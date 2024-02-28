@@ -4,16 +4,18 @@
 package com.datasqrl.discovery;
 
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.discovery.store.MetricStoreProvider;
 import com.datasqrl.discovery.store.TableStatisticsStore;
 import com.datasqrl.engine.EngineCapability;
 import com.datasqrl.engine.stream.StreamEngine;
 import com.datasqrl.engine.stream.StreamHolder;
+import com.datasqrl.engine.stream.flink.LocalFlinkStreamEngineImpl;
+import com.datasqrl.engine.stream.inmemory.InMemStreamEngine;
 import com.datasqrl.engine.stream.monitor.DataMonitor;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.io.DataSystemDiscovery;
-import com.datasqrl.io.DataSystemDiscoveryFactory;
 import com.datasqrl.io.SourceRecord;
 import com.datasqrl.io.stats.DefaultSchemaGenerator;
 import com.datasqrl.io.stats.SourceTableStatistics;
@@ -35,16 +37,17 @@ import java.util.stream.Collectors;
 import lombok.NonNull;
 
 public class DataDiscovery {
-
   private final ErrorCollector errors;
   private final StreamEngine streamEngine;
+  private final SqrlConfig config;
   private final MetadataStoreProvider metadataStoreProvider;
   private final StreamInputPreparer streamPreparer;
 
   public DataDiscovery(@NonNull ErrorCollector errors, @NonNull StreamEngine streamEngine,
-      @NonNull MetadataStoreProvider metadataStoreProvider) {
+      @NonNull MetadataStoreProvider metadataStoreProvider, @NonNull SqrlConfig config) {
     this.errors = errors;
     this.streamEngine = streamEngine;
+    this.config = config;
     Preconditions.checkArgument(streamEngine.supports(EngineCapability.DATA_MONITORING));
     this.metadataStoreProvider = metadataStoreProvider;
     streamPreparer = new StreamInputPreparerImpl();
@@ -73,7 +76,15 @@ public class DataDiscovery {
       return null;
     }
 
-    DataMonitor dataMonitor = streamEngine.createDataMonitor();
+    DataMonitor dataMonitor;
+    if (streamEngine instanceof InMemStreamEngine) {
+      dataMonitor = new InMemJobFactory().createDataMonitor();
+    } else if (streamEngine instanceof LocalFlinkStreamEngineImpl) {
+      dataMonitor = new FlinkJobFactory().createFlinkJob(config);
+    } else {
+      throw new RuntimeException("Unknown data discovery stream engine");
+    }
+
     for (TableInput table : tables) {
       StreamHolder<SourceRecord.Raw> stream = streamPreparer.getRawInput(table, dataMonitor,
           ErrorPrefix.INPUT_DATA.resolve(table.getName()));

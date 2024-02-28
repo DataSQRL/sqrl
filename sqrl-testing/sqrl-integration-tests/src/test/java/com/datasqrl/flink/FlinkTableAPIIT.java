@@ -70,7 +70,7 @@ public class FlinkTableAPIIT extends AbstractPhysicalSQRLIT {
     TableSource tblSource = loadTable(NamePath.of("ecommerce-data", "Orders"), moduleLoader);
 
     AbstractFlinkStreamEngine flink = new FlinkEngineFactory().initialize(SqrlConfig.EMPTY);
-    FlinkStreamBuilder streamBuilder = flink.createJob();
+    FlinkStreamBuilder streamBuilder = null;//flink.createJob();
     StreamInputPreparer streamPreparer = new StreamInputPreparerImpl();
 
 

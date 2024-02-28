@@ -105,7 +105,7 @@ public class TestExecutor {
           FlinkExecutablePlan.class);
       FlinkStreamPhysicalPlan plan = new FlinkStreamPhysicalPlan(flinkPlan);
       LocalFlinkStreamEngineImpl localFlinkStreamEngine = new LocalFlinkStreamEngineImpl(
-          new ExecutionEnvironmentFactory(Map.of()), config.getSubConfig("engines")
+           config.getSubConfig("engines")
           .getSubConfig("stream"));
       CompletableFuture<com.datasqrl.engine.ExecutionResult> fut = localFlinkStreamEngine.execute(
           plan, ErrorCollector.root());

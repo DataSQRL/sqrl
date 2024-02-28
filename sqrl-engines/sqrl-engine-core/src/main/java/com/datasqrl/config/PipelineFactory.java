@@ -7,18 +7,14 @@ import com.datasqrl.engine.EngineFactory;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionEngine.Type;
 import com.datasqrl.engine.database.DatabaseEngine;
-import com.datasqrl.engine.database.DatabaseEngineFactory;
-import com.datasqrl.engine.pipeline.SimplePipeline;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
-import com.datasqrl.engine.server.ServerEngine;
+import com.datasqrl.engine.pipeline.SimplePipeline;
 import com.datasqrl.engine.stream.StreamEngine;
-import com.datasqrl.metadata.MetadataStoreProvider;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import lombok.NonNull;
-
 import java.util.Optional;
+import lombok.Getter;
+import lombok.NonNull;
 import org.apache.commons.lang3.tuple.Pair;
 
 /**
@@ -30,6 +26,7 @@ public class PipelineFactory {
   public static final String ENGINES_PROPERTY = "engines";
 
   @NonNull
+  @Getter //temporary to aid migration until DI is landed
   private final SqrlConfig config;
 
   public PipelineFactory(@NonNull SqrlConfig config) {
@@ -38,21 +35,6 @@ public class PipelineFactory {
 
   public static PipelineFactory fromRootConfig(@NonNull SqrlConfig config) {
     return new PipelineFactory(config.getSubConfig(ENGINES_PROPERTY));
-  }
-
-
-  public MetadataStoreProvider getMetaDataStoreProvider(Optional<String> engineIdentifier) {
-    for (String engineId : config.getKeys()) {
-      SqrlConfig engineConfig = config.getSubConfig(engineId);
-      EngineFactory engineFactory = EngineFactory.fromConfig(engineConfig);
-      if (engineIdentifier.map(id -> id.equalsIgnoreCase(engineId))
-          .orElse(engineFactory.getEngineType()==Type.DATABASE)) {
-        config.getErrorCollector().checkFatal(engineFactory instanceof DatabaseEngineFactory,
-            "Selected or default engine [%s] for metadata is not a database engine", engineId);
-        return ((DatabaseEngineFactory)engineFactory).getMetadataStore(engineConfig);
-      }
-    }
-    throw config.getErrorCollector().exception("Could not find database engine for metadata");
   }
 
   private Map<String, ExecutionEngine> getEngines(Optional<ExecutionEngine.Type> engineType) {
