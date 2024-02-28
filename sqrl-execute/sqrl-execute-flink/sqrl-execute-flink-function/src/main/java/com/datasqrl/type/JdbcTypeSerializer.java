@@ -1,5 +1,8 @@
 package com.datasqrl.type;
 
+
+import org.apache.flink.table.types.logical.LogicalType;
+
 public interface JdbcTypeSerializer<D, S> {
 
   String getDialect();
@@ -10,7 +13,7 @@ public interface JdbcTypeSerializer<D, S> {
 
   GenericDeserializationConverter<D> getDeserializerConverter();
 
-  GenericSerializationConverter<S> getSerializerConverter();
+  GenericSerializationConverter<S> getSerializerConverter(LogicalType type);
 
   interface GenericSerializationConverter<T> {
     T create();

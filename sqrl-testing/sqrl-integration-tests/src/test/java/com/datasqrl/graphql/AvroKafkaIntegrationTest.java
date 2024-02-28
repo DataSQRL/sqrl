@@ -76,7 +76,7 @@ public class AvroKafkaIntegrationTest extends AbstractGraphqlTest {
     Thread.sleep(2000);
     writeToTopic(TOPIC,orders.stream().map(o -> KafkaBaseTest.serializeAvro(o, avroSchema)), ValueType.BYTE);
 
-    countDownLatch.await(120, TimeUnit.SECONDS);
+    countDownLatch.await(60, TimeUnit.SECONDS);
 
     fut.cancel(true);
     assertEquals(countDownLatch.getCount(), 0);
