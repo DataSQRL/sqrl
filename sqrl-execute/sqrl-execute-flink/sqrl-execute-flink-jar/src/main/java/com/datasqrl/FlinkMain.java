@@ -33,64 +33,73 @@ import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
  */
 @Slf4j
 public class FlinkMain {
+
   public static void main(String[] args) {
     ClasspathResourceResolver resourceResolver = new ClasspathResourceResolver();
-
-    (new FlinkMain()).run(resourceResolver);
-  }
-
-  @SneakyThrows
-  public void run(ResourceResolver resourceResolver) {
     log.info("Hello.");
+    ErrorCollector errors = ErrorCollector.root();
 
     Optional<URI> flinkSqlPlan = resourceResolver.resolveFile(NamePath.of("deploy", PLAN_SQL));
     Optional<URI> flinkConfig = resourceResolver.resolveFile(NamePath.of("deploy", PLAN_CONFIG));
-
     Optional<URI> flinkPlan = resourceResolver.resolveFile(NamePath.of("deploy", PLAN_JSON));
-    Preconditions.checkState(flinkPlan.isPresent(), "Could not find flink executable plan.");
 
-    Deserializer deserializer = new Deserializer();
-    FlinkExecutablePlan executablePlan = deserializer.mapJsonFile(flinkPlan.get(), FlinkExecutablePlan.class);
-    log.info("Found executable.");
-
-    ErrorCollector errors = ErrorCollector.root();
     try {
-      if (flinkSqlPlan.isPresent() && flinkConfig.isPresent()) {
-        log.info("Executing sql.");
-        URL url = ResourceResolver.toURL(flinkSqlPlan.get());
-        String plan;
-        try (InputStream in = url.openStream()){
-          plan = IOUtils.toString(in, StandardCharsets.UTF_8);
-        }
-
-        Map<String, String> configMap = deserializer.mapYAMLFile(flinkConfig.get(), Map.class);
-
-        String[] commands = plan.split(PLAN_SEPARATOR);
-
-        Configuration sEnvConfig = Configuration.fromMap(configMap);
-        StreamExecutionEnvironment sEnv = StreamExecutionEnvironment.getExecutionEnvironment(sEnvConfig);
-        EnvironmentSettings tEnvConfig = EnvironmentSettings.newInstance()
-            .withConfiguration(Configuration.fromMap(configMap)).build();
-        StreamTableEnvironment tEnv = StreamTableEnvironment.create(sEnv, tEnvConfig);
-
-        for (String command : commands) {
-          String trim = command.trim();
-          if (!trim.isEmpty()) {
-            tEnv.executeSql(trim);
-          }
-        }
-      } else {
-        FlinkEnvironmentBuilder builder = new FlinkEnvironmentBuilder(errors);
-        StatementSet statementSet = executablePlan.accept(builder, null);
-        log.info("Built. " + statementSet);
-        TableResult result = statementSet.execute();
-        log.info("Plan execution complete: {}", result.getResultKind());
-      }
+      (new FlinkMain()).run(errors, flinkPlan, flinkConfig, flinkSqlPlan);
     } catch (Exception e) {
       errors.getCatcher().handle(e);
     }
     if (errors.hasErrors()) {
       log.error(ErrorPrinter.prettyPrint(errors));
+    }
+  }
+
+  @SneakyThrows
+  public TableResult run(ErrorCollector errors, Optional<URI> flinkPlan, Optional<URI> flinkConfig,
+      Optional<URI> sqlPlan) {
+
+    Preconditions.checkState(
+        flinkPlan.isPresent() || (sqlPlan.isPresent() && flinkConfig.isPresent()),
+        "Could not find flink executable plan.");
+
+    Deserializer deserializer = new Deserializer();
+
+    if (sqlPlan.isPresent() && flinkConfig.isPresent()) {
+      log.info("Executing sql.");
+      URL url = ResourceResolver.toURL(sqlPlan.get());
+      String plan;
+      try (InputStream in = url.openStream()) {
+        plan = IOUtils.toString(in, StandardCharsets.UTF_8);
+      }
+
+      Map<String, String> configMap = deserializer.mapYAMLFile(flinkConfig.get(), Map.class);
+
+      String[] commands = plan.split(PLAN_SEPARATOR);
+
+      Configuration sEnvConfig = Configuration.fromMap(configMap);
+      StreamExecutionEnvironment sEnv = StreamExecutionEnvironment.getExecutionEnvironment(
+          sEnvConfig);
+      EnvironmentSettings tEnvConfig = EnvironmentSettings.newInstance()
+          .withConfiguration(Configuration.fromMap(configMap)).build();
+      StreamTableEnvironment tEnv = StreamTableEnvironment.create(sEnv, tEnvConfig);
+      TableResult tableResult = null;
+      for (String command : commands) {
+        String trim = command.trim();
+        if (!trim.isEmpty()) {
+          tableResult = tEnv.executeSql(trim);
+        }
+      }
+      return tableResult;
+    } else {
+      FlinkExecutablePlan executablePlan = deserializer.mapJsonFile(flinkPlan.get(),
+          FlinkExecutablePlan.class);
+      log.info("Found executable.");
+
+      FlinkEnvironmentBuilder builder = new FlinkEnvironmentBuilder(errors);
+      StatementSet statementSet = executablePlan.accept(builder, null);
+      log.info("Built. " + statementSet);
+      TableResult result = statementSet.execute();
+      log.info("Plan execution complete: {}", result.getResultKind());
+      return result;
     }
   }
 }

@@ -179,8 +179,8 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
       @Override
       public RexNode visitCall(RexCall call) {
         for (PgExtension extension : extensions) {
-          for (SqrlFunction function : extension.operators()) {
-            if (function.getFunctionName().equals(
+          for (String function : extension.operators()) {
+            if (function.equals(
                 Name.system(call.getOperator().getName().toLowerCase()))) {
               statements.add(extension.getExtensionDdl());
             }

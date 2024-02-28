@@ -1,5 +1,6 @@
 package com.datasqrl;
 
+import static com.datasqrl.function.SqrlFunction.getFunctionNameFromClass;
 import static com.datasqrl.plan.local.analyze.RetailSqrlModule.createTableSource;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -12,7 +13,7 @@ import com.datasqrl.config.SourceFactory;
 import com.datasqrl.engine.database.relational.ddl.PostgresDDLFactory;
 import com.datasqrl.engine.database.relational.ddl.statements.CreateTableDDL;
 import com.datasqrl.function.SqrlFunction;
-import com.datasqrl.function.StdJsonLibraryImpl;
+import com.datasqrl.functions.json.StdJsonLibraryImpl;
 import com.datasqrl.graphql.AbstractGraphqlTest;
 import com.datasqrl.io.DataSystemConnectorFactory;
 import com.datasqrl.io.InMemSourceFactory;
@@ -29,7 +30,6 @@ import com.google.auto.service.AutoService;
 import com.ibm.icu.impl.Pair;
 import java.io.IOException;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -47,10 +47,10 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.TableResult;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
+import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.functions.UserDefinedFunction;
 import org.apache.flink.test.junit5.MiniClusterExtension;
 import org.apache.flink.types.Row;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -159,9 +159,9 @@ public class JsonConversionTest extends AbstractGraphqlTest {
     Table inputTable = tableEnv.fromDataStream(env.fromCollection(inputRows,
         Types.ROW_NAMED(new String[]{"id", "json"}, Types.INT, Types.STRING)));
 
-    for (SqrlFunction sqrlFunction : StdJsonLibraryImpl.json) {
+    for (FunctionDefinition sqrlFunction : StdJsonLibraryImpl.json) {
       UserDefinedFunction userDefinedFunction = (UserDefinedFunction) sqrlFunction;
-      tableEnv.createFunction(sqrlFunction.getFunctionName().getCanonical(),
+      tableEnv.createFunction(getFunctionNameFromClass(sqrlFunction.getClass()),
           userDefinedFunction.getClass());
     }
 

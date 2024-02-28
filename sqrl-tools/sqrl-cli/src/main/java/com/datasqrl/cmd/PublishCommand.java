@@ -29,7 +29,6 @@ public class PublishCommand extends AbstractCommand {
     @Override
     protected void execute(ErrorCollector errors) throws IOException {
         if (toRemote) NotYetImplementedException.trigger("Publishing to remote repository is not yet supported");
-
         Path packageRoot = root.rootDir;
         Optional<List<Path>> packageConfigsOpt = Packager.findPackageFile(root.rootDir, root.packageFiles);
         errors.checkFatal(packageConfigsOpt.isPresent(),"Directory does not contain [%s] package configuration file",
