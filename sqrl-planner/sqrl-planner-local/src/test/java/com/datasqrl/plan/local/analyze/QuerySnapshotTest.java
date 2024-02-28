@@ -19,17 +19,15 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.graphql.APIConnectorManagerImpl;
 import com.datasqrl.graphql.generate.GraphqlSchemaFactory;
-import com.datasqrl.graphql.inference.GraphqlModelGenerator;
 import com.datasqrl.graphql.inference.GraphqlQueryBuilder;
 import com.datasqrl.graphql.inference.GraphqlQueryGenerator;
 import com.datasqrl.graphql.inference.GraphqlSchemaValidator;
-import com.datasqrl.plan.global.DAGPlanner;
-import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.local.generate.QueryTableFunction;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISourceImpl;
 import com.datasqrl.plan.rules.IdealExecutionStage;
 import com.datasqrl.plan.rules.SQRLConverter;
+import com.datasqrl.plan.rules.SqrlConverterConfig;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.util.ScriptBuilder;
 import com.datasqrl.util.SnapshotTest;
@@ -37,7 +35,6 @@ import com.datasqrl.util.SqlNameUtil;
 import com.datasqrl.util.data.Retail;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphqlTypeComparatorRegistry;
-import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.SchemaPrinter;
 import java.nio.file.Path;
 import java.util.Comparator;
@@ -95,7 +92,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
             framework.getSchema().getTableStream(PhysicalRelationalTable.class))
         .sorted(Comparator.comparing(f->f.getNameId()))
         .forEach(table-> {
-          SQRLConverter.Config config = table.getBaseConfig().stage(IdealExecutionStage.INSTANCE).build();
+          SqrlConverterConfig config = table.getBaseConfig().stage(IdealExecutionStage.INSTANCE).build();
           snapshot.addContent(
               sqrlConverter.convert(table, config, false,
                   /*Error already collected during planning*/ErrorCollector.root()).explain(),

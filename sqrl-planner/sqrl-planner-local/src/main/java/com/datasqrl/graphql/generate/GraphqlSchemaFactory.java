@@ -20,7 +20,6 @@ import com.datasqrl.config.CompilerConfiguration;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.function.SqrlFunctionParameter;
 import com.datasqrl.graphql.server.CustomScalars;
-import com.datasqrl.plan.table.LogicalNestedTable;
 import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.Relationship.JoinType;
@@ -291,19 +290,20 @@ public class GraphqlSchemaFactory {
 
   //Todo need to adjust PKs
   private boolean isLocalPrimaryKey(Table table, int i) {
-    if (table instanceof LogicalNestedTable) {
-      LogicalNestedTable nestedTable = (LogicalNestedTable) table;
-      if (i < nestedTable.getNumPrimaryKeys() - nestedTable.getNumLocalPks()) {
-        return false;
-      } else if (i < nestedTable.getNumPrimaryKeys()) {
-        return true;
-      }
-    } else if (table instanceof ScriptRelationalTable) {
-      ScriptRelationalTable relTable = (ScriptRelationalTable) table;
-      if (i < relTable.getNumPrimaryKeys()) {
-        return true;
-      }
-    }
+    //todo
+//    if (table instanceof LogicalNestedTable) {
+//      LogicalNestedTable nestedTable = (LogicalNestedTable) table;
+//      if (i < nestedTable.getNumPrimaryKeys() - nestedTable.getNumLocalPks()) {
+//        return false;
+//      } else if (i < nestedTable.getNumPrimaryKeys()) {
+//        return true;
+//      }
+//    } else if (table instanceof ScriptRelationalTable) {
+//      ScriptRelationalTable relTable = (ScriptRelationalTable) table;
+//      if (i < relTable.getNumPrimaryKeys()) {
+//        return true;
+//      }
+//    }
 
     return false;
   }

@@ -8,17 +8,14 @@ import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.graphql.APIConnectorLookup;
 import com.datasqrl.graphql.APIConnectorManager;
-import com.datasqrl.graphql.server.Model.RootGraphqlModel;
-import com.datasqrl.plan.local.generate.Debugger;
 import com.datasqrl.plan.local.generate.ResolvedExport;
+import com.datasqrl.plan.rules.SqrlConverterConfig;
 import com.datasqrl.util.FunctionUtil;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.table.PhysicalTable;
-import com.google.common.base.Preconditions;
 import org.apache.flink.table.functions.UserDefinedFunction;
 
 import java.net.URL;
@@ -31,7 +28,6 @@ import java.util.Set;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.flink.table.functions.FunctionDefinition;
-import org.apache.flink.table.functions.UserDefinedFunction;
 
 /**
  * The DAGPlanner currently makes the simplifying assumption that the execution pipeline consists of
@@ -87,7 +83,7 @@ public class DAGPlanner {
     //Plan final version of all tables
     dag.allNodesByClass(SqrlDAG.TableNode.class).forEach( tableNode -> {
       PhysicalTable table = tableNode.getTable();
-      SQRLConverter.Config config = table.getBaseConfig().build();
+      SqrlConverterConfig config = table.getBaseConfig().build();
       table.setPlannedRelNode(sqrlConverter.convert(table, config, errors));
     });
   }

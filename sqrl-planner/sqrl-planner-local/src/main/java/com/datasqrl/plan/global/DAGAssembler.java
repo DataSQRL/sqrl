@@ -8,9 +8,7 @@ import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.graphql.APIConnectorLookup;
 import com.datasqrl.graphql.APIConnectorManager;
-import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.RelStageRunner;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
@@ -21,6 +19,7 @@ import com.datasqrl.plan.local.generate.QueryTableFunction;
 import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.plan.rules.AnnotatedLP;
 import com.datasqrl.plan.rules.SQRLConverter;
+import com.datasqrl.plan.rules.SqrlConverterConfig;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.plan.table.PhysicalTable;
 import com.datasqrl.plan.table.TableType;
@@ -44,8 +43,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
-import lombok.Value;
-import org.apache.calcite.plan.RelOptPlanner;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.TableFunctionScan;
@@ -53,11 +50,7 @@ import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.hint.Hintable;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.flink.table.functions.UserDefinedFunction;
-import java.net.URL;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.datasqrl.error.ErrorCode.PRIMARY_KEY_NULLABLE;
 import static com.datasqrl.plan.OptimizationStage.*;
@@ -70,7 +63,6 @@ public class DAGAssembler {
   private final Debugger debugger;
   private final ErrorCollector errors;
   private final APIConnectorManager apiManager;
-  private ErrorCollector errors;
 
   public PhysicalDAGPlan assemble(SqrlDAG dag, Set<URL> jars, Map<String, UserDefinedFunction> udfs) {
     //Plan final version of all tables
@@ -79,7 +71,7 @@ public class DAGAssembler {
       Preconditions.checkNotNull(stage);
       PhysicalTable table = tableNode.getTable();
       table.assignStage(stage); //this stage on the config below
-      SQRLConverter.Config config = table.getBaseConfig().build();
+      SqrlConverterConfig config = table.getBaseConfig().build();
       table.setPlannedRelNode(sqrlConverter.convert(table, config, errors));
     });
 
@@ -212,11 +204,11 @@ public class DAGAssembler {
     return new PhysicalDAGPlan(allPlans, pipeline);
   }
 
-  public static SQRLConverter.Config  getExportBaseConfig() {
-      return SQRLConverter.Config.builder().build();
+  public static SqrlConverterConfig getExportBaseConfig() {
+      return SqrlConverterConfig.builder().build();
   }
 
-  private RelNode produceWriteTree(RelNode relNode, SQRLConverter.Config config, ErrorCollector errors) {
+  private RelNode produceWriteTree(RelNode relNode, SqrlConverterConfig config, ErrorCollector errors) {
     AnnotatedLP alp = sqrlConverter.convert(relNode, config, errors);
     RelNode convertedRelNode = alp.getRelNode();
     //Expand to full tree

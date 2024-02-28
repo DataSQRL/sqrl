@@ -22,7 +22,6 @@ import com.datasqrl.plan.global.DAGPlanner;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.ExternalSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.WriteQuery;
-import com.datasqrl.plan.local.analyze.ResolveTest;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.util.CalciteUtil;
@@ -82,7 +81,7 @@ public class AbstractPhysicalSQRLIT extends AbstractSchemaInferenceModelTest {
     APIConnectorManager apiManager = injector.getInstance(APIConnectorManager.class);//new MockAPIConnectorManager(framework, pipeline, errors);
     SqrlSchema sqrlSchema = framework.getSchema();
     for (String tableName : queryTables) {
-      Optional<ScriptRelationalTable> vtOpt = ResolveTest.getLatestTable(sqrlSchema, tableName,
+      Optional<ScriptRelationalTable> vtOpt = getLatestTable(sqrlSchema, tableName,
               ScriptRelationalTable.class);
       Preconditions.checkArgument(vtOpt.isPresent(), "No such table: %s", tableName);
       ScriptRelationalTable vt = vtOpt.get();

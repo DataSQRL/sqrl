@@ -10,19 +10,16 @@ import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSource;
-import com.datasqrl.plan.rules.SQRLConverter;
-import com.datasqrl.plan.rules.SQRLConverter.Config.ConfigBuilder;
+import com.datasqrl.plan.rules.SqrlConverterConfig;
 import com.datasqrl.plan.table.Timestamps.Type;
 import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import com.datasqrl.util.CalciteUtil;
 import lombok.Getter;
 import lombok.NonNull;
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeFactory;
 
 /**
  * A relational table that is defined by the imported data from a {@link TableSource}.
@@ -59,8 +56,8 @@ public class ProxyImportRelationalTable extends PhysicalRelationalTable implemen
   }
 
   @Override
-  public ConfigBuilder getBaseConfig() {
-    SQRLConverter.Config.ConfigBuilder builder = SQRLConverter.Config.builder();
+  public SqrlConverterConfig.SqrlConverterConfigBuilder getBaseConfig() {
+    SqrlConverterConfig.SqrlConverterConfigBuilder builder = SqrlConverterConfig.builder();
     getAssignedStage().ifPresent(stage -> builder.stage(stage));
     return builder;
   }

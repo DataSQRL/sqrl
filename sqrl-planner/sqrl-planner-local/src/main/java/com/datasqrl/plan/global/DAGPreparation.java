@@ -8,6 +8,7 @@ import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.plan.local.generate.QueryTableFunction;
 import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
+import com.datasqrl.plan.table.ProxyImportRelationalTable;
 import com.datasqrl.schema.RootSqrlTable;
 import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
@@ -38,12 +39,6 @@ public class DAGPreparation {
     apiManager.getExports().forEach((sqrlTable, log) -> exports.add(exportTable(
         (ModifiableTable) ((RootSqrlTable) sqrlTable).getInternalTable(),
         log.getSink(), relBuilder, false)));
-
-    //Assign timestamps to imports which propagate and restrict remaining timestamps in downstream tables
-    StreamUtil.filterByClass(getAllPhysicalTables(sqrlSchema), ProxyImportRelationalTable.class)
-        .forEach(this::finalizeTimestampOnTable);
-    //Some downstream tables have multiple timestamp candidates because the timestamp was selected multiple times, pick the best one
-    getAllPhysicalTables(sqrlSchema).forEach(this::finalizeTimestampOnTable);
 
     //Replace default joins with inner joins for API queries
     return apiManager.getQueries().stream()

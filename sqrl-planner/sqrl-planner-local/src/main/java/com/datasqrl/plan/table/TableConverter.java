@@ -1,6 +1,7 @@
 package com.datasqrl.plan.table;
 
 import com.datasqrl.calcite.QueryPlanner;
+import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.ReservedName;
@@ -37,7 +38,7 @@ public class TableConverter {
       );
 
   TypeFactory typeFactory;
-  QueryPlanner planner;
+  SqrlFramework framework;
 
 
   public SourceTableDefinition sourceToTable(
@@ -110,7 +111,7 @@ public class TableConverter {
 
   private boolean isValidDatatype(String datatype) {
     try {
-      planner.parseDatatype(datatype);
+      framework.getQueryPlanner().parseDatatype(datatype);
       return true;
     } catch (Exception e) {
       return false;

@@ -8,7 +8,7 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.plan.rules.ComputeCost;
 import com.datasqrl.plan.rules.ExecutionAnalysis;
 import com.datasqrl.plan.rules.SQRLConverter;
-import com.datasqrl.plan.rules.SQRLConverter.Config;
+import com.datasqrl.plan.rules.SqrlConverterConfig;
 import com.datasqrl.plan.rules.SimpleCostModel;
 import com.datasqrl.plan.global.SqrlDAG.ExportNode;
 import com.datasqrl.plan.global.SqrlDAG.QueryNode;
@@ -32,7 +32,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.Value;
 import org.apache.calcite.rel.RelNode;
 
 import static com.datasqrl.plan.global.DAGAssembler.getExportBaseConfig;
@@ -74,12 +73,12 @@ public class DAGBuilder {
     return new SqrlDAG(dagInputs);
   }
 
-  private void add2DAG(RelNode relnode, Config baseConfig,
+  private void add2DAG(RelNode relnode, SqrlConverterConfig baseConfig,
       List<ExecutionStage> stages, Multimap<SqrlNode, SqrlNode> dagInputs,
       Function<Map<ExecutionStage, StageAnalysis>,SqrlNode> nodeConstructor,
       Map<PhysicalRelationalTable, TableNode> table2Node) {
     Set<PhysicalRelationalTable> inputTables = new LinkedHashSet<>();
-    Config.ConfigBuilder configBuilder = baseConfig.toBuilder()
+    SqrlConverterConfig.SqrlConverterConfigBuilder configBuilder = baseConfig.toBuilder()
         .sourceTableConsumer(inputTables::add);
 
     //Try all stages to determine which one are viable
@@ -96,7 +95,7 @@ public class DAGBuilder {
                                           Map<PhysicalRelationalTable, TableNode> table2Node) {
     if (table2Node.containsKey(table)) return table2Node.get(table);
     Set<PhysicalRelationalTable> inputTables = new LinkedHashSet<>();
-    SQRLConverter.Config.ConfigBuilder configBuilder = table.getBaseConfig();
+    SqrlConverterConfig.SqrlConverterConfigBuilder configBuilder = table.getBaseConfig();
     configBuilder.sourceTableConsumer(inputTables::add);
     List<ExecutionStage> stages = table.getSupportedStages(pipeline, errors);
     Map<ExecutionStage, StageAnalysis> stageAnalysis = tryStages(stages, stage ->
@@ -110,7 +109,7 @@ public class DAGBuilder {
   }
 
   public Map<ExecutionStage, StageAnalysis> planStages(PhysicalTable table) {
-    SQRLConverter.Config.ConfigBuilder configBuilder = table.getBaseConfig();
+    SqrlConverterConfig.SqrlConverterConfigBuilder configBuilder = table.getBaseConfig();
     List<ExecutionStage> stages = table.getSupportedStages(pipeline, errors);
     return tryStages(stages, stage ->
         sqrlConverter.convert(table, configBuilder.stage(stage).build(), errors));

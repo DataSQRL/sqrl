@@ -6,8 +6,7 @@ import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.plan.rules.LPAnalysis;
-import com.datasqrl.plan.rules.SQRLConverter;
-import com.datasqrl.plan.rules.SQRLConverter.Config.ConfigBuilder;
+import com.datasqrl.plan.rules.SqrlConverterConfig;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -57,9 +56,9 @@ public class QueryRelationalTable extends PhysicalRelationalTable {
   }
 
   @Override
-  public ConfigBuilder getBaseConfig() {
-    SQRLConverter.Config.ConfigBuilder builder = getAnalyzedLP().getConverterConfig().toBuilder();
-    getAssignedStage().ifPresent(stage -> builder.stage(stage));
+  public SqrlConverterConfig.SqrlConverterConfigBuilder getBaseConfig() {
+    SqrlConverterConfig.SqrlConverterConfigBuilder builder = getAnalyzedLP().getConverterConfig().toBuilder();
+    getAssignedStage().ifPresent(builder::stage);
     return builder;
   }
 

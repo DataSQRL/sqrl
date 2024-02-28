@@ -6,8 +6,7 @@ package com.datasqrl.plan.hints;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.plan.rules.SQRLConverter.Config;
-import com.datasqrl.plan.rules.SQRLConverter.Config.ConfigBuilder;
+import com.datasqrl.plan.rules.SqrlConverterConfig;
 import com.google.common.collect.Iterables;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +25,7 @@ public interface OptimizerHint {
     String stageName;
 
     @Override
-    public void add2Config(ExecutionPipeline pipeline, ConfigBuilder configBuilder, ErrorCollector errors) {
+    public void add2Config(ExecutionPipeline pipeline, SqrlConverterConfig.SqrlConverterConfigBuilder configBuilder, ErrorCollector errors) {
       configBuilder.stage(getStage(pipeline,errors));
     }
 
@@ -41,16 +40,16 @@ public interface OptimizerHint {
   interface Pipeline extends OptimizerHint {
 
     void add2Config(ExecutionPipeline pipeline,
-        Config.ConfigBuilder configBuilder, ErrorCollector errors);
+        SqrlConverterConfig.SqrlConverterConfigBuilder configBuilder, ErrorCollector errors);
 
   }
 
   interface Generic extends OptimizerHint.Pipeline {
 
-    void add2Config(Config.ConfigBuilder configBuilder, ErrorCollector errors);
+    void add2Config(SqrlConverterConfig.SqrlConverterConfigBuilder configBuilder, ErrorCollector errors);
 
     default void add2Config(ExecutionPipeline pipeline,
-        Config.ConfigBuilder configBuilder, ErrorCollector errors) {
+        SqrlConverterConfig.SqrlConverterConfigBuilder configBuilder, ErrorCollector errors) {
       add2Config(configBuilder, errors);
     }
 

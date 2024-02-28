@@ -11,7 +11,7 @@ import com.datasqrl.plan.rules.AnnotatedLP;
 import com.datasqrl.plan.rules.IdealExecutionStage;
 import com.datasqrl.plan.rules.LPAnalysis;
 import com.datasqrl.plan.rules.SQRLConverter;
-import com.datasqrl.plan.rules.SQRLConverter.Config;
+import com.datasqrl.plan.rules.SqrlConverterConfig;
 import com.datasqrl.plan.table.CalciteTableFactory;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.plan.util.SelectIndexMap;
@@ -111,18 +111,18 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
       RelBuilder relBuilder, Optional<SqlNodeList> hints, ErrorCollector errors) {
     //Parse all optimizer hints
     List<OptimizerHint> optimizerHints = OptimizerHint.fromSqlHint(hints, errors);
-    SQRLConverter.Config.ConfigBuilder configBuilder = SQRLConverter.Config.builder();
+    SqrlConverterConfig.SqrlConverterConfigBuilder configBuilder = SqrlConverterConfig.builder();
     //Apply only generic optimizer hints (pipeline optimization happens in the DAGPlanner)
     StreamUtil.filterByClass(optimizerHints, OptimizerHint.Generic.class)
         .forEach(h -> h.add2Config(configBuilder, errors));
     //Capture stages
     List<OptimizerHint.Stage> configuredStages = StreamUtil.filterByClass(optimizerHints,
         OptimizerHint.Stage.class).collect(Collectors.toList());
-    Config baseConfig = configBuilder.build();
+    SqrlConverterConfig baseConfig = configBuilder.build();
 
     //Config for original construction without a specific stage
     configBuilder.stage(IdealExecutionStage.INSTANCE);
-    Config config = configBuilder.build();
+    SqrlConverterConfig config = configBuilder.build();
 
     SQRLConverter sqrlConverter = new SQRLConverter(relBuilder);
     AnnotatedLP alp = sqrlConverter.convert(relNode, config, errors);

@@ -8,10 +8,9 @@ import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.plan.rules.SQRLConverter;
+import com.datasqrl.plan.rules.SqrlConverterConfig;
 import com.datasqrl.plan.table.PullupOperator.Container;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ContiguousSet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -20,8 +19,6 @@ import lombok.NonNull;
 import lombok.Setter;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.schema.Statistic;
 import org.apache.calcite.schema.Statistics;
 import org.apache.calcite.util.ImmutableBitSet;
@@ -84,7 +81,7 @@ public abstract class PhysicalRelationalTable extends ScriptRelationalTable impl
 
   public abstract List<ExecutionStage> getSupportedStages(ExecutionPipeline pipeline, ErrorCollector errors);
 
-  public abstract SQRLConverter.Config.ConfigBuilder getBaseConfig();
+  public abstract SqrlConverterConfig.SqrlConverterConfigBuilder getBaseConfig();
 
   public void assignStage(ExecutionStage stage) {
     this.assignedStage = Optional.of(stage);

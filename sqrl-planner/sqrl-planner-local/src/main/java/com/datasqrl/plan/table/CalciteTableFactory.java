@@ -27,7 +27,7 @@ public class CalciteTableFactory {
 
   public CalciteTableFactory(SqrlFramework framework) {
     this(new TableIdFactory(framework.getSchema().getTableNameToIdMap()),
-        new TableConverter(framework.getTypeFactory(), framework.getQueryPlanner()));
+        new TableConverter(framework.getTypeFactory(), framework));
   }
 
   public ImportedRelationalTableImpl createImportedTable(RelDataType rootType,

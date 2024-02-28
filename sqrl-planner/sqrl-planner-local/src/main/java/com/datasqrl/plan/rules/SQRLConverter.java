@@ -14,13 +14,9 @@ import com.datasqrl.plan.util.SelectIndexMap;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import java.util.List;
-import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
-import lombok.Value;
 import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.hint.Hintable;
 import org.apache.calcite.tools.RelBuilder;
 
 @AllArgsConstructor(onConstructor_=@Inject)
@@ -29,7 +25,7 @@ public class SQRLConverter {
 
   RelBuilder relBuilder;
 
-  public AnnotatedLP convert(final RelNode relNode, Config config, ErrorCollector errors) {
+  public AnnotatedLP convert(final RelNode relNode, SqrlConverterConfig config, ErrorCollector errors) {
     ExecutionAnalysis exec = ExecutionAnalysis.of(config.getStage());
     SQRLLogicalPlanRewriter sqrl2sql = new SQRLLogicalPlanRewriter(relBuilder, exec,
         errors, config);
@@ -48,11 +44,11 @@ public class SQRLConverter {
     return alp.getRelNode();
   }
 
-  public RelNode convert(PhysicalTable table, Config config, ErrorCollector errors) {
+  public RelNode convert(PhysicalTable table, SqrlConverterConfig config, ErrorCollector errors) {
     return convert(table,config,true,errors);
   }
 
-  public RelNode convert(PhysicalTable table, Config config,
+  public RelNode convert(PhysicalTable table, SqrlConverterConfig config,
                          boolean addWatermark, ErrorCollector errors) {
     RelBuilder builder;
     ExecutionAnalysis exec = ExecutionAnalysis.of(config.getStage());
@@ -90,27 +86,4 @@ public class SQRLConverter {
 
   public static final int DEFAULT_SLIDING_WINDOW_PANES = 50;
 
-  @Builder(toBuilder = true)
-  @AllArgsConstructor
-  @Getter
-  public static class Config {
-
-    ExecutionStage stage;
-
-    @Builder.Default
-    Consumer<PhysicalRelationalTable> sourceTableConsumer = (t) -> {};
-    @Builder.Default
-    int slideWindowPanes = DEFAULT_SLIDING_WINDOW_PANES;
-
-    @Builder.Default
-    boolean setOriginalFieldnames = false;
-
-    @Builder.Default
-    List<String> fieldNames = null;
-
-    public Config withStage(ExecutionStage stage) {
-      return toBuilder().stage(stage).build();
-    }
-
-  }
 }

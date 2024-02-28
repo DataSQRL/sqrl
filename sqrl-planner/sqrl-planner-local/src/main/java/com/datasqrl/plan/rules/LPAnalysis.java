@@ -15,7 +15,7 @@ public class LPAnalysis {
 
   @NonNull List<OptimizerHint.Stage> configuredStages;
 
-  @NonNull SQRLConverter.Config converterConfig;
+  @NonNull SqrlConverterConfig converterConfig;
 
 
 }

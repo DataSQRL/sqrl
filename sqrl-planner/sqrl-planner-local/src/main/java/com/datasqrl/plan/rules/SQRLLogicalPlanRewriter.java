@@ -11,7 +11,6 @@ import com.datasqrl.plan.hints.*;
 import com.datasqrl.plan.local.generate.QueryTableFunction;
 import com.datasqrl.plan.rules.JoinAnalysis.Side;
 import com.datasqrl.plan.rules.JoinAnalysis.Type;
-import com.datasqrl.plan.rules.SQRLConverter.Config;
 import com.datasqrl.plan.table.*;
 import com.datasqrl.plan.util.*;
 import com.datasqrl.plan.util.TimestampAnalysis.MaxTimestamp;
@@ -21,7 +20,6 @@ import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.SqrlRexUtil;
 import com.datasqrl.util.SqrlRexUtil.JoinConditionDecomposition;
 import com.datasqrl.util.SqrlRexUtil.JoinConditionDecomposition.EqualityCondition;
-import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.*;
 import com.google.common.primitives.Ints;
@@ -102,13 +100,13 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
 
   RelBuilder relBuilder;
   SqrlRexUtil rexUtil;
-  Config config;
+  SqrlConverterConfig config;
   ErrorCollector errors;
 
   ExecutionAnalysis exec;
 
   SQRLLogicalPlanRewriter(@NonNull RelBuilder relBuilder, @NonNull ExecutionAnalysis exec,
-      @NonNull ErrorCollector errors, @NonNull Config config) {
+      @NonNull ErrorCollector errors, @NonNull SqrlConverterConfig config) {
     this.relBuilder = relBuilder;
     this.rexUtil = new SqrlRexUtil(relBuilder.getTypeFactory());
     this.config = config;

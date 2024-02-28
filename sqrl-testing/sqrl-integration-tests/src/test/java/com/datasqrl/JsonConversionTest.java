@@ -125,7 +125,7 @@ public class JsonConversionTest extends AbstractGraphqlTest {
 
   public Map<NamePath, SqrlModule> createJson() {
     CalciteTableFactory tableFactory = new CalciteTableFactory(new TableIdFactory(new HashMap<>()),
-        new TableConverter(new TypeFactory(), NameCanonicalizer.SYSTEM));
+        new TableConverter(new TypeFactory(), framework));
     SqrlModule module = new SqrlModule() {
 
       private final Map<Name, NamespaceObject> tables = new HashMap();
