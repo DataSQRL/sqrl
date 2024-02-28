@@ -8,11 +8,7 @@ import static com.datasqrl.graphql.util.GraphqlCheckUtil.checkState;
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.config.SerializedSqrlConfig;
 import com.datasqrl.graphql.APIConnectorManager;
-import com.datasqrl.graphql.server.Model.ArgumentLookupCoords;
-import com.datasqrl.graphql.server.Model.RootGraphqlModel;
-import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.queries.APISource;
 import graphql.language.FieldDefinition;
 import graphql.language.ObjectTypeDefinition;
@@ -23,7 +19,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.rel.type.RelDataType;
@@ -32,71 +27,72 @@ import org.apache.calcite.rel.type.RelRecordType;
 import org.apache.calcite.sql.validate.SqlNameMatcher;
 
 @Slf4j
-@AllArgsConstructor
 public abstract class SchemaWalker {
 
   protected final SqlNameMatcher nameMatcher;
   protected final SqrlSchema schema;
-  protected final APISource source;
-  protected TypeDefinitionRegistry registry;
-  APIConnectorManager apiManager;
+  protected final APIConnectorManager apiManager;
+
+  public SchemaWalker(SqlNameMatcher nameMatcher, SqrlSchema schema,
+      APIConnectorManager apiManager) {
+    this.nameMatcher = nameMatcher;
+    this.schema = schema;
+    this.apiManager = apiManager;
+  }
+
   protected final Set<ObjectTypeDefinition> seen = new HashSet<>();
 
-  public void walk() {
-
-    //Builds a graphql model from schema and source.
-
-    //We walk both in lockstep, keeping careful attention to the casing of both
-
-    //We also make room for external graphql annotations and graphql extensions
-
-    this.registry = (new SchemaParser()).parse(source.getSchemaDefinition());
+  public void walk(APISource source) {
+    TypeDefinitionRegistry registry = (new SchemaParser()).parse(source.getSchemaDefinition());
 
     ObjectTypeDefinition queryType = getQueryType(registry);
     Optional<ObjectTypeDefinition> mutationType = getMutationType(registry);
-    mutationType.ifPresent(this::walkMutation);
+    mutationType.ifPresent(m->walkMutation(m, registry, source));
 
     Optional<ObjectTypeDefinition> subscriptionType = getSubscriptionType(registry);
-    subscriptionType.ifPresent(this::walkSubscription);
+    subscriptionType.ifPresent(s->walkSubscription(s, registry, source));
 
-    walk(queryType, NamePath.ROOT, Optional.empty());
+    walk(queryType, NamePath.ROOT, Optional.empty(), registry);
   }
 
-  private void walkSubscription(ObjectTypeDefinition m) {
+  private void walkSubscription(ObjectTypeDefinition m, TypeDefinitionRegistry registry,
+      APISource source) {
     for(FieldDefinition fieldDefinition : m.getFieldDefinitions()) {
-      walkSubscription(m, fieldDefinition);
+      walkSubscription(m, fieldDefinition, registry, source);
     }
   }
 
-  protected abstract void walkSubscription(ObjectTypeDefinition m, FieldDefinition fieldDefinition);
+  protected abstract void walkSubscription(ObjectTypeDefinition m, FieldDefinition fieldDefinition,
+      TypeDefinitionRegistry registry, APISource source);
 
-  private void walkMutation(ObjectTypeDefinition m) {
+  private void walkMutation(ObjectTypeDefinition m, TypeDefinitionRegistry registry, APISource source) {
     for(FieldDefinition fieldDefinition : m.getFieldDefinitions()) {
-      walkMutation(m, fieldDefinition);
+      walkMutation(source, registry, m, fieldDefinition);
     }
   }
 
-  protected abstract void walkMutation(ObjectTypeDefinition m, FieldDefinition fieldDefinition);
+  protected abstract void walkMutation(APISource source, TypeDefinitionRegistry registry,
+      ObjectTypeDefinition m, FieldDefinition fieldDefinition);
 
-  private void walk(ObjectTypeDefinition type, NamePath path, Optional<RelDataType> rel) {
+  private void walk(ObjectTypeDefinition type, NamePath path, Optional<RelDataType> rel, TypeDefinitionRegistry registry) {
     if (seen.contains(type)) {
       return;
     }
     seen.add(type);
     //check to see if 'we're already resolved the type
     for (FieldDefinition field : type.getFieldDefinitions()) {
-      walk(type, field, path.concat(Name.system(field.getName())), rel);
+      walk(type, field, path.concat(Name.system(field.getName())), rel, registry);
     }
   }
 
   private void walk(ObjectTypeDefinition type, FieldDefinition field, NamePath path,
-      Optional<RelDataType> rel) {
+      Optional<RelDataType> rel, TypeDefinitionRegistry registry) {
     //1. Check to see if we have a table function or a reldatatype of this field.
     List<SqrlTableMacro> functions = schema.getTableFunctions(path);
 
     //Check to see if there exists a relationship on the schema
     if (!functions.isEmpty()) {
-      visitQuery(type, field, path, rel, functions);
+      visitQuery(type, field, path, rel, functions, registry);
       return;
     }
 
@@ -111,7 +107,7 @@ public abstract class SchemaWalker {
               .orElseThrow();//assure it is a object type
 
           RelRecordType relRecordType = (RelRecordType) relDataTypeField.getType();
-          walk(type1, path, Optional.of(relRecordType));
+          walk(type1, path, Optional.of(relRecordType), registry);
           return;
         } else if (relDataTypeField.getType().getComponentType() != null) {
           //array todo
@@ -135,7 +131,7 @@ public abstract class SchemaWalker {
       NamePath path, RelDataType relDataType, RelDataTypeField relDataTypeField);
 
   public Object visitQuery(ObjectTypeDefinition type, FieldDefinition field, NamePath path,
-      Optional<RelDataType> rel, List<SqrlTableMacro> functions) {
+      Optional<RelDataType> rel, List<SqrlTableMacro> functions, TypeDefinitionRegistry registry) {
      Optional<TypeDefinition> optType = registry.getType(field.getType());
      checkState(optType.isPresent(), field.getType().getSourceLocation(), "Could not find object in graphql type registry");
 
@@ -150,7 +146,7 @@ public abstract class SchemaWalker {
       RelDataType rowType = functions.get(0).getRowType();
       // simple query, no frills
       NamePath orDefault = schema.getPathToAbsolutePathMap().getOrDefault(path, path);
-      walk(currentType, orDefault, Optional.of(rowType));
+      walk(currentType, orDefault, Optional.of(rowType), registry);
     } else {
       throw new RuntimeException();
       // throw, not yet supported

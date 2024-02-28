@@ -7,6 +7,8 @@ import static com.datasqrl.engine.EngineCapability.STANDARD_DATABASE;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.function.SqrlFunction;
+import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
+import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
 import com.datasqrl.sql.PgExtension;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.config.SqrlConfig;
@@ -29,7 +31,6 @@ import com.datasqrl.io.tables.BaseTableConfig;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.IndexSelectorConfig;
-import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.DatabaseStagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.ReadQuery;
@@ -124,9 +125,9 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
   }
 
   @Override
-  public EnginePhysicalPlan plan(PhysicalDAGPlan.StagePlan plan,
-      List<PhysicalDAGPlan.StageSink> inputs, ExecutionPipeline pipeline, SqrlFramework framework,
-      TableSink errorSink) {
+  public EnginePhysicalPlan plan(StagePlan plan,
+      List<StageSink> inputs, ExecutionPipeline pipeline, SqrlFramework framework,
+      TableSink errorSink, ErrorCollector errorCollector) {
     Preconditions.checkArgument(plan instanceof DatabaseStagePlan);
     DatabaseStagePlan dbPlan = (DatabaseStagePlan) plan;
     JdbcDDLFactory factory =

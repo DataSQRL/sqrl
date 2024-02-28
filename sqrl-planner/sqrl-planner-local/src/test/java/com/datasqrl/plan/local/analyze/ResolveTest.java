@@ -9,11 +9,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.datasqrl.AbstractLogicalSQRLIT;
 import com.datasqrl.IntegrationTestSettings;
+import com.datasqrl.IntegrationTestSettings.DatabaseEngine;
+import com.datasqrl.IntegrationTestSettings.StreamEngine;
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionEngine.Type;
 import com.datasqrl.engine.pipeline.ExecutionStage;
+import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.plan.global.DAGBuilder;
 import com.datasqrl.plan.global.DAGPreparation;
 import com.datasqrl.plan.global.SqrlDAG;
@@ -60,7 +63,11 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   private Path exportPath = Retail.INSTANCE.getRootPackageDirectory().resolve("export-data");
   @BeforeEach
   public void setup(TestInfo testInfo) throws IOException {
-    initialize(IntegrationTestSettings.getInMemory(), null, Optional.of(exportPath));
+    initialize(IntegrationTestSettings.builder()
+        .stream(StreamEngine.INMEMORY)
+        .database(DatabaseEngine.INMEMORY)
+        .server(null)
+        .build(), null, Optional.of(exportPath));
     schema = framework.getSchema();
 
     this.snapshot = SnapshotTest.Snapshot.of(getClass(), testInfo);
@@ -124,7 +131,8 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   @Test
   public void timestampExpressionTest() {
     plan(
-        "IMPORT time.*; IMPORT ecommerce-data.Customer TIMESTAMP epochToTimestamp(lastUpdated) AS timestamp;\n");
+        "IMPORT time.*; IMPORT ecommerce-data.Customer TIMESTAMP epochToTimestamp(lastUpdated) AS timestamp;\n"
+    );
     validateQueryTable("customer", TableType.STREAM, ExecutionEngine.Type.STREAM, 7, 1,
         TimestampTest.fixed(6));
   }
@@ -709,15 +717,16 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
       SqrlSchema sqrlSchema, String tableName) {
 
     List<Function> tableFunction =
-        new ArrayList<>(sqrlSchema.getSqrlFramework().getSchema().getFunctions(tableName, false));
+        new ArrayList<>(sqrlSchema.getFunctions(tableName, false));
     return tableFunction.size() == 0? Optional.empty() : Optional.of((T)tableFunction.get(0));
   }
 
   private void createSnapshots() {
     RelBuilder relBuilder = framework.getQueryPlanner().getRelBuilder();
+    APIConnectorManager apiConnectorManager = injector.getInstance(APIConnectorManager.class);
 
-    new DAGPreparation(relBuilder, errors).prepareInputs(framework.getSchema(),
-        new MockAPIConnectorManager(framework, pipeline), Collections.EMPTY_LIST);
+    new DAGPreparation(relBuilder, apiConnectorManager)
+        .prepareInputs(framework.getSchema(), Collections.EMPTY_LIST);
     DAGBuilder dagBuilder = new DAGBuilder(new SQRLConverter(relBuilder),
         pipeline, errors);
     validatedTables.forEach((table, execType) -> {

@@ -5,6 +5,7 @@ import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.getType;
 import static com.datasqrl.graphql.util.GraphqlCheckUtil.checkState;
 import static com.datasqrl.graphql.util.GraphqlCheckUtil.createThrowable;
 
+import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
@@ -12,10 +13,10 @@ import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.generate.GraphqlSchemaUtil;
-import com.datasqrl.graphql.server.Model.ArgumentLookupCoords;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.queries.APISource;
 import com.google.common.collect.Iterables;
+import com.google.inject.Inject;
 import graphql.language.EnumTypeDefinition;
 import graphql.language.FieldDefinition;
 import graphql.language.InputObjectTypeDefinition;
@@ -27,6 +28,7 @@ import graphql.language.ScalarTypeDefinition;
 import graphql.language.Type;
 import graphql.language.TypeDefinition;
 import graphql.language.TypeName;
+import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import java.util.Collection;
 import java.util.HashMap;
@@ -44,13 +46,19 @@ public class GraphqlSchemaValidator extends SchemaWalker {
 
   private final Map<ObjectTypeDefinition, SqrlTableMacro> visitedObj = new HashMap<>();
 
-  public GraphqlSchemaValidator(SqlNameMatcher nameMatcher, SqrlSchema schema, APISource source,
-      TypeDefinitionRegistry registry, APIConnectorManager apiManager) {
-    super(nameMatcher, schema, source, registry, apiManager);
+  @Inject
+  public GraphqlSchemaValidator(SqrlFramework framework, APIConnectorManager apiConnectorManager) {
+    this(framework.getCatalogReader().nameMatcher(), framework.getSchema(),
+        apiConnectorManager);
+  }
+
+  public GraphqlSchemaValidator(SqlNameMatcher nameMatcher, SqrlSchema schema, APIConnectorManager apiManager) {
+    super(nameMatcher, schema, apiManager);
   }
 
   @Override
-  protected void walkSubscription(ObjectTypeDefinition m, FieldDefinition fieldDefinition) {
+  protected void walkSubscription(ObjectTypeDefinition m, FieldDefinition fieldDefinition,
+      TypeDefinitionRegistry registry, APISource source) {
     //Assure they are root tables
     Collection<Function> functions = schema.getFunctions(fieldDefinition.getName(), false);
     checkState(functions.size() == 1, fieldDefinition.getSourceLocation(),
@@ -64,7 +72,8 @@ public class GraphqlSchemaValidator extends SchemaWalker {
   }
 
   @Override
-  protected void walkMutation(ObjectTypeDefinition m, FieldDefinition fieldDefinition) {
+  protected void walkMutation(APISource source, TypeDefinitionRegistry registry,
+      ObjectTypeDefinition m, FieldDefinition fieldDefinition) {
     // Check we've found the mutation
     TableSink mutationSink = apiManager.getMutationSource(source,
         Name.system(fieldDefinition.getName()));
@@ -73,14 +82,14 @@ public class GraphqlSchemaValidator extends SchemaWalker {
           "Could not find mutation source: %s.", fieldDefinition.getName());
     }
 
-    validateStructurallyEqualMutation(fieldDefinition, getValidMutationReturnType(fieldDefinition),
-        getValidMutationInput(fieldDefinition), List.of(ReservedName.SOURCE_TIME.getCanonical()));
+    validateStructurallyEqualMutation(fieldDefinition, getValidMutationReturnType(fieldDefinition, registry),
+        getValidMutationInput(fieldDefinition, registry), List.of(ReservedName.SOURCE_TIME.getCanonical()), registry);
 
   }
 
   private Object validateStructurallyEqualMutation(FieldDefinition fieldDefinition,
       ObjectTypeDefinition returnTypeDefinition, InputObjectTypeDefinition inputType,
-      List<String> allowedFieldNames) {
+      List<String> allowedFieldNames, TypeDefinitionRegistry registry) {
 
     //The return type can have _source_time
     for (FieldDefinition returnTypeFieldDefinition : returnTypeDefinition.getFieldDefinitions()) {
@@ -93,34 +102,34 @@ public class GraphqlSchemaValidator extends SchemaWalker {
           inputType.getInputValueDefinitions());
 
       //validate type structurally equal
-      validateStructurallyEqualMutation(returnTypeFieldDefinition, inputDefinition);
+      validateStructurallyEqualMutation(returnTypeFieldDefinition, inputDefinition, registry);
     }
 
     return null;
   }
 
   private void validateStructurallyEqualMutation(FieldDefinition fieldDefinition,
-      InputValueDefinition inputDefinition) {
+      InputValueDefinition inputDefinition, TypeDefinitionRegistry registry) {
     checkState(fieldDefinition.getName().equals(inputDefinition.getName()),
         fieldDefinition.getSourceLocation(), "Name must be equal to the input name {} {}",
         fieldDefinition.getName(), inputDefinition.getName());
     Type definitionType = fieldDefinition.getType();
     Type inputType = inputDefinition.getType();
 
-    validateStructurallyType(fieldDefinition, definitionType, inputType);
+    validateStructurallyType(fieldDefinition, definitionType, inputType, registry);
   }
 
   private Object validateStructurallyType(FieldDefinition field, Type definitionType,
-      Type inputType) {
+      Type inputType, TypeDefinitionRegistry registry) {
     if (inputType instanceof NonNullType) {
       //subType may be nullable if type is non-null
       NonNullType nonNullType = (NonNullType) inputType;
       if (definitionType instanceof NonNullType) {
         NonNullType nonNullDefinitionType = (NonNullType) definitionType;
         return validateStructurallyType(field, nonNullDefinitionType.getType(),
-            nonNullType.getType());
+            nonNullType.getType(), registry);
       } else {
-        return validateStructurallyType(field, definitionType, nonNullType.getType());
+        return validateStructurallyType(field, definitionType, nonNullType.getType(), registry);
       }
     } else if (inputType instanceof ListType) {
       //subType must be a list
@@ -128,7 +137,7 @@ public class GraphqlSchemaValidator extends SchemaWalker {
           "List type mismatch for field. Must match the input type. " + field.getName());
       ListType inputListType = (ListType) inputType;
       ListType definitionListType = (ListType) definitionType;
-      return validateStructurallyType(field, definitionListType.getType(), inputListType.getType());
+      return validateStructurallyType(field, definitionListType.getType(), inputListType.getType(), registry);
     } else if (inputType instanceof TypeName) {
       //If subtype nonnull then it could return errors
       checkState(!(definitionType instanceof NonNullType), definitionType.getSourceLocation(),
@@ -168,7 +177,7 @@ public class GraphqlSchemaValidator extends SchemaWalker {
         ObjectTypeDefinition objectDefinition = (ObjectTypeDefinition) defTypeDef;
         InputObjectTypeDefinition inputDefinition = (InputObjectTypeDefinition) inputTypeDef;
         return validateStructurallyEqualMutation(field, objectDefinition, inputDefinition,
-            List.of());
+            List.of(), registry);
       } else {
         throw createThrowable(inputTypeDef.getSourceLocation(), "Unknown type encountered: %s",
             inputTypeDef.getName());
@@ -195,7 +204,7 @@ public class GraphqlSchemaValidator extends SchemaWalker {
     return found;
   }
 
-  private InputObjectTypeDefinition getValidMutationInput(FieldDefinition fieldDefinition) {
+  private InputObjectTypeDefinition getValidMutationInput(FieldDefinition fieldDefinition, TypeDefinitionRegistry registry) {
     checkState(!(fieldDefinition.getInputValueDefinitions().isEmpty()),
         fieldDefinition.getSourceLocation(), fieldDefinition.getName()
             + " has too few arguments. Must have one non-null input type argument.");
@@ -223,7 +232,7 @@ public class GraphqlSchemaValidator extends SchemaWalker {
   }
 
 
-  private ObjectTypeDefinition getValidMutationReturnType(FieldDefinition fieldDefinition) {
+  private ObjectTypeDefinition getValidMutationReturnType(FieldDefinition fieldDefinition, TypeDefinitionRegistry registry) {
     Type type = fieldDefinition.getType();
     if (type instanceof NonNullType) {
       type = ((NonNullType) type).getType();
@@ -318,7 +327,8 @@ public class GraphqlSchemaValidator extends SchemaWalker {
 //        .collect(Collectors.toList());
 //  }
 
-  private TypeDefinition unwrapObjectType(Type type) {
+
+  private TypeDefinition unwrapObjectType(Type type, TypeDefinitionRegistry registry) {
     //type can be in a single array with any non-nulls, e.g. [customer!]!
     type = unboxNonNull(type);
     if (type instanceof ListType) {
@@ -326,7 +336,7 @@ public class GraphqlSchemaValidator extends SchemaWalker {
     }
     type = unboxNonNull(type);
 
-    Optional<TypeDefinition> typeDef = this.registry.getType(type);
+    Optional<TypeDefinition> typeDef = registry.getType(type);
 
     checkState(typeDef.isPresent(), type.getSourceLocation(), "Could not find Object type [%s]",
         type instanceof TypeName ? ((TypeName) type).getName() : type.toString());
@@ -341,16 +351,17 @@ public class GraphqlSchemaValidator extends SchemaWalker {
     return type;
   }
 
-  public void validate(APISource apiSchema, ErrorCollector errors) {
+  public void validate(APISource source, ErrorCollector errors) {
     try {
-      errors = errors.withSchema(apiSchema.getName().getDisplay(), apiSchema.getSchemaDefinition());
+      TypeDefinitionRegistry registry = (new SchemaParser()).parse(source.getSchemaDefinition());
+      errors = errors.withSchema(source.getName().getDisplay(), source.getSchemaDefinition());
       Optional<ObjectTypeDefinition> queryType = getType(registry,
           () -> getQueryTypeName(registry));
       if (queryType.isEmpty()) {
         throw createThrowable(null, "Cannot find graphql Query type");
       }
 
-      walk();
+      walk(source);
     } catch (Exception e) {
       throw errors.handle(e);
     }

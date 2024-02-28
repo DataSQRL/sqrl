@@ -3,6 +3,7 @@
  */
 package com.datasqrl.io;
 
+import static com.datasqrl.config.PipelineFactory.ENGINES_PROPERTY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -10,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.datasqrl.AbstractEngineIT;
 import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.config.PipelineFactory;
+import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.discovery.DataDiscovery;
 import com.datasqrl.discovery.DataDiscoveryFactory;
 import com.datasqrl.discovery.TableWriter;
@@ -44,6 +46,7 @@ import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
 public class TestDataSetMonitoringIT extends AbstractEngineIT {
+  PipelineFactory pipelineFactory;
 
   @SneakyThrows
   @ParameterizedTest
@@ -53,6 +56,9 @@ public class TestDataSetMonitoringIT extends AbstractEngineIT {
     initialize(
         IntegrationTestSettings.builder().stream(engine.getStream()).database(engine.getDatabase())
             .build(), null, Optional.empty());
+    pipelineFactory = new PipelineFactory(injector.getInstance(SqrlConfig.class)
+        .getSubConfig(ENGINES_PROPERTY));
+
     SnapshotTest.Snapshot snapshot = SnapshotTest.Snapshot.of(getClass(), example.getName(),
         engine.getName());
 

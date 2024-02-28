@@ -1,15 +1,23 @@
 package org.apache.calcite.jdbc;
 
-import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.calcite.type.TypeFactory;
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.io.tables.TableSink;
+import com.datasqrl.io.tables.TableSource;
+import com.datasqrl.module.SqrlModule;
 import com.datasqrl.plan.local.generate.ResolvedExport;
+import com.datasqrl.plan.queries.APIMutation;
+import com.datasqrl.plan.queries.APIQuery;
+import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.RootSqrlTable;
 import com.datasqrl.util.StreamUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Iterables;
+import com.google.inject.Singleton;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,19 +25,19 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.Getter;
-import org.apache.calcite.plan.RelOptCluster;
-import org.apache.calcite.plan.RelOptPlanner;
-import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.schema.TableFunction;
+import org.apache.calcite.sql.SqlOperator;
 
 @Getter
+@Singleton
 public class SqrlSchema extends SimpleCalciteSchema {
-  private final SqrlFramework sqrlFramework;
   private final TypeFactory typeFactory;
+  private final NameCanonicalizer nameCanonicalizer;
 
   private final List<ResolvedExport> exports = new ArrayList<>();
   private final Set<URL> jars = new HashSet<>();
@@ -39,25 +47,28 @@ public class SqrlSchema extends SimpleCalciteSchema {
   //Required for looking up tables
   private final Map<NamePath, String> pathToSysTableMap = new HashMap<>();
 
-  public SqrlSchema(SqrlFramework framework, TypeFactory typeFactory) {
+  private final Map<String, SqlOperator> udf = new HashMap<>();
+  private final Map<List<String>, SqlOperator> udfListMap = new HashMap<>();
+  private final Map<List<String>, SqlOperator> internalNames = new HashMap<>();
+
+  private final AtomicInteger uniqueCompilerId = new AtomicInteger(0);
+  private final AtomicInteger uniquePkId = new AtomicInteger(0);
+  private final AtomicInteger uniqueMacroInt = new AtomicInteger(0);
+  private final Map<Name, AtomicInteger> tableNameToIdMap = new HashMap<>();
+
+  //API
+
+  private final Map<APIMutation, TableSink> mutations = new HashMap<>();
+  private final Map<NamePath, SqrlModule> modules = new HashMap<>();
+  private final Map<APISubscription, TableSource> subscriptions = new HashMap<>();
+  private final Map<SqrlTableMacro, Object> apiExports = new HashMap<>();
+  private final List<APIQuery> queries = new ArrayList<>();
+
+  public SqrlSchema(TypeFactory typeFactory, NameCanonicalizer nameCanonicalizer) {
     super(null, CalciteSchema.createRootSchema(false, false).plus(), "");
-    sqrlFramework = framework;
     this.typeFactory = typeFactory;
+    this.nameCanonicalizer = nameCanonicalizer;
   }
-
-  //backwards compatibility classes for migration
-  public RelOptPlanner getPlanner() {
-    return sqrlFramework.getQueryPlanner().getPlanner();
-  }
-
-  public RelOptCluster getCluster() {
-    return sqrlFramework.getQueryPlanner().getCluster();
-  }
-
-  public RelDataTypeFactory getTypeFactory() {
-    return sqrlFramework.getTypeFactory();
-  }
-  // end backwards compat
 
   public<T extends TableFunction> Stream<T> getFunctionStream(Class<T> clazz) {
     return StreamUtil.filterByClass(getFunctionNames().stream()
@@ -141,5 +152,11 @@ public class SqrlSchema extends SimpleCalciteSchema {
   @VisibleForTesting
   public SqrlTableMacro getTableFunction(String name) {
     return (SqrlTableMacro)Iterables.getOnlyElement(getFunctions(name, false));
+  }
+
+  public void addFunction(String canonicalName, SqlOperator function) {
+    this.udf.put(nameCanonicalizer.getCanonical(canonicalName), function);
+    this.udfListMap.put(List.of(nameCanonicalizer.getCanonical(canonicalName)), function);
+    this.internalNames.put(List.of(function.getName()), function);
   }
 }

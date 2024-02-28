@@ -5,9 +5,12 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 
 import com.datasqrl.util.ServiceLoaderDiscovery;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.apache.calcite.config.CalciteConnectionConfigImpl;
 import org.apache.calcite.jdbc.SqrlSchema;
@@ -29,24 +32,22 @@ public class SqrlFramework {
   private final NameCanonicalizer nameCanonicalizer;
   private QueryPlanner queryPlanner;
   private final RelMetadataProvider relMetadataProvider;
-  private final AtomicInteger uniqueCompilerId = new AtomicInteger(0);
-  private final AtomicInteger uniquePkId = new AtomicInteger(0);
-  private final AtomicInteger uniqueMacroInt = new AtomicInteger(0);
-  private final Map<Name, AtomicInteger> tableNameToIdMap = new HashMap<>();
 
   public SqrlFramework() {
-    this(null, HintStrategyTable.builder().build(), NameCanonicalizer.SYSTEM);
+    this(null, HintStrategyTable.builder().build(), NameCanonicalizer.SYSTEM,
+        new SqrlSchema(new TypeFactory(), NameCanonicalizer.SYSTEM));
   }
 
+  @Inject
   public SqrlFramework(RelMetadataProvider relMetadataProvider, HintStrategyTable hintStrategyTable,
-      NameCanonicalizer nameCanonicalizer) {
+      NameCanonicalizer nameCanonicalizer, SqrlSchema schema) {
     this.hintStrategyTable = hintStrategyTable;
     this.typeFactory = new TypeFactory();
-    this.schema = new SqrlSchema(this, typeFactory);
+    this.schema = schema;
     //Add type aliases
-    this.schema.add("String", t->typeFactory.createSqlType(SqlTypeName.VARCHAR));
+    schema.add("String", t->typeFactory.createSqlType(SqlTypeName.VARCHAR));
     //Int -> Integer
-    this.schema.add("Int", t->typeFactory.createSqlType(SqlTypeName.INTEGER));
+    schema.add("Int", t->typeFactory.createSqlType(SqlTypeName.INTEGER));
 
     this.relMetadataProvider = relMetadataProvider;
 
@@ -56,7 +57,7 @@ public class SqrlFramework {
 
     this.nameCanonicalizer = nameCanonicalizer;
     this.catalogReader = new CatalogReader(schema, typeFactory, config);
-    this.sqrlOperatorTable = new OperatorTable(nameCanonicalizer, catalogReader, SqlStdOperatorTable.instance());
+    this.sqrlOperatorTable = new OperatorTable(catalogReader, schema);
     this.queryPlanner = resetPlanner();
   }
 

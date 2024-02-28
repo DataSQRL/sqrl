@@ -94,10 +94,10 @@ public class TestExecutor {
     JsonObject serverJsonObject = new JsonObject(serverConfigStr);
     ServerConfig serverConfig = new ServerConfig(serverJsonObject);
 
-    ServerPhysicalPlan serverPhysicalPlan = new ServerPhysicalPlan(model, serverConfig);
+    ServerPhysicalPlan serverPhysicalPlan = new ServerPhysicalPlan(model,serverConfig);
     VertxEngineFactory vertxEngineFactory = new VertxEngineFactory();
     VertxEngineFactory.VertxEngine vertxEngine = vertxEngineFactory.initialize(eng.getSubConfig("server"), vertx);
-    vertxEngine.execute(serverPhysicalPlan, ErrorCollector.root()).get();
+    vertxEngine.execute(serverPhysicalPlan, ErrorCollector.root(), model).get();
 
     if (!executeSql) {
       FlinkExecutablePlan flinkPlan = mapper.readValue(

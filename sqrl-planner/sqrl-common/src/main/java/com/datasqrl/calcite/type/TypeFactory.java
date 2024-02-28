@@ -1,6 +1,7 @@
 
 package com.datasqrl.calcite.type;
 
+import com.google.inject.Singleton;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -18,6 +19,7 @@ import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
+@Singleton
 public class TypeFactory extends FlinkTypeFactory {
 
   public TypeFactory() {

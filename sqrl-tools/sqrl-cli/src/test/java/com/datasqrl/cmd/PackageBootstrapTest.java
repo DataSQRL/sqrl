@@ -5,13 +5,11 @@ package com.datasqrl.cmd;
 
 import static com.datasqrl.packager.Packager.BUILD_DIR_NAME;
 import static com.datasqrl.packager.Packager.PACKAGE_JSON;
-import static com.datasqrl.packager.Packager.setScriptFiles;
 import static com.datasqrl.packager.config.ScriptConfiguration.GRAPHQL_NORMALIZED_FILE_NAME;
 import static com.datasqrl.util.TestResources.RESOURCE_DIR;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.datasqrl.config.SqrlConfig;
-import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.packager.config.Dependency;

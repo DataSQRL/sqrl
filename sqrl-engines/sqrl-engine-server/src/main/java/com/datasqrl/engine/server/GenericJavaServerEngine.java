@@ -4,15 +4,9 @@ import static com.datasqrl.engine.EngineCapability.NO_CAPABILITIES;
 
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
-import com.datasqrl.config.Constraints.Default;
-import com.datasqrl.config.Constraints.MinLength;
-import com.datasqrl.config.Constraints.Regex;
-import com.datasqrl.config.SqrlConfig;
-import com.datasqrl.config.SqrlConfigUtil;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionResult;
-import com.datasqrl.engine.ExecutionResult.Message;
 import com.datasqrl.engine.database.relational.JDBCEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
@@ -20,6 +14,7 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.GraphQLServer;
 import com.datasqrl.graphql.config.CorsHandlerOptions;
 import com.datasqrl.graphql.config.ServerConfig;
+import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.ServerStagePlan;
@@ -28,18 +23,15 @@ import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.handler.graphql.GraphiQLHandlerOptions;
 import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.pgclient.PgConnectOptions;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -68,11 +60,15 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
 
   @Override
   public CompletableFuture<ExecutionResult> execute(EnginePhysicalPlan plan, ErrorCollector errors) {
+    return CompletableFuture.supplyAsync(()->(ExecutionResult)null);
+  }
+  public CompletableFuture<ExecutionResult> execute(EnginePhysicalPlan plan, ErrorCollector error,
+      RootGraphqlModel model) {
     Preconditions.checkArgument(plan instanceof ServerPhysicalPlan);
     ServerPhysicalPlan serverPlan = (ServerPhysicalPlan)plan;
     Vertx vertx = this.vertx.orElseGet(Vertx::vertx);
     CompletableFuture<String> future = vertx.deployVerticle(new GraphQLServer(
-            serverPlan.getModel(), serverPlan.getConfig(), canonicalize))
+            model, serverPlan.getConfig(), canonicalize))
         .toCompletionStage()
         .toCompletableFuture();
     if (serverPlan.getConfig().getGraphiQLHandlerOptions() != null &&
@@ -83,12 +79,12 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
           serverPlan.getConfig().getHttpServerOptions().getPort(),
           serverPlan.getConfig().getGraphiQLHandlerOptions().getGraphQLUri()));
     }
-    return future.thenApply(Message::new);
+    return future.thenApply(f->new ExecutionResult.Message(f));
   }
 
   @Override
   public EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs, ExecutionPipeline pipeline,
-      SqrlFramework relBuilder, TableSink errorSink) {
+      SqrlFramework relBuilder, TableSink errorSink, ErrorCollector errorCollector) {
     Preconditions.checkArgument(plan instanceof ServerStagePlan);
     Set<ExecutionStage> dbStages = pipeline.getStages().stream().filter(s -> s.getEngine().getType()==Type.DATABASE).collect(
         Collectors.toSet());
@@ -97,7 +93,7 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
     Preconditions.checkArgument(engine instanceof JDBCEngine, "Currently the server only supports JDBC databases");
 
     ServerConfig updatedConfig = applyDefaults(serverConfig, ((JDBCEngine)engine).getConnector(), this.port);
-    return new ServerPhysicalPlan(((ServerStagePlan) plan).getModel(), updatedConfig);
+    return new ServerPhysicalPlan(null, updatedConfig);
   }
 
   public static ServerConfig applyDefaults(ServerConfig serverConfig, JdbcDataSystemConnector connector, int port) {

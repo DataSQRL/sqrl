@@ -13,21 +13,22 @@ import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.schema.RootSqrlTable;
 import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
+import com.google.inject.Inject;
 import java.util.Collection;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.tools.RelBuilder;
 
-@Value
+@AllArgsConstructor(onConstructor_=@Inject)
 public class DAGPreparation {
 
   private final RelBuilder relBuilder;
+  private final APIConnectorManager apiManager;
 
-  private final ErrorCollector errors;
-
-  public Collection<AnalyzedAPIQuery> prepareInputs(SqrlSchema sqrlSchema, APIConnectorManager apiManager,
+  public Collection<AnalyzedAPIQuery> prepareInputs(SqrlSchema sqrlSchema,
       Collection<ResolvedExport> exports) {
 
     //Add subscriptions as exports

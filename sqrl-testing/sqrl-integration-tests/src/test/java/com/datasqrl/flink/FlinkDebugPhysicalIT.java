@@ -7,6 +7,7 @@ import com.datasqrl.AbstractPhysicalSQRLIT;
 import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.local.generate.DebuggerConfig;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestScript;
@@ -17,6 +18,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -56,7 +58,8 @@ class FlinkDebugPhysicalIT extends AbstractPhysicalSQRLIT {
     TestScript script = example.getScript(RetailScriptNames.FULL);
     initialize(IntegrationTestSettings.getFlinkWithDBConfig()
           .debugger(DebuggerConfig.of(NamePath.of("print"),null))
-        .build(), script.getScriptPath().getParent(), Optional.of(outputPath));
+        .build(), script.getScriptPath().getParent(), Optional.of(outputPath), ErrorCollector.root(),
+        null, true);
     validateTables(script.getScript(), "order_stats", "order_again");
   }
 
@@ -67,8 +70,8 @@ class FlinkDebugPhysicalIT extends AbstractPhysicalSQRLIT {
             .debugger(DebuggerConfig.of(NamePath.of("output"),
                 toName("customer", "category", "NewCustomerPromotion", "_spending_by_month_category", "total")))
             .build(),
-        (Path) script.getScriptPath().getParent(),
-        Optional.of(outputPath));
+        script.getScriptPath().getParent(),
+        Optional.of(outputPath), ErrorCollector.root(), null, true);
     validateTables(script.getScript(),"favorite_categories", "NewCustomerPromotion", "order_again");
   }
 

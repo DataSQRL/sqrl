@@ -3,8 +3,6 @@ package com.datasqrl.graphql.inference;
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.graphql.APIConnectorManager;
-import com.datasqrl.graphql.server.Model.ArgumentLookupCoords;
-import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISource;
 import graphql.language.FieldDefinition;
@@ -32,21 +30,22 @@ public class GraphqlQueryGenerator extends SchemaWalker {
   private final List<SqrlTableMacro> subscriptions = new ArrayList<>();
 
   public GraphqlQueryGenerator(SqlNameMatcher nameMatcher,
-      SqrlSchema schema, TypeDefinitionRegistry registry,
-      APISource source, GraphqlQueryBuilder graphqlQueryBuilder, APIConnectorManager apiManager) {
-    super(nameMatcher, schema,  source, registry, apiManager);
+      SqrlSchema schema, GraphqlQueryBuilder graphqlQueryBuilder, APIConnectorManager apiManager) {
+    super(nameMatcher, schema, apiManager);
     this.graphqlQueryBuilder = graphqlQueryBuilder;
   }
 
   @Override
-  protected void walkSubscription(ObjectTypeDefinition m, FieldDefinition fieldDefinition) {
+  protected void walkSubscription(ObjectTypeDefinition m, FieldDefinition fieldDefinition,
+      TypeDefinitionRegistry registry, APISource source) {
     SqrlTableMacro tableFunction = schema.getTableFunction(fieldDefinition.getName());
 
     subscriptions.add(tableFunction);
   }
 
   @Override
-  protected void walkMutation(ObjectTypeDefinition m, FieldDefinition fieldDefinition) {
+  protected void walkMutation(APISource source, TypeDefinitionRegistry registry,
+      ObjectTypeDefinition m, FieldDefinition fieldDefinition) {
   }
 
   @Override

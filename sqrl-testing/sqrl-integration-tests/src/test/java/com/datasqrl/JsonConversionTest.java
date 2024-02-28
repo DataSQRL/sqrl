@@ -4,14 +4,16 @@ import static com.datasqrl.function.SqrlFunction.getFunctionNameFromClass;
 import static com.datasqrl.plan.local.analyze.RetailSqrlModule.createTableSource;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.datasqrl.TestSqrlFramework.TestQueryPlanner;
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.function.SqrlTableMacro;
+import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.SourceFactory;
 import com.datasqrl.engine.database.relational.ddl.PostgresDDLFactory;
 import com.datasqrl.engine.database.relational.ddl.statements.CreateTableDDL;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.function.SqrlFunction;
 import com.datasqrl.functions.json.StdJsonLibraryImpl;
 import com.datasqrl.graphql.AbstractGraphqlTest;
@@ -25,6 +27,9 @@ import com.datasqrl.module.SqrlModule;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.datasqrl.plan.local.analyze.MockModuleLoader;
 import com.datasqrl.plan.table.CalciteTableFactory;
+import com.datasqrl.plan.table.TableConverter;
+import com.datasqrl.plan.table.TableIdFactory;
+import com.datasqrl.plan.validate.ScriptPlanner;
 import com.datasqrl.util.SnapshotTest;
 import com.google.auto.service.AutoService;
 import com.ibm.icu.impl.Pair;
@@ -42,6 +47,8 @@ import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.sql.ScriptNode;
+import org.apache.calcite.sql.SqrlStatement;
 import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.Table;
@@ -69,8 +76,7 @@ public class JsonConversionTest extends AbstractGraphqlTest {
 
   protected SnapshotTest.Snapshot snapshot;
   ObjectMapper objectMapper = new ObjectMapper();
-  private TestQueryPlanner planner;
-  private TestSqrlFramework framework;
+  private ScriptPlanner planner;
 
   @BeforeAll
   public static void setupAll() {
@@ -103,17 +109,27 @@ public class JsonConversionTest extends AbstractGraphqlTest {
 
   @BeforeEach
   public void setup(TestInfo testInfo) throws IOException {
+    initialize(IntegrationTestSettings.getInMemory(), null, Optional.empty(), ErrorCollector.root(),
+        createJson(), false);
+
     this.snapshot = SnapshotTest.Snapshot.of(getClass(), testInfo);
-    this.framework = new TestSqrlFramework();
 
-    MockModuleLoader moduleLoader = new MockModuleLoader(null, createJson(), Optional.empty());
-    planner = framework.getQueryPlanner(moduleLoader);
-    planner.planSqrl("IMPORT json-data.jsondata");
+    this.planner = injector.getInstance(ScriptPlanner.class);
+    runStatement("IMPORT json-data.jsondata");
+  }
 
+  private void runStatement(String statement) {
+    planner.validateStatement(parse(statement));
+  }
+
+  private SqrlStatement parse(String statement) {
+    return (SqrlStatement) ((ScriptNode)framework.getQueryPlanner().parse(Dialect.SQRL, statement))
+        .getStatements().get(0);
   }
 
   public Map<NamePath, SqrlModule> createJson() {
-    CalciteTableFactory tableFactory = new CalciteTableFactory(framework);
+    CalciteTableFactory tableFactory = new CalciteTableFactory(new TableIdFactory(new HashMap<>()),
+        new TableConverter(new TypeFactory(), NameCanonicalizer.SYSTEM));
     SqrlModule module = new SqrlModule() {
 
       private final Map<Name, NamespaceObject> tables = new HashMap();
@@ -382,18 +398,18 @@ public class JsonConversionTest extends AbstractGraphqlTest {
   }
 
   public Pair<Object, Object> executeScript(String fncName) {
-    planner.planSqrl("IMPORT json.*")
-        .planSqrl("X(@a: Int) := SELECT " + fncName + " AS json FROM jsondata");
+    runStatement("IMPORT json.*");
+    runStatement("X(@a: Int) := SELECT " + fncName + " AS json FROM jsondata");
     return convert("X");
   }
 
   @SneakyThrows
   private Pair<Object, Object> convert(String fncName) {
-    SqrlTableMacro x = planner.getSchema().getTableFunction(fncName);
+    SqrlTableMacro x = framework.getQueryPlanner().getSchema().getTableFunction(fncName);
     RelNode relNode = x.getViewTransform().get();
 
-    RelNode pgRelNode = planner.convertRelToDialect(Dialect.POSTGRES, relNode);
-    String pgQuery = planner.relToString(Dialect.POSTGRES, pgRelNode).getSql();
+    RelNode pgRelNode = framework.getQueryPlanner().convertRelToDialect(Dialect.POSTGRES, relNode);
+    String pgQuery = framework.getQueryPlanner().relToString(Dialect.POSTGRES, pgRelNode).getSql();
     snapshot.addContent(pgQuery, "postgres");
 
     // Execute Postgres query
@@ -407,8 +423,8 @@ public class JsonConversionTest extends AbstractGraphqlTest {
 
     snapshot.addContent((String) pgResult, "Postgres Result");
 
-    RelNode flinkRelNode = planner.convertRelToDialect(Dialect.FLINK, relNode);
-    String query = planner.relToString(Dialect.FLINK, flinkRelNode).getSql();
+    RelNode flinkRelNode = framework.getQueryPlanner().convertRelToDialect(Dialect.FLINK, relNode);
+    String query = framework.getQueryPlanner().relToString(Dialect.FLINK, flinkRelNode).getSql();
     snapshot.addContent(query, "flink");
 
     Object flinkResult = jsonFunctionTest(query);

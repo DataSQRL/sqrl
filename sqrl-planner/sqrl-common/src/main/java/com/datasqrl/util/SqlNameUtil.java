@@ -4,7 +4,9 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
+import com.google.inject.Inject;
 import java.util.Arrays;
+import lombok.AllArgsConstructor;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
@@ -14,13 +16,10 @@ import java.util.stream.Collectors;
 import org.apache.calcite.sql.SqrlAssignment;
 import org.apache.calcite.sql.SqrlExpressionQuery;
 
+@AllArgsConstructor(onConstructor_=@Inject)
 public class SqlNameUtil {
 
   private final NameCanonicalizer canonicalizer;
-
-  public SqlNameUtil(NameCanonicalizer canonicalizer) {
-    this.canonicalizer = canonicalizer;
-  }
 
   public NamePath toNamePath(List<String> names) {
     return NamePath.of(names.stream()

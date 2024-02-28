@@ -33,6 +33,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.inject.Inject;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -45,6 +46,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.apache.calcite.plan.RelOptPlanner;
 import org.apache.calcite.rel.RelNode;
@@ -56,22 +58,16 @@ import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.table.functions.UserDefinedFunction;
 
-@Value
+@AllArgsConstructor(onConstructor_=@Inject)
 public class DAGAssembler {
-
   private final SqrlFramework framework;
-  private final RelOptPlanner planner;
   private final SQRLConverter sqrlConverter;
   private final ExecutionPipeline pipeline;
-
   private final Debugger debugger;
+  private final ErrorCollector errors;
+  private final APIConnectorManager apiManager;
 
-  private ErrorCollector errors;
-
-
-
-  public PhysicalDAGPlan assemble(SqrlDAG dag, Set<URL> jars, Map<String, UserDefinedFunction> udfs,
-      RootGraphqlModel model, APIConnectorManager apiManager) {
+  public PhysicalDAGPlan assemble(SqrlDAG dag, Set<URL> jars, Map<String, UserDefinedFunction> udfs) {
     //Plan final version of all tables
     dag.allNodesByClass(SqrlDAG.TableNode.class).forEach( tableNode -> {
       ExecutionStage stage = tableNode.getChosenStage();
@@ -97,7 +93,7 @@ public class DAGAssembler {
       AnalyzedAPIQuery apiQuery = query.getQuery();
       if (stage.getEngine().getType()==Type.SERVER) { //this must be the serverStage by assumption
         RelNode relNode = apiQuery.getRelNode(serverStage.get(), sqrlConverter, errors);
-        relNode = RelStageRunner.runStage(SERVER_DAG_STITCHING, relNode, planner);
+        relNode = RelStageRunner.runStage(SERVER_DAG_STITCHING, relNode, framework.getQueryPlanner().getPlanner());
         serverScanVisitor.findScans(relNode);
         serverQueries.add(new PhysicalDAGPlan.ReadQuery(apiQuery.getBaseQuery(), relNode));
       } else {
@@ -120,7 +116,7 @@ public class DAGAssembler {
       queriesByStage.get(database).stream().sorted(Comparator.comparing(DatabaseQuery::getName))
           .forEach(query -> {
         RelNode relNode = query.getRelNode(database, sqrlConverter, errors);
-        relNode = RelStageRunner.runStage(DATABASE_DAG_STITCHING, relNode, planner);
+        relNode = RelStageRunner.runStage(DATABASE_DAG_STITCHING, relNode, framework.getQueryPlanner().getPlanner());
         tableScanVisitor.findScans(relNode);
         readDAG.add(new PhysicalDAGPlan.ReadQuery(query.getQueryId(), relNode));
       });
@@ -212,7 +208,7 @@ public class DAGAssembler {
 
     if (serverStage.isPresent()) {
       PhysicalDAGPlan.StagePlan serverPlan = new PhysicalDAGPlan.ServerStagePlan(
-          serverStage.get(), model, serverQueries);
+          serverStage.get(), serverQueries);
       allPlans.add(serverPlan);
     }
     Optional<ExecutionStage> logStage = pipeline.getStage(Type.LOG);
@@ -237,7 +233,8 @@ public class DAGAssembler {
   }
 
   private RelNode produceWriteTree(RelNode convertedRelNode, int timestampIndex) {
-    RelNode expandedRelNode = RelStageRunner.runStage(STREAM_DAG_STITCHING, convertedRelNode, planner);
+    RelNode expandedRelNode = RelStageRunner.runStage(STREAM_DAG_STITCHING, convertedRelNode,
+        framework.getQueryPlanner().getPlanner());
     TimestampHint timestampHint = new TimestampHint(timestampIndex);
     expandedRelNode = timestampHint.addHint((Hintable) expandedRelNode);
     return expandedRelNode;

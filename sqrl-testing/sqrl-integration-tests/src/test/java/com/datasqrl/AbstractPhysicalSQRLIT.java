@@ -3,8 +3,6 @@
  */
 package com.datasqrl;
 
-import static com.datasqrl.plan.SqrlOptimizeDag.extractFlinkFunctions;
-
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.ReservedName;
@@ -13,6 +11,7 @@ import com.datasqrl.engine.PhysicalPlanExecutor;
 import com.datasqrl.engine.PhysicalPlanner;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.graphql.APIConnectorManager;
+import com.datasqrl.graphql.inference.AbstractSchemaInferenceModelTest;
 import com.datasqrl.io.impl.file.FileDataSystemConfig;
 import com.datasqrl.io.impl.file.FileDataSystemFactory;
 import com.datasqrl.io.impl.file.FilePath;
@@ -23,7 +22,6 @@ import com.datasqrl.plan.global.DAGPlanner;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.ExternalSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.WriteQuery;
-import com.datasqrl.plan.local.analyze.MockAPIConnectorManager;
 import com.datasqrl.plan.local.analyze.ResolveTest;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.table.ScriptRelationalTable;
@@ -60,7 +58,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 @Slf4j
 @ExtendWith(MiniClusterExtension.class)
-public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
+public class AbstractPhysicalSQRLIT extends AbstractSchemaInferenceModelTest {
 
   protected SnapshotTest.Snapshot snapshot;
   protected boolean closeSnapshotOnValidate = true;
@@ -81,7 +79,7 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
     plan(script);
 
     //We add a scan query for every query table
-    APIConnectorManager apiManager = new MockAPIConnectorManager(framework, pipeline);
+    APIConnectorManager apiManager = injector.getInstance(APIConnectorManager.class);//new MockAPIConnectorManager(framework, pipeline, errors);
     SqrlSchema sqrlSchema = framework.getSchema();
     for (String tableName : queryTables) {
       Optional<ScriptRelationalTable> vtOpt = ResolveTest.getLatestTable(sqrlSchema, tableName,
@@ -94,12 +92,11 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
       apiManager.addQuery(new APIQuery(tableName, null, relBuilder.build(), null, null, false));
     }
 
-    PhysicalDAGPlan dag = DAGPlanner.plan(framework, apiManager, framework.getSchema().getExports(),
-        framework.getSchema().getJars(), extractFlinkFunctions(framework.getSqrlOperatorTable()),
-        null, pipeline, errors, debugger);
+    DAGPlanner dagPlanner = injector.getInstance(DAGPlanner.class);
+    PhysicalDAGPlan dag = dagPlanner.plan();
     addContent(dag);
 
-    PhysicalPlan physicalPlan = new PhysicalPlanner(framework, errorSink.getErrorSink())
+    PhysicalPlan physicalPlan = injector.getInstance(PhysicalPlanner.class)
         .plan(dag);
     PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
     PhysicalPlanExecutor.Result result = executor.execute(physicalPlan, errors);

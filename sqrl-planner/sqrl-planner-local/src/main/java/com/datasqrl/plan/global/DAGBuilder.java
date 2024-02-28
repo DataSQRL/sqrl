@@ -20,6 +20,7 @@ import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.plan.table.PhysicalTable;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.google.inject.Inject;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -29,6 +30,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;
 
@@ -37,13 +40,13 @@ import static com.datasqrl.plan.global.DAGAssembler.getExportBaseConfig;
 /**
  * Assembles the DAG from the sinks and tables
  */
-@Value
+@AllArgsConstructor(onConstructor_=@Inject)
+@Getter
 public class DAGBuilder {
 
   private SQRLConverter sqrlConverter;
   private ExecutionPipeline pipeline;
   private ErrorCollector errors;
-
 
   public SqrlDAG build(Collection<AnalyzedAPIQuery> queries,
       Collection<ResolvedExport> exports) {

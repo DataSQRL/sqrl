@@ -1,15 +1,11 @@
 package com.datasqrl.plan.local.generate;
 
-import com.datasqrl.config.CompilerConfiguration;
-import com.datasqrl.error.ErrorCode;
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.tables.TableSink;
-import com.datasqrl.loaders.DataSystemNsObject;
-import com.datasqrl.loaders.LoaderUtil;
-import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-import java.util.Optional;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.io.tables.TableSink;
+import com.datasqrl.loaders.LoaderUtil;
+import com.datasqrl.loaders.ModuleLoader;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 

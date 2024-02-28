@@ -78,7 +78,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
 
   @Override
   public EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs, ExecutionPipeline pipeline,
-      SqrlFramework relBuilder, TableSink errorSink) {
+      SqrlFramework relBuilder, TableSink errorSink, ErrorCollector errorCollector) {
     Preconditions.checkArgument(plan instanceof LogStagePlan);
     return new KafkaPhysicalPlan(this.config.getConfig(),
         ((LogStagePlan) plan).getLogs().stream()

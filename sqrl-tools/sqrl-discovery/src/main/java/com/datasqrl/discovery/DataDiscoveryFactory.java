@@ -24,20 +24,20 @@ public class DataDiscoveryFactory {
   public static final String DATABASE_ENGINE_KEY = "database";
 
   public static DataDiscovery fromConfig(@NonNull SqrlConfig config, ErrorCollector errors) {
-    PipelineFactory pipelineFactory = PipelineFactory.fromRootConfig(config);
+    PipelineFactory pipelineFactory = new PipelineFactory(config.getSubConfig(ENGINES_PROPERTY));
     SqrlConfig discoveryConfig = config.getSubConfig(DISCOVERY_KEY);
     Optional<String> metadataEngine = discoveryConfig.asString(DATABASE_ENGINE_KEY).validate(
         StringUtils::isNotBlank,"Cannot be empty").getOptional();
     DataDiscovery discovery = new DataDiscovery(errors, pipelineFactory.getStreamEngine(),
         getMetaDataStoreProvider(config.getSubConfig(ENGINES_PROPERTY), metadataEngine),
-        pipelineFactory.getConfig());
+        pipelineFactory.getEngineConfig());
     return discovery;
   }
 
   public static DataDiscovery fromPipeline(@NonNull PipelineFactory pipelineFactory, ErrorCollector errors) {
     return new DataDiscovery(errors, pipelineFactory.getStreamEngine(),
-        getMetaDataStoreProvider(pipelineFactory.getConfig(), Optional.empty()),
-        pipelineFactory.getConfig());
+        getMetaDataStoreProvider(pipelineFactory.getEngineConfig(), Optional.empty()),
+        pipelineFactory.getEngineConfig());
   }
 
   public static MetadataStoreProvider getMetaDataStoreProvider(SqrlConfig baseEngineConfig, Optional<String> engineIdentifier) {
