@@ -41,17 +41,14 @@ public class InferGraphqlSchema {
 
   private final ExecutionPipeline pipeline;
   private final SqrlFramework framework;
-  private final CompilerConfiguration compilerConfig;
   private final ErrorCollector errorCollector;
   private final APIConnectorManager apiManager;
-  private final ModuleLoader moduleLoader;
-  private final GraphqlSchemaFactory schemaFactory;
   private final GraphqlSourceFactory graphqlSourceFactory;
+  private final GraphqlSchemaFactory schemaFactory;
 
   @SneakyThrows
-  public static String inferGraphQLSchema(SqrlSchema schema,
-      boolean addArguments) {
-    GraphQLSchema gqlSchema = new GraphqlSchemaFactory(schema, addArguments).generate();
+  public String inferGraphQLSchema() {
+    GraphQLSchema gqlSchema = schemaFactory.generate();
 
     SchemaPrinter.Options opts = SchemaPrinter.Options.defaultOptions()
         .setComparators(GraphqlTypeComparatorRegistry.AS_IS_REGISTRY)
@@ -79,24 +76,22 @@ public class InferGraphqlSchema {
     APISource apiSchema = graphqlSourceFactory.get()
         .orElseGet(() ->
             new APISourceImpl(Name.system("<schema>"),
-                inferGraphQLSchema(framework.getSchema(),
-                    compilerConfig.isAddArguments())));
+                inferGraphQLSchema()));
 
     ErrorCollector apiErrors = errorCollector.withSchema(apiSchema.getName().getDisplay(),
         apiSchema.getSchemaDefinition());
 
     //todo: move
     try {
-      GraphqlSchemaValidator schemaValidator = new GraphqlSchemaValidator(framework.getCatalogReader().nameMatcher(),
-          framework.getSchema(), apiSchema, (new SchemaParser()).parse(apiSchema.getSchemaDefinition()), apiManager);
+      GraphqlSchemaValidator schemaValidator = new GraphqlSchemaValidator(framework, apiManager);
 
       schemaValidator.validate(apiSchema, errorCollector);
 
       GraphqlQueryGenerator queryGenerator = new GraphqlQueryGenerator(framework.getCatalogReader().nameMatcher(),
-          framework.getSchema(),  (new SchemaParser()).parse(apiSchema.getSchemaDefinition()), apiSchema,
+          framework.getSchema(),
           new GraphqlQueryBuilder(framework, apiManager, new SqlNameUtil(NameCanonicalizer.SYSTEM)), apiManager);
 
-      queryGenerator.walk();
+      queryGenerator.walk(apiSchema);
       queryGenerator.getQueries().forEach(apiManager::addQuery);
       queryGenerator.getSubscriptions().forEach(s->apiManager.addSubscription(
           new APISubscription(s.getAbsolutePath().getFirst(), apiSchema), s));

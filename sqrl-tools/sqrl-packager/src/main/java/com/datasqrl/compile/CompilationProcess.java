@@ -59,7 +59,7 @@ public class CompilationProcess {
     PhysicalDAGPlan dagPlan = dagPlanner.plan();
 
     PhysicalPlan physicalPlan = physicalPlanner.plan(dagPlan);
-    Optional<RootGraphqlModel> model = graphqlPostplanHook.run(physicalPlan);
+    Optional<RootGraphqlModel> model = graphqlPostplanHook.run(source, physicalPlan);
     writeDeploymentArtifactsHook.run(model, source, physicalPlan);
     flinkSqlPostprocessor.run(physicalPlan);
     return physicalPlan;

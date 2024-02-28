@@ -12,6 +12,7 @@ import com.datasqrl.util.data.Retail.RetailScriptNames;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
+import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,17 +32,10 @@ class SchemaInferenceModelTest extends AbstractSchemaInferenceModelTest {
     initialize(IntegrationTestSettings.getInMemory(), example.getScript(RetailScriptNames.FULL)
         .getRootPackageDirectory(), Optional.empty());
 
-    Pair<Object, APIConnectorManager> result = this.inferSchemaAndQueries(
+    this.inferSchemaAndQueries(
         example.getScript(RetailScriptNames.FULL),
         Path.of("src/test/resources/c360bundle/schema.full.graphqls"));
-    assertEquals(336, result.getValue().getQueries().size());
-
-//    APIConnectorManager instance = injector.getInstance(APIConnectorManager.class);
-//    InferredSchema result = inferSchemaAndQueries(
-//        example.getScript(RetailScriptNames.FULL),
-//        Path.of("src/test/resources/c360bundle/schema.full.graphqls"));
-//    assertEquals(60, result.getQuery().getFields().size());
-//    assertEquals(336, instance.getQueries().size());
-//>>>>>>> 8622af179 (Reuse more code)
+    SqrlSchema schema = injector.getInstance(SqrlSchema.class);
+    assertEquals(336, schema.getQueries().size());
   }
 }

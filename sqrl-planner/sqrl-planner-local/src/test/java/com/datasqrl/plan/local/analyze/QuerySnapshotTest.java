@@ -3,7 +3,6 @@
  */
 package com.datasqrl.plan.local.analyze;
 
-import static com.datasqrl.plan.SqrlOptimizeDag.extractFlinkFunctions;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -103,7 +102,9 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
               table.getNameId());
         });
 
-    GraphqlSchemaFactory graphqlSchemaFactory = new GraphqlSchemaFactory(framework.getSchema(), true);
+
+
+    GraphqlSchemaFactory graphqlSchemaFactory = injector.getInstance(GraphqlSchemaFactory.class);
     GraphQLSchema generate = graphqlSchemaFactory.generate();
 
     SchemaPrinter.Options opts = SchemaPrinter.Options.defaultOptions()
@@ -117,13 +118,13 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
     APIConnectorManagerImpl apiManager = mock(APIConnectorManagerImpl.class);
 
     GraphqlSchemaValidator schemaValidator = new GraphqlSchemaValidator(framework.getCatalogReader().nameMatcher(),
-        framework.getSchema(), source, (new SchemaParser()).parse(source.getSchemaDefinition()), apiManager);
+        framework.getSchema(), apiManager);
     schemaValidator.validate(source, errors);
     GraphqlQueryGenerator queryGenerator = new GraphqlQueryGenerator(framework.getCatalogReader().nameMatcher(),
-        framework.getSchema(),  (new SchemaParser()).parse(source.getSchemaDefinition()), source,
+        framework.getSchema(),
         new GraphqlQueryBuilder(framework, apiManager, new SqlNameUtil(NameCanonicalizer.SYSTEM)), apiManager);
 
-    queryGenerator.walk();
+    queryGenerator.walk(source);
     queryGenerator.getQueries().forEach(apiManager::addQuery);
 
     //todo readd once moved

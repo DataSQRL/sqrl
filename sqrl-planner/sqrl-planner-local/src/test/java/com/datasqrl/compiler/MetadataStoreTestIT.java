@@ -33,7 +33,8 @@ public class MetadataStoreTestIT extends AbstractEngineIT {
 
   public void setup(IntegrationTestSettings.DatabaseEngine database) {
     initialize(IntegrationTestSettings.getDatabaseOnly(database), null, Optional.empty());
-    PipelineFactory pipelineFactory = injector.getInstance(PipelineFactory.class);
+    SqrlConfig config = injector.getInstance(SqrlConfig.class);
+    PipelineFactory pipelineFactory = PipelineFactory.fromRootConfig(config);
     meta = getMetaDataStoreProvider(pipelineFactory.getEngineConfig(), Optional.empty()).openStore();
   }
 

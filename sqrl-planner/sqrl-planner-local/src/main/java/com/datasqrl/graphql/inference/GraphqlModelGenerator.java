@@ -57,16 +57,16 @@ public class GraphqlModelGenerator extends SchemaWalker {
   List<SubscriptionCoords> subscriptions = new ArrayList<>();
 
   public GraphqlModelGenerator(SqlNameMatcher nameMatcher, SqrlSchema schema,
-      TypeDefinitionRegistry registry, APISource source,
       Map<IdentifiedQuery, QueryTemplate> databaseQueries, QueryPlanner queryPlanner,
       APIConnectorManager apiManager) {
-    super(nameMatcher, schema, source, registry, apiManager);
+    super(nameMatcher, schema, apiManager);
     this.databaseQueries = databaseQueries;
     this.queryPlanner = queryPlanner;
   }
 
   @Override
-  protected void walkSubscription(ObjectTypeDefinition m, FieldDefinition fieldDefinition) {
+  protected void walkSubscription(ObjectTypeDefinition m, FieldDefinition fieldDefinition,
+      TypeDefinitionRegistry registry, APISource source) {
     APISubscription apiSubscription = new APISubscription(Name.system(fieldDefinition.getName()),
         source);
     SqrlTableMacro tableFunction = schema.getTableFunction(fieldDefinition.getName());
@@ -82,7 +82,8 @@ public class GraphqlModelGenerator extends SchemaWalker {
   }
 
   @Override
-  protected void walkMutation(ObjectTypeDefinition m, FieldDefinition fieldDefinition) {
+  protected void walkMutation(APISource source, TypeDefinitionRegistry registry,
+      ObjectTypeDefinition m, FieldDefinition fieldDefinition) {
     TableSink tableSink = apiManager.getMutationSource(source,
         Name.system(fieldDefinition.getName()));
 
