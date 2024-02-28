@@ -89,6 +89,7 @@ import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.rel2sql.FlinkRelToSqlConverter;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.rel.type.RelRecordType;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlFunction;
@@ -97,6 +98,7 @@ import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.calcite.sql.type.ArraySqlType;
 import org.apache.calcite.tools.Program;
 import org.apache.calcite.tools.Programs;
 import org.apache.calcite.tools.RelBuilder;
@@ -198,50 +200,60 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
 
   private RexNode convertField(RelDataTypeField field, AtomicBoolean hasChanged, RelBuilder relBuilder,
       WriteSink writeSink, Map<String, String> downcastClassNames) {
-    //1. Check to see if format or engine supports converting the data type to a type flink can handle natively
-    TableConfig tableConfig = getTableConfig(writeSink);
-    if (!(field.getType() instanceof RawRelDataType) ||
-        formatSupportsType(tableConfig.getFormat().getName(), (RawRelDataType)field.getType()) ||
-        engineSupportsType(getEngine(writeSink), ((RawRelDataType) field.getType()).getRawType().getDefaultConversion())) {
+    //If they are not raw, is basic type and return
+    if (!isRawType(field.getType())) {
       return relBuilder.field(field.getIndex());
-    }
-
-    //Otherwise apply downcasting
-    Class<?> defaultConversion = ((RawRelDataType) field.getType()).getRawType()
-        .getDefaultConversion();
-    CatalogReader catalogReader = (CatalogReader) relBuilder.getRelOptSchema();
-
-    DowncastFunction downcastFunction = ServiceLoaderDiscovery.get(DowncastFunction.class,
-        e -> e.getConversionClass().getName(),
-        defaultConversion.getName());
-    if (downcastFunction == null) {
-      throw new RuntimeException("Needed downcast function but could not find one: " + defaultConversion.getName());
-    }
-    String fncName = downcastFunction.downcastFunctionName().toLowerCase();
-    FunctionDefinition functionDef;
-    try {
-      functionDef = (FunctionDefinition)downcastFunction.getDowncastClassName()
-          .getDeclaredConstructor().newInstance();
-    } catch (Exception e) {
-      throw new RuntimeException(e);
     }
 
     FlinkConverter flinkConverter = new FlinkConverter((TypeFactory) framework.getQueryPlanner().getCatalogReader()
         .getTypeFactory());
 
-    Optional<SqlFunction> convertedFunction = flinkConverter
-        .convertFunction(fncName, functionDef);
+    //1. Check to see if format or engine supports converting the data type to a type flink can handle natively
+    TableConfig tableConfig = getTableConfig(writeSink);
 
-    if (convertedFunction.isEmpty()) {
-      throw new RuntimeException("Could not convert downcast function");
+    //If it's a raw type and the format or engine supports it, return it
+    if (formatSupportsType(tableConfig.getFormat().getName(), (RawRelDataType)field.getType()) ||
+        engineSupportsType(getEngine(writeSink), ((RawRelDataType) field.getType()).getRawType().getDefaultConversion())) {
+      return relBuilder.field(field.getIndex());
+    } else {
+      //Otherwise apply downcasting
+      Class<?> defaultConversion = ((RawRelDataType) field.getType()).getRawType()
+          .getDefaultConversion();
+
+      DowncastFunction downcastFunction = ServiceLoaderDiscovery.get(DowncastFunction.class,
+          e -> e.getConversionClass().getName(),
+          defaultConversion.getName());
+      if (downcastFunction == null) {
+        throw new RuntimeException(
+            "Needed downcast function but could not find one for RAW type: " + defaultConversion.getName());
+      }
+      String fncName = downcastFunction.downcastFunctionName().toLowerCase();
+      FunctionDefinition functionDef;
+      try {
+        functionDef = (FunctionDefinition) downcastFunction.getDowncastClassName()
+            .getDeclaredConstructor().newInstance();
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+
+      Optional<SqlFunction> convertedFunction = flinkConverter
+          .convertFunction(fncName, functionDef);
+
+      if (convertedFunction.isEmpty()) {
+        throw new RuntimeException("Could not convert downcast function");
+      }
+
+      downcastClassNames.put(fncName,
+          downcastFunction.getDowncastClassName().getName());
+
+      hasChanged.set(true);
+      return relBuilder.getRexBuilder()
+          .makeCall(convertedFunction.get(), List.of(relBuilder.field(field.getIndex())));
     }
+  }
 
-    downcastClassNames.put(fncName,
-        downcastFunction.getDowncastClassName().getName());
-
-    hasChanged.set(true);
-    return relBuilder.getRexBuilder()
-        .makeCall(convertedFunction.get(), List.of(relBuilder.field(field.getIndex())));
+  private boolean isRawType(RelDataType type) {
+    return type instanceof RawRelDataType;
   }
 
   private boolean engineSupportsType(Optional<ExecutionEngine> engine, Class<?> defaultConversion) {
