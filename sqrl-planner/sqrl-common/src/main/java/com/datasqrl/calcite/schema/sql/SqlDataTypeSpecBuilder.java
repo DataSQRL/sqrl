@@ -63,7 +63,7 @@ public class SqlDataTypeSpecBuilder {
         if (type instanceof RawRelDataType) {
           RawType<?> rawType = ((RawRelDataType) type).getRawType();
           typeNameSpec = new SqlRawTypeNameSpec(
-              SqlLiteral.createCharString(rawType.getOriginatingClass().toString(),
+              SqlLiteral.createCharString(rawType.getOriginatingClass().getName(),
                   SqlParserPos.ZERO),
               SqlLiteral.createCharString(rawType.getSerializerString(), SqlParserPos.ZERO),
               SqlParserPos.ZERO);

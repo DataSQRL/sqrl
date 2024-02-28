@@ -7,6 +7,7 @@ import org.apache.flink.api.java.typeutils.runtime.kryo.KryoSerializer;
 import org.apache.flink.connector.jdbc.converter.AbstractJdbcRowConverter.JdbcDeserializationConverter;
 import org.apache.flink.connector.jdbc.converter.AbstractJdbcRowConverter.JdbcSerializationConverter;
 import org.apache.flink.table.data.RawValueData;
+import org.apache.flink.table.types.logical.LogicalType;
 import org.postgresql.util.PGobject;
 
 @AutoService(JdbcTypeSerializer.class)
@@ -37,8 +38,9 @@ public class PostgresJsonTypeSerializer
   }
 
   @Override
-  public GenericSerializationConverter<JdbcSerializationConverter> getSerializerConverter() {
-    return () -> (val, index, statement) -> {
+  public GenericSerializationConverter<JdbcSerializationConverter> getSerializerConverter(
+      LogicalType type) {
+    return ()-> (val, index, statement) -> {
       if (val != null && !val.isNullAt(index)) {
         PGobject pgObject = new PGobject();
         pgObject.setType("json");

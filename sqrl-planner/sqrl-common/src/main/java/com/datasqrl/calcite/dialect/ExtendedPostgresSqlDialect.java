@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.calcite.avatica.util.Casing;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelRecordType;
 import org.apache.calcite.sql.SqlAlienSystemTypeNameSpec;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlDataTypeSpec;
@@ -53,7 +54,9 @@ public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
 
   public SqlDataTypeSpec getCastSpec(RelDataType type) {
     String castSpec;
-    if (type instanceof RawRelDataType) {
+    if (type.getComponentType() instanceof RelRecordType) {
+      castSpec = "jsonb";
+    } else if (type instanceof RawRelDataType) {
       RawRelDataType rawRelDataType = (RawRelDataType) type;
       Class<?> originatingClass = rawRelDataType.getRawType().getOriginatingClass();
       if (foreignCastSpecMap.containsKey(originatingClass)) {
@@ -103,10 +106,10 @@ public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
           break;
         // May need to create user-defined types in PostgreSQL or use JSON/JSONB types
         case ROW:
+          castSpec = "jsonb";
+          break;
         case SYMBOL:
         case MAP:
-          castSpec = "BYTEA";
-          break;
         default:
           return (SqlDataTypeSpec) super.getCastSpec(type);
       }
