@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import static com.datasqrl.discovery.DataDiscoveryFactory.getMetaDataStoreProvider;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ConfigurationTest {
@@ -37,9 +38,9 @@ public class ConfigurationTest {
     assertEquals(3, compilerConfig.getMaxApiArguments());
     assertEquals(2, pipelineFactory.getEngines().size());
     ExecutionPipeline executionPipeline = pipelineFactory.createPipeline();
-    pipelineFactory.getDatabaseEngine();
-    pipelineFactory.getStreamEngine();
-    pipelineFactory.getMetaDataStoreProvider(Optional.empty());
+//    pipelineFactory.getDatabaseEngine();
+//    pipelineFactory.getStreamEngine();
+    getMetaDataStoreProvider(pipelineFactory.getConfig(), Optional.empty());
 
     LinkedHashMap<String, Dependency> dependencies = DependencyConfig.fromRootConfig(config);
     assertEquals(2, dependencies.size());

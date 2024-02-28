@@ -5,10 +5,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.config.SqrlConfig;
+import com.datasqrl.config.SqrlConfigUtil;
+import com.datasqrl.engine.EngineFactory;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.util.SqrlObjectMapper;
 import com.google.common.io.Resources;
 import java.util.Map;
+import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 
@@ -18,7 +21,11 @@ class FlinkEngineConfigurationTest {
   @Test
   public void testPackageSerialization() {
     SqrlConfig config = SqrlConfigCommons.fromURL(ErrorCollector.root(), Resources.getResource("package-flink-conf.json"));
-    Map<String,String> flinkConf = new FlinkEngineFactory().getFlinkConfiguration(config);
+    Map<String,String> flinkConf = getFlinkConfiguration(config);
     assertEquals(1, flinkConf.size());
+  }
+
+  public static Map<String,String> getFlinkConfiguration(@NonNull SqrlConfig config) {
+    return SqrlConfigUtil.toStringMap(config, EngineFactory.getReservedKeys());
   }
 }
