@@ -10,8 +10,8 @@ type Orders {
 }
 
 type Query {
-  Users(id: Float, limit: Int = 10, offset: Int = 0): [Users!]
   Orders(limit: Int = 10, offset: Int = 0): [Orders!]
+  Users(id: Float, limit: Int = 10, offset: Int = 0): [Users!]
 }
 
 type Users {

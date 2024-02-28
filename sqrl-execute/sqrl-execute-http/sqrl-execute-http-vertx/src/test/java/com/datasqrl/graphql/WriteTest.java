@@ -29,6 +29,7 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
 import java.time.Duration;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -131,9 +132,7 @@ class WriteTest {
                     .parentType("Query")
                     .fieldName("customer")
                     .match(ArgumentSet.builder()
-                            .query(JdbcQuery.builder()
-                                    .sql("SELECT customerid FROM Customer")
-                                    .build())
+                            .query(new JdbcQuery("SELECT customerid FROM Customer", List.of()))
                             .build())
                     .build())
             .mutation(new MutationCoords("addCustomer", getKafkaConfig().serialize()))

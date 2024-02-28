@@ -16,8 +16,8 @@ type Orders {
 }
 
 type Query {
-  Orders(limit: Int = 10, offset: Int = 0): [Orders!]
   CustomerOrderStats(customerid: Float, limit: Int = 10, offset: Int = 0): [CustomerOrderStats!]
+  Orders(limit: Int = 10, offset: Int = 0): [Orders!]
 }
 
 type entries {

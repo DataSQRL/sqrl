@@ -2,6 +2,8 @@ package com.datasqrl.calcite.function;
 
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.function.SqrlFunctionParameter;
+import com.datasqrl.schema.Multiplicity;
+import com.datasqrl.schema.Relationship.JoinType;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.function.Supplier;
@@ -27,4 +29,8 @@ public interface SqrlTableMacro extends TableFunction {
   NamePath getAbsolutePath();
 
   String getDisplayName();
+
+  Multiplicity getMultiplicity();
+
+  JoinType getJoinType();
 }

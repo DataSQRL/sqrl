@@ -17,14 +17,13 @@ import java.util.Optional;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
 @Slf4j
-public class SchemaGeneratorUseCaseTest extends AbstractSchemaGeneratorTest {
+public class GraphqlSchemaFactoryUseCaseTest extends AbstractGraphqlSchemaFactoryTest {
 
 
   @BeforeEach

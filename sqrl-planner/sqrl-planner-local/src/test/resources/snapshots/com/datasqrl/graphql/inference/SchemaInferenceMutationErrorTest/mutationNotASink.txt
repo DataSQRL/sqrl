@@ -1,7 +1,0 @@
-[FATAL] Could not find mutation source: addOrder.
-in script:<schema> [7:1]:
-	id: Int!
-}
-type Mutation {
-^
-

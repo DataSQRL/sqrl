@@ -12,11 +12,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.Setter;
 
 @AllArgsConstructor
 @Getter
 public class ServerPhysicalPlan implements EnginePhysicalPlan {
 
+  @Setter
   RootGraphqlModel model;
   ServerConfig config;
 

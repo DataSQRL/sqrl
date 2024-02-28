@@ -4,7 +4,6 @@
 package com.datasqrl.compile;
 
 import com.datasqrl.DefaultFunctions;
-import com.datasqrl.calcite.QueryPlanner;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
@@ -16,64 +15,63 @@ import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.engine.ExecutionEngine.Type;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlanner;
-import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
+import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.frontend.ErrorSink;
-import com.datasqrl.function.SqrlFunctionParameter;
-import com.datasqrl.plan.SqrlOptimizeDag;
-import com.datasqrl.loaders.ModuleLoaderComposite;
-import com.datasqrl.plan.ScriptPlanner;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.APIConnectorManagerImpl;
-import com.datasqrl.graphql.generate.SchemaGenerator;
+import com.datasqrl.graphql.generate.GraphqlSchemaFactory;
 import com.datasqrl.graphql.inference.GraphQLMutationExtraction;
-import com.datasqrl.graphql.inference.SchemaBuilder;
-import com.datasqrl.graphql.inference.SchemaInference;
-import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
-import com.datasqrl.graphql.inference.SqrlSchemaForInference;
+import com.datasqrl.graphql.inference.GraphqlModelGenerator;
+import com.datasqrl.graphql.inference.GraphqlQueryBuilder;
+import com.datasqrl.graphql.inference.GraphqlQueryGenerator;
+import com.datasqrl.graphql.inference.GraphqlSchemaValidator;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
-import com.datasqrl.graphql.util.ReplaceGraphqlQueries;
+import com.datasqrl.graphql.server.Model.StringSchema;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.loaders.LoaderUtil;
 import com.datasqrl.loaders.ModuleLoader;
+import com.datasqrl.loaders.ModuleLoaderComposite;
 import com.datasqrl.loaders.ModuleLoaderImpl;
 import com.datasqrl.loaders.ObjectLoaderImpl;
 import com.datasqrl.module.resolver.FileResourceResolver;
 import com.datasqrl.module.resolver.ResourceResolver;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.packager.config.ScriptConfiguration;
+import com.datasqrl.plan.ScriptPlanner;
+import com.datasqrl.plan.SqrlOptimizeDag;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.hints.SqrlHintStrategyTable;
 import com.datasqrl.plan.local.generate.Debugger;
 import com.datasqrl.plan.local.generate.DebuggerConfig;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISource;
-import com.datasqrl.plan.queries.IdentifiedQuery;
+import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.plan.rules.SqrlRelMetadataProvider;
 import com.datasqrl.plan.table.CalciteTableFactory;
 import com.datasqrl.serializer.Deserializer;
 import com.datasqrl.util.FileUtil;
+import com.datasqrl.util.SqlNameUtil;
 import com.datasqrl.util.SqrlObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.google.common.base.Preconditions;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphqlTypeComparatorRegistry;
+import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.SchemaPrinter;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.commons.io.FileUtils;
 
 @Slf4j
@@ -153,50 +151,64 @@ public class Compiler {
 
     Optional<APISource> apiSource = Optional.empty();
     if (pipeline.getStage(Type.SERVER).isPresent()) {
-      SqrlSchemaForInference sqrlSchemaForInference = new SqrlSchemaForInference(
-          framework.getSchema());
-
       Name graphqlName = Name.system(
           scriptFiles.get(ScriptConfiguration.GRAPHQL_KEY).orElse("<schema>")
               .split("\\.")[0]);
 
       APISource apiSchema = apiSchemaOpt.orElseGet(() ->
           new APISource(graphqlName,
-              inferGraphQLSchema(sqrlSchemaForInference, compilerConfig.isAddArguments())));
+              inferGraphQLSchema(framework.getSchema(), compilerConfig.isAddArguments())));
       apiSource = Optional.of(apiSchema);
       errors = errors.withSchema(apiSchema.getName().getDisplay(), apiSchema.getSchemaDefinition());
 
-      //todo: move
-      try {
-        InferredSchema inferredSchema = new SchemaInference(
-            framework,
-            apiSchema.getName().getDisplay(),
-            moduleLoader,
-            apiSchema,
-            sqrlSchemaForInference,
-            framework.getQueryPlanner().getRelBuilder(),
-            apiManager)
-            .accept();
+      GraphqlSchemaValidator schemaValidator = new GraphqlSchemaValidator(framework.getCatalogReader().nameMatcher(),
+          framework.getSchema(), apiSchema, (new SchemaParser()).parse(apiSchema.getSchemaDefinition()), apiManager);
 
-        SchemaBuilder schemaBuilder = new SchemaBuilder(apiSchema, apiManager);
+      schemaValidator.validate(apiSchema, errors);
 
-        root = Optional.of(inferredSchema.accept(schemaBuilder, null));
-      } catch (Exception e) {
-        throw errors.handle(e);
-      }
+      GraphqlQueryGenerator queryGenerator = new GraphqlQueryGenerator(framework.getCatalogReader().nameMatcher(),
+          framework.getSchema(),  (new SchemaParser()).parse(apiSchema.getSchemaDefinition()), apiSchema,
+          new GraphqlQueryBuilder(framework, apiManager, new SqlNameUtil(NameCanonicalizer.SYSTEM)), apiManager);
+
+      queryGenerator.walk();
+      queryGenerator.getQueries().forEach(apiManager::addQuery);
+      queryGenerator.getSubscriptions().forEach(s->apiManager.addSubscription(
+          new APISubscription(s.getAbsolutePath().getFirst(), apiSchema), s));
+
     } else if (pipeline.getStage(Type.DATABASE).isPresent()) {
       AtomicInteger i = new AtomicInteger();
       framework.getSchema().getTableFunctions()
           .forEach(t->apiManager.addQuery(new APIQuery(
               "query" + i.incrementAndGet(),
-              framework.getQueryPlanner().expandMacros(t.getViewTransform().get()))));
+              NamePath.ROOT,
+              framework.getQueryPlanner().expandMacros(t.getViewTransform().get()),
+              List.of(),
+              List.of(), false)));
     }
 
     PhysicalDAGPlan dag = SqrlOptimizeDag.planDag(framework, pipelineFactory.createPipeline(), apiManager, root.orElse(null),
         false,new Debugger(debugger, moduleLoader), errors);
     PhysicalPlan physicalPlan = createPhysicalPlan(dag, errorTableSink, framework);
 
-    root = root.map(model->updateGraphqlPlan(framework.getQueryPlanner(), model, physicalPlan.getDatabaseQueries()));
+    if (apiSource.isPresent()) {
+      GraphqlModelGenerator modelGen = new GraphqlModelGenerator(
+          framework.getCatalogReader().nameMatcher(),
+          framework.getSchema(), (new SchemaParser()).parse(apiSource.get().getSchemaDefinition()),
+          apiSource.get(),
+          physicalPlan.getDatabaseQueries(), framework.getQueryPlanner(), apiManager);
+      modelGen.walk();
+      RootGraphqlModel model = RootGraphqlModel.builder()
+          .coords(modelGen.getCoords())
+          .mutations(modelGen.getMutations())
+          .subscriptions(modelGen.getSubscriptions())
+          .schema(StringSchema.builder().schema(apiSource.get().getSchemaDefinition()).build())
+          .build();
+      root = Optional.of(model);
+      //todo remove
+      physicalPlan.getPlans(ServerPhysicalPlan.class).findFirst().get()
+          .setModel(model);
+    }
+
 
     CompilerResult result = new CompilerResult(root, apiSource.map(APISource::getSchemaDefinition), physicalPlan);
 
@@ -212,9 +224,9 @@ public class Compiler {
   }
 
   @SneakyThrows
-  public static String inferGraphQLSchema(SqrlSchemaForInference schema,
+  public static String inferGraphQLSchema(SqrlSchema schema,
       boolean addArguments) {
-    GraphQLSchema gqlSchema = new SchemaGenerator().generate(schema, addArguments);
+    GraphQLSchema gqlSchema = new GraphqlSchemaFactory(schema, addArguments).generate();
 
     SchemaPrinter.Options opts = SchemaPrinter.Options.defaultOptions()
         .setComparators(GraphqlTypeComparatorRegistry.AS_IS_REGISTRY)
@@ -228,13 +240,6 @@ public class Compiler {
     PhysicalPlanner physicalPlanner = new PhysicalPlanner(framework, errorSink);
     PhysicalPlan physicalPlan = physicalPlanner.plan(dag);
     return physicalPlan;
-  }
-
-  private RootGraphqlModel updateGraphqlPlan(QueryPlanner planner, RootGraphqlModel root,
-      Map<IdentifiedQuery, QueryTemplate> queries) {
-    ReplaceGraphqlQueries replaceGraphqlQueries = new ReplaceGraphqlQueries(queries, planner);
-    root.accept(replaceGraphqlQueries, null);
-    return root;
   }
 
   @Value

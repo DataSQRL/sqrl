@@ -3,6 +3,7 @@ package com.datasqrl.schema;
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.schema.Relationship.JoinType;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.function.Supplier;
@@ -53,5 +54,15 @@ public class RootSqrlTable implements SqrlTableMacro {
   @Override
   public String getDisplayName() {
     return getName().getDisplay();
+  }
+
+  @Override
+  public Multiplicity getMultiplicity() {
+    return Multiplicity.MANY;
+  }
+
+  @Override
+  public JoinType getJoinType() {
+    return JoinType.NONE;
   }
 }

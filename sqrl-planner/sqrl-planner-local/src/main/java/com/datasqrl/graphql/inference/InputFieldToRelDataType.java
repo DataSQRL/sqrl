@@ -1,22 +1,20 @@
 package com.datasqrl.graphql.inference;
 
 import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.getMutationTypeName;
+import static com.datasqrl.graphql.util.GraphqlCheckUtil.checkState;
+import static com.datasqrl.graphql.util.GraphqlCheckUtil.createThrowable;
 
 import com.datasqrl.calcite.type.NamedRelDataType;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
-import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.graphql.visitor.GraphqlDefinitionVisitor;
 import com.datasqrl.graphql.visitor.GraphqlFieldDefinitionVisitor;
 import com.datasqrl.graphql.visitor.GraphqlInputValueDefinitionVisitor;
 import com.datasqrl.graphql.visitor.GraphqlSchemaVisitor;
 import com.datasqrl.graphql.visitor.GraphqlTypeVisitor;
-import com.datasqrl.schema.UniversalTable;
-import com.datasqrl.schema.UniversalTable.Configuration;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.RelDataTypeBuilder;
-import com.google.common.base.Preconditions;
 import graphql.language.EnumTypeDefinition;
 import graphql.language.EnumValueDefinition;
 import graphql.language.FieldDefinition;
@@ -50,7 +48,7 @@ public class InputFieldToRelDataType implements
   @Override
   public List<NamedRelDataType> visitObjectTypeDefinition(ObjectTypeDefinition node,
       TypeDefinitionRegistry context) {
-    Preconditions.checkArgument(node.getName().equals(getMutationTypeName(context)),
+    checkState(node.getName().equals(getMutationTypeName(context)), node.getSourceLocation(),
         "Mutation is required");
     List<NamedRelDataType> schemas = node.getFieldDefinitions().stream()
         .map(f->GraphqlSchemaVisitor.accept(this, f, context))
@@ -63,15 +61,14 @@ public class InputFieldToRelDataType implements
   public NamedRelDataType visitFieldDefinition(FieldDefinition node, TypeDefinitionRegistry context) {
 //    validateReturnType(fieldType); todo
 
-    Preconditions.checkState(node.getInputValueDefinitions().size() == 1, "Too many arguments for mutation '%s'. Must have exactly one.", node.getName());
+    checkState(node.getInputValueDefinitions().size() == 1, node.getSourceLocation(),"Too many arguments for mutation '%s'. Must have exactly one.", node.getName());
     InputValueDefinition def = node.getInputValueDefinitions().get(0);
-    Preconditions.checkState(def.getType() instanceof NonNullType, "Mutation '%s' input argument must be non-array and non-null", node.getName());
-    Preconditions.checkState(((NonNullType) def.getType()).getType() instanceof TypeName, "Mutation '%s' input argument must be non-array and non-null", node.getName());
+    checkState(def.getType() instanceof NonNullType, node.getSourceLocation(), "Mutation '%s' input argument must be non-array and non-null", node.getName());
+    checkState(((NonNullType) def.getType()).getType() instanceof TypeName,  node.getSourceLocation(),"Mutation '%s' input argument must be non-array and non-null", node.getName());
 
-    //Todo get description directive
     TypeDefinition typeDef =
         GraphqlSchemaVisitor.accept(new TypeResolver(), ((NonNullType) def.getType()).getType(), typeDefinitionRegistry)
-            .orElseThrow(()->new RuntimeException("Could not find type:" + def.getName()));
+            .orElseThrow(()->createThrowable( node.getSourceLocation(),"Could not find type:" + def.getName()));
 
     RelDataType relDataType = GraphqlSchemaVisitor.accept(new InputObjectToRelDataType(),
         typeDef, new FieldContext());
