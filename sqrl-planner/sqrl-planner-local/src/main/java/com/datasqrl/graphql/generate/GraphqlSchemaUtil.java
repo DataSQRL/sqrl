@@ -3,34 +3,33 @@
  */
 package com.datasqrl.graphql.generate;
 
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.graphql.inference.SqrlSchemaForInference.SQRLTable;
+import static com.datasqrl.canonicalizer.Name.isSystemHidden;
+
 import com.datasqrl.graphql.server.CustomScalars;
 import com.datasqrl.graphql.type.SqrlVertxScalars;
 import com.datasqrl.json.GraphqlGeneratorMapping;
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.util.ServiceLoaderDiscovery;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.BiMap;
 import graphql.Scalars;
+import graphql.language.FieldDefinition;
 import graphql.schema.GraphQLInputType;
 import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLNonNull;
 import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLScalarType;
 import graphql.schema.GraphQLType;
-import graphql.schema.GraphQLTypeReference;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 @Slf4j
-public class SchemaGeneratorUtil {
+public class GraphqlSchemaUtil {
   public static final Map<Class, GraphqlGeneratorMapping> addlScalars = ServiceLoaderDiscovery
       .getAll(GraphqlGeneratorMapping.class)
       .stream()
@@ -67,29 +66,8 @@ public class SchemaGeneratorUtil {
     }
   }
 
-  public static String conformName(String name) {
-    return name.replaceAll(
-        "[^_a-zA-Z0-9]", "");
-  }
-
-  public static String getTypeName(SQRLTable table, BiMap<String, SQRLTable> names) {
-    String conformed = conformName(table.getName());
-
-    if (names.inverse().get(table) != null) {
-      return names.inverse().get(table);
-    }
-
-    while (names.get(conformed) != null) {
-      conformed = conformed + "_"; //add suffix
-    }
-    names.put(conformed, table);
-
-    return conformed;
-  }
-
-  public static GraphQLTypeReference getTypeReference(SQRLTable table,
-      BiMap<String, SQRLTable> names) {
-    return new GraphQLTypeReference(getTypeName(table, names));
+  public static boolean isValidGraphQLName(String name) {
+    return !isSystemHidden(name) && Pattern.matches("[_A-Za-z][_0-9A-Za-z]*", name);
   }
 
   public static Optional<GraphQLInputType> getInputType(RelDataType type) {
@@ -106,6 +84,7 @@ public class SchemaGeneratorUtil {
     return getInOutTypeHelper(type);
   }
 
+  // Todo move to dialect?
   public static Optional<GraphQLType> getInOutTypeHelper(RelDataType type) {
     if (type.getSqlTypeName() == null) {
       return Optional.empty();
@@ -184,7 +163,10 @@ public class SchemaGeneratorUtil {
     }
   }
 
-  public static boolean isAccessible(SQRLTable table) {
-    return !Name.isHiddenString(table.getName());
+  /**
+   * Checks if the graphql schema has a different case than the graphql schema
+   */
+  public static boolean hasVaryingCase(FieldDefinition field, RelDataTypeField relDataTypeField) {
+    return !field.getName().equals(relDataTypeField.getName());
   }
 }

@@ -8,11 +8,11 @@ import static com.datasqrl.plan.SqrlOptimizeDag.extractFlinkFunctions;
 import com.datasqrl.AbstractLogicalSQRLIT;
 import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.engine.database.relational.IndexSelectorConfigByDialect;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIConnectorManager;
-import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.plan.global.DAGPlanner;
 import com.datasqrl.plan.global.QueryIndexSummary;
@@ -20,9 +20,10 @@ import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.plan.global.IndexSelector;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.local.analyze.MockAPIConnectorManager;
-import com.datasqrl.plan.local.generate.Debugger;
 import com.datasqrl.plan.queries.APISource;
+import com.datasqrl.util.SqlNameUtil;
 import com.datasqrl.util.TestScript;
+import graphql.schema.idl.SchemaParser;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -40,42 +41,46 @@ public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
   }
 
   @SneakyThrows
-  public Pair<InferredSchema, APIConnectorManager> inferSchemaAndQueries(TestScript script,
+  public Pair<Object, APIConnectorManager> inferSchemaAndQueries(TestScript script,
       Path schemaPath) {
     initialize(IntegrationTestSettings.getInMemory(), script.getRootPackageDirectory(), Optional.empty());
     String schemaStr = Files.readString(schemaPath);
     plan(script.getScript());
-    Triple<InferredSchema, RootGraphqlModel, APIConnectorManager> result = inferSchemaModelQueries(
+    Triple<Object, RootGraphqlModel, APIConnectorManager> result = inferSchemaModelQueries(
         schemaStr, framework, pipeline, errors);
     return Pair.of(result.getLeft(), result.getRight());
   }
 
-  public static Triple<InferredSchema, RootGraphqlModel, APIConnectorManager> inferSchemaModelQueries(
+  public static Triple<Object, RootGraphqlModel, APIConnectorManager> inferSchemaModelQueries(
       String schemaStr, SqrlFramework framework, ExecutionPipeline pipeline, ErrorCollector errors) {
     APISource source = APISource.of(schemaStr);
     //Inference
-    SqrlSchemaForInference sqrlSchemaForInference = new SqrlSchemaForInference(framework.getSchema());
+    GraphQLMutationExtraction preAnalysis = new GraphQLMutationExtraction(
+        framework.getTypeFactory(),
+        NameCanonicalizer.SYSTEM);
 
     MockAPIConnectorManager apiManager = new MockAPIConnectorManager(framework, pipeline);
 
-    SchemaInference inference = new SchemaInference(framework, "<schema>", null,source,
-        sqrlSchemaForInference,
-        framework.getQueryPlanner().getRelBuilder(), apiManager);
-
-    InferredSchema inferredSchema;
     try {
-      inferredSchema = inference.accept();
+      preAnalysis.analyze(source, apiManager);
+
+      GraphqlSchemaValidator schemaValidator = new GraphqlSchemaValidator(
+          framework.getCatalogReader().nameMatcher(),
+          framework.getSchema(), source, (new SchemaParser()).parse(source.getSchemaDefinition()),
+          apiManager);
+      schemaValidator.validate(source, errors);
+
+      GraphqlQueryGenerator queryGenerator = new GraphqlQueryGenerator(framework.getCatalogReader().nameMatcher(),
+          framework.getSchema(),  (new SchemaParser()).parse(source.getSchemaDefinition()), source,
+          new GraphqlQueryBuilder(framework, apiManager, new SqlNameUtil(NameCanonicalizer.SYSTEM)), apiManager);
+
+      queryGenerator.walk();
+      queryGenerator.getQueries().forEach(apiManager::addQuery);
     } catch (Exception e) {
-      errors.withSchema("<schema>", schemaStr).handle(e);
+      errors.withSchema(source.getName().getDisplay(), source.getSchemaDefinition()).handle(e);
       return null;
     }
-
-    //Build queries
-    SchemaBuilder schemaBuilder = new SchemaBuilder(source, apiManager);
-
-    RootGraphqlModel root = inferredSchema.accept(schemaBuilder, null);
-
-    return Triple.of(inferredSchema, root, apiManager);
+    return Triple.of(null, null, apiManager);
   }
 
   public Map<IndexDefinition, Double> selectIndexes(TestScript script, Path schemaPath) {

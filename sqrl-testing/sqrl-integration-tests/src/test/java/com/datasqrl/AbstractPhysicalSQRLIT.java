@@ -7,15 +7,11 @@ import static com.datasqrl.plan.SqrlOptimizeDag.extractFlinkFunctions;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
-import com.datasqrl.config.PipelineFactory;
 import com.datasqrl.engine.PhysicalPlan;
-import com.datasqrl.engine.PhysicalPlan.StagePlan;
 import com.datasqrl.engine.PhysicalPlanExecutor;
 import com.datasqrl.engine.PhysicalPlanner;
 import com.datasqrl.engine.database.QueryTemplate;
-import com.datasqrl.engine.database.relational.JDBCEngine;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.io.impl.file.FileDataSystemConfig;
 import com.datasqrl.io.impl.file.FileDataSystemFactory;
@@ -23,18 +19,15 @@ import com.datasqrl.io.impl.file.FilePath;
 import com.datasqrl.io.impl.file.FilePathConfig;
 import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
 import com.datasqrl.io.tables.TableConfig;
-import com.datasqrl.module.SqrlModule;
 import com.datasqrl.plan.global.DAGPlanner;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.ExternalSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.WriteQuery;
 import com.datasqrl.plan.local.analyze.MockAPIConnectorManager;
 import com.datasqrl.plan.local.analyze.ResolveTest;
-import com.datasqrl.plan.local.generate.Debugger;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.util.CalciteUtil;
-import com.datasqrl.util.DatabaseHandle;
 import com.datasqrl.util.FileTestUtil;
 import com.datasqrl.util.ResultSetPrinter;
 import com.datasqrl.util.SnapshotTest;
@@ -52,8 +45,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -64,7 +55,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.test.junit5.MiniClusterExtension;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -101,7 +91,7 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
       RelBuilder relBuilder = framework.getQueryPlanner().getRelBuilder()
           .scan(vt.getNameId());
       relBuilder = CalciteUtil.projectOutNested(relBuilder);
-      apiManager.addQuery(new APIQuery(tableName, relBuilder.build()));
+      apiManager.addQuery(new APIQuery(tableName, null, relBuilder.build(), null, null, false));
     }
 
     PhysicalDAGPlan dag = DAGPlanner.plan(framework, apiManager, framework.getSchema().getExports(),

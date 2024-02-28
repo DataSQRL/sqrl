@@ -8,9 +8,9 @@ type Click {
 scalar DateTime
 
 type Query {
-  Trending(url: String, limit: Int = 10, offset: Int = 0): [Trending!]
   Click(limit: Int = 10, offset: Int = 0): [Click!]
   Recommendation(url: String, rec: String, limit: Int = 10, offset: Int = 0): [Recommendation!]
+  Trending(url: String, limit: Int = 10, offset: Int = 0): [Trending!]
   VisitAfter(limit: Int = 10, offset: Int = 0): [VisitAfter!]
 }
 

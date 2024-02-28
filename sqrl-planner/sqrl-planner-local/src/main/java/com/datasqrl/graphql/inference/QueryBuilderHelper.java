@@ -4,18 +4,14 @@ import static com.datasqrl.graphql.jdbc.SchemaConstants.LIMIT;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.OFFSET;
 
 import com.datasqrl.calcite.QueryPlanner;
-import com.datasqrl.graphql.APIConnectorManager;
-import com.datasqrl.graphql.inference.SchemaBuilder.ArgCombination;
-import com.datasqrl.graphql.server.Model;
+import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.graphql.inference.GraphqlQueryGenerator.ArgCombination;
 import com.datasqrl.graphql.server.Model.Argument;
 import com.datasqrl.graphql.server.Model.ArgumentParameter;
 import com.datasqrl.graphql.server.Model.FixedArgument;
 import com.datasqrl.graphql.server.Model.JdbcParameterHandler;
-import com.datasqrl.graphql.server.Model.QueryBase;
 import com.datasqrl.graphql.server.Model.SourceParameter;
 import com.datasqrl.graphql.server.Model.VariableArgument;
-import com.datasqrl.graphql.util.ApiQueryBase;
-import com.datasqrl.graphql.util.PagedApiQueryBase;
 import com.datasqrl.plan.queries.APIQuery;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
@@ -40,20 +36,17 @@ public class QueryBuilderHelper {
   private final RelBuilder relBuilder;
   private final RexBuilder rexBuilder;
   private final String nameId;
-  private final APIConnectorManager apiManager;
   List<Argument> graphqlArguments = new ArrayList<>();
-  // Parameter handler and operands should be
   List<Pair<RexNode, JdbcParameterHandler>> parameterHandler = new ArrayList<>();
   List<RexNode> extraFilters = new ArrayList<>();
   private boolean limitOffsetFlag = false;
 
   public QueryBuilderHelper(QueryPlanner queryPlanner, RelBuilder relBuilder,
-      String nameId, APIConnectorManager apiManager) {
+      String nameId) {
     this.queryPlanner = queryPlanner;
     this.relBuilder = relBuilder;
     this.rexBuilder = relBuilder.getRexBuilder();
     this.nameId = nameId;
-    this.apiManager = apiManager;
   }
 
   public void filter(String name, RelDataType type) {
@@ -158,37 +151,13 @@ public class QueryBuilderHelper {
     relBuilder.filter(extraFilters);
   }
 
-  public Model.ArgumentSet build() {
-
+  public APIQuery build(NamePath path) {
     RelNode rel = relBuilder.build();
 
     RelNode expanded = queryPlanner.expandMacros(rel);
-
-    APIQuery query = new APIQuery(nameId, expanded);
-    apiManager.addQuery(query);
-    List<JdbcParameterHandler> handlers = this.parameterHandler.stream()
+    List<JdbcParameterHandler> parameters = this.parameterHandler.stream()
         .map(Pair::getRight)
         .collect(Collectors.toList());
-
-    QueryBase queryBase;
-
-    if (limitOffsetFlag) {
-      queryBase = PagedApiQueryBase.builder()
-          .parameters(handlers)
-          .relNode(expanded)
-          .query(query)
-          .build();
-    } else {
-      queryBase = ApiQueryBase.builder()
-          .parameters(handlers)
-          .relNode(expanded)
-          .query(query)
-          .build();
-    }
-
-    return Model.ArgumentSet.builder()
-        .arguments(this.graphqlArguments)
-        .query(queryBase)
-        .build();
+    return new APIQuery(nameId, path, expanded, parameters, this.graphqlArguments, limitOffsetFlag);
   }
 }

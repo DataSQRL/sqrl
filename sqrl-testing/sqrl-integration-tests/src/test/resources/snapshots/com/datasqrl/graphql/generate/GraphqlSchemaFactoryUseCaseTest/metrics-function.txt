@@ -2,12 +2,12 @@
 scalar DateTime
 
 type Query {
-  sensors(limit: Int = 10, offset: Int = 0): [sensors!]
   machinegroup(limit: Int = 10, offset: Int = 0): [machinegroup!]
+  SecReading(sensorid: Float, timeSec: DateTime, limit: Int = 10, offset: Int = 0): [SecReading!]
   SecReadingByTemp(temp: Int!): [SecReadingByTemp!]
   SensorMaxTemp(sensorid: Float, limit: Int = 10, offset: Int = 0): [SensorMaxTemp!]
-  SecReading(sensorid: Float, timeSec: DateTime, limit: Int = 10, offset: Int = 0): [SecReading!]
   sensorreading(limit: Int = 10, offset: Int = 0): [sensorreading!]
+  sensors(limit: Int = 10, offset: Int = 0): [sensors!]
 }
 
 type SecReading {

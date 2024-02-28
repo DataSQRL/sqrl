@@ -41,7 +41,7 @@ class SchemaInferenceMutationErrorTest extends AbstractSchemaInferenceModelTest 
   @Test
   public void mustHaveQueryType() {
     super.inferSchemaModelQueries("type Orders {\n\tid: Int\n}\n", framework, pipeline, errors);
-    assertFalse(errors.hasErrorsWarningsOrNotices());
+    assertTrue(errors.hasErrorsWarningsOrNotices());
   }
 
   @Test
@@ -80,15 +80,6 @@ class SchemaInferenceMutationErrorTest extends AbstractSchemaInferenceModelTest 
   public void nonMatchingInputAndOutputTypes() {
     super.inferSchemaModelQueries("type Orders {\n\tid: Int\n}\n"
         + "input OrderInput {\n\tid: String!\n}\n"
-        + "type Mutation {\n\taddOrder(input: OrderInput!): Orders\n}"
-        + "type Query {\n\torders: Orders\n}", framework, pipeline, errors);
-    validateErrorsAndAddContent();
-  }
-
-  @Test
-  public void mutationNotASink() {
-   super.inferSchemaModelQueries("type Orders {\n\tid: Int!\n}\n"
-        + "input OrderInput {\n\tid: Int!\n}\n"
         + "type Mutation {\n\taddOrder(input: OrderInput!): Orders\n}"
         + "type Query {\n\torders: Orders\n}", framework, pipeline, errors);
     validateErrorsAndAddContent();

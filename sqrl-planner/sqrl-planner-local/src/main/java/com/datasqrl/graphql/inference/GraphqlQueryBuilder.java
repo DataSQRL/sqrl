@@ -10,10 +10,9 @@ import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.function.SqrlFunctionParameter;
 import com.datasqrl.graphql.APIConnectorManager;
-import com.datasqrl.graphql.inference.SchemaBuilder.ArgCombination;
-import com.datasqrl.graphql.server.Model;
+import com.datasqrl.graphql.inference.GraphqlQueryGenerator.ArgCombination;
 import com.datasqrl.graphql.server.Model.SourceParameter;
-import com.datasqrl.util.NameUtil;
+import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.util.SqlNameUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -35,7 +34,6 @@ import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.schema.Function;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.sql.SqlFunctionCategory;
@@ -45,7 +43,6 @@ import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlSyntax;
 import org.apache.calcite.sql.SqlUtil;
 import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -58,7 +55,7 @@ public class GraphqlQueryBuilder {
   APIConnectorManager apiManager;
   SqlNameUtil nameUtil;
 
-  public Model.ArgumentSet create(List<ArgCombination> arg, SqrlTableMacro macro,
+  public APIQuery create(List<ArgCombination> arg, SqrlTableMacro macro,
       String parentName, FieldDefinition fieldDefinition, RelDataType parentType) {
 
     Pair<SqlUserDefinedTableFunction, Boolean> operatorPair = resolveOperator(macro, arg);
@@ -69,7 +66,7 @@ public class GraphqlQueryBuilder {
 
     QueryBuilderHelper queryBuilderHelper = new QueryBuilderHelper(framework.getQueryPlanner(),
         framework.getQueryPlanner().getRelBuilder(),
-        nameId, apiManager);
+        nameId);
 
     if (allowPermutation) {
       for (SqrlFunctionParameter parameter : getInternalParams(operator.getFunction().getParameters())) {
@@ -127,7 +124,7 @@ public class GraphqlQueryBuilder {
       queryBuilderHelper.limitOffset(limit, offset);
     }
 
-    Model.ArgumentSet argumentSet = queryBuilderHelper.build();
+    APIQuery query = queryBuilderHelper.build(macro.getFullPath());
 
     //Validate all source args are resolvable
     List<SourceParameter> sourceParams = queryBuilderHelper.graphqlArguments.stream()
@@ -146,7 +143,7 @@ public class GraphqlQueryBuilder {
       Preconditions.checkState(sourceParams.isEmpty(), "Expected no source params");
     }
 
-    return argumentSet;
+    return query;
   }
 
   private String generateQueryNameId(String parentName, FieldDefinition fieldDefinition) {

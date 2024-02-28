@@ -27,6 +27,7 @@ import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.SqlConnection;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
@@ -70,18 +71,14 @@ class VertxGraphQLBuilderTest {
                   .path("sort.customerid")
                   .value("DESC")
                   .build())
-              .query(JdbcQuery.builder()
-                  .sql("SELECT customerid FROM Customer ORDER BY customerid DESC")
-                  .build())
+              .query(new JdbcQuery("SELECT customerid FROM Customer ORDER BY customerid DESC", List.of()))
               .build())
           .match(ArgumentSet.builder()
               .argument(FixedArgument.builder()
                   .path("sort.customerid")
                   .value("ASC")
                   .build())
-              .query(JdbcQuery.builder()
-                  .sql("SELECT customerid FROM Customer ORDER BY customerid ASC")
-                  .build())
+              .query(new JdbcQuery("SELECT customerid FROM Customer ORDER BY customerid ASC", List.of()))
               .build())
           .build())
 
@@ -92,24 +89,18 @@ class VertxGraphQLBuilderTest {
               .argument(VariableArgument.builder()
                   .path("customerid")
                   .build())
-              .query(JdbcQuery.builder()
-                  .sql("SELECT customerid FROM Customer WHERE customerid = $1")
-                  .parameter(ArgumentParameter.builder()
+              .query(new JdbcQuery("SELECT customerid FROM Customer WHERE customerid = $1", List.of(ArgumentParameter.builder()
                       .path("customerid")
-                      .build())
-                  .build())
+                      .build())))
               .build())
           .build())
       .coord(ArgumentLookupCoords.builder()
           .parentType("Customer")
           .fieldName("sameCustomer")
           .match(ArgumentSet.builder()
-              .query(JdbcQuery.builder()
-                  .sql("SELECT customerid FROM Customer WHERE customerid = $1")
-                  .parameter(SourceParameter.builder()
+              .query(new JdbcQuery("SELECT customerid FROM Customer WHERE customerid = $1", List.of(SourceParameter.builder()
                       .key("customerid")
-                      .build())
-                  .build())
+                      .build())))
               .build())
           .build())
       .build();

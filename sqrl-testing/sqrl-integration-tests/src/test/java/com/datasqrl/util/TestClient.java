@@ -96,7 +96,7 @@ public class TestClient {
         p.complete();
       } else {
         log.info("Failed to connect " + websocketRes.cause());
-        fail();
+        fail(websocketRes.cause());
         p.fail("Failed");
       }
     });
