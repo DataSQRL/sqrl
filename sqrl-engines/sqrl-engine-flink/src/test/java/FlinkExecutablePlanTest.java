@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import com.datasqrl.FlinkExecutablePlan;
 import com.datasqrl.FlinkExecutablePlan.*;
 import com.datasqrl.FlinkEnvironmentBuilder;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.model.LogicalStreamMetaData;
 import com.datasqrl.serializer.SerializableSchema;
 import com.datasqrl.serializer.SerializableSchema.WaterMarkType;
@@ -114,7 +115,7 @@ class FlinkExecutablePlanTest {
             .build())
         .build();
 
-    FlinkEnvironmentBuilder visitor = new FlinkEnvironmentBuilder();
+    FlinkEnvironmentBuilder visitor = new FlinkEnvironmentBuilder(ErrorCollector.root());
     StatementSet statementSet = executablePlan.accept(visitor, null);
     TableResult result = statementSet.execute();
 

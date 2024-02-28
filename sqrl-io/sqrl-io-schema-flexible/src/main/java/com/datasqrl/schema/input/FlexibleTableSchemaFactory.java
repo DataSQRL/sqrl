@@ -28,7 +28,7 @@ public class FlexibleTableSchemaFactory implements TableSchemaFactory {
     Deserializer deserializer = new Deserializer();
     TableDefinition schemaDef = deserializer.mapYAML(schemaDefinition, TableDefinition.class);
     SchemaImport importer = new SchemaImport(Constraint.FACTORY_LOOKUP, NameCanonicalizer.SYSTEM);
-    FlexibleTableSchema tableSchema = importer.convert(schemaDef, ErrorCollector.root()).get();
+    FlexibleTableSchema tableSchema = importer.convert(schemaDef, errors).get();
     return new FlexibleTableSchemaHolder(tableSchema, schemaDefinition, location);
   }
 

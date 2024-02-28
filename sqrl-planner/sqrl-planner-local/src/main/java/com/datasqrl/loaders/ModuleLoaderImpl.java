@@ -5,19 +5,22 @@ import com.datasqrl.io.DataSystemDiscovery;
 import com.datasqrl.io.impl.print.PrintDataSystemFactory;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.module.SqrlModule;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 
-@AllArgsConstructor
+@AllArgsConstructor(onConstructor_=@Inject)
 public class ModuleLoaderImpl implements ModuleLoader {
   final StandardLibraryLoader standardLibraryLoader = new StandardLibraryLoader();
   ObjectLoader objectLoader;
 
   @Override
   public Optional<SqrlModule> getModule(NamePath namePath) {
-
     // Load modules from standard library
     List<NamespaceObject> nsObjects = new ArrayList<>(loadFromStandardLibrary(namePath));
 

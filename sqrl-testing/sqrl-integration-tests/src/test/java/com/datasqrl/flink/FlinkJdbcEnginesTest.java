@@ -3,6 +3,7 @@ package com.datasqrl.flink;
 import com.datasqrl.AbstractQuerySQRLIT;
 import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.IntegrationTestSettings.DatabaseEngine;
+import com.datasqrl.IntegrationTestSettings.StreamEngine;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestGraphQLSchema;
 import com.datasqrl.util.TestScript;

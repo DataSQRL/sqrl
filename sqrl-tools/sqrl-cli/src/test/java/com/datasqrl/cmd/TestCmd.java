@@ -270,6 +270,7 @@ public class TestCmd {
   public static int execute(Path rootDir, String... args) {
     return execute(rootDir, AssertStatusHook.INSTANCE, args);
   }
+
   public static int execute(Path rootDir, StatusHook hook, String... args) {
     return new RootCommand(rootDir,hook).getCmd().execute(args);
   }

@@ -21,12 +21,14 @@ import com.datasqrl.schema.UniversalTable;
 import com.datasqrl.util.SqlNameUtil;
 import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
+import com.google.inject.Inject;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import lombok.AllArgsConstructor;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.hint.RelHint;
 import org.apache.calcite.schema.Function;
@@ -34,17 +36,12 @@ import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.tools.RelBuilder;
 
+@AllArgsConstructor(onConstructor_=@Inject)
 public class SqrlPlanningTableFactory implements SqrlTableFactory {
 
   private final SqrlFramework framework;
   private final SqlNameUtil nameUtil;
   private final CalciteTableFactory tableFactory;
-
-  public SqrlPlanningTableFactory(SqrlFramework framework) {
-    this.framework = framework;
-    this.nameUtil = new SqlNameUtil(framework.getNameCanonicalizer());
-    this.tableFactory = new CalciteTableFactory(framework);
-  }
 
   @Override
   public void createTable(List<String> path, RelNode input, List<RelHint> hints,

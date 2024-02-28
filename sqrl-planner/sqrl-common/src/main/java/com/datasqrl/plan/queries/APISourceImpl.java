@@ -8,18 +8,19 @@ import com.datasqrl.util.FileUtil;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.EqualsAndHashCode.Include;
-import lombok.Value;
+import lombok.Getter;
 
-@Value
+@AllArgsConstructor
+@Getter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public class APISource {
+public class APISourceImpl implements APISource {
 
   @Include
   Name name;
   String schemaDefinition;
 
   public static APISource of(String schemaDefinition) {
-    return new APISource(Name.system("schema"),schemaDefinition
+    return new APISourceImpl(Name.system("schema"),schemaDefinition
         .replaceAll("\t", "  "));
   }
 
@@ -29,7 +30,7 @@ public class APISource {
   }
 
   public static APISource of(String filename, NameCanonicalizer canonicalizer, ResourceResolver resolver) {
-    return new APISource(
+    return new APISourceImpl(
         canonicalizer.name(FileUtil.separateExtension(filename).getKey()),
         FileUtil.readFile(resolver.resolveFile(NamePath.of(filename)).get())
     );

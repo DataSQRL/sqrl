@@ -58,6 +58,10 @@
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-execute-flink-function</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-execute-http-core</artifactId>
+    </dependency>
   </dependencies>
   <build>
     <pluginManagement>

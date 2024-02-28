@@ -1,27 +1,33 @@
 package com.datasqrl.calcite;
 
-import com.datasqrl.canonicalizer.NameCanonicalizer;
-import org.apache.calcite.sql.*;
+import com.google.inject.Inject;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import org.apache.calcite.jdbc.SqrlSchema;
+import org.apache.calcite.sql.SqlFunctionCategory;
+import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlOperator;
+import org.apache.calcite.sql.SqlOperatorTable;
+import org.apache.calcite.sql.SqlSyntax;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.validate.SqlNameMatcher;
 
-import java.util.*;
-
 public class OperatorTable implements SqlOperatorTable {
-  private final Map<String, SqlOperator> udf = new HashMap<>();
-  private final Map<List<String>, SqlOperator> udfListMap = new HashMap<>();
-  private final Map<List<String>, SqlOperator> internalNames = new HashMap<>();
-  private final NameCanonicalizer nameCanonicalizer;
-  private final SqlOperatorTable[] chain;
 
-  public OperatorTable(NameCanonicalizer nameCanonicalizer, SqlOperatorTable... chain) {
-    this.nameCanonicalizer = nameCanonicalizer;
-    this.chain = chain;
+  private final SqlOperatorTable[] chain;
+  private final SqrlSchema schema;
+
+  @Inject
+  public OperatorTable(CatalogReader catalogReader, SqrlSchema schema) {
+    this.chain = new SqlOperatorTable[]{catalogReader, SqlStdOperatorTable.instance()};
+    this.schema = schema;
   }
 
   @Override
   public void lookupOperatorOverloads(SqlIdentifier sqlIdentifier, SqlFunctionCategory sqlFunctionCategory, SqlSyntax sqlSyntax, List<SqlOperator> list, SqlNameMatcher sqlNameMatcher) {
     if (list.isEmpty()) {
-      SqlOperator fn = sqlNameMatcher.get(udfListMap, List.of(), List.of(sqlIdentifier.getSimple()));
+      SqlOperator fn = sqlNameMatcher.get(schema.getUdfListMap(), List.of(), List.of(sqlIdentifier.getSimple()));
       if (fn != null) {
         list.add(fn);
       }
@@ -29,7 +35,7 @@ public class OperatorTable implements SqlOperatorTable {
 
     //Also check the function name since calcite will convert to their function name
     if (list.isEmpty()) {
-      SqlOperator fn = sqlNameMatcher.get(internalNames, List.of(), List.of(sqlIdentifier.getSimple()));
+      SqlOperator fn = sqlNameMatcher.get(schema.getInternalNames(), List.of(), List.of(sqlIdentifier.getSimple()));
       if (fn != null) {
         list.add(fn);
       }
@@ -47,16 +53,10 @@ public class OperatorTable implements SqlOperatorTable {
 
   @Override
   public List<SqlOperator> getOperatorList() {
-    return new ArrayList<>(this.udf.values());
-  }
-
-  public void addFunction(String canonicalName, SqlOperator function) {
-    this.udf.put(nameCanonicalizer.getCanonical(canonicalName), function);
-    this.udfListMap.put(List.of(nameCanonicalizer.getCanonical(canonicalName)), function);
-    this.internalNames.put(List.of(function.getName()), function);
+    return new ArrayList<>(schema.getUdf().values());
   }
 
   public Map<String, SqlOperator> getUdfs() {
-    return udf;
+    return schema.getUdf();
   }
 }

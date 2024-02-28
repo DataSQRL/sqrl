@@ -20,6 +20,11 @@ public class EngineStage implements ExecutionStage {
   String name;
   ExecutionEngine engine;
 
+  public EngineStage(String name, ExecutionEngine engine) {
+    this.name = name;
+    this.engine = engine;
+  }
+
   @Override
   public boolean supports(EngineCapability capability) {
     return engine.supports(capability);

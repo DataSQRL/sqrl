@@ -10,6 +10,7 @@ import graphql.schema.GraphqlTypeComparatorRegistry;
 import graphql.schema.idl.SchemaPrinter;
 import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.calcite.jdbc.SqrlSchema;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 
@@ -26,7 +27,8 @@ public class AbstractGraphqlSchemaFactoryTest extends AbstractLogicalSQRLIT {
   protected String generateSchema(String sqrlScript, boolean addArguments) {
     plan(sqrlScript);
 
-    GraphQLSchema schema = new GraphqlSchemaFactory(framework.getSchema(), addArguments).generate();
+    GraphQLSchema schema = new GraphqlSchemaFactory(injector.getInstance(SqrlSchema.class), addArguments)
+        .generate();
     SchemaPrinter.Options opts = SchemaPrinter.Options.defaultOptions()
         .setComparators(GraphqlTypeComparatorRegistry.AS_IS_REGISTRY)
         .includeDirectives(false);

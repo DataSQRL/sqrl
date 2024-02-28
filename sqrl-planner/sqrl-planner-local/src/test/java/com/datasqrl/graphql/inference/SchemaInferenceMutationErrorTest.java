@@ -40,37 +40,36 @@ class SchemaInferenceMutationErrorTest extends AbstractSchemaInferenceModelTest 
 
   @Test
   public void mustHaveQueryType() {
-    super.inferSchemaModelQueries("type Orders {\n\tid: Int\n}\n", framework, pipeline, errors);
+    super.inferSchemaModelQueriesErr("type Orders {\n  id: Int\n}\n", framework, errors);
     assertTrue(errors.hasErrorsWarningsOrNotices());
   }
 
   @Test
   public void inputMustBeNonnull() {
-    super.inferSchemaModelQueries("type Orders {\n" +
-        "\t_uuid: String\n" +
+    super.inferSchemaModelQueriesErr("type Orders {\n" +
+        "  _uuid: String\n" +
         "}\n"
         + "input OrderInput {\n" +
-        "\tid: Int!" +
+        "  id: Int!" +
         "\n}" +
         "\n"
         + "type Mutation {\n" +
-        "\taddOrder(input: OrderInput): Orders\n" +
+        "  addOrder(input: OrderInput): Orders\n" +
         "}\n"
         + "type Query {\n" +
-        "\torders: Orders" +
-        "\n}", framework, pipeline, errors);
+        "  orders: Orders" +
+        "\n}", framework, errors);
     validateErrorsAndAddContent();
   }
 
   @Test
   public void validSubscriptionArrayTest() {
-    plan(
-      "TestOutput := STREAM ON ADD AS SELECT COLLECT(productid) AS id FROM Product;\n");
-    inferSchemaModelQueries("type Query {\n\torders: [Orders]\n}\n"
-        + "type Subscription {\n\ttestOutput: TestOutput\n}\n"
-        + "input TestInput {\n\tid: [Int!]!\n}\n"
-        + "type TestOutput {\n\tid: [Int!]!\n}\n"
-        + "type Orders {\n\tid: [Int!]!\n}\n", framework, pipeline, errors
+    plan("TestOutput := STREAM ON ADD AS SELECT COLLECT(productid) AS id FROM Product;\n");
+    inferSchemaModelQueries("type Query {\n  orders: [Orders]\n}\n"
+        + "type Subscription {\n  testOutput: TestOutput\n}\n"
+        + "input TestInput {\n  id: [Int!]!\n}\n"
+        + "type TestOutput {\n  id: [Int!]!\n}\n"
+        + "type Orders {\n  id: [Int!]!\n}\n", framework, errors
     );
 
     assertFalse(errors.hasErrorsWarningsOrNotices());
@@ -78,10 +77,19 @@ class SchemaInferenceMutationErrorTest extends AbstractSchemaInferenceModelTest 
 
   @Test
   public void nonMatchingInputAndOutputTypes() {
-    super.inferSchemaModelQueries("type Orders {\n\tid: Int\n}\n"
-        + "input OrderInput {\n\tid: String!\n}\n"
-        + "type Mutation {\n\taddOrder(input: OrderInput!): Orders\n}"
-        + "type Query {\n\torders: Orders\n}", framework, pipeline, errors);
+    super.inferSchemaModelQueriesErr("type Orders {\n  id: Int\n}\n"
+        + "input OrderInput {\n  id: String!\n}\n"
+        + "type Mutation {\n  addOrder(input: OrderInput!): Orders\n}"
+        + "type Query {\n  orders: Orders\n}", framework, errors);
     validateErrorsAndAddContent();
   }
+
+//  @Test
+//  public void mutationNotASink() {
+//   super.inferSchemaModelQueriesErr("type Orders {\n  id: Int!\n}\n"
+//        + "input OrderInput {\n  id: Int!\n}\n"
+//        + "type Mutation {\n  addOrder(input: OrderInput!): Orders\n}"
+//        + "type Query {\n  orders: Orders\n}", framework, errors);
+//    validateErrorsAndAddContent();
+//  }
 }
