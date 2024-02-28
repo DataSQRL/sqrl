@@ -1,13 +1,14 @@
 package com.datasqrl.json;
 
 import com.google.auto.service.AutoService;
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
 
 @AutoService(GraphqlGeneratorMapping.class)
 public class JsonGraphqlGeneratorMapping implements GraphqlGeneratorMapping {
 
   @Override
   public Class getConversionClass() {
-    return FlinkJsonType.class;
+    return JsonNode.class;
   }
 
   @Override

@@ -50,7 +50,6 @@ import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableSchemaFactory;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.io.tables.TableSource;
-import com.datasqrl.json.FlinkJsonType;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.ExternalSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.Query;
@@ -101,6 +100,7 @@ import org.apache.calcite.tools.Programs;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
 import org.apache.flink.table.api.config.ExecutionConfigOptions;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.functions.UserDefinedFunction;
@@ -269,7 +269,7 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
 
   private boolean formatSupportsType(String format, RawRelDataType type) {
     //Hard code in json format for now
-    return type.getRawType().getOriginatingClass() == FlinkJsonType.class &&
+    return type.getRawType().getOriginatingClass() == JsonNode.class &&
         format.equalsIgnoreCase(JsonLineFormat.NAME);
   }
 
