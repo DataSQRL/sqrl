@@ -1,10 +1,14 @@
 package com.datasqrl.plan.global;
 
+import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.graphql.server.Model.Argument;
+import com.datasqrl.graphql.server.Model.JdbcParameterHandler;
 import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.queries.APIQuery;
+import java.util.List;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;
 
@@ -16,10 +20,6 @@ public class AnalyzedAPIQuery implements DatabaseQuery {
 
   public AnalyzedAPIQuery(APIQuery baseQuery) {
     this.baseQuery = baseQuery;
-  }
-
-  public AnalyzedAPIQuery(String nameId, RelNode relNode) {
-    this.baseQuery = new APIQuery(nameId, relNode);
   }
 
   public SQRLConverter.Config getBaseConfig() {

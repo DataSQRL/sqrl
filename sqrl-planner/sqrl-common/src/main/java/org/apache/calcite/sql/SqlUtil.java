@@ -38,6 +38,7 @@ import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.type.SqlTypeUtil;
 import org.apache.calcite.sql.util.SqlBasicVisitor;
 import org.apache.calcite.sql.validate.SqlNameMatcher;
+import org.apache.calcite.sql.validate.SqlNameMatchers;
 import org.apache.calcite.util.BarfingInvocationHandler;
 import org.apache.calcite.util.ConversionUtil;
 import org.apache.calcite.util.Glossary;
@@ -650,7 +651,8 @@ public abstract class SqlUtil {
           final List<@Nullable RelDataType> permutedArgTypes;
           if (argNames != null) {
             final List<String> paramNames = operandMetadata.paramNames();
-            permutedArgTypes = permuteArgTypes(paramNames, argNames, argTypes);
+            permutedArgTypes = permuteArgTypes(paramNames, argNames, argTypes,
+                SqlNameMatchers.withCaseSensitive(false));
             if (permutedArgTypes == null) {
               return false;
             }
@@ -679,11 +681,17 @@ public abstract class SqlUtil {
    */
   private static @Nullable List<@Nullable RelDataType> permuteArgTypes(List<String> paramNames,
       List<String> argNames, List<RelDataType> argTypes) {
+    return permuteArgTypes(paramNames, argNames, argTypes);
+  }
+
+  //SQRL: Add namematcher to find case-insensitive parameters
+  private static @Nullable List<@Nullable RelDataType> permuteArgTypes(List<String> paramNames,
+      List<String> argNames, List<RelDataType> argTypes, SqlNameMatcher nameMatcher) {
     // Arguments passed by name. Make sure that the function has
     // parameters of all of these names.
     Map<Integer, Integer> map = new HashMap<>();
     for (Ord<String> argName : Ord.zip(argNames)) {
-      int i = paramNames.indexOf(argName.e);
+      int i = nameMatcher.indexOf(paramNames, argName.e);
       if (i < 0) {
         return null;
       }

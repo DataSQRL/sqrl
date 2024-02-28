@@ -1,6 +1,6 @@
-[FATAL] Could not find Object type [MISSING]
-in script:<schema> [2:12]:
+[FATAL] Could not find object in graphql type registry
+in script:schema [2:12]:
 type Orders {
-	entries: MISSING
+  entries: MISSING
 -----------^
 

@@ -14,7 +14,7 @@ import org.junit.jupiter.api.TestInfo;
 import java.io.IOException;
 
 @Slf4j
-public class SchemaGeneratorTest extends AbstractSchemaGeneratorTest {
+public class GraphqlSchemaFactoryTest extends AbstractGraphqlSchemaFactoryTest {
 
   @BeforeEach
   public void setup(TestInfo testInfo) throws IOException {

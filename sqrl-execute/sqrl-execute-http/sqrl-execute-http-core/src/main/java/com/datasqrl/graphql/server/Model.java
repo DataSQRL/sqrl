@@ -208,7 +208,6 @@ public class Model {
     <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context);
   }
 
-  @Builder
   @Getter
   @AllArgsConstructor
   @NoArgsConstructor

@@ -10,6 +10,7 @@ import com.datasqrl.plan.local.generate.QueryTableFunction;
 import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.plan.table.ProxyImportRelationalTable;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
+import com.datasqrl.schema.RootSqrlTable;
 import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
 import java.util.Collection;
@@ -30,7 +31,8 @@ public class DAGPreparation {
       Collection<ResolvedExport> exports) {
 
     //Add subscriptions as exports
-    apiManager.getExports().forEach((sqrlTable, log) -> exports.add(exportTable((ModifiableTable) sqrlTable.getVt(),
+    apiManager.getExports().forEach((sqrlTable, log) -> exports.add(exportTable(
+        (ModifiableTable) ((RootSqrlTable) sqrlTable).getInternalTable(),
         log.getSink(), relBuilder)));
 
     //Assign timestamps to imports which propagate and restrict remaining timestamps in downstream tables
@@ -40,9 +42,8 @@ public class DAGPreparation {
     getAllPhysicalTables(sqrlSchema).forEach(this::finalizeTimestampOnTable);
 
     //Replace default joins with inner joins for API queries
-    return apiManager.getQueries().stream().map(apiQuery ->
-      new AnalyzedAPIQuery(apiQuery.getNameId(), apiQuery.getRelNode())
-    ).collect(Collectors.toList());
+    return apiManager.getQueries().stream()
+        .map(AnalyzedAPIQuery::new).collect(Collectors.toList());
   }
 
   private Stream<PhysicalRelationalTable> getAllPhysicalTables(SqrlSchema sqrlSchema) {

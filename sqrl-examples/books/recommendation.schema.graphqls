@@ -79,12 +79,12 @@ type PositiveReviews {
 
 type Query {
   Authors(author_id: Float, limit: Int = 10, offset: Int = 0): [Authors!]
-  Books(book_id: Float, limit: Int = 10, offset: Int = 0): [Books!]
   BookRatingCount(book_id: Float, limit: Int = 10, offset: Int = 0): [BookRatingCount!]
-  PositiveReviews(limit: Int = 10, offset: Int = 0): [PositiveReviews!]
-  Reviews(limit: Int = 10, offset: Int = 0): [Reviews!]
+  Books(book_id: Float, limit: Int = 10, offset: Int = 0): [Books!]
   CoReviews(limit: Int = 10, offset: Int = 0): [CoReviews!]
   CoReviewsUndirected(limit: Int = 10, offset: Int = 0): [CoReviewsUndirected!]
+  PositiveReviews(limit: Int = 10, offset: Int = 0): [PositiveReviews!]
+  Reviews(limit: Int = 10, offset: Int = 0): [Reviews!]
 }
 
 type Reviews {

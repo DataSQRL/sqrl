@@ -43,11 +43,11 @@ type Product {
 }
 
 type Query {
-  Product(productid: Float, limit: Int = 10, offset: Int = 0): [Product!]
+  Category(name: String, limit: Int = 10, offset: Int = 0): [Category!]
+  Customer(customerid: Float, limit: Int = 10, offset: Int = 0): [Customer!]
   NewCustomerPromotion(limit: Int = 10, offset: Int = 0): [NewCustomerPromotion!]
   Orders(limit: Int = 10, offset: Int = 0): [Orders!]
-  Customer(customerid: Float, limit: Int = 10, offset: Int = 0): [Customer!]
-  Category(name: String, limit: Int = 10, offset: Int = 0): [Category!]
+  Product(productid: Float, limit: Int = 10, offset: Int = 0): [Product!]
 }
 
 type entries {

@@ -3,6 +3,11 @@
  */
 package com.datasqrl.plan.queries;
 
+import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.graphql.server.Model.Argument;
+import com.datasqrl.graphql.server.Model.JdbcParameterHandler;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.EqualsAndHashCode;
 import lombok.EqualsAndHashCode.Include;
 import lombok.ToString;
@@ -15,7 +20,15 @@ import org.apache.calcite.rel.RelNode;
 public class APIQuery implements IdentifiedQuery {
 
   @Include
-  private final String nameId;
-  private final RelNode relNode;
-
+  String nameId;
+  // Path from root
+  NamePath namePath;
+  // Query
+  RelNode relNode;
+  // Where parameters come from
+  List<JdbcParameterHandler> parameters;
+  // How arguments are matched
+  List<Argument> graphqlArguments;
+  // Has a limit/offset
+  boolean isLimitOffset;
 }
