@@ -1,7 +1,8 @@
->>>errors
-[FATAL] Undefined timestamp does not have candidates
-in script:<script> [2:1]:
-IMPORT ecommerce-data.Product TIMESTAMP _ingest_time;
-Product2 := SELECT * FROM Product UNION DISTINCT SELECT * FROM Product;
-^
+>>>product$2
+LogicalTableScan(table=[[product$1]])
+
+>>>product2$1
+LogicalUnion(all=[false])
+  LogicalTableScan(table=[[product$2]])
+  LogicalTableScan(table=[[product$2]])
 

@@ -1,0 +1,13 @@
+>>>category$1
+LogicalProject(name=[$5], _ingest_time=[$1])
+  LogicalTableScan(table=[[product$2]])
+
+>>>customer$2
+LogicalTableScan(table=[[customer$1]])
+
+>>>orders$2
+LogicalTableScan(table=[[orders$1]])
+
+>>>product$2
+LogicalTableScan(table=[[product$1]])
+

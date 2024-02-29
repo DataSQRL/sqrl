@@ -17,8 +17,8 @@ import org.junit.jupiter.api.TestInfo;
 class SchemaInferenceMutationErrorTest extends AbstractSchemaInferenceModelTest {
 
   private Snapshot snapshot;
-  public static final String IMPORT_SCRIPT = "IMPORT ecommerce-data.Orders;\n"
-      + "IMPORT ecommerce-data.Product;\n";
+  public static final String IMPORT_SCRIPT = "IMPORT ecommerce-data.Orders TIMESTAMP _ingest_time;\n"
+      + "IMPORT ecommerce-data.Product TIMESTAMP _ingest_time;\n";
 
   @BeforeEach
   protected void initialize(TestInfo testInfo) {

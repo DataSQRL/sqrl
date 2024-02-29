@@ -1,0 +1,7 @@
+>>>order_time$1
+LogicalProject(month=[$4], month0=[EXTRACT(FLAG(MONTH), NOW())], _uuid=[$0])
+  LogicalTableScan(table=[[orders$2]])
+
+>>>orders$2
+LogicalTableScan(table=[[orders$1]])
+

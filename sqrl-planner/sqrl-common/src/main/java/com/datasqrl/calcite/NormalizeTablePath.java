@@ -111,8 +111,12 @@ public class NormalizeTablePath {
 
       if (materializeSelf || !input.hasNext()) {
         // Do a table scan on the source table
-        RelOptTable table = catalogResolver.getTableFromPath(pathWalker.getPath());
-        pathItems.add(new SelfTablePathItem(table));
+        Optional<RelOptTable> table = catalogResolver.getTableFromPath(pathWalker.getPath());
+        if (table.isEmpty()) {
+          throw addError(errors, ErrorLabel.GENERIC, item, "Could not find path item at: %s",
+              pathWalker.getPath().getDisplay());
+        }
+        table.map(t->pathItems.add(new SelfTablePathItem(t)));
         alias = ReservedName.SELF_IDENTIFIER;
       } else {
         Name nextIdentifier = getIdentifier(input.next())

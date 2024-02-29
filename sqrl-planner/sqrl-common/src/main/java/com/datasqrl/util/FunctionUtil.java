@@ -50,6 +50,16 @@ public class FunctionUtil {
         .map(f->(TimestampPreservingFunction)f)
         .findFirst();
   }
+  public static Optional<SqrlTimeTumbleFunction> getSqrlTimeTumbleFunction(
+      FunctionDefinition functionDefinition) {
+
+    return ServiceLoaderDiscovery.getAll(FunctionMetadata.class)
+        .stream()
+        .filter(f->f.getMetadataClass().equals(functionDefinition.getClass()))
+        .filter(f->SqrlTimeTumbleFunction.class.isAssignableFrom(f.getClass()))
+        .map(f->(SqrlTimeTumbleFunction)f)
+        .findFirst();
+  }
 
   public static Optional<InputPreservingFunction> isInputPreservingFunction(FunctionDefinition functionDefinition) {
     return ServiceLoaderDiscovery.getAll(FunctionMetadata.class)

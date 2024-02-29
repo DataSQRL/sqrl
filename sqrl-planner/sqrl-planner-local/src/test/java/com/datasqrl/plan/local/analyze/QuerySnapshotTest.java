@@ -639,7 +639,8 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   @Disabled("no longer supported")
   public void importWithTimestamp() {
     validateScript("IMPORT ecommerce-data.Customer TIMESTAMP _ingest_time AS c_ts;");
-    RelOptTable table = framework.getCatalogReader().getTableFromPath(Name.system("Customer").toNamePath());
+    RelOptTable table = framework.getCatalogReader().getTableFromPath(Name.system("Customer").toNamePath())
+        .get();
     int cTs = framework.getCatalogReader().nameMatcher()
         .indexOf(table.getRowType().getFieldNames(), "c_ts");
     assertTrue(cTs != -1, "Timestamp column missing");
@@ -649,9 +650,9 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   @Disabled("no longer supported")
   public void importWithTimestampAndAlias() {
     validateScript("IMPORT ecommerce-data.Customer AS C2 TIMESTAMP _ingest_time AS c_ts;");
-    RelOptTable table = framework.getCatalogReader().getTableFromPath(Name.system("C2").toNamePath());
+    Optional<RelOptTable> table = framework.getCatalogReader().getTableFromPath(Name.system("C2").toNamePath());
     int cTs = framework.getCatalogReader().nameMatcher()
-        .indexOf(table.getRowType().getFieldNames(), "c_ts");
+        .indexOf(table.get().getRowType().getFieldNames(), "c_ts");
     assertTrue(cTs != -1, "Timestamp column missing");
   }
 

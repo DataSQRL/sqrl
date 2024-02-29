@@ -20,6 +20,7 @@ import com.datasqrl.function.IndexType;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
+import com.datasqrl.util.FunctionUtil;
 import org.apache.flink.table.functions.FunctionDefinition;
 
 import java.util.EnumSet;
@@ -49,7 +50,8 @@ public class InMemoryDatabase extends ExecutionEngine.Base implements DatabaseEn
   }
 
   public boolean supports(FunctionDefinition function) {
-      return !(function instanceof SqrlTimeTumbleFunction);
+      return FunctionUtil.getTimestampPreservingFunction(function)
+          .isEmpty();
   }
 
   @Override

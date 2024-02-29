@@ -1,7 +1,6 @@
 package com.datasqrl.functions.time;
 
 import com.datasqrl.function.FunctionMetadata;
-import com.datasqrl.function.SqrlTimeTumbleFunction;
 import com.datasqrl.time.EndOfDay;
 import com.datasqrl.time.EndOfMinute;
 import com.datasqrl.time.TimeFunctions;

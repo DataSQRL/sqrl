@@ -17,6 +17,5 @@ type entries {
   quantity: Float!
   unit_price: Float!
   discount: Float
-  parent: Orders!
 }
 

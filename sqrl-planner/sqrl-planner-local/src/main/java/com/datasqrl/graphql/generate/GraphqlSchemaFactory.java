@@ -22,6 +22,7 @@ import com.datasqrl.function.SqrlFunctionParameter;
 import com.datasqrl.graphql.server.CustomScalars;
 import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.schema.Multiplicity;
+import com.datasqrl.schema.NestedRelationship;
 import com.datasqrl.schema.Relationship.JoinType;
 import com.google.inject.Inject;
 import graphql.Scalars;
@@ -46,17 +47,20 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.schema.Table;
+import org.apache.calcite.util.ImmutableBitSet;
 import org.apache.commons.collections.ListUtils;
 import scala.annotation.meta.field;
 
 /**
  * Creates a default graphql schema based on the SQRL schema
  */
+@Slf4j
 public class GraphqlSchemaFactory {
 
   private final List<GraphQLFieldDefinition> queryFields = new ArrayList<>();
@@ -260,16 +264,20 @@ public class GraphqlSchemaFactory {
   }
 
   private List<GraphQLArgument> generatePermuted(SqrlTableMacro macro) {
+    if (macro instanceof NestedRelationship) return List.of();
     String tableName = schema.getPathToSysTableMap().get(macro.getAbsolutePath());
+    if (tableName == null) {
+      log.info("Table name null, to debug");
+      return List.of();
+    }
     Table table = schema.getTable(tableName, false).getTable();
+    List<ImmutableBitSet> keys = table.getStatistic().getKeys();
+    if (keys.isEmpty()) return List.of(); //no pks
+    ImmutableBitSet pks = keys.get(0);
     RelDataType rowType = macro.getRowType();
-
     List<RelDataTypeField> primaryKeys = new ArrayList<>();
-    for (int i = 0; i < rowType.getFieldList().size(); i++) {
-      boolean localPrimaryKey = isLocalPrimaryKey(table, i);
-      if (localPrimaryKey) {
-        primaryKeys.add(rowType.getFieldList().get(i));
-      }
+    for (Integer key : pks.asList()) {
+      primaryKeys.add(rowType.getFieldList().get(key));
     }
 
     return primaryKeys

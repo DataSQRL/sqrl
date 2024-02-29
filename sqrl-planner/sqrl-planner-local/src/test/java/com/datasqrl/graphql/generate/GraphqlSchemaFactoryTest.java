@@ -24,12 +24,12 @@ public class GraphqlSchemaFactoryTest extends AbstractGraphqlSchemaFactoryTest {
 
   @Test
   public void testImport() {
-    snapshotTest("IMPORT ecommerce-data.Product;");
+    snapshotTest("IMPORT ecommerce-data.Product TIMESTAMP _ingest_time;");
   }
 
   @Test
   public void testImportWithDifferentCapitalization() {
-    snapshotTest("IMPORT ecommerce-data.product;");
+    snapshotTest("IMPORT ecommerce-data.product TIMESTAMP _ingest_time;");
   }
 
   @Test
@@ -39,26 +39,26 @@ public class GraphqlSchemaFactoryTest extends AbstractGraphqlSchemaFactoryTest {
 
   @Test
   public void testPrimaryKey() {
-    snapshotTest("IMPORT ecommerce-data.Product;\n"
+    snapshotTest("IMPORT ecommerce-data.Product TIMESTAMP _ingest_time;\n"
         + "Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC;");
   }
 
   @Test
   public void testNestedPrimaryKey() {
-    snapshotTest("IMPORT ecommerce-data.Product;\n"
+    snapshotTest("IMPORT ecommerce-data.product TIMESTAMP _ingest_time;\n"
         + "Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC;\n"
         + "Product.nested := SELECT p.productid, count(*) cnt FROM @ JOIN Product p GROUP BY p.productid;");
   }
 
   @Test
   public void testNestedTable() {
-    snapshotTest("IMPORT ecommerce-data.Orders;\n"
+    snapshotTest("IMPORT ecommerce-data.Orders TIMESTAMP _ingest_time;\n"
         + "Orders := DISTINCT Orders ON id ORDER BY _ingest_time DESC;\n");
   }
 
   @Test
   public void testNestedNoPrimaryKey() {
-    snapshotTest("IMPORT ecommerce-data.Product;\n"
+    snapshotTest("IMPORT ecommerce-data.product TIMESTAMP _ingest_time;\n"
         + "Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC;\n"
         + "Product.nested := SELECT p.productid, p.name FROM @ JOIN Product p");
   }
@@ -75,7 +75,7 @@ public class GraphqlSchemaFactoryTest extends AbstractGraphqlSchemaFactoryTest {
 
   @Test
   public void testJson() {
-    snapshotTest("IMPORT ecommerce-data.Product;\n"
+    snapshotTest("IMPORT ecommerce-data.Product TIMESTAMP _ingest_time;\n"
         + "IMPORT json.*;\n"
         + "Product.json := toJson('{}');");
   }

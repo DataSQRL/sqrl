@@ -3,17 +3,13 @@
  */
 package com.datasqrl.util;
 
-import com.datasqrl.function.InputPreservingFunction;
-import com.datasqrl.function.SqrlTimeTumbleFunction;
 import com.google.common.base.Preconditions;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -183,7 +179,10 @@ public class CalciteUtil {
 
     @Override
     public RexNode getOperand(SqlOperator operator, List<RexNode> operands) {
-      int index = ((InputPreservingFunction)FunctionUtil.getSqrlFunction(operator).get()).preservedOperandIndex();
+      int index = FunctionUtil.getSqrlFunction(operator)
+              .flatMap(FunctionUtil::isInputPreservingFunction)
+              .get()
+              .preservedOperandIndex();
       return operands.get(index);
     }
   };

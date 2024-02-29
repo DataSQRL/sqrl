@@ -108,8 +108,8 @@ public class ExecutionAnalysis {
         capabilities.add(EngineFeature.NOW);
       } else {
         FunctionUtil.getSqrlFunction(call.getOperator())
-            .flatMap(FunctionUtil::getTimestampPreservingFunction)
-            .ifPresent(f->functions.add((FunctionDefinition) f));
+            .filter(f->FunctionUtil.getTimestampPreservingFunction(f).isPresent())
+            .ifPresent(functions::add);
 //            .ifPresent(f->capabilities.add(EngineCapability.EXTENDED_FUNCTIONS));
       }
       return super.visitCall(call);

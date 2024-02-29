@@ -1,0 +1,4 @@
+>>>orders$2
+LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], map=[STR_TO_MAP('x=y')])
+  LogicalTableScan(table=[[orders$1]])
+

@@ -3,7 +3,6 @@
  */
 package com.datasqrl.plan.util;
 
-import com.datasqrl.function.TimestampPreservingFunction;
 import com.datasqrl.function.SqrlTimeTumbleFunction;
 import com.datasqrl.plan.table.Timestamps;
 import com.datasqrl.util.CalciteUtil;
@@ -102,8 +101,7 @@ public class TimestampAnalysis {
     }
     RexCall call = (RexCall) rexNode;
     Optional<SqrlTimeTumbleFunction> fnc = FunctionUtil.getSqrlFunction(call.getOperator())
-            .filter(o -> o instanceof SqrlTimeTumbleFunction)
-            .map(o -> (SqrlTimeTumbleFunction) o);
+            .flatMap(FunctionUtil::getSqrlTimeTumbleFunction);
     if (fnc.isEmpty()) {
       return Optional.empty();
     }

@@ -1,5 +1,6 @@
 package com.datasqrl.calcite;
 
+import static com.datasqrl.plan.validate.ScriptPlanner.addError;
 import static com.datasqrl.plan.validate.ScriptPlanner.isSelfTable;
 import static com.datasqrl.plan.validate.ScriptPlanner.isVariable;
 import static org.apache.calcite.sql.SqlUtil.stripAs;
@@ -117,7 +118,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
       List<SqlNode> selectList = new ArrayList<>(call.getSelectList().getList());
       Set<String> fieldNames = new HashSet<>(getFieldNames(selectList));
 
-      List<String> columns = catalogReader.getTableFromPath(result.getCurrentPath())
+      List<String> columns = catalogReader.getTableFromPath(result.getCurrentPath()).get()
           .unwrap(ModifiableTable.class).getRowType().getFieldNames();
       List<SqlNode> newNodes = new ArrayList<>();
       for (String column : columns) {
@@ -134,8 +135,9 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
       return new Result(top, result.getCurrentPath(), List.of(), List.of(), Optional.empty(), result.params);
     } else if (call.isKeywordPresent(SqlSelectKeyword.DISTINCT) || (context.isNested() && call.getFetch() != null)) {
       //if is nested, get primary key nodes
+      Optional<RelOptTable> tableFromPath = catalogReader.getTableFromPath(context.currentPath);
       Set<Integer> pkColumns = context.isNested()?
-              getPrimaryKeyColumns(catalogReader.getTableFromPath(context.currentPath)):Set.of();
+              getPrimaryKeyColumns(tableFromPath.get()):Set.of();
 
       SqlSelectBuilder inner = new SqlSelectBuilder(call)
           .clearKeywords()

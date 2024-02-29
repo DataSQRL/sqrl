@@ -1,0 +1,14 @@
+>>>customer$2
+LogicalTableScan(table=[[customer$1]])
+
+>>>orders$2
+LogicalTableScan(table=[[orders$1]])
+
+>>>product$2
+LogicalTableScan(table=[[product$1]])
+
+>>>x$1
+LogicalProject(MAX=[$2], name=[$0], description=[$1], __timestamp=[$3])
+  LogicalAggregate(group=[{3, 4}], MAX=[MAX($2)], __timestamp=[MAX($1)])
+    LogicalTableScan(table=[[product$2]])
+

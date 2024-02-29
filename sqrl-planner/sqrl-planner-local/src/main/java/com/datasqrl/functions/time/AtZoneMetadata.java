@@ -1,9 +1,12 @@
 package com.datasqrl.functions.time;
 
+import com.datasqrl.function.FunctionMetadata;
 import com.datasqrl.function.InputPreservingFunction;
 import com.datasqrl.function.TimestampPreservingFunction;
 import com.datasqrl.time.AtZone;
+import com.google.auto.service.AutoService;
 
+@AutoService(FunctionMetadata.class)
 public class AtZoneMetadata implements InputPreservingFunction {
 
   @Override

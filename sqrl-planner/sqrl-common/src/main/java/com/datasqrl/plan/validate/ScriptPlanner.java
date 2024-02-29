@@ -220,6 +220,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     QueryPlanner planner = framework.getQueryPlanner();
     QualifiedExport export = getExportOps().get(node);
     ModifiableTable table = planner.getCatalogReader().getTableFromPath(export.getTable())
+        .get()
         .unwrap(ModifiableTable.class);
 
     ResolvedExport resolvedExport = exportTable(table, export.getSink(), planner.getRelBuilder(), true);
@@ -920,8 +921,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
   }
 
   private Optional<RelOptTable> resolveModifiableTable(SqlNode node, NamePath names) {
-    Optional<RelOptTable> table = Optional.ofNullable(
-        framework.getCatalogReader().getTableFromPath(names));
+    Optional<RelOptTable> table = framework.getCatalogReader().getTableFromPath(names);
     if (table.isEmpty()) {
       addError(ErrorLabel.GENERIC, node, "Could not find table: %s", names.getDisplay());
     }
