@@ -1,0 +1,87 @@
+type Category {
+  name: String
+  products(name: String): [Product]
+}
+
+type Customer {
+  customerid: Int
+  email: String
+  name: String
+  lastupdated: Int
+  updatetime: String
+  orders(id: Int, time: String): [orders]
+  order_again(productid: Int, num_orders: Int): [order_again]
+  favorite_categories(category_name: String): [favorite_categories]
+  order_stats: [order_stats]
+}
+
+type NewCustomerPromotion {
+  customerid: Int
+  email: String
+  name: String
+  total_spend: Float
+  num_orders: Int
+}
+
+type Product {
+  productid: Int
+  name: String
+  description: String
+  category: String
+  updatetime: String
+}
+
+type Query {
+  Category(name: String): [Category]
+  Customer(customerid: Int, email: String, name: String): [Customer]
+  NewCustomerPromotion(customerid: Int!): [NewCustomerPromotion]
+  orders(id: Int!): [orders]
+  Product(productid: Int, name: String): [Product]
+}
+
+type entries {
+  productid: Int
+  quantity: Int
+  unit_price: Float
+  parent: orders!
+  discount: Float
+  discount0: Float
+  total: Float
+  product: [Product]
+}
+
+type favorite_categories {
+  category_name: String
+  total: Float
+  parent: Customer!
+  category: [Category]
+}
+
+type order_again {
+  productid: Int
+  quantity: Int
+  num_orders: Int
+  most_recent: String
+  parent: Customer!
+}
+
+type order_stats {
+  total_spend: Float
+  num_orders: Int
+  parent: Customer!
+}
+
+type orders {
+  id: Int
+  customerid: Int
+  time: String
+  entries: [entries]
+  total: [total]
+}
+
+type total {
+  price: Float
+  discount: Float
+  num: Int
+  parent: orders!
+}

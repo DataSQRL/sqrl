@@ -1,0 +1,8 @@
+{
+NewCustomerPromotion (customerid: 1000121) {
+    customerid
+    email
+    name
+    total_spend
+    num_orders
+}}

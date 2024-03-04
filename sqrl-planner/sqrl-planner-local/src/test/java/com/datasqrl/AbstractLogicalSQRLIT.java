@@ -5,6 +5,9 @@ package com.datasqrl;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.error.CollectedException;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.graphql.APIConnectorLookup;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.loaders.ModuleLoader;
@@ -38,7 +41,12 @@ public class AbstractLogicalSQRLIT extends AbstractEngineIT {
   protected void plan(String query) {
     ScriptPlanner planner = injector.getInstance(ScriptPlanner.class);
     ModuleLoader moduleLoader = injector.getInstance(ModuleLoader.class);
-    planner.plan(new StringMainScript(query), moduleLoader);
+    try {
+      planner.plan(new StringMainScript(query), moduleLoader);
+    } catch (CollectedException e) {
+      System.out.println(ErrorPrinter.prettyPrint(errors));
+      throw e;
+    }
   }
 
   @AllArgsConstructor

@@ -29,7 +29,7 @@ public enum ErrorCode implements ErrorLabel {
   MULTIPLE_PRIMARY_KEY,
   TABLE_LOCKED,
   SCHEMA_ERROR,
-  TALBE_NOT_MATERIALIZE,
+  TABLE_NOT_MATERIALIZE,
   NOT_YET_IMPLEMENTED;
 
   @Override

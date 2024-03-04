@@ -1,0 +1,8 @@
+{
+ProductSearch( query: "garden") {
+    productid
+    name
+    description
+    category
+    score
+}}

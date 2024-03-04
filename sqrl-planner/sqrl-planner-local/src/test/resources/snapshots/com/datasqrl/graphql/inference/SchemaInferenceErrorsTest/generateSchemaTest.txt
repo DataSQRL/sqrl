@@ -19,7 +19,6 @@ type Query {
 
 type entries {
   discount: Float
-  parent: Orders!
   productid: Float!
   quantity: Float!
   unit_price: Float!

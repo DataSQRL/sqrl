@@ -1,8 +1,5 @@
 >>>orders-hasTimestamp
 (
-  `_uuid` CHAR(36) NOT NULL,
-  `_ingest_time` TIMESTAMP_LTZ(3) NOT NULL,
-  `_source_time` TIMESTAMP_LTZ(3) NOT NULL,
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` BIGINT NOT NULL,
@@ -10,8 +7,6 @@
 )
 >>>orders
 (
-  `_uuid` CHAR(36) NOT NULL,
-  `_ingest_time` TIMESTAMP_LTZ(3) NOT NULL,
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` BIGINT NOT NULL,
@@ -19,9 +14,6 @@
 )
 >>>products-hasTimestamp
 (
-  `_uuid` CHAR(36) NOT NULL,
-  `_ingest_time` TIMESTAMP_LTZ(3) NOT NULL,
-  `_source_time` TIMESTAMP_LTZ(3) NOT NULL,
   `id` BIGINT NOT NULL,
   `name` STRING NOT NULL,
   `sizing` STRING NOT NULL,
@@ -33,8 +25,6 @@
 )
 >>>products
 (
-  `_uuid` CHAR(36) NOT NULL,
-  `_ingest_time` TIMESTAMP_LTZ(3) NOT NULL,
   `id` BIGINT NOT NULL,
   `name` STRING NOT NULL,
   `sizing` STRING NOT NULL,

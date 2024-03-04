@@ -10,6 +10,7 @@ import com.datasqrl.util.SnapshotTest;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
@@ -40,6 +41,7 @@ public class DAGExporterTest extends AbstractLogicalSQRLIT {
     }
 
     @Test
+//    @Disabled // STOPSHIP: 2/29/24 Test failing, not sure why
     public void joinTimestampPropagationTest() {
         ScriptBuilder builder = DAGPlannerTest.imports(false);
         builder.add("OrderCustomer1 := SELECT o.id, c.name FROM Orders o JOIN Customer c on o.customerid = c.customerid");

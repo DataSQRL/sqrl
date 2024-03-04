@@ -11,6 +11,7 @@ import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.SnapshotTest.Snapshot;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
@@ -63,6 +64,7 @@ class SchemaInferenceMutationErrorTest extends AbstractSchemaInferenceModelTest 
   }
 
   @Test
+  @Disabled //disabled, removal of stream keyword in 0.5
   public void validSubscriptionArrayTest() {
     plan("TestOutput := STREAM ON ADD AS SELECT COLLECT(productid) AS id FROM Product;\n");
     inferSchemaModelQueries("type Query {\n  orders: [Orders]\n}\n"

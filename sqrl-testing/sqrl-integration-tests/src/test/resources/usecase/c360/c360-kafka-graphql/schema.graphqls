@@ -1,0 +1,29 @@
+
+type Orders {
+  id: Float!
+  customerid: Float!
+  time: String!
+  entries(productid: Int, limit: Int = 10, offset: Int = 0): [entries!]
+}
+
+type Query {
+  Orders(limit: Int = 10, offset: Int = 0): [Orders!]
+  OrderCount(limit: Int = 10, offset: Int = 0): [OrderCount!]
+}
+
+type entries {
+  productid: Int!
+  quantity: Int!
+  unit_price: Float!
+  discount: Float
+}
+
+type Subscription {
+    OrderCount: OrderCount
+}
+
+type OrderCount {
+    timeSec: String!
+    number: Int!
+    volume: Int!
+}

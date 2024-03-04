@@ -1,0 +1,9 @@
+{
+Category( name: "Decoration") {
+    name
+    products {
+        name
+        productid
+        description
+    }
+}}

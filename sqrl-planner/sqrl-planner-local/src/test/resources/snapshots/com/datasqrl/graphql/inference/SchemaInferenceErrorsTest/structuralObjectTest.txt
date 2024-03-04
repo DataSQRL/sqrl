@@ -1,4 +1,4 @@
-[FATAL] Unknown field at location invalidField. Possible scalars are [_uuid, _idx, productid, quantity, unit_price, discount]
+[FATAL] Unknown field at location invalidField. Possible scalars are [_idx, productid, quantity, unit_price, discount]
 in script:schema [5:3]:
 }
 type Entries {

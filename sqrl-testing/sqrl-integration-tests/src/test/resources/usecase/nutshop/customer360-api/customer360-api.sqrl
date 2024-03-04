@@ -1,0 +1,60 @@
+IMPORT nutshop-data.Products;
+IMPORT nutshop-data.Orders;
+IMPORT usda-data.nuts;
+
+-- @api(name="Product", query="getproducts")
+Products := DISTINCT Products ON id ORDER BY _ingest_time DESC;
+
+Orders.date := EPOCH_TO_TIMESTAMP(time);
+Orders.items.discount0 := coalesce(discount, 0.0);
+
+-- @api(name="User", query="getusers")
+Customers := SELECT DISTINCT customerid AS id FROM Orders;
+
+Customers.purchases := JOIN Orders ON Orders.customerid = @.id ORDER BY Orders.time DESC;
+Orders.items.product := JOIN Products ON Products.id = @.productid LIMIT 1;
+
+Orders.items.total := quantity * unit_price - discount0;
+Orders.total := sum(items.total);
+Orders.savings := sum(items.discount0);
+
+Customers.spending_by_month :=
+         SELECT TRUNCATE_TO_MONTH(date) AS month,
+                sum(total) AS total_spend,
+                sum(discount0) AS total_savings
+         FROM @.purchases
+         GROUP BY month ORDER BY month DESC;
+
+NumOrders := SELECT COUNT(*) AS count FROM Orders;
+
+Customers.since := SELECT MIN(o.date) FROM Orders o WHERE o.customerid = @.id;
+
+Customers.total_orders := SUM(purchases.total);
+
+Products.nutrition := JOIN Nuts ON Nuts.fdcID = @.usda_id LIMIT 1;
+Nuts.product := JOIN Products ON @.fdcID = Products.usda_id LIMIT 1;
+
+Nuts.protein := SELECT f.amount FROM @.foodNutrients f JOIN f.nutrient AS n WHERE n.name = 'Protein' LIMIT 1;
+
+Customers.past_purchases :=
+         SELECT i.productid, count(i.*) as num_orders, sum(i.quantity) as total_quantity
+         FROM @.purchases.items i
+         GROUP BY i.productid
+         ORDER BY num_orders DESC, total_quantity DESC;
+
+Customers._recent_avg_protein :=
+        SELECT SUM(e.quantity * p.weight_in_gram * n.protein)/SUM(e.quantity * p.weight_in_gram)
+        FROM @.purchases.items e JOIN e.product p JOIN p.nutrition n
+        WHERE e.parent.date > now() - INTERVAL 183 DAYS; -- about 6 months
+
+-- @api(paginate=true)
+Customers.products_by_protein :=
+        SELECT p.id AS productid, ABS(p.nutrition.protein - @._recent_avg_protein) AS protein_difference FROM Products p
+        ORDER BY protein_difference ASC LIMIT 20;
+Customers.products_by_protein.product := JOIN Products ON Products.id = _productid LIMIT 1;
+
+NewCustomerPromotion := STREAM ON ADD AS
+SELECT customerid, total_orders
+FROM Customers WHERE total_orders >= 100;
+
+NewCustomerPromotion.customer := JOIN Customers ON Customers.id = @.customerid;

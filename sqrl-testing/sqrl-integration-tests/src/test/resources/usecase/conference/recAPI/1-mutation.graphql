@@ -1,0 +1,9 @@
+mutation {
+  Likes(liked: {
+    eventId: 1136937
+    userid: "10"
+    liked: true
+  }) {
+    userid
+  }
+}

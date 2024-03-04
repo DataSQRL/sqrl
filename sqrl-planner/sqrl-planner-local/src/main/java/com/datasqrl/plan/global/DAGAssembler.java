@@ -127,9 +127,9 @@ public class DAGAssembler {
       for (PhysicalRelationalTable materializedTable : materializedTables) {
         List<String> nullablePks = CalciteUtil.identifyNullableFields(materializedTable.getRowType(), materializedTable.getPrimaryKey().asList());
         errors.checkFatal(nullablePks.isEmpty(), PRIMARY_KEY_NULLABLE, "Cannot materialize table [%s] with nullable primary key: %s", materializedTable, nullablePks);
-        errors.checkFatal(materializedTable.getPrimaryKey().isDefined(), ErrorCode.TALBE_NOT_MATERIALIZE,"Table [%s] does not have a primary key and can therefore not be materialized", materializedTable);
+        errors.checkFatal(materializedTable.getPrimaryKey().isDefined(), ErrorCode.TABLE_NOT_MATERIALIZE,"Table [%s] does not have a primary key and can therefore not be materialized", materializedTable);
         Preconditions.checkArgument(materializedTable.getTimestamp().size()<=1, "Should not have multiple timestamps at this point");
-        errors.checkFatal(materializedTable.getType()== TableType.STATIC || materializedTable.getTimestamp().size()==1, ErrorCode.TALBE_NOT_MATERIALIZE, "Table [%s] does not have a timestamp and can therefore not be materialized", materializedTable);
+        errors.checkFatal(materializedTable.getType()== TableType.STATIC || materializedTable.getTimestamp().size()==1, ErrorCode.TABLE_NOT_MATERIALIZE, "Table [%s] does not have a timestamp and can therefore not be materialized", materializedTable);
         RelNode processedRelnode = produceWriteTree(materializedTable.getPlannedRelNode(),
                 materializedTable.getTimestamp().getOnlyCandidate());
         OptionalInt timestampIdx = materializedTable.getType() == TableType.STATIC ? OptionalInt.empty() :

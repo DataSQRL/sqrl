@@ -1,7 +1,7 @@
 >>>distincton
 [FATAL] DISTINCT ON statements require stream table as input
 in script:<script> [3:1]:
-IMPORT ecommerce-data.Customer;
+IMPORT ecommerce-data.Customer TIMESTAMP _ingest_time;
 Customer1 := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;
 Customer2 := DISTINCT Customer1 ON customerid ORDER BY _ingest_time DESC;
 ^

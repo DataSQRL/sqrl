@@ -67,7 +67,7 @@ public class ResolveErrorMsgTest extends AbstractLogicalSQRLIT {
   public void logicalPlanErrors() {
     initialize(IntegrationTestSettings.getInMemory(), (Path) null, Optional.empty());
     generateInvalid("distincton",
-        "IMPORT ecommerce-data.Customer",
+        "IMPORT ecommerce-data.Customer TIMESTAMP _ingest_time",
         "Customer1 := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC",
         "Customer2 := DISTINCT Customer1 ON customerid ORDER BY _ingest_time DESC");
   }

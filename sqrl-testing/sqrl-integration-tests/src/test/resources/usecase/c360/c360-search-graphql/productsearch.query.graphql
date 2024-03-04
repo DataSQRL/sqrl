@@ -1,0 +1,8 @@
+{
+ProductSearch( query: "garden gnome") {
+    productid
+    name
+    description
+    category
+    score
+}}

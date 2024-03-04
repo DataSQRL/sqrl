@@ -1,0 +1,11 @@
+{
+Package(name: "datasqrl.seedshop") {
+    latest {
+        version
+        variant
+        description
+        file
+        hash
+        submissionTime
+    }
+}}

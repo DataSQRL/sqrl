@@ -1,0 +1,7 @@
+mutation ApplicationUpdate($loan_application_id: Int!,
+  $status: String!, $message: String!) {
+  ApplicationUpdates(event: {loan_application_id: $loan_application_id,
+     status: $status, message: $message}) {
+    loan_application_id
+  }
+}

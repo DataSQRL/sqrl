@@ -1,0 +1,6 @@
+subscription HighTempAlert {
+  HighTempAlert(sensorid: 1) {
+    sensorid
+    temp
+  }
+}

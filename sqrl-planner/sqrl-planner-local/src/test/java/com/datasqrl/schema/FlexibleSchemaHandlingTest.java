@@ -55,7 +55,7 @@ public class FlexibleSchemaHandlingTest {
   @ArgumentsSource(SchemaConverterProvider.class)
   public <S> void conversionTest(InputSchema inputSchema, SchemaConverterTestCase<S> visitorTest) {
     SnapshotTest.Snapshot snapshot = SnapshotTest.Snapshot.of(getClass(), inputSchema.getName(),
-        visitorTest.schemaConverter.getClass().getSimpleName());
+        stripLambdaName(visitorTest.schemaConverter.getClass().getSimpleName()));
     Name tableAlias = Name.system("TestTable");
     List<FlexibleTableSchema> schemas = getSchemas(inputSchema);
     for (FlexibleTableSchema table : schemas) {
@@ -78,6 +78,11 @@ public class FlexibleSchemaHandlingTest {
       }
     }
     snapshot.createOrValidate();
+  }
+
+  private String stripLambdaName(String simpleName) {
+    int i = simpleName.indexOf('$');
+    return i == -1 ? simpleName : simpleName.substring(0, i);
   }
 
   public static String[] getCaseName(String tableName, boolean hasTimestamp) {

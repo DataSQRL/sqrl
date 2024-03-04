@@ -1,0 +1,15 @@
+{
+Customer( customerid: 1000101) {
+    email
+    name
+    updatetime
+    orders {
+        id
+        time
+        total {
+            price
+            discount
+            num
+        }
+    }
+}}

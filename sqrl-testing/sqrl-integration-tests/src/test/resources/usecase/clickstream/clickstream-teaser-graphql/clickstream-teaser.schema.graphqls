@@ -1,0 +1,15 @@
+type Query {
+  Recommendation(url: String!): [Recommendation!]
+  Trending(limit: Int!): [Trending!]
+}
+
+type Recommendation {
+  url: String!
+  rec: String!
+  frequency: Int!
+}
+
+type Trending {
+  url: String!
+  total: Int!
+}
