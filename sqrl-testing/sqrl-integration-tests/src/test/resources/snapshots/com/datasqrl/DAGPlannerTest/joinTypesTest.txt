@@ -120,6 +120,7 @@ LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] optio
 CREATE TABLE IF NOT EXISTS customer$3 ("customerid" BIGINT NOT NULL,"email" TEXT NOT NULL,"name" TEXT NOT NULL,"lastUpdated" BIGINT NOT NULL,"timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("customerid"));
 CREATE TABLE IF NOT EXISTS ordercustomer2$1 ("id" BIGINT NOT NULL,"name" TEXT ,"_time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id","_time"));
 CREATE TABLE IF NOT EXISTS orders$2 ("id" BIGINT NOT NULL,"customerid" BIGINT NOT NULL,"time" TIMESTAMP WITH TIME ZONE NOT NULL,"entries" JSONB NOT NULL , PRIMARY KEY ("id","time"));
+CREATE INDEX IF NOT EXISTS orders$2_hash_c2 ON orders$2 USING hash ("time");
 >>>flink-plan.sql
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptostring` AS 'com.datasqrl.time.TimestampToString' LANGUAGE JAVA;
 
@@ -183,10 +184,11 @@ CREATE TEMPORARY TABLE `customer$3` (
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` BIGINT NOT NULL,
-  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'password' = 'postgres',
-  'connector' = 'jdbc',
+  'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'customer$3',
   'user' = 'postgres',
@@ -196,10 +198,11 @@ CREATE TEMPORARY TABLE `customer$3` (
 CREATE TEMPORARY TABLE `ordercustomer2$1` (
   `id` BIGINT NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+  `_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`id`, `_time`) NOT ENFORCED
 ) WITH (
   'password' = 'postgres',
-  'connector' = 'jdbc',
+  'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'ordercustomer2$1',
   'user' = 'postgres',
@@ -210,10 +213,11 @@ CREATE TEMPORARY TABLE `orders$2` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` ROW(`_idx` INTEGER NOT NULL, `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
+  `entries` ROW(`_idx` INTEGER NOT NULL, `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
   'password' = 'postgres',
-  'connector' = 'jdbc',
+  'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'orders$2',
   'user' = 'postgres',

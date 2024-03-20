@@ -101,6 +101,7 @@ CREATE TABLE IF NOT EXISTS orderagg3$1 ("customerid" BIGINT NOT NULL,"count" BIG
 CREATE TABLE IF NOT EXISTS orderagg4$1 ("customerid" BIGINT NOT NULL,"timestamp" TIMESTAMP WITH TIME ZONE NOT NULL,"count" BIGINT NOT NULL , PRIMARY KEY ("customerid"));
 CREATE TABLE IF NOT EXISTS orders$2 ("id" BIGINT NOT NULL,"customerid" BIGINT NOT NULL,"time" TIMESTAMP WITH TIME ZONE NOT NULL,"entries" JSONB NOT NULL , PRIMARY KEY ("id","time"));
 CREATE TABLE IF NOT EXISTS ordersstate$1 ("id" BIGINT NOT NULL,"customerid" BIGINT NOT NULL,"time" TIMESTAMP WITH TIME ZONE NOT NULL,"entries" JSONB NOT NULL , PRIMARY KEY ("id"));
+CREATE INDEX IF NOT EXISTS orders$2_hash_c2 ON orders$2 USING hash ("time");
 >>>flink-plan.sql
 CREATE TEMPORARY TABLE `orders$1` (
   `id` BIGINT NOT NULL,
@@ -120,10 +121,11 @@ CREATE TEMPORARY TABLE `orders$1` (
 CREATE TEMPORARY TABLE `orderagg1$1` (
   `customerid` BIGINT NOT NULL,
   `count` BIGINT NOT NULL,
-  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'password' = 'postgres',
-  'connector' = 'jdbc',
+  'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'orderagg1$1',
   'user' = 'postgres',
@@ -133,10 +135,11 @@ CREATE TEMPORARY TABLE `orderagg1$1` (
 CREATE TEMPORARY TABLE `orderagg2$1` (
   `customerid` BIGINT NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `count` BIGINT NOT NULL
+  `count` BIGINT NOT NULL,
+  PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'password' = 'postgres',
-  'connector' = 'jdbc',
+  'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'orderagg2$1',
   'user' = 'postgres',
@@ -146,10 +149,11 @@ CREATE TEMPORARY TABLE `orderagg2$1` (
 CREATE TEMPORARY TABLE `orderagg3$1` (
   `customerid` BIGINT NOT NULL,
   `count` BIGINT NOT NULL,
-  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'password' = 'postgres',
-  'connector' = 'jdbc',
+  'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'orderagg3$1',
   'user' = 'postgres',
@@ -159,10 +163,11 @@ CREATE TEMPORARY TABLE `orderagg3$1` (
 CREATE TEMPORARY TABLE `orderagg4$1` (
   `customerid` BIGINT NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `count` BIGINT NOT NULL
+  `count` BIGINT NOT NULL,
+  PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'password' = 'postgres',
-  'connector' = 'jdbc',
+  'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'orderagg4$1',
   'user' = 'postgres',
@@ -173,10 +178,11 @@ CREATE TEMPORARY TABLE `orders$2` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` ROW(`_idx` INTEGER NOT NULL, `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
+  `entries` ROW(`_idx` INTEGER NOT NULL, `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
   'password' = 'postgres',
-  'connector' = 'jdbc',
+  'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'orders$2',
   'user' = 'postgres',
@@ -187,10 +193,11 @@ CREATE TEMPORARY TABLE `ordersstate$1` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` ROW(`_idx` INTEGER NOT NULL, `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
+  `entries` ROW(`_idx` INTEGER NOT NULL, `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
+  PRIMARY KEY (`id`) NOT ENFORCED
 ) WITH (
   'password' = 'postgres',
-  'connector' = 'jdbc',
+  'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'ordersstate$1',
   'user' = 'postgres',

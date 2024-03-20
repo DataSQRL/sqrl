@@ -113,7 +113,7 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
 
     ddlStatements = ListUtils.union(typeExtensions, ddlStatements);
 
-    dbPlan.getIndexDefinitions().stream()
+    dbPlan.getIndexDefinitions().stream().sorted()
             .map(factory::createIndex)
             .forEach(ddlStatements::add);
 
