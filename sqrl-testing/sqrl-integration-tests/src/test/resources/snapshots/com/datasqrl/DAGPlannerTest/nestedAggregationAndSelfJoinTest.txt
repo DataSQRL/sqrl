@@ -73,13 +73,13 @@ ID:     orders2$1
 Type:   stream
 Stage:  streams
 Inputs: orders$2
-Primary Key: _uuid
+Primary Key: uuid
 Timestamp  : _ingest_time
 Schema:
- - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+ - uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
  - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalProject(_uuid=[$5], _ingest_time=[$4])
+LogicalProject(uuid=[$5], _ingest_time=[$4])
   LogicalJoin(condition=[AND(=($11, $5), =($10, $4))], joinType=[inner]) hints[IntervalJoin]
     LogicalTableScan(table=[[orders$2]])
     LogicalTableScan(table=[[orders$2]])
@@ -153,7 +153,7 @@ LogicalProject(__pk6$_uuid=[$0], price=[$2], num=[$3], discount=[$4], _ingest_ti
 CREATE TABLE IF NOT EXISTS customer$3 ("customerid" BIGINT NOT NULL,"email" TEXT NOT NULL,"name" TEXT NOT NULL,"lastUpdated" BIGINT NOT NULL,"_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL,"_uuid" TEXT NOT NULL , PRIMARY KEY ("customerid"));
 CREATE TABLE IF NOT EXISTS entrycount$1 ("price" DOUBLE PRECISION ,"_uuid" TEXT NOT NULL,"_idx" INTEGER NOT NULL,"_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("_uuid","_idx"));
 CREATE TABLE IF NOT EXISTS orders$2 ("id" BIGINT NOT NULL,"customerid" BIGINT NOT NULL,"time" TIMESTAMP WITH TIME ZONE NOT NULL,"entries" JSONB NOT NULL,"_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL,"_uuid" TEXT NOT NULL , PRIMARY KEY ("_uuid"));
-CREATE TABLE IF NOT EXISTS orders2$1 ("_uuid" TEXT NOT NULL,"_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("_uuid"));
+CREATE TABLE IF NOT EXISTS orders2$1 ("uuid" TEXT NOT NULL,"_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("uuid"));
 CREATE TABLE IF NOT EXISTS orders_by_day$1 ("__pk1$customerid" BIGINT NOT NULL,"day" TIMESTAMP WITH TIME ZONE NOT NULL,"total_price" DOUBLE PRECISION ,"total_num" BIGINT NOT NULL,"__timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("__pk1$customerid","day"));
 CREATE TABLE IF NOT EXISTS ordersinline$1 ("id" BIGINT NOT NULL,"customerid" BIGINT NOT NULL,"time" TIMESTAMP WITH TIME ZONE NOT NULL,"price" DOUBLE PRECISION ,"num" BIGINT NOT NULL,"_uuid" TEXT NOT NULL,"_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("_uuid"));
 CREATE TABLE IF NOT EXISTS total$1 ("__pk6$_uuid" TEXT NOT NULL,"price" DOUBLE PRECISION ,"num" BIGINT NOT NULL,"discount" DOUBLE PRECISION ,"_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("__pk6$_uuid"));
@@ -224,10 +224,11 @@ CREATE TEMPORARY TABLE `customer$3` (
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` BIGINT NOT NULL,
   `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL
+  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,
+  PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'password' = 'postgres',
-  'connector' = 'jdbc',
+  'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'customer$3',
   'user' = 'postgres',
@@ -238,10 +239,11 @@ CREATE TEMPORARY TABLE `entrycount$1` (
   `price` DOUBLE,
   `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,
   `_idx` INTEGER NOT NULL,
-  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`_uuid`, `_idx`) NOT ENFORCED
 ) WITH (
   'password' = 'postgres',
-  'connector' = 'jdbc',
+  'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'entrycount$1',
   'user' = 'postgres',
@@ -254,10 +256,11 @@ CREATE TEMPORARY TABLE `orders$2` (
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `entries` ROW(`_idx` INTEGER NOT NULL, `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
   `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL
+  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,
+  PRIMARY KEY (`_uuid`) NOT ENFORCED
 ) WITH (
   'password' = 'postgres',
-  'connector' = 'jdbc',
+  'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'orders$2',
   'user' = 'postgres',
@@ -265,11 +268,12 @@ CREATE TEMPORARY TABLE `orders$2` (
 );
 
 CREATE TEMPORARY TABLE `orders2$1` (
-  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,
-  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+  `uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,
+  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`uuid`) NOT ENFORCED
 ) WITH (
   'password' = 'postgres',
-  'connector' = 'jdbc',
+  'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'orders2$1',
   'user' = 'postgres',
@@ -281,10 +285,11 @@ CREATE TEMPORARY TABLE `orders_by_day$1` (
   `day` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `total_price` DOUBLE,
   `total_num` BIGINT NOT NULL,
-  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`__pk1$customerid`, `day`) NOT ENFORCED
 ) WITH (
   'password' = 'postgres',
-  'connector' = 'jdbc',
+  'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'orders_by_day$1',
   'user' = 'postgres',
@@ -298,10 +303,11 @@ CREATE TEMPORARY TABLE `ordersinline$1` (
   `price` DOUBLE,
   `num` BIGINT NOT NULL,
   `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,
-  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`_uuid`) NOT ENFORCED
 ) WITH (
   'password' = 'postgres',
-  'connector' = 'jdbc',
+  'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'ordersinline$1',
   'user' = 'postgres',
@@ -313,10 +319,11 @@ CREATE TEMPORARY TABLE `total$1` (
   `price` DOUBLE,
   `num` BIGINT NOT NULL,
   `discount` DOUBLE,
-  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`__pk6$_uuid`) NOT ENFORCED
 ) WITH (
   'password' = 'postgres',
-  'connector' = 'jdbc',
+  'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'total$1',
   'user' = 'postgres',
@@ -363,7 +370,7 @@ INSERT INTO `orders$2`
 FROM `orders$1`)
 ;
 INSERT INTO `orders2$1`
-(SELECT `orders$1`.`_uuid`, `orders$1`.`_ingest_time`
+(SELECT `orders$1`.`_uuid` AS `uuid`, `orders$1`.`_ingest_time`
 FROM `orders$1`
 INNER JOIN `orders$1` AS `orders$10` ON ((`orders$1`.`_uuid` = `orders$10`.`_uuid`) AND (`orders$1`.`_ingest_time` = `orders$10`.`_ingest_time`)))
 ;

@@ -24,7 +24,7 @@ public class CompositeRepositoryImpl implements Repository {
 
     @Override
     public Optional<Dependency> resolveDependency(String packageName) {
-        if (packageName.contains("/") || packageName.contains(".")) {
+        if (!packageName.contains(".")) {
             return Optional.empty();
         }
         return repositories.stream().map(rep -> rep.resolveDependency(packageName))

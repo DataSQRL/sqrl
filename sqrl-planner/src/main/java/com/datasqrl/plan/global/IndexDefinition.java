@@ -4,14 +4,13 @@
 package com.datasqrl.plan.global;
 
 import com.datasqrl.function.IndexType;
-import com.google.common.collect.ContiguousSet;
 import lombok.Value;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Value
-public class IndexDefinition {
+public class IndexDefinition implements Comparable<IndexDefinition> {
 
   public static final String INDEX_NAME = "_index_";
 
@@ -40,4 +39,8 @@ public class IndexDefinition {
         fieldNames, IndexType.BTREE);
   }
 
+  @Override
+  public int compareTo(IndexDefinition o) {
+    return getName().compareTo(o.getName());
+  }
 }

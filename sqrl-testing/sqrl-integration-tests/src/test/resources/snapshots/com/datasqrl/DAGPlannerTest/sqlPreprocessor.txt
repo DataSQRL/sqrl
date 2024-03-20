@@ -17,12 +17,14 @@ CREATE TABLE IF NOT EXISTS source_table$1 ("id" INTEGER NOT NULL,"data" TEXT ,"e
 >>>flink-plan.sql
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofmonth` AS 'com.datasqrl.time.EndOfMonth' LANGUAGE JAVA;
 
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofmonth` AS 'com.datasqrl.time.EndOfMonth' LANGUAGE JAVA;
+
 CREATE TEMPORARY TABLE `source_table` (
   `id` INTEGER NOT NULL,
   `data` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
   `event_time` TIMESTAMP(3),
   PRIMARY KEY (`id`) NOT ENFORCED,
-  WATERMARK FOR `event_time` AS (`event_time` - INTERVAL '0.005' SECOND)
+  WATERMARK FOR `event_time` AS (`event_time` - INTERVAL '1.0' SECOND)
 ) WITH (
   'connector' = 'datagen',
   'number-of-rows' = '20'
@@ -31,10 +33,11 @@ CREATE TEMPORARY TABLE `source_table` (
 CREATE TEMPORARY TABLE `source_table$1` (
   `id` INTEGER NOT NULL,
   `data` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `event_time` TIMESTAMP(3)
+  `event_time` TIMESTAMP(3),
+  PRIMARY KEY (`id`) NOT ENFORCED
 ) WITH (
   'password' = 'postgres',
-  'connector' = 'jdbc',
+  'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'source_table$1',
   'user' = 'postgres',

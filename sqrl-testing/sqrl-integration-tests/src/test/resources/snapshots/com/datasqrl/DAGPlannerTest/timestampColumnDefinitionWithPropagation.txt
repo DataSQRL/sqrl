@@ -33,6 +33,7 @@ LogicalProject(month=[endOfMonth(endOfMonth($4))], timestamp=[$4], _customerid=[
 >>>database-schema.sql
 CREATE TABLE IF NOT EXISTS customer$2 ("customerid" BIGINT NOT NULL,"email" TEXT NOT NULL,"name" TEXT NOT NULL,"lastUpdated" BIGINT NOT NULL,"timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("customerid","lastUpdated"));
 CREATE TABLE IF NOT EXISTS customercopy$1 ("month" TIMESTAMP WITH TIME ZONE NOT NULL,"timestamp" TIMESTAMP WITH TIME ZONE NOT NULL,"_customerid" BIGINT NOT NULL,"_lastUpdated" BIGINT NOT NULL , PRIMARY KEY ("_customerid","_lastUpdated"));
+CREATE INDEX IF NOT EXISTS customer$2_hash_c3 ON customer$2 USING hash ("lastUpdated");
 >>>flink-plan.sql
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptostring` AS 'com.datasqrl.time.TimestampToString' LANGUAGE JAVA;
 
@@ -81,10 +82,11 @@ CREATE TEMPORARY TABLE `customer$2` (
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` BIGINT NOT NULL,
-  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
 ) WITH (
   'password' = 'postgres',
-  'connector' = 'jdbc',
+  'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'customer$2',
   'user' = 'postgres',
@@ -95,10 +97,11 @@ CREATE TEMPORARY TABLE `customercopy$1` (
   `month` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `_customerid` BIGINT NOT NULL,
-  `_lastUpdated` BIGINT NOT NULL
+  `_lastUpdated` BIGINT NOT NULL,
+  PRIMARY KEY (`_customerid`, `_lastUpdated`) NOT ENFORCED
 ) WITH (
   'password' = 'postgres',
-  'connector' = 'jdbc',
+  'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'customercopy$1',
   'user' = 'postgres',

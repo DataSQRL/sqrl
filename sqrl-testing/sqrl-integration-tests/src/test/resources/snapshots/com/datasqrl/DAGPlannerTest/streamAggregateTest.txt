@@ -133,6 +133,11 @@ CREATE TABLE IF NOT EXISTS ordertime1$1 ("customer" BIGINT NOT NULL,"bucket" TIM
 CREATE TABLE IF NOT EXISTS ordertime2$1 ("customer" BIGINT NOT NULL,"bucket" TIMESTAMP WITH TIME ZONE NOT NULL,"order_count" BIGINT NOT NULL , PRIMARY KEY ("customer","bucket"));
 CREATE TABLE IF NOT EXISTS ordertime3$1 ("customer" BIGINT NOT NULL,"bucket" TIMESTAMP WITH TIME ZONE NOT NULL,"order_count" BIGINT NOT NULL , PRIMARY KEY ("customer","bucket"));
 CREATE TABLE IF NOT EXISTS product$2 ("productid" BIGINT NOT NULL,"name" TEXT NOT NULL,"description" TEXT NOT NULL,"category" TEXT NOT NULL,"_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL,"_uuid" TEXT NOT NULL , PRIMARY KEY ("_uuid"));
+CREATE INDEX IF NOT EXISTS customer$2_hash_c3 ON customer$2 USING hash ("lastUpdated");
+CREATE INDEX IF NOT EXISTS orders$2_hash_c2 ON orders$2 USING hash ("time");
+CREATE INDEX IF NOT EXISTS ordertime1$1_hash_c1 ON ordertime1$1 USING hash ("bucket");
+CREATE INDEX IF NOT EXISTS ordertime2$1_hash_c1 ON ordertime2$1 USING hash ("bucket");
+CREATE INDEX IF NOT EXISTS ordertime3$1_hash_c1 ON ordertime3$1 USING hash ("bucket");
 >>>flink-plan.sql
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptostring` AS 'com.datasqrl.time.TimestampToString' LANGUAGE JAVA;
 
@@ -215,10 +220,11 @@ CREATE TEMPORARY TABLE `customer$2` (
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` BIGINT NOT NULL,
-  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
 ) WITH (
   'password' = 'postgres',
-  'connector' = 'jdbc',
+  'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'customer$2',
   'user' = 'postgres',
@@ -228,10 +234,11 @@ CREATE TEMPORARY TABLE `customer$2` (
 CREATE TEMPORARY TABLE `orderagg1$1` (
   `customer` BIGINT NOT NULL,
   `order_count` BIGINT NOT NULL,
-  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`customer`) NOT ENFORCED
 ) WITH (
   'password' = 'postgres',
-  'connector' = 'jdbc',
+  'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'orderagg1$1',
   'user' = 'postgres',
@@ -241,10 +248,11 @@ CREATE TEMPORARY TABLE `orderagg1$1` (
 CREATE TEMPORARY TABLE `orderagg2$1` (
   `order_count` BIGINT NOT NULL,
   `__pk` INTEGER NOT NULL,
-  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE
+  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  PRIMARY KEY (`__pk`) NOT ENFORCED
 ) WITH (
   'password' = 'postgres',
-  'connector' = 'jdbc',
+  'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'orderagg2$1',
   'user' = 'postgres',
@@ -255,10 +263,11 @@ CREATE TEMPORARY TABLE `orders$2` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` ROW(`_idx` INTEGER NOT NULL, `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
+  `entries` ROW(`_idx` INTEGER NOT NULL, `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
   'password' = 'postgres',
-  'connector' = 'jdbc',
+  'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'orders$2',
   'user' = 'postgres',
@@ -268,10 +277,11 @@ CREATE TEMPORARY TABLE `orders$2` (
 CREATE TEMPORARY TABLE `ordertime1$1` (
   `customer` BIGINT NOT NULL,
   `bucket` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `order_count` BIGINT NOT NULL
+  `order_count` BIGINT NOT NULL,
+  PRIMARY KEY (`customer`, `bucket`) NOT ENFORCED
 ) WITH (
   'password' = 'postgres',
-  'connector' = 'jdbc',
+  'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'ordertime1$1',
   'user' = 'postgres',
@@ -281,10 +291,11 @@ CREATE TEMPORARY TABLE `ordertime1$1` (
 CREATE TEMPORARY TABLE `ordertime2$1` (
   `customer` BIGINT NOT NULL,
   `bucket` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `order_count` BIGINT NOT NULL
+  `order_count` BIGINT NOT NULL,
+  PRIMARY KEY (`customer`, `bucket`) NOT ENFORCED
 ) WITH (
   'password' = 'postgres',
-  'connector' = 'jdbc',
+  'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'ordertime2$1',
   'user' = 'postgres',
@@ -294,10 +305,11 @@ CREATE TEMPORARY TABLE `ordertime2$1` (
 CREATE TEMPORARY TABLE `ordertime3$1` (
   `customer` BIGINT NOT NULL,
   `bucket` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `order_count` BIGINT NOT NULL
+  `order_count` BIGINT NOT NULL,
+  PRIMARY KEY (`customer`, `bucket`) NOT ENFORCED
 ) WITH (
   'password' = 'postgres',
-  'connector' = 'jdbc',
+  'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'ordertime3$1',
   'user' = 'postgres',
@@ -310,10 +322,11 @@ CREATE TEMPORARY TABLE `product$2` (
   `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL
+  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,
+  PRIMARY KEY (`_uuid`) NOT ENFORCED
 ) WITH (
   'password' = 'postgres',
-  'connector' = 'jdbc',
+  'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'product$2',
   'user' = 'postgres',
