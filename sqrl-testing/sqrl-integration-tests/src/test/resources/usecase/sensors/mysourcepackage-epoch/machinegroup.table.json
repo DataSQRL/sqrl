@@ -1,0 +1,16 @@
+{
+  "type" : "source",
+  "canonicalizer" : "system",
+  "format" : {
+    "name" : "json"
+  },
+  "name" : "machinegroup",
+  "identifier" : "machinegroup",
+  "schema" : "flexible",
+  "connector" : {
+    "directoryURI" : "",
+    "fileURIs" : [ "../../sqrl-examples/sensors/data-epoch/sensors_part0001.json.gz", "../../sqrl-examples/sensors/data-epoch/sensorreading_part0001.csv.gz", "../../sqrl-examples/sensors/data-epoch/sensors_part0000.json.gz", "../../sqrl-examples/sensors/data-epoch/machinegroup_part0001.json.gz" ],
+    "filenamePattern" : "^([^\\.]+?)(?:_part.*)?$",
+    "name" : "file"
+  }
+}

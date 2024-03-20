@@ -20,7 +20,6 @@ import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
 import org.apache.flink.table.functions.AggregateFunction;
 import org.apache.flink.table.functions.ScalarFunction;
-import org.apache.flink.table.functions.TableFunction;
 import org.apache.flink.table.functions.UserDefinedFunction;
 
 @AutoService(Preprocessor.class)

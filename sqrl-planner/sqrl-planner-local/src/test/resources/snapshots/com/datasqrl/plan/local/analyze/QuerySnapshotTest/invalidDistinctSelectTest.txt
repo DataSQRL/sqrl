@@ -1,8 +1,0 @@
->>>errors
-[FATAL] At line 5, column 34: Column 'x' not found in any table
-in script:<script> [5:34]:
-IMPORT ecommerce-data.Product;
-IMPORT time.*;
-Customer := DISTINCT Customer ON x ORDER BY _ingest_time DESC;
----------------------------------^
-

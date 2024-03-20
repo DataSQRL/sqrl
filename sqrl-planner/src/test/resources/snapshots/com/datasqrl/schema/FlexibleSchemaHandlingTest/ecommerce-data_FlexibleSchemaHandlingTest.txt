@@ -1,0 +1,12 @@
+>>>customer-hasTimestamp
+RecordType(BIGINT customerid, VARCHAR(2147483647) email, VARCHAR(2147483647) name, BIGINT lastUpdated)
+>>>customer
+RecordType(BIGINT customerid, VARCHAR(2147483647) email, VARCHAR(2147483647) name, BIGINT lastUpdated)
+>>>orders-hasTimestamp
+RecordType(BIGINT id, BIGINT customerid, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) time, RecordType(INTEGER _idx, BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount) ARRAY entries)
+>>>orders
+RecordType(BIGINT id, BIGINT customerid, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) time, RecordType(INTEGER _idx, BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount) ARRAY entries)
+>>>product-hasTimestamp
+RecordType(BIGINT productid, VARCHAR(2147483647) name, VARCHAR(2147483647) description, VARCHAR(2147483647) category)
+>>>product
+RecordType(BIGINT productid, VARCHAR(2147483647) name, VARCHAR(2147483647) description, VARCHAR(2147483647) category)

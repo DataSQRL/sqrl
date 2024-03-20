@@ -1,0 +1,7 @@
+>>>order_time$1
+LogicalProject(hour=[$4], hour0=[EXTRACT(FLAG(HOUR), NOW())], _uuid=[$0])
+  LogicalTableScan(table=[[orders$2]])
+
+>>>orders$2
+LogicalTableScan(table=[[orders$1]])
+

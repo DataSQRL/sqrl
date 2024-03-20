@@ -1,7 +1,0 @@
->>>errors
-[FATAL] Alias by itself.
-in script:<script> [2:34]:
-IMPORT ecommerce-data.Orders;
-X := SELECT * From Orders o JOIN o;
----------------------------------^
-

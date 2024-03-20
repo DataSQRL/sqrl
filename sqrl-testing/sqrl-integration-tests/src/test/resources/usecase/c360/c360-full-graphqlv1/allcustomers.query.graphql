@@ -1,0 +1,10 @@
+{
+Customer {
+    email
+    name
+    updatetime
+    favorite_categories {
+        category_name
+        total
+    }
+}}

@@ -1,0 +1,7 @@
+{
+ProductSearchWithId( query: "garden", id: 5000) {
+    productid
+    name
+    description
+    category
+}}

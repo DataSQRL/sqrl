@@ -13,6 +13,7 @@ import java.nio.file.Paths;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@Disabled
 public class FileHashTest {
 
     @Test

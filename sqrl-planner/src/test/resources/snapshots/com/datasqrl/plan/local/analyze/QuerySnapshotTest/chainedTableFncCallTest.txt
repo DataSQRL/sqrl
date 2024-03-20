@@ -1,0 +1,15 @@
+>>>orders$2
+LogicalTableScan(table=[[orders$1]])
+
+>>>x$1
+LogicalFilter(condition=[=($2, ?0)])
+  LogicalTableScan(table=[[orders$2]])
+
+>>>y$1
+LogicalFilter(condition=[=($2, ?0)])
+  LogicalTableScan(table=[[orders$2]])
+
+>>>z$1
+LogicalFilter(condition=[=($2, 3)])
+  LogicalTableScan(table=[[orders$2]])
+

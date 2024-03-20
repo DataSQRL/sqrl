@@ -1,0 +1,7 @@
+>>>product$2
+LogicalTableScan(table=[[product$1]])
+
+>>>product2$1
+LogicalProject(x=[+($1, *(1000:INTERVAL SECOND, 60))], _uuid=[$0], _ingest_time=[$1])
+  LogicalTableScan(table=[[product$2]])
+

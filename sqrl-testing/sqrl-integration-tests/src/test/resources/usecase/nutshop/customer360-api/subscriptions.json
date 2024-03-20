@@ -1,0 +1,6 @@
+[
+  {
+    "subscription": "NewCustomerPromotion",
+    "sinks" : [{ "name" :  "output" }]
+  }
+]

@@ -1,0 +1,21 @@
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+
+type Orders {
+  id: Float!
+  customerid: Float!
+  time: DateTime!
+  entries(limit: Int = 10, offset: Int = 0): [entries!]
+}
+
+type Query {
+  Orders(limit: Int = 10, offset: Int = 0): [Orders!]
+}
+
+type entries {
+  productid: Float!
+  quantity: Float!
+  unit_price: Float!
+  discount: Float
+}
+

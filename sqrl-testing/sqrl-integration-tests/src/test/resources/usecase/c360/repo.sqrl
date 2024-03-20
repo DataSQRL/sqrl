@@ -1,0 +1,20 @@
+IMPORT datasqrl-central.Submission TIMESTAMP submissionTime;
+IMPORT string.concat;
+
+Submission.variant0 := COALESCE(variant, 'default');
+Submission.repoURL := concat('https://repository.datasqrl.com/',file);
+
+Package := SELECT DISTINCT name FROM Submission;
+
+Package.latest := JOIN Submission s ON @.name = s.name AND s.latest = TRUE ORDER BY s.submissionTime DESC;
+Package.versions := JOIN Submission s ON @.name = s.name ORDER BY s.submissionTime DESC;
+
+TopicPackages := SELECT s.name AS pkgName, k.name AS topicName, COUNT(1) AS numSubmissions, MAX(submissionTime) AS lastSubmission
+                 FROM Submission s JOIN s.keywords k
+                 GROUP BY pkgName, topicName ORDER BY numSubmissions DESC;
+
+TopicPackages.latest := JOIN Submission s ON @.pkgName = s.name AND s.latest = TRUE ORDER BY s.submissionTime DESC;
+
+TopicSearch := SELECT k.name AS topicName, COUNT(DISTINCT s.name) AS numPackages
+               FROM Submission s JOIN s.keywords k
+               GROUP BY topicName ORDER BY numPackages DESC;

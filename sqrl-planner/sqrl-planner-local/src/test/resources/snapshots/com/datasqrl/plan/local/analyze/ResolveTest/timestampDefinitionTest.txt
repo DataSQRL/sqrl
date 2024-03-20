@@ -1,3 +1,0 @@
->>>orders$2-lp-STREAM
-LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
-

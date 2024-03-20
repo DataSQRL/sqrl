@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "engines" : {
+    "database" : {
+      "type" : "jdbc",
+      "connector": "jdbc",
+      "password" : "postgres",
+      "driver" : "org.postgresql.Driver",
+      "user" : "postgres",
+      "url" : "jdbc:postgresql://database:5432/datasqrl"
+    },
+    "streams" : {
+      "type" : "flink"
+    },
+    "log" : {
+      "name" : "kafka",
+      "schema" : "flexible",
+      "format" : "avro",
+      "type" : "kafka",
+      "connector" : {
+        "name" : "kafka",
+        "bootstrap.servers" : "kafka:9092"
+      }
+    },
+    "server" : {
+      "type" : "vertx"
+    }
+  }
+}

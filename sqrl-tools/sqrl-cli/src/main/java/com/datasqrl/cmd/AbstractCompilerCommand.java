@@ -3,6 +3,7 @@
  */
 package com.datasqrl.cmd;
 
+import static com.datasqrl.packager.Packager.PACKAGE_JSON;
 import static com.datasqrl.packager.config.ScriptConfiguration.GRAPHQL_NORMALIZED_FILE_NAME;
 
 import com.datasqrl.calcite.type.TypeFactory;
@@ -23,11 +24,15 @@ import com.datasqrl.packager.repository.Repository;
 import com.google.common.base.Preconditions;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.jdbc.SqrlSchema;
@@ -74,7 +79,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
         this.root.packageFiles, this.profiles, this.files, !noinfer);
     SqrlConfig sqrlConfig = packageBootstrap.bootstrap(repository, errors,
         this::createDefaultConfig,
-        this::postProcessConfig);
+        this::postProcessConfig, targetDir);
 
     Packager packager = new Packager(repository, root.rootDir, sqrlConfig, errors);
     Path path = packager.preprocess();
@@ -112,7 +117,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
 
   protected void postprocess(Packager packager, Path targetDir,
       PhysicalPlan plan, ErrorCollector errors) {
-    packager.postprocess(getTargetDir(), Optional.ofNullable(mountDirectory), profiles);
+    packager.postprocess(root.rootDir, getTargetDir(), Optional.ofNullable(mountDirectory), profiles);
   }
 
   protected boolean isGenerateGraphql() {

@@ -1,0 +1,19 @@
+{
+  "type" : "source",
+  "canonicalizer" : "system",
+  "format" : {
+    "name" : "csv",
+    "delimiter" : ",",
+    "commentPrefix" : null,
+    "header" : [ "productid", "name", "description", "category" ]
+  },
+  "name" : "product",
+  "identifier" : "product",
+  "schema" : "flexible",
+  "connector" : {
+    "directoryURI" : "../../sqrl-examples/retail/data/",
+    "fileURIs" : [ ],
+    "filenamePattern" : "^([^\\.]+?)(?:_part.*)?$",
+    "name" : "file"
+  }
+}

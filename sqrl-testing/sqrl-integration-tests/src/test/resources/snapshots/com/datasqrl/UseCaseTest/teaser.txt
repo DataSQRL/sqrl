@@ -1,0 +1,150 @@
+>>>pipeline_explain.txt
+=== Orders
+ID:     orders$2
+Type:   stream
+Stage:  streams
+Primary Key: id, time
+Timestamp  : time
+Schema:
+ - id: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - items: RecordType(INTEGER NOT NULL _idx, BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+Plan:
+LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[2]]]]) hints[WatermarkHint options:[2]]
+
+=== spending
+ID:     spending$1
+Type:   stream
+Stage:  streams
+Inputs: orders$2, totals$1, users$1
+Primary Key: __pk1$id, week
+Timestamp  : week
+Schema:
+ - __pk1$id: BIGINT NOT NULL
+ - week: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - spend: DOUBLE NOT NULL
+ - saved: DOUBLE NOT NULL
+Post Processors:
+ - sort: #0: __pk1$id BIGINT ASC, #1: week TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC
+Plan:
+LogicalProject(__pk1$id=[$0], week=[$1], spend=[$2], saved=[$3])
+  LogicalAggregate(group=[{0, 1}], spend=[SUM($2)], saved=[SUM($3)]) hints[TumbleAggregationHint options:[1, FUNCTION, 5, 604800000, 0]]
+    LogicalProject(__pk3$id=[$0], week=[endOfWeek($3)], price=[$7], saving=[$8], id=[$1], time=[$3])
+      LogicalJoin(condition=[AND(=($1, $5), =($3, $6))], joinType=[inner]) hints[IntervalJoin]
+        LogicalProject(__pk3$id=[$5], id=[$0], customerid=[$1], time=[$2], items=[$3])
+          LogicalJoin(condition=[=($5, $4)], joinType=[inner]) hints[TemporalJoinHint options:[2, 1, 0]]
+            LogicalProject(id=[$0], customerid=[$1], time=[$2], items=[$3], customerid4=[$1])
+              LogicalTableScan(table=[[orders$2]])
+            LogicalFilter(condition=[=($2, 1)]) hints[DedupHint]
+              LogicalProject(id=[$0], _time=[$1], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $1 DESC NULLS LAST)])
+                LogicalTableScan(table=[[users$1]])
+        LogicalTableScan(table=[[totals$1]])
+
+=== totals
+ID:     totals$1
+Type:   stream
+Stage:  streams
+Inputs: orders$2
+Primary Key: __pk1$id, __pk3$time
+Timestamp  : __pk3$time
+Schema:
+ - __pk1$id: BIGINT NOT NULL
+ - __pk3$time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - price: DOUBLE NOT NULL
+ - saving: DOUBLE NOT NULL
+Plan:
+LogicalProject(__pk1$id=[$0], __pk3$time=[$1], price=[$2], saving=[$3])
+  LogicalAggregate(group=[{0, 1}], price=[SUM($2)], agg#1=[SUM($3)]) hints[TumbleAggregationHint options:[1, INSTANT, 1, 1, 0]]
+    LogicalProject(__pk1$id=[$0], __pk2$time=[$2], $f2=[*($6, $7)], $f3=[COALESCE($8, 0.0:DECIMAL(2, 1))], _idx=[$4])
+      LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{3}])
+        LogicalTableScan(table=[[orders$2]])
+        LogicalTableFunctionScan(invocation=[Orders.items($cor0.items)], rowType=[RecordType(INTEGER _idx, BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount)], elementType=[class [Ljava.lang.Object;])
+
+=== Users
+ID:     users$1
+Type:   state
+Stage:  streams
+Inputs: orders$2
+Primary Key: id
+Timestamp  : _time
+Schema:
+ - id: BIGINT NOT NULL
+ - _time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Post Processors:
+ - topN: partition=id limit=1 sort=#1: _time TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
+Plan:
+LogicalProject(id=[$1], _time=[$2])
+  LogicalTableScan(table=[[orders$2]])
+
+>>>flink-plan.sql
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofweek` AS 'com.datasqrl.time.EndOfWeek' LANGUAGE JAVA;
+
+CREATE TEMPORARY TABLE `orders$1` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `items` ROW(`_idx` INTEGER NOT NULL, `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED,
+  WATERMARK FOR `time` AS (`time` - INTERVAL '0.001' SECOND)
+)
+PARTITIONED BY ()
+WITH (
+  'format' = 'json',
+  'path' = '/mnt/build/data',
+  'source.monitor-interval' = '0',
+  'connector' = 'filesystem',
+  'source.path.regex-pattern' = 'to be determined'
+);
+
+CREATE VIEW `table$1`
+AS
+SELECT *
+FROM (SELECT `id`, `_time`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `_time` DESC NULLS LAST)) AS `_rownum`
+FROM (SELECT `customerid` AS `id`, `time` AS `_time`
+FROM `orders$1`) AS `t`) AS `t0`
+WHERE (`_rownum` = 1);
+
+CREATE VIEW `table$2`
+AS
+SELECT `$cor0`.`id` AS `__pk1$id`, `$cor0`.`time` AS `__pk2$time`, (`t50`.`quantity` * `t50`.`unit_price`) AS `$f2`, COALESCE(`t50`.`discount`, 0.0) AS `$f3`, `t50`.`_idx`
+FROM `orders$1` AS `$cor0`,
+UNNEST(`$cor0`.`items`) AS `t50`;
+
+CREATE VIEW `table$3`
+AS
+SELECT `t3`.`__pk3$id`, ENDOFWEEK(`t3`.`time`) AS `week`, `t10`.`price`, `t10`.`saving`, `t3`.`id`, `t3`.`time`
+FROM (SELECT `t1`.`id` AS `__pk3$id`, `$cor4`.`id`, `$cor4`.`customerid`, `$cor4`.`time`, `$cor4`.`items`
+FROM (SELECT `id`, `customerid`, `time`, `items`, `customerid` AS `customerid4`
+FROM `orders$1`) AS `$cor4`
+INNER JOIN `table$1` FOR SYSTEM_TIME AS OF `$cor4`.`time` AS `t1` ON (`t1`.`id` = `$cor4`.`customerid4`)) AS `t3`
+INNER JOIN (SELECT `__pk1$id`, `window_time` AS `__pk3$time`, SUM(`$f2`) AS `price`, SUM(`$f3`) AS `saving`
+FROM TABLE(TUMBLE((TABLE `table$2`), (DESCRIPTOR(`__pk2$time`)), INTERVAL '0.001' SECOND(1))) AS `t7`
+GROUP BY `__pk1$id`, `window_start`, `window_end`, `window_time`) AS `t10` ON ((`t3`.`id` = `t10`.`__pk1$id`) AND (`t3`.`time` = `t10`.`__pk3$time`));
+
+CREATE VIEW `table$1`
+AS
+SELECT `$cor0`.`id` AS `__pk1$id`, `$cor0`.`time` AS `__pk2$time`, (`t00`.`quantity` * `t00`.`unit_price`) AS `$f2`, COALESCE(`t00`.`discount`, 0.0) AS `$f3`, `t00`.`_idx`
+FROM `orders$1` AS `$cor0`,
+UNNEST(`$cor0`.`items`) AS `t00`;
+
+STATEMENT SET BEGIN
+INSERT INTO `orders$2`
+(SELECT *
+FROM `orders$1`)
+;
+INSERT INTO `spending$1`
+(SELECT `__pk3$id` AS `__pk1$id`, `window_time` AS `week`, SUM(`price`) AS `spend`, SUM(`saving`) AS `saved`
+FROM TABLE(TUMBLE((TABLE `table$3`), (DESCRIPTOR(`time`)), INTERVAL '604800' SECOND(9), INTERVAL '0' SECOND(1))) AS `t12`
+GROUP BY `__pk3$id`, `window_start`, `window_end`, `window_time`)
+;
+INSERT INTO `totals$1`
+(SELECT `__pk1$id`, `window_time` AS `__pk3$time`, SUM(`$f2`) AS `price`, SUM(`$f3`) AS `saving`
+FROM TABLE(TUMBLE((TABLE `table$1`), (DESCRIPTOR(`__pk2$time`)), INTERVAL '0.001' SECOND(1))) AS `t2`
+GROUP BY `__pk1$id`, `window_start`, `window_end`, `window_time`)
+;
+INSERT INTO `users$1`
+(SELECT `customerid` AS `id`, `time` AS `_time`
+FROM `orders$1`)
+;
+END;

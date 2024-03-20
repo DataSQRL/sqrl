@@ -1,0 +1,19 @@
+>>>customer$2
+LogicalTableScan(table=[[customer$1]])
+
+>>>orders$2
+LogicalTableScan(table=[[orders$1]])
+
+>>>product$2
+LogicalTableScan(table=[[product$1]])
+
+>>>x$1
+LogicalProject(time=[$4], time0=[$10], time1=[$16], _uuid=[$0])
+  LogicalJoin(condition=[=($12, $18)], joinType=[inner])
+    LogicalJoin(condition=[=($6, $12)], joinType=[inner])
+      LogicalJoin(condition=[AND(=($0, $6), =($10, $4))], joinType=[inner])
+        LogicalTableScan(table=[[orders$2]])
+        LogicalTableScan(table=[[orders$2]])
+      LogicalTableScan(table=[[orders$2]])
+    LogicalTableScan(table=[[orders$2]])
+

@@ -1,0 +1,9 @@
+>>>product$2
+LogicalTableScan(table=[[product$1]])
+
+>>>x$1
+LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], _uuid0=[$6])
+  LogicalJoin(condition=[true], joinType=[inner])
+    LogicalTableScan(table=[[product$2]])
+    LogicalTableScan(table=[[product$2]])
+

@@ -13,7 +13,7 @@ import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;
-import com.datasqrl.io.impl.print.PrintDataSystemFactory;
+import com.datasqrl.loaders.ModuleLoaderImpl;
 import com.datasqrl.loaders.StandardLibraryLoader;
 import com.datasqrl.packager.ImportExportAnalyzer;
 import com.datasqrl.packager.ImportExportAnalyzer.Result;
@@ -24,8 +24,10 @@ import com.datasqrl.packager.config.PackageConfiguration;
 import com.datasqrl.packager.config.ScriptConfiguration;
 import com.datasqrl.packager.repository.Repository;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,8 +41,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
+import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
+import org.apache.commons.io.FileUtils;
 
 @AllArgsConstructor
 public class PackageBootstrap {
@@ -54,7 +58,7 @@ public class PackageBootstrap {
   @SneakyThrows
   public SqrlConfig bootstrap(Repository repository, ErrorCollector errors,
       Function<ErrorCollector, SqrlConfig> defaultConfigFnc,
-      Function<SqrlConfig, SqrlConfig> postProcess) {
+      Function<SqrlConfig, SqrlConfig> postProcess, Path targetDir) {
     errors = errors.withLocation(ErrorPrefix.CONFIG).resolve("package");
 
     //Create build dir to unpack resolved dependencies
@@ -115,16 +119,7 @@ public class PackageBootstrap {
     }
 
     //Create package.json
-    List<Path> configFiles = new ArrayList<>();
-
-    //explicit cli package overrides
-    if (!packageFiles.isEmpty()) {
-      configFiles.addAll(packageFiles);
-    } else { //check for implicit package json
-      if (Files.exists(rootDir.resolve(PACKAGE_JSON))) {
-        configFiles.add(rootDir.resolve(PACKAGE_JSON));
-      }
-    }
+    List<Path> configFiles = existingPackage.orElseGet(ArrayList::new);
 
     // Add profile config files
     for (String profile : profiles) {
@@ -136,7 +131,7 @@ public class PackageBootstrap {
       } else if (Files.isRegularFile(remoteProfile)) { //look for remote
         configFiles.add(remoteProfile);
       } else {
-        throw new RuntimeException("Could not find profile: " + profile);
+//        throw new RuntimeException("Could not find profile: " + profile);
       }
     }
 
@@ -228,7 +223,7 @@ public class PackageBootstrap {
     StandardLibraryLoader standardLibraryLoader = new StandardLibraryLoader();
     Set<NamePath> pkgs = new HashSet<>(allResults.getPkgs());
     pkgs.removeAll(standardLibraryLoader.loadedLibraries());
-    pkgs.remove(Name.system(PrintDataSystemFactory.SYSTEM_NAME).toNamePath());
+    pkgs.remove(Name.system(ModuleLoaderImpl.PRINT_SINK_NAME).toNamePath());
 
     Set<NamePath> unloadedDeps = new HashSet<>();
     for (NamePath packagePath : pkgs) {

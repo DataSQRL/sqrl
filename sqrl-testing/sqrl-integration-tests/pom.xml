@@ -1,7 +1,8 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
-    <groupId>com.datasqrl</groupId>
+    <groupId>run.sqrl</groupId>
     <artifactId>sqrl-testing</artifactId>
     <version>0.4.4-SNAPSHOT</version>
   </parent>
@@ -17,7 +18,7 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.datasqrl</groupId>
+      <groupId>run.sqrl</groupId>
       <artifactId>sqrl-cli</artifactId>
       <scope>test</scope>
     </dependency>
@@ -27,7 +28,7 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>com.datasqrl</groupId>
+      <groupId>run.sqrl</groupId>
       <artifactId>sqrl-cli</artifactId>
       <type>test-jar</type>
       <scope>test</scope>
@@ -104,14 +105,14 @@
 
     <!-- Test jars -->
     <dependency>
-      <artifactId>sqrl-common</artifactId>
-      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-calcite</artifactId>
+      <groupId>run.sqrl</groupId>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <artifactId>sqrl-planner-local</artifactId>
-      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-planner</artifactId>
+      <groupId>run.sqrl</groupId>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>

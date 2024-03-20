@@ -1,8 +1,0 @@
->>>errors
-[FATAL] At line 3, column 22: Table 'joinDeclaration' not found
-in script:<script> [3:22]:
-IMPORT ecommerce-data.Product;
-Product.joinDeclaration := JOIN Product ON true;
-NewProduct := SELECT joinDeclaration.productid FROM Product;
----------------------^
-
