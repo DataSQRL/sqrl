@@ -1,12 +1,9 @@
 package com.datasqrl.io.tables;
 
 import com.datasqrl.config.SqrlConfig;
-import com.datasqrl.io.connector.ConnectorConfig;
 import com.datasqrl.io.formats.Format;
-import com.datasqrl.io.formats.Format.BaseFormat;
 import com.datasqrl.io.formats.Format.DefaultFormat;
 import com.datasqrl.io.formats.FormatFactory;
-import com.datasqrl.io.tables.TableConfig.Builder;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
@@ -30,7 +27,7 @@ public class FlinkConnectorFactory implements ConnectorFactory {
   );
 
   @Override
-  public Format getFormat(SqrlConfig connectorConfig) {
+  public Optional<Format> getFormat(SqrlConfig connectorConfig) {
     Optional<String> format = connectorConfig.asString(FORMAT_KEY).getOptional()
         .or(() -> connectorConfig.asString(VALUE_FORMAT_KEY).getOptional());
     connectorConfig.getErrorCollector()
@@ -38,8 +35,10 @@ public class FlinkConnectorFactory implements ConnectorFactory {
             VALUE_FORMAT_KEY);
     Optional<FormatFactory> formatFactory = ServiceLoaderDiscovery.findFirst(FormatFactory.class,
         FormatFactory::getName, format.get());
-    return formatFactory.map(fac -> fac.fromConfig(connectorConfig))
-        .orElseGet(() -> new DefaultFormat(format.get()));
+    Optional<Format> format1 = formatFactory.map(fac -> fac.fromConfig(connectorConfig));
+    Optional<Format> defaultFormat = format.map(f -> new DefaultFormat(f));
+
+    return format1.isPresent() ? format1 : defaultFormat;
   }
 
   @Override

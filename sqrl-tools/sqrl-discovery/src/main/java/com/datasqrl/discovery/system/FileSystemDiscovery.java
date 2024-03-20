@@ -104,7 +104,8 @@ public class FileSystemDiscovery implements DataSystemDiscovery {
               if (otherTbl == null) {
                 tablesByName.put(tblName, table);
               } else {
-                Format otherFormat = otherTbl.getConnectorConfig().getFormat();
+                Format otherFormat = otherTbl.getConnectorConfig().getFormat()
+                    .get();
                 if (!format.get().equals(otherFormat)) {
                   errors.warn("Table file [%s] does not have the same format [%s] of previously " +
                           "encountered table [%s]. File will be ignored",
