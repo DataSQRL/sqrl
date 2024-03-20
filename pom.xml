@@ -67,7 +67,18 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
   </properties>
-
+  <developers>
+    <developer>
+      <name>Daniel Henneberger</name>
+      <email>daniel@datasqrl.com</email>
+      <url>https://github.com/henneberger</url>
+    </developer>
+  </developers>
+  <scm>
+    <connection>scm:git:https://github.com/DataSQRL/sqrl.git</connection>
+    <url>https://github.com/DataSQRL/sqrl</url>
+    <developerConnection>scm:git:https://github.com/DataSQRL/sqrl.git</developerConnection>
+  </scm>
   <profiles>
     <profile>
       <id>update-snapshots</id>
