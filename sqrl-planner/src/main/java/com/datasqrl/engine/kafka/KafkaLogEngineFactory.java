@@ -28,7 +28,7 @@ public class KafkaLogEngineFactory implements EngineFactory {
   public KafkaLogEngine initialize(@NonNull SqrlConfig connectorConfig) {
     //This is hard-coded for now since Flink is the only engine we support
     KafkaConnectorFactory kafkaConnector = KafkaFlinkConnectorFactory.INSTANCE;
-    Format format = kafkaConnector.getFormat(connectorConfig);
+    Format format = kafkaConnector.getFormat(connectorConfig).get();
     Optional<TableSchemaExporterFactory> schemaExporterFactoryOpt;
     try {
       TableSchemaExporterFactory schemaFactory = TableSchemaExporterFactory.load(

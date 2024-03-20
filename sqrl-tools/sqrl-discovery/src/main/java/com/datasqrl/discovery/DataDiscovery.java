@@ -52,7 +52,8 @@ public class DataDiscovery {
     List<TableSource> resultTables = new ArrayList<>();
     try (TableStatisticsStore store = openStore()) {
       for (TableConfig table : tables) {
-        if (!isFlexibleFormat(table.getConnectorConfig().getFormat())) continue;
+        if (table.getConnectorConfig().getFormat()
+            .filter(DataDiscovery::isFlexibleFormat).isEmpty()) continue;
         SourceTableStatistics stats = store.getTableStatistics(NamePath.of(table.getName()));
         if (stats == null) {
           getConfiguration().getErrors().warn("Could not find data for table: %s", table.getName());
