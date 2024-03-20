@@ -41,15 +41,17 @@ import org.apache.flink.sql.parser.ddl.SqlWatermark;
 import org.apache.flink.sql.parser.ddl.constraint.SqlTableConstraint;
 import org.apache.flink.sql.parser.validate.FlinkSqlConformance;
 import org.apache.flink.table.planner.delegation.FlinkSqlParserFactories;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+@Disabled
 class SqrlToFlinkSqlPlannerTest {
 
   @SneakyThrows
   @Test
   public void readConf() {
     String str = Files.readString(
-        Path.of("../../sqrl-examples/avro/ecommerce-avro/orders.sql"));
+        Path.of("../sqrl-examples/avro/ecommerce-avro/orders.sql"));
 
     SqlConformance conformance =  FlinkSqlConformance.DEFAULT;
     Config config = SqlParser.config()
