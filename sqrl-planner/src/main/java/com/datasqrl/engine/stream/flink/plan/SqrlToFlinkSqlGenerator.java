@@ -27,7 +27,6 @@ import com.datasqrl.flink.FlinkConverter;
 import com.datasqrl.function.DowncastFunction;
 import com.datasqrl.io.connector.ConnectorConfig;
 import com.datasqrl.io.formats.Format;
-import com.datasqrl.io.formats.JsonLineFormat;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableConfig.Base;
 import com.datasqrl.json.FlinkJsonType;
@@ -111,9 +110,9 @@ public class SqrlToFlinkSqlGenerator {
     Map<String, String> downcastClassNames = new HashMap<>();
 
     for (WriteQuery query : writeQueries) {
-      Pair<List<SqlCreateView>, RichSqlInsert> result = process(query);
       RelNode relNode = applyDowncasting(framework.getQueryPlanner().getRelBuilder(),
           query.getRelNode(), query.getSink(), downcastClassNames);
+      Pair<List<SqlCreateView>, RichSqlInsert> result = process(query.getSink().getName(), relNode);
       SqlCreateTable sqlCreateTable = registerSinkTable(query.getSink(), relNode);
       sinksAndSources.add(sqlCreateTable);
       queries.addAll(result.getKey());
@@ -124,8 +123,8 @@ public class SqrlToFlinkSqlGenerator {
     return new SqlResult(sinksAndSources, inserts, queries, functions);
   }
 
-  private Pair<List<SqlCreateView>, RichSqlInsert> process(WriteQuery query) {
-    FlinkSqlNodes convert = toSql.convert(query.getRelNode());
+  private Pair<List<SqlCreateView>, RichSqlInsert> process(String name, RelNode relNode) {
+    FlinkSqlNodes convert = toSql.convert(relNode);
 
     SqlNode topLevelQuery = convert.getSqlNode();
     List<SqlCreateView> queries = convert.getQueryList()
@@ -133,7 +132,7 @@ public class SqrlToFlinkSqlGenerator {
         .map(this::createQuery)
         .collect(Collectors.toList());
 
-    return Pair.of(queries, createInsert(topLevelQuery, query.getSink().getName()));
+    return Pair.of(queries, createInsert(topLevelQuery, name));
   }
 
   private SqlCreateView createQuery(QueryPipelineItem q) {
