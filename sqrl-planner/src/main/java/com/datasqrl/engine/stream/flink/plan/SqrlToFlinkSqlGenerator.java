@@ -25,7 +25,8 @@ import com.datasqrl.engine.stream.flink.sql.rules.PushWatermarkHintToTableScanRu
 import com.datasqrl.engine.stream.flink.sql.rules.ShapeBushyCorrelateJoinRule.ShapeBushyCorrelateJoinRuleConfig;
 import com.datasqrl.flink.FlinkConverter;
 import com.datasqrl.function.DowncastFunction;
-import com.datasqrl.io.formats.FormatFactoryOld;
+import com.datasqrl.io.connector.ConnectorConfig;
+import com.datasqrl.io.formats.Format;
 import com.datasqrl.io.formats.JsonLineFormat;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableConfig.Base;
@@ -187,7 +188,7 @@ public class SqrlToFlinkSqlGenerator {
 
     //If it's a raw type and the format or engine supports it, return it
     //todo: fix hack for format
-    if (formatSupportsType(tableConfig.getFormat().map(FormatFactoryOld::getName).orElse(""), (RawRelDataType) field.getType())
+    if (formatSupportsType(tableConfig.getConnectorConfig(), (RawRelDataType) field.getType())
         || engineSupportsType(getEngine(writeSink),
         ((RawRelDataType) field.getType()).getRawType().getDefaultConversion())
     ) {
@@ -241,10 +242,16 @@ public class SqrlToFlinkSqlGenerator {
     return type instanceof RawRelDataType;
   }
 
-  private boolean formatSupportsType(String format, RawRelDataType type) {
+  private boolean formatSupportsType(ConnectorConfig tableConfig, RawRelDataType type) {
      //Hard code in json format for now
-     return type.getRawType().getOriginatingClass() == FlinkJsonType.class &&
-         format.equalsIgnoreCase(JsonLineFormat.NAME);
+    if (type.getRawType().getOriginatingClass() == FlinkJsonType.class) {
+      Optional<Format> format = tableConfig.getFormat();
+      if (format.isPresent()) {
+        return format.get().getName().equalsIgnoreCase("flexible-json");
+      }
+    }
+
+     return false;
    }
    private TableConfig getTableConfig(WriteSink sink) {
          if (sink instanceof EngineSink) {
