@@ -1,0 +1,6 @@
+IMPORT ecommerceTs.Orders;
+OrdersState := DISTINCT Orders ON id ORDER BY time DESC;
+OrderAgg1 := SELECT customerid, COUNT(1) as count FROM Orders GROUP BY customerid;
+OrderAgg2 := SELECT customerid, MAX(time) as timestamp, COUNT(1) as count FROM Orders GROUP BY customerid;
+OrderAgg3 := SELECT customerid, COUNT(1) as count FROM OrdersState GROUP BY customerid;
+OrderAgg4 := SELECT customerid, MAX(time) as timestamp, COUNT(1) as count FROM OrdersState GROUP BY customerid;

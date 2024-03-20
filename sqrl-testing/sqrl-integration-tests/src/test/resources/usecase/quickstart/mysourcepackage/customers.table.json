@@ -1,0 +1,17 @@
+{
+  "type" : "source",
+  "name" : "customers",
+  "identifier" : "customers",
+  "canonicalizer" : "system",
+  "schema" : "flexible",
+  "format" : {
+    "name" : "json",
+    "charset" : "UTF-8"
+  },
+  "connector" : {
+    "directoryURI" : "",
+    "fileURIs" : [ "../../sqrl-examples/quickstart/data/customers.json.gz" ],
+    "filenamePattern" : "^([^\\.]+?)(?:_part.*)?$",
+    "name" : "file"
+  }
+}

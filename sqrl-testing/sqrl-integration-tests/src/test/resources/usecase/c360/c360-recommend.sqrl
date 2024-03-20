@@ -1,0 +1,41 @@
+IMPORT time.endOfHour;
+IMPORT time.epochToTimestamp;
+IMPORT ecommerce-data.Customer TIMESTAMP epochToTimestamp(lastUpdated) AS updateTime;
+IMPORT ecommerce-data.Product TIMESTAMP _ingest_time - INTERVAL 365 DAYS AS updateTime;
+IMPORT ecommerce-data.Orders;
+
+Customer := DISTINCT Customer ON customerid ORDER BY updateTime DESC;
+Category := SELECT DISTINCT category AS name FROM Product;
+Product := DISTINCT Product ON productid ORDER BY updateTime DESC;
+
+-- Compute useful statistics on orders
+Orders.entries.discount0 := coalesce(discount, 0.0);
+Orders.entries.total := quantity * unit_price - discount0;
+Orders.total := SELECT sum(e.total) AS price, sum(e.discount0) AS discount, count(1) AS num FROM @.entries e;
+
+-- Relate Customer to Orders and categories to products
+Customer.orders := JOIN Orders ON Orders.customerid = @.customerid;
+Category.products := JOIN Product ON @.name = Product.category;
+
+-- Aggregate all products the customer has ordered for the 'order again' feature
+Orders.entries.product := JOIN Product ON Product.productid = @.productid;
+
+
+/* Compute w/w product sales volume increase average over a month
+   These numbers are internal to determine trending products */
+
+Product._sales_by_hour := SELECT endOfHour(o.time) as hour, sum(e.quantity) as quantity,
+                                count(1) as num_orders
+                          FROM @ JOIN Orders.entries e ON e.productid = @.productid JOIN e.parent o
+                          GROUP BY hour
+                          ORDER BY hour DESC;
+
+Product._sales_24h := SELECT sum(quantity) as total, sum(num_orders) as num FROM @._sales_by_hour WHERE hour > now() - INTERVAL 1 DAY;
+Product._sales_72h := SELECT sum(quantity) as total, sum(num_orders) as num FROM @._sales_by_hour WHERE hour > now() - INTERVAL 3 DAY;
+
+Product._sales_trend := SELECT a.total*1.5 / greatest(b.total, 500.0) + a.num*1.5 / greatest(b.num, 100.0) as increase
+                        FROM @ AS x JOIN x._sales_24h a JOIN x._sales_72h b;
+
+--TODO: fix _sales_trend
+--Category.trending := JOIN Product p ON @.name = p.category
+--                     ORDER BY p._sales_trend.increase DESC;

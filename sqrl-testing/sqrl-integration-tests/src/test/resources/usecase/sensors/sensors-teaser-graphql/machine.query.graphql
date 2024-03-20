@@ -1,0 +1,5 @@
+{
+Machine(machineid: 2) {
+    maxTemp
+    avgTemp
+}}

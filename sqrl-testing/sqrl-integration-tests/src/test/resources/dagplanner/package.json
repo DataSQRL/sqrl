@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "engines" : {
+    "server" : {
+      "type": "vertx"
+    },
+    "database" : {
+      "type" : "jdbc",
+      "connector": "jdbc",
+      "password" : "postgres",
+      "driver" : "org.postgresql.Driver",
+      "user" : "postgres",
+      "url" : "jdbc:postgresql://database:5432/datasqrl"
+    },
+    "streams" : {
+      "type" : "flink"
+    }
+  }
+}

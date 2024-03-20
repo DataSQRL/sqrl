@@ -1,0 +1,9 @@
+IMPORT time.*;
+IMPORT ecommerceTs.Customer;
+IMPORT ecommerceTs.Orders;
+IMPORT ecommerceTs.Product;
+OrderAgg1 := SELECT o.customerid as customer, COUNT(o.id) as order_count FROM Orders o GROUP BY customer;
+OrderAgg2 := SELECT COUNT(o.id) as order_count FROM Orders o;
+Ordertime1 := SELECT o.customerid as customer, endOfsecond(o.time) as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket;
+Ordertime2 := SELECT o.customerid as customer, endOfMinute(o.time, 1, 15) as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket;
+Ordertime3 := SELECT o.customerid as customer, endOfHour(o.time, 5, 30) as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket;

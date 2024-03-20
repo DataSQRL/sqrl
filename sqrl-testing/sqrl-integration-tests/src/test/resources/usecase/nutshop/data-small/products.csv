@@ -1,0 +1,199 @@
+id; name; sizing; weight_in_gram; type; category; usda_id; updated
+1; coconut meat, dried (desiccated), creamed; 1 lbs; 454; Nuts; coconut meat; 168585; 2022-10-28T21:37:23.375Z
+2; coconut meat, dried (desiccated), sweetened, shredded; 1 lbs; 454; Nuts; coconut meat; 168586; 2022-10-28T21:37:23.375Z
+3; sisymbrium sp. seeds, whole, dried; 1 lbs; 454; Seeds; sisymbrium sp. seeds; 168587; 2022-10-28T21:37:23.375Z
+4; almond butter, plain, without salt added; 1 lbs; 454; Nuts; almond butter; 168588; 2022-10-28T21:37:23.375Z
+5; chestnuts, japanese, boiled and steamed; 1 lbs; 454; Nuts; chestnuts; 168589; 2022-10-28T21:37:23.375Z
+6; chestnuts, japanese, roasted; 1 lbs; 454; Nuts; chestnuts; 168590; 2022-10-28T21:37:23.375Z
+7; lotus seeds, raw; 1 lbs; 454; Seeds; lotus seeds; 168591; 2022-10-28T21:37:23.375Z
+8; almonds, honey roasted, unblanched; 1 lbs; 454; Nuts; almonds; 168592; 2022-10-28T21:37:23.375Z
+9; sunflower seed kernels, oil roasted, with salt added; 1 lbs; 454; Seeds; sunflower seed kernels; 168593; 2022-10-28T21:37:23.375Z
+10; sunflower seed kernels, toasted, with salt added; 1 lbs; 454; Seeds; sunflower seed kernels; 168594; 2022-10-28T21:37:23.375Z
+11; sunflower seed kernels, toasted, with salt added; 2 lbs; 907; Seeds; sunflower seed kernels; 168594; 2022-10-28T21:37:23.375Z
+12; sunflower seed kernels, toasted, with salt added; 5 lbs; 2268; Seeds; sunflower seed kernels; 168594; 2022-10-28T21:37:23.375Z
+13; sunflower seed kernels, toasted, with salt added; 10 lbs; 4536; Seeds; sunflower seed kernels; 168594; 2022-10-28T21:37:23.375Z
+14; sunflower seed butter, with salt added (Includes foods for USDA's Food Distribution Program); 1 lbs; 454; Seeds; sunflower seed butter; 168595; 2022-10-28T21:37:23.375Z
+15; almonds, dry roasted, with salt added; 1 lbs; 454; Nuts; almonds; 168596; 2022-10-28T21:37:23.375Z
+16; almonds, dry roasted, with salt added; 2 lbs; 907; Nuts; almonds; 168596; 2022-10-28T21:37:23.375Z
+17; almonds, dry roasted, with salt added; 5 lbs; 2268; Nuts; almonds; 168596; 2022-10-28T21:37:23.375Z
+18; cashew butter, plain, with salt added; 1 lbs; 454; Nuts; cashew butter; 168597; 2022-10-28T21:37:23.375Z
+19; macadamia nuts, dry roasted, with salt added; 1 lbs; 454; Nuts; macadamia nuts; 168598; 2022-10-28T21:37:23.375Z
+20; macadamia nuts, dry roasted, with salt added; 2 lbs; 907; Nuts; macadamia nuts; 168598; 2022-10-28T21:37:23.375Z
+21; mixed nuts, dry roasted, with peanuts, with salt added; 1 lbs; 454; Nuts; mixed nuts; 168599; 2022-10-28T21:37:23.375Z
+22; mixed nuts, oil roasted, with peanuts, with salt added; 1 lbs; 454; Nuts; mixed nuts; 168600; 2022-10-28T21:37:23.375Z
+23; pumpkin and squash seeds, whole, roasted, with salt added; 1 lbs; 454; Seeds; pumpkin and squash seeds; 168601; 2022-10-28T21:37:23.375Z
+24; pumpkin and squash seeds, whole, roasted, with salt added; 2 lbs; 907; Seeds; pumpkin and squash seeds; 168601; 2022-10-28T21:37:23.375Z
+25; almonds, oil roasted, lightly salted; 1 lbs; 454; Nuts; almonds; 168602; 2022-10-28T21:37:23.375Z
+26; almonds, oil roasted, lightly salted; 2 lbs; 907; Nuts; almonds; 168602; 2022-10-28T21:37:23.375Z
+27; almonds, oil roasted, lightly salted; 5 lbs; 2268; Nuts; almonds; 168602; 2022-10-28T21:37:23.375Z
+28; almond butter, plain, with salt added; 1 lbs; 454; Nuts; almond butter; 168603; 2022-10-28T21:37:23.375Z
+29; sesame butter, tahini, type of kernels unspecified; 1 lbs; 454; Seeds; sesame butter; 168604; 2022-10-28T21:37:23.375Z
+30; sesame butter, tahini, from unroasted kernels (non-chemically removed seed coat); 1 lbs; 454; Seeds; sesame butter; 169406; 2022-10-28T21:37:23.375Z
+31; watermelon seed kernels, dried; 1 lbs; 454; Seeds; watermelon seed kernels; 169407; 2022-10-28T21:37:23.375Z
+32; chestnuts, japanese, dried; 1 lbs; 454; Nuts; chestnuts; 169408; 2022-10-28T21:37:23.375Z
+33; sesame butter, tahini, from raw and stone ground kernels; 1 lbs; 454; Seeds; sesame butter; 169410; 2022-10-28T21:37:23.375Z
+34; sesame butter, tahini, from raw and stone ground kernels; 2 lbs; 907; Seeds; sesame butter; 169410; 2022-10-28T21:37:23.375Z
+35; sesame seed kernels, dried (decorticated); 1 lbs; 454; Seeds; sesame seed kernels; 169412; 2022-10-28T21:37:23.375Z
+36; chestnuts, japanese, raw; 1 lbs; 454; Nuts; chestnuts; 169413; 2022-10-28T21:37:23.375Z
+37; chestnuts, japanese, raw; 2 lbs; 907; Nuts; chestnuts; 169413; 2022-10-28T21:37:23.375Z
+38; chestnuts, japanese, raw; 5 lbs; 2268; Nuts; chestnuts; 169413; 2022-10-28T21:37:23.375Z
+39; flaxseed; 1 lbs; 454; Seeds; flaxseed; 169414; 2022-10-28T21:37:23.375Z
+40; flaxseed; 2 lbs; 907; Seeds; flaxseed; 169414; 2022-10-28T21:37:23.375Z
+41; pumpkin and squash seed kernels, roasted, with salt added; 1 lbs; 454; Seeds; pumpkin and squash seed kernels; 169415; 2022-10-28T21:37:23.375Z
+42; pumpkin and squash seed kernels, roasted, with salt added; 2 lbs; 907; Seeds; pumpkin and squash seed kernels; 169415; 2022-10-28T21:37:23.375Z
+43; pumpkin and squash seed kernels, roasted, with salt added; 5 lbs; 2268; Seeds; pumpkin and squash seed kernels; 169415; 2022-10-28T21:37:23.375Z
+44; sesame seed kernels, toasted, with salt added (decorticated); 1 lbs; 454; Seeds; sesame seed kernels; 169416; 2022-10-28T21:37:23.375Z
+45; sesame seed kernels, toasted, with salt added (decorticated); 2 lbs; 907; Seeds; sesame seed kernels; 169416; 2022-10-28T21:37:23.375Z
+46; sesame seed kernels, toasted, with salt added (decorticated); 5 lbs; 2268; Seeds; sesame seed kernels; 169416; 2022-10-28T21:37:23.375Z
+47; sesame seed kernels, toasted, with salt added (decorticated); 10 lbs; 4536; Seeds; sesame seed kernels; 169416; 2022-10-28T21:37:23.375Z
+48; sunflower seed kernels, from shell, dry roasted, with salt added; 1 lbs; 454; Seeds; sunflower seed kernels; 169417; 2022-10-28T21:37:23.375Z
+49; sunflower seed kernels, from shell, dry roasted, with salt added; 2 lbs; 907; Seeds; sunflower seed kernels; 169417; 2022-10-28T21:37:23.375Z
+50; sunflower seed kernels, from shell, dry roasted, with salt added; 5 lbs; 2268; Seeds; sunflower seed kernels; 169417; 2022-10-28T21:37:23.375Z
+51; sunflower seed kernels, dry roasted, with salt added; 1 lbs; 454; Seeds; sunflower seed kernels; 169418; 2022-10-28T21:37:23.375Z
+52; sunflower seed kernels, dry roasted, with salt added; 2 lbs; 907; Seeds; sunflower seed kernels; 169418; 2022-10-28T21:37:23.375Z
+53; sunflower seed kernels, dry roasted, with salt added; 5 lbs; 2268; Seeds; sunflower seed kernels; 169418; 2022-10-28T21:37:23.375Z
+54; almonds, oil roasted, with salt added; 1 lbs; 454; Nuts; almonds; 169419; 2022-10-28T21:37:23.375Z
+55; almonds, oil roasted, with salt added, smoke flavor; 1 lbs; 454; Nuts; almonds; 169420; 2022-10-28T21:37:23.375Z
+56; almonds, oil roasted, with salt added, smoke flavor; 2 lbs; 907; Nuts; almonds; 169420; 2022-10-28T21:37:23.375Z
+57; cashew nuts, dry roasted, with salt added; 1 lbs; 454; Nuts; cashew nuts; 169421; 2022-10-28T21:37:23.375Z
+58; cashew nuts, oil roasted, with salt added; 1 lbs; 454; Nuts; cashew nuts; 169422; 2022-10-28T21:37:23.375Z
+59; mixed nuts, oil roasted, without peanuts, with salt added; 1 lbs; 454; Nuts; mixed nuts; 169423; 2022-10-28T21:37:23.375Z
+60; pecans, dry roasted, with salt added; 1 lbs; 454; Nuts; pecans; 169424; 2022-10-28T21:37:23.375Z
+61; pecans, dry roasted, with salt added; 2 lbs; 907; Nuts; pecans; 169424; 2022-10-28T21:37:23.375Z
+62; pecans, oil roasted, with salt added; 1 lbs; 454; Nuts; pecans; 169425; 2022-10-28T21:37:23.375Z
+63; pistachio nuts, dry roasted, with salt added; 1 lbs; 454; Nuts; pistachio nuts; 169426; 2022-10-28T21:37:23.375Z
+64; pistachio nuts, dry roasted, with salt added; 2 lbs; 907; Nuts; pistachio nuts; 169426; 2022-10-28T21:37:23.375Z
+65; mixed nuts, oil roasted, with peanuts, lightly salted; 1 lbs; 454; Nuts; mixed nuts; 169427; 2022-10-28T21:37:23.375Z
+66; mixed nuts, oil roasted, with peanuts, lightly salted; 2 lbs; 907; Nuts; mixed nuts; 169427; 2022-10-28T21:37:23.375Z
+67; mixed nuts, oil roasted, with peanuts, lightly salted; 5 lbs; 2268; Nuts; mixed nuts; 169427; 2022-10-28T21:37:23.375Z
+68; mixed nuts, oil roasted, with peanuts, lightly salted; 10 lbs; 4536; Nuts; mixed nuts; 169427; 2022-10-28T21:37:23.375Z
+69; mixed nuts, oil roasted, without peanuts, lightly salted; 1 lbs; 454; Nuts; mixed nuts; 169428; 2022-10-28T21:37:23.375Z
+70; breadfruit seeds, raw; 1 lbs; 454; Seeds; breadfruit seeds; 170144; 2022-10-28T21:37:23.375Z
+71; breadfruit seeds, boiled; 1 lbs; 454; Seeds; breadfruit seeds; 170145; 2022-10-28T21:37:23.375Z
+72; hemp seed, hulled; 1 lbs; 454; Seeds; hemp seed; 170148; 2022-10-28T21:37:23.375Z
+73; hemp seed, hulled; 2 lbs; 907; Seeds; hemp seed; 170148; 2022-10-28T21:37:23.375Z
+74; hemp seed, hulled; 5 lbs; 2268; Seeds; hemp seed; 170148; 2022-10-28T21:37:23.375Z
+75; lotus seeds, dried; 1 lbs; 454; Seeds; lotus seeds; 170149; 2022-10-28T21:37:23.375Z
+76; lotus seeds, dried; 2 lbs; 907; Seeds; lotus seeds; 170149; 2022-10-28T21:37:23.375Z
+77; lotus seeds, dried; 5 lbs; 2268; Seeds; lotus seeds; 170149; 2022-10-28T21:37:23.375Z
+78; lotus seeds, dried; 10 lbs; 4536; Seeds; lotus seeds; 170149; 2022-10-28T21:37:23.375Z
+79; sesame seeds, whole, dried; 1 lbs; 454; Seeds; sesame seeds; 170150; 2022-10-28T21:37:23.375Z
+80; sesame seeds, whole, roasted and toasted; 1 lbs; 454; Seeds; sesame seeds; 170151; 2022-10-28T21:37:23.375Z
+81; sesame seed kernels, toasted, without salt added (decorticated); 1 lbs; 454; Seeds; sesame seed kernels; 170152; 2022-10-28T21:37:23.375Z
+82; sunflower seed kernels, toasted, without salt; 1 lbs; 454; Seeds; sunflower seed kernels; 170154; 2022-10-28T21:37:23.375Z
+83; sunflower seed kernels, toasted, without salt; 2 lbs; 907; Seeds; sunflower seed kernels; 170154; 2022-10-28T21:37:23.375Z
+84; sunflower seed butter, without salt; 1 lbs; 454; Seeds; sunflower seed butter; 170155; 2022-10-28T21:37:23.375Z
+85; acorns, raw; 1 lbs; 454; Nuts; acorns; 170157; 2022-10-28T21:37:23.375Z
+86; almonds, dry roasted, without salt added; 1 lbs; 454; Nuts; almonds; 170158; 2022-10-28T21:37:23.375Z
+87; almonds, oil roasted, without salt added; 1 lbs; 454; Nuts; almonds; 170159; 2022-10-28T21:37:23.375Z
+88; almond paste; 1 lbs; 454; Nuts; almond paste; 170160; 2022-10-28T21:37:23.375Z
+89; beechnuts, dried; 1 lbs; 454; Nuts; beechnuts; 170161; 2022-10-28T21:37:23.375Z
+90; beechnuts, dried; 2 lbs; 907; Nuts; beechnuts; 170161; 2022-10-28T21:37:23.375Z
+91; beechnuts, dried; 5 lbs; 2268; Nuts; beechnuts; 170161; 2022-10-28T21:37:23.375Z
+92; beechnuts, dried; 10 lbs; 4536; Nuts; beechnuts; 170161; 2022-10-28T21:37:23.375Z
+93; cashew nuts, raw; 1 lbs; 454; Nuts; cashew nuts; 170162; 2022-10-28T21:37:23.375Z
+94; cashew butter, plain, without salt added; 1 lbs; 454; Nuts; cashew butter; 170163; 2022-10-28T21:37:23.375Z
+95; chestnuts, chinese, raw; 1 lbs; 454; Nuts; chestnuts; 170164; 2022-10-28T21:37:23.375Z
+96; chestnuts, chinese, dried; 1 lbs; 454; Nuts; chestnuts; 170165; 2022-10-28T21:37:23.375Z
+97; chestnuts, chinese, boiled and steamed; 1 lbs; 454; Nuts; chestnuts; 170166; 2022-10-28T21:37:23.375Z
+98; chestnuts, chinese, boiled and steamed; 2 lbs; 907; Nuts; chestnuts; 170166; 2022-10-28T21:37:23.375Z
+99; chestnuts, european, dried, peeled; 1 lbs; 454; Nuts; chestnuts; 170167; 2022-10-28T21:37:23.375Z
+100; chestnuts, european, dried, peeled; 2 lbs; 907; Nuts; chestnuts; 170167; 2022-10-28T21:37:23.375Z
+101; chestnuts, european, boiled and steamed; 1 lbs; 454; Nuts; chestnuts; 170168; 2022-10-28T21:37:23.375Z
+102; chestnuts, european, boiled and steamed; 2 lbs; 907; Nuts; chestnuts; 170168; 2022-10-28T21:37:23.375Z
+103; chestnuts, european, boiled and steamed; 5 lbs; 2268; Nuts; chestnuts; 170168; 2022-10-28T21:37:23.375Z
+104; coconut meat, raw; 1 lbs; 454; Nuts; coconut meat; 170169; 2022-10-28T21:37:23.375Z
+105; coconut meat, dried (desiccated), not sweetened; 1 lbs; 454; Nuts; coconut meat; 170170; 2022-10-28T21:37:23.375Z
+106; coconut cream, canned, sweetened; 1 lbs; 454; Nuts; coconut cream; 170171; 2022-10-28T21:37:23.375Z
+107; coconut cream, canned, sweetened; 2 lbs; 907; Nuts; coconut cream; 170171; 2022-10-28T21:37:23.375Z
+108; ginkgo nuts, dried; 1 lbs; 454; Nuts; ginkgo nuts; 170175; 2022-10-28T21:37:23.375Z
+109; ginkgo nuts, dried; 2 lbs; 907; Nuts; ginkgo nuts; 170175; 2022-10-28T21:37:23.375Z
+110; ginkgo nuts, dried; 5 lbs; 2268; Nuts; ginkgo nuts; 170175; 2022-10-28T21:37:23.375Z
+111; ginkgo nuts, canned; 1 lbs; 454; Nuts; ginkgo nuts; 170176; 2022-10-28T21:37:23.375Z
+112; hickorynuts, dried; 1 lbs; 454; Nuts; hickorynuts; 170177; 2022-10-28T21:37:23.375Z
+113; macadamia nuts, raw; 1 lbs; 454; Nuts; macadamia nuts; 170178; 2022-10-28T21:37:23.375Z
+114; macadamia nuts, dry roasted, without salt added; 1 lbs; 454; Nuts; macadamia nuts; 170179; 2022-10-28T21:37:23.375Z
+115; mixed nuts, dry roasted, with peanuts, salt added, CHOSEN ROASTER; 1 lbs; 454; Nuts; mixed nuts; 170181; 2022-10-28T21:37:23.375Z
+116; pecans; 1 lbs; 454; Nuts; pecans; 170182; 2022-10-28T21:37:23.375Z
+117; pecans; 2 lbs; 907; Nuts; pecans; 170182; 2022-10-28T21:37:23.375Z
+118; pecans; 5 lbs; 2268; Nuts; pecans; 170182; 2022-10-28T21:37:23.375Z
+119; pecans, dry roasted, without salt added; 1 lbs; 454; Nuts; pecans; 170183; 2022-10-28T21:37:23.375Z
+120; pecans, dry roasted, without salt added; 2 lbs; 907; Nuts; pecans; 170183; 2022-10-28T21:37:23.375Z
+121; pecans, dry roasted, without salt added; 5 lbs; 2268; Nuts; pecans; 170183; 2022-10-28T21:37:23.375Z
+122; pistachio nuts, raw; 1 lbs; 454; Nuts; pistachio nuts; 170184; 2022-10-28T21:37:23.375Z
+123; pistachio nuts, dry roasted, without salt added; 1 lbs; 454; Nuts; pistachio nuts; 170185; 2022-10-28T21:37:23.375Z
+124; pistachio nuts, dry roasted, without salt added; 2 lbs; 907; Nuts; pistachio nuts; 170185; 2022-10-28T21:37:23.375Z
+125; pistachio nuts, dry roasted, without salt added; 5 lbs; 2268; Nuts; pistachio nuts; 170185; 2022-10-28T21:37:23.375Z
+126; walnuts, black, dried; 1 lbs; 454; Nuts; walnuts; 170186; 2022-10-28T21:37:23.375Z
+127; walnuts, english; 1 lbs; 454; Nuts; walnuts; 170187; 2022-10-28T21:37:23.375Z
+128; walnuts, english; 2 lbs; 907; Nuts; walnuts; 170187; 2022-10-28T21:37:23.375Z
+129; pumpkin and squash seeds, whole, roasted, without salt; 1 lbs; 454; Seeds; pumpkin and squash seeds; 170188; 2022-10-28T21:37:23.375Z
+130; sesame butter, tahini, from roasted and toasted kernels (most common type); 1 lbs; 454; Seeds; sesame butter; 170189; 2022-10-28T21:37:23.375Z
+131; chestnuts, european, roasted; 1 lbs; 454; Nuts; chestnuts; 170190; 2022-10-28T21:37:23.375Z
+132; chestnuts, european, roasted; 2 lbs; 907; Nuts; chestnuts; 170190; 2022-10-28T21:37:23.375Z
+133; chestnuts, european, roasted; 5 lbs; 2268; Nuts; chestnuts; 170190; 2022-10-28T21:37:23.375Z
+134; chestnuts, european, roasted; 10 lbs; 4536; Nuts; chestnuts; 170190; 2022-10-28T21:37:23.375Z
+135; sesame butter, paste; 1 lbs; 454; Seeds; sesame butter; 170191; 2022-10-28T21:37:23.375Z
+136; breadnut tree seeds, raw; 1 lbs; 454; Seeds; breadnut tree seeds; 170552; 2022-10-28T21:37:23.375Z
+137; breadnut tree seeds, raw; 2 lbs; 907; Seeds; breadnut tree seeds; 170552; 2022-10-28T21:37:23.375Z
+138; breadnut tree seeds, raw; 5 lbs; 2268; Seeds; breadnut tree seeds; 170552; 2022-10-28T21:37:23.375Z
+139; breadnut tree seeds, raw; 10 lbs; 4536; Seeds; breadnut tree seeds; 170552; 2022-10-28T21:37:23.375Z
+140; breadnut tree seeds, dried; 1 lbs; 454; Seeds; breadnut tree seeds; 170553; 2022-10-28T21:37:23.375Z
+141; breadnut tree seeds, dried; 2 lbs; 907; Seeds; breadnut tree seeds; 170553; 2022-10-28T21:37:23.375Z
+142; chia seeds, dried; 1 lbs; 454; Seeds; chia seeds; 170554; 2022-10-28T21:37:23.375Z
+143; pumpkin and squash seed kernels, dried; 1 lbs; 454; Seeds; pumpkin and squash seed kernels; 170556; 2022-10-28T21:37:23.375Z
+144; pumpkin and squash seed kernels, roasted, without salt; 1 lbs; 454; Seeds; pumpkin and squash seed kernels; 170557; 2022-10-28T21:37:23.375Z
+145; pumpkin and squash seed kernels, roasted, without salt; 2 lbs; 907; Seeds; pumpkin and squash seed kernels; 170557; 2022-10-28T21:37:23.375Z
+146; safflower seed kernels, dried; 1 lbs; 454; Seeds; safflower seed kernels; 170558; 2022-10-28T21:37:23.375Z
+147; safflower seed kernels, dried; 2 lbs; 907; Seeds; safflower seed kernels; 170558; 2022-10-28T21:37:23.375Z
+148; safflower seed kernels, dried; 5 lbs; 2268; Seeds; safflower seed kernels; 170558; 2022-10-28T21:37:23.375Z
+149; sunflower seed kernels, dried; 1 lbs; 454; Seeds; sunflower seed kernels; 170562; 2022-10-28T21:37:23.375Z
+150; sunflower seed kernels, dried; 2 lbs; 907; Seeds; sunflower seed kernels; 170562; 2022-10-28T21:37:23.375Z
+151; sunflower seed kernels, dried; 5 lbs; 2268; Seeds; sunflower seed kernels; 170562; 2022-10-28T21:37:23.375Z
+152; sunflower seed kernels, dried; 10 lbs; 4536; Seeds; sunflower seed kernels; 170562; 2022-10-28T21:37:23.375Z
+153; sunflower seed kernels, dry roasted, without salt; 1 lbs; 454; Seeds; sunflower seed kernels; 170563; 2022-10-28T21:37:23.375Z
+154; sunflower seed kernels, oil roasted, without salt; 1 lbs; 454; Seeds; sunflower seed kernels; 170564; 2022-10-28T21:37:23.375Z
+155; acorns, dried; 1 lbs; 454; Nuts; acorns; 170565; 2022-10-28T21:37:23.375Z
+156; almonds; 1 lbs; 454; Nuts; almonds; 170567; 2022-10-28T21:37:23.375Z
+157; almonds, blanched; 1 lbs; 454; Nuts; almonds; 170568; 2022-10-28T21:37:23.375Z
+158; almonds, blanched; 2 lbs; 907; Nuts; almonds; 170568; 2022-10-28T21:37:23.375Z
+159; almonds, blanched; 5 lbs; 2268; Nuts; almonds; 170568; 2022-10-28T21:37:23.375Z
+160; brazilnuts, dried, unblanched; 1 lbs; 454; Nuts; brazilnuts; 170569; 2022-10-28T21:37:23.375Z
+161; butternuts, dried; 1 lbs; 454; Nuts; butternuts; 170570; 2022-10-28T21:37:23.375Z
+162; cashew nuts, dry roasted, without salt added; 1 lbs; 454; Nuts; cashew nuts; 170571; 2022-10-28T21:37:23.375Z
+163; cashew nuts, oil roasted, without salt added; 1 lbs; 454; Nuts; cashew nuts; 170572; 2022-10-28T21:37:23.375Z
+164; chestnuts, chinese, roasted; 1 lbs; 454; Nuts; chestnuts; 170573; 2022-10-28T21:37:23.375Z
+165; chestnuts, european, raw, unpeeled; 1 lbs; 454; Nuts; chestnuts; 170574; 2022-10-28T21:37:23.375Z
+166; chestnuts, european, raw, unpeeled; 2 lbs; 907; Nuts; chestnuts; 170574; 2022-10-28T21:37:23.375Z
+167; chestnuts, european, raw, unpeeled; 5 lbs; 2268; Nuts; chestnuts; 170574; 2022-10-28T21:37:23.375Z
+168; chestnuts, european, raw, unpeeled; 10 lbs; 4536; Nuts; chestnuts; 170574; 2022-10-28T21:37:23.375Z
+169; chestnuts, european, raw, peeled; 1 lbs; 454; Nuts; chestnuts; 170575; 2022-10-28T21:37:23.375Z
+170; chestnuts, european, dried, unpeeled; 1 lbs; 454; Nuts; chestnuts; 170576; 2022-10-28T21:37:23.375Z
+171; coconut meat, dried (desiccated), sweetened, flaked, packaged; 1 lbs; 454; Nuts; coconut meat; 170577; 2022-10-28T21:37:23.375Z
+172; coconut meat, dried (desiccated), sweetened, flaked, canned; 1 lbs; 454; Nuts; coconut meat; 170578; 2022-10-28T21:37:23.375Z
+173; coconut meat, dried (desiccated), sweetened, flaked, canned; 2 lbs; 907; Nuts; coconut meat; 170578; 2022-10-28T21:37:23.375Z
+174; coconut meat, dried (desiccated), toasted; 1 lbs; 454; Nuts; coconut meat; 170579; 2022-10-28T21:37:23.375Z
+175; hazelnuts or filberts; 1 lbs; 454; Nuts; hazelnuts or filberts; 170581; 2022-10-28T21:37:23.375Z
+176; hazelnuts or filberts, blanched; 1 lbs; 454; Nuts; hazelnuts or filberts; 170582; 2022-10-28T21:37:23.375Z
+177; hazelnuts or filberts, dry roasted, without salt added; 1 lbs; 454; Nuts; hazelnuts or filberts; 170583; 2022-10-28T21:37:23.375Z
+178; ginkgo nuts, raw; 1 lbs; 454; Nuts; ginkgo nuts; 170584; 2022-10-28T21:37:23.375Z
+179; ginkgo nuts, raw; 2 lbs; 907; Nuts; ginkgo nuts; 170584; 2022-10-28T21:37:23.375Z
+180; ginkgo nuts, raw; 5 lbs; 2268; Nuts; ginkgo nuts; 170584; 2022-10-28T21:37:23.375Z
+181; mixed nuts, dry roasted, with peanuts, without salt added; 1 lbs; 454; Nuts; mixed nuts; 170585; 2022-10-28T21:37:23.375Z
+182; mixed nuts, oil roasted, with peanuts, without salt added; 1 lbs; 454; Nuts; mixed nuts; 170587; 2022-10-28T21:37:23.375Z
+183; mixed nuts, oil roasted, with peanuts, without salt added; 2 lbs; 907; Nuts; mixed nuts; 170587; 2022-10-28T21:37:23.375Z
+184; mixed nuts, oil roasted, with peanuts, without salt added; 5 lbs; 2268; Nuts; mixed nuts; 170587; 2022-10-28T21:37:23.375Z
+185; mixed nuts, oil roasted, without peanuts, without salt added; 1 lbs; 454; Nuts; mixed nuts; 170588; 2022-10-28T21:37:23.375Z
+186; pecans, oil roasted, without salt added; 1 lbs; 454; Nuts; pecans; 170589; 2022-10-28T21:37:23.375Z
+187; pecans, oil roasted, without salt added; 2 lbs; 907; Nuts; pecans; 170589; 2022-10-28T21:37:23.375Z
+188; pecans, oil roasted, without salt added; 5 lbs; 2268; Nuts; pecans; 170589; 2022-10-28T21:37:23.375Z
+189; pilinuts, dried; 1 lbs; 454; Nuts; pilinuts; 170590; 2022-10-28T21:37:23.375Z
+190; pine nuts, dried; 1 lbs; 454; Nuts; pine nuts; 170591; 2022-10-28T21:37:23.375Z
+191; pine nuts, pinyon, dried; 1 lbs; 454; Nuts; pine nuts; 170592; 2022-10-28T21:37:23.375Z
+192; pine nuts, pinyon, dried; 2 lbs; 907; Nuts; pine nuts; 170592; 2022-10-28T21:37:23.375Z
+193; pine nuts, pinyon, dried; 5 lbs; 2268; Nuts; pine nuts; 170592; 2022-10-28T21:37:23.375Z
+194; walnuts, glazed; 1 lbs; 454; Nuts; walnuts; 170593; 2022-10-28T21:37:23.375Z
+195; walnuts, dry roasted, with salt added; 1 lbs; 454; Nuts; walnuts; 170594; 2022-10-28T21:37:23.375Z
+196; breadfruit seeds, roasted; 1 lbs; 454; Seeds; breadfruit seeds; 170595; 2022-10-28T21:37:23.375Z
+197; breadfruit seeds, roasted; 2 lbs; 907; Seeds; breadfruit seeds; 170595; 2022-10-28T21:37:23.375Z
+198; cottonseed kernels, roasted (glandless); 1 lbs; 454; Seeds; cottonseed kernels; 170596; 2022-10-28T21:37:23.375Z

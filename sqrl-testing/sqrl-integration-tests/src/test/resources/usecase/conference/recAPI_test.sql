@@ -1,0 +1,28 @@
+--
+--CREATE TABLE Likes (
+--    eventId BIGINT NOT NULL,
+--    userid STRING NOT NULL,
+--    liked BOOLEAN NOT NULL,
+--    sourcetime TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+--     WATERMARK FOR `sourcetime` AS (`sourcetime` - INTERVAL '0.001' SECOND)
+--) WITH (
+--  'properties.bootstrap.servers' = 'kafka:9092',
+--  'format' = 'avro',
+--  'properties.group.id' = 'groupid',
+--  'topic' = 'topic',
+--  'connector' = 'kafka'
+--);
+--
+--
+--CREATE TABLE AddInterest (
+--    text STRING NOT NULL,
+--    userid STRING NOT NULL,
+--    sourcetime TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+--     WATERMARK FOR `sourcetime` AS (`sourcetime` - INTERVAL '0.001' SECOND)
+--) WITH (
+--  'properties.bootstrap.servers' = 'kafka:9092',
+--  'format' = 'avro',
+--  'properties.group.id' = 'groupid',
+--  'topic' = 'topic',
+--  'connector' = 'kafka'
+--);

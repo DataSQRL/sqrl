@@ -1,7 +1,7 @@
 package com.datasqrl.compile;
 
 import com.datasqrl.actions.CreateDatabaseQueries;
-import com.datasqrl.actions.FlinkSqlPostprocessor;
+import com.datasqrl.actions.FlinkSqlGenerator;
 import com.datasqrl.actions.GraphqlPostplanHook;
 import com.datasqrl.actions.InferGraphqlSchema;
 import com.datasqrl.actions.WriteDeploymentArtifacts;
@@ -18,12 +18,12 @@ import com.datasqrl.loaders.ModuleLoaderComposite;
 import com.datasqrl.plan.MainScript;
 import com.datasqrl.plan.global.DAGPlanner;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
+import com.datasqrl.plan.global.SqrlDAG;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.validate.ScriptPlanner;
 import com.google.inject.Inject;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
-import org.apache.commons.lang3.tuple.Pair;
 
 @AllArgsConstructor(onConstructor_=@Inject)
 public class CompilationProcess {
@@ -38,7 +38,7 @@ public class CompilationProcess {
   private final CreateDatabaseQueries createDatabaseQueries;
   private final InferGraphqlSchema inferencePostcompileHook;
   private final WriteDeploymentArtifacts writeDeploymentArtifactsHook;
-  private final FlinkSqlPostprocessor flinkSqlPostprocessor;
+//  private final FlinkSqlGenerator flinkSqlGenerator;
   private final GraphqlSourceFactory graphqlSourceFactory;
   private final GraphQLMutationExtraction graphQLMutationExtraction;
   private final ExecutionPipeline pipeline;
@@ -56,12 +56,12 @@ public class CompilationProcess {
     planner.plan(mainScript, composite);
     postcompileHooks();
     Optional<APISource> source = inferencePostcompileHook.run();
-    PhysicalDAGPlan dagPlan = dagPlanner.plan();
+    SqrlDAG dag = dagPlanner.planLogical();
+    PhysicalDAGPlan dagPlan = dagPlanner.planPhysical(dag);
 
     PhysicalPlan physicalPlan = physicalPlanner.plan(dagPlan);
     Optional<RootGraphqlModel> model = graphqlPostplanHook.run(source, physicalPlan);
-    writeDeploymentArtifactsHook.run(model, source, physicalPlan);
-    flinkSqlPostprocessor.run(physicalPlan);
+    writeDeploymentArtifactsHook.run(model, source, physicalPlan, dag);
     return physicalPlan;
   }
 

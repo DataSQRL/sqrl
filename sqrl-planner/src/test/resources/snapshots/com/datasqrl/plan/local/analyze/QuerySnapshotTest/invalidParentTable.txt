@@ -1,0 +1,8 @@
+>>>errors
+[FATAL] Could not find table: Products
+in script:<script> [5:1]:
+IMPORT ecommerce-data.Orders TIMESTAMP time;
+IMPORT ecommerce-data.Product TIMESTAMP _ingest_time;
+Products.orders := SELECT COUNT(1) FROM @ JOIN Orders.entries e ON e.productid = @.productid;
+^
+

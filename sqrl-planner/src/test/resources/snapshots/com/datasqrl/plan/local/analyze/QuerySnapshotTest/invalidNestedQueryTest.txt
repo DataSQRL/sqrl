@@ -1,0 +1,7 @@
+>>>errors
+[FATAL] Table must start with with '@'
+in script:<script> [2:43]:
+IMPORT ecommerce-data.Product TIMESTAMP _ingest_time;
+Product.nested := SELECT p.productid FROM Product p;
+------------------------------------------^
+

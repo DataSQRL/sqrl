@@ -14,7 +14,7 @@ public class SqrlConfigUtil {
   public static<R> Map<String, R> toMap(@NonNull SqrlConfig config, Function<Object,R> valueFunction, @NonNull Collection<String> withoutKeys) {
     LinkedHashMap<String, R> result = new LinkedHashMap<>();
     config.toMap().forEach((key,value) -> {
-      if (withoutKeys.contains(key)) return;
+      if (withoutKeys.contains(key) || key.equals(SqrlConfig.VERSION_KEY)) return;
       result.put(key,valueFunction.apply(value));
     });
     return result;

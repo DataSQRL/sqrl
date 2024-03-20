@@ -1,0 +1,9 @@
+IMPORT time.*;
+IMPORT ecommerceTs.Customer;
+IMPORT ecommerceTs.Orders;
+IMPORT ecommerceTs.Product;
+OrderNow1 := SELECT o.customerid as customer, endOfDay(o.time) as bucket, COUNT(o.id) as order_count FROM Orders o  WHERE (o.time > NOW() - INTERVAL 8 DAY) GROUP BY customer, bucket;
+OrderNow2 := SELECT endOfDay(o.time) as bucket, COUNT(o.id) as order_count FROM Orders o  WHERE (o.time > NOW() - INTERVAL 8 DAY) GROUP BY bucket;
+OrderNow3 := SELECT o.customerid as customer, COUNT(o.id) as order_count FROM Orders o  WHERE (o.time > NOW() - INTERVAL 8 DAY) GROUP BY customer;
+OrderAugment := SELECT o.id, o.time, c.order_count FROM Orders o JOIN OrderNow3 c ON o.customerid = c.customer;
+RecentTotal := SELECT sum(e.unit_price * e.quantity) AS total, sum(e.quantity) AS quantity FROM Orders o JOIN o.entries e WHERE o.time > now() - INTERVAL 7 DAY;

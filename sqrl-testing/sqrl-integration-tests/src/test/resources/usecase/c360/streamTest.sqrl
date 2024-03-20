@@ -1,0 +1,12 @@
+IMPORT time.*;
+IMPORT ecommerce-data.Customer TIMESTAMP updateTime;
+IMPORT ecommerce-data.Orders TIMESTAMP time;
+IMPORT ecommerce-data.Product TIMESTAMP _ingest_time;
+Customer.updateTime := epochToTimestamp(lastUpdated);
+Customer := DISTINCT Customer ON customerid ORDER BY updateTime DESC;
+CustomerCount := SELECT c.customerid, c.name, SUM(e.quantity) as quantity FROM Orders o JOIN o.entries e JOIN Customer c on o.customerid = c.customerid GROUP BY c.customerid, c.name;
+CountStream := STREAM ON ADD AS SELECT customerid, name, quantity FROM CustomerCount WHERE quantity > 1;
+UpdateStream := STREAM ON UPDATE AS SELECT customerid, name, quantity FROM CustomerCount WHERE quantity > 1;
+CustomerCount2 := DISTINCT CountStream ON customerid ORDER BY _source_time DESC;
+EXPORT CountStream TO print.CountStream;
+EXPORT CountStream TO output.CountStream;

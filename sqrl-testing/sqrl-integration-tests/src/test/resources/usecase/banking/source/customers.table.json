@@ -1,0 +1,15 @@
+{
+  "format" : {
+    "delimiter" : ",",
+    "name" : "csv",
+    "header" : [ "id", "first_name", "last_name", "email", "phone", "address", "date_of_birth", "updated_on" ]
+  },
+  "schema" : "flexible",
+  "identifier" : "customers",
+  "type" : "source",
+  "connector" : {
+    "directoryURI" : "../../sqrl-examples/banking/data",
+    "name" : "file"
+  },
+  "canonicalizer" : "system"
+}

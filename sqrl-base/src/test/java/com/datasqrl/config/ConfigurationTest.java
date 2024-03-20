@@ -15,7 +15,6 @@ import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
-import lombok.Value;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -43,6 +42,7 @@ public class ConfigurationTest {
     assertEquals(7, map.get("e2").field1);
     assertEquals("flip", map.get("e3").field2);
     assertEquals(List.of("a","b","c"), map.get("e1").field3);
+    assertEquals(1, config.getVersion());
 
     ConstraintClass x1 = config.as("x1",ConstraintClass.class).get();
     assertEquals(2, x1.optInt);
@@ -111,14 +111,14 @@ public class ConfigurationTest {
   @Test
   public void copyTest() {
     SqrlConfig other = SqrlConfigCommons.fromFiles(errors, CONFIG_FILE1).getSubConfig("subConf");
-    SqrlConfig newConf = SqrlConfig.create();
+    SqrlConfig newConf = SqrlConfig.createCurrentVersion();
     newConf.copy(other);
     testSubConf(newConf);
   }
 
   @Test
   public void testCreate() {
-    SqrlConfig newConf = SqrlConfig.create();
+    SqrlConfig newConf = SqrlConfig.createCurrentVersion();
     newConf.setProperty("test", true);
     TestClass tc = new TestClass(9,"boat", List.of("x", "y", "z"));
     newConf.getSubConfig("clazz").setProperties(tc);

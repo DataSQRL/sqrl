@@ -1,0 +1,19 @@
+{
+  "type" : "source",
+  "canonicalizer" : "system",
+  "format" : {
+    "name" : "csv",
+    "delimiter" : ",",
+    "commentPrefix" : null,
+    "header" : [ "url", "category", "author", "updated" ]
+  },
+  "name" : "content",
+  "identifier" : "content",
+  "schema" : "flexible",
+  "connector" : {
+    "directoryURI" : "",
+    "fileURIs" : [ "../../sqrl-examples/clickstream/data/content.csv.gz", "../../sqrl-examples/clickstream/data/click_part0001.csv.gz" ],
+    "filenamePattern" : "^([^\\.]+?)(?:_part.*)?$",
+    "name" : "file"
+  }
+}

@@ -1,0 +1,251 @@
+>>>pipeline_explain.txt
+=== Customer
+ID:     customer$2
+Type:   stream
+Stage:  streams
+Primary Key: customerid, lastUpdated
+Timestamp  : timestamp
+Schema:
+ - customerid: BIGINT NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - lastUpdated: BIGINT NOT NULL
+ - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Plan:
+LogicalTableScan(table=[[customer$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+
+=== Customer
+ID:     customer$3
+Type:   state
+Stage:  streams
+Inputs: customer$2
+Primary Key: customerid
+Timestamp  : timestamp
+Schema:
+ - customerid: BIGINT NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - lastUpdated: BIGINT NOT NULL
+ - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Post Processors:
+ - topN: partition=customerid limit=1 sort=#4: timestamp TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
+Plan:
+LogicalTableScan(table=[[customer$2]])
+
+=== Orders
+ID:     orders$2
+Type:   stream
+Stage:  streams
+Primary Key: id, time
+Timestamp  : time
+Schema:
+ - id: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - entries: RecordType(INTEGER NOT NULL _idx, BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+Plan:
+LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[2]]]]) hints[WatermarkHint options:[2]]
+
+=== Product
+ID:     product$2
+Type:   stream
+Stage:  streams
+Primary Key: _uuid
+Timestamp  : _ingest_time
+Schema:
+ - productid: BIGINT NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - description: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - category: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+Plan:
+LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+
+=== recentOrders
+ID:     recentorders$1
+Type:   state
+Stage:  streams
+Inputs: customer$3, orders$2
+Primary Key: __pk1$customerid, id, time
+Timestamp  : time
+Schema:
+ - __pk1$customerid: BIGINT NOT NULL
+ - id: BIGINT NOT NULL
+ - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Post Processors:
+ - topN: partition=__pk1$customerid limit=10 sort=#2: time TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC 
+Plan:
+LogicalProject(__pk1$customerid=[$4], id=[$0], time=[$2])
+  LogicalJoin(condition=[=($4, $1)], joinType=[inner]) hints[TemporalJoinHint options:[2, 4, 0]]
+    LogicalTableScan(table=[[orders$2]])
+    LogicalFilter(condition=[=($5, 1)]) hints[DedupHint]
+      LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
+        LogicalTableScan(table=[[customer$3]])
+
+>>>database-schema.sql
+CREATE TABLE IF NOT EXISTS customer$3 ("customerid" BIGINT NOT NULL,"email" TEXT NOT NULL,"name" TEXT NOT NULL,"lastUpdated" BIGINT NOT NULL,"timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("customerid"));
+CREATE TABLE IF NOT EXISTS orders$2 ("id" BIGINT NOT NULL,"customerid" BIGINT NOT NULL,"time" TIMESTAMP WITH TIME ZONE NOT NULL,"entries" JSONB NOT NULL , PRIMARY KEY ("id","time"));
+CREATE TABLE IF NOT EXISTS product$2 ("productid" BIGINT NOT NULL,"name" TEXT NOT NULL,"description" TEXT NOT NULL,"category" TEXT NOT NULL,"_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL,"_uuid" TEXT NOT NULL , PRIMARY KEY ("_uuid"));
+CREATE TABLE IF NOT EXISTS recentorders$1 ("__pk1$customerid" BIGINT NOT NULL,"id" BIGINT NOT NULL,"time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("__pk1$customerid","id","time"));
+>>>flink-plan.sql
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptostring` AS 'com.datasqrl.time.TimestampToString' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofmonth` AS 'com.datasqrl.time.EndOfMonth' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofweek` AS 'com.datasqrl.time.EndOfWeek' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `parsetimestamp` AS 'com.datasqrl.time.ParseTimestamp' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `uuid` AS 'com.datasqrl.secure.Uuid' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochmillitotimestamp` AS 'com.datasqrl.time.EpochMilliToTimestamp' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofminute` AS 'com.datasqrl.time.EndOfMinute' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptoepoch` AS 'com.datasqrl.time.TimestampToEpoch' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofsecond` AS 'com.datasqrl.time.EndOfSecond' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochtotimestamp` AS 'com.datasqrl.time.EpochToTimestamp' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofday` AS 'com.datasqrl.time.EndOfDay' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `atzone` AS 'com.datasqrl.time.AtZone' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofhour` AS 'com.datasqrl.time.EndOfHour' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofyear` AS 'com.datasqrl.time.EndOfYear' LANGUAGE JAVA;
+
+CREATE TEMPORARY TABLE `orders$1` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `entries` ROW(`_idx` INTEGER NOT NULL, `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED,
+  WATERMARK FOR `time` AS (`time` - INTERVAL '0.001' SECOND)
+) WITH (
+  'format' = 'json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10000',
+  'connector' = 'filesystem',
+  'source.path.regex-pattern' = ''
+);
+
+CREATE TEMPORARY TABLE `product$1` (
+  `productid` BIGINT NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `_uuid` AS UUID(),
+  PRIMARY KEY (`_uuid`) NOT ENFORCED,
+  WATERMARK FOR `_ingest_time` AS (`_ingest_time` - INTERVAL '0.001' SECOND)
+) WITH (
+  'format' = 'json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10000',
+  'connector' = 'filesystem',
+  'source.path.regex-pattern' = ''
+);
+
+CREATE TEMPORARY TABLE `customer$1` (
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
+  `timestamp` AS EPOCHTOTIMESTAMP(`lastUpdated`),
+  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
+  WATERMARK FOR `timestamp` AS (`timestamp` - INTERVAL '0.001' SECOND)
+) WITH (
+  'format' = 'json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10000',
+  'connector' = 'filesystem',
+  'source.path.regex-pattern' = ''
+);
+
+CREATE TEMPORARY TABLE `customer$3` (
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+) WITH (
+  'password' = 'postgres',
+  'connector' = 'jdbc',
+  'driver' = 'org.postgresql.Driver',
+  'table-name' = 'customer$3',
+  'user' = 'postgres',
+  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+);
+
+CREATE TEMPORARY TABLE `orders$2` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `entries` ROW(`_idx` INTEGER NOT NULL, `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
+) WITH (
+  'password' = 'postgres',
+  'connector' = 'jdbc',
+  'driver' = 'org.postgresql.Driver',
+  'table-name' = 'orders$2',
+  'user' = 'postgres',
+  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+);
+
+CREATE TEMPORARY TABLE `product$2` (
+  `productid` BIGINT NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL
+) WITH (
+  'password' = 'postgres',
+  'connector' = 'jdbc',
+  'driver' = 'org.postgresql.Driver',
+  'table-name' = 'product$2',
+  'user' = 'postgres',
+  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+);
+
+CREATE TEMPORARY TABLE `recentorders$1` (
+  `__pk1$customerid` BIGINT NOT NULL,
+  `id` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+) WITH (
+  'password' = 'postgres',
+  'connector' = 'jdbc',
+  'driver' = 'org.postgresql.Driver',
+  'table-name' = 'recentorders$1',
+  'user' = 'postgres',
+  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+);
+
+CREATE VIEW `table$1`
+AS
+SELECT *
+FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, (ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC NULLS LAST)) AS `_rownum`
+FROM `customer$1`) AS `t`
+WHERE (`_rownum` = 1);
+
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `customer$3`
+(SELECT *
+FROM `customer$1`)
+;
+INSERT INTO `orders$2`
+(SELECT *
+FROM `orders$1`)
+;
+INSERT INTO `product$2`
+(SELECT *
+FROM `product$1`)
+;
+INSERT INTO `recentorders$1`
+(SELECT `t0`.`customerid` AS `__pk1$customerid`, `$cor0`.`id`, `$cor0`.`time`
+FROM `orders$1` AS `$cor0`
+INNER JOIN `table$1` FOR SYSTEM_TIME AS OF `$cor0`.`time` AS `t0` ON (`t0`.`customerid` = `$cor0`.`customerid`))
+;
+END;

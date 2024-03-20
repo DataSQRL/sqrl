@@ -1,0 +1,5 @@
+{
+Customer( customerid: 1000101) {
+    email
+    name
+}}

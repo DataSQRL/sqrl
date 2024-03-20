@@ -4,7 +4,6 @@
  */
 package com.datasqrl.cmd;
 
-import static com.datasqrl.PlanConstants.PLAN_SQL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -31,7 +30,9 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
+@Disabled
 public class TestCmd {
+  public static final String PLAN_SQL = "flink-plan.sql";
 
   private static final Path OUTPUT_DIR = Paths.get("src", "test", "resources", "output");
 

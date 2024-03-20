@@ -1,0 +1,117 @@
+>>>pipeline_explain.txt
+=== Customer
+ID:     customer$2
+Type:   stream
+Stage:  streams
+Primary Key: customerid, lastUpdated
+Timestamp  : timestamp
+Schema:
+ - customerid: BIGINT NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - lastUpdated: BIGINT NOT NULL
+ - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Plan:
+LogicalTableScan(table=[[customer$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+
+=== CustomerCopy
+ID:     customercopy$1
+Type:   stream
+Stage:  streams
+Inputs: customer$2
+Primary Key: _customerid, _lastUpdated
+Timestamp  : timestamp
+Schema:
+ - month: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - _customerid: BIGINT NOT NULL
+ - _lastUpdated: BIGINT NOT NULL
+Plan:
+LogicalProject(month=[endOfMonth(endOfMonth($4))], timestamp=[$4], _customerid=[$0], _lastUpdated=[$3])
+  LogicalTableScan(table=[[customer$2]])
+
+>>>database-schema.sql
+CREATE TABLE IF NOT EXISTS customer$2 ("customerid" BIGINT NOT NULL,"email" TEXT NOT NULL,"name" TEXT NOT NULL,"lastUpdated" BIGINT NOT NULL,"timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("customerid","lastUpdated"));
+CREATE TABLE IF NOT EXISTS customercopy$1 ("month" TIMESTAMP WITH TIME ZONE NOT NULL,"timestamp" TIMESTAMP WITH TIME ZONE NOT NULL,"_customerid" BIGINT NOT NULL,"_lastUpdated" BIGINT NOT NULL , PRIMARY KEY ("_customerid","_lastUpdated"));
+>>>flink-plan.sql
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptostring` AS 'com.datasqrl.time.TimestampToString' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofmonth` AS 'com.datasqrl.time.EndOfMonth' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofweek` AS 'com.datasqrl.time.EndOfWeek' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `parsetimestamp` AS 'com.datasqrl.time.ParseTimestamp' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochmillitotimestamp` AS 'com.datasqrl.time.EpochMilliToTimestamp' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofminute` AS 'com.datasqrl.time.EndOfMinute' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptoepoch` AS 'com.datasqrl.time.TimestampToEpoch' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofsecond` AS 'com.datasqrl.time.EndOfSecond' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochtotimestamp` AS 'com.datasqrl.time.EpochToTimestamp' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofday` AS 'com.datasqrl.time.EndOfDay' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `atzone` AS 'com.datasqrl.time.AtZone' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofhour` AS 'com.datasqrl.time.EndOfHour' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofyear` AS 'com.datasqrl.time.EndOfYear' LANGUAGE JAVA;
+
+CREATE TEMPORARY TABLE `customer$1` (
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
+  `timestamp` AS EPOCHTOTIMESTAMP(`lastUpdated`),
+  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
+  WATERMARK FOR `timestamp` AS (`timestamp` - INTERVAL '0.001' SECOND)
+) WITH (
+  'format' = 'json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10000',
+  'connector' = 'filesystem',
+  'source.path.regex-pattern' = ''
+);
+
+CREATE TEMPORARY TABLE `customer$2` (
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+) WITH (
+  'password' = 'postgres',
+  'connector' = 'jdbc',
+  'driver' = 'org.postgresql.Driver',
+  'table-name' = 'customer$2',
+  'user' = 'postgres',
+  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+);
+
+CREATE TEMPORARY TABLE `customercopy$1` (
+  `month` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `_customerid` BIGINT NOT NULL,
+  `_lastUpdated` BIGINT NOT NULL
+) WITH (
+  'password' = 'postgres',
+  'connector' = 'jdbc',
+  'driver' = 'org.postgresql.Driver',
+  'table-name' = 'customercopy$1',
+  'user' = 'postgres',
+  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+);
+
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `customer$2`
+(SELECT *
+FROM `customer$1`)
+;
+INSERT INTO `customercopy$1`
+(SELECT ENDOFMONTH(ENDOFMONTH(`timestamp`)) AS `month`, `timestamp`, `customerid` AS `_customerid`, `lastUpdated` AS `_lastUpdated`
+FROM `customer$1`)
+;
+END;

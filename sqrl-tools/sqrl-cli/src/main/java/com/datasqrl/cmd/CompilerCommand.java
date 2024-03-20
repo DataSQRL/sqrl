@@ -13,6 +13,7 @@ public class CompilerCommand extends AbstractCompilerCommand {
 
   @Override
   public SqrlConfig createDefaultConfig(ErrorCollector errors) {
-    return Packager.createDockerConfig(errors);
+    throw new RuntimeException("package.json required");
+//    return Packager.createDockerConfig(errors);
   }
 }

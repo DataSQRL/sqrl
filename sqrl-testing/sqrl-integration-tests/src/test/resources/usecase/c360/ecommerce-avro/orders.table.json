@@ -1,0 +1,15 @@
+{
+  "type" : "source",
+  "canonicalizer" : "system",
+  "format" : {
+    "name" : "avro"
+  },
+  "name" : "orders",
+  "identifier" : "orders",
+  "schema" : "avro",
+  "connector" : {
+    "name" : "kafka",
+    "bootstrap.servers": "${sys:datasqrl.kafka_servers}",
+    "group.id": "datasqrl-orders"
+  }
+}

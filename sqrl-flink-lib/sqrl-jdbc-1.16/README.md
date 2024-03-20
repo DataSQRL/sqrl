@@ -1,0 +1,1 @@
+Notes: requires flink-csv and flink-json in provided scope

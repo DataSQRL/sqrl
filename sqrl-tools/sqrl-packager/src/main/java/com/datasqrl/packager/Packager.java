@@ -10,7 +10,6 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.EngineKeys;
 import com.datasqrl.config.PipelineFactory;
 import com.datasqrl.config.SqrlConfig;
-import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.engine.EngineFactory;
 import com.datasqrl.engine.database.relational.JDBCEngineFactory;
 import com.datasqrl.engine.server.GenericJavaServerEngineFactory;
@@ -21,15 +20,13 @@ import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.io.formats.JsonLineFormat;
 import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
 import com.datasqrl.io.impl.kafka.KafkaDataSystemFactory;
-import com.datasqrl.kafka.KafkaLogEngineFactory;
+import com.datasqrl.engine.kafka.KafkaLogEngineFactory;
 import com.datasqrl.packager.Preprocessors.PreprocessorsContext;
 import com.datasqrl.packager.config.Dependency;
 import com.datasqrl.packager.config.DependencyConfig;
 import com.datasqrl.packager.config.ScriptConfiguration;
-import com.datasqrl.packager.postprocess.DockerPostprocessor;
-import com.datasqrl.packager.postprocess.FlinkPostprocessor;
-import com.datasqrl.packager.postprocess.Postprocessor.ProcessorContext;
 import com.datasqrl.packager.preprocess.DataSystemPreprocessor;
+import com.datasqrl.packager.preprocess.FlinkSqlPreprocessor;
 import com.datasqrl.packager.preprocess.JarPreprocessor;
 import com.datasqrl.packager.preprocess.PackageJsonPreprocessor;
 import com.datasqrl.packager.preprocess.Preprocessor;
@@ -42,6 +39,7 @@ import com.google.common.base.Preconditions;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -53,6 +51,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -62,6 +61,7 @@ import org.apache.commons.lang3.StringUtils;
 @Getter
 public class Packager {
   public static final String BUILD_DIR_NAME = "build";
+  public static final String DEPLOY_DIR_NAME = "deploy";
   public static final String PROFILES_KEY = "profiles";
   public static final String PACKAGE_JSON = "package.json";
   public static final Path DEFAULT_PACKAGE = Path.of(Packager.PACKAGE_JSON);
@@ -181,7 +181,8 @@ public class Packager {
   private void preProcessFiles(SqrlConfig config) throws IOException {
     //Preprocessor will normalize files
     List<Preprocessor> processorList = ListUtils.union(List.of(new TablePreprocessor(),
-            new JarPreprocessor(), new DataSystemPreprocessor(), new PackageJsonPreprocessor()),
+            new JarPreprocessor(), new DataSystemPreprocessor(), new PackageJsonPreprocessor(),
+            new FlinkSqlPreprocessor()),
         ServiceLoaderDiscovery.getAll(Preprocessor.class));
     Preprocessors preprocessors = new Preprocessors(processorList, errors);
     preprocessors.handle(
@@ -232,10 +233,45 @@ public class Packager {
     return targetPath;
   }
 
-  public void postprocess(Path targetDir, Optional<Path> mountDirectory,
+  public void postprocess(Path rootDir, Path targetDir, Optional<Path> mountDirectory,
       String[] profiles) {
-    List.of(new DockerPostprocessor(), new FlinkPostprocessor())
-        .forEach(p->p.process(new ProcessorContext(buildDir, targetDir, mountDirectory, profiles)));
+
+    // Copy profiles
+    for (String profile : profiles) {
+      copyToDeploy(targetDir,
+          rootDir.resolve(profile));
+    }
+//    List.of()
+//        .forEach(p->p.process(new ProcessorContext(buildDir, targetDir, mountDirectory, profiles)));
+  }
+
+  @SneakyThrows
+  private void copyToDeploy(Path targetDir, Path profile) {
+    if (!Files.exists(targetDir)) {
+      Files.createDirectories(targetDir);
+    }
+
+    // Copy each file and directory from the profile path to the target directory
+    try (Stream<Path> stream = Files.walk(profile)) {
+      stream.forEach(sourcePath -> {
+        Path destinationPath = targetDir.resolve(profile.relativize(sourcePath))
+            .toAbsolutePath();
+        if (Files.isDirectory(sourcePath)) {
+          try {
+            Files.createDirectories(destinationPath);
+          } catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+        } else {
+
+          try {
+            Files.copy(sourcePath, destinationPath, StandardCopyOption.REPLACE_EXISTING);
+          } catch (IOException e) {
+            throw new UncheckedIOException(e);
+          }
+        }
+      });
+    }
   }
 
   @SneakyThrows
@@ -257,12 +293,12 @@ public class Packager {
         return Optional.empty();
       }
     } else {
-      return Optional.of(packageFiles);
+      return Optional.of(packageFiles.stream().map(rootDir::resolve).collect(Collectors.toUnmodifiableList()));
     }
   }
 
   public static SqrlConfig createDockerConfig(ErrorCollector errors) {
-    SqrlConfig rootConfig = SqrlConfigCommons.create(errors);
+    SqrlConfig rootConfig = SqrlConfig.createCurrentVersion(errors);
 
     SqrlConfig config = rootConfig.getSubConfig(PipelineFactory.ENGINES_PROPERTY);
 

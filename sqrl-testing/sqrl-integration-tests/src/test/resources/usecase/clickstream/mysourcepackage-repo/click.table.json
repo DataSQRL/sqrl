@@ -1,0 +1,19 @@
+{
+  "type" : "source",
+  "canonicalizer" : "system",
+  "format" : {
+    "charset" : "UTF-8",
+    "name" : "csv",
+    "delimiter" : ",",
+    "commentPrefix" : null,
+    "header" : [ "url", "timestamp", "userid" ]
+  },
+  "identifier" : "click",
+  "schema" : "flexible",
+  "connector" : {
+    "directoryURI" : "",
+    "fileURIs" : [ "https://github.com/DataSQRL/sqrl/raw/485185a28cff3f4dd8819549612ec84e5116efc7/sqrl-examples/clickstream/data/click_part0001.csv.gz" ],
+    "filenamePattern" : "^([^\\.]+?)(?:_part.*)?$",
+    "name" : "file"
+  }
+}

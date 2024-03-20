@@ -1,0 +1,32 @@
+{
+  "version": "1",
+  "engines" : {
+    "server" : {
+      "type" : "vertx"
+    },
+    "database" : {
+      "type": "jdbc",
+      "connector": "jdbc",
+      "password": "postgres",
+      "driver": "org.postgresql.Driver",
+      "username": "postgres",
+      "url": "jdbc:postgresql://database:5432/datasqrl"
+    },
+    "log" : {
+      "format" : "json",
+      "type" : "kafka",
+      "connector" : "kafka",
+      "properties.bootstrap.servers": "kafka:9092",
+      "properties.group.id": "groupid",
+      "scan.startup.mode" : "earliest-offset",
+      "properties.auto.offset.reset" : "earliest"
+    },
+    "streams" : {
+      "type" : "flink"
+    }
+  },
+  "script" : {
+    "graphql" : "schema.graphqls",
+    "main" : "c360.sqrl"
+  }
+}

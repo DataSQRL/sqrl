@@ -95,6 +95,10 @@ public class Deserializer {
     writer.writeValue(file.toFile(),object);
   }
 
+  public <O> String toJson(O object) throws IOException {
+    return jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(object);
+  }
+
   public<O> String writeYML(O object) throws IOException {
     return yamlMapper.writeValueAsString(object);
   }

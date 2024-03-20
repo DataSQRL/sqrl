@@ -1,8 +1,0 @@
->>>errors
-[FATAL] Aggregate functions not yet allowed
-in script:<script> [3:18]:
-IMPORT ecommerce-data.Product;
-Product.joinDeclaration := JOIN Product ON @.productid = Product.productid;
-Product.total := COUNT(joinDeclaration);
------------------^
-

@@ -1,0 +1,13 @@
+IMPORT time.*;
+IMPORT ecommerce-data.Customer TIMESTAMP _ingest_time;
+IMPORT ecommerce-data.Orders TIMESTAMP time;
+IMPORT ecommerce-data.Product TIMESTAMP _ingest_time;
+OrderAgg1 := SELECT o.customerid as customer, endOfHour(o.time, 1, 15) as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket;
+OrderAgg2 := SELECT COUNT(o.id) as order_count FROM Orders o;
+Ordertime1 := SELECT o.customerid as customer, endOfSecond(o.time) as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket;
+OrderNow1 := SELECT o.customerid as customer, endOfHour(o.time) as bucket, COUNT(o.id) as order_count FROM Orders o  WHERE (o.time > NOW() - INTERVAL 999 DAYS) GROUP BY customer, bucket;
+OrderNow2 := SELECT endOfHour(o.time) as bucket, COUNT(o.id) as order_count FROM Orders o  WHERE (o.time > NOW() - INTERVAL 999 DAYS) GROUP BY bucket;
+OrderNow3 := SELECT o.customerid as customer, COUNT(o.id) as order_count FROM Orders o  WHERE (o.time > NOW() - INTERVAL 999 DAYS) GROUP BY customer;
+OrderAugment := SELECT o.id, o.time, c.order_count FROM Orders o JOIN OrderNow3 c ON o.customerid = c.customer;
+OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid;
+agg1 := SELECT o.customerid as customer, COUNT(o.id) as order_count FROM OrderCustomer o GROUP BY customer;

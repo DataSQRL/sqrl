@@ -1,0 +1,19 @@
+{
+  "type" : "source",
+  "canonicalizer" : "system",
+  "format" : {
+    "name" : "csv",
+    "delimiter" : ",",
+    "commentPrefix" : null,
+    "header" : [ "sensorid", "time", "temperature", "humidity" ]
+  },
+  "name" : "sensorreading",
+  "identifier" : "sensorreading",
+  "schema" : "flexible",
+  "connector" : {
+    "directoryURI" : "",
+    "fileURIs" : [ "https://github.com/DataSQRL/sqrl/raw/485185a28cff3f4dd8819549612ec84e5116efc7/sqrl-examples/sensors/data/sensorreading_part0001.csv.gz"],
+    "filenamePattern" : "^([^\\.]+?)(?:_part.*)?$",
+    "name" : "file"
+  }
+}

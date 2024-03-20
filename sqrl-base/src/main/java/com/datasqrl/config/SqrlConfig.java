@@ -11,6 +11,17 @@ import java.util.function.Predicate;
 
 public interface SqrlConfig {
 
+  static final int CURRENT_VERSION = 1;
+  static final String VERSION_KEY = "version";
+
+
+  /**
+   * All SQRL configuration files are versioned. This returns the version.
+   *
+   * @return the version of this configuration
+   */
+  int getVersion();
+
   public SqrlConfig getSubConfig(String name);
   public boolean hasSubConfig(String name);
 
@@ -42,7 +53,7 @@ public interface SqrlConfig {
 
   ErrorCollector getErrorCollector();
 
-  void setProperty(String key, Object value);
+  SqrlConfig setProperty(String key, Object value);
 
   void setProperties(Object value);
 
@@ -96,14 +107,33 @@ public interface SqrlConfig {
 
   }
 
-  static SqrlConfig create() {
-    return create(ErrorCollector.root());
+  static<T extends Enum<T>> T getEnum(Value<String> value, Class<T> clazz, Optional<T> defaultValue) {
+    if (defaultValue.isPresent()) value = value.withDefault(defaultValue.get().name());
+    return Enum.valueOf(clazz,value.map(String::toLowerCase).validate(v -> isEnumValue(v,clazz),
+        String.format("Use one of: %s",clazz.getEnumConstants())).get());
   }
 
-  static SqrlConfig create(ErrorCollector errors) {
-    return SqrlConfigCommons.create(errors);
+  static<T extends Enum<T>> boolean isEnumValue(String value, Class<T> clazz) {
+    for (T e : clazz.getEnumConstants()) {
+      if(e.name().equals(value)) { return true; }
+    }
+    return false;
   }
 
-  static SqrlConfig EMPTY = create();
+  static SqrlConfig createCurrentVersion() {
+    return createCurrentVersion(ErrorCollector.root());
+  }
+
+  static SqrlConfig createCurrentVersion(ErrorCollector errors) {
+    return create(errors, CURRENT_VERSION);
+  }
+
+  static SqrlConfig create(SqrlConfig other) {
+    return create(other.getErrorCollector(), other.getVersion());
+  }
+
+  static SqrlConfig create(ErrorCollector errors, int version) {
+    return SqrlConfigCommons.create(errors, version);
+  }
 
 }

@@ -7,7 +7,6 @@ import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableSchema;
 import com.datasqrl.io.tables.TableSchemaFactory;
 import com.datasqrl.io.tables.TableSource;
-import com.datasqrl.schema.input.FlexibleTableSchemaFactory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -35,9 +34,9 @@ public class TableWriter {
     Path tableConfigFile = destinationDir.resolve(
             table.getName().getCanonical() + TABLE_FILE_SUFFIX);
     TableSchema ts = table.getSchema();
-    TableConfig config = table.getConfiguration().toBuilder().schema(ts.getSchemaType()).build();
+    TableConfig config = table.getConfiguration().toBuilder().build();
     config.toFile(tableConfigFile);
-    TableSchemaFactory schemaFactory = TableSchemaFactory.load(ts.getSchemaType());
+    TableSchemaFactory schemaFactory = TableSchemaFactory.loadByType(ts.getSchemaType());
     Path schemaFile = destinationDir.resolve(schemaFactory.getSchemaFilename(config));
     Files.writeString(schemaFile, ts.getDefinition());
   }

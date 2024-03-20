@@ -11,4 +11,13 @@ public class StringUtil {
         return base.substring(0,base.length()-remove.length());
     }
 
+    public static String replaceSubstring(String original, int start, int end, String replacement) {
+        if (start < 0 || end > original.length() || start > end) {
+            throw new IllegalArgumentException("Invalid start or end position");
+        }
+        String before = original.substring(0, start);
+        String after = original.substring(end);
+        return before + replacement + after;
+    }
+
 }

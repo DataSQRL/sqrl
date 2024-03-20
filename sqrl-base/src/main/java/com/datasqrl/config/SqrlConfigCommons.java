@@ -61,6 +61,14 @@ public class SqrlConfigCommons implements SqrlConfig {
   String prefix;
 
   @Override
+  public int getVersion() {
+    errors.checkFatal(config.containsKey(VERSION_KEY),"Configuration file does not have a `version`.");
+    int version = config.getInt(VERSION_KEY, 0);
+    errors.checkFatal(version>0, "Invalid version: %s", version);
+    return version;
+  }
+
+  @Override
   public SqrlConfigCommons getSubConfig(String name) {
     return new SqrlConfigCommons(errors,configFilename,config,getPrefix(name));
   }
@@ -211,8 +219,9 @@ public class SqrlConfigCommons implements SqrlConfig {
   }
 
   @Override
-  public void setProperty(String key, Object value) {
+  public SqrlConfig setProperty(String key, Object value) {
     config.setProperty(getFullKey(key), value);
+    return this;
   }
 
   @Override
@@ -305,9 +314,11 @@ public class SqrlConfigCommons implements SqrlConfig {
     return config.containsKey(fullKey);
   }
 
-  public static SqrlConfig create(ErrorCollector errors) {
+  public static SqrlConfig create(ErrorCollector errors, int version) {
     Configuration config = new BaseHierarchicalConfiguration();
-    return new SqrlConfigCommons(errors,null,config,"");
+    SqrlConfigCommons newconfig = new SqrlConfigCommons(errors,null,config,"");
+    newconfig.setProperty(VERSION_KEY, version);
+    return newconfig;
   }
 
   public static SqrlConfig fromFiles(ErrorCollector errors, @NonNull List<Path> files) {

@@ -1,0 +1,13 @@
+{
+  "format" : {
+    "name" : "json"
+  },
+  "schema" : "flexible",
+  "identifier" : "emailtemplates",
+  "type" : "source",
+  "connector" : {
+    "name" : "file",
+    "fileURIs" : [ "../../sqrl-examples/conference/data/emailtemplates.json" ]
+  },
+  "canonicalizer" : "system"
+}
