@@ -1,0 +1,7 @@
+>>>errors
+[FATAL] Order by cannot be nested
+in script:<script> [2:1]:
+IMPORT ecommerce-data.Product TIMESTAMP _ingest_time;
+Product.nested := DISTINCT @ ON @.productid ORDER BY _ingest_time DESC;
+^
+

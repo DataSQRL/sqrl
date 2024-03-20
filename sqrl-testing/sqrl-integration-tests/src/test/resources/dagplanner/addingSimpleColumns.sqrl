@@ -1,0 +1,4 @@
+IMPORT time.*;
+IMPORT ecommerceTs.Orders;
+Orders.col1 := (id + customerid)/2;
+OrderEntry := SELECT o.col1, o.time, e.productid, e.discount FROM Orders o JOIN o.entries e;

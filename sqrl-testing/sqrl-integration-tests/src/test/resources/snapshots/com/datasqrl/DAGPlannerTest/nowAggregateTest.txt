@@ -1,0 +1,412 @@
+>>>pipeline_explain.txt
+=== Customer
+ID:     customer$2
+Type:   stream
+Stage:  streams
+Primary Key: customerid, lastUpdated
+Timestamp  : timestamp
+Schema:
+ - customerid: BIGINT NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - lastUpdated: BIGINT NOT NULL
+ - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Plan:
+LogicalTableScan(table=[[customer$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+
+=== OrderAugment
+ID:     orderaugment$1
+Type:   stream
+Stage:  streams
+Inputs: ordernow3$1, orders$2
+Primary Key: id, time
+Timestamp  : time
+Schema:
+ - id: BIGINT NOT NULL
+ - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - order_count: BIGINT NOT NULL
+Plan:
+LogicalProject(id=[$0], time=[$2], order_count=[$5])
+  LogicalJoin(condition=[=($1, $4)], joinType=[inner]) hints[TemporalJoinHint options:[2, 2, 0]]
+    LogicalTableScan(table=[[orders$2]])
+    LogicalFilter(condition=[=($3, 1)]) hints[DedupHint]
+      LogicalProject(customer=[$0], order_count=[$1], _time=[$2], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
+        LogicalTableScan(table=[[ordernow3$1]])
+
+=== OrderNow1
+ID:     ordernow1$1
+Type:   stream
+Stage:  streams
+Inputs: orders$2
+Primary Key: customer, bucket
+Timestamp  : bucket
+Schema:
+ - customer: BIGINT NOT NULL
+ - bucket: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - order_count: BIGINT NOT NULL
+Post Processors:
+ - now-filter: bucket > now() - 777600000 ms
+Plan:
+LogicalAggregate(group=[{0, 1}], order_count=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 3, 86400000, 0]]
+  LogicalProject(customer=[$1], bucket=[endOfDay($2)], id=[$0], time=[$2])
+    LogicalTableScan(table=[[orders$2]])
+
+=== OrderNow2
+ID:     ordernow2$1
+Type:   stream
+Stage:  streams
+Inputs: orders$2
+Primary Key: bucket
+Timestamp  : bucket
+Schema:
+ - bucket: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - order_count: BIGINT NOT NULL
+Post Processors:
+ - now-filter: bucket > now() - 777600000 ms
+Plan:
+LogicalAggregate(group=[{0}], order_count=[COUNT()]) hints[TumbleAggregationHint options:[0, FUNCTION, 2, 86400000, 0]]
+  LogicalProject(bucket=[endOfDay($2)], id=[$0], time=[$2])
+    LogicalTableScan(table=[[orders$2]])
+
+=== OrderNow3
+ID:     ordernow3$1
+Type:   state
+Stage:  streams
+Inputs: orders$2
+Primary Key: customer
+Timestamp  : _time
+Schema:
+ - customer: BIGINT NOT NULL
+ - order_count: BIGINT NOT NULL
+ - _time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Post Processors:
+ - topN: partition=customer limit=1 sort=#2: _time TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
+Plan:
+LogicalProject(customer=[$0], order_count=[$2], _time=[$1])
+  LogicalAggregate(group=[{0, 2}], order_count=[COUNT()]) hints[SlidingAggregationHint options:[2, 691200000, 13824000]]
+    LogicalProject(customer=[$1], id=[$0], time=[$2])
+      LogicalTableScan(table=[[orders$2]])
+
+=== Orders
+ID:     orders$2
+Type:   stream
+Stage:  streams
+Primary Key: id, time
+Timestamp  : time
+Schema:
+ - id: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - entries: RecordType(INTEGER NOT NULL _idx, BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+Plan:
+LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[2]]]]) hints[WatermarkHint options:[2]]
+
+=== Product
+ID:     product$2
+Type:   stream
+Stage:  streams
+Primary Key: _uuid
+Timestamp  : _ingest_time
+Schema:
+ - productid: BIGINT NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - description: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - category: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+Plan:
+LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+
+=== RecentTotal
+ID:     recenttotal$1
+Type:   state
+Stage:  streams
+Inputs: orders$2
+Primary Key: __pk
+Timestamp  : _time
+Schema:
+ - total: DOUBLE NOT NULL
+ - quantity: BIGINT NOT NULL
+ - __pk: INTEGER NOT NULL
+ - _time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Post Processors:
+ - topN: limit=1 sort=#3: _time TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
+Plan:
+LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
+  LogicalAggregate(group=[{3}], total=[SUM($0)], quantity=[SUM($1)]) hints[SlidingAggregationHint options:[3, 604800000, 12096000]]
+    LogicalProject($f0=[*($7, $6)], quantity=[$6], id=[$0], time=[$2], _idx=[$4])
+      LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{3}])
+        LogicalTableScan(table=[[orders$2]])
+        LogicalTableFunctionScan(invocation=[Orders.entries($cor0.entries)], rowType=[RecordType(INTEGER _idx, BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount)], elementType=[class [Ljava.lang.Object;])
+
+>>>database-schema.sql
+CREATE INDEX IF NOT EXISTS ordernow1$1_btree_c1 ON ordernow1$1 USING btree ("bucket");
+CREATE TABLE IF NOT EXISTS customer$2 ("customerid" BIGINT NOT NULL,"email" TEXT NOT NULL,"name" TEXT NOT NULL,"lastUpdated" BIGINT NOT NULL,"timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("customerid","lastUpdated"));
+CREATE TABLE IF NOT EXISTS orderaugment$1 ("id" BIGINT NOT NULL,"time" TIMESTAMP WITH TIME ZONE NOT NULL,"order_count" BIGINT NOT NULL , PRIMARY KEY ("id","time"));
+CREATE TABLE IF NOT EXISTS ordernow1$1 ("customer" BIGINT NOT NULL,"bucket" TIMESTAMP WITH TIME ZONE NOT NULL,"order_count" BIGINT NOT NULL , PRIMARY KEY ("customer","bucket"));
+CREATE TABLE IF NOT EXISTS ordernow2$1 ("bucket" TIMESTAMP WITH TIME ZONE NOT NULL,"order_count" BIGINT NOT NULL , PRIMARY KEY ("bucket"));
+CREATE TABLE IF NOT EXISTS ordernow3$1 ("customer" BIGINT NOT NULL,"order_count" BIGINT NOT NULL,"_time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("customer"));
+CREATE TABLE IF NOT EXISTS orders$2 ("id" BIGINT NOT NULL,"customerid" BIGINT NOT NULL,"time" TIMESTAMP WITH TIME ZONE NOT NULL,"entries" JSONB NOT NULL , PRIMARY KEY ("id","time"));
+CREATE TABLE IF NOT EXISTS product$2 ("productid" BIGINT NOT NULL,"name" TEXT NOT NULL,"description" TEXT NOT NULL,"category" TEXT NOT NULL,"_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL,"_uuid" TEXT NOT NULL , PRIMARY KEY ("_uuid"));
+CREATE TABLE IF NOT EXISTS recenttotal$1 ("total" DOUBLE PRECISION NOT NULL,"quantity" BIGINT NOT NULL,"__pk" INTEGER NOT NULL,"_time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("__pk"));
+>>>flink-plan.sql
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptostring` AS 'com.datasqrl.time.TimestampToString' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofmonth` AS 'com.datasqrl.time.EndOfMonth' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofweek` AS 'com.datasqrl.time.EndOfWeek' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `parsetimestamp` AS 'com.datasqrl.time.ParseTimestamp' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `uuid` AS 'com.datasqrl.secure.Uuid' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochmillitotimestamp` AS 'com.datasqrl.time.EpochMilliToTimestamp' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofminute` AS 'com.datasqrl.time.EndOfMinute' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptoepoch` AS 'com.datasqrl.time.TimestampToEpoch' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofsecond` AS 'com.datasqrl.time.EndOfSecond' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochtotimestamp` AS 'com.datasqrl.time.EpochToTimestamp' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofday` AS 'com.datasqrl.time.EndOfDay' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `atzone` AS 'com.datasqrl.time.AtZone' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofhour` AS 'com.datasqrl.time.EndOfHour' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofyear` AS 'com.datasqrl.time.EndOfYear' LANGUAGE JAVA;
+
+CREATE TEMPORARY TABLE `orders$1` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `entries` ROW(`_idx` INTEGER NOT NULL, `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED,
+  WATERMARK FOR `time` AS (`time` - INTERVAL '0.001' SECOND)
+) WITH (
+  'format' = 'json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10000',
+  'connector' = 'filesystem',
+  'source.path.regex-pattern' = ''
+);
+
+CREATE TEMPORARY TABLE `product$1` (
+  `productid` BIGINT NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `_uuid` AS UUID(),
+  PRIMARY KEY (`_uuid`) NOT ENFORCED,
+  WATERMARK FOR `_ingest_time` AS (`_ingest_time` - INTERVAL '0.001' SECOND)
+) WITH (
+  'format' = 'json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10000',
+  'connector' = 'filesystem',
+  'source.path.regex-pattern' = ''
+);
+
+CREATE TEMPORARY TABLE `customer$1` (
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
+  `timestamp` AS EPOCHTOTIMESTAMP(`lastUpdated`),
+  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
+  WATERMARK FOR `timestamp` AS (`timestamp` - INTERVAL '0.001' SECOND)
+) WITH (
+  'format' = 'json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10000',
+  'connector' = 'filesystem',
+  'source.path.regex-pattern' = ''
+);
+
+CREATE TEMPORARY TABLE `customer$2` (
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+) WITH (
+  'password' = 'postgres',
+  'connector' = 'jdbc',
+  'driver' = 'org.postgresql.Driver',
+  'table-name' = 'customer$2',
+  'user' = 'postgres',
+  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+);
+
+CREATE TEMPORARY TABLE `orderaugment$1` (
+  `id` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `order_count` BIGINT NOT NULL
+) WITH (
+  'password' = 'postgres',
+  'connector' = 'jdbc',
+  'driver' = 'org.postgresql.Driver',
+  'table-name' = 'orderaugment$1',
+  'user' = 'postgres',
+  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+);
+
+CREATE TEMPORARY TABLE `ordernow1$1` (
+  `customer` BIGINT NOT NULL,
+  `bucket` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `order_count` BIGINT NOT NULL
+) WITH (
+  'password' = 'postgres',
+  'connector' = 'jdbc',
+  'driver' = 'org.postgresql.Driver',
+  'table-name' = 'ordernow1$1',
+  'user' = 'postgres',
+  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+);
+
+CREATE TEMPORARY TABLE `ordernow2$1` (
+  `bucket` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `order_count` BIGINT NOT NULL
+) WITH (
+  'password' = 'postgres',
+  'connector' = 'jdbc',
+  'driver' = 'org.postgresql.Driver',
+  'table-name' = 'ordernow2$1',
+  'user' = 'postgres',
+  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+);
+
+CREATE TEMPORARY TABLE `ordernow3$1` (
+  `customer` BIGINT NOT NULL,
+  `order_count` BIGINT NOT NULL,
+  `_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+) WITH (
+  'password' = 'postgres',
+  'connector' = 'jdbc',
+  'driver' = 'org.postgresql.Driver',
+  'table-name' = 'ordernow3$1',
+  'user' = 'postgres',
+  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+);
+
+CREATE TEMPORARY TABLE `orders$2` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `entries` ROW(`_idx` INTEGER NOT NULL, `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
+) WITH (
+  'password' = 'postgres',
+  'connector' = 'jdbc',
+  'driver' = 'org.postgresql.Driver',
+  'table-name' = 'orders$2',
+  'user' = 'postgres',
+  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+);
+
+CREATE TEMPORARY TABLE `product$2` (
+  `productid` BIGINT NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL
+) WITH (
+  'password' = 'postgres',
+  'connector' = 'jdbc',
+  'driver' = 'org.postgresql.Driver',
+  'table-name' = 'product$2',
+  'user' = 'postgres',
+  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+);
+
+CREATE TEMPORARY TABLE `recenttotal$1` (
+  `total` DOUBLE NOT NULL,
+  `quantity` BIGINT NOT NULL,
+  `__pk` INTEGER NOT NULL,
+  `_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+) WITH (
+  'password' = 'postgres',
+  'connector' = 'jdbc',
+  'driver' = 'org.postgresql.Driver',
+  'table-name' = 'recenttotal$1',
+  'user' = 'postgres',
+  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+);
+
+CREATE VIEW `table$1`
+AS
+SELECT `customerid` AS `customer`, `id`, `time`
+FROM `orders$1`;
+
+CREATE VIEW `table$2`
+AS
+SELECT *
+FROM (SELECT `customer`, `order_count`, `_time`, (ROW_NUMBER() OVER (PARTITION BY `customer` ORDER BY `_time` DESC NULLS LAST)) AS `_rownum`
+FROM (SELECT `customer`, COUNT(*) AS `order_count`, `window_time` AS `_time`
+FROM TABLE(HOP((TABLE `table$1`), (DESCRIPTOR(`time`)), INTERVAL '13824' SECOND(8), INTERVAL '691200' SECOND(9))) AS `t0`
+GROUP BY `customer`, `window_start`, `window_end`, `window_time`) AS `t3`) AS `t4`
+WHERE (`_rownum` = 1);
+
+CREATE VIEW `table$3`
+AS
+SELECT `customerid` AS `customer`, ENDOFDAY(`time`) AS `bucket`, `id`, `time`
+FROM `orders$1`;
+
+CREATE VIEW `table$4`
+AS
+SELECT ENDOFDAY(`time`) AS `bucket`, `id`, `time`
+FROM `orders$1`;
+
+CREATE VIEW `table$5`
+AS
+SELECT `customerid` AS `customer`, `id`, `time`
+FROM `orders$1`;
+
+CREATE VIEW `table$6`
+AS
+SELECT (`t00`.`unit_price` * `t00`.`quantity`) AS `$f0`, `t00`.`quantity`, `$cor0`.`id`, `$cor0`.`time`, `t00`.`_idx`
+FROM `orders$1` AS `$cor0`,
+UNNEST(`$cor0`.`entries`) AS `t00`;
+
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `customer$2`
+(SELECT *
+FROM `customer$1`)
+;
+INSERT INTO `orderaugment$1`
+(SELECT `$cor1`.`id`, `$cor1`.`time`, `t5`.`order_count`
+FROM `orders$1` AS `$cor1`
+INNER JOIN `table$2` FOR SYSTEM_TIME AS OF `$cor1`.`time` AS `t5` ON (`$cor1`.`customerid` = `t5`.`customer`))
+;
+INSERT INTO `ordernow1$1`
+(SELECT `customer`, `window_time` AS `bucket`, COUNT(*) AS `order_count`
+FROM TABLE(TUMBLE((TABLE `table$3`), (DESCRIPTOR(`time`)), INTERVAL '86400' SECOND(8), INTERVAL '0' SECOND(1))) AS `t0`
+GROUP BY `customer`, `window_start`, `window_end`, `window_time`)
+;
+INSERT INTO `ordernow2$1`
+(SELECT `window_time` AS `bucket`, COUNT(*) AS `order_count`
+FROM TABLE(TUMBLE((TABLE `table$4`), (DESCRIPTOR(`time`)), INTERVAL '86400' SECOND(8), INTERVAL '0' SECOND(1))) AS `t0`
+GROUP BY `window_start`, `window_end`, `window_time`)
+;
+INSERT INTO `ordernow3$1`
+(SELECT `customer`, COUNT(*) AS `order_count`, `window_time` AS `_time`
+FROM TABLE(HOP((TABLE `table$5`), (DESCRIPTOR(`time`)), INTERVAL '13824' SECOND(8), INTERVAL '691200' SECOND(9))) AS `t0`
+GROUP BY `customer`, `window_start`, `window_end`, `window_time`)
+;
+INSERT INTO `orders$2`
+(SELECT *
+FROM `orders$1`)
+;
+INSERT INTO `product$2`
+(SELECT *
+FROM `product$1`)
+;
+INSERT INTO `recenttotal$1`
+(SELECT SUM(`$f0`) AS `total`, SUM(`quantity`) AS `quantity`, 1 AS `__pk`, `window_time` AS `_time`
+FROM TABLE(HOP((TABLE `table$6`), (DESCRIPTOR(`time`)), INTERVAL '12096' SECOND(8), INTERVAL '604800' SECOND(9))) AS `t2`
+GROUP BY `window_start`, `window_end`, `window_time`)
+;
+END;

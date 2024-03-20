@@ -1,0 +1,4 @@
+IMPORT time.*;
+IMPORT ecommerce-data.Customer TIMESTAMP _ingest_time;
+IMPORT ecommerce-data.Orders TIMESTAMP time;
+IMPORT ecommerce-data.Product TIMESTAMP _ingest_time;

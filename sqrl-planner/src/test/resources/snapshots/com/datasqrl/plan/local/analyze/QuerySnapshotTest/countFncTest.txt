@@ -1,0 +1,11 @@
+>>>entries_2$1
+LogicalProject(__pk1$_uuid=[$0], discount=[$1], cnt=[$3], _time=[$2])
+  LogicalAggregate(group=[{0, 1, 3}], cnt=[COUNT()])
+    LogicalProject(__pk1$_uuid=[$0], discount=[COALESCE($10, 0:DOUBLE)], _idx=[$6], time=[$4])
+      LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{5}])
+        LogicalTableScan(table=[[orders$2]])
+        LogicalTableFunctionScan(invocation=[Orders.entries($cor0.entries)], rowType=[RecordType(INTEGER _idx, BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount)], elementType=[class [Ljava.lang.Object;])
+
+>>>orders$2
+LogicalTableScan(table=[[orders$1]])
+

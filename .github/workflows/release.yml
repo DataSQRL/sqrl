@@ -32,11 +32,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-      - name: Copy JAR files
-        run: |
-          cp sqrl-execute/sqrl-execute-flink/sqrl-execute-flink-jar/target/flink-job.jar sqrl-tools/sqrl-cli/target/flink-job.jar
-          cp sqrl-execute/sqrl-execute-http/sqrl-execute-http-vertx/target/vertx-server.jar sqrl-tools/sqrl-cli/target/vertx-server.jar
-      # Build docker
       - name: Build and Push sqrl-cli Latest
         uses: docker/build-push-action@v3
         with:
@@ -45,27 +40,11 @@ jobs:
           push: true
           tags: datasqrl/cmd:${{ github.ref_name }},datasqrl/cmd:latest
           platforms: linux/amd64,linux/arm64
-      - name: Build and Push sqrl-execute-http-vertx Docker
+      - name: Build and Push sqrl-vertx Docker
         uses: docker/build-push-action@v3
         with:
-          context: sqrl-execute/sqrl-execute-http/sqrl-execute-http-vertx
-          file: sqrl-execute/sqrl-execute-http/sqrl-execute-http-vertx/Dockerfile
+          context: sqrl-server/sqrl-server-vertx
+          file: sqrl-server/sqrl-server-vertx/Dockerfile
           push: true
-          tags: datasqrl/engine-vertx:${{ github.ref_name }},datasqrl/engine-vertx:latest
-          platforms: linux/amd64,linux/arm64
-      - name: Build and Push sqrl-execute-http-aws-lambda Docker
-        uses: docker/build-push-action@v3
-        with:
-          context: sqrl-execute/sqrl-execute-http/sqrl-execute-http-aws-lambda
-          file: sqrl-execute/sqrl-execute-http/sqrl-execute-http-aws-lambda/Dockerfile
-          push: true
-          tags: datasqrl/engine-aws-lambda:${{ github.ref_name }},datasqrl/engine-aws-lambda:latest
-          platforms: linux/amd64,linux/arm64
-      - name: Build and Push sqrl-execute-flink-jar Docker
-        uses: docker/build-push-action@v3
-        with:
-          context: sqrl-execute/sqrl-execute-flink/sqrl-execute-flink-jar
-          file: sqrl-execute/sqrl-execute-flink/sqrl-execute-flink-jar/Dockerfile
-          push: true
-          tags: datasqrl/engine-flink:${{ github.ref_name }},datasqrl/engine-flink:latest
+          tags: datasqrl/sqrl-server:${{ github.ref_name }},datasqrl/sqrl-server:latest
           platforms: linux/amd64,linux/arm64

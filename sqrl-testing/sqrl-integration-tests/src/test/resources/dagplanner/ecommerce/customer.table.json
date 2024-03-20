@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "flink" : {
+    "format" : "json",
+    "path" : "file:/mock",
+    "source.monitor-interval" : 10000,
+    "connector" : "filesystem",
+    "source.path.regex-pattern" : ""
+  },
+  "table" : {
+    "type" : "source",
+    "timestamp" : "_ingest_time",
+    "primary-key" : "_uuid"
+  },
+  "metadata" : {
+    "_ingest_time" : {
+      "attribute" : "proctime()"
+    },
+    "_uuid" : {
+      "attribute" : "secure.Uuid()"
+    }
+  }
+}

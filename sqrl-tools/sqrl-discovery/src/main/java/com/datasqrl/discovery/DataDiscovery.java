@@ -4,134 +4,89 @@
 package com.datasqrl.discovery;
 
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.config.SqrlConfig;
-import com.datasqrl.discovery.store.MetricStoreProvider;
-import com.datasqrl.discovery.store.TableStatisticsStore;
-import com.datasqrl.engine.EngineCapability;
-import com.datasqrl.engine.stream.StreamEngine;
-import com.datasqrl.engine.stream.StreamHolder;
-import com.datasqrl.engine.stream.flink.LocalFlinkStreamEngineImpl;
-import com.datasqrl.engine.stream.inmemory.InMemStreamEngine;
-import com.datasqrl.engine.stream.monitor.DataMonitor;
+import com.datasqrl.metadata.MetricStoreProvider;
+import com.datasqrl.metadata.TableStatisticsStore;
+import com.datasqrl.discovery.system.DataSystemDiscovery;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.error.ErrorPrefix;
-import com.datasqrl.io.DataSystemDiscovery;
-import com.datasqrl.io.SourceRecord;
-import com.datasqrl.io.stats.DefaultSchemaGenerator;
-import com.datasqrl.io.stats.SourceTableStatistics;
+import com.datasqrl.io.formats.Format;
+import com.datasqrl.metadata.stats.DefaultSchemaGenerator;
+import com.datasqrl.metadata.stats.SourceTableStatistics;
 import com.datasqrl.io.tables.TableConfig;
-import com.datasqrl.io.tables.TableInput;
 import com.datasqrl.io.tables.TableSource;
-import com.datasqrl.io.util.StreamInputPreparer;
-import com.datasqrl.io.util.StreamInputPreparerImpl;
 import com.datasqrl.metadata.MetadataStoreProvider;
 import com.datasqrl.schema.input.FlexibleTableSchema;
+import com.datasqrl.schema.input.FlexibleTableSchemaFactory;
 import com.datasqrl.schema.input.FlexibleTableSchemaHolder;
 import com.datasqrl.schema.input.SchemaAdjustmentSettings;
-import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import lombok.NonNull;
+import lombok.Value;
 
+@Value
 public class DataDiscovery {
-  private final ErrorCollector errors;
-  private final StreamEngine streamEngine;
-  private final SqrlConfig config;
-  private final MetadataStoreProvider metadataStoreProvider;
-  private final StreamInputPreparer streamPreparer;
 
-  public DataDiscovery(@NonNull ErrorCollector errors, @NonNull StreamEngine streamEngine,
-      @NonNull MetadataStoreProvider metadataStoreProvider, @NonNull SqrlConfig config) {
-    this.errors = errors;
-    this.streamEngine = streamEngine;
-    this.config = config;
-    Preconditions.checkArgument(streamEngine.supports(EngineCapability.DATA_MONITORING));
-    this.metadataStoreProvider = metadataStoreProvider;
-    streamPreparer = new StreamInputPreparerImpl();
-  }
+  DataDiscoveryConfig configuration;
+  MonitoringJobFactory monitorFactory;
+  MetadataStoreProvider metadataStore;
+  NamePath basePath = NamePath.ROOT;
+
 
   private TableStatisticsStore openStore() throws IOException {
-    return MetricStoreProvider.getStatsStore(metadataStoreProvider);
+    return MetricStoreProvider.getStatsStore(metadataStore);
   }
 
-  public List<TableInput> discoverTables(TableConfig discoveryConfig) {
-    DataSystemDiscovery discovery = discoveryConfig.initializeDiscovery();
-
-    NamePath path = NamePath.of(discoveryConfig.getName());
-    List<TableInput> tables = discovery
-        .discoverSources(errors)
-        .stream().map(tblConfig -> tblConfig.initializeInput(path))
-        .filter(tbl -> tbl != null && streamPreparer.isRawInput(tbl))
-        .collect(Collectors.toList());
-    return tables;
-  }
-
-  public DataMonitor.Job monitorTables(List<TableInput> tables) {
+  public MonitoringJobFactory.Job monitorTables(Collection<TableConfig> tables) {
     try (TableStatisticsStore store = openStore()) {
     } catch (IOException e) {
-      errors.fatal("Could not open statistics store");
+      configuration.getErrors().fatal("Could not open statistics store");
       return null;
     }
 
-    DataMonitor dataMonitor;
-    if (streamEngine instanceof InMemStreamEngine) {
-      dataMonitor = new InMemJobFactory().createDataMonitor();
-    } else if (streamEngine instanceof LocalFlinkStreamEngineImpl) {
-      dataMonitor = new FlinkJobFactory().createFlinkJob(config);
-    } else {
-      throw new RuntimeException("Unknown data discovery stream engine");
-    }
-
-    for (TableInput table : tables) {
-      StreamHolder<SourceRecord.Raw> stream = streamPreparer.getRawInput(table, dataMonitor,
-          ErrorPrefix.INPUT_DATA.resolve(table.getName()));
-      StreamHolder<SourceTableStatistics> stats = stream.mapWithError(new ComputeMetrics(table.getDigest()),
-          ErrorPrefix.INPUT_DATA.resolve(table.getName()), SourceTableStatistics.class);
-      dataMonitor.monitorTable(stats, new MetricStoreProvider(metadataStoreProvider,
-          table.getDigest().getPath()));
-    }
-    DataMonitor.Job job = dataMonitor.build();
-    return job;
+    return monitorFactory.create(tables, metadataStore);
   }
 
-  public List<TableSource> discoverSchema(List<TableInput> tables) {
+  public List<TableSource> discoverSchema(Collection<TableConfig> tables) {
     List<TableSource> resultTables = new ArrayList<>();
     try (TableStatisticsStore store = openStore()) {
-      for (TableInput table : tables) {
-        SourceTableStatistics stats = store.getTableStatistics(table.getPath());
+      for (TableConfig table : tables) {
+        if (!isFlexibleFormat(table.getConnectorConfig().getFormat())) continue;
+        SourceTableStatistics stats = store.getTableStatistics(NamePath.of(table.getName()));
         if (stats == null) {
-          //No data in table
+          getConfiguration().getErrors().warn("Could not find data for table: %s", table.getName());
           continue;
         }
         DefaultSchemaGenerator generator = new DefaultSchemaGenerator(SchemaAdjustmentSettings.DEFAULT);
         Optional<FlexibleTableSchema> baseSchema = Optional.empty(); //TODO: allow users to configure base schemas
         FlexibleTableSchema schema;
-        ErrorCollector subErrors = errors.resolve(table.getName());
+        ErrorCollector subErrors = getConfiguration().getErrors().resolve(table.getName().getDisplay());
         if (baseSchema.isEmpty()) {
           schema = generator.mergeSchema(stats, table.getName(), subErrors);
         } else {
           schema = generator.mergeSchema(stats, baseSchema.get(), subErrors);
         }
-        TableSource tblSource = table.getConfiguration()
-            .initializeSource(table.getPath().parent(), new FlexibleTableSchemaHolder(schema));
+        TableSource tblSource = table.initializeSource(basePath, new FlexibleTableSchemaHolder(schema));
         resultTables.add(tblSource);
       }
     } catch (IOException e) {
-      errors.fatal("Could not read statistics from store");
+      getConfiguration().getErrors().fatal("Could not read statistics from store");
 
     }
     return resultTables;
   }
 
-  public List<TableSource> runFullDiscovery(TableConfig discoveryConfig) {
-    List<TableInput> inputTables = discoverTables(discoveryConfig);
+  public static boolean isFlexibleFormat(Format format) {
+    return format.getSchemaType().filter(t -> t.equalsIgnoreCase(FlexibleTableSchemaFactory.SCHEMA_TYPE)).isPresent();
+  }
+
+  public List<TableSource> runFullDiscovery(DataSystemDiscovery systemDiscovery, String systemConfig) {
+    Collection<TableConfig> inputTables = systemDiscovery.discoverTables(configuration, systemConfig);
     if (inputTables == null || inputTables.isEmpty()) {
       return List.of();
     }
-    DataMonitor.Job monitorJob = monitorTables(inputTables);
+    MonitoringJobFactory.Job monitorJob = monitorTables(inputTables);
     if (monitorJob == null) {
       return List.of();
     } else {
@@ -139,7 +94,6 @@ public class DataDiscovery {
     }
     List<TableSource> sourceTables = discoverSchema(inputTables);
     return sourceTables;
-
   }
 
 

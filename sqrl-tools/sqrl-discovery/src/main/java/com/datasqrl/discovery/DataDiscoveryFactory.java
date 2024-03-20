@@ -4,61 +4,54 @@ import static com.datasqrl.config.PipelineFactory.ENGINES_PROPERTY;
 
 import com.datasqrl.config.PipelineFactory;
 import com.datasqrl.config.SqrlConfig;
-import com.datasqrl.engine.EngineFactory;
-import com.datasqrl.engine.ExecutionEngine.Type;
-import com.datasqrl.engine.database.DatabaseEngineFactory;
-import com.datasqrl.engine.database.inmemory.InMemoryDatabaseFactory;
-import com.datasqrl.engine.database.relational.JDBCEngineFactory;
+import com.datasqrl.discovery.system.DataSystemDiscovery;
+import com.datasqrl.engine.database.DatabaseEngine;
+import com.datasqrl.engine.database.relational.JDBCEngine;
+import com.datasqrl.engine.stream.StreamEngine;
+import com.datasqrl.engine.stream.flink.AbstractFlinkStreamEngine;
+import com.datasqrl.discovery.flink.FlinkMonitoringJobFactory;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.metadata.InMemoryMetadataStore;
-import com.datasqrl.metadata.JdbcMetadataStore;
+import com.datasqrl.metadata.JdbcMetadataEngine;
 import com.datasqrl.metadata.MetadataStoreProvider;
+import com.datasqrl.util.ServiceLoaderDiscovery;
 import java.util.Optional;
 import lombok.NonNull;
-import org.apache.commons.lang3.StringUtils;
 
 public class DataDiscoveryFactory {
 
   public static final String DISCOVERY_KEY = "discovery";
 
-  public static final String DATABASE_ENGINE_KEY = "database";
-
   public static DataDiscovery fromConfig(@NonNull SqrlConfig config, ErrorCollector errors) {
-    PipelineFactory pipelineFactory = new PipelineFactory(config.getSubConfig(ENGINES_PROPERTY));
+    SqrlConfig enginesConfig = config.getSubConfig(ENGINES_PROPERTY);
+    PipelineFactory pipelineFactory = new PipelineFactory(enginesConfig);
     SqrlConfig discoveryConfig = config.getSubConfig(DISCOVERY_KEY);
-    Optional<String> metadataEngine = discoveryConfig.asString(DATABASE_ENGINE_KEY).validate(
-        StringUtils::isNotBlank,"Cannot be empty").getOptional();
-    DataDiscovery discovery = new DataDiscovery(errors, pipelineFactory.getStreamEngine(),
-        getMetaDataStoreProvider(config.getSubConfig(ENGINES_PROPERTY), metadataEngine),
-        pipelineFactory.getEngineConfig());
+    DataDiscovery discovery = new DataDiscovery(
+        DataDiscoveryConfig.of(discoveryConfig, errors),
+        getJobFactory(pipelineFactory.getStreamEngine()),
+        getMetaDataStoreProvider(pipelineFactory.getDatabaseEngine()));
     return discovery;
   }
 
-  public static DataDiscovery fromPipeline(@NonNull PipelineFactory pipelineFactory, ErrorCollector errors) {
-    return new DataDiscovery(errors, pipelineFactory.getStreamEngine(),
-        getMetaDataStoreProvider(pipelineFactory.getEngineConfig(), Optional.empty()),
-        pipelineFactory.getEngineConfig());
+  public static MetadataStoreProvider getMetaDataStoreProvider(@NonNull DatabaseEngine databaseEngine) {
+    if (databaseEngine instanceof JDBCEngine) {
+      JdbcMetadataEngine metadataStore = new JdbcMetadataEngine();
+      return metadataStore.getMetadataStore(databaseEngine);
+    } else {
+      throw new RuntimeException("Unsupported engine type for meta data store: " + databaseEngine);
+    }
   }
 
-  public static MetadataStoreProvider getMetaDataStoreProvider(SqrlConfig baseEngineConfig, Optional<String> engineIdentifier) {
-    for (String engineId : baseEngineConfig.getKeys()) {
-      SqrlConfig engineConfig = baseEngineConfig.getSubConfig(engineId);
-      EngineFactory engineFactory = EngineFactory.fromConfig(engineConfig);
-      if (engineIdentifier.map(id -> id.equalsIgnoreCase(engineId))
-          .orElse(engineFactory.getEngineType()== Type.DATABASE)) {
-        baseEngineConfig.getErrorCollector().checkFatal(engineFactory instanceof DatabaseEngineFactory,
-            "Selected or default engine [%s] for metadata is not a database engine", engineId);
-        if (engineFactory instanceof JDBCEngineFactory) {
-          JdbcMetadataStore metadataStore = new JdbcMetadataStore();
-          return metadataStore.getMetadataStore(engineConfig);
-        } else if (engineFactory instanceof InMemoryDatabaseFactory) {
-          InMemoryMetadataStore inMemoryMetadataStore = new InMemoryMetadataStore();
-          return inMemoryMetadataStore.getMetadataStore(engineConfig);
-        } else {
-          throw new RuntimeException("Unknown engine type for mata data store");
-        }
-      }
+
+  public static MonitoringJobFactory getJobFactory(@NonNull StreamEngine streamEngine) {
+    if (streamEngine instanceof AbstractFlinkStreamEngine) {
+      return new FlinkMonitoringJobFactory(((AbstractFlinkStreamEngine) streamEngine));
+    } else {
+      throw new RuntimeException("Unsupported engine type for monitoring: " + streamEngine);
     }
-    throw baseEngineConfig.getErrorCollector().exception("Could not find database engine for metadata");
+  }
+
+  public static Optional<String> inferDataSystemFromArgument(@NonNull String systemConfig) {
+    return ServiceLoaderDiscovery.getAll(DataSystemDiscovery.class).stream().filter(system -> system.matchesArgument(systemConfig))
+        .findFirst().map(DataSystemDiscovery::getType);
   }
 }

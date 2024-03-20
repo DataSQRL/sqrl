@@ -1,0 +1,7 @@
+>>>errors
+[FATAL] At line 2, column 53: Column 'parent' not found in table 'e'
+in script:<script> [2:53]:
+IMPORT ecommerce-data.Orders TIMESTAMP time;
+X := SELECT e.* FROM Orders.entries AS e ORDER BY e.parent;
+----------------------------------------------------^
+

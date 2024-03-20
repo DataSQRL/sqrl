@@ -1,0 +1,13 @@
+{
+  "format" : {
+    "name" : "json"
+  },
+  "schema" : "flexible",
+  "identifier" : "loan_types",
+  "type" : "source",
+  "connector" : {
+    "directoryURI" : "../../sqrl-examples/banking/data",
+    "name" : "file"
+  },
+  "canonicalizer" : "system"
+}

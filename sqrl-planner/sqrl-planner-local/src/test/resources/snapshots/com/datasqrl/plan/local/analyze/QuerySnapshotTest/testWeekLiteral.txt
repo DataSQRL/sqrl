@@ -1,7 +1,0 @@
->>>order_time$1
-LogicalProject(_uuid=[$0], week=[$4], week0=[EXTRACT(FLAG(WEEK), NOW())])
-  LogicalTableScan(table=[[orders$2]])
-
->>>orders$2
-LogicalTableScan(table=[[orders$1]])
-

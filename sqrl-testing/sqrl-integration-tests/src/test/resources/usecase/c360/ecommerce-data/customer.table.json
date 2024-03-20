@@ -1,0 +1,19 @@
+{
+  "type" : "source",
+  "canonicalizer" : "system",
+  "format" : {
+    "name" : "csv",
+    "delimiter" : ",",
+    "commentPrefix" : null,
+    "header" : [ "customerid", "email", "name", "lastUpdated" ]
+  },
+  "name" : "customer",
+  "identifier" : "customer",
+  "schema" : "flexible",
+  "connector" : {
+    "directoryURI" : "../../sqrl-examples/retail/data/",
+    "fileURIs" : [ ],
+    "filenamePattern" : "^([^\\.]+?)(?:_part.*)?$",
+    "name" : "file"
+  }
+}

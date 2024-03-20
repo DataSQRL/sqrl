@@ -1,7 +1,0 @@
->>>product$2
-LogicalTableScan(table=[[product$1]])
-
->>>product$3
-LogicalProject(productid=[$2], _uuid=[$0], _ingest_time=[$1], name=[$3], description=[$4], category=[$5])
-  LogicalTableScan(table=[[product$2]])
-

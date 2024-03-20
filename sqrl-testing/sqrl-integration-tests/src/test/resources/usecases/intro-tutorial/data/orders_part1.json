@@ -1,0 +1,1014 @@
+{"id": 150000011, "customerid": 11, "time": "2023-01-02T22:22:58.525Z", "items": [{"productid": 115,"quantity": 1,"unit_price":  9.22 }] }
+{"id": 150000005, "customerid": 6, "time": "2023-01-02T22:23:51.868Z", "items": [{"productid": 113,"quantity": 1,"unit_price": 38.70 ,"discount":  7.75 }] }
+{"id": 150000013, "customerid": 28, "time": "2023-01-02T22:50:58.838Z", "items": [{"productid": 18,"quantity": 1,"unit_price": 10.01 ,"discount":  4.81 }] }
+{"id": 150000022, "customerid": 12, "time": "2023-01-02T23:18:17.934Z", "items": [{"productid": 59,"quantity": 1,"unit_price": 23.22 ,"discount":  9.40 }] }
+{"id": 150000015, "customerid": 4, "time": "2023-01-02T23:54:28.476Z", "items": [{"productid": 101,"quantity": 1,"unit_price": 35.01 }] }
+{"id": 150000021, "customerid": 13, "time": "2023-01-03T00:35:12.294Z", "items": [{"productid": 57,"quantity": 1,"unit_price":  6.11 ,"discount":  2.02 }] }
+{"id": 150000008, "customerid": 30, "time": "2023-01-03T02:26:52.748Z", "items": [{"productid": 155,"quantity": 1,"unit_price": 83.44 ,"discount": 38.52 }] }
+{"id": 150000014, "customerid": 3, "time": "2023-01-03T02:53:02.123Z", "items": [{"productid": 62,"quantity": 1,"unit_price": 42.47 ,"discount":  9.41 }] }
+{"id": 150000023, "customerid": 18, "time": "2023-01-03T04:54:43.118Z", "items": [{"productid": 110,"quantity": 1,"unit_price":  5.64 ,"discount":  2.62 }] }
+{"id": 150000009, "customerid": 10, "time": "2023-01-03T05:05:36.956Z", "items": [{"productid": 177,"quantity": 1,"unit_price":  8.70 }] }
+{"id": 150000020, "customerid": 30, "time": "2023-01-03T06:58:03.038Z", "items": [{"productid": 180,"quantity": 1,"unit_price": 23.20 ,"discount":  4.38 }] }
+{"id": 150000003, "customerid": 26, "time": "2023-01-03T07:41:33.092Z", "items": [{"productid": 141,"quantity": 1,"unit_price":  6.36 }] }
+{"id": 150000006, "customerid": 29, "time": "2023-01-03T07:58:05.708Z", "items": [{"productid": 87,"quantity": 2,"unit_price": 12.05 }] }
+{"id": 150000004, "customerid": 26, "time": "2023-01-03T09:22:20.364Z", "items": [{"productid": 174,"quantity": 1,"unit_price": 10.71 }] }
+{"id": 150000017, "customerid": 10, "time": "2023-01-03T11:21:07.625Z", "items": [{"productid": 93,"quantity": 3,"unit_price": 58.77 }] }
+{"id": 150000012, "customerid": 13, "time": "2023-01-03T11:46:45.221Z", "items": [{"productid": 207,"quantity": 2,"unit_price": 17.50 }] }
+{"id": 150000002, "customerid": 4, "time": "2023-01-03T11:59:39.659Z", "items": [{"productid": 9,"quantity": 1,"unit_price": 15.41 ,"discount":  3.06 }] }
+{"id": 150000001, "customerid": 13, "time": "2023-01-03T13:08:50.269Z", "items": [{"productid": 140,"quantity": 2,"unit_price": 25.83 ,"discount": 15.32 },{"productid": 184,"quantity": 1,"unit_price":  8.47 }] }
+{"id": 150000019, "customerid": 21, "time": "2023-01-03T14:23:57.743Z", "items": [{"productid": 177,"quantity": 2,"unit_price":  8.70 }] }
+{"id": 150000010, "customerid": 10, "time": "2023-01-03T15:14:26.207Z", "items": [{"productid": 150,"quantity": 2,"unit_price":  5.92 }] }
+{"id": 150000016, "customerid": 23, "time": "2023-01-03T15:48:34.469Z", "items": [{"productid": 121,"quantity": 1,"unit_price":  7.83 }] }
+{"id": 150000007, "customerid": 5, "time": "2023-01-03T18:20:52.045Z", "items": [{"productid": 168,"quantity": 1,"unit_price": 11.15 ,"discount":  0.70 }] }
+{"id": 150000024, "customerid": 14, "time": "2023-01-03T20:10:50.725Z", "items": [{"productid": 21,"quantity": 1,"unit_price":  8.90 }] }
+{"id": 150000018, "customerid": 14, "time": "2023-01-03T20:14:48.817Z", "items": [{"productid": 68,"quantity": 1,"unit_price":  7.02 ,"discount":  0.69 }] }
+{"id": 150000025, "customerid": 24, "time": "2023-01-03T21:32:30.798Z", "items": [{"productid": 204,"quantity": 1,"unit_price":  8.20 }] }
+{"id": 150000031, "customerid": 23, "time": "2023-01-03T22:28:51.549Z", "items": [{"productid": 83,"quantity": 1,"unit_price":  9.09 }] }
+{"id": 150000040, "customerid": 11, "time": "2023-01-04T04:12:08.182Z", "items": [{"productid": 36,"quantity": 2,"unit_price":  7.61 ,"discount":  5.45 }] }
+{"id": 150000036, "customerid": 2, "time": "2023-01-04T04:26:41.425Z", "items": [{"productid": 41,"quantity": 2,"unit_price":  5.31 }] }
+{"id": 150000034, "customerid": 4, "time": "2023-01-04T07:20:33.197Z", "items": [{"productid": 133,"quantity": 1,"unit_price":  8.38 }] }
+{"id": 150000037, "customerid": 24, "time": "2023-01-04T10:12:36.113Z", "items": [{"productid": 4,"quantity": 1,"unit_price":  8.01 ,"discount":  1.56 }] }
+{"id": 150000033, "customerid": 15, "time": "2023-01-04T10:40:11.932Z", "items": [{"productid": 98,"quantity": 3,"unit_price": 32.37 }] }
+{"id": 150000027, "customerid": 28, "time": "2023-01-04T11:06:16.563Z", "items": [{"productid": 113,"quantity": 1,"unit_price": 38.70 ,"discount":  4.58 },{"productid": 170,"quantity": 1,"unit_price":  8.90 ,"discount":  1.89 }] }
+{"id": 150000026, "customerid": 15, "time": "2023-01-04T11:21:54.177Z", "items": [{"productid": 78,"quantity": 1,"unit_price":  6.29 ,"discount":  1.56 }] }
+{"id": 150000032, "customerid": 24, "time": "2023-01-04T14:03:23.122Z", "items": [{"productid": 177,"quantity": 1,"unit_price":  8.70 },{"productid": 38,"quantity": 1,"unit_price":  6.74 ,"discount":  2.89 }] }
+{"id": 150000035, "customerid": 26, "time": "2023-01-04T15:38:24.454Z", "items": [{"productid": 173,"quantity": 1,"unit_price": 20.52 ,"discount":  7.40 }] }
+{"id": 150000039, "customerid": 19, "time": "2023-01-04T16:15:15.669Z", "items": [{"productid": 190,"quantity": 1,"unit_price":  9.81 }] }
+{"id": 150000038, "customerid": 17, "time": "2023-01-04T17:56:18.071Z", "items": [{"productid": 2,"quantity": 1,"unit_price": 11.81 }] }
+{"id": 150000030, "customerid": 19, "time": "2023-01-04T18:09:41.515Z", "items": [{"productid": 183,"quantity": 1,"unit_price": 11.46 ,"discount":  3.04 }] }
+{"id": 150000028, "customerid": 18, "time": "2023-01-04T18:53:50.879Z", "items": [{"productid": 52,"quantity": 1,"unit_price": 40.62 ,"discount": 18.12 },{"productid": 56,"quantity": 1,"unit_price":  5.47 }] }
+{"id": 150000029, "customerid": 26, "time": "2023-01-04T20:26:36.325Z", "items": [{"productid": 172,"quantity": 1,"unit_price": 12.07 ,"discount":  0.90 }] }
+{"id": 150000041, "customerid": 15, "time": "2023-01-04T21:18:19.266Z", "items": [{"productid": 95,"quantity": 1,"unit_price":  8.15 }] }
+{"id": 150000074, "customerid": 8, "time": "2023-01-05T00:02:10.896Z", "items": [{"productid": 135,"quantity": 1,"unit_price": 11.92 ,"discount":  0.87 }] }
+{"id": 150000044, "customerid": 13, "time": "2023-01-05T00:31:55.921Z", "items": [{"productid": 48,"quantity": 1,"unit_price":  5.45 }] }
+{"id": 150000042, "customerid": 1, "time": "2023-01-05T01:26:16.193Z", "items": [{"productid": 77,"quantity": 2,"unit_price": 96.05 }] }
+{"id": 150000072, "customerid": 11, "time": "2023-01-05T01:56:31.346Z", "items": [{"productid": 6,"quantity": 1,"unit_price":  8.66 ,"discount":  1.02 }] }
+{"id": 150000050, "customerid": 1, "time": "2023-01-05T02:32:30.549Z", "items": [{"productid": 122,"quantity": 1,"unit_price": 13.31 }] }
+{"id": 150000056, "customerid": 1, "time": "2023-01-05T04:40:50.570Z", "items": [{"productid": 16,"quantity": 1,"unit_price": 18.64 ,"discount":  8.51 }] }
+{"id": 150000059, "customerid": 7, "time": "2023-01-05T05:05:15.045Z", "items": [{"productid": 204,"quantity": 2,"unit_price":  8.20 }] }
+{"id": 150000043, "customerid": 13, "time": "2023-01-05T05:20:21.632Z", "items": [{"productid": 46,"quantity": 2,"unit_price":  6.31 }] }
+{"id": 150000051, "customerid": 24, "time": "2023-01-05T05:42:42.371Z", "items": [{"productid": 55,"quantity": 2,"unit_price": 12.22 }] }
+{"id": 150000073, "customerid": 20, "time": "2023-01-05T06:16:58.486Z", "items": [{"productid": 47,"quantity": 3,"unit_price": 12.30 }] }
+{"id": 150000064, "customerid": 23, "time": "2023-01-05T06:51:14.244Z", "items": [{"productid": 47,"quantity": 1,"unit_price": 12.30 ,"discount":  2.13 }] }
+{"id": 150000067, "customerid": 1, "time": "2023-01-05T07:22:48.807Z", "items": [{"productid": 107,"quantity": 1,"unit_price": 15.03 ,"discount":  0.82 }] }
+{"id": 150000058, "customerid": 29, "time": "2023-01-05T08:07:13.497Z", "items": [{"productid": 142,"quantity": 1,"unit_price":  6.33 }] }
+{"id": 150000054, "customerid": 9, "time": "2023-01-05T08:12:55.706Z", "items": [{"productid": 166,"quantity": 1,"unit_price":  6.59 ,"discount":  1.44 }] }
+{"id": 150000069, "customerid": 20, "time": "2023-01-05T08:21:37.768Z", "items": [{"productid": 75,"quantity": 1,"unit_price": 22.06 ,"discount":  4.38 }] }
+{"id": 150000046, "customerid": 8, "time": "2023-01-05T09:23:08.208Z", "items": [{"productid": 34,"quantity": 2,"unit_price": 37.32 }] }
+{"id": 150000053, "customerid": 23, "time": "2023-01-05T09:24:31.781Z", "items": [{"productid": 111,"quantity": 1,"unit_price": 10.18 }] }
+{"id": 150000068, "customerid": 26, "time": "2023-01-05T09:51:34.081Z", "items": [{"productid": 183,"quantity": 2,"unit_price": 11.46 },{"productid": 67,"quantity": 1,"unit_price":  8.28 }] }
+{"id": 150000055, "customerid": 7, "time": "2023-01-05T10:44:44.346Z", "items": [{"productid": 72,"quantity": 1,"unit_price": 11.75 }] }
+{"id": 150000071, "customerid": 26, "time": "2023-01-05T11:23:00.082Z", "items": [{"productid": 73,"quantity": 1,"unit_price":  7.94 ,"discount":  3.16 }] }
+{"id": 150000052, "customerid": 4, "time": "2023-01-05T12:15:06.782Z", "items": [{"productid": 161,"quantity": 1,"unit_price": 29.88 },{"productid": 100,"quantity": 2,"unit_price": 15.66 ,"discount":  7.60 }] }
+{"id": 150000049, "customerid": 1, "time": "2023-01-05T12:18:46.190Z", "items": [{"productid": 82,"quantity": 2,"unit_price": 85.96 ,"discount": 10.26 }] }
+{"id": 150000045, "customerid": 25, "time": "2023-01-05T14:19:00.016Z", "items": [{"productid": 65,"quantity": 1,"unit_price": 10.28 },{"productid": 166,"quantity": 2,"unit_price":  6.59 }] }
+{"id": 150000065, "customerid": 2, "time": "2023-01-05T15:04:52.759Z", "items": [{"productid": 27,"quantity": 1,"unit_price":  5.49 }] }
+{"id": 150000057, "customerid": 29, "time": "2023-01-05T15:26:40.066Z", "items": [{"productid": 32,"quantity": 2,"unit_price":  9.82 ,"discount":  9.69 }] }
+{"id": 150000047, "customerid": 6, "time": "2023-01-05T15:30:38.213Z", "items": [{"productid": 107,"quantity": 1,"unit_price": 15.03 },{"productid": 52,"quantity": 2,"unit_price": 40.62 }] }
+{"id": 150000066, "customerid": 7, "time": "2023-01-05T16:14:39.450Z", "items": [{"productid": 9,"quantity": 1,"unit_price": 15.41 }] }
+{"id": 150000063, "customerid": 9, "time": "2023-01-05T17:13:37.414Z", "items": [{"productid": 88,"quantity": 1,"unit_price": 11.12 ,"discount":  5.15 }] }
+{"id": 150000048, "customerid": 14, "time": "2023-01-05T17:36:55.571Z", "items": [{"productid": 15,"quantity": 1,"unit_price": 10.96 }] }
+{"id": 150000062, "customerid": 21, "time": "2023-01-05T19:11:41.315Z", "items": [{"productid": 52,"quantity": 1,"unit_price": 40.62 ,"discount": 19.49 }] }
+{"id": 150000060, "customerid": 25, "time": "2023-01-05T20:20:48.482Z", "items": [{"productid": 110,"quantity": 1,"unit_price":  5.64 },{"productid": 129,"quantity": 1,"unit_price": 20.60 }] }
+{"id": 150000070, "customerid": 11, "time": "2023-01-05T22:03:18.458Z", "items": [{"productid": 95,"quantity": 1,"unit_price":  8.15 }] }
+{"id": 150000061, "customerid": 22, "time": "2023-01-05T22:04:38.919Z", "items": [{"productid": 24,"quantity": 1,"unit_price":  5.02 ,"discount":  0.92 },{"productid": 123,"quantity": 2,"unit_price": 29.75 }] }
+{"id": 150000076, "customerid": 11, "time": "2023-01-05T22:16:22.567Z", "items": [{"productid": 54,"quantity": 1,"unit_price": 11.68 ,"discount":  3.99 }] }
+{"id": 150000078, "customerid": 14, "time": "2023-01-05T22:17:24.659Z", "items": [{"productid": 198,"quantity": 2,"unit_price":  6.75 ,"discount":  1.82 }] }
+{"id": 150000111, "customerid": 8, "time": "2023-01-05T22:22:43.846Z", "items": [{"productid": 61,"quantity": 2,"unit_price": 19.00 ,"discount":  6.28 },{"productid": 169,"quantity": 1,"unit_price":  5.23 ,"discount":  1.29 }] }
+{"id": 150000103, "customerid": 8, "time": "2023-01-05T22:47:10.030Z", "items": [{"productid": 181,"quantity": 1,"unit_price": 45.19 ,"discount":  9.42 },{"productid": 11,"quantity": 2,"unit_price": 12.08 }] }
+{"id": 150000100, "customerid": 6, "time": "2023-01-05T23:17:06.630Z", "items": [{"productid": 14,"quantity": 3,"unit_price":  5.99 ,"discount":  6.83 }] }
+{"id": 150000094, "customerid": 27, "time": "2023-01-05T23:45:55.521Z", "items": [{"productid": 100,"quantity": 3,"unit_price": 15.66 ,"discount": 14.15 }] }
+{"id": 150000098, "customerid": 25, "time": "2023-01-06T00:15:07.838Z", "items": [{"productid": 140,"quantity": 1,"unit_price": 25.83 }] }
+{"id": 150000092, "customerid": 28, "time": "2023-01-06T01:42:23.166Z", "items": [{"productid": 43,"quantity": 1,"unit_price":  9.13 ,"discount":  0.98 }] }
+{"id": 150000089, "customerid": 27, "time": "2023-01-06T01:51:42.840Z", "items": [{"productid": 66,"quantity": 2,"unit_price":  5.62 ,"discount":  5.07 }] }
+{"id": 150000108, "customerid": 6, "time": "2023-01-06T02:52:19.754Z", "items": [{"productid": 154,"quantity": 1,"unit_price": 42.85 }] }
+{"id": 150000096, "customerid": 30, "time": "2023-01-06T03:20:58.856Z", "items": [{"productid": 204,"quantity": 1,"unit_price":  8.20 ,"discount":  3.62 }] }
+{"id": 150000107, "customerid": 30, "time": "2023-01-06T04:17:12.038Z", "items": [{"productid": 113,"quantity": 1,"unit_price": 38.70 }] }
+{"id": 150000077, "customerid": 19, "time": "2023-01-06T05:06:18.067Z", "items": [{"productid": 176,"quantity": 1,"unit_price":  7.79 },{"productid": 167,"quantity": 2,"unit_price":  6.56 }] }
+{"id": 150000093, "customerid": 6, "time": "2023-01-06T06:08:45.972Z", "items": [{"productid": 41,"quantity": 1,"unit_price":  5.31 }] }
+{"id": 150000105, "customerid": 22, "time": "2023-01-06T06:11:34.932Z", "items": [{"productid": 168,"quantity": 1,"unit_price": 11.15 ,"discount":  1.55 }] }
+{"id": 150000075, "customerid": 16, "time": "2023-01-06T06:13:21.949Z", "items": [{"productid": 164,"quantity": 2,"unit_price": 18.71 }] }
+{"id": 150000081, "customerid": 26, "time": "2023-01-06T07:32:57.429Z", "items": [{"productid": 31,"quantity": 1,"unit_price": 52.53 ,"discount":  4.63 }] }
+{"id": 150000090, "customerid": 22, "time": "2023-01-06T08:23:24.617Z", "items": [{"productid": 29,"quantity": 2,"unit_price": 12.07 }] }
+{"id": 150000104, "customerid": 20, "time": "2023-01-06T08:29:05.870Z", "items": [{"productid": 141,"quantity": 1,"unit_price":  6.36 },{"productid": 183,"quantity": 3,"unit_price": 11.46 }] }
+{"id": 150000085, "customerid": 8, "time": "2023-01-06T09:05:52.720Z", "items": [{"productid": 57,"quantity": 1,"unit_price":  6.11 }] }
+{"id": 150000112, "customerid": 27, "time": "2023-01-06T10:10:24.485Z", "items": [{"productid": 127,"quantity": 3,"unit_price": 20.99 ,"discount": 21.51 }] }
+{"id": 150000086, "customerid": 3, "time": "2023-01-06T10:32:48.377Z", "items": [{"productid": 148,"quantity": 2,"unit_price": 20.75 }] }
+{"id": 150000110, "customerid": 9, "time": "2023-01-06T10:46:44.398Z", "items": [{"productid": 76,"quantity": 1,"unit_price": 49.32 }] }
+{"id": 150000088, "customerid": 30, "time": "2023-01-06T10:48:54.062Z", "items": [{"productid": 200,"quantity": 1,"unit_price": 25.64 ,"discount":  8.30 }] }
+{"id": 150000106, "customerid": 17, "time": "2023-01-06T12:26:25.347Z", "items": [{"productid": 20,"quantity": 2,"unit_price":  5.24 },{"productid": 74,"quantity": 1,"unit_price": 12.98 }] }
+{"id": 150000087, "customerid": 10, "time": "2023-01-06T13:08:00.455Z", "items": [{"productid": 30,"quantity": 1,"unit_price": 26.98 ,"discount":  8.51 },{"productid": 86,"quantity": 1,"unit_price":  6.10 }] }
+{"id": 150000099, "customerid": 28, "time": "2023-01-06T14:06:22.229Z", "items": [{"productid": 185,"quantity": 1,"unit_price":  7.89 }] }
+{"id": 150000101, "customerid": 8, "time": "2023-01-06T14:09:00.724Z", "items": [{"productid": 125,"quantity": 1,"unit_price":  8.93 ,"discount":  1.57 }] }
+{"id": 150000095, "customerid": 26, "time": "2023-01-06T14:32:05.163Z", "items": [{"productid": 156,"quantity": 1,"unit_price":  8.00 }] }
+{"id": 150000084, "customerid": 29, "time": "2023-01-06T14:32:32.123Z", "items": [{"productid": 117,"quantity": 1,"unit_price": 35.05 }] }
+{"id": 150000091, "customerid": 26, "time": "2023-01-06T16:33:43.174Z", "items": [{"productid": 150,"quantity": 1,"unit_price":  5.92 }] }
+{"id": 150000079, "customerid": 21, "time": "2023-01-06T17:30:55.620Z", "items": [{"productid": 186,"quantity": 1,"unit_price":  9.27 }] }
+{"id": 150000083, "customerid": 2, "time": "2023-01-06T17:52:31.581Z", "items": [{"productid": 93,"quantity": 2,"unit_price": 58.77 }] }
+{"id": 150000109, "customerid": 7, "time": "2023-01-06T18:08:29.556Z", "items": [{"productid": 60,"quantity": 2,"unit_price": 11.18 },{"productid": 67,"quantity": 2,"unit_price":  8.28 ,"discount":  1.52 }] }
+{"id": 150000080, "customerid": 25, "time": "2023-01-06T18:17:37.010Z", "items": [{"productid": 102,"quantity": 1,"unit_price": 11.60 }] }
+{"id": 150000097, "customerid": 16, "time": "2023-01-06T18:25:56.915Z", "items": [{"productid": 195,"quantity": 1,"unit_price": 11.38 }] }
+{"id": 150000082, "customerid": 16, "time": "2023-01-06T21:38:14.810Z", "items": [{"productid": 97,"quantity": 2,"unit_price": 14.48 ,"discount":  6.38 }] }
+{"id": 150000102, "customerid": 15, "time": "2023-01-06T22:11:40.086Z", "items": [{"productid": 12,"quantity": 2,"unit_price":  7.49 }] }
+{"id": 150000142, "customerid": 27, "time": "2023-01-06T22:17:57.676Z", "items": [{"productid": 105,"quantity": 1,"unit_price": 10.44 }] }
+{"id": 150000138, "customerid": 23, "time": "2023-01-06T23:06:30.109Z", "items": [{"productid": 3,"quantity": 1,"unit_price": 26.39 },{"productid": 32,"quantity": 1,"unit_price":  9.82 }] }
+{"id": 150000144, "customerid": 18, "time": "2023-01-06T23:15:36.186Z", "items": [{"productid": 92,"quantity": 1,"unit_price": 30.18 ,"discount":  3.89 }] }
+{"id": 150000122, "customerid": 16, "time": "2023-01-06T23:50:06.874Z", "items": [{"productid": 5,"quantity": 2,"unit_price":  5.43 ,"discount":  3.79 }] }
+{"id": 150000145, "customerid": 14, "time": "2023-01-07T01:34:36.575Z", "items": [{"productid": 147,"quantity": 1,"unit_price": 12.21 }] }
+{"id": 150000123, "customerid": 22, "time": "2023-01-07T02:37:47.850Z", "items": [{"productid": 142,"quantity": 1,"unit_price":  6.33 }] }
+{"id": 150000140, "customerid": 2, "time": "2023-01-07T02:47:27.759Z", "items": [{"productid": 37,"quantity": 2,"unit_price": 12.94 ,"discount":  8.41 }] }
+{"id": 150000126, "customerid": 22, "time": "2023-01-07T03:25:26.939Z", "items": [{"productid": 54,"quantity": 1,"unit_price": 11.68 }] }
+{"id": 150000136, "customerid": 26, "time": "2023-01-07T03:46:28.634Z", "items": [{"productid": 33,"quantity": 1,"unit_price": 16.69 }] }
+{"id": 150000117, "customerid": 18, "time": "2023-01-07T03:53:56.997Z", "items": [{"productid": 195,"quantity": 2,"unit_price": 11.38 ,"discount":  7.45 }] }
+{"id": 150000114, "customerid": 10, "time": "2023-01-07T04:21:25.221Z", "items": [{"productid": 47,"quantity": 2,"unit_price": 12.30 ,"discount":  3.05 }] }
+{"id": 150000131, "customerid": 13, "time": "2023-01-07T04:33:05.088Z", "items": [{"productid": 155,"quantity": 2,"unit_price": 83.44 }] }
+{"id": 150000120, "customerid": 26, "time": "2023-01-07T04:58:11.757Z", "items": [{"productid": 78,"quantity": 1,"unit_price":  6.29 },{"productid": 169,"quantity": 1,"unit_price":  5.23 ,"discount":  2.43 },{"productid": 36,"quantity": 1,"unit_price":  7.61 }] }
+{"id": 150000143, "customerid": 1, "time": "2023-01-07T05:22:47.345Z", "items": [{"productid": 54,"quantity": 1,"unit_price": 11.68 }] }
+{"id": 150000134, "customerid": 14, "time": "2023-01-07T05:47:12.306Z", "items": [{"productid": 109,"quantity": 1,"unit_price": 10.64 }] }
+{"id": 150000128, "customerid": 9, "time": "2023-01-07T07:00:57.957Z", "items": [{"productid": 207,"quantity": 1,"unit_price": 17.50 ,"discount":  5.44 }] }
+{"id": 150000113, "customerid": 29, "time": "2023-01-07T07:42:30.656Z", "items": [{"productid": 164,"quantity": 1,"unit_price": 18.71 },{"productid": 171,"quantity": 1,"unit_price": 19.89 }] }
+{"id": 150000127, "customerid": 2, "time": "2023-01-07T08:15:06.848Z", "items": [{"productid": 94,"quantity": 1,"unit_price":  5.03 }] }
+{"id": 150000146, "customerid": 16, "time": "2023-01-07T09:32:14.717Z", "items": [{"productid": 28,"quantity": 1,"unit_price":  7.10 }] }
+{"id": 150000121, "customerid": 13, "time": "2023-01-07T09:56:46.625Z", "items": [{"productid": 145,"quantity": 1,"unit_price": 41.55 ,"discount": 18.44 }] }
+{"id": 150000147, "customerid": 24, "time": "2023-01-07T10:29:02.296Z", "items": [{"productid": 141,"quantity": 2,"unit_price":  6.36 }] }
+{"id": 150000137, "customerid": 16, "time": "2023-01-07T11:59:50.099Z", "items": [{"productid": 185,"quantity": 1,"unit_price":  7.89 }] }
+{"id": 150000141, "customerid": 15, "time": "2023-01-07T12:13:20.026Z", "items": [{"productid": 25,"quantity": 1,"unit_price":  8.54 }] }
+{"id": 150000130, "customerid": 16, "time": "2023-01-07T13:19:19.758Z", "items": [{"productid": 138,"quantity": 1,"unit_price":  6.80 }] }
+{"id": 150000135, "customerid": 17, "time": "2023-01-07T14:13:01.591Z", "items": [{"productid": 86,"quantity": 1,"unit_price":  6.10 ,"discount":  2.17 }] }
+{"id": 150000129, "customerid": 13, "time": "2023-01-07T14:21:11.287Z", "items": [{"productid": 154,"quantity": 2,"unit_price": 42.85 }] }
+{"id": 150000125, "customerid": 14, "time": "2023-01-07T14:53:19.361Z", "items": [{"productid": 106,"quantity": 1,"unit_price":  8.84 }] }
+{"id": 150000116, "customerid": 23, "time": "2023-01-07T15:26:12.529Z", "items": [{"productid": 108,"quantity": 1,"unit_price": 33.60 ,"discount":  2.62 }] }
+{"id": 150000124, "customerid": 7, "time": "2023-01-07T16:42:00.804Z", "items": [{"productid": 113,"quantity": 2,"unit_price": 38.70 ,"discount":  9.23 }] }
+{"id": 150000139, "customerid": 17, "time": "2023-01-07T18:27:57.344Z", "items": [{"productid": 199,"quantity": 1,"unit_price": 11.47 ,"discount":  5.73 }] }
+{"id": 150000132, "customerid": 10, "time": "2023-01-07T18:30:14.434Z", "items": [{"productid": 179,"quantity": 1,"unit_price": 10.38 ,"discount":  3.18 },{"productid": 146,"quantity": 1,"unit_price": 10.96 ,"discount":  4.14 }] }
+{"id": 150000115, "customerid": 22, "time": "2023-01-07T18:41:32.284Z", "items": [{"productid": 26,"quantity": 1,"unit_price": 19.08 }] }
+{"id": 150000133, "customerid": 6, "time": "2023-01-07T19:29:45.126Z", "items": [{"productid": 174,"quantity": 2,"unit_price": 10.71 }] }
+{"id": 150000118, "customerid": 24, "time": "2023-01-07T20:00:08.214Z", "items": [{"productid": 94,"quantity": 1,"unit_price":  5.03 ,"discount":  2.35 }] }
+{"id": 150000119, "customerid": 9, "time": "2023-01-07T21:29:49.562Z", "items": [{"productid": 6,"quantity": 1,"unit_price":  8.66 ,"discount":  2.98 },{"productid": 120,"quantity": 1,"unit_price": 10.88 },{"productid": 19,"quantity": 1,"unit_price": 11.78 ,"discount":  4.26 }] }
+{"id": 150000154, "customerid": 7, "time": "2023-01-07T22:14:48.911Z", "items": [{"productid": 132,"quantity": 1,"unit_price": 10.21 }] }
+{"id": 150000164, "customerid": 23, "time": "2023-01-07T23:19:03.410Z", "items": [{"productid": 78,"quantity": 2,"unit_price":  6.29 ,"discount":  3.10 }] }
+{"id": 150000170, "customerid": 6, "time": "2023-01-08T00:01:32.429Z", "items": [{"productid": 63,"quantity": 1,"unit_price":  8.34 ,"discount":  0.74 }] }
+{"id": 150000152, "customerid": 22, "time": "2023-01-08T01:06:04.614Z", "items": [{"productid": 103,"quantity": 2,"unit_price": 19.72 },{"productid": 56,"quantity": 1,"unit_price":  5.47 ,"discount":  0.66 }] }
+{"id": 150000148, "customerid": 17, "time": "2023-01-08T01:48:49.913Z", "items": [{"productid": 52,"quantity": 2,"unit_price": 40.62 }] }
+{"id": 150000169, "customerid": 12, "time": "2023-01-08T03:24:18.875Z", "items": [{"productid": 129,"quantity": 1,"unit_price": 20.60 }] }
+{"id": 150000168, "customerid": 23, "time": "2023-01-08T03:52:32.308Z", "items": [{"productid": 69,"quantity": 1,"unit_price":  8.65 }] }
+{"id": 150000165, "customerid": 24, "time": "2023-01-08T06:07:41.958Z", "items": [{"productid": 46,"quantity": 1,"unit_price":  6.31 ,"discount":  0.66 }] }
+{"id": 150000163, "customerid": 7, "time": "2023-01-08T06:21:09.648Z", "items": [{"productid": 26,"quantity": 3,"unit_price": 19.08 },{"productid": 145,"quantity": 1,"unit_price": 41.55 }] }
+{"id": 150000156, "customerid": 24, "time": "2023-01-08T09:10:50.235Z", "items": [{"productid": 70,"quantity": 1,"unit_price": 10.76 }] }
+{"id": 150000167, "customerid": 17, "time": "2023-01-08T09:11:45.124Z", "items": [{"productid": 106,"quantity": 1,"unit_price":  8.84 }] }
+{"id": 150000161, "customerid": 30, "time": "2023-01-08T09:35:06.969Z", "items": [{"productid": 81,"quantity": 1,"unit_price": 44.14 }] }
+{"id": 150000157, "customerid": 18, "time": "2023-01-08T10:03:12.526Z", "items": [{"productid": 75,"quantity": 2,"unit_price": 22.06 ,"discount":  3.00 }] }
+{"id": 150000150, "customerid": 14, "time": "2023-01-08T10:03:40.684Z", "items": [{"productid": 45,"quantity": 1,"unit_price": 39.76 },{"productid": 104,"quantity": 3,"unit_price": 44.08 }] }
+{"id": 150000155, "customerid": 25, "time": "2023-01-08T10:40:15.249Z", "items": [{"productid": 21,"quantity": 2,"unit_price":  8.90 }] }
+{"id": 150000151, "customerid": 2, "time": "2023-01-08T11:09:55.599Z", "items": [{"productid": 98,"quantity": 2,"unit_price": 32.37 }] }
+{"id": 150000171, "customerid": 25, "time": "2023-01-08T13:57:14.750Z", "items": [{"productid": 189,"quantity": 1,"unit_price":  5.75 ,"discount":  0.33 }] }
+{"id": 150000158, "customerid": 1, "time": "2023-01-08T14:14:22.978Z", "items": [{"productid": 26,"quantity": 1,"unit_price": 19.08 }] }
+{"id": 150000162, "customerid": 4, "time": "2023-01-08T15:11:40.370Z", "items": [{"productid": 97,"quantity": 1,"unit_price": 14.48 ,"discount":  4.11 }] }
+{"id": 150000160, "customerid": 20, "time": "2023-01-08T17:40:10.164Z", "items": [{"productid": 14,"quantity": 1,"unit_price":  5.99 },{"productid": 63,"quantity": 1,"unit_price":  8.34 }] }
+{"id": 150000159, "customerid": 24, "time": "2023-01-08T18:00:10.166Z", "items": [{"productid": 16,"quantity": 1,"unit_price": 18.64 ,"discount":  3.35 }] }
+{"id": 150000166, "customerid": 10, "time": "2023-01-08T18:42:51.201Z", "items": [{"productid": 174,"quantity": 1,"unit_price": 10.71 }] }
+{"id": 150000153, "customerid": 7, "time": "2023-01-08T20:41:15.764Z", "items": [{"productid": 156,"quantity": 1,"unit_price":  8.00 }] }
+{"id": 150000149, "customerid": 25, "time": "2023-01-08T21:24:33.518Z", "items": [{"productid": 120,"quantity": 1,"unit_price": 10.88 ,"discount":  3.98 },{"productid": 17,"quantity": 1,"unit_price":  5.08 }] }
+{"id": 150000175, "customerid": 15, "time": "2023-01-08T22:47:50.092Z", "items": [{"productid": 3,"quantity": 2,"unit_price": 26.39 }] }
+{"id": 150000179, "customerid": 11, "time": "2023-01-08T22:58:35.701Z", "items": [{"productid": 13,"quantity": 1,"unit_price":  9.69 }] }
+{"id": 150000188, "customerid": 12, "time": "2023-01-09T01:50:32.128Z", "items": [{"productid": 192,"quantity": 2,"unit_price": 14.07 }] }
+{"id": 150000189, "customerid": 2, "time": "2023-01-09T01:54:48.453Z", "items": [{"productid": 178,"quantity": 2,"unit_price":  6.11 ,"discount":  1.79 }] }
+{"id": 150000178, "customerid": 13, "time": "2023-01-09T02:05:27.146Z", "items": [{"productid": 54,"quantity": 2,"unit_price": 11.68 ,"discount":  6.03 }] }
+{"id": 150000181, "customerid": 19, "time": "2023-01-09T02:31:59.863Z", "items": [{"productid": 62,"quantity": 2,"unit_price": 42.47 ,"discount": 16.13 }] }
+{"id": 150000177, "customerid": 27, "time": "2023-01-09T03:25:06.981Z", "items": [{"productid": 68,"quantity": 3,"unit_price":  7.02 }] }
+{"id": 150000176, "customerid": 21, "time": "2023-01-09T04:49:47.462Z", "items": [{"productid": 202,"quantity": 2,"unit_price": 14.70 ,"discount":  6.04 }] }
+{"id": 150000183, "customerid": 28, "time": "2023-01-09T05:33:35.896Z", "items": [{"productid": 59,"quantity": 2,"unit_price": 23.22 ,"discount":  9.46 }] }
+{"id": 150000185, "customerid": 22, "time": "2023-01-09T06:11:34.942Z", "items": [{"productid": 40,"quantity": 1,"unit_price":  7.91 }] }
+{"id": 150000195, "customerid": 23, "time": "2023-01-09T06:45:37.695Z", "items": [{"productid": 17,"quantity": 1,"unit_price":  5.08 ,"discount":  0.63 },{"productid": 9,"quantity": 1,"unit_price": 15.41 ,"discount":  3.38 }] }
+{"id": 150000174, "customerid": 13, "time": "2023-01-09T08:01:53.984Z", "items": [{"productid": 192,"quantity": 2,"unit_price": 14.07 ,"discount":  2.85 }] }
+{"id": 150000187, "customerid": 4, "time": "2023-01-09T08:28:15.822Z", "items": [{"productid": 79,"quantity": 2,"unit_price": 11.62 },{"productid": 99,"quantity": 1,"unit_price":  9.21 }] }
+{"id": 150000172, "customerid": 21, "time": "2023-01-09T08:58:28.790Z", "items": [{"productid": 204,"quantity": 2,"unit_price":  8.20 },{"productid": 42,"quantity": 1,"unit_price":  5.37 }] }
+{"id": 150000182, "customerid": 3, "time": "2023-01-09T09:15:22.529Z", "items": [{"productid": 164,"quantity": 2,"unit_price": 18.71 ,"discount": 18.64 },{"productid": 46,"quantity": 1,"unit_price":  6.31 ,"discount":  1.69 }] }
+{"id": 150000194, "customerid": 16, "time": "2023-01-09T09:49:57.819Z", "items": [{"productid": 97,"quantity": 1,"unit_price": 14.48 }] }
+{"id": 150000193, "customerid": 5, "time": "2023-01-09T10:16:23.053Z", "items": [{"productid": 114,"quantity": 1,"unit_price":  8.22 }] }
+{"id": 150000186, "customerid": 26, "time": "2023-01-09T10:21:55.928Z", "items": [{"productid": 49,"quantity": 2,"unit_price":  7.62 ,"discount":  6.59 },{"productid": 5,"quantity": 1,"unit_price":  5.43 }] }
+{"id": 150000184, "customerid": 29, "time": "2023-01-09T13:47:18.523Z", "items": [{"productid": 134,"quantity": 1,"unit_price":  7.01 },{"productid": 160,"quantity": 1,"unit_price": 13.37 ,"discount":  6.50 }] }
+{"id": 150000191, "customerid": 4, "time": "2023-01-09T14:53:39.884Z", "items": [{"productid": 67,"quantity": 1,"unit_price":  8.28 }] }
+{"id": 150000192, "customerid": 29, "time": "2023-01-09T16:23:47.959Z", "items": [{"productid": 184,"quantity": 1,"unit_price":  8.47 ,"discount":  4.18 }] }
+{"id": 150000190, "customerid": 17, "time": "2023-01-09T16:25:46.644Z", "items": [{"productid": 127,"quantity": 1,"unit_price": 20.99 ,"discount":  1.51 }] }
+{"id": 150000180, "customerid": 25, "time": "2023-01-09T18:04:15.827Z", "items": [{"productid": 150,"quantity": 1,"unit_price":  5.92 ,"discount":  0.78 }] }
+{"id": 150000173, "customerid": 19, "time": "2023-01-09T18:16:48.488Z", "items": [{"productid": 125,"quantity": 2,"unit_price":  8.93 },{"productid": 80,"quantity": 1,"unit_price": 19.75 }] }
+{"id": 150000198, "customerid": 24, "time": "2023-01-09T23:51:48.994Z", "items": [{"productid": 114,"quantity": 2,"unit_price":  8.22 }] }
+{"id": 150000197, "customerid": 14, "time": "2023-01-10T03:38:19.667Z", "items": [{"productid": 80,"quantity": 2,"unit_price": 19.75 }] }
+{"id": 150000196, "customerid": 12, "time": "2023-01-10T21:17:18.795Z", "items": [{"productid": 54,"quantity": 3,"unit_price": 11.68 ,"discount": 10.27 }] }
+{"id": 150000206, "customerid": 8, "time": "2023-01-10T23:07:54.082Z", "items": [{"productid": 126,"quantity": 3,"unit_price": 12.35 },{"productid": 75,"quantity": 1,"unit_price": 22.06 }] }
+{"id": 150000205, "customerid": 1, "time": "2023-01-11T00:07:52.047Z", "items": [{"productid": 11,"quantity": 1,"unit_price": 12.08 }] }
+{"id": 150000204, "customerid": 21, "time": "2023-01-11T04:06:37.293Z", "items": [{"productid": 149,"quantity": 2,"unit_price": 46.38 ,"discount": 12.21 }] }
+{"id": 150000207, "customerid": 21, "time": "2023-01-11T06:26:05.243Z", "items": [{"productid": 121,"quantity": 1,"unit_price":  7.83 },{"productid": 48,"quantity": 1,"unit_price":  5.45 ,"discount":  2.70 }] }
+{"id": 150000202, "customerid": 1, "time": "2023-01-11T07:37:08.941Z", "items": [{"productid": 24,"quantity": 1,"unit_price":  5.02 ,"discount":  1.02 }] }
+{"id": 150000200, "customerid": 2, "time": "2023-01-11T08:37:30.966Z", "items": [{"productid": 162,"quantity": 2,"unit_price":  5.19 },{"productid": 46,"quantity": 1,"unit_price":  6.31 },{"productid": 199,"quantity": 2,"unit_price": 11.47 ,"discount":  8.22 }] }
+{"id": 150000213, "customerid": 30, "time": "2023-01-11T09:38:37.027Z", "items": [{"productid": 181,"quantity": 1,"unit_price": 45.19 }] }
+{"id": 150000208, "customerid": 5, "time": "2023-01-11T10:21:35.451Z", "items": [{"productid": 26,"quantity": 1,"unit_price": 19.08 ,"discount":  2.83 }] }
+{"id": 150000199, "customerid": 5, "time": "2023-01-11T12:08:03.134Z", "items": [{"productid": 165,"quantity": 2,"unit_price": 41.83 },{"productid": 122,"quantity": 1,"unit_price": 13.31 ,"discount":  3.26 }] }
+{"id": 150000203, "customerid": 27, "time": "2023-01-11T12:26:18.939Z", "items": [{"productid": 112,"quantity": 1,"unit_price": 17.31 }] }
+{"id": 150000211, "customerid": 7, "time": "2023-01-11T12:31:58.570Z", "items": [{"productid": 139,"quantity": 2,"unit_price": 11.56 ,"discount":  3.92 }] }
+{"id": 150000214, "customerid": 15, "time": "2023-01-11T14:35:33.057Z", "items": [{"productid": 82,"quantity": 1,"unit_price": 85.96 }] }
+{"id": 150000210, "customerid": 15, "time": "2023-01-11T18:37:32.002Z", "items": [{"productid": 87,"quantity": 2,"unit_price": 12.05 }] }
+{"id": 150000212, "customerid": 24, "time": "2023-01-11T18:40:22.782Z", "items": [{"productid": 146,"quantity": 1,"unit_price": 10.96 ,"discount":  4.87 },{"productid": 111,"quantity": 1,"unit_price": 10.18 ,"discount":  4.75 }] }
+{"id": 150000209, "customerid": 10, "time": "2023-01-11T19:56:58.017Z", "items": [{"productid": 146,"quantity": 1,"unit_price": 10.96 }] }
+{"id": 150000201, "customerid": 20, "time": "2023-01-11T20:18:47.667Z", "items": [{"productid": 194,"quantity": 1,"unit_price":  6.77 ,"discount":  1.08 },{"productid": 182,"quantity": 1,"unit_price":  9.18 ,"discount":  4.56 }] }
+{"id": 150000219, "customerid": 14, "time": "2023-01-12T02:11:14.484Z", "items": [{"productid": 48,"quantity": 2,"unit_price":  5.45 ,"discount":  3.89 }] }
+{"id": 150000216, "customerid": 16, "time": "2023-01-12T02:14:40.345Z", "items": [{"productid": 32,"quantity": 1,"unit_price":  9.82 },{"productid": 118,"quantity": 1,"unit_price": 12.95 ,"discount":  2.83 }] }
+{"id": 150000235, "customerid": 20, "time": "2023-01-12T03:28:53.880Z", "items": [{"productid": 25,"quantity": 1,"unit_price":  8.54 }] }
+{"id": 150000227, "customerid": 3, "time": "2023-01-12T04:21:24.950Z", "items": [{"productid": 45,"quantity": 1,"unit_price": 39.76 ,"discount": 12.61 },{"productid": 51,"quantity": 1,"unit_price": 18.17 }] }
+{"id": 150000233, "customerid": 9, "time": "2023-01-12T04:51:13.016Z", "items": [{"productid": 31,"quantity": 1,"unit_price": 52.53 }] }
+{"id": 150000228, "customerid": 8, "time": "2023-01-12T06:00:05.545Z", "items": [{"productid": 12,"quantity": 2,"unit_price":  7.49 }] }
+{"id": 150000234, "customerid": 16, "time": "2023-01-12T06:44:16.275Z", "items": [{"productid": 93,"quantity": 1,"unit_price": 58.77 }] }
+{"id": 150000226, "customerid": 15, "time": "2023-01-12T06:49:57.407Z", "items": [{"productid": 84,"quantity": 3,"unit_price": 15.46 }] }
+{"id": 150000221, "customerid": 26, "time": "2023-01-12T07:18:18.240Z", "items": [{"productid": 139,"quantity": 2,"unit_price": 11.56 ,"discount":  6.82 },{"productid": 48,"quantity": 2,"unit_price":  5.45 ,"discount":  2.71 }] }
+{"id": 150000222, "customerid": 21, "time": "2023-01-12T07:25:34.515Z", "items": [{"productid": 116,"quantity": 1,"unit_price": 15.68 ,"discount":  4.33 }] }
+{"id": 150000215, "customerid": 6, "time": "2023-01-12T07:35:51.523Z", "items": [{"productid": 10,"quantity": 1,"unit_price":  9.53 }] }
+{"id": 150000218, "customerid": 11, "time": "2023-01-12T08:24:38.414Z", "items": [{"productid": 109,"quantity": 1,"unit_price": 10.64 ,"discount":  4.39 }] }
+{"id": 150000231, "customerid": 5, "time": "2023-01-12T09:53:51.744Z", "items": [{"productid": 115,"quantity": 2,"unit_price":  9.22 }] }
+{"id": 150000229, "customerid": 1, "time": "2023-01-12T10:00:01.699Z", "items": [{"productid": 137,"quantity": 1,"unit_price": 51.89 }] }
+{"id": 150000225, "customerid": 1, "time": "2023-01-12T10:29:08.680Z", "items": [{"productid": 66,"quantity": 1,"unit_price":  5.62 ,"discount":  1.26 }] }
+{"id": 150000223, "customerid": 21, "time": "2023-01-12T10:52:49.189Z", "items": [{"productid": 135,"quantity": 1,"unit_price": 11.92 }] }
+{"id": 150000217, "customerid": 21, "time": "2023-01-12T12:43:15.388Z", "items": [{"productid": 201,"quantity": 1,"unit_price":  8.65 ,"discount":  1.14 }] }
+{"id": 150000232, "customerid": 26, "time": "2023-01-12T13:31:23.868Z", "items": [{"productid": 2,"quantity": 1,"unit_price": 11.81 },{"productid": 21,"quantity": 1,"unit_price":  8.90 ,"discount":  1.43 }] }
+{"id": 150000230, "customerid": 13, "time": "2023-01-12T13:42:18.615Z", "items": [{"productid": 139,"quantity": 1,"unit_price": 11.56 }] }
+{"id": 150000220, "customerid": 1, "time": "2023-01-12T19:34:54.393Z", "items": [{"productid": 99,"quantity": 1,"unit_price":  9.21 ,"discount":  4.56 },{"productid": 126,"quantity": 1,"unit_price": 12.35 ,"discount":  0.88 }] }
+{"id": 150000224, "customerid": 12, "time": "2023-01-12T20:41:25.554Z", "items": [{"productid": 63,"quantity": 1,"unit_price":  8.34 ,"discount":  2.13 }] }
+{"id": 150000243, "customerid": 22, "time": "2023-01-12T22:25:18.705Z", "items": [{"productid": 165,"quantity": 1,"unit_price": 41.83 }] }
+{"id": 150000238, "customerid": 14, "time": "2023-01-12T22:38:13.414Z", "items": [{"productid": 135,"quantity": 1,"unit_price": 11.92 ,"discount":  1.84 }] }
+{"id": 150000255, "customerid": 26, "time": "2023-01-13T00:36:19.706Z", "items": [{"productid": 25,"quantity": 1,"unit_price":  8.54 }] }
+{"id": 150000254, "customerid": 30, "time": "2023-01-13T01:11:25.136Z", "items": [{"productid": 84,"quantity": 1,"unit_price": 15.46 ,"discount":  5.50 }] }
+{"id": 150000239, "customerid": 10, "time": "2023-01-13T02:20:48.413Z", "items": [{"productid": 9,"quantity": 2,"unit_price": 15.41 },{"productid": 34,"quantity": 1,"unit_price": 37.32 }] }
+{"id": 150000257, "customerid": 21, "time": "2023-01-13T02:50:10.182Z", "items": [{"productid": 105,"quantity": 1,"unit_price": 10.44 ,"discount":  1.92 }] }
+{"id": 150000258, "customerid": 13, "time": "2023-01-13T02:55:39.811Z", "items": [{"productid": 1,"quantity": 2,"unit_price":  6.94 ,"discount":  5.09 },{"productid": 124,"quantity": 1,"unit_price": 57.94 }] }
+{"id": 150000237, "customerid": 7, "time": "2023-01-13T02:58:12.889Z", "items": [{"productid": 168,"quantity": 2,"unit_price": 11.15 },{"productid": 34,"quantity": 1,"unit_price": 37.32 }] }
+{"id": 150000251, "customerid": 27, "time": "2023-01-13T03:12:45.081Z", "items": [{"productid": 163,"quantity": 2,"unit_price": 11.01 }] }
+{"id": 150000248, "customerid": 18, "time": "2023-01-13T03:42:44.493Z", "items": [{"productid": 133,"quantity": 1,"unit_price":  8.38 ,"discount":  3.88 }] }
+{"id": 150000236, "customerid": 17, "time": "2023-01-13T04:49:40.384Z", "items": [{"productid": 163,"quantity": 3,"unit_price": 11.01 },{"productid": 65,"quantity": 1,"unit_price": 10.28 ,"discount":  2.03 }] }
+{"id": 150000249, "customerid": 10, "time": "2023-01-13T05:16:07.728Z", "items": [{"productid": 179,"quantity": 1,"unit_price": 10.38 }] }
+{"id": 150000260, "customerid": 25, "time": "2023-01-13T06:07:34.789Z", "items": [{"productid": 190,"quantity": 1,"unit_price":  9.81 }] }
+{"id": 150000240, "customerid": 18, "time": "2023-01-13T06:17:24.792Z", "items": [{"productid": 163,"quantity": 2,"unit_price": 11.01 }] }
+{"id": 150000256, "customerid": 16, "time": "2023-01-13T07:38:50.277Z", "items": [{"productid": 191,"quantity": 1,"unit_price":  8.27 },{"productid": 161,"quantity": 1,"unit_price": 29.88 }] }
+{"id": 150000252, "customerid": 19, "time": "2023-01-13T07:52:53.747Z", "items": [{"productid": 131,"quantity": 1,"unit_price":  6.01 ,"discount":  0.55 },{"productid": 15,"quantity": 1,"unit_price": 10.96 }] }
+{"id": 150000242, "customerid": 8, "time": "2023-01-13T08:31:30.691Z", "items": [{"productid": 203,"quantity": 1,"unit_price":  6.18 }] }
+{"id": 150000259, "customerid": 28, "time": "2023-01-13T09:14:32.854Z", "items": [{"productid": 78,"quantity": 1,"unit_price":  6.29 }] }
+{"id": 150000262, "customerid": 26, "time": "2023-01-13T10:44:29.978Z", "items": [{"productid": 98,"quantity": 2,"unit_price": 32.37 }] }
+{"id": 150000253, "customerid": 6, "time": "2023-01-13T10:45:26.979Z", "items": [{"productid": 125,"quantity": 1,"unit_price":  8.93 ,"discount":  0.54 }] }
+{"id": 150000261, "customerid": 14, "time": "2023-01-13T12:03:12.350Z", "items": [{"productid": 103,"quantity": 1,"unit_price": 19.72 ,"discount":  1.93 }] }
+{"id": 150000246, "customerid": 19, "time": "2023-01-13T13:01:54.169Z", "items": [{"productid": 159,"quantity": 1,"unit_price":  7.86 }] }
+{"id": 150000250, "customerid": 12, "time": "2023-01-13T14:36:47.205Z", "items": [{"productid": 129,"quantity": 1,"unit_price": 20.60 ,"discount":  7.46 },{"productid": 47,"quantity": 1,"unit_price": 12.30 ,"discount":  3.45 }] }
+{"id": 150000247, "customerid": 13, "time": "2023-01-13T17:27:51.602Z", "items": [{"productid": 173,"quantity": 1,"unit_price": 20.52 },{"productid": 146,"quantity": 1,"unit_price": 10.96 }] }
+{"id": 150000241, "customerid": 20, "time": "2023-01-13T19:49:28.557Z", "items": [{"productid": 78,"quantity": 1,"unit_price":  6.29 }] }
+{"id": 150000245, "customerid": 26, "time": "2023-01-13T19:59:57.169Z", "items": [{"productid": 1,"quantity": 1,"unit_price":  6.94 }] }
+{"id": 150000244, "customerid": 18, "time": "2023-01-13T21:59:28.151Z", "items": [{"productid": 95,"quantity": 1,"unit_price":  8.15 },{"productid": 182,"quantity": 1,"unit_price":  9.18 }] }
+{"id": 150000271, "customerid": 25, "time": "2023-01-13T23:02:18.341Z", "items": [{"productid": 136,"quantity": 1,"unit_price": 26.65 },{"productid": 105,"quantity": 1,"unit_price": 10.44 ,"discount":  4.01 }] }
+{"id": 150000268, "customerid": 12, "time": "2023-01-14T00:00:16.509Z", "items": [{"productid": 151,"quantity": 2,"unit_price":  7.24 ,"discount":  6.11 }] }
+{"id": 150000272, "customerid": 11, "time": "2023-01-14T00:46:51.386Z", "items": [{"productid": 110,"quantity": 2,"unit_price":  5.64 }] }
+{"id": 150000273, "customerid": 15, "time": "2023-01-14T01:03:59.641Z", "items": [{"productid": 5,"quantity": 3,"unit_price":  5.43 }] }
+{"id": 150000278, "customerid": 29, "time": "2023-01-14T01:49:56.415Z", "items": [{"productid": 167,"quantity": 1,"unit_price":  6.56 ,"discount":  2.46 }] }
+{"id": 150000276, "customerid": 18, "time": "2023-01-14T02:32:30.515Z", "items": [{"productid": 123,"quantity": 1,"unit_price": 29.75 },{"productid": 130,"quantity": 2,"unit_price": 10.02 ,"discount":  3.62 }] }
+{"id": 150000263, "customerid": 22, "time": "2023-01-14T03:04:23.834Z", "items": [{"productid": 158,"quantity": 1,"unit_price": 30.42 ,"discount":  7.31 }] }
+{"id": 150000267, "customerid": 4, "time": "2023-01-14T03:58:35.804Z", "items": [{"productid": 189,"quantity": 1,"unit_price":  5.75 },{"productid": 175,"quantity": 2,"unit_price": 18.21 },{"productid": 68,"quantity": 1,"unit_price":  7.02 }] }
+{"id": 150000275, "customerid": 10, "time": "2023-01-14T04:22:07.932Z", "items": [{"productid": 137,"quantity": 2,"unit_price": 51.89 ,"discount": 15.44 }] }
+{"id": 150000265, "customerid": 2, "time": "2023-01-14T04:24:33.568Z", "items": [{"productid": 73,"quantity": 2,"unit_price":  7.94 ,"discount":  6.51 }] }
+{"id": 150000281, "customerid": 18, "time": "2023-01-14T05:16:48.773Z", "items": [{"productid": 71,"quantity": 1,"unit_price": 11.90 }] }
+{"id": 150000269, "customerid": 12, "time": "2023-01-14T06:57:11.475Z", "items": [{"productid": 124,"quantity": 1,"unit_price": 57.94 }] }
+{"id": 150000274, "customerid": 13, "time": "2023-01-14T07:56:42.367Z", "items": [{"productid": 194,"quantity": 2,"unit_price":  6.77 },{"productid": 148,"quantity": 1,"unit_price": 20.75 }] }
+{"id": 150000279, "customerid": 12, "time": "2023-01-14T10:29:44.363Z", "items": [{"productid": 20,"quantity": 1,"unit_price":  5.24 }] }
+{"id": 150000280, "customerid": 2, "time": "2023-01-14T11:36:34.828Z", "items": [{"productid": 163,"quantity": 2,"unit_price": 11.01 }] }
+{"id": 150000264, "customerid": 11, "time": "2023-01-14T14:26:33.920Z", "items": [{"productid": 28,"quantity": 1,"unit_price":  7.10 },{"productid": 102,"quantity": 1,"unit_price": 11.60 ,"discount":  5.21 }] }
+{"id": 150000266, "customerid": 8, "time": "2023-01-14T21:20:33.569Z", "items": [{"productid": 137,"quantity": 1,"unit_price": 51.89 }] }
+{"id": 150000270, "customerid": 30, "time": "2023-01-14T21:25:47.864Z", "items": [{"productid": 84,"quantity": 2,"unit_price": 15.46 }] }
+{"id": 150000277, "customerid": 3, "time": "2023-01-14T22:10:53.446Z", "items": [{"productid": 198,"quantity": 1,"unit_price":  6.75 ,"discount":  1.18 },{"productid": 102,"quantity": 2,"unit_price": 11.60 }] }
+{"id": 150000294, "customerid": 3, "time": "2023-01-15T00:59:19.296Z", "items": [{"productid": 179,"quantity": 1,"unit_price": 10.38 }] }
+{"id": 150000289, "customerid": 6, "time": "2023-01-15T02:01:31.735Z", "items": [{"productid": 95,"quantity": 1,"unit_price":  8.15 ,"discount":  1.14 }] }
+{"id": 150000296, "customerid": 20, "time": "2023-01-15T02:23:30.980Z", "items": [{"productid": 90,"quantity": 1,"unit_price":  7.94 }] }
+{"id": 150000291, "customerid": 18, "time": "2023-01-15T02:52:55.807Z", "items": [{"productid": 99,"quantity": 1,"unit_price":  9.21 }] }
+{"id": 150000290, "customerid": 18, "time": "2023-01-15T03:06:25.092Z", "items": [{"productid": 49,"quantity": 1,"unit_price":  7.62 }] }
+{"id": 150000299, "customerid": 20, "time": "2023-01-15T03:19:43.692Z", "items": [{"productid": 106,"quantity": 2,"unit_price":  8.84 }] }
+{"id": 150000282, "customerid": 16, "time": "2023-01-15T03:52:54.321Z", "items": [{"productid": 131,"quantity": 1,"unit_price":  6.01 }] }
+{"id": 150000302, "customerid": 5, "time": "2023-01-15T05:05:42.471Z", "items": [{"productid": 23,"quantity": 1,"unit_price":  8.87 }] }
+{"id": 150000287, "customerid": 27, "time": "2023-01-15T06:01:01.169Z", "items": [{"productid": 165,"quantity": 1,"unit_price": 41.83 }] }
+{"id": 150000301, "customerid": 25, "time": "2023-01-15T06:04:51.688Z", "items": [{"productid": 109,"quantity": 1,"unit_price": 10.64 ,"discount":  4.55 }] }
+{"id": 150000300, "customerid": 30, "time": "2023-01-15T06:31:32.103Z", "items": [{"productid": 68,"quantity": 2,"unit_price":  7.02 }] }
+{"id": 150000298, "customerid": 28, "time": "2023-01-15T08:14:07.521Z", "items": [{"productid": 47,"quantity": 1,"unit_price": 12.30 }] }
+{"id": 150000293, "customerid": 5, "time": "2023-01-15T08:14:36.360Z", "items": [{"productid": 58,"quantity": 2,"unit_price": 10.39 ,"discount":  5.82 }] }
+{"id": 150000288, "customerid": 9, "time": "2023-01-15T09:05:45.634Z", "items": [{"productid": 25,"quantity": 1,"unit_price":  8.54 }] }
+{"id": 150000286, "customerid": 7, "time": "2023-01-15T09:56:41.252Z", "items": [{"productid": 165,"quantity": 2,"unit_price": 41.83 ,"discount": 18.75 }] }
+{"id": 150000285, "customerid": 18, "time": "2023-01-15T13:47:16.125Z", "items": [{"productid": 125,"quantity": 1,"unit_price":  8.93 },{"productid": 66,"quantity": 2,"unit_price":  5.62 }] }
+{"id": 150000295, "customerid": 7, "time": "2023-01-15T15:28:08.912Z", "items": [{"productid": 110,"quantity": 1,"unit_price":  5.64 }] }
+{"id": 150000283, "customerid": 21, "time": "2023-01-15T17:37:09.249Z", "items": [{"productid": 190,"quantity": 2,"unit_price":  9.81 }] }
+{"id": 150000292, "customerid": 6, "time": "2023-01-15T19:05:08.428Z", "items": [{"productid": 178,"quantity": 1,"unit_price":  6.11 },{"productid": 66,"quantity": 1,"unit_price":  5.62 ,"discount":  1.90 }] }
+{"id": 150000284, "customerid": 19, "time": "2023-01-15T20:41:38.771Z", "items": [{"productid": 50,"quantity": 1,"unit_price": 10.69 }] }
+{"id": 150000297, "customerid": 23, "time": "2023-01-15T22:13:41.010Z", "items": [{"productid": 122,"quantity": 1,"unit_price": 13.31 ,"discount":  2.71 }] }
+{"id": 150000303, "customerid": 17, "time": "2023-01-15T22:54:13.501Z", "items": [{"productid": 81,"quantity": 1,"unit_price": 44.14 ,"discount": 17.85 }] }
+{"id": 150000314, "customerid": 13, "time": "2023-01-16T02:36:23.433Z", "items": [{"productid": 109,"quantity": 1,"unit_price": 10.64 ,"discount":  3.69 },{"productid": 127,"quantity": 1,"unit_price": 20.99 }] }
+{"id": 150000307, "customerid": 17, "time": "2023-01-16T02:38:47.373Z", "items": [{"productid": 53,"quantity": 1,"unit_price": 12.62 }] }
+{"id": 150000312, "customerid": 4, "time": "2023-01-16T06:29:35.976Z", "items": [{"productid": 150,"quantity": 1,"unit_price":  5.92 ,"discount":  0.85 }] }
+{"id": 150000317, "customerid": 2, "time": "2023-01-16T07:48:21.741Z", "items": [{"productid": 188,"quantity": 1,"unit_price": 35.21 }] }
+{"id": 150000305, "customerid": 21, "time": "2023-01-16T08:25:25.039Z", "items": [{"productid": 196,"quantity": 1,"unit_price":  8.00 ,"discount":  1.49 }] }
+{"id": 150000316, "customerid": 29, "time": "2023-01-16T13:20:14.806Z", "items": [{"productid": 112,"quantity": 2,"unit_price": 17.31 },{"productid": 133,"quantity": 1,"unit_price":  8.38 }] }
+{"id": 150000311, "customerid": 16, "time": "2023-01-16T14:57:33.189Z", "items": [{"productid": 108,"quantity": 1,"unit_price": 33.60 ,"discount":  3.59 }] }
+{"id": 150000313, "customerid": 28, "time": "2023-01-16T18:26:40.228Z", "items": [{"productid": 94,"quantity": 1,"unit_price":  5.03 }] }
+{"id": 150000308, "customerid": 5, "time": "2023-01-16T18:45:43.564Z", "items": [{"productid": 71,"quantity": 2,"unit_price": 11.90 },{"productid": 18,"quantity": 1,"unit_price": 10.01 }] }
+{"id": 150000306, "customerid": 30, "time": "2023-01-16T19:15:58.315Z", "items": [{"productid": 79,"quantity": 2,"unit_price": 11.62 }] }
+{"id": 150000315, "customerid": 20, "time": "2023-01-16T19:39:40.851Z", "items": [{"productid": 85,"quantity": 1,"unit_price": 34.56 }] }
+{"id": 150000304, "customerid": 12, "time": "2023-01-16T20:50:12.740Z", "items": [{"productid": 138,"quantity": 2,"unit_price":  6.80 },{"productid": 184,"quantity": 1,"unit_price":  8.47 ,"discount":  2.96 }] }
+{"id": 150000309, "customerid": 7, "time": "2023-01-16T20:51:40.385Z", "items": [{"productid": 176,"quantity": 1,"unit_price":  7.79 }] }
+{"id": 150000310, "customerid": 7, "time": "2023-01-16T21:15:30.136Z", "items": [{"productid": 177,"quantity": 2,"unit_price":  8.70 ,"discount":  2.84 }] }
+{"id": 150000319, "customerid": 28, "time": "2023-01-17T00:04:25.582Z", "items": [{"productid": 198,"quantity": 1,"unit_price":  6.75 ,"discount":  1.67 }] }
+{"id": 150000333, "customerid": 13, "time": "2023-01-17T02:43:48.173Z", "items": [{"productid": 157,"quantity": 3,"unit_price": 13.61 ,"discount":  7.25 }] }
+{"id": 150000330, "customerid": 29, "time": "2023-01-17T04:00:05.842Z", "items": [{"productid": 67,"quantity": 1,"unit_price":  8.28 }] }
+{"id": 150000321, "customerid": 22, "time": "2023-01-17T06:33:39.443Z", "items": [{"productid": 175,"quantity": 1,"unit_price": 18.21 },{"productid": 103,"quantity": 2,"unit_price": 19.72 ,"discount": 13.41 }] }
+{"id": 150000318, "customerid": 4, "time": "2023-01-17T06:58:32.886Z", "items": [{"productid": 163,"quantity": 1,"unit_price": 11.01 ,"discount":  1.10 }] }
+{"id": 150000322, "customerid": 29, "time": "2023-01-17T08:02:35.707Z", "items": [{"productid": 136,"quantity": 1,"unit_price": 26.65 }] }
+{"id": 150000325, "customerid": 22, "time": "2023-01-17T08:08:55.546Z", "items": [{"productid": 152,"quantity": 2,"unit_price": 11.28 ,"discount":  6.89 }] }
+{"id": 150000334, "customerid": 3, "time": "2023-01-17T08:58:43.422Z", "items": [{"productid": 126,"quantity": 1,"unit_price": 12.35 }] }
+{"id": 150000326, "customerid": 3, "time": "2023-01-17T11:34:36.660Z", "items": [{"productid": 198,"quantity": 1,"unit_price":  6.75 ,"discount":  1.49 },{"productid": 130,"quantity": 3,"unit_price": 10.02 ,"discount":  7.55 },{"productid": 151,"quantity": 1,"unit_price":  7.24 }] }
+{"id": 150000323, "customerid": 13, "time": "2023-01-17T16:00:15.159Z", "items": [{"productid": 134,"quantity": 1,"unit_price":  7.01 ,"discount":  2.84 }] }
+{"id": 150000331, "customerid": 16, "time": "2023-01-17T17:40:35.865Z", "items": [{"productid": 158,"quantity": 1,"unit_price": 30.42 ,"discount": 10.79 }] }
+{"id": 150000332, "customerid": 16, "time": "2023-01-17T18:03:12.153Z", "items": [{"productid": 20,"quantity": 1,"unit_price":  5.24 }] }
+{"id": 150000329, "customerid": 9, "time": "2023-01-17T18:18:27.968Z", "items": [{"productid": 45,"quantity": 1,"unit_price": 39.76 }] }
+{"id": 150000327, "customerid": 7, "time": "2023-01-17T18:50:37.076Z", "items": [{"productid": 165,"quantity": 1,"unit_price": 41.83 ,"discount": 11.39 }] }
+{"id": 150000320, "customerid": 1, "time": "2023-01-17T19:00:51.083Z", "items": [{"productid": 201,"quantity": 1,"unit_price":  8.65 }] }
+{"id": 150000328, "customerid": 25, "time": "2023-01-17T20:33:16.878Z", "items": [{"productid": 164,"quantity": 1,"unit_price": 18.71 }] }
+{"id": 150000324, "customerid": 18, "time": "2023-01-17T20:52:38.682Z", "items": [{"productid": 45,"quantity": 1,"unit_price": 39.76 ,"discount": 18.78 },{"productid": 19,"quantity": 2,"unit_price": 11.78 }] }
+{"id": 150000348, "customerid": 11, "time": "2023-01-17T22:22:31.465Z", "items": [{"productid": 98,"quantity": 2,"unit_price": 32.37 }] }
+{"id": 150000347, "customerid": 8, "time": "2023-01-17T23:54:13.453Z", "items": [{"productid": 29,"quantity": 2,"unit_price": 12.07 },{"productid": 26,"quantity": 1,"unit_price": 19.08 }] }
+{"id": 150000349, "customerid": 26, "time": "2023-01-18T00:29:09.438Z", "items": [{"productid": 71,"quantity": 1,"unit_price": 11.90 }] }
+{"id": 150000335, "customerid": 10, "time": "2023-01-18T01:38:43.521Z", "items": [{"productid": 45,"quantity": 1,"unit_price": 39.76 }] }
+{"id": 150000339, "customerid": 27, "time": "2023-01-18T04:00:16.181Z", "items": [{"productid": 2,"quantity": 1,"unit_price": 11.81 ,"discount":  3.42 }] }
+{"id": 150000341, "customerid": 23, "time": "2023-01-18T04:26:53.394Z", "items": [{"productid": 204,"quantity": 1,"unit_price":  8.20 }] }
+{"id": 150000345, "customerid": 18, "time": "2023-01-18T06:42:22.960Z", "items": [{"productid": 191,"quantity": 1,"unit_price":  8.27 ,"discount":  2.74 }] }
+{"id": 150000346, "customerid": 18, "time": "2023-01-18T07:38:15.057Z", "items": [{"productid": 180,"quantity": 1,"unit_price": 23.20 }] }
+{"id": 150000343, "customerid": 30, "time": "2023-01-18T07:41:20.550Z", "items": [{"productid": 178,"quantity": 1,"unit_price":  6.11 ,"discount":  0.66 }] }
+{"id": 150000342, "customerid": 12, "time": "2023-01-18T09:32:57.805Z", "items": [{"productid": 149,"quantity": 2,"unit_price": 46.38 },{"productid": 55,"quantity": 2,"unit_price": 12.22 ,"discount":  2.32 },{"productid": 150,"quantity": 2,"unit_price":  5.92 ,"discount":  2.61 }] }
+{"id": 150000340, "customerid": 20, "time": "2023-01-18T12:54:10.762Z", "items": [{"productid": 38,"quantity": 1,"unit_price":  6.74 }] }
+{"id": 150000344, "customerid": 22, "time": "2023-01-18T12:56:54.406Z", "items": [{"productid": 124,"quantity": 1,"unit_price": 57.94 }] }
+{"id": 150000338, "customerid": 19, "time": "2023-01-18T14:14:21.889Z", "items": [{"productid": 132,"quantity": 1,"unit_price": 10.21 ,"discount":  1.71 }] }
+{"id": 150000336, "customerid": 10, "time": "2023-01-18T15:52:59.433Z", "items": [{"productid": 45,"quantity": 1,"unit_price": 39.76 ,"discount":  9.93 }] }
+{"id": 150000337, "customerid": 22, "time": "2023-01-18T20:15:40.581Z", "items": [{"productid": 189,"quantity": 1,"unit_price":  5.75 },{"productid": 88,"quantity": 1,"unit_price": 11.12 }] }
+{"id": 150000372, "customerid": 3, "time": "2023-01-18T22:26:30.311Z", "items": [{"productid": 64,"quantity": 1,"unit_price": 14.18 }] }
+{"id": 150000357, "customerid": 20, "time": "2023-01-18T23:21:24.218Z", "items": [{"productid": 166,"quantity": 1,"unit_price":  6.59 },{"productid": 30,"quantity": 2,"unit_price": 26.98 ,"discount": 12.93 }] }
+{"id": 150000354, "customerid": 29, "time": "2023-01-19T02:42:05.855Z", "items": [{"productid": 207,"quantity": 1,"unit_price": 17.50 }] }
+{"id": 150000358, "customerid": 19, "time": "2023-01-19T04:01:32.848Z", "items": [{"productid": 159,"quantity": 2,"unit_price":  7.86 },{"productid": 173,"quantity": 1,"unit_price": 20.52 }] }
+{"id": 150000370, "customerid": 10, "time": "2023-01-19T04:08:55.080Z", "items": [{"productid": 205,"quantity": 1,"unit_price":  8.00 }] }
+{"id": 150000371, "customerid": 11, "time": "2023-01-19T04:14:15.747Z", "items": [{"productid": 141,"quantity": 1,"unit_price":  6.36 }] }
+{"id": 150000362, "customerid": 3, "time": "2023-01-19T05:16:09.205Z", "items": [{"productid": 148,"quantity": 2,"unit_price": 20.75 ,"discount":  9.31 },{"productid": 196,"quantity": 1,"unit_price":  8.00 }] }
+{"id": 150000355, "customerid": 25, "time": "2023-01-19T05:16:33.762Z", "items": [{"productid": 103,"quantity": 1,"unit_price": 19.72 }] }
+{"id": 150000366, "customerid": 17, "time": "2023-01-19T05:17:21.619Z", "items": [{"productid": 139,"quantity": 1,"unit_price": 11.56 }] }
+{"id": 150000363, "customerid": 19, "time": "2023-01-19T05:41:34.095Z", "items": [{"productid": 18,"quantity": 1,"unit_price": 10.01 },{"productid": 201,"quantity": 1,"unit_price":  8.65 ,"discount":  0.97 }] }
+{"id": 150000361, "customerid": 7, "time": "2023-01-19T06:29:54.637Z", "items": [{"productid": 85,"quantity": 1,"unit_price": 34.56 }] }
+{"id": 150000359, "customerid": 28, "time": "2023-01-19T06:49:26.745Z", "items": [{"productid": 24,"quantity": 2,"unit_price":  5.02 ,"discount":  3.88 }] }
+{"id": 150000351, "customerid": 28, "time": "2023-01-19T06:58:11.304Z", "items": [{"productid": 42,"quantity": 2,"unit_price":  5.37 }] }
+{"id": 150000369, "customerid": 6, "time": "2023-01-19T08:08:29.885Z", "items": [{"productid": 183,"quantity": 2,"unit_price": 11.46 },{"productid": 103,"quantity": 1,"unit_price": 19.72 }] }
+{"id": 150000367, "customerid": 25, "time": "2023-01-19T08:43:56.272Z", "items": [{"productid": 8,"quantity": 1,"unit_price":  9.06 ,"discount":  0.93 }] }
+{"id": 150000350, "customerid": 25, "time": "2023-01-19T10:51:42.936Z", "items": [{"productid": 139,"quantity": 2,"unit_price": 11.56 }] }
+{"id": 150000365, "customerid": 21, "time": "2023-01-19T12:25:00.256Z", "items": [{"productid": 192,"quantity": 1,"unit_price": 14.07 }] }
+{"id": 150000368, "customerid": 24, "time": "2023-01-19T13:48:09.889Z", "items": [{"productid": 12,"quantity": 2,"unit_price":  7.49 },{"productid": 70,"quantity": 3,"unit_price": 10.76 }] }
+{"id": 150000356, "customerid": 8, "time": "2023-01-19T15:35:21.461Z", "items": [{"productid": 72,"quantity": 1,"unit_price": 11.75 }] }
+{"id": 150000360, "customerid": 6, "time": "2023-01-19T17:36:50.675Z", "items": [{"productid": 59,"quantity": 2,"unit_price": 23.22 ,"discount":  2.95 }] }
+{"id": 150000353, "customerid": 11, "time": "2023-01-19T17:39:05.911Z", "items": [{"productid": 86,"quantity": 2,"unit_price":  6.10 }] }
+{"id": 150000364, "customerid": 8, "time": "2023-01-19T20:04:30.735Z", "items": [{"productid": 38,"quantity": 2,"unit_price":  6.74 ,"discount":  5.58 },{"productid": 83,"quantity": 2,"unit_price":  9.09 }] }
+{"id": 150000352, "customerid": 23, "time": "2023-01-19T20:25:45.271Z", "items": [{"productid": 35,"quantity": 1,"unit_price": 72.67 ,"discount": 33.41 }] }
+{"id": 150000377, "customerid": 25, "time": "2023-01-19T23:22:05.366Z", "items": [{"productid": 13,"quantity": 1,"unit_price":  9.69 ,"discount":  1.04 }] }
+{"id": 150000386, "customerid": 18, "time": "2023-01-20T03:40:44.417Z", "items": [{"productid": 15,"quantity": 1,"unit_price": 10.96 ,"discount":  4.79 }] }
+{"id": 150000380, "customerid": 2, "time": "2023-01-20T03:55:43.025Z", "items": [{"productid": 19,"quantity": 3,"unit_price": 11.78 ,"discount":  8.76 }] }
+{"id": 150000375, "customerid": 14, "time": "2023-01-20T06:10:14.756Z", "items": [{"productid": 111,"quantity": 1,"unit_price": 10.18 ,"discount":  4.14 },{"productid": 110,"quantity": 1,"unit_price":  5.64 ,"discount":  1.19 }] }
+{"id": 150000382, "customerid": 14, "time": "2023-01-20T06:34:20.586Z", "items": [{"productid": 2,"quantity": 1,"unit_price": 11.81 },{"productid": 132,"quantity": 1,"unit_price": 10.21 ,"discount":  2.17 }] }
+{"id": 150000385, "customerid": 29, "time": "2023-01-20T10:37:33.393Z", "items": [{"productid": 120,"quantity": 2,"unit_price": 10.88 ,"discount":  8.02 }] }
+{"id": 150000383, "customerid": 4, "time": "2023-01-20T11:38:47.155Z", "items": [{"productid": 70,"quantity": 2,"unit_price": 10.76 }] }
+{"id": 150000379, "customerid": 13, "time": "2023-01-20T12:31:43.516Z", "items": [{"productid": 175,"quantity": 1,"unit_price": 18.21 ,"discount":  1.52 }] }
+{"id": 150000374, "customerid": 21, "time": "2023-01-20T13:56:34.297Z", "items": [{"productid": 63,"quantity": 1,"unit_price":  8.34 },{"productid": 59,"quantity": 2,"unit_price": 23.22 ,"discount":  4.45 }] }
+{"id": 150000378, "customerid": 18, "time": "2023-01-20T14:11:16.314Z", "items": [{"productid": 68,"quantity": 1,"unit_price":  7.02 ,"discount":  3.32 }] }
+{"id": 150000381, "customerid": 4, "time": "2023-01-20T15:09:04.317Z", "items": [{"productid": 115,"quantity": 1,"unit_price":  9.22 }] }
+{"id": 150000384, "customerid": 15, "time": "2023-01-20T16:22:17.065Z", "items": [{"productid": 177,"quantity": 1,"unit_price":  8.70 },{"productid": 146,"quantity": 1,"unit_price": 10.96 }] }
+{"id": 150000373, "customerid": 25, "time": "2023-01-20T20:48:07.087Z", "items": [{"productid": 59,"quantity": 2,"unit_price": 23.22 }] }
+{"id": 150000376, "customerid": 11, "time": "2023-01-20T21:26:24.175Z", "items": [{"productid": 110,"quantity": 1,"unit_price":  5.64 }] }
+{"id": 150000389, "customerid": 17, "time": "2023-01-21T01:12:28.365Z", "items": [{"productid": 59,"quantity": 1,"unit_price": 23.22 }] }
+{"id": 150000395, "customerid": 11, "time": "2023-01-21T02:34:09.112Z", "items": [{"productid": 65,"quantity": 1,"unit_price": 10.28 }] }
+{"id": 150000396, "customerid": 17, "time": "2023-01-21T04:26:17.083Z", "items": [{"productid": 122,"quantity": 1,"unit_price": 13.31 }] }
+{"id": 150000388, "customerid": 21, "time": "2023-01-21T05:13:48.045Z", "items": [{"productid": 40,"quantity": 2,"unit_price":  7.91 }] }
+{"id": 150000391, "customerid": 4, "time": "2023-01-21T05:30:21.656Z", "items": [{"productid": 128,"quantity": 1,"unit_price": 12.12 ,"discount":  1.08 }] }
+{"id": 150000394, "customerid": 10, "time": "2023-01-21T06:42:18.947Z", "items": [{"productid": 43,"quantity": 1,"unit_price":  9.13 ,"discount":  1.84 }] }
+{"id": 150000387, "customerid": 25, "time": "2023-01-21T09:27:02.915Z", "items": [{"productid": 30,"quantity": 2,"unit_price": 26.98 ,"discount": 23.08 },{"productid": 76,"quantity": 2,"unit_price": 49.32 ,"discount": 26.83 }] }
+{"id": 150000393, "customerid": 22, "time": "2023-01-21T10:43:31.931Z", "items": [{"productid": 61,"quantity": 2,"unit_price": 19.00 ,"discount": 16.70 },{"productid": 119,"quantity": 1,"unit_price":  6.36 }] }
+{"id": 150000392, "customerid": 23, "time": "2023-01-21T12:06:10.186Z", "items": [{"productid": 105,"quantity": 2,"unit_price": 10.44 ,"discount":  9.72 }] }
+{"id": 150000390, "customerid": 14, "time": "2023-01-21T14:11:09.146Z", "items": [{"productid": 195,"quantity": 1,"unit_price": 11.38 ,"discount":  3.33 },{"productid": 81,"quantity": 2,"unit_price": 44.14 }] }
+{"id": 150000397, "customerid": 5, "time": "2023-01-21T14:39:37.779Z", "items": [{"productid": 3,"quantity": 2,"unit_price": 26.39 }] }
+{"id": 150000410, "customerid": 24, "time": "2023-01-21T23:22:13.773Z", "items": [{"productid": 173,"quantity": 2,"unit_price": 20.52 }] }
+{"id": 150000407, "customerid": 3, "time": "2023-01-22T00:13:18.339Z", "items": [{"productid": 2,"quantity": 1,"unit_price": 11.81 ,"discount":  3.40 },{"productid": 107,"quantity": 2,"unit_price": 15.03 ,"discount":  6.33 },{"productid": 71,"quantity": 1,"unit_price": 11.90 }] }
+{"id": 150000409, "customerid": 27, "time": "2023-01-22T00:14:47.612Z", "items": [{"productid": 165,"quantity": 2,"unit_price": 41.83 ,"discount": 36.13 }] }
+{"id": 150000404, "customerid": 27, "time": "2023-01-22T08:06:49.396Z", "items": [{"productid": 6,"quantity": 1,"unit_price":  8.66 }] }
+{"id": 150000398, "customerid": 27, "time": "2023-01-22T10:00:02.274Z", "items": [{"productid": 27,"quantity": 1,"unit_price":  5.49 ,"discount":  1.74 }] }
+{"id": 150000406, "customerid": 28, "time": "2023-01-22T10:07:09.330Z", "items": [{"productid": 186,"quantity": 1,"unit_price":  9.27 ,"discount":  2.66 },{"productid": 65,"quantity": 1,"unit_price": 10.28 }] }
+{"id": 150000399, "customerid": 1, "time": "2023-01-22T14:14:49.858Z", "items": [{"productid": 117,"quantity": 2,"unit_price": 35.05 ,"discount": 15.54 }] }
+{"id": 150000405, "customerid": 7, "time": "2023-01-22T15:46:31.424Z", "items": [{"productid": 201,"quantity": 2,"unit_price":  8.65 }] }
+{"id": 150000400, "customerid": 24, "time": "2023-01-22T16:48:42.242Z", "items": [{"productid": 40,"quantity": 1,"unit_price":  7.91 }] }
+{"id": 150000408, "customerid": 27, "time": "2023-01-22T17:49:46.643Z", "items": [{"productid": 116,"quantity": 1,"unit_price": 15.68 },{"productid": 194,"quantity": 1,"unit_price":  6.77 ,"discount":  2.63 }] }
+{"id": 150000403, "customerid": 26, "time": "2023-01-22T19:38:04.409Z", "items": [{"productid": 146,"quantity": 1,"unit_price": 10.96 ,"discount":  4.24 }] }
+{"id": 150000402, "customerid": 16, "time": "2023-01-22T20:11:01.552Z", "items": [{"productid": 71,"quantity": 1,"unit_price": 11.90 ,"discount":  1.66 }] }
+{"id": 150000401, "customerid": 5, "time": "2023-01-22T21:07:44.864Z", "items": [{"productid": 85,"quantity": 1,"unit_price": 34.56 }] }
+{"id": 150000424, "customerid": 20, "time": "2023-01-23T04:37:26.370Z", "items": [{"productid": 60,"quantity": 2,"unit_price": 11.18 ,"discount":  7.82 }] }
+{"id": 150000412, "customerid": 11, "time": "2023-01-23T06:36:29.733Z", "items": [{"productid": 33,"quantity": 1,"unit_price": 16.69 ,"discount":  0.86 }] }
+{"id": 150000414, "customerid": 2, "time": "2023-01-23T07:13:29.494Z", "items": [{"productid": 175,"quantity": 1,"unit_price": 18.21 }] }
+{"id": 150000411, "customerid": 14, "time": "2023-01-23T08:03:17.955Z", "items": [{"productid": 70,"quantity": 1,"unit_price": 10.76 },{"productid": 47,"quantity": 1,"unit_price": 12.30 }] }
+{"id": 150000422, "customerid": 14, "time": "2023-01-23T09:07:59.916Z", "items": [{"productid": 178,"quantity": 1,"unit_price":  6.11 },{"productid": 49,"quantity": 1,"unit_price":  7.62 }] }
+{"id": 150000417, "customerid": 24, "time": "2023-01-23T09:34:42.366Z", "items": [{"productid": 83,"quantity": 2,"unit_price":  9.09 }] }
+{"id": 150000423, "customerid": 15, "time": "2023-01-23T10:31:00.341Z", "items": [{"productid": 181,"quantity": 2,"unit_price": 45.19 }] }
+{"id": 150000421, "customerid": 7, "time": "2023-01-23T11:47:50.206Z", "items": [{"productid": 166,"quantity": 1,"unit_price":  6.59 ,"discount":  3.19 }] }
+{"id": 150000413, "customerid": 1, "time": "2023-01-23T12:04:52.456Z", "items": [{"productid": 67,"quantity": 1,"unit_price":  8.28 ,"discount":  2.33 }] }
+{"id": 150000415, "customerid": 16, "time": "2023-01-23T13:17:51.540Z", "items": [{"productid": 141,"quantity": 1,"unit_price":  6.36 ,"discount":  2.24 }] }
+{"id": 150000419, "customerid": 9, "time": "2023-01-23T14:46:58.577Z", "items": [{"productid": 102,"quantity": 2,"unit_price": 11.60 }] }
+{"id": 150000418, "customerid": 3, "time": "2023-01-23T16:04:40.250Z", "items": [{"productid": 66,"quantity": 1,"unit_price":  5.62 },{"productid": 33,"quantity": 2,"unit_price": 16.69 ,"discount":  9.35 }] }
+{"id": 150000420, "customerid": 6, "time": "2023-01-23T19:02:18.957Z", "items": [{"productid": 168,"quantity": 1,"unit_price": 11.15 }] }
+{"id": 150000416, "customerid": 8, "time": "2023-01-23T20:27:34.017Z", "items": [{"productid": 17,"quantity": 1,"unit_price":  5.08 ,"discount":  0.83 }] }
+{"id": 150000437, "customerid": 19, "time": "2023-01-23T22:49:28.825Z", "items": [{"productid": 41,"quantity": 1,"unit_price":  5.31 }] }
+{"id": 150000436, "customerid": 16, "time": "2023-01-24T01:14:45.498Z", "items": [{"productid": 64,"quantity": 3,"unit_price": 14.18 }] }
+{"id": 150000435, "customerid": 7, "time": "2023-01-24T02:38:49.991Z", "items": [{"productid": 190,"quantity": 2,"unit_price":  9.81 ,"discount":  8.19 }] }
+{"id": 150000438, "customerid": 11, "time": "2023-01-24T03:00:10.637Z", "items": [{"productid": 200,"quantity": 1,"unit_price": 25.64 },{"productid": 31,"quantity": 3,"unit_price": 52.53 ,"discount": 29.71 }] }
+{"id": 150000439, "customerid": 16, "time": "2023-01-24T03:44:36.964Z", "items": [{"productid": 94,"quantity": 2,"unit_price":  5.03 ,"discount":  4.77 }] }
+{"id": 150000426, "customerid": 4, "time": "2023-01-24T04:28:05.956Z", "items": [{"productid": 47,"quantity": 2,"unit_price": 12.30 }] }
+{"id": 150000429, "customerid": 28, "time": "2023-01-24T05:01:00.266Z", "items": [{"productid": 85,"quantity": 1,"unit_price": 34.56 }] }
+{"id": 150000434, "customerid": 16, "time": "2023-01-24T06:42:33.901Z", "items": [{"productid": 42,"quantity": 2,"unit_price":  5.37 },{"productid": 58,"quantity": 1,"unit_price": 10.39 ,"discount":  3.71 }] }
+{"id": 150000441, "customerid": 6, "time": "2023-01-24T09:13:31.315Z", "items": [{"productid": 184,"quantity": 1,"unit_price":  8.47 }] }
+{"id": 150000428, "customerid": 14, "time": "2023-01-24T10:12:36.992Z", "items": [{"productid": 195,"quantity": 1,"unit_price": 11.38 }] }
+{"id": 150000440, "customerid": 4, "time": "2023-01-24T11:48:59.214Z", "items": [{"productid": 117,"quantity": 1,"unit_price": 35.05 }] }
+{"id": 150000430, "customerid": 17, "time": "2023-01-24T14:17:26.236Z", "items": [{"productid": 66,"quantity": 1,"unit_price":  5.62 ,"discount":  1.10 },{"productid": 145,"quantity": 1,"unit_price": 41.55 ,"discount":  3.82 }] }
+{"id": 150000433, "customerid": 19, "time": "2023-01-24T14:29:50.785Z", "items": [{"productid": 31,"quantity": 1,"unit_price": 52.53 }] }
+{"id": 150000431, "customerid": 3, "time": "2023-01-24T16:27:42.247Z", "items": [{"productid": 112,"quantity": 2,"unit_price": 17.31 ,"discount":  8.85 }] }
+{"id": 150000442, "customerid": 23, "time": "2023-01-24T17:11:46.250Z", "items": [{"productid": 133,"quantity": 1,"unit_price":  8.38 }] }
+{"id": 150000427, "customerid": 29, "time": "2023-01-24T18:12:31.840Z", "items": [{"productid": 193,"quantity": 1,"unit_price": 31.44 ,"discount":  1.90 }] }
+{"id": 150000432, "customerid": 1, "time": "2023-01-24T19:09:20.079Z", "items": [{"productid": 1,"quantity": 2,"unit_price":  6.94 ,"discount":  6.92 }] }
+{"id": 150000425, "customerid": 12, "time": "2023-01-24T19:30:34.098Z", "items": [{"productid": 4,"quantity": 2,"unit_price":  8.01 ,"discount":  7.47 }] }
+{"id": 150000467, "customerid": 21, "time": "2023-01-24T22:22:46.385Z", "items": [{"productid": 9,"quantity": 1,"unit_price": 15.41 }] }
+{"id": 150000471, "customerid": 28, "time": "2023-01-24T22:57:28.517Z", "items": [{"productid": 6,"quantity": 1,"unit_price":  8.66 }] }
+{"id": 150000456, "customerid": 14, "time": "2023-01-24T23:23:41.682Z", "items": [{"productid": 136,"quantity": 1,"unit_price": 26.65 }] }
+{"id": 150000451, "customerid": 7, "time": "2023-01-25T00:10:56.298Z", "items": [{"productid": 96,"quantity": 1,"unit_price":  8.52 ,"discount":  1.84 }] }
+{"id": 150000463, "customerid": 2, "time": "2023-01-25T01:08:34.392Z", "items": [{"productid": 181,"quantity": 1,"unit_price": 45.19 },{"productid": 20,"quantity": 1,"unit_price":  5.24 ,"discount":  0.70 }] }
+{"id": 150000453, "customerid": 28, "time": "2023-01-25T01:20:39.212Z", "items": [{"productid": 2,"quantity": 1,"unit_price": 11.81 }] }
+{"id": 150000460, "customerid": 19, "time": "2023-01-25T01:20:50.890Z", "items": [{"productid": 81,"quantity": 1,"unit_price": 44.14 }] }
+{"id": 150000445, "customerid": 1, "time": "2023-01-25T01:56:16.226Z", "items": [{"productid": 82,"quantity": 1,"unit_price": 85.96 }] }
+{"id": 150000466, "customerid": 13, "time": "2023-01-25T02:25:30.907Z", "items": [{"productid": 114,"quantity": 2,"unit_price":  8.22 ,"discount":  6.57 }] }
+{"id": 150000450, "customerid": 2, "time": "2023-01-25T03:48:36.627Z", "items": [{"productid": 99,"quantity": 1,"unit_price":  9.21 }] }
+{"id": 150000459, "customerid": 6, "time": "2023-01-25T05:25:05.106Z", "items": [{"productid": 17,"quantity": 2,"unit_price":  5.08 }] }
+{"id": 150000454, "customerid": 30, "time": "2023-01-25T06:36:28.831Z", "items": [{"productid": 168,"quantity": 1,"unit_price": 11.15 ,"discount":  5.14 }] }
+{"id": 150000464, "customerid": 17, "time": "2023-01-25T07:14:09.765Z", "items": [{"productid": 39,"quantity": 1,"unit_price": 12.38 ,"discount":  5.90 },{"productid": 45,"quantity": 1,"unit_price": 39.76 }] }
+{"id": 150000465, "customerid": 10, "time": "2023-01-25T07:17:36.797Z", "items": [{"productid": 189,"quantity": 1,"unit_price":  5.75 }] }
+{"id": 150000444, "customerid": 6, "time": "2023-01-25T11:11:49.918Z", "items": [{"productid": 89,"quantity": 2,"unit_price":  7.10 }] }
+{"id": 150000452, "customerid": 10, "time": "2023-01-25T11:44:17.695Z", "items": [{"productid": 151,"quantity": 2,"unit_price":  7.24 ,"discount":  2.41 }] }
+{"id": 150000447, "customerid": 25, "time": "2023-01-25T12:26:26.416Z", "items": [{"productid": 70,"quantity": 2,"unit_price": 10.76 }] }
+{"id": 150000448, "customerid": 6, "time": "2023-01-25T13:08:47.682Z", "items": [{"productid": 75,"quantity": 2,"unit_price": 22.06 }] }
+{"id": 150000457, "customerid": 28, "time": "2023-01-25T13:13:32.978Z", "items": [{"productid": 125,"quantity": 1,"unit_price":  8.93 },{"productid": 169,"quantity": 1,"unit_price":  5.23 ,"discount":  0.52 }] }
+{"id": 150000470, "customerid": 25, "time": "2023-01-25T13:24:43.971Z", "items": [{"productid": 88,"quantity": 2,"unit_price": 11.12 }] }
+{"id": 150000473, "customerid": 22, "time": "2023-01-25T13:30:35.299Z", "items": [{"productid": 72,"quantity": 2,"unit_price": 11.75 }] }
+{"id": 150000472, "customerid": 7, "time": "2023-01-25T14:10:26.327Z", "items": [{"productid": 21,"quantity": 1,"unit_price":  8.90 }] }
+{"id": 150000461, "customerid": 14, "time": "2023-01-25T14:26:22.136Z", "items": [{"productid": 108,"quantity": 2,"unit_price": 33.60 ,"discount":  5.24 }] }
+{"id": 150000468, "customerid": 10, "time": "2023-01-25T16:02:53.490Z", "items": [{"productid": 56,"quantity": 3,"unit_price":  5.47 ,"discount":  2.36 }] }
+{"id": 150000458, "customerid": 1, "time": "2023-01-25T16:11:39.578Z", "items": [{"productid": 125,"quantity": 2,"unit_price":  8.93 },{"productid": 78,"quantity": 1,"unit_price":  6.29 }] }
+{"id": 150000474, "customerid": 29, "time": "2023-01-25T16:28:17.731Z", "items": [{"productid": 24,"quantity": 1,"unit_price":  5.02 ,"discount":  0.96 },{"productid": 57,"quantity": 1,"unit_price":  6.11 }] }
+{"id": 150000455, "customerid": 16, "time": "2023-01-25T16:57:40.179Z", "items": [{"productid": 130,"quantity": 1,"unit_price": 10.02 ,"discount":  1.08 }] }
+{"id": 150000469, "customerid": 9, "time": "2023-01-25T17:21:30.807Z", "items": [{"productid": 4,"quantity": 1,"unit_price":  8.01 }] }
+{"id": 150000443, "customerid": 10, "time": "2023-01-25T17:51:49.571Z", "items": [{"productid": 102,"quantity": 1,"unit_price": 11.60 }] }
+{"id": 150000462, "customerid": 22, "time": "2023-01-25T17:57:49.694Z", "items": [{"productid": 25,"quantity": 1,"unit_price":  8.54 },{"productid": 206,"quantity": 1,"unit_price": 10.29 ,"discount":  1.13 }] }
+{"id": 150000449, "customerid": 26, "time": "2023-01-25T19:26:33.929Z", "items": [{"productid": 109,"quantity": 3,"unit_price": 10.64 }] }
+{"id": 150000446, "customerid": 23, "time": "2023-01-25T20:18:48.337Z", "items": [{"productid": 66,"quantity": 1,"unit_price":  5.62 }] }
+{"id": 150000485, "customerid": 26, "time": "2023-01-25T23:22:00.430Z", "items": [{"productid": 29,"quantity": 2,"unit_price": 12.07 ,"discount": 10.02 }] }
+{"id": 150000480, "customerid": 22, "time": "2023-01-26T00:41:33.035Z", "items": [{"productid": 107,"quantity": 1,"unit_price": 15.03 ,"discount":  5.70 }] }
+{"id": 150000481, "customerid": 12, "time": "2023-01-26T04:59:17.249Z", "items": [{"productid": 27,"quantity": 3,"unit_price":  5.49 ,"discount":  0.85 }] }
+{"id": 150000476, "customerid": 4, "time": "2023-01-26T05:32:18.426Z", "items": [{"productid": 174,"quantity": 2,"unit_price": 10.71 },{"productid": 133,"quantity": 1,"unit_price":  8.38 ,"discount":  3.73 }] }
+{"id": 150000487, "customerid": 12, "time": "2023-01-26T05:53:11.608Z", "items": [{"productid": 114,"quantity": 1,"unit_price":  8.22 ,"discount":  2.63 }] }
+{"id": 150000475, "customerid": 11, "time": "2023-01-26T08:43:49.756Z", "items": [{"productid": 91,"quantity": 1,"unit_price": 13.50 }] }
+{"id": 150000490, "customerid": 23, "time": "2023-01-26T09:26:23.077Z", "items": [{"productid": 84,"quantity": 1,"unit_price": 15.46 ,"discount":  1.17 },{"productid": 173,"quantity": 1,"unit_price": 20.52 }] }
+{"id": 150000484, "customerid": 28, "time": "2023-01-26T11:49:13.322Z", "items": [{"productid": 82,"quantity": 1,"unit_price": 85.96 ,"discount":  4.38 }] }
+{"id": 150000486, "customerid": 27, "time": "2023-01-26T12:29:43.570Z", "items": [{"productid": 99,"quantity": 2,"unit_price":  9.21 }] }
+{"id": 150000482, "customerid": 20, "time": "2023-01-26T13:49:15.836Z", "items": [{"productid": 14,"quantity": 3,"unit_price":  5.99 ,"discount":  4.61 }] }
+{"id": 150000479, "customerid": 5, "time": "2023-01-26T18:22:33.151Z", "items": [{"productid": 172,"quantity": 1,"unit_price": 12.07 }] }
+{"id": 150000478, "customerid": 20, "time": "2023-01-26T18:45:59.518Z", "items": [{"productid": 109,"quantity": 1,"unit_price": 10.64 }] }
+{"id": 150000489, "customerid": 2, "time": "2023-01-26T20:45:32.651Z", "items": [{"productid": 15,"quantity": 1,"unit_price": 10.96 },{"productid": 97,"quantity": 2,"unit_price": 14.48 ,"discount": 12.48 },{"productid": 67,"quantity": 2,"unit_price":  8.28 ,"discount":  3.30 }] }
+{"id": 150000477, "customerid": 15, "time": "2023-01-26T21:37:01.097Z", "items": [{"productid": 158,"quantity": 1,"unit_price": 30.42 },{"productid": 74,"quantity": 1,"unit_price": 12.98 }] }
+{"id": 150000483, "customerid": 15, "time": "2023-01-26T21:45:42.319Z", "items": [{"productid": 161,"quantity": 2,"unit_price": 29.88 }] }
+{"id": 150000488, "customerid": 8, "time": "2023-01-26T21:52:12.075Z", "items": [{"productid": 120,"quantity": 2,"unit_price": 10.88 ,"discount":  5.53 },{"productid": 59,"quantity": 2,"unit_price": 23.22 }] }
+{"id": 150000497, "customerid": 21, "time": "2023-01-26T22:17:55.989Z", "items": [{"productid": 90,"quantity": 1,"unit_price":  7.94 },{"productid": 130,"quantity": 3,"unit_price": 10.02 },{"productid": 132,"quantity": 2,"unit_price": 10.21 }] }
+{"id": 150000493, "customerid": 9, "time": "2023-01-27T00:54:38.080Z", "items": [{"productid": 189,"quantity": 2,"unit_price":  5.75 ,"discount":  3.82 }] }
+{"id": 150000496, "customerid": 29, "time": "2023-01-27T01:25:42.483Z", "items": [{"productid": 107,"quantity": 2,"unit_price": 15.03 }] }
+{"id": 150000501, "customerid": 9, "time": "2023-01-27T01:43:32.613Z", "items": [{"productid": 104,"quantity": 1,"unit_price": 44.08 }] }
+{"id": 150000495, "customerid": 16, "time": "2023-01-27T03:31:11.817Z", "items": [{"productid": 75,"quantity": 2,"unit_price": 22.06 ,"discount": 16.75 }] }
+{"id": 150000498, "customerid": 29, "time": "2023-01-27T05:44:35.748Z", "items": [{"productid": 29,"quantity": 1,"unit_price": 12.07 },{"productid": 19,"quantity": 1,"unit_price": 11.78 }] }
+{"id": 150000492, "customerid": 17, "time": "2023-01-27T07:33:26.030Z", "items": [{"productid": 36,"quantity": 2,"unit_price":  7.61 },{"productid": 124,"quantity": 3,"unit_price": 57.94 }] }
+{"id": 150000500, "customerid": 12, "time": "2023-01-27T11:33:14.410Z", "items": [{"productid": 174,"quantity": 1,"unit_price": 10.71 }] }
+{"id": 150000494, "customerid": 15, "time": "2023-01-27T11:40:33.824Z", "items": [{"productid": 70,"quantity": 2,"unit_price": 10.76 }] }
+{"id": 150000499, "customerid": 24, "time": "2023-01-27T15:36:45.479Z", "items": [{"productid": 34,"quantity": 2,"unit_price": 37.32 }] }
+{"id": 150000491, "customerid": 24, "time": "2023-01-27T17:39:47.885Z", "items": [{"productid": 155,"quantity": 1,"unit_price": 83.44 }] }
+{"id": 150000529, "customerid": 17, "time": "2023-01-27T22:21:32.460Z", "items": [{"productid": 74,"quantity": 1,"unit_price": 12.98 },{"productid": 88,"quantity": 1,"unit_price": 11.12 ,"discount":  2.36 }] }
+{"id": 150000525, "customerid": 11, "time": "2023-01-28T01:42:46.016Z", "items": [{"productid": 100,"quantity": 1,"unit_price": 15.66 }] }
+{"id": 150000520, "customerid": 17, "time": "2023-01-28T01:48:43.310Z", "items": [{"productid": 24,"quantity": 2,"unit_price":  5.02 }] }
+{"id": 150000503, "customerid": 20, "time": "2023-01-28T02:50:02.724Z", "items": [{"productid": 47,"quantity": 2,"unit_price": 12.30 },{"productid": 78,"quantity": 1,"unit_price":  6.29 }] }
+{"id": 150000521, "customerid": 10, "time": "2023-01-28T03:26:18.243Z", "items": [{"productid": 40,"quantity": 1,"unit_price":  7.91 }] }
+{"id": 150000507, "customerid": 14, "time": "2023-01-28T04:58:16.290Z", "items": [{"productid": 75,"quantity": 1,"unit_price": 22.06 }] }
+{"id": 150000528, "customerid": 26, "time": "2023-01-28T05:30:31.266Z", "items": [{"productid": 76,"quantity": 1,"unit_price": 49.32 ,"discount": 21.00 }] }
+{"id": 150000506, "customerid": 30, "time": "2023-01-28T05:33:18.839Z", "items": [{"productid": 204,"quantity": 1,"unit_price":  8.20 ,"discount":  0.52 }] }
+{"id": 150000504, "customerid": 29, "time": "2023-01-28T05:48:02.119Z", "items": [{"productid": 161,"quantity": 2,"unit_price": 29.88 ,"discount":  3.46 }] }
+{"id": 150000518, "customerid": 7, "time": "2023-01-28T06:54:17.402Z", "items": [{"productid": 34,"quantity": 1,"unit_price": 37.32 }] }
+{"id": 150000527, "customerid": 4, "time": "2023-01-28T06:55:04.719Z", "items": [{"productid": 32,"quantity": 1,"unit_price":  9.82 }] }
+{"id": 150000517, "customerid": 22, "time": "2023-01-28T08:01:44.908Z", "items": [{"productid": 94,"quantity": 2,"unit_price":  5.03 }] }
+{"id": 150000526, "customerid": 24, "time": "2023-01-28T08:27:08.785Z", "items": [{"productid": 111,"quantity": 4,"unit_price": 10.18 }] }
+{"id": 150000522, "customerid": 14, "time": "2023-01-28T08:50:48.835Z", "items": [{"productid": 42,"quantity": 1,"unit_price":  5.37 ,"discount":  0.43 }] }
+{"id": 150000530, "customerid": 10, "time": "2023-01-28T08:54:10.009Z", "items": [{"productid": 207,"quantity": 1,"unit_price": 17.50 },{"productid": 90,"quantity": 1,"unit_price":  7.94 }] }
+{"id": 150000511, "customerid": 10, "time": "2023-01-28T09:09:45.032Z", "items": [{"productid": 6,"quantity": 1,"unit_price":  8.66 ,"discount":  2.46 }] }
+{"id": 150000508, "customerid": 19, "time": "2023-01-28T09:40:52.566Z", "items": [{"productid": 207,"quantity": 1,"unit_price": 17.50 }] }
+{"id": 150000515, "customerid": 13, "time": "2023-01-28T10:33:01.148Z", "items": [{"productid": 143,"quantity": 2,"unit_price": 10.93 ,"discount":  9.44 }] }
+{"id": 150000510, "customerid": 15, "time": "2023-01-28T10:39:22.082Z", "items": [{"productid": 127,"quantity": 2,"unit_price": 20.99 ,"discount":  6.49 }] }
+{"id": 150000513, "customerid": 8, "time": "2023-01-28T10:44:02.743Z", "items": [{"productid": 203,"quantity": 3,"unit_price":  6.18 ,"discount":  5.19 },{"productid": 5,"quantity": 2,"unit_price":  5.43 ,"discount":  2.18 }] }
+{"id": 150000505, "customerid": 1, "time": "2023-01-28T16:19:03.474Z", "items": [{"productid": 109,"quantity": 2,"unit_price": 10.64 }] }
+{"id": 150000519, "customerid": 12, "time": "2023-01-28T16:29:23.074Z", "items": [{"productid": 121,"quantity": 1,"unit_price":  7.83 ,"discount":  0.83 }] }
+{"id": 150000502, "customerid": 7, "time": "2023-01-28T17:38:06.687Z", "items": [{"productid": 64,"quantity": 2,"unit_price": 14.18 }] }
+{"id": 150000516, "customerid": 13, "time": "2023-01-28T17:39:26.920Z", "items": [{"productid": 54,"quantity": 1,"unit_price": 11.68 ,"discount":  4.29 }] }
+{"id": 150000524, "customerid": 15, "time": "2023-01-28T20:02:31.662Z", "items": [{"productid": 132,"quantity": 1,"unit_price": 10.21 ,"discount":  0.95 }] }
+{"id": 150000523, "customerid": 1, "time": "2023-01-28T20:12:44.668Z", "items": [{"productid": 136,"quantity": 1,"unit_price": 26.65 }] }
+{"id": 150000512, "customerid": 28, "time": "2023-01-28T20:34:12.293Z", "items": [{"productid": 55,"quantity": 1,"unit_price": 12.22 }] }
+{"id": 150000509, "customerid": 25, "time": "2023-01-28T21:15:58.274Z", "items": [{"productid": 135,"quantity": 1,"unit_price": 11.92 }] }
+{"id": 150000514, "customerid": 5, "time": "2023-01-28T21:19:18.996Z", "items": [{"productid": 82,"quantity": 1,"unit_price": 85.96 ,"discount": 23.07 }] }
+{"id": 150000537, "customerid": 12, "time": "2023-01-29T01:51:30.402Z", "items": [{"productid": 105,"quantity": 1,"unit_price": 10.44 ,"discount":  3.57 }] }
+{"id": 150000539, "customerid": 3, "time": "2023-01-29T04:31:49.887Z", "items": [{"productid": 12,"quantity": 1,"unit_price":  7.49 },{"productid": 118,"quantity": 1,"unit_price": 12.95 },{"productid": 137,"quantity": 1,"unit_price": 51.89 }] }
+{"id": 150000534, "customerid": 16, "time": "2023-01-29T08:01:21.228Z", "items": [{"productid": 181,"quantity": 1,"unit_price": 45.19 }] }
+{"id": 150000531, "customerid": 14, "time": "2023-01-29T12:04:15.401Z", "items": [{"productid": 13,"quantity": 1,"unit_price":  9.69 ,"discount":  2.65 }] }
+{"id": 150000535, "customerid": 6, "time": "2023-01-29T12:21:44.492Z", "items": [{"productid": 17,"quantity": 2,"unit_price":  5.08 ,"discount":  3.00 }] }
+{"id": 150000533, "customerid": 12, "time": "2023-01-29T16:01:31.617Z", "items": [{"productid": 84,"quantity": 2,"unit_price": 15.46 ,"discount": 12.54 }] }
+{"id": 150000536, "customerid": 3, "time": "2023-01-29T17:48:36.075Z", "items": [{"productid": 123,"quantity": 1,"unit_price": 29.75 ,"discount": 13.73 }] }
+{"id": 150000538, "customerid": 28, "time": "2023-01-29T20:50:29.960Z", "items": [{"productid": 112,"quantity": 1,"unit_price": 17.31 },{"productid": 111,"quantity": 1,"unit_price": 10.18 }] }
+{"id": 150000532, "customerid": 2, "time": "2023-01-29T22:09:05.237Z", "items": [{"productid": 167,"quantity": 2,"unit_price":  6.56 }] }
+{"id": 150000555, "customerid": 12, "time": "2023-01-30T01:27:32.242Z", "items": [{"productid": 73,"quantity": 1,"unit_price":  7.94 },{"productid": 70,"quantity": 1,"unit_price": 10.76 ,"discount":  2.68 }] }
+{"id": 150000543, "customerid": 8, "time": "2023-01-30T01:36:48.913Z", "items": [{"productid": 61,"quantity": 1,"unit_price": 19.00 }] }
+{"id": 150000554, "customerid": 8, "time": "2023-01-30T04:17:02.173Z", "items": [{"productid": 143,"quantity": 1,"unit_price": 10.93 ,"discount":  1.05 }] }
+{"id": 150000556, "customerid": 20, "time": "2023-01-30T06:19:39.770Z", "items": [{"productid": 32,"quantity": 1,"unit_price":  9.82 }] }
+{"id": 150000552, "customerid": 17, "time": "2023-01-30T08:07:23.809Z", "items": [{"productid": 110,"quantity": 1,"unit_price":  5.64 },{"productid": 14,"quantity": 1,"unit_price":  5.99 }] }
+{"id": 150000546, "customerid": 10, "time": "2023-01-30T08:33:53.319Z", "items": [{"productid": 199,"quantity": 1,"unit_price": 11.47 }] }
+{"id": 150000540, "customerid": 26, "time": "2023-01-30T09:11:14.588Z", "items": [{"productid": 108,"quantity": 1,"unit_price": 33.60 }] }
+{"id": 150000553, "customerid": 14, "time": "2023-01-30T09:19:54.769Z", "items": [{"productid": 58,"quantity": 1,"unit_price": 10.39 }] }
+{"id": 150000551, "customerid": 2, "time": "2023-01-30T09:58:31.794Z", "items": [{"productid": 160,"quantity": 2,"unit_price": 13.37 }] }
+{"id": 150000544, "customerid": 24, "time": "2023-01-30T10:01:32.460Z", "items": [{"productid": 47,"quantity": 1,"unit_price": 12.30 }] }
+{"id": 150000547, "customerid": 21, "time": "2023-01-30T11:59:57.188Z", "items": [{"productid": 118,"quantity": 1,"unit_price": 12.95 ,"discount":  5.44 }] }
+{"id": 150000548, "customerid": 30, "time": "2023-01-30T14:50:47.818Z", "items": [{"productid": 5,"quantity": 3,"unit_price":  5.43 ,"discount":  2.50 }] }
+{"id": 150000542, "customerid": 13, "time": "2023-01-30T15:44:55.855Z", "items": [{"productid": 31,"quantity": 2,"unit_price": 52.53 }] }
+{"id": 150000549, "customerid": 5, "time": "2023-01-30T16:15:24.947Z", "items": [{"productid": 190,"quantity": 1,"unit_price":  9.81 }] }
+{"id": 150000541, "customerid": 4, "time": "2023-01-30T16:52:22.847Z", "items": [{"productid": 171,"quantity": 1,"unit_price": 19.89 ,"discount":  2.46 }] }
+{"id": 150000550, "customerid": 22, "time": "2023-01-30T19:19:26.833Z", "items": [{"productid": 72,"quantity": 2,"unit_price": 11.75 ,"discount":  3.96 }] }
+{"id": 150000545, "customerid": 19, "time": "2023-01-30T22:09:33.553Z", "items": [{"productid": 147,"quantity": 1,"unit_price": 12.21 }] }
+{"id": 150000573, "customerid": 9, "time": "2023-01-30T22:27:13.224Z", "items": [{"productid": 5,"quantity": 1,"unit_price":  5.43 }] }
+{"id": 150000574, "customerid": 17, "time": "2023-01-30T22:47:18.880Z", "items": [{"productid": 46,"quantity": 1,"unit_price":  6.31 ,"discount":  1.20 },{"productid": 140,"quantity": 1,"unit_price": 25.83 }] }
+{"id": 150000564, "customerid": 26, "time": "2023-01-31T00:09:41.974Z", "items": [{"productid": 44,"quantity": 2,"unit_price": 20.42 ,"discount": 10.34 }] }
+{"id": 150000561, "customerid": 18, "time": "2023-01-31T00:59:55.093Z", "items": [{"productid": 148,"quantity": 1,"unit_price": 20.75 },{"productid": 94,"quantity": 1,"unit_price":  5.03 }] }
+{"id": 150000562, "customerid": 26, "time": "2023-01-31T01:32:54.396Z", "items": [{"productid": 55,"quantity": 1,"unit_price": 12.22 }] }
+{"id": 150000563, "customerid": 29, "time": "2023-01-31T02:35:38.649Z", "items": [{"productid": 184,"quantity": 1,"unit_price":  8.47 }] }
+{"id": 150000570, "customerid": 30, "time": "2023-01-31T04:38:03.460Z", "items": [{"productid": 190,"quantity": 1,"unit_price":  9.81 }] }
+{"id": 150000567, "customerid": 15, "time": "2023-01-31T05:14:02.911Z", "items": [{"productid": 137,"quantity": 2,"unit_price": 51.89 }] }
+{"id": 150000571, "customerid": 28, "time": "2023-01-31T06:33:26.416Z", "items": [{"productid": 146,"quantity": 1,"unit_price": 10.96 ,"discount":  3.29 }] }
+{"id": 150000576, "customerid": 1, "time": "2023-01-31T07:07:16.835Z", "items": [{"productid": 191,"quantity": 2,"unit_price":  8.27 }] }
+{"id": 150000572, "customerid": 3, "time": "2023-01-31T09:19:30.234Z", "items": [{"productid": 61,"quantity": 1,"unit_price": 19.00 }] }
+{"id": 150000575, "customerid": 19, "time": "2023-01-31T09:24:32.240Z", "items": [{"productid": 88,"quantity": 3,"unit_price": 11.12 },{"productid": 113,"quantity": 1,"unit_price": 38.70 ,"discount": 14.69 }] }
+{"id": 150000577, "customerid": 27, "time": "2023-01-31T10:26:54.096Z", "items": [{"productid": 4,"quantity": 2,"unit_price":  8.01 }] }
+{"id": 150000559, "customerid": 5, "time": "2023-01-31T15:18:15.522Z", "items": [{"productid": 80,"quantity": 1,"unit_price": 19.75 }] }
+{"id": 150000569, "customerid": 3, "time": "2023-01-31T15:34:29.323Z", "items": [{"productid": 50,"quantity": 1,"unit_price": 10.69 },{"productid": 88,"quantity": 1,"unit_price": 11.12 ,"discount":  1.19 }] }
+{"id": 150000560, "customerid": 21, "time": "2023-01-31T15:59:45.129Z", "items": [{"productid": 97,"quantity": 1,"unit_price": 14.48 }] }
+{"id": 150000568, "customerid": 20, "time": "2023-01-31T17:40:59.857Z", "items": [{"productid": 96,"quantity": 1,"unit_price":  8.52 ,"discount":  3.94 },{"productid": 45,"quantity": 1,"unit_price": 39.76 }] }
+{"id": 150000565, "customerid": 23, "time": "2023-01-31T19:13:06.074Z", "items": [{"productid": 159,"quantity": 1,"unit_price":  7.86 }] }
+{"id": 150000557, "customerid": 13, "time": "2023-01-31T19:47:56.735Z", "items": [{"productid": 74,"quantity": 1,"unit_price": 12.98 }] }
+{"id": 150000558, "customerid": 27, "time": "2023-01-31T21:39:28.948Z", "items": [{"productid": 129,"quantity": 1,"unit_price": 20.60 }] }
+{"id": 150000566, "customerid": 26, "time": "2023-01-31T21:46:00.479Z", "items": [{"productid": 45,"quantity": 1,"unit_price": 39.76 }] }
+{"id": 150000587, "customerid": 12, "time": "2023-01-31T23:32:14.337Z", "items": [{"productid": 117,"quantity": 2,"unit_price": 35.05 ,"discount": 12.30 },{"productid": 203,"quantity": 1,"unit_price":  6.18 }] }
+{"id": 150000580, "customerid": 24, "time": "2023-02-01T00:39:34.192Z", "items": [{"productid": 177,"quantity": 1,"unit_price":  8.70 }] }
+{"id": 150000578, "customerid": 2, "time": "2023-02-01T02:48:40.788Z", "items": [{"productid": 104,"quantity": 3,"unit_price": 44.08 ,"discount": 61.19 }] }
+{"id": 150000581, "customerid": 4, "time": "2023-02-01T08:52:00.046Z", "items": [{"productid": 127,"quantity": 1,"unit_price": 20.99 }] }
+{"id": 150000583, "customerid": 4, "time": "2023-02-01T11:00:32.731Z", "items": [{"productid": 187,"quantity": 2,"unit_price": 15.75 }] }
+{"id": 150000584, "customerid": 19, "time": "2023-02-01T11:39:34.536Z", "items": [{"productid": 79,"quantity": 1,"unit_price": 11.62 }] }
+{"id": 150000582, "customerid": 19, "time": "2023-02-01T18:26:43.785Z", "items": [{"productid": 98,"quantity": 1,"unit_price": 32.37 }] }
+{"id": 150000586, "customerid": 4, "time": "2023-02-01T19:42:31.077Z", "items": [{"productid": 67,"quantity": 1,"unit_price":  8.28 }] }
+{"id": 150000579, "customerid": 21, "time": "2023-02-01T20:28:41.477Z", "items": [{"productid": 24,"quantity": 1,"unit_price":  5.02 }] }
+{"id": 150000585, "customerid": 24, "time": "2023-02-01T20:34:32.839Z", "items": [{"productid": 56,"quantity": 1,"unit_price":  5.47 }] }
+{"id": 150000591, "customerid": 25, "time": "2023-02-01T22:32:14.368Z", "items": [{"productid": 205,"quantity": 2,"unit_price":  8.00 ,"discount":  1.95 }] }
+{"id": 150000592, "customerid": 4, "time": "2023-02-01T22:54:10.989Z", "items": [{"productid": 157,"quantity": 1,"unit_price": 13.61 }] }
+{"id": 150000612, "customerid": 23, "time": "2023-02-01T23:22:54.303Z", "items": [{"productid": 127,"quantity": 1,"unit_price": 20.99 }] }
+{"id": 150000602, "customerid": 19, "time": "2023-02-02T02:02:21.896Z", "items": [{"productid": 62,"quantity": 1,"unit_price": 42.47 ,"discount": 11.12 }] }
+{"id": 150000600, "customerid": 21, "time": "2023-02-02T02:17:18.585Z", "items": [{"productid": 32,"quantity": 1,"unit_price":  9.82 }] }
+{"id": 150000611, "customerid": 7, "time": "2023-02-02T02:26:00.709Z", "items": [{"productid": 152,"quantity": 1,"unit_price": 11.28 }] }
+{"id": 150000617, "customerid": 1, "time": "2023-02-02T04:51:00.894Z", "items": [{"productid": 49,"quantity": 1,"unit_price":  7.62 ,"discount":  3.69 }] }
+{"id": 150000590, "customerid": 17, "time": "2023-02-02T05:19:08.648Z", "items": [{"productid": 80,"quantity": 2,"unit_price": 19.75 },{"productid": 60,"quantity": 1,"unit_price": 11.18 }] }
+{"id": 150000607, "customerid": 23, "time": "2023-02-02T05:27:14.251Z", "items": [{"productid": 101,"quantity": 1,"unit_price": 35.01 },{"productid": 194,"quantity": 1,"unit_price":  6.77 }] }
+{"id": 150000594, "customerid": 12, "time": "2023-02-02T05:44:29.822Z", "items": [{"productid": 65,"quantity": 2,"unit_price": 10.28 }] }
+{"id": 150000620, "customerid": 19, "time": "2023-02-02T05:47:24.642Z", "items": [{"productid": 81,"quantity": 3,"unit_price": 44.14 ,"discount": 19.80 }] }
+{"id": 150000614, "customerid": 13, "time": "2023-02-02T06:11:22.255Z", "items": [{"productid": 47,"quantity": 1,"unit_price": 12.30 ,"discount":  3.29 }] }
+{"id": 150000619, "customerid": 8, "time": "2023-02-02T06:26:58.717Z", "items": [{"productid": 57,"quantity": 2,"unit_price":  6.11 ,"discount":  3.01 }] }
+{"id": 150000610, "customerid": 7, "time": "2023-02-02T07:42:00.543Z", "items": [{"productid": 81,"quantity": 1,"unit_price": 44.14 ,"discount":  9.36 }] }
+{"id": 150000603, "customerid": 11, "time": "2023-02-02T08:16:30.046Z", "items": [{"productid": 57,"quantity": 2,"unit_price":  6.11 }] }
+{"id": 150000598, "customerid": 9, "time": "2023-02-02T08:52:06.279Z", "items": [{"productid": 43,"quantity": 1,"unit_price":  9.13 },{"productid": 80,"quantity": 2,"unit_price": 19.75 }] }
+{"id": 150000601, "customerid": 6, "time": "2023-02-02T11:31:42.780Z", "items": [{"productid": 39,"quantity": 2,"unit_price": 12.38 }] }
+{"id": 150000596, "customerid": 19, "time": "2023-02-02T13:21:23.870Z", "items": [{"productid": 11,"quantity": 1,"unit_price": 12.08 ,"discount":  5.32 }] }
+{"id": 150000616, "customerid": 4, "time": "2023-02-02T15:14:57.631Z", "items": [{"productid": 68,"quantity": 2,"unit_price":  7.02 }] }
+{"id": 150000606, "customerid": 16, "time": "2023-02-02T15:41:08.427Z", "items": [{"productid": 30,"quantity": 1,"unit_price": 26.98 ,"discount": 12.57 }] }
+{"id": 150000605, "customerid": 8, "time": "2023-02-02T16:10:52.465Z", "items": [{"productid": 76,"quantity": 1,"unit_price": 49.32 ,"discount":  2.65 }] }
+{"id": 150000604, "customerid": 21, "time": "2023-02-02T16:24:17.739Z", "items": [{"productid": 170,"quantity": 1,"unit_price":  8.90 ,"discount":  0.86 }] }
+{"id": 150000588, "customerid": 26, "time": "2023-02-02T16:35:30.886Z", "items": [{"productid": 105,"quantity": 1,"unit_price": 10.44 ,"discount":  3.77 }] }
+{"id": 150000593, "customerid": 30, "time": "2023-02-02T16:38:53.492Z", "items": [{"productid": 174,"quantity": 2,"unit_price": 10.71 },{"productid": 69,"quantity": 1,"unit_price":  8.65 }] }
+{"id": 150000608, "customerid": 29, "time": "2023-02-02T18:25:29.157Z", "items": [{"productid": 187,"quantity": 1,"unit_price": 15.75 },{"productid": 23,"quantity": 1,"unit_price":  8.87 }] }
+{"id": 150000595, "customerid": 15, "time": "2023-02-02T18:27:09.385Z", "items": [{"productid": 102,"quantity": 2,"unit_price": 11.60 ,"discount": 11.05 }] }
+{"id": 150000613, "customerid": 23, "time": "2023-02-02T18:36:34.296Z", "items": [{"productid": 71,"quantity": 1,"unit_price": 11.90 }] }
+{"id": 150000589, "customerid": 22, "time": "2023-02-02T19:13:49.884Z", "items": [{"productid": 166,"quantity": 1,"unit_price":  6.59 },{"productid": 108,"quantity": 1,"unit_price": 33.60 ,"discount": 16.12 }] }
+{"id": 150000599, "customerid": 4, "time": "2023-02-02T19:18:19.183Z", "items": [{"productid": 16,"quantity": 1,"unit_price": 18.64 ,"discount":  5.91 }] }
+{"id": 150000597, "customerid": 19, "time": "2023-02-02T20:50:35.270Z", "items": [{"productid": 109,"quantity": 1,"unit_price": 10.64 }] }
+{"id": 150000609, "customerid": 20, "time": "2023-02-02T21:25:38.369Z", "items": [{"productid": 178,"quantity": 2,"unit_price":  6.11 ,"discount":  4.23 }] }
+{"id": 150000618, "customerid": 20, "time": "2023-02-02T22:03:31.459Z", "items": [{"productid": 27,"quantity": 1,"unit_price":  5.49 ,"discount":  2.48 }] }
+{"id": 150000615, "customerid": 21, "time": "2023-02-02T22:12:10.045Z", "items": [{"productid": 130,"quantity": 2,"unit_price": 10.02 }] }
+{"id": 150000628, "customerid": 19, "time": "2023-02-02T22:53:42.588Z", "items": [{"productid": 154,"quantity": 1,"unit_price": 42.85 }] }
+{"id": 150000626, "customerid": 8, "time": "2023-02-02T23:43:01.696Z", "items": [{"productid": 173,"quantity": 1,"unit_price": 20.52 ,"discount":  8.29 }] }
+{"id": 150000624, "customerid": 5, "time": "2023-02-02T23:55:12.218Z", "items": [{"productid": 141,"quantity": 2,"unit_price":  6.36 }] }
+{"id": 150000622, "customerid": 24, "time": "2023-02-03T01:28:55.343Z", "items": [{"productid": 117,"quantity": 1,"unit_price": 35.05 }] }
+{"id": 150000621, "customerid": 11, "time": "2023-02-03T03:55:37.131Z", "items": [{"productid": 174,"quantity": 1,"unit_price": 10.71 }] }
+{"id": 150000634, "customerid": 6, "time": "2023-02-03T04:32:05.307Z", "items": [{"productid": 26,"quantity": 2,"unit_price": 19.08 }] }
+{"id": 150000633, "customerid": 7, "time": "2023-02-03T06:38:04.943Z", "items": [{"productid": 194,"quantity": 1,"unit_price":  6.77 ,"discount":  1.68 }] }
+{"id": 150000629, "customerid": 5, "time": "2023-02-03T08:09:51.619Z", "items": [{"productid": 188,"quantity": 1,"unit_price": 35.21 ,"discount":  4.65 }] }
+{"id": 150000625, "customerid": 13, "time": "2023-02-03T09:06:26.290Z", "items": [{"productid": 44,"quantity": 1,"unit_price": 20.42 }] }
+{"id": 150000623, "customerid": 28, "time": "2023-02-03T11:24:54.094Z", "items": [{"productid": 25,"quantity": 1,"unit_price":  8.54 }] }
+{"id": 150000635, "customerid": 29, "time": "2023-02-03T12:29:20.776Z", "items": [{"productid": 117,"quantity": 1,"unit_price": 35.05 ,"discount":  2.75 },{"productid": 109,"quantity": 1,"unit_price": 10.64 }] }
+{"id": 150000632, "customerid": 6, "time": "2023-02-03T16:01:23.142Z", "items": [{"productid": 194,"quantity": 1,"unit_price":  6.77 ,"discount":  2.38 }] }
+{"id": 150000627, "customerid": 10, "time": "2023-02-03T16:13:57.761Z", "items": [{"productid": 92,"quantity": 1,"unit_price": 30.18 ,"discount": 13.97 },{"productid": 39,"quantity": 1,"unit_price": 12.38 }] }
+{"id": 150000630, "customerid": 20, "time": "2023-02-03T20:35:15.766Z", "items": [{"productid": 136,"quantity": 1,"unit_price": 26.65 ,"discount":  6.25 }] }
+{"id": 150000631, "customerid": 22, "time": "2023-02-03T22:11:52.982Z", "items": [{"productid": 90,"quantity": 1,"unit_price":  7.94 ,"discount":  1.36 }] }
+{"id": 150000640, "customerid": 21, "time": "2023-02-03T22:23:15.136Z", "items": [{"productid": 143,"quantity": 2,"unit_price": 10.93 ,"discount":  4.05 },{"productid": 140,"quantity": 1,"unit_price": 25.83 ,"discount":  7.00 }] }
+{"id": 150000652, "customerid": 27, "time": "2023-02-03T22:24:48.002Z", "items": [{"productid": 180,"quantity": 1,"unit_price": 23.20 },{"productid": 83,"quantity": 1,"unit_price":  9.09 ,"discount":  1.16 }] }
+{"id": 150000655, "customerid": 26, "time": "2023-02-04T01:34:32.003Z", "items": [{"productid": 162,"quantity": 1,"unit_price":  5.19 }] }
+{"id": 150000642, "customerid": 13, "time": "2023-02-04T02:08:03.821Z", "items": [{"productid": 27,"quantity": 1,"unit_price":  5.49 ,"discount":  2.59 }] }
+{"id": 150000651, "customerid": 28, "time": "2023-02-04T02:53:23.485Z", "items": [{"productid": 192,"quantity": 2,"unit_price": 14.07 }] }
+{"id": 150000639, "customerid": 22, "time": "2023-02-04T03:08:42.015Z", "items": [{"productid": 55,"quantity": 1,"unit_price": 12.22 },{"productid": 70,"quantity": 1,"unit_price": 10.76 ,"discount":  3.85 }] }
+{"id": 150000646, "customerid": 14, "time": "2023-02-04T05:06:05.755Z", "items": [{"productid": 119,"quantity": 2,"unit_price":  6.36 }] }
+{"id": 150000653, "customerid": 27, "time": "2023-02-04T05:24:39Z", "items": [{"productid": 199,"quantity": 1,"unit_price": 11.47 }] }
+{"id": 150000648, "customerid": 17, "time": "2023-02-04T06:31:52.831Z", "items": [{"productid": 71,"quantity": 1,"unit_price": 11.90 }] }
+{"id": 150000658, "customerid": 1, "time": "2023-02-04T07:38:14.461Z", "items": [{"productid": 95,"quantity": 1,"unit_price":  8.15 ,"discount":  1.15 }] }
+{"id": 150000641, "customerid": 3, "time": "2023-02-04T08:51:48.947Z", "items": [{"productid": 193,"quantity": 2,"unit_price": 31.44 }] }
+{"id": 150000649, "customerid": 24, "time": "2023-02-04T09:41:25.270Z", "items": [{"productid": 39,"quantity": 1,"unit_price": 12.38 }] }
+{"id": 150000636, "customerid": 10, "time": "2023-02-04T10:47:26.658Z", "items": [{"productid": 31,"quantity": 1,"unit_price": 52.53 }] }
+{"id": 150000638, "customerid": 5, "time": "2023-02-04T11:00:42.839Z", "items": [{"productid": 195,"quantity": 2,"unit_price": 11.38 ,"discount":  5.39 }] }
+{"id": 150000637, "customerid": 13, "time": "2023-02-04T11:48:40.860Z", "items": [{"productid": 36,"quantity": 1,"unit_price":  7.61 ,"discount":  3.65 },{"productid": 111,"quantity": 1,"unit_price": 10.18 }] }
+{"id": 150000657, "customerid": 13, "time": "2023-02-04T15:43:54.728Z", "items": [{"productid": 71,"quantity": 1,"unit_price": 11.90 }] }
+{"id": 150000659, "customerid": 29, "time": "2023-02-04T17:35:07.099Z", "items": [{"productid": 77,"quantity": 1,"unit_price": 96.05 }] }
+{"id": 150000654, "customerid": 30, "time": "2023-02-04T17:36:27.634Z", "items": [{"productid": 18,"quantity": 1,"unit_price": 10.01 }] }
+{"id": 150000647, "customerid": 6, "time": "2023-02-04T19:11:04.564Z", "items": [{"productid": 90,"quantity": 1,"unit_price":  7.94 ,"discount":  1.33 }] }
+{"id": 150000656, "customerid": 13, "time": "2023-02-04T19:28:46.297Z", "items": [{"productid": 134,"quantity": 2,"unit_price":  7.01 }] }
+{"id": 150000643, "customerid": 25, "time": "2023-02-04T20:00:40.652Z", "items": [{"productid": 149,"quantity": 1,"unit_price": 46.38 }] }
+{"id": 150000650, "customerid": 21, "time": "2023-02-04T20:45:12.132Z", "items": [{"productid": 155,"quantity": 1,"unit_price": 83.44 ,"discount":  8.82 },{"productid": 36,"quantity": 1,"unit_price":  7.61 ,"discount":  1.46 }] }
+{"id": 150000644, "customerid": 29, "time": "2023-02-04T20:50:13.201Z", "items": [{"productid": 128,"quantity": 1,"unit_price": 12.12 ,"discount":  2.40 }] }
+{"id": 150000645, "customerid": 23, "time": "2023-02-04T21:45:49.262Z", "items": [{"productid": 202,"quantity": 2,"unit_price": 14.70 }] }
+{"id": 150000662, "customerid": 16, "time": "2023-02-04T22:34:20.767Z", "items": [{"productid": 98,"quantity": 2,"unit_price": 32.37 }] }
+{"id": 150000666, "customerid": 28, "time": "2023-02-05T00:14:54.413Z", "items": [{"productid": 145,"quantity": 2,"unit_price": 41.55 }] }
+{"id": 150000675, "customerid": 26, "time": "2023-02-05T05:20:04.091Z", "items": [{"productid": 153,"quantity": 1,"unit_price": 19.17 ,"discount":  4.30 }] }
+{"id": 150000664, "customerid": 14, "time": "2023-02-05T07:16:58.922Z", "items": [{"productid": 198,"quantity": 1,"unit_price":  6.75 ,"discount":  3.17 }] }
+{"id": 150000667, "customerid": 17, "time": "2023-02-05T09:40:24.602Z", "items": [{"productid": 83,"quantity": 1,"unit_price":  9.09 }] }
+{"id": 150000673, "customerid": 19, "time": "2023-02-05T10:29:49.111Z", "items": [{"productid": 58,"quantity": 3,"unit_price": 10.39 }] }
+{"id": 150000670, "customerid": 13, "time": "2023-02-05T11:58:09.925Z", "items": [{"productid": 53,"quantity": 1,"unit_price": 12.62 }] }
+{"id": 150000660, "customerid": 22, "time": "2023-02-05T13:05:24.814Z", "items": [{"productid": 152,"quantity": 1,"unit_price": 11.28 ,"discount":  2.88 }] }
+{"id": 150000668, "customerid": 12, "time": "2023-02-05T15:19:15.867Z", "items": [{"productid": 178,"quantity": 2,"unit_price":  6.11 }] }
+{"id": 150000663, "customerid": 4, "time": "2023-02-05T15:29:39.600Z", "items": [{"productid": 106,"quantity": 2,"unit_price":  8.84 ,"discount":  4.69 }] }
+{"id": 150000671, "customerid": 28, "time": "2023-02-05T16:37:41.536Z", "items": [{"productid": 61,"quantity": 1,"unit_price": 19.00 ,"discount":  7.90 }] }
+{"id": 150000661, "customerid": 27, "time": "2023-02-05T17:17:28.986Z", "items": [{"productid": 110,"quantity": 1,"unit_price":  5.64 }] }
+{"id": 150000669, "customerid": 12, "time": "2023-02-05T18:00:00.162Z", "items": [{"productid": 45,"quantity": 2,"unit_price": 39.76 }] }
+{"id": 150000674, "customerid": 12, "time": "2023-02-05T20:22:50.178Z", "items": [{"productid": 22,"quantity": 1,"unit_price": 19.89 ,"discount":  8.42 },{"productid": 146,"quantity": 1,"unit_price": 10.96 }] }
+{"id": 150000672, "customerid": 15, "time": "2023-02-05T20:59:39.940Z", "items": [{"productid": 43,"quantity": 1,"unit_price":  9.13 }] }
+{"id": 150000665, "customerid": 21, "time": "2023-02-05T22:04:04.159Z", "items": [{"productid": 122,"quantity": 2,"unit_price": 13.31 ,"discount": 12.50 }] }
+{"id": 150000692, "customerid": 24, "time": "2023-02-05T23:14:55.495Z", "items": [{"productid": 191,"quantity": 1,"unit_price":  8.27 },{"productid": 123,"quantity": 1,"unit_price": 29.75 ,"discount":  8.15 }] }
+{"id": 150000686, "customerid": 1, "time": "2023-02-06T00:43:25.387Z", "items": [{"productid": 148,"quantity": 1,"unit_price": 20.75 },{"productid": 110,"quantity": 2,"unit_price":  5.64 }] }
+{"id": 150000687, "customerid": 13, "time": "2023-02-06T02:32:12.392Z", "items": [{"productid": 174,"quantity": 1,"unit_price": 10.71 }] }
+{"id": 150000682, "customerid": 8, "time": "2023-02-06T04:39:26.314Z", "items": [{"productid": 174,"quantity": 1,"unit_price": 10.71 }] }
+{"id": 150000697, "customerid": 6, "time": "2023-02-06T05:21:03.812Z", "items": [{"productid": 156,"quantity": 1,"unit_price":  8.00 },{"productid": 20,"quantity": 2,"unit_price":  5.24 }] }
+{"id": 150000691, "customerid": 20, "time": "2023-02-06T06:46:35.341Z", "items": [{"productid": 71,"quantity": 1,"unit_price": 11.90 }] }
+{"id": 150000683, "customerid": 24, "time": "2023-02-06T09:18:38.418Z", "items": [{"productid": 13,"quantity": 2,"unit_price":  9.69 }] }
+{"id": 150000685, "customerid": 13, "time": "2023-02-06T09:26:01.293Z", "items": [{"productid": 3,"quantity": 2,"unit_price": 26.39 },{"productid": 113,"quantity": 1,"unit_price": 38.70 ,"discount":  6.31 }] }
+{"id": 150000696, "customerid": 20, "time": "2023-02-06T10:47:43.164Z", "items": [{"productid": 82,"quantity": 1,"unit_price": 85.96 ,"discount": 22.15 }] }
+{"id": 150000681, "customerid": 30, "time": "2023-02-06T11:12:35.238Z", "items": [{"productid": 142,"quantity": 1,"unit_price":  6.33 },{"productid": 19,"quantity": 1,"unit_price": 11.78 }] }
+{"id": 150000688, "customerid": 28, "time": "2023-02-06T11:55:34.384Z", "items": [{"productid": 21,"quantity": 3,"unit_price":  8.90 ,"discount": 11.04 },{"productid": 155,"quantity": 2,"unit_price": 83.44 }] }
+{"id": 150000698, "customerid": 25, "time": "2023-02-06T13:31:40.806Z", "items": [{"productid": 91,"quantity": 2,"unit_price": 13.50 }] }
+{"id": 150000677, "customerid": 11, "time": "2023-02-06T13:34:27.290Z", "items": [{"productid": 66,"quantity": 2,"unit_price":  5.62 }] }
+{"id": 150000693, "customerid": 24, "time": "2023-02-06T14:04:16.156Z", "items": [{"productid": 138,"quantity": 2,"unit_price":  6.80 }] }
+{"id": 150000678, "customerid": 4, "time": "2023-02-06T15:25:44.067Z", "items": [{"productid": 163,"quantity": 1,"unit_price": 11.01 }] }
+{"id": 150000694, "customerid": 30, "time": "2023-02-06T16:27:37.198Z", "items": [{"productid": 105,"quantity": 2,"unit_price": 10.44 ,"discount":  6.82 },{"productid": 201,"quantity": 1,"unit_price":  8.65 ,"discount":  1.66 }] }
+{"id": 150000689, "customerid": 13, "time": "2023-02-06T16:34:25.717Z", "items": [{"productid": 190,"quantity": 2,"unit_price":  9.81 }] }
+{"id": 150000676, "customerid": 21, "time": "2023-02-06T17:46:28.337Z", "items": [{"productid": 61,"quantity": 1,"unit_price": 19.00 ,"discount":  6.76 }] }
+{"id": 150000700, "customerid": 29, "time": "2023-02-06T18:05:36.363Z", "items": [{"productid": 130,"quantity": 1,"unit_price": 10.02 }] }
+{"id": 150000684, "customerid": 3, "time": "2023-02-06T19:09:16.986Z", "items": [{"productid": 122,"quantity": 2,"unit_price": 13.31 }] }
+{"id": 150000699, "customerid": 11, "time": "2023-02-06T19:35:40.972Z", "items": [{"productid": 81,"quantity": 1,"unit_price": 44.14 }] }
+{"id": 150000680, "customerid": 10, "time": "2023-02-06T19:56:37.154Z", "items": [{"productid": 152,"quantity": 1,"unit_price": 11.28 }] }
+{"id": 150000695, "customerid": 5, "time": "2023-02-06T20:00:15.224Z", "items": [{"productid": 105,"quantity": 1,"unit_price": 10.44 }] }
+{"id": 150000679, "customerid": 30, "time": "2023-02-06T21:45:16.516Z", "items": [{"productid": 11,"quantity": 2,"unit_price": 12.08 }] }
+{"id": 150000690, "customerid": 17, "time": "2023-02-06T21:58:14.149Z", "items": [{"productid": 161,"quantity": 1,"unit_price": 29.88 }] }
+{"id": 150000711, "customerid": 12, "time": "2023-02-06T22:44:26.694Z", "items": [{"productid": 109,"quantity": 3,"unit_price": 10.64 }] }
+{"id": 150000719, "customerid": 18, "time": "2023-02-06T22:59:07.855Z", "items": [{"productid": 39,"quantity": 1,"unit_price": 12.38 }] }
+{"id": 150000701, "customerid": 16, "time": "2023-02-07T00:50:08.442Z", "items": [{"productid": 89,"quantity": 2,"unit_price":  7.10 ,"discount":  1.67 }] }
+{"id": 150000728, "customerid": 7, "time": "2023-02-07T00:51:15.419Z", "items": [{"productid": 200,"quantity": 1,"unit_price": 25.64 },{"productid": 154,"quantity": 2,"unit_price": 42.85 }] }
+{"id": 150000726, "customerid": 22, "time": "2023-02-07T01:21:16.069Z", "items": [{"productid": 37,"quantity": 1,"unit_price": 12.94 }] }
+{"id": 150000705, "customerid": 22, "time": "2023-02-07T03:24:15.019Z", "items": [{"productid": 135,"quantity": 1,"unit_price": 11.92 ,"discount":  0.81 }] }
+{"id": 150000724, "customerid": 2, "time": "2023-02-07T03:55:00.446Z", "items": [{"productid": 109,"quantity": 1,"unit_price": 10.64 }] }
+{"id": 150000708, "customerid": 22, "time": "2023-02-07T04:05:28.793Z", "items": [{"productid": 23,"quantity": 1,"unit_price":  8.87 ,"discount":  0.96 },{"productid": 29,"quantity": 1,"unit_price": 12.07 ,"discount":  2.62 }] }
+{"id": 150000709, "customerid": 20, "time": "2023-02-07T04:31:40.837Z", "items": [{"productid": 40,"quantity": 1,"unit_price":  7.91 ,"discount":  2.00 },{"productid": 136,"quantity": 1,"unit_price": 26.65 }] }
+{"id": 150000715, "customerid": 21, "time": "2023-02-07T06:23:38.338Z", "items": [{"productid": 67,"quantity": 2,"unit_price":  8.28 ,"discount":  3.11 },{"productid": 203,"quantity": 2,"unit_price":  6.18 ,"discount":  4.82 }] }
+{"id": 150000725, "customerid": 25, "time": "2023-02-07T06:40:46.121Z", "items": [{"productid": 10,"quantity": 1,"unit_price":  9.53 ,"discount":  4.41 }] }
+{"id": 150000710, "customerid": 14, "time": "2023-02-07T06:44:05.375Z", "items": [{"productid": 94,"quantity": 1,"unit_price":  5.03 }] }
+{"id": 150000713, "customerid": 13, "time": "2023-02-07T07:26:43.296Z", "items": [{"productid": 85,"quantity": 1,"unit_price": 34.56 }] }
+{"id": 150000722, "customerid": 24, "time": "2023-02-07T08:30:30.087Z", "items": [{"productid": 65,"quantity": 1,"unit_price": 10.28 },{"productid": 61,"quantity": 1,"unit_price": 19.00 ,"discount":  7.20 }] }
+{"id": 150000721, "customerid": 22, "time": "2023-02-07T08:35:06.966Z", "items": [{"productid": 95,"quantity": 1,"unit_price":  8.15 }] }
+{"id": 150000717, "customerid": 30, "time": "2023-02-07T09:04:34.240Z", "items": [{"productid": 167,"quantity": 2,"unit_price":  6.56 }] }
+{"id": 150000703, "customerid": 13, "time": "2023-02-07T12:04:28.507Z", "items": [{"productid": 124,"quantity": 1,"unit_price": 57.94 },{"productid": 199,"quantity": 1,"unit_price": 11.47 ,"discount":  5.29 }] }
+{"id": 150000712, "customerid": 25, "time": "2023-02-07T12:40:31.366Z", "items": [{"productid": 19,"quantity": 1,"unit_price": 11.78 ,"discount":  3.97 },{"productid": 153,"quantity": 2,"unit_price": 19.17 ,"discount":  6.29 }] }
+{"id": 150000720, "customerid": 29, "time": "2023-02-07T13:57:53.902Z", "items": [{"productid": 134,"quantity": 2,"unit_price":  7.01 ,"discount":  4.40 }] }
+{"id": 150000723, "customerid": 30, "time": "2023-02-07T14:13:00.767Z", "items": [{"productid": 159,"quantity": 1,"unit_price":  7.86 }] }
+{"id": 150000704, "customerid": 14, "time": "2023-02-07T15:34:25.560Z", "items": [{"productid": 21,"quantity": 1,"unit_price":  8.90 ,"discount":  2.46 }] }
+{"id": 150000714, "customerid": 13, "time": "2023-02-07T15:52:24.484Z", "items": [{"productid": 125,"quantity": 1,"unit_price":  8.93 }] }
+{"id": 150000702, "customerid": 15, "time": "2023-02-07T16:01:49.016Z", "items": [{"productid": 163,"quantity": 1,"unit_price": 11.01 ,"discount":  1.08 },{"productid": 71,"quantity": 3,"unit_price": 11.90 ,"discount": 10.39 }] }
+{"id": 150000716, "customerid": 9, "time": "2023-02-07T16:40:01.037Z", "items": [{"productid": 193,"quantity": 1,"unit_price": 31.44 }] }
+{"id": 150000727, "customerid": 29, "time": "2023-02-07T16:41:28.959Z", "items": [{"productid": 116,"quantity": 1,"unit_price": 15.68 ,"discount":  7.23 }] }
+{"id": 150000707, "customerid": 25, "time": "2023-02-07T17:29:11.975Z", "items": [{"productid": 124,"quantity": 1,"unit_price": 57.94 ,"discount":  3.59 }] }
+{"id": 150000706, "customerid": 4, "time": "2023-02-07T20:24:06.450Z", "items": [{"productid": 40,"quantity": 1,"unit_price":  7.91 ,"discount":  3.88 }] }
+{"id": 150000718, "customerid": 23, "time": "2023-02-07T21:20:08.591Z", "items": [{"productid": 37,"quantity": 1,"unit_price": 12.94 ,"discount":  1.39 }] }
+{"id": 150000736, "customerid": 17, "time": "2023-02-07T23:13:52.727Z", "items": [{"productid": 8,"quantity": 2,"unit_price":  9.06 ,"discount":  7.59 }] }
+{"id": 150000731, "customerid": 13, "time": "2023-02-08T03:41:14.595Z", "items": [{"productid": 38,"quantity": 3,"unit_price":  6.74 },{"productid": 27,"quantity": 2,"unit_price":  5.49 ,"discount":  2.71 }] }
+{"id": 150000740, "customerid": 17, "time": "2023-02-08T04:31:25.682Z", "items": [{"productid": 14,"quantity": 2,"unit_price":  5.99 }] }
+{"id": 150000732, "customerid": 8, "time": "2023-02-08T06:11:25.413Z", "items": [{"productid": 93,"quantity": 1,"unit_price": 58.77 }] }
+{"id": 150000729, "customerid": 12, "time": "2023-02-08T09:09:59.118Z", "items": [{"productid": 24,"quantity": 2,"unit_price":  5.02 }] }
+{"id": 150000738, "customerid": 13, "time": "2023-02-08T09:19:05.218Z", "items": [{"productid": 105,"quantity": 1,"unit_price": 10.44 }] }
+{"id": 150000739, "customerid": 16, "time": "2023-02-08T09:29:43.466Z", "items": [{"productid": 67,"quantity": 1,"unit_price":  8.28 }] }
+{"id": 150000734, "customerid": 22, "time": "2023-02-08T11:28:17.118Z", "items": [{"productid": 7,"quantity": 2,"unit_price": 12.70 },{"productid": 41,"quantity": 1,"unit_price":  5.31 ,"discount":  0.46 }] }
+{"id": 150000735, "customerid": 18, "time": "2023-02-08T11:47:24.755Z", "items": [{"productid": 130,"quantity": 1,"unit_price": 10.02 ,"discount":  2.07 }] }
+{"id": 150000730, "customerid": 16, "time": "2023-02-08T12:10:43.672Z", "items": [{"productid": 45,"quantity": 1,"unit_price": 39.76 }] }
+{"id": 150000737, "customerid": 4, "time": "2023-02-08T12:39:19.636Z", "items": [{"productid": 82,"quantity": 1,"unit_price": 85.96 ,"discount": 41.08 }] }
+{"id": 150000733, "customerid": 8, "time": "2023-02-08T16:30:08.775Z", "items": [{"productid": 9,"quantity": 1,"unit_price": 15.41 }] }
+{"id": 150000741, "customerid": 11, "time": "2023-02-08T23:04:04.991Z", "items": [{"productid": 88,"quantity": 1,"unit_price": 11.12 },{"productid": 139,"quantity": 1,"unit_price": 11.56 ,"discount":  1.02 }] }
+{"id": 150000743, "customerid": 18, "time": "2023-02-08T23:47:35.280Z", "items": [{"productid": 197,"quantity": 2,"unit_price":  9.22 }] }
+{"id": 150000748, "customerid": 12, "time": "2023-02-09T00:57:05.738Z", "items": [{"productid": 115,"quantity": 1,"unit_price":  9.22 }] }
+{"id": 150000757, "customerid": 4, "time": "2023-02-09T01:13:27.162Z", "items": [{"productid": 186,"quantity": 1,"unit_price":  9.27 }] }
+{"id": 150000758, "customerid": 8, "time": "2023-02-09T01:52:22.063Z", "items": [{"productid": 46,"quantity": 1,"unit_price":  6.31 ,"discount":  3.14 }] }
+{"id": 150000756, "customerid": 10, "time": "2023-02-09T02:37:17.473Z", "items": [{"productid": 89,"quantity": 2,"unit_price":  7.10 }] }
+{"id": 150000762, "customerid": 15, "time": "2023-02-09T03:24:36.574Z", "items": [{"productid": 174,"quantity": 1,"unit_price": 10.71 ,"discount":  4.25 },{"productid": 157,"quantity": 2,"unit_price": 13.61 }] }
+{"id": 150000763, "customerid": 4, "time": "2023-02-09T03:42:45.889Z", "items": [{"productid": 119,"quantity": 1,"unit_price":  6.36 ,"discount":  3.02 }] }
+{"id": 150000749, "customerid": 5, "time": "2023-02-09T05:33:14.352Z", "items": [{"productid": 115,"quantity": 1,"unit_price":  9.22 ,"discount":  3.83 }] }
+{"id": 150000761, "customerid": 17, "time": "2023-02-09T07:20:47.039Z", "items": [{"productid": 132,"quantity": 1,"unit_price": 10.21 ,"discount":  1.76 }] }
+{"id": 150000766, "customerid": 10, "time": "2023-02-09T07:46:56.063Z", "items": [{"productid": 158,"quantity": 2,"unit_price": 30.42 }] }
+{"id": 150000760, "customerid": 17, "time": "2023-02-09T10:37:41.960Z", "items": [{"productid": 86,"quantity": 2,"unit_price":  6.10 }] }
+{"id": 150000750, "customerid": 13, "time": "2023-02-09T11:04:35.617Z", "items": [{"productid": 29,"quantity": 3,"unit_price": 12.07 ,"discount":  5.76 }] }
+{"id": 150000754, "customerid": 23, "time": "2023-02-09T12:35:00.974Z", "items": [{"productid": 206,"quantity": 1,"unit_price": 10.29 }] }
+{"id": 150000747, "customerid": 16, "time": "2023-02-09T12:58:27.785Z", "items": [{"productid": 105,"quantity": 1,"unit_price": 10.44 },{"productid": 134,"quantity": 1,"unit_price":  7.01 ,"discount":  0.53 }] }
+{"id": 150000752, "customerid": 4, "time": "2023-02-09T13:07:17.460Z", "items": [{"productid": 115,"quantity": 2,"unit_price":  9.22 }] }
+{"id": 150000765, "customerid": 14, "time": "2023-02-09T13:11:12.246Z", "items": [{"productid": 134,"quantity": 1,"unit_price":  7.01 }] }
+{"id": 150000746, "customerid": 18, "time": "2023-02-09T13:37:05.281Z", "items": [{"productid": 24,"quantity": 1,"unit_price":  5.02 }] }
+{"id": 150000744, "customerid": 16, "time": "2023-02-09T15:54:23.059Z", "items": [{"productid": 120,"quantity": 1,"unit_price": 10.88 }] }
+{"id": 150000751, "customerid": 14, "time": "2023-02-09T18:28:02.790Z", "items": [{"productid": 67,"quantity": 1,"unit_price":  8.28 ,"discount":  1.45 }] }
+{"id": 150000755, "customerid": 16, "time": "2023-02-09T18:59:06.216Z", "items": [{"productid": 203,"quantity": 1,"unit_price":  6.18 ,"discount":  1.12 }] }
+{"id": 150000745, "customerid": 26, "time": "2023-02-09T19:01:26.475Z", "items": [{"productid": 196,"quantity": 1,"unit_price":  8.00 ,"discount":  2.58 }] }
+{"id": 150000742, "customerid": 20, "time": "2023-02-09T19:23:14.626Z", "items": [{"productid": 38,"quantity": 1,"unit_price":  6.74 }] }
+{"id": 150000764, "customerid": 27, "time": "2023-02-09T19:38:39.316Z", "items": [{"productid": 89,"quantity": 1,"unit_price":  7.10 }] }
+{"id": 150000759, "customerid": 19, "time": "2023-02-09T21:59:14.603Z", "items": [{"productid": 104,"quantity": 2,"unit_price": 44.08 }] }
+{"id": 150000753, "customerid": 8, "time": "2023-02-09T22:03:48.644Z", "items": [{"productid": 85,"quantity": 1,"unit_price": 34.56 }] }
+{"id": 150000768, "customerid": 13, "time": "2023-02-10T02:06:17.667Z", "items": [{"productid": 163,"quantity": 1,"unit_price": 11.01 ,"discount":  0.77 }] }
+{"id": 150000776, "customerid": 26, "time": "2023-02-10T03:22:45.232Z", "items": [{"productid": 14,"quantity": 1,"unit_price":  5.99 ,"discount":  1.22 }] }
+{"id": 150000774, "customerid": 28, "time": "2023-02-10T04:31:23.704Z", "items": [{"productid": 73,"quantity": 1,"unit_price":  7.94 ,"discount":  3.86 }] }
+{"id": 150000772, "customerid": 3, "time": "2023-02-10T06:19:29.437Z", "items": [{"productid": 33,"quantity": 1,"unit_price": 16.69 }] }
+{"id": 150000771, "customerid": 1, "time": "2023-02-10T07:23:09.771Z", "items": [{"productid": 108,"quantity": 1,"unit_price": 33.60 ,"discount":  3.39 }] }
+{"id": 150000769, "customerid": 12, "time": "2023-02-10T09:00:04.379Z", "items": [{"productid": 66,"quantity": 2,"unit_price":  5.62 }] }
+{"id": 150000775, "customerid": 22, "time": "2023-02-10T10:15:42.017Z", "items": [{"productid": 16,"quantity": 4,"unit_price": 18.64 }] }
+{"id": 150000773, "customerid": 24, "time": "2023-02-10T12:05:18.190Z", "items": [{"productid": 46,"quantity": 1,"unit_price":  6.31 ,"discount":  2.02 }] }
+{"id": 150000767, "customerid": 1, "time": "2023-02-10T16:10:52.176Z", "items": [{"productid": 206,"quantity": 1,"unit_price": 10.29 }] }
+{"id": 150000777, "customerid": 14, "time": "2023-02-10T19:07:57.077Z", "items": [{"productid": 107,"quantity": 1,"unit_price": 15.03 ,"discount":  6.91 }] }
+{"id": 150000770, "customerid": 16, "time": "2023-02-10T20:53:42.757Z", "items": [{"productid": 155,"quantity": 1,"unit_price": 83.44 }] }
+{"id": 150000794, "customerid": 8, "time": "2023-02-10T22:17:41.307Z", "items": [{"productid": 141,"quantity": 2,"unit_price":  6.36 ,"discount":  4.65 },{"productid": 160,"quantity": 1,"unit_price": 13.37 ,"discount":  3.39 }] }
+{"id": 150000793, "customerid": 22, "time": "2023-02-10T22:50:02.933Z", "items": [{"productid": 178,"quantity": 1,"unit_price":  6.11 }] }
+{"id": 150000778, "customerid": 1, "time": "2023-02-10T23:17:31.303Z", "items": [{"productid": 194,"quantity": 1,"unit_price":  6.77 }] }
+{"id": 150000801, "customerid": 3, "time": "2023-02-11T02:49:54.837Z", "items": [{"productid": 108,"quantity": 2,"unit_price": 33.60 ,"discount": 14.87 }] }
+{"id": 150000798, "customerid": 24, "time": "2023-02-11T04:00:41.407Z", "items": [{"productid": 48,"quantity": 1,"unit_price":  5.45 ,"discount":  2.25 }] }
+{"id": 150000785, "customerid": 23, "time": "2023-02-11T04:51:45.822Z", "items": [{"productid": 37,"quantity": 3,"unit_price": 12.94 ,"discount":  3.09 }] }
+{"id": 150000784, "customerid": 13, "time": "2023-02-11T06:57:29.573Z", "items": [{"productid": 116,"quantity": 1,"unit_price": 15.68 }] }
+{"id": 150000797, "customerid": 11, "time": "2023-02-11T07:29:25.422Z", "items": [{"productid": 125,"quantity": 1,"unit_price":  8.93 }] }
+{"id": 150000781, "customerid": 15, "time": "2023-02-11T08:06:41.648Z", "items": [{"productid": 39,"quantity": 1,"unit_price": 12.38 },{"productid": 64,"quantity": 1,"unit_price": 14.18 ,"discount":  5.03 }] }
+{"id": 150000792, "customerid": 4, "time": "2023-02-11T08:42:20.193Z", "items": [{"productid": 163,"quantity": 1,"unit_price": 11.01 },{"productid": 61,"quantity": 1,"unit_price": 19.00 }] }
+{"id": 150000786, "customerid": 16, "time": "2023-02-11T09:39:55.603Z", "items": [{"productid": 143,"quantity": 1,"unit_price": 10.93 ,"discount":  4.73 },{"productid": 93,"quantity": 2,"unit_price": 58.77 }] }
+{"id": 150000789, "customerid": 3, "time": "2023-02-11T10:23:46.768Z", "items": [{"productid": 31,"quantity": 1,"unit_price": 52.53 },{"productid": 152,"quantity": 1,"unit_price": 11.28 }] }
+{"id": 150000782, "customerid": 17, "time": "2023-02-11T11:22:03.450Z", "items": [{"productid": 40,"quantity": 1,"unit_price":  7.91 },{"productid": 77,"quantity": 2,"unit_price": 96.05 }] }
+{"id": 150000787, "customerid": 10, "time": "2023-02-11T12:17:00.058Z", "items": [{"productid": 65,"quantity": 2,"unit_price": 10.28 ,"discount":  2.85 }] }
+{"id": 150000800, "customerid": 3, "time": "2023-02-11T12:48:05.931Z", "items": [{"productid": 136,"quantity": 1,"unit_price": 26.65 }] }
+{"id": 150000790, "customerid": 3, "time": "2023-02-11T13:13:53.829Z", "items": [{"productid": 172,"quantity": 1,"unit_price": 12.07 }] }
+{"id": 150000796, "customerid": 25, "time": "2023-02-11T13:18:05.810Z", "items": [{"productid": 40,"quantity": 1,"unit_price":  7.91 }] }
+{"id": 150000795, "customerid": 9, "time": "2023-02-11T13:55:02.524Z", "items": [{"productid": 158,"quantity": 2,"unit_price": 30.42 }] }
+{"id": 150000783, "customerid": 20, "time": "2023-02-11T14:13:57.115Z", "items": [{"productid": 151,"quantity": 1,"unit_price":  7.24 }] }
+{"id": 150000799, "customerid": 11, "time": "2023-02-11T16:57:42.749Z", "items": [{"productid": 180,"quantity": 2,"unit_price": 23.20 },{"productid": 138,"quantity": 1,"unit_price":  6.80 }] }
+{"id": 150000779, "customerid": 19, "time": "2023-02-11T19:12:13.588Z", "items": [{"productid": 100,"quantity": 2,"unit_price": 15.66 }] }
+{"id": 150000780, "customerid": 4, "time": "2023-02-11T20:48:44.116Z", "items": [{"productid": 39,"quantity": 1,"unit_price": 12.38 }] }
+{"id": 150000791, "customerid": 14, "time": "2023-02-11T21:13:13.778Z", "items": [{"productid": 182,"quantity": 2,"unit_price":  9.18 ,"discount":  1.82 },{"productid": 143,"quantity": 1,"unit_price": 10.93 }] }
+{"id": 150000788, "customerid": 17, "time": "2023-02-11T21:53:10.607Z", "items": [{"productid": 28,"quantity": 2,"unit_price":  7.10 ,"discount":  6.69 }] }
+{"id": 150000831, "customerid": 22, "time": "2023-02-11T22:59:06.194Z", "items": [{"productid": 171,"quantity": 2,"unit_price": 19.89 ,"discount": 14.72 }] }
+{"id": 150000822, "customerid": 29, "time": "2023-02-11T23:55:00.071Z", "items": [{"productid": 174,"quantity": 1,"unit_price": 10.71 }] }
+{"id": 150000809, "customerid": 4, "time": "2023-02-12T00:33:23.020Z", "items": [{"productid": 69,"quantity": 1,"unit_price":  8.65 }] }
+{"id": 150000805, "customerid": 5, "time": "2023-02-12T00:33:34.121Z", "items": [{"productid": 19,"quantity": 1,"unit_price": 11.78 }] }
+{"id": 150000812, "customerid": 22, "time": "2023-02-12T01:48:03.428Z", "items": [{"productid": 9,"quantity": 2,"unit_price": 15.41 ,"discount":  3.57 },{"productid": 176,"quantity": 2,"unit_price":  7.79 ,"discount":  5.48 }] }
+{"id": 150000825, "customerid": 27, "time": "2023-02-12T02:06:00.910Z", "items": [{"productid": 138,"quantity": 1,"unit_price":  6.80 ,"discount":  1.57 }] }
+{"id": 150000802, "customerid": 1, "time": "2023-02-12T02:21:05.523Z", "items": [{"productid": 182,"quantity": 1,"unit_price":  9.18 },{"productid": 36,"quantity": 1,"unit_price":  7.61 ,"discount":  2.27 }] }
+{"id": 150000816, "customerid": 4, "time": "2023-02-12T02:25:54.531Z", "items": [{"productid": 127,"quantity": 1,"unit_price": 20.99 }] }
+{"id": 150000819, "customerid": 8, "time": "2023-02-12T04:07:46.343Z", "items": [{"productid": 201,"quantity": 2,"unit_price":  8.65 }] }
+{"id": 150000813, "customerid": 29, "time": "2023-02-12T04:18:23.494Z", "items": [{"productid": 163,"quantity": 1,"unit_price": 11.01 ,"discount":  2.15 }] }
+{"id": 150000828, "customerid": 23, "time": "2023-02-12T05:47:03.801Z", "items": [{"productid": 194,"quantity": 2,"unit_price":  6.77 },{"productid": 167,"quantity": 1,"unit_price":  6.56 ,"discount":  2.36 }] }
+{"id": 150000806, "customerid": 16, "time": "2023-02-12T05:54:48.370Z", "items": [{"productid": 59,"quantity": 1,"unit_price": 23.22 ,"discount":  9.14 }] }
+{"id": 150000820, "customerid": 4, "time": "2023-02-12T06:17:20.343Z", "items": [{"productid": 67,"quantity": 1,"unit_price":  8.28 ,"discount":  2.81 }] }
+{"id": 150000814, "customerid": 1, "time": "2023-02-12T06:17:45.033Z", "items": [{"productid": 167,"quantity": 1,"unit_price":  6.56 ,"discount":  2.15 },{"productid": 195,"quantity": 1,"unit_price": 11.38 }] }
+{"id": 150000821, "customerid": 7, "time": "2023-02-12T06:26:13.998Z", "items": [{"productid": 193,"quantity": 1,"unit_price": 31.44 }] }
+{"id": 150000810, "customerid": 16, "time": "2023-02-12T08:51:05.523Z", "items": [{"productid": 87,"quantity": 3,"unit_price": 12.05 ,"discount":  9.31 },{"productid": 84,"quantity": 1,"unit_price": 15.46 ,"discount":  4.92 }] }
+{"id": 150000824, "customerid": 7, "time": "2023-02-12T09:13:50.019Z", "items": [{"productid": 173,"quantity": 2,"unit_price": 20.52 ,"discount":  6.85 }] }
+{"id": 150000833, "customerid": 2, "time": "2023-02-12T11:49:32.602Z", "items": [{"productid": 20,"quantity": 1,"unit_price":  5.24 }] }
+{"id": 150000826, "customerid": 10, "time": "2023-02-12T12:27:18.310Z", "items": [{"productid": 158,"quantity": 2,"unit_price": 30.42 },{"productid": 80,"quantity": 1,"unit_price": 19.75 }] }
+{"id": 150000817, "customerid": 1, "time": "2023-02-12T12:39:15.147Z", "items": [{"productid": 91,"quantity": 1,"unit_price": 13.50 }] }
+{"id": 150000832, "customerid": 29, "time": "2023-02-12T12:50:59.839Z", "items": [{"productid": 194,"quantity": 2,"unit_price":  6.77 ,"discount":  3.41 }] }
+{"id": 150000804, "customerid": 29, "time": "2023-02-12T13:28:14.425Z", "items": [{"productid": 91,"quantity": 2,"unit_price": 13.50 ,"discount":  5.22 }] }
+{"id": 150000807, "customerid": 1, "time": "2023-02-12T14:01:43.702Z", "items": [{"productid": 40,"quantity": 2,"unit_price":  7.91 ,"discount":  6.70 }] }
+{"id": 150000830, "customerid": 17, "time": "2023-02-12T14:22:17.204Z", "items": [{"productid": 5,"quantity": 2,"unit_price":  5.43 }] }
+{"id": 150000827, "customerid": 9, "time": "2023-02-12T15:26:32.709Z", "items": [{"productid": 145,"quantity": 1,"unit_price": 41.55 },{"productid": 54,"quantity": 1,"unit_price": 11.68 }] }
+{"id": 150000803, "customerid": 27, "time": "2023-02-12T16:43:32.742Z", "items": [{"productid": 99,"quantity": 1,"unit_price":  9.21 }] }
+{"id": 150000815, "customerid": 3, "time": "2023-02-12T17:27:55.218Z", "items": [{"productid": 127,"quantity": 1,"unit_price": 20.99 }] }
+{"id": 150000834, "customerid": 7, "time": "2023-02-12T17:47:49.795Z", "items": [{"productid": 59,"quantity": 2,"unit_price": 23.22 },{"productid": 41,"quantity": 2,"unit_price":  5.31 ,"discount":  1.81 }] }
+{"id": 150000829, "customerid": 6, "time": "2023-02-12T18:50:30.245Z", "items": [{"productid": 30,"quantity": 1,"unit_price": 26.98 }] }
+{"id": 150000808, "customerid": 17, "time": "2023-02-12T19:03:53.361Z", "items": [{"productid": 87,"quantity": 1,"unit_price": 12.05 },{"productid": 171,"quantity": 1,"unit_price": 19.89 }] }
+{"id": 150000823, "customerid": 4, "time": "2023-02-12T20:13:51.815Z", "items": [{"productid": 60,"quantity": 2,"unit_price": 11.18 }] }
+{"id": 150000818, "customerid": 3, "time": "2023-02-12T20:54:06.835Z", "items": [{"productid": 138,"quantity": 1,"unit_price":  6.80 }] }
+{"id": 150000811, "customerid": 11, "time": "2023-02-12T21:57:05.388Z", "items": [{"productid": 186,"quantity": 2,"unit_price":  9.27 }] }
+{"id": 150000842, "customerid": 11, "time": "2023-02-12T23:16:58.453Z", "items": [{"productid": 160,"quantity": 2,"unit_price": 13.37 ,"discount":  7.44 }] }
+{"id": 150000839, "customerid": 30, "time": "2023-02-12T23:55:04.067Z", "items": [{"productid": 68,"quantity": 2,"unit_price":  7.02 ,"discount":  5.32 }] }
+{"id": 150000849, "customerid": 16, "time": "2023-02-13T01:49:20.744Z", "items": [{"productid": 126,"quantity": 1,"unit_price": 12.35 ,"discount":  2.82 }] }
+{"id": 150000844, "customerid": 23, "time": "2023-02-13T04:28:38.468Z", "items": [{"productid": 193,"quantity": 1,"unit_price": 31.44 ,"discount":  9.89 }] }
+{"id": 150000845, "customerid": 20, "time": "2023-02-13T06:21:49.246Z", "items": [{"productid": 119,"quantity": 2,"unit_price":  6.36 }] }
+{"id": 150000835, "customerid": 28, "time": "2023-02-13T07:12:37.831Z", "items": [{"productid": 3,"quantity": 2,"unit_price": 26.39 }] }
+{"id": 150000837, "customerid": 14, "time": "2023-02-13T09:59:34.226Z", "items": [{"productid": 6,"quantity": 2,"unit_price":  8.66 ,"discount":  7.53 }] }
+{"id": 150000836, "customerid": 8, "time": "2023-02-13T10:38:50.718Z", "items": [{"productid": 107,"quantity": 1,"unit_price": 15.03 },{"productid": 1,"quantity": 2,"unit_price":  6.94 }] }
+{"id": 150000850, "customerid": 26, "time": "2023-02-13T11:15:45.959Z", "items": [{"productid": 150,"quantity": 1,"unit_price":  5.92 ,"discount":  0.49 },{"productid": 31,"quantity": 1,"unit_price": 52.53 }] }
+{"id": 150000838, "customerid": 26, "time": "2023-02-13T11:34:58.877Z", "items": [{"productid": 21,"quantity": 1,"unit_price":  8.90 ,"discount":  3.83 }] }
+{"id": 150000846, "customerid": 11, "time": "2023-02-13T12:28:11.374Z", "items": [{"productid": 59,"quantity": 1,"unit_price": 23.22 },{"productid": 172,"quantity": 1,"unit_price": 12.07 }] }
+{"id": 150000843, "customerid": 14, "time": "2023-02-13T12:29:47.657Z", "items": [{"productid": 112,"quantity": 1,"unit_price": 17.31 ,"discount":  3.63 }] }
+{"id": 150000853, "customerid": 4, "time": "2023-02-13T15:28:27.467Z", "items": [{"productid": 125,"quantity": 2,"unit_price":  8.93 ,"discount":  2.11 }] }
+{"id": 150000840, "customerid": 4, "time": "2023-02-13T17:28:08.881Z", "items": [{"productid": 28,"quantity": 1,"unit_price":  7.10 ,"discount":  2.79 }] }
+{"id": 150000851, "customerid": 26, "time": "2023-02-13T18:10:51.253Z", "items": [{"productid": 33,"quantity": 1,"unit_price": 16.69 }] }
+{"id": 150000847, "customerid": 6, "time": "2023-02-13T19:57:08.426Z", "items": [{"productid": 134,"quantity": 1,"unit_price":  7.01 ,"discount":  0.63 }] }
+{"id": 150000848, "customerid": 1, "time": "2023-02-13T20:11:20.115Z", "items": [{"productid": 58,"quantity": 1,"unit_price": 10.39 }] }
+{"id": 150000854, "customerid": 10, "time": "2023-02-13T20:49:49.189Z", "items": [{"productid": 203,"quantity": 2,"unit_price":  6.18 ,"discount":  5.84 },{"productid": 12,"quantity": 1,"unit_price":  7.49 ,"discount":  0.41 }] }
+{"id": 150000852, "customerid": 25, "time": "2023-02-13T21:24:59.840Z", "items": [{"productid": 48,"quantity": 1,"unit_price":  5.45 ,"discount":  0.34 }] }
+{"id": 150000841, "customerid": 26, "time": "2023-02-13T21:51:38.160Z", "items": [{"productid": 85,"quantity": 1,"unit_price": 34.56 }] }
+{"id": 150000856, "customerid": 8, "time": "2023-02-14T00:34:55.929Z", "items": [{"productid": 103,"quantity": 1,"unit_price": 19.72 }] }
+{"id": 150000858, "customerid": 6, "time": "2023-02-14T01:11:21.806Z", "items": [{"productid": 145,"quantity": 1,"unit_price": 41.55 ,"discount":  4.74 },{"productid": 146,"quantity": 1,"unit_price": 10.96 }] }
+{"id": 150000855, "customerid": 9, "time": "2023-02-14T06:34:29.790Z", "items": [{"productid": 57,"quantity": 1,"unit_price":  6.11 ,"discount":  1.01 }] }
+{"id": 150000859, "customerid": 13, "time": "2023-02-14T06:46:56.587Z", "items": [{"productid": 22,"quantity": 1,"unit_price": 19.89 ,"discount":  3.10 }] }
+{"id": 150000868, "customerid": 18, "time": "2023-02-14T08:10:02.063Z", "items": [{"productid": 37,"quantity": 1,"unit_price": 12.94 }] }
+{"id": 150000863, "customerid": 30, "time": "2023-02-14T08:53:13.155Z", "items": [{"productid": 157,"quantity": 1,"unit_price": 13.61 }] }
+{"id": 150000865, "customerid": 15, "time": "2023-02-14T08:53:34.950Z", "items": [{"productid": 14,"quantity": 1,"unit_price":  5.99 ,"discount":  2.58 }] }
+{"id": 150000870, "customerid": 2, "time": "2023-02-14T13:33:08.083Z", "items": [{"productid": 195,"quantity": 2,"unit_price": 11.38 },{"productid": 164,"quantity": 1,"unit_price": 18.71 }] }
+{"id": 150000866, "customerid": 6, "time": "2023-02-14T13:37:15.531Z", "items": [{"productid": 168,"quantity": 1,"unit_price": 11.15 },{"productid": 45,"quantity": 1,"unit_price": 39.76 ,"discount": 12.52 }] }
+{"id": 150000861, "customerid": 14, "time": "2023-02-14T13:52:29.050Z", "items": [{"productid": 12,"quantity": 2,"unit_price":  7.49 },{"productid": 109,"quantity": 2,"unit_price": 10.64 }] }
+{"id": 150000869, "customerid": 20, "time": "2023-02-14T13:55:58.147Z", "items": [{"productid": 38,"quantity": 2,"unit_price":  6.74 },{"productid": 145,"quantity": 2,"unit_price": 41.55 }] }
+{"id": 150000867, "customerid": 9, "time": "2023-02-14T15:25:10.909Z", "items": [{"productid": 125,"quantity": 1,"unit_price":  8.93 },{"productid": 146,"quantity": 3,"unit_price": 10.96 }] }
+{"id": 150000860, "customerid": 27, "time": "2023-02-14T18:59:59.480Z", "items": [{"productid": 161,"quantity": 1,"unit_price": 29.88 ,"discount":  2.43 },{"productid": 75,"quantity": 1,"unit_price": 22.06 }] }
+{"id": 150000857, "customerid": 22, "time": "2023-02-14T19:50:36.705Z", "items": [{"productid": 102,"quantity": 2,"unit_price": 11.60 }] }
+{"id": 150000864, "customerid": 18, "time": "2023-02-14T20:06:12.200Z", "items": [{"productid": 132,"quantity": 1,"unit_price": 10.21 ,"discount":  2.73 }] }
+{"id": 150000862, "customerid": 10, "time": "2023-02-14T21:50:31.923Z", "items": [{"productid": 76,"quantity": 1,"unit_price": 49.32 ,"discount": 14.70 }] }
+{"id": 150000873, "customerid": 4, "time": "2023-02-14T22:25:01.129Z", "items": [{"productid": 46,"quantity": 2,"unit_price":  6.31 },{"productid": 134,"quantity": 1,"unit_price":  7.01 ,"discount":  2.64 }] }
+{"id": 150000881, "customerid": 22, "time": "2023-02-14T22:39:03.112Z", "items": [{"productid": 64,"quantity": 1,"unit_price": 14.18 }] }
+{"id": 150000877, "customerid": 30, "time": "2023-02-14T23:46:00.554Z", "items": [{"productid": 76,"quantity": 2,"unit_price": 49.32 }] }
+{"id": 150000878, "customerid": 12, "time": "2023-02-15T04:19:25.775Z", "items": [{"productid": 126,"quantity": 1,"unit_price": 12.35 }] }
+{"id": 150000888, "customerid": 18, "time": "2023-02-15T06:48:32.652Z", "items": [{"productid": 169,"quantity": 1,"unit_price":  5.23 },{"productid": 142,"quantity": 2,"unit_price":  6.33 }] }
+{"id": 150000875, "customerid": 10, "time": "2023-02-15T07:37:11.874Z", "items": [{"productid": 53,"quantity": 1,"unit_price": 12.62 },{"productid": 82,"quantity": 1,"unit_price": 85.96 }] }
+{"id": 150000879, "customerid": 29, "time": "2023-02-15T08:04:05.121Z", "items": [{"productid": 42,"quantity": 1,"unit_price":  5.37 }] }
+{"id": 150000889, "customerid": 2, "time": "2023-02-15T10:46:53.983Z", "items": [{"productid": 68,"quantity": 2,"unit_price":  7.02 }] }
+{"id": 150000882, "customerid": 3, "time": "2023-02-15T11:59:10.483Z", "items": [{"productid": 16,"quantity": 2,"unit_price": 18.64 },{"productid": 71,"quantity": 1,"unit_price": 11.90 }] }
+{"id": 150000886, "customerid": 22, "time": "2023-02-15T12:46:10.434Z", "items": [{"productid": 152,"quantity": 1,"unit_price": 11.28 ,"discount":  5.09 }] }
+{"id": 150000872, "customerid": 14, "time": "2023-02-15T15:12:32.858Z", "items": [{"productid": 38,"quantity": 1,"unit_price":  6.74 ,"discount":  2.35 }] }
+{"id": 150000871, "customerid": 16, "time": "2023-02-15T15:22:07.575Z", "items": [{"productid": 204,"quantity": 1,"unit_price":  8.20 ,"discount":  1.73 }] }
+{"id": 150000874, "customerid": 27, "time": "2023-02-15T15:24:18.429Z", "items": [{"productid": 165,"quantity": 2,"unit_price": 41.83 }] }
+{"id": 150000887, "customerid": 4, "time": "2023-02-15T15:56:53.981Z", "items": [{"productid": 30,"quantity": 1,"unit_price": 26.98 ,"discount":  9.54 }] }
+{"id": 150000885, "customerid": 14, "time": "2023-02-15T16:46:50.408Z", "items": [{"productid": 134,"quantity": 2,"unit_price":  7.01 }] }
+{"id": 150000880, "customerid": 13, "time": "2023-02-15T17:38:29.205Z", "items": [{"productid": 132,"quantity": 2,"unit_price": 10.21 }] }
+{"id": 150000876, "customerid": 15, "time": "2023-02-15T19:44:39.642Z", "items": [{"productid": 127,"quantity": 1,"unit_price": 20.99 ,"discount": 10.44 },{"productid": 39,"quantity": 1,"unit_price": 12.38 ,"discount":  1.03 }] }
+{"id": 150000883, "customerid": 9, "time": "2023-02-15T20:02:36.449Z", "items": [{"productid": 154,"quantity": 1,"unit_price": 42.85 }] }
+{"id": 150000884, "customerid": 15, "time": "2023-02-15T20:46:41.765Z", "items": [{"productid": 137,"quantity": 1,"unit_price": 51.89 }] }
+{"id": 150000896, "customerid": 7, "time": "2023-02-15T23:42:27.464Z", "items": [{"productid": 109,"quantity": 1,"unit_price": 10.64 },{"productid": 186,"quantity": 1,"unit_price":  9.27 }] }
+{"id": 150000890, "customerid": 1, "time": "2023-02-16T01:34:01.722Z", "items": [{"productid": 5,"quantity": 1,"unit_price":  5.43 },{"productid": 144,"quantity": 2,"unit_price": 18.59 }] }
+{"id": 150000891, "customerid": 21, "time": "2023-02-16T02:43:33.842Z", "items": [{"productid": 104,"quantity": 1,"unit_price": 44.08 ,"discount":  3.76 }] }
+{"id": 150000898, "customerid": 24, "time": "2023-02-16T03:57:18.720Z", "items": [{"productid": 161,"quantity": 1,"unit_price": 29.88 }] }
+{"id": 150000893, "customerid": 11, "time": "2023-02-16T09:20:23.341Z", "items": [{"productid": 63,"quantity": 2,"unit_price":  8.34 },{"productid": 81,"quantity": 1,"unit_price": 44.14 }] }
+{"id": 150000901, "customerid": 15, "time": "2023-02-16T09:45:17.396Z", "items": [{"productid": 52,"quantity": 2,"unit_price": 40.62 }] }
+{"id": 150000894, "customerid": 17, "time": "2023-02-16T13:21:13.133Z", "items": [{"productid": 44,"quantity": 2,"unit_price": 20.42 ,"discount": 20.33 }] }
+{"id": 150000892, "customerid": 5, "time": "2023-02-16T13:54:37.946Z", "items": [{"productid": 109,"quantity": 1,"unit_price": 10.64 }] }
+{"id": 150000902, "customerid": 14, "time": "2023-02-16T14:04:51.954Z", "items": [{"productid": 15,"quantity": 1,"unit_price": 10.96 ,"discount":  5.07 }] }
+{"id": 150000897, "customerid": 28, "time": "2023-02-16T16:55:51.138Z", "items": [{"productid": 54,"quantity": 1,"unit_price": 11.68 }] }
+{"id": 150000900, "customerid": 24, "time": "2023-02-16T17:10:38.713Z", "items": [{"productid": 24,"quantity": 1,"unit_price":  5.02 }] }
+{"id": 150000895, "customerid": 10, "time": "2023-02-16T18:00:04.826Z", "items": [{"productid": 153,"quantity": 1,"unit_price": 19.17 ,"discount":  5.66 }] }
+{"id": 150000899, "customerid": 3, "time": "2023-02-16T21:29:41.853Z", "items": [{"productid": 169,"quantity": 1,"unit_price":  5.23 },{"productid": 49,"quantity": 1,"unit_price":  7.62 ,"discount":  0.57 }] }
+{"id": 150000903, "customerid": 21, "time": "2023-02-16T22:26:35.909Z", "items": [{"productid": 14,"quantity": 1,"unit_price":  5.99 }] }
+{"id": 150000906, "customerid": 11, "time": "2023-02-17T00:10:34.621Z", "items": [{"productid": 136,"quantity": 1,"unit_price": 26.65 }] }
+{"id": 150000905, "customerid": 1, "time": "2023-02-17T02:27:25.627Z", "items": [{"productid": 160,"quantity": 1,"unit_price": 13.37 ,"discount":  1.44 }] }
+{"id": 150000904, "customerid": 7, "time": "2023-02-17T09:39:40.298Z", "items": [{"productid": 123,"quantity": 1,"unit_price": 29.75 }] }
+{"id": 150000909, "customerid": 9, "time": "2023-02-17T12:41:37.409Z", "items": [{"productid": 112,"quantity": 1,"unit_price": 17.31 ,"discount":  4.86 }] }
+{"id": 150000907, "customerid": 15, "time": "2023-02-17T14:17:46.802Z", "items": [{"productid": 176,"quantity": 2,"unit_price":  7.79 }] }
+{"id": 150000911, "customerid": 10, "time": "2023-02-17T20:23:14.722Z", "items": [{"productid": 77,"quantity": 1,"unit_price": 96.05 }] }
+{"id": 150000908, "customerid": 30, "time": "2023-02-17T20:40:40.924Z", "items": [{"productid": 154,"quantity": 1,"unit_price": 42.85 ,"discount":  3.46 },{"productid": 172,"quantity": 1,"unit_price": 12.07 ,"discount":  3.29 }] }
+{"id": 150000910, "customerid": 15, "time": "2023-02-17T21:25:35.099Z", "items": [{"productid": 12,"quantity": 2,"unit_price":  7.49 }] }
+{"id": 150000916, "customerid": 6, "time": "2023-02-17T23:54:38.844Z", "items": [{"productid": 188,"quantity": 1,"unit_price": 35.21 ,"discount":  8.77 }] }
+{"id": 150000929, "customerid": 30, "time": "2023-02-18T00:11:11.950Z", "items": [{"productid": 72,"quantity": 1,"unit_price": 11.75 },{"productid": 112,"quantity": 2,"unit_price": 17.31 ,"discount":  4.49 }] }
+{"id": 150000921, "customerid": 13, "time": "2023-02-18T00:29:25.557Z", "items": [{"productid": 16,"quantity": 1,"unit_price": 18.64 }] }
+{"id": 150000912, "customerid": 8, "time": "2023-02-18T01:24:44.892Z", "items": [{"productid": 86,"quantity": 2,"unit_price":  6.10 }] }
+{"id": 150000932, "customerid": 7, "time": "2023-02-18T02:21:36.472Z", "items": [{"productid": 137,"quantity": 1,"unit_price": 51.89 },{"productid": 61,"quantity": 1,"unit_price": 19.00 ,"discount":  7.13 }] }
+{"id": 150000931, "customerid": 1, "time": "2023-02-18T02:26:44.366Z", "items": [{"productid": 67,"quantity": 1,"unit_price":  8.28 }] }
+{"id": 150000918, "customerid": 26, "time": "2023-02-18T02:50:52.912Z", "items": [{"productid": 15,"quantity": 2,"unit_price": 10.96 }] }
+{"id": 150000928, "customerid": 18, "time": "2023-02-18T04:32:43.181Z", "items": [{"productid": 25,"quantity": 2,"unit_price":  8.54 },{"productid": 7,"quantity": 1,"unit_price": 12.70 }] }
+{"id": 150000933, "customerid": 12, "time": "2023-02-18T04:55:24.581Z", "items": [{"productid": 56,"quantity": 1,"unit_price":  5.47 }] }
+{"id": 150000940, "customerid": 22, "time": "2023-02-18T05:20:53.884Z", "items": [{"productid": 10,"quantity": 2,"unit_price":  9.53 }] }
+{"id": 150000941, "customerid": 26, "time": "2023-02-18T05:26:57.327Z", "items": [{"productid": 185,"quantity": 2,"unit_price":  7.89 ,"discount":  2.40 }] }
+{"id": 150000926, "customerid": 21, "time": "2023-02-18T05:53:42.209Z", "items": [{"productid": 6,"quantity": 1,"unit_price":  8.66 }] }
+{"id": 150000920, "customerid": 11, "time": "2023-02-18T06:35:06.301Z", "items": [{"productid": 96,"quantity": 2,"unit_price":  8.52 }] }
+{"id": 150000935, "customerid": 8, "time": "2023-02-18T06:55:27.967Z", "items": [{"productid": 102,"quantity": 1,"unit_price": 11.60 }] }
+{"id": 150000943, "customerid": 7, "time": "2023-02-18T07:19:12.455Z", "items": [{"productid": 187,"quantity": 1,"unit_price": 15.75 ,"discount":  5.90 }] }
+{"id": 150000919, "customerid": 18, "time": "2023-02-18T10:16:51.576Z", "items": [{"productid": 176,"quantity": 1,"unit_price":  7.79 }] }
+{"id": 150000914, "customerid": 12, "time": "2023-02-18T10:35:20.518Z", "items": [{"productid": 186,"quantity": 1,"unit_price":  9.27 ,"discount":  0.95 }] }
+{"id": 150000936, "customerid": 13, "time": "2023-02-18T11:22:30.252Z", "items": [{"productid": 90,"quantity": 1,"unit_price":  7.94 }] }
+{"id": 150000939, "customerid": 16, "time": "2023-02-18T11:56:49.593Z", "items": [{"productid": 88,"quantity": 1,"unit_price": 11.12 },{"productid": 10,"quantity": 1,"unit_price":  9.53 }] }
+{"id": 150000927, "customerid": 22, "time": "2023-02-18T12:30:20.259Z", "items": [{"productid": 47,"quantity": 2,"unit_price": 12.30 },{"productid": 22,"quantity": 2,"unit_price": 19.89 }] }
+{"id": 150000922, "customerid": 17, "time": "2023-02-18T13:05:47.413Z", "items": [{"productid": 30,"quantity": 2,"unit_price": 26.98 ,"discount": 25.84 },{"productid": 112,"quantity": 2,"unit_price": 17.31 },{"productid": 22,"quantity": 3,"unit_price": 19.89 ,"discount": 19.59 }] }
+{"id": 150000930, "customerid": 9, "time": "2023-02-18T13:54:32.753Z", "items": [{"productid": 104,"quantity": 2,"unit_price": 44.08 }] }
+{"id": 150000915, "customerid": 13, "time": "2023-02-18T14:04:32.708Z", "items": [{"productid": 71,"quantity": 1,"unit_price": 11.90 }] }
+{"id": 150000913, "customerid": 22, "time": "2023-02-18T15:07:24.131Z", "items": [{"productid": 43,"quantity": 1,"unit_price":  9.13 ,"discount":  4.10 }] }
+{"id": 150000923, "customerid": 6, "time": "2023-02-18T15:36:58.379Z", "items": [{"productid": 96,"quantity": 1,"unit_price":  8.52 }] }
+{"id": 150000937, "customerid": 6, "time": "2023-02-18T16:18:21.957Z", "items": [{"productid": 38,"quantity": 2,"unit_price":  6.74 }] }
+{"id": 150000925, "customerid": 29, "time": "2023-02-18T17:54:18.292Z", "items": [{"productid": 60,"quantity": 1,"unit_price": 11.18 ,"discount":  3.96 }] }
+{"id": 150000938, "customerid": 6, "time": "2023-02-18T18:18:10.368Z", "items": [{"productid": 94,"quantity": 1,"unit_price":  5.03 ,"discount":  1.60 },{"productid": 96,"quantity": 2,"unit_price":  8.52 }] }
+{"id": 150000924, "customerid": 10, "time": "2023-02-18T18:50:06.253Z", "items": [{"productid": 143,"quantity": 2,"unit_price": 10.93 }] }
+{"id": 150000942, "customerid": 7, "time": "2023-02-18T18:59:43.296Z", "items": [{"productid": 149,"quantity": 2,"unit_price": 46.38 }] }
+{"id": 150000934, "customerid": 20, "time": "2023-02-18T19:43:34.860Z", "items": [{"productid": 178,"quantity": 1,"unit_price":  6.11 }] }
+{"id": 150000917, "customerid": 11, "time": "2023-02-18T21:44:42.325Z", "items": [{"productid": 139,"quantity": 1,"unit_price": 11.56 }] }
+{"id": 150000950, "customerid": 20, "time": "2023-02-18T22:23:14.365Z", "items": [{"productid": 194,"quantity": 1,"unit_price":  6.77 },{"productid": 207,"quantity": 1,"unit_price": 17.50 }] }
+{"id": 150000957, "customerid": 7, "time": "2023-02-18T23:10:02.054Z", "items": [{"productid": 13,"quantity": 1,"unit_price":  9.69 }] }
+{"id": 150000953, "customerid": 2, "time": "2023-02-18T23:53:35.015Z", "items": [{"productid": 74,"quantity": 3,"unit_price": 12.98 ,"discount": 13.39 }] }
+{"id": 150000961, "customerid": 25, "time": "2023-02-19T00:16:28.994Z", "items": [{"productid": 122,"quantity": 1,"unit_price": 13.31 ,"discount":  2.13 }] }
+{"id": 150000959, "customerid": 23, "time": "2023-02-19T01:19:10.034Z", "items": [{"productid": 176,"quantity": 1,"unit_price":  7.79 }] }
+{"id": 150000956, "customerid": 28, "time": "2023-02-19T03:28:47.250Z", "items": [{"productid": 2,"quantity": 2,"unit_price": 11.81 }] }
+{"id": 150000945, "customerid": 17, "time": "2023-02-19T03:51:05.893Z", "items": [{"productid": 46,"quantity": 1,"unit_price":  6.31 ,"discount":  1.79 }] }
+{"id": 150000955, "customerid": 12, "time": "2023-02-19T05:57:24.938Z", "items": [{"productid": 94,"quantity": 1,"unit_price":  5.03 }] }
+{"id": 150000951, "customerid": 7, "time": "2023-02-19T07:37:58.316Z", "items": [{"productid": 39,"quantity": 2,"unit_price": 12.38 ,"discount":  9.83 }] }
+{"id": 150000944, "customerid": 4, "time": "2023-02-19T09:33:58.540Z", "items": [{"productid": 97,"quantity": 1,"unit_price": 14.48 }] }
+{"id": 150000949, "customerid": 26, "time": "2023-02-19T09:55:37.450Z", "items": [{"productid": 125,"quantity": 1,"unit_price":  8.93 }] }
+{"id": 150000946, "customerid": 16, "time": "2023-02-19T10:30:58.318Z", "items": [{"productid": 114,"quantity": 1,"unit_price":  8.22 }] }
+{"id": 150000947, "customerid": 15, "time": "2023-02-19T17:02:53.918Z", "items": [{"productid": 99,"quantity": 1,"unit_price":  9.21 }] }
+{"id": 150000952, "customerid": 25, "time": "2023-02-19T18:21:54.474Z", "items": [{"productid": 41,"quantity": 1,"unit_price":  5.31 ,"discount":  0.62 },{"productid": 183,"quantity": 2,"unit_price": 11.46 ,"discount":  9.12 }] }
+{"id": 150000948, "customerid": 22, "time": "2023-02-19T18:52:21.026Z", "items": [{"productid": 111,"quantity": 1,"unit_price": 10.18 ,"discount":  1.13 }] }
+{"id": 150000958, "customerid": 6, "time": "2023-02-19T20:50:24.253Z", "items": [{"productid": 97,"quantity": 2,"unit_price": 14.48 ,"discount":  4.80 }] }
+{"id": 150000960, "customerid": 21, "time": "2023-02-19T20:57:08.559Z", "items": [{"productid": 167,"quantity": 1,"unit_price":  6.56 }] }
+{"id": 150000954, "customerid": 11, "time": "2023-02-19T21:47:44.879Z", "items": [{"productid": 59,"quantity": 1,"unit_price": 23.22 }] }
+{"id": 150000977, "customerid": 28, "time": "2023-02-19T22:18:43.357Z", "items": [{"productid": 119,"quantity": 2,"unit_price":  6.36 },{"productid": 136,"quantity": 1,"unit_price": 26.65 }] }
+{"id": 150000971, "customerid": 27, "time": "2023-02-20T00:15:50.514Z", "items": [{"productid": 42,"quantity": 1,"unit_price":  5.37 }] }
+{"id": 150000972, "customerid": 21, "time": "2023-02-20T02:02:27.119Z", "items": [{"productid": 126,"quantity": 1,"unit_price": 12.35 ,"discount":  1.10 },{"productid": 111,"quantity": 1,"unit_price": 10.18 }] }
+{"id": 150000962, "customerid": 18, "time": "2023-02-20T02:41:13.057Z", "items": [{"productid": 190,"quantity": 1,"unit_price":  9.81 },{"productid": 45,"quantity": 1,"unit_price": 39.76 }] }
+{"id": 150000966, "customerid": 25, "time": "2023-02-20T03:52:29.979Z", "items": [{"productid": 164,"quantity": 1,"unit_price": 18.71 }] }
+{"id": 150000974, "customerid": 30, "time": "2023-02-20T05:44:53.592Z", "items": [{"productid": 117,"quantity": 1,"unit_price": 35.05 ,"discount":  9.66 }] }
+{"id": 150000983, "customerid": 2, "time": "2023-02-20T06:25:15.669Z", "items": [{"productid": 36,"quantity": 2,"unit_price":  7.61 }] }
+{"id": 150000976, "customerid": 20, "time": "2023-02-20T07:07:40.256Z", "items": [{"productid": 130,"quantity": 2,"unit_price": 10.02 ,"discount":  5.93 }] }
+{"id": 150000981, "customerid": 24, "time": "2023-02-20T07:08:42.304Z", "items": [{"productid": 66,"quantity": 3,"unit_price":  5.62 }] }
+{"id": 150000973, "customerid": 12, "time": "2023-02-20T07:47:18.741Z", "items": [{"productid": 50,"quantity": 2,"unit_price": 10.69 ,"discount":  3.01 },{"productid": 187,"quantity": 3,"unit_price": 15.75 ,"discount": 11.20 },{"productid": 31,"quantity": 2,"unit_price": 52.53 ,"discount": 44.81 }] }
+{"id": 150000967, "customerid": 2, "time": "2023-02-20T08:03:23.863Z", "items": [{"productid": 53,"quantity": 2,"unit_price": 12.62 ,"discount": 11.19 }] }
+{"id": 150000970, "customerid": 13, "time": "2023-02-20T10:21:47.505Z", "items": [{"productid": 153,"quantity": 2,"unit_price": 19.17 ,"discount": 14.89 }] }
+{"id": 150000965, "customerid": 28, "time": "2023-02-20T10:34:04.313Z", "items": [{"productid": 106,"quantity": 1,"unit_price":  8.84 }] }
+{"id": 150000968, "customerid": 18, "time": "2023-02-20T11:01:57.390Z", "items": [{"productid": 98,"quantity": 2,"unit_price": 32.37 ,"discount": 28.24 },{"productid": 144,"quantity": 2,"unit_price": 18.59 }] }
+{"id": 150000969, "customerid": 14, "time": "2023-02-20T13:10:14.902Z", "items": [{"productid": 198,"quantity": 2,"unit_price":  6.75 ,"discount":  3.45 }] }
+{"id": 150000982, "customerid": 9, "time": "2023-02-20T13:19:24.708Z", "items": [{"productid": 204,"quantity": 4,"unit_price":  8.20 }] }
+{"id": 150000975, "customerid": 16, "time": "2023-02-20T14:12:21.342Z", "items": [{"productid": 53,"quantity": 1,"unit_price": 12.62 }] }
+{"id": 150000985, "customerid": 4, "time": "2023-02-20T15:34:15.614Z", "items": [{"productid": 145,"quantity": 1,"unit_price": 41.55 }] }
+{"id": 150000963, "customerid": 24, "time": "2023-02-20T15:56:38.294Z", "items": [{"productid": 94,"quantity": 1,"unit_price":  5.03 ,"discount":  0.38 }] }
+{"id": 150000979, "customerid": 27, "time": "2023-02-20T18:21:35.740Z", "items": [{"productid": 15,"quantity": 2,"unit_price": 10.96 ,"discount":  3.52 }] }
+{"id": 150000984, "customerid": 15, "time": "2023-02-20T19:41:33.003Z", "items": [{"productid": 83,"quantity": 2,"unit_price":  9.09 ,"discount":  1.99 }] }
+{"id": 150000978, "customerid": 11, "time": "2023-02-20T20:14:47.478Z", "items": [{"productid": 144,"quantity": 1,"unit_price": 18.59 }] }
+{"id": 150000964, "customerid": 7, "time": "2023-02-20T20:20:20.232Z", "items": [{"productid": 124,"quantity": 3,"unit_price": 57.94 }] }
+{"id": 150000980, "customerid": 30, "time": "2023-02-20T20:30:19.956Z", "items": [{"productid": 59,"quantity": 1,"unit_price": 23.22 }] }
+{"id": 150001012, "customerid": 6, "time": "2023-02-20T22:36:14.181Z", "items": [{"productid": 174,"quantity": 2,"unit_price": 10.71 ,"discount":  2.84 }] }
+{"id": 150001000, "customerid": 14, "time": "2023-02-20T22:58:10.903Z", "items": [{"productid": 120,"quantity": 1,"unit_price": 10.88 ,"discount":  3.41 },{"productid": 56,"quantity": 2,"unit_price":  5.47 ,"discount":  4.96 }] }
+{"id": 150001014, "customerid": 9, "time": "2023-02-21T00:07:37.990Z", "items": [{"productid": 54,"quantity": 1,"unit_price": 11.68 }] }
+{"id": 150001007, "customerid": 11, "time": "2023-02-21T00:57:12.956Z", "items": [{"productid": 56,"quantity": 1,"unit_price":  5.47 }] }
+{"id": 150000999, "customerid": 11, "time": "2023-02-21T02:15:06.285Z", "items": [{"productid": 99,"quantity": 2,"unit_price":  9.21 ,"discount":  6.93 }] }
+{"id": 150000995, "customerid": 10, "time": "2023-02-21T03:08:13.004Z", "items": [{"productid": 83,"quantity": 1,"unit_price":  9.09 }] }
+{"id": 150001004, "customerid": 19, "time": "2023-02-21T03:53:28.781Z", "items": [{"productid": 105,"quantity": 1,"unit_price": 10.44 ,"discount":  5.08 },{"productid": 149,"quantity": 2,"unit_price": 46.38 ,"discount": 39.31 }] }
+{"id": 150000988, "customerid": 5, "time": "2023-02-21T04:23:13.842Z", "items": [{"productid": 142,"quantity": 1,"unit_price":  6.33 }] }
+{"id": 150000987, "customerid": 7, "time": "2023-02-21T04:57:09.459Z", "items": [{"productid": 120,"quantity": 2,"unit_price": 10.88 },{"productid": 96,"quantity": 1,"unit_price":  8.52 }] }
+{"id": 150000998, "customerid": 15, "time": "2023-02-21T04:59:46.090Z", "items": [{"productid": 52,"quantity": 2,"unit_price": 40.62 },{"productid": 76,"quantity": 2,"unit_price": 49.32 }] }
+{"id": 150001005, "customerid": 20, "time": "2023-02-21T05:38:52.210Z", "items": [{"productid": 61,"quantity": 1,"unit_price": 19.00 }] }
+{"id": 150001011, "customerid": 23, "time": "2023-02-21T06:22:33.560Z", "items": [{"productid": 116,"quantity": 1,"unit_price": 15.68 },{"productid": 93,"quantity": 1,"unit_price": 58.77 ,"discount": 15.97 }] }
+{"id": 150001013, "customerid": 6, "time": "2023-02-21T06:50:10.893Z", "items": [{"productid": 37,"quantity": 2,"unit_price": 12.94 ,"discount":  8.43 }] }
+{"id": 150000994, "customerid": 18, "time": "2023-02-21T06:50:51.285Z", "items": [{"productid": 88,"quantity": 1,"unit_price": 11.12 ,"discount":  3.74 }] }
+{"id": 150000990, "customerid": 17, "time": "2023-02-21T08:08:29.539Z", "items": [{"productid": 11,"quantity": 1,"unit_price": 12.08 ,"discount":  0.62 },{"productid": 60,"quantity": 1,"unit_price": 11.18 ,"discount":  4.21 },{"productid": 28,"quantity": 1,"unit_price":  7.10 ,"discount":  1.01 }] }
+{"id": 150001010, "customerid": 1, "time": "2023-02-21T10:06:30.605Z", "items": [{"productid": 17,"quantity": 1,"unit_price":  5.08 ,"discount":  1.69 }] }
+{"id": 150000997, "customerid": 8, "time": "2023-02-21T10:59:26.776Z", "items": [{"productid": 124,"quantity": 1,"unit_price": 57.94 }] }
+{"id": 150000996, "customerid": 6, "time": "2023-02-21T11:26:39.038Z", "items": [{"productid": 23,"quantity": 2,"unit_price":  8.87 ,"discount":  2.68 },{"productid": 99,"quantity": 1,"unit_price":  9.21 ,"discount":  4.09 }] }
+{"id": 150001001, "customerid": 24, "time": "2023-02-21T12:48:18.232Z", "items": [{"productid": 5,"quantity": 1,"unit_price":  5.43 },{"productid": 45,"quantity": 1,"unit_price": 39.76 }] }
+{"id": 150000991, "customerid": 1, "time": "2023-02-21T13:42:06.048Z", "items": [{"productid": 124,"quantity": 2,"unit_price": 57.94 }] }
+{"id": 150001002, "customerid": 11, "time": "2023-02-21T14:11:02.114Z", "items": [{"productid": 137,"quantity": 1,"unit_price": 51.89 }] }
+{"id": 150001006, "customerid": 15, "time": "2023-02-21T14:26:24.580Z", "items": [{"productid": 16,"quantity": 2,"unit_price": 18.64 },{"productid": 185,"quantity": 2,"unit_price":  7.89 ,"discount":  4.93 }] }
+{"id": 150000992, "customerid": 26, "time": "2023-02-21T14:55:43.939Z", "items": [{"productid": 18,"quantity": 3,"unit_price": 10.01 ,"discount":  4.95 }] }
+{"id": 150001009, "customerid": 6, "time": "2023-02-21T16:05:09.215Z", "items": [{"productid": 67,"quantity": 1,"unit_price":  8.28 }] }
+{"id": 150000993, "customerid": 6, "time": "2023-02-21T16:34:29.767Z", "items": [{"productid": 204,"quantity": 1,"unit_price":  8.20 },{"productid": 206,"quantity": 1,"unit_price": 10.29 }] }
+{"id": 150001008, "customerid": 19, "time": "2023-02-21T17:07:18.370Z", "items": [{"productid": 24,"quantity": 1,"unit_price":  5.02 }] }
+{"id": 150000986, "customerid": 16, "time": "2023-02-21T18:43:09.852Z", "items": [{"productid": 16,"quantity": 1,"unit_price": 18.64 },{"productid": 189,"quantity": 2,"unit_price":  5.75 },{"productid": 55,"quantity": 1,"unit_price": 12.22 }] }
+{"id": 150000989, "customerid": 8, "time": "2023-02-21T20:09:57.516Z", "items": [{"productid": 163,"quantity": 1,"unit_price": 11.01 }] }
+{"id": 150001003, "customerid": 19, "time": "2023-02-21T20:21:33.575Z", "items": [{"productid": 143,"quantity": 1,"unit_price": 10.93 }] }

@@ -1,0 +1,20 @@
+type Product {
+  productid: Int
+  name: String
+  description: String
+  category: String
+}
+
+type ProductSearch {
+  productid: Int
+  name: String
+  description: String
+  category: String
+  score: Float
+}
+
+type Query {
+  ProductSearch(query: String!): [ProductSearch!]
+  ProductSearchWithId(query: String!, id: Int!): [Product]
+}
+

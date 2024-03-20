@@ -1,0 +1,18 @@
+{
+  "package":
+  {
+    "name": "datasqrl.examples.Retail",
+    "version": "1.0.0",
+    "variant": "dev",
+    "description": "Simple e-commerce data example"
+  },
+  "script":
+  {
+    "main": "c360-full.sqrl",
+    "graphql": "c360-full-graphqlv1/schema.graphqls"
+  },
+  "compiler":
+  {
+    "maxApiArguments": 3
+  }
+}

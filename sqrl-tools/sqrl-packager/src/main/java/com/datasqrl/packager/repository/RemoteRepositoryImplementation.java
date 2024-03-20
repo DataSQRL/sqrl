@@ -16,6 +16,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import net.lingala.zip4j.ZipFile;
@@ -134,6 +136,7 @@ public class RemoteRepositoryImplementation implements Repository {
               .writeValueAsString(
                   Map.of("query", query.getQueryString(), "variables", payload))))
           .uri(repositoryServerURI)
+          .timeout(Duration.of(10, ChronoUnit.SECONDS))
           .build();
       HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
       return mapper.readValue(response.body(), JsonNode.class).get("data");

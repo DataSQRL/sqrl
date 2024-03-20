@@ -1,7 +1,8 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
-    <groupId>com.datasqrl</groupId>
+    <groupId>run.sqrl</groupId>
     <artifactId>sqrl-tools</artifactId>
     <version>0.4.4-SNAPSHOT</version>
   </parent>
@@ -17,44 +18,36 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.datasqrl</groupId>
+      <groupId>run.sqrl</groupId>
       <artifactId>sqrl-base</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-common</artifactId>
+      <groupId>run.sqrl</groupId>
+      <artifactId>sqrl-calcite</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-execute-flink-jar</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
+      <groupId>run.sqrl</groupId>
       <artifactId>sqrl-packager</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-planner-local</artifactId>
+      <groupId>run.sqrl</groupId>
+      <artifactId>sqrl-planner</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.datasqrl</groupId>
+      <groupId>run.sqrl</groupId>
       <artifactId>sqrl-discovery</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-engine-kafka</artifactId>
     </dependency>
 
     <!-- For the time being, include all connectors -->
     <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-planner-schema-flexible</artifactId>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-file-sink-common</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-planner-schema-avro</artifactId>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-s3-fs-hadoop</artifactId>
     </dependency>
+
     <!-- util -->
     <dependency>
       <groupId>info.picocli</groupId>
@@ -67,14 +60,14 @@
     </dependency>
     <!-- Test jars -->
     <dependency>
-      <artifactId>sqrl-common</artifactId>
-      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-calcite</artifactId>
+      <groupId>run.sqrl</groupId>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <artifactId>sqrl-planner-local</artifactId>
-      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-planner</artifactId>
+      <groupId>run.sqrl</groupId>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
@@ -123,14 +116,6 @@
       <artifactId>kafka-streams-test-utils</artifactId>
       <scope>compile</scope>
     </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-io-mem</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-execute-flink-inmem</artifactId>
-    </dependency>
   </dependencies>
 
   <build>
@@ -153,10 +138,12 @@
               <shadedArtifactAttached>true</shadedArtifactAttached>
               <minimizeJar>false</minimizeJar>
               <transformers>
-                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                <transformer
+                  implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                   <mainClass>com.datasqrl.DatasqrlCMD</mainClass>
                 </transformer>
-                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+                <transformer
+                  implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
               </transformers>
               <filters>
                 <filter>

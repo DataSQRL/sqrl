@@ -10,7 +10,6 @@ import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
 import java.util.LinkedHashMap;
-import java.util.Optional;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 
@@ -33,6 +32,8 @@ public class ConfigurationTest {
     assertNotNull(config);
     CompilerConfiguration compilerConfig = CompilerConfiguration.fromRootConfig(config);
     PipelineFactory pipelineFactory = PipelineFactory.fromRootConfig(config);
+    assertEquals(1, config.getVersion());
+    assertEquals(1, pipelineFactory.getEngineConfig().getVersion());
 
 
     assertEquals(3, compilerConfig.getMaxApiArguments());
@@ -40,7 +41,7 @@ public class ConfigurationTest {
     ExecutionPipeline executionPipeline = pipelineFactory.createPipeline();
 //    pipelineFactory.getDatabaseEngine();
 //    pipelineFactory.getStreamEngine();
-    getMetaDataStoreProvider(pipelineFactory.getEngineConfig(), Optional.empty());
+    getMetaDataStoreProvider(pipelineFactory.getDatabaseEngine());
 
     LinkedHashMap<String, Dependency> dependencies = DependencyConfig.fromRootConfig(config);
     assertEquals(2, dependencies.size());

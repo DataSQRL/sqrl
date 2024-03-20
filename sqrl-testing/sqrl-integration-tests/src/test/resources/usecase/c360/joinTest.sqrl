@@ -1,0 +1,7 @@
+IMPORT time.*;
+IMPORT ecommerce-data.Customer TIMESTAMP epochToTimestamp(lastUpdated) as updateTime;
+IMPORT ecommerce-data.Orders TIMESTAMP time;
+OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid;
+OrderCustomerInterval := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid AND o.time >= c.updateTime AND o.time <= c.updateTime + INTERVAL 365 DAYS;
+CustomerDedup := DISTINCT Customer ON customerid ORDER BY updateTime DESC;
+OrderCustomerDedup := SELECT o.id, c.name, o.customerid FROM Orders o JOIN CustomerDedup c on o.customerid = c.customerid;

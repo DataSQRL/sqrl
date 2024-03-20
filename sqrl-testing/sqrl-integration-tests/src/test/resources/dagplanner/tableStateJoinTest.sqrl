@@ -1,0 +1,12 @@
+IMPORT time.*;
+IMPORT ecommerce.Customer;
+IMPORT ecommerce.Orders;
+IMPORT ecommerce.Product;
+Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;
+Orders := DISTINCT Orders ON id ORDER BY _ingest_time DESC;
+OrderCustomerLeft := SELECT c._uuid, o.id, c.name, o.customerid  FROM Orders o LEFT JOIN Customer c on o.customerid = c.customerid;
+OrderCustomer := SELECT o._uuid, o.id, c.name, o.customerid FROM Orders o INNER JOIN Customer c on o.customerid = c.customerid;
+OrderCustomerLeftExcluded := SELECT o._uuid, o.id, o.customerid  FROM Orders o LEFT JOIN Customer c on o.customerid = c.customerid WHERE c._uuid IS NULL;
+OrderCustomerRight := SELECT coalesce(o.id, 0) as ouuid, o.id, c.name, o.customerid  FROM Orders o RIGHT JOIN Customer c on o.customerid = c.customerid;
+OrderCustomerRightExcluded := SELECT c._uuid, c.customerid, c.name  FROM Orders o RIGHT JOIN Customer c on o.customerid = c.customerid WHERE o.id IS NULL;
+OrderCustomerConstant := SELECT o._uuid, o.id, c.name, o.customerid FROM Orders o INNER JOIN Customer c ON o.customerid = c.customerid AND c.name = 'Robert' AND o.id > 5;

@@ -1,7 +1,0 @@
->>>errors
-[FATAL] Order by statement must be specified
-in script:<script> [2:1]:
-IMPORT ecommerce-data.Product;
-Product := DISTINCT Product ON productid;
-^
-

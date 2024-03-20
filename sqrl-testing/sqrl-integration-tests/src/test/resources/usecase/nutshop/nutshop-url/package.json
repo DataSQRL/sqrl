@@ -1,0 +1,9 @@
+{
+  "package": {
+    "name": "datasqrl.examples.Nutshop",
+    "version": "0.1.0",
+    "variant": "dev",
+    "description": "Small Nutshop example data",
+    "repository": "https://github.com/DataSQRL/sqrl"
+  }
+}
