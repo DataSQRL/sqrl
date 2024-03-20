@@ -2,12 +2,12 @@
   <parent>
     <artifactId>sqrl-root</artifactId>
     <groupId>run.sqrl</groupId>
-    <version>0.5.0-RC1</version>
+    <version>0.5.0-RC2-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>sqrl-calcite</artifactId>
-  <version>0.5.0-RC1</version>
+  <version>0.5.0-RC2-SNAPSHOT</version>
 
   <!--
     README: Dependencies that are shared between planning and utility modules
@@ -59,13 +59,13 @@
     <dependency>
       <groupId>run.sqrl</groupId>
       <artifactId>sqrl-server-core</artifactId>
-      <version>0.5.0-RC1</version>
+      <version>0.5.0-RC2-SNAPSHOT</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>run.sqrl</groupId>
       <artifactId>sqrl-jdbc-1.16</artifactId>
-      <version>0.5.0-RC1</version>
+      <version>0.5.0-RC2-SNAPSHOT</version>
       <scope>compile</scope>
     </dependency>
   </dependencies>
