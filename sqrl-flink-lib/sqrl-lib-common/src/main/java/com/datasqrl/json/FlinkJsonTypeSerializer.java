@@ -36,12 +36,19 @@ public class FlinkJsonTypeSerializer extends TypeSerializer<FlinkJsonType> {
 
     @Override
     public void serialize(FlinkJsonType record, DataOutputView target) throws IOException {
-        target.writeUTF(record.getJson());
+        byte[] bytes = record.getJson().getBytes();
+        target.writeInt(bytes.length); // First write the length of the array
+        target.write(bytes);
     }
 
     @Override
     public FlinkJsonType deserialize(DataInputView source) throws IOException {
-        return new FlinkJsonType(source.readUTF());
+        int length = source.readInt();
+        byte[] array = new byte[length];
+        for (int i = 0; i < length; i++) {
+            array[i] = source.readByte();
+        }
+        return new FlinkJsonType(new String(array));
     }
 
     @Override
