@@ -2,9 +2,9 @@
  * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
  */
 /**
- * Contains configuration helper classes to access and manipulate configuration files.
+ * An abstraction layer around Apache Commons configuration to read and write configuration files.
  *
  * {@link com.datasqrl.config.SqrlConfig} is the main interface for interacting with configuration files
- * in DataSQRL.
+ * in DataSQRL. All access to configuration should go through this interface.
  */
 package com.datasqrl.config;

@@ -1,7 +1,6 @@
 package com.datasqrl.functions.vector;
 
-import static com.datasqrl.function.DocumentedFunction.getFunctionNameFromClass;
-
+import static com.datasqrl.function.FlinkUdfNsObject.getFunctionNameFromClass;
 import com.datasqrl.function.CalciteFunctionUtil;
 import com.datasqrl.function.translations.PostgresSqlTranslation;
 import com.datasqrl.function.translations.SqlTranslation;
@@ -17,7 +16,7 @@ public class CenterSqlTranslation extends PostgresSqlTranslation {
 
   public CenterSqlTranslation() {
     super(CalciteFunctionUtil.lightweightOp(
-        getFunctionNameFromClass(Center.class)));
+        getFunctionNameFromClass(Center.class).getDisplay()));
   }
 
   @Override

@@ -1,6 +1,6 @@
 package com.datasqrl.functions.json;
 
-import static com.datasqrl.function.DocumentedFunction.getFunctionNameFromClass;
+import static com.datasqrl.function.FlinkUdfNsObject.getFunctionNameFromClass;
 
 import com.datasqrl.function.DowncastFunction;
 import com.datasqrl.json.JsonToString;
@@ -16,7 +16,7 @@ public class JsonDowncastFunction implements DowncastFunction {
 
   @Override
   public String downcastFunctionName() {
-    return getFunctionNameFromClass(JsonToString.class);
+    return getFunctionNameFromClass(JsonToString.class).getDisplay();
   }
 
   @Override

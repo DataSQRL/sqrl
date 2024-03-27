@@ -1,7 +1,5 @@
 package com.datasqrl.function;
 
-import static com.datasqrl.function.DocumentedFunction.getFunctionNameFromClass;
-
 import lombok.experimental.UtilityClass;
 import org.apache.calcite.sql.SqlBinaryOperator;
 import org.apache.calcite.sql.SqlFunctionCategory;
@@ -23,7 +21,7 @@ public class CalciteFunctionUtil {
    * inference happens.
    */
   public static SqlUnresolvedFunction lightweightOp(FunctionDefinition functionDefinition) {
-    return lightweightOp(getFunctionNameFromClass(functionDefinition.getClass()));
+    return lightweightOp(FlinkUdfNsObject.getFunctionName(functionDefinition));
   }
   public static SqlUnresolvedFunction lightweightOp(String name) {
     return new SqlUnresolvedFunction(new SqlIdentifier(name, SqlParserPos.ZERO),

@@ -1,6 +1,6 @@
 package com.datasqrl.loaders;
 
-import static com.datasqrl.function.DocumentedFunction.getFunctionNameFromClass;
+import static com.datasqrl.function.FlinkUdfNsObject.getFunctionName;
 import static com.datasqrl.io.tables.TableConfig.Base.PRIMARYKEY_KEY;
 import static com.datasqrl.io.tables.TableConfig.Base.TIMESTAMP_COL_KEY;
 import static com.datasqrl.io.tables.TableConfig.Base.TYPE_KEY;
@@ -146,7 +146,7 @@ public class FlinkSqlNamespaceObject extends AbstractTableNamespaceObject {
 
         // Return a namespace object containing the created function
         FlinkUdfNsObject flinkUdfNsObject = new FlinkUdfNsObject(
-            getFunctionNameFromClass(udf.getClass()), udf, Optional.empty());
+            getFunctionName(udf), udf, Optional.empty());
         flinkUdfNsObject.apply(Optional.of(fnc.getFunctionIdentifier()[fnc.getFunctionIdentifier().length-1]), framework, ErrorCollector.root());
       }
 
