@@ -84,7 +84,9 @@ public class NormalizeTablePath {
       }
       alias = generateAlias();
       // Get absolute path of alias `o`
-      pathWalker.setPath(context.getAliasPath(identifier));
+      NamePath path = context.getAliasPath(identifier)
+          .orElseThrow(() -> new RuntimeException("Could not find alias: " + identifier));
+      pathWalker.setPath(path);
       Name nextIdentifier = getIdentifier(input.next())
           .orElseThrow(() -> new RuntimeException("Subqueries are not yet implemented"));
       SqrlTableMacro parent = getTable(pathWalker.getPath()).get();
