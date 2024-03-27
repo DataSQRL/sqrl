@@ -14,15 +14,12 @@ import com.datasqrl.io.tables.TableType;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.module.SqrlModule;
-import com.datasqrl.schema.converters.SchemaToRelDataTypeFactory;
+import com.datasqrl.io.schema.flexible.converters.SchemaToRelDataTypeFactory;
 import com.datasqrl.sql.SqlCallRewriter;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.RelDataTypeBuilder;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
@@ -30,6 +27,10 @@ import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.validate.SqrlSqlValidator;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 @AllArgsConstructor(onConstructor_=@Inject)
 public class TableConverter {

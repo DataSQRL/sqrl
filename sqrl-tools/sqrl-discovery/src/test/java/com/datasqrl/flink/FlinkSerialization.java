@@ -4,7 +4,7 @@
 package com.datasqrl.flink;
 
 import com.datasqrl.InputError;
-import com.datasqrl.io.SourceRecord;
+import com.datasqrl.discovery.SourceRecord;
 
 import java.util.List;
 import org.junit.jupiter.api.Test;

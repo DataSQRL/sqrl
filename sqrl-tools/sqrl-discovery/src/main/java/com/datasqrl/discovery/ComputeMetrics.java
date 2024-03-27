@@ -5,7 +5,7 @@ package com.datasqrl.discovery;
 
 import com.datasqrl.engine.stream.FunctionWithError;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.SourceRecord.Raw;
+import com.datasqrl.discovery.SourceRecord.Raw;
 import com.datasqrl.metadata.stats.SourceTableStatistics;
 import java.util.Optional;
 import java.util.function.Supplier;

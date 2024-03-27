@@ -2,9 +2,9 @@ package com.datasqrl.plan.local.analyze;
 
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.SqrlConfig;
-import com.datasqrl.io.PrintFlinkDynamicSinkConnectorFactory;
+import com.datasqrl.engine.stream.flink.PrintFlinkDynamicSinkConnectorFactory;
 import com.datasqrl.io.StandardDynamicSinkFactory;
-import com.datasqrl.io.impl.file.FileFlinkDynamicSinkConnectorFactory;
+import com.datasqrl.io.file.FileFlinkDynamicSinkConnectorFactory;
 import com.datasqrl.loaders.DynamicSinkNsObject;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.loaders.ModuleLoaderImpl;
@@ -71,9 +71,7 @@ public class MockModuleLoader implements ModuleLoader {
     for (NamespaceObject object : objects) {
       if (object instanceof TableSourceNamespaceObject) {
         TableSourceNamespaceObject s = (TableSourceNamespaceObject) object;
-        s.getTable().getConfiguration()
-            .getConnectorConfigOld()
-            .setProperty("monitorIntervalMs" /*file-io not guaranteed to be on classpath*/, "0");
+
       }
     }
 

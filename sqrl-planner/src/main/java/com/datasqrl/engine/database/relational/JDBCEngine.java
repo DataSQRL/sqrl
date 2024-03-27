@@ -6,7 +6,6 @@ package com.datasqrl.engine.database.relational;
 import static com.datasqrl.engine.EngineFeature.STANDARD_DATABASE;
 
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.function.SqrlTimeTumbleFunction;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
 import com.datasqrl.sql.PgExtension;
@@ -22,7 +21,6 @@ import com.datasqrl.engine.database.relational.ddl.JdbcDDLServiceLoader;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.ExternalDataType;
-import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.plan.global.IndexSelectorConfig;
 import com.datasqrl.plan.global.PhysicalDAGPlan.DatabaseStagePlan;

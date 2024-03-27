@@ -9,7 +9,7 @@ import com.datasqrl.function.IndexableFunction.OperandSelector;
 import com.datasqrl.plan.rules.SqrlRelMdRowCount;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.util.FunctionUtil;
-import com.datasqrl.util.SqrlRexUtil;
+import com.datasqrl.calcite.SqrlRexUtil;
 import com.google.common.collect.ImmutableSet;
 import lombok.*;
 import lombok.EqualsAndHashCode.Include;

@@ -12,8 +12,8 @@ import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.config.CorsHandlerOptions;
 import com.datasqrl.graphql.config.ServerConfig;
-import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
-import com.datasqrl.io.impl.jdbc.JdbcDialect;
+import com.datasqrl.engine.database.relational.JdbcDataSystemConnector;
+import com.datasqrl.engine.database.relational.JdbcDialect;
 import com.datasqrl.plan.global.PhysicalDAGPlan.ServerStagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
@@ -27,12 +27,10 @@ import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.pgclient.PgConnectOptions;
 import java.util.List;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.postgresql.Driver;
 
 /**
  * A generic java server engine.

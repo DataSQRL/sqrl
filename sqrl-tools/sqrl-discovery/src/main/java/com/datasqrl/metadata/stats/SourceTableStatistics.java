@@ -5,7 +5,7 @@ package com.datasqrl.metadata.stats;
 
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.SourceRecord;
+import com.datasqrl.discovery.SourceRecord;
 import com.datasqrl.metadata.Metric;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;

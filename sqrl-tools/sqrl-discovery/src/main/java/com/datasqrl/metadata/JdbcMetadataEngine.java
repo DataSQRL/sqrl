@@ -4,7 +4,7 @@ import com.datasqrl.metadata.serializer.KryoProvider;
 import com.datasqrl.metadata.serializer.SerializerProvider;
 import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.database.relational.JDBCEngine;
-import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
+import com.datasqrl.engine.database.relational.JdbcDataSystemConnector;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
 import lombok.Value;

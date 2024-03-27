@@ -4,7 +4,7 @@ import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.PrintFlinkDynamicSinkConnectorFactory;
+import com.datasqrl.engine.stream.flink.PrintFlinkDynamicSinkConnectorFactory;
 import com.datasqrl.io.StandardDynamicSinkFactory;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.module.SqrlModule;

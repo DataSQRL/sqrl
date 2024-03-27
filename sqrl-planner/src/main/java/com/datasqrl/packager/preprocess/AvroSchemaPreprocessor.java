@@ -1,7 +1,7 @@
 package com.datasqrl.packager.preprocess;
 
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.formats.AvroTableSchemaFactory;
+import com.datasqrl.io.schema.avro.AvroTableSchemaFactory;
 import com.datasqrl.preprocessor.TablePreprocessor;
 import com.datasqrl.util.StringUtil;
 import com.google.auto.service.AutoService;

@@ -19,11 +19,11 @@
 //import com.datasqrl.engine.stream.flink.FlinkEngineFactory;
 //import com.datasqrl.error.ErrorCollector;
 //import com.datasqrl.io.formats.JsonLineFormat;
-//import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
+//import com.datasqrl.engine.database.relational.JdbcDataSystemConnector;
 //import com.datasqrl.io.impl.kafka.KafkaDataSystemFactory;
 //import com.datasqrl.kafka.KafkaLogEngineFactory;
 //import com.datasqrl.packager.Packager;
-//import com.datasqrl.schema.input.FlexibleTableSchemaFactory;
+//import com.datasqrl.io.flexible.schema.FlexibleTableSchemaFactory;
 //import java.nio.file.Path;
 //import lombok.SneakyThrows;
 //import org.apache.flink.configuration.ConfigConstants;

@@ -3,7 +3,6 @@
  */
 package com.datasqrl.engine.database.relational;
 
-import com.datasqrl.io.impl.jdbc.JdbcDialect;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.plan.global.IndexSelectorConfig;
 import com.datasqrl.function.IndexType;

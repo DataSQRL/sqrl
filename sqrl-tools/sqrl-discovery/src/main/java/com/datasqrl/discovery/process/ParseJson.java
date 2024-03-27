@@ -2,7 +2,7 @@ package com.datasqrl.discovery.process;
 
 import com.datasqrl.engine.stream.FunctionWithError;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.SourceRecord.Raw;
+import com.datasqrl.discovery.SourceRecord.Raw;
 import com.datasqrl.util.SqrlObjectMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;

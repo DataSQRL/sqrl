@@ -3,8 +3,8 @@
  */
 package com.datasqrl.metadata;
 
-import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
-import com.datasqrl.io.impl.jdbc.JdbcDialect;
+import com.datasqrl.engine.database.relational.JdbcDataSystemConnector;
+import com.datasqrl.engine.database.relational.JdbcDialect;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;

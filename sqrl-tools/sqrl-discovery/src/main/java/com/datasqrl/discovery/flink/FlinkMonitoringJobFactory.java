@@ -14,7 +14,7 @@ import com.datasqrl.engine.EngineFactory;
 import com.datasqrl.engine.stream.FunctionWithError;
 import com.datasqrl.error.ErrorLocation;
 import com.datasqrl.error.ErrorPrefix;
-import com.datasqrl.io.SourceRecord;
+import com.datasqrl.discovery.SourceRecord;
 import com.datasqrl.metadata.stats.SourceTableStatistics;
 import com.datasqrl.io.tables.FlinkConnectorFactory;
 import com.datasqrl.io.tables.TableConfig;

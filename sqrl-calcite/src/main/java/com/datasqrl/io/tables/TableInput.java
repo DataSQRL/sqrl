@@ -5,9 +5,9 @@ package com.datasqrl.io.tables;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.io.formats.FormatFactoryOld;
-import java.util.Optional;
 import lombok.Getter;
+
+import java.util.Optional;
 
 @Getter
 public class TableInput extends AbstractExternalTable {

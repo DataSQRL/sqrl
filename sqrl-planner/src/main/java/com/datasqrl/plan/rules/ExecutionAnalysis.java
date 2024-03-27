@@ -7,7 +7,7 @@ import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.util.FunctionUtil;
-import com.datasqrl.util.SqrlRexUtil;
+import com.datasqrl.calcite.SqrlRexUtil;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;

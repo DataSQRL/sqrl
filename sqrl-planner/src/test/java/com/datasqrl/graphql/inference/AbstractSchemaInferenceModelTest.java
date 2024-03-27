@@ -12,7 +12,7 @@ import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.engine.database.relational.IndexSelectorConfigByDialect;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIConnectorManager;
-import com.datasqrl.io.impl.jdbc.JdbcDialect;
+import com.datasqrl.engine.database.relational.JdbcDialect;
 import com.datasqrl.plan.global.DAGPlanner;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.plan.global.IndexSelector;

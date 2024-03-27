@@ -2,7 +2,7 @@ package com.datasqrl.packager.preprocess;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.preprocessor.TablePreprocessor;
-import com.datasqrl.schema.input.FlexibleTableSchemaFactory;
+import com.datasqrl.io.schema.flexible.FlexibleTableSchemaFactory;
 import com.datasqrl.util.StringUtil;
 import com.google.auto.service.AutoService;
 import com.google.common.base.Preconditions;

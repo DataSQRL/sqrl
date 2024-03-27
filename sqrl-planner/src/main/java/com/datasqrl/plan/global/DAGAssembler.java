@@ -21,7 +21,7 @@ import com.datasqrl.plan.rules.SqrlConverterConfig;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.plan.table.PhysicalTable;
 import com.datasqrl.util.CalciteUtil;
-import com.datasqrl.util.SqrlRexUtil;
+import com.datasqrl.calcite.SqrlRexUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
