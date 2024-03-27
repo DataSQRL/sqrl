@@ -1,4 +1,4 @@
-package com.datasqrl.engine.kafka;
+package com.datasqrl.engine.log.kafka;
 
 import com.datasqrl.engine.log.Log;
 import com.datasqrl.io.tables.TableSink;

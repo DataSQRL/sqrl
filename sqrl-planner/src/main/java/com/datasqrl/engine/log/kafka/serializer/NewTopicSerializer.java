@@ -1,4 +1,4 @@
-package com.datasqrl.engine.kafka.serializer;
+package com.datasqrl.engine.log.kafka.serializer;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;

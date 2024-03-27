@@ -8,9 +8,8 @@ import com.datasqrl.config.PipelineFactory;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.engine.EngineFactory;
 import com.datasqrl.engine.database.relational.JDBCEngineFactory;
-import com.datasqrl.engine.kafka.KafkaLogEngineFactory;
+import com.datasqrl.engine.log.kafka.KafkaLogEngineFactory;
 import com.datasqrl.engine.stream.flink.FlinkEngineFactory;
-import com.datasqrl.engine.stream.inmemory.InMemoryStreamFactory;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.ExternalDataType;
 import com.datasqrl.util.DatabaseHandle;
@@ -29,7 +28,7 @@ import static com.datasqrl.config.PipelineFactory.ENGINES_PROPERTY;
 @Builder
 public class IntegrationTestSettings {
   public enum LogEngine {KAFKA, NONE}
-  public enum StreamEngine {FLINK, INMEMORY}
+  public enum StreamEngine {FLINK, INMEMORY, NONE}
 
   public enum DatabaseEngine {INMEMORY, H2, POSTGRES, SQLITE}
   public enum ServerEngine {VERTX}
@@ -62,8 +61,7 @@ public class IntegrationTestSettings {
         streamEngineName = FlinkEngineFactory.ENGINE_NAME;
         break;
       case INMEMORY:
-        streamEngineName = InMemoryStreamFactory.ENGINE_NAME;
-        break;
+        throw new UnsupportedOperationException("Not supported anymore");
     }
     if (!Strings.isNullOrEmpty(streamEngineName)) {
       engineConfig.getSubConfig("streams")
@@ -141,7 +139,7 @@ public class IntegrationTestSettings {
   }
 
   public static IntegrationTestSettings getDatabaseOnly(DatabaseEngine database) {
-    return getEngines(IntegrationTestSettings.StreamEngine.INMEMORY, database).build();
+    return getEngines(StreamEngine.NONE, database).build();
   }
 
   @Value

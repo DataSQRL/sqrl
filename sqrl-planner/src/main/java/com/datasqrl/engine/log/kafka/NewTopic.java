@@ -1,4 +1,4 @@
-package com.datasqrl.engine.kafka;
+package com.datasqrl.engine.log.kafka;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

@@ -1,6 +1,6 @@
 package com.datasqrl.graphql.inference;
 
-import static com.datasqrl.engine.kafka.KafkaLogEngine.DEFAULT_EVENT_TIME_NAME;
+import static com.datasqrl.engine.log.kafka.KafkaLogEngine.DEFAULT_EVENT_TIME_NAME;
 import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.getMutationTypeName;
 
 import com.datasqrl.canonicalizer.Name;

@@ -11,7 +11,7 @@ import com.datasqrl.discovery.process.ParseJson;
 import com.datasqrl.engine.stream.flink.AbstractFlinkStreamEngine;
 import com.datasqrl.metadata.MetricStoreProvider;
 import com.datasqrl.engine.EngineFactory;
-import com.datasqrl.engine.stream.FunctionWithError;
+import com.datasqrl.FunctionWithError;
 import com.datasqrl.error.ErrorLocation;
 import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.discovery.SourceRecord;

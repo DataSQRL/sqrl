@@ -3,7 +3,6 @@
  */
 package com.datasqrl;
 
-import com.datasqrl.engine.stream.FunctionWithError;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLocation;
 import java.util.Optional;

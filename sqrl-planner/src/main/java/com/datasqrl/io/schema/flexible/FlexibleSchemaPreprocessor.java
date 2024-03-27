@@ -1,28 +1,28 @@
-package com.datasqrl.packager.preprocess;
+package com.datasqrl.io.schema.flexible;
 
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.schema.avro.AvroTableSchemaFactory;
-import com.datasqrl.preprocessor.TablePreprocessor;
+import com.datasqrl.packager.preprocess.Preprocessor;
+import com.datasqrl.packager.preprocessor.PreprocessorBase;
 import com.datasqrl.util.StringUtil;
 import com.google.auto.service.AutoService;
 import com.google.common.base.Preconditions;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.regex.Pattern;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.regex.Pattern;
+
 @NoArgsConstructor
 @AutoService(Preprocessor.class)
-public class AvroSchemaPreprocessor extends TablePreprocessor {
+public class FlexibleSchemaPreprocessor extends PreprocessorBase {
 
-
-  public static final String AVRO_SCHEMA_REGEX = "(.*)\\.avsc$";
+  public static final String SCHEMA_YML_REGEX = "(.*)\\.schema\\.yml$";
 
   @Override
   public Pattern getPattern() {
     // Get a pattern for all files with the extension .schema.yml
-    return Pattern.compile(AVRO_SCHEMA_REGEX);
+    return Pattern.compile(SCHEMA_YML_REGEX);
   }
 
   @SneakyThrows
@@ -31,14 +31,12 @@ public class AvroSchemaPreprocessor extends TablePreprocessor {
     Preconditions.checkArgument(Files.isRegularFile(file), "Not a regular file: %s", file);
 
     //Check if the directory contains a table json file
-    String tablename = StringUtil.removeFromEnd(file.getFileName().toString(), AvroTableSchemaFactory.SCHEMA_EXTENSION);
-    Path parent = file.getParent() == null ? file.toAbsolutePath().getParent() : file.getParent();
-    if (!tableExists(parent, tablename)) {
+    String tablename = StringUtil.removeFromEnd(file.getFileName().toString(), FlexibleTableSchemaFactory.SCHEMA_EXTENSION);
+    if (!tableExists(file.getParent(), tablename)) {
       errors.warn("No table file [%s] for schema file [%s], hence schema is ignored", tablename, file);
       return;
     }
 
     processorContext.addDependency(file);
   }
-
 }

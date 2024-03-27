@@ -45,7 +45,7 @@ public class GraphQLMutationExtractionTest extends AbstractEngineIT {
   @Test
   public void testMutationProcessing() {
     initialize(IntegrationTestSettings.builder()
-        .stream(StreamEngine.INMEMORY).database(DatabaseEngine.POSTGRES)
+        .stream(StreamEngine.FLINK).database(DatabaseEngine.POSTGRES)
         .log(LogEngine.KAFKA).build(), null, Optional.empty());
 
     APIConnectorManager apiManager = mock(APIConnectorManager.class);

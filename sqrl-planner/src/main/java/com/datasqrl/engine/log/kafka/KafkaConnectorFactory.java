@@ -1,4 +1,4 @@
-package com.datasqrl.engine.kafka;
+package com.datasqrl.engine.log.kafka;
 
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.io.connector.ConnectorConfig;

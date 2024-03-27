@@ -1,4 +1,4 @@
-package com.datasqrl.engine.kafka;
+package com.datasqrl.engine.log.kafka;
 
 import static com.datasqrl.io.tables.TableConfig.Base.TIMESTAMP_COL_KEY;
 
@@ -23,10 +23,9 @@ import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
 import com.datasqrl.plan.table.RelDataTypeTableSchema;
 import com.datasqrl.schema.TableSchemaExporterFactory;
 import com.google.common.base.Preconditions;
-import java.util.Collection;
+
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.NonNull;
@@ -42,7 +41,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
 
   private final SqrlConfig connectorConfig;
   private final Optional<TableSchemaExporterFactory> schemaFactory;
-  private final com.datasqrl.engine.kafka.KafkaConnectorFactory connectorFactory;
+  private final KafkaConnectorFactory connectorFactory;
 
   public KafkaLogEngine(SqrlConfig connectorConfig, Optional<TableSchemaExporterFactory> schemaFactory,
       KafkaConnectorFactory connectorFactory) {
@@ -58,7 +57,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     Preconditions.checkArgument(plan instanceof LogStagePlan);
     return new KafkaPhysicalPlan(this.connectorConfig,
         ((LogStagePlan) plan).getLogs().stream()
-            .map(log -> (com.datasqrl.engine.kafka.KafkaTopic)log)
+            .map(log -> (KafkaTopic)log)
             .map(t->new NewTopic(t.getTopicName()))
             .collect(Collectors.toList()));
   }
