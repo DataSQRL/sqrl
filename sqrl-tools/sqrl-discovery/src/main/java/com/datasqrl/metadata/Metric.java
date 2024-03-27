@@ -1,4 +1,4 @@
-package com.datasqrl.io.util;
+package com.datasqrl.metadata;
 
 public interface Metric<M extends Metric> {
 

@@ -7,8 +7,7 @@ import lombok.Getter;
 import lombok.NonNull;
 
 @Getter
-public class KafkaFlinkConnectorFactory extends FlinkConnectorFactory implements
-    com.datasqrl.engine.kafka.KafkaConnectorFactory {
+public class KafkaFlinkConnectorFactory extends FlinkConnectorFactory implements KafkaConnectorFactory {
 
   public static final KafkaConnectorFactory INSTANCE = new KafkaFlinkConnectorFactory();
   public static final String TOPIC_KEY = "topic";

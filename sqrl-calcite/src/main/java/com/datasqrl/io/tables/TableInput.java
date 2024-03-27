@@ -18,9 +18,4 @@ public class TableInput extends AbstractExternalTable {
     super(configuration, path, name, tableSchema);
   }
 
-  public FormatFactoryOld.Parser getParser() {
-    FormatFactoryOld format = configuration.getFormat().get();
-    return format.getParser(configuration.getFormatConfig());
-  }
-
 }

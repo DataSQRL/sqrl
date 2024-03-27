@@ -6,7 +6,7 @@ package com.datasqrl.metadata.stats;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.SourceRecord;
-import com.datasqrl.io.util.Metric;
+import com.datasqrl.metadata.Metric;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.google.common.base.Preconditions;
