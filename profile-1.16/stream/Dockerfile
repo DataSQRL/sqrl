@@ -6,12 +6,12 @@ COPY build.gradle /app/
 WORKDIR /app
 
 # Fetch all necessary dependencies
-#RUN gradle copyDependencies
+RUN gradle copyDependencies
 
 FROM flink:1.16.1-scala_2.12-java11
 
 # Exclude this step for fat jar
-COPY build/dependencies /opt/flink/lib/
+COPY --from=build /app/build/dependencies /opt/flink/lib/
 # UDFs
 COPY lib/ /opt/flink/lib/
 
