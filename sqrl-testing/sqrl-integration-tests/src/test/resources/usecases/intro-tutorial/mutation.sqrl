@@ -27,15 +27,15 @@ Customers.past_purchases := SELECT i.productid, count(1) as num_orders,
 
 Customers.product_visits := SELECT productid, count(1) as visits
       FROM @ JOIN ProductVisit v ON @.id = v.customerid
-      WHERE v.event_time > now() - INTERVAL 90 DAY
+      WHERE v._source_time > now() - INTERVAL 90 DAY
       GROUP BY productid ORDER BY visits DESC;
 
 Products := DISTINCT Products ON id ORDER BY updated DESC;
 
-_OrderItems := SELECT o.id, o.time, i.* FROM Orders o JOIN o.items;
+_OrderItems := SELECT o.id, o.time, o.customerid, i.* FROM Orders o JOIN o.items i;
 
 -- aggregating by country
-Products.volume_10day := SELECT c.country0 AS country, sum(i.quantity) as quantity,
-         sum(i.total) as spend, sum(i.quantity * @.weight_in_gram) as weight
-      FROM @ JOIN _OrderItems o ON o.productid = @id JOIN Customer c ON o.customerid =c.id
+Products.volume_10day := SELECT c.country0 AS country, sum(o.quantity) as quantity,
+         sum(o.quantity * o.unit_price) as spend, sum(o.quantity * @.weight_in_gram) as weight
+      FROM @ JOIN _OrderItems o ON o.productid = @.id JOIN Customers c ON o.customerid =c.id
       WHERE o.time > now() - INTERVAL 10 DAY GROUP BY c.country0;

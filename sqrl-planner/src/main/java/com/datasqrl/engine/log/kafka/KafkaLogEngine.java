@@ -36,8 +36,7 @@ import org.apache.kafka.common.internals.Topic;
 @Slf4j
 public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
 
-  public static final String DEFAULT_EVENT_TIME_NAME = "event_time";
-  public static final String DEFAULT_EVENT_ID_NAME = "event_id";
+  public static final String DEFAULT_EVENT_TIME_NAME = "_source_time";
 
   private final SqrlConfig connectorConfig;
   private final Optional<TableSchemaExporterFactory> schemaFactory;
