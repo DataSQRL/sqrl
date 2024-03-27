@@ -4,7 +4,7 @@ import static org.apache.flink.table.functions.FunctionKind.SCALAR;
 
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.flink.FlinkConverter;
-import com.datasqrl.function.SqrlFunction;
+import com.datasqrl.function.DocumentedFunction;
 import java.time.Instant;
 import java.util.Map;
 import org.apache.calcite.sql.SqlFunction;
@@ -46,7 +46,7 @@ public class DefaultFunctions {
         .get();
   }
 
-  public static class Now extends ScalarFunction implements SqrlFunction {
+  public static class Now extends ScalarFunction implements DocumentedFunction {
 
     public Now() {
     }

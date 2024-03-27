@@ -107,10 +107,8 @@ public class ExecutionAnalysis {
       if (SqrlRexUtil.isNOW(call.getOperator())) {
         capabilities.add(EngineFeature.NOW);
       } else {
-        FunctionUtil.getSqrlFunction(call.getOperator())
-            .filter(f->FunctionUtil.getTimestampPreservingFunction(f).isPresent())
+        FunctionUtil.getBridgedFunction(call.getOperator())
             .ifPresent(functions::add);
-//            .ifPresent(f->capabilities.add(EngineCapability.EXTENDED_FUNCTIONS));
       }
       return super.visitCall(call);
     }

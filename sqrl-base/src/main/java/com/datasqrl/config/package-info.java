@@ -3,5 +3,8 @@
  */
 /**
  * Contains configuration helper classes to access and manipulate configuration files.
+ *
+ * {@link com.datasqrl.config.SqrlConfig} is the main interface for interacting with configuration files
+ * in DataSQRL.
  */
 package com.datasqrl.config;

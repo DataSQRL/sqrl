@@ -6,12 +6,9 @@ package com.datasqrl.plan.global;
 import com.datasqrl.function.IndexType;
 import com.datasqrl.function.IndexableFunction;
 import com.datasqrl.function.IndexableFunction.OperandSelector;
-import com.datasqrl.function.SqrlFunction;
 import com.datasqrl.plan.rules.SqrlRelMdRowCount;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
-import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.util.FunctionUtil;
-import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.datasqrl.util.SqrlRexUtil;
 import com.google.common.collect.ImmutableSet;
 import lombok.*;
@@ -21,9 +18,9 @@ import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.sql.SqlKind;
+import org.apache.flink.table.functions.FunctionDefinition;
 
 import java.util.*;
-import org.apache.flink.table.functions.FunctionDefinition;
 
 /**
  * This class represents the potentially indexable filters and sorts of a query.
@@ -197,8 +194,8 @@ public class QueryIndexSummary {
     @Override
     public RexNode visitCall(RexCall call) {
       boolean prior = parentIsArithmetic;
-      Optional<IndexableFunction> sqrlFunction = FunctionUtil.getSqrlFunction(call.getOperator())
-          .flatMap(FunctionUtil::isIndexableFunctionMetadata);
+      Optional<IndexableFunction> sqrlFunction = FunctionUtil.getBridgedFunction(call.getOperator())
+          .flatMap(QueryIndexSummary.IndexableFinder::getIndexableFunction);
       if (sqrlFunction.isPresent() && parentIsArithmetic) {
         //This is either a top level predicate or a distance function inside a comparison
         IndexableFunction idxFunction = (IndexableFunction) sqrlFunction.get();
@@ -218,6 +215,10 @@ public class QueryIndexSummary {
       RexNode result = super.visitCall(call);
       parentIsArithmetic = prior;
       return result;
+    }
+
+    private static Optional<IndexableFunction> getIndexableFunction(FunctionDefinition functionDefinition) {
+      return FunctionUtil.getFunctionMetaData(functionDefinition, IndexableFunction.class);
     }
 
     private static Optional<IndexableFunctionCall> resolveIndexFunctionCall(RexCall call, IndexableFunction idxFunction) {

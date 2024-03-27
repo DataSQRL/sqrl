@@ -1,6 +1,6 @@
 package com.datasqrl.functions.json;
 
-import static com.datasqrl.function.SqrlFunction.getFunctionNameFromClass;
+import static com.datasqrl.function.DocumentedFunction.getFunctionNameFromClass;
 
 import com.datasqrl.function.DowncastFunction;
 import com.datasqrl.json.JsonToString;

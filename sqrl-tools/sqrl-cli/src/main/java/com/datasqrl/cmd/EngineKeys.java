@@ -1,4 +1,4 @@
-package com.datasqrl.config;
+package com.datasqrl.cmd;
 
 public class EngineKeys {
   public static final String LOG = "log";

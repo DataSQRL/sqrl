@@ -49,8 +49,8 @@ public class FlinkUdfNsObject implements FunctionNamespaceObject<FunctionDefinit
   }
 
   private String getFunctionName(FunctionDefinition function) {
-    if (function instanceof SqrlFunction) {
-      return ((SqrlFunction) function).getFunctionName();
+    if (function instanceof DocumentedFunction) {
+      return ((DocumentedFunction) function).getFunctionName();
     }
 
     return getFunctionNameFromClass(function.getClass()).getDisplay();

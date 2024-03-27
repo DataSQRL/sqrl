@@ -6,7 +6,6 @@ package com.datasqrl.cmd;
 import static picocli.CommandLine.Command;
 import static picocli.CommandLine.Parameters;
 
-import com.datasqrl.config.EngineKeys;
 import com.datasqrl.config.PipelineFactory;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConfigCommons;

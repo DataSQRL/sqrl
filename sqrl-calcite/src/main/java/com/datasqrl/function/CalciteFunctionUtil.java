@@ -1,6 +1,6 @@
 package com.datasqrl.function;
 
-import static com.datasqrl.function.SqrlFunction.getFunctionNameFromClass;
+import static com.datasqrl.function.DocumentedFunction.getFunctionNameFromClass;
 
 import lombok.experimental.UtilityClass;
 import org.apache.calcite.sql.SqlBinaryOperator;

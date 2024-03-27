@@ -3,7 +3,7 @@
  */
 package com.datasqrl.function;
 
-public interface SqrlFunction {
+public interface DocumentedFunction {
 
   String getDocumentation();
 

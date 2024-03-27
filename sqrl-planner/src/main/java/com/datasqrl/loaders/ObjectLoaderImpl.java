@@ -1,6 +1,6 @@
 package com.datasqrl.loaders;
 
-import static com.datasqrl.function.SqrlFunction.getFunctionNameFromClass;
+import static com.datasqrl.function.DocumentedFunction.getFunctionNameFromClass;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;

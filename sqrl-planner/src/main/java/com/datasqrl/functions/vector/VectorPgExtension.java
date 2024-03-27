@@ -1,9 +1,8 @@
 package com.datasqrl.functions.vector;
 
-import static com.datasqrl.function.SqrlFunction.getFunctionNameFromClass;
+import static com.datasqrl.function.DocumentedFunction.getFunctionNameFromClass;
 
 import com.datasqrl.sql.PgExtension;
-import com.datasqrl.function.SqrlFunction;
 import com.datasqrl.sql.SqlDDLStatement;
 import com.datasqrl.vector.FlinkVectorType;
 import com.datasqrl.vector.VectorFunctions;

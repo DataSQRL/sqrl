@@ -115,7 +115,7 @@ public class DAGPlanner {
       OperatorTable sqrlOperatorTable) {
     Map<String, UserDefinedFunction> fncs = new HashMap<>();
     for (Map.Entry<String, SqlOperator> fnc : sqrlOperatorTable.getUdfs().entrySet()) {
-      Optional<FunctionDefinition> definition = FunctionUtil.getSqrlFunction(fnc.getValue());
+      Optional<FunctionDefinition> definition = FunctionUtil.getBridgedFunction(fnc.getValue());
       if (definition.isPresent()) {
         if (definition.get() instanceof UserDefinedFunction) {
           fncs.put(fnc.getKey(), (UserDefinedFunction)definition.get());

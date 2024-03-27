@@ -5,7 +5,7 @@
 //
 //import static com.datasqrl.io.tables.TableConfig.CONNECTOR_KEY;
 //
-//import com.datasqrl.config.EngineKeys;
+//import com.datasqrl.cmd.EngineKeys;
 //import com.datasqrl.config.PipelineFactory;
 //import com.datasqrl.config.SqrlConfig;
 //import com.datasqrl.config.SqrlConfig.Value;

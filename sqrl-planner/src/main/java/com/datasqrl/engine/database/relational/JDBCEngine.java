@@ -6,6 +6,7 @@ package com.datasqrl.engine.database.relational;
 import static com.datasqrl.engine.EngineFeature.STANDARD_DATABASE;
 
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.function.SqrlTimeTumbleFunction;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
 import com.datasqrl.sql.PgExtension;
@@ -76,8 +77,9 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
 
   @Override
   public boolean supports(FunctionDefinition function) {
-    return FunctionUtil.getTimestampPreservingFunction(function)
-        .isEmpty(); //TODO: @Daniel: change to determining which functions are supported by dialect & database type
+    //TODO: @Daniel: change to determining which functions are supported by dialect & database type
+    //This is a hack - we just check that it's not a tumble window function
+    return FunctionUtil.getSqrlTimeTumbleFunction(function).isEmpty();
   }
 
 

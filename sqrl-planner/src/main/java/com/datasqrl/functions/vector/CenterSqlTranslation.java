@@ -1,12 +1,11 @@
 package com.datasqrl.functions.vector;
 
-import static com.datasqrl.function.SqrlFunction.getFunctionNameFromClass;
+import static com.datasqrl.function.DocumentedFunction.getFunctionNameFromClass;
 
 import com.datasqrl.function.CalciteFunctionUtil;
 import com.datasqrl.function.translations.PostgresSqlTranslation;
 import com.datasqrl.function.translations.SqlTranslation;
 import com.datasqrl.vector.Center;
-import com.datasqrl.vector.VectorFunctions;
 import com.google.auto.service.AutoService;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlWriter;

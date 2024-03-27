@@ -30,8 +30,8 @@ public class TimeTumbleFunctionCall {
         return Optional.empty();
     }
     RexCall call = (RexCall) rexNode;
-    Optional<SqrlTimeTumbleFunction> fnc = FunctionUtil.getSqrlFunction(call.getOperator())
-        .flatMap(FunctionUtil::isTimeTumbleFunction);
+    Optional<SqrlTimeTumbleFunction> fnc = FunctionUtil.getBridgedFunction(call.getOperator())
+        .flatMap(FunctionUtil::getSqrlTimeTumbleFunction);
     if (fnc.isEmpty()) {
         return Optional.empty();
     }

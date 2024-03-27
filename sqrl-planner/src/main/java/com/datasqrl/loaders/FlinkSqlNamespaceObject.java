@@ -1,6 +1,6 @@
 package com.datasqrl.loaders;
 
-import static com.datasqrl.function.SqrlFunction.getFunctionNameFromClass;
+import static com.datasqrl.function.DocumentedFunction.getFunctionNameFromClass;
 import static com.datasqrl.io.tables.TableConfig.Base.PRIMARYKEY_KEY;
 import static com.datasqrl.io.tables.TableConfig.Base.TIMESTAMP_COL_KEY;
 import static com.datasqrl.io.tables.TableConfig.Base.TYPE_KEY;
@@ -11,7 +11,6 @@ import static com.datasqrl.io.tables.TableConfig.METADATA_COLUMN_TYPE_KEY;
 import static com.datasqrl.io.tables.TableConfig.METADATA_KEY;
 import static com.datasqrl.io.tables.TableConfig.TABLE_KEY;
 import static com.datasqrl.loaders.ObjectLoaderImpl.UDF_FUNCTION_CLASS;
-import static org.apache.calcite.model.ModelHandler.addFunctions;
 
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.Name;
@@ -30,26 +29,22 @@ import com.datasqrl.plan.table.ImportedRelationalTableImpl;
 import com.datasqrl.plan.table.PrimaryKey;
 import com.datasqrl.plan.table.ProxyImportRelationalTable;
 import com.datasqrl.util.CalciteUtil;
-import com.datasqrl.util.CalciteUtil.RelDataTypeFieldBuilder;
 import com.datasqrl.util.RelDataTypeBuilder;
 import com.google.common.base.Preconditions;
-import java.net.URLClassLoader;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
+
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeFactory.FieldInfoBuilder;
 import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.SqlIntervalLiteral.IntervalValue;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqrlSqlValidator;
 import org.apache.flink.sql.parser.ddl.SqlCreateFunction;
 import org.apache.flink.sql.parser.ddl.SqlCreateTable;
