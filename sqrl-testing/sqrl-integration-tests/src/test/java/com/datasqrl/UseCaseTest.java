@@ -1,7 +1,7 @@
 package com.datasqrl;
 
 import java.nio.file.Path;
-import org.junit.jupiter.api.Disabled;
+import java.util.Optional;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
@@ -17,7 +17,7 @@ public class UseCaseTest extends AbstractUseCaseTest {
   @ParameterizedTest
   @ArgumentsSource(UseCaseFiles.class)
   void testUsecase(Path script, Path graphQlFile, Path packageFile) {
-    super.testUsecase(script, graphQlFile, packageFile);
+    super.testUsecase(script, graphQlFile, packageFile, Optional.empty());
   }
 
   static class UseCaseFiles extends SqrlScriptsAndLocalPackages {

@@ -5,13 +5,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.datasqrl.cmd.AssertStatusHook;
 import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.SnapshotTest.Snapshot;
-import com.google.common.base.Strings;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
@@ -28,7 +27,7 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
   }
 
 
-  void testUsecase(Path script, Path graphQlFile, Path packageFile) {
+  void testUsecase(Path script, Path graphQlFile, Path packageFile, Optional<Path> profile) {
     assertTrue(Files.exists(script));
     Path baseDir = script.getParent();
     //Check if GraphQL exists
@@ -46,6 +45,9 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
       assert Files.exists(packageFile);
       arguments.add("-c"); arguments.add(packageFile.getFileName().toString());
     }
+    profile.ifPresent((p)-> {
+      arguments.add("-p"); arguments.add(p.toAbsolutePath().toString());
+    });
     arguments.add("-t"); arguments.add(deployDir.toString());
     arguments.add("--nolookup");
 
