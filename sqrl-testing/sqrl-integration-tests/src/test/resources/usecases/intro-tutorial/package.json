@@ -13,14 +13,13 @@
       "type" : "flink"
     },
     "log" : {
-      "name" : "kafka",
-      "schema" : "flexible",
-      "format" : "avro",
       "type" : "kafka",
-      "connector" : {
-        "name" : "kafka",
-        "bootstrap.servers" : "kafka:9092"
-      }
+      "connector" : "kafka",
+      "format" : "json",
+      "properties.bootstrap.servers": "kafka:9092",
+      "properties.group.id": "groupid",
+      "scan.startup.mode" : "earliest-offset",
+      "properties.auto.offset.reset" : "earliest"
     },
     "server" : {
       "type" : "vertx"

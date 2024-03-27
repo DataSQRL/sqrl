@@ -25,7 +25,6 @@ import java.util.Optional;
 public class TableConfig {
 
   public static final String CONNECTOR_KEY = "flink";
-  public static final String CONNECTOR_NAME_KEY = "connector";
 
   public static final String METADATA_KEY = "metadata";
   public static final String TABLE_KEY = "table";
