@@ -1,9 +1,8 @@
 package com.datasqrl.functions.vector;
 
-import static com.datasqrl.function.SqrlFunction.getFunctionNameFromClass;
+import static com.datasqrl.function.FlinkUdfNsObject.getFunctionNameFromClass;
 
 import com.datasqrl.sql.PgExtension;
-import com.datasqrl.function.SqrlFunction;
 import com.datasqrl.sql.SqlDDLStatement;
 import com.datasqrl.vector.FlinkVectorType;
 import com.datasqrl.vector.VectorFunctions;
@@ -24,7 +23,7 @@ public class VectorPgExtension implements PgExtension {
   @Override
   public Set<String> operators() {
     return VectorFunctions.functions.stream()
-        .map(f->getFunctionNameFromClass(f.getClass()))
+        .map(f->getFunctionNameFromClass(f.getClass()).getDisplay())
         .collect(Collectors.toSet());
   }
 

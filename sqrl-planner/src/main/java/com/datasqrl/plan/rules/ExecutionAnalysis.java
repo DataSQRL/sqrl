@@ -7,7 +7,7 @@ import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.util.FunctionUtil;
-import com.datasqrl.util.SqrlRexUtil;
+import com.datasqrl.calcite.SqrlRexUtil;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
@@ -107,10 +107,8 @@ public class ExecutionAnalysis {
       if (SqrlRexUtil.isNOW(call.getOperator())) {
         capabilities.add(EngineFeature.NOW);
       } else {
-        FunctionUtil.getSqrlFunction(call.getOperator())
-            .filter(f->FunctionUtil.getTimestampPreservingFunction(f).isPresent())
+        FunctionUtil.getBridgedFunction(call.getOperator())
             .ifPresent(functions::add);
-//            .ifPresent(f->capabilities.add(EngineCapability.EXTENDED_FUNCTIONS));
       }
       return super.visitCall(call);
     }

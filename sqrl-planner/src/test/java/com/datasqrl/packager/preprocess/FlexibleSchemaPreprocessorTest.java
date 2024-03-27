@@ -1,6 +1,6 @@
 package com.datasqrl.packager.preprocess;
 
-import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.io.schema.flexible.FlexibleSchemaPreprocessor;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;

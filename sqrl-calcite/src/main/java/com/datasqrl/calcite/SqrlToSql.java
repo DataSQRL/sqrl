@@ -186,7 +186,8 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
             }
           }
         } else if (ident.isStar() && ident.names.size() == 2) {
-          NamePath path = newContext.getAliasPath(nameUtil.toName(ident.names.get(0)));
+          NamePath path = newContext.getAliasPath(nameUtil.toName(ident.names.get(0)))
+              .orElseThrow(() -> new RuntimeException("Could not find alias: " + ident.names.get(0)));
           Collection<Function> sqrlTable = planner.getSchema().getFunctions(path.getDisplay(), false);
 
           if (!sqrlTable.isEmpty()) {
@@ -533,8 +534,8 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
       return aliasPathMap.containsKey(alias);
     }
 
-    public NamePath getAliasPath(Name alias) {
-      return getAliasPathMap().get(alias);
+    public Optional<NamePath> getAliasPath(Name alias) {
+      return Optional.ofNullable(getAliasPathMap().get(alias));
     }
 
     public static class ContextBuilder {

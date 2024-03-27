@@ -1,6 +1,5 @@
 package com.datasqrl.metadata;
 
-import com.datasqrl.io.util.Metric;
 import java.io.Closeable;
 import java.io.Serializable;
 

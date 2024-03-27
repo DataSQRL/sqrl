@@ -3,6 +3,7 @@
  */
 package com.datasqrl.util;
 
+import com.datasqrl.function.InputPreservingFunction;
 import com.google.common.base.Preconditions;
 
 import java.math.BigDecimal;
@@ -15,7 +16,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import com.google.common.collect.ContiguousSet;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
@@ -42,6 +42,7 @@ import org.apache.calcite.sql.type.ArraySqlType;
 import org.apache.calcite.sql.type.BasicSqlType;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.tools.RelBuilder;
+import org.apache.flink.table.functions.FunctionDefinition;
 
 public class CalciteUtil {
 
@@ -167,8 +168,8 @@ public class CalciteUtil {
   public static final InputRefTransformation INPUT_PRESERVING_TRANSFORM = new InputRefTransformation() {
     @Override
     public boolean appliesTo(SqlOperator operator) {
-      return FunctionUtil.getSqrlFunction(operator)
-              .flatMap(FunctionUtil::isInputPreservingFunction)
+      return FunctionUtil.getBridgedFunction(operator)
+              .flatMap(CalciteUtil::getInputPreservingFunction)
               .isPresent();
     }
 
@@ -179,13 +180,18 @@ public class CalciteUtil {
 
     @Override
     public RexNode getOperand(SqlOperator operator, List<RexNode> operands) {
-      int index = FunctionUtil.getSqrlFunction(operator)
-              .flatMap(FunctionUtil::isInputPreservingFunction)
+      int index = FunctionUtil.getBridgedFunction(operator)
+              .flatMap(CalciteUtil::getInputPreservingFunction)
               .get()
               .preservedOperandIndex();
       return operands.get(index);
     }
   };
+
+  private static Optional<InputPreservingFunction> getInputPreservingFunction(FunctionDefinition functionDefinition) {
+    return FunctionUtil.getFunctionMetaData(functionDefinition, InputPreservingFunction.class);
+  }
+
 
   public static final InputRefTransformation COALESCE_TRANSFORM = new BasicInputRefTransformation("coalesce",
           ops -> ops.size()==2 && (ops.get(1) instanceof RexLiteral), 0);

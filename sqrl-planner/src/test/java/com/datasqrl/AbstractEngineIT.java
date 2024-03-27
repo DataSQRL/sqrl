@@ -13,7 +13,7 @@ import com.datasqrl.engine.database.relational.JDBCEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.inject.StatefulModule;
-import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
+import com.datasqrl.engine.database.relational.JdbcDataSystemConnector;
 import com.datasqrl.module.SqrlModule;
 import com.datasqrl.util.DatabaseHandle;
 import com.google.inject.Guice;

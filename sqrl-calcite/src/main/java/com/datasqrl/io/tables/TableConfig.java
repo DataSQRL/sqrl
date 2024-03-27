@@ -11,26 +11,20 @@ import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.ExternalDataType;
 import com.datasqrl.io.connector.ConnectorConfig;
-import com.datasqrl.io.formats.FormatFactoryOld;
 import com.datasqrl.module.resolver.ResourceResolver;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.base.Preconditions;
+import lombok.*;
+
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import lombok.Value;
 
 @Value
 public class TableConfig {
 
   public static final String CONNECTOR_KEY = "flink";
-  public static final String CONNECTOR_NAME_KEY = "connector";
 
   public static final String METADATA_KEY = "metadata";
   public static final String TABLE_KEY = "table";
@@ -72,11 +66,6 @@ public class TableConfig {
   public ConnectorConfig getConnectorConfig() {
     //Right now, we have hard-coded flink as the connector engine
     return new ConnectorConfig(config.getSubConfig(CONNECTOR_KEY), new FlinkConnectorFactory());
-  }
-
-  @Deprecated
-  public SqrlConfig getConnectorConfigOld() {
-    return config.getSubConfig(CONNECTOR_KEY);
   }
 
   public SqrlConfig getMetadataConfig() {
@@ -126,27 +115,6 @@ public class TableConfig {
     return new Builder(this.getName(), SqrlConfig.create(config)).copyFrom(this);
   }
 
-  public SqrlConfig getFormatConfig() {
-    return SqrlConfig.createCurrentVersion();
-  }
-
-  public boolean hasFormat() {
-    return getFormatConfig().containsKey(FORMAT_NAME_KEY);
-  }
-
-  public Optional<FormatFactoryOld> getFormat() {
-    try {
-      SqrlConfig formatConfig = getFormatConfig();
-      FormatFactoryOld factory = FormatFactoryOld.fromConfig(formatConfig);
-      return Optional.of(factory);
-    } catch (Exception e) {//hack for missing conf values
-      return Optional.empty();
-    }
-  }
-
-  /*
-   * ############# OLD CODE - DELETE ONCE REFACTORED
-   */
 
   @Value
   public static class Base {
@@ -259,30 +227,6 @@ public class TableConfig {
 
     public TableConfig build() {
       return new TableConfig(name, config);
-    }
-
-    /*
-      #### OLD CODE - REMOVE ONCE REFACTORED
-     */
-
-    public SqrlConfig getFormatConfig() {
-      return SqrlConfig.createCurrentVersion();
-    }
-
-
-  }
-
-  @AllArgsConstructor
-  @Getter
-  @NoArgsConstructor(force = true, access = AccessLevel.PRIVATE)
-  @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "className")
-  public static class Serialized {
-
-    Name name;
-    SerializedSqrlConfig config;
-
-    public TableConfig deserialize(ErrorCollector errors) {
-      return new TableConfig(name, config.deserialize(errors));
     }
 
   }

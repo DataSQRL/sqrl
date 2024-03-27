@@ -6,7 +6,6 @@ import com.datasqrl.AbstractLogicalSQRLIT;
 import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.plan.local.generate.DebuggerConfig;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.data.Retail;
 import java.io.IOException;
@@ -76,8 +75,7 @@ public class ResolveErrorMsgTest extends AbstractLogicalSQRLIT {
   @Test
   @Disabled("move to physical error handling test")
   public void debugErrors() {
-    initialize(IntegrationTestSettings.builder().debugger(
-            DebuggerConfig.of(NamePath.of("missing"),null))
+    initialize(IntegrationTestSettings.builder()
         .build(), (Path) null, Optional.empty());
     generateInvalid("wrong-sink",
         "IMPORT ecommerce-data.Customer",

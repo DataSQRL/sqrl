@@ -3,17 +3,15 @@
  */
 package com.datasqrl.util.data;
 
-import com.datasqrl.io.impl.file.FileDataSystemConfig;
-import com.datasqrl.io.impl.file.FileDataSystemFactory;
-import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.util.TestDataset;
 import com.datasqrl.util.TestGraphQLSchema;
 import com.datasqrl.util.TestScript;
+import lombok.AllArgsConstructor;
+import org.apache.flink.util.ArrayUtils;
+
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
-import lombok.AllArgsConstructor;
-import org.apache.flink.util.ArrayUtils;
 
 @AllArgsConstructor
 public class Nutshop implements TestDataset {
@@ -31,13 +29,7 @@ public class Nutshop implements TestDataset {
   public static final Nutshop COMPRESS = new Nutshop(Variant.compress);
 
   public static final Nutshop URL = new Nutshop(Variant.url) {
-    @Override
-    public TableConfig getDiscoveryConfig() {
-      List<String> urls = List.of(
-          "https://github.com/DataSQRL/sqrl/raw/55628dff255ffdf4c6de879ea1f2abe4b54d5e99/sqrl-examples/nutshop/data-compress/orders_part1.json.gz",
-          "https://github.com/DataSQRL/sqrl/raw/55628dff255ffdf4c6de879ea1f2abe4b54d5e99/sqrl-examples/nutshop/data-compress/products.csv.gz");
-      return FileDataSystemFactory.getFileDiscoveryConfig(getName(), FileDataSystemConfig.builder().fileURIs(urls).build()).build();
-    }
+
   };
 
   final Variant variant;

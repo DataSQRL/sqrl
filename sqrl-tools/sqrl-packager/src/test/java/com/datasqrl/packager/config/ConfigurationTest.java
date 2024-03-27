@@ -36,7 +36,12 @@ public class ConfigurationTest {
     assertEquals(1, pipelineFactory.getEngineConfig().getVersion());
 
 
-    assertEquals(3, compilerConfig.getMaxApiArguments());
+    assertFalse(compilerConfig.isAddArguments());
+    CompilerConfiguration.ExplainConfig explain = compilerConfig.getExplain();
+    assertFalse(explain.isText());
+    assertFalse(explain.isExtended());
+    assertTrue(explain.isVisual());
+    assertTrue(explain.isSorted());
     assertEquals(2, pipelineFactory.getEngines().size());
     ExecutionPipeline executionPipeline = pipelineFactory.createPipeline();
 //    pipelineFactory.getDatabaseEngine();

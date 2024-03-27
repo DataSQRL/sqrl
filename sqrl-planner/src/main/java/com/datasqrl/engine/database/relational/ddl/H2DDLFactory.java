@@ -5,7 +5,7 @@ package com.datasqrl.engine.database.relational.ddl;
 
 import com.datasqrl.engine.database.relational.ddl.statements.CreateIndexDDL;
 import com.datasqrl.engine.database.relational.ddl.statements.CreateTableDDL;
-import com.datasqrl.io.impl.jdbc.JdbcDialect;
+import com.datasqrl.engine.database.relational.JdbcDialect;
 import com.datasqrl.sql.SqlDDLStatement;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;

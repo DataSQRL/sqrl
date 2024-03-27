@@ -16,8 +16,8 @@ import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.plan.queries.APIMutation;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISourceImpl;
-import com.datasqrl.schema.converters.FlexibleSchemaExporter;
-import com.datasqrl.schema.input.FlexibleTableSchemaHolder;
+import com.datasqrl.io.schema.flexible.converters.FlexibleSchemaExporter;
+import com.datasqrl.io.schema.flexible.FlexibleTableSchemaHolder;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.SnapshotTest.Snapshot;
 import com.google.common.io.Resources;
@@ -45,7 +45,7 @@ public class GraphQLMutationExtractionTest extends AbstractEngineIT {
   @Test
   public void testMutationProcessing() {
     initialize(IntegrationTestSettings.builder()
-        .stream(StreamEngine.INMEMORY).database(DatabaseEngine.POSTGRES)
+        .stream(StreamEngine.FLINK).database(DatabaseEngine.POSTGRES)
         .log(LogEngine.KAFKA).build(), null, Optional.empty());
 
     APIConnectorManager apiManager = mock(APIConnectorManager.class);

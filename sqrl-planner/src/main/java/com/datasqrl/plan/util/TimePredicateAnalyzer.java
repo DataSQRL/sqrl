@@ -3,7 +3,7 @@
  */
 package com.datasqrl.plan.util;
 
-import com.datasqrl.util.SqrlRexUtil;
+import com.datasqrl.calcite.SqrlRexUtil;
 import com.google.common.collect.Iterables;
 import java.util.HashSet;
 import java.util.List;

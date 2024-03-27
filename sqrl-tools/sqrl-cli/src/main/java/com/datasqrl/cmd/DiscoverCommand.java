@@ -6,7 +6,6 @@ package com.datasqrl.cmd;
 import static picocli.CommandLine.Command;
 import static picocli.CommandLine.Parameters;
 
-import com.datasqrl.config.EngineKeys;
 import com.datasqrl.config.PipelineFactory;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConfigCommons;
@@ -23,7 +22,7 @@ import com.datasqrl.engine.stream.flink.FlinkEngineFactory;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.FileConfigOptions;
-import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
+import com.datasqrl.engine.database.relational.JdbcDataSystemConnector;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.packager.Packager;

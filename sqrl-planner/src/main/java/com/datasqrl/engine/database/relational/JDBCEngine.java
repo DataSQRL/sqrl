@@ -21,7 +21,6 @@ import com.datasqrl.engine.database.relational.ddl.JdbcDDLServiceLoader;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.ExternalDataType;
-import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.plan.global.IndexSelectorConfig;
 import com.datasqrl.plan.global.PhysicalDAGPlan.DatabaseStagePlan;
@@ -76,8 +75,9 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
 
   @Override
   public boolean supports(FunctionDefinition function) {
-    return FunctionUtil.getTimestampPreservingFunction(function)
-        .isEmpty(); //TODO: @Daniel: change to determining which functions are supported by dialect & database type
+    //TODO: @Daniel: change to determining which functions are supported by dialect & database type
+    //This is a hack - we just check that it's not a tumble window function
+    return FunctionUtil.getSqrlTimeTumbleFunction(function).isEmpty();
   }
 
 

@@ -16,8 +16,8 @@
 //import com.datasqrl.io.impl.file.FileDataSystemConfig;
 //import com.datasqrl.io.impl.file.FileDataSystemFactory;
 //import com.datasqrl.io.impl.file.FilePath;
-//import com.datasqrl.io.impl.file.FilePathConfig;
-//import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
+//import com.datasqrl.discovery.system.FilePathConfig;
+//import com.datasqrl.engine.database.relational.JdbcDataSystemConnector;
 //import com.datasqrl.io.tables.TableConfig;
 //import com.datasqrl.plan.global.DAGPlanner;
 //import com.datasqrl.plan.global.PhysicalDAGPlan;

@@ -9,6 +9,12 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+/**
+ * Interface for accessing configuration files that provides convenience methods
+ * for accessing different data types and methods to handle errors in a way that
+ * preserves the error locality so it is easy for users to understand where the
+ * error comes from and how to fix it.
+ */
 public interface SqrlConfig {
 
   static final int CURRENT_VERSION = 1;

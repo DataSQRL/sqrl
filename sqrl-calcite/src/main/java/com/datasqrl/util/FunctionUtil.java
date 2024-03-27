@@ -4,7 +4,7 @@ import com.datasqrl.function.FunctionMetadata;
 import com.datasqrl.function.IndexableFunction;
 import com.datasqrl.function.InputPreservingFunction;
 import com.datasqrl.function.SqrlTimeTumbleFunction;
-import com.datasqrl.function.TimestampPreservingFunction;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Optional;
@@ -31,7 +31,7 @@ public class FunctionUtil {
     return Optional.empty();
   }
 
-  public static Optional<FunctionDefinition> getSqrlFunction(SqlOperator operator) {
+  public static Optional<FunctionDefinition> getBridgedFunction(SqlOperator operator) {
     if (operator instanceof BridgingSqlFunction) {
       return Optional.of(((org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction)operator).getDefinition());
     } else if (operator instanceof BridgingSqlAggFunction) {
@@ -40,49 +40,18 @@ public class FunctionUtil {
     return Optional.empty();
   }
 
-  public static Optional<TimestampPreservingFunction> getTimestampPreservingFunction(
-      FunctionDefinition functionDefinition) {
-
+  public static<C> Optional<C> getFunctionMetaData(
+          FunctionDefinition functionDefinition, Class<C> functionClass) {
     return ServiceLoaderDiscovery.getAll(FunctionMetadata.class)
-        .stream()
-        .filter(f->f.getMetadataClass().equals(functionDefinition.getClass()))
-        .filter(f->TimestampPreservingFunction.class.isAssignableFrom(f.getClass()))
-        .map(f->(TimestampPreservingFunction)f)
-        .findFirst();
+            .stream()
+            .filter(f->f.getMetadataClass().equals(functionDefinition.getClass()))
+            .filter(f->functionClass.isAssignableFrom(f.getClass()))
+            .map(f->(C)f)
+            .findFirst();
   }
+
   public static Optional<SqrlTimeTumbleFunction> getSqrlTimeTumbleFunction(
       FunctionDefinition functionDefinition) {
-
-    return ServiceLoaderDiscovery.getAll(FunctionMetadata.class)
-        .stream()
-        .filter(f->f.getMetadataClass().equals(functionDefinition.getClass()))
-        .filter(f->SqrlTimeTumbleFunction.class.isAssignableFrom(f.getClass()))
-        .map(f->(SqrlTimeTumbleFunction)f)
-        .findFirst();
-  }
-
-  public static Optional<InputPreservingFunction> isInputPreservingFunction(FunctionDefinition functionDefinition) {
-    return ServiceLoaderDiscovery.getAll(FunctionMetadata.class)
-        .stream()
-        .filter(f->f.getMetadataClass().equals(functionDefinition.getClass()))
-        .filter(f->InputPreservingFunction.class.isAssignableFrom(f.getClass()))
-        .map(f->(InputPreservingFunction)f)
-        .findFirst();
-  }
-  public static Optional<SqrlTimeTumbleFunction> isTimeTumbleFunction(FunctionDefinition functionDefinition) {
-    return ServiceLoaderDiscovery.getAll(FunctionMetadata.class)
-        .stream()
-        .filter(f->f.getMetadataClass().equals(functionDefinition.getClass()))
-        .filter(f->SqrlTimeTumbleFunction.class.isAssignableFrom(f.getClass()))
-        .map(f->(SqrlTimeTumbleFunction)f)
-        .findFirst();
-  }
-
-  public static Optional<IndexableFunction> isIndexableFunctionMetadata(FunctionDefinition functionDefinition) {
-    return ServiceLoaderDiscovery.getAll(FunctionMetadata.class).stream()
-        .filter(f->f.getMetadataClass().equals(functionDefinition.getClass()))
-        .filter(f->IndexableFunction.class.isAssignableFrom(f.getClass()))
-        .map(f->(IndexableFunction)f)
-        .findFirst();
+    return getFunctionMetaData(functionDefinition, SqrlTimeTumbleFunction.class);
   }
 }

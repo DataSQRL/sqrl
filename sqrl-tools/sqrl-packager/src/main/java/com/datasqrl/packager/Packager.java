@@ -3,39 +3,25 @@
  */
 package com.datasqrl.packager;
 
-import static com.datasqrl.packager.LambdaUtil.rethrowCall;
-import static com.datasqrl.util.NameUtil.namepath2Path;
-
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.config.EngineKeys;
-import com.datasqrl.config.PipelineFactory;
 import com.datasqrl.config.SqrlConfig;
-import com.datasqrl.engine.EngineFactory;
-import com.datasqrl.engine.database.relational.JDBCEngineFactory;
-import com.datasqrl.engine.server.GenericJavaServerEngineFactory;
-import com.datasqrl.engine.server.VertxEngineFactory;
-import com.datasqrl.engine.stream.flink.FlinkEngineFactory;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;
-import com.datasqrl.io.formats.JsonLineFormat;
-import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
-import com.datasqrl.io.impl.kafka.KafkaDataSystemFactory;
-import com.datasqrl.engine.kafka.KafkaLogEngineFactory;
 import com.datasqrl.packager.Preprocessors.PreprocessorsContext;
 import com.datasqrl.packager.config.Dependency;
 import com.datasqrl.packager.config.DependencyConfig;
 import com.datasqrl.packager.config.ScriptConfiguration;
-import com.datasqrl.packager.preprocess.DataSystemPreprocessor;
-import com.datasqrl.packager.preprocess.FlinkSqlPreprocessor;
-import com.datasqrl.packager.preprocess.JarPreprocessor;
-import com.datasqrl.packager.preprocess.PackageJsonPreprocessor;
-import com.datasqrl.packager.preprocess.Preprocessor;
-import com.datasqrl.packager.preprocess.TablePreprocessor;
+import com.datasqrl.packager.preprocess.*;
 import com.datasqrl.packager.repository.Repository;
-import com.datasqrl.schema.input.FlexibleTableSchemaFactory;
 import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.google.common.base.Preconditions;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.SneakyThrows;
+import org.apache.commons.collections4.ListUtils;
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -43,20 +29,13 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.SneakyThrows;
-import org.apache.commons.collections4.ListUtils;
-import org.apache.commons.lang3.StringUtils;
+
+import static com.datasqrl.packager.LambdaUtil.rethrowCall;
+import static com.datasqrl.util.NameUtil.namepath2Path;
 
 @Getter
 public class Packager {
@@ -274,15 +253,6 @@ public class Packager {
     }
   }
 
-  @SneakyThrows
-  public static Path writeEngineConfig(Path rootDir, SqrlConfig config) {
-    Path enginesFile = Files.createTempFile(rootDir, "package-engines", ".json");
-    File file = enginesFile.toFile();
-    file.deleteOnExit();
-
-    config.toFile(enginesFile, true);
-    return enginesFile;
-  }
 
   public static Optional<List<Path>> findPackageFile(Path rootDir, List<Path> packageFiles) {
     if (packageFiles.isEmpty()) {
@@ -297,47 +267,4 @@ public class Packager {
     }
   }
 
-  public static SqrlConfig createDockerConfig(ErrorCollector errors) {
-    SqrlConfig rootConfig = SqrlConfig.createCurrentVersion(errors);
-
-    SqrlConfig config = rootConfig.getSubConfig(PipelineFactory.ENGINES_PROPERTY);
-
-    SqrlConfig dbConfig = config.getSubConfig("database");
-    dbConfig.setProperty(JDBCEngineFactory.ENGINE_NAME_KEY, JDBCEngineFactory.ENGINE_NAME);
-    dbConfig.setProperties(JdbcDataSystemConnector.builder()
-        .url("jdbc:postgresql://database:5432/datasqrl")
-        .driver("org.postgresql.Driver")
-        .dialect("postgres")
-        .database("datasqrl")
-        .user("postgres")
-        .password("postgres")
-        .host("database")
-        .port(5432)
-        .build()
-    );
-    SqrlConfig flinkConfig = config.getSubConfig(EngineKeys.STREAMS);
-    flinkConfig.setProperty(FlinkEngineFactory.ENGINE_NAME_KEY, FlinkEngineFactory.ENGINE_NAME);
-
-    SqrlConfig server = config.getSubConfig(EngineKeys.SERVER);
-    server.setProperty(GenericJavaServerEngineFactory.ENGINE_NAME_KEY,
-        VertxEngineFactory.ENGINE_NAME);
-
-    SqrlConfig logConfig = config.getSubConfig(EngineKeys.LOG);
-    logConfig.setProperty(EngineFactory.ENGINE_NAME_KEY, KafkaLogEngineFactory.ENGINE_NAME);
-    logConfig.copy(
-        KafkaDataSystemFactory.getKafkaEngineConfig(KafkaLogEngineFactory.ENGINE_NAME, "kafka:9092",
-            JsonLineFormat.NAME, FlexibleTableSchemaFactory.SCHEMA_TYPE));
-
-    return rootConfig;
-  }
-
-  public static void setScriptFiles(Path rootDir, Path mainScript, Path graphQLSchemaFile,
-      SqrlConfig sqrlConfig, ErrorCollector errors) {
-    errors.checkFatal(mainScript == null || Files.isRegularFile(mainScript), "Could not find sqrl file: %s", mainScript);
-    errors.checkFatal(!(graphQLSchemaFile != null && !Files.isRegularFile(graphQLSchemaFile)), "Could not find API file: %s", graphQLSchemaFile);
-
-    SqrlConfig scriptConfig = ScriptConfiguration.fromScriptConfig(sqrlConfig);
-    addFileToPackageJsonConfig(rootDir, scriptConfig, Map.of(ScriptConfiguration.MAIN_KEY, Optional.ofNullable(mainScript),
-        ScriptConfiguration.GRAPHQL_KEY, Optional.ofNullable(graphQLSchemaFile)), errors);
-  }
 }

@@ -6,8 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.formats.AvroSchemaHolder;
-import com.datasqrl.io.formats.AvroTableSchemaFactory;
+import com.datasqrl.io.schema.avro.AvroSchemaHolder;
+import com.datasqrl.io.schema.avro.AvroTableSchemaFactory;
+import com.datasqrl.io.schema.avro.AvroSchemaToRelDataTypeFactory;
 import com.datasqrl.util.SnapshotTest;
 import com.google.common.collect.ImmutableMap;
 import java.nio.file.Files;

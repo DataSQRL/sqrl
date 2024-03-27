@@ -2,7 +2,7 @@ package com.datasqrl.plan.table;
 
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.function.SqrlTimeTumbleFunction;
-import com.datasqrl.util.SqrlRexUtil;
+import com.datasqrl.calcite.SqrlRexUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;

@@ -3,7 +3,7 @@
  */
 package com.datasqrl.function;
 
-public interface SqrlTimeTumbleFunction extends FunctionMetadata, TimestampPreservingFunction {
+public interface SqrlTimeTumbleFunction extends FunctionMetadata {
 
   public Specification getSpecification(long[] arguments);
 

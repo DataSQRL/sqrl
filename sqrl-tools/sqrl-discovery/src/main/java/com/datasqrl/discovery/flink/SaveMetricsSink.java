@@ -1,7 +1,7 @@
 package com.datasqrl.discovery.flink;
 
 import com.datasqrl.metadata.MetricStore;
-import com.datasqrl.io.util.Metric;
+import com.datasqrl.metadata.Metric;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 

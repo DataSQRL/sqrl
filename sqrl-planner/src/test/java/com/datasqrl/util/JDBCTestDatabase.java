@@ -5,7 +5,7 @@ package com.datasqrl.util;
 
 import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.IntegrationTestSettings.DatabaseEngine;
-import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
+import com.datasqrl.engine.database.relational.JdbcDataSystemConnector;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
