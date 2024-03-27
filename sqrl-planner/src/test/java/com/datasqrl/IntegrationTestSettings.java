@@ -3,29 +3,27 @@
  */
 package com.datasqrl;
 
-import static com.datasqrl.config.CompilerConfiguration.COMPILER_KEY;
-import static com.datasqrl.config.PipelineFactory.ENGINES_PROPERTY;
-
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.PipelineFactory;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.engine.EngineFactory;
 import com.datasqrl.engine.database.relational.JDBCEngineFactory;
+import com.datasqrl.engine.kafka.KafkaLogEngineFactory;
 import com.datasqrl.engine.stream.flink.FlinkEngineFactory;
 import com.datasqrl.engine.stream.inmemory.InMemoryStreamFactory;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.ExternalDataType;
-import com.datasqrl.engine.kafka.KafkaLogEngineFactory;
-import com.datasqrl.plan.local.generate.DebuggerConfig;
 import com.datasqrl.util.DatabaseHandle;
 import com.datasqrl.util.JDBCTestDatabase;
 import com.google.common.base.Strings;
-import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Value;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.flink.configuration.TaskManagerOptions;
+
+import static com.datasqrl.config.CompilerConfiguration.COMPILER_KEY;
+import static com.datasqrl.config.PipelineFactory.ENGINES_PROPERTY;
 
 @Getter
 @Builder
@@ -45,8 +43,6 @@ public class IntegrationTestSettings {
   @Builder.Default
   final DatabaseEngine database = DatabaseEngine.POSTGRES;
   @Builder.Default
-  final DebuggerConfig debugger = DebuggerConfig.NONE;
-  @Builder.Default
   final NamePath errorSink = NamePath.of("print","errors");
 
 
@@ -54,14 +50,6 @@ public class IntegrationTestSettings {
       ErrorCollector errors) {
     SqrlConfig config = SqrlConfig.createCurrentVersion(errors);
     SqrlConfig compilerConfig = config.getSubConfig(COMPILER_KEY);
-    if (debugger != DebuggerConfig.NONE) {
-
-      compilerConfig.setProperty("debugSink", debugger.getSinkBasePath().getDisplay());
-      if (debugger.getDebugTables() != null) {
-        compilerConfig.setProperty("debugTables", debugger.getDebugTables().stream()
-            .map(e -> e.getDisplay()).collect(Collectors.toList()));
-      }
-    }
 
     compilerConfig.setProperty("errorSink", errorSink.getDisplay());
 
