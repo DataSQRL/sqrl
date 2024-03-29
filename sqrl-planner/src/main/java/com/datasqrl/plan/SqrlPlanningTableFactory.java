@@ -30,8 +30,10 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.hint.RelHint;
 import org.apache.calcite.schema.Function;
 import org.apache.calcite.schema.FunctionParameter;
+import org.apache.calcite.sql.SqlHint;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.tools.RelBuilder;
+import org.apache.commons.lang3.tuple.Pair;
 
 @AllArgsConstructor(onConstructor_=@Inject)
 public class SqrlPlanningTableFactory implements SqrlTableFactory {
@@ -102,13 +104,14 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
   public static LPAnalysis convertToVanillaSQL(RelNode relNode,
       RelBuilder relBuilder, Optional<SqlNodeList> hints, ErrorCollector errors) {
     //Parse all optimizer hints
-    List<OptimizerHint> optimizerHints = OptimizerHint.fromSqlHint(hints, errors);
+    Pair<List<OptimizerHint>,List<SqlHint>> analyzedHints = OptimizerHint.fromSqlHints(hints, errors);
+    //TODO: put other SQLHints back on the relnode after we are done, i.e. pass them through
     SqrlConverterConfig.SqrlConverterConfigBuilder configBuilder = SqrlConverterConfig.builder();
     //Apply only generic optimizer hints (pipeline optimization happens in the DAGPlanner)
-    StreamUtil.filterByClass(optimizerHints, OptimizerHint.Generic.class)
+    StreamUtil.filterByClass(analyzedHints.getKey(), OptimizerHint.Generic.class)
         .forEach(h -> h.add2Config(configBuilder, errors));
     //Capture stages
-    List<OptimizerHint.Stage> configuredStages = StreamUtil.filterByClass(optimizerHints,
+    List<OptimizerHint.Stage> configuredStages = StreamUtil.filterByClass(analyzedHints.getKey(),
         OptimizerHint.Stage.class).collect(Collectors.toList());
     SqrlConverterConfig baseConfig = configBuilder.build();
 

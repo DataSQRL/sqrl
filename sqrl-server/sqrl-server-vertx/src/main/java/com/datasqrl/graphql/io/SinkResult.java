@@ -10,6 +10,5 @@ import java.util.UUID;
 public class SinkResult {
 
     Instant sourceTime;
-    Optional<UUID> uuid;
 
 }

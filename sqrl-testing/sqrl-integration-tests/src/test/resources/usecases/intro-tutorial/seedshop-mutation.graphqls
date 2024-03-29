@@ -78,7 +78,7 @@ input VisitEvent {
 }
 
 type CreatedProductVisit {
-  _source_time: String!
+  event_time: String!
   productid: Int!
   customerid: Int!
 }

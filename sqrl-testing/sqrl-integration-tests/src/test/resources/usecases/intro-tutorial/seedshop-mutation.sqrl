@@ -1,7 +1,7 @@
 IMPORT seedshop.Orders;
 IMPORT seedshop.Products;
 IMPORT seedshop.Customers;
-IMPORT mutation.ProductVisit;
+IMPORT seedshop-mutation.ProductVisit;
 IMPORT time.*;
 
 Orders.totals := SELECT sum(quantity * unit_price - coalesce(discount, 0.0)) as price,
@@ -27,7 +27,7 @@ Customers.past_purchases := SELECT i.productid, count(1) as num_orders,
 
 Customers.product_visits := SELECT productid, count(1) as visits
       FROM @ JOIN ProductVisit v ON @.id = v.customerid
-      WHERE v._source_time > now() - INTERVAL 90 DAY
+      WHERE v.event_time > now() - INTERVAL 90 DAY
       GROUP BY productid ORDER BY visits DESC;
 
 Products := DISTINCT Products ON id ORDER BY updated DESC;

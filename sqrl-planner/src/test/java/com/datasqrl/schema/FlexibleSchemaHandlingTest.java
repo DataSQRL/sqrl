@@ -41,7 +41,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 
 /**
  * Tests the generation of schemas for various consumers based on the central
- * {@link FlexibleTableSchema} by way of the {@link UniversalTable}.
+ * {@link FlexibleTableSchema}.
  */
 @Disabled
 public class FlexibleSchemaHandlingTest {

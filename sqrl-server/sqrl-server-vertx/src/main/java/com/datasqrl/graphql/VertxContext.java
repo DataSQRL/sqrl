@@ -27,6 +27,7 @@ import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.Value;
 import org.reactivestreams.Publisher;
@@ -84,11 +85,16 @@ public class VertxContext implements Context {
 
       Map entry = (Map)args.entrySet().stream()
           .findFirst().map(Entry::getValue).get();
+      //Add UUID for event
+      UUID uuid = UUID.randomUUID();
+      entry.put(ReservedName.MUTATION_TIME.getDisplay(), uuid);
 
       emitter.send(entry)
           .onSuccess(sinkResult->{
+            //Add timestamp from sink to result
             ZonedDateTime dateTime = ZonedDateTime.ofInstant(sinkResult.getSourceTime(), ZoneOffset.UTC);
-            entry.put(ReservedName.SOURCE_TIME.getCanonical(), dateTime.toLocalDateTime());
+            entry.put(ReservedName.MUTATION_PRIMARY_KEY.getCanonical(), dateTime.toLocalDateTime());
+
             fut.complete(entry);
           })
           .onFailure((m)->

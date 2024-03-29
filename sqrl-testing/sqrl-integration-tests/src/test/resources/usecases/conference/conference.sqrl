@@ -1,7 +1,7 @@
-IMPORT mysourcepackage.tables.Events;
+IMPORT events-data.Events;
 
-IMPORT recAPI.Likes;
-IMPORT recAPI.AddInterest;
+IMPORT conference.Likes;
+IMPORT conference.AddInterest;
 
 IMPORT string.*;
 IMPORT text.*;
@@ -18,9 +18,14 @@ Events.startTimestamp := parseTimestamp(concat(startTime,' PDT'), 'MMMM d, yyyy 
 
 Events := DISTINCT Events ON id ORDER BY last_updated DESC;
 
+/*+ test */
+CountEventsTest := SELECT COUNT(*) as num_events FROM Events;
+/*+ test */
+EventsSubsetTest := SELECT * FROM Events LIMIT 10;
+
 AddInterest.embedding := asciiTextTestEmbed(text);
 
-LikeVector := SELECT l.userid, e.embedding, l.event_time
+LikeVector := SELECT l.userid, e.embedding, e.title, e.abstract, e.location, l.event_time
               FROM Likes l TEMPORAL JOIN Events e ON l.eventId = e.id WHERE l.liked;
 
 UserInterestVectors := SELECT userid, embedding, event_time FROM LikeVector

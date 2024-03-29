@@ -3,8 +3,10 @@ package com.datasqrl.graphql;
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.config.LogEngineSupplier;
 import com.datasqrl.engine.log.Log;
+import com.datasqrl.engine.log.LogEngine;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.loaders.FlinkSqlNamespaceObject;
@@ -86,9 +88,8 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
       }
       String logId = getLogId(mutation);
       //TODO: add _event_id to mutation schema and provide as primary key
-      Log log = logEngine.get().createLog(logId, mutation.getSchema(),
-          mutation.getPk().map(p->List.of(p)).orElse(List.of()),
-          mutation.getTimestamp());
+      Log log = logEngine.get().createLog(logId, mutation.getSchema(), List.of(mutation.getPkName()),
+              new LogEngine.Timestamp(mutation.getTimestampName(), LogEngine.TimestampType.LOG_TIME));
       ((LogModule)logModule).addEntry(mutation.getName(),log);
       sqrlSchema.getMutations().put(mutation, log.getSource());
     }
@@ -117,7 +118,7 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
       String logId = table.getNameId();
       RelDataTypeField tableSchema = new RelDataTypeFieldImpl(table.getTableName().getDisplay(), -1,
           table.getRowType());
-      log = logEngine.get().createLog(logId, tableSchema, List.of(), Optional.empty());
+      log = logEngine.get().createLog(logId, tableSchema, List.of(), LogEngine.Timestamp.NONE);
       sqrlSchema.getApiExports().put(sqrlTable, log);
     }
     sqrlSchema.getSubscriptions().put(subscription, log.getSink());

@@ -5,6 +5,7 @@ import static com.datasqrl.io.tables.TableConfig.Base.TIMESTAMP_COL_KEY;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.EnginePhysicalPlan;
@@ -36,8 +37,6 @@ import org.apache.kafka.common.internals.Topic;
 @Slf4j
 public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
 
-  public static final String DEFAULT_EVENT_TIME_NAME = "_source_time";
-
   private final SqrlConfig connectorConfig;
   private final Optional<TableSchemaExporterFactory> schemaFactory;
   private final KafkaConnectorFactory connectorFactory;
@@ -63,30 +62,37 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
 
   @Override
   public Log createLog(String logId, RelDataTypeField schema, List<String> primaryKey,
-      Optional<String> timestamp) {
+                       Timestamp timestamp) {
     String topicName = sanitizeName(logId);
     Preconditions.checkArgument(Topic.isValid(topicName), "Not a valid topic name: %s", topicName);
 
     Optional<TableSchema> tblSchema = Optional.of(new RelDataTypeTableSchema(schema.getType()));
 
-    TableConfig.Builder tblBuilder = buildLog(Name.system(schema.getName()), connectorConfig, topicName);
+    TableConfig.Builder tblBuilder = buildLog(Name.system(schema.getName()), connectorConfig, topicName, timestamp);
     if (!primaryKey.isEmpty()) tblBuilder.setPrimaryKey(primaryKey.toArray(new String[0]));
     TableConfig logConfig = tblBuilder.build();
-    timestamp.map(ts -> logConfig.getBaseTableConfig().getBaseConfig().setProperty(TIMESTAMP_COL_KEY, ts));
     NamePath path = Name.system(schema.getName()).toNamePath();
-    TableSource tableSource = logConfig.initializeSource(path, tblSchema.orElse(null));
+    TableSource tableSource = logConfig.initializeSource(path, tblSchema.get());
     return new KafkaTopic(topicName, tableSource,
         logConfig.initializeSink(path, tblSchema)
     );
   }
 
   private TableConfig.Builder buildLog(@NonNull Name name,
-      @NonNull SqrlConfig connectorConfig, @NonNull String topic) {
+      @NonNull SqrlConfig connectorConfig, @NonNull String topic, @NonNull Timestamp timestamp) {
     TableConfig.Builder builder = TableConfig.builder(name);
-    builder.setType(ExternalDataType.source_and_sink);
-    builder.setTimestampColumn(DEFAULT_EVENT_TIME_NAME);
-    builder.setWatermark(0);
-    builder.setMetadata(DEFAULT_EVENT_TIME_NAME, "TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)", connectorFactory.getEventTime());
+    if (timestamp.getType()!=TimestampType.NONE) {
+      builder.setType(ExternalDataType.source_and_sink);
+      builder.setTimestampColumn(timestamp.getName());
+      builder.setWatermark(0);
+      if (timestamp.getType()==TimestampType.LOG_TIME) {
+        builder.setMetadata(timestamp.getName(), "TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)", connectorFactory.getEventTime());
+      } else {
+        throw new UnsupportedOperationException("Not yet supported: " + timestamp.getType());
+      }
+    } else {
+      builder.setType(ExternalDataType.sink);
+    }
     builder.copyConnectorConfig(connectorFactory.fromBaseConfig(connectorConfig, topic));
     return builder;
   }

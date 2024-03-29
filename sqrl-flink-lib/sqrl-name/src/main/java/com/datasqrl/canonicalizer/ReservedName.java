@@ -23,7 +23,6 @@ public class ReservedName extends AbstractName {
 
   public static final Name SELF_IDENTIFIER = Name.system("@");
   public static final ReservedName UUID = new ReservedName(HIDDEN_PREFIX + "uuid");
-  public static final ReservedName INGEST_TIME = new ReservedName(HIDDEN_PREFIX + "ingest_time");
   public static final ReservedName SOURCE_TIME = new ReservedName(HIDDEN_PREFIX + "source_time");
   public static final ReservedName ARRAY_IDX = new ReservedName(HIDDEN_PREFIX + "idx");
   public static final ReservedName SYSTEM_TIMESTAMP = new ReservedName(SYSTEM_HIDDEN_PREFIX + "timestamp");
@@ -31,5 +30,8 @@ public class ReservedName extends AbstractName {
   public static final ReservedName PARENT = new ReservedName("parent");
   public static final ReservedName ALL = new ReservedName("*");
   public static final ReservedName VARIABLE_PREFIX = new ReservedName("@");
+
+  public static final ReservedName MUTATION_TIME = new ReservedName("event_time");
+  public static final ReservedName MUTATION_PRIMARY_KEY = UUID;
 
 }

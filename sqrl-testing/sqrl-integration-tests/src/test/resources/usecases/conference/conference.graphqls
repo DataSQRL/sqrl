@@ -99,6 +99,6 @@ input LikedInput {
 }
 
 type LikeAdded {
-    _source_time: String!
+    event_time: String!
     userid: String!
 }
