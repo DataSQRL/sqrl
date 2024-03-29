@@ -67,15 +67,11 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     Preconditions.checkArgument(Topic.isValid(topicName), "Not a valid topic name: %s", topicName);
 
     Optional<TableSchema> tblSchema = Optional.of(new RelDataTypeTableSchema(schema.getType()));
-
-    TableConfig.Builder tblBuilder = buildLog(Name.system(schema.getName()), connectorConfig, topicName, timestamp);
+    Name logName = Name.system(schema.getName());
+    TableConfig.Builder tblBuilder = buildLog(logName, connectorConfig, topicName, timestamp);
     if (!primaryKey.isEmpty()) tblBuilder.setPrimaryKey(primaryKey.toArray(new String[0]));
     TableConfig logConfig = tblBuilder.build();
-    NamePath path = Name.system(schema.getName()).toNamePath();
-    TableSource tableSource = logConfig.initializeSource(path, tblSchema.get());
-    return new KafkaTopic(topicName, tableSource,
-        logConfig.initializeSink(path, tblSchema)
-    );
+    return new KafkaTopic(topicName, logName, logConfig, tblSchema);
   }
 
   private TableConfig.Builder buildLog(@NonNull Name name,

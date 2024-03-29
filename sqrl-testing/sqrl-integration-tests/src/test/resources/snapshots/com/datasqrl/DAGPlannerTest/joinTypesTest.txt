@@ -62,7 +62,7 @@ Schema:
  - _time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
 LogicalProject(id=[$0], name=[$6], _time=[$2])
-  LogicalJoin(condition=[=($1, $4)], joinType=[left]) hints[TemporalJoinHint options:[2, 4, 0]]
+  LogicalJoin(condition=[=($1, $4)], joinType=[left]) hints[TemporalJoinHint options:[2]]
     LogicalTableScan(table=[[orders$2]])
     LogicalFilter(condition=[=($5, 1)]) hints[DedupHint]
       LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])

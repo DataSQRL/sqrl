@@ -85,7 +85,7 @@ public class GraphqlSchemaValidator extends SchemaWalker {
 
     validateStructurallyEqualMutation(fieldDefinition, getValidMutationReturnType(fieldDefinition, registry),
             getValidMutationInput(fieldDefinition, registry),
-            List.of(ReservedName.MUTATION_TIME.getCanonical()), registry);
+            List.of(ReservedName.MUTATION_TIME.getCanonical(), ReservedName.MUTATION_PRIMARY_KEY.getDisplay()), registry);
 
   }
 

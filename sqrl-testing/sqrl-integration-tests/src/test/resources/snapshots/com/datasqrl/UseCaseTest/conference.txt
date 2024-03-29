@@ -97,7 +97,7 @@ Schema:
  - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
 Plan:
 LogicalProject(userid=[$1], embedding=[$15], title=[$8], abstract=[$9], location=[$10], event_time=[$4], _uuid=[$3])
-  LogicalJoin(condition=[=($0, $13)], joinType=[inner]) hints[TemporalJoinHint options:[4, 7, 8]]
+  LogicalJoin(condition=[=($0, $13)], joinType=[inner]) hints[TemporalJoinHint options:[4]]
     LogicalFilter(condition=[$2])
       LogicalTableScan(table=[[likes$2]])
     LogicalFilter(condition=[=($13, 1)]) hints[DedupHint]

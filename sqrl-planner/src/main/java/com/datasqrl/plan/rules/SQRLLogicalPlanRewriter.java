@@ -608,7 +608,6 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     //Detect temporal join
     if (joinAnalysis.canBe(Type.TEMPORAL)) {
       if (leftInput.type.isStream() && (rightInput.type==TableType.VERSIONED_STATE || rightInput.type==TableType.LOOKUP)) {
-        Preconditions.checkArgument(rightInput.primaryKey.isSimple());
         //Check for primary keys equalities on the state-side of the join
         if (isPKConstrained.get(Side.RIGHT) && rightInput.nowFilter.isEmpty()) {
           RelBuilder relB = makeRelBuilder();
@@ -619,9 +618,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
 
           PrimaryKeyMap pk = leftInput.primaryKey.toBuilder().build();
           TemporalJoinHint hint = new TemporalJoinHint(
-              joinTimestamp.getOnlyCandidate(),
-              rightInput.timestamp.getOnlyCandidate(),
-                  ArrayUtil.toArray(rightInput.primaryKey.asSimpleList()));
+              joinTimestamp.getOnlyCandidate());
           joinAnalysis = joinAnalysis.makeA(Type.TEMPORAL);
           relB.join(joinAnalysis.export(), condition);
           hint.addTo(relB);

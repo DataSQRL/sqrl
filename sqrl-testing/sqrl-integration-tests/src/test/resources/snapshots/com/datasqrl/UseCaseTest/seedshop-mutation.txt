@@ -95,7 +95,7 @@ Plan:
 LogicalProject(__pk1$id=[$0], productid=[$1], num_orders=[$2], total_quantity=[$3], __timestamp=[$4])
   LogicalAggregate(group=[{4, 15}], num_orders=[COUNT()], total_quantity=[SUM($16)], __timestamp=[MAX($2)])
     LogicalCorrelate(correlation=[$cor4], joinType=[inner], requiredColumns=[{3}])
-      LogicalJoin(condition=[=($1, $4)], joinType=[inner]) hints[TemporalJoinHint options:[2, 7, 0]]
+      LogicalJoin(condition=[=($1, $4)], joinType=[inner]) hints[TemporalJoinHint options:[2]]
         LogicalTableScan(table=[[orders$2]])
         LogicalFilter(condition=[=($9, 1)]) hints[DedupHint]
           LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], ip_address=[$4], country=[$5], changed_on=[$6], timestamp=[$7], country0=[$8], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $7 DESC NULLS LAST)])
@@ -120,7 +120,7 @@ Post Processors:
 Plan:
 LogicalProject(__pk1$id=[$2], productid=[$0], visits=[$3], _event_time=[$1])
   LogicalAggregate(group=[{1, 3, 4}], visits=[COUNT()]) hints[SlidingAggregationHint options:[3, 7776000000, 155520000]]
-    LogicalJoin(condition=[=($4, $0)], joinType=[inner]) hints[TemporalJoinHint options:[3, 7, 0]]
+    LogicalJoin(condition=[=($4, $0)], joinType=[inner]) hints[TemporalJoinHint options:[3]]
       LogicalTableScan(table=[[productvisit$2]])
       LogicalFilter(condition=[=($9, 1)]) hints[DedupHint]
         LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], ip_address=[$4], country=[$5], changed_on=[$6], timestamp=[$7], country0=[$8], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $7 DESC NULLS LAST)])
@@ -199,7 +199,7 @@ LogicalProject(__pk1$id=[$0], week=[$1], spend=[$2], saved=[$3])
     LogicalProject(__pk3$id=[$0], week=[endOfWeek($3)], price=[$7], saving=[$8], id=[$1], time=[$3])
       LogicalJoin(condition=[AND(=($1, $5), =($3, $6))], joinType=[inner]) hints[IntervalJoin]
         LogicalProject(__pk3$id=[$5], id=[$0], customerid=[$1], time=[$2], items=[$3])
-          LogicalJoin(condition=[=($5, $4)], joinType=[inner]) hints[TemporalJoinHint options:[2, 7, 0]]
+          LogicalJoin(condition=[=($5, $4)], joinType=[inner]) hints[TemporalJoinHint options:[2]]
             LogicalProject(id=[$0], customerid=[$1], time=[$2], items=[$3], customerid4=[$1])
               LogicalTableScan(table=[[orders$2]])
             LogicalFilter(condition=[=($9, 1)]) hints[DedupHint]
@@ -247,8 +247,8 @@ Plan:
 LogicalProject(__pk1$id=[$0], country=[$1], quantity=[$3], spend=[$4], weight=[$5], _time=[$2])
   LogicalAggregate(group=[{0, 1, 6}], quantity=[SUM($2)], spend=[SUM($3)], weight=[SUM($4)]) hints[SlidingAggregationHint options:[6, 864000000, 17280000]]
     LogicalProject(__pk6$id=[$8], country=[$25], quantity=[$5], $f3=[*($5, $6)], $f4=[*($5, $11)], id=[$0], time=[$1], _idx=[$3])
-      LogicalJoin(condition=[=($2, $17)], joinType=[inner]) hints[TemporalJoinHint options:[1, 7, 0]]
-        LogicalJoin(condition=[=($4, $8)], joinType=[inner]) hints[TemporalJoinHint options:[1, 7, 0]]
+      LogicalJoin(condition=[=($2, $17)], joinType=[inner]) hints[TemporalJoinHint options:[1]]
+        LogicalJoin(condition=[=($4, $8)], joinType=[inner]) hints[TemporalJoinHint options:[1]]
           LogicalTableScan(table=[[_orderitems$1]])
           LogicalFilter(condition=[=($8, 1)]) hints[DedupHint]
             LogicalProject(id=[$0], name=[$1], sizing=[$2], weight_in_gram=[$3], type=[$4], category=[$5], usda_id=[$6], updated=[$7], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $7 DESC NULLS LAST)])

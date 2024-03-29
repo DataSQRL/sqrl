@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "flink" : {
+    "format" : "json",
+    "path" : "/mnt/build/data",
+    "source.monitor-interval" : 1,
+    "connector" : "filesystem",
+    "source.path.regex-pattern" : "to be determined"
+  },
+  "table" : {
+    "type" : "source",
+    "primary-key" : ["id","updated_on"],
+    "timestamp" : "updated_on",
+    "watermark-millis" : "1"
+  }
+}

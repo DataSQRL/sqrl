@@ -77,7 +77,7 @@ Post Processors:
  - topN: partition=__pk1$customerid limit=10 sort=#2: time TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC 
 Plan:
 LogicalProject(__pk1$customerid=[$4], id=[$0], time=[$2])
-  LogicalJoin(condition=[=($4, $1)], joinType=[inner]) hints[TemporalJoinHint options:[2, 4, 0]]
+  LogicalJoin(condition=[=($4, $1)], joinType=[inner]) hints[TemporalJoinHint options:[2]]
     LogicalTableScan(table=[[orders$2]])
     LogicalFilter(condition=[=($5, 1)]) hints[DedupHint]
       LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])

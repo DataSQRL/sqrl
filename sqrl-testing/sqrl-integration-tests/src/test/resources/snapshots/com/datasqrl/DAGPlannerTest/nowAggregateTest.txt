@@ -27,7 +27,7 @@ Schema:
  - order_count: BIGINT NOT NULL
 Plan:
 LogicalProject(id=[$0], time=[$2], order_count=[$5])
-  LogicalJoin(condition=[=($1, $4)], joinType=[inner]) hints[TemporalJoinHint options:[2, 2, 0]]
+  LogicalJoin(condition=[=($1, $4)], joinType=[inner]) hints[TemporalJoinHint options:[2]]
     LogicalTableScan(table=[[orders$2]])
     LogicalFilter(condition=[=($3, 1)]) hints[DedupHint]
       LogicalProject(customer=[$0], order_count=[$1], _time=[$2], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])

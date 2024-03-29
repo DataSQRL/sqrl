@@ -98,9 +98,9 @@ Post Processors:
 Plan:
 LogicalProject(__pk1$customerid=[$1], category=[$2], num=[$3], _time=[$0])
   LogicalAggregate(group=[{2, 4, 18}], num=[SUM($12)]) hints[SlidingAggregationHint options:[2, 86400000, 1728000]]
-    LogicalJoin(condition=[=($15, $11)], joinType=[inner]) hints[TemporalJoinHint options:[2, 4, 0]]
+    LogicalJoin(condition=[=($15, $11)], joinType=[inner]) hints[TemporalJoinHint options:[2]]
       LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{3}])
-        LogicalJoin(condition=[=($1, $4)], joinType=[inner]) hints[TemporalJoinHint options:[2, 4, 0]]
+        LogicalJoin(condition=[=($1, $4)], joinType=[inner]) hints[TemporalJoinHint options:[2]]
           LogicalTableScan(table=[[orders$2]])
           LogicalFilter(condition=[=($5, 1)]) hints[DedupHint]
             LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])

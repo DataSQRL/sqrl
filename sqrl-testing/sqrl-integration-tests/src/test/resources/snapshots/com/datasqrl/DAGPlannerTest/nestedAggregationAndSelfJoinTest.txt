@@ -101,7 +101,7 @@ Plan:
 LogicalProject(__pk1$customerid=[$0], day=[$1], total_price=[$2], total_num=[$3], __timestamp=[$4])
   LogicalAggregate(group=[{0, 1}], total_price=[SUM($2)], total_num=[SUM($3)], __timestamp=[MAX($5)])
     LogicalProject(__pk2$customerid=[$7], day=[endOfDay($2)], price=[$3], num=[$4], _uuid=[$5], _ingest_time=[$6])
-      LogicalJoin(condition=[=($1, $7)], joinType=[inner]) hints[TemporalJoinHint options:[6, 4, 0]]
+      LogicalJoin(condition=[=($1, $7)], joinType=[inner]) hints[TemporalJoinHint options:[6]]
         LogicalTableScan(table=[[ordersinline$1]])
         LogicalFilter(condition=[=($6, 1)]) hints[DedupHint]
           LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], _ingest_time=[$4], _uuid=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
