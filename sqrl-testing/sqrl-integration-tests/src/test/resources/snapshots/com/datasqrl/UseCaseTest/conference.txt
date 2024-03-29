@@ -1,0 +1,323 @@
+>>>pipeline_explain.txt
+=== AddInterest
+ID:     addinterest$2
+Type:   stream
+Stage:  streams
+Primary Key: _uuid
+Timestamp  : event_time
+Schema:
+ - text: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - userid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - event_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - embedding: RAW('com.datasqrl.vector.FlinkVectorType', 'ADVjb20uZGF0YXNxcmwudmVjdG9yLkZsaW5rVmVjdG9yVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAEALWNvbS5kYXRhc3FybC52ZWN0b3IuRmxpbmtWZWN0b3JUeXBlU2VyaWFsaXplcg==')
+Plan:
+LogicalProject(text=[$0], userid=[$1], _uuid=[$2], event_time=[$3], embedding=[asciiTextTestEmbed($0)]) hints[WatermarkHint options:[3]]
+  LogicalTableScan(table=[[addinterest$1]])
+
+=== Events
+ID:     events$2
+Type:   stream
+Stage:  streams
+Primary Key: url, last_updated
+Timestamp  : last_updated
+Schema:
+ - url: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - date: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - time: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - title: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - abstract: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - location: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - speakers: RecordType(INTEGER NOT NULL _idx, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL name, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" title, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL company) NOT NULL ARRAY NOT NULL
+ - last_updated: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - id: BIGINT NOT NULL
+ - full_text: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - embedding: RAW('com.datasqrl.vector.FlinkVectorType', 'ADVjb20uZGF0YXNxcmwudmVjdG9yLkZsaW5rVmVjdG9yVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAEALWNvbS5kYXRhc3FybC52ZWN0b3IuRmxpbmtWZWN0b3JUeXBlU2VyaWFsaXplcg==')
+ - startTime: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - startTimestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
+Plan:
+LogicalProject(url=[$0], date=[$1], time=[$2], title=[$3], abstract=[$4], location=[$5], speakers=[$6], last_updated=[$7], id=[COALESCE(CAST(REGEXP_EXTRACT($0, '(\d*)$')):BIGINT, 0:BIGINT)], full_text=[CONCAT($3, '\n', $4)], embedding=[asciiTextTestEmbed(CONCAT($3, '\n', $4))], startTime=[CONCAT(TRIM(FLAG(BOTH), ' ', REGEXP_EXTRACT($1, '^[^-]*')), ' ', TRIM(FLAG(BOTH), ' ', REGEXP_EXTRACT($2, '\d\d?:\d\d\s(AM|PM)')))], startTimestamp=[parseTimestamp(CONCAT(CONCAT(TRIM(FLAG(BOTH), ' ', REGEXP_EXTRACT($1, '^[^-]*')), ' ', TRIM(FLAG(BOTH), ' ', REGEXP_EXTRACT($2, '\d\d?:\d\d\s(AM|PM)'))), ' PDT'), 'MMMM d, yyyy h:mm a z')]) hints[WatermarkHint options:[7]]
+  LogicalTableScan(table=[[events$1]])
+
+=== Events
+ID:     events$3
+Type:   state
+Stage:  streams
+Inputs: events$2
+Primary Key: id
+Timestamp  : last_updated
+Schema:
+ - url: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - date: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - time: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - title: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - abstract: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - location: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - speakers: RecordType(INTEGER NOT NULL _idx, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL name, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" title, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL company) NOT NULL ARRAY NOT NULL
+ - last_updated: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - id: BIGINT NOT NULL
+ - full_text: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - embedding: RAW('com.datasqrl.vector.FlinkVectorType', 'ADVjb20uZGF0YXNxcmwudmVjdG9yLkZsaW5rVmVjdG9yVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAEALWNvbS5kYXRhc3FybC52ZWN0b3IuRmxpbmtWZWN0b3JUeXBlU2VyaWFsaXplcg==')
+ - startTime: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - startTimestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
+Post Processors:
+ - topN: partition=id limit=1 sort=#7: last_updated TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
+Plan:
+LogicalTableScan(table=[[events$2]])
+
+=== Likes
+ID:     likes$2
+Type:   stream
+Stage:  streams
+Primary Key: _uuid
+Timestamp  : event_time
+Schema:
+ - eventId: BIGINT NOT NULL
+ - userid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - liked: BOOLEAN NOT NULL
+ - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - event_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Plan:
+LogicalTableScan(table=[[likes$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+
+=== LikeVector
+ID:     likevector$1
+Type:   stream
+Stage:  streams
+Inputs: events$3, likes$2
+Primary Key: _uuid
+Timestamp  : event_time
+Schema:
+ - userid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - embedding: RAW('com.datasqrl.vector.FlinkVectorType', 'ADVjb20uZGF0YXNxcmwudmVjdG9yLkZsaW5rVmVjdG9yVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAEALWNvbS5kYXRhc3FybC52ZWN0b3IuRmxpbmtWZWN0b3JUeXBlU2VyaWFsaXplcg==')
+ - title: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - abstract: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - location: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - event_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+Plan:
+LogicalProject(userid=[$1], embedding=[$15], title=[$8], abstract=[$9], location=[$10], event_time=[$4], _uuid=[$3])
+  LogicalJoin(condition=[=($0, $13)], joinType=[inner]) hints[TemporalJoinHint options:[4, 7, 8]]
+    LogicalFilter(condition=[$2])
+      LogicalTableScan(table=[[likes$2]])
+    LogicalFilter(condition=[=($13, 1)]) hints[DedupHint]
+      LogicalProject(url=[$0], date=[$1], time=[$2], title=[$3], abstract=[$4], location=[$5], speakers=[$6], last_updated=[$7], id=[$8], full_text=[$9], embedding=[$10], startTime=[$11], startTimestamp=[$12], _rownum=[ROW_NUMBER() OVER (PARTITION BY $8 ORDER BY $7 DESC NULLS LAST)])
+        LogicalTableScan(table=[[events$3]])
+
+=== UserInterests
+ID:     userinterests$1
+Type:   state
+Stage:  streams
+Inputs: userinterestvectors$1
+Primary Key: userid
+Timestamp  : __timestamp
+Schema:
+ - userid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - interestVector: RAW('com.datasqrl.vector.FlinkVectorType', 'ADVjb20uZGF0YXNxcmwudmVjdG9yLkZsaW5rVmVjdG9yVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAEALWNvbS5kYXRhc3FybC52ZWN0b3IuRmxpbmtWZWN0b3JUeXBlU2VyaWFsaXplcg==')
+ - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Plan:
+LogicalAggregate(group=[{0}], interestVector=[center($1)], __timestamp=[MAX($2)])
+  LogicalTableScan(table=[[userinterestvectors$1]])
+
+=== UserInterestVectors
+ID:     userinterestvectors$1
+Type:   stream
+Stage:  streams
+Inputs: addinterest$2, likevector$1
+Primary Key: __pk$0
+Timestamp  : event_time
+Schema:
+ - userid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - embedding: RAW('com.datasqrl.vector.FlinkVectorType', 'ADVjb20uZGF0YXNxcmwudmVjdG9yLkZsaW5rVmVjdG9yVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAEALWNvbS5kYXRhc3FybC52ZWN0b3IuRmxpbmtWZWN0b3JUeXBlU2VyaWFsaXplcg==')
+ - event_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - __pk$0: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+Plan:
+LogicalUnion(all=[true])
+  LogicalProject(userid=[$0], embedding=[$1], event_time=[$5], __pk$0=[$6])
+    LogicalTableScan(table=[[likevector$1]])
+  LogicalProject(userid=[$1], embedding=[$4], event_time=[$3], __pk$0=[$2])
+    LogicalTableScan(table=[[addinterest$2]])
+
+=== UserLikes
+ID:     userlikes$1
+Type:   state
+Stage:  streams
+Inputs: likes$2
+Primary Key: userid, eventId
+Timestamp  : event_time
+Schema:
+ - eventId: BIGINT NOT NULL
+ - userid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - liked: BOOLEAN NOT NULL
+ - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - event_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Post Processors:
+ - topN: partition=userid, eventId limit=1 sort=#4: event_time TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
+Plan:
+LogicalTableScan(table=[[likes$2]])
+
+>>>database-schema.sql
+CREATE EXTENSION IF NOT EXISTS vector;
+CREATE TABLE IF NOT EXISTS events$3 ("url" TEXT ,"date" TEXT NOT NULL,"time" TEXT NOT NULL,"title" TEXT NOT NULL,"abstract" TEXT NOT NULL,"location" TEXT NOT NULL,"speakers" JSONB NOT NULL,"last_updated" TIMESTAMP WITH TIME ZONE NOT NULL,"id" BIGINT NOT NULL,"full_text" TEXT NOT NULL,"embedding" VECTOR ,"startTime" TEXT ,"startTimestamp" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS userinterests$1 ("userid" TEXT NOT NULL,"interestVector" VECTOR ,"__timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("userid"));
+CREATE TABLE IF NOT EXISTS userlikes$1 ("eventId" BIGINT NOT NULL,"userid" TEXT NOT NULL,"liked" BOOLEAN NOT NULL,"_uuid" TEXT NOT NULL,"event_time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("userid","eventId"));
+CREATE INDEX IF NOT EXISTS events$3_text_c3c4 ON events$3 USING GIN (to_tsvector('english', coalesce("title", '') || ' ' || coalesce("abstract", '') ));
+>>>flink-plan.sql
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `bannedwordsfilter` AS 'com.datasqrl.text.BannedWordsFilter' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `cosinedistance` AS 'com.datasqrl.vector.CosineDistance' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `onnxembed` AS 'com.datasqrl.vector.OnnxEmbed' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `textsearch` AS 'com.datasqrl.text.TextSearch' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `asciitexttestembed` AS 'com.datasqrl.vector.AsciiTextTestEmbed' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `euclideandistance` AS 'com.datasqrl.vector.EuclideanDistance' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `center` AS 'com.datasqrl.vector.Center' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `format` AS 'com.datasqrl.text.Format' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `vectortodouble` AS 'com.datasqrl.vector.VectorToDouble' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `parsetimestamp` AS 'com.datasqrl.time.ParseTimestamp' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `cosinesimilarity` AS 'com.datasqrl.vector.CosineSimilarity' LANGUAGE JAVA;
+
+CREATE TEMPORARY TABLE `events$1` (
+  `url` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `date` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `time` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `title` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `abstract` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `location` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `speakers` ROW(`_idx` INTEGER NOT NULL, `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL, `title` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`, `company` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL) NOT NULL ARRAY NOT NULL,
+  `last_updated` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`url`, `last_updated`) NOT ENFORCED,
+  WATERMARK FOR `last_updated` AS (`last_updated` - INTERVAL '0.001' SECOND)
+) WITH (
+  'format' = 'json',
+  'path' = '/mnt/build/data',
+  'source.monitor-interval' = '1',
+  'connector' = 'filesystem',
+  'source.path.regex-pattern' = 'to be determined'
+);
+
+CREATE TEMPORARY TABLE `likes$1` (
+  `eventId` BIGINT NOT NULL,
+  `userid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `liked` BOOLEAN NOT NULL,
+  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL METADATA FROM 'timestamp',
+  WATERMARK FOR `event_time` AS (`event_time` - INTERVAL '0.0' SECOND)
+) WITH (
+  'properties.bootstrap.servers' = 'kafka:9092',
+  'properties.auto.offset.reset' = 'earliest',
+  'connector' = 'kafka',
+  'format' = 'json',
+  'properties.group.id' = 'groupid',
+  'topic' = 'conference-likes',
+  'scan.startup.mode' = 'earliest-offset'
+);
+
+CREATE TEMPORARY TABLE `addinterest$1` (
+  `text` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `userid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL METADATA FROM 'timestamp',
+  WATERMARK FOR `event_time` AS (`event_time` - INTERVAL '0.0' SECOND)
+) WITH (
+  'properties.bootstrap.servers' = 'kafka:9092',
+  'properties.auto.offset.reset' = 'earliest',
+  'connector' = 'kafka',
+  'format' = 'json',
+  'properties.group.id' = 'groupid',
+  'topic' = 'conference-addinterest',
+  'scan.startup.mode' = 'earliest-offset'
+);
+
+CREATE TEMPORARY TABLE `events$3` (
+  `url` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `date` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `time` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `title` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `abstract` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `location` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `speakers` ROW(`_idx` INTEGER NOT NULL, `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL, `title` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`, `company` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL) NOT NULL ARRAY NOT NULL,
+  `last_updated` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `id` BIGINT NOT NULL,
+  `full_text` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `embedding` RAW('com.datasqrl.vector.FlinkVectorType', 'ADVjb20uZGF0YXNxcmwudmVjdG9yLkZsaW5rVmVjdG9yVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAEALWNvbS5kYXRhc3FybC52ZWN0b3IuRmxpbmtWZWN0b3JUeXBlU2VyaWFsaXplcg=='),
+  `startTime` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `startTimestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  PRIMARY KEY (`id`) NOT ENFORCED
+) WITH (
+  'password' = 'postgres',
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'table-name' = 'events$3',
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
+);
+
+CREATE TEMPORARY TABLE `userinterests$1` (
+  `userid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `interestVector` RAW('com.datasqrl.vector.FlinkVectorType', 'ADVjb20uZGF0YXNxcmwudmVjdG9yLkZsaW5rVmVjdG9yVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAEALWNvbS5kYXRhc3FybC52ZWN0b3IuRmxpbmtWZWN0b3JUeXBlU2VyaWFsaXplcg=='),
+  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`userid`) NOT ENFORCED
+) WITH (
+  'password' = 'postgres',
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'table-name' = 'userinterests$1',
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
+);
+
+CREATE TEMPORARY TABLE `userlikes$1` (
+  `eventId` BIGINT NOT NULL,
+  `userid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `liked` BOOLEAN NOT NULL,
+  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`userid`, `eventId`) NOT ENFORCED
+) WITH (
+  'password' = 'postgres',
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'table-name' = 'userlikes$1',
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
+);
+
+CREATE VIEW `table$1`
+AS
+SELECT *
+FROM (SELECT `url`, `date`, `time`, `title`, `abstract`, `location`, `speakers`, `last_updated`, `id`, `full_text`, `embedding`, `startTime`, `startTimestamp`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `last_updated` DESC NULLS LAST)) AS `_rownum`
+FROM (SELECT `url`, `date`, `time`, `title`, `abstract`, `location`, `speakers`, `last_updated`, COALESCE(CAST(REGEXP_EXTRACT(`url`, '(\d*)$') AS BIGINT), 0) AS `id`, CONCAT(`title`, '\n', `abstract`) AS `full_text`, ASCIITEXTTESTEMBED(CONCAT(`title`, '\n', `abstract`)) AS `embedding`, CONCAT(TRIM(BOTH ' ' FROM REGEXP_EXTRACT(`date`, '^[^-]*')), ' ', TRIM(BOTH ' ' FROM REGEXP_EXTRACT(`time`, '\d\d?:\d\d\s(AM|PM)'))) AS `startTime`, PARSETIMESTAMP(CONCAT(CONCAT(TRIM(BOTH ' ' FROM REGEXP_EXTRACT(`date`, '^[^-]*')), ' ', TRIM(BOTH ' ' FROM REGEXP_EXTRACT(`time`, '\d\d?:\d\d\s(AM|PM)'))), ' PDT'), 'MMMM d, yyyy h:mm a z') AS `startTimestamp`
+FROM `events$1`) AS `t`) AS `t0`
+WHERE (`_rownum` = 1);
+
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `events$3`
+(SELECT `url`, `date`, `time`, `title`, `abstract`, `location`, `speakers`, `last_updated`, COALESCE(CAST(REGEXP_EXTRACT(`url`, '(\d*)$') AS BIGINT), 0) AS `id`, CONCAT(`title`, '\n', `abstract`) AS `full_text`, ASCIITEXTTESTEMBED(CONCAT(`title`, '\n', `abstract`)) AS `embedding`, CONCAT(TRIM(BOTH ' ' FROM REGEXP_EXTRACT(`date`, '^[^-]*')), ' ', TRIM(BOTH ' ' FROM REGEXP_EXTRACT(`time`, '\d\d?:\d\d\s(AM|PM)'))) AS `startTime`, PARSETIMESTAMP(CONCAT(CONCAT(TRIM(BOTH ' ' FROM REGEXP_EXTRACT(`date`, '^[^-]*')), ' ', TRIM(BOTH ' ' FROM REGEXP_EXTRACT(`time`, '\d\d?:\d\d\s(AM|PM)'))), ' PDT'), 'MMMM d, yyyy h:mm a z') AS `startTimestamp`
+FROM `events$1`)
+;
+INSERT INTO `userinterests$1`
+(SELECT `userid`, CENTER(`embedding`) AS `interestVector`, MAX(`event_time`) AS `__timestamp`
+FROM (SELECT `$cor0`.`userid`, `t1`.`embedding`, `$cor0`.`event_time`, `$cor0`.`_uuid` AS `__pk$0`
+FROM (SELECT *
+FROM `likes$1`
+WHERE `liked`) AS `$cor0`
+INNER JOIN `table$1` FOR SYSTEM_TIME AS OF `$cor0`.`event_time` AS `t1` ON (`$cor0`.`eventId` = `t1`.`id`)
+UNION ALL
+SELECT `userid`, ASCIITEXTTESTEMBED(`text`) AS `embedding`, `event_time`, `_uuid` AS `__pk$0`
+FROM `addinterest$1`) AS `t7`
+GROUP BY `userid`)
+;
+INSERT INTO `userlikes$1`
+(SELECT *
+FROM `likes$1`)
+;
+END;
