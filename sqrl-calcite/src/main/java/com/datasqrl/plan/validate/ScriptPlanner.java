@@ -117,8 +117,6 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
 
   private final SqlNameUtil nameUtil;
 
-  private final Map<SqrlImportDefinition, List<QualifiedImport>> importOps = new HashMap<>();
-  private final Map<SqrlExportDefinition, QualifiedExport> exportOps = new HashMap<>();
   private final Map<SqlNode, Object> schemaTable = new HashMap<>();
   private final AtomicInteger uniqueId = new AtomicInteger(0);
   private final Map<SqlNode, RelOptTable> tableMap = new HashMap<>();
@@ -130,75 +128,32 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
 
   @Override
   public Void visit(SqrlImportDefinition node, Void context) {
-    // IMPORT data.* AS x;
     if (node.getImportPath().isStar() && node.getAlias().isPresent()) {
-      addError(ErrorCode.IMPORT_CANNOT_BE_ALIASED, node, "Import cannot be aliased");
-
-      //Strip alias and continue to process
-      node = node.clone(node.getImportPath(), Optional.empty());
+      throw addError(ErrorCode.IMPORT_CANNOT_BE_ALIASED, node, "Import cannot be aliased");
     }
 
     NamePath path = nameUtil.toNamePath(node.getImportPath().names);
-    Optional<SqrlModule> moduleOpt = moduleLoader.getModule(path.popLast());
+    SqrlModule module = moduleLoader.getModule(path.popLast()).orElse(null);
 
-    if (moduleOpt.isEmpty()) {
-      addError(ErrorCode.GENERIC, node, "Could not find module [%s] at path: [%s]", path,
-          String.join("/",path.toStringList()));
-      return null; //end processing
+    if (module == null) {
+      throw addError(ErrorCode.GENERIC, node, "Could not find module [%s] at path: [%s]",
+          path, String.join("/", path.toStringList()));
     }
 
-    SqrlModule module = moduleOpt.get();
-
-    if (path.getLast().equals(ReservedName.ALL)) {
-      importOps.put(node, module.getNamespaceObjects().stream()
-          .map(i -> new QualifiedImport(i, Optional.empty()))
-          .collect(Collectors.toList()));
+    if (node.getImportPath().isStar()) {
       if (module.getNamespaceObjects().isEmpty()) {
         addWarn(ErrorLabel.GENERIC, node, "Module is empty: %s", path);
       }
 
-      List<NamespaceObject> objects = new ArrayList<>(module.getNamespaceObjects());
-
-      for (NamespaceObject obj : objects) {
-        handleImport(node, Optional.of(obj), Optional.empty(), path);
-      }
+      module.getNamespaceObjects().forEach(obj -> obj.apply(Optional.empty(), framework, errorCollector));
     } else {
-      // Get the namespace object specified in the import statement
-      Optional<NamespaceObject> objOpt = module.getNamespaceObject(path.getLast());
-
-      //Keep original casing
-      String objectName = node.getAlias()
-          .map(a -> a.names.get(0))
-          .orElse(path.getLast().getDisplay());
-
-      handleImport(node, objOpt, Optional.of(objectName), path);
-
-      if (objOpt.isPresent()) {
-        importOps.put(node, List.of(new QualifiedImport(objOpt.get(), Optional.of(objectName))));
-      }
-    }
-
-    List<QualifiedImport> qualifiedImports = getImportOps().get(node);
-    if (qualifiedImports != null) {
-      qualifiedImports.forEach(i -> i.getObject().apply(i.getAlias(), framework, errorCollector));
+      module.getNamespaceObject(path.getLast())
+          .map(object -> object.apply(Optional.of(node.getAlias().map(a -> a.names.get(0))
+              .orElse(/*retain alias*/path.getLast().getDisplay())), framework, errorCollector))
+          .orElseThrow(() -> addError(ErrorCode.GENERIC, node, "Object [%s] not found in module: %s", path.getLast(), path));
     }
 
     return null;
-  }
-
-  private void handleImport(SqrlImportDefinition node, Optional<NamespaceObject> obj,
-      Optional<String> alias, NamePath path) {
-    if (obj.isEmpty()) {
-      addError(ErrorLabel.GENERIC, node.getIdentifier(), "Could not find import object: %s",
-          path.getDisplay());
-    }
-  }
-
-  @Value
-  public class QualifiedImport {
-
-    NamespaceObject object;
-    Optional<String> alias;
   }
 
   /**
@@ -216,13 +171,11 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     }
 
     NamePath path = nameUtil.toNamePath(node.getIdentifier().names);
-    exportOps.put(node, new QualifiedExport(path, sink.get()));
 
     QueryPlanner planner = framework.getQueryPlanner();
-    QualifiedExport export = getExportOps().get(node);
-    Optional<RelOptTable> table = planner.getCatalogReader().getTableFromPath(export.getTable());
-    Preconditions.checkState(table.isPresent(), "Could not find export table: %s", export.getTable().getDisplay());
-    ResolvedExport resolvedExport = exportTable(table.get().unwrap(ModifiableTable.class), export.getSink(), planner.getRelBuilder(), true);
+    Optional<RelOptTable> table = planner.getCatalogReader().getTableFromPath(path);
+    Preconditions.checkState(table.isPresent(), "Could not find export table: %s", path.getDisplay());
+    ResolvedExport resolvedExport = exportTable(table.get().unwrap(ModifiableTable.class), sink.get(), planner.getRelBuilder(), true);
     framework.getSchema().add(resolvedExport);
 
     return null;
@@ -233,13 +186,6 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         .build();
     int numSelects = selectedFieldsOnly?table.getNumSelects():table.getNumColumns();
     return new ResolvedExport(table.getNameId(), export, numSelects, sink);
-  }
-
-  @Value
-  public class QualifiedExport {
-
-    NamePath table;
-    TableSink sink;
   }
 
   @Override
