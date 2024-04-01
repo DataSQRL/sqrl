@@ -1,12 +1,13 @@
 version: "3.8"
 services:
+<#if database?? && database>
   database:
     build:
       context: database
       dockerfile: Dockerfile
     ports:
       - '5432:5432'
-
+</#if>
   flink-jobmanager:
     build:
       context: stream

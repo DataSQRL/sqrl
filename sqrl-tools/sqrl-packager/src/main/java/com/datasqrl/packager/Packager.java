@@ -16,6 +16,12 @@ import com.datasqrl.packager.repository.Repository;
 import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.google.common.base.Preconditions;
+import freemarker.template.Configuration;
+import freemarker.template.Template;
+import freemarker.template.TemplateExceptionHandler;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.nio.file.Paths;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -242,17 +248,47 @@ public class Packager {
             throw new RuntimeException(e);
           }
         } else {
-
           try {
-            Files.copy(sourcePath, destinationPath, StandardCopyOption.REPLACE_EXISTING);
-          } catch (IOException e) {
-            throw new UncheckedIOException(e);
+            if (sourcePath.toString().endsWith(".ftl")) {
+              processTemplate(sourcePath, destinationPath, Map.of("database", true) /*stub-config*/);
+            } else {
+              Files.copy(sourcePath, destinationPath, StandardCopyOption.REPLACE_EXISTING);
+            }
+          } catch (Exception e) {
+            throw new RuntimeException(e);
           }
+
         }
       });
     }
   }
 
+  public void processTemplate(Path path, Path destination, Map config) throws Exception {
+    if (!path.toString().endsWith(".ftl")) {
+      return;
+    }
+
+    // configure Freemarker
+    Configuration cfg = new Configuration(Configuration.VERSION_2_3_32);
+    cfg.setDirectoryForTemplateLoading(path.getParent().toFile());
+    cfg.setDefaultEncoding("UTF-8");
+    cfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
+
+    // extract the template filename
+    String templateName = path.getFileName().toString();
+
+    // load and process the template
+    Template template = cfg.getTemplate(templateName);
+    Writer out = new StringWriter();
+    template.process(config, out);
+
+    // remove .ftl extension
+    String outputFileName = templateName.substring(0, templateName.length() - 4);
+
+    // write
+    Path outputPath = destination.getParent().resolve(outputFileName);
+    Files.write(outputPath, out.toString().getBytes());
+  }
 
   public static Optional<List<Path>> findPackageFile(Path rootDir, List<Path> packageFiles) {
     if (packageFiles.isEmpty()) {
