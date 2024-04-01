@@ -21,34 +21,6 @@ LogicalProject(id=[$0], time=[$2], customerid=[$1], _idx=[$4], productid=[$5], q
     LogicalTableScan(table=[[orders$2]])
     LogicalTableFunctionScan(invocation=[Orders.items($cor8.items)], rowType=[RecordType(INTEGER _idx, BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount)], elementType=[class [Ljava.lang.Object;])
 
-=== category_visits
-ID:     category_visits$1
-Type:   state
-Stage:  streams
-Inputs: customers$3, products$3, productvisit$2
-Primary Key: __pk1$id, category
-Timestamp  : _event_time
-Schema:
- - __pk1$id: BIGINT NOT NULL
- - category: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - visits: BIGINT NOT NULL
- - _event_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
-Post Processors:
- - topN: partition=__pk1$id, category limit=1 sort=#3: _event_time TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
- - sort: #0: __pk1$id BIGINT ASC, #2: visits BIGINT DESC
-Plan:
-LogicalProject(__pk1$id=[$1], category=[$2], visits=[$3], _event_time=[$0])
-  LogicalAggregate(group=[{3, 4, 19}], visits=[COUNT()]) hints[SlidingAggregationHint options:[3, 86400000, 1728000]]
-    LogicalJoin(condition=[=($1, $14)], joinType=[inner]) hints[TemporalJoinHint options:[3]]
-      LogicalJoin(condition=[=($4, $0)], joinType=[inner]) hints[TemporalJoinHint options:[3]]
-        LogicalTableScan(table=[[productvisit$2]])
-        LogicalFilter(condition=[=($9, 1)]) hints[DedupHint]
-          LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], ip_address=[$4], country=[$5], changed_on=[$6], timestamp=[$7], country0=[$8], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $7 DESC NULLS LAST)])
-            LogicalTableScan(table=[[customers$3]])
-      LogicalFilter(condition=[=($8, 1)]) hints[DedupHint]
-        LogicalProject(id=[$0], name=[$1], sizing=[$2], weight_in_gram=[$3], type=[$4], category=[$5], usda_id=[$6], updated=[$7], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $7 DESC NULLS LAST)])
-          LogicalTableScan(table=[[products$3]])
-
 === Customers
 ID:     customers$2
 Type:   stream
@@ -118,6 +90,48 @@ LogicalProject(__pk1$id=[$0], country=[$1], month=[$2], quantity=[$3], spend=[$4
           LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], ip_address=[$4], country=[$5], changed_on=[$6], timestamp=[$7], country0=[$8], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $7 DESC NULLS LAST)])
             LogicalTableScan(table=[[customers$3]])
 
+=== NumOrders
+ID:     numorders$1
+Type:   state
+Stage:  streams
+Inputs: orders$2
+Primary Key: __pk
+Timestamp  : __timestamp
+Schema:
+ - count: BIGINT NOT NULL
+ - __pk: INTEGER NOT NULL
+ - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
+Plan:
+LogicalProject(count=[$0], __pk=[1], __timestamp=[$1])
+  LogicalAggregate(group=[{}], count=[COUNT()], __timestamp=[MAX($2)])
+    LogicalTableScan(table=[[orders$2]])
+
+=== order_stats
+ID:     order_stats$1
+Type:   state
+Stage:  streams
+Inputs: customers$3, orders$2, totals$1
+Primary Key: __pk1$id
+Timestamp  : __timestamp
+Schema:
+ - __pk1$id: BIGINT NOT NULL
+ - total_spend: DOUBLE NOT NULL
+ - total_saved: DOUBLE NOT NULL
+ - num_orders: BIGINT NOT NULL
+ - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Plan:
+LogicalProject(__pk1$id=[$0], total_spend=[$1], total_saved=[$2], num_orders=[$3], __timestamp=[$4])
+  LogicalAggregate(group=[{0}], total_spend=[SUM($7)], total_saved=[SUM($8)], num_orders=[COUNT()], __timestamp=[MAX($3)])
+    LogicalJoin(condition=[AND(=($1, $5), =($3, $6))], joinType=[inner]) hints[IntervalJoin]
+      LogicalProject(__pk4$id=[$5], id=[$0], customerid=[$1], time=[$2], items=[$3])
+        LogicalJoin(condition=[=($5, $4)], joinType=[inner]) hints[TemporalJoinHint options:[2]]
+          LogicalProject(id=[$0], customerid=[$1], time=[$2], items=[$3], customerid4=[$1])
+            LogicalTableScan(table=[[orders$2]])
+          LogicalFilter(condition=[=($9, 1)]) hints[DedupHint]
+            LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], ip_address=[$4], country=[$5], changed_on=[$6], timestamp=[$7], country0=[$8], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $7 DESC NULLS LAST)])
+              LogicalTableScan(table=[[customers$3]])
+      LogicalTableScan(table=[[totals$1]])
+
 === Orders
 ID:     orders$2
 Type:   stream
@@ -158,30 +172,6 @@ LogicalProject(__pk1$id=[$0], productid=[$1], num_orders=[$2], total_quantity=[$
             LogicalTableScan(table=[[customers$3]])
       LogicalTableFunctionScan(invocation=[Orders.items($cor7.items)], rowType=[RecordType(INTEGER _idx, BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount)], elementType=[class [Ljava.lang.Object;])
 
-=== product_visits
-ID:     product_visits$1
-Type:   state
-Stage:  streams
-Inputs: customers$3, productvisit$2
-Primary Key: __pk1$id, productid
-Timestamp  : _event_time
-Schema:
- - __pk1$id: BIGINT NOT NULL
- - productid: BIGINT NOT NULL
- - visits: BIGINT NOT NULL
- - _event_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
-Post Processors:
- - topN: partition=__pk1$id, productid limit=1 sort=#3: _event_time TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
- - sort: #0: __pk1$id BIGINT ASC, #2: visits BIGINT DESC
-Plan:
-LogicalProject(__pk1$id=[$2], productid=[$0], visits=[$3], _event_time=[$1])
-  LogicalAggregate(group=[{1, 3, 4}], visits=[COUNT()]) hints[SlidingAggregationHint options:[3, 2592000000, 51840000]]
-    LogicalJoin(condition=[=($4, $0)], joinType=[inner]) hints[TemporalJoinHint options:[3]]
-      LogicalTableScan(table=[[productvisit$2]])
-      LogicalFilter(condition=[=($9, 1)]) hints[DedupHint]
-        LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], ip_address=[$4], country=[$5], changed_on=[$6], timestamp=[$7], country0=[$8], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $7 DESC NULLS LAST)])
-          LogicalTableScan(table=[[customers$3]])
-
 === Products
 ID:     products$2
 Type:   stream
@@ -220,20 +210,6 @@ Post Processors:
  - topN: partition=id limit=1 sort=#7: updated TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
 Plan:
 LogicalTableScan(table=[[products$2]])
-
-=== ProductVisit
-ID:     productvisit$2
-Type:   stream
-Stage:  streams
-Primary Key: _uuid
-Timestamp  : event_time
-Schema:
- - customerid: BIGINT NOT NULL
- - productid: BIGINT NOT NULL
- - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - event_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
-Plan:
-LogicalTableScan(table=[[productvisit$1]], hints=[[[WatermarkHint inheritPath:[] options:[3]]]]) hints[WatermarkHint options:[3]]
 
 === spending
 ID:     spending$1
@@ -283,19 +259,114 @@ LogicalProject(__pk1$id=[$0], __pk3$time=[$1], price=[$2], saving=[$3])
         LogicalTableScan(table=[[orders$2]])
         LogicalTableFunctionScan(invocation=[Orders.items($cor0.items)], rowType=[RecordType(INTEGER _idx, BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount)], elementType=[class [Ljava.lang.Object;])
 
+>>>schema.graphqls
+type Customers {
+  id: Float!
+  first_name: String!
+  last_name: String!
+  email: String!
+  ip_address: String
+  country: String
+  changed_on: Float!
+  timestamp: DateTime!
+  country0: String!
+  order_stats: order_stats
+  past_purchases(productid: Float, limit: Int = 10, offset: Int = 0): [past_purchases!]
+  purchases(limit: Int = 10, offset: Int = 0): [Orders!]
+  spending(week: DateTime, limit: Int = 10, offset: Int = 0): [spending!]
+}
+
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+
+type NumOrders {
+  count: Float!
+}
+
+type Orders {
+  id: Float!
+  customerid: Float!
+  time: DateTime!
+  customer(limit: Int = 10, offset: Int = 0): [Customers!]
+  items(limit: Int = 10, offset: Int = 0): [items!]
+  totals: totals
+}
+
+type Products {
+  id: Float!
+  name: String!
+  sizing: String!
+  weight_in_gram: Float!
+  type: String!
+  category: String!
+  usda_id: Float!
+  updated: DateTime!
+  monthly_by_country(country: String, month: DateTime, limit: Int = 10, offset: Int = 0): [monthly_by_country!]
+}
+
+type Query {
+  Customers(id: Float, limit: Int = 10, offset: Int = 0): [Customers!]
+  NumOrders(limit: Int = 10, offset: Int = 0): [NumOrders!]
+  Orders(id: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [Orders!]
+  Products(id: Float, limit: Int = 10, offset: Int = 0): [Products!]
+}
+
+type items {
+  productid: Float!
+  quantity: Float!
+  unit_price: Float!
+  discount: Float
+}
+
+type monthly_by_country {
+  country: String!
+  month: DateTime!
+  quantity: Float!
+  spend: Float!
+  weight: Float!
+  parent: Products!
+}
+
+type order_stats {
+  total_spend: Float!
+  total_saved: Float!
+  num_orders: Float!
+  parent: Customers!
+}
+
+type past_purchases {
+  productid: Float!
+  num_orders: Float!
+  total_quantity: Float!
+  parent: Customers!
+}
+
+type spending {
+  week: DateTime!
+  spend: Float!
+  saved: Float!
+  parent: Customers!
+}
+
+type totals {
+  price: Float!
+  saving: Float!
+  parent: Orders!
+}
+
 >>>database-schema.sql
-CREATE TABLE IF NOT EXISTS category_visits$1 ("__pk1$id" BIGINT NOT NULL,"category" TEXT NOT NULL,"visits" BIGINT NOT NULL,"_event_time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("__pk1$id","category"));
 CREATE TABLE IF NOT EXISTS customers$3 ("id" BIGINT NOT NULL,"first_name" TEXT NOT NULL,"last_name" TEXT NOT NULL,"email" TEXT NOT NULL,"ip_address" TEXT ,"country" TEXT ,"changed_on" BIGINT NOT NULL,"timestamp" TIMESTAMP WITH TIME ZONE NOT NULL,"country0" TEXT NOT NULL , PRIMARY KEY ("id"));
 CREATE TABLE IF NOT EXISTS monthly_by_country$1 ("__pk1$id" BIGINT NOT NULL,"country" TEXT NOT NULL,"month" TIMESTAMP WITH TIME ZONE NOT NULL,"quantity" BIGINT NOT NULL,"spend" DOUBLE PRECISION NOT NULL,"weight" BIGINT NOT NULL , PRIMARY KEY ("__pk1$id","country","month"));
+CREATE TABLE IF NOT EXISTS numorders$1 ("count" BIGINT NOT NULL,"__pk" INTEGER NOT NULL,"__timestamp" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY ("__pk"));
+CREATE TABLE IF NOT EXISTS order_stats$1 ("__pk1$id" BIGINT NOT NULL,"total_spend" DOUBLE PRECISION NOT NULL,"total_saved" DOUBLE PRECISION NOT NULL,"num_orders" BIGINT NOT NULL,"__timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("__pk1$id"));
 CREATE TABLE IF NOT EXISTS orders$2 ("id" BIGINT NOT NULL,"customerid" BIGINT NOT NULL,"time" TIMESTAMP WITH TIME ZONE NOT NULL,"items" JSONB NOT NULL , PRIMARY KEY ("id","time"));
 CREATE TABLE IF NOT EXISTS past_purchases$1 ("__pk1$id" BIGINT NOT NULL,"productid" BIGINT NOT NULL,"num_orders" BIGINT NOT NULL,"total_quantity" BIGINT NOT NULL,"__timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("__pk1$id","productid"));
-CREATE TABLE IF NOT EXISTS product_visits$1 ("__pk1$id" BIGINT NOT NULL,"productid" BIGINT NOT NULL,"visits" BIGINT NOT NULL,"_event_time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("__pk1$id","productid"));
 CREATE TABLE IF NOT EXISTS products$3 ("id" BIGINT NOT NULL,"name" TEXT NOT NULL,"sizing" TEXT NOT NULL,"weight_in_gram" BIGINT NOT NULL,"type" TEXT NOT NULL,"category" TEXT NOT NULL,"usda_id" BIGINT NOT NULL,"updated" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
 CREATE TABLE IF NOT EXISTS spending$1 ("__pk1$id" BIGINT NOT NULL,"week" TIMESTAMP WITH TIME ZONE NOT NULL,"spend" DOUBLE PRECISION NOT NULL,"saved" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("__pk1$id","week"));
 CREATE TABLE IF NOT EXISTS totals$1 ("__pk1$id" BIGINT NOT NULL,"__pk3$time" TIMESTAMP WITH TIME ZONE NOT NULL,"price" DOUBLE PRECISION NOT NULL,"saving" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("__pk1$id","__pk3$time"));
+CREATE INDEX IF NOT EXISTS monthly_by_country$1_btree_c0c2 ON monthly_by_country$1 USING btree ("__pk1$id","month");
 CREATE INDEX IF NOT EXISTS orders$2_hash_c1 ON orders$2 USING hash ("customerid");
-CREATE INDEX IF NOT EXISTS products$3_btree_c1c5 ON products$3 USING btree ("name","category");
-CREATE INDEX IF NOT EXISTS products$3_hash_c5 ON products$3 USING hash ("category");
+CREATE INDEX IF NOT EXISTS orders$2_hash_c2 ON orders$2 USING hash ("time");
 >>>flink-plan.sql
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptostring` AS 'com.datasqrl.time.TimestampToString' LANGUAGE JAVA;
 
@@ -357,22 +428,6 @@ CREATE TEMPORARY TABLE `customers$1` (
   'source.path.regex-pattern' = 'to be determined'
 );
 
-CREATE TEMPORARY TABLE `productvisit$1` (
-  `customerid` BIGINT NOT NULL,
-  `productid` BIGINT NOT NULL,
-  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL METADATA FROM 'timestamp',
-  WATERMARK FOR `event_time` AS (`event_time` - INTERVAL '0.0' SECOND)
-) WITH (
-  'properties.bootstrap.servers' = 'kafka:9092',
-  'properties.auto.offset.reset' = 'earliest',
-  'connector' = 'kafka',
-  'format' = 'json',
-  'properties.group.id' = 'groupid',
-  'topic' = 'seedshop-mutation-productvisit',
-  'scan.startup.mode' = 'earliest-offset'
-);
-
 CREATE TEMPORARY TABLE `products$1` (
   `id` BIGINT NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -390,21 +445,6 @@ CREATE TEMPORARY TABLE `products$1` (
   'source.monitor-interval' = '0',
   'connector' = 'filesystem',
   'source.path.regex-pattern' = 'to be determined'
-);
-
-CREATE TEMPORARY TABLE `category_visits$1` (
-  `__pk1$id` BIGINT NOT NULL,
-  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `visits` BIGINT NOT NULL,
-  `_event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  PRIMARY KEY (`__pk1$id`, `category`) NOT ENFORCED
-) WITH (
-  'password' = 'postgres',
-  'connector' = 'jdbc-sqrl',
-  'driver' = 'org.postgresql.Driver',
-  'table-name' = 'category_visits$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
 );
 
 CREATE TEMPORARY TABLE `customers$3` (
@@ -444,6 +484,36 @@ CREATE TEMPORARY TABLE `monthly_by_country$1` (
   'url' = 'jdbc:postgresql://database:5432/datasqrl'
 );
 
+CREATE TEMPORARY TABLE `numorders$1` (
+  `count` BIGINT NOT NULL,
+  `__pk` INTEGER NOT NULL,
+  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  PRIMARY KEY (`__pk`) NOT ENFORCED
+) WITH (
+  'password' = 'postgres',
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'table-name' = 'numorders$1',
+  'user' = 'postgres',
+  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+);
+
+CREATE TEMPORARY TABLE `order_stats$1` (
+  `__pk1$id` BIGINT NOT NULL,
+  `total_spend` DOUBLE NOT NULL,
+  `total_saved` DOUBLE NOT NULL,
+  `num_orders` BIGINT NOT NULL,
+  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`__pk1$id`) NOT ENFORCED
+) WITH (
+  'password' = 'postgres',
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'table-name' = 'order_stats$1',
+  'user' = 'postgres',
+  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+);
+
 CREATE TEMPORARY TABLE `orders$2` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
@@ -471,21 +541,6 @@ CREATE TEMPORARY TABLE `past_purchases$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'past_purchases$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
-);
-
-CREATE TEMPORARY TABLE `product_visits$1` (
-  `__pk1$id` BIGINT NOT NULL,
-  `productid` BIGINT NOT NULL,
-  `visits` BIGINT NOT NULL,
-  `_event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  PRIMARY KEY (`__pk1$id`, `productid`) NOT ENFORCED
-) WITH (
-  'password' = 'postgres',
-  'connector' = 'jdbc-sqrl',
-  'driver' = 'org.postgresql.Driver',
-  'table-name' = 'product_visits$1',
   'user' = 'postgres',
   'url' = 'jdbc:postgresql://database:5432/datasqrl'
 );
@@ -542,25 +597,27 @@ CREATE TEMPORARY TABLE `totals$1` (
 CREATE VIEW `table$1`
 AS
 SELECT *
-FROM (SELECT `id`, `name`, `sizing`, `weight_in_gram`, `type`, `category`, `usda_id`, `updated`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated` DESC NULLS LAST)) AS `_rownum`
-FROM `products$1`) AS `t`
+FROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, `country0`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC NULLS LAST)) AS `_rownum`
+FROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, COALESCE(`country`, 'none') AS `country0`
+FROM `customers$1`) AS `t`) AS `t0`
 WHERE (`_rownum` = 1);
 
 CREATE VIEW `table$2`
 AS
 SELECT *
-FROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, `country0`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC NULLS LAST)) AS `_rownum`
-FROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, COALESCE(`country`, 'none') AS `country0`
-FROM `customers$1`) AS `t1`) AS `t2`
+FROM (SELECT `id`, `name`, `sizing`, `weight_in_gram`, `type`, `category`, `usda_id`, `updated`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated` DESC NULLS LAST)) AS `_rownum`
+FROM `products$1`) AS `t2`
 WHERE (`_rownum` = 1);
 
 CREATE VIEW `table$3`
 AS
-SELECT *
+SELECT `$cor9`.`id0` AS `__pk6$id`, `t1`.`country0` AS `country`, ENDOFMONTH(`$cor9`.`time`) AS `month`, `$cor9`.`quantity`, (`$cor9`.`quantity` * `$cor9`.`unit_price`) AS `$f4`, (`$cor9`.`quantity` * `$cor9`.`weight_in_gram`) AS `$f5`, `$cor9`.`id`, `$cor9`.`time`, `$cor9`.`_idx`
 FROM (SELECT *
-FROM `productvisit$1` AS `$cor10`
-INNER JOIN `table$2` FOR SYSTEM_TIME AS OF `$cor10`.`event_time` AS `t3` ON (`t3`.`id` = `$cor10`.`customerid`)) AS `$cor9`
-INNER JOIN `table$1` FOR SYSTEM_TIME AS OF `$cor9`.`event_time` AS `t0` ON (`$cor9`.`productid` = `t0`.`id`);
+FROM (SELECT `$cor8`.`id`, `$cor8`.`time`, `$cor8`.`customerid`, `t50`.`_idx`, `t50`.`productid`, `t50`.`quantity`, `t50`.`unit_price`, `t50`.`discount`
+FROM `orders$1` AS `$cor8`,
+UNNEST(`$cor8`.`items`) AS `t50`) AS `$cor10`
+INNER JOIN `table$2` FOR SYSTEM_TIME AS OF `$cor10`.`time` AS `t3` ON (`$cor10`.`productid` = `t3`.`id`)) AS `$cor9`
+INNER JOIN `table$1` FOR SYSTEM_TIME AS OF `$cor9`.`time` AS `t1` ON (`$cor9`.`customerid` = `t1`.`id`);
 
 CREATE VIEW `table$4`
 AS
@@ -572,20 +629,17 @@ WHERE (`_rownum` = 1);
 
 CREATE VIEW `table$5`
 AS
-SELECT *
-FROM (SELECT `id`, `name`, `sizing`, `weight_in_gram`, `type`, `category`, `usda_id`, `updated`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated` DESC NULLS LAST)) AS `_rownum`
-FROM `products$1`) AS `t2`
-WHERE (`_rownum` = 1);
+SELECT `$cor0`.`id` AS `__pk1$id`, `$cor0`.`time` AS `__pk2$time`, ((`t50`.`quantity` * `t50`.`unit_price`) - COALESCE(`t50`.`discount`, 0.0)) AS `$f2`, COALESCE(`t50`.`discount`, 0.0) AS `$f3`, `t50`.`_idx`
+FROM `orders$1` AS `$cor0`,
+UNNEST(`$cor0`.`items`) AS `t50`;
 
 CREATE VIEW `table$6`
 AS
-SELECT `$cor11`.`id0` AS `__pk6$id`, `t1`.`country0` AS `country`, ENDOFMONTH(`$cor11`.`time`) AS `month`, `$cor11`.`quantity`, (`$cor11`.`quantity` * `$cor11`.`unit_price`) AS `$f4`, (`$cor11`.`quantity` * `$cor11`.`weight_in_gram`) AS `$f5`, `$cor11`.`id`, `$cor11`.`time`, `$cor11`.`_idx`
-FROM (SELECT *
-FROM (SELECT `$cor8`.`id`, `$cor8`.`time`, `$cor8`.`customerid`, `t50`.`_idx`, `t50`.`productid`, `t50`.`quantity`, `t50`.`unit_price`, `t50`.`discount`
-FROM `orders$1` AS `$cor8`,
-UNNEST(`$cor8`.`items`) AS `t50`) AS `$cor12`
-INNER JOIN `table$5` FOR SYSTEM_TIME AS OF `$cor12`.`time` AS `t3` ON (`$cor12`.`productid` = `t3`.`id`)) AS `$cor11`
-INNER JOIN `table$4` FOR SYSTEM_TIME AS OF `$cor11`.`time` AS `t1` ON (`$cor11`.`customerid` = `t1`.`id`);
+SELECT *
+FROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, `country0`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC NULLS LAST)) AS `_rownum`
+FROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, COALESCE(`country`, 'none') AS `country0`
+FROM `customers$1`) AS `t`) AS `t0`
+WHERE (`_rownum` = 1);
 
 CREATE VIEW `table$7`
 AS
@@ -597,63 +651,51 @@ WHERE (`_rownum` = 1);
 
 CREATE VIEW `table$8`
 AS
-SELECT *
-FROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, `country0`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC NULLS LAST)) AS `_rownum`
-FROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, COALESCE(`country`, 'none') AS `country0`
-FROM `customers$1`) AS `t`) AS `t0`
-WHERE (`_rownum` = 1);
-
-CREATE VIEW `table$9`
-AS
-SELECT *
-FROM `productvisit$1` AS `$cor14`
-INNER JOIN `table$8` FOR SYSTEM_TIME AS OF `$cor14`.`event_time` AS `t1` ON (`t1`.`id` = `$cor14`.`customerid`);
-
-CREATE VIEW `table$10`
-AS
-SELECT *
-FROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, `country0`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC NULLS LAST)) AS `_rownum`
-FROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, COALESCE(`country`, 'none') AS `country0`
-FROM `customers$1`) AS `t`) AS `t0`
-WHERE (`_rownum` = 1);
-
-CREATE VIEW `table$11`
-AS
 SELECT `$cor0`.`id` AS `__pk1$id`, `$cor0`.`time` AS `__pk2$time`, ((`t50`.`quantity` * `t50`.`unit_price`) - COALESCE(`t50`.`discount`, 0.0)) AS `$f2`, COALESCE(`t50`.`discount`, 0.0) AS `$f3`, `t50`.`_idx`
 FROM `orders$1` AS `$cor0`,
 UNNEST(`$cor0`.`items`) AS `t50`;
 
-CREATE VIEW `table$12`
+CREATE VIEW `table$9`
 AS
 SELECT `t3`.`__pk3$id`, ENDOFWEEK(`t3`.`time`) AS `week`, `t10`.`price`, `t10`.`saving`, `t3`.`id`, `t3`.`time`
-FROM (SELECT `t1`.`id` AS `__pk3$id`, `$cor15`.`id`, `$cor15`.`customerid`, `$cor15`.`time`, `$cor15`.`items`
+FROM (SELECT `t1`.`id` AS `__pk3$id`, `$cor13`.`id`, `$cor13`.`customerid`, `$cor13`.`time`, `$cor13`.`items`
 FROM (SELECT `id`, `customerid`, `time`, `items`, `customerid` AS `customerid4`
-FROM `orders$1`) AS `$cor15`
-INNER JOIN `table$10` FOR SYSTEM_TIME AS OF `$cor15`.`time` AS `t1` ON (`t1`.`id` = `$cor15`.`customerid4`)) AS `t3`
+FROM `orders$1`) AS `$cor13`
+INNER JOIN `table$7` FOR SYSTEM_TIME AS OF `$cor13`.`time` AS `t1` ON (`t1`.`id` = `$cor13`.`customerid4`)) AS `t3`
 INNER JOIN (SELECT `__pk1$id`, `window_time` AS `__pk3$time`, SUM(`$f2`) AS `price`, SUM(`$f3`) AS `saving`
-FROM TABLE(TUMBLE((TABLE `table$11`), (DESCRIPTOR(`__pk2$time`)), INTERVAL '0.001' SECOND(1))) AS `t7`
+FROM TABLE(TUMBLE((TABLE `table$8`), (DESCRIPTOR(`__pk2$time`)), INTERVAL '0.001' SECOND(1))) AS `t7`
 GROUP BY `__pk1$id`, `window_start`, `window_end`, `window_time`) AS `t10` ON ((`t3`.`id` = `t10`.`__pk1$id`) AND (`t3`.`time` = `t10`.`__pk3$time`));
 
-CREATE VIEW `table$13`
+CREATE VIEW `table$10`
 AS
 SELECT `$cor0`.`id` AS `__pk1$id`, `$cor0`.`time` AS `__pk2$time`, ((`t00`.`quantity` * `t00`.`unit_price`) - COALESCE(`t00`.`discount`, 0.0)) AS `$f2`, COALESCE(`t00`.`discount`, 0.0) AS `$f3`, `t00`.`_idx`
 FROM `orders$1` AS `$cor0`,
 UNNEST(`$cor0`.`items`) AS `t00`;
 
 EXECUTE STATEMENT SET BEGIN
-INSERT INTO `category_visits$1`
-(SELECT `id` AS `__pk1$id`, `category`, COUNT(*) AS `visits`, `window_time` AS `_event_time`
-FROM TABLE(HOP((TABLE `table$3`), (DESCRIPTOR(`event_time`)), INTERVAL '1728' SECOND(7), INTERVAL '86400' SECOND(8))) AS `t5`
-GROUP BY `id`, `category`, `window_start`, `window_end`, `window_time`)
-;
 INSERT INTO `customers$3`
 (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, COALESCE(`country`, 'none') AS `country0`
 FROM `customers$1`)
 ;
 INSERT INTO `monthly_by_country$1`
 (SELECT `__pk6$id` AS `__pk1$id`, `country`, `window_time` AS `month`, SUM(`quantity`) AS `quantity`, SUM(`$f4`) AS `spend`, SUM(`$f5`) AS `weight`
-FROM TABLE(TUMBLE((TABLE `table$6`), (DESCRIPTOR(`time`)), INTERVAL '2629746' SECOND(10), INTERVAL '0' SECOND(1))) AS `t9`
+FROM TABLE(TUMBLE((TABLE `table$3`), (DESCRIPTOR(`time`)), INTERVAL '2629746' SECOND(10), INTERVAL '0' SECOND(1))) AS `t9`
 GROUP BY `__pk6$id`, `country`, `window_start`, `window_end`, `window_time`)
+;
+INSERT INTO `numorders$1`
+(SELECT COUNT(*) AS `count`, 1 AS `__pk`, MAX(`time`) AS `__timestamp`
+FROM `orders$1`)
+;
+INSERT INTO `order_stats$1`
+(SELECT `t3`.`__pk4$id` AS `__pk1$id`, SUM(`t10`.`price`) AS `total_spend`, SUM(`t10`.`saving`) AS `total_saved`, COUNT(*) AS `num_orders`, MAX(`t3`.`time`) AS `__timestamp`
+FROM (SELECT `t1`.`id` AS `__pk4$id`, `$cor11`.`id`, `$cor11`.`customerid`, `$cor11`.`time`, `$cor11`.`items`
+FROM (SELECT `id`, `customerid`, `time`, `items`, `customerid` AS `customerid4`
+FROM `orders$1`) AS `$cor11`
+INNER JOIN `table$4` FOR SYSTEM_TIME AS OF `$cor11`.`time` AS `t1` ON (`t1`.`id` = `$cor11`.`customerid4`)) AS `t3`
+INNER JOIN (SELECT `__pk1$id`, `window_time` AS `__pk3$time`, SUM(`$f2`) AS `price`, SUM(`$f3`) AS `saving`
+FROM TABLE(TUMBLE((TABLE `table$5`), (DESCRIPTOR(`__pk2$time`)), INTERVAL '0.001' SECOND(1))) AS `t7`
+GROUP BY `__pk1$id`, `window_start`, `window_end`, `window_time`) AS `t10` ON ((`t3`.`id` = `t10`.`__pk1$id`) AND (`t3`.`time` = `t10`.`__pk3$time`))
+GROUP BY `t3`.`__pk4$id`)
 ;
 INSERT INTO `orders$2`
 (SELECT *
@@ -662,15 +704,10 @@ FROM `orders$1`)
 INSERT INTO `past_purchases$1`
 (SELECT `$cor7`.`id0` AS `__pk1$id`, `t40`.`productid`, COUNT(*) AS `num_orders`, SUM(`t40`.`quantity`) AS `total_quantity`, MAX(`$cor7`.`time`) AS `__timestamp`
 FROM (SELECT *
-FROM `orders$1` AS `$cor13`
-INNER JOIN `table$7` FOR SYSTEM_TIME AS OF `$cor13`.`time` AS `t1` ON (`$cor13`.`customerid` = `t1`.`id`)) AS `$cor7`,
+FROM `orders$1` AS `$cor12`
+INNER JOIN `table$6` FOR SYSTEM_TIME AS OF `$cor12`.`time` AS `t1` ON (`$cor12`.`customerid` = `t1`.`id`)) AS `$cor7`,
 UNNEST(`$cor7`.`items`) AS `t40`
 GROUP BY `$cor7`.`id0`, `t40`.`productid`)
-;
-INSERT INTO `product_visits$1`
-(SELECT `id` AS `__pk1$id`, `productid`, COUNT(*) AS `visits`, `window_time` AS `_event_time`
-FROM TABLE(HOP((TABLE `table$9`), (DESCRIPTOR(`event_time`)), INTERVAL '51840' SECOND(8), INTERVAL '2592000' SECOND(10))) AS `t2`
-GROUP BY `productid`, `id`, `window_start`, `window_end`, `window_time`)
 ;
 INSERT INTO `products$3`
 (SELECT *
@@ -678,12 +715,12 @@ FROM `products$1`)
 ;
 INSERT INTO `spending$1`
 (SELECT `__pk3$id` AS `__pk1$id`, `window_time` AS `week`, SUM(`price`) AS `spend`, SUM(`saving`) AS `saved`
-FROM TABLE(TUMBLE((TABLE `table$12`), (DESCRIPTOR(`time`)), INTERVAL '604800' SECOND(9), INTERVAL '0' SECOND(1))) AS `t12`
+FROM TABLE(TUMBLE((TABLE `table$9`), (DESCRIPTOR(`time`)), INTERVAL '604800' SECOND(9), INTERVAL '0' SECOND(1))) AS `t12`
 GROUP BY `__pk3$id`, `window_start`, `window_end`, `window_time`)
 ;
 INSERT INTO `totals$1`
 (SELECT `__pk1$id`, `window_time` AS `__pk3$time`, SUM(`$f2`) AS `price`, SUM(`$f3`) AS `saving`
-FROM TABLE(TUMBLE((TABLE `table$13`), (DESCRIPTOR(`__pk2$time`)), INTERVAL '0.001' SECOND(1))) AS `t2`
+FROM TABLE(TUMBLE((TABLE `table$10`), (DESCRIPTOR(`__pk2$time`)), INTERVAL '0.001' SECOND(1))) AS `t2`
 GROUP BY `__pk1$id`, `window_start`, `window_end`, `window_time`)
 ;
 END;

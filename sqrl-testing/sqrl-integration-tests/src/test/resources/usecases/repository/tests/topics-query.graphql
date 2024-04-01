@@ -1,0 +1,5 @@
+{
+TopicSearch(topicName: "example") {
+    topicName
+    numPackages
+}}

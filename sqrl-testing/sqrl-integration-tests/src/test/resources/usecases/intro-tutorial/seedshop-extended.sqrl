@@ -1,7 +1,6 @@
 IMPORT seedshop.Orders;
 IMPORT seedshop.Products;
 IMPORT seedshop.Customers;
-IMPORT seedshop-mutation.ProductVisit;
 IMPORT time.*;
 
 Orders.totals := SELECT sum(quantity * unit_price - coalesce(discount, 0.0)) as price,
@@ -39,14 +38,3 @@ Products.monthly_by_country := SELECT c.country0 AS country, endOfMonth(o.time) 
          sum(o.quantity * o.unit_price) as spend, sum(o.quantity * @.weight_in_gram) as weight
       FROM @ JOIN _OrderItems o ON o.productid = @.id JOIN Customers c ON o.customerid =c.id
       GROUP BY country, month;
-
-Customers.product_visits := SELECT productid, count(1) as visits
-                            FROM @ JOIN ProductVisit v ON @.id = v.customerid
-                            WHERE v.event_time > now() - INTERVAL 30 DAY
-                            GROUP BY productid ORDER BY visits DESC;
-
-Customers.category_visits := SELECT p.category, count(1) as visits
-                            FROM @ JOIN ProductVisit v ON @.id = v.customerid
-                                   JOIN Products p ON v.productid = p.id
-                            WHERE v.event_time > now() - INTERVAL 1 DAY
-                            GROUP BY category ORDER BY visits DESC;
