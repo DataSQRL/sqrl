@@ -6,12 +6,15 @@ COPY build.gradle /app/
 WORKDIR /app
 
 # Fetch all necessary dependencies
-#RUN gradle copyDependencies
+RUN gradle copyDependencies
 
 FROM flink:1.16.1-scala_2.12-java11
 
+RUN mkdir -p /opt/flink/plugins/flink-s3-fs-hadoop
+RUN ln -fs /opt/flink/opt/flink-s3-fs-hadoop-*.jar /opt/flink/plugins/flink-s3-fs-hadoop/.
+
 # Exclude this step for fat jar
-COPY build/dependencies /opt/flink/lib/
+COPY --from=build /app/build/dependencies /opt/flink/lib/
 # UDFs
 COPY lib/ /opt/flink/lib/
 
