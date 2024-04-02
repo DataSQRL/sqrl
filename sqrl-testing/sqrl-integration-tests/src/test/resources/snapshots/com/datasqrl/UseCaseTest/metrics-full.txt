@@ -1,0 +1,442 @@
+>>>pipeline_explain.txt
+=== HighTemp
+ID:     hightemp$1
+Type:   stream
+Stage:  streams
+Inputs: secreading$1, sensors$3
+Primary Key: sensorid, timeSec
+Timestamp  : timeSec
+Schema:
+ - machineid: BIGINT NOT NULL
+ - sensorid: BIGINT NOT NULL
+ - temp: DOUBLE NOT NULL
+ - timeSec: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Plan:
+LogicalProject(machineid=[$5], sensorid=[$0], temp=[$2], timeSec=[$1])
+  LogicalJoin(condition=[=($4, $3)], joinType=[inner]) hints[TemporalJoinHint options:[1]]
+    LogicalProject(sensorid=[$0], timeSec=[$1], temp=[$2], sensorid3=[$0])
+      LogicalFilter(condition=[>($2, 100)])
+        LogicalTableScan(table=[[secreading$1]])
+    LogicalFilter(condition=[=($3, 1)]) hints[DedupHint]
+      LogicalProject(id=[$0], machineid=[$1], placed=[$2], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
+        LogicalTableScan(table=[[sensors$3]])
+
+=== print.tempWarning.tempWarning
+ID:     hightemp$1$1
+Type:   export
+Stage:  streams
+Inputs: hightemp$1
+
+=== lastHour
+ID:     lasthour$1
+Type:   state
+Stage:  streams
+Inputs: secreading$1, sensors$3
+Primary Key: __pk1$id
+Timestamp  : _timeSec
+Schema:
+ - __pk1$id: BIGINT NOT NULL
+ - maxTemp: DOUBLE NOT NULL
+ - avgTemp: DOUBLE NOT NULL
+ - _timeSec: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Post Processors:
+ - topN: partition=__pk1$id limit=1 sort=#3: _timeSec TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
+Plan:
+LogicalProject(__pk1$id=[$1], maxTemp=[$2], avgTemp=[$3], _timeSec=[$0])
+  LogicalAggregate(group=[{1, 4}], maxTemp=[MAX($2)], avgTemp=[AVG($2)]) hints[SlidingAggregationHint options:[1, 3600000, 72000]]
+    LogicalJoin(condition=[=($4, $3)], joinType=[inner]) hints[TemporalJoinHint options:[1]]
+      LogicalProject(sensorid=[$0], timeSec=[$1], temp=[$2], sensorid3=[$0])
+        LogicalTableScan(table=[[secreading$1]])
+      LogicalFilter(condition=[=($3, 1)]) hints[DedupHint]
+        LogicalProject(id=[$0], machineid=[$1], placed=[$2], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
+          LogicalTableScan(table=[[sensors$3]])
+
+=== Machine
+ID:     machine$1
+Type:   state
+Stage:  streams
+Inputs: secreading$1, sensors$3
+Primary Key: machineid
+Timestamp  : _timeSec
+Schema:
+ - machineid: BIGINT NOT NULL
+ - maxTemp: DOUBLE NOT NULL
+ - avgTemp: DOUBLE NOT NULL
+ - _timeSec: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Post Processors:
+ - topN: partition=machineid limit=1 sort=#3: _timeSec TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
+Plan:
+LogicalProject(machineid=[$1], maxTemp=[$2], avgTemp=[$3], _timeSec=[$0])
+  LogicalAggregate(group=[{1, 5}], maxTemp=[MAX($2)], avgTemp=[AVG($2)]) hints[SlidingAggregationHint options:[1, 3600000, 72000]]
+    LogicalJoin(condition=[=($4, $3)], joinType=[inner]) hints[TemporalJoinHint options:[1]]
+      LogicalProject(sensorid=[$0], timeSec=[$1], temp=[$2], sensorid3=[$0])
+        LogicalTableScan(table=[[secreading$1]])
+      LogicalFilter(condition=[=($3, 1)]) hints[DedupHint]
+        LogicalProject(id=[$0], machineid=[$1], placed=[$2], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
+          LogicalTableScan(table=[[sensors$3]])
+
+=== SecReading
+ID:     secreading$1
+Type:   stream
+Stage:  streams
+Inputs: sensorreading$2
+Primary Key: sensorid, timeSec
+Timestamp  : timeSec
+Schema:
+ - sensorid: BIGINT NOT NULL
+ - timeSec: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - temp: DOUBLE NOT NULL
+Plan:
+LogicalAggregate(group=[{0, 1}], temp=[AVG($2)]) hints[TumbleAggregationHint options:[1, FUNCTION, 3, 1000, 0]]
+  LogicalProject(sensorid=[$0], timeSec=[endOfSecond($1)], temperature=[$2], time=[$1])
+    LogicalTableScan(table=[[sensorreading$2]])
+
+=== SensorReading
+ID:     sensorreading$2
+Type:   stream
+Stage:  streams
+Primary Key: sensorid, time
+Timestamp  : time
+Schema:
+ - sensorid: BIGINT NOT NULL
+ - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - temperature: DOUBLE NOT NULL
+ - humidity: DOUBLE NOT NULL
+Plan:
+LogicalTableScan(table=[[sensorreading$1]], hints=[[[WatermarkHint inheritPath:[] options:[1]]]]) hints[WatermarkHint options:[1]]
+
+=== Sensors
+ID:     sensors$2
+Type:   stream
+Stage:  streams
+Primary Key: id, placed
+Timestamp  : placed
+Schema:
+ - id: BIGINT NOT NULL
+ - machineid: BIGINT NOT NULL
+ - placed: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Plan:
+LogicalTableScan(table=[[sensors$1]], hints=[[[WatermarkHint inheritPath:[] options:[2]]]]) hints[WatermarkHint options:[2]]
+
+=== Sensors
+ID:     sensors$3
+Type:   state
+Stage:  streams
+Inputs: sensors$2
+Primary Key: id
+Timestamp  : placed
+Schema:
+ - id: BIGINT NOT NULL
+ - machineid: BIGINT NOT NULL
+ - placed: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Post Processors:
+ - topN: partition=id limit=1 sort=#2: placed TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
+Plan:
+LogicalTableScan(table=[[sensors$2]])
+
+>>>schema.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+
+type HighTemp {
+  machineid: Float!
+  sensorid: Float!
+  temp: Float!
+  timeSec: DateTime!
+}
+
+type Machine {
+  machineid: Float!
+  maxTemp: Float!
+  avgTemp: Float!
+  sensors(limit: Int = 10, offset: Int = 0): [Sensors!]
+}
+
+type Query {
+  HighTemp(sensorid: Float, timeSec: DateTime, limit: Int = 10, offset: Int = 0): [HighTemp!]
+  Machine(machineid: Float, limit: Int = 10, offset: Int = 0): [Machine!]
+  SecReading(sensorid: Float, timeSec: DateTime, limit: Int = 10, offset: Int = 0): [SecReading!]
+  SensorReading(sensorid: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [SensorReading!]
+  Sensors(id: Float, limit: Int = 10, offset: Int = 0): [Sensors!]
+}
+
+type SecReading {
+  sensorid: Float!
+  timeSec: DateTime!
+  temp: Float!
+}
+
+type SensorReading {
+  sensorid: Float!
+  time: DateTime!
+  temperature: Float!
+  humidity: Float!
+}
+
+type Sensors {
+  id: Float!
+  machineid: Float!
+  placed: DateTime!
+  lastHour: lastHour
+  readings(limit: Int = 10, offset: Int = 0): [SecReading!]
+}
+
+type lastHour {
+  maxTemp: Float!
+  avgTemp: Float!
+  parent: Sensors!
+}
+
+>>>database-schema.sql
+CREATE TABLE IF NOT EXISTS hightemp$1 ("machineid" BIGINT NOT NULL,"sensorid" BIGINT NOT NULL,"temp" DOUBLE PRECISION NOT NULL,"timeSec" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("sensorid","timeSec"));
+CREATE TABLE IF NOT EXISTS lasthour$1 ("__pk1$id" BIGINT NOT NULL,"maxTemp" DOUBLE PRECISION NOT NULL,"avgTemp" DOUBLE PRECISION NOT NULL,"_timeSec" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("__pk1$id"));
+CREATE TABLE IF NOT EXISTS machine$1 ("machineid" BIGINT NOT NULL,"maxTemp" DOUBLE PRECISION NOT NULL,"avgTemp" DOUBLE PRECISION NOT NULL,"_timeSec" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("machineid"));
+CREATE TABLE IF NOT EXISTS secreading$1 ("sensorid" BIGINT NOT NULL,"timeSec" TIMESTAMP WITH TIME ZONE NOT NULL,"temp" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("sensorid","timeSec"));
+CREATE TABLE IF NOT EXISTS sensorreading$2 ("sensorid" BIGINT NOT NULL,"time" TIMESTAMP WITH TIME ZONE NOT NULL,"temperature" DOUBLE PRECISION NOT NULL,"humidity" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("sensorid","time"));
+CREATE TABLE IF NOT EXISTS sensors$3 ("id" BIGINT NOT NULL,"machineid" BIGINT NOT NULL,"placed" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
+CREATE INDEX IF NOT EXISTS hightemp$1_hash_c3 ON hightemp$1 USING hash ("timeSec");
+CREATE INDEX IF NOT EXISTS secreading$1_hash_c1 ON secreading$1 USING hash ("timeSec");
+CREATE INDEX IF NOT EXISTS sensorreading$2_hash_c1 ON sensorreading$2 USING hash ("time");
+CREATE INDEX IF NOT EXISTS sensors$3_hash_c1 ON sensors$3 USING hash ("machineid");
+>>>flink-plan.sql
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofsecond` AS 'com.datasqrl.time.EndOfSecond' LANGUAGE JAVA;
+
+CREATE TEMPORARY TABLE `sensors$1` (
+  `id` BIGINT NOT NULL,
+  `machineid` BIGINT NOT NULL,
+  `placed` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`id`, `placed`) NOT ENFORCED,
+  WATERMARK FOR `placed` AS (`placed` - INTERVAL '0.001' SECOND)
+) WITH (
+  'format' = 'json',
+  'path' = '/mnt/build/data',
+  'source.monitor-interval' = '0',
+  'connector' = 'filesystem',
+  'source.path.regex-pattern' = 'to be determined'
+);
+
+CREATE TEMPORARY TABLE `sensorreading$1` (
+  `sensorid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `temperature` DOUBLE NOT NULL,
+  `humidity` DOUBLE NOT NULL,
+  PRIMARY KEY (`sensorid`, `time`) NOT ENFORCED,
+  WATERMARK FOR `time` AS (`time` - INTERVAL '0.001' SECOND)
+) WITH (
+  'format' = 'csv',
+  'path' = '/mnt/build/data',
+  'source.monitor-interval' = '0',
+  'connector' = 'filesystem',
+  'source.path.regex-pattern' = 'to be determined'
+);
+
+CREATE TEMPORARY TABLE `hightemp$1` (
+  `machineid` BIGINT NOT NULL,
+  `sensorid` BIGINT NOT NULL,
+  `temp` DOUBLE NOT NULL,
+  `timeSec` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`sensorid`, `timeSec`) NOT ENFORCED
+) WITH (
+  'password' = 'postgres',
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'table-name' = 'hightemp$1',
+  'user' = 'postgres',
+  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+);
+
+CREATE TEMPORARY TABLE `lasthour$1` (
+  `__pk1$id` BIGINT NOT NULL,
+  `maxTemp` DOUBLE NOT NULL,
+  `avgTemp` DOUBLE NOT NULL,
+  `_timeSec` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`__pk1$id`) NOT ENFORCED
+) WITH (
+  'password' = 'postgres',
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'table-name' = 'lasthour$1',
+  'user' = 'postgres',
+  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+);
+
+CREATE TEMPORARY TABLE `machine$1` (
+  `machineid` BIGINT NOT NULL,
+  `maxTemp` DOUBLE NOT NULL,
+  `avgTemp` DOUBLE NOT NULL,
+  `_timeSec` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`machineid`) NOT ENFORCED
+) WITH (
+  'password' = 'postgres',
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'table-name' = 'machine$1',
+  'user' = 'postgres',
+  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+);
+
+CREATE TEMPORARY TABLE `secreading$1` (
+  `sensorid` BIGINT NOT NULL,
+  `timeSec` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `temp` DOUBLE NOT NULL,
+  PRIMARY KEY (`sensorid`, `timeSec`) NOT ENFORCED
+) WITH (
+  'password' = 'postgres',
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'table-name' = 'secreading$1',
+  'user' = 'postgres',
+  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+);
+
+CREATE TEMPORARY TABLE `sensorreading$2` (
+  `sensorid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `temperature` DOUBLE NOT NULL,
+  `humidity` DOUBLE NOT NULL,
+  PRIMARY KEY (`sensorid`, `time`) NOT ENFORCED
+) WITH (
+  'password' = 'postgres',
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'table-name' = 'sensorreading$2',
+  'user' = 'postgres',
+  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+);
+
+CREATE TEMPORARY TABLE `sensors$3` (
+  `id` BIGINT NOT NULL,
+  `machineid` BIGINT NOT NULL,
+  `placed` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`id`) NOT ENFORCED
+) WITH (
+  'password' = 'postgres',
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'table-name' = 'sensors$3',
+  'user' = 'postgres',
+  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+);
+
+CREATE TEMPORARY TABLE `hightemp$1$1` (
+  `machineid` BIGINT NOT NULL,
+  `sensorid` BIGINT NOT NULL,
+  `temp` DOUBLE NOT NULL,
+  `timeSec` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+) WITH (
+  'connector' = 'print',
+  'print-identifier' = 'tempWarning'
+);
+
+CREATE VIEW `table$1`
+AS
+SELECT *
+FROM (SELECT `id`, `machineid`, `placed`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `placed` DESC NULLS LAST)) AS `_rownum`
+FROM `sensors$1`) AS `t`
+WHERE (`_rownum` = 1);
+
+CREATE VIEW `table$2`
+AS
+SELECT `sensorid`, ENDOFSECOND(`time`) AS `timeSec`, `temperature`, `time`
+FROM `sensorreading$1`;
+
+CREATE VIEW `table$3`
+AS
+SELECT *
+FROM (SELECT `id`, `machineid`, `placed`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `placed` DESC NULLS LAST)) AS `_rownum`
+FROM `sensors$1`) AS `t`
+WHERE (`_rownum` = 1);
+
+CREATE VIEW `table$4`
+AS
+SELECT `sensorid`, ENDOFSECOND(`time`) AS `timeSec`, `temperature`, `time`
+FROM `sensorreading$1`;
+
+CREATE VIEW `table$5`
+AS
+SELECT *
+FROM (SELECT `sensorid`, `window_time` AS `timeSec`, AVG(`temperature`) AS `temp`, `sensorid` AS `sensorid3`
+FROM TABLE(TUMBLE((TABLE `table$4`), (DESCRIPTOR(`time`)), INTERVAL '1' SECOND(4), INTERVAL '0' SECOND(1))) AS `t2`
+GROUP BY `sensorid`, `window_start`, `window_end`, `window_time`) AS `$cor4`
+INNER JOIN `table$3` FOR SYSTEM_TIME AS OF `$cor4`.`timeSec` AS `t0` ON (`t0`.`id` = `$cor4`.`sensorid3`);
+
+CREATE VIEW `table$6`
+AS
+SELECT *
+FROM (SELECT `id`, `machineid`, `placed`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `placed` DESC NULLS LAST)) AS `_rownum`
+FROM `sensors$1`) AS `t`
+WHERE (`_rownum` = 1);
+
+CREATE VIEW `table$7`
+AS
+SELECT `sensorid`, ENDOFSECOND(`time`) AS `timeSec`, `temperature`, `time`
+FROM `sensorreading$1`;
+
+CREATE VIEW `table$8`
+AS
+SELECT *
+FROM (SELECT `sensorid`, `window_time` AS `timeSec`, AVG(`temperature`) AS `temp`, `sensorid` AS `sensorid3`
+FROM TABLE(TUMBLE((TABLE `table$7`), (DESCRIPTOR(`time`)), INTERVAL '1' SECOND(4), INTERVAL '0' SECOND(1))) AS `t2`
+GROUP BY `sensorid`, `window_start`, `window_end`, `window_time`) AS `$cor5`
+INNER JOIN `table$6` FOR SYSTEM_TIME AS OF `$cor5`.`timeSec` AS `t0` ON (`t0`.`id` = `$cor5`.`sensorid3`);
+
+CREATE VIEW `table$9`
+AS
+SELECT `sensorid`, ENDOFSECOND(`time`) AS `timeSec`, `temperature`, `time`
+FROM `sensorreading$1`;
+
+CREATE VIEW `table$10`
+AS
+SELECT *
+FROM (SELECT `id`, `machineid`, `placed`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `placed` DESC NULLS LAST)) AS `_rownum`
+FROM `sensors$1`) AS `t`
+WHERE (`_rownum` = 1);
+
+CREATE VIEW `table$11`
+AS
+SELECT `sensorid`, ENDOFSECOND(`time`) AS `timeSec`, `temperature`, `time`
+FROM `sensorreading$1`;
+
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `hightemp$1`
+(SELECT `t0`.`machineid`, `$cor3`.`sensorid`, `$cor3`.`temp`, `$cor3`.`timeSec`
+FROM (SELECT `sensorid`, `timeSec`, `temp`, `sensorid` AS `sensorid3`
+FROM (SELECT `sensorid`, `window_time` AS `timeSec`, AVG(`temperature`) AS `temp`
+FROM TABLE(TUMBLE((TABLE `table$2`), (DESCRIPTOR(`time`)), INTERVAL '1' SECOND(4), INTERVAL '0' SECOND(1))) AS `t2`
+GROUP BY `sensorid`, `window_start`, `window_end`, `window_time`) AS `t4`
+WHERE (`temp` > 100)) AS `$cor3`
+INNER JOIN `table$1` FOR SYSTEM_TIME AS OF `$cor3`.`timeSec` AS `t0` ON (`t0`.`id` = `$cor3`.`sensorid3`))
+;
+INSERT INTO `lasthour$1`
+(SELECT `id` AS `__pk1$id`, MAX(`temp`) AS `maxTemp`, AVG(`temp`) AS `avgTemp`, `window_time` AS `_timeSec`
+FROM TABLE(HOP((TABLE `table$5`), (DESCRIPTOR(`timeSec`)), INTERVAL '72' SECOND(5), INTERVAL '3600' SECOND(7))) AS `t6`
+GROUP BY `id`, `window_start`, `window_end`, `window_time`)
+;
+INSERT INTO `machine$1`
+(SELECT `machineid`, MAX(`temp`) AS `maxTemp`, AVG(`temp`) AS `avgTemp`, `window_time` AS `_timeSec`
+FROM TABLE(HOP((TABLE `table$8`), (DESCRIPTOR(`timeSec`)), INTERVAL '72' SECOND(5), INTERVAL '3600' SECOND(7))) AS `t6`
+GROUP BY `machineid`, `window_start`, `window_end`, `window_time`)
+;
+INSERT INTO `secreading$1`
+(SELECT `sensorid`, `window_time` AS `timeSec`, AVG(`temperature`) AS `temp`
+FROM TABLE(TUMBLE((TABLE `table$9`), (DESCRIPTOR(`time`)), INTERVAL '1' SECOND(4), INTERVAL '0' SECOND(1))) AS `t0`
+GROUP BY `sensorid`, `window_start`, `window_end`, `window_time`)
+;
+INSERT INTO `sensorreading$2`
+(SELECT *
+FROM `sensorreading$1`)
+;
+INSERT INTO `sensors$3`
+(SELECT *
+FROM `sensors$1`)
+;
+INSERT INTO `hightemp$1$1`
+(SELECT `t0`.`machineid`, `$cor6`.`sensorid`, `$cor6`.`temp`, `$cor6`.`timeSec`
+FROM (SELECT `sensorid`, `timeSec`, `temp`, `sensorid` AS `sensorid3`
+FROM (SELECT `sensorid`, `window_time` AS `timeSec`, AVG(`temperature`) AS `temp`
+FROM TABLE(TUMBLE((TABLE `table$11`), (DESCRIPTOR(`time`)), INTERVAL '1' SECOND(4), INTERVAL '0' SECOND(1))) AS `t2`
+GROUP BY `sensorid`, `window_start`, `window_end`, `window_time`) AS `t4`
+WHERE (`temp` > 100)) AS `$cor6`
+INNER JOIN `table$10` FOR SYSTEM_TIME AS OF `$cor6`.`timeSec` AS `t0` ON (`t0`.`id` = `$cor6`.`sensorid3`))
+;
+END;

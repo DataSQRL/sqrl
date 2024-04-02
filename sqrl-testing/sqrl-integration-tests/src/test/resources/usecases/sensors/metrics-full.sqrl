@@ -1,0 +1,28 @@
+IMPORT sensor-local.SensorReading; -- Import sensor data
+IMPORT sensor-local.Sensors;
+IMPORT time.endOfSecond;           -- Import time function
+
+/* Aggregate sensor readings to second */
+SecReading := SELECT sensorid, endOfSecond(time) as timeSec,
+        avg(temperature) as temp FROM SensorReading
+    GROUP BY sensorid, timeSec;
+/* Create table of sensors and relate to readings */
+Sensors := DISTINCT Sensors ON id  ORDER BY placed DESC;
+Sensors.readings := JOIN SecReading r ON r.sensorid = @.id;
+Sensors.lastHour := SELECT max(temp) as maxTemp, avg(temp) as avgTemp
+                       FROM @.readings
+                       WHERE timeSec >= now() - INTERVAL 1 HOUR;
+/* Create table of machines with recent temperature */
+Machine := SELECT machineid, max(temp) as maxTemp,
+    avg(temp) as avgTemp
+    FROM Sensors s JOIN s.readings
+    WHERE timeSec >= now() - INTERVAL 1 HOUR
+    GROUP BY machineid;
+
+Machine.sensors := JOIN Sensors s ON s.machineid = @.machineid;
+
+HighTemp := SELECT machineid, sensorid, temp, timeSec
+            FROM Sensors s JOIN s.readings
+            WHERE temp > 100;
+
+EXPORT HighTemp TO print.tempWarning;
