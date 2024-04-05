@@ -46,12 +46,19 @@ public class PackageBootstrapTest {
   @Test
   public void testRetailPackaging() {
     TestScript script = Retail.INSTANCE.getScript(Retail.RetailScriptNames.FULL);
-    Path graphQLSchema = script.getRootPackageDirectory().resolve("c360-full-graphqlv1")
-        .resolve(GRAPHQL_NORMALIZED_FILE_NAME);
-    Path packageFileWithoutScript = script.getRootPackageDirectory()
-        .resolve("package-exampleWOscript.json");
-    Path packageFileWithScript = script.getRootPackageDirectory()
-        .resolve("package-exampleWscript.json");
+
+    Path graphQLSchema = script
+            .getRootPackageDirectory()
+            .resolve("c360-full-graphqlv1")
+            .resolve(GRAPHQL_NORMALIZED_FILE_NAME);
+
+    Path packageFileWithoutScript = script
+            .getRootPackageDirectory()
+            .resolve("package-exampleWOscript.json");
+
+    Path packageFileWithScript = script
+            .getRootPackageDirectory()
+            .resolve("package-exampleWscript.json");
 
     testCombination(script.getScriptPath(), null, packageFileWithoutScript);
     testCombination(script.getScriptPath(), null, packageFileWithScript);
@@ -65,19 +72,21 @@ public class PackageBootstrapTest {
 
   private static final Path baseDependencyPath = RESOURCE_DIR.resolve("dependency");
   private static final List<Path> depScripts = new ArrayList<>();
+
   static {
-    IntStream.rangeClosed(1,2)
+    IntStream.rangeClosed(1, 2)
         .forEach(i -> depScripts.add(baseDependencyPath.resolve("main" + i + ".sqrl")));
   }
+
   private static final Path pkgWDeps = baseDependencyPath.resolve("packageWDependencies.json");
   private static final Path pkgWODeps = baseDependencyPath.resolve("packageWODependencies.json");
 
   @Test
   public void dependencyResolution() {
-    testCombinationMockRepo(depScripts.get(0),pkgWDeps);
-    testCombinationMockRepo(depScripts.get(0),pkgWODeps);
-    testCombinationMockRepo(depScripts.get(1),pkgWDeps);
-    testCombinationMockRepo(depScripts.get(1),pkgWODeps);
+    testCombinationMockRepo(depScripts.get(0), pkgWDeps);
+    testCombinationMockRepo(depScripts.get(0), pkgWODeps);
+    testCombinationMockRepo(depScripts.get(1), pkgWDeps);
+    testCombinationMockRepo(depScripts.get(1), pkgWODeps);
     snapshot.createOrValidate();
   }
 
@@ -92,7 +101,7 @@ public class PackageBootstrapTest {
   @Disabled
   @Test
   public void testProfileResolutionPreference() {
-    String[] profiles = { "test-profile" };
+    String[] profiles = {"test-profile"};
 
     Repository mockRepo = mock(Repository.class);
     testCombination(depScripts.get(0), null, null, profiles, mockRepo);
@@ -101,11 +110,11 @@ public class PackageBootstrapTest {
   }
 
   private void testCombinationMockRepo(Path main, Path packageFile) {
-    testCombination(main,null,packageFile, null, new MockRepository());
+    testCombination(main, null, packageFile, null, new MockRepository());
   }
 
   private void testCombination(Path main, Path graphQl, Path packageFile) {
-    testCombination(main,graphQl,packageFile, null, new MockRepository());
+    testCombination(main, graphQl, packageFile, null, new MockRepository());
   }
 
   @SneakyThrows
@@ -121,11 +130,20 @@ public class PackageBootstrapTest {
     if (profiles == null) {
       profiles = new String[0];
     }
-    PackageBootstrap bootstrap = new PackageBootstrap(packageFile.getParent(),
-        List.of(packageFile.getFileName()), profiles, files.toArray(Path[]::new), true);
+
+    PackageBootstrap bootstrap = new PackageBootstrap(
+            packageFile.getParent(),
+            List.of(packageFile.getFileName()),
+            profiles,
+            files.toArray(Path[]::new),
+            true);
+
     SqrlConfig config = bootstrap.bootstrap(repository, errors, (e) -> null, (c) -> c, null);
+
     Packager pkg = new Packager(repository, packageFile.getParent(), config, errors);
+
     Path buildDir = packageFile.getParent().resolve(BUILD_DIR_NAME);
+
     pkg.cleanBuildDir(buildDir);
     populateBuildDirAndTakeSnapshot(pkg, main, graphQl, packageFile);
     pkg.cleanBuildDir(buildDir);
@@ -135,9 +153,11 @@ public class PackageBootstrapTest {
   private void populateBuildDirAndTakeSnapshot(Packager pkg, Path main, Path graphQl, Path packageFile) {
     Path buildDir = pkg.getRootDir().resolve(Packager.BUILD_DIR_NAME);
     pkg.preprocess();
-    String[] caseNames = Stream.of(main, graphQl, packageFile)
-        .filter(Predicate.not(Objects::isNull)).map(String::valueOf)
-        .toArray(size -> new String[size + 1]);
+    String[] caseNames =
+        Stream.of(main, graphQl, packageFile)
+            .filter(Predicate.not(Objects::isNull))
+            .map(String::valueOf)
+            .toArray(size -> new String[size + 1]);
     caseNames[caseNames.length - 1] = "dir";
     snapshot.addContent(FileTestUtil.getAllFilesAsString(buildDir), caseNames);
     caseNames[caseNames.length - 1] = "package";
@@ -150,7 +170,7 @@ public class PackageBootstrapTest {
     public boolean retrieveDependency(Path targetPath, Dependency dependency) throws IOException {
       assertEquals(NUTSHOP, dependency);
       Files.createDirectories(targetPath);
-      Files.writeString(targetPath.resolve("package.json"),"test");
+      Files.writeString(targetPath.resolve("package.json"), "test");
       return true;
     }
 
@@ -162,6 +182,6 @@ public class PackageBootstrapTest {
       return Optional.empty();
     }
 
-    private static final Dependency NUTSHOP = new Dependency("datasqrl.examples.Nutshop","0.1.0","dev");
+    private static final Dependency NUTSHOP = new Dependency("datasqrl.examples.Nutshop", "0.1.0", "dev");
   }
 }
