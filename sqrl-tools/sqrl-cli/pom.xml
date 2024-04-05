@@ -58,6 +58,18 @@
     </dependency>
     <!-- Test jars -->
     <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>${mockito.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-junit-jupiter</artifactId>
+      <version>${mockito.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <artifactId>sqrl-calcite</artifactId>
       <groupId>run.sqrl</groupId>
       <type>test-jar</type>

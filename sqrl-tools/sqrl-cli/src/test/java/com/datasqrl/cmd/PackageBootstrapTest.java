@@ -3,11 +3,12 @@
  */
 package com.datasqrl.cmd;
 
-import static com.datasqrl.packager.Packager.BUILD_DIR_NAME;
-import static com.datasqrl.packager.Packager.PACKAGE_JSON;
+import static com.datasqrl.packager.Packager.*;
 import static com.datasqrl.packager.config.ScriptConfiguration.GRAPHQL_NORMALIZED_FILE_NAME;
 import static com.datasqrl.util.TestResources.RESOURCE_DIR;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.error.ErrorCollector;
@@ -21,10 +22,7 @@ import com.datasqrl.util.data.Retail;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -34,7 +32,6 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
-@Disabled
 public class PackageBootstrapTest {
 
   SnapshotTest.Snapshot snapshot;
@@ -44,6 +41,8 @@ public class PackageBootstrapTest {
     this.snapshot = SnapshotTest.Snapshot.of(getClass(), testInfo);
   }
 
+  // this test is supposed to test package json merging scenarios
+  @Disabled
   @Test
   public void testRetailPackaging() {
     TestScript script = Retail.INSTANCE.getScript(Retail.RetailScriptNames.FULL);
@@ -89,16 +88,28 @@ public class PackageBootstrapTest {
     snapshot.createOrValidate();
   }
 
+  // finish this once the immutable config list problem is solved
+  @Disabled
+  @Test
+  public void testProfileResolutionPreference() {
+    String[] profiles = { "test-profile" };
+
+    Repository mockRepo = mock(Repository.class);
+    testCombination(depScripts.get(0), null, null, profiles, mockRepo);
+
+    verify(mockRepo, never()).resolveDependency(any());
+  }
+
   private void testCombinationMockRepo(Path main, Path packageFile) {
-    testCombination(main,null,packageFile,new MockRepository());
+    testCombination(main,null,packageFile, null, new MockRepository());
   }
 
   private void testCombination(Path main, Path graphQl, Path packageFile) {
-    testCombination(main,graphQl,packageFile,new MockRepository());
+    testCombination(main,graphQl,packageFile, null, new MockRepository());
   }
 
   @SneakyThrows
-  private void testCombination(Path main, Path graphQl, Path packageFile, Repository repository) {
+  private void testCombination(Path main, Path graphQl, Path packageFile, String[] profiles, Repository repository) {
     ErrorCollector errors = ErrorCollector.root();
     List<Path> files = new ArrayList<>();
     if (main != null) {
@@ -107,8 +118,11 @@ public class PackageBootstrapTest {
     if (graphQl != null) {
       files.add(packageFile.getParent().relativize(graphQl));
     }
+    if (profiles == null) {
+      profiles = new String[0];
+    }
     PackageBootstrap bootstrap = new PackageBootstrap(packageFile.getParent(),
-        List.of(packageFile), new String[0], files.toArray(Path[]::new), true);
+        List.of(packageFile.getFileName()), profiles, files.toArray(Path[]::new), true);
     SqrlConfig config = bootstrap.bootstrap(repository, errors, (e) -> null, (c) -> c, null);
     Packager pkg = new Packager(repository, packageFile.getParent(), config, errors);
     Path buildDir = packageFile.getParent().resolve(BUILD_DIR_NAME);
