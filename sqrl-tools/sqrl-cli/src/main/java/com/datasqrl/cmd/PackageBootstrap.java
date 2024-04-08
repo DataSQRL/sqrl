@@ -1,7 +1,6 @@
 package com.datasqrl.cmd;
 
-import static com.datasqrl.packager.Packager.PACKAGE_JSON;
-import static com.datasqrl.packager.Packager.PROFILES_KEY;
+import static com.datasqrl.packager.Packager.*;
 import static com.datasqrl.packager.config.DependencyConfig.PKG_NAME_KEY;
 import static com.datasqrl.packager.config.DependencyConfig.VARIANT_KEY;
 import static com.datasqrl.packager.config.DependencyConfig.VERSION_KEY;
@@ -24,10 +23,8 @@ import com.datasqrl.packager.config.PackageConfiguration;
 import com.datasqrl.packager.config.ScriptConfiguration;
 import com.datasqrl.packager.repository.Repository;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,10 +38,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
-import java.util.stream.Stream;
+
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
-import org.apache.commons.io.FileUtils;
 
 @AllArgsConstructor
 public class PackageBootstrap {
@@ -88,9 +84,16 @@ public class PackageBootstrap {
       profiles = this.profiles;
     }
 
+    //Create package.json from project root if exists
+    List<Path> configFiles = existingPackage.orElseGet(ArrayList::new);
+
     //Download any profiles
     for (String profile : profiles) {
-      if (profile.contains(".")) { //possible repo profile
+      Path localProfile = rootDir.resolve(profile).resolve(PACKAGE_JSON);
+
+      if (Files.isRegularFile(localProfile)) {
+        configFiles.add(localProfile);
+      } else { // repo profile
         //check to see if it's already in the package json, download the correct dep
         Optional<Dependency> dependency;
         if (hasVersionedProfileDependency(existingConfig, profile)) {
@@ -98,10 +101,10 @@ public class PackageBootstrap {
               .getSubConfig(DependencyConfig.DEPENDENCIES_KEY)
               .getSubConfig(profile);
           dependency = Optional.of(new Dependency(depConfig.asString(PKG_NAME_KEY).getOptional()
-                .orElse(null),
-              depConfig.asString(VERSION_KEY).get(),
-              depConfig.asString(VARIANT_KEY).getOptional()
-                  .orElse(PackageConfiguration.DEFAULT_VARIANT)));
+                  .orElse(null),
+                  depConfig.asString(VERSION_KEY).get(),
+                  depConfig.asString(VARIANT_KEY).getOptional()
+                      .orElse(PackageConfiguration.DEFAULT_VARIANT)));
         } else {
           dependency = repository.resolveDependency(profile);
         }
@@ -115,23 +118,11 @@ public class PackageBootstrap {
             throw new RuntimeException("Could not retrieve profile dependency: " + profile);
           }
         }
-      }
-    }
 
-    //Create package.json
-    List<Path> configFiles = existingPackage.orElseGet(ArrayList::new);
-
-    // Add profile config files
-    for (String profile : profiles) {
-      Path localProfile = rootDir.resolve(profile).resolve(PACKAGE_JSON);
-      Path remoteProfile = rootDir.resolve(Packager.BUILD_DIR_NAME).resolve(profile).resolve(PACKAGE_JSON);
-
-      if (Files.isRegularFile(localProfile)) {//Look for local
-        configFiles.add(localProfile);
-      } else if (Files.isRegularFile(remoteProfile)) { //look for remote
-        configFiles.add(remoteProfile);
-      } else {
-//        throw new RuntimeException("Could not find profile: " + profile);
+        Path remoteProfile = rootDir.resolve(Packager.BUILD_DIR_NAME).resolve(profile).resolve(PACKAGE_JSON);
+        if (Files.isRegularFile(remoteProfile)) {
+          configFiles.add(remoteProfile);
+        }
       }
     }
 
