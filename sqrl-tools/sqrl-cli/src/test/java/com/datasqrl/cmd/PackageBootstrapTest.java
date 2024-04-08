@@ -41,8 +41,6 @@ public class PackageBootstrapTest {
     this.snapshot = SnapshotTest.Snapshot.of(getClass(), testInfo);
   }
 
-  // this test is supposed to test package json merging scenarios
-  @Disabled
   @Test
   public void testRetailPackaging() {
     TestScript script = Retail.INSTANCE.getScript(Retail.RetailScriptNames.FULL);
