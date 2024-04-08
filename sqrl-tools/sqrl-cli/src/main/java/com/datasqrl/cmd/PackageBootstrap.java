@@ -92,7 +92,6 @@ public class PackageBootstrap {
       Path localProfile = rootDir.resolve(profile).resolve(PACKAGE_JSON);
 
       if (Files.isRegularFile(localProfile)) {
-        detectDuplicateConfigs(errors, configFiles);
         configFiles.add(localProfile);
       } else { // repo profile
         //check to see if it's already in the package json, download the correct dep
@@ -122,7 +121,6 @@ public class PackageBootstrap {
 
         Path remoteProfile = rootDir.resolve(Packager.BUILD_DIR_NAME).resolve(profile).resolve(PACKAGE_JSON);
         if (Files.isRegularFile(remoteProfile)) {
-          detectDuplicateConfigs(errors, configFiles);
           configFiles.add(remoteProfile);
         }
       }
@@ -183,15 +181,6 @@ public class PackageBootstrap {
     }
 
     return postProcess.apply(sqrlConfig);
-  }
-
-  // Currently the compilation fails with a nice stack trace when there are multiple package.jsons
-  // Normally we want to merge these jsons.
-  // This method is a temporary solution to give a meaningful error message to the user until we fix this behavior.
-  private void detectDuplicateConfigs(ErrorCollector errors, List<Path> configFiles) {
-    if (configFiles.stream().anyMatch(path -> path.equals(rootDir.resolve(DEFAULT_PACKAGE)))) {
-      errors.fatal("Both the project and the profile have a package.json defined.");
-    }
   }
 
   private Path relativize(Optional<Path> path) {
