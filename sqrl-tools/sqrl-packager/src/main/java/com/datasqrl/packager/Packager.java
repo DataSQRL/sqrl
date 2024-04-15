@@ -16,12 +16,12 @@ import com.datasqrl.packager.repository.Repository;
 import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateExceptionHandler;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.nio.file.Paths;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -31,7 +31,6 @@ import org.apache.commons.lang3.StringUtils;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -294,7 +293,7 @@ public class Packager {
     if (packageFiles.isEmpty()) {
       Path defaultPkg = rootDir.resolve(DEFAULT_PACKAGE);
       if (Files.isRegularFile(defaultPkg)) {
-        return Optional.of(List.of(defaultPkg));
+        return Optional.of(Lists.newArrayList(defaultPkg));
       } else {
         return Optional.empty();
       }
