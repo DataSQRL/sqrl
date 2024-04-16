@@ -97,7 +97,6 @@ public class FlexibleJsonFormat implements DeserializationFormatFactory,
   }
 
   private RelationType createFlexibleTableSchema(RowType rowType) {
-
     List<SchemaField> types = new ArrayList<>();
     Builder builder = new Builder();
     for (RowField field : rowType.getFields()) {

@@ -22,6 +22,7 @@ import com.datasqrl.calcite.visitor.SqlTopLevelRelationVisitor;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
+import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
@@ -117,6 +118,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
   private final SqrlTableFactory tableFactory;
 
   private final SqlNameUtil nameUtil;
+  private final ConnectorFactoryFactory connectorFactoryFactory;
 
   private final Map<SqlNode, Object> schemaTable = new HashMap<>();
   private final AtomicInteger uniqueId = new AtomicInteger(0);
@@ -164,7 +166,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
   public Void visit(SqrlExportDefinition node, Void context) {
     Optional<TableSink> sink = LoaderUtil.loadSinkOpt(
         nameUtil.toNamePath(node.getSinkPath().names),
-        errorCollector, moduleLoader);
+        errorCollector, moduleLoader, connectorFactoryFactory);
 
     if (sink.isEmpty()) {
       addError(ErrorCode.CANNOT_RESOLVE_TABLESINK, node, "Cannot resolve table sink: %s",

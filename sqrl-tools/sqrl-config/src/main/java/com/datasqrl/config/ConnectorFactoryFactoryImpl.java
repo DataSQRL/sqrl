@@ -3,6 +3,8 @@ package com.datasqrl.config;
 import static com.datasqrl.config.ConnectorConfigImpl.FORMAT_KEY;
 import static com.datasqrl.config.ConnectorConfigImpl.VALUE_FORMAT_KEY;
 
+import com.datasqrl.config.TableConfig.Format;
+import com.datasqrl.config.TableConfig.TableConfigBuilder;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import java.util.List;
 import java.util.Map;
@@ -110,7 +112,22 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
 //  public String getType() {
 //    return CONNECTOR_TYPE;
 //  }
-    return null;
+    return new ConnectorFactory() {
+      @Override
+      public TableConfig createSourceAndSink(IConnectorFactoryContext context) {
+        TableConfigBuilderImpl builder = TableConfigImpl.builder(
+            (String) context.getMap().get("name"));
+        builder.setType(ExternalDataType.sink);
+        builder.getConnectorConfig().setProperty("connector", "print");
+        builder.getConnectorConfig().setProperty("print-identifier", (String) context.getMap().get("name"));
+        return builder.build();
+      }
+
+      @Override
+      public Optional<Format> getFormat() {
+        return Optional.empty();
+      }
+    };
   }
 
   @Override
