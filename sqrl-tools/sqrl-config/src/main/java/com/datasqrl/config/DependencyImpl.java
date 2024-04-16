@@ -14,64 +14,42 @@ import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@AllArgsConstructor
 @Getter
 @EqualsAndHashCode
-@NoArgsConstructor
+@Setter
+@AllArgsConstructor
 public class DependencyImpl implements Dependency {
 //
-//  @Constraints.Default
-//  String name = null;
-//  String version;
-//  @Constraints.Default
-//  String variant = PackageConfiguration.DEFAULT_VARIANT;
+  @Constraints.Default
+  String name = null;
+  String version;
+  @Constraints.Default
+  String variant = "default";
 
-  SqrlConfig sqrlConfig;
-
-  public DependencyImpl(String name, String version, String variant) {
-    sqrlConfig = SqrlConfig.createCurrentVersion();
-    setName(name);
-    setVersion(name);
-    setVariant(name);
+  public DependencyImpl() {
+  }
+  public DependencyImpl(SqrlConfig sqrlConfig) {
+    name = sqrlConfig.asString(PKG_NAME_KEY).getOptional()
+        .orElse(null);
+    variant = sqrlConfig.asString(VARIANT_KEY).getOptional()
+        .orElse(PackageConfigurationImpl.DEFAULT_VARIANT);
+    version = sqrlConfig.asString(VERSION_KEY).getOptional().orElse(null);
   }
 
   @Override
   public String toString() {
-    return getName() + "@" + getVersion().orElse("1") + "/" + getVariant();
+    return getName() + "@" + getVersion().orElse(null) + "/" + getVariant();
   }
 
-  @Override
-  public String getName() {
-    return sqrlConfig.asString(PKG_NAME_KEY).getOptional()
-        .orElse(null);
-  }
-
-  @Override
-  public void setName(String name) {
-    sqrlConfig.setProperty(PKG_NAME_KEY, name);
-  }
 
   @Override
   public Optional<String> getVersion() {
-    return sqrlConfig.asString(VERSION_KEY).getOptional();
+    return Optional.ofNullable(version);
 
   }
-  @Override
-  public void setVersion(String version) {
-    sqrlConfig.setProperty(VERSION_KEY, version);
-  }
-
-  @Override
-  public String getVariant() {
-    return sqrlConfig.asString(VARIANT_KEY).getOptional()
-        .orElse(PackageConfigurationImpl.DEFAULT_VARIANT);
-  }
-
-  @Override
-  public void setVariant(String variant) {
-    sqrlConfig.setProperty(VARIANT_KEY, variant);
-  }
+ 
   /**
    * Normalizes a dependency and uses the dependency package name as the name unless it is explicitly specified.
    * @param defaultName
