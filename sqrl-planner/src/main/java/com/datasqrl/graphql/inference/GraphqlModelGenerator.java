@@ -97,7 +97,7 @@ public class GraphqlModelGenerator extends SchemaWalker {
       filters.put(input.getName(), field.getName());
     }
 
-    Map<String, String> vertxConfig = mapToVertxKafkaConfig(log.getSink().getConfiguration().getConnectorConfig().getConfig().toMap());
+    Map<String, String> vertxConfig = mapToVertxKafkaConfig(log.getSink().getConfiguration().getConnectorConfig().toMap());
 
     subscriptions.add(new SubscriptionCoords(fieldDefinition.getName(),
         log.getSink().getName().getDisplay(), vertxConfig,
@@ -121,7 +121,7 @@ public class GraphqlModelGenerator extends SchemaWalker {
     TableSource tableSink = apiManager.getMutationSource(source,
         Name.system(fieldDefinition.getName()));
 
-    Map<String, Object> map = tableSink.getConfiguration().getConnectorConfig().getConfig().toMap();
+    Map<String, Object> map = tableSink.getConfiguration().getConnectorConfig().toMap();
     Map<String, String> vertxConfig = new HashMap<>();
     vertxConfig.put(BOOTSTRAP_SERVERS_CONFIG, (String)map.get("properties.bootstrap.servers"));
     vertxConfig.put(GROUP_ID_CONFIG, (String)map.get("properties.group.id"));

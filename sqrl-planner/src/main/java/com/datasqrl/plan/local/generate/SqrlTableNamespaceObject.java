@@ -26,12 +26,13 @@ public class SqrlTableNamespaceObject extends AbstractTableNamespaceObject<Physi
   private final boolean materializeSelf;
   private final List<FunctionParameter> functionParameters;
   private final Optional<Supplier<RelNode>> relNodeSupplier;
+  private final boolean isTest;
 
   public SqrlTableNamespaceObject(Name name, PhysicalRelationalTable table, CalciteTableFactory tableFactory,
       SqrlTableFunctionDef args,
       List<FunctionParameter> parameters, List<Function> isA, boolean materializeSelf,
       List<FunctionParameter> functionParameters, Optional<Supplier<RelNode>> relNodeSupplier,
-      ModuleLoader moduleLoader) {
+      ModuleLoader moduleLoader, boolean isTest) {
     super(tableFactory, NameCanonicalizer.SYSTEM, moduleLoader);
     this.name = name;
     this.table = table;
@@ -41,12 +42,13 @@ public class SqrlTableNamespaceObject extends AbstractTableNamespaceObject<Physi
     this.materializeSelf = materializeSelf;
     this.functionParameters = functionParameters;
     this.relNodeSupplier = relNodeSupplier;
+    this.isTest = isTest;
   }
 
   @Override
   public boolean apply(Optional<String> objectName, SqrlFramework framework, ErrorCollector errors) {
     registerScriptTable(table, framework, Optional.of(functionParameters),
-        relNodeSupplier);
+        relNodeSupplier, isTest);
 
     return true;
   }

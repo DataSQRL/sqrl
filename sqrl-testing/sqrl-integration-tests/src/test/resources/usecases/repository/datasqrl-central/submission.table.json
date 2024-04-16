@@ -1,21 +1,15 @@
 {
   "version": 1,
   "flink" : {
-    "format" : "json",
-    "path" : "/mnt/build/data",
-    "source.monitor-interval" : 0,
-    "connector" : "filesystem",
-    "source.path.regex-pattern" : "to be determined"
+    "format" : "flexible-json",
+    "path" : "/data/repodata.jsonl",
+    "source.monitor-interval" : 1,
+    "connector" : "filesystem"
   },
   "table" : {
     "type" : "source",
-    "primary-key" : ["_uuid", "submissionTime"],
+    "primary-key" : ["name", "submissionTime"],
     "timestamp" : "submissionTime",
     "watermark-millis" : "1"
-  },
-  "metadata" : {
-    "_uuid" : {
-      "attribute" : "secure.Uuid()"
-    }
   }
 }

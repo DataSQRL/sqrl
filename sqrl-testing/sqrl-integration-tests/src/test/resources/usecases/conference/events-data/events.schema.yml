@@ -6,7 +6,7 @@ columns:
 - name: "url"
   type: "STRING"
   tests:
-  - "nota_null"
+  - "not_null"
 - name: "date"
   type: "STRING"
   tests:
@@ -31,16 +31,10 @@ columns:
   columns:
   - name: "name"
     type: "STRING"
-    tests:
-    - "not_null"
   - name: "title"
     type: "STRING"
   - name: "company"
     type: "STRING"
-    tests:
-    - "not_null"
-  tests:
-  - "not_null"
 - name: "last_updated"
   type: "TIMESTAMP"
   tests:

@@ -14,6 +14,7 @@ LogicalTableScan(table=[[source_table]], hints=[[[WatermarkHint inheritPath:[] o
 
 >>>database-schema.sql
 CREATE TABLE IF NOT EXISTS source_table$1 ("id" INTEGER NOT NULL,"data" TEXT ,"event_time" TIMESTAMP WITHOUT TIME ZONE  , PRIMARY KEY ("id"));
+
 >>>flink-plan.sql
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofmonth` AS 'com.datasqrl.time.EndOfMonth' LANGUAGE JAVA;
 
@@ -40,8 +41,8 @@ CREATE TEMPORARY TABLE `source_table$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'source_table$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 EXECUTE STATEMENT SET BEGIN
@@ -50,3 +51,5 @@ INSERT INTO `source_table$1`
 FROM `source_table`)
 ;
 END;
+
+

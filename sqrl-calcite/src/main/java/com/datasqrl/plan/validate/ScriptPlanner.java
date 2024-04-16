@@ -59,7 +59,6 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.Value;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataTypeField;
@@ -74,6 +73,7 @@ import org.apache.calcite.sql.ScriptNode;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.SqlDynamicParam;
+import org.apache.calcite.sql.SqlHint;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlIntervalQualifier;
 import org.apache.calcite.sql.SqlJoin;
@@ -113,6 +113,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
   private final SqrlFramework framework;
   private ModuleLoader moduleLoader;
   private ErrorCollector errorCollector;
+  private final ExecutionGoal executionGoal;
   private final SqrlTableFactory tableFactory;
 
   private final SqlNameUtil nameUtil;
@@ -147,8 +148,8 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
 
       module.getNamespaceObjects().forEach(obj -> obj.apply(Optional.empty(), framework, errorCollector));
     } else {
-      module.getNamespaceObject(path.getLast())
-          .map(object -> object.apply(Optional.of(node.getAlias().map(a -> a.names.get(0))
+      Optional<NamespaceObject> namespaceObject = module.getNamespaceObject(path.getLast());
+      namespaceObject.map(object -> object.apply(Optional.of(node.getAlias().map(a -> a.names.get(0))
               .orElse(/*retain alias*/path.getLast().getDisplay())), framework, errorCollector))
           .orElseThrow(() -> addError(ErrorCode.GENERIC, node, "Object [%s] not found in module: %s", path.getLast(), path));
     }
@@ -161,7 +162,8 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
    */
   @Override
   public Void visit(SqrlExportDefinition node, Void context) {
-    Optional<TableSink> sink = LoaderUtil.loadSinkOpt(nameUtil.toNamePath(node.getSinkPath().names),
+    Optional<TableSink> sink = LoaderUtil.loadSinkOpt(
+        nameUtil.toNamePath(node.getSinkPath().names),
         errorCollector, moduleLoader);
 
     if (sink.isEmpty()) {
@@ -345,7 +347,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
 
       Relationship rel = new Relationship(path.getLast(),
           path, toTable, Relationship.JoinType.JOIN, Multiplicity.MANY,
-          result.getParams(), nodeSupplier);
+          result.getParams(), nodeSupplier, hasTestHint(assignment.getHints()));
       planner.getSchema().addRelationship(rel);
     } else {
       List<String> path = assignment.getIdentifier().names;
@@ -359,7 +361,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
 
       tableFactory.createTable(moduleLoader, path, rel, null,
           assignment.getHints(), result.getParams(), isA,
-          materializeSelf, nodeSupplier, errorCollector);
+          materializeSelf, nodeSupplier, errorCollector, hasTestHint(assignment.getHints()));
     }
 
     return null;
@@ -966,17 +968,21 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
       throw errors.handle(e);
     }
 
-    //wtf is this, fix it
     ErrorCollector scriptErrors = errorCollector.withScript("<script>", mainScript.getContent());
 
-//    framework.resetPlanner();
     for (SqlNode statement : scriptNode.getStatements()) {
       try {
         ErrorCollector lineErrors = scriptErrors
             .atFile(SqrlAstException.toLocation(statement.getParserPosition()));
         errorCollector = lineErrors;
         moduleLoader = composite;
-        validateStatement((SqrlStatement) statement);
+        SqrlStatement stmt = (SqrlStatement) statement;
+        if (hasTestHint(stmt.getHints()) && executionGoal != ExecutionGoal.TEST) {
+          //Skip test annotations
+          continue;
+        }
+
+        validateStatement(stmt);
         if (lineErrors.hasErrors()) {
           throw new CollectedException(new RuntimeException("Script cannot validate"));
         }
@@ -995,5 +1001,10 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         throw statementErrors.handle(e);
       }
     }
+  }
+
+  private boolean hasTestHint(Optional<SqlNodeList> optionalStmt) {
+    return optionalStmt.isPresent() && optionalStmt.get().getList().stream()
+        .anyMatch(node -> node instanceof SqlHint && "test".equalsIgnoreCase(((SqlHint) node).getName()));
   }
 }

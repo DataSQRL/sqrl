@@ -29,6 +29,7 @@ import com.datasqrl.plan.rules.IdealExecutionStage;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.rules.SqrlConverterConfig;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
+import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.util.ScriptBuilder;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.SqlNameUtil;
@@ -101,7 +102,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
         });
 
     GraphqlSchemaFactory graphqlSchemaFactory = injector.getInstance(GraphqlSchemaFactory.class);
-    GraphQLSchema generate = graphqlSchemaFactory.generate();
+    GraphQLSchema generate = graphqlSchemaFactory.generate(ExecutionGoal.COMPILE);
 
     SchemaPrinter.Options opts = SchemaPrinter.Options.defaultOptions()
         .setComparators(GraphqlTypeComparatorRegistry.AS_IS_REGISTRY)

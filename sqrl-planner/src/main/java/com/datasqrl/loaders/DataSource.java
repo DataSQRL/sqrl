@@ -3,6 +3,8 @@
  */
 package com.datasqrl.loaders;
 
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.config.TableConfig;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.*;
 import com.datasqrl.canonicalizer.NamePath;
@@ -27,7 +29,19 @@ public class DataSource {
           tableConfig.getName());
       return Optional.empty();
     }
-    return Optional.of(tableConfig.initializeSource(basePath, tableSchema));
+    return Optional.of(initializeSource(tableConfig, basePath, tableSchema));
+  }
+
+  public TableSource initializeSource(TableConfig tableConfig, NamePath basePath, TableSchema schema) {
+//    getErrors().checkFatal(getBase().getType().isSource(), "Table is not a source: %s", name);
+    Name tableName = tableConfig.getName();
+    return new TableSource(tableConfig, basePath.concat(tableName), tableName, schema);
+  }
+
+  public TableSink initializeSink(TableConfig tableConfig, NamePath basePath, Optional<TableSchema> schema) {
+//    getErrors().checkFatal(getBase().getType().isSink(), "Table is not a sink: %s", name);
+    Name tableName = tableConfig.getName();
+    return new TableSinkImpl(tableConfig, basePath.concat(tableName), tableName, schema);
   }
 
   public Optional<TableSink> readTableSink(Optional<TableSchema> schema, TableConfig tableConfig, NamePath basePath) {
@@ -35,6 +49,6 @@ public class DataSource {
       return Optional.empty();
     }
 
-    return Optional.of(tableConfig.initializeSink(basePath, schema));
+    return Optional.of(initializeSink(tableConfig, basePath, schema));
   }
 }

@@ -1,9 +1,5 @@
 package com.datasqrl.config;
 
-import static com.datasqrl.config.PipelineFactory.ENGINES_PROPERTY;
-
-import com.datasqrl.config.PipelineFactory;
-import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -16,8 +12,8 @@ public class SqrlConfigPipeline implements ExecutionPipeline {
   ExecutionPipeline pipeline;
 
   @Inject
-  public SqrlConfigPipeline(SqrlConfig config) {
-    this.pipeline = new PipelineFactory(config.getSubConfig(ENGINES_PROPERTY))
+  public SqrlConfigPipeline(PackageJson config, ConnectorFactoryFactory connectorFactory) {
+    this.pipeline = new PipelineFactory(config.getPipeline(), config.getEngines(), connectorFactory)
         .createPipeline();
   }
 }

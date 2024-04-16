@@ -4,7 +4,7 @@ import static com.datasqrl.packager.Packager.canonicalizePath;
 import static com.datasqrl.util.NameUtil.namepath2Path;
 
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.config.SqrlConfig;
+import com.datasqrl.config.PackageJson;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.preprocess.Preprocessor;
 import com.datasqrl.packager.preprocess.Preprocessor.ProcessorContext;
@@ -118,7 +118,7 @@ public class Preprocessors {
     Path rootDir;
     Path buildDir;
     // The user specified config
-    SqrlConfig config;
+    PackageJson config;
     String[] profiles;
   }
 }

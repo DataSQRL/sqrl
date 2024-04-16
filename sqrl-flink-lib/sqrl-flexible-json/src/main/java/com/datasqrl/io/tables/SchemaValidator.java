@@ -3,7 +3,6 @@
  */
 package com.datasqrl.io.tables;
 
-//import com.datasqrl.engine.stream.FunctionWithError;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.SourceRecord;
 

@@ -1,8 +1,8 @@
 package com.datasqrl.io.schema.avro;
 
+import com.datasqrl.config.TableConfig;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableSchemaFactory;
 import com.google.auto.service.AutoService;
 import java.net.URI;

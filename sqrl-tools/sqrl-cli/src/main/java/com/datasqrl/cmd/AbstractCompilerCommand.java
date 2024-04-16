@@ -3,14 +3,15 @@
  */
 package com.datasqrl.cmd;
 
-import static com.datasqrl.packager.Packager.PACKAGE_JSON;
-import static com.datasqrl.packager.config.ScriptConfiguration.GRAPHQL_NORMALIZED_FILE_NAME;
+
+import static com.datasqrl.config.ScriptConfigImpl.GRAPHQL_NORMALIZED_FILE_NAME;
 
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.compile.CompilationProcess;
 import com.datasqrl.compile.DirectoryManager;
-import com.datasqrl.config.SqrlConfig;
+import com.datasqrl.compile.TestPlan;
+import com.datasqrl.config.PackageJson;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIType;
@@ -21,21 +22,20 @@ import com.datasqrl.packager.repository.CompositeRepositoryImpl;
 import com.datasqrl.packager.repository.LocalRepositoryImplementation;
 import com.datasqrl.packager.repository.RemoteRepositoryImplementation;
 import com.datasqrl.packager.repository.Repository;
+import com.datasqrl.plan.validate.ExecutionGoal;
 import com.google.common.base.Preconditions;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Stream;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.jdbc.SqrlSchema;
+import org.apache.commons.collections.ListUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import picocli.CommandLine;
 import picocli.CommandLine.ScopeType;
 
@@ -73,13 +73,28 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
 
   @SneakyThrows
   public void execute(ErrorCollector errors) {
+    execute(errors, profiles, targetDir.resolve("snapshots"),
+        targetDir.resolve("tests")
+        );
+  }
+
+  public void execute(ErrorCollector errors, String[] profiles, Path snapshotPath, Path testsPath) {
     Repository repository = createRepository(errors);
 
     PackageBootstrap packageBootstrap = new PackageBootstrap(root.rootDir,
-        this.root.packageFiles, this.profiles, this.files, !noinfer);
-    SqrlConfig sqrlConfig = packageBootstrap.bootstrap(repository, errors,
+        this.root.packageFiles, profiles, this.files, !noinfer);
+    PackageJson sqrlConfig = packageBootstrap.bootstrap(repository, errors,
         this::createDefaultConfig,
         this::postProcessConfig, targetDir);
+
+    Optional<String> snapshotPathConf = sqrlConfig.getCompilerConfig()
+        .getSnapshotPath();
+    if (snapshotPathConf.isEmpty()) {
+      sqrlConfig.getCompilerConfig()
+          .setSnapshotPath(snapshotPath.toAbsolutePath().toString());
+    }
+
+    sqrlConfig.setPipeline(ListUtils.union(sqrlConfig.getPipeline(), List.of("test")));
 
     Packager packager = new Packager(repository, root.rootDir, sqrlConfig, errors);
     Path path = packager.preprocess();
@@ -93,10 +108,10 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     DirectoryManager.prepareTargetDirectory(getTargetDir());
 
     Injector injector = Guice.createInjector(
-        new SqrlInjector(errors, root.rootDir, getTargetDir(), debug, sqrlConfig),
+        new SqrlInjector(errors, root.rootDir, getTargetDir(), debug, sqrlConfig, getGoal()),
         new StatefulModule(new SqrlSchema(new TypeFactory(), NameCanonicalizer.SYSTEM)));
     CompilationProcess compilationProcess = injector.getInstance(CompilationProcess.class);
-    PhysicalPlan plan = compilationProcess.executeCompilation();
+    Pair<PhysicalPlan, TestPlan> plan = compilationProcess.executeCompilation(testsPath);
 
     if (errors.hasErrors()) {
       return;
@@ -106,18 +121,18 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
       addGraphql(root.rootDir.resolve(Packager.BUILD_DIR_NAME), root.rootDir);
     }
 
-    postprocess(packager, getTargetDir(), plan, errors);
+    postprocess(sqrlConfig, packager, getTargetDir(), plan.getLeft(), plan.getRight(), errors);
   }
 
-  public abstract SqrlConfig createDefaultConfig(ErrorCollector errors);
+  public abstract PackageJson createDefaultConfig(ErrorCollector errors);
 
-  public SqrlConfig postProcessConfig(SqrlConfig config) {
+  public PackageJson postProcessConfig(PackageJson config) {
     return config;
   }
 
-  protected void postprocess(Packager packager, Path targetDir,
-      PhysicalPlan plan, ErrorCollector errors) {
-    packager.postprocess(root.rootDir, getTargetDir(), Optional.ofNullable(mountDirectory), profiles);
+  protected void postprocess(PackageJson sqrlConfig, Packager packager, Path targetDir,
+      PhysicalPlan plan, TestPlan testPlan, ErrorCollector errors) {
+    packager.postprocess(sqrlConfig, root.rootDir, getTargetDir(), plan, Optional.ofNullable(mountDirectory), testPlan, profiles);
   }
 
   protected boolean isGenerateGraphql() {
@@ -141,10 +156,13 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   }
 
   protected Repository createRepository(ErrorCollector errors) {
-    LocalRepositoryImplementation localRepo = LocalRepositoryImplementation.of(errors);
+    LocalRepositoryImplementation localRepo = LocalRepositoryImplementation.of(errors,
+        root.rootDir);
     //TODO: read remote repository URLs from configuration?
     RemoteRepositoryImplementation remoteRepo = new RemoteRepositoryImplementation();
     remoteRepo.setCacheRepository(localRepo);
     return new CompositeRepositoryImpl(List.of(localRepo, remoteRepo));
   }
+
+  public abstract ExecutionGoal getGoal();
 }

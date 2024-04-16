@@ -4,6 +4,7 @@
 package com.datasqrl.graphql.generate;
 
 import com.datasqrl.AbstractLogicalSQRLIT;
+import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.util.SnapshotTest.Snapshot;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphqlTypeComparatorRegistry;
@@ -28,7 +29,7 @@ public class AbstractGraphqlSchemaFactoryTest extends AbstractLogicalSQRLIT {
     plan(sqrlScript);
 
     GraphQLSchema schema = new GraphqlSchemaFactory(injector.getInstance(SqrlSchema.class), addArguments)
-        .generate();
+        .generate(ExecutionGoal.COMPILE);
     SchemaPrinter.Options opts = SchemaPrinter.Options.defaultOptions()
         .setComparators(GraphqlTypeComparatorRegistry.AS_IS_REGISTRY)
         .includeDirectives(false);

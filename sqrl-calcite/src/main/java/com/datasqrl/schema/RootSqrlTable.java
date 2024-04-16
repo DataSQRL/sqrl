@@ -4,7 +4,6 @@ import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.schema.Relationship.JoinType;
-import java.lang.reflect.Type;
 import java.util.List;
 import java.util.function.Supplier;
 import lombok.Getter;
@@ -21,14 +20,16 @@ public class RootSqrlTable implements SqrlTableMacro {
   private final List<FunctionParameter> parameters;
   private final Supplier<RelNode> viewTransform;
   private final NamePath fullPath;
+  private final boolean isTest;
 
   public RootSqrlTable(Name name, Table internalTable, List<FunctionParameter> parameters,
-      Supplier<RelNode> viewTransform) {
+      Supplier<RelNode> viewTransform, boolean isTest) {
     this.name = name;
     this.internalTable = internalTable;
     this.parameters = parameters;
     this.viewTransform = viewTransform;
     this.fullPath = NamePath.of(name);
+    this.isTest = isTest;
   }
 
   @Override

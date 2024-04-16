@@ -235,6 +235,7 @@ CREATE TABLE IF NOT EXISTS ordercustomerrightexcluded$1 ("_uuid" TEXT NOT NULL,"
 CREATE TABLE IF NOT EXISTS orders$3 ("id" BIGINT NOT NULL,"customerid" BIGINT NOT NULL,"time" TIMESTAMP WITH TIME ZONE NOT NULL,"entries" JSONB NOT NULL,"_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL,"_uuid" TEXT NOT NULL , PRIMARY KEY ("id"));
 CREATE TABLE IF NOT EXISTS product$2 ("productid" BIGINT NOT NULL,"name" TEXT NOT NULL,"description" TEXT NOT NULL,"category" TEXT NOT NULL,"_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL,"_uuid" TEXT NOT NULL , PRIMARY KEY ("_uuid"));
 CREATE INDEX IF NOT EXISTS ordercustomerright$1_hash_c0 ON ordercustomerright$1 USING hash ("ouuid");
+
 >>>flink-plan.sql
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptostring` AS 'com.datasqrl.time.TimestampToString' LANGUAGE JAVA;
 
@@ -325,8 +326,8 @@ CREATE TEMPORARY TABLE `customer$3` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'customer$3',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `ordercustomer$1` (
@@ -341,8 +342,8 @@ CREATE TEMPORARY TABLE `ordercustomer$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'ordercustomer$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `ordercustomerconstant$1` (
@@ -357,8 +358,8 @@ CREATE TEMPORARY TABLE `ordercustomerconstant$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'ordercustomerconstant$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `ordercustomerleft$1` (
@@ -373,8 +374,8 @@ CREATE TEMPORARY TABLE `ordercustomerleft$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'ordercustomerleft$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `ordercustomerleftexcluded$1` (
@@ -388,8 +389,8 @@ CREATE TEMPORARY TABLE `ordercustomerleftexcluded$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'ordercustomerleftexcluded$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `ordercustomerright$1` (
@@ -405,8 +406,8 @@ CREATE TEMPORARY TABLE `ordercustomerright$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'ordercustomerright$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `ordercustomerrightexcluded$1` (
@@ -420,8 +421,8 @@ CREATE TEMPORARY TABLE `ordercustomerrightexcluded$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'ordercustomerrightexcluded$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `orders$3` (
@@ -437,8 +438,8 @@ CREATE TEMPORARY TABLE `orders$3` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'orders$3',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `product$2` (
@@ -454,8 +455,8 @@ CREATE TEMPORARY TABLE `product$2` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'product$2',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 EXECUTE STATEMENT SET BEGIN
@@ -540,3 +541,5 @@ INSERT INTO `product$2`
 FROM `product$1`)
 ;
 END;
+
+

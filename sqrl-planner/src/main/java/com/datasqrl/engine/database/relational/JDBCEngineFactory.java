@@ -1,7 +1,8 @@
 package com.datasqrl.engine.database.relational;
 
-import com.datasqrl.config.SqrlConfig;
-import com.datasqrl.engine.EngineFactory;
+import com.datasqrl.config.ConnectorFactory;
+import com.datasqrl.config.PackageJson.EngineConfig;
+import com.datasqrl.config.EngineFactory;
 import com.datasqrl.engine.database.DatabaseEngineFactory;
 import com.google.auto.service.AutoService;
 import lombok.NonNull;
@@ -17,8 +18,8 @@ public class JDBCEngineFactory implements DatabaseEngineFactory {
   }
 
   @Override
-  public JDBCEngine initialize(@NonNull SqrlConfig config) {
-    return new JDBCEngine(config);
+  public JDBCEngine initialize(@NonNull EngineConfig config, ConnectorFactory connectorFactory) {
+    return new JDBCEngine(config, connectorFactory);
   }
 
 }

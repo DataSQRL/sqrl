@@ -157,6 +157,7 @@ CREATE TABLE IF NOT EXISTS orders2$1 ("uuid" TEXT NOT NULL,"_ingest_time" TIMEST
 CREATE TABLE IF NOT EXISTS orders_by_day$1 ("__pk1$customerid" BIGINT NOT NULL,"day" TIMESTAMP WITH TIME ZONE NOT NULL,"total_price" DOUBLE PRECISION ,"total_num" BIGINT NOT NULL,"__timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("__pk1$customerid","day"));
 CREATE TABLE IF NOT EXISTS ordersinline$1 ("id" BIGINT NOT NULL,"customerid" BIGINT NOT NULL,"time" TIMESTAMP WITH TIME ZONE NOT NULL,"price" DOUBLE PRECISION ,"num" BIGINT NOT NULL,"_uuid" TEXT NOT NULL,"_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("_uuid"));
 CREATE TABLE IF NOT EXISTS total$1 ("__pk6$_uuid" TEXT NOT NULL,"price" DOUBLE PRECISION ,"num" BIGINT NOT NULL,"discount" DOUBLE PRECISION ,"_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("__pk6$_uuid"));
+
 >>>flink-plan.sql
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptostring` AS 'com.datasqrl.time.TimestampToString' LANGUAGE JAVA;
 
@@ -231,8 +232,8 @@ CREATE TEMPORARY TABLE `customer$3` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'customer$3',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `entrycount$1` (
@@ -246,8 +247,8 @@ CREATE TEMPORARY TABLE `entrycount$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'entrycount$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `orders$2` (
@@ -263,8 +264,8 @@ CREATE TEMPORARY TABLE `orders$2` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'orders$2',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `orders2$1` (
@@ -276,8 +277,8 @@ CREATE TEMPORARY TABLE `orders2$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'orders2$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `orders_by_day$1` (
@@ -292,8 +293,8 @@ CREATE TEMPORARY TABLE `orders_by_day$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'orders_by_day$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `ordersinline$1` (
@@ -310,8 +311,8 @@ CREATE TEMPORARY TABLE `ordersinline$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'ordersinline$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `total$1` (
@@ -326,8 +327,8 @@ CREATE TEMPORARY TABLE `total$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'total$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE VIEW `table$1`
@@ -397,3 +398,5 @@ FROM TABLE(TUMBLE((TABLE `table$4`), (DESCRIPTOR(`_ingest_time`)), INTERVAL '0.0
 GROUP BY `__pk1$_uuid`, `window_start`, `window_end`, `window_time`)
 ;
 END;
+
+

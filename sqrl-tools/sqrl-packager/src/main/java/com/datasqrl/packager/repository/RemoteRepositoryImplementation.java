@@ -3,11 +3,9 @@
  */
 package com.datasqrl.packager.repository;
 
-import static com.datasqrl.packager.config.DependencyConfig.PKG_NAME_KEY;
-import static com.datasqrl.packager.config.DependencyConfig.VARIANT_KEY;
-import static com.datasqrl.packager.config.DependencyConfig.VERSION_KEY;
 
-import com.datasqrl.packager.config.Dependency;
+import com.datasqrl.config.DependencyImpl;
+import com.datasqrl.config.Dependency;
 import com.datasqrl.packager.util.FileHash;
 import com.datasqrl.packager.util.Zipper;
 import com.datasqrl.util.FileUtil;
@@ -36,6 +34,9 @@ import java.util.Map;
 import java.util.Optional;
 
 public class RemoteRepositoryImplementation implements Repository {
+  public static final String PKG_NAME_KEY = "pkgName";
+  public static final String VERSION_KEY = "version";
+  public static final String VARIANT_KEY = "variant";
 
   public static final URI DEFAULT_URI = URI.create("https://repo.sqrl.run");
 
@@ -117,7 +118,7 @@ public class RemoteRepositoryImplementation implements Repository {
     JsonNode result = executeQuery(Query.getLatest, Map.of("pkgName", packageName));
     Optional<JsonNode> latest = getPackageField(result, "latest").filter(n -> !n.isNull() && !n.isEmpty());
     if (latest.isEmpty()) return Optional.empty();
-    return Optional.of(map(latest.get(), Dependency.class));
+    return Optional.of(map(latest.get(), DependencyImpl.class));
   }
 
   private Optional<JsonNode> getPackageField(JsonNode result, String field) {

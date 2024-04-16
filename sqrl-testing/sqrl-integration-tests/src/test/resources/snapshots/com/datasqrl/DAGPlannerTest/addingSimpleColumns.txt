@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS orderentry$1 ("col1" BIGINT NOT NULL,"time" TIMESTAMP
 CREATE TABLE IF NOT EXISTS orders$2 ("id" BIGINT NOT NULL,"customerid" BIGINT NOT NULL,"time" TIMESTAMP WITH TIME ZONE NOT NULL,"entries" JSONB NOT NULL,"col1" BIGINT NOT NULL , PRIMARY KEY ("id","time"));
 CREATE INDEX IF NOT EXISTS orderentry$1_hash_c1 ON orderentry$1 USING hash ("time");
 CREATE INDEX IF NOT EXISTS orders$2_hash_c2 ON orders$2 USING hash ("time");
+
 >>>flink-plan.sql
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptostring` AS 'com.datasqrl.time.TimestampToString' LANGUAGE JAVA;
 
@@ -95,8 +96,8 @@ CREATE TEMPORARY TABLE `orderentry$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'orderentry$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `orders$2` (
@@ -111,8 +112,8 @@ CREATE TEMPORARY TABLE `orders$2` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'orders$2',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 EXECUTE STATEMENT SET BEGIN
@@ -127,3 +128,5 @@ INSERT INTO `orders$2`
 FROM `orders$1`)
 ;
 END;
+
+

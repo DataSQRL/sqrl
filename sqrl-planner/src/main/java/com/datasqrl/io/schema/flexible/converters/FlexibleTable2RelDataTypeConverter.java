@@ -41,7 +41,7 @@ public class FlexibleTable2RelDataTypeConverter implements
     RelDataTypeBuilder builder = CalciteUtil.getRelTypeBuilder(typeFactory);
     if (isNested && !isSingleton) {
       //TODO: For flexible schema we add nested array indexes since ordinals are not yet supported in unnesting in Flink
-      builder.add(ReservedName.ARRAY_IDX, TypeFactory.makeIntegerType(typeFactory, false));
+//      builder.add(ReservedName.ARRAY_IDX, TypeFactory.makeIntegerType(typeFactory, false));
     }
     stack.addFirst(builder);
   }

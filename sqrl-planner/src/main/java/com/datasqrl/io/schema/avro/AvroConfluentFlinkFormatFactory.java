@@ -1,9 +1,8 @@
 package com.datasqrl.io.schema.avro;
 
-
-import com.datasqrl.config.SqrlConfig;
-import com.datasqrl.io.formats.Format;
-import com.datasqrl.io.formats.FormatFactory;
+import com.datasqrl.config.PackageJson.EngineConfig;
+import com.datasqrl.config.TableConfig.Format;
+import com.datasqrl.config.FormatFactory;
 import com.google.auto.service.AutoService;
 import java.util.Optional;
 import java.util.Set;
@@ -22,7 +21,7 @@ public class AvroConfluentFlinkFormatFactory extends FormatFactory.BaseFormatFac
   }
 
   @Override
-  public Format fromConfig(SqrlConfig connectorConfig) {
+  public Format fromConfig(EngineConfig connectorConfig) {
     return new AvroConfluentFormat();
   }
 

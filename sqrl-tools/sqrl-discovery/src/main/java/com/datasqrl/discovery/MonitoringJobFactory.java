@@ -1,7 +1,6 @@
 package com.datasqrl.discovery;
 
-import com.datasqrl.io.formats.Format;
-import com.datasqrl.io.tables.TableConfig;
+import com.datasqrl.config.TableConfig;
 import com.datasqrl.metadata.MetadataStoreProvider;
 import java.util.Collection;
 

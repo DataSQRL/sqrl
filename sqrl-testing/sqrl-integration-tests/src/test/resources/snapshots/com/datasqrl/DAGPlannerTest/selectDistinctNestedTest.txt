@@ -117,6 +117,7 @@ CREATE TABLE IF NOT EXISTS productid$1 ("productid" BIGINT NOT NULL,"_time" TIME
 CREATE TABLE IF NOT EXISTS suborders$1 ("__pk1$productid" BIGINT NOT NULL,"orderid" BIGINT NOT NULL,"numOrders" BIGINT NOT NULL,"lastOrder" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("__pk1$productid","orderid"));
 CREATE INDEX IF NOT EXISTS customer$2_hash_c3 ON customer$2 USING hash ("lastUpdated");
 CREATE INDEX IF NOT EXISTS orders$2_hash_c2 ON orders$2 USING hash ("time");
+
 >>>flink-plan.sql
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptostring` AS 'com.datasqrl.time.TimestampToString' LANGUAGE JAVA;
 
@@ -206,8 +207,8 @@ CREATE TEMPORARY TABLE `customer$2` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'customer$2',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `orders$2` (
@@ -221,8 +222,8 @@ CREATE TEMPORARY TABLE `orders$2` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'orders$2',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `product$2` (
@@ -238,8 +239,8 @@ CREATE TEMPORARY TABLE `product$2` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'product$2',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `productid$1` (
@@ -251,8 +252,8 @@ CREATE TEMPORARY TABLE `productid$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'productid$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `suborders$1` (
@@ -266,8 +267,8 @@ CREATE TEMPORARY TABLE `suborders$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'suborders$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 EXECUTE STATEMENT SET BEGIN
@@ -303,3 +304,5 @@ WHERE (`productid` = `$cor2`.`customerid`)) AS `t6`
 GROUP BY `$cor2`.`productid`, `$cor2`.`id`)
 ;
 END;
+
+

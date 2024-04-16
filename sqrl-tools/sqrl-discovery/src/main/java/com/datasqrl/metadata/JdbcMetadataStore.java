@@ -3,8 +3,9 @@
  */
 package com.datasqrl.metadata;
 
-import com.datasqrl.engine.database.relational.JdbcDataSystemConnector;
-import com.datasqrl.engine.database.relational.JdbcDialect;
+import com.datasqrl.config.PackageJson.EngineConfig;
+import com.datasqrl.config.JdbcDialect;
+import com.datasqrl.config.JdbcEngineConfigDelegate;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -44,7 +45,8 @@ public class JdbcMetadataStore implements MetadataStore {
   private final JdbcDialect dialect;
   private final Kryo kryo;
 
-  public JdbcMetadataStore(JdbcDataSystemConnector config, Kryo kryo) {
+  public JdbcMetadataStore(EngineConfig engineConfig, Kryo kryo) {
+    JdbcEngineConfigDelegate config = new JdbcEngineConfigDelegate(engineConfig);
     this.kryo = kryo;
     try {
       this.connection = DriverManager.getConnection(
@@ -88,7 +90,7 @@ public class JdbcMetadataStore implements MetadataStore {
               "KEY ( data_key ) VALUES ( ?, ? );",
           JdbcDialect.Postgres, "INSERT INTO " + TABLE_NAME + " " +
               "( data_key, data_value ) VALUES ( ?, ? ) ON CONFLICT ( data_key ) DO UPDATE SET data_value = EXCLUDED.data_value;",
-          JdbcDialect.SQLite, "INSERT INTO " + TABLE_NAME + " " +
+          JdbcDialect.SQLServer, "INSERT INTO " + TABLE_NAME + " " +
               "( data_key, data_value ) VALUES ( ?, ? ) ON CONFLICT ( data_key ) DO UPDATE SET data_value = EXCLUDED.data_value;",
           JdbcDialect.MySQL, "REPLACE INTO " + TABLE_NAME + " " +
               "( data_key, data_value ) VALUES ( ?, ? );"

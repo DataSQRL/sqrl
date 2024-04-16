@@ -37,6 +37,7 @@ LogicalProject(__pk1$id=[$0], __pk3$time=[$1], price=[$2], saving=[$3])
 CREATE TABLE IF NOT EXISTS orders$2 ("id" BIGINT NOT NULL,"customerid" BIGINT NOT NULL,"time" TIMESTAMP WITH TIME ZONE NOT NULL,"entries" JSONB NOT NULL , PRIMARY KEY ("id","time"));
 CREATE TABLE IF NOT EXISTS totals$1 ("__pk1$id" BIGINT NOT NULL,"__pk3$time" TIMESTAMP WITH TIME ZONE NOT NULL,"price" DOUBLE PRECISION NOT NULL,"saving" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("__pk1$id","__pk3$time"));
 CREATE INDEX IF NOT EXISTS orders$2_hash_c2 ON orders$2 USING hash ("time");
+
 >>>flink-plan.sql
 CREATE TEMPORARY TABLE `orders$1` (
   `id` BIGINT NOT NULL,
@@ -64,8 +65,8 @@ CREATE TEMPORARY TABLE `orders$2` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'orders$2',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `totals$1` (
@@ -79,8 +80,8 @@ CREATE TEMPORARY TABLE `totals$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'totals$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE VIEW `table$1`
@@ -100,3 +101,5 @@ FROM TABLE(TUMBLE((TABLE `table$1`), (DESCRIPTOR(`__pk2$time`)), INTERVAL '0.001
 GROUP BY `__pk1$id`, `window_start`, `window_end`, `window_time`)
 ;
 END;
+
+

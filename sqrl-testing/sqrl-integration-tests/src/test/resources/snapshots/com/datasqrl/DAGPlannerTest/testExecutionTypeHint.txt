@@ -108,6 +108,7 @@ CREATE TABLE IF NOT EXISTS customeragg3$1 ("customerid" BIGINT NOT NULL,"num" BI
 CREATE TABLE IF NOT EXISTS orders$2 ("id" BIGINT NOT NULL,"customerid" BIGINT NOT NULL,"time" TIMESTAMP WITH TIME ZONE NOT NULL,"entries" JSONB NOT NULL,"_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL,"_uuid" TEXT NOT NULL , PRIMARY KEY ("_uuid"));
 CREATE TABLE IF NOT EXISTS product$2 ("productid" BIGINT NOT NULL,"name" TEXT NOT NULL,"description" TEXT NOT NULL,"category" TEXT NOT NULL,"_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL,"_uuid" TEXT NOT NULL , PRIMARY KEY ("_uuid"));
 CREATE INDEX IF NOT EXISTS customer$2_btree_c4 ON customer$2 USING btree ("_ingest_time");
+
 >>>flink-plan.sql
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptostring` AS 'com.datasqrl.time.TimestampToString' LANGUAGE JAVA;
 
@@ -198,8 +199,8 @@ CREATE TEMPORARY TABLE `customer$2` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'customer$2',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `customeragg1$1` (
@@ -212,8 +213,8 @@ CREATE TEMPORARY TABLE `customeragg1$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'customeragg1$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `customeragg3$1` (
@@ -226,8 +227,8 @@ CREATE TEMPORARY TABLE `customeragg3$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'customeragg3$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `orders$2` (
@@ -243,8 +244,8 @@ CREATE TEMPORARY TABLE `orders$2` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'orders$2',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `product$2` (
@@ -260,8 +261,8 @@ CREATE TEMPORARY TABLE `product$2` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'product$2',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE VIEW `table$1`
@@ -298,3 +299,5 @@ INSERT INTO `product$2`
 FROM `product$1`)
 ;
 END;
+
+

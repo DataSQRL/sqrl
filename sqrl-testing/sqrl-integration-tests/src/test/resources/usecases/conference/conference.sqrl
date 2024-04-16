@@ -1,12 +1,17 @@
 IMPORT events-data.Events;
 
 IMPORT conference.Likes;
+IMPORT conference-test.Likes AS testLikes;
 IMPORT conference.AddInterest;
+IMPORT conference-test.AddInterest AS testAddInterest;
 
 IMPORT string.*;
 IMPORT text.*;
 IMPORT vector.*;
 IMPORT time.parseTimestamp;
+
+Likes := SELECT eventId, userid, liked, _uuid, event_time FROM Likes UNION ALL SELECT eventId, userid, liked, _uuid, event_time FROM testLikes;
+AddInterest := SELECT _uuid, userid, text, event_time FROM AddInterest UNION ALL SELECT _uuid, userid, text, event_time FROM testAddInterest;
 
 Events.id := coalesce(CAST(regexExtract(url, '(\d*)$') AS BIGINT),0);
 
@@ -18,10 +23,10 @@ Events.startTimestamp := parseTimestamp(concat(startTime,' PDT'), 'MMMM d, yyyy 
 
 Events := DISTINCT Events ON id ORDER BY last_updated DESC;
 
-/*+ test */
+/*+test */
 CountEventsTest := SELECT COUNT(*) as num_events FROM Events;
-/*+ test */
-EventsSubsetTest := SELECT * FROM Events LIMIT 10;
+/*+test */
+EventsSubsetTest := SELECT * FROM Events ORDER BY url LIMIT 5;
 
 AddInterest.embedding := asciiTextTestEmbed(text);
 

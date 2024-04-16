@@ -3,7 +3,7 @@
  */
 package com.datasqrl.plan.rules;
 
-import com.datasqrl.engine.ExecutionEngine.Type;
+import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.local.generate.QueryTableFunction;
 import com.datasqrl.plan.table.QueryRelationalTable;
@@ -50,8 +50,4 @@ public class DAGFunctionExpansionRule extends RelOptRule {
       call.transformTo(rewrittenNode);
     }
   }
-
-
-
-
 }

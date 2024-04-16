@@ -1,5 +1,6 @@
 {
-TopicSearch(topicName: "example") {
+  TopicSearch(topicName: "example") {
     topicName
     numPackages
-}}
+  }
+}

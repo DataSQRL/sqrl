@@ -1,5 +1,5 @@
 {
-TopicPackages(topicName: "example") {
+  TopicPackages(topicName: "example") {
     topicName
     pkgName
     lastSubmission
@@ -8,4 +8,5 @@ TopicPackages(topicName: "example") {
       version
       variant
     }
-}}
+  }
+}

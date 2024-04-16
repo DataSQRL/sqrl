@@ -75,6 +75,7 @@ CREATE TABLE IF NOT EXISTS orders$2 ("id" BIGINT NOT NULL,"customerid" BIGINT NO
 CREATE TABLE IF NOT EXISTS product$2 ("productid" BIGINT NOT NULL,"name" TEXT NOT NULL,"description" TEXT NOT NULL,"category" TEXT NOT NULL,"_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL,"_uuid" TEXT NOT NULL , PRIMARY KEY ("_uuid"));
 CREATE INDEX IF NOT EXISTS customer$2_hash_c3 ON customer$2 USING hash ("lastUpdated");
 CREATE INDEX IF NOT EXISTS orders$2_hash_c2 ON orders$2 USING hash ("time");
+
 >>>flink-plan.sql
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptostring` AS 'com.datasqrl.time.TimestampToString' LANGUAGE JAVA;
 
@@ -164,8 +165,8 @@ CREATE TEMPORARY TABLE `customer$2` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'customer$2',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `joinstream$1` (
@@ -179,8 +180,8 @@ CREATE TEMPORARY TABLE `joinstream$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'joinstream$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `orders$2` (
@@ -194,8 +195,8 @@ CREATE TEMPORARY TABLE `orders$2` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'orders$2',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `product$2` (
@@ -211,8 +212,8 @@ CREATE TEMPORARY TABLE `product$2` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'product$2',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `joinstream$1$1` (
@@ -247,3 +248,5 @@ FROM `orders$1`
 INNER JOIN `customer$1` ON (`orders$1`.`customerid` = `customer$1`.`customerid`))
 ;
 END;
+
+

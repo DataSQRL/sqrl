@@ -4,13 +4,16 @@
 package com.datasqrl.packager;
 
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.config.SqrlConfig;
+import com.datasqrl.compile.TestPlan;
+import com.datasqrl.config.DependenciesConfigImpl;
+import com.datasqrl.config.PackageJson.DependenciesConfig;
+import com.datasqrl.config.Dependency;
+import com.datasqrl.config.PackageJson;
+import com.datasqrl.config.PackageJson.ScriptConfig;
+import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.packager.Preprocessors.PreprocessorsContext;
-import com.datasqrl.packager.config.Dependency;
-import com.datasqrl.packager.config.DependencyConfig;
-import com.datasqrl.packager.config.ScriptConfiguration;
 import com.datasqrl.packager.preprocess.*;
 import com.datasqrl.packager.repository.Repository;
 import com.datasqrl.util.FileUtil;
@@ -21,7 +24,6 @@ import freemarker.template.Template;
 import freemarker.template.TemplateExceptionHandler;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.nio.file.Paths;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -31,7 +33,6 @@ import org.apache.commons.lang3.StringUtils;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -40,6 +41,8 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.datasqrl.config.ScriptConfigImpl.GRAPHQL_KEY;
+import static com.datasqrl.config.ScriptConfigImpl.MAIN_KEY;
 import static com.datasqrl.packager.LambdaUtil.rethrowCall;
 import static com.datasqrl.util.NameUtil.namepath2Path;
 
@@ -47,18 +50,17 @@ import static com.datasqrl.util.NameUtil.namepath2Path;
 public class Packager {
   public static final String BUILD_DIR_NAME = "build";
   public static final String DEPLOY_DIR_NAME = "deploy";
-  public static final String PROFILES_KEY = "profiles";
   public static final String PACKAGE_JSON = "package.json";
   public static final Path DEFAULT_PACKAGE = Path.of(Packager.PACKAGE_JSON);
 
   private final Repository repository;
   private final Path rootDir;
-  private final SqrlConfig config;
+  private final PackageJson config;
   private final Path buildDir;
   private final ErrorCollector errors;
 
   public Packager(@NonNull Repository repository, @NonNull Path rootDir,
-      @NonNull SqrlConfig sqrlConfig, @NonNull ErrorCollector errors) {
+      @NonNull PackageJson sqrlConfig, @NonNull ErrorCollector errors) {
     errors.checkFatal(Files.isDirectory(rootDir), "Not a valid root directory: %s", rootDir);
     Preconditions.checkArgument(Files.isDirectory(rootDir));
     this.repository = repository;
@@ -70,8 +72,7 @@ public class Packager {
 
   public Path preprocess() {
     errors.checkFatal(
-        ScriptConfiguration.fromScriptConfig(config).asString(ScriptConfiguration.MAIN_KEY)
-            .getOptional().map(StringUtils::isNotBlank).orElse(false),
+        config.getScriptConfig().getMainScript().map(StringUtils::isNotBlank).orElse(false),
         "No config or main script specified");
     try {
       cleanBuildDir(buildDir);
@@ -95,10 +96,11 @@ public class Packager {
    * Helper function for retrieving listed dependencies.
    */
   private void retrieveDependencies() {
-    LinkedHashMap<String, Dependency> dependencies = DependencyConfig.fromRootConfig(config);
-    ErrorCollector depErrors = config.getErrorCollector()
-        .resolve(DependencyConfig.DEPENDENCIES_KEY);
-    dependencies.entrySet().stream()
+    DependenciesConfig dependencies = config.getDependencies();
+    ErrorCollector depErrors = errors
+        .resolve(DependenciesConfigImpl.DEPENDENCIES_KEY);
+
+    dependencies.getDependencies().entrySet().stream()
         .map(entry -> rethrowCall(() ->
             retrieveDependency(buildDir, NamePath.parse(entry.getKey()),
                 entry.getValue().normalize(entry.getKey(), depErrors))
@@ -113,7 +115,7 @@ public class Packager {
         .stream()
         .collect(Collectors.toMap(Entry::getKey, v->canonicalizePath(v.getValue())));
     //Files should exist, if error occurs its internal, hence we create root error collector
-    addFileToPackageJsonConfig(buildDir, ScriptConfiguration.fromScriptConfig(config),
+    addFileToPackageJsonConfig(buildDir, config.getScriptConfig(),
         destinationPaths, errors);
 
     // Shouldn't be here, move to postprocessor for flink
@@ -122,12 +124,17 @@ public class Packager {
         buildDir.resolve("build.gradle"));
   }
 
-  public static void addFileToPackageJsonConfig(Path rootDir, SqrlConfig config, Map<String, Optional<Path>> filesByKey,
+  public static void addFileToPackageJsonConfig(Path rootDir, ScriptConfig scriptConfig, Map<String, Optional<Path>> filesByKey,
       ErrorCollector errors) {
     filesByKey.forEach((key, file) -> {
       if (file.isPresent()) {
         errors.checkFatal(Files.isRegularFile(file.get()), "Could not locate %s file: %s", key, file.get());
-        config.setProperty(key,rootDir.relativize(file.get()).normalize().toString());
+        String normalizedPath = rootDir.relativize(file.get()).normalize().toString();
+        if (key.equals(MAIN_KEY)) {
+          scriptConfig.setMainScript(normalizedPath);
+        } else if (key.equals(GRAPHQL_KEY)) {
+          scriptConfig.setGraphql(normalizedPath);
+        }
       }
     });
   }
@@ -147,15 +154,17 @@ public class Packager {
    * @throws IOException
    */
   private Map<String, Optional<Path>> copyScriptFilesToBuildDir() throws IOException {
-    SqrlConfig scriptConfig = ScriptConfiguration.fromScriptConfig(config);
+    ScriptConfig scriptConfig = config.getScriptConfig();
     Map<String, Optional<Path>> destinationPaths = new HashMap<>();
-    for (String fileKey : ScriptConfiguration.FILE_KEYS) {
-      Optional<String> configuredFile = scriptConfig.asString(fileKey).getOptional();
-      if (configuredFile.isPresent()) {
-        Path destinationPath = copyRelativeFile(rootDir.resolve(configuredFile.get()), rootDir,
-            buildDir);
-        destinationPaths.put(fileKey,Optional.of(destinationPath));
-      }
+    if (scriptConfig.getMainScript().isPresent()) {
+      Path destinationPath = copyRelativeFile(rootDir.resolve(scriptConfig.getMainScript().get()), rootDir,
+          buildDir);
+      destinationPaths.put(MAIN_KEY,Optional.of(destinationPath));
+    }
+    if (scriptConfig.getGraphql().isPresent()) {
+      Path destinationPath = copyRelativeFile(rootDir.resolve(scriptConfig.getGraphql().get()), rootDir,
+          buildDir);
+      destinationPaths.put(GRAPHQL_KEY,Optional.of(destinationPath));
     }
     return destinationPaths;
   }
@@ -163,9 +172,10 @@ public class Packager {
   /**
    * Helper function to preprocess files.
    */
-  private void preProcessFiles(SqrlConfig config) throws IOException {
+  private void preProcessFiles(PackageJson config) throws IOException {
     //Preprocessor will normalize files
     List<Preprocessor> processorList = ListUtils.union(List.of(new TablePreprocessor(),
+            new JsonlPreprocessor(),
             new JarPreprocessor(), new DataSystemPreprocessor(), new PackageJsonPreprocessor(),
             new FlinkSqlPreprocessor()),
         ServiceLoaderDiscovery.getAll(Preprocessor.class));
@@ -218,24 +228,28 @@ public class Packager {
     return targetPath;
   }
 
-  public void postprocess(Path rootDir, Path targetDir, Optional<Path> mountDirectory,
-      String[] profiles) {
+  public void postprocess(PackageJson sqrlConfig, Path rootDir, Path targetDir, PhysicalPlan plan, Optional<Path> mountDirectory,
+      TestPlan testPlan, String[] profiles) {
 
     // Copy profiles
     for (String profile : profiles) {
       copyToDeploy(targetDir,
-          rootDir.resolve(profile));
+          rootDir.resolve(profile), plan, testPlan, sqrlConfig);
     }
 //    List.of()
 //        .forEach(p->p.process(new ProcessorContext(buildDir, targetDir, mountDirectory, profiles)));
   }
 
   @SneakyThrows
-  private void copyToDeploy(Path targetDir, Path profile) {
+  private void copyToDeploy(Path targetDir, Path profile, PhysicalPlan plan, TestPlan testPlan,
+      PackageJson sqrlConfig) {
     if (!Files.exists(targetDir)) {
       Files.createDirectories(targetDir);
     }
-
+    Map<String, Object> templateConfig = new HashMap<>();
+    templateConfig.put("testPlan", testPlan);
+    templateConfig.put("plan", plan);
+    templateConfig.put("config", sqrlConfig.toMap());
     // Copy each file and directory from the profile path to the target directory
     try (Stream<Path> stream = Files.walk(profile)) {
       stream.forEach(sourcePath -> {
@@ -250,7 +264,7 @@ public class Packager {
         } else {
           try {
             if (sourcePath.toString().endsWith(".ftl")) {
-              processTemplate(sourcePath, destinationPath, Map.of("database", true) /*stub-config*/);
+              processTemplate(sourcePath, destinationPath, templateConfig);
             } else {
               Files.copy(sourcePath, destinationPath, StandardCopyOption.REPLACE_EXISTING);
             }
@@ -289,6 +303,7 @@ public class Packager {
     Path outputPath = destination.getParent().resolve(outputFileName);
     Files.write(outputPath, out.toString().getBytes());
   }
+
 
   public static Optional<List<Path>> findPackageFile(Path rootDir, List<Path> packageFiles) {
     if (packageFiles.isEmpty()) {

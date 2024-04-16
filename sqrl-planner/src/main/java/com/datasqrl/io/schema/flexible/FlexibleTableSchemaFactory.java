@@ -1,7 +1,7 @@
 package com.datasqrl.io.schema.flexible;
 
+import com.datasqrl.config.TableConfig;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableSchemaFactory;
 import com.datasqrl.schema.input.FlexibleTableSchema;
 import com.datasqrl.serializer.Deserializer;

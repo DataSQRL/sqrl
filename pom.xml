@@ -150,7 +150,11 @@
         <artifactId>sqrl-planner</artifactId>
         <version>${project.version}</version>
       </dependency>
-
+      <dependency>
+        <groupId>run.sqrl</groupId>
+        <artifactId>sqrl-config</artifactId>
+        <version>${project.version}</version>
+      </dependency>
       <dependency>
         <groupId>run.sqrl</groupId>
         <artifactId>sqrl-json</artifactId>

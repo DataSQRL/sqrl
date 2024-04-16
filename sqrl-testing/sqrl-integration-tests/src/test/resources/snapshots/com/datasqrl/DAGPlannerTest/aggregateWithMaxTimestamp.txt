@@ -102,6 +102,7 @@ CREATE TABLE IF NOT EXISTS orderagg4$1 ("customerid" BIGINT NOT NULL,"timestamp"
 CREATE TABLE IF NOT EXISTS orders$2 ("id" BIGINT NOT NULL,"customerid" BIGINT NOT NULL,"time" TIMESTAMP WITH TIME ZONE NOT NULL,"entries" JSONB NOT NULL , PRIMARY KEY ("id","time"));
 CREATE TABLE IF NOT EXISTS ordersstate$1 ("id" BIGINT NOT NULL,"customerid" BIGINT NOT NULL,"time" TIMESTAMP WITH TIME ZONE NOT NULL,"entries" JSONB NOT NULL , PRIMARY KEY ("id"));
 CREATE INDEX IF NOT EXISTS orders$2_hash_c2 ON orders$2 USING hash ("time");
+
 >>>flink-plan.sql
 CREATE TEMPORARY TABLE `orders$1` (
   `id` BIGINT NOT NULL,
@@ -128,8 +129,8 @@ CREATE TEMPORARY TABLE `orderagg1$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'orderagg1$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `orderagg2$1` (
@@ -142,8 +143,8 @@ CREATE TEMPORARY TABLE `orderagg2$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'orderagg2$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `orderagg3$1` (
@@ -156,8 +157,8 @@ CREATE TEMPORARY TABLE `orderagg3$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'orderagg3$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `orderagg4$1` (
@@ -170,8 +171,8 @@ CREATE TEMPORARY TABLE `orderagg4$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'orderagg4$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `orders$2` (
@@ -185,8 +186,8 @@ CREATE TEMPORARY TABLE `orders$2` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'orders$2',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `ordersstate$1` (
@@ -200,8 +201,8 @@ CREATE TEMPORARY TABLE `ordersstate$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'ordersstate$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 EXECUTE STATEMENT SET BEGIN
@@ -238,3 +239,5 @@ INSERT INTO `ordersstate$1`
 FROM `orders$1`)
 ;
 END;
+
+

@@ -1,5 +1,6 @@
 package com.datasqrl.io.tables;
 
+import com.datasqrl.config.TableConfig;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.google.common.base.Preconditions;

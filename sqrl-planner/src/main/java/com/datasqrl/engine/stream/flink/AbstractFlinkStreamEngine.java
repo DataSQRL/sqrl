@@ -5,8 +5,10 @@ package com.datasqrl.engine.stream.flink;
 
 import static com.datasqrl.engine.EngineFeature.STANDARD_STREAM;
 
+import com.datasqrl.actions.FlinkSqlGenerator;
 import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.config.SqrlConfig;
+import com.datasqrl.config.PackageJson.EngineConfig;
+import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
@@ -32,9 +34,9 @@ public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base imp
   public static final EnumSet<EngineFeature> FLINK_CAPABILITIES = STANDARD_STREAM;
 
   @Getter
-  private final SqrlConfig config;
+  private final EngineConfig config;
 
-  public AbstractFlinkStreamEngine(SqrlConfig config) {
+  public AbstractFlinkStreamEngine(EngineConfig config) {
     super(FlinkEngineFactory.ENGINE_NAME, Type.STREAM, FLINK_CAPABILITIES);
     this.config = config;
   }
@@ -51,8 +53,11 @@ public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base imp
     Preconditions.checkArgument(inputs.isEmpty());
     Preconditions.checkArgument(stagePlan instanceof StreamStagePlan);
     StreamStagePlan plan = (StreamStagePlan) stagePlan;
+    FlinkSqlGenerator generator = new FlinkSqlGenerator(framework);
 
-    return new FlinkStreamPhysicalPlan(plan);
+    List<String> flinkSql = generator.run(plan);
+
+    return new FlinkStreamPhysicalPlan(plan, flinkSql);
   }
 
   @Override

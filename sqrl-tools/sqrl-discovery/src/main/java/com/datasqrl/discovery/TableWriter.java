@@ -3,7 +3,7 @@
  */
 package com.datasqrl.discovery;
 
-import com.datasqrl.io.tables.TableConfig;
+import com.datasqrl.config.TableConfig;
 import com.datasqrl.io.tables.TableSchema;
 import com.datasqrl.io.tables.TableSchemaFactory;
 import com.datasqrl.io.tables.TableSource;
@@ -35,7 +35,7 @@ public class TableWriter {
             table.getName().getCanonical() + TABLE_FILE_SUFFIX);
     TableSchema ts = table.getSchema();
     TableConfig config = table.getConfiguration().toBuilder().build();
-    config.toFile(tableConfigFile);
+    config.toFile(tableConfigFile, true);
     TableSchemaFactory schemaFactory = TableSchemaFactory.loadByType(ts.getSchemaType());
     Path schemaFile = destinationDir.resolve(schemaFactory.getSchemaFilename(config));
     Files.writeString(schemaFile, ts.getDefinition());

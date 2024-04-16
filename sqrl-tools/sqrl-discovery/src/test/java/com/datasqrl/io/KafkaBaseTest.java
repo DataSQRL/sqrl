@@ -8,7 +8,7 @@
 //import com.datasqrl.io.formats.FormatFactory;
 //import com.datasqrl.io.formats.JsonLineFormat;
 //import com.datasqrl.io.impl.kafka.KafkaDataSystemFactory;
-//import com.datasqrl.io.tables.TableConfig;
+//import com.datasqrl.config.TableConfig;
 //import com.datasqrl.util.FileStreamUtil;
 //import com.google.common.collect.ImmutableList;
 //import java.io.ByteArrayOutputStream;

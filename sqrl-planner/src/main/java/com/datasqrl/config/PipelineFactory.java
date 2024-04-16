@@ -3,15 +3,16 @@
  */
 package com.datasqrl.config;
 
-import com.datasqrl.engine.EngineFactory;
 import com.datasqrl.engine.ExecutionEngine;
-import com.datasqrl.engine.ExecutionEngine.Type;
+import com.datasqrl.engine.IExecutionEngine;
 import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.SimplePipeline;
 import com.datasqrl.engine.stream.StreamEngine;
-import com.google.inject.Inject;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.util.ServiceLoaderDiscovery;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import lombok.Getter;
@@ -24,27 +25,31 @@ import org.apache.commons.lang3.tuple.Pair;
  */
 public class PipelineFactory {
 
-  public static final String ENGINES_PROPERTY = "engines";
-
+  private final List<String> pipeline;
   @NonNull
   @Getter
-  private final SqrlConfig engineConfig;
+  private final PackageJson.EnginesConfig engineConfig;
+  private final ConnectorFactoryFactory connectorFactoryFactory;
 
-  public PipelineFactory(@NonNull SqrlConfig engineConfig) {
+  public PipelineFactory(List<String> pipeline, @NonNull PackageJson.EnginesConfig engineConfig, ConnectorFactoryFactory connectorFactoryFactory) {
+    this.pipeline = pipeline;
     this.engineConfig = engineConfig;
+    this.connectorFactoryFactory = connectorFactoryFactory;
   }
 
-  public static PipelineFactory fromRootConfig(@NonNull SqrlConfig config) {
-    return new PipelineFactory(config.getSubConfig(ENGINES_PROPERTY));
-  }
-
-  private Map<String, ExecutionEngine> getEngines(Optional<ExecutionEngine.Type> engineType) {
+  private Map<String, ExecutionEngine> getEngines(Optional<EngineFactory.Type> engineType) {
     Map<String, ExecutionEngine> engines = new HashMap<>();
-    for (String engineId : engineConfig.getKeys()) {
-      SqrlConfig engineConfig = this.engineConfig.getSubConfig(engineId);
-      EngineFactory engineFactory = EngineFactory.fromConfig(engineConfig);
-      if (engineType.map(type -> engineFactory.getEngineType()==type).orElse(true)) {
-        engines.put(engineId, engineFactory.initialize(engineConfig));
+    for (String engineId : pipeline) {
+      if (engineId.equalsIgnoreCase("test")) continue;
+      PackageJson.EngineConfig engineConfig = this.engineConfig.getEngineConfig(engineId);
+      EngineFactory engineFactory = ServiceLoaderDiscovery.get(
+          EngineFactory.class,
+          EngineFactory::getEngineName,
+          engineConfig.getEngineName());
+      ConnectorFactory connectorFactory = connectorFactoryFactory.create(engineId, engineConfig);
+      IExecutionEngine engine = engineFactory.initialize(engineConfig, connectorFactory);
+      if (engineType.map(type -> engine.getType()==type).orElse(true)) {
+        engines.put(engineId, (ExecutionEngine)engine);
       }
     }
     return engines;
@@ -54,23 +59,25 @@ public class PipelineFactory {
     return getEngines(Optional.empty());
   }
 
-  public Pair<String,ExecutionEngine> getEngine(ExecutionEngine.Type type) {
+  public Pair<String,ExecutionEngine> getEngine(EngineFactory.Type type) {
     Map<String,ExecutionEngine> engines = getEngines(Optional.of(type));
-    engineConfig.getErrorCollector().checkFatal(!engines.isEmpty(), "Need to configure a %s engine", type.name().toLowerCase());
-    engineConfig.getErrorCollector().checkFatal(engines.size()==1, "Currently support only a single %s engine", type.name().toLowerCase());
+    //Todo: error collector
+    ErrorCollector errors = ErrorCollector.root();
+    errors.checkFatal(!engines.isEmpty(), "Need to configure a %s engine", type.name().toLowerCase());
+    errors.checkFatal(engines.size()==1, "Currently support only a single %s engine", type.name().toLowerCase());
     return Pair.of(engines.entrySet().iterator().next());
   }
 
   public DatabaseEngine getDatabaseEngine() {
-    return (DatabaseEngine) getEngine(Type.DATABASE).getRight();
+    return (DatabaseEngine) getEngine(EngineFactory.Type.DATABASE).getRight();
   }
 
   public StreamEngine getStreamEngine() {
-    return (StreamEngine) getEngine(Type.STREAM).getRight();
+    return (StreamEngine) getEngine(EngineFactory.Type.STREAM).getRight();
   }
 
 
   public ExecutionPipeline createPipeline() {
-    return SimplePipeline.of(getEngines(), engineConfig.getErrorCollector());
+    return SimplePipeline.of(getEngines(), /*todo*/ErrorCollector.root());
   }
 }

@@ -121,6 +121,7 @@ CREATE TABLE IF NOT EXISTS customer$3 ("customerid" BIGINT NOT NULL,"email" TEXT
 CREATE TABLE IF NOT EXISTS ordercustomer2$1 ("id" BIGINT NOT NULL,"name" TEXT ,"_time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id","_time"));
 CREATE TABLE IF NOT EXISTS orders$2 ("id" BIGINT NOT NULL,"customerid" BIGINT NOT NULL,"time" TIMESTAMP WITH TIME ZONE NOT NULL,"entries" JSONB NOT NULL , PRIMARY KEY ("id","time"));
 CREATE INDEX IF NOT EXISTS orders$2_hash_c2 ON orders$2 USING hash ("time");
+
 >>>flink-plan.sql
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptostring` AS 'com.datasqrl.time.TimestampToString' LANGUAGE JAVA;
 
@@ -191,8 +192,8 @@ CREATE TEMPORARY TABLE `customer$3` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'customer$3',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `ordercustomer2$1` (
@@ -205,8 +206,8 @@ CREATE TEMPORARY TABLE `ordercustomer2$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'ordercustomer2$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `orders$2` (
@@ -220,8 +221,8 @@ CREATE TEMPORARY TABLE `orders$2` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'orders$2',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE VIEW `table$1`
@@ -246,3 +247,5 @@ INSERT INTO `orders$2`
 FROM `orders$1`)
 ;
 END;
+
+
