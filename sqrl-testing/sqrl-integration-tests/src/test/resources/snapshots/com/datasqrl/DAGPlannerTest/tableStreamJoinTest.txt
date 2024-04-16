@@ -143,7 +143,7 @@ Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
  - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
- - entries: RecordType(INTEGER NOT NULL _idx, BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+ - entries: RecordType(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
  - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
 Plan:
@@ -173,9 +173,12 @@ CREATE INDEX IF NOT EXISTS customer$2_hash_c2 ON customer$2 USING hash ("name");
 CREATE INDEX IF NOT EXISTS orders$2_btree_c0 ON orders$2 USING btree ("id");
 
 >>>flink-plan.sql
+
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptostring` AS 'com.datasqrl.time.TimestampToString' LANGUAGE JAVA;
 
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofmonth` AS 'com.datasqrl.time.EndOfMonth' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `tojson` AS 'com.datasqrl.json.ToJson' LANGUAGE JAVA;
 
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofweek` AS 'com.datasqrl.time.EndOfWeek' LANGUAGE JAVA;
 
@@ -205,7 +208,7 @@ CREATE TEMPORARY TABLE `orders$1` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` ROW(`_idx` INTEGER NOT NULL, `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
+  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
   `_ingest_time` AS PROCTIME(),
   `_uuid` AS UUID(),
   PRIMARY KEY (`_uuid`) NOT ENFORCED
@@ -270,7 +273,7 @@ CREATE TEMPORARY TABLE `orders$2` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` ROW(`_idx` INTEGER NOT NULL, `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
+  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),
   `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,
   PRIMARY KEY (`_uuid`) NOT ENFORCED
@@ -306,7 +309,7 @@ INSERT INTO `customer$2`
 FROM `customer$1`)
 ;
 INSERT INTO `orders$2`
-(SELECT *
+(SELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`, `_ingest_time`, `_uuid`
 FROM `orders$1`)
 ;
 INSERT INTO `product$2`

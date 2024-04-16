@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS customercopy$1 ("month" TIMESTAMP WITH TIME ZONE NOT 
 CREATE INDEX IF NOT EXISTS customer$2_hash_c3 ON customer$2 USING hash ("lastUpdated");
 
 >>>flink-plan.sql
+
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptostring` AS 'com.datasqrl.time.TimestampToString' LANGUAGE JAVA;
 
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofmonth` AS 'com.datasqrl.time.EndOfMonth' LANGUAGE JAVA;

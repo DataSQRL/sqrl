@@ -9,7 +9,7 @@ Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
  - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
- - entries: RecordType(INTEGER NOT NULL _idx, BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+ - entries: RecordType(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
 Plan:
 LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[2]]]]) hints[WatermarkHint options:[2]]
 
@@ -28,10 +28,10 @@ Schema:
 Plan:
 LogicalProject(__pk1$id=[$0], __pk3$time=[$1], price=[$2], saving=[$3])
   LogicalAggregate(group=[{0, 1}], price=[SUM($2)], agg#1=[SUM($3)]) hints[TumbleAggregationHint options:[1, INSTANT, 1, 1, 0]]
-    LogicalProject(__pk1$id=[$0], __pk2$time=[$2], $f2=[*($6, $7)], $f3=[COALESCE($8, 0.0:DECIMAL(2, 1))], _idx=[$4])
+    LogicalProject(__pk1$id=[$0], __pk2$time=[$2], $f2=[*($5, $6)], $f3=[COALESCE($7, 0.0:DECIMAL(2, 1))], productid=[$4])
       LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{3}])
         LogicalTableScan(table=[[orders$2]])
-        LogicalTableFunctionScan(invocation=[Orders.entries($cor0.entries)], rowType=[RecordType(INTEGER _idx, BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount)], elementType=[class [Ljava.lang.Object;])
+        LogicalTableFunctionScan(invocation=[Orders.entries($cor0.entries)], rowType=[RecordType(BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount)], elementType=[class [Ljava.lang.Object;])
 
 >>>database-schema.sql
 CREATE TABLE IF NOT EXISTS orders$2 ("id" BIGINT NOT NULL,"customerid" BIGINT NOT NULL,"time" TIMESTAMP WITH TIME ZONE NOT NULL,"entries" JSONB NOT NULL , PRIMARY KEY ("id","time"));
@@ -39,11 +39,14 @@ CREATE TABLE IF NOT EXISTS totals$1 ("__pk1$id" BIGINT NOT NULL,"__pk3$time" TIM
 CREATE INDEX IF NOT EXISTS orders$2_hash_c2 ON orders$2 USING hash ("time");
 
 >>>flink-plan.sql
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `tojson` AS 'com.datasqrl.json.ToJson' LANGUAGE JAVA;
+
 CREATE TEMPORARY TABLE `orders$1` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` ROW(`_idx` INTEGER NOT NULL, `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
+  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
   PRIMARY KEY (`id`, `time`) NOT ENFORCED,
   WATERMARK FOR `time` AS (`time` - INTERVAL '0.001' SECOND)
 ) WITH (
@@ -58,7 +61,7 @@ CREATE TEMPORARY TABLE `orders$2` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` ROW(`_idx` INTEGER NOT NULL, `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
+  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
   'password' = 'postgres',
@@ -86,13 +89,13 @@ CREATE TEMPORARY TABLE `totals$1` (
 
 CREATE VIEW `table$1`
 AS
-SELECT `$cor0`.`id` AS `__pk1$id`, `$cor0`.`time` AS `__pk2$time`, (`t00`.`quantity` * `t00`.`unit_price`) AS `$f2`, COALESCE(`t00`.`discount`, 0.0) AS `$f3`, `t00`.`_idx`
+SELECT `$cor0`.`id` AS `__pk1$id`, `$cor0`.`time` AS `__pk2$time`, (`t00`.`quantity` * `t00`.`unit_price`) AS `$f2`, COALESCE(`t00`.`discount`, 0.0) AS `$f3`, `t00`.`productid`
 FROM `orders$1` AS `$cor0`,
 UNNEST(`$cor0`.`entries`) AS `t00`;
 
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `orders$2`
-(SELECT *
+(SELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`
 FROM `orders$1`)
 ;
 INSERT INTO `totals$1`

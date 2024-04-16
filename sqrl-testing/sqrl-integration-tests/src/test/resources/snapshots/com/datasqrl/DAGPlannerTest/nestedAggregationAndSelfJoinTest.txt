@@ -39,18 +39,18 @@ ID:     entrycount$1
 Type:   stream
 Stage:  streams
 Inputs: orders$2
-Primary Key: _uuid, _idx
+Primary Key: _uuid, _productid
 Timestamp  : _ingest_time
 Schema:
  - price: DOUBLE
  - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
- - _idx: INTEGER NOT NULL
+ - _productid: BIGINT NOT NULL
  - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalProject(price=[-(*($8, $9), $10)], _uuid=[$5], _idx=[$6], _ingest_time=[$4])
+LogicalProject(price=[-(*($7, $8), $9)], _uuid=[$5], _productid=[$6], _ingest_time=[$4])
   LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{3}])
     LogicalTableScan(table=[[orders$2]])
-    LogicalTableFunctionScan(invocation=[Orders.entries($cor0.entries)], rowType=[RecordType(INTEGER _idx, BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount)], elementType=[class [Ljava.lang.Object;])
+    LogicalTableFunctionScan(invocation=[Orders.entries($cor0.entries)], rowType=[RecordType(BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount)], elementType=[class [Ljava.lang.Object;])
 
 === Orders
 ID:     orders$2
@@ -62,7 +62,7 @@ Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
  - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
- - entries: RecordType(INTEGER NOT NULL _idx, BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+ - entries: RecordType(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
  - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
 Plan:
@@ -144,14 +144,14 @@ Schema:
 Plan:
 LogicalProject(__pk6$_uuid=[$0], price=[$2], num=[$3], discount=[$4], _ingest_time=[$1])
   LogicalAggregate(group=[{0, 4}], price=[SUM($1)], num=[COUNT()], discount=[SUM($2)]) hints[TumbleAggregationHint options:[4, INSTANT, 4, 1, 0]]
-    LogicalProject(__pk1$_uuid=[$5], $f1=[-(*($8, $9), $10)], discount=[$10], _idx=[$6], _ingest_time=[$4])
+    LogicalProject(__pk1$_uuid=[$5], $f1=[-(*($7, $8), $9)], discount=[$9], productid=[$6], _ingest_time=[$4])
       LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{3}])
         LogicalTableScan(table=[[orders$2]])
-        LogicalTableFunctionScan(invocation=[Orders.entries($cor1.entries)], rowType=[RecordType(INTEGER _idx, BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount)], elementType=[class [Ljava.lang.Object;])
+        LogicalTableFunctionScan(invocation=[Orders.entries($cor1.entries)], rowType=[RecordType(BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount)], elementType=[class [Ljava.lang.Object;])
 
 >>>database-schema.sql
 CREATE TABLE IF NOT EXISTS customer$3 ("customerid" BIGINT NOT NULL,"email" TEXT NOT NULL,"name" TEXT NOT NULL,"lastUpdated" BIGINT NOT NULL,"_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL,"_uuid" TEXT NOT NULL , PRIMARY KEY ("customerid"));
-CREATE TABLE IF NOT EXISTS entrycount$1 ("price" DOUBLE PRECISION ,"_uuid" TEXT NOT NULL,"_idx" INTEGER NOT NULL,"_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("_uuid","_idx"));
+CREATE TABLE IF NOT EXISTS entrycount$1 ("price" DOUBLE PRECISION ,"_uuid" TEXT NOT NULL,"_productid" BIGINT NOT NULL,"_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("_uuid","_productid"));
 CREATE TABLE IF NOT EXISTS orders$2 ("id" BIGINT NOT NULL,"customerid" BIGINT NOT NULL,"time" TIMESTAMP WITH TIME ZONE NOT NULL,"entries" JSONB NOT NULL,"_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL,"_uuid" TEXT NOT NULL , PRIMARY KEY ("_uuid"));
 CREATE TABLE IF NOT EXISTS orders2$1 ("uuid" TEXT NOT NULL,"_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("uuid"));
 CREATE TABLE IF NOT EXISTS orders_by_day$1 ("__pk1$customerid" BIGINT NOT NULL,"day" TIMESTAMP WITH TIME ZONE NOT NULL,"total_price" DOUBLE PRECISION ,"total_num" BIGINT NOT NULL,"__timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("__pk1$customerid","day"));
@@ -159,9 +159,12 @@ CREATE TABLE IF NOT EXISTS ordersinline$1 ("id" BIGINT NOT NULL,"customerid" BIG
 CREATE TABLE IF NOT EXISTS total$1 ("__pk6$_uuid" TEXT NOT NULL,"price" DOUBLE PRECISION ,"num" BIGINT NOT NULL,"discount" DOUBLE PRECISION ,"_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("__pk6$_uuid"));
 
 >>>flink-plan.sql
+
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptostring` AS 'com.datasqrl.time.TimestampToString' LANGUAGE JAVA;
 
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofmonth` AS 'com.datasqrl.time.EndOfMonth' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `tojson` AS 'com.datasqrl.json.ToJson' LANGUAGE JAVA;
 
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofweek` AS 'com.datasqrl.time.EndOfWeek' LANGUAGE JAVA;
 
@@ -191,7 +194,7 @@ CREATE TEMPORARY TABLE `orders$1` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` ROW(`_idx` INTEGER NOT NULL, `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
+  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
   `_ingest_time` AS PROCTIME(),
   `_uuid` AS UUID(),
   PRIMARY KEY (`_uuid`) NOT ENFORCED
@@ -239,9 +242,9 @@ CREATE TEMPORARY TABLE `customer$3` (
 CREATE TEMPORARY TABLE `entrycount$1` (
   `price` DOUBLE,
   `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,
-  `_idx` INTEGER NOT NULL,
+  `_productid` BIGINT NOT NULL,
   `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  PRIMARY KEY (`_uuid`, `_idx`) NOT ENFORCED
+  PRIMARY KEY (`_uuid`, `_productid`) NOT ENFORCED
 ) WITH (
   'password' = 'postgres',
   'connector' = 'jdbc-sqrl',
@@ -255,7 +258,7 @@ CREATE TEMPORARY TABLE `orders$2` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` ROW(`_idx` INTEGER NOT NULL, `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
+  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),
   `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,
   PRIMARY KEY (`_uuid`) NOT ENFORCED
@@ -340,19 +343,19 @@ WHERE (`_rownum` = 1);
 
 CREATE VIEW `table$2`
 AS
-SELECT `$cor1`.`_uuid` AS `__pk1$_uuid`, ((`t20`.`quantity` * `t20`.`unit_price`) - `t20`.`discount`) AS `$f1`, `t20`.`discount`, `t20`.`_idx`, `$cor1`.`_ingest_time`
+SELECT `$cor1`.`_uuid` AS `__pk1$_uuid`, ((`t20`.`quantity` * `t20`.`unit_price`) - `t20`.`discount`) AS `$f1`, `t20`.`discount`, `t20`.`productid`, `$cor1`.`_ingest_time`
 FROM `orders$1` AS `$cor1`,
 UNNEST(`$cor1`.`entries`) AS `t20`;
 
 CREATE VIEW `table$3`
 AS
-SELECT `$cor1`.`_uuid` AS `__pk1$_uuid`, ((`t00`.`quantity` * `t00`.`unit_price`) - `t00`.`discount`) AS `$f1`, `t00`.`discount`, `t00`.`_idx`, `$cor1`.`_ingest_time`
+SELECT `$cor1`.`_uuid` AS `__pk1$_uuid`, ((`t00`.`quantity` * `t00`.`unit_price`) - `t00`.`discount`) AS `$f1`, `t00`.`discount`, `t00`.`productid`, `$cor1`.`_ingest_time`
 FROM `orders$1` AS `$cor1`,
 UNNEST(`$cor1`.`entries`) AS `t00`;
 
 CREATE VIEW `table$4`
 AS
-SELECT `$cor1`.`_uuid` AS `__pk1$_uuid`, ((`t00`.`quantity` * `t00`.`unit_price`) - `t00`.`discount`) AS `$f1`, `t00`.`discount`, `t00`.`_idx`, `$cor1`.`_ingest_time`
+SELECT `$cor1`.`_uuid` AS `__pk1$_uuid`, ((`t00`.`quantity` * `t00`.`unit_price`) - `t00`.`discount`) AS `$f1`, `t00`.`discount`, `t00`.`productid`, `$cor1`.`_ingest_time`
 FROM `orders$1` AS `$cor1`,
 UNNEST(`$cor1`.`entries`) AS `t00`;
 
@@ -362,12 +365,12 @@ INSERT INTO `customer$3`
 FROM `customer$1`)
 ;
 INSERT INTO `entrycount$1`
-(SELECT ((`t00`.`quantity` * `t00`.`unit_price`) - `t00`.`discount`) AS `price`, `$cor0`.`_uuid`, `t00`.`_idx`, `$cor0`.`_ingest_time`
+(SELECT ((`t00`.`quantity` * `t00`.`unit_price`) - `t00`.`discount`) AS `price`, `$cor0`.`_uuid`, `t00`.`productid` AS `_productid`, `$cor0`.`_ingest_time`
 FROM `orders$1` AS `$cor0`,
 UNNEST(`$cor0`.`entries`) AS `t00`)
 ;
 INSERT INTO `orders$2`
-(SELECT *
+(SELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`, `_ingest_time`, `_uuid`
 FROM `orders$1`)
 ;
 INSERT INTO `orders2$1`
