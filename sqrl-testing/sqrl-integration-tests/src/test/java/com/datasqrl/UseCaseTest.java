@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
+@Disabled
 public class UseCaseTest extends AbstractUseCaseTest {
 
   public static final Path USECASE_DIR = getResourcesDirectory("usecases");

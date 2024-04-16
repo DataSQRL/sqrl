@@ -49,7 +49,7 @@ public class DependencyImpl implements Dependency {
     return Optional.ofNullable(version);
 
   }
- 
+
   /**
    * Normalizes a dependency and uses the dependency package name as the name unless it is explicitly specified.
    * @param defaultName
