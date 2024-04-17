@@ -90,7 +90,7 @@ public class JdbcMetadataStore implements MetadataStore {
               "KEY ( data_key ) VALUES ( ?, ? );",
           JdbcDialect.Postgres, "INSERT INTO " + TABLE_NAME + " " +
               "( data_key, data_value ) VALUES ( ?, ? ) ON CONFLICT ( data_key ) DO UPDATE SET data_value = EXCLUDED.data_value;",
-          JdbcDialect.SQLServer, "INSERT INTO " + TABLE_NAME + " " +
+          JdbcDialect.SQLite, "INSERT INTO " + TABLE_NAME + " " +
               "( data_key, data_value ) VALUES ( ?, ? ) ON CONFLICT ( data_key ) DO UPDATE SET data_value = EXCLUDED.data_value;",
           JdbcDialect.MySQL, "REPLACE INTO " + TABLE_NAME + " " +
               "( data_key, data_value ) VALUES ( ?, ? );"
