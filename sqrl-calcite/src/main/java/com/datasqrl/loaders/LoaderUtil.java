@@ -1,5 +1,7 @@
 package com.datasqrl.loaders;
 
+import static com.datasqrl.config.ConnectorFactoryFactory.PRINT_SINK_NAME;
+
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.ConnectorFactory;
@@ -21,11 +23,11 @@ public class LoaderUtil {
   public static Optional<TableSink> loadSinkOpt(@NonNull NamePath sinkPath, ErrorCollector errors,
         ModuleLoader moduleLoader, ConnectorFactoryFactory connectorFactoryFactory) {
 
-      if (sinkPath.getFirst().getCanonical().equalsIgnoreCase("print")) {
-        ConnectorFactory print = connectorFactoryFactory.create("print", null);
+      if (sinkPath.getFirst().getCanonical().equalsIgnoreCase(PRINT_SINK_NAME)) {
+        ConnectorFactory print = connectorFactoryFactory.create(PRINT_SINK_NAME, null);
         TableConfig sourceAndSink = print.createSourceAndSink(new ConnectorFactoryContext(
             Map.of("name", sinkPath.getLast().getDisplay())));
-        return Optional.of(initializeSink(sourceAndSink, sinkPath, Optional.empty()));
+        return Optional.of(TableSinkImpl.create(sourceAndSink, sinkPath, Optional.empty()));
       }
 
     //Attempt to load and convert a table sink

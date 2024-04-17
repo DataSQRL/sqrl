@@ -24,22 +24,11 @@ public class KafkaTopic implements Log {
 
   @Override
   public TableSource getSource() {
-    return initializeSource(logConfig, logName.toNamePath(), tableSchema.get());
+    return TableSource.create(logConfig, logName.toNamePath(), tableSchema.get());
   }
 
-  public TableSource initializeSource(TableConfig tableConfig, NamePath basePath, TableSchema schema) {
-//    getErrors().checkFatal(getBase().getType().isSource(), "Table is not a source: %s", name);
-    Name tableName = tableConfig.getName();
-    return new TableSource(tableConfig, basePath.concat(tableName), tableName, schema);
-  }
-
-  public TableSink initializeSink(TableConfig tableConfig, NamePath basePath, Optional<TableSchema> schema) {
-//    getErrors().checkFatal(getBase().getType().isSink(), "Table is not a sink: %s", name);
-    Name tableName = tableConfig.getName();
-    return new TableSinkImpl(tableConfig, basePath.concat(tableName), tableName, schema);
-  }
   @Override
   public TableSink getSink() {
-    return initializeSink(logConfig, logName.toNamePath(), tableSchema);
+    return TableSinkImpl.create(logConfig, logName.toNamePath(), tableSchema);
   }
 }

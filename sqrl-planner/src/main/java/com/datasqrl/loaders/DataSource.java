@@ -29,19 +29,7 @@ public class DataSource {
           tableConfig.getName());
       return Optional.empty();
     }
-    return Optional.of(initializeSource(tableConfig, basePath, tableSchema));
-  }
-
-  public TableSource initializeSource(TableConfig tableConfig, NamePath basePath, TableSchema schema) {
-//    getErrors().checkFatal(getBase().getType().isSource(), "Table is not a source: %s", name);
-    Name tableName = tableConfig.getName();
-    return new TableSource(tableConfig, basePath.concat(tableName), tableName, schema);
-  }
-
-  public TableSink initializeSink(TableConfig tableConfig, NamePath basePath, Optional<TableSchema> schema) {
-//    getErrors().checkFatal(getBase().getType().isSink(), "Table is not a sink: %s", name);
-    Name tableName = tableConfig.getName();
-    return new TableSinkImpl(tableConfig, basePath.concat(tableName), tableName, schema);
+    return Optional.of(TableSource.create(tableConfig, basePath, tableSchema));
   }
 
   public Optional<TableSink> readTableSink(Optional<TableSchema> schema, TableConfig tableConfig, NamePath basePath) {
@@ -49,6 +37,6 @@ public class DataSource {
       return Optional.empty();
     }
 
-    return Optional.of(initializeSink(tableConfig, basePath, schema));
+    return Optional.of(TableSinkImpl.create(tableConfig, basePath, schema));
   }
 }

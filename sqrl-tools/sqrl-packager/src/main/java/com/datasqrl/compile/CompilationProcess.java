@@ -72,7 +72,7 @@ public class CompilationProcess {
     } else {
       testPlan = null;
     }
-    writeDeploymentArtifactsHook.run(model, source, physicalPlan, dag);
+    writeDeploymentArtifactsHook.run(source, physicalPlan, dag);
     return Pair.of(physicalPlan, testPlan);
   }
 

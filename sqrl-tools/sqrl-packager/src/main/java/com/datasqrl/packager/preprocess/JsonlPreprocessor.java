@@ -1,5 +1,6 @@
 package com.datasqrl.packager.preprocess;
 
+import static com.datasqrl.actions.WriteDeploymentArtifacts.DATA_DIR;
 import static com.datasqrl.packager.LambdaUtil.rethrowCall;
 
 import com.datasqrl.error.ErrorCollector;
@@ -37,7 +38,7 @@ public class JsonlPreprocessor implements Preprocessor {
   @SneakyThrows
   @Override
   public void processFile(Path path, ProcessorContext processorContext, ErrorCollector errors) {
-    Path dataDir = processorContext.getBuildDir().resolve("data");
+    Path dataDir = processorContext.getBuildDir().resolve(DATA_DIR);
     Files.createDirectories(dataDir);
     Path data = dataDir.resolve(path.getFileName());
     Files.copy(path, data);

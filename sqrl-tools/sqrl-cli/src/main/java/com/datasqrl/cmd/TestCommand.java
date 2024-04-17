@@ -69,7 +69,7 @@ public class TestCommand extends AbstractCompilerCommand {
         environment.stop();
       }));
 
-      ContainerState testContainer = environment.getContainerByServiceName("test").get();
+      ContainerState testContainer = environment.getContainerByServiceName(EngineKeys.TEST).get();
 
       while (testContainer.isRunning()) {
         Thread.sleep(1000);

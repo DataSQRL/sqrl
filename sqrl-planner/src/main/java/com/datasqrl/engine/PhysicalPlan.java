@@ -3,6 +3,7 @@
  */
 package com.datasqrl.engine;
 
+import com.datasqrl.cmd.EngineKeys;
 import com.datasqrl.engine.database.DatabasePhysicalPlan;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.engine.database.relational.JDBCPhysicalPlan;
@@ -35,10 +36,10 @@ public class PhysicalPlan {
 
   public EnginePhysicalPlan get(String name) {
     switch (name.toLowerCase()) {
-      case "log": return getPlans(KafkaPhysicalPlan.class).findFirst().get();
-      case "database": return getPlans(JDBCPhysicalPlan.class).findFirst().get();
-      case "server": return getPlans(ServerPhysicalPlan.class).findFirst().get();
-      case "streams": return getPlans(FlinkStreamPhysicalPlan.class).findFirst().get();
+      case EngineKeys.LOG: return getPlans(KafkaPhysicalPlan.class).findFirst().get();
+      case EngineKeys.DATABASE: return getPlans(JDBCPhysicalPlan.class).findFirst().get();
+      case EngineKeys.SERVER: return getPlans(ServerPhysicalPlan.class).findFirst().get();
+      case EngineKeys.STREAMS: return getPlans(FlinkStreamPhysicalPlan.class).findFirst().get();
       default:
         throw new RuntimeException("Could not find plan");
     }

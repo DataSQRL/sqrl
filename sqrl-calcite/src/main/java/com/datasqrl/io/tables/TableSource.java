@@ -24,4 +24,10 @@ public class TableSource extends TableInput {
     super(configuration, path, name, Optional.ofNullable(schema));
     this.schema = schema;
   }
+
+  public static TableSource create(TableConfig tableConfig, NamePath basePath, TableSchema schema) {
+//    getErrors().checkFatal(getBase().getType().isSource(), "Table is not a source: %s", name);
+    Name tableName = tableConfig.getName();
+    return new TableSource(tableConfig, basePath.concat(tableName), tableName, schema);
+  }
 }

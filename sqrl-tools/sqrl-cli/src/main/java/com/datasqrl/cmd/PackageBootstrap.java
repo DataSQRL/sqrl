@@ -1,5 +1,6 @@
 package com.datasqrl.cmd;
 
+import static com.datasqrl.config.ConnectorFactoryFactory.PRINT_SINK_NAME;
 import static com.datasqrl.packager.Packager.*;
 import static com.datasqrl.util.NameUtil.namepath2Path;
 
@@ -196,7 +197,7 @@ public class PackageBootstrap {
     StandardLibraryLoader standardLibraryLoader = new StandardLibraryLoader();
     Set<NamePath> pkgs = new HashSet<>(allResults.getPkgs());
     pkgs.removeAll(standardLibraryLoader.loadedLibraries());
-    pkgs.remove(Name.system(ModuleLoaderImpl.PRINT_SINK_NAME).toNamePath());
+    pkgs.remove(Name.system(PRINT_SINK_NAME).toNamePath());
 
     Set<NamePath> unloadedDeps = new HashSet<>();
     for (NamePath packagePath : pkgs) {

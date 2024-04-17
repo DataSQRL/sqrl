@@ -3,6 +3,7 @@ package com.datasqrl.config;
 import static com.datasqrl.config.ConnectorConfigImpl.FORMAT_KEY;
 import static com.datasqrl.config.ConnectorConfigImpl.VALUE_FORMAT_KEY;
 
+import com.datasqrl.cmd.EngineKeys;
 import com.datasqrl.config.TableConfig.Format;
 import com.datasqrl.config.TableConfig.TableConfigBuilder;
 import com.datasqrl.util.ServiceLoaderDiscovery;
@@ -16,13 +17,13 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
 
   @Override
   public ConnectorFactory create(String engineId, PackageJson.EngineConfig engineConfig) {
-    if (engineId.equalsIgnoreCase("log")) {
+    if (engineId.equalsIgnoreCase(EngineKeys.LOG)) {
       return createKafkaConnectorFactory(engineConfig);
-    } else if (engineId.equalsIgnoreCase("database")) {
+    } else if (engineId.equalsIgnoreCase(EngineKeys.DATABASE)) {
       return createJdbcConnectorFactory(engineConfig);
-    } else if (engineId.equalsIgnoreCase("print")) {
+    } else if (engineId.equalsIgnoreCase(PRINT_SINK_NAME)) {
       return createPrintConnectorFactory(engineConfig);
-    } else if (engineId.equalsIgnoreCase("file")) {
+    } else if (engineId.equalsIgnoreCase(FILE_SINK_NAME)) {
       return createFileConnectorFactory(engineConfig);
     }
 
@@ -118,7 +119,7 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
         TableConfigBuilderImpl builder = TableConfigImpl.builder(
             (String) context.getMap().get("name"));
         builder.setType(ExternalDataType.sink);
-        builder.getConnectorConfig().setProperty("connector", "print");
+        builder.getConnectorConfig().setProperty("connector", PRINT_SINK_NAME);
         builder.getConnectorConfig().setProperty("print-identifier", (String) context.getMap().get("name"));
         return builder.build();
       }

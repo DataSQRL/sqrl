@@ -153,14 +153,20 @@ public class GraphqlModelGenerator extends SchemaWalker {
   protected void visitQuery(ObjectTypeDefinition parentType, ObjectTypeDefinition toType,
       FieldDefinition field, NamePath path, Optional<RelDataType> parentRel,
       List<SqrlTableMacro> functions) {
-    ArgumentLookupCoords.ArgumentLookupCoordsBuilder coordsBuilder = ArgumentLookupCoords.builder()
-        .parentType(parentType.getName()).fieldName(field.getName());
 
-    List<Entry<IdentifiedQuery, QueryTemplate>> collect = databaseQueries.entrySet().stream()
+    List<Entry<IdentifiedQuery, QueryTemplate>> queries = databaseQueries.entrySet().stream()
         .filter(f -> ((APIQuery) f.getKey()).getNamePath().equals(path))
         .collect(Collectors.toList());
 
-    for (Entry<IdentifiedQuery, QueryTemplate> entry : collect) {
+    // No queries: use a property fetcher
+    if (queries.isEmpty()) {
+      return;
+    }
+
+    ArgumentLookupCoords.ArgumentLookupCoordsBuilder coordsBuilder = ArgumentLookupCoords.builder()
+        .parentType(parentType.getName()).fieldName(field.getName());
+
+    for (Entry<IdentifiedQuery, QueryTemplate> entry : queries) {
       JdbcQuery queryBase;
       APIQuery query = (APIQuery) entry.getKey();
 
@@ -180,11 +186,11 @@ public class GraphqlModelGenerator extends SchemaWalker {
       coordsBuilder.match(set);
     }
 
-    ArgumentLookupCoords build = coordsBuilder.build();
-    Set<Set<Argument>> matches = build.getMatchs().stream().map(ArgumentSet::getArguments)
+    ArgumentLookupCoords coord = coordsBuilder.build();
+    Set<Set<Argument>> matches = coord.getMatchs().stream().map(ArgumentSet::getArguments)
         .collect(Collectors.toSet());
-    Preconditions.checkState(build.getMatchs().size() == matches.size());
+    Preconditions.checkState(coord.getMatchs().size() == matches.size());
 
-    coords.add(build);
+    coords.add(coord);
   }
 }

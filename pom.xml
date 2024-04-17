@@ -832,9 +832,7 @@
         <artifactId>maven-failsafe-plugin</artifactId>
         <version>3.2.5</version>
         <configuration>
-          <systemPropertyVariables>
-            <snapshots.update>${snapshots.update}</snapshots.update>
-          </systemPropertyVariables>
+          <!-- Only includes files that end with IT -->
           <includes>
             <include>**/*IT.java</include>
           </includes>
@@ -848,24 +846,6 @@
             </goals>
           </execution>
         </executions>
-      </plugin>
-      <plugin>
-        <groupId>com.mycila</groupId>
-        <artifactId>license-maven-plugin</artifactId>
-        <version>4.1</version>
-        <configuration>
-          <inlineHeader><![CDATA[
-Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.]]></inlineHeader>
-          <includes>
-            <include>**/*.java</include>
-          </includes>
-          <excludes>
-            <exclude>**/src/main/java/org/**</exclude>
-          </excludes>
-          <mapping>
-            <java>SLASHSTAR_STYLE</java>
-          </mapping>
-        </configuration>
       </plugin>
     </plugins>
   </build>

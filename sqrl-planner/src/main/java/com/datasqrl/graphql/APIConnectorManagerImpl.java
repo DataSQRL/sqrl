@@ -3,6 +3,7 @@ package com.datasqrl.graphql;
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.cmd.EngineKeys;
 import com.datasqrl.config.ConnectorFactoryContext;
 import com.datasqrl.config.ConnectorFactory.IConnectorFactoryContext;
 import com.datasqrl.config.ConnectorFactoryFactory;
@@ -150,7 +151,7 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
     Preconditions.checkArgument(Topic.isValid(topicName), "Not a valid topic name: %s", topicName);
     Name logName = Name.system(schema.getName());
 
-    TableConfig logConfig = connectorFactory.create("log", logEngine.get().getEngineConfig())
+    TableConfig logConfig = connectorFactory.create(EngineKeys.LOG, logEngine.get().getEngineConfig())
         .createSourceAndSink(createSinkContext(logName.getDisplay(), topicName, timestamp.getName(),
             timestamp.getType().name(), primaryKey));
     Optional<TableSchema> tblSchema = Optional.of(new RelDataTypeTableSchema(schema.getType()));

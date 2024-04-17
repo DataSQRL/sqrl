@@ -3,6 +3,7 @@
  */
 package com.datasqrl.config;
 
+import com.datasqrl.cmd.EngineKeys;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.IExecutionEngine;
 import com.datasqrl.engine.database.DatabaseEngine;
@@ -40,7 +41,7 @@ public class PipelineFactory {
   private Map<String, ExecutionEngine> getEngines(Optional<EngineFactory.Type> engineType) {
     Map<String, ExecutionEngine> engines = new HashMap<>();
     for (String engineId : pipeline) {
-      if (engineId.equalsIgnoreCase("test")) continue;
+      if (engineId.equalsIgnoreCase(EngineKeys.TEST)) continue;
       PackageJson.EngineConfig engineConfig = this.engineConfig.getEngineConfig(engineId);
       EngineFactory engineFactory = ServiceLoaderDiscovery.get(
           EngineFactory.class,

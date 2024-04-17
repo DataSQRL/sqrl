@@ -129,6 +129,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
   private final ArrayListMultimap<SqlNode, Function> isA = ArrayListMultimap.create();
   private final ArrayListMultimap<SqlNode, FunctionParameter> parameters = ArrayListMultimap.create();
 
+  private static final String TEST_HINT_NAME = "test";
   @Override
   public Void visit(SqrlImportDefinition node, Void context) {
     if (node.getImportPath().isStar() && node.getAlias().isPresent()) {
@@ -1007,6 +1008,6 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
 
   private boolean hasTestHint(Optional<SqlNodeList> optionalStmt) {
     return optionalStmt.isPresent() && optionalStmt.get().getList().stream()
-        .anyMatch(node -> node instanceof SqlHint && "test".equalsIgnoreCase(((SqlHint) node).getName()));
+        .anyMatch(node -> node instanceof SqlHint && TEST_HINT_NAME.equalsIgnoreCase(((SqlHint) node).getName()));
   }
 }

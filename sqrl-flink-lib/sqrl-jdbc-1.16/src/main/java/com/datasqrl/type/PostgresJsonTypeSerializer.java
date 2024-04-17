@@ -1,7 +1,6 @@
 package com.datasqrl.type;
 
 import com.datasqrl.json.FlinkJsonType;
-import java.nio.charset.StandardCharsets;
 import org.apache.flink.api.common.ExecutionConfig;
 import org.apache.flink.api.java.typeutils.runtime.kryo.KryoSerializer;
 import org.apache.flink.connector.jdbc.converter.AbstractJdbcRowConverter.JdbcDeserializationConverter;

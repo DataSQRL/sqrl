@@ -1,5 +1,7 @@
 package com.datasqrl.loaders;
 
+import static com.datasqrl.config.ConnectorFactoryFactory.PRINT_SINK_NAME;
+
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.TableConfigLoader;
@@ -17,7 +19,6 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor(onConstructor_=@Inject)
 public class ModuleLoaderImpl implements ModuleLoader {
 
-  public static final String PRINT_SINK_NAME = "print";
   final StandardLibraryLoader standardLibraryLoader = new StandardLibraryLoader();
   private final ResourceResolver resourceResolver;
   private final ErrorCollector errors;
