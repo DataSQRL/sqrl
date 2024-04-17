@@ -6,26 +6,30 @@ package com.datasqrl.cmd;
 import static picocli.CommandLine.Command;
 import static picocli.CommandLine.Parameters;
 
+import com.datasqrl.config.ConnectorFactoryFactoryImpl;
+import com.datasqrl.config.PackageJson.DiscoveryConfig;
+import com.datasqrl.config.PackageJson.EnginesConfig;
+import com.datasqrl.config.PackageJson;
+import com.datasqrl.config.TableConfig;
 import com.datasqrl.config.PipelineFactory;
-import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.discovery.DataDiscovery;
-import com.datasqrl.discovery.DataDiscoveryFactory;
 import com.datasqrl.discovery.MonitoringJobFactory;
 import com.datasqrl.discovery.MonitoringJobFactory.Job;
 import com.datasqrl.discovery.TableWriter;
+import com.datasqrl.discovery.flink.FlinkMonitoringJobFactory;
 import com.datasqrl.discovery.system.DataSystemDiscovery;
-import com.datasqrl.engine.database.relational.JDBCEngineFactory;
-import com.datasqrl.engine.server.GenericJavaServerEngineFactory;
-import com.datasqrl.engine.server.VertxEngineFactory;
-import com.datasqrl.engine.stream.flink.FlinkEngineFactory;
+import com.datasqrl.engine.database.DatabaseEngine;
+import com.datasqrl.engine.database.relational.JDBCEngine;
+import com.datasqrl.engine.stream.StreamEngine;
+import com.datasqrl.engine.stream.flink.AbstractFlinkStreamEngine;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.FileConfigOptions;
-import com.datasqrl.engine.database.relational.JdbcDataSystemConnector;
-import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableSource;
+import com.datasqrl.metadata.JdbcMetadataEngine;
+import com.datasqrl.metadata.MetadataStoreProvider;
 import com.datasqrl.packager.Packager;
+import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
 import java.io.IOException;
@@ -35,6 +39,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import lombok.NonNull;
 import lombok.SneakyThrows;
 import picocli.CommandLine;
 
@@ -67,7 +72,7 @@ public class DiscoverCommand extends AbstractCommand {
     String dataSystemType;
     if (Strings.isNullOrEmpty(systemType)) {
       //try to infer from the provided argument
-      dataSystemType = DataDiscoveryFactory.inferDataSystemFromArgument(systemConfig).orElse(null);
+      dataSystemType = inferDataSystemFromArgument(systemConfig).orElse(null);
     } else {
       dataSystemType = systemType;
     }
@@ -76,11 +81,11 @@ public class DiscoverCommand extends AbstractCommand {
     errors.checkFatal(systemDiscovery.isPresent(), "Could not find data system [%s]. Available options are: %s", dataSystemType, DataSystemDiscovery.getAvailable());
 
     //check package json, or use embedded config
-    SqrlConfig config = Packager.findPackageFile(root.rootDir, this.root.packageFiles)
-        .map(p -> SqrlConfigCommons.fromFiles(errors, p))
+    PackageJson config = Packager.findPackageFile(root.rootDir, this.root.packageFiles)
+        .map(p -> SqrlConfigCommons.fromFilesPackageJson(errors, p))
         .orElseGet(() -> createEmbeddedConfig(errors));
 
-    DataDiscovery discovery = DataDiscoveryFactory.fromConfig(config, errors);
+    DataDiscovery discovery = fromConfig(config, errors);
 
     //Setup output directory to write to
     if (outputDir == null) {
@@ -89,7 +94,8 @@ public class DiscoverCommand extends AbstractCommand {
     Files.createDirectories(outputDir);
 
     //First, discover tables
-    Collection<TableConfig> discoveredTables = systemDiscovery.get().discoverTables(discovery.getConfiguration(), systemConfig);
+    Collection<TableConfig> discoveredTables = systemDiscovery.get().discoverTables(discovery.getConfiguration(), systemConfig,
+        new ConnectorFactoryFactoryImpl());
 
     errors.checkFatal(discoveredTables!=null && !discoveredTables.isEmpty(),"Did not discover any tables");
     MonitoringJobFactory.Job monitorJob = discovery.monitorTables(discoveredTables);
@@ -139,37 +145,72 @@ public class DiscoverCommand extends AbstractCommand {
       writeOutput.run();
     }
   }
-
-  private void applyConnectorOverrides(SqrlConfig connectorConfig) {
-    connectorConfig.setProperty(FileConfigOptions.MONITOR_INTERVAL_MS, "0");
-  }
+//
+//  private void applyConnectorOverrides(SqrlConfig connectorConfig) {
+//    connectorConfig.setProperty(FileConfigOptions.MONITOR_INTERVAL_MS, "0");
+//  }
 
   @SneakyThrows
-  public SqrlConfig createEmbeddedConfig(ErrorCollector errors) {
-    SqrlConfig rootConfig = SqrlConfig.createCurrentVersion(errors);
+  public PackageJson createEmbeddedConfig(ErrorCollector errors) {
+//    PackageJson rootConfig = PackageJson.createCurrentVersion(errors);
 
-    SqrlConfig config = rootConfig.getSubConfig(PipelineFactory.ENGINES_PROPERTY);
+    //todo
+//    SqrlConfig config = rootConfig.getSubConfig(PipelineFactory.ENGINES_PROPERTY);
+//
+//    SqrlConfig dbConfig = config.getSubConfig("database");
+//    dbConfig.setProperty(JDBCEngineFactory.ENGINE_NAME_KEY, JDBCEngineFactory.ENGINE_NAME);
+//    dbConfig.setProperties(JdbcDataSystemConnector.builder()
+//        .url("jdbc:h2:file:./h2.db")
+//        .driver("org.h2.Driver")
+//        .dialect("h2")
+//        .database("datasqrl")
+//        .build()
+//    );
+//
+//    SqrlConfig flinkConfig = config.getSubConfig(EngineKeys.STREAMS);
+//    flinkConfig.setProperty(FlinkEngineFactory.ENGINE_NAME_KEY, FlinkEngineFactory.ENGINE_NAME);
+//
+//    SqrlConfig server = config.getSubConfig(EngineKeys.SERVER);
+//    server.setProperty(GenericJavaServerEngineFactory.ENGINE_NAME_KEY,
+//        VertxEngineFactory.ENGINE_NAME);
 
-    SqrlConfig dbConfig = config.getSubConfig("database");
-    dbConfig.setProperty(JDBCEngineFactory.ENGINE_NAME_KEY, JDBCEngineFactory.ENGINE_NAME);
-    dbConfig.setProperties(JdbcDataSystemConnector.builder()
-        .url("jdbc:h2:file:./h2.db")
-        .driver("org.h2.Driver")
-        .dialect("h2")
-        .database("datasqrl")
-        .build()
-    );
-
-    SqrlConfig flinkConfig = config.getSubConfig(EngineKeys.STREAMS);
-    flinkConfig.setProperty(FlinkEngineFactory.ENGINE_NAME_KEY, FlinkEngineFactory.ENGINE_NAME);
-
-    SqrlConfig server = config.getSubConfig(EngineKeys.SERVER);
-    server.setProperty(GenericJavaServerEngineFactory.ENGINE_NAME_KEY,
-        VertxEngineFactory.ENGINE_NAME);
-
-    return rootConfig;
+//    return rootConfig;
+    return null;
   }
 
+  public static DataDiscovery fromConfig(@NonNull PackageJson config, ErrorCollector errors) {
+    EnginesConfig enginesConfig = config.getEngines();
+    PipelineFactory pipelineFactory = new PipelineFactory(config.getPipeline(), enginesConfig,
+        new ConnectorFactoryFactoryImpl());
+    DiscoveryConfig discoveryConfig = config.getDiscovery();
+    DataDiscovery discovery = new DataDiscovery(
+        discoveryConfig.getDataDiscoveryConfig(),
+        getJobFactory(pipelineFactory.getStreamEngine()),
+        getMetaDataStoreProvider(pipelineFactory.getDatabaseEngine()),
+        new ConnectorFactoryFactoryImpl());
+    return discovery;
+  }
 
+  public static MetadataStoreProvider getMetaDataStoreProvider(@NonNull DatabaseEngine databaseEngine) {
+    if (databaseEngine instanceof JDBCEngine) {
+      JdbcMetadataEngine metadataStore = new JdbcMetadataEngine();
+      return metadataStore.getMetadataStore(databaseEngine);
+    } else {
+      throw new RuntimeException("Unsupported engine type for meta data store: " + databaseEngine);
+    }
+  }
+
+  public static MonitoringJobFactory getJobFactory(@NonNull StreamEngine streamEngine) {
+    if (streamEngine instanceof AbstractFlinkStreamEngine) {
+      return new FlinkMonitoringJobFactory(((AbstractFlinkStreamEngine) streamEngine), new ConnectorFactoryFactoryImpl());
+    } else {
+      throw new RuntimeException("Unsupported engine type for monitoring: " + streamEngine);
+    }
+  }
+
+  public static Optional<String> inferDataSystemFromArgument(@NonNull String systemConfig) {
+    return ServiceLoaderDiscovery.getAll(DataSystemDiscovery.class).stream().filter(system -> system.matchesArgument(systemConfig))
+        .findFirst().map(DataSystemDiscovery::getType);
+  }
 
 }

@@ -2,6 +2,8 @@ package com.datasqrl.json;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import org.apache.flink.types.Row;
+import org.apache.flink.types.RowKind;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -9,6 +11,16 @@ import org.junit.jupiter.api.Test;
 class JsonFunctionsTest {
   @Nested
   class ToJsonTest {
+
+    @Test
+    void testUnicodeJson() {
+      Row row = Row.withNames();
+      row.setField("key", "”value”");
+      Row[] rows = new Row[]{row};
+      FlinkJsonType result = JsonFunctions.TO_JSON.eval(rows);
+      assertNotNull(result);
+      assertEquals("[{\"key\":\"”value”\"}]", result.getJson());
+    }
 
     @Test
     void testValidJson() {

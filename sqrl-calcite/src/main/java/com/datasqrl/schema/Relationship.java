@@ -27,6 +27,8 @@ public class Relationship implements SqrlTableMacro {
   private final List<FunctionParameter> parameters;
   private final Supplier<RelNode> viewTransform;
 
+  private final boolean isTest;
+
   @Override
   public RelDataType getRowType(RelDataTypeFactory relDataTypeFactory, List<Object> list) {
     return getRowType();

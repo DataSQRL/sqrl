@@ -4,34 +4,32 @@
 package com.datasqrl.discovery;
 
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.metadata.MetricStoreProvider;
-import com.datasqrl.metadata.TableStatisticsStore;
+import com.datasqrl.config.ConnectorFactoryFactory;
+import com.datasqrl.config.PackageJson.DataDiscoveryConfig;
+import com.datasqrl.config.TableConfig.Format;
+import com.datasqrl.config.TableConfig;
 import com.datasqrl.discovery.system.DataSystemDiscovery;
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.formats.Format;
-import com.datasqrl.metadata.stats.DefaultSchemaGenerator;
-import com.datasqrl.metadata.stats.SourceTableStatistics;
-import com.datasqrl.io.tables.TableConfig;
+import com.datasqrl.io.schema.flexible.FlexibleTableSchemaFactory;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.metadata.MetadataStoreProvider;
-import com.datasqrl.schema.input.FlexibleTableSchema;
-import com.datasqrl.io.schema.flexible.FlexibleTableSchemaFactory;
-import com.datasqrl.io.schema.flexible.FlexibleTableSchemaHolder;
-import com.datasqrl.schema.input.SchemaAdjustmentSettings;
+import com.datasqrl.metadata.MetricStoreProvider;
+import com.datasqrl.metadata.TableStatisticsStore;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
-import lombok.Value;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
-@Value
+@AllArgsConstructor
+@Getter
 public class DataDiscovery {
 
   DataDiscoveryConfig configuration;
   MonitoringJobFactory monitorFactory;
   MetadataStoreProvider metadataStore;
-  NamePath basePath = NamePath.ROOT;
+  ConnectorFactoryFactory connectorFactoryFactory;
+  final NamePath basePath = NamePath.ROOT;
 
 
   private TableStatisticsStore openStore() throws IOException {
@@ -52,24 +50,25 @@ public class DataDiscovery {
     List<TableSource> resultTables = new ArrayList<>();
     try (TableStatisticsStore store = openStore()) {
       for (TableConfig table : tables) {
-        if (table.getConnectorConfig().getFormat()
-            .filter(DataDiscovery::isFlexibleFormat).isEmpty()) continue;
-        SourceTableStatistics stats = store.getTableStatistics(NamePath.of(table.getName()));
-        if (stats == null) {
-          getConfiguration().getErrors().warn("Could not find data for table: %s", table.getName());
-          continue;
-        }
-        DefaultSchemaGenerator generator = new DefaultSchemaGenerator(SchemaAdjustmentSettings.DEFAULT);
-        Optional<FlexibleTableSchema> baseSchema = Optional.empty(); //TODO: allow users to configure base schemas
-        FlexibleTableSchema schema;
-        ErrorCollector subErrors = getConfiguration().getErrors().resolve(table.getName().getDisplay());
-        if (baseSchema.isEmpty()) {
-          schema = generator.mergeSchema(stats, table.getName(), subErrors);
-        } else {
-          schema = generator.mergeSchema(stats, baseSchema.get(), subErrors);
-        }
-        TableSource tblSource = table.initializeSource(basePath, new FlexibleTableSchemaHolder(schema));
-        resultTables.add(tblSource);
+//        if (table.getConnectorConfig().getFormat()
+//            .filter(DataDiscovery::isFlexibleFormat).isEmpty()) continue;
+//        SourceTableStatistics stats = store.getTableStatistics(NamePath.of(table.getName()));
+//        if (stats == null) {
+//          getConfiguration().getErrors().warn("Could not find data for table: %s", table.getName());
+//          continue;
+//        }
+//        DefaultSchemaGenerator generator = new DefaultSchemaGenerator(SchemaAdjustmentSettings.DEFAULT);
+//        Optional<FlexibleTableSchema> baseSchema = Optional.empty(); //TODO: allow users to configure base schemas
+//        FlexibleTableSchema schema;
+//        ErrorCollector subErrors = getConfiguration().getErrors().resolve(table.getName().getDisplay());
+//        if (baseSchema.isEmpty()) {
+//          schema = generator.mergeSchema(stats, table.getName(), subErrors);
+//        } else {
+//          schema = generator.mergeSchema(stats, baseSchema.get(), subErrors);
+//        }
+//        TableSource tblSource = table.initializeSource(basePath, new FlexibleTableSchemaHolder(schema));
+//        resultTables.add(tblSource);
+        throw new RuntimeException();
       }
     } catch (IOException e) {
       getConfiguration().getErrors().fatal("Could not read statistics from store");
@@ -83,7 +82,7 @@ public class DataDiscovery {
   }
 
   public List<TableSource> runFullDiscovery(DataSystemDiscovery systemDiscovery, String systemConfig) {
-    Collection<TableConfig> inputTables = systemDiscovery.discoverTables(configuration, systemConfig);
+    Collection<TableConfig> inputTables = systemDiscovery.discoverTables(configuration, systemConfig, connectorFactoryFactory);
     if (inputTables == null || inputTables.isEmpty()) {
       return List.of();
     }

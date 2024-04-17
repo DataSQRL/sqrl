@@ -28,10 +28,7 @@ public interface APIConnectorManager extends APIConnectorLookup {
 
   void addQuery(APIQuery query);
 
-  void updateModuleLoader(ModuleLoader moduleLoader);
-
   ModuleLoader getModuleLoader();
-
 
   List<APIQuery> getQueries();
 

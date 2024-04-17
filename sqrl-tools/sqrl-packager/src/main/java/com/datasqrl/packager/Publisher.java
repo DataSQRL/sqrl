@@ -1,12 +1,13 @@
 package com.datasqrl.packager;
 
-import com.datasqrl.config.SqrlConfig;
+import com.datasqrl.config.PackageConfiguration;
+import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.packager.config.PackageConfiguration;
 import com.datasqrl.packager.repository.PublishRepository;
 import com.datasqrl.packager.util.Zipper;
 import com.google.common.base.Preconditions;
+import java.util.List;
 import lombok.AllArgsConstructor;
 
 import java.io.IOException;
@@ -22,10 +23,10 @@ public class Publisher {
         Preconditions.checkArgument(Files.isDirectory(packageRoot));
         Path packageInfo = packageRoot.resolve(Packager.PACKAGE_JSON);
         errors.checkFatal(Files.isRegularFile(packageInfo),"Directory does not contain [%s] package configuration file", packageInfo);
-        SqrlConfig pkgConfig = SqrlConfigCommons.fromFiles(errors,packageInfo);
+        PackageJson pkgConfig = SqrlConfigCommons.fromFilesPackageJson(errors, List.of(packageInfo));
 
         try {
-            PackageConfiguration packageConfig = PackageConfiguration.fromRootConfig(pkgConfig);
+            PackageConfiguration packageConfig = pkgConfig.getPackageConfig();
             Path zipFile = Files.createTempFile(packageRoot, "package", Zipper.ZIP_EXTENSION);
             try {
                 Zipper.compress(zipFile, packageRoot);

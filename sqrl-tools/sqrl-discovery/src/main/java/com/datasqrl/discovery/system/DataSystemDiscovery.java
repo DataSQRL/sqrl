@@ -1,8 +1,8 @@
 package com.datasqrl.discovery.system;
 
-import com.datasqrl.discovery.DataDiscoveryConfig;
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.tables.TableConfig;
+import com.datasqrl.config.ConnectorFactoryFactory;
+import com.datasqrl.config.PackageJson.DataDiscoveryConfig;
+import com.datasqrl.config.TableConfig;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import java.util.Collection;
 import java.util.List;
@@ -18,7 +18,8 @@ public interface DataSystemDiscovery {
     return false;
   }
 
-  Collection<TableConfig> discoverTables(@NonNull DataDiscoveryConfig discoveryConfig, @NonNull String configFile);
+  Collection<TableConfig> discoverTables(@NonNull DataDiscoveryConfig discoveryConfig, @NonNull String configFile,
+      ConnectorFactoryFactory connectorFactoryFactory);
 
   static Optional<DataSystemDiscovery> load(String systemType) {
     return ServiceLoaderDiscovery.findFirst(DataSystemDiscovery.class, DataSystemDiscovery::getType, systemType);
@@ -28,6 +29,4 @@ public interface DataSystemDiscovery {
     return ServiceLoaderDiscovery.getAll(DataSystemDiscovery.class).stream()
         .map(DataSystemDiscovery::getType).collect(Collectors.toUnmodifiableList());
   }
-
-
 }

@@ -1,11 +1,11 @@
 package com.datasqrl.loaders;
 
+import static com.datasqrl.config.ConnectorFactoryFactory.PRINT_SINK_NAME;
+
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.config.SqrlConfig;
+import com.datasqrl.config.TableConfigLoader;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.engine.stream.flink.PrintFlinkDynamicSinkConnectorFactory;
-import com.datasqrl.io.StandardDynamicSinkFactory;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.module.SqrlModule;
 import com.datasqrl.module.resolver.ResourceResolver;
@@ -19,22 +19,16 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor(onConstructor_=@Inject)
 public class ModuleLoaderImpl implements ModuleLoader {
 
-  public static final String PRINT_SINK_NAME = "print";
   final StandardLibraryLoader standardLibraryLoader = new StandardLibraryLoader();
   private final ResourceResolver resourceResolver;
   private final ErrorCollector errors;
   private final CalciteTableFactory tableFactory;
-  private final SqrlFramework framework;
+  private final TableConfigLoader tableConfigFactory;
 
   @Override
   public Optional<SqrlModule> getModule(NamePath namePath) {
     // Load modules from standard library
     List<NamespaceObject> nsObjects = new ArrayList<>(loadFromStandardLibrary(namePath));
-
-    // Attempt to load flink sql
-    if (nsObjects.isEmpty()) {
-      nsObjects = new FlinkSqlLoader(framework, resourceResolver, tableFactory, this).load(namePath);
-    }
 
     // Load modules from file system
     if (nsObjects.isEmpty()) {
@@ -55,20 +49,22 @@ public class ModuleLoaderImpl implements ModuleLoader {
 
 
   private List<NamespaceObject> loadFromStandardLibrary(NamePath namePath) {
-    if (isPrintSink(namePath)) {
-      return List.of(new DynamicSinkNsObject(namePath, new StandardDynamicSinkFactory(new PrintFlinkDynamicSinkConnectorFactory(), SqrlConfig.createCurrentVersion())));
-    }
+//    if (isPrintSink(namePath)) { todo: read-add for 0.5
+//      return List.of(new DynamicSinkNsObject(namePath,
+//          new StandardDynamicSinkFactory(new PrintFlinkDynamicSinkConnectorFactory(),
+//          null)));
+//    }
 
     return standardLibraryLoader.load(namePath);
   }
 
   private List<NamespaceObject> loadFromFileSystem(NamePath namePath) {
-    return new ObjectLoaderImpl(resourceResolver, errors, tableFactory, this).load(namePath);
+    return new ObjectLoaderImpl(resourceResolver, errors, tableFactory, this, tableConfigFactory).load(namePath);
   }
 
   @Override
   public String toString() {
-    return new ObjectLoaderImpl(resourceResolver, errors, tableFactory, this).toString();
+    return new ObjectLoaderImpl(resourceResolver, errors, tableFactory, this, tableConfigFactory).toString();
   }
 
 }

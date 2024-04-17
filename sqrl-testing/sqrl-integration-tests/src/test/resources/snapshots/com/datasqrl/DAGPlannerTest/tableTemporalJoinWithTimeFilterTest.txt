@@ -42,7 +42,7 @@ Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
  - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
- - entries: RecordType(INTEGER NOT NULL _idx, BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+ - entries: RecordType(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
 Plan:
 LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[2]]]]) hints[WatermarkHint options:[2]]
 
@@ -97,15 +97,15 @@ Post Processors:
  - topN: partition=__pk1$customerid, category limit=1 sort=#3: _time TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
 Plan:
 LogicalProject(__pk1$customerid=[$1], category=[$2], num=[$3], _time=[$0])
-  LogicalAggregate(group=[{2, 4, 18}], num=[SUM($12)]) hints[SlidingAggregationHint options:[2, 86400000, 1728000]]
-    LogicalJoin(condition=[=($15, $11)], joinType=[inner]) hints[TemporalJoinHint options:[2]]
+  LogicalAggregate(group=[{2, 4, 17}], num=[SUM($11)]) hints[SlidingAggregationHint options:[2, 86400000, 1728000]]
+    LogicalJoin(condition=[=($14, $10)], joinType=[inner]) hints[TemporalJoinHint options:[2]]
       LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{3}])
         LogicalJoin(condition=[=($1, $4)], joinType=[inner]) hints[TemporalJoinHint options:[2]]
           LogicalTableScan(table=[[orders$2]])
           LogicalFilter(condition=[=($5, 1)]) hints[DedupHint]
             LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
               LogicalTableScan(table=[[customer$3]])
-        LogicalTableFunctionScan(invocation=[Orders.entries($cor0.entries)], rowType=[RecordType(INTEGER _idx, BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount)], elementType=[class [Ljava.lang.Object;])
+        LogicalTableFunctionScan(invocation=[Orders.entries($cor0.entries)], rowType=[RecordType(BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount)], elementType=[class [Ljava.lang.Object;])
       LogicalFilter(condition=[=($6, 1)]) hints[DedupHint]
         LogicalProject(productid=[$0], name=[$1], description=[$2], category=[$3], _ingest_time=[$4], _uuid=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
           LogicalTableScan(table=[[product$3]])
@@ -116,10 +116,14 @@ CREATE TABLE IF NOT EXISTS orders$2 ("id" BIGINT NOT NULL,"customerid" BIGINT NO
 CREATE TABLE IF NOT EXISTS product$3 ("productid" BIGINT NOT NULL,"name" TEXT NOT NULL,"description" TEXT NOT NULL,"category" TEXT NOT NULL,"_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL,"_uuid" TEXT NOT NULL , PRIMARY KEY ("productid"));
 CREATE TABLE IF NOT EXISTS totals$1 ("__pk1$customerid" BIGINT NOT NULL,"category" TEXT NOT NULL,"num" BIGINT NOT NULL,"_time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("__pk1$customerid","category"));
 CREATE INDEX IF NOT EXISTS orders$2_hash_c2 ON orders$2 USING hash ("time");
+
 >>>flink-plan.sql
+
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptostring` AS 'com.datasqrl.time.TimestampToString' LANGUAGE JAVA;
 
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofmonth` AS 'com.datasqrl.time.EndOfMonth' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `tojson` AS 'com.datasqrl.json.ToJson' LANGUAGE JAVA;
 
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofweek` AS 'com.datasqrl.time.EndOfWeek' LANGUAGE JAVA;
 
@@ -149,7 +153,7 @@ CREATE TEMPORARY TABLE `orders$1` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` ROW(`_idx` INTEGER NOT NULL, `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
+  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
   PRIMARY KEY (`id`, `time`) NOT ENFORCED,
   WATERMARK FOR `time` AS (`time` - INTERVAL '0.001' SECOND)
 ) WITH (
@@ -205,23 +209,23 @@ CREATE TEMPORARY TABLE `customer$3` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'customer$3',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `orders$2` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` ROW(`_idx` INTEGER NOT NULL, `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
+  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
   'password' = 'postgres',
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'orders$2',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `product$3` (
@@ -237,8 +241,8 @@ CREATE TEMPORARY TABLE `product$3` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'product$3',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `totals$1` (
@@ -252,8 +256,8 @@ CREATE TEMPORARY TABLE `totals$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'totals$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE VIEW `table$1`
@@ -286,7 +290,7 @@ INSERT INTO `customer$3`
 FROM `customer$1`)
 ;
 INSERT INTO `orders$2`
-(SELECT *
+(SELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`
 FROM `orders$1`)
 ;
 INSERT INTO `product$3`
@@ -299,3 +303,5 @@ FROM TABLE(HOP((TABLE `table$3`), (DESCRIPTOR(`time`)), INTERVAL '1728' SECOND(7
 GROUP BY `customerid0`, `category`, `window_start`, `window_end`, `window_time`)
 ;
 END;
+
+

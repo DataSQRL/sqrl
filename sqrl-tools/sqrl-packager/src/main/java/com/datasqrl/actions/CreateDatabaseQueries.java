@@ -1,19 +1,12 @@
 package com.datasqrl.actions;
 
 import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.engine.ExecutionEngine.Type;
+import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
-import com.datasqrl.function.SqrlFunctionParameter;
-import com.datasqrl.graphql.APIConnectorManager;
-import com.datasqrl.graphql.server.Model.ArgumentParameter;
 import com.datasqrl.plan.queries.APIQuery;
-import com.datasqrl.schema.NestedRelationship;
 import com.datasqrl.sql.DatabaseQueryFactory;
 import com.google.inject.Inject;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor(onConstructor_=@Inject)

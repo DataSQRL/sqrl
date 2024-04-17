@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.graphql.generate.GraphqlSchemaFactory;
+import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.SnapshotTest.Snapshot;
 import graphql.schema.GraphQLSchema;
@@ -42,7 +43,7 @@ class SchemaInferenceErrorsTest extends AbstractSchemaInferenceModelTest {
   @Test
   public void generateSchemaTest() {
     GraphQLSchema gqlSchema = injector.getInstance(GraphqlSchemaFactory.class)
-        .generate();
+        .generate(ExecutionGoal.COMPILE);
 
     if (errors.hasErrors()) {
       fail("Exception thrown");

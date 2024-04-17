@@ -1,14 +1,14 @@
 package com.datasqrl.discovery.system;
 
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.discovery.DataDiscoveryConfig;
-import com.datasqrl.discovery.TablePattern;
+import com.datasqrl.config.TableConfig.Format;
+import com.datasqrl.config.ConnectorFactoryFactory;
+import com.datasqrl.config.PackageJson.DataDiscoveryConfig;
+import com.datasqrl.config.TablePattern;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.formats.Format;
 import com.datasqrl.io.file.FilePath;
 import com.datasqrl.io.file.FilePath.NameComponents;
-import com.datasqrl.io.tables.ConnectorFactory;
-import com.datasqrl.io.tables.TableConfig;
+import com.datasqrl.config.TableConfig;
 import com.google.auto.service.AutoService;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -30,7 +30,7 @@ public class FileSystemDiscovery implements DataSystemDiscovery {
 
   public static final String TYPE = "filesystem";
 
-  private final FileTableConfigFactory tableConfigFactory = new FileTableConfigFactory();
+//  private final FileTableConfigFactory tableConfigFactory = new FileTableConfigFactory();
 
   @Override
   public String getType() {
@@ -50,7 +50,7 @@ public class FileSystemDiscovery implements DataSystemDiscovery {
 
   @Override
   public Collection<TableConfig> discoverTables(@NonNull DataDiscoveryConfig discoveryConfig, @NonNull
-      String configFile) {
+      String configFile, ConnectorFactoryFactory connectorFactoryFactory) {
     FilePath path;
     if (matchesArgument(configFile)) {
       path = FilePath.fromJavaPath(Path.of(configFile));
@@ -59,8 +59,8 @@ public class FileSystemDiscovery implements DataSystemDiscovery {
     }
     FilePathConfig pathConfig = FilePathConfig.ofDirectory(path);
 
-    TableFinder tblFinder = new TableFinder(path, discoveryConfig.getErrors(),
-        discoveryConfig.getTablePattern(DEFAULT_TABLE_PATTERN), discoveryConfig.getConnectorFactory());
+    TableFinder tblFinder = new TableFinder(path, ErrorCollector.root()/*discoveryConfig.getErrors()*/,
+        discoveryConfig.getTablePattern(DEFAULT_TABLE_PATTERN), connectorFactoryFactory);
     tblFinder.gatherTables(pathConfig);
     return tblFinder.getTablesByName().values();
   }
@@ -72,7 +72,7 @@ public class FileSystemDiscovery implements DataSystemDiscovery {
     FilePath basePath;
     ErrorCollector errors;
     TablePattern tablePattern;
-    ConnectorFactory connectorFactory;
+    ConnectorFactoryFactory connectorFactory;
     Map<Name, TableConfig> tablesByName = new HashMap<>();
 
     private void gatherTables(FilePathConfig pathConfig) {
@@ -93,10 +93,15 @@ public class FileSystemDiscovery implements DataSystemDiscovery {
                 continue;
               }
 
-              TableConfig.Builder builder = tableConfigFactory.forDiscovery(tblName, basePath,
-                  tablePattern.substitute(tblName.getDisplay(), Optional.of("/"), Optional.of(
-                      components.getSuffix())) , format.get());
-              TableConfig table = builder.build();
+              if (true) {
+                throw new RuntimeException("todo engineconfig for file connector");
+              }
+              TableConfig table = connectorFactory.create("file", null)
+                  .createSourceAndSink(null);
+//                  .forDiscovery(tblName, basePath,
+//                  tablePattern.substitute(tblName.getDisplay(), Optional.of("/"), Optional.of(
+//                      components.getSuffix())) , format.get());
+//              ITableConfig table = builder.build();
 
               TableConfig otherTbl = tablesByName.get(tblName);
               if (otherTbl == null) {

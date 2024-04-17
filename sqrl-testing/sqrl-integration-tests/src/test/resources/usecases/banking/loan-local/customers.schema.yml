@@ -31,7 +31,7 @@ columns:
   type: "STRING"
   tests:
   - "not_null"
-- name: "updated_on"
+- name: "updated_at"
   type: "TIMESTAMP"
   tests:
   - "not_null"

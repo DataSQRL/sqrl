@@ -1,7 +1,6 @@
 package com.datasqrl.packager.repository;
 
-import com.datasqrl.packager.config.Dependency;
-import java.util.regex.Pattern;
+import com.datasqrl.config.Dependency;
 import lombok.AllArgsConstructor;
 
 import java.io.IOException;

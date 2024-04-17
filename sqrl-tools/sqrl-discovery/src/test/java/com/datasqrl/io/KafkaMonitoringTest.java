@@ -5,7 +5,7 @@
 //import com.datasqrl.IntegrationTestSettings;
 //import com.datasqrl.cmd.AssertStatusHook;
 //import com.datasqrl.cmd.RootCommand;
-//import com.datasqrl.io.tables.TableConfig;
+//import com.datasqrl.config.TableConfig;
 //import com.datasqrl.util.FileTestUtil;
 //import com.datasqrl.util.FileUtil;
 //import com.datasqrl.util.SnapshotTest;

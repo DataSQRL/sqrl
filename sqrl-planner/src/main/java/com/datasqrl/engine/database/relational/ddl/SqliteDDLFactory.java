@@ -3,8 +3,8 @@
  */
 package com.datasqrl.engine.database.relational.ddl;
 
+import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.engine.database.relational.ddl.statements.CreateTableDDL;
-import com.datasqrl.engine.database.relational.JdbcDialect;
 import com.datasqrl.sql.SqlDDLStatement;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.plan.global.IndexDefinition;

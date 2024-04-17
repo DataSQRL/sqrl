@@ -1,6 +1,6 @@
 package com.datasqrl.packager.repository;
 
-import com.datasqrl.packager.config.PackageConfiguration;
+import com.datasqrl.config.PackageConfiguration;
 import java.nio.file.Path;
 
 public interface PublishRepository {

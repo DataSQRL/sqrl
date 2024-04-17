@@ -1,24 +1,16 @@
 package com.datasqrl.actions;
 
 import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.engine.ExecutionEngine.Type;
+import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.graphql.APIConnectorManager;
-import com.datasqrl.graphql.ScriptFiles;
 import com.datasqrl.graphql.inference.GraphqlModelGenerator;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.server.Model.StringSchema;
-import com.datasqrl.module.resolver.ResourceResolver;
-import com.datasqrl.packager.config.ScriptConfiguration;
 import com.datasqrl.plan.queries.APISource;
-import com.datasqrl.plan.queries.APISourceImpl;
 import com.google.inject.Inject;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 
@@ -27,9 +19,7 @@ public class GraphqlPostplanHook {
 
   private final ExecutionPipeline pipeline;
   private final SqrlFramework framework;
-  private final ResourceResolver resourceResolver;
   private final APIConnectorManager apiManager;
-  private final ScriptFiles scriptFiles;
 
   public Optional<RootGraphqlModel> run(Optional<APISource> source, PhysicalPlan physicalPlan) {
     if (pipeline.getStage(Type.SERVER).isEmpty()) {

@@ -1,5 +1,6 @@
 query {
-Recommendation(url: "mascot_books/a_time_of_gifts") {
+  Recommendation(url: "mascot_books/a_time_of_gifts") {
     rec
     frequency
-}}
+  }
+}

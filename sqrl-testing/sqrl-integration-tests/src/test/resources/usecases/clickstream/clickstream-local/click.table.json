@@ -1,11 +1,10 @@
 {
   "version": 1,
   "flink" : {
-    "format" : "csv",
-    "path" : "/mnt/build/data",
-    "source.monitor-interval" : 0,
-    "connector" : "filesystem",
-    "source.path.regex-pattern" : "to be determined"
+    "format" : "flexible-json",
+    "path" : "/data/click.jsonl",
+    "source.monitor-interval" : 1,
+    "connector" : "filesystem"
   },
   "table" : {
     "type" : "source",

@@ -45,7 +45,7 @@ type Customers {
   phone: String!
   address: String!
   date_of_birth: String!
-  updated_on: String!
+  updated_at: String!
   applications(limit: Int = 20, offset: Int = 0): [Applications!]
   overview: [overview!]
 }
@@ -68,6 +68,7 @@ type Query {
   Customers(id: Int!): [Customers!]
   LoanTypes(id: Int): [LoanTypes!]
   ApplicationAlert: [ApplicationAlert!]
+  ApplicationUpdates: [ApplicationUpdates!]
 }
 
 type overview {
@@ -91,6 +92,6 @@ input ApplicationUpdateEvent {
 }
 
 type ApplicationUpdateEventResult {
-  _uuid: String!
   loan_application_id: Int!
+  message: String!
 }

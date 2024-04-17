@@ -13,6 +13,5 @@
     <module>sqrl-integration-tests</module>
     <module>sqrl-flink-1.16</module>
     <module>sqrl-flink-1.17</module>
-    <module>sqrl-flink-1.18</module>
   </modules>
 </project>

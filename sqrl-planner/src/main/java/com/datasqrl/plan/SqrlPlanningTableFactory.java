@@ -46,7 +46,7 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
   public void createTable(ModuleLoader moduleLoader, List<String> path, RelNode input, List<RelHint> hints,
       Optional<SqlNodeList> opHints,
       List<FunctionParameter> parameters, List<Function> isA, boolean materializeSelf,
-      Optional<Supplier<RelNode>> relNodeSupplier, ErrorCollector errors) {
+      Optional<Supplier<RelNode>> relNodeSupplier, ErrorCollector errors, boolean isTest) {
     LPAnalysis analyzedLP = convertToVanillaSQL(
         input, framework.getQueryPlanner().getRelBuilder(),
         opHints, errors);
@@ -64,7 +64,7 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
     SqrlTableNamespaceObject nsObj = new SqrlTableNamespaceObject(names.getLast(),
         table,
         tableFactory, null, parameters, isA, materializeSelf, parameters, relNodeSupplier,
-        moduleLoader);
+        moduleLoader, isTest);
 
     nsObj.apply(Optional.empty(), framework, errors);
   }

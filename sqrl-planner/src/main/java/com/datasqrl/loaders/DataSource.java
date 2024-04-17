@@ -3,6 +3,8 @@
  */
 package com.datasqrl.loaders;
 
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.config.TableConfig;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.*;
 import com.datasqrl.canonicalizer.NamePath;
@@ -27,7 +29,7 @@ public class DataSource {
           tableConfig.getName());
       return Optional.empty();
     }
-    return Optional.of(tableConfig.initializeSource(basePath, tableSchema));
+    return Optional.of(TableSource.create(tableConfig, basePath, tableSchema));
   }
 
   public Optional<TableSink> readTableSink(Optional<TableSchema> schema, TableConfig tableConfig, NamePath basePath) {
@@ -35,6 +37,6 @@ public class DataSource {
       return Optional.empty();
     }
 
-    return Optional.of(tableConfig.initializeSink(basePath, schema));
+    return Optional.of(TableSinkImpl.create(tableConfig, basePath, schema));
   }
 }

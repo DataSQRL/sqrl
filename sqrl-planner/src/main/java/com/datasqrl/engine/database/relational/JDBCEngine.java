@@ -5,28 +5,33 @@ package com.datasqrl.engine.database.relational;
 
 import static com.datasqrl.engine.EngineFeature.STANDARD_DATABASE;
 
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
-import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
-import com.datasqrl.sql.PgExtension;
 import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.config.SqrlConfig;
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.config.EngineFactory.Type;
+import com.datasqrl.config.ConnectorFactory;
+import com.datasqrl.config.PackageJson.EngineConfig;
+import com.datasqrl.config.TableConfig;
+import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.database.QueryTemplate;
-import com.datasqrl.sql.SqlDDLStatement;
 import com.datasqrl.engine.database.relational.ddl.JdbcDDLFactory;
 import com.datasqrl.engine.database.relational.ddl.JdbcDDLServiceLoader;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.ExternalDataType;
-import com.datasqrl.io.tables.TableConfig;
+import com.datasqrl.function.DowncastFunction;
+import com.datasqrl.functions.json.JsonDowncastFunction;
+import com.datasqrl.functions.json.RowToJsonDowncastFunction;
 import com.datasqrl.plan.global.IndexSelectorConfig;
 import com.datasqrl.plan.global.PhysicalDAGPlan.DatabaseStagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.ReadQuery;
+import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
+import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
 import com.datasqrl.plan.queries.IdentifiedQuery;
+import com.datasqrl.sql.PgExtension;
+import com.datasqrl.sql.SqlDDLStatement;
 import com.datasqrl.type.JdbcTypeSerializer;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.FunctionUtil;
@@ -34,13 +39,20 @@ import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.rel.type.RelRecordType;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
@@ -59,18 +71,15 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
 //    CAPABILITIES_BY_DIALECT.put(Dialect.H2, EnumSet.of(NOW, GLOBAL_SORT, MULTI_RANK));
 //  }
 
-  final SqrlConfig connectorConfig;
-
   @Getter
-  final JdbcDataSystemConnector connector;
+  final EngineConfig connectorConfig;
 
-  final JdbcConnectorFactory connectorFactory = JdbcFlinkConnectorFactory.INSTANCE;
+  private final ConnectorFactory connectorFactory;
 
-  public JDBCEngine(@NonNull SqrlConfig connectorConfig) {
+  public JDBCEngine(@NonNull EngineConfig connectorConfig, ConnectorFactory connectorFactory) {
     super(JDBCEngineFactory.ENGINE_NAME, Type.DATABASE, STANDARD_DATABASE);
-//        CAPABILITIES_BY_DIALECT.get(configuration.getDialect()));
     this.connectorConfig = connectorConfig;
-    this.connector = JdbcDataSystemConnector.fromFlinkConnector(connectorConfig);
+    this.connectorFactory = connectorFactory;
   }
 
   @Override
@@ -82,16 +91,17 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
 
 
   @Override
-  public TableConfig getSinkConfig(String sinkName) {
-    TableConfig.Builder tblBuilder = TableConfig.builder(sinkName)
-        .setType(ExternalDataType.sink);
-    tblBuilder.copyConnectorConfig(connectorFactory.fromBaseConfig(connectorConfig, sinkName));
-    return tblBuilder.build();
+  public TableConfig getSinkConfig(String tableName) {
+    return connectorFactory.createSourceAndSink(() -> Map.of("table-name", tableName));
   }
 
   @Override
   public IndexSelectorConfig getIndexSelectorConfig() {
-    return IndexSelectorConfigByDialect.of(connector.getDialect());
+    return IndexSelectorConfigByDialect.of(getDialect());
+  }
+
+  private JdbcDialect getDialect() {
+    return JdbcDialect.Postgres;
   }
 
   @Override
@@ -101,7 +111,7 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
     Preconditions.checkArgument(plan instanceof DatabaseStagePlan);
     DatabaseStagePlan dbPlan = (DatabaseStagePlan) plan;
     JdbcDDLFactory factory =
-        (new JdbcDDLServiceLoader()).load(connector.getDialect())
+        (new JdbcDDLServiceLoader()).load(getDialect())
             .orElseThrow(() -> new RuntimeException("Could not find DDL factory"));
 
     List<SqlDDLStatement> ddlStatements = StreamUtil.filterByClass(inputs,
@@ -166,17 +176,52 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
   }
 
   @Override
-  public boolean supportsType(java.lang.reflect.Type type) {
-    JdbcTypeSerializer jdbcTypeSerializer = ServiceLoaderDiscovery.get(JdbcTypeSerializer.class,
-        (Function<JdbcTypeSerializer, String>) JdbcTypeSerializer::getDialectId,
-        connector.getDialect().getId(),
-        (Function<JdbcTypeSerializer, String>) jdbcTypeSerializer1 -> jdbcTypeSerializer1.getConversionClass().getTypeName(),
-        type.getTypeName());
+  public Optional<DowncastFunction> getDowncastFunction(RelDataType type) {
+    if (type instanceof RawRelDataType) {
+      Class<?> defaultConversion = ((RawRelDataType) type).getRawType().getDefaultConversion();
 
-    if (jdbcTypeSerializer != null) {
-      return true;
+      JdbcTypeSerializer jdbcTypeSerializer = ServiceLoaderDiscovery.get(JdbcTypeSerializer.class,
+          (Function<JdbcTypeSerializer, String>) JdbcTypeSerializer::getDialectId,
+          getDialect().getId(),
+          (Function<JdbcTypeSerializer, String>) jdbcTypeSerializer1 -> jdbcTypeSerializer1.getConversionClass()
+              .getTypeName(),
+          defaultConversion.getTypeName());
+
+      if (jdbcTypeSerializer != null) {
+        return Optional.empty();
+      } else {
+        return Optional.of(new RowToJsonDowncastFunction()); //try to downcast any raw to json
+      }
+    } else if (type instanceof RelRecordType) { //type is array of rows or rows
+      return Optional.of(new RowToJsonDowncastFunction());
+    } else if (type.getComponentType() != null && !isScalar(type.getComponentType())) { //allow primitive 1d arrays
+      return Optional.of(new RowToJsonDowncastFunction());
     }
 
-    return super.supportsType(type);
+    return super.getDowncastFunction(type);
+  }
+
+  private boolean isScalar(RelDataType componentType) {
+    switch (componentType.getSqlTypeName()) {
+      case BOOLEAN:
+      case TINYINT:
+      case SMALLINT:
+      case INTEGER:
+      case BIGINT:
+      case FLOAT:
+      case DOUBLE:
+      case CHAR:
+      case VARCHAR:
+      case BINARY:
+      case VARBINARY:
+      case DATE:
+      case TIMESTAMP:
+      case TIME_WITH_LOCAL_TIME_ZONE:
+      case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
+      case DECIMAL:
+        return true;
+      default:
+        return false;
+    }
   }
 }

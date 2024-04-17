@@ -46,10 +46,6 @@ public class FlexibleSchemaValidator implements SchemaValidator, Serializable {
     this.typeMatcher = typeMatcher;
   }
 
-//  public FunctionWithError<SourceRecord.Raw, SourceRecord.Named> getFunction() {
-//    return new Function(this);
-//  }
-
   public SourceRecord.Named verifyAndAdjust(SourceRecord.Raw record, ErrorCollector errors) {
     //verify meta data
     errors.checkFatal(record.hasUUID(),"Input record does not have UUID");

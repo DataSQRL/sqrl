@@ -150,7 +150,11 @@
         <artifactId>sqrl-planner</artifactId>
         <version>${project.version}</version>
       </dependency>
-
+      <dependency>
+        <groupId>run.sqrl</groupId>
+        <artifactId>sqrl-config</artifactId>
+        <version>${project.version}</version>
+      </dependency>
       <dependency>
         <groupId>run.sqrl</groupId>
         <artifactId>sqrl-json</artifactId>
@@ -820,28 +824,28 @@
           <includes>
             <include>**/*Test.java</include>
             <include>**/*Test*.java</include>
-            <include>**/*IT.java</include>
-            <include>**/*IT*.java</include>
           </includes>
         </configuration>
       </plugin>
       <plugin>
-        <groupId>com.mycila</groupId>
-        <artifactId>license-maven-plugin</artifactId>
-        <version>4.1</version>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>3.2.5</version>
         <configuration>
-          <inlineHeader><![CDATA[
-Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.]]></inlineHeader>
+          <!-- Only includes files that end with IT -->
           <includes>
-            <include>**/*.java</include>
+            <include>**/*IT.java</include>
           </includes>
-          <excludes>
-            <exclude>**/src/main/java/org/**</exclude>
-          </excludes>
-          <mapping>
-            <java>SLASHSTAR_STYLE</java>
-          </mapping>
         </configuration>
+        <executions>
+          <execution>
+            <id>integration-test</id>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>

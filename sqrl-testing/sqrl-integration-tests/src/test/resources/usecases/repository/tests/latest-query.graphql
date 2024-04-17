@@ -1,5 +1,5 @@
 {
-Package(name: "datasqrl.seedshop") {
+  Package(name: "datasqrl.seedshop") {
     latest {
         version
         variant
@@ -8,4 +8,5 @@ Package(name: "datasqrl.seedshop") {
         hash
         submissionTime
     }
-}}
+  }
+}

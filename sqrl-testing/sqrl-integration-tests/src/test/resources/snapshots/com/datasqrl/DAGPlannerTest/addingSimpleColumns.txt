@@ -4,7 +4,7 @@ ID:     orderentry$1
 Type:   stream
 Stage:  streams
 Inputs: orders$2
-Primary Key: _id, time, _idx
+Primary Key: _id, time, productid
 Timestamp  : time
 Schema:
  - col1: BIGINT NOT NULL
@@ -12,12 +12,11 @@ Schema:
  - productid: BIGINT NOT NULL
  - discount: DOUBLE
  - _id: BIGINT NOT NULL
- - _idx: INTEGER NOT NULL
 Plan:
-LogicalProject(col1=[$4], time=[$2], productid=[$6], discount=[$9], _id=[$0], _idx=[$5])
+LogicalProject(col1=[$4], time=[$2], productid=[$5], discount=[$8], _id=[$0])
   LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{3}])
     LogicalTableScan(table=[[orders$2]])
-    LogicalTableFunctionScan(invocation=[Orders.entries($cor0.entries)], rowType=[RecordType(INTEGER _idx, BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount)], elementType=[class [Ljava.lang.Object;])
+    LogicalTableFunctionScan(invocation=[Orders.entries($cor0.entries)], rowType=[RecordType(BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount)], elementType=[class [Ljava.lang.Object;])
 
 === Orders
 ID:     orders$2
@@ -29,21 +28,26 @@ Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
  - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
- - entries: RecordType(INTEGER NOT NULL _idx, BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+ - entries: RecordType(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
  - col1: BIGINT NOT NULL
 Plan:
 LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], col1=[/(+($0, $1), 2)]) hints[WatermarkHint options:[2]]
   LogicalTableScan(table=[[orders$1]])
 
 >>>database-schema.sql
-CREATE TABLE IF NOT EXISTS orderentry$1 ("col1" BIGINT NOT NULL,"time" TIMESTAMP WITH TIME ZONE NOT NULL,"productid" BIGINT NOT NULL,"discount" DOUBLE PRECISION ,"_id" BIGINT NOT NULL,"_idx" INTEGER NOT NULL , PRIMARY KEY ("_id","time","_idx"));
+CREATE TABLE IF NOT EXISTS orderentry$1 ("col1" BIGINT NOT NULL,"time" TIMESTAMP WITH TIME ZONE NOT NULL,"productid" BIGINT NOT NULL,"discount" DOUBLE PRECISION ,"_id" BIGINT NOT NULL , PRIMARY KEY ("_id","time","productid"));
 CREATE TABLE IF NOT EXISTS orders$2 ("id" BIGINT NOT NULL,"customerid" BIGINT NOT NULL,"time" TIMESTAMP WITH TIME ZONE NOT NULL,"entries" JSONB NOT NULL,"col1" BIGINT NOT NULL , PRIMARY KEY ("id","time"));
-CREATE INDEX IF NOT EXISTS orderentry$1_hash_c1 ON orderentry$1 USING hash ("time");
+CREATE INDEX IF NOT EXISTS orderentry$1_btree_c1c2 ON orderentry$1 USING btree ("time","productid");
+CREATE INDEX IF NOT EXISTS orderentry$1_hash_c2 ON orderentry$1 USING hash ("productid");
 CREATE INDEX IF NOT EXISTS orders$2_hash_c2 ON orders$2 USING hash ("time");
+
 >>>flink-plan.sql
+
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptostring` AS 'com.datasqrl.time.TimestampToString' LANGUAGE JAVA;
 
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofmonth` AS 'com.datasqrl.time.EndOfMonth' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `tojson` AS 'com.datasqrl.json.ToJson' LANGUAGE JAVA;
 
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofweek` AS 'com.datasqrl.time.EndOfWeek' LANGUAGE JAVA;
 
@@ -71,7 +75,7 @@ CREATE TEMPORARY TABLE `orders$1` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` ROW(`_idx` INTEGER NOT NULL, `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
+  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
   PRIMARY KEY (`id`, `time`) NOT ENFORCED,
   WATERMARK FOR `time` AS (`time` - INTERVAL '0.001' SECOND)
 ) WITH (
@@ -88,22 +92,21 @@ CREATE TEMPORARY TABLE `orderentry$1` (
   `productid` BIGINT NOT NULL,
   `discount` DOUBLE,
   `_id` BIGINT NOT NULL,
-  `_idx` INTEGER NOT NULL,
-  PRIMARY KEY (`_id`, `time`, `_idx`) NOT ENFORCED
+  PRIMARY KEY (`_id`, `time`, `productid`) NOT ENFORCED
 ) WITH (
   'password' = 'postgres',
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'orderentry$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `orders$2` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` ROW(`_idx` INTEGER NOT NULL, `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
+  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),
   `col1` BIGINT NOT NULL,
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
@@ -111,19 +114,21 @@ CREATE TEMPORARY TABLE `orders$2` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'orders$2',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `orderentry$1`
-(SELECT `$cor0`.`col1`, `$cor0`.`time`, `t10`.`productid`, `t10`.`discount`, `$cor0`.`id` AS `_id`, `t10`.`_idx`
+(SELECT `$cor0`.`col1`, `$cor0`.`time`, `t10`.`productid`, `t10`.`discount`, `$cor0`.`id` AS `_id`
 FROM (SELECT `id`, `customerid`, `time`, `entries`, ((`id` + `customerid`) / 2) AS `col1`
 FROM `orders$1`) AS `$cor0`,
 UNNEST(`$cor0`.`entries`) AS `t10`)
 ;
 INSERT INTO `orders$2`
-(SELECT `id`, `customerid`, `time`, `entries`, ((`id` + `customerid`) / 2) AS `col1`
+(SELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`, ((`id` + `customerid`) / 2) AS `col1`
 FROM `orders$1`)
 ;
 END;
+
+

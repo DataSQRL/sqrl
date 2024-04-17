@@ -6,7 +6,7 @@
       "connector": "jdbc",
       "password" : "postgres",
       "driver" : "org.postgresql.Driver",
-      "user" : "postgres",
+      "username" : "postgres",
       "url" : "jdbc:postgresql://database:5432/datasqrl"
     },
     "streams" : {

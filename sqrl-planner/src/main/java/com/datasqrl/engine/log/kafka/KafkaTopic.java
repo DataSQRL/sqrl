@@ -2,16 +2,19 @@ package com.datasqrl.engine.log.kafka;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.config.TableConfig;
 import com.datasqrl.engine.log.Log;
-import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableSchema;
 import com.datasqrl.io.tables.TableSink;
+import com.datasqrl.io.tables.TableSinkImpl;
 import com.datasqrl.io.tables.TableSource;
-import lombok.Value;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 import java.util.Optional;
 
-@Value
+@AllArgsConstructor
+@Getter
 public class KafkaTopic implements Log {
 
   String topicName;
@@ -21,11 +24,11 @@ public class KafkaTopic implements Log {
 
   @Override
   public TableSource getSource() {
-    return logConfig.initializeSource(logName.toNamePath(), tableSchema.get());
+    return TableSource.create(logConfig, logName.toNamePath(), tableSchema.get());
   }
 
   @Override
   public TableSink getSink() {
-    return logConfig.initializeSink(logName.toNamePath(), tableSchema);
+    return TableSinkImpl.create(logConfig, logName.toNamePath(), tableSchema);
   }
 }

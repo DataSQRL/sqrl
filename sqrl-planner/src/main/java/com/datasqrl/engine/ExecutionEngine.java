@@ -4,48 +4,40 @@
 package com.datasqrl.engine;
 
 import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.config.EngineFactory.Type;
+import com.datasqrl.config.TableConfig;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.tables.TableConfig;
 
+import com.datasqrl.function.DowncastFunction;
+import com.datasqrl.functions.json.JsonDowncastFunction;
+import com.datasqrl.functions.vector.VectorDowncastFunction;
+import com.datasqrl.json.FlinkJsonType;
+import com.datasqrl.json.JsonToString;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
+import com.datasqrl.vector.FlinkVectorType;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
+import org.apache.calcite.rel.type.RelDataType;
 import org.apache.flink.table.functions.FunctionDefinition;
+import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 /**
  * Describes a physical execution engine and it's capabilities.
  */
-public interface ExecutionEngine {
-
-  public enum Type {
-    STREAM, DATABASE, SERVER, LOG;
-
-    public boolean isWrite() {
-      return this == STREAM;
-    }
-
-    public boolean isRead() {
-      return this == DATABASE || this == SERVER;
-    }
-
-    public boolean isCompute() { return this != LOG; }
-  }
+public interface ExecutionEngine extends IExecutionEngine{
 
   boolean supports(EngineFeature capability);
 
   boolean supports(FunctionDefinition function);
 
-  Type getType();
-
-  String getName();
-
   /**
-   * Returns the {@link com.datasqrl.io.tables.TableConfig} for this engine so it can
+   * Returns the {@link TableConfig} for this engine so it can
    * be used as a sink by a previous stage in the pipeline.
    * @return
    */
@@ -81,7 +73,16 @@ public interface ExecutionEngine {
     }
   }
 
-  default boolean supportsType(java.lang.reflect.Type type) {
-    return false;
+  default Optional<DowncastFunction> getDowncastFunction(RelDataType type) {
+    // Convert sqrl native raw types to strings
+    if (type instanceof RawRelDataType) {
+      if ((((RawRelDataType)type).getRawType().getDefaultConversion() == FlinkJsonType.class)) {
+        return Optional.of(new JsonDowncastFunction());
+      } else if ((((RawRelDataType)type).getRawType().getDefaultConversion() == FlinkVectorType.class)) {
+        return Optional.of(new VectorDowncastFunction());
+      }
+    }
+
+    return Optional.empty(); //assume everything is supported by default
   }
 }

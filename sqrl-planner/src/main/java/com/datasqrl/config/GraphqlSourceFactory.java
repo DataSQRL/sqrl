@@ -1,7 +1,6 @@
 package com.datasqrl.config;
 
 import com.datasqrl.canonicalizer.NameCanonicalizer;
-import com.datasqrl.packager.config.ScriptConfiguration;
 import com.datasqrl.graphql.ScriptFiles;
 import com.datasqrl.module.resolver.ResourceResolver;
 import com.datasqrl.plan.queries.APISource;
@@ -15,7 +14,7 @@ public class GraphqlSourceFactory {
   @Inject
   public GraphqlSourceFactory(ScriptFiles scriptFiles, NameCanonicalizer nameCanonicalizer,
       ResourceResolver resourceResolver) {
-    apiSchemaOpt = scriptFiles.get(ScriptConfiguration.GRAPHQL_KEY)
+    apiSchemaOpt = scriptFiles.getConfig().getGraphql()
         .map(file -> APISourceImpl.of(file, nameCanonicalizer, resourceResolver));
   }
 

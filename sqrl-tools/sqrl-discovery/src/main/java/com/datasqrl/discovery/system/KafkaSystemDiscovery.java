@@ -1,7 +1,8 @@
 package com.datasqrl.discovery.system;
 
-import com.datasqrl.discovery.DataDiscoveryConfig;
-import com.datasqrl.io.tables.TableConfig;
+import com.datasqrl.config.ConnectorFactoryFactory;
+import com.datasqrl.config.PackageJson.DataDiscoveryConfig;
+import com.datasqrl.config.TableConfig;
 import com.google.auto.service.AutoService;
 import java.util.Collection;
 import lombok.NonNull;
@@ -17,7 +18,7 @@ public class KafkaSystemDiscovery implements DataSystemDiscovery {
 
   @Override
   public Collection<TableConfig> discoverTables(@NonNull DataDiscoveryConfig discoveryConfig,
-      @NonNull String configFile) {
+      @NonNull String configFile, ConnectorFactoryFactory connectorFactoryFactory) {
     throw new UnsupportedOperationException("Not yet implemented");
   }
 }

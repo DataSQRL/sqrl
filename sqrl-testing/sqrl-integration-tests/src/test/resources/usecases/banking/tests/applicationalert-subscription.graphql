@@ -1,4 +1,4 @@
-subscription ApplicationAlert {
+query {
   ApplicationAlert {
       id
       loan_type_id

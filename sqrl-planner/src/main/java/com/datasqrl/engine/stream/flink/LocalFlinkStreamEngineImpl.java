@@ -3,13 +3,13 @@
  */
 package com.datasqrl.engine.stream.flink;
 
-import com.datasqrl.config.SqrlConfig;
+import com.datasqrl.config.PackageJson.EngineConfig;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class LocalFlinkStreamEngineImpl extends AbstractFlinkStreamEngine {
 
-  public LocalFlinkStreamEngineImpl(SqrlConfig config) {
+  public LocalFlinkStreamEngineImpl(EngineConfig config) {
     super(config);
   }
 }

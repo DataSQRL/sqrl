@@ -41,17 +41,18 @@ public class PostgresVectorTypeSerializer implements JdbcTypeSerializer {
       LogicalType type) {
     return () -> (val, index, statement) -> {
       if (val != null && !val.isNullAt(index)) {
-        PGobject pgObject = new PGobject();
-        pgObject.setType("vector");
         RawValueData<FlinkVectorType> object = val.getRawValue(index);
-        FlinkVectorType vec = object.toObject(new KryoSerializer<>
-                (FlinkVectorType.class, new ExecutionConfig()));
-        pgObject.setValue(Arrays.toString(vec.getValue()));
-        statement.setObject(index, pgObject);
+        FlinkVectorType vec = object.toObject(new KryoSerializer<>(FlinkVectorType.class, new ExecutionConfig()));
 
-      } else {
-        statement.setObject(index, null);
+        if (vec != null) {
+          PGobject pgObject = new PGobject();
+          pgObject.setType("vector");
+          pgObject.setValue(Arrays.toString(vec.getValue()));
+          statement.setObject(index, pgObject);
+          return;
+        }
       }
+      statement.setObject(index, null);
     };
   }
 }

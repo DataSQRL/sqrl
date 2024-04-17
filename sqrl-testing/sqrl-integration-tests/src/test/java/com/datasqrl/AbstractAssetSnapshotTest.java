@@ -106,7 +106,10 @@ public abstract class AbstractAssetSnapshotTest {
 
   protected int execute(Path rootDir, String... args) {
     buildDir = rootDir.resolve("build");
-    return new RootCommand(rootDir,hook).getCmd().execute(args);
+    List<String> argslist = new ArrayList<>(List.of(args));
+    argslist.add("-p");
+    argslist.add("../../../../../../profiles/profile-1.16");
+    return new RootCommand(rootDir,hook).getCmd().execute(argslist.toArray(String[]::new));
   }
 
 

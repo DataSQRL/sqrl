@@ -1,11 +1,10 @@
 {
   "version": 1,
   "flink" : {
-    "format" : "json",
-    "path" : "/mnt/build/data",
+    "format" : "flexible-json",
+    "path" : "/data/loan_types.jsonl",
     "source.monitor-interval" : 1,
-    "connector" : "filesystem",
-    "source.path.regex-pattern" : "to be determined"
+    "connector" : "filesystem"
   },
   "table" : {
     "type" : "source",

@@ -2,7 +2,6 @@
 //
 //import com.datasqrl.cmd.AssertStatusHook;
 //import com.datasqrl.cmd.RootCommand;
-//import com.datasqrl.config.SqrlConfig;
 //import com.datasqrl.error.ErrorCollector;
 //import com.datasqrl.packager.Packager;
 //import com.datasqrl.plan.rules.SqrlRelMetadataProvider;

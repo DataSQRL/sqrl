@@ -17,6 +17,7 @@
 
   <modules>
     <module>sqrl-cli</module>
+    <module>sqrl-config</module>
     <module>sqrl-discovery</module>
     <module>sqrl-packager</module>
   </modules>

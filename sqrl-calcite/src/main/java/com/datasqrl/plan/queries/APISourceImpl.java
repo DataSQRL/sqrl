@@ -36,4 +36,8 @@ public class APISourceImpl implements APISource {
     );
   }
 
+  @Override
+  public APISource clone(String schema) {
+    return new APISourceImpl(name, schema);
+  }
 }

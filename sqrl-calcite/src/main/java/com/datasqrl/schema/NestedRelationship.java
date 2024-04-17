@@ -19,8 +19,9 @@ public class NestedRelationship extends Relationship {
   public NestedRelationship(Name name,
       NamePath fullPath, NamePath absolutePath,
       Multiplicity multiplicity,
-      List<FunctionParameter> parameters, RelDataType rowType, int[] localPKs) {
-    super(name, fullPath, absolutePath, JoinType.CHILD, multiplicity, parameters, null);
+      List<FunctionParameter> parameters, RelDataType rowType, int[] localPKs, boolean isTest) {
+    super(name, fullPath, absolutePath, JoinType.CHILD, multiplicity, parameters, null,
+        isTest);
     this.rowType = rowType;
     this.localPKs = localPKs;
   }

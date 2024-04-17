@@ -1,44 +1,35 @@
 package com.datasqrl.discovery.flink;
 
+import com.datasqrl.FunctionWithError;
 import com.datasqrl.InputError;
 import com.datasqrl.MapWithErrorProcess;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.config.SqrlConfig;
-import com.datasqrl.config.SqrlConfigUtil;
+import com.datasqrl.config.ConnectorFactoryFactory;
+import com.datasqrl.config.TableConfig;
 import com.datasqrl.discovery.ComputeMetrics;
 import com.datasqrl.discovery.MonitoringJobFactory;
+import com.datasqrl.discovery.SourceRecord;
 import com.datasqrl.discovery.process.ParseJson;
 import com.datasqrl.engine.stream.flink.AbstractFlinkStreamEngine;
-import com.datasqrl.metadata.MetricStoreProvider;
-import com.datasqrl.engine.EngineFactory;
-import com.datasqrl.FunctionWithError;
 import com.datasqrl.error.ErrorLocation;
 import com.datasqrl.error.ErrorPrefix;
-import com.datasqrl.discovery.SourceRecord;
-import com.datasqrl.metadata.stats.SourceTableStatistics;
-import com.datasqrl.io.tables.FlinkConnectorFactory;
-import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.metadata.MetadataStoreProvider;
+import com.datasqrl.metadata.MetricStoreProvider;
+import com.datasqrl.metadata.stats.SourceTableStatistics;
 import java.util.Collection;
 import java.util.Map;
-import lombok.NonNull;
-import lombok.Value;
-import org.apache.flink.api.common.functions.FlatMapFunction;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.table.api.DataTypes;
-import org.apache.flink.table.api.FormatDescriptor;
-import org.apache.flink.table.api.Schema;
-import org.apache.flink.table.api.TableDescriptor;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
-import org.apache.flink.types.Row;
-import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
 
-@Value
+@AllArgsConstructor
+@Getter
 public class FlinkMonitoringJobFactory implements MonitoringJobFactory {
 
   public static final int DEFAULT_PARALLELISM = 2;
@@ -46,7 +37,7 @@ public class FlinkMonitoringJobFactory implements MonitoringJobFactory {
   private final int defaultParallelism = DEFAULT_PARALLELISM;
 
   AbstractFlinkStreamEngine flinkEngine;
-  FlinkConnectorFactory connectorConfig = new FlinkConnectorFactory();
+  ConnectorFactoryFactory connectorFactoryFactory;
 
   @Override
   public Job create(Collection<TableConfig> tables, MetadataStoreProvider storeProvider) {
@@ -84,29 +75,30 @@ public class FlinkMonitoringJobFactory implements MonitoringJobFactory {
   }
 
   private DataStream<String> createTextStream(TableConfig table, StreamTableEnvironment tableEnv) {
-    SqrlConfig connectorConfig = table.getConnectorConfig().getConfig();
-    String connector = connectorConfig.asString(FlinkConnectorFactory.CONNECTOR_KEY).get();
-
-    TableDescriptor.Builder descriptorBuilder = TableDescriptor.forConnector(connector);
-    connectorConfig.getKeys().forEach(key -> descriptorBuilder.option(key, connectorConfig.asString(key).get()));
-    //Overwrite format
-    descriptorBuilder.format(FormatDescriptor.forFormat("raw").build());
-    descriptorBuilder.schema(Schema.newBuilder()
-        .column("data", DataTypes.STRING()).build());
-
-    tableEnv.createTable(table.getName().getDisplay(), descriptorBuilder.build());
-
-    DataStream<Row> rawStream = tableEnv.toDataStream(tableEnv.from(table.getName().getDisplay()));
-
-    DataStream<String> splitStream = rawStream.flatMap(new FlatMapFunction<Row, String>() {
-      @Override
-      public void flatMap(Row value, Collector<String> out) throws Exception {
-        for (String line : value.getField(0).toString().split("\n")) {
-          out.collect(line);
-        }
-      }
-    });
-    return splitStream;
+//    SqrlConfig connectorConfig = table.getConnectorConfig().getConfig();
+//    String connector = connectorConfig.asString(FlinkConnectorFactory.CONNECTOR_KEY).get();
+//
+//    TableDescriptor.Builder descriptorBuilder = TableDescriptor.forConnector(connector);
+//    connectorConfig.getKeys().forEach(key -> descriptorBuilder.option(key, connectorConfig.asString(key).get()));
+//    //Overwrite format
+//    descriptorBuilder.format(FormatDescriptor.forFormat("raw").build());
+//    descriptorBuilder.schema(Schema.newBuilder()
+//        .column("data", DataTypes.STRING()).build());
+//
+//    tableEnv.createTable(table.getName().getDisplay(), descriptorBuilder.build());
+//
+//    DataStream<Row> rawStream = tableEnv.toDataStream(tableEnv.from(table.getName().getDisplay()));
+//
+//    DataStream<String> splitStream = rawStream.flatMap(new FlatMapFunction<Row, String>() {
+//      @Override
+//      public void flatMap(Row value, Collector<String> out) throws Exception {
+//        for (String line : value.getField(0).toString().split("\n")) {
+//          out.collect(line);
+//        }
+//      }
+//    });
+//    return splitStream;
+    throw new RuntimeException();
   }
 
   public static <T, R> DataStream<R> mapWithError(DataStream<T> stream, FunctionWithError<T, R> function,
@@ -120,11 +112,12 @@ public class FlinkMonitoringJobFactory implements MonitoringJobFactory {
 
 
   public Map<String,String> getFlinkConfiguration() {
-    return getFlinkConfiguration(flinkEngine.getConfig());
-  }
-
-  public static Map<String,String> getFlinkConfiguration(@NonNull SqrlConfig config) {
-    return SqrlConfigUtil.toStringMap(config, EngineFactory.getReservedKeys());
+    throw new RuntimeException();
+//    return getFlinkConfiguration(flinkEngine.getConfig());
+//  }
+//
+//  public static Map<String,String> getFlinkConfiguration(@NonNull SqrlConfig config) {
+//    return SqrlConfigUtil.toStringMap(config, EngineFactory.getReservedKeys());
   }
 
 }

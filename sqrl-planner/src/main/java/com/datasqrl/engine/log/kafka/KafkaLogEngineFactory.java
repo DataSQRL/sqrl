@@ -1,9 +1,9 @@
 package com.datasqrl.engine.log.kafka;
 
-import com.datasqrl.config.SqrlConfig;
-import com.datasqrl.engine.EngineFactory;
-import com.datasqrl.engine.ExecutionEngine.Type;
-import com.datasqrl.io.formats.Format;
+import com.datasqrl.config.TableConfig.Format;
+import com.datasqrl.config.ConnectorFactory;
+import com.datasqrl.config.PackageJson.EngineConfig;
+import com.datasqrl.config.EngineFactory;
 import com.datasqrl.schema.TableSchemaExporterFactory;
 import com.google.auto.service.AutoService;
 import java.util.Optional;
@@ -25,10 +25,10 @@ public class KafkaLogEngineFactory implements EngineFactory {
   }
 
   @Override
-  public KafkaLogEngine initialize(@NonNull SqrlConfig connectorConfig) {
+  public KafkaLogEngine initialize(@NonNull EngineConfig connectorConfig,
+      ConnectorFactory connectorFactory) {
     //This is hard-coded for now since Flink is the only engine we support
-    KafkaConnectorFactory kafkaConnector = KafkaFlinkConnectorFactory.INSTANCE;
-    Format format = kafkaConnector.getFormat(connectorConfig).get();
+    Format format = connectorFactory.getFormat().get();
     Optional<TableSchemaExporterFactory> schemaExporterFactoryOpt;
     try {
       TableSchemaExporterFactory schemaFactory = TableSchemaExporterFactory.load(
@@ -37,8 +37,9 @@ public class KafkaLogEngineFactory implements EngineFactory {
     } catch (Exception e) {
       schemaExporterFactoryOpt = Optional.empty();
     }
-    return new KafkaLogEngine(connectorConfig, schemaExporterFactoryOpt,
-        kafkaConnector);
-  }
 
+    return new KafkaLogEngine(connectorConfig,
+        schemaExporterFactoryOpt,
+        connectorFactory);
+  }
 }

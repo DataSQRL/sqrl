@@ -1,5 +1,6 @@
 query {
-Trending(limit: 20) {
+  Trending(limit: 20) {
     url
     total
-}}
+  }
+}

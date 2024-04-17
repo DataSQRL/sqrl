@@ -3,7 +3,7 @@
  */
 package com.datasqrl.plan.rules;
 
-import com.datasqrl.engine.ExecutionEngine;
+import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.plan.hints.JoinCostHint;
 import com.datasqrl.plan.hints.SqrlHint;
 import com.datasqrl.plan.rules.JoinAnalysis.Side;
@@ -26,7 +26,7 @@ class SimpleCostModel implements ComputeCost {
     this.cost = cost;
   }
 
-  public static SimpleCostModel of(ExecutionEngine.Type engineType, RelNode relNode) {
+  public static SimpleCostModel of(Type engineType, RelNode relNode) {
     double cost = 1.0;
     switch (engineType) {
       case DATABASE:

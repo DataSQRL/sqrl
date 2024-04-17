@@ -1,6 +1,6 @@
 === Customer
 ID:     customer$2
-Type:   stream
+Type:   streams
 Stage:  streams
 Primary Key: _uuid
 Timestamp  : _ingest_time
@@ -35,7 +35,7 @@ LogicalTableScan(table=[[customer$2]])
 
 === EntryCount
 ID:     entrycount$1
-Type:   stream
+Type:   streams
 Stage:  streams
 Inputs: orders$2
 Primary Key: _uuid, _idx
@@ -53,7 +53,7 @@ LogicalProject(price=[-(*($8, $9), $10)], _uuid=[$0], _idx=[$6], _time=[$4])
 
 === Orders
 ID:     orders$2
-Type:   stream
+Type:   streams
 Stage:  streams
 Primary Key: _uuid
 Timestamp  : time
@@ -69,7 +69,7 @@ LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] optio
 
 === Orders2
 ID:     orders2$1
-Type:   stream
+Type:   streams
 Stage:  streams
 Inputs: orders$2
 Primary Key: _uuid
@@ -85,7 +85,7 @@ LogicalProject(_uuid=[$0], _time=[$4])
 
 === orders_by_day
 ID:     orders_by_day$1
-Type:   stream
+Type:   streams
 Stage:  streams
 Inputs: customer$3, ordersinline$1
 Primary Key: __pk2$customerid, day
@@ -106,7 +106,7 @@ LogicalAggregate(group=[{0, 1}], total_price=[SUM($2)], total_num=[SUM($3)]) hin
 
 === OrdersInline
 ID:     ordersinline$1
-Type:   stream
+Type:   streams
 Stage:  streams
 Inputs: orders$2, total$1
 Primary Key: _uuid
@@ -126,7 +126,7 @@ LogicalProject(id=[$2], customerid=[$3], time=[$4], price=[$7], num=[$8], _uuid=
 
 === total
 ID:     total$1
-Type:   stream
+Type:   streams
 Stage:  streams
 Inputs: orders$2
 Primary Key: __pk1$_uuid

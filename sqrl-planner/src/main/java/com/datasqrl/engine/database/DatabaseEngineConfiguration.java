@@ -3,6 +3,7 @@
  */
 package com.datasqrl.engine.database;
 
+import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.engine.EngineConfiguration;
 import com.datasqrl.engine.ExecutionEngine;
@@ -17,8 +18,8 @@ public interface DatabaseEngineConfiguration extends EngineConfiguration {
   @Override
   DatabaseEngine initialize(@NonNull ErrorCollector errors);
 
-  default ExecutionEngine.Type getEngineType() {
-    return ExecutionEngine.Type.DATABASE;
+  default Type getEngineType() {
+    return Type.DATABASE;
   }
 
 }

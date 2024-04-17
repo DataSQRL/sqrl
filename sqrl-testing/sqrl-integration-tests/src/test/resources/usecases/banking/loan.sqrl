@@ -3,7 +3,7 @@ IMPORT loan-local.Applications;
 IMPORT loan-local.Loan_types AS LoanTypes;
 IMPORT loan.ApplicationUpdates;
 
-Customers := DISTINCT Customers ON id ORDER BY updated_on DESC;
+Customers := DISTINCT Customers ON id ORDER BY updated_at DESC;
 Applications := DISTINCT Applications ON id ORDER BY updated_at DESC;
 LoanTypes := DISTINCT LoanTypes ON id ORDER BY updated_at DESC;
 
@@ -20,7 +20,7 @@ Customers.overview := SELECT a.loan_type_id, SUM(a.amount) as total_amount, COUN
 
 ApplicationStatus := SELECT u.status, u.message, u.event_time, a.id, a.customer_id, a.loan_type_id,
                             a.amount, a.duration, t.max_amount, t.min_amount
-                     FROM ApplicationUpdates u JOIN u.application a
+                     FROM ApplicationUpdates u JOIN Applications a ON a.id = u.loan_application_id
                             JOIN LoanTypes t ON t.id = a.loan_type_id;
 
 --EXPORT ApplicationStatus TO print.status;

@@ -1,12 +1,11 @@
 package com.datasqrl.compile;
 
 import com.datasqrl.actions.CreateDatabaseQueries;
-import com.datasqrl.actions.FlinkSqlGenerator;
 import com.datasqrl.actions.GraphqlPostplanHook;
 import com.datasqrl.actions.InferGraphqlSchema;
 import com.datasqrl.actions.WriteDeploymentArtifacts;
+import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.config.GraphqlSourceFactory;
-import com.datasqrl.engine.ExecutionEngine.Type;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlanner;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
@@ -22,8 +21,11 @@ import com.datasqrl.plan.global.SqrlDAG;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.validate.ScriptPlanner;
 import com.google.inject.Inject;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.tuple.Pair;
 
 @AllArgsConstructor(onConstructor_=@Inject)
 public class CompilationProcess {
@@ -42,8 +44,9 @@ public class CompilationProcess {
   private final GraphqlSourceFactory graphqlSourceFactory;
   private final GraphQLMutationExtraction graphQLMutationExtraction;
   private final ExecutionPipeline pipeline;
+  private final TestPlanner testPlanner;
 
-  public PhysicalPlan executeCompilation() {
+  public Pair<PhysicalPlan, TestPlan> executeCompilation(Path testsPath) {
     pipeline.getStage(Type.SERVER)
         .flatMap(p->graphqlSourceFactory.get())
         .ifPresent(graphQLMutationExtraction::analyze);
@@ -61,8 +64,16 @@ public class CompilationProcess {
 
     PhysicalPlan physicalPlan = physicalPlanner.plan(dagPlan);
     Optional<RootGraphqlModel> model = graphqlPostplanHook.run(source, physicalPlan);
-    writeDeploymentArtifactsHook.run(model, source, physicalPlan, dag);
-    return physicalPlan;
+
+    //create test artifact
+    TestPlan testPlan;
+    if (Files.isDirectory(testsPath) && source.isPresent()) {
+      testPlan = testPlanner.generateTestPlan(source.get(), testsPath);
+    } else {
+      testPlan = null;
+    }
+    writeDeploymentArtifactsHook.run(source, physicalPlan, dag);
+    return Pair.of(physicalPlan, testPlan);
   }
 
   private void postcompileHooks() {

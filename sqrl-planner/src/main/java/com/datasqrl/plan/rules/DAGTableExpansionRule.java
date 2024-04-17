@@ -3,13 +3,11 @@
  */
 package com.datasqrl.plan.rules;
 
-import com.datasqrl.engine.ExecutionEngine;
-import com.datasqrl.engine.ExecutionEngine.Type;
+import com.datasqrl.config.EngineFactory;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.plan.table.SourceRelationalTableImpl;
-import com.datasqrl.util.CalciteUtil;
 import com.google.common.base.Preconditions;
 import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
@@ -34,9 +32,9 @@ public abstract class DAGTableExpansionRule extends RelOptRule {
 
   public static class Read extends DAGTableExpansionRule {
 
-    private final ExecutionEngine.Type engineType;
+    private final EngineFactory.Type engineType;
 
-    public Read(Type engineType) {
+    public Read(EngineFactory.Type engineType) {
       this.engineType = engineType;
     }
 

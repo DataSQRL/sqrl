@@ -1,7 +1,7 @@
 package com.datasqrl.plan.global;
 
 import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.engine.ExecutionEngine.Type;
+import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
