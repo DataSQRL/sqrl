@@ -15,7 +15,7 @@ import java.util.Optional;
 
 @AllArgsConstructor
 @Getter
-public class KafkaTopic implements Log {
+class KafkaTopic implements Log {
 
   String topicName;
   Name logName;

@@ -1,12 +1,12 @@
 package com.datasqrl.engine.log;
 
-import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.engine.ExecutionEngine;
 
 import lombok.Value;
 
 public interface LogEngine extends ExecutionEngine {
-  EngineConfig getEngineConfig();
+
+  LogFactory getLogFactory();
 
   @Value
   class Timestamp {

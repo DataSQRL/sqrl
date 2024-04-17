@@ -27,7 +27,7 @@
     }
   },
   "test": {
-    "durationSec": 40,
-    "delaySec": 120
+    "durationSec": 15,
+    "delaySec": 20
   }
 }

@@ -9,6 +9,7 @@ import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.log.LogEngine;
+import com.datasqrl.engine.log.LogFactory;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.global.PhysicalDAGPlan.LogStagePlan;
@@ -51,16 +52,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
             .collect(Collectors.toList()));
   }
 
-
-  static String sanitizeName(String logId) {
-    String sanitizedName = logId;
-    for (char invalidChar : REPLACE_CHARS) {
-      sanitizedName = sanitizedName.replace(invalidChar,REPLACE_WITH);
-    }
-    return sanitizedName;
+  @Override
+  public LogFactory getLogFactory() {
+    return new KafkaLogFactory(connectorFactory);
   }
-
-  public static final char[] REPLACE_CHARS = {'$'};
-  public static final char REPLACE_WITH = '-';
-
 }

@@ -34,7 +34,7 @@
              </elementProp>
            </collectionProp>
          </elementProp>
-         <stringProp name="HTTPSampler.protocol">https</stringProp>
+         <stringProp name="HTTPSampler.protocol">http</stringProp>
          <stringProp name="HTTPSampler.domain">server</stringProp>
          <stringProp name="HTTPSampler.port">8888</stringProp>
          <stringProp name="HTTPSampler.path">/graphql</stringProp>
@@ -115,7 +115,7 @@
              </elementProp>
            </collectionProp>
          </elementProp>
-         <stringProp name="HTTPSampler.protocol">https</stringProp>
+         <stringProp name="HTTPSampler.protocol">http</stringProp>
          <stringProp name="HTTPSampler.domain">server</stringProp>
          <stringProp name="HTTPSampler.port">8888</stringProp>
          <stringProp name="HTTPSampler.path">/graphql</stringProp>

@@ -3,18 +3,12 @@ package com.datasqrl.graphql;
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.cmd.EngineKeys;
-import com.datasqrl.config.ConnectorFactoryContext;
-import com.datasqrl.config.ConnectorFactory.IConnectorFactoryContext;
 import com.datasqrl.config.ConnectorFactoryFactory;
-import com.datasqrl.config.TableConfig;
 import com.datasqrl.config.LogEngineSupplier;
 import com.datasqrl.engine.log.Log;
 import com.datasqrl.engine.log.LogEngine;
 import com.datasqrl.engine.log.LogEngine.Timestamp;
-import com.datasqrl.engine.log.kafka.KafkaTopic;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.tables.TableSchema;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.loaders.ModuleLoaderStd;
@@ -27,9 +21,7 @@ import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.plan.table.CalciteTableFactory;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
-import com.datasqrl.plan.table.RelDataTypeTableSchema;
 import com.datasqrl.schema.RootSqrlTable;
-import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.util.ArrayList;
@@ -45,7 +37,6 @@ import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
-import org.apache.kafka.common.internals.Topic;
 
 @Getter
 @Singleton
@@ -61,14 +52,6 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
   private final RelDataTypeFactory typeFactory;
   private final ConnectorFactoryFactory connectorFactory;
   private final SqrlSchema sqrlSchema;
-
-  static String sanitizeName(String logId) {
-    String sanitizedName = logId;
-    for (char invalidChar : REPLACE_CHARS) {
-      sanitizedName = sanitizedName.replace(invalidChar, REPLACE_WITH);
-    }
-    return sanitizedName;
-  }
 
   public static String getLogId(APIMutation mutation) {
     return mutation.getSource().getName().getCanonical() + "-" + mutation.getName().getCanonical();
@@ -147,26 +130,9 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
 
   public Log createLog(String logId, RelDataTypeField schema, List<String> primaryKey,
       Timestamp timestamp) {
-    String topicName = sanitizeName(logId);
-    Preconditions.checkArgument(Topic.isValid(topicName), "Not a valid topic name: %s", topicName);
-    Name logName = Name.system(schema.getName());
-
-    TableConfig logConfig = connectorFactory.create(EngineKeys.LOG, logEngine.get().getEngineConfig())
-        .createSourceAndSink(createSinkContext(logName.getDisplay(), topicName, timestamp.getName(),
-            timestamp.getType().name(), primaryKey));
-    Optional<TableSchema> tblSchema = Optional.of(new RelDataTypeTableSchema(schema.getType()));
-    return new KafkaTopic(topicName, logName, logConfig, tblSchema);
-  }
-
-  private IConnectorFactoryContext createSinkContext(String name, String topicName,
-      String timestampName, String timestampType, List<String> primaryKey) {
-    Map<String, Object> context = new HashMap<>();
-    context.put("name", name);
-    context.put("topic", topicName);
-    context.put("timestamp-name", timestampName);
-    context.put("timestamp-type", timestampType);
-    context.put("primary-key", primaryKey);
-    return new ConnectorFactoryContext(context);
+    return logEngine.get()
+        .getLogFactory()
+        .create(logId, schema, primaryKey, timestamp);
   }
 
   @Override
