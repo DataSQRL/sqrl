@@ -5,22 +5,13 @@ import static org.junit.jupiter.api.Assertions.fail;
 import com.datasqrl.cmd.AssertStatusHook;
 import com.datasqrl.cmd.RootCommand;
 import com.datasqrl.cmd.StatusHook;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
-import org.apache.commons.csv.CSVRecord;
 import org.junit.jupiter.api.Test;
 
-public class UseCasesTest {
+public class UseCasesIT {
   private static final Path RESOURCES = Paths.get("src/test/resources/usecases");
 
   @Test

@@ -22,6 +22,10 @@ jobs:
         cache: maven
     - name: Build SQRL
       run: mvn -T 1 -B -U -e clean install
+    - name: Build Docker image
+      run: docker build -t sqrl-deps .
+    - name: Integration Tests
+      run: mvn -B verify -Dskip.unit.tests=true
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v3
       env:

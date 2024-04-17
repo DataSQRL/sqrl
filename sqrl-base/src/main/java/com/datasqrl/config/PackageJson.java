@@ -12,6 +12,8 @@ public interface PackageJson {
 
   void setPipeline(List<String> pipeline);
 
+  TestConfig getTest();
+
   EnginesConfig getEngines();
 
   DiscoveryConfig getDiscovery();
@@ -82,6 +84,11 @@ public interface PackageJson {
 
     @Deprecated(since="Migrate to templates or static objects")
     Map<String, Object> toMap();
+  }
+
+  interface TestConfig {
+    int getDurationSec();
+    int getDelaySec();
   }
 
   interface DependenciesConfig {

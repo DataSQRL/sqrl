@@ -9,9 +9,13 @@ import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.plan.validate.ExecutionGoal;
+import com.datasqrl.util.SqrlObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.file.Path;
+import java.util.Map;
 import lombok.SneakyThrows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +39,7 @@ public class TestCommand extends AbstractCompilerCommand {
     super.execute(errors, this.profiles, snapshotPath == null ?
         root.rootDir.resolve("snapshots") : snapshotPath,
         tests == null ?
-            root.rootDir.resolve("tests") : tests);
+            root.rootDir.resolve("tests") : tests, ExecutionGoal.TEST);
 
   }
 
@@ -44,16 +48,18 @@ public class TestCommand extends AbstractCompilerCommand {
   protected void postprocess(PackageJson sqrlConfig, Packager packager, Path targetDir, PhysicalPlan plan,
       TestPlan right, ErrorCollector errors) {
     super.postprocess(sqrlConfig, packager, targetDir, plan, right, errors);
+    Path compose = targetDir.resolve("docker-compose.yml");
     final DockerComposeContainer<?> environment =
-        new DockerComposeContainer<>(targetDir.resolve("docker-compose.yml").toFile())
+        new DockerComposeContainer<>(compose.toFile())
             .withBuild(true);
+
+    Map map = SqrlObjectMapper.YAML_INSTANCE.readValue(compose.toFile(), Map.class);
+    Map<String, Object> servicesMap = (Map<String, Object>)map.get("services");
 
     Logger logger = LoggerFactory.getLogger(TestCommand.class);
     Slf4jLogConsumer logConsumer = new Slf4jLogConsumer(logger);
-    environment.withLogConsumer("flink-job-submitter", logConsumer);
-    environment.withLogConsumer("test", logConsumer);
-    environment.withLogConsumer("flink-taskmanager", logConsumer);
-    environment.withLogConsumer("flink-jobmanager", logConsumer);
+    servicesMap.keySet().stream()
+            .forEach(s->environment.withLogConsumer(s, logConsumer));
 
     try {
       environment.start();

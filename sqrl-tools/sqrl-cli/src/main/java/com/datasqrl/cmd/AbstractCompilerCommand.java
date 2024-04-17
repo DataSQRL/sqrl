@@ -74,11 +74,11 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   @SneakyThrows
   public void execute(ErrorCollector errors) {
     execute(errors, profiles, targetDir.resolve("snapshots"),
-        targetDir.resolve("tests")
-        );
+        targetDir.resolve("tests"), ExecutionGoal.COMPILE);
   }
 
-  public void execute(ErrorCollector errors, String[] profiles, Path snapshotPath, Path testsPath) {
+  public void execute(ErrorCollector errors, String[] profiles, Path snapshotPath, Path testsPath,
+      ExecutionGoal goal) {
     Repository repository = createRepository(errors);
 
     PackageBootstrap packageBootstrap = new PackageBootstrap(root.rootDir,
@@ -94,7 +94,9 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
           .setSnapshotPath(snapshotPath.toAbsolutePath().toString());
     }
 
-    sqrlConfig.setPipeline(ListUtils.union(sqrlConfig.getPipeline(), List.of("test")));
+    if (goal == ExecutionGoal.TEST) {
+      sqrlConfig.setPipeline(ListUtils.union(sqrlConfig.getPipeline(), List.of("test")));
+    }
 
     Packager packager = new Packager(repository, root.rootDir, sqrlConfig, errors);
     Path path = packager.preprocess();

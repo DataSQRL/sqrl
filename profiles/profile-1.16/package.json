@@ -25,5 +25,9 @@
     "streams" : {
       "type" : "flink"
     }
+  },
+  "test": {
+    "durationSec": 30,
+    "delaySec": 10
   }
 }

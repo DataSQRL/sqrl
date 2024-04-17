@@ -92,8 +92,8 @@
       <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Thread Group">
         <intProp name="ThreadGroup.num_threads">1</intProp>
         <intProp name="ThreadGroup.ramp_time">0</intProp>
-        <longProp name="ThreadGroup.duration">40</longProp>
-        <longProp name="ThreadGroup.delay">15</longProp>
+        <longProp name="ThreadGroup.duration">${config["test"]["durationSec"]}</longProp>
+        <longProp name="ThreadGroup.delay">${config["test"]["delaySec"]}</longProp>
         <boolProp name="ThreadGroup.same_user_on_next_iteration">false</boolProp>
         <boolProp name="ThreadGroup.scheduler">true</boolProp>
         <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>

@@ -29,6 +29,11 @@ public class PackageJsonImpl implements PackageJson {
   }
 
   @Override
+  public TestConfig getTest() {
+    return new TestConfigImpl(sqrlConfig.getSubConfig("test"));
+  }
+
+  @Override
   public EnginesConfigImpl getEngines() {
     return new EnginesConfigImpl(sqrlConfig.getSubConfig(ENGINES_PROPERTY));
   }

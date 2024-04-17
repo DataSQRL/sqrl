@@ -20,6 +20,10 @@ services:
       - |
         FLINK_PROPERTIES=
         jobmanager.rpc.address: flink-jobmanager
+<#if mountDir??>
+    volumes:
+      - ${mountDir}:${mountDir}
+</#if>
   flink-taskmanager:
     build:
       context: streams
@@ -32,6 +36,10 @@ services:
         FLINK_PROPERTIES=
         jobmanager.rpc.address: flink-jobmanager
         taskmanager.numberOfTaskSlots: 1
+<#if mountDir??>
+    volumes:
+      - ${mountDir}:${mountDir}
+</#if>
   flink-job-submitter:
     build:
       context: streams

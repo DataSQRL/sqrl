@@ -1,8 +1,9 @@
 package com.datasqrl.compile;
 
 import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.calcite.function.SqrlTableMacro;
+import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.compile.TestPlan.GraphqlQuery;
-import com.datasqrl.graphql.GraphqlSchemaParser;
 import com.datasqrl.graphql.visitor.GraphqlSchemaVisitor;
 import com.datasqrl.plan.queries.APISource;
 import com.google.inject.Inject;
@@ -38,6 +39,7 @@ import lombok.AllArgsConstructor;
 
 @AllArgsConstructor(onConstructor_ = @Inject)
 public class TestPlanner {
+  SqrlFramework framework;
 
   public TestPlan generateTestPlan(APISource source, Path testsPath) {
     Parser parser = new Parser();
@@ -109,7 +111,10 @@ public class TestPlanner {
     private List<Node> processQueryDefinition(ObjectTypeDefinition definition, Document document) {
       List<Node> queries = new ArrayList<>();
       for (FieldDefinition def : definition.getFieldDefinitions()) {
-        if (def.getName().endsWith("Test")) {
+        //Lookup function and see if it is a sqrl test macro
+        // Todo: use overloaded lookup
+        SqrlTableMacro macro = framework.getSchema().getTableFunctions(NamePath.of(def.getName())).get(0);
+        if (macro.isTest()) {
           OperationDefinition operation = processOperation(def.getName(), (ObjectTypeDefinition) unbox(def.getType(), document), def.getInputValueDefinitions());
           queries.add(operation);
         }

@@ -234,7 +234,7 @@ public class Packager {
     // Copy profiles
     for (String profile : profiles) {
       copyToDeploy(targetDir,
-          rootDir.resolve(profile), plan, testPlan, sqrlConfig);
+          rootDir.resolve(profile), plan, testPlan, sqrlConfig, mountDirectory);
     }
 //    List.of()
 //        .forEach(p->p.process(new ProcessorContext(buildDir, targetDir, mountDirectory, profiles)));
@@ -242,7 +242,7 @@ public class Packager {
 
   @SneakyThrows
   private void copyToDeploy(Path targetDir, Path profile, PhysicalPlan plan, TestPlan testPlan,
-      PackageJson sqrlConfig) {
+      PackageJson sqrlConfig, Optional<Path> mountDirectory) {
     if (!Files.exists(targetDir)) {
       Files.createDirectories(targetDir);
     }
@@ -250,6 +250,7 @@ public class Packager {
     templateConfig.put("testPlan", testPlan);
     templateConfig.put("plan", plan);
     templateConfig.put("config", sqrlConfig.toMap());
+    mountDirectory.map(m->templateConfig.put("mountDir", m.toAbsolutePath().toString()));
     // Copy each file and directory from the profile path to the target directory
     try (Stream<Path> stream = Files.walk(profile)) {
       stream.forEach(sourcePath -> {
