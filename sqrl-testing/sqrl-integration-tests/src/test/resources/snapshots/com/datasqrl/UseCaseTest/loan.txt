@@ -20,7 +20,7 @@ LogicalProject(id=[$3], customer_id=[$4], loan_type_id=[$5], max_amount=[$8], mi
   LogicalFilter(condition=[AND(=($0, 'underwriting'), OR(>($6, $8), <($6, $9)))])
     LogicalTableScan(table=[[applicationstatus$1]])
 
-=== ApplicationAlert.ApplicationAlert
+=== ApplicationAlert.applicationalert-1
 ID:     applicationalert$1$1
 Type:   export
 Stage:  streams
@@ -85,12 +85,11 @@ Schema:
 Plan:
 LogicalProject(status=[$1], message=[$2], event_time=[$4], id=[$5], customer_id=[$6], loan_type_id=[$7], amount=[$8], duration=[$9], max_amount=[$17], min_amount=[$18], _uuid=[$3])
   LogicalJoin(condition=[=($13, $7)], joinType=[inner]) hints[TemporalJoinHint options:[4]]
-    LogicalJoin(condition=[=($0, $12)], joinType=[inner]) hints[TemporalJoinHint options:[4]]
+    LogicalJoin(condition=[=($5, $0)], joinType=[inner]) hints[TemporalJoinHint options:[4]]
       LogicalTableScan(table=[[applicationupdates$2]])
-      LogicalProject(id=[$0], customer_id=[$1], loan_type_id=[$2], amount=[$3], duration=[$4], application_date=[$5], updated_at=[$6], id7=[$0])
-        LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
-          LogicalProject(id=[$0], customer_id=[$1], loan_type_id=[$2], amount=[$3], duration=[$4], application_date=[$5], updated_at=[$6], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
-            LogicalTableScan(table=[[applications$3]])
+      LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
+        LogicalProject(id=[$0], customer_id=[$1], loan_type_id=[$2], amount=[$3], duration=[$4], application_date=[$5], updated_at=[$6], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
+          LogicalTableScan(table=[[applications$3]])
     LogicalFilter(condition=[=($9, 1)]) hints[DedupHint]
       LogicalProject(id=[$0], name=[$1], description=[$2], interest_rate=[$3], max_amount=[$4], min_amount=[$5], max_duration=[$6], min_duration=[$7], updated_at=[$8], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $8 DESC NULLS LAST)])
         LogicalTableScan(table=[[loantypes$3]])
@@ -114,8 +113,8 @@ LogicalTableScan(table=[[applicationupdates$1]], hints=[[[WatermarkHint inheritP
 ID:     customers$2
 Type:   stream
 Stage:  streams
-Primary Key: id, updated_on
-Timestamp  : updated_on
+Primary Key: id, updated_at
+Timestamp  : updated_at
 Schema:
  - id: BIGINT NOT NULL
  - first_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -124,7 +123,7 @@ Schema:
  - phone: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - address: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - date_of_birth: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - updated_on: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - updated_at: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
 LogicalTableScan(table=[[customers$1]], hints=[[[WatermarkHint inheritPath:[] options:[7]]]]) hints[WatermarkHint options:[7]]
 
@@ -134,7 +133,7 @@ Type:   state
 Stage:  streams
 Inputs: customers$2
 Primary Key: id
-Timestamp  : updated_on
+Timestamp  : updated_at
 Schema:
  - id: BIGINT NOT NULL
  - first_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -143,9 +142,9 @@ Schema:
  - phone: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - address: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - date_of_birth: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - updated_on: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - updated_at: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Post Processors:
- - topN: partition=id limit=1 sort=#7: updated_on TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
+ - topN: partition=id limit=1 sort=#7: updated_at TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
 Plan:
 LogicalTableScan(table=[[customers$2]])
 
@@ -206,344 +205,13 @@ Schema:
 Plan:
 LogicalProject(__pk1$id=[$0], loan_type_id=[$1], total_amount=[$2], total_loans=[$3], __timestamp=[$4])
   LogicalAggregate(group=[{0, 11}], total_amount=[SUM($12)], total_loans=[COUNT()], __timestamp=[MAX($17)])
-    LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], phone=[$4], address=[$5], date_of_birth=[$6], updated_on=[$7], _rownum=[$8], id0=[$9], customer_id=[$10], loan_type_id=[$11], amount=[$12], duration=[$13], application_date=[$14], updated_at=[$15], customer_id7=[$16], __timestamp=[CASE(<($7, $15), $15, $7)])
+    LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], phone=[$4], address=[$5], date_of_birth=[$6], updated_at=[$7], _rownum=[$8], id0=[$9], customer_id=[$10], loan_type_id=[$11], amount=[$12], duration=[$13], application_date=[$14], updated_at0=[$15], customer_id7=[$16], __timestamp=[CASE(<($7, $15), $15, $7)])
       LogicalJoin(condition=[=($0, $16)], joinType=[inner]) hints[JoinCostHint options:[VERSIONED_STATE, VERSIONED_STATE, 1, LEFT]]
         LogicalFilter(condition=[=($8, 1)]) hints[DedupHint]
-          LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], phone=[$4], address=[$5], date_of_birth=[$6], updated_on=[$7], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $7 DESC NULLS LAST)])
+          LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], phone=[$4], address=[$5], date_of_birth=[$6], updated_at=[$7], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $7 DESC NULLS LAST)])
             LogicalTableScan(table=[[customers$3]])
         LogicalProject(id=[$0], customer_id=[$1], loan_type_id=[$2], amount=[$3], duration=[$4], application_date=[$5], updated_at=[$6], customer_id7=[$1])
           LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
             LogicalProject(id=[$0], customer_id=[$1], loan_type_id=[$2], amount=[$3], duration=[$4], application_date=[$5], updated_at=[$6], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
               LogicalTableScan(table=[[applications$3]])
 
->>>database-schema.sql
-CREATE TABLE IF NOT EXISTS applicationalert$1 ("id" BIGINT NOT NULL,"customer_id" BIGINT NOT NULL,"loan_type_id" BIGINT NOT NULL,"max_amount" DOUBLE PRECISION NOT NULL,"min_amount" DOUBLE PRECISION NOT NULL,"amount" DOUBLE PRECISION NOT NULL,"_uuid" TEXT NOT NULL,"_event_time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("_uuid"));
-CREATE TABLE IF NOT EXISTS applications$3 ("id" BIGINT NOT NULL,"customer_id" BIGINT NOT NULL,"loan_type_id" BIGINT NOT NULL,"amount" DOUBLE PRECISION NOT NULL,"duration" BIGINT NOT NULL,"application_date" TIMESTAMP WITH TIME ZONE NOT NULL,"updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
-CREATE TABLE IF NOT EXISTS applicationstatus$1 ("status" TEXT NOT NULL,"message" TEXT NOT NULL,"event_time" TIMESTAMP WITH TIME ZONE NOT NULL,"id" BIGINT NOT NULL,"customer_id" BIGINT NOT NULL,"loan_type_id" BIGINT NOT NULL,"amount" DOUBLE PRECISION NOT NULL,"duration" BIGINT NOT NULL,"max_amount" DOUBLE PRECISION NOT NULL,"min_amount" DOUBLE PRECISION NOT NULL,"_uuid" TEXT NOT NULL , PRIMARY KEY ("_uuid"));
-CREATE TABLE IF NOT EXISTS applicationupdates$2 ("loan_application_id" BIGINT NOT NULL,"status" TEXT NOT NULL,"message" TEXT NOT NULL,"_uuid" TEXT NOT NULL,"event_time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("_uuid"));
-CREATE TABLE IF NOT EXISTS customers$3 ("id" BIGINT NOT NULL,"first_name" TEXT NOT NULL,"last_name" TEXT NOT NULL,"email" TEXT NOT NULL,"phone" TEXT NOT NULL,"address" TEXT NOT NULL,"date_of_birth" TEXT NOT NULL,"updated_on" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
-CREATE TABLE IF NOT EXISTS loantypes$3 ("id" BIGINT NOT NULL,"name" TEXT NOT NULL,"description" TEXT NOT NULL,"interest_rate" DOUBLE PRECISION NOT NULL,"max_amount" DOUBLE PRECISION NOT NULL,"min_amount" DOUBLE PRECISION NOT NULL,"max_duration" BIGINT NOT NULL,"min_duration" BIGINT NOT NULL,"updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
-CREATE TABLE IF NOT EXISTS overview$1 ("__pk1$id" BIGINT NOT NULL,"loan_type_id" BIGINT NOT NULL,"total_amount" DOUBLE PRECISION NOT NULL,"total_loans" BIGINT NOT NULL,"__timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("__pk1$id","loan_type_id"));
-CREATE INDEX IF NOT EXISTS applications$3_hash_c1 ON applications$3 USING hash ("customer_id");
-CREATE INDEX IF NOT EXISTS applicationupdates$2_hash_c0 ON applicationupdates$2 USING hash ("loan_application_id");
->>>flink-plan.sql
-CREATE TEMPORARY TABLE `applicationupdates$1` (
-  `loan_application_id` BIGINT NOT NULL,
-  `status` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `message` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL METADATA FROM 'timestamp',
-  WATERMARK FOR `event_time` AS (`event_time` - INTERVAL '0.0' SECOND)
-) WITH (
-  'properties.bootstrap.servers' = 'kafka:9092',
-  'properties.auto.offset.reset' = 'earliest',
-  'connector' = 'kafka',
-  'format' = 'json',
-  'properties.group.id' = 'groupid',
-  'topic' = 'loan-applicationupdates',
-  'scan.startup.mode' = 'earliest-offset'
-);
-
-CREATE TEMPORARY TABLE `customers$1` (
-  `id` BIGINT NOT NULL,
-  `first_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `last_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `phone` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `address` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `date_of_birth` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `updated_on` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  PRIMARY KEY (`id`, `updated_on`) NOT ENFORCED,
-  WATERMARK FOR `updated_on` AS (`updated_on` - INTERVAL '0.001' SECOND)
-) WITH (
-  'format' = 'json',
-  'path' = '/mnt/build/data',
-  'source.monitor-interval' = '1',
-  'connector' = 'filesystem',
-  'source.path.regex-pattern' = 'to be determined'
-);
-
-CREATE TEMPORARY TABLE `applications$1` (
-  `id` BIGINT NOT NULL,
-  `customer_id` BIGINT NOT NULL,
-  `loan_type_id` BIGINT NOT NULL,
-  `amount` DOUBLE NOT NULL,
-  `duration` BIGINT NOT NULL,
-  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,
-  WATERMARK FOR `updated_at` AS (`updated_at` - INTERVAL '0.001' SECOND)
-) WITH (
-  'format' = 'json',
-  'path' = '/mnt/build/data',
-  'source.monitor-interval' = '1',
-  'connector' = 'filesystem',
-  'source.path.regex-pattern' = 'to be determined'
-);
-
-CREATE TEMPORARY TABLE `loantypes$1` (
-  `id` BIGINT NOT NULL,
-  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `interest_rate` DOUBLE NOT NULL,
-  `max_amount` DOUBLE NOT NULL,
-  `min_amount` DOUBLE NOT NULL,
-  `max_duration` BIGINT NOT NULL,
-  `min_duration` BIGINT NOT NULL,
-  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,
-  WATERMARK FOR `updated_at` AS (`updated_at` - INTERVAL '0.001' SECOND)
-) WITH (
-  'format' = 'json',
-  'path' = '/mnt/build/data',
-  'source.monitor-interval' = '1',
-  'connector' = 'filesystem',
-  'source.path.regex-pattern' = 'to be determined'
-);
-
-CREATE TEMPORARY TABLE `applicationalert$1` (
-  `id` BIGINT NOT NULL,
-  `customer_id` BIGINT NOT NULL,
-  `loan_type_id` BIGINT NOT NULL,
-  `max_amount` DOUBLE NOT NULL,
-  `min_amount` DOUBLE NOT NULL,
-  `amount` DOUBLE NOT NULL,
-  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `_event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  PRIMARY KEY (`_uuid`) NOT ENFORCED
-) WITH (
-  'password' = 'postgres',
-  'connector' = 'jdbc-sqrl',
-  'driver' = 'org.postgresql.Driver',
-  'table-name' = 'applicationalert$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
-);
-
-CREATE TEMPORARY TABLE `applications$3` (
-  `id` BIGINT NOT NULL,
-  `customer_id` BIGINT NOT NULL,
-  `loan_type_id` BIGINT NOT NULL,
-  `amount` DOUBLE NOT NULL,
-  `duration` BIGINT NOT NULL,
-  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  PRIMARY KEY (`id`) NOT ENFORCED
-) WITH (
-  'password' = 'postgres',
-  'connector' = 'jdbc-sqrl',
-  'driver' = 'org.postgresql.Driver',
-  'table-name' = 'applications$3',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
-);
-
-CREATE TEMPORARY TABLE `applicationstatus$1` (
-  `status` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `message` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `id` BIGINT NOT NULL,
-  `customer_id` BIGINT NOT NULL,
-  `loan_type_id` BIGINT NOT NULL,
-  `amount` DOUBLE NOT NULL,
-  `duration` BIGINT NOT NULL,
-  `max_amount` DOUBLE NOT NULL,
-  `min_amount` DOUBLE NOT NULL,
-  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  PRIMARY KEY (`_uuid`) NOT ENFORCED
-) WITH (
-  'password' = 'postgres',
-  'connector' = 'jdbc-sqrl',
-  'driver' = 'org.postgresql.Driver',
-  'table-name' = 'applicationstatus$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
-);
-
-CREATE TEMPORARY TABLE `applicationupdates$2` (
-  `loan_application_id` BIGINT NOT NULL,
-  `status` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `message` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  PRIMARY KEY (`_uuid`) NOT ENFORCED
-) WITH (
-  'password' = 'postgres',
-  'connector' = 'jdbc-sqrl',
-  'driver' = 'org.postgresql.Driver',
-  'table-name' = 'applicationupdates$2',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
-);
-
-CREATE TEMPORARY TABLE `customers$3` (
-  `id` BIGINT NOT NULL,
-  `first_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `last_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `phone` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `address` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `date_of_birth` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `updated_on` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  PRIMARY KEY (`id`) NOT ENFORCED
-) WITH (
-  'password' = 'postgres',
-  'connector' = 'jdbc-sqrl',
-  'driver' = 'org.postgresql.Driver',
-  'table-name' = 'customers$3',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
-);
-
-CREATE TEMPORARY TABLE `loantypes$3` (
-  `id` BIGINT NOT NULL,
-  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `interest_rate` DOUBLE NOT NULL,
-  `max_amount` DOUBLE NOT NULL,
-  `min_amount` DOUBLE NOT NULL,
-  `max_duration` BIGINT NOT NULL,
-  `min_duration` BIGINT NOT NULL,
-  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  PRIMARY KEY (`id`) NOT ENFORCED
-) WITH (
-  'password' = 'postgres',
-  'connector' = 'jdbc-sqrl',
-  'driver' = 'org.postgresql.Driver',
-  'table-name' = 'loantypes$3',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
-);
-
-CREATE TEMPORARY TABLE `overview$1` (
-  `__pk1$id` BIGINT NOT NULL,
-  `loan_type_id` BIGINT NOT NULL,
-  `total_amount` DOUBLE NOT NULL,
-  `total_loans` BIGINT NOT NULL,
-  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  PRIMARY KEY (`__pk1$id`, `loan_type_id`) NOT ENFORCED
-) WITH (
-  'password' = 'postgres',
-  'connector' = 'jdbc-sqrl',
-  'driver' = 'org.postgresql.Driver',
-  'table-name' = 'overview$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
-);
-
-CREATE TEMPORARY TABLE `applicationalert$1$1` (
-  `id` BIGINT NOT NULL,
-  `customer_id` BIGINT NOT NULL,
-  `loan_type_id` BIGINT NOT NULL,
-  `max_amount` DOUBLE NOT NULL,
-  `min_amount` DOUBLE NOT NULL,
-  `amount` DOUBLE NOT NULL,
-  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `_event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
-  'properties.bootstrap.servers' = 'kafka:9092',
-  'properties.auto.offset.reset' = 'earliest',
-  'connector' = 'kafka',
-  'format' = 'json',
-  'properties.group.id' = 'groupid',
-  'topic' = 'applicationalert-1',
-  'scan.startup.mode' = 'earliest-offset'
-);
-
-CREATE VIEW `table$1`
-AS
-SELECT *
-FROM (SELECT `id`, `name`, `description`, `interest_rate`, `max_amount`, `min_amount`, `max_duration`, `min_duration`, `updated_at`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated_at` DESC NULLS LAST)) AS `_rownum`
-FROM `loantypes$1`) AS `t`
-WHERE (`_rownum` = 1);
-
-CREATE VIEW `table$2`
-AS
-SELECT `id`, `customer_id`, `loan_type_id`, `amount`, `duration`, `application_date`, `updated_at`, `id` AS `id7`
-FROM (SELECT `id`, `customer_id`, `loan_type_id`, `amount`, `duration`, `application_date`, `updated_at`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated_at` DESC NULLS LAST)) AS `_rownum`
-FROM `applications$1`) AS `t1`
-WHERE (`_rownum` = 1);
-
-CREATE VIEW `table$3`
-AS
-SELECT *
-FROM (SELECT `id`, `name`, `description`, `interest_rate`, `max_amount`, `min_amount`, `max_duration`, `min_duration`, `updated_at`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated_at` DESC NULLS LAST)) AS `_rownum`
-FROM `loantypes$1`) AS `t`
-WHERE (`_rownum` = 1);
-
-CREATE VIEW `table$4`
-AS
-SELECT `id`, `customer_id`, `loan_type_id`, `amount`, `duration`, `application_date`, `updated_at`, `id` AS `id7`
-FROM (SELECT `id`, `customer_id`, `loan_type_id`, `amount`, `duration`, `application_date`, `updated_at`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated_at` DESC NULLS LAST)) AS `_rownum`
-FROM `applications$1`) AS `t1`
-WHERE (`_rownum` = 1);
-
-CREATE VIEW `table$5`
-AS
-SELECT *
-FROM (SELECT `id`, `name`, `description`, `interest_rate`, `max_amount`, `min_amount`, `max_duration`, `min_duration`, `updated_at`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated_at` DESC NULLS LAST)) AS `_rownum`
-FROM `loantypes$1`) AS `t`
-WHERE (`_rownum` = 1);
-
-CREATE VIEW `table$6`
-AS
-SELECT `id`, `customer_id`, `loan_type_id`, `amount`, `duration`, `application_date`, `updated_at`, `id` AS `id7`
-FROM (SELECT `id`, `customer_id`, `loan_type_id`, `amount`, `duration`, `application_date`, `updated_at`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated_at` DESC NULLS LAST)) AS `_rownum`
-FROM `applications$1`) AS `t1`
-WHERE (`_rownum` = 1);
-
-EXECUTE STATEMENT SET BEGIN
-INSERT INTO `applicationalert$1`
-(SELECT `id`, `customer_id`, `loan_type_id`, `max_amount`, `min_amount`, `amount`, `_uuid`, `event_time` AS `_event_time`
-FROM (SELECT `$cor2`.`status`, `$cor2`.`message`, `$cor2`.`event_time`, `$cor2`.`id`, `$cor2`.`customer_id`, `$cor2`.`loan_type_id`, `$cor2`.`amount`, `$cor2`.`duration`, `t0`.`max_amount`, `t0`.`min_amount`, `$cor2`.`_uuid`
-FROM (SELECT *
-FROM `applicationupdates$1` AS `$cor3`
-INNER JOIN `table$2` FOR SYSTEM_TIME AS OF `$cor3`.`event_time` AS `t3` ON (`$cor3`.`loan_application_id` = `t3`.`id7`)) AS `$cor2`
-INNER JOIN `table$1` FOR SYSTEM_TIME AS OF `$cor2`.`event_time` AS `t0` ON (`t0`.`id` = `$cor2`.`loan_type_id`)) AS `t5`
-WHERE ((`t5`.`status` = 'underwriting') AND ((`t5`.`amount` > `t5`.`max_amount`) OR (`t5`.`amount` < `t5`.`min_amount`))))
-;
-INSERT INTO `applications$3`
-(SELECT *
-FROM `applications$1`)
-;
-INSERT INTO `applicationstatus$1`
-(SELECT `$cor4`.`status`, `$cor4`.`message`, `$cor4`.`event_time`, `$cor4`.`id`, `$cor4`.`customer_id`, `$cor4`.`loan_type_id`, `$cor4`.`amount`, `$cor4`.`duration`, `t0`.`max_amount`, `t0`.`min_amount`, `$cor4`.`_uuid`
-FROM (SELECT *
-FROM `applicationupdates$1` AS `$cor5`
-INNER JOIN `table$4` FOR SYSTEM_TIME AS OF `$cor5`.`event_time` AS `t3` ON (`$cor5`.`loan_application_id` = `t3`.`id7`)) AS `$cor4`
-INNER JOIN `table$3` FOR SYSTEM_TIME AS OF `$cor4`.`event_time` AS `t0` ON (`t0`.`id` = `$cor4`.`loan_type_id`))
-;
-INSERT INTO `applicationupdates$2`
-(SELECT *
-FROM `applicationupdates$1`)
-;
-INSERT INTO `customers$3`
-(SELECT *
-FROM `customers$1`)
-;
-INSERT INTO `loantypes$3`
-(SELECT *
-FROM `loantypes$1`)
-;
-INSERT INTO `overview$1`
-(SELECT `t0`.`id` AS `__pk1$id`, `t3`.`loan_type_id`, SUM(`t3`.`amount`) AS `total_amount`, COUNT(*) AS `total_loans`, MAX((CASE WHEN (`t0`.`updated_on` < `t3`.`updated_at`) THEN `t3`.`updated_at` ELSE `t0`.`updated_on` END)) AS `__timestamp`
-FROM (SELECT *
-FROM (SELECT `id`, `first_name`, `last_name`, `email`, `phone`, `address`, `date_of_birth`, `updated_on`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated_on` DESC NULLS LAST)) AS `_rownum`
-FROM `customers$1`) AS `t`
-WHERE (`_rownum` = 1)) AS `t0`
-INNER JOIN (SELECT `id`, `customer_id`, `loan_type_id`, `amount`, `duration`, `application_date`, `updated_at`, `customer_id` AS `customer_id7`
-FROM (SELECT `id`, `customer_id`, `loan_type_id`, `amount`, `duration`, `application_date`, `updated_at`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated_at` DESC NULLS LAST)) AS `_rownum`
-FROM `applications$1`) AS `t1`
-WHERE (`_rownum` = 1)) AS `t3` ON (`t0`.`id` = `t3`.`customer_id7`)
-GROUP BY `t0`.`id`, `t3`.`loan_type_id`)
-;
-INSERT INTO `applicationalert$1$1`
-(SELECT `id`, `customer_id`, `loan_type_id`, `max_amount`, `min_amount`, `amount`, `_uuid`, `event_time` AS `_event_time`
-FROM (SELECT `$cor6`.`status`, `$cor6`.`message`, `$cor6`.`event_time`, `$cor6`.`id`, `$cor6`.`customer_id`, `$cor6`.`loan_type_id`, `$cor6`.`amount`, `$cor6`.`duration`, `t0`.`max_amount`, `t0`.`min_amount`, `$cor6`.`_uuid`
-FROM (SELECT *
-FROM `applicationupdates$1` AS `$cor7`
-INNER JOIN `table$6` FOR SYSTEM_TIME AS OF `$cor7`.`event_time` AS `t3` ON (`$cor7`.`loan_application_id` = `t3`.`id7`)) AS `$cor6`
-INNER JOIN `table$5` FOR SYSTEM_TIME AS OF `$cor6`.`event_time` AS `t0` ON (`t0`.`id` = `$cor6`.`loan_type_id`)) AS `t5`
-WHERE ((`t5`.`status` = 'underwriting') AND ((`t5`.`amount` > `t5`.`max_amount`) OR (`t5`.`amount` < `t5`.`min_amount`))))
-;
-END;
