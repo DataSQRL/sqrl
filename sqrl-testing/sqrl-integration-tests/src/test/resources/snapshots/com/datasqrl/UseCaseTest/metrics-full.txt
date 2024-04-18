@@ -198,7 +198,9 @@ CREATE INDEX IF NOT EXISTS hightemp$1_hash_c3 ON hightemp$1 USING hash ("timeSec
 CREATE INDEX IF NOT EXISTS secreading$1_hash_c1 ON secreading$1 USING hash ("timeSec");
 CREATE INDEX IF NOT EXISTS sensorreading$2_hash_c1 ON sensorreading$2 USING hash ("time");
 CREATE INDEX IF NOT EXISTS sensors$3_hash_c1 ON sensors$3 USING hash ("machineid");
+
 >>>flink-plan.sql
+
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofsecond` AS 'com.datasqrl.time.EndOfSecond' LANGUAGE JAVA;
 
 CREATE TEMPORARY TABLE `sensors$1` (
@@ -241,8 +243,8 @@ CREATE TEMPORARY TABLE `hightemp$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'hightemp$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `lasthour$1` (
@@ -256,8 +258,8 @@ CREATE TEMPORARY TABLE `lasthour$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'lasthour$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `machine$1` (
@@ -271,8 +273,8 @@ CREATE TEMPORARY TABLE `machine$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'machine$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `secreading$1` (
@@ -285,8 +287,8 @@ CREATE TEMPORARY TABLE `secreading$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'secreading$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `sensorreading$2` (
@@ -300,8 +302,8 @@ CREATE TEMPORARY TABLE `sensorreading$2` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'sensorreading$2',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `sensors$3` (
@@ -314,8 +316,8 @@ CREATE TEMPORARY TABLE `sensors$3` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'sensors$3',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `hightemp$1$1` (
@@ -440,3 +442,5 @@ WHERE (`temp` > 100)) AS `$cor6`
 INNER JOIN `table$10` FOR SYSTEM_TIME AS OF `$cor6`.`timeSec` AS `t0` ON (`t0`.`id` = `$cor6`.`sensorid3`))
 ;
 END;
+
+

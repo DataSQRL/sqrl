@@ -72,7 +72,9 @@ LogicalProject(beforeURL=[$0], afterURL=[$3], timestamp=[$4], _userid=[$2], _tim
 >>>database-schema.sql
 CREATE TABLE IF NOT EXISTS recommendation$1 ("url" TEXT NOT NULL,"rec" TEXT NOT NULL,"frequency" BIGINT NOT NULL,"__timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("url","rec"));
 CREATE TABLE IF NOT EXISTS trending$1 ("url" TEXT NOT NULL,"total" BIGINT NOT NULL,"_timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("url"));
+
 >>>flink-plan.sql
+
 CREATE TEMPORARY TABLE `click$1` (
   `url` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
@@ -80,11 +82,10 @@ CREATE TEMPORARY TABLE `click$1` (
   PRIMARY KEY (`url`, `userid`, `timestamp`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS (`timestamp` - INTERVAL '1.0' SECOND)
 ) WITH (
-  'format' = 'csv',
-  'path' = '/mnt/build/data',
-  'source.monitor-interval' = '0',
-  'connector' = 'filesystem',
-  'source.path.regex-pattern' = 'to be determined'
+  'format' = 'flexible-json',
+  'path' = '/data/click.jsonl',
+  'source.monitor-interval' = '1',
+  'connector' = 'filesystem'
 );
 
 CREATE TEMPORARY TABLE `recommendation$1` (
@@ -98,8 +99,8 @@ CREATE TEMPORARY TABLE `recommendation$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'recommendation$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `trending$1` (
@@ -112,8 +113,8 @@ CREATE TEMPORARY TABLE `trending$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'trending$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE VIEW `table$1`
@@ -134,3 +135,5 @@ FROM TABLE(HOP((TABLE `table$1`), (DESCRIPTOR(`timestamp`)), INTERVAL '1728' SEC
 GROUP BY `url`, `window_start`, `window_end`, `window_time`)
 ;
 END;
+
+

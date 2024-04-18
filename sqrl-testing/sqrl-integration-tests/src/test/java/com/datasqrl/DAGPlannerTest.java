@@ -24,7 +24,8 @@ public class DAGPlannerTest extends AbstractAssetSnapshotTest {
   void testScripts(Path script) {
     assertTrue(Files.exists(script));
     this.snapshot = Snapshot.of(getDisplayName(script), getClass());
-    execute(SCRIPT_DIR, "compile", script.getFileName().toString(), "-t", deployDir.toString(), "--nolookup");
+    execute(SCRIPT_DIR, "compile", script.getFileName().toString(), "-t", deployDir.toString(), "--nolookup",
+        "--profile", "../../../../../../profiles/profile-1.16");
     createSnapshot();
   }
 

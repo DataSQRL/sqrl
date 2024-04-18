@@ -13,11 +13,11 @@ Schema:
  - minTemp: DECIMAL(10, 5) NOT NULL
 Plan:
 LogicalProject(__pk1$groupId=[$0], __pk3$created=[$1], maxTemp=[$2], minTemp=[$3])
-  LogicalAggregate(group=[{0, 2}], maxTemp=[MAX($8)], minTemp=[MIN($9)]) hints[TumbleAggregationHint options:[2, INSTANT, 2, 1, 0]]
-    LogicalJoin(condition=[=($5, $6)], joinType=[inner]) hints[TemporalJoinHint options:[2]]
+  LogicalAggregate(group=[{0, 2}], maxTemp=[MAX($7)], minTemp=[MIN($8)]) hints[TumbleAggregationHint options:[2, INSTANT, 2, 1, 0]]
+    LogicalJoin(condition=[=($4, $5)], joinType=[inner]) hints[TemporalJoinHint options:[2]]
       LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{3}])
         LogicalTableScan(table=[[observationgroup$2]])
-        LogicalTableFunctionScan(invocation=[ObservationGroup.patients($cor3.patients)], rowType=[RecordType(INTEGER _idx, BIGINT patientId)], elementType=[class [Ljava.lang.Object;])
+        LogicalTableFunctionScan(invocation=[ObservationGroup.patients($cor3.patients)], rowType=[RecordType(BIGINT patientId)], elementType=[class [Ljava.lang.Object;])
       LogicalFilter(condition=[=($5, 1)]) hints[DedupHint]
         LogicalProject(patientid=[$0], avgTemp=[$1], maxTemp=[$2], minTemp=[$3], _timeMin=[$4], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
           LogicalTableScan(table=[[patientlasthour$1]])
@@ -32,7 +32,7 @@ Schema:
  - groupId: BIGINT NOT NULL
  - groupName: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - created: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
- - patients: RecordType(INTEGER NOT NULL _idx, BIGINT NOT NULL patientId) NOT NULL ARRAY NOT NULL
+ - patients: RecordType(BIGINT NOT NULL patientId) NOT NULL ARRAY NOT NULL
 Plan:
 LogicalTableScan(table=[[observationgroup$1]], hints=[[[WatermarkHint inheritPath:[] options:[2]]]]) hints[WatermarkHint options:[2]]
 
@@ -173,7 +173,7 @@ Type:   export
 Stage:  streams
 Inputs: tempalert$1
 
-=== TempAlert.TempAlert
+=== TempAlert.tempalert-1
 ID:     tempalert$1$2
 Type:   export
 Stage:  streams
@@ -184,10 +184,14 @@ CREATE TABLE IF NOT EXISTS lasthour$1 ("__pk1$groupId" BIGINT NOT NULL,"__pk3$cr
 CREATE TABLE IF NOT EXISTS observationgroup$2 ("groupId" BIGINT NOT NULL,"groupName" TEXT NOT NULL,"created" TIMESTAMP WITH TIME ZONE NOT NULL,"patients" JSONB NOT NULL , PRIMARY KEY ("groupId","created"));
 CREATE TABLE IF NOT EXISTS patienthourly$1 ("patientid" BIGINT NOT NULL,"timeHour" TIMESTAMP WITH TIME ZONE NOT NULL,"avgTemp" NUMERIC NOT NULL,"maxTemp" NUMERIC NOT NULL,"minTemp" NUMERIC NOT NULL , PRIMARY KEY ("patientid","timeHour"));
 CREATE TABLE IF NOT EXISTS patientlasthour$1 ("patientid" BIGINT NOT NULL,"avgTemp" NUMERIC NOT NULL,"maxTemp" NUMERIC NOT NULL,"minTemp" NUMERIC NOT NULL,"_timeMin" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("patientid"));
+
 >>>flink-plan.sql
+
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptostring` AS 'com.datasqrl.time.TimestampToString' LANGUAGE JAVA;
 
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofmonth` AS 'com.datasqrl.time.EndOfMonth' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `tojson` AS 'com.datasqrl.json.ToJson' LANGUAGE JAVA;
 
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofweek` AS 'com.datasqrl.time.EndOfWeek' LANGUAGE JAVA;
 
@@ -215,7 +219,7 @@ CREATE TEMPORARY TABLE `observationgroup$1` (
   `groupId` BIGINT NOT NULL,
   `groupName` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `created` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `patients` ROW(`_idx` INTEGER NOT NULL, `patientId` BIGINT NOT NULL) NOT NULL ARRAY NOT NULL,
+  `patients` ROW(`patientId` BIGINT NOT NULL) NOT NULL ARRAY NOT NULL,
   PRIMARY KEY (`groupId`, `created`) NOT ENFORCED,
   WATERMARK FOR `created` AS (`created` - INTERVAL '0.001' SECOND)
 ) WITH (
@@ -268,23 +272,23 @@ CREATE TEMPORARY TABLE `lasthour$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'lasthour$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `observationgroup$2` (
   `groupId` BIGINT NOT NULL,
   `groupName` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `created` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `patients` ROW(`_idx` INTEGER NOT NULL, `patientId` BIGINT NOT NULL) NOT NULL ARRAY NOT NULL,
+  `patients` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),
   PRIMARY KEY (`groupId`, `created`) NOT ENFORCED
 ) WITH (
   'password' = 'postgres',
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'observationgroup$2',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `patienthourly$1` (
@@ -299,8 +303,8 @@ CREATE TEMPORARY TABLE `patienthourly$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'patienthourly$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `patientlasthour$1` (
@@ -315,8 +319,8 @@ CREATE TEMPORARY TABLE `patientlasthour$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'patientlasthour$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `tempalert$1$1` (
@@ -452,7 +456,7 @@ FROM TABLE(TUMBLE((TABLE `table$5`), (DESCRIPTOR(`created`)), INTERVAL '0.001' S
 GROUP BY `groupId`, `window_start`, `window_end`, `window_time`)
 ;
 INSERT INTO `observationgroup$2`
-(SELECT *
+(SELECT `groupId`, `groupName`, `created`, TOJSON(`patients`) AS `patients`
 FROM `observationgroup$1`)
 ;
 INSERT INTO `patienthourly$1`
@@ -484,3 +488,5 @@ WHERE ((`smoothTemp` < 95) OR (`smoothTemp` > 102))) AS `$cor9`
 INNER JOIN `table$14` FOR SYSTEM_TIME AS OF `$cor9`.`timeMin` AS `t0` ON (`t0`.`id` = `$cor9`.`sensorid3`))
 ;
 END;
+
+

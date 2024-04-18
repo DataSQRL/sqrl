@@ -4,22 +4,21 @@ ID:     _orderitems$1
 Type:   stream
 Stage:  streams
 Inputs: orders$2
-Primary Key: id, time, _idx
+Primary Key: id, time, productid
 Timestamp  : time
 Schema:
  - id: BIGINT NOT NULL
  - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - customerid: BIGINT NOT NULL
- - _idx: INTEGER NOT NULL
  - productid: BIGINT NOT NULL
  - quantity: BIGINT NOT NULL
  - unit_price: DOUBLE NOT NULL
  - discount: DOUBLE
 Plan:
-LogicalProject(id=[$0], time=[$2], customerid=[$1], _idx=[$4], productid=[$5], quantity=[$6], unit_price=[$7], discount=[$8])
+LogicalProject(id=[$0], time=[$2], customerid=[$1], productid=[$4], quantity=[$5], unit_price=[$6], discount=[$7])
   LogicalCorrelate(correlation=[$cor8], joinType=[inner], requiredColumns=[{3}])
     LogicalTableScan(table=[[orders$2]])
-    LogicalTableFunctionScan(invocation=[Orders.items($cor8.items)], rowType=[RecordType(INTEGER _idx, BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount)], elementType=[class [Ljava.lang.Object;])
+    LogicalTableFunctionScan(invocation=[Orders.items($cor8.items)], rowType=[RecordType(BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount)], elementType=[class [Ljava.lang.Object;])
 
 === category_visits
 ID:     category_visits$1
@@ -107,9 +106,9 @@ Schema:
 Plan:
 LogicalProject(__pk1$id=[$0], country=[$1], month=[$2], quantity=[$3], spend=[$4], weight=[$5])
   LogicalAggregate(group=[{0, 1, 2}], quantity=[SUM($3)], spend=[SUM($4)], weight=[SUM($5)]) hints[TumbleAggregationHint options:[2, FUNCTION, 7, 2629746000, 0]]
-    LogicalProject(__pk6$id=[$8], country=[$25], month=[endOfMonth($1)], quantity=[$5], $f4=[*($5, $6)], $f5=[*($5, $11)], id=[$0], time=[$1], _idx=[$3])
-      LogicalJoin(condition=[=($2, $17)], joinType=[inner]) hints[TemporalJoinHint options:[1]]
-        LogicalJoin(condition=[=($4, $8)], joinType=[inner]) hints[TemporalJoinHint options:[1]]
+    LogicalProject(__pk6$id=[$7], country=[$24], month=[endOfMonth($1)], quantity=[$4], $f4=[*($4, $5)], $f5=[*($4, $10)], id=[$0], time=[$1], productid=[$3])
+      LogicalJoin(condition=[=($2, $16)], joinType=[inner]) hints[TemporalJoinHint options:[1]]
+        LogicalJoin(condition=[=($3, $7)], joinType=[inner]) hints[TemporalJoinHint options:[1]]
           LogicalTableScan(table=[[_orderitems$1]])
           LogicalFilter(condition=[=($8, 1)]) hints[DedupHint]
             LogicalProject(id=[$0], name=[$1], sizing=[$2], weight_in_gram=[$3], type=[$4], category=[$5], usda_id=[$6], updated=[$7], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $7 DESC NULLS LAST)])
@@ -128,7 +127,7 @@ Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
  - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
- - items: RecordType(INTEGER NOT NULL _idx, BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+ - items: RecordType(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
 Plan:
 LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[2]]]]) hints[WatermarkHint options:[2]]
 
@@ -149,14 +148,14 @@ Post Processors:
  - sort: #0: __pk1$id BIGINT ASC, #2: num_orders BIGINT DESC, #3: total_quantity BIGINT DESC
 Plan:
 LogicalProject(__pk1$id=[$0], productid=[$1], num_orders=[$2], total_quantity=[$3], __timestamp=[$4])
-  LogicalAggregate(group=[{4, 15}], num_orders=[COUNT()], total_quantity=[SUM($16)], __timestamp=[MAX($2)])
+  LogicalAggregate(group=[{4, 14}], num_orders=[COUNT()], total_quantity=[SUM($15)], __timestamp=[MAX($2)])
     LogicalCorrelate(correlation=[$cor7], joinType=[inner], requiredColumns=[{3}])
       LogicalJoin(condition=[=($1, $4)], joinType=[inner]) hints[TemporalJoinHint options:[2]]
         LogicalTableScan(table=[[orders$2]])
         LogicalFilter(condition=[=($9, 1)]) hints[DedupHint]
           LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], ip_address=[$4], country=[$5], changed_on=[$6], timestamp=[$7], country0=[$8], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $7 DESC NULLS LAST)])
             LogicalTableScan(table=[[customers$3]])
-      LogicalTableFunctionScan(invocation=[Orders.items($cor7.items)], rowType=[RecordType(INTEGER _idx, BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount)], elementType=[class [Ljava.lang.Object;])
+      LogicalTableFunctionScan(invocation=[Orders.items($cor7.items)], rowType=[RecordType(BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount)], elementType=[class [Ljava.lang.Object;])
 
 === product_visits
 ID:     product_visits$1
@@ -278,10 +277,10 @@ Schema:
 Plan:
 LogicalProject(__pk1$id=[$0], __pk3$time=[$1], price=[$2], saving=[$3])
   LogicalAggregate(group=[{0, 1}], agg#0=[SUM($2)], agg#1=[SUM($3)]) hints[TumbleAggregationHint options:[1, INSTANT, 1, 1, 0]]
-    LogicalProject(__pk1$id=[$0], __pk2$time=[$2], $f2=[-(*($6, $7), COALESCE($8, 0.0:DECIMAL(2, 1)))], $f3=[COALESCE($8, 0.0:DECIMAL(2, 1))], _idx=[$4])
+    LogicalProject(__pk1$id=[$0], __pk2$time=[$2], $f2=[-(*($5, $6), COALESCE($7, 0.0:DECIMAL(2, 1)))], $f3=[COALESCE($7, 0.0:DECIMAL(2, 1))], productid=[$4])
       LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{3}])
         LogicalTableScan(table=[[orders$2]])
-        LogicalTableFunctionScan(invocation=[Orders.items($cor0.items)], rowType=[RecordType(INTEGER _idx, BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount)], elementType=[class [Ljava.lang.Object;])
+        LogicalTableFunctionScan(invocation=[Orders.items($cor0.items)], rowType=[RecordType(BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount)], elementType=[class [Ljava.lang.Object;])
 
 >>>database-schema.sql
 CREATE TABLE IF NOT EXISTS category_visits$1 ("__pk1$id" BIGINT NOT NULL,"category" TEXT NOT NULL,"visits" BIGINT NOT NULL,"_event_time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("__pk1$id","category"));
@@ -296,10 +295,14 @@ CREATE TABLE IF NOT EXISTS totals$1 ("__pk1$id" BIGINT NOT NULL,"__pk3$time" TIM
 CREATE INDEX IF NOT EXISTS orders$2_hash_c1 ON orders$2 USING hash ("customerid");
 CREATE INDEX IF NOT EXISTS products$3_btree_c1c5 ON products$3 USING btree ("name","category");
 CREATE INDEX IF NOT EXISTS products$3_hash_c5 ON products$3 USING hash ("category");
+
 >>>flink-plan.sql
+
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptostring` AS 'com.datasqrl.time.TimestampToString' LANGUAGE JAVA;
 
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofmonth` AS 'com.datasqrl.time.EndOfMonth' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `tojson` AS 'com.datasqrl.json.ToJson' LANGUAGE JAVA;
 
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofweek` AS 'com.datasqrl.time.EndOfWeek' LANGUAGE JAVA;
 
@@ -327,7 +330,7 @@ CREATE TEMPORARY TABLE `orders$1` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `items` ROW(`_idx` INTEGER NOT NULL, `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
+  `items` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
   PRIMARY KEY (`id`, `time`) NOT ENFORCED,
   WATERMARK FOR `time` AS (`time` - INTERVAL '0.001' SECOND)
 ) WITH (
@@ -403,8 +406,8 @@ CREATE TEMPORARY TABLE `category_visits$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'category_visits$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `customers$3` (
@@ -423,8 +426,8 @@ CREATE TEMPORARY TABLE `customers$3` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'customers$3',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `monthly_by_country$1` (
@@ -440,23 +443,23 @@ CREATE TEMPORARY TABLE `monthly_by_country$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'monthly_by_country$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `orders$2` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `items` ROW(`_idx` INTEGER NOT NULL, `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
+  `items` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
   'password' = 'postgres',
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'orders$2',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `past_purchases$1` (
@@ -471,8 +474,8 @@ CREATE TEMPORARY TABLE `past_purchases$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'past_purchases$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `product_visits$1` (
@@ -486,8 +489,8 @@ CREATE TEMPORARY TABLE `product_visits$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'product_visits$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `products$3` (
@@ -505,8 +508,8 @@ CREATE TEMPORARY TABLE `products$3` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'products$3',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `spending$1` (
@@ -520,8 +523,8 @@ CREATE TEMPORARY TABLE `spending$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'spending$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE TEMPORARY TABLE `totals$1` (
@@ -535,8 +538,8 @@ CREATE TEMPORARY TABLE `totals$1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'table-name' = 'totals$1',
-  'user' = 'postgres',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl'
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
 );
 
 CREATE VIEW `table$1`
@@ -579,9 +582,9 @@ WHERE (`_rownum` = 1);
 
 CREATE VIEW `table$6`
 AS
-SELECT `$cor11`.`id0` AS `__pk6$id`, `t1`.`country0` AS `country`, ENDOFMONTH(`$cor11`.`time`) AS `month`, `$cor11`.`quantity`, (`$cor11`.`quantity` * `$cor11`.`unit_price`) AS `$f4`, (`$cor11`.`quantity` * `$cor11`.`weight_in_gram`) AS `$f5`, `$cor11`.`id`, `$cor11`.`time`, `$cor11`.`_idx`
+SELECT `$cor11`.`id0` AS `__pk6$id`, `t1`.`country0` AS `country`, ENDOFMONTH(`$cor11`.`time`) AS `month`, `$cor11`.`quantity`, (`$cor11`.`quantity` * `$cor11`.`unit_price`) AS `$f4`, (`$cor11`.`quantity` * `$cor11`.`weight_in_gram`) AS `$f5`, `$cor11`.`id`, `$cor11`.`time`, `$cor11`.`productid`
 FROM (SELECT *
-FROM (SELECT `$cor8`.`id`, `$cor8`.`time`, `$cor8`.`customerid`, `t50`.`_idx`, `t50`.`productid`, `t50`.`quantity`, `t50`.`unit_price`, `t50`.`discount`
+FROM (SELECT `$cor8`.`id`, `$cor8`.`time`, `$cor8`.`customerid`, `t50`.`productid`, `t50`.`quantity`, `t50`.`unit_price`, `t50`.`discount`
 FROM `orders$1` AS `$cor8`,
 UNNEST(`$cor8`.`items`) AS `t50`) AS `$cor12`
 INNER JOIN `table$5` FOR SYSTEM_TIME AS OF `$cor12`.`time` AS `t3` ON (`$cor12`.`productid` = `t3`.`id`)) AS `$cor11`
@@ -619,7 +622,7 @@ WHERE (`_rownum` = 1);
 
 CREATE VIEW `table$11`
 AS
-SELECT `$cor0`.`id` AS `__pk1$id`, `$cor0`.`time` AS `__pk2$time`, ((`t50`.`quantity` * `t50`.`unit_price`) - COALESCE(`t50`.`discount`, 0.0)) AS `$f2`, COALESCE(`t50`.`discount`, 0.0) AS `$f3`, `t50`.`_idx`
+SELECT `$cor0`.`id` AS `__pk1$id`, `$cor0`.`time` AS `__pk2$time`, ((`t50`.`quantity` * `t50`.`unit_price`) - COALESCE(`t50`.`discount`, 0.0)) AS `$f2`, COALESCE(`t50`.`discount`, 0.0) AS `$f3`, `t50`.`productid`
 FROM `orders$1` AS `$cor0`,
 UNNEST(`$cor0`.`items`) AS `t50`;
 
@@ -636,7 +639,7 @@ GROUP BY `__pk1$id`, `window_start`, `window_end`, `window_time`) AS `t10` ON ((
 
 CREATE VIEW `table$13`
 AS
-SELECT `$cor0`.`id` AS `__pk1$id`, `$cor0`.`time` AS `__pk2$time`, ((`t00`.`quantity` * `t00`.`unit_price`) - COALESCE(`t00`.`discount`, 0.0)) AS `$f2`, COALESCE(`t00`.`discount`, 0.0) AS `$f3`, `t00`.`_idx`
+SELECT `$cor0`.`id` AS `__pk1$id`, `$cor0`.`time` AS `__pk2$time`, ((`t00`.`quantity` * `t00`.`unit_price`) - COALESCE(`t00`.`discount`, 0.0)) AS `$f2`, COALESCE(`t00`.`discount`, 0.0) AS `$f3`, `t00`.`productid`
 FROM `orders$1` AS `$cor0`,
 UNNEST(`$cor0`.`items`) AS `t00`;
 
@@ -656,7 +659,7 @@ FROM TABLE(TUMBLE((TABLE `table$6`), (DESCRIPTOR(`time`)), INTERVAL '2629746' SE
 GROUP BY `__pk6$id`, `country`, `window_start`, `window_end`, `window_time`)
 ;
 INSERT INTO `orders$2`
-(SELECT *
+(SELECT `id`, `customerid`, `time`, TOJSON(`items`) AS `items`
 FROM `orders$1`)
 ;
 INSERT INTO `past_purchases$1`
@@ -687,3 +690,5 @@ FROM TABLE(TUMBLE((TABLE `table$13`), (DESCRIPTOR(`__pk2$time`)), INTERVAL '0.00
 GROUP BY `__pk1$id`, `window_start`, `window_end`, `window_time`)
 ;
 END;
+
+

@@ -140,8 +140,8 @@ public class TestCmd {
     execute(PROFILES_PATH, "compile",
         "myscript.sqrl", "schema.graphqls",
         "--nolookup",
-        "-p", "profile1",
-        "-p", "profile2",
+        "--profile", "profile1",
+        "--profile", "profile2",
         "--mnt", "/example/dir"
     );
 

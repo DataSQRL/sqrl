@@ -1,7 +1,5 @@
 package com.datasqrl;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import com.datasqrl.cmd.RootCommand;
 import com.datasqrl.cmd.StatusHook;
 import com.datasqrl.util.FileUtil;
@@ -35,7 +33,6 @@ public abstract class AbstractAssetSnapshotTest {
   protected final Path deployDir;
   protected final StatusHook hook;
   protected Snapshot snapshot;
-
 
   protected AbstractAssetSnapshotTest(Path deployDir, StatusHook hook) {
     this.deployDir = deployDir;
@@ -101,14 +98,9 @@ public abstract class AbstractAssetSnapshotTest {
     }
   }
 
-
-
-
   protected int execute(Path rootDir, String... args) {
     buildDir = rootDir.resolve("build");
     List<String> argslist = new ArrayList<>(List.of(args));
-    argslist.add("-p");
-    argslist.add("../../../../../../profiles/profile-1.16");
     return new RootCommand(rootDir,hook).getCmd().execute(argslist.toArray(String[]::new));
   }
 
@@ -153,11 +145,10 @@ public abstract class AbstractAssetSnapshotTest {
     return Files.walk(directory)
         .filter(path -> !Files.isDirectory(path))
         .filter(path -> path.toString().endsWith(SQRL_EXTENSION))
+        .filter(path-> !path.toString().contains("/build/"))
         .filter(path -> !StringUtil.removeFromEnd(path.getFileName().toString(), SQRL_EXTENSION).endsWith(DISABLED_FLAG))
         .sorted();
   }
-
-
 
   @AllArgsConstructor
   public abstract static class SqrlScriptArgumentsProvider implements ArgumentsProvider {
@@ -168,8 +159,5 @@ public abstract class AbstractAssetSnapshotTest {
     public Stream<? extends Arguments> provideArguments(ExtensionContext context) throws IOException {
       return getSQRLScripts(directory).map(Arguments::of);
     }
-
-
   }
-
 }

@@ -246,6 +246,9 @@ public class Packager {
     templateConfig.put("config", sqrlConfig.toMap());
     mountDirectory.map(m->templateConfig.put("mountDir", m.toAbsolutePath().toString()));
     // Copy each file and directory from the profile path to the target directory
+    if (!Files.isDirectory(profile)) {
+      throw new RuntimeException("Could not find profile: " + profile);
+    }
     try (Stream<Path> stream = Files.walk(profile)) {
       stream.forEach(sourcePath -> {
         Path destinationPath = targetDir.resolve(profile.relativize(sourcePath))
