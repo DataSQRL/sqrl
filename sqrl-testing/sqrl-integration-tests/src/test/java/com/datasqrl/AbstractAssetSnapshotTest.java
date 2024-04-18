@@ -1,7 +1,5 @@
 package com.datasqrl;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import com.datasqrl.cmd.RootCommand;
 import com.datasqrl.cmd.StatusHook;
 import com.datasqrl.util.FileUtil;

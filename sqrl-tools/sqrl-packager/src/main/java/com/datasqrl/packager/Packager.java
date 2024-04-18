@@ -246,31 +246,32 @@ public class Packager {
     templateConfig.put("config", sqrlConfig.toMap());
     mountDirectory.map(m->templateConfig.put("mountDir", m.toAbsolutePath().toString()));
     // Copy each file and directory from the profile path to the target directory
-    if (Files.isDirectory(profile)) {
-      try (Stream<Path> stream = Files.walk(profile)) {
-        stream.forEach(sourcePath -> {
-          Path destinationPath = targetDir.resolve(profile.relativize(sourcePath))
-              .toAbsolutePath();
-          if (Files.isDirectory(sourcePath)) {
-            try {
-              Files.createDirectories(destinationPath);
-            } catch (IOException e) {
-              throw new RuntimeException(e);
-            }
-          } else {
-            try {
-              if (sourcePath.toString().endsWith(".ftl")) {
-                processTemplate(sourcePath, destinationPath, templateConfig);
-              } else {
-                Files.copy(sourcePath, destinationPath, StandardCopyOption.REPLACE_EXISTING);
-              }
-            } catch (Exception e) {
-              throw new RuntimeException(e);
-            }
-
+    if (!Files.isDirectory(profile)) {
+      throw new RuntimeException("Could not find profile: " + profile);
+    }
+    try (Stream<Path> stream = Files.walk(profile)) {
+      stream.forEach(sourcePath -> {
+        Path destinationPath = targetDir.resolve(profile.relativize(sourcePath))
+            .toAbsolutePath();
+        if (Files.isDirectory(sourcePath)) {
+          try {
+            Files.createDirectories(destinationPath);
+          } catch (IOException e) {
+            throw new RuntimeException(e);
           }
-        });
-      }
+        } else {
+          try {
+            if (sourcePath.toString().endsWith(".ftl")) {
+              processTemplate(sourcePath, destinationPath, templateConfig);
+            } else {
+              Files.copy(sourcePath, destinationPath, StandardCopyOption.REPLACE_EXISTING);
+            }
+          } catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+
+        }
+      });
     }
   }
 

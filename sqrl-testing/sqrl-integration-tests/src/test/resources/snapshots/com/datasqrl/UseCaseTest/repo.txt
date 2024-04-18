@@ -142,3 +142,140 @@ type keywords {
   name: String!
 }
 
+>>>database-schema.sql
+CREATE TABLE IF NOT EXISTS package$1 ("name" TEXT NOT NULL,"_submissionTime" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("name"));
+CREATE TABLE IF NOT EXISTS submission$2 ("name" TEXT NOT NULL,"version" TEXT NOT NULL,"variant" TEXT ,"latest" BOOLEAN NOT NULL,"type" TEXT ,"license" TEXT ,"repository" TEXT ,"homepage" TEXT ,"documentation" TEXT ,"readme" TEXT ,"description" TEXT ,"uniqueId" TEXT NOT NULL,"file" TEXT NOT NULL,"hash" TEXT NOT NULL,"authorid" TEXT NOT NULL,"submissionTime" TIMESTAMP WITH TIME ZONE NOT NULL,"keywords" JSONB NOT NULL,"variant0" TEXT NOT NULL,"repoURL" TEXT NOT NULL , PRIMARY KEY ("name","submissionTime"));
+CREATE TABLE IF NOT EXISTS topicpackages$1 ("pkgName" TEXT NOT NULL,"topicName" TEXT NOT NULL,"numSubmissions" BIGINT NOT NULL,"lastSubmission" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("pkgName","topicName"));
+CREATE TABLE IF NOT EXISTS topicsearch$1 ("topicName" TEXT NOT NULL,"numPackages" BIGINT NOT NULL,"__timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("topicName"));
+CREATE INDEX IF NOT EXISTS submission$2_hash_c15 ON submission$2 USING hash ("submissionTime");
+CREATE INDEX IF NOT EXISTS topicpackages$1_hash_c1 ON topicpackages$1 USING hash ("topicName");
+
+>>>flink-plan.sql
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `tojson` AS 'com.datasqrl.json.ToJson' LANGUAGE JAVA;
+
+CREATE TEMPORARY TABLE `submission$1` (
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `version` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `variant` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `latest` BOOLEAN NOT NULL,
+  `type` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `license` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `repository` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `homepage` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `documentation` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `readme` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `uniqueId` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `file` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `hash` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `authorid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `submissionTime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `keywords` ROW(`name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL) NOT NULL ARRAY NOT NULL,
+  PRIMARY KEY (`name`, `submissionTime`) NOT ENFORCED,
+  WATERMARK FOR `submissionTime` AS (`submissionTime` - INTERVAL '0.001' SECOND)
+) WITH (
+  'format' = 'flexible-json',
+  'path' = '/data/repodata.jsonl',
+  'source.monitor-interval' = '1',
+  'connector' = 'filesystem'
+);
+
+CREATE TEMPORARY TABLE `package$1` (
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `_submissionTime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`name`) NOT ENFORCED
+) WITH (
+  'password' = 'postgres',
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'table-name' = 'package$1',
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
+);
+
+CREATE TEMPORARY TABLE `submission$2` (
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `version` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `variant` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `latest` BOOLEAN NOT NULL,
+  `type` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `license` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `repository` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `homepage` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `documentation` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `readme` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `uniqueId` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `file` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `hash` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `authorid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `submissionTime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `keywords` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),
+  `variant0` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `repoURL` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  PRIMARY KEY (`name`, `submissionTime`) NOT ENFORCED
+) WITH (
+  'password' = 'postgres',
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'table-name' = 'submission$2',
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
+);
+
+CREATE TEMPORARY TABLE `topicpackages$1` (
+  `pkgName` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `topicName` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `numSubmissions` BIGINT NOT NULL,
+  `lastSubmission` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`pkgName`, `topicName`) NOT ENFORCED
+) WITH (
+  'password' = 'postgres',
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'table-name' = 'topicpackages$1',
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
+);
+
+CREATE TEMPORARY TABLE `topicsearch$1` (
+  `topicName` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `numPackages` BIGINT NOT NULL,
+  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`topicName`) NOT ENFORCED
+) WITH (
+  'password' = 'postgres',
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'table-name' = 'topicsearch$1',
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
+);
+
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `package$1`
+(SELECT `name`, `submissionTime` AS `_submissionTime`
+FROM `submission$1`)
+;
+INSERT INTO `submission$2`
+(SELECT `name`, `version`, `variant`, `latest`, `type`, `license`, `repository`, `homepage`, `documentation`, `readme`, `description`, `uniqueId`, `file`, `hash`, `authorid`, `submissionTime`, TOJSON(`keywords`) AS `keywords`, COALESCE(`variant`, 'default') AS `variant0`, CONCAT('https://repository.datasqrl.com/', `file`) AS `repoURL`
+FROM `submission$1`)
+;
+INSERT INTO `topicpackages$1`
+(SELECT `$cor0`.`name` AS `pkgName`, `t10`.`name` AS `topicName`, COUNT(*) AS `numSubmissions`, MAX(`$cor0`.`submissionTime`) AS `lastSubmission`
+FROM (SELECT `name`, `version`, `variant`, `latest`, `type`, `license`, `repository`, `homepage`, `documentation`, `readme`, `description`, `uniqueId`, `file`, `hash`, `authorid`, `submissionTime`, `keywords`, COALESCE(`variant`, 'default') AS `variant0`, CONCAT('https://repository.datasqrl.com/', `file`) AS `repoURL`
+FROM `submission$1`) AS `$cor0`,
+UNNEST(`$cor0`.`keywords`) AS `t10`
+GROUP BY `$cor0`.`name`, `t10`.`name`)
+;
+INSERT INTO `topicsearch$1`
+(SELECT `t10`.`name` AS `topicName`, COUNT(*) AS `numPackages`, MAX(`$cor1`.`submissionTime`) AS `__timestamp`
+FROM (SELECT `name`, `version`, `variant`, `latest`, `type`, `license`, `repository`, `homepage`, `documentation`, `readme`, `description`, `uniqueId`, `file`, `hash`, `authorid`, `submissionTime`, `keywords`, COALESCE(`variant`, 'default') AS `variant0`, CONCAT('https://repository.datasqrl.com/', `file`) AS `repoURL`
+FROM `submission$1`) AS `$cor1`,
+UNNEST(`$cor1`.`keywords`) AS `t10`
+GROUP BY `t10`.`name`)
+;
+END;
+
+
