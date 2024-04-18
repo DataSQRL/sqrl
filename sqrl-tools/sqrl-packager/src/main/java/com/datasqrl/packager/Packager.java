@@ -118,10 +118,6 @@ public class Packager {
     addFileToPackageJsonConfig(buildDir, config.getScriptConfig(),
         destinationPaths, errors);
 
-    // Shouldn't be here, move to postprocessor for flink
-    String buildFile = FileUtil.readResource("build.gradle");
-    Files.copy(new ByteArrayInputStream(buildFile.getBytes()),
-        buildDir.resolve("build.gradle"));
   }
 
   public static void addFileToPackageJsonConfig(Path rootDir, ScriptConfig scriptConfig, Map<String, Optional<Path>> filesByKey,
@@ -236,8 +232,6 @@ public class Packager {
       copyToDeploy(targetDir,
           rootDir.resolve(profile), plan, testPlan, sqrlConfig, mountDirectory);
     }
-//    List.of()
-//        .forEach(p->p.process(new ProcessorContext(buildDir, targetDir, mountDirectory, profiles)));
   }
 
   @SneakyThrows

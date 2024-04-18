@@ -47,6 +47,12 @@ services:
     command: flink run /scripts/FlinkJob.jar
     depends_on:
       - flink-jobmanager
+<#if config["pipeline"]?seq_contains("log")>
+      - kafka
+</#if>
+<#if config["pipeline"]?seq_contains("database")>
+      - database
+</#if>
     environment:
       - |
         FLINK_PROPERTIES=
@@ -55,7 +61,9 @@ services:
 </#if>
 <#if config["pipeline"]?seq_contains("log")>
   kafka:
-    image: docker.io/bitnami/kafka:3.4.0-debian-11-r38
+    build:
+      context: log
+      dockerfile: Dockerfile
     ports:
       - "9092:9092"
       - "9094:9094"
@@ -65,13 +73,16 @@ services:
       - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
       - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,EXTERNAL://localhost:9094
       - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT,PLAINTEXT:PLAINTEXT
-  kafka-setup:
-    image: docker.io/bitnami/kafka:3.4.0-debian-11-r38
-    volumes:
-      - './log/create-topics.sh:/create-topics.sh'
-    command: ['/bin/bash', '/create-topics.sh']
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - 8080:8080
     depends_on:
       - kafka
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      DYNAMIC_CONFIG_ENABLED: 'true'
 </#if>
 <#if config["pipeline"]?seq_contains("server")>
   server:
@@ -79,8 +90,12 @@ services:
       context: server
       dockerfile: Dockerfile
     depends_on:
+<#if config["pipeline"]?seq_contains("database")>
       - database
-      - kafka-setup
+</#if>
+<#if config["pipeline"]?seq_contains("log")>
+      - kafka
+</#if>
     ports:
       - "8888:8888"
 </#if>

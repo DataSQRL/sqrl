@@ -28,6 +28,6 @@
   },
   "test": {
     "durationSec": 15,
-    "delaySec": 20
+    "delaySec": 30
   }
 }

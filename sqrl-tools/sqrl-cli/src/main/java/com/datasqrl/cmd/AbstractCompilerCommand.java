@@ -67,7 +67,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
       scope = ScopeType.INHERIT)
   protected boolean noinfer = false;
 
-  @CommandLine.Option(names = {"-p", "--profile"},
+  @CommandLine.Option(names = {"--profile"},
       description = "An alternative set of configuration values which override the default package.json")
   protected String[] profiles = new String[0];
 

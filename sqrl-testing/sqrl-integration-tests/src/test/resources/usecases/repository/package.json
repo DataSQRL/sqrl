@@ -1,4 +1,4 @@
 {
   "version": 1,
-  "pipeline" : ["streams", "log", "database", "server"]
+  "pipeline" : ["streams",  "database", "server"]
 }

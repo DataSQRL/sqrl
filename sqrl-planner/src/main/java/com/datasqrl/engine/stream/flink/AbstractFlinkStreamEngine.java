@@ -25,6 +25,8 @@ import java.util.List;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.table.functions.FunctionDefinition;
 
 @Slf4j
@@ -55,9 +57,9 @@ public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base imp
     StreamStagePlan plan = (StreamStagePlan) stagePlan;
     FlinkSqlGenerator generator = new FlinkSqlGenerator(framework);
 
-    List<String> flinkSql = generator.run(plan);
+    Pair<List<String>, List<SqlNode>> flinkSql = generator.run(plan);
 
-    return new FlinkStreamPhysicalPlan(plan, flinkSql);
+    return new FlinkStreamPhysicalPlan(plan, flinkSql.getLeft(), flinkSql.getRight());
   }
 
   @Override

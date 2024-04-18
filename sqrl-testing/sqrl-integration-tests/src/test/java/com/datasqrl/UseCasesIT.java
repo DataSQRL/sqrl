@@ -40,7 +40,7 @@ public class UseCasesIT {
     argsList.add("test");
     argsList.addAll(List.of(args));
     argsList.add("--nolookup");
-    argsList.add("-p");
+    argsList.add("--profile");
     argsList.add("../../../../../../../profiles/profile-1.16");
     execute(RESOURCES.resolve(path),
         AssertStatusHook.INSTANCE, argsList.toArray(a->new String[a]));

@@ -15,6 +15,7 @@ import java.util.Map;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.sql.parser.ddl.SqlSet;
 import org.apache.flink.sql.parser.dml.SqlExecute;
 import org.apache.flink.sql.parser.dml.SqlStatementSet;
@@ -27,7 +28,7 @@ public class FlinkSqlGenerator {
 
   private final SqrlFramework framework;
 
-  public List<String> run(StreamStagePlan physicalPlan) {
+  public Pair<List<String>, List<SqlNode>> run(StreamStagePlan physicalPlan) {
     SqrlToFlinkSqlGenerator sqlPlanner = new SqrlToFlinkSqlGenerator(framework);
     SqlResult result = sqlPlanner.plan(physicalPlan);
 
@@ -51,7 +52,7 @@ public class FlinkSqlGenerator {
         plan.add(sqlNodeToString.convert(() -> sqlNode).getSql() + ";");
       }
     }
-    return plan;
+    return Pair.of(plan, flinkSql);
 
   }
 }

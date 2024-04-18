@@ -100,4 +100,11 @@ public class PackageJsonImpl implements PackageJson {
     //ScriptConfiguration.SCRIPT_KEY
     return false;
   }
+
+  @Override
+  public String toString() {
+    return "PackageJsonImpl{" +
+        "sqrlConfig=" + sqrlConfig.toMap() +
+        '}';
+  }
 }

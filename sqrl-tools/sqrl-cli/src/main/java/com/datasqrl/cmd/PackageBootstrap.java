@@ -81,7 +81,7 @@ public class PackageBootstrap {
     }
 
     //Create package.json from project root if exists
-    List<Path> configFiles = new ArrayList<>(existingPackage.orElseGet(ArrayList::new));
+    List<Path> configFiles = new ArrayList<>();
 
     //Download any profiles
     for (String profile : profiles) {
@@ -115,6 +115,8 @@ public class PackageBootstrap {
         }
       }
     }
+
+    existingPackage.ifPresent(configFiles::addAll);
 
     if (packageFiles.isEmpty() && configFiles.isEmpty()) { //No profiles found, use default
       PackageJson defaultConfig = defaultConfigFnc.apply(errors);

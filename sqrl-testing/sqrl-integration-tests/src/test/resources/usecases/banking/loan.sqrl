@@ -25,10 +25,14 @@ ApplicationStatus := SELECT u.status, u.message, u.event_time, a.id, a.customer_
 
 --EXPORT ApplicationStatus TO print.status;
 
---Customers.recentFunding := SELECT SUM(a.amount) as total_amount, COUNT(1) as total_loans
---                           FROM @ JOIN ApplicationStatus a ON @.id = a.customer_id
---                           WHERE a.status = 'approval' AND a.event_time > now() - INTERVAL 21 DAY;
-
 ApplicationAlert := SELECT id, customer_id, loan_type_id, max_amount, min_amount, amount
                     FROM ApplicationStatus a
                     WHERE status = 'underwriting' AND (amount > max_amount OR amount < min_amount);
+
+/*+test */
+LoanTypesTest := SELECT COUNT(*) as num_loan_types FROM LoanTypes;
+
+/*+test */
+CustomerApplicationTest := SELECT c.id, c.email, COUNT(*) as num_applications, SUM(a.amount) as total
+                           FROM Customers c JOIN c.applications a
+                           GROUP BY c.id, c.email ORDER BY c.email;
