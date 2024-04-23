@@ -1,0 +1,12 @@
+IMPORT seedshop.Products;
+IMPORT text.textSearch;
+
+Products := DISTINCT Products ON id ORDER BY updated DESC;
+
+ProductSearch(@query: String) := SELECT p.*, textSearch(@query, name) as score
+                                 FROM Products p
+                                 WHERE textSearch(@query, name) > 0
+                                 ORDER BY score DESC;
+
+ProductSearchWithId(@query: String, @id: Int) := SELECT * FROM Products WHERE textSearch(@query, name, category) > 0
+                                               AND id > @id;

@@ -14,6 +14,23 @@ Schema:
 Plan:
 LogicalTableScan(table=[[customer$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
+=== HistoricOrders
+ID:     historicorders$1
+Type:   stream
+Stage:  streams
+Inputs: orders$2
+Primary Key: id, time
+Timestamp  : time
+Schema:
+ - id: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - entries: RecordType(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+Post Processors:
+ - now-filter: time > now() - 86313600000 ms
+Plan:
+LogicalTableScan(table=[[orders$2]])
+
 === OrderAgg1
 ID:     orderagg1$1
 Type:   stream
@@ -97,6 +114,23 @@ Schema:
 Plan:
 LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
+=== RecentOrders
+ID:     recentorders$1
+Type:   stream
+Stage:  streams
+Inputs: orders$2
+Primary Key: id, time
+Timestamp  : time
+Schema:
+ - id: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - entries: RecordType(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+Post Processors:
+ - now-filter: time > now() - 1000 ms
+Plan:
+LogicalTableScan(table=[[orders$2]])
+
 >>>flink.json
 {
   "flinkSql" : [
@@ -119,14 +153,16 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
     "CREATE TEMPORARY TABLE `product$1` (\n  `productid` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `_uuid` AS UUID(),\n  PRIMARY KEY (`_uuid`) NOT ENFORCED,\n  WATERMARK FOR `_ingest_time` AS (`_ingest_time` - INTERVAL '0.001' SECOND)\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
     "CREATE TEMPORARY TABLE `customer$1` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `timestamp` AS EPOCHTOTIMESTAMP(`lastUpdated`),\n  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,\n  WATERMARK FOR `timestamp` AS (`timestamp` - INTERVAL '0.001' SECOND)\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
     "CREATE TEMPORARY TABLE `customer$2` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'customer$2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `historicorders$1` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  PRIMARY KEY (`id`, `time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'historicorders$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `orderagg1$1` (\n  `customer` BIGINT NOT NULL,\n  `bucket` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `order_count` BIGINT NOT NULL,\n  PRIMARY KEY (`customer`, `bucket`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orderagg1$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `orderagg2$1` (\n  `customer` BIGINT NOT NULL,\n  `bucket` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `order_count` BIGINT NOT NULL,\n  PRIMARY KEY (`customer`, `bucket`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orderagg2$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `orderfilter$1` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  PRIMARY KEY (`id`, `time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orderfilter$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `orders$2` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  PRIMARY KEY (`id`, `time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orders$2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `product$2` (\n  `productid` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,\n  PRIMARY KEY (`_uuid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'product$2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `recentorders$1` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  PRIMARY KEY (`id`, `time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'recentorders$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE VIEW `table$1`\nAS\nSELECT `customerid` AS `customer`, ENDOFSECOND(`time`) AS `bucket`, `id`, `time`\nFROM `orders$1`;",
     "CREATE VIEW `table$2`\nAS\nSELECT `customerid` AS `customer`, ENDOFSECOND(`time`) AS `bucket`, `id`, `time`\nFROM `orders$1`;",
-    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer$2`\n(SELECT *\nFROM `customer$1`)\n;\nINSERT INTO `orderagg1$1`\n(SELECT `customer`, `window_time` AS `bucket`, COUNT(*) AS `order_count`\nFROM TABLE(TUMBLE((TABLE `table$1`), (DESCRIPTOR(`time`)), INTERVAL '1' SECOND(4), INTERVAL '0' SECOND(1))) AS `t0`\nGROUP BY `customer`, `window_start`, `window_end`, `window_time`)\n;\nINSERT INTO `orderagg2$1`\n(SELECT `customer`, `window_time` AS `bucket`, COUNT(*) AS `order_count`\nFROM TABLE(TUMBLE((TABLE `table$2`), (DESCRIPTOR(`time`)), INTERVAL '1' SECOND(4), INTERVAL '0' SECOND(1))) AS `t0`\nGROUP BY `customer`, `window_start`, `window_end`, `window_time`)\n;\nINSERT INTO `orderfilter$1`\n(SELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders$1`)\n;\nINSERT INTO `orders$2`\n(SELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders$1`)\n;\nINSERT INTO `product$2`\n(SELECT *\nFROM `product$1`)\n;\nEND;"
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer$2`\n(SELECT *\nFROM `customer$1`)\n;\nINSERT INTO `historicorders$1`\n(SELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders$1`)\n;\nINSERT INTO `orderagg1$1`\n(SELECT `customer`, `window_time` AS `bucket`, COUNT(*) AS `order_count`\nFROM TABLE(TUMBLE((TABLE `table$1`), (DESCRIPTOR(`time`)), INTERVAL '1' SECOND(4), INTERVAL '0' SECOND(1))) AS `t0`\nGROUP BY `customer`, `window_start`, `window_end`, `window_time`)\n;\nINSERT INTO `orderagg2$1`\n(SELECT `customer`, `window_time` AS `bucket`, COUNT(*) AS `order_count`\nFROM TABLE(TUMBLE((TABLE `table$2`), (DESCRIPTOR(`time`)), INTERVAL '1' SECOND(4), INTERVAL '0' SECOND(1))) AS `t0`\nGROUP BY `customer`, `window_start`, `window_end`, `window_time`)\n;\nINSERT INTO `orderfilter$1`\n(SELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders$1`)\n;\nINSERT INTO `orders$2`\n(SELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders$1`)\n;\nINSERT INTO `product$2`\n(SELECT *\nFROM `product$1`)\n;\nINSERT INTO `recentorders$1`\n(SELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders$1`)\n;\nEND;"
   ],
   "connectors" : [
     "jdbc-sqrl",
@@ -157,6 +193,20 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
         "\"lastUpdated\""
       ],
       "sql" : "CREATE TABLE IF NOT EXISTS customer$2 (\"customerid\" BIGINT NOT NULL,\"email\" TEXT NOT NULL,\"name\" TEXT NOT NULL,\"lastUpdated\" BIGINT NOT NULL,\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\",\"lastUpdated\"));"
+    },
+    {
+      "name" : "historicorders$1",
+      "columns" : [
+        "\"id\" BIGINT NOT NULL",
+        "\"customerid\" BIGINT NOT NULL",
+        "\"time\" TIMESTAMP WITH TIME ZONE NOT NULL",
+        "\"entries\" JSONB NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"id\"",
+        "\"time\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS historicorders$1 (\"id\" BIGINT NOT NULL,\"customerid\" BIGINT NOT NULL,\"time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"entries\" JSONB NOT NULL , PRIMARY KEY (\"id\",\"time\"));"
     },
     {
       "name" : "orderagg1$1",
@@ -228,6 +278,20 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
       "sql" : "CREATE TABLE IF NOT EXISTS product$2 (\"productid\" BIGINT NOT NULL,\"name\" TEXT NOT NULL,\"description\" TEXT NOT NULL,\"category\" TEXT NOT NULL,\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"_uuid\" TEXT NOT NULL , PRIMARY KEY (\"_uuid\"));"
     },
     {
+      "name" : "recentorders$1",
+      "columns" : [
+        "\"id\" BIGINT NOT NULL",
+        "\"customerid\" BIGINT NOT NULL",
+        "\"time\" TIMESTAMP WITH TIME ZONE NOT NULL",
+        "\"entries\" JSONB NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"id\"",
+        "\"time\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS recentorders$1 (\"id\" BIGINT NOT NULL,\"customerid\" BIGINT NOT NULL,\"time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"entries\" JSONB NOT NULL , PRIMARY KEY (\"id\",\"time\"));"
+    },
+    {
       "indexName" : "customer$2_hash_c3",
       "tableName" : "customer$2",
       "columns" : [
@@ -235,6 +299,15 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
       ],
       "type" : "HASH",
       "sql" : "CREATE INDEX IF NOT EXISTS customer$2_hash_c3 ON customer$2 USING hash (\"lastUpdated\");"
+    },
+    {
+      "indexName" : "historicorders$1_btree_c2",
+      "tableName" : "historicorders$1",
+      "columns" : [
+        "time"
+      ],
+      "type" : "BTREE",
+      "sql" : "CREATE INDEX IF NOT EXISTS historicorders$1_btree_c2 ON historicorders$1 USING btree (\"time\");"
     },
     {
       "indexName" : "orderagg1$1_btree_c1",
@@ -271,6 +344,15 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
       ],
       "type" : "HASH",
       "sql" : "CREATE INDEX IF NOT EXISTS orders$2_hash_c2 ON orders$2 USING hash (\"time\");"
+    },
+    {
+      "indexName" : "recentorders$1_btree_c2",
+      "tableName" : "recentorders$1",
+      "columns" : [
+        "time"
+      ],
+      "type" : "BTREE",
+      "sql" : "CREATE INDEX IF NOT EXISTS recentorders$1_btree_c2 ON recentorders$1 USING btree (\"time\");"
     }
   ]
 }
@@ -411,8 +493,158 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
       {
         "type" : "args",
         "parentType" : "Query",
+        "fieldName" : "HistoricOrders",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "time"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\nFROM (SELECT *\n  FROM \"historicorders$1\"\n  WHERE CURRENT_TIMESTAMP <= (\"time\" + INTERVAL '86313600' SECOND(11))) AS \"t\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, 1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "id"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "time"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"historicorders$1\"\nWHERE CURRENT_TIMESTAMP <= (\"time\" + INTERVAL '86313600' SECOND(11))\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
+              "parameters" : [ ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"historicorders$1\"\n  WHERE CURRENT_TIMESTAMP <= (\"time\" + INTERVAL '86313600' SECOND(11))) AS \"t\"\nWHERE \"id\" = $1\nORDER BY \"time\" DESC NULLS LAST",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "id"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "time"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"historicorders$1\"\n  WHERE CURRENT_TIMESTAMP <= (\"time\" + INTERVAL '86313600' SECOND(11))) AS \"t\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "time"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
         "fieldName" : "OrderAgg1",
         "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"orderagg1$1\"\nWHERE CURRENT_TIMESTAMP < (\"bucket\" + INTERVAL '86401' SECOND(8))\nORDER BY \"bucket\" DESC NULLS LAST, \"customer\"",
+              "parameters" : [ ]
+            }
+          },
           {
             "arguments" : [
               {
@@ -515,26 +747,6 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
                 }
               ]
             }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"orderagg1$1\"\nWHERE CURRENT_TIMESTAMP < (\"bucket\" + INTERVAL '86401' SECOND(8))\nORDER BY \"bucket\" DESC NULLS LAST, \"customer\"",
-              "parameters" : [ ]
-            }
           }
         ]
       },
@@ -543,37 +755,6 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
         "parentType" : "Query",
         "fieldName" : "OrderAgg2",
         "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "bucket"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"orderagg2$1\"\n  WHERE CURRENT_TIMESTAMP < (\"bucket\" + INTERVAL '86401' SECOND(8))) AS \"t\"\nWHERE \"bucket\" = $1\nORDER BY \"bucket\" DESC NULLS LAST, \"customer\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "bucket"
-                }
-              ]
-            }
-          },
           {
             "arguments" : [
               {
@@ -665,6 +846,37 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
               "sql" : "SELECT *\nFROM \"orderagg2$1\"\nWHERE CURRENT_TIMESTAMP < (\"bucket\" + INTERVAL '86401' SECOND(8))\nORDER BY \"bucket\" DESC NULLS LAST, \"customer\"",
               "parameters" : [ ]
             }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "bucket"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"orderagg2$1\"\n  WHERE CURRENT_TIMESTAMP < (\"bucket\" + INTERVAL '86401' SECOND(8))) AS \"t\"\nWHERE \"bucket\" = $1\nORDER BY \"bucket\" DESC NULLS LAST, \"customer\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "bucket"
+                }
+              ]
+            }
           }
         ]
       },
@@ -673,57 +885,6 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
         "parentType" : "Query",
         "fieldName" : "OrderFilter",
         "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "time"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"orderfilter$1\"\n  WHERE CURRENT_TIMESTAMP < (\"time\" + INTERVAL '86400' SECOND(8))) AS \"t\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "time"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"orderfilter$1\"\nWHERE CURRENT_TIMESTAMP < (\"time\" + INTERVAL '86400' SECOND(8))\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
-              "parameters" : [ ]
-            }
-          },
           {
             "arguments" : [
               {
@@ -795,14 +956,7 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
                 }
               ]
             }
-          }
-        ]
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "Orders",
-        "matchs" : [
+          },
           {
             "arguments" : [
               {
@@ -819,7 +973,7 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"orders$2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
+              "sql" : "SELECT *\nFROM \"orderfilter$1\"\nWHERE CURRENT_TIMESTAMP < (\"time\" + INTERVAL '86400' SECOND(8))\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
               "parameters" : [ ]
             }
           },
@@ -844,7 +998,7 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"orders$2\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
+              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"orderfilter$1\"\n  WHERE CURRENT_TIMESTAMP < (\"time\" + INTERVAL '86400' SECOND(8))) AS \"t\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -853,7 +1007,14 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
                 }
               ]
             }
-          },
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Orders",
+        "matchs" : [
           {
             "arguments" : [
               {
@@ -925,6 +1086,57 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
                 }
               ]
             }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"orders$2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
+              "parameters" : [ ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "time"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"orders$2\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "time"
+                }
+              ]
+            }
           }
         ]
       },
@@ -954,6 +1166,136 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
             }
           }
         ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "RecentOrders",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"recentorders$1\"\n  WHERE CURRENT_TIMESTAMP <= (\"time\" + INTERVAL '1' SECOND(4))) AS \"t\"\nWHERE \"id\" = $1\nORDER BY \"time\" DESC NULLS LAST",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "id"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "time"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\nFROM (SELECT *\n  FROM \"recentorders$1\"\n  WHERE CURRENT_TIMESTAMP <= (\"time\" + INTERVAL '1' SECOND(4))) AS \"t\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, 1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "id"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "time"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"recentorders$1\"\nWHERE CURRENT_TIMESTAMP <= (\"time\" + INTERVAL '1' SECOND(4))\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
+              "parameters" : [ ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "time"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"recentorders$1\"\n  WHERE CURRENT_TIMESTAMP <= (\"time\" + INTERVAL '1' SECOND(4))) AS \"t\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "time"
+                }
+              ]
+            }
+          }
+        ]
       }
     ],
     "mutations" : [ ],
@@ -961,7 +1303,7 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "type Customer {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype OrderAgg1 {\n  customer: Float!\n  bucket: DateTime!\n  order_count: Float!\n}\n\ntype OrderAgg2 {\n  customer: Float!\n  bucket: DateTime!\n  order_count: Float!\n}\n\ntype OrderFilter {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries(limit: Int = 10, offset: Int = 0): [entries!]\n}\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries(limit: Int = 10, offset: Int = 0): [entries!]\n}\n\ntype Product {\n  productid: Float!\n  name: String!\n  description: String!\n  category: String!\n}\n\ntype Query {\n  Customer(customerid: Float, lastUpdated: Float, limit: Int = 10, offset: Int = 0): [Customer!]\n  OrderAgg1(customer: Float, bucket: DateTime, limit: Int = 10, offset: Int = 0): [OrderAgg1!]\n  OrderAgg2(customer: Float, bucket: DateTime, limit: Int = 10, offset: Int = 0): [OrderAgg2!]\n  OrderFilter(id: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [OrderFilter!]\n  Orders(id: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [Orders!]\n  Product(limit: Int = 10, offset: Int = 0): [Product!]\n}\n\ntype entries {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n\ntype entries_ {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n"
+      "schema" : "type Customer {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype HistoricOrders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries(limit: Int = 10, offset: Int = 0): [entries!]\n}\n\ntype OrderAgg1 {\n  customer: Float!\n  bucket: DateTime!\n  order_count: Float!\n}\n\ntype OrderAgg2 {\n  customer: Float!\n  bucket: DateTime!\n  order_count: Float!\n}\n\ntype OrderFilter {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries(limit: Int = 10, offset: Int = 0): [entries!]\n}\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries(limit: Int = 10, offset: Int = 0): [entries!]\n}\n\ntype Product {\n  productid: Float!\n  name: String!\n  description: String!\n  category: String!\n}\n\ntype Query {\n  Customer(customerid: Float, lastUpdated: Float, limit: Int = 10, offset: Int = 0): [Customer!]\n  HistoricOrders(id: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [HistoricOrders!]\n  OrderAgg1(customer: Float, bucket: DateTime, limit: Int = 10, offset: Int = 0): [OrderAgg1!]\n  OrderAgg2(customer: Float, bucket: DateTime, limit: Int = 10, offset: Int = 0): [OrderAgg2!]\n  OrderFilter(id: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [OrderFilter!]\n  Orders(id: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [Orders!]\n  Product(limit: Int = 10, offset: Int = 0): [Product!]\n  RecentOrders(id: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [RecentOrders!]\n}\n\ntype RecentOrders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries(limit: Int = 10, offset: Int = 0): [entries!]\n}\n\ntype entries {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n\ntype entries_ {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n\ntype entries__ {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n\ntype entries___ {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n"
     }
   }
 }

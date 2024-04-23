@@ -1,0 +1,7 @@
+IMPORT ecommerceTs.Product;
+IMPORT text.bannedWordsFilter;
+IMPORT text.textsearch;
+IMPORT text.format as formatting;
+Product.badWords := bannedWordsFilter(name);
+Product.searchResult := textsearch('garden gnome', category, name);
+Product.format := formatting('Go buy: %s in %s with id=%s', name, category, CAST(productid AS STRING));

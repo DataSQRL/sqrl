@@ -275,7 +275,7 @@ public class SqrlToFlinkSqlGenerator {
       return false;
     }
 
-    if (format.get().getName().equalsIgnoreCase(FlexibleJsonFlinkFormatFactory.FORMAT_NAME)) {
+    if (format.get().getName().equalsIgnoreCase(FlexibleJsonFlinkFormatFactory.FORMAT_NAME) && type instanceof RawRelDataType) {
       RawRelDataType relDataType = (RawRelDataType) type;
       return FlexibleJsonFlinkFormatFactory.getSupportedTypeClasses().contains(relDataType.getRawType().getOriginatingClass());
     } else {

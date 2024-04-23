@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "flink" : {
+    "format" : "flexible-json",
+    "path" : "/data/customers.jsonl",
+    "source.monitor-interval" : 1,
+    "connector" : "filesystem"
+  },
+  "table" : {
+    "type" : "source",
+    "primary-key" : ["id", "changed_on"],
+    "timestamp" : "timestamp",
+    "watermark-millis" : "1"
+  },
+  "metadata" : {
+    "timestamp" : {
+      "attribute" : "time.epochMilliToTimestamp(changed_on)"
+    }
+  }
+}

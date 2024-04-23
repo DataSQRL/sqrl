@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "flink" : {
+    "format" : "flexible-json",
+    "path" : "/data/sink/",
+    "connector" : "filesystem"
+  },
+  "table" : {
+    "type" : "sink"
+  }
+}

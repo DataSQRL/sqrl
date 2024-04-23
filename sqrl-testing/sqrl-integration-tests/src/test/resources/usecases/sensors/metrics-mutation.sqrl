@@ -1,0 +1,13 @@
+IMPORT metrics-mutation.AddReading AS SensorReading;
+IMPORT time.endOfSecond;  -- Import time function
+/* Aggregate sensor readings to second */
+SecReading := SELECT sensorid, endOfSecond(event_time) as timeSec,
+        avg(temperature) as temp FROM SensorReading
+    GROUP BY sensorid, timeSec;
+/* Get max temperature in last minute */
+SensorMaxTemp := SELECT sensorid, max(temp) as maxTemp
+    FROM SecReading
+    WHERE timeSec >= now() - INTERVAL 1 MINUTE
+    GROUP BY sensorid;
+/* Alert on high temperatures */
+HighTempAlert := SELECT * FROM SecReading WHERE temp > 50;

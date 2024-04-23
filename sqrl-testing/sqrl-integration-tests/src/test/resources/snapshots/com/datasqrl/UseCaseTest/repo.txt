@@ -86,62 +86,6 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT()], __timestamp=[MAX($2)])
       LogicalTableScan(table=[[submission$2]])
       LogicalTableFunctionScan(invocation=[Submission.keywords($cor1.keywords)], rowType=[RecordType(VARCHAR(2147483647) name)], elementType=[class [Ljava.lang.Object;])
 
->>>schema.graphqls
-"An RFC-3339 compliant DateTime Scalar"
-scalar DateTime
-
-type Package {
-  name: String!
-  latest(limit: Int = 10, offset: Int = 0): [Submission!]
-  versions(limit: Int = 10, offset: Int = 0): [Submission!]
-}
-
-type Query {
-  Package(name: String, limit: Int = 10, offset: Int = 0): [Package!]
-  Submission(name: String, submissionTime: DateTime, limit: Int = 10, offset: Int = 0): [Submission!]
-  TopicPackages(pkgName: String, topicName: String, limit: Int = 10, offset: Int = 0): [TopicPackages!]
-  TopicSearch(topicName: String, limit: Int = 10, offset: Int = 0): [TopicSearch!]
-}
-
-type Submission {
-  name: String!
-  version: String!
-  variant: String
-  latest: Boolean!
-  type: String
-  license: String
-  repository: String
-  homepage: String
-  documentation: String
-  readme: String
-  description: String
-  uniqueId: String!
-  file: String!
-  hash: String!
-  authorid: String!
-  submissionTime: DateTime!
-  variant0: String!
-  repoURL: String!
-  keywords(limit: Int = 10, offset: Int = 0): [keywords!]
-}
-
-type TopicPackages {
-  pkgName: String!
-  topicName: String!
-  numSubmissions: Float!
-  lastSubmission: DateTime!
-  latest(limit: Int = 10, offset: Int = 0): [Submission!]
-}
-
-type TopicSearch {
-  topicName: String!
-  numPackages: Float!
-}
-
-type keywords {
-  name: String!
-}
-
 >>>flink.json
 {
   "flinkSql" : [

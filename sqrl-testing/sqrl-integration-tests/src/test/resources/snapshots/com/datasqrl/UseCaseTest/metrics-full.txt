@@ -134,59 +134,6 @@ Post Processors:
 Plan:
 LogicalTableScan(table=[[sensors$2]])
 
->>>schema.graphqls
-"An RFC-3339 compliant DateTime Scalar"
-scalar DateTime
-
-type HighTemp {
-  machineid: Float!
-  sensorid: Float!
-  temp: Float!
-  timeSec: DateTime!
-}
-
-type Machine {
-  machineid: Float!
-  maxTemp: Float!
-  avgTemp: Float!
-  sensors(limit: Int = 10, offset: Int = 0): [Sensors!]
-}
-
-type Query {
-  HighTemp(sensorid: Float, timeSec: DateTime, limit: Int = 10, offset: Int = 0): [HighTemp!]
-  Machine(machineid: Float, limit: Int = 10, offset: Int = 0): [Machine!]
-  SecReading(sensorid: Float, timeSec: DateTime, limit: Int = 10, offset: Int = 0): [SecReading!]
-  SensorReading(sensorid: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [SensorReading!]
-  Sensors(id: Float, limit: Int = 10, offset: Int = 0): [Sensors!]
-}
-
-type SecReading {
-  sensorid: Float!
-  timeSec: DateTime!
-  temp: Float!
-}
-
-type SensorReading {
-  sensorid: Float!
-  time: DateTime!
-  temperature: Float!
-  humidity: Float!
-}
-
-type Sensors {
-  id: Float!
-  machineid: Float!
-  placed: DateTime!
-  lastHour: lastHour
-  readings(limit: Int = 10, offset: Int = 0): [SecReading!]
-}
-
-type lastHour {
-  maxTemp: Float!
-  avgTemp: Float!
-  parent: Sensors!
-}
-
 >>>flink.json
 {
   "flinkSql" : [
@@ -317,6 +264,15 @@ type lastHour {
       ],
       "type" : "HASH",
       "sql" : "CREATE INDEX IF NOT EXISTS hightemp$1_hash_c3 ON hightemp$1 USING hash (\"timeSec\");"
+    },
+    {
+      "indexName" : "secreading$1_btree_c2",
+      "tableName" : "secreading$1",
+      "columns" : [
+        "temp"
+      ],
+      "type" : "BTREE",
+      "sql" : "CREATE INDEX IF NOT EXISTS secreading$1_btree_c2 ON secreading$1 USING btree (\"temp\");"
     },
     {
       "indexName" : "secreading$1_hash_c1",
@@ -782,6 +738,34 @@ type lastHour {
       {
         "type" : "args",
         "parentType" : "Query",
+        "fieldName" : "SecReadingByTemp",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "temp"
+              }
+            ],
+            "query" : {
+              "type" : "JdbcQuery",
+              "type" : "JdbcQuery",
+              "sql" : "SELECT *\nFROM \"secreading$1\"\nWHERE \"temp\" > $1\nORDER BY \"timeSec\" DESC NULLS LAST, \"sensorid\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "temp"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
         "fieldName" : "SensorReading",
         "matchs" : [
           {
@@ -973,7 +957,7 @@ type lastHour {
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype HighTemp {\n  machineid: Float!\n  sensorid: Float!\n  temp: Float!\n  timeSec: DateTime!\n}\n\ntype Machine {\n  machineid: Float!\n  maxTemp: Float!\n  avgTemp: Float!\n  sensors(limit: Int = 10, offset: Int = 0): [Sensors!]\n}\n\ntype Query {\n  HighTemp(sensorid: Float, timeSec: DateTime, limit: Int = 10, offset: Int = 0): [HighTemp!]\n  Machine(machineid: Float, limit: Int = 10, offset: Int = 0): [Machine!]\n  SecReading(sensorid: Float, timeSec: DateTime, limit: Int = 10, offset: Int = 0): [SecReading!]\n  SensorReading(sensorid: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [SensorReading!]\n  Sensors(id: Float, limit: Int = 10, offset: Int = 0): [Sensors!]\n}\n\ntype SecReading {\n  sensorid: Float!\n  timeSec: DateTime!\n  temp: Float!\n}\n\ntype SensorReading {\n  sensorid: Float!\n  time: DateTime!\n  temperature: Float!\n  humidity: Float!\n}\n\ntype Sensors {\n  id: Float!\n  machineid: Float!\n  placed: DateTime!\n  lastHour: lastHour\n  readings(limit: Int = 10, offset: Int = 0): [SecReading!]\n}\n\ntype lastHour {\n  maxTemp: Float!\n  avgTemp: Float!\n  parent: Sensors!\n}\n"
+      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype HighTemp {\n  machineid: Float!\n  sensorid: Float!\n  temp: Float!\n  timeSec: DateTime!\n}\n\ntype Machine {\n  machineid: Float!\n  maxTemp: Float!\n  avgTemp: Float!\n  sensors(limit: Int = 10, offset: Int = 0): [Sensors!]\n}\n\ntype Query {\n  HighTemp(sensorid: Float, timeSec: DateTime, limit: Int = 10, offset: Int = 0): [HighTemp!]\n  Machine(machineid: Float, limit: Int = 10, offset: Int = 0): [Machine!]\n  SecReading(sensorid: Float, timeSec: DateTime, limit: Int = 10, offset: Int = 0): [SecReading!]\n  SecReadingByTemp(temp: Int!): [SecReadingByTemp!]\n  SensorReading(sensorid: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [SensorReading!]\n  Sensors(id: Float, limit: Int = 10, offset: Int = 0): [Sensors!]\n}\n\ntype SecReading {\n  sensorid: Float!\n  timeSec: DateTime!\n  temp: Float!\n}\n\ntype SecReadingByTemp {\n  sensorid: Float!\n  timeSec: DateTime!\n  temp: Float!\n}\n\ntype SensorReading {\n  sensorid: Float!\n  time: DateTime!\n  temperature: Float!\n  humidity: Float!\n}\n\ntype Sensors {\n  id: Float!\n  machineid: Float!\n  placed: DateTime!\n  lastHour: lastHour\n  readings(limit: Int = 10, offset: Int = 0): [SecReading!]\n}\n\ntype lastHour {\n  maxTemp: Float!\n  avgTemp: Float!\n  parent: Sensors!\n}\n"
     }
   }
 }

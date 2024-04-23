@@ -16,7 +16,7 @@ Post Processors:
 Plan:
 LogicalProject(customerid=[$0], week=[$1], total=[$2], saved=[$3])
   LogicalAggregate(group=[{0, 1}], total=[SUM($2)], agg#1=[SUM($3)]) hints[TumbleAggregationHint options:[1, FUNCTION, 5, 604800000, 0]]
-    LogicalProject(customerid=[$1], week=[endOfWeek($2)], $f2=[*($4, $5)], $f3=[COALESCE($6, 0.0:DECIMAL(2, 1))], id=[$0], time=[$2])
+    LogicalProject(customerid=[$1], week=[endOfWeek($2)], total=[$7], $f3=[COALESCE($6, 0.0:DECIMAL(2, 1))], id=[$0], time=[$2])
       LogicalTableScan(table=[[orders$2]])
 
 === Orders
@@ -33,8 +33,10 @@ Schema:
  - quantity: BIGINT NOT NULL
  - unit_price: DOUBLE NOT NULL
  - discount: DOUBLE
+ - total: DOUBLE NOT NULL
 Plan:
-LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[2]]]]) hints[WatermarkHint options:[2]]
+LogicalProject(id=[$0], customerid=[$1], time=[$2], productid=[$3], quantity=[$4], unit_price=[$5], discount=[$6], total=[-(*($4, $5), COALESCE($6, 0.0:DOUBLE))]) hints[WatermarkHint options:[2]]
+  LogicalTableScan(table=[[orders$1]])
 
 === ProductRevenue
 ID:     productrevenue$1
@@ -50,10 +52,9 @@ Schema:
 Post Processors:
  - sort: #1: week TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC
 Plan:
-LogicalProject(productid=[$0], week=[$1], revenue=[$2])
-  LogicalAggregate(group=[{0, 1}], agg#0=[SUM($2)]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 604800000, 0]]
-    LogicalProject(productid=[$3], week=[endOfWeek($2)], $f2=[-(*($4, $5), COALESCE($6, 0.0:DECIMAL(2, 1)))], id=[$0], time=[$2])
-      LogicalTableScan(table=[[orders$2]])
+LogicalAggregate(group=[{0, 1}], revenue=[SUM($2)]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 604800000, 0]]
+  LogicalProject(productid=[$3], week=[endOfWeek($2)], total=[$7], id=[$0], time=[$2])
+    LogicalTableScan(table=[[orders$2]])
 
 >>>flink.json
 {
@@ -61,11 +62,11 @@ LogicalProject(productid=[$0], week=[$1], revenue=[$2])
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofweek` AS 'com.datasqrl.time.EndOfWeek' LANGUAGE JAVA;",
     "CREATE TEMPORARY TABLE `orders$1` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `productid` BIGINT NOT NULL,\n  `quantity` BIGINT NOT NULL,\n  `unit_price` DOUBLE NOT NULL,\n  `discount` DOUBLE,\n  PRIMARY KEY (`id`, `time`) NOT ENFORCED,\n  WATERMARK FOR `time` AS (`time` - INTERVAL '0.001' SECOND)\n) WITH (\n  'format' = 'flexible-json',\n  'path' = '/data/orders.jsonl',\n  'source.monitor-interval' = '1',\n  'connector' = 'filesystem'\n);",
     "CREATE TEMPORARY TABLE `customerspending$1` (\n  `customerid` BIGINT NOT NULL,\n  `week` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `total` DOUBLE NOT NULL,\n  `saved` DOUBLE NOT NULL,\n  PRIMARY KEY (`customerid`, `week`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'customerspending$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `orders$2` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `productid` BIGINT NOT NULL,\n  `quantity` BIGINT NOT NULL,\n  `unit_price` DOUBLE NOT NULL,\n  `discount` DOUBLE,\n  PRIMARY KEY (`id`, `time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orders$2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `orders$2` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `productid` BIGINT NOT NULL,\n  `quantity` BIGINT NOT NULL,\n  `unit_price` DOUBLE NOT NULL,\n  `discount` DOUBLE,\n  `total` DOUBLE NOT NULL,\n  PRIMARY KEY (`id`, `time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orders$2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `productrevenue$1` (\n  `productid` BIGINT NOT NULL,\n  `week` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `revenue` DOUBLE NOT NULL,\n  PRIMARY KEY (`productid`, `week`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'productrevenue$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE VIEW `table$1`\nAS\nSELECT `customerid`, ENDOFWEEK(`time`) AS `week`, (`quantity` * `unit_price`) AS `$f2`, COALESCE(`discount`, 0.0) AS `$f3`, `id`, `time`\nFROM `orders$1`;",
-    "CREATE VIEW `table$2`\nAS\nSELECT `productid`, ENDOFWEEK(`time`) AS `week`, ((`quantity` * `unit_price`) - COALESCE(`discount`, 0.0)) AS `$f2`, `id`, `time`\nFROM `orders$1`;",
-    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customerspending$1`\n(SELECT `customerid`, `window_time` AS `week`, SUM(`$f2`) AS `total`, SUM(`$f3`) AS `saved`\nFROM TABLE(TUMBLE((TABLE `table$1`), (DESCRIPTOR(`time`)), INTERVAL '604800' SECOND(9), INTERVAL '0' SECOND(1))) AS `t0`\nGROUP BY `customerid`, `window_start`, `window_end`, `window_time`)\n;\nINSERT INTO `orders$2`\n(SELECT *\nFROM `orders$1`)\n;\nINSERT INTO `productrevenue$1`\n(SELECT `productid`, `window_time` AS `week`, SUM(`$f2`) AS `revenue`\nFROM TABLE(TUMBLE((TABLE `table$2`), (DESCRIPTOR(`time`)), INTERVAL '604800' SECOND(9), INTERVAL '0' SECOND(1))) AS `t0`\nGROUP BY `productid`, `window_start`, `window_end`, `window_time`)\n;\nEND;"
+    "CREATE VIEW `table$1`\nAS\nSELECT `customerid`, ENDOFWEEK(`time`) AS `week`, ((`quantity` * `unit_price`) - COALESCE(`discount`, 0.0)) AS `total`, COALESCE(`discount`, 0.0) AS `$f3`, `id`, `time`\nFROM `orders$1`;",
+    "CREATE VIEW `table$2`\nAS\nSELECT `productid`, ENDOFWEEK(`time`) AS `week`, ((`quantity` * `unit_price`) - COALESCE(`discount`, 0.0)) AS `total`, `id`, `time`\nFROM `orders$1`;",
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customerspending$1`\n(SELECT `customerid`, `window_time` AS `week`, SUM(`total`) AS `total`, SUM(`$f3`) AS `saved`\nFROM TABLE(TUMBLE((TABLE `table$1`), (DESCRIPTOR(`time`)), INTERVAL '604800' SECOND(9), INTERVAL '0' SECOND(1))) AS `t1`\nGROUP BY `customerid`, `window_start`, `window_end`, `window_time`)\n;\nINSERT INTO `orders$2`\n(SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `unit_price`, `discount`, ((`quantity` * `unit_price`) - COALESCE(`discount`, 0.0)) AS `total`\nFROM `orders$1`)\n;\nINSERT INTO `productrevenue$1`\n(SELECT `productid`, `window_time` AS `week`, SUM(`total`) AS `revenue`\nFROM TABLE(TUMBLE((TABLE `table$2`), (DESCRIPTOR(`time`)), INTERVAL '604800' SECOND(9), INTERVAL '0' SECOND(1))) AS `t1`\nGROUP BY `productid`, `window_start`, `window_end`, `window_time`)\n;\nEND;"
   ],
   "connectors" : [
     "jdbc-sqrl",
@@ -105,13 +106,14 @@ LogicalProject(productid=[$0], week=[$1], revenue=[$2])
         "\"productid\" BIGINT NOT NULL",
         "\"quantity\" BIGINT NOT NULL",
         "\"unit_price\" DOUBLE PRECISION NOT NULL",
-        "\"discount\" DOUBLE PRECISION "
+        "\"discount\" DOUBLE PRECISION ",
+        "\"total\" DOUBLE PRECISION NOT NULL"
       ],
       "primaryKeys" : [
         "\"id\"",
         "\"time\""
       ],
-      "sql" : "CREATE TABLE IF NOT EXISTS orders$2 (\"id\" BIGINT NOT NULL,\"customerid\" BIGINT NOT NULL,\"time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"productid\" BIGINT NOT NULL,\"quantity\" BIGINT NOT NULL,\"unit_price\" DOUBLE PRECISION NOT NULL,\"discount\" DOUBLE PRECISION  , PRIMARY KEY (\"id\",\"time\"));"
+      "sql" : "CREATE TABLE IF NOT EXISTS orders$2 (\"id\" BIGINT NOT NULL,\"customerid\" BIGINT NOT NULL,\"time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"productid\" BIGINT NOT NULL,\"quantity\" BIGINT NOT NULL,\"unit_price\" DOUBLE PRECISION NOT NULL,\"discount\" DOUBLE PRECISION ,\"total\" DOUBLE PRECISION NOT NULL , PRIMARY KEY (\"id\",\"time\"));"
     },
     {
       "name" : "productrevenue$1",
@@ -371,7 +373,7 @@ LogicalProject(productid=[$0], week=[$1], revenue=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"productid\", \"quantity\", \"unit_price\", \"discount\", 1 AS \"__pk\"\nFROM \"orders$2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, 1",
+              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"productid\", \"quantity\", \"unit_price\", \"discount\", \"total\", 1 AS \"__pk\"\nFROM \"orders$2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, 1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -555,7 +557,7 @@ LogicalProject(productid=[$0], week=[$1], revenue=[$2])
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "type CustomerSpending {\n  customerid: Float!\n  week: DateTime!\n  total: Float!\n  saved: Float!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n\ntype ProductRevenue {\n  productid: Float!\n  week: DateTime!\n  revenue: Float!\n}\n\ntype Query {\n  CustomerSpending(customerid: Float, week: DateTime, limit: Int = 10, offset: Int = 0): [CustomerSpending!]\n  Orders(id: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [Orders!]\n  ProductRevenue(productid: Float, week: DateTime, limit: Int = 10, offset: Int = 0): [ProductRevenue!]\n}\n"
+      "schema" : "type CustomerSpending {\n  customerid: Float!\n  week: DateTime!\n  total: Float!\n  saved: Float!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n  total: Float!\n}\n\ntype ProductRevenue {\n  productid: Float!\n  week: DateTime!\n  revenue: Float!\n}\n\ntype Query {\n  CustomerSpending(customerid: Float, week: DateTime, limit: Int = 10, offset: Int = 0): [CustomerSpending!]\n  Orders(id: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [Orders!]\n  ProductRevenue(productid: Float, week: DateTime, limit: Int = 10, offset: Int = 0): [ProductRevenue!]\n}\n"
     }
   }
 }
