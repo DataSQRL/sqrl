@@ -51,7 +51,7 @@ public class PackageJsonImpl implements PackageJson {
 
   @Override
   public DependenciesConfigImpl getDependencies() {
-    return new DependenciesConfigImpl(sqrlConfig.getSubConfig(DEPENDENCIES_KEY));
+    return new DependenciesConfigImpl(sqrlConfig, sqrlConfig.getSubConfig(DEPENDENCIES_KEY));
   }
 
   @Override

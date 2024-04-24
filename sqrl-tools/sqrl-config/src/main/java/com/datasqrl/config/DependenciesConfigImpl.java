@@ -12,6 +12,7 @@ public class DependenciesConfigImpl implements PackageJson.DependenciesConfig {
   public static final String VERSION_KEY = "version";
   public static final String VARIANT_KEY = "variant";
 
+  SqrlConfig parentConfig;
   SqrlConfig sqrlConfig;
 
   public void addDependency(String key, Dependency dep) {
@@ -29,7 +30,7 @@ public class DependenciesConfigImpl implements PackageJson.DependenciesConfig {
   }
 
   public Map<String, Dependency> getDependencies() {
-    return sqrlConfig.asMap(DEPENDENCIES_KEY, Dependency.class).get();
+    return parentConfig.asMap(DEPENDENCIES_KEY, Dependency.class).get();
   }
 
 //  public static LinkedHashMap<String, Dependency> fromRootConfig(@NonNull SqrlConfig config) {
