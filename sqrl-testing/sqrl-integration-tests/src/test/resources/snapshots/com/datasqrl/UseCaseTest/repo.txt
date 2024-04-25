@@ -175,13 +175,25 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT()], __timestamp=[MAX($2)])
       "sql" : "CREATE TABLE IF NOT EXISTS topicsearch$1 (\"topicName\" TEXT NOT NULL,\"numPackages\" BIGINT NOT NULL,\"__timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"topicName\"));"
     },
     {
-      "indexName" : "submission$2_hash_c15",
+      "indexName" : "submission$2_btree_c0c1c2",
       "tableName" : "submission$2",
       "columns" : [
-        "submissionTime"
+        "name",
+        "version",
+        "variant"
       ],
-      "type" : "HASH",
-      "sql" : "CREATE INDEX IF NOT EXISTS submission$2_hash_c15 ON submission$2 USING hash (\"submissionTime\");"
+      "type" : "BTREE",
+      "sql" : "CREATE INDEX IF NOT EXISTS submission$2_btree_c0c1c2 ON submission$2 USING btree (\"name\",\"version\",\"variant\");"
+    },
+    {
+      "indexName" : "submission$2_btree_c0c2",
+      "tableName" : "submission$2",
+      "columns" : [
+        "name",
+        "variant"
+      ],
+      "type" : "BTREE",
+      "sql" : "CREATE INDEX IF NOT EXISTS submission$2_btree_c0c2 ON submission$2 USING btree (\"name\",\"variant\");"
     },
     {
       "indexName" : "topicpackages$1_hash_c1",
@@ -262,21 +274,10 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT()], __timestamp=[MAX($2)])
         "fieldName" : "latest",
         "matchs" : [
           {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
+            "arguments" : [ ],
             "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
+              "type" : "JdbcQuery",
+              "type" : "JdbcQuery",
               "sql" : "SELECT *\nFROM \"submission$2\"\nWHERE $1 = \"name\" AND \"latest\"\nORDER BY \"submissionTime\" DESC",
               "parameters" : [
                 {
@@ -294,6 +295,88 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT()], __timestamp=[MAX($2)])
         "parentType" : "Package",
         "fieldName" : "versions",
         "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "version"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"submission$2\"\n  WHERE $1 = \"name\") AS \"t\"\nWHERE \"version\" = $2\nORDER BY \"submissionTime\" DESC",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "type" : "source",
+                  "key" : "name"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "version"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "version"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "variant"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"submission$2\"\n  WHERE $1 = \"name\") AS \"t\"\nWHERE \"version\" = $2 AND \"variant\" = $3\nORDER BY \"submissionTime\" DESC",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "type" : "source",
+                  "key" : "name"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "version"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "variant"
+                }
+              ]
+            }
+          },
           {
             "arguments" : [
               {
@@ -319,56 +402,13 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT()], __timestamp=[MAX($2)])
                 }
               ]
             }
-          }
-        ]
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "Submission",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "name"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"submission$2\"\nWHERE \"name\" = $1\nORDER BY \"submissionTime\" DESC NULLS LAST",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "name"
-                }
-              ]
-            }
           },
           {
             "arguments" : [
               {
                 "type" : "variable",
                 "type" : "variable",
-                "path" : "name"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "submissionTime"
+                "path" : "variant"
               },
               {
                 "type" : "variable",
@@ -384,231 +424,17 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT()], __timestamp=[MAX($2)])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"name\", \"version\", \"variant\", \"latest\", \"type\", \"license\", \"repository\", \"homepage\", \"documentation\", \"readme\", \"description\", \"uniqueId\", \"file\", \"hash\", \"authorid\", \"submissionTime\", \"keywords\", \"variant0\", \"repoURL\", 1 AS \"__pk\"\nFROM \"submission$2\"\nWHERE \"name\" = $1 AND \"submissionTime\" = $2\nORDER BY \"submissionTime\" DESC NULLS LAST, 1",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "name"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "submissionTime"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"submission$2\"\nORDER BY \"submissionTime\" DESC NULLS LAST, \"name\"",
-              "parameters" : [ ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "submissionTime"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"submission$2\"\nWHERE \"submissionTime\" = $1\nORDER BY \"submissionTime\" DESC NULLS LAST, \"name\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "submissionTime"
-                }
-              ]
-            }
-          }
-        ]
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "TopicPackages",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"topicpackages$1\"\nORDER BY \"numSubmissions\" DESC, \"pkgName\", \"topicName\"",
-              "parameters" : [ ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "topicName"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"topicpackages$1\"\nWHERE \"topicName\" = $1\nORDER BY \"numSubmissions\" DESC, \"pkgName\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "topicName"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "pkgName"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"topicpackages$1\"\nWHERE \"pkgName\" = $1\nORDER BY \"numSubmissions\" DESC, \"topicName\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "pkgName"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "pkgName"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "topicName"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"pkgName\", \"topicName\", \"numSubmissions\", \"lastSubmission\", 1 AS \"__pk\"\nFROM \"topicpackages$1\"\nWHERE \"pkgName\" = $1 AND \"topicName\" = $2\nORDER BY \"numSubmissions\" DESC, 1",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "pkgName"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "topicName"
-                }
-              ]
-            }
-          }
-        ]
-      },
-      {
-        "type" : "args",
-        "parentType" : "TopicPackages",
-        "fieldName" : "latest",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"submission$2\"\nWHERE $1 = \"name\" AND \"latest\"\nORDER BY \"submissionTime\" DESC",
+              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"submission$2\"\n  WHERE $1 = \"name\") AS \"t\"\nWHERE \"variant\" = $2\nORDER BY \"submissionTime\" DESC",
               "parameters" : [
                 {
                   "type" : "source",
                   "type" : "source",
-                  "key" : "pkgName"
+                  "key" : "name"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "variant"
                 }
               ]
             }
@@ -672,6 +498,66 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT()], __timestamp=[MAX($2)])
             }
           }
         ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "TopicPackages",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "topicName"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"topicpackages$1\"\nWHERE \"topicName\" = $1\nORDER BY \"numSubmissions\" DESC, \"pkgName\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "topicName"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "TopicPackages",
+        "fieldName" : "latest",
+        "matchs" : [
+          {
+            "arguments" : [ ],
+            "query" : {
+              "type" : "JdbcQuery",
+              "type" : "JdbcQuery",
+              "sql" : "SELECT *\nFROM \"submission$2\"\nWHERE $1 = \"name\" AND \"latest\"\nORDER BY \"submissionTime\" DESC",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "type" : "source",
+                  "key" : "pkgName"
+                }
+              ]
+            }
+          }
+        ]
       }
     ],
     "mutations" : [ ],
@@ -679,7 +565,7 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT()], __timestamp=[MAX($2)])
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype Package {\n  name: String!\n  latest(limit: Int = 10, offset: Int = 0): [Submission!]\n  versions(limit: Int = 10, offset: Int = 0): [Submission!]\n}\n\ntype Query {\n  Package(name: String, limit: Int = 10, offset: Int = 0): [Package!]\n  Submission(name: String, submissionTime: DateTime, limit: Int = 10, offset: Int = 0): [Submission!]\n  TopicPackages(pkgName: String, topicName: String, limit: Int = 10, offset: Int = 0): [TopicPackages!]\n  TopicSearch(topicName: String, limit: Int = 10, offset: Int = 0): [TopicSearch!]\n}\n\ntype Submission {\n  name: String!\n  version: String!\n  variant: String\n  latest: Boolean!\n  type: String\n  license: String\n  repository: String\n  homepage: String\n  documentation: String\n  readme: String\n  description: String\n  uniqueId: String!\n  file: String!\n  hash: String!\n  authorid: String!\n  submissionTime: DateTime!\n  variant0: String!\n  repoURL: String!\n  keywords(limit: Int = 10, offset: Int = 0): [keywords!]\n}\n\ntype TopicPackages {\n  pkgName: String!\n  topicName: String!\n  numSubmissions: Float!\n  lastSubmission: DateTime!\n  latest(limit: Int = 10, offset: Int = 0): [Submission!]\n}\n\ntype TopicSearch {\n  topicName: String!\n  numPackages: Float!\n}\n\ntype keywords {\n  name: String!\n}\n"
+      "schema" : "type Package {\n  name: String!\n  latest: Submission\n  versions(version: String, variant: String, limit: Int = 10, offset: Int = 0): [Submission!]\n}\n\ntype Query {\n  Package(name: String, limit: Int = 10, offset: Int = 0): [Package!]\n  TopicSearch(topicName: String, limit: Int = 10, offset: Int = 0): [TopicSearch!]\n  TopicPackages(topicName: String!, limit: Int = 10, offset: Int = 0): [TopicPackages!]\n}\n\ntype Submission {\n  name: String!\n  version: String!\n  variant: String!\n  latest: Boolean!\n  type: String\n  license: String\n  repository: String\n  homepage: String\n  documentation: String\n  readme: String\n  description: String\n  uniqueId: String!\n  keywords: [keywords!]\n  repoURL: String!\n  file: String!\n  hash: String!\n  submissionTime: String!\n}\n\ntype keywords {\n  name: String!\n}\n\ntype TopicSearch {\n  topicName: String!\n  numPackages: Int!\n}\n\ntype TopicPackages {\n  topicName: String!\n  pkgName: String!\n  lastSubmission: String!\n  numSubmissions: Int!\n  latest: Submission\n}\n"
     }
   }
 }

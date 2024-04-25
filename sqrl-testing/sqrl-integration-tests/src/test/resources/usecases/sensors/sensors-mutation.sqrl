@@ -1,4 +1,4 @@
-IMPORT metrics-mutation.AddReading AS SensorReading;
+IMPORT sensors-mutation.AddReading AS SensorReading;
 IMPORT time.endOfSecond;  -- Import time function
 /* Aggregate sensor readings to second */
 SecReading := SELECT sensorid, endOfSecond(event_time) as timeSec,
