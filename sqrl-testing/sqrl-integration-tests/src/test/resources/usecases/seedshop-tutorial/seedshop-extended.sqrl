@@ -28,11 +28,20 @@ Customers.past_purchases := SELECT i.productid, count(1) as num_orders,
       GROUP BY i.productid
       ORDER BY num_orders DESC, total_quantity DESC;
 
+/*+test */
+CustomerPurchaseTest := SELECT c.id, p.productid, count(*) as num
+                        FROM Customers c JOIN c.past_purchases p
+                        GROUP BY id, productid
+
 --compute customer promotions and export for email
 CustomerPromotion := SELECT c.first_name, c.last_name, c.email, s.spend, s.saved
         FROM Customers c JOIN c.spending s
         WHERE s.spend > 250;
+
 EXPORT CustomerPromotion TO mySinkPackage.promotion;
+
+/*+test */
+CustomerPromotionTest := SELECT COUNT(*) FROM CustomerPromotion;
 
 
 NumOrders := SELECT COUNT(*) AS count FROM Orders;
@@ -46,3 +55,13 @@ Products.monthly_by_country := SELECT c.country0 AS country, endOfMonth(o.time) 
          sum(o.quantity * o.unit_price) as spend, sum(o.quantity * @.weight_in_gram) as weight
       FROM @ JOIN _OrderItems o ON o.productid = @.id JOIN Customers c ON o.customerid =c.id
       GROUP BY country, month;
+
+IMPORT text.textSearch;
+
+ProductSearch(@query: String) := SELECT p.*, textSearch(@query, name) as score
+                                 FROM Products p
+                                 WHERE textSearch(@query, name) > 0
+                                 ORDER BY score DESC;
+
+ProductSearchWithId(@query: String, @id: Int) := SELECT * FROM Products WHERE textSearch(@query, name, category) > 0
+                                                                          AND id > @id;

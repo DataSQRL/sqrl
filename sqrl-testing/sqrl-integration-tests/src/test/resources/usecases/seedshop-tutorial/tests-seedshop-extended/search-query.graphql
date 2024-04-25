@@ -1,0 +1,13 @@
+query {
+    ProductSearch(query: "coconut") {
+        id
+        name
+        sizing
+        weight_in_gram
+        type
+        category
+        usda_id
+        updated
+        score
+    }
+}

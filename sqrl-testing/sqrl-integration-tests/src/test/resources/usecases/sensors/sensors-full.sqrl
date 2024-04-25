@@ -22,10 +22,16 @@ Machine := SELECT machineid, max(temp) as maxTemp,
     WHERE timeSec >= now() - INTERVAL 1 HOUR
     GROUP BY machineid;
 
+/*+test */
+MachineCountTest := SELECT COUNT(*) num FROM Machine;
+
 Machine.sensors := JOIN Sensors s ON s.machineid = @.machineid;
 
 HighTemp := SELECT machineid, sensorid, temp, timeSec
             FROM Sensors s JOIN s.readings
-            WHERE temp > 100;
+            WHERE temp > 35;
+
+/*+test */
+HighTempTest := SELECT COUNT(*) as num, AVG(temp) as avg_temp FROM HighTemp;
 
 EXPORT HighTemp TO print.tempWarning;

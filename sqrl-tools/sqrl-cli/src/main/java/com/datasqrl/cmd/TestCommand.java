@@ -32,10 +32,10 @@ import picocli.CommandLine;
 @CommandLine.Command(name = "test", description = "Tests a SQRL script")
 public class TestCommand extends AbstractCompilerCommand {
   @CommandLine.Option(names = {"-s", "--snapshot"},
-      description = "Snapshot path")
+      description = "Path to snapshots")
   protected Path snapshotPath = null;
   @CommandLine.Option(names = {"--tests"},
-      description = "Snapshot path")
+      description = "Path to test queries")
   protected Path tests = null;
 
   @SneakyThrows
@@ -43,9 +43,8 @@ public class TestCommand extends AbstractCompilerCommand {
   public void execute(ErrorCollector errors) {
     super.execute(errors, this.profiles, snapshotPath == null ?
         root.rootDir.resolve("snapshots") : snapshotPath,
-        tests == null ?
-            root.rootDir.resolve("tests") : tests, ExecutionGoal.TEST);
-
+        tests == null ? root.rootDir.resolve("tests") : tests,
+        ExecutionGoal.TEST);
   }
 
   @SneakyThrows

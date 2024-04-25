@@ -1,0 +1,6 @@
+query {
+    SensorMaxTemp(sensorid: 3) {
+        sensorid
+        maxTemp
+    }
+}

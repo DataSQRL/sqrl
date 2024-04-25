@@ -1,0 +1,16 @@
+query {
+    Sensors(limit: 10) {
+        id
+        machineid
+        placed
+        lastHour {
+            maxTemp
+            avgTemp
+        }
+        readings(limit: 5) {
+            sensorid
+            timeSec
+            temp
+        }
+    }
+}

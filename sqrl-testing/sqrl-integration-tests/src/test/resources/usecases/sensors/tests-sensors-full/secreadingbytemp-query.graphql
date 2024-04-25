@@ -1,0 +1,7 @@
+query {
+    SecReadingByTemp(temp: 30) {
+        sensorid
+        timeSec
+        temp
+    }
+}
