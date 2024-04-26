@@ -13,7 +13,10 @@ import org.apache.flink.calcite.shaded.com.google.common.base.Strings;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-public class UseCasesIT {
+/**
+ * Tests some use cases in the test/resources/usecases folder using the `test` command.
+ */
+public class UseCasesRunTest {
   private static final Path RESOURCES = Paths.get("src/test/resources/usecases");
 
   @Test
@@ -44,6 +47,16 @@ public class UseCasesIT {
   @Test
   public void testSensorsFull() {
     execute("sensors", "sensors-full.sqrl", null, "sensors-full");
+  }
+
+  @Test
+  public void testSeedshopMutation() {
+    execute("seedshop-tutorial", "sensors-mutation.sqrl", "sensors-mutation.graphqls", "seedshop-mutation");
+  }
+
+  @Test
+  public void testSeedshopExtended() {
+    execute("seedshop-tutorial", "sensors-extended.sqrl", "sensors-extended.graphqls", "seedshop-extended");
   }
 
 

@@ -1,15 +1,18 @@
 package com.datasqrl;
 
 import java.nio.file.Path;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
-public class UseCaseTest extends AbstractUseCaseTest {
+/**
+ * Compiles the use cases in the test/resources/usecases folder and snapshots the
+ * deployment assets
+ */
+public class UseCaseCompileTest extends AbstractUseCaseTest {
 
   public static final Path USECASE_DIR = getResourcesDirectory("usecases");
 
-  protected UseCaseTest() {
+  protected UseCaseCompileTest() {
     super(USECASE_DIR);
   }
 
