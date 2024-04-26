@@ -117,7 +117,7 @@ public class SqrlJdbcDynamicTableFactory implements DynamicTableSinkFactory {
                 .setClassLoader(classLoader)
                 .setDBUrl(url)
                 .setTableName(readableConfig.get(TABLE_NAME))
-                .setDialect(JdbcDialectLoader.load(url, classLoader))
+                .setDialect(loadDialect(url, classLoader))
                 .setParallelism(readableConfig.getOptional(SINK_PARALLELISM).orElse(null))
                 .setConnectionCheckTimeoutSeconds(
                     (int) readableConfig.get(MAX_RETRY_TIMEOUT).getSeconds());
@@ -223,7 +223,7 @@ public class SqrlJdbcDynamicTableFactory implements DynamicTableSinkFactory {
 
     private void validateConfigOptions(ReadableConfig config, ClassLoader classLoader) {
         String jdbcUrl = config.get(URL);
-        JdbcDialectLoader.load(jdbcUrl, classLoader);
+//        JdbcDialectLoader.load(jdbcUrl, classLoader);
 
         checkAllOrNone(config, new ConfigOption[] {USERNAME, PASSWORD});
 

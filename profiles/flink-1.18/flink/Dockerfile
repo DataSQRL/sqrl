@@ -11,7 +11,7 @@ WORKDIR /app
 # Fetch all necessary dependencies
 RUN gradle shadowJar
 
-FROM flink:1.16.1-scala_2.12-java11
+FROM flink:1.18.1-scala_2.12-java11
 
 RUN mkdir -p /opt/flink/plugins/flink-s3-fs-hadoop
 RUN ln -fs /opt/flink/opt/flink-s3-fs-hadoop-*.jar /opt/flink/plugins/flink-s3-fs-hadoop/.
