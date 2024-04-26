@@ -63,7 +63,7 @@ public class UseCasesRunTest {
   @Test
   @Disabled
   public void compile() {
-    compile("seedshop-tutorial", "seedshop-extended.sqrl", null);
+    compile("sensors", "sensors-mutation.sqrl", "sensors-mutation.graphqls");
   }
 
   private void execute(String path, String script, String graphql) {
