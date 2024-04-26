@@ -200,7 +200,6 @@ CREATE INDEX IF NOT EXISTS sensorreading$2_hash_c1 ON sensorreading$2 USING hash
 CREATE INDEX IF NOT EXISTS sensors$3_hash_c1 ON sensors$3 USING hash ("machineid");
 
 >>>flink-plan.sql
-
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofsecond` AS 'com.datasqrl.time.EndOfSecond' LANGUAGE JAVA;
 
 CREATE TEMPORARY TABLE `sensors$1` (

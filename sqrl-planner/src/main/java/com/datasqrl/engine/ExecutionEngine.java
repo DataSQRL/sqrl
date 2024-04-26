@@ -30,7 +30,7 @@ import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 /**
  * Describes a physical execution engine and it's capabilities.
  */
-public interface ExecutionEngine extends IExecutionEngine{
+public interface ExecutionEngine extends IExecutionEngine {
 
   boolean supports(EngineFeature capability);
 

@@ -6,6 +6,7 @@ package com.datasqrl.cmd;
 
 import static com.datasqrl.config.ScriptConfigImpl.GRAPHQL_NORMALIZED_FILE_NAME;
 
+import com.datasqrl.actions.WriteDeploymentArtifacts;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.compile.CompilationProcess;
@@ -95,7 +96,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     }
 
     if (goal == ExecutionGoal.TEST) {
-      sqrlConfig.setPipeline(ListUtils.union(sqrlConfig.getPipeline(), List.of(EngineKeys.TEST)));
+      sqrlConfig.setPipeline(ListUtils.union(sqrlConfig.getEnabledEngines(), List.of(EngineKeys.TEST)));
     }
 
     Packager packager = new Packager(repository, root.rootDir, sqrlConfig, errors);

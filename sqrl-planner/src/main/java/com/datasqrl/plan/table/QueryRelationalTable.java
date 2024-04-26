@@ -48,7 +48,8 @@ public class QueryRelationalTable extends PhysicalRelationalTable {
   public List<ExecutionStage> getSupportedStages(ExecutionPipeline pipeline, ErrorCollector errors) {
     if (analyzedLP.getConfiguredStages().isEmpty()) return pipeline.getStages();
     return analyzedLP.getConfiguredStages().stream().map(stage -> {
-      Optional<ExecutionStage> execStage = pipeline.getStage(stage.getStageName());
+      Optional<ExecutionStage> execStage = pipeline.getStage(stage.getStageName())
+          .or(()->pipeline.getStageByType(stage.getStageName()));
       errors.checkFatal(execStage.isPresent(),"Could not find execution stage [%s] "
           + "specified in optimizer hint on table [%s] in pipeline [%s]", stage.getStageName(), this, pipeline);
       return execStage.get();

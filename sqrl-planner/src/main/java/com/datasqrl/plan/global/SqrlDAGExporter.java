@@ -42,7 +42,7 @@ public class SqrlDAGExporter {
         List<Node> result = new ArrayList<>();
         for (SqrlDAG.SqrlNode node : dag) {
             List<String> inputs = dag.getInputs(node).stream().map(SqrlDAG.SqrlNode::getId).sorted().collect(Collectors.toUnmodifiableList());
-            String stage = node.getChosenStage().getName();
+            String stage = node.getChosenStage().getEngine().getType().name().toLowerCase();
             if (node instanceof SqrlDAG.TableNode) {
                 SqrlDAG.TableNode tableNode = (SqrlDAG.TableNode)node;
                 PhysicalRelationalTable table = (PhysicalRelationalTable) tableNode.getTable();

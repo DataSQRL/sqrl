@@ -39,7 +39,7 @@ public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base imp
   private final EngineConfig config;
 
   public AbstractFlinkStreamEngine(EngineConfig config) {
-    super(FlinkEngineFactory.ENGINE_NAME, Type.STREAM, FLINK_CAPABILITIES);
+    super(FlinkEngineFactory.ENGINE_NAME, Type.STREAMS, FLINK_CAPABILITIES);
     this.config = config;
   }
 
@@ -58,8 +58,7 @@ public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base imp
     FlinkSqlGenerator generator = new FlinkSqlGenerator(framework);
 
     Pair<List<String>, List<SqlNode>> flinkSql = generator.run(plan);
-
-    return new FlinkStreamPhysicalPlan(plan, flinkSql.getLeft(), flinkSql.getRight());
+    return new FlinkStreamPhysicalPlan(flinkSql.getLeft(), flinkSql.getRight());
   }
 
   @Override

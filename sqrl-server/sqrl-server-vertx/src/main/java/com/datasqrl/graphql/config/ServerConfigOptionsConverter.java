@@ -25,18 +25,10 @@ public class ServerConfigOptionsConverter {
     serverConfig.setHttpServerOptions(
         new HttpServerOptions(json.getJsonObject("httpServerOptions") == null
             ? new JsonObject() : json.getJsonObject("httpServerOptions")));
-    if (json.containsKey("pgConnectOptions")) {
-      PgConnectOptions pgConnectOptions = new PgConnectOptions(
-          json.getJsonObject("pgConnectOptions") == null
-              ? new JsonObject() : json.getJsonObject("pgConnectOptions"));
-
-      serverConfig.setPgConnectOptions(pgConnectOptions);
-    }
-    if (json.containsKey("jdbcConnectOptions")) {
-      serverConfig.setJdbcConnectOptions(
-          new JDBCConnectOptions(json.getJsonObject("jdbcConnectOptions") == null
-              ? new JsonObject() : json.getJsonObject("jdbcConnectOptions")));
-    }
+    PgConnectOptions pgConnectOptions =  json.getJsonObject("pgConnectOptions") == null
+        ? PgConnectOptions.fromEnv()
+        : new PgConnectOptions(json.getJsonObject("pgConnectOptions"));
+    serverConfig.setPgConnectOptions(pgConnectOptions);
     serverConfig.setPoolOptions(
         new PoolOptions(json.getJsonObject("poolOptions") == null
             ? new JsonObject() : json.getJsonObject("poolOptions")));
@@ -58,7 +50,6 @@ public class ServerConfigOptionsConverter {
       if (serverConfig.getPgConnectOptions() != null) {
         json.put("pgConnectOptions", serverConfig.getPgConnectOptions().toJson());
       }
-      json.put("jdbcConnectOptions", serverConfig.getJdbcConnectOptions().toJson());
       json.put("poolOptions", serverConfig.getPoolOptions().toJson());
       json.put("corsHandlerOptions", serverConfig.getCorsHandlerOptions().toJson());
       json.put("apolloWSOptions", serverConfig.getApolloWSOptions().toJson());

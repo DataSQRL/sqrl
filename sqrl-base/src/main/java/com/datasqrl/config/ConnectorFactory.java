@@ -8,7 +8,6 @@ public interface ConnectorFactory {
 
   Optional<TableConfig.Format> getFormat();
 
-
   interface IConnectorFactoryContext {
     Map<String, Object> getMap();
   }

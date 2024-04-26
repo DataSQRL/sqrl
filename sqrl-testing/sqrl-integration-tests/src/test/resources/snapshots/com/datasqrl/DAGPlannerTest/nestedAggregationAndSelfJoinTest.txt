@@ -159,7 +159,6 @@ CREATE TABLE IF NOT EXISTS ordersinline$1 ("id" BIGINT NOT NULL,"customerid" BIG
 CREATE TABLE IF NOT EXISTS total$1 ("__pk6$_uuid" TEXT NOT NULL,"price" DOUBLE PRECISION ,"num" BIGINT NOT NULL,"discount" DOUBLE PRECISION ,"_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("__pk6$_uuid"));
 
 >>>flink-plan.sql
-
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptostring` AS 'com.datasqrl.time.TimestampToString' LANGUAGE JAVA;
 
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofmonth` AS 'com.datasqrl.time.EndOfMonth' LANGUAGE JAVA;

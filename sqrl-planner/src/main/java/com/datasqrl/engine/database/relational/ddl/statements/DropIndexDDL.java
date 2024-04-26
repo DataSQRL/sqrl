@@ -13,7 +13,7 @@ public class DropIndexDDL implements SqlDDLStatement {
   String tableName;
 
   @Override
-  public String toSql() {
+  public String getSql() {
     return "DROP INDEX IF EXISTS " + indexName + ";";
   }
 }

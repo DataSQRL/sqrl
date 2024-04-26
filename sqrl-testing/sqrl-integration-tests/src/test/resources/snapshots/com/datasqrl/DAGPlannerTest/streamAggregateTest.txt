@@ -140,7 +140,6 @@ CREATE INDEX IF NOT EXISTS ordertime2$1_hash_c1 ON ordertime2$1 USING hash ("buc
 CREATE INDEX IF NOT EXISTS ordertime3$1_hash_c1 ON ordertime3$1 USING hash ("bucket");
 
 >>>flink-plan.sql
-
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptostring` AS 'com.datasqrl.time.TimestampToString' LANGUAGE JAVA;
 
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofmonth` AS 'com.datasqrl.time.EndOfMonth' LANGUAGE JAVA;

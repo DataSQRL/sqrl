@@ -151,7 +151,6 @@ CREATE INDEX IF NOT EXISTS submission$2_hash_c15 ON submission$2 USING hash ("su
 CREATE INDEX IF NOT EXISTS topicpackages$1_hash_c1 ON topicpackages$1 USING hash ("topicName");
 
 >>>flink-plan.sql
-
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `tojson` AS 'com.datasqrl.json.ToJson' LANGUAGE JAVA;
 
 CREATE TEMPORARY TABLE `submission$1` (

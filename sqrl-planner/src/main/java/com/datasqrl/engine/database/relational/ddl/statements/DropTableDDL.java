@@ -12,7 +12,7 @@ public class DropTableDDL implements SqlDDLStatement {
   String name;
 
   @Override
-  public String toSql() {
+  public String getSql() {
     return "DROP TABLE IF EXISTS " + name + ";";
   }
 }

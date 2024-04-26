@@ -14,8 +14,13 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.SneakyThrows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,18 +53,29 @@ public class TestCommand extends AbstractCompilerCommand {
   protected void postprocess(PackageJson sqrlConfig, Packager packager, Path targetDir, PhysicalPlan plan,
       TestPlan right, ErrorCollector errors) {
     super.postprocess(sqrlConfig, packager, targetDir, plan, right, errors);
-    Path compose = targetDir.resolve("docker-compose.yml");
+    List<File> dockerComposePaths = getComposePaths(targetDir);
+    if (dockerComposePaths.isEmpty()) {
+      throw new RuntimeException("Could not find docker compose containers");
+    }
+
     final DockerComposeContainer<?> environment =
-        new DockerComposeContainer<>(compose.toFile())
+        new DockerComposeContainer<>(dockerComposePaths)
             .withBuild(true);
 
-    Map map = SqrlObjectMapper.YAML_INSTANCE.readValue(compose.toFile(), Map.class);
-    Map<String, Object> servicesMap = (Map<String, Object>)map.get("services");
+    List<String> services = dockerComposePaths.stream()
+        .map(f -> {
+          try {
+            return SqrlObjectMapper.YAML_INSTANCE.readValue(f, Map.class).get("services");
+          } catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+        })
+        .flatMap(f -> ((Map<String, Object>) f).keySet().stream())
+        .collect(Collectors.toList());
 
     Logger logger = LoggerFactory.getLogger(TestCommand.class);
     Slf4jLogConsumer logConsumer = new Slf4jLogConsumer(logger);
-    servicesMap.keySet().stream()
-            .forEach(s->environment.withLogConsumer(s, logConsumer));
+    services.forEach(s->environment.withLogConsumer(s, logConsumer));
 
     try {
       environment.start();
@@ -69,10 +85,16 @@ public class TestCommand extends AbstractCompilerCommand {
         environment.stop();
       }));
 
-      ContainerState testContainer = environment.getContainerByServiceName(EngineKeys.TEST).get();
-
-      while (testContainer.isRunning()) {
-        Thread.sleep(1000);
+      Optional<ContainerState> containerByServiceName = environment.getContainerByServiceName(
+          EngineKeys.TEST);
+      if (containerByServiceName.isPresent()) {
+        ContainerState testContainer = containerByServiceName.get();
+        while (testContainer.isRunning()) {
+          Thread.sleep(1000);
+        }
+      } else {
+        String message = "Test container could not start";
+        throw new RuntimeException(message);
       }
 
     } finally {
@@ -100,6 +122,14 @@ public class TestCommand extends AbstractCompilerCommand {
     } catch (IOException e) {
       e.printStackTrace();
     }
+  }
+
+  @SneakyThrows
+  private List<File> getComposePaths(Path targetDir) {
+    return Files.list(targetDir)
+        .filter(f->f.getFileName().toString().endsWith("compose.yml"))
+        .map(f->f.toFile())
+        .collect(Collectors.toList());
   }
 
   @Override

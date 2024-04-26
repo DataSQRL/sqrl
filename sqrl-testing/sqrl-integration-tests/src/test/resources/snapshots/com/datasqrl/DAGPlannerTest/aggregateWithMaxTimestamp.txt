@@ -104,7 +104,6 @@ CREATE TABLE IF NOT EXISTS ordersstate$1 ("id" BIGINT NOT NULL,"customerid" BIGI
 CREATE INDEX IF NOT EXISTS orders$2_hash_c2 ON orders$2 USING hash ("time");
 
 >>>flink-plan.sql
-
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `tojson` AS 'com.datasqrl.json.ToJson' LANGUAGE JAVA;
 
 CREATE TEMPORARY TABLE `orders$1` (

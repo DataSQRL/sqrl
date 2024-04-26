@@ -297,7 +297,6 @@ CREATE INDEX IF NOT EXISTS products$3_btree_c1c5 ON products$3 USING btree ("nam
 CREATE INDEX IF NOT EXISTS products$3_hash_c5 ON products$3 USING hash ("category");
 
 >>>flink-plan.sql
-
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptostring` AS 'com.datasqrl.time.TimestampToString' LANGUAGE JAVA;
 
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofmonth` AS 'com.datasqrl.time.EndOfMonth' LANGUAGE JAVA;

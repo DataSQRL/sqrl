@@ -46,7 +46,7 @@ public class JdbcMetadataStore implements MetadataStore {
   private final Kryo kryo;
 
   public JdbcMetadataStore(EngineConfig engineConfig, Kryo kryo) {
-    JdbcEngineConfigDelegate config = new JdbcEngineConfigDelegate(engineConfig);
+    JdbcEngineConfigDelegate config =null;// new JdbcEngineConfigDelegate(null);
     this.kryo = kryo;
     try {
       this.connection = DriverManager.getConnection(

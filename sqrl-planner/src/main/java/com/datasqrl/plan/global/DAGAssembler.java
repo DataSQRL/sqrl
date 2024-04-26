@@ -63,7 +63,7 @@ public class DAGAssembler {
     });
 
     //We make the assumption that there is a single stream stage
-    ExecutionStage streamStage = pipeline.getStage(Type.STREAM).get();
+    ExecutionStage streamStage = pipeline.getStage(Type.STREAMS).get();
     List<PhysicalDAGPlan.WriteQuery> streamQueries = new ArrayList<>();
     //We make the assumption that there is a single (optional) server stage
     Optional<ExecutionStage> serverStage = pipeline.getStage(Type.SERVER);

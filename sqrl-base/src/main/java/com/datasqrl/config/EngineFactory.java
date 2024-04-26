@@ -16,13 +16,16 @@ public interface EngineFactory {
 
   Type getEngineType();
 
-  IExecutionEngine initialize(@NonNull PackageJson.EngineConfig config, ConnectorFactory connectorFactory);
+  IExecutionEngine create(@NonNull PackageJson.EngineConfig config,
+      ConnectorFactoryFactory connectorFactoryFactory);
+
+  Class<? extends IExecutionEngine> getFactoryClass();
 
   enum Type {
-    STREAM, DATABASE, SERVER, LOG;
+    STREAMS, DATABASE, SERVER, LOG;
 
     public boolean isWrite() {
-      return this == STREAM;
+      return this == STREAMS;
     }
 
     public boolean isRead() {

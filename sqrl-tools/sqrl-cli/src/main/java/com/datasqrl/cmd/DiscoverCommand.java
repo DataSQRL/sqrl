@@ -20,7 +20,7 @@ import com.datasqrl.discovery.TableWriter;
 import com.datasqrl.discovery.flink.FlinkMonitoringJobFactory;
 import com.datasqrl.discovery.system.DataSystemDiscovery;
 import com.datasqrl.engine.database.DatabaseEngine;
-import com.datasqrl.engine.database.relational.JDBCEngine;
+import com.datasqrl.engine.database.relational.AbstractJDBCEngine;
 import com.datasqrl.engine.stream.StreamEngine;
 import com.datasqrl.engine.stream.flink.AbstractFlinkStreamEngine;
 import com.datasqrl.error.ErrorCode;
@@ -95,7 +95,7 @@ public class DiscoverCommand extends AbstractCommand {
 
     //First, discover tables
     Collection<TableConfig> discoveredTables = systemDiscovery.get().discoverTables(discovery.getConfiguration(), systemConfig,
-        new ConnectorFactoryFactoryImpl());
+        new ConnectorFactoryFactoryImpl(null));
 
     errors.checkFatal(discoveredTables!=null && !discoveredTables.isEmpty(),"Did not discover any tables");
     MonitoringJobFactory.Job monitorJob = discovery.monitorTables(discoveredTables);
@@ -180,19 +180,19 @@ public class DiscoverCommand extends AbstractCommand {
 
   public static DataDiscovery fromConfig(@NonNull PackageJson config, ErrorCollector errors) {
     EnginesConfig enginesConfig = config.getEngines();
-    PipelineFactory pipelineFactory = new PipelineFactory(config.getPipeline(), enginesConfig,
-        new ConnectorFactoryFactoryImpl());
+    PipelineFactory pipelineFactory = new PipelineFactory(null, config.getEnabledEngines(), enginesConfig,
+        new ConnectorFactoryFactoryImpl(null));
     DiscoveryConfig discoveryConfig = config.getDiscovery();
     DataDiscovery discovery = new DataDiscovery(
         discoveryConfig.getDataDiscoveryConfig(),
         getJobFactory(pipelineFactory.getStreamEngine()),
         getMetaDataStoreProvider(pipelineFactory.getDatabaseEngine()),
-        new ConnectorFactoryFactoryImpl());
+        new ConnectorFactoryFactoryImpl(null));
     return discovery;
   }
 
   public static MetadataStoreProvider getMetaDataStoreProvider(@NonNull DatabaseEngine databaseEngine) {
-    if (databaseEngine instanceof JDBCEngine) {
+    if (databaseEngine instanceof AbstractJDBCEngine) {
       JdbcMetadataEngine metadataStore = new JdbcMetadataEngine();
       return metadataStore.getMetadataStore(databaseEngine);
     } else {
@@ -202,7 +202,7 @@ public class DiscoverCommand extends AbstractCommand {
 
   public static MonitoringJobFactory getJobFactory(@NonNull StreamEngine streamEngine) {
     if (streamEngine instanceof AbstractFlinkStreamEngine) {
-      return new FlinkMonitoringJobFactory(((AbstractFlinkStreamEngine) streamEngine), new ConnectorFactoryFactoryImpl());
+      return new FlinkMonitoringJobFactory(((AbstractFlinkStreamEngine) streamEngine), new ConnectorFactoryFactoryImpl(null));
     } else {
       throw new RuntimeException("Unsupported engine type for monitoring: " + streamEngine);
     }

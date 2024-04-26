@@ -186,7 +186,6 @@ CREATE TABLE IF NOT EXISTS patienthourly$1 ("patientid" BIGINT NOT NULL,"timeHou
 CREATE TABLE IF NOT EXISTS patientlasthour$1 ("patientid" BIGINT NOT NULL,"avgTemp" NUMERIC NOT NULL,"maxTemp" NUMERIC NOT NULL,"minTemp" NUMERIC NOT NULL,"_timeMin" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("patientid"));
 
 >>>flink-plan.sql
-
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptostring` AS 'com.datasqrl.time.TimestampToString' LANGUAGE JAVA;
 
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofmonth` AS 'com.datasqrl.time.EndOfMonth' LANGUAGE JAVA;

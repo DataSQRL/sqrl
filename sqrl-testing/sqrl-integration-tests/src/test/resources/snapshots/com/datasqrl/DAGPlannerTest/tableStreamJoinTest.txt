@@ -173,7 +173,6 @@ CREATE INDEX IF NOT EXISTS customer$2_hash_c2 ON customer$2 USING hash ("name");
 CREATE INDEX IF NOT EXISTS orders$2_btree_c0 ON orders$2 USING btree ("id");
 
 >>>flink-plan.sql
-
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptostring` AS 'com.datasqrl.time.TimestampToString' LANGUAGE JAVA;
 
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofmonth` AS 'com.datasqrl.time.EndOfMonth' LANGUAGE JAVA;

@@ -4,6 +4,7 @@
 package com.datasqrl.config;
 
 import com.datasqrl.cmd.EngineKeys;
+import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.IExecutionEngine;
 import com.datasqrl.engine.database.DatabaseEngine;
@@ -12,6 +13,7 @@ import com.datasqrl.engine.pipeline.SimplePipeline;
 import com.datasqrl.engine.stream.StreamEngine;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.util.ServiceLoaderDiscovery;
+import com.google.inject.Injector;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,29 +28,49 @@ import org.apache.commons.lang3.tuple.Pair;
  */
 public class PipelineFactory {
 
-  private final List<String> pipeline;
+  private final Injector injector;
+  private final List<String> enabledEngines;
   @NonNull
   @Getter
   private final PackageJson.EnginesConfig engineConfig;
   private final ConnectorFactoryFactory connectorFactoryFactory;
 
-  public PipelineFactory(List<String> pipeline, @NonNull PackageJson.EnginesConfig engineConfig, ConnectorFactoryFactory connectorFactoryFactory) {
-    this.pipeline = pipeline;
+  public PipelineFactory(Injector injector, List<String> enabledEngines, @NonNull PackageJson.EnginesConfig engineConfig, ConnectorFactoryFactory connectorFactoryFactory) {
+    this.injector = injector;
+    this.enabledEngines = enabledEngines;
     this.engineConfig = engineConfig;
     this.connectorFactoryFactory = connectorFactoryFactory;
   }
 
   private Map<String, ExecutionEngine> getEngines(Optional<EngineFactory.Type> engineType) {
     Map<String, ExecutionEngine> engines = new HashMap<>();
-    for (String engineId : pipeline) {
+    for (String engineId : enabledEngines) {
       if (engineId.equalsIgnoreCase(EngineKeys.TEST)) continue;
-      PackageJson.EngineConfig engineConfig = this.engineConfig.getEngineConfig(engineId);
       EngineFactory engineFactory = ServiceLoaderDiscovery.get(
           EngineFactory.class,
           EngineFactory::getEngineName,
-          engineConfig.getEngineName());
-      ConnectorFactory connectorFactory = connectorFactoryFactory.create(engineId, engineConfig);
-      IExecutionEngine engine = engineFactory.initialize(engineConfig, connectorFactory);
+          engineId);
+
+      Optional<EngineConfig> engineConfigOpt = this.engineConfig.getEngineConfig(engineId);
+      EngineConfig engineConfig = engineConfigOpt.orElseGet(()->new EngineConfig() {
+        @Override
+        public String getEngineName() {
+          return engineId;
+        }
+
+        @Override
+        public Map<String, Object> toMap() {
+          return Map.of();
+        }
+
+        @Override
+        public ConnectorsConfig getConnectors() {
+          return null;
+        }
+      });
+
+      IExecutionEngine engine = injector.getInstance(engineFactory.getFactoryClass());
+//      IExecutionEngine engine = engineFactory.create(engineConfig, connectorFactoryFactory);
       if (engineType.map(type -> engine.getType()==type).orElse(true)) {
         engines.put(engineId, (ExecutionEngine)engine);
       }
@@ -74,7 +96,7 @@ public class PipelineFactory {
   }
 
   public StreamEngine getStreamEngine() {
-    return (StreamEngine) getEngine(EngineFactory.Type.STREAM).getRight();
+    return (StreamEngine) getEngine(EngineFactory.Type.STREAMS).getRight();
   }
 
 

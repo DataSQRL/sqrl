@@ -21,7 +21,7 @@ public class GraphqlPostplanHook {
   private final SqrlFramework framework;
   private final APIConnectorManager apiManager;
 
-  public Optional<RootGraphqlModel> run(Optional<APISource> source, PhysicalPlan physicalPlan) {
+  public Optional<RootGraphqlModel> updatePlan(Optional<APISource> source, PhysicalPlan physicalPlan) {
     if (pipeline.getStage(Type.SERVER).isEmpty()) {
       return Optional.empty();
     }

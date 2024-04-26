@@ -1,36 +1,75 @@
 package com.datasqrl.config;
 
-import static com.datasqrl.config.ConnectorConfigImpl.FORMAT_KEY;
-import static com.datasqrl.config.ConnectorConfigImpl.VALUE_FORMAT_KEY;
-
-import com.datasqrl.cmd.EngineKeys;
+import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.config.TableConfig.Format;
-import com.datasqrl.config.TableConfig.TableConfigBuilder;
-import com.datasqrl.util.ServiceLoaderDiscovery;
+import com.google.inject.Inject;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import lombok.AllArgsConstructor;
+
 /**
  * Placeholder for future templated connector handling
  */
+@AllArgsConstructor(onConstructor_=@Inject)
 public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
 
+  PackageJson packageJson;
   @Override
-  public ConnectorFactory create(String engineId, PackageJson.EngineConfig engineConfig) {
-    if (engineId.equalsIgnoreCase(EngineKeys.LOG)) {
-      return createKafkaConnectorFactory(engineConfig);
-    } else if (engineId.equalsIgnoreCase(EngineKeys.DATABASE)) {
-      return createJdbcConnectorFactory(engineConfig);
-    } else if (engineId.equalsIgnoreCase(PRINT_SINK_NAME)) {
-      return createPrintConnectorFactory(engineConfig);
-    } else if (engineId.equalsIgnoreCase(FILE_SINK_NAME)) {
-      return createFileConnectorFactory(engineConfig);
+  public Optional<ConnectorFactory> create(Type type, String name) {
+    ConnectorsConfig connectors = packageJson.getEngines().getEngineConfig("flink")
+        .get().getConnectors();
+    Optional<ConnectorConf> connectorConfig = connectors.getConnectorConfig(name);
+    if (name.equalsIgnoreCase(PRINT_SINK_NAME)) {
+      return Optional.of(createPrintConnectorFactory(null));
+    }
+    if (type.equals(Type.LOG)) {
+      return Optional.of(createKafkaConnectorFactory(connectorConfig.get()));
+    } else if (type.equals(Type.DATABASE)) {
+      return Optional.of(createJdbcConnectorFactory(connectorConfig.get()));
+    }
+//    else if (name.equalsIgnoreCase(FILE_SINK_NAME)) {
+//      return Optional.of(createFileConnectorFactory(connectorConfig.get()));
+//    }
+      return connectorConfig.map(c -> new ConnectorFactory() {
+        @Override
+        public TableConfig createSourceAndSink(IConnectorFactoryContext context) {
+          return null;
+        }
+
+        @Override
+        public Optional<Format> getFormat() {
+          return Optional.empty();
+        }
+      });
     }
 
-    return new EngineConnectorFactoryImpl(engineConfig);
+  @Override
+  public ConnectorConf getConfig(String name) {
+    ConnectorsConfig connectors = packageJson.getEngines().getEngineConfig("flink")
+        .get().getConnectors();
+    Optional<ConnectorConf> connectorConfig = connectors.getConnectorConfig(name);
+    return connectorConfig.get();
   }
 
-  private ConnectorFactory createFileConnectorFactory(PackageJson.EngineConfig engineConfig) {
+//    if (name.equalsIgnoreCase(EngineKeys.LOG)) {
+//      return createKafkaConnectorFactory(engineConfig);
+//    } else if (name.equalsIgnoreCase(EngineKeys.DATABASE)) {
+//      return createJdbcConnectorFactory(engineConfig);
+//    } else if (name.equalsIgnoreCase(PRINT_SINK_NAME)) {
+//      return createPrintConnectorFactory(engineConfig);
+//    } else if (name.equalsIgnoreCase(FILE_SINK_NAME)) {
+//      return createFileConnectorFactory(engineConfig);
+//    }
+//
+//    return new EngineConnectorFactoryImpl(engineConfig);
+//
+//  @Override
+//  public Optional<Format> getFormatForExtension(String format) {
+//    return Optional.empty();
+//  }
+
+//  private ConnectorFactory createFileConnectorFactory(ConnectorConf engineConfig) {
 
 //  @Override
 //  public IConnectorConfig forName(@NonNull Name name, @NonNull IEngineConfig baseConnectorConfig) {
@@ -92,10 +131,10 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
 ////  private void updateMonitorInterval(SqrlConfig config, int interval_milliseconds) {
 ////    config.setProperty(MONITOR_INTERVAL_KEY, interval_milliseconds);
 ////  }
-    return null;
-  }
+//    return null;
+//  }
 
-  private ConnectorFactory createPrintConnectorFactory(PackageJson.EngineConfig engineConfig) {
+  private ConnectorFactory createPrintConnectorFactory(ConnectorConf engineConfig) {
 
 //  public static final String CONNECTOR_TYPE = "print";
 //  public static final String PRINT_IDENTIFIER_KEY = "print-identifier";
@@ -136,16 +175,15 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
     throw new RuntimeException("TBD");
   }
 
-  private ConnectorFactory createKafkaConnectorFactory(PackageJson.EngineConfig engineConfig1) {
-    EngineConfigImpl engineConfig = (EngineConfigImpl) engineConfig1;
+  private ConnectorFactory createKafkaConnectorFactory(ConnectorConf connectorConf) {
 
     return new ConnectorFactory() {
       @Override
       public TableConfig createSourceAndSink(IConnectorFactoryContext context) {
         Map<String, Object> map = context.getMap();
+        ConnectorConfImpl connectorConf1 = (ConnectorConfImpl) connectorConf;
 
-
-        SqrlConfig config = SqrlConfig.create(engineConfig.sqrlConfig);
+        SqrlConfig config = SqrlConfig.create(connectorConf1.sqrlConfig);
 
 //      String topicName = sanitizeName(logId);
         TableConfigBuilderImpl builder = TableConfigImpl.builder((String)map.get("topic"));
@@ -169,29 +207,30 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
           builder.setType(ExternalDataType.sink);
         }
 
-        builder.copyConnectorConfig(engineConfig);
+        builder.copyConnectorConfig(connectorConf1);
         builder.getConnectorConfig().setProperty("topic", map.get("topic"));
         return builder.build();
       }
 
       @Override
       public Optional<TableConfig.Format> getFormat() {
-        Optional<String> format = engineConfig.sqrlConfig.asString(FORMAT_KEY).getOptional()
-            .or(() -> engineConfig.sqrlConfig.asString(VALUE_FORMAT_KEY).getOptional());
-        engineConfig.sqrlConfig.getErrorCollector()
-            .checkFatal(format.isPresent(), "Need to configure a format via [%s] or [%s]", FORMAT_KEY,
-                VALUE_FORMAT_KEY);
-        Optional<FormatFactory> formatFactory = ServiceLoaderDiscovery.findFirst(FormatFactory.class,
-            FormatFactory::getName, format.get());
-        Optional<TableConfig.Format> format1 = formatFactory.map(fac -> fac.fromConfig(engineConfig));
-        Optional<TableConfig.Format> defaultFormat = format.map(f -> new TableConfig.Format.DefaultFormat(f));
+//        Optional<String> format = engineConfig.sqrlConfig.asString(FORMAT_KEY).getOptional()
+//            .or(() -> engineConfig.sqrlConfig.asString(VALUE_FORMAT_KEY).getOptional());
+//        engineConfig.sqrlConfig.getErrorCollector()
+//            .checkFatal(format.isPresent(), "Need to configure a format via [%s] or [%s]", FORMAT_KEY,
+//                VALUE_FORMAT_KEY);
+//        Optional<FormatFactory> formatFactory = ServiceLoaderDiscovery.findFirst(FormatFactory.class,
+//            FormatFactory::getName, format.get());
+//        Optional<TableConfig.Format> format1 = formatFactory.map(fac -> fac.fromConfig(engineConfig));
+//        Optional<TableConfig.Format> defaultFormat = format.map(f -> new TableConfig.Format.DefaultFormat(f));
 
-        return format1.isPresent() ? format1 : defaultFormat;
+        return Optional.empty();
+//        return format1.isPresent() ? format1 : defaultFormat;
       }
     };
   }
 
-  private ConnectorFactory createJdbcConnectorFactory(PackageJson.EngineConfig engineConfig1) {
+  private ConnectorFactory createJdbcConnectorFactory(ConnectorConf engineConfig1) {
     return new ConnectorFactory() {
       @Override
       public TableConfig createSourceAndSink(IConnectorFactoryContext context) {
@@ -201,7 +240,7 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
         TableConfigBuilderImpl builder = TableConfigImpl.builder(tableName);
         builder.setType(ExternalDataType.sink);
 
-        EngineConfigImpl engineConfig = (EngineConfigImpl) engineConfig1;
+        ConnectorConfImpl engineConfig = (ConnectorConfImpl) engineConfig1;
         builder.copyConnectorConfig(engineConfig);
         builder.getConnectorConfig().setProperty("table-name", tableName);
         builder.getConnectorConfig().setProperty("connector", "jdbc-sqrl");

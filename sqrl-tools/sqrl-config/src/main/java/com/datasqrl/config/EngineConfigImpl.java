@@ -1,5 +1,7 @@
 package com.datasqrl.config;
 
+import static com.datasqrl.config.PackageJsonImpl.CONNECTORS_KEY;
+
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -23,6 +25,12 @@ public class EngineConfigImpl implements PackageJson.EngineConfig {
   public Map<String, Object> toMap() {
     return SqrlConfigUtil.toMap(sqrlConfig,
         Function.identity(), List.of());
+  }
+
+  //Todo move out to engine specific config
+  @Override
+  public ConnectorsConfig getConnectors() {
+    return new ConnectorsConfigImpl(sqrlConfig.getSubConfig(CONNECTORS_KEY));
   }
 
 //  public EngineFactoryInterface discoverFactory() {

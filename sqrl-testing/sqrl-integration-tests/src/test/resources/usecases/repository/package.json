@@ -1,4 +1,4 @@
 {
-  "version": 1,
-  "pipeline" : ["streams",  "database", "server"]
+  "version": "1",
+  "enabled-engines": ["vertx", "postgres", "flink"]
 }

@@ -227,7 +227,6 @@ CREATE INDEX IF NOT EXISTS applications$3_hash_c1 ON applications$3 USING hash (
 CREATE INDEX IF NOT EXISTS applicationupdates$2_hash_c0 ON applicationupdates$2 USING hash ("loan_application_id");
 
 >>>flink-plan.sql
-
 SET 'table.exec.source.idle-timeout' = '1';
 
 CREATE TEMPORARY TABLE `applicationupdates$1` (

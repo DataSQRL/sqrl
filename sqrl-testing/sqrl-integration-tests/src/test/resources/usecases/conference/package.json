@@ -1,13 +1,9 @@
 {
   "version": "1",
-  "pipeline" : ["streams", "log", "database", "server"],
-  "engines" : {
-    "streams" : {
+  "enabled-engines": ["vertx", "postgres", "kafka", "flink"],
+  "values" : {
+    "flinkConfig": {
       "table.exec.sink.not-null-enforcer":"DROP"
     }
-  },
-  "script" : {
-    "graphql" : "schema.graphqls",
-    "main" : "c360.sqrl"
   }
 }

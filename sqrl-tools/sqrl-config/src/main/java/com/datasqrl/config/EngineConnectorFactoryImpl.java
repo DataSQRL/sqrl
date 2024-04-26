@@ -1,5 +1,6 @@
 package com.datasqrl.config;
 
+import java.util.Map;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 
@@ -15,4 +16,5 @@ public class EngineConnectorFactoryImpl implements ConnectorFactory {
   public Optional<TableConfig.Format> getFormat() {
     return Optional.empty();
   }
+
 }

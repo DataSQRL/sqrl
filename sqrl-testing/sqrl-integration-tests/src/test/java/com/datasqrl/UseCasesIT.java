@@ -41,7 +41,7 @@ public class UseCasesIT {
     argsList.addAll(List.of(args));
     argsList.add("--nolookup");
     argsList.add("--profile");
-    argsList.add("../../../../../../../profiles/profile-1.16");
+    argsList.add("../../../../../../../profiles/flink-1.16");
     execute(RESOURCES.resolve(path),
         AssertStatusHook.INSTANCE, argsList.toArray(a->new String[a]));
   }

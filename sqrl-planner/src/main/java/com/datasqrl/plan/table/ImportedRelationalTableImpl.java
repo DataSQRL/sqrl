@@ -7,7 +7,6 @@ import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.canonicalizer.Name;
-import java.util.List;
 import java.util.function.Predicate;
 import lombok.NonNull;
 import lombok.Value;
@@ -27,7 +26,7 @@ public class ImportedRelationalTableImpl extends SourceRelationalTableImpl imple
 
   //Currently, we hardcode all table sources to support only stream engines
   private final Predicate<ExecutionStage> supportsStage =
-      stage -> stage.getEngine().getType() == Type.STREAM;
+      stage -> stage.getEngine().getType() == Type.STREAMS;
 
   public ImportedRelationalTableImpl(@NonNull Name nameId, RelDataType baseRowType,
       TableSource tableSource) {

@@ -15,7 +15,13 @@ import com.datasqrl.graphql.server.Model.MutationCoords;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.server.Model.SubscriptionCoords;
 import com.datasqrl.graphql.type.SqrlVertxScalars;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.InjectableValues;
+import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import graphql.GraphQL;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
@@ -37,10 +43,13 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.pgclient.impl.PgPoolOptions;
 import io.vertx.sqlclient.SqlClient;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -65,17 +74,48 @@ public class GraphQLServer extends AbstractVerticle {
   @SneakyThrows
   private static RootGraphqlModel readModel() {
     ObjectMapper objectMapper = new ObjectMapper();
+
+    // Register the custom deserializer module
+    SimpleModule module = new SimpleModule();
+    module.addDeserializer(String.class, new JsonEnvVarDeserializer());
+    objectMapper.registerModule(module);
     return objectMapper.readValue(
         new File("server-model.json"),
         RootGraphqlModel.class);
   }
 
+  public static class JsonEnvVarDeserializer extends JsonDeserializer<String> {
+
+    @Override
+    public String deserialize(JsonParser p, DeserializationContext ctxt)
+        throws IOException, JsonProcessingException {
+      String value = p.getText();
+      Pattern pattern = Pattern.compile("\\$\\{(.+?)\\}");
+      Matcher matcher = pattern.matcher(value);
+      StringBuffer result = new StringBuffer();
+      while (matcher.find()) {
+        String key = matcher.group(1);
+        String envVarValue = System.getenv(key);
+        if (envVarValue != null) {
+          matcher.appendReplacement(result, envVarValue);
+        }
+      }
+      matcher.appendTail(result);
+
+      return result.toString();
+    }
+  }
   private Future<JsonObject> loadConfig() {
     Promise<JsonObject> promise = Promise.promise();
     vertx.fileSystem().readFile("server-config.json", result -> {
       if (result.succeeded()) {
         try {
-          JsonObject config = new JsonObject(result.result().toString());
+          ObjectMapper objectMapper = new ObjectMapper();
+          SimpleModule module = new SimpleModule();
+          module.addDeserializer(String.class, new JsonEnvVarDeserializer());
+          objectMapper.registerModule(module);
+          Map configMap = objectMapper.readValue(result.result().toString(), Map.class);
+          JsonObject config = new JsonObject(configMap);
           promise.complete(config);
         } catch (Exception e) {
           e.printStackTrace();
@@ -194,16 +234,9 @@ public class GraphQLServer extends AbstractVerticle {
   }
 
   private SqlClient getSqlClient() {
-    if (this.config.getPgConnectOptions() != null && this.config.getServletConfig().isUsePgPool()) {
-      return PgPool.client(vertx, this.config.getPgConnectOptions(),
-          new PgPoolOptions(this.config.getPoolOptions())
-              .setPipelined(true));
-    } else if (this.config.getJdbcConnectOptions() != null) {
-      return JDBCPool.pool(vertx, this.config.getJdbcConnectOptions(),
-          this.config.getPoolOptions());
-    } else {
-      throw new RuntimeException("Unknown connection type. Either pgConnectOptions or jdbcConnectOptions should be configured.");
-    }
+    return PgPool.client(vertx, this.config.getPgConnectOptions(),
+        new PgPoolOptions(this.config.getPoolOptions())
+            .setPipelined(true));
   }
 
   public GraphQL createGraphQL(SqlClient client, Promise<Void> startPromise) {

@@ -232,7 +232,6 @@ CREATE INDEX IF NOT EXISTS events$3_text_c3c4 ON events$3 USING GIN (to_tsvector
 >>>flink-plan.sql
 SET 'table.exec.sink.not-null-enforcer' = 'DROP';
 
-
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `bannedwordsfilter` AS 'com.datasqrl.text.BannedWordsFilter' LANGUAGE JAVA;
 
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `cosinedistance` AS 'com.datasqrl.vector.CosineDistance' LANGUAGE JAVA;

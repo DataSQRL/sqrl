@@ -33,7 +33,7 @@ class SimpleCostModel implements ComputeCost {
         //Currently we make the simplifying assumption that database execution is the baseline and we compare
         //other engines against it
         break;
-      case STREAM:
+      case STREAMS:
         //We assume that pre-computing is generally cheaper (by factor of 10) unless (standard) joins are
         //involved which can lead to combinatorial explosion. So, we primarily cost the joins
         cost = joinCost(relNode);

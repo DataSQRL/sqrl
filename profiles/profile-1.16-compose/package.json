@@ -1,0 +1,20 @@
+{
+  "version": "1",
+  "enabled-engines": ["vertx", "postgres", "kafka", "flink"],
+  "engines" : {
+    "kafka" : {
+      "connector" : "kafka",
+      "upsert-connector" : "upsert-kafka"
+    }
+  },
+  "connector-overrides": {
+
+  },
+  "value": {
+
+  },
+  "test": {
+    "durationSec": 15,
+    "delaySec": 30
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "jdbc-url": "jdbc:postgresql://database:5432/datasqrl",
+  "jdbc-driver": "org.postgresql.Driver",
+  "jdbc-password": "postgres",
+  "jdbc-username": "postgres",
+  "properties.bootstrap.servers": "kafka:9092"
+}

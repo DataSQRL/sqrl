@@ -11,7 +11,6 @@ import com.datasqrl.engine.PhysicalPlanner;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.graphql.APIConnectorManagerImpl;
 import com.datasqrl.graphql.inference.GraphQLMutationExtraction;
-import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.loaders.ModuleLoaderComposite;
 import com.datasqrl.plan.MainScript;
@@ -19,6 +18,7 @@ import com.datasqrl.plan.global.DAGPlanner;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.global.SqrlDAG;
 import com.datasqrl.plan.queries.APISource;
+import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.plan.validate.ScriptPlanner;
 import com.google.inject.Inject;
 import java.nio.file.Files;
@@ -42,6 +42,7 @@ public class CompilationProcess {
   private final WriteDeploymentArtifacts writeDeploymentArtifactsHook;
 //  private final FlinkSqlGenerator flinkSqlGenerator;
   private final GraphqlSourceFactory graphqlSourceFactory;
+  private final ExecutionGoal executionGoal;
   private final GraphQLMutationExtraction graphQLMutationExtraction;
   private final ExecutionPipeline pipeline;
   private final TestPlanner testPlanner;
@@ -63,11 +64,11 @@ public class CompilationProcess {
     PhysicalDAGPlan dagPlan = dagPlanner.planPhysical(dag);
 
     PhysicalPlan physicalPlan = physicalPlanner.plan(dagPlan);
-    Optional<RootGraphqlModel> model = graphqlPostplanHook.run(source, physicalPlan);
+    graphqlPostplanHook.updatePlan(source, physicalPlan);
 
     //create test artifact
     TestPlan testPlan;
-    if (Files.isDirectory(testsPath) && source.isPresent()) {
+    if (Files.isDirectory(testsPath) && source.isPresent() && executionGoal == ExecutionGoal.TEST) {
       testPlan = testPlanner.generateTestPlan(source.get(), testsPath);
     } else {
       testPlan = null;

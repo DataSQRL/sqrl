@@ -26,6 +26,9 @@ public interface ExecutionPipeline {
   default Optional<ExecutionStage> getStage(String name) {
     return StreamUtil.getOnlyElement(getStages().stream().filter(s -> s.getName().equalsIgnoreCase(name)));
   }
+  default Optional<ExecutionStage> getStageByType(String type) {
+    return StreamUtil.getOnlyElement(getStages().stream().filter(s -> s.getEngine().getType().name().equalsIgnoreCase(type)));
+  }
 
   /**
    * We currently make the simplifying assumption that an {@link ExecutionPipeline} contains at most

@@ -87,34 +87,34 @@ public class FileSystemDiscovery implements DataSystemDiscovery {
               NameComponents components = componentsOpt.get();
               Name tblName = Name.system(components.getIdentifier());
 
-              Optional<Format> format = connectorFactory.getFormatForExtension(components.getFormat());
-              if (format.isEmpty()) {
-                errors.warn("File %s has unsupported format %s", p, components.getFormat());
-                continue;
-              }
+//              Optional<Format> format = connectorFactory.getFormatForExtension(components.getFormat());
+//              if (format.isEmpty()) {
+//                errors.warn("File %s has unsupported format %s", p, components.getFormat());
+//                continue;
+//              }
 
               if (true) {
                 throw new RuntimeException("todo engineconfig for file connector");
               }
-              TableConfig table = connectorFactory.create("file", null)
-                  .createSourceAndSink(null);
+//              TableConfig table = connectorFactory.create("file")
+//                  .createSourceAndSink(null);
 //                  .forDiscovery(tblName, basePath,
 //                  tablePattern.substitute(tblName.getDisplay(), Optional.of("/"), Optional.of(
 //                      components.getSuffix())) , format.get());
 //              ITableConfig table = builder.build();
-
-              TableConfig otherTbl = tablesByName.get(tblName);
-              if (otherTbl == null) {
-                tablesByName.put(tblName, table);
-              } else {
-                Format otherFormat = otherTbl.getConnectorConfig().getFormat()
-                    .get();
-                if (!format.get().equals(otherFormat)) {
-                  errors.warn("Table file [%s] does not have the same format [%s] of previously " +
-                          "encountered table [%s]. File will be ignored",
-                      p, otherFormat, otherTbl.getName());
-                }
-              }
+//
+//              TableConfig otherTbl = tablesByName.get(tblName);
+//              if (otherTbl == null) {
+//                tablesByName.put(tblName, table);
+//              } else {
+//                Format otherFormat = otherTbl.getConnectorConfig().getFormat()
+//                    .get();
+//                if (!format.get().equals(otherFormat)) {
+//                  errors.warn("Table file [%s] does not have the same format [%s] of previously " +
+//                          "encountered table [%s]. File will be ignored",
+//                      p, otherFormat, otherTbl.getName());
+//                }
+//              }
 
             }
           }
