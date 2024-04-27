@@ -34,6 +34,9 @@ import freemarker.template.TemplateMethodModelEx;
 import freemarker.template.TemplateModelException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.nio.file.FileVisitResult;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -114,7 +117,7 @@ public class Packager {
 
     dependencies.getDependencies().entrySet().stream()
         .map(entry -> rethrowCall(() ->
-            retrieveDependency(buildDir, NamePath.parse(entry.getKey()),
+            retrieveDependency(rootDir, buildDir, NamePath.parse(entry.getKey()),
                 entry.getValue().normalize(entry.getKey(), depErrors))
                 ? Optional.<NamePath>empty()
                 : Optional.of(NamePath.parse(entry.getKey()))))
@@ -212,13 +215,39 @@ public class Packager {
     }
   }
 
-  private boolean retrieveDependency(Path buildDir, NamePath packagePath, Dependency dependency)
+  private boolean retrieveDependency(Path rootDir, Path buildDir, NamePath packagePath, Dependency dependency)
       throws IOException {
     Path targetPath = namepath2Path(buildDir, packagePath);
     Preconditions.checkArgument(FileUtil.isEmptyDirectory(targetPath),
         "Dependency [%s] conflicts with existing module structure in directory: [%s]", dependency,
         targetPath);
-    return repository.retrieveDependency(targetPath, dependency);
+
+    // Determine the directory in the root that corresponds to the dependency's name
+    String depName = dependency.getName();
+    Path sourcePath = rootDir.resolve(depName);
+
+    // Check if the source directory exists and is indeed a directory
+    if (Files.isDirectory(sourcePath)) {
+      // Copy the entire directory from source to target
+      Files.walkFileTree(sourcePath, new SimpleFileVisitor<Path>() {
+        @Override
+        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+          Path targetDir = targetPath.resolve(sourcePath.relativize(dir));
+          Files.createDirectories(targetDir);
+          return FileVisitResult.CONTINUE;
+        }
+
+        @Override
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+          Files.copy(file, targetPath.resolve(sourcePath.relativize(file)), StandardCopyOption.REPLACE_EXISTING);
+          return FileVisitResult.CONTINUE;
+        }
+      });
+      return true;
+    } else {
+      // If the directory does not exist or is not a directory, proceed with the original retrieval logic
+      return repository.retrieveDependency(targetPath, dependency);
+    }
   }
 
   public static Path copyRelativeFile(Path srcFile, Path srcDir, Path destDir) throws IOException {

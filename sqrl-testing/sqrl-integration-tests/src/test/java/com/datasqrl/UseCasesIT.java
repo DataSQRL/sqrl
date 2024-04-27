@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 public class UseCasesIT {
@@ -26,7 +27,7 @@ public class UseCasesIT {
 
   @Test
   public void testConference() {
-    execute("conference", "conference.sqrl", "conference.graphqls");
+    execute("conference", "conference.sqrl", "conference-no-mutation.graphqls");
   }
 
   @Test

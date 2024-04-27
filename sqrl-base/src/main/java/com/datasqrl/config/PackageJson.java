@@ -117,7 +117,7 @@ public interface PackageJson {
 
     Optional<Dependency> getDependency(String profile);
 
-    Map<String, Dependency> getDependencies();
+    Map<String, ? extends Dependency> getDependencies();
   }
 
   interface DiscoveryConfig {

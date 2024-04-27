@@ -9,7 +9,7 @@
   "dependencies": {
     "conference" : {
       "name" : "conference-test",
-      "variant" : "dev",
+      "variant" : "test",
       "version" : "0.1.0"
     }
   }

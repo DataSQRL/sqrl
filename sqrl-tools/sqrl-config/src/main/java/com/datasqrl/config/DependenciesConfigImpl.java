@@ -29,8 +29,8 @@ public class DependenciesConfigImpl implements PackageJson.DependenciesConfig {
     return Optional.of(new DependencyImpl(subConfig));
   }
 
-  public Map<String, Dependency> getDependencies() {
-    return parentConfig.asMap(DEPENDENCIES_KEY, Dependency.class).get();
+  public Map<String, DependencyImpl> getDependencies() {
+    return parentConfig.asMap(DEPENDENCIES_KEY, DependencyImpl.class).get();
   }
 
 //  public static LinkedHashMap<String, Dependency> fromRootConfig(@NonNull SqrlConfig config) {
