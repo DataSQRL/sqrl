@@ -5,5 +5,12 @@
     "flinkConfig": {
       "table.exec.sink.not-null-enforcer":"DROP"
     }
+  },
+  "dependencies": {
+    "conference" : {
+      "name" : "conference-test",
+      "variant" : "dev",
+      "version" : "0.1.0"
+    }
   }
 }
