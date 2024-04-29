@@ -41,8 +41,8 @@ public class JsonlPreprocessor implements Preprocessor {
     Path dataDir = processorContext.getBuildDir().resolve(DATA_DIR);
     Files.createDirectories(dataDir);
     Path data = dataDir.resolve(path.getFileName());
-    try {
+    if (!Files.isRegularFile(data)) {
       Files.copy(path, data);
-    } catch (Exception e) {e.printStackTrace();}
+    }
   }
 }

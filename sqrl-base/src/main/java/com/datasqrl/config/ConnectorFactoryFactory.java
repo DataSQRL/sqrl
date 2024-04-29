@@ -10,5 +10,4 @@ public interface ConnectorFactoryFactory {
   Optional<ConnectorFactory> create(Type type, String engineId);
   ConnectorConf getConfig(String name);
 
-  Optional<TableConfig.Format> getFormatForExtension(String format);
 }

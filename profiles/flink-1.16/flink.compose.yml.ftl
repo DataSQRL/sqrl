@@ -11,6 +11,10 @@ services:
       - |
         FLINK_PROPERTIES=
         jobmanager.rpc.address: flink-jobmanager
+<#if mountDir??>
+    volumes:
+      - ${mountDir}:${mountDir}
+</#if>
   flink-taskmanager:
     build:
       context: flink
@@ -23,6 +27,10 @@ services:
         FLINK_PROPERTIES=
         jobmanager.rpc.address: flink-jobmanager
         taskmanager.numberOfTaskSlots: 1
+<#if mountDir??>
+    volumes:
+      - ${mountDir}:${mountDir}
+</#if>
   flink-job-submitter:
     build:
       context: flink
@@ -42,7 +50,6 @@ services:
         jobmanager.rpc.address: flink-jobmanager
         rest.address: flink-jobmanager
       - PROPERTIES_BOOTSTRAP_SERVERS=kafka:9092
-      - jdbc-url=jdbc:postgresql://database:5432/datasqrl
-      - jdbc-driver=org.postgresql.Driver
-      - jdbc-username=postgres
-      - jdbc-password=postgres
+      - JDBC_URL=jdbc:postgresql://database:5432/datasqrl
+      - JDBC_USERNAME=postgres
+      - JDBC_PASSWORD=postgres

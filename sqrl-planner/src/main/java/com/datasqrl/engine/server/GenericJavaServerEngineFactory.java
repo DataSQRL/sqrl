@@ -12,9 +12,4 @@ public abstract class GenericJavaServerEngineFactory implements EngineFactory {
     return Type.SERVER;
   }
 
-  public static ServerConfig convertServerConfig() {
-    Map<String, Object> map = Map.of();
-    JsonObject jsonObject = new JsonObject(map);
-    return new ServerConfig(jsonObject);
-  }
 }

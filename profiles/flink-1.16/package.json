@@ -6,24 +6,15 @@
       "connectors": {
         "postgres": {
           "connector": "jdbc",
-          "password": "${jdbc-password}",
-          "driver": "${jdbc-driver}",
-          "username": "${jdbc-username}",
-          "url": "${jdbc-url}",
-          "table-name": "$${table}"
+          "password": "${JDBC_PASSWORD}",
+          "driver": "org.postgresql.Driver",
+          "username": "${JDBC_USERNAME}",
+          "url": "${JDBC_URL}",
+          "table-name": "${table}"
         },
         "kafka": {
           "connector" : "kafka",
           "format" : "json",
-          "properties.bootstrap.servers": "${PROPERTIES_BOOTSTRAP_SERVERS}",
-          "properties.group.id": "groupid",
-          "scan.startup.mode" : "earliest-offset",
-          "properties.auto.offset.reset" : "earliest",
-          "topic" : "$${topic}"
-        },
-        "upsert-kafka": {
-          "connector" : "kafka",
-          "key.format" : "json",
           "properties.bootstrap.servers": "${PROPERTIES_BOOTSTRAP_SERVERS}",
           "properties.group.id": "groupid",
           "scan.startup.mode" : "earliest-offset",

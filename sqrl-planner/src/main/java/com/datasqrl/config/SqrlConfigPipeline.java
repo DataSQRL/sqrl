@@ -13,8 +13,8 @@ public class SqrlConfigPipeline implements ExecutionPipeline {
   ExecutionPipeline pipeline;
 
   @Inject
-  public SqrlConfigPipeline(Injector injector, PackageJson config, ConnectorFactoryFactory connectorFactory) {
-    this.pipeline = new PipelineFactory(injector, config.getEnabledEngines(), config.getEngines(), connectorFactory)
+  public SqrlConfigPipeline(Injector injector, PackageJson config) {
+    this.pipeline = new PipelineFactory(injector, config.getEnabledEngines(), config.getEngines())
         .createPipeline();
   }
 }

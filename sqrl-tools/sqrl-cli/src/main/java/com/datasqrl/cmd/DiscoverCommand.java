@@ -180,8 +180,8 @@ public class DiscoverCommand extends AbstractCommand {
 
   public static DataDiscovery fromConfig(@NonNull PackageJson config, ErrorCollector errors) {
     EnginesConfig enginesConfig = config.getEngines();
-    PipelineFactory pipelineFactory = new PipelineFactory(null, config.getEnabledEngines(), enginesConfig,
-        new ConnectorFactoryFactoryImpl(null));
+    PipelineFactory pipelineFactory = new PipelineFactory(null, config.getEnabledEngines(), enginesConfig
+    );
     DiscoveryConfig discoveryConfig = config.getDiscovery();
     DataDiscovery discovery = new DataDiscovery(
         discoveryConfig.getDataDiscoveryConfig(),

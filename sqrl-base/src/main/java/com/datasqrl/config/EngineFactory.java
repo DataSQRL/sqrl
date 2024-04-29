@@ -16,9 +16,6 @@ public interface EngineFactory {
 
   Type getEngineType();
 
-  IExecutionEngine create(@NonNull PackageJson.EngineConfig config,
-      ConnectorFactoryFactory connectorFactoryFactory);
-
   Class<? extends IExecutionEngine> getFactoryClass();
 
   enum Type {

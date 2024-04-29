@@ -53,7 +53,7 @@ public class WriteDeploymentArtifacts {
   public void run(Optional<APISource> graphqlSource, PhysicalPlan physicalPlan, SqrlDAG dag) {
     writeDeployArtifacts(physicalPlan, targetDir);
     graphqlSource.ifPresent(this::writeGraphqlSchema);
-//    writeExplain(dag);
+    writeExplain(dag);
   }
 
   @SneakyThrows

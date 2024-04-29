@@ -32,10 +32,4 @@ public class EngineConfigImpl implements PackageJson.EngineConfig {
   public ConnectorsConfig getConnectors() {
     return new ConnectorsConfigImpl(sqrlConfig.getSubConfig(CONNECTORS_KEY));
   }
-
-//  public EngineFactoryInterface discoverFactory() {
-//    return ServiceLoaderDiscovery.get(EngineFactoryInterface.class,
-//        EngineFactoryInterface::getEngineName,
-//        sqrlConfig.asString(ENGINE_NAME_KEY).get());
-//  }
 }
