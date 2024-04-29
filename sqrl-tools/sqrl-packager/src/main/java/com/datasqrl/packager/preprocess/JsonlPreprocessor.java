@@ -1,25 +1,16 @@
 package com.datasqrl.packager.preprocess;
 
-import static com.datasqrl.actions.WriteDeploymentArtifacts.DATA_DIR;
-import static com.datasqrl.packager.LambdaUtil.rethrowCall;
+import static com.datasqrl.actions.WriteDag.DATA_DIR;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.util.SqrlObjectMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.auto.service.AutoService;
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 import java.util.regex.Pattern;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.IOUtils;
 
 @AutoService(Preprocessor.class)
 /*

@@ -6,7 +6,6 @@ package com.datasqrl.cmd;
 
 import static com.datasqrl.config.ScriptConfigImpl.GRAPHQL_NORMALIZED_FILE_NAME;
 
-import com.datasqrl.actions.WriteDeploymentArtifacts;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.compile.CompilationProcess;

@@ -3,8 +3,6 @@
  */
 package com.datasqrl.packager;
 
-import com.datasqrl.actions.FlinkSqlGenerator;
-import com.datasqrl.actions.WriteDeploymentArtifacts;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.compile.TestPlan;
 import com.datasqrl.config.DependenciesConfigImpl;
@@ -16,7 +14,6 @@ import com.datasqrl.config.PackageJson.ScriptConfig;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlan.StagePlan;
-import com.datasqrl.engine.stream.flink.plan.FlinkStreamPhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.packager.Preprocessors.PreprocessorsContext;
@@ -56,8 +53,8 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.datasqrl.actions.WriteDeploymentArtifacts.DATA_DIR;
-import static com.datasqrl.actions.WriteDeploymentArtifacts.LIB_DIR;
+import static com.datasqrl.actions.WriteDag.DATA_DIR;
+import static com.datasqrl.actions.WriteDag.LIB_DIR;
 import static com.datasqrl.config.ScriptConfigImpl.GRAPHQL_KEY;
 import static com.datasqrl.config.ScriptConfigImpl.MAIN_KEY;
 import static com.datasqrl.packager.LambdaUtil.rethrowCall;
