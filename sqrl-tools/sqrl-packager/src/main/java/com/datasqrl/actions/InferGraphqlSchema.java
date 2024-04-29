@@ -21,7 +21,9 @@ import com.datasqrl.plan.queries.APISourceImpl;
 import com.google.inject.Inject;
 import graphql.language.FieldDefinition;
 import graphql.language.ObjectTypeDefinition;
+import graphql.language.SDLDefinition;
 import graphql.language.ScalarTypeDefinition;
+import graphql.language.TypeDefinition;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphqlTypeComparatorRegistry;
 import graphql.schema.idl.SchemaPrinter;
@@ -29,6 +31,7 @@ import graphql.schema.idl.TypeDefinitionRegistry;
 import graphql.schema.idl.UnExecutableSchemaGenerator;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
@@ -96,14 +99,13 @@ public class InferGraphqlSchema {
 
         schemaDef.remove(schemaDef.getType("Query").get());
         testDef.remove(testDef.getType("Query").get());
-
-        for (ScalarTypeDefinition scalar : schemaDef.scalars().values()) {
-          if (schemaDef.scalars().containsKey(scalar.getName()) && testDef.scalars()
-              .containsKey(scalar.getName())) {
-            // Example conflict resolution: keep the scalar from schemaDef, ignore from testDef
-            testDef.remove(scalar);
-          }
+        for (Map.Entry<String, TypeDefinition> type: schemaDef.types().entrySet()) {
+          testDef.remove(type.getValue());
         }
+        for (Map.Entry<String, ScalarTypeDefinition> type: schemaDef.scalars().entrySet()) {
+          testDef.remove(type.getValue());
+        }
+
         schemaDef.add(mergedQuery);
 
         TypeDefinitionRegistry merge = schemaDef.merge(testDef);

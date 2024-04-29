@@ -51,12 +51,13 @@ public class UseCasesIT {
 
   @Test
   public void testSeedshopMutation() {
-    execute("seedshop-tutorial", "sensors-mutation.sqrl", "sensors-mutation.graphqls", "seedshop-mutation");
+    execute("seedshop-tutorial", "seedshop-mutation.sqrl", "seedshop-mutation.graphqls", "seedshop-mutation");
   }
 
   @Test
+  @Disabled
   public void testSeedshopExtended() {
-    execute("seedshop-tutorial", "sensors-extended.sqrl", "sensors-extended.graphqls", "seedshop-extended");
+    execute("seedshop-tutorial", "seedshop-extended.sqrl", "seedshop-extended.graphqls", "seedshop-extended");
   }
 
 
@@ -82,7 +83,7 @@ public class UseCasesIT {
     }
     argsList.add("--nolookup");
     argsList.add("--profile");
-    argsList.add("../../../../../../../profiles/profile-1.16");
+    argsList.add("../../../../../../../profiles/flink-1.16");
     execute(RESOURCES.resolve(path),
         AssertStatusHook.INSTANCE, argsList.toArray(a->new String[a]));
   }

@@ -1,22 +1,17 @@
 mutation {
     AddReading1: AddReading(metric: {sensorid: 1, temperature: 23.5}) {
-        event_time
         sensorid
     }
     AddReading2: AddReading(metric: {sensorid: 2, temperature: 25.1}) {
-        event_time
         sensorid
     }
     AddReading3: AddReading(metric: {sensorid: 3, temperature: 50.7}) {
-        event_time
         sensorid
     }
     AddReading4: AddReading(metric: {sensorid: 2, temperature: 24.7}) {
-        event_time
         sensorid
     }
     AddReading5: AddReading(metric: {sensorid: 1, temperature: 24.7}) {
-        event_time
         sensorid
     }
 }

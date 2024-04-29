@@ -47,7 +47,7 @@ public class CompilationProcess {
   private final ExecutionPipeline pipeline;
   private final TestPlanner testPlanner;
 
-  public Pair<PhysicalPlan, TestPlan> executeCompilation(Path testsPath) {
+  public Pair<PhysicalPlan, TestPlan> executeCompilation(Optional<Path> testsPath) {
     pipeline.getStage(Type.SERVER)
         .flatMap(p->graphqlSourceFactory.get())
         .ifPresent(graphQLMutationExtraction::analyze);
@@ -68,7 +68,7 @@ public class CompilationProcess {
 
     //create test artifact
     TestPlan testPlan;
-    if (Files.isDirectory(testsPath) && source.isPresent() && executionGoal == ExecutionGoal.TEST) {
+    if (source.isPresent() && executionGoal == ExecutionGoal.TEST) {
       testPlan = testPlanner.generateTestPlan(source.get(), testsPath);
     } else {
       testPlan = null;

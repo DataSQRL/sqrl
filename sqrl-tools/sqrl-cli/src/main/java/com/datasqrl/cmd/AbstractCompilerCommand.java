@@ -28,13 +28,18 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.commons.collections.ListUtils;
+import org.apache.commons.collections4.SetUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import picocli.CommandLine;
 import picocli.CommandLine.ScopeType;
@@ -74,10 +79,10 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   @SneakyThrows
   public void execute(ErrorCollector errors) {
     execute(errors, profiles, targetDir.resolve("snapshots"),
-        targetDir.resolve("tests"), ExecutionGoal.COMPILE);
+        Optional.empty(), ExecutionGoal.COMPILE);
   }
 
-  public void execute(ErrorCollector errors, String[] profiles, Path snapshotPath, Path testsPath,
+  public void execute(ErrorCollector errors, String[] profiles, Path snapshotPath, Optional<Path> testsPath,
       ExecutionGoal goal) {
     Repository repository = createRepository(errors);
 
@@ -95,7 +100,9 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     }
 
     if (goal == ExecutionGoal.TEST) {
-      sqrlConfig.setPipeline(ListUtils.union(sqrlConfig.getEnabledEngines(), List.of(EngineKeys.TEST)));
+      LinkedHashSet<String> hashSet = new LinkedHashSet<>(sqrlConfig.getEnabledEngines());
+      hashSet.add(EngineKeys.TEST);
+      sqrlConfig.setPipeline(new ArrayList<>(hashSet));
     }
 
     Packager packager = new Packager(repository, root.rootDir, sqrlConfig, errors);
@@ -113,6 +120,8 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
         new SqrlInjector(errors, root.rootDir, getTargetDir(), debug, sqrlConfig, getGoal()),
         new StatefulModule(new SqrlSchema(new TypeFactory(), NameCanonicalizer.SYSTEM)));
     CompilationProcess compilationProcess = injector.getInstance(CompilationProcess.class);
+    testsPath.ifPresent(this::validateTestPath);
+
     Pair<PhysicalPlan, TestPlan> plan = compilationProcess.executeCompilation(testsPath);
 
     if (errors.hasErrors()) {
@@ -124,6 +133,12 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     }
 
     postprocess(sqrlConfig, packager, getTargetDir(), plan.getLeft(), plan.getRight(), errors);
+  }
+
+  private void validateTestPath(Path path) {
+    if (!Files.isDirectory(path)) {
+      throw new RuntimeException("Could not find test path: "+ path.toAbsolutePath());
+    }
   }
 
   public abstract PackageJson createDefaultConfig(ErrorCollector errors);

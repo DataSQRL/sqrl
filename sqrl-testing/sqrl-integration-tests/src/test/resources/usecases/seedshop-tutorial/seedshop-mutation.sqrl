@@ -52,7 +52,7 @@ Customers.category_visits := SELECT p.category, count(1) as visits
                             GROUP BY category ORDER BY visits DESC;
 
 /*+test */
-TestCustomerProductVisit := SELECT * FROM Customer c JOIN c.product_visits;
+TestCustomerProductVisit := SELECT * FROM Customers c JOIN c.product_visits;
 
 /*+test */
-TestCustomerCategoryVisit := SELECT * FROM Customer c JOIN c.category_visits;
+TestCustomerCategoryVisit := SELECT * FROM Customers c JOIN c.category_visits;

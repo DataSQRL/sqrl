@@ -42,8 +42,10 @@ public class TestCommand extends AbstractCompilerCommand {
   @Override
   public void execute(ErrorCollector errors) {
     super.execute(errors, this.profiles, snapshotPath == null ?
-        root.rootDir.resolve("snapshots") : snapshotPath,
-        tests == null ? root.rootDir.resolve("tests") : tests,
+        root.rootDir.resolve("snapshots") :
+            snapshotPath.isAbsolute() ? snapshotPath : root.rootDir.resolve(snapshotPath),
+        tests == null ? Optional.of(root.rootDir.resolve("tests")) :
+            Optional.of((tests.isAbsolute() ? tests : root.rootDir.resolve(tests))),
         ExecutionGoal.TEST);
   }
 
