@@ -16,13 +16,14 @@ import org.apache.flink.sql.parser.ddl.SqlTableOption;
 
 @Getter
 public class FlinkStreamPhysicalPlan implements StreamPhysicalPlan {
-  final StreamStagePlan plan;
+  public static final String FLINK_PLAN_FILENAME = "flink-plan.json";
+
   final List<String> flinkSql;
   private final Set<String> connectors;
   private final Set<String> formats;
-  public FlinkStreamPhysicalPlan(StreamStagePlan plan, List<String> flinkSql,
+
+  public FlinkStreamPhysicalPlan( List<String> flinkSql,
       List<SqlNode> sqlNodes) {
-    this.plan = plan;
     this.flinkSql = flinkSql;
     this.connectors = extractConnectors(sqlNodes);
     this.formats = extractFormats(sqlNodes);
@@ -59,12 +60,5 @@ public class FlinkStreamPhysicalPlan implements StreamPhysicalPlan {
       }
     }
     return formats;
-  }
-
-  public static final String FLINK_PLAN_FILENAME = "flink-plan.json";
-
-  public boolean containsConnector(String connector) {
-
-    return false;
   }
 }

@@ -93,7 +93,7 @@ interface SqrlConfig {
     return as(key, Boolean.class);
   }
 
-  boolean hasKey(String profiles);
+  boolean hasKey(String key);
 
   interface Value<T> {
 

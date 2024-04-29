@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 public class UseCasesIT {
@@ -40,8 +41,10 @@ public class UseCasesIT {
     argsList.add("test");
     argsList.addAll(List.of(args));
     argsList.add("--nolookup");
+//    argsList.add("--profile");
+//    argsList.add("../../../../../../../profiles/flink-1.18");
     argsList.add("--profile");
-    argsList.add("../../../../../../../profiles/profile-1.16");
+    argsList.add("../../../../../../../profiles/flink-1.16");
     execute(RESOURCES.resolve(path),
         AssertStatusHook.INSTANCE, argsList.toArray(a->new String[a]));
   }

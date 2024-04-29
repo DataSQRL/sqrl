@@ -18,8 +18,8 @@ public class JdbcEngineConfigDelegate {
   private String database;
   private final String url;
 
-  public JdbcEngineConfigDelegate(PackageJson.EngineConfig enginesConfig) {
-    this.map = enginesConfig.toMap();
+  public JdbcEngineConfigDelegate(ConnectorConf connectorConf) {
+    this.map = connectorConf.toMap();
     this.url = (String)map.get("url");
     Matcher matcher = JDBC_URL_REGEX.matcher(url);
     if (matcher.find()) {

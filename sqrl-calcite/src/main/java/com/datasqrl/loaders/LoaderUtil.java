@@ -7,6 +7,7 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.ConnectorFactory;
 import com.datasqrl.config.ConnectorFactoryContext;
 import com.datasqrl.config.ConnectorFactoryFactory;
+import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.config.TableConfig;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSchema;
@@ -24,7 +25,8 @@ public class LoaderUtil {
         ModuleLoader moduleLoader, ConnectorFactoryFactory connectorFactoryFactory) {
 
       if (sinkPath.getFirst().getCanonical().equalsIgnoreCase(PRINT_SINK_NAME)) {
-        ConnectorFactory print = connectorFactoryFactory.create(PRINT_SINK_NAME, null);
+        ConnectorFactory print = connectorFactoryFactory.create(null, PRINT_SINK_NAME)
+            .get();
         TableConfig sourceAndSink = print.createSourceAndSink(new ConnectorFactoryContext(
             Map.of("name", sinkPath.getLast().getDisplay())));
         return Optional.of(TableSinkImpl.create(sourceAndSink, sinkPath, Optional.empty()));

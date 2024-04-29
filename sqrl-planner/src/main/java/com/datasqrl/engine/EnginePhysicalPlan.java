@@ -3,6 +3,9 @@
  */
 package com.datasqrl.engine;
 
+/**
+ * A jackson serializable object
+ */
 public interface EnginePhysicalPlan {
 
 }

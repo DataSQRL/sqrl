@@ -1,9 +1,9 @@
 package com.datasqrl.graphql.server;
 
-import com.datasqrl.graphql.server.Model.Argument;
-import com.datasqrl.graphql.server.Model.MutationCoords;
-import com.datasqrl.graphql.server.Model.ResolvedQuery;
-import com.datasqrl.graphql.server.Model.SubscriptionCoords;
+import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
+import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoords;
+import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
+import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoords;
 import graphql.schema.DataFetcher;
 import java.util.Map;
 import java.util.Set;

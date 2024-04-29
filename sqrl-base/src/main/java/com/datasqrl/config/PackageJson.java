@@ -5,10 +5,12 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 public interface PackageJson {
 
-  List<String> getPipeline();
+  List<String> getEnabledEngines();
 
   void setPipeline(List<String> pipeline);
 
@@ -75,7 +77,7 @@ public interface PackageJson {
 
   interface EnginesConfig {
 
-    EngineConfig getEngineConfig(String engineId);
+    Optional<EngineConfig> getEngineConfig(String engineId);
   }
 
   interface EngineConfig {
@@ -84,6 +86,24 @@ public interface PackageJson {
 
     @Deprecated(since="Migrate to templates or static objects")
     Map<String, Object> toMap();
+
+    ConnectorsConfig getConnectors();
+  }
+
+  @AllArgsConstructor
+  @Getter
+  static class EmptyEngineConfig implements EngineConfig {
+    String engineName;
+
+    @Override
+    public Map<String, Object> toMap() {
+      return Map.of();
+    }
+
+    @Override
+    public ConnectorsConfig getConnectors() {
+      return null;
+    }
   }
 
   interface TestConfig {

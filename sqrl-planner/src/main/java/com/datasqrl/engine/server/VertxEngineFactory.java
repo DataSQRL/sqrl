@@ -1,11 +1,8 @@
 package com.datasqrl.engine.server;
 
-import com.datasqrl.config.ConnectorFactory;
-import com.datasqrl.config.PackageJson.EngineConfig;
-
 import com.datasqrl.config.EngineFactory;
+import com.datasqrl.engine.IExecutionEngine;
 import com.google.auto.service.AutoService;
-import lombok.NonNull;
 
 @AutoService(EngineFactory.class)
 public class VertxEngineFactory extends GenericJavaServerEngineFactory {
@@ -18,8 +15,8 @@ public class VertxEngineFactory extends GenericJavaServerEngineFactory {
   }
 
   @Override
-  public VertxEngine initialize(@NonNull EngineConfig config, ConnectorFactory connectorFactory) {
-    return new VertxEngine();
+  public Class<? extends IExecutionEngine> getFactoryClass() {
+    return VertxEngine.class;
   }
 
   public static class VertxEngine extends GenericJavaServerEngine {

@@ -1,9 +1,8 @@
 {
-  "version": 1,
-  "pipeline" : ["streams", "database", "log", "server"],
-  "engines" : {
-    "streams" : {
-      "type" : "flink",
+  "version": "1",
+  "enabled-engines": ["vertx", "postgres", "kafka", "flink"],
+  "values" : {
+    "flinkConfig": {
       "table.exec.source.idle-timeout": "1"
     }
   }

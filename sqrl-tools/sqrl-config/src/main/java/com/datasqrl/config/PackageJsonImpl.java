@@ -15,12 +15,13 @@ public class PackageJsonImpl implements PackageJson {
   public static final String SCRIPT_KEY = "script";
   public static final String COMPILER_KEY = "compiler";
   public static final String PACKAGE_KEY = "package";
-  public static final String PIPELINE_KEY = "pipeline";
+  public static final String PIPELINE_KEY = "enabled-engines";
+  public static final String CONNECTORS_KEY = "connectors";
 
   private SqrlConfig sqrlConfig;
 
   @Override
-  public List<String> getPipeline() {
+  public List<String> getEnabledEngines() {
     return sqrlConfig.asList(PIPELINE_KEY, String.class).get();
   }
 

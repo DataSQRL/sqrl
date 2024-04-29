@@ -1,14 +1,10 @@
 package com.datasqrl.engine.log.kafka;
 
+import java.util.List;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Value;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -19,8 +15,4 @@ public class NewTopic {
     private short replicationFactor;
     private Map<Integer, List<Integer>> replicasAssignments;
     private Map<String, String> config;
-
-    public <T> NewTopic(String topicName) {
-      name = topicName;
-    }
 }

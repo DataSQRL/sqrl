@@ -95,7 +95,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     }
 
     if (goal == ExecutionGoal.TEST) {
-      sqrlConfig.setPipeline(ListUtils.union(sqrlConfig.getPipeline(), List.of(EngineKeys.TEST)));
+      sqrlConfig.setPipeline(ListUtils.union(sqrlConfig.getEnabledEngines(), List.of(EngineKeys.TEST)));
     }
 
     Packager packager = new Packager(repository, root.rootDir, sqrlConfig, errors);

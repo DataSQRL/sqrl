@@ -29,12 +29,10 @@ import com.datasqrl.io.schema.json.FlexibleJsonFlinkFormatFactory;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.ExternalSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.Query;
-import com.datasqrl.plan.global.PhysicalDAGPlan.StreamStagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.WriteQuery;
 import com.datasqrl.plan.global.PhysicalDAGPlan.WriteSink;
 import com.datasqrl.plan.table.ImportedRelationalTable;
 import com.datasqrl.sql.SqlCallRewriter;
-import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -96,9 +94,9 @@ public class SqrlToFlinkSqlGenerator {
 
   SqrlFramework framework;
 
-  public SqlResult plan(StreamStagePlan stagePlan) {
-    checkPreconditions(stagePlan.getQueries());
-    List<WriteQuery> writeQueries = applyFlinkCompatibilityRules(stagePlan.getQueries());
+  public SqlResult plan(List<? extends Query> stageQueries) {
+    checkPreconditions(stageQueries);
+    List<WriteQuery> writeQueries = applyFlinkCompatibilityRules(stageQueries);
     Set<SqlCreateTable> sinksAndSources = extractTableDescriptors(writeQueries);
 
     List<SqlCreateView> queries = new ArrayList<>();

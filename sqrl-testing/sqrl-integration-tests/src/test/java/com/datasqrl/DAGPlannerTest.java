@@ -25,7 +25,7 @@ public class DAGPlannerTest extends AbstractAssetSnapshotTest {
     assertTrue(Files.exists(script));
     this.snapshot = Snapshot.of(getDisplayName(script), getClass());
     execute(SCRIPT_DIR, "compile", script.getFileName().toString(), "-t", deployDir.toString(), "--nolookup",
-        "--profile", "../../../../../../profiles/profile-1.16");
+        "--profile", "../../../../../../profiles/flink-1.16");
     createSnapshot();
   }
 
@@ -41,13 +41,7 @@ public class DAGPlannerTest extends AbstractAssetSnapshotTest {
 
   @Override
   public Predicate<Path> getDeployDirFilter() {
-    return file -> {
-      switch (file.getFileName().toString()) {
-        case "flink-plan.sql":
-        case "database-schema.sql": return true;
-      }
-      return false;
-    };
+    return (p)->false;
   }
 
   static class DagPlannerSQRLFiles extends SqrlScriptArgumentsProvider {

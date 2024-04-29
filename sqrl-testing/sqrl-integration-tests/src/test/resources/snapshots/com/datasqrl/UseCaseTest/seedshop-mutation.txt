@@ -282,413 +282,829 @@ LogicalProject(__pk1$id=[$0], __pk3$time=[$1], price=[$2], saving=[$3])
         LogicalTableScan(table=[[orders$2]])
         LogicalTableFunctionScan(invocation=[Orders.items($cor0.items)], rowType=[RecordType(BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount)], elementType=[class [Ljava.lang.Object;])
 
->>>database-schema.sql
-CREATE TABLE IF NOT EXISTS category_visits$1 ("__pk1$id" BIGINT NOT NULL,"category" TEXT NOT NULL,"visits" BIGINT NOT NULL,"_event_time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("__pk1$id","category"));
-CREATE TABLE IF NOT EXISTS customers$3 ("id" BIGINT NOT NULL,"first_name" TEXT NOT NULL,"last_name" TEXT NOT NULL,"email" TEXT NOT NULL,"ip_address" TEXT ,"country" TEXT ,"changed_on" BIGINT NOT NULL,"timestamp" TIMESTAMP WITH TIME ZONE NOT NULL,"country0" TEXT NOT NULL , PRIMARY KEY ("id"));
-CREATE TABLE IF NOT EXISTS monthly_by_country$1 ("__pk1$id" BIGINT NOT NULL,"country" TEXT NOT NULL,"month" TIMESTAMP WITH TIME ZONE NOT NULL,"quantity" BIGINT NOT NULL,"spend" DOUBLE PRECISION NOT NULL,"weight" BIGINT NOT NULL , PRIMARY KEY ("__pk1$id","country","month"));
-CREATE TABLE IF NOT EXISTS orders$2 ("id" BIGINT NOT NULL,"customerid" BIGINT NOT NULL,"time" TIMESTAMP WITH TIME ZONE NOT NULL,"items" JSONB NOT NULL , PRIMARY KEY ("id","time"));
-CREATE TABLE IF NOT EXISTS past_purchases$1 ("__pk1$id" BIGINT NOT NULL,"productid" BIGINT NOT NULL,"num_orders" BIGINT NOT NULL,"total_quantity" BIGINT NOT NULL,"__timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("__pk1$id","productid"));
-CREATE TABLE IF NOT EXISTS product_visits$1 ("__pk1$id" BIGINT NOT NULL,"productid" BIGINT NOT NULL,"visits" BIGINT NOT NULL,"_event_time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("__pk1$id","productid"));
-CREATE TABLE IF NOT EXISTS products$3 ("id" BIGINT NOT NULL,"name" TEXT NOT NULL,"sizing" TEXT NOT NULL,"weight_in_gram" BIGINT NOT NULL,"type" TEXT NOT NULL,"category" TEXT NOT NULL,"usda_id" BIGINT NOT NULL,"updated" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
-CREATE TABLE IF NOT EXISTS spending$1 ("__pk1$id" BIGINT NOT NULL,"week" TIMESTAMP WITH TIME ZONE NOT NULL,"spend" DOUBLE PRECISION NOT NULL,"saved" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("__pk1$id","week"));
-CREATE TABLE IF NOT EXISTS totals$1 ("__pk1$id" BIGINT NOT NULL,"__pk3$time" TIMESTAMP WITH TIME ZONE NOT NULL,"price" DOUBLE PRECISION NOT NULL,"saving" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("__pk1$id","__pk3$time"));
-CREATE INDEX IF NOT EXISTS orders$2_hash_c1 ON orders$2 USING hash ("customerid");
-CREATE INDEX IF NOT EXISTS products$3_btree_c1c5 ON products$3 USING btree ("name","category");
-CREATE INDEX IF NOT EXISTS products$3_hash_c5 ON products$3 USING hash ("category");
-
->>>flink-plan.sql
-
-CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptostring` AS 'com.datasqrl.time.TimestampToString' LANGUAGE JAVA;
-
-CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofmonth` AS 'com.datasqrl.time.EndOfMonth' LANGUAGE JAVA;
-
-CREATE TEMPORARY FUNCTION IF NOT EXISTS `tojson` AS 'com.datasqrl.json.ToJson' LANGUAGE JAVA;
-
-CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofweek` AS 'com.datasqrl.time.EndOfWeek' LANGUAGE JAVA;
-
-CREATE TEMPORARY FUNCTION IF NOT EXISTS `parsetimestamp` AS 'com.datasqrl.time.ParseTimestamp' LANGUAGE JAVA;
-
-CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochmillitotimestamp` AS 'com.datasqrl.time.EpochMilliToTimestamp' LANGUAGE JAVA;
-
-CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofminute` AS 'com.datasqrl.time.EndOfMinute' LANGUAGE JAVA;
-
-CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptoepoch` AS 'com.datasqrl.time.TimestampToEpoch' LANGUAGE JAVA;
-
-CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofsecond` AS 'com.datasqrl.time.EndOfSecond' LANGUAGE JAVA;
-
-CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochtotimestamp` AS 'com.datasqrl.time.EpochToTimestamp' LANGUAGE JAVA;
-
-CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofday` AS 'com.datasqrl.time.EndOfDay' LANGUAGE JAVA;
-
-CREATE TEMPORARY FUNCTION IF NOT EXISTS `atzone` AS 'com.datasqrl.time.AtZone' LANGUAGE JAVA;
-
-CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofhour` AS 'com.datasqrl.time.EndOfHour' LANGUAGE JAVA;
-
-CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofyear` AS 'com.datasqrl.time.EndOfYear' LANGUAGE JAVA;
-
-CREATE TEMPORARY TABLE `orders$1` (
-  `id` BIGINT NOT NULL,
-  `customerid` BIGINT NOT NULL,
-  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `items` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
-  PRIMARY KEY (`id`, `time`) NOT ENFORCED,
-  WATERMARK FOR `time` AS (`time` - INTERVAL '0.001' SECOND)
-) WITH (
-  'format' = 'json',
-  'path' = '/mnt/build/data',
-  'source.monitor-interval' = '0',
-  'connector' = 'filesystem',
-  'source.path.regex-pattern' = 'to be determined'
-);
-
-CREATE TEMPORARY TABLE `customers$1` (
-  `id` BIGINT NOT NULL,
-  `first_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `last_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `ip_address` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `country` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `changed_on` BIGINT NOT NULL,
-  `timestamp` AS EPOCHMILLITOTIMESTAMP(`changed_on`),
-  PRIMARY KEY (`id`, `changed_on`) NOT ENFORCED,
-  WATERMARK FOR `timestamp` AS (`timestamp` - INTERVAL '0.001' SECOND)
-) WITH (
-  'format' = 'json',
-  'path' = '/mnt/build/data',
-  'source.monitor-interval' = '0',
-  'connector' = 'filesystem',
-  'source.path.regex-pattern' = 'to be determined'
-);
-
-CREATE TEMPORARY TABLE `productvisit$1` (
-  `customerid` BIGINT NOT NULL,
-  `productid` BIGINT NOT NULL,
-  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL METADATA FROM 'timestamp',
-  WATERMARK FOR `event_time` AS (`event_time` - INTERVAL '0.0' SECOND)
-) WITH (
-  'properties.bootstrap.servers' = 'kafka:9092',
-  'properties.auto.offset.reset' = 'earliest',
-  'connector' = 'kafka',
-  'format' = 'json',
-  'properties.group.id' = 'groupid',
-  'topic' = 'seedshop-mutation-productvisit',
-  'scan.startup.mode' = 'earliest-offset'
-);
-
-CREATE TEMPORARY TABLE `products$1` (
-  `id` BIGINT NOT NULL,
-  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `sizing` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `weight_in_gram` BIGINT NOT NULL,
-  `type` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `usda_id` BIGINT NOT NULL,
-  `updated` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  PRIMARY KEY (`id`, `updated`) NOT ENFORCED,
-  WATERMARK FOR `updated` AS (`updated` - INTERVAL '0.001' SECOND)
-) WITH (
-  'format' = 'json',
-  'path' = '/mnt/build/data',
-  'source.monitor-interval' = '0',
-  'connector' = 'filesystem',
-  'source.path.regex-pattern' = 'to be determined'
-);
-
-CREATE TEMPORARY TABLE `category_visits$1` (
-  `__pk1$id` BIGINT NOT NULL,
-  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `visits` BIGINT NOT NULL,
-  `_event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  PRIMARY KEY (`__pk1$id`, `category`) NOT ENFORCED
-) WITH (
-  'password' = 'postgres',
-  'connector' = 'jdbc-sqrl',
-  'driver' = 'org.postgresql.Driver',
-  'table-name' = 'category_visits$1',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl',
-  'username' = 'postgres'
-);
-
-CREATE TEMPORARY TABLE `customers$3` (
-  `id` BIGINT NOT NULL,
-  `first_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `last_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `ip_address` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `country` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `changed_on` BIGINT NOT NULL,
-  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `country0` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  PRIMARY KEY (`id`) NOT ENFORCED
-) WITH (
-  'password' = 'postgres',
-  'connector' = 'jdbc-sqrl',
-  'driver' = 'org.postgresql.Driver',
-  'table-name' = 'customers$3',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl',
-  'username' = 'postgres'
-);
-
-CREATE TEMPORARY TABLE `monthly_by_country$1` (
-  `__pk1$id` BIGINT NOT NULL,
-  `country` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `month` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `quantity` BIGINT NOT NULL,
-  `spend` DOUBLE NOT NULL,
-  `weight` BIGINT NOT NULL,
-  PRIMARY KEY (`__pk1$id`, `country`, `month`) NOT ENFORCED
-) WITH (
-  'password' = 'postgres',
-  'connector' = 'jdbc-sqrl',
-  'driver' = 'org.postgresql.Driver',
-  'table-name' = 'monthly_by_country$1',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl',
-  'username' = 'postgres'
-);
-
-CREATE TEMPORARY TABLE `orders$2` (
-  `id` BIGINT NOT NULL,
-  `customerid` BIGINT NOT NULL,
-  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `items` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),
-  PRIMARY KEY (`id`, `time`) NOT ENFORCED
-) WITH (
-  'password' = 'postgres',
-  'connector' = 'jdbc-sqrl',
-  'driver' = 'org.postgresql.Driver',
-  'table-name' = 'orders$2',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl',
-  'username' = 'postgres'
-);
-
-CREATE TEMPORARY TABLE `past_purchases$1` (
-  `__pk1$id` BIGINT NOT NULL,
-  `productid` BIGINT NOT NULL,
-  `num_orders` BIGINT NOT NULL,
-  `total_quantity` BIGINT NOT NULL,
-  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  PRIMARY KEY (`__pk1$id`, `productid`) NOT ENFORCED
-) WITH (
-  'password' = 'postgres',
-  'connector' = 'jdbc-sqrl',
-  'driver' = 'org.postgresql.Driver',
-  'table-name' = 'past_purchases$1',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl',
-  'username' = 'postgres'
-);
-
-CREATE TEMPORARY TABLE `product_visits$1` (
-  `__pk1$id` BIGINT NOT NULL,
-  `productid` BIGINT NOT NULL,
-  `visits` BIGINT NOT NULL,
-  `_event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  PRIMARY KEY (`__pk1$id`, `productid`) NOT ENFORCED
-) WITH (
-  'password' = 'postgres',
-  'connector' = 'jdbc-sqrl',
-  'driver' = 'org.postgresql.Driver',
-  'table-name' = 'product_visits$1',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl',
-  'username' = 'postgres'
-);
-
-CREATE TEMPORARY TABLE `products$3` (
-  `id` BIGINT NOT NULL,
-  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `sizing` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `weight_in_gram` BIGINT NOT NULL,
-  `type` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `usda_id` BIGINT NOT NULL,
-  `updated` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  PRIMARY KEY (`id`) NOT ENFORCED
-) WITH (
-  'password' = 'postgres',
-  'connector' = 'jdbc-sqrl',
-  'driver' = 'org.postgresql.Driver',
-  'table-name' = 'products$3',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl',
-  'username' = 'postgres'
-);
-
-CREATE TEMPORARY TABLE `spending$1` (
-  `__pk1$id` BIGINT NOT NULL,
-  `week` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `spend` DOUBLE NOT NULL,
-  `saved` DOUBLE NOT NULL,
-  PRIMARY KEY (`__pk1$id`, `week`) NOT ENFORCED
-) WITH (
-  'password' = 'postgres',
-  'connector' = 'jdbc-sqrl',
-  'driver' = 'org.postgresql.Driver',
-  'table-name' = 'spending$1',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl',
-  'username' = 'postgres'
-);
-
-CREATE TEMPORARY TABLE `totals$1` (
-  `__pk1$id` BIGINT NOT NULL,
-  `__pk3$time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `price` DOUBLE NOT NULL,
-  `saving` DOUBLE NOT NULL,
-  PRIMARY KEY (`__pk1$id`, `__pk3$time`) NOT ENFORCED
-) WITH (
-  'password' = 'postgres',
-  'connector' = 'jdbc-sqrl',
-  'driver' = 'org.postgresql.Driver',
-  'table-name' = 'totals$1',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl',
-  'username' = 'postgres'
-);
-
-CREATE VIEW `table$1`
-AS
-SELECT *
-FROM (SELECT `id`, `name`, `sizing`, `weight_in_gram`, `type`, `category`, `usda_id`, `updated`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated` DESC NULLS LAST)) AS `_rownum`
-FROM `products$1`) AS `t`
-WHERE (`_rownum` = 1);
-
-CREATE VIEW `table$2`
-AS
-SELECT *
-FROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, `country0`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC NULLS LAST)) AS `_rownum`
-FROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, COALESCE(`country`, 'none') AS `country0`
-FROM `customers$1`) AS `t1`) AS `t2`
-WHERE (`_rownum` = 1);
-
-CREATE VIEW `table$3`
-AS
-SELECT *
-FROM (SELECT *
-FROM `productvisit$1` AS `$cor10`
-INNER JOIN `table$2` FOR SYSTEM_TIME AS OF `$cor10`.`event_time` AS `t3` ON (`t3`.`id` = `$cor10`.`customerid`)) AS `$cor9`
-INNER JOIN `table$1` FOR SYSTEM_TIME AS OF `$cor9`.`event_time` AS `t0` ON (`$cor9`.`productid` = `t0`.`id`);
-
-CREATE VIEW `table$4`
-AS
-SELECT *
-FROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, `country0`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC NULLS LAST)) AS `_rownum`
-FROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, COALESCE(`country`, 'none') AS `country0`
-FROM `customers$1`) AS `t`) AS `t0`
-WHERE (`_rownum` = 1);
-
-CREATE VIEW `table$5`
-AS
-SELECT *
-FROM (SELECT `id`, `name`, `sizing`, `weight_in_gram`, `type`, `category`, `usda_id`, `updated`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated` DESC NULLS LAST)) AS `_rownum`
-FROM `products$1`) AS `t2`
-WHERE (`_rownum` = 1);
-
-CREATE VIEW `table$6`
-AS
-SELECT `$cor11`.`id0` AS `__pk6$id`, `t1`.`country0` AS `country`, ENDOFMONTH(`$cor11`.`time`) AS `month`, `$cor11`.`quantity`, (`$cor11`.`quantity` * `$cor11`.`unit_price`) AS `$f4`, (`$cor11`.`quantity` * `$cor11`.`weight_in_gram`) AS `$f5`, `$cor11`.`id`, `$cor11`.`time`, `$cor11`.`productid`
-FROM (SELECT *
-FROM (SELECT `$cor8`.`id`, `$cor8`.`time`, `$cor8`.`customerid`, `t50`.`productid`, `t50`.`quantity`, `t50`.`unit_price`, `t50`.`discount`
-FROM `orders$1` AS `$cor8`,
-UNNEST(`$cor8`.`items`) AS `t50`) AS `$cor12`
-INNER JOIN `table$5` FOR SYSTEM_TIME AS OF `$cor12`.`time` AS `t3` ON (`$cor12`.`productid` = `t3`.`id`)) AS `$cor11`
-INNER JOIN `table$4` FOR SYSTEM_TIME AS OF `$cor11`.`time` AS `t1` ON (`$cor11`.`customerid` = `t1`.`id`);
-
-CREATE VIEW `table$7`
-AS
-SELECT *
-FROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, `country0`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC NULLS LAST)) AS `_rownum`
-FROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, COALESCE(`country`, 'none') AS `country0`
-FROM `customers$1`) AS `t`) AS `t0`
-WHERE (`_rownum` = 1);
-
-CREATE VIEW `table$8`
-AS
-SELECT *
-FROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, `country0`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC NULLS LAST)) AS `_rownum`
-FROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, COALESCE(`country`, 'none') AS `country0`
-FROM `customers$1`) AS `t`) AS `t0`
-WHERE (`_rownum` = 1);
-
-CREATE VIEW `table$9`
-AS
-SELECT *
-FROM `productvisit$1` AS `$cor14`
-INNER JOIN `table$8` FOR SYSTEM_TIME AS OF `$cor14`.`event_time` AS `t1` ON (`t1`.`id` = `$cor14`.`customerid`);
-
-CREATE VIEW `table$10`
-AS
-SELECT *
-FROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, `country0`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC NULLS LAST)) AS `_rownum`
-FROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, COALESCE(`country`, 'none') AS `country0`
-FROM `customers$1`) AS `t`) AS `t0`
-WHERE (`_rownum` = 1);
-
-CREATE VIEW `table$11`
-AS
-SELECT `$cor0`.`id` AS `__pk1$id`, `$cor0`.`time` AS `__pk2$time`, ((`t50`.`quantity` * `t50`.`unit_price`) - COALESCE(`t50`.`discount`, 0.0)) AS `$f2`, COALESCE(`t50`.`discount`, 0.0) AS `$f3`, `t50`.`productid`
-FROM `orders$1` AS `$cor0`,
-UNNEST(`$cor0`.`items`) AS `t50`;
-
-CREATE VIEW `table$12`
-AS
-SELECT `t3`.`__pk3$id`, ENDOFWEEK(`t3`.`time`) AS `week`, `t10`.`price`, `t10`.`saving`, `t3`.`id`, `t3`.`time`
-FROM (SELECT `t1`.`id` AS `__pk3$id`, `$cor15`.`id`, `$cor15`.`customerid`, `$cor15`.`time`, `$cor15`.`items`
-FROM (SELECT `id`, `customerid`, `time`, `items`, `customerid` AS `customerid4`
-FROM `orders$1`) AS `$cor15`
-INNER JOIN `table$10` FOR SYSTEM_TIME AS OF `$cor15`.`time` AS `t1` ON (`t1`.`id` = `$cor15`.`customerid4`)) AS `t3`
-INNER JOIN (SELECT `__pk1$id`, `window_time` AS `__pk3$time`, SUM(`$f2`) AS `price`, SUM(`$f3`) AS `saving`
-FROM TABLE(TUMBLE((TABLE `table$11`), (DESCRIPTOR(`__pk2$time`)), INTERVAL '0.001' SECOND(1))) AS `t7`
-GROUP BY `__pk1$id`, `window_start`, `window_end`, `window_time`) AS `t10` ON ((`t3`.`id` = `t10`.`__pk1$id`) AND (`t3`.`time` = `t10`.`__pk3$time`));
-
-CREATE VIEW `table$13`
-AS
-SELECT `$cor0`.`id` AS `__pk1$id`, `$cor0`.`time` AS `__pk2$time`, ((`t00`.`quantity` * `t00`.`unit_price`) - COALESCE(`t00`.`discount`, 0.0)) AS `$f2`, COALESCE(`t00`.`discount`, 0.0) AS `$f3`, `t00`.`productid`
-FROM `orders$1` AS `$cor0`,
-UNNEST(`$cor0`.`items`) AS `t00`;
-
-EXECUTE STATEMENT SET BEGIN
-INSERT INTO `category_visits$1`
-(SELECT `id` AS `__pk1$id`, `category`, COUNT(*) AS `visits`, `window_time` AS `_event_time`
-FROM TABLE(HOP((TABLE `table$3`), (DESCRIPTOR(`event_time`)), INTERVAL '1728' SECOND(7), INTERVAL '86400' SECOND(8))) AS `t5`
-GROUP BY `id`, `category`, `window_start`, `window_end`, `window_time`)
-;
-INSERT INTO `customers$3`
-(SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, COALESCE(`country`, 'none') AS `country0`
-FROM `customers$1`)
-;
-INSERT INTO `monthly_by_country$1`
-(SELECT `__pk6$id` AS `__pk1$id`, `country`, `window_time` AS `month`, SUM(`quantity`) AS `quantity`, SUM(`$f4`) AS `spend`, SUM(`$f5`) AS `weight`
-FROM TABLE(TUMBLE((TABLE `table$6`), (DESCRIPTOR(`time`)), INTERVAL '2629746' SECOND(10), INTERVAL '0' SECOND(1))) AS `t9`
-GROUP BY `__pk6$id`, `country`, `window_start`, `window_end`, `window_time`)
-;
-INSERT INTO `orders$2`
-(SELECT `id`, `customerid`, `time`, TOJSON(`items`) AS `items`
-FROM `orders$1`)
-;
-INSERT INTO `past_purchases$1`
-(SELECT `$cor7`.`id0` AS `__pk1$id`, `t40`.`productid`, COUNT(*) AS `num_orders`, SUM(`t40`.`quantity`) AS `total_quantity`, MAX(`$cor7`.`time`) AS `__timestamp`
-FROM (SELECT *
-FROM `orders$1` AS `$cor13`
-INNER JOIN `table$7` FOR SYSTEM_TIME AS OF `$cor13`.`time` AS `t1` ON (`$cor13`.`customerid` = `t1`.`id`)) AS `$cor7`,
-UNNEST(`$cor7`.`items`) AS `t40`
-GROUP BY `$cor7`.`id0`, `t40`.`productid`)
-;
-INSERT INTO `product_visits$1`
-(SELECT `id` AS `__pk1$id`, `productid`, COUNT(*) AS `visits`, `window_time` AS `_event_time`
-FROM TABLE(HOP((TABLE `table$9`), (DESCRIPTOR(`event_time`)), INTERVAL '51840' SECOND(8), INTERVAL '2592000' SECOND(10))) AS `t2`
-GROUP BY `productid`, `id`, `window_start`, `window_end`, `window_time`)
-;
-INSERT INTO `products$3`
-(SELECT *
-FROM `products$1`)
-;
-INSERT INTO `spending$1`
-(SELECT `__pk3$id` AS `__pk1$id`, `window_time` AS `week`, SUM(`price`) AS `spend`, SUM(`saving`) AS `saved`
-FROM TABLE(TUMBLE((TABLE `table$12`), (DESCRIPTOR(`time`)), INTERVAL '604800' SECOND(9), INTERVAL '0' SECOND(1))) AS `t12`
-GROUP BY `__pk3$id`, `window_start`, `window_end`, `window_time`)
-;
-INSERT INTO `totals$1`
-(SELECT `__pk1$id`, `window_time` AS `__pk3$time`, SUM(`$f2`) AS `price`, SUM(`$f3`) AS `saving`
-FROM TABLE(TUMBLE((TABLE `table$13`), (DESCRIPTOR(`__pk2$time`)), INTERVAL '0.001' SECOND(1))) AS `t2`
-GROUP BY `__pk1$id`, `window_start`, `window_end`, `window_time`)
-;
-END;
-
-
+>>>flink.json
+{
+  "flinkSql" : [
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptostring` AS 'com.datasqrl.time.TimestampToString' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofmonth` AS 'com.datasqrl.time.EndOfMonth' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `tojson` AS 'com.datasqrl.json.ToJson' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofweek` AS 'com.datasqrl.time.EndOfWeek' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `parsetimestamp` AS 'com.datasqrl.time.ParseTimestamp' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochmillitotimestamp` AS 'com.datasqrl.time.EpochMilliToTimestamp' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofminute` AS 'com.datasqrl.time.EndOfMinute' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptoepoch` AS 'com.datasqrl.time.TimestampToEpoch' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofsecond` AS 'com.datasqrl.time.EndOfSecond' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochtotimestamp` AS 'com.datasqrl.time.EpochToTimestamp' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofday` AS 'com.datasqrl.time.EndOfDay' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `atzone` AS 'com.datasqrl.time.AtZone' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofhour` AS 'com.datasqrl.time.EndOfHour' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofyear` AS 'com.datasqrl.time.EndOfYear' LANGUAGE JAVA;",
+    "CREATE TEMPORARY TABLE `orders$1` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `items` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,\n  PRIMARY KEY (`id`, `time`) NOT ENFORCED,\n  WATERMARK FOR `time` AS (`time` - INTERVAL '0.001' SECOND)\n) WITH (\n  'format' = 'json',\n  'path' = '/mnt/build/data',\n  'source.monitor-interval' = '0',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = 'to be determined'\n);",
+    "CREATE TEMPORARY TABLE `customers$1` (\n  `id` BIGINT NOT NULL,\n  `first_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `last_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `ip_address` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `country` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `changed_on` BIGINT NOT NULL,\n  `timestamp` AS EPOCHMILLITOTIMESTAMP(`changed_on`),\n  PRIMARY KEY (`id`, `changed_on`) NOT ENFORCED,\n  WATERMARK FOR `timestamp` AS (`timestamp` - INTERVAL '0.001' SECOND)\n) WITH (\n  'format' = 'json',\n  'path' = '/mnt/build/data',\n  'source.monitor-interval' = '0',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = 'to be determined'\n);",
+    "CREATE TEMPORARY TABLE `productvisit$1` (\n  `customerid` BIGINT NOT NULL,\n  `productid` BIGINT NOT NULL,\n  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL METADATA FROM 'timestamp',\n  WATERMARK FOR `event_time` AS (`event_time` - INTERVAL '0.0' SECOND)\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'json',\n  'properties.group.id' = 'groupid',\n  'topic' = 'seedshop-mutation-productvisit',\n  'scan.startup.mode' = 'earliest-offset'\n);",
+    "CREATE TEMPORARY TABLE `products$1` (\n  `id` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `sizing` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `weight_in_gram` BIGINT NOT NULL,\n  `type` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `usda_id` BIGINT NOT NULL,\n  `updated` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`, `updated`) NOT ENFORCED,\n  WATERMARK FOR `updated` AS (`updated` - INTERVAL '0.001' SECOND)\n) WITH (\n  'format' = 'json',\n  'path' = '/mnt/build/data',\n  'source.monitor-interval' = '0',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = 'to be determined'\n);",
+    "CREATE TEMPORARY TABLE `category_visits$1` (\n  `__pk1$id` BIGINT NOT NULL,\n  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `visits` BIGINT NOT NULL,\n  `_event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`__pk1$id`, `category`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'category_visits$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `customers$3` (\n  `id` BIGINT NOT NULL,\n  `first_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `last_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `ip_address` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `country` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `changed_on` BIGINT NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `country0` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  PRIMARY KEY (`id`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'customers$3',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `monthly_by_country$1` (\n  `__pk1$id` BIGINT NOT NULL,\n  `country` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `month` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `quantity` BIGINT NOT NULL,\n  `spend` DOUBLE NOT NULL,\n  `weight` BIGINT NOT NULL,\n  PRIMARY KEY (`__pk1$id`, `country`, `month`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'monthly_by_country$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `orders$2` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `items` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  PRIMARY KEY (`id`, `time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orders$2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `past_purchases$1` (\n  `__pk1$id` BIGINT NOT NULL,\n  `productid` BIGINT NOT NULL,\n  `num_orders` BIGINT NOT NULL,\n  `total_quantity` BIGINT NOT NULL,\n  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`__pk1$id`, `productid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'past_purchases$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `product_visits$1` (\n  `__pk1$id` BIGINT NOT NULL,\n  `productid` BIGINT NOT NULL,\n  `visits` BIGINT NOT NULL,\n  `_event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`__pk1$id`, `productid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'product_visits$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `products$3` (\n  `id` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `sizing` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `weight_in_gram` BIGINT NOT NULL,\n  `type` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `usda_id` BIGINT NOT NULL,\n  `updated` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'products$3',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `spending$1` (\n  `__pk1$id` BIGINT NOT NULL,\n  `week` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `spend` DOUBLE NOT NULL,\n  `saved` DOUBLE NOT NULL,\n  PRIMARY KEY (`__pk1$id`, `week`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'spending$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `totals$1` (\n  `__pk1$id` BIGINT NOT NULL,\n  `__pk3$time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `price` DOUBLE NOT NULL,\n  `saving` DOUBLE NOT NULL,\n  PRIMARY KEY (`__pk1$id`, `__pk3$time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'totals$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM (SELECT `id`, `name`, `sizing`, `weight_in_gram`, `type`, `category`, `usda_id`, `updated`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated` DESC NULLS LAST)) AS `_rownum`\nFROM `products$1`) AS `t`\nWHERE (`_rownum` = 1);",
+    "CREATE VIEW `table$2`\nAS\nSELECT *\nFROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, `country0`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC NULLS LAST)) AS `_rownum`\nFROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, COALESCE(`country`, 'none') AS `country0`\nFROM `customers$1`) AS `t1`) AS `t2`\nWHERE (`_rownum` = 1);",
+    "CREATE VIEW `table$3`\nAS\nSELECT *\nFROM (SELECT *\nFROM `productvisit$1` AS `$cor10`\nINNER JOIN `table$2` FOR SYSTEM_TIME AS OF `$cor10`.`event_time` AS `t3` ON (`t3`.`id` = `$cor10`.`customerid`)) AS `$cor9`\nINNER JOIN `table$1` FOR SYSTEM_TIME AS OF `$cor9`.`event_time` AS `t0` ON (`$cor9`.`productid` = `t0`.`id`);",
+    "CREATE VIEW `table$4`\nAS\nSELECT *\nFROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, `country0`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC NULLS LAST)) AS `_rownum`\nFROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, COALESCE(`country`, 'none') AS `country0`\nFROM `customers$1`) AS `t`) AS `t0`\nWHERE (`_rownum` = 1);",
+    "CREATE VIEW `table$5`\nAS\nSELECT *\nFROM (SELECT `id`, `name`, `sizing`, `weight_in_gram`, `type`, `category`, `usda_id`, `updated`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated` DESC NULLS LAST)) AS `_rownum`\nFROM `products$1`) AS `t2`\nWHERE (`_rownum` = 1);",
+    "CREATE VIEW `table$6`\nAS\nSELECT `$cor11`.`id0` AS `__pk6$id`, `t1`.`country0` AS `country`, ENDOFMONTH(`$cor11`.`time`) AS `month`, `$cor11`.`quantity`, (`$cor11`.`quantity` * `$cor11`.`unit_price`) AS `$f4`, (`$cor11`.`quantity` * `$cor11`.`weight_in_gram`) AS `$f5`, `$cor11`.`id`, `$cor11`.`time`, `$cor11`.`productid`\nFROM (SELECT *\nFROM (SELECT `$cor8`.`id`, `$cor8`.`time`, `$cor8`.`customerid`, `t50`.`productid`, `t50`.`quantity`, `t50`.`unit_price`, `t50`.`discount`\nFROM `orders$1` AS `$cor8`,\nUNNEST(`$cor8`.`items`) AS `t50`) AS `$cor12`\nINNER JOIN `table$5` FOR SYSTEM_TIME AS OF `$cor12`.`time` AS `t3` ON (`$cor12`.`productid` = `t3`.`id`)) AS `$cor11`\nINNER JOIN `table$4` FOR SYSTEM_TIME AS OF `$cor11`.`time` AS `t1` ON (`$cor11`.`customerid` = `t1`.`id`);",
+    "CREATE VIEW `table$7`\nAS\nSELECT *\nFROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, `country0`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC NULLS LAST)) AS `_rownum`\nFROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, COALESCE(`country`, 'none') AS `country0`\nFROM `customers$1`) AS `t`) AS `t0`\nWHERE (`_rownum` = 1);",
+    "CREATE VIEW `table$8`\nAS\nSELECT *\nFROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, `country0`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC NULLS LAST)) AS `_rownum`\nFROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, COALESCE(`country`, 'none') AS `country0`\nFROM `customers$1`) AS `t`) AS `t0`\nWHERE (`_rownum` = 1);",
+    "CREATE VIEW `table$9`\nAS\nSELECT *\nFROM `productvisit$1` AS `$cor14`\nINNER JOIN `table$8` FOR SYSTEM_TIME AS OF `$cor14`.`event_time` AS `t1` ON (`t1`.`id` = `$cor14`.`customerid`);",
+    "CREATE VIEW `table$10`\nAS\nSELECT *\nFROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, `country0`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC NULLS LAST)) AS `_rownum`\nFROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, COALESCE(`country`, 'none') AS `country0`\nFROM `customers$1`) AS `t`) AS `t0`\nWHERE (`_rownum` = 1);",
+    "CREATE VIEW `table$11`\nAS\nSELECT `$cor0`.`id` AS `__pk1$id`, `$cor0`.`time` AS `__pk2$time`, ((`t50`.`quantity` * `t50`.`unit_price`) - COALESCE(`t50`.`discount`, 0.0)) AS `$f2`, COALESCE(`t50`.`discount`, 0.0) AS `$f3`, `t50`.`productid`\nFROM `orders$1` AS `$cor0`,\nUNNEST(`$cor0`.`items`) AS `t50`;",
+    "CREATE VIEW `table$12`\nAS\nSELECT `t3`.`__pk3$id`, ENDOFWEEK(`t3`.`time`) AS `week`, `t10`.`price`, `t10`.`saving`, `t3`.`id`, `t3`.`time`\nFROM (SELECT `t1`.`id` AS `__pk3$id`, `$cor15`.`id`, `$cor15`.`customerid`, `$cor15`.`time`, `$cor15`.`items`\nFROM (SELECT `id`, `customerid`, `time`, `items`, `customerid` AS `customerid4`\nFROM `orders$1`) AS `$cor15`\nINNER JOIN `table$10` FOR SYSTEM_TIME AS OF `$cor15`.`time` AS `t1` ON (`t1`.`id` = `$cor15`.`customerid4`)) AS `t3`\nINNER JOIN (SELECT `__pk1$id`, `window_time` AS `__pk3$time`, SUM(`$f2`) AS `price`, SUM(`$f3`) AS `saving`\nFROM TABLE(TUMBLE((TABLE `table$11`), (DESCRIPTOR(`__pk2$time`)), INTERVAL '0.001' SECOND(1))) AS `t7`\nGROUP BY `__pk1$id`, `window_start`, `window_end`, `window_time`) AS `t10` ON ((`t3`.`id` = `t10`.`__pk1$id`) AND (`t3`.`time` = `t10`.`__pk3$time`));",
+    "CREATE VIEW `table$13`\nAS\nSELECT `$cor0`.`id` AS `__pk1$id`, `$cor0`.`time` AS `__pk2$time`, ((`t00`.`quantity` * `t00`.`unit_price`) - COALESCE(`t00`.`discount`, 0.0)) AS `$f2`, COALESCE(`t00`.`discount`, 0.0) AS `$f3`, `t00`.`productid`\nFROM `orders$1` AS `$cor0`,\nUNNEST(`$cor0`.`items`) AS `t00`;",
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `category_visits$1`\n(SELECT `id` AS `__pk1$id`, `category`, COUNT(*) AS `visits`, `window_time` AS `_event_time`\nFROM TABLE(HOP((TABLE `table$3`), (DESCRIPTOR(`event_time`)), INTERVAL '1728' SECOND(7), INTERVAL '86400' SECOND(8))) AS `t5`\nGROUP BY `id`, `category`, `window_start`, `window_end`, `window_time`)\n;\nINSERT INTO `customers$3`\n(SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, COALESCE(`country`, 'none') AS `country0`\nFROM `customers$1`)\n;\nINSERT INTO `monthly_by_country$1`\n(SELECT `__pk6$id` AS `__pk1$id`, `country`, `window_time` AS `month`, SUM(`quantity`) AS `quantity`, SUM(`$f4`) AS `spend`, SUM(`$f5`) AS `weight`\nFROM TABLE(TUMBLE((TABLE `table$6`), (DESCRIPTOR(`time`)), INTERVAL '2629746' SECOND(10), INTERVAL '0' SECOND(1))) AS `t9`\nGROUP BY `__pk6$id`, `country`, `window_start`, `window_end`, `window_time`)\n;\nINSERT INTO `orders$2`\n(SELECT `id`, `customerid`, `time`, TOJSON(`items`) AS `items`\nFROM `orders$1`)\n;\nINSERT INTO `past_purchases$1`\n(SELECT `$cor7`.`id0` AS `__pk1$id`, `t40`.`productid`, COUNT(*) AS `num_orders`, SUM(`t40`.`quantity`) AS `total_quantity`, MAX(`$cor7`.`time`) AS `__timestamp`\nFROM (SELECT *\nFROM `orders$1` AS `$cor13`\nINNER JOIN `table$7` FOR SYSTEM_TIME AS OF `$cor13`.`time` AS `t1` ON (`$cor13`.`customerid` = `t1`.`id`)) AS `$cor7`,\nUNNEST(`$cor7`.`items`) AS `t40`\nGROUP BY `$cor7`.`id0`, `t40`.`productid`)\n;\nINSERT INTO `product_visits$1`\n(SELECT `id` AS `__pk1$id`, `productid`, COUNT(*) AS `visits`, `window_time` AS `_event_time`\nFROM TABLE(HOP((TABLE `table$9`), (DESCRIPTOR(`event_time`)), INTERVAL '51840' SECOND(8), INTERVAL '2592000' SECOND(10))) AS `t2`\nGROUP BY `productid`, `id`, `window_start`, `window_end`, `window_time`)\n;\nINSERT INTO `products$3`\n(SELECT *\nFROM `products$1`)\n;\nINSERT INTO `spending$1`\n(SELECT `__pk3$id` AS `__pk1$id`, `window_time` AS `week`, SUM(`price`) AS `spend`, SUM(`saving`) AS `saved`\nFROM TABLE(TUMBLE((TABLE `table$12`), (DESCRIPTOR(`time`)), INTERVAL '604800' SECOND(9), INTERVAL '0' SECOND(1))) AS `t12`\nGROUP BY `__pk3$id`, `window_start`, `window_end`, `window_time`)\n;\nINSERT INTO `totals$1`\n(SELECT `__pk1$id`, `window_time` AS `__pk3$time`, SUM(`$f2`) AS `price`, SUM(`$f3`) AS `saving`\nFROM TABLE(TUMBLE((TABLE `table$13`), (DESCRIPTOR(`__pk2$time`)), INTERVAL '0.001' SECOND(1))) AS `t2`\nGROUP BY `__pk1$id`, `window_start`, `window_end`, `window_time`)\n;\nEND;"
+  ],
+  "connectors" : [
+    "jdbc-sqrl",
+    "kafka",
+    "filesystem"
+  ],
+  "formats" : [
+    "json"
+  ]
+}
+>>>kafka.json
+{
+  "topics" : [
+    {
+      "name" : "seedshop-mutation-productvisit",
+      "numPartitions" : 1,
+      "replicationFactor" : 1,
+      "replicasAssignments" : { },
+      "config" : { }
+    }
+  ]
+}
+>>>postgres.json
+{
+  "ddl" : [
+    {
+      "name" : "category_visits$1",
+      "columns" : [
+        "\"__pk1$id\" BIGINT NOT NULL",
+        "\"category\" TEXT NOT NULL",
+        "\"visits\" BIGINT NOT NULL",
+        "\"_event_time\" TIMESTAMP WITH TIME ZONE NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"__pk1$id\"",
+        "\"category\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS category_visits$1 (\"__pk1$id\" BIGINT NOT NULL,\"category\" TEXT NOT NULL,\"visits\" BIGINT NOT NULL,\"_event_time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"__pk1$id\",\"category\"));"
+    },
+    {
+      "name" : "customers$3",
+      "columns" : [
+        "\"id\" BIGINT NOT NULL",
+        "\"first_name\" TEXT NOT NULL",
+        "\"last_name\" TEXT NOT NULL",
+        "\"email\" TEXT NOT NULL",
+        "\"ip_address\" TEXT ",
+        "\"country\" TEXT ",
+        "\"changed_on\" BIGINT NOT NULL",
+        "\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL",
+        "\"country0\" TEXT NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"id\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS customers$3 (\"id\" BIGINT NOT NULL,\"first_name\" TEXT NOT NULL,\"last_name\" TEXT NOT NULL,\"email\" TEXT NOT NULL,\"ip_address\" TEXT ,\"country\" TEXT ,\"changed_on\" BIGINT NOT NULL,\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL,\"country0\" TEXT NOT NULL , PRIMARY KEY (\"id\"));"
+    },
+    {
+      "name" : "monthly_by_country$1",
+      "columns" : [
+        "\"__pk1$id\" BIGINT NOT NULL",
+        "\"country\" TEXT NOT NULL",
+        "\"month\" TIMESTAMP WITH TIME ZONE NOT NULL",
+        "\"quantity\" BIGINT NOT NULL",
+        "\"spend\" DOUBLE PRECISION NOT NULL",
+        "\"weight\" BIGINT NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"__pk1$id\"",
+        "\"country\"",
+        "\"month\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS monthly_by_country$1 (\"__pk1$id\" BIGINT NOT NULL,\"country\" TEXT NOT NULL,\"month\" TIMESTAMP WITH TIME ZONE NOT NULL,\"quantity\" BIGINT NOT NULL,\"spend\" DOUBLE PRECISION NOT NULL,\"weight\" BIGINT NOT NULL , PRIMARY KEY (\"__pk1$id\",\"country\",\"month\"));"
+    },
+    {
+      "name" : "orders$2",
+      "columns" : [
+        "\"id\" BIGINT NOT NULL",
+        "\"customerid\" BIGINT NOT NULL",
+        "\"time\" TIMESTAMP WITH TIME ZONE NOT NULL",
+        "\"items\" JSONB NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"id\"",
+        "\"time\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS orders$2 (\"id\" BIGINT NOT NULL,\"customerid\" BIGINT NOT NULL,\"time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"items\" JSONB NOT NULL , PRIMARY KEY (\"id\",\"time\"));"
+    },
+    {
+      "name" : "past_purchases$1",
+      "columns" : [
+        "\"__pk1$id\" BIGINT NOT NULL",
+        "\"productid\" BIGINT NOT NULL",
+        "\"num_orders\" BIGINT NOT NULL",
+        "\"total_quantity\" BIGINT NOT NULL",
+        "\"__timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"__pk1$id\"",
+        "\"productid\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS past_purchases$1 (\"__pk1$id\" BIGINT NOT NULL,\"productid\" BIGINT NOT NULL,\"num_orders\" BIGINT NOT NULL,\"total_quantity\" BIGINT NOT NULL,\"__timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"__pk1$id\",\"productid\"));"
+    },
+    {
+      "name" : "product_visits$1",
+      "columns" : [
+        "\"__pk1$id\" BIGINT NOT NULL",
+        "\"productid\" BIGINT NOT NULL",
+        "\"visits\" BIGINT NOT NULL",
+        "\"_event_time\" TIMESTAMP WITH TIME ZONE NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"__pk1$id\"",
+        "\"productid\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS product_visits$1 (\"__pk1$id\" BIGINT NOT NULL,\"productid\" BIGINT NOT NULL,\"visits\" BIGINT NOT NULL,\"_event_time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"__pk1$id\",\"productid\"));"
+    },
+    {
+      "name" : "products$3",
+      "columns" : [
+        "\"id\" BIGINT NOT NULL",
+        "\"name\" TEXT NOT NULL",
+        "\"sizing\" TEXT NOT NULL",
+        "\"weight_in_gram\" BIGINT NOT NULL",
+        "\"type\" TEXT NOT NULL",
+        "\"category\" TEXT NOT NULL",
+        "\"usda_id\" BIGINT NOT NULL",
+        "\"updated\" TIMESTAMP WITH TIME ZONE NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"id\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS products$3 (\"id\" BIGINT NOT NULL,\"name\" TEXT NOT NULL,\"sizing\" TEXT NOT NULL,\"weight_in_gram\" BIGINT NOT NULL,\"type\" TEXT NOT NULL,\"category\" TEXT NOT NULL,\"usda_id\" BIGINT NOT NULL,\"updated\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\"));"
+    },
+    {
+      "name" : "spending$1",
+      "columns" : [
+        "\"__pk1$id\" BIGINT NOT NULL",
+        "\"week\" TIMESTAMP WITH TIME ZONE NOT NULL",
+        "\"spend\" DOUBLE PRECISION NOT NULL",
+        "\"saved\" DOUBLE PRECISION NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"__pk1$id\"",
+        "\"week\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS spending$1 (\"__pk1$id\" BIGINT NOT NULL,\"week\" TIMESTAMP WITH TIME ZONE NOT NULL,\"spend\" DOUBLE PRECISION NOT NULL,\"saved\" DOUBLE PRECISION NOT NULL , PRIMARY KEY (\"__pk1$id\",\"week\"));"
+    },
+    {
+      "name" : "totals$1",
+      "columns" : [
+        "\"__pk1$id\" BIGINT NOT NULL",
+        "\"__pk3$time\" TIMESTAMP WITH TIME ZONE NOT NULL",
+        "\"price\" DOUBLE PRECISION NOT NULL",
+        "\"saving\" DOUBLE PRECISION NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"__pk1$id\"",
+        "\"__pk3$time\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS totals$1 (\"__pk1$id\" BIGINT NOT NULL,\"__pk3$time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"price\" DOUBLE PRECISION NOT NULL,\"saving\" DOUBLE PRECISION NOT NULL , PRIMARY KEY (\"__pk1$id\",\"__pk3$time\"));"
+    },
+    {
+      "indexName" : "orders$2_hash_c1",
+      "tableName" : "orders$2",
+      "columns" : [
+        "customerid"
+      ],
+      "type" : "HASH",
+      "sql" : "CREATE INDEX IF NOT EXISTS orders$2_hash_c1 ON orders$2 USING hash (\"customerid\");"
+    },
+    {
+      "indexName" : "products$3_btree_c1c5",
+      "tableName" : "products$3",
+      "columns" : [
+        "name",
+        "category"
+      ],
+      "type" : "BTREE",
+      "sql" : "CREATE INDEX IF NOT EXISTS products$3_btree_c1c5 ON products$3 USING btree (\"name\",\"category\");"
+    },
+    {
+      "indexName" : "products$3_hash_c5",
+      "tableName" : "products$3",
+      "columns" : [
+        "category"
+      ],
+      "type" : "HASH",
+      "sql" : "CREATE INDEX IF NOT EXISTS products$3_hash_c5 ON products$3 USING hash (\"category\");"
+    }
+  ]
+}
+>>>vertx.json
+{
+  "model" : {
+    "coords" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Products",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "category"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"id\", \"name\", \"sizing\", \"weight_in_gram\", \"type\", \"category\", \"usda_id\", \"updated\", 1 AS \"__pk\"\nFROM \"products$3\"\nWHERE \"id\" = $1 AND \"category\" = $2\nORDER BY 1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "id"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "category"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "name"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"id\", \"name\", \"sizing\", \"weight_in_gram\", \"type\", \"category\", \"usda_id\", \"updated\", 1 AS \"__pk\"\nFROM \"products$3\"\nWHERE \"id\" = $1 AND \"name\" = $2\nORDER BY 1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "id"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "name"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "name"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "category"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"products$3\"\nWHERE \"name\" = $1 AND \"category\" = $2\nORDER BY \"id\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "name"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "category"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"id\", \"name\", \"sizing\", \"weight_in_gram\", \"type\", \"category\", \"usda_id\", \"updated\", 1 AS \"__pk\"\nFROM \"products$3\"\nWHERE \"id\" = $1\nORDER BY 1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "id"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "category"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"products$3\"\nWHERE \"category\" = $1\nORDER BY \"id\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "category"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "name"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"products$3\"\nWHERE \"name\" = $1\nORDER BY \"id\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "name"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"products$3\"\nORDER BY \"id\"",
+              "parameters" : [ ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "name"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "category"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"id\", \"name\", \"sizing\", \"weight_in_gram\", \"type\", \"category\", \"usda_id\", \"updated\", 1 AS \"__pk\"\nFROM \"products$3\"\nWHERE \"id\" = $1 AND \"name\" = $2 AND \"category\" = $3\nORDER BY 1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "id"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "name"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "category"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Products",
+        "fieldName" : "monthly_by_country",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "country"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"monthly_by_country$1\"\n  WHERE \"__pk1$id\" = $1) AS \"t\"\nWHERE \"country\" = $2\nORDER BY \"month\" DESC NULLS LAST",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "type" : "source",
+                  "key" : "id"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "country"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"monthly_by_country$1\"\nWHERE \"__pk1$id\" = $1\nORDER BY \"month\" DESC NULLS LAST, \"country\"",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "type" : "source",
+                  "key" : "id"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Customers",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "id"
+              }
+            ],
+            "query" : {
+              "type" : "JdbcQuery",
+              "type" : "JdbcQuery",
+              "sql" : "SELECT \"id\", \"first_name\", \"last_name\", \"email\", \"ip_address\", \"country\", \"changed_on\", \"timestamp\", \"country0\", 1 AS \"__pk\"\nFROM \"customers$3\"\nWHERE \"id\" = $1\nORDER BY 1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "id"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Customers",
+        "fieldName" : "purchases",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"orders$2\"\nWHERE \"customerid\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "type" : "source",
+                  "key" : "id"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "orders",
+        "fieldName" : "totals",
+        "matchs" : [
+          {
+            "arguments" : [ ],
+            "query" : {
+              "type" : "JdbcQuery",
+              "type" : "JdbcQuery",
+              "sql" : "SELECT \"__pk1$id\", \"__pk3$time\", \"price\", \"saving\", 1 AS \"__pk\"\nFROM \"totals$1\"\nWHERE \"__pk1$id\" = $1 AND \"__pk3$time\" = $2\nORDER BY \"__pk3$time\" DESC NULLS LAST, 1",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "type" : "source",
+                  "key" : "id"
+                },
+                {
+                  "type" : "source",
+                  "type" : "source",
+                  "key" : "time"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Customers",
+        "fieldName" : "spending",
+        "matchs" : [
+          {
+            "arguments" : [ ],
+            "query" : {
+              "type" : "JdbcQuery",
+              "type" : "JdbcQuery",
+              "sql" : "SELECT *\nFROM \"spending$1\"\nWHERE \"__pk1$id\" = $1\nORDER BY \"__pk1$id\", \"week\" DESC",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "type" : "source",
+                  "key" : "id"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Customers",
+        "fieldName" : "past_purchases",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "productid"
+              }
+            ],
+            "query" : {
+              "type" : "JdbcQuery",
+              "type" : "JdbcQuery",
+              "sql" : "SELECT \"__pk1$id\", \"productid\", \"num_orders\", \"total_quantity\", \"__timestamp\", 1 AS \"__pk\"\nFROM (SELECT *\n  FROM \"past_purchases$1\"\n  WHERE \"__pk1$id\" = $1) AS \"t\"\nWHERE \"productid\" = $2\nORDER BY \"__pk1$id\", \"num_orders\" DESC, \"total_quantity\" DESC, 1",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "type" : "source",
+                  "key" : "id"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "productid"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [ ],
+            "query" : {
+              "type" : "JdbcQuery",
+              "type" : "JdbcQuery",
+              "sql" : "SELECT *\nFROM \"past_purchases$1\"\nWHERE \"__pk1$id\" = $1\nORDER BY \"__pk1$id\", \"num_orders\" DESC, \"total_quantity\" DESC, \"productid\"",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "type" : "source",
+                  "key" : "id"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Customers",
+        "fieldName" : "product_visits",
+        "matchs" : [
+          {
+            "arguments" : [ ],
+            "query" : {
+              "type" : "JdbcQuery",
+              "type" : "JdbcQuery",
+              "sql" : "SELECT *\nFROM \"product_visits$1\"\nWHERE \"__pk1$id\" = $1\nORDER BY \"__pk1$id\", \"visits\" DESC, \"productid\"",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "type" : "source",
+                  "key" : "id"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Customers",
+        "fieldName" : "category_visits",
+        "matchs" : [
+          {
+            "arguments" : [ ],
+            "query" : {
+              "type" : "JdbcQuery",
+              "type" : "JdbcQuery",
+              "sql" : "SELECT *\nFROM \"category_visits$1\"\nWHERE \"__pk1$id\" = $1\nORDER BY \"__pk1$id\", \"visits\" DESC, \"category\"",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "type" : "source",
+                  "key" : "id"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "mutations" : [
+      {
+        "fieldName" : "ProductVisit",
+        "topic" : "seedshop-mutation-productvisit",
+        "sinkConfig" : {
+          "value.serializer" : "com.datasqrl.graphql.kafka.JsonSerializer",
+          "group.id" : "groupid",
+          "bootstrap.servers" : "${PROPERTIES_BOOTSTRAP_SERVERS}",
+          "key.serializer" : "com.datasqrl.graphql.kafka.JsonSerializer"
+        }
+      }
+    ],
+    "subscriptions" : [ ],
+    "schema" : {
+      "type" : "string",
+      "type" : "string",
+      "schema" : "type Products {\n  id: Int!\n  name: String!\n  sizing: String!\n  weight_in_gram: Int!\n  type: String!\n  category: String!\n  monthly_by_country(country: String, limit: Int = 20, offset: Int = 0): [monthly_by_country!]\n}\n\ntype Query {\n  Products(id: Int, name: String, category: String, limit: Int!, offset: Int = 0): [Products!]\n  Customers(id: Int!): Customers\n}\n\ntype Customers {\n  id: Int!\n  first_name: String!\n  last_name: String!\n  email: String!\n  country: String\n  purchases(limit: Int = 20, offset: Int = 0): [orders!]\n  spending: [spending!]\n  past_purchases(productid: Int): [past_purchases!]\n  product_visits: [product_visits!]\n  category_visits: [category_visits!]\n}\n\ntype items {\n  quantity: Int!\n  unit_price: Float!\n  discount: Float!\n}\n\ntype orders {\n  id: Int!\n  customerid: Int!\n  time: String!\n  items: [items!]\n  totals: totals\n}\n\ntype past_purchases {\n  productid: Int!\n  num_orders: Int!\n  total_quantity: Int!\n}\n\ntype product_visits {\n  productid: Int!\n  visits: Int!\n}\n\ntype category_visits {\n  category: String!\n  visits: Int!\n}\n\ntype spending {\n  week: String!\n  spend: Float!\n  saved: Float!\n}\n\ntype totals {\n  price: Float!\n  saving: Float!\n}\n\ntype monthly_by_country {\n  country: String\n  month: String!\n  quantity: Int!\n  spend: Float!\n  weight: Int!\n}\n\ntype Mutation {\n  ProductVisit(event: VisitEvent!): CreatedProductVisit\n}\n\ninput VisitEvent {\n  customerid: Int!\n  productid: Int!\n}\n\ntype CreatedProductVisit {\n  event_time: String!\n  productid: Int!\n  customerid: Int!\n}\n"
+    }
+  }
+}

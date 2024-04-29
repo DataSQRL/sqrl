@@ -1,10 +1,7 @@
 package com.datasqrl.engine.stream.flink;
 
-import com.datasqrl.config.ConnectorFactory;
-import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.config.EngineFactory;
 import com.google.auto.service.AutoService;
-import lombok.NonNull;
 
 @AutoService(EngineFactory.class)
 public class FlinkEngineFactory implements EngineFactory {
@@ -18,13 +15,11 @@ public class FlinkEngineFactory implements EngineFactory {
 
   @Override
   public Type getEngineType() {
-    return Type.STREAM;
+    return Type.STREAMS;
   }
 
   @Override
-  public AbstractFlinkStreamEngine initialize(@NonNull EngineConfig config,
-      ConnectorFactory connectorFactory) {
-    return new LocalFlinkStreamEngineImpl(config);
+  public Class getFactoryClass() {
+    return LocalFlinkStreamEngineImpl.class;
   }
-
 }

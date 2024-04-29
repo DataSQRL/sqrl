@@ -66,8 +66,9 @@ public abstract class AbstractAssetSnapshotTest {
   }
 
   protected void createSnapshot() {
-    snapshotFiles(buildDir, getBuildDirFilter());
     snapshotFiles(deployDir, getDeployDirFilter());
+    snapshotFiles(buildDir, getBuildDirFilter());
+    snapshotFiles(buildDir.resolve("plan"), (e)->true);
     snapshot.createOrValidate();
   }
 

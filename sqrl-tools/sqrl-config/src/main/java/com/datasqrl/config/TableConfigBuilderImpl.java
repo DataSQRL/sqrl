@@ -75,6 +75,11 @@ public class TableConfigBuilderImpl implements TableConfig.TableConfigBuilder {
         .copy(connectorConfig.getSqrlConfig());
     return this;
   }
+  public TableConfig.TableConfigBuilder copyConnectorConfig(ConnectorConfImpl connectorConfig) {
+    config.getSubConfig(TableConfigImpl.FLINK_CONNECTOR_KEY)
+        .copy(connectorConfig.sqrlConfig);
+    return this;
+  }
 
   public SqrlConfig getConfig() {
     return config;

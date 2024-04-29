@@ -7,8 +7,8 @@ import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.inference.GraphqlModelGenerator;
-import com.datasqrl.graphql.server.Model.RootGraphqlModel;
-import com.datasqrl.graphql.server.Model.StringSchema;
+import com.datasqrl.graphql.server.RootGraphqlModel;
+import com.datasqrl.graphql.server.RootGraphqlModel.StringSchema;
 import com.datasqrl.plan.queries.APISource;
 import com.google.inject.Inject;
 import java.util.Optional;
@@ -21,7 +21,7 @@ public class GraphqlPostplanHook {
   private final SqrlFramework framework;
   private final APIConnectorManager apiManager;
 
-  public Optional<RootGraphqlModel> run(Optional<APISource> source, PhysicalPlan physicalPlan) {
+  public Optional<RootGraphqlModel> updatePlan(Optional<APISource> source, PhysicalPlan physicalPlan) {
     if (pipeline.getStage(Type.SERVER).isEmpty()) {
       return Optional.empty();
     }
