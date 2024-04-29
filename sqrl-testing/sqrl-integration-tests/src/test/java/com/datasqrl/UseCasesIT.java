@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 /**
  * Tests some use cases in the test/resources/usecases folder using the `test` command.
  */
-public class UseCasesRunTest {
+public class UseCasesIT {
   private static final Path RESOURCES = Paths.get("src/test/resources/usecases");
 
   @Test

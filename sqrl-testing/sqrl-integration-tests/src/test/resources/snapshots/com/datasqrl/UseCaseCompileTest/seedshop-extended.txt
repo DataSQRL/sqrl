@@ -300,6 +300,7 @@ LogicalProject(__pk1$id=[$0], __pk3$time=[$1], price=[$2], saving=[$3])
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofweek` AS 'com.datasqrl.time.EndOfWeek' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `parsetimestamp` AS 'com.datasqrl.time.ParseTimestamp' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochmillitotimestamp` AS 'com.datasqrl.time.EpochMilliToTimestamp' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `textsearch` AS 'com.datasqrl.text.TextSearch' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofminute` AS 'com.datasqrl.time.EndOfMinute' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptoepoch` AS 'com.datasqrl.time.TimestampToEpoch' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofsecond` AS 'com.datasqrl.time.EndOfSecond' LANGUAGE JAVA;",
@@ -537,6 +538,16 @@ LogicalProject(__pk1$id=[$0], __pk3$time=[$1], price=[$2], saving=[$3])
       ],
       "type" : "HASH",
       "sql" : "CREATE INDEX IF NOT EXISTS orders$2_hash_c2 ON orders$2 USING hash (\"time\");"
+    },
+    {
+      "indexName" : "products$3_text_c1c5",
+      "tableName" : "products$3",
+      "columns" : [
+        "name",
+        "category"
+      ],
+      "type" : "TEXT",
+      "sql" : "CREATE INDEX IF NOT EXISTS products$3_text_c1c5 ON products$3 USING GIN (to_tsvector('english', coalesce(\"name\", '') || ' ' || coalesce(\"category\", '') ));"
     }
   ]
 }
@@ -1362,6 +1373,72 @@ LogicalProject(__pk1$id=[$0], __pk3$time=[$1], price=[$2], saving=[$3])
             }
           }
         ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "ProductSearch",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "query"
+              }
+            ],
+            "query" : {
+              "type" : "JdbcQuery",
+              "type" : "JdbcQuery",
+              "sql" : "SELECT \"id\", \"name\", \"sizing\", \"weight_in_gram\", \"type\", \"category\", \"usda_id\", \"updated\", TS_RANK_CD(TO_TSVECTOR('english', COALESCE(\"name\", ' ')), WEBSEARCH_TO_TSQUERY('english', $1)) AS \"score\"\nFROM \"products$3\"\nWHERE (TO_TSVECTOR('english', COALESCE(\"name\", ' ')) @@ WEBSEARCH_TO_TSQUERY('english', $1))\nORDER BY TS_RANK_CD(TO_TSVECTOR('english', COALESCE(\"name\", ' ')), WEBSEARCH_TO_TSQUERY('english', $1)) DESC, \"id\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "query"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "ProductSearchWithId",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "query"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "id"
+              }
+            ],
+            "query" : {
+              "type" : "JdbcQuery",
+              "type" : "JdbcQuery",
+              "sql" : "SELECT *\nFROM \"products$3\"\nWHERE (TO_TSVECTOR('english', COALESCE(\"name\", ' ') || ' ' || COALESCE(\"category\", ' ')) @@ WEBSEARCH_TO_TSQUERY('english', $1)) AND \"id\" > $2\nORDER BY \"id\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "query"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "id"
+                }
+              ]
+            }
+          }
+        ]
       }
     ],
     "mutations" : [ ],
@@ -1369,7 +1446,7 @@ LogicalProject(__pk1$id=[$0], __pk3$time=[$1], price=[$2], saving=[$3])
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "type CustomerPromotion {\n  first_name: String!\n  last_name: String!\n  email: String!\n  spend: Float!\n  saved: Float!\n}\n\ntype Customers {\n  id: Float!\n  first_name: String!\n  last_name: String!\n  email: String!\n  ip_address: String\n  country: String\n  changed_on: Float!\n  timestamp: DateTime!\n  country0: String!\n  order_stats: order_stats\n  past_purchases(productid: Float, limit: Int = 10, offset: Int = 0): [past_purchases!]\n  purchases(limit: Int = 10, offset: Int = 0): [Orders!]\n  spending(week: DateTime, limit: Int = 10, offset: Int = 0): [spending!]\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype NumOrders {\n  count: Float!\n}\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  customer(limit: Int = 10, offset: Int = 0): [Customers!]\n  items(limit: Int = 10, offset: Int = 0): [items!]\n  totals: totals\n}\n\ntype Products {\n  id: Float!\n  name: String!\n  sizing: String!\n  weight_in_gram: Float!\n  type: String!\n  category: String!\n  usda_id: Float!\n  updated: DateTime!\n  monthly_by_country(country: String, month: DateTime, limit: Int = 10, offset: Int = 0): [monthly_by_country!]\n}\n\ntype Query {\n  CustomerPromotion(limit: Int = 10, offset: Int = 0): [CustomerPromotion!]\n  Customers(id: Float, limit: Int = 10, offset: Int = 0): [Customers!]\n  NumOrders(limit: Int = 10, offset: Int = 0): [NumOrders!]\n  Orders(id: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [Orders!]\n  Products(id: Float, limit: Int = 10, offset: Int = 0): [Products!]\n}\n\ntype items {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n\ntype monthly_by_country {\n  country: String!\n  month: DateTime!\n  quantity: Float!\n  spend: Float!\n  weight: Float!\n  parent: Products!\n}\n\ntype order_stats {\n  first_order: DateTime!\n  total_spend: Float!\n  total_saved: Float!\n  num_orders: Float!\n  parent: Customers!\n}\n\ntype past_purchases {\n  productid: Float!\n  num_orders: Float!\n  total_quantity: Float!\n  parent: Customers!\n}\n\ntype spending {\n  week: DateTime!\n  spend: Float!\n  saved: Float!\n  parent: Customers!\n}\n\ntype totals {\n  price: Float!\n  saving: Float!\n  parent: Orders!\n}\n"
+      "schema" : "type CustomerPromotion {\n  first_name: String!\n  last_name: String!\n  email: String!\n  spend: Float!\n  saved: Float!\n}\n\ntype Customers {\n  id: Float!\n  first_name: String!\n  last_name: String!\n  email: String!\n  ip_address: String\n  country: String\n  changed_on: Float!\n  timestamp: DateTime!\n  country0: String!\n  order_stats: order_stats\n  past_purchases(productid: Float, limit: Int = 10, offset: Int = 0): [past_purchases!]\n  purchases(limit: Int = 10, offset: Int = 0): [Orders!]\n  spending(week: DateTime, limit: Int = 10, offset: Int = 0): [spending!]\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype NumOrders {\n  count: Float!\n}\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  customer(limit: Int = 10, offset: Int = 0): [Customers!]\n  items(limit: Int = 10, offset: Int = 0): [items!]\n  totals: totals\n}\n\ntype ProductSearch {\n  id: Float!\n  name: String!\n  sizing: String!\n  weight_in_gram: Float!\n  type: String!\n  category: String!\n  usda_id: Float!\n  updated: DateTime!\n  score: Float\n}\n\ntype ProductSearchWithId {\n  id: Float!\n  name: String!\n  sizing: String!\n  weight_in_gram: Float!\n  type: String!\n  category: String!\n  usda_id: Float!\n  updated: DateTime!\n}\n\ntype Products {\n  id: Float!\n  name: String!\n  sizing: String!\n  weight_in_gram: Float!\n  type: String!\n  category: String!\n  usda_id: Float!\n  updated: DateTime!\n  monthly_by_country(country: String, month: DateTime, limit: Int = 10, offset: Int = 0): [monthly_by_country!]\n}\n\ntype Query {\n  CustomerPromotion(limit: Int = 10, offset: Int = 0): [CustomerPromotion!]\n  Customers(id: Float, limit: Int = 10, offset: Int = 0): [Customers!]\n  NumOrders(limit: Int = 10, offset: Int = 0): [NumOrders!]\n  Orders(id: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [Orders!]\n  Products(id: Float, limit: Int = 10, offset: Int = 0): [Products!]\n  ProductSearch(query: String!): [ProductSearch!]\n  ProductSearchWithId(query: String!, id: Int!): [ProductSearchWithId!]\n}\n\ntype items {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n\ntype monthly_by_country {\n  country: String!\n  month: DateTime!\n  quantity: Float!\n  spend: Float!\n  weight: Float!\n  parent: Products!\n}\n\ntype order_stats {\n  first_order: DateTime!\n  total_spend: Float!\n  total_saved: Float!\n  num_orders: Float!\n  parent: Customers!\n}\n\ntype past_purchases {\n  productid: Float!\n  num_orders: Float!\n  total_quantity: Float!\n  parent: Customers!\n}\n\ntype spending {\n  week: DateTime!\n  spend: Float!\n  saved: Float!\n  parent: Customers!\n}\n\ntype totals {\n  price: Float!\n  saving: Float!\n  parent: Orders!\n}\n"
     }
   }
 }
