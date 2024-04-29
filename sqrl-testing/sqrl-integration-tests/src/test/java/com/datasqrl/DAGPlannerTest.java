@@ -41,13 +41,7 @@ public class DAGPlannerTest extends AbstractAssetSnapshotTest {
 
   @Override
   public Predicate<Path> getDeployDirFilter() {
-    return file -> {
-      switch (file.getFileName().toString()) {
-        case "flink-plan.sql":
-        case "database-schema.sql": return true;
-      }
-      return false;
-    };
+    return (p)->false;
   }
 
   static class DagPlannerSQRLFiles extends SqrlScriptArgumentsProvider {

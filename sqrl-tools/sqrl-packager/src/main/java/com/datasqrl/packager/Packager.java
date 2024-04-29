@@ -25,6 +25,9 @@ import com.datasqrl.packager.repository.Repository;
 import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.datasqrl.util.SqrlObjectMapper;
+import com.fasterxml.jackson.core.util.DefaultIndenter;
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.base.Preconditions;
 import freemarker.template.Configuration;
 import freemarker.template.DefaultMapAdapter;
@@ -291,19 +294,17 @@ public class Packager {
           rootDir.resolve(profile), plan, testPlan, sqrlConfig, mountDirectory, plans);
     }
 
-    Path lib = buildDir.resolve(LIB_DIR);
-    Files.createDirectories(lib);
-    //todo copy all jars in lib dir
-//    plan.getPlans(FlinkStreamPhysicalPlan.class).findFirst().get().getJars()
-//        .stream()
-//        .forEach(jar->copyJar(lib, jar));
+    copyFolder(targetDir, DATA_DIR);
+    copyFolder(targetDir, LIB_DIR);
+  }
 
-
-    Path deployDataPath = targetDir.resolve("flink").resolve(DATA_DIR);
-    Files.createDirectories(deployDataPath);
-    Path buildDataPath = buildDir.resolve(DATA_DIR);
-    if (Files.isDirectory(buildDataPath)) {
-      Files.move(buildDataPath, deployDataPath, StandardCopyOption.REPLACE_EXISTING);
+  @SneakyThrows
+  private void copyFolder(Path targetDir, String folderName) {
+    Path targetPath = targetDir.resolve("flink").resolve(folderName);
+    Files.createDirectories(targetPath);
+    Path sourcePath = buildDir.resolve(folderName);
+    if (Files.isDirectory(sourcePath)) {
+      Files.move(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
     }
   }
 
@@ -311,7 +312,13 @@ public class Packager {
   private Object writePlan(String name, EnginePhysicalPlan plan, Path targetDir) {
     Files.createDirectories(buildDir.resolve(PLAN_DIR_NAME));
     Path path = buildDir.resolve(PLAN_DIR_NAME).resolve(name + ".json");
-    SqrlObjectMapper.INSTANCE.writerWithDefaultPrettyPrinter().writeValue(path.toFile(), plan);
+
+    SqrlObjectMapper.INSTANCE.enable(SerializationFeature.INDENT_OUTPUT);
+
+    DefaultPrettyPrinter prettyPrinter = new DefaultPrettyPrinter();
+    prettyPrinter.indentArraysWith(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE);
+
+    SqrlObjectMapper.INSTANCE.writer(prettyPrinter).writeValue(path.toFile(), plan);
     return SqrlObjectMapper.INSTANCE.readValue(path.toFile(), Map.class);
   }
 

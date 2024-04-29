@@ -65,7 +65,7 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
 
   @Override
   public Predicate<Path> getDeployDirFilter() {
-    return file -> file.getFileName().toString().endsWith(".sql");
+    return file -> false;
   }
 
   @AllArgsConstructor

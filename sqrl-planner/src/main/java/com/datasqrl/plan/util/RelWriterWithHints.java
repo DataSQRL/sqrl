@@ -3,6 +3,7 @@
  */
 package com.datasqrl.plan.util;
 
+import com.datasqrl.util.CalciteHacks;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.externalize.RelWriterImpl;
 import org.apache.calcite.rel.hint.Hintable;
@@ -44,11 +45,14 @@ public class RelWriterWithHints extends RelWriterImpl {
       List<Pair<String, Object>> values) {
     List<RelNode> inputs = rel.getInputs();
     final RelMetadataQuery mq = rel.getCluster().getMetadataQuery();
-    if (!mq.isVisibleInExplain(rel, detailLevel)) {
+    CalciteHacks.resetToSqrlMetadataProvider();
+
+    //removed b/c of
+//    if (!mq.isVisibleInExplain(rel, detailLevel)) {
       // render children in place of this, at same level
-      explainInputs(inputs);
-      return;
-    }
+//      explainInputs(inputs);
+//      return;
+//    }
 
     StringBuilder s = new StringBuilder();
     spacer.spaces(s);

@@ -149,256 +149,499 @@ LogicalProject(__pk6$_uuid=[$0], price=[$2], num=[$3], discount=[$4], _ingest_ti
         LogicalTableScan(table=[[orders$2]])
         LogicalTableFunctionScan(invocation=[Orders.entries($cor1.entries)], rowType=[RecordType(BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount)], elementType=[class [Ljava.lang.Object;])
 
->>>database-schema.sql
-CREATE TABLE IF NOT EXISTS customer$3 ("customerid" BIGINT NOT NULL,"email" TEXT NOT NULL,"name" TEXT NOT NULL,"lastUpdated" BIGINT NOT NULL,"_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL,"_uuid" TEXT NOT NULL , PRIMARY KEY ("customerid"));
-CREATE TABLE IF NOT EXISTS entrycount$1 ("price" DOUBLE PRECISION ,"_uuid" TEXT NOT NULL,"_productid" BIGINT NOT NULL,"_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("_uuid","_productid"));
-CREATE TABLE IF NOT EXISTS orders$2 ("id" BIGINT NOT NULL,"customerid" BIGINT NOT NULL,"time" TIMESTAMP WITH TIME ZONE NOT NULL,"entries" JSONB NOT NULL,"_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL,"_uuid" TEXT NOT NULL , PRIMARY KEY ("_uuid"));
-CREATE TABLE IF NOT EXISTS orders2$1 ("uuid" TEXT NOT NULL,"_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("uuid"));
-CREATE TABLE IF NOT EXISTS orders_by_day$1 ("__pk1$customerid" BIGINT NOT NULL,"day" TIMESTAMP WITH TIME ZONE NOT NULL,"total_price" DOUBLE PRECISION ,"total_num" BIGINT NOT NULL,"__timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("__pk1$customerid","day"));
-CREATE TABLE IF NOT EXISTS ordersinline$1 ("id" BIGINT NOT NULL,"customerid" BIGINT NOT NULL,"time" TIMESTAMP WITH TIME ZONE NOT NULL,"price" DOUBLE PRECISION ,"num" BIGINT NOT NULL,"_uuid" TEXT NOT NULL,"_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("_uuid"));
-CREATE TABLE IF NOT EXISTS total$1 ("__pk6$_uuid" TEXT NOT NULL,"price" DOUBLE PRECISION ,"num" BIGINT NOT NULL,"discount" DOUBLE PRECISION ,"_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("__pk6$_uuid"));
-
->>>flink-plan.sql
-CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptostring` AS 'com.datasqrl.time.TimestampToString' LANGUAGE JAVA;
-
-CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofmonth` AS 'com.datasqrl.time.EndOfMonth' LANGUAGE JAVA;
-
-CREATE TEMPORARY FUNCTION IF NOT EXISTS `tojson` AS 'com.datasqrl.json.ToJson' LANGUAGE JAVA;
-
-CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofweek` AS 'com.datasqrl.time.EndOfWeek' LANGUAGE JAVA;
-
-CREATE TEMPORARY FUNCTION IF NOT EXISTS `parsetimestamp` AS 'com.datasqrl.time.ParseTimestamp' LANGUAGE JAVA;
-
-CREATE TEMPORARY FUNCTION IF NOT EXISTS `uuid` AS 'com.datasqrl.secure.Uuid' LANGUAGE JAVA;
-
-CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochmillitotimestamp` AS 'com.datasqrl.time.EpochMilliToTimestamp' LANGUAGE JAVA;
-
-CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofminute` AS 'com.datasqrl.time.EndOfMinute' LANGUAGE JAVA;
-
-CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptoepoch` AS 'com.datasqrl.time.TimestampToEpoch' LANGUAGE JAVA;
-
-CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofsecond` AS 'com.datasqrl.time.EndOfSecond' LANGUAGE JAVA;
-
-CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochtotimestamp` AS 'com.datasqrl.time.EpochToTimestamp' LANGUAGE JAVA;
-
-CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofday` AS 'com.datasqrl.time.EndOfDay' LANGUAGE JAVA;
-
-CREATE TEMPORARY FUNCTION IF NOT EXISTS `atzone` AS 'com.datasqrl.time.AtZone' LANGUAGE JAVA;
-
-CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofhour` AS 'com.datasqrl.time.EndOfHour' LANGUAGE JAVA;
-
-CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofyear` AS 'com.datasqrl.time.EndOfYear' LANGUAGE JAVA;
-
-CREATE TEMPORARY TABLE `orders$1` (
-  `id` BIGINT NOT NULL,
-  `customerid` BIGINT NOT NULL,
-  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
-  `_ingest_time` AS PROCTIME(),
-  `_uuid` AS UUID(),
-  PRIMARY KEY (`_uuid`) NOT ENFORCED
-) WITH (
-  'format' = 'json',
-  'path' = 'file:/mock',
-  'source.monitor-interval' = '10000',
-  'connector' = 'filesystem',
-  'source.path.regex-pattern' = ''
-);
-
-CREATE TEMPORARY TABLE `customer$1` (
-  `customerid` BIGINT NOT NULL,
-  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `lastUpdated` BIGINT NOT NULL,
-  `_ingest_time` AS PROCTIME(),
-  `_uuid` AS UUID(),
-  PRIMARY KEY (`_uuid`) NOT ENFORCED
-) WITH (
-  'format' = 'json',
-  'path' = 'file:/mock',
-  'source.monitor-interval' = '10000',
-  'connector' = 'filesystem',
-  'source.path.regex-pattern' = ''
-);
-
-CREATE TEMPORARY TABLE `customer$3` (
-  `customerid` BIGINT NOT NULL,
-  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `lastUpdated` BIGINT NOT NULL,
-  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,
-  PRIMARY KEY (`customerid`) NOT ENFORCED
-) WITH (
-  'password' = 'postgres',
-  'connector' = 'jdbc-sqrl',
-  'driver' = 'org.postgresql.Driver',
-  'table-name' = 'customer$3',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl',
-  'username' = 'postgres'
-);
-
-CREATE TEMPORARY TABLE `entrycount$1` (
-  `price` DOUBLE,
-  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,
-  `_productid` BIGINT NOT NULL,
-  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  PRIMARY KEY (`_uuid`, `_productid`) NOT ENFORCED
-) WITH (
-  'password' = 'postgres',
-  'connector' = 'jdbc-sqrl',
-  'driver' = 'org.postgresql.Driver',
-  'table-name' = 'entrycount$1',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl',
-  'username' = 'postgres'
-);
-
-CREATE TEMPORARY TABLE `orders$2` (
-  `id` BIGINT NOT NULL,
-  `customerid` BIGINT NOT NULL,
-  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),
-  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,
-  PRIMARY KEY (`_uuid`) NOT ENFORCED
-) WITH (
-  'password' = 'postgres',
-  'connector' = 'jdbc-sqrl',
-  'driver' = 'org.postgresql.Driver',
-  'table-name' = 'orders$2',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl',
-  'username' = 'postgres'
-);
-
-CREATE TEMPORARY TABLE `orders2$1` (
-  `uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,
-  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  PRIMARY KEY (`uuid`) NOT ENFORCED
-) WITH (
-  'password' = 'postgres',
-  'connector' = 'jdbc-sqrl',
-  'driver' = 'org.postgresql.Driver',
-  'table-name' = 'orders2$1',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl',
-  'username' = 'postgres'
-);
-
-CREATE TEMPORARY TABLE `orders_by_day$1` (
-  `__pk1$customerid` BIGINT NOT NULL,
-  `day` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `total_price` DOUBLE,
-  `total_num` BIGINT NOT NULL,
-  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  PRIMARY KEY (`__pk1$customerid`, `day`) NOT ENFORCED
-) WITH (
-  'password' = 'postgres',
-  'connector' = 'jdbc-sqrl',
-  'driver' = 'org.postgresql.Driver',
-  'table-name' = 'orders_by_day$1',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl',
-  'username' = 'postgres'
-);
-
-CREATE TEMPORARY TABLE `ordersinline$1` (
-  `id` BIGINT NOT NULL,
-  `customerid` BIGINT NOT NULL,
-  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `price` DOUBLE,
-  `num` BIGINT NOT NULL,
-  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,
-  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  PRIMARY KEY (`_uuid`) NOT ENFORCED
-) WITH (
-  'password' = 'postgres',
-  'connector' = 'jdbc-sqrl',
-  'driver' = 'org.postgresql.Driver',
-  'table-name' = 'ordersinline$1',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl',
-  'username' = 'postgres'
-);
-
-CREATE TEMPORARY TABLE `total$1` (
-  `__pk6$_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,
-  `price` DOUBLE,
-  `num` BIGINT NOT NULL,
-  `discount` DOUBLE,
-  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  PRIMARY KEY (`__pk6$_uuid`) NOT ENFORCED
-) WITH (
-  'password' = 'postgres',
-  'connector' = 'jdbc-sqrl',
-  'driver' = 'org.postgresql.Driver',
-  'table-name' = 'total$1',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl',
-  'username' = 'postgres'
-);
-
-CREATE VIEW `table$1`
-AS
-SELECT *
-FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `_ingest_time`, `_uuid`, (ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `_ingest_time` DESC NULLS LAST)) AS `_rownum`
-FROM `customer$1`) AS `t`
-WHERE (`_rownum` = 1);
-
-CREATE VIEW `table$2`
-AS
-SELECT `$cor1`.`_uuid` AS `__pk1$_uuid`, ((`t20`.`quantity` * `t20`.`unit_price`) - `t20`.`discount`) AS `$f1`, `t20`.`discount`, `t20`.`productid`, `$cor1`.`_ingest_time`
-FROM `orders$1` AS `$cor1`,
-UNNEST(`$cor1`.`entries`) AS `t20`;
-
-CREATE VIEW `table$3`
-AS
-SELECT `$cor1`.`_uuid` AS `__pk1$_uuid`, ((`t00`.`quantity` * `t00`.`unit_price`) - `t00`.`discount`) AS `$f1`, `t00`.`discount`, `t00`.`productid`, `$cor1`.`_ingest_time`
-FROM `orders$1` AS `$cor1`,
-UNNEST(`$cor1`.`entries`) AS `t00`;
-
-CREATE VIEW `table$4`
-AS
-SELECT `$cor1`.`_uuid` AS `__pk1$_uuid`, ((`t00`.`quantity` * `t00`.`unit_price`) - `t00`.`discount`) AS `$f1`, `t00`.`discount`, `t00`.`productid`, `$cor1`.`_ingest_time`
-FROM `orders$1` AS `$cor1`,
-UNNEST(`$cor1`.`entries`) AS `t00`;
-
-EXECUTE STATEMENT SET BEGIN
-INSERT INTO `customer$3`
-(SELECT *
-FROM `customer$1`)
-;
-INSERT INTO `entrycount$1`
-(SELECT ((`t00`.`quantity` * `t00`.`unit_price`) - `t00`.`discount`) AS `price`, `$cor0`.`_uuid`, `t00`.`productid` AS `_productid`, `$cor0`.`_ingest_time`
-FROM `orders$1` AS `$cor0`,
-UNNEST(`$cor0`.`entries`) AS `t00`)
-;
-INSERT INTO `orders$2`
-(SELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`, `_ingest_time`, `_uuid`
-FROM `orders$1`)
-;
-INSERT INTO `orders2$1`
-(SELECT `orders$1`.`_uuid` AS `uuid`, `orders$1`.`_ingest_time`
-FROM `orders$1`
-INNER JOIN `orders$1` AS `orders$10` ON ((`orders$1`.`_uuid` = `orders$10`.`_uuid`) AND (`orders$1`.`_ingest_time` = `orders$10`.`_ingest_time`)))
-;
-INSERT INTO `orders_by_day$1`
-(SELECT `t0`.`customerid` AS `__pk1$customerid`, ENDOFDAY(`$cor3`.`time`) AS `day`, SUM(`$cor3`.`price`) AS `total_price`, SUM(`$cor3`.`num`) AS `total_num`, MAX(`$cor3`.`_ingest_time`) AS `__timestamp`
-FROM (SELECT `orders$1`.`id`, `orders$1`.`customerid`, `orders$1`.`time`, `t7`.`price`, `t7`.`num`, `orders$1`.`_uuid`, `orders$1`.`_ingest_time`
-FROM `orders$1`
-INNER JOIN (SELECT `__pk1$_uuid` AS `__pk6$_uuid`, SUM(`$f1`) AS `price`, COUNT(*) AS `num`, SUM(`discount`) AS `discount`, `window_time` AS `_ingest_time`
-FROM TABLE(TUMBLE((TABLE `table$2`), (DESCRIPTOR(`_ingest_time`)), INTERVAL '0.001' SECOND(1))) AS `t4`
-GROUP BY `__pk1$_uuid`, `window_start`, `window_end`, `window_time`) AS `t7` ON ((`orders$1`.`_uuid` = `t7`.`__pk6$_uuid`) AND (`orders$1`.`_ingest_time` = `t7`.`_ingest_time`))) AS `$cor3`
-INNER JOIN `table$1` FOR SYSTEM_TIME AS OF `$cor3`.`_ingest_time` AS `t0` ON (`$cor3`.`customerid` = `t0`.`customerid`)
-GROUP BY `t0`.`customerid`, ENDOFDAY(`$cor3`.`time`))
-;
-INSERT INTO `ordersinline$1`
-(SELECT `orders$1`.`id`, `orders$1`.`customerid`, `orders$1`.`time`, `t5`.`price`, `t5`.`num`, `orders$1`.`_uuid`, `orders$1`.`_ingest_time`
-FROM `orders$1`
-INNER JOIN (SELECT `__pk1$_uuid` AS `__pk6$_uuid`, SUM(`$f1`) AS `price`, COUNT(*) AS `num`, SUM(`discount`) AS `discount`, `window_time` AS `_ingest_time`
-FROM TABLE(TUMBLE((TABLE `table$3`), (DESCRIPTOR(`_ingest_time`)), INTERVAL '0.001' SECOND(1))) AS `t2`
-GROUP BY `__pk1$_uuid`, `window_start`, `window_end`, `window_time`) AS `t5` ON ((`orders$1`.`_uuid` = `t5`.`__pk6$_uuid`) AND (`orders$1`.`_ingest_time` = `t5`.`_ingest_time`)))
-;
-INSERT INTO `total$1`
-(SELECT `__pk1$_uuid` AS `__pk6$_uuid`, SUM(`$f1`) AS `price`, COUNT(*) AS `num`, SUM(`discount`) AS `discount`, `window_time` AS `_ingest_time`
-FROM TABLE(TUMBLE((TABLE `table$4`), (DESCRIPTOR(`_ingest_time`)), INTERVAL '0.001' SECOND(1))) AS `t2`
-GROUP BY `__pk1$_uuid`, `window_start`, `window_end`, `window_time`)
-;
-END;
-
-
+>>>flink.json
+{
+  "flinkSql" : [
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptostring` AS 'com.datasqrl.time.TimestampToString' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofmonth` AS 'com.datasqrl.time.EndOfMonth' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `tojson` AS 'com.datasqrl.json.ToJson' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofweek` AS 'com.datasqrl.time.EndOfWeek' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `parsetimestamp` AS 'com.datasqrl.time.ParseTimestamp' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `uuid` AS 'com.datasqrl.secure.Uuid' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochmillitotimestamp` AS 'com.datasqrl.time.EpochMilliToTimestamp' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofminute` AS 'com.datasqrl.time.EndOfMinute' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptoepoch` AS 'com.datasqrl.time.TimestampToEpoch' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofsecond` AS 'com.datasqrl.time.EndOfSecond' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochtotimestamp` AS 'com.datasqrl.time.EpochToTimestamp' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofday` AS 'com.datasqrl.time.EndOfDay' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `atzone` AS 'com.datasqrl.time.AtZone' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofhour` AS 'com.datasqrl.time.EndOfHour' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofyear` AS 'com.datasqrl.time.EndOfYear' LANGUAGE JAVA;",
+    "CREATE TEMPORARY TABLE `orders$1` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,\n  `_ingest_time` AS PROCTIME(),\n  `_uuid` AS UUID(),\n  PRIMARY KEY (`_uuid`) NOT ENFORCED\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
+    "CREATE TEMPORARY TABLE `customer$1` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `_ingest_time` AS PROCTIME(),\n  `_uuid` AS UUID(),\n  PRIMARY KEY (`_uuid`) NOT ENFORCED\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
+    "CREATE TEMPORARY TABLE `customer$3` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,\n  PRIMARY KEY (`customerid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'customer$3',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `entrycount$1` (\n  `price` DOUBLE,\n  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_productid` BIGINT NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`_uuid`, `_productid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'entrycount$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `orders$2` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,\n  PRIMARY KEY (`_uuid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orders$2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `orders2$1` (\n  `uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`uuid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orders2$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `orders_by_day$1` (\n  `__pk1$customerid` BIGINT NOT NULL,\n  `day` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `total_price` DOUBLE,\n  `total_num` BIGINT NOT NULL,\n  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`__pk1$customerid`, `day`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orders_by_day$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `ordersinline$1` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `price` DOUBLE,\n  `num` BIGINT NOT NULL,\n  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`_uuid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'ordersinline$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `total$1` (\n  `__pk6$_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,\n  `price` DOUBLE,\n  `num` BIGINT NOT NULL,\n  `discount` DOUBLE,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`__pk6$_uuid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'total$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `_ingest_time`, `_uuid`, (ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `_ingest_time` DESC NULLS LAST)) AS `_rownum`\nFROM `customer$1`) AS `t`\nWHERE (`_rownum` = 1);",
+    "CREATE VIEW `table$2`\nAS\nSELECT `$cor1`.`_uuid` AS `__pk1$_uuid`, ((`t20`.`quantity` * `t20`.`unit_price`) - `t20`.`discount`) AS `$f1`, `t20`.`discount`, `t20`.`productid`, `$cor1`.`_ingest_time`\nFROM `orders$1` AS `$cor1`,\nUNNEST(`$cor1`.`entries`) AS `t20`;",
+    "CREATE VIEW `table$3`\nAS\nSELECT `$cor1`.`_uuid` AS `__pk1$_uuid`, ((`t00`.`quantity` * `t00`.`unit_price`) - `t00`.`discount`) AS `$f1`, `t00`.`discount`, `t00`.`productid`, `$cor1`.`_ingest_time`\nFROM `orders$1` AS `$cor1`,\nUNNEST(`$cor1`.`entries`) AS `t00`;",
+    "CREATE VIEW `table$4`\nAS\nSELECT `$cor1`.`_uuid` AS `__pk1$_uuid`, ((`t00`.`quantity` * `t00`.`unit_price`) - `t00`.`discount`) AS `$f1`, `t00`.`discount`, `t00`.`productid`, `$cor1`.`_ingest_time`\nFROM `orders$1` AS `$cor1`,\nUNNEST(`$cor1`.`entries`) AS `t00`;",
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer$3`\n(SELECT *\nFROM `customer$1`)\n;\nINSERT INTO `entrycount$1`\n(SELECT ((`t00`.`quantity` * `t00`.`unit_price`) - `t00`.`discount`) AS `price`, `$cor0`.`_uuid`, `t00`.`productid` AS `_productid`, `$cor0`.`_ingest_time`\nFROM `orders$1` AS `$cor0`,\nUNNEST(`$cor0`.`entries`) AS `t00`)\n;\nINSERT INTO `orders$2`\n(SELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`, `_ingest_time`, `_uuid`\nFROM `orders$1`)\n;\nINSERT INTO `orders2$1`\n(SELECT `orders$1`.`_uuid` AS `uuid`, `orders$1`.`_ingest_time`\nFROM `orders$1`\nINNER JOIN `orders$1` AS `orders$10` ON ((`orders$1`.`_uuid` = `orders$10`.`_uuid`) AND (`orders$1`.`_ingest_time` = `orders$10`.`_ingest_time`)))\n;\nINSERT INTO `orders_by_day$1`\n(SELECT `t0`.`customerid` AS `__pk1$customerid`, ENDOFDAY(`$cor3`.`time`) AS `day`, SUM(`$cor3`.`price`) AS `total_price`, SUM(`$cor3`.`num`) AS `total_num`, MAX(`$cor3`.`_ingest_time`) AS `__timestamp`\nFROM (SELECT `orders$1`.`id`, `orders$1`.`customerid`, `orders$1`.`time`, `t7`.`price`, `t7`.`num`, `orders$1`.`_uuid`, `orders$1`.`_ingest_time`\nFROM `orders$1`\nINNER JOIN (SELECT `__pk1$_uuid` AS `__pk6$_uuid`, SUM(`$f1`) AS `price`, COUNT(*) AS `num`, SUM(`discount`) AS `discount`, `window_time` AS `_ingest_time`\nFROM TABLE(TUMBLE((TABLE `table$2`), (DESCRIPTOR(`_ingest_time`)), INTERVAL '0.001' SECOND(1))) AS `t4`\nGROUP BY `__pk1$_uuid`, `window_start`, `window_end`, `window_time`) AS `t7` ON ((`orders$1`.`_uuid` = `t7`.`__pk6$_uuid`) AND (`orders$1`.`_ingest_time` = `t7`.`_ingest_time`))) AS `$cor3`\nINNER JOIN `table$1` FOR SYSTEM_TIME AS OF `$cor3`.`_ingest_time` AS `t0` ON (`$cor3`.`customerid` = `t0`.`customerid`)\nGROUP BY `t0`.`customerid`, ENDOFDAY(`$cor3`.`time`))\n;\nINSERT INTO `ordersinline$1`\n(SELECT `orders$1`.`id`, `orders$1`.`customerid`, `orders$1`.`time`, `t5`.`price`, `t5`.`num`, `orders$1`.`_uuid`, `orders$1`.`_ingest_time`\nFROM `orders$1`\nINNER JOIN (SELECT `__pk1$_uuid` AS `__pk6$_uuid`, SUM(`$f1`) AS `price`, COUNT(*) AS `num`, SUM(`discount`) AS `discount`, `window_time` AS `_ingest_time`\nFROM TABLE(TUMBLE((TABLE `table$3`), (DESCRIPTOR(`_ingest_time`)), INTERVAL '0.001' SECOND(1))) AS `t2`\nGROUP BY `__pk1$_uuid`, `window_start`, `window_end`, `window_time`) AS `t5` ON ((`orders$1`.`_uuid` = `t5`.`__pk6$_uuid`) AND (`orders$1`.`_ingest_time` = `t5`.`_ingest_time`)))\n;\nINSERT INTO `total$1`\n(SELECT `__pk1$_uuid` AS `__pk6$_uuid`, SUM(`$f1`) AS `price`, COUNT(*) AS `num`, SUM(`discount`) AS `discount`, `window_time` AS `_ingest_time`\nFROM TABLE(TUMBLE((TABLE `table$4`), (DESCRIPTOR(`_ingest_time`)), INTERVAL '0.001' SECOND(1))) AS `t2`\nGROUP BY `__pk1$_uuid`, `window_start`, `window_end`, `window_time`)\n;\nEND;"
+  ],
+  "connectors" : [
+    "jdbc-sqrl",
+    "filesystem"
+  ],
+  "formats" : [
+    "json"
+  ]
+}
+>>>kafka.json
+{
+  "topics" : [ ]
+}
+>>>postgres.json
+{
+  "ddl" : [
+    {
+      "name" : "customer$3",
+      "columns" : [
+        "\"customerid\" BIGINT NOT NULL",
+        "\"email\" TEXT NOT NULL",
+        "\"name\" TEXT NOT NULL",
+        "\"lastUpdated\" BIGINT NOT NULL",
+        "\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL",
+        "\"_uuid\" TEXT NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"customerid\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS customer$3 (\"customerid\" BIGINT NOT NULL,\"email\" TEXT NOT NULL,\"name\" TEXT NOT NULL,\"lastUpdated\" BIGINT NOT NULL,\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"_uuid\" TEXT NOT NULL , PRIMARY KEY (\"customerid\"));"
+    },
+    {
+      "name" : "entrycount$1",
+      "columns" : [
+        "\"price\" DOUBLE PRECISION ",
+        "\"_uuid\" TEXT NOT NULL",
+        "\"_productid\" BIGINT NOT NULL",
+        "\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"_uuid\"",
+        "\"_productid\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS entrycount$1 (\"price\" DOUBLE PRECISION ,\"_uuid\" TEXT NOT NULL,\"_productid\" BIGINT NOT NULL,\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"_uuid\",\"_productid\"));"
+    },
+    {
+      "name" : "orders$2",
+      "columns" : [
+        "\"id\" BIGINT NOT NULL",
+        "\"customerid\" BIGINT NOT NULL",
+        "\"time\" TIMESTAMP WITH TIME ZONE NOT NULL",
+        "\"entries\" JSONB NOT NULL",
+        "\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL",
+        "\"_uuid\" TEXT NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"_uuid\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS orders$2 (\"id\" BIGINT NOT NULL,\"customerid\" BIGINT NOT NULL,\"time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"entries\" JSONB NOT NULL,\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"_uuid\" TEXT NOT NULL , PRIMARY KEY (\"_uuid\"));"
+    },
+    {
+      "name" : "orders2$1",
+      "columns" : [
+        "\"uuid\" TEXT NOT NULL",
+        "\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"uuid\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS orders2$1 (\"uuid\" TEXT NOT NULL,\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"uuid\"));"
+    },
+    {
+      "name" : "orders_by_day$1",
+      "columns" : [
+        "\"__pk1$customerid\" BIGINT NOT NULL",
+        "\"day\" TIMESTAMP WITH TIME ZONE NOT NULL",
+        "\"total_price\" DOUBLE PRECISION ",
+        "\"total_num\" BIGINT NOT NULL",
+        "\"__timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"__pk1$customerid\"",
+        "\"day\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS orders_by_day$1 (\"__pk1$customerid\" BIGINT NOT NULL,\"day\" TIMESTAMP WITH TIME ZONE NOT NULL,\"total_price\" DOUBLE PRECISION ,\"total_num\" BIGINT NOT NULL,\"__timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"__pk1$customerid\",\"day\"));"
+    },
+    {
+      "name" : "ordersinline$1",
+      "columns" : [
+        "\"id\" BIGINT NOT NULL",
+        "\"customerid\" BIGINT NOT NULL",
+        "\"time\" TIMESTAMP WITH TIME ZONE NOT NULL",
+        "\"price\" DOUBLE PRECISION ",
+        "\"num\" BIGINT NOT NULL",
+        "\"_uuid\" TEXT NOT NULL",
+        "\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"_uuid\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS ordersinline$1 (\"id\" BIGINT NOT NULL,\"customerid\" BIGINT NOT NULL,\"time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"price\" DOUBLE PRECISION ,\"num\" BIGINT NOT NULL,\"_uuid\" TEXT NOT NULL,\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"_uuid\"));"
+    },
+    {
+      "name" : "total$1",
+      "columns" : [
+        "\"__pk6$_uuid\" TEXT NOT NULL",
+        "\"price\" DOUBLE PRECISION ",
+        "\"num\" BIGINT NOT NULL",
+        "\"discount\" DOUBLE PRECISION ",
+        "\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"__pk6$_uuid\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS total$1 (\"__pk6$_uuid\" TEXT NOT NULL,\"price\" DOUBLE PRECISION ,\"num\" BIGINT NOT NULL,\"discount\" DOUBLE PRECISION ,\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"__pk6$_uuid\"));"
+    }
+  ]
+}
+>>>vertx.json
+{
+  "model" : {
+    "coords" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Customer",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"customer$3\"\nORDER BY \"customerid\"",
+              "parameters" : [ ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "customerid"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"_ingest_time\", \"_uuid\", 1 AS \"__pk\"\nFROM \"customer$3\"\nWHERE \"customerid\" = $1\nORDER BY 1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "customerid"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Customer",
+        "fieldName" : "orders_by_day",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"orders_by_day$1\"\nWHERE \"__pk1$customerid\" = $1\nORDER BY \"day\"",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "type" : "source",
+                  "key" : "customerid"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "day"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"__pk1$customerid\", \"day\", \"total_price\", \"total_num\", \"__timestamp\", 1 AS \"__pk\"\nFROM (SELECT *\n  FROM \"orders_by_day$1\"\n  WHERE \"__pk1$customerid\" = $1) AS \"t\"\nWHERE \"day\" = $2\nORDER BY 1",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "type" : "source",
+                  "key" : "customerid"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "day"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "orders_by_day",
+        "fieldName" : "parent",
+        "matchs" : [
+          {
+            "arguments" : [ ],
+            "query" : {
+              "type" : "JdbcQuery",
+              "type" : "JdbcQuery",
+              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"_ingest_time\", \"_uuid\", 1 AS \"__pk\"\nFROM \"customer$3\"\nWHERE \"customerid\" = $1\nORDER BY 1",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "type" : "source",
+                  "key" : "__pk1$customerid"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "EntryCount",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"entrycount$1\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"_uuid\", \"_productid\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Orders",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"orders$2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"_uuid\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Orders",
+        "fieldName" : "total",
+        "matchs" : [
+          {
+            "arguments" : [ ],
+            "query" : {
+              "type" : "JdbcQuery",
+              "type" : "JdbcQuery",
+              "sql" : "SELECT \"__pk6$_uuid\", \"price\", \"num\", \"discount\", \"_ingest_time\", 1 AS \"__pk\"\nFROM \"total$1\"\nWHERE \"__pk6$_uuid\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, 1",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "type" : "source",
+                  "key" : "_uuid"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "total",
+        "fieldName" : "parent",
+        "matchs" : [
+          {
+            "arguments" : [ ],
+            "query" : {
+              "type" : "JdbcQuery",
+              "type" : "JdbcQuery",
+              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\", \"_uuid\", 1 AS \"__pk\"\nFROM \"orders$2\"\nWHERE \"_uuid\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, 1",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "type" : "source",
+                  "key" : "__pk6$_uuid"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Orders2",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "uuid"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"uuid\", \"_ingest_time\", 1 AS \"__pk\"\nFROM \"orders2$1\"\nWHERE \"uuid\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, 1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "uuid"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"orders2$1\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"uuid\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "OrdersInline",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"ordersinline$1\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"_uuid\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      }
+    ],
+    "mutations" : [ ],
+    "subscriptions" : [ ],
+    "schema" : {
+      "type" : "string",
+      "type" : "string",
+      "schema" : "type Customer {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  orders_by_day(day: DateTime, limit: Int = 10, offset: Int = 0): [orders_by_day!]\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype EntryCount {\n  price: Float\n}\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries(limit: Int = 10, offset: Int = 0): [entries!]\n  total: total\n}\n\ntype Orders2 {\n  uuid: String!\n}\n\ntype OrdersInline {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  price: Float\n  num: Float!\n}\n\ntype Query {\n  Customer(customerid: Float, limit: Int = 10, offset: Int = 0): [Customer!]\n  EntryCount(limit: Int = 10, offset: Int = 0): [EntryCount!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  Orders2(uuid: String, limit: Int = 10, offset: Int = 0): [Orders2!]\n  OrdersInline(limit: Int = 10, offset: Int = 0): [OrdersInline!]\n}\n\ntype entries {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n\ntype orders_by_day {\n  day: DateTime!\n  total_price: Float\n  total_num: Float!\n  parent: Customer!\n}\n\ntype total {\n  price: Float\n  num: Float!\n  discount: Float\n  parent: Orders!\n}\n"
+    }
+  }
+}

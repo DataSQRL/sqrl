@@ -21,47 +21,42 @@ import lombok.Setter;
 import lombok.Singular;
 import lombok.ToString;
 
-public class Model {
+@Getter
+@Builder
+public class RootGraphqlModel {
+
+  @Singular
+  List<Coords> coords;
+  @Singular
+  List<MutationCoords> mutations;
+  @Singular
+  List<SubscriptionCoords> subscriptions;
+
+  Schema schema;
+
+  @JsonCreator
+  public RootGraphqlModel(
+      @JsonProperty("coords") List<Coords> coords,
+      @JsonProperty("mutations") List<MutationCoords> mutations,
+      @JsonProperty("subscriptions") List<SubscriptionCoords> subscriptions,
+      @JsonProperty("schema") Schema schema) {
+    this.coords = coords;
+    this.mutations = mutations == null ? List.of() : mutations;
+    this.subscriptions = subscriptions == null ? List.of() : subscriptions;
+    this.schema = schema;
+  }
+
+  public <R, C> R accept(RootVisitor<R, C> visitor, C context) {
+    return visitor.visitRoot(this, context);
+  }
 
   public interface RootVisitor<R, C> {
 
     R visitRoot(RootGraphqlModel root, C context);
   }
 
-  @Getter
-  @Builder
-  @NoArgsConstructor
-  public static class RootGraphqlModel {
-
-    @Singular
-    List<Coords> coords;
-    @Singular
-    List<MutationCoords> mutations;
-    @Singular
-    List<SubscriptionCoords> subscriptions;
-
-    Schema schema;
-
-    @JsonCreator
-    public RootGraphqlModel(
-        @JsonProperty("coords") List<Coords> coords,
-        @JsonProperty("mutations") List<MutationCoords> mutations,
-        @JsonProperty("subscriptions") List<SubscriptionCoords> subscriptions,
-        @JsonProperty("schema") Schema schema) {
-      this.coords = coords;
-      this.mutations = mutations == null ? List.of() : mutations;
-      this.subscriptions = subscriptions == null ? List.of() : subscriptions;
-      this.schema = schema;
-    }
-
-    public <R, C> R accept(RootVisitor<R, C> visitor, C context) {
-      return visitor.visitRoot(this, context);
-    }
-  }
-
   @JsonTypeInfo(
       use = JsonTypeInfo.Id.NAME,
-      include = JsonTypeInfo.As.PROPERTY,
       property = "type")
   @JsonSubTypes({
       @Type(value = StringSchema.class, name = "string")
@@ -121,7 +116,6 @@ public class Model {
   @NoArgsConstructor
   @JsonTypeInfo(
       use = JsonTypeInfo.Id.NAME,
-      include = JsonTypeInfo.As.PROPERTY,
       property = "type")
   @JsonSubTypes({
       @Type(value = ArgumentLookupCoords.class, name = "args"),
@@ -198,7 +192,6 @@ public class Model {
 
   @JsonTypeInfo(
       use = JsonTypeInfo.Id.NAME,
-      include = JsonTypeInfo.As.PROPERTY,
       property = "type")
   @JsonSubTypes({
       @Type(value = JdbcQuery.class, name = "JdbcQuery"),
@@ -243,7 +236,6 @@ public class Model {
 
   @JsonTypeInfo(
       use = JsonTypeInfo.Id.NAME,
-      include = JsonTypeInfo.As.PROPERTY,
       property = "type")
   @JsonSubTypes({
       @Type(value = FixedArgument.class, name = "fixed"),
@@ -331,7 +323,6 @@ public class Model {
 
   @JsonTypeInfo(
       use = JsonTypeInfo.Id.NAME,
-      include = JsonTypeInfo.As.PROPERTY,
       property = "type")
   @JsonSubTypes({
       @Type(value = SourceParameter.class, name = "source"),

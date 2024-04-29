@@ -2,11 +2,11 @@ package com.datasqrl.graphql.jdbc;
 
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import com.datasqrl.graphql.server.Context;
-import com.datasqrl.graphql.server.Model.Argument;
-import com.datasqrl.graphql.server.Model.MutationCoords;
-import com.datasqrl.graphql.server.Model.ResolvedQuery;
-import com.datasqrl.graphql.server.Model.SubscriptionCoords;
-import com.datasqrl.graphql.server.Model.VariableArgument;
+import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
+import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoords;
+import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
+import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoords;
+import com.datasqrl.graphql.server.RootGraphqlModel.VariableArgument;
 import com.datasqrl.graphql.server.QueryExecutionContext;
 import graphql.schema.DataFetcher;
 import graphql.schema.GraphQLArgument;

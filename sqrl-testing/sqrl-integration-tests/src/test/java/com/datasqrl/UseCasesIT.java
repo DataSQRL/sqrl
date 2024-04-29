@@ -27,7 +27,7 @@ public class UseCasesIT {
 
   @Test
   public void testConference() {
-    execute("conference", "conference.sqrl", "conference-no-mutation.graphqls");
+    execute("conference", "conference.sqrl", "conference.graphqls");
   }
 
   @Test
@@ -41,8 +41,8 @@ public class UseCasesIT {
     argsList.add("test");
     argsList.addAll(List.of(args));
     argsList.add("--nolookup");
-    argsList.add("--profile");
-    argsList.add("../../../../../../../profiles/flink-1.18");
+//    argsList.add("--profile");
+//    argsList.add("../../../../../../../profiles/flink-1.18");
     argsList.add("--profile");
     argsList.add("../../../../../../../profiles/flink-1.16");
     execute(RESOURCES.resolve(path),

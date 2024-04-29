@@ -77,8 +77,6 @@ shadowJar {
     }
     from('.') {
         include 'lib/**'
-        include 'flink-plan.sql'
-        include 'flink-conf.yaml'
         into('.')
     }
     zip64 = true

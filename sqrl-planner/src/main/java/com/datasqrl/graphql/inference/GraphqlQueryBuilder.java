@@ -11,7 +11,7 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.function.SqrlFunctionParameter;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.inference.GraphqlQueryGenerator.ArgCombination;
-import com.datasqrl.graphql.server.Model.SourceParameter;
+import com.datasqrl.graphql.server.RootGraphqlModel.SourceParameter;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.util.SqlNameUtil;
 import com.google.common.base.Preconditions;

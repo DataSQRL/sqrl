@@ -30,7 +30,7 @@ public class FlinkSqlGenerator {
 
   public Pair<List<String>, List<SqlNode>> run(StreamStagePlan physicalPlan) {
     SqrlToFlinkSqlGenerator sqlPlanner = new SqrlToFlinkSqlGenerator(framework);
-    SqlResult result = sqlPlanner.plan(physicalPlan);
+    SqlResult result = sqlPlanner.plan(physicalPlan.getQueries());
 
     List<SqlNode> flinkSql = new ArrayList<>();
     flinkSql.addAll(framework.getSchema().getAddlSql());

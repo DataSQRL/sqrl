@@ -1,7 +1,5 @@
 package com.datasqrl.config;
 
-import java.util.Map;
-import java.util.Optional;
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
@@ -11,10 +9,4 @@ public class EngineConnectorFactoryImpl implements ConnectorFactory {
   public TableConfig createSourceAndSink(IConnectorFactoryContext context) {
     throw new RuntimeException("TBD");
   }
-
-  @Override
-  public Optional<TableConfig.Format> getFormat() {
-    return Optional.empty();
-  }
-
 }

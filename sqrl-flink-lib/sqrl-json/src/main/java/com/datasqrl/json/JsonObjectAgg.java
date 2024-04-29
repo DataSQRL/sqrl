@@ -35,7 +35,7 @@ public class JsonObjectAgg extends AggregateFunction<Object, ObjectAgg> {
         throw new RuntimeException(e);
       }
     } else {
-      accumulator.add(key, null);
+      accumulator.add(key, value);
     }
   }
 

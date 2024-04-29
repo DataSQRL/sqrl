@@ -142,139 +142,600 @@ type keywords {
   name: String!
 }
 
->>>database-schema.sql
-CREATE TABLE IF NOT EXISTS package$1 ("name" TEXT NOT NULL,"_submissionTime" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("name"));
-CREATE TABLE IF NOT EXISTS submission$2 ("name" TEXT NOT NULL,"version" TEXT NOT NULL,"variant" TEXT ,"latest" BOOLEAN NOT NULL,"type" TEXT ,"license" TEXT ,"repository" TEXT ,"homepage" TEXT ,"documentation" TEXT ,"readme" TEXT ,"description" TEXT ,"uniqueId" TEXT NOT NULL,"file" TEXT NOT NULL,"hash" TEXT NOT NULL,"authorid" TEXT NOT NULL,"submissionTime" TIMESTAMP WITH TIME ZONE NOT NULL,"keywords" JSONB NOT NULL,"variant0" TEXT NOT NULL,"repoURL" TEXT NOT NULL , PRIMARY KEY ("name","submissionTime"));
-CREATE TABLE IF NOT EXISTS topicpackages$1 ("pkgName" TEXT NOT NULL,"topicName" TEXT NOT NULL,"numSubmissions" BIGINT NOT NULL,"lastSubmission" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("pkgName","topicName"));
-CREATE TABLE IF NOT EXISTS topicsearch$1 ("topicName" TEXT NOT NULL,"numPackages" BIGINT NOT NULL,"__timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("topicName"));
-CREATE INDEX IF NOT EXISTS submission$2_hash_c15 ON submission$2 USING hash ("submissionTime");
-CREATE INDEX IF NOT EXISTS topicpackages$1_hash_c1 ON topicpackages$1 USING hash ("topicName");
-
->>>flink-plan.sql
-CREATE TEMPORARY FUNCTION IF NOT EXISTS `tojson` AS 'com.datasqrl.json.ToJson' LANGUAGE JAVA;
-
-CREATE TEMPORARY TABLE `submission$1` (
-  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `version` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `variant` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `latest` BOOLEAN NOT NULL,
-  `type` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `license` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `repository` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `homepage` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `documentation` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `readme` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `uniqueId` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `file` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `hash` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `authorid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `submissionTime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `keywords` ROW(`name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL) NOT NULL ARRAY NOT NULL,
-  PRIMARY KEY (`name`, `submissionTime`) NOT ENFORCED,
-  WATERMARK FOR `submissionTime` AS (`submissionTime` - INTERVAL '0.001' SECOND)
-) WITH (
-  'format' = 'flexible-json',
-  'path' = '/data/repodata.jsonl',
-  'source.monitor-interval' = '1',
-  'connector' = 'filesystem'
-);
-
-CREATE TEMPORARY TABLE `package$1` (
-  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `_submissionTime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  PRIMARY KEY (`name`) NOT ENFORCED
-) WITH (
-  'password' = 'postgres',
-  'connector' = 'jdbc-sqrl',
-  'driver' = 'org.postgresql.Driver',
-  'table-name' = 'package$1',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl',
-  'username' = 'postgres'
-);
-
-CREATE TEMPORARY TABLE `submission$2` (
-  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `version` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `variant` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `latest` BOOLEAN NOT NULL,
-  `type` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `license` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `repository` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `homepage` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `documentation` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `readme` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `uniqueId` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `file` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `hash` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `authorid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `submissionTime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `keywords` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),
-  `variant0` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `repoURL` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  PRIMARY KEY (`name`, `submissionTime`) NOT ENFORCED
-) WITH (
-  'password' = 'postgres',
-  'connector' = 'jdbc-sqrl',
-  'driver' = 'org.postgresql.Driver',
-  'table-name' = 'submission$2',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl',
-  'username' = 'postgres'
-);
-
-CREATE TEMPORARY TABLE `topicpackages$1` (
-  `pkgName` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `topicName` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `numSubmissions` BIGINT NOT NULL,
-  `lastSubmission` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  PRIMARY KEY (`pkgName`, `topicName`) NOT ENFORCED
-) WITH (
-  'password' = 'postgres',
-  'connector' = 'jdbc-sqrl',
-  'driver' = 'org.postgresql.Driver',
-  'table-name' = 'topicpackages$1',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl',
-  'username' = 'postgres'
-);
-
-CREATE TEMPORARY TABLE `topicsearch$1` (
-  `topicName` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `numPackages` BIGINT NOT NULL,
-  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  PRIMARY KEY (`topicName`) NOT ENFORCED
-) WITH (
-  'password' = 'postgres',
-  'connector' = 'jdbc-sqrl',
-  'driver' = 'org.postgresql.Driver',
-  'table-name' = 'topicsearch$1',
-  'url' = 'jdbc:postgresql://database:5432/datasqrl',
-  'username' = 'postgres'
-);
-
-EXECUTE STATEMENT SET BEGIN
-INSERT INTO `package$1`
-(SELECT `name`, `submissionTime` AS `_submissionTime`
-FROM `submission$1`)
-;
-INSERT INTO `submission$2`
-(SELECT `name`, `version`, `variant`, `latest`, `type`, `license`, `repository`, `homepage`, `documentation`, `readme`, `description`, `uniqueId`, `file`, `hash`, `authorid`, `submissionTime`, TOJSON(`keywords`) AS `keywords`, COALESCE(`variant`, 'default') AS `variant0`, CONCAT('https://repository.datasqrl.com/', `file`) AS `repoURL`
-FROM `submission$1`)
-;
-INSERT INTO `topicpackages$1`
-(SELECT `$cor0`.`name` AS `pkgName`, `t10`.`name` AS `topicName`, COUNT(*) AS `numSubmissions`, MAX(`$cor0`.`submissionTime`) AS `lastSubmission`
-FROM (SELECT `name`, `version`, `variant`, `latest`, `type`, `license`, `repository`, `homepage`, `documentation`, `readme`, `description`, `uniqueId`, `file`, `hash`, `authorid`, `submissionTime`, `keywords`, COALESCE(`variant`, 'default') AS `variant0`, CONCAT('https://repository.datasqrl.com/', `file`) AS `repoURL`
-FROM `submission$1`) AS `$cor0`,
-UNNEST(`$cor0`.`keywords`) AS `t10`
-GROUP BY `$cor0`.`name`, `t10`.`name`)
-;
-INSERT INTO `topicsearch$1`
-(SELECT `t10`.`name` AS `topicName`, COUNT(*) AS `numPackages`, MAX(`$cor1`.`submissionTime`) AS `__timestamp`
-FROM (SELECT `name`, `version`, `variant`, `latest`, `type`, `license`, `repository`, `homepage`, `documentation`, `readme`, `description`, `uniqueId`, `file`, `hash`, `authorid`, `submissionTime`, `keywords`, COALESCE(`variant`, 'default') AS `variant0`, CONCAT('https://repository.datasqrl.com/', `file`) AS `repoURL`
-FROM `submission$1`) AS `$cor1`,
-UNNEST(`$cor1`.`keywords`) AS `t10`
-GROUP BY `t10`.`name`)
-;
-END;
-
-
+>>>flink.json
+{
+  "flinkSql" : [
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `tojson` AS 'com.datasqrl.json.ToJson' LANGUAGE JAVA;",
+    "CREATE TEMPORARY TABLE `submission$1` (\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `version` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `variant` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `latest` BOOLEAN NOT NULL,\n  `type` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `license` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `repository` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `homepage` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `documentation` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `readme` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `uniqueId` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `file` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `hash` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `authorid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `submissionTime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `keywords` ROW(`name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL) NOT NULL ARRAY NOT NULL,\n  PRIMARY KEY (`name`, `submissionTime`) NOT ENFORCED,\n  WATERMARK FOR `submissionTime` AS (`submissionTime` - INTERVAL '0.001' SECOND)\n) WITH (\n  'format' = 'flexible-json',\n  'path' = '/data/repodata.jsonl',\n  'source.monitor-interval' = '1',\n  'connector' = 'filesystem'\n);",
+    "CREATE TEMPORARY TABLE `package$1` (\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_submissionTime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`name`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'package$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `submission$2` (\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `version` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `variant` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `latest` BOOLEAN NOT NULL,\n  `type` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `license` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `repository` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `homepage` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `documentation` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `readme` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `uniqueId` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `file` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `hash` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `authorid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `submissionTime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `keywords` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  `variant0` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `repoURL` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  PRIMARY KEY (`name`, `submissionTime`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'submission$2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `topicpackages$1` (\n  `pkgName` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `topicName` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `numSubmissions` BIGINT NOT NULL,\n  `lastSubmission` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`pkgName`, `topicName`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'topicpackages$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `topicsearch$1` (\n  `topicName` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `numPackages` BIGINT NOT NULL,\n  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`topicName`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'topicsearch$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `package$1`\n(SELECT `name`, `submissionTime` AS `_submissionTime`\nFROM `submission$1`)\n;\nINSERT INTO `submission$2`\n(SELECT `name`, `version`, `variant`, `latest`, `type`, `license`, `repository`, `homepage`, `documentation`, `readme`, `description`, `uniqueId`, `file`, `hash`, `authorid`, `submissionTime`, TOJSON(`keywords`) AS `keywords`, COALESCE(`variant`, 'default') AS `variant0`, CONCAT('https://repository.datasqrl.com/', `file`) AS `repoURL`\nFROM `submission$1`)\n;\nINSERT INTO `topicpackages$1`\n(SELECT `$cor0`.`name` AS `pkgName`, `t10`.`name` AS `topicName`, COUNT(*) AS `numSubmissions`, MAX(`$cor0`.`submissionTime`) AS `lastSubmission`\nFROM (SELECT `name`, `version`, `variant`, `latest`, `type`, `license`, `repository`, `homepage`, `documentation`, `readme`, `description`, `uniqueId`, `file`, `hash`, `authorid`, `submissionTime`, `keywords`, COALESCE(`variant`, 'default') AS `variant0`, CONCAT('https://repository.datasqrl.com/', `file`) AS `repoURL`\nFROM `submission$1`) AS `$cor0`,\nUNNEST(`$cor0`.`keywords`) AS `t10`\nGROUP BY `$cor0`.`name`, `t10`.`name`)\n;\nINSERT INTO `topicsearch$1`\n(SELECT `t10`.`name` AS `topicName`, COUNT(*) AS `numPackages`, MAX(`$cor1`.`submissionTime`) AS `__timestamp`\nFROM (SELECT `name`, `version`, `variant`, `latest`, `type`, `license`, `repository`, `homepage`, `documentation`, `readme`, `description`, `uniqueId`, `file`, `hash`, `authorid`, `submissionTime`, `keywords`, COALESCE(`variant`, 'default') AS `variant0`, CONCAT('https://repository.datasqrl.com/', `file`) AS `repoURL`\nFROM `submission$1`) AS `$cor1`,\nUNNEST(`$cor1`.`keywords`) AS `t10`\nGROUP BY `t10`.`name`)\n;\nEND;"
+  ],
+  "connectors" : [
+    "jdbc-sqrl",
+    "filesystem"
+  ],
+  "formats" : [
+    "flexible-json"
+  ]
+}
+>>>postgres.json
+{
+  "ddl" : [
+    {
+      "name" : "package$1",
+      "columns" : [
+        "\"name\" TEXT NOT NULL",
+        "\"_submissionTime\" TIMESTAMP WITH TIME ZONE NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"name\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS package$1 (\"name\" TEXT NOT NULL,\"_submissionTime\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"name\"));"
+    },
+    {
+      "name" : "submission$2",
+      "columns" : [
+        "\"name\" TEXT NOT NULL",
+        "\"version\" TEXT NOT NULL",
+        "\"variant\" TEXT ",
+        "\"latest\" BOOLEAN NOT NULL",
+        "\"type\" TEXT ",
+        "\"license\" TEXT ",
+        "\"repository\" TEXT ",
+        "\"homepage\" TEXT ",
+        "\"documentation\" TEXT ",
+        "\"readme\" TEXT ",
+        "\"description\" TEXT ",
+        "\"uniqueId\" TEXT NOT NULL",
+        "\"file\" TEXT NOT NULL",
+        "\"hash\" TEXT NOT NULL",
+        "\"authorid\" TEXT NOT NULL",
+        "\"submissionTime\" TIMESTAMP WITH TIME ZONE NOT NULL",
+        "\"keywords\" JSONB NOT NULL",
+        "\"variant0\" TEXT NOT NULL",
+        "\"repoURL\" TEXT NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"name\"",
+        "\"submissionTime\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS submission$2 (\"name\" TEXT NOT NULL,\"version\" TEXT NOT NULL,\"variant\" TEXT ,\"latest\" BOOLEAN NOT NULL,\"type\" TEXT ,\"license\" TEXT ,\"repository\" TEXT ,\"homepage\" TEXT ,\"documentation\" TEXT ,\"readme\" TEXT ,\"description\" TEXT ,\"uniqueId\" TEXT NOT NULL,\"file\" TEXT NOT NULL,\"hash\" TEXT NOT NULL,\"authorid\" TEXT NOT NULL,\"submissionTime\" TIMESTAMP WITH TIME ZONE NOT NULL,\"keywords\" JSONB NOT NULL,\"variant0\" TEXT NOT NULL,\"repoURL\" TEXT NOT NULL , PRIMARY KEY (\"name\",\"submissionTime\"));"
+    },
+    {
+      "name" : "topicpackages$1",
+      "columns" : [
+        "\"pkgName\" TEXT NOT NULL",
+        "\"topicName\" TEXT NOT NULL",
+        "\"numSubmissions\" BIGINT NOT NULL",
+        "\"lastSubmission\" TIMESTAMP WITH TIME ZONE NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"pkgName\"",
+        "\"topicName\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS topicpackages$1 (\"pkgName\" TEXT NOT NULL,\"topicName\" TEXT NOT NULL,\"numSubmissions\" BIGINT NOT NULL,\"lastSubmission\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"pkgName\",\"topicName\"));"
+    },
+    {
+      "name" : "topicsearch$1",
+      "columns" : [
+        "\"topicName\" TEXT NOT NULL",
+        "\"numPackages\" BIGINT NOT NULL",
+        "\"__timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"topicName\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS topicsearch$1 (\"topicName\" TEXT NOT NULL,\"numPackages\" BIGINT NOT NULL,\"__timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"topicName\"));"
+    },
+    {
+      "indexName" : "submission$2_hash_c15",
+      "tableName" : "submission$2",
+      "columns" : [
+        "submissionTime"
+      ],
+      "type" : "HASH",
+      "sql" : "CREATE INDEX IF NOT EXISTS submission$2_hash_c15 ON submission$2 USING hash (\"submissionTime\");"
+    },
+    {
+      "indexName" : "topicpackages$1_hash_c1",
+      "tableName" : "topicpackages$1",
+      "columns" : [
+        "topicName"
+      ],
+      "type" : "HASH",
+      "sql" : "CREATE INDEX IF NOT EXISTS topicpackages$1_hash_c1 ON topicpackages$1 USING hash (\"topicName\");"
+    }
+  ]
+}
+>>>vertx.json
+{
+  "model" : {
+    "coords" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Package",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"package$1\"\nORDER BY \"name\"",
+              "parameters" : [ ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "name"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"name\", \"_submissionTime\", 1 AS \"__pk\"\nFROM \"package$1\"\nWHERE \"name\" = $1\nORDER BY 1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "name"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Package",
+        "fieldName" : "latest",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"submission$2\"\nWHERE $1 = \"name\" AND \"latest\"\nORDER BY \"submissionTime\" DESC",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "type" : "source",
+                  "key" : "name"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Package",
+        "fieldName" : "versions",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"submission$2\"\nWHERE $1 = \"name\"\nORDER BY \"submissionTime\" DESC",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "type" : "source",
+                  "key" : "name"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Submission",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "name"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"submission$2\"\nWHERE \"name\" = $1\nORDER BY \"submissionTime\" DESC NULLS LAST",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "name"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "name"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "submissionTime"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"name\", \"version\", \"variant\", \"latest\", \"type\", \"license\", \"repository\", \"homepage\", \"documentation\", \"readme\", \"description\", \"uniqueId\", \"file\", \"hash\", \"authorid\", \"submissionTime\", \"keywords\", \"variant0\", \"repoURL\", 1 AS \"__pk\"\nFROM \"submission$2\"\nWHERE \"name\" = $1 AND \"submissionTime\" = $2\nORDER BY \"submissionTime\" DESC NULLS LAST, 1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "name"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "submissionTime"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"submission$2\"\nORDER BY \"submissionTime\" DESC NULLS LAST, \"name\"",
+              "parameters" : [ ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "submissionTime"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"submission$2\"\nWHERE \"submissionTime\" = $1\nORDER BY \"submissionTime\" DESC NULLS LAST, \"name\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "submissionTime"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "TopicPackages",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"topicpackages$1\"\nORDER BY \"numSubmissions\" DESC, \"pkgName\", \"topicName\"",
+              "parameters" : [ ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "topicName"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"topicpackages$1\"\nWHERE \"topicName\" = $1\nORDER BY \"numSubmissions\" DESC, \"pkgName\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "topicName"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "pkgName"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"topicpackages$1\"\nWHERE \"pkgName\" = $1\nORDER BY \"numSubmissions\" DESC, \"topicName\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "pkgName"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "pkgName"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "topicName"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"pkgName\", \"topicName\", \"numSubmissions\", \"lastSubmission\", 1 AS \"__pk\"\nFROM \"topicpackages$1\"\nWHERE \"pkgName\" = $1 AND \"topicName\" = $2\nORDER BY \"numSubmissions\" DESC, 1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "pkgName"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "topicName"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "TopicPackages",
+        "fieldName" : "latest",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"submission$2\"\nWHERE $1 = \"name\" AND \"latest\"\nORDER BY \"submissionTime\" DESC",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "type" : "source",
+                  "key" : "pkgName"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "TopicSearch",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "topicName"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"topicName\", \"numPackages\", \"__timestamp\", 1 AS \"__pk\"\nFROM \"topicsearch$1\"\nWHERE \"topicName\" = $1\nORDER BY \"numPackages\" DESC, 1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "topicName"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"topicsearch$1\"\nORDER BY \"numPackages\" DESC, \"topicName\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      }
+    ],
+    "mutations" : [ ],
+    "subscriptions" : [ ],
+    "schema" : {
+      "type" : "string",
+      "type" : "string",
+      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype Package {\n  name: String!\n  latest(limit: Int = 10, offset: Int = 0): [Submission!]\n  versions(limit: Int = 10, offset: Int = 0): [Submission!]\n}\n\ntype Query {\n  Package(name: String, limit: Int = 10, offset: Int = 0): [Package!]\n  Submission(name: String, submissionTime: DateTime, limit: Int = 10, offset: Int = 0): [Submission!]\n  TopicPackages(pkgName: String, topicName: String, limit: Int = 10, offset: Int = 0): [TopicPackages!]\n  TopicSearch(topicName: String, limit: Int = 10, offset: Int = 0): [TopicSearch!]\n}\n\ntype Submission {\n  name: String!\n  version: String!\n  variant: String\n  latest: Boolean!\n  type: String\n  license: String\n  repository: String\n  homepage: String\n  documentation: String\n  readme: String\n  description: String\n  uniqueId: String!\n  file: String!\n  hash: String!\n  authorid: String!\n  submissionTime: DateTime!\n  variant0: String!\n  repoURL: String!\n  keywords(limit: Int = 10, offset: Int = 0): [keywords!]\n}\n\ntype TopicPackages {\n  pkgName: String!\n  topicName: String!\n  numSubmissions: Float!\n  lastSubmission: DateTime!\n  latest(limit: Int = 10, offset: Int = 0): [Submission!]\n}\n\ntype TopicSearch {\n  topicName: String!\n  numPackages: Float!\n}\n\ntype keywords {\n  name: String!\n}\n"
+    }
+  }
+}
