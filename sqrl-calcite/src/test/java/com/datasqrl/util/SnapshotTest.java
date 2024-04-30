@@ -134,15 +134,15 @@ public class SnapshotTest {
         if (!expected.equals(content)) {
           String[] expectedLines = expected.split("\n");
           String[] contentLines = content.split("\n");
-          log.error("Error at: ");
           for (int i = 0; i < Math.min(expectedLines.length, contentLines.length); i++) {
             if (!expectedLines[i].equals(contentLines[i])) {
+              log.error("Error at line {}: ",i);
               log.error("expected: " + expectedLines[i]);
               log.error("found   : " + contentLines[i]);
               break;
             }
           }
-          fail("Mismatched snapshots: " + fileName + " " + "file://"+path.toFile().getAbsolutePath());
+          assertEquals(expected, content, "Mismatched snapshots: " + fileName + " " + "file://"+path.toFile().getAbsolutePath());
         }
       }
     }
