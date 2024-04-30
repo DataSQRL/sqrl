@@ -32,7 +32,7 @@ public class JsonlPreprocessor implements Preprocessor {
     Path dataDir = processorContext.getBuildDir().resolve(DATA_DIR);
     Files.createDirectories(dataDir);
     Path data = dataDir.resolve(path.getFileName());
-    if (!Files.isRegularFile(data)) {
+    if (!Files.isRegularFile(data)) { //copy only if file does not already exist
       Files.copy(path, data);
     }
   }

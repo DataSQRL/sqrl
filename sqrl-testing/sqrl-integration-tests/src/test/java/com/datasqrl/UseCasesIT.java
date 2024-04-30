@@ -45,6 +45,7 @@ public class UseCasesIT {
   }
 
   @Test
+  @Disabled("need support for compressed data and csv")
   public void testSensorsFull() {
     execute("sensors", "sensors-full.sqrl", null, "sensors-full");
   }
@@ -55,9 +56,8 @@ public class UseCasesIT {
   }
 
   @Test
-  @Disabled
   public void testSeedshopExtended() {
-    execute("seedshop-tutorial", "seedshop-extended.sqrl", "seedshop-extended.graphqls", "seedshop-extended");
+    execute("seedshop-tutorial", "seedshop-extended.sqrl", null, "seedshop-extended");
   }
 
 

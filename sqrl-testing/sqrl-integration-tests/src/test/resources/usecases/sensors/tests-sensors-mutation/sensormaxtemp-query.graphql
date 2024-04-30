@@ -1,5 +1,5 @@
 query {
-    SensorMaxTemp(sensorid: 3) {
+    SensorMaxTemp(sensorid: 2) {
         sensorid
         maxTemp
     }

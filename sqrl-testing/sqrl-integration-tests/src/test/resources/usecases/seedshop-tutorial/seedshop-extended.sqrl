@@ -41,7 +41,7 @@ CustomerPromotion := SELECT c.first_name, c.last_name, c.email, s.spend, s.saved
 EXPORT CustomerPromotion TO mySinkPackage.promotion;
 
 /*+test */
-CustomerPromotionTest := SELECT COUNT(*) FROM CustomerPromotion;
+CustomerPromotionTest := SELECT COUNT(*) AS numPromotions FROM CustomerPromotion;
 
 
 NumOrders := SELECT COUNT(*) AS count FROM Orders;
