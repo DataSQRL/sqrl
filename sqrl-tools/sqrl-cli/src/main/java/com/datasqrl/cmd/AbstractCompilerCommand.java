@@ -100,9 +100,9 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     }
 
     if (goal == ExecutionGoal.TEST) {
-      LinkedHashSet<String> hashSet = new LinkedHashSet<>(sqrlConfig.getEnabledEngines());
-      hashSet.add(EngineKeys.TEST);
-      sqrlConfig.setPipeline(new ArrayList<>(hashSet));
+      List<String> defaultKeys = List.of(EngineKeys.TEST, EngineKeys.DATABASE, EngineKeys.LOG,
+          EngineKeys.SERVER, EngineKeys.STREAMS);
+      sqrlConfig.setPipeline(defaultKeys);
     }
 
     Packager packager = new Packager(repository, root.rootDir, sqrlConfig, errors);

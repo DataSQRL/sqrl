@@ -27,8 +27,8 @@ public class FlinkMain {
 
   public TableResult run() throws Exception {
     Map<String, String> flinkConfig = new HashMap();
-<#if config["values"]?? && config["values"]["flinkConfig"]??>
-<#list config["values"]["flinkConfig"] as key, value>
+<#if config["values"]?? && config["values"]["flink-config"]??>
+<#list config["values"]["flink-config"] as key, value>
 <#if key?contains(".")>
     flinkConfig.put("${key}", "${value}");
 </#if>

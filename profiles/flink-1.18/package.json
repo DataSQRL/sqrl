@@ -10,7 +10,7 @@
           "driver": "org.postgresql.Driver",
           "username": "${JDBC_USERNAME}",
           "url": "${JDBC_URL}",
-          "table-name": "${table}"
+          "table-name": "${sqrl:table}"
         },
         "kafka": {
           "connector" : "kafka",
@@ -19,7 +19,7 @@
           "properties.group.id": "groupid",
           "scan.startup.mode" : "earliest-offset",
           "properties.auto.offset.reset" : "earliest",
-          "topic" : "${topic}"
+          "topic" : "${sqrl:topic}"
         }
       }
     }

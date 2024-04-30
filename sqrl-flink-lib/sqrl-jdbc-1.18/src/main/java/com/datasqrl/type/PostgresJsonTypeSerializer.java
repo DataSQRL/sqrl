@@ -1,8 +1,7 @@
 package com.datasqrl.type;
 
 import com.datasqrl.json.FlinkJsonType;
-import org.apache.flink.api.common.ExecutionConfig;
-import org.apache.flink.api.java.typeutils.runtime.kryo.KryoSerializer;
+import com.datasqrl.json.FlinkJsonTypeSerializer;
 import org.apache.flink.connector.jdbc.converter.AbstractJdbcRowConverter.JdbcDeserializationConverter;
 import org.apache.flink.connector.jdbc.converter.AbstractJdbcRowConverter.JdbcSerializationConverter;
 import org.apache.flink.table.data.RawValueData;
@@ -38,15 +37,20 @@ public class PostgresJsonTypeSerializer
   @Override
   public GenericSerializationConverter<JdbcSerializationConverter> getSerializerConverter(
       LogicalType type) {
+    FlinkJsonTypeSerializer typeSerializer = new FlinkJsonTypeSerializer();
+
     return ()-> (val, index, statement) -> {
       if (val != null && !val.isNullAt(index)) {
         PGobject pgObject = new PGobject();
         pgObject.setType("json");
         RawValueData<FlinkJsonType> object = val.getRawValue(index);
-        FlinkJsonType vec = object.toObject(new KryoSerializer<>
-            (FlinkJsonType.class, new ExecutionConfig()));
-        pgObject.setValue(vec.getJson());
-        statement.setObject(index, pgObject);
+        FlinkJsonType vec = object.toObject(typeSerializer);
+        if (vec == null) {
+          statement.setObject(index, null);
+        } else {
+          pgObject.setValue(vec.getJson());
+          statement.setObject(index, pgObject);
+        }
       } else {
         statement.setObject(index, null);
       }
