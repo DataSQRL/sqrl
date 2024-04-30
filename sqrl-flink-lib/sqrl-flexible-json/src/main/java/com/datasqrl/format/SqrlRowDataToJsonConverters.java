@@ -42,12 +42,7 @@ public class SqrlRowDataToJsonConverters extends RowDataToJsonConverters {
       if (o == null) {
         return null;
       }
-      try {
-        return mapper.readTree(o.getJson());
-      } catch (JsonProcessingException e) {
-        e.printStackTrace();
-        return null;
-      }
+      return o.getJson();
     };
   }
 }

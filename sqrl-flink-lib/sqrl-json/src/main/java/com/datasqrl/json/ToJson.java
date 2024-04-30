@@ -25,7 +25,7 @@ public class ToJson extends ScalarFunction {
       return null;
     }
     try {
-      return new FlinkJsonType(mapper.readTree(json).toString());
+      return new FlinkJsonType(mapper.readTree(json));
     } catch (JsonProcessingException e) {
       return null;
     }
@@ -40,7 +40,7 @@ public class ToJson extends ScalarFunction {
       return (FlinkJsonType)json;
     }
 
-    return new FlinkJsonType(unboxFlinkToJsonNode(json).toString());
+    return new FlinkJsonType(unboxFlinkToJsonNode(json));
   }
 
   JsonNode unboxFlinkToJsonNode(Object json) {

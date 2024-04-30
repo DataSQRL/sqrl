@@ -6,9 +6,11 @@ import org.apache.flink.api.common.typeutils.TypeSerializerSnapshot;
 import org.apache.flink.core.memory.DataInputView;
 import org.apache.flink.core.memory.DataOutputView;
 import java.io.IOException;
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 
 public class FlinkJsonTypeSerializer extends TypeSerializer<FlinkJsonType> {
 
+    ObjectMapper mapper = new ObjectMapper();
     @Override
     public boolean isImmutableType() {
         return true;
@@ -36,12 +38,12 @@ public class FlinkJsonTypeSerializer extends TypeSerializer<FlinkJsonType> {
 
     @Override
     public void serialize(FlinkJsonType record, DataOutputView target) throws IOException {
-        target.writeUTF(record.getJson());
+        target.writeUTF(record.getJson().toString());
     }
 
     @Override
     public FlinkJsonType deserialize(DataInputView source) throws IOException {
-        return new FlinkJsonType(source.readUTF());
+        return new FlinkJsonType(mapper.readTree(source.readUTF()));
     }
 
     @Override

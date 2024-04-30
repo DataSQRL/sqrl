@@ -13,7 +13,7 @@ public class JsonExists extends ScalarFunction {
       return null;
     }
     try {
-      return SqlJsonUtils.jsonExists(json.json, path);
+      return SqlJsonUtils.jsonExists(json.json.toString(), path);
     } catch (Exception e) {
       return false;
     }

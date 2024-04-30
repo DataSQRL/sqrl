@@ -48,7 +48,7 @@ public class PostgresJsonTypeSerializer
         if (vec == null) {
           statement.setObject(index, null);
         } else {
-          pgObject.setValue(vec.getJson());
+          pgObject.setValue(vec.getJson().toString());
           statement.setObject(index, pgObject);
         }
       } else {
