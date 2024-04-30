@@ -206,6 +206,11 @@
         <artifactId>sqrl-packager</artifactId>
         <version>${project.version}</version>
       </dependency>
+      <dependency>
+        <groupId>run.sqrl</groupId>
+        <artifactId>sqrl-auth</artifactId>
+        <version>${project.version}</version>
+      </dependency>
 
       <!-- sqrl test jars-->
       <dependency>

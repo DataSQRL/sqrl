@@ -22,7 +22,7 @@ import java.util.Optional;
 @Slf4j
 public class LocalRepositoryImplementation implements Repository, CacheRepository, PublishRepository {
 
-    public static final String LOCAL_REPO_NAME = "datasqrl";
+    public static final String LOCAL_REPO_NAME = "datasqrl/repository";
 
     @Getter
     private final Path repositoryPath;

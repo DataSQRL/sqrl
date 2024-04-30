@@ -133,6 +133,7 @@ public class RepositoryTest {
   @Test
   @SneakyThrows
   public void remoteRepoTest() {
+    // TODO: package here once we have real public packages in the repo, because for now datasqrl.example.speedshop is a mocked one
     DependencyImpl dependency = new DependencyImpl("datasqrl.seedshop", "0.1.1", "dev");
 
     RemoteRepositoryImplementation remoteRepo = new RemoteRepositoryImplementation(

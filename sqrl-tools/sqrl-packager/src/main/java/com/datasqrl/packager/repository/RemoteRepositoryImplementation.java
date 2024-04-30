@@ -4,24 +4,17 @@
 package com.datasqrl.packager.repository;
 
 
-import com.datasqrl.config.DependencyImpl;
+import com.datasqrl.auth.AuthProvider;
 import com.datasqrl.config.Dependency;
+import com.datasqrl.config.DependencyImpl;
 import com.datasqrl.packager.util.FileHash;
 import com.datasqrl.packager.util.Zipper;
-import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.SqrlObjectMapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
-import lombok.Setter;
-import lombok.SneakyThrows;
-import net.lingala.zip4j.ZipFile;
-import org.apache.commons.io.FileUtils;
-
-import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 import java.net.http.HttpClient;
@@ -30,17 +23,21 @@ import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
-public class RemoteRepositoryImplementation implements Repository {
-  public static final String PKG_NAME_KEY = "pkgName";
-  public static final String VERSION_KEY = "version";
-  public static final String VARIANT_KEY = "variant";
+import lombok.Setter;
+import net.lingala.zip4j.ZipFile;
+import org.apache.commons.io.FileUtils;
 
-  public static final URI DEFAULT_URI = URI.create("https://repo.sqrl.run");
+public class RemoteRepositoryImplementation implements Repository {
+  public static final URI DEFAULT_URI = URI.create("https://sqrl-repository-frontend-git-staging-datasqrl.vercel.app"); //https://dev.datasqrl.com
 
   private final ObjectMapper mapper = SqrlObjectMapper.INSTANCE;
+  private final HttpClient client = HttpClient.newHttpClient();
+  private final AuthProvider authProvider = new AuthProvider(client);
+
   private final URI repositoryServerURI;
   @Setter
   private CacheRepository cacheRepository = null;
@@ -54,28 +51,15 @@ public class RemoteRepositoryImplementation implements Repository {
   }
 
   @Override
-  public boolean retrieveDependency(Path targetPath, Dependency dependency) throws IOException {
-    JsonNode result = executeQuery(Query.getDependency, Map.of(
-        PKG_NAME_KEY, dependency.getName(),
-        VERSION_KEY, dependency.getVersion(),
-        VARIANT_KEY, dependency.getVariant()));
-    return getDependencyVersion(result)
-        .map(dep -> downloadDependency(targetPath, dep, dependency))
-        .orElse(false);
-  }
-
-  // Gets the first dependency version from a retrieved package
-  private Optional<JsonNode> getDependencyVersion(JsonNode result) {
-    return getPackageField(result, "versions")
-        .filter(n -> n.isArray() && !n.isEmpty())
-        .map(n -> n.get(0));
+  public boolean retrieveDependency(Path targetPath, Dependency dependency) {
+    JsonNode dependencyInfo = getDependencyInfo(dependency.getName(), dependency.getVersion().get(), dependency.getVariant());
+    return downloadDependency(targetPath, dependencyInfo, dependency);
   }
 
   // Downloads the given Dependency to the specified Path
-  private boolean downloadDependency(Path targetPath, JsonNode dep, Dependency dependency) {
-    String file = dep.get("file").asText();
-    String hash = dep.get("hash").asText();
-    String repoURL = dep.get("repoURL").asText();
+  private boolean downloadDependency(Path targetPath, JsonNode dependencyInfo, Dependency dependency) {
+    String hash = dependencyInfo.get("hash").asText();
+    String repoURL = dependencyInfo.get("repoURL").asText();
 
     try {
       // Create target directory
@@ -115,68 +99,69 @@ public class RemoteRepositoryImplementation implements Repository {
 
   @Override
   public Optional<Dependency> resolveDependency(String packageName) {
-    JsonNode result = executeQuery(Query.getLatest, Map.of("pkgName", packageName));
-    Optional<JsonNode> latest = getPackageField(result, "latest").filter(n -> !n.isNull() && !n.isEmpty());
-    if (latest.isEmpty()) return Optional.empty();
-    return Optional.of(map(latest.get(), DependencyImpl.class));
+    JsonNode result = getLatestDependencyInfo(packageName);
+    return Optional.of(map(result, DependencyImpl.class));
   }
 
-  private Optional<JsonNode> getPackageField(JsonNode result, String field) {
-    JsonNode packages = result.get("Package");
-    if (!packages.isArray() || packages.isEmpty()) return Optional.empty();
-    return Optional.of(packages.get(0).get(field));
-  }
-
-  public JsonNode executeQuery(Query query, Map<String,Object> payload) {
+  public JsonNode getDependencyInfo(String name, String version, String variant) {
     try {
       HttpClient client = HttpClient.newHttpClient();
+
+      String authToken = authProvider.isAuthenticated();
+      if (authToken == null) {
+        authToken = authProvider.loginToRepository();
+      }
+
       HttpRequest request = HttpRequest.newBuilder()
-          .header("Content-Type", "application/json")
-          .header("Accept", "application/json")
-          .POST(HttpRequest.BodyPublishers.ofString(mapper
-              .writeValueAsString(
-                  Map.of("query", query.getQueryString(), "variables", payload))))
-          .uri(repositoryServerURI)
-          .timeout(Duration.of(10, ChronoUnit.SECONDS))
-          .build();
+              .uri(buildPackageInfoUri(name, version, variant))
+              .header("Authorization", "Bearer " + authToken)
+              .GET()
+              .timeout(Duration.of(10, ChronoUnit.SECONDS))
+              .build();
+
       HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
-      return mapper.readValue(response.body(), JsonNode.class).get("data");
+      int statusCode = response.statusCode();
+      if (statusCode != 200) {
+        String message = String.format("Could not call remote repository. statusCode=%d, body=%s", statusCode, response.body());
+        throw new RuntimeException(message);
+      }
+      return mapper.readValue(response.body(), JsonNode.class);
     } catch (Exception e) {
-      throw new RuntimeException("Could not call remote repository",e);
+      throw new RuntimeException("Could not call remote repository", e);
     }
+  }
+
+  public JsonNode getLatestDependencyInfo(String name) {
+    return getDependencyInfo(name, null, null);
+  }
+
+  private URI buildPackageInfoUri(String name, String version, String variant) {
+    if (name == null) {
+      throw new IllegalArgumentException("name cannot be null");
+    }
+
+    StringBuilder uriBuilder = new StringBuilder(repositoryServerURI.toString())
+            .append("/api/packages/")
+            .append(name);
+
+    // Append version and variant if provided
+    if (version != null && variant != null) {
+      uriBuilder.append("/")
+              .append(version)
+              .append("/")
+              .append(variant);
+    }
+
+    return URI.create(uriBuilder.toString());
   }
 
   private<O> O map(JsonNode node, Class<O> clazz) {
     try {
+      mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
       return mapper.treeToValue(node,clazz);
     } catch (JsonProcessingException e) {
       throw new RuntimeException("Unexpected response from repository server: " + node.toString(), e);
     }
   }
-
-  @SneakyThrows
-  private static String loadQuery(String queryFile) {
-    return FileUtil.readResource(queryFile);
-  }
-
-  private enum Query {
-
-    getDependency("getDependency.graphql"), getLatest("latestPackageByName.graphql");
-
-    private final String fileName;
-    private String queryString;
-
-    Query(String fileName) {
-      this.fileName = fileName;
-    }
-
-    public synchronized String getQueryString() {
-      if (queryString==null) {
-        queryString = loadQuery(fileName);
-      }
-      return queryString;
-    }
-
-  }
-
+  
 }
