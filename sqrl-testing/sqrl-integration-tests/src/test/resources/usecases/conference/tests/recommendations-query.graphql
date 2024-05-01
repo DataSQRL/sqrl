@@ -1,10 +1,10 @@
 query {
-  User10: RecommendedEvents(userid:"10") {
+  User10: RecommendedEvents(userid:"10", limit: 5) {
     url
     title
     score
   }
-  User11: RecommendedEvents(userid:"11") {
+  User11: RecommendedEvents(userid:"11", limit: 5) {
     url
     title
     score

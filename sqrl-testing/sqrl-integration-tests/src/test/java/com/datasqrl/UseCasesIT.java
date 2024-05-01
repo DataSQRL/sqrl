@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test;
 public class UseCasesIT {
   private static final Path RESOURCES = Paths.get("src/test/resources/usecases");
 
-  @Test
+  @Test //Done
   public void testBanking() {
     execute("banking", "loan.sqrl", "loan.graphqls");
   }
