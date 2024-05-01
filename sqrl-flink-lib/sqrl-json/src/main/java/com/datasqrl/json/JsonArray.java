@@ -25,17 +25,13 @@ public class JsonArray extends ScalarFunction {
     for (Object value : objects) {
       if (value instanceof FlinkJsonType) {
         FlinkJsonType type = (FlinkJsonType) value;
-        try {
-          arrayNode.add(mapper.readTree(type.json));
-        } catch (JsonProcessingException e) {
-          throw new RuntimeException(e);
-        }
+        arrayNode.add(type.json);
       } else {
         arrayNode.addPOJO(value);
       }
     }
 
-    return new FlinkJsonType(arrayNode.toString());
+    return new FlinkJsonType(arrayNode);
   }
 
   @Override

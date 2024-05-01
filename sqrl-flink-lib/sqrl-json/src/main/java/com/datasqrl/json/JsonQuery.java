@@ -17,7 +17,7 @@ public class JsonQuery extends ScalarFunction {
     }
     try {
       ObjectMapper mapper = new ObjectMapper();
-      JsonNode jsonNode = mapper.readTree(input.getJson());
+      JsonNode jsonNode = input.getJson();
       ReadContext ctx = JsonPath.parse(jsonNode.toString());
       Object result = ctx.read(pathSpec);
       return mapper.writeValueAsString(result); // Convert the result back to JSON string

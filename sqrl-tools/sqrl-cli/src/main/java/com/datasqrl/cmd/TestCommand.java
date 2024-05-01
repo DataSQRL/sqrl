@@ -44,7 +44,7 @@ public class TestCommand extends AbstractCompilerCommand {
     super.execute(errors, this.profiles, snapshotPath == null ?
         root.rootDir.resolve("snapshots") :
             snapshotPath.isAbsolute() ? snapshotPath : root.rootDir.resolve(snapshotPath),
-        tests == null ? Optional.of(root.rootDir.resolve("tests")) :
+        tests == null ? Optional.empty() :
             Optional.of((tests.isAbsolute() ? tests : root.rootDir.resolve(tests))),
         ExecutionGoal.TEST);
   }

@@ -16,11 +16,11 @@ public class JsonConcat extends ScalarFunction {
       return null;
     }
     try {
-      ObjectNode node1 = (ObjectNode) mapper.readTree(json1.getJson());
-      ObjectNode node2 = (ObjectNode) mapper.readTree(json2.getJson());
+      ObjectNode node1 = (ObjectNode) json1.getJson();
+      ObjectNode node2 = (ObjectNode) json2.getJson();
 
       node1.setAll(node2);
-      return new FlinkJsonType(node1.toString());
+      return new FlinkJsonType(node1);
     } catch (Exception e) {
       return null;
     }

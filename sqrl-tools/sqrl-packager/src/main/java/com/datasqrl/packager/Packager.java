@@ -187,7 +187,7 @@ public class Packager {
     //Preprocessor will normalize files
     List<Preprocessor> processorList = ListUtils.union(List.of(new TablePreprocessor(),
             new JsonlPreprocessor(),
-            new JarPreprocessor(), new DataSystemPreprocessor(), new PackageJsonPreprocessor(),
+            new JarPreprocessor(), new DataSystemPreprocessor(),// new PackageJsonPreprocessor(),
             new FlinkSqlPreprocessor()),
         ServiceLoaderDiscovery.getAll(Preprocessor.class));
     Preprocessors preprocessors = new Preprocessors(processorList, errors);
