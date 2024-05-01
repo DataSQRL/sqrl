@@ -24,12 +24,12 @@ public class UseCasesIT {
     execute("banking", "loan.sqrl", "loan.graphqls");
   }
 
-  @Test
+  @Test //Done
   public void testClickstream() {
     execute("clickstream", "clickstream-teaser.sqrl", "clickstream-teaser.graphqls");
   }
 
-  @Test
+  @Test //Done
   public void testConference() {
     execute("conference", "conference.sqrl", "conference.graphqls");
   }

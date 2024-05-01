@@ -349,11 +349,16 @@ LogicalTableScan(table=[[likes$2]])
                 "type" : "variable",
                 "type" : "variable",
                 "path" : "userid"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
             "query" : {
-              "type" : "JdbcQuery",
-              "type" : "JdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
               "sql" : "SELECT \"events$3\".\"url\", \"events$3\".\"date\", \"events$3\".\"time\", \"events$3\".\"title\", \"events$3\".\"abstract\", \"events$3\".\"location\", \"events$3\".\"speakers\", \"events$3\".\"last_updated\", \"events$3\".\"id\", \"events$3\".\"full_text\", \"events$3\".\"embedding\", \"events$3\".\"startTime\", \"events$3\".\"startTimestamp\", 1 - (\"t\".\"interestVector\" <=> \"events$3\".\"embedding\") AS \"score\"\nFROM (SELECT *\n  FROM \"userinterests$1\"\n  WHERE \"userid\" = $1) AS \"t\",\n \"events$3\"\nORDER BY 1 - (\"t\".\"interestVector\" <=> \"events$3\".\"embedding\") DESC, \"events$3\".\"id\"",
               "parameters" : [
                 {
@@ -382,11 +387,16 @@ LogicalTableScan(table=[[likes$2]])
                 "type" : "variable",
                 "type" : "variable",
                 "path" : "userid"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
             "query" : {
-              "type" : "JdbcQuery",
-              "type" : "JdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
               "sql" : "SELECT \"t\".\"url\", \"t\".\"date\", \"t\".\"time\", \"t\".\"title\", \"t\".\"abstract\", \"t\".\"location\", \"t\".\"speakers\", \"t\".\"last_updated\", \"t\".\"id\", \"t\".\"full_text\", \"t\".\"embedding\", \"t\".\"startTime\", \"t\".\"startTimestamp\", COALESCE(1 - (\"t0\".\"interestVector\" <=> \"t\".\"embedding\"), 0.0) AS \"score\"\nFROM (SELECT *\n  FROM \"events$3\"\n  WHERE (TO_TSVECTOR('english', COALESCE(\"title\", ' ') || ' ' || COALESCE(\"abstract\", ' ')) @@ WEBSEARCH_TO_TSQUERY('english', $1))) AS \"t\"\n LEFT JOIN (SELECT *\n  FROM \"userinterests$1\"\n  WHERE \"userid\" = $2) AS \"t0\" ON TRUE\nORDER BY COALESCE(1 - (\"t0\".\"interestVector\" <=> \"t\".\"embedding\"), 0.0) DESC, \"t\".\"id\"",
               "parameters" : [
                 {
@@ -431,7 +441,7 @@ LogicalTableScan(table=[[likes$2]])
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "scalar DateTime\n\ntype Query {\n    Events(limit: Int!, offset: Int = 0): [Events!]!\n    EventsLiked(userid: String!): [EventsLiked!]!\n    RecommendedEvents(userid: String!): [RecommendedEvents!]\n    PersonalizedEventSearch(query: String!, userid: String!): [PersonalizedEventSearch!]\n}\n\n\ninterface AbstractEvents {\n    id : Int!\n    date: String!\n    time : String!\n    location: String!\n    title : String!\n    abstract : String!\n    url : String!\n    startTimestamp : String!\n}\n\ntype speakers {\n    name : String!\n    title: String\n    company: String\n}\n\ntype LikeCount {\n    num : Int\n}\n\ntype Events implements AbstractEvents{\n    id : Int!\n    date: String!\n    time : String!\n    location: String!\n    title : String!\n    abstract : String!\n    url : String!\n    startTimestamp : String!\n    speakers : [speakers!]\n}\n\ntype RecommendedEvents implements AbstractEvents{\n    id : Int!\n    date: String!\n    time : String!\n    location: String!\n    title : String!\n    abstract : String!\n    url : String!\n    startTimestamp : String!\n    score: Float!\n}\n\ntype PersonalizedEventSearch implements AbstractEvents{\n    id : Int!\n    date: String!\n    time : String!\n    location: String!\n    title : String!\n    abstract : String!\n    url : String!\n    startTimestamp : String!\n    score: Float!\n}\n\ntype EventsLiked implements AbstractEvents{\n    id : Int!\n    date: String!\n    time : String!\n    location: String!\n    title : String!\n    abstract : String!\n    url : String!\n    startTimestamp : String!\n}\n\n\n\ntype Mutation {\n    Likes(liked: LikedInput!): LikeAdded\n    AddInterest(interest: AddInterest!): InterestAdded\n}\n\ninput AddInterest {\n    text: String!\n    userid: String!\n}\n\ntype InterestAdded {\n    userid: String!\n}\n\ninput LikedInput {\n    eventId: Int!\n    userid: String!\n    liked: Boolean!\n}\n\ntype LikeAdded {\n    event_time: String!\n    userid: String!\n}\n"
+      "schema" : "scalar DateTime\n\ntype Query {\n    Events(limit: Int!, offset: Int = 0): [Events!]!\n    EventsLiked(userid: String!): [EventsLiked!]!\n    RecommendedEvents(userid: String!, limit: Int!=10): [RecommendedEvents!]\n    PersonalizedEventSearch(query: String!, userid: String!, limit: Int!=10): [PersonalizedEventSearch!]\n}\n\n\ninterface AbstractEvents {\n    id : Int!\n    date: String!\n    time : String!\n    location: String!\n    title : String!\n    abstract : String!\n    url : String!\n    startTimestamp : String!\n}\n\ntype speakers {\n    name : String!\n    title: String\n    company: String\n}\n\ntype LikeCount {\n    num : Int\n}\n\ntype Events implements AbstractEvents{\n    id : Int!\n    date: String!\n    time : String!\n    location: String!\n    title : String!\n    abstract : String!\n    url : String!\n    startTimestamp : String!\n    speakers : [speakers!]\n}\n\ntype RecommendedEvents implements AbstractEvents{\n    id : Int!\n    date: String!\n    time : String!\n    location: String!\n    title : String!\n    abstract : String!\n    url : String!\n    startTimestamp : String!\n    score: Float!\n}\n\ntype PersonalizedEventSearch implements AbstractEvents{\n    id : Int!\n    date: String!\n    time : String!\n    location: String!\n    title : String!\n    abstract : String!\n    url : String!\n    startTimestamp : String!\n    score: Float!\n}\n\ntype EventsLiked implements AbstractEvents{\n    id : Int!\n    date: String!\n    time : String!\n    location: String!\n    title : String!\n    abstract : String!\n    url : String!\n    startTimestamp : String!\n}\n\n\n\ntype Mutation {\n    Likes(liked: LikedInput!): LikeAdded\n    AddInterest(interest: AddInterest!): InterestAdded\n}\n\ninput AddInterest {\n    text: String!\n    userid: String!\n}\n\ntype InterestAdded {\n    userid: String!\n}\n\ninput LikedInput {\n    eventId: Int!\n    userid: String!\n    liked: Boolean!\n}\n\ntype LikeAdded {\n    event_time: String!\n    userid: String!\n}\n"
     }
   }
 }
