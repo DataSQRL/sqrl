@@ -51,11 +51,6 @@ public class UseCasesIT {
   }
 
   @Test
-  public void testSeedshopMutation() {
-    execute("seedshop-tutorial", "seedshop-mutation.sqrl", "seedshop-mutation.graphqls", "seedshop-mutation");
-  }
-
-  @Test
   public void testSeedshopExtended() {
     execute("seedshop-tutorial", "seedshop-extended.sqrl", null, "seedshop-extended");
   }

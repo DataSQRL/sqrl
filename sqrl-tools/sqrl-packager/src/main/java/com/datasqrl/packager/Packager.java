@@ -329,7 +329,8 @@ public class Packager {
     Map<String, Object> templateConfig = new HashMap<>();
 //    templateConfig.put("testPlan", testPlan);
 //    templateConfig.put("plan", plan);
-    templateConfig.put("config", sqrlConfig.toMap());
+    templateConfig.put("config", sqrlConfig.toMap()); //Add SQRL config
+    templateConfig.put("environment", System.getenv()); //Add environmental variables
     templateConfig.putAll(plans);
     mountDirectory.map(m->templateConfig.put("mountDir", m.toAbsolutePath().toString()));
     // Copy each file and directory from the profile path to the target directory

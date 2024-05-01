@@ -1,5 +1,6 @@
 {
-  "version": 1,
+  "version": "1",
+  "enabled-engines": ["vertx", "postgres", "kafka", "flink"],
   "values" : {
     "flink-config": {
       "table.exec.source.idle-timeout": "1000 ms"
