@@ -57,8 +57,10 @@ dependencies {
     testImplementation platform('org.junit:junit-bom:5.9.1')
     testImplementation 'org.junit.jupiter:junit-jupiter'
 
+    testImplementation "org.apache.flink:flink-statebackend-rocksdb:$flinkVersion"
     testImplementation "org.apache.flink:flink-table-planner_2.12:$flinkVersion"
     testImplementation "org.apache.flink:flink-runtime-web:$flinkVersion"
+    testRuntimeOnly fileTree(dir: 'lib', include: '*.jar')
 }
 
 test {

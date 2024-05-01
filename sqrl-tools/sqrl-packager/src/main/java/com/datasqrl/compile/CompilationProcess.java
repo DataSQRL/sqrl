@@ -59,7 +59,7 @@ public class CompilationProcess {
 
     planner.plan(mainScript, composite);
     postcompileHooks();
-    Optional<APISource> source = inferencePostcompileHook.run();
+    Optional<APISource> source = inferencePostcompileHook.run(testsPath);
     SqrlDAG dag = dagPlanner.planLogical();
     PhysicalDAGPlan dagPlan = dagPlanner.planPhysical(dag);
 
