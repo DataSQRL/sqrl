@@ -80,7 +80,7 @@ Schema:
 Post Processors:
  - sort: #1: numPackages BIGINT DESC
 Plan:
-LogicalAggregate(group=[{0}], numPackages=[COUNT()], __timestamp=[MAX($2)])
+LogicalAggregate(group=[{0}], numPackages=[COUNT(DISTINCT $1)], __timestamp=[MAX($2)])
   LogicalProject(topicName=[$19], name=[$0], submissionTime=[$15])
     LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{16}])
       LogicalTableScan(table=[[submission$2]])
@@ -98,7 +98,7 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT()], __timestamp=[MAX($2)])
     "CREATE VIEW `table$1`\nAS\nSELECT `name`, `submissionTime` AS `_submissionTime`\nFROM `submission$1`;",
     "CREATE VIEW `table$2`\nAS\nSELECT `name`, `version`, `variant`, `latest`, `type`, `license`, `repository`, `homepage`, `documentation`, `readme`, `description`, `uniqueId`, `file`, `hash`, `authorid`, `submissionTime`, TOJSON(`keywords`) AS `keywords`, COALESCE(`variant`, 'default') AS `variant0`, CONCAT('https://repository.datasqrl.com/', `file`) AS `repoURL`\nFROM `submission$1`;",
     "CREATE VIEW `table$3`\nAS\nSELECT `$cor0`.`name` AS `pkgName`, `t10`.`name` AS `topicName`, COUNT(*) AS `numSubmissions`, MAX(`$cor0`.`submissionTime`) AS `lastSubmission`\nFROM (SELECT `name`, `version`, `variant`, `latest`, `type`, `license`, `repository`, `homepage`, `documentation`, `readme`, `description`, `uniqueId`, `file`, `hash`, `authorid`, `submissionTime`, `keywords`, COALESCE(`variant`, 'default') AS `variant0`, CONCAT('https://repository.datasqrl.com/', `file`) AS `repoURL`\nFROM `submission$1`) AS `$cor0`,\nUNNEST(`$cor0`.`keywords`) AS `t10`\nGROUP BY `$cor0`.`name`, `t10`.`name`;",
-    "CREATE VIEW `table$4`\nAS\nSELECT `t10`.`name` AS `topicName`, COUNT(*) AS `numPackages`, MAX(`$cor1`.`submissionTime`) AS `__timestamp`\nFROM (SELECT `name`, `version`, `variant`, `latest`, `type`, `license`, `repository`, `homepage`, `documentation`, `readme`, `description`, `uniqueId`, `file`, `hash`, `authorid`, `submissionTime`, `keywords`, COALESCE(`variant`, 'default') AS `variant0`, CONCAT('https://repository.datasqrl.com/', `file`) AS `repoURL`\nFROM `submission$1`) AS `$cor1`,\nUNNEST(`$cor1`.`keywords`) AS `t10`\nGROUP BY `t10`.`name`;",
+    "CREATE VIEW `table$4`\nAS\nSELECT `t10`.`name` AS `topicName`, COUNT(DISTINCT `$cor1`.`name`) AS `numPackages`, MAX(`$cor1`.`submissionTime`) AS `__timestamp`\nFROM (SELECT `name`, `version`, `variant`, `latest`, `type`, `license`, `repository`, `homepage`, `documentation`, `readme`, `description`, `uniqueId`, `file`, `hash`, `authorid`, `submissionTime`, `keywords`, COALESCE(`variant`, 'default') AS `variant0`, CONCAT('https://repository.datasqrl.com/', `file`) AS `repoURL`\nFROM `submission$1`) AS `$cor1`,\nUNNEST(`$cor1`.`keywords`) AS `t10`\nGROUP BY `t10`.`name`;",
     "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `package$1`\n(SELECT *\nFROM `table$1`)\n;\nINSERT INTO `submission$2`\n(SELECT *\nFROM `table$2`)\n;\nINSERT INTO `topicpackages$1`\n(SELECT *\nFROM `table$3`)\n;\nINSERT INTO `topicsearch$1`\n(SELECT *\nFROM `table$4`)\n;\nEND;"
   ],
   "connectors" : [
