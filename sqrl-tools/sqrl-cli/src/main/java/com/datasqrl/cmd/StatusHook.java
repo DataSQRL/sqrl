@@ -49,7 +49,6 @@ public interface StatusHook {
     @Override
     public void onFailure(Exception e, ErrorCollector errors) {
       failed = true;
-      e.printStackTrace();
     }
 
     @Override
