@@ -447,7 +447,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
 
   public Result visitAugmentedTable(SqlCall node, Context context) {
     Result result = SqlNodeVisitor.accept(this, node.getOperandList().get(0), context);
-    SqlCall call = node.getOperator().createCall(node.getParserPosition(), result.sqlNode);
+    SqlCall call = node.getOperator().createCall(node.getFunctionQuantifier(), node.getParserPosition(), result.sqlNode);
     return new Result(call, result.currentPath, result.pullupColumns, result.tableReferences,
         result.condition, result.params);
   }
@@ -464,7 +464,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
 
     WalkExpressions walkExpressions = new WalkExpressions(context);
     SqlNode expr = node.getOperandList().get(1).accept(walkExpressions);
-    SqlCall call = node.getOperator().createCall(node.getParserPosition(),
+    SqlCall call = node.getOperator().createCall(node.getFunctionQuantifier(), node.getParserPosition(),
         query, expr, node.getOperandList().get(2),
         node.getOperandList().get(3));
 
