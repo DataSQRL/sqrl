@@ -327,8 +327,6 @@ public class Packager {
     }
 
     Map<String, Object> templateConfig = new HashMap<>();
-//    templateConfig.put("testPlan", testPlan);
-//    templateConfig.put("plan", plan);
     templateConfig.put("config", sqrlConfig.toMap()); //Add SQRL config
     templateConfig.put("environment", System.getenv()); //Add environmental variables
     templateConfig.putAll(plans);
@@ -355,11 +353,17 @@ public class Packager {
         if (sourcePath.getFileName().toString().equalsIgnoreCase("package.json")) continue;
 
         Path destinationPath = targetDir.resolve(profile.relativize(sourcePath)).toAbsolutePath();
-        if (Files.isDirectory(destinationPath) || Files.isRegularFile(destinationPath)) continue; //skip existing to allow overloads
+        if (Files.isDirectory(destinationPath) || Files.isRegularFile(trimFtl(destinationPath))) continue; //skip existing to allow overloads
 
         copy(profileEngineName, profile, targetDir, sourcePath, templateConfig);
       }
     }
+  }
+
+  private Path trimFtl(Path destinationPath) {
+    return destinationPath.getFileName().toString().endsWith(".ftl") ?
+        destinationPath.getParent().resolve(destinationPath.getFileName().toString().substring(0,destinationPath.getFileName().toString().length()-4 ))
+        : destinationPath;
   }
 
   @SneakyThrows
@@ -396,6 +400,7 @@ public class Packager {
     cfg.setDirectoryForTemplateLoading(path.getParent().toFile());
     cfg.setDefaultEncoding("UTF-8");
     cfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
+    cfg.setNumberFormat("computer");
 
     cfg.setSharedVariable("jsonEncode", new JsonEncoderMethod());
 

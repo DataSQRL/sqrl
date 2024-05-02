@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.EnvironmentSettings;
@@ -41,14 +42,11 @@ public class FlinkMain {
         .withConfiguration(Configuration.fromMap(flinkConfig)).build();
     StreamTableEnvironment tEnv = StreamTableEnvironment.create(sEnv, tEnvConfig);
     TableResult tableResult = null;
-
-<#list flink["flinkSql"] as sql>
-    tableResult = tEnv.executeSql(replaceWithEnv(""
-        <#list sql?split("\n") as line>
-        + "${line?replace("\"", "\\\"")?replace("\\", "\\\\")} "
-        </#list>
-        ));
-</#list>
+    String[] statements = readResourceFile("flink.sql").split("\n\n");
+    for (String statement : statements) {
+      if (statement.trim().isEmpty()) continue;
+      tableResult = tEnv.executeSql(replaceWithEnv(statement));
+    }
     return tableResult;
   }
 
@@ -68,5 +66,15 @@ public class FlinkMain {
       matcher.appendTail(result);
 
       return result.toString();
+    }
+
+    private static String readResourceFile(String fileName) {
+      try (var inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(fileName);
+        BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+        return reader.lines().collect(Collectors.joining("\n"));
+      } catch (IOException | NullPointerException e) {
+        System.err.println("Error reading the resource file: " + e.getMessage());
+        throw new RuntimeException(e);
+      }
     }
 }

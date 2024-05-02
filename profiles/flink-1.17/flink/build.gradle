@@ -9,9 +9,9 @@ version '1.0-SNAPSHOT'
 sourceCompatibility = '11'
 
 ext {
-    flinkVersion = "1.18.1"
-    jdbcVersion = "3.1.2-1.18"
-    kafkaVersion = "3.1.0-1.18"
+    flinkVersion = "1.17.2"
+    jdbcVersion = "3.1.2-1.17"
+    kafkaVersion = "3.1.0-1.17"
     sqrlVersion = "0.5.0-RC2-SNAPSHOT"
 }
 
@@ -42,9 +42,7 @@ dependencies {
     implementation "run.sqrl:sqrl-text:$sqrlVersion"
     implementation "run.sqrl:sqrl-flexible-json:$sqrlVersion"
     implementation "run.sqrl:sqrl-vector:$sqrlVersion"
-//<#if flink["formats"]?seq_contains("jdbc-sqrl") || flink["connectors"]?seq_contains("jdbc-sqrl")>
-    implementation "run.sqrl:sqrl-jdbc-1.18:$sqrlVersion"
-//</#if>
+    implementation "run.sqrl:sqrl-jdbc-1.17:$sqrlVersion"
 
     // Log4j 2 dependencies
     implementation 'org.apache.logging.log4j:log4j-core:2.17.1'
