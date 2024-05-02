@@ -34,7 +34,7 @@ public class UseCasesIT {
     execute("conference", "conference.sqrl", "conference.graphqls");
   }
 
-  @Test
+  @Test //Done
   public void testRepository() {
     execute("repository", "repo.sqrl", "repo.graphqls");
   }
@@ -45,7 +45,7 @@ public class UseCasesIT {
   }
 
   @Test
-  @Disabled("need support for compressed data and csv")
+  @Disabled("need to update csv test data")
   public void testSensorsFull() {
     execute("sensors", "sensors-full.sqrl", null, "sensors-full");
   }

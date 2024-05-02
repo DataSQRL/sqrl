@@ -22,8 +22,7 @@ type Customers {
   purchases(limit: Int = 20, offset: Int = 0): [orders!]
   spending: [spending!]
   past_purchases(productid: Int): [past_purchases!]
-  product_visits: [product_visits!]
-  category_visits: [category_visits!]
+  productVisits: [productVisits!]
 }
 
 type items {
@@ -46,13 +45,8 @@ type past_purchases {
   total_quantity: Int!
 }
 
-type product_visits {
+type productVisits {
   productid: Int!
-  visits: Int!
-}
-
-type category_visits {
-  category: String!
   visits: Int!
 }
 

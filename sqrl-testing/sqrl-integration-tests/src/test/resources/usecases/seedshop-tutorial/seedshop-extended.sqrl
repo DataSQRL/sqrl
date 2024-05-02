@@ -32,6 +32,7 @@ Customers.past_purchases := SELECT i.productid, count(1) as num_orders,
 CustomerPurchaseTest := SELECT c.id, p.productid, count(*) as num
                         FROM Customers c JOIN c.past_purchases p
                         GROUP BY id, productid
+                        ORDER BY id ASC, productid ASC;
 
 --compute customer promotions and export for email
 CustomerPromotion := SELECT c.first_name, c.last_name, c.email, s.spend, s.saved
@@ -61,7 +62,7 @@ IMPORT text.textSearch;
 ProductSearch(@query: String) := SELECT p.*, textSearch(@query, name) as score
                                  FROM Products p
                                  WHERE textSearch(@query, name) > 0
-                                 ORDER BY score DESC;
+                                 ORDER BY score DESC, id ASC;
 
 ProductSearchWithId(@query: String, @id: Int) := SELECT * FROM Products WHERE textSearch(@query, name, category) > 0
-                                                                          AND id > @id;
+                                                                          AND id > @id ORDER BY id ASC;

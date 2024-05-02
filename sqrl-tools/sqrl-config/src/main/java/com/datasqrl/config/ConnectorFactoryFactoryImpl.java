@@ -68,7 +68,7 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
       if (!timestampType.equalsIgnoreCase("NONE")) {//!=TimestampType.NONE
         builder.setType(ExternalDataType.source_and_sink);
         builder.setTimestampColumn(timestampName);
-        builder.setWatermark(0);
+        builder.setWatermark(1);
         if (timestampType.equalsIgnoreCase("LOG_TIME")) {
           builder.setMetadata(timestampName, "TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)",
               "timestamp"); //todo fix?

@@ -3,7 +3,6 @@
   "flink" : {
     "format" : "csv",
     "path" : "/data/sensorreading.csv.gz",
-    "source.monitor-interval" : 1,
     "connector" : "filesystem"
   },
   "table" : {

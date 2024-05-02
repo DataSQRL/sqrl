@@ -186,7 +186,7 @@ public class Packager {
   private void preProcessFiles(PackageJson config) throws IOException {
     //Preprocessor will normalize files
     List<Preprocessor> processorList = ListUtils.union(List.of(new TablePreprocessor(),
-            new JsonlPreprocessor(),
+            new CopyStaticDataPreprocessor(),
             new JarPreprocessor(), new DataSystemPreprocessor(),// new PackageJsonPreprocessor(),
             new FlinkSqlPreprocessor()),
         ServiceLoaderDiscovery.getAll(Preprocessor.class));

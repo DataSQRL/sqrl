@@ -38,7 +38,7 @@ import org.apache.flink.core.fs.Path;
  */
 public class FilePath implements Serializable { //todo: move to io-core
 
-  private static final Set<String> COMPRESSION_EXTENSIONS = StandardDeCompressors.getCommonSuffixes()
+  public static final Set<String> COMPRESSION_EXTENSIONS = StandardDeCompressors.getCommonSuffixes()
       .stream()
       .map(String::toLowerCase).collect(Collectors.toSet());
 

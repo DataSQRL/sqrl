@@ -1,5 +1,5 @@
 query {
-    Sensors(limit: 10) {
+    Sensors(id: 9, limit: 10) {
         id
         machineid
         placed

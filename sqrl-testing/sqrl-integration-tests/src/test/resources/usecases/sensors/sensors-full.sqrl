@@ -5,9 +5,9 @@ IMPORT time.endOfSecond;           -- Import time function
 /* Aggregate sensor readings to second */
 SecReading := SELECT sensorid, endOfSecond(time) as timeSec,
         avg(temperature) as temp FROM SensorReading
-    GROUP BY sensorid, timeSec;
+    GROUP BY sensorid, timeSec ORDER BY timeSec DESC;
 
-SecReadingByTemp(@temp: Int) := SELECT * FROM SecReading WHERE temp > @temp;
+SecReadingByTemp(@temp: Int) := SELECT * FROM SecReading WHERE temp > @temp ORDER BY timeSec ASC;
 
 /* Create table of sensors and relate to readings */
 Sensors := DISTINCT Sensors ON id  ORDER BY placed DESC;

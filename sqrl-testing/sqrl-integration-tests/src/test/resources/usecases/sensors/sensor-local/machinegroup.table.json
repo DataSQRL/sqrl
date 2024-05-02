@@ -1,9 +1,8 @@
 {
   "version": 1,
   "flink" : {
-    "format" : "json",
+    "format" : "flexible-json",
     "path" : "/data/machinegroup.jsonl.gz",
-    "source.monitor-interval" : 1,
     "connector" : "filesystem"
   },
   "table" : {

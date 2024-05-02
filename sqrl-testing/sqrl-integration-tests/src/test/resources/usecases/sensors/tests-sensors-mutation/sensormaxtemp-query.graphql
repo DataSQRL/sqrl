@@ -1,5 +1,13 @@
 query {
-    SensorMaxTemp(sensorid: 2) {
+    Sensor1: SensorMaxTemp(sensorid: 1) {
+        sensorid
+        maxTemp
+    }
+    Sensor2: SensorMaxTemp(sensorid: 2) {
+        sensorid
+        maxTemp
+    }
+    Sensor3: SensorMaxTemp(sensorid: 3) {
         sensorid
         maxTemp
     }

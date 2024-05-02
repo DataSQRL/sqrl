@@ -40,19 +40,9 @@ Products.monthly_by_country := SELECT c.country0 AS country, endOfMonth(o.time) 
       FROM @ JOIN _OrderItems o ON o.productid = @.id JOIN Customers c ON o.customerid =c.id
       GROUP BY country, month;
 
-Customers.product_visits := SELECT productid, count(1) as visits
-                            FROM @ JOIN ProductVisit v ON @.id = v.customerid
-                            WHERE v.event_time > now() - INTERVAL 5 MINUTE
-                            GROUP BY productid ORDER BY visits DESC;
+CustomerProductVisits := SELECT customerid, productid, count(1) as visits
+                            FROM ProductVisit
+                            WHERE event_time > now() - INTERVAL 5 MINUTE
+                            GROUP BY customerid, productid;
 
-Customers.category_visits := SELECT p.category, count(1) as visits
-                            FROM @ JOIN ProductVisit v ON @.id = v.customerid
-                                   JOIN Products p ON v.productid = p.id
-                            WHERE v.event_time > now() - INTERVAL 5 MINUTE
-                            GROUP BY category ORDER BY visits DESC;
-
-/*+test */
-TestCustomerProductVisit := SELECT * FROM Customers c JOIN c.product_visits;
-
-/*+test */
-TestCustomerCategoryVisit := SELECT * FROM Customers c JOIN c.category_visits;
+Customers.productVisits := JOIN CustomerProductVisits v ON v.customerid = @.id ORDER BY visits DESC;

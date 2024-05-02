@@ -1,5 +1,5 @@
 query {
-    SecReadingByTemp(temp: 30) {
+    SecReadingByTemp(temp: 35) {
         sensorid
         timeSec
         temp

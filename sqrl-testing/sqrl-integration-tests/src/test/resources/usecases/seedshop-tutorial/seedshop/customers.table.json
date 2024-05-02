@@ -3,7 +3,6 @@
   "flink" : {
     "format" : "flexible-json",
     "path" : "/data/customers.jsonl",
-    "source.monitor-interval" : 1,
     "connector" : "filesystem"
   },
   "table" : {

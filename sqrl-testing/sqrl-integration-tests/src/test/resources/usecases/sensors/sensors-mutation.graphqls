@@ -6,7 +6,7 @@ type Query {
 type SecReading {
   sensorid: Int!
   timeSec: String!
-  temp: Float!
+  temperature: Float!
 }
 
 type SensorMaxTemp {
@@ -35,5 +35,5 @@ type Subscription {
 type HighTempAlert {
   sensorid: Int!
   timeSec: String!
-  temp: Float!
+  temperature: Float!
 }
