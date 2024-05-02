@@ -77,8 +77,8 @@ public class UseCasesIT {
       argsList.add("--tests"); argsList.add("tests-"+testSuffix);
     }
     argsList.add("--nolookup");
-//    argsList.add("--profile");
-//    argsList.add("../../../../../../../profiles/flink-1.18");
+    argsList.add("--profile");
+    argsList.add("../../../../../../../profiles/flink-1.17");
     argsList.add("--profile");
     argsList.add("../../../../../../../profiles/flink-1.16");
     execute(RESOURCES.resolve(path),
