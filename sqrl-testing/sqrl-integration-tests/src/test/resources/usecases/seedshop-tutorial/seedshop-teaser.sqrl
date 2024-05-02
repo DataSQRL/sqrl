@@ -1,0 +1,10 @@
+IMPORT seedshop.Orders;
+IMPORT time.endOfWeek;
+
+CustomerSpending := SELECT customerid, endOfWeek(time) AS week,
+    sum(quantity * unit_price) AS total, sum(coalesce(discount, 0.0)) AS saved
+  FROM Orders GROUP BY customerid, week ORDER BY week DESC;
+
+ProductRevenue := SELECT productid, endOfWeek(time) AS week,
+    sum(quantity * unit_price - coalesce(discount, 0.0)) AS revenue
+  FROM Orders GROUP BY productid, week ORDER BY week DESC;

@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import lombok.Getter;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.rel2sql.FlinkRelToSqlConverter;
@@ -17,6 +18,7 @@ import org.apache.calcite.sql.SqlNode;
 @AutoService(RelToSqlNode.class)
 public class FlinkRelToSqlNode implements RelToSqlNode {
 
+  @Getter
   AtomicInteger atomicInteger = new AtomicInteger();
 
   @Override

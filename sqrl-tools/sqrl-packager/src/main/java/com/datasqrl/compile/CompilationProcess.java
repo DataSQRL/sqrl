@@ -47,7 +47,7 @@ public class CompilationProcess {
   private final ExecutionPipeline pipeline;
   private final TestPlanner testPlanner;
 
-  public Pair<PhysicalPlan, TestPlan> executeCompilation(Path testsPath) {
+  public Pair<PhysicalPlan, TestPlan> executeCompilation(Optional<Path> testsPath) {
     pipeline.getStage(Type.SERVER)
         .flatMap(p->graphqlSourceFactory.get())
         .ifPresent(graphQLMutationExtraction::analyze);
@@ -59,7 +59,7 @@ public class CompilationProcess {
 
     planner.plan(mainScript, composite);
     postcompileHooks();
-    Optional<APISource> source = inferencePostcompileHook.run();
+    Optional<APISource> source = inferencePostcompileHook.run(testsPath);
     SqrlDAG dag = dagPlanner.planLogical();
     PhysicalDAGPlan dagPlan = dagPlanner.planPhysical(dag);
 
@@ -68,7 +68,7 @@ public class CompilationProcess {
 
     //create test artifact
     TestPlan testPlan;
-    if (Files.isDirectory(testsPath) && source.isPresent() && executionGoal == ExecutionGoal.TEST) {
+    if (source.isPresent() && executionGoal == ExecutionGoal.TEST) {
       testPlan = testPlanner.generateTestPlan(source.get(), testsPath);
     } else {
       testPlan = null;

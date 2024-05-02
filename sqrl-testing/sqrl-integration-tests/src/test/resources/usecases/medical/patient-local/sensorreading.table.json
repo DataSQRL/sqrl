@@ -3,9 +3,7 @@
   "flink" : {
     "format" : "csv",
     "path" : "/mnt/build/data",
-    "source.monitor-interval" : 0,
-    "connector" : "filesystem",
-    "source.path.regex-pattern" : "to be determined"
+    "connector" : "filesystem"
   },
   "table" : {
     "type" : "source",

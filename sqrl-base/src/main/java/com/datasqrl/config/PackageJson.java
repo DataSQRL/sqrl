@@ -14,8 +14,6 @@ public interface PackageJson {
 
   void setPipeline(List<String> pipeline);
 
-  TestConfig getTest();
-
   EnginesConfig getEngines();
 
   DiscoveryConfig getDiscovery();
@@ -104,11 +102,6 @@ public interface PackageJson {
     public ConnectorsConfig getConnectors() {
       return null;
     }
-  }
-
-  interface TestConfig {
-    int getDurationSec();
-    int getDelaySec();
   }
 
   interface DependenciesConfig {

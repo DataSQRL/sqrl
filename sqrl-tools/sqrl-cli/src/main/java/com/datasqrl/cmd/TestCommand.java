@@ -32,20 +32,22 @@ import picocli.CommandLine;
 @CommandLine.Command(name = "test", description = "Tests a SQRL script")
 public class TestCommand extends AbstractCompilerCommand {
   @CommandLine.Option(names = {"-s", "--snapshot"},
-      description = "Snapshot path")
+      description = "Path to snapshots")
   protected Path snapshotPath = null;
   @CommandLine.Option(names = {"--tests"},
-      description = "Snapshot path")
+      description = "Path to test queries")
   protected Path tests = null;
 
   @SneakyThrows
   @Override
   public void execute(ErrorCollector errors) {
     super.execute(errors, this.profiles, snapshotPath == null ?
-        root.rootDir.resolve("snapshots") : snapshotPath,
-        tests == null ?
-            root.rootDir.resolve("tests") : tests, ExecutionGoal.TEST);
-
+        root.rootDir.resolve("snapshots") :
+            snapshotPath.isAbsolute() ? snapshotPath : root.rootDir.resolve(snapshotPath),
+        tests == null ? (Files.isDirectory(root.rootDir.resolve("tests")) ?
+            Optional.of(root.rootDir.resolve("tests")) : Optional.empty()) :
+            Optional.of((tests.isAbsolute() ? tests : root.rootDir.resolve(tests))),
+        ExecutionGoal.TEST);
   }
 
   @SneakyThrows

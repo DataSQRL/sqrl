@@ -1,9 +1,0 @@
-{
-Package(name: "datasqrl.seedshop") {
-    versions(version: "0.1.1", variant: "dev") {
-        version
-        file
-        hash
-        submissionTime
-    }
-}}

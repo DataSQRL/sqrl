@@ -29,13 +29,9 @@ public class JsonObjectAgg extends AggregateFunction<Object, ObjectAgg> {
 
   public void accumulate(ObjectAgg accumulator, String key, @DataTypeHint(inputGroup = InputGroup.ANY) Object value) {
     if (value instanceof FlinkJsonType) {
-      try {
-        accumulateObject(accumulator, key, mapper.readTree(((FlinkJsonType)value).getJson()));
-      } catch (JsonProcessingException e) {
-        throw new RuntimeException(e);
-      }
+      accumulateObject(accumulator, key, ((FlinkJsonType)value).getJson());
     } else {
-      accumulator.add(key, value);
+      accumulator.add(key, mapper.getNodeFactory().pojoNode(value));
     }
   }
 
@@ -52,7 +48,7 @@ public class JsonObjectAgg extends AggregateFunction<Object, ObjectAgg> {
   }
 
   public void accumulateObject(ObjectAgg accumulator, String key, Object value) {
-    accumulator.add(key, value);
+    accumulator.add(key, mapper.getNodeFactory().pojoNode(value));
   }
 
   public void retract(ObjectAgg accumulator, String key, String value) {
@@ -82,18 +78,8 @@ public class JsonObjectAgg extends AggregateFunction<Object, ObjectAgg> {
   @Override
   public FlinkJsonType getValue(ObjectAgg accumulator) {
     ObjectNode objectNode = mapper.createObjectNode();
-    accumulator.getObjects().forEach((key, value) -> {
-      if (value instanceof FlinkJsonType) {
-        try {
-          objectNode.set(key, mapper.readTree(((FlinkJsonType) value).json));
-        } catch (JsonProcessingException e) {
-          // Ignore value
-        }
-      } else {
-        objectNode.putPOJO(key, value);
-      }
-    });
-    return new FlinkJsonType(objectNode.toString());
+    accumulator.getObjects().forEach(objectNode::putPOJO);
+    return new FlinkJsonType(objectNode);
   }
 
 }

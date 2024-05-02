@@ -3,8 +3,8 @@ scalar DateTime
 type Query {
     Events(limit: Int!, offset: Int = 0): [Events!]!
     EventsLiked(userid: String!): [EventsLiked!]!
-    RecommendedEvents(userid: String!): [RecommendedEvents!]
-    PersonalizedEventSearch(query: String!, userid: String!): [PersonalizedEventSearch!]
+    RecommendedEvents(userid: String!, limit: Int!=10): [RecommendedEvents!]
+    PersonalizedEventSearch(query: String!, userid: String!, limit: Int!=10): [PersonalizedEventSearch!]
 }
 
 

@@ -3,7 +3,6 @@
   "flink" : {
     "format" : "flexible-json",
     "path" : "/data/repodata.jsonl",
-    "source.monitor-interval" : 1,
     "connector" : "filesystem"
   },
   "table" : {

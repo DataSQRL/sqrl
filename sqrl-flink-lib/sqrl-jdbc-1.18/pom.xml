@@ -15,7 +15,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <flink.version>1.18.1</flink.version>
   </properties>
-  <description>Jdbc sink for flink 1.16</description>
+  <description>Jdbc sink for flink 1.18</description>
 
   <url>https://www.datasqrl.com/</url>
   <licenses>

@@ -163,6 +163,15 @@ public class GraphqlQueryBuilder {
     if (functions.size() == 1 && getExternalParams(functions.get(0).getParameters()).size() == 0) {
       List<SqlOperator> operators = getOperators(macro.getDisplayName(), List.of(),
           getInternalParams(functions.get(0).getParameters()));
+      if (operators.isEmpty()) {
+        throw new RuntimeException(String.format(
+            "Could not find operator: %s(%s)", macro.getDisplayName(), getInternalParams(functions.get(0).getParameters()).stream()
+                .map(SqrlFunctionParameter::getName)
+                .collect(Collectors.joining(","))));
+      } else if (operators.size() > 1) {
+        throw new RuntimeException(String.format(
+            "Ambiguous operator: %s", macro.getDisplayName()));
+      }
       return Pair.of((SqlUserDefinedTableFunction) Iterables.getOnlyElement(operators), true);
     }
 

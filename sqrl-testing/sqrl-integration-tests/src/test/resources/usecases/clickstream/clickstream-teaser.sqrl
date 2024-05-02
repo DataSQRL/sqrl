@@ -13,4 +13,7 @@ VisitAfter := SELECT b.url AS beforeURL, a.url AS afterURL,
 Recommendation := SELECT beforeURL AS url, afterURL AS rec,
     count(1) AS frequency FROM VisitAfter
     GROUP BY url, rec ORDER BY url ASC, frequency DESC;
-
+/*+test */
+RankTest := SELECT url, count(1) AS total
+            FROM Click
+            GROUP BY url ORDER BY total DESC;

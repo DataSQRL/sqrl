@@ -87,13 +87,13 @@ public class VertxContext implements Context {
           .findFirst().map(Entry::getValue).get();
       //Add UUID for event
       UUID uuid = UUID.randomUUID();
-      entry.put(ReservedName.MUTATION_TIME.getDisplay(), uuid);
+      entry.put(ReservedName.MUTATION_PRIMARY_KEY.getDisplay(), uuid);
 
       emitter.send(entry)
           .onSuccess(sinkResult->{
             //Add timestamp from sink to result
             ZonedDateTime dateTime = ZonedDateTime.ofInstant(sinkResult.getSourceTime(), ZoneOffset.UTC);
-            entry.put(ReservedName.MUTATION_PRIMARY_KEY.getCanonical(), dateTime.toLocalDateTime());
+            entry.put(ReservedName.MUTATION_TIME.getCanonical(), dateTime.toLocalDateTime());
 
             fut.complete(entry);
           })

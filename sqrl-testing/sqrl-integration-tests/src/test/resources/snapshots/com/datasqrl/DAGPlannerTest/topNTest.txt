@@ -14,8 +14,8 @@ Schema:
 Plan:
 LogicalTableScan(table=[[customer$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
-=== Customer
-ID:     customer$3
+=== CustomerDistinct
+ID:     customerdistinct$1
 Type:   state
 Stage:  streams
 Inputs: customer$2
@@ -32,6 +32,83 @@ Post Processors:
 Plan:
 LogicalTableScan(table=[[customer$2]])
 
+=== CustomerId
+ID:     customerid$1
+Type:   state
+Stage:  streams
+Inputs: customer$2
+Primary Key: customerid
+Timestamp  : _timestamp
+Schema:
+ - customerid: BIGINT NOT NULL
+ - _timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Post Processors:
+ - topN: partition=customerid limit=1 sort=#1: _timestamp TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
+Plan:
+LogicalProject(customerid=[$0], _timestamp=[$4])
+  LogicalTableScan(table=[[customer$2]])
+
+=== CustomerOrders
+ID:     customerorders$1
+Type:   stream
+Stage:  streams
+Inputs: customerid$1, orders$2
+Primary Key: id, _time
+Timestamp  : _time
+Schema:
+ - id: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - _time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Plan:
+LogicalProject(id=[$0], customerid=[$4], _time=[$2])
+  LogicalJoin(condition=[=($1, $4)], joinType=[inner]) hints[TemporalJoinHint options:[2]]
+    LogicalTableScan(table=[[orders$2]])
+    LogicalFilter(condition=[=($2, 1)]) hints[DedupHint]
+      LogicalProject(customerid=[$0], _timestamp=[$1], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $1 DESC NULLS LAST)])
+        LogicalTableScan(table=[[customerid$1]])
+
+=== distinctOrders
+ID:     distinctorders$1
+Type:   state
+Stage:  streams
+Inputs: customerdistinct$1, orders$2
+Primary Key: __pk1$customerid, id
+Timestamp  : _time
+Schema:
+ - __pk1$customerid: BIGINT NOT NULL
+ - id: BIGINT NOT NULL
+ - _time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Post Processors:
+ - topN: partition=__pk1$customerid limit=10 sort=#1: id BIGINT DESC distinct
+Plan:
+LogicalProject(__pk1$customerid=[$4], id=[$0], _time=[$2])
+  LogicalJoin(condition=[=($4, $1)], joinType=[inner]) hints[TemporalJoinHint options:[2]]
+    LogicalTableScan(table=[[orders$2]])
+    LogicalFilter(condition=[=($5, 1)]) hints[DedupHint]
+      LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
+        LogicalTableScan(table=[[customerdistinct$1]])
+
+=== distinctOrdersTime
+ID:     distinctorderstime$1
+Type:   state
+Stage:  streams
+Inputs: customerdistinct$1, orders$2
+Primary Key: __pk1$customerid, id, time
+Timestamp  : time
+Schema:
+ - __pk1$customerid: BIGINT NOT NULL
+ - id: BIGINT NOT NULL
+ - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Post Processors:
+ - topN: partition=__pk1$customerid limit=10 sort=#2: time TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC distinct
+Plan:
+LogicalProject(__pk1$customerid=[$4], id=[$0], time=[$2])
+  LogicalJoin(condition=[=($4, $1)], joinType=[inner]) hints[TemporalJoinHint options:[2]]
+    LogicalTableScan(table=[[orders$2]])
+    LogicalFilter(condition=[=($5, 1)]) hints[DedupHint]
+      LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
+        LogicalTableScan(table=[[customerdistinct$1]])
+
 === Orders
 ID:     orders$2
 Type:   stream
@@ -45,6 +122,23 @@ Schema:
  - entries: RecordType(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
 Plan:
 LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[2]]]]) hints[WatermarkHint options:[2]]
+
+=== Orders
+ID:     orders$3
+Type:   state
+Stage:  streams
+Inputs: orders$2
+Primary Key: id
+Timestamp  : time
+Schema:
+ - id: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - entries: RecordType(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+Post Processors:
+ - topN: partition=id limit=1 sort=#2: time TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
+Plan:
+LogicalTableScan(table=[[orders$2]])
 
 === Product
 ID:     product$2
@@ -66,7 +160,7 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
 ID:     recentorders$1
 Type:   state
 Stage:  streams
-Inputs: customer$3, orders$2
+Inputs: customerdistinct$1, orders$2
 Primary Key: __pk1$customerid, id, time
 Timestamp  : time
 Schema:
@@ -81,7 +175,7 @@ LogicalProject(__pk1$customerid=[$4], id=[$0], time=[$2])
     LogicalTableScan(table=[[orders$2]])
     LogicalFilter(condition=[=($5, 1)]) hints[DedupHint]
       LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
-        LogicalTableScan(table=[[customer$3]])
+        LogicalTableScan(table=[[customerdistinct$1]])
 
 >>>flink.json
 {
@@ -104,12 +198,29 @@ LogicalProject(__pk1$customerid=[$4], id=[$0], time=[$2])
     "CREATE TEMPORARY TABLE `orders$1` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,\n  PRIMARY KEY (`id`, `time`) NOT ENFORCED,\n  WATERMARK FOR `time` AS (`time` - INTERVAL '0.001' SECOND)\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
     "CREATE TEMPORARY TABLE `product$1` (\n  `productid` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `_uuid` AS UUID(),\n  PRIMARY KEY (`_uuid`) NOT ENFORCED,\n  WATERMARK FOR `_ingest_time` AS (`_ingest_time` - INTERVAL '0.001' SECOND)\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
     "CREATE TEMPORARY TABLE `customer$1` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `timestamp` AS EPOCHTOTIMESTAMP(`lastUpdated`),\n  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,\n  WATERMARK FOR `timestamp` AS (`timestamp` - INTERVAL '0.001' SECOND)\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
-    "CREATE TEMPORARY TABLE `customer$3` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`customerid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'customer$3',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `orders$2` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  PRIMARY KEY (`id`, `time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orders$2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `customer$2` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'customer$2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `customerdistinct$1` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`customerid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'customerdistinct$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `customerid$1` (\n  `customerid` BIGINT NOT NULL,\n  `_timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`customerid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'customerid$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `customerorders$1` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`, `_time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'customerorders$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `distinctorders$1` (\n  `__pk1$customerid` BIGINT NOT NULL,\n  `id` BIGINT NOT NULL,\n  `_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`__pk1$customerid`, `id`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'distinctorders$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `distinctorderstime$1` (\n  `__pk1$customerid` BIGINT NOT NULL,\n  `id` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`__pk1$customerid`, `id`, `time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'distinctorderstime$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `orders$3` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  PRIMARY KEY (`id`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orders$3',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `product$2` (\n  `productid` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,\n  PRIMARY KEY (`_uuid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'product$2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `recentorders$1` (\n  `__pk1$customerid` BIGINT NOT NULL,\n  `id` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`__pk1$customerid`, `id`, `time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'recentorders$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, (ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC NULLS LAST)) AS `_rownum`\nFROM `customer$1`) AS `t`\nWHERE (`_rownum` = 1);",
-    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer$3`\n(SELECT *\nFROM `customer$1`)\n;\nINSERT INTO `orders$2`\n(SELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders$1`)\n;\nINSERT INTO `product$2`\n(SELECT *\nFROM `product$1`)\n;\nINSERT INTO `recentorders$1`\n(SELECT `t0`.`customerid` AS `__pk1$customerid`, `$cor0`.`id`, `$cor0`.`time`\nFROM `orders$1` AS `$cor0`\nINNER JOIN `table$1` FOR SYSTEM_TIME AS OF `$cor0`.`time` AS `t0` ON (`t0`.`customerid` = `$cor0`.`customerid`))\n;\nEND;"
+    "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `customer$1`;",
+    "CREATE VIEW `table$2`\nAS\nSELECT *\nFROM `customer$1`;",
+    "CREATE VIEW `table$3`\nAS\nSELECT `customerid`, `timestamp` AS `_timestamp`\nFROM `customer$1`;",
+    "CREATE VIEW `table$4`\nAS\nSELECT *\nFROM (SELECT `customerid`, `_timestamp`, (ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `_timestamp` DESC NULLS LAST)) AS `_rownum`\nFROM (SELECT `customerid`, `timestamp` AS `_timestamp`\nFROM `customer$1`) AS `t`) AS `t0`\nWHERE (`_rownum` = 1);",
+    "CREATE VIEW `table$5`\nAS\nSELECT `$cor0`.`id`, `t1`.`customerid`, `$cor0`.`time` AS `_time`\nFROM `orders$1` AS `$cor0`\nINNER JOIN `table$4` FOR SYSTEM_TIME AS OF `$cor0`.`time` AS `t1` ON (`$cor0`.`customerid` = `t1`.`customerid`);",
+    "CREATE VIEW `table$6`\nAS\nSELECT *\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, (ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC NULLS LAST)) AS `_rownum`\nFROM `customer$1`) AS `t`\nWHERE (`_rownum` = 1);",
+    "CREATE VIEW `table$7`\nAS\nSELECT `t0`.`customerid` AS `__pk1$customerid`, `$cor1`.`id`, `$cor1`.`time` AS `_time`\nFROM `orders$1` AS `$cor1`\nINNER JOIN `table$6` FOR SYSTEM_TIME AS OF `$cor1`.`time` AS `t0` ON (`t0`.`customerid` = `$cor1`.`customerid`);",
+    "CREATE VIEW `table$8`\nAS\nSELECT *\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, (ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC NULLS LAST)) AS `_rownum`\nFROM `customer$1`) AS `t`\nWHERE (`_rownum` = 1);",
+    "CREATE VIEW `table$9`\nAS\nSELECT `t0`.`customerid` AS `__pk1$customerid`, `$cor2`.`id`, `$cor2`.`time`\nFROM `orders$1` AS `$cor2`\nINNER JOIN `table$8` FOR SYSTEM_TIME AS OF `$cor2`.`time` AS `t0` ON (`t0`.`customerid` = `$cor2`.`customerid`);",
+    "CREATE VIEW `table$10`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders$1`;",
+    "CREATE VIEW `table$11`\nAS\nSELECT *\nFROM `product$1`;",
+    "CREATE VIEW `table$12`\nAS\nSELECT *\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, (ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC NULLS LAST)) AS `_rownum`\nFROM `customer$1`) AS `t`\nWHERE (`_rownum` = 1);",
+    "CREATE VIEW `table$13`\nAS\nSELECT `t0`.`customerid` AS `__pk1$customerid`, `$cor3`.`id`, `$cor3`.`time`\nFROM `orders$1` AS `$cor3`\nINNER JOIN `table$12` FOR SYSTEM_TIME AS OF `$cor3`.`time` AS `t0` ON (`t0`.`customerid` = `$cor3`.`customerid`);",
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer$2`\n(SELECT *\nFROM `table$1`)\n;\nINSERT INTO `customerdistinct$1`\n(SELECT *\nFROM `table$2`)\n;\nINSERT INTO `customerid$1`\n(SELECT *\nFROM `table$3`)\n;\nINSERT INTO `customerorders$1`\n(SELECT *\nFROM `table$5`)\n;\nINSERT INTO `distinctorders$1`\n(SELECT *\nFROM `table$7`)\n;\nINSERT INTO `distinctorderstime$1`\n(SELECT *\nFROM `table$9`)\n;\nINSERT INTO `orders$3`\n(SELECT *\nFROM `table$10`)\n;\nINSERT INTO `product$2`\n(SELECT *\nFROM `table$11`)\n;\nINSERT INTO `recentorders$1`\n(SELECT *\nFROM `table$13`)\n;\nEND;"
   ],
   "connectors" : [
     "jdbc-sqrl",
@@ -127,7 +238,22 @@ LogicalProject(__pk1$customerid=[$4], id=[$0], time=[$2])
 {
   "ddl" : [
     {
-      "name" : "customer$3",
+      "name" : "customer$2",
+      "columns" : [
+        "\"customerid\" BIGINT NOT NULL",
+        "\"email\" TEXT NOT NULL",
+        "\"name\" TEXT NOT NULL",
+        "\"lastUpdated\" BIGINT NOT NULL",
+        "\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"customerid\"",
+        "\"lastUpdated\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS customer$2 (\"customerid\" BIGINT NOT NULL,\"email\" TEXT NOT NULL,\"name\" TEXT NOT NULL,\"lastUpdated\" BIGINT NOT NULL,\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\",\"lastUpdated\"));"
+    },
+    {
+      "name" : "customerdistinct$1",
       "columns" : [
         "\"customerid\" BIGINT NOT NULL",
         "\"email\" TEXT NOT NULL",
@@ -138,10 +264,61 @@ LogicalProject(__pk1$customerid=[$4], id=[$0], time=[$2])
       "primaryKeys" : [
         "\"customerid\""
       ],
-      "sql" : "CREATE TABLE IF NOT EXISTS customer$3 (\"customerid\" BIGINT NOT NULL,\"email\" TEXT NOT NULL,\"name\" TEXT NOT NULL,\"lastUpdated\" BIGINT NOT NULL,\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\"));"
+      "sql" : "CREATE TABLE IF NOT EXISTS customerdistinct$1 (\"customerid\" BIGINT NOT NULL,\"email\" TEXT NOT NULL,\"name\" TEXT NOT NULL,\"lastUpdated\" BIGINT NOT NULL,\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\"));"
     },
     {
-      "name" : "orders$2",
+      "name" : "customerid$1",
+      "columns" : [
+        "\"customerid\" BIGINT NOT NULL",
+        "\"_timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"customerid\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS customerid$1 (\"customerid\" BIGINT NOT NULL,\"_timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\"));"
+    },
+    {
+      "name" : "customerorders$1",
+      "columns" : [
+        "\"id\" BIGINT NOT NULL",
+        "\"customerid\" BIGINT NOT NULL",
+        "\"_time\" TIMESTAMP WITH TIME ZONE NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"id\"",
+        "\"_time\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS customerorders$1 (\"id\" BIGINT NOT NULL,\"customerid\" BIGINT NOT NULL,\"_time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\",\"_time\"));"
+    },
+    {
+      "name" : "distinctorders$1",
+      "columns" : [
+        "\"__pk1$customerid\" BIGINT NOT NULL",
+        "\"id\" BIGINT NOT NULL",
+        "\"_time\" TIMESTAMP WITH TIME ZONE NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"__pk1$customerid\"",
+        "\"id\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS distinctorders$1 (\"__pk1$customerid\" BIGINT NOT NULL,\"id\" BIGINT NOT NULL,\"_time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"__pk1$customerid\",\"id\"));"
+    },
+    {
+      "name" : "distinctorderstime$1",
+      "columns" : [
+        "\"__pk1$customerid\" BIGINT NOT NULL",
+        "\"id\" BIGINT NOT NULL",
+        "\"time\" TIMESTAMP WITH TIME ZONE NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"__pk1$customerid\"",
+        "\"id\"",
+        "\"time\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS distinctorderstime$1 (\"__pk1$customerid\" BIGINT NOT NULL,\"id\" BIGINT NOT NULL,\"time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"__pk1$customerid\",\"id\",\"time\"));"
+    },
+    {
+      "name" : "orders$3",
       "columns" : [
         "\"id\" BIGINT NOT NULL",
         "\"customerid\" BIGINT NOT NULL",
@@ -149,10 +326,9 @@ LogicalProject(__pk1$customerid=[$4], id=[$0], time=[$2])
         "\"entries\" JSONB NOT NULL"
       ],
       "primaryKeys" : [
-        "\"id\"",
-        "\"time\""
+        "\"id\""
       ],
-      "sql" : "CREATE TABLE IF NOT EXISTS orders$2 (\"id\" BIGINT NOT NULL,\"customerid\" BIGINT NOT NULL,\"time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"entries\" JSONB NOT NULL , PRIMARY KEY (\"id\",\"time\"));"
+      "sql" : "CREATE TABLE IF NOT EXISTS orders$3 (\"id\" BIGINT NOT NULL,\"customerid\" BIGINT NOT NULL,\"time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"entries\" JSONB NOT NULL , PRIMARY KEY (\"id\"));"
     },
     {
       "name" : "product$2",
@@ -184,13 +360,13 @@ LogicalProject(__pk1$customerid=[$4], id=[$0], time=[$2])
       "sql" : "CREATE TABLE IF NOT EXISTS recentorders$1 (\"__pk1$customerid\" BIGINT NOT NULL,\"id\" BIGINT NOT NULL,\"time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"__pk1$customerid\",\"id\",\"time\"));"
     },
     {
-      "indexName" : "orders$2_hash_c2",
-      "tableName" : "orders$2",
+      "indexName" : "customer$2_hash_c3",
+      "tableName" : "customer$2",
       "columns" : [
-        "time"
+        "lastUpdated"
       ],
       "type" : "HASH",
-      "sql" : "CREATE INDEX IF NOT EXISTS orders$2_hash_c2 ON orders$2 USING hash (\"time\");"
+      "sql" : "CREATE INDEX IF NOT EXISTS customer$2_hash_c3 ON customer$2 USING hash (\"lastUpdated\");"
     }
   ]
 }
@@ -219,7 +395,137 @@ LogicalProject(__pk1$customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customer$3\"\nORDER BY \"customerid\"",
+              "sql" : "SELECT *\nFROM \"customer$2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\", \"lastUpdated\"",
+              "parameters" : [ ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "customerid"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "lastUpdated"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customer$2\"\nWHERE \"customerid\" = $1 AND \"lastUpdated\" = $2\nORDER BY \"timestamp\" DESC NULLS LAST, 1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "customerid"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "lastUpdated"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "lastUpdated"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"customer$2\"\nWHERE \"lastUpdated\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "lastUpdated"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "customerid"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"customer$2\"\nWHERE \"customerid\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"lastUpdated\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "customerid"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "CustomerDistinct",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"customerdistinct$1\"\nORDER BY \"customerid\"",
               "parameters" : [ ]
             }
           },
@@ -244,7 +550,7 @@ LogicalProject(__pk1$customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customer$3\"\nWHERE \"customerid\" = $1\nORDER BY 1",
+              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customerdistinct$1\"\nWHERE \"customerid\" = $1\nORDER BY 1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -258,8 +564,8 @@ LogicalProject(__pk1$customerid=[$4], id=[$0], time=[$2])
       },
       {
         "type" : "args",
-        "parentType" : "Customer",
-        "fieldName" : "recentOrders",
+        "parentType" : "CustomerDistinct",
+        "fieldName" : "distinctOrders",
         "matchs" : [
           {
             "arguments" : [
@@ -277,7 +583,7 @@ LogicalProject(__pk1$customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT *\n  FROM (SELECT \"__pk1$customerid\", \"id\", \"time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1$customerid\" ORDER BY \"time\" DESC) AS \"_rownum\"\n    FROM \"recentorders$1\") AS \"t\"\n  WHERE \"_rownum\" <= 10) AS \"t0\"\nWHERE \"__pk1$customerid\" = $1\nORDER BY \"__pk1$customerid\", \"_rownum\", \"id\", \"time\"",
+              "sql" : "SELECT \"__pk1$customerid\", \"id\", \"_time\"\nFROM (SELECT *\n  FROM (SELECT \"__pk1$customerid\", \"id\", \"_time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1$customerid\" ORDER BY \"id\" DESC) AS \"_rownum\", RANK() OVER (PARTITION BY \"__pk1$customerid\" ORDER BY \"id\" DESC) AS \"_rank\", DENSE_RANK() OVER (PARTITION BY \"__pk1$customerid\" ORDER BY \"id\" DESC) AS \"_denserank\"\n    FROM \"distinctorders$1\") AS \"t\"\n  WHERE \"_rownum\" = \"_rank\" AND \"_denserank\" <= 10) AS \"t0\"\nWHERE \"__pk1$customerid\" = $1\nORDER BY \"id\"",
               "parameters" : [
                 {
                   "type" : "source",
@@ -287,6 +593,244 @@ LogicalProject(__pk1$customerid=[$4], id=[$0], time=[$2])
               ]
             }
           },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"__pk1$customerid\", \"id\", \"_time\", 1 AS \"__pk\"\nFROM (SELECT *\n  FROM (SELECT *\n    FROM (SELECT \"__pk1$customerid\", \"id\", \"_time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1$customerid\" ORDER BY \"id\" DESC) AS \"_rownum\", RANK() OVER (PARTITION BY \"__pk1$customerid\" ORDER BY \"id\" DESC) AS \"_rank\", DENSE_RANK() OVER (PARTITION BY \"__pk1$customerid\" ORDER BY \"id\" DESC) AS \"_denserank\"\n      FROM \"distinctorders$1\") AS \"t\"\n    WHERE \"_rownum\" = \"_rank\" AND \"_denserank\" <= 10) AS \"t0\"\n  WHERE \"__pk1$customerid\" = $1) AS \"t1\"\nWHERE \"id\" = $2\nORDER BY 1",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "type" : "source",
+                  "key" : "customerid"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "id"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "distinctOrders",
+        "fieldName" : "parent",
+        "matchs" : [
+          {
+            "arguments" : [ ],
+            "query" : {
+              "type" : "JdbcQuery",
+              "type" : "JdbcQuery",
+              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customerdistinct$1\"\nWHERE \"customerid\" = $1\nORDER BY 1",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "type" : "source",
+                  "key" : "__pk1$customerid"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "CustomerDistinct",
+        "fieldName" : "distinctOrdersTime",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"__pk1$customerid\", \"id\", \"time\"\nFROM (SELECT *\n  FROM (SELECT \"__pk1$customerid\", \"id\", \"time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1$customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_rownum\", RANK() OVER (PARTITION BY \"__pk1$customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_rank\", DENSE_RANK() OVER (PARTITION BY \"__pk1$customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_denserank\"\n    FROM \"distinctorderstime$1\") AS \"t\"\n  WHERE \"_rownum\" = \"_rank\" AND \"_denserank\" <= 10) AS \"t0\"\nWHERE \"__pk1$customerid\" = $1\nORDER BY \"id\", \"time\"",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "type" : "source",
+                  "key" : "customerid"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "time"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"__pk1$customerid\", \"id\", \"time\"\nFROM (SELECT *\n  FROM (SELECT *\n    FROM (SELECT \"__pk1$customerid\", \"id\", \"time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1$customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_rownum\", RANK() OVER (PARTITION BY \"__pk1$customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_rank\", DENSE_RANK() OVER (PARTITION BY \"__pk1$customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_denserank\"\n      FROM \"distinctorderstime$1\") AS \"t\"\n    WHERE \"_rownum\" = \"_rank\" AND \"_denserank\" <= 10) AS \"t0\"\n  WHERE \"__pk1$customerid\" = $1) AS \"t1\"\nWHERE \"time\" = $2\nORDER BY \"id\"",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "type" : "source",
+                  "key" : "customerid"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "time"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"__pk1$customerid\", \"id\", \"time\"\nFROM (SELECT *\n  FROM (SELECT *\n    FROM (SELECT \"__pk1$customerid\", \"id\", \"time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1$customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_rownum\", RANK() OVER (PARTITION BY \"__pk1$customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_rank\", DENSE_RANK() OVER (PARTITION BY \"__pk1$customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_denserank\"\n      FROM \"distinctorderstime$1\") AS \"t\"\n    WHERE \"_rownum\" = \"_rank\" AND \"_denserank\" <= 10) AS \"t0\"\n  WHERE \"__pk1$customerid\" = $1) AS \"t1\"\nWHERE \"id\" = $2\nORDER BY \"time\"",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "type" : "source",
+                  "key" : "customerid"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "id"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "time"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"__pk1$customerid\", \"id\", \"time\", 1 AS \"__pk\"\nFROM (SELECT *\n  FROM (SELECT *\n    FROM (SELECT \"__pk1$customerid\", \"id\", \"time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1$customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_rownum\", RANK() OVER (PARTITION BY \"__pk1$customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_rank\", DENSE_RANK() OVER (PARTITION BY \"__pk1$customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_denserank\"\n      FROM \"distinctorderstime$1\") AS \"t\"\n    WHERE \"_rownum\" = \"_rank\" AND \"_denserank\" <= 10) AS \"t0\"\n  WHERE \"__pk1$customerid\" = $1) AS \"t1\"\nWHERE \"id\" = $2 AND \"time\" = $3\nORDER BY 1",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "type" : "source",
+                  "key" : "customerid"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "id"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "time"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "distinctOrdersTime",
+        "fieldName" : "parent",
+        "matchs" : [
+          {
+            "arguments" : [ ],
+            "query" : {
+              "type" : "JdbcQuery",
+              "type" : "JdbcQuery",
+              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customerdistinct$1\"\nWHERE \"customerid\" = $1\nORDER BY 1",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "type" : "source",
+                  "key" : "__pk1$customerid"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "CustomerDistinct",
+        "fieldName" : "recentOrders",
+        "matchs" : [
           {
             "arguments" : [
               {
@@ -319,42 +863,6 @@ LogicalProject(__pk1$customerid=[$4], id=[$0], time=[$2])
                   "type" : "arg",
                   "type" : "arg",
                   "path" : "id"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "time"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT *\n  FROM (SELECT *\n    FROM (SELECT \"__pk1$customerid\", \"id\", \"time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1$customerid\" ORDER BY \"time\" DESC) AS \"_rownum\"\n      FROM \"recentorders$1\") AS \"t\"\n    WHERE \"_rownum\" <= 10) AS \"t0\"\n  WHERE \"__pk1$customerid\" = $1) AS \"t1\"\nWHERE \"time\" = $2\nORDER BY \"__pk1$customerid\", \"_rownum\", \"id\"",
-              "parameters" : [
-                {
-                  "type" : "source",
-                  "type" : "source",
-                  "key" : "customerid"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "time"
                 }
               ]
             }
@@ -404,6 +912,68 @@ LogicalProject(__pk1$customerid=[$4], id=[$0], time=[$2])
                 }
               ]
             }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM (SELECT *\n  FROM (SELECT \"__pk1$customerid\", \"id\", \"time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1$customerid\" ORDER BY \"time\" DESC) AS \"_rownum\"\n    FROM \"recentorders$1\") AS \"t\"\n  WHERE \"_rownum\" <= 10) AS \"t0\"\nWHERE \"__pk1$customerid\" = $1\nORDER BY \"__pk1$customerid\", \"_rownum\", \"id\", \"time\"",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "type" : "source",
+                  "key" : "customerid"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "time"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM (SELECT *\n  FROM (SELECT *\n    FROM (SELECT \"__pk1$customerid\", \"id\", \"time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1$customerid\" ORDER BY \"time\" DESC) AS \"_rownum\"\n      FROM \"recentorders$1\") AS \"t\"\n    WHERE \"_rownum\" <= 10) AS \"t0\"\n  WHERE \"__pk1$customerid\" = $1) AS \"t1\"\nWHERE \"time\" = $2\nORDER BY \"__pk1$customerid\", \"_rownum\", \"id\"",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "type" : "source",
+                  "key" : "customerid"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "time"
+                }
+              ]
+            }
           }
         ]
       },
@@ -417,12 +987,128 @@ LogicalProject(__pk1$customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customer$3\"\nWHERE \"customerid\" = $1\nORDER BY 1",
+              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customerdistinct$1\"\nWHERE \"customerid\" = $1\nORDER BY 1",
               "parameters" : [
                 {
                   "type" : "source",
                   "type" : "source",
                   "key" : "__pk1$customerid"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "CustomerId",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "customerid"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"customerid\", \"_timestamp\", 1 AS \"__pk\"\nFROM \"customerid$1\"\nWHERE \"customerid\" = $1\nORDER BY 1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "customerid"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"customerid$1\"\nORDER BY \"customerid\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "CustomerOrders",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"customerorders$1\"\nORDER BY \"_time\" DESC NULLS LAST, \"id\"",
+              "parameters" : [ ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"customerorders$1\"\nWHERE \"id\" = $1\nORDER BY \"_time\" DESC NULLS LAST",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "id"
                 }
               ]
             }
@@ -455,7 +1141,7 @@ LogicalProject(__pk1$customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"orders$2\"\nWHERE \"id\" = $1\nORDER BY \"time\" DESC NULLS LAST",
+              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\nFROM \"orders$3\"\nWHERE \"id\" = $1\nORDER BY 1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -470,16 +1156,6 @@ LogicalProject(__pk1$customerid=[$4], id=[$0], time=[$2])
               {
                 "type" : "variable",
                 "type" : "variable",
-                "path" : "id"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "time"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
                 "path" : "limit"
               },
               {
@@ -491,69 +1167,7 @@ LogicalProject(__pk1$customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\nFROM \"orders$2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, 1",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "id"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "time"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "time"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"orders$2\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "time"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"orders$2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
+              "sql" : "SELECT *\nFROM \"orders$3\"\nORDER BY \"id\"",
               "parameters" : [ ]
             }
           }
@@ -592,7 +1206,7 @@ LogicalProject(__pk1$customerid=[$4], id=[$0], time=[$2])
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "type Customer {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n  recentOrders(id: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [recentOrders!]\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries(limit: Int = 10, offset: Int = 0): [entries!]\n}\n\ntype Product {\n  productid: Float!\n  name: String!\n  description: String!\n  category: String!\n}\n\ntype Query {\n  Customer(customerid: Float, limit: Int = 10, offset: Int = 0): [Customer!]\n  Orders(id: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [Orders!]\n  Product(limit: Int = 10, offset: Int = 0): [Product!]\n}\n\ntype entries {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n\ntype recentOrders {\n  id: Float!\n  time: DateTime!\n  parent: Customer!\n}\n"
+      "schema" : "type Customer {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n}\n\ntype CustomerDistinct {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n  distinctOrders(id: Float, limit: Int = 10, offset: Int = 0): [distinctOrders!]\n  distinctOrdersTime(id: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [distinctOrdersTime!]\n  recentOrders(id: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [recentOrders!]\n}\n\ntype CustomerId {\n  customerid: Float!\n}\n\ntype CustomerOrders {\n  id: Float!\n  customerid: Float!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries(limit: Int = 10, offset: Int = 0): [entries!]\n}\n\ntype Product {\n  productid: Float!\n  name: String!\n  description: String!\n  category: String!\n}\n\ntype Query {\n  Customer(customerid: Float, lastUpdated: Float, limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerDistinct(customerid: Float, limit: Int = 10, offset: Int = 0): [CustomerDistinct!]\n  CustomerId(customerid: Float, limit: Int = 10, offset: Int = 0): [CustomerId!]\n  CustomerOrders(id: Float, limit: Int = 10, offset: Int = 0): [CustomerOrders!]\n  Orders(id: Float, limit: Int = 10, offset: Int = 0): [Orders!]\n  Product(limit: Int = 10, offset: Int = 0): [Product!]\n}\n\ntype distinctOrders {\n  id: Float!\n  parent: CustomerDistinct!\n}\n\ntype distinctOrdersTime {\n  id: Float!\n  time: DateTime!\n  parent: CustomerDistinct!\n}\n\ntype entries {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n\ntype recentOrders {\n  id: Float!\n  time: DateTime!\n  parent: CustomerDistinct!\n}\n"
     }
   }
 }

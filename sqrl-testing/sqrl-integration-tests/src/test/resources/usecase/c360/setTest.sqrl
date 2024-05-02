@@ -1,5 +1,0 @@
-IMPORT time.*;
-IMPORT ecommerce-data.Customer TIMESTAMP epochToTimestamp(lastUpdated) as updateTime;
-IMPORT ecommerce-data.Orders TIMESTAMP _ingest_time;
-CombinedStream := SELECT o.customerid, o.time AS rowtime FROM Orders o UNION ALL SELECT c.customerid, c.updateTime AS rowtime FROM Customer c;
-StreamCount := SELECT endOfHour(rowtime) as hour, COUNT(1) as num FROM CombinedStream GROUP BY hour;

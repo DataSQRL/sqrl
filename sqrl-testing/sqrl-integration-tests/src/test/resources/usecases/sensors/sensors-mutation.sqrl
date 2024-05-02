@@ -1,0 +1,21 @@
+IMPORT sensors-mutation.AddReading AS SensorReading;
+IMPORT time.endOfSecond;  -- Import time function
+/* Aggregate sensor readings to second */
+SecReading := SELECT sensorid, endOfSecond(event_time) as timeSec,
+        avg(temperature) as temperature FROM SensorReading
+    GROUP BY sensorid, timeSec;
+/* Get max temperature in last minute */
+SensorMaxTemp := SELECT sensorid, max(temperature) as maxTemp
+    FROM SensorReading
+--    WHERE timeSec >= now() - INTERVAL 1 MINUTE
+    GROUP BY sensorid;
+/* Alert on high temperatures */
+HighTempAlert := SELECT * FROM SensorReading WHERE temperature > 50;
+/*+test */
+HighTempAlertTest := SELECT sensorid, temperature FROM HighTempAlert ORDER BY sensorid DESC;
+
+/*+test */
+SecReadingTest := SELECT COUNT(*) > 0 AS window_closed FROM SecReading;
+/* The SecReadingTest is a bit finicky and only works if the addreading mutations span two seconds.
+   If the mutations are processed too quickly all in one second, the time window won't close.
+ */

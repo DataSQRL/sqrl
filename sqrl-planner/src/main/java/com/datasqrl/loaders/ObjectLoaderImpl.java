@@ -37,8 +37,9 @@ import org.apache.flink.table.functions.UserDefinedFunction;
 public class ObjectLoaderImpl implements ObjectLoader {
 
   public static final String FUNCTION_JSON = ".function.json";
-  private static final Predicate<String> DATA_SYSTEM_FILE = Pattern.compile(".*"+FileUtil.toRegex(DataSource.DATASYSTEM_FILE_PREFIX)
-      + ".*" + FileUtil.toRegex(DataSource.TABLE_FILE_SUFFIX)+"$").asMatchPredicate();
+  private static final Predicate<String> DATA_SYSTEM_FILE = Pattern.compile(".*"+
+      FileUtil.toRegex(DataSource.DATASYSTEM_FILE_PREFIX + DataSource.TABLE_FILE_SUFFIX) +"$")
+      .asMatchPredicate();
   private final ResourceResolver resourceResolver;
   private final ErrorCollector errors;
   private final CalciteTableFactory tableFactory;
@@ -72,7 +73,7 @@ public class ObjectLoaderImpl implements ObjectLoader {
 
   private List<? extends NamespaceObject> load(URI uri, NamePath directory, List<URI> allItems) {
     if (DATA_SYSTEM_FILE.test(uri.toString())) {
-      return loadDataSystem(uri, directory);
+      return loadDynamicSink(uri, directory);
     } else if (uri.toString().endsWith(DataSource.TABLE_FILE_SUFFIX)) {
       return loadTable(uri, directory, allItems);
     } else if (uri.toString().endsWith(FUNCTION_JSON)) {
@@ -81,7 +82,7 @@ public class ObjectLoaderImpl implements ObjectLoader {
     return List.of();
   }
 
-  private List<NamespaceObject> loadDataSystem(URI uri, NamePath basePath) {
+  private List<NamespaceObject> loadDynamicSink(URI uri, NamePath basePath) {
     TableConfig tableConfig = tableConfigFactory.load(uri, basePath.getLast(), errors);
     if (true) {
       throw new RuntimeException();

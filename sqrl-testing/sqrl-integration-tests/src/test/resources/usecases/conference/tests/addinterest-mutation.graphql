@@ -1,8 +1,14 @@
 mutation {
-AddInterest(interest:{
-  userid:"10",
-  text:"ai"
-}) {
-  userid
-}
+  User10: AddInterest(interest:{
+    userid:"10",
+    text:"ai"
+  }) {
+    userid
+  }
+  User12: AddInterest(interest:{
+    userid:"12",
+    text:"flink"
+  }) {
+    userid
+  }
 }

@@ -14,6 +14,38 @@ Schema:
 Plan:
 LogicalTableScan(table=[[customer$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
+=== OrderAgg1
+ID:     orderagg1$1
+Type:   stream
+Stage:  streams
+Inputs: orders$2
+Primary Key: customer, bucket
+Timestamp  : bucket
+Schema:
+ - customer: BIGINT NOT NULL
+ - bucket: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - order_count: BIGINT NOT NULL
+Plan:
+LogicalAggregate(group=[{0, 1}], order_count=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 3, 3600000, 900000]]
+  LogicalProject(customer=[$1], bucket=[endOfHour($2, 1:BIGINT, 15:BIGINT)], id=[$0], time=[$2])
+    LogicalTableScan(table=[[orders$2]])
+
+=== OrderAgg2
+ID:     orderagg2$1
+Type:   state
+Stage:  streams
+Inputs: orders$2
+Primary Key: __pk
+Timestamp  : __timestamp
+Schema:
+ - order_count: BIGINT NOT NULL
+ - __pk: INTEGER NOT NULL
+ - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
+Plan:
+LogicalProject(order_count=[$0], __pk=[1], __timestamp=[$1])
+  LogicalAggregate(group=[{}], order_count=[COUNT()], __timestamp=[MAX($2)])
+    LogicalTableScan(table=[[orders$2]])
+
 === OrderAugment
 ID:     orderaugment$1
 Type:   stream
@@ -101,6 +133,22 @@ Schema:
 Plan:
 LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[2]]]]) hints[WatermarkHint options:[2]]
 
+=== Ordertime1
+ID:     ordertime1$1
+Type:   stream
+Stage:  streams
+Inputs: orders$2
+Primary Key: customer, bucket
+Timestamp  : bucket
+Schema:
+ - customer: BIGINT NOT NULL
+ - bucket: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - order_count: BIGINT NOT NULL
+Plan:
+LogicalAggregate(group=[{0, 1}], order_count=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 3, 1000, 0]]
+  LogicalProject(customer=[$1], bucket=[endOfSecond($2)], id=[$0], time=[$2])
+    LogicalTableScan(table=[[orders$2]])
+
 === Product
 ID:     product$2
 Type:   stream
@@ -161,20 +209,36 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
     "CREATE TEMPORARY TABLE `product$1` (\n  `productid` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `_uuid` AS UUID(),\n  PRIMARY KEY (`_uuid`) NOT ENFORCED,\n  WATERMARK FOR `_ingest_time` AS (`_ingest_time` - INTERVAL '0.001' SECOND)\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
     "CREATE TEMPORARY TABLE `customer$1` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `timestamp` AS EPOCHTOTIMESTAMP(`lastUpdated`),\n  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,\n  WATERMARK FOR `timestamp` AS (`timestamp` - INTERVAL '0.001' SECOND)\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
     "CREATE TEMPORARY TABLE `customer$2` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'customer$2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `orderagg1$1` (\n  `customer` BIGINT NOT NULL,\n  `bucket` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `order_count` BIGINT NOT NULL,\n  PRIMARY KEY (`customer`, `bucket`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orderagg1$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `orderagg2$1` (\n  `order_count` BIGINT NOT NULL,\n  `__pk` INTEGER NOT NULL,\n  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,\n  PRIMARY KEY (`__pk`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orderagg2$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `orderaugment$1` (\n  `id` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `order_count` BIGINT NOT NULL,\n  PRIMARY KEY (`id`, `time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orderaugment$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `ordernow1$1` (\n  `customer` BIGINT NOT NULL,\n  `bucket` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `order_count` BIGINT NOT NULL,\n  PRIMARY KEY (`customer`, `bucket`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'ordernow1$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `ordernow2$1` (\n  `bucket` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `order_count` BIGINT NOT NULL,\n  PRIMARY KEY (`bucket`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'ordernow2$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `ordernow3$1` (\n  `customer` BIGINT NOT NULL,\n  `order_count` BIGINT NOT NULL,\n  `_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`customer`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'ordernow3$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `orders$2` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  PRIMARY KEY (`id`, `time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orders$2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `ordertime1$1` (\n  `customer` BIGINT NOT NULL,\n  `bucket` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `order_count` BIGINT NOT NULL,\n  PRIMARY KEY (`customer`, `bucket`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'ordertime1$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `product$2` (\n  `productid` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,\n  PRIMARY KEY (`_uuid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'product$2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `recenttotal$1` (\n  `total` DOUBLE NOT NULL,\n  `quantity` BIGINT NOT NULL,\n  `__pk` INTEGER NOT NULL,\n  `_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`__pk`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'recenttotal$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE VIEW `table$1`\nAS\nSELECT `customerid` AS `customer`, `id`, `time`\nFROM `orders$1`;",
-    "CREATE VIEW `table$2`\nAS\nSELECT *\nFROM (SELECT `customer`, `order_count`, `_time`, (ROW_NUMBER() OVER (PARTITION BY `customer` ORDER BY `_time` DESC NULLS LAST)) AS `_rownum`\nFROM (SELECT `customer`, COUNT(*) AS `order_count`, `window_time` AS `_time`\nFROM TABLE(HOP((TABLE `table$1`), (DESCRIPTOR(`time`)), INTERVAL '13824' SECOND(8), INTERVAL '691200' SECOND(9))) AS `t0`\nGROUP BY `customer`, `window_start`, `window_end`, `window_time`) AS `t3`) AS `t4`\nWHERE (`_rownum` = 1);",
-    "CREATE VIEW `table$3`\nAS\nSELECT `customerid` AS `customer`, ENDOFDAY(`time`) AS `bucket`, `id`, `time`\nFROM `orders$1`;",
-    "CREATE VIEW `table$4`\nAS\nSELECT ENDOFDAY(`time`) AS `bucket`, `id`, `time`\nFROM `orders$1`;",
+    "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `customer$1`;",
+    "CREATE VIEW `table$2`\nAS\nSELECT `customerid` AS `customer`, ENDOFHOUR(`time`, 1, 15) AS `bucket`, `id`, `time`\nFROM `orders$1`;",
+    "CREATE VIEW `table$3`\nAS\nSELECT `customer`, `window_time` AS `bucket`, COUNT(*) AS `order_count`\nFROM TABLE(TUMBLE((TABLE `table$2`), (DESCRIPTOR(`time`)), INTERVAL '3600' SECOND(7), INTERVAL '900' SECOND(6))) AS `t0`\nGROUP BY `customer`, `window_start`, `window_end`, `window_time`;",
+    "CREATE VIEW `table$4`\nAS\nSELECT COUNT(*) AS `order_count`, 1 AS `__pk`, MAX(`time`) AS `__timestamp`\nFROM `orders$1`;",
     "CREATE VIEW `table$5`\nAS\nSELECT `customerid` AS `customer`, `id`, `time`\nFROM `orders$1`;",
-    "CREATE VIEW `table$6`\nAS\nSELECT (`t00`.`unit_price` * `t00`.`quantity`) AS `$f0`, `t00`.`quantity`, `$cor0`.`id`, `$cor0`.`time`, `t00`.`productid`\nFROM `orders$1` AS `$cor0`,\nUNNEST(`$cor0`.`entries`) AS `t00`;",
-    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer$2`\n(SELECT *\nFROM `customer$1`)\n;\nINSERT INTO `orderaugment$1`\n(SELECT `$cor1`.`id`, `$cor1`.`time`, `t5`.`order_count`\nFROM `orders$1` AS `$cor1`\nINNER JOIN `table$2` FOR SYSTEM_TIME AS OF `$cor1`.`time` AS `t5` ON (`$cor1`.`customerid` = `t5`.`customer`))\n;\nINSERT INTO `ordernow1$1`\n(SELECT `customer`, `window_time` AS `bucket`, COUNT(*) AS `order_count`\nFROM TABLE(TUMBLE((TABLE `table$3`), (DESCRIPTOR(`time`)), INTERVAL '86400' SECOND(8), INTERVAL '0' SECOND(1))) AS `t0`\nGROUP BY `customer`, `window_start`, `window_end`, `window_time`)\n;\nINSERT INTO `ordernow2$1`\n(SELECT `window_time` AS `bucket`, COUNT(*) AS `order_count`\nFROM TABLE(TUMBLE((TABLE `table$4`), (DESCRIPTOR(`time`)), INTERVAL '86400' SECOND(8), INTERVAL '0' SECOND(1))) AS `t0`\nGROUP BY `window_start`, `window_end`, `window_time`)\n;\nINSERT INTO `ordernow3$1`\n(SELECT `customer`, COUNT(*) AS `order_count`, `window_time` AS `_time`\nFROM TABLE(HOP((TABLE `table$5`), (DESCRIPTOR(`time`)), INTERVAL '13824' SECOND(8), INTERVAL '691200' SECOND(9))) AS `t0`\nGROUP BY `customer`, `window_start`, `window_end`, `window_time`)\n;\nINSERT INTO `orders$2`\n(SELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders$1`)\n;\nINSERT INTO `product$2`\n(SELECT *\nFROM `product$1`)\n;\nINSERT INTO `recenttotal$1`\n(SELECT SUM(`$f0`) AS `total`, SUM(`quantity`) AS `quantity`, 1 AS `__pk`, `window_time` AS `_time`\nFROM TABLE(HOP((TABLE `table$6`), (DESCRIPTOR(`time`)), INTERVAL '12096' SECOND(8), INTERVAL '604800' SECOND(9))) AS `t2`\nGROUP BY `window_start`, `window_end`, `window_time`)\n;\nEND;"
+    "CREATE VIEW `table$6`\nAS\nSELECT *\nFROM (SELECT `customer`, `order_count`, `_time`, (ROW_NUMBER() OVER (PARTITION BY `customer` ORDER BY `_time` DESC NULLS LAST)) AS `_rownum`\nFROM (SELECT `customer`, COUNT(*) AS `order_count`, `window_time` AS `_time`\nFROM TABLE(HOP((TABLE `table$5`), (DESCRIPTOR(`time`)), INTERVAL '13824' SECOND(8), INTERVAL '691200' SECOND(9))) AS `t0`\nGROUP BY `customer`, `window_start`, `window_end`, `window_time`) AS `t3`) AS `t4`\nWHERE (`_rownum` = 1);",
+    "CREATE VIEW `table$7`\nAS\nSELECT `$cor1`.`id`, `$cor1`.`time`, `t5`.`order_count`\nFROM `orders$1` AS `$cor1`\nINNER JOIN `table$6` FOR SYSTEM_TIME AS OF `$cor1`.`time` AS `t5` ON (`$cor1`.`customerid` = `t5`.`customer`);",
+    "CREATE VIEW `table$8`\nAS\nSELECT `customerid` AS `customer`, ENDOFDAY(`time`) AS `bucket`, `id`, `time`\nFROM `orders$1`;",
+    "CREATE VIEW `table$9`\nAS\nSELECT `customer`, `window_time` AS `bucket`, COUNT(*) AS `order_count`\nFROM TABLE(TUMBLE((TABLE `table$8`), (DESCRIPTOR(`time`)), INTERVAL '86400' SECOND(8), INTERVAL '0' SECOND(1))) AS `t0`\nGROUP BY `customer`, `window_start`, `window_end`, `window_time`;",
+    "CREATE VIEW `table$10`\nAS\nSELECT ENDOFDAY(`time`) AS `bucket`, `id`, `time`\nFROM `orders$1`;",
+    "CREATE VIEW `table$11`\nAS\nSELECT `window_time` AS `bucket`, COUNT(*) AS `order_count`\nFROM TABLE(TUMBLE((TABLE `table$10`), (DESCRIPTOR(`time`)), INTERVAL '86400' SECOND(8), INTERVAL '0' SECOND(1))) AS `t0`\nGROUP BY `window_start`, `window_end`, `window_time`;",
+    "CREATE VIEW `table$12`\nAS\nSELECT `customerid` AS `customer`, `id`, `time`\nFROM `orders$1`;",
+    "CREATE VIEW `table$13`\nAS\nSELECT `customer`, COUNT(*) AS `order_count`, `window_time` AS `_time`\nFROM TABLE(HOP((TABLE `table$12`), (DESCRIPTOR(`time`)), INTERVAL '13824' SECOND(8), INTERVAL '691200' SECOND(9))) AS `t0`\nGROUP BY `customer`, `window_start`, `window_end`, `window_time`;",
+    "CREATE VIEW `table$14`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders$1`;",
+    "CREATE VIEW `table$15`\nAS\nSELECT `customerid` AS `customer`, ENDOFSECOND(`time`) AS `bucket`, `id`, `time`\nFROM `orders$1`;",
+    "CREATE VIEW `table$16`\nAS\nSELECT `customer`, `window_time` AS `bucket`, COUNT(*) AS `order_count`\nFROM TABLE(TUMBLE((TABLE `table$15`), (DESCRIPTOR(`time`)), INTERVAL '1' SECOND(4), INTERVAL '0' SECOND(1))) AS `t0`\nGROUP BY `customer`, `window_start`, `window_end`, `window_time`;",
+    "CREATE VIEW `table$17`\nAS\nSELECT *\nFROM `product$1`;",
+    "CREATE VIEW `table$18`\nAS\nSELECT (`t00`.`unit_price` * `t00`.`quantity`) AS `$f0`, `t00`.`quantity`, `$cor0`.`id`, `$cor0`.`time`, `t00`.`productid`\nFROM `orders$1` AS `$cor0`,\nUNNEST(`$cor0`.`entries`) AS `t00`;",
+    "CREATE VIEW `table$19`\nAS\nSELECT SUM(`$f0`) AS `total`, SUM(`quantity`) AS `quantity`, 1 AS `__pk`, `window_time` AS `_time`\nFROM TABLE(HOP((TABLE `table$18`), (DESCRIPTOR(`time`)), INTERVAL '12096' SECOND(8), INTERVAL '604800' SECOND(9))) AS `t2`\nGROUP BY `window_start`, `window_end`, `window_time`;",
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer$2`\n(SELECT *\nFROM `table$1`)\n;\nINSERT INTO `orderagg1$1`\n(SELECT *\nFROM `table$3`)\n;\nINSERT INTO `orderagg2$1`\n(SELECT *\nFROM `table$4`)\n;\nINSERT INTO `orderaugment$1`\n(SELECT *\nFROM `table$7`)\n;\nINSERT INTO `ordernow1$1`\n(SELECT *\nFROM `table$9`)\n;\nINSERT INTO `ordernow2$1`\n(SELECT *\nFROM `table$11`)\n;\nINSERT INTO `ordernow3$1`\n(SELECT *\nFROM `table$13`)\n;\nINSERT INTO `orders$2`\n(SELECT *\nFROM `table$14`)\n;\nINSERT INTO `ordertime1$1`\n(SELECT *\nFROM `table$16`)\n;\nINSERT INTO `product$2`\n(SELECT *\nFROM `table$17`)\n;\nINSERT INTO `recenttotal$1`\n(SELECT *\nFROM `table$19`)\n;\nEND;"
   ],
   "connectors" : [
     "jdbc-sqrl",
@@ -205,6 +269,31 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
         "\"lastUpdated\""
       ],
       "sql" : "CREATE TABLE IF NOT EXISTS customer$2 (\"customerid\" BIGINT NOT NULL,\"email\" TEXT NOT NULL,\"name\" TEXT NOT NULL,\"lastUpdated\" BIGINT NOT NULL,\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\",\"lastUpdated\"));"
+    },
+    {
+      "name" : "orderagg1$1",
+      "columns" : [
+        "\"customer\" BIGINT NOT NULL",
+        "\"bucket\" TIMESTAMP WITH TIME ZONE NOT NULL",
+        "\"order_count\" BIGINT NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"customer\"",
+        "\"bucket\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS orderagg1$1 (\"customer\" BIGINT NOT NULL,\"bucket\" TIMESTAMP WITH TIME ZONE NOT NULL,\"order_count\" BIGINT NOT NULL , PRIMARY KEY (\"customer\",\"bucket\"));"
+    },
+    {
+      "name" : "orderagg2$1",
+      "columns" : [
+        "\"order_count\" BIGINT NOT NULL",
+        "\"__pk\" INTEGER NOT NULL",
+        "\"__timestamp\" TIMESTAMP WITH TIME ZONE "
+      ],
+      "primaryKeys" : [
+        "\"__pk\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS orderagg2$1 (\"order_count\" BIGINT NOT NULL,\"__pk\" INTEGER NOT NULL,\"__timestamp\" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY (\"__pk\"));"
     },
     {
       "name" : "orderaugment$1",
@@ -270,6 +359,19 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
       "sql" : "CREATE TABLE IF NOT EXISTS orders$2 (\"id\" BIGINT NOT NULL,\"customerid\" BIGINT NOT NULL,\"time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"entries\" JSONB NOT NULL , PRIMARY KEY (\"id\",\"time\"));"
     },
     {
+      "name" : "ordertime1$1",
+      "columns" : [
+        "\"customer\" BIGINT NOT NULL",
+        "\"bucket\" TIMESTAMP WITH TIME ZONE NOT NULL",
+        "\"order_count\" BIGINT NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"customer\"",
+        "\"bucket\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS ordertime1$1 (\"customer\" BIGINT NOT NULL,\"bucket\" TIMESTAMP WITH TIME ZONE NOT NULL,\"order_count\" BIGINT NOT NULL , PRIMARY KEY (\"customer\",\"bucket\"));"
+    },
+    {
       "name" : "product$2",
       "columns" : [
         "\"productid\" BIGINT NOT NULL",
@@ -307,6 +409,15 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
       "sql" : "CREATE INDEX IF NOT EXISTS customer$2_hash_c3 ON customer$2 USING hash (\"lastUpdated\");"
     },
     {
+      "indexName" : "orderagg1$1_hash_c1",
+      "tableName" : "orderagg1$1",
+      "columns" : [
+        "bucket"
+      ],
+      "type" : "HASH",
+      "sql" : "CREATE INDEX IF NOT EXISTS orderagg1$1_hash_c1 ON orderagg1$1 USING hash (\"bucket\");"
+    },
+    {
       "indexName" : "orderaugment$1_hash_c1",
       "tableName" : "orderaugment$1",
       "columns" : [
@@ -332,6 +443,15 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
       ],
       "type" : "HASH",
       "sql" : "CREATE INDEX IF NOT EXISTS orders$2_hash_c2 ON orders$2 USING hash (\"time\");"
+    },
+    {
+      "indexName" : "ordertime1$1_hash_c1",
+      "tableName" : "ordertime1$1",
+      "columns" : [
+        "bucket"
+      ],
+      "type" : "HASH",
+      "sql" : "CREATE INDEX IF NOT EXISTS ordertime1$1_hash_c1 ON ordertime1$1 USING hash (\"bucket\");"
     }
   ]
 }
@@ -465,6 +585,163 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
                   "path" : "customerid"
                 }
               ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "OrderAgg1",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "customer"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "bucket"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"customer\", \"bucket\", \"order_count\", 1 AS \"__pk\"\nFROM \"orderagg1$1\"\nWHERE \"customer\" = $1 AND \"bucket\" = $2\nORDER BY \"bucket\" DESC NULLS LAST, 1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "customer"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "bucket"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "bucket"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"orderagg1$1\"\nWHERE \"bucket\" = $1\nORDER BY \"bucket\" DESC NULLS LAST, \"customer\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "bucket"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "customer"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"orderagg1$1\"\nWHERE \"customer\" = $1\nORDER BY \"bucket\" DESC NULLS LAST",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "customer"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"orderagg1$1\"\nORDER BY \"bucket\" DESC NULLS LAST, \"customer\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "OrderAgg2",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"orderagg2$1\"\nORDER BY \"__pk\"",
+              "parameters" : [ ]
             }
           }
         ]
@@ -609,26 +886,6 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
               {
                 "type" : "variable",
                 "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"ordernow1$1\"\nWHERE CURRENT_TIMESTAMP < (\"bucket\" + INTERVAL '777600' SECOND(9))\nORDER BY \"bucket\" DESC NULLS LAST, \"customer\"",
-              "parameters" : [ ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
                 "path" : "customer"
               },
               {
@@ -725,6 +982,26 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
                   "path" : "bucket"
                 }
               ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"ordernow1$1\"\nWHERE CURRENT_TIMESTAMP < (\"bucket\" + INTERVAL '777600' SECOND(9))\nORDER BY \"bucket\" DESC NULLS LAST, \"customer\"",
+              "parameters" : [ ]
             }
           }
         ]
@@ -855,6 +1132,16 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
               {
                 "type" : "variable",
                 "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "time"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
                 "path" : "limit"
               },
               {
@@ -866,8 +1153,19 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"orders$2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
-              "parameters" : [ ]
+              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\nFROM \"orders$2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, 1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "id"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "time"
+                }
+              ]
             }
           },
           {
@@ -937,12 +1235,34 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
               {
                 "type" : "variable",
                 "type" : "variable",
-                "path" : "id"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
                 "type" : "variable",
-                "path" : "time"
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"orders$2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Ordertime1",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "bucket"
               },
               {
                 "type" : "variable",
@@ -958,17 +1278,104 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\nFROM \"orders$2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, 1",
+              "sql" : "SELECT *\nFROM \"ordertime1$1\"\nWHERE \"bucket\" = $1\nORDER BY \"bucket\" DESC NULLS LAST, \"customer\"",
               "parameters" : [
                 {
                   "type" : "arg",
                   "type" : "arg",
-                  "path" : "id"
+                  "path" : "bucket"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "customer"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"ordertime1$1\"\nWHERE \"customer\" = $1\nORDER BY \"bucket\" DESC NULLS LAST",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "customer"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"ordertime1$1\"\nORDER BY \"bucket\" DESC NULLS LAST, \"customer\"",
+              "parameters" : [ ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "customer"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "bucket"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"customer\", \"bucket\", \"order_count\", 1 AS \"__pk\"\nFROM \"ordertime1$1\"\nWHERE \"customer\" = $1 AND \"bucket\" = $2\nORDER BY \"bucket\" DESC NULLS LAST, 1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "customer"
                 },
                 {
                   "type" : "arg",
                   "type" : "arg",
-                  "path" : "time"
+                  "path" : "bucket"
                 }
               ]
             }
@@ -1035,7 +1442,7 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "type Customer {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype OrderAugment {\n  id: Float!\n  time: DateTime!\n  order_count: Float!\n}\n\ntype OrderNow1 {\n  customer: Float!\n  bucket: DateTime!\n  order_count: Float!\n}\n\ntype OrderNow2 {\n  bucket: DateTime!\n  order_count: Float!\n}\n\ntype OrderNow3 {\n  customer: Float!\n  order_count: Float!\n}\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries(limit: Int = 10, offset: Int = 0): [entries!]\n}\n\ntype Product {\n  productid: Float!\n  name: String!\n  description: String!\n  category: String!\n}\n\ntype Query {\n  Customer(customerid: Float, lastUpdated: Float, limit: Int = 10, offset: Int = 0): [Customer!]\n  OrderAugment(id: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [OrderAugment!]\n  OrderNow1(customer: Float, bucket: DateTime, limit: Int = 10, offset: Int = 0): [OrderNow1!]\n  OrderNow2(bucket: DateTime, limit: Int = 10, offset: Int = 0): [OrderNow2!]\n  OrderNow3(customer: Float, limit: Int = 10, offset: Int = 0): [OrderNow3!]\n  Orders(id: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [Orders!]\n  Product(limit: Int = 10, offset: Int = 0): [Product!]\n  RecentTotal(limit: Int = 10, offset: Int = 0): [RecentTotal!]\n}\n\ntype RecentTotal {\n  total: Float!\n  quantity: Float!\n}\n\ntype entries {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n"
+      "schema" : "type Customer {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype OrderAgg1 {\n  customer: Float!\n  bucket: DateTime!\n  order_count: Float!\n}\n\ntype OrderAgg2 {\n  order_count: Float!\n}\n\ntype OrderAugment {\n  id: Float!\n  time: DateTime!\n  order_count: Float!\n}\n\ntype OrderNow1 {\n  customer: Float!\n  bucket: DateTime!\n  order_count: Float!\n}\n\ntype OrderNow2 {\n  bucket: DateTime!\n  order_count: Float!\n}\n\ntype OrderNow3 {\n  customer: Float!\n  order_count: Float!\n}\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries(limit: Int = 10, offset: Int = 0): [entries!]\n}\n\ntype Ordertime1 {\n  customer: Float!\n  bucket: DateTime!\n  order_count: Float!\n}\n\ntype Product {\n  productid: Float!\n  name: String!\n  description: String!\n  category: String!\n}\n\ntype Query {\n  Customer(customerid: Float, lastUpdated: Float, limit: Int = 10, offset: Int = 0): [Customer!]\n  OrderAgg1(customer: Float, bucket: DateTime, limit: Int = 10, offset: Int = 0): [OrderAgg1!]\n  OrderAgg2(limit: Int = 10, offset: Int = 0): [OrderAgg2!]\n  OrderAugment(id: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [OrderAugment!]\n  OrderNow1(customer: Float, bucket: DateTime, limit: Int = 10, offset: Int = 0): [OrderNow1!]\n  OrderNow2(bucket: DateTime, limit: Int = 10, offset: Int = 0): [OrderNow2!]\n  OrderNow3(customer: Float, limit: Int = 10, offset: Int = 0): [OrderNow3!]\n  Orders(id: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [Orders!]\n  Ordertime1(customer: Float, bucket: DateTime, limit: Int = 10, offset: Int = 0): [Ordertime1!]\n  Product(limit: Int = 10, offset: Int = 0): [Product!]\n  RecentTotal(limit: Int = 10, offset: Int = 0): [RecentTotal!]\n}\n\ntype RecentTotal {\n  total: Float!\n  quantity: Float!\n}\n\ntype entries {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n"
     }
   }
 }

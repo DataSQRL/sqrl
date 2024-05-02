@@ -1,11 +1,9 @@
 {
   "version": 1,
   "flink" : {
-    "format" : "json",
-    "path" : "/mnt/build/data",
-    "source.monitor-interval" : 0,
-    "connector" : "filesystem",
-    "source.path.regex-pattern" : "to be determined"
+    "format" : "flexible-json",
+    "path" : "/data/sensors.jsonl.gz",
+    "connector" : "filesystem"
   },
   "table" : {
     "type" : "source",

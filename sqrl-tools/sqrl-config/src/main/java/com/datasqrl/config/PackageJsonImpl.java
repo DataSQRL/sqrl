@@ -8,7 +8,6 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class PackageJsonImpl implements PackageJson {
   public static final String ENGINES_PROPERTY = "engines";
-  public static final String TEST_KEY = "test";
   public static final String DISCOVERY_KEY = "discovery";
   public static final String PROFILES_KEY = "profiles";
   public static final String DEPENDENCIES_KEY = "dependencies";
@@ -28,11 +27,6 @@ public class PackageJsonImpl implements PackageJson {
   @Override
   public void setPipeline(List<String> pipeline) {
     sqrlConfig.setProperty(PIPELINE_KEY, pipeline);
-  }
-
-  @Override
-  public TestConfig getTest() {
-    return new TestConfigImpl(sqrlConfig.getSubConfig(TEST_KEY));
   }
 
   @Override

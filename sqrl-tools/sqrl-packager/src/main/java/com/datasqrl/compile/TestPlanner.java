@@ -33,6 +33,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
@@ -41,27 +42,29 @@ import lombok.AllArgsConstructor;
 public class TestPlanner {
   SqrlFramework framework;
 
-  public TestPlan generateTestPlan(APISource source, Path testsPath) {
+  public TestPlan generateTestPlan(APISource source, Optional<Path> testsPath) {
     Parser parser = new Parser();
     List<GraphqlQuery> queries = new ArrayList<>();
     List<GraphqlQuery> mutations = new ArrayList<>();
 
-    try (Stream<Path> paths = Files.walk(testsPath)) {
-      paths.filter(Files::isRegularFile)
-          .filter(path -> path.toString().endsWith(".graphql"))
-          .forEach(file -> {
-            String content = null;
-            try {
-              content = new String(Files.readAllBytes(file));
-            } catch (IOException e) {
-              throw new RuntimeException(e);
-            }
-            Document document = parser.parseDocument(content);
-            extractQueriesAndMutations(document, queries, mutations, file.getFileName().toString().replace(".graphql", ""));
-          });
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
+    testsPath.ifPresent((p) -> {
+      try (Stream<Path> paths = Files.walk(p)) {
+        paths.filter(Files::isRegularFile)
+            .filter(path -> path.toString().endsWith(".graphql"))
+            .forEach(file -> {
+              String content = null;
+              try {
+                content = new String(Files.readAllBytes(file));
+              } catch (IOException e) {
+                throw new RuntimeException(e);
+              }
+              Document document = parser.parseDocument(content);
+              extractQueriesAndMutations(document, queries, mutations, file.getFileName().toString().replace(".graphql", ""));
+            });
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    });
 
     Document document = parser.parseDocument(source.getSchemaDefinition());
 

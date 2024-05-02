@@ -2,6 +2,7 @@ package com.datasqrl.engine.stream.flink.plan;
 
 import com.datasqrl.DefaultFunctions;
 import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
 import com.datasqrl.calcite.schema.sql.SqlDataTypeSpecBuilder;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.Name;
@@ -49,6 +50,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.apache.calcite.avatica.util.TimeUnit;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.rel2sql.FlinkRelToSqlConverter;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexNode;
@@ -62,6 +64,7 @@ import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlOperator;
+import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.tools.Program;
@@ -126,7 +129,16 @@ public class SqrlToFlinkSqlGenerator {
         .map(this::createQuery)
         .collect(Collectors.toList());
 
-    return Pair.of(queries, createInsert(topLevelQuery, name));
+    FlinkRelToSqlConverter relToSqlConverter = new FlinkRelToSqlConverter(toSql.getAtomicInteger());
+    QueryPipelineItem queryPipelineItem = relToSqlConverter.create(topLevelQuery);
+    SqlCreateView query = createQuery(queryPipelineItem);
+    queries.add(query);
+
+    SqlSelect select = new SqlSelectBuilder()
+        .setFrom(query.getViewName())
+        .build();
+
+    return Pair.of(queries, createInsert(select, name));
   }
 
   private SqlCreateView createQuery(QueryPipelineItem q) {
@@ -275,7 +287,7 @@ public class SqrlToFlinkSqlGenerator {
       return false;
     }
 
-    if (format.get().getName().equalsIgnoreCase(FlexibleJsonFlinkFormatFactory.FORMAT_NAME)) {
+    if (format.get().getName().equalsIgnoreCase(FlexibleJsonFlinkFormatFactory.FORMAT_NAME) && type instanceof RawRelDataType) {
       RawRelDataType relDataType = (RawRelDataType) type;
       return FlexibleJsonFlinkFormatFactory.getSupportedTypeClasses().contains(relDataType.getRawType().getOriginatingClass());
     } else {

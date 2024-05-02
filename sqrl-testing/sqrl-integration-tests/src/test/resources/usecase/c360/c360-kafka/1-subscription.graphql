@@ -1,7 +1,0 @@
-subscription OrderCount {
-  OrderCount {
-    timeSec
-    volume
-    number
-  }
-}

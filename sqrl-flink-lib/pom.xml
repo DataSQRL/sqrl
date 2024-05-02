@@ -18,6 +18,7 @@
   <modules>
     <module>sqrl-h2-1.16</module>
     <module>sqrl-jdbc-1.16</module>
+    <module>sqrl-jdbc-1.17</module>
     <module>sqrl-jdbc-1.18</module>
     <module>sqrl-json</module>
     <module>sqrl-lib-common</module>

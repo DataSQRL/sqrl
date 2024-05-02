@@ -1,7 +1,0 @@
-IMPORT time.*;
-IMPORT ecommerce-data.Customer TIMESTAMP _ingest_time;
-IMPORT ecommerce-data.Orders TIMESTAMP time;
-IMPORT ecommerce-data.Product TIMESTAMP _ingest_time;
-IMPORT json.jsonArray AS jsonArrays;
-IMPORT string.*;
-/*+ EXEC(streams) */ jsonArrayTable := SELECT jsonArrays(customerid) AS obj FROM Customer;
