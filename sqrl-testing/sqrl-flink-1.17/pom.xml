@@ -3,7 +3,7 @@
   <parent>
     <groupId>run.sqrl</groupId>
     <artifactId>sqrl-testing</artifactId>
-    <version>0.5.0-RC2-SNAPSHOT</version>
+    <version>0.5.0-RC2</version>
   </parent>
 
   <artifactId>sqrl-flink-1.17</artifactId>
