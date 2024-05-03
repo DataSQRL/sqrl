@@ -279,7 +279,12 @@ public class SqrlConfigCommons implements SqrlConfig {
     getKeys().forEach(localKey -> {
       String fullKey = getFullKey(localKey);
       if (config.containsKey(fullKey)) {
-        Object value = config.getProperty(fullKey);
+        Object value;
+        if (localKey.equalsIgnoreCase("enabled-engines")) {
+          value = config.getList(fullKey);
+        } else {
+          value = config.getProperty(fullKey);
+        }
         //TODO: this does not interpolate secrets. need to check type and then use type specific access method
         map.put(localKey, value);
       } else {
