@@ -20,7 +20,7 @@ import picocli.CommandLine;
 @CommandLine.Command(name = "publish", description = "Publishes a package to local and remote repository")
 public class PublishCommand extends AbstractCommand {
 
-    @CommandLine.Parameters(index = "0", description = "Main script (optional)")
+    @CommandLine.Option(names = {"--main"}, description = "Main script (optional)")
     private Path mainScript;
 
     @CommandLine.Option(names = {"--remote"}, description = "Publish to remote repository (local only by default)")

@@ -22,7 +22,7 @@ public class Zipper {
         ZipFile zip = new ZipFile(zipFile.toFile());
         for (Path p : Files.list(directory).collect(Collectors.toList())) {
             if (Files.isRegularFile(p) && !FileUtil.isExtension(p, ZIP_EXTENSION)) zip.addFile(p.toFile());
-            else if (Files.isDirectory(p)) zip.addFolder(directory.toFile(), zipParameters);
+            else if (Files.isDirectory(p)) zip.addFolder(p.toFile(), zipParameters);
         }
     }
 
