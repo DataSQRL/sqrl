@@ -10,6 +10,7 @@ import com.datasqrl.serializer.Deserializer;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -49,7 +50,7 @@ public class WriteDag {
           .build();
       List<Node> nodes = exporter.export(dag);
       if (explainConfig.isSorted()) Collections.sort(nodes); //make order deterministic
-      writeFile(buildDir.resolve(EXPLAIN_TEXT_FILENAME),nodes.stream().map(SqrlDAGExporter.Node::toString)
+      writeFile(buildDir.getBuildDir().resolve(EXPLAIN_TEXT_FILENAME),nodes.stream().map(SqrlDAGExporter.Node::toString)
           .collect(Collectors.joining("\n")));
     }
     if (explainConfig.isVisual()) {
@@ -63,7 +64,7 @@ public class WriteDag {
       String jsonContent = new Deserializer().toJson(nodes);
       String htmlFile = Resources.toString(Resources.getResource(VISUAL_HTML_FILENAME), Charsets.UTF_8);
       htmlFile = htmlFile.replace(DAG_PLACEHOLDER, jsonContent);
-      writeFile(buildDir.resolve(EXPLAIN_VISUAL_FILENAME),htmlFile);
+      writeFile(buildDir.getBuildDir().resolve(EXPLAIN_VISUAL_FILENAME),htmlFile);
     }
   }
 

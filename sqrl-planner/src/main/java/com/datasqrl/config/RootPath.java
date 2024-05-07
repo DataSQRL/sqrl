@@ -7,12 +7,12 @@ import lombok.Getter;
 import lombok.experimental.Delegate;
 
 @Getter
-public class TargetPath {
+public class RootPath {
 
-  private final Path targetDir;
+  private final Path rootDir;
 
   @Inject
-  public TargetPath(@Named("targetDir") Path targetDir) {
-    this.targetDir = targetDir;
+  public RootPath(@Named("rootDir") Path rootDir) {
+    this.rootDir = rootDir;
   }
 }
