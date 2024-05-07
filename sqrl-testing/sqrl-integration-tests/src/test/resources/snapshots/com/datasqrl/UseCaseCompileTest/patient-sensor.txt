@@ -173,7 +173,7 @@ Type:   export
 Stage:  streams
 Inputs: tempalert$1
 
-=== TempAlert.tempalert-1
+=== TempAlert.TempAlert
 ID:     tempalert$1$2
 Type:   export
 Stage:  streams

@@ -100,7 +100,7 @@ public class GraphqlModelGenerator extends SchemaWalker {
     Map<String, String> vertxConfig = mapToVertxKafkaConfig(log.getSink().getConfiguration().getConnectorConfig().toMap());
 
     subscriptions.add(new SubscriptionCoords(fieldDefinition.getName(),
-        log.getSink().getName().getDisplay(), vertxConfig,
+        (String)log.getConnectorContext().getMap().get("topic"), vertxConfig,
         filters));
   }
 

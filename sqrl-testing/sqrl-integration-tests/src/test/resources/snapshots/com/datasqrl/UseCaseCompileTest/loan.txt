@@ -20,7 +20,7 @@ LogicalProject(id=[$3], customer_id=[$4], loan_type_id=[$5], max_amount=[$8], mi
   LogicalFilter(condition=[AND(=($0, 'underwriting'), OR(>($6, $8), <($6, $9)))])
     LogicalTableScan(table=[[applicationstatus$1]])
 
-=== ApplicationAlert.applicationalert-1
+=== ApplicationAlert.ApplicationAlert
 ID:     applicationalert$1$1
 Type:   export
 Stage:  streams
