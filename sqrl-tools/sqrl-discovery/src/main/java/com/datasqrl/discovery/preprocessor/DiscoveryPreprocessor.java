@@ -11,7 +11,7 @@ public interface DiscoveryPreprocessor extends Preprocessor {
 
   @Override
   default void processFile(Path file, ProcessorContext processorContext, ErrorCollector errors) {
-    if (!runDiscovery(file)) return;
+    if (!runDiscovery(file.getParent())) return;
     discoverFile(file, processorContext, errors);
   }
 

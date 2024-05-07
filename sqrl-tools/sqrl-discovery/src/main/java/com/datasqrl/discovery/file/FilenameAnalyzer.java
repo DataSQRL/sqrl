@@ -28,7 +28,7 @@ public class FilenameAnalyzer {
       return Optional.of(new FilenameAnalyzer.Components(
           matcher.group(1),
           matcher.group(2).toLowerCase(),
-          matcher.group(4).toLowerCase()));
+          matcher.group(4)==null?"":matcher.group(4).toLowerCase()));
     }
     return Optional.empty();
   }

@@ -15,6 +15,7 @@ import com.datasqrl.config.SqrlCompilerConfiguration;
 import com.datasqrl.config.SqrlConfigPipeline;
 import com.datasqrl.config.SqrlRelBuilder;
 import com.datasqrl.config.TableConfigLoaderImpl;
+import com.datasqrl.discovery.preprocessor.FlexibleSchemaInferencePreprocessor;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIConnectorManager;
@@ -88,6 +89,7 @@ public class SqrlInjector extends AbstractModule {
     binder.addBinding().to(FlinkSqlPreprocessor.class);
     binder.addBinding().to(FlexibleSchemaPreprocessor.class);
     binder.addBinding().to(AvroSchemaPreprocessor.class);
+    binder.addBinding().to(FlexibleSchemaInferencePreprocessor.class);
   }
 
   @Provides

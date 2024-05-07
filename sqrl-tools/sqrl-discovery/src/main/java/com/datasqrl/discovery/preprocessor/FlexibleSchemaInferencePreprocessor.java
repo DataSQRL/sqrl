@@ -164,9 +164,11 @@ public class FlexibleSchemaInferencePreprocessor implements DiscoveryPreprocesso
       return paths.map(p -> p.getFileName().toString())
           .anyMatch(f -> f.length()>length &&
               Name.system(f.substring(0, length)).equals(tableName) &&
-              f.charAt(length)=='.');
+              filterExtensions.contains(f.substring(length).toLowerCase()));
     }
   }
+
+  public static final Set<String> filterExtensions = Set.of(".table.json", "schema.yml");
 
 
 }
