@@ -84,6 +84,10 @@ public interface Name extends Serializable, Comparable<Name> {
     return !(name == null || name.trim().isEmpty());// && name.indexOf('.') < 0 && name.indexOf('/') < 0;
   }
 
+  static boolean isValidNameStrict(String name) {
+    return !(name == null || name.trim().isEmpty()) && name.indexOf('.') < 0 && name.indexOf('/') < 0;
+  }
+
   static <T> T getIfValidName(@NonNull String name, @NonNull NameCanonicalizer canonicalizer,
       @NonNull Function<Name, T> getter) {
     if (!validName(name)) {

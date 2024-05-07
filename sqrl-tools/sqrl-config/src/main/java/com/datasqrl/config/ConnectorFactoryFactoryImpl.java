@@ -22,6 +22,8 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
     Optional<ConnectorConf> connectorConfig = connectors.getConnectorConfig(name);
     if (name.equalsIgnoreCase(PRINT_SINK_NAME)) {
       return Optional.of(createPrintConnectorFactory(null));
+    } else if (name.equalsIgnoreCase(FILE_SINK_NAME)) {
+      return Optional.of(createLocalFile(connectorConfig.get()));
     }
     if (type.equals(Type.LOG)) {
       return Optional.of(createKafkaConnectorFactory(connectorConfig.get()));
@@ -40,16 +42,41 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
     return connectorConfig.get();
   }
 
-  private ConnectorFactory createPrintConnectorFactory(ConnectorConf engineConfig) {
+  private ConnectorFactory createPrintConnectorFactory(ConnectorConf connectorConf) {
 
     return context -> {
-      TableConfigBuilderImpl builder = TableConfigImpl.builder(
-          (String) context.getMap().get("name"));
+      String name = (String) context.getMap().get("name");
+      TableConfigBuilderImpl builder = TableConfigImpl.builder(context.getName());
       builder.setType(ExternalDataType.sink);
       builder.getConnectorConfig().setProperty("connector", PRINT_SINK_NAME);
-      builder.getConnectorConfig().setProperty("print-identifier", (String) context.getMap().get("name"));
+      builder.getConnectorConfig().setProperty("print-identifier", name);
       return builder.build();
     };
+  }
+
+  private ConnectorFactory createLocalFile(ConnectorConf connectorConf) {
+
+    return context -> {
+      Map<String, Object> contextData = context.getMap();
+
+      String filename = (String)contextData.get("filename");
+      String format = (String)contextData.get("format");
+      TableConfigBuilderImpl builder = TableConfigImpl.builder(context.getName());
+      builder.setType(ExternalDataType.source);
+      builder.addUuid("_uuid");
+      builder.setPrimaryKey(new String[]{"_uuid"});
+      builder.addIngestTime("_ingest_time");
+      builder.setTimestampColumn("_ingest_time");
+
+      ConnectorConfImpl engineConfig = (ConnectorConfImpl) connectorConf;
+      builder.copyConnectorConfig(engineConfig);
+      builder.getConnectorConfig().setProperty("path", "/data/" + filename);
+      builder.getConnectorConfig().setProperty("format", format);
+
+      return builder.build();
+    };
+
+
   }
 
   private ConnectorFactory createKafkaConnectorFactory(ConnectorConf connectorConf) {
@@ -59,7 +86,7 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
       ConnectorConfImpl connectorConf1 = (ConnectorConfImpl) connectorConf;
 
 //      String topicName = sanitizeName(logId);
-      TableConfigBuilderImpl builder = TableConfigImpl.builder((String)map.get("topic"));
+      TableConfigBuilderImpl builder = TableConfigImpl.builder(context.getName());
       List<String> primaryKey = (List<String>)map.get("primary-key");
       String timestampType = (String)map.get("timestamp-type");
       String timestampName = (String)map.get("timestamp-name");
@@ -86,17 +113,15 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
     };
   }
 
-  private ConnectorFactory createJdbcConnectorFactory(ConnectorConf engineConfig1) {
+  private ConnectorFactory createJdbcConnectorFactory(ConnectorConf connectorConf) {
     return context -> {
-      Map<String, Object> map = context.getMap();
-
-      String tableName = (String)map.get("table-name");
-      TableConfigBuilderImpl builder = TableConfigImpl.builder(tableName);
+      TableConfigBuilderImpl builder = TableConfigImpl.builder(context.getName());
       builder.setType(ExternalDataType.sink);
 
-      ConnectorConfImpl engineConfig = (ConnectorConfImpl) engineConfig1;
+      ConnectorConfImpl engineConfig = (ConnectorConfImpl) connectorConf;
+      Map<String, Object> map = context.getMap();
       builder.copyConnectorConfig(engineConfig);
-      builder.getConnectorConfig().setProperty("table-name", tableName);
+      builder.getConnectorConfig().setProperty("table-name", (String)map.get("table-name"));
       builder.getConnectorConfig().setProperty("connector", "jdbc-sqrl");
 
       return builder.build();

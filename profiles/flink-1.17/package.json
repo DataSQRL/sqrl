@@ -14,12 +14,18 @@
         },
         "kafka": {
           "connector" : "kafka",
-          "format" : "json",
+          "format" : "flexible-json",
           "properties.bootstrap.servers": "${PROPERTIES_BOOTSTRAP_SERVERS}",
           "properties.group.id": "groupid",
           "scan.startup.mode" : "earliest-offset",
           "properties.auto.offset.reset" : "earliest",
           "topic" : "${sqrl:topic}"
+        },
+        "localfile": {
+          "connector" : "filesystem",
+          "format" : "${sqrl:format}",
+          "path" : "${sqrl:filepath}",
+          "source.monitor-interval" : 1
         }
       }
     }

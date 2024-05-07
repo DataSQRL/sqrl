@@ -37,7 +37,7 @@ public class KafkaLogFactory implements LogFactory {
     Name logName = Name.system(schema.getName());
 
     TableConfig logConfig = connectorFactory
-        .createSourceAndSink(createSinkContext(logName.getDisplay(), topicName, timestamp.getName(),
+        .createSourceAndSink(createSinkContext(logName, topicName, timestamp.getName(),
             timestamp.getType().name(), primaryKey));
     Optional<TableSchema> tblSchema = Optional.of(new RelDataTypeTableSchema(schema.getType()));
     return new KafkaTopic(topicName, logName, logConfig, tblSchema);
@@ -51,14 +51,13 @@ public class KafkaLogFactory implements LogFactory {
     return sanitizedName;
   }
 
-  private IConnectorFactoryContext createSinkContext(String name, String topicName,
+  private IConnectorFactoryContext createSinkContext(Name name, String topicName,
       String timestampName, String timestampType, List<String> primaryKey) {
     Map<String, Object> context = new HashMap<>();
-    context.put("name", name);
     context.put("topic", topicName);
     context.put("timestamp-name", timestampName);
     context.put("timestamp-type", timestampType);
     context.put("primary-key", primaryKey);
-    return new ConnectorFactoryContext(context);
+    return new ConnectorFactoryContext(name, context);
   }
 }

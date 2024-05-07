@@ -10,6 +10,7 @@ import com.datasqrl.metadata.Metric;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.google.common.base.Preconditions;
+import java.util.Map;
 import lombok.ToString;
 
 @ToString
@@ -29,10 +30,21 @@ public class SourceTableStatistics implements
     return errors;
   }
 
+  public ErrorCollector validate(Map<String, Object> data,
+      ErrorCollector errors) {
+    RelationStats.validate(data, errors, NameCanonicalizer.SYSTEM);
+    return errors;
+  }
+
   @Override
   public void add(SourceRecord<String> sourceRecord, Void context) {
     //TODO: Analyze timestamps on record
     relation.add(sourceRecord.getData(), NameCanonicalizer.SYSTEM);
+  }
+
+  public void add(Map<String, Object> data, Void context) {
+    //TODO: Analyze timestamps on record
+    relation.add(data, NameCanonicalizer.SYSTEM);
   }
 
   @Override
