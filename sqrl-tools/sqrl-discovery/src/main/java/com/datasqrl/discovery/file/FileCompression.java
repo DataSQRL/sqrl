@@ -73,7 +73,7 @@ public class FileCompression {
 
     @Override
     public Set<String> getExtensions() {
-      return Set.of("gzip");
+      return Set.of("gzip", "gz");
     }
   }
 
