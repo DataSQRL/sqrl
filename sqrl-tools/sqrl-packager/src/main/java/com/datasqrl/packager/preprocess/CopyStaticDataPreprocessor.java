@@ -23,7 +23,6 @@ import java.util.regex.Pattern;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
-@AutoService(Preprocessor.class)
 /*
  * Copies jsonl and csv files (optionally with compression) to data directory to be added to flink
  */

@@ -14,7 +14,6 @@ import java.nio.file.Path;
 import java.util.regex.Pattern;
 
 @NoArgsConstructor
-@AutoService(Preprocessor.class)
 public class FlexibleSchemaPreprocessor extends PreprocessorBase {
 
   public static final String SCHEMA_YML_REGEX = "(.*)\\.schema\\.yml$";

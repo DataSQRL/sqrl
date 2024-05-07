@@ -1,10 +1,8 @@
 package com.datasqrl.io.schema.avro;
 
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.packager.preprocess.Preprocessor;
 import com.datasqrl.packager.preprocessor.PreprocessorBase;
 import com.datasqrl.util.StringUtil;
-import com.google.auto.service.AutoService;
 import com.google.common.base.Preconditions;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -13,7 +11,6 @@ import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 
 @NoArgsConstructor
-@AutoService(Preprocessor.class)
 public class AvroSchemaPreprocessor extends PreprocessorBase {
 
 

@@ -5,6 +5,7 @@ package com.datasqrl.cmd;
 
 
 import static com.datasqrl.config.ScriptConfigImpl.GRAPHQL_NORMALIZED_FILE_NAME;
+import static com.datasqrl.packager.Packager.PACKAGE_JSON;
 
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
@@ -14,6 +15,7 @@ import com.datasqrl.compile.TestPlan;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.graphql.APIType;
 import com.datasqrl.inject.SqrlInjector;
 import com.datasqrl.inject.StatefulModule;
@@ -105,20 +107,19 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
       sqrlConfig.setPipeline(defaultKeys);
     }
 
-    Packager packager = new Packager(repository, root.rootDir, sqrlConfig, errors);
-    Path path = packager.preprocess();
+    DirectoryManager.prepareTargetDirectory(getTargetDir());
+    errors.checkFatal(Files.isDirectory(root.rootDir), "Not a valid root directory: %s", root.rootDir);
 
+    Injector injector = Guice.createInjector(
+        new SqrlInjector(errors, root.rootDir, getTargetDir(), debug, sqrlConfig, getGoal(), repository),
+        new StatefulModule(new SqrlSchema(new TypeFactory(), NameCanonicalizer.SYSTEM)));
+
+    Packager packager = injector.getInstance(Packager.class);
+    packager.preprocess(errors.withLocation(ErrorPrefix.CONFIG.resolve(PACKAGE_JSON)));
     if (errors.hasErrors()) {
       return;
     }
 
-    Preconditions.checkArgument(Files.isRegularFile(path));
-
-    DirectoryManager.prepareTargetDirectory(getTargetDir());
-
-    Injector injector = Guice.createInjector(
-        new SqrlInjector(errors, root.rootDir, getTargetDir(), debug, sqrlConfig, getGoal()),
-        new StatefulModule(new SqrlSchema(new TypeFactory(), NameCanonicalizer.SYSTEM)));
     CompilationProcess compilationProcess = injector.getInstance(CompilationProcess.class);
     testsPath.ifPresent(this::validateTestPath);
 
