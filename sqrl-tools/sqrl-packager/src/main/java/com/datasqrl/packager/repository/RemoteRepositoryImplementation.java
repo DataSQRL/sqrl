@@ -39,7 +39,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 
 public class RemoteRepositoryImplementation implements Repository, PublishRepository {
-  public static final URI DEFAULT_URI = URI.create("https://sqrl-repository-frontend-git-staging-datasqrl.vercel.app"); // https://dev.datasqrl.com
+  public static final URI DEFAULT_URI = URI.create("https://dev.datasqrl.com");
 
   private final ObjectMapper mapper = SqrlObjectMapper.INSTANCE;
   private final HttpClient client = HttpClient.newHttpClient();
