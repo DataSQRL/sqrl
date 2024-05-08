@@ -1,0 +1,62 @@
+>>>products.schema.yml
+---
+name: "products"
+schema_version: "1"
+partial_schema: false
+columns:
+- name: "id"
+  type: "BIGINT"
+  tests:
+  - "not_null"
+- name: "name"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "sizing"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "weight_in_gram"
+  type: "BIGINT"
+  tests:
+  - "not_null"
+- name: "type"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "category"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "usda_id"
+  type: "BIGINT"
+  tests:
+  - "not_null"
+- name: "updated"
+  type: "TIMESTAMP"
+  tests:
+  - "not_null"
+
+>>>products.table.json
+{
+  "flink" : {
+    "format" : "flexible-json",
+    "path" : "/data/products.jsonl",
+    "source.monitor-interval" : 1,
+    "connector" : "filesystem"
+  },
+  "metadata" : {
+    "_ingest_time" : {
+      "attribute" : "proctime()"
+    },
+    "_uuid" : {
+      "attribute" : "secure.Uuid()"
+    }
+  },
+  "version" : 1,
+  "table" : {
+    "type" : "source",
+    "primary-key" : "_uuid",
+    "timestamp" : "_ingest_time"
+  }
+}

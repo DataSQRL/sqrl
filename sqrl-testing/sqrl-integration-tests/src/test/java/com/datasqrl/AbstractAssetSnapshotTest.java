@@ -112,7 +112,10 @@ public abstract class AbstractAssetSnapshotTest {
 
 
   public static String getDisplayName(Path path) {
-    return FileUtil.separateExtension(path).getKey();
+    String filename = path.getFileName().toString();
+    int length = filename.indexOf('.');
+    if (length<0) length = filename.length();
+    return filename.substring(0,length);
   }
 
   public static Path getResourcesDirectory(String subdir) {

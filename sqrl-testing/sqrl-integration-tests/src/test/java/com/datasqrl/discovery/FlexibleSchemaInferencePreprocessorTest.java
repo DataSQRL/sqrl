@@ -22,6 +22,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
+import lombok.SneakyThrows;
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -29,7 +30,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
-public class SchemaInferenceTest extends AbstractAssetSnapshotTest {
+public class FlexibleSchemaInferencePreprocessorTest extends AbstractAssetSnapshotTest {
 
   public static final Path FILES_DIR = getResourcesDirectory("discoveryfiles");
 
@@ -37,7 +38,7 @@ public class SchemaInferenceTest extends AbstractAssetSnapshotTest {
   FlexibleSchemaInferencePreprocessor preprocessor;
   PackageJson packageJson;
 
-  protected SchemaInferenceTest() {
+  protected FlexibleSchemaInferencePreprocessorTest() {
     super(FILES_DIR.resolve("output"), AssertStatusHook.INSTANCE);
     packageJson = SqrlConfigCommons.fromFilesPackageJson(errors, List.of(Path.of("../../profiles/flink-1.16/package.json")));
     Injector injector = Guice.createInjector(
@@ -50,12 +51,14 @@ public class SchemaInferenceTest extends AbstractAssetSnapshotTest {
 
   @ParameterizedTest
   @ArgumentsSource(DataFiles.class)
+  @SneakyThrows
   void testScripts(Path file) {
     assertTrue(Files.exists(file));
+    Path targetFile = Files.copy(file, deployDir.resolve(file.getFileName()));
     String filename = file.getFileName().toString();
     assertTrue(preprocessor.getPattern().matcher(filename).matches());
     this.snapshot = Snapshot.of(getDisplayName(file), getClass());
-    preprocessor.processFile(file, new ProcessorContext(FILES_DIR, buildDir, packageJson), errors);
+    preprocessor.processFile(targetFile, new ProcessorContext(deployDir, buildDir, packageJson), errors);
     createSnapshot();
   }
 
