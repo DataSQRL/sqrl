@@ -29,8 +29,8 @@ import org.junit.jupiter.params.provider.ArgumentsProvider;
 
 public abstract class AbstractAssetSnapshotTest {
 
-  protected Path buildDir = null;
-  protected final Path deployDir;
+  public Path buildDir = null;
+  public final Path deployDir;
   protected final StatusHook hook;
   protected Snapshot snapshot;
 
@@ -59,6 +59,10 @@ public abstract class AbstractAssetSnapshotTest {
     return path -> false;
   }
 
+  public Predicate<Path> getPlanDirFilter() {
+    return path -> true;
+  }
+
   protected void clearDir(Path dir) throws IOException {
     if (dir != null && Files.isDirectory(dir)) {
       FileUtils.deleteDirectory(dir.toFile());
@@ -68,12 +72,13 @@ public abstract class AbstractAssetSnapshotTest {
   protected void createSnapshot() {
     snapshotFiles(deployDir, getDeployDirFilter());
     snapshotFiles(buildDir, getBuildDirFilter());
-    snapshotFiles(buildDir.resolve("plan"), (e)->true);
+    snapshotFiles(buildDir.resolve("plan"), getPlanDirFilter());
     snapshot.createOrValidate();
   }
 
   @SneakyThrows
   private void snapshotFiles(Path path, Predicate<Path> predicate) {
+    if (path==null || !Files.isDirectory(path)) return;
     List<Path> paths = new ArrayList<>();
     Files.walkFileTree(path, new SimpleFileVisitor<>() {
       @Override
@@ -107,7 +112,10 @@ public abstract class AbstractAssetSnapshotTest {
 
 
   public static String getDisplayName(Path path) {
-    return FileUtil.separateExtension(path).getKey();
+    String filename = path.getFileName().toString();
+    int length = filename.indexOf('.');
+    if (length<0) length = filename.length();
+    return filename.substring(0,length);
   }
 
   public static Path getResourcesDirectory(String subdir) {

@@ -1,0 +1,60 @@
+>>>orderitems.schema.yml
+---
+name: "orderitems"
+schema_version: "1"
+partial_schema: false
+columns:
+- name: "id"
+  type: "BIGINT"
+  tests:
+  - "not_null"
+- name: "customerid"
+  type: "BIGINT"
+  tests:
+  - "not_null"
+- name: "time"
+  type: "TIMESTAMP"
+  tests:
+  - "not_null"
+- name: "items"
+  columns:
+  - name: "productid"
+    type: "BIGINT"
+    tests:
+    - "not_null"
+  - name: "quantity"
+    type: "BIGINT"
+    tests:
+    - "not_null"
+  - name: "unit_price"
+    type: "DOUBLE"
+    tests:
+    - "not_null"
+  - name: "discount"
+    type: "DOUBLE"
+  tests:
+  - "not_null"
+
+>>>orderitems.table.json
+{
+  "flink" : {
+    "format" : "flexible-json",
+    "path" : "/data/orderitems.jsonl",
+    "source.monitor-interval" : 1,
+    "connector" : "filesystem"
+  },
+  "metadata" : {
+    "_ingest_time" : {
+      "attribute" : "proctime()"
+    },
+    "_uuid" : {
+      "attribute" : "secure.Uuid()"
+    }
+  },
+  "version" : 1,
+  "table" : {
+    "type" : "source",
+    "primary-key" : "_uuid",
+    "timestamp" : "_ingest_time"
+  }
+}

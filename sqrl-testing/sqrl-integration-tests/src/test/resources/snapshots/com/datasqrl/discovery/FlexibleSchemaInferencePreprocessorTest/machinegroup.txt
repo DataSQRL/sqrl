@@ -1,0 +1,50 @@
+>>>machinegroup.schema.yml
+---
+name: "machinegroup"
+schema_version: "1"
+partial_schema: false
+columns:
+- name: "groupId"
+  type: "BIGINT"
+  tests:
+  - "not_null"
+- name: "groupName"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "created"
+  type: "TIMESTAMP"
+  tests:
+  - "not_null"
+- name: "machines"
+  columns:
+  - name: "machineId"
+    type: "BIGINT"
+    tests:
+    - "not_null"
+  tests:
+  - "not_null"
+
+>>>machinegroup.table.json
+{
+  "flink" : {
+    "format" : "flexible-json",
+    "path" : "/data/machinegroup.jsonl.gz",
+    "source.monitor-interval" : 1,
+    "connector" : "filesystem"
+  },
+  "metadata" : {
+    "_ingest_time" : {
+      "attribute" : "proctime()"
+    },
+    "_uuid" : {
+      "attribute" : "secure.Uuid()"
+    }
+  },
+  "version" : 1,
+  "table" : {
+    "type" : "source",
+    "primary-key" : "_uuid",
+    "timestamp" : "_ingest_time"
+  }
+}

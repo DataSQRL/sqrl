@@ -8,6 +8,7 @@ import com.datasqrl.config.PackageJson;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.preprocess.Preprocessor;
 import com.datasqrl.packager.preprocess.Preprocessor.ProcessorContext;
+import com.google.inject.Inject;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -15,18 +16,17 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.SneakyThrows;
-import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
-@Value
 @Slf4j
+@AllArgsConstructor(onConstructor_=@Inject)
 public class Preprocessors {
-
   public static final Set<String> EXCLUDED_DIRS = Set.of(Packager.BUILD_DIR_NAME, "deploy");
-  List<Preprocessor> preprocessors;
-  ErrorCollector errors;
+
+  Set<Preprocessor> preprocessors;
 
   @SneakyThrows
   public boolean handle(PreprocessorsContext ctx) {
@@ -62,7 +62,7 @@ public class Preprocessors {
   private void invokePreprocessor(Preprocessor preprocessor, Path userDir, PreprocessorsContext ctx) {
     ProcessorContext context = new ProcessorContext(ctx.rootDir, ctx.buildDir, ctx.config);
     log.trace("Invoking preprocessor: {}", preprocessor.getClass());
-    preprocessor.processFile(userDir, context, errors);
+    preprocessor.processFile(userDir, context, ctx.errors);
     copyRelativeFiles(context.getDependencies(),
         getModulePath(context.getName(), ctx.rootDir, ctx.buildDir, userDir));
     copy(context.getLibraries(), ctx.buildDir);
@@ -120,5 +120,6 @@ public class Preprocessors {
     // The user specified config
     PackageJson config;
     String[] profiles;
+    ErrorCollector errors;
   }
 }

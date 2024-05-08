@@ -27,8 +27,9 @@ public class LoaderUtil {
       if (sinkPath.getFirst().getCanonical().equalsIgnoreCase(PRINT_SINK_NAME)) {
         ConnectorFactory print = connectorFactoryFactory.create(null, PRINT_SINK_NAME)
             .get();
-        TableConfig sourceAndSink = print.createSourceAndSink(new ConnectorFactoryContext(
-            Map.of("name", sinkPath.getLast().getDisplay())));
+        Name sinkName = sinkPath.getLast();
+        TableConfig sourceAndSink = print.createSourceAndSink(new ConnectorFactoryContext(sinkName,
+            Map.of("name", sinkName.getDisplay())));
         return Optional.of(TableSinkImpl.create(sourceAndSink, sinkPath, Optional.empty()));
       }
 

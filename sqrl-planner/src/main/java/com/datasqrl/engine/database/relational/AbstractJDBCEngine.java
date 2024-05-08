@@ -8,6 +8,7 @@ import static com.datasqrl.engine.EngineFeature.STANDARD_DATABASE;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.config.ConnectorConf;
+import com.datasqrl.config.ConnectorFactoryContext;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.config.PackageJson.EngineConfig;
@@ -93,7 +94,8 @@ public class AbstractJDBCEngine extends ExecutionEngine.Base implements Database
   @Override
   public TableConfig getSinkConfig(String tableName) {
     return connectorFactory
-        .create(Type.DATABASE, getDialect().getId()).get().createSourceAndSink(() -> Map.of("table-name", tableName));
+        .create(Type.DATABASE, getDialect().getId()).get().createSourceAndSink(
+            new ConnectorFactoryContext(tableName, Map.of("table-name", tableName)));
   }
 
   @Override

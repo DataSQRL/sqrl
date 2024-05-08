@@ -2,6 +2,8 @@ package com.datasqrl.engine.log.kafka;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.config.ConnectorFactory.IConnectorFactoryContext;
+import com.datasqrl.config.ConnectorFactoryContext;
 import com.datasqrl.config.TableConfig;
 import com.datasqrl.engine.log.Log;
 import com.datasqrl.io.tables.TableSchema;
@@ -21,6 +23,7 @@ class KafkaTopic implements Log {
   Name logName;
   TableConfig logConfig;
   Optional<TableSchema> tableSchema;
+  IConnectorFactoryContext connectorContext;
 
   @Override
   public TableSource getSource() {

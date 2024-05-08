@@ -35,12 +35,12 @@ public class KafkaLogFactory implements LogFactory {
     String topicName = sanitizeName(logId);
     Preconditions.checkArgument(Topic.isValid(topicName), "Not a valid topic name: %s", topicName);
     Name logName = Name.system(schema.getName());
-
+    IConnectorFactoryContext connectorContext = createSinkContext(logName, topicName, timestamp.getName(),
+        timestamp.getType().name(), primaryKey);
     TableConfig logConfig = connectorFactory
-        .createSourceAndSink(createSinkContext(logName.getDisplay(), topicName, timestamp.getName(),
-            timestamp.getType().name(), primaryKey));
+        .createSourceAndSink(connectorContext);
     Optional<TableSchema> tblSchema = Optional.of(new RelDataTypeTableSchema(schema.getType()));
-    return new KafkaTopic(topicName, logName, logConfig, tblSchema);
+    return new KafkaTopic(topicName, logName, logConfig, tblSchema, connectorContext);
   }
 
   static String sanitizeName(String logId) {
@@ -51,14 +51,13 @@ public class KafkaLogFactory implements LogFactory {
     return sanitizedName;
   }
 
-  private IConnectorFactoryContext createSinkContext(String name, String topicName,
+  private IConnectorFactoryContext createSinkContext(Name name, String topicName,
       String timestampName, String timestampType, List<String> primaryKey) {
     Map<String, Object> context = new HashMap<>();
-    context.put("name", name);
     context.put("topic", topicName);
     context.put("timestamp-name", timestampName);
     context.put("timestamp-type", timestampType);
     context.put("primary-key", primaryKey);
-    return new ConnectorFactoryContext(context);
+    return new ConnectorFactoryContext(name, context);
   }
 }
