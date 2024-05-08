@@ -3,6 +3,7 @@ package com.datasqrl.discovery.file;
 import com.datasqrl.graphql.SqrlObjectMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.auto.service.AutoService;
+import com.google.common.base.Strings;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,6 +29,7 @@ public class JsonRecordReader implements RecordReader {
   public Stream<Map<String, Object>> read(InputStream input) throws IOException {
     BufferedReader reader = new BufferedReader(new InputStreamReader(input));
     return reader.lines().flatMap(line -> {
+      if (Strings.isNullOrEmpty(line)) return Stream.of();
       try {
         return Stream.of((Map<String,Object>)mapper.readValue(line, LinkedHashMap.class));
       } catch (IOException e) {
