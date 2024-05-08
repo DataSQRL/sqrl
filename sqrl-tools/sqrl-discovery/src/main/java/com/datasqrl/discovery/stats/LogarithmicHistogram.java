@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
  */
-package com.datasqrl.metadata.stats;
+package com.datasqrl.discovery.stats;
 
 import com.google.common.base.Preconditions;
 import java.io.Serializable;
@@ -36,7 +36,7 @@ public class LogarithmicHistogram implements Serializable {
 
   @ToString
   public static class Accumulator implements
-      com.datasqrl.metadata.stats.Accumulator<Long, Accumulator, Void> {
+      com.datasqrl.discovery.stats.Accumulator<Long, Accumulator, Void> {
 
     private float base;
     private double baseConversion;

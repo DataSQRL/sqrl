@@ -1,12 +1,10 @@
 /*
  * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
  */
-package com.datasqrl.metadata.stats;
+package com.datasqrl.discovery.stats;
 
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.discovery.SourceRecord;
-import com.datasqrl.metadata.Metric;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.google.common.base.Preconditions;
@@ -15,7 +13,7 @@ import lombok.ToString;
 
 @ToString
 public class SourceTableStatistics implements
-    Accumulator<SourceRecord<String>, SourceTableStatistics, Void>,
+    Accumulator<Map<String,Object>, SourceTableStatistics, Void>,
     Metric<SourceTableStatistics> {
 
   final RelationStats relation;
@@ -24,11 +22,6 @@ public class SourceTableStatistics implements
     this.relation = new RelationStats();
   }
 
-  public ErrorCollector validate(SourceRecord<String> sourceRecord,
-      ErrorCollector errors) {
-    RelationStats.validate(sourceRecord.getData(), errors, NameCanonicalizer.SYSTEM);
-    return errors;
-  }
 
   public ErrorCollector validate(Map<String, Object> data,
       ErrorCollector errors) {
@@ -37,11 +30,6 @@ public class SourceTableStatistics implements
   }
 
   @Override
-  public void add(SourceRecord<String> sourceRecord, Void context) {
-    //TODO: Analyze timestamps on record
-    relation.add(sourceRecord.getData(), NameCanonicalizer.SYSTEM);
-  }
-
   public void add(Map<String, Object> data, Void context) {
     //TODO: Analyze timestamps on record
     relation.add(data, NameCanonicalizer.SYSTEM);

@@ -2,18 +2,13 @@ package com.datasqrl.discovery.preprocessor;
 
 
 import static com.datasqrl.config.ConnectorFactoryFactory.FILE_SINK_NAME;
-import static com.datasqrl.config.ConnectorFactoryFactory.PRINT_SINK_NAME;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.config.ConnectorConfImpl;
 import com.datasqrl.config.ConnectorFactory;
 import com.datasqrl.config.ConnectorFactoryContext;
 import com.datasqrl.config.ConnectorFactoryFactory;
-import com.datasqrl.config.ExternalDataType;
 import com.datasqrl.config.TableConfig;
-import com.datasqrl.config.TableConfigBuilderImpl;
-import com.datasqrl.config.TableConfigImpl;
 import com.datasqrl.discovery.TableWriter;
 import com.datasqrl.discovery.file.FileCompression;
 import com.datasqrl.discovery.file.FileCompression.CompressionIO;
@@ -23,13 +18,11 @@ import com.datasqrl.discovery.file.RecordReader;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.schema.flexible.FlexibleTableSchemaHolder;
 import com.datasqrl.io.tables.TableSource;
-import com.datasqrl.metadata.stats.DefaultSchemaGenerator;
-import com.datasqrl.metadata.stats.SourceTableStatistics;
-import com.datasqrl.packager.preprocess.Preprocessor;
+import com.datasqrl.discovery.stats.DefaultSchemaGenerator;
+import com.datasqrl.discovery.stats.SourceTableStatistics;
 import com.datasqrl.schema.input.FlexibleTableSchema;
 import com.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.datasqrl.util.ServiceLoaderDiscovery;
-import com.google.auto.service.AutoService;
 import com.google.inject.Inject;
 import java.io.FileInputStream;
 import java.io.IOException;
