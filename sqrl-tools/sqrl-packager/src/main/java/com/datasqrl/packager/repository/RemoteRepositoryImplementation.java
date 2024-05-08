@@ -32,14 +32,16 @@ import java.util.List;
 import java.util.Optional;
 import lombok.Setter;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import net.lingala.zip4j.ZipFile;
 import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 
+@Slf4j
 public class RemoteRepositoryImplementation implements Repository, PublishRepository {
-  public static final URI DEFAULT_URI = URI.create("https://dev.datasqrl.com");
+  public static final URI DEFAULT_URI = URI.create("https://sqrl-repository-frontend-git-staging-datasqrl.vercel.app");
 
   private final ObjectMapper mapper = SqrlObjectMapper.INSTANCE;
   private final HttpClient client = HttpClient.newHttpClient();
@@ -133,8 +135,8 @@ public class RemoteRepositoryImplementation implements Repository, PublishReposi
       if (statusCode != 200) {
         String message =
             String.format(
-                "Could not call remote repository. statusCode=%d, body=%s",
-                statusCode, response.body());
+                "Could not call remote repository for [%s]. statusCode=%d, body=%s",
+                name, statusCode, response.body());
         throw new RuntimeException(message);
       }
       return mapper.readValue(response.body(), JsonNode.class);
@@ -202,7 +204,7 @@ public class RemoteRepositoryImplementation implements Repository, PublishReposi
     if (response.statusCode() == 200) {
       return true;
     } else {
-      System.err.printf("An error happened while uploading dependency: %s%n", response.body());
+      log.error("An error happened while uploading dependency: status code: {} response: {}", response.statusCode(), response.body());
       return false;
     }
   }

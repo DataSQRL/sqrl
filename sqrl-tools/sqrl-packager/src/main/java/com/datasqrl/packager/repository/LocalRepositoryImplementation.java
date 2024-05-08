@@ -55,6 +55,7 @@ public class LocalRepositoryImplementation implements Repository, CacheRepositor
             .resolve(FileUtil.addExtension(dependency.getVariant(), Zipper.ZIP_EXTENSION));
         Path parentDir = destFile.getParent();
         if (!Files.isDirectory(parentDir)) Files.createDirectories(parentDir);
+        Files.deleteIfExists(destFile);
         Files.copy(zipFile, destFile);
     }
 
