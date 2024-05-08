@@ -62,7 +62,6 @@ public class AuthProvider {
   }
 
   private Optional<String> refreshAccessToken(String refreshToken) {
-    log.info("Refresh token flow");
     Map<Object, Object> data = prepareData(refreshToken);
 
     HttpRequest request = HttpRequest.newBuilder()
