@@ -33,6 +33,8 @@
     <commonsio.version>2.11.0</commonsio.version>
     <commons-lang3.version>3.12.0</commons-lang3.version>
     <commons-config.version>2.9.0</commons-config.version>
+    <commons-collections.version>4.4</commons-collections.version>
+    <httpcomponents.version>4.5.14</httpcomponents.version>
     <commons-bean.version>1.9.4</commons-bean.version>
     <h2.version>2.1.214</h2.version>
     <opencsv.version>5.7.1</opencsv.version>
@@ -290,6 +292,16 @@
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-configuration2</artifactId>
         <version>${commons-config.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-collections4</artifactId>
+        <version>${commons-collections.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.httpcomponents</groupId>
+        <artifactId>httpmime</artifactId>
+        <version>${httpcomponents.version}</version>
       </dependency>
       <dependency>
         <groupId>commons-beanutils</groupId>

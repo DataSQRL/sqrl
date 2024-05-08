@@ -41,9 +41,7 @@ public class LocalRepositoryImplementation implements Repository, CacheRepositor
 
     @Override
     public boolean retrieveDependency(Path targetPath, Dependency dependency) throws IOException {
-        Path path = dependency2Path(dependency);
-        Path zipFile = path
-            .resolve(FileUtil.addExtension(dependency.getVariant(), Zipper.ZIP_EXTENSION));
+        Path zipFile = getZipFilePath(dependency);
         if (Files.isRegularFile(zipFile)) {
             new ZipFile(zipFile.toFile()).extractAll(targetPath.toString());
             return true;
@@ -70,6 +68,12 @@ public class LocalRepositoryImplementation implements Repository, CacheRepositor
     @Override
     public Optional<Dependency> resolveDependency(String packageName) {
         return Optional.empty();
+    }
+
+    public Path getZipFilePath(Dependency dependency) {
+        Path path = dependency2Path(dependency);
+        Path zipFile = path.resolve(FileUtil.addExtension(dependency.getVariant(), Zipper.ZIP_EXTENSION));
+        return zipFile;
     }
 
     private Path dependency2Path(Dependency dependency) {
