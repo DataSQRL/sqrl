@@ -8,5 +8,4 @@ public class AuthUtils {
     public static final String AUTH0_DOMAIN = "dev-46466kz3hleg0in1.us.auth0.com";
     public static final String CLIENT_ID = "KC2EoCphVVe5wzZj3GyFiTZboulfYJNH";
     public static final String TOKEN_ENDPOINT = String.format("https://%s/oauth/token", AUTH0_DOMAIN);
-    public static final String USERINFO_ENDPOINT = String.format("https://%s/userinfo", AUTH0_DOMAIN);
 }

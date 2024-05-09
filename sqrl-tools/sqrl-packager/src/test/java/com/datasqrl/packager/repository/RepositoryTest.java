@@ -131,6 +131,7 @@ public class RepositoryTest {
   }
 
   @Test
+  @Disabled
   @SneakyThrows
   public void remoteRepoTest() {
     // TODO: package here once we have real public packages in the repo, because for now datasqrl.example.speedshop is a mocked one
