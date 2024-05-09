@@ -11,8 +11,9 @@ import lombok.NonNull;
 import picocli.CommandLine;
 import picocli.CommandLine.ScopeType;
 
-@CommandLine.Command(name = "datasqrl", mixinStandardHelpOptions = true, version = "0.1",
-    subcommands = {CompilerCommand.class,  PublishCommand.class, TestCommand.class})
+@CommandLine.Command(name = "datasqrl", mixinStandardHelpOptions = true, version = "0.5",
+    subcommands = {CompilerCommand.class,
+         PublishCommand.class, TestCommand.class, LoginCommand.class})
 @Getter
 public class RootCommand implements Runnable {
 

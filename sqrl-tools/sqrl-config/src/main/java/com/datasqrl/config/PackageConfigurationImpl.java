@@ -7,6 +7,8 @@ import com.datasqrl.config.Constraints.Default;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.AllArgsConstructor;
@@ -59,8 +61,19 @@ public class PackageConfigurationImpl implements PackageConfiguration {
 
   @Override
   public Map<String, Object> toMap() {
-    return Map.of();
+    Map<String, Object> map = new LinkedHashMap<>();
+    map.put("name", getName());
+    map.put("version", getVersion());
+    map.put("variant", getVariant());
+    map.put("latest", getLatest());
+    map.put("type", getType());
+    map.put("license", getLicense());
+    map.put("repository", getRepository());
+    map.put("homepage", getHomepage());
+    map.put("documentation", getDocumentation());
+    map.put("readme", getReadme());
+    map.put("description", getDescription());
+    map.put("keywords", getKeywords());
+    return map;
   }
-
-
 }

@@ -45,10 +45,8 @@ public class RemoteRepositoryImplementation implements Repository, PublishReposi
   public static final URI DEFAULT_URI = URI.create("https://sqrl-repository-frontend-git-staging-datasqrl.vercel.app");
 
   private final ObjectMapper mapper = SqrlObjectMapper.INSTANCE;
-  private final HttpClient client = HttpClient.newBuilder()
-      .followRedirects(HttpClient.Redirect.ALWAYS)
-      .build();
-  private final AuthProvider authProvider = new AuthProvider(client);
+
+  private final AuthProvider authProvider = new AuthProvider();
 
   private final URI repositoryServerURI;
   @Setter
@@ -120,23 +118,23 @@ public class RemoteRepositoryImplementation implements Repository, PublishReposi
     try {
       HttpClient client = HttpClient.newHttpClient();
 
-      String authToken = authProvider.getAccessToken();
+      Optional<String> authToken = authProvider.getAccessToken();
 
-      HttpRequest request =
+      HttpRequest.Builder requestBuilder =
           HttpRequest.newBuilder()
-              .uri(buildPackageInfoUri(name, version, variant))
-              .header("Authorization", "Bearer " + authToken)
-              .GET()
+              .uri(buildPackageInfoUri(name, version, variant));
+      authToken.ifPresent((t)->requestBuilder.header("Authorization", "Bearer " + authToken));
+      requestBuilder.GET()
               .timeout(Duration.of(10, ChronoUnit.SECONDS))
               .build();
 
-      HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
+      HttpResponse<String> response = client.send(requestBuilder.build(), BodyHandlers.ofString());
       int statusCode = response.statusCode();
       if (statusCode != 200) {
         String message =
             String.format(
-                "Could not call remote repository for [%s]. statusCode=%d, body=%s",
-                name, statusCode, response.body());
+                "Package [%s] is not available. Check if it exists and you have permission to access it.",
+                name);
         throw new RuntimeException(message);
       }
       return mapper.readValue(response.body(), JsonNode.class);
@@ -178,7 +176,8 @@ public class RemoteRepositoryImplementation implements Repository, PublishReposi
   public boolean publish(Path zipFile, PackageConfiguration pkgConfig) {
     HttpClient client = HttpClient.newHttpClient();
 
-    String authToken = authProvider.getAccessToken();
+    String authToken = authProvider.getAccessToken()
+        .orElseThrow(() -> new RuntimeException("Must be logged in to publish. Run `sqrl login`"));
 
     HttpEntity httpEntity = createHttpEntity(zipFile, pkgConfig);
 
@@ -212,6 +211,7 @@ public class RemoteRepositoryImplementation implements Repository, PublishReposi
     MultipartEntityBuilder entityBuilder = MultipartEntityBuilder.create();
     for (Map.Entry<String, Object> entry : map.entrySet()) {
       if (entry.getValue() instanceof List) continue;
+      if (entry.getValue() == null) continue;
       entityBuilder.addTextBody(entry.getKey(), entry.getValue().toString());
     }
     

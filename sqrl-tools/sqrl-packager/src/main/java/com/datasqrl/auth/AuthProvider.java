@@ -38,20 +38,21 @@ public class AuthProvider {
   private final HttpClient client;
   private final TokenManager tokenManager;
 
-  public AuthProvider(HttpClient client) {
-    this.client = client;
+  public AuthProvider() {
+    this.client = HttpClient.newBuilder()
+        .followRedirects(HttpClient.Redirect.ALWAYS)
+        .build();
     this.tokenManager = new TokenManager();
   }
 
-  public String getAccessToken() {
+  public Optional<String> getAccessToken() {
     return tokenManager.getAccessToken()
-        .orElseGet(this::loginToRepository);
+        .or(()->tokenManager.getRefreshToken()
+            .flatMap(this::refreshAccessToken));
   }
 
   public String loginToRepository() {
-    return tokenManager.getRefreshToken()
-        .flatMap(this::refreshAccessToken)
-        .orElseGet(this::browserFlow);
+    return this.browserFlow();
   }
 
   private Optional<String> refreshAccessToken(String refreshToken) {
@@ -73,6 +74,7 @@ public class AuthProvider {
       int statusCode = response.statusCode();
       if (statusCode == 200) {
         JsonObject jsonResponse = new JsonObject(response.body());
+
         String newAccessToken = jsonResponse.getString("access_token");
         tokenManager.setAccessToken(newAccessToken);
 
