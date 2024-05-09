@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.util.List;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -54,6 +55,11 @@ public class PackageConfigurationImpl implements PackageConfiguration {
   public DependencyImpl asDependency() {
     checkInitialized();
     return new DependencyImpl(getName(), getVersion(), getVariant());
+  }
+
+  @Override
+  public Map<String, Object> toMap() {
+    return Map.of();
   }
 
 

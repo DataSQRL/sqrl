@@ -1,8 +1,10 @@
 package com.datasqrl.auth;
 
-import static com.datasqrl.auth.AuthUtils.*;
+import static com.datasqrl.auth.AuthUtils.AUTHORIZE_ENDPOINT;
+import static com.datasqrl.auth.AuthUtils.CLIENT_ID;
+import static com.datasqrl.auth.AuthUtils.REDIRECT_URI;
+import static com.datasqrl.auth.AuthUtils.TOKEN_ENDPOINT;
 
-import com.datasqrl.util.FileUtil;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import java.io.IOException;
@@ -13,12 +15,9 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.Base64;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -31,50 +30,41 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class AuthProvider {
-
-  private static final String ENV_DATASQRL_TOKEN = "DATASQRL_TOKEN";
-  private static final Path DATASQRL_CONFIG_DIRECTORY = FileUtil.getUserRoot().resolve(".datasqrl");
-  private static final Path REFRESH_TOKEN_PATH = DATASQRL_CONFIG_DIRECTORY.resolve("auth");
-
-  private static final long TIMEOUT_IN_SECONDS = 60;
-
+  private static final long TIMEOUT_IN_SECONDS = 120;
   private final String state = getRandomString(16);
   private final String codeVerifier = getRandomString(43);
   private final String codeChallenge = generateCodeChallenge(codeVerifier);
 
   private final HttpClient client;
-  private String accessToken;
+  private final TokenManager tokenManager;
 
   public AuthProvider(HttpClient client) {
     this.client = client;
+    this.tokenManager = new TokenManager();
   }
 
-  @SneakyThrows
+  public String getAccessToken() {
+    return tokenManager.getAccessToken()
+        .orElseGet(this::loginToRepository);
+  }
+
   public String loginToRepository() {
-    return obtainRefreshToken()
+    return tokenManager.getRefreshToken()
         .flatMap(this::refreshAccessToken)
         .orElseGet(this::browserFlow);
   }
 
-  private Optional<String> obtainRefreshToken() throws IOException {
-    String refreshTokenFromEnv = System.getenv(ENV_DATASQRL_TOKEN);
-    if (refreshTokenFromEnv != null && !refreshTokenFromEnv.isEmpty()) {
-      return Optional.of(refreshTokenFromEnv);
-    }
-
-    return Files.isRegularFile(REFRESH_TOKEN_PATH) ?
-        Optional.of(Files.readString(REFRESH_TOKEN_PATH)) :
-        Optional.empty();
-  }
-
   private Optional<String> refreshAccessToken(String refreshToken) {
-    Map<Object, Object> data = prepareData(refreshToken);
+    JsonObject payload = new JsonObject();
+    payload.put("grant_type", "refresh_token");
+    payload.put("refresh_token", refreshToken);
+    payload.put("client_id", CLIENT_ID);
 
     HttpRequest request = HttpRequest.newBuilder()
         .uri(URI.create(TOKEN_ENDPOINT))
-        .header("Content-Type", "application/x-www-form-urlencoded")
+        .header("Content-Type", "application/json")
         .header("Accept", "application/json")
-        .POST(ofFormData(data))
+        .POST(HttpRequest.BodyPublishers.ofString(payload.toString()))
         .build();
 
     try {
@@ -84,6 +74,13 @@ public class AuthProvider {
       if (statusCode == 200) {
         JsonObject jsonResponse = new JsonObject(response.body());
         String newAccessToken = jsonResponse.getString("access_token");
+        tokenManager.setAccessToken(newAccessToken);
+
+        //Support rotating refresh tokens if enabled
+        String newRefreshToken = jsonResponse.containsKey("refresh_token") ?
+            jsonResponse.getString("refresh_token") : refreshToken;
+        tokenManager.setRefreshToken(newRefreshToken);
+
         return Optional.of(newAccessToken);
       } else if (statusCode == 403 ) {
         log.warn(new JsonObject(response.body()).getString("error_description"));
@@ -97,37 +94,23 @@ public class AuthProvider {
   }
 
   @SneakyThrows
-  private void writeToken(String refreshToken) {
-    Files.createDirectories(DATASQRL_CONFIG_DIRECTORY);
-    Files.write(REFRESH_TOKEN_PATH, refreshToken.getBytes(StandardCharsets.UTF_8));
-  }
-
-  private Map<Object, Object> prepareData(String refreshToken) {
-    Map<Object, Object> data = new HashMap<>();
-    data.put("grant_type", "refresh_token");
-    data.put("refresh_token", refreshToken);
-    data.put("client_id", CLIENT_ID);
-    return data;
-  }
-
-  @SneakyThrows
   private String browserFlow() {
-    CompletableFuture<JsonObject> tokenFuture = new CompletableFuture<>();
-
     Vertx vertx = Vertx.vertx();
-    vertx.deployVerticle(
-        new OAuthCallbackVerticle(
-            code -> exchangeCodeForToken(code, tokenFuture)));
-
-    openAuthWindow();
 
     try {
+      CompletableFuture<JsonObject> tokenFuture = new CompletableFuture<>();
+
+      vertx.deployVerticle(
+          new OAuthCallbackVerticle(
+              code -> exchangeCodeForToken(code, tokenFuture)));
+
+      openAuthWindow();
+
       JsonObject authToken = tokenFuture.get(TIMEOUT_IN_SECONDS, TimeUnit.SECONDS);
-      accessToken = authToken.getString("access_token");
+      String accessToken = authToken.getString("access_token");
+      tokenManager.setAccessToken(accessToken);
       String refreshToken = authToken.getString("refresh_token");
-
-      writeToken(refreshToken);
-
+      tokenManager.setRefreshToken(refreshToken);
       return accessToken;
     } catch (TimeoutException | ExecutionException | InterruptedException e) {
       throw new RuntimeException("Exception while getting access token.", e);
@@ -136,31 +119,12 @@ public class AuthProvider {
     }
   }
 
-  private static HttpRequest.BodyPublisher ofFormData(Map<Object, Object> data) {
-    var builder = new StringBuilder();
-    for (Map.Entry<Object, Object> entry : data.entrySet()) {
-      if (builder.length() > 0) {
-        builder.append("&");
-      }
-      builder.append(URLEncoder.encode(entry.getKey().toString(), StandardCharsets.UTF_8));
-      builder.append("=");
-      builder.append(URLEncoder.encode(entry.getValue().toString(), StandardCharsets.UTF_8));
-    }
-    return HttpRequest.BodyPublishers.ofString(builder.toString());
-  }
-
-  @SneakyThrows
-  public String isAuthenticated() {
-    if (accessToken != null) {
-      return accessToken;
-    }
-
-    return null;
-  }
-
   private void exchangeCodeForToken(String code, CompletableFuture<JsonObject> tokenFuture) {
-    JsonObject payload = new JsonObject().put("grant_type", "authorization_code")
-        .put("client_id", CLIENT_ID).put("code_verifier", codeVerifier).put("code", code)
+    JsonObject payload = new JsonObject()
+        .put("grant_type", "authorization_code")
+        .put("client_id", CLIENT_ID)
+        .put("code_verifier", codeVerifier)
+        .put("code", code)
         .put("redirect_uri", REDIRECT_URI);
 
     HttpRequest request = HttpRequest.newBuilder().uri(URI.create(TOKEN_ENDPOINT))

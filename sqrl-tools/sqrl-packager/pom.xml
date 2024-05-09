@@ -19,10 +19,6 @@
       <groupId>run.sqrl</groupId>
       <artifactId>sqrl-config</artifactId>
     </dependency>
-    <dependency>
-      <groupId>run.sqrl</groupId>
-      <artifactId>sqrl-auth</artifactId>
-    </dependency>
     <!-- to be moved out during run service modularization-->
     <!-- Kafka -->
     <dependency>

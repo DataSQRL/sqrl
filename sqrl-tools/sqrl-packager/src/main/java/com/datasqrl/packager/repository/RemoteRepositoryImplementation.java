@@ -29,6 +29,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.Setter;
 import lombok.SneakyThrows;
@@ -119,10 +120,7 @@ public class RemoteRepositoryImplementation implements Repository, PublishReposi
     try {
       HttpClient client = HttpClient.newHttpClient();
 
-      String authToken = authProvider.isAuthenticated();
-      if (authToken == null) {
-        authToken = authProvider.loginToRepository();
-      }
+      String authToken = authProvider.getAccessToken();
 
       HttpRequest request =
           HttpRequest.newBuilder()
@@ -180,10 +178,7 @@ public class RemoteRepositoryImplementation implements Repository, PublishReposi
   public boolean publish(Path zipFile, PackageConfiguration pkgConfig) {
     HttpClient client = HttpClient.newHttpClient();
 
-    String authToken = authProvider.isAuthenticated();
-    if (authToken == null) {
-      authToken = authProvider.loginToRepository();
-    }
+    String authToken = authProvider.getAccessToken();
 
     HttpEntity httpEntity = createHttpEntity(zipFile, pkgConfig);
 
@@ -212,42 +207,19 @@ public class RemoteRepositoryImplementation implements Repository, PublishReposi
   }
 
   private static HttpEntity createHttpEntity(Path zipFilePath, PackageConfiguration pkgConfig) {
+    Map<String, Object> map = pkgConfig.toMap();
+
+    MultipartEntityBuilder entityBuilder = MultipartEntityBuilder.create();
+    for (Map.Entry<String, Object> entry : map.entrySet()) {
+      if (entry.getValue() instanceof List) continue;
+      entityBuilder.addTextBody(entry.getKey(), entry.getValue().toString());
+    }
+    
     File zipFile = zipFilePath.toFile();
+    entityBuilder.addBinaryBody("file", zipFile, ContentType.create("application/zip"), zipFile.getName());
 
-    MultipartEntityBuilder entityBuilder =
-        MultipartEntityBuilder.create()
-            .addTextBody("name", pkgConfig.getName())
-            .addTextBody("version", pkgConfig.getVersion())
-            .addTextBody("latest", pkgConfig.getLatest().toString())
-            .addTextBody("orgname", pkgConfig.getName().split("\\.", 2)[0])
-            .addBinaryBody("file", zipFile, ContentType.create("application/zip"), zipFile.getName());
-
-    String variant = pkgConfig.getVariant();
-    if (variant != null) {
-      entityBuilder.addTextBody("variant", variant);
-    }
-
-    String type = pkgConfig.getType();
-    if (type != null) {
-      entityBuilder.addTextBody("type", type);
-    }
-
-    String license = pkgConfig.getLicense();
-    if (license != null) {
-      entityBuilder.addTextBody("license", license);
-    }
-    String repository = pkgConfig.getRepository();
-    if (repository != null) {
-      entityBuilder.addTextBody("repository", repository);
-    }
-    String homepage = pkgConfig.getHomepage();
-    if (homepage != null) {
-      entityBuilder.addTextBody("homepage", homepage);
-    }
-    String documentation = pkgConfig.getDocumentation();
-    if (documentation != null) {
-      entityBuilder.addTextBody("documentation", documentation);
-    }
+    //to be removed
+    entityBuilder.addTextBody("orgname", pkgConfig.getName().split("\\.", 2)[0]);
 
     List<String> keywords = pkgConfig.getKeywords();
     for (int i = 0; i < keywords.size(); i++) {
