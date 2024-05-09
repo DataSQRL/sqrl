@@ -85,7 +85,7 @@ public class AuthProvider {
         // Optionally save new refresh token if provided
         String newRefreshToken = jsonResponse.containsKey("refresh_token") ?
             jsonResponse.getString("refresh_token") : refreshToken;
-        Files.write(REFRESH_TOKEN_PATH, newRefreshToken.getBytes(StandardCharsets.UTF_8));
+        writeToken(newRefreshToken);
         // Save or handle tokens as needed
         return Optional.of(newAccessToken);
       } else {
@@ -95,6 +95,12 @@ public class AuthProvider {
       log.error("Error during token refresh", e);
     }
     return Optional.empty();
+  }
+
+  @SneakyThrows
+  private void writeToken(String refreshToken) {
+    Files.createDirectories(REFRESH_TOKEN_PATH);
+    Files.write(REFRESH_TOKEN_PATH, refreshToken.getBytes(StandardCharsets.UTF_8));
   }
 
   private Map<Object, Object> prepareData(String refreshToken) {
@@ -121,9 +127,7 @@ public class AuthProvider {
       accessToken = authToken.getString("access_token");
       String refreshToken = authToken.getString("refresh_token");
 
-      Files.createDirectories(DATASQRL_CONFIG_DIRECTORY);
-
-      Files.write(REFRESH_TOKEN_PATH, refreshToken.getBytes(StandardCharsets.UTF_8));
+      writeToken(refreshToken)
 
       return accessToken;
     } catch (TimeoutException | ExecutionException | InterruptedException e) {
