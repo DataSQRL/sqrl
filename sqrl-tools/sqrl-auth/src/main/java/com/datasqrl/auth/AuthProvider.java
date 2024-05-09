@@ -177,17 +177,21 @@ public class AuthProvider {
   }
 
   private void openAuthWindow() throws IOException {
-    Map<String, String> parameters = Map.of("response_type", "code",
-        "client_id", CLIENT_ID,
-        "redirect_uri", URLEncoder.encode(REDIRECT_URI, StandardCharsets.UTF_8), "scope",
-        "offline_access", "state", state, "audience",
-        "https://sqrl-repository-frontend-git-staging-datasqrl.vercel.app/api/client",
-        "code_challenge", codeChallenge, "code_challenge_method", "S256");
+    Map<String, String> parameters = Map.of(
+      "response_type", "code",
+      "client_id", CLIENT_ID,
+      "redirect_uri", REDIRECT_URI,
+      "scope", "offline_access",
+      "state", state,
+      "audience", "https://sqrl-repository-frontend-git-staging-datasqrl.vercel.app/api/client", //TODO we need to create a new audience
+      "code_challenge", codeChallenge,
+      "code_challenge_method", "S256");
 
     String paramString = parameters.entrySet().stream()
-        .map(entry -> entry.getKey() + "=" + entry.getValue()).collect(Collectors.joining("&"));
+        .map(entry -> entry.getKey() + "=" + URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8))
+        .collect(Collectors.joining("&"));
 
-    String authUrl = "https://" + AUTH0_DOMAIN + "/authorize?" + paramString;
+    String authUrl = AUTHORIZE_ENDPOINT + "?" + paramString;
 
     Runtime.getRuntime().exec("open " + authUrl);
   }

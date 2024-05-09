@@ -44,7 +44,9 @@ public class RemoteRepositoryImplementation implements Repository, PublishReposi
   public static final URI DEFAULT_URI = URI.create("https://sqrl-repository-frontend-git-staging-datasqrl.vercel.app");
 
   private final ObjectMapper mapper = SqrlObjectMapper.INSTANCE;
-  private final HttpClient client = HttpClient.newHttpClient();
+  private final HttpClient client = HttpClient.newBuilder()
+      .followRedirects(HttpClient.Redirect.ALWAYS)
+      .build();
   private final AuthProvider authProvider = new AuthProvider(client);
 
   private final URI repositoryServerURI;
