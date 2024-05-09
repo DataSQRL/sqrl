@@ -99,7 +99,7 @@ public class AuthProvider {
 
   @SneakyThrows
   private void writeToken(String refreshToken) {
-    Files.createDirectories(REFRESH_TOKEN_PATH);
+    Files.createDirectories(DATASQRL_CONFIG_DIRECTORY);
     Files.write(REFRESH_TOKEN_PATH, refreshToken.getBytes(StandardCharsets.UTF_8));
   }
 
