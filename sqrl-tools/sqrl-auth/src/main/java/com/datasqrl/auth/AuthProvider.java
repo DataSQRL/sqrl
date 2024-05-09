@@ -73,18 +73,22 @@ public class AuthProvider {
     HttpRequest request = HttpRequest.newBuilder()
         .uri(URI.create(TOKEN_ENDPOINT))
         .header("Content-Type", "application/x-www-form-urlencoded")
+        .header("Accept", "application/json")
         .POST(ofFormData(data))
         .build();
 
     try {
       HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-      if (response.statusCode() == 200) {
+      int statusCode = response.statusCode();
+      if (statusCode == 200) {
         JsonObject jsonResponse = new JsonObject(response.body());
         String newAccessToken = jsonResponse.getString("access_token");
         return Optional.of(newAccessToken);
+      } else if (statusCode == 403 ) {
+        log.warn(new JsonObject(response.body()).getString("error_description"));
       } else {
-        log.warn("Refresh token expired.");
+        log.error("Error during token refresh: {}", response.body());
       }
     } catch (IOException | InterruptedException e) {
       log.error("Error during token refresh", e);
