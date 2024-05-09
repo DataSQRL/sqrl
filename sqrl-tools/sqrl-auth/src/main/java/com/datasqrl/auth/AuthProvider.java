@@ -127,7 +127,7 @@ public class AuthProvider {
       accessToken = authToken.getString("access_token");
       String refreshToken = authToken.getString("refresh_token");
 
-      writeToken(refreshToken)
+      writeToken(refreshToken);
 
       return accessToken;
     } catch (TimeoutException | ExecutionException | InterruptedException e) {
