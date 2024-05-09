@@ -32,6 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class AuthProvider {
 
+  private static final String ENV_DATASQRL_TOKEN = "DATASQRL_TOKEN";
   private static final Path DATASQRL_CONFIG_DIRECTORY = FileUtil.getUserRoot().resolve(".datasqrl");
   private static final Path REFRESH_TOKEN_PATH = DATASQRL_CONFIG_DIRECTORY.resolve("auth");
 
@@ -56,6 +57,11 @@ public class AuthProvider {
   }
 
   private Optional<String> obtainRefreshToken() throws IOException {
+    String refreshTokenFromEnv = System.getenv(ENV_DATASQRL_TOKEN);
+    if (refreshTokenFromEnv != null && !refreshTokenFromEnv.isEmpty()) {
+      return Optional.of(refreshTokenFromEnv);
+    }
+
     return Files.isRegularFile(REFRESH_TOKEN_PATH) ?
         Optional.of(Files.readString(REFRESH_TOKEN_PATH)) :
         Optional.empty();
