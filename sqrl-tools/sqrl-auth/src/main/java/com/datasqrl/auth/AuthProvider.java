@@ -82,11 +82,6 @@ public class AuthProvider {
       if (response.statusCode() == 200) {
         JsonObject jsonResponse = new JsonObject(response.body());
         String newAccessToken = jsonResponse.getString("access_token");
-        // Optionally save new refresh token if provided
-        String newRefreshToken = jsonResponse.containsKey("refresh_token") ?
-            jsonResponse.getString("refresh_token") : refreshToken;
-        writeToken(newRefreshToken);
-        // Save or handle tokens as needed
         return Optional.of(newAccessToken);
       } else {
         log.warn("Refresh token expired.");
