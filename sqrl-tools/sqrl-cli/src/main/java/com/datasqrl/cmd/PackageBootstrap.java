@@ -19,6 +19,7 @@ import com.datasqrl.packager.ImportExportAnalyzer;
 import com.datasqrl.packager.ImportExportAnalyzer.Result;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.packager.repository.Repository;
+import com.datasqrl.util.NameUtil;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -38,8 +39,10 @@ import java.util.function.Function;
 
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
 @AllArgsConstructor
+@Slf4j
 public class PackageBootstrap {
   Path rootDir;
   List<Path> packageFiles;
@@ -98,9 +101,10 @@ public class PackageBootstrap {
         } else {
           dependency = repository.resolveDependency(profile);
         }
+        Path profilePath = namepath2Path(rootDir.resolve(BUILD_DIR_NAME), NamePath.parse(profile));
 
         if (dependency.isPresent()) {
-          boolean success = repository.retrieveDependency(rootDir.resolve("build"),
+          boolean success = repository.retrieveDependency(profilePath,
               dependency.get());
           if (success) {
             dependencies.put(profile, dependency.get());
@@ -109,9 +113,12 @@ public class PackageBootstrap {
           }
         }
 
-        Path remoteProfile = rootDir.resolve(Packager.BUILD_DIR_NAME).resolve(profile).resolve(PACKAGE_JSON);
+
+        Path remoteProfile = profilePath.resolve(PACKAGE_JSON);
         if (Files.isRegularFile(remoteProfile)) {
           configFiles.add(remoteProfile);
+        } else {
+          log.warn("Could not find package.json in profile: " + profile);
         }
       }
     }

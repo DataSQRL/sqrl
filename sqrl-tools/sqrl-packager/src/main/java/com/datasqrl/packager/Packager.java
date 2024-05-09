@@ -268,10 +268,12 @@ public class Packager {
       plans.put("test", map);
     }
 
+
     // Copy profiles
     for (String profile : profiles) {
+      Path profilePath = namepath2Path(rootDir.resolve(BUILD_DIR_NAME), NamePath.parse(profile));
       copyToDeploy(targetDir,
-          rootDir.resolve(profile), plan, testPlan, sqrlConfig, mountDirectory, plans);
+          profilePath, plan, testPlan, sqrlConfig, mountDirectory, plans);
     }
 
     copyFolder(targetDir, DATA_DIR);

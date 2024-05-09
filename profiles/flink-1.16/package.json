@@ -32,5 +32,14 @@
   },
   "test-runner": {
     "delay-sec": 30
+  },
+  "package": {
+    "name": "datasqrl.profiles.flink-1-16",
+    "version": "0.0.1",
+    "variant": "dev",
+    "description": "Flink 1.16 profile",
+    "homepage": "",
+    "documentation": "",
+    "keywords": "profile"
   }
 }

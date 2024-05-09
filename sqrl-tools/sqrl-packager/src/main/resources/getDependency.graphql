@@ -1,9 +1,0 @@
-query getDependency($pkgName: String!, $version: String!, $variant: String!) {
-Package(name: $pkgName) {
-    name
-    versions(version: $version, variant: $variant) {
-        file
-        hash
-        repoURL
-    }
-}}

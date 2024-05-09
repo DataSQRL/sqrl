@@ -1,6 +1,7 @@
 package com.datasqrl.config;
 
 import java.util.List;
+import java.util.Map;
 
 public interface PackageConfiguration {
 
@@ -31,4 +32,6 @@ public interface PackageConfiguration {
   void checkInitialized();
 
   Dependency asDependency();
+
+  Map<String, Object> toMap();
 }
