@@ -28,6 +28,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
@@ -36,6 +37,7 @@ import io.vertx.ext.web.handler.LoggerHandler;
 import io.vertx.ext.web.handler.graphql.ApolloWSHandler;
 import io.vertx.ext.web.handler.graphql.GraphQLHandler;
 import io.vertx.ext.web.handler.graphql.GraphiQLHandler;
+import io.vertx.ext.web.handler.graphql.ws.GraphQLWSHandler;
 import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
 import io.vertx.kafka.client.producer.KafkaProducer;
@@ -181,17 +183,30 @@ public class GraphQLServer extends AbstractVerticle {
     //Todo: Don't spin up the ws endpoint if there are no subscriptions
     GraphQLHandler graphQLHandler = GraphQLHandler.create(graphQL,
         this.config.getGraphQLHandlerOptions());
-    router.route(this.config.getServletConfig().getGraphQLEndpoint()).handler(graphQLHandler);
 
     if (!model.getSubscriptions().isEmpty()) {
       if (this.config.getServletConfig().isUseApolloWs()) {
         ApolloWSHandler apolloWSHandler = ApolloWSHandler.create(graphQL,
             this.config.getApolloWSOptions());
-        router.route(this.config.getServletConfig().getGraphQLWsEndpoint())
-            .handler(apolloWSHandler);
+        if (this.config.getServletConfig().getGraphQLWsEndpoint()
+            .equalsIgnoreCase(this.config.getServletConfig().getGraphQLEndpoint())) {
+          router.route(this.config.getServletConfig().getGraphQLEndpoint())
+              .handler(apolloWSHandler)
+              .handler(graphQLHandler);
+        } else {
+          router.route(this.config.getServletConfig().getGraphQLWsEndpoint())
+              .handler(apolloWSHandler);
+          router.route(this.config.getServletConfig().getGraphQLEndpoint())
+              .handler(graphQLHandler);
+        }
       } else {
-        throw new RuntimeException("Only Apollo style websockets supported at this time");
+        GraphQLWSHandler graphQLWSHandler = GraphQLWSHandler.create(graphQL);
+        router.route(this.config.getServletConfig().getGraphQLEndpoint())
+            .handler(graphQLWSHandler)
+            .handler(graphQLHandler);
       }
+    } else {
+      router.route(this.config.getServletConfig().getGraphQLEndpoint()).handler(graphQLHandler);
     }
 
     vertx.createHttpServer(this.config.getHttpServerOptions()).requestHandler(router)

@@ -1,4 +1,4 @@
-FROM datasqrl/sqrl-dependencies:0.5-RC2 as m2-dependencies
+FROM datasqrl/sqrl-dependencies:v0.5.0-RC3 as m2-dependencies
 
 # Stage 1: Building the dependencies or the fat JAR
 FROM gradle:8.6-jdk11 AS build

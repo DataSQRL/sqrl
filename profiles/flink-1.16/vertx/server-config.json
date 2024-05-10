@@ -1,9 +1,9 @@
 {
   "servletConfig": {
-    "graphiQLEndpoint": "/graphiql/*",
+    "graphiQLEndpoint": "/graphiql*",
     "graphQLEndpoint": "/graphql",
     "usePgPool": true,
-    "useApolloWs": true,
+    "useApolloWs": false,
     "graphQLWsEndpoint": "/graphql-ws"
   },
   "graphQLHandlerOptions": {
