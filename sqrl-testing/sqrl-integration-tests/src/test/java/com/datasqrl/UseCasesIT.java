@@ -103,7 +103,7 @@ public class UseCasesIT {
 //    argsList.add("--profile");
 //    argsList.add("../../../../../../../profiles/flink-1.18");
     argsList.add("--profile");
-    argsList.add("../../../../../../../profiles/flink-1.16");
+    argsList.add("../../../../../../../profiles/flink-1-16");
     execute(RESOURCES.resolve(path),
         AssertStatusHook.INSTANCE, argsList.toArray(a->new String[a]));
   }

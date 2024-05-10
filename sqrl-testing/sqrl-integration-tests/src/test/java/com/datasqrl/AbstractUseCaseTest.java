@@ -49,7 +49,7 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
     arguments.add("-t"); arguments.add(deployDir.toString());
     arguments.add("--nolookup");
     arguments.add("--profile");
-    arguments.add("../../../../../../../profiles/flink-1.16");
+    arguments.add("../../../../../../../profiles/flink-1-16");
 
     this.snapshot = Snapshot.of(getDisplayName(script), getClass());
     System.out.printf("%s - %s\n", baseDir, arguments);
