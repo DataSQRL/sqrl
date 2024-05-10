@@ -26,29 +26,21 @@ public class UseCasesIT {
   }
 
   @Test //Done
-  @Disabled("temp")
-
   public void testClickstream() {
     execute("clickstream", "clickstream-teaser.sqrl", "clickstream-teaser.graphqls");
   }
 
   @Test //Done
-  @Disabled("temp")
-
   public void testConference() {
     execute("conference", "conference.sqrl", "conference.graphqls");
   }
 
   @Test //Done
-  @Disabled("temp")
-
   public void testRepository() {
     execute("repository", "repo.sqrl", "repo.graphqls");
   }
 
   @Test
-  @Disabled("temp")
-
   public void testSensorsMutation() {
     execute("sensors", "sensors-mutation.sqrl", "sensors-mutation.graphqls", "sensors-mutation");
   }
@@ -59,7 +51,6 @@ public class UseCasesIT {
   }
 
   @Test
-  @Disabled("temp")
   public void testSeedshopExtended() {
     execute("seedshop-tutorial", "seedshop-extended.sqrl", null, "seedshop-extended");
   }
