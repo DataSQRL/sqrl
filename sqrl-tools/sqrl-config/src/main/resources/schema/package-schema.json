@@ -1,0 +1,58 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "package": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^(\\d+\\.\\d+\\.\\d+)$"
+        },
+        "variant": {
+          "type": "string"
+        },
+        "latest": {
+          "type": "boolean"
+        },
+        "type": {
+          "type": "string"
+        },
+        "license": {
+          "type": "string"
+        },
+        "repository": {
+          "type": "string",
+          "format": "uri"
+        },
+        "homepage": {
+          "type": "string",
+          "format": "uri"
+        },
+        "description": {
+          "type": "string"
+        },
+        "readme": {
+          "type": "string"
+        },
+        "documentation": {
+          "type": "string",
+          "format": "uri"
+        },
+        "keywords": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [ "name", "version", "latest", "keywords" ],
+      "additionalProperties": false
+    }
+  },
+  "required": [ "package" ],
+  "additionalProperties": false
+}

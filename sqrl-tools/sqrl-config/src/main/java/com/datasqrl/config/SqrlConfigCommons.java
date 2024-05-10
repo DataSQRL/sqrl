@@ -18,10 +18,12 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -29,11 +31,16 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
+
+import com.google.common.io.Resources;
+import io.vertx.core.json.JsonObject;
+import io.vertx.json.schema.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
+import lombok.SneakyThrows;
 import org.apache.commons.configuration2.BaseHierarchicalConfiguration;
 import org.apache.commons.configuration2.CombinedConfiguration;
 import org.apache.commons.configuration2.Configuration;
@@ -344,25 +351,67 @@ public class SqrlConfigCommons implements SqrlConfig {
     ErrorCollector localErrors = errors.withConfig(firstFile);
     try {
       Configuration baseconfig = configs.fileBased(JSONConfiguration.class, firstFile.toFile());
+      if (!isValid(baseconfig)) throw new RuntimeException(firstFile + " has validation errors.");
 
       if (otherFiles.length>0) {
         NodeCombiner combiner = new OverrideCombiner();
         CombinedConfiguration cc = new CombinedConfiguration(combiner);
         for (int i = otherFiles.length-1; i >= 0; i--) { //iterate backwards so last file takes precedence
-          localErrors = errors.withConfig(otherFiles[i]);
-          Configuration nextconfig = configs.fileBased(JSONConfiguration.class, otherFiles[i].toFile());
-          cc.addConfiguration(nextconfig);
+          Path otherFile = otherFiles[i];
+          localErrors = errors.withConfig(otherFile);
+          Configuration nextConfig = configs.fileBased(JSONConfiguration.class, otherFile.toFile());
+          if (!isValid(nextConfig)) throw new RuntimeException(otherFile + " has validation errors.");
+          cc.addConfiguration(nextConfig);
         }
         cc.addConfiguration(baseconfig);
         resultconfig = cc;
       } else {
         resultconfig = baseconfig;
       }
+
       String configFilename = firstFile.toString();
-      return
-          new SqrlConfigCommons(errors.withConfig(configFilename), configFilename, resultconfig, "");
+      return new SqrlConfigCommons(errors.withConfig(configFilename), configFilename, resultconfig, "");
     } catch (ConfigurationException e) {
       throw localErrors.handle(e);
+    }
+  }
+
+  @SneakyThrows
+  private static boolean isValid(Configuration baseconfig) {
+    JsonObject json = convertToJson(baseconfig);
+
+    String content = Files.readString(Paths.get(Resources.getResource("schema/package-schema.json").toURI()));
+    JsonSchema schema = JsonSchema.of(new JsonObject(content));
+    OutputUnit result = Validator.create(
+                    schema,
+                    new JsonSchemaOptions().setBaseUri("file:src/main/resources/schema/").setDraft(Draft.DRAFT7))
+            .validate(json);
+
+    return result.getValid();
+  }
+
+  // Converts Configuration to JsonObject with support for nested objects
+  private static JsonObject convertToJson(Configuration config) {
+    JsonObject json = new JsonObject();
+    Iterator<String> keys = config.getKeys();
+    while (keys.hasNext()) {
+      String key = keys.next();
+      String[] parts = key.split("\\.");
+      addToJson(json, parts, 0, config.getProperty(key));
+    }
+    return json;
+  }
+
+  // Recursive method to handle nested keys
+  private static void addToJson(JsonObject json, String[] keys, int index, Object value) {
+    String key = keys[index];
+    if (index == keys.length - 1) {
+      json.put(key, value);
+    } else {
+      if (!json.containsKey(key)) {
+        json.put(key, new JsonObject());
+      }
+      addToJson(json.getJsonObject(key), keys, index + 1, value);
     }
   }
 
