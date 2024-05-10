@@ -52,7 +52,5 @@
       "required": [ "name", "version", "latest", "keywords" ],
       "additionalProperties": false
     }
-  },
-  "required": [ "package" ],
-  "additionalProperties": false
+  }
 }
