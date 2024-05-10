@@ -16,10 +16,10 @@ import lombok.Getter;
 import lombok.NonNull;
 import org.apache.calcite.rel.RelNode;
 
-@Getter
 public class QueryRelationalTable extends PhysicalRelationalTable {
 
   private final LPAnalysis analyzedLP;
+  @Getter
   private final Optional<PhysicalRelationalTable> streamRoot;
 
   public QueryRelationalTable(Name rootTableId, NamePath tablePath, @NonNull LPAnalysis analyzedLP) {
@@ -29,15 +29,11 @@ public class QueryRelationalTable extends PhysicalRelationalTable {
         analyzedLP.getConvertedRelnode().select.getSourceLength(),
         analyzedLP.getConvertedRelnode().getTimestamp(),
         PrimaryKey.of(analyzedLP.getConvertedRelnode().getPrimaryKey()),
+        analyzedLP.getConvertedRelnode().getPullups(),
         TableStatistic.of(analyzedLP.getConvertedRelnode().estimateRowCount()));
     Preconditions.checkArgument(analyzedLP.getConvertedRelnode().select.isIdentity(), "We assume an identity select");
     this.analyzedLP = analyzedLP;
     this.streamRoot = analyzedLP.getConvertedRelnode().getStreamRoot();
-  }
-
-  @Override
-  public PullupOperator.Container getPullups() {
-    return analyzedLP.getConvertedRelnode().getPullups();
   }
 
   public RelNode getOriginalRelnode() {
@@ -58,7 +54,7 @@ public class QueryRelationalTable extends PhysicalRelationalTable {
 
   @Override
   public SqrlConverterConfig.SqrlConverterConfigBuilder getBaseConfig() {
-    SqrlConverterConfig.SqrlConverterConfigBuilder builder = getAnalyzedLP().getConverterConfig().toBuilder();
+    SqrlConverterConfig.SqrlConverterConfigBuilder builder = analyzedLP.getConverterConfig().toBuilder();
     getAssignedStage().ifPresent(builder::stage);
     return builder;
   }

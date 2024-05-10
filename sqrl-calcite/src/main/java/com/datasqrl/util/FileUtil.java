@@ -86,6 +86,12 @@ public class FileUtil {
     return separateExtension(path.getFileName().toString());
   }
 
+  public static String getFileName(String path) {
+    int start = Math.max(path.lastIndexOf('\\'), path.lastIndexOf('/'));
+    if (start<0) start = 0;
+    return path.substring(start);
+  }
+
   public static Pair<String, String> separateExtension(String fileName) {
     if (Strings.isNullOrEmpty(fileName)) {
       return null;
@@ -100,6 +106,11 @@ public class FileUtil {
 
   public static String readFile(URI uri) {
     return BaseFileUtil.readFile(uri);
+  }
+
+  @SneakyThrows
+  public static String readFile(Path path) {
+    return Files.readString(path);
   }
 
   @SneakyThrows

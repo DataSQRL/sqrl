@@ -96,8 +96,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
         .forEach(table-> {
           SqrlConverterConfig config = table.getBaseConfig().stage(IdealExecutionStage.INSTANCE).build();
           snapshot.addContent(
-              sqrlConverter.convert(table, config, false,
-                  /*Error already collected during planning*/ErrorCollector.root()).explain(),
+              sqrlConverter.convert(table, config, ErrorCollector.root()).getRelNode().explain(),
               table.getNameId());
         });
 

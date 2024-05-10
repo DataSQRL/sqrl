@@ -51,8 +51,8 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
 
   public static final Path DEFAULT_DEPLOY_DIR = Path.of("build", "deploy");
 
-  @CommandLine.Parameters(arity = "1..2", description = "Main script and (optional) API specification")
-  protected Path[] files;
+  @CommandLine.Parameters(arity = "0..2", description = "Main script and (optional) API specification")
+  protected Path[] files = new Path[0];
 
   @CommandLine.Option(names = {"-a", "--api"},
       description = "Generates the API specification for the given type")
@@ -150,7 +150,9 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
 
   protected void postprocess(PackageJson sqrlConfig, Packager packager, Path targetDir,
       PhysicalPlan plan, TestPlan testPlan, ErrorCollector errors) {
-    packager.postprocess(sqrlConfig, root.rootDir, getTargetDir(), plan, Optional.ofNullable(mountDirectory), testPlan, profiles);
+    packager.postprocess(sqrlConfig, root.rootDir, getTargetDir(), plan, Optional.ofNullable(mountDirectory), testPlan,
+        sqrlConfig.getProfiles());
+
   }
 
   protected boolean isGenerateGraphql() {

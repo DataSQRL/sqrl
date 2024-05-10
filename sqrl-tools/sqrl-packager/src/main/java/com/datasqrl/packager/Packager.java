@@ -250,7 +250,7 @@ public class Packager {
 
   @SneakyThrows
   public void postprocess(PackageJson sqrlConfig, Path rootDir, Path targetDir, PhysicalPlan plan, Optional<Path> mountDirectory,
-      TestPlan testPlan, String[] profiles) {
+      TestPlan testPlan, List<String> profiles) {
 
     Map<String, Object> plans = new HashMap<>();
     // We'll write a single asset for each folder in the physical plan stage
@@ -269,6 +269,7 @@ public class Packager {
     }
 
     // Copy profiles
+    Collections.reverse(profiles); //Reversing profiles so last one wins
     for (String profile : profiles) {
       copyToDeploy(targetDir,
           rootDir.resolve(profile), plan, testPlan, sqrlConfig, mountDirectory, plans);
