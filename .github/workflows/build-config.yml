@@ -21,8 +21,9 @@ jobs:
         distribution: 'adopt'
         cache: maven
     - name: Build SQRL
+      env:
+        DATASQRL_TOKEN: ${{ secrets.DATASQRL_TOKEN }}
       run: mvn -T 1 -B -U -e clean package
-
     - name: Build Docker image
       run: docker build -t datasqrl/sqrl-dependencies:v0.5.0-RC3 .
     - name: Build and Push sqrl-vertx Docker
@@ -34,4 +35,6 @@ jobs:
         tags: datasqrl/sqrl-server:v0.5.0-RC3
         platforms: linux/amd64
     - name: Build SQRL
+      env:
+        DATASQRL_TOKEN: ${{ secrets.DATASQRL_TOKEN }}
       run: mvn -T 1 -B -U -e clean verify -Dskip.unit.tests=true

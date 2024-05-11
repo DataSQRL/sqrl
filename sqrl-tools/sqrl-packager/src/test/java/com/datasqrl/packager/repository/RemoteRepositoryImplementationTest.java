@@ -14,9 +14,9 @@ class RemoteRepositoryImplementationTest {
     RemoteRepositoryImplementation remoteRepositoryImplementation =
         new RemoteRepositoryImplementation();
     JsonNode dev = remoteRepositoryImplementation.getDependencyInfo(
-        "datasqrl.profiles.flink-1.16",
+        "datasqrl.profiles.flink-1-16",
         "0.0.1", "dev");
 
-    assertEquals("datasqrl.profiles.flink-1.16", dev.get("name").textValue());
+    assertEquals("datasqrl.profiles.flink-1-16", dev.get("name").textValue());
   }
 }
