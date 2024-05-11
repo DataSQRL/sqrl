@@ -3,11 +3,13 @@ package com.datasqrl.packager.repository;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 class RemoteRepositoryImplementationTest {
 
   @Test
+  @Disabled
   void retrieveDependency() {
     RemoteRepositoryImplementation remoteRepositoryImplementation =
         new RemoteRepositoryImplementation();

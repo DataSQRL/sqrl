@@ -114,33 +114,30 @@ public class RemoteRepositoryImplementation implements Repository, PublishReposi
     return Optional.of(map(result, DependencyImpl.class));
   }
 
+  @SneakyThrows
   public JsonNode getDependencyInfo(String name, String version, String variant) {
-    try {
-      HttpClient client = HttpClient.newHttpClient();
+    HttpClient client = HttpClient.newHttpClient();
 
-      Optional<String> authToken = authProvider.getAccessToken();
+    Optional<String> authToken = authProvider.getAccessToken();
 
-      HttpRequest.Builder requestBuilder =
-          HttpRequest.newBuilder()
-              .uri(buildPackageInfoUri(name, version, variant));
-      authToken.ifPresent((t)->requestBuilder.header("Authorization", "Bearer " + authToken));
-      requestBuilder.GET()
-              .timeout(Duration.of(10, ChronoUnit.SECONDS))
-              .build();
+    HttpRequest.Builder requestBuilder =
+        HttpRequest.newBuilder()
+            .uri(buildPackageInfoUri(name, version, variant));
+    authToken.ifPresent((t)->requestBuilder.header("Authorization", "Bearer " + authToken));
+    requestBuilder.GET()
+            .timeout(Duration.of(10, ChronoUnit.SECONDS))
+            .build();
 
-      HttpResponse<String> response = client.send(requestBuilder.build(), BodyHandlers.ofString());
-      int statusCode = response.statusCode();
-      if (statusCode != 200) {
-        String message =
-            String.format(
-                "Package [%s] is not available. Check if it exists and you have permission to access it.",
-                name);
-        throw new RuntimeException(message);
-      }
-      return mapper.readValue(response.body(), JsonNode.class);
-    } catch (Exception e) {
-      throw new RuntimeException("Could not call remote repository", e);
+    HttpResponse<String> response = client.send(requestBuilder.build(), BodyHandlers.ofString());
+    int statusCode = response.statusCode();
+    if (statusCode != 200) {
+      String message =
+          String.format(
+              "Package [%s] is not available. Check if it exists and you have permission to access it.",
+              name);
+      throw new RuntimeException(message);
     }
+    return mapper.readValue(response.body(), JsonNode.class);
   }
 
   public JsonNode getLatestDependencyInfo(String name) {

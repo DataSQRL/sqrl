@@ -4,6 +4,7 @@
 package com.datasqrl.packager;
 
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.cmd.PackageBootstrap;
 import com.datasqrl.compile.TestPlan;
 import com.datasqrl.config.BuildPath;
 import com.datasqrl.config.DependenciesConfigImpl;
@@ -268,13 +269,14 @@ public class Packager {
       plans.put("test", map);
     }
 
-
     // Copy profiles
     Collections.reverse(profiles); //Reversing profiles so last one wins
     for (String profile : profiles) {
-      Path profilePath = namepath2Path(rootDir.resolve(BUILD_DIR_NAME), NamePath.parse(profile));
-      copyToDeploy(targetDir,
-          profilePath, plan, testPlan, sqrlConfig, mountDirectory, plans);
+      Path profilePath = PackageBootstrap.isLocalProfile(rootDir, profile)
+          ? rootDir.resolve(profile)
+          : namepath2Path(rootDir.resolve(BUILD_DIR_NAME), NamePath.parse(profile));
+
+      copyToDeploy(targetDir, profilePath, plan, testPlan, sqrlConfig, mountDirectory, plans);
     }
 
     copyFolder(targetDir, DATA_DIR);
@@ -341,7 +343,7 @@ public class Packager {
         Path destinationPath = targetDir.resolve(profile.relativize(sourcePath)).toAbsolutePath();
         if (Files.isDirectory(destinationPath) || Files.isRegularFile(trimFtl(destinationPath))) continue; //skip existing to allow overloads
 
-        copy(profileEngineName, profile, targetDir, sourcePath, templateConfig);
+        copy(profile, targetDir, sourcePath, templateConfig);
       }
     }
   }
@@ -353,7 +355,7 @@ public class Packager {
   }
 
   @SneakyThrows
-  private void copy(String profileEngineName, Path profile, Path targetDir, Path sourcePath,
+  private void copy(Path profile, Path targetDir, Path sourcePath,
       Map<String, Object> templateConfig) {
     try (Stream<Path> stream = Files.walk(sourcePath)) {
       List<Path> engineFiles = stream.collect(Collectors.toList());
