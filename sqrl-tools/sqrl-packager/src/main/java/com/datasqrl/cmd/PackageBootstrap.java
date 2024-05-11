@@ -76,10 +76,6 @@ public class PackageBootstrap {
     for (String profile : profiles) {
       if (isLocalProfile(rootDir, profile)) {
         Path localProfile = rootDir.resolve(profile).resolve(PACKAGE_JSON);
-        //1. Profile must contain a package json
-        if (!Files.isRegularFile(localProfile)) {
-          throw new RuntimeException("Profile [" + profile + "] must have a " + PACKAGE_JSON);
-        }
         configFiles.add(localProfile);
       } else {
         //check to see if it's already in the package json, download the correct dep
@@ -175,6 +171,12 @@ public class PackageBootstrap {
   public static boolean isLocalProfile(Path rootDir, String profile) {
     //1. Check if it's on the local file system
     if (Files.isDirectory(rootDir.resolve(profile))) {
+      //1. Profile must contain a package json
+      if (!Files.isRegularFile(rootDir.resolve(profile).resolve(PACKAGE_JSON))) {
+        log.info("Profile [" + profile + "] is a directory but missing a package.json. Attempting to resolve as a remote profile.");
+        return false;
+      }
+
       return true;
     }
     //2. Check if it looks like a repo link
