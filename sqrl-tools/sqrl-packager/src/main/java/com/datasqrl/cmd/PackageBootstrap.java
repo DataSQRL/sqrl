@@ -178,7 +178,7 @@ public class PackageBootstrap {
       return true;
     }
     //2. Check if it looks like a repo link
-    if (Pattern.matches("^\\\\w+(?:\\\\.\\\\w+)+$", profile)) {
+    if (Pattern.matches("^\\w+(?:\\.\\w+)+$", profile)) {
       return false;
     }
 
