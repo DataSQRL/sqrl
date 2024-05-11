@@ -5,9 +5,11 @@ services:
       context: vertx
       dockerfile: Dockerfile
     depends_on:
-      - database
+      database:
+        condition: service_started
 <#if config["enabled-engines"]?seq_contains("kafka")>
-      - kafka-setup
+      kafka-setup:
+        condition: service_completed_successfully
 </#if>
     ports:
       - "8888:8888"

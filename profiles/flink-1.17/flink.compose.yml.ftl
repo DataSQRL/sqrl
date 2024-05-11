@@ -11,10 +11,6 @@ services:
       - |
         FLINK_PROPERTIES=
         jobmanager.rpc.address: flink-jobmanager
-<#if mountDir??>
-    volumes:
-      - ${mountDir}:${mountDir}
-</#if>
   flink-taskmanager:
     build:
       context: flink
@@ -27,22 +23,21 @@ services:
         FLINK_PROPERTIES=
         jobmanager.rpc.address: flink-jobmanager
         taskmanager.numberOfTaskSlots: 1
-<#if mountDir??>
-    volumes:
-      - ${mountDir}:${mountDir}
-</#if>
   flink-job-submitter:
     build:
       context: flink
       dockerfile: Dockerfile
     command: flink run /scripts/FlinkJob.jar
     depends_on:
-      - flink-jobmanager
+      flink-jobmanager:
+        condition: service_started
 <#if config["enabled-engines"]?seq_contains("kafka")>
-      - kafka-setup
+      kafka-setup:
+        condition: service_completed_successfully
  </#if>
 <#if config["enabled-engines"]?seq_contains("postgres")>
-      - database
+      database:
+        condition: service_started
 </#if>
     environment:
       - |
