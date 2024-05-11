@@ -11,6 +11,9 @@ import java.util.function.Consumer;
 
 public class OAuthCallbackVerticle extends AbstractVerticle {
 
+  private static final String MISSING_CODE_ERR =
+          "Authentication failed: The authorization_code is not present.";
+
   private final Consumer<String> onOAuthCallback;
 
   public OAuthCallbackVerticle(Consumer<String> onOAuthCallback) {
@@ -34,6 +37,12 @@ public class OAuthCallbackVerticle extends AbstractVerticle {
 
   private void handleAuthCallback(RoutingContext routingContext) {
     String code = routingContext.request().getParam("code");
+
+    if (code == null) {
+      routingContext.response().putHeader("content-type", "text/html")
+              .end(MISSING_CODE_ERR);
+      throw new IllegalArgumentException(MISSING_CODE_ERR);
+    }
 
     routingContext.response().putHeader("content-type", "text/html")
         .end("Authentication successful. You can close this window.");

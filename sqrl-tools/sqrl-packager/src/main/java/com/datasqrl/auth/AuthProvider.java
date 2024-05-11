@@ -1,5 +1,6 @@
 package com.datasqrl.auth;
 
+import static com.datasqrl.auth.AuthUtils.AUDIENCE;
 import static com.datasqrl.auth.AuthUtils.AUTHORIZE_ENDPOINT;
 import static com.datasqrl.auth.AuthUtils.CLIENT_ID;
 import static com.datasqrl.auth.AuthUtils.REDIRECT_URI;
@@ -148,7 +149,7 @@ public class AuthProvider {
       "redirect_uri", REDIRECT_URI,
       "scope", "offline_access",
       "state", state,
-      "audience", "https://sqrl-repository-frontend-git-staging-datasqrl.vercel.app", //TODO we need to create a new audience
+      "audience", AUDIENCE,
       "code_challenge", codeChallenge,
       "code_challenge_method", "S256");
 
