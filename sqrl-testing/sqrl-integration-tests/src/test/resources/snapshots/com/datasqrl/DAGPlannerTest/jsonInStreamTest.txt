@@ -61,11 +61,11 @@ Schema:
  - obj: RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI=')
  - _customerid: BIGINT NOT NULL
  - _timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Post Processors:
+ - topN: partition=_customerid limit=1 sort=#2: _timestamp TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
 Plan:
 LogicalProject(obj=[jsonArray($0)], _customerid=[$0], _timestamp=[$4])
-  LogicalFilter(condition=[=($5, 1)]) hints[DedupHint]
-    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
-      LogicalTableScan(table=[[customer$3]])
+  LogicalTableScan(table=[[customer$3]])
 
 === jsonConcatTable
 ID:     jsonconcattable$1
@@ -78,11 +78,11 @@ Schema:
  - obj: RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI=')
  - _customerid: BIGINT NOT NULL
  - _timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Post Processors:
+ - topN: partition=_customerid limit=1 sort=#2: _timestamp TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
 Plan:
 LogicalProject(obj=[jsonConcat(toJson('{"a": true}'), toJson('{"a": false}'))], _customerid=[$0], _timestamp=[$4])
-  LogicalFilter(condition=[=($5, 1)]) hints[DedupHint]
-    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
-      LogicalTableScan(table=[[customer$3]])
+  LogicalTableScan(table=[[customer$3]])
 
 === jsonExistsTable
 ID:     jsonexiststable$1
@@ -95,11 +95,11 @@ Schema:
  - obj: BOOLEAN
  - _customerid: BIGINT NOT NULL
  - _timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Post Processors:
+ - topN: partition=_customerid limit=1 sort=#2: _timestamp TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
 Plan:
 LogicalProject(obj=[jsonExists(toJson('{"a": true}'), '$.a')], _customerid=[$0], _timestamp=[$4])
-  LogicalFilter(condition=[=($5, 1)]) hints[DedupHint]
-    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
-      LogicalTableScan(table=[[customer$3]])
+  LogicalTableScan(table=[[customer$3]])
 
 === jsonExtractTable
 ID:     jsonextracttable$1
@@ -112,11 +112,11 @@ Schema:
  - obj: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - _customerid: BIGINT NOT NULL
  - _timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Post Processors:
+ - topN: partition=_customerid limit=1 sort=#2: _timestamp TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
 Plan:
 LogicalProject(obj=[jsonExtract(toJson('{"a": "hello"}'), '$.a':VARCHAR(2147483647) CHARACTER SET "UTF-16LE", 'default':VARCHAR(2147483647) CHARACTER SET "UTF-16LE")], _customerid=[$0], _timestamp=[$4])
-  LogicalFilter(condition=[=($5, 1)]) hints[DedupHint]
-    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
-      LogicalTableScan(table=[[customer$3]])
+  LogicalTableScan(table=[[customer$3]])
 
 === jsonObjectAggTable
 ID:     jsonobjectaggtable$1
@@ -132,10 +132,9 @@ Schema:
 Plan:
 LogicalProject(agg=[$1], _name=[$0], __timestamp=[$2])
   LogicalAggregate(group=[{0}], agg=[jsonObjectAgg($1, $0)], __timestamp=[MAX($3)])
-    LogicalProject(name=[$2], $f1=['key'], customerid=[$0], timestamp=[$4])
-      LogicalFilter(condition=[=($5, 1)]) hints[DedupHint]
-        LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
-          LogicalTableScan(table=[[customer$3]])
+    LogicalFilter(condition=[=($4, 1)]) hints[DedupHint]
+      LogicalProject(name=[$2], $f1=['key'], customerid=[$0], timestamp=[$4], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
+        LogicalTableScan(table=[[customer$3]])
 
 === jsonQueryTable
 ID:     jsonquerytable$1
@@ -148,11 +147,11 @@ Schema:
  - obj: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - _customerid: BIGINT NOT NULL
  - _timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Post Processors:
+ - topN: partition=_customerid limit=1 sort=#2: _timestamp TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
 Plan:
 LogicalProject(obj=[jsonQuery(toJson('{"a": {"b": 1}}'), '$.a')], _customerid=[$0], _timestamp=[$4])
-  LogicalFilter(condition=[=($5, 1)]) hints[DedupHint]
-    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
-      LogicalTableScan(table=[[customer$3]])
+  LogicalTableScan(table=[[customer$3]])
 
 === jsonToStringTable
 ID:     jsontostringtable$1
@@ -165,11 +164,11 @@ Schema:
  - obj: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - _customerid: BIGINT NOT NULL
  - _timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Post Processors:
+ - topN: partition=_customerid limit=1 sort=#2: _timestamp TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
 Plan:
 LogicalProject(obj=[jsonToString(toJson('{"a": 1}'))], _customerid=[$0], _timestamp=[$4])
-  LogicalFilter(condition=[=($5, 1)]) hints[DedupHint]
-    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
-      LogicalTableScan(table=[[customer$3]])
+  LogicalTableScan(table=[[customer$3]])
 
 === ObjComplex
 ID:     objcomplex$1
@@ -182,11 +181,11 @@ Schema:
  - obj: RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI=')
  - _customerid: BIGINT NOT NULL
  - _timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Post Processors:
+ - topN: partition=_customerid limit=1 sort=#2: _timestamp TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
 Plan:
 LogicalProject(obj=[jsonObject(CONCAT('application#', $2), $0)], _customerid=[$0], _timestamp=[$4])
-  LogicalFilter(condition=[=($5, 1)]) hints[DedupHint]
-    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
-      LogicalTableScan(table=[[customer$3]])
+  LogicalTableScan(table=[[customer$3]])
 
 === Orders
 ID:     orders$2
@@ -229,11 +228,11 @@ Schema:
  - obj: RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI=')
  - _customerid: BIGINT NOT NULL
  - _timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Post Processors:
+ - topN: partition=_customerid limit=1 sort=#2: _timestamp TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
 Plan:
 LogicalProject(obj=[toJson('{"a": 1}')], _customerid=[$0], _timestamp=[$4])
-  LogicalFilter(condition=[=($5, 1)]) hints[DedupHint]
-    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
-      LogicalTableScan(table=[[customer$3]])
+  LogicalTableScan(table=[[customer$3]])
 
 >>>flink.json
 {
@@ -280,17 +279,17 @@ LogicalProject(obj=[toJson('{"a": 1}')], _customerid=[$0], _timestamp=[$4])
     "CREATE TEMPORARY TABLE `tojsontable$1` (\n  `obj` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  `_customerid` BIGINT NOT NULL,\n  `_timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`_customerid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'tojsontable$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `customer$1`;",
     "CREATE VIEW `table$2`\nAS\nSELECT JSONARRAYAGG(`name`) AS `agg`, `name` AS `_name`, MAX(`timestamp`) AS `__timestamp`\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, (ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC NULLS LAST)) AS `_rownum`\nFROM `customer$1`) AS `t`\nWHERE (`_rownum` = 1)\nGROUP BY `name`;",
-    "CREATE VIEW `table$3`\nAS\nSELECT JSONARRAY(`customerid`) AS `obj`, `customerid` AS `_customerid`, `timestamp` AS `_timestamp`\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, (ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC NULLS LAST)) AS `_rownum`\nFROM `customer$1`) AS `t`\nWHERE (`_rownum` = 1);",
-    "CREATE VIEW `table$4`\nAS\nSELECT JSONCONCAT(TOJSON('{\"a\": true}'), TOJSON('{\"a\": false}')) AS `obj`, `customerid` AS `_customerid`, `timestamp` AS `_timestamp`\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, (ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC NULLS LAST)) AS `_rownum`\nFROM `customer$1`) AS `t`\nWHERE (`_rownum` = 1);",
-    "CREATE VIEW `table$5`\nAS\nSELECT JSONEXISTS(TOJSON('{\"a\": true}'), '$.a') AS `obj`, `customerid` AS `_customerid`, `timestamp` AS `_timestamp`\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, (ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC NULLS LAST)) AS `_rownum`\nFROM `customer$1`) AS `t`\nWHERE (`_rownum` = 1);",
-    "CREATE VIEW `table$6`\nAS\nSELECT JSONEXTRACT(TOJSON('{\"a\": \"hello\"}'), '$.a', 'default') AS `obj`, `customerid` AS `_customerid`, `timestamp` AS `_timestamp`\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, (ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC NULLS LAST)) AS `_rownum`\nFROM `customer$1`) AS `t`\nWHERE (`_rownum` = 1);",
-    "CREATE VIEW `table$7`\nAS\nSELECT JSONOBJECTAGG('key', `name`) AS `agg`, `name` AS `_name`, MAX(`timestamp`) AS `__timestamp`\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, (ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC NULLS LAST)) AS `_rownum`\nFROM `customer$1`) AS `t`\nWHERE (`_rownum` = 1)\nGROUP BY `name`;",
-    "CREATE VIEW `table$8`\nAS\nSELECT JSONQUERY(TOJSON('{\"a\": {\"b\": 1}}'), '$.a') AS `obj`, `customerid` AS `_customerid`, `timestamp` AS `_timestamp`\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, (ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC NULLS LAST)) AS `_rownum`\nFROM `customer$1`) AS `t`\nWHERE (`_rownum` = 1);",
-    "CREATE VIEW `table$9`\nAS\nSELECT JSONTOSTRING(TOJSON('{\"a\": 1}')) AS `obj`, `customerid` AS `_customerid`, `timestamp` AS `_timestamp`\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, (ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC NULLS LAST)) AS `_rownum`\nFROM `customer$1`) AS `t`\nWHERE (`_rownum` = 1);",
-    "CREATE VIEW `table$10`\nAS\nSELECT JSONOBJECT(CONCAT('application#', `name`), `customerid`) AS `obj`, `customerid` AS `_customerid`, `timestamp` AS `_timestamp`\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, (ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC NULLS LAST)) AS `_rownum`\nFROM `customer$1`) AS `t`\nWHERE (`_rownum` = 1);",
+    "CREATE VIEW `table$3`\nAS\nSELECT JSONARRAY(`customerid`) AS `obj`, `customerid` AS `_customerid`, `timestamp` AS `_timestamp`\nFROM `customer$1`;",
+    "CREATE VIEW `table$4`\nAS\nSELECT JSONCONCAT(TOJSON('{\"a\": true}'), TOJSON('{\"a\": false}')) AS `obj`, `customerid` AS `_customerid`, `timestamp` AS `_timestamp`\nFROM `customer$1`;",
+    "CREATE VIEW `table$5`\nAS\nSELECT JSONEXISTS(TOJSON('{\"a\": true}'), '$.a') AS `obj`, `customerid` AS `_customerid`, `timestamp` AS `_timestamp`\nFROM `customer$1`;",
+    "CREATE VIEW `table$6`\nAS\nSELECT JSONEXTRACT(TOJSON('{\"a\": \"hello\"}'), '$.a', 'default') AS `obj`, `customerid` AS `_customerid`, `timestamp` AS `_timestamp`\nFROM `customer$1`;",
+    "CREATE VIEW `table$7`\nAS\nSELECT JSONOBJECTAGG(`$f1`, `name`) AS `agg`, `name` AS `_name`, MAX(`timestamp`) AS `__timestamp`\nFROM (SELECT `name`, 'key' AS `$f1`, `customerid`, `timestamp`, (ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC NULLS LAST)) AS `_rownum`\nFROM `customer$1`) AS `t`\nWHERE (`_rownum` = 1)\nGROUP BY `name`;",
+    "CREATE VIEW `table$8`\nAS\nSELECT JSONQUERY(TOJSON('{\"a\": {\"b\": 1}}'), '$.a') AS `obj`, `customerid` AS `_customerid`, `timestamp` AS `_timestamp`\nFROM `customer$1`;",
+    "CREATE VIEW `table$9`\nAS\nSELECT JSONTOSTRING(TOJSON('{\"a\": 1}')) AS `obj`, `customerid` AS `_customerid`, `timestamp` AS `_timestamp`\nFROM `customer$1`;",
+    "CREATE VIEW `table$10`\nAS\nSELECT JSONOBJECT(CONCAT('application#', `name`), `customerid`) AS `obj`, `customerid` AS `_customerid`, `timestamp` AS `_timestamp`\nFROM `customer$1`;",
     "CREATE VIEW `table$11`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders$1`;",
     "CREATE VIEW `table$12`\nAS\nSELECT *\nFROM `product$1`;",
-    "CREATE VIEW `table$13`\nAS\nSELECT TOJSON('{\"a\": 1}') AS `obj`, `customerid` AS `_customerid`, `timestamp` AS `_timestamp`\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, (ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC NULLS LAST)) AS `_rownum`\nFROM `customer$1`) AS `t`\nWHERE (`_rownum` = 1);",
+    "CREATE VIEW `table$13`\nAS\nSELECT TOJSON('{\"a\": 1}') AS `obj`, `customerid` AS `_customerid`, `timestamp` AS `_timestamp`\nFROM `customer$1`;",
     "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer$3`\n(SELECT *\nFROM `table$1`)\n;\nINSERT INTO `jsonarrayaggtable$1`\n(SELECT *\nFROM `table$2`)\n;\nINSERT INTO `jsonarraytable$1`\n(SELECT *\nFROM `table$3`)\n;\nINSERT INTO `jsonconcattable$1`\n(SELECT *\nFROM `table$4`)\n;\nINSERT INTO `jsonexiststable$1`\n(SELECT *\nFROM `table$5`)\n;\nINSERT INTO `jsonextracttable$1`\n(SELECT *\nFROM `table$6`)\n;\nINSERT INTO `jsonobjectaggtable$1`\n(SELECT *\nFROM `table$7`)\n;\nINSERT INTO `jsonquerytable$1`\n(SELECT *\nFROM `table$8`)\n;\nINSERT INTO `jsontostringtable$1`\n(SELECT *\nFROM `table$9`)\n;\nINSERT INTO `objcomplex$1`\n(SELECT *\nFROM `table$10`)\n;\nINSERT INTO `orders$2`\n(SELECT *\nFROM `table$11`)\n;\nINSERT INTO `product$2`\n(SELECT *\nFROM `table$12`)\n;\nINSERT INTO `tojsontable$1`\n(SELECT *\nFROM `table$13`)\n;\nEND;"
   ],
   "connectors" : [

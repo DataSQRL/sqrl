@@ -76,6 +76,8 @@ public class TopNConstraint implements PullupOperator {
         partition.stream()).collect(Collectors.toList());
   }
 
+
+
   public static TopNConstraint makeDeduplication(List<Integer> partitionByIndexes,
       int timestampIndex) {
     RelCollation collation = RelCollations.of(

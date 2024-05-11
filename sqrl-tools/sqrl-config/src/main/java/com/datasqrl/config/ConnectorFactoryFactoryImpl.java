@@ -1,7 +1,9 @@
 package com.datasqrl.config;
 
 import com.datasqrl.config.EngineFactory.Type;
+import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.config.TableConfig.Format;
+import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import java.util.List;
 import java.util.Map;
@@ -17,18 +19,19 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
   PackageJson packageJson;
   @Override
   public Optional<ConnectorFactory> create(Type type, String name) {
-    ConnectorsConfig connectors = packageJson.getEngines().getEngineConfig("flink")
-        .get().getConnectors();
+    Optional<EngineConfig> engineConfig = packageJson.getEngines().getEngineConfig("flink");
+    Preconditions.checkArgument(engineConfig.isPresent(), "Missing engine configuration for Flink");
+    ConnectorsConfig connectors = engineConfig.get().getConnectors();
     Optional<ConnectorConf> connectorConfig = connectors.getConnectorConfig(name);
     if (name.equalsIgnoreCase(PRINT_SINK_NAME)) {
       return Optional.of(createPrintConnectorFactory(null));
     } else if (name.equalsIgnoreCase(FILE_SINK_NAME)) {
-      return Optional.of(createLocalFile(connectorConfig.get()));
+      return connectorConfig.map(this::createLocalFile);
     }
     if (type.equals(Type.LOG)) {
-      return Optional.of(createKafkaConnectorFactory(connectorConfig.get()));
+      return connectorConfig.map(this::createKafkaConnectorFactory);
     } else if (type.equals(Type.DATABASE)) {
-      return Optional.of(createJdbcConnectorFactory(connectorConfig.get()));
+      return connectorConfig.map(this::createJdbcConnectorFactory);
     }
 
     return connectorConfig.map(c -> context -> null);

@@ -9,6 +9,7 @@ import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.io.tables.TableType;
+import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.rules.SqrlConverterConfig;
 import com.datasqrl.plan.table.PullupOperator.Container;
 import com.google.common.base.Preconditions;
@@ -23,6 +24,7 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.schema.Statistic;
 import org.apache.calcite.schema.Statistics;
 import org.apache.calcite.util.ImmutableBitSet;
+import org.apache.commons.lang3.tuple.Pair;
 
 /**
  * A relational table that is defined by the user query in the SQRL script.
@@ -41,6 +43,8 @@ public abstract class PhysicalRelationalTable extends ScriptRelationalTable impl
   @NonNull
   protected Timestamps timestamp;
 
+  protected PullupOperator.Container pullups;
+
   protected RelNode plannedRelNode;
   @Setter
   protected Optional<ExecutionStage> assignedStage = Optional.empty();
@@ -49,12 +53,14 @@ public abstract class PhysicalRelationalTable extends ScriptRelationalTable impl
 
   public PhysicalRelationalTable(Name rootTableId, @NonNull NamePath tablePath, @NonNull TableType type,
                                   RelDataType rowType, int numSelects, @NonNull Timestamps timestamp,
-                                 @NonNull PrimaryKey primaryKey, @NonNull TableStatistic tableStatistic) {
+                                 @NonNull PrimaryKey primaryKey, @NonNull PullupOperator.Container pullups,
+                                 @NonNull TableStatistic tableStatistic) {
     super(rootTableId, rowType, numSelects);
     this.tablePath = tablePath;
     this.type = type;
     this.timestamp = timestamp;
     this.primaryKey = primaryKey;
+    this.pullups = pullups;
     this.tableStatistic = tableStatistic;
   }
 
@@ -66,7 +72,7 @@ public abstract class PhysicalRelationalTable extends ScriptRelationalTable impl
   and execute in the database because they are expensive or impossible to execute in a stream
   */
   public PullupOperator.Container getPullups() {
-    return Container.EMPTY;
+    return pullups;
   }
 
   public abstract Optional<PhysicalRelationalTable> getStreamRoot();
@@ -95,10 +101,13 @@ public abstract class PhysicalRelationalTable extends ScriptRelationalTable impl
   }
 
   @Override
-  public void setPlannedRelNode(@NonNull RelNode relNode) {
+  public void setPlannedRelNode(@NonNull SQRLConverter.TablePlan planned) {
+    Preconditions.checkArgument(plannedRelNode == null, "Table has already been planned");
+    RelNode relNode = planned.getRelNode();
     Preconditions.checkArgument(relNode.getRowType().equalsSansFieldNames(getRowType()), "Row types do not match");
     Preconditions.checkArgument(relNode.getRowType().getFieldNames().subList(0,getNumSelects()).equals(getRowType().getFieldNames().subList(0,getNumSelects())), "Names do not match");
     this.plannedRelNode = relNode;
+    this.pullups = planned.getPullups();
   }
 
   @Override

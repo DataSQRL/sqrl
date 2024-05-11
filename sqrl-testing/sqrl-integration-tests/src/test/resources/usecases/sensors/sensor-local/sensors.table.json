@@ -2,13 +2,18 @@
   "version": 1,
   "flink" : {
     "format" : "flexible-json",
-    "path" : "/data/sensors.jsonl.gz",
+    "path" : "/data/sensors.jsonl",
     "connector" : "filesystem"
   },
   "table" : {
     "type" : "source",
     "primary-key" : ["id", "placed"],
-    "timestamp" : "placed",
+    "timestamp" : "timestamp",
     "watermark-millis" : "1"
+  },
+  "metadata" : {
+    "timestamp": {
+      "attribute": "time.EpochMilliToTimestamp(placed)"
+    }
   }
 }

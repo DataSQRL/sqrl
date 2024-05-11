@@ -45,7 +45,6 @@ public class UseCasesIT {
   }
 
   @Test
-  @Disabled("need to update csv test data")
   public void testSensorsFull() {
     execute("sensors", "sensors-full.sqrl", null, "sensors-full");
   }
@@ -78,11 +77,11 @@ public class UseCasesIT {
     }
     argsList.add("--nolookup");
     argsList.add("--profile");
-    argsList.add("../../../../../../../profiles/flink-1.17");
-    argsList.add("--profile");
     argsList.add("../../../../../../../profiles/flink-1.16");
+    argsList.add("--profile");
+    argsList.add("../../../../../../../profiles/flink-1.17");
     execute(RESOURCES.resolve(path),
-        AssertStatusHook.INSTANCE, argsList.toArray(a->new String[a]));
+        AssertStatusHook.INSTANCE, argsList.toArray(String[]::new));
   }
 
   private void compile(String path, String script, String graphql) {

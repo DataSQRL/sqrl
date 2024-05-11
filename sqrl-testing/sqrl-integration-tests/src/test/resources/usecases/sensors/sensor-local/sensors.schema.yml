@@ -7,7 +7,7 @@ columns:
   type: "BIGINT"
   tests:
   - "not_null"
-- name: "machineid"
+- name: "machineId"
   type: "BIGINT"
   tests:
   - "not_null"

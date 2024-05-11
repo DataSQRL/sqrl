@@ -8,7 +8,12 @@
   "table" : {
     "type" : "source",
     "primary-key" : ["sensorid", "time"],
-    "timestamp" : "time",
+    "timestamp" : "timestamp",
     "watermark-millis" : "1"
+  },
+  "metadata" : {
+    "timestamp": {
+      "attribute": "time.EpochMilliToTimestamp(time)"
+    }
   }
 }

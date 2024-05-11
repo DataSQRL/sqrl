@@ -52,16 +52,6 @@ public class DAGAssembler {
   private final APIConnectorManager apiManager;
 
   public PhysicalDAGPlan assemble(SqrlDAG dag, Set<URL> jars, Map<String, UserDefinedFunction> udfs) {
-    //Plan final version of all tables
-    dag.allNodesByClass(SqrlDAG.TableNode.class).forEach( tableNode -> {
-      ExecutionStage stage = tableNode.getChosenStage();
-      Preconditions.checkNotNull(stage);
-      PhysicalTable table = tableNode.getTable();
-      table.assignStage(stage); //this stage on the config below
-      SqrlConverterConfig config = table.getBaseConfig().build();
-      table.setPlannedRelNode(sqrlConverter.convert(table, config, errors));
-    });
-
     //We make the assumption that there is a single stream stage
     ExecutionStage streamStage = pipeline.getStage(Type.STREAMS).get();
     List<PhysicalDAGPlan.WriteQuery> streamQueries = new ArrayList<>();

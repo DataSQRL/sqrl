@@ -3,14 +3,14 @@ IMPORT sensor-local.Sensors;
 IMPORT time.endOfSecond;           -- Import time function
 
 /* Aggregate sensor readings to second */
-SecReading := SELECT sensorid, endOfSecond(time) as timeSec,
+SecReading := SELECT sensorid, endOfSecond(timestamp) as timeSec,
         avg(temperature) as temp FROM SensorReading
     GROUP BY sensorid, timeSec ORDER BY timeSec DESC;
 
 SecReadingByTemp(@temp: Int) := SELECT * FROM SecReading WHERE temp > @temp ORDER BY timeSec ASC;
 
 /* Create table of sensors and relate to readings */
-Sensors := DISTINCT Sensors ON id  ORDER BY placed DESC;
+Sensors := DISTINCT Sensors ON id  ORDER BY timestamp DESC;
 Sensors.readings := JOIN SecReading r ON r.sensorid = @.id;
 Sensors.lastHour := SELECT max(temp) as maxTemp, avg(temp) as avgTemp
                        FROM @.readings

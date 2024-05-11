@@ -204,16 +204,15 @@ Schema:
  - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
 LogicalProject(__pk1$id=[$0], loan_type_id=[$1], total_amount=[$2], total_loans=[$3], __timestamp=[$4])
-  LogicalAggregate(group=[{0, 11}], total_amount=[SUM($12)], total_loans=[COUNT()], __timestamp=[MAX($17)])
-    LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], phone=[$4], address=[$5], date_of_birth=[$6], updated_at=[$7], _rownum=[$8], id0=[$9], customer_id=[$10], loan_type_id=[$11], amount=[$12], duration=[$13], application_date=[$14], updated_at0=[$15], customer_id7=[$16], __timestamp=[CASE(<($7, $15), $15, $7)])
+  LogicalAggregate(group=[{0, 11}], total_amount=[SUM($12)], total_loans=[COUNT()], __timestamp=[MAX($18)])
+    LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], phone=[$4], address=[$5], date_of_birth=[$6], updated_at=[$7], _rownum=[$8], id0=[$9], customer_id=[$10], loan_type_id=[$11], amount=[$12], duration=[$13], application_date=[$14], updated_at0=[$15], customer_id7=[$16], _rownum0=[$17], __timestamp=[CASE(<($7, $15), $15, $7)])
       LogicalJoin(condition=[=($0, $16)], joinType=[inner]) hints[JoinCostHint options:[VERSIONED_STATE, VERSIONED_STATE, 1, LEFT]]
         LogicalFilter(condition=[=($8, 1)]) hints[DedupHint]
           LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], phone=[$4], address=[$5], date_of_birth=[$6], updated_at=[$7], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $7 DESC NULLS LAST)])
             LogicalTableScan(table=[[customers$3]])
-        LogicalProject(id=[$0], customer_id=[$1], loan_type_id=[$2], amount=[$3], duration=[$4], application_date=[$5], updated_at=[$6], customer_id7=[$1])
-          LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
-            LogicalProject(id=[$0], customer_id=[$1], loan_type_id=[$2], amount=[$3], duration=[$4], application_date=[$5], updated_at=[$6], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
-              LogicalTableScan(table=[[applications$3]])
+        LogicalFilter(condition=[=($8, 1)]) hints[DedupHint]
+          LogicalProject(id=[$0], customer_id=[$1], loan_type_id=[$2], amount=[$3], duration=[$4], application_date=[$5], updated_at=[$6], customer_id7=[$1], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
+            LogicalTableScan(table=[[applications$3]])
 
 >>>flink.json
 {
@@ -240,7 +239,7 @@ LogicalProject(__pk1$id=[$0], loan_type_id=[$1], total_amount=[$2], total_loans=
     "CREATE VIEW `table$8`\nAS\nSELECT *\nFROM `applicationupdates$1`;",
     "CREATE VIEW `table$9`\nAS\nSELECT *\nFROM `customers$1`;",
     "CREATE VIEW `table$10`\nAS\nSELECT *\nFROM `loantypes$1`;",
-    "CREATE VIEW `table$11`\nAS\nSELECT `t0`.`id` AS `__pk1$id`, `t3`.`loan_type_id`, SUM(`t3`.`amount`) AS `total_amount`, COUNT(*) AS `total_loans`, MAX((CASE WHEN (`t0`.`updated_at` < `t3`.`updated_at`) THEN `t3`.`updated_at` ELSE `t0`.`updated_at` END)) AS `__timestamp`\nFROM (SELECT *\nFROM (SELECT `id`, `first_name`, `last_name`, `email`, `phone`, `address`, `date_of_birth`, `updated_at`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated_at` DESC NULLS LAST)) AS `_rownum`\nFROM `customers$1`) AS `t`\nWHERE (`_rownum` = 1)) AS `t0`\nINNER JOIN (SELECT `id`, `customer_id`, `loan_type_id`, `amount`, `duration`, `application_date`, `updated_at`, `customer_id` AS `customer_id7`\nFROM (SELECT `id`, `customer_id`, `loan_type_id`, `amount`, `duration`, `application_date`, `updated_at`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated_at` DESC NULLS LAST)) AS `_rownum`\nFROM `applications$1`) AS `t1`\nWHERE (`_rownum` = 1)) AS `t3` ON (`t0`.`id` = `t3`.`customer_id7`)\nGROUP BY `t0`.`id`, `t3`.`loan_type_id`;",
+    "CREATE VIEW `table$11`\nAS\nSELECT `t0`.`id` AS `__pk1$id`, `t2`.`loan_type_id`, SUM(`t2`.`amount`) AS `total_amount`, COUNT(*) AS `total_loans`, MAX((CASE WHEN (`t0`.`updated_at` < `t2`.`updated_at`) THEN `t2`.`updated_at` ELSE `t0`.`updated_at` END)) AS `__timestamp`\nFROM (SELECT *\nFROM (SELECT `id`, `first_name`, `last_name`, `email`, `phone`, `address`, `date_of_birth`, `updated_at`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated_at` DESC NULLS LAST)) AS `_rownum`\nFROM `customers$1`) AS `t`\nWHERE (`_rownum` = 1)) AS `t0`\nINNER JOIN (SELECT *\nFROM (SELECT `id`, `customer_id`, `loan_type_id`, `amount`, `duration`, `application_date`, `updated_at`, `customer_id` AS `customer_id7`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated_at` DESC NULLS LAST)) AS `_rownum`\nFROM `applications$1`) AS `t1`\nWHERE (`_rownum` = 1)) AS `t2` ON (`t0`.`id` = `t2`.`customer_id7`)\nGROUP BY `t0`.`id`, `t2`.`loan_type_id`;",
     "CREATE VIEW `table$12`\nAS\nSELECT *\nFROM (SELECT `id`, `name`, `description`, `interest_rate`, `max_amount`, `min_amount`, `max_duration`, `min_duration`, `updated_at`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated_at` DESC NULLS LAST)) AS `_rownum`\nFROM `loantypes$1`) AS `t`\nWHERE (`_rownum` = 1);",
     "CREATE VIEW `table$13`\nAS\nSELECT *\nFROM (SELECT `id`, `customer_id`, `loan_type_id`, `amount`, `duration`, `application_date`, `updated_at`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated_at` DESC NULLS LAST)) AS `_rownum`\nFROM `applications$1`) AS `t1`\nWHERE (`_rownum` = 1);",
     "CREATE VIEW `table$14`\nAS\nSELECT `id`, `customer_id`, `loan_type_id`, `max_amount`, `min_amount`, `amount`, `_uuid`, `event_time` AS `_event_time`\nFROM (SELECT `$cor5`.`status`, `$cor5`.`message`, `$cor5`.`event_time`, `$cor5`.`id`, `$cor5`.`customer_id`, `$cor5`.`loan_type_id`, `$cor5`.`amount`, `$cor5`.`duration`, `t0`.`max_amount`, `t0`.`min_amount`, `$cor5`.`_uuid`\nFROM (SELECT *\nFROM `applicationupdates$1` AS `$cor6`\nINNER JOIN `table$13` FOR SYSTEM_TIME AS OF `$cor6`.`event_time` AS `t2` ON (`t2`.`id` = `$cor6`.`loan_application_id`)) AS `$cor5`\nINNER JOIN `table$12` FOR SYSTEM_TIME AS OF `$cor5`.`event_time` AS `t0` ON (`t0`.`id` = `$cor5`.`loan_type_id`)) AS `t4`\nWHERE ((`t4`.`status` = 'underwriting') AND ((`t4`.`amount` > `t4`.`max_amount`) OR (`t4`.`amount` < `t4`.`min_amount`)));",

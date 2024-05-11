@@ -12,6 +12,7 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.io.tables.TableType;
 import com.datasqrl.plan.rules.SqrlConverterConfig;
+import com.datasqrl.plan.table.PullupOperator.Container;
 import com.datasqrl.plan.table.Timestamps.Type;
 import com.google.common.base.Preconditions;
 import java.util.List;
@@ -35,7 +36,7 @@ public class ProxyImportRelationalTable extends PhysicalRelationalTable implemen
   public ProxyImportRelationalTable(@NonNull Name rootTableId, @NonNull NamePath tablePath,
       @NonNull Timestamps timestamp, @NonNull RelDataType rowType, @NonNull TableType tableType, @NonNull PrimaryKey primaryKey,
       ImportedRelationalTableImpl baseTable, TableStatistic tableStatistic) {
-    super(rootTableId, tablePath, tableType, rowType, rowType.getFieldCount(), timestamp,  primaryKey, tableStatistic);
+    super(rootTableId, tablePath, tableType, rowType, rowType.getFieldCount(), timestamp,  primaryKey, Container.EMPTY, tableStatistic);
     this.baseTable = baseTable;
     if (tableType.isLocked()) lock();
   }
