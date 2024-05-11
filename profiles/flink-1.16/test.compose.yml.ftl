@@ -9,5 +9,7 @@ services:
 </#if>
     command: ["jmeter", "-n", "-t", "/test/test-plan.jmx", "-l", "/test/results.jtl"]
     depends_on:
-      - server
-      - flink-job-submitter
+      server:
+        condition: service_started
+      flink-job-submitter:
+        condition: service_completed_successfully
