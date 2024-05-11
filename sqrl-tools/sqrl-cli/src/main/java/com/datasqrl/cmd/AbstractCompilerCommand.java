@@ -88,11 +88,9 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
       ExecutionGoal goal) {
     Repository repository = createRepository(errors);
 
-    PackageBootstrap packageBootstrap = new PackageBootstrap(root.rootDir,
-        this.root.packageFiles, profiles, this.files, !noinfer);
-    PackageJson sqrlConfig = packageBootstrap.bootstrap(repository, errors,
-        this::createDefaultConfig,
-        this::postProcessConfig, targetDir);
+    PackageBootstrap packageBootstrap = new PackageBootstrap(repository, errors, !noinfer);
+    PackageJson sqrlConfig = packageBootstrap.bootstrap(root.rootDir, this.root.packageFiles,
+        profiles, this.files, this::createDefaultConfig);
 
     Optional<String> snapshotPathConf = sqrlConfig.getCompilerConfig()
         .getSnapshotPath();
