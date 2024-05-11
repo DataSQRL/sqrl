@@ -148,7 +148,7 @@ public class AuthProvider {
       "redirect_uri", REDIRECT_URI,
       "scope", "offline_access",
       "state", state,
-      "audience", "https://sqrl-repository-frontend-git-staging-datasqrl.vercel.app/api/client", //TODO we need to create a new audience
+      "audience", "https://sqrl-repository-frontend-git-staging-datasqrl.vercel.app", //TODO we need to create a new audience
       "code_challenge", codeChallenge,
       "code_challenge_method", "S256");
 
