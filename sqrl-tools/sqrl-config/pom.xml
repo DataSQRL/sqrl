@@ -2,7 +2,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>run.sqrl</groupId>
+    <groupId>com.datasqrl</groupId>
     <artifactId>sqrl-tools</artifactId>
     <version>0.5.0-RC3-SNAPSHOT</version>
   </parent>
@@ -18,11 +18,11 @@
   <dependencies>
 
     <dependency>
-      <groupId>run.sqrl</groupId>
+      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-name</artifactId>
     </dependency>
     <dependency>
-      <groupId>run.sqrl</groupId>
+      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-errors</artifactId>
     </dependency>
     <!-- Configuration -->
@@ -35,7 +35,7 @@
       <artifactId>jackson-annotations</artifactId>
     </dependency>
     <dependency>
-      <groupId>run.sqrl</groupId>
+      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-base</artifactId>
     </dependency>
   </dependencies>
