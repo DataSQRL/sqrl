@@ -24,8 +24,14 @@ jobs:
       env:
         DATASQRL_TOKEN: ${{ secrets.DATASQRL_TOKEN }}
       run: mvn -T 1 -B -U -e clean package
-    - name: Build Docker image
-      run: docker build -t datasqrl/sqrl-dependencies:v0.5.0-RC3 .
+    - name: Build sqrl-dependencies Docker
+      uses: docker/build-push-action@v3
+      with:
+        context: .
+        file: Dockerfile
+        push: false
+        tags: datasqrl/sqrl-dependencies:v0.5.0-RC3
+        platforms: linux/amd64
     - name: Build and Push sqrl-vertx Docker
       uses: docker/build-push-action@v3
       with:

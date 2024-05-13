@@ -158,9 +158,9 @@ public class PackageBootstrap {
       errors.fatal("GraphQL schema file is not a regular file: %s", graphQLSchemaFile.get());
     }
 
-    if (inferDependencies) {
-      inferDependencies(rootDir, packageJson);
-    }
+//    if (inferDependencies) {
+//      inferDependencies(rootDir, packageJson);
+//    }
 
     return packageJson;
   }
