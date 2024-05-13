@@ -6,6 +6,7 @@ package com.datasqrl.io.tables;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.config.TableConfig;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;

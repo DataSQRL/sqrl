@@ -8,8 +8,12 @@ public interface StatusHook {
   void onSuccess();
 
   void onFailure(Exception e, ErrorCollector errors);
+  boolean isSuccess();
+
+  boolean isFailed();
 
   public static final StatusHook NONE = new StatusHook() {
+    boolean failed = false;
     @Override
     public void onSuccess() {
 
@@ -17,24 +21,43 @@ public interface StatusHook {
 
     @Override
     public void onFailure(Exception e, ErrorCollector errors) {
-e.printStackTrace();
+      e.printStackTrace();
+      failed = true;
+    }
+
+    @Override
+    public boolean isSuccess() {
+      return !failed;
+    }
+
+    @Override
+    public boolean isFailed() {
+      return failed;
     }
   };
 
   @Getter
   public static class Impl implements StatusHook {
 
-    private boolean success = false;
     private boolean failed = false;
 
     @Override
     public void onSuccess() {
-      success = true;
+      failed = false;
     }
 
     @Override
     public void onFailure(Exception e, ErrorCollector errors) {
       failed = true;
+    }
+
+    @Override
+    public boolean isSuccess() {
+      return false;
+    }
+
+    public boolean isFailed() {
+      return failed;
     }
   }
 

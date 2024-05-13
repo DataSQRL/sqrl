@@ -6,7 +6,6 @@ package com.datasqrl.functions.text;
 import com.datasqrl.NamespaceObjectUtil;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.function.AbstractFunctionModule;
-import com.datasqrl.function.SqrlFunction;
 import com.datasqrl.function.StdLibrary;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.text.TextFunctions;

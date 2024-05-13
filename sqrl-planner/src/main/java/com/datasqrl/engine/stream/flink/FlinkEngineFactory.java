@@ -1,13 +1,7 @@
 package com.datasqrl.engine.stream.flink;
 
-import com.datasqrl.config.SqrlConfig;
-import com.datasqrl.config.SqrlConfigUtil;
-import com.datasqrl.engine.EngineFactory;
-import com.datasqrl.engine.ExecutionEngine;
+import com.datasqrl.config.EngineFactory;
 import com.google.auto.service.AutoService;
-import java.util.HashMap;
-import java.util.Map;
-import lombok.NonNull;
 
 @AutoService(EngineFactory.class)
 public class FlinkEngineFactory implements EngineFactory {
@@ -20,13 +14,12 @@ public class FlinkEngineFactory implements EngineFactory {
   }
 
   @Override
-  public ExecutionEngine.Type getEngineType() {
-    return ExecutionEngine.Type.STREAM;
+  public Type getEngineType() {
+    return Type.STREAMS;
   }
 
   @Override
-  public AbstractFlinkStreamEngine initialize(@NonNull SqrlConfig config) {
-    return new LocalFlinkStreamEngineImpl(config);
+  public Class getFactoryClass() {
+    return LocalFlinkStreamEngineImpl.class;
   }
-
 }

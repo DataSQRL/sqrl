@@ -7,11 +7,11 @@ import com.datasqrl.graphql.io.SinkProducer;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import com.datasqrl.graphql.server.Context;
 import com.datasqrl.graphql.server.JdbcClient;
-import com.datasqrl.graphql.server.Model.Argument;
-import com.datasqrl.graphql.server.Model.MutationCoords;
-import com.datasqrl.graphql.server.Model.ResolvedQuery;
-import com.datasqrl.graphql.server.Model.SubscriptionCoords;
-import com.datasqrl.graphql.server.Model.VariableArgument;
+import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
+import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoords;
+import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
+import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoords;
+import com.datasqrl.graphql.server.RootGraphqlModel.VariableArgument;
 import com.datasqrl.graphql.server.QueryExecutionContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ValueNode;
@@ -27,6 +27,7 @@ import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.Value;
 import org.reactivestreams.Publisher;
@@ -84,11 +85,16 @@ public class VertxContext implements Context {
 
       Map entry = (Map)args.entrySet().stream()
           .findFirst().map(Entry::getValue).get();
+      //Add UUID for event
+      UUID uuid = UUID.randomUUID();
+      entry.put(ReservedName.MUTATION_PRIMARY_KEY.getDisplay(), uuid);
 
       emitter.send(entry)
           .onSuccess(sinkResult->{
+            //Add timestamp from sink to result
             ZonedDateTime dateTime = ZonedDateTime.ofInstant(sinkResult.getSourceTime(), ZoneOffset.UTC);
-            entry.put(ReservedName.SOURCE_TIME.getCanonical(), dateTime.toLocalDateTime());
+            entry.put(ReservedName.MUTATION_TIME.getCanonical(), dateTime.toLocalDateTime());
+
             fut.complete(entry);
           })
           .onFailure((m)->

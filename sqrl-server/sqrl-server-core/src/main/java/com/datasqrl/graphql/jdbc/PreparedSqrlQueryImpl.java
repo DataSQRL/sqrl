@@ -1,6 +1,6 @@
 package com.datasqrl.graphql.jdbc;
 
-import com.datasqrl.graphql.server.Model.PreparedSqrlQuery;
+import com.datasqrl.graphql.server.RootGraphqlModel.PreparedSqrlQuery;
 import java.sql.Connection;
 import lombok.Value;
 

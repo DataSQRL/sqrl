@@ -9,6 +9,8 @@ import com.datasqrl.plan.table.AddedColumn;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.plan.table.PhysicalTable;
 import com.datasqrl.plan.table.ProxyImportRelationalTable;
+import com.datasqrl.plan.table.PullupOperator;
+import com.datasqrl.plan.table.PullupOperator.Container;
 import com.datasqrl.plan.table.QueryRelationalTable;
 import com.datasqrl.plan.util.SelectIndexMap;
 import com.google.common.base.Preconditions;
@@ -18,6 +20,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.tools.RelBuilder;
+import org.apache.commons.lang3.tuple.Pair;
+import org.immutables.value.Value;
 
 @AllArgsConstructor(onConstructor_=@Inject)
 @Getter
@@ -44,15 +48,24 @@ public class SQRLConverter {
     return alp.getRelNode();
   }
 
-  public RelNode convert(PhysicalTable table, SqrlConverterConfig config, ErrorCollector errors) {
-    return convert(table,config,true,errors);
+  @Value
+  @Getter
+  @AllArgsConstructor
+  public static class TablePlan {
+    RelNode relNode;
+    PullupOperator.Container pullups;
+
+    public static TablePlan of(AnnotatedLP alp) {
+      return new TablePlan(alp.getRelNode(), alp.getPullups());
+    }
   }
 
-  public RelNode convert(PhysicalTable table, SqrlConverterConfig config,
-                         boolean addWatermark, ErrorCollector errors) {
+  public TablePlan convert(PhysicalTable table, SqrlConverterConfig config, ErrorCollector errors) {
     RelBuilder builder;
     ExecutionAnalysis exec = ExecutionAnalysis.of(config.getStage());
     PhysicalRelationalTable physicalTable;
+    PullupOperator.Container pullups = Container.EMPTY;
+    boolean addWatermark = true;
     if (table instanceof ProxyImportRelationalTable) {
       physicalTable = (PhysicalRelationalTable)table;
       builder = relBuilder.scan(((ProxyImportRelationalTable)table).getBaseTable().getNameId());
@@ -62,6 +75,7 @@ public class SQRLConverter {
       AnnotatedLP alp = convert(queryTable.getOriginalRelnode(), config, errors);
       builder = relBuilder.push(alp.getRelNode());
       physicalTable = queryTable;
+      pullups = alp.getPullups();
       addWatermark = false; //watermarks only apply to imported tables
     }
     //Add any additional columns that were added to the table after definition
@@ -75,13 +89,13 @@ public class SQRLConverter {
       int addedIndex = column.appendTo(builder, index, select);
       select = select.add(addedIndex);
     }
-    if (addWatermark) { //TODO: remove and handle in connector definition
+    if (addWatermark) { //TODO: remove
       int timestampIdx = table.getTimestamp().getOnlyCandidate();
       Preconditions.checkArgument(timestampIdx < physicalTable.getNumColumns());
       WatermarkHint watermarkHint = new WatermarkHint(timestampIdx);
       watermarkHint.addTo(builder);
     }
-    return builder.build();
+    return new TablePlan(builder.build(), pullups);
   }
 
   public static final int DEFAULT_SLIDING_WINDOW_PANES = 50;

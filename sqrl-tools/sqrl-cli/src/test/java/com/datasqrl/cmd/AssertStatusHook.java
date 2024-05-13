@@ -7,6 +7,8 @@ import com.datasqrl.error.ErrorPrinter;
 
 public class AssertStatusHook implements StatusHook {
   public static AssertStatusHook INSTANCE = new AssertStatusHook();
+  private boolean failed;
+
   @Override
   public void onSuccess() {
   }
@@ -14,6 +16,16 @@ public class AssertStatusHook implements StatusHook {
   @Override
   public void onFailure(Exception e, ErrorCollector errors) {
     System.out.println(ErrorPrinter.prettyPrint(errors));
-    fail(e);
+    failed = true;
+  }
+
+  @Override
+  public boolean isSuccess() {
+    return !failed;
+  }
+
+  @Override
+  public boolean isFailed() {
+    return failed;
   }
 }

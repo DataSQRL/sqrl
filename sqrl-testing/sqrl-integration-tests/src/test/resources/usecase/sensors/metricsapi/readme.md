@@ -1,1 +1,0 @@
-All three subscriptions should trigger

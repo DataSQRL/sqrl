@@ -1,8 +1,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
-    <groupId>run.sqrl</groupId>
+    <groupId>com.datasqrl</groupId>
     <artifactId>sqrl-tools</artifactId>
-    <version>0.5.0-RC2-SNAPSHOT</version>
+    <version>0.5.0-RC3-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -14,6 +14,11 @@
   </properties>
 
   <dependencies>
+
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-config</artifactId>
+    </dependency>
     <!-- to be moved out during run service modularization-->
     <!-- Kafka -->
     <dependency>
@@ -58,11 +63,11 @@
 
     <dependency>
       <artifactId>sqrl-base</artifactId>
-      <groupId>run.sqrl</groupId>
+      <groupId>com.datasqrl</groupId>
     </dependency>
     <dependency>
       <artifactId>sqrl-planner</artifactId>
-      <groupId>run.sqrl</groupId>
+      <groupId>com.datasqrl</groupId>
     </dependency>
 
     <!-- Utils -->
@@ -77,11 +82,19 @@
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-collections4</artifactId>
-      <version>4.4</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpmime</artifactId>
     </dependency>
     <dependency>
       <groupId>net.lingala.zip4j</groupId>
       <artifactId>zip4j</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.freemarker</groupId>
+      <artifactId>freemarker</artifactId>
     </dependency>
 
     <!-- Test -->
@@ -124,18 +137,18 @@
     <!-- Test jars -->
     <dependency>
       <artifactId>sqrl-planner</artifactId>
-      <groupId>run.sqrl</groupId>
+      <groupId>com.datasqrl</groupId>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
     <dependency>
       <artifactId>sqrl-calcite</artifactId>
-      <groupId>run.sqrl</groupId>
+      <groupId>com.datasqrl</groupId>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>run.sqrl</groupId>
+      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-discovery</artifactId>
     </dependency>
   </dependencies>

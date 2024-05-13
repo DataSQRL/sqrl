@@ -6,10 +6,10 @@ import com.datasqrl.calcite.SqrlTableFactory;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.config.CompilerConfiguration;
+import com.datasqrl.config.PackageJson.CompilerConfig;
+import com.datasqrl.config.PackageJson;
+import com.datasqrl.config.TableConfigLoader;
 import com.datasqrl.config.SqrlCompilerConfiguration;
-import com.datasqrl.config.SqrlConfig;
-import com.datasqrl.config.SqrlConfigDebugger;
 import com.datasqrl.config.SqrlConfigPipeline;
 import com.datasqrl.config.SqrlRelBuilder;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
@@ -23,7 +23,6 @@ import com.datasqrl.module.resolver.FileResourceResolver;
 import com.datasqrl.module.resolver.ResourceResolver;
 import com.datasqrl.plan.MainScript;
 import com.datasqrl.plan.SqrlPlanningTableFactory;
-import com.datasqrl.plan.local.generate.Debugger;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.name.Named;
@@ -36,20 +35,22 @@ import org.apache.calcite.tools.RelBuilder;
 public class MockSqrlInjector extends AbstractModule {
 
   private final ErrorCollector errors;
-  private final SqrlConfig config;
+  private final PackageJson config;
   private final boolean debug;
   private final Path rootDir;
   private final Map<NamePath, SqrlModule> addlModules;
+  private final TableConfigLoader tableConfigFactory;
   private final Optional<Path> errorDir;
 
-  public MockSqrlInjector(ErrorCollector errors, SqrlConfig config, Optional<Path> errorDir,
-      Path rootDir, Map<NamePath, SqrlModule> addlModules, boolean isDebug) {
+  public MockSqrlInjector(ErrorCollector errors, PackageJson config, Optional<Path> errorDir,
+      Path rootDir, Map<NamePath, SqrlModule> addlModules, boolean isDebug, TableConfigLoader tableConfigFactory) {
     this.errors = errors;
     this.config = config;
     this.rootDir = rootDir;
     this.debug = isDebug;
     this.errorDir = errorDir;
     this.addlModules = addlModules;
+    this.tableConfigFactory = tableConfigFactory;
   }
 
   @Override
@@ -58,9 +59,8 @@ public class MockSqrlInjector extends AbstractModule {
     bind(RelDataTypeFactory.class).to(TypeFactory.class);
     bind(MainScript.class).to(MainScriptImpl.class);
     bind(APIConnectorManager.class).to(APIConnectorManagerImpl.class);
-    bind(Debugger.class).to(SqrlConfigDebugger.class);
     bind(ExecutionPipeline.class).to(SqrlConfigPipeline.class);
-    bind(CompilerConfiguration.class).to(SqrlCompilerConfiguration.class);
+    bind(CompilerConfig.class).to(SqrlCompilerConfiguration.class);
     bind(SqrlTableFactory.class).to(SqrlPlanningTableFactory.class);
     bind(RelBuilder.class).to(SqrlRelBuilder.class);
     bind(ModuleLoader.class).to(ModuleLoaderImpl.class);
@@ -75,6 +75,11 @@ public class MockSqrlInjector extends AbstractModule {
   @Provides
   public ErrorCollector provideErrorCollector() {
     return errors;
+  }
+
+  @Provides
+  public TableConfigLoader provideTableConfigFactory() {
+    return tableConfigFactory;
   }
 
   @Provides
@@ -122,7 +127,7 @@ public class MockSqrlInjector extends AbstractModule {
 
 
   @Provides
-  public SqrlConfig provideSqrlConfig() {
+  public PackageJson provideSqrlConfig() {
     return config;
   }
 

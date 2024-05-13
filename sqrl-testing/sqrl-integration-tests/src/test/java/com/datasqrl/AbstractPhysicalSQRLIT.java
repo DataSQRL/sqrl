@@ -6,7 +6,6 @@
 //import com.datasqrl.calcite.Dialect;
 //import com.datasqrl.canonicalizer.Name;
 //import com.datasqrl.canonicalizer.ReservedName;
-//import com.datasqrl.config.SqrlConfig;
 //import com.datasqrl.engine.PhysicalPlan;
 //import com.datasqrl.engine.PhysicalPlanExecutor;
 //import com.datasqrl.engine.PhysicalPlanner;
@@ -16,9 +15,9 @@
 //import com.datasqrl.io.impl.file.FileDataSystemConfig;
 //import com.datasqrl.io.impl.file.FileDataSystemFactory;
 //import com.datasqrl.io.impl.file.FilePath;
-//import com.datasqrl.io.impl.file.FilePathConfig;
-//import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
-//import com.datasqrl.io.tables.TableConfig;
+//import com.datasqrl.discovery.system.FilePathConfig;
+//import com.datasqrl.config.JdbcDataSystemConnector;
+//import com.datasqrl.config.TableConfig;
 //import com.datasqrl.plan.global.DAGPlanner;
 //import com.datasqrl.plan.global.PhysicalDAGPlan;
 //import com.datasqrl.plan.global.PhysicalDAGPlan.ExternalSink;

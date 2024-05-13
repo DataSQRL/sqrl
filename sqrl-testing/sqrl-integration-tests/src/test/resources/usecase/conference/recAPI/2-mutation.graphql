@@ -1,8 +1,0 @@
-mutation {
-AddInterest(interest:{
-  userid:"10",
-  text:"ai"
-}) {
-  userid
-}
-}

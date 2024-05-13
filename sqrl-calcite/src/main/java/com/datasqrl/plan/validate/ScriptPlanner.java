@@ -22,6 +22,7 @@ import com.datasqrl.calcite.visitor.SqlTopLevelRelationVisitor;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
+import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
@@ -59,7 +60,6 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.Value;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataTypeField;
@@ -74,6 +74,7 @@ import org.apache.calcite.sql.ScriptNode;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.SqlDynamicParam;
+import org.apache.calcite.sql.SqlHint;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlIntervalQualifier;
 import org.apache.calcite.sql.SqlJoin;
@@ -113,12 +114,12 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
   private final SqrlFramework framework;
   private ModuleLoader moduleLoader;
   private ErrorCollector errorCollector;
+  private final ExecutionGoal executionGoal;
   private final SqrlTableFactory tableFactory;
 
   private final SqlNameUtil nameUtil;
+  private final ConnectorFactoryFactory connectorFactoryFactory;
 
-  private final Map<SqrlImportDefinition, List<QualifiedImport>> importOps = new HashMap<>();
-  private final Map<SqrlExportDefinition, QualifiedExport> exportOps = new HashMap<>();
   private final Map<SqlNode, Object> schemaTable = new HashMap<>();
   private final AtomicInteger uniqueId = new AtomicInteger(0);
   private final Map<SqlNode, RelOptTable> tableMap = new HashMap<>();
@@ -128,77 +129,35 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
   private final ArrayListMultimap<SqlNode, Function> isA = ArrayListMultimap.create();
   private final ArrayListMultimap<SqlNode, FunctionParameter> parameters = ArrayListMultimap.create();
 
+  private static final String TEST_HINT_NAME = "test";
   @Override
   public Void visit(SqrlImportDefinition node, Void context) {
-    // IMPORT data.* AS x;
     if (node.getImportPath().isStar() && node.getAlias().isPresent()) {
-      addError(ErrorCode.IMPORT_CANNOT_BE_ALIASED, node, "Import cannot be aliased");
-
-      //Strip alias and continue to process
-      node = node.clone(node.getImportPath(), Optional.empty());
+      throw addError(ErrorCode.IMPORT_CANNOT_BE_ALIASED, node, "Import cannot be aliased");
     }
 
     NamePath path = nameUtil.toNamePath(node.getImportPath().names);
-    Optional<SqrlModule> moduleOpt = moduleLoader.getModule(path.popLast());
+    SqrlModule module = moduleLoader.getModule(path.popLast()).orElse(null);
 
-    if (moduleOpt.isEmpty()) {
-      addError(ErrorCode.GENERIC, node, "Could not find module [%s] at path: [%s]", path,
-          String.join("/",path.toStringList()));
-      return null; //end processing
+    if (module == null) {
+      throw addError(ErrorCode.GENERIC, node, "Could not find module [%s] at path: [%s]",
+          path, String.join("/", path.toStringList()));
     }
 
-    SqrlModule module = moduleOpt.get();
-
-    if (path.getLast().equals(ReservedName.ALL)) {
-      importOps.put(node, module.getNamespaceObjects().stream()
-          .map(i -> new QualifiedImport(i, Optional.empty()))
-          .collect(Collectors.toList()));
+    if (node.getImportPath().isStar()) {
       if (module.getNamespaceObjects().isEmpty()) {
         addWarn(ErrorLabel.GENERIC, node, "Module is empty: %s", path);
       }
 
-      List<NamespaceObject> objects = new ArrayList<>(module.getNamespaceObjects());
-
-      for (NamespaceObject obj : objects) {
-        handleImport(node, Optional.of(obj), Optional.empty(), path);
-      }
+      module.getNamespaceObjects().forEach(obj -> obj.apply(Optional.empty(), framework, errorCollector));
     } else {
-      // Get the namespace object specified in the import statement
-      Optional<NamespaceObject> objOpt = module.getNamespaceObject(path.getLast());
-
-      //Keep original casing
-      String objectName = node.getAlias()
-          .map(a -> a.names.get(0))
-          .orElse(path.getLast().getDisplay());
-
-      handleImport(node, objOpt, Optional.of(objectName), path);
-
-      if (objOpt.isPresent()) {
-        importOps.put(node, List.of(new QualifiedImport(objOpt.get(), Optional.of(objectName))));
-      }
-    }
-
-    List<QualifiedImport> qualifiedImports = getImportOps().get(node);
-    if (qualifiedImports != null) {
-      qualifiedImports.forEach(i -> i.getObject().apply(i.getAlias(), framework, errorCollector));
+      Optional<NamespaceObject> namespaceObject = module.getNamespaceObject(path.getLast());
+      namespaceObject.map(object -> object.apply(Optional.of(node.getAlias().map(a -> a.names.get(0))
+              .orElse(/*retain alias*/path.getLast().getDisplay())), framework, errorCollector))
+          .orElseThrow(() -> addError(ErrorCode.GENERIC, node, "Object [%s] not found in module: %s", path.getLast(), path));
     }
 
     return null;
-  }
-
-  private void handleImport(SqrlImportDefinition node, Optional<NamespaceObject> obj,
-      Optional<String> alias, NamePath path) {
-    if (obj.isEmpty()) {
-      addError(ErrorLabel.GENERIC, node.getIdentifier(), "Could not find import object: %s",
-          path.getDisplay());
-    }
-  }
-
-  @Value
-  public class QualifiedImport {
-
-    NamespaceObject object;
-    Optional<String> alias;
   }
 
   /**
@@ -206,8 +165,9 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
    */
   @Override
   public Void visit(SqrlExportDefinition node, Void context) {
-    Optional<TableSink> sink = LoaderUtil.loadSinkOpt(nameUtil.toNamePath(node.getSinkPath().names),
-        errorCollector, moduleLoader);
+    Optional<TableSink> sink = LoaderUtil.loadSinkOpt(
+        nameUtil.toNamePath(node.getSinkPath().names),
+        errorCollector, moduleLoader, connectorFactoryFactory);
 
     if (sink.isEmpty()) {
       addError(ErrorCode.CANNOT_RESOLVE_TABLESINK, node, "Cannot resolve table sink: %s",
@@ -216,13 +176,11 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     }
 
     NamePath path = nameUtil.toNamePath(node.getIdentifier().names);
-    exportOps.put(node, new QualifiedExport(path, sink.get()));
 
     QueryPlanner planner = framework.getQueryPlanner();
-    QualifiedExport export = getExportOps().get(node);
-    Optional<RelOptTable> table = planner.getCatalogReader().getTableFromPath(export.getTable());
-    Preconditions.checkState(table.isPresent(), "Could not find export table: %s", export.getTable().getDisplay());
-    ResolvedExport resolvedExport = exportTable(table.get().unwrap(ModifiableTable.class), export.getSink(), planner.getRelBuilder(), true);
+    Optional<RelOptTable> table = planner.getCatalogReader().getTableFromPath(path);
+    Preconditions.checkState(table.isPresent(), "Could not find export table: %s", path.getDisplay());
+    ResolvedExport resolvedExport = exportTable(table.get().unwrap(ModifiableTable.class), sink.get(), planner.getRelBuilder(), true);
     framework.getSchema().add(resolvedExport);
 
     return null;
@@ -233,13 +191,6 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         .build();
     int numSelects = selectedFieldsOnly?table.getNumSelects():table.getNumColumns();
     return new ResolvedExport(table.getNameId(), export, numSelects, sink);
-  }
-
-  @Value
-  public class QualifiedExport {
-
-    NamePath table;
-    TableSink sink;
   }
 
   @Override
@@ -399,7 +350,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
 
       Relationship rel = new Relationship(path.getLast(),
           path, toTable, Relationship.JoinType.JOIN, Multiplicity.MANY,
-          result.getParams(), nodeSupplier);
+          result.getParams(), nodeSupplier, hasTestHint(assignment.getHints()));
       planner.getSchema().addRelationship(rel);
     } else {
       List<String> path = assignment.getIdentifier().names;
@@ -413,7 +364,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
 
       tableFactory.createTable(moduleLoader, path, rel, null,
           assignment.getHints(), result.getParams(), isA,
-          materializeSelf, nodeSupplier, errorCollector);
+          materializeSelf, nodeSupplier, errorCollector, hasTestHint(assignment.getHints()));
     }
 
     return null;
@@ -1020,17 +971,21 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
       throw errors.handle(e);
     }
 
-    //wtf is this, fix it
     ErrorCollector scriptErrors = errorCollector.withScript("<script>", mainScript.getContent());
 
-//    framework.resetPlanner();
     for (SqlNode statement : scriptNode.getStatements()) {
       try {
         ErrorCollector lineErrors = scriptErrors
             .atFile(SqrlAstException.toLocation(statement.getParserPosition()));
         errorCollector = lineErrors;
         moduleLoader = composite;
-        validateStatement((SqrlStatement) statement);
+        SqrlStatement stmt = (SqrlStatement) statement;
+        if (hasTestHint(stmt.getHints()) && executionGoal != ExecutionGoal.TEST) {
+          //Skip test annotations
+          continue;
+        }
+
+        validateStatement(stmt);
         if (lineErrors.hasErrors()) {
           throw new CollectedException(new RuntimeException("Script cannot validate"));
         }
@@ -1049,5 +1004,10 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         throw statementErrors.handle(e);
       }
     }
+  }
+
+  private boolean hasTestHint(Optional<SqlNodeList> optionalStmt) {
+    return optionalStmt.isPresent() && optionalStmt.get().getList().stream()
+        .anyMatch(node -> node instanceof SqlHint && TEST_HINT_NAME.equalsIgnoreCase(((SqlHint) node).getName()));
   }
 }

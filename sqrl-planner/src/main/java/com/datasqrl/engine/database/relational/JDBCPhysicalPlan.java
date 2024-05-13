@@ -7,19 +7,15 @@ import com.datasqrl.engine.database.DatabasePhysicalPlan;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.sql.SqlDDLStatement;
 import com.datasqrl.plan.queries.IdentifiedQuery;
-import com.datasqrl.serializer.Deserializer;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import lombok.Value;
 
 @Value
 public class JDBCPhysicalPlan implements DatabasePhysicalPlan {
 
-  List<SqlDDLStatement> ddlStatements;
+  List<SqlDDLStatement> ddl;
+  @JsonIgnore
   Map<IdentifiedQuery, QueryTemplate> queries;
-
 }

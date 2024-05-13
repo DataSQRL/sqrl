@@ -3,11 +3,12 @@ package com.datasqrl.config;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import java.nio.file.Path;
+import lombok.Getter;
 import lombok.experimental.Delegate;
 
-public class TargetPath implements Path {
+@Getter
+public class TargetPath {
 
-  @Delegate
   private final Path targetDir;
 
   @Inject

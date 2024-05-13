@@ -24,9 +24,7 @@ public class KafkaSinkProducer<OUT> implements SinkProducer {
   @Override
   public Future<SinkResult> send(Map entry) {
     final KafkaProducerRecord producerRecord;
-//    entry.put("_source_time", ZonedDateTime.now(ZoneId.systemDefault()));
-    UUID uuid = UUID.randomUUID();
-    entry.put("_uuid", uuid);
+
 
     try {
       producerRecord = KafkaProducerRecord.create(topic, entry);
@@ -35,6 +33,6 @@ public class KafkaSinkProducer<OUT> implements SinkProducer {
     }
     //TODO: generate UUID server side
     return kafkaProducer.send(producerRecord).map(result ->
-        new SinkResult(Instant.ofEpochMilli(((RecordMetadata)result).getTimestamp()), Optional.of(uuid)));
+        new SinkResult(Instant.ofEpochMilli(((RecordMetadata)result).getTimestamp())));
   }
 }

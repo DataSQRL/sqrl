@@ -3,8 +3,8 @@
  */
 package com.datasqrl.engine.pipeline;
 
+import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.engine.ExecutionEngine;
-import com.datasqrl.engine.ExecutionEngine.Type;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
@@ -43,14 +43,14 @@ public class SimplePipeline implements ExecutionPipeline {
   public static SimplePipeline of(Map<String, ExecutionEngine> engines, ErrorCollector errors) {
     List<ExecutionStage> stages = new ArrayList<>();
     getStage(Type.LOG, engines).ifPresent(stages::add);
-    stages.add(getStage(Type.STREAM, engines).orElseThrow(
+    stages.add(getStage(Type.STREAMS, engines).orElseThrow(
         () -> errors.exception("Need to configure a stream engine")));
     getStage(Type.DATABASE, engines).ifPresent(stages::add);
     getStage(Type.SERVER, engines).ifPresent(stages::add);
     return new SimplePipeline(stages);
   }
 
-  private static Optional<EngineStage> getStage(ExecutionEngine.Type engineType,
+  private static Optional<EngineStage> getStage(Type engineType,
       Map<String, ExecutionEngine> engines) {
     return StreamUtil.getOnlyElement(engines.entrySet().stream()
         .filter(e -> e.getValue().getType()==engineType)

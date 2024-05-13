@@ -24,54 +24,53 @@ public class JsonArrayAgg extends AggregateFunction<FlinkJsonType, ArrayAgg> {
   }
 
   public void accumulate(ArrayAgg accumulator, String value) {
-    accumulator.add(value);
+    accumulator.add(mapper.getNodeFactory().textNode(value));
   }
 
   @SneakyThrows
   public void accumulate(ArrayAgg accumulator, FlinkJsonType value) {
     if (value != null) {
-      accumulator.add(mapper.readTree(value.json));
+      accumulator.add(value.json);
     } else {
       accumulator.add(null);
     }
   }
 
   public void accumulate(ArrayAgg accumulator, Double value) {
-    accumulator.add(value);
+    accumulator.add(mapper.getNodeFactory().numberNode(value));
   }
 
   public void accumulate(ArrayAgg accumulator, Long value) {
-    accumulator.add(value);
+    accumulator.add(mapper.getNodeFactory().numberNode(value));
   }
 
   public void accumulate(ArrayAgg accumulator, Integer value) {
-    accumulator.add(value);
+    accumulator.add(mapper.getNodeFactory().numberNode(value));
   }
 
   public void retract(ArrayAgg accumulator, String value) {
-    accumulator.remove(value);
+    accumulator.remove(mapper.getNodeFactory().textNode(value));
   }
 
   @SneakyThrows
   public void retract(ArrayAgg accumulator, FlinkJsonType value) {
     if (value != null) {
-      JsonNode jsonNode = mapper.readTree(value.json);
-      accumulator.remove(jsonNode);
+      accumulator.remove(value.json);
     } else {
       accumulator.remove(null);
     }
   }
 
   public void retract(ArrayAgg accumulator, Double value) {
-    accumulator.remove(value);
+    accumulator.remove(mapper.getNodeFactory().numberNode(value));
   }
 
   public void retract(ArrayAgg accumulator, Long value) {
-    accumulator.remove(value);
+    accumulator.remove(mapper.getNodeFactory().numberNode(value));
   }
 
   public void retract(ArrayAgg accumulator, Integer value) {
-    accumulator.remove(value);
+    accumulator.remove(mapper.getNodeFactory().numberNode(value));
   }
 
   @Override
@@ -79,15 +78,11 @@ public class JsonArrayAgg extends AggregateFunction<FlinkJsonType, ArrayAgg> {
     ArrayNode arrayNode = mapper.createArrayNode();
     for (Object o : accumulator.getObjects()) {
       if (o instanceof FlinkJsonType) {
-        try {
-          arrayNode.add(mapper.readTree(((FlinkJsonType) o).json));
-        } catch (JsonProcessingException e) {
-          return null;
-        }
+        arrayNode.add(((FlinkJsonType) o).json);
       } else {
         arrayNode.addPOJO(o);
       }
     }
-    return new FlinkJsonType(arrayNode.toString());
+    return new FlinkJsonType(arrayNode);
   }
 }

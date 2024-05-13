@@ -4,7 +4,6 @@ import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.DynamicSinkFactory;
 import com.datasqrl.module.NamespaceObject;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -15,7 +14,7 @@ import java.util.Optional;
 @Getter
 public class DynamicSinkNsObject implements NamespaceObject {
   NamePath path;
-  DynamicSinkFactory sinkFactory;
+//  DynamicSinkFactory sinkFactory;
 
   public Name getName() {
     return path.getLast();

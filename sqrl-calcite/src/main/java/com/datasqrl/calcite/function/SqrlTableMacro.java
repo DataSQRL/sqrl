@@ -33,4 +33,6 @@ public interface SqrlTableMacro extends TableFunction {
   Multiplicity getMultiplicity();
 
   JoinType getJoinType();
+
+  boolean isTest();
 }

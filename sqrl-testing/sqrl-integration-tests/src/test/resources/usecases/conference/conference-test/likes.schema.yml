@@ -1,0 +1,25 @@
+---
+name: "Likes"
+schema_version: "1"
+partial_schema: false
+columns:
+- name: "_uuid"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "eventId"
+  type: "BIGINT"
+  tests:
+  - "not_null"
+- name: "userid"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "liked"
+  type: "BOOLEAN"
+  tests:
+  - "not_null"
+- name: "event_time"
+  type: "TIMESTAMP"
+  tests:
+  - "not_null"

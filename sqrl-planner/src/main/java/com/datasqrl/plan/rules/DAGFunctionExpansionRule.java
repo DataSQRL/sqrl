@@ -3,13 +3,12 @@
  */
 package com.datasqrl.plan.rules;
 
-import com.datasqrl.engine.ExecutionEngine.Type;
+import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.local.generate.QueryTableFunction;
 import com.datasqrl.plan.table.QueryRelationalTable;
-import com.datasqrl.schema.NestedRelationship;
 import com.datasqrl.util.CalciteUtil;
-import com.datasqrl.util.SqrlRexUtil;
+import com.datasqrl.calcite.SqrlRexUtil;
 import com.google.common.base.Preconditions;
 import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
@@ -51,8 +50,4 @@ public class DAGFunctionExpansionRule extends RelOptRule {
       call.transformTo(rewrittenNode);
     }
   }
-
-
-
-
 }

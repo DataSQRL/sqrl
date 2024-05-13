@@ -18,8 +18,7 @@ public class JsonExtract extends ScalarFunction {
       return null;
     }
     try {
-      ObjectMapper mapper = new ObjectMapper();
-      JsonNode jsonNode = mapper.readTree(input.getJson());
+      JsonNode jsonNode = input.getJson();
       ReadContext ctx = JsonPath.parse(jsonNode.toString());
       return ctx.read(pathSpec);
     } catch (Exception e) {

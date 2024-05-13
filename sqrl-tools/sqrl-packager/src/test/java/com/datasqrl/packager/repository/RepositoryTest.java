@@ -5,10 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.datasqrl.config.Dependency;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.serializer.Deserializer;
 import com.datasqrl.packager.Publisher;
-import com.datasqrl.packager.config.Dependency;
+import com.datasqrl.config.DependencyImpl;
 import com.datasqrl.packager.util.Zipper;
 import com.datasqrl.util.FileTestUtil;
 import com.datasqrl.util.FileUtil;
@@ -45,7 +46,7 @@ public class RepositoryTest {
     Files.createDirectories(localRepoPath);
     Files.createDirectories(outputPath);
     errors = ErrorCollector.root();
-    localRepo = new LocalRepositoryImplementation(localRepoPath, errors);
+    localRepo = new LocalRepositoryImplementation(localRepoPath, null, errors);
   }
 
   @AfterEach
@@ -94,7 +95,7 @@ public class RepositoryTest {
   @Test
   @SneakyThrows
   public void localPublishAndRetrieve() {
-    Dependency dependency = new Dependency("datasqrl.examples.ecommerce", "1.0.0", "dev");
+    DependencyImpl dependency = new DependencyImpl("datasqrl.examples.ecommerce", "1.0.0", "dev");
     assertTrue(localRepo.resolveDependency(dependency.getName()).isEmpty());
 
     assertFalse(localRepo.retrieveDependency(outputPath, dependency));
@@ -116,7 +117,7 @@ public class RepositoryTest {
   @Test
   @Disabled
   public void publishQuickstartLocally() {
-    LocalRepositoryImplementation repo = LocalRepositoryImplementation.of(errors);
+    LocalRepositoryImplementation repo = LocalRepositoryImplementation.of(errors, null);
     publishLocally(Quickstart.INSTANCE.getDataPackageDirectory(), repo);
   }
 
@@ -130,9 +131,11 @@ public class RepositoryTest {
   }
 
   @Test
+  @Disabled
   @SneakyThrows
   public void remoteRepoTest() {
-    Dependency dependency = new Dependency("datasqrl.seedshop", "0.1.1", "dev");
+    // TODO: package here once we have real public packages in the repo, because for now datasqrl.example.speedshop is a mocked one
+    DependencyImpl dependency = new DependencyImpl("datasqrl.seedshop", "0.1.1", "dev");
 
     RemoteRepositoryImplementation remoteRepo = new RemoteRepositoryImplementation(
         RemoteRepositoryImplementation.DEFAULT_URI);

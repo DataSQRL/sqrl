@@ -1,10 +1,10 @@
 package com.datasqrl.graphql.inference;
 
-import static com.datasqrl.engine.kafka.KafkaLogEngine.DEFAULT_EVENT_TIME_NAME;
 import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.getMutationTypeName;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
+import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.GraphqlSchemaParser;
@@ -55,7 +55,7 @@ public class GraphQLMutationExtraction {
 
       for (RelDataTypeField namedType : addedFields) {
         APIMutation apiMutation = new APIMutation(Name.system(namedType.getName()), apiSource,
-            namedType.getType(), Optional.of(DEFAULT_EVENT_TIME_NAME), Optional.of("_uuid"));
+            namedType.getType(), ReservedName.MUTATION_TIME.getDisplay(), ReservedName.MUTATION_PRIMARY_KEY.getDisplay());
         connectorManager.addMutation(apiMutation);
       }
     }

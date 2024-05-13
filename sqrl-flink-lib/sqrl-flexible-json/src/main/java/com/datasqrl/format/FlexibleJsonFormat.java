@@ -6,6 +6,8 @@ import static org.apache.flink.formats.json.JsonFormatOptions.MAP_NULL_KEY_LITER
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.io.tables.SchemaValidator;
+import com.datasqrl.schema.constraint.Constraint;
+import com.datasqrl.schema.constraint.NotNull;
 import com.datasqrl.schema.input.FlexibleFieldSchema.Field;
 import com.datasqrl.schema.input.FlexibleFieldSchema.Field.Builder;
 import com.datasqrl.schema.input.FlexibleFieldSchema.FieldType;
@@ -95,7 +97,6 @@ public class FlexibleJsonFormat implements DeserializationFormatFactory,
   }
 
   private RelationType createFlexibleTableSchema(RowType rowType) {
-
     List<SchemaField> types = new ArrayList<>();
     Builder builder = new Builder();
     for (RowField field : rowType.getFields()) {
@@ -120,7 +121,8 @@ public class FlexibleJsonFormat implements DeserializationFormatFactory,
         case INTERVAL_YEAR_MONTH:
         case INTERVAL_DAY_TIME:
           builder.setTypes(List.of(new FieldType(Name.system(field.getName()),
-              getType(field.getType(), this::createFlexibleTableSchema), 0, List.of())));
+              getType(field.getType(), this::createFlexibleTableSchema), 0,
+              field.getType().isNullable() ? List.of() : List.of(NotNull.INSTANCE))));
           break;
         case BINARY:
         case VARBINARY:
@@ -129,7 +131,9 @@ public class FlexibleJsonFormat implements DeserializationFormatFactory,
           //todo: array depth
           ArrayType arrayType = (ArrayType) field.getType();
           builder.setTypes(List.of(new FieldType(Name.system(field.getName()),
-              getType(arrayType.getElementType(), this::createFlexibleTableSchema), 1, List.of())));
+              getType(arrayType.getElementType(), this::createFlexibleTableSchema), 1,
+              field.getType().isNullable() ? List.of() : List.of(NotNull.INSTANCE))));
+
           break;
         case MULTISET:
           break;
@@ -137,7 +141,8 @@ public class FlexibleJsonFormat implements DeserializationFormatFactory,
           break;
         case ROW:
           builder.setTypes(List.of(new FieldType(Name.system(field.getName()),
-              createFlexibleTableSchema((RowType)field.getType()), 0, List.of())));
+              createFlexibleTableSchema((RowType)field.getType()), 0,
+              field.getType().isNullable() ? List.of() : List.of(NotNull.INSTANCE))));
           break;
         case DISTINCT_TYPE:
           break;

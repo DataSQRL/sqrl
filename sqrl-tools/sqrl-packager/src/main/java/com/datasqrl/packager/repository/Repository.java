@@ -3,7 +3,7 @@
  */
 package com.datasqrl.packager.repository;
 
-import com.datasqrl.packager.config.Dependency;
+import com.datasqrl.config.Dependency;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;

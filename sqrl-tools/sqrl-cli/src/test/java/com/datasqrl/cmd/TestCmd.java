@@ -4,12 +4,13 @@
  */
 package com.datasqrl.cmd;
 
+import static com.datasqrl.config.ScriptConfigImpl.GRAPHQL_NORMALIZED_FILE_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
-import com.datasqrl.packager.config.ScriptConfiguration;
 import com.datasqrl.util.FileTestUtil;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestScript;
@@ -139,8 +140,8 @@ public class TestCmd {
     execute(PROFILES_PATH, "compile",
         "myscript.sqrl", "schema.graphqls",
         "--nolookup",
-        "-p", "profile1",
-        "-p", "profile2",
+        "--profile", "profile1",
+        "--profile", "profile2",
         "--mnt", "/example/dir"
     );
 
@@ -177,7 +178,7 @@ public class TestCmd {
         script.getRootPackageDirectory().relativize(script.getScriptPath()).toString(),
         script.getRootPackageDirectory().relativize(script.getGraphQLSchemas().get(0).getSchemaPath()).toString(),
             "-t", OUTPUT_DIR.toString(), "-a", "GraphQL");
-    Path schemaFile = rootDir.resolve(ScriptConfiguration.GRAPHQL_NORMALIZED_FILE_NAME);
+    Path schemaFile = rootDir.resolve(GRAPHQL_NORMALIZED_FILE_NAME);
     assertTrue(Files.isRegularFile(schemaFile),
         () -> String.format("Schema file could not be found: %s", schemaFile));
     Files.deleteIfExists(schemaFile);
@@ -273,10 +274,18 @@ public class TestCmd {
   }
 
   public static int execute(Path rootDir, StatusHook hook, String... args) {
-    return new RootCommand(rootDir,hook).getCmd().execute(args);
+    RootCommand rootCommand = new RootCommand(rootDir, hook);
+    int exitCode = rootCommand.getCmd().execute(args) + (hook.isSuccess() ? 0 : 1);
+    if (exitCode != 0) {
+      fail();
+    }
+    return exitCode;
   }
 
   public class ErrorStatusHook implements StatusHook {
+
+    private boolean failed;
+
     @Override
     public void onSuccess() {
 
@@ -285,6 +294,16 @@ public class TestCmd {
     @Override
     public void onFailure(Exception e, ErrorCollector errors) {
       snapshot.addContent(ErrorPrinter.prettyPrint(errors));
+    }
+
+    @Override
+    public boolean isSuccess() {
+      return !failed;
+    }
+
+    @Override
+    public boolean isFailed() {
+      return failed;
     }
   }
 

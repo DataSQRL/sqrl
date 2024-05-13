@@ -6,7 +6,7 @@
 //import com.datasqrl.discovery.TableWriter;
 //import com.datasqrl.io.DataSystemConnectorFactory;
 //import com.datasqrl.io.InMemSourceFactory;
-//import com.datasqrl.io.impl.file.FileTableConfigFactory;
+//import com.datasqrl.discovery.system.FileTableConfigFactory;
 //import com.datasqrl.io.mem.MemoryConnectorFactory;
 //import com.datasqrl.io.tables.TableSource;
 //import com.datasqrl.module.SqrlModule;

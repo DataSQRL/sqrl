@@ -2,10 +2,10 @@ package com.datasqrl.graphql;
 
 import com.datasqrl.graphql.server.Context;
 import com.datasqrl.graphql.server.JdbcClient;
-import com.datasqrl.graphql.server.Model.JdbcQuery;
-import com.datasqrl.graphql.server.Model.PreparedSqrlQuery;
-import com.datasqrl.graphql.server.Model.ResolvedJdbcQuery;
-import com.datasqrl.graphql.server.Model.ResolvedQuery;
+import com.datasqrl.graphql.server.RootGraphqlModel.JdbcQuery;
+import com.datasqrl.graphql.server.RootGraphqlModel.PreparedSqrlQuery;
+import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedJdbcQuery;
+import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
 import io.vertx.sqlclient.PreparedQuery;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;

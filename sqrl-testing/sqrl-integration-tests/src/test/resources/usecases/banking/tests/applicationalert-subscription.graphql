@@ -1,0 +1,10 @@
+query {
+  ApplicationAlert {
+      id
+      loan_type_id
+      customer_id
+      max_amount
+      min_amount
+      amount
+  }
+}

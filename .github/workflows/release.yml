@@ -60,3 +60,13 @@ jobs:
             datasqrl/sqrl-server:${{ github.ref_name }}
             datasqrl/sqrl-server:${{ env.TAG_SUFFIX }}
           platforms: linux/amd64,linux/arm64
+      - name: Build and Push sqrl-dependencies Docker
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: |
+            datasqrl/sqrl-dependencies:${{ github.ref_name }}
+            datasqrl/sqrl-dependencies:${{ env.TAG_SUFFIX }}
+          platforms: linux/amd64,linux/arm64

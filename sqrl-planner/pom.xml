@@ -1,8 +1,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
-    <groupId>run.sqrl</groupId>
+    <groupId>com.datasqrl</groupId>
     <artifactId>sqrl-root</artifactId>
-    <version>0.5.0-RC2-SNAPSHOT</version>
+    <version>0.5.0-RC3-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -16,7 +16,7 @@
 
   <dependencies>
     <dependency>
-      <groupId>run.sqrl</groupId>
+      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-calcite</artifactId>
     </dependency>
 
@@ -72,7 +72,7 @@
 
     <dependency>
       <artifactId>sqrl-calcite</artifactId>
-      <groupId>run.sqrl</groupId>
+      <groupId>com.datasqrl</groupId>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
@@ -111,65 +111,30 @@
       <scope>test</scope>
     </dependency>
 
-    <!-- Kafka tests: todo migrate -->
-    <dependency>
-      <groupId>org.apache.kafka</groupId>
-      <artifactId>kafka-clients</artifactId>
-      <classifier>test</classifier>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.kafka</groupId>
-      <artifactId>kafka_${scala.version}</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.kafka</groupId>
-      <artifactId>kafka_${scala.version}</artifactId>
-      <scope>test</scope>
-      <classifier>test</classifier>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.kafka</groupId>
-      <artifactId>kafka-streams</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.kafka</groupId>
-      <artifactId>kafka-streams</artifactId>
-      <scope>test</scope>
-      <classifier>test</classifier>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.kafka</groupId>
-      <artifactId>kafka-streams-test-utils</artifactId>
-      <scope>test</scope>
-    </dependency>
 
     <dependency>
-      <groupId>run.sqrl</groupId>
+      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-text</artifactId>
     </dependency>
     <dependency>
-      <groupId>run.sqrl</groupId>
+      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-time</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-collections4</artifactId>
-      <version>4.4</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>run.sqrl</groupId>
+      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-flexible-json</artifactId>
     </dependency>
     <dependency>
-      <groupId>run.sqrl</groupId>
+      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-secure</artifactId>
     </dependency>
     <dependency>
-      <groupId>run.sqrl</groupId>
+      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-vector</artifactId>
     </dependency>
     <dependency>
@@ -177,9 +142,8 @@
       <artifactId>h2</artifactId>
     </dependency>
     <dependency>
-      <groupId>run.sqrl</groupId>
+      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-server-vertx</artifactId>
-      <version>0.5.0-RC2-SNAPSHOT</version>
       <scope>compile</scope>
     </dependency>
     <dependency>

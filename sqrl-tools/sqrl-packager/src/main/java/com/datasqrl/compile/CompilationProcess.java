@@ -1,18 +1,16 @@
 package com.datasqrl.compile;
 
 import com.datasqrl.actions.CreateDatabaseQueries;
-import com.datasqrl.actions.FlinkSqlGenerator;
 import com.datasqrl.actions.GraphqlPostplanHook;
 import com.datasqrl.actions.InferGraphqlSchema;
-import com.datasqrl.actions.WriteDeploymentArtifacts;
+import com.datasqrl.actions.WriteDag;
+import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.config.GraphqlSourceFactory;
-import com.datasqrl.engine.ExecutionEngine.Type;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlanner;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.graphql.APIConnectorManagerImpl;
 import com.datasqrl.graphql.inference.GraphQLMutationExtraction;
-import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.loaders.ModuleLoaderComposite;
 import com.datasqrl.plan.MainScript;
@@ -20,10 +18,14 @@ import com.datasqrl.plan.global.DAGPlanner;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.global.SqrlDAG;
 import com.datasqrl.plan.queries.APISource;
+import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.plan.validate.ScriptPlanner;
 import com.google.inject.Inject;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.tuple.Pair;
 
 @AllArgsConstructor(onConstructor_=@Inject)
 public class CompilationProcess {
@@ -37,13 +39,15 @@ public class CompilationProcess {
   private final GraphqlPostplanHook graphqlPostplanHook;
   private final CreateDatabaseQueries createDatabaseQueries;
   private final InferGraphqlSchema inferencePostcompileHook;
-  private final WriteDeploymentArtifacts writeDeploymentArtifactsHook;
+  private final WriteDag writeDeploymentArtifactsHook;
 //  private final FlinkSqlGenerator flinkSqlGenerator;
   private final GraphqlSourceFactory graphqlSourceFactory;
+  private final ExecutionGoal executionGoal;
   private final GraphQLMutationExtraction graphQLMutationExtraction;
   private final ExecutionPipeline pipeline;
+  private final TestPlanner testPlanner;
 
-  public PhysicalPlan executeCompilation() {
+  public Pair<PhysicalPlan, TestPlan> executeCompilation(Optional<Path> testsPath) {
     pipeline.getStage(Type.SERVER)
         .flatMap(p->graphqlSourceFactory.get())
         .ifPresent(graphQLMutationExtraction::analyze);
@@ -55,14 +59,22 @@ public class CompilationProcess {
 
     planner.plan(mainScript, composite);
     postcompileHooks();
-    Optional<APISource> source = inferencePostcompileHook.run();
+    Optional<APISource> source = inferencePostcompileHook.run(testsPath);
     SqrlDAG dag = dagPlanner.planLogical();
     PhysicalDAGPlan dagPlan = dagPlanner.planPhysical(dag);
 
     PhysicalPlan physicalPlan = physicalPlanner.plan(dagPlan);
-    Optional<RootGraphqlModel> model = graphqlPostplanHook.run(source, physicalPlan);
-    writeDeploymentArtifactsHook.run(model, source, physicalPlan, dag);
-    return physicalPlan;
+    graphqlPostplanHook.updatePlan(source, physicalPlan);
+
+    //create test artifact
+    TestPlan testPlan;
+    if (source.isPresent() && executionGoal == ExecutionGoal.TEST) {
+      testPlan = testPlanner.generateTestPlan(source.get(), testsPath);
+    } else {
+      testPlan = null;
+    }
+    writeDeploymentArtifactsHook.run(dag);
+    return Pair.of(physicalPlan, testPlan);
   }
 
   private void postcompileHooks() {

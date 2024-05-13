@@ -1,7 +1,0 @@
-query {
-  RecommendedEvents(userid:"10") {
-    url
-    title
-    score
-  }
-}

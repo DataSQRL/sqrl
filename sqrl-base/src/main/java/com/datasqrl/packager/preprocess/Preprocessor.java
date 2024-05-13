@@ -1,7 +1,7 @@
 package com.datasqrl.packager.preprocess;
 
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.config.SqrlConfig;
+import com.datasqrl.config.PackageJson;
 import com.datasqrl.error.ErrorCollector;
 import com.google.common.base.Preconditions;
 import java.nio.file.Files;
@@ -24,10 +24,10 @@ public interface Preprocessor {
     Set<Path> dependencies, libraries;
     Path rootDir, buildDir;
 
-    SqrlConfig sqrlConfig;
+    PackageJson sqrlConfig;
     Optional<NamePath> name = Optional.empty();
 
-    public ProcessorContext(Path rootDir, Path buildDir, SqrlConfig sqrlConfig) {
+    public ProcessorContext(Path rootDir, Path buildDir, PackageJson sqrlConfig) {
       this.rootDir = rootDir;
       this.buildDir = buildDir;
       this.dependencies = new HashSet<>();

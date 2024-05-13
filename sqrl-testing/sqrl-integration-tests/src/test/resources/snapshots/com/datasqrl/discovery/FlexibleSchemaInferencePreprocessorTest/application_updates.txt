@@ -1,0 +1,46 @@
+>>>application_updates.schema.yml
+---
+name: "application_updates"
+schema_version: "1"
+partial_schema: false
+columns:
+- name: "loan_application_id"
+  type: "BIGINT"
+  tests:
+  - "not_null"
+- name: "status"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "message"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "event_time"
+  type: "TIMESTAMP"
+  tests:
+  - "not_null"
+
+>>>application_updates.table.json
+{
+  "flink" : {
+    "format" : "flexible-json",
+    "path" : "/data/application_updates.jsonl",
+    "source.monitor-interval" : 1,
+    "connector" : "filesystem"
+  },
+  "metadata" : {
+    "_ingest_time" : {
+      "attribute" : "proctime()"
+    },
+    "_uuid" : {
+      "attribute" : "secure.Uuid()"
+    }
+  },
+  "version" : 1,
+  "table" : {
+    "type" : "source",
+    "primary-key" : "_uuid",
+    "timestamp" : "_ingest_time"
+  }
+}

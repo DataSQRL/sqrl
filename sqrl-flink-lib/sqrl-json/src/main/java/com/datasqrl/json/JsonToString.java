@@ -8,7 +8,7 @@ public class JsonToString extends ScalarFunction {
     if (json == null) {
       return null;
     }
-    return json.getJson();
+    return json.getJson().toString();
   }
 
 }

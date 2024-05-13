@@ -1,7 +1,0 @@
-IMPORT ecommerce-data.Orders TIMESTAMP _ingest_time;
-CountStream0 := STREAM ON ADD AS SELECT customerid, count(1) AS num FROM orders GROUP BY customerid;
-CustomerCount := SELECT o.customerid, count(1) as quantity FROM Orders o GROUP BY o.customerid;
-CountStream1 := STREAM ON ADD AS SELECT customerid, quantity FROM CustomerCount WHERE quantity >= 1;
-CountStream2 := STREAM ON ADD AS SELECT customerid, quantity FROM CustomerCount WHERE quantity >= 2;
-UpdateStream0 := STREAM ON UPDATE AS SELECT customerid, count(1) AS num FROM orders GROUP BY customerid;
-UpdateStream1 := STREAM ON UPDATE AS SELECT customerid, quantity FROM CustomerCount WHERE quantity >= 1;

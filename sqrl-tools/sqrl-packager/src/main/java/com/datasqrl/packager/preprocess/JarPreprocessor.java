@@ -23,7 +23,6 @@ import org.apache.flink.table.functions.AggregateFunction;
 import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.table.functions.UserDefinedFunction;
 
-@AutoService(Preprocessor.class)
 /*
  * Reads a jar and creates sqrl manifest entries in the build directory
  */

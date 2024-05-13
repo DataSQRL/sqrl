@@ -23,7 +23,7 @@ public class CreateIndexDDL implements SqlDDLStatement {
 
 
   @Override
-  public String toSql() {
+  public String getSql() {
     String indexType, columnExpression;
     switch (type) {
       case TEXT:
@@ -59,4 +59,5 @@ public class CreateIndexDDL implements SqlDDLStatement {
         columnExpression);
     return sql;
   }
+
 }

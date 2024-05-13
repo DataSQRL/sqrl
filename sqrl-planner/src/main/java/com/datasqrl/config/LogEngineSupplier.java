@@ -1,6 +1,6 @@
 package com.datasqrl.config;
 
-import com.datasqrl.engine.ExecutionEngine.Type;
+import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.engine.log.LogEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.google.inject.Inject;

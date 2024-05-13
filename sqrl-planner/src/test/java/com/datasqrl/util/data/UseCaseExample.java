@@ -1,8 +1,5 @@
 package com.datasqrl.util.data;
 
-import com.datasqrl.io.impl.file.FileDataSystemConfig;
-import com.datasqrl.io.impl.file.FileDataSystemFactory;
-import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.util.TestDataset;
 import com.datasqrl.util.TestGraphQLSchema;
 import com.datasqrl.util.TestScript;
@@ -10,13 +7,14 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
+import lombok.SneakyThrows;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import lombok.SneakyThrows;
 
 public class UseCaseExample implements TestDataset {
 
@@ -93,18 +91,6 @@ public class UseCaseExample implements TestDataset {
   @Override
   public String toString() {
     return name;
-  }
-
-  @Override
-  @SneakyThrows
-  public TableConfig getDiscoveryConfig() {
-//    String baseUrl = "https://github.com/DataSQRL/sqrl/raw/651b944d4597865cf020c8fb8b73aca18aa1c3ca/sqrl-examples/quickstart/data/%s";
-    List<String> urls;
-    try (Stream<Path> fileStream = Files.list(getDataDirectory())) {
-      urls = fileStream.filter(Files::isRegularFile).
-          map(Path::toString).collect(Collectors.toList());
-    }
-    return FileDataSystemFactory.getFileDiscoveryConfig(getName(), FileDataSystemConfig.builder().fileURIs(urls).build()).build();
   }
 
   public List<TestScript> getScripts() {

@@ -32,7 +32,6 @@ public class ServerConfig {
   HttpServerOptions httpServerOptions;
   @Nullable
   PgConnectOptions pgConnectOptions;
-  JDBCConnectOptions jdbcConnectOptions;
   PoolOptions poolOptions;
   CorsHandlerOptions corsHandlerOptions;
   ApolloWSOptions apolloWSOptions;

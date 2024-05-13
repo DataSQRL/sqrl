@@ -1,7 +1,0 @@
-IMPORT time.*;
-IMPORT ecommerce-data.Orders;
-IMPORT ecommerce-data.Customer TIMESTAMP epochToTimestamp(lastUpdated) AS updateTime;
-Customer := DISTINCT Customer ON customerid ORDER BY updateTime DESC;
-Orders.total := SELECT SUM(e.quantity * e.unit_price - e.discount) as price, COUNT(e.quantity) as num, SUM(e.discount) as discount FROM @.entries e;
-OrdersInline := SELECT o.id, o.customerid, o.time, t.price, t.num FROM Orders o JOIN o.total t;
-Customer.orders_by_hour := SELECT endOfHour(o.time) as hour, SUM(o.price) as total_price, SUM(o.num) as total_num FROM @ JOIN OrdersInline o ON o.customerid = @.customerid GROUP BY hour;

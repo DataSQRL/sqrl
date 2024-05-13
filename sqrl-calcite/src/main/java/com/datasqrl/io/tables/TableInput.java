@@ -5,9 +5,11 @@ package com.datasqrl.io.tables;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.io.formats.FormatFactoryOld;
-import java.util.Optional;
+
+import com.datasqrl.config.TableConfig;
 import lombok.Getter;
+
+import java.util.Optional;
 
 @Getter
 public class TableInput extends AbstractExternalTable {
@@ -16,11 +18,6 @@ public class TableInput extends AbstractExternalTable {
   public TableInput(TableConfig configuration, NamePath path,
                     Name name, Optional<TableSchema> tableSchema) {
     super(configuration, path, name, tableSchema);
-  }
-
-  public FormatFactoryOld.Parser getParser() {
-    FormatFactoryOld format = configuration.getFormat().get();
-    return format.getParser(configuration.getFormatConfig());
   }
 
 }
