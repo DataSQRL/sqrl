@@ -85,6 +85,7 @@
         <version>1.5</version>
         <executions>
           <execution>
+            <phase>deploy</phase>
             <id>sign-artifacts</id>
             <goals>
               <goal>sign</goal>
