@@ -35,14 +35,14 @@ dependencies {
     implementation "org.apache.flink:flink-avro:$flinkVersion"
     implementation "org.apache.flink:flink-avro-confluent-registry:$flinkVersion"
 
-    implementation "run.sqrl:sqrl-lib-common:$sqrlVersion"
-    implementation "run.sqrl:sqrl-json:$sqrlVersion"
-    implementation "run.sqrl:sqrl-secure:$sqrlVersion"
-    implementation "run.sqrl:sqrl-time:$sqrlVersion"
-    implementation "run.sqrl:sqrl-text:$sqrlVersion"
-    implementation "run.sqrl:sqrl-flexible-json:$sqrlVersion"
-    implementation "run.sqrl:sqrl-vector:$sqrlVersion"
-    implementation "run.sqrl:sqrl-jdbc-1.18:$sqrlVersion"
+    implementation "com.datasqrl:sqrl-lib-common:$sqrlVersion"
+    implementation "com.datasqrl:sqrl-json:$sqrlVersion"
+    implementation "com.datasqrl:sqrl-secure:$sqrlVersion"
+    implementation "com.datasqrl:sqrl-time:$sqrlVersion"
+    implementation "com.datasqrl:sqrl-text:$sqrlVersion"
+    implementation "com.datasqrl:sqrl-flexible-json:$sqrlVersion"
+    implementation "com.datasqrl:sqrl-vector:$sqrlVersion"
+    implementation "com.datasqrl:sqrl-jdbc-1.18:$sqrlVersion"
 
     // Log4j 2 dependencies
     implementation 'org.apache.logging.log4j:log4j-core:2.17.1'

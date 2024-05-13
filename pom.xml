@@ -1,7 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>run.sqrl</groupId>
+  <groupId>com.datasqrl</groupId>
   <artifactId>sqrl-root</artifactId>
   <packaging>pom</packaging>
   <version>0.5.0-RC3-SNAPSHOT</version>
@@ -112,29 +112,29 @@
     <dependencies>
       <!-- SQRL deps, please keep this in order -->
       <dependency>
-        <groupId>run.sqrl</groupId>
+        <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-base</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>run.sqrl</groupId>
+        <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-lib-common</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>run.sqrl</groupId>
+        <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-name</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>run.sqrl</groupId>
+        <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-errors</artifactId>
         <version>${project.version}</version>
       </dependency>
 
       <!-- examples-->
       <dependency>
-        <groupId>run.sqrl</groupId>
+        <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-examples</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -142,83 +142,83 @@
 
       <!-- planner -->
       <dependency>
-        <groupId>run.sqrl</groupId>
+        <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-calcite</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>run.sqrl</groupId>
+        <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-planner</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>run.sqrl</groupId>
+        <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-config</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>run.sqrl</groupId>
+        <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-json</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>run.sqrl</groupId>
+        <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-secure</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>run.sqrl</groupId>
+        <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-text</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>run.sqrl</groupId>
+        <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-time</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>run.sqrl</groupId>
+        <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-vector</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>run.sqrl</groupId>
+        <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-flexible-json</artifactId>
         <version>${project.version}</version>
       </dependency>
       <!-- tests -->
       <dependency>
-        <groupId>run.sqrl</groupId>
+        <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-integration-tests</artifactId>
         <version>${project.version}</version>
       </dependency>
       <!-- tools -->
       <dependency>
-        <groupId>run.sqrl</groupId>
+        <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-cli</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>run.sqrl</groupId>
+        <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-discovery</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>run.sqrl</groupId>
+        <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-packager</artifactId>
         <version>${project.version}</version>
       </dependency>
 
       <!-- sqrl test jars-->
       <dependency>
-        <groupId>run.sqrl</groupId>
+        <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-calcite</artifactId>
         <type>test-jar</type>
         <scope>test</scope>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>run.sqrl</groupId>
+        <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-cli</artifactId>
         <type>test-jar</type>
         <scope>test</scope>
@@ -226,7 +226,7 @@
       </dependency>
 
       <dependency>
-        <groupId>run.sqrl</groupId>
+        <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-planner</artifactId>
         <type>test-jar</type>
         <scope>test</scope>

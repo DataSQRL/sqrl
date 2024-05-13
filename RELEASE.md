@@ -28,7 +28,7 @@ mvn deploy
 
 (https://central.sonatype.com/publishing)[SonaType]
 
-Log in as `dhenneberger` (for run.sqrl) an publish the deployment
+Log in as `dhenneberger` (for com.datasqrl) an publish the deployment
 
 
 Step 3: Go to github and go to 'Tags'. Create a new release on the newly created tag.

@@ -1,6 +1,6 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
-    <groupId>run.sqrl</groupId>
+    <groupId>com.datasqrl</groupId>
     <artifactId>sqrl-tools</artifactId>
     <version>0.5.0-RC3-SNAPSHOT</version>
   </parent>
@@ -16,23 +16,23 @@
 
   <dependencies>
     <dependency>
-      <groupId>run.sqrl</groupId>
+      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-base</artifactId>
     </dependency>
     <dependency>
-      <groupId>run.sqrl</groupId>
+      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-calcite</artifactId>
     </dependency>
     <dependency>
-      <groupId>run.sqrl</groupId>
+      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-packager</artifactId>
     </dependency>
     <dependency>
-      <groupId>run.sqrl</groupId>
+      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-planner</artifactId>
     </dependency>
     <dependency>
-      <groupId>run.sqrl</groupId>
+      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-discovery</artifactId>
     </dependency>
 
@@ -69,13 +69,13 @@
     </dependency>
     <dependency>
       <artifactId>sqrl-calcite</artifactId>
-      <groupId>run.sqrl</groupId>
+      <groupId>com.datasqrl</groupId>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
     <dependency>
       <artifactId>sqrl-planner</artifactId>
-      <groupId>run.sqrl</groupId>
+      <groupId>com.datasqrl</groupId>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
