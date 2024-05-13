@@ -111,40 +111,6 @@
       <scope>test</scope>
     </dependency>
 
-    <!-- Kafka tests: todo migrate -->
-    <dependency>
-      <groupId>org.apache.kafka</groupId>
-      <artifactId>kafka-clients</artifactId>
-      <classifier>test</classifier>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.kafka</groupId>
-      <artifactId>kafka_${scala.version}</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.kafka</groupId>
-      <artifactId>kafka_${scala.version}</artifactId>
-      <scope>test</scope>
-      <classifier>test</classifier>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.kafka</groupId>
-      <artifactId>kafka-streams</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.kafka</groupId>
-      <artifactId>kafka-streams</artifactId>
-      <scope>test</scope>
-      <classifier>test</classifier>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.kafka</groupId>
-      <artifactId>kafka-streams-test-utils</artifactId>
-      <scope>test</scope>
-    </dependency>
 
     <dependency>
       <groupId>com.datasqrl</groupId>
@@ -178,7 +144,6 @@
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-server-vertx</artifactId>
-      <version>0.5.0-RC3-SNAPSHOT</version>
       <scope>compile</scope>
     </dependency>
     <dependency>

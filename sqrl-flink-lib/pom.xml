@@ -32,6 +32,30 @@
     <module>sqrl-errors</module>
   </modules>
 
+  <description>Parent pom</description>
+
+  <url>https://www.datasqrl.com/</url>
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <name>Daniel Henneberger</name>
+      <email>daniel@datasqrl.com</email>
+      <url>https://github.com/henneberger</url>
+    </developer>
+  </developers>
+  <scm>
+    <connection>scm:git:https://github.com/DataSQRL/sqrl.git</connection>
+    <url>https://github.com/DataSQRL/sqrl</url>
+    <developerConnection>scm:git:https://github.com/DataSQRL/sqrl.git</developerConnection>
+    <tag>v0.5.0-RC3</tag>
+  </scm>
+
   <dependencies>
     <dependency>
       <groupId>org.projectlombok</groupId>
@@ -62,7 +86,6 @@
         <executions>
           <execution>
             <id>sign-artifacts</id>
-            <phase>deploy</phase>
             <goals>
               <goal>sign</goal>
             </goals>
@@ -71,12 +94,21 @@
       </plugin>
 
       <plugin>
+        <groupId>org.sonatype.central</groupId>
+        <artifactId>central-publishing-maven-plugin</artifactId>
+        <version>0.4.0</version>
+        <extensions>true</extensions>
+        <configuration>
+          <publishingServerId>central</publishingServerId>
+          <tokenAuth>true</tokenAuth>
+        </configuration>
+      </plugin>
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
         <version>2.2.1</version>
         <executions>
           <execution>
-            <phase>deploy</phase>
             <id>attach-sources</id>
             <goals>
               <goal>jar-no-fork</goal>
