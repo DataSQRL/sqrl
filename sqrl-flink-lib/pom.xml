@@ -134,36 +134,92 @@
           <failOnError>false</failOnError>
         </configuration>
       </plugin>
+<!--      <plugin>-->
+<!--        <groupId>org.apache.maven.plugins</groupId>-->
+<!--        <artifactId>maven-shade-plugin</artifactId>-->
+<!--        <version>3.2.4</version>-->
+<!--        <configuration>-->
+<!--          <createDependencyReducedPom>false</createDependencyReducedPom>-->
+<!--        </configuration>-->
+<!--        <executions>-->
+<!--          <execution>-->
+<!--            <phase>package</phase>-->
+<!--            <goals>-->
+<!--              <goal>shade</goal>-->
+<!--            </goals>-->
+<!--            <configuration>-->
+<!--              <shadedArtifactAttached>true</shadedArtifactAttached>-->
+<!--              <minimizeJar>false</minimizeJar>-->
+<!--              <filters>-->
+<!--                <filter>-->
+<!--                  <artifact>*:*</artifact>-->
+<!--                  <excludes>-->
+<!--                    <exclude>META-INF/*.SF</exclude>-->
+<!--                    <exclude>META-INF/*.DSA</exclude>-->
+<!--                    <exclude>META-INF/*.RSA</exclude>-->
+<!--                  </excludes>-->
+<!--                </filter>-->
+<!--              </filters>-->
+<!--            </configuration>-->
+<!--          </execution>-->
+<!--        </executions>-->
+<!--      </plugin>-->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <version>3.2.4</version>
-        <configuration>
-          <createDependencyReducedPom>false</createDependencyReducedPom>
-        </configuration>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>3.6.3</version>
         <executions>
           <execution>
-            <phase>package</phase>
+            <id>attach-javadocs</id>
             <goals>
-              <goal>shade</goal>
+              <goal>jar</goal>
             </goals>
+            <phase>package</phase>
             <configuration>
-              <shadedArtifactAttached>true</shadedArtifactAttached>
-              <minimizeJar>false</minimizeJar>
-              <filters>
-                <filter>
-                  <artifact>*:*</artifact>
-                  <excludes>
-                    <exclude>META-INF/*.SF</exclude>
-                    <exclude>META-INF/*.DSA</exclude>
-                    <exclude>META-INF/*.RSA</exclude>
-                  </excludes>
-                </filter>
-              </filters>
+              <show>public</show>
+              <failOnError>false</failOnError>
+              <detectOfflineLinks>false</detectOfflineLinks>
+              <doclint>all,-missing</doclint>
+              <nohelp>true</nohelp>
+              <excludePackageNames>*.internal.*,testutil,demo</excludePackageNames>
+              <quiet>true</quiet>
             </configuration>
           </execution>
         </executions>
+        <configuration>
+          <failOnError>false</failOnError>
+        </configuration>
       </plugin>
     </plugins>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>3.6.3</version>
+          <executions>
+            <execution>
+              <id>attach-javadocs</id>
+              <goals>
+                <goal>jar</goal>
+              </goals>
+              <phase>package</phase>
+              <configuration>
+                <show>public</show>
+                <failOnError>false</failOnError>
+                <detectOfflineLinks>false</detectOfflineLinks>
+                <doclint>all,-missing</doclint>
+                <nohelp>true</nohelp>
+                <excludePackageNames>*.internal.*,testutil,demo</excludePackageNames>
+                <quiet>true</quiet>
+              </configuration>
+            </execution>
+          </executions>
+          <configuration>
+            <failOnError>false</failOnError>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
   </build>
 </project>
