@@ -122,7 +122,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
 
   @Override
   protected RelNode setRelHolder(AnnotatedLP relHolder) {
-    if (!exec.supportsFeature(EngineFeature.PULLUP_OPTIMIZATION)) {
+    if (config.inlinePullups()) {
       //Inline all pullups
       RelBuilder relB = makeRelBuilder();
       relHolder = relHolder.inlineNowFilter(relB, exec).inlineTopN(relB, exec);

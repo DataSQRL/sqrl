@@ -28,6 +28,11 @@ public final class IdealExecutionStage implements ExecutionStage {
   }
 
   @Override
+  public boolean doPullupOptimization() {
+    return true;
+  }
+
+  @Override
   public ExecutionEngine getEngine() {
     throw new UnsupportedOperationException();
   }

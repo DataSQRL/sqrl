@@ -31,4 +31,8 @@ public class SqrlConverterConfig {
     return toBuilder().stage(stage).build();
   }
 
+  public boolean inlinePullups() {
+    return !stage.doPullupOptimization();
+  }
+
 }

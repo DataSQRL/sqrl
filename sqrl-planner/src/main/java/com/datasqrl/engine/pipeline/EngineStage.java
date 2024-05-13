@@ -13,11 +13,8 @@ public class EngineStage implements ExecutionStage {
 
   String name;
   ExecutionEngine engine;
+  boolean pullupOptimization;
 
-  public EngineStage(String name, ExecutionEngine engine) {
-    this.name = name;
-    this.engine = engine;
-  }
 
   @Override
   public boolean supportsFeature(EngineFeature capability) {
@@ -27,6 +24,15 @@ public class EngineStage implements ExecutionStage {
   @Override
   public boolean supportsFunction(FunctionDefinition function) {
     return engine.supports(function);
+  }
+
+
+  /**
+   * Whether to pullup expensive stateful operators to be executed in the database
+   * @return
+   */
+  public boolean doPullupOptimization() {
+    return pullupOptimization;
   }
 
 }

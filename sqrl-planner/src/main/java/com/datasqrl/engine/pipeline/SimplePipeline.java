@@ -41,20 +41,22 @@ public class SimplePipeline implements ExecutionPipeline {
   }
 
   public static SimplePipeline of(Map<String, ExecutionEngine> engines, ErrorCollector errors) {
+    //The ordering of stages is critical for simple pipeline
     List<ExecutionStage> stages = new ArrayList<>();
-    getStage(Type.LOG, engines).ifPresent(stages::add);
-    stages.add(getStage(Type.STREAMS, engines).orElseThrow(
+    getStage(Type.LOG, engines, false).ifPresent(stages::add);
+    Optional<EngineStage> db = getStage(Type.DATABASE, engines, false);
+    stages.add(getStage(Type.STREAMS, engines, db.isPresent()).orElseThrow(
         () -> errors.exception("Need to configure a stream engine")));
-    getStage(Type.DATABASE, engines).ifPresent(stages::add);
-    getStage(Type.SERVER, engines).ifPresent(stages::add);
+    db.ifPresent(stages::add);
+    getStage(Type.SERVER, engines, false).ifPresent(stages::add);
     return new SimplePipeline(stages);
   }
 
   private static Optional<EngineStage> getStage(Type engineType,
-      Map<String, ExecutionEngine> engines) {
+      Map<String, ExecutionEngine> engines, boolean pullupOptimization) {
     return StreamUtil.getOnlyElement(engines.entrySet().stream()
         .filter(e -> e.getValue().getType()==engineType)
-        .map(e -> new EngineStage(e.getKey(),e.getValue())));
+        .map(e -> new EngineStage(e.getKey(), e.getValue(), pullupOptimization)));
 
   }
 
