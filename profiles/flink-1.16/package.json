@@ -1,0 +1,45 @@
+{
+  "version": "1",
+  "enabled-engines": ["vertx", "postgres", "kafka", "flink"],
+  "engines" : {
+    "flink" : {
+      "connectors": {
+        "postgres": {
+          "connector": "jdbc",
+          "password": "${JDBC_PASSWORD}",
+          "driver": "org.postgresql.Driver",
+          "username": "${JDBC_USERNAME}",
+          "url": "${JDBC_URL}",
+          "table-name": "${sqrl:table}"
+        },
+        "kafka": {
+          "connector" : "kafka",
+          "format" : "flexible-json",
+          "properties.bootstrap.servers": "${PROPERTIES_BOOTSTRAP_SERVERS}",
+          "properties.group.id": "groupid",
+          "scan.startup.mode" : "earliest-offset",
+          "properties.auto.offset.reset" : "earliest",
+          "topic" : "${sqrl:topic}"
+        },
+        "localfile": {
+          "connector" : "filesystem",
+          "format" : "${sqrl:format}",
+          "path" : "${sqrl:filepath}",
+          "source.monitor-interval" : 1
+        }
+      }
+    }
+  },
+  "test-runner": {
+    "delay-sec": 30
+  },
+  "package": {
+    "name": "datasqrl.profiles.flink-1-16",
+    "version": "0.0.1",
+    "variant": "dev",
+    "description": "Flink 1.16 profile",
+    "homepage": "",
+    "documentation": "",
+    "keywords": "profile"
+  }
+}

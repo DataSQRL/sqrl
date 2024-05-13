@@ -2,8 +2,8 @@
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>sqrl-flink-lib</artifactId>
-  <groupId>run.sqrl</groupId>
-  <version>0.5.0-RC2-SNAPSHOT</version>
+  <groupId>com.datasqrl</groupId>
+  <version>0.5.0-RC3-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <properties>
@@ -18,6 +18,8 @@
   <modules>
     <module>sqrl-h2-1.16</module>
     <module>sqrl-jdbc-1.16</module>
+    <module>sqrl-jdbc-1.17</module>
+    <module>sqrl-jdbc-1.18</module>
     <module>sqrl-json</module>
     <module>sqrl-lib-common</module>
     <module>sqrl-secure</module>
@@ -29,6 +31,30 @@
     <module>sqrl-name</module>
     <module>sqrl-errors</module>
   </modules>
+
+  <description>Parent pom</description>
+
+  <url>https://www.datasqrl.com/</url>
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <name>Daniel Henneberger</name>
+      <email>daniel@datasqrl.com</email>
+      <url>https://github.com/henneberger</url>
+    </developer>
+  </developers>
+  <scm>
+    <connection>scm:git:https://github.com/DataSQRL/sqrl.git</connection>
+    <url>https://github.com/DataSQRL/sqrl</url>
+    <developerConnection>scm:git:https://github.com/DataSQRL/sqrl.git</developerConnection>
+    <tag>v0.5.0-RC3</tag>
+  </scm>
 
   <dependencies>
     <dependency>
@@ -59,8 +85,8 @@
         <version>1.5</version>
         <executions>
           <execution>
-            <id>sign-artifacts</id>
             <phase>deploy</phase>
+            <id>sign-artifacts</id>
             <goals>
               <goal>sign</goal>
             </goals>
@@ -69,12 +95,21 @@
       </plugin>
 
       <plugin>
+        <groupId>org.sonatype.central</groupId>
+        <artifactId>central-publishing-maven-plugin</artifactId>
+        <version>0.4.0</version>
+        <extensions>true</extensions>
+        <configuration>
+          <publishingServerId>central</publishingServerId>
+          <tokenAuth>true</tokenAuth>
+        </configuration>
+      </plugin>
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
         <version>2.2.1</version>
         <executions>
           <execution>
-            <phase>deploy</phase>
             <id>attach-sources</id>
             <goals>
               <goal>jar-no-fork</goal>
@@ -99,36 +134,92 @@
           <failOnError>false</failOnError>
         </configuration>
       </plugin>
+<!--      <plugin>-->
+<!--        <groupId>org.apache.maven.plugins</groupId>-->
+<!--        <artifactId>maven-shade-plugin</artifactId>-->
+<!--        <version>3.2.4</version>-->
+<!--        <configuration>-->
+<!--          <createDependencyReducedPom>false</createDependencyReducedPom>-->
+<!--        </configuration>-->
+<!--        <executions>-->
+<!--          <execution>-->
+<!--            <phase>package</phase>-->
+<!--            <goals>-->
+<!--              <goal>shade</goal>-->
+<!--            </goals>-->
+<!--            <configuration>-->
+<!--              <shadedArtifactAttached>true</shadedArtifactAttached>-->
+<!--              <minimizeJar>false</minimizeJar>-->
+<!--              <filters>-->
+<!--                <filter>-->
+<!--                  <artifact>*:*</artifact>-->
+<!--                  <excludes>-->
+<!--                    <exclude>META-INF/*.SF</exclude>-->
+<!--                    <exclude>META-INF/*.DSA</exclude>-->
+<!--                    <exclude>META-INF/*.RSA</exclude>-->
+<!--                  </excludes>-->
+<!--                </filter>-->
+<!--              </filters>-->
+<!--            </configuration>-->
+<!--          </execution>-->
+<!--        </executions>-->
+<!--      </plugin>-->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <version>3.2.4</version>
-        <configuration>
-          <createDependencyReducedPom>false</createDependencyReducedPom>
-        </configuration>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>3.6.3</version>
         <executions>
           <execution>
-            <phase>package</phase>
+            <id>attach-javadocs</id>
             <goals>
-              <goal>shade</goal>
+              <goal>jar</goal>
             </goals>
+            <phase>package</phase>
             <configuration>
-              <shadedArtifactAttached>true</shadedArtifactAttached>
-              <minimizeJar>false</minimizeJar>
-              <filters>
-                <filter>
-                  <artifact>*:*</artifact>
-                  <excludes>
-                    <exclude>META-INF/*.SF</exclude>
-                    <exclude>META-INF/*.DSA</exclude>
-                    <exclude>META-INF/*.RSA</exclude>
-                  </excludes>
-                </filter>
-              </filters>
+              <show>public</show>
+              <failOnError>false</failOnError>
+              <detectOfflineLinks>false</detectOfflineLinks>
+              <doclint>all,-missing</doclint>
+              <nohelp>true</nohelp>
+              <excludePackageNames>*.internal.*,testutil,demo</excludePackageNames>
+              <quiet>true</quiet>
             </configuration>
           </execution>
         </executions>
+        <configuration>
+          <failOnError>false</failOnError>
+        </configuration>
       </plugin>
     </plugins>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>3.6.3</version>
+          <executions>
+            <execution>
+              <id>attach-javadocs</id>
+              <goals>
+                <goal>jar</goal>
+              </goals>
+              <phase>package</phase>
+              <configuration>
+                <show>public</show>
+                <failOnError>false</failOnError>
+                <detectOfflineLinks>false</detectOfflineLinks>
+                <doclint>all,-missing</doclint>
+                <nohelp>true</nohelp>
+                <excludePackageNames>*.internal.*,testutil,demo</excludePackageNames>
+                <quiet>true</quiet>
+              </configuration>
+            </execution>
+          </executions>
+          <configuration>
+            <failOnError>false</failOnError>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
   </build>
 </project>

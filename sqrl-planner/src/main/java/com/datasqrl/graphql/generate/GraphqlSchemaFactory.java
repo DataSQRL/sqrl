@@ -16,11 +16,11 @@ import static graphql.schema.GraphQLNonNull.nonNull;
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.config.CompilerConfiguration;
-import com.datasqrl.config.SqrlConfig;
+
+import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.function.SqrlFunctionParameter;
 import com.datasqrl.graphql.server.CustomScalars;
-import com.datasqrl.plan.table.ScriptRelationalTable;
+import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.NestedRelationship;
 import com.datasqrl.schema.Relationship.JoinType;
@@ -55,7 +55,6 @@ import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.util.ImmutableBitSet;
 import org.apache.commons.collections.ListUtils;
-import scala.annotation.meta.field;
 
 /**
  * Creates a default graphql schema based on the SQRL schema
@@ -68,15 +67,14 @@ public class GraphqlSchemaFactory {
   private final Set<String> usedNames = new HashSet<>();
   private final SqrlSchema schema;
   private final boolean addArguments;
-  // Root path signifying the 'Query' type.
+ // Root path signifying the 'Query' type.
   private Map<NamePath, List<SqrlTableMacro>> objectPathToTables;
   // The path from root
   private Map<NamePath, List<SqrlTableMacro>> fieldPathToTables;
 
   @Inject
-  public GraphqlSchemaFactory(SqrlSchema schema, SqrlConfig config) {
-    this(schema, CompilerConfiguration.fromConfig(config)
-        .isAddArguments());
+  public GraphqlSchemaFactory(SqrlSchema schema, CompilerConfig config) {
+    this(schema, config.isAddArguments());
   }
 
   public GraphqlSchemaFactory(SqrlSchema schema, boolean addArguments) {
@@ -84,7 +82,7 @@ public class GraphqlSchemaFactory {
     this.addArguments = addArguments;
   }
 
-  public GraphQLSchema generate() {
+  public GraphQLSchema generate(ExecutionGoal goal) {
     this.objectPathToTables = schema.getTableFunctions().stream()
         .collect(Collectors.groupingBy(e -> e.getFullPath().popLast(),
             LinkedHashMap::new, Collectors.toList()));
@@ -94,33 +92,51 @@ public class GraphqlSchemaFactory {
     for (Map.Entry<NamePath, List<SqrlTableMacro>> path : fieldPathToTables.entrySet()) {
       if (path.getKey().getLast().isHidden()) continue;
 
+      if (goal == ExecutionGoal.TEST) {
+        if (!path.getValue().get(0).isTest()) continue;
+      } else {
+        if (path.getValue().get(0).isTest()) continue;
+      }
       Optional<GraphQLObjectType> graphQLObjectType = generateObject(path.getValue(),
           objectPathToTables.getOrDefault(path.getKey(), List.of()));
       graphQLObjectType.map(objectTypes::add);
     }
 
-    GraphQLObjectType queryType = createQueryType(objectPathToTables.get(NamePath.ROOT));
+    GraphQLObjectType queryType = createQueryType(goal, objectPathToTables.get(NamePath.ROOT));
 
     postProcess();
 
     if (queryFields.isEmpty()) {
-      throw new RuntimeException("No tables found to build schema");
+       return null;
     }
 
-    return GraphQLSchema.newSchema()
+    GraphQLSchema.Builder builder = GraphQLSchema.newSchema()
         .query(queryType)
-        .additionalTypes(new LinkedHashSet<>(objectTypes))
-        .additionalType(CustomScalars.DATETIME)
-        .build();
+        .additionalTypes(new LinkedHashSet<>(objectTypes));
+
+    //todo: hack because we can't merge scalars with graphql-java
+    if (goal != ExecutionGoal.TEST) {
+      builder
+        .additionalType(CustomScalars.DATETIME);
+    }
+
+    return builder.build();
   }
 
-  private GraphQLObjectType createQueryType(List<SqrlTableMacro> relationships) {
+  private GraphQLObjectType createQueryType(ExecutionGoal goal, List<SqrlTableMacro> relationships) {
 
     List<GraphQLFieldDefinition> fields = new ArrayList<>();
 
     for (SqrlTableMacro rel : relationships) {
       String name = rel.getAbsolutePath().getDisplay();
       if (name.startsWith(HIDDEN_PREFIX) || !isValidGraphQLName(name)) continue;
+
+      if (goal == ExecutionGoal.TEST) {
+        if (!rel.isTest()) continue;
+      } else {
+        if (rel.isTest()) continue;
+      }
+
       GraphQLFieldDefinition field = GraphQLFieldDefinition.newFieldDefinition()
           .name(rel.getAbsolutePath().getDisplay())
           .type(wrap(createTypeName(rel), rel.getMultiplicity()))

@@ -1,7 +1,7 @@
 package com.datasqrl.graphql.server;
 
-import com.datasqrl.graphql.server.Model.JdbcQuery;
-import com.datasqrl.graphql.server.Model.ResolvedQuery;
+import com.datasqrl.graphql.server.RootGraphqlModel.JdbcQuery;
+import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
 
 public interface JdbcClient {
   ResolvedQuery prepareQuery(JdbcQuery pgQuery, Context context);

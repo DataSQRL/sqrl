@@ -14,6 +14,7 @@ import java.util.Optional;
 import lombok.Value;
 import org.apache.calcite.sql.SqlHint;
 import org.apache.calcite.sql.SqlNodeList;
+import org.apache.commons.lang3.tuple.Pair;
 
 public interface OptimizerHint {
 
@@ -30,7 +31,8 @@ public interface OptimizerHint {
     }
 
     public ExecutionStage getStage(ExecutionPipeline pipeline, ErrorCollector errors) {
-      Optional<ExecutionStage> stage = pipeline.getStage(stageName);
+      Optional<ExecutionStage> stage = pipeline.getStage(stageName)
+          .or(()->pipeline.getStageByType(stageName));
       errors.checkFatal(stage.isPresent(),"Could not find execution stage [%s] specified in optimizer hint", stageName);
       return stage.get();
     }
@@ -55,8 +57,9 @@ public interface OptimizerHint {
 
   }
 
-  static List<OptimizerHint> fromSqlHint(Optional<SqlNodeList> hints, ErrorCollector errors) {
+  static Pair<List<OptimizerHint>,List<SqlHint>> fromSqlHints(Optional<SqlNodeList> hints, ErrorCollector errors) {
     List<OptimizerHint> optHints = new ArrayList<>();
+    List<SqlHint> otherHints = new ArrayList<>();
     if (hints.isPresent()) {
       for (SqlHint hint : Iterables.filter(hints.get().getList(), SqlHint.class)) {
         String hintname = hint.getName().toLowerCase();
@@ -66,11 +69,11 @@ public interface OptimizerHint {
               "Expected a single option for [%s] hint but found: %s", Stage.HINT_NAME, options);
           optHints.add(new Stage(options.get(0).trim()));
         } else {
-          errors.fatal("Unrecognized hint: %s", hintname);
+          otherHints.add(hint);
         }
       }
     }
-    return optHints;
+    return Pair.of(optHints, otherHints);
   }
 
 

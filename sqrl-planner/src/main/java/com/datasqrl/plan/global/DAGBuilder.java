@@ -8,6 +8,7 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.plan.rules.ComputeCost;
 import com.datasqrl.plan.rules.ExecutionAnalysis;
 import com.datasqrl.plan.rules.SQRLConverter;
+import com.datasqrl.plan.rules.SQRLConverter.TablePlan;
 import com.datasqrl.plan.rules.SqrlConverterConfig;
 import com.datasqrl.plan.rules.SimpleCostModel;
 import com.datasqrl.plan.global.SqrlDAG.ExportNode;
@@ -83,7 +84,7 @@ public class DAGBuilder {
 
     //Try all stages to determine which one are viable
     Map<ExecutionStage, StageAnalysis> stageAnalysis = tryStages(stages, stage ->
-        sqrlConverter.convert(relnode, configBuilder.stage(stage).build(), errors).getRelNode());
+        TablePlan.of(sqrlConverter.convert(relnode, configBuilder.stage(stage).build(), errors)));
     SqrlNode node = nodeConstructor.apply(stageAnalysis);
     //Add all input nodes
     inputTables.stream().map(table -> getInputTable(table, dagInputs, table2Node)).forEach( input ->
@@ -116,15 +117,15 @@ public class DAGBuilder {
   }
 
   private Map<ExecutionStage, StageAnalysis> tryStages(List<ExecutionStage> stages,
-      Function<ExecutionStage, RelNode> planner) {
+      Function<ExecutionStage, SQRLConverter.TablePlan> planner) {
     Map<ExecutionStage, StageAnalysis> stageAnalysis = new LinkedHashMap<>();
     for (ExecutionStage stage : stages) {
       if (!stage.isCompute()) continue;
       StageAnalysis result;
       try {
-        RelNode relNode = planner.apply(stage);
-        ComputeCost cost = SimpleCostModel.of(stage.getEngine().getType(), relNode);
-        result = new Cost(stage, cost, true, relNode);
+        TablePlan plan = planner.apply(stage);
+        ComputeCost cost = SimpleCostModel.of(stage.getEngine().getType(), plan.getRelNode());
+        result = new Cost(stage, cost, true, plan.getRelNode());
       } catch (ExecutionAnalysis.CapabilityException ex) {
         result = StageAnalysis.of(ex);
       }

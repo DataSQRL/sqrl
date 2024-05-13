@@ -130,8 +130,20 @@ public class SnapshotTest {
         fail("Creating snapshots: " + "file://"+path.toFile().getAbsolutePath());
       } else {
         byte[] data = Files.readAllBytes(path);
-        String dataStr = new String(data);
-        assertEquals(dataStr, content, fileName + " " + "file://"+path.toFile().getAbsolutePath());
+        String expected = new String(data);
+        if (!expected.equals(content)) {
+          String[] expectedLines = expected.split("\n");
+          String[] contentLines = content.split("\n");
+          for (int i = 0; i < Math.min(expectedLines.length, contentLines.length); i++) {
+            if (!expectedLines[i].equals(contentLines[i])) {
+              log.error("Error at line {}: ",i);
+              log.error("expected: " + expectedLines[i]);
+              log.error("found   : " + contentLines[i]);
+              break;
+            }
+          }
+          assertEquals(expected, content, "Mismatched snapshots: " + fileName + " " + "file://"+path.toFile().getAbsolutePath());
+        }
       }
     }
 

@@ -19,9 +19,9 @@
 //import com.datasqrl.graphql.config.ServerConfig;
 //import com.datasqrl.graphql.inference.AbstractSchemaInferenceModelTest;
 //import com.datasqrl.graphql.inference.GraphqlModelGenerator;
-//import com.datasqrl.graphql.server.Model.Coords;
-//import com.datasqrl.graphql.server.Model.RootGraphqlModel;
-//import com.datasqrl.graphql.server.Model.StringSchema;
+//import com.datasqrl.graphql.server.RootGraphqlModel.Coords;
+//import com.datasqrl.graphql.server.RootGraphqlModel;
+//import com.datasqrl.graphql.server.RootGraphqlModel.StringSchema;
 //import com.datasqrl.plan.global.DAGAssembler;
 //import com.datasqrl.plan.global.DAGBuilder;
 //import com.datasqrl.plan.global.DAGPlanner;

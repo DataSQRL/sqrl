@@ -1,13 +1,13 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
     <artifactId>sqrl-root</artifactId>
-    <groupId>run.sqrl</groupId>
-    <version>0.5.0-RC2-SNAPSHOT</version>
+    <groupId>com.datasqrl</groupId>
+    <version>0.5.0-RC3-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>sqrl-calcite</artifactId>
-  <version>0.5.0-RC2-SNAPSHOT</version>
+  <version>0.5.0-RC3-SNAPSHOT</version>
 
   <!--
     README: Dependencies that are shared between planning and utility modules
@@ -15,7 +15,7 @@
   <dependencies>
     <!-- SQRL -->
     <dependency>
-      <groupId>run.sqrl</groupId>
+      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-base</artifactId>
     </dependency>
     <dependency>
@@ -57,16 +57,12 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>run.sqrl</groupId>
+      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-server-core</artifactId>
-      <version>0.5.0-RC2-SNAPSHOT</version>
-      <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>run.sqrl</groupId>
+      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-jdbc-1.16</artifactId>
-      <version>0.5.0-RC2-SNAPSHOT</version>
-      <scope>compile</scope>
     </dependency>
   </dependencies>
   <build>

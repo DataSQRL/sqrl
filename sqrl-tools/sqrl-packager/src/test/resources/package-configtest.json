@@ -10,7 +10,13 @@
   },
   "compiler":
   {
-    "maxApiArguments": 3
+    "addArguments": false,
+    "explain": {
+      "visual": true,
+      "text": false,
+      "extended": false,
+      "sorted": true
+    }
   },
   "engines": {
     "streams": {

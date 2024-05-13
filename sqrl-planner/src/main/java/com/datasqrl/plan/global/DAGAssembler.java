@@ -1,18 +1,18 @@
 package com.datasqrl.plan.global;
 
 import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.engine.ExecutionEngine.Type;
+import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIConnectorManager;
+import com.datasqrl.io.tables.TableType;
 import com.datasqrl.plan.RelStageRunner;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.datasqrl.plan.global.SqrlDAG.ExportNode;
 import com.datasqrl.plan.hints.TimestampHint;
-import com.datasqrl.plan.local.generate.Debugger;
 import com.datasqrl.plan.local.generate.QueryTableFunction;
 import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.plan.rules.AnnotatedLP;
@@ -20,24 +20,12 @@ import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.rules.SqrlConverterConfig;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.plan.table.PhysicalTable;
-import com.datasqrl.io.tables.TableType;
 import com.datasqrl.util.CalciteUtil;
-import com.datasqrl.util.SqrlRexUtil;
+import com.datasqrl.calcite.SqrlRexUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
 import com.google.inject.Inject;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
@@ -46,7 +34,11 @@ import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.hint.Hintable;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.flink.table.functions.UserDefinedFunction;
+
+import java.net.URL;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.datasqrl.error.ErrorCode.PRIMARY_KEY_NULLABLE;
 import static com.datasqrl.plan.OptimizationStage.*;
@@ -56,23 +48,12 @@ public class DAGAssembler {
   private final SqrlFramework framework;
   private final SQRLConverter sqrlConverter;
   private final ExecutionPipeline pipeline;
-  private final Debugger debugger;
   private final ErrorCollector errors;
   private final APIConnectorManager apiManager;
 
   public PhysicalDAGPlan assemble(SqrlDAG dag, Set<URL> jars, Map<String, UserDefinedFunction> udfs) {
-    //Plan final version of all tables
-    dag.allNodesByClass(SqrlDAG.TableNode.class).forEach( tableNode -> {
-      ExecutionStage stage = tableNode.getChosenStage();
-      Preconditions.checkNotNull(stage);
-      PhysicalTable table = tableNode.getTable();
-      table.assignStage(stage); //this stage on the config below
-      SqrlConverterConfig config = table.getBaseConfig().build();
-      table.setPlannedRelNode(sqrlConverter.convert(table, config, errors));
-    });
-
     //We make the assumption that there is a single stream stage
-    ExecutionStage streamStage = pipeline.getStage(Type.STREAM).get();
+    ExecutionStage streamStage = pipeline.getStage(Type.STREAMS).get();
     List<PhysicalDAGPlan.WriteQuery> streamQueries = new ArrayList<>();
     //We make the assumption that there is a single (optional) server stage
     Optional<ExecutionStage> serverStage = pipeline.getStage(Type.SERVER);

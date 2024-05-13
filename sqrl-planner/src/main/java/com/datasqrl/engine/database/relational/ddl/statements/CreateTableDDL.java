@@ -16,7 +16,7 @@ public class CreateTableDDL implements SqlDDLStatement {
   List<String> primaryKeys;
 
   @Override
-  public String toSql() {
+  public String getSql() {
     String primaryKeyStr = "";
     if (!primaryKeys.isEmpty()) {
       primaryKeyStr = String.format(", PRIMARY KEY (%s)", String.join(",", primaryKeys));

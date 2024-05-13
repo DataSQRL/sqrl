@@ -32,3 +32,24 @@ To build the docker image for the DataSQRL command:
 ```bash
 docker build -t datasqrl/datasqrl-cmd .
 ```
+
+# To run int test:
+First, build the docker files:
+```
+docker build . -t datasqrl/sqrl-dependencies:0.5-RC2
+```
+
+Second, build the docker server image:
+```
+mvn package
+cd sqrl-server/sqrl-server-vertx
+docker build . -t datasqrl/sqrl-server:latest
+```
+If you want to skip the unit tests, add `-DskipTests=true`
+Go back to the root directory.
+
+Third, run the integration tests:
+```
+mvn verify
+```
+

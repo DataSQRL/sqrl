@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "flink" : {
+    "format" : "json",
+    "path" : "/mnt/build/data",
+    "connector" : "filesystem",
+    "source.path.regex-pattern" : "to be determined"
+  },
+  "table" : {
+    "type" : "source",
+    "primary-key" : ["groupId", "created"],
+    "timestamp" : "created",
+    "watermark-millis" : "1"
+  }
+}

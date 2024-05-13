@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "flink" : {
+    "format" : "json",
+    "path" : "/mnt/build/data",
+    "connector" : "filesystem"
+  },
+  "table" : {
+    "type" : "source",
+    "primary-key" : ["id", "placed"],
+    "timestamp" : "placedTimestamp",
+    "watermark-millis" : "1"
+  },
+  "metadata" : {
+    "placedTimestamp" : {
+      "attribute" : "time.epochMilliToTimestamp(placed)"
+    }
+  }
+}

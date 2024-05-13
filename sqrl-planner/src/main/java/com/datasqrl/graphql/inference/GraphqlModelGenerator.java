@@ -23,15 +23,15 @@ import com.datasqrl.engine.stream.flink.sql.rules.PushDownWatermarkHintRule.Push
 import com.datasqrl.engine.stream.flink.sql.rules.PushWatermarkHintToTableScanRule.PushWatermarkHintToTableScanConfig;
 import com.datasqrl.engine.stream.flink.sql.rules.ShapeBushyCorrelateJoinRule.ShapeBushyCorrelateJoinRuleConfig;
 import com.datasqrl.graphql.APIConnectorManager;
-import com.datasqrl.graphql.server.Model.Argument;
-import com.datasqrl.graphql.server.Model.ArgumentLookupCoords;
-import com.datasqrl.graphql.server.Model.ArgumentSet;
-import com.datasqrl.graphql.server.Model.Coords;
-import com.datasqrl.graphql.server.Model.FieldLookupCoords;
-import com.datasqrl.graphql.server.Model.JdbcQuery;
-import com.datasqrl.graphql.server.Model.MutationCoords;
-import com.datasqrl.graphql.server.Model.PagedJdbcQuery;
-import com.datasqrl.graphql.server.Model.SubscriptionCoords;
+import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
+import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentLookupCoords;
+import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentSet;
+import com.datasqrl.graphql.server.RootGraphqlModel.Coords;
+import com.datasqrl.graphql.server.RootGraphqlModel.FieldLookupCoords;
+import com.datasqrl.graphql.server.RootGraphqlModel.JdbcQuery;
+import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoords;
+import com.datasqrl.graphql.server.RootGraphqlModel.PagedJdbcQuery;
+import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoords;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.plan.queries.APIQuery;
@@ -97,10 +97,10 @@ public class GraphqlModelGenerator extends SchemaWalker {
       filters.put(input.getName(), field.getName());
     }
 
-    Map<String, String> vertxConfig = mapToVertxKafkaConfig(log.getSink().getConfiguration().getConnectorConfig().getConfig().toMap());
+    Map<String, String> vertxConfig = mapToVertxKafkaConfig(log.getSink().getConfiguration().getConnectorConfig().toMap());
 
     subscriptions.add(new SubscriptionCoords(fieldDefinition.getName(),
-        log.getSink().getName().getDisplay(), vertxConfig,
+        (String)log.getConnectorContext().getMap().get("topic"), vertxConfig,
         filters));
   }
 
@@ -121,7 +121,7 @@ public class GraphqlModelGenerator extends SchemaWalker {
     TableSource tableSink = apiManager.getMutationSource(source,
         Name.system(fieldDefinition.getName()));
 
-    Map<String, Object> map = tableSink.getConfiguration().getConnectorConfig().getConfig().toMap();
+    Map<String, Object> map = tableSink.getConfiguration().getConnectorConfig().toMap();
     Map<String, String> vertxConfig = new HashMap<>();
     vertxConfig.put(BOOTSTRAP_SERVERS_CONFIG, (String)map.get("properties.bootstrap.servers"));
     vertxConfig.put(GROUP_ID_CONFIG, (String)map.get("properties.group.id"));
@@ -153,14 +153,20 @@ public class GraphqlModelGenerator extends SchemaWalker {
   protected void visitQuery(ObjectTypeDefinition parentType, ObjectTypeDefinition toType,
       FieldDefinition field, NamePath path, Optional<RelDataType> parentRel,
       List<SqrlTableMacro> functions) {
-    ArgumentLookupCoords.ArgumentLookupCoordsBuilder coordsBuilder = ArgumentLookupCoords.builder()
-        .parentType(parentType.getName()).fieldName(field.getName());
 
-    List<Entry<IdentifiedQuery, QueryTemplate>> collect = databaseQueries.entrySet().stream()
+    List<Entry<IdentifiedQuery, QueryTemplate>> queries = databaseQueries.entrySet().stream()
         .filter(f -> ((APIQuery) f.getKey()).getNamePath().equals(path))
         .collect(Collectors.toList());
 
-    for (Entry<IdentifiedQuery, QueryTemplate> entry : collect) {
+    // No queries: use a property fetcher
+    if (queries.isEmpty()) {
+      return;
+    }
+
+    ArgumentLookupCoords.ArgumentLookupCoordsBuilder coordsBuilder = ArgumentLookupCoords.builder()
+        .parentType(parentType.getName()).fieldName(field.getName());
+
+    for (Entry<IdentifiedQuery, QueryTemplate> entry : queries) {
       JdbcQuery queryBase;
       APIQuery query = (APIQuery) entry.getKey();
 
@@ -180,11 +186,11 @@ public class GraphqlModelGenerator extends SchemaWalker {
       coordsBuilder.match(set);
     }
 
-    ArgumentLookupCoords build = coordsBuilder.build();
-    Set<Set<Argument>> matches = build.getMatchs().stream().map(ArgumentSet::getArguments)
+    ArgumentLookupCoords coord = coordsBuilder.build();
+    Set<Set<Argument>> matches = coord.getMatchs().stream().map(ArgumentSet::getArguments)
         .collect(Collectors.toSet());
-    Preconditions.checkState(build.getMatchs().size() == matches.size());
+    Preconditions.checkState(coord.getMatchs().size() == matches.size());
 
-    coords.add(build);
+    coords.add(coord);
   }
 }

@@ -1,9 +1,9 @@
 package com.datasqrl.packager.repository;
 
+import com.datasqrl.config.PackageConfiguration;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.serializer.Deserializer;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.packager.config.PackageConfiguration;
 import com.datasqrl.packager.util.FileHash;
 import com.datasqrl.packager.util.GeneratePackageId;
 import com.datasqrl.packager.util.Zipper;

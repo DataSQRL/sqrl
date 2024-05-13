@@ -2,9 +2,11 @@ package com.datasqrl.plan.global;
 
 import com.datasqrl.io.tables.TableType;
 import com.datasqrl.plan.local.generate.ResolvedExport;
+import com.datasqrl.plan.rules.SqrlRelMetadataProvider;
 import com.datasqrl.plan.table.*;
 import com.datasqrl.plan.util.RelWriterWithHints;
 import com.datasqrl.plan.util.TimePredicate;
+import com.datasqrl.util.CalciteHacks;
 import com.google.common.base.Preconditions;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,6 +16,9 @@ import lombok.experimental.SuperBuilder;
 import org.apache.calcite.rel.RelCollation;
 import org.apache.calcite.rel.RelFieldCollation;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.metadata.JaninoRelMetadataProvider;
+import org.apache.calcite.rel.metadata.RelMetadataQuery;
+import org.apache.calcite.rel.metadata.RelMetadataQueryBase;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.commons.lang3.StringUtils;
 
@@ -39,10 +44,11 @@ public class SqrlDAGExporter {
 
 
     public List<Node> export(SqrlDAG dag) {
+        CalciteHacks.resetToSqrlMetadataProvider();
         List<Node> result = new ArrayList<>();
         for (SqrlDAG.SqrlNode node : dag) {
             List<String> inputs = dag.getInputs(node).stream().map(SqrlDAG.SqrlNode::getId).sorted().collect(Collectors.toUnmodifiableList());
-            String stage = node.getChosenStage().getName();
+            String stage = node.getChosenStage().getEngine().getType().name().toLowerCase();
             if (node instanceof SqrlDAG.TableNode) {
                 SqrlDAG.TableNode tableNode = (SqrlDAG.TableNode)node;
                 PhysicalRelationalTable table = (PhysicalRelationalTable) tableNode.getTable();
@@ -98,6 +104,7 @@ public class SqrlDAGExporter {
     }
 
     private String explain(RelNode relNode) {
+        CalciteHacks.resetToSqrlMetadataProvider();
         if (withHints) {
             return RelWriterWithHints.explain(relNode);
         } else {

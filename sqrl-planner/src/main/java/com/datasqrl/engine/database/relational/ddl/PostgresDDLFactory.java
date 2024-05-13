@@ -4,25 +4,21 @@
 package com.datasqrl.engine.database.relational.ddl;
 
 import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
+import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.engine.database.relational.ddl.statements.CreateIndexDDL;
 import com.datasqrl.engine.database.relational.ddl.statements.CreateTableDDL;
-import com.datasqrl.io.impl.jdbc.JdbcDialect;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
-import com.datasqrl.util.CalciteUtil;
 import com.google.auto.service.AutoService;
-import com.google.common.base.Preconditions;
-import java.util.Arrays;
+
 import java.util.stream.Collectors;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.calcite.sql.SqlAlienSystemTypeNameSpec;
+
 import org.apache.calcite.sql.SqlDataTypeSpec;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
 import org.apache.calcite.sql.pretty.SqlPrettyWriter;
 
 @AutoService(JdbcDDLFactory.class)

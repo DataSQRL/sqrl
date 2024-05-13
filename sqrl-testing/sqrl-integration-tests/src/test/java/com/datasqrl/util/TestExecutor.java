@@ -5,7 +5,6 @@
 //import static com.datasqrl.PlanConstants.PLAN_SQL;
 //
 //import com.datasqrl.FlinkExecutablePlan;
-//import com.datasqrl.config.SqrlConfig;
 //import com.datasqrl.config.SqrlConfigCommons;
 //import com.datasqrl.engine.ExecutionResult;
 //import com.datasqrl.engine.database.relational.JDBCEngine;
@@ -106,7 +105,7 @@
 //      FlinkStreamPhysicalPlan plan = new FlinkStreamPhysicalPlan(flinkPlan);
 //      LocalFlinkStreamEngineImpl localFlinkStreamEngine = new LocalFlinkStreamEngineImpl(
 //           config.getSubConfig("engines")
-//          .getSubConfig("stream"));
+//          .getSubConfig("streams"));
 //      CompletableFuture<com.datasqrl.engine.ExecutionResult> fut = localFlinkStreamEngine.execute(
 //          plan, ErrorCollector.root());
 //      return fut;

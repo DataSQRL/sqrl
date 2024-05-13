@@ -1,14 +1,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>run.sqrl</groupId>
+    <groupId>com.datasqrl</groupId>
     <artifactId>sqrl-flink-lib</artifactId>
-    <version>0.5.0-RC2-SNAPSHOT</version>
+    <version>0.5.0-RC3-SNAPSHOT</version>
   </parent>
 
-  <groupId>run.sqrl</groupId>
+  <groupId>com.datasqrl</groupId>
   <artifactId>sqrl-lib-common</artifactId>
-  <version>0.5.0-RC2-SNAPSHOT</version>
+  <version>0.5.0-RC3-SNAPSHOT</version>
 
   <properties>
     <maven.compiler.source>11</maven.compiler.source>
@@ -59,6 +59,10 @@
           <publishingServerId>central</publishingServerId>
           <tokenAuth>true</tokenAuth>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
       </plugin>
     </plugins>
   </build>

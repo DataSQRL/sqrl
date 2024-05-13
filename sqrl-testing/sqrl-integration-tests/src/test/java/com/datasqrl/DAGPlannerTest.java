@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
-@Disabled("build server fails on test but runs locally")
 public class DAGPlannerTest extends AbstractAssetSnapshotTest {
 
   public static final Path SCRIPT_DIR = getResourcesDirectory("dagplanner");
@@ -25,7 +24,8 @@ public class DAGPlannerTest extends AbstractAssetSnapshotTest {
   void testScripts(Path script) {
     assertTrue(Files.exists(script));
     this.snapshot = Snapshot.of(getDisplayName(script), getClass());
-    execute(SCRIPT_DIR, "compile", script.getFileName().toString(), "-t", deployDir.toString(), "--nolookup");
+    execute(SCRIPT_DIR, "compile", script.getFileName().toString(), "-t", deployDir.toString(), "--nolookup",
+        "--profile", "../../../../../../profiles/flink-1.16");
     createSnapshot();
   }
 
@@ -41,13 +41,7 @@ public class DAGPlannerTest extends AbstractAssetSnapshotTest {
 
   @Override
   public Predicate<Path> getDeployDirFilter() {
-    return file -> {
-      switch (file.getFileName().toString()) {
-        case "flink-plan.sql":
-        case "database-schema.sql": return true;
-      }
-      return false;
-    };
+    return (p)->false;
   }
 
   static class DagPlannerSQRLFiles extends SqrlScriptArgumentsProvider {

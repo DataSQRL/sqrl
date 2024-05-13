@@ -7,13 +7,11 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.flink.FlinkConverter;
 import com.datasqrl.function.CalciteFunctionNsObject;
 import com.datasqrl.function.FlinkUdfNsObject;
-import com.datasqrl.function.SqrlFunction;
-import com.datasqrl.util.FunctionUtil;
 import com.datasqrl.module.NamespaceObject;
 import com.google.common.base.Preconditions;
 import java.util.Locale;
 import java.util.Optional;
-import org.apache.calcite.rex.RexBuilder;
+
 import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;

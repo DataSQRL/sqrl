@@ -37,17 +37,13 @@ public class JsonObject extends ScalarFunction {
       Object value = objects[i + 1];
       if (value instanceof FlinkJsonType) {
         FlinkJsonType type = (FlinkJsonType) value;
-        try {
-          objectNode.put(key, mapper.readTree(type.json));
-        } catch (JsonProcessingException e) {
-          throw new RuntimeException(e);
-        }
+        objectNode.put(key, type.json);
       } else {
         objectNode.putPOJO(key, value);
       }
     }
 
-    return new FlinkJsonType(objectNode.toString());
+    return new FlinkJsonType(objectNode);
   }
 
 

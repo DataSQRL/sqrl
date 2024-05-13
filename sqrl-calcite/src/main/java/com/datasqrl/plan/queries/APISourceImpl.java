@@ -29,11 +29,15 @@ public class APISourceImpl implements APISource {
     return name.toString();
   }
 
-  public static APISource of(String filename, NameCanonicalizer canonicalizer, ResourceResolver resolver) {
+  public static APISource of(String filePath, NameCanonicalizer canonicalizer, ResourceResolver resolver) {
     return new APISourceImpl(
-        canonicalizer.name(FileUtil.separateExtension(filename).getKey()),
-        FileUtil.readFile(resolver.resolveFile(NamePath.of(filename)).get())
+        canonicalizer.name(FileUtil.separateExtension(FileUtil.getFileName(filePath)).getKey()),
+        FileUtil.readFile(resolver.resolveFile(NamePath.of(filePath)).get())
     );
   }
 
+  @Override
+  public APISource clone(String schema) {
+    return new APISourceImpl(name, schema);
+  }
 }

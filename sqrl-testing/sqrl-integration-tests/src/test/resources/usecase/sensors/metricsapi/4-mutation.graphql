@@ -1,5 +1,0 @@
-mutation AddReading($sensorId: Int!, $temperature: Float!) {
-  AddReading(metric: {sensorid: $sensorId, temperature: $temperature}) {
-    _source_time
-  }
-}

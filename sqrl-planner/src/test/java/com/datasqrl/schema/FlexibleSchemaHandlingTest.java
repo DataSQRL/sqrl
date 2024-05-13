@@ -11,11 +11,11 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.schema.constraint.Constraint;
-import com.datasqrl.schema.converters.SchemaToRelDataTypeFactory;
+import com.datasqrl.io.schema.flexible.converters.SchemaToRelDataTypeFactory;
 import com.datasqrl.schema.input.FlexibleTableSchema;
-import com.datasqrl.schema.input.FlexibleTableSchemaFactory;
-import com.datasqrl.schema.input.FlexibleTableSchemaHolder;
-import com.datasqrl.schema.input.external.SchemaImport;
+import com.datasqrl.io.schema.flexible.FlexibleTableSchemaFactory;
+import com.datasqrl.io.schema.flexible.FlexibleTableSchemaHolder;
+import com.datasqrl.io.schema.flexible.external.SchemaImport;
 import com.datasqrl.schema.input.external.TableDefinition;
 import com.datasqrl.serializer.Deserializer;
 import com.datasqrl.util.SnapshotTest;
@@ -41,7 +41,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 
 /**
  * Tests the generation of schemas for various consumers based on the central
- * {@link FlexibleTableSchema} by way of the {@link UniversalTable}.
+ * {@link FlexibleTableSchema}.
  */
 @Disabled
 public class FlexibleSchemaHandlingTest {

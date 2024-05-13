@@ -1,0 +1,17 @@
+mutation {
+    AddReading1: AddReading(metric: {sensorid: 1, temperature: 43.5}) {
+        sensorid
+    }
+    AddReading2: AddReading(metric: {sensorid: 2, temperature: 55.1}) {
+        sensorid
+    }
+    AddReading3: AddReading(metric: {sensorid: 3, temperature: 50.7}) {
+        sensorid
+    }
+    AddReading4: AddReading(metric: {sensorid: 2, temperature: 24.7}) {
+        sensorid
+    }
+    AddReading5: AddReading(metric: {sensorid: 1, temperature: 22.7}) {
+        sensorid
+    }
+}

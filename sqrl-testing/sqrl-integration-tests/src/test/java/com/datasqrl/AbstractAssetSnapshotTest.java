@@ -1,7 +1,5 @@
 package com.datasqrl;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import com.datasqrl.cmd.RootCommand;
 import com.datasqrl.cmd.StatusHook;
 import com.datasqrl.util.FileUtil;
@@ -15,6 +13,7 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -30,11 +29,10 @@ import org.junit.jupiter.params.provider.ArgumentsProvider;
 
 public abstract class AbstractAssetSnapshotTest {
 
-  protected Path buildDir = null;
-  protected final Path deployDir;
+  public Path buildDir = null;
+  public final Path deployDir;
   protected final StatusHook hook;
   protected Snapshot snapshot;
-
 
   protected AbstractAssetSnapshotTest(Path deployDir, StatusHook hook) {
     this.deployDir = deployDir;
@@ -61,6 +59,10 @@ public abstract class AbstractAssetSnapshotTest {
     return path -> false;
   }
 
+  public Predicate<Path> getPlanDirFilter() {
+    return path -> true;
+  }
+
   protected void clearDir(Path dir) throws IOException {
     if (dir != null && Files.isDirectory(dir)) {
       FileUtils.deleteDirectory(dir.toFile());
@@ -68,23 +70,21 @@ public abstract class AbstractAssetSnapshotTest {
   }
 
   protected void createSnapshot() {
-    snapshotFiles(buildDir, getBuildDirFilter());
     snapshotFiles(deployDir, getDeployDirFilter());
+    snapshotFiles(buildDir, getBuildDirFilter());
+    snapshotFiles(buildDir.resolve("plan"), getPlanDirFilter());
     snapshot.createOrValidate();
   }
 
   @SneakyThrows
   private void snapshotFiles(Path path, Predicate<Path> predicate) {
+    if (path==null || !Files.isDirectory(path)) return;
     List<Path> paths = new ArrayList<>();
     Files.walkFileTree(path, new SimpleFileVisitor<>() {
       @Override
       public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
         if (predicate.test(file)) {
-          try {
-            snapshot.addContent(Files.readString(file), file.getFileName().toString());
-          } catch (IOException e) {
-            e.printStackTrace();
-          }
+          paths.add(file);
         }
         return FileVisitResult.CONTINUE;
       }
@@ -94,19 +94,28 @@ public abstract class AbstractAssetSnapshotTest {
         return FileVisitResult.CONTINUE;
       }
     });
+    Collections.sort(paths); //Create deterministic order
+    for (Path file : paths) {
+      try {
+        snapshot.addContent(Files.readString(file), file.getFileName().toString());
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
   }
-
-
-
 
   protected int execute(Path rootDir, String... args) {
     buildDir = rootDir.resolve("build");
-    return new RootCommand(rootDir,hook).getCmd().execute(args);
+    List<String> argslist = new ArrayList<>(List.of(args));
+    return new RootCommand(rootDir,hook).getCmd().execute(argslist.toArray(String[]::new));
   }
 
 
   public static String getDisplayName(Path path) {
-    return FileUtil.separateExtension(path).getKey();
+    String filename = path.getFileName().toString();
+    int length = filename.indexOf('.');
+    if (length<0) length = filename.length();
+    return filename.substring(0,length);
   }
 
   public static Path getResourcesDirectory(String subdir) {
@@ -145,11 +154,10 @@ public abstract class AbstractAssetSnapshotTest {
     return Files.walk(directory)
         .filter(path -> !Files.isDirectory(path))
         .filter(path -> path.toString().endsWith(SQRL_EXTENSION))
+        .filter(path-> !path.toString().contains("/build/"))
         .filter(path -> !StringUtil.removeFromEnd(path.getFileName().toString(), SQRL_EXTENSION).endsWith(DISABLED_FLAG))
         .sorted();
   }
-
-
 
   @AllArgsConstructor
   public abstract static class SqrlScriptArgumentsProvider implements ArgumentsProvider {
@@ -160,8 +168,5 @@ public abstract class AbstractAssetSnapshotTest {
     public Stream<? extends Arguments> provideArguments(ExtensionContext context) throws IOException {
       return getSQRLScripts(directory).map(Arguments::of);
     }
-
-
   }
-
 }

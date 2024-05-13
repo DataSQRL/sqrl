@@ -63,7 +63,7 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
       SqrlFramework framework, ErrorCollector errors) {
     ProxyImportRelationalTable importTable = importTable(table,
         objectName.map(canonicalizer::name).orElse(table.getName()), errors);
-    registerScriptTable(importTable, framework, Optional.empty(), Optional.empty());
+    registerScriptTable(importTable, framework, Optional.empty(), Optional.empty(), false);
     return true;
   }
 
@@ -88,7 +88,7 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
   }
 
   public void registerScriptTable(PhysicalRelationalTable table, SqrlFramework framework, Optional<List<FunctionParameter>> parameters,
-      Optional<Supplier<RelNode>> relNodeSupplier) {
+      Optional<Supplier<RelNode>> relNodeSupplier, boolean isTest) {
 
     NamePath path =  table.getTablePath();
 
@@ -107,7 +107,7 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
           path.getFirst(),
           table,
           parameters.orElse(List.of()),
-          nodeSupplier);
+          nodeSupplier, isTest);
       framework.getSchema().addTable(tbl);
     } else { //add parent-child relationships
       NamePath parentPath = path.popLast();
@@ -125,22 +125,25 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
           JoinType.CHILD,
           multiplicity,
           pkWrapper.getLeft(),
-          () -> framework.getQueryPlanner().plan(Dialect.CALCITE, pkWrapper.getRight()));
+          () -> framework.getQueryPlanner().plan(Dialect.CALCITE, pkWrapper.getRight()),
+          isTest);
       framework.getSchema().addRelationship(relationship);
 
-      Relationship rel = createParent(framework, path, parentTable, table);
+      Relationship rel = createParent(framework, path, parentTable, table, isTest);
       framework.getSchema().addRelationship(rel);
     }
     //Add nested relationships
-    createNested(table.getRowType(), path, framework);
+    createNested(table.getRowType(), path, framework, isTest);
   }
 
-  private void createNested(RelDataType type, NamePath path, SqrlFramework framework) {
+  private void createNested(RelDataType type, NamePath path, SqrlFramework framework,
+      boolean isTest) {
     type.getFieldList().stream().filter(f -> CalciteUtil.isNestedTable(f.getType()))
-        .forEach(field -> createdNestedChild(field, path, framework));
+        .forEach(field -> createdNestedChild(field, path, framework, isTest));
   }
 
-  private void createdNestedChild(RelDataTypeField field, NamePath path, SqrlFramework framework) {
+  private void createdNestedChild(RelDataTypeField field, NamePath path, SqrlFramework framework,
+      boolean isTest) {
     path = path.concat(canonicalizer.name(field.getName()));
     RelDataType nestedType = CalciteUtil.getNestedTableType(field.getType()).get();
     Multiplicity multiplicity = Multiplicity.MANY;
@@ -160,13 +163,13 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
         field.getType(),
         true, new CasedParameter(field.getName()));
     NestedRelationship relationship = new NestedRelationship(name, path, path,
-        multiplicity, List.of(param), nestedType, pks);
+        multiplicity, List.of(param), nestedType, pks, false);
     framework.getSchema().addRelationship(relationship);
-    createNested(nestedType, path, framework);
+    createNested(nestedType, path, framework, false);
   }
 
   public Relationship createParent(SqrlFramework framework, NamePath path, PhysicalRelationalTable parentTable,
-      PhysicalRelationalTable childTable) {
+      PhysicalRelationalTable childTable, boolean isTest) {
     Pair<List<FunctionParameter>, SqlNode> pkWrapper = createPkWrapper(childTable,
         parentTable);
     NamePath relPath = path.concat(ReservedName.PARENT);
@@ -174,7 +177,8 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
     return new Relationship(ReservedName.PARENT,
         relPath, path.popLast(),
         JoinType.PARENT, Multiplicity.ONE, pkWrapper.getLeft(),
-        () -> framework.getQueryPlanner().plan(Dialect.CALCITE, pkWrapper.getRight()));
+        () -> framework.getQueryPlanner().plan(Dialect.CALCITE, pkWrapper.getRight()),
+        isTest);
   }
 
   public static Pair<List<FunctionParameter>, SqlNode> createPkWrapper(PhysicalRelationalTable fromTable,

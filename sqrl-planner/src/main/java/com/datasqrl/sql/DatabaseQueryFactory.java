@@ -2,7 +2,7 @@ package com.datasqrl.sql;
 
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.graphql.server.Model.ArgumentParameter;
+import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentParameter;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.schema.NestedRelationship;
 import com.google.inject.Inject;

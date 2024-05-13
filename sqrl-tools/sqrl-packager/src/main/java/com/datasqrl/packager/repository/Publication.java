@@ -1,6 +1,7 @@
 package com.datasqrl.packager.repository;
 
-import com.datasqrl.packager.config.PackageConfiguration;
+import com.datasqrl.config.PackageConfiguration;
+import com.datasqrl.config.PackageConfigurationImpl;
 import com.google.common.base.Strings;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -10,7 +11,7 @@ import lombok.NonNull;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Publication extends PackageConfiguration {
+public class Publication extends PackageConfigurationImpl {
 
     String uniqueId;
     String file;

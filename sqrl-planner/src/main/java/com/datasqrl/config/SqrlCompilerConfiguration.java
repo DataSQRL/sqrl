@@ -3,13 +3,13 @@ package com.datasqrl.config;
 import com.google.inject.Inject;
 import lombok.experimental.Delegate;
 
-public class SqrlCompilerConfiguration extends CompilerConfiguration {
+public class SqrlCompilerConfiguration implements PackageJson.CompilerConfig {
 
   @Delegate
-  private final CompilerConfiguration compilerConfig;
+  private final PackageJson.CompilerConfig compilerConfig;
 
   @Inject
-  public SqrlCompilerConfiguration(SqrlConfig config) {
-    this.compilerConfig = CompilerConfiguration.fromRootConfig(config);
+  public SqrlCompilerConfiguration(PackageJson config) {
+    this.compilerConfig = config.getCompilerConfig();
   }
 }

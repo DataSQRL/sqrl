@@ -6,7 +6,7 @@ Stage:  streams
 
 === Customer
 ID:     customer$2
-Type:   stream
+Type:   streams
 Stage:  streams
 Inputs: customer$1
 Primary Key: _uuid
@@ -23,7 +23,7 @@ LogicalTableScan(table=[[customer$1]], hints=[[[WatermarkHint inheritPath:[] opt
 
 === OrderCustomer1
 ID:     ordercustomer1$1
-Type:   stream
+Type:   streams
 Stage:  database
 Inputs: orders$2, customer$2
 Primary Key: _uuid1, _uuid00
@@ -50,7 +50,7 @@ LogicalTableScan(table=[[ordercustomer1$1]])
 
 === OrderCustomer2
 ID:     ordercustomer2$1
-Type:   stream
+Type:   streams
 Stage:  database
 Inputs: orders$2, customer$2
 Primary Key: _uuid1, _uuid00
@@ -77,7 +77,7 @@ LogicalTableScan(table=[[ordercustomer2$1]])
 
 === OrderCustomer3
 ID:     ordercustomer3$1
-Type:   stream
+Type:   streams
 Stage:  database
 Inputs: orders$2, customer$2, product$2
 Primary Key: _uuid2, _uuid00, _uuid10
@@ -113,7 +113,7 @@ Stage:  streams
 
 === Orders
 ID:     orders$2
-Type:   stream
+Type:   streams
 Stage:  streams
 Inputs: orders$1
 Primary Key: _uuid
@@ -135,7 +135,7 @@ Stage:  streams
 
 === Product
 ID:     product$2
-Type:   stream
+Type:   streams
 Stage:  streams
 Inputs: product$1
 Primary Key: _uuid

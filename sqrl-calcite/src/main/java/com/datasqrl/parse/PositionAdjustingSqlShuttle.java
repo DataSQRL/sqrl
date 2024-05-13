@@ -20,9 +20,9 @@ public class PositionAdjustingSqlShuttle extends SqlShuttle {
 
   @Override
   public SqlNode visit(SqlCall call) {
-    List<SqlNode> adjustedOperands = call.getOperandList().stream()
+    SqlNode[] adjustedOperands = call.getOperandList().stream()
         .map(operand -> operand == null ? null : operand.accept(this))
-        .collect(Collectors.toList());
+        .toArray(SqlNode[]::new);
     SqlParserPos adjustedPos = adjustPosition(call.getParserPosition());
 
     //Hints are special, otherwise they get rewritten as basic calls
@@ -35,7 +35,7 @@ public class PositionAdjustingSqlShuttle extends SqlShuttle {
     }
 
     return call.getOperator()
-        .createCall(adjustedPos, adjustedOperands);
+        .createCall(call.getFunctionQuantifier(), adjustedPos, adjustedOperands);
   }
 
   @Override

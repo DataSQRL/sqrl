@@ -3,7 +3,7 @@
  */
 package com.datasqrl.plan.rules;
 
-import com.datasqrl.engine.ExecutionEngine;
+import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.plan.hints.JoinCostHint;
 import com.datasqrl.plan.hints.SqrlHint;
 import com.datasqrl.plan.rules.JoinAnalysis.Side;
@@ -26,14 +26,14 @@ class SimpleCostModel implements ComputeCost {
     this.cost = cost;
   }
 
-  public static SimpleCostModel of(ExecutionEngine.Type engineType, RelNode relNode) {
+  public static SimpleCostModel of(Type engineType, RelNode relNode) {
     double cost = 1.0;
     switch (engineType) {
       case DATABASE:
         //Currently we make the simplifying assumption that database execution is the baseline and we compare
         //other engines against it
         break;
-      case STREAM:
+      case STREAMS:
         //We assume that pre-computing is generally cheaper (by factor of 10) unless (standard) joins are
         //involved which can lead to combinatorial explosion. So, we primarily cost the joins
         cost = joinCost(relNode);

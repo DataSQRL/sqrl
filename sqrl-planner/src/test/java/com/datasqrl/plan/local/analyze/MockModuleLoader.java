@@ -1,13 +1,7 @@
 package com.datasqrl.plan.local.analyze;
 
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.config.SqrlConfig;
-import com.datasqrl.io.PrintFlinkDynamicSinkConnectorFactory;
-import com.datasqrl.io.StandardDynamicSinkFactory;
-import com.datasqrl.io.impl.file.FileFlinkDynamicSinkConnectorFactory;
-import com.datasqrl.loaders.DynamicSinkNsObject;
 import com.datasqrl.loaders.ModuleLoader;
-import com.datasqrl.loaders.ModuleLoaderImpl;
 import com.datasqrl.loaders.ObjectLoaderImpl;
 import com.datasqrl.loaders.SqrlDirectoryModule;
 import com.datasqrl.loaders.StandardLibraryLoader;
@@ -44,19 +38,24 @@ public class MockModuleLoader implements ModuleLoader {
     if (tables.containsKey(namePath)) {
       return Optional.of(tables.get(namePath));
     }
-
-    //todo: move this out
-    if (ModuleLoaderImpl.isPrintSink(namePath) ) {
-      return Optional.of(
-          new SqrlDirectoryModule(
-              List.of(new DynamicSinkNsObject(namePath, new StandardDynamicSinkFactory(new PrintFlinkDynamicSinkConnectorFactory(), SqrlConfig.createCurrentVersion())))));
-    }
-
-    if (isOutputSink(namePath)) {
-      return Optional.of(
-          new SqrlDirectoryModule(
-              List.of(new DynamicSinkNsObject(namePath, FileFlinkDynamicSinkConnectorFactory.forPath(errorDir.get())))));
-    }
+//
+//    //todo: move this out
+//    if (ModuleLoaderImpl.isPrintSink(namePath) ) {
+//      if (true) throw new RuntimeException();
+//      return Optional.of(
+//          new SqrlDirectoryModule(
+//              List.of(new DynamicSinkNsObject(namePath, new StandardDynamicSinkFactory(new PrintFlinkDynamicSinkConnectorFactory()
+//                  ,
+////                  SqrlConfig.createCurrentVersion()
+//                  null
+//              )))));
+//    }
+//
+//    if (isOutputSink(namePath)) {
+//      return Optional.of(
+//          new SqrlDirectoryModule(
+//              List.of(new DynamicSinkNsObject(namePath, FileFlinkDynamicSinkConnectorFactory.forPath(errorDir.get())))));
+//    }
 
     List<NamespaceObject> objects = standardLibraryLoader.load(namePath);
     if (objects.isEmpty()) {
@@ -71,9 +70,7 @@ public class MockModuleLoader implements ModuleLoader {
     for (NamespaceObject object : objects) {
       if (object instanceof TableSourceNamespaceObject) {
         TableSourceNamespaceObject s = (TableSourceNamespaceObject) object;
-        s.getTable().getConfiguration()
-            .getConnectorConfigOld()
-            .setProperty("monitorIntervalMs" /*file-io not guaranteed to be on classpath*/, "0");
+
       }
     }
 

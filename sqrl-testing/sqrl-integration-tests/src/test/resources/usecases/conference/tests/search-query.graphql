@@ -1,0 +1,17 @@
+query {
+  User10: PersonalizedEventSearch(query: "data", userid:"10", limit: 3) {
+    url
+    title
+    score
+  }
+  User11: PersonalizedEventSearch(query: "data", userid:"11", limit: 3) {
+    url
+    title
+    score
+  }
+  User12: PersonalizedEventSearch(query: "data", userid:"12", limit: 3) {
+    url
+    title
+    score
+  }
+}

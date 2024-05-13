@@ -3,7 +3,7 @@
  */
 package com.datasqrl.plan;
 
-import com.datasqrl.engine.ExecutionEngine.Type;
+import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.engine.stream.flink.sql.rules.ToStubAggRule;
 import com.datasqrl.plan.rules.DAGFunctionExpansionRule;
 import com.datasqrl.plan.rules.DAGTableExpansionRule.Read;

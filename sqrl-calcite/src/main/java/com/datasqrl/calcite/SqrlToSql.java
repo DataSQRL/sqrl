@@ -186,7 +186,8 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
             }
           }
         } else if (ident.isStar() && ident.names.size() == 2) {
-          NamePath path = newContext.getAliasPath(nameUtil.toName(ident.names.get(0)));
+          NamePath path = newContext.getAliasPath(nameUtil.toName(ident.names.get(0)))
+              .orElseThrow(() -> new RuntimeException("Could not find alias: " + ident.names.get(0)));
           Collection<Function> sqrlTable = planner.getSchema().getFunctions(path.getDisplay(), false);
 
           if (!sqrlTable.isEmpty()) {
@@ -446,7 +447,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
 
   public Result visitAugmentedTable(SqlCall node, Context context) {
     Result result = SqlNodeVisitor.accept(this, node.getOperandList().get(0), context);
-    SqlCall call = node.getOperator().createCall(node.getParserPosition(), result.sqlNode);
+    SqlCall call = node.getOperator().createCall(node.getFunctionQuantifier(), node.getParserPosition(), result.sqlNode);
     return new Result(call, result.currentPath, result.pullupColumns, result.tableReferences,
         result.condition, result.params);
   }
@@ -463,7 +464,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
 
     WalkExpressions walkExpressions = new WalkExpressions(context);
     SqlNode expr = node.getOperandList().get(1).accept(walkExpressions);
-    SqlCall call = node.getOperator().createCall(node.getParserPosition(),
+    SqlCall call = node.getOperator().createCall(node.getFunctionQuantifier(), node.getParserPosition(),
         query, expr, node.getOperandList().get(2),
         node.getOperandList().get(3));
 
@@ -533,8 +534,8 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
       return aliasPathMap.containsKey(alias);
     }
 
-    public NamePath getAliasPath(Name alias) {
-      return getAliasPathMap().get(alias);
+    public Optional<NamePath> getAliasPath(Name alias) {
+      return Optional.ofNullable(getAliasPathMap().get(alias));
     }
 
     public static class ContextBuilder {

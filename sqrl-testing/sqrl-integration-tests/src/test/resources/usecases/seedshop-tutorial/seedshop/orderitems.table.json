@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "flink" : {
+    "format" : "flexible-json",
+    "path" : "/data/orderitems.jsonl",
+    "connector" : "filesystem"
+  },
+  "table" : {
+    "type" : "source",
+    "primary-key" : ["id", "time"],
+    "timestamp" : "time",
+    "watermark-millis" : "1"
+  }
+}

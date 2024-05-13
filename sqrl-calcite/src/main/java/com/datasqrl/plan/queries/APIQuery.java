@@ -4,8 +4,8 @@
 package com.datasqrl.plan.queries;
 
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.graphql.server.Model.Argument;
-import com.datasqrl.graphql.server.Model.JdbcParameterHandler;
+import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
+import com.datasqrl.graphql.server.RootGraphqlModel.JdbcParameterHandler;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.EqualsAndHashCode;

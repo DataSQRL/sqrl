@@ -3,14 +3,13 @@
 // */
 //package com.datasqrl.cmd;
 //
-//import static com.datasqrl.io.tables.TableConfig.CONNECTOR_KEY;
+//import static com.datasqrl.config.TableConfig.CONNECTOR_KEY;
 //
-//import com.datasqrl.config.EngineKeys;
+//import com.datasqrl.cmd.EngineKeys;
 //import com.datasqrl.config.PipelineFactory;
-//import com.datasqrl.config.SqrlConfig;
 //import com.datasqrl.config.SqrlConfig.Value;
 //import com.datasqrl.config.SqrlConfigCommons;
-//import com.datasqrl.engine.EngineFactory;
+//import com.datasqrl.config.EngineFactory;
 //import com.datasqrl.engine.PhysicalPlan;
 //import com.datasqrl.engine.PhysicalPlanExecutor;
 //import com.datasqrl.engine.database.relational.JDBCEngineFactory;
@@ -19,11 +18,11 @@
 //import com.datasqrl.engine.stream.flink.FlinkEngineFactory;
 //import com.datasqrl.error.ErrorCollector;
 //import com.datasqrl.io.formats.JsonLineFormat;
-//import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
+//import com.datasqrl.config.JdbcDataSystemConnector;
 //import com.datasqrl.io.impl.kafka.KafkaDataSystemFactory;
 //import com.datasqrl.kafka.KafkaLogEngineFactory;
 //import com.datasqrl.packager.Packager;
-//import com.datasqrl.schema.input.FlexibleTableSchemaFactory;
+//import com.datasqrl.io.flexible.schema.FlexibleTableSchemaFactory;
 //import java.nio.file.Path;
 //import lombok.SneakyThrows;
 //import org.apache.flink.configuration.ConfigConstants;

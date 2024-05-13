@@ -84,7 +84,8 @@ public class GraphqlSchemaValidator extends SchemaWalker {
     }
 
     validateStructurallyEqualMutation(fieldDefinition, getValidMutationReturnType(fieldDefinition, registry),
-        getValidMutationInput(fieldDefinition, registry), List.of(ReservedName.SOURCE_TIME.getCanonical()), registry);
+            getValidMutationInput(fieldDefinition, registry),
+            List.of(ReservedName.MUTATION_TIME.getCanonical(), ReservedName.MUTATION_PRIMARY_KEY.getDisplay()), registry);
 
   }
 
@@ -92,7 +93,7 @@ public class GraphqlSchemaValidator extends SchemaWalker {
       ObjectTypeDefinition returnTypeDefinition, InputObjectTypeDefinition inputType,
       List<String> allowedFieldNames, TypeDefinitionRegistry registry) {
 
-    //The return type can have _source_time
+    //The return type can have event_time
     for (FieldDefinition returnTypeFieldDefinition : returnTypeDefinition.getFieldDefinitions()) {
       if (allowedFieldNames.contains(returnTypeFieldDefinition.getName())) {
         continue;

@@ -2,7 +2,6 @@ package com.datasqrl.plan.queries;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-import java.util.Optional;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
@@ -17,10 +16,10 @@ public class APIMutation implements APIConnector {
   Name name;
   @EqualsAndHashCode.Include
   APISource source;
-  RelDataType schema;
 
-  Optional<String> timestamp;
-  Optional<String> pk;
+  RelDataType schema;
+  String timestampName;
+  String pkName;
 
   @Override
   public String toString() {

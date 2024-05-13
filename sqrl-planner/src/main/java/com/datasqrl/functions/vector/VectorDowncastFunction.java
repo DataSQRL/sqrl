@@ -1,6 +1,6 @@
 package com.datasqrl.functions.vector;
 
-import static com.datasqrl.function.SqrlFunction.getFunctionNameFromClass;
+import static com.datasqrl.function.FlinkUdfNsObject.getFunctionNameFromClass;
 
 import com.datasqrl.function.DowncastFunction;
 import com.datasqrl.vector.FlinkVectorType;
@@ -16,7 +16,7 @@ public class VectorDowncastFunction implements DowncastFunction {
 
   @Override
   public String downcastFunctionName() {
-    return getFunctionNameFromClass(VectorToDouble.class);
+    return getFunctionNameFromClass(VectorToDouble.class).getDisplay();
   }
 
   @Override

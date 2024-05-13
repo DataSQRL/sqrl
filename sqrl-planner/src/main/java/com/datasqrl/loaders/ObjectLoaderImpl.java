@@ -1,14 +1,13 @@
 package com.datasqrl.loaders;
 
-import static com.datasqrl.function.SqrlFunction.getFunctionNameFromClass;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.config.TableConfigLoader;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.function.FlinkUdfNsObject;
-import com.datasqrl.io.ExternalDataType;
-import com.datasqrl.io.StandardDynamicSinkFactory;
-import com.datasqrl.io.tables.TableConfig;
+import com.datasqrl.config.ExternalDataType;
+import com.datasqrl.config.TableConfig;
 import com.datasqrl.io.tables.TableSchema;
 import com.datasqrl.io.tables.TableSchemaFactory;
 import com.datasqrl.io.tables.TableSink;
@@ -38,19 +37,23 @@ import org.apache.flink.table.functions.UserDefinedFunction;
 public class ObjectLoaderImpl implements ObjectLoader {
 
   public static final String FUNCTION_JSON = ".function.json";
-  private static final Predicate<String> DATA_SYSTEM_FILE = Pattern.compile(".*"+FileUtil.toRegex(DataSource.DATASYSTEM_FILE_PREFIX)
-      + ".*" + FileUtil.toRegex(DataSource.TABLE_FILE_SUFFIX)+"$").asMatchPredicate();
+  private static final Predicate<String> DATA_SYSTEM_FILE = Pattern.compile(".*"+
+      FileUtil.toRegex(DataSource.DATASYSTEM_FILE_PREFIX + DataSource.TABLE_FILE_SUFFIX) +"$")
+      .asMatchPredicate();
   private final ResourceResolver resourceResolver;
   private final ErrorCollector errors;
   private final CalciteTableFactory tableFactory;
   private final ModuleLoader moduleLoader;
+  private final TableConfigLoader tableConfigFactory;
 
   public ObjectLoaderImpl(ResourceResolver resourceResolver, ErrorCollector errors,
-      CalciteTableFactory tableFactory, ModuleLoader moduleLoader) {
+      CalciteTableFactory tableFactory, ModuleLoader moduleLoader,
+      TableConfigLoader tableConfigFactory) {
     this.resourceResolver = resourceResolver;
     this.errors = errors;
     this.tableFactory = tableFactory;
     this.moduleLoader = moduleLoader;
+    this.tableConfigFactory = tableConfigFactory;
   }
 
   final static Deserializer SERIALIZER = new Deserializer();
@@ -70,7 +73,7 @@ public class ObjectLoaderImpl implements ObjectLoader {
 
   private List<? extends NamespaceObject> load(URI uri, NamePath directory, List<URI> allItems) {
     if (DATA_SYSTEM_FILE.test(uri.toString())) {
-      return loadDataSystem(uri, directory);
+      return loadDynamicSink(uri, directory);
     } else if (uri.toString().endsWith(DataSource.TABLE_FILE_SUFFIX)) {
       return loadTable(uri, directory, allItems);
     } else if (uri.toString().endsWith(FUNCTION_JSON)) {
@@ -79,16 +82,19 @@ public class ObjectLoaderImpl implements ObjectLoader {
     return List.of();
   }
 
-  private List<NamespaceObject> loadDataSystem(URI uri, NamePath basePath) {
-    TableConfig tableConfig = TableConfig.load(uri, basePath.getLast(), errors);
-    return List.of(new DynamicSinkNsObject(basePath, StandardDynamicSinkFactory.of(tableConfig)));
+  private List<NamespaceObject> loadDynamicSink(URI uri, NamePath basePath) {
+    TableConfig tableConfig = tableConfigFactory.load(uri, basePath.getLast(), errors);
+    if (true) {
+      throw new RuntimeException();
+    }
+    return List.of(new DynamicSinkNsObject(basePath/*, StandardDynamicSinkFactory.of(tableConfig))*/));
   }
 
   @SneakyThrows
   private List<TableNamespaceObject> loadTable(URI uri, NamePath basePath, List<URI> allItemsInPath) {
     String tableName = StringUtil.removeFromEnd(ResourceResolver.getFileName(uri),DataSource.TABLE_FILE_SUFFIX);
     errors.checkFatal(Name.validName(tableName), "Not a valid table name: %s", tableName);
-    TableConfig tableConfig = TableConfig.load(uri, Name.system(tableName), errors);
+    TableConfig tableConfig = tableConfigFactory.load(uri, Name.system(tableName), errors);
 
     //Find all files associated with the table, i.e. that start with the table name followed by '.'
     List<URI> tablesFiles = allItemsInPath.stream().filter( file -> {
@@ -157,7 +163,7 @@ public class ObjectLoaderImpl implements ObjectLoader {
     UserDefinedFunction udf = (UserDefinedFunction) functionClass.getDeclaredConstructor().newInstance();
 
     // Return a namespace object containing the created function
-    return List.of(new FlinkUdfNsObject(getFunctionNameFromClass(udf.getClass()), udf, Optional.of(jarUrl)));
+    return List.of(new FlinkUdfNsObject(FlinkUdfNsObject.getFunctionName(udf), udf, Optional.of(jarUrl)));
   }
 
   @SneakyThrows

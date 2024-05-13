@@ -48,14 +48,10 @@ public class FlinkUdfNsObject implements FunctionNamespaceObject<FunctionDefinit
     return true;
   }
 
-  private String getFunctionName(FunctionDefinition function) {
-    if (function instanceof SqrlFunction) {
-      return ((SqrlFunction) function).getFunctionName();
-    }
-
+  public static String getFunctionName(FunctionDefinition function) {
     return getFunctionNameFromClass(function.getClass()).getDisplay();
   }
-  static Name getFunctionNameFromClass(Class clazz) {
+  public static Name getFunctionNameFromClass(Class clazz) {
     String fctName = clazz.getSimpleName();
     fctName = Character.toLowerCase(fctName.charAt(0)) + fctName.substring(1);
     return Name.system(fctName);
