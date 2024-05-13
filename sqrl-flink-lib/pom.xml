@@ -3,7 +3,7 @@
 
   <artifactId>sqrl-flink-lib</artifactId>
   <groupId>com.datasqrl</groupId>
-  <version>0.5.0-RC3</version>
+  <version>0.5.0-RC4-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <properties>
