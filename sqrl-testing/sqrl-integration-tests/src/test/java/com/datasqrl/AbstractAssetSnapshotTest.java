@@ -78,6 +78,7 @@ public abstract class AbstractAssetSnapshotTest {
 
   protected void createFailSnapshot(String failMessage) {
     snapshot.addContent(failMessage);
+    snapshot.createOrValidate();
   }
 
   @SneakyThrows
@@ -119,6 +120,7 @@ public abstract class AbstractAssetSnapshotTest {
 
 
   public static String getDisplayName(Path path) {
+    if (path==null) return "";
     String filename = path.getFileName().toString();
     int length = filename.indexOf('.');
     if (length<0) length = filename.length();
