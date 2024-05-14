@@ -14,10 +14,6 @@ public class EngineStage implements ExecutionStage {
   String name;
   ExecutionEngine engine;
 
-  public EngineStage(String name, ExecutionEngine engine) {
-    this.name = name;
-    this.engine = engine;
-  }
 
   @Override
   public boolean supportsFeature(EngineFeature capability) {
@@ -28,5 +24,6 @@ public class EngineStage implements ExecutionStage {
   public boolean supportsFunction(FunctionDefinition function) {
     return engine.supports(function);
   }
+
 
 }
