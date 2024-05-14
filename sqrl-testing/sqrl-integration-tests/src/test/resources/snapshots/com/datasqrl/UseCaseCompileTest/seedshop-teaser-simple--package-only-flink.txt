@@ -1,0 +1,11 @@
+>>>pipeline_explain.txt
+
+>>>flink.json
+{
+  "flinkSql" : [
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofweek` AS 'com.datasqrl.time.EndOfWeek' LANGUAGE JAVA;",
+    "EXECUTE STATEMENT SET BEGIN\nEND;"
+  ],
+  "connectors" : [ ],
+  "formats" : [ ]
+}

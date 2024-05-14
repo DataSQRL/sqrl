@@ -11,8 +11,6 @@ Schema:
  - week: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - total: DOUBLE NOT NULL
  - saved: DOUBLE NOT NULL
-Post Processors:
- - sort: #1: week TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC
 Plan:
 LogicalProject(customerid=[$0], week=[$1], total=[$2], saved=[$3])
   LogicalAggregate(group=[{0, 1}], total=[SUM($2)], agg#1=[SUM($3)]) hints[TumbleAggregationHint options:[1, FUNCTION, 5, 604800000, 0]]
@@ -47,13 +45,17 @@ Schema:
  - productid: BIGINT NOT NULL
  - week: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - revenue: DOUBLE NOT NULL
-Post Processors:
- - sort: #1: week TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC
 Plan:
 LogicalProject(productid=[$0], week=[$1], revenue=[$2])
   LogicalAggregate(group=[{0, 1}], agg#0=[SUM($2)]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 604800000, 0]]
     LogicalProject(productid=[$3], week=[endOfWeek($2)], $f2=[-(*($4, $5), COALESCE($6, 0.0:DECIMAL(2, 1)))], id=[$0], time=[$2])
       LogicalTableScan(table=[[orders$2]])
+
+=== print.Revenue.Revenue
+ID:     productrevenue$1$1
+Type:   export
+Stage:  streams
+Inputs: productrevenue$1
 
 >>>flink.json
 {
@@ -63,14 +65,18 @@ LogicalProject(productid=[$0], week=[$1], revenue=[$2])
     "CREATE TEMPORARY TABLE `customerspending$1` (\n  `customerid` BIGINT NOT NULL,\n  `week` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `total` DOUBLE NOT NULL,\n  `saved` DOUBLE NOT NULL,\n  PRIMARY KEY (`customerid`, `week`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'customerspending$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `orders$2` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `productid` BIGINT NOT NULL,\n  `quantity` BIGINT NOT NULL,\n  `unit_price` DOUBLE NOT NULL,\n  `discount` DOUBLE,\n  PRIMARY KEY (`id`, `time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orders$2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `productrevenue$1` (\n  `productid` BIGINT NOT NULL,\n  `week` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `revenue` DOUBLE NOT NULL,\n  PRIMARY KEY (`productid`, `week`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'productrevenue$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `productrevenue$1$1` (\n  `productid` BIGINT NOT NULL,\n  `week` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `revenue` DOUBLE NOT NULL\n) WITH (\n  'connector' = 'print',\n  'print-identifier' = 'Revenue'\n);",
     "CREATE VIEW `table$1`\nAS\nSELECT `customerid`, ENDOFWEEK(`time`) AS `week`, (`quantity` * `unit_price`) AS `$f2`, COALESCE(`discount`, 0.0) AS `$f3`, `id`, `time`\nFROM `orders$1`;",
     "CREATE VIEW `table$2`\nAS\nSELECT `customerid`, `window_time` AS `week`, SUM(`$f2`) AS `total`, SUM(`$f3`) AS `saved`\nFROM TABLE(TUMBLE((TABLE `table$1`), (DESCRIPTOR(`time`)), INTERVAL '604800' SECOND(9), INTERVAL '0' SECOND(1))) AS `t0`\nGROUP BY `customerid`, `window_start`, `window_end`, `window_time`;",
     "CREATE VIEW `table$3`\nAS\nSELECT *\nFROM `orders$1`;",
     "CREATE VIEW `table$4`\nAS\nSELECT `productid`, ENDOFWEEK(`time`) AS `week`, ((`quantity` * `unit_price`) - COALESCE(`discount`, 0.0)) AS `$f2`, `id`, `time`\nFROM `orders$1`;",
     "CREATE VIEW `table$5`\nAS\nSELECT `productid`, `window_time` AS `week`, SUM(`$f2`) AS `revenue`\nFROM TABLE(TUMBLE((TABLE `table$4`), (DESCRIPTOR(`time`)), INTERVAL '604800' SECOND(9), INTERVAL '0' SECOND(1))) AS `t0`\nGROUP BY `productid`, `window_start`, `window_end`, `window_time`;",
-    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customerspending$1`\n(SELECT *\nFROM `table$2`)\n;\nINSERT INTO `orders$2`\n(SELECT *\nFROM `table$3`)\n;\nINSERT INTO `productrevenue$1`\n(SELECT *\nFROM `table$5`)\n;\nEND;"
+    "CREATE VIEW `table$6`\nAS\nSELECT `productid`, ENDOFWEEK(`time`) AS `week`, ((`quantity` * `unit_price`) - COALESCE(`discount`, 0.0)) AS `$f2`, `id`, `time`\nFROM `orders$1`;",
+    "CREATE VIEW `table$7`\nAS\nSELECT `productid`, `window_time` AS `week`, SUM(`$f2`) AS `revenue`\nFROM TABLE(TUMBLE((TABLE `table$6`), (DESCRIPTOR(`time`)), INTERVAL '604800' SECOND(9), INTERVAL '0' SECOND(1))) AS `t0`\nGROUP BY `productid`, `window_start`, `window_end`, `window_time`;",
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customerspending$1`\n(SELECT *\nFROM `table$2`)\n;\nINSERT INTO `orders$2`\n(SELECT *\nFROM `table$3`)\n;\nINSERT INTO `productrevenue$1`\n(SELECT *\nFROM `table$5`)\n;\nINSERT INTO `productrevenue$1$1`\n(SELECT *\nFROM `table$7`)\n;\nEND;"
   ],
   "connectors" : [
+    "print",
     "jdbc-sqrl",
     "filesystem"
   ],
@@ -193,7 +199,7 @@ LogicalProject(productid=[$0], week=[$1], revenue=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"customerid\", \"week\", \"total\", \"saved\", 1 AS \"__pk\"\nFROM \"customerspending$1\"\nWHERE \"customerid\" = $1 AND \"week\" = $2\nORDER BY \"week\" DESC, 1",
+              "sql" : "SELECT \"customerid\", \"week\", \"total\", \"saved\", 1 AS \"__pk\"\nFROM \"customerspending$1\"\nWHERE \"customerid\" = $1 AND \"week\" = $2\nORDER BY \"week\" DESC NULLS LAST, 1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -229,7 +235,7 @@ LogicalProject(productid=[$0], week=[$1], revenue=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customerspending$1\"\nWHERE \"week\" = $1\nORDER BY \"week\" DESC, \"customerid\"",
+              "sql" : "SELECT *\nFROM \"customerspending$1\"\nWHERE \"week\" = $1\nORDER BY \"week\" DESC NULLS LAST, \"customerid\"",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -260,7 +266,7 @@ LogicalProject(productid=[$0], week=[$1], revenue=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customerspending$1\"\nWHERE \"customerid\" = $1\nORDER BY \"week\" DESC",
+              "sql" : "SELECT *\nFROM \"customerspending$1\"\nWHERE \"customerid\" = $1\nORDER BY \"week\" DESC NULLS LAST",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -286,7 +292,7 @@ LogicalProject(productid=[$0], week=[$1], revenue=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customerspending$1\"\nORDER BY \"week\" DESC, \"customerid\"",
+              "sql" : "SELECT *\nFROM \"customerspending$1\"\nORDER BY \"week\" DESC NULLS LAST, \"customerid\"",
               "parameters" : [ ]
             }
           }
@@ -448,7 +454,7 @@ LogicalProject(productid=[$0], week=[$1], revenue=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"productrevenue$1\"\nWHERE \"productid\" = $1\nORDER BY \"week\" DESC",
+              "sql" : "SELECT *\nFROM \"productrevenue$1\"\nWHERE \"productid\" = $1\nORDER BY \"week\" DESC NULLS LAST",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -479,7 +485,7 @@ LogicalProject(productid=[$0], week=[$1], revenue=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"productrevenue$1\"\nWHERE \"week\" = $1\nORDER BY \"week\" DESC, \"productid\"",
+              "sql" : "SELECT *\nFROM \"productrevenue$1\"\nWHERE \"week\" = $1\nORDER BY \"week\" DESC NULLS LAST, \"productid\"",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -505,7 +511,7 @@ LogicalProject(productid=[$0], week=[$1], revenue=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"productrevenue$1\"\nORDER BY \"week\" DESC, \"productid\"",
+              "sql" : "SELECT *\nFROM \"productrevenue$1\"\nORDER BY \"week\" DESC NULLS LAST, \"productid\"",
               "parameters" : [ ]
             }
           },
@@ -535,7 +541,7 @@ LogicalProject(productid=[$0], week=[$1], revenue=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"productid\", \"week\", \"revenue\", 1 AS \"__pk\"\nFROM \"productrevenue$1\"\nWHERE \"productid\" = $1 AND \"week\" = $2\nORDER BY \"week\" DESC, 1",
+              "sql" : "SELECT \"productid\", \"week\", \"revenue\", 1 AS \"__pk\"\nFROM \"productrevenue$1\"\nWHERE \"productid\" = $1 AND \"week\" = $2\nORDER BY \"week\" DESC NULLS LAST, 1",
               "parameters" : [
                 {
                   "type" : "arg",
