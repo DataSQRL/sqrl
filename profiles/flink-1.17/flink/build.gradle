@@ -12,7 +12,7 @@ ext {
     flinkVersion = "1.17.2"
     jdbcVersion = "3.1.2-1.17"
     kafkaVersion = "3.1.0-1.17"
-    sqrlVersion = "0.5.0-RC3"
+    sqrlVersion = "0.5.0-RC4"
 }
 
 repositories {
