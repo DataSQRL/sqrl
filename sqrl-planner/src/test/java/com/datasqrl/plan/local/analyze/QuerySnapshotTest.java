@@ -89,7 +89,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
     } catch (Exception e) {
       throw errors.handle(e);
     }
-    SQRLConverter sqrlConverter = new SQRLConverter(framework.getQueryPlanner().getRelBuilder());
+    SQRLConverter sqrlConverter = new SQRLConverter(framework.getQueryPlanner().getRelBuilder(), pipeline);
     Stream.concat(framework.getSchema().getFunctionStream(QueryTableFunction.class).map(QueryTableFunction::getQueryTable),
             framework.getSchema().getTableStream(PhysicalRelationalTable.class))
         .sorted(Comparator.comparing(f->f.getNameId()))

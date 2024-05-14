@@ -19,6 +19,10 @@ public interface ExecutionPipeline {
     return getStages().stream().filter(ExecutionStage::isRead).collect(Collectors.toList());
   }
 
+  default boolean hasReadStages() {
+    return getStages().stream().anyMatch(ExecutionStage::isRead);
+  }
+
   Set<ExecutionStage> getUpStreamFrom(ExecutionStage stage);
 
   Set<ExecutionStage> getDownStreamFrom(ExecutionStage stage);

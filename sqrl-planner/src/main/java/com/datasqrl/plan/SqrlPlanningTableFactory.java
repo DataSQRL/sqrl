@@ -41,6 +41,7 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
   private final SqrlFramework framework;
   private final SqlNameUtil nameUtil;
   private final CalciteTableFactory tableFactory;
+  private final SQRLConverter sqrlConverter;
 
   @Override
   public void createTable(ModuleLoader moduleLoader, List<String> path, RelNode input, List<RelHint> hints,
@@ -101,7 +102,7 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
 
 
   //Converts SQRL statements into vanilla SQL
-  public static LPAnalysis convertToVanillaSQL(RelNode relNode,
+  private LPAnalysis convertToVanillaSQL(RelNode relNode,
       RelBuilder relBuilder, Optional<SqlNodeList> hints, ErrorCollector errors) {
     //Parse all optimizer hints
     Pair<List<OptimizerHint>,List<SqlHint>> analyzedHints = OptimizerHint.fromSqlHints(hints, errors);
@@ -119,7 +120,6 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
     configBuilder.stage(IdealExecutionStage.INSTANCE);
     SqrlConverterConfig config = configBuilder.build();
 
-    SQRLConverter sqrlConverter = new SQRLConverter(relBuilder);
     AnnotatedLP alp = sqrlConverter.convert(relNode, config, errors);
     return new LPAnalysis(relNode, alp, configuredStages, baseConfig);
   }

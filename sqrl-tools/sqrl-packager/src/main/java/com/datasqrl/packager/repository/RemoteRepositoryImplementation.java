@@ -215,9 +215,6 @@ public class RemoteRepositoryImplementation implements Repository, PublishReposi
     File zipFile = zipFilePath.toFile();
     entityBuilder.addBinaryBody("file", zipFile, ContentType.create("application/zip"), zipFile.getName());
 
-    //to be removed
-    entityBuilder.addTextBody("orgname", pkgConfig.getName().split("\\.", 2)[0]);
-
     List<String> keywords = pkgConfig.getKeywords();
     for (int i = 0; i < keywords.size(); i++) {
       entityBuilder.addTextBody(String.format("topics[%d][name]", i), keywords.get(i));

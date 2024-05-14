@@ -31,8 +31,6 @@ public enum EngineFeature {
   TABLE_FUNCTION_SCAN,
   //Engine can export data to TableSink
   EXPORT,
-  //Whether pulling up now-filters and topN leads to better performance
-  PULLUP_OPTIMIZATION,
   //Writing/upserting data into engine by primary key will deduplicate data
   MATERIALIZE_ON_KEY,
   //Engine supports relations (i.e. no primary key)
@@ -42,7 +40,7 @@ public enum EngineFeature {
 
   public static EnumSet<EngineFeature> STANDARD_STREAM = EnumSet.of(DENORMALIZE,
       TEMPORAL_JOIN, TO_STREAM, STREAM_WINDOW_AGGREGATION, EXTENDED_FUNCTIONS, CUSTOM_FUNCTIONS,
-      EXPORT, PULLUP_OPTIMIZATION, DATA_MONITORING);
+      EXPORT, DATA_MONITORING);
 
   public static EnumSet<EngineFeature> STANDARD_DATABASE = EnumSet.of(NOW, GLOBAL_SORT, MATERIALIZE_ON_KEY,
       MULTI_RANK, TABLE_FUNCTION_SCAN, RELATIONS, DENORMALIZE);
