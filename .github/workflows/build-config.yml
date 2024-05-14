@@ -1,7 +1,7 @@
 name: Build and test SQRL with Maven
 on:
   pull_request:
-    branches: [ "main", "v0.5", "v0.5-RC3" ]
+    branches: [ "main", "v0.5", "v0.5-RC5" ]
 
 jobs:
   build:
@@ -30,7 +30,7 @@ jobs:
         context: .
         file: Dockerfile
         push: false
-        tags: datasqrl/sqrl-dependencies:v0.5.0-RC3
+        tags: datasqrl/sqrl-dependencies:v0.5.0-RC4
         platforms: linux/amd64
     - name: Build and Push sqrl-vertx Docker
       uses: docker/build-push-action@v3
@@ -38,7 +38,7 @@ jobs:
         context: sqrl-server/sqrl-server-vertx
         file: sqrl-server/sqrl-server-vertx/Dockerfile
         push: false
-        tags: datasqrl/sqrl-server:v0.5.0-RC3
+        tags: datasqrl/sqrl-server:v0.5.0-RC4
         platforms: linux/amd64
     - name: Build SQRL
       env:

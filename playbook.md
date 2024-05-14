@@ -36,7 +36,7 @@ docker build -t datasqrl/datasqrl-cmd .
 # To run int test:
 First, build the docker files:
 ```
-docker build . -t datasqrl/sqrl-dependencies:0.5-RC2
+docker build . -t datasqrl/sqrl-dependencies:0.5-RC4
 ```
 
 Second, build the docker server image:
