@@ -307,11 +307,6 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
     if (!pullupColumns.isEmpty() || result.getPathItems().size() > 1) {
       sqlNode = buildAndProjectLast(pullupColumns, sqlNode, result.getPathItems().get(0),
           result.getPathItems().get(result.getPathItems().size()-1));
-    } else if (result.getPathItems().size() == 1) {
-      //Just a table by itself
-      if (sqlNode instanceof SqlBasicCall) {
-        sqlNode = ((SqlBasicCall) sqlNode).getOperandList().get(0);
-      }
     }
 
     this.parameters = result.getParams(); //update parameters with new parameters
@@ -455,6 +450,18 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
   @Override
   public Result visitUserDefinedTableFunction(SqlCall node, Context context) {
     return new Result(node, NamePath.ROOT, List.of(), List.of(), Optional.empty(), parameters);
+  }
+
+  @Override
+  public Result visitValues(SqlCall node, Context context) {
+    return new Result(node, context.currentPath, List.of(), List.of(),
+        Optional.empty(), List.of());
+  }
+
+  @Override
+  public Result visitRow(SqlCall node, Context context) {
+    return new Result(node, context.currentPath, List.of(), List.of(),
+        Optional.empty(), List.of());
   }
 
   @Override

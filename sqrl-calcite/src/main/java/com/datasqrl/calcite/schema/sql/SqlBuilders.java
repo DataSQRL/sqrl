@@ -38,8 +38,7 @@ public class SqlBuilders {
     public SqlAliasCallBuilder(SqlCall node) {
       Preconditions.checkState(node.getKind() == SqlKind.AS);
       this.node = node.getOperator().createCall(SqlParserPos.ZERO,
-          node.getOperandList().get(0),
-          node.getOperandList().get(1));
+          node.getOperandList().subList(0, node.getOperandList().size()).toArray(SqlNode[]::new));
     }
 
     public String getAlias() {
@@ -48,6 +47,10 @@ public class SqlBuilders {
     }
 
     public SqlAliasCallBuilder setTable(SqlNode sqlNode) {
+      if (sqlNode.getKind() == SqlKind.AS) {
+        sqlNode = ((SqlCall) sqlNode).getOperandList().get(0);
+      }
+
       this.node.setOperand(0, sqlNode);
       return this;
     }
