@@ -351,12 +351,20 @@ public class AnnotatedLP implements RelHolder {
    * @return An updated {@link AnnotatedLP} with an additional projection.
    */
   public AnnotatedLP postProcess(@NonNull RelBuilder relBuilder, RelNode originalRelNode,
-      ExecutionAnalysis exec, ErrorCollector errors) {
+      SqrlConverterConfig config, boolean inlinePullups, ErrorCollector errors) {
     errors.checkFatal(type!=TableType.LOOKUP, "Lookup tables can only be used in temporal joins");
+    ExecutionAnalysis exec = config.getExecAnalysis();
     if (type==TableType.RELATION) exec.requireFeature(EngineFeature.RELATIONS);
 
+    //Now filters are always inlined
     AnnotatedLP input = this;
-    relBuilder.push(input.relNode);
+    if (inlinePullups) {
+      //Inline all pullups and don't pass them downstream in the DAG
+      input = this.inlineNowFilter(relBuilder, exec).inlineTopN(relBuilder, exec).inlineSort(relBuilder, exec);
+    }
+
+
+   relBuilder.push(input.relNode);
 
     Function<Integer,RelDataTypeField> getField = i -> relBuilder.peek().getRowType().getFieldList().get(i);
     Function<Integer,String> getFieldName = i -> getField.apply(i).getName();

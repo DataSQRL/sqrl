@@ -19,7 +19,6 @@ public class UseCaseCompileTest extends AbstractUseCaseTest {
 
   @ParameterizedTest
   @ArgumentsSource(UseCaseFiles.class)
-  @Disabled
   void testUsecase(Path script, Path graphQlFile, Path packageFile) {
     super.testUsecase(script, graphQlFile, packageFile);
   }

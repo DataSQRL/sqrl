@@ -907,7 +907,7 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"customer\", \"bucket\", \"order_count\", 1 AS \"__pk\"\nFROM (SELECT *\n  FROM \"ordernow1$1\"\n  WHERE CURRENT_TIMESTAMP < (\"bucket\" + INTERVAL '777600' SECOND(9))) AS \"t\"\nWHERE \"customer\" = $1 AND \"bucket\" = $2\nORDER BY \"bucket\" DESC NULLS LAST, 1",
+              "sql" : "SELECT *\nFROM (SELECT \"customer\", \"bucket\", \"order_count\", 1 AS \"__pk\"\n  FROM \"ordernow1$1\"\n  WHERE \"customer\" = $1 AND \"bucket\" = $2) AS \"t0\"\nWHERE CURRENT_TIMESTAMP < (\"bucket\" + INTERVAL '777600' SECOND(9))\nORDER BY \"bucket\" DESC NULLS LAST, \"__pk\"",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -943,7 +943,7 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"ordernow1$1\"\n  WHERE CURRENT_TIMESTAMP < (\"bucket\" + INTERVAL '777600' SECOND(9))) AS \"t\"\nWHERE \"customer\" = $1\nORDER BY \"bucket\" DESC NULLS LAST",
+              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"ordernow1$1\"\n  WHERE \"customer\" = $1) AS \"t\"\nWHERE CURRENT_TIMESTAMP < (\"bucket\" + INTERVAL '777600' SECOND(9))\nORDER BY \"bucket\" DESC NULLS LAST",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -974,7 +974,7 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"ordernow1$1\"\n  WHERE CURRENT_TIMESTAMP < (\"bucket\" + INTERVAL '777600' SECOND(9))) AS \"t\"\nWHERE \"bucket\" = $1\nORDER BY \"bucket\" DESC NULLS LAST, \"customer\"",
+              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"ordernow1$1\"\n  WHERE \"bucket\" = $1) AS \"t\"\nWHERE CURRENT_TIMESTAMP < (\"bucket\" + INTERVAL '777600' SECOND(9))\nORDER BY \"bucket\" DESC NULLS LAST, \"customer\"",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1052,7 +1052,7 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"bucket\", \"order_count\", 1 AS \"__pk\"\nFROM (SELECT *\n  FROM \"ordernow2$1\"\n  WHERE CURRENT_TIMESTAMP < (\"bucket\" + INTERVAL '777600' SECOND(9))) AS \"t\"\nWHERE \"bucket\" = $1\nORDER BY \"bucket\" DESC NULLS LAST, 1",
+              "sql" : "SELECT *\nFROM (SELECT \"bucket\", \"order_count\", 1 AS \"__pk\"\n  FROM \"ordernow2$1\"\n  WHERE \"bucket\" = $1) AS \"t0\"\nWHERE CURRENT_TIMESTAMP < (\"bucket\" + INTERVAL '777600' SECOND(9))\nORDER BY \"bucket\" DESC NULLS LAST, \"__pk\"",
               "parameters" : [
                 {
                   "type" : "arg",

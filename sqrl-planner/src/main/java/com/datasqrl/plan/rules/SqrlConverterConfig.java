@@ -27,8 +27,15 @@ public class SqrlConverterConfig {
   @Builder.Default
   List<String> fieldNames = null;
 
+  @Builder.Default
+  boolean inlinePullups = false;
+
   public SqrlConverterConfig withStage(ExecutionStage stage) {
     return toBuilder().stage(stage).build();
+  }
+
+  public ExecutionAnalysis getExecAnalysis() {
+    return ExecutionAnalysis.of(getStage());
   }
 
 }

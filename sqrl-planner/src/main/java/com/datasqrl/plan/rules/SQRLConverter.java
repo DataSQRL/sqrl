@@ -1,5 +1,6 @@
 package com.datasqrl.plan.rules;
 
+import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.global.AnalyzedAPIQuery;
@@ -28,14 +29,18 @@ import org.immutables.value.Value;
 public class SQRLConverter {
 
   RelBuilder relBuilder;
+  ExecutionPipeline pipeline;
+
+  public boolean isInlinePullups() {
+    return !pipeline.hasReadStages();
+  }
 
   public AnnotatedLP convert(final RelNode relNode, SqrlConverterConfig config, ErrorCollector errors) {
-    ExecutionAnalysis exec = ExecutionAnalysis.of(config.getStage());
-    SQRLLogicalPlanRewriter sqrl2sql = new SQRLLogicalPlanRewriter(relBuilder, exec,
-        errors, config);
+    SQRLLogicalPlanRewriter sqrl2sql = new SQRLLogicalPlanRewriter(relBuilder, config,
+        errors);
     RelNode converted = relNode.accept(sqrl2sql);
     AnnotatedLP alp = sqrl2sql.getRelHolder(converted);
-    alp = alp.postProcess(relBuilder, relNode, exec, errors);
+    alp = alp.postProcess(relBuilder, relNode, config, isInlinePullups(), errors);
     Preconditions.checkArgument(alp.select.isIdentity(),"Invalid select: %s", alp.select);
     return alp;
   }
