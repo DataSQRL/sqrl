@@ -22,12 +22,6 @@ public interface ExecutionStage {
 
   boolean supportsFunction(FunctionDefinition function);
 
-  /**
-   * Whether to pullup expensive stateful operators to be executed in the database
-   * @return
-   */
-  boolean doPullupOptimization();
-
   default boolean isRead() {
     return getEngine().getType().isRead();
   }

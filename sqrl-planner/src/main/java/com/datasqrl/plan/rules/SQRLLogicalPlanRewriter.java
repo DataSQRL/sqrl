@@ -106,13 +106,13 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
 
   ExecutionAnalysis exec;
 
-  SQRLLogicalPlanRewriter(@NonNull RelBuilder relBuilder, @NonNull ExecutionAnalysis exec,
-      @NonNull ErrorCollector errors, @NonNull SqrlConverterConfig config) {
+  SQRLLogicalPlanRewriter(@NonNull RelBuilder relBuilder,  @NonNull SqrlConverterConfig config,
+      @NonNull ErrorCollector errors) {
     this.relBuilder = relBuilder;
     this.rexUtil = new SqrlRexUtil(relBuilder.getTypeFactory());
     this.config = config;
     this.errors = errors;
-    this.exec = exec;
+    this.exec = config.getExecAnalysis();
   }
 
   private RelBuilder makeRelBuilder() {
@@ -122,14 +122,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
 
   @Override
   protected RelNode setRelHolder(AnnotatedLP relHolder) {
-    if (config.inlinePullups()) {
-      //Inline all pullups
-      RelBuilder relB = makeRelBuilder();
-      relHolder = relHolder.inlineNowFilter(relB, exec).inlineTopN(relB, exec);
-    }
-    super.setRelHolder(relHolder);
-    this.relHolder = relHolder;
-    RelNode result = relHolder.getRelNode();
+    RelNode result = super.setRelHolder(relHolder);
     //Some sanity checks
     Preconditions.checkArgument(!relHolder.type.hasTimestamp() || !relHolder.timestamp.is(
         Timestamps.Type.UNDEFINED),"Timestamp required");
@@ -864,7 +857,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
   @Override
   public RelNode visit(LogicalUnion logicalUnion) {
     List<AnnotatedLP> rawInputs = logicalUnion.getInputs().stream()
-        .map(in -> getRelHolder(in.accept(this)).inlineTopN(makeRelBuilder(), exec))
+        .map(in -> getRelHolder(in.accept(this)).inlineNowFilter(makeRelBuilder(), exec).inlineTopN(makeRelBuilder(), exec))
             .collect(Collectors.toUnmodifiableList());
     Preconditions.checkArgument(rawInputs.size() > 0);
     if (!rawInputs.stream().allMatch(alp -> alp.type.isStream()) || !logicalUnion.all) {
@@ -875,7 +868,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     List<AnnotatedLP> inputs = rawInputs.stream().map(meta -> meta.copy().sort(SortOrder.EMPTY)
             .build()) //We ignore the sorts of the inputs (if any) since they are streams and we union them the default sort is timestamp
         .map(meta -> meta.postProcess(
-            makeRelBuilder(), null, exec, errors)) //The post-process makes sure the input relations are aligned and timestamps are chosen (pk,selects,timestamps)
+            makeRelBuilder(), null, config, false, errors)) //The post-process makes sure the input relations are aligned and timestamps are chosen (pk,selects,timestamps)
         .collect(Collectors.toList());
 
     //Calcite ensures that a union has the same select columns. We need to also ensure primary keys and timestamps align.
@@ -1103,7 +1096,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
       PkAndSelect pkAndSelect = addedTimestamp.getKey();
       Timestamps timestamp = addedTimestamp.getValue();
 
-      //Convert now-filter to sliding window and add as hint
+                                                                                              //Convert now-filter to sliding window and add as hint
       long intervalWidthMs = nowFilter.getPredicate().getIntervalLength();
       // TODO: extract slide-width from hint
       long slideWidthMs = intervalWidthMs / config.getSlideWindowPanes();

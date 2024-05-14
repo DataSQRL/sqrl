@@ -13,7 +13,6 @@ public class EngineStage implements ExecutionStage {
 
   String name;
   ExecutionEngine engine;
-  boolean pullupOptimization;
 
 
   @Override
@@ -26,13 +25,5 @@ public class EngineStage implements ExecutionStage {
     return engine.supports(function);
   }
 
-
-  /**
-   * Whether to pullup expensive stateful operators to be executed in the database
-   * @return
-   */
-  public boolean doPullupOptimization() {
-    return pullupOptimization;
-  }
 
 }

@@ -104,7 +104,7 @@ public abstract class PhysicalRelationalTable extends ScriptRelationalTable impl
   public void setPlannedRelNode(@NonNull SQRLConverter.TablePlan planned) {
     Preconditions.checkArgument(plannedRelNode == null, "Table has already been planned");
     RelNode relNode = planned.getRelNode();
-    Preconditions.checkArgument(relNode.getRowType().equalsSansFieldNames(getRowType()), "Row types do not match");
+    Preconditions.checkArgument(relNode.getRowType().equalsSansFieldNames(getRowType()), "Row types do not match: %s vs %s", getRowType(), relNode.getRowType());
     Preconditions.checkArgument(relNode.getRowType().getFieldNames().subList(0,getNumSelects()).equals(getRowType().getFieldNames().subList(0,getNumSelects())), "Names do not match");
     this.plannedRelNode = relNode;
     this.pullups = planned.getPullups();

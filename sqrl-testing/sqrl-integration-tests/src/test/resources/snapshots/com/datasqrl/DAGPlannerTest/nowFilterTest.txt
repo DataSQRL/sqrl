@@ -529,7 +529,7 @@ LogicalTableScan(table=[[orders$2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\nFROM (SELECT *\n  FROM \"historicorders$1\"\n  WHERE CURRENT_TIMESTAMP <= (\"time\" + INTERVAL '86313600' SECOND(11))) AS \"t\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, 1",
+              "sql" : "SELECT *\nFROM (SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\n  FROM \"historicorders$1\"\n  WHERE \"id\" = $1 AND \"time\" = $2) AS \"t0\"\nWHERE CURRENT_TIMESTAMP <= (\"time\" + INTERVAL '86313600' SECOND(11))\nORDER BY \"time\" DESC NULLS LAST, \"__pk\"",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -585,7 +585,7 @@ LogicalTableScan(table=[[orders$2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"historicorders$1\"\n  WHERE CURRENT_TIMESTAMP <= (\"time\" + INTERVAL '86313600' SECOND(11))) AS \"t\"\nWHERE \"id\" = $1\nORDER BY \"time\" DESC NULLS LAST",
+              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"historicorders$1\"\n  WHERE \"id\" = $1) AS \"t\"\nWHERE CURRENT_TIMESTAMP <= (\"time\" + INTERVAL '86313600' SECOND(11))\nORDER BY \"time\" DESC NULLS LAST",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -616,7 +616,7 @@ LogicalTableScan(table=[[orders$2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"historicorders$1\"\n  WHERE CURRENT_TIMESTAMP <= (\"time\" + INTERVAL '86313600' SECOND(11))) AS \"t\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
+              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"historicorders$1\"\n  WHERE \"time\" = $1) AS \"t\"\nWHERE CURRENT_TIMESTAMP <= (\"time\" + INTERVAL '86313600' SECOND(11))\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -679,7 +679,7 @@ LogicalTableScan(table=[[orders$2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"customer\", \"bucket\", \"order_count\", 1 AS \"__pk\"\nFROM (SELECT *\n  FROM \"orderagg1$1\"\n  WHERE CURRENT_TIMESTAMP < (\"bucket\" + INTERVAL '86401' SECOND(8))) AS \"t\"\nWHERE \"customer\" = $1 AND \"bucket\" = $2\nORDER BY \"bucket\" DESC NULLS LAST, 1",
+              "sql" : "SELECT *\nFROM (SELECT \"customer\", \"bucket\", \"order_count\", 1 AS \"__pk\"\n  FROM \"orderagg1$1\"\n  WHERE \"customer\" = $1 AND \"bucket\" = $2) AS \"t0\"\nWHERE CURRENT_TIMESTAMP < (\"bucket\" + INTERVAL '86401' SECOND(8))\nORDER BY \"bucket\" DESC NULLS LAST, \"__pk\"",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -715,7 +715,7 @@ LogicalTableScan(table=[[orders$2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"orderagg1$1\"\n  WHERE CURRENT_TIMESTAMP < (\"bucket\" + INTERVAL '86401' SECOND(8))) AS \"t\"\nWHERE \"bucket\" = $1\nORDER BY \"bucket\" DESC NULLS LAST, \"customer\"",
+              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"orderagg1$1\"\n  WHERE \"bucket\" = $1) AS \"t\"\nWHERE CURRENT_TIMESTAMP < (\"bucket\" + INTERVAL '86401' SECOND(8))\nORDER BY \"bucket\" DESC NULLS LAST, \"customer\"",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -746,7 +746,7 @@ LogicalTableScan(table=[[orders$2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"orderagg1$1\"\n  WHERE CURRENT_TIMESTAMP < (\"bucket\" + INTERVAL '86401' SECOND(8))) AS \"t\"\nWHERE \"customer\" = $1\nORDER BY \"bucket\" DESC NULLS LAST",
+              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"orderagg1$1\"\n  WHERE \"customer\" = $1) AS \"t\"\nWHERE CURRENT_TIMESTAMP < (\"bucket\" + INTERVAL '86401' SECOND(8))\nORDER BY \"bucket\" DESC NULLS LAST",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -784,7 +784,7 @@ LogicalTableScan(table=[[orders$2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"orderagg2$1\"\n  WHERE CURRENT_TIMESTAMP < (\"bucket\" + INTERVAL '86401' SECOND(8))) AS \"t\"\nWHERE \"customer\" = $1\nORDER BY \"bucket\" DESC NULLS LAST",
+              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"orderagg2$1\"\n  WHERE \"customer\" = $1) AS \"t\"\nWHERE CURRENT_TIMESTAMP < (\"bucket\" + INTERVAL '86401' SECOND(8))\nORDER BY \"bucket\" DESC NULLS LAST",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -820,7 +820,7 @@ LogicalTableScan(table=[[orders$2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"customer\", \"bucket\", \"order_count\", 1 AS \"__pk\"\nFROM (SELECT *\n  FROM \"orderagg2$1\"\n  WHERE CURRENT_TIMESTAMP < (\"bucket\" + INTERVAL '86401' SECOND(8))) AS \"t\"\nWHERE \"customer\" = $1 AND \"bucket\" = $2\nORDER BY \"bucket\" DESC NULLS LAST, 1",
+              "sql" : "SELECT *\nFROM (SELECT \"customer\", \"bucket\", \"order_count\", 1 AS \"__pk\"\n  FROM \"orderagg2$1\"\n  WHERE \"customer\" = $1 AND \"bucket\" = $2) AS \"t0\"\nWHERE CURRENT_TIMESTAMP < (\"bucket\" + INTERVAL '86401' SECOND(8))\nORDER BY \"bucket\" DESC NULLS LAST, \"__pk\"",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -876,7 +876,7 @@ LogicalTableScan(table=[[orders$2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"orderagg2$1\"\n  WHERE CURRENT_TIMESTAMP < (\"bucket\" + INTERVAL '86401' SECOND(8))) AS \"t\"\nWHERE \"bucket\" = $1\nORDER BY \"bucket\" DESC NULLS LAST, \"customer\"",
+              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"orderagg2$1\"\n  WHERE \"bucket\" = $1) AS \"t\"\nWHERE CURRENT_TIMESTAMP < (\"bucket\" + INTERVAL '86401' SECOND(8))\nORDER BY \"bucket\" DESC NULLS LAST, \"customer\"",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -919,7 +919,7 @@ LogicalTableScan(table=[[orders$2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\nFROM (SELECT *\n  FROM \"orderfilter$1\"\n  WHERE CURRENT_TIMESTAMP < (\"time\" + INTERVAL '86400' SECOND(8))) AS \"t\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, 1",
+              "sql" : "SELECT *\nFROM (SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\n  FROM \"orderfilter$1\"\n  WHERE \"id\" = $1 AND \"time\" = $2) AS \"t0\"\nWHERE CURRENT_TIMESTAMP < (\"time\" + INTERVAL '86400' SECOND(8))\nORDER BY \"time\" DESC NULLS LAST, \"__pk\"",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -955,7 +955,7 @@ LogicalTableScan(table=[[orders$2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"orderfilter$1\"\n  WHERE CURRENT_TIMESTAMP < (\"time\" + INTERVAL '86400' SECOND(8))) AS \"t\"\nWHERE \"id\" = $1\nORDER BY \"time\" DESC NULLS LAST",
+              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"orderfilter$1\"\n  WHERE \"id\" = $1) AS \"t\"\nWHERE CURRENT_TIMESTAMP < (\"time\" + INTERVAL '86400' SECOND(8))\nORDER BY \"time\" DESC NULLS LAST",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1006,7 +1006,7 @@ LogicalTableScan(table=[[orders$2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"orderfilter$1\"\n  WHERE CURRENT_TIMESTAMP < (\"time\" + INTERVAL '86400' SECOND(8))) AS \"t\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
+              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"orderfilter$1\"\n  WHERE \"time\" = $1) AS \"t\"\nWHERE CURRENT_TIMESTAMP < (\"time\" + INTERVAL '86400' SECOND(8))\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1201,7 +1201,7 @@ LogicalTableScan(table=[[orders$2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"recentorders$1\"\n  WHERE CURRENT_TIMESTAMP <= (\"time\" + INTERVAL '1' SECOND(4))) AS \"t\"\nWHERE \"id\" = $1\nORDER BY \"time\" DESC NULLS LAST",
+              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"recentorders$1\"\n  WHERE \"id\" = $1) AS \"t\"\nWHERE CURRENT_TIMESTAMP <= (\"time\" + INTERVAL '1' SECOND(4))\nORDER BY \"time\" DESC NULLS LAST",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1237,7 +1237,7 @@ LogicalTableScan(table=[[orders$2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\nFROM (SELECT *\n  FROM \"recentorders$1\"\n  WHERE CURRENT_TIMESTAMP <= (\"time\" + INTERVAL '1' SECOND(4))) AS \"t\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, 1",
+              "sql" : "SELECT *\nFROM (SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\n  FROM \"recentorders$1\"\n  WHERE \"id\" = $1 AND \"time\" = $2) AS \"t0\"\nWHERE CURRENT_TIMESTAMP <= (\"time\" + INTERVAL '1' SECOND(4))\nORDER BY \"time\" DESC NULLS LAST, \"__pk\"",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1293,7 +1293,7 @@ LogicalTableScan(table=[[orders$2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"recentorders$1\"\n  WHERE CURRENT_TIMESTAMP <= (\"time\" + INTERVAL '1' SECOND(4))) AS \"t\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
+              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"recentorders$1\"\n  WHERE \"time\" = $1) AS \"t\"\nWHERE CURRENT_TIMESTAMP <= (\"time\" + INTERVAL '1' SECOND(4))\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
               "parameters" : [
                 {
                   "type" : "arg",
