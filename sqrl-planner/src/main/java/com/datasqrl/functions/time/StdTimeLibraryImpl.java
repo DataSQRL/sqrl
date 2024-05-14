@@ -37,7 +37,7 @@ public class StdTimeLibraryImpl extends AbstractFunctionModule implements StdLib
       EPOCH_TO_TIMESTAMP,
       EPOCH_MILLI_TO_TIMESTAMP,
       TIMESTAMP_TO_EPOCH,
-//      TIMESTAMP_TO_EPOCH_MILLI,
+      TIMESTAMP_TO_EPOCH_MILLI,
       STRING_TO_TIMESTAMP,
       TIMESTAMP_TO_STRING,
       AT_ZONE,
