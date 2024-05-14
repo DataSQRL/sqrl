@@ -1,0 +1,378 @@
+>>>pipeline_explain.txt
+=== Customer
+ID:     customer$2
+Type:   stream
+Stage:  streams
+Primary Key: _uuid
+Timestamp  : _ingest_time
+Schema:
+ - customerid: BIGINT NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - lastUpdated: BIGINT NOT NULL
+ - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+Plan:
+LogicalTableScan(table=[[customer$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+
+=== OrderCustomer1
+ID:     ordercustomer1$1
+Type:   stream
+Stage:  database
+Inputs: customer$2, orders$2
+Primary Key: _uuid, _uuid0
+Timestamp  : __timestamp
+Schema:
+ - id: BIGINT NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+ - _uuid0: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+ - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Plan:
+LogicalProject(id=[$0], name=[$8], _uuid=[$5], _uuid0=[$11], __timestamp=[CASE(<($4, $10), $10, $4)])
+  LogicalJoin(condition=[=($1, $6)], joinType=[inner]) hints[JoinCostHint options:[STREAM, STREAM, 1, NONE]]
+    LogicalTableScan(table=[[orders$2]])
+    LogicalTableScan(table=[[customer$2]])
+
+=== OrderCustomer2
+ID:     ordercustomer2$1
+Type:   stream
+Stage:  database
+Inputs: customer$2, orders$2
+Primary Key: _uuid, _uuid0
+Timestamp  : timestamp
+Schema:
+ - id: BIGINT NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+ - _uuid0: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+Plan:
+LogicalProject(id=[$0], name=[$8], timestamp=[GREATEST($4, $10)], _uuid=[$5], _uuid0=[$11])
+  LogicalJoin(condition=[=($1, $6)], joinType=[inner]) hints[JoinCostHint options:[STREAM, STREAM, 1, NONE]]
+    LogicalTableScan(table=[[orders$2]])
+    LogicalTableScan(table=[[customer$2]])
+
+=== OrderCustomer3
+ID:     ordercustomer3$1
+Type:   stream
+Stage:  database
+Inputs: customer$2, orders$2, product$2
+Primary Key: _uuid, _uuid0, _uuid1
+Timestamp  : __timestamp
+Schema:
+ - id: BIGINT NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - name0: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+ - _uuid0: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+ - _uuid1: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+ - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Plan:
+LogicalProject(id=[$0], name=[$8], name0=[$13], _uuid=[$5], _uuid0=[$11], _uuid1=[$17], __timestamp=[CASE(<($4, $10), CASE(<($10, $16), $16, $10), CASE(<($4, $16), $16, $4))])
+  LogicalJoin(condition=[=($12, $6)], joinType=[inner]) hints[JoinCostHint options:[STREAM, STREAM, 1, NONE]]
+    LogicalJoin(condition=[=($1, $6)], joinType=[inner]) hints[JoinCostHint options:[STREAM, STREAM, 1, NONE]]
+      LogicalTableScan(table=[[orders$2]])
+      LogicalTableScan(table=[[customer$2]])
+    LogicalTableScan(table=[[product$2]])
+
+=== Orders
+ID:     orders$2
+Type:   stream
+Stage:  streams
+Primary Key: _uuid
+Timestamp  : _ingest_time
+Schema:
+ - id: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - entries: RecordType(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+ - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+Plan:
+LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+
+=== Product
+ID:     product$2
+Type:   stream
+Stage:  streams
+Primary Key: _uuid
+Timestamp  : _ingest_time
+Schema:
+ - productid: BIGINT NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - description: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - category: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+Plan:
+LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+
+>>>flink.json
+{
+  "flinkSql" : [
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptostring` AS 'com.datasqrl.time.TimestampToString' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofmonth` AS 'com.datasqrl.time.EndOfMonth' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `tojson` AS 'com.datasqrl.json.ToJson' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptoepochmilli` AS 'com.datasqrl.time.TimestampToEpochMilli' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofweek` AS 'com.datasqrl.time.EndOfWeek' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `parsetimestamp` AS 'com.datasqrl.time.ParseTimestamp' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `uuid` AS 'com.datasqrl.secure.Uuid' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochmillitotimestamp` AS 'com.datasqrl.time.EpochMilliToTimestamp' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofminute` AS 'com.datasqrl.time.EndOfMinute' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptoepoch` AS 'com.datasqrl.time.TimestampToEpoch' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofsecond` AS 'com.datasqrl.time.EndOfSecond' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochtotimestamp` AS 'com.datasqrl.time.EpochToTimestamp' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofday` AS 'com.datasqrl.time.EndOfDay' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `atzone` AS 'com.datasqrl.time.AtZone' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofhour` AS 'com.datasqrl.time.EndOfHour' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofyear` AS 'com.datasqrl.time.EndOfYear' LANGUAGE JAVA;",
+    "CREATE TEMPORARY TABLE `orders$1` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,\n  `_ingest_time` AS PROCTIME(),\n  `_uuid` AS UUID(),\n  PRIMARY KEY (`_uuid`) NOT ENFORCED\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
+    "CREATE TEMPORARY TABLE `product$1` (\n  `productid` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_ingest_time` AS PROCTIME(),\n  `_uuid` AS UUID(),\n  PRIMARY KEY (`_uuid`) NOT ENFORCED\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
+    "CREATE TEMPORARY TABLE `customer$1` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `_ingest_time` AS PROCTIME(),\n  `_uuid` AS UUID(),\n  PRIMARY KEY (`_uuid`) NOT ENFORCED\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
+    "CREATE TEMPORARY TABLE `customer$2` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,\n  PRIMARY KEY (`_uuid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'customer$2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `orders$2` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,\n  PRIMARY KEY (`_uuid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orders$2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `product$2` (\n  `productid` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,\n  PRIMARY KEY (`_uuid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'product$2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `customer$1`;",
+    "CREATE VIEW `table$2`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`, `_ingest_time`, `_uuid`\nFROM `orders$1`;",
+    "CREATE VIEW `table$3`\nAS\nSELECT *\nFROM `product$1`;",
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer$2`\n(SELECT *\nFROM `table$1`)\n;\nINSERT INTO `orders$2`\n(SELECT *\nFROM `table$2`)\n;\nINSERT INTO `product$2`\n(SELECT *\nFROM `table$3`)\n;\nEND;"
+  ],
+  "connectors" : [
+    "jdbc-sqrl",
+    "filesystem"
+  ],
+  "formats" : [
+    "json"
+  ]
+}
+>>>kafka.json
+{
+  "topics" : [ ]
+}
+>>>postgres.json
+{
+  "ddl" : [
+    {
+      "name" : "customer$2",
+      "columns" : [
+        "\"customerid\" BIGINT NOT NULL",
+        "\"email\" TEXT NOT NULL",
+        "\"name\" TEXT NOT NULL",
+        "\"lastUpdated\" BIGINT NOT NULL",
+        "\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL",
+        "\"_uuid\" TEXT NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"_uuid\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS customer$2 (\"customerid\" BIGINT NOT NULL,\"email\" TEXT NOT NULL,\"name\" TEXT NOT NULL,\"lastUpdated\" BIGINT NOT NULL,\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"_uuid\" TEXT NOT NULL , PRIMARY KEY (\"_uuid\"));"
+    },
+    {
+      "name" : "orders$2",
+      "columns" : [
+        "\"id\" BIGINT NOT NULL",
+        "\"customerid\" BIGINT NOT NULL",
+        "\"time\" TIMESTAMP WITH TIME ZONE NOT NULL",
+        "\"entries\" JSONB NOT NULL",
+        "\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL",
+        "\"_uuid\" TEXT NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"_uuid\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS orders$2 (\"id\" BIGINT NOT NULL,\"customerid\" BIGINT NOT NULL,\"time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"entries\" JSONB NOT NULL,\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"_uuid\" TEXT NOT NULL , PRIMARY KEY (\"_uuid\"));"
+    },
+    {
+      "name" : "product$2",
+      "columns" : [
+        "\"productid\" BIGINT NOT NULL",
+        "\"name\" TEXT NOT NULL",
+        "\"description\" TEXT NOT NULL",
+        "\"category\" TEXT NOT NULL",
+        "\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL",
+        "\"_uuid\" TEXT NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"_uuid\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS product$2 (\"productid\" BIGINT NOT NULL,\"name\" TEXT NOT NULL,\"description\" TEXT NOT NULL,\"category\" TEXT NOT NULL,\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"_uuid\" TEXT NOT NULL , PRIMARY KEY (\"_uuid\"));"
+    }
+  ]
+}
+>>>vertx.json
+{
+  "model" : {
+    "coords" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Customer",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"customer$2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"_uuid\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "OrderCustomer1",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"orders$2\".\"id\", \"customer$2\".\"name\", \"orders$2\".\"_uuid\", \"customer$2\".\"_uuid\" AS \"_uuid0\", CASE WHEN \"orders$2\".\"_ingest_time\" < \"customer$2\".\"_ingest_time\" THEN \"customer$2\".\"_ingest_time\" ELSE \"orders$2\".\"_ingest_time\" END AS \"__timestamp\"\nFROM \"orders$2\"\n INNER JOIN \"customer$2\" ON \"orders$2\".\"customerid\" = \"customer$2\".\"customerid\"\nORDER BY CASE WHEN \"orders$2\".\"_ingest_time\" < \"customer$2\".\"_ingest_time\" THEN \"customer$2\".\"_ingest_time\" ELSE \"orders$2\".\"_ingest_time\" END DESC NULLS LAST, \"orders$2\".\"_uuid\", \"customer$2\".\"_uuid\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "OrderCustomer2",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"orders$2\".\"id\", \"customer$2\".\"name\", GREATEST(\"orders$2\".\"_ingest_time\", \"customer$2\".\"_ingest_time\") AS \"timestamp\", \"orders$2\".\"_uuid\", \"customer$2\".\"_uuid\" AS \"_uuid0\"\nFROM \"orders$2\"\n INNER JOIN \"customer$2\" ON \"orders$2\".\"customerid\" = \"customer$2\".\"customerid\"\nORDER BY GREATEST(\"orders$2\".\"_ingest_time\", \"customer$2\".\"_ingest_time\") DESC NULLS LAST, \"orders$2\".\"_uuid\", \"customer$2\".\"_uuid\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "OrderCustomer3",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"orders$2\".\"id\", \"customer$2\".\"name\", \"product$2\".\"name\" AS \"name0\", \"orders$2\".\"_uuid\", \"customer$2\".\"_uuid\" AS \"_uuid0\", \"product$2\".\"_uuid\" AS \"_uuid1\", CASE WHEN \"orders$2\".\"_ingest_time\" < \"customer$2\".\"_ingest_time\" THEN CASE WHEN \"customer$2\".\"_ingest_time\" < \"product$2\".\"_ingest_time\" THEN \"product$2\".\"_ingest_time\" ELSE \"customer$2\".\"_ingest_time\" END ELSE CASE WHEN \"orders$2\".\"_ingest_time\" < \"product$2\".\"_ingest_time\" THEN \"product$2\".\"_ingest_time\" ELSE \"orders$2\".\"_ingest_time\" END END AS \"__timestamp\"\nFROM \"orders$2\"\n INNER JOIN \"customer$2\" ON \"orders$2\".\"customerid\" = \"customer$2\".\"customerid\"\n INNER JOIN \"product$2\" ON \"customer$2\".\"customerid\" = \"product$2\".\"productid\"\nORDER BY CASE WHEN \"orders$2\".\"_ingest_time\" < \"customer$2\".\"_ingest_time\" THEN CASE WHEN \"customer$2\".\"_ingest_time\" < \"product$2\".\"_ingest_time\" THEN \"product$2\".\"_ingest_time\" ELSE \"customer$2\".\"_ingest_time\" END ELSE CASE WHEN \"orders$2\".\"_ingest_time\" < \"product$2\".\"_ingest_time\" THEN \"product$2\".\"_ingest_time\" ELSE \"orders$2\".\"_ingest_time\" END END DESC NULLS LAST, \"orders$2\".\"_uuid\", \"customer$2\".\"_uuid\", \"product$2\".\"_uuid\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Orders",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"orders$2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"_uuid\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Product",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"product$2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"_uuid\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      }
+    ],
+    "mutations" : [ ],
+    "subscriptions" : [ ],
+    "schema" : {
+      "type" : "string",
+      "type" : "string",
+      "schema" : "type Customer {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype OrderCustomer1 {\n  id: Float!\n  name: String!\n}\n\ntype OrderCustomer2 {\n  id: Float!\n  name: String!\n  timestamp: DateTime!\n}\n\ntype OrderCustomer3 {\n  id: Float!\n  name: String!\n  name0: String!\n}\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries(limit: Int = 10, offset: Int = 0): [entries!]\n}\n\ntype Product {\n  productid: Float!\n  name: String!\n  description: String!\n  category: String!\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  OrderCustomer1(limit: Int = 10, offset: Int = 0): [OrderCustomer1!]\n  OrderCustomer2(limit: Int = 10, offset: Int = 0): [OrderCustomer2!]\n  OrderCustomer3(limit: Int = 10, offset: Int = 0): [OrderCustomer3!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  Product(limit: Int = 10, offset: Int = 0): [Product!]\n}\n\ntype entries {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n"
+    }
+  }
+}
