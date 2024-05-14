@@ -1,10 +1,10 @@
 package com.datasqrl;
 
+import com.datasqrl.cmd.AssertStatusHook;
 import com.datasqrl.cmd.RootCommand;
-import com.datasqrl.cmd.StatusHook;
 import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.SnapshotTest.Snapshot;
-import com.datasqrl.util.StringUtil;
+import com.google.common.base.Strings;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitResult;
@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
@@ -21,6 +22,7 @@ import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -31,12 +33,10 @@ public abstract class AbstractAssetSnapshotTest {
 
   public Path buildDir = null;
   public final Path deployDir;
-  protected final StatusHook hook;
   protected Snapshot snapshot;
 
-  protected AbstractAssetSnapshotTest(Path deployDir, StatusHook hook) {
+  protected AbstractAssetSnapshotTest(Path deployDir) {
     this.deployDir = deployDir;
-    this.hook = hook;
   }
 
   @BeforeEach
@@ -76,6 +76,10 @@ public abstract class AbstractAssetSnapshotTest {
     snapshot.createOrValidate();
   }
 
+  protected void createFailSnapshot(String failMessage) {
+    snapshot.addContent(failMessage);
+  }
+
   @SneakyThrows
   private void snapshotFiles(Path path, Predicate<Path> predicate) {
     if (path==null || !Files.isDirectory(path)) return;
@@ -104,10 +108,13 @@ public abstract class AbstractAssetSnapshotTest {
     }
   }
 
-  protected int execute(Path rootDir, String... args) {
+  protected AssertStatusHook execute(Path rootDir, String... args) {
     buildDir = rootDir.resolve("build");
     List<String> argslist = new ArrayList<>(List.of(args));
-    return new RootCommand(rootDir,hook).getCmd().execute(argslist.toArray(String[]::new));
+    AssertStatusHook statusHook = new AssertStatusHook();
+    int code = new RootCommand(rootDir,statusHook).getCmd().execute(argslist.toArray(String[]::new));
+    if (statusHook.isSuccess()) Assertions.assertEquals(0, code);
+    return statusHook;
   }
 
 
@@ -147,7 +154,6 @@ public abstract class AbstractAssetSnapshotTest {
   }
 
   private static final String SQRL_EXTENSION = ".sqrl";
-  private static final String DISABLED_FLAG = "disabled";
 
   @SneakyThrows
   public static Stream<Path> getSQRLScripts(Path directory) {
@@ -155,8 +161,26 @@ public abstract class AbstractAssetSnapshotTest {
         .filter(path -> !Files.isDirectory(path))
         .filter(path -> path.toString().endsWith(SQRL_EXTENSION))
         .filter(path-> !path.toString().contains("/build/"))
-        .filter(path -> !StringUtil.removeFromEnd(path.getFileName().toString(), SQRL_EXTENSION).endsWith(DISABLED_FLAG))
+        .filter(path -> TestNameModifier.of(path)!=TestNameModifier.disabled)
         .sorted();
+  }
+
+  public enum TestNameModifier {
+    none, disabled, fail;
+
+    public static TestNameModifier of(String filename) {
+      if (Strings.isNullOrEmpty(filename)) return none;
+      String name = FileUtil.separateExtension(filename).getLeft().toLowerCase();
+      return Arrays.stream(TestNameModifier.values())
+          .filter(mod -> name.endsWith(mod.name()))
+          .findFirst().orElse(none);
+    }
+
+    public static TestNameModifier of(Path file) {
+      if (file==null) return none;
+      return TestNameModifier.of(file.getFileName().toString());
+    }
+
   }
 
   @AllArgsConstructor

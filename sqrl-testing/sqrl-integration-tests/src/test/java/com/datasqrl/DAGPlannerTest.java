@@ -1,5 +1,6 @@
 package com.datasqrl;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.datasqrl.cmd.AssertStatusHook;
@@ -16,17 +17,23 @@ public class DAGPlannerTest extends AbstractAssetSnapshotTest {
   public static final Path SCRIPT_DIR = getResourcesDirectory("dagplanner");
 
   protected DAGPlannerTest() {
-    super(SCRIPT_DIR.resolve("deploy-assets"), AssertStatusHook.INSTANCE);
+    super(SCRIPT_DIR.resolve("deploy-assets"));
   }
 
   @ParameterizedTest
   @ArgumentsSource(DagPlannerSQRLFiles.class)
   void testScripts(Path script) {
     assertTrue(Files.exists(script));
+    boolean expectFailure = TestNameModifier.of(script)==TestNameModifier.fail;
     this.snapshot = Snapshot.of(getDisplayName(script), getClass());
-    execute(SCRIPT_DIR, "compile", script.getFileName().toString(), "-t", deployDir.toString(), "--nolookup",
+    AssertStatusHook hook = execute(SCRIPT_DIR, "compile", script.getFileName().toString(), "-t", deployDir.toString(), "--nolookup",
         "--profile", "../../../../../../profiles/flink-1.16");
-    createSnapshot();
+    assertEquals(expectFailure, hook.isFailed(), hook.getFailMessage());
+    if (expectFailure) {
+      createFailSnapshot(hook.getFailMessage());
+    } else {
+      createSnapshot();
+    }
   }
 
   @Override
