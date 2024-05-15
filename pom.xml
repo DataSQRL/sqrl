@@ -34,6 +34,7 @@
     <commons-lang3.version>3.12.0</commons-lang3.version>
     <commons-config.version>2.9.0</commons-config.version>
     <commons-collections.version>4.4</commons-collections.version>
+    <commons-csv.version>1.9.0</commons-csv.version>
     <httpcomponents.version>4.5.14</httpcomponents.version>
     <commons-bean.version>1.9.4</commons-bean.version>
     <h2.version>2.1.214</h2.version>
@@ -316,6 +317,11 @@
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-collections4</artifactId>
         <version>${commons-collections.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-csv</artifactId>
+        <version>${commons-csv.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.httpcomponents</groupId>
