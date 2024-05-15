@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import org.apache.calcite.rel.core.CorrelationId;
 import org.apache.calcite.rel.core.Filter;
@@ -176,9 +177,15 @@ public class FlinkRelToSqlConverter extends RelToSqlConverter {
     SqlCall call = SqlStdOperatorTable.UNNEST.createCall(SqlParserPos.ZERO,
         new SqlIdentifier(List.of(leftResult2.neededAlias, fieldAccess.getField().getName()),
             SqlParserPos.ZERO));
+    List<SqlNode> ops = new ArrayList<>();
+    ops.add(call);
+    ops.add(new SqlIdentifier(rightResult.neededAlias, POS));
+    ops.addAll(uncollect.getRowType().getFieldNames().stream()
+        .map(r->new SqlIdentifier(r, SqlParserPos.ZERO))
+        .collect(Collectors.toList()));
+
     final SqlNode rightLateralAs =
-        SqlStdOperatorTable.AS.createCall(POS, call,
-            new SqlIdentifier(rightResult.neededAlias, POS));
+        SqlStdOperatorTable.AS.createCall(POS, ops.toArray(SqlNode[]::new));
 
     final SqlNode join =
         new SqlJoin(POS,
