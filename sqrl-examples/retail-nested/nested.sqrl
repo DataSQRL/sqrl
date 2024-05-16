@@ -1,3 +1,0 @@
-IMPORT nested-data.Orders;
-
-ProductCount := SELECT e.productid, COUNT(e.note) AS numNotes, SUM(e.quantity) AS quantity FROM Orders.entries e GROUP BY e.productid;

@@ -1,5 +1,0 @@
-IMPORT ecommerce-avro.Orders;
-IMPORT time.*;
-
-OrderCount := SELECT endOfSecond(_source_time) timeSec, COUNT(1) as number, SUM(e.quantity) as volume FROM Orders o JOIN o.entries e
-                    GROUP BY timeSec;

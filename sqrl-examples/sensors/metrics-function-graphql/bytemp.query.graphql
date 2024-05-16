@@ -1,6 +1,0 @@
-{
-SecReadingByTemp(temp: 25.5) {
-    sensorid
-    timeSec
-    temp
-}}
