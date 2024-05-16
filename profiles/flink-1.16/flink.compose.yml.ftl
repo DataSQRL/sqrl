@@ -11,9 +11,9 @@ services:
       - |
         FLINK_PROPERTIES=
         jobmanager.rpc.address: flink-jobmanager
-<#if mountDir??>
+<#if config["values"]?? && config["values"]["mountDir"]??>
     volumes:
-      - ${mountDir}:${mountDir}
+      - ${config["values"]["mountDir"]}:${config["values"]["mountDir"]}
 </#if>
   flink-taskmanager:
     build:
@@ -27,9 +27,9 @@ services:
         FLINK_PROPERTIES=
         jobmanager.rpc.address: flink-jobmanager
         taskmanager.numberOfTaskSlots: 1
-<#if mountDir??>
+<#if config["values"]?? && config["values"]["mountDir"]??>
     volumes:
-      - ${mountDir}:${mountDir}
+      - ${config["values"]["mountDir"]}:${config["values"]["mountDir"]}
 </#if>
   flink-job-submitter:
     build:

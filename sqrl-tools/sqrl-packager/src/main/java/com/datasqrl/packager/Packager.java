@@ -250,7 +250,7 @@ public class Packager {
   }
 
   @SneakyThrows
-  public void postprocess(PackageJson sqrlConfig, Path rootDir, Path targetDir, PhysicalPlan plan, Optional<Path> mountDirectory,
+  public void postprocess(PackageJson sqrlConfig, Path rootDir, Path targetDir, PhysicalPlan plan,
       TestPlan testPlan, List<String> profiles) {
 
     Map<String, Object> plans = new HashMap<>();
@@ -276,7 +276,7 @@ public class Packager {
           ? rootDir.resolve(profile)
           : namepath2Path(rootDir.resolve(BUILD_DIR_NAME), NamePath.parse(profile));
 
-      copyToDeploy(targetDir, profilePath, plan, testPlan, sqrlConfig, mountDirectory, plans);
+      copyToDeploy(targetDir, profilePath, plan, testPlan, sqrlConfig, plans);
     }
 
     copyFolder(targetDir, DATA_DIR);
@@ -309,7 +309,7 @@ public class Packager {
 
   @SneakyThrows
   private void copyToDeploy(Path targetDir, Path profile, PhysicalPlan plan, TestPlan testPlan,
-      PackageJson sqrlConfig, Optional<Path> mountDirectory, Map<String, Object> plans) {
+      PackageJson sqrlConfig, Map<String, Object> plans) {
     if (!Files.exists(targetDir)) {
       Files.createDirectories(targetDir);
     }
@@ -318,7 +318,6 @@ public class Packager {
     templateConfig.put("config", sqrlConfig.toMap()); //Add SQRL config
     templateConfig.put("environment", System.getenv()); //Add environmental variables
     templateConfig.putAll(plans);
-    mountDirectory.map(m->templateConfig.put("mountDir", m.toAbsolutePath().toString()));
     // Copy each file and directory from the profile path to the target directory
     if (!Files.isDirectory(profile)) {
       throw new RuntimeException("Could not find profile: " + profile);

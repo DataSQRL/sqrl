@@ -50,18 +50,16 @@ public class SqrlInjector extends AbstractModule {
   private final Path rootDir;
   private final Path buildDir;
   private final Path targetDir;
-  private final boolean debug;
   private final PackageJson sqrlConfig;
   private final ExecutionGoal goal;
   private final Repository repository;
 
-  public SqrlInjector(ErrorCollector errors, Path rootDir, Path targetDir, boolean debug,
+  public SqrlInjector(ErrorCollector errors, Path rootDir, Path targetDir,
       PackageJson sqrlConfig, ExecutionGoal goal, Repository repository) {
     this.errors = errors;
     this.rootDir = rootDir;
     this.buildDir = rootDir.resolve("build");
     this.targetDir = targetDir;
-    this.debug = debug;
     this.sqrlConfig = sqrlConfig;
     this.goal = goal;
     this.repository = repository;
@@ -110,11 +108,6 @@ public class SqrlInjector extends AbstractModule {
     return targetDir;
   }
 
-  @Provides
-  @Named("debugFlag")
-  public boolean provideDebugFlag() {
-    return debug;
-  }
 
   @Provides
   public ResourceResolver provideResourceResolver() {
