@@ -15,7 +15,6 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.loaders.StandardLibraryLoader;
 import com.datasqrl.packager.ImportExportAnalyzer;
-import com.datasqrl.packager.ImportExportAnalyzer.Result;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.packager.repository.Repository;
 import java.io.IOException;
@@ -43,7 +42,6 @@ import lombok.extern.slf4j.Slf4j;
 public class PackageBootstrap {
   Repository repository;
   ErrorCollector errors;
-  boolean inferDependencies;
 
   @SneakyThrows
   public PackageJson bootstrap(Path rootDir, List<Path> packageFiles,
@@ -158,10 +156,6 @@ public class PackageBootstrap {
       errors.fatal("GraphQL schema file is not a regular file: %s", graphQLSchemaFile.get());
     }
 
-//    if (inferDependencies) {
-//      inferDependencies(rootDir, packageJson);
-//    }
-
     return packageJson;
   }
 
@@ -197,47 +191,5 @@ public class PackageBootstrap {
     return existingConfig.isPresent()
         && existingConfig.get().getDependencies().getDependency(profile).isPresent()
         && existingConfig.get().getDependencies().getDependency(profile).get().getVersion().isPresent();
-  }
-
-  private void inferDependencies(Path rootDir, PackageJson config) throws IOException {
-    //Analyze all local SQRL files to discovery transitive or undeclared dependencies
-    //At the end, we'll add the new dependencies to the package config.
-    ImportExportAnalyzer analyzer = new ImportExportAnalyzer();
-
-    BiPredicate<Path, BasicFileAttributes> FIND_SQRL_SCRIPT = (p, f) ->
-        f.isRegularFile() && p.getFileName().toString().toLowerCase().endsWith(".sqrl");
-
-    // Find all SQRL script files
-    Result allResults = Files.find(rootDir, 128, FIND_SQRL_SCRIPT)
-        .map(script -> analyzer.analyze(script, errors))
-        .reduce(Result.EMPTY, Result::add);
-
-    StandardLibraryLoader standardLibraryLoader = new StandardLibraryLoader();
-    Set<NamePath> pkgs = new HashSet<>(allResults.getPkgs());
-    pkgs.removeAll(standardLibraryLoader.loadedLibraries());
-    pkgs.remove(Name.system(PRINT_SINK_NAME).toNamePath());
-
-    Set<NamePath> unloadedDeps = new HashSet<>();
-    for (NamePath packagePath : pkgs) {
-      Path dir = namepath2Path(rootDir, packagePath);
-      if (!Files.exists(dir)) {
-        unloadedDeps.add(packagePath);
-      }
-    }
-
-    LinkedHashMap<String, Dependency> inferredDependencies = new LinkedHashMap<>();
-
-    //Resolve dependencies
-    for (NamePath unloadedDep : unloadedDeps) {
-      repository
-          .resolveDependency(unloadedDep.toString())
-          .ifPresentOrElse((dep) -> inferredDependencies.put(unloadedDep.toString(), dep),
-              () -> errors.checkFatal(true, "Could not infer dependency: %s", unloadedDep));
-    }
-
-    // Add inferred dependencies to package config
-    inferredDependencies.forEach((key, dep) -> {
-      config.getDependencies().addDependency(key, dep);
-    });
   }
 }

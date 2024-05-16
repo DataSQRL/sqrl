@@ -38,7 +38,6 @@ public class UseCasesIT {
       argsList.add("-s"); argsList.add("snapshots-"+testSuffix);
       argsList.add("--tests"); argsList.add("tests-"+testSuffix);
     }
-    argsList.add("--nolookup");
     argsList.add("--profile");
     argsList.add("../../../../../../../profiles/flink-1.16");
     argsList.add("--profile");
@@ -52,7 +51,6 @@ public class UseCasesIT {
     argsList.add("compile");
     argsList.add(script);
     if (!Strings.isNullOrEmpty(graphql)) argsList.add(graphql);
-    argsList.add("--nolookup");
     argsList.add("--profile");
     argsList.add("../../../../../../../profiles/flink-1.16");
     argsList.add("--profile");

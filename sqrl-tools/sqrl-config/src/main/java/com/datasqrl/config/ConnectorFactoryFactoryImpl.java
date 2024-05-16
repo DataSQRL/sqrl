@@ -28,10 +28,12 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
     } else if (name.equalsIgnoreCase(FILE_SINK_NAME)) {
       return connectorConfig.map(this::createLocalFile);
     }
-    if (type.equals(Type.LOG)) {
-      return connectorConfig.map(this::createKafkaConnectorFactory);
-    } else if (type.equals(Type.DATABASE)) {
-      return connectorConfig.map(this::createJdbcConnectorFactory);
+    if (type != null) {
+      if (type.equals(Type.LOG)) {
+        return connectorConfig.map(this::createKafkaConnectorFactory);
+      } else if (type.equals(Type.DATABASE)) {
+        return connectorConfig.map(this::createJdbcConnectorFactory);
+      }
     }
 
     return connectorConfig.map(c -> context -> null);

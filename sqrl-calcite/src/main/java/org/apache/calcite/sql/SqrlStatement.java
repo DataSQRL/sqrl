@@ -18,4 +18,6 @@ public abstract class SqrlStatement extends SqrlSqlNode {
     this.identifier = identifier;
     this.hints = hints;
   }
+
+  public abstract <R, C> R accept(StatementVisitor<R, C> visitor, C context);
 }

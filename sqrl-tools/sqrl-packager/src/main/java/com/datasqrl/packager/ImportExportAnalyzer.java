@@ -4,31 +4,41 @@
 package com.datasqrl.packager;
 
 
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.config.ConnectorFactoryFactory;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.parse.SqrlParser;
 import com.datasqrl.parse.SqrlParserImpl;
 import com.datasqrl.util.SqlNameUtil;
+import com.google.inject.Inject;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.LinkedHashSet;
+import java.util.Optional;
 import java.util.Set;
-import lombok.Value;
+import java.util.stream.Collectors;
+import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
+import org.apache.calcite.sql.ScriptNode;
+import org.apache.calcite.sql.ScriptVisitor;
+import org.apache.calcite.sql.SqrlAssignTimestamp;
+import org.apache.calcite.sql.SqrlAssignment;
 import org.apache.calcite.sql.SqrlExportDefinition;
 import org.apache.calcite.sql.SqrlImportDefinition;
-import org.apache.calcite.sql.ScriptNode;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.commons.collections4.SetUtils;
+import org.apache.calcite.sql.SqrlStatement;
+import org.apache.calcite.sql.StatementVisitor;
 
+@AllArgsConstructor(onConstructor_=@Inject)
+public class ImportExportAnalyzer implements
+    StatementVisitor<Optional<NamePath>, Void>,
+    ScriptVisitor<Set<NamePath>, Void> {
+  private final ModuleLoader moduleLoader;
+  private final SqlNameUtil nameUtil;
+  private final ConnectorFactoryFactory connectorFactoryFactory;
+  private final SqrlParser parser = new SqrlParserImpl();
 
-public class ImportExportAnalyzer {
-
-  NameCanonicalizer canonicalizer = NameCanonicalizer.SYSTEM;
-  SqrlParser parser = new SqrlParserImpl();
-
-  public Result analyze(Path sqrlScript, ErrorCollector errors) {
-
+  @SneakyThrows
+  public Set<NamePath> analyze(Path sqrlScript, ErrorCollector errors) {
     ScriptNode node;
     try {
       String scriptContent = Files.readString(sqrlScript);
@@ -42,42 +52,46 @@ public class ImportExportAnalyzer {
       throw errors.handle(e);
     }
 
-    return analyze(node);
+    return node.accept(this, null);
   }
 
-  private Result analyze(ScriptNode scriptNode) {
-    Set<NamePath> importPkgs = new LinkedHashSet<>();
-    Set<NamePath> exportPkgs = new LinkedHashSet<>();
-    for (SqlNode statement : scriptNode.getStatements()) {
-      if (statement instanceof SqrlImportDefinition) {
-        SqrlImportDefinition impDef = (SqrlImportDefinition) statement;
-        importPkgs.add(new SqlNameUtil(canonicalizer).toNamePath(impDef.getImportPath().names).popLast());
-      }
-      if (statement instanceof SqrlExportDefinition) {
-        SqrlExportDefinition expDef = (SqrlExportDefinition) statement;
-        exportPkgs.add(new SqlNameUtil(canonicalizer).toNamePath(expDef.getSinkPath().names).popLast());
-      }
+  @Override
+  public Optional<NamePath> visit(SqrlImportDefinition node, Void context) {
+    NamePath path = nameUtil.toNamePath(node.getImportPath().names);
+    if (moduleLoader.getModule(path.popLast()).isPresent()) {
+      return Optional.empty();
     }
-    return new Result(importPkgs, exportPkgs);
+    return Optional.of(path);
   }
 
-  @Value
-  public static class Result {
+  @Override
+  public Optional<NamePath> visit(SqrlExportDefinition node, Void context) {
+    NamePath sinkPath = nameUtil.toNamePath(node.getSinkPath().names);
 
-    public static final Result EMPTY = new Result(new LinkedHashSet<>(), new LinkedHashSet<>());
-
-    Set<NamePath> importPkgs;
-    Set<NamePath> exportPkgs;
-
-    public Result add(Result other) {
-      return new Result(SetUtils.union(importPkgs,other.importPkgs),
-          SetUtils.union(exportPkgs, other.exportPkgs));
+    if (connectorFactoryFactory.create(null, sinkPath.getFirst().getCanonical()).isPresent()) {
+      return Optional.empty();
     }
-
-    public Set<NamePath> getPkgs() {
-      return SetUtils.union(importPkgs, exportPkgs);
+    if (moduleLoader.getModule(sinkPath.popLast()).isPresent()) {
+      return Optional.empty();
     }
+    return Optional.of(sinkPath.popLast());
   }
 
+  @Override
+  public Optional<NamePath> visit(SqrlAssignTimestamp statement, Void context) {
+    return Optional.empty();
+  }
 
+  @Override
+  public Optional<NamePath> visit(SqrlAssignment statement, Void context) {
+    return Optional.empty();
+  }
+
+  @Override
+  public Set<NamePath> visit(ScriptNode statement, Void context) {
+    return statement.getStatements().stream()
+        .map(s -> ((SqrlStatement)s).accept(this, null))
+        .flatMap(Optional::stream)
+        .collect(Collectors.toSet());
+  }
 }

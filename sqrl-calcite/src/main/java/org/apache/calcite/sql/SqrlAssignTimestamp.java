@@ -36,4 +36,9 @@ public class SqrlAssignTimestamp extends SqrlStatement {
     this.alias = alias;
     this.timestampAlias = timestampAlias;
   }
+
+  @Override
+  public <R, C> R accept(StatementVisitor<R, C> visitor, C context) {
+    return visitor.visit(this, context);
+  }
 }

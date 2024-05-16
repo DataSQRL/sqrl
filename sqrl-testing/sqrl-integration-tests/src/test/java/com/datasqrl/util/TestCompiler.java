@@ -38,8 +38,7 @@
 //    picocli.CommandLine rootCommand = new RootCommand(rootDir, AssertStatusHook.INSTANCE).getCmd();
 //    int code = rootCommand.execute("compile", script.toString(), graphql.toString(),
 //        "-c", defaultPackage.toAbsolutePath().toString(),
-//        "-c", packageOverride.toAbsolutePath().toString(),
-//        "--nolookup");
+//        "-c", packageOverride.toAbsolutePath().toString());
 //    assertEquals(0, code, "Non-zero exit code");
 //    return rootDir;
 //  }
