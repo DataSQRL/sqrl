@@ -23,6 +23,7 @@ import org.apache.calcite.sql.util.SqlVisitor;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqlValidatorScope;
 import org.apache.calcite.util.Litmus;
+import org.checkerframework.checker.units.qual.C;
 
 @Getter
 public final class ScriptNode
@@ -69,6 +70,10 @@ public final class ScriptNode
   @Override
   public <R> R accept(SqlVisitor<R> sqlVisitor) {
     return null;
+  }
+
+  public <R, C> R accept(ScriptVisitor<R, C> visitor, C context) {
+    return visitor.visit(this, context);
   }
 
   @Override

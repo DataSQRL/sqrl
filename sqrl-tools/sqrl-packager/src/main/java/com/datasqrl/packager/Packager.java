@@ -9,7 +9,6 @@ import com.datasqrl.compile.TestPlan;
 import com.datasqrl.config.BuildPath;
 import com.datasqrl.config.DependenciesConfigImpl;
 import com.datasqrl.config.EngineFactory;
-import com.datasqrl.config.PackageJson.DependenciesConfig;
 import com.datasqrl.config.Dependency;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.ScriptConfig;
@@ -75,6 +74,8 @@ public class Packager {
   private final PackageJson config;
   private final BuildPath buildDir;
   private final Preprocessors preprocessors;
+  private final ImportExportAnalyzer analyzer;
+
   public void preprocess(ErrorCollector errors) {
     errors.checkFatal(
         config.getScriptConfig().getMainScript().map(StringUtils::isNotBlank).orElse(false),
@@ -85,10 +86,46 @@ public class Packager {
       retrieveDependencies(errors);
       copyFilesToBuildDir(errors);
       preProcessFiles(config, errors);
+      inferDependencies(errors);
       writePackageConfig();
     } catch (IOException e) {
       throw errors.handle(e);
     }
+  }
+
+  @SneakyThrows
+  private void inferDependencies(ErrorCollector errors) {
+    //Analyze all local SQRL files to discovery transitive or undeclared dependencies
+    //At the end, we'll add the new dependencies to the package config.
+
+    //Only infer on main script
+    String mainScriptPath = config.getScriptConfig().getMainScript()
+        .orElseThrow(() -> new RuntimeException("No main script specified"));
+
+    Set<NamePath> unresolvedDeps = analyzer.analyze(rootDir.getRootDir().resolve(mainScriptPath), errors);
+
+    List<Dependency> dependencies = unresolvedDeps.stream()
+        .flatMap(dep -> {
+          try {
+            return repository.resolveDependency(dep.toString())
+                .stream();
+          } catch (Exception e) {
+            //suppress any exception
+            return Optional.<Dependency>empty()
+                .stream();
+          }
+        })
+        .collect(Collectors.toList());
+
+    // Add inferred dependencies to package config
+    dependencies.forEach((dep) -> {
+      config.getDependencies().addDependency(dep.getName(), dep);
+    });
+
+    Map<String, Dependency> deps = dependencies.stream()
+        .collect(Collectors.toMap(Dependency::getName, d -> d));
+
+    retrieveDependencies(deps, errors);
   }
 
   @SneakyThrows
@@ -100,18 +137,20 @@ public class Packager {
    * Helper function for retrieving listed dependencies.
    */
   private void retrieveDependencies(ErrorCollector errors) {
-    DependenciesConfig dependencies = config.getDependencies();
     ErrorCollector depErrors = errors
         .resolve(DependenciesConfigImpl.DEPENDENCIES_KEY);
+    retrieveDependencies(config.getDependencies().getDependencies(), depErrors)
+        .forEach(failedDep -> depErrors.fatal("Could not retrieve dependency: %s", failedDep));
+  }
 
-    dependencies.getDependencies().entrySet().stream()
+  private Stream<NamePath> retrieveDependencies(Map<String, ? extends Dependency> dependencies, ErrorCollector errors) {
+    return dependencies.entrySet().stream()
         .map(entry -> rethrowCall(() ->
             retrieveDependency(rootDir.getRootDir(), buildDir.getBuildDir(), NamePath.parse(entry.getKey()),
-                entry.getValue().normalize(entry.getKey(), depErrors))
+                entry.getValue().normalize(entry.getKey(), errors))
                 ? Optional.<NamePath>empty()
                 : Optional.of(NamePath.parse(entry.getKey()))))
-        .flatMap(Optional::stream)
-        .forEach(failedDep -> depErrors.fatal("Could not retrieve dependency: %s", failedDep));
+        .flatMap(Optional::stream);
   }
 
   private void copyFilesToBuildDir(ErrorCollector errors) throws IOException {
@@ -208,7 +247,7 @@ public class Packager {
 
     // Determine the directory in the root that corresponds to the dependency's name
     String depName = dependency.getName();
-    Path sourcePath = rootDir.resolve(depName);
+    Path sourcePath = namepath2Path(rootDir, NamePath.parse(depName));
 
     // Check if the source directory exists and is indeed a directory
     if (Files.isDirectory(sourcePath)) {

@@ -15,4 +15,9 @@ public class SqrlDistinctQuery extends SqrlAssignment {
     super(location, hints, identifier, tableArgs);
     this.select = select;
   }
+
+  @Override
+  public <R, C> R accept(StatementVisitor<R, C> visitor, C context) {
+    return visitor.visit(this, context);
+  }
 }

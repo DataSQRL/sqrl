@@ -22,6 +22,7 @@ import com.datasqrl.calcite.visitor.SqlTopLevelRelationVisitor;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
+import com.datasqrl.config.ConnectorFactoryContext;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCode;
@@ -31,8 +32,9 @@ import com.datasqrl.function.SqrlFunctionParameter;
 import com.datasqrl.function.SqrlFunctionParameter.NoParameter;
 import com.datasqrl.function.SqrlFunctionParameter.UnknownCaseParameter;
 import com.datasqrl.io.tables.TableSink;
-import com.datasqrl.loaders.LoaderUtil;
+import com.datasqrl.io.tables.TableSinkImpl;
 import com.datasqrl.loaders.ModuleLoader;
+import com.datasqrl.loaders.TableSinkObject;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.module.SqrlModule;
 import com.datasqrl.parse.SqrlAstException;
@@ -165,9 +167,17 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
    */
   @Override
   public Void visit(SqrlExportDefinition node, Void context) {
-    Optional<TableSink> sink = LoaderUtil.loadSinkOpt(
-        nameUtil.toNamePath(node.getSinkPath().names),
-        errorCollector, moduleLoader, connectorFactoryFactory);
+    NamePath sinkPath = nameUtil.toNamePath(node.getSinkPath().names);
+
+    // Resolve through connector factory or module loader
+    Optional<TableSink> sink = connectorFactoryFactory.create(null, sinkPath.getFirst().getCanonical())
+        .map(t->t.createSourceAndSink(new ConnectorFactoryContext(sinkPath.getLast(),
+            Map.of("name", sinkPath.getLast().getDisplay()))))
+        .map(t->TableSinkImpl.create(t, sinkPath, Optional.empty()))
+        .or(()->moduleLoader.getModule(sinkPath.popLast())
+            .flatMap(m -> m.getNamespaceObject(sinkPath.getLast()))
+            .filter(t->t instanceof TableSinkObject)
+            .map(t->((TableSinkObject) t).getSink()));
 
     if (sink.isEmpty()) {
       addError(ErrorCode.CANNOT_RESOLVE_TABLESINK, node, "Cannot resolve table sink: %s",
@@ -960,16 +970,6 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     addError(errorCode, node, message, format);
   }
 
-  public void validate(ScriptNode script) {
-    for (SqlNode sqlNode : script.getStatements()) {
-      validateStatement((SqrlStatement) sqlNode);
-    }
-  }
-
-  public void validateStatement(SqrlStatement sqlNode) {
-    SqlNodeVisitor.accept(this, sqlNode, null);
-  }
-
   public void plan(MainScript mainScript, ModuleLoader composite) {
     ErrorCollector errors = errorCollector;
     if (errorCollector.getLocation() == null
@@ -999,7 +999,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
           continue;
         }
 
-        validateStatement(stmt);
+        stmt.accept(this, null);
         if (lineErrors.hasErrors()) {
           throw new CollectedException(new RuntimeException("Script cannot validate"));
         }

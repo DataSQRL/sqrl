@@ -129,7 +129,6 @@ public class TestCmd {
         script.getRootPackageDirectory().relativize(script.getScriptPath()).toString(),
         script.getRootPackageDirectory().relativize(script.getGraphQLSchemas().get(0).getSchemaPath()).toString(),
         "-t", OUTPUT_DIR.toString(),
-        "--nolookup",
         "--mnt", rootDir.toString());
     createSnapshot();
   }
@@ -139,7 +138,6 @@ public class TestCmd {
   public void compileProfiles() {
     execute(PROFILES_PATH, "compile",
         "myscript.sqrl", "schema.graphqls",
-        "--nolookup",
         "--profile", "profile1",
         "--profile", "profile2",
         "--mnt", "/example/dir"
@@ -224,7 +222,6 @@ public class TestCmd {
       args.add("-c");
       args.add(path.resolve(pkg).toString());
     }
-    args.add("--nolookup");
     if (graphql != null) {
       args.add(graphql);
     }
@@ -248,8 +245,7 @@ public class TestCmd {
     TestScript script = Retail.INSTANCE.getScript(Retail.RetailScriptNames.FULL);
     execute(rootDir, "compile",
         script.getRootPackageDirectory().relativize(script.getScriptPath()).toString(),
-        "-t", OUTPUT_DIR.toString(),
-        "--nolookup");
+        "-t", OUTPUT_DIR.toString());
     createSnapshot();
   }
 

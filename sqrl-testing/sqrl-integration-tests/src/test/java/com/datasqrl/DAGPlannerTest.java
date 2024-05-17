@@ -26,7 +26,7 @@ public class DAGPlannerTest extends AbstractAssetSnapshotTest {
     assertTrue(Files.exists(script));
     boolean expectFailure = TestNameModifier.of(script)==TestNameModifier.fail;
     this.snapshot = Snapshot.of(getDisplayName(script), getClass());
-    AssertStatusHook hook = execute(SCRIPT_DIR, "compile", script.getFileName().toString(), "-t", deployDir.toString(), "--nolookup",
+    AssertStatusHook hook = execute(SCRIPT_DIR, "compile", script.getFileName().toString(), "-t", deployDir.toString(),
         "--profile", "../../../../../../profiles/flink-1.16");
     assertEquals(expectFailure, hook.isFailed(), hook.getFailMessage());
     if (expectFailure) {
