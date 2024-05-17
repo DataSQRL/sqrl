@@ -31,7 +31,7 @@ public class DependencyImpl implements Dependency {
   public DependencyImpl() {
   }
   public DependencyImpl(SqrlConfig sqrlConfig) {
-    name = sqrlConfig.asString(PKG_NAME_KEY).getOptional()
+    name = sqrlConfig.asString("name").getOptional()
         .orElse(null);
     variant = sqrlConfig.asString(VARIANT_KEY).getOptional()
         .orElse(PackageConfigurationImpl.DEFAULT_VARIANT);

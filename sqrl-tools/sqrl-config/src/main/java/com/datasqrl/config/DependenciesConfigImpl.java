@@ -20,7 +20,7 @@ public class DependenciesConfigImpl implements PackageJson.DependenciesConfig {
   }
 
   public Optional<Dependency> getDependency(String dependency) {
-    if (!sqrlConfig.hasKey(dependency)) {
+    if (!sqrlConfig.hasSubConfig(dependency)) {
       //todo Optional
       return Optional.empty();
     }

@@ -123,10 +123,10 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
 
   public PackageJson createDefaultConfig(ErrorCollector errors) {
     PackageJson packageJson = new PackageJsonImpl();
-    packageJson.setProfiles(new String[]{"datasqrl.package.default"});
+    packageJson.setProfiles(new String[]{"datasqrl.profile.default"});
     packageJson.getDependencies()
-        .addDependency("datasqrl.package.default",
-            new DependencyImpl("datasqrl.package.default", "v0.5.0-RC5", "dev"));
+        .addDependency("datasqrl.profile.default",
+            new DependencyImpl("datasqrl.profile.default", "v0.5.0-RC5", "dev"));
 
     return packageJson;
   }

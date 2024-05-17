@@ -71,6 +71,7 @@ public class PackageBootstrap {
       PackageJson defaultConfig = defaultConfigFnc.apply(errors);
       Path path = buildDir.resolve(PACKAGE_JSON);
       profiles = defaultConfig.getProfiles().toArray(String[]::new);
+      existingConfig = Optional.of(defaultConfig);
       defaultConfig.toFile(path, true);
       configFiles.add(path);
     }
