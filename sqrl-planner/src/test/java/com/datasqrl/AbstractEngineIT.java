@@ -35,15 +35,15 @@ public abstract class AbstractEngineIT {
 
   protected void initialize(IntegrationTestSettings settings, Path rootDir,
       Optional<Path> errorDir) {
-    initialize(settings, rootDir, errorDir, ErrorCollector.root(), null, false);
+    initialize(settings, rootDir, errorDir, ErrorCollector.root(), null);
   }
 
   protected void initialize(IntegrationTestSettings settings, Path rootDir, Optional<Path> errorDir,
-      ErrorCollector errors, Map<NamePath, SqrlModule> addlModules, boolean isDebug) {
+      ErrorCollector errors, Map<NamePath, SqrlModule> addlModules) {
     this.errors = errors;
     Triple<DatabaseHandle, PipelineFactory, PackageJson> setup = settings.createSqrlSettings(errors);
     injector = Guice.createInjector(
-        new MockSqrlInjector(errors, setup.getRight(), errorDir, rootDir, addlModules, isDebug, null),
+        new MockSqrlInjector(errors, setup.getRight(), errorDir, rootDir, addlModules, null),
         new StatefulModule(new SqrlSchema(new TypeFactory(), NameCanonicalizer.SYSTEM)));
 
     this.framework = injector.getInstance(SqrlFramework.class);

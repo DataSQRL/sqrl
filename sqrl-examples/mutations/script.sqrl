@@ -1,3 +1,0 @@
-IMPORT schema.createEvent AS event;
-IMPORT string.*;
-event.trimmed_name := RTRIM(LTRIM(name));

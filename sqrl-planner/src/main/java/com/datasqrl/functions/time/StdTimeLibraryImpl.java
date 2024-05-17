@@ -16,6 +16,7 @@ import static com.datasqrl.time.TimeFunctions.EPOCH_MILLI_TO_TIMESTAMP;
 import static com.datasqrl.time.TimeFunctions.EPOCH_TO_TIMESTAMP;
 import static com.datasqrl.time.TimeFunctions.STRING_TO_TIMESTAMP;
 import static com.datasqrl.time.TimeFunctions.TIMESTAMP_TO_EPOCH;
+import static com.datasqrl.time.TimeFunctions.TIMESTAMP_TO_EPOCH_MILLI;
 import static com.datasqrl.time.TimeFunctions.TIMESTAMP_TO_STRING;
 
 import com.datasqrl.NamespaceObjectUtil;
@@ -36,6 +37,7 @@ public class StdTimeLibraryImpl extends AbstractFunctionModule implements StdLib
       EPOCH_TO_TIMESTAMP,
       EPOCH_MILLI_TO_TIMESTAMP,
       TIMESTAMP_TO_EPOCH,
+      TIMESTAMP_TO_EPOCH_MILLI,
       STRING_TO_TIMESTAMP,
       TIMESTAMP_TO_STRING,
       AT_ZONE,

@@ -1,5 +1,0 @@
-{
-Trending(limit: 20) {
-    url
-    total
-}}

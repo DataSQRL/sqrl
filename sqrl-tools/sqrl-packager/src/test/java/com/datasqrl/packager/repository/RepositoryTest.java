@@ -15,9 +15,6 @@ import com.datasqrl.util.FileTestUtil;
 import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.StringUtil;
-import com.datasqrl.util.data.Quickstart;
-import com.datasqrl.util.data.Retail;
-import com.datasqrl.util.data.UseCaseExample;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -39,6 +36,8 @@ public class RepositoryTest {
   ErrorCollector errors;
   LocalRepositoryImplementation localRepo;
 
+  public static final Path SAMPLE_SEEDSHOP_PACKAGE = Path.of("src", "test", "resources").resolve(
+      "samplePackages").resolve("seedshop");
 
   @BeforeEach
   public void setup(TestInfo testInfo) throws IOException {
@@ -56,17 +55,8 @@ public class RepositoryTest {
   }
 
   @Test
-  public void testQuickstartValidatePub() {
-    Publication pub = testValidatePublication(Quickstart.INSTANCE.getRootPackageDirectory().resolve(
-        UseCaseExample.DATA_PACKAGE+"-repo"));
-    assertEquals("datasqrl.seedshop", pub.getName());
-    assertEquals("dev", pub.getVariant());
-    assertEquals(true, pub.getLatest());
-  }
-
-  @Test
   public void testRetailValidatePub() {
-    Publication pub = testValidatePublication(Retail.INSTANCE.getDataPackageDirectory());
+    Publication pub = testValidatePublication(SAMPLE_SEEDSHOP_PACKAGE);
     assertEquals("datasqrl.examples.ecommerce", pub.getName());
     assertEquals("dev", pub.getVariant());
     assertEquals(true, pub.getLatest());
@@ -101,8 +91,7 @@ public class RepositoryTest {
     assertFalse(localRepo.retrieveDependency(outputPath, dependency));
 
     Publisher publisher = new Publisher(errors);
-    Path ecommercePkg = Retail.INSTANCE.getDataPackageDirectory();
-    publisher.publish(ecommercePkg, localRepo);
+    publisher.publish(SAMPLE_SEEDSHOP_PACKAGE, localRepo);
     assertFalse(errors.isFatal(), errors.toString());
 
     assertTrue(localRepo.resolveDependency(dependency.getName())
@@ -116,9 +105,9 @@ public class RepositoryTest {
 
   @Test
   @Disabled
-  public void publishQuickstartLocally() {
+  public void publishSeedshopLocally() {
     LocalRepositoryImplementation repo = LocalRepositoryImplementation.of(errors, null);
-    publishLocally(Quickstart.INSTANCE.getDataPackageDirectory(), repo);
+    publishLocally(SAMPLE_SEEDSHOP_PACKAGE, repo);
   }
 
   @SneakyThrows

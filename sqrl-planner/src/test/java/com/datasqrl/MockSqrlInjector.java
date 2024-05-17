@@ -36,18 +36,16 @@ public class MockSqrlInjector extends AbstractModule {
 
   private final ErrorCollector errors;
   private final PackageJson config;
-  private final boolean debug;
   private final Path rootDir;
   private final Map<NamePath, SqrlModule> addlModules;
   private final TableConfigLoader tableConfigFactory;
   private final Optional<Path> errorDir;
 
   public MockSqrlInjector(ErrorCollector errors, PackageJson config, Optional<Path> errorDir,
-      Path rootDir, Map<NamePath, SqrlModule> addlModules, boolean isDebug, TableConfigLoader tableConfigFactory) {
+      Path rootDir, Map<NamePath, SqrlModule> addlModules, TableConfigLoader tableConfigFactory) {
     this.errors = errors;
     this.config = config;
     this.rootDir = rootDir;
-    this.debug = isDebug;
     this.errorDir = errorDir;
     this.addlModules = addlModules;
     this.tableConfigFactory = tableConfigFactory;
@@ -64,12 +62,6 @@ public class MockSqrlInjector extends AbstractModule {
     bind(SqrlTableFactory.class).to(SqrlPlanningTableFactory.class);
     bind(RelBuilder.class).to(SqrlRelBuilder.class);
     bind(ModuleLoader.class).to(ModuleLoaderImpl.class);
-  }
-
-  @Provides
-  @Named("debugFlag")
-  public boolean provideDebugFlag() {
-    return debug;
   }
 
   @Provides

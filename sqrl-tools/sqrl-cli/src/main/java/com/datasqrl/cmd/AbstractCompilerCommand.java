@@ -58,16 +58,9 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
       description = "Generates the API specification for the given type")
   protected APIType[] generateAPI = new APIType[0];
 
-  @CommandLine.Option(names = {"-d", "--debug"},
-      description = "Outputs table changestream to configured sink for debugging")
-  protected boolean debug = false;
-
   @CommandLine.Option(names = {"-t", "--target"},
       description = "Target directory for deployment artifacts")
   protected Path targetDir = DEFAULT_DEPLOY_DIR;
-
-  @CommandLine.Option(names = {"--mnt"}, description = "Local directory to mount for data access")
-  protected Path mountDirectory = null;
 
   @CommandLine.Option(names = {"--nolookup"},
       description = "Do not look up package dependencies in the repository",
@@ -109,7 +102,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     errors.checkFatal(Files.isDirectory(root.rootDir), "Not a valid root directory: %s", root.rootDir);
 
     Injector injector = Guice.createInjector(
-        new SqrlInjector(errors, root.rootDir, getTargetDir(), debug, sqrlConfig, getGoal(), repository),
+        new SqrlInjector(errors, root.rootDir, getTargetDir(), sqrlConfig, getGoal(), repository),
         new StatefulModule(new SqrlSchema(new TypeFactory(), NameCanonicalizer.SYSTEM)));
 
     Packager packager = injector.getInstance(Packager.class);
@@ -148,7 +141,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
 
   protected void postprocess(PackageJson sqrlConfig, Packager packager, Path targetDir,
       PhysicalPlan plan, TestPlan testPlan, ErrorCollector errors) {
-    packager.postprocess(sqrlConfig, root.rootDir, getTargetDir(), plan, Optional.ofNullable(mountDirectory), testPlan,
+    packager.postprocess(sqrlConfig, root.rootDir, getTargetDir(), plan, testPlan,
         sqrlConfig.getProfiles());
 
   }
