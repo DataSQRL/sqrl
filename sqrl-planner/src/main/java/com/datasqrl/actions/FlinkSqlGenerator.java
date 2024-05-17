@@ -37,6 +37,9 @@ public class FlinkSqlGenerator {
     flinkSql.addAll(result.getFunctions());
     flinkSql.addAll(result.getSinksSources());
     flinkSql.addAll(result.getQueries());
+    if (result.getInserts().isEmpty()){
+      throw new RuntimeException("Flink stage empty. No queries or exports were found.");
+    }
     SqlStatementSet sqlStatementSet = new SqlStatementSet(result.getInserts(), SqlParserPos.ZERO);
     SqlExecute execute = new SqlExecute(sqlStatementSet, SqlParserPos.ZERO);
     flinkSql.add(execute);

@@ -24,7 +24,7 @@ public class CopyStaticDataPreprocessorTest extends AbstractAssetSnapshotTest {
   CopyStaticDataPreprocessor preprocessor = new CopyStaticDataPreprocessor();
 
   protected CopyStaticDataPreprocessorTest() {
-    super(FILES_DIR.resolve("output"), AssertStatusHook.INSTANCE);
+    super(FILES_DIR.resolve("output"));
     super.buildDir = super.deployDir;
   }
 

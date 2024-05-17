@@ -1,0 +1,7 @@
+[FATAL] Could not find module [seedshop-mutation.ProductVisit] at path: [seedshop-mutation/ProductVisit]
+in script:<script> [4:1]:
+IMPORT seedshop.Products;
+IMPORT seedshop.Customers;
+IMPORT seedshop-mutation.ProductVisit;
+^
+

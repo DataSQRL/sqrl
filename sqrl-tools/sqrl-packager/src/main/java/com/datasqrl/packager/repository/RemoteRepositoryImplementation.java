@@ -87,7 +87,7 @@ public class RemoteRepositoryImplementation implements Repository, PublishReposi
       // Ensure the hashes match
       Preconditions.checkArgument(
           downloadHash.equals(hash),
-          "File hash [%s] does not match hash" + "of dowloaded file [%s]",
+          "File hash [%s] does not match hash" + "of downloaded file [%s]",
           hash,
           downloadHash);
 

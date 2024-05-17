@@ -4,10 +4,13 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
+import lombok.Getter;
 
 public class AssertStatusHook implements StatusHook {
   public static AssertStatusHook INSTANCE = new AssertStatusHook();
   private boolean failed;
+  @Getter
+  private String failMessage = null;
 
   @Override
   public void onSuccess() {
@@ -15,7 +18,7 @@ public class AssertStatusHook implements StatusHook {
 
   @Override
   public void onFailure(Exception e, ErrorCollector errors) {
-    System.out.println(ErrorPrinter.prettyPrint(errors));
+    failMessage = ErrorPrinter.prettyPrint(errors);
     failed = true;
   }
 

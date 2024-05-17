@@ -1,5 +1,6 @@
 package com.datasqrl;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.datasqrl.cmd.AssertStatusHook;
@@ -13,6 +14,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -24,7 +26,7 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
   private boolean hasGraphQL = false;
 
   protected AbstractUseCaseTest(Path usecaseDirectory) {
-    super(usecaseDirectory.resolve("deploy-assets"), AssertStatusHook.INSTANCE);
+    super(usecaseDirectory.resolve("deploy-assets"));
   }
 
 
@@ -50,11 +52,17 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
     arguments.add("--nolookup");
     arguments.add("--profile");
     arguments.add("../../../../../../../profiles/flink-1.16");
-
-    this.snapshot = Snapshot.of(getDisplayName(script), getClass());
-    System.out.printf("%s - %s\n", baseDir, arguments);
-    execute(baseDir, arguments.toArray(new String[0]));
-    createSnapshot();
+    String testname = Stream.of(script, graphQlFile, packageFile)
+        .map(AbstractAssetSnapshotTest::getDisplayName)
+        .collect(Collectors.joining("-"));
+    this.snapshot = Snapshot.of(testname, getClass());
+//    System.out.printf("%s - %s\n", baseDir, arguments);
+    AssertStatusHook hook = execute(baseDir, arguments.toArray(new String[0]));
+    if (hook.isFailed()) {
+      createFailSnapshot(hook.getFailMessage());
+    } else {
+      createSnapshot();
+    }
   }
 
   @Override

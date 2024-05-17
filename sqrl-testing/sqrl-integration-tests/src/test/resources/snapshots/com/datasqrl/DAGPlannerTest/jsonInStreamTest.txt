@@ -239,6 +239,7 @@ LogicalProject(obj=[toJson('{"a": 1}')], _customerid=[$0], _timestamp=[$4])
   "flinkSql" : [
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptostring` AS 'com.datasqrl.time.TimestampToString' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `jsonobjectagg` AS 'com.datasqrl.json.JsonObjectAgg' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptoepochmilli` AS 'com.datasqrl.time.TimestampToEpochMilli' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofweek` AS 'com.datasqrl.time.EndOfWeek' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `jsonextract` AS 'com.datasqrl.json.JsonExtract' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `jsonarrayagg` AS 'com.datasqrl.json.JsonArrayAgg' LANGUAGE JAVA;",
