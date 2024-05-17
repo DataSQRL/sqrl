@@ -5,10 +5,12 @@ datasqrl/examples/ecommerce
 datasqrl/examples/ecommerce/1.0.0
 datasqrl/examples/ecommerce/1.0.0/dev.zip
 >>>output
-customer.schema.yml
-customer.table.json
+customers.schema.yml
+customers.table.json
+orderitems.schema.yml
+orderitems.table.json
 orders.schema.yml
 orders.table.json
 package.json
-product.schema.yml
-product.table.json
+products.schema.yml
+products.table.json
