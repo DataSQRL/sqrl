@@ -62,11 +62,6 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
       description = "Target directory for deployment artifacts")
   protected Path targetDir = DEFAULT_DEPLOY_DIR;
 
-  @CommandLine.Option(names = {"--nolookup"},
-      description = "Do not look up package dependencies in the repository",
-      scope = ScopeType.INHERIT)
-  protected boolean noinfer = false;
-
   @CommandLine.Option(names = {"--profile"},
       description = "An alternative set of configuration values which override the default package.json")
   protected String[] profiles = new String[0];
@@ -81,7 +76,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
       ExecutionGoal goal) {
     Repository repository = createRepository(errors);
 
-    PackageBootstrap packageBootstrap = new PackageBootstrap(repository, errors, !noinfer);
+    PackageBootstrap packageBootstrap = new PackageBootstrap(repository, errors);
     PackageJson sqrlConfig = packageBootstrap.bootstrap(root.rootDir, this.root.packageFiles,
         profiles, this.files, this::createDefaultConfig);
 

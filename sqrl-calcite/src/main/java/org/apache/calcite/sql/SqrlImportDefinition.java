@@ -38,4 +38,9 @@ public class SqrlImportDefinition extends SqrlStatement {
   public SqrlImportDefinition clone(SqlIdentifier importPath, Optional<SqlIdentifier> alias) {
     return new SqrlImportDefinition(this.pos, importPath, alias);
   }
+
+  @Override
+  public <R, C> R accept(StatementVisitor<R, C> visitor, C context) {
+    return visitor.visit(this, context);
+  }
 }

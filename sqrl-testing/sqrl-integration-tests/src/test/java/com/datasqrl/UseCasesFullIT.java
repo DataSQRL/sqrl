@@ -49,6 +49,6 @@ public class UseCasesFullIT extends UseCasesIT {
   @Disabled
   public void testCompileScript() {
     execute(Path.of("/Users/matthias/git/data-product-data-connect-cv/src/main/datasqrl"), AssertStatusHook.INSTANCE,
-        "compile", "clinical_views.sqrl", "-c", "test_package_clinical_views.json", "--profile", "profile/", "--nolookup");
+        "compile", "clinical_views.sqrl", "-c", "test_package_clinical_views.json", "--profile", "profile/");
   }
 }

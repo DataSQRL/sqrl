@@ -17,4 +17,9 @@ public class SqrlStreamQuery extends SqrlSqlQuery {
     super(location, hints, identifier, tableArgs, query);
     this.type = type;
   }
+
+  @Override
+  public <R, C> R accept(StatementVisitor<R, C> visitor, C context) {
+    return visitor.visit(this, context);
+  }
 }

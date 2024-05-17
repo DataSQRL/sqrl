@@ -14,4 +14,9 @@ public class SqrlExpressionQuery extends SqrlAssignment {
     super(location, hints, identifier, tableArgs);
     this.expression = expression;
   }
+
+  @Override
+  public <R, C> R accept(StatementVisitor<R, C> visitor, C context) {
+    return visitor.visit(this, context);
+  }
 }

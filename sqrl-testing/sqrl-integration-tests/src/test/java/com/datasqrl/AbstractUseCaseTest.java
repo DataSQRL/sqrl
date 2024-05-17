@@ -49,7 +49,6 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
       arguments.add("-c"); arguments.add(packageFile.getFileName().toString());
     }
     arguments.add("-t"); arguments.add(deployDir.toString());
-    arguments.add("--nolookup");
     arguments.add("--profile");
     arguments.add("../../../../../../../profiles/flink-1.16");
     String testname = Stream.of(script, graphQlFile, packageFile)
