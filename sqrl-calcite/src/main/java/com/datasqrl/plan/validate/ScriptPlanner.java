@@ -524,9 +524,11 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
 
       @Override
       public SqlNode visitAliasedRelation(SqlCall node, Object context) {
+        List<SqlNode> ops = new ArrayList<>();
+        ops.add(SqlNodeVisitor.accept(this, node.getOperandList().get(0), null));
+        ops.addAll(node.getOperandList().subList(1, node.getOperandList().size()));
         return node.getOperator().createCall(node.getParserPosition(),
-            SqlNodeVisitor.accept(this, node.getOperandList().get(0), null),
-            node.getOperandList().get(1));
+            ops.toArray(SqlNode[]::new));
       }
 
       @Override
@@ -568,7 +570,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
 
       private SqlNode visitAugmentedTable(SqlCall node, Object context) {
         SqlNode op = SqlNodeVisitor.accept(this, node.getOperandList().get(0), context);
-        return node.getOperator().createCall(node.getParserPosition(), op);
+        return node.getOperator().createCall(node.getFunctionQuantifier(), node.getParserPosition(), op);
       }
 
       @Override
@@ -580,11 +582,23 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
       }
 
       @Override
+      public SqlNode visitValues(SqlCall node, Object context) {
+        return node;
+      }
+
+      @Override
+      public SqlNode visitRow(SqlCall node, Object context) {
+        return node;
+      }
+
+      @Override
       public SqlNode visitOrderedUnion(SqlOrderBy node, Object context) {
         SqlNode query = SqlNodeVisitor.accept(this, node.getOperandList().get(0), context);
         return node.getOperator().createCall(node.getParserPosition(),
             query, node.getOperandList().get(1), node.getOperandList().get(2), node.getOperandList().get(3));
       }
+
+
 
       @Override
       public SqlNode visitCall(SqlCall node, Object context) {
