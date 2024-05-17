@@ -10,5 +10,7 @@ public interface SqlRelationVisitor<R, C> extends SqlTopLevelRelationVisitor<R,C
   R visitLateralFunction(SqlCall node, C context);
   R visitUnnestFunction(SqlCall node, C context);
   R visitUserDefinedTableFunction(SqlCall node, C context);
+  R visitValues(SqlCall node, C context);
+  R visitRow(SqlCall node, C context);
   R visitCall(SqlCall node, C context);
 }

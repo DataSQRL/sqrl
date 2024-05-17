@@ -76,6 +76,10 @@ public abstract class SqlNodeVisitor<R, C> implements
       return visitor.visitTable((SqlIdentifier) node, context);
     } else if (node instanceof SqlJoin) {
       return visitor.visitJoin((SqlJoin) node, context);
+    } else if (node.getKind() == SqlKind.VALUES) {
+      return visitor.visitValues((SqlCall) node, context);
+    } else if (node.getKind() == SqlKind.ROW) {
+      return visitor.visitRow((SqlCall) node, context);
     } else if (node instanceof SqlSelect) {
       return visitor.visitQuerySpecification((SqlSelect) node, context);
     } else if (node instanceof SqlCall
