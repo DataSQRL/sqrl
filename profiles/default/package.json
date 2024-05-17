@@ -34,10 +34,10 @@
     "delay-sec": 30
   },
   "package": {
-    "name": "datasqrl.profiles.flink-1-16",
+    "name": "datasqrl.profiles.default",
     "version": "0.0.1",
     "variant": "dev",
-    "description": "Flink 1.16 profile",
+    "description": "A docker compose datasqrl profile",
     "homepage": "",
     "documentation": "",
     "keywords": "profile"
