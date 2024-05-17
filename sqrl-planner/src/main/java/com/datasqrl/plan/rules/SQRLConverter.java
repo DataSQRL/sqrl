@@ -48,8 +48,8 @@ public class SQRLConverter {
   public RelNode convertAPI(AnalyzedAPIQuery query, ExecutionStage stage, ErrorCollector errors) {
     AnnotatedLP alp = convert(query.getRelNode(), query.getBaseConfig().withStage(stage), errors);
     //Rewrite query to inline sort or use a default sort
-    alp = alp.withDefaultSort().inlineSort(relBuilder, ExecutionAnalysis.of(stage));
-    assert alp.getPullups().isEmpty();
+    alp = alp.withDefaultSort().inlineAll(relBuilder, ExecutionAnalysis.of(stage));
+    Preconditions.checkArgument(alp.getPullups().isEmpty());
     return alp.getRelNode();
   }
 
