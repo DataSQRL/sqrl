@@ -684,25 +684,14 @@ LogicalProject(__pk1$id=[$0], loan_type_id=[$1], total_amount=[$2], total_loans=
       {
         "fieldName" : "ApplicationUpdates",
         "topic" : "loan-applicationupdates",
-        "sinkConfig" : {
-          "value.serializer" : "com.datasqrl.graphql.kafka.JsonSerializer",
-          "group.id" : "groupid",
-          "bootstrap.servers" : "${PROPERTIES_BOOTSTRAP_SERVERS}",
-          "key.serializer" : "com.datasqrl.graphql.kafka.JsonSerializer"
-        }
+        "sinkConfig" : { }
       }
     ],
     "subscriptions" : [
       {
         "fieldName" : "ApplicationAlert",
         "topic" : "applicationalert-1",
-        "sinkConfig" : {
-          "key.deserializer" : "com.datasqrl.graphql.kafka.JsonDeserializer",
-          "value.deserializer" : "com.datasqrl.graphql.kafka.JsonDeserializer",
-          "group.id" : "groupid",
-          "bootstrap.servers" : "${PROPERTIES_BOOTSTRAP_SERVERS}",
-          "auto.offset.reset" : "earliest"
-        },
+        "sinkConfig" : { },
         "filters" : { }
       }
     ],
