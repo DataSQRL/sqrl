@@ -1027,12 +1027,7 @@ LogicalProject(__pk1$id=[$0], __pk3$time=[$1], price=[$2], saving=[$3])
       {
         "fieldName" : "ProductVisit",
         "topic" : "seedshop-mutation-productvisit",
-        "sinkConfig" : {
-          "value.serializer" : "com.datasqrl.graphql.kafka.JsonSerializer",
-          "group.id" : "groupid",
-          "bootstrap.servers" : "${PROPERTIES_BOOTSTRAP_SERVERS}",
-          "key.serializer" : "com.datasqrl.graphql.kafka.JsonSerializer"
-        }
+        "sinkConfig" : { }
       }
     ],
     "subscriptions" : [ ],

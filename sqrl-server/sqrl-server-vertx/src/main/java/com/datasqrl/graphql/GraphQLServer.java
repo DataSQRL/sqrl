@@ -3,11 +3,16 @@
  */
 package com.datasqrl.graphql;
 
+import static org.apache.kafka.clients.consumer.ConsumerConfig.*;
+import static org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG;
+import static org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG;
+
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.graphql.config.CorsHandlerOptions;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.io.SinkConsumer;
 import com.datasqrl.graphql.io.SinkProducer;
+import com.datasqrl.graphql.kafka.JsonSerializer;
 import com.datasqrl.graphql.kafka.KafkaSinkConsumer;
 import com.datasqrl.graphql.kafka.KafkaSinkProducer;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
@@ -50,6 +55,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -268,11 +274,11 @@ public class GraphQLServer extends AbstractVerticle {
     }
   }
 
-  static Map<String, SinkConsumer> constructSubscriptions(RootGraphqlModel root, Vertx vertx,
+  Map<String, SinkConsumer> constructSubscriptions(RootGraphqlModel root, Vertx vertx,
       Promise<Void> startPromise) {
     Map<String, SinkConsumer> consumers = new HashMap<>();
     for (SubscriptionCoords sub: root.getSubscriptions()) {
-      KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, sub.getSinkConfig());
+      KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, getSourceConfig());
       consumer.subscribe(sub.getTopic())
           .onSuccess(v -> log.info("Subscribed to topic: {}", sub.getTopic()))
           .onFailure(startPromise::fail);
@@ -282,10 +288,34 @@ public class GraphQLServer extends AbstractVerticle {
     return consumers;
   }
 
-  static Map<String, SinkProducer> constructSinkProducers(RootGraphqlModel root, Vertx vertx) {
+  private Map<String, String> getSourceConfig() {
+    Map<String, String> conf = new HashMap<>();
+    conf.put(BOOTSTRAP_SERVERS_CONFIG, getEnvironmentVariable("PROPERTIES_BOOTSTRAP_SERVERS"));
+    conf.put(GROUP_ID_CONFIG, UUID.randomUUID().toString());
+    conf.put(KEY_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class.getName());
+    conf.put(VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class.getName());
+    conf.put(AUTO_OFFSET_RESET_CONFIG, "latest");
+    return conf;
+  }
+
+  String getEnvironmentVariable(String envVar) {
+    return System.getenv(envVar);
+  }
+
+  private Map<String, String> getSinkConfig() {
+    Map<String, String> conf = new HashMap<>();
+    conf.put(BOOTSTRAP_SERVERS_CONFIG, getEnvironmentVariable("PROPERTIES_BOOTSTRAP_SERVERS"));
+    conf.put(GROUP_ID_CONFIG, UUID.randomUUID().toString());
+    conf.put(KEY_SERIALIZER_CLASS_CONFIG, JsonSerializer.class.getName());
+    conf.put(VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class.getName());
+
+    return conf;
+  }
+
+  Map<String, SinkProducer> constructSinkProducers(RootGraphqlModel root, Vertx vertx) {
     Map<String, SinkProducer> producers = new HashMap<>();
     for (MutationCoords mut : root.getMutations()) {
-      KafkaProducer<String, String> producer = KafkaProducer.create(vertx, mut.getSinkConfig());
+      KafkaProducer<String, String> producer = KafkaProducer.create(vertx, getSinkConfig());
       KafkaSinkProducer sinkProducer = new KafkaSinkProducer<>(mut.getTopic(), producer);
       producers.put(mut.getFieldName(), sinkProducer);
     }
