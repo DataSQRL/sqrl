@@ -4,6 +4,7 @@
 package com.datasqrl.packager;
 
 
+import com.datasqrl.MainScriptImpl;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.error.ErrorCollector;
@@ -36,15 +37,13 @@ public class ImportExportAnalyzer implements
   private final SqlNameUtil nameUtil;
   private final ConnectorFactoryFactory connectorFactoryFactory;
   private final SqrlParser parser = new SqrlParserImpl();
-
+  private final MainScriptImpl mainScript;
   @SneakyThrows
   public Set<NamePath> analyze(Path sqrlScript, ErrorCollector errors) {
     ScriptNode node;
     try {
-      String scriptContent = Files.readString(sqrlScript);
-      if (errors.getLocation() == null || errors.getLocation().getSourceMap() == null) {
-        errors = errors.withSchema("<schema>", scriptContent);
-      }
+      String scriptContent = mainScript.getContent();
+      errors = errors.withSchema("<schema>", scriptContent);
 
       node = parser.parse(scriptContent);
     } catch (Exception e) {
