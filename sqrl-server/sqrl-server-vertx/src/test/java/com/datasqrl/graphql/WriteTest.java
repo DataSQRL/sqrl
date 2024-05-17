@@ -48,6 +48,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -97,14 +98,14 @@ class WriteTest {
     PgPool client = PgPool.pool(vertx, options, new PoolOptions());
     this.client = client;
     this.model = getCustomerModel();
-    this.mutations = GraphQLServer.constructSinkProducers(model, vertx);
-    this.subscriptions = GraphQLServer.constructSubscriptions(model, vertx, Promise.promise());
-  }
+    GraphQLServer graphQLServer = new GraphQLServer(null, null, null);
+    GraphQLServer serverSpy = Mockito.spy(graphQLServer);
+    Mockito.when(serverSpy.getEnvironmentVariable("PROPERTIES_BOOTSTRAP_SERVERS"))
+        .thenReturn(CLUSTER.bootstrapServers());
 
-//  private SqrlConfig getKafkaConfig() {
-//    return KafkaDataSystemFactory.getKafkaEngineConfigWithTopic("kafka", CLUSTER.bootstrapServers(),topicName,
-//            JsonLineFormat.NAME, "flexible");
-//  }
+    this.mutations = serverSpy.constructSinkProducers(model, vertx);
+    this.subscriptions = serverSpy.constructSubscriptions(model, vertx, Promise.promise());
+  }
 
   private Properties getKafkaProps() {
     Properties props = new Properties();
@@ -145,7 +146,7 @@ class WriteTest {
                             .build())
                     .build())
             .mutation(new MutationCoords("addCustomer", topicName,
-                Maps.fromProperties(getKafkaProps())))
+                Map.of()))
             .build();
   }
 

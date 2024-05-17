@@ -274,7 +274,7 @@ public class GraphQLServer extends AbstractVerticle {
     }
   }
 
-  static Map<String, SinkConsumer> constructSubscriptions(RootGraphqlModel root, Vertx vertx,
+  Map<String, SinkConsumer> constructSubscriptions(RootGraphqlModel root, Vertx vertx,
       Promise<Void> startPromise) {
     Map<String, SinkConsumer> consumers = new HashMap<>();
     for (SubscriptionCoords sub: root.getSubscriptions()) {
@@ -288,9 +288,9 @@ public class GraphQLServer extends AbstractVerticle {
     return consumers;
   }
 
-  private static Map<String, String> getSourceConfig() {
+  private Map<String, String> getSourceConfig() {
     Map<String, String> conf = new HashMap<>();
-    conf.put(BOOTSTRAP_SERVERS_CONFIG, System.getenv("PROPERTIES_BOOTSTRAP_SERVERS"));
+    conf.put(BOOTSTRAP_SERVERS_CONFIG, getEnvironmentVariable("PROPERTIES_BOOTSTRAP_SERVERS"));
     conf.put(GROUP_ID_CONFIG, UUID.randomUUID().toString());
     conf.put(KEY_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class.getName());
     conf.put(VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class.getName());
@@ -298,9 +298,13 @@ public class GraphQLServer extends AbstractVerticle {
     return conf;
   }
 
-  private static Map<String, String> getSinkConfig() {
+  String getEnvironmentVariable(String envVar) {
+    return System.getenv(envVar);
+  }
+
+  private Map<String, String> getSinkConfig() {
     Map<String, String> conf = new HashMap<>();
-    conf.put(BOOTSTRAP_SERVERS_CONFIG, System.getenv("PROPERTIES_BOOTSTRAP_SERVERS"));
+    conf.put(BOOTSTRAP_SERVERS_CONFIG, getEnvironmentVariable("PROPERTIES_BOOTSTRAP_SERVERS"));
     conf.put(GROUP_ID_CONFIG, UUID.randomUUID().toString());
     conf.put(KEY_SERIALIZER_CLASS_CONFIG, JsonSerializer.class.getName());
     conf.put(VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class.getName());
@@ -308,7 +312,7 @@ public class GraphQLServer extends AbstractVerticle {
     return conf;
   }
 
-  static Map<String, SinkProducer> constructSinkProducers(RootGraphqlModel root, Vertx vertx) {
+  Map<String, SinkProducer> constructSinkProducers(RootGraphqlModel root, Vertx vertx) {
     Map<String, SinkProducer> producers = new HashMap<>();
     for (MutationCoords mut : root.getMutations()) {
       KafkaProducer<String, String> producer = KafkaProducer.create(vertx, getSinkConfig());
