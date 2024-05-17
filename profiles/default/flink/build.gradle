@@ -12,7 +12,7 @@ ext {
     flinkVersion = "1.18.1"
     jdbcVersion = "3.1.2-1.18"
     kafkaVersion = "3.1.0-1.18"
-    sqrlVersion = "0.5.0-RC4"
+    sqrlVersion = "0.5.0-RC5-SNAPSHOT"
 }
 
 repositories {
@@ -59,6 +59,12 @@ dependencies {
     testImplementation "org.apache.flink:flink-table-planner_2.12:$flinkVersion"
     testImplementation "org.apache.flink:flink-runtime-web:$flinkVersion"
     testRuntimeOnly fileTree(dir: 'lib', include: '*.jar')
+}
+
+test {
+    minHeapSize = "128m" // initial heap size
+    maxHeapSize = "2g" // maximum heap size
+    jvmArgs '-XX:MaxPermSize=256m' // mem argument for the test JVM
 }
 
 test {

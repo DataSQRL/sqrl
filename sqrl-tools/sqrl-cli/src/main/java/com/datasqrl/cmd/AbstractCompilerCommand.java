@@ -3,7 +3,6 @@
  */
 package com.datasqrl.cmd;
 
-
 import static com.datasqrl.config.ScriptConfigImpl.GRAPHQL_NORMALIZED_FILE_NAME;
 import static com.datasqrl.packager.Packager.PACKAGE_JSON;
 
@@ -12,7 +11,9 @@ import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.compile.CompilationProcess;
 import com.datasqrl.compile.DirectoryManager;
 import com.datasqrl.compile.TestPlan;
+import com.datasqrl.config.DependencyImpl;
 import com.datasqrl.config.PackageJson;
+import com.datasqrl.config.PackageJsonImpl;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;
@@ -25,26 +26,18 @@ import com.datasqrl.packager.repository.LocalRepositoryImplementation;
 import com.datasqrl.packager.repository.RemoteRepositoryImplementation;
 import com.datasqrl.packager.repository.Repository;
 import com.datasqrl.plan.validate.ExecutionGoal;
-import com.google.common.base.Preconditions;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.jdbc.SqrlSchema;
-import org.apache.commons.collections.ListUtils;
-import org.apache.commons.collections4.SetUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import picocli.CommandLine;
-import picocli.CommandLine.ScopeType;
 
 @Slf4j
 public abstract class AbstractCompilerCommand extends AbstractCommand {
@@ -128,10 +121,14 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     }
   }
 
-  public abstract PackageJson createDefaultConfig(ErrorCollector errors);
+  public PackageJson createDefaultConfig(ErrorCollector errors) {
+    PackageJson packageJson = new PackageJsonImpl();
+    packageJson.setProfiles(new String[]{"datasqrl.package.default"});
+    packageJson.getDependencies()
+        .addDependency("datasqrl.package.default",
+            new DependencyImpl("datasqrl.package.default", "v0.5.0-RC5", "dev"));
 
-  public PackageJson postProcessConfig(PackageJson config) {
-    return config;
+    return packageJson;
   }
 
   protected void postprocess(PackageJson sqrlConfig, Packager packager, Path targetDir,

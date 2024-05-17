@@ -10,7 +10,6 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.util.SqrlObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -20,7 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import lombok.SneakyThrows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -132,11 +130,6 @@ public class TestCommand extends AbstractCompilerCommand {
         .filter(f->f.getFileName().toString().endsWith("compose.yml"))
         .map(f->f.toFile())
         .collect(Collectors.toList());
-  }
-
-  @Override
-  public PackageJson createDefaultConfig(ErrorCollector errors) {
-    throw new RuntimeException("package.json required");
   }
 
   @Override
