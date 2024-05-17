@@ -418,22 +418,12 @@ LogicalTableScan(table=[[likes$2]])
       {
         "fieldName" : "Likes",
         "topic" : "conference-likes",
-        "sinkConfig" : {
-          "value.serializer" : "com.datasqrl.graphql.kafka.JsonSerializer",
-          "group.id" : "groupid",
-          "bootstrap.servers" : "${PROPERTIES_BOOTSTRAP_SERVERS}",
-          "key.serializer" : "com.datasqrl.graphql.kafka.JsonSerializer"
-        }
+        "sinkConfig" : { }
       },
       {
         "fieldName" : "AddInterest",
         "topic" : "conference-addinterest",
-        "sinkConfig" : {
-          "value.serializer" : "com.datasqrl.graphql.kafka.JsonSerializer",
-          "group.id" : "groupid",
-          "bootstrap.servers" : "${PROPERTIES_BOOTSTRAP_SERVERS}",
-          "key.serializer" : "com.datasqrl.graphql.kafka.JsonSerializer"
-        }
+        "sinkConfig" : { }
       }
     ],
     "subscriptions" : [ ],

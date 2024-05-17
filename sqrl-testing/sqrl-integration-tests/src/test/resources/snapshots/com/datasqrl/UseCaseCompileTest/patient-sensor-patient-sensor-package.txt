@@ -460,25 +460,14 @@ Inputs: tempalert$1
       {
         "fieldName" : "AddReading",
         "topic" : "patient-sensor-addreading",
-        "sinkConfig" : {
-          "value.serializer" : "com.datasqrl.graphql.kafka.JsonSerializer",
-          "group.id" : "groupid",
-          "bootstrap.servers" : "${PROPERTIES_BOOTSTRAP_SERVERS}",
-          "key.serializer" : "com.datasqrl.graphql.kafka.JsonSerializer"
-        }
+        "sinkConfig" : { }
       }
     ],
     "subscriptions" : [
       {
         "fieldName" : "TempAlert",
         "topic" : "tempalert-1",
-        "sinkConfig" : {
-          "key.deserializer" : "com.datasqrl.graphql.kafka.JsonDeserializer",
-          "value.deserializer" : "com.datasqrl.graphql.kafka.JsonDeserializer",
-          "group.id" : "groupid",
-          "bootstrap.servers" : "${PROPERTIES_BOOTSTRAP_SERVERS}",
-          "auto.offset.reset" : "earliest"
-        },
+        "sinkConfig" : { },
         "filters" : {
           "patientId" : "patientid"
         }
