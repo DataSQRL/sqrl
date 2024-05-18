@@ -257,6 +257,10 @@ public class AnnotatedLP implements RelHolder {
     }
   }
 
+  public AnnotatedLP inlineAll(RelBuilder relB, ExecutionAnalysis exec) {
+    return this.inlineNowFilter(relB, exec).inlineTopN(relB, exec).inlineSort(relB, exec);
+  }
+
   public AnnotatedLP inlineNowFilter(RelBuilder relB, ExecutionAnalysis exec) {
     if (nowFilter.isEmpty()) {
       return this;
@@ -360,7 +364,7 @@ public class AnnotatedLP implements RelHolder {
     AnnotatedLP input = this;
     if (inlinePullups) {
       //Inline all pullups and don't pass them downstream in the DAG
-      input = this.inlineNowFilter(relBuilder, exec).inlineTopN(relBuilder, exec).inlineSort(relBuilder, exec);
+      input = this.inlineAll(relBuilder, exec);
     }
 
 
