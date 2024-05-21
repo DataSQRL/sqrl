@@ -29,6 +29,12 @@ ApplicationAlert := SELECT id, customer_id, loan_type_id, max_amount, min_amount
                     FROM ApplicationStatus a
                     WHERE status = 'underwriting' AND (amount > max_amount OR amount < min_amount);
 
+IMPORT loan.AddChatMessage;
+
+CustomerChatMessage := SELECT c.role, c.content, c.name, ctx.customerid, c.event_time AS timestamp,
+                        c._uuid AS uuid
+                       FROM AddChatMessage c JOIN c.context ctx ORDER BY timestamp DESC;
+
 /*+test */
 LoanTypesTest := SELECT COUNT(*) as num_loan_types FROM LoanTypes;
 
