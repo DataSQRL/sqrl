@@ -39,9 +39,7 @@ public class UseCasesIT {
       argsList.add("--tests"); argsList.add("tests-"+testSuffix);
     }
     argsList.add("--profile");
-    argsList.add("../../../../../../../profiles/flink-1.16");
-    argsList.add("--profile");
-    argsList.add("../../../../../../../profiles/flink-1.18");
+    argsList.add("../../../../../../../profiles/default");
     execute(RESOURCES.resolve(path),
         AssertStatusHook.INSTANCE, argsList.toArray(String[]::new));
   }
@@ -52,9 +50,7 @@ public class UseCasesIT {
     argsList.add(script);
     if (!Strings.isNullOrEmpty(graphql)) argsList.add(graphql);
     argsList.add("--profile");
-    argsList.add("../../../../../../../profiles/flink-1.16");
-    argsList.add("--profile");
-    argsList.add("../../../../../../../profiles/flink-1.17");
+    argsList.add("../../../../../../../profiles/default");
     execute(RESOURCES.resolve(path),
         AssertStatusHook.INSTANCE, argsList.toArray(a->new String[a]));
   }

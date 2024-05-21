@@ -55,11 +55,8 @@ public class PackageBootstrap {
 
     Optional<List<Path>> existingPackage = Packager.findPackageFile(rootDir, packageFiles);
     Optional<PackageJson> existingConfig;
-    if (existingPackage.isPresent()) {
-      existingConfig = Optional.of(SqrlConfigCommons.fromFilesPackageJson(errors, existingPackage.get()));
-    } else {
-      existingConfig = Optional.empty();
-    }
+    existingConfig = existingPackage.map(
+        paths -> SqrlConfigCommons.fromFilesPackageJson(errors, paths));
 
     Map<String, Dependency> dependencies = new HashMap<>();
     // Check if 'profiles' key is set, replace if existing
@@ -69,6 +66,15 @@ public class PackageBootstrap {
 
     //Create package.json from project root if exists
     List<Path> configFiles = new ArrayList<>();
+
+    if (existingConfig.isEmpty() && profiles.length == 0) { //No profiles found, use default (remotely downloaded)
+      PackageJson defaultConfig = defaultConfigFnc.apply(errors);
+      Path path = buildDir.resolve(PACKAGE_JSON);
+      profiles = defaultConfig.getProfiles().toArray(String[]::new);
+      existingConfig = Optional.of(defaultConfig);
+      defaultConfig.toFile(path, true);
+      configFiles.add(path);
+    }
 
     //Download any profiles
     for (String profile : profiles) {
@@ -107,13 +113,6 @@ public class PackageBootstrap {
     }
 
     existingPackage.ifPresent(configFiles::addAll);
-
-    if (packageFiles.isEmpty() && configFiles.isEmpty()) { //No profiles found, use default
-      PackageJson defaultConfig = defaultConfigFnc.apply(errors);
-      Path path = buildDir.resolve(PACKAGE_JSON);
-      defaultConfig.toFile(path, true);
-      configFiles.add(path);
-    }
 
     // Could not find any package json
     if (configFiles.isEmpty()) {

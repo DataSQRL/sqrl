@@ -38,17 +38,17 @@ public class UseCasesFullIT extends UseCasesIT {
     execute("seedshop-tutorial", "seedshop-extended.sqrl", null, "seedshop-extended");
   }
 
-
-  @Test
-  @Disabled
-  public void compile() {
-    compile("sensors", "sensors-mutation.sqrl", "sensors-mutation.graphqls");
-  }
-
-  @Test
-  @Disabled
-  public void testCompileScript() {
-    execute(Path.of("/Users/matthias/git/data-product-data-connect-cv/src/main/datasqrl"), AssertStatusHook.INSTANCE,
-        "compile", "clinical_views.sqrl", "-c", "test_package_clinical_views.json", "--profile", "profile/");
-  }
+//
+//  @Test
+//  @Disabled
+//  public void compile() {
+//    compile("sensors", "sensors-mutation.sqrl", "sensors-mutation.graphqls");
+//  }
+//
+//  @Test
+//  @Disabled
+//  public void testCompileScript() {
+//    execute(Path.of("/Users/matthias/git/data-product-data-connect-cv/src/main/datasqrl"), AssertStatusHook.INSTANCE,
+//        "compile", "clinical_views.sqrl", "-c", "test_package_clinical_views.json", "--profile", "profile/");
+//  }
 }

@@ -19,6 +19,10 @@ public class PackageJsonImpl implements PackageJson {
 
   private SqrlConfig sqrlConfig;
 
+  public PackageJsonImpl() {
+    this(SqrlConfig.createCurrentVersion());
+  }
+
   @Override
   public List<String> getEnabledEngines() {
     return sqrlConfig.asList(PIPELINE_KEY, String.class).get();
