@@ -40,7 +40,7 @@ public class FlexibleSchemaInferencePreprocessorTest extends AbstractAssetSnapsh
 
   protected FlexibleSchemaInferencePreprocessorTest() {
     super(FILES_DIR.resolve("output"));
-    packageJson = SqrlConfigCommons.fromFilesPackageJson(errors, List.of(Path.of("../../profiles/flink-1.16/package.json")));
+    packageJson = SqrlConfigCommons.fromFilesPackageJson(errors, List.of(Path.of("../../profiles/default/package.json")));
     Injector injector = Guice.createInjector(
         new SqrlInjector(ErrorCollector.root(), FILES_DIR, super.deployDir, packageJson, ExecutionGoal.COMPILE, null),
         new StatefulModule(new SqrlSchema(new TypeFactory(), NameCanonicalizer.SYSTEM)));

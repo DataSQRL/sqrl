@@ -50,7 +50,7 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
     }
     arguments.add("-t"); arguments.add(deployDir.toString());
     arguments.add("--profile");
-    arguments.add("../../../../../../../profiles/flink-1.16");
+    arguments.add("../../../../../../../profiles/default");
     String testname = Stream.of(script, graphQlFile, packageFile)
         .map(AbstractAssetSnapshotTest::getDisplayName)
         .collect(Collectors.joining("-"));
