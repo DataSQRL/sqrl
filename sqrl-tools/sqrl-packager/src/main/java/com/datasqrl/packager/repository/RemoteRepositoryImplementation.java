@@ -207,18 +207,19 @@ public class RemoteRepositoryImplementation implements Repository, PublishReposi
 
     MultipartEntityBuilder entityBuilder = MultipartEntityBuilder.create();
     for (Map.Entry<String, Object> entry : map.entrySet()) {
-      if (entry.getValue() instanceof List) continue;
       if (entry.getValue() == null) continue;
-      entityBuilder.addTextBody(entry.getKey(), entry.getValue().toString());
+      if (entry.getValue() instanceof List) {
+        List<?> list = (List<?>) entry.getValue();
+        for (int i = 0; i < list.size(); i++) {
+          entityBuilder.addTextBody(String.format("%s[%d]", entry.getKey(), i), list.get(i).toString());
+        }
+      } else {
+        entityBuilder.addTextBody(entry.getKey(), entry.getValue().toString());
+      }
     }
     
     File zipFile = zipFilePath.toFile();
     entityBuilder.addBinaryBody("file", zipFile, ContentType.create("application/zip"), zipFile.getName());
-
-    List<String> keywords = pkgConfig.getKeywords();
-    for (int i = 0; i < keywords.size(); i++) {
-      entityBuilder.addTextBody(String.format("topics[%d][name]", i), keywords.get(i));
-    }
 
     return entityBuilder.build();
   }
