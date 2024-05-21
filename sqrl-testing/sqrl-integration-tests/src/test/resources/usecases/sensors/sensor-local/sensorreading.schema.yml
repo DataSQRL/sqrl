@@ -8,7 +8,7 @@ columns:
   tests:
   - "not_null"
 - name: "time"
-  type: "TIMESTAMP"
+  type: "BIGINT"
   tests:
   - "not_null"
 - name: "temperature"
