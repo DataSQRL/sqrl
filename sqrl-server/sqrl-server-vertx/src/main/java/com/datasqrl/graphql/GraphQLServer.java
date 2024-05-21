@@ -292,8 +292,8 @@ public class GraphQLServer extends AbstractVerticle {
     Map<String, String> conf = new HashMap<>();
     conf.put(BOOTSTRAP_SERVERS_CONFIG, getEnvironmentVariable("PROPERTIES_BOOTSTRAP_SERVERS"));
     conf.put(GROUP_ID_CONFIG, UUID.randomUUID().toString());
-    conf.put(KEY_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class.getName());
-    conf.put(VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class.getName());
+    conf.put(KEY_DESERIALIZER_CLASS_CONFIG, "com.datasqrl.graphql.kafka.JsonDeserializer");
+    conf.put(VALUE_DESERIALIZER_CLASS_CONFIG, "com.datasqrl.graphql.kafka.JsonDeserializer");
     conf.put(AUTO_OFFSET_RESET_CONFIG, "latest");
     return conf;
   }
@@ -306,8 +306,8 @@ public class GraphQLServer extends AbstractVerticle {
     Map<String, String> conf = new HashMap<>();
     conf.put(BOOTSTRAP_SERVERS_CONFIG, getEnvironmentVariable("PROPERTIES_BOOTSTRAP_SERVERS"));
     conf.put(GROUP_ID_CONFIG, UUID.randomUUID().toString());
-    conf.put(KEY_SERIALIZER_CLASS_CONFIG, JsonSerializer.class.getName());
-    conf.put(VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class.getName());
+    conf.put(KEY_SERIALIZER_CLASS_CONFIG, "com.datasqrl.graphql.kafka.JsonSerializer");
+    conf.put(VALUE_SERIALIZER_CLASS_CONFIG, "com.datasqrl.graphql.kafka.JsonSerializer");
 
     return conf;
   }
