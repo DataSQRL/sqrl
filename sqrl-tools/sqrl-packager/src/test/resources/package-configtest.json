@@ -6,7 +6,7 @@
     "version": "1.0.0",
     "variant": "dev",
     "description": "Basic nutshop example",
-    "keywords": ["example", "tutorial", "ecommerce"]
+    "topics": ["example", "tutorial", "ecommerce"]
   },
   "compiler":
   {
