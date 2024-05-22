@@ -1,7 +1,7 @@
 query {
     Sensors(id: 9, limit: 10) {
         id
-        machineid
+        machineId
         placed
         lastHour {
             maxTemp

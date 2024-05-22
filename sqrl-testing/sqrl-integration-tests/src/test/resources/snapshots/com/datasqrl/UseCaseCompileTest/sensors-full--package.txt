@@ -103,7 +103,7 @@ Primary Key: sensorid, time
 Timestamp  : timestamp
 Schema:
  - sensorid: BIGINT NOT NULL
- - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - time: BIGINT NOT NULL
  - temperature: DOUBLE NOT NULL
  - humidity: DOUBLE NOT NULL
  - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
@@ -119,7 +119,7 @@ Timestamp  : timestamp
 Schema:
  - id: BIGINT NOT NULL
  - machineId: BIGINT NOT NULL
- - placed: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - placed: BIGINT NOT NULL
  - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
 LogicalTableScan(table=[[sensors$1]], hints=[[[WatermarkHint inheritPath:[] options:[3]]]]) hints[WatermarkHint options:[3]]
@@ -134,7 +134,7 @@ Timestamp  : timestamp
 Schema:
  - id: BIGINT NOT NULL
  - machineId: BIGINT NOT NULL
- - placed: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - placed: BIGINT NOT NULL
  - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Post Processors:
  - topN: partition=id limit=1 sort=#3: timestamp TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
@@ -146,14 +146,14 @@ LogicalTableScan(table=[[sensors$2]])
   "flinkSql" : [
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochmillitotimestamp` AS 'com.datasqrl.time.EpochMilliToTimestamp' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofsecond` AS 'com.datasqrl.time.EndOfSecond' LANGUAGE JAVA;",
-    "CREATE TEMPORARY TABLE `sensors$1` (\n  `id` BIGINT NOT NULL,\n  `machineId` BIGINT NOT NULL,\n  `placed` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `timestamp` AS EPOCHMILLITOTIMESTAMP(`placed`),\n  PRIMARY KEY (`id`, `placed`) NOT ENFORCED,\n  WATERMARK FOR `timestamp` AS (`timestamp` - INTERVAL '0.001' SECOND)\n) WITH (\n  'format' = 'flexible-json',\n  'path' = '/data/sensors.jsonl',\n  'connector' = 'filesystem'\n);",
-    "CREATE TEMPORARY TABLE `sensorreading$1` (\n  `sensorid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `temperature` DOUBLE NOT NULL,\n  `humidity` DOUBLE NOT NULL,\n  `timestamp` AS EPOCHMILLITOTIMESTAMP(`time`),\n  PRIMARY KEY (`sensorid`, `time`) NOT ENFORCED,\n  WATERMARK FOR `timestamp` AS (`timestamp` - INTERVAL '0.001' SECOND)\n) WITH (\n  'format' = 'csv',\n  'path' = '/data/sensorreading.csv.gz',\n  'connector' = 'filesystem'\n);",
+    "CREATE TEMPORARY TABLE `sensors$1` (\n  `id` BIGINT NOT NULL,\n  `machineId` BIGINT NOT NULL,\n  `placed` BIGINT NOT NULL,\n  `timestamp` AS EPOCHMILLITOTIMESTAMP(`placed`),\n  PRIMARY KEY (`id`, `placed`) NOT ENFORCED,\n  WATERMARK FOR `timestamp` AS (`timestamp` - INTERVAL '0.001' SECOND)\n) WITH (\n  'format' = 'flexible-json',\n  'path' = '/data/sensors.jsonl',\n  'connector' = 'filesystem'\n);",
+    "CREATE TEMPORARY TABLE `sensorreading$1` (\n  `sensorid` BIGINT NOT NULL,\n  `time` BIGINT NOT NULL,\n  `temperature` DOUBLE NOT NULL,\n  `humidity` DOUBLE NOT NULL,\n  `timestamp` AS EPOCHMILLITOTIMESTAMP(`time`),\n  PRIMARY KEY (`sensorid`, `time`) NOT ENFORCED,\n  WATERMARK FOR `timestamp` AS (`timestamp` - INTERVAL '0.001' SECOND)\n) WITH (\n  'format' = 'csv',\n  'path' = '/data/sensorreading.csv.gz',\n  'connector' = 'filesystem'\n);",
     "CREATE TEMPORARY TABLE `hightemp$1` (\n  `machineid` BIGINT NOT NULL,\n  `sensorid` BIGINT NOT NULL,\n  `temp` DOUBLE NOT NULL,\n  `timeSec` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`sensorid`, `timeSec`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'hightemp$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `lasthour$1` (\n  `__pk1$id` BIGINT NOT NULL,\n  `maxTemp` DOUBLE NOT NULL,\n  `avgTemp` DOUBLE NOT NULL,\n  `_timeSec` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`__pk1$id`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'lasthour$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `machine$1` (\n  `machineid` BIGINT NOT NULL,\n  `maxTemp` DOUBLE NOT NULL,\n  `avgTemp` DOUBLE NOT NULL,\n  `_timeSec` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`machineid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'machine$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `secreading$1` (\n  `sensorid` BIGINT NOT NULL,\n  `timeSec` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `temp` DOUBLE NOT NULL,\n  PRIMARY KEY (`sensorid`, `timeSec`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'secreading$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `sensorreading$2` (\n  `sensorid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `temperature` DOUBLE NOT NULL,\n  `humidity` DOUBLE NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`sensorid`, `time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'sensorreading$2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `sensors$3` (\n  `id` BIGINT NOT NULL,\n  `machineId` BIGINT NOT NULL,\n  `placed` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'sensors$3',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `sensorreading$2` (\n  `sensorid` BIGINT NOT NULL,\n  `time` BIGINT NOT NULL,\n  `temperature` DOUBLE NOT NULL,\n  `humidity` DOUBLE NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`sensorid`, `time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'sensorreading$2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `sensors$3` (\n  `id` BIGINT NOT NULL,\n  `machineId` BIGINT NOT NULL,\n  `placed` BIGINT NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'sensors$3',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `hightemp$1$1` (\n  `machineid` BIGINT NOT NULL,\n  `sensorid` BIGINT NOT NULL,\n  `temp` DOUBLE NOT NULL,\n  `timeSec` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n) WITH (\n  'connector' = 'print',\n  'print-identifier' = 'tempWarning'\n);",
     "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM (SELECT `id`, `machineId`, `placed`, `timestamp`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC NULLS LAST)) AS `_rownum`\nFROM `sensors$1`) AS `t`\nWHERE (`_rownum` = 1);",
     "CREATE VIEW `table$2`\nAS\nSELECT `sensorid`, ENDOFSECOND(`timestamp`) AS `timeSec`, `temperature`, `time`, `timestamp`\nFROM `sensorreading$1`;",
@@ -249,7 +249,7 @@ LogicalTableScan(table=[[sensors$2]])
       "name" : "sensorreading$2",
       "columns" : [
         "\"sensorid\" BIGINT NOT NULL",
-        "\"time\" TIMESTAMP WITH TIME ZONE NOT NULL",
+        "\"time\" BIGINT NOT NULL",
         "\"temperature\" DOUBLE PRECISION NOT NULL",
         "\"humidity\" DOUBLE PRECISION NOT NULL",
         "\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL"
@@ -258,20 +258,20 @@ LogicalTableScan(table=[[sensors$2]])
         "\"sensorid\"",
         "\"time\""
       ],
-      "sql" : "CREATE TABLE IF NOT EXISTS sensorreading$2 (\"sensorid\" BIGINT NOT NULL,\"time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"temperature\" DOUBLE PRECISION NOT NULL,\"humidity\" DOUBLE PRECISION NOT NULL,\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"sensorid\",\"time\"));"
+      "sql" : "CREATE TABLE IF NOT EXISTS sensorreading$2 (\"sensorid\" BIGINT NOT NULL,\"time\" BIGINT NOT NULL,\"temperature\" DOUBLE PRECISION NOT NULL,\"humidity\" DOUBLE PRECISION NOT NULL,\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"sensorid\",\"time\"));"
     },
     {
       "name" : "sensors$3",
       "columns" : [
         "\"id\" BIGINT NOT NULL",
         "\"machineId\" BIGINT NOT NULL",
-        "\"placed\" TIMESTAMP WITH TIME ZONE NOT NULL",
+        "\"placed\" BIGINT NOT NULL",
         "\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL"
       ],
       "primaryKeys" : [
         "\"id\""
       ],
-      "sql" : "CREATE TABLE IF NOT EXISTS sensors$3 (\"id\" BIGINT NOT NULL,\"machineId\" BIGINT NOT NULL,\"placed\" TIMESTAMP WITH TIME ZONE NOT NULL,\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\"));"
+      "sql" : "CREATE TABLE IF NOT EXISTS sensors$3 (\"id\" BIGINT NOT NULL,\"machineId\" BIGINT NOT NULL,\"placed\" BIGINT NOT NULL,\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\"));"
     },
     {
       "indexName" : "hightemp$1_hash_c3",
@@ -974,7 +974,7 @@ LogicalTableScan(table=[[sensors$2]])
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype HighTemp {\n  machineid: Float!\n  sensorid: Float!\n  temp: Float!\n  timeSec: DateTime!\n}\n\ntype Machine {\n  machineid: Float!\n  maxTemp: Float!\n  avgTemp: Float!\n  sensors(limit: Int = 10, offset: Int = 0): [Sensors!]\n}\n\ntype Query {\n  HighTemp(sensorid: Float, timeSec: DateTime, limit: Int = 10, offset: Int = 0): [HighTemp!]\n  Machine(machineid: Float, limit: Int = 10, offset: Int = 0): [Machine!]\n  SecReading(sensorid: Float, timeSec: DateTime, limit: Int = 10, offset: Int = 0): [SecReading!]\n  SecReadingByTemp(temp: Int!): [SecReadingByTemp!]\n  SensorReading(sensorid: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [SensorReading!]\n  Sensors(id: Float, limit: Int = 10, offset: Int = 0): [Sensors!]\n}\n\ntype SecReading {\n  sensorid: Float!\n  timeSec: DateTime!\n  temp: Float!\n}\n\ntype SecReadingByTemp {\n  sensorid: Float!\n  timeSec: DateTime!\n  temp: Float!\n}\n\ntype SensorReading {\n  sensorid: Float!\n  time: DateTime!\n  temperature: Float!\n  humidity: Float!\n  timestamp: DateTime!\n}\n\ntype Sensors {\n  id: Float!\n  machineId: Float!\n  placed: DateTime!\n  timestamp: DateTime!\n  lastHour: lastHour\n  readings(limit: Int = 10, offset: Int = 0): [SecReading!]\n}\n\ntype lastHour {\n  maxTemp: Float!\n  avgTemp: Float!\n  parent: Sensors!\n}\n"
+      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype HighTemp {\n  machineid: Float!\n  sensorid: Float!\n  temp: Float!\n  timeSec: DateTime!\n}\n\ntype Machine {\n  machineid: Float!\n  maxTemp: Float!\n  avgTemp: Float!\n  sensors(limit: Int = 10, offset: Int = 0): [Sensors!]\n}\n\ntype Query {\n  HighTemp(sensorid: Float, timeSec: DateTime, limit: Int = 10, offset: Int = 0): [HighTemp!]\n  Machine(machineid: Float, limit: Int = 10, offset: Int = 0): [Machine!]\n  SecReading(sensorid: Float, timeSec: DateTime, limit: Int = 10, offset: Int = 0): [SecReading!]\n  SecReadingByTemp(temp: Int!): [SecReadingByTemp!]\n  SensorReading(sensorid: Float, time: Float, limit: Int = 10, offset: Int = 0): [SensorReading!]\n  Sensors(id: Float, limit: Int = 10, offset: Int = 0): [Sensors!]\n}\n\ntype SecReading {\n  sensorid: Float!\n  timeSec: DateTime!\n  temp: Float!\n}\n\ntype SecReadingByTemp {\n  sensorid: Float!\n  timeSec: DateTime!\n  temp: Float!\n}\n\ntype SensorReading {\n  sensorid: Float!\n  time: Float!\n  temperature: Float!\n  humidity: Float!\n  timestamp: DateTime!\n}\n\ntype Sensors {\n  id: Float!\n  machineId: Float!\n  placed: Float!\n  timestamp: DateTime!\n  lastHour: lastHour\n  readings(limit: Int = 10, offset: Int = 0): [SecReading!]\n}\n\ntype lastHour {\n  maxTemp: Float!\n  avgTemp: Float!\n  parent: Sensors!\n}\n"
     }
   }
 }

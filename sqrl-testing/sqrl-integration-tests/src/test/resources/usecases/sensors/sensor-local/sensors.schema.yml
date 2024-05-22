@@ -12,6 +12,6 @@ columns:
   tests:
   - "not_null"
 - name: "placed"
-  type: "TIMESTAMP"
+  type: "BIGINT"
   tests:
   - "not_null"
