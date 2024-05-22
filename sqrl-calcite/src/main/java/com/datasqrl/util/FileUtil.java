@@ -87,9 +87,7 @@ public class FileUtil {
   }
 
   public static String getFileName(String path) {
-    int start = Math.max(path.lastIndexOf('\\'), path.lastIndexOf('/'));
-    if (start<0) start = 0;
-    return path.substring(start);
+    return Path.of(path).getFileName().toString();
   }
 
   public static Pair<String, String> separateExtension(String fileName) {
