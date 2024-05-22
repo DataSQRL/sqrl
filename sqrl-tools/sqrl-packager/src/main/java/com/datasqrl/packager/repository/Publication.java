@@ -24,7 +24,7 @@ public class Publication extends PackageConfigurationImpl {
         super(pkg.getName(), pkg.getVersion(), pkg.getVariant(), pkg.getLatest(), orEmpty(pkg.getType()),
             orEmpty(pkg.getLicense()),
             orEmpty(pkg.getRepository()), orEmpty(pkg.getHomepage()), orEmpty(pkg.getDocumentation()),
-            orEmpty(pkg.getReadme()), orEmpty(pkg.getDescription()), pkg.getKeywords());
+            orEmpty(pkg.getReadme()), orEmpty(pkg.getDescription()), pkg.getTopics());
         pkg.checkInitialized();
         this.uniqueId = uniqueId;
         this.file = file;

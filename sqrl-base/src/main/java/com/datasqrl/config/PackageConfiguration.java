@@ -27,7 +27,7 @@ public interface PackageConfiguration {
 
   String getDocumentation();
 
-  List<String> getKeywords();
+  List<String> getTopics();
 
   void checkInitialized();
 

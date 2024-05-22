@@ -7,7 +7,7 @@ import com.datasqrl.config.Constraints.Default;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import java.util.HashMap;
+
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,12 +45,12 @@ public class PackageConfigurationImpl implements PackageConfiguration {
   @Default
   String description = "";
   @Default
-  List<String> keywords = List.of();
+  List<String> topics = List.of();
 
   public void checkInitialized() {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(getName()) &&
         !Strings.isNullOrEmpty(getVersion()) && !Strings.isNullOrEmpty(getVariant()) &&
-        getLatest()!=null && getKeywords()!=null, "Package configuration has not been initialized.");
+        getLatest() != null && this.getTopics() != null, "Package configuration has not been initialized.");
   }
 
   @JsonIgnore
@@ -73,7 +73,7 @@ public class PackageConfigurationImpl implements PackageConfiguration {
     map.put("documentation", getDocumentation());
     map.put("readme", getReadme());
     map.put("description", getDescription());
-    map.put("keywords", getKeywords());
+    map.put("topics", this.getTopics());
     return map;
   }
 }

@@ -61,7 +61,7 @@
 //    PackageConfiguration pkgConfig = config.getPackageConfig();
 //    assertEquals("1.0.0", pkgConfig.getVersion());
 //    assertEquals("dev", pkgConfig.getVariant());
-//    assertEquals(3, pkgConfig.getKeywords().size());
+//    assertEquals(3, pkgConfig.getTopics().size());
 //
 //    assertFalse(errors.hasErrorsWarningsOrNotices());
 //  }

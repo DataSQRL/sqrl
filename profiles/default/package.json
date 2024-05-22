@@ -40,6 +40,6 @@
     "description": "A docker compose datasqrl profile",
     "homepage": "",
     "documentation": "",
-    "keywords": "profile"
+    "topics": [ "profile" ]
   }
 }
