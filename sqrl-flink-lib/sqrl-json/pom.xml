@@ -67,7 +67,6 @@
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-lib-common</artifactId>
-      <version>0.5.0-RC5-SNAPSHOT</version>
     </dependency>
 
   </dependencies>

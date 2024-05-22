@@ -126,7 +126,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     packageJson.setProfiles(new String[]{"datasqrl.profile.default"});
     packageJson.getDependencies()
         .addDependency("datasqrl.profile.default",
-            new DependencyImpl("datasqrl.profile.default", "v0.5.0-RC5", "dev"));
+            new DependencyImpl("datasqrl.profile.default", "v0.5.0", "dev"));
 
     return packageJson;
   }

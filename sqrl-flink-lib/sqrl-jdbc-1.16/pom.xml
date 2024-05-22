@@ -71,12 +71,10 @@
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-lib-common</artifactId>
-      <version>${version}</version>
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-flexible-json</artifactId>
-      <version>${version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
