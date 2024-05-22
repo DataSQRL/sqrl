@@ -1,5 +1,6 @@
 package com.datasqrl.packager.repository;
 
+import static com.datasqrl.auth.AuthUtils.REPO_URL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -16,6 +17,7 @@ import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.StringUtil;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -127,7 +129,7 @@ public class RepositoryTest {
     DependencyImpl dependency = new DependencyImpl("datasqrl.seedshop", "0.1.1", "dev");
 
     RemoteRepositoryImplementation remoteRepo = new RemoteRepositoryImplementation(
-        RemoteRepositoryImplementation.DEFAULT_URI);
+        URI.create(REPO_URL));
     remoteRepo.setCacheRepository(localRepo);
 
     Optional<Dependency> optDep = remoteRepo.resolveDependency(dependency.getName());

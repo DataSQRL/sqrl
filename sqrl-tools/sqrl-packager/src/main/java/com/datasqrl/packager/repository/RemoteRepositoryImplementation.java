@@ -3,6 +3,8 @@
  */
 package com.datasqrl.packager.repository;
 
+import static com.datasqrl.auth.AuthUtils.REPO_URL;
+
 import com.datasqrl.auth.AuthProvider;
 import com.datasqrl.config.Dependency;
 import com.datasqrl.config.DependencyImpl;
@@ -42,7 +44,6 @@ import org.apache.http.entity.mime.MultipartEntityBuilder;
 
 @Slf4j
 public class RemoteRepositoryImplementation implements Repository, PublishRepository {
-  public static final URI DEFAULT_URI = URI.create("https://sqrl-repository-frontend-git-staging-datasqrl.vercel.app");
 
   private final ObjectMapper mapper = SqrlObjectMapper.INSTANCE;
 
@@ -57,7 +58,7 @@ public class RemoteRepositoryImplementation implements Repository, PublishReposi
   }
 
   public RemoteRepositoryImplementation() {
-    this(DEFAULT_URI);
+    this(URI.create(REPO_URL));
   }
 
   @Override
