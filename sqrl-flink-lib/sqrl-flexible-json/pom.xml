@@ -43,17 +43,14 @@
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-errors</artifactId>
-      <version>${version}</version>
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-name</artifactId>
-      <version>${version}</version>
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-json</artifactId>
-      <version>${version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
@@ -76,7 +73,6 @@
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-lib-common</artifactId>
-      <version>${version}</version>
     </dependency>
   </dependencies>
   <build>

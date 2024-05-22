@@ -49,7 +49,6 @@
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-lib-common</artifactId>
-      <version>${version}</version>
     </dependency>
   </dependencies>
   <build>
