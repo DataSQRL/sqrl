@@ -69,6 +69,16 @@ type Query {
   LoanTypes(id: Int): [LoanTypes!]
   ApplicationAlert: [ApplicationAlert!]
   ApplicationUpdates: [ApplicationUpdates!]
+  CustomerChatMessage(customerid: Int!, limit: Int = 10, offset: Int = 0): [CustomerChatMessage!]
+}
+
+type CustomerChatMessage {
+  role: String!
+  content: String!
+  name: String
+  customerid: Int!
+  timestamp: String!
+  uuid: String!
 }
 
 type overview {
@@ -83,6 +93,7 @@ type Subscription {
 
 type Mutation {
   ApplicationUpdates(event: ApplicationUpdateEvent!): ApplicationUpdateEventResult!
+  AddChatMessage(message: ChatMessageInput!): CreatedChatMessage
 }
 
 input ApplicationUpdateEvent {
@@ -94,4 +105,20 @@ input ApplicationUpdateEvent {
 type ApplicationUpdateEventResult {
   loan_application_id: Int!
   message: String!
+}
+
+
+input ChatMessageInput {
+  role: String!
+  content: String!
+  name: String
+  context: ChatMessageContextInput
+}
+
+input ChatMessageContextInput {
+  customerid: Int
+}
+
+type CreatedChatMessage {
+  event_time: String!
 }
