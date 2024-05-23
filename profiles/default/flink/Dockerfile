@@ -1,17 +1,6 @@
 # Stage 1: Building the dependencies and the fat JAR
 FROM gradle:8.6-jdk11 AS build
 
-# Set the working directory in the Docker image
-WORKDIR /app
-
-# First, copy only the build.gradle file(s) into the Docker image
-COPY build.gradle /app/
-
-# Download and cache the project dependencies
-# We are using `--no-daemon` and `--console=plain` for better CI logs
-RUN gradle --no-daemon --console=plain dependencies
-
-# Copy the Gradle configuration files
 COPY . /app/
 WORKDIR /app
 
