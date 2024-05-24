@@ -124,7 +124,7 @@ public class RemoteRepositoryImplementation implements Repository, PublishReposi
     HttpRequest.Builder requestBuilder =
         HttpRequest.newBuilder()
             .uri(buildPackageInfoUri(name, version, variant));
-    authToken.ifPresent((t)->requestBuilder.header("Authorization", "Bearer " + authToken));
+    authToken.ifPresent((t) -> requestBuilder.header("Authorization", "Bearer " + t));
     requestBuilder.GET()
             .timeout(Duration.of(10, ChronoUnit.SECONDS))
             .build();
@@ -218,7 +218,7 @@ public class RemoteRepositoryImplementation implements Repository, PublishReposi
         entityBuilder.addTextBody(entry.getKey(), entry.getValue().toString());
       }
     }
-    
+
     File zipFile = zipFilePath.toFile();
     entityBuilder.addBinaryBody("file", zipFile, ContentType.create("application/zip"), zipFile.getName());
 
