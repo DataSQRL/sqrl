@@ -35,6 +35,9 @@ import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.healthchecks.HealthCheckHandler;
+import io.vertx.ext.healthchecks.HealthChecks;
+import io.vertx.ext.healthchecks.Status;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
@@ -185,6 +188,9 @@ public class GraphQLServer extends AbstractVerticle {
     CorsHandler corsHandler = toCorsHandler(this.config.getCorsHandlerOptions());
     router.route().handler(corsHandler);
     router.route().handler(BodyHandler.create());
+
+    HealthCheckHandler healthCheckHandler = HealthCheckHandler.create(vertx);
+    router.get("/health*").handler(healthCheckHandler);
 
     //Todo: Don't spin up the ws endpoint if there are no subscriptions
     GraphQLHandler graphQLHandler = GraphQLHandler.create(graphQL,
