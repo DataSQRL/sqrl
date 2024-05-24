@@ -28,6 +28,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import graphql.GraphQL;
+import graphql.execution.instrumentation.ChainedInstrumentation;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -45,6 +46,8 @@ import io.vertx.ext.web.handler.LoggerHandler;
 import io.vertx.ext.web.handler.graphql.ApolloWSHandler;
 import io.vertx.ext.web.handler.graphql.GraphQLHandler;
 import io.vertx.ext.web.handler.graphql.GraphiQLHandler;
+import io.vertx.ext.web.handler.graphql.instrumentation.JsonObjectAdapter;
+import io.vertx.ext.web.handler.graphql.instrumentation.VertxFutureAdapter;
 import io.vertx.ext.web.handler.graphql.ws.GraphQLWSHandler;
 import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
@@ -271,7 +274,10 @@ public class GraphQLServer extends AbstractVerticle {
       GraphQL graphQL = model.accept(
           new GraphQLEngineBuilder(List.of(SqrlVertxScalars.JSON)),
           new VertxContext(new VertxJdbcClient(client), constructSinkProducers(model, vertx),
-              constructSubscriptions(model, vertx, startPromise), canonicalizer));
+              constructSubscriptions(model, vertx, startPromise), canonicalizer))
+          .instrumentation(new ChainedInstrumentation(
+              new JsonObjectAdapter(), VertxFutureAdapter.create()))
+          .build();
       return graphQL;
     } catch (Exception e) {
       startPromise.fail(e.getMessage());

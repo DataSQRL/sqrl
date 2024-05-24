@@ -67,6 +67,23 @@
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-web-graphql</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>com.graphql-java</groupId>
+          <artifactId>graphql-java</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>com.graphql-java</groupId>
+      <artifactId>graphql-java</artifactId>
+      <version>22.1</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.reactivestreams</groupId>
+          <artifactId>reactive-streams</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>

@@ -23,8 +23,11 @@ import com.google.common.collect.Maps;
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import graphql.GraphQL;
+import graphql.execution.instrumentation.ChainedInstrumentation;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
+import io.vertx.ext.web.handler.graphql.instrumentation.JsonObjectAdapter;
+import io.vertx.ext.web.handler.graphql.instrumentation.VertxFutureAdapter;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
@@ -167,7 +170,10 @@ class WriteTest {
 
     GraphQL graphQL = model.accept(
         new GraphQLEngineBuilder(),
-        new VertxContext(new VertxJdbcClient(client), mutations, subscriptions, NameCanonicalizer.SYSTEM));
+        new VertxContext(new VertxJdbcClient(client), mutations, subscriptions, NameCanonicalizer.SYSTEM))
+        .instrumentation(new ChainedInstrumentation(
+            new JsonObjectAdapter(), VertxFutureAdapter.create()))
+        .build();
 
     ExecutionInput executionInput = ExecutionInput.newExecutionInput()
         .query("mutation ($event: CreateCustomerEvent!) { addCustomer(event: $event) { customerid, ts } }")

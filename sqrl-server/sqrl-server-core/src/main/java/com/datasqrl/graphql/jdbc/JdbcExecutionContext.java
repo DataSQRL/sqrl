@@ -131,9 +131,9 @@ public class JdbcExecutionContext implements QueryExecutionContext,
   public Object visitArgumentParameter(ArgumentParameter argumentParameter,
       QueryExecutionContext context) {
     return context.getArguments().stream()
-        .filter(arg -> arg.getPath().equalsIgnoreCase(argumentParameter.getPath()))
+        .filter(arg -> ((Argument)arg).getPath().equalsIgnoreCase(argumentParameter.getPath()))
         .findFirst()
-        .map(f -> f.getValue())
+        .map(f -> ((Argument)f).getValue())
         .orElse(null);
   }
 }

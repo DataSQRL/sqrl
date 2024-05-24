@@ -14,6 +14,7 @@ import com.datasqrl.graphql.server.RootGraphqlModel.SourceParameter;
 import com.datasqrl.graphql.server.QueryExecutionContext;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import graphql.schema.DataFetchingEnvironment;
+import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
 import io.vertx.sqlclient.Row;
@@ -34,10 +35,9 @@ public class VertxQueryExecutionContext implements QueryExecutionContext,
   VertxContext context;
   DataFetchingEnvironment environment;
   Set<Argument> arguments;
-  Promise<Object> fut;
 
   @Override
-  public CompletableFuture runQuery(GraphQLEngineBuilder server, ResolvedJdbcQuery pgQuery,
+  public Future runQuery(GraphQLEngineBuilder server, ResolvedJdbcQuery pgQuery,
       boolean isList) {
     Object[] paramObj = new Object[pgQuery.getQuery().getParameters().size()];
     for (int i = 0; i < pgQuery.getQuery().getParameters().size(); i++) {
@@ -46,20 +46,13 @@ public class VertxQueryExecutionContext implements QueryExecutionContext,
       paramObj[i] = o;
     }
 
-    ((PreparedSqrlQueryImpl) pgQuery.getPreparedQueryContainer())
+    return ((PreparedSqrlQueryImpl) pgQuery.getPreparedQueryContainer())
         .getPreparedQuery().execute(Tuple.from(paramObj))
-        .map(r -> resultMapper(r, isList))
-        .onSuccess(fut::complete)
-        .onFailure(f -> {
-          f.printStackTrace();
-          fut.fail(f);
-        });
-
-    return null;
+        .map(r -> resultMapper(r, isList));
   }
 
   @Override
-  public CompletableFuture runPagedJdbcQuery(ResolvedPagedJdbcQuery pgQuery,
+  public Future runPagedJdbcQuery(ResolvedPagedJdbcQuery pgQuery,
       boolean isList, QueryExecutionContext context) {
     Optional<Integer> limit = Optional.ofNullable(getEnvironment().getArgument(LIMIT));
     Optional<Integer> offset = Optional.ofNullable(getEnvironment().getArgument(OFFSET));
@@ -77,18 +70,11 @@ public class VertxQueryExecutionContext implements QueryExecutionContext,
         offset.orElse(0)
     );
 
-    this.context.getSqlClient()
+    return this.context.getSqlClient()
         .getSqlClient()
         .preparedQuery(query)
         .execute(Tuple.from(paramObj))
-        .map(r -> resultMapper(r, isList))
-        .onSuccess(fut::complete)
-        .onFailure(f -> {
-          f.printStackTrace();
-          fut.fail(f);
-        });
-
-    return new CompletableFuture();
+        .map(r -> resultMapper(r, isList));
   }
 
   private Object resultMapper(RowSet<Row> r, boolean isList) {
@@ -113,9 +99,9 @@ public class VertxQueryExecutionContext implements QueryExecutionContext,
   public Object visitArgumentParameter(ArgumentParameter argumentParameter,
       QueryExecutionContext context) {
     return context.getArguments().stream()
-        .filter(arg -> arg.getPath().equalsIgnoreCase(argumentParameter.getPath()))
+        .filter(arg -> ((Argument)arg).getPath().equalsIgnoreCase(argumentParameter.getPath()))
         .findFirst()
-        .map(f -> f.getValue())
+        .map(f -> ((Argument)f).getValue())
         .orElse(null);
   }
 }

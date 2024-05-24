@@ -19,7 +19,10 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.base.Preconditions;
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
+import graphql.schema.PropertyDataFetcher;
+import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.handler.graphql.instrumentation.JsonObjectAdapter;
 import io.vertx.ext.web.handler.graphql.schema.VertxDataFetcher;
 import io.vertx.ext.web.handler.graphql.schema.VertxPropertyDataFetcher;
 import java.time.ZoneOffset;
@@ -48,12 +51,12 @@ public class VertxContext implements Context {
 
   @Override
   public DataFetcher<Object> createPropertyFetcher(String name) {
-    return VertxPropertyDataFetcher.create(name);
+    return PropertyDataFetcher.fetching(name);
   }
 
   @Override
-  public DataFetcher<?> createArgumentLookupFetcher(GraphQLEngineBuilder server, Map<Set<Argument>, ResolvedQuery> lookupMap) {
-    return VertxDataFetcher.create((env, fut) -> {
+  public DataFetcher<Future<?>> createArgumentLookupFetcher(GraphQLEngineBuilder server, Map<Set<Argument>, ResolvedQuery> lookupMap) {
+    return (env) -> {
       //Map args
       Set<Argument> argumentSet = env.getArguments().entrySet().stream()
           .map(argument -> new VariableArgument(argument.getKey(), argument.getValue()))
@@ -62,14 +65,13 @@ public class VertxContext implements Context {
       //Find query
       ResolvedQuery resolvedQuery = lookupMap.get(argumentSet);
       if (resolvedQuery == null) {
-        fut.fail("Could not find query: " + env.getArguments());
-        return;
+        return Future.failedFuture("Could not find query: " + env.getArguments());
       }
       //Execute
       QueryExecutionContext context = new VertxQueryExecutionContext(this,
-          env, argumentSet, fut);
-      resolvedQuery.accept(server, context);
-    });
+          env, argumentSet);
+      return (Future)resolvedQuery.accept(server, context);
+    };
   }
 
   @Override
