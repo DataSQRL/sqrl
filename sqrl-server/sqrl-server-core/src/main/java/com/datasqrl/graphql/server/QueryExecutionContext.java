@@ -7,12 +7,12 @@ import graphql.schema.DataFetchingEnvironment;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
-public interface QueryExecutionContext {
+public interface QueryExecutionContext<R> {
 
   Context getContext();
   DataFetchingEnvironment getEnvironment();
   Set<Argument> getArguments();
-  CompletableFuture runQuery(GraphQLEngineBuilder graphQLEngineBuilder, ResolvedJdbcQuery pgQuery, boolean isList);
-  CompletableFuture runPagedJdbcQuery(ResolvedPagedJdbcQuery pgQuery,
+  Object runQuery(GraphQLEngineBuilder graphQLEngineBuilder, ResolvedJdbcQuery pgQuery, boolean isList);
+  Object runPagedJdbcQuery(ResolvedPagedJdbcQuery pgQuery,
       boolean isList, QueryExecutionContext context);
 }

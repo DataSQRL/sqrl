@@ -51,7 +51,7 @@ public class JdbcContext implements Context {
       //Execute
       QueryExecutionContext context = new JdbcExecutionContext(this,
           env, argumentSet);
-      CompletableFuture future = resolvedQuery.accept(server, context);
+      CompletableFuture future = (CompletableFuture)resolvedQuery.accept(server, context);
       return future;
     };
   }

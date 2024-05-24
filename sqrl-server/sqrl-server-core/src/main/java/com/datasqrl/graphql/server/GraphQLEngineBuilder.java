@@ -24,6 +24,7 @@ import com.datasqrl.graphql.server.RootGraphqlModel.SchemaVisitor;
 import com.datasqrl.graphql.server.RootGraphqlModel.StringSchema;
 import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoords;
 import graphql.GraphQL;
+import graphql.GraphQL.Builder;
 import graphql.language.FieldDefinition;
 import graphql.language.InterfaceTypeDefinition;
 import graphql.language.ObjectTypeDefinition;
@@ -49,11 +50,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 public class GraphQLEngineBuilder implements
-    RootVisitor<GraphQL, Context>,
+    RootVisitor<Builder, Context>,
     CoordVisitor<DataFetcher<?>, Context>,
     SchemaVisitor<TypeDefinitionRegistry, Object>,
     QueryBaseVisitor<ResolvedQuery, Context>,
-    ResolvedQueryVisitor<CompletableFuture, QueryExecutionContext> {
+    ResolvedQueryVisitor<Object, QueryExecutionContext> {
 
   private List<GraphQLScalarType> addlTypes;
 
@@ -83,7 +84,7 @@ public class GraphQLEngineBuilder implements
   }
 
   @Override
-  public GraphQL visitRoot(RootGraphqlModel root, Context context) {
+  public Builder visitRoot(RootGraphqlModel root, Context context) {
     TypeDefinitionRegistry registry = root.schema.accept(this, null);
 
     GraphQLCodeRegistry.Builder codeRegistry = GraphQLCodeRegistry.newCodeRegistry();
@@ -112,10 +113,11 @@ public class GraphQLEngineBuilder implements
     }
 
     RuntimeWiring wiring = createWiring(registry, codeRegistry);
+
     GraphQLSchema graphQLSchema = new SchemaGenerator()
         .makeExecutableSchema(registry, wiring);
 
-    return GraphQL.newGraphQL(graphQLSchema).build();
+    return GraphQL.newGraphQL(graphQLSchema);
   }
 
   private RuntimeWiring createWiring(TypeDefinitionRegistry registry, GraphQLCodeRegistry.Builder codeRegistry) {
@@ -165,18 +167,17 @@ public class GraphQLEngineBuilder implements
   }
 
   @Override
-  public CompletableFuture visitResolvedJdbcQuery(ResolvedJdbcQuery query,
+  public Object visitResolvedJdbcQuery(ResolvedJdbcQuery query,
       QueryExecutionContext context) {
     return context.runQuery(this, query, isList(context.getEnvironment().getFieldType()));
   }
 
   @Override
-  public CompletableFuture visitResolvedPagedJdbcQuery(ResolvedPagedJdbcQuery query,
+  public Object visitResolvedPagedJdbcQuery(ResolvedPagedJdbcQuery query,
       QueryExecutionContext context) {
-    CompletableFuture fut = context.runPagedJdbcQuery(query,
+    return context.runPagedJdbcQuery(query,
         isList(context.getEnvironment().getFieldType()),
         context);
-    return fut;
   }
 
   private boolean isList(GraphQLOutputType fieldType) {

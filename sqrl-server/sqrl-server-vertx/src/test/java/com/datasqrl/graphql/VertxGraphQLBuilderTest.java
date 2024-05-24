@@ -11,6 +11,7 @@ import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentLookupCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentParameter;
 import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentSet;
+import com.datasqrl.graphql.server.RootGraphqlModel.FieldLookupCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.FixedArgument;
 import com.datasqrl.graphql.server.RootGraphqlModel.JdbcQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.SourceParameter;
@@ -21,7 +22,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import graphql.ExecutionResult;
 import graphql.GraphQL;
 import graphql.GraphQLError;
+import graphql.execution.instrumentation.ChainedInstrumentation;
 import io.vertx.core.Vertx;
+import io.vertx.ext.web.handler.graphql.instrumentation.JsonObjectAdapter;
+import io.vertx.ext.web.handler.graphql.instrumentation.VertxFutureAdapter;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
@@ -63,6 +67,11 @@ class VertxGraphQLBuilderTest {
           + "  customerid: Int "
           + "  sameCustomer: Customer"
           + "}").build())
+      .coord(FieldLookupCoords.builder()
+          .parentType("Customer")
+          .fieldName("customerid")
+          .columnName("customerid")
+          .build())
       .coord(ArgumentLookupCoords.builder()
           .parentType("Query")
           .fieldName("customer")
@@ -143,7 +152,10 @@ class VertxGraphQLBuilderTest {
   public void test() {
     GraphQL graphQL = root.accept(
         new GraphQLEngineBuilder(),
-        new VertxContext(new VertxJdbcClient(client), Map.of(), Map.of(), NameCanonicalizer.SYSTEM));
+        new VertxContext(new VertxJdbcClient(client), Map.of(), Map.of(), NameCanonicalizer.SYSTEM))
+        .instrumentation(new ChainedInstrumentation(
+            new JsonObjectAdapter(), VertxFutureAdapter.create()))
+        .build();
     ExecutionResult result = graphQL.execute("{\n"
         + "  customer2(customerid: 2) {\n"
         + "    customerid\n"
