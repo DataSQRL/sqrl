@@ -1,10 +1,14 @@
 # Stage 1: Building the dependencies and the fat JAR
 FROM gradle:8.6-jdk11 AS build
 
-COPY . /app/
+COPY build.gradle /app/build.gradle
 WORKDIR /app
 
 # Fetch all necessary dependencies
+RUN gradle --no-daemon --console=plain build
+
+COPY . /app/
+# Create fat jar
 RUN gradle --no-daemon --console=plain shadowJar
 
 FROM flink:1.18.1-scala_2.12-java11
