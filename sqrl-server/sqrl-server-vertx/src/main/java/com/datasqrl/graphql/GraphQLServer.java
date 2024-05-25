@@ -12,7 +12,6 @@ import com.datasqrl.graphql.config.CorsHandlerOptions;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.io.SinkConsumer;
 import com.datasqrl.graphql.io.SinkProducer;
-import com.datasqrl.graphql.kafka.JsonSerializer;
 import com.datasqrl.graphql.kafka.KafkaSinkConsumer;
 import com.datasqrl.graphql.kafka.KafkaSinkProducer;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
@@ -23,7 +22,6 @@ import com.datasqrl.graphql.type.SqrlVertxScalars;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.InjectableValues;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
@@ -34,11 +32,8 @@ import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.healthchecks.HealthCheckHandler;
-import io.vertx.ext.healthchecks.HealthChecks;
-import io.vertx.ext.healthchecks.Status;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
@@ -49,7 +44,6 @@ import io.vertx.ext.web.handler.graphql.GraphiQLHandler;
 import io.vertx.ext.web.handler.graphql.instrumentation.JsonObjectAdapter;
 import io.vertx.ext.web.handler.graphql.instrumentation.VertxFutureAdapter;
 import io.vertx.ext.web.handler.graphql.ws.GraphQLWSHandler;
-import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.pgclient.PgPool;
@@ -57,7 +51,8 @@ import io.vertx.pgclient.impl.PgPoolOptions;
 import io.vertx.sqlclient.SqlClient;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -67,6 +62,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.calcite.jdbc.CalciteConnection;
+import org.apache.calcite.schema.SchemaPlus;
 
 @Slf4j
 public class GraphQLServer extends AbstractVerticle {
@@ -186,7 +183,10 @@ public class GraphQLServer extends AbstractVerticle {
 
     //Todo: Don't spin up the ws endpoint if there are no subscriptions
     SqlClient client = getSqlClient();
-    GraphQL graphQL = createGraphQL(client, startPromise);
+
+    GraphQL graphQL = createGraphQL(client,
+        getCalciteClient(),
+        startPromise);
 
     CorsHandler corsHandler = toCorsHandler(this.config.getCorsHandlerOptions());
     router.route().handler(corsHandler);
@@ -269,11 +269,27 @@ public class GraphQLServer extends AbstractVerticle {
             .setPipelined(true));
   }
 
-  public GraphQL createGraphQL(SqlClient client, Promise<Void> startPromise) {
+  @SneakyThrows
+  public static CalciteConnection getCalciteClient() {
+    Class.forName("org.apache.calcite.jdbc.Driver");
+    Connection connection =
+        DriverManager.getConnection("jdbc:calcite:");
+    CalciteConnection calciteConnection =
+        connection.unwrap(CalciteConnection.class);
+    SchemaPlus rootSchema = calciteConnection.getRootSchema();
+    FlinkSchema flinkySchema = new FlinkSchema();
+    rootSchema.add("flink", flinkySchema);
+
+    return calciteConnection;
+  }
+
+  public GraphQL createGraphQL(SqlClient client, CalciteConnection calciteClient, Promise<Void> startPromise) {
     try {
       GraphQL graphQL = model.accept(
           new GraphQLEngineBuilder(List.of(SqrlVertxScalars.JSON)),
-          new VertxContext(new VertxJdbcClient(client), constructSinkProducers(model, vertx),
+          new VertxContext(new VertxJdbcClient(client),
+              calciteClient,
+              constructSinkProducers(model, vertx),
               constructSubscriptions(model, vertx, startPromise), canonicalizer))
           .instrumentation(new ChainedInstrumentation(
               new JsonObjectAdapter(), VertxFutureAdapter.create()))

@@ -170,7 +170,7 @@ class WriteTest {
 
     GraphQL graphQL = model.accept(
         new GraphQLEngineBuilder(),
-        new VertxContext(new VertxJdbcClient(client), mutations, subscriptions, NameCanonicalizer.SYSTEM))
+        new VertxContext(new VertxJdbcClient(client), null, mutations, subscriptions, NameCanonicalizer.SYSTEM))
         .instrumentation(new ChainedInstrumentation(
             new JsonObjectAdapter(), VertxFutureAdapter.create()))
         .build();

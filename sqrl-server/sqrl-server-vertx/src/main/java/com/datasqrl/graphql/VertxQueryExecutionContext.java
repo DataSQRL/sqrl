@@ -8,6 +8,7 @@ import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentParameter;
 import com.datasqrl.graphql.server.RootGraphqlModel.ParameterHandlerVisitor;
 import com.datasqrl.graphql.server.RootGraphqlModel.JdbcParameterHandler;
+import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedCalciteQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedPagedJdbcQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedJdbcQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.SourceParameter;
@@ -16,10 +17,16 @@ import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import graphql.schema.DataFetchingEnvironment;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -75,6 +82,53 @@ public class VertxQueryExecutionContext implements QueryExecutionContext,
         .preparedQuery(query)
         .execute(Tuple.from(paramObj))
         .map(r -> resultMapper(r, isList));
+  }
+  static ResultSet resultSet = null;
+
+  @SneakyThrows
+  @Override
+  public Future runCalciteQuery(ResolvedCalciteQuery query, boolean list,
+      QueryExecutionContext context) {
+
+    Promise promise = Promise.promise();
+
+    try {
+      // Create a statement from the Calcite connection
+      Statement statement = this.context.getCalciteClient().createStatement();
+
+      if (resultSet == null) {
+        // Execute the query specified in the ResolvedCalciteQuery
+        resultSet = statement.executeQuery(query.getQuery().getSql());
+      }
+
+      // Process the ResultSet into a JSON structure
+      List<JsonObject> results = new ArrayList<>();
+      while (resultSet.next()) {
+        JsonObject jsonObject = new JsonObject();
+        ResultSetMetaData metaData = resultSet.getMetaData();
+        int columnCount = metaData.getColumnCount();
+        for (int i = 1; i <= columnCount; i++) {
+          String columnName = metaData.getColumnName(i);
+          jsonObject.put(columnName, resultSet.getObject(i));
+        }
+        results.add(jsonObject);
+      }
+
+      // Decide on the return structure based on isList flag
+      if (list) {
+        promise.complete(results);
+      } else {
+        if (results.isEmpty()) {
+          promise.complete(new JsonObject());
+        } else {
+          promise.complete(results.get(0));
+        }
+      }
+    } catch (SQLException e) {
+      promise.fail(e);
+    }
+
+    return promise.future();
   }
 
   private Object resultMapper(RowSet<Row> r, boolean isList) {

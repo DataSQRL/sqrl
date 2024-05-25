@@ -7,6 +7,7 @@ import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentParameter;
 import com.datasqrl.graphql.server.RootGraphqlModel.ParameterHandlerVisitor;
 import com.datasqrl.graphql.server.RootGraphqlModel.JdbcParameterHandler;
+import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedCalciteQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedPagedJdbcQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedJdbcQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.SourceParameter;
@@ -103,6 +104,12 @@ public class JdbcExecutionContext implements QueryExecutionContext,
         throw new RuntimeException(e);
       }
     });
+  }
+
+  @Override
+  public Object runCalciteQuery(ResolvedCalciteQuery query, boolean list,
+      QueryExecutionContext context) {
+    throw new RuntimeException("Not yet supported");
   }
 
   private List<Map<String, Object>> resultSetToList(ResultSet resultSet) throws SQLException {

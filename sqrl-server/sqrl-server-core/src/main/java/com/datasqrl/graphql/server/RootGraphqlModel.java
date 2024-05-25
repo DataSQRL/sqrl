@@ -186,6 +186,7 @@ public class RootGraphqlModel {
   public interface QueryBaseVisitor<R, C> {
 
     R visitJdbcQuery(JdbcQuery jdbcQuery, C context);
+    R visitCalciteQuery(CalciteQuery query, C context);
 
     R visitPagedJdbcQuery(PagedJdbcQuery jdbcQuery, C context);
   }
@@ -215,6 +216,23 @@ public class RootGraphqlModel {
     @Override
     public <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context) {
       return visitor.visitJdbcQuery(this, context);
+    }
+  }
+
+
+  @Getter
+  @AllArgsConstructor
+  @NoArgsConstructor
+  public static class CalciteQuery implements QueryBase {
+
+    final String type = "CalciteQuery";
+    String sql;
+    @Singular
+    List<JdbcParameterHandler> parameters;
+
+    @Override
+    public <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context) {
+      return visitor.visitCalciteQuery(this, context);
     }
   }
 
@@ -375,6 +393,8 @@ public class RootGraphqlModel {
     public R visitResolvedJdbcQuery(ResolvedJdbcQuery query, C context);
 
     public R visitResolvedPagedJdbcQuery(ResolvedPagedJdbcQuery query, C context);
+
+    public R visitResolvedCalciteQuery(ResolvedCalciteQuery resolvedCalciteQuery, C context);
   }
 
   public interface ResolvedQuery {
@@ -393,6 +413,19 @@ public class RootGraphqlModel {
     @Override
     public <R, C> R accept(ResolvedQueryVisitor<R, C> visitor, C context) {
       return visitor.visitResolvedJdbcQuery(this, context);
+    }
+  }
+
+  @AllArgsConstructor
+  @Getter
+  @NoArgsConstructor
+  public static class ResolvedCalciteQuery implements ResolvedQuery {
+
+    CalciteQuery query;
+
+    @Override
+    public <R, C> R accept(ResolvedQueryVisitor<R, C> visitor, C context) {
+      return visitor.visitResolvedCalciteQuery(this, context);
     }
   }
 

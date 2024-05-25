@@ -13,18 +13,14 @@ import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.VariableArgument;
 import com.datasqrl.graphql.server.QueryExecutionContext;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ValueNode;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.base.Preconditions;
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
 import graphql.schema.PropertyDataFetcher;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.handler.graphql.instrumentation.JsonObjectAdapter;
 import io.vertx.ext.web.handler.graphql.schema.VertxDataFetcher;
-import io.vertx.ext.web.handler.graphql.schema.VertxPropertyDataFetcher;
+import io.vertx.sqlclient.SqlClient;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Map;
@@ -33,6 +29,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.Value;
+import org.apache.calcite.jdbc.CalciteConnection;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 
@@ -40,6 +37,7 @@ import reactor.core.publisher.Flux;
 public class VertxContext implements Context {
 
   VertxJdbcClient sqlClient;
+  CalciteConnection calciteClient;
   Map<String, SinkProducer> sinks;
   Map<String, SinkConsumer> subscriptions;
   NameCanonicalizer canonicalizer;
