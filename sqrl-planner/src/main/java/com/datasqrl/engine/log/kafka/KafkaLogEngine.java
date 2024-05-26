@@ -18,13 +18,11 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.global.PhysicalDAGPlan.LogStagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
-import com.datasqrl.schema.TableSchemaExporterFactory;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -49,7 +47,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
   }
 
   @Override
-  public EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs, ExecutionPipeline pipeline,
+  public EnginePhysicalPlan plan(StagePlan plan, List<StagePlan> stagePlans, List<StageSink> inputs, ExecutionPipeline pipeline,
       SqrlFramework relBuilder, ErrorCollector errorCollector) {
     Preconditions.checkArgument(plan instanceof LogStagePlan);
     return new KafkaPhysicalPlan(

@@ -83,7 +83,6 @@ public class VertxQueryExecutionContext implements QueryExecutionContext,
         .execute(Tuple.from(paramObj))
         .map(r -> resultMapper(r, isList));
   }
-  static ResultSet resultSet = null;
 
   @SneakyThrows
   @Override
@@ -96,10 +95,8 @@ public class VertxQueryExecutionContext implements QueryExecutionContext,
       // Create a statement from the Calcite connection
       Statement statement = this.context.getCalciteClient().createStatement();
 
-      if (resultSet == null) {
         // Execute the query specified in the ResolvedCalciteQuery
-        resultSet = statement.executeQuery(query.getQuery().getSql());
-      }
+      ResultSet resultSet = statement.executeQuery(query.getQuery().getSql());
 
       // Process the ResultSet into a JSON structure
       List<JsonObject> results = new ArrayList<>();
@@ -125,6 +122,7 @@ public class VertxQueryExecutionContext implements QueryExecutionContext,
         }
       }
     } catch (SQLException e) {
+      e.printStackTrace();
       promise.fail(e);
     }
 

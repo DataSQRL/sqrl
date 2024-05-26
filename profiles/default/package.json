@@ -1,6 +1,6 @@
 {
   "version": "1",
-  "enabled-engines": ["vertx", "postgres", "kafka", "flink"],
+  "enabled-engines": ["vertx", "postgres", "kafka", "flink", "iceberg"],
   "engines" : {
     "flink" : {
       "connectors": {

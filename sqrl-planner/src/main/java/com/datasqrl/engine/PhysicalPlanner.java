@@ -28,7 +28,8 @@ public class PhysicalPlanner {
               plan.getWriteQueries().stream().map(wq -> wq.getSink()), PhysicalDAGPlan.StageSink.class)
           .filter(sink -> sink.getStage().equals(stagePlan.getStage()))
           .collect(Collectors.toList());
-      EnginePhysicalPlan physicalPlan = stagePlan.getStage().getEngine().plan(stagePlan, inputs,
+      EnginePhysicalPlan physicalPlan = stagePlan.getStage().getEngine().plan(stagePlan,
+          plan.getStagePlans(), inputs,
           plan.getPipeline(), framework, errorCollector);
       physicalStages.add(new PhysicalPlan.StagePlan(stagePlan.getStage(), physicalPlan));
     }

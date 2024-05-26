@@ -42,6 +42,7 @@ import io.vertx.sqlclient.SqlConnection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
@@ -167,68 +168,78 @@ class VertxGraphQLBuilderTest {
             new JsonObjectAdapter(), VertxFutureAdapter.create()))
         .queryExecutionStrategy(new AsyncExecutionStrategy())
         .build();
-    ExecutionInput input = ExecutionInput.newExecutionInput().query("query {\n"
-        + "  ... @defer { customer { customerid } }"
-        + " }"
-       ).graphQLContext(
-            Map.of(ExperimentalApi.ENABLE_INCREMENTAL_SUPPORT, true)).build();
+    long time;
+    for (int i = 0; i < 2; i++) {
+      time = System.currentTimeMillis();
+      CountDownLatch latch = new CountDownLatch(1);
 
-    ExecutionResult initialResult = graphQL
-        .executeAsync(input)
-        .get();
+      ExecutionInput input = ExecutionInput.newExecutionInput().query("query {\n"
+          + "  ... @defer { customer { customerid } }"
+          + " }"
+      ).graphQLContext(
+          Map.of(ExperimentalApi.ENABLE_INCREMENTAL_SUPPORT, true)).build();
 
-    IncrementalExecutionResult result = (IncrementalExecutionResult) initialResult;
+      ExecutionResult initialResult = graphQL
+          .executeAsync(input)
+          .get();
 
-    Publisher<DelayedIncrementalPartialResult> delayedIncrementalResults = result
-        .getIncrementalItemPublisher();
+      IncrementalExecutionResult result = (IncrementalExecutionResult) initialResult;
 
-    delayedIncrementalResults.subscribe(new Subscriber<>() {
+      Publisher<DelayedIncrementalPartialResult> delayedIncrementalResults = result
+          .getIncrementalItemPublisher();
 
-      Subscription subscription;
+      delayedIncrementalResults.subscribe(new Subscriber<>() {
 
-      int calls = 0;
-      @Override
-      public void onSubscribe(Subscription s) {
-        subscription = s;
-        //
-        // how many you request is up to you
-        subscription.request(1);
-      }
+        Subscription subscription;
 
-      @Override
-      public void onNext(DelayedIncrementalPartialResult executionResult) {
-        //
-        // as each deferred result arrives, send it to where it needs to go
-        //
-        executionResult.getIncremental().stream().map(i->(DeferPayload)i)
-            .map(d->d.getData())
-                .forEach(System.out::println);
-        calls++;
-        System.out.println(executionResult.hasNext());
+        int calls = 0;
+
+        @Override
+        public void onSubscribe(Subscription s) {
+          subscription = s;
+          //
+          // how many you request is up to you
+          subscription.request(1);
+        }
+
+        @Override
+        public void onNext(DelayedIncrementalPartialResult executionResult) {
+          //
+          // as each deferred result arrives, send it to where it needs to go
+          //
+          executionResult.getIncremental().stream().map(i -> (DeferPayload) i)
+              .map(d -> d.getData())
+              .forEach(System.out::println);
+          calls++;
+          System.out.println(executionResult.hasNext());
+          latch.countDown();
 //        subscription.request(10);
-      }
+        }
 
-      @Override
-      public void onError(Throwable t) {
-        fail(t);
-        t.printStackTrace();
-      }
+        @Override
+        public void onError(Throwable t) {
+          fail(t);
+          t.printStackTrace();
+        }
 
-      @Override
-      public void onComplete() {
-        assertEquals(1, calls);
-      }
-    });
+        @Override
+        public void onComplete() {
+          assertEquals(1, calls);
+        }
+      });
+      latch.await();
 
-    if (result.getErrors() != null && !result.getErrors().isEmpty()) {
-      fail(result.getErrors().stream()
-          .map(GraphQLError::getMessage)
-          .collect(Collectors.joining(",")));
+      if (result.getErrors() != null && !result.getErrors().isEmpty()) {
+        fail(result.getErrors().stream()
+            .map(GraphQLError::getMessage)
+            .collect(Collectors.joining(",")));
+      }
+      String value = new ObjectMapper().writeValueAsString(result.getData());
+      System.out.println(value);
+      assertEquals(
+          "{}",
+          value);
+      System.out.println(System.currentTimeMillis() - time);
     }
-    String value = new ObjectMapper().writeValueAsString(result.getData());
-    System.out.println(value);
-    assertEquals(
-        "{}",
-        value);
   }
 }

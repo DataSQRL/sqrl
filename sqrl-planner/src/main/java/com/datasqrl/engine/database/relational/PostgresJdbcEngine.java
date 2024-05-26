@@ -13,7 +13,7 @@ public class PostgresJdbcEngine extends AbstractJDBCEngine {
   public PostgresJdbcEngine(
       @NonNull PackageJson json,
       ConnectorFactoryFactory connectorFactory) {
-    super(json.getEngines().getEngineConfig(PostgresEngineFactory.ENGINE_NAME)
+    super(PostgresEngineFactory.ENGINE_NAME, json.getEngines().getEngineConfig(PostgresEngineFactory.ENGINE_NAME)
             .orElseGet(()-> new EmptyEngineConfig(PostgresEngineFactory.ENGINE_NAME)),
         connectorFactory);
   }
