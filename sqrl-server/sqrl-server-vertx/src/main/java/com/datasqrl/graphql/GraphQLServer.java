@@ -3,7 +3,11 @@
  */
 package com.datasqrl.graphql;
 
-import static org.apache.kafka.clients.consumer.ConsumerConfig.*;
+import static org.apache.kafka.clients.consumer.ConsumerConfig.AUTO_OFFSET_RESET_CONFIG;
+import static org.apache.kafka.clients.consumer.ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG;
+import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
+import static org.apache.kafka.clients.consumer.ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG;
+import static org.apache.kafka.clients.consumer.ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG;
 import static org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG;
 import static org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG;
 
@@ -12,7 +16,6 @@ import com.datasqrl.graphql.config.CorsHandlerOptions;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.io.SinkConsumer;
 import com.datasqrl.graphql.io.SinkProducer;
-import com.datasqrl.graphql.kafka.JsonSerializer;
 import com.datasqrl.graphql.kafka.KafkaSinkConsumer;
 import com.datasqrl.graphql.kafka.KafkaSinkProducer;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
@@ -23,7 +26,6 @@ import com.datasqrl.graphql.type.SqrlVertxScalars;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.InjectableValues;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
@@ -33,11 +35,8 @@ import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.healthchecks.HealthCheckHandler;
-import io.vertx.ext.healthchecks.HealthChecks;
-import io.vertx.ext.healthchecks.Status;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
@@ -46,7 +45,6 @@ import io.vertx.ext.web.handler.graphql.ApolloWSHandler;
 import io.vertx.ext.web.handler.graphql.GraphQLHandler;
 import io.vertx.ext.web.handler.graphql.GraphiQLHandler;
 import io.vertx.ext.web.handler.graphql.ws.GraphQLWSHandler;
-import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.pgclient.PgPool;
@@ -54,7 +52,6 @@ import io.vertx.pgclient.impl.PgPoolOptions;
 import io.vertx.sqlclient.SqlClient;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,7 +73,8 @@ public class GraphQLServer extends AbstractVerticle {
     this(readModel(), null, NameCanonicalizer.SYSTEM);
   }
 
-  public GraphQLServer(RootGraphqlModel model, ServerConfig config, NameCanonicalizer canonicalizer) {
+  public GraphQLServer(RootGraphqlModel model, ServerConfig config,
+      NameCanonicalizer canonicalizer) {
     this.model = model;
     this.config = config;
     this.canonicalizer = canonicalizer;
@@ -116,6 +114,7 @@ public class GraphQLServer extends AbstractVerticle {
       return result.toString();
     }
   }
+
   private Future<JsonObject> loadConfig() {
     Promise<JsonObject> promise = Promise.promise();
     vertx.fileSystem().readFile("server-config.json", result -> {
@@ -223,13 +222,13 @@ public class GraphQLServer extends AbstractVerticle {
 
     vertx.createHttpServer(this.config.getHttpServerOptions()).requestHandler(router)
         .listen(this.config.getHttpServerOptions().getPort())
-        .onFailure((e)-> {
+        .onFailure((e) -> {
           log.error("Could not start graphql server", e);
           if (!startPromise.future().isComplete()) {
             startPromise.fail(e);
           }
         })
-        .onSuccess((s)-> {
+        .onSuccess((s) -> {
           log.info("HTTP server started on port {}", this.config.getHttpServerOptions().getPort());
           if (!startPromise.future().isComplete()) {
             startPromise.complete();
@@ -283,7 +282,7 @@ public class GraphQLServer extends AbstractVerticle {
   Map<String, SinkConsumer> constructSubscriptions(RootGraphqlModel root, Vertx vertx,
       Promise<Void> startPromise) {
     Map<String, SinkConsumer> consumers = new HashMap<>();
-    for (SubscriptionCoords sub: root.getSubscriptions()) {
+    for (SubscriptionCoords sub : root.getSubscriptions()) {
       KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, getSourceConfig());
       consumer.subscribe(sub.getTopic())
           .onSuccess(v -> log.info("Subscribed to topic: {}", sub.getTopic()))
