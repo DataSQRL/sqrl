@@ -62,7 +62,7 @@ import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 @Slf4j
-public class AbstractJDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
+public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
 
 //  public static final EnumMap<Dialect, EnumSet<EngineCapability>> CAPABILITIES_BY_DIALECT = new EnumMap<Dialect, EnumSet<EngineCapability>>(
 //      Dialect.class);
@@ -77,8 +77,8 @@ public class AbstractJDBCEngine extends ExecutionEngine.Base implements Database
 
   private final ConnectorFactoryFactory connectorFactory;
 
-  public AbstractJDBCEngine(@NonNull EngineConfig connectorConfig, ConnectorFactoryFactory connectorFactory) {
-    super(PostgresEngineFactory.ENGINE_NAME, Type.DATABASE, STANDARD_DATABASE);
+  public AbstractJDBCEngine(String name, @NonNull EngineConfig connectorConfig, ConnectorFactoryFactory connectorFactory) {
+    super(name, Type.DATABASE, STANDARD_DATABASE);
     this.connectorConfig = connectorConfig;
     this.connectorFactory = connectorFactory;
   }
@@ -94,7 +94,9 @@ public class AbstractJDBCEngine extends ExecutionEngine.Base implements Database
   @Override
   public TableConfig getSinkConfig(String tableName) {
     return connectorFactory
-        .create(Type.DATABASE, getDialect().getId()).get().createSourceAndSink(
+        .create(Type.DATABASE, getDialect().getId())
+        .orElseThrow(()-> new RuntimeException("Could not obtain sink for dialect: " + getDialect()))
+        .createSourceAndSink(
             new ConnectorFactoryContext(tableName, Map.of("table-name", tableName)));
   }
 
@@ -103,9 +105,7 @@ public class AbstractJDBCEngine extends ExecutionEngine.Base implements Database
     return IndexSelectorConfigByDialect.of(getDialect());
   }
 
-  private JdbcDialect getDialect() {
-    return JdbcDialect.Postgres;
-  }
+  protected abstract JdbcDialect getDialect();
 
   @Override
   public EnginePhysicalPlan plan(StagePlan plan,
@@ -226,9 +226,5 @@ public class AbstractJDBCEngine extends ExecutionEngine.Base implements Database
       default:
         return false;
     }
-  }
-
-  public ConnectorConf getConnectorFactoryConfig() {
-    return connectorFactory.getConfig(getDialect().getId());
   }
 }

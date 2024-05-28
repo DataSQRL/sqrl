@@ -16,6 +16,7 @@ import lombok.Value;
 public class JDBCPhysicalPlan implements DatabasePhysicalPlan {
 
   List<SqlDDLStatement> ddl;
+  //todo fix me to include queries
   @JsonIgnore
   Map<IdentifiedQuery, QueryTemplate> queries;
 }

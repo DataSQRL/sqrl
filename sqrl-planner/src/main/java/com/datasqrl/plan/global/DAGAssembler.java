@@ -53,10 +53,10 @@ public class DAGAssembler {
 
   public PhysicalDAGPlan assemble(SqrlDAG dag, Set<URL> jars, Map<String, UserDefinedFunction> udfs) {
     //We make the assumption that there is a single stream stage
-    ExecutionStage streamStage = pipeline.getStage(Type.STREAMS).get();
+    ExecutionStage streamStage = pipeline.getStage(Type.STREAMS).get().get(0);
     List<PhysicalDAGPlan.WriteQuery> streamQueries = new ArrayList<>();
     //We make the assumption that there is a single (optional) server stage
-    Optional<ExecutionStage> serverStage = pipeline.getStage(Type.SERVER);
+    Optional<ExecutionStage> serverStage = pipeline.getStage(Type.SERVER).map(e->e.get(0));
     List<PhysicalDAGPlan.ReadQuery> serverQueries = new ArrayList<>();
 
     //Plan API queries and find all tables that need to be materialized
@@ -76,7 +76,7 @@ public class DAGAssembler {
     });
     //Extract all tables and function for serverScanVisitor
     Stream.concat(serverScanVisitor.scanTables.stream().map(DatabaseQuery::of),
-        serverScanVisitor.scanFunctions.stream().map(DatabaseQuery::of))
+            serverScanVisitor.scanFunctions.stream().map(DatabaseQuery::of))
         .forEach(q -> queriesByStage.put(q.getAssignedStage(), q));
 
     List<PhysicalDAGPlan.StagePlan> databasePlans = new ArrayList<>();
@@ -89,16 +89,16 @@ public class DAGAssembler {
       VisitTableScans tableScanVisitor = new VisitTableScans();
       queriesByStage.get(database).stream().sorted(Comparator.comparing(DatabaseQuery::getName))
           .forEach(query -> {
-        RelNode relNode = query.getRelNode(database, sqrlConverter, errors);
-        relNode = RelStageRunner.runStage(DATABASE_DAG_STITCHING, relNode, framework.getQueryPlanner().getPlanner());
-        tableScanVisitor.findScans(relNode);
-        databaseQueries.add(new PhysicalDAGPlan.ReadQuery(query.getQueryId(), relNode));
-      });
+            RelNode relNode = query.getRelNode(database, sqrlConverter, errors);
+            relNode = RelStageRunner.runStage(DATABASE_DAG_STITCHING, relNode, framework.getQueryPlanner().getPlanner());
+            tableScanVisitor.findScans(relNode);
+            databaseQueries.add(new PhysicalDAGPlan.ReadQuery(query.getQueryId(), relNode));
+          });
 
       Preconditions.checkArgument(tableScanVisitor.scanFunctions.isEmpty(),
           "Should not encounter table functions in materialized queries");
       List<PhysicalRelationalTable> materializedTables = tableScanVisitor.scanTables.stream()
-              .sorted().collect(Collectors.toList());
+          .sorted().collect(Collectors.toList());
 
       //Second, all tables that need to be written in denormalized form
       for (PhysicalRelationalTable materializedTable : materializedTables) {
@@ -108,9 +108,9 @@ public class DAGAssembler {
         Preconditions.checkArgument(materializedTable.getTimestamp().size()<=1, "Should not have multiple timestamps at this point");
         errors.checkFatal(materializedTable.getType()== TableType.STATIC || materializedTable.getTimestamp().size()==1, ErrorCode.TABLE_NOT_MATERIALIZE, "Table [%s] does not have a timestamp and can therefore not be materialized", materializedTable);
         RelNode processedRelnode = produceWriteTree(materializedTable.getPlannedRelNode(),
-                materializedTable.getTimestamp().getOnlyCandidate());
+            materializedTable.getTimestamp().getOnlyCandidate());
         OptionalInt timestampIdx = materializedTable.getType() == TableType.STATIC ? OptionalInt.empty() :
-                OptionalInt.of(materializedTable.getTimestamp().getOnlyCandidate());
+            OptionalInt.of(materializedTable.getTimestamp().getOnlyCandidate());
         streamQueries.add(new PhysicalDAGPlan.WriteQuery(
             new EngineSink(materializedTable.getNameId(), materializedTable.getPrimaryKey().getPkIndexes(),
                 materializedTable.getRowType(), timestampIdx, database),
@@ -171,7 +171,7 @@ public class DAGAssembler {
           serverStage.get(), serverQueries);
       allPlans.add(serverPlan);
     }
-    Optional<ExecutionStage> logStage = pipeline.getStage(Type.LOG);
+    Optional<ExecutionStage> logStage = pipeline.getStage(Type.LOG).map(e->e.get(0));
     if (logStage.isPresent()) {
       PhysicalDAGPlan.StagePlan logPlan = new PhysicalDAGPlan.LogStagePlan(
           logStage.get(), apiManager.getLogs());
@@ -182,7 +182,7 @@ public class DAGAssembler {
   }
 
   public static SqrlConverterConfig getExportBaseConfig() {
-      return SqrlConverterConfig.builder().build();
+    return SqrlConverterConfig.builder().build();
   }
 
   private RelNode produceWriteTree(RelNode relNode, SqrlConverterConfig config, ErrorCollector errors) {

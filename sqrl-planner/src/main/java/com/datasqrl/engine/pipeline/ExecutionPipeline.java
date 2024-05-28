@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public interface ExecutionPipeline {
 
@@ -42,8 +43,11 @@ public interface ExecutionPipeline {
    * @param type
    * @return the stage for a given {@link Type}.
    */
-  default Optional<ExecutionStage> getStage(Type type) {
-    return StreamUtil.getOnlyElement(getStages().stream().filter(s -> s.getEngine().getType().equals(type)));
+  default Optional<List<ExecutionStage>> getStage(Type type) {
+    List<ExecutionStage> executionStageStream = getStages().stream()
+        .filter(s -> s.getEngine().getType().equals(type))
+        .collect(Collectors.toList());
+    return executionStageStream.isEmpty() ? Optional.empty() : Optional.of(executionStageStream);
   }
 
 

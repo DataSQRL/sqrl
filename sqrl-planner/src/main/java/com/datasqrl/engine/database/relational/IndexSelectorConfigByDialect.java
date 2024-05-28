@@ -49,9 +49,10 @@ public class IndexSelectorConfigByDialect implements IndexSelectorConfig {
         return EnumSet.of(HASH, BTREE, TEXT, VEC_COSINE, VEC_EUCLID);
       case H2:
       case SQLite:
+      case Snowflake:
         return EnumSet.of(HASH, BTREE);
       default:
-        throw new IllegalStateException(dialect.name());
+        throw new IllegalStateException("Dialect not supported:" + dialect.name());
     }
   }
 
@@ -68,9 +69,10 @@ public class IndexSelectorConfigByDialect implements IndexSelectorConfig {
       case MySQL:
       case H2:
       case SQLite:
+      case Snowflake:
         return maxIndexColumns;
       default:
-        throw new IllegalStateException(dialect.name());
+        throw new IllegalStateException("Dialect not supported: " + dialect.name());
     }
   }
 

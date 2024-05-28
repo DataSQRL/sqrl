@@ -2,7 +2,6 @@ package com.datasqrl.config;
 
 import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.config.PackageJson.EngineConfig;
-import com.datasqrl.config.TableConfig.Format;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import java.util.List;
@@ -22,12 +21,15 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
     Optional<EngineConfig> engineConfig = packageJson.getEngines().getEngineConfig("flink");
     Preconditions.checkArgument(engineConfig.isPresent(), "Missing engine configuration for Flink");
     ConnectorsConfig connectors = engineConfig.get().getConnectors();
+    if (name.equalsIgnoreCase("snowflake")) { //work around until we get the correct engine in
+      return connectors.getConnectorConfig("iceberg").map(this::createIceberg);
+    }
     Optional<ConnectorConf> connectorConfig = connectors.getConnectorConfig(name);
     if (name.equalsIgnoreCase(PRINT_SINK_NAME)) {
       return Optional.of(createPrintConnectorFactory(null));
     } else if (name.equalsIgnoreCase(FILE_SINK_NAME)) {
       return connectorConfig.map(this::createLocalFile);
-    }
+    } else
     if (type != null) {
       if (type.equals(Type.LOG)) {
         return connectorConfig.map(this::createKafkaConnectorFactory);
@@ -36,7 +38,7 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
       }
     }
 
-    return connectorConfig.map(c -> context -> null);
+    throw new RuntimeException("Connector not supported: " + name);
   }
 
   @Override
@@ -45,6 +47,20 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
         .get().getConnectors();
     Optional<ConnectorConf> connectorConfig = connectors.getConnectorConfig(name);
     return connectorConfig.get();
+  }
+
+  private ConnectorFactory createIceberg(ConnectorConf connectorConf) {
+    // todo template this
+    return context -> {
+      Map<String, Object> map = connectorConf.toMap();
+      TableConfigBuilderImpl builder = TableConfigImpl.builder(context.getName());
+      map.entrySet().forEach(e->
+          builder.getConnectorConfig().setProperty(e.getKey(), e.getValue()));
+      builder.getConnectorConfig().setProperty("catalog-table", context.getName());
+
+      builder.setType(ExternalDataType.source_and_sink);
+      return builder.build();
+    };
   }
 
   private ConnectorFactory createPrintConnectorFactory(ConnectorConf connectorConf) {
