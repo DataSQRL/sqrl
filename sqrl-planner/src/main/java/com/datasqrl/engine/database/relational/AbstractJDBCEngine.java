@@ -9,6 +9,7 @@ import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.QueryPlanner;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.convert.SqlNodeToString.SqlStrings;
+import com.datasqrl.calcite.dialect.ExtendedSnowflakeSqlDialect;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.config.ConnectorConf;
 import com.datasqrl.config.ConnectorFactoryContext;
@@ -60,6 +61,9 @@ import org.apache.calcite.rel.type.RelRecordType;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlWriterConfig;
+import org.apache.calcite.sql.pretty.SqlPrettyWriter;
 import org.apache.commons.collections.ListUtils;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.planner.plan.schema.RawRelDataType;
@@ -120,14 +124,17 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
         (new JdbcDDLServiceLoader()).load(getDialect())
             .orElseThrow(() -> new RuntimeException("Could not find DDL factory"));
 
-    List<SqlDDLStatement> ddlStatements = StreamUtil.filterByClass(inputs,
+    List<SqlDDLStatement> ddlStatements = new ArrayList<>();
+    factory.createCatalog().map(c->ddlStatements.add(()->toDialectString(c)));
+
+    ddlStatements.addAll(
+      StreamUtil.filterByClass(inputs,
             EngineSink.class)
         .map(factory::createTable)
-        .collect(Collectors.toList());
+        .collect(Collectors.toList()));
 
     List<SqlDDLStatement> typeExtensions = extractTypeExtensions(dbPlan.getQueries());
-
-    ddlStatements = ListUtils.union(typeExtensions, ddlStatements);
+    ddlStatements.addAll(typeExtensions);
 
     dbPlan.getIndexDefinitions().stream().sorted()
             .map(factory::createIndex)
@@ -147,6 +154,14 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
     }
 
     return new JDBCPhysicalPlan(ddlStatements, databaseQueries, queries);
+  }
+
+  private String toDialectString(SqlNode sqlNode) {
+    SqlWriterConfig config = SqlPrettyWriter.config()
+        .withDialect(ExtendedSnowflakeSqlDialect.DEFAULT); //todo move to this dialect
+    SqlPrettyWriter prettyWriter = new SqlPrettyWriter(config);
+    sqlNode.unparse(prettyWriter, 0, 0);
+    return prettyWriter.toSqlString().getSql() + ";";
   }
 
   //todo remove

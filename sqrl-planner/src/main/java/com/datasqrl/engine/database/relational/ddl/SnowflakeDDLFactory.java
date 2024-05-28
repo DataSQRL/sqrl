@@ -5,6 +5,8 @@ package com.datasqrl.engine.database.relational.ddl;
 
 import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
 import com.datasqrl.calcite.dialect.ExtendedSnowflakeSqlDialect;
+import com.datasqrl.calcite.dialect.snowflake.SqlCatalogParams;
+import com.datasqrl.calcite.dialect.snowflake.SqlCreateCatalogIntegrationAwsGlue;
 import com.datasqrl.calcite.dialect.snowflake.SqlCreateIcebergTableFromAwsGlue;
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.engine.database.relational.ddl.statements.CreateIndexDDL;
@@ -13,12 +15,15 @@ import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.datasqrl.sql.SqlDDLStatement;
 import com.google.auto.service.AutoService;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlLiteral;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlWriterConfig;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.pretty.SqlPrettyWriter;
@@ -29,6 +34,28 @@ public class SnowflakeDDLFactory implements JdbcDDLFactory {
   @Override
   public JdbcDialect getDialect() {
     return JdbcDialect.Snowflake;
+  }
+
+  @Override
+  public Optional<SqlNode> createCatalog() {
+
+    SqlNodeList catalogParams = SqlCatalogParams.createGlueCatalogParams(
+        SqlParserPos.ZERO,
+        "arn:aws:iam::123456789012:role/myGlueRole",
+        "123456789012",
+        "us-east-2",
+        "my.catalogdb"
+    );
+
+    SqlCreateCatalogIntegrationAwsGlue catalog = new SqlCreateCatalogIntegrationAwsGlue(SqlParserPos.ZERO,
+        false, true, new SqlIdentifier("MyCatalog", SqlParserPos.ZERO),
+        SqlLiteral.createCharString("GLUE", SqlParserPos.ZERO),
+        SqlLiteral.createCharString("ICEBERG", SqlParserPos.ZERO),
+        catalogParams,
+        SqlLiteral.createBoolean(true, SqlParserPos.ZERO),
+        null);
+
+    return Optional.of(catalog);
   }
 
   public SqlDDLStatement createTable(EngineSink table) {
