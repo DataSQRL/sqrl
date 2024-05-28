@@ -5,17 +5,13 @@ package com.datasqrl.engine.database.relational.ddl;
 
 import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
 import com.datasqrl.calcite.dialect.ExtendedSnowflakeSqlDialect;
-import com.datasqrl.calcite.dialect.snowflake.SqlColumnDeclaration;
-import com.datasqrl.calcite.dialect.snowflake.SqlCreateIcebergTableFromAWSGlue;
-import com.datasqrl.calcite.dialect.snowflake.SqlPrimaryKeyConstraint;
+import com.datasqrl.calcite.dialect.snowflake.SqlCreateIcebergTableFromAwsGlue;
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.engine.database.relational.ddl.statements.CreateIndexDDL;
-import com.datasqrl.engine.database.relational.ddl.statements.CreateTableDDL;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.datasqrl.sql.SqlDDLStatement;
 import com.google.auto.service.AutoService;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.calcite.rel.type.RelDataType;
@@ -23,8 +19,6 @@ import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlLiteral;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlWriterConfig;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.pretty.SqlPrettyWriter;
@@ -41,7 +35,7 @@ public class SnowflakeDDLFactory implements JdbcDDLFactory {
     SqlIdentifier tableName = new SqlIdentifier(table.getNameId(), SqlParserPos.ZERO);
 
     return ()-> {
-      SqlCreateIcebergTableFromAWSGlue createTable = new SqlCreateIcebergTableFromAWSGlue(
+      SqlCreateIcebergTableFromAwsGlue createTable = new SqlCreateIcebergTableFromAwsGlue(
           SqlParserPos.ZERO, true,
           true, tableName, null, null,
           SqlLiteral.createCharString(table.getNameId(), SqlParserPos.ZERO), null,

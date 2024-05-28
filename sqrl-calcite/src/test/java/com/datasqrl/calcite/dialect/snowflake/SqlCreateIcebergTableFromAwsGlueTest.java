@@ -1,17 +1,10 @@
 package com.datasqrl.calcite.dialect.snowflake;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import com.datasqrl.calcite.dialect.ExtendedSnowflakeSqlDialect;
-import org.apache.calcite.sql.SqlDialect;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlNodeList;
-import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.SqlWriterConfig;
-import org.apache.calcite.sql.dialect.AnsiSqlDialect;
-import org.apache.calcite.sql.dialect.SnowflakeSqlDialect;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.pretty.SqlPrettyWriter;
 import org.junit.jupiter.api.Test;
@@ -20,13 +13,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /**
  * Test class for SqlCreateIcebergTableFromAWSGlue.
  */
-public class SqlCreateIcebergTableFromAWSGlueTest {
+public class SqlCreateIcebergTableFromAwsGlueTest {
 
   @Test
   public void testBasicCreateTable() {
     SqlIdentifier tableName = new SqlIdentifier("test_table", SqlParserPos.ZERO);
     SqlLiteral catalogTableName = SqlLiteral.createCharString("test_catalog_table", SqlParserPos.ZERO);
-    SqlCreateIcebergTableFromAWSGlue createTable = new SqlCreateIcebergTableFromAWSGlue(
+    SqlCreateIcebergTableFromAwsGlue createTable = new SqlCreateIcebergTableFromAwsGlue(
         SqlParserPos.ZERO, false, false, tableName, null, null, catalogTableName, null, null, null);
 
     assertEquals("CREATE ICEBERG TABLE \"test_table\" CATALOG_TABLE_NAME = 'test_catalog_table'",
@@ -43,7 +36,7 @@ public class SqlCreateIcebergTableFromAWSGlueTest {
     SqlLiteral replaceInvalidCharacters = SqlLiteral.createBoolean(true, SqlParserPos.ZERO);
     SqlLiteral comment = SqlLiteral.createCharString("This is a test table", SqlParserPos.ZERO);
 
-    SqlCreateIcebergTableFromAWSGlue createTable = new SqlCreateIcebergTableFromAWSGlue(
+    SqlCreateIcebergTableFromAwsGlue createTable = new SqlCreateIcebergTableFromAwsGlue(
         SqlParserPos.ZERO, true, true, tableName, externalVolume, catalog, catalogTableName,
         catalogNamespace, replaceInvalidCharacters, comment);
 

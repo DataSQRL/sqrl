@@ -18,7 +18,7 @@ import java.util.Objects;
  *   [ COMMENT = '<string_literal>' ]
  *   [ [ WITH ] TAG ( <tag_name> = '<tag_value>' [ , <tag_name> = '<tag_value>' , ... ] ) ]
  */
-public class SqlCreateIcebergTableFromAWSGlue extends SqlCall {
+public class SqlCreateIcebergTableFromAwsGlue extends SqlCall {
 
   public static final SqlSpecialOperator OPERATOR = new SqlSpecialOperator("CREATE ICEBERG TABLE",
       SqlKind.OTHER_DDL);
@@ -33,7 +33,7 @@ public class SqlCreateIcebergTableFromAWSGlue extends SqlCall {
   private final boolean replace;
   private final boolean ifNotExists;
 
-  public SqlCreateIcebergTableFromAWSGlue(SqlParserPos pos, boolean replace, boolean ifNotExists,
+  public SqlCreateIcebergTableFromAwsGlue(SqlParserPos pos, boolean replace, boolean ifNotExists,
       SqlIdentifier tableName,
       SqlLiteral externalVolume, SqlLiteral catalog, SqlLiteral catalogTableName,
       SqlLiteral catalogNamespace, SqlLiteral replaceInvalidCharacters, SqlLiteral comment) {
