@@ -41,13 +41,4 @@ public class SnowflakeIcebergEngine extends AbstractJDBCEngine {
 
     return super.plan(plan, inputs, pipeline, framework, errorCollector);
   }
-
-
-  public static class SnowflakeIcebergPlan implements EnginePhysicalPlan, Serializable {
-    public Boolean noProps = true;
-
-    public Boolean getNoProps() {
-      return noProps;
-    }
-  }
 }

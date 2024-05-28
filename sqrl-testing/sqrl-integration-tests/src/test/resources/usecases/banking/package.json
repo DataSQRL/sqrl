@@ -1,6 +1,7 @@
 {
   "version": "1",
-  "enabled-engines": ["vertx", "postgres", "kafka", "flink"],
+  "profiles" : ["/Users/henneberger/sqrl/profiles/default"],
+  "enabled-engines": ["vertx", "postgres", "kafka", "flink", "snowflake"],
   "values" : {
     "flink-config": {
       "table.exec.source.idle-timeout": "1 ms"

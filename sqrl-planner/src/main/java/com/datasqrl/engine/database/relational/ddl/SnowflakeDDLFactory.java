@@ -51,7 +51,7 @@ public class SnowflakeDDLFactory implements JdbcDDLFactory {
           .withDialect(ExtendedSnowflakeSqlDialect.DEFAULT);
       SqlPrettyWriter prettyWriter = new SqlPrettyWriter(config);
       createTable.unparse(prettyWriter, 0, 0);
-      return prettyWriter.toSqlString().getSql();
+      return prettyWriter.toSqlString().getSql() + ";";
     };
 
   }

@@ -5,7 +5,10 @@ package com.datasqrl.engine.database.relational;
 
 import static com.datasqrl.engine.EngineFeature.STANDARD_DATABASE;
 
+import com.datasqrl.calcite.Dialect;
+import com.datasqrl.calcite.QueryPlanner;
 import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.calcite.convert.SqlNodeToString.SqlStrings;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.config.ConnectorConf;
 import com.datasqrl.config.ConnectorFactoryContext;
@@ -133,7 +136,34 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
     Map<IdentifiedQuery, QueryTemplate> databaseQueries = dbPlan.getQueries().stream()
         .collect(Collectors.toMap(ReadQuery::getQuery, q -> new QueryTemplate(q.getRelNode())));
 
-    return new JDBCPhysicalPlan(ddlStatements, databaseQueries);
+    List<Map<String, String>> queries = new ArrayList<>();
+    QueryPlanner queryPlanner = framework.getQueryPlanner();
+    for (QueryTemplate template : databaseQueries.values()) {
+      String sql = queryPlanner.relToString(mapDialect(getDialect()),
+          template.getRelNode())
+          .getSql();
+      //todo: migrate this to a full form for consumption by downstream engines
+      queries.add(Map.of("sql", sql + ";"));
+    }
+
+    return new JDBCPhysicalPlan(ddlStatements, databaseQueries, queries);
+  }
+
+  //todo remove
+  private Dialect mapDialect(JdbcDialect dialect) {
+    switch (dialect) {
+      case Postgres:
+        return Dialect.POSTGRES;
+      case Snowflake:
+        return Dialect.SNOWFLAKE;
+      case Oracle:
+      case MySQL:
+      case SQLServer:
+      case H2:
+      case SQLite:
+      default:
+        return Dialect.CALCITE;
+    }
   }
 
   private List<SqlDDLStatement> extractTypeExtensions(List<ReadQuery> queries) {

@@ -8,6 +8,7 @@ import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.sql.SqlDDLStatement;
 import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import lombok.Value;
@@ -16,7 +17,11 @@ import lombok.Value;
 public class JDBCPhysicalPlan implements DatabasePhysicalPlan {
 
   List<SqlDDLStatement> ddl;
-  //todo fix me to include queries
+
+  //todo remove
   @JsonIgnore
-  Map<IdentifiedQuery, QueryTemplate> queries;
+  Map<IdentifiedQuery, QueryTemplate> queryPlans;
+
+  List<Map<String, String>> queries;
+
 }
