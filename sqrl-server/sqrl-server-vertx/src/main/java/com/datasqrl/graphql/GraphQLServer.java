@@ -14,6 +14,7 @@ import static org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.graphql.calcite.FlinkQuery;
 import com.datasqrl.graphql.calcite.FlinkSchema;
+import com.datasqrl.graphql.calcite.SimpleModifiableTable;
 import com.datasqrl.graphql.config.CorsHandlerOptions;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.io.SinkConsumer;
@@ -26,7 +27,6 @@ import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoords;
 import com.datasqrl.graphql.type.SqrlVertxScalars;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -57,6 +57,7 @@ import io.vertx.pgclient.impl.PgPoolOptions;
 import io.vertx.sqlclient.SqlClient;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.HashMap;
@@ -70,7 +71,6 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.jdbc.CalciteConnection;
 import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
-import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.StructKind;
 import org.apache.calcite.schema.SchemaPlus;
 import org.apache.calcite.sql.type.SqlTypeName;
@@ -105,8 +105,14 @@ public class GraphQLServer extends AbstractVerticle {
   }
 
   @SneakyThrows
-  public static CalciteConnection getCalciteClient() {
+  public static CalciteConnection getCalciteClient(Vertx vertx) {
     Class.forName("org.apache.calcite.jdbc.Driver");
+//    JDBCPool pool = JDBCPool.pool(vertx, new JDBCConnectOptions().setJdbcUrl("jdbc:calcite:"),
+//        new PoolOptions().setMaxSize(1));
+//    SqlConnection sqlConnection = pool.getConnection().toCompletionStage().toCompletableFuture()
+//        .get();
+//    ;
+//    CalciteConnection connection = (CalciteConnection)getInnermostConnection(sqlConnection);
     Connection connection = DriverManager.getConnection("jdbc:calcite:");
     CalciteConnection calciteConnection = connection.unwrap(CalciteConnection.class);
     SchemaPlus rootSchema = calciteConnection.getRootSchema();
@@ -116,16 +122,53 @@ public class GraphQLServer extends AbstractVerticle {
     JavaTypeFactoryImpl relDataTypeFactory = new JavaTypeFactoryImpl();
     flinkSchema.addTable(new FlinkQuery("sales_fact_1997",  List.of(
         "CREATE TABLE RandomData (\n" + " customerid INT, \n" + " text STRING \n" + ") WITH (\n"
-            + " 'connector' = 'datagen',\n" + " 'number-of-rows'='10',\n"
+            + " 'connector' = 'datagen',\n" +
+            " 'number-of-rows'='10',\n"
+            + " 'rows-per-second'='5',\n"
             + " 'fields.customerid.kind'='random',\n" + " 'fields.customerid.min'='1',\n"
             + " 'fields.customerid.max'='1000',\n" + " 'fields.text.length'='10'\n" + ")"),
         "SELECT * FROM RandomData", relDataTypeFactory.createStructType(StructKind.FULLY_QUALIFIED,
         List.of(relDataTypeFactory.createSqlType(SqlTypeName.VARCHAR),
             relDataTypeFactory.createSqlType(SqlTypeName.VARCHAR)), List.of("customerid", "text"))));
 
+    rootSchema.add("mod", new SimpleModifiableTable(
+        relDataTypeFactory.createStructType(StructKind.FULLY_QUALIFIED,
+            List.of(relDataTypeFactory.createSqlType(SqlTypeName.VARCHAR),
+                relDataTypeFactory.createSqlType(SqlTypeName.VARCHAR)), List.of("customerid", "text"))
+    ));
+//
+//    PreparedStatement preparedStatement = calciteConnection.prepareStatement("INSERT INTO \"mod\" "
+//        + "VALUES(?, ?)"
+////        + "SELECT customerid + '1', text FROM (VALUES(?, ?)) as t(customerid, text)"
+//    );
+//    preparedStatement.setString(1, "1");
+//    preparedStatement.setString(2, "2");
+//
+//    System.out.println(preparedStatement.executeUpdate());
+//
+//    ResultSet resultSet = calciteConnection.createStatement()
+//        .executeQuery("SELECT * FROM \"mod\" ");
+//
+//    resultSet.next();
+//    System.out.println(resultSet.getString(1));
+
     flinkSchema.assureOpen();
 
     return calciteConnection;
+  }
+  public static Object getInnermostConnection(Object outerConnection) throws NoSuchFieldException, IllegalAccessException {
+    Field field = null;
+    Object currentObject = outerConnection;
+
+    // Assuming you know the field names and their depths
+    String[] fields = {"conn", "conn", "conn", "wrappedConnection"};
+    for (String fieldName : fields) {
+      field = currentObject.getClass().getDeclaredField(fieldName);
+      field.setAccessible(true);
+      currentObject = field.get(currentObject);
+    }
+
+    return currentObject;
   }
 
   private Future<JsonObject> loadConfig() {
@@ -196,7 +239,7 @@ public class GraphQLServer extends AbstractVerticle {
     //Todo: Don't spin up the ws endpoint if there are no subscriptions
     SqlClient client = getSqlClient();
 
-    GraphQL graphQL = createGraphQL(client, getCalciteClient(), startPromise);
+    GraphQL graphQL = createGraphQL(client, getCalciteClient(vertx), startPromise);
 
     CorsHandler corsHandler = toCorsHandler(this.config.getCorsHandlerOptions());
     router.route().handler(corsHandler);
@@ -272,7 +315,7 @@ public class GraphQLServer extends AbstractVerticle {
       Promise<Void> startPromise) {
     try {
       GraphQL graphQL = model.accept(new GraphQLEngineBuilder(List.of(SqrlVertxScalars.JSON)),
-          new VertxContext(new VertxJdbcClient(client), calciteClient,
+          new VertxContext(vertx, new VertxJdbcClient(client), calciteClient,
               constructSinkProducers(model, vertx),
               constructSubscriptions(model, vertx, startPromise), canonicalizer)).instrumentation(
           new ChainedInstrumentation(new JsonObjectAdapter(), VertxFutureAdapter.create())).build();

@@ -17,9 +17,12 @@ import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import graphql.schema.DataFetchingEnvironment;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
+import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.sqlclient.PreparedQuery;
 import io.vertx.sqlclient.Row;
+import io.vertx.sqlclient.RowIterator;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
 import java.sql.ResultSet;
@@ -27,10 +30,12 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import lombok.SneakyThrows;
@@ -84,49 +89,46 @@ public class VertxQueryExecutionContext implements QueryExecutionContext,
         .map(r -> resultMapper(r, isList));
   }
 
-  @SneakyThrows
   @Override
-  public Future runCalciteQuery(ResolvedCalciteQuery query, boolean list,
+  public CompletionStage runCalciteQuery(ResolvedCalciteQuery query, boolean list,
       QueryExecutionContext context) {
 
-    Promise promise = Promise.promise();
-
-    try {
-      // Create a statement from the Calcite connection
-      Statement statement = this.context.getCalciteClient().createStatement();
+    return CompletableFuture.supplyAsync(()-> {
+      try {
+        // Create a statement from the Calcite connection
+        Statement statement = this.context.getCalciteClient().createStatement();
 
         // Execute the query specified in the ResolvedCalciteQuery
-      ResultSet resultSet = statement.executeQuery(query.getQuery().getSql());
+        ResultSet resultSet = statement.executeQuery(query.getQuery().getSql());
 
-      // Process the ResultSet into a JSON structure
-      List<JsonObject> results = new ArrayList<>();
-      while (resultSet.next()) {
-        JsonObject jsonObject = new JsonObject();
-        ResultSetMetaData metaData = resultSet.getMetaData();
-        int columnCount = metaData.getColumnCount();
-        for (int i = 1; i <= columnCount; i++) {
-          String columnName = metaData.getColumnName(i);
-          jsonObject.put(columnName, resultSet.getObject(i));
+        // Process the ResultSet into a JSON structure
+        List<JsonObject> results = new ArrayList<>();
+        while (resultSet.next()) {
+          JsonObject jsonObject = new JsonObject();
+          ResultSetMetaData metaData = resultSet.getMetaData();
+          int columnCount = metaData.getColumnCount();
+          for (int i = 1; i <= columnCount; i++) {
+            String columnName = metaData.getColumnName(i);
+            jsonObject.put(columnName, resultSet.getObject(i));
+          }
+          results.add(jsonObject);
         }
-        results.add(jsonObject);
-      }
 
-      // Decide on the return structure based on isList flag
-      if (list) {
-        promise.complete(results);
-      } else {
-        if (results.isEmpty()) {
-          promise.complete(new JsonObject());
+        // Decide on the return structure based on isList flag
+        if (list) {
+          return results;
         } else {
-          promise.complete(results.get(0));
+          if (results.isEmpty()) {
+            return new JsonObject();
+          } else {
+            return results.get(0);
+          }
         }
+      } catch (SQLException e) {
+        e.printStackTrace();
       }
-    } catch (SQLException e) {
-      e.printStackTrace();
-      promise.fail(e);
-    }
-
-    return promise.future();
+      return null;
+    });
   }
 
   private Object resultMapper(RowSet<Row> r, boolean isList) {

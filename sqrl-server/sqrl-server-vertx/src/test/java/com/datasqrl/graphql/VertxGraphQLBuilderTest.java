@@ -13,14 +13,12 @@ import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentParameter;
 import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentSet;
 import com.datasqrl.graphql.server.RootGraphqlModel.CalciteQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.FieldLookupCoords;
-import com.datasqrl.graphql.server.RootGraphqlModel.FixedArgument;
 import com.datasqrl.graphql.server.RootGraphqlModel.JdbcQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.SourceParameter;
 import com.datasqrl.graphql.server.RootGraphqlModel.StringSchema;
 import com.datasqrl.graphql.server.RootGraphqlModel.VariableArgument;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import graphql.Directives;
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import graphql.ExperimentalApi;
@@ -41,7 +39,6 @@ import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.SqlConnection;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
@@ -94,7 +91,7 @@ class VertxGraphQLBuilderTest {
           .fieldName("customer")
           .match(ArgumentSet.builder()
               .query(
-                  new CalciteQuery("select STREAM  *\n"
+                  new CalciteQuery("select STREAM *\n"
                       + "from \"flink\".\"sales_fact_1997\"", List.of())
               )
               .build())
@@ -124,6 +121,7 @@ class VertxGraphQLBuilderTest {
           .build())
       .build();
   private PgPool client;
+  private Vertx vertx;
 
   @SneakyThrows
   @BeforeEach
@@ -137,7 +135,7 @@ class VertxGraphQLBuilderTest {
 
     options.setCachePreparedStatements(true);
     options.setPipeliningLimit(100_000);
-
+    this.vertx = vertx;
     PgPool client = PgPool.pool(vertx, options, new PoolOptions());
     this.client = client;
 
@@ -163,7 +161,7 @@ class VertxGraphQLBuilderTest {
   public void test() {
     GraphQL graphQL = root.accept(
         new GraphQLEngineBuilder(),
-        new VertxContext(new VertxJdbcClient(client), GraphQLServer.getCalciteClient(), Map.of(), Map.of(), NameCanonicalizer.SYSTEM))
+        new VertxContext(vertx, new VertxJdbcClient(client), GraphQLServer.getCalciteClient(vertx), Map.of(), Map.of(), NameCanonicalizer.SYSTEM))
         .instrumentation(new ChainedInstrumentation(
             new JsonObjectAdapter(), VertxFutureAdapter.create()))
         .queryExecutionStrategy(new AsyncExecutionStrategy())

@@ -112,13 +112,15 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
 //        }
 //    }
 
+    List<CalciteSqlQuery> queries = new ArrayList<>();
     //server queries
     for (PhysicalDAGPlan.Query query : plan.getQueries()) {
       if (((ReadQuery)query).getQuery() instanceof APIQuery) {
         APIQuery apiQuery = (APIQuery)((ReadQuery)query).getQuery();
         String sql = queryPlanner.relToString(Dialect.CALCITE, apiQuery.getRelNode())
             .getSql();
-//        queries.add(new CalciteSqlQuery(apiQuery, sql));
+        queries.add(new CalciteSqlQuery(
+            apiQuery.getNamePath().getDisplay(), sql));
 
       } else {
         throw new RuntimeException();
@@ -126,20 +128,22 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
 
     }
 
-    return new ServerPhysicalPlan(/*Will set later after queries are generated*/null, null);
+    return new ServerPhysicalPlan(/*Will set later after queries are generated*/null, queries);
   }
+
+
 //
 //  @Value
 //  private class PostgresSqlQuery implements SqlQuery {
 //    APIQuery apiQuery;
 //    String sqls;
 //  }
-//  @Value
-//  private class CalciteSqlQuery implements SqlQuery {
-//    APIQuery apiQuery;
-//    String sql;
-//  }
-//
+  @Value
+  protected class CalciteSqlQuery {
+    String path;
+    String sql;
+  }
+
 //  @Value
 //  private class CalciteDbSqlQuery implements SqlQuery {
 //    DatabaseQueryImpl apiQuery;

@@ -1,11 +1,12 @@
 package com.datasqrl.graphql.calcite;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Properties;
 import lombok.SneakyThrows;
 import org.apache.calcite.DataContext;
 import org.apache.calcite.config.CalciteConnectionConfig;
@@ -23,13 +24,12 @@ import org.apache.calcite.schema.Table;
 import org.apache.calcite.schema.impl.AbstractTable;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlNode;
-import org.apache.flink.configuration.RestOptions;
-import org.apache.flink.table.jdbc.DriverUri;
-import org.apache.flink.table.jdbc.FlinkConnection;
 import org.apache.flink.table.jdbc.FlinkResultSet;
 import org.apache.flink.table.jdbc.FlinkStatement;
 
-class FlinkQueryTable extends AbstractTable implements ScannableTable, StreamableTable {
+class FlinkQueryTable extends AbstractTable implements ScannableTable
+    , StreamableTable
+{
 
   private final FlinkSchema flinkSchema;
   private final FlinkQuery query;
@@ -73,8 +73,10 @@ class FlinkQueryTable extends AbstractTable implements ScannableTable, Streamabl
   @SneakyThrows
   @Override
   public Enumerable<Object[]> scan(DataContext dataContext) {
-    FlinkStatement statement = (FlinkStatement) flinkSchema.getConnection().createStatement();
-
+    Connection connection = flinkSchema.getConnection();
+    FlinkStatement statement = (FlinkStatement) connection.createStatement();
+//    PreparedStatement preparedStatement = connection.prepareStatement(query.getQuery());
+//    preparedStatement.setString(1, "0");
     final FlinkResultSet resultSet = (FlinkResultSet)
         statement.executeQuery(query.getQuery());
 
@@ -89,15 +91,20 @@ class FlinkQueryTable extends AbstractTable implements ScannableTable, Streamabl
             if (resultSet.next()) {
               nextElement = new Object[]{resultSet.getInt("customerid"),
                   resultSet.getString("text")};
+              System.out.println(Arrays.toString(nextElement));
               fetched = true;
             } else {
+              System.out.println("closing HasNext");
               close();
               return false;
             }
           } catch (SQLException e) {
+            e.printStackTrace();
             close();
             throw new RuntimeException("Error fetching next element.", e);
           }
+        } else {
+          System.out.println("no no next fetch");
         }
         return fetched;
       }
@@ -105,18 +112,23 @@ class FlinkQueryTable extends AbstractTable implements ScannableTable, Streamabl
       @Override
       public Object[] next() {
         if (!fetched && !hasNext()) {
+          new NoSuchElementException().printStackTrace();
           throw new NoSuchElementException();
         }
+        System.out.println("no next");
         fetched = false;
         return nextElement;
       }
 
       private void close() {
         try {
+          System.out.println("closing");
+
           resultSet.close();
           statement.close();
-//          connection.close();
+          connection.close();
         } catch (SQLException e) {
+          e.printStackTrace();
           throw new RuntimeException("Error closing streaming resources.", e);
         }
       }
