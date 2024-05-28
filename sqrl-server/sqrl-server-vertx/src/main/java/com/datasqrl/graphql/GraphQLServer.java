@@ -36,11 +36,15 @@ import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.healthchecks.HealthCheckHandler;
+import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
+import io.vertx.ext.web.handler.JWTAuthHandler;
 import io.vertx.ext.web.handler.LoggerHandler;
+import io.vertx.ext.web.handler.ProtocolUpgradeHandler;
 import io.vertx.ext.web.handler.graphql.ApolloWSHandler;
 import io.vertx.ext.web.handler.graphql.GraphQLHandler;
 import io.vertx.ext.web.handler.graphql.GraphiQLHandler;
@@ -55,6 +59,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -88,9 +93,7 @@ public class GraphQLServer extends AbstractVerticle {
     SimpleModule module = new SimpleModule();
     module.addDeserializer(String.class, new JsonEnvVarDeserializer());
     objectMapper.registerModule(module);
-    return objectMapper.readValue(
-        new File("server-model.json"),
-        RootGraphqlModel.class);
+    return objectMapper.readValue(new File("server-model.json"), RootGraphqlModel.class);
   }
 
   public static class JsonEnvVarDeserializer extends JsonDeserializer<String> {
@@ -169,72 +172,141 @@ public class GraphQLServer extends AbstractVerticle {
 
   protected void setupServer(Promise<Void> startPromise) {
     Router router = Router.router(vertx);
-    router.route().handler(LoggerHandler.create());
-    if (this.config.getGraphiQLHandlerOptions() != null) {
-      router.route(this.config.getServletConfig().getGraphiQLEndpoint())
-          .handler(GraphiQLHandler.create(this.config.getGraphiQLHandlerOptions()));
-    }
 
-    router.errorHandler(500, ctx -> {
-      ctx.failure().printStackTrace();
-      ctx.response().setStatusCode(500).end();
-    });
+    logRequests(router);
+    configureGraphiQLHandler(router);
+    handleErrors(router);
 
-    //Todo: Don't spin up the ws endpoint if there are no subscriptions
     SqlClient client = getSqlClient();
     GraphQL graphQL = createGraphQL(client, startPromise);
 
-    CorsHandler corsHandler = toCorsHandler(this.config.getCorsHandlerOptions());
-    router.route().handler(corsHandler);
-    router.route().handler(BodyHandler.create());
+    addCorsHandler(router);
+    addBodyHandler(router);
+    addHealthCheckHandler(router);
 
-    HealthCheckHandler healthCheckHandler = HealthCheckHandler.create(vertx);
-    router.get("/health*").handler(healthCheckHandler);
+    Optional<JWTAuthHandler> jwtAuthHandler = createJwtAuthHandler();
 
-    //Todo: Don't spin up the ws endpoint if there are no subscriptions
-    GraphQLHandler graphQLHandler = GraphQLHandler.create(graphQL,
-        this.config.getGraphQLHandlerOptions());
+    configureEndpoints(router, graphQL, jwtAuthHandler);
 
-    if (!model.getSubscriptions().isEmpty()) {
-      if (this.config.getServletConfig().isUseApolloWs()) {
-        ApolloWSHandler apolloWSHandler = ApolloWSHandler.create(graphQL,
-            this.config.getApolloWSOptions());
-        if (this.config.getServletConfig().getGraphQLWsEndpoint()
-            .equalsIgnoreCase(this.config.getServletConfig().getGraphQLEndpoint())) {
-          router.route(this.config.getServletConfig().getGraphQLEndpoint())
-              .handler(apolloWSHandler)
-              .handler(graphQLHandler);
-        } else {
-          router.route(this.config.getServletConfig().getGraphQLWsEndpoint())
-              .handler(apolloWSHandler);
-          router.route(this.config.getServletConfig().getGraphQLEndpoint())
-              .handler(graphQLHandler);
-        }
-      } else {
-        GraphQLWSHandler graphQLWSHandler = GraphQLWSHandler.create(graphQL);
-        router.route(this.config.getServletConfig().getGraphQLEndpoint())
-            .handler(graphQLWSHandler)
-            .handler(graphQLHandler);
-      }
-    } else {
-      router.route(this.config.getServletConfig().getGraphQLEndpoint()).handler(graphQLHandler);
+    startHttpServer(router, startPromise);
+  }
+
+  private void logRequests(Router router) {
+    router.route().handler(LoggerHandler.create());
+  }
+
+  private void configureGraphiQLHandler(Router router) {
+    if (this.config.getGraphiQLHandlerOptions() != null) {
+      router.route(config.getServletConfig().getGraphiQLEndpoint())
+          .handler(GraphiQLHandler.create(config.getGraphiQLHandlerOptions()));
     }
+  }
 
+  private void handleErrors(Router router) {
+    router.errorHandler(500, ctx -> {
+      log.error("", ctx.failure());
+      ctx.response().setStatusCode(500).end();
+    });
+  }
+
+  private void addCorsHandler(Router router) {
+    router.route().handler(toCorsHandler(this.config.getCorsHandlerOptions()));
+  }
+
+  private void addBodyHandler(Router router) {
+    router.route().handler(BodyHandler.create());
+  }
+
+  private void addHealthCheckHandler(Router router) {
+    router.get("/health*").handler(HealthCheckHandler.create(vertx));
+  }
+
+  private Optional<JWTAuthHandler> createJwtAuthHandler() {
+    if (this.config.getJWTAuthOptions() != null) {
+      JWTAuth provider = JWTAuth.create(vertx, config.getJWTAuthOptions());
+      return Optional.of(JWTAuthHandler.create(provider));
+    }
+    return Optional.empty();
+  }
+
+  private void configureEndpoints(Router router, GraphQL graphQL,
+      Optional<JWTAuthHandler> authHandler) {
+    GraphQLHandler graphQLHandler = GraphQLHandler.create(graphQL,
+        config.getGraphQLHandlerOptions());
+    String graphQLEndpoint = config.getServletConfig().getGraphQLEndpoint();
+
+    // Setup subscription endpoints if there are any subscriptions
+    if (!model.getSubscriptions().isEmpty()) {
+      setupWebsocketEndpoint(router, graphQL, authHandler, graphQLEndpoint, graphQLHandler);
+    } else {
+      setupGraphQLEndpoint(router, authHandler, graphQLEndpoint, graphQLHandler);
+    }
+  }
+
+  private void setupWebsocketEndpoint(Router router, GraphQL graphQL,
+      Optional<JWTAuthHandler> authHandler, String graphQLEndpoint, GraphQLHandler graphQLHandler) {
+
+    String graphQLWsEndpoint = config.getServletConfig().getGraphQLWsEndpoint();
+
+    ProtocolUpgradeHandler WSHandler = getWSHandler(graphQL);
+
+    if (graphQLWsEndpoint.equalsIgnoreCase(graphQLEndpoint)) {
+      // Shared endpoint for WebSocket and HTTP
+      setupSharedEndpoint(router, authHandler, graphQLEndpoint, graphQLHandler, WSHandler);
+    } else {
+      // Separate endpoints for WebSocket and HTTP
+      setupSeparateEndpoints(router, authHandler, graphQLEndpoint, graphQLHandler,
+          graphQLWsEndpoint, WSHandler);
+    }
+  }
+
+  private ProtocolUpgradeHandler getWSHandler(GraphQL graphQL) {
+    if (config.getServletConfig().isUseApolloWs()) {
+      return ApolloWSHandler.create(graphQL, config.getApolloWSOptions());
+    } else {
+      return GraphQLWSHandler.create(graphQL);
+    }
+  }
+
+  private static void setupSharedEndpoint(Router router, Optional<JWTAuthHandler> authHandler,
+      String graphQLEndpoint, GraphQLHandler graphQLHandler, ProtocolUpgradeHandler WSHandler) {
+    Route sharedRoute = router.route(graphQLEndpoint).handler(WSHandler);
+    authHandler.ifPresent(sharedRoute::handler);
+
+    sharedRoute.handler(graphQLHandler);
+  }
+
+  private static void setupSeparateEndpoints(Router router, Optional<JWTAuthHandler> authHandler,
+      String graphQLEndpoint, GraphQLHandler graphQLHandler, String graphQLWsEndpoint,
+      ProtocolUpgradeHandler WSHandler) {
+    Route apolloWSRoute = router.route(graphQLWsEndpoint).handler(WSHandler);
+    authHandler.ifPresent(apolloWSRoute::handler);
+
+    setupGraphQLEndpoint(router, authHandler, graphQLEndpoint, graphQLHandler);
+  }
+
+  private static void setupGraphQLEndpoint(Router router, Optional<JWTAuthHandler> authHandler,
+      String graphQLEndpoint, GraphQLHandler graphQLHandler) {
+    Route graphQLRoute = router.route(graphQLEndpoint);
+    authHandler.ifPresent(graphQLRoute::handler);
+    graphQLRoute.handler(graphQLHandler);
+  }
+
+  private void startHttpServer(Router router, Promise<Void> startPromise) {
     vertx.createHttpServer(this.config.getHttpServerOptions()).requestHandler(router)
-        .listen(this.config.getHttpServerOptions().getPort())
-        .onFailure((e) -> {
-          log.error("Could not start graphql server", e);
+        .listen(this.config.getHttpServerOptions().getPort()).onFailure(e -> {
+          log.error("Could not start GraphQL server", e);
           if (!startPromise.future().isComplete()) {
             startPromise.fail(e);
           }
-        })
-        .onSuccess((s) -> {
-          log.info("HTTP server started on port {}", this.config.getHttpServerOptions().getPort());
+        }).onSuccess(s -> {
+          log.info("HTTP server started on port {}", config.getHttpServerOptions().getPort());
           if (!startPromise.future().isComplete()) {
             startPromise.complete();
           }
         });
   }
+
 
   private CorsHandler toCorsHandler(CorsHandlerOptions corsHandlerOptions) {
     CorsHandler corsHandler = corsHandlerOptions.getAllowedOrigin() != null
