@@ -29,7 +29,7 @@ services:
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
     ports:
-      - 8080:8080
+      - 8087:8080
     depends_on:
       - kafka
     environment:

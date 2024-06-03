@@ -8,17 +8,17 @@ import org.junit.jupiter.api.Test;
 @Disabled
 public class UseCasesFullIT extends UseCasesIT {
 
-  @Test //Done
+  @Test
   public void testBanking() {
     execute("banking", "loan.sqrl", "loan.graphqls");
   }
 
-  @Test //Done
+  @Test
   public void testClickstream() {
     execute("clickstream", "clickstream-teaser.sqrl", "clickstream-teaser.graphqls");
   }
 
-  @Test //Done
+  @Test
   public void testConference() {
     execute("conference", "conference.sqrl", "conference.graphqls");
   }
