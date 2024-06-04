@@ -38,7 +38,6 @@ import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.jwt.JWTAuth;
-import io.vertx.ext.auth.jwt.JWTAuthOptions;
 import io.vertx.ext.healthchecks.HealthCheckHandler;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
@@ -76,6 +75,7 @@ public class GraphQLServer extends AbstractVerticle {
   private final RootGraphqlModel model;
   private final NameCanonicalizer canonicalizer;
   private ServerConfig config;
+  private JWTAuth authProvider;
 
   public GraphQLServer() {
     this(readModel(), null, NameCanonicalizer.SYSTEM);
@@ -177,7 +177,6 @@ public class GraphQLServer extends AbstractVerticle {
     Router router = Router.router(vertx);
 
     logRequests(router);
-    configureGraphiQLHandler(router, vertx);
     handleErrors(router);
 
     SqlClient client = getSqlClient();
@@ -189,7 +188,8 @@ public class GraphQLServer extends AbstractVerticle {
 
     Optional<JWTAuthHandler> jwtAuthHandler = createJwtAuthHandler();
 
-    configureEndpoints(router, graphQL, jwtAuthHandler);
+    configureApiEndpoints(router, graphQL, jwtAuthHandler);
+    configureGraphiQLEndpoint(router, vertx);
 
     startHttpServer(router, startPromise);
   }
@@ -198,15 +198,13 @@ public class GraphQLServer extends AbstractVerticle {
     router.route().handler(LoggerHandler.create());
   }
 
-  private void configureGraphiQLHandler(Router router, Vertx vertx) {
+  private void configureGraphiQLEndpoint(Router router, Vertx vertx) {
     if (config.getGraphiQLHandlerOptions() != null) {
       GraphiQLHandlerBuilder handlerBuilder = GraphiQLHandler.builder(vertx)
           .with(config.getGraphiQLHandlerOptions());
 
-      JWTAuthOptions jwtAuthOptions = config.getJWTAuthOptions();
-      if (jwtAuthOptions != null) {
-        JWTAuth provider = JWTAuth.create(vertx, jwtAuthOptions);
-        String token = provider.generateToken(new JsonObject());
+      if (authProvider != null) {
+        String token = authProvider.generateToken(new JsonObject());
 
         handlerBuilder.addingHeaders(rc ->
             MultiMap.caseInsensitiveMultiMap().add("Authorization", "Bearer " + token));
@@ -252,13 +250,13 @@ public class GraphQLServer extends AbstractVerticle {
 
   private Optional<JWTAuthHandler> createJwtAuthHandler() {
     if (config.getJWTAuthOptions() != null) {
-      JWTAuth provider = JWTAuth.create(vertx, config.getJWTAuthOptions());
-      return Optional.of(JWTAuthHandler.create(provider));
+      authProvider = JWTAuth.create(vertx, config.getJWTAuthOptions());
+      return Optional.of(JWTAuthHandler.create(authProvider));
     }
     return Optional.empty();
   }
 
-  private void configureEndpoints(Router router, GraphQL graphQL,
+  private void configureApiEndpoints(Router router, GraphQL graphQL,
       Optional<JWTAuthHandler> authHandler) {
     GraphQLHandler graphQLHandler = GraphQLHandler.create(graphQL,
         config.getGraphQLHandlerOptions());
