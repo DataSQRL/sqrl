@@ -226,7 +226,7 @@ public class GraphQLServer extends AbstractVerticle {
       );
     });
     router.errorHandler(401, ctx -> {
-      log.error(String.format(
+      log.warn(String.format(
           "Unauthorized. request.uri: [%s]",
           ctx.request().uri()
       ), ctx.failure());
