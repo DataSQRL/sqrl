@@ -73,6 +73,10 @@ public class JsonArrayAgg extends AggregateFunction<FlinkJsonType, ArrayAgg> {
     accumulator.remove(mapper.getNodeFactory().numberNode(value));
   }
 
+  public void merge(ArrayAgg accumulator, java.lang.Iterable<ArrayAgg> iterable) {
+    iterable.forEach(o->accumulator.getObjects().addAll(o.getObjects()));
+  }
+
   @Override
   public FlinkJsonType getValue(ArrayAgg accumulator) {
     ArrayNode arrayNode = mapper.createArrayNode();

@@ -76,6 +76,10 @@ public class JsonObjectAgg extends AggregateFunction<Object, ObjectAgg> {
     accumulator.remove(key);
   }
 
+  public void merge(ObjectAgg accumulator, java.lang.Iterable<ObjectAgg> iterable) {
+    iterable.forEach(o->accumulator.getObjects().putAll(o.getObjects()));
+  }
+
   @Override
   public FlinkJsonType getValue(ObjectAgg accumulator) {
     ObjectNode objectNode = mapper.createObjectNode();
