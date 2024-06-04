@@ -1,6 +1,7 @@
 package com.datasqrl.json;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ObjectNode;
@@ -20,7 +21,7 @@ public class JsonObjectAgg extends AggregateFunction<Object, ObjectAgg> {
 
   @Override
   public ObjectAgg createAccumulator() {
-    return new ObjectAgg(new HashMap<>());
+    return new ObjectAgg(new LinkedHashMap<>());
   }
 
   public void accumulate(ObjectAgg accumulator, String key, String value) {
