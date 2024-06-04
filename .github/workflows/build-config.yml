@@ -7,6 +7,8 @@ jobs:
   build:
     runs-on: self-hosted
     timeout-minutes: 20
+    env:
+      TZ: 'America/Los_Angeles'
     steps:
     - name: Setup Timezone
       uses: szenius/set-timezone@v1.1
