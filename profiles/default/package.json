@@ -17,7 +17,7 @@
           "format" : "flexible-json",
           "properties.bootstrap.servers": "${PROPERTIES_BOOTSTRAP_SERVERS}",
           "properties.group.id": "${PROPERTIES_GROUP_ID}",
-          "scan.startup.mode" : "earliest-offset",
+          "scan.startup.mode" : "group-offset",
           "properties.auto.offset.reset" : "earliest",
           "topic" : "${sqrl:topic}"
         },
