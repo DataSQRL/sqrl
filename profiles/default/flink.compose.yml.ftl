@@ -53,6 +53,7 @@ services:
         jobmanager.rpc.address: flink-jobmanager
         rest.address: flink-jobmanager
       - PROPERTIES_BOOTSTRAP_SERVERS=kafka:9092
+      - PROPERTIES_GROUP_ID=mygroupid
       - JDBC_URL=jdbc:postgresql://database:5432/datasqrl
       - JDBC_USERNAME=postgres
       - JDBC_PASSWORD=postgres
