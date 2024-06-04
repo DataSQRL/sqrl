@@ -17,7 +17,7 @@
           "format" : "flexible-json",
           "properties.bootstrap.servers": "${PROPERTIES_BOOTSTRAP_SERVERS}",
           "properties.group.id": "${PROPERTIES_GROUP_ID}",
-          "scan.startup.mode" : "group-offset",
+          "scan.startup.mode" : "group-offsets",
           "properties.auto.offset.reset" : "earliest",
           "topic" : "${sqrl:topic}"
         },
@@ -35,7 +35,7 @@
   },
   "package": {
     "name": "datasqrl.profile.default",
-    "version": "v0.5.0",
+    "version": "0.5.1",
     "variant": "dev",
     "description": "A docker compose datasqrl profile",
     "homepage": "",
