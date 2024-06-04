@@ -32,11 +32,13 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import graphql.GraphQL;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
+import io.vertx.core.MultiMap;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.jwt.JWTAuth;
+import io.vertx.ext.auth.jwt.JWTAuthOptions;
 import io.vertx.ext.healthchecks.HealthCheckHandler;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
@@ -48,6 +50,7 @@ import io.vertx.ext.web.handler.ProtocolUpgradeHandler;
 import io.vertx.ext.web.handler.graphql.ApolloWSHandler;
 import io.vertx.ext.web.handler.graphql.GraphQLHandler;
 import io.vertx.ext.web.handler.graphql.GraphiQLHandler;
+import io.vertx.ext.web.handler.graphql.GraphiQLHandlerBuilder;
 import io.vertx.ext.web.handler.graphql.ws.GraphQLWSHandler;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
 import io.vertx.kafka.client.producer.KafkaProducer;
@@ -174,7 +177,7 @@ public class GraphQLServer extends AbstractVerticle {
     Router router = Router.router(vertx);
 
     logRequests(router);
-    configureGraphiQLHandler(router);
+    configureGraphiQLHandler(router, vertx);
     handleErrors(router);
 
     SqlClient client = getSqlClient();
@@ -195,17 +198,43 @@ public class GraphQLServer extends AbstractVerticle {
     router.route().handler(LoggerHandler.create());
   }
 
-  private void configureGraphiQLHandler(Router router) {
-    if (this.config.getGraphiQLHandlerOptions() != null) {
+  private void configureGraphiQLHandler(Router router, Vertx vertx) {
+    if (config.getGraphiQLHandlerOptions() != null) {
+      GraphiQLHandlerBuilder handlerBuilder = GraphiQLHandler.builder(vertx)
+          .with(config.getGraphiQLHandlerOptions());
+
+      JWTAuthOptions jwtAuthOptions = config.getJWTAuthOptions();
+      if (jwtAuthOptions != null) {
+        JWTAuth provider = JWTAuth.create(vertx, jwtAuthOptions);
+        String token = provider.generateToken(new JsonObject());
+
+        handlerBuilder.addingHeaders(rc ->
+            MultiMap.caseInsensitiveMultiMap().add("Authorization", "Bearer " + token));
+      }
+
       router.route(config.getServletConfig().getGraphiQLEndpoint())
-          .handler(GraphiQLHandler.create(config.getGraphiQLHandlerOptions()));
+          .subRouter(handlerBuilder.build().router());
     }
   }
 
   private void handleErrors(Router router) {
     router.errorHandler(500, ctx -> {
-      log.error("", ctx.failure());
-      ctx.response().setStatusCode(500).end();
+      log.error(String.format(
+          "An internal error happened during processing the request. request.uri: [%s]",
+          ctx.request().uri()
+      ), ctx.failure());
+      ctx.response().setStatusCode(500).end(
+          "{ \"statusCode\": 500, \"statusMessage\": \"Internal Server Error\" }"
+      );
+    });
+    router.errorHandler(401, ctx -> {
+      log.error(String.format(
+          "Unauthorized. request.uri: [%s]",
+          ctx.request().uri()
+      ), ctx.failure());
+      ctx.response().setStatusCode(401).end(
+          "{ \"statusCode\": 401, \"statusMessage\": \"Unauthorized\" }"
+      );
     });
   }
 
@@ -222,7 +251,7 @@ public class GraphQLServer extends AbstractVerticle {
   }
 
   private Optional<JWTAuthHandler> createJwtAuthHandler() {
-    if (this.config.getJWTAuthOptions() != null) {
+    if (config.getJWTAuthOptions() != null) {
       JWTAuth provider = JWTAuth.create(vertx, config.getJWTAuthOptions());
       return Optional.of(JWTAuthHandler.create(provider));
     }
