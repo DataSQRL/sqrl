@@ -28,54 +28,52 @@ dependencies {
     compileOnly "org.apache.flink:flink-streaming-java:$flinkVersion"
     compileOnly "org.apache.flink:flink-table-api-java-bridge:$flinkVersion"
 
-    testImplementation "org.apache.flink:flink-connector-kafka:$kafkaVersion"
-    testImplementation "org.apache.flink:flink-connector-jdbc:$jdbcVersion"
-    testImplementation "org.apache.flink:flink-table-api-java:$flinkVersion"
-    testImplementation "org.apache.flink:flink-table-runtime:$flinkVersion"
-    testImplementation "org.apache.flink:flink-connector-files:$flinkVersion"
-    testImplementation "org.apache.flink:flink-avro:$flinkVersion"
-    testImplementation "org.apache.flink:flink-avro-confluent-registry:$flinkVersion"
+    implementation "org.apache.flink:flink-connector-kafka:$kafkaVersion"
+    implementation "org.apache.flink:flink-connector-jdbc:$jdbcVersion"
+    implementation "org.apache.flink:flink-avro-confluent-registry:$flinkVersion"
 
-    testImplementation "com.datasqrl:sqrl-lib-common:$sqrlVersion"
-    testImplementation "com.datasqrl:sqrl-json:$sqrlVersion"
-    testImplementation "com.datasqrl:sqrl-secure:$sqrlVersion"
-    testImplementation "com.datasqrl:sqrl-time:$sqrlVersion"
-    testImplementation "com.datasqrl:sqrl-text:$sqrlVersion"
-    testImplementation "com.datasqrl:sqrl-flexible-json:$sqrlVersion"
-    testImplementation "com.datasqrl:sqrl-vector:$sqrlVersion"
-    testImplementation "com.datasqrl:sqrl-jdbc-1.18:$sqrlVersion"
+    implementation "com.datasqrl:sqrl-lib-common:$sqrlVersion"
+    implementation "com.datasqrl:sqrl-json:$sqrlVersion"
+    implementation "com.datasqrl:sqrl-secure:$sqrlVersion"
+    implementation "com.datasqrl:sqrl-time:$sqrlVersion"
+    implementation "com.datasqrl:sqrl-text:$sqrlVersion"
+    implementation "com.datasqrl:sqrl-flexible-json:$sqrlVersion"
+    implementation "com.datasqrl:sqrl-vector:$sqrlVersion"
+    implementation "com.datasqrl:sqrl-jdbc-1.18:$sqrlVersion"
 
     // Log4j 2 dependencies
-    testImplementation 'org.apache.logging.log4j:log4j-core:2.17.1'
-    testImplementation 'org.apache.logging.log4j:log4j-api:2.17.1'
-    testImplementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.17.1'
-
-    testImplementation "org.apache.flink:flink-connector-files:$flinkVersion"
-    testImplementation "org.apache.flink:flink-json:$flinkVersion"
-
-    testImplementation platform('org.junit:junit-bom:5.9.1')
-    testImplementation 'org.junit.jupiter:junit-jupiter'
-
-    testImplementation "org.apache.flink:flink-statebackend-rocksdb:$flinkVersion"
-    testImplementation "org.apache.flink:flink-table-planner_2.12:$flinkVersion"
-    testImplementation "org.apache.flink:flink-runtime-web:$flinkVersion"
+//    testImplementation 'org.apache.logging.log4j:log4j-core:2.17.1'
+//    testImplementation 'org.apache.logging.log4j:log4j-api:2.17.1'
+//    testImplementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.17.1'
+//
+//    testImplementation "org.apache.flink:flink-table-api-java:$flinkVersion"
+//    testImplementation "org.apache.flink:flink-table-runtime:$flinkVersion"
+//    testImplementation "org.apache.flink:flink-connector-files:$flinkVersion"
+//    testImplementation "org.apache.flink:flink-json:$flinkVersion"
+//
+//    testImplementation platform('org.junit:junit-bom:5.9.1')
+//    testImplementation 'org.junit.jupiter:junit-jupiter'
+//
+//    testImplementation "org.apache.flink:flink-statebackend-rocksdb:$flinkVersion"
+//    testImplementation "org.apache.flink:flink-table-planner_2.12:$flinkVersion"
+//    testImplementation "org.apache.flink:flink-runtime-web:$flinkVersion"
     testRuntimeOnly fileTree(dir: 'lib', include: '*.jar')
 }
-
-test {
-    minHeapSize = "128m" // initial heap size
-    maxHeapSize = "2g" // maximum heap size
-    jvmArgs '-XX:MaxPermSize=256m' // mem argument for the test JVM
-}
-
-test {
-    useJUnitPlatform()
-}
-
-task copyDependencies(type: Copy) {
-    from configurations.runtimeClasspath
-    into 'build/dependencies'
-}
+//
+//test {
+//    minHeapSize = "128m" // initial heap size
+//    maxHeapSize = "2g" // maximum heap size
+//    jvmArgs '-XX:MaxPermSize=256m' // mem argument for the test JVM
+//}
+//
+//test {
+//    useJUnitPlatform()
+//}
+//
+//task copyDependencies(type: Copy) {
+//    from configurations.runtimeClasspath
+//    into 'build/dependencies'
+//}
 
 shadowJar {
     mergeServiceFiles()
