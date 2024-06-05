@@ -2,7 +2,7 @@
   <parent>
     <artifactId>sqrl-root</artifactId>
     <groupId>com.datasqrl</groupId>
-    <version>0.5.1-SNAPSHOT</version>
+    <version>0.5.1</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -10,7 +10,7 @@
     README: Dependencies that are shared between planning and execution
   -->
   <artifactId>sqrl-base</artifactId>
-  <version>0.5.1-SNAPSHOT</version>
+  <version>0.5.1</version>
 
   <properties>
     <maven.compiler.source>11</maven.compiler.source>
