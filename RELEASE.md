@@ -10,6 +10,8 @@ Update the build.gradle.ftl in the profiles to point to the new sqrl version
     sqrlVersion = "0.?"
 ```
 
+Update the RootCommand version from 'v0.x.0'
+
 Update the Dockerfile in the vertx profile:
 ```
 FROM datasqrl/sqrl-server:v.0?
