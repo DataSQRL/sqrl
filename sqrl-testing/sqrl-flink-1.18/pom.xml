@@ -21,6 +21,14 @@
       <version>1.18.1</version>
       <scope>test</scope>
     </dependency>
+    <!-- https://mvnrepository.com/artifact/org.postgresql/postgresql -->
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>42.7.3</version>
+      <scope>test</scope>
+    </dependency>
+
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-clients</artifactId>
@@ -98,6 +106,14 @@
       <artifactId>hadoop-hdfs</artifactId>
       <version>2.10.2</version>
     </dependency>
+    <!-- https://mvnrepository.com/artifact/org.apache.flink/flink-connector-jdbc -->
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-connector-jdbc</artifactId>
+      <version>3.1.2-1.18</version>
+      <scope>provided</scope>
+    </dependency>
+
     <!-- https://mvnrepository.com/artifact/org.apache.iceberg/iceberg-hive-metastore -->
     <dependency>
       <groupId>org.apache.iceberg</groupId>
@@ -126,6 +142,10 @@
     <dependency>
       <groupId>org.apache.kafka</groupId>
       <artifactId>kafka-streams</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>postgresql</artifactId>
     </dependency>
 
     <dependency>

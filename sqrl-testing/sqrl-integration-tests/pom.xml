@@ -25,6 +25,7 @@
       <artifactId>flink-runtime-web</artifactId>
       <scope>test</scope>
     </dependency>
+
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-cli</artifactId>
