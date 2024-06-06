@@ -1,11 +1,22 @@
 {
   "version": "1",
-  "enabled-engines": ["vertx", "postgres", "kafka", "flink"],
+  "enabled-engines": ["vertx", "postgres", "kafka", "postgres-log","flink"],
   "engines" : {
+    "postgres-log": {
+
+    },
     "flink" : {
       "connectors": {
         "postgres": {
           "connector": "jdbc-sqrl",
+          "password": "${JDBC_PASSWORD}",
+          "driver": "org.postgresql.Driver",
+          "username": "${JDBC_USERNAME}",
+          "url": "${JDBC_URL}",
+          "table-name": "${sqrl:table}"
+        },
+        "postgres-log": {
+          "connector": "jdbc",
           "password": "${JDBC_PASSWORD}",
           "driver": "org.postgresql.Driver",
           "username": "${JDBC_USERNAME}",
