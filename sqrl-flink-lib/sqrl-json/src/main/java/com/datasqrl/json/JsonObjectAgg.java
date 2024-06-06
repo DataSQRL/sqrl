@@ -1,8 +1,6 @@
 package com.datasqrl.json;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.flink.table.annotation.DataTypeHint;
@@ -17,67 +15,29 @@ import org.apache.flink.table.functions.AggregateFunction;
 @FunctionHint(output = @DataTypeHint(value= "RAW", bridgedTo = FlinkJsonType.class, rawSerializer = FlinkJsonTypeSerializer.class))
 public class JsonObjectAgg extends AggregateFunction<Object, ObjectAgg> {
 
-  private final ObjectMapper mapper = new ObjectMapper();
+  private static final long serialVersionUID = 1L;
+  private static final ObjectMapper mapper = new ObjectMapper();
 
   @Override
   public ObjectAgg createAccumulator() {
     return new ObjectAgg(new LinkedHashMap<>());
   }
 
-  public void accumulate(ObjectAgg accumulator, String key, String value) {
-    accumulateObject(accumulator, key, value);
-  }
-
   public void accumulate(ObjectAgg accumulator, String key, @DataTypeHint(inputGroup = InputGroup.ANY) Object value) {
-    if (value instanceof FlinkJsonType) {
-      accumulateObject(accumulator, key, ((FlinkJsonType)value).getJson());
-    } else {
-      accumulator.add(key, mapper.getNodeFactory().pojoNode(value));
-    }
-  }
-
-  public void accumulate(ObjectAgg accumulator, String key, Double value) {
-    accumulateObject(accumulator, key, value);
-  }
-
-  public void accumulate(ObjectAgg accumulator, String key, Long value) {
-    accumulateObject(accumulator, key, value);
-  }
-
-  public void accumulate(ObjectAgg accumulator, String key, Integer value) {
-    accumulateObject(accumulator, key, value);
-  }
-
-  public void accumulateObject(ObjectAgg accumulator, String key, Object value) {
-    accumulator.add(key, mapper.getNodeFactory().pojoNode(value));
-  }
-
-  public void retract(ObjectAgg accumulator, String key, String value) {
-    retractObject(accumulator, key);
+    Object val = unboxFlinkJsonType(value);
+    accumulator.add(key, mapper.getNodeFactory().pojoNode(val));
   }
 
   public void retract(ObjectAgg accumulator, String key, @DataTypeHint(inputGroup = InputGroup.ANY) Object value) {
-    retractObject(accumulator, key);
-  }
-
-  public void retract(ObjectAgg accumulator, String key, Double value) {
-    retractObject(accumulator, key);
-  }
-
-  public void retract(ObjectAgg accumulator, String key, Long value) {
-    retractObject(accumulator, key);
-  }
-
-  public void retract(ObjectAgg accumulator, String key, Integer value) {
-    retractObject(accumulator, key);
-  }
-
-  public void retractObject(ObjectAgg accumulator, String key) {
     accumulator.remove(key);
   }
 
   public void merge(ObjectAgg accumulator, java.lang.Iterable<ObjectAgg> iterable) {
     iterable.forEach(o->accumulator.getObjects().putAll(o.getObjects()));
+  }
+
+  public void resetAccumulator(ObjectAgg acc) {
+    acc.getObjects().clear();
   }
 
   @Override
@@ -87,4 +47,7 @@ public class JsonObjectAgg extends AggregateFunction<Object, ObjectAgg> {
     return new FlinkJsonType(objectNode);
   }
 
+  private Object unboxFlinkJsonType(Object value) {
+    return (value instanceof FlinkJsonType) ? ((FlinkJsonType)value).getJson() : value;
+  }
 }

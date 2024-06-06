@@ -385,6 +385,17 @@ class JsonFunctionsTest {
     }
 
     @Test
+    void testIntValues() {
+      ObjectAgg accumulator = JsonFunctions.JSON_OBJECTAGG.createAccumulator();
+      JsonFunctions.JSON_OBJECTAGG.accumulate(accumulator, "key1", 1);
+      JsonFunctions.JSON_OBJECTAGG.accumulate(accumulator, "key2", 2);
+
+      FlinkJsonType result = JsonFunctions.JSON_OBJECTAGG.getValue(accumulator);
+      assertNotNull(result);
+      assertEquals("{\"key1\":1,\"key2\":2}", result.getJson().toString()); // The last value for the same key should be retained
+    }
+
+    @Test
     void testNullKey() {
       assertThrows(IllegalArgumentException.class, () -> JsonFunctions.JSON_OBJECT.eval(null, "value1"));
     }
