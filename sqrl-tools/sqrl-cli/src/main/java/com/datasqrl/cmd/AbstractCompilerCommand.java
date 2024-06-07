@@ -15,9 +15,11 @@ import com.datasqrl.config.DependencyImpl;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJsonImpl;
 import com.datasqrl.engine.PhysicalPlan;
+import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.graphql.APIType;
+import com.datasqrl.graphql.server.RootGraphqlModel.StringSchema;
 import com.datasqrl.inject.SqrlInjector;
 import com.datasqrl.inject.StatefulModule;
 import com.datasqrl.packager.Packager;
@@ -30,9 +32,11 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.jdbc.SqrlSchema;
@@ -109,7 +113,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     }
 
     if (isGenerateGraphql()) {
-      addGraphql(root.rootDir.resolve(Packager.BUILD_DIR_NAME), root.rootDir);
+      addGraphql(plan.getLeft(), root.rootDir);
     }
 
     postprocess(sqrlConfig, packager, getTargetDir(), plan.getLeft(), plan.getRight(), errors);
@@ -146,9 +150,17 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   }
 
   @SneakyThrows
-  protected void addGraphql(Path build, Path rootDir) {
-    Files.copy(build.resolve(GRAPHQL_NORMALIZED_FILE_NAME),
-        rootDir.resolve(GRAPHQL_NORMALIZED_FILE_NAME));
+  protected void addGraphql(PhysicalPlan plan, Path rootDir) {
+    List<ServerPhysicalPlan> plans = plan.getPlans(ServerPhysicalPlan.class)
+        .collect(Collectors.toList());
+    if (plans.isEmpty()) {
+      return;
+    }
+
+    Path path = rootDir.resolve(GRAPHQL_NORMALIZED_FILE_NAME);
+    Files.deleteIfExists(path);
+    StringSchema stringSchema = (StringSchema)plans.get(0).getModel().getSchema();
+    Files.writeString(path, stringSchema.getSchema(), StandardOpenOption.CREATE);
   }
 
   private Path getTargetDir() {
