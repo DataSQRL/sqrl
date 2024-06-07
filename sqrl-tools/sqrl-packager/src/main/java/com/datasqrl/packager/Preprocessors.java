@@ -50,8 +50,7 @@ public class Preprocessors {
       preprocessors.stream()
           .filter(preprocessor -> preprocessor.getPattern().asMatchPredicate()
               .test(userDir.getFileName().toString()))
-          .findFirst()
-          .ifPresent(preprocessor -> invokePreprocessor(preprocessor, userDir, context));
+          .forEach(preprocessor -> invokePreprocessor(preprocessor, userDir, context));
     }
     return true;
   }
