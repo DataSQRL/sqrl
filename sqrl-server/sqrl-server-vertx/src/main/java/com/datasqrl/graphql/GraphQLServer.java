@@ -3,11 +3,7 @@
  */
 package com.datasqrl.graphql;
 
-import static org.apache.kafka.clients.consumer.ConsumerConfig.AUTO_OFFSET_RESET_CONFIG;
-import static org.apache.kafka.clients.consumer.ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG;
-import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
-import static org.apache.kafka.clients.consumer.ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG;
-import static org.apache.kafka.clients.consumer.ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG;
+import static org.apache.kafka.clients.consumer.ConsumerConfig.*;
 import static org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG;
 import static org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG;
 
@@ -16,6 +12,7 @@ import com.datasqrl.graphql.config.CorsHandlerOptions;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.io.SinkConsumer;
 import com.datasqrl.graphql.io.SinkProducer;
+import com.datasqrl.graphql.kafka.JsonSerializer;
 import com.datasqrl.graphql.kafka.KafkaSinkConsumer;
 import com.datasqrl.graphql.kafka.KafkaSinkProducer;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
@@ -26,6 +23,7 @@ import com.datasqrl.graphql.type.SqrlVertxScalars;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.InjectableValues;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
@@ -35,20 +33,20 @@ import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.healthchecks.HealthCheckHandler;
-import io.vertx.ext.web.Route;
+import io.vertx.ext.healthchecks.HealthChecks;
+import io.vertx.ext.healthchecks.Status;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
-import io.vertx.ext.web.handler.JWTAuthHandler;
 import io.vertx.ext.web.handler.LoggerHandler;
-import io.vertx.ext.web.handler.ProtocolUpgradeHandler;
 import io.vertx.ext.web.handler.graphql.ApolloWSHandler;
 import io.vertx.ext.web.handler.graphql.GraphQLHandler;
 import io.vertx.ext.web.handler.graphql.GraphiQLHandler;
 import io.vertx.ext.web.handler.graphql.ws.GraphQLWSHandler;
+import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.pgclient.PgPool;
@@ -56,10 +54,10 @@ import io.vertx.pgclient.impl.PgPoolOptions;
 import io.vertx.sqlclient.SqlClient;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -78,8 +76,7 @@ public class GraphQLServer extends AbstractVerticle {
     this(readModel(), null, NameCanonicalizer.SYSTEM);
   }
 
-  public GraphQLServer(RootGraphqlModel model, ServerConfig config,
-      NameCanonicalizer canonicalizer) {
+  public GraphQLServer(RootGraphqlModel model, ServerConfig config, NameCanonicalizer canonicalizer) {
     this.model = model;
     this.config = config;
     this.canonicalizer = canonicalizer;
@@ -93,7 +90,9 @@ public class GraphQLServer extends AbstractVerticle {
     SimpleModule module = new SimpleModule();
     module.addDeserializer(String.class, new JsonEnvVarDeserializer());
     objectMapper.registerModule(module);
-    return objectMapper.readValue(new File("server-model.json"), RootGraphqlModel.class);
+    return objectMapper.readValue(
+        new File("server-model.json"),
+        RootGraphqlModel.class);
   }
 
   public static class JsonEnvVarDeserializer extends JsonDeserializer<String> {
@@ -117,7 +116,6 @@ public class GraphQLServer extends AbstractVerticle {
       return result.toString();
     }
   }
-
   private Future<JsonObject> loadConfig() {
     Promise<JsonObject> promise = Promise.promise();
     vertx.fileSystem().readFile("server-config.json", result -> {
@@ -172,141 +170,72 @@ public class GraphQLServer extends AbstractVerticle {
 
   protected void setupServer(Promise<Void> startPromise) {
     Router router = Router.router(vertx);
+    router.route().handler(LoggerHandler.create());
+    if (this.config.getGraphiQLHandlerOptions() != null) {
+      router.route(this.config.getServletConfig().getGraphiQLEndpoint())
+          .handler(GraphiQLHandler.create(this.config.getGraphiQLHandlerOptions()));
+    }
 
-    logRequests(router);
-    configureGraphiQLHandler(router);
-    handleErrors(router);
+    router.errorHandler(500, ctx -> {
+      ctx.failure().printStackTrace();
+      ctx.response().setStatusCode(500).end();
+    });
 
+    //Todo: Don't spin up the ws endpoint if there are no subscriptions
     SqlClient client = getSqlClient();
     GraphQL graphQL = createGraphQL(client, startPromise);
 
-    addCorsHandler(router);
-    addBodyHandler(router);
-    addHealthCheckHandler(router);
-
-    Optional<JWTAuthHandler> jwtAuthHandler = createJwtAuthHandler();
-
-    configureEndpoints(router, graphQL, jwtAuthHandler);
-
-    startHttpServer(router, startPromise);
-  }
-
-  private void logRequests(Router router) {
-    router.route().handler(LoggerHandler.create());
-  }
-
-  private void configureGraphiQLHandler(Router router) {
-    if (this.config.getGraphiQLHandlerOptions() != null) {
-      router.route(config.getServletConfig().getGraphiQLEndpoint())
-          .handler(GraphiQLHandler.create(config.getGraphiQLHandlerOptions()));
-    }
-  }
-
-  private void handleErrors(Router router) {
-    router.errorHandler(500, ctx -> {
-      log.error("", ctx.failure());
-      ctx.response().setStatusCode(500).end();
-    });
-  }
-
-  private void addCorsHandler(Router router) {
-    router.route().handler(toCorsHandler(this.config.getCorsHandlerOptions()));
-  }
-
-  private void addBodyHandler(Router router) {
+    CorsHandler corsHandler = toCorsHandler(this.config.getCorsHandlerOptions());
+    router.route().handler(corsHandler);
     router.route().handler(BodyHandler.create());
-  }
 
-  private void addHealthCheckHandler(Router router) {
-    router.get("/health*").handler(HealthCheckHandler.create(vertx));
-  }
+    HealthCheckHandler healthCheckHandler = HealthCheckHandler.create(vertx);
+    router.get("/health*").handler(healthCheckHandler);
 
-  private Optional<JWTAuthHandler> createJwtAuthHandler() {
-    if (this.config.getJWTAuthOptions() != null) {
-      JWTAuth provider = JWTAuth.create(vertx, config.getJWTAuthOptions());
-      return Optional.of(JWTAuthHandler.create(provider));
-    }
-    return Optional.empty();
-  }
-
-  private void configureEndpoints(Router router, GraphQL graphQL,
-      Optional<JWTAuthHandler> authHandler) {
+    //Todo: Don't spin up the ws endpoint if there are no subscriptions
     GraphQLHandler graphQLHandler = GraphQLHandler.create(graphQL,
-        config.getGraphQLHandlerOptions());
-    String graphQLEndpoint = config.getServletConfig().getGraphQLEndpoint();
+        this.config.getGraphQLHandlerOptions());
 
-    // Setup subscription endpoints if there are any subscriptions
     if (!model.getSubscriptions().isEmpty()) {
-      setupWebsocketEndpoint(router, graphQL, authHandler, graphQLEndpoint, graphQLHandler);
+      if (this.config.getServletConfig().isUseApolloWs()) {
+        ApolloWSHandler apolloWSHandler = ApolloWSHandler.create(graphQL,
+            this.config.getApolloWSOptions());
+        if (this.config.getServletConfig().getGraphQLWsEndpoint()
+            .equalsIgnoreCase(this.config.getServletConfig().getGraphQLEndpoint())) {
+          router.route(this.config.getServletConfig().getGraphQLEndpoint())
+              .handler(apolloWSHandler)
+              .handler(graphQLHandler);
+        } else {
+          router.route(this.config.getServletConfig().getGraphQLWsEndpoint())
+              .handler(apolloWSHandler);
+          router.route(this.config.getServletConfig().getGraphQLEndpoint())
+              .handler(graphQLHandler);
+        }
+      } else {
+        GraphQLWSHandler graphQLWSHandler = GraphQLWSHandler.create(graphQL);
+        router.route(this.config.getServletConfig().getGraphQLEndpoint())
+            .handler(graphQLWSHandler)
+            .handler(graphQLHandler);
+      }
     } else {
-      setupGraphQLEndpoint(router, authHandler, graphQLEndpoint, graphQLHandler);
+      router.route(this.config.getServletConfig().getGraphQLEndpoint()).handler(graphQLHandler);
     }
-  }
 
-  private void setupWebsocketEndpoint(Router router, GraphQL graphQL,
-      Optional<JWTAuthHandler> authHandler, String graphQLEndpoint, GraphQLHandler graphQLHandler) {
-
-    String graphQLWsEndpoint = config.getServletConfig().getGraphQLWsEndpoint();
-
-    ProtocolUpgradeHandler WSHandler = getWSHandler(graphQL);
-
-    if (graphQLWsEndpoint.equalsIgnoreCase(graphQLEndpoint)) {
-      // Shared endpoint for WebSocket and HTTP
-      setupSharedEndpoint(router, authHandler, graphQLEndpoint, graphQLHandler, WSHandler);
-    } else {
-      // Separate endpoints for WebSocket and HTTP
-      setupSeparateEndpoints(router, authHandler, graphQLEndpoint, graphQLHandler,
-          graphQLWsEndpoint, WSHandler);
-    }
-  }
-
-  private ProtocolUpgradeHandler getWSHandler(GraphQL graphQL) {
-    if (config.getServletConfig().isUseApolloWs()) {
-      return ApolloWSHandler.create(graphQL, config.getApolloWSOptions());
-    } else {
-      return GraphQLWSHandler.create(graphQL);
-    }
-  }
-
-  private static void setupSharedEndpoint(Router router, Optional<JWTAuthHandler> authHandler,
-      String graphQLEndpoint, GraphQLHandler graphQLHandler, ProtocolUpgradeHandler WSHandler) {
-    Route sharedRoute = router.route(graphQLEndpoint).handler(WSHandler);
-    authHandler.ifPresent(sharedRoute::handler);
-
-    sharedRoute.handler(graphQLHandler);
-  }
-
-  private static void setupSeparateEndpoints(Router router, Optional<JWTAuthHandler> authHandler,
-      String graphQLEndpoint, GraphQLHandler graphQLHandler, String graphQLWsEndpoint,
-      ProtocolUpgradeHandler WSHandler) {
-    Route apolloWSRoute = router.route(graphQLWsEndpoint).handler(WSHandler);
-    authHandler.ifPresent(apolloWSRoute::handler);
-
-    setupGraphQLEndpoint(router, authHandler, graphQLEndpoint, graphQLHandler);
-  }
-
-  private static void setupGraphQLEndpoint(Router router, Optional<JWTAuthHandler> authHandler,
-      String graphQLEndpoint, GraphQLHandler graphQLHandler) {
-    Route graphQLRoute = router.route(graphQLEndpoint);
-    authHandler.ifPresent(graphQLRoute::handler);
-    graphQLRoute.handler(graphQLHandler);
-  }
-
-  private void startHttpServer(Router router, Promise<Void> startPromise) {
     vertx.createHttpServer(this.config.getHttpServerOptions()).requestHandler(router)
-        .listen(this.config.getHttpServerOptions().getPort()).onFailure(e -> {
-          log.error("Could not start GraphQL server", e);
+        .listen(this.config.getHttpServerOptions().getPort())
+        .onFailure((e)-> {
+          log.error("Could not start graphql server", e);
           if (!startPromise.future().isComplete()) {
             startPromise.fail(e);
           }
-        }).onSuccess(s -> {
-          log.info("HTTP server started on port {}", config.getHttpServerOptions().getPort());
+        })
+        .onSuccess((s)-> {
+          log.info("HTTP server started on port {}", this.config.getHttpServerOptions().getPort());
           if (!startPromise.future().isComplete()) {
             startPromise.complete();
           }
         });
   }
-
 
   private CorsHandler toCorsHandler(CorsHandlerOptions corsHandlerOptions) {
     CorsHandler corsHandler = corsHandlerOptions.getAllowedOrigin() != null
@@ -354,7 +283,7 @@ public class GraphQLServer extends AbstractVerticle {
   Map<String, SinkConsumer> constructSubscriptions(RootGraphqlModel root, Vertx vertx,
       Promise<Void> startPromise) {
     Map<String, SinkConsumer> consumers = new HashMap<>();
-    for (SubscriptionCoords sub : root.getSubscriptions()) {
+    for (SubscriptionCoords sub: root.getSubscriptions()) {
       KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, getSourceConfig());
       consumer.subscribe(sub.getTopic())
           .onSuccess(v -> log.info("Subscribed to topic: {}", sub.getTopic()))

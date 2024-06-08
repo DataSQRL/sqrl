@@ -2,7 +2,6 @@ package com.datasqrl.graphql.config;
 
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.auth.jwt.JWTAuthOptions;
 import io.vertx.ext.web.handler.graphql.ApolloWSOptions;
 import io.vertx.ext.web.handler.graphql.GraphQLHandlerOptions;
 import io.vertx.ext.web.handler.graphql.GraphiQLHandlerOptions;
@@ -39,9 +38,6 @@ public class ServerConfigOptionsConverter {
     serverConfig.setApolloWSOptions(
         new ApolloWSOptions(json.getJsonObject("apolloWSOptions") == null
             ? new JsonObject() : json.getJsonObject("apolloWSOptions")));
-    if (json.containsKey("JWTAuthOptions")) {
-      serverConfig.setJWTAuthOptions(new JWTAuthOptions(json.getJsonObject("JWTAuthOptions")));
-    }
   }
 
   public static void toJson(ServerConfig serverConfig, JsonObject json) {
