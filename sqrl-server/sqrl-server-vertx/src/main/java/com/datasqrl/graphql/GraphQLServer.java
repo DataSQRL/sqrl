@@ -208,6 +208,7 @@ public class GraphQLServer extends AbstractVerticle {
     Optional<JWTAuth> authProvider = this.config.getAuthOptions() != null ?
         Optional.of(JWTAuth.create(vertx, this.config.getAuthOptions())) : Optional.empty();
     authProvider.ifPresent((auth)-> {
+      //Required for adding auth on ws handler
       System.setProperty("io.vertx.web.router.setup.lenient", "true");
       handler.handler(JWTAuthHandler.create(auth));
     });
