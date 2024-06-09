@@ -2,11 +2,14 @@ package com.datasqrl.graphql.config;
 
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.jwt.JWTAuthOptions;
 import io.vertx.ext.web.handler.graphql.ApolloWSOptions;
 import io.vertx.ext.web.handler.graphql.GraphQLHandlerOptions;
 import io.vertx.ext.web.handler.graphql.GraphiQLHandlerOptions;
+import io.vertx.ext.web.handler.graphql.ws.GraphQLWSOptions;
 import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.pgclient.PgConnectOptions;
+import io.vertx.pgclient.impl.PgPoolOptions;
 import io.vertx.sqlclient.PoolOptions;
 import javax.annotation.Nullable;
 import lombok.AllArgsConstructor;
@@ -34,11 +37,6 @@ public class ServerConfig {
   PgConnectOptions pgConnectOptions;
   PoolOptions poolOptions;
   CorsHandlerOptions corsHandlerOptions;
-  ApolloWSOptions apolloWSOptions;
-
-  public JsonObject toJson() {
-    JsonObject json = new JsonObject();
-    ServerConfigOptionsConverter.toJson(this, json);
-    return json;
-  }
+  @Nullable
+  JWTAuthOptions authOptions;
 }
