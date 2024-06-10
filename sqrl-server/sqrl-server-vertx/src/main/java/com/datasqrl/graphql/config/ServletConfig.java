@@ -21,19 +21,9 @@ public class ServletConfig {
   }
 
   @Default
-  String graphiQLEndpoint = "/graphiql/*";
+  String graphiQLEndpoint = "/graphiql*";
   @Default
   String graphQLEndpoint = "/graphql";
   @Default
   boolean usePgPool = true;
-  @Default
-  public boolean useApolloWs = true;
-  @Default
-  public String graphQLWsEndpoint = "/graphql-ws";
-
-  public JsonObject toJson() {
-    JsonObject json = new JsonObject();
-    ServletConfigOptionsConverter.toJson(this, json);
-    return json;
-  }
 }

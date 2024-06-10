@@ -22,32 +22,7 @@ public class ServletConfigOptionsConverter {
             obj.setUsePgPool(((Boolean)member.getValue()).booleanValue());
           }
           break;
-        case "useApolloWs":
-          if (member.getValue() instanceof Boolean) {
-            obj.setUseApolloWs(((Boolean)member.getValue()).booleanValue());
-          }
-          break;
-        case "graphQLWsEndpoint":
-          if (member.getValue() instanceof String) {
-            obj.setGraphQLWsEndpoint(((String)member.getValue()));
-          }
-          break;
       }
-    }
-  }
-
-
-  public static void toJson(ServletConfig obj, JsonObject json) {
-    if (obj.getGraphiQLEndpoint() != null) {
-      json.put("graphiQLEndpoint", obj.getGraphiQLEndpoint());
-    }
-    if (obj.getGraphQLEndpoint() != null) {
-      json.put("graphQLEndpoint", obj.getGraphQLEndpoint());
-    }
-    json.put("usePgPool", obj.isUsePgPool());
-    json.put("useApolloWs", obj.isUseApolloWs());
-    if (obj.getGraphQLWsEndpoint() != null) {
-      json.put("graphQLWsEndpoint", obj.getGraphQLWsEndpoint());
     }
   }
 }

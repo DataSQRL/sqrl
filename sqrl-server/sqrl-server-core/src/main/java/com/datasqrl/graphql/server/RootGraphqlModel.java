@@ -97,6 +97,7 @@ public class RootGraphqlModel {
   @Getter
   @AllArgsConstructor
   @NoArgsConstructor
+  @Builder
   public static class SubscriptionCoords {
     protected String fieldName;
     protected String topic;
