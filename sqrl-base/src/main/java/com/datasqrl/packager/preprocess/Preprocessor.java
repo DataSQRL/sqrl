@@ -10,7 +10,9 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.Value;
 
 public interface Preprocessor {
 
@@ -19,6 +21,7 @@ public interface Preprocessor {
   void processFile(Path dir, ProcessorContext processorContext, ErrorCollector errors);
 
   @Getter
+  @AllArgsConstructor
   class ProcessorContext {
 
     Set<Path> dependencies, libraries;
@@ -49,14 +52,6 @@ public interface Preprocessor {
      */
     public void addLibrary(Path jarPath) {
       libraries.add(jarPath);
-    }
-
-    /**
-     * Instead of the usual module folder, it creates a differenly named one
-     */
-    public ProcessorContext createModuleFolder(NamePath name) {
-      this.name = Optional.of(name);
-      return this;
     }
   }
 

@@ -45,13 +45,12 @@ public class Preprocessors {
   /**
    * Processes the given list of user files.
    */
-  private boolean processUserFiles(List<Path> userFiles, PreprocessorsContext context) {
+  protected boolean processUserFiles(List<Path> userFiles, PreprocessorsContext context) {
     for (Path userDir : userFiles) {
       preprocessors.stream()
           .filter(preprocessor -> preprocessor.getPattern().asMatchPredicate()
               .test(userDir.getFileName().toString()))
-          .findFirst()
-          .ifPresent(preprocessor -> invokePreprocessor(preprocessor, userDir, context));
+          .forEach(preprocessor -> invokePreprocessor(preprocessor, userDir, context));
     }
     return true;
   }
@@ -59,7 +58,7 @@ public class Preprocessors {
   /**
    * Invokes the given preprocessor and copies relative files.
    */
-  private void invokePreprocessor(Preprocessor preprocessor, Path userDir, PreprocessorsContext ctx) {
+  protected void invokePreprocessor(Preprocessor preprocessor, Path userDir, PreprocessorsContext ctx) {
     ProcessorContext context = new ProcessorContext(ctx.rootDir, ctx.buildDir, ctx.config);
     log.trace("Invoking preprocessor: {}", preprocessor.getClass());
     preprocessor.processFile(userDir, context, ctx.errors);
