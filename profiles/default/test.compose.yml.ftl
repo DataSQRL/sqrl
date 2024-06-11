@@ -8,6 +8,8 @@ services:
       - ${config["compiler"]["snapshotPath"]}:/test/snapshots
 </#if>
     command: ["jmeter", "-n", "-t", "/test/test-plan.jmx", "-l", "/test/results.jtl"]
+    env_file:
+      - ".env"
     depends_on:
       server:
         condition: service_started
