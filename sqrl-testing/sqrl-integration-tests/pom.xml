@@ -2,7 +2,7 @@
   <parent>
     <groupId>com.datasqrl</groupId>
     <artifactId>sqrl-testing</artifactId>
-    <version>0.5.2-SNAPSHOT</version>
+    <version>0.5.2</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
