@@ -3,7 +3,7 @@
   <parent>
     <groupId>com.datasqrl</groupId>
     <artifactId>sqrl-testing</artifactId>
-    <version>0.5.2</version>
+    <version>0.5.3-SNAPSHOT</version>
   </parent>
 
   <artifactId>sqrl-flink-1.17</artifactId>
