@@ -267,6 +267,9 @@ public class Packager {
         }
       });
       return true;
+//    } else if (Files.isRegularFile(sourcePath)) { //check if graphqls file
+//      Files.copy(sourcePath, targetPath.resolve(sourcePath.relativize(sourcePath)), StandardCopyOption.REPLACE_EXISTING);
+//      return true;
     } else {
       // If the directory does not exist or is not a directory, proceed with the original retrieval logic
       return repository.retrieveDependency(targetPath, dependency);
@@ -318,12 +321,42 @@ public class Packager {
       copyToDeploy(targetDir, profilePath, plan, testPlan, sqrlConfig, plans);
     }
 
-    copyFolder(targetDir, DATA_DIR);
-    copyFolder(targetDir, LIB_DIR);
+    copyDataFiles(buildDir.getBuildDir());
+    moveFolder(targetDir, DATA_DIR);
+    copyJarFiles(buildDir.getBuildDir());
+    moveFolder(targetDir, LIB_DIR);
+  }
+
+  private void copyDataFiles(Path buildDir) throws IOException {
+    Files.walk(buildDir)
+        .filter(path -> (path.toString().endsWith(".jsonl") || path.toString().endsWith(".csv") ) && !Files.isDirectory(path))
+        .filter(path -> !path.startsWith(buildDir.resolve(DATA_DIR)))
+        .forEach(path -> {
+          try {
+            Path destination = buildDir.resolve(DATA_DIR).resolve(path.getFileName());
+            Files.copy(path, destination, StandardCopyOption.REPLACE_EXISTING);
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
+        });
+  }
+
+  private void copyJarFiles(Path buildDir) throws IOException {
+    Files.walk(buildDir)
+        .filter(path -> path.toString().endsWith(".jar") && !Files.isDirectory(path))
+        .filter(path -> !path.startsWith(buildDir.resolve(LIB_DIR)))
+        .forEach(path -> {
+          try {
+            Path destination = buildDir.resolve(LIB_DIR).resolve(path.getFileName());
+            Files.copy(path, destination, StandardCopyOption.REPLACE_EXISTING);
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
+        });
   }
 
   @SneakyThrows
-  private void copyFolder(Path targetDir, String folderName) {
+  private void moveFolder(Path targetDir, String folderName) {
     Path targetPath = targetDir.resolve("flink").resolve(folderName);
     Files.createDirectories(targetPath);
     Path sourcePath = buildDir.getBuildDir().resolve(folderName);

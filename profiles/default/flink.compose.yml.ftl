@@ -7,13 +7,15 @@ services:
     ports:
       - "8081:8081"
     command: jobmanager
+    env_file:
+      - ".env"
     environment:
       - |
         FLINK_PROPERTIES=
         jobmanager.rpc.address: flink-jobmanager
 <#if config["values"]?? && config["values"]["mountDir"]??>
     volumes:
-      - ${config["values"]["mountDir"]}:${config["values"]["mountDir"]}
+      - ${config["values"]["mountDir"]}
 </#if>
   flink-taskmanager:
     build:
@@ -22,6 +24,8 @@ services:
     depends_on:
       - flink-jobmanager
     command: taskmanager
+    env_file:
+      - ".env"
     environment:
       - |
         FLINK_PROPERTIES=
@@ -29,13 +33,15 @@ services:
         taskmanager.numberOfTaskSlots: 1
 <#if config["values"]?? && config["values"]["mountDir"]??>
     volumes:
-      - ${config["values"]["mountDir"]}:${config["values"]["mountDir"]}
+      - ${config["values"]["mountDir"]}
 </#if>
   flink-job-submitter:
     build:
       context: flink
       dockerfile: Dockerfile
     command: flink run /scripts/FlinkJob.jar
+    env_file:
+      - ".env"
     depends_on:
       flink-jobmanager:
         condition: service_started

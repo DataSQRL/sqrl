@@ -75,7 +75,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
 
     PackageBootstrap packageBootstrap = new PackageBootstrap(repository, errors);
     PackageJson sqrlConfig = packageBootstrap.bootstrap(root.rootDir, this.root.packageFiles,
-        profiles, this.files, this::createDefaultConfig);
+        profiles, this.files);
 
     Optional<String> snapshotPathConf = sqrlConfig.getCompilerConfig()
         .getSnapshotPath();
@@ -123,16 +123,6 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     if (!Files.isDirectory(path)) {
       throw new RuntimeException("Could not find test path: "+ path.toAbsolutePath());
     }
-  }
-
-  public PackageJson createDefaultConfig(ErrorCollector errors) {
-    PackageJson packageJson = new PackageJsonImpl();
-    packageJson.setProfiles(new String[]{"datasqrl.profile.default"});
-    packageJson.getDependencies()
-        .addDependency("datasqrl.profile.default",
-            new DependencyImpl("datasqrl.profile.default", "v0.5.0", "dev"));
-
-    return packageJson;
   }
 
   protected void postprocess(PackageJson sqrlConfig, Packager packager, Path targetDir,

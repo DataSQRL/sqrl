@@ -7,6 +7,8 @@ services:
     ports:
       - "9092:9092"
       - "9094:9094"
+    env_file:
+      - ".env"
     environment:
       - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
       - ALLOW_PLAINTEXT_LISTENER=yes
@@ -17,6 +19,8 @@ services:
     build:
       context: kafka
       dockerfile: Dockerfile
+    env_file:
+      - ".env"
     environment:
       - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
       - ALLOW_PLAINTEXT_LISTENER=yes

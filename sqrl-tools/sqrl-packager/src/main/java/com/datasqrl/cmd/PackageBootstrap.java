@@ -1,36 +1,27 @@
 package com.datasqrl.cmd;
 
-import static com.datasqrl.config.ConnectorFactoryFactory.PRINT_SINK_NAME;
 import static com.datasqrl.packager.Packager.*;
 import static com.datasqrl.util.NameUtil.namepath2Path;
 
-import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.config.DependencyImpl;
 import com.datasqrl.config.PackageJson.DependenciesConfig;
 import com.datasqrl.config.Dependency;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.ScriptConfig;
+import com.datasqrl.config.PackageJsonImpl;
 import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;
-import com.datasqrl.loaders.StandardLibraryLoader;
-import com.datasqrl.packager.ImportExportAnalyzer;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.packager.repository.Repository;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.function.BiPredicate;
-import java.util.function.Function;
 
 import java.util.regex.Pattern;
 import lombok.AllArgsConstructor;
@@ -45,7 +36,7 @@ public class PackageBootstrap {
 
   @SneakyThrows
   public PackageJson bootstrap(Path rootDir, List<Path> packageFiles,
-      String[] profiles, Path[] files,  Function<ErrorCollector, PackageJson> defaultConfigFnc) {
+      String[] profiles, Path[] files) {
     ErrorCollector errors = this.errors.withLocation(ErrorPrefix.CONFIG).resolve("package");
 
     //Create build dir to unpack resolved dependencies
@@ -68,12 +59,16 @@ public class PackageBootstrap {
     List<Path> configFiles = new ArrayList<>();
 
     if (existingConfig.isEmpty() && profiles.length == 0) { //No profiles found, use default (remotely downloaded)
-      PackageJson defaultConfig = defaultConfigFnc.apply(errors);
+      PackageJson defaultConfig = createDefaultConfig(errors);
       Path path = buildDir.resolve(PACKAGE_JSON);
       profiles = defaultConfig.getProfiles().toArray(String[]::new);
       existingConfig = Optional.of(defaultConfig);
       defaultConfig.toFile(path, true);
       configFiles.add(path);
+    } else if (existingConfig.isPresent() && profiles.length == 0) {
+      PackageJson packageJson = existingConfig.get();
+      setDefaultConfig(packageJson);
+      profiles = packageJson.getProfiles().toArray(String[]::new);
     }
 
     //Download any profiles
@@ -154,6 +149,21 @@ public class PackageBootstrap {
     } else if (!isGraphQLSet && graphQLSchemaFile.isPresent()) {
       errors.fatal("GraphQL schema file is not a regular file: %s", graphQLSchemaFile.get());
     }
+
+    return packageJson;
+  }
+
+  public PackageJson createDefaultConfig(ErrorCollector errors) {
+    PackageJson packageJson = new PackageJsonImpl();
+
+    return setDefaultConfig(packageJson);
+  }
+
+  public PackageJson setDefaultConfig(PackageJson packageJson) {
+    packageJson.setProfiles(new String[]{"datasqrl.profile.default"});
+    packageJson.getDependencies()
+        .addDependency("datasqrl.profile.default",
+            new DependencyImpl("datasqrl.profile.default", "v0.5.0", "dev"));
 
     return packageJson;
   }

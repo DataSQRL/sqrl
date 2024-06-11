@@ -13,6 +13,8 @@ services:
 </#if>
     ports:
       - "8888:8888"
+    env_file:
+      - ".env"
     environment:
       - PROPERTIES_BOOTSTRAP_SERVERS=kafka:9092
       - PGHOST=database
