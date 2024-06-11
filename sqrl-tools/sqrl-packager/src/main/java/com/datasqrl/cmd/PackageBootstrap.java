@@ -163,7 +163,7 @@ public class PackageBootstrap {
     packageJson.setProfiles(new String[]{"datasqrl.profile.default"});
     packageJson.getDependencies()
         .addDependency("datasqrl.profile.default",
-            new DependencyImpl("datasqrl.profile.default", "v0.5.0", "dev"));
+            new DependencyImpl("datasqrl.profile.default", "0.5.2", "dev"));
 
     return packageJson;
   }
