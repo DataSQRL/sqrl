@@ -7,9 +7,7 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
       - name: checkout
         uses: actions/checkout@v3
@@ -20,8 +18,9 @@ jobs:
           distribution: 'adopt'
           cache: maven
       - name: Build SQRL
-        run: mvn -B -U -T 6 -e clean package -DskipTests=true
-
+        env:
+          DATASQRL_TOKEN: ${{ secrets.DATASQRL_TOKEN }}
+        run: mvn -T 1 -B -U -e clean package -DskipTests=true
       # Set up Docker
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -38,8 +37,7 @@ jobs:
           context: sqrl-tools/sqrl-cli
           file: sqrl-tools/sqrl-cli/Dockerfile
           push: true
-          tags: |
-            datasqrl/cmd:${{ github.ref_name }}
+          tags: datasqrl/cmd:${{ github.ref_name }},datasqrl/cmd:latest
           platforms: linux/amd64,linux/arm64
       - name: Build and Push sqrl-vertx Docker
         uses: docker/build-push-action@v3
@@ -47,15 +45,5 @@ jobs:
           context: sqrl-server/sqrl-server-vertx
           file: sqrl-server/sqrl-server-vertx/Dockerfile
           push: true
-          tags: |
-            datasqrl/sqrl-server:${{ github.ref_name }}
-          platforms: linux/amd64,linux/arm64
-      - name: Build and Push sqrl-dependencies Docker
-        uses: docker/build-push-action@v3
-        with:
-          context: .
-          file: Dockerfile
-          push: true
-          tags: |
-            datasqrl/sqrl-dependencies:${{ github.ref_name }}
+          tags: datasqrl/sqrl-server:${{ github.ref_name }},datasqrl/server:latest
           platforms: linux/amd64,linux/arm64
