@@ -39,8 +39,13 @@ import lombok.extern.slf4j.Slf4j;
 import net.lingala.zip4j.ZipFile;
 import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 
 @Slf4j
 public class RemoteRepositoryImplementation implements Repository, PublishRepository {
@@ -172,34 +177,26 @@ public class RemoteRepositoryImplementation implements Repository, PublishReposi
   @Override
   @SneakyThrows
   public boolean publish(Path zipFile, PackageConfiguration pkgConfig) {
-    HttpClient client = HttpClient.newHttpClient();
+    try (CloseableHttpClient client = HttpClients.createDefault()) {
+      String authToken = authProvider.getAccessToken()
+          .orElseThrow(() -> new RuntimeException("Must be logged in to publish. Run `sqrl login`"));
 
-    String authToken = authProvider.getAccessToken()
-        .orElseThrow(() -> new RuntimeException("Must be logged in to publish. Run `sqrl login`"));
+      HttpEntity httpEntity = createHttpEntity(zipFile, pkgConfig);
+      HttpPost request = new HttpPost(repositoryServerURI.resolve("/api/packages").toString());
+      request.setHeader("Authorization", "Bearer " + authToken);
+      request.setEntity(httpEntity);
 
-    HttpEntity httpEntity = createHttpEntity(zipFile, pkgConfig);
-
-    HttpRequest request =
-        HttpRequest.newBuilder()
-            .uri(repositoryServerURI.resolve("/api/packages"))
-            .header("Content-Type", httpEntity.getContentType().getValue())
-            .header("Authorization", "Bearer " + authToken)
-                .POST(HttpRequest.BodyPublishers.ofInputStream(() -> {
-                    try {
-                        return httpEntity.getContent();
-                    } catch (IOException e) {
-                        throw new UncheckedIOException(e);
-                    }
-                }))
-            .timeout(Duration.of(30, ChronoUnit.SECONDS))
-            .build();
-
-    HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
-    if (response.statusCode() == 200) {
-      return true;
-    } else {
-      log.error("An error happened while uploading dependency: status code: {} response: {}", response.statusCode(), response.body());
-      return false;
+      try (CloseableHttpResponse response = client.execute(request)) {
+        if (response.getStatusLine().getStatusCode() == 200) {
+          return true;
+        } else {
+          log.error("An error happened while uploading dependency: status code: {} response: {}",
+              response.getStatusLine().getStatusCode(), EntityUtils.toString(response.getEntity()));
+          return false;
+        }
+      }
+    } catch (IOException e) {
+      throw new UncheckedIOException("Failed to publish the package", e);
     }
   }
 
