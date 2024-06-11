@@ -143,14 +143,20 @@ public class Packager {
         .forEach(failedDep -> depErrors.fatal("Could not retrieve dependency: %s", failedDep));
   }
 
+  @SneakyThrows
   private Stream<NamePath> retrieveDependencies(Map<String, ? extends Dependency> dependencies, ErrorCollector errors) {
-    return dependencies.entrySet().stream()
-        .map(entry -> rethrowCall(() ->
-            retrieveDependency(rootDir.getRootDir(), buildDir.getBuildDir(), NamePath.parse(entry.getKey()),
-                entry.getValue().normalize(entry.getKey(), errors))
-                ? Optional.<NamePath>empty()
-                : Optional.of(NamePath.parse(entry.getKey()))))
-        .flatMap(Optional::stream);
+    List<Optional<NamePath>> deps = new ArrayList<>();
+    for(Map.Entry<String, ? extends Dependency> entry : dependencies.entrySet()) {
+      Optional<NamePath> namePath =
+          retrieveDependency(rootDir.getRootDir(), buildDir.getBuildDir(),
+              NamePath.parse(entry.getKey()),
+              entry.getValue().normalize(entry.getKey(), errors))
+              ? Optional.<NamePath>empty()
+              : Optional.of(NamePath.parse(entry.getKey()));
+      deps.add(namePath);
+    }
+
+    return deps.stream().flatMap(Optional::stream);
   }
 
   private void copyFilesToBuildDir(ErrorCollector errors) throws IOException {

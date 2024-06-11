@@ -60,7 +60,7 @@ public class ImportExportAnalyzer implements
     if (moduleLoader.getModule(path.popLast()).isPresent()) {
       return Optional.empty();
     }
-    return Optional.of(path);
+    return Optional.of(path.popLast());
   }
 
   @Override
