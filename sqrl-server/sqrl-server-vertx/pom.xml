@@ -3,7 +3,7 @@
   <parent>
     <groupId>com.datasqrl</groupId>
     <artifactId>sqrl-server</artifactId>
-    <version>0.5.2</version>
+    <version>0.5.3-SNAPSHOT</version>
   </parent>
 
   <artifactId>sqrl-server-vertx</artifactId>
@@ -214,7 +214,7 @@
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-server-core</artifactId>
-      <version>0.5.2</version>
+      <version>0.5.3-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
