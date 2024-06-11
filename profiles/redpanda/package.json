@@ -2,7 +2,7 @@
   "version": "1",
   "package": {
     "name": "datasqrl.profile.redpanda",
-    "version": "v0.5.2",
+    "version": "0.5.2",
     "variant": "dev",
     "description": "A redpanda datasqrl profile",
     "homepage": "",
