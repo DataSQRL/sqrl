@@ -30,7 +30,7 @@ public class PostgresCDC {
           DockerImageName
             .parse("ankane/pgvector:v0.5.0")
             .asCompatibleSubstituteFor("postgres"))
-          .withCommand("postgres -c wal_level=logical -c shared_preload_libraries=pgoutput");
+          .withCommand("postgres -c wal_level=logical");
 
 
   @BeforeEach
