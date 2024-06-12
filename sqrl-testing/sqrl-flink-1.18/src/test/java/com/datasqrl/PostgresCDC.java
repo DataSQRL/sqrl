@@ -58,6 +58,8 @@ public class PostgresCDC {
           "CREATE TABLE IF NOT EXISTS pgsink (id INT PRIMARY KEY);";
       stmt.execute(createSinkTableSQL);
 
+      // Setup notificaion for pgsink table. On each insert we will
+      // trigger a notify with the id of the inserted record.
       String createTrigger =
           "CREATE OR REPLACE FUNCTION notify_on_insert()\n" +
               "RETURNS TRIGGER AS $$\n" +
@@ -71,8 +73,6 @@ public class PostgresCDC {
               "CREATE TRIGGER insert_notify_trigger\n" +
               "AFTER INSERT ON pgsink\n" +
               "FOR EACH ROW EXECUTE PROCEDURE notify_on_insert();";
-
-      // Execute the SQL
       stmt.execute(createTrigger);
     }
   }
@@ -94,13 +94,6 @@ public class PostgresCDC {
   @SneakyThrows
   @Test
   public void testCdc() {
-//    String sourcetable = "CREATE TEMPORARY TABLE `sourcetable` (\n" +
-//        "  `id` INT NOT NULL" +
-//        ") WITH (" +
-//        "    'connector' = 'datagen'," +
-//        "    'number-of-rows' = '10'" +
-//        ")";
-
     String connector = "postgres-cdc";
     String hostname = postgres.getHost();
     String port = postgres.getMappedPort(5432).toString();
@@ -128,11 +121,6 @@ public class PostgresCDC {
         connector, hostname, port, username, password, databaseName, schemaName, "pgsource"
     );
 
-//    String sinkTable =
-//        "CREATE TEMPORARY TABLE sink_table (id INT NOT NULL) WITH ('connector' = 'jdbc', 'url' = '"
-//            + postgres.getJdbcUrl() + "', 'table-name' = 'target_table', 'username' = '"
-//            + postgres.getUsername() + "', 'password' = '" + postgres.getPassword() + "');";
-
     String sinkTable = String.format(
         "CREATE TEMPORARY TABLE sink_table (\n" +
             "    id INT NOT NULL,\n" +
@@ -147,15 +135,8 @@ public class PostgresCDC {
         postgres.getJdbcUrl(), username, password, "pgsink"
     );
 
-    // Define your Callable
-    Callable<List<String>> callable = new Callable<List<String>>() {
-      @Override
-      public List<String> call() throws Exception {
-        return listenFunction(2);
-      }
-    };
-
-// Submit your Callable to an ExecutorService and get a Future
+    // Listen for notifications
+    Callable<List<String>> callable = () -> listenFunction(2);
     ExecutorService executor = Executors.newSingleThreadExecutor();
     Future<List<String>> future = executor.submit(callable);
 
@@ -195,55 +176,54 @@ public class PostgresCDC {
       assertEquals(2, sinkCount);
     }
 
+    // Assert that we got the notification for the records inserted into pgsink
     assertEquals(2, future.get().size());
   }
 
   private List<String> listenFunction(int expectedRecordsCount) throws SQLException {
-    // Get a new connection from the test container
-//    Connection conn = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
-    Connection conn = getConn();
+    try (Connection conn = getConn(); Statement stmt = conn.createStatement()) {
+      // issue the LISTEN command to get events when a record is inserted into pgsink
+      stmt.execute("LISTEN my_notify");
 
-    // Create a new Statement to issue the LISTEN command
-    Statement stmt = conn.createStatement();
-    stmt.execute("LISTEN my_notify");
+      // Get the connection's PGConnection for receiving notifications
+      PGConnection pgconn = conn.unwrap(PGConnection.class);
 
-    // Get the connection's PGConnection for receiving notifications
-    PGConnection pgconn = conn.unwrap(PGConnection.class);
+      List<String> fetchedRecords = new ArrayList<>();
 
-    List<String> fetchedRecords = new ArrayList<>();
+      while (true) {
+        // Check for notifications synchronously
+        PGNotification[] notifications = pgconn.getNotifications();
 
-    while (true) {
-      // Check for notifications synchronously
-      PGNotification[] notifications = pgconn.getNotifications();
+        if (notifications != null) {
+          for (PGNotification notification : notifications) {
+            // Parse the record ID from the notification parameter
+            String recordId = notification.getParameter();
 
-      if (notifications != null) {
-        for (PGNotification notification : notifications) {
-          // Parse the record ID from the notification parameter
-          String recordId = notification.getParameter();
-
-          // Fetch the record and store it
-          Statement selectStmt = conn.createStatement();
-          ResultSet rs = selectStmt.executeQuery("SELECT * FROM pgsink WHERE id = " + recordId);
-          if (rs.next()) {
-            fetchedRecords.add(rs.getString("id"));
+            // Fetch the record and store it
+            Statement selectStmt = conn.createStatement();
+            ResultSet rs = selectStmt.executeQuery("SELECT * FROM pgsink WHERE id = " + recordId);
+            if (rs.next()) {
+              fetchedRecords.add(rs.getString("id"));
+            }
           }
+        }
 
-          // Break the loop after receiving a notification
-          if (fetchedRecords.size() == expectedRecordsCount) {
-            return fetchedRecords;
-          }
+        // Break the loop after receiving the expected notifications
+        if (fetchedRecords.size() == expectedRecordsCount) {
+          break;
+        }
+
+        // Wait a while before checking again
+        try {
+          Thread.sleep(100);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          break;
         }
       }
 
-      // Wait a while before checking again
-      try {
-        Thread.sleep(100);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        break;
-      }
+      return fetchedRecords;
     }
-
-    return null;
   }
+
 }
