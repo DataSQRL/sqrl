@@ -5,8 +5,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import lombok.SneakyThrows;
@@ -19,6 +26,8 @@ import org.apache.flink.test.junit5.MiniClusterExtension;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.postgresql.PGConnection;
+import org.postgresql.PGNotification;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -48,6 +57,23 @@ public class PostgresCDC {
       String createSinkTableSQL =
           "CREATE TABLE IF NOT EXISTS pgsink (id INT PRIMARY KEY);";
       stmt.execute(createSinkTableSQL);
+
+      String createTrigger =
+          "CREATE OR REPLACE FUNCTION notify_on_insert()\n" +
+              "RETURNS TRIGGER AS $$\n" +
+              "BEGIN\n" +
+              "   -- Issue a NOTIFY command with the new record's ID as the payload\n" +
+              "   PERFORM pg_notify('my_notify', NEW.id::text);\n" +
+              "   RETURN NEW;\n" +
+              "END;\n" +
+              "$$ LANGUAGE plpgsql;\n" +
+              "\n" +
+              "CREATE TRIGGER insert_notify_trigger\n" +
+              "AFTER INSERT ON pgsink\n" +
+              "FOR EACH ROW EXECUTE PROCEDURE notify_on_insert();";
+
+      // Execute the SQL
+      stmt.execute(createTrigger);
     }
   }
 
@@ -121,6 +147,18 @@ public class PostgresCDC {
         postgres.getJdbcUrl(), username, password, "pgsink"
     );
 
+    // Define your Callable
+    Callable<List<String>> callable = new Callable<List<String>>() {
+      @Override
+      public List<String> call() throws Exception {
+        return listenFunction(2);
+      }
+    };
+
+// Submit your Callable to an ExecutorService and get a Future
+    ExecutorService executor = Executors.newSingleThreadExecutor();
+    Future<List<String>> future = executor.submit(callable);
+
     // Set up Flink environment
     StreamExecutionEnvironment env = StreamExecutionEnvironment
         .getExecutionEnvironment();
@@ -156,5 +194,56 @@ public class PostgresCDC {
       int sinkCount = sinkRs.getInt("cnt");
       assertEquals(2, sinkCount);
     }
+
+    assertEquals(2, future.get().size());
+  }
+
+  private List<String> listenFunction(int expectedRecordsCount) throws SQLException {
+    // Get a new connection from the test container
+//    Connection conn = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
+    Connection conn = getConn();
+
+    // Create a new Statement to issue the LISTEN command
+    Statement stmt = conn.createStatement();
+    stmt.execute("LISTEN my_notify");
+
+    // Get the connection's PGConnection for receiving notifications
+    PGConnection pgconn = conn.unwrap(PGConnection.class);
+
+    List<String> fetchedRecords = new ArrayList<>();
+
+    while (true) {
+      // Check for notifications synchronously
+      PGNotification[] notifications = pgconn.getNotifications();
+
+      if (notifications != null) {
+        for (PGNotification notification : notifications) {
+          // Parse the record ID from the notification parameter
+          String recordId = notification.getParameter();
+
+          // Fetch the record and store it
+          Statement selectStmt = conn.createStatement();
+          ResultSet rs = selectStmt.executeQuery("SELECT * FROM pgsink WHERE id = " + recordId);
+          if (rs.next()) {
+            fetchedRecords.add(rs.getString("id"));
+          }
+
+          // Break the loop after receiving a notification
+          if (fetchedRecords.size() == expectedRecordsCount) {
+            return fetchedRecords;
+          }
+        }
+      }
+
+      // Wait a while before checking again
+      try {
+        Thread.sleep(100);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        break;
+      }
+    }
+
+    return null;
   }
 }
