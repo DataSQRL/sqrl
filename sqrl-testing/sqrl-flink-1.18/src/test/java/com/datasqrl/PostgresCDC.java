@@ -28,8 +28,10 @@ public class PostgresCDC {
   PostgreSQLContainer<?> postgres =
       new PostgreSQLContainer<>(
           DockerImageName
-            .parse("debezium/postgres:15-alpine")
-            .asCompatibleSubstituteFor("postgres"));
+            .parse("ankane/pgvector:v0.5.0")
+            .asCompatibleSubstituteFor("postgres"))
+          .withCommand("postgres -c wal_level=logical -c shared_preload_libraries=pgoutput");
+
 
   @BeforeEach
   public void setup() {
@@ -80,7 +82,6 @@ public class PostgresCDC {
     String password = postgres.getPassword();
     String databaseName = postgres.getDatabaseName();
     String schemaName = "public";
-
     String sourceTable = String.format(
         "CREATE TABLE source_table (\n" +
             "    id INT,\n" +
@@ -94,7 +95,9 @@ public class PostgresCDC {
             "    'database-name' = '%s',\n" +
             "    'schema-name' = '%s',\n" +
             "    'table-name' = '%s',\n" +
-            "    'slot.name' = 'flink'\n" +
+            "    'slot.name' = 'flink_slot',\n" +
+            "    'decoding.plugin.name' = 'pgoutput',\n" +
+            "    'debezium.slot.drop_on_stop' = 'false'\n" +
             ")",
         connector, hostname, port, username, password, databaseName, schemaName, "pgsource"
     );
