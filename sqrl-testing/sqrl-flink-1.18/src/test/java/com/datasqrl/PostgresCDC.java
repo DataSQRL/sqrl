@@ -10,6 +10,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import lombok.SneakyThrows;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.ResultKind;
 import org.apache.flink.table.api.TableResult;
@@ -25,8 +26,10 @@ import org.testcontainers.utility.DockerImageName;
 public class PostgresCDC {
 
   PostgreSQLContainer<?> postgres =
-      new PostgreSQLContainer<>(DockerImageName.parse("debezium/postgres:15-alpine").asCompatibleSubstituteFor("postgres"));
-//      new PostgreSQLContainer<>("postgres:15.4");
+      new PostgreSQLContainer<>(
+          DockerImageName
+            .parse("debezium/postgres:15-alpine")
+            .asCompatibleSubstituteFor("postgres"));
 
   @BeforeEach
   public void setup() {
@@ -38,10 +41,10 @@ public class PostgresCDC {
   private void createPostgresTableForFlink() {
     try (Connection conn = getConn(); Statement stmt = conn.createStatement()) {
       String createSourceTableSQL =
-          "CREATE TABLE IF NOT EXISTS pgsource (" + "id INT);";
+          "CREATE TABLE IF NOT EXISTS pgsource (id INT PRIMARY KEY);";
       stmt.execute(createSourceTableSQL);
       String createSinkTableSQL =
-          "CREATE TABLE IF NOT EXISTS pgsink (" + "id INT);";
+          "CREATE TABLE IF NOT EXISTS pgsink (id INT PRIMARY KEY);";
       stmt.execute(createSinkTableSQL);
     }
   }
@@ -55,8 +58,7 @@ public class PostgresCDC {
   @SneakyThrows
   private void insertDataIntoPostgresTable() {
     try (Connection conn = getConn(); Statement stmt = conn.createStatement()) {
-      String insertSQL = "INSERT INTO pgsource (id) VALUES "
-          + "(1),(2);";
+      String insertSQL = "INSERT INTO pgsource (id) VALUES (1),(2);";
       stmt.execute(insertSQL);
     }
   }
@@ -111,33 +113,32 @@ public class PostgresCDC {
             "    'url' = '%s',\n" +
             "    'username' = '%s',\n" +
             "    'password' = '%s',\n" +
-            "    'table-name' = '%s',\n" +
-            "    'sink.buffer-flush.max-rows' = '1'\n" +
+            "    'table-name' = '%s'\n" +
             ")",
-        postgres.getJdbcUrl(), username, password, "pgsink1"
+        postgres.getJdbcUrl(), username, password, "pgsink"
     );
 
     // Set up Flink environment
-    StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-    env.enableCheckpointing(1000);
+    StreamExecutionEnvironment env = StreamExecutionEnvironment
+        .getExecutionEnvironment();
     StreamTableEnvironment tableEnv = StreamTableEnvironment.create(env);
 
     tableEnv.executeSql(sourceTable);
     tableEnv.executeSql(sinkTable);
     TableResult tableResult = tableEnv.executeSql(
-        "INSERT INTO `sink_table` SELECT * FROM `source_table`");
+        "INSERT INTO sink_table SELECT * FROM source_table");
+
     CompletableFuture<Object> objectCompletableFuture = CompletableFuture.supplyAsync(() -> {
       tableResult.print();
       return null;
     });
 
+    Thread.sleep(1000); //wait for flink to start
     insertDataIntoPostgresTable();
 
     try {
-      objectCompletableFuture.get(5, TimeUnit.SECONDS);
-    } catch (TimeoutException ignored) {
-
-    }
+      objectCompletableFuture.get(2, TimeUnit.SECONDS);
+    } catch (TimeoutException ignored) {}
 
     assertEquals(ResultKind.SUCCESS_WITH_CONTENT, tableResult.getResultKind());
 
