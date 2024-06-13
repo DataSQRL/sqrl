@@ -366,8 +366,25 @@ public class Packager {
     Path targetPath = targetDir.resolve("flink").resolve(folderName);
     Files.createDirectories(targetPath);
     Path sourcePath = buildDir.getBuildDir().resolve(folderName);
-    if (Files.isDirectory(sourcePath)) {
-      Files.move(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
+    if (!Files.isDirectory(sourcePath)) {
+      return;
+    }
+    // Move each file individually, replacing existing files
+    try (Stream<Path> stream = Files.walk(sourcePath)) {
+      stream.forEach(sourceFile -> {
+        try {
+          Path relativePath = sourcePath.relativize(sourceFile);
+          Path targetFile = targetPath.resolve(relativePath);
+          if (Files.isDirectory(sourceFile)) {
+            Files.createDirectories(targetFile);
+          } else {
+            Files.createDirectories(targetFile.getParent());
+            Files.move(sourceFile, targetFile, StandardCopyOption.REPLACE_EXISTING);
+          }
+        } catch (IOException e) {
+          throw new RuntimeException("Error moving file: " + sourceFile, e);
+        }
+      });
     }
   }
 
