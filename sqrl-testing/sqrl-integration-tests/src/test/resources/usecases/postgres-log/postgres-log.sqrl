@@ -1,0 +1,4 @@
+IMPORT postgres-log.AddEvent;
+
+-- Load into postgres table
+PgTable := SELECT * FROM AddEvent;

@@ -1,0 +1,28 @@
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+
+type PgTable {
+  timestamp: DateTime!
+  userId: Float!
+  eventType: String!
+}
+
+type Query {
+  PgTable(limit: Int = 10, offset: Int = 0): [PgTable!]
+}
+
+type Mutation {
+  AddEvent(event: EventInput!): AddedEvent
+}
+
+input EventInput {
+  timestamp: DateTime!
+  userId : Float!
+  eventType: String!
+}
+
+type AddedEvent {
+  timestamp: DateTime!
+  userId: Float!
+  eventType: String!
+}
