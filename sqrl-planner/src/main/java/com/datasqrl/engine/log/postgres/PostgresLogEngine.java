@@ -44,7 +44,8 @@ public class PostgresLogEngine extends ExecutionEngine.Base implements LogEngine
   @Getter
   private final EngineConfig engineConfig;
 
-  private final ConnectorFactory connectorFactory;
+  private final ConnectorFactory sourceConnectorFactory;
+  private final ConnectorFactory sinkConnectorFactory;
 
   @Inject
   public PostgresLogEngine(PackageJson json, ConnectorFactoryFactory connectorFactory) {
@@ -52,12 +53,13 @@ public class PostgresLogEngine extends ExecutionEngine.Base implements LogEngine
 
     this.engineConfig = json.getEngines().getEngineConfig(ENGINE_NAME)
         .orElseGet(() -> new EmptyEngineConfig(ENGINE_NAME));
-    this.connectorFactory = connectorFactory.create(LOG, "postgres-log-source").orElse(null);
+    this.sourceConnectorFactory = connectorFactory.create(LOG, "postgres-log-source").orElse(null);
+    this.sinkConnectorFactory = connectorFactory.create(LOG, "postgres-log-sink").orElse(null);
   }
 
   @Override
   public LogFactory getLogFactory() {
-    return new PostgresLogFactory(connectorFactory);
+    return new PostgresLogFactory(sourceConnectorFactory, sinkConnectorFactory);
   }
 
   @Override

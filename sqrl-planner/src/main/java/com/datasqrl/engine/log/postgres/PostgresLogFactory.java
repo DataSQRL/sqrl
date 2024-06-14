@@ -20,7 +20,8 @@ import org.apache.calcite.rel.type.RelDataTypeField;
 @AllArgsConstructor
 public class PostgresLogFactory implements LogFactory {
 
-  ConnectorFactory connectorFactory;
+  ConnectorFactory sourceConnectorFactory;
+  ConnectorFactory sinkConnectorFactory;
 
   @Override
   public Log create(String logId, RelDataTypeField schema, List<String> primaryKey,
@@ -30,9 +31,10 @@ public class PostgresLogFactory implements LogFactory {
     Name logName = Name.system(schema.getName());
     IConnectorFactoryContext connectorContext = createSinkContext(logName, tableName, timestamp.getName(),
         timestamp.getType().name(), primaryKey);
-    TableConfig logConfig = connectorFactory.createSourceAndSink(connectorContext);
+    TableConfig sourceConfig = sourceConnectorFactory.createSourceAndSink(connectorContext);
+    TableConfig sinkConfig = sourceConnectorFactory.createSourceAndSink(connectorContext);
     Optional<TableSchema> tblSchema = Optional.of(new RelDataTypeTableSchema(schema.getType()));
-    return new PostgresTable(tableName, logName, logConfig, tblSchema, connectorContext);
+    return new PostgresTable(tableName, logName, sourceConfig, sinkConfig, tblSchema, connectorContext);
   }
 
   private IConnectorFactoryContext createSinkContext(Name name, String tableName,

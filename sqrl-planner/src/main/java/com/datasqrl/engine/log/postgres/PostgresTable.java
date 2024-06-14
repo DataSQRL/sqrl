@@ -18,18 +18,19 @@ public class PostgresTable implements Log {
 
   String topicName;
   Name logName;
-  TableConfig logConfig;
+  TableConfig sourceConfig;
+  TableConfig sinkConfig;
   Optional<TableSchema> tableSchema;
   IConnectorFactoryContext connectorContext;
 
   @Override
   public TableSource getSource() {
-    return TableSource.create(logConfig, logName.toNamePath(), tableSchema.get());
+    return TableSource.create(sourceConfig, logName.toNamePath(), tableSchema.get());
   }
 
   @Override
   public TableSink getSink() {
-    return TableSinkImpl.create(logConfig, logName.toNamePath(), tableSchema);
+    return TableSinkImpl.create(sinkConfig, logName.toNamePath(), tableSchema);
   }
 
 }
