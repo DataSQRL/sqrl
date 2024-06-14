@@ -23,6 +23,19 @@
           "url": "${JDBC_URL}",
           "table-name": "${sqrl:table}"
         },
+        "postgres-log-source": {
+          "connector": "postgres-cdc",
+          "hostname": "database",
+          "port": "5432",
+          "username": "${JDBC_USERNAME}",
+          "password": "${JDBC_PASSWORD}",
+          "database-name": "datasqrl",
+          "schema-name": "public",
+          "table-name": "${sqrl:table}",
+          "slot.name": "flink_slot",
+          "decoding.plugin.name": "pgoutput",
+          "debezium.slot.drop_on_stop": "false"
+        },
         "kafka": {
           "connector" : "kafka",
           "format" : "flexible-json",

@@ -27,7 +27,8 @@ public class ConnectorConfigImpl implements TableConfig.ConnectorConfig {
       "upsert-kafka", TableType.VERSIONED_STATE,
       "jdbc", TableType.LOOKUP,
       "jdbc-sqrl", TableType.LOOKUP,
-      "datagen", TableType.STREAM
+      "datagen", TableType.STREAM,
+      "postgres-cdc", TableType.STREAM
   );
 
   public Optional<TableConfig.Format> getFormat() {

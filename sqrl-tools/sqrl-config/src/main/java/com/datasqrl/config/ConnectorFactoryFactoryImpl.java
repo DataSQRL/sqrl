@@ -51,7 +51,7 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
     // end
 
     Optional<ConnectorConf> connectorConfig = getConnectorConfig(connectorName);
-    if (connectorName.equals("postgres-log")) {
+    if (connectorName.equals("postgres-log-source")) {
       return connectorConfig.map(this::createPostgresLogConnectorFactory);
     }
 
@@ -210,7 +210,7 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
 
       builder.copyConnectorConfig(engineConfig);
       builder.getConnectorConfig().setProperty("table-name", (String)map.get("table-name"));
-      builder.getConnectorConfig().setProperty("connector", "jdbc-sqrl");
+//      builder.getConnectorConfig().setProperty("connector", "jdbc-sqrl");
       return builder.build();
     };
   }

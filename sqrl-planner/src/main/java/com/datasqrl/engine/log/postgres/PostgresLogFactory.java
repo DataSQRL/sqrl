@@ -30,8 +30,7 @@ public class PostgresLogFactory implements LogFactory {
     Name logName = Name.system(schema.getName());
     IConnectorFactoryContext connectorContext = createSinkContext(logName, tableName, timestamp.getName(),
         timestamp.getType().name(), primaryKey);
-    TableConfig logConfig = connectorFactory
-        .createSourceAndSink(connectorContext);
+    TableConfig logConfig = connectorFactory.createSourceAndSink(connectorContext);
     Optional<TableSchema> tblSchema = Optional.of(new RelDataTypeTableSchema(schema.getType()));
     return new PostgresTable(tableName, logName, logConfig, tblSchema, connectorContext);
   }

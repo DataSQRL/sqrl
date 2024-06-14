@@ -52,7 +52,7 @@ public class PostgresLogEngine extends ExecutionEngine.Base implements LogEngine
 
     this.engineConfig = json.getEngines().getEngineConfig(ENGINE_NAME)
         .orElseGet(() -> new EmptyEngineConfig(ENGINE_NAME));
-    this.connectorFactory = connectorFactory.create(LOG, ENGINE_NAME).orElse(null);
+    this.connectorFactory = connectorFactory.create(LOG, "postgres-log-source").orElse(null);
   }
 
   @Override
