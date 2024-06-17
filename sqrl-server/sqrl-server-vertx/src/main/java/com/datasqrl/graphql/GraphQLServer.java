@@ -258,7 +258,7 @@ public class GraphQLServer extends AbstractVerticle {
           .onSuccess(v -> log.info("Subscribed to topic: {}", sub.getTopic()))
           .onFailure(startPromise::fail);
 
-      // not now, optional, we need a PostgresConsumer here that uses Postgres listen / notify
+      //TODO: add PostgresConsumer here that uses Postgres listen / notify
 
       consumers.put(sub.getFieldName(), new KafkaSinkConsumer<>(consumer));
     }
