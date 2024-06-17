@@ -6,6 +6,7 @@ package com.datasqrl.engine.database.relational.ddl;
 import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.engine.database.relational.ddl.statements.CreateIndexDDL;
+import com.datasqrl.engine.database.relational.ddl.statements.CreateNotifyTriggerDDL;
 import com.datasqrl.engine.database.relational.ddl.statements.CreateTableDDL;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
@@ -29,6 +30,7 @@ public class PostgresDDLFactory implements JdbcDDLFactory {
     return JdbcDialect.Postgres;
   }
 
+  @Override
   public CreateTableDDL createTable(EngineSink table) {
     List<String> pk = new ArrayList<>();
     List<String> columns = new ArrayList<>();
@@ -76,9 +78,14 @@ public class PostgresDDLFactory implements JdbcDDLFactory {
     return sql.toString();
   }
 
+  @Override
   public CreateIndexDDL createIndex(IndexDefinition index) {
     List<String> columns = index.getColumnNames();
     return new CreateIndexDDL(index.getName(), index.getTableId(), columns, index.getType());
+  }
+
+  public CreateNotifyTriggerDDL createNotify(String name, String pk) {
+    return new CreateNotifyTriggerDDL(name, pk);
   }
 
   public static List<String> quoteIdentifier(List<String> columns) {

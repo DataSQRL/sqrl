@@ -76,20 +76,10 @@ public class PostgresLogEngine extends ExecutionEngine.Base implements LogEngine
       String topicName = pgTable.getTopicName();
       RelDataType dataType = pgTable.getTableSchema().getRelDataType();
       ddlStatements.add(postgresDDLFactory.createTable(topicName, dataType.getFieldList()));
+      ddlStatements.add(postgresDDLFactory.createNotify(topicName, "_uuid"));
     }
-
-
-//    List<SqlDDLStatement> typeExtensions = extractTypeExtensions(dbPlan.getQueries());
-//
-//    ddlStatements = ListUtils.union(typeExtensions, ddlStatements);
-//
-//    dbPlan.getIndexDefinitions().stream().sorted()
-//        .map(factory::createIndex)
-//        .forEach(ddlStatements::add);
-//
-//    Map<IdentifiedQuery, QueryTemplate> databaseQueries = dbPlan.getQueries().stream()
-//        .collect(Collectors.toMap(ReadQuery::getQuery, q -> new QueryTemplate(q.getRelNode())));
 
     return new PostgresPhysicalPlan(ddlStatements);
   }
+
 }
