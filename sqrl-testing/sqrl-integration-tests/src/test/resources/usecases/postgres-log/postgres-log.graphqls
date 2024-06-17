@@ -26,3 +26,7 @@ type AddedEvent {
   userId: Float!
   eventType: String!
 }
+
+type Subscription {
+  PgTable(eventType: String): PgTable
+}

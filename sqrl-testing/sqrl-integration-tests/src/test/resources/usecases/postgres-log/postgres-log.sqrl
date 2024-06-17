@@ -1,4 +1,4 @@
 IMPORT postgres-log.AddEvent;
 
 -- Load into postgres (as database) table
-PgDatabaseTable := SELECT * FROM AddEvent;
+PgTable := SELECT * FROM AddEvent;
