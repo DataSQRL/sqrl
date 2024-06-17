@@ -4,10 +4,10 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.config.ConnectorFactory.IConnectorFactoryContext;
 import com.datasqrl.config.TableConfig;
 import com.datasqrl.engine.log.Log;
-import com.datasqrl.io.tables.TableSchema;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.io.tables.TableSinkImpl;
 import com.datasqrl.io.tables.TableSource;
+import com.datasqrl.plan.table.RelDataTypeTableSchema;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -20,17 +20,17 @@ public class PostgresTable implements Log {
   Name logName;
   TableConfig sourceConfig;
   TableConfig sinkConfig;
-  Optional<TableSchema> tableSchema;
+  RelDataTypeTableSchema tableSchema;
   IConnectorFactoryContext connectorContext;
 
   @Override
   public TableSource getSource() {
-    return TableSource.create(sourceConfig, logName.toNamePath(), tableSchema.get());
+    return TableSource.create(sourceConfig, logName.toNamePath(), tableSchema);
   }
 
   @Override
   public TableSink getSink() {
-    return TableSinkImpl.create(sinkConfig, logName.toNamePath(), tableSchema);
+    return TableSinkImpl.create(sinkConfig, logName.toNamePath(), Optional.of(tableSchema));
   }
 
 }

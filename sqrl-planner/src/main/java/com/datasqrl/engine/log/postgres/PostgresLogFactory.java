@@ -8,12 +8,10 @@ import com.datasqrl.config.TableConfig;
 import com.datasqrl.engine.log.Log;
 import com.datasqrl.engine.log.LogEngine.Timestamp;
 import com.datasqrl.engine.log.LogFactory;
-import com.datasqrl.io.tables.TableSchema;
 import com.datasqrl.plan.table.RelDataTypeTableSchema;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.rel.type.RelDataTypeField;
 
@@ -33,7 +31,7 @@ public class PostgresLogFactory implements LogFactory {
         timestamp.getType().name(), primaryKey);
     TableConfig sourceConfig = sourceConnectorFactory.createSourceAndSink(connectorContext);
     TableConfig sinkConfig = sourceConnectorFactory.createSourceAndSink(connectorContext);
-    Optional<TableSchema> tblSchema = Optional.of(new RelDataTypeTableSchema(schema.getType()));
+    RelDataTypeTableSchema tblSchema = new RelDataTypeTableSchema(schema.getType());
     return new PostgresTable(tableName, logName, sourceConfig, sinkConfig, tblSchema, connectorContext);
   }
 

@@ -47,6 +47,14 @@ public class PostgresDDLFactory implements JdbcDDLFactory {
     return new CreateTableDDL(table.getNameId(), columns, pk);
   }
 
+  public CreateTableDDL createTable(String name, List<RelDataTypeField> fields) {
+    List<String> columns = fields.stream()
+        .map(PostgresDDLFactory::toSql)
+        .collect(Collectors.toList());
+
+    return new CreateTableDDL(name, columns, new ArrayList<>());
+  }
+
   public static String toSql(RelDataTypeField field) {
     SqlDataTypeSpec castSpec = ExtendedPostgresSqlDialect.DEFAULT.getCastSpec(field.getType());
     SqlPrettyWriter sqlPrettyWriter = new SqlPrettyWriter();

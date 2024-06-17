@@ -13,31 +13,25 @@ import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
-import com.datasqrl.engine.database.QueryTemplate;
-import com.datasqrl.engine.database.relational.JDBCPhysicalPlan;
 import com.datasqrl.engine.database.relational.ddl.JdbcDDLFactory;
 import com.datasqrl.engine.database.relational.ddl.JdbcDDLServiceLoader;
+import com.datasqrl.engine.database.relational.ddl.PostgresDDLFactory;
+import com.datasqrl.engine.log.Log;
 import com.datasqrl.engine.log.LogEngine;
 import com.datasqrl.engine.log.LogFactory;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.plan.global.PhysicalDAGPlan.DatabaseStagePlan;
-import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.LogStagePlan;
-import com.datasqrl.plan.global.PhysicalDAGPlan.ReadQuery;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
-import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.datasqrl.sql.SqlDDLStatement;
-import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 import lombok.Getter;
-import org.apache.commons.collections.ListUtils;
+import org.apache.calcite.rel.type.RelDataType;
 
 public class PostgresLogEngine extends ExecutionEngine.Base implements LogEngine {
 
@@ -68,15 +62,22 @@ public class PostgresLogEngine extends ExecutionEngine.Base implements LogEngine
 
     Preconditions.checkArgument(plan instanceof LogStagePlan);
 
-    LogStagePlan dbPlan = (LogStagePlan) plan;
-    JdbcDDLFactory factory =
-        (new JdbcDDLServiceLoader()).load(JdbcDialect.Postgres)
-            .orElseThrow(() -> new RuntimeException("Could not find DDL factory"));
+    JdbcDDLFactory factory = new JdbcDDLServiceLoader()
+        .load(JdbcDialect.Postgres)
+        .orElseThrow(() -> new RuntimeException("Could not find DDL factory"));
 
-    List<SqlDDLStatement> ddlStatements = StreamUtil.filterByClass(inputs,
-            EngineSink.class)
-        .map(factory::createTable)
-        .collect(Collectors.toList());
+    PostgresDDLFactory postgresDDLFactory = (PostgresDDLFactory) factory;
+
+    List<SqlDDLStatement> ddlStatements = new ArrayList<>();
+
+    LogStagePlan dbPlan = (LogStagePlan) plan;
+    for (Log log : dbPlan.getLogs()) {
+      PostgresTable pgTable = (PostgresTable) log;
+      String topicName = pgTable.getTopicName();
+      RelDataType dataType = pgTable.getTableSchema().getRelDataType();
+      ddlStatements.add(postgresDDLFactory.createTable(topicName, dataType.getFieldList()));
+    }
+
 
 //    List<SqlDDLStatement> typeExtensions = extractTypeExtensions(dbPlan.getQueries());
 //
