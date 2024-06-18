@@ -173,8 +173,6 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
       builder.copyConnectorConfig(engineConfig);
       builder.getConnectorConfig().setProperty("table-name", (String)map.get("table-name"));
       builder.getConnectorConfig().setProperty("connector", "jdbc-sqrl");
-      builder.getConnectorConfig().setProperty("timestamp-name", map.get("timestamp-name"));
-      builder.getConnectorConfig().setProperty("timestamp-type", map.get("timestamp-type"));
 
       return builder.build();
     };
