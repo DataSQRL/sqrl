@@ -50,7 +50,7 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
     }
     arguments.add("-t"); arguments.add(deployDir.toString());
     arguments.add("--profile");
-    arguments.add("../../../../../../../profiles/default");
+    arguments.add(getProjectRoot(script).resolve("profiles/default").toString());
     String testname = Stream.of(script, graphQlFile, packageFile)
         .map(AbstractAssetSnapshotTest::getDisplayName)
         .collect(Collectors.joining("-"));
@@ -93,11 +93,14 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
         return graphQLFiles.stream().flatMap(gql -> pkgFiles.stream().map(pkg -> Arguments.of(path, gql, pkg)));
       });
     }
-
-
-
   }
 
+  private Path getProjectRoot(Path script) {
+    Path currentPath = script.toAbsolutePath();
+    while (!currentPath.getFileName().toString().equals("sqrl-testing")) {
+      currentPath = currentPath.getParent();
+    }
 
-
+    return currentPath.getParent();
+  }
 }

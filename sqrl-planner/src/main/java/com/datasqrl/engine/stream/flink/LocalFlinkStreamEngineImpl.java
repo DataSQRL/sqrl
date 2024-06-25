@@ -5,8 +5,6 @@ package com.datasqrl.engine.stream.flink;
 
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.EmptyEngineConfig;
-import com.datasqrl.config.PackageJson.EngineConfig;
-import com.datasqrl.engine.log.kafka.KafkaLogEngineFactory;
 import com.google.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 

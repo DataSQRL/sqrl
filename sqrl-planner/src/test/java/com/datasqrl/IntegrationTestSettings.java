@@ -3,9 +3,6 @@
  */
 package com.datasqrl;
 
-import static com.datasqrl.config.ConnectorFactoryFactory.PRINT_SINK_NAME;
-
-import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PipelineFactory;
 import com.datasqrl.error.ErrorCollector;
@@ -32,8 +29,7 @@ public class IntegrationTestSettings {
   final ServerEngine server = ServerEngine.VERTX;
   @Builder.Default
   final DatabaseEngine database = DatabaseEngine.POSTGRES;
-  @Builder.Default
-  final NamePath errorSink = NamePath.of(PRINT_SINK_NAME,"errors");
+
 
 
   public Triple<DatabaseHandle, PipelineFactory, PackageJson> createSqrlSettings(

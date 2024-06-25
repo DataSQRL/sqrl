@@ -15,4 +15,8 @@ public class NewTopic {
     private short replicationFactor;
     private Map<Integer, List<Integer>> replicasAssignments;
     private Map<String, String> config;
+
+    public NewTopic(String name) {
+        this(name, 1, Short.parseShort("1"), Map.of(), Map.of());
+    }
 }

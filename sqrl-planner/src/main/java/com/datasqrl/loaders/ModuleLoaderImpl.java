@@ -1,8 +1,5 @@
 package com.datasqrl.loaders;
 
-import static com.datasqrl.config.ConnectorFactoryFactory.PRINT_SINK_NAME;
-
-import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.TableConfigLoader;
 import com.datasqrl.error.ErrorCollector;
@@ -11,7 +8,6 @@ import com.datasqrl.module.SqrlModule;
 import com.datasqrl.module.resolver.ResourceResolver;
 import com.datasqrl.plan.table.CalciteTableFactory;
 import com.google.inject.Inject;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

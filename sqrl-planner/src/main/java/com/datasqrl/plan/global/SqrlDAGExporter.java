@@ -77,10 +77,10 @@ public class SqrlDAGExporter {
                         .post_processors(convert(table.getPullups(),fields))
                         .build());
             } else if (node instanceof SqrlDAG.ExportNode) {
-                ResolvedExport resolvedExport = ((SqrlDAG.ExportNode) node).getExport();
+                AnalyzedExport export = ((SqrlDAG.ExportNode) node).getExport();
                 result.add(Node.builder()
                         .id(node.getId())
-                        .name(resolvedExport.getSink().getPath().toString())
+                        .name(export.getSink().getPath().toString())
                         .type(NodeType.EXPORT.getName())
                         .stage(stage)
                         .inputs(inputs)

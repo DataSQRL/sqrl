@@ -136,9 +136,11 @@ public class SnapshotTest {
           String[] contentLines = content.split("\n");
           for (int i = 0; i < Math.min(expectedLines.length, contentLines.length); i++) {
             if (!expectedLines[i].equals(contentLines[i])) {
-              log.error("Error at line {}: ",i);
-              log.error("expected: " + expectedLines[i]);
-              log.error("found   : " + contentLines[i]);
+              log.error("Error at line: {}\n"
+                  + "expected: {}\n"
+                  + "found   : {}\n"
+                  + "------------------\n"
+                  + "entire plan output:\n{}", i, expectedLines[i], contentLines[i], content);
               break;
             }
           }

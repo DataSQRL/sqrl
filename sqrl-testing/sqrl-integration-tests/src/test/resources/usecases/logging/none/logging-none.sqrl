@@ -1,0 +1,9 @@
+IMPORT mock.Data;
+
+-- This export operation will not be compiled because
+-- the 'compiler.log' setting is currently set to NONE.
+EXPORT Data TO log.LogData;
+
+-- So we need to designate a sink that will be compiled. Otherwise,
+-- this script will not perform any action and the compilation will fail.
+EXPORT Data TO print.DummyLogData;

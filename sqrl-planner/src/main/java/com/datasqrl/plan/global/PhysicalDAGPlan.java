@@ -132,11 +132,11 @@ public class PhysicalDAGPlan {
   @AllArgsConstructor
   public static class EngineSink implements WriteSink, StageSink {
 
-    final String nameId;
-    final int[] primaryKeys;
-    final RelDataType rowType;
-    final OptionalInt timestampIdx;
-    final ExecutionStage stage;
+    String nameId;
+    int[] primaryKeys;
+    RelDataType rowType;
+    OptionalInt timestampIdx;
+    ExecutionStage stage;
 
     @Override
     public String getName() {

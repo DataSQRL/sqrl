@@ -7,13 +7,13 @@ package com.datasqrl.packager;
 import com.datasqrl.MainScriptImpl;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.ConnectorFactoryFactory;
+import com.datasqrl.config.SystemBuiltInConnectors;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.parse.SqrlParser;
 import com.datasqrl.parse.SqrlParserImpl;
 import com.datasqrl.util.SqlNameUtil;
 import com.google.inject.Inject;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.Set;
@@ -73,7 +73,7 @@ public class ImportExportAnalyzer implements
   public Optional<NamePath> visit(SqrlExportDefinition node, Void context) {
     NamePath sinkPath = nameUtil.toNamePath(node.getSinkPath().names);
 
-    if (connectorFactoryFactory.create(null, sinkPath.getFirst().getCanonical()).isPresent()) {
+    if (SystemBuiltInConnectors.forExport(sinkPath.popLast()).isPresent()) {
       return Optional.empty();
     }
     if (moduleLoader.getModule(sinkPath.popLast()).isPresent()) {

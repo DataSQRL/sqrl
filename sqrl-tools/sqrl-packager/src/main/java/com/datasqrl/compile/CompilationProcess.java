@@ -15,6 +15,7 @@ import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.loaders.ModuleLoaderComposite;
 import com.datasqrl.plan.MainScript;
 import com.datasqrl.plan.global.DAGPlanner;
+import com.datasqrl.plan.global.LogicalDAGPlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.global.SqrlDAG;
 import com.datasqrl.plan.queries.APISource;

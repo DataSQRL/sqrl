@@ -49,6 +49,8 @@ public interface PackageJson {
     void setSnapshotPath(String string);
 
     boolean isAddArguments();
+
+    LogMethod getLog();
   }
 
   interface ExplainConfig {
@@ -124,5 +126,30 @@ public interface PackageJson {
     TablePattern getTablePattern(String defaultTablePattern);
 
     ErrorCollector getErrors();
+  }
+
+  enum LogMethod {
+    NONE("none"),
+    PRINT("print"),
+    KAFKA("kafka");
+
+    final String value;
+
+    LogMethod(String value) {
+      this.value = value;
+    }
+
+    public static LogMethod parse(String value) {
+      for (LogMethod method : LogMethod.values()) {
+        if (method.value.equals(value)) {
+          return method;
+        }
+      }
+      throw new IllegalArgumentException("Invalid LogMethod value: " + value);
+    }
+
+    public String getValue() {
+      return value;
+    }
   }
 }
