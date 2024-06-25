@@ -101,6 +101,15 @@ public class PackageJsonImpl implements PackageJson {
   }
 
   @Override
+  public LogMethod getLogMethod() {
+    if (sqrlConfig.hasKey("log-method")) {
+      return LogMethod.parse(sqrlConfig.asString("log-method").get());
+    } else {
+      return LogMethod.PRINT;
+    }
+  }
+
+  @Override
   public String toString() {
     return "PackageJsonImpl{" +
         "sqrlConfig=" + sqrlConfig.toMap() +

@@ -40,6 +40,8 @@ public interface PackageJson {
 
   boolean hasScriptKey();
 
+  LogMethod getLogMethod();
+
   interface CompilerConfig {
 
     ExplainConfig getExplain();
@@ -124,5 +126,26 @@ public interface PackageJson {
     TablePattern getTablePattern(String defaultTablePattern);
 
     ErrorCollector getErrors();
+  }
+
+  enum LogMethod {
+    NONE("none"),
+    PRINT("print"),
+    LOG_ENGINE("log-engine");
+
+    final String value;
+
+    LogMethod(String value) {
+      this.value = value;
+    }
+
+    public static LogMethod parse(String value) {
+      for (LogMethod method : LogMethod.values()) {
+        if (method.value.equals(value)) {
+          return method;
+        }
+      }
+      throw new IllegalArgumentException("Invalid LogMethod value: " + value);
+    }
   }
 }

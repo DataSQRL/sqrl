@@ -22,12 +22,32 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
     Optional<EngineConfig> engineConfig = packageJson.getEngines().getEngineConfig("flink");
     Preconditions.checkArgument(engineConfig.isPresent(), "Missing engine configuration for Flink");
     ConnectorsConfig connectors = engineConfig.get().getConnectors();
+
+    if (name.equalsIgnoreCase(LOG_SINK_NAME)) {
+      switch (packageJson.getLogMethod()) {
+        case PRINT:
+          return Optional.of(createPrintConnectorFactory(null));
+        case LOG_ENGINE:
+          List<String> engines = packageJson.getEnabledEngines();
+          if (engines.contains("kafka")) {
+            return connectors.getConnectorConfig("kafka").map(this::createKafkaConnectorFactory);
+//          } else if (engines.contains("postgres-log")) {
+//            return connectors.getConnectorConfig("postgres-log-sink").map(this::createPostgresLogExportConnectionFactory);
+          } else {
+            throw new IllegalArgumentException("Only the Kafka and Postgres-log engines are supported for use as log sinks.");
+          }
+        case NONE:
+          return Optional.empty();
+      }
+    }
+
     Optional<ConnectorConf> connectorConfig = connectors.getConnectorConfig(name);
-    if (name.equalsIgnoreCase(PRINT_SINK_NAME)) {
+    if (name.equalsIgnoreCase(PRINT_SINK_NAME)) { // TODO: to deprecate it?
       return Optional.of(createPrintConnectorFactory(null));
     } else if (name.equalsIgnoreCase(FILE_SINK_NAME)) {
       return connectorConfig.map(this::createLocalFile);
     }
+
     if (type != null) {
       if (type.equals(Type.LOG)) {
         return connectorConfig.map(this::createKafkaConnectorFactory);
@@ -129,6 +149,19 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
       builder.getConnectorConfig().setProperty("table-name", (String)map.get("table-name"));
       builder.getConnectorConfig().setProperty("connector", "jdbc-sqrl");
 
+      return builder.build();
+    };
+  }
+
+  private ConnectorFactory createPostgresLogExportConnectionFactory(ConnectorConf connectorConf) {
+    return context -> {
+      ConnectorConfImpl engineConfig = (ConnectorConfImpl) connectorConf;
+
+      String name = (String) context.getMap().get("name");
+      TableConfigBuilderImpl builder = TableConfigImpl.builder(context.getName());
+      builder.setType(ExternalDataType.sink);
+      builder.copyConnectorConfig(engineConfig);
+      builder.getConnectorConfig().setProperty("table-name", name);
       return builder.build();
     };
   }
