@@ -116,8 +116,8 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
       String timestampType = (String)map.get("timestamp-type");
       String timestampName = (String)map.get("timestamp-name");
 //
-      if (!primaryKey.isEmpty()) builder.setPrimaryKey(primaryKey.toArray(new String[0]));
-      if (!timestampType.equalsIgnoreCase("NONE")) {//!=TimestampType.NONE
+      if (primaryKey != null && !primaryKey.isEmpty()) builder.setPrimaryKey(primaryKey.toArray(new String[0]));
+      if (timestampType != null && !timestampType.equalsIgnoreCase("NONE")) {//!=TimestampType.NONE
         builder.setType(ExternalDataType.source_and_sink);
         builder.setTimestampColumn(timestampName);
         builder.setWatermark(0);
