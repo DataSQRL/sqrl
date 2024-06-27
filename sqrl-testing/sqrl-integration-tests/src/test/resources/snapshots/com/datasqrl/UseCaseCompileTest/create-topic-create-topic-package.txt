@@ -1,0 +1,150 @@
+>>>pipeline_explain.txt
+=== AddEvent
+ID:     addevent$2
+Type:   stream
+Stage:  streams
+Primary Key: _uuid
+Timestamp  : event_time
+Schema:
+ - timestamp: TIMESTAMP(3) NOT NULL
+ - userId: DECIMAL(10, 5) NOT NULL
+ - eventType: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - event_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Plan:
+LogicalTableScan(table=[[addevent$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+
+=== PgTable
+ID:     pgtable$1
+Type:   stream
+Stage:  streams
+Inputs: addevent$2
+Primary Key: _uuid
+Timestamp  : event_time
+Schema:
+ - timestamp: TIMESTAMP(3) NOT NULL
+ - userId: DECIMAL(10, 5) NOT NULL
+ - eventType: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - event_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Plan:
+LogicalTableScan(table=[[addevent$2]])
+
+=== PgTable.PgTable
+ID:     pgtable$1$1
+Type:   export
+Stage:  streams
+Inputs: pgtable$1
+
+>>>flink.json
+{
+  "flinkSql" : [
+    "CREATE TEMPORARY TABLE `addevent$1` (\n  `timestamp` TIMESTAMP(3) NOT NULL,\n  `userId` DECIMAL(10, 5) NOT NULL,\n  `eventType` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL METADATA FROM 'timestamp',\n  WATERMARK FOR `event_time` AS (`event_time` - INTERVAL '0.0' SECOND)\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'create-topic-addevent',\n  'scan.startup.mode' = 'group-offsets'\n);",
+    "CREATE TEMPORARY TABLE `pgtable$1` (\n  `timestamp` TIMESTAMP(3) NOT NULL,\n  `userId` DECIMAL(10, 5) NOT NULL,\n  `eventType` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`_uuid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'pgtable$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `pgtable$1$1` (\n  `timestamp` TIMESTAMP(3) NOT NULL,\n  `userId` DECIMAL(10, 5) NOT NULL,\n  `eventType` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'pgtable-1',\n  'scan.startup.mode' = 'group-offsets'\n);",
+    "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `addevent$1`;",
+    "CREATE VIEW `table$2`\nAS\nSELECT *\nFROM `addevent$1`;",
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `pgtable$1`\n(SELECT *\nFROM `table$1`)\n;\nINSERT INTO `pgtable$1$1`\n(SELECT *\nFROM `table$2`)\n;\nEND;"
+  ],
+  "connectors" : [
+    "jdbc-sqrl",
+    "kafka"
+  ],
+  "formats" : [
+    "flexible-json"
+  ]
+}
+>>>kafka.json
+{
+  "topics" : [
+    {
+      "name" : "pgtable-1",
+      "numPartitions" : 1,
+      "replicationFactor" : 1,
+      "replicasAssignments" : { },
+      "config" : { }
+    },
+    {
+      "name" : "create-topic-addevent",
+      "numPartitions" : 1,
+      "replicationFactor" : 1,
+      "replicasAssignments" : { },
+      "config" : { }
+    }
+  ]
+}
+>>>postgres.json
+{
+  "ddl" : [
+    {
+      "name" : "pgtable$1",
+      "columns" : [
+        "\"timestamp\" TIMESTAMP WITHOUT TIME ZONE NOT NULL",
+        "\"userId\" NUMERIC NOT NULL",
+        "\"eventType\" TEXT NOT NULL",
+        "\"_uuid\" TEXT NOT NULL",
+        "\"event_time\" TIMESTAMP WITH TIME ZONE NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"_uuid\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS pgtable$1 (\"timestamp\" TIMESTAMP WITHOUT TIME ZONE NOT NULL,\"userId\" NUMERIC NOT NULL,\"eventType\" TEXT NOT NULL,\"_uuid\" TEXT NOT NULL,\"event_time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"_uuid\"));"
+    }
+  ]
+}
+>>>vertx.json
+{
+  "model" : {
+    "coords" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "PgTable",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"pgtable$1\"\nORDER BY \"event_time\" DESC NULLS LAST, \"_uuid\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      }
+    ],
+    "mutations" : [
+      {
+        "fieldName" : "AddEvent",
+        "topic" : "create-topic-addevent",
+        "sinkConfig" : { }
+      }
+    ],
+    "subscriptions" : [
+      {
+        "fieldName" : "PgTable",
+        "topic" : "pgtable-1",
+        "sinkConfig" : { },
+        "filters" : {
+          "eventType" : "eventType"
+        }
+      }
+    ],
+    "schema" : {
+      "type" : "string",
+      "type" : "string",
+      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype PgTable {\n    timestamp: DateTime!\n    userId: Float!\n    eventType: String!\n}\n\ntype Query {\n    PgTable(limit: Int = 10, offset: Int = 0): [PgTable!]\n}\n\ntype Mutation {\n    AddEvent(event: EventInput!): AddedEvent\n}\n\ninput EventInput {\n    timestamp: DateTime!\n    userId : Float!\n    eventType: String!\n}\n\ntype AddedEvent {\n    timestamp: DateTime!\n    userId: Float!\n    eventType: String!\n}\n\ntype Subscription {\n    PgTable(eventType: String): PgTable\n}\n"
+    }
+  }
+}

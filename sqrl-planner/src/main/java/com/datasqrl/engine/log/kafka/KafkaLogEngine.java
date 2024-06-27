@@ -55,7 +55,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     return new KafkaPhysicalPlan(
         ((LogStagePlan) plan).getLogs().stream()
             .map(log -> (KafkaTopic)log)
-            .map(t->new NewTopic(t.getTopicName(), 1, Short.parseShort("1"), Map.of(), Map.of()))
+            .map(t-> new NewTopic(t.getTopicName(), 1, Short.parseShort("1"), Map.of(), Map.of()))
             .collect(Collectors.toList()));
   }
 
