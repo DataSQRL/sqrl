@@ -13,7 +13,7 @@ import com.datasqrl.function.DowncastFunction;
 import com.datasqrl.functions.json.JsonDowncastFunction;
 import com.datasqrl.functions.vector.VectorDowncastFunction;
 import com.datasqrl.json.FlinkJsonType;
-import com.datasqrl.json.JsonToString;
+import com.datasqrl.plan.global.PhysicalDAGPlan.ExternalSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
 import com.datasqrl.vector.FlinkVectorType;
@@ -46,8 +46,8 @@ public interface ExecutionEngine extends IExecutionEngine {
 //  CompletableFuture<ExecutionResult> execute(EnginePhysicalPlan plan, ErrorCollector errors);
 
   EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs,
-      ExecutionPipeline pipeline, SqrlFramework relBuilder,
-      ErrorCollector errorCollector);
+      List<ExternalSink> externalSinks, ExecutionPipeline pipeline,
+      SqrlFramework relBuilder, ErrorCollector errorCollector);
 
   @AllArgsConstructor
   @Getter

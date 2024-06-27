@@ -23,6 +23,13 @@ public class PhysicalPlanner {
 
   public PhysicalPlan plan(PhysicalDAGPlan plan) {
     List<PhysicalPlan.StagePlan> physicalStages = new ArrayList<>();
+
+    List<ExternalSink> externalSinks = plan.getWriteQueries().stream()
+        .map(WriteQuery::getSink)
+        .filter(ExternalSink.class::isInstance)
+        .map(ExternalSink.class::cast)
+        .collect(Collectors.toList());
+
     for (int i = 0; i < plan.getStagePlans().size(); i++) {
       PhysicalDAGPlan.StagePlan stagePlan = plan.getStagePlans().get(i);
       //1. Get all queries that sink into this stage
@@ -30,15 +37,10 @@ public class PhysicalPlanner {
               plan.getWriteQueries().stream().map(WriteQuery::getSink), PhysicalDAGPlan.StageSink.class)
           .filter(sink -> sink.getStage().equals(stagePlan.getStage()))
           .collect(Collectors.toList());
-      List<ExternalSink> externalSinks = stagePlan.getQueries().stream()
-          .filter(WriteQuery.class::isInstance)
-          .map(WriteQuery.class::cast)
-          .map(WriteQuery::getSink)
-          .filter(ExternalSink.class::isInstance)
-          .map(ExternalSink.class::cast)
-          .collect(Collectors.toList());
+
       EnginePhysicalPlan physicalPlan = stagePlan.getStage().getEngine().plan(stagePlan, inputs,
-          plan.getPipeline(), framework, errorCollector);
+          externalSinks, plan.getPipeline(), framework, errorCollector);
+
       physicalStages.add(new PhysicalPlan.StagePlan(stagePlan.getStage(), physicalPlan));
     }
 
