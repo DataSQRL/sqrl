@@ -19,6 +19,7 @@ import com.datasqrl.plan.global.PhysicalDAGPlan.ExternalSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.LogStagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
+import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import java.util.ArrayList;
@@ -61,8 +62,13 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         .map(NewTopic::new)
         .forEach(topics::add);
 
-    externalSinks.stream()
-        .map(externalSink -> externalSink.getTableSink().getName().getCanonical())
+    List<ResolvedExport> exports = relBuilder.getSchema().getExports();
+    exports.stream()
+        .flatMap(resolvedExport -> externalSinks.stream()
+            .map(ExternalSink::getTableSink)
+            .filter(externalTableSink -> externalTableSink.equals(resolvedExport.getSink()))
+            .findAny().stream())
+        .map(externalTableSink -> externalTableSink.getName().getCanonical())
         .map(NewTopic::new)
         .forEach(topics::add);
 

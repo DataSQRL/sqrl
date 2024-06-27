@@ -2,7 +2,6 @@ package com.datasqrl.config;
 
 import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.config.PackageJson.EngineConfig;
-import com.datasqrl.config.TableConfig.Format;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import java.util.List;
@@ -37,7 +36,7 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
             throw new IllegalArgumentException("Only the Kafka and Postgres-log engines are supported for use as log sinks.");
           }
         case NONE:
-          return Optional.empty();
+          return Optional.of(createBlackHoleConnectorFactory());
       }
     }
 
@@ -153,15 +152,12 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
     };
   }
 
-  private ConnectorFactory createPostgresLogExportConnectionFactory(ConnectorConf connectorConf) {
+  private ConnectorFactory createBlackHoleConnectorFactory() {
     return context -> {
-      ConnectorConfImpl engineConfig = (ConnectorConfImpl) connectorConf;
-
-      String name = (String) context.getMap().get("name");
       TableConfigBuilderImpl builder = TableConfigImpl.builder(context.getName());
       builder.setType(ExternalDataType.sink);
-      builder.copyConnectorConfig(engineConfig);
-      builder.getConnectorConfig().setProperty("table-name", name);
+      builder.getConnectorConfig().setProperty("connector", "blackhole");
+
       return builder.build();
     };
   }

@@ -38,5 +38,13 @@ Inputs: data$2
 }
 >>>kafka.json
 {
-  "topics" : [ ]
+  "topics" : [
+    {
+      "name" : "logdata",
+      "numPartitions" : 1,
+      "replicationFactor" : 1,
+      "replicasAssignments" : { },
+      "config" : { }
+    }
+  ]
 }

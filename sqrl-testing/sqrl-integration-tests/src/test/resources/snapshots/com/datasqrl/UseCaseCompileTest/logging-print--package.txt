@@ -1,0 +1,48 @@
+>>>pipeline_explain.txt
+=== Data
+ID:     data$2
+Type:   stream
+Stage:  streams
+Primary Key: id
+Timestamp  : timestamp
+Schema:
+ - id: BIGINT NOT NULL
+ - epoch_timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - some_value: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Plan:
+LogicalTableScan(table=[[data$1]], hints=[[[WatermarkHint inheritPath:[] options:[3]]]]) hints[WatermarkHint options:[3]]
+
+=== log.LogData.LogData
+ID:     data$2$1
+Type:   export
+Stage:  streams
+Inputs: data$2
+
+>>>flink.json
+{
+  "flinkSql" : [
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochmillitotimestamp` AS 'com.datasqrl.time.EpochMilliToTimestamp' LANGUAGE JAVA;",
+    "CREATE TEMPORARY TABLE `data$1` (\n  `id` BIGINT NOT NULL,\n  `epoch_timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `some_value` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `timestamp` AS EPOCHMILLITOTIMESTAMP(`epoch_timestamp`),\n  PRIMARY KEY (`id`) NOT ENFORCED,\n  WATERMARK FOR `timestamp` AS (`timestamp` - INTERVAL '0.001' SECOND)\n) WITH (\n  'fields.epoch_timestamp.kind' = 'sequence',\n  'number-of-rows' = '10',\n  'connector' = 'datagen',\n  'fields.some_value.kind' = 'random',\n  'fields.id.kind' = 'sequence',\n  'fields.id.start' = '0',\n  'fields.epoch_timestamp.start' = '1719318565'\n);",
+    "CREATE TEMPORARY TABLE `data$2$1` (\n  `id` BIGINT NOT NULL,\n  `epoch_timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `some_value` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n) WITH (\n  'connector' = 'print',\n  'print-identifier' = 'LogData'\n);",
+    "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `data$1`;",
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `data$2$1`\n(SELECT *\nFROM `table$1`)\n;\nEND;"
+  ],
+  "connectors" : [
+    "print",
+    "datagen"
+  ],
+  "formats" : [ ]
+}
+>>>kafka.json
+{
+  "topics" : [
+    {
+      "name" : "logdata",
+      "numPartitions" : 1,
+      "replicationFactor" : 1,
+      "replicasAssignments" : { },
+      "config" : { }
+    }
+  ]
+}
