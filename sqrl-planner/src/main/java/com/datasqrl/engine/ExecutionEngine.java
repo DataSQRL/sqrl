@@ -47,7 +47,7 @@ public interface ExecutionEngine extends IExecutionEngine {
 
   EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs,
       List<ExternalSink> externalSinks, ExecutionPipeline pipeline,
-      SqrlFramework relBuilder, ErrorCollector errorCollector);
+      SqrlFramework framework, ErrorCollector errorCollector);
 
   @AllArgsConstructor
   @Getter

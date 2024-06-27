@@ -50,7 +50,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
   @Override
   public EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs,
       List<ExternalSink> externalSinks, ExecutionPipeline pipeline,
-      SqrlFramework relBuilder, ErrorCollector errorCollector) {
+      SqrlFramework framework, ErrorCollector errorCollector) {
 
     Preconditions.checkArgument(plan instanceof LogStagePlan);
 
@@ -62,7 +62,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         .map(NewTopic::new)
         .forEach(topics::add);
 
-    List<ResolvedExport> exports = relBuilder.getSchema().getExports();
+    List<ResolvedExport> exports = framework.getSchema().getExports();
     exports.stream()
         .flatMap(resolvedExport -> externalSinks.stream()
             .map(ExternalSink::getTableSink)

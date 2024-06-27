@@ -34,7 +34,7 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
   @Override
   public EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs,
       List<ExternalSink> externalSinks, ExecutionPipeline pipeline,
-      SqrlFramework relBuilder, ErrorCollector errorCollector) {
+      SqrlFramework framework, ErrorCollector errorCollector) {
 
     Preconditions.checkArgument(plan instanceof ServerStagePlan);
     Set<ExecutionStage> dbStages = pipeline.getStages().stream().filter(s -> s.getEngine().getType()== Type.DATABASE).collect(
