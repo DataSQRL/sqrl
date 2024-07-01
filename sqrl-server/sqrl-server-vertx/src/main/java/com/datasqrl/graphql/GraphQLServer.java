@@ -23,10 +23,6 @@ import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoords;
 import com.datasqrl.graphql.type.SqrlVertxScalars;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import graphql.GraphQL;
@@ -97,27 +93,6 @@ public class GraphQLServer extends AbstractVerticle {
         RootGraphqlModel.class);
   }
 
-  public static class JsonEnvVarDeserializer extends JsonDeserializer<String> {
-
-    @Override
-    public String deserialize(JsonParser p, DeserializationContext ctxt)
-        throws IOException, JsonProcessingException {
-      String value = p.getText();
-      Pattern pattern = Pattern.compile("\\$\\{(.+?)\\}");
-      Matcher matcher = pattern.matcher(value);
-      StringBuffer result = new StringBuffer();
-      while (matcher.find()) {
-        String key = matcher.group(1);
-        String envVarValue = System.getenv(key);
-        if (envVarValue != null) {
-          matcher.appendReplacement(result, envVarValue);
-        }
-      }
-      matcher.appendTail(result);
-
-      return result.toString();
-    }
-  }
   private Future<JsonObject> loadConfig() {
     Promise<JsonObject> promise = Promise.promise();
     vertx.fileSystem().readFile("server-config.json", result -> {
