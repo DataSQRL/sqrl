@@ -197,6 +197,8 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     Optional<RelOptTable> table = planner.getCatalogReader().getTableFromPath(path);
     Preconditions.checkState(table.isPresent(), "Could not find export table: %s", path.getDisplay());
     // add a boolean here?
+
+    // TODO: create Log here and add it to ResolvedExport
     ResolvedExport resolvedExport = exportTable(table.get().unwrap(ModifiableTable.class), sink.get(), planner.getRelBuilder(), true, externalSink.isPresent());
     framework.getSchema().add(resolvedExport);
 

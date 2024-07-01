@@ -154,13 +154,14 @@ public class DAGAssembler {
       if (exportNode.getExport().isExternal()) {
         sink = new PhysicalDAGPlan.ExternalSink(exportNode.getUniqueId(), export.getSink());
       } else {
-        RelNode relNode = exportNode.getExport().getRelNode();
+        // logging to log engine, TODO
+        if (true) {
+          RelNode relNode = exportNode.getExport().getRelNode();
 
-        Optional<ExecutionStage> loggingStage = pipeline.getStage(Type.LOG);
-        TableSink tableSink = exportNode.getExport().getSink();
+          Optional<ExecutionStage> loggingStage = pipeline.getStage(Type.LOG);
+          TableSink tableSink = exportNode.getExport().getSink();
 
-        if (loggingStage.isPresent()) {
-          if (loggingStage.get().getEngine() instanceof LogEngine) {
+          if (loggingStage.isPresent()) {
             String logId = exportNode.getUniqueId();
             String logName = tableSink.getName().getCanonical();
             String pkName = "";
@@ -171,9 +172,14 @@ public class DAGAssembler {
                 List.of(pkName), new LogEngine.Timestamp(timestampName, TimestampType.LOG_TIME));
 
             exportLogs.add(exportLog);
+          } else {
+            throw new IllegalStateException("Log engine should be present when logging to an engine.");
           }
+          sink = new PhysicalDAGPlan.ExportSink(exportNode.getUniqueId(), export.getSink(), loggingStage.get());
+        } else {
+          // logging is none
         }
-        sink = new PhysicalDAGPlan.ExportSink(exportNode.getUniqueId(), export.getSink(), loggingStage.get());
+
       }
 
       streamQueries.add(new PhysicalDAGPlan.WriteQuery(sink, processedRelnode));
