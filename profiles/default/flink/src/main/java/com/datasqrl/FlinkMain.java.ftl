@@ -61,7 +61,7 @@ public class FlinkMain {
       while (matcher.find()) {
         String key = matcher.group(1);
         String envValue = envVariables.getOrDefault(key, "");
-        matcher.appendReplacement(result, envValue);;
+        matcher.appendReplacement(result, Matcher.quoteReplacement(envValue));
       }
       matcher.appendTail(result);
 
