@@ -6,6 +6,7 @@ package com.datasqrl.engine;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
+import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.ExternalSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.WriteQuery;
 import com.datasqrl.util.StreamUtil;
@@ -24,10 +25,11 @@ public class PhysicalPlanner {
   public PhysicalPlan plan(PhysicalDAGPlan plan) {
     List<PhysicalPlan.StagePlan> physicalStages = new ArrayList<>();
 
-    List<ExternalSink> externalSinks = plan.getWriteQueries().stream()
+    // itt engineSinkKell
+    List<EngineSink> engineSinks = plan.getWriteQueries().stream()
         .map(WriteQuery::getSink)
-        .filter(ExternalSink.class::isInstance)
-        .map(ExternalSink.class::cast)
+        .filter(EngineSink.class::isInstance)
+        .map(EngineSink.class::cast)
         .collect(Collectors.toList());
 
     for (int i = 0; i < plan.getStagePlans().size(); i++) {
@@ -39,7 +41,7 @@ public class PhysicalPlanner {
           .collect(Collectors.toList());
 
       EnginePhysicalPlan physicalPlan = stagePlan.getStage().getEngine().plan(stagePlan, inputs,
-          externalSinks, plan.getPipeline(), framework, errorCollector);
+          engineSinks, plan.getPipeline(), framework, errorCollector);
 
       physicalStages.add(new PhysicalPlan.StagePlan(stagePlan.getStage(), physicalPlan));
     }

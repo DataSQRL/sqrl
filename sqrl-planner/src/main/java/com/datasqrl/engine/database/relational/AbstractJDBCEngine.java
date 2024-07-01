@@ -27,7 +27,6 @@ import com.datasqrl.functions.json.RowToJsonDowncastFunction;
 import com.datasqrl.plan.global.IndexSelectorConfig;
 import com.datasqrl.plan.global.PhysicalDAGPlan.DatabaseStagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
-import com.datasqrl.plan.global.PhysicalDAGPlan.ExternalSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.ReadQuery;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
@@ -110,7 +109,7 @@ public class AbstractJDBCEngine extends ExecutionEngine.Base implements Database
 
   @Override
   public EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs,
-      List<ExternalSink> externalSinks, ExecutionPipeline pipeline,
+      List<EngineSink> engineSinks, ExecutionPipeline pipeline,
       SqrlFramework framework, ErrorCollector errorCollector) {
 
     Preconditions.checkArgument(plan instanceof DatabaseStagePlan);

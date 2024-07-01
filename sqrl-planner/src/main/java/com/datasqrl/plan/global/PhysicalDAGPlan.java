@@ -132,11 +132,11 @@ public class PhysicalDAGPlan {
   @AllArgsConstructor
   public static class EngineSink implements WriteSink, StageSink {
 
-    final String nameId;
-    final int[] primaryKeys;
-    final RelDataType rowType;
-    final OptionalInt timestampIdx;
-    final ExecutionStage stage;
+    String nameId;
+    int[] primaryKeys;
+    RelDataType rowType;
+    OptionalInt timestampIdx;
+    ExecutionStage stage;
 
     @Override
     public String getName() {
@@ -165,6 +165,19 @@ public class PhysicalDAGPlan {
   }
 
   @Value
+  @AllArgsConstructor
+  public static class ExportSink implements WriteSink {
+    String name;
+    TableSink tableSink;
+    ExecutionStage stage;
+
+    @Override
+    public <R, C> R accept(SinkVisitor<R, C> visitor, C context) {
+      return visitor.accept(this, context);
+    }
+  }
+
+  @Value
   public static class ReadQuery implements Query {
 
     IdentifiedQuery query;
@@ -184,5 +197,6 @@ public class PhysicalDAGPlan {
 
     R accept(ExternalSink externalSink, C context);
     R accept(EngineSink engineSink, C context);
+    R accept(ExportSink exportSink, C context);
   }
 }

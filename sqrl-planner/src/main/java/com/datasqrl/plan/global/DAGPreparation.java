@@ -30,7 +30,7 @@ public class DAGPreparation {
     //Add subscriptions as exports
     apiManager.getExports().forEach((sqrlTable, log) -> exports.add(exportTable(
         (ModifiableTable) ((RootSqrlTable) sqrlTable).getInternalTable(),
-        log.getSink(), relBuilder, false)));
+        log.getSink(), relBuilder, false, false)));
 
     //Replace default joins with inner joins for API queries
     return apiManager.getQueries().stream()

@@ -10,4 +10,6 @@ public class ResolvedExport {
   RelNode relNode;
   int numSelects;
   TableSink sink;
+  boolean isExternal;
+  // add metadata here to decide whether it is an engine or external sink (in scriptplanner)
 }

@@ -132,7 +132,7 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
       Timestamp timestamp) {
     return logEngine.get()
         .getLogFactory()
-        .create(logId, schema, primaryKey, timestamp);
+        .create(logId, schema.getName(), schema.getType(), primaryKey, timestamp);
   }
 
   @Override

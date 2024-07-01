@@ -2,15 +2,22 @@ package com.datasqrl.plan.global;
 
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.config.EngineFactory.Type;
+import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.database.DatabaseEngine;
+import com.datasqrl.engine.log.Log;
+import com.datasqrl.engine.log.LogEngine;
+import com.datasqrl.engine.log.LogEngine.Timestamp;
+import com.datasqrl.engine.log.LogEngine.TimestampType;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIConnectorManager;
+import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.io.tables.TableType;
 import com.datasqrl.plan.RelStageRunner;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
+import com.datasqrl.plan.global.PhysicalDAGPlan.WriteSink;
 import com.datasqrl.plan.global.SqrlDAG.ExportNode;
 import com.datasqrl.plan.hints.TimestampHint;
 import com.datasqrl.plan.local.generate.QueryTableFunction;
@@ -32,6 +39,7 @@ import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.TableFunctionScan;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.hint.Hintable;
+import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.flink.table.functions.UserDefinedFunction;
 
@@ -128,6 +136,8 @@ public class DAGAssembler {
       databasePlans.add(new PhysicalDAGPlan.DatabaseStagePlan(database, databaseQueries, indexDefinitions));
     }
 
+    List<Log> exportLogs = new ArrayList<>();
+
     //Add exported tables
     dag.allNodesByClass(ExportNode.class).forEach(exportNode -> {
       Preconditions.checkArgument(exportNode.getChosenStage().equals(streamStage));
@@ -139,9 +149,34 @@ public class DAGAssembler {
       Preconditions.checkArgument(relBuilder1.peek().getRowType().getFieldCount()>=export.getNumSelects());
       relBuilder1.project(CalciteUtil.getIdentityRex(relBuilder1, export.getNumSelects()));
       processedRelnode = relBuilder1.build();
-      streamQueries.add(new PhysicalDAGPlan.WriteQuery(
-          new PhysicalDAGPlan.ExternalSink(exportNode.getUniqueId(), export.getSink()),
-          processedRelnode));
+      // we can decide where whether it is an external or an engine sink
+      WriteSink sink;
+      if (exportNode.getExport().isExternal()) {
+        sink = new PhysicalDAGPlan.ExternalSink(exportNode.getUniqueId(), export.getSink());
+      } else {
+        RelNode relNode = exportNode.getExport().getRelNode();
+
+        Optional<ExecutionStage> loggingStage = pipeline.getStage(Type.LOG);
+        TableSink tableSink = exportNode.getExport().getSink();
+
+        if (loggingStage.isPresent()) {
+          if (loggingStage.get().getEngine() instanceof LogEngine) {
+            String logId = exportNode.getUniqueId();
+            String logName = tableSink.getName().getCanonical();
+            String pkName = "";
+            String timestampName = "";
+
+            LogEngine logEngine = (LogEngine) loggingStage.get().getEngine();
+            Log exportLog = logEngine.getLogFactory().create(logId, logName, relNode.getTable().getRowType(),
+                List.of(pkName), new LogEngine.Timestamp(timestampName, TimestampType.LOG_TIME));
+
+            exportLogs.add(exportLog);
+          }
+        }
+        sink = new PhysicalDAGPlan.ExportSink(exportNode.getUniqueId(), export.getSink(), loggingStage.get());
+      }
+
+      streamQueries.add(new PhysicalDAGPlan.WriteQuery(sink, processedRelnode));
     });
     //Add debugging output
 //    AtomicInteger debugCounter = new AtomicInteger(0);
@@ -173,8 +208,11 @@ public class DAGAssembler {
     }
     Optional<ExecutionStage> logStage = pipeline.getStage(Type.LOG);
     if (logStage.isPresent()) {
+      List<Log> logs = new ArrayList<>(apiManager.getLogs());
+      logs.addAll(exportLogs);
+
       PhysicalDAGPlan.StagePlan logPlan = new PhysicalDAGPlan.LogStagePlan(
-          logStage.get(), apiManager.getLogs());
+          logStage.get(), logs);
       allPlans.add(logPlan);
     }
 

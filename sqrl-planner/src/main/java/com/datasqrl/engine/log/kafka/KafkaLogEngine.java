@@ -15,6 +15,7 @@ import com.datasqrl.engine.log.LogEngine;
 import com.datasqrl.engine.log.LogFactory;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.ExternalSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.LogStagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
@@ -49,7 +50,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
 
   @Override
   public EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs,
-      List<ExternalSink> externalSinks, ExecutionPipeline pipeline,
+      List<EngineSink> engineSinks, ExecutionPipeline pipeline,
       SqrlFramework framework, ErrorCollector errorCollector) {
 
     Preconditions.checkArgument(plan instanceof LogStagePlan);
@@ -62,15 +63,20 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         .map(NewTopic::new)
         .forEach(topics::add);
 
-    List<ResolvedExport> exports = framework.getSchema().getExports();
-    exports.stream()
-        .flatMap(resolvedExport -> externalSinks.stream()
-            .map(ExternalSink::getTableSink)
-            .filter(externalTableSink -> externalTableSink.equals(resolvedExport.getSink()))
-            .findAny().stream())
-        .map(externalTableSink -> externalTableSink.getName().getCanonical())
+    engineSinks.stream()
+        .map(EngineSink::getName)
         .map(NewTopic::new)
         .forEach(topics::add);
+
+//    List<ResolvedExport> exports = framework.getSchema().getExports();
+//    exports.stream()
+//        .flatMap(resolvedExport -> engineSinks.stream()
+//            .map(EngineSink::getTableSink)
+//            .filter(externalTableSink -> externalTableSink.equals(resolvedExport.getSink()))
+//            .findAny().stream())
+//        .map(externalTableSink -> externalTableSink.getName().getCanonical())
+//        .map(NewTopic::new)
+//        .forEach(topics::add);
 
     return new KafkaPhysicalPlan(topics);
   }

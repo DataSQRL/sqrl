@@ -170,37 +170,44 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     NamePath sinkPath = nameUtil.toNamePath(node.getSinkPath().names);
 
     // Resolve through connector factory or module loader
-    Optional<TableSink> sink = connectorFactoryFactory.create(null, sinkPath.getFirst().getCanonical())
-        .map(t->t.createSourceAndSink(new ConnectorFactoryContext(sinkPath.getLast(),
+    // engine sink
+    Optional<TableSink> engineSink = connectorFactoryFactory.create(null, sinkPath.getFirst().getCanonical())
+        .map(t -> t.createSourceAndSink(new ConnectorFactoryContext(sinkPath.getLast(),
             Map.of("name", sinkPath.getLast().getDisplay()))))
-        .map(t->TableSinkImpl.create(t, sinkPath, Optional.empty()))
-        .or(()->moduleLoader.getModule(sinkPath.popLast())
-            .flatMap(m -> m.getNamespaceObject(sinkPath.getLast()))
-            .filter(t->t instanceof TableSinkObject)
-            .map(t->((TableSinkObject) t).getSink()));
+        .map(t -> TableSinkImpl.create(t, sinkPath, Optional.empty()));
 
-    if (sink.isEmpty()) {
+    // external sink should take precedence
+    // external sink
+    Optional<TableSink> externalSink = moduleLoader.getModule(sinkPath.popLast())
+        .flatMap(m -> m.getNamespaceObject(sinkPath.getLast()))
+        .filter(t -> t instanceof TableSinkObject)
+        .map(t -> ((TableSinkObject) t).getSink());
+
+    if (engineSink.isEmpty() && externalSink.isEmpty()) {
       addError(ErrorCode.CANNOT_RESOLVE_TABLESINK, node, "Cannot resolve table sink: %s",
           nameUtil.toNamePath(node.getSinkPath().names).getDisplay());
       return null;
     }
+
+    Optional<TableSink> sink = engineSink.or(() -> externalSink);
 
     NamePath path = nameUtil.toNamePath(node.getIdentifier().names);
 
     QueryPlanner planner = framework.getQueryPlanner();
     Optional<RelOptTable> table = planner.getCatalogReader().getTableFromPath(path);
     Preconditions.checkState(table.isPresent(), "Could not find export table: %s", path.getDisplay());
-    ResolvedExport resolvedExport = exportTable(table.get().unwrap(ModifiableTable.class), sink.get(), planner.getRelBuilder(), true);
+    // add a boolean here?
+    ResolvedExport resolvedExport = exportTable(table.get().unwrap(ModifiableTable.class), sink.get(), planner.getRelBuilder(), true, externalSink.isPresent());
     framework.getSchema().add(resolvedExport);
 
     return null;
   }
 
-  public static ResolvedExport exportTable(ModifiableTable table, TableSink sink, RelBuilder relBuilder, boolean selectedFieldsOnly) {
+  public static ResolvedExport exportTable(ModifiableTable table, TableSink sink, RelBuilder relBuilder, boolean selectedFieldsOnly, boolean isExternal) {
     RelNode export = relBuilder.scan(table.getNameId())
         .build();
     int numSelects = selectedFieldsOnly?table.getNumSelects():table.getNumColumns();
-    return new ResolvedExport(table.getNameId(), export, numSelects, sink);
+    return new ResolvedExport(table.getNameId(), export, numSelects, sink, isExternal);
   }
 
   @Override
