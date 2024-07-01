@@ -176,10 +176,10 @@ public class SqrlDAG extends AbstractDAG<SqrlNode, SqrlDAG> {
   @Getter
   public static class ExportNode extends SqrlNode {
 
-    private final ResolvedExport export;
+    private final AnalyzedExport export;
     private final String uniqueId;
 
-    public ExportNode(Map<ExecutionStage, StageAnalysis> stageAnalysis, ResolvedExport export,
+    public ExportNode(Map<ExecutionStage, StageAnalysis> stageAnalysis, AnalyzedExport export,
         String uniqueId) {
       super(stageAnalysis);
       this.export = export;

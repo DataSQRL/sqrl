@@ -16,47 +16,61 @@ import lombok.AllArgsConstructor;
 public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
 
   PackageJson packageJson;
-  @Override
-  public Optional<ConnectorFactory> create(Type type, String name) {
+
+  private Optional<ConnectorConf> getConnectorConfig(String connectorName) {
     Optional<EngineConfig> engineConfig = packageJson.getEngines().getEngineConfig("flink");
     Preconditions.checkArgument(engineConfig.isPresent(), "Missing engine configuration for Flink");
     ConnectorsConfig connectors = engineConfig.get().getConnectors();
+    return connectors.getConnectorConfig(connectorName);
+  }
 
-    if (name.equalsIgnoreCase(LOG_SINK_NAME)) {
-      switch (packageJson.getLogMethod()) {
-        case PRINT:
-          return Optional.of(createPrintConnectorFactory(null));
-        case LOG_ENGINE:
-          List<String> engines = packageJson.getEnabledEngines();
-          if (engines.contains("kafka")) {
-            return connectors.getConnectorConfig("kafka").map(this::createKafkaConnectorFactory);
-//          } else if (engines.contains("postgres-log")) {
-//            return connectors.getConnectorConfig("postgres-log-sink").map(this::createPostgresLogExportConnectionFactory);
-          } else {
-            throw new IllegalArgumentException("Only the Kafka and Postgres-log engines are supported for use as log sinks.");
-          }
-        case NONE:
-          return Optional.of(createBlackHoleConnectorFactory());
-      }
+
+  @Override
+  public Optional<ConnectorFactory> create(SystemBuiltInConnectors builtInConnector) {
+
+    switch (builtInConnector) {
+      case PRINT_SINK:
+        return Optional.of(createPrintConnectorFactory(null));
+      case LOCAL_FILE_SOURCE:
+        return getConnectorConfig(builtInConnector.getName().getCanonical()).map(this::createLocalFile);
+      default:
+        throw new IllegalArgumentException("Unknown connector: " + builtInConnector);
     }
+  }
 
-    Optional<ConnectorConf> connectorConfig = connectors.getConnectorConfig(name);
-    if (name.equalsIgnoreCase(PRINT_SINK_NAME)) { // TODO: to deprecate it?
-      return Optional.of(createPrintConnectorFactory(null));
-    } else if (name.equalsIgnoreCase(FILE_SINK_NAME)) {
-      return connectorConfig.map(this::createLocalFile);
-    }
+  @Override
+  public Optional<ConnectorFactory> create(Type engineType, String connectorName) {
 
-    if (type != null) {
-      if (type.equals(Type.LOG)) {
+//    if (connectorName.equalsIgnoreCase(LOG_SINK_NAME)) {
+//      switch (packageJson.getLogMethod()) {
+//        case PRINT:
+//          return Optional.of(createPrintConnectorFactory(null));
+//        case LOG_ENGINE:
+//          List<String> engines = packageJson.getEnabledEngines();
+//          if (engines.contains("kafka")) {
+//            return connectors.getConnectorConfig("kafka").map(this::createKafkaConnectorFactory);
+////          } else if (engines.contains("postgres-log")) {
+////            return connectors.getConnectorConfig("postgres-log-sink").map(this::createPostgresLogExportConnectionFactory);
+//          } else {
+//            throw new IllegalArgumentException("Only the Kafka and Postgres-log engines are supported for use as log sinks.");
+//          }
+//        case NONE:
+//          return Optional.of(createBlackHoleConnectorFactory());
+//      }
+//    }
+
+    Optional<ConnectorConf> connectorConfig = getConnectorConfig(connectorName);
+    if (engineType != null) {
+      if (engineType.equals(Type.LOG)) {
         return connectorConfig.map(this::createKafkaConnectorFactory);
-      } else if (type.equals(Type.DATABASE)) {
+      } else if (engineType.equals(Type.DATABASE)) {
         return connectorConfig.map(this::createJdbcConnectorFactory);
       }
     }
 
     return connectorConfig.map(c -> context -> null);
   }
+
 
   @Override
   public ConnectorConf getConfig(String name) {
@@ -72,7 +86,7 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
       String name = (String) context.getMap().get("name");
       TableConfigBuilderImpl builder = TableConfigImpl.builder(context.getName());
       builder.setType(ExternalDataType.sink);
-      builder.getConnectorConfig().setProperty("connector", PRINT_SINK_NAME);
+      builder.getConnectorConfig().setProperty("connector", "print");
       builder.getConnectorConfig().setProperty("print-identifier", name);
       return builder.build();
     };

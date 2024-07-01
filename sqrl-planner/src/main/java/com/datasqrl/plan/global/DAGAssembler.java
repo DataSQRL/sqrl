@@ -57,9 +57,8 @@ public class DAGAssembler {
   private final SQRLConverter sqrlConverter;
   private final ExecutionPipeline pipeline;
   private final ErrorCollector errors;
-  private final APIConnectorManager apiManager;
 
-  public PhysicalDAGPlan assemble(SqrlDAG dag, Set<URL> jars, Map<String, UserDefinedFunction> udfs) {
+  public PhysicalDAGPlan assemble(SqrlDAG dag, List<Log> logs, Set<URL> jars, Map<String, UserDefinedFunction> udfs) {
     //We make the assumption that there is a single stream stage
     ExecutionStage streamStage = pipeline.getStage(Type.STREAMS).get();
     List<PhysicalDAGPlan.WriteQuery> streamQueries = new ArrayList<>();
@@ -141,47 +140,18 @@ public class DAGAssembler {
     //Add exported tables
     dag.allNodesByClass(ExportNode.class).forEach(exportNode -> {
       Preconditions.checkArgument(exportNode.getChosenStage().equals(streamStage));
-      ResolvedExport export = exportNode.getExport();
+      AnalyzedExport export = exportNode.getExport();
       RelNode processedRelnode = produceWriteTree(export.getRelNode(),
           getExportBaseConfig().withStage(exportNode.getChosenStage()), errors);
       //Pick only the selected keys
       RelBuilder relBuilder1 = sqrlConverter.getRelBuilder().push(processedRelnode);
-      Preconditions.checkArgument(relBuilder1.peek().getRowType().getFieldCount()>=export.getNumSelects());
-      relBuilder1.project(CalciteUtil.getIdentityRex(relBuilder1, export.getNumSelects()));
-      processedRelnode = relBuilder1.build();
-      // we can decide where whether it is an external or an engine sink
-      WriteSink sink;
-      if (exportNode.getExport().isExternal()) {
-        sink = new PhysicalDAGPlan.ExternalSink(exportNode.getUniqueId(), export.getSink());
-      } else {
-        // logging to log engine, TODO
-        if (true) {
-          RelNode relNode = exportNode.getExport().getRelNode();
-
-          Optional<ExecutionStage> loggingStage = pipeline.getStage(Type.LOG);
-          TableSink tableSink = exportNode.getExport().getSink();
-
-          if (loggingStage.isPresent()) {
-            String logId = exportNode.getUniqueId();
-            String logName = tableSink.getName().getCanonical();
-            String pkName = "";
-            String timestampName = "";
-
-            LogEngine logEngine = (LogEngine) loggingStage.get().getEngine();
-            Log exportLog = logEngine.getLogFactory().create(logId, logName, relNode.getTable().getRowType(),
-                List.of(pkName), new LogEngine.Timestamp(timestampName, TimestampType.LOG_TIME));
-
-            exportLogs.add(exportLog);
-          } else {
-            throw new IllegalStateException("Log engine should be present when logging to an engine.");
-          }
-          sink = new PhysicalDAGPlan.ExportSink(exportNode.getUniqueId(), export.getSink(), loggingStage.get());
-        } else {
-          // logging is none
-        }
-
+      if (export.getNumSelects().isPresent()) {
+        int numFields2Select = export.getNumSelects().getAsInt();
+        Preconditions.checkArgument(relBuilder1.peek().getRowType().getFieldCount()>=numFields2Select);
+        relBuilder1.project(CalciteUtil.getIdentityRex(relBuilder1, numFields2Select));
       }
-
+      processedRelnode = relBuilder1.build();
+      WriteSink sink = new PhysicalDAGPlan.ExternalSink(exportNode.getUniqueId(), export.getSink());
       streamQueries.add(new PhysicalDAGPlan.WriteQuery(sink, processedRelnode));
     });
     //Add debugging output
@@ -214,12 +184,12 @@ public class DAGAssembler {
     }
     Optional<ExecutionStage> logStage = pipeline.getStage(Type.LOG);
     if (logStage.isPresent()) {
-      List<Log> logs = new ArrayList<>(apiManager.getLogs());
-      logs.addAll(exportLogs);
 
       PhysicalDAGPlan.StagePlan logPlan = new PhysicalDAGPlan.LogStagePlan(
           logStage.get(), logs);
       allPlans.add(logPlan);
+    } else if (!logs.isEmpty()) {
+      throw new IllegalStateException("Should not have logs when no log engine is present");
     }
 
     return new PhysicalDAGPlan(allPlans, pipeline);

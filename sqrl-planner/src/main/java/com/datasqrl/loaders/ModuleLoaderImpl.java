@@ -1,8 +1,5 @@
 package com.datasqrl.loaders;
 
-import static com.datasqrl.config.ConnectorFactoryFactory.PRINT_SINK_NAME;
-
-import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.TableConfigLoader;
 import com.datasqrl.error.ErrorCollector;
@@ -40,11 +37,6 @@ public class ModuleLoaderImpl implements ModuleLoader {
     }
 
     return Optional.of(new SqrlDirectoryModule(nsObjects));
-  }
-
-  public static boolean isPrintSink(NamePath namePath) {
-    return namePath.size() == 1 && namePath.getLast().getCanonical()
-            .equals(PRINT_SINK_NAME);
   }
 
 

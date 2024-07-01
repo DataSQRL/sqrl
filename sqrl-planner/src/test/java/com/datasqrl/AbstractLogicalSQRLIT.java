@@ -56,14 +56,6 @@ public class AbstractLogicalSQRLIT extends AbstractEngineIT {
   }
 
 
-  protected SqrlDAG planDAG(String script, Collection<String> queryTables) {
-    plan(script);
-    DAGPlanner dagPlanner = injector.getInstance(DAGPlanner.class);
-
-    createAPIQueries(queryTables);
-    return dagPlanner.planLogical();
-  }
-
   /**
    * Adds a table scan for every table in the collection
    *

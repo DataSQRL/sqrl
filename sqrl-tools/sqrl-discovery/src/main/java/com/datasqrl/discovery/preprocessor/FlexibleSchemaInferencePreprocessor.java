@@ -1,13 +1,12 @@
 package com.datasqrl.discovery.preprocessor;
 
 
-import static com.datasqrl.config.ConnectorFactoryFactory.FILE_SINK_NAME;
-
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.ConnectorFactory;
 import com.datasqrl.config.ConnectorFactoryContext;
 import com.datasqrl.config.ConnectorFactoryFactory;
+import com.datasqrl.config.SystemBuiltInConnectors;
 import com.datasqrl.config.TableConfig;
 import com.datasqrl.discovery.TableWriter;
 import com.datasqrl.discovery.file.FileCompression;
@@ -54,7 +53,7 @@ public class FlexibleSchemaInferencePreprocessor implements DiscoveryPreprocesso
 
   @Inject
   public FlexibleSchemaInferencePreprocessor(ConnectorFactoryFactory connectorFactoryFactory) {
-    this.connectorFactory = connectorFactoryFactory.create(null, FILE_SINK_NAME);
+    this.connectorFactory = connectorFactoryFactory.create(SystemBuiltInConnectors.LOCAL_FILE_SOURCE);
   }
 
   @Override

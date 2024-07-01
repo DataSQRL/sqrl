@@ -15,6 +15,7 @@ import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.loaders.ModuleLoaderComposite;
 import com.datasqrl.plan.MainScript;
 import com.datasqrl.plan.global.DAGPlanner;
+import com.datasqrl.plan.global.LogicalDAGPlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.global.SqrlDAG;
 import com.datasqrl.plan.queries.APISource;
@@ -60,7 +61,7 @@ public class CompilationProcess {
     planner.plan(mainScript, composite);
     postcompileHooks();
     Optional<APISource> source = inferencePostcompileHook.run(testsPath);
-    SqrlDAG dag = dagPlanner.planLogical();
+    LogicalDAGPlan dag = dagPlanner.planLogical();
     PhysicalDAGPlan dagPlan = dagPlanner.planPhysical(dag);
 
     PhysicalPlan physicalPlan = physicalPlanner.plan(dagPlan);
@@ -73,7 +74,7 @@ public class CompilationProcess {
     } else {
       testPlan = null;
     }
-    writeDeploymentArtifactsHook.run(dag);
+    writeDeploymentArtifactsHook.run(dag.getDag());
     return Pair.of(physicalPlan, testPlan);
   }
 
