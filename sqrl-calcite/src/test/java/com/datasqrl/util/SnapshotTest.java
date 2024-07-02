@@ -138,7 +138,9 @@ public class SnapshotTest {
             if (!expectedLines[i].equals(contentLines[i])) {
               log.error("Error at line: {}\n"
                   + "expected: {}\n"
-                  + "found   : {}", i, expectedLines[i], contentLines[i]);
+                  + "found   : {}\n"
+                  + "------------------\n"
+                  + "entire plan output:\n{}", i, expectedLines[i], contentLines[i], content);
               break;
             }
           }

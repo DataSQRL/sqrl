@@ -18,6 +18,7 @@ import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.io.tables.TableSinkImpl;
 import com.datasqrl.plan.local.generate.QueryTableFunction;
 import com.datasqrl.plan.local.generate.ResolvedExport;
+import com.datasqrl.plan.local.generate.ResolvedExport.Internal;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.schema.RootSqrlTable;
 import com.google.common.base.Preconditions;
@@ -78,8 +79,9 @@ public class DAGPreparation {
           NamePath sinkPath = NamePath.of(connector.getName(), Name.system(export.getTable()));
           tableSink = connectorFactoryFactory.create(connector)
               .map(t -> t.createSourceAndSink(new ConnectorFactoryContext(sinkPath.getLast(),
-                  Map.of("name", sinkPath.getLast().getDisplay()))))
-              .map(t -> TableSinkImpl.create(t, sinkPath, Optional.empty())).get();
+                  Map.of("id", sinkPath.getLast().getDisplay(),
+                      "name", ((Internal) export).getSinkPath().getLast().getDisplay()))))
+              .map(t -> TableSinkImpl.create(t, ((Internal) export).getSinkPath(), Optional.empty())).get();
         }
         analyzedExports.add(new AnalyzedExport(export.getTable(), export.getRelNode(),
             OptionalInt.of(export.getNumFieldSelects()), tableSink));

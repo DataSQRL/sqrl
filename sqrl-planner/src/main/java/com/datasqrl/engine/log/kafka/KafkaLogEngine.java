@@ -63,10 +63,10 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         .map(NewTopic::new)
         .forEach(topics::add);
 
-    engineSinks.stream()
-        .map(EngineSink::getName)
-        .map(NewTopic::new)
-        .forEach(topics::add);
+//    engineSinks.stream()
+//        .map(EngineSink::getName)
+//        .map(NewTopic::new)
+//        .forEach(topics::add);
 
 //    List<ResolvedExport> exports = framework.getSchema().getExports();
 //    exports.stream()

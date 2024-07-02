@@ -184,7 +184,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     Optional<SystemBuiltInConnectors> builtInSink = SystemBuiltInConnectors.forExport(sinkPath.popLast());
     ResolvedExport resolvedExport;
     if (builtInSink.isPresent()) {
-      resolvedExport = new ResolvedExport.Internal(modTable.getNameId(), exportRelNode, numSelects, builtInSink.get());
+      resolvedExport = new ResolvedExport.Internal(modTable.getNameId(), sinkPath, exportRelNode, numSelects, builtInSink.get());
     } else {
       Optional<TableSink> externalSink = moduleLoader.getModule(sinkPath.popLast())
           .flatMap(m -> m.getNamespaceObject(sinkPath.getLast()))

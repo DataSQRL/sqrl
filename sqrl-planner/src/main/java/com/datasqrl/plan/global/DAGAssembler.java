@@ -184,7 +184,6 @@ public class DAGAssembler {
     }
     Optional<ExecutionStage> logStage = pipeline.getStage(Type.LOG);
     if (logStage.isPresent()) {
-
       PhysicalDAGPlan.StagePlan logPlan = new PhysicalDAGPlan.LogStagePlan(
           logStage.get(), logs);
       allPlans.add(logPlan);

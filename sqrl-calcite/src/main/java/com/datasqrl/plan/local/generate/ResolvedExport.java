@@ -1,13 +1,10 @@
 package com.datasqrl.plan.local.generate;
 
-import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.SystemBuiltInConnectors;
-import com.datasqrl.engine.log.Log;
 import com.datasqrl.io.tables.TableSink;
-import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.Value;
 import org.apache.calcite.rel.RelNode;
 
 @Getter
@@ -32,9 +29,11 @@ public abstract class ResolvedExport {
   public static class Internal extends ResolvedExport {
 
     private final SystemBuiltInConnectors connector;
+    private final NamePath sinkPath;
 
-    public Internal(String table, RelNode relNode, int numFieldSelects, SystemBuiltInConnectors connector) {
+    public Internal(String table, NamePath sinkPath, RelNode relNode, int numFieldSelects, SystemBuiltInConnectors connector) {
       super(table, relNode, numFieldSelects);
+      this.sinkPath = sinkPath;
       this.connector = connector;
     }
   }
