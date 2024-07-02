@@ -275,7 +275,7 @@ public class SqrlToFlinkSqlGenerator {
    }
 
    private Optional<DowncastFunction> getEngineDowncastFunction(ExecutionEngine engine, RelDataType datatype) {
-     return engine.getDowncastFunction(datatype);
+     return engine.getSinkTypeCastFunction(datatype);
    }
   private boolean isRawType(RelDataType type) {
     return type instanceof RawRelDataType;

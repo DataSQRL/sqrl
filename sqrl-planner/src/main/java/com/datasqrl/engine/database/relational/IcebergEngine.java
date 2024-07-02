@@ -1,13 +1,14 @@
 package com.datasqrl.engine.database.relational;
 
 import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.config.ConnectorFactoryContext;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.EmptyEngineConfig;
-import com.datasqrl.config.TableConfig;
 import com.datasqrl.engine.EnginePhysicalPlan;
+import com.datasqrl.engine.database.QueryEngine;
+import com.datasqrl.engine.database.relational.IcebergPlan.IcebergSerializableColumn;
+import com.datasqrl.engine.database.relational.IcebergPlan.IcebergSerializableTable;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
@@ -15,27 +16,30 @@ import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
 import com.datasqrl.util.StreamUtil;
 import com.google.inject.Inject;
-import java.io.Serializable;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import lombok.NonNull;
-import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.type.SqlTypeName;
 
-public class SnowflakeIcebergEngine extends AbstractJDBCEngine {
+public class IcebergEngine extends AbstractJDBCTableFormatEngine {
 
   @Inject
-  public SnowflakeIcebergEngine(
+  public IcebergEngine(
       @NonNull PackageJson json,
       ConnectorFactoryFactory connectorFactory) {
-    super(SnowflakeIcebergEngineFactory.ENGINE_NAME,
-        json.getEngines().getEngineConfig(SnowflakeIcebergEngineFactory.ENGINE_NAME)
-            .orElseGet(()-> new EmptyEngineConfig(SnowflakeIcebergEngineFactory.ENGINE_NAME)),
+    super(IcebergEngineFactory.ENGINE_NAME,
+        json.getEngines().getEngineConfig(IcebergEngineFactory.ENGINE_NAME)
+            .orElseGet(()-> new EmptyEngineConfig(IcebergEngineFactory.ENGINE_NAME)),
         connectorFactory);
+  }
+
+  @Override
+  public boolean supportsQueryEngine(QueryEngine engine) {
+    return engine instanceof SnowflakeEngine;
   }
 
   @Override
@@ -53,28 +57,24 @@ public class SnowflakeIcebergEngine extends AbstractJDBCEngine {
             convertRelDataTypeToIcebergSchema(c.getRowType())))
         .collect(Collectors.toList());
 
-    JDBCPhysicalPlan plan1 = (JDBCPhysicalPlan)super.plan(plan, inputs, pipeline, framework, errorCollector);
+    //For the Iceberg connector, we only need the DDL statements for the catalog.
+    JDBCPhysicalPlan icebergDDL = (JDBCPhysicalPlan) super.plan(plan, inputs, pipeline, framework, errorCollector);
     //todo end
 
-    return new IcebergPlan(sinks, plan1.getDdl(), plan1.getQueries());
-  }
-  @Value
-  public class IcebergSerializableTable {
-    //todo make list
-    String namespace;
-    String name;
-    List<IcebergSerializableColumn> columns;
+    errorCollector.checkFatal(!queryEngines.isEmpty(), "No Iceberg compatible query engines have been configured.");
+
+    Map<String, EnginePhysicalPlan> queryEnginePlans = new HashMap<>();
+    for (Map.Entry<String, QueryEngine> queryEngine : queryEngines.entrySet()) {
+      queryEnginePlans.put(queryEngine.getKey(),
+          queryEngine.getValue().plan(plan, inputs, pipeline, framework, errorCollector));
+    }
+
+    return new IcebergPlan(sinks, icebergDDL.getDdl(), queryEnginePlans);
   }
 
-  @Value
-  public class IcebergSerializableColumn {
-    boolean optional;
-    int index;
-    String name;
-    String typeName;
-  }
 
-  public List<IcebergSerializableColumn> convertRelDataTypeToIcebergSchema(RelDataType relDataType) {
+  public List<IcebergSerializableColumn> convertRelDataTypeToIcebergSchema(
+      RelDataType relDataType) {
     List<IcebergSerializableColumn> icebergFields = relDataType.getFieldList().stream()
         .map(field -> convertField(field))
         .collect(Collectors.toList());
@@ -138,4 +138,5 @@ public class SnowflakeIcebergEngine extends AbstractJDBCEngine {
         throw new IllegalArgumentException("Unsupported Calcite SQL type: " + sqlTypeName);
     }
   }
+
 }

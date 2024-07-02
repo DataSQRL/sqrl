@@ -13,7 +13,6 @@ import com.datasqrl.function.DowncastFunction;
 import com.datasqrl.functions.json.JsonDowncastFunction;
 import com.datasqrl.functions.vector.VectorDowncastFunction;
 import com.datasqrl.json.FlinkJsonType;
-import com.datasqrl.json.JsonToString;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
 import com.datasqrl.vector.FlinkVectorType;
@@ -32,8 +31,18 @@ import org.apache.flink.table.planner.plan.schema.RawRelDataType;
  */
 public interface ExecutionEngine extends IExecutionEngine {
 
+  /**
+   *
+   * @param capability
+   * @return whether the engine supports the given {@link EngineFeature}
+   */
   boolean supports(EngineFeature capability);
 
+  /**
+   *
+   * @param function
+   * @return whether the engine can execute the given function
+   */
   boolean supports(FunctionDefinition function);
 
   /**
@@ -43,11 +52,40 @@ public interface ExecutionEngine extends IExecutionEngine {
    */
   TableConfig getSinkConfig(String sinkName);
 
-//  CompletableFuture<ExecutionResult> execute(EnginePhysicalPlan plan, ErrorCollector errors);
-
+  /**
+   * Create the physical plan from the {@link StagePlan} produced by the {@link com.datasqrl.plan.global.DAGPlanner}
+   * for this engine.
+   *
+   * @param plan
+   * @param inputs
+   * @param pipeline
+   * @param relBuilder
+   * @param errorCollector
+   * @return
+   */
   EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs,
       ExecutionPipeline pipeline, SqrlFramework relBuilder,
       ErrorCollector errorCollector);
+
+  /**
+   * Engines support different sets of data types. DataSQRL uses {@link DowncastFunction} to cast SQRL native types
+   * to the data type supported by the engine.
+   *
+   * @param type The type to cast
+   * @return The downcast function to use for the given type, or empty if no type casting is needed.
+   */
+  default Optional<DowncastFunction> getSinkTypeCastFunction(RelDataType type) {
+    // Convert sqrl native raw types to strings
+    if (type instanceof RawRelDataType) {
+      if ((((RawRelDataType)type).getRawType().getDefaultConversion() == FlinkJsonType.class)) {
+        return Optional.of(new JsonDowncastFunction());
+      } else if ((((RawRelDataType)type).getRawType().getDefaultConversion() == FlinkVectorType.class)) {
+        return Optional.of(new VectorDowncastFunction());
+      }
+    }
+
+    return Optional.empty(); //assume everything is supported by default
+  }
 
   @AllArgsConstructor
   @Getter
@@ -73,16 +111,5 @@ public interface ExecutionEngine extends IExecutionEngine {
     }
   }
 
-  default Optional<DowncastFunction> getDowncastFunction(RelDataType type) {
-    // Convert sqrl native raw types to strings
-    if (type instanceof RawRelDataType) {
-      if ((((RawRelDataType)type).getRawType().getDefaultConversion() == FlinkJsonType.class)) {
-        return Optional.of(new JsonDowncastFunction());
-      } else if ((((RawRelDataType)type).getRawType().getDefaultConversion() == FlinkVectorType.class)) {
-        return Optional.of(new VectorDowncastFunction());
-      }
-    }
 
-    return Optional.empty(); //assume everything is supported by default
-  }
 }

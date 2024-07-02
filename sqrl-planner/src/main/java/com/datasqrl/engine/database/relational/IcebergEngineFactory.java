@@ -5,9 +5,9 @@ import com.datasqrl.engine.database.DatabaseEngineFactory;
 import com.google.auto.service.AutoService;
 
 @AutoService(EngineFactory.class)
-public class SnowflakeIcebergEngineFactory implements DatabaseEngineFactory {
+public class IcebergEngineFactory implements DatabaseEngineFactory {
 
-  public static final String ENGINE_NAME = "snowflake";
+  public static final String ENGINE_NAME = "iceberg";
 
   @Override
   public String getEngineName() {
@@ -16,7 +16,7 @@ public class SnowflakeIcebergEngineFactory implements DatabaseEngineFactory {
 
   @Override
   public Class getFactoryClass() {
-    return SnowflakeIcebergEngine.class;
+    return IcebergEngine.class;
   }
 
 }

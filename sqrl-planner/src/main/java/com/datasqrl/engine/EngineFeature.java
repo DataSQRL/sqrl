@@ -45,5 +45,12 @@ public enum EngineFeature {
   public static EnumSet<EngineFeature> STANDARD_DATABASE = EnumSet.of(NOW, GLOBAL_SORT, MATERIALIZE_ON_KEY,
       MULTI_RANK, TABLE_FUNCTION_SCAN, RELATIONS, DENORMALIZE);
 
+  public static EnumSet<EngineFeature> STANDARD_TABLE_FORMAT = EnumSet.of(MATERIALIZE_ON_KEY,
+      DENORMALIZE);
+
+  public static EnumSet<EngineFeature> STANDARD_QUERY = EnumSet.of(NOW, GLOBAL_SORT,
+      MULTI_RANK, TABLE_FUNCTION_SCAN, RELATIONS);
+
+
   public static EnumSet<EngineFeature> NO_CAPABILITIES = EnumSet.noneOf(EngineFeature.class);
 }

@@ -4,11 +4,10 @@ import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.EmptyEngineConfig;
-import com.datasqrl.config.PackageJson.EngineConfig;
 import com.google.inject.Inject;
 import lombok.NonNull;
 
-public class PostgresJdbcEngine extends AbstractJDBCEngine {
+public class PostgresJdbcEngine extends AbstractJDBCDatabaseEngine {
 
   @Inject
   public PostgresJdbcEngine(

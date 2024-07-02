@@ -29,11 +29,11 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.pretty.SqlPrettyWriter;
 
 @AutoService(JdbcDDLFactory.class)
-public class SnowflakeDDLFactory implements JdbcDDLFactory {
+public class IcebergDDLFactory implements JdbcDDLFactory {
 
   @Override
   public JdbcDialect getDialect() {
-    return JdbcDialect.Snowflake;
+    return JdbcDialect.Iceberg;
   }
 
   @Override
@@ -105,7 +105,7 @@ public class SnowflakeDDLFactory implements JdbcDDLFactory {
 
   public static List<String> quoteIdentifier(List<String> columns) {
     return columns.stream()
-        .map(SnowflakeDDLFactory::quoteIdentifier)
+        .map(IcebergDDLFactory::quoteIdentifier)
         .collect(Collectors.toList());
   }
   public static String quoteIdentifier(String column) {
