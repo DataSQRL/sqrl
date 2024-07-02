@@ -24,8 +24,11 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.config.ConnectorFactoryContext;
 import com.datasqrl.config.ConnectorFactoryFactory;
+import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SystemBuiltInConnectors;
 import com.datasqrl.engine.log.Log;
+import com.datasqrl.engine.log.LogFactory;
+import com.datasqrl.engine.log.LogManager;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
@@ -120,9 +123,11 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
   private ErrorCollector errorCollector;
   private final ExecutionGoal executionGoal;
   private final SqrlTableFactory tableFactory;
+  private final PackageJson packageJson;
 
   private final SqlNameUtil nameUtil;
   private final ConnectorFactoryFactory connectorFactoryFactory;
+  private final LogManager logManager;
 
   private final Map<SqlNode, Object> schemaTable = new HashMap<>();
   private final AtomicInteger uniqueId = new AtomicInteger(0);
@@ -182,9 +187,29 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     RelNode exportRelNode = planner.getRelBuilder().scan(modTable.getNameId()).build();
 
     Optional<SystemBuiltInConnectors> builtInSink = SystemBuiltInConnectors.forExport(sinkPath.popLast());
-    ResolvedExport resolvedExport;
+    TableSink tableSink = null;
     if (builtInSink.isPresent()) {
-      resolvedExport = new ResolvedExport.Internal(modTable.getNameId(), sinkPath, exportRelNode, numSelects, builtInSink.get());
+      SystemBuiltInConnectors connector = builtInSink.get();
+      if (connector == SystemBuiltInConnectors.LOG) {
+        switch (packageJson.getLogMethod()) {
+          case NONE: return null; //Ignore export
+          case PRINT: connector = SystemBuiltInConnectors.PRINT_SINK; break;
+          case LOG_ENGINE:
+            Log sinkLog = logManager.create(modTable.getNameId(), sinkPath.getLast().getDisplay(),
+                exportRelNode.getRowType(), List.of(), LogFactory.Timestamp.NONE);
+            tableSink = sinkLog.getSink();
+            break;
+          default: throw new UnsupportedOperationException("Unknown log method: " + packageJson.getLogMethod());
+        }
+      }
+      if (tableSink == null) {
+        //Create the export for the built-in connector
+        tableSink = connectorFactoryFactory.create(connector)
+            .map(t -> t.createSourceAndSink(new ConnectorFactoryContext(sinkPath.getLast(),
+                Map.of("id", modTable.getNameId(),
+                    "name", sinkPath.getLast().getDisplay()))))
+            .map(t -> TableSinkImpl.create(t, sinkPath.popLast(), Optional.empty())).get();
+      }
     } else {
       Optional<TableSink> externalSink = moduleLoader.getModule(sinkPath.popLast())
           .flatMap(m -> m.getNamespaceObject(sinkPath.getLast()))
@@ -195,8 +220,9 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
             nameUtil.toNamePath(node.getSinkPath().names).getDisplay());
         return null;
       }
-      resolvedExport = new ResolvedExport.External(modTable.getNameId(), exportRelNode, numSelects, externalSink.get());
+      tableSink = externalSink.get();
     }
+    ResolvedExport resolvedExport = new ResolvedExport(modTable.getNameId(), exportRelNode, numSelects, tableSink);
     framework.getSchema().add(resolvedExport);
     return null;
   }

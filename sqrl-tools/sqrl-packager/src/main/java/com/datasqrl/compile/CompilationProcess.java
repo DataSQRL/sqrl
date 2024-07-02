@@ -61,7 +61,7 @@ public class CompilationProcess {
     planner.plan(mainScript, composite);
     postcompileHooks();
     Optional<APISource> source = inferencePostcompileHook.run(testsPath);
-    LogicalDAGPlan dag = dagPlanner.planLogical();
+    SqrlDAG dag = dagPlanner.planLogical();
     PhysicalDAGPlan dagPlan = dagPlanner.planPhysical(dag);
 
     PhysicalPlan physicalPlan = physicalPlanner.plan(dagPlan);
@@ -74,7 +74,7 @@ public class CompilationProcess {
     } else {
       testPlan = null;
     }
-    writeDeploymentArtifactsHook.run(dag.getDag());
+    writeDeploymentArtifactsHook.run(dag);
     return Pair.of(physicalPlan, testPlan);
   }
 

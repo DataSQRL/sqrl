@@ -2,32 +2,18 @@ package com.datasqrl.plan.global;
 
 
 import com.datasqrl.calcite.ModifiableTable;
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.config.ConnectorFactoryContext;
 import com.datasqrl.config.ConnectorFactoryFactory;
-import com.datasqrl.config.LogEngineSupplier;
 import com.datasqrl.config.PackageJson;
-import com.datasqrl.config.SystemBuiltInConnectors;
-import com.datasqrl.engine.log.Log;
-import com.datasqrl.engine.log.LogEngine.Timestamp;
-import com.datasqrl.engine.log.LogEngine.TimestampType;
-import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.engine.log.LogManager;
 import com.datasqrl.graphql.APIConnectorManager;
-import com.datasqrl.io.tables.TableSink;
-import com.datasqrl.io.tables.TableSinkImpl;
 import com.datasqrl.plan.local.generate.QueryTableFunction;
 import com.datasqrl.plan.local.generate.ResolvedExport;
-import com.datasqrl.plan.local.generate.ResolvedExport.Internal;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.schema.RootSqrlTable;
-import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -42,7 +28,7 @@ public class DAGPreparation {
 
   private final RelBuilder relBuilder;
   private final APIConnectorManager apiManager;
-  private final LogEngineSupplier logEngineSupplier;
+  private final LogManager logManager;
   private final ConnectorFactoryFactory connectorFactoryFactory;
   PackageJson packageJson;
 
@@ -50,46 +36,9 @@ public class DAGPreparation {
   public Result prepareInputs(SqrlSchema sqrlSchema,
       Collection<ResolvedExport> exports) {
 
-    List<Log> logs = new ArrayList<>();
     //Analyze exports
     List<AnalyzedExport> analyzedExports = new ArrayList<>();
-    for (ResolvedExport export : exports) {
-      if (export instanceof ResolvedExport.External) {
-        ResolvedExport.External externalExport = (ResolvedExport.External) export;
-        analyzedExports.add(AnalyzedExport.from(externalExport));
-      } else {
-        ResolvedExport.Internal internalExport = (ResolvedExport.Internal) export;
-        SystemBuiltInConnectors connector = internalExport.getConnector();
-        TableSink tableSink = null;
-        if (connector == SystemBuiltInConnectors.LOG) {
-          switch (packageJson.getLogMethod()) {
-            case NONE: continue; //Ignore export
-            case PRINT: connector = SystemBuiltInConnectors.PRINT_SINK; break;
-            case LOG_ENGINE:
-              Log sinkLog = logEngineSupplier.get().getLogFactory().create(export.getTable(), export.getTable(),
-                  export.getRelNode().getRowType(), List.of(), Timestamp.NONE);
-              logs.add(sinkLog);
-              tableSink = sinkLog.getSink();
-              break;
-            default: throw new UnsupportedOperationException("Unknown log method: " + packageJson.getLogMethod());
-          }
-        }
-        if (tableSink == null) {
-          //Create the export for the built-in connector
-          NamePath sinkPath = NamePath.of(connector.getName(), Name.system(export.getTable()));
-          tableSink = connectorFactoryFactory.create(connector)
-              .map(t -> t.createSourceAndSink(new ConnectorFactoryContext(sinkPath.getLast(),
-                  Map.of("id", sinkPath.getLast().getDisplay(),
-                      "name", ((Internal) export).getSinkPath().getLast().getDisplay()))))
-              .map(t -> TableSinkImpl.create(t, ((Internal) export).getSinkPath(), Optional.empty())).get();
-        }
-        analyzedExports.add(new AnalyzedExport(export.getTable(), export.getRelNode(),
-            OptionalInt.of(export.getNumFieldSelects()), tableSink));
-      }
-    }
-
-    //Add all mutation and subscription logs
-    logs.addAll(apiManager.getLogs());
+    exports.stream().map(AnalyzedExport::from).forEach(analyzedExports::add);
 
     //Add subscriptions as exports
     apiManager.getExports().forEach((sqrlTable, log) -> {
@@ -101,7 +50,7 @@ public class DAGPreparation {
     //Replace default joins with inner joins for API queries
     return new Result(apiManager.getQueries().stream()
         .map(AnalyzedAPIQuery::new).collect(Collectors.toList()),
-        analyzedExports, logs);
+        analyzedExports);
   }
 
   private Stream<PhysicalRelationalTable> getAllPhysicalTables(SqrlSchema sqrlSchema) {
@@ -115,7 +64,6 @@ public class DAGPreparation {
 
     Collection<AnalyzedAPIQuery> queries;
     Collection<AnalyzedExport> exports;
-    List<Log> logs;
 
 
   }

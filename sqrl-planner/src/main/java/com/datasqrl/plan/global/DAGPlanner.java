@@ -45,7 +45,7 @@ public class DAGPlanner {
   private final DAGPreparation dagPreparation;
   private final SQRLConverter sqrlConverter;
 
-  public LogicalDAGPlan build(Collection<ResolvedExport> exports) {
+  public SqrlDAG build(Collection<ResolvedExport> exports) {
     //Prepare the inputs
     DAGPreparation.Result prepResult = dagPreparation.prepareInputs(framework.getSchema(), exports);
 
@@ -63,7 +63,7 @@ public class DAGPlanner {
       errors.fatal("Could not find execution stage for [%s]. Full DAG below.\n%s", ex.getNode().getName(), dag);
     }
     dag.forEach(node -> Preconditions.checkArgument(node.hasViableStage()));
-    return new LogicalDAGPlan(dag, prepResult.getLogs());
+    return dag;
   }
 
   public void optimize(SqrlDAG dag) {
@@ -89,20 +89,20 @@ public class DAGPlanner {
     });
   }
 
-  public PhysicalDAGPlan assemble(LogicalDAGPlan logicalDag,
+  public PhysicalDAGPlan assemble(SqrlDAG logicalDag,
       Set<URL> jars, Map<String, UserDefinedFunction> udfs) {
     //Stitch DAG together
-    return assembler.assemble(logicalDag.getDag(), logicalDag.getLogs(), jars, udfs);
+    return assembler.assemble(logicalDag, jars, udfs);
   }
 
-  public LogicalDAGPlan planLogical() {
+  public SqrlDAG planLogical() {
     List<ResolvedExport> exports = framework.getSchema().getExports();
-    LogicalDAGPlan buildDag = build(exports);
-    optimize(buildDag.getDag());
-    return buildDag;
+    SqrlDAG dag = build(exports);
+    optimize(dag);
+    return dag;
   }
 
-  public PhysicalDAGPlan planPhysical(LogicalDAGPlan dag) {
+  public PhysicalDAGPlan planPhysical(SqrlDAG dag) {
     return assemble(dag, framework.getSchema().getJars(),
         extractFlinkFunctions(framework.getSqrlOperatorTable()));
   }

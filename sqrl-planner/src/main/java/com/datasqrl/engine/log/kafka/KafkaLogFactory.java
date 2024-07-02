@@ -1,14 +1,11 @@
 package com.datasqrl.engine.log.kafka;
 
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.cmd.EngineKeys;
 import com.datasqrl.config.ConnectorFactory;
 import com.datasqrl.config.ConnectorFactory.IConnectorFactoryContext;
 import com.datasqrl.config.ConnectorFactoryContext;
 import com.datasqrl.config.TableConfig;
 import com.datasqrl.engine.log.Log;
-import com.datasqrl.engine.log.LogEngine;
-import com.datasqrl.engine.log.LogEngine.Timestamp;
 import com.datasqrl.engine.log.LogFactory;
 import com.datasqrl.io.tables.TableSchema;
 import com.datasqrl.plan.table.RelDataTypeTableSchema;
@@ -19,8 +16,6 @@ import java.util.Map;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.rel.type.RelRecordType;
 import org.apache.kafka.common.internals.Topic;
 
 @AllArgsConstructor

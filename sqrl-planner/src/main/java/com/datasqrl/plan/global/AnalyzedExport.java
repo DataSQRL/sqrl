@@ -16,7 +16,7 @@ public class AnalyzedExport {
   OptionalInt numSelects;
   TableSink sink;
 
-  public static AnalyzedExport from(ResolvedExport.External export) {
+  public static AnalyzedExport from(ResolvedExport export) {
     return new AnalyzedExport(export.getTable(), export.getRelNode() ,
         OptionalInt.of(export.getNumFieldSelects()),
         export.getSink());

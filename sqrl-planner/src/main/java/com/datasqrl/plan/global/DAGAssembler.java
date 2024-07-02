@@ -2,18 +2,13 @@ package com.datasqrl.plan.global;
 
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.config.EngineFactory.Type;
-import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.log.Log;
-import com.datasqrl.engine.log.LogEngine;
-import com.datasqrl.engine.log.LogEngine.Timestamp;
-import com.datasqrl.engine.log.LogEngine.TimestampType;
+import com.datasqrl.engine.log.LogManager;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.graphql.APIConnectorManager;
-import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.io.tables.TableType;
 import com.datasqrl.plan.RelStageRunner;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
@@ -21,12 +16,10 @@ import com.datasqrl.plan.global.PhysicalDAGPlan.WriteSink;
 import com.datasqrl.plan.global.SqrlDAG.ExportNode;
 import com.datasqrl.plan.hints.TimestampHint;
 import com.datasqrl.plan.local.generate.QueryTableFunction;
-import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.plan.rules.AnnotatedLP;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.rules.SqrlConverterConfig;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
-import com.datasqrl.plan.table.PhysicalTable;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.calcite.SqrlRexUtil;
 import com.google.common.base.Preconditions;
@@ -39,7 +32,6 @@ import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.TableFunctionScan;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.hint.Hintable;
-import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.flink.table.functions.UserDefinedFunction;
 
@@ -56,9 +48,10 @@ public class DAGAssembler {
   private final SqrlFramework framework;
   private final SQRLConverter sqrlConverter;
   private final ExecutionPipeline pipeline;
+  private final LogManager logManager;
   private final ErrorCollector errors;
 
-  public PhysicalDAGPlan assemble(SqrlDAG dag, List<Log> logs, Set<URL> jars, Map<String, UserDefinedFunction> udfs) {
+  public PhysicalDAGPlan assemble(SqrlDAG dag, Set<URL> jars, Map<String, UserDefinedFunction> udfs) {
     //We make the assumption that there is a single stream stage
     ExecutionStage streamStage = pipeline.getStage(Type.STREAMS).get();
     List<PhysicalDAGPlan.WriteQuery> streamQueries = new ArrayList<>();
@@ -183,9 +176,14 @@ public class DAGAssembler {
       allPlans.add(serverPlan);
     }
     Optional<ExecutionStage> logStage = pipeline.getStage(Type.LOG);
+    Map<String, Log> logs = logManager.getLogs();
     if (logStage.isPresent()) {
+      List<Log> sortedLogs = logs.entrySet().stream()
+          .sorted(Map.Entry.comparingByKey())
+          .map(Map.Entry::getValue)
+          .collect(Collectors.toList());
       PhysicalDAGPlan.StagePlan logPlan = new PhysicalDAGPlan.LogStagePlan(
-          logStage.get(), logs);
+          logStage.get(), sortedLogs);
       allPlans.add(logPlan);
     } else if (!logs.isEmpty()) {
       throw new IllegalStateException("Should not have logs when no log engine is present");
