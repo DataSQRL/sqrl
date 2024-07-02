@@ -15,12 +15,9 @@ import com.datasqrl.engine.log.LogEngine;
 import com.datasqrl.engine.log.LogFactory;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
-import com.datasqrl.plan.global.PhysicalDAGPlan.ExternalSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.LogStagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
-import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import java.util.ArrayList;
@@ -50,8 +47,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
 
   @Override
   public EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs,
-      List<EngineSink> engineSinks, ExecutionPipeline pipeline,
-      SqrlFramework framework, ErrorCollector errorCollector) {
+      ExecutionPipeline pipeline, SqrlFramework framework, ErrorCollector errorCollector) {
 
     Preconditions.checkArgument(plan instanceof LogStagePlan);
 
@@ -62,21 +58,6 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         .map(KafkaTopic::getTopicName)
         .map(NewTopic::new)
         .forEach(topics::add);
-
-//    engineSinks.stream()
-//        .map(EngineSink::getName)
-//        .map(NewTopic::new)
-//        .forEach(topics::add);
-
-//    List<ResolvedExport> exports = framework.getSchema().getExports();
-//    exports.stream()
-//        .flatMap(resolvedExport -> engineSinks.stream()
-//            .map(EngineSink::getTableSink)
-//            .filter(externalTableSink -> externalTableSink.equals(resolvedExport.getSink()))
-//            .findAny().stream())
-//        .map(externalTableSink -> externalTableSink.getName().getCanonical())
-//        .map(NewTopic::new)
-//        .forEach(topics::add);
 
     return new KafkaPhysicalPlan(topics);
   }

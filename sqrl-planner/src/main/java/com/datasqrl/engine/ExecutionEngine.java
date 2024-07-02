@@ -46,8 +46,7 @@ public interface ExecutionEngine extends IExecutionEngine {
 //  CompletableFuture<ExecutionResult> execute(EnginePhysicalPlan plan, ErrorCollector errors);
 
   EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs,
-      List<EngineSink> engineSinks, ExecutionPipeline pipeline,
-      SqrlFramework framework, ErrorCollector errorCollector);
+      ExecutionPipeline pipeline, SqrlFramework framework, ErrorCollector errorCollector);
 
   @AllArgsConstructor
   @Getter

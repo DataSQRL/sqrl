@@ -165,19 +165,6 @@ public class PhysicalDAGPlan {
   }
 
   @Value
-  @AllArgsConstructor
-  public static class ExportSink implements WriteSink {
-    String name;
-    TableSink tableSink;
-    ExecutionStage stage;
-
-    @Override
-    public <R, C> R accept(SinkVisitor<R, C> visitor, C context) {
-      return visitor.accept(this, context);
-    }
-  }
-
-  @Value
   public static class ReadQuery implements Query {
 
     IdentifiedQuery query;
@@ -197,6 +184,5 @@ public class PhysicalDAGPlan {
 
     R accept(ExternalSink externalSink, C context);
     R accept(EngineSink engineSink, C context);
-    R accept(ExportSink exportSink, C context);
   }
 }

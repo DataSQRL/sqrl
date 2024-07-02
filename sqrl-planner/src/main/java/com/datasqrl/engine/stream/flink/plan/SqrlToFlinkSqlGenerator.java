@@ -28,7 +28,6 @@ import com.datasqrl.flink.FlinkConverter;
 import com.datasqrl.function.DowncastFunction;
 import com.datasqrl.io.schema.json.FlexibleJsonFlinkFormatFactory;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
-import com.datasqrl.plan.global.PhysicalDAGPlan.ExportSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.ExternalSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.Query;
 import com.datasqrl.plan.global.PhysicalDAGPlan.WriteQuery;
@@ -300,9 +299,6 @@ public class SqrlToFlinkSqlGenerator {
     if (sink instanceof EngineSink) {
       EngineSink engineSink = (EngineSink) sink;
       return engineSink.getStage().getEngine().getSinkConfig(engineSink.getNameId());
-    } else if (sink instanceof ExportSink) {
-      ExportSink exportSink = (ExportSink) sink;
-      return exportSink.getTableSink().getConfiguration();
     } else if (sink instanceof ExternalSink) {
       ExternalSink externalSink = (ExternalSink) sink;
       return externalSink.getTableSink().getConfiguration();
@@ -484,10 +480,6 @@ public class SqrlToFlinkSqlGenerator {
       ExternalSink externalSink = (ExternalSink) sink;
       tableConfig = externalSink.getTableSink().getConfiguration();
       name = externalSink.getName();
-    } else if (sink instanceof ExportSink) {
-      ExportSink exportSink = (ExportSink) sink;
-      tableConfig = exportSink.getTableSink().getConfiguration();
-      name = exportSink.getName();
     } else {
       throw new RuntimeException("Could not identify write sink type.");
     }

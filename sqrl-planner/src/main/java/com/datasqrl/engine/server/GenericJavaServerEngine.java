@@ -10,7 +10,6 @@ import com.datasqrl.engine.database.relational.AbstractJDBCEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.ServerStagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
@@ -33,8 +32,7 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
 
   @Override
   public EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs,
-      List<EngineSink> engineSinks, ExecutionPipeline pipeline,
-      SqrlFramework framework, ErrorCollector errorCollector) {
+      ExecutionPipeline pipeline, SqrlFramework framework, ErrorCollector errorCollector) {
 
     Preconditions.checkArgument(plan instanceof ServerStagePlan);
     Set<ExecutionStage> dbStages = pipeline.getStages().stream().filter(s -> s.getEngine().getType()== Type.DATABASE).collect(
