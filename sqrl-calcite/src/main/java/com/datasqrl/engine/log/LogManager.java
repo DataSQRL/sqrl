@@ -15,6 +15,6 @@ public interface LogManager extends LogFactory {
    *
    * @return All the logs created by this {@link LogManager} with their globally unique ids.
    */
-  Map<String,Log> getLogs();
+  Map<String, Log> getLogs();
 
 }

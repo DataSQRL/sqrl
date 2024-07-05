@@ -39,6 +39,11 @@ public class KafkaLogFactory implements LogFactory {
     return new KafkaTopic(topicName, logName, logConfig, tblSchema, connectorContext);
   }
 
+  @Override
+  public String getEngineName() {
+    return KafkaLogEngineFactory.ENGINE_NAME;
+  }
+
   static String sanitizeName(String logId) {
     String sanitizedName = logId;
     for (char invalidChar : REPLACE_CHARS) {

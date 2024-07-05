@@ -1,5 +1,7 @@
 {
   "version": "1",
   "enabled-engines": ["kafka", "flink"],
-  "log-method": "none"
+  "compiler": {
+    "log": "none"
+  }
 }

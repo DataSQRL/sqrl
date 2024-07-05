@@ -40,8 +40,6 @@ public interface PackageJson {
 
   boolean hasScriptKey();
 
-  LogMethod getLogMethod();
-
   interface CompilerConfig {
 
     ExplainConfig getExplain();
@@ -51,6 +49,8 @@ public interface PackageJson {
     void setSnapshotPath(String string);
 
     boolean isAddArguments();
+
+    LogMethod getLog();
   }
 
   interface ExplainConfig {
@@ -131,7 +131,7 @@ public interface PackageJson {
   enum LogMethod {
     NONE("none"),
     PRINT("print"),
-    LOG_ENGINE("log-engine");
+    KAFKA("kafka");
 
     final String value;
 
@@ -146,6 +146,10 @@ public interface PackageJson {
         }
       }
       throw new IllegalArgumentException("Invalid LogMethod value: " + value);
+    }
+
+    public String getValue() {
+      return value;
     }
   }
 }

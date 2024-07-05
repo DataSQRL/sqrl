@@ -23,6 +23,8 @@ public interface LogFactory {
   Log create(String logId, Name logName, RelDataType schema, List<String> primaryKey,
       Timestamp timestamp);
 
+  String getEngineName();
+
   enum TimestampType {
     /**
      * Don't set a timestamp on the created log.

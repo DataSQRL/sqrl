@@ -44,4 +44,9 @@ public class LogManagerImpl implements LogManager {
     logs.put(logId, log);
     return log;
   }
+
+  @Override
+  public String getEngineName() {
+    return proxiedFactory.get().getEngineName();
+  }
 }
