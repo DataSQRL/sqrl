@@ -1,5 +1,6 @@
 package com.datasqrl.config;
 
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.engine.log.Log;
 import com.datasqrl.engine.log.LogEngine;
@@ -36,7 +37,7 @@ public class LogManagerImpl implements LogManager {
   }
 
   @Override
-  public Log create(String logId, String logName, RelDataType schema, List<String> primaryKey,
+  public Log create(String logId, Name logName, RelDataType schema, List<String> primaryKey,
       Timestamp timestamp) {
     Log log = proxiedFactory.orElseThrow(() -> new IllegalStateException("No log engine configured"))
         .create(logId, logName, schema, primaryKey, timestamp);

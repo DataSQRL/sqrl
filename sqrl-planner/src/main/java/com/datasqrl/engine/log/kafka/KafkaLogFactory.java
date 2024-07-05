@@ -26,18 +26,17 @@ public class KafkaLogFactory implements LogFactory {
   ConnectorFactory connectorFactory;
 
   @Override
-  public Log create(String logId, String logName, RelDataType schema, List<String> primaryKey,
+  public Log create(String logId, Name logName, RelDataType schema, List<String> primaryKey,
       Timestamp timestamp) {
 
     String topicName = sanitizeName(logId);
     Preconditions.checkArgument(Topic.isValid(topicName), "Not a valid topic name: %s", topicName);
-    Name name = Name.system(logName);
-    IConnectorFactoryContext connectorContext = createSinkContext(name, topicName, timestamp.getName(),
+    IConnectorFactoryContext connectorContext = createSinkContext(logName, topicName, timestamp.getName(),
         timestamp.getType().name(), primaryKey);
     TableConfig logConfig = connectorFactory
         .createSourceAndSink(connectorContext);
     Optional<TableSchema> tblSchema = Optional.of(new RelDataTypeTableSchema(schema));
-    return new KafkaTopic(topicName, name, logConfig, tblSchema, connectorContext);
+    return new KafkaTopic(topicName, logName, logConfig, tblSchema, connectorContext);
   }
 
   static String sanitizeName(String logId) {

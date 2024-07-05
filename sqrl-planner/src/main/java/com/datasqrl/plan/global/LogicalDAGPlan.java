@@ -6,8 +6,5 @@ import lombok.Value;
 
 @Value
 public class LogicalDAGPlan {
-
-  ;
   List<Log> logs;
-
 }

@@ -4,7 +4,6 @@ import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.ConnectorFactoryFactory;
-import com.datasqrl.config.LogManagerImpl;
 import com.datasqrl.engine.log.Log;
 import com.datasqrl.engine.log.LogFactory.Timestamp;
 import com.datasqrl.engine.log.LogFactory;
@@ -90,7 +89,7 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
       }
       String logId = getLogId(mutation);
       //TODO: add _event_id to mutation schema and provide as primary key
-      Log log = createLog(logId, mutation.getSchema(), List.of(mutation.getPkName()),
+      Log log = createLog(logId, mutation.getName(), mutation.getSchema(), List.of(mutation.getPkName()),
           new Timestamp(mutation.getTimestampName(), LogFactory.TimestampType.LOG_TIME));
       ((LogModule) logModule).addEntry(mutation.getName(), log);
       sqrlSchema.getMutations().put(mutation, log.getSource());
@@ -122,17 +121,17 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
       RelDataTypeField tableSchema = new RelDataTypeFieldImpl(table.getTableName().getDisplay(), -1,
           table.getRowType());
 
-      log = createLog(logId, tableSchema, List.of(), LogFactory.Timestamp.NONE);
+      log = createLog(logId, table.getTableName(), tableSchema, List.of(), LogFactory.Timestamp.NONE);
       sqrlSchema.getApiExports().put(sqrlTable, log);
     }
     sqrlSchema.getSubscriptions().put(subscription, log.getSink());
     return log;
   }
 
-  public Log createLog(String logId, RelDataTypeField schema, List<String> primaryKey,
+  public Log createLog(String logId, Name logName, RelDataTypeField schema, List<String> primaryKey,
       Timestamp timestamp) {
     return logEngine
-        .create(logId, schema.getName(), schema.getType(), primaryKey, timestamp);
+        .create(logId, logName, schema.getType(), primaryKey, timestamp);
   }
 
   @Override

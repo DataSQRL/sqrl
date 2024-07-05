@@ -1,7 +1,7 @@
 package com.datasqrl.engine.log;
 
+import com.datasqrl.canonicalizer.Name;
 import java.util.List;
-import java.util.Map;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
 
@@ -14,13 +14,13 @@ public interface LogFactory {
    * Creates a new log.
    *
    * @param logId The unique identifier for this log. Must be globally unique.
-   * @param logName The user provided name to identify this log. //TODO: @Nandor, please change type to {@link com.datasqrl.canonicalizer.Name}.
+   * @param logName The user provided name to identify this log.
    * @param schema The schema for the messages in the log.
    * @param primaryKey The primary key for messages in the log. The primary key columns must be part of the schema.
    * @param timestamp The timestamp for the messages in the log.
    * @return
    */
-  Log create(String logId, String logName, RelDataType schema, List<String> primaryKey,
+  Log create(String logId, Name logName, RelDataType schema, List<String> primaryKey,
       Timestamp timestamp);
 
   enum TimestampType {

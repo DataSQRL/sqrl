@@ -195,7 +195,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
           case NONE: return null; //Ignore export
           case PRINT: connector = SystemBuiltInConnectors.PRINT_SINK; break;
           case LOG_ENGINE:
-            Log sinkLog = logManager.create(modTable.getNameId(), sinkPath.getLast().getDisplay(),
+            Log sinkLog = logManager.create(modTable.getNameId(), sinkPath.getLast(),
                 exportRelNode.getRowType(), List.of(), LogFactory.Timestamp.NONE);
             tableSink = sinkLog.getSink();
             break;
