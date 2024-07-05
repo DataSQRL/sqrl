@@ -33,7 +33,7 @@ LogicalProject(productid=[$0], week=[$1], revenue=[$2])
     LogicalProject(productid=[$3], week=[endOfWeek($2)], $f2=[-(*($4, $5), COALESCE($6, 0.0:DECIMAL(2, 1)))], id=[$0], time=[$2])
       LogicalTableScan(table=[[orders$2]])
 
-=== print.Revenue.Revenue
+=== print.Revenue
 ID:     productrevenue$1$1
 Type:   export
 Stage:  streams

@@ -30,7 +30,7 @@ Schema:
 Plan:
 LogicalTableScan(table=[[addevent$2]])
 
-=== PgTable.PgTable
+=== kafka.PgTable
 ID:     pgtable$1$1
 Type:   export
 Stage:  streams
@@ -58,14 +58,14 @@ Inputs: pgtable$1
 {
   "topics" : [
     {
-      "name" : "pgtable-1",
+      "name" : "create-topic-addevent",
       "numPartitions" : 1,
       "replicationFactor" : 1,
       "replicasAssignments" : { },
       "config" : { }
     },
     {
-      "name" : "create-topic-addevent",
+      "name" : "pgtable-1",
       "numPartitions" : 1,
       "replicationFactor" : 1,
       "replicasAssignments" : { },

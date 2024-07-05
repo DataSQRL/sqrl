@@ -1,9 +1,10 @@
 package com.datasqrl.engine.log.kafka;
 
+import static com.datasqrl.engine.log.kafka.KafkaLogEngineFactory.ENGINE_NAME;
+
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.ConnectorFactory.IConnectorFactoryContext;
-import com.datasqrl.config.ConnectorFactoryContext;
 import com.datasqrl.config.TableConfig;
 import com.datasqrl.engine.log.Log;
 import com.datasqrl.io.tables.TableSchema;
@@ -27,11 +28,11 @@ class KafkaTopic implements Log {
 
   @Override
   public TableSource getSource() {
-    return TableSource.create(logConfig, logName.toNamePath(), tableSchema.get());
+    return TableSource.create(logConfig, NamePath.of(ENGINE_NAME), tableSchema.get());
   }
 
   @Override
   public TableSink getSink() {
-    return TableSinkImpl.create(logConfig, logName.toNamePath(), tableSchema);
+    return TableSinkImpl.create(logConfig, NamePath.of(ENGINE_NAME), tableSchema);
   }
 }

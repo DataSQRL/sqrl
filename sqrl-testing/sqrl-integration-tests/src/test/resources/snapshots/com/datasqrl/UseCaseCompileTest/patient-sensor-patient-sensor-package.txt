@@ -167,13 +167,13 @@ LogicalProject(patientid=[$5], sensorid=[$0], smoothTemp=[$2], timeMin=[$1])
       LogicalProject(id=[$0], patientid=[$1], placed=[$2], placedTimestamp=[$3], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $3 DESC NULLS LAST)])
         LogicalTableScan(table=[[sensors$3]])
 
-=== print.tempWarning.tempWarning
+=== print.tempWarning
 ID:     tempalert$1$1
 Type:   export
 Stage:  streams
 Inputs: tempalert$1
 
-=== TempAlert.TempAlert
+=== kafka.TempAlert
 ID:     tempalert$1$2
 Type:   export
 Stage:  streams
@@ -244,14 +244,14 @@ Inputs: tempalert$1
 {
   "topics" : [
     {
-      "name" : "tempalert-1",
+      "name" : "patient-sensor-addreading",
       "numPartitions" : 1,
       "replicationFactor" : 1,
       "replicasAssignments" : { },
       "config" : { }
     },
     {
-      "name" : "patient-sensor-addreading",
+      "name" : "tempalert-1",
       "numPartitions" : 1,
       "replicationFactor" : 1,
       "replicasAssignments" : { },
