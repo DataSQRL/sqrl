@@ -2,5 +2,5 @@ version: "3.8"
 services:
   iceberg:
     build:
-      context: snowflake
+      context: iceberg
       dockerfile: Dockerfile

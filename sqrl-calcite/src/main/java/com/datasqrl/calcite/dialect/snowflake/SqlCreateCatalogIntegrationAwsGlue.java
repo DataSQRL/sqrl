@@ -1,5 +1,6 @@
 package com.datasqrl.calcite.dialect.snowflake;
 
+import lombok.Getter;
 import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.util.ImmutableNullableList;
@@ -24,6 +25,7 @@ import java.util.Objects;
  *   [ GLUE_REGION = '<AWS-region-of-the-glue-catalog>' ]
  *   CATALOG_NAMESPACE = '<catalog-namespace>'
  */
+@Getter
 public class SqlCreateCatalogIntegrationAwsGlue extends SqlCall {
     public static final SqlSpecialOperator OPERATOR = new SqlSpecialOperator("CREATE CATALOG INTEGRATION", SqlKind.OTHER_DDL);
 

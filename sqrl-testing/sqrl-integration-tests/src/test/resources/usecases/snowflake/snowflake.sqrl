@@ -1,1 +1,5 @@
-IMPORT data.data;
+IMPORT data.applications;
+
+-- Todo: snowflake stage gets elimiated if no queries ..?
+
+MySnowflakeTable := SELECT * FROM applications;

@@ -6,6 +6,7 @@ package com.datasqrl.config;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.module.resolver.ResourceResolver;
+import java.util.Optional;
 import lombok.*;
 
 import java.net.URI;
@@ -76,8 +77,8 @@ public class TableConfigImpl implements TableConfig {
     // Some sinks disallow primary key (kafka) for sinks. Generally we should pass through when specified.
     // When creating the log engine, we should pass in if the connector needs pks. However, this is difficult
     // right now so we'll add a hack to check for this specific case.
-    String connectorName = getConnectorConfig().getConnectorName();
-    if (connectorName.equalsIgnoreCase("kafka")) {
+    Optional<String> connectorName = getConnectorConfig().getConnectorName();
+    if (connectorName.isPresent() && connectorName.get().equalsIgnoreCase("kafka")) {
       return List.of();
     }
 

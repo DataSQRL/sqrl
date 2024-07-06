@@ -95,7 +95,6 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
             .orElseThrow(() -> new RuntimeException("Could not find DDL factory"));
 
     List<SqlDDLStatement> ddlStatements = new ArrayList<>();
-    factory.createCatalog().map(c->ddlStatements.add(()->toDialectString(c)));
 
     ddlStatements.addAll(
       StreamUtil.filterByClass(inputs,
@@ -126,7 +125,7 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
     return new JDBCPhysicalPlan(ddlStatements, databaseQueries, queries);
   }
 
-  private String toDialectString(SqlNode sqlNode) {
+  public String toDialectString(SqlNode sqlNode) {
     SqlWriterConfig config = SqlPrettyWriter.config()
         .withDialect(ExtendedSnowflakeSqlDialect.DEFAULT); //todo move to this dialect
     SqlPrettyWriter prettyWriter = new SqlPrettyWriter(config);
@@ -135,7 +134,7 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
   }
 
   //todo remove
-  private Dialect mapDialect(JdbcDialect dialect) {
+  public Dialect mapDialect(JdbcDialect dialect) {
     switch (dialect) {
       case Postgres:
         return Dialect.POSTGRES;

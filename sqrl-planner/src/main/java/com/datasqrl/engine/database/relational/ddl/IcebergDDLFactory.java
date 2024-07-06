@@ -36,27 +36,26 @@ public class IcebergDDLFactory implements JdbcDDLFactory {
     return JdbcDialect.Iceberg;
   }
 
-  @Override
-  public Optional<SqlNode> createCatalog() {
-
-    SqlNodeList catalogParams = SqlCatalogParams.createGlueCatalogParams(
-        SqlParserPos.ZERO,
-        "arn:aws:iam::123456789012:role/myGlueRole",
-        "123456789012",
-        "us-east-2",
-        "my.catalogdb"
-    );
-
-    SqlCreateCatalogIntegrationAwsGlue catalog = new SqlCreateCatalogIntegrationAwsGlue(SqlParserPos.ZERO,
-        false, true, new SqlIdentifier("MyCatalog", SqlParserPos.ZERO),
-        SqlLiteral.createCharString("GLUE", SqlParserPos.ZERO),
-        SqlLiteral.createCharString("ICEBERG", SqlParserPos.ZERO),
-        catalogParams,
-        SqlLiteral.createBoolean(true, SqlParserPos.ZERO),
-        null);
-
-    return Optional.of(catalog);
-  }
+//  public Optional<SqlNode> createCatalog() {
+//
+//    SqlNodeList catalogParams = SqlCatalogParams.createGlueCatalogParams(
+//        SqlParserPos.ZERO,
+//        "arn:aws:iam::123456789012:role/myGlueRole",
+//        "123456789012",
+//        "us-east-2",
+//        "my.catalogdb"
+//    );
+//
+//    SqlCreateCatalogIntegrationAwsGlue catalog = new SqlCreateCatalogIntegrationAwsGlue(SqlParserPos.ZERO,
+//        false, true, new SqlIdentifier("MyCatalog", SqlParserPos.ZERO),
+//        SqlLiteral.createCharString("GLUE", SqlParserPos.ZERO),
+//        SqlLiteral.createCharString("ICEBERG", SqlParserPos.ZERO),
+//        catalogParams,
+//        SqlLiteral.createBoolean(true, SqlParserPos.ZERO),
+//        null);
+//
+//    return Optional.of(catalog);
+//  }
 
   public SqlDDLStatement createTable(EngineSink table) {
     SqlIdentifier tableName = new SqlIdentifier(table.getNameId(), SqlParserPos.ZERO);

@@ -35,6 +35,7 @@ import com.datasqrl.plan.global.PhysicalDAGPlan.WriteSink;
 import com.datasqrl.plan.table.ImportedRelationalTable;
 import com.datasqrl.sql.SqlCallRewriter;
 import com.google.common.base.Preconditions;
+import io.vertx.sqlclient.SqlResult;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -76,6 +77,7 @@ import org.apache.flink.sql.parser.ddl.SqlCreateTable;
 import org.apache.flink.sql.parser.ddl.SqlCreateView;
 import org.apache.flink.sql.parser.ddl.SqlTableColumn;
 import org.apache.flink.sql.parser.ddl.SqlTableOption;
+import org.apache.flink.sql.parser.ddl.SqlUseCatalog;
 import org.apache.flink.sql.parser.ddl.SqlWatermark;
 import org.apache.flink.sql.parser.ddl.constraint.SqlConstraintEnforcement;
 import org.apache.flink.sql.parser.ddl.constraint.SqlTableConstraint;
@@ -100,7 +102,7 @@ public class SqrlToFlinkSqlGenerator {
   public SqlResult plan(List<? extends Query> stageQueries) {
     checkPreconditions(stageQueries);
     List<WriteQuery> writeQueries = applyFlinkCompatibilityRules(stageQueries);
-    Set<SqlCreateTable> sinksAndSources = extractTableDescriptors(writeQueries);
+    Set<SqlCall> sinksAndSources = extractTableDescriptors(writeQueries);
 
     List<SqlCreateView> queries = new ArrayList<>();
     List<RichSqlInsert> inserts = new ArrayList<>();
@@ -353,10 +355,10 @@ public class SqrlToFlinkSqlGenerator {
         new SqlNodeList(SqlParserPos.ZERO));
   }
 
-  private Set<SqlCreateTable> extractTableDescriptors(List<WriteQuery> queries) {
+  private Set<SqlCall> extractTableDescriptors(List<WriteQuery> queries) {
     Map<String, ImportedRelationalTable> tables = uniqueSourceExtractor.extract(queries);
 
-    Set<SqlCreateTable> sinksAndSources = new LinkedHashSet<>();
+    Set<SqlCall> sinksAndSources = new LinkedHashSet<>();
     for (Map.Entry<String, ImportedRelationalTable> table : tables.entrySet()) {
       String tableName = table.getKey();
       SqlCreateTable sqlCreateTable = toCreateTable(tableName, table.getValue().getRowType(),
@@ -588,7 +590,7 @@ public class SqrlToFlinkSqlGenerator {
 
   @lombok.Value
   public static class SqlResult {
-    private Set<SqlCreateTable> sinksSources;
+    private Set<SqlCall> sinksSources;
     private List<RichSqlInsert> inserts;
     private List<SqlCreateView> queries;
     private List<SqlCreateFunction> functions;

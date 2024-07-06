@@ -1,10 +1,32 @@
 {
   "version": "1",
-  "profiles" : ["/Users/henneberger/sqrl/profiles/default"],
-  "enabled-engines": ["flink", "iceberg", "snowflake"],
-  "values" : {
+  "profiles": [
+    "/Users/henneberger/sqrl/profiles/default"
+  ],
+  "enabled-engines": [
+    "flink",
+    "iceberg",
+    "snowflake"
+  ],
+  "values": {
     "flink-config": {
       "table.exec.source.idle-timeout": "1 ms"
+    }
+  },
+  "engines": {
+    "flink": {
+      "connectors" : {
+        "iceberg" : {
+          "warehouse":"s3://daniel-iceberg-table-test",
+          "catalog-impl":"org.apache.iceberg.aws.glue.GlueCatalog",
+          "io-impl":"org.apache.iceberg.aws.s3.S3FileIO",
+          "catalog-name": "mydatabase"
+        }
+      }
+    },
+    "snowflake" : {
+      "catalog-name": "MyCatalog",
+      "external-volume": "iceberg_storage_vol"
     }
   }
 }
