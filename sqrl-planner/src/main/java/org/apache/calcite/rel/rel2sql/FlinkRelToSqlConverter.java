@@ -268,6 +268,10 @@ public class FlinkRelToSqlConverter extends RelToSqlConverter {
 
   @Override
   public Result visit(TableFunctionScan e) {
+    if (e.getInputs().isEmpty()) {
+      return super.visit(e).resetAlias();
+    }
+
     Result x = super.visitInput(e, 0)
         .resetAlias();
 

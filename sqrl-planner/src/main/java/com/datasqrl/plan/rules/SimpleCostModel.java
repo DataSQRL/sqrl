@@ -42,6 +42,8 @@ class SimpleCostModel implements ComputeCost {
       case SERVER:
         cost = cost * 2;
         break;
+//      case STATIC:
+//        return 1;
       default:
         throw new UnsupportedOperationException("Unsupported engine type: " + engineType);
     }
