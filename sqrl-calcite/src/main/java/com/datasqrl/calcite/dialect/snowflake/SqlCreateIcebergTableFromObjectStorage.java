@@ -13,7 +13,7 @@ import java.util.Objects;
  * CREATE [ OR REPLACE ] ICEBERG TABLE [ IF NOT EXISTS ] <table_name>
  *   [ EXTERNAL_VOLUME = '<external_volume_name>' ]
  *   [ CATALOG = '<catalog_integration_name>' ]
- *   METADATA_FILE_PATH = '<metadata_file_path>'
+ *   [ METADATA_FILE_PATH = '<metadata_file_path>' ]
  *   [ REPLACE_INVALID_CHARACTERS = { TRUE | FALSE } ]
  *   [ COMMENT = '<string_literal>' ]
  *   [ [ WITH ] TAG ( <tag_name> = '<tag_value>' [ , <tag_name> = '<tag_value>' , ... ] ) ]
@@ -43,7 +43,7 @@ public class SqlCreateIcebergTableFromObjectStorage extends SqlCall {
     this.tableName = Objects.requireNonNull(tableName);
     this.externalVolume = externalVolume;
     this.catalog = catalog;
-    this.metadataFilePath = Objects.requireNonNull(metadataFilePath);
+    this.metadataFilePath = metadataFilePath;
     this.replaceInvalidCharacters = replaceInvalidCharacters;
     this.comment = comment;
     this.tags = tags;
@@ -81,8 +81,10 @@ public class SqlCreateIcebergTableFromObjectStorage extends SqlCall {
       writer.literal("= '" + catalog.toValue() + "'");
     }
 
-    writer.keyword("METADATA_FILE_PATH");
-    writer.literal("= '" + metadataFilePath.toValue() + "'");
+    if (metadataFilePath != null) {
+      writer.keyword("METADATA_FILE_PATH");
+      writer.literal("= '" + metadataFilePath.toValue() + "'");
+    }
 
     if (replaceInvalidCharacters != null) {
       writer.keyword("REPLACE_INVALID_CHARACTERS");

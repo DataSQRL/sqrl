@@ -30,6 +30,10 @@
         "iceberg": {
           "connector": "iceberg",
           "catalog-table": "${sqrl:table}"
+        },
+        "snowflake": {
+          "connector": "iceberg",
+          "catalog-table": "${sqrl:table}"
         }
       }
     }

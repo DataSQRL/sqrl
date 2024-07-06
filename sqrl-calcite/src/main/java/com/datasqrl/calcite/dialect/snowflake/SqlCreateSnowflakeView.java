@@ -2,7 +2,6 @@ package com.datasqrl.calcite.dialect.snowflake;
 
 import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.calcite.sql.util.SqlVisitor;
 import org.apache.calcite.util.ImmutableNullableList;
 
 import javax.annotation.Nonnull;
@@ -25,7 +24,7 @@ import java.util.Objects;
  *   [ [ WITH ] TAG ( <tag_name> = '<tag_value>' [ , <tag_name> = '<tag_value>' , ... ] ) ]
  *   AS <select_statement>
  */
-public class SqlCreateView extends SqlCall {
+public class SqlCreateSnowflakeView extends SqlCall {
 
   private static final SqlSpecialOperator OPERATOR = new SqlSpecialOperator("CREATE VIEW",
       SqlKind.CREATE_VIEW);
@@ -41,7 +40,7 @@ public class SqlCreateView extends SqlCall {
   private final SqlCharStringLiteral comment;
   private final boolean copyGrants;
 
-  public SqlCreateView(SqlParserPos pos, boolean replace, boolean ifNotExists, boolean secure,
+  public SqlCreateSnowflakeView(SqlParserPos pos, boolean replace, boolean ifNotExists, boolean secure,
       boolean recursive, SqlIdentifier tempOption, SqlIdentifier viewName, SqlNodeList columnList,
       SqlSelect select, SqlCharStringLiteral comment, boolean copyGrants) {
     super(pos);
@@ -49,7 +48,7 @@ public class SqlCreateView extends SqlCall {
     this.ifNotExists = ifNotExists;
     this.secure = secure;
     this.recursive = recursive;
-    this.tempOption = Objects.requireNonNull(tempOption);
+    this.tempOption = tempOption;
     this.viewName = Objects.requireNonNull(viewName);
     this.columnList = columnList;
     this.select = Objects.requireNonNull(select);

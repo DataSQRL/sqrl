@@ -48,7 +48,7 @@ import java.util.Objects;
  *   [ [ WITH ] AGGREGATION POLICY <policy_name> ]
  *   [ [ WITH ] TAG ( <tag_name> = '<tag_value>' [ , <tag_name> = '<tag_value>' , ... ] ) ]
  */
-public class SqlCreateIcebergTableFromSnowflak extends SqlCall {
+public class SqlCreateIcebergTableFromSnowflake extends SqlCall {
 
   private static final SqlSpecialOperator OPERATOR = new SqlSpecialOperator("CREATE ICEBERG TABLE",
       SqlKind.OTHER_DDL);
@@ -71,7 +71,7 @@ public class SqlCreateIcebergTableFromSnowflak extends SqlCall {
   private final SqlLiteral defaultDdlCollation;
   private final boolean copyGrants;
 
-  public SqlCreateIcebergTableFromSnowflak(SqlParserPos pos, boolean replace, boolean ifNotExists,
+  public SqlCreateIcebergTableFromSnowflake(SqlParserPos pos, boolean replace, boolean ifNotExists,
       SqlIdentifier tableName,
       List<SqlColumnDeclaration> columns, SqlNodeList columnConstraints,
       SqlLiteral comment, SqlNodeList tableOptions, SqlNodeList clusterBy,

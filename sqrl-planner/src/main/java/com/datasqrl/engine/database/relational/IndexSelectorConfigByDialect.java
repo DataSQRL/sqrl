@@ -52,6 +52,8 @@ public class IndexSelectorConfigByDialect implements IndexSelectorConfig {
         return EnumSet.of(HASH, BTREE);
       case Iceberg:
         return EnumSet.of(BTREE);
+      case Snowflake:
+        return EnumSet.of(BTREE);
       default:
         throw new IllegalStateException("Dialect not supported:" + dialect.name());
     }
@@ -71,6 +73,7 @@ public class IndexSelectorConfigByDialect implements IndexSelectorConfig {
       case H2:
       case SQLite:
       case Iceberg:
+      case Snowflake:
         return maxIndexColumns;
       default:
         throw new IllegalStateException("Dialect not supported: " + dialect.name());
