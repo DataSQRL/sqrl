@@ -4,25 +4,14 @@
 package com.datasqrl.schema.input.external;
 
 import java.util.List;
+import java.util.Map;
+import lombok.Getter;
 
+@Getter
 public class FieldTypeDefinitionImpl implements FieldTypeDefinition {
 
   public String type;
   public List<FieldDefinition> columns;
   public List<String> tests;
-
-  @Override
-  public String getType() {
-    return type;
-  }
-
-  @Override
-  public List<FieldDefinition> getColumns() {
-    return columns;
-  }
-
-  @Override
-  public List<String> getTests() {
-    return tests;
-  }
+  public Map<String, Object> cardinality;
 }

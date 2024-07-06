@@ -138,6 +138,14 @@ public class SchemaImport {
     final Type type;
     final int arrayDepth;
     List<Constraint> constraints = convertConstraints(ftd.getTests(), errors);
+    if (ftd.getCardinality() != null) {
+      Constraint.Factory cf = constraintLookup.get("cardinality");
+
+      Optional<Constraint> r = cf.create(ftd.getCardinality(), errors);
+      if (r.isPresent()) {
+        constraints.add(r.get());
+      }
+    }
     if (ftd.getColumns() != null) {
       if (ftd.getType() != null) {
         errors.warn("Cannot define columns and type. Type is ignored");

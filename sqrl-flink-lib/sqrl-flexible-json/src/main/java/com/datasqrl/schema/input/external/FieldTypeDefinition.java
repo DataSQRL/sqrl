@@ -5,6 +5,7 @@ package com.datasqrl.schema.input.external;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 
 public interface FieldTypeDefinition extends Serializable {
 
@@ -14,5 +15,5 @@ public interface FieldTypeDefinition extends Serializable {
 
   List<String> getTests();
 
-
+  Map<String, Object> getCardinality();
 }
