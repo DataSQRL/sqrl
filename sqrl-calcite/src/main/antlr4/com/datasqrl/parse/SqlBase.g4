@@ -102,7 +102,7 @@ expression
     ;
 
 type
-    : baseType ('(' typeParameter (',' typeParameter)* ')')?
+    : baseType ('(' typeParameter (',' typeParameter)* ')')? (NOT NULL)?
     ;
 
 typeParameter

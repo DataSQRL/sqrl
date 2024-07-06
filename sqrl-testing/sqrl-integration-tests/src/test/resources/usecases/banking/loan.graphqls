@@ -69,7 +69,12 @@ type Query {
   LoanTypes(id: Int): [LoanTypes!]
   ApplicationAlert: [ApplicationAlert!]
   ApplicationUpdates: [ApplicationUpdates!]
+  MyCustomer: [MyCustomer!]
   CustomerChatMessage(customerid: Int!, limit: Int = 10, offset: Int = 0): [CustomerChatMessage!]
+}
+
+type MyCustomer {
+  col: String!
 }
 
 type CustomerChatMessage {

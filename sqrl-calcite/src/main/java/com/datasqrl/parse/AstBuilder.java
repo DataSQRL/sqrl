@@ -21,6 +21,7 @@ import com.datasqrl.model.StreamType;
 import com.datasqrl.parse.SqlBaseParser.*;
 import com.datasqrl.sql.parser.impl.SqrlSqlParserImpl;
 import com.google.common.base.Preconditions;
+import java.time.ZoneId;
 import lombok.SneakyThrows;
 import lombok.Value;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -555,7 +556,10 @@ public class AstBuilder
   }
 
   private SqlDataTypeSpec getType(TypeContext ctx) {
-    return new SqlDataTypeSpec(getTypeName(ctx.baseType()), getLocation(ctx));
+    return new SqlDataTypeSpec(getTypeName(ctx.baseType()),
+        TimeZone.getTimeZone(ZoneId.systemDefault()),
+        ctx.NOT() == null,
+        getLocation(ctx));
   }
 
   private SqlTypeNameSpec getTypeName(BaseTypeContext baseType) {
