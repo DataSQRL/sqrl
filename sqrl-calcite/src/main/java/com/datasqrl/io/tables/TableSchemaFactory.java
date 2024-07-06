@@ -5,6 +5,7 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.google.common.base.Preconditions;
 import java.net.URI;
+import java.nio.file.Path;
 import java.util.Optional;
 
 public interface TableSchemaFactory {
@@ -24,7 +25,7 @@ public interface TableSchemaFactory {
     Preconditions.checkArgument(!errors.hasErrors(), "Encountered errors processing internal schema: %s", errors);
     return schema;
   }
-  TableSchema create(String schemaDefinition, Optional<URI> location, ErrorCollector errors);
+  TableSchema create(String schemaDefinition, Optional<Path> location, ErrorCollector errors);
   String getSchemaFilename(TableConfig tableConfig);
 
   String getType();

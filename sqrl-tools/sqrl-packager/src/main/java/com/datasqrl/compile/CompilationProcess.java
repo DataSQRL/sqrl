@@ -53,8 +53,8 @@ public class CompilationProcess {
         .ifPresent(graphQLMutationExtraction::analyze);
 
     ModuleLoader composite = ModuleLoaderComposite.builder()
-        .moduleLoader(moduleLoader)
         .moduleLoader(apiConnectorManager.getModuleLoader())
+        .moduleLoader(moduleLoader)
         .build();
 
     planner.plan(mainScript, composite);

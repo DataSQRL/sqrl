@@ -31,6 +31,7 @@ import com.datasqrl.packager.preprocess.DataSystemPreprocessor;
 import com.datasqrl.packager.preprocess.FlinkSqlPreprocessor;
 import com.datasqrl.packager.preprocess.JarPreprocessor;
 import com.datasqrl.packager.preprocess.Preprocessor;
+import com.datasqrl.packager.preprocess.ScriptPreprocessor;
 import com.datasqrl.packager.preprocess.TablePreprocessor;
 import com.datasqrl.packager.repository.Repository;
 import com.datasqrl.plan.MainScript;
@@ -80,6 +81,7 @@ public class SqrlInjector extends AbstractModule {
     bind(ConnectorFactoryFactory.class).to(ConnectorFactoryFactoryImpl.class);
 
     Multibinder<Preprocessor> binder = Multibinder.newSetBinder(binder(), Preprocessor.class);
+    binder.addBinding().to(ScriptPreprocessor.class);
     binder.addBinding().to(TablePreprocessor.class);
     binder.addBinding().to(CopyStaticDataPreprocessor.class);
     binder.addBinding().to(JarPreprocessor.class);

@@ -151,10 +151,10 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         addWarn(ErrorLabel.GENERIC, node, "Module is empty: %s", path);
       }
 
-      module.getNamespaceObjects().forEach(obj -> obj.apply(Optional.empty(), framework, errorCollector));
+      module.getNamespaceObjects().forEach(obj -> obj.apply(this, Optional.empty(), framework, errorCollector));
     } else {
       Optional<NamespaceObject> namespaceObject = module.getNamespaceObject(path.getLast());
-      namespaceObject.map(object -> object.apply(Optional.of(node.getAlias().map(a -> a.names.get(0))
+      namespaceObject.map(object -> object.apply(this, Optional.of(node.getAlias().map(a -> a.names.get(0))
               .orElse(/*retain alias*/path.getLast().getDisplay())), framework, errorCollector))
           .orElseThrow(() -> addError(ErrorCode.GENERIC, node, "Object [%s] not found in module: %s", path.getLast(), path));
     }

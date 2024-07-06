@@ -2,6 +2,7 @@ package com.datasqrl.plan.table;
 
 import com.datasqrl.io.tables.TableSchema;
 import java.net.URI;
+import java.nio.file.Path;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -22,7 +23,7 @@ public class RelDataTypeTableSchema implements TableSchema {
   }
 
   @Override
-  public Optional<URI> getLocation() {
+  public Optional<Path> getLocation() {
     return Optional.empty();
   }
 }

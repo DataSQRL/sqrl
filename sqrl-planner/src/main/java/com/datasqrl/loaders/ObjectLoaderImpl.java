@@ -26,6 +26,8 @@ import java.io.File;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -37,9 +39,7 @@ import org.apache.flink.table.functions.UserDefinedFunction;
 public class ObjectLoaderImpl implements ObjectLoader {
 
   public static final String FUNCTION_JSON = ".function.json";
-  private static final Predicate<String> DATA_SYSTEM_FILE = Pattern.compile(".*"+
-      FileUtil.toRegex(DataSource.DATASYSTEM_FILE_PREFIX + DataSource.TABLE_FILE_SUFFIX) +"$")
-      .asMatchPredicate();
+  private static final Predicate<String> SCRIPT_IMPORT = Pattern.compile(".*" + FileUtil.toRegex(".sqrl")).asMatchPredicate();
   private final ResourceResolver resourceResolver;
   private final ErrorCollector errors;
   private final CalciteTableFactory tableFactory;
@@ -65,39 +65,46 @@ public class ObjectLoaderImpl implements ObjectLoader {
 
   @Override
   public List<NamespaceObject> load(NamePath directory) {
-    List<URI> allItems = resourceResolver.loadPath(directory);
+    //Folders take precedence
+    List<Path> allItems = resourceResolver.loadPath(directory);
+
+    //Check for sqrl scripts
+    if (allItems.isEmpty()) {
+      Optional<Path> sqrlFile = resourceResolver.resolveFile(directory.popLast()
+          .concat(Name.system(directory.getLast().toString() + ".sqrl")));
+      if (sqrlFile.isPresent()) {
+        return loadScript(directory, sqrlFile.get());
+      }
+    }
+
     return allItems.stream()
             .flatMap(url -> load(url, directory, allItems).stream())
             .collect(Collectors.toList());
   }
 
-  private List<? extends NamespaceObject> load(URI uri, NamePath directory, List<URI> allItems) {
-    if (DATA_SYSTEM_FILE.test(uri.toString())) {
-      return loadDynamicSink(uri, directory);
-    } else if (uri.toString().endsWith(DataSource.TABLE_FILE_SUFFIX)) {
-      return loadTable(uri, directory, allItems);
-    } else if (uri.toString().endsWith(FUNCTION_JSON)) {
-      return loadFunction(uri, directory);
+  private List<? extends NamespaceObject> load(Path path, NamePath directory, List<Path> allItems) {
+   if (path.toString().endsWith(DataSource.TABLE_FILE_SUFFIX)) {
+      return loadTable(path, directory, allItems);
+    } else if (path.toString().endsWith(FUNCTION_JSON)) {
+      return loadFunction(path, directory);
     }
     return List.of();
   }
 
-  private List<NamespaceObject> loadDynamicSink(URI uri, NamePath basePath) {
-    TableConfig tableConfig = tableConfigFactory.load(uri, basePath.getLast(), errors);
-    if (true) {
-      throw new RuntimeException();
-    }
-    return List.of(new DynamicSinkNsObject(basePath/*, StandardDynamicSinkFactory.of(tableConfig))*/));
+  @SneakyThrows
+  private List<NamespaceObject> loadScript(NamePath directory, Path path) {
+    return List.of(new ScriptNamespaceObject(moduleLoader, Name.system(""),
+        Files.readString(path)));
   }
 
   @SneakyThrows
-  private List<TableNamespaceObject> loadTable(URI uri, NamePath basePath, List<URI> allItemsInPath) {
-    String tableName = StringUtil.removeFromEnd(ResourceResolver.getFileName(uri),DataSource.TABLE_FILE_SUFFIX);
+  private List<TableNamespaceObject> loadTable(Path path, NamePath basePath, List<Path> allItemsInPath) {
+    String tableName = StringUtil.removeFromEnd(ResourceResolver.getFileName(path),DataSource.TABLE_FILE_SUFFIX);
     errors.checkFatal(Name.validName(tableName), "Not a valid table name: %s", tableName);
-    TableConfig tableConfig = tableConfigFactory.load(uri, Name.system(tableName), errors);
+    TableConfig tableConfig = tableConfigFactory.load(path, Name.system(tableName), errors);
 
     //Find all files associated with the table, i.e. that start with the table name followed by '.'
-    List<URI> tablesFiles = allItemsInPath.stream().filter( file -> {
+    List<Path> tablesFiles = allItemsInPath.stream().filter( file -> {
         String filename = ResourceResolver.getFileName(file);
         if (filename.length() <= tableName.length() + 1) return false;
         return filename.substring(0,tableName.length()).equalsIgnoreCase(tableName)
@@ -110,7 +117,7 @@ public class ObjectLoaderImpl implements ObjectLoader {
       return factory.map(f -> f.create(BaseFileUtil.readFile(file), Optional.of(file), errors)).stream();
     }).collect(Collectors.toUnmodifiableList());
 
-    errors.checkFatal(tableSchemas.size()<=1, "Found multiple schemas for table %s with configuration %s", tableName, uri);
+    errors.checkFatal(tableSchemas.size()<=1, "Found multiple schemas for table %s with configuration %s", tableName, path);
     Optional<TableSchema> tableSchema = tableSchemas.stream().findFirst();
 
     ExternalDataType tableType = tableConfig.getBase().getType();
@@ -118,7 +125,7 @@ public class ObjectLoaderImpl implements ObjectLoader {
     if (tableType == ExternalDataType.source ||
         tableType == ExternalDataType.source_and_sink) {
       errors.checkFatal(tableSchema.isPresent(), "Could not find schema file [%s] for table [%s]",
-          basePath + "/" + tableConfig.getName().getDisplay(), uri);
+          basePath + "/" + tableConfig.getName().getDisplay(), path);
     }
 
     switch (tableType) {
@@ -151,8 +158,8 @@ public class ObjectLoaderImpl implements ObjectLoader {
   public static final Class<?> UDF_FUNCTION_CLASS = UserDefinedFunction.class;
 
   @SneakyThrows
-  private List<NamespaceObject> loadFunction(URI uri, NamePath namePath) {
-    ObjectNode json = SERIALIZER.mapJsonFile(uri, ObjectNode.class);
+  private List<NamespaceObject> loadFunction(Path path, NamePath namePath) {
+    ObjectNode json = SERIALIZER.mapJsonFile(path, ObjectNode.class);
     String jarPath = json.get("jarPath").asText();
     String functionClassName = json.get("functionClass").asText();
 

@@ -32,7 +32,7 @@ public class FileResourceResolver implements ResourceResolver {
 
   @SneakyThrows
   @Override
-  public List<URI> loadPath(NamePath namePath) {
+  public List<Path> loadPath(NamePath namePath) {
     Path path = namepath2Path(baseDir, namePath);
 
     if (!Files.exists(path)) {
@@ -40,16 +40,15 @@ public class FileResourceResolver implements ResourceResolver {
     }
 
     return Files.list(path)
-        .map(Path::toUri)
         .collect(Collectors.toList());
   }
 
   @Override
-  public Optional<URI> resolveFile(NamePath namePath) {
+  public Optional<Path> resolveFile(NamePath namePath) {
     Path path = namepath2Path(baseDir, namePath);
     if (!Files.exists(path)) {
       return Optional.empty();
     }
-    return Optional.of(path.toUri());
+    return Optional.of(path);
   }
 }

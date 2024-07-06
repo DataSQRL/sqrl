@@ -2,6 +2,7 @@ package com.datasqrl.io.schema.avro;
 
 import com.datasqrl.io.tables.TableSchema;
 import java.net.URI;
+import java.nio.file.Path;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Value;
@@ -13,8 +14,7 @@ public class AvroSchemaHolder implements TableSchema {
 
   Schema schema;
   String schemaDefinition;
-  Optional<URI> location;
-
+  Optional<Path> location;
 
   @Override
   public String getSchemaType() {

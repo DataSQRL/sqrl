@@ -7,6 +7,7 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.plan.table.CalciteTableFactory;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
+import com.datasqrl.plan.validate.ScriptPlanner;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -46,7 +47,7 @@ public class SqrlTableNamespaceObject extends AbstractTableNamespaceObject<Physi
   }
 
   @Override
-  public boolean apply(Optional<String> objectName, SqrlFramework framework, ErrorCollector errors) {
+  public boolean apply(ScriptPlanner planner, Optional<String> objectName, SqrlFramework framework, ErrorCollector errors) {
     registerScriptTable(table, framework, Optional.of(functionParameters),
         relNodeSupplier, isTest);
 

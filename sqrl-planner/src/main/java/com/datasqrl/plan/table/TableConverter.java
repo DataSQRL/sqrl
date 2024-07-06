@@ -143,7 +143,7 @@ public class TableConverter {
       String name = attribute.getLast().getDisplay();
       Optional<NamespaceObject> namespaceObject = moduleOpt.get()
           .getNamespaceObject(Name.system(name));
-      namespaceObject.get().apply(Optional.empty(), framework, errors);
+      namespaceObject.get().apply(null,Optional.empty(), framework, errors);
     }
   }
 
