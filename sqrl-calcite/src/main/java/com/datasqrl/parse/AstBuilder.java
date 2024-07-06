@@ -179,6 +179,24 @@ public class AstBuilder
   }
 
   @Override
+  public SqlNode visitCreateStatement(CreateStatementContext ctx) {
+    return visit(ctx.createDefinition());
+  }
+
+  @Override
+  public SqlNode visitCreateDefinition(CreateDefinitionContext ctx) {
+    return new SqrlCreateDefinition(getLocation(ctx),
+        getNamePath(ctx.qualifiedName()),
+        visit(ctx.columnDefinition(), SqrlColumnDefinition.class));
+  }
+
+  @Override
+  public SqlNode visitColumnDefinition(ColumnDefinitionContext ctx) {
+    return new SqrlColumnDefinition(getLocation(ctx),
+        (SqlIdentifier)ctx.identifier().accept(this), getType(ctx.type()));
+  }
+
+  @Override
   public SqlNode visitImportStatement(ImportStatementContext ctx) {
     return visit(ctx.importDefinition());
   }
