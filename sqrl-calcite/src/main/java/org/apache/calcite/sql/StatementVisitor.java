@@ -6,12 +6,6 @@ public interface StatementVisitor<R, C> {
 
   R visit(SqrlExportDefinition statement, C context);
 
-  R visit(SqrlAssignTimestamp statement, C context);
-
-  default R visit(SqrlStreamQuery statement, C context) {
-    return visit((SqrlAssignment) statement, context);
-  }
-
   default R visit(SqrlExpressionQuery statement, C context) {
     return visit((SqrlAssignment) statement, context);
   }

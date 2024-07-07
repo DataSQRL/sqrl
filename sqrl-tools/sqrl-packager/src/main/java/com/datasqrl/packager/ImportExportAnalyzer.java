@@ -13,7 +13,6 @@ import com.datasqrl.parse.SqrlParser;
 import com.datasqrl.parse.SqrlParserImpl;
 import com.datasqrl.util.SqlNameUtil;
 import com.google.inject.Inject;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.Set;
@@ -22,7 +21,6 @@ import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.calcite.sql.ScriptNode;
 import org.apache.calcite.sql.ScriptVisitor;
-import org.apache.calcite.sql.SqrlAssignTimestamp;
 import org.apache.calcite.sql.SqrlAssignment;
 import org.apache.calcite.sql.SqrlExportDefinition;
 import org.apache.calcite.sql.SqrlImportDefinition;
@@ -74,11 +72,6 @@ public class ImportExportAnalyzer implements
       return Optional.empty();
     }
     return Optional.of(sinkPath.popLast());
-  }
-
-  @Override
-  public Optional<NamePath> visit(SqrlAssignTimestamp statement, Void context) {
-    return Optional.empty();
   }
 
   @Override
