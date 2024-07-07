@@ -60,12 +60,12 @@ public class DatasqrlRun {
   @SneakyThrows
   public void startFlink() {
     Map<String, String> config = Map.of(
-        "taskmanager.network.numberOfBuffers", "5000",
         "taskmanager.network.memory.max", "1g");
     //read flink config from package.json values?
 
     Configuration configuration = Configuration.fromMap(config);
     StreamExecutionEnvironment sEnv = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(configuration);
+    sEnv.setParallelism(1);
     EnvironmentSettings tEnvConfig = EnvironmentSettings.newInstance()
         .withConfiguration(configuration).build();
     StreamTableEnvironment tEnv = StreamTableEnvironment.create(sEnv, tEnvConfig);
@@ -122,7 +122,7 @@ public class DatasqrlRun {
     Map map = objectMapper.readValue(path.resolve("kafka.json").toFile(), Map.class);
     List<Map<String, Object>> topics = (List<Map<String, Object>>)map.get("topics");
     for (Map<String, Object> topic : topics) {
-      CLUSTER.createTopic((String)topic.get("name"));
+      CLUSTER.createTopic((String)topic.get("name"), 1, 1);
     }
   }
 
