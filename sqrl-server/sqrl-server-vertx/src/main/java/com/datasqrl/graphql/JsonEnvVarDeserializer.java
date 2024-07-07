@@ -10,10 +10,20 @@ import java.util.regex.Pattern;
 
 public class JsonEnvVarDeserializer extends JsonDeserializer<String> {
 
+  private Map<String, String> env;
+
+  public JsonEnvVarDeserializer() {
+    env = System.getenv();
+  }
+
+  public JsonEnvVarDeserializer(Map<String, String> env) {
+    this.env = env;
+  }
+
   @Override
   public String deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
     String value = p.getText();
-    return replaceWithEnv(System.getenv(), value);
+    return replaceWithEnv(this.env, value);
   }
 
   public String replaceWithEnv(Map<String, String> env, String value) {
