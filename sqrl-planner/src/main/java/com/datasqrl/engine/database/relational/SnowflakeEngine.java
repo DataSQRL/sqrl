@@ -65,34 +65,8 @@ public class SnowflakeEngine extends AbstractJDBCQueryEngine {
     List<SqlDDLStatement> ddlStatements = new ArrayList<>();
 
     EngineConfig engineConfig = connectorConfig;
-//    SqlNodeList catalogParams = SqlCatalogParams.createGlueCatalogParams(
-//        SqlParserPos.ZERO,
-//        "arn:aws:iam::123456789012:role/myGlueRole",
-//        "123456789012",
-//        "us-east-2",
-//        "my.catalogdb"
-//    );
-//
-//    SqlCreateCatalogIntegrationAwsGlue catalog = new SqlCreateCatalogIntegrationAwsGlue(SqlParserPos.ZERO,
-//        false, true,
-//        new SqlIdentifier("MyCatalog", SqlParserPos.ZERO),
-//        SqlLiteral.createCharString("GLUE", SqlParserPos.ZERO),
-//        SqlLiteral.createCharString("ICEBERG", SqlParserPos.ZERO),
-//        catalogParams,
-//        SqlLiteral.createBoolean(true, SqlParserPos.ZERO),
-//        null);
-//    ddlStatements.add(()->catalog.toSqlString(CalciteSqlDialect.DEFAULT).getSql());
-
-    /**
-     * CREATE ICEBERG TABLE myGlueTable
-     *   EXTERNAL_VOLUME='glueCatalogVolume'
-     *   CATALOG='glueCatalogInt'
-     *   CATALOG_TABLE_NAME='myGlueTable';
-     */
 
     for (EngineSink sink : StreamUtil.filterByClass(inputs, EngineSink.class).collect(Collectors.toList())) {
-//    SqlCharStringLiteral comment = SqlLiteral.createCharString("This is an advanced view with multiple features.", pos);
-
       SqlLiteral externalVolume = SqlLiteral.createCharString(
           (String)engineConfig.toMap().get("external-volume"), SqlParserPos.ZERO);
 
