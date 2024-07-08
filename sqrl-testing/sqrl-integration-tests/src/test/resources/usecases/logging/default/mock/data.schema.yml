@@ -8,7 +8,7 @@ columns:
   tests:
   - "not_null"
 - name: "epoch_timestamp"
-  type: "TIMESTAMP"
+  type: "BIGINT"
   tests:
   - "not_null"
 - name: "some_value"

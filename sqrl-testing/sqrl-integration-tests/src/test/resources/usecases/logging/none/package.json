@@ -3,5 +3,8 @@
   "enabled-engines": ["kafka", "flink"],
   "compiler": {
     "log": "none"
+  },
+  "script": {
+    "main": "logging-none.sqrl"
   }
 }

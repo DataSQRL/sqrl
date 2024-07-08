@@ -1,4 +1,7 @@
 {
   "version": "1",
-  "enabled-engines": ["kafka", "flink"]
+  "enabled-engines": ["kafka", "flink"],
+  "script": {
+    "main": "logging-default.sqrl"
+  }
 }
