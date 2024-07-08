@@ -14,7 +14,7 @@ import lombok.Getter;
 @Getter
 public class Cardinality implements Constraint {
 
-  public static final Name NAME = Name.system("cardianlity");
+  public static final Name NAME = Name.system("cardinality");
 
   public static final Cardinality UNCONSTRAINED = new Cardinality(0, Long.MAX_VALUE);
 
