@@ -1,14 +1,9 @@
 package com.datasqrl.engine.database.relational;
 
 import com.datasqrl.calcite.Dialect;
-import com.datasqrl.calcite.QueryPlanner;
 import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.calcite.convert.RelToSqlNode.SqlNodes;
-import com.datasqrl.calcite.dialect.snowflake.SqlCatalogParams;
-import com.datasqrl.calcite.dialect.snowflake.SqlCreateCatalogIntegrationAwsGlue;
 import com.datasqrl.calcite.dialect.snowflake.SqlCreateIcebergTableFromObjectStorage;
 import com.datasqrl.calcite.dialect.snowflake.SqlCreateSnowflakeView;
-import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.EngineFactory;
 import com.datasqrl.config.EngineFactory.Type;
@@ -18,13 +13,10 @@ import com.datasqrl.config.PackageJson.EmptyEngineConfig;
 import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.database.QueryTemplate;
-import com.datasqrl.engine.database.relational.ddl.JdbcDDLFactory;
-import com.datasqrl.engine.database.relational.ddl.JdbcDDLServiceLoader;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.global.PhysicalDAGPlan.DatabaseStagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
-import com.datasqrl.plan.global.PhysicalDAGPlan.Query;
 import com.datasqrl.plan.global.PhysicalDAGPlan.ReadQuery;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
@@ -43,13 +35,11 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.SqlCharStringLiteral;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlLiteral;
-import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.dialect.CalciteSqlDialect;
 import org.apache.calcite.sql.dialect.SnowflakeSqlDialect;
 import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.calcite.util.ImmutableNullableList;
 
 public class SnowflakeEngine extends AbstractJDBCQueryEngine {
 
@@ -123,7 +113,6 @@ public class SnowflakeEngine extends AbstractJDBCQueryEngine {
         .collect(Collectors.toMap(ReadQuery::getQuery, q -> new QueryTemplate(q.getRelNode())));
 
     List<Map<String, String>> queries = new ArrayList<>();
-    //todo: do not quote identifiers
 
     for (Map.Entry<IdentifiedQuery, QueryTemplate> entry : databaseQueries.entrySet()) {
       RelNode relNode = entry.getValue().getRelNode();
@@ -135,7 +124,8 @@ public class SnowflakeEngine extends AbstractJDBCQueryEngine {
 
       SqlCharStringLiteral comment = SqlLiteral.createCharString("", pos);
 
-      SqlSelect select =(SqlSelect) framework.getQueryPlanner().relToSql(Dialect.SNOWFLAKE, relNode).getSqlNode();
+      SqlSelect select =(SqlSelect) framework.getQueryPlanner()
+          .relToSql(Dialect.SNOWFLAKE, relNode).getSqlNode();
 
       SqlCreateSnowflakeView createView = new SqlCreateSnowflakeView(pos, true, true, false, false, null, viewName, columnList,
           select, comment, false);

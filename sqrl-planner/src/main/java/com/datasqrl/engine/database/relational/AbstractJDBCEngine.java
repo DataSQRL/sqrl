@@ -112,17 +112,17 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
     Map<IdentifiedQuery, QueryTemplate> databaseQueries = dbPlan.getQueries().stream()
         .collect(Collectors.toMap(ReadQuery::getQuery, q -> new QueryTemplate(q.getRelNode())));
 
-    List<Map<String, String>> queries = new ArrayList<>();
-    QueryPlanner queryPlanner = framework.getQueryPlanner();
-    for (QueryTemplate template : databaseQueries.values()) {
-      String sql = queryPlanner.relToString(mapDialect(getDialect()),
-          template.getRelNode())
-          .getSql();
-      //todo: migrate this to a full form for consumption by downstream engines
-      queries.add(Map.of("sql", sql + ";"));
-    }
+//    List<Map<String, String>> queries = new ArrayList<>();
+//    QueryPlanner queryPlanner = framework.getQueryPlanner();
+//    for (QueryTemplate template : databaseQueries.values()) {
+//      String sql = queryPlanner.relToString(mapDialect(getDialect()),
+//          template.getRelNode())
+//          .getSql();
+//      //todo: migrate this to a full form for consumption by downstream engines
+//      queries.add(Map.of("sql", sql + ";"));
+//    }
 
-    return new JDBCPhysicalPlan(ddlStatements, databaseQueries, queries);
+    return new JDBCPhysicalPlan(ddlStatements, databaseQueries);
   }
 
   public String toDialectString(SqlNode sqlNode) {

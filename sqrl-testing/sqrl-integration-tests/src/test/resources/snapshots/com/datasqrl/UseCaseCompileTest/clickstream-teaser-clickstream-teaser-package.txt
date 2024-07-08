@@ -1,6 +1,6 @@
 >>>pipeline_explain.txt
 === Click
-ID:     click$2
+ID:     click_2
 Type:   stream
 Stage:  streams
 Primary Key: url, userid, timestamp
@@ -10,13 +10,13 @@ Schema:
  - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - userid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
 Plan:
-LogicalTableScan(table=[[click$1]], hints=[[[WatermarkHint inheritPath:[] options:[1]]]]) hints[WatermarkHint options:[1]]
+LogicalTableScan(table=[[click_1]], hints=[[[WatermarkHint inheritPath:[] options:[1]]]]) hints[WatermarkHint options:[1]]
 
 === Recommendation
-ID:     recommendation$1
+ID:     recommendation_1
 Type:   state
 Stage:  streams
-Inputs: visitafter$1
+Inputs: visitafter_1
 Primary Key: url, rec
 Timestamp  : __timestamp
 Schema:
@@ -29,13 +29,13 @@ Post Processors:
 Plan:
 LogicalProject(url=[$0], rec=[$1], frequency=[$2], __timestamp=[$3])
   LogicalAggregate(group=[{0, 1}], frequency=[COUNT()], __timestamp=[MAX($2)])
-    LogicalTableScan(table=[[visitafter$1]])
+    LogicalTableScan(table=[[visitafter_1]])
 
 === Trending
-ID:     trending$1
+ID:     trending_1
 Type:   state
 Stage:  streams
-Inputs: click$2
+Inputs: click_2
 Primary Key: url
 Timestamp  : _timestamp
 Schema:
@@ -48,13 +48,13 @@ Post Processors:
 Plan:
 LogicalProject(url=[$0], total=[$2], _timestamp=[$1])
   LogicalAggregate(group=[{0, 1}], total=[COUNT()]) hints[SlidingAggregationHint options:[1, 86400000, 1728000]]
-    LogicalTableScan(table=[[click$2]])
+    LogicalTableScan(table=[[click_2]])
 
 === VisitAfter
-ID:     visitafter$1
+ID:     visitafter_1
 Type:   stream
 Stage:  streams
-Inputs: click$2
+Inputs: click_2
 Primary Key: beforeURL, _userid, _timestamp0, afterURL, timestamp
 Timestamp  : timestamp
 Schema:
@@ -66,19 +66,19 @@ Schema:
 Plan:
 LogicalProject(beforeURL=[$0], afterURL=[$3], timestamp=[$4], _userid=[$2], _timestamp0=[$1])
   LogicalJoin(condition=[AND(=($2, $5), <($1, $4), >=($1, -($4, *(60000:INTERVAL MINUTE, 10))))], joinType=[inner]) hints[IntervalJoin]
-    LogicalTableScan(table=[[click$2]])
-    LogicalTableScan(table=[[click$2]])
+    LogicalTableScan(table=[[click_2]])
+    LogicalTableScan(table=[[click_2]])
 
 >>>flink.json
 {
   "flinkSql" : [
-    "CREATE TEMPORARY TABLE `click$1` (\n  `url` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `userid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  PRIMARY KEY (`url`, `userid`, `timestamp`) NOT ENFORCED,\n  WATERMARK FOR `timestamp` AS (`timestamp` - INTERVAL '1.0' SECOND)\n) WITH (\n  'format' = 'flexible-json',\n  'path' = '/data/click.jsonl',\n  'connector' = 'filesystem'\n);",
-    "CREATE TEMPORARY TABLE `recommendation$1` (\n  `url` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `rec` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `frequency` BIGINT NOT NULL,\n  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`url`, `rec`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'recommendation$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `trending$1` (\n  `url` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `total` BIGINT NOT NULL,\n  `_timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`url`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'trending$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE VIEW `table$1`\nAS\nSELECT `click$1`.`url`, `click$10`.`url` AS `rec`, COUNT(*) AS `frequency`, MAX(`click$10`.`timestamp`) AS `__timestamp`\nFROM `click$1`\nINNER JOIN `click$1` AS `click$10` ON (((`click$1`.`userid` = `click$10`.`userid`) AND (`click$1`.`timestamp` < `click$10`.`timestamp`)) AND (`click$1`.`timestamp` >= (`click$10`.`timestamp` - (INTERVAL '1' MINUTE * 10))))\nGROUP BY `click$1`.`url`, `click$10`.`url`;",
-    "CREATE VIEW `table$2`\nAS\nSELECT *\nFROM `click$1`;",
+    "CREATE TEMPORARY TABLE `click_1` (\n  `url` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `userid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  PRIMARY KEY (`url`, `userid`, `timestamp`) NOT ENFORCED,\n  WATERMARK FOR `timestamp` AS (`timestamp` - INTERVAL '1.0' SECOND)\n) WITH (\n  'format' = 'flexible-json',\n  'path' = '/data/click.jsonl',\n  'connector' = 'filesystem'\n);",
+    "CREATE TEMPORARY TABLE `recommendation_1` (\n  `url` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `rec` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `frequency` BIGINT NOT NULL,\n  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`url`, `rec`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'recommendation_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `trending_1` (\n  `url` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `total` BIGINT NOT NULL,\n  `_timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`url`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'trending_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE VIEW `table$1`\nAS\nSELECT `click_1`.`url`, `click_10`.`url` AS `rec`, COUNT(*) AS `frequency`, MAX(`click_10`.`timestamp`) AS `__timestamp`\nFROM `click_1`\nINNER JOIN `click_1` AS `click_10` ON (((`click_1`.`userid` = `click_10`.`userid`) AND (`click_1`.`timestamp` < `click_10`.`timestamp`)) AND (`click_1`.`timestamp` >= (`click_10`.`timestamp` - (INTERVAL '1' MINUTE * 10))))\nGROUP BY `click_1`.`url`, `click_10`.`url`;",
+    "CREATE VIEW `table$2`\nAS\nSELECT *\nFROM `click_1`;",
     "CREATE VIEW `table$3`\nAS\nSELECT `url`, COUNT(*) AS `total`, `window_time` AS `_timestamp`\nFROM TABLE(HOP((TABLE `table$2`), (DESCRIPTOR(`timestamp`)), INTERVAL '1728' SECOND(7), INTERVAL '86400' SECOND(8))) AS `t`\nGROUP BY `url`, `window_start`, `window_end`, `window_time`;",
-    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `recommendation$1`\n(SELECT *\nFROM `table$1`)\n;\nINSERT INTO `trending$1`\n(SELECT *\nFROM `table$3`)\n;\nEND;"
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `recommendation_1`\n(SELECT *\nFROM `table$1`)\n;\nINSERT INTO `trending_1`\n(SELECT *\nFROM `table$3`)\n;\nEND;"
   ],
   "connectors" : [
     "jdbc-sqrl",
@@ -92,7 +92,7 @@ LogicalProject(beforeURL=[$0], afterURL=[$3], timestamp=[$4], _userid=[$2], _tim
 {
   "ddl" : [
     {
-      "name" : "recommendation$1",
+      "name" : "recommendation_1",
       "columns" : [
         "\"url\" TEXT NOT NULL",
         "\"rec\" TEXT NOT NULL",
@@ -103,10 +103,10 @@ LogicalProject(beforeURL=[$0], afterURL=[$3], timestamp=[$4], _userid=[$2], _tim
         "\"url\"",
         "\"rec\""
       ],
-      "sql" : "CREATE TABLE IF NOT EXISTS recommendation$1 (\"url\" TEXT NOT NULL,\"rec\" TEXT NOT NULL,\"frequency\" BIGINT NOT NULL,\"__timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"url\",\"rec\"));"
+      "sql" : "CREATE TABLE IF NOT EXISTS recommendation_1 (\"url\" TEXT NOT NULL,\"rec\" TEXT NOT NULL,\"frequency\" BIGINT NOT NULL,\"__timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"url\",\"rec\"));"
     },
     {
-      "name" : "trending$1",
+      "name" : "trending_1",
       "columns" : [
         "\"url\" TEXT NOT NULL",
         "\"total\" BIGINT NOT NULL",
@@ -115,7 +115,7 @@ LogicalProject(beforeURL=[$0], afterURL=[$3], timestamp=[$4], _userid=[$2], _tim
       "primaryKeys" : [
         "\"url\""
       ],
-      "sql" : "CREATE TABLE IF NOT EXISTS trending$1 (\"url\" TEXT NOT NULL,\"total\" BIGINT NOT NULL,\"_timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"url\"));"
+      "sql" : "CREATE TABLE IF NOT EXISTS trending_1 (\"url\" TEXT NOT NULL,\"total\" BIGINT NOT NULL,\"_timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"url\"));"
     }
   ]
 }
@@ -139,7 +139,7 @@ LogicalProject(beforeURL=[$0], afterURL=[$3], timestamp=[$4], _userid=[$2], _tim
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-              "sql" : "SELECT *\nFROM \"recommendation$1\"\nWHERE \"url\" = $1\nORDER BY \"url\", \"frequency\" DESC, \"rec\"",
+              "sql" : "SELECT *\nFROM \"recommendation_1\"\nWHERE \"url\" = $1\nORDER BY \"url\", \"frequency\" DESC, \"rec\"",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -167,7 +167,7 @@ LogicalProject(beforeURL=[$0], afterURL=[$3], timestamp=[$4], _userid=[$2], _tim
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"trending$1\"\nORDER BY \"total\" DESC, \"url\"",
+              "sql" : "SELECT *\nFROM \"trending_1\"\nORDER BY \"total\" DESC, \"url\"",
               "parameters" : [ ]
             }
           }

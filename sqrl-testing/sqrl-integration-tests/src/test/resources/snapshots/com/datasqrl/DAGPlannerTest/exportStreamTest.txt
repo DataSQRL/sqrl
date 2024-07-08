@@ -1,6 +1,6 @@
 >>>pipeline_explain.txt
 === Customer
-ID:     customer$2
+ID:     customer_2
 Type:   stream
 Stage:  streams
 Primary Key: customerid, lastUpdated
@@ -12,13 +12,13 @@ Schema:
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalTableScan(table=[[customer$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+LogicalTableScan(table=[[customer_1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
 === JoinStream
-ID:     joinstream$1
+ID:     joinstream_1
 Type:   stream
 Stage:  streams
-Inputs: customer$2, orders$2
+Inputs: customer_2, orders_2
 Primary Key: id, _time, _lastUpdated
 Timestamp  : _time
 Schema:
@@ -29,17 +29,17 @@ Schema:
 Plan:
 LogicalProject(id=[$0], name=[$6], _time=[$2], _lastUpdated=[$7])
   LogicalJoin(condition=[=($4, $1)], joinType=[inner]) hints[JoinCostHint options:[STREAM, STREAM, 1, NONE]]
-    LogicalTableScan(table=[[orders$2]])
-    LogicalTableScan(table=[[customer$2]])
+    LogicalTableScan(table=[[orders_2]])
+    LogicalTableScan(table=[[customer_2]])
 
 === print.CountStream.CountStream
-ID:     joinstream$1$1
+ID:     joinstream_1_1
 Type:   export
 Stage:  streams
-Inputs: joinstream$1
+Inputs: joinstream_1
 
 === Orders
-ID:     orders$2
+ID:     orders_2
 Type:   stream
 Stage:  streams
 Primary Key: id, time
@@ -50,10 +50,10 @@ Schema:
  - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - entries: RecordType(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
 Plan:
-LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[2]]]]) hints[WatermarkHint options:[2]]
+LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] options:[2]]]]) hints[WatermarkHint options:[2]]
 
 === Product
-ID:     product$2
+ID:     product_2
 Type:   stream
 Stage:  streams
 Primary Key: _uuid
@@ -66,7 +66,7 @@ Schema:
  - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
 Plan:
-LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
 >>>flink.json
 {
@@ -87,20 +87,20 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `atzone` AS 'com.datasqrl.time.AtZone' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofhour` AS 'com.datasqrl.time.EndOfHour' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofyear` AS 'com.datasqrl.time.EndOfYear' LANGUAGE JAVA;",
-    "CREATE TEMPORARY TABLE `orders$1` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,\n  PRIMARY KEY (`id`, `time`) NOT ENFORCED,\n  WATERMARK FOR `time` AS (`time` - INTERVAL '0.001' SECOND)\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
-    "CREATE TEMPORARY TABLE `product$1` (\n  `productid` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `_uuid` AS UUID(),\n  PRIMARY KEY (`_uuid`) NOT ENFORCED,\n  WATERMARK FOR `_ingest_time` AS (`_ingest_time` - INTERVAL '0.001' SECOND)\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
-    "CREATE TEMPORARY TABLE `customer$1` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `timestamp` AS EPOCHTOTIMESTAMP(`lastUpdated`),\n  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,\n  WATERMARK FOR `timestamp` AS (`timestamp` - INTERVAL '0.001' SECOND)\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
-    "CREATE TEMPORARY TABLE `customer$2` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'customer$2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `joinstream$1` (\n  `id` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `_lastUpdated` BIGINT NOT NULL,\n  PRIMARY KEY (`id`, `_time`, `_lastUpdated`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'joinstream$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `orders$2` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  PRIMARY KEY (`id`, `time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orders$2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `product$2` (\n  `productid` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,\n  PRIMARY KEY (`_uuid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'product$2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `joinstream$1$1` (\n  `id` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL\n) WITH (\n  'connector' = 'print',\n  'print-identifier' = 'CountStream'\n);",
-    "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `customer$1`;",
-    "CREATE VIEW `table$2`\nAS\nSELECT `orders$1`.`id`, `customer$1`.`name`, `orders$1`.`time` AS `_time`, `customer$1`.`lastUpdated` AS `_lastUpdated`\nFROM `orders$1`\nINNER JOIN `customer$1` ON (`orders$1`.`customerid` = `customer$1`.`customerid`);",
-    "CREATE VIEW `table$3`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders$1`;",
-    "CREATE VIEW `table$4`\nAS\nSELECT *\nFROM `product$1`;",
-    "CREATE VIEW `table$5`\nAS\nSELECT `orders$1`.`id`, `customer$1`.`name`\nFROM `orders$1`\nINNER JOIN `customer$1` ON (`orders$1`.`customerid` = `customer$1`.`customerid`);",
-    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer$2`\n(SELECT *\nFROM `table$1`)\n;\nINSERT INTO `joinstream$1`\n(SELECT *\nFROM `table$2`)\n;\nINSERT INTO `orders$2`\n(SELECT *\nFROM `table$3`)\n;\nINSERT INTO `product$2`\n(SELECT *\nFROM `table$4`)\n;\nINSERT INTO `joinstream$1$1`\n(SELECT *\nFROM `table$5`)\n;\nEND;"
+    "CREATE TEMPORARY TABLE `customer_1` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `timestamp` AS EPOCHTOTIMESTAMP(`lastUpdated`),\n  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,\n  WATERMARK FOR `timestamp` AS (`timestamp` - INTERVAL '0.001' SECOND)\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
+    "CREATE TEMPORARY TABLE `orders_1` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,\n  PRIMARY KEY (`id`, `time`) NOT ENFORCED,\n  WATERMARK FOR `time` AS (`time` - INTERVAL '0.001' SECOND)\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
+    "CREATE TEMPORARY TABLE `product_1` (\n  `productid` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `_uuid` AS UUID(),\n  PRIMARY KEY (`_uuid`) NOT ENFORCED,\n  WATERMARK FOR `_ingest_time` AS (`_ingest_time` - INTERVAL '0.001' SECOND)\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
+    "CREATE TEMPORARY TABLE `customer_2` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'customer_2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `joinstream_1` (\n  `id` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `_lastUpdated` BIGINT NOT NULL,\n  PRIMARY KEY (`id`, `_time`, `_lastUpdated`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'joinstream_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `orders_2` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  PRIMARY KEY (`id`, `time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orders_2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `product_2` (\n  `productid` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,\n  PRIMARY KEY (`_uuid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'product_2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `joinstream_1_1` (\n  `id` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL\n) WITH (\n  'connector' = 'print',\n  'print-identifier' = 'CountStream'\n);",
+    "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `customer_1`;",
+    "CREATE VIEW `table$2`\nAS\nSELECT `orders_1`.`id`, `customer_1`.`name`, `orders_1`.`time` AS `_time`, `customer_1`.`lastUpdated` AS `_lastUpdated`\nFROM `orders_1`\nINNER JOIN `customer_1` ON (`orders_1`.`customerid` = `customer_1`.`customerid`);",
+    "CREATE VIEW `table$3`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders_1`;",
+    "CREATE VIEW `table$4`\nAS\nSELECT *\nFROM `product_1`;",
+    "CREATE VIEW `table$5`\nAS\nSELECT `orders_1`.`id`, `customer_1`.`name`\nFROM `orders_1`\nINNER JOIN `customer_1` ON (`orders_1`.`customerid` = `customer_1`.`customerid`);",
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer_2`\n(SELECT *\nFROM `table$1`)\n;\nINSERT INTO `joinstream_1`\n(SELECT *\nFROM `table$2`)\n;\nINSERT INTO `orders_2`\n(SELECT *\nFROM `table$3`)\n;\nINSERT INTO `product_2`\n(SELECT *\nFROM `table$4`)\n;\nINSERT INTO `joinstream_1_1`\n(SELECT *\nFROM `table$5`)\n;\nEND;"
   ],
   "connectors" : [
     "print",
@@ -119,7 +119,7 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
 {
   "ddl" : [
     {
-      "name" : "customer$2",
+      "name" : "customer_2",
       "columns" : [
         "\"customerid\" BIGINT NOT NULL",
         "\"email\" TEXT NOT NULL",
@@ -131,10 +131,10 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
         "\"customerid\"",
         "\"lastUpdated\""
       ],
-      "sql" : "CREATE TABLE IF NOT EXISTS customer$2 (\"customerid\" BIGINT NOT NULL,\"email\" TEXT NOT NULL,\"name\" TEXT NOT NULL,\"lastUpdated\" BIGINT NOT NULL,\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\",\"lastUpdated\"));"
+      "sql" : "CREATE TABLE IF NOT EXISTS customer_2 (\"customerid\" BIGINT NOT NULL,\"email\" TEXT NOT NULL,\"name\" TEXT NOT NULL,\"lastUpdated\" BIGINT NOT NULL,\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\",\"lastUpdated\"));"
     },
     {
-      "name" : "joinstream$1",
+      "name" : "joinstream_1",
       "columns" : [
         "\"id\" BIGINT NOT NULL",
         "\"name\" TEXT NOT NULL",
@@ -146,10 +146,10 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
         "\"_time\"",
         "\"_lastUpdated\""
       ],
-      "sql" : "CREATE TABLE IF NOT EXISTS joinstream$1 (\"id\" BIGINT NOT NULL,\"name\" TEXT NOT NULL,\"_time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"_lastUpdated\" BIGINT NOT NULL , PRIMARY KEY (\"id\",\"_time\",\"_lastUpdated\"));"
+      "sql" : "CREATE TABLE IF NOT EXISTS joinstream_1 (\"id\" BIGINT NOT NULL,\"name\" TEXT NOT NULL,\"_time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"_lastUpdated\" BIGINT NOT NULL , PRIMARY KEY (\"id\",\"_time\",\"_lastUpdated\"));"
     },
     {
-      "name" : "orders$2",
+      "name" : "orders_2",
       "columns" : [
         "\"id\" BIGINT NOT NULL",
         "\"customerid\" BIGINT NOT NULL",
@@ -160,10 +160,10 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
         "\"id\"",
         "\"time\""
       ],
-      "sql" : "CREATE TABLE IF NOT EXISTS orders$2 (\"id\" BIGINT NOT NULL,\"customerid\" BIGINT NOT NULL,\"time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"entries\" JSONB NOT NULL , PRIMARY KEY (\"id\",\"time\"));"
+      "sql" : "CREATE TABLE IF NOT EXISTS orders_2 (\"id\" BIGINT NOT NULL,\"customerid\" BIGINT NOT NULL,\"time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"entries\" JSONB NOT NULL , PRIMARY KEY (\"id\",\"time\"));"
     },
     {
-      "name" : "product$2",
+      "name" : "product_2",
       "columns" : [
         "\"productid\" BIGINT NOT NULL",
         "\"name\" TEXT NOT NULL",
@@ -175,25 +175,25 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
       "primaryKeys" : [
         "\"_uuid\""
       ],
-      "sql" : "CREATE TABLE IF NOT EXISTS product$2 (\"productid\" BIGINT NOT NULL,\"name\" TEXT NOT NULL,\"description\" TEXT NOT NULL,\"category\" TEXT NOT NULL,\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"_uuid\" TEXT NOT NULL , PRIMARY KEY (\"_uuid\"));"
+      "sql" : "CREATE TABLE IF NOT EXISTS product_2 (\"productid\" BIGINT NOT NULL,\"name\" TEXT NOT NULL,\"description\" TEXT NOT NULL,\"category\" TEXT NOT NULL,\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"_uuid\" TEXT NOT NULL , PRIMARY KEY (\"_uuid\"));"
     },
     {
-      "indexName" : "customer$2_hash_c3",
-      "tableName" : "customer$2",
+      "indexName" : "customer_2_hash_c3",
+      "tableName" : "customer_2",
       "columns" : [
         "lastUpdated"
       ],
       "type" : "HASH",
-      "sql" : "CREATE INDEX IF NOT EXISTS customer$2_hash_c3 ON customer$2 USING hash (\"lastUpdated\");"
+      "sql" : "CREATE INDEX IF NOT EXISTS customer_2_hash_c3 ON customer_2 USING hash (\"lastUpdated\");"
     },
     {
-      "indexName" : "orders$2_hash_c2",
-      "tableName" : "orders$2",
+      "indexName" : "orders_2_hash_c2",
+      "tableName" : "orders_2",
       "columns" : [
         "time"
       ],
       "type" : "HASH",
-      "sql" : "CREATE INDEX IF NOT EXISTS orders$2_hash_c2 ON orders$2 USING hash (\"time\");"
+      "sql" : "CREATE INDEX IF NOT EXISTS orders_2_hash_c2 ON orders_2 USING hash (\"time\");"
     }
   ]
 }
@@ -222,7 +222,7 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customer$2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\", \"lastUpdated\"",
+              "sql" : "SELECT *\nFROM \"customer_2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\", \"lastUpdated\"",
               "parameters" : [ ]
             }
           },
@@ -252,7 +252,7 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customer$2\"\nWHERE \"customerid\" = $1 AND \"lastUpdated\" = $2\nORDER BY \"timestamp\" DESC NULLS LAST, 1",
+              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customer_2\"\nWHERE \"customerid\" = $1 AND \"lastUpdated\" = $2\nORDER BY \"timestamp\" DESC NULLS LAST, 1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -288,7 +288,7 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customer$2\"\nWHERE \"lastUpdated\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\"",
+              "sql" : "SELECT *\nFROM \"customer_2\"\nWHERE \"lastUpdated\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\"",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -319,7 +319,7 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customer$2\"\nWHERE \"customerid\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"lastUpdated\"",
+              "sql" : "SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"lastUpdated\"",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -352,7 +352,7 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"joinstream$1\"\nORDER BY \"_time\" DESC NULLS LAST, \"id\", \"_lastUpdated\"",
+              "sql" : "SELECT *\nFROM \"joinstream_1\"\nORDER BY \"_time\" DESC NULLS LAST, \"id\", \"_lastUpdated\"",
               "parameters" : [ ]
             }
           },
@@ -377,7 +377,7 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"joinstream$1\"\nWHERE \"id\" = $1\nORDER BY \"_time\" DESC NULLS LAST, \"_lastUpdated\"",
+              "sql" : "SELECT *\nFROM \"joinstream_1\"\nWHERE \"id\" = $1\nORDER BY \"_time\" DESC NULLS LAST, \"_lastUpdated\"",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -420,7 +420,7 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\nFROM \"orders$2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, 1",
+              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, 1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -456,7 +456,7 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"orders$2\"\nWHERE \"id\" = $1\nORDER BY \"time\" DESC NULLS LAST",
+              "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1\nORDER BY \"time\" DESC NULLS LAST",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -487,7 +487,7 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"orders$2\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
+              "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -513,7 +513,7 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"orders$2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
+              "sql" : "SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
               "parameters" : [ ]
             }
           }
@@ -540,7 +540,7 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"product$2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"_uuid\"",
+              "sql" : "SELECT *\nFROM \"product_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"_uuid\"",
               "parameters" : [ ]
             }
           }

@@ -1,9 +1,9 @@
 >>>pipeline_explain.txt
 === HighTempAlert
-ID:     hightempalert$1
+ID:     hightempalert_1
 Type:   stream
 Stage:  streams
-Inputs: sensorreading$2
+Inputs: sensorreading_2
 Primary Key: _uuid
 Timestamp  : event_time
 Schema:
@@ -13,19 +13,19 @@ Schema:
  - event_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
 LogicalFilter(condition=[>($1, 50)])
-  LogicalTableScan(table=[[sensorreading$2]])
+  LogicalTableScan(table=[[sensorreading_2]])
 
 === HighTempAlert.HighTempAlert
-ID:     hightempalert$1$1
+ID:     hightempalert_1_1
 Type:   export
 Stage:  streams
-Inputs: hightempalert$1
+Inputs: hightempalert_1
 
 === SecReading
-ID:     secreading$1
+ID:     secreading_1
 Type:   stream
 Stage:  streams
-Inputs: sensorreading$2
+Inputs: sensorreading_2
 Primary Key: sensorid, timeSec
 Timestamp  : timeSec
 Schema:
@@ -35,13 +35,13 @@ Schema:
 Plan:
 LogicalAggregate(group=[{0, 1}], temperature=[AVG($2)]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 1000, 0]]
   LogicalProject(sensorid=[$0], timeSec=[endOfSecond($3)], temperature=[$1], _uuid=[$2], event_time=[$3])
-    LogicalTableScan(table=[[sensorreading$2]])
+    LogicalTableScan(table=[[sensorreading_2]])
 
 === SensorMaxTemp
-ID:     sensormaxtemp$1
+ID:     sensormaxtemp_1
 Type:   state
 Stage:  streams
-Inputs: sensorreading$2
+Inputs: sensorreading_2
 Primary Key: sensorid
 Timestamp  : __timestamp
 Schema:
@@ -50,10 +50,10 @@ Schema:
  - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
 LogicalAggregate(group=[{0}], maxTemp=[MAX($1)], __timestamp=[MAX($3)])
-  LogicalTableScan(table=[[sensorreading$2]])
+  LogicalTableScan(table=[[sensorreading_2]])
 
 === SensorReading
-ID:     sensorreading$2
+ID:     sensorreading_2
 Type:   stream
 Stage:  streams
 Primary Key: _uuid
@@ -64,21 +64,21 @@ Schema:
  - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - event_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalTableScan(table=[[sensorreading$1]], hints=[[[WatermarkHint inheritPath:[] options:[3]]]]) hints[WatermarkHint options:[3]]
+LogicalTableScan(table=[[sensorreading_1]], hints=[[[WatermarkHint inheritPath:[] options:[3]]]]) hints[WatermarkHint options:[3]]
 
 >>>flink.json
 {
   "flinkSql" : [
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofsecond` AS 'com.datasqrl.time.EndOfSecond' LANGUAGE JAVA;",
-    "CREATE TEMPORARY TABLE `sensorreading$1` (\n  `sensorid` BIGINT NOT NULL,\n  `temperature` DECIMAL(10, 5) NOT NULL,\n  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL METADATA FROM 'timestamp',\n  WATERMARK FOR `event_time` AS (`event_time` - INTERVAL '0.0' SECOND)\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'sensors-mutation-addreading',\n  'scan.startup.mode' = 'group-offsets'\n);",
-    "CREATE TEMPORARY TABLE `secreading$1` (\n  `sensorid` BIGINT NOT NULL,\n  `timeSec` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `temperature` DECIMAL(10, 5) NOT NULL,\n  PRIMARY KEY (`sensorid`, `timeSec`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'secreading$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `sensormaxtemp$1` (\n  `sensorid` BIGINT NOT NULL,\n  `maxTemp` DECIMAL(10, 5) NOT NULL,\n  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`sensorid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'sensormaxtemp$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `hightempalert$1$1` (\n  `sensorid` BIGINT NOT NULL,\n  `temperature` DECIMAL(10, 5) NOT NULL,\n  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'hightempalert-1',\n  'scan.startup.mode' = 'group-offsets'\n);",
-    "CREATE VIEW `table$1`\nAS\nSELECT `sensorid`, ENDOFSECOND(`event_time`) AS `timeSec`, `temperature`, `_uuid`, `event_time`\nFROM `sensorreading$1`;",
+    "CREATE TEMPORARY TABLE `sensorreading_1` (\n  `sensorid` BIGINT NOT NULL,\n  `temperature` DECIMAL(10, 5) NOT NULL,\n  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL METADATA FROM 'timestamp',\n  WATERMARK FOR `event_time` AS (`event_time` - INTERVAL '0.0' SECOND)\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'sensors-mutation-addreading',\n  'scan.startup.mode' = 'group-offsets'\n);",
+    "CREATE TEMPORARY TABLE `secreading_1` (\n  `sensorid` BIGINT NOT NULL,\n  `timeSec` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `temperature` DECIMAL(10, 5) NOT NULL,\n  PRIMARY KEY (`sensorid`, `timeSec`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'secreading_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `sensormaxtemp_1` (\n  `sensorid` BIGINT NOT NULL,\n  `maxTemp` DECIMAL(10, 5) NOT NULL,\n  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`sensorid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'sensormaxtemp_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `hightempalert_1_1` (\n  `sensorid` BIGINT NOT NULL,\n  `temperature` DECIMAL(10, 5) NOT NULL,\n  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'hightempalert_1',\n  'scan.startup.mode' = 'group-offsets'\n);",
+    "CREATE VIEW `table$1`\nAS\nSELECT `sensorid`, ENDOFSECOND(`event_time`) AS `timeSec`, `temperature`, `_uuid`, `event_time`\nFROM `sensorreading_1`;",
     "CREATE VIEW `table$2`\nAS\nSELECT `sensorid`, `window_time` AS `timeSec`, AVG(`temperature`) AS `temperature`\nFROM TABLE(TUMBLE((TABLE `table$1`), (DESCRIPTOR(`event_time`)), INTERVAL '1' SECOND(4), INTERVAL '0' SECOND(1))) AS `t0`\nGROUP BY `sensorid`, `window_start`, `window_end`, `window_time`;",
-    "CREATE VIEW `table$3`\nAS\nSELECT `sensorid`, MAX(`temperature`) AS `maxTemp`, MAX(`event_time`) AS `__timestamp`\nFROM `sensorreading$1`\nGROUP BY `sensorid`;",
-    "CREATE VIEW `table$4`\nAS\nSELECT *\nFROM `sensorreading$1`\nWHERE (`temperature` > 50);",
-    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `secreading$1`\n(SELECT *\nFROM `table$2`)\n;\nINSERT INTO `sensormaxtemp$1`\n(SELECT *\nFROM `table$3`)\n;\nINSERT INTO `hightempalert$1$1`\n(SELECT *\nFROM `table$4`)\n;\nEND;"
+    "CREATE VIEW `table$3`\nAS\nSELECT `sensorid`, MAX(`temperature`) AS `maxTemp`, MAX(`event_time`) AS `__timestamp`\nFROM `sensorreading_1`\nGROUP BY `sensorid`;",
+    "CREATE VIEW `table$4`\nAS\nSELECT *\nFROM `sensorreading_1`\nWHERE (`temperature` > 50);",
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `secreading_1`\n(SELECT *\nFROM `table$2`)\n;\nINSERT INTO `sensormaxtemp_1`\n(SELECT *\nFROM `table$3`)\n;\nINSERT INTO `hightempalert_1_1`\n(SELECT *\nFROM `table$4`)\n;\nEND;"
   ],
   "connectors" : [
     "jdbc-sqrl",
@@ -92,7 +92,7 @@ LogicalTableScan(table=[[sensorreading$1]], hints=[[[WatermarkHint inheritPath:[
 {
   "topics" : [
     {
-      "name" : "hightempalert-1",
+      "name" : "hightempalert_1",
       "numPartitions" : 1,
       "replicationFactor" : 1,
       "replicasAssignments" : { },
@@ -111,7 +111,7 @@ LogicalTableScan(table=[[sensorreading$1]], hints=[[[WatermarkHint inheritPath:[
 {
   "ddl" : [
     {
-      "name" : "secreading$1",
+      "name" : "secreading_1",
       "columns" : [
         "\"sensorid\" BIGINT NOT NULL",
         "\"timeSec\" TIMESTAMP WITH TIME ZONE NOT NULL",
@@ -121,10 +121,10 @@ LogicalTableScan(table=[[sensorreading$1]], hints=[[[WatermarkHint inheritPath:[
         "\"sensorid\"",
         "\"timeSec\""
       ],
-      "sql" : "CREATE TABLE IF NOT EXISTS secreading$1 (\"sensorid\" BIGINT NOT NULL,\"timeSec\" TIMESTAMP WITH TIME ZONE NOT NULL,\"temperature\" NUMERIC NOT NULL , PRIMARY KEY (\"sensorid\",\"timeSec\"));"
+      "sql" : "CREATE TABLE IF NOT EXISTS secreading_1 (\"sensorid\" BIGINT NOT NULL,\"timeSec\" TIMESTAMP WITH TIME ZONE NOT NULL,\"temperature\" NUMERIC NOT NULL , PRIMARY KEY (\"sensorid\",\"timeSec\"));"
     },
     {
-      "name" : "sensormaxtemp$1",
+      "name" : "sensormaxtemp_1",
       "columns" : [
         "\"sensorid\" BIGINT NOT NULL",
         "\"maxTemp\" NUMERIC NOT NULL",
@@ -133,7 +133,7 @@ LogicalTableScan(table=[[sensorreading$1]], hints=[[[WatermarkHint inheritPath:[
       "primaryKeys" : [
         "\"sensorid\""
       ],
-      "sql" : "CREATE TABLE IF NOT EXISTS sensormaxtemp$1 (\"sensorid\" BIGINT NOT NULL,\"maxTemp\" NUMERIC NOT NULL,\"__timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"sensorid\"));"
+      "sql" : "CREATE TABLE IF NOT EXISTS sensormaxtemp_1 (\"sensorid\" BIGINT NOT NULL,\"maxTemp\" NUMERIC NOT NULL,\"__timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"sensorid\"));"
     }
   ]
 }
@@ -157,7 +157,7 @@ LogicalTableScan(table=[[sensorreading$1]], hints=[[[WatermarkHint inheritPath:[
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-              "sql" : "SELECT *\nFROM \"secreading$1\"\nWHERE \"sensorid\" = $1\nORDER BY \"timeSec\" DESC NULLS LAST",
+              "sql" : "SELECT *\nFROM \"secreading_1\"\nWHERE \"sensorid\" = $1\nORDER BY \"timeSec\" DESC NULLS LAST",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -179,7 +179,7 @@ LogicalTableScan(table=[[sensorreading$1]], hints=[[[WatermarkHint inheritPath:[
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-              "sql" : "SELECT *\nFROM \"sensormaxtemp$1\"\nORDER BY \"sensorid\"",
+              "sql" : "SELECT *\nFROM \"sensormaxtemp_1\"\nORDER BY \"sensorid\"",
               "parameters" : [ ]
             }
           },
@@ -194,7 +194,7 @@ LogicalTableScan(table=[[sensorreading$1]], hints=[[[WatermarkHint inheritPath:[
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-              "sql" : "SELECT \"sensorid\", \"maxTemp\", \"__timestamp\", 1 AS \"__pk\"\nFROM \"sensormaxtemp$1\"\nWHERE \"sensorid\" = $1\nORDER BY 1",
+              "sql" : "SELECT \"sensorid\", \"maxTemp\", \"__timestamp\", 1 AS \"__pk\"\nFROM \"sensormaxtemp_1\"\nWHERE \"sensorid\" = $1\nORDER BY 1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -217,7 +217,7 @@ LogicalTableScan(table=[[sensorreading$1]], hints=[[[WatermarkHint inheritPath:[
     "subscriptions" : [
       {
         "fieldName" : "HighTempAlert",
-        "topic" : "hightempalert-1",
+        "topic" : "hightempalert_1",
         "sinkConfig" : { },
         "filters" : {
           "sensorid" : "sensorid"

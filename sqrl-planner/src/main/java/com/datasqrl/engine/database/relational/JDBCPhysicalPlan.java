@@ -22,6 +22,4 @@ public class JDBCPhysicalPlan implements DatabasePhysicalPlan {
   @JsonIgnore
   Map<IdentifiedQuery, QueryTemplate> queryPlans;
 
-  List<Map<String, String>> queries;
-
 }
