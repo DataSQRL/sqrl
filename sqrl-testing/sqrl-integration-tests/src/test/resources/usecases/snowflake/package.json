@@ -1,8 +1,5 @@
 {
   "version": "1",
-  "profiles": [
-    "/Users/henneberger/sqrl/profiles/default"
-  ],
   "enabled-engines": [
     "flink",
     "iceberg",

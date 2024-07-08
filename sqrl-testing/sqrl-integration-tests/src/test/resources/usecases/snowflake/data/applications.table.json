@@ -2,7 +2,7 @@
   "version": 1,
   "flink" : {
     "format" : "flexible-json",
-    "path" : "/Users/henneberger/sqrl/sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/banking/data/applications.jsonl",
+    "path" : "/data/applications.jsonl",
     "source.monitor-interval" : 1,
     "connector" : "filesystem"
   },
