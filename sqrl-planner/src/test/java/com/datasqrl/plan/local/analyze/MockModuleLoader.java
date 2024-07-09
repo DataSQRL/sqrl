@@ -31,32 +31,12 @@ public class MockModuleLoader implements ModuleLoader {
   @Override
   public Optional<SqrlModule> getModule(NamePath namePath) {
     if (objLoader != null && !objLoader.load(namePath).isEmpty()) {
-      return Optional.of(new SqrlDirectoryModule(
-          applyTestSettings(objLoader.load(namePath))));
+      return objLoader.load(namePath);
     }
 
     if (tables.containsKey(namePath)) {
       return Optional.of(tables.get(namePath));
     }
-//
-//    //todo: move this out
-//    if (ModuleLoaderImpl.isPrintSink(namePath) ) {
-//      if (true) throw new RuntimeException();
-//      return Optional.of(
-//          new SqrlDirectoryModule(
-//              List.of(new DynamicSinkNsObject(namePath, new StandardDynamicSinkFactory(new PrintFlinkDynamicSinkConnectorFactory()
-//                  ,
-////                  SqrlConfig.createCurrentVersion()
-//                  null
-//              )))));
-//    }
-//
-//    if (isOutputSink(namePath)) {
-//      return Optional.of(
-//          new SqrlDirectoryModule(
-//              List.of(new DynamicSinkNsObject(namePath, FileFlinkDynamicSinkConnectorFactory.forPath(errorDir.get())))));
-//    }
-
     List<NamespaceObject> objects = standardLibraryLoader.load(namePath);
     if (objects.isEmpty()) {
       return Optional.empty();
@@ -65,21 +45,4 @@ public class MockModuleLoader implements ModuleLoader {
     return Optional.of(
         new SqrlDirectoryModule(objects));
   }
-
-  private List<NamespaceObject> applyTestSettings(List<NamespaceObject> objects) {
-    for (NamespaceObject object : objects) {
-      if (object instanceof TableSourceNamespaceObject) {
-        TableSourceNamespaceObject s = (TableSourceNamespaceObject) object;
-
-      }
-    }
-
-    return objects;
-  }
-
-  private static boolean isOutputSink(NamePath namePath) {
-    return namePath.size() == 1 && namePath.getLast().getCanonical()
-        .equals("output");
-  }
-
 }

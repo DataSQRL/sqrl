@@ -150,7 +150,8 @@ public class GraphqlModelGenerator extends SchemaWalker {
     ArgumentLookupCoords coord = coordsBuilder.build();
     Set<Set<Argument>> matches = coord.getMatchs().stream().map(ArgumentSet::getArguments)
         .collect(Collectors.toSet());
-    Preconditions.checkState(coord.getMatchs().size() == matches.size());
+    Preconditions.checkState(coord.getMatchs().size() == matches.size(),
+        "Internal error");
 
     coords.add(coord);
   }

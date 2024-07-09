@@ -13,6 +13,7 @@ import com.datasqrl.io.tables.TableSchemaFactory;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.module.NamespaceObject;
+import com.datasqrl.module.SqrlModule;
 import com.datasqrl.module.TableNamespaceObject;
 import com.datasqrl.module.resolver.ResourceResolver;
 import com.datasqrl.plan.table.CalciteTableFactory;
@@ -64,7 +65,7 @@ public class ObjectLoaderImpl implements ObjectLoader {
   }
 
   @Override
-  public List<NamespaceObject> load(NamePath directory) {
+  public Optional<SqrlModule> load(NamePath directory) {
     //Folders take precedence
     List<Path> allItems = resourceResolver.loadPath(directory);
 
@@ -73,13 +74,17 @@ public class ObjectLoaderImpl implements ObjectLoader {
       Optional<Path> sqrlFile = resourceResolver.resolveFile(directory.popLast()
           .concat(Name.system(directory.getLast().toString() + ".sqrl")));
       if (sqrlFile.isPresent()) {
-        return loadScript(directory, sqrlFile.get());
+        return Optional.of(loadScript(directory, sqrlFile.get()));
       }
     }
 
-    return allItems.stream()
-            .flatMap(url -> load(url, directory, allItems).stream())
-            .collect(Collectors.toList());
+    List<NamespaceObject> items = allItems.stream()
+        .flatMap(url -> load(url, directory, allItems).stream())
+        .collect(Collectors.toList());
+    if (items.isEmpty()) {
+      return Optional.empty();
+    }
+    return Optional.of(new SqrlDirectoryModule(items));
   }
 
   private List<? extends NamespaceObject> load(Path path, NamePath directory, List<Path> allItems) {
@@ -92,9 +97,8 @@ public class ObjectLoaderImpl implements ObjectLoader {
   }
 
   @SneakyThrows
-  private List<NamespaceObject> loadScript(NamePath directory, Path path) {
-    return List.of(new ScriptNamespaceObject(moduleLoader, Name.system(""),
-        Files.readString(path)));
+  private SqrlModule loadScript(NamePath directory, Path path) {
+    return new ScriptSqrlModule(moduleLoader, Files.readString(path), Optional.empty());
   }
 
   @SneakyThrows
