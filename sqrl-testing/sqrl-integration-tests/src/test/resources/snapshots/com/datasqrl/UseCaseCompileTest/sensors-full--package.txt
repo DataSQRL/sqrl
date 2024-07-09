@@ -42,7 +42,7 @@ Schema:
  - avgTemp: DOUBLE NOT NULL
  - _timeSec: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Post Processors:
- - topN: partition=__pk1_id limit=1 sort=#3: _timeSec TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last
+ - topN: partition=__pk1_id limit=1 sort=#3: _timeSec TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
 Plan:
 LogicalProject(__pk1_id=[$1], maxTemp=[$2], avgTemp=[$3], _timeSec=[$0])
   LogicalAggregate(group=[{1, 4}], maxTemp=[MAX($2)], avgTemp=[AVG($2)]) hints[SlidingAggregationHint options:[1, 3600000, 72000]]

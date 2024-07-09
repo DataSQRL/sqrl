@@ -1,2 +1,3 @@
-[FATAL] Connector not supported: mysinkpackage
+[FATAL] Could not find execution stage for [table spending_1]. Stage analysis below.
+flink: Stage [flink] does not support capabilities: [GLOBAL_SORT (feature)]
 
