@@ -2,21 +2,19 @@ package com.datasqrl.json;
 
 import java.util.ArrayList;
 import lombok.SneakyThrows;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.JsonProcessingException;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ArrayNode;
 import org.apache.flink.table.annotation.DataTypeHint;
-import org.apache.flink.table.annotation.FunctionHint;
+import org.apache.flink.table.annotation.InputGroup;
 import org.apache.flink.table.functions.AggregateFunction;
 
 /**
  * Aggregation function that aggregates JSON objects into a JSON array.
  */
 public class JsonArrayAgg extends AggregateFunction<FlinkJsonType, ArrayAgg> {
+  private static final long serialVersionUID = 1L;
 
-  private final ObjectMapper mapper = new ObjectMapper();
-
+  private static final ObjectMapper mapper = new ObjectMapper();
 
   @Override
   public ArrayAgg createAccumulator() {
@@ -28,53 +26,21 @@ public class JsonArrayAgg extends AggregateFunction<FlinkJsonType, ArrayAgg> {
   }
 
   @SneakyThrows
-  public void accumulate(ArrayAgg accumulator, FlinkJsonType value) {
-    if (value != null) {
-      accumulator.add(value.json);
-    } else {
-      accumulator.add(null);
-    }
+  public void accumulate(ArrayAgg accumulator, @DataTypeHint(inputGroup = InputGroup.ANY) Object value) {
+    accumulator.add(mapper.getNodeFactory().pojoNode(unboxFlinkJsonType(value)));
   }
 
-  public void accumulate(ArrayAgg accumulator, Double value) {
-    accumulator.add(mapper.getNodeFactory().numberNode(value));
-  }
 
-  public void accumulate(ArrayAgg accumulator, Long value) {
-    accumulator.add(mapper.getNodeFactory().numberNode(value));
-  }
-
-  public void accumulate(ArrayAgg accumulator, Integer value) {
-    accumulator.add(mapper.getNodeFactory().numberNode(value));
-  }
-
-  public void retract(ArrayAgg accumulator, String value) {
-    accumulator.remove(mapper.getNodeFactory().textNode(value));
-  }
-
-  @SneakyThrows
-  public void retract(ArrayAgg accumulator, FlinkJsonType value) {
-    if (value != null) {
-      accumulator.remove(value.json);
-    } else {
-      accumulator.remove(null);
-    }
-  }
-
-  public void retract(ArrayAgg accumulator, Double value) {
-    accumulator.remove(mapper.getNodeFactory().numberNode(value));
-  }
-
-  public void retract(ArrayAgg accumulator, Long value) {
-    accumulator.remove(mapper.getNodeFactory().numberNode(value));
-  }
-
-  public void retract(ArrayAgg accumulator, Integer value) {
-    accumulator.remove(mapper.getNodeFactory().numberNode(value));
+  public void retract(ArrayAgg accumulator, @DataTypeHint(inputGroup = InputGroup.ANY) Object value) {
+    accumulator.remove(mapper.getNodeFactory().pojoNode(value));
   }
 
   public void merge(ArrayAgg accumulator, java.lang.Iterable<ArrayAgg> iterable) {
     iterable.forEach(o->accumulator.getObjects().addAll(o.getObjects()));
+  }
+
+  public void resetAccumulator(ArrayAgg acc) {
+    acc.getObjects().clear();
   }
 
   @Override
@@ -88,5 +54,9 @@ public class JsonArrayAgg extends AggregateFunction<FlinkJsonType, ArrayAgg> {
       }
     }
     return new FlinkJsonType(arrayNode);
+  }
+
+  private Object unboxFlinkJsonType(Object value) {
+    return value instanceof FlinkJsonType ? ((FlinkJsonType) value).getJson() : value;
   }
 }
