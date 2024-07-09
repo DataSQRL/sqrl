@@ -50,7 +50,10 @@ public class FlexibleTable2RelDataTypeConverter implements
   public RelDataType endTable(Name name, NamePath namePath, boolean isNested,
       boolean isSingleton) {
     RelDataType type = stack.removeFirst().build();
-    if (!isSingleton) type = typeFactory.wrapInArray(type);
+    if (!isSingleton) {
+      type = typeFactory.wrapInArray(type);
+      type = typeFactory.createTypeWithNullability(type, false);
+    }
     return type;
   }
 

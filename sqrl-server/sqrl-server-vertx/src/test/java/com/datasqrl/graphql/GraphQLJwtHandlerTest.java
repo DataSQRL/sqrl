@@ -101,7 +101,7 @@ class GraphQLJwtHandlerTest {
     serverConfig.setHttpServerOptions(httpServerOptions);
     server = new GraphQLServer(root, serverConfig, NameCanonicalizer.SYSTEM) {
       @Override
-      String getEnvironmentVariable(String envVar) {
+      public String getEnvironmentVariable(String envVar) {
         return CLUSTER.bootstrapServers();
       }
 
