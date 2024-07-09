@@ -61,7 +61,10 @@ public class FlexibleTableConverter {
       T nestedTable = visitRelation(path, fieldName,
           (RelationType<FlexibleFieldSchema.Field>) ftype.getType(), true,
           isSingleton, visitor);
-      nullable = isMixedType || hasZeroOneMultiplicity(ftype) || !ConstraintHelper.isNonNull(ftype.getConstraints());
+      nullable = isMixedType || hasZeroOneMultiplicity(ftype);
+      if (ConstraintHelper.isNonNull(ftype.getConstraints())) {
+        nullable = false;
+      }
       visitor.addField(fieldName, nestedTable, nullable, isSingleton);
     } else {
       visitor.addField(fieldName, ftype.getType(), nullable);
