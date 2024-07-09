@@ -180,7 +180,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     NamespaceObject namespaceObject = createTableResolver.create(
         new TableSource(tableConfig, namePath, namePath.getLast(),
             new RelDataTypeTableSchema(fieldBuilder.build())));
-    namespaceObject.apply(Optional.empty(), framework, errorCollector);
+    namespaceObject.apply(this, Optional.empty(), framework, errorCollector);
     return null;
   }
 

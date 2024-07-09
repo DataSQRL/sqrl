@@ -54,7 +54,7 @@ public class ScriptSqrlModule implements SqrlModule {
         Optional.of(framework.getQueryPlanner()));
     ScriptPlanner newPlanner = new ScriptPlanner(newFramework, moduleLoader, errors,
         planner.getExecutionGoal(), planner.getTableFactory(), planner.getNameUtil(),
-        planner.getConnectorFactoryFactory());
+        planner.getConnectorFactoryFactory(), planner.getCreateTableResolver());
 
     newPlanner.plan(
         new MainScript() {
