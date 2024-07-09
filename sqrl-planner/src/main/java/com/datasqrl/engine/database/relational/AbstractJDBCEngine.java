@@ -197,14 +197,14 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
     if (type instanceof RawRelDataType) {
       Class<?> defaultConversion = ((RawRelDataType) type).getRawType().getDefaultConversion();
 
-      JdbcTypeSerializer jdbcTypeSerializer = ServiceLoaderDiscovery.get(JdbcTypeSerializer.class,
-          (Function<JdbcTypeSerializer, String>) JdbcTypeSerializer::getDialectId,
-          getDialect().getId(),
-          (Function<JdbcTypeSerializer, String>) jdbcTypeSerializer1 -> jdbcTypeSerializer1.getConversionClass()
-              .getTypeName(),
-          defaultConversion.getTypeName());
+      Optional<JdbcTypeSerializer> jdbcTypeSerializer = ServiceLoaderDiscovery.findFirst(JdbcTypeSerializer.class,
+            (Function<JdbcTypeSerializer, String>) JdbcTypeSerializer::getDialectId,
+            getDialect().getId(),
+            (Function<JdbcTypeSerializer, String>) jdbcTypeSerializer1 -> jdbcTypeSerializer1.getConversionClass()
+                .getTypeName(),
+            defaultConversion.getTypeName());
 
-      if (jdbcTypeSerializer != null) {
+      if (jdbcTypeSerializer.isEmpty()) {
         return Optional.empty();
       } else {
         return Optional.of(new RowToJsonDowncastFunction()); //try to downcast any raw to json
