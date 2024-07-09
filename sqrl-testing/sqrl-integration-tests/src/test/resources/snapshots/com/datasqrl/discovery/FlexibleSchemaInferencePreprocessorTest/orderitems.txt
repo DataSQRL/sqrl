@@ -39,7 +39,7 @@ columns:
 {
   "flink" : {
     "format" : "flexible-json",
-    "path" : "/data/orderitems.jsonl",
+    "path" : "/${DATA_PATH}/orderitems.jsonl",
     "source.monitor-interval" : 1,
     "connector" : "filesystem"
   },

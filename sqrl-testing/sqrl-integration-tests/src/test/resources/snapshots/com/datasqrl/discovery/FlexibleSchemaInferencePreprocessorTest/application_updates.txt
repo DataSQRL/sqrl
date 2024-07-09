@@ -25,7 +25,7 @@ columns:
 {
   "flink" : {
     "format" : "flexible-json",
-    "path" : "/data/application_updates.jsonl",
+    "path" : "/${DATA_PATH}/application_updates.jsonl",
     "source.monitor-interval" : 1,
     "connector" : "filesystem"
   },
