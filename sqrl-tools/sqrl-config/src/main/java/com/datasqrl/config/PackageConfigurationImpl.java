@@ -14,6 +14,7 @@ import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
 @NoArgsConstructor
@@ -41,7 +42,8 @@ public class PackageConfigurationImpl implements PackageConfiguration {
   @Default
   String documentation = "";
   @Default
-  String readme = "";
+  @Setter
+  String readme = null;
   @Default
   String description = "";
   @Default

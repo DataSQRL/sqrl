@@ -1,6 +1,7 @@
 package com.datasqrl.packager;
 
 import com.datasqrl.config.PackageConfiguration;
+import com.datasqrl.config.PackageConfigurationImpl;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.error.ErrorCollector;
@@ -13,9 +14,12 @@ import lombok.AllArgsConstructor;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import lombok.SneakyThrows;
 
 @AllArgsConstructor
 public class Publisher {
+
+    private static final String README_NAME = "README.md";
 
     private final ErrorCollector errors;
 
@@ -26,7 +30,9 @@ public class Publisher {
         PackageJson pkgConfig = SqrlConfigCommons.fromFilesPackageJson(errors, List.of(packageInfo));
 
         try {
-            PackageConfiguration packageConfig = pkgConfig.getPackageConfig();
+            PackageConfigurationImpl packageConfig = (PackageConfigurationImpl) pkgConfig.getPackageConfig();
+            addReadme(packageRoot, packageConfig);
+
             Path zipFile = Files.createTempFile(packageRoot, "package", Zipper.ZIP_EXTENSION);
             try {
                 Zipper.compress(zipFile, packageRoot);
@@ -43,6 +49,13 @@ public class Publisher {
         }
     }
 
-    
+    @SneakyThrows
+    private void addReadme(Path packageRoot, PackageConfigurationImpl packageConfig) {
+        Path readmePath = packageRoot.resolve(README_NAME);
+        if (packageConfig.getReadme() == null && Files.exists(readmePath)) {
+            String readmeContent = Files.readString(readmePath);
+            packageConfig.setReadme(readmeContent);
+        }
+    }
 
 }
