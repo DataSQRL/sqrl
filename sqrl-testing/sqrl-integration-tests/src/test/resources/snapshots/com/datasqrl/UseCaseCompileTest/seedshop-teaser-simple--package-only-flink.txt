@@ -1,2 +1,2 @@
-[FATAL] Flink stage empty. No queries or exports were found.
+[FATAL] No sinks detected. Please configure an external sink or specify queries/subscriptions via the GraphQL API. Without sinks, the data has nowhere to flow, rendering preceding queries redundant and resulting in an empty Flink stage.
 

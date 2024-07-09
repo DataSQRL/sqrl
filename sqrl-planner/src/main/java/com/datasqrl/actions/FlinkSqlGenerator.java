@@ -38,7 +38,10 @@ public class FlinkSqlGenerator {
     flinkSql.addAll(result.getSinksSources());
     flinkSql.addAll(result.getQueries());
     if (result.getInserts().isEmpty()){
-      throw new RuntimeException("Flink stage empty. No queries or exports were found.");
+      throw new RuntimeException("No sinks detected."
+          + " Please configure an external sink or specify queries/subscriptions"
+          + " via the GraphQL API. Without sinks, the data has nowhere to flow,"
+          + " rendering preceding queries redundant and resulting in an empty Flink stage.");
     }
     SqlStatementSet sqlStatementSet = new SqlStatementSet(result.getInserts(), SqlParserPos.ZERO);
     SqlExecute execute = new SqlExecute(sqlStatementSet, SqlParserPos.ZERO);
