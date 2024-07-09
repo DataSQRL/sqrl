@@ -1,5 +1,6 @@
 package com.datasqrl.calcite.function;
 
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.function.SqrlFunctionParameter;
 import com.datasqrl.schema.Multiplicity;
@@ -35,4 +36,6 @@ public interface SqrlTableMacro extends TableFunction {
   JoinType getJoinType();
 
   boolean isTest();
+
+  SqrlTableMacro rename(Name destName);
 }

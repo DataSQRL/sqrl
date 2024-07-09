@@ -4,6 +4,7 @@ import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.module.TableNamespaceObject;
+import com.datasqrl.plan.validate.ScriptPlanner;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
@@ -19,7 +20,7 @@ public class TableFunctionNamespaceObject implements TableNamespaceObject<QueryT
   QueryTableFunction table;
 
   @Override
-  public boolean apply(Optional<String> objectName, SqrlFramework framework, ErrorCollector errors) {
+  public boolean apply(ScriptPlanner planner, Optional<String> objectName, SqrlFramework framework, ErrorCollector errors) {
     throw new RuntimeException("Cannot import a table function");
   }
 }

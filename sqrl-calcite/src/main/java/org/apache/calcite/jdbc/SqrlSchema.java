@@ -10,7 +10,6 @@ import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.plan.queries.APIMutation;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISubscription;
-import com.datasqrl.plan.util.PrimaryKeyMap.Builder;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.RootSqrlTable;
 import com.datasqrl.util.StreamUtil;
@@ -33,11 +32,11 @@ import org.apache.calcite.schema.Table;
 import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlOperator;
+import org.apache.calcite.util.NameMultimap;
 
 @Getter
 @Singleton
 public class SqrlSchema extends SimpleCalciteSchema {
-  private final TypeFactory typeFactory;
   private final NameCanonicalizer nameCanonicalizer;
 
   private final List<ResolvedExport> exports = new ArrayList<>();
@@ -68,7 +67,6 @@ public class SqrlSchema extends SimpleCalciteSchema {
 
   public SqrlSchema(TypeFactory typeFactory, NameCanonicalizer nameCanonicalizer) {
     super(null, CalciteSchema.createRootSchema(false, false).plus(), "");
-    this.typeFactory = typeFactory;
     this.nameCanonicalizer = nameCanonicalizer;
   }
 
@@ -164,5 +162,9 @@ public class SqrlSchema extends SimpleCalciteSchema {
 
   public void addAdditionalSql(Set<SqlNode> addlSql) {
     this.addlSql.addAll(addlSql);
+  }
+
+  public NameMultimap<FunctionEntry> getFunctionMap() {
+    return this.functionMap;
   }
 }
