@@ -51,6 +51,6 @@ class ParseTest {
 
   @Test
   public void testSqlSelect() {
-    parser.parse("Table.nested(val: Int = 5, var: String) := SELECT * FROM tbl.nested;");
+    parser.parse("Tbl.nested(val: Int = 5, var: String) := SELECT * FROM tbl.nested;");
   }
 }
