@@ -10,7 +10,7 @@ public class UseCasesFullIT extends UseCasesIT {
 
   @Test
   public void testBanking() {
-    execute("banking", "loan.sqrl", "schema.graphqls");
+    execute("banking", "loan.sqrl", "loan.graphqls");
   }
 
   @Test

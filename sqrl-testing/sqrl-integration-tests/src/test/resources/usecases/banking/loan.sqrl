@@ -1,5 +1,5 @@
 IMPORT src.*;
-IMPORT schema.ApplicationUpdates;
+IMPORT loan.ApplicationUpdates;
 
 Customers := DISTINCT Customers ON id ORDER BY updated_at DESC;
 Applications := DISTINCT Applications ON id ORDER BY updated_at DESC;
@@ -27,7 +27,7 @@ ApplicationAlert := SELECT id, customer_id, loan_type_id, max_amount, min_amount
                     FROM ApplicationStatus a
                     WHERE status = 'underwriting' AND (amount > max_amount OR amount < min_amount);
 
-IMPORT schema.AddChatMessage;
+IMPORT loan.AddChatMessage;
 
 CustomerChatMessage := SELECT role, content, name, c.context.customerid, event_time AS timestamp,
                         _uuid AS uuid

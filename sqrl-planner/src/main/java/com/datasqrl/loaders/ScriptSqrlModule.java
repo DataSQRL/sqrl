@@ -5,34 +5,21 @@ import static com.datasqrl.canonicalizer.Name.HIDDEN_PREFIX;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.module.SqrlModule;
 import com.datasqrl.plan.MainScript;
-import com.datasqrl.plan.queries.APIMutation;
-import com.datasqrl.plan.queries.APIQuery;
-import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.plan.validate.ScriptPlanner;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
-import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.jdbc.CalciteSchema.FunctionEntry;
 import org.apache.calcite.jdbc.CalciteSchema.FunctionEntryImpl;
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.schema.Function;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlOperator;
 
 @AllArgsConstructor
 public class ScriptSqrlModule implements SqrlModule {
