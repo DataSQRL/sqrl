@@ -10,6 +10,8 @@ import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.plan.queries.APIMutation;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISubscription;
+import com.datasqrl.plan.util.PrimaryKeyMap.Builder;
+import com.datasqrl.plan.validate.ResolvedImport;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.RootSqrlTable;
 import com.datasqrl.util.StreamUtil;
@@ -40,6 +42,7 @@ public class SqrlSchema extends SimpleCalciteSchema {
   private final NameCanonicalizer nameCanonicalizer;
 
   private final List<ResolvedExport> exports = new ArrayList<>();
+  private final List<ResolvedImport> imports = new ArrayList<>();
   private final Set<URL> jars = new HashSet<>();
 
   //Current table mapping
@@ -86,6 +89,9 @@ public class SqrlSchema extends SimpleCalciteSchema {
 
   public void add(ResolvedExport export) {
     this.exports.add(export);
+  }
+  public void add(ResolvedImport imp) {
+    this.imports.add(imp);
   }
 
   public void addTable(RootSqrlTable root) {

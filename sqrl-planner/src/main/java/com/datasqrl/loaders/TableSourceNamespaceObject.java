@@ -23,7 +23,6 @@ public class TableSourceNamespaceObject extends AbstractTableNamespaceObject<Tab
     this.table = table;
   }
 
-
   @Override
   public Name getName() {
     return table.getName();

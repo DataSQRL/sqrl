@@ -2,6 +2,7 @@ package org.apache.calcite.sql;
 
 public interface StatementVisitor<R, C> {
 
+  R visit(SqrlCreateDefinition statement, C context);
   R visit(SqrlImportDefinition statement, C context);
 
   R visit(SqrlExportDefinition statement, C context);
