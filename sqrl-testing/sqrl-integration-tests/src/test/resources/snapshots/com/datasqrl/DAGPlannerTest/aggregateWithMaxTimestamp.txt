@@ -1,9 +1,9 @@
 >>>pipeline_explain.txt
 === OrderAgg1
-ID:     orderagg1$1
+ID:     orderagg1_1
 Type:   state
 Stage:  streams
-Inputs: orders$2
+Inputs: orders_2
 Primary Key: customerid
 Timestamp  : __timestamp
 Schema:
@@ -12,13 +12,13 @@ Schema:
  - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
 LogicalAggregate(group=[{1}], count=[COUNT()], __timestamp=[MAX($2)])
-  LogicalTableScan(table=[[orders$2]])
+  LogicalTableScan(table=[[orders_2]])
 
 === OrderAgg2
-ID:     orderagg2$1
+ID:     orderagg2_1
 Type:   state
 Stage:  streams
-Inputs: orders$2
+Inputs: orders_2
 Primary Key: customerid
 Timestamp  : timestamp
 Schema:
@@ -27,13 +27,13 @@ Schema:
  - count: BIGINT NOT NULL
 Plan:
 LogicalAggregate(group=[{1}], timestamp=[MAX($2)], count=[COUNT()])
-  LogicalTableScan(table=[[orders$2]])
+  LogicalTableScan(table=[[orders_2]])
 
 === OrderAgg3
-ID:     orderagg3$1
+ID:     orderagg3_1
 Type:   state
 Stage:  streams
-Inputs: ordersstate$1
+Inputs: ordersstate_1
 Primary Key: customerid
 Timestamp  : __timestamp
 Schema:
@@ -44,13 +44,13 @@ Plan:
 LogicalAggregate(group=[{1}], count=[COUNT()], __timestamp=[MAX($2)])
   LogicalFilter(condition=[=($4, 1)]) hints[DedupHint]
     LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
-      LogicalTableScan(table=[[ordersstate$1]])
+      LogicalTableScan(table=[[ordersstate_1]])
 
 === OrderAgg4
-ID:     orderagg4$1
+ID:     orderagg4_1
 Type:   state
 Stage:  streams
-Inputs: ordersstate$1
+Inputs: ordersstate_1
 Primary Key: customerid
 Timestamp  : timestamp
 Schema:
@@ -61,10 +61,10 @@ Plan:
 LogicalAggregate(group=[{1}], timestamp=[MAX($2)], count=[COUNT()])
   LogicalFilter(condition=[=($4, 1)]) hints[DedupHint]
     LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
-      LogicalTableScan(table=[[ordersstate$1]])
+      LogicalTableScan(table=[[ordersstate_1]])
 
 === Orders
-ID:     orders$2
+ID:     orders_2
 Type:   stream
 Stage:  streams
 Primary Key: id, time
@@ -75,13 +75,13 @@ Schema:
  - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - entries: RecordType(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
 Plan:
-LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[2]]]]) hints[WatermarkHint options:[2]]
+LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] options:[2]]]]) hints[WatermarkHint options:[2]]
 
 === OrdersState
-ID:     ordersstate$1
+ID:     ordersstate_1
 Type:   state
 Stage:  streams
-Inputs: orders$2
+Inputs: orders_2
 Primary Key: id
 Timestamp  : time
 Schema:
@@ -92,26 +92,26 @@ Schema:
 Post Processors:
  - topN: partition=id limit=1 sort=#2: time TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
 Plan:
-LogicalTableScan(table=[[orders$2]])
+LogicalTableScan(table=[[orders_2]])
 
 >>>flink.json
 {
   "flinkSql" : [
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `tojson` AS 'com.datasqrl.json.ToJson' LANGUAGE JAVA;",
-    "CREATE TEMPORARY TABLE `orders$1` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,\n  PRIMARY KEY (`id`, `time`) NOT ENFORCED,\n  WATERMARK FOR `time` AS (`time` - INTERVAL '0.001' SECOND)\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
-    "CREATE TEMPORARY TABLE `orderagg1$1` (\n  `customerid` BIGINT NOT NULL,\n  `count` BIGINT NOT NULL,\n  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`customerid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orderagg1$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `orderagg2$1` (\n  `customerid` BIGINT NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `count` BIGINT NOT NULL,\n  PRIMARY KEY (`customerid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orderagg2$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `orderagg3$1` (\n  `customerid` BIGINT NOT NULL,\n  `count` BIGINT NOT NULL,\n  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`customerid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orderagg3$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `orderagg4$1` (\n  `customerid` BIGINT NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `count` BIGINT NOT NULL,\n  PRIMARY KEY (`customerid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orderagg4$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `orders$2` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  PRIMARY KEY (`id`, `time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orders$2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `ordersstate$1` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  PRIMARY KEY (`id`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'ordersstate$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE VIEW `table$1`\nAS\nSELECT `customerid`, COUNT(*) AS `count`, MAX(`time`) AS `__timestamp`\nFROM `orders$1`\nGROUP BY `customerid`;",
-    "CREATE VIEW `table$2`\nAS\nSELECT `customerid`, MAX(`time`) AS `timestamp`, COUNT(*) AS `count`\nFROM `orders$1`\nGROUP BY `customerid`;",
-    "CREATE VIEW `table$3`\nAS\nSELECT `customerid`, COUNT(*) AS `count`, MAX(`time`) AS `__timestamp`\nFROM (SELECT `id`, `customerid`, `time`, `entries`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `time` DESC NULLS LAST)) AS `_rownum`\nFROM `orders$1`) AS `t`\nWHERE (`_rownum` = 1)\nGROUP BY `customerid`;",
-    "CREATE VIEW `table$4`\nAS\nSELECT `customerid`, MAX(`time`) AS `timestamp`, COUNT(*) AS `count`\nFROM (SELECT `id`, `customerid`, `time`, `entries`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `time` DESC NULLS LAST)) AS `_rownum`\nFROM `orders$1`) AS `t`\nWHERE (`_rownum` = 1)\nGROUP BY `customerid`;",
-    "CREATE VIEW `table$5`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders$1`;",
-    "CREATE VIEW `table$6`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders$1`;",
-    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `orderagg1$1`\n(SELECT *\nFROM `table$1`)\n;\nINSERT INTO `orderagg2$1`\n(SELECT *\nFROM `table$2`)\n;\nINSERT INTO `orderagg3$1`\n(SELECT *\nFROM `table$3`)\n;\nINSERT INTO `orderagg4$1`\n(SELECT *\nFROM `table$4`)\n;\nINSERT INTO `orders$2`\n(SELECT *\nFROM `table$5`)\n;\nINSERT INTO `ordersstate$1`\n(SELECT *\nFROM `table$6`)\n;\nEND;"
+    "CREATE TEMPORARY TABLE `orders_1` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,\n  PRIMARY KEY (`id`, `time`) NOT ENFORCED,\n  WATERMARK FOR `time` AS (`time` - INTERVAL '0.001' SECOND)\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
+    "CREATE TEMPORARY TABLE `orderagg1_1` (\n  `customerid` BIGINT NOT NULL,\n  `count` BIGINT NOT NULL,\n  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`customerid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orderagg1_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `orderagg2_1` (\n  `customerid` BIGINT NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `count` BIGINT NOT NULL,\n  PRIMARY KEY (`customerid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orderagg2_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `orderagg3_1` (\n  `customerid` BIGINT NOT NULL,\n  `count` BIGINT NOT NULL,\n  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`customerid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orderagg3_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `orderagg4_1` (\n  `customerid` BIGINT NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `count` BIGINT NOT NULL,\n  PRIMARY KEY (`customerid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orderagg4_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `orders_2` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  PRIMARY KEY (`id`, `time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orders_2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `ordersstate_1` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  PRIMARY KEY (`id`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'ordersstate_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE VIEW `table$1`\nAS\nSELECT `customerid`, COUNT(*) AS `count`, MAX(`time`) AS `__timestamp`\nFROM `orders_1`\nGROUP BY `customerid`;",
+    "CREATE VIEW `table$2`\nAS\nSELECT `customerid`, MAX(`time`) AS `timestamp`, COUNT(*) AS `count`\nFROM `orders_1`\nGROUP BY `customerid`;",
+    "CREATE VIEW `table$3`\nAS\nSELECT `customerid`, COUNT(*) AS `count`, MAX(`time`) AS `__timestamp`\nFROM (SELECT `id`, `customerid`, `time`, `entries`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `time` DESC NULLS LAST)) AS `_rownum`\nFROM `orders_1`) AS `t`\nWHERE (`_rownum` = 1)\nGROUP BY `customerid`;",
+    "CREATE VIEW `table$4`\nAS\nSELECT `customerid`, MAX(`time`) AS `timestamp`, COUNT(*) AS `count`\nFROM (SELECT `id`, `customerid`, `time`, `entries`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `time` DESC NULLS LAST)) AS `_rownum`\nFROM `orders_1`) AS `t`\nWHERE (`_rownum` = 1)\nGROUP BY `customerid`;",
+    "CREATE VIEW `table$5`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders_1`;",
+    "CREATE VIEW `table$6`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders_1`;",
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `orderagg1_1`\n(SELECT *\nFROM `table$1`)\n;\nINSERT INTO `orderagg2_1`\n(SELECT *\nFROM `table$2`)\n;\nINSERT INTO `orderagg3_1`\n(SELECT *\nFROM `table$3`)\n;\nINSERT INTO `orderagg4_1`\n(SELECT *\nFROM `table$4`)\n;\nINSERT INTO `orders_2`\n(SELECT *\nFROM `table$5`)\n;\nINSERT INTO `ordersstate_1`\n(SELECT *\nFROM `table$6`)\n;\nEND;"
   ],
   "connectors" : [
     "jdbc-sqrl",
@@ -129,7 +129,7 @@ LogicalTableScan(table=[[orders$2]])
 {
   "ddl" : [
     {
-      "name" : "orderagg1$1",
+      "name" : "orderagg1_1",
       "columns" : [
         "\"customerid\" BIGINT NOT NULL",
         "\"count\" BIGINT NOT NULL",
@@ -138,10 +138,10 @@ LogicalTableScan(table=[[orders$2]])
       "primaryKeys" : [
         "\"customerid\""
       ],
-      "sql" : "CREATE TABLE IF NOT EXISTS orderagg1$1 (\"customerid\" BIGINT NOT NULL,\"count\" BIGINT NOT NULL,\"__timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\"));"
+      "sql" : "CREATE TABLE IF NOT EXISTS orderagg1_1 (\"customerid\" BIGINT NOT NULL,\"count\" BIGINT NOT NULL,\"__timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\"));"
     },
     {
-      "name" : "orderagg2$1",
+      "name" : "orderagg2_1",
       "columns" : [
         "\"customerid\" BIGINT NOT NULL",
         "\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL",
@@ -150,10 +150,10 @@ LogicalTableScan(table=[[orders$2]])
       "primaryKeys" : [
         "\"customerid\""
       ],
-      "sql" : "CREATE TABLE IF NOT EXISTS orderagg2$1 (\"customerid\" BIGINT NOT NULL,\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL,\"count\" BIGINT NOT NULL , PRIMARY KEY (\"customerid\"));"
+      "sql" : "CREATE TABLE IF NOT EXISTS orderagg2_1 (\"customerid\" BIGINT NOT NULL,\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL,\"count\" BIGINT NOT NULL , PRIMARY KEY (\"customerid\"));"
     },
     {
-      "name" : "orderagg3$1",
+      "name" : "orderagg3_1",
       "columns" : [
         "\"customerid\" BIGINT NOT NULL",
         "\"count\" BIGINT NOT NULL",
@@ -162,10 +162,10 @@ LogicalTableScan(table=[[orders$2]])
       "primaryKeys" : [
         "\"customerid\""
       ],
-      "sql" : "CREATE TABLE IF NOT EXISTS orderagg3$1 (\"customerid\" BIGINT NOT NULL,\"count\" BIGINT NOT NULL,\"__timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\"));"
+      "sql" : "CREATE TABLE IF NOT EXISTS orderagg3_1 (\"customerid\" BIGINT NOT NULL,\"count\" BIGINT NOT NULL,\"__timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\"));"
     },
     {
-      "name" : "orderagg4$1",
+      "name" : "orderagg4_1",
       "columns" : [
         "\"customerid\" BIGINT NOT NULL",
         "\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL",
@@ -174,10 +174,10 @@ LogicalTableScan(table=[[orders$2]])
       "primaryKeys" : [
         "\"customerid\""
       ],
-      "sql" : "CREATE TABLE IF NOT EXISTS orderagg4$1 (\"customerid\" BIGINT NOT NULL,\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL,\"count\" BIGINT NOT NULL , PRIMARY KEY (\"customerid\"));"
+      "sql" : "CREATE TABLE IF NOT EXISTS orderagg4_1 (\"customerid\" BIGINT NOT NULL,\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL,\"count\" BIGINT NOT NULL , PRIMARY KEY (\"customerid\"));"
     },
     {
-      "name" : "orders$2",
+      "name" : "orders_2",
       "columns" : [
         "\"id\" BIGINT NOT NULL",
         "\"customerid\" BIGINT NOT NULL",
@@ -188,10 +188,10 @@ LogicalTableScan(table=[[orders$2]])
         "\"id\"",
         "\"time\""
       ],
-      "sql" : "CREATE TABLE IF NOT EXISTS orders$2 (\"id\" BIGINT NOT NULL,\"customerid\" BIGINT NOT NULL,\"time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"entries\" JSONB NOT NULL , PRIMARY KEY (\"id\",\"time\"));"
+      "sql" : "CREATE TABLE IF NOT EXISTS orders_2 (\"id\" BIGINT NOT NULL,\"customerid\" BIGINT NOT NULL,\"time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"entries\" JSONB NOT NULL , PRIMARY KEY (\"id\",\"time\"));"
     },
     {
-      "name" : "ordersstate$1",
+      "name" : "ordersstate_1",
       "columns" : [
         "\"id\" BIGINT NOT NULL",
         "\"customerid\" BIGINT NOT NULL",
@@ -201,16 +201,16 @@ LogicalTableScan(table=[[orders$2]])
       "primaryKeys" : [
         "\"id\""
       ],
-      "sql" : "CREATE TABLE IF NOT EXISTS ordersstate$1 (\"id\" BIGINT NOT NULL,\"customerid\" BIGINT NOT NULL,\"time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"entries\" JSONB NOT NULL , PRIMARY KEY (\"id\"));"
+      "sql" : "CREATE TABLE IF NOT EXISTS ordersstate_1 (\"id\" BIGINT NOT NULL,\"customerid\" BIGINT NOT NULL,\"time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"entries\" JSONB NOT NULL , PRIMARY KEY (\"id\"));"
     },
     {
-      "indexName" : "orders$2_hash_c2",
-      "tableName" : "orders$2",
+      "indexName" : "orders_2_hash_c2",
+      "tableName" : "orders_2",
       "columns" : [
         "time"
       ],
       "type" : "HASH",
-      "sql" : "CREATE INDEX IF NOT EXISTS orders$2_hash_c2 ON orders$2 USING hash (\"time\");"
+      "sql" : "CREATE INDEX IF NOT EXISTS orders_2_hash_c2 ON orders_2 USING hash (\"time\");"
     }
   ]
 }
@@ -244,7 +244,7 @@ LogicalTableScan(table=[[orders$2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"customerid\", \"count\", \"__timestamp\", 1 AS \"__pk\"\nFROM \"orderagg1$1\"\nWHERE \"customerid\" = $1\nORDER BY 1",
+              "sql" : "SELECT \"customerid\", \"count\", \"__timestamp\", 1 AS \"__pk\"\nFROM \"orderagg1_1\"\nWHERE \"customerid\" = $1\nORDER BY 1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -270,7 +270,7 @@ LogicalTableScan(table=[[orders$2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"orderagg1$1\"\nORDER BY \"customerid\"",
+              "sql" : "SELECT *\nFROM \"orderagg1_1\"\nORDER BY \"customerid\"",
               "parameters" : [ ]
             }
           }
@@ -297,7 +297,7 @@ LogicalTableScan(table=[[orders$2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"orderagg2$1\"\nORDER BY \"customerid\"",
+              "sql" : "SELECT *\nFROM \"orderagg2_1\"\nORDER BY \"customerid\"",
               "parameters" : [ ]
             }
           },
@@ -322,7 +322,7 @@ LogicalTableScan(table=[[orders$2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"customerid\", \"timestamp\", \"count\", 1 AS \"__pk\"\nFROM \"orderagg2$1\"\nWHERE \"customerid\" = $1\nORDER BY 1",
+              "sql" : "SELECT \"customerid\", \"timestamp\", \"count\", 1 AS \"__pk\"\nFROM \"orderagg2_1\"\nWHERE \"customerid\" = $1\nORDER BY 1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -360,7 +360,7 @@ LogicalTableScan(table=[[orders$2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"customerid\", \"count\", \"__timestamp\", 1 AS \"__pk\"\nFROM \"orderagg3$1\"\nWHERE \"customerid\" = $1\nORDER BY 1",
+              "sql" : "SELECT \"customerid\", \"count\", \"__timestamp\", 1 AS \"__pk\"\nFROM \"orderagg3_1\"\nWHERE \"customerid\" = $1\nORDER BY 1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -386,7 +386,7 @@ LogicalTableScan(table=[[orders$2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"orderagg3$1\"\nORDER BY \"customerid\"",
+              "sql" : "SELECT *\nFROM \"orderagg3_1\"\nORDER BY \"customerid\"",
               "parameters" : [ ]
             }
           }
@@ -413,7 +413,7 @@ LogicalTableScan(table=[[orders$2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"orderagg4$1\"\nORDER BY \"customerid\"",
+              "sql" : "SELECT *\nFROM \"orderagg4_1\"\nORDER BY \"customerid\"",
               "parameters" : [ ]
             }
           },
@@ -438,7 +438,7 @@ LogicalTableScan(table=[[orders$2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"customerid\", \"timestamp\", \"count\", 1 AS \"__pk\"\nFROM \"orderagg4$1\"\nWHERE \"customerid\" = $1\nORDER BY 1",
+              "sql" : "SELECT \"customerid\", \"timestamp\", \"count\", 1 AS \"__pk\"\nFROM \"orderagg4_1\"\nWHERE \"customerid\" = $1\nORDER BY 1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -481,7 +481,7 @@ LogicalTableScan(table=[[orders$2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\nFROM \"orders$2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, 1",
+              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, 1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -517,7 +517,7 @@ LogicalTableScan(table=[[orders$2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"orders$2\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
+              "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -548,7 +548,7 @@ LogicalTableScan(table=[[orders$2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"orders$2\"\nWHERE \"id\" = $1\nORDER BY \"time\" DESC NULLS LAST",
+              "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1\nORDER BY \"time\" DESC NULLS LAST",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -574,7 +574,7 @@ LogicalTableScan(table=[[orders$2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"orders$2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
+              "sql" : "SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
               "parameters" : [ ]
             }
           }
@@ -601,7 +601,7 @@ LogicalTableScan(table=[[orders$2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"ordersstate$1\"\nORDER BY \"id\"",
+              "sql" : "SELECT *\nFROM \"ordersstate_1\"\nORDER BY \"id\"",
               "parameters" : [ ]
             }
           },
@@ -626,7 +626,7 @@ LogicalTableScan(table=[[orders$2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\nFROM \"ordersstate$1\"\nWHERE \"id\" = $1\nORDER BY 1",
+              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\nFROM \"ordersstate_1\"\nWHERE \"id\" = $1\nORDER BY 1",
               "parameters" : [
                 {
                   "type" : "arg",

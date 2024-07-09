@@ -7,16 +7,19 @@ import com.datasqrl.cmd.EngineKeys;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.IExecutionEngine;
 import com.datasqrl.engine.database.DatabaseEngine;
+import com.datasqrl.engine.database.QueryEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.SimplePipeline;
 import com.datasqrl.engine.stream.StreamEngine;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.util.ServiceLoaderDiscovery;
+import com.datasqrl.util.StreamUtil;
 import com.google.inject.Injector;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NonNull;
 import org.apache.commons.lang3.tuple.Pair;
@@ -53,6 +56,13 @@ public class PipelineFactory {
         engines.put(engineId, (ExecutionEngine)engine);
       }
     }
+    //Register query engines with database engines that support them
+    List<QueryEngine> queryEngines = StreamUtil.filterByClass(engines.values(), QueryEngine.class).collect(
+        Collectors.toUnmodifiableList());
+    StreamUtil.filterByClass(engines.values(), DatabaseEngine.class).forEach(
+        databaseEngine ->
+          queryEngines.stream().filter(databaseEngine::supportsQueryEngine).forEach(databaseEngine::addQueryEngine)
+    );
     return engines;
   }
 
@@ -68,15 +78,6 @@ public class PipelineFactory {
     errors.checkFatal(engines.size()==1, "Currently support only a single %s engine", type.name().toLowerCase());
     return Pair.of(engines.entrySet().iterator().next());
   }
-
-  public DatabaseEngine getDatabaseEngine() {
-    return (DatabaseEngine) getEngine(EngineFactory.Type.DATABASE).getRight();
-  }
-
-  public StreamEngine getStreamEngine() {
-    return (StreamEngine) getEngine(EngineFactory.Type.STREAMS).getRight();
-  }
-
 
   public ExecutionPipeline createPipeline() {
     return SimplePipeline.of(getEngines(), /*todo*/ErrorCollector.root());

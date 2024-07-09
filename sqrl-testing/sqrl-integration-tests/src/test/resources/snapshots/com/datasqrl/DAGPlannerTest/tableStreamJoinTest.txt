@@ -1,6 +1,6 @@
 >>>pipeline_explain.txt
 === Customer
-ID:     customer$2
+ID:     customer_2
 Type:   stream
 Stage:  streams
 Primary Key: _uuid
@@ -13,13 +13,13 @@ Schema:
  - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
 Plan:
-LogicalTableScan(table=[[customer$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+LogicalTableScan(table=[[customer_1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
 === OrderCustomer
-ID:     ordercustomer$1
+ID:     ordercustomer_1
 Type:   stream
 Stage:  database
-Inputs: customer$2, orders$2
+Inputs: customer_2, orders_2
 Primary Key: _uuid, _uuid0
 Timestamp  : __timestamp
 Schema:
@@ -32,14 +32,14 @@ Schema:
 Plan:
 LogicalProject(_uuid=[$5], id=[$0], name=[$8], customerid=[$1], _uuid0=[$11], __timestamp=[CASE(<($4, $10), $10, $4)])
   LogicalJoin(condition=[=($1, $6)], joinType=[inner]) hints[JoinCostHint options:[STREAM, STREAM, 1, NONE]]
-    LogicalTableScan(table=[[orders$2]])
-    LogicalTableScan(table=[[customer$2]])
+    LogicalTableScan(table=[[orders_2]])
+    LogicalTableScan(table=[[customer_2]])
 
 === OrderCustomerConstant
-ID:     ordercustomerconstant$1
+ID:     ordercustomerconstant_1
 Type:   stream
 Stage:  database
-Inputs: customer$2, orders$2
+Inputs: customer_2, orders_2
 Primary Key: _uuid, _uuid0
 Timestamp  : __timestamp
 Schema:
@@ -52,14 +52,14 @@ Schema:
 Plan:
 LogicalProject(_uuid=[$5], id=[$0], name=[$8], customerid=[$1], _uuid0=[$11], __timestamp=[CASE(<($4, $10), $10, $4)])
   LogicalJoin(condition=[AND(=($1, $6), =($8, 'Robert'), >($0, 5))], joinType=[inner]) hints[JoinCostHint options:[STREAM, STREAM, 2, NONE]]
-    LogicalTableScan(table=[[orders$2]])
-    LogicalTableScan(table=[[customer$2]])
+    LogicalTableScan(table=[[orders_2]])
+    LogicalTableScan(table=[[customer_2]])
 
 === OrderCustomerLeft
-ID:     ordercustomerleft$1
+ID:     ordercustomerleft_1
 Type:   stream
 Stage:  database
-Inputs: customer$2, orders$2
+Inputs: customer_2, orders_2
 Primary Key: _uuid, cuuid
 Timestamp  : __timestamp
 Schema:
@@ -72,14 +72,14 @@ Schema:
 Plan:
 LogicalProject(cuuid=[COALESCE($11, '')], id=[$0], name=[$8], customerid=[$1], _uuid=[$5], __timestamp=[CASE(<($4, $10), $10, $4)])
   LogicalJoin(condition=[=($1, $6)], joinType=[left]) hints[JoinCostHint options:[STREAM, STREAM, 1, NONE]]
-    LogicalTableScan(table=[[orders$2]])
-    LogicalTableScan(table=[[customer$2]])
+    LogicalTableScan(table=[[orders_2]])
+    LogicalTableScan(table=[[customer_2]])
 
 === OrderCustomerLeftExcluded
-ID:     ordercustomerleftexcluded$1
+ID:     ordercustomerleftexcluded_1
 Type:   stream
 Stage:  database
-Inputs: customer$2, orders$2
+Inputs: customer_2, orders_2
 Primary Key: _uuid
 Timestamp  : __timestamp
 Schema:
@@ -91,14 +91,14 @@ Plan:
 LogicalProject(_uuid=[$5], id=[$0], customerid=[$1], __timestamp=[CASE(<($4, $10), $10, $4)])
   LogicalFilter(condition=[IS NULL($11)])
     LogicalJoin(condition=[=($1, $6)], joinType=[left]) hints[JoinCostHint options:[STREAM, STREAM, 1, NONE]]
-      LogicalTableScan(table=[[orders$2]])
-      LogicalTableScan(table=[[customer$2]])
+      LogicalTableScan(table=[[orders_2]])
+      LogicalTableScan(table=[[customer_2]])
 
 === OrderCustomerRight
-ID:     ordercustomerright$1
+ID:     ordercustomerright_1
 Type:   stream
 Stage:  database
-Inputs: customer$2, orders$2
+Inputs: customer_2, orders_2
 Primary Key: _uuid, ouuid
 Timestamp  : __timestamp
 Schema:
@@ -111,14 +111,14 @@ Schema:
 Plan:
 LogicalProject(ouuid=[COALESCE($11, '')], id=[$6], name=[$2], customerid=[$7], _uuid=[$5], __timestamp=[CASE(<($4, $10), $10, $4)])
   LogicalJoin(condition=[=($7, $0)], joinType=[left]) hints[JoinCostHint options:[STREAM, STREAM, 1, NONE]]
-    LogicalTableScan(table=[[customer$2]])
-    LogicalTableScan(table=[[orders$2]])
+    LogicalTableScan(table=[[customer_2]])
+    LogicalTableScan(table=[[orders_2]])
 
 === OrderCustomerRightExcluded
-ID:     ordercustomerrightexcluded$1
+ID:     ordercustomerrightexcluded_1
 Type:   stream
 Stage:  database
-Inputs: customer$2, orders$2
+Inputs: customer_2, orders_2
 Primary Key: _uuid
 Timestamp  : __timestamp
 Schema:
@@ -130,11 +130,11 @@ Plan:
 LogicalProject(_uuid=[$5], customerid=[$0], name=[$2], __timestamp=[CASE(<($4, $10), $10, $4)])
   LogicalFilter(condition=[IS NULL($11)])
     LogicalJoin(condition=[=($7, $0)], joinType=[left]) hints[JoinCostHint options:[STREAM, STREAM, 1, NONE]]
-      LogicalTableScan(table=[[customer$2]])
-      LogicalTableScan(table=[[orders$2]])
+      LogicalTableScan(table=[[customer_2]])
+      LogicalTableScan(table=[[orders_2]])
 
 === Orders
-ID:     orders$2
+ID:     orders_2
 Type:   stream
 Stage:  streams
 Primary Key: _uuid
@@ -147,10 +147,10 @@ Schema:
  - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
 Plan:
-LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
 === Product
-ID:     product$2
+ID:     product_2
 Type:   stream
 Stage:  streams
 Primary Key: _uuid
@@ -163,7 +163,7 @@ Schema:
  - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
 Plan:
-LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
 >>>flink.json
 {
@@ -184,16 +184,16 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `atzone` AS 'com.datasqrl.time.AtZone' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofhour` AS 'com.datasqrl.time.EndOfHour' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofyear` AS 'com.datasqrl.time.EndOfYear' LANGUAGE JAVA;",
-    "CREATE TEMPORARY TABLE `orders$1` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,\n  `_ingest_time` AS PROCTIME(),\n  `_uuid` AS UUID(),\n  PRIMARY KEY (`_uuid`) NOT ENFORCED\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
-    "CREATE TEMPORARY TABLE `product$1` (\n  `productid` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_ingest_time` AS PROCTIME(),\n  `_uuid` AS UUID(),\n  PRIMARY KEY (`_uuid`) NOT ENFORCED\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
-    "CREATE TEMPORARY TABLE `customer$1` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `_ingest_time` AS PROCTIME(),\n  `_uuid` AS UUID(),\n  PRIMARY KEY (`_uuid`) NOT ENFORCED\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
-    "CREATE TEMPORARY TABLE `customer$2` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,\n  PRIMARY KEY (`_uuid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'customer$2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `orders$2` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,\n  PRIMARY KEY (`_uuid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orders$2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `product$2` (\n  `productid` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,\n  PRIMARY KEY (`_uuid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'product$2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `customer$1`;",
-    "CREATE VIEW `table$2`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`, `_ingest_time`, `_uuid`\nFROM `orders$1`;",
-    "CREATE VIEW `table$3`\nAS\nSELECT *\nFROM `product$1`;",
-    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer$2`\n(SELECT *\nFROM `table$1`)\n;\nINSERT INTO `orders$2`\n(SELECT *\nFROM `table$2`)\n;\nINSERT INTO `product$2`\n(SELECT *\nFROM `table$3`)\n;\nEND;"
+    "CREATE TEMPORARY TABLE `customer_1` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `_ingest_time` AS PROCTIME(),\n  `_uuid` AS UUID(),\n  PRIMARY KEY (`_uuid`) NOT ENFORCED\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
+    "CREATE TEMPORARY TABLE `orders_1` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,\n  `_ingest_time` AS PROCTIME(),\n  `_uuid` AS UUID(),\n  PRIMARY KEY (`_uuid`) NOT ENFORCED\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
+    "CREATE TEMPORARY TABLE `product_1` (\n  `productid` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_ingest_time` AS PROCTIME(),\n  `_uuid` AS UUID(),\n  PRIMARY KEY (`_uuid`) NOT ENFORCED\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
+    "CREATE TEMPORARY TABLE `customer_2` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,\n  PRIMARY KEY (`_uuid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'customer_2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `orders_2` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,\n  PRIMARY KEY (`_uuid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orders_2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `product_2` (\n  `productid` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,\n  PRIMARY KEY (`_uuid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'product_2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `customer_1`;",
+    "CREATE VIEW `table$2`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`, `_ingest_time`, `_uuid`\nFROM `orders_1`;",
+    "CREATE VIEW `table$3`\nAS\nSELECT *\nFROM `product_1`;",
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer_2`\n(SELECT *\nFROM `table$1`)\n;\nINSERT INTO `orders_2`\n(SELECT *\nFROM `table$2`)\n;\nINSERT INTO `product_2`\n(SELECT *\nFROM `table$3`)\n;\nEND;"
   ],
   "connectors" : [
     "jdbc-sqrl",
@@ -211,7 +211,7 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
 {
   "ddl" : [
     {
-      "name" : "customer$2",
+      "name" : "customer_2",
       "columns" : [
         "\"customerid\" BIGINT NOT NULL",
         "\"email\" TEXT NOT NULL",
@@ -223,10 +223,10 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
       "primaryKeys" : [
         "\"_uuid\""
       ],
-      "sql" : "CREATE TABLE IF NOT EXISTS customer$2 (\"customerid\" BIGINT NOT NULL,\"email\" TEXT NOT NULL,\"name\" TEXT NOT NULL,\"lastUpdated\" BIGINT NOT NULL,\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"_uuid\" TEXT NOT NULL , PRIMARY KEY (\"_uuid\"));"
+      "sql" : "CREATE TABLE IF NOT EXISTS customer_2 (\"customerid\" BIGINT NOT NULL,\"email\" TEXT NOT NULL,\"name\" TEXT NOT NULL,\"lastUpdated\" BIGINT NOT NULL,\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"_uuid\" TEXT NOT NULL , PRIMARY KEY (\"_uuid\"));"
     },
     {
-      "name" : "orders$2",
+      "name" : "orders_2",
       "columns" : [
         "\"id\" BIGINT NOT NULL",
         "\"customerid\" BIGINT NOT NULL",
@@ -238,10 +238,10 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
       "primaryKeys" : [
         "\"_uuid\""
       ],
-      "sql" : "CREATE TABLE IF NOT EXISTS orders$2 (\"id\" BIGINT NOT NULL,\"customerid\" BIGINT NOT NULL,\"time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"entries\" JSONB NOT NULL,\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"_uuid\" TEXT NOT NULL , PRIMARY KEY (\"_uuid\"));"
+      "sql" : "CREATE TABLE IF NOT EXISTS orders_2 (\"id\" BIGINT NOT NULL,\"customerid\" BIGINT NOT NULL,\"time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"entries\" JSONB NOT NULL,\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"_uuid\" TEXT NOT NULL , PRIMARY KEY (\"_uuid\"));"
     },
     {
-      "name" : "product$2",
+      "name" : "product_2",
       "columns" : [
         "\"productid\" BIGINT NOT NULL",
         "\"name\" TEXT NOT NULL",
@@ -253,25 +253,25 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
       "primaryKeys" : [
         "\"_uuid\""
       ],
-      "sql" : "CREATE TABLE IF NOT EXISTS product$2 (\"productid\" BIGINT NOT NULL,\"name\" TEXT NOT NULL,\"description\" TEXT NOT NULL,\"category\" TEXT NOT NULL,\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"_uuid\" TEXT NOT NULL , PRIMARY KEY (\"_uuid\"));"
+      "sql" : "CREATE TABLE IF NOT EXISTS product_2 (\"productid\" BIGINT NOT NULL,\"name\" TEXT NOT NULL,\"description\" TEXT NOT NULL,\"category\" TEXT NOT NULL,\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"_uuid\" TEXT NOT NULL , PRIMARY KEY (\"_uuid\"));"
     },
     {
-      "indexName" : "customer$2_hash_c2",
-      "tableName" : "customer$2",
+      "indexName" : "customer_2_hash_c2",
+      "tableName" : "customer_2",
       "columns" : [
         "name"
       ],
       "type" : "HASH",
-      "sql" : "CREATE INDEX IF NOT EXISTS customer$2_hash_c2 ON customer$2 USING hash (\"name\");"
+      "sql" : "CREATE INDEX IF NOT EXISTS customer_2_hash_c2 ON customer_2 USING hash (\"name\");"
     },
     {
-      "indexName" : "orders$2_btree_c0",
-      "tableName" : "orders$2",
+      "indexName" : "orders_2_btree_c0",
+      "tableName" : "orders_2",
       "columns" : [
         "id"
       ],
       "type" : "BTREE",
-      "sql" : "CREATE INDEX IF NOT EXISTS orders$2_btree_c0 ON orders$2 USING btree (\"id\");"
+      "sql" : "CREATE INDEX IF NOT EXISTS orders_2_btree_c0 ON orders_2 USING btree (\"id\");"
     }
   ]
 }
@@ -300,7 +300,7 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customer$2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"_uuid\"",
+              "sql" : "SELECT *\nFROM \"customer_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"_uuid\"",
               "parameters" : [ ]
             }
           }
@@ -327,7 +327,7 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"orders$2\".\"_uuid\", \"orders$2\".\"id\", \"customer$2\".\"name\", \"orders$2\".\"customerid\", \"customer$2\".\"_uuid\" AS \"_uuid0\", CASE WHEN \"orders$2\".\"_ingest_time\" < \"customer$2\".\"_ingest_time\" THEN \"customer$2\".\"_ingest_time\" ELSE \"orders$2\".\"_ingest_time\" END AS \"__timestamp\"\nFROM \"orders$2\"\n INNER JOIN \"customer$2\" ON \"orders$2\".\"customerid\" = \"customer$2\".\"customerid\"\nORDER BY CASE WHEN \"orders$2\".\"_ingest_time\" < \"customer$2\".\"_ingest_time\" THEN \"customer$2\".\"_ingest_time\" ELSE \"orders$2\".\"_ingest_time\" END DESC NULLS LAST, \"orders$2\".\"_uuid\", \"customer$2\".\"_uuid\"",
+              "sql" : "SELECT \"orders_2\".\"_uuid\", \"orders_2\".\"id\", \"customer_2\".\"name\", \"orders_2\".\"customerid\", \"customer_2\".\"_uuid\" AS \"_uuid0\", CASE WHEN \"orders_2\".\"_ingest_time\" < \"customer_2\".\"_ingest_time\" THEN \"customer_2\".\"_ingest_time\" ELSE \"orders_2\".\"_ingest_time\" END AS \"__timestamp\"\nFROM \"orders_2\"\n INNER JOIN \"customer_2\" ON \"orders_2\".\"customerid\" = \"customer_2\".\"customerid\"\nORDER BY CASE WHEN \"orders_2\".\"_ingest_time\" < \"customer_2\".\"_ingest_time\" THEN \"customer_2\".\"_ingest_time\" ELSE \"orders_2\".\"_ingest_time\" END DESC NULLS LAST, \"orders_2\".\"_uuid\", \"customer_2\".\"_uuid\"",
               "parameters" : [ ]
             }
           }
@@ -354,7 +354,7 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"orders$2\".\"_uuid\", \"orders$2\".\"id\", \"customer$2\".\"name\", \"orders$2\".\"customerid\", \"customer$2\".\"_uuid\" AS \"_uuid0\", CASE WHEN \"orders$2\".\"_ingest_time\" < \"customer$2\".\"_ingest_time\" THEN \"customer$2\".\"_ingest_time\" ELSE \"orders$2\".\"_ingest_time\" END AS \"__timestamp\"\nFROM \"orders$2\"\n INNER JOIN \"customer$2\" ON \"orders$2\".\"customerid\" = \"customer$2\".\"customerid\" AND \"customer$2\".\"name\" = 'Robert' AND \"orders$2\".\"id\" > 5\nORDER BY CASE WHEN \"orders$2\".\"_ingest_time\" < \"customer$2\".\"_ingest_time\" THEN \"customer$2\".\"_ingest_time\" ELSE \"orders$2\".\"_ingest_time\" END DESC NULLS LAST, \"orders$2\".\"_uuid\", \"customer$2\".\"_uuid\"",
+              "sql" : "SELECT \"orders_2\".\"_uuid\", \"orders_2\".\"id\", \"customer_2\".\"name\", \"orders_2\".\"customerid\", \"customer_2\".\"_uuid\" AS \"_uuid0\", CASE WHEN \"orders_2\".\"_ingest_time\" < \"customer_2\".\"_ingest_time\" THEN \"customer_2\".\"_ingest_time\" ELSE \"orders_2\".\"_ingest_time\" END AS \"__timestamp\"\nFROM \"orders_2\"\n INNER JOIN \"customer_2\" ON \"orders_2\".\"customerid\" = \"customer_2\".\"customerid\" AND \"customer_2\".\"name\" = 'Robert' AND \"orders_2\".\"id\" > 5\nORDER BY CASE WHEN \"orders_2\".\"_ingest_time\" < \"customer_2\".\"_ingest_time\" THEN \"customer_2\".\"_ingest_time\" ELSE \"orders_2\".\"_ingest_time\" END DESC NULLS LAST, \"orders_2\".\"_uuid\", \"customer_2\".\"_uuid\"",
               "parameters" : [ ]
             }
           }
@@ -381,7 +381,7 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT COALESCE(\"customer$2\".\"_uuid\", '') AS \"cuuid\", \"orders$2\".\"id\", \"customer$2\".\"name\", \"orders$2\".\"customerid\", \"orders$2\".\"_uuid\", CASE WHEN \"orders$2\".\"_ingest_time\" < \"customer$2\".\"_ingest_time\" THEN \"customer$2\".\"_ingest_time\" ELSE \"orders$2\".\"_ingest_time\" END AS \"__timestamp\"\nFROM \"orders$2\"\n LEFT JOIN \"customer$2\" ON \"orders$2\".\"customerid\" = \"customer$2\".\"customerid\"\nORDER BY CASE WHEN \"orders$2\".\"_ingest_time\" < \"customer$2\".\"_ingest_time\" THEN \"customer$2\".\"_ingest_time\" ELSE \"orders$2\".\"_ingest_time\" END DESC NULLS LAST, \"orders$2\".\"_uuid\", COALESCE(\"customer$2\".\"_uuid\", '')",
+              "sql" : "SELECT COALESCE(\"customer_2\".\"_uuid\", '') AS \"cuuid\", \"orders_2\".\"id\", \"customer_2\".\"name\", \"orders_2\".\"customerid\", \"orders_2\".\"_uuid\", CASE WHEN \"orders_2\".\"_ingest_time\" < \"customer_2\".\"_ingest_time\" THEN \"customer_2\".\"_ingest_time\" ELSE \"orders_2\".\"_ingest_time\" END AS \"__timestamp\"\nFROM \"orders_2\"\n LEFT JOIN \"customer_2\" ON \"orders_2\".\"customerid\" = \"customer_2\".\"customerid\"\nORDER BY CASE WHEN \"orders_2\".\"_ingest_time\" < \"customer_2\".\"_ingest_time\" THEN \"customer_2\".\"_ingest_time\" ELSE \"orders_2\".\"_ingest_time\" END DESC NULLS LAST, \"orders_2\".\"_uuid\", COALESCE(\"customer_2\".\"_uuid\", '')",
               "parameters" : [ ]
             }
           },
@@ -406,7 +406,7 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT COALESCE(\"customer$2\".\"_uuid\", '') AS \"cuuid\", \"orders$2\".\"id\", \"customer$2\".\"name\", \"orders$2\".\"customerid\", \"orders$2\".\"_uuid\", CASE WHEN \"orders$2\".\"_ingest_time\" < \"customer$2\".\"_ingest_time\" THEN \"customer$2\".\"_ingest_time\" ELSE \"orders$2\".\"_ingest_time\" END AS \"__timestamp\"\n  FROM \"orders$2\"\n   LEFT JOIN \"customer$2\" ON \"orders$2\".\"customerid\" = \"customer$2\".\"customerid\") AS \"t\"\nWHERE \"t\".\"cuuid\" = $1\nORDER BY \"__timestamp\" DESC NULLS LAST, \"_uuid\"",
+              "sql" : "SELECT *\nFROM (SELECT COALESCE(\"customer_2\".\"_uuid\", '') AS \"cuuid\", \"orders_2\".\"id\", \"customer_2\".\"name\", \"orders_2\".\"customerid\", \"orders_2\".\"_uuid\", CASE WHEN \"orders_2\".\"_ingest_time\" < \"customer_2\".\"_ingest_time\" THEN \"customer_2\".\"_ingest_time\" ELSE \"orders_2\".\"_ingest_time\" END AS \"__timestamp\"\n  FROM \"orders_2\"\n   LEFT JOIN \"customer_2\" ON \"orders_2\".\"customerid\" = \"customer_2\".\"customerid\") AS \"t\"\nWHERE \"t\".\"cuuid\" = $1\nORDER BY \"__timestamp\" DESC NULLS LAST, \"_uuid\"",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -439,7 +439,7 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"orders$2\".\"_uuid\", \"orders$2\".\"id\", \"orders$2\".\"customerid\", CASE WHEN \"orders$2\".\"_ingest_time\" < \"customer$2\".\"_ingest_time\" THEN \"customer$2\".\"_ingest_time\" ELSE \"orders$2\".\"_ingest_time\" END AS \"__timestamp\"\nFROM \"orders$2\"\n LEFT JOIN \"customer$2\" ON \"orders$2\".\"customerid\" = \"customer$2\".\"customerid\"\nWHERE \"customer$2\".\"_uuid\" IS NULL\nORDER BY CASE WHEN \"orders$2\".\"_ingest_time\" < \"customer$2\".\"_ingest_time\" THEN \"customer$2\".\"_ingest_time\" ELSE \"orders$2\".\"_ingest_time\" END DESC NULLS LAST, \"orders$2\".\"_uuid\"",
+              "sql" : "SELECT \"orders_2\".\"_uuid\", \"orders_2\".\"id\", \"orders_2\".\"customerid\", CASE WHEN \"orders_2\".\"_ingest_time\" < \"customer_2\".\"_ingest_time\" THEN \"customer_2\".\"_ingest_time\" ELSE \"orders_2\".\"_ingest_time\" END AS \"__timestamp\"\nFROM \"orders_2\"\n LEFT JOIN \"customer_2\" ON \"orders_2\".\"customerid\" = \"customer_2\".\"customerid\"\nWHERE \"customer_2\".\"_uuid\" IS NULL\nORDER BY CASE WHEN \"orders_2\".\"_ingest_time\" < \"customer_2\".\"_ingest_time\" THEN \"customer_2\".\"_ingest_time\" ELSE \"orders_2\".\"_ingest_time\" END DESC NULLS LAST, \"orders_2\".\"_uuid\"",
               "parameters" : [ ]
             }
           }
@@ -466,7 +466,7 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT COALESCE(\"orders$2\".\"_uuid\", '') AS \"ouuid\", \"orders$2\".\"id\", \"customer$2\".\"name\", \"orders$2\".\"customerid\", \"customer$2\".\"_uuid\", CASE WHEN \"customer$2\".\"_ingest_time\" < \"orders$2\".\"_ingest_time\" THEN \"orders$2\".\"_ingest_time\" ELSE \"customer$2\".\"_ingest_time\" END AS \"__timestamp\"\nFROM \"customer$2\"\n LEFT JOIN \"orders$2\" ON \"customer$2\".\"customerid\" = \"orders$2\".\"customerid\"\nORDER BY CASE WHEN \"customer$2\".\"_ingest_time\" < \"orders$2\".\"_ingest_time\" THEN \"orders$2\".\"_ingest_time\" ELSE \"customer$2\".\"_ingest_time\" END DESC NULLS LAST, \"customer$2\".\"_uuid\", COALESCE(\"orders$2\".\"_uuid\", '')",
+              "sql" : "SELECT COALESCE(\"orders_2\".\"_uuid\", '') AS \"ouuid\", \"orders_2\".\"id\", \"customer_2\".\"name\", \"orders_2\".\"customerid\", \"customer_2\".\"_uuid\", CASE WHEN \"customer_2\".\"_ingest_time\" < \"orders_2\".\"_ingest_time\" THEN \"orders_2\".\"_ingest_time\" ELSE \"customer_2\".\"_ingest_time\" END AS \"__timestamp\"\nFROM \"customer_2\"\n LEFT JOIN \"orders_2\" ON \"customer_2\".\"customerid\" = \"orders_2\".\"customerid\"\nORDER BY CASE WHEN \"customer_2\".\"_ingest_time\" < \"orders_2\".\"_ingest_time\" THEN \"orders_2\".\"_ingest_time\" ELSE \"customer_2\".\"_ingest_time\" END DESC NULLS LAST, \"customer_2\".\"_uuid\", COALESCE(\"orders_2\".\"_uuid\", '')",
               "parameters" : [ ]
             }
           },
@@ -491,7 +491,7 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT COALESCE(\"orders$2\".\"_uuid\", '') AS \"ouuid\", \"orders$2\".\"id\", \"customer$2\".\"name\", \"orders$2\".\"customerid\", \"customer$2\".\"_uuid\", CASE WHEN \"customer$2\".\"_ingest_time\" < \"orders$2\".\"_ingest_time\" THEN \"orders$2\".\"_ingest_time\" ELSE \"customer$2\".\"_ingest_time\" END AS \"__timestamp\"\n  FROM \"customer$2\"\n   LEFT JOIN \"orders$2\" ON \"customer$2\".\"customerid\" = \"orders$2\".\"customerid\") AS \"t\"\nWHERE \"t\".\"ouuid\" = $1\nORDER BY \"__timestamp\" DESC NULLS LAST, \"_uuid\"",
+              "sql" : "SELECT *\nFROM (SELECT COALESCE(\"orders_2\".\"_uuid\", '') AS \"ouuid\", \"orders_2\".\"id\", \"customer_2\".\"name\", \"orders_2\".\"customerid\", \"customer_2\".\"_uuid\", CASE WHEN \"customer_2\".\"_ingest_time\" < \"orders_2\".\"_ingest_time\" THEN \"orders_2\".\"_ingest_time\" ELSE \"customer_2\".\"_ingest_time\" END AS \"__timestamp\"\n  FROM \"customer_2\"\n   LEFT JOIN \"orders_2\" ON \"customer_2\".\"customerid\" = \"orders_2\".\"customerid\") AS \"t\"\nWHERE \"t\".\"ouuid\" = $1\nORDER BY \"__timestamp\" DESC NULLS LAST, \"_uuid\"",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -524,7 +524,7 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"customer$2\".\"_uuid\", \"customer$2\".\"customerid\", \"customer$2\".\"name\", CASE WHEN \"customer$2\".\"_ingest_time\" < \"orders$2\".\"_ingest_time\" THEN \"orders$2\".\"_ingest_time\" ELSE \"customer$2\".\"_ingest_time\" END AS \"__timestamp\"\nFROM \"customer$2\"\n LEFT JOIN \"orders$2\" ON \"customer$2\".\"customerid\" = \"orders$2\".\"customerid\"\nWHERE \"orders$2\".\"_uuid\" IS NULL\nORDER BY CASE WHEN \"customer$2\".\"_ingest_time\" < \"orders$2\".\"_ingest_time\" THEN \"orders$2\".\"_ingest_time\" ELSE \"customer$2\".\"_ingest_time\" END DESC NULLS LAST, \"customer$2\".\"_uuid\"",
+              "sql" : "SELECT \"customer_2\".\"_uuid\", \"customer_2\".\"customerid\", \"customer_2\".\"name\", CASE WHEN \"customer_2\".\"_ingest_time\" < \"orders_2\".\"_ingest_time\" THEN \"orders_2\".\"_ingest_time\" ELSE \"customer_2\".\"_ingest_time\" END AS \"__timestamp\"\nFROM \"customer_2\"\n LEFT JOIN \"orders_2\" ON \"customer_2\".\"customerid\" = \"orders_2\".\"customerid\"\nWHERE \"orders_2\".\"_uuid\" IS NULL\nORDER BY CASE WHEN \"customer_2\".\"_ingest_time\" < \"orders_2\".\"_ingest_time\" THEN \"orders_2\".\"_ingest_time\" ELSE \"customer_2\".\"_ingest_time\" END DESC NULLS LAST, \"customer_2\".\"_uuid\"",
               "parameters" : [ ]
             }
           }
@@ -551,7 +551,7 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"orders$2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"_uuid\"",
+              "sql" : "SELECT *\nFROM \"orders_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"_uuid\"",
               "parameters" : [ ]
             }
           }
@@ -578,7 +578,7 @@ LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"product$2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"_uuid\"",
+              "sql" : "SELECT *\nFROM \"product_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"_uuid\"",
               "parameters" : [ ]
             }
           }

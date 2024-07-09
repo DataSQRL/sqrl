@@ -26,7 +26,7 @@ public class PhysicalPlan {
 
   public Map<IdentifiedQuery, QueryTemplate> getDatabaseQueries() {
     return getPlans(DatabasePhysicalPlan.class).flatMap(
-            dbPlan -> dbPlan.getQueries().entrySet().stream())
+            dbPlan -> dbPlan.getQueryPlans().entrySet().stream())
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
 

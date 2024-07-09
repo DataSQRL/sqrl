@@ -5,4 +5,5 @@ public enum Dialect {
     CALCITE,
     FLINK,
     POSTGRES,
+    SNOWFLAKE,
 }
