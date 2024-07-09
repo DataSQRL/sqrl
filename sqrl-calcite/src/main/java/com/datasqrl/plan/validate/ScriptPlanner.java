@@ -45,14 +45,14 @@ import com.datasqrl.parse.SqrlAstException;
 import com.datasqrl.plan.CreateTableResolver;
 import com.datasqrl.plan.MainScript;
 import com.datasqrl.plan.local.generate.ResolvedExport;
-import com.datasqrl.plan.rel.LogicalStream;
+
 import com.datasqrl.plan.table.RelDataTypeTableSchema;
+
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.NestedRelationship;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.Relationship.JoinType;
 import com.datasqrl.util.CalciteUtil;
-import com.datasqrl.util.CalciteUtil.RelDataTypeFieldBuilder;
 import com.datasqrl.util.CheckUtil;
 import com.datasqrl.util.RelDataTypeBuilder;
 import com.datasqrl.util.SqlNameUtil;
@@ -95,7 +95,6 @@ import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlOrderBy;
 import org.apache.calcite.sql.SqlSelect;
-import org.apache.calcite.sql.SqrlAssignTimestamp;
 import org.apache.calcite.sql.SqrlAssignment;
 import org.apache.calcite.sql.SqrlColumnDefinition;
 import org.apache.calcite.sql.SqrlCreateDefinition;
@@ -107,7 +106,6 @@ import org.apache.calcite.sql.SqrlImportDefinition;
 import org.apache.calcite.sql.SqrlJoinQuery;
 import org.apache.calcite.sql.SqrlSqlQuery;
 import org.apache.calcite.sql.SqrlStatement;
-import org.apache.calcite.sql.SqrlStreamQuery;
 import org.apache.calcite.sql.SqrlTableFunctionDef;
 import org.apache.calcite.sql.SqrlTableParamDef;
 import org.apache.calcite.sql.StatementVisitor;
@@ -280,18 +278,6 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     return null;
   }
 
-  @Override
-  public Void visit(SqrlStreamQuery node, Void context) {
-    boolean materializeSelf = materializeSelfQuery(node);
-    isMaterializeTable.put(node, materializeSelf);
-
-    visit((SqrlAssignment) node, null);
-    validateTable(node, node.getQuery(), node.getTableArgs(), materializeSelf);
-    postvisit(node, context);
-
-    return null;
-  }
-
   private boolean materializeSelfQuery(SqrlSqlQuery node) {
     if (node.getTableArgs().isEmpty()) {
       NamePath path = nameUtil.toNamePath(node.getIdentifier().names);
@@ -416,9 +402,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
       planner.getSchema().addRelationship(rel);
     } else {
       List<String> path = assignment.getIdentifier().names;
-      RelNode rel = assignment instanceof SqrlStreamQuery
-          ? LogicalStream.create(expanded, ((SqrlStreamQuery)assignment).getType())
-          : expanded;
+      RelNode rel = expanded;
 
       Optional<Supplier<RelNode>> nodeSupplier = result.getParams().isEmpty()
           ? Optional.empty()
@@ -903,46 +887,6 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     validateTable(node, node.getSelect(), Optional.empty(), false);
 
     postvisit(node, context);
-
-    return null;
-  }
-
-  @Override
-  public Void visit(SqrlAssignTimestamp node, Void context) {
-    if (node.getIdentifier().isStar()) {
-      throw addError(ErrorLabel.GENERIC, node.getIdentifier(),
-          "Cannot assign timestamp to multiple import items");
-    }
-    if (node.getIdentifier().names.size() > 1) {
-      throw addError(ErrorLabel.GENERIC, node.getIdentifier().getComponent(1),
-          "Cannot assign timestamp to nested item");
-    }
-
-    //Find table
-    Optional<RelOptTable> table = resolveModifiableTable(node,
-        node.getAlias().map(a -> nameUtil.toNamePath(a.names))
-            .orElse(nameUtil.toNamePath(node.getIdentifier().names)));
-
-    //Plan timestamp expression
-    RexNode rexNode = table.flatMap(t -> {
-          try {
-            return Optional.of(framework.getQueryPlanner().planExpression(node.getTimestamp(), t.getRowType()));
-          } catch (Exception e) {
-            throw addError(ErrorLabel.GENERIC, node.getTimestamp(), e.getMessage());
-          }
-        }
-    ).get();
-
-    //Add timestamp to table
-    int timestampIndex;
-    if (rexNode instanceof RexInputRef) {
-      timestampIndex = ((RexInputRef) rexNode).getIndex();
-    } else {
-      //otherwise, add new column
-      timestampIndex = addColumn(rexNode, node.getTimestampAlias().map(SqlIdentifier::getSimple).orElse(ReservedName.SYSTEM_TIMESTAMP.getCanonical()), table.get());
-    }
-    TimestampAssignableTable timestampAssignableTable = table.get().unwrap(TimestampAssignableTable.class);
-    timestampAssignableTable.assignTimestamp(timestampIndex);
 
     return null;
   }

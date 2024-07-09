@@ -32,7 +32,6 @@ statement
     | exportDefinition                               #exportStatement
     | assignmentPath ':=' fromDeclaration            #fromQuery
     | assignmentPath ':=' joinDeclaration            #joinQuery
-    | assignmentPath ':=' streamQuerySpec            #streamQuery
     | assignmentPath ':=' distinctQuerySpec          #distinctQuery
     | assignmentPath ':=' query                      #sqlQuery
     | assignmentPath ':=' expression                 #expressionQuery
@@ -55,7 +54,7 @@ columnDefinition
    ;
 
 importDefinition
-   : IMPORT qualifiedName (AS? alias=identifier)? (TIMESTAMP expression (AS timestampAlias=identifier)?)?
+   : IMPORT qualifiedName (AS? alias=identifier)?
    ;
 
 exportDefinition
@@ -82,15 +81,6 @@ distinctQuerySpec
 
 onExpr
    : '('? selectItem (',' selectItem)* ')'?;
-
-streamQuerySpec
-    : STREAM ON subscriptionType AS query;
-
-subscriptionType
-    : ADD
-    | DELETE
-    | UPDATE
-    ;
 
 selectItem
     : expression                    #selectSingle

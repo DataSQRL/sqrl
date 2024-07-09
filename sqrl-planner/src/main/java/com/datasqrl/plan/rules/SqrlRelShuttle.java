@@ -3,19 +3,14 @@
  */
 package com.datasqrl.plan.rules;
 
-import com.datasqrl.plan.rel.LogicalStream;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttle;
-import org.apache.calcite.rel.core.Snapshot;
-import org.apache.calcite.rel.core.TableFunctionScan;
 import org.apache.calcite.rel.logical.LogicalCalc;
-import org.apache.calcite.rel.logical.LogicalCorrelate;
 import org.apache.calcite.rel.logical.LogicalExchange;
 import org.apache.calcite.rel.logical.LogicalIntersect;
 import org.apache.calcite.rel.logical.LogicalMatch;
 import org.apache.calcite.rel.logical.LogicalMinus;
 import org.apache.calcite.rel.logical.LogicalTableModify;
-import org.apache.calcite.rel.logical.LogicalValues;
 
 /**
  * A {@link RelShuttle} that throws exceptions for all logical operators that cannot occur in an

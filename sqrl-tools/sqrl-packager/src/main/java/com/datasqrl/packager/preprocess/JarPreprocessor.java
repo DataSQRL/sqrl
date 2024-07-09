@@ -21,6 +21,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.flink.table.functions.AggregateFunction;
 import org.apache.flink.table.functions.ScalarFunction;
+import org.apache.flink.table.functions.TableAggregateFunction;
+import org.apache.flink.table.functions.TableFunction;
 import org.apache.flink.table.functions.UserDefinedFunction;
 
 /*
@@ -35,8 +37,10 @@ public class JarPreprocessor implements Preprocessor {
   public static final Set<String> flinkUdfs = Set.of(
       ScalarFunction.class.getCanonicalName(),
       AggregateFunction.class.getCanonicalName(),
-      UserDefinedFunction.class.getCanonicalName()
-  );
+      UserDefinedFunction.class.getCanonicalName(),
+      TableFunction.class.getCanonicalName(),
+      TableAggregateFunction.class.getCanonicalName()
+      );
 
   @Override
   public Pattern getPattern() {

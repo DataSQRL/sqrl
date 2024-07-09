@@ -64,7 +64,6 @@ import static com.datasqrl.util.NameUtil.namepath2Path;
 @AllArgsConstructor(onConstructor_=@Inject)
 public class Packager {
   public static final String BUILD_DIR_NAME = "build";
-  public static final String DEPLOY_DIR_NAME = "deploy";
   public static final String PLAN_DIR_NAME = "plan";
   public static final String PACKAGE_JSON = "package.json";
   public static final Path DEFAULT_PACKAGE = Path.of(Packager.PACKAGE_JSON);
@@ -340,6 +339,7 @@ public class Packager {
         .forEach(path -> {
           try {
             Path destination = buildDir.resolve(DATA_DIR).resolve(path.getFileName());
+            destination.toFile().mkdirs();
             Files.copy(path, destination, StandardCopyOption.REPLACE_EXISTING);
           } catch (IOException e) {
             e.printStackTrace();

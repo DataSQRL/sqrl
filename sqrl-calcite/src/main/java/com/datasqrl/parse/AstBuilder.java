@@ -17,7 +17,6 @@
 package com.datasqrl.parse;
 
 import com.datasqrl.calcite.SqrlConformance;
-import com.datasqrl.model.StreamType;
 import com.datasqrl.parse.SqlBaseParser.*;
 import com.datasqrl.sql.parser.impl.SqrlSqlParserImpl;
 import com.google.common.base.Preconditions;
@@ -33,7 +32,6 @@ import org.apache.calcite.config.CharLiteralStyle;
 import org.apache.calcite.config.Lex;
 import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.SqlHint.HintOptionFormat;
-import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.calcite.sql.parser.SqlParserPos;
@@ -207,33 +205,10 @@ public class AstBuilder
     Optional<SqlIdentifier> alias = Optional.ofNullable(
         ctx.alias == null ? null : (SqlIdentifier) visit(ctx.alias));
 
-    Optional<SqlNode> timestamp;
-    Optional<SqlIdentifier> timestampAlias = Optional.empty();
-    if (ctx.TIMESTAMP() != null) {
-      SqlNode expr = parseExpression(ctx.expression());
-
-      if (ctx.timestampAlias != null) {
-        SqlIdentifier tsAlias = ((SqlIdentifier) visit(ctx.timestampAlias));
-        timestampAlias = Optional.of(tsAlias);
-      }
-      timestamp = Optional.of(expr);
-    } else {
-      timestamp = Optional.empty();
-    }
-
     SqlIdentifier identifier = getNamePath(ctx.qualifiedName());
     SqrlImportDefinition importDef = new SqrlImportDefinition(getLocation(ctx), identifier, alias);
 
-    if (timestamp.isEmpty()) {
-      return importDef;
-    } else {
-      SqrlAssignTimestamp assignTimestamp = new SqrlAssignTimestamp(getLocation(ctx),
-          new SqlIdentifier(Util.last(identifier.names), identifier.getParserPosition()),
-          alias,
-          timestamp.get(), timestampAlias);
-
-      return new SqlNodeList(List.of(importDef, assignTimestamp), importDef.getParserPosition());
-    }
+    return importDef;
   }
 
   @Override
@@ -290,21 +265,6 @@ public class AstBuilder
         assign.getIdentifier(),
         assign.getTableArgs(),
         (SqlSelect) query);
-  }
-
-  @Override
-  public SqlNode visitStreamQuery(StreamQueryContext ctx) {
-    AssignPathResult assign = visitAssign(ctx.assignmentPath());
-    SqlParserPos offset = getLocation(ctx.streamQuerySpec().query());
-    SqlNode query = parseQuery(ctx.streamQuerySpec().query(), offset);
-
-    return new SqrlStreamQuery(
-        getLocation(ctx),
-        assign.getHints(),
-        assign.getIdentifier(),
-        assign.getTableArgs(),
-        query,
-        StreamType.valueOf(ctx.streamQuerySpec().subscriptionType().getText()));
   }
 
   @Override

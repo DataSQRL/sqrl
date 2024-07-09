@@ -63,3 +63,4 @@ services:
       - JDBC_URL=jdbc:postgresql://database:5432/datasqrl
       - JDBC_USERNAME=postgres
       - JDBC_PASSWORD=postgres
+      - DATA_PATH=/data
