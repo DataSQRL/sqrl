@@ -31,7 +31,7 @@ public class MockModuleLoaderImpl implements ModuleLoader {
       @Nullable ResourceResolver resourceResolver) {
     if (rootDir != null) {
       ObjectLoaderImpl objectLoader = new ObjectLoaderImpl(resourceResolver,
-          errors, tableFactory, this, null);
+          errors, tableFactory, this, null, null, null);
       loader = new MockModuleLoader(objectLoader, Map.of(), errorDir);
     } else if (tables != null) {
       loader = new MockModuleLoader(null, tables, errorDir);

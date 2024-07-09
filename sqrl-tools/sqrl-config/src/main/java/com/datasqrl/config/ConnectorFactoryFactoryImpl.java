@@ -41,24 +41,6 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
   @Override
   public Optional<ConnectorFactory> create(Type engineType, String connectorName) {
 
-//    if (connectorName.equalsIgnoreCase(LOG_SINK_NAME)) {
-//      switch (packageJson.getLogMethod()) {
-//        case PRINT:
-//          return Optional.of(createPrintConnectorFactory(null));
-//        case LOG_ENGINE:
-//          List<String> engines = packageJson.getEnabledEngines();
-//          if (engines.contains("kafka")) {
-//            return connectors.getConnectorConfig("kafka").map(this::createKafkaConnectorFactory);
-////          } else if (engines.contains("postgres-log")) {
-////            return connectors.getConnectorConfig("postgres-log-sink").map(this::createPostgresLogExportConnectionFactory);
-//          } else {
-//            throw new IllegalArgumentException("Only the Kafka and Postgres-log engines are supported for use as log sinks.");
-//          }
-//        case NONE:
-//          return Optional.of(createBlackHoleConnectorFactory());
-//      }
-//    }
-
     // from conflict, include into the new logic
     Optional<EngineConfig> engineConfig = packageJson.getEngines().getEngineConfig("flink");
     Preconditions.checkArgument(engineConfig.isPresent(), "Missing engine configuration for Flink");
@@ -77,7 +59,7 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
       }
     }
 
-    throw new RuntimeException("Connector not supported: " + name);
+    throw new RuntimeException("Connector not supported: " + connectorName);
   }
 
 

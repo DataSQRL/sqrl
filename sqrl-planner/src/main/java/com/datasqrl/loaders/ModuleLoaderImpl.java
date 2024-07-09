@@ -1,7 +1,9 @@
 package com.datasqrl.loaders;
 
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.TableConfigLoader;
+import com.datasqrl.engine.log.LogManager;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.module.SqrlModule;
@@ -22,6 +24,8 @@ public class ModuleLoaderImpl implements ModuleLoader {
   private final ErrorCollector errors;
   private final CalciteTableFactory tableFactory;
   private final TableConfigLoader tableConfigFactory;
+  private final PackageJson sqrlConfig;
+  private final LogManager logManager;
 
   // Required to reduce the cost of script imports
   private final Map<NamePath, SqrlModule> cache = new HashMap<>();
@@ -57,13 +61,13 @@ public class ModuleLoaderImpl implements ModuleLoader {
   }
 
   private Optional<SqrlModule> loadFromFileSystem(NamePath namePath) {
-    return new ObjectLoaderImpl(resourceResolver, errors, tableFactory, this, tableConfigFactory)
+    return new ObjectLoaderImpl(resourceResolver, errors, tableFactory, this, tableConfigFactory, sqrlConfig, logManager)
         .load(namePath);
   }
 
   @Override
   public String toString() {
-    return new ObjectLoaderImpl(resourceResolver, errors, tableFactory, this, tableConfigFactory).toString();
+    return new ObjectLoaderImpl(resourceResolver, errors, tableFactory, this, tableConfigFactory, sqrlConfig, logManager).toString();
   }
 
 }

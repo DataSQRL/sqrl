@@ -27,7 +27,7 @@ public class LogManagerImpl implements LogManager {
   @Inject
   public LogManagerImpl(ExecutionPipeline pipeline) {
     proxiedFactory = pipeline.getStage(Type.LOG)
-        .map(stage -> (LogEngine) stage.getEngine())
+        .map(stage -> (LogEngine) stage.get(0).getEngine())
         .map(LogEngine::getLogFactory);
   }
 

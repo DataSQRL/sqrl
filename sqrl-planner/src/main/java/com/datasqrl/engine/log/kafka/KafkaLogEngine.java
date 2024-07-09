@@ -18,11 +18,13 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.global.PhysicalDAGPlan.LogStagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
+import com.datasqrl.plan.validate.ResolvedImport;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.ListUtils;
@@ -53,11 +55,13 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
 
     List<NewTopic> logTopics = ((LogStagePlan) plan).getLogs().stream()
         .map(log -> (KafkaTopic) log)
-        .map(t -> new NewTopic(t.getTopicName(), 1, Short.parseShort("1"), Map.of(), Map.of()))
+        .map(KafkaTopic::getTopicName)
+        .map(NewTopic::new)
         .collect(Collectors.toList());
 
     List<NewTopic> imports = framework.getSchema().getImports().stream()
-        .map(t -> new NewTopic(t.getName(), 1, Short.parseShort("1"), Map.of(), Map.of()))
+        .map(ResolvedImport::getName)
+        .map(NewTopic::new)
         .collect(Collectors.toList());
 
     return new KafkaPhysicalPlan(ListUtils.union(logTopics, imports));

@@ -3,7 +3,9 @@ package com.datasqrl.loaders;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.TableConfigLoader;
+import com.datasqrl.engine.log.LogManager;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.function.FlinkUdfNsObject;
 import com.datasqrl.config.ExternalDataType;
@@ -45,15 +47,19 @@ public class ObjectLoaderImpl implements ObjectLoader {
   private final CalciteTableFactory tableFactory;
   private final ModuleLoader moduleLoader;
   private final TableConfigLoader tableConfigFactory;
+  private final PackageJson sqrlConfig;
+  private final LogManager logManager;
 
   public ObjectLoaderImpl(ResourceResolver resourceResolver, ErrorCollector errors,
       CalciteTableFactory tableFactory, ModuleLoader moduleLoader,
-      TableConfigLoader tableConfigFactory) {
+      TableConfigLoader tableConfigFactory, PackageJson sqrlConfig, LogManager logManager) {
     this.resourceResolver = resourceResolver;
     this.errors = errors;
     this.tableFactory = tableFactory;
     this.moduleLoader = moduleLoader;
     this.tableConfigFactory = tableConfigFactory;
+    this.sqrlConfig = sqrlConfig;
+    this.logManager = logManager;
   }
 
   final static Deserializer SERIALIZER = new Deserializer();
@@ -104,7 +110,8 @@ public class ObjectLoaderImpl implements ObjectLoader {
 
   @SneakyThrows
   private SqrlModule loadScript(NamePath directory, Path path) {
-    return new ScriptSqrlModule(moduleLoader, Files.readString(path), Optional.empty());
+    return new ScriptSqrlModule(moduleLoader, Files.readString(path), Optional.empty(),
+        sqrlConfig, logManager);
   }
 
   @SneakyThrows
