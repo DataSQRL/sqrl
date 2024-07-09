@@ -46,7 +46,6 @@ import com.datasqrl.plan.CreateTableResolver;
 import com.datasqrl.plan.MainScript;
 import com.datasqrl.plan.local.generate.ResolvedExport;
 
-import com.datasqrl.plan.rel.LogicalStream;
 import com.datasqrl.plan.table.RelDataTypeTableSchema;
 
 import com.datasqrl.schema.Multiplicity;
@@ -54,7 +53,6 @@ import com.datasqrl.schema.NestedRelationship;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.Relationship.JoinType;
 import com.datasqrl.util.CalciteUtil;
-import com.datasqrl.util.CalciteUtil.RelDataTypeFieldBuilder;
 import com.datasqrl.util.CheckUtil;
 import com.datasqrl.util.RelDataTypeBuilder;
 import com.datasqrl.util.SqlNameUtil;
