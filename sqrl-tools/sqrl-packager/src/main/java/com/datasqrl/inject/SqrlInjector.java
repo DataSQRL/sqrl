@@ -34,6 +34,8 @@ import com.datasqrl.packager.preprocess.Preprocessor;
 import com.datasqrl.packager.preprocess.ScriptPreprocessor;
 import com.datasqrl.packager.preprocess.TablePreprocessor;
 import com.datasqrl.packager.repository.Repository;
+import com.datasqrl.plan.CreateTableResolver;
+import com.datasqrl.plan.CreateTableResolverImpl;
 import com.datasqrl.plan.MainScript;
 import com.datasqrl.plan.SqrlPlanningTableFactory;
 import com.datasqrl.plan.validate.ExecutionGoal;
@@ -79,6 +81,7 @@ public class SqrlInjector extends AbstractModule {
     bind(RelBuilder.class).to(SqrlRelBuilder.class);
     bind(TableConfigLoader.class).to(TableConfigLoaderImpl.class);
     bind(ConnectorFactoryFactory.class).to(ConnectorFactoryFactoryImpl.class);
+    bind(CreateTableResolver.class).to(CreateTableResolverImpl.class);
 
     Multibinder<Preprocessor> binder = Multibinder.newSetBinder(binder(), Preprocessor.class);
     binder.addBinding().to(ScriptPreprocessor.class);

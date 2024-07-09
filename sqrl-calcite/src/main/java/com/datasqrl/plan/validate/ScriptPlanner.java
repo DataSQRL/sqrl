@@ -16,6 +16,7 @@ import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlJoinBuilder;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
 import com.datasqrl.calcite.schema.sql.SqlDataTypeSpecBuilder;
+import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.calcite.visitor.SqlNodeVisitor;
 import com.datasqrl.calcite.visitor.SqlRelationVisitor;
 import com.datasqrl.calcite.visitor.SqlTopLevelRelationVisitor;
@@ -24,6 +25,8 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.config.ConnectorFactoryContext;
 import com.datasqrl.config.ConnectorFactoryFactory;
+import com.datasqrl.config.EngineFactory.Type;
+import com.datasqrl.config.TableConfig;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
@@ -33,19 +36,25 @@ import com.datasqrl.function.SqrlFunctionParameter.NoParameter;
 import com.datasqrl.function.SqrlFunctionParameter.UnknownCaseParameter;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.io.tables.TableSinkImpl;
+import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.loaders.TableSinkObject;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.module.SqrlModule;
 import com.datasqrl.parse.SqrlAstException;
+import com.datasqrl.plan.CreateTableResolver;
 import com.datasqrl.plan.MainScript;
 import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.plan.rel.LogicalStream;
+import com.datasqrl.plan.table.RelDataTypeTableSchema;
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.NestedRelationship;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.Relationship.JoinType;
+import com.datasqrl.util.CalciteUtil;
+import com.datasqrl.util.CalciteUtil.RelDataTypeFieldBuilder;
 import com.datasqrl.util.CheckUtil;
+import com.datasqrl.util.RelDataTypeBuilder;
 import com.datasqrl.util.SqlNameUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
@@ -88,6 +97,8 @@ import org.apache.calcite.sql.SqlOrderBy;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqrlAssignTimestamp;
 import org.apache.calcite.sql.SqrlAssignment;
+import org.apache.calcite.sql.SqrlColumnDefinition;
+import org.apache.calcite.sql.SqrlCreateDefinition;
 import org.apache.calcite.sql.SqrlDistinctQuery;
 import org.apache.calcite.sql.SqrlExportDefinition;
 import org.apache.calcite.sql.SqrlExpressionQuery;
@@ -102,6 +113,7 @@ import org.apache.calcite.sql.SqrlTableParamDef;
 import org.apache.calcite.sql.StatementVisitor;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.util.SqlBasicVisitor;
 import org.apache.calcite.sql.util.SqlShuttle;
 import org.apache.calcite.sql.validate.SqlValidator;
@@ -122,6 +134,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
   private final SqlNameUtil nameUtil;
   private final ConnectorFactoryFactory connectorFactoryFactory;
 
+  private final CreateTableResolver createTableResolver;
   private final Map<SqlNode, Object> schemaTable = new HashMap<>();
   private final AtomicInteger uniqueId = new AtomicInteger(0);
   private final Map<SqlNode, RelOptTable> tableMap = new HashMap<>();
@@ -132,6 +145,45 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
   private final ArrayListMultimap<SqlNode, FunctionParameter> parameters = ArrayListMultimap.create();
 
   private static final String TEST_HINT_NAME = "test";
+
+  @Override
+  public Void visit(SqrlCreateDefinition statement, Void context) {
+    NamePath namePath = NamePath.of(statement.getName().names.toArray(String[]::new));
+    String logId = statement.getName().names.get(0);
+
+    Map map = new HashMap();
+    map.put("primary-key", List.of("_uuid"));
+    map.put("timestamp-type", "LOG_TIME");
+    map.put("timestamp-name", "event_time");
+    map.put("name", logId);
+
+    Optional<TableConfig> sink = connectorFactoryFactory.create(Type.LOG, "kafka")
+        .map(t->t.createSourceAndSink(new ConnectorFactoryContext(logId, map)));
+
+    if (sink.isEmpty()) {
+      addError(ErrorCode.CANNOT_RESOLVE_TABLESINK, statement, "Cannot resolve log: %s",
+          logId);
+      return null;
+    }
+
+    TableConfig tableConfig = sink.get();
+    this.framework.getSchema().add(new ResolvedImport(logId, tableConfig));
+    TypeFactory typeFactory = TypeFactory.getTypeFactory();
+    RelDataTypeBuilder fieldBuilder = CalciteUtil.getRelTypeBuilder(typeFactory);
+    fieldBuilder.add(Name.system("_uuid"), typeFactory.createSqlType(SqlTypeName.VARCHAR));
+//    fieldBuilder.add(Name.system("event_time"), typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3));
+    for (SqrlColumnDefinition definition : statement.getColumns()) {
+      fieldBuilder.add(definition.getColumnName().getSimple(),
+          SqlDataTypeSpecBuilder.create(definition.getType(), typeFactory));
+    }
+
+    NamespaceObject namespaceObject = createTableResolver.create(
+        new TableSource(tableConfig, namePath, namePath.getLast(),
+            new RelDataTypeTableSchema(fieldBuilder.build())));
+    namespaceObject.apply(this, Optional.empty(), framework, errorCollector);
+    return null;
+  }
+
   @Override
   public Void visit(SqrlImportDefinition node, Void context) {
     if (node.getImportPath().isStar() && node.getAlias().isPresent()) {
