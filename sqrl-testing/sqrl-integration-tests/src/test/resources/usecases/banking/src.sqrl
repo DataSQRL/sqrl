@@ -1,0 +1,3 @@
+IMPORT loan-local.Customers;
+IMPORT loan-local.Applications;
+IMPORT loan-local.Loan_types AS LoanTypes;

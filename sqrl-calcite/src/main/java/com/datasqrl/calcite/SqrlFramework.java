@@ -9,6 +9,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.AllArgsConstructor;
@@ -43,6 +44,11 @@ public class SqrlFramework {
   @Inject
   public SqrlFramework(RelMetadataProvider relMetadataProvider, HintStrategyTable hintStrategyTable,
       NameCanonicalizer nameCanonicalizer, SqrlSchema schema) {
+    this(relMetadataProvider, hintStrategyTable, nameCanonicalizer, schema, Optional.empty());
+  }
+
+  public SqrlFramework(RelMetadataProvider relMetadataProvider, HintStrategyTable hintStrategyTable,
+      NameCanonicalizer nameCanonicalizer, SqrlSchema schema, Optional<QueryPlanner> planner) {
     this.hintStrategyTable = hintStrategyTable;
     this.typeFactory = new TypeFactory();
     this.schema = schema;
@@ -60,7 +66,7 @@ public class SqrlFramework {
     this.nameCanonicalizer = nameCanonicalizer;
     this.catalogReader = new CatalogReader(schema, typeFactory, config);
     this.sqrlOperatorTable = new OperatorTable(catalogReader, schema);
-    this.queryPlanner = resetPlanner();
+    this.queryPlanner = planner.orElseGet(this::resetPlanner);
   }
 
   public QueryPlanner resetPlanner() {

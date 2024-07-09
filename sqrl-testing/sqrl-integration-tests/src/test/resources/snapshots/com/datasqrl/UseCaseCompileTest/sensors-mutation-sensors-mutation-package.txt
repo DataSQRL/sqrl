@@ -227,7 +227,7 @@ LogicalTableScan(table=[[sensorreading_1]], hints=[[[WatermarkHint inheritPath:[
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "type Query {\n  SecReading(sensorid: Int!): [SecReading!]\n  SensorMaxTemp(sensorid: Int): [SensorMaxTemp!]\n}\n\ntype SecReading {\n  sensorid: Int!\n  timeSec: String!\n  temperature: Float!\n}\n\ntype SensorMaxTemp {\n  sensorid: Int!\n  maxTemp: Float!\n}\n\ntype Mutation {\n  AddReading(metric: ReadingInput!): CreatedReading\n}\n\ninput ReadingInput {\n  sensorid: Int!\n  temperature: Float!\n}\n\ntype CreatedReading {\n  event_time: String!\n  sensorid: Int!\n}\n\ntype Subscription {\n  HighTempAlert(sensorid: Int): HighTempAlert\n}\n\ntype HighTempAlert {\n  sensorid: Int!\n  timeSec: String!\n  temperature: Float!\n}\n"
+      "schema" : "type Query {\n  SecReading(sensorid: Int!): [SecReading!]\n  SensorMaxTemp(sensorid: Int): [SensorMaxTemp!]\n}\n\ntype SecReading {\n  sensorid: Int!\n  timeSec: String!\n  temperature: Float!\n}\n\ntype SensorMaxTemp {\n  sensorid: Int!\n  maxTemp: Float!\n}\n\ntype Mutation {\n  AddReading(metric: ReadingInput!): CreatedReading\n}\n\ninput ReadingInput {\n  sensorid: Int!\n  temperature: Float!\n}\n\ntype CreatedReading {\n  event_time: String!\n  sensorid: Int!\n}\n\ntype Subscription {\n  HighTempAlert(sensorid: Int): HighTempAlert\n}\n\ntype HighTempAlert {\n  sensorid: Int!\n  timeSec: String!\n  temperature: Float!\n}"
     }
   }
 }

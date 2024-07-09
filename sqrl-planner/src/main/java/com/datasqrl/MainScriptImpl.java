@@ -18,7 +18,7 @@ public class MainScriptImpl implements MainScript {
   private final ResourceResolver resourceResolver;
 
   public String getContent() {
-    URI mainScript = config.getScriptConfig().getMainScript().map(NamePath::of).flatMap(resourceResolver::resolveFile)
+    Path mainScript = config.getScriptConfig().getMainScript().map(NamePath::of).flatMap(resourceResolver::resolveFile)
         .orElseThrow(() -> new RuntimeException("Could not find main sqrl script file"));
     return FileUtil.readFile(mainScript);
   }
@@ -26,7 +26,6 @@ public class MainScriptImpl implements MainScript {
   public Optional<Path> getPath() {
     return config.getScriptConfig().getMainScript()
         .map(NamePath::of)
-        .flatMap(resourceResolver::resolveFile)
-        .map(Path::of);
+        .flatMap(resourceResolver::resolveFile);
   }
 }

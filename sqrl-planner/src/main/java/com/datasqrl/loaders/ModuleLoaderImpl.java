@@ -12,7 +12,9 @@ import com.datasqrl.module.resolver.ResourceResolver;
 import com.datasqrl.plan.table.CalciteTableFactory;
 import com.google.inject.Inject;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 
@@ -25,41 +27,42 @@ public class ModuleLoaderImpl implements ModuleLoader {
   private final CalciteTableFactory tableFactory;
   private final TableConfigLoader tableConfigFactory;
 
+  // Required to reduce the cost of script imports
+  private final Map<NamePath, SqrlModule> cache = new HashMap<>();
   @Override
   public Optional<SqrlModule> getModule(NamePath namePath) {
+    if (cache.containsKey(namePath)) {
+      return Optional.of(cache.get(namePath));
+    }
+
+    Optional<SqrlModule> module = getModuleOpt(namePath);
+    module.ifPresent(sqrlModule -> cache.put(namePath, sqrlModule));
+
+    return module;
+  }
+
+  public Optional<SqrlModule> getModuleOpt(NamePath namePath) {
     // Load modules from standard library
-    List<NamespaceObject> nsObjects = new ArrayList<>(loadFromStandardLibrary(namePath));
+    Optional<SqrlModule> module = loadFromStandardLibrary(namePath);
+    if (module.isPresent()) {
+      return module;
+    }
 
     // Load modules from file system
-    if (nsObjects.isEmpty()) {
-      nsObjects.addAll(loadFromFileSystem(namePath));
-    }
+    return loadFromFileSystem(namePath);
+  }
 
-    if (nsObjects.isEmpty()) {
+  private Optional<SqrlModule> loadFromStandardLibrary(NamePath namePath) {
+    List<NamespaceObject> lib = standardLibraryLoader.load(namePath);
+    if (lib.isEmpty()) {
       return Optional.empty();
     }
-
-    return Optional.of(new SqrlDirectoryModule(nsObjects));
+    return Optional.of(new SqrlDirectoryModule(lib));
   }
 
-  public static boolean isPrintSink(NamePath namePath) {
-    return namePath.size() == 1 && namePath.getLast().getCanonical()
-            .equals(PRINT_SINK_NAME);
-  }
-
-
-  private List<NamespaceObject> loadFromStandardLibrary(NamePath namePath) {
-//    if (isPrintSink(namePath)) { todo: read-add for 0.5
-//      return List.of(new DynamicSinkNsObject(namePath,
-//          new StandardDynamicSinkFactory(new PrintFlinkDynamicSinkConnectorFactory(),
-//          null)));
-//    }
-
-    return standardLibraryLoader.load(namePath);
-  }
-
-  private List<NamespaceObject> loadFromFileSystem(NamePath namePath) {
-    return new ObjectLoaderImpl(resourceResolver, errors, tableFactory, this, tableConfigFactory).load(namePath);
+  private Optional<SqrlModule> loadFromFileSystem(NamePath namePath) {
+    return new ObjectLoaderImpl(resourceResolver, errors, tableFactory, this, tableConfigFactory)
+        .load(namePath);
   }
 
   @Override

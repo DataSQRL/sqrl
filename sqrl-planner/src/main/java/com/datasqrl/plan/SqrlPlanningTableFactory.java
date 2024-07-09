@@ -67,7 +67,7 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
         tableFactory, null, parameters, isA, materializeSelf, parameters, relNodeSupplier,
         moduleLoader, isTest);
 
-    nsObj.apply(Optional.empty(), framework, errors);
+    nsObj.apply(null, Optional.empty(), framework, errors);
   }
 
 

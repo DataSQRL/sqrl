@@ -11,6 +11,8 @@ import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -47,5 +49,9 @@ public class BaseFileUtil {
     }
 
     return content.toString();
+  }
+  @SneakyThrows
+  public static String readFile(Path path) {
+    return Files.readString(path);
   }
 }

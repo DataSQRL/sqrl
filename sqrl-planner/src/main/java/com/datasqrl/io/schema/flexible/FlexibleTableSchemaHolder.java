@@ -7,6 +7,7 @@ import com.datasqrl.schema.input.external.TableDefinition;
 import com.datasqrl.serializer.Deserializer;
 import com.google.common.base.Strings;
 import java.net.URI;
+import java.nio.file.Path;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
@@ -19,7 +20,7 @@ public class FlexibleTableSchemaHolder implements TableSchema {
 
   @NonNull FlexibleTableSchema schema;
   String definition;
-  @NonNull Optional<URI> location;
+  @NonNull Optional<Path> location;
 
   public FlexibleTableSchemaHolder(FlexibleTableSchema schema) {
     this(schema, null, Optional.empty());

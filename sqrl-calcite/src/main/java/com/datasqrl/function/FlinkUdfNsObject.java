@@ -6,6 +6,7 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.flink.FlinkConverter;
 import com.datasqrl.module.FunctionNamespaceObject;
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.plan.validate.ScriptPlanner;
 import java.net.URL;
 import java.util.Optional;
 import lombok.Value;
@@ -27,7 +28,7 @@ public class FlinkUdfNsObject implements FunctionNamespaceObject<FunctionDefinit
   }
 
   @Override
-  public boolean apply(Optional<String> objectName, SqrlFramework framework, ErrorCollector errors) {
+  public boolean apply(ScriptPlanner planner, Optional<String> objectName, SqrlFramework framework, ErrorCollector errors) {
     FlinkConverter flinkConverter = new FlinkConverter((TypeFactory) framework.getQueryPlanner().getCatalogReader()
         .getTypeFactory());
 

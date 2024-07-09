@@ -4,6 +4,7 @@
 package com.datasqrl.io.tables;
 
 import java.net.URI;
+import java.nio.file.Path;
 import java.util.Optional;
 
 public interface TableSchema {
@@ -12,6 +13,6 @@ public interface TableSchema {
 
   String getDefinition();
 
-  Optional<URI> getLocation();
+  Optional<Path> getLocation();
 
 }

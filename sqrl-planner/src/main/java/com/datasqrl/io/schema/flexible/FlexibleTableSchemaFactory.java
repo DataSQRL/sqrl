@@ -11,6 +11,7 @@ import com.datasqrl.io.schema.flexible.external.SchemaImport;
 import com.datasqrl.schema.input.external.TableDefinition;
 import com.google.auto.service.AutoService;
 import java.net.URI;
+import java.nio.file.Path;
 import java.util.Optional;
 
 @AutoService(TableSchemaFactory.class)
@@ -21,7 +22,7 @@ public class FlexibleTableSchemaFactory implements TableSchemaFactory {
 
 
   @Override
-  public FlexibleTableSchemaHolder create(String schemaDefinition, Optional<URI> location, ErrorCollector errors) {
+  public FlexibleTableSchemaHolder create(String schemaDefinition, Optional<Path> location, ErrorCollector errors) {
     Deserializer deserializer = new Deserializer();
     TableDefinition schemaDef = deserializer.mapYAML(schemaDefinition, TableDefinition.class);
     SchemaImport importer = new SchemaImport(Constraint.FACTORY_LOOKUP, NameCanonicalizer.SYSTEM);

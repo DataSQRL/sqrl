@@ -43,7 +43,7 @@ public class AvroSchemaHandlingTest {
     AvroTableSchemaFactory schemaFactory = new AvroTableSchemaFactory();
     assertEquals("avro", schemaFactory.getType());
     ErrorCollector errors = ErrorCollector.root();
-    AvroSchemaHolder schema = schemaFactory.create(schemaDef, Optional.of(schemaPath.toUri()), errors);
+    AvroSchemaHolder schema = schemaFactory.create(schemaDef, Optional.of(schemaPath), errors);
     assertNotNull(schema.getSchema());
     assertEquals(schemaDef, schema.getSchemaDefinition());
     assertEquals("avro", schema.getSchemaType());

@@ -67,7 +67,7 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
   public void addMutation(APIMutation mutation) {
     NamePath apiNamePath = apiToModulePath(mutation.getSource());
     Optional<SqrlModule> module = moduleLoader.getModule(apiNamePath);
-    if (module.isPresent()) {
+    if (module.isPresent() && module.get().getNamespaceObject(mutation.getName()).isPresent()) {
       Optional<NamespaceObject> log = module.get().getNamespaceObject(mutation.getName());
       errors.checkFatal(log.isPresent(), "Could not load mutation endpoint for %s", mutation);
       if (log.get() instanceof TableSourceSinkNamespaceObject) {
