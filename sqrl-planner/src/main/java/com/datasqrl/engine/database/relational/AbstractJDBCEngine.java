@@ -5,18 +5,22 @@ package com.datasqrl.engine.database.relational;
 
 import static com.datasqrl.engine.EngineFeature.STANDARD_DATABASE;
 
+import com.datasqrl.calcite.Dialect;
+import com.datasqrl.calcite.QueryPlanner;
 import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.calcite.dialect.ExtendedSnowflakeSqlDialect;
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.config.ConnectorConf;
 import com.datasqrl.config.ConnectorFactoryContext;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.EngineFactory.Type;
+import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.config.TableConfig;
-import com.datasqrl.config.JdbcDialect;
+import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.database.DatabaseEngine;
+import com.datasqrl.engine.database.QueryEngine;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.engine.database.relational.ddl.JdbcDDLFactory;
 import com.datasqrl.engine.database.relational.ddl.JdbcDDLServiceLoader;
@@ -41,6 +45,7 @@ import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -57,55 +62,27 @@ import org.apache.calcite.rel.type.RelRecordType;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
-import org.apache.commons.collections.ListUtils;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlWriterConfig;
+import org.apache.calcite.sql.pretty.SqlPrettyWriter;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
+/**
+ * This is an abstract engine implementation that provides shared functionalities for relational/jdbc-compatible
+ * engines.
+ *
+ * It implements the physical plan construction by creating DDL statements and queries for the relational database dialect.
+ */
 @Slf4j
-public class AbstractJDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
+public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements ExecutionEngine {
 
-//  public static final EnumMap<Dialect, EnumSet<EngineCapability>> CAPABILITIES_BY_DIALECT = new EnumMap<Dialect, EnumSet<EngineCapability>>(
-//      Dialect.class);
-
-//  static {
-//    CAPABILITIES_BY_DIALECT.put(Dialect.POSTGRES, EnumSet.of(NOW, GLOBAL_SORT, MULTI_RANK));
-//    CAPABILITIES_BY_DIALECT.put(Dialect.H2, EnumSet.of(NOW, GLOBAL_SORT, MULTI_RANK));
-//  }
-
-  @Getter
-  final EngineConfig connectorConfig;
-
-  private final ConnectorFactoryFactory connectorFactory;
-
-  public AbstractJDBCEngine(@NonNull EngineConfig connectorConfig, ConnectorFactoryFactory connectorFactory) {
-    super(PostgresEngineFactory.ENGINE_NAME, Type.DATABASE, STANDARD_DATABASE);
-    this.connectorConfig = connectorConfig;
-    this.connectorFactory = connectorFactory;
+  public AbstractJDBCEngine(@NonNull String name, @NonNull Type type,
+      @NonNull EnumSet<EngineFeature> capabilities) {
+    super(name, type, capabilities);
   }
 
-  @Override
-  public boolean supports(FunctionDefinition function) {
-    //TODO: @Daniel: change to determining which functions are supported by dialect & database type
-    //This is a hack - we just check that it's not a tumble window function
-    return FunctionUtil.getSqrlTimeTumbleFunction(function).isEmpty();
-  }
-
-
-  @Override
-  public TableConfig getSinkConfig(String tableName) {
-    return connectorFactory
-        .create(Type.DATABASE, getDialect().getId()).get().createSourceAndSink(
-            new ConnectorFactoryContext(tableName, Map.of("table-name", tableName)));
-  }
-
-  @Override
-  public IndexSelectorConfig getIndexSelectorConfig() {
-    return IndexSelectorConfigByDialect.of(getDialect());
-  }
-
-  private JdbcDialect getDialect() {
-    return JdbcDialect.Postgres;
-  }
+  protected abstract JdbcDialect getDialect();
 
   @Override
   public EnginePhysicalPlan plan(StagePlan plan,
@@ -117,14 +94,16 @@ public class AbstractJDBCEngine extends ExecutionEngine.Base implements Database
         (new JdbcDDLServiceLoader()).load(getDialect())
             .orElseThrow(() -> new RuntimeException("Could not find DDL factory"));
 
-    List<SqlDDLStatement> ddlStatements = StreamUtil.filterByClass(inputs,
+    List<SqlDDLStatement> ddlStatements = new ArrayList<>();
+
+    ddlStatements.addAll(
+      StreamUtil.filterByClass(inputs,
             EngineSink.class)
         .map(factory::createTable)
-        .collect(Collectors.toList());
+        .collect(Collectors.toList()));
 
     List<SqlDDLStatement> typeExtensions = extractTypeExtensions(dbPlan.getQueries());
-
-    ddlStatements = ListUtils.union(typeExtensions, ddlStatements);
+    ddlStatements.addAll(typeExtensions);
 
     dbPlan.getIndexDefinitions().stream().sorted()
             .map(factory::createIndex)
@@ -133,7 +112,42 @@ public class AbstractJDBCEngine extends ExecutionEngine.Base implements Database
     Map<IdentifiedQuery, QueryTemplate> databaseQueries = dbPlan.getQueries().stream()
         .collect(Collectors.toMap(ReadQuery::getQuery, q -> new QueryTemplate(q.getRelNode())));
 
+//    List<Map<String, String>> queries = new ArrayList<>();
+//    QueryPlanner queryPlanner = framework.getQueryPlanner();
+//    for (QueryTemplate template : databaseQueries.values()) {
+//      String sql = queryPlanner.relToString(mapDialect(getDialect()),
+//          template.getRelNode())
+//          .getSql();
+//      //todo: migrate this to a full form for consumption by downstream engines
+//      queries.add(Map.of("sql", sql + ";"));
+//    }
+
     return new JDBCPhysicalPlan(ddlStatements, databaseQueries);
+  }
+
+  public String toDialectString(SqlNode sqlNode) {
+    SqlWriterConfig config = SqlPrettyWriter.config()
+        .withDialect(ExtendedSnowflakeSqlDialect.DEFAULT); //todo move to this dialect
+    SqlPrettyWriter prettyWriter = new SqlPrettyWriter(config);
+    sqlNode.unparse(prettyWriter, 0, 0);
+    return prettyWriter.toSqlString().getSql() + ";";
+  }
+
+  //todo remove
+  public Dialect mapDialect(JdbcDialect dialect) {
+    switch (dialect) {
+      case Postgres:
+        return Dialect.POSTGRES;
+      case Snowflake:
+        return Dialect.SNOWFLAKE;
+      case Oracle:
+      case MySQL:
+      case SQLServer:
+      case H2:
+      case SQLite:
+      default:
+        return Dialect.CALCITE;
+    }
   }
 
   private List<SqlDDLStatement> extractTypeExtensions(List<ReadQuery> queries) {
@@ -179,7 +193,7 @@ public class AbstractJDBCEngine extends ExecutionEngine.Base implements Database
   }
 
   @Override
-  public Optional<DowncastFunction> getDowncastFunction(RelDataType type) {
+  public Optional<DowncastFunction> getSinkTypeCastFunction(RelDataType type) {
     if (type instanceof RawRelDataType) {
       Class<?> defaultConversion = ((RawRelDataType) type).getRawType().getDefaultConversion();
 
@@ -201,7 +215,7 @@ public class AbstractJDBCEngine extends ExecutionEngine.Base implements Database
       return Optional.of(new RowToJsonDowncastFunction());
     }
 
-    return super.getDowncastFunction(type);
+    return super.getSinkTypeCastFunction(type);
   }
 
   private boolean isScalar(RelDataType componentType) {
@@ -226,9 +240,5 @@ public class AbstractJDBCEngine extends ExecutionEngine.Base implements Database
       default:
         return false;
     }
-  }
-
-  public ConnectorConf getConnectorFactoryConfig() {
-    return connectorFactory.getConfig(getDialect().getId());
   }
 }

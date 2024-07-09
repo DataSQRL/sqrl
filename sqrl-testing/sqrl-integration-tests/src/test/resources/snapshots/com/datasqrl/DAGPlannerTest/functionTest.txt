@@ -1,6 +1,6 @@
 >>>pipeline_explain.txt
 === Product
-ID:     product$2
+ID:     product_2
 Type:   stream
 Stage:  streams
 Primary Key: _uuid
@@ -17,7 +17,7 @@ Schema:
  - format: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
 Plan:
 LogicalProject(productid=[$0], name=[$1], description=[$2], category=[$3], _ingest_time=[$4], _uuid=[$5], badWords=[bannedWordsFilter($1)], searchResult=[textsearch('garden gnome', $3, $1)], format=[formatting('Go buy: %s in %s with id=%s', $1, $3, CAST($0):VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL)]) hints[WatermarkHint options:[4]]
-  LogicalTableScan(table=[[product$1]])
+  LogicalTableScan(table=[[product_1]])
 
 >>>flink.json
 {
@@ -26,10 +26,10 @@ LogicalProject(productid=[$0], name=[$1], description=[$2], category=[$3], _inge
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `textsearch` AS 'com.datasqrl.text.TextSearch' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `uuid` AS 'com.datasqrl.secure.Uuid' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `formatting` AS 'com.datasqrl.text.Format' LANGUAGE JAVA;",
-    "CREATE TEMPORARY TABLE `product$1` (\n  `productid` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `_uuid` AS UUID(),\n  PRIMARY KEY (`_uuid`) NOT ENFORCED,\n  WATERMARK FOR `_ingest_time` AS (`_ingest_time` - INTERVAL '0.001' SECOND)\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
-    "CREATE TEMPORARY TABLE `product$2` (\n  `productid` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,\n  `badWords` BOOLEAN NOT NULL,\n  `searchResult` DOUBLE NOT NULL,\n  `format` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  PRIMARY KEY (`_uuid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'product$2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE VIEW `table$1`\nAS\nSELECT `productid`, `name`, `description`, `category`, `_ingest_time`, `_uuid`, BANNEDWORDSFILTER(`name`) AS `badWords`, TEXTSEARCH('garden gnome', `category`, `name`) AS `searchResult`, FORMATTING('Go buy: %s in %s with id=%s', `name`, `category`, CAST(`productid` AS VARCHAR(65536) CHARACTER SET `UTF-16LE`)) AS `format`\nFROM `product$1`;",
-    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `product$2`\n(SELECT *\nFROM `table$1`)\n;\nEND;"
+    "CREATE TEMPORARY TABLE `product_1` (\n  `productid` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `_uuid` AS UUID(),\n  PRIMARY KEY (`_uuid`) NOT ENFORCED,\n  WATERMARK FOR `_ingest_time` AS (`_ingest_time` - INTERVAL '0.001' SECOND)\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
+    "CREATE TEMPORARY TABLE `product_2` (\n  `productid` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,\n  `badWords` BOOLEAN NOT NULL,\n  `searchResult` DOUBLE NOT NULL,\n  `format` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  PRIMARY KEY (`_uuid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'product_2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE VIEW `table$1`\nAS\nSELECT `productid`, `name`, `description`, `category`, `_ingest_time`, `_uuid`, BANNEDWORDSFILTER(`name`) AS `badWords`, TEXTSEARCH('garden gnome', `category`, `name`) AS `searchResult`, FORMATTING('Go buy: %s in %s with id=%s', `name`, `category`, CAST(`productid` AS VARCHAR(65536) CHARACTER SET `UTF-16LE`)) AS `format`\nFROM `product_1`;",
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `product_2`\n(SELECT *\nFROM `table$1`)\n;\nEND;"
   ],
   "connectors" : [
     "jdbc-sqrl",
@@ -47,7 +47,7 @@ LogicalProject(productid=[$0], name=[$1], description=[$2], category=[$3], _inge
 {
   "ddl" : [
     {
-      "name" : "product$2",
+      "name" : "product_2",
       "columns" : [
         "\"productid\" BIGINT NOT NULL",
         "\"name\" TEXT NOT NULL",
@@ -62,7 +62,7 @@ LogicalProject(productid=[$0], name=[$1], description=[$2], category=[$3], _inge
       "primaryKeys" : [
         "\"_uuid\""
       ],
-      "sql" : "CREATE TABLE IF NOT EXISTS product$2 (\"productid\" BIGINT NOT NULL,\"name\" TEXT NOT NULL,\"description\" TEXT NOT NULL,\"category\" TEXT NOT NULL,\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"_uuid\" TEXT NOT NULL,\"badWords\" BOOLEAN NOT NULL,\"searchResult\" DOUBLE PRECISION NOT NULL,\"format\" TEXT NOT NULL , PRIMARY KEY (\"_uuid\"));"
+      "sql" : "CREATE TABLE IF NOT EXISTS product_2 (\"productid\" BIGINT NOT NULL,\"name\" TEXT NOT NULL,\"description\" TEXT NOT NULL,\"category\" TEXT NOT NULL,\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"_uuid\" TEXT NOT NULL,\"badWords\" BOOLEAN NOT NULL,\"searchResult\" DOUBLE PRECISION NOT NULL,\"format\" TEXT NOT NULL , PRIMARY KEY (\"_uuid\"));"
     }
   ]
 }
@@ -91,7 +91,7 @@ LogicalProject(productid=[$0], name=[$1], description=[$2], category=[$3], _inge
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"product$2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"_uuid\"",
+              "sql" : "SELECT *\nFROM \"product_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"_uuid\"",
               "parameters" : [ ]
             }
           }

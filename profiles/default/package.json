@@ -26,6 +26,10 @@
           "format" : "${sqrl:format}",
           "path" : "${sqrl:filepath}",
           "source.monitor-interval" : 1
+        },
+        "iceberg": {
+          "connector": "iceberg",
+          "catalog-table": "${sqrl:table}"
         }
       }
     }

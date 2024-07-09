@@ -19,7 +19,7 @@ public interface EngineFactory {
   Class<? extends IExecutionEngine> getFactoryClass();
 
   enum Type {
-    STREAMS, DATABASE, SERVER, LOG;
+    STREAMS, DATABASE, SERVER, LOG, QUERY;
 
     public boolean isWrite() {
       return this == STREAMS;
@@ -29,6 +29,6 @@ public interface EngineFactory {
       return this == DATABASE || this == SERVER;
     }
 
-    public boolean isCompute() { return this != LOG; }
+    public boolean isCompute() { return isWrite() || isRead(); }
   }
 }

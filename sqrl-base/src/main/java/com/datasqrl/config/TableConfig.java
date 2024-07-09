@@ -53,7 +53,7 @@ public interface TableConfig {
 
     TableType getTableType();
 
-    String getConnectorName();
+    Optional<String> getConnectorName();
   }
 
   interface TableTableConfig {

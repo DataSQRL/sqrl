@@ -1,29 +1,29 @@
 >>>pipeline_explain.txt
 === lastHour
-ID:     lasthour$1
+ID:     lasthour_1
 Type:   stream
 Stage:  streams
-Inputs: observationgroup$2, patientlasthour$1
-Primary Key: __pk1$groupId, __pk3$created
-Timestamp  : __pk3$created
+Inputs: observationgroup_2, patientlasthour_1
+Primary Key: __pk1_groupId, __pk3_created
+Timestamp  : __pk3_created
 Schema:
- - __pk1$groupId: BIGINT NOT NULL
- - __pk3$created: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - __pk1_groupId: BIGINT NOT NULL
+ - __pk3_created: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - maxTemp: DECIMAL(10, 5) NOT NULL
  - minTemp: DECIMAL(10, 5) NOT NULL
 Plan:
-LogicalProject(__pk1$groupId=[$0], __pk3$created=[$1], maxTemp=[$2], minTemp=[$3])
+LogicalProject(__pk1_groupId=[$0], __pk3_created=[$1], maxTemp=[$2], minTemp=[$3])
   LogicalAggregate(group=[{0, 2}], maxTemp=[MAX($7)], minTemp=[MIN($8)]) hints[TumbleAggregationHint options:[2, INSTANT, 2, 1, 0]]
     LogicalJoin(condition=[=($4, $5)], joinType=[inner]) hints[TemporalJoinHint options:[2]]
       LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{3}])
-        LogicalTableScan(table=[[observationgroup$2]])
+        LogicalTableScan(table=[[observationgroup_2]])
         LogicalTableFunctionScan(invocation=[ObservationGroup.patients($cor3.patients)], rowType=[RecordType(BIGINT patientId)], elementType=[class [Ljava.lang.Object;])
       LogicalFilter(condition=[=($5, 1)]) hints[DedupHint]
         LogicalProject(patientid=[$0], avgTemp=[$1], maxTemp=[$2], minTemp=[$3], _timeMin=[$4], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
-          LogicalTableScan(table=[[patientlasthour$1]])
+          LogicalTableScan(table=[[patientlasthour_1]])
 
 === ObservationGroup
-ID:     observationgroup$2
+ID:     observationgroup_2
 Type:   stream
 Stage:  streams
 Primary Key: groupId, created
@@ -34,13 +34,13 @@ Schema:
  - created: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - patients: RecordType(BIGINT NOT NULL patientId) NOT NULL ARRAY NOT NULL
 Plan:
-LogicalTableScan(table=[[observationgroup$1]], hints=[[[WatermarkHint inheritPath:[] options:[2]]]]) hints[WatermarkHint options:[2]]
+LogicalTableScan(table=[[observationgroup_1]], hints=[[[WatermarkHint inheritPath:[] options:[2]]]]) hints[WatermarkHint options:[2]]
 
 === PatientHourly
-ID:     patienthourly$1
+ID:     patienthourly_1
 Type:   stream
 Stage:  streams
-Inputs: sensors$3, smoothreading$1
+Inputs: sensors_3, smoothreading_1
 Primary Key: patientid, timeHour
 Timestamp  : timeHour
 Schema:
@@ -54,16 +54,16 @@ LogicalAggregate(group=[{0, 1}], avgTemp=[AVG($2)], maxTemp=[MAX($2)], minTemp=[
   LogicalProject(patientid=[$5], timeHour=[endOfHour($1)], smoothTemp=[$2], sensorid=[$0], timeMin=[$1])
     LogicalJoin(condition=[=($4, $3)], joinType=[inner]) hints[TemporalJoinHint options:[1]]
       LogicalProject(sensorid=[$0], timeMin=[$1], smoothTemp=[$2], sensorid3=[$0])
-        LogicalTableScan(table=[[smoothreading$1]])
+        LogicalTableScan(table=[[smoothreading_1]])
       LogicalFilter(condition=[=($4, 1)]) hints[DedupHint]
         LogicalProject(id=[$0], patientid=[$1], placed=[$2], placedTimestamp=[$3], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $3 DESC NULLS LAST)])
-          LogicalTableScan(table=[[sensors$3]])
+          LogicalTableScan(table=[[sensors_3]])
 
 === PatientLastHour
-ID:     patientlasthour$1
+ID:     patientlasthour_1
 Type:   state
 Stage:  streams
-Inputs: sensors$3, smoothreading$1
+Inputs: sensors_3, smoothreading_1
 Primary Key: patientid
 Timestamp  : _timeMin
 Schema:
@@ -79,13 +79,13 @@ LogicalProject(patientid=[$1], avgTemp=[$2], maxTemp=[$3], minTemp=[$4], _timeMi
   LogicalAggregate(group=[{1, 5}], avgTemp=[AVG($2)], maxTemp=[MAX($2)], minTemp=[MIN($2)]) hints[SlidingAggregationHint options:[1, 3600000, 72000]]
     LogicalJoin(condition=[=($4, $3)], joinType=[inner]) hints[TemporalJoinHint options:[1]]
       LogicalProject(sensorid=[$0], timeMin=[$1], smoothTemp=[$2], sensorid3=[$0])
-        LogicalTableScan(table=[[smoothreading$1]])
+        LogicalTableScan(table=[[smoothreading_1]])
       LogicalFilter(condition=[=($4, 1)]) hints[DedupHint]
         LogicalProject(id=[$0], patientid=[$1], placed=[$2], placedTimestamp=[$3], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $3 DESC NULLS LAST)])
-          LogicalTableScan(table=[[sensors$3]])
+          LogicalTableScan(table=[[sensors_3]])
 
 === SensorReading
-ID:     sensorreading$2
+ID:     sensorreading_2
 Type:   stream
 Stage:  streams
 Primary Key: _uuid
@@ -96,10 +96,10 @@ Schema:
  - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - event_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalTableScan(table=[[sensorreading$1]], hints=[[[WatermarkHint inheritPath:[] options:[3]]]]) hints[WatermarkHint options:[3]]
+LogicalTableScan(table=[[sensorreading_1]], hints=[[[WatermarkHint inheritPath:[] options:[3]]]]) hints[WatermarkHint options:[3]]
 
 === Sensors
-ID:     sensors$2
+ID:     sensors_2
 Type:   stream
 Stage:  streams
 Primary Key: id, placed
@@ -110,13 +110,13 @@ Schema:
  - placed: BIGINT NOT NULL
  - placedTimestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalTableScan(table=[[sensors$1]], hints=[[[WatermarkHint inheritPath:[] options:[3]]]]) hints[WatermarkHint options:[3]]
+LogicalTableScan(table=[[sensors_1]], hints=[[[WatermarkHint inheritPath:[] options:[3]]]]) hints[WatermarkHint options:[3]]
 
 === Sensors
-ID:     sensors$3
+ID:     sensors_3
 Type:   state
 Stage:  streams
-Inputs: sensors$2
+Inputs: sensors_2
 Primary Key: id
 Timestamp  : placedTimestamp
 Schema:
@@ -127,13 +127,13 @@ Schema:
 Post Processors:
  - topN: partition=id limit=1 sort=#3: placedTimestamp TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
 Plan:
-LogicalTableScan(table=[[sensors$2]])
+LogicalTableScan(table=[[sensors_2]])
 
 === SmoothReading
-ID:     smoothreading$1
+ID:     smoothreading_1
 Type:   stream
 Stage:  streams
-Inputs: sensorreading$2
+Inputs: sensorreading_2
 Primary Key: sensorid, timeMin
 Timestamp  : timeMin
 Schema:
@@ -143,13 +143,13 @@ Schema:
 Plan:
 LogicalAggregate(group=[{0, 1}], smoothTemp=[AVG($2)]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 60000, 0]]
   LogicalProject(sensorid=[$0], timeMin=[endOfMinute($3)], temperature=[$1], _uuid=[$2], event_time=[$3])
-    LogicalTableScan(table=[[sensorreading$2]])
+    LogicalTableScan(table=[[sensorreading_2]])
 
 === TempAlert
-ID:     tempalert$1
+ID:     tempalert_1
 Type:   stream
 Stage:  streams
-Inputs: sensors$3, smoothreading$1
+Inputs: sensors_3, smoothreading_1
 Primary Key: sensorid, timeMin
 Timestamp  : timeMin
 Schema:
@@ -162,22 +162,22 @@ LogicalProject(patientid=[$5], sensorid=[$0], smoothTemp=[$2], timeMin=[$1])
   LogicalJoin(condition=[=($4, $3)], joinType=[inner]) hints[TemporalJoinHint options:[1]]
     LogicalProject(sensorid=[$0], timeMin=[$1], smoothTemp=[$2], sensorid3=[$0])
       LogicalFilter(condition=[SEARCH($2, Sarg[(-∞..95), (102..+∞)])])
-        LogicalTableScan(table=[[smoothreading$1]])
+        LogicalTableScan(table=[[smoothreading_1]])
     LogicalFilter(condition=[=($4, 1)]) hints[DedupHint]
       LogicalProject(id=[$0], patientid=[$1], placed=[$2], placedTimestamp=[$3], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $3 DESC NULLS LAST)])
-        LogicalTableScan(table=[[sensors$3]])
+        LogicalTableScan(table=[[sensors_3]])
 
 === print.tempWarning.tempWarning
-ID:     tempalert$1$1
+ID:     tempalert_1_1
 Type:   export
 Stage:  streams
-Inputs: tempalert$1
+Inputs: tempalert_1
 
 === TempAlert.TempAlert
-ID:     tempalert$1$2
+ID:     tempalert_1_2
 Type:   export
 Stage:  streams
-Inputs: tempalert$1
+Inputs: tempalert_1
 
 >>>flink.json
 {
@@ -197,37 +197,37 @@ Inputs: tempalert$1
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `atzone` AS 'com.datasqrl.time.AtZone' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofhour` AS 'com.datasqrl.time.EndOfHour' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofyear` AS 'com.datasqrl.time.EndOfYear' LANGUAGE JAVA;",
-    "CREATE TEMPORARY TABLE `observationgroup$1` (\n  `groupId` BIGINT NOT NULL,\n  `groupName` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `created` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `patients` ROW(`patientId` BIGINT NOT NULL) NOT NULL ARRAY NOT NULL,\n  PRIMARY KEY (`groupId`, `created`) NOT ENFORCED,\n  WATERMARK FOR `created` AS (`created` - INTERVAL '0.001' SECOND)\n) WITH (\n  'format' = 'json',\n  'path' = '/mnt/build/data',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = 'to be determined'\n);",
-    "CREATE TEMPORARY TABLE `sensors$1` (\n  `id` BIGINT NOT NULL,\n  `patientid` BIGINT NOT NULL,\n  `placed` BIGINT NOT NULL,\n  `placedTimestamp` AS EPOCHMILLITOTIMESTAMP(`placed`),\n  PRIMARY KEY (`id`, `placed`) NOT ENFORCED,\n  WATERMARK FOR `placedTimestamp` AS (`placedTimestamp` - INTERVAL '0.001' SECOND)\n) WITH (\n  'format' = 'json',\n  'path' = '/mnt/build/data',\n  'connector' = 'filesystem'\n);",
-    "CREATE TEMPORARY TABLE `sensorreading$1` (\n  `sensorid` BIGINT NOT NULL,\n  `temperature` DECIMAL(10, 5) NOT NULL,\n  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL METADATA FROM 'timestamp',\n  WATERMARK FOR `event_time` AS (`event_time` - INTERVAL '0.0' SECOND)\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'patient-sensor-addreading',\n  'scan.startup.mode' = 'group-offsets'\n);",
-    "CREATE TEMPORARY TABLE `lasthour$1` (\n  `__pk1$groupId` BIGINT NOT NULL,\n  `__pk3$created` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `maxTemp` DECIMAL(10, 5) NOT NULL,\n  `minTemp` DECIMAL(10, 5) NOT NULL,\n  PRIMARY KEY (`__pk1$groupId`, `__pk3$created`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'lasthour$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `observationgroup$2` (\n  `groupId` BIGINT NOT NULL,\n  `groupName` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `created` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `patients` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  PRIMARY KEY (`groupId`, `created`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'observationgroup$2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `patienthourly$1` (\n  `patientid` BIGINT NOT NULL,\n  `timeHour` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `avgTemp` DECIMAL(10, 5) NOT NULL,\n  `maxTemp` DECIMAL(10, 5) NOT NULL,\n  `minTemp` DECIMAL(10, 5) NOT NULL,\n  PRIMARY KEY (`patientid`, `timeHour`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'patienthourly$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `patientlasthour$1` (\n  `patientid` BIGINT NOT NULL,\n  `avgTemp` DECIMAL(10, 5) NOT NULL,\n  `maxTemp` DECIMAL(10, 5) NOT NULL,\n  `minTemp` DECIMAL(10, 5) NOT NULL,\n  `_timeMin` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`patientid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'patientlasthour$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `tempalert$1$1` (\n  `patientid` BIGINT NOT NULL,\n  `sensorid` BIGINT NOT NULL,\n  `smoothTemp` DECIMAL(10, 5) NOT NULL,\n  `timeMin` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n) WITH (\n  'connector' = 'print',\n  'print-identifier' = 'tempWarning'\n);",
-    "CREATE TEMPORARY TABLE `tempalert$1$2` (\n  `patientid` BIGINT NOT NULL,\n  `sensorid` BIGINT NOT NULL,\n  `smoothTemp` DECIMAL(10, 5) NOT NULL,\n  `timeMin` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'tempalert-1',\n  'scan.startup.mode' = 'group-offsets'\n);",
-    "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM (SELECT `id`, `patientid`, `placed`, `placedTimestamp`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `placedTimestamp` DESC NULLS LAST)) AS `_rownum`\nFROM `sensors$1`) AS `t`\nWHERE (`_rownum` = 1);",
-    "CREATE VIEW `table$2`\nAS\nSELECT `sensorid`, ENDOFMINUTE(`event_time`) AS `timeMin`, `temperature`, `_uuid`, `event_time`\nFROM `sensorreading$1`;",
+    "CREATE TEMPORARY TABLE `sensorreading_1` (\n  `sensorid` BIGINT NOT NULL,\n  `temperature` DECIMAL(10, 5) NOT NULL,\n  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL METADATA FROM 'timestamp',\n  WATERMARK FOR `event_time` AS (`event_time` - INTERVAL '0.0' SECOND)\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'patient-sensor-addreading',\n  'scan.startup.mode' = 'group-offsets'\n);",
+    "CREATE TEMPORARY TABLE `observationgroup_1` (\n  `groupId` BIGINT NOT NULL,\n  `groupName` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `created` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `patients` ROW(`patientId` BIGINT NOT NULL) NOT NULL ARRAY NOT NULL,\n  PRIMARY KEY (`groupId`, `created`) NOT ENFORCED,\n  WATERMARK FOR `created` AS (`created` - INTERVAL '0.001' SECOND)\n) WITH (\n  'format' = 'json',\n  'path' = '/mnt/build/data',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = 'to be determined'\n);",
+    "CREATE TEMPORARY TABLE `sensors_1` (\n  `id` BIGINT NOT NULL,\n  `patientid` BIGINT NOT NULL,\n  `placed` BIGINT NOT NULL,\n  `placedTimestamp` AS EPOCHMILLITOTIMESTAMP(`placed`),\n  PRIMARY KEY (`id`, `placed`) NOT ENFORCED,\n  WATERMARK FOR `placedTimestamp` AS (`placedTimestamp` - INTERVAL '0.001' SECOND)\n) WITH (\n  'format' = 'json',\n  'path' = '/mnt/build/data',\n  'connector' = 'filesystem'\n);",
+    "CREATE TEMPORARY TABLE `lasthour_1` (\n  `__pk1_groupId` BIGINT NOT NULL,\n  `__pk3_created` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `maxTemp` DECIMAL(10, 5) NOT NULL,\n  `minTemp` DECIMAL(10, 5) NOT NULL,\n  PRIMARY KEY (`__pk1_groupId`, `__pk3_created`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'lasthour_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `observationgroup_2` (\n  `groupId` BIGINT NOT NULL,\n  `groupName` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `created` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `patients` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  PRIMARY KEY (`groupId`, `created`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'observationgroup_2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `patienthourly_1` (\n  `patientid` BIGINT NOT NULL,\n  `timeHour` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `avgTemp` DECIMAL(10, 5) NOT NULL,\n  `maxTemp` DECIMAL(10, 5) NOT NULL,\n  `minTemp` DECIMAL(10, 5) NOT NULL,\n  PRIMARY KEY (`patientid`, `timeHour`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'patienthourly_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `patientlasthour_1` (\n  `patientid` BIGINT NOT NULL,\n  `avgTemp` DECIMAL(10, 5) NOT NULL,\n  `maxTemp` DECIMAL(10, 5) NOT NULL,\n  `minTemp` DECIMAL(10, 5) NOT NULL,\n  `_timeMin` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`patientid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'patientlasthour_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `tempalert_1_1` (\n  `patientid` BIGINT NOT NULL,\n  `sensorid` BIGINT NOT NULL,\n  `smoothTemp` DECIMAL(10, 5) NOT NULL,\n  `timeMin` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n) WITH (\n  'connector' = 'print',\n  'print-identifier' = 'tempWarning'\n);",
+    "CREATE TEMPORARY TABLE `tempalert_1_2` (\n  `patientid` BIGINT NOT NULL,\n  `sensorid` BIGINT NOT NULL,\n  `smoothTemp` DECIMAL(10, 5) NOT NULL,\n  `timeMin` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'tempalert_1',\n  'scan.startup.mode' = 'group-offsets'\n);",
+    "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM (SELECT `id`, `patientid`, `placed`, `placedTimestamp`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `placedTimestamp` DESC NULLS LAST)) AS `_rownum`\nFROM `sensors_1`) AS `t`\nWHERE (`_rownum` = 1);",
+    "CREATE VIEW `table$2`\nAS\nSELECT `sensorid`, ENDOFMINUTE(`event_time`) AS `timeMin`, `temperature`, `_uuid`, `event_time`\nFROM `sensorreading_1`;",
     "CREATE VIEW `table$3`\nAS\nSELECT *\nFROM (SELECT `sensorid`, `window_time` AS `timeMin`, AVG(`temperature`) AS `smoothTemp`, `sensorid` AS `sensorid3`\nFROM TABLE(TUMBLE((TABLE `table$2`), (DESCRIPTOR(`event_time`)), INTERVAL '60' SECOND(5), INTERVAL '0' SECOND(1))) AS `t2`\nGROUP BY `sensorid`, `window_start`, `window_end`, `window_time`) AS `$cor5`\nINNER JOIN `table$1` FOR SYSTEM_TIME AS OF `$cor5`.`timeMin` AS `t0` ON (`t0`.`id` = `$cor5`.`sensorid3`);",
     "CREATE VIEW `table$4`\nAS\nSELECT *\nFROM (SELECT `patientid`, `avgTemp`, `maxTemp`, `minTemp`, `_timeMin`, (ROW_NUMBER() OVER (PARTITION BY `patientid` ORDER BY `_timeMin` DESC NULLS LAST)) AS `_rownum`\nFROM (SELECT `patientid`, AVG(`smoothTemp`) AS `avgTemp`, MAX(`smoothTemp`) AS `maxTemp`, MIN(`smoothTemp`) AS `minTemp`, `window_time` AS `_timeMin`\nFROM TABLE(HOP((TABLE `table$3`), (DESCRIPTOR(`timeMin`)), INTERVAL '72' SECOND(5), INTERVAL '3600' SECOND(7))) AS `t6`\nGROUP BY `patientid`, `window_start`, `window_end`, `window_time`) AS `t9`) AS `t10`\nWHERE (`_rownum` = 1);",
-    "CREATE VIEW `table$5`\nAS\nSELECT *\nFROM (SELECT *\nFROM `observationgroup$1` AS `$cor3`,\nUNNEST(`$cor3`.`patients`) AS `t130` (`patientId`)) AS `$cor4`\nINNER JOIN `table$4` FOR SYSTEM_TIME AS OF `$cor4`.`created` AS `t11` ON (`$cor4`.`patientId` = `t11`.`patientid`);",
-    "CREATE VIEW `table$6`\nAS\nSELECT `groupId` AS `__pk1$groupId`, `window_time` AS `__pk3$created`, MAX(`maxTemp`) AS `maxTemp`, MIN(`minTemp`) AS `minTemp`\nFROM TABLE(TUMBLE((TABLE `table$5`), (DESCRIPTOR(`created`)), INTERVAL '0.001' SECOND(1))) AS `t15`\nGROUP BY `groupId`, `window_start`, `window_end`, `window_time`;",
-    "CREATE VIEW `table$7`\nAS\nSELECT `groupId`, `groupName`, `created`, TOJSON(`patients`) AS `patients`\nFROM `observationgroup$1`;",
-    "CREATE VIEW `table$8`\nAS\nSELECT *\nFROM (SELECT `id`, `patientid`, `placed`, `placedTimestamp`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `placedTimestamp` DESC NULLS LAST)) AS `_rownum`\nFROM `sensors$1`) AS `t`\nWHERE (`_rownum` = 1);",
-    "CREATE VIEW `table$9`\nAS\nSELECT `sensorid`, ENDOFMINUTE(`event_time`) AS `timeMin`, `temperature`, `_uuid`, `event_time`\nFROM `sensorreading$1`;",
+    "CREATE VIEW `table$5`\nAS\nSELECT *\nFROM (SELECT *\nFROM `observationgroup_1` AS `$cor3`,\nUNNEST(`$cor3`.`patients`) AS `t130` (`patientId`)) AS `$cor4`\nINNER JOIN `table$4` FOR SYSTEM_TIME AS OF `$cor4`.`created` AS `t11` ON (`$cor4`.`patientId` = `t11`.`patientid`);",
+    "CREATE VIEW `table$6`\nAS\nSELECT `groupId` AS `__pk1_groupId`, `window_time` AS `__pk3_created`, MAX(`maxTemp`) AS `maxTemp`, MIN(`minTemp`) AS `minTemp`\nFROM TABLE(TUMBLE((TABLE `table$5`), (DESCRIPTOR(`created`)), INTERVAL '0.001' SECOND(1))) AS `t15`\nGROUP BY `groupId`, `window_start`, `window_end`, `window_time`;",
+    "CREATE VIEW `table$7`\nAS\nSELECT `groupId`, `groupName`, `created`, TOJSON(`patients`) AS `patients`\nFROM `observationgroup_1`;",
+    "CREATE VIEW `table$8`\nAS\nSELECT *\nFROM (SELECT `id`, `patientid`, `placed`, `placedTimestamp`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `placedTimestamp` DESC NULLS LAST)) AS `_rownum`\nFROM `sensors_1`) AS `t`\nWHERE (`_rownum` = 1);",
+    "CREATE VIEW `table$9`\nAS\nSELECT `sensorid`, ENDOFMINUTE(`event_time`) AS `timeMin`, `temperature`, `_uuid`, `event_time`\nFROM `sensorreading_1`;",
     "CREATE VIEW `table$10`\nAS\nSELECT `t0`.`patientid`, ENDOFHOUR(`$cor6`.`timeMin`) AS `timeHour`, `$cor6`.`smoothTemp`, `$cor6`.`sensorid`, `$cor6`.`timeMin`\nFROM (SELECT `sensorid`, `window_time` AS `timeMin`, AVG(`temperature`) AS `smoothTemp`, `sensorid` AS `sensorid3`\nFROM TABLE(TUMBLE((TABLE `table$9`), (DESCRIPTOR(`event_time`)), INTERVAL '60' SECOND(5), INTERVAL '0' SECOND(1))) AS `t2`\nGROUP BY `sensorid`, `window_start`, `window_end`, `window_time`) AS `$cor6`\nINNER JOIN `table$8` FOR SYSTEM_TIME AS OF `$cor6`.`timeMin` AS `t0` ON (`t0`.`id` = `$cor6`.`sensorid3`);",
     "CREATE VIEW `table$11`\nAS\nSELECT `patientid`, `window_time` AS `timeHour`, AVG(`smoothTemp`) AS `avgTemp`, MAX(`smoothTemp`) AS `maxTemp`, MIN(`smoothTemp`) AS `minTemp`\nFROM TABLE(TUMBLE((TABLE `table$10`), (DESCRIPTOR(`timeMin`)), INTERVAL '3600' SECOND(7), INTERVAL '0' SECOND(1))) AS `t7`\nGROUP BY `patientid`, `window_start`, `window_end`, `window_time`;",
-    "CREATE VIEW `table$12`\nAS\nSELECT *\nFROM (SELECT `id`, `patientid`, `placed`, `placedTimestamp`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `placedTimestamp` DESC NULLS LAST)) AS `_rownum`\nFROM `sensors$1`) AS `t`\nWHERE (`_rownum` = 1);",
-    "CREATE VIEW `table$13`\nAS\nSELECT `sensorid`, ENDOFMINUTE(`event_time`) AS `timeMin`, `temperature`, `_uuid`, `event_time`\nFROM `sensorreading$1`;",
+    "CREATE VIEW `table$12`\nAS\nSELECT *\nFROM (SELECT `id`, `patientid`, `placed`, `placedTimestamp`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `placedTimestamp` DESC NULLS LAST)) AS `_rownum`\nFROM `sensors_1`) AS `t`\nWHERE (`_rownum` = 1);",
+    "CREATE VIEW `table$13`\nAS\nSELECT `sensorid`, ENDOFMINUTE(`event_time`) AS `timeMin`, `temperature`, `_uuid`, `event_time`\nFROM `sensorreading_1`;",
     "CREATE VIEW `table$14`\nAS\nSELECT *\nFROM (SELECT `sensorid`, `window_time` AS `timeMin`, AVG(`temperature`) AS `smoothTemp`, `sensorid` AS `sensorid3`\nFROM TABLE(TUMBLE((TABLE `table$13`), (DESCRIPTOR(`event_time`)), INTERVAL '60' SECOND(5), INTERVAL '0' SECOND(1))) AS `t2`\nGROUP BY `sensorid`, `window_start`, `window_end`, `window_time`) AS `$cor7`\nINNER JOIN `table$12` FOR SYSTEM_TIME AS OF `$cor7`.`timeMin` AS `t0` ON (`t0`.`id` = `$cor7`.`sensorid3`);",
     "CREATE VIEW `table$15`\nAS\nSELECT `patientid`, AVG(`smoothTemp`) AS `avgTemp`, MAX(`smoothTemp`) AS `maxTemp`, MIN(`smoothTemp`) AS `minTemp`, `window_time` AS `_timeMin`\nFROM TABLE(HOP((TABLE `table$14`), (DESCRIPTOR(`timeMin`)), INTERVAL '72' SECOND(5), INTERVAL '3600' SECOND(7))) AS `t6`\nGROUP BY `patientid`, `window_start`, `window_end`, `window_time`;",
-    "CREATE VIEW `table$16`\nAS\nSELECT *\nFROM (SELECT `id`, `patientid`, `placed`, `placedTimestamp`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `placedTimestamp` DESC NULLS LAST)) AS `_rownum`\nFROM `sensors$1`) AS `t`\nWHERE (`_rownum` = 1);",
-    "CREATE VIEW `table$17`\nAS\nSELECT `sensorid`, ENDOFMINUTE(`event_time`) AS `timeMin`, `temperature`, `_uuid`, `event_time`\nFROM `sensorreading$1`;",
+    "CREATE VIEW `table$16`\nAS\nSELECT *\nFROM (SELECT `id`, `patientid`, `placed`, `placedTimestamp`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `placedTimestamp` DESC NULLS LAST)) AS `_rownum`\nFROM `sensors_1`) AS `t`\nWHERE (`_rownum` = 1);",
+    "CREATE VIEW `table$17`\nAS\nSELECT `sensorid`, ENDOFMINUTE(`event_time`) AS `timeMin`, `temperature`, `_uuid`, `event_time`\nFROM `sensorreading_1`;",
     "CREATE VIEW `table$18`\nAS\nSELECT `t0`.`patientid`, `$cor8`.`sensorid`, `$cor8`.`smoothTemp`, `$cor8`.`timeMin`\nFROM (SELECT `sensorid`, `timeMin`, `smoothTemp`, `sensorid` AS `sensorid3`\nFROM (SELECT `sensorid`, `window_time` AS `timeMin`, AVG(`temperature`) AS `smoothTemp`\nFROM TABLE(TUMBLE((TABLE `table$17`), (DESCRIPTOR(`event_time`)), INTERVAL '60' SECOND(5), INTERVAL '0' SECOND(1))) AS `t2`\nGROUP BY `sensorid`, `window_start`, `window_end`, `window_time`) AS `t4`\nWHERE ((`smoothTemp` < 95) OR (`smoothTemp` > 102))) AS `$cor8`\nINNER JOIN `table$16` FOR SYSTEM_TIME AS OF `$cor8`.`timeMin` AS `t0` ON (`t0`.`id` = `$cor8`.`sensorid3`);",
-    "CREATE VIEW `table$19`\nAS\nSELECT *\nFROM (SELECT `id`, `patientid`, `placed`, `placedTimestamp`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `placedTimestamp` DESC NULLS LAST)) AS `_rownum`\nFROM `sensors$1`) AS `t`\nWHERE (`_rownum` = 1);",
-    "CREATE VIEW `table$20`\nAS\nSELECT `sensorid`, ENDOFMINUTE(`event_time`) AS `timeMin`, `temperature`, `_uuid`, `event_time`\nFROM `sensorreading$1`;",
+    "CREATE VIEW `table$19`\nAS\nSELECT *\nFROM (SELECT `id`, `patientid`, `placed`, `placedTimestamp`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `placedTimestamp` DESC NULLS LAST)) AS `_rownum`\nFROM `sensors_1`) AS `t`\nWHERE (`_rownum` = 1);",
+    "CREATE VIEW `table$20`\nAS\nSELECT `sensorid`, ENDOFMINUTE(`event_time`) AS `timeMin`, `temperature`, `_uuid`, `event_time`\nFROM `sensorreading_1`;",
     "CREATE VIEW `table$21`\nAS\nSELECT `t0`.`patientid`, `$cor9`.`sensorid`, `$cor9`.`smoothTemp`, `$cor9`.`timeMin`\nFROM (SELECT `sensorid`, `timeMin`, `smoothTemp`, `sensorid` AS `sensorid3`\nFROM (SELECT `sensorid`, `window_time` AS `timeMin`, AVG(`temperature`) AS `smoothTemp`\nFROM TABLE(TUMBLE((TABLE `table$20`), (DESCRIPTOR(`event_time`)), INTERVAL '60' SECOND(5), INTERVAL '0' SECOND(1))) AS `t2`\nGROUP BY `sensorid`, `window_start`, `window_end`, `window_time`) AS `t4`\nWHERE ((`smoothTemp` < 95) OR (`smoothTemp` > 102))) AS `$cor9`\nINNER JOIN `table$19` FOR SYSTEM_TIME AS OF `$cor9`.`timeMin` AS `t0` ON (`t0`.`id` = `$cor9`.`sensorid3`);",
-    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `lasthour$1`\n(SELECT *\nFROM `table$6`)\n;\nINSERT INTO `observationgroup$2`\n(SELECT *\nFROM `table$7`)\n;\nINSERT INTO `patienthourly$1`\n(SELECT *\nFROM `table$11`)\n;\nINSERT INTO `patientlasthour$1`\n(SELECT *\nFROM `table$15`)\n;\nINSERT INTO `tempalert$1$1`\n(SELECT *\nFROM `table$18`)\n;\nINSERT INTO `tempalert$1$2`\n(SELECT *\nFROM `table$21`)\n;\nEND;"
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `lasthour_1`\n(SELECT *\nFROM `table$6`)\n;\nINSERT INTO `observationgroup_2`\n(SELECT *\nFROM `table$7`)\n;\nINSERT INTO `patienthourly_1`\n(SELECT *\nFROM `table$11`)\n;\nINSERT INTO `patientlasthour_1`\n(SELECT *\nFROM `table$15`)\n;\nINSERT INTO `tempalert_1_1`\n(SELECT *\nFROM `table$18`)\n;\nINSERT INTO `tempalert_1_2`\n(SELECT *\nFROM `table$21`)\n;\nEND;"
   ],
   "connectors" : [
     "print",
@@ -244,7 +244,7 @@ Inputs: tempalert$1
 {
   "topics" : [
     {
-      "name" : "tempalert-1",
+      "name" : "tempalert_1",
       "numPartitions" : 1,
       "replicationFactor" : 1,
       "replicasAssignments" : { },
@@ -263,21 +263,21 @@ Inputs: tempalert$1
 {
   "ddl" : [
     {
-      "name" : "lasthour$1",
+      "name" : "lasthour_1",
       "columns" : [
-        "\"__pk1$groupId\" BIGINT NOT NULL",
-        "\"__pk3$created\" TIMESTAMP WITH TIME ZONE NOT NULL",
+        "\"__pk1_groupId\" BIGINT NOT NULL",
+        "\"__pk3_created\" TIMESTAMP WITH TIME ZONE NOT NULL",
         "\"maxTemp\" NUMERIC NOT NULL",
         "\"minTemp\" NUMERIC NOT NULL"
       ],
       "primaryKeys" : [
-        "\"__pk1$groupId\"",
-        "\"__pk3$created\""
+        "\"__pk1_groupId\"",
+        "\"__pk3_created\""
       ],
-      "sql" : "CREATE TABLE IF NOT EXISTS lasthour$1 (\"__pk1$groupId\" BIGINT NOT NULL,\"__pk3$created\" TIMESTAMP WITH TIME ZONE NOT NULL,\"maxTemp\" NUMERIC NOT NULL,\"minTemp\" NUMERIC NOT NULL , PRIMARY KEY (\"__pk1$groupId\",\"__pk3$created\"));"
+      "sql" : "CREATE TABLE IF NOT EXISTS lasthour_1 (\"__pk1_groupId\" BIGINT NOT NULL,\"__pk3_created\" TIMESTAMP WITH TIME ZONE NOT NULL,\"maxTemp\" NUMERIC NOT NULL,\"minTemp\" NUMERIC NOT NULL , PRIMARY KEY (\"__pk1_groupId\",\"__pk3_created\"));"
     },
     {
-      "name" : "observationgroup$2",
+      "name" : "observationgroup_2",
       "columns" : [
         "\"groupId\" BIGINT NOT NULL",
         "\"groupName\" TEXT NOT NULL",
@@ -288,10 +288,10 @@ Inputs: tempalert$1
         "\"groupId\"",
         "\"created\""
       ],
-      "sql" : "CREATE TABLE IF NOT EXISTS observationgroup$2 (\"groupId\" BIGINT NOT NULL,\"groupName\" TEXT NOT NULL,\"created\" TIMESTAMP WITH TIME ZONE NOT NULL,\"patients\" JSONB NOT NULL , PRIMARY KEY (\"groupId\",\"created\"));"
+      "sql" : "CREATE TABLE IF NOT EXISTS observationgroup_2 (\"groupId\" BIGINT NOT NULL,\"groupName\" TEXT NOT NULL,\"created\" TIMESTAMP WITH TIME ZONE NOT NULL,\"patients\" JSONB NOT NULL , PRIMARY KEY (\"groupId\",\"created\"));"
     },
     {
-      "name" : "patienthourly$1",
+      "name" : "patienthourly_1",
       "columns" : [
         "\"patientid\" BIGINT NOT NULL",
         "\"timeHour\" TIMESTAMP WITH TIME ZONE NOT NULL",
@@ -303,10 +303,10 @@ Inputs: tempalert$1
         "\"patientid\"",
         "\"timeHour\""
       ],
-      "sql" : "CREATE TABLE IF NOT EXISTS patienthourly$1 (\"patientid\" BIGINT NOT NULL,\"timeHour\" TIMESTAMP WITH TIME ZONE NOT NULL,\"avgTemp\" NUMERIC NOT NULL,\"maxTemp\" NUMERIC NOT NULL,\"minTemp\" NUMERIC NOT NULL , PRIMARY KEY (\"patientid\",\"timeHour\"));"
+      "sql" : "CREATE TABLE IF NOT EXISTS patienthourly_1 (\"patientid\" BIGINT NOT NULL,\"timeHour\" TIMESTAMP WITH TIME ZONE NOT NULL,\"avgTemp\" NUMERIC NOT NULL,\"maxTemp\" NUMERIC NOT NULL,\"minTemp\" NUMERIC NOT NULL , PRIMARY KEY (\"patientid\",\"timeHour\"));"
     },
     {
-      "name" : "patientlasthour$1",
+      "name" : "patientlasthour_1",
       "columns" : [
         "\"patientid\" BIGINT NOT NULL",
         "\"avgTemp\" NUMERIC NOT NULL",
@@ -317,7 +317,7 @@ Inputs: tempalert$1
       "primaryKeys" : [
         "\"patientid\""
       ],
-      "sql" : "CREATE TABLE IF NOT EXISTS patientlasthour$1 (\"patientid\" BIGINT NOT NULL,\"avgTemp\" NUMERIC NOT NULL,\"maxTemp\" NUMERIC NOT NULL,\"minTemp\" NUMERIC NOT NULL,\"_timeMin\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"patientid\"));"
+      "sql" : "CREATE TABLE IF NOT EXISTS patientlasthour_1 (\"patientid\" BIGINT NOT NULL,\"avgTemp\" NUMERIC NOT NULL,\"maxTemp\" NUMERIC NOT NULL,\"minTemp\" NUMERIC NOT NULL,\"_timeMin\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"patientid\"));"
     }
   ]
 }
@@ -335,7 +335,7 @@ Inputs: tempalert$1
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-              "sql" : "SELECT *\nFROM \"observationgroup$2\"\nORDER BY \"created\" DESC NULLS LAST, \"groupId\"",
+              "sql" : "SELECT *\nFROM \"observationgroup_2\"\nORDER BY \"created\" DESC NULLS LAST, \"groupId\"",
               "parameters" : [ ]
             }
           },
@@ -350,7 +350,7 @@ Inputs: tempalert$1
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-              "sql" : "SELECT *\nFROM \"observationgroup$2\"\nWHERE \"groupId\" = $1\nORDER BY \"created\" DESC NULLS LAST",
+              "sql" : "SELECT *\nFROM \"observationgroup_2\"\nWHERE \"groupId\" = $1\nORDER BY \"created\" DESC NULLS LAST",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -372,7 +372,7 @@ Inputs: tempalert$1
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-              "sql" : "SELECT \"__pk1$groupId\", \"__pk3$created\", \"maxTemp\", \"minTemp\", 1 AS \"__pk\"\nFROM \"lasthour$1\"\nWHERE \"__pk1$groupId\" = $1 AND \"__pk3$created\" = $2\nORDER BY \"__pk3$created\" DESC NULLS LAST, 1",
+              "sql" : "SELECT \"__pk1_groupId\", \"__pk3_created\", \"maxTemp\", \"minTemp\", 1 AS \"__pk\"\nFROM \"lasthour_1\"\nWHERE \"__pk1_groupId\" = $1 AND \"__pk3_created\" = $2\nORDER BY \"__pk3_created\" DESC NULLS LAST, 1",
               "parameters" : [
                 {
                   "type" : "source",
@@ -415,7 +415,7 @@ Inputs: tempalert$1
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"patienthourly$1\"\nWHERE \"patientid\" = $1\nORDER BY \"timeHour\" DESC NULLS LAST",
+              "sql" : "SELECT *\nFROM \"patienthourly_1\"\nWHERE \"patientid\" = $1\nORDER BY \"timeHour\" DESC NULLS LAST",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -443,7 +443,7 @@ Inputs: tempalert$1
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-              "sql" : "SELECT \"patientid\", \"avgTemp\", \"maxTemp\", \"minTemp\", \"_timeMin\", 1 AS \"__pk\"\nFROM \"patientlasthour$1\"\nWHERE \"patientid\" = $1\nORDER BY 1",
+              "sql" : "SELECT \"patientid\", \"avgTemp\", \"maxTemp\", \"minTemp\", \"_timeMin\", 1 AS \"__pk\"\nFROM \"patientlasthour_1\"\nWHERE \"patientid\" = $1\nORDER BY 1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -466,7 +466,7 @@ Inputs: tempalert$1
     "subscriptions" : [
       {
         "fieldName" : "TempAlert",
-        "topic" : "tempalert-1",
+        "topic" : "tempalert_1",
         "sinkConfig" : { },
         "filters" : {
           "patientId" : "patientid"

@@ -45,7 +45,7 @@ public class ConnectorConfigImpl implements TableConfig.ConnectorConfig {
 
   @Override
   public TableType getTableType() {
-    String connectorName = getConnectorName().toLowerCase();
+    String connectorName = getConnectorName().get().toLowerCase();
     TableType tableType = CONNECTOR_TYPE_MAP.get(connectorName);
     if (tableType == null) {
       log
@@ -57,8 +57,8 @@ public class ConnectorConfigImpl implements TableConfig.ConnectorConfig {
   }
 
   @Override
-  public String getConnectorName() {
-    return config.asString(ConnectorConfigImpl.CONNECTOR_KEY).get();
+  public Optional<String> getConnectorName() {
+    return config.asString(ConnectorConfigImpl.CONNECTOR_KEY).getOptional();
   }
 
   @Override

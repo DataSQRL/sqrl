@@ -17,7 +17,7 @@ public interface Name extends Serializable, Comparable<Name> {
   String HIDDEN_PREFIX = "_";
 
   String SYSTEM_HIDDEN_PREFIX = HIDDEN_PREFIX + HIDDEN_PREFIX;
-  char NAME_DELIMITER = '$';
+  char NAME_DELIMITER = '_';
 
   /**
    * Returns the canonical version of the field name.

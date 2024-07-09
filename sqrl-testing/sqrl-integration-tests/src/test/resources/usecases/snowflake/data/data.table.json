@@ -1,0 +1,22 @@
+{
+  "flink" : {
+    "format" : "flexible-json",
+    "path" : "/data/data.jsonl",
+    "source.monitor-interval" : 1,
+    "connector" : "filesystem"
+  },
+  "metadata" : {
+    "_ingest_time" : {
+      "attribute" : "proctime()"
+    },
+    "_uuid" : {
+      "attribute" : "secure.Uuid()"
+    }
+  },
+  "version" : 1,
+  "table" : {
+    "type" : "source",
+    "primary-key" : "_uuid",
+    "timestamp" : "_ingest_time"
+  }
+}

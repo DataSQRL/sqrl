@@ -344,9 +344,9 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
     return getPrimaryKeyColumns(table).stream()
         .map(i -> new PullupColumn(
             table.getRowType().getFieldList().get(i).getName(),
-            String.format("%spk%d$%s", ReservedName.SYSTEM_HIDDEN_PREFIX, uniquePkId.incrementAndGet(),
+            String.format("%spk%d_%s", ReservedName.SYSTEM_HIDDEN_PREFIX, uniquePkId.incrementAndGet(),
                 table.getRowType().getFieldList().get(i).getName()),
-            String.format("%spk%d$%s", ReservedName.SYSTEM_HIDDEN_PREFIX, i + 1,
+            String.format("%spk%d_%s", ReservedName.SYSTEM_HIDDEN_PREFIX, i + 1,
                 table.getRowType().getFieldList().get(i).getName())
         ))
         .collect(Collectors.toList());

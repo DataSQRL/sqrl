@@ -1,9 +1,9 @@
 >>>pipeline_explain.txt
 === Package
-ID:     package$1
+ID:     package_1
 Type:   state
 Stage:  streams
-Inputs: submission$2
+Inputs: submission_2
 Primary Key: name
 Timestamp  : _submissionTime
 Schema:
@@ -13,10 +13,10 @@ Post Processors:
  - topN: partition=name limit=1 sort=#1: _submissionTime TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
 Plan:
 LogicalProject(name=[$0], _submissionTime=[$15])
-  LogicalTableScan(table=[[submission$2]])
+  LogicalTableScan(table=[[submission_2]])
 
 === Submission
-ID:     submission$2
+ID:     submission_2
 Type:   stream
 Stage:  streams
 Primary Key: name, submissionTime
@@ -43,13 +43,13 @@ Schema:
  - repoURL: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
 Plan:
 LogicalProject(name=[$0], version=[$1], variant=[$2], latest=[$3], type=[$4], license=[$5], repository=[$6], homepage=[$7], documentation=[$8], readme=[$9], description=[$10], uniqueId=[$11], file=[$12], hash=[$13], authorid=[$14], submissionTime=[$15], keywords=[$16], variant0=[COALESCE($2, 'default')], repoURL=[CONCAT('https://repository.datasqrl.com/', $12)]) hints[WatermarkHint options:[15]]
-  LogicalTableScan(table=[[submission$1]])
+  LogicalTableScan(table=[[submission_1]])
 
 === TopicPackages
-ID:     topicpackages$1
+ID:     topicpackages_1
 Type:   state
 Stage:  streams
-Inputs: submission$2
+Inputs: submission_2
 Primary Key: pkgName, topicName
 Timestamp  : lastSubmission
 Schema:
@@ -63,14 +63,14 @@ Plan:
 LogicalAggregate(group=[{0, 1}], numSubmissions=[COUNT()], lastSubmission=[MAX($2)])
   LogicalProject(pkgName=[$0], topicName=[$19], submissionTime=[$15])
     LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{16}])
-      LogicalTableScan(table=[[submission$2]])
+      LogicalTableScan(table=[[submission_2]])
       LogicalTableFunctionScan(invocation=[Submission.keywords($cor0.keywords)], rowType=[RecordType(VARCHAR(2147483647) name)], elementType=[class [Ljava.lang.Object;])
 
 === TopicSearch
-ID:     topicsearch$1
+ID:     topicsearch_1
 Type:   state
 Stage:  streams
-Inputs: submission$2
+Inputs: submission_2
 Primary Key: topicName
 Timestamp  : __timestamp
 Schema:
@@ -83,23 +83,23 @@ Plan:
 LogicalAggregate(group=[{0}], numPackages=[COUNT(DISTINCT $1)], __timestamp=[MAX($2)])
   LogicalProject(topicName=[$19], name=[$0], submissionTime=[$15])
     LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{16}])
-      LogicalTableScan(table=[[submission$2]])
+      LogicalTableScan(table=[[submission_2]])
       LogicalTableFunctionScan(invocation=[Submission.keywords($cor1.keywords)], rowType=[RecordType(VARCHAR(2147483647) name)], elementType=[class [Ljava.lang.Object;])
 
 >>>flink.json
 {
   "flinkSql" : [
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `tojson` AS 'com.datasqrl.json.ToJson' LANGUAGE JAVA;",
-    "CREATE TEMPORARY TABLE `submission$1` (\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `version` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `variant` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `latest` BOOLEAN NOT NULL,\n  `type` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `license` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `repository` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `homepage` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `documentation` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `readme` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `uniqueId` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `file` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `hash` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `authorid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `submissionTime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `keywords` ROW(`name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL) NOT NULL ARRAY NOT NULL,\n  PRIMARY KEY (`name`, `submissionTime`) NOT ENFORCED,\n  WATERMARK FOR `submissionTime` AS (`submissionTime` - INTERVAL '0.001' SECOND)\n) WITH (\n  'format' = 'flexible-json',\n  'path' = '/data/repodata.jsonl',\n  'connector' = 'filesystem'\n);",
-    "CREATE TEMPORARY TABLE `package$1` (\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_submissionTime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`name`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'package$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `submission$2` (\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `version` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `variant` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `latest` BOOLEAN NOT NULL,\n  `type` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `license` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `repository` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `homepage` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `documentation` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `readme` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `uniqueId` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `file` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `hash` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `authorid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `submissionTime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `keywords` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  `variant0` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `repoURL` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  PRIMARY KEY (`name`, `submissionTime`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'submission$2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `topicpackages$1` (\n  `pkgName` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `topicName` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `numSubmissions` BIGINT NOT NULL,\n  `lastSubmission` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`pkgName`, `topicName`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'topicpackages$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `topicsearch$1` (\n  `topicName` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `numPackages` BIGINT NOT NULL,\n  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`topicName`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'topicsearch$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE VIEW `table$1`\nAS\nSELECT `name`, `submissionTime` AS `_submissionTime`\nFROM `submission$1`;",
-    "CREATE VIEW `table$2`\nAS\nSELECT `name`, `version`, `variant`, `latest`, `type`, `license`, `repository`, `homepage`, `documentation`, `readme`, `description`, `uniqueId`, `file`, `hash`, `authorid`, `submissionTime`, TOJSON(`keywords`) AS `keywords`, COALESCE(`variant`, 'default') AS `variant0`, CONCAT('https://repository.datasqrl.com/', `file`) AS `repoURL`\nFROM `submission$1`;",
-    "CREATE VIEW `table$3`\nAS\nSELECT `$cor0`.`name` AS `pkgName`, `t10`.`name` AS `topicName`, COUNT(*) AS `numSubmissions`, MAX(`$cor0`.`submissionTime`) AS `lastSubmission`\nFROM (SELECT `name`, `version`, `variant`, `latest`, `type`, `license`, `repository`, `homepage`, `documentation`, `readme`, `description`, `uniqueId`, `file`, `hash`, `authorid`, `submissionTime`, `keywords`, COALESCE(`variant`, 'default') AS `variant0`, CONCAT('https://repository.datasqrl.com/', `file`) AS `repoURL`\nFROM `submission$1`) AS `$cor0`,\nUNNEST(`$cor0`.`keywords`) AS `t10` (`name`)\nGROUP BY `$cor0`.`name`, `t10`.`name`;",
-    "CREATE VIEW `table$4`\nAS\nSELECT `t10`.`name` AS `topicName`, COUNT(DISTINCT `$cor1`.`name`) AS `numPackages`, MAX(`$cor1`.`submissionTime`) AS `__timestamp`\nFROM (SELECT `name`, `version`, `variant`, `latest`, `type`, `license`, `repository`, `homepage`, `documentation`, `readme`, `description`, `uniqueId`, `file`, `hash`, `authorid`, `submissionTime`, `keywords`, COALESCE(`variant`, 'default') AS `variant0`, CONCAT('https://repository.datasqrl.com/', `file`) AS `repoURL`\nFROM `submission$1`) AS `$cor1`,\nUNNEST(`$cor1`.`keywords`) AS `t10` (`name`)\nGROUP BY `t10`.`name`;",
-    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `package$1`\n(SELECT *\nFROM `table$1`)\n;\nINSERT INTO `submission$2`\n(SELECT *\nFROM `table$2`)\n;\nINSERT INTO `topicpackages$1`\n(SELECT *\nFROM `table$3`)\n;\nINSERT INTO `topicsearch$1`\n(SELECT *\nFROM `table$4`)\n;\nEND;"
+    "CREATE TEMPORARY TABLE `submission_1` (\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `version` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `variant` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `latest` BOOLEAN NOT NULL,\n  `type` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `license` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `repository` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `homepage` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `documentation` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `readme` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `uniqueId` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `file` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `hash` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `authorid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `submissionTime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `keywords` ROW(`name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL) NOT NULL ARRAY NOT NULL,\n  PRIMARY KEY (`name`, `submissionTime`) NOT ENFORCED,\n  WATERMARK FOR `submissionTime` AS (`submissionTime` - INTERVAL '0.001' SECOND)\n) WITH (\n  'format' = 'flexible-json',\n  'path' = '/data/repodata.jsonl',\n  'connector' = 'filesystem'\n);",
+    "CREATE TEMPORARY TABLE `package_1` (\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_submissionTime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`name`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'package_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `submission_2` (\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `version` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `variant` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `latest` BOOLEAN NOT NULL,\n  `type` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `license` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `repository` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `homepage` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `documentation` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `readme` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `uniqueId` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `file` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `hash` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `authorid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `submissionTime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `keywords` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  `variant0` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `repoURL` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  PRIMARY KEY (`name`, `submissionTime`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'submission_2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `topicpackages_1` (\n  `pkgName` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `topicName` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `numSubmissions` BIGINT NOT NULL,\n  `lastSubmission` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`pkgName`, `topicName`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'topicpackages_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `topicsearch_1` (\n  `topicName` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `numPackages` BIGINT NOT NULL,\n  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`topicName`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'topicsearch_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE VIEW `table$1`\nAS\nSELECT `name`, `submissionTime` AS `_submissionTime`\nFROM `submission_1`;",
+    "CREATE VIEW `table$2`\nAS\nSELECT `name`, `version`, `variant`, `latest`, `type`, `license`, `repository`, `homepage`, `documentation`, `readme`, `description`, `uniqueId`, `file`, `hash`, `authorid`, `submissionTime`, TOJSON(`keywords`) AS `keywords`, COALESCE(`variant`, 'default') AS `variant0`, CONCAT('https://repository.datasqrl.com/', `file`) AS `repoURL`\nFROM `submission_1`;",
+    "CREATE VIEW `table$3`\nAS\nSELECT `$cor0`.`name` AS `pkgName`, `t10`.`name` AS `topicName`, COUNT(*) AS `numSubmissions`, MAX(`$cor0`.`submissionTime`) AS `lastSubmission`\nFROM (SELECT `name`, `version`, `variant`, `latest`, `type`, `license`, `repository`, `homepage`, `documentation`, `readme`, `description`, `uniqueId`, `file`, `hash`, `authorid`, `submissionTime`, `keywords`, COALESCE(`variant`, 'default') AS `variant0`, CONCAT('https://repository.datasqrl.com/', `file`) AS `repoURL`\nFROM `submission_1`) AS `$cor0`,\nUNNEST(`$cor0`.`keywords`) AS `t10` (`name`)\nGROUP BY `$cor0`.`name`, `t10`.`name`;",
+    "CREATE VIEW `table$4`\nAS\nSELECT `t10`.`name` AS `topicName`, COUNT(DISTINCT `$cor1`.`name`) AS `numPackages`, MAX(`$cor1`.`submissionTime`) AS `__timestamp`\nFROM (SELECT `name`, `version`, `variant`, `latest`, `type`, `license`, `repository`, `homepage`, `documentation`, `readme`, `description`, `uniqueId`, `file`, `hash`, `authorid`, `submissionTime`, `keywords`, COALESCE(`variant`, 'default') AS `variant0`, CONCAT('https://repository.datasqrl.com/', `file`) AS `repoURL`\nFROM `submission_1`) AS `$cor1`,\nUNNEST(`$cor1`.`keywords`) AS `t10` (`name`)\nGROUP BY `t10`.`name`;",
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `package_1`\n(SELECT *\nFROM `table$1`)\n;\nINSERT INTO `submission_2`\n(SELECT *\nFROM `table$2`)\n;\nINSERT INTO `topicpackages_1`\n(SELECT *\nFROM `table$3`)\n;\nINSERT INTO `topicsearch_1`\n(SELECT *\nFROM `table$4`)\n;\nEND;"
   ],
   "connectors" : [
     "jdbc-sqrl",
@@ -113,7 +113,7 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT(DISTINCT $1)], __timestamp=[MAX
 {
   "ddl" : [
     {
-      "name" : "package$1",
+      "name" : "package_1",
       "columns" : [
         "\"name\" TEXT NOT NULL",
         "\"_submissionTime\" TIMESTAMP WITH TIME ZONE NOT NULL"
@@ -121,10 +121,10 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT(DISTINCT $1)], __timestamp=[MAX
       "primaryKeys" : [
         "\"name\""
       ],
-      "sql" : "CREATE TABLE IF NOT EXISTS package$1 (\"name\" TEXT NOT NULL,\"_submissionTime\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"name\"));"
+      "sql" : "CREATE TABLE IF NOT EXISTS package_1 (\"name\" TEXT NOT NULL,\"_submissionTime\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"name\"));"
     },
     {
-      "name" : "submission$2",
+      "name" : "submission_2",
       "columns" : [
         "\"name\" TEXT NOT NULL",
         "\"version\" TEXT NOT NULL",
@@ -150,10 +150,10 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT(DISTINCT $1)], __timestamp=[MAX
         "\"name\"",
         "\"submissionTime\""
       ],
-      "sql" : "CREATE TABLE IF NOT EXISTS submission$2 (\"name\" TEXT NOT NULL,\"version\" TEXT NOT NULL,\"variant\" TEXT ,\"latest\" BOOLEAN NOT NULL,\"type\" TEXT ,\"license\" TEXT ,\"repository\" TEXT ,\"homepage\" TEXT ,\"documentation\" TEXT ,\"readme\" TEXT ,\"description\" TEXT ,\"uniqueId\" TEXT NOT NULL,\"file\" TEXT NOT NULL,\"hash\" TEXT NOT NULL,\"authorid\" TEXT NOT NULL,\"submissionTime\" TIMESTAMP WITH TIME ZONE NOT NULL,\"keywords\" JSONB NOT NULL,\"variant0\" TEXT NOT NULL,\"repoURL\" TEXT NOT NULL , PRIMARY KEY (\"name\",\"submissionTime\"));"
+      "sql" : "CREATE TABLE IF NOT EXISTS submission_2 (\"name\" TEXT NOT NULL,\"version\" TEXT NOT NULL,\"variant\" TEXT ,\"latest\" BOOLEAN NOT NULL,\"type\" TEXT ,\"license\" TEXT ,\"repository\" TEXT ,\"homepage\" TEXT ,\"documentation\" TEXT ,\"readme\" TEXT ,\"description\" TEXT ,\"uniqueId\" TEXT NOT NULL,\"file\" TEXT NOT NULL,\"hash\" TEXT NOT NULL,\"authorid\" TEXT NOT NULL,\"submissionTime\" TIMESTAMP WITH TIME ZONE NOT NULL,\"keywords\" JSONB NOT NULL,\"variant0\" TEXT NOT NULL,\"repoURL\" TEXT NOT NULL , PRIMARY KEY (\"name\",\"submissionTime\"));"
     },
     {
-      "name" : "topicpackages$1",
+      "name" : "topicpackages_1",
       "columns" : [
         "\"pkgName\" TEXT NOT NULL",
         "\"topicName\" TEXT NOT NULL",
@@ -164,10 +164,10 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT(DISTINCT $1)], __timestamp=[MAX
         "\"pkgName\"",
         "\"topicName\""
       ],
-      "sql" : "CREATE TABLE IF NOT EXISTS topicpackages$1 (\"pkgName\" TEXT NOT NULL,\"topicName\" TEXT NOT NULL,\"numSubmissions\" BIGINT NOT NULL,\"lastSubmission\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"pkgName\",\"topicName\"));"
+      "sql" : "CREATE TABLE IF NOT EXISTS topicpackages_1 (\"pkgName\" TEXT NOT NULL,\"topicName\" TEXT NOT NULL,\"numSubmissions\" BIGINT NOT NULL,\"lastSubmission\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"pkgName\",\"topicName\"));"
     },
     {
-      "name" : "topicsearch$1",
+      "name" : "topicsearch_1",
       "columns" : [
         "\"topicName\" TEXT NOT NULL",
         "\"numPackages\" BIGINT NOT NULL",
@@ -176,37 +176,37 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT(DISTINCT $1)], __timestamp=[MAX
       "primaryKeys" : [
         "\"topicName\""
       ],
-      "sql" : "CREATE TABLE IF NOT EXISTS topicsearch$1 (\"topicName\" TEXT NOT NULL,\"numPackages\" BIGINT NOT NULL,\"__timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"topicName\"));"
+      "sql" : "CREATE TABLE IF NOT EXISTS topicsearch_1 (\"topicName\" TEXT NOT NULL,\"numPackages\" BIGINT NOT NULL,\"__timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"topicName\"));"
     },
     {
-      "indexName" : "submission$2_btree_c0c1c2",
-      "tableName" : "submission$2",
+      "indexName" : "submission_2_btree_c0c1c2",
+      "tableName" : "submission_2",
       "columns" : [
         "name",
         "version",
         "variant"
       ],
       "type" : "BTREE",
-      "sql" : "CREATE INDEX IF NOT EXISTS submission$2_btree_c0c1c2 ON submission$2 USING btree (\"name\",\"version\",\"variant\");"
+      "sql" : "CREATE INDEX IF NOT EXISTS submission_2_btree_c0c1c2 ON submission_2 USING btree (\"name\",\"version\",\"variant\");"
     },
     {
-      "indexName" : "submission$2_btree_c0c2",
-      "tableName" : "submission$2",
+      "indexName" : "submission_2_btree_c0c2",
+      "tableName" : "submission_2",
       "columns" : [
         "name",
         "variant"
       ],
       "type" : "BTREE",
-      "sql" : "CREATE INDEX IF NOT EXISTS submission$2_btree_c0c2 ON submission$2 USING btree (\"name\",\"variant\");"
+      "sql" : "CREATE INDEX IF NOT EXISTS submission_2_btree_c0c2 ON submission_2 USING btree (\"name\",\"variant\");"
     },
     {
-      "indexName" : "topicpackages$1_hash_c1",
-      "tableName" : "topicpackages$1",
+      "indexName" : "topicpackages_1_hash_c1",
+      "tableName" : "topicpackages_1",
       "columns" : [
         "topicName"
       ],
       "type" : "HASH",
-      "sql" : "CREATE INDEX IF NOT EXISTS topicpackages$1_hash_c1 ON topicpackages$1 USING hash (\"topicName\");"
+      "sql" : "CREATE INDEX IF NOT EXISTS topicpackages_1_hash_c1 ON topicpackages_1 USING hash (\"topicName\");"
     }
   ]
 }
@@ -235,7 +235,7 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT(DISTINCT $1)], __timestamp=[MAX
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"package$1\"\nORDER BY \"name\"",
+              "sql" : "SELECT *\nFROM \"package_1\"\nORDER BY \"name\"",
               "parameters" : [ ]
             }
           },
@@ -260,7 +260,7 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT(DISTINCT $1)], __timestamp=[MAX
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"name\", \"_submissionTime\", 1 AS \"__pk\"\nFROM \"package$1\"\nWHERE \"name\" = $1\nORDER BY 1",
+              "sql" : "SELECT \"name\", \"_submissionTime\", 1 AS \"__pk\"\nFROM \"package_1\"\nWHERE \"name\" = $1\nORDER BY 1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -282,7 +282,7 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT(DISTINCT $1)], __timestamp=[MAX
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-              "sql" : "SELECT *\nFROM \"submission$2\"\nWHERE $1 = \"name\" AND \"latest\"\nORDER BY \"submissionTime\" DESC",
+              "sql" : "SELECT *\nFROM \"submission_2\"\nWHERE $1 = \"name\" AND \"latest\"\nORDER BY \"submissionTime\" DESC",
               "parameters" : [
                 {
                   "type" : "source",
@@ -320,7 +320,7 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT(DISTINCT $1)], __timestamp=[MAX
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"submission$2\"\n  WHERE $1 = \"name\") AS \"t\"\nWHERE \"version\" = $2\nORDER BY \"submissionTime\" DESC",
+              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"submission_2\"\n  WHERE $1 = \"name\") AS \"t\"\nWHERE \"version\" = $2\nORDER BY \"submissionTime\" DESC",
               "parameters" : [
                 {
                   "type" : "source",
@@ -361,7 +361,7 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT(DISTINCT $1)], __timestamp=[MAX
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"submission$2\"\n  WHERE $1 = \"name\") AS \"t\"\nWHERE \"version\" = $2 AND \"variant\" = $3\nORDER BY \"submissionTime\" DESC",
+              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"submission_2\"\n  WHERE $1 = \"name\") AS \"t\"\nWHERE \"version\" = $2 AND \"variant\" = $3\nORDER BY \"submissionTime\" DESC",
               "parameters" : [
                 {
                   "type" : "source",
@@ -397,7 +397,7 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT(DISTINCT $1)], __timestamp=[MAX
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"submission$2\"\nWHERE $1 = \"name\"\nORDER BY \"submissionTime\" DESC",
+              "sql" : "SELECT *\nFROM \"submission_2\"\nWHERE $1 = \"name\"\nORDER BY \"submissionTime\" DESC",
               "parameters" : [
                 {
                   "type" : "source",
@@ -428,7 +428,7 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT(DISTINCT $1)], __timestamp=[MAX
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"submission$2\"\n  WHERE $1 = \"name\") AS \"t\"\nWHERE \"variant\" = $2\nORDER BY \"submissionTime\" DESC",
+              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"submission_2\"\n  WHERE $1 = \"name\") AS \"t\"\nWHERE \"variant\" = $2\nORDER BY \"submissionTime\" DESC",
               "parameters" : [
                 {
                   "type" : "source",
@@ -471,7 +471,7 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT(DISTINCT $1)], __timestamp=[MAX
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"topicName\", \"numPackages\", \"__timestamp\", 1 AS \"__pk\"\nFROM \"topicsearch$1\"\nWHERE \"topicName\" = $1\nORDER BY \"numPackages\" DESC, 1",
+              "sql" : "SELECT \"topicName\", \"numPackages\", \"__timestamp\", 1 AS \"__pk\"\nFROM \"topicsearch_1\"\nWHERE \"topicName\" = $1\nORDER BY \"numPackages\" DESC, 1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -497,7 +497,7 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT(DISTINCT $1)], __timestamp=[MAX
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"topicsearch$1\"\nORDER BY \"numPackages\" DESC, \"topicName\"",
+              "sql" : "SELECT *\nFROM \"topicsearch_1\"\nORDER BY \"numPackages\" DESC, \"topicName\"",
               "parameters" : [ ]
             }
           }
@@ -529,7 +529,7 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT(DISTINCT $1)], __timestamp=[MAX
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"topicpackages$1\"\nWHERE \"topicName\" = $1\nORDER BY \"numSubmissions\" DESC, \"pkgName\"",
+              "sql" : "SELECT *\nFROM \"topicpackages_1\"\nWHERE \"topicName\" = $1\nORDER BY \"numSubmissions\" DESC, \"pkgName\"",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -551,7 +551,7 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT(DISTINCT $1)], __timestamp=[MAX
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-              "sql" : "SELECT *\nFROM \"submission$2\"\nWHERE $1 = \"name\" AND \"latest\"\nORDER BY \"submissionTime\" DESC",
+              "sql" : "SELECT *\nFROM \"submission_2\"\nWHERE $1 = \"name\" AND \"latest\"\nORDER BY \"submissionTime\" DESC",
               "parameters" : [
                 {
                   "type" : "source",

@@ -10,6 +10,7 @@ import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 
 public interface JdbcDDLFactory {
   JdbcDialect getDialect();
+
   SqlDDLStatement createTable(EngineSink table);
 
   SqlDDLStatement createIndex(IndexDefinition indexDefinitions);
