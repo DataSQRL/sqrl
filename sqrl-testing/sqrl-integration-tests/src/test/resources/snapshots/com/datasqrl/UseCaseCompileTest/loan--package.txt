@@ -1,6 +1,0 @@
-[FATAL] Could not find module [schema.ApplicationUpdates] at path: [schema/ApplicationUpdates]
-in script:<script> [2:1]:
-IMPORT src.*;
-IMPORT schema.ApplicationUpdates;
-^
-
