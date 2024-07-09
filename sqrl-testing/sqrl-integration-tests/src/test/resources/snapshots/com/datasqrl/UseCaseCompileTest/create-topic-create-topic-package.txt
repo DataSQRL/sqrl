@@ -1,6 +1,6 @@
 >>>pipeline_explain.txt
 === AddEvent
-ID:     addevent$2
+ID:     addevent_2
 Type:   stream
 Stage:  streams
 Primary Key: _uuid
@@ -12,13 +12,13 @@ Schema:
  - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - event_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalTableScan(table=[[addevent$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+LogicalTableScan(table=[[addevent_1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
 === PgTable
-ID:     pgtable$1
+ID:     pgtable_1
 Type:   stream
 Stage:  streams
-Inputs: addevent$2
+Inputs: addevent_2
 Primary Key: _uuid
 Timestamp  : event_time
 Schema:
@@ -28,23 +28,23 @@ Schema:
  - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - event_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalTableScan(table=[[addevent$2]])
+LogicalTableScan(table=[[addevent_2]])
 
 === kafka.PgTable
-ID:     pgtable$1$1
+ID:     pgtable_1_1
 Type:   export
 Stage:  streams
-Inputs: pgtable$1
+Inputs: pgtable_1
 
 >>>flink.json
 {
   "flinkSql" : [
-    "CREATE TEMPORARY TABLE `addevent$1` (\n  `timestamp` TIMESTAMP(3) NOT NULL,\n  `userId` DECIMAL(10, 5) NOT NULL,\n  `eventType` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL METADATA FROM 'timestamp',\n  WATERMARK FOR `event_time` AS (`event_time` - INTERVAL '0.0' SECOND)\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'create-topic-addevent',\n  'scan.startup.mode' = 'group-offsets'\n);",
-    "CREATE TEMPORARY TABLE `pgtable$1` (\n  `timestamp` TIMESTAMP(3) NOT NULL,\n  `userId` DECIMAL(10, 5) NOT NULL,\n  `eventType` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`_uuid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'pgtable$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `pgtable$1$1` (\n  `timestamp` TIMESTAMP(3) NOT NULL,\n  `userId` DECIMAL(10, 5) NOT NULL,\n  `eventType` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'pgtable-1',\n  'scan.startup.mode' = 'group-offsets'\n);",
-    "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `addevent$1`;",
-    "CREATE VIEW `table$2`\nAS\nSELECT *\nFROM `addevent$1`;",
-    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `pgtable$1`\n(SELECT *\nFROM `table$1`)\n;\nINSERT INTO `pgtable$1$1`\n(SELECT *\nFROM `table$2`)\n;\nEND;"
+    "CREATE TEMPORARY TABLE `addevent_1` (\n  `timestamp` TIMESTAMP(3) NOT NULL,\n  `userId` DECIMAL(10, 5) NOT NULL,\n  `eventType` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL METADATA FROM 'timestamp',\n  WATERMARK FOR `event_time` AS (`event_time` - INTERVAL '0.0' SECOND)\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'create-topic-addevent',\n  'scan.startup.mode' = 'group-offsets'\n);",
+    "CREATE TEMPORARY TABLE `pgtable_1` (\n  `timestamp` TIMESTAMP(3) NOT NULL,\n  `userId` DECIMAL(10, 5) NOT NULL,\n  `eventType` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`_uuid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'pgtable_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `pgtable_1_1` (\n  `timestamp` TIMESTAMP(3) NOT NULL,\n  `userId` DECIMAL(10, 5) NOT NULL,\n  `eventType` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'pgtable_1',\n  'scan.startup.mode' = 'group-offsets'\n);",
+    "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `addevent_1`;",
+    "CREATE VIEW `table$2`\nAS\nSELECT *\nFROM `addevent_1`;",
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `pgtable_1`\n(SELECT *\nFROM `table$1`)\n;\nINSERT INTO `pgtable_1_1`\n(SELECT *\nFROM `table$2`)\n;\nEND;"
   ],
   "connectors" : [
     "jdbc-sqrl",
@@ -65,7 +65,7 @@ Inputs: pgtable$1
       "config" : { }
     },
     {
-      "name" : "pgtable-1",
+      "name" : "pgtable_1",
       "numPartitions" : 1,
       "replicationFactor" : 1,
       "replicasAssignments" : { },
@@ -77,7 +77,7 @@ Inputs: pgtable$1
 {
   "ddl" : [
     {
-      "name" : "pgtable$1",
+      "name" : "pgtable_1",
       "columns" : [
         "\"timestamp\" TIMESTAMP WITHOUT TIME ZONE NOT NULL",
         "\"userId\" NUMERIC NOT NULL",
@@ -88,7 +88,7 @@ Inputs: pgtable$1
       "primaryKeys" : [
         "\"_uuid\""
       ],
-      "sql" : "CREATE TABLE IF NOT EXISTS pgtable$1 (\"timestamp\" TIMESTAMP WITHOUT TIME ZONE NOT NULL,\"userId\" NUMERIC NOT NULL,\"eventType\" TEXT NOT NULL,\"_uuid\" TEXT NOT NULL,\"event_time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"_uuid\"));"
+      "sql" : "CREATE TABLE IF NOT EXISTS pgtable_1 (\"timestamp\" TIMESTAMP WITHOUT TIME ZONE NOT NULL,\"userId\" NUMERIC NOT NULL,\"eventType\" TEXT NOT NULL,\"_uuid\" TEXT NOT NULL,\"event_time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"_uuid\"));"
     }
   ]
 }
@@ -117,7 +117,7 @@ Inputs: pgtable$1
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"pgtable$1\"\nORDER BY \"event_time\" DESC NULLS LAST, \"_uuid\"",
+              "sql" : "SELECT *\nFROM \"pgtable_1\"\nORDER BY \"event_time\" DESC NULLS LAST, \"_uuid\"",
               "parameters" : [ ]
             }
           }
@@ -134,7 +134,7 @@ Inputs: pgtable$1
     "subscriptions" : [
       {
         "fieldName" : "PgTable",
-        "topic" : "pgtable-1",
+        "topic" : "pgtable_1",
         "sinkConfig" : { },
         "filters" : {
           "eventType" : "eventType"
