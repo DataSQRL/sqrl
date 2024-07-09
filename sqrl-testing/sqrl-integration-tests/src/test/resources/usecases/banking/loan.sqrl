@@ -1,4 +1,6 @@
-IMPORT src.*;
+IMPORT loan-local.Customers;
+IMPORT loan-local.Applications;
+IMPORT loan-local.Loan_types AS LoanTypes;
 IMPORT loan.ApplicationUpdates;
 
 Customers := DISTINCT Customers ON id ORDER BY updated_at DESC;

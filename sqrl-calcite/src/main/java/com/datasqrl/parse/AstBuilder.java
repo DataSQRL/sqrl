@@ -21,6 +21,7 @@ import com.datasqrl.model.StreamType;
 import com.datasqrl.parse.SqlBaseParser.*;
 import com.datasqrl.sql.parser.impl.SqrlSqlParserImpl;
 import com.google.common.base.Preconditions;
+import java.time.ZoneId;
 import lombok.SneakyThrows;
 import lombok.Value;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -176,6 +177,24 @@ public class AstBuilder
   @Override
   public SqlNode visitSingleStatement(SingleStatementContext context) {
     return visit(context.statement());
+  }
+
+  @Override
+  public SqlNode visitCreateStatement(CreateStatementContext ctx) {
+    return visit(ctx.createDefinition());
+  }
+
+  @Override
+  public SqlNode visitCreateDefinition(CreateDefinitionContext ctx) {
+    return new SqrlCreateDefinition(getLocation(ctx),
+        getNamePath(ctx.qualifiedName()),
+        visit(ctx.columnDefinition(), SqrlColumnDefinition.class));
+  }
+
+  @Override
+  public SqlNode visitColumnDefinition(ColumnDefinitionContext ctx) {
+    return new SqrlColumnDefinition(getLocation(ctx),
+        (SqlIdentifier)ctx.identifier().accept(this), getType(ctx.type()));
   }
 
   @Override
@@ -537,7 +556,10 @@ public class AstBuilder
   }
 
   private SqlDataTypeSpec getType(TypeContext ctx) {
-    return new SqlDataTypeSpec(getTypeName(ctx.baseType()), getLocation(ctx));
+    return new SqlDataTypeSpec(getTypeName(ctx.baseType()),
+        TimeZone.getTimeZone(ZoneId.systemDefault()),
+        ctx.NOT() == null,
+        getLocation(ctx));
   }
 
   private SqlTypeNameSpec getTypeName(BaseTypeContext baseType) {

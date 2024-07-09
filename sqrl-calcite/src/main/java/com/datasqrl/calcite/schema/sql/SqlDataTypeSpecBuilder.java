@@ -11,6 +11,8 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import lombok.experimental.UtilityClass;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.rel.type.RelDataTypeFactory.FieldInfoBuilder;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.RelRecordType;
 import org.apache.calcite.sql.SqlBasicTypeNameSpec;
@@ -21,6 +23,7 @@ import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlRowTypeNameSpec;
 import org.apache.calcite.sql.SqlTypeNameSpec;
+import org.apache.calcite.sql.SqlUserDefinedTypeNameSpec;
 import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
@@ -33,6 +36,76 @@ import org.apache.flink.table.types.logical.RawType;
 
 @UtilityClass
 public class SqlDataTypeSpecBuilder {
+
+  public static RelDataType create(SqlDataTypeSpec typeSpec, RelDataTypeFactory typeFactory) {
+    if (typeSpec.getTypeNameSpec() instanceof SqlUserDefinedTypeNameSpec) {
+      SqlUserDefinedTypeNameSpec udf = (SqlUserDefinedTypeNameSpec) typeSpec.getTypeNameSpec();
+      SqlIdentifier typeName = udf.getTypeName();
+      SqlTypeName sqlTypeName = SqlTypeName.get(typeName.getSimple());
+      if (sqlTypeName == SqlTypeName.ANY) {
+        return typeFactory.createTypeWithNullability(
+            typeFactory.createSqlType(SqlTypeName.ANY), typeSpec.getNullable());
+      }
+
+      return typeFactory.createTypeWithNullability(
+          typeFactory.createSqlType(sqlTypeName), typeSpec.getNullable());
+    }
+
+    if (typeSpec.getTypeNameSpec() instanceof SqlBasicTypeNameSpec) {
+      SqlBasicTypeNameSpec basicTypeNameSpec = (SqlBasicTypeNameSpec) typeSpec.getTypeNameSpec();
+      SqlIdentifier typeName = basicTypeNameSpec.getTypeName();
+      SqlTypeName sqlTypeName = SqlTypeName.get(typeName.getSimple());
+      if (sqlTypeName == SqlTypeName.ANY) {
+        return typeFactory.createTypeWithNullability(
+            typeFactory.createSqlType(SqlTypeName.ANY), typeSpec.getNullable());
+      }
+
+      if (typeSpec.getNullable() != null ) {
+        return typeFactory.createTypeWithNullability(
+            typeFactory.createSqlType(sqlTypeName), typeSpec.getNullable());
+      } else {
+        return typeFactory.createSqlType(sqlTypeName);
+      }
+    }
+
+    if (typeSpec.getTypeNameSpec() instanceof ExtendedSqlCollectionTypeNameSpec) {
+      ExtendedSqlCollectionTypeNameSpec collectionTypeNameSpec = (ExtendedSqlCollectionTypeNameSpec) typeSpec.getTypeNameSpec();
+      RelDataType elementType = create(collectionTypeNameSpec.getElementTypeName(), typeFactory);
+      return typeFactory.createTypeWithNullability(
+          typeFactory.createArrayType(elementType, -1), typeSpec.getNullable());
+    }
+
+    if (typeSpec.getTypeNameSpec() instanceof SqlRowTypeNameSpec) {
+      SqlRowTypeNameSpec rowTypeNameSpec = (SqlRowTypeNameSpec) typeSpec.getTypeNameSpec();
+      List<SqlIdentifier> fieldNames = rowTypeNameSpec.getFieldNames();
+      List<SqlDataTypeSpec> fieldTypeSpecs = rowTypeNameSpec.getFieldTypes();
+
+      FieldInfoBuilder fieldInfoBuilder = typeFactory.builder();
+      for (int i = 0; i < fieldNames.size(); i++) {
+        SqlIdentifier fieldName = fieldNames.get(i);
+        SqlDataTypeSpec fieldTypeSpec = fieldTypeSpecs.get(i);
+        fieldInfoBuilder.add(fieldName.getSimple(), create(fieldTypeSpec, typeFactory));
+      }
+      return typeFactory.createTypeWithNullability(
+          typeFactory.createStructType(fieldInfoBuilder), typeSpec.getNullable());
+    }
+//
+//    if (typeSpec.getTypeNameSpec() instanceof SqlRawTypeNameSpec) {
+//      SqlRawTypeNameSpec rawTypeNameSpec = (SqlRawTypeNameSpec) typeSpec.getTypeNameSpec();
+//      RawType<?> rawType = new RawType<>(
+//          (Class<?>) rawTypeNameSpec.getClass().getName(),
+//          rawTypeNameSpec.getSerializerString().toString());
+//
+//      return new RawRelDataType(rawType, typeSpec.getNullable());
+//    }
+
+    throw new UnsupportedOperationException("Unsupported type when create RelDataType: " + typeSpec.getTypeNameSpec());
+  }
+
+  private static RelDataType create(SqlTypeNameSpec typeNameSpec, RelDataTypeFactory typeFactory) {
+    SqlDataTypeSpec typeSpec = new SqlDataTypeSpec(typeNameSpec, SqlParserPos.ZERO);
+    return create(typeSpec, typeFactory);
+  }
 
   public static SqlDataTypeSpec create(RelDataType type) {
     if (type.getSqlTypeName() == SqlTypeName.ANY) {

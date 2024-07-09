@@ -27,7 +27,8 @@ singleStatement
     ;
 
 statement
-    : importDefinition                               #importStatement
+    : createDefinition                               #createStatement
+    | importDefinition                               #importStatement
     | exportDefinition                               #exportStatement
     | assignmentPath ':=' fromDeclaration            #fromQuery
     | assignmentPath ':=' joinDeclaration            #joinQuery
@@ -43,6 +44,14 @@ query
 
 assignmentPath
    : hint? qualifiedName tableFunctionDef?
+   ;
+
+createDefinition
+   : CREATE TABLE qualifiedName '(' columnDefinition (',' columnDefinition)* ')'
+   ;
+
+columnDefinition
+   : identifier type
    ;
 
 importDefinition
@@ -93,7 +102,7 @@ expression
     ;
 
 type
-    : baseType ('(' typeParameter (',' typeParameter)* ')')?
+    : baseType ('(' typeParameter (',' typeParameter)* ')')? (NOT NULL)?
     ;
 
 typeParameter
@@ -229,6 +238,8 @@ WHERE: 'WHERE';
 YEAR: 'YEAR';
 YEARS: 'YEARS';
 IMPORT: 'IMPORT';
+CREATE: 'CREATE';
+TABLE: 'TABLE';
 SEMICOLON: ';';
 INVERSE: 'INVERSE';
 

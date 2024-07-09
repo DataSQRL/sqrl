@@ -24,6 +24,7 @@ import org.apache.calcite.sql.ScriptNode;
 import org.apache.calcite.sql.ScriptVisitor;
 import org.apache.calcite.sql.SqrlAssignTimestamp;
 import org.apache.calcite.sql.SqrlAssignment;
+import org.apache.calcite.sql.SqrlCreateDefinition;
 import org.apache.calcite.sql.SqrlExportDefinition;
 import org.apache.calcite.sql.SqrlImportDefinition;
 import org.apache.calcite.sql.SqrlStatement;
@@ -52,6 +53,11 @@ public class ImportExportAnalyzer implements
     }
 
     return node.accept(this, null);
+  }
+
+  @Override
+  public Optional<NamePath> visit(SqrlCreateDefinition statement, Void context) {
+    return Optional.empty();
   }
 
   @Override
