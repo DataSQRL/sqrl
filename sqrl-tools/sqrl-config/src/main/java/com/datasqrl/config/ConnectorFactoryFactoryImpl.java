@@ -21,9 +21,7 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
     Optional<EngineConfig> engineConfig = packageJson.getEngines().getEngineConfig("flink");
     Preconditions.checkArgument(engineConfig.isPresent(), "Missing engine configuration for Flink");
     ConnectorsConfig connectors = engineConfig.get().getConnectors();
-    if (name.equalsIgnoreCase("snowflake")) { //work around until we get the correct engine in
-      return connectors.getConnectorConfig("iceberg").map(this::createIceberg);
-    }
+
     Optional<ConnectorConf> connectorConfig = connectors.getConnectorConfig(name);
     if (name.equalsIgnoreCase(PRINT_SINK_NAME)) {
       return Optional.of(createPrintConnectorFactory(null));
@@ -33,6 +31,8 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
     if (type != null) {
       if (type.equals(Type.LOG)) {
         return connectorConfig.map(this::createKafkaConnectorFactory);
+      } else if (name.equalsIgnoreCase("iceberg")) {
+        return connectorConfig.map(this::createIceberg);
       } else if (type.equals(Type.DATABASE)) {
         return connectorConfig.map(this::createJdbcConnectorFactory);
       }
