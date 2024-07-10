@@ -56,6 +56,8 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
         return connectorConfig.map(this::createKafkaConnectorFactory);
       } else if (engineType.equals(Type.DATABASE)) {
         return connectorConfig.map(this::createJdbcConnectorFactory);
+      } else {
+        throw new IllegalArgumentException("Unable to create connectorConfig for engineType=" + engineType.name());
       }
     }
 
@@ -171,13 +173,4 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
     };
   }
 
-  private ConnectorFactory createBlackHoleConnectorFactory() {
-    return context -> {
-      TableConfigBuilderImpl builder = TableConfigImpl.builder(context.getName());
-      builder.setType(ExternalDataType.sink);
-      builder.getConnectorConfig().setProperty("connector", "blackhole");
-
-      return builder.build();
-    };
-  }
 }
