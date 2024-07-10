@@ -2,6 +2,8 @@ package com.datasqrl.engine.database.relational;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.calcite.convert.SnowflakeSqlNodeToString;
+import com.datasqrl.calcite.dialect.ExtendedSnowflakeSqlDialect;
 import com.datasqrl.calcite.dialect.snowflake.SqlCreateIcebergTableFromObjectStorage;
 import com.datasqrl.calcite.dialect.snowflake.SqlCreateSnowflakeView;
 import com.datasqrl.config.ConnectorFactoryFactory;
@@ -38,8 +40,8 @@ import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.dialect.CalciteSqlDialect;
-import org.apache.calcite.sql.dialect.SnowflakeSqlDialect;
 import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.flink.table.functions.FunctionDefinition;
 
 public class SnowflakeEngine extends AbstractJDBCQueryEngine {
 
@@ -104,14 +106,19 @@ public class SnowflakeEngine extends AbstractJDBCQueryEngine {
       SqlCreateSnowflakeView createView = new SqlCreateSnowflakeView(pos, true, true, false, false, null, viewName, columnList,
           select, comment, false);
 
-      String sql = createView.toSqlString(SnowflakeSqlDialect.DEFAULT)
-          .getSql();
+      SnowflakeSqlNodeToString toString = new SnowflakeSqlNodeToString();
+      String sql = toString.convert(() -> createView).getSql();
 
       queries.add(Map.of("sql", sql));
     }
 
 
     return new SnowflakePlan(ddlStatements, queries);
+  }
+
+  @Override
+  public boolean supports(FunctionDefinition function) {
+    return true;
   }
 
   @Value
