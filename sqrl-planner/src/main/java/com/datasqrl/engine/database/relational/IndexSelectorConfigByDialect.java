@@ -7,6 +7,7 @@ import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.plan.global.IndexSelectorConfig;
 import com.datasqrl.function.IndexType;
+import com.google.common.base.Preconditions;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
@@ -16,6 +17,7 @@ import java.util.EnumSet;
 
 import static com.datasqrl.function.IndexType.BTREE;
 import static com.datasqrl.function.IndexType.HASH;
+import static com.datasqrl.function.IndexType.PBTREE;
 import static com.datasqrl.function.IndexType.TEXT;
 import static com.datasqrl.function.IndexType.VEC_COSINE;
 import static com.datasqrl.function.IndexType.VEC_EUCLID;
@@ -36,8 +38,39 @@ public class IndexSelectorConfigByDialect implements IndexSelectorConfig {
   int maxIndexColumns = MAX_INDEX_COLUMNS;
 
   @Override
+  public boolean hasPrimaryKeyIndex() {
+    switch (dialect) {
+      case Postgres:
+      case MySQL:
+      case Oracle:
+      case H2:
+      case SQLite:
+        return true;
+      case Iceberg:
+        return false;
+      default:
+        throw new IllegalStateException("Dialect not supported:" + dialect.name());
+    }
+  }
+
+  @Override
+  public int maxIndexes() {
+    switch (dialect) {
+      case Iceberg:
+        return 1;
+      default:
+        return 8;
+    }
+  }
+
+  @Override
   public int maxIndexColumnSets() {
-    return 50;
+    switch (dialect) {
+      case Iceberg:
+        return Integer.MAX_VALUE;
+      default:
+        return 50;
+    }
   }
 
   @Override
@@ -51,9 +84,7 @@ public class IndexSelectorConfigByDialect implements IndexSelectorConfig {
       case SQLite:
         return EnumSet.of(HASH, BTREE);
       case Iceberg:
-        return EnumSet.of(BTREE);
-      case Snowflake:
-        return EnumSet.of(BTREE);
+        return EnumSet.of(PBTREE);
       default:
         throw new IllegalStateException("Dialect not supported:" + dialect.name());
     }
@@ -73,7 +104,6 @@ public class IndexSelectorConfigByDialect implements IndexSelectorConfig {
       case H2:
       case SQLite:
       case Iceberg:
-      case Snowflake:
         return maxIndexColumns;
       default:
         throw new IllegalStateException("Dialect not supported: " + dialect.name());
@@ -87,8 +117,11 @@ public class IndexSelectorConfigByDialect implements IndexSelectorConfig {
         return 1;
       case BTREE:
         return 1.5 + 0.1 * index.getColumns().size();
+      case PBTREE:
+        Preconditions.checkArgument(index.getPartitionOffset() >= 0);
+        return 1 + 1.0/(index.getPartitionOffset()+1) + 0.1 * index.getColumns().size();
       default:
-        throw new IllegalStateException(index.getType().name());
+        return 1;
     }
   }
 
