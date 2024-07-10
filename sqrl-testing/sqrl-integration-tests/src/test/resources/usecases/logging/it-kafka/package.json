@@ -1,0 +1,11 @@
+{
+  "version": "1",
+  "enabled-engines": ["kafka", "flink", "vertx", "postgres"],
+  "compiler": {
+    "log": "kafka"
+  },
+  "script": {
+    "main": "logging-kafka.sqrl",
+    "graphql": "logging-kafka.graphqls"
+  }
+}

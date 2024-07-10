@@ -1,0 +1,7 @@
+IMPORT mock.Data;
+IMPORT circlesource.ReusedData;
+
+EXPORT Data TO log.LogData;
+
+/* +exec(test) */
+TestTable := SELECT * FROM ReusedData;
