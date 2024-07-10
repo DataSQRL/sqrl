@@ -109,9 +109,9 @@ public class ObjectLoaderImpl implements ObjectLoader {
   }
 
   @SneakyThrows
-  private SqrlModule loadScript(NamePath directory, Path path) {
+  private SqrlModule loadScript(NamePath namePath, Path path) {
     return new ScriptSqrlModule(moduleLoader, Files.readString(path), Optional.empty(),
-        sqrlConfig, logManager);
+        sqrlConfig, logManager, namePath);
   }
 
   @SneakyThrows
