@@ -4,6 +4,8 @@
 package com.datasqrl.plan.rules;
 
 import com.datasqrl.config.EngineFactory.Type;
+import com.datasqrl.engine.database.AnalyticDatabaseEngine;
+import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.hints.JoinCostHint;
 import com.datasqrl.plan.hints.SqrlHint;
 import com.datasqrl.plan.rules.JoinAnalysis.Side;
@@ -26,12 +28,16 @@ class SimpleCostModel implements ComputeCost {
     this.cost = cost;
   }
 
-  public static SimpleCostModel of(Type engineType, RelNode relNode) {
+  public static SimpleCostModel of(ExecutionStage executionStage, RelNode relNode) {
     double cost = 1.0;
-    switch (engineType) {
+    switch (executionStage.getEngine().getType()) {
       case DATABASE:
         //Currently we make the simplifying assumption that database execution is the baseline and we compare
         //other engines against it
+        //However, if the database is a table format, we apply a penalty because query engines are less efficient.
+        if (executionStage.getEngine() instanceof AnalyticDatabaseEngine) {
+          cost = cost * 1.3;
+        }
         break;
       case STREAMS:
         //We assume that pre-computing is generally cheaper (by factor of 10) unless (standard) joins are
@@ -45,7 +51,7 @@ class SimpleCostModel implements ComputeCost {
 //      case STATIC:
 //        return 1;
       default:
-        throw new UnsupportedOperationException("Unsupported engine type: " + engineType);
+        throw new UnsupportedOperationException("Unsupported engine type: " + executionStage.getEngine().getType());
     }
     return new SimpleCostModel(cost);
   }

@@ -44,6 +44,7 @@ public class DAGPlanner {
   private final DAGBuilder dagBuilder;
   private final DAGPreparation dagPreparation;
   private final SQRLConverter sqrlConverter;
+
   public SqrlDAG build(Collection<ResolvedExport> exports) {
     //Prepare the inputs
     Collection<AnalyzedAPIQuery> analyzedQueries = dagPreparation.prepareInputs(framework.getSchema(), exports);
