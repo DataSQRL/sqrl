@@ -13,7 +13,7 @@ Schema:
 Plan:
 LogicalTableScan(table=[[data_1]], hints=[[[WatermarkHint inheritPath:[] options:[3]]]]) hints[WatermarkHint options:[3]]
 
-=== log.LogData
+=== logger.LogData
 ID:     data_2_1
 Type:   export
 Stage:  streams

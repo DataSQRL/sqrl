@@ -2,7 +2,7 @@
   "version": "1",
   "enabled-engines": ["kafka", "flink"],
   "compiler": {
-    "log": "kafka"
+    "logger": "kafka"
   },
   "script": {
     "main": "logging-kafka.sqrl"

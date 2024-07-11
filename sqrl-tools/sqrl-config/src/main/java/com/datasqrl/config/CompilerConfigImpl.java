@@ -24,8 +24,8 @@ public class CompilerConfigImpl implements PackageJson.CompilerConfig {
 
   @Override
   public LogMethod getLog() {
-    if (sqrlConfig.hasKey("log")) {
-      return LogMethod.parse(sqrlConfig.asString("log").get());
+    if (sqrlConfig.hasKey("logger")) {
+      return LogMethod.parse(sqrlConfig.asString("logger").get());
     } else {
       return LogMethod.PRINT;
     }

@@ -58,7 +58,6 @@ import com.datasqrl.schema.NestedRelationship;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.Relationship.JoinType;
 import com.datasqrl.util.CalciteUtil;
-import com.datasqrl.util.CalciteUtil.RelDataTypeFieldBuilder;
 import com.datasqrl.util.CheckUtil;
 import com.datasqrl.util.RelDataTypeBuilder;
 import com.datasqrl.util.SqlNameUtil;
@@ -124,7 +123,6 @@ import org.apache.calcite.sql.util.SqlBasicVisitor;
 import org.apache.calcite.sql.util.SqlShuttle;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqrlSqlValidator;
-import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.Util;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -243,7 +241,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     TableSink tableSink = null;
     if (builtInSink.isPresent()) {
       SystemBuiltInConnectors connector = builtInSink.get();
-      if (connector == SystemBuiltInConnectors.LOG) {
+      if (connector == SystemBuiltInConnectors.LOGGER) {
         switch (packageJson.getCompilerConfig().getLog()) {
           case NONE: return null; //Ignore export
           case PRINT: connector = SystemBuiltInConnectors.PRINT_SINK; break;

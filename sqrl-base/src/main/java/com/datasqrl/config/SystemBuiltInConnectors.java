@@ -12,7 +12,7 @@ public enum SystemBuiltInConnectors {
 
   PRINT_SINK(Name.system("print"), ExternalDataType.sink),
   LOCAL_FILE_SOURCE(Name.system("localfile"), ExternalDataType.source),
-  LOG(Name.system("log"), ExternalDataType.sink);
+  LOGGER(Name.system("logger"), ExternalDataType.sink);
 
   final Name name;
   final ExternalDataType type;
