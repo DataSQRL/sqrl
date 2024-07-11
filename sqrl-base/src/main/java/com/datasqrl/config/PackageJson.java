@@ -50,7 +50,7 @@ public interface PackageJson {
 
     boolean isAddArguments();
 
-    LogMethod getLog();
+    String getLogger();
   }
 
   interface ExplainConfig {
@@ -128,28 +128,4 @@ public interface PackageJson {
     ErrorCollector getErrors();
   }
 
-  enum LogMethod {
-    NONE("none"),
-    PRINT("print"),
-    KAFKA("kafka");
-
-    final String value;
-
-    LogMethod(String value) {
-      this.value = value;
-    }
-
-    public static LogMethod parse(String value) {
-      for (LogMethod method : LogMethod.values()) {
-        if (method.value.equals(value)) {
-          return method;
-        }
-      }
-      throw new IllegalArgumentException("Invalid LogMethod value: " + value);
-    }
-
-    public String getValue() {
-      return value;
-    }
-  }
 }

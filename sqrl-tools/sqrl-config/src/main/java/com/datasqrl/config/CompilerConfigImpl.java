@@ -1,6 +1,5 @@
 package com.datasqrl.config;
 
-import com.datasqrl.config.PackageJson.LogMethod;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 
@@ -23,12 +22,8 @@ public class CompilerConfigImpl implements PackageJson.CompilerConfig {
   }
 
   @Override
-  public LogMethod getLog() {
-    if (sqrlConfig.hasKey("logger")) {
-      return LogMethod.parse(sqrlConfig.asString("logger").get());
-    } else {
-      return LogMethod.PRINT;
-    }
+  public String getLogger() {
+    return sqrlConfig.hasKey("logger") ? sqrlConfig.asString("logger").get() : "print";
   }
 
   public ExplainConfigImpl getExplain() {

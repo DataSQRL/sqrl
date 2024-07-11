@@ -26,7 +26,6 @@ import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.config.ConnectorFactoryContext;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.PackageJson;
-import com.datasqrl.config.PackageJson.LogMethod;
 import com.datasqrl.config.SystemBuiltInConnectors;
 import com.datasqrl.engine.log.Log;
 import com.datasqrl.engine.log.LogFactory;
@@ -242,22 +241,21 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     if (builtInSink.isPresent()) {
       SystemBuiltInConnectors connector = builtInSink.get();
       if (connector == SystemBuiltInConnectors.LOGGER) {
-        switch (packageJson.getCompilerConfig().getLog()) {
-          case NONE: return null; //Ignore export
-          case PRINT: connector = SystemBuiltInConnectors.PRINT_SINK; break;
-          case KAFKA:
-            if (!LogMethod.KAFKA.getValue().equals(logManager.getEngineName())) {
-              throw new IllegalStateException(String.format("The configured log engine is '%s'"
-                      + " while 'compiler.log' is set to '%s'. Please change the logging to"
-                      + " the desired engine.",
-                  logManager.getEngineName(), LogMethod.KAFKA.getValue()));
-            }
-            Log sinkLog = logManager.create(modTable.getNameId(), sinkPath.getLast(),
-                exportRelNode.getRowType(), List.of(), LogFactory.Timestamp.NONE);
-            tableSink = sinkLog.getSink();
-            break;
-          default: throw new UnsupportedOperationException(
-              "Unknown log method: " + packageJson.getCompilerConfig().getLog());
+        String logger = packageJson.getCompilerConfig().getLogger();
+        if (logger.equalsIgnoreCase("none")) {
+          return null;
+        } else if (logger.equalsIgnoreCase("print")) {
+          connector = SystemBuiltInConnectors.PRINT_SINK;
+        } else {
+          if (!logger.equalsIgnoreCase(logManager.getEngineName())) {
+            throw new IllegalStateException(String.format("The configured log engine is '%s'"
+                    + " while 'compiler.logger' is set to '%s'. Please change the logger to"
+                    + " the desired engine.",
+                logManager.getEngineName(), logger));
+          }
+          Log sinkLog = logManager.create(modTable.getNameId(), sinkPath.getLast(),
+              exportRelNode.getRowType(), List.of(), LogFactory.Timestamp.NONE);
+          tableSink = sinkLog.getSink();
         }
       }
       if (tableSink == null) {
