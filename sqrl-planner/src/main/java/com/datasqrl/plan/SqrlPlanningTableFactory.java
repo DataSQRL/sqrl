@@ -7,6 +7,8 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.plan.hints.OptimizerHint;
+import com.datasqrl.plan.hints.OptimizerHint.ConverterHint;
+import com.datasqrl.plan.hints.PipelineStageHint;
 import com.datasqrl.plan.local.generate.SqrlTableNamespaceObject;
 import com.datasqrl.plan.rules.AnnotatedLP;
 import com.datasqrl.plan.rules.IdealExecutionStage;
@@ -109,11 +111,11 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
     //TODO: put other SQLHints back on the relnode after we are done, i.e. pass them through
     SqrlConverterConfig.SqrlConverterConfigBuilder configBuilder = SqrlConverterConfig.builder();
     //Apply only generic optimizer hints (pipeline optimization happens in the DAGPlanner)
-    StreamUtil.filterByClass(analyzedHints.getKey(), OptimizerHint.Generic.class)
+    StreamUtil.filterByClass(analyzedHints.getKey(), ConverterHint.class)
         .forEach(h -> h.add2Config(configBuilder, errors));
     //Capture stages
-    List<OptimizerHint.Stage> configuredStages = StreamUtil.filterByClass(analyzedHints.getKey(),
-        OptimizerHint.Stage.class).collect(Collectors.toList());
+    List<PipelineStageHint> configuredStages = StreamUtil.filterByClass(analyzedHints.getKey(),
+        PipelineStageHint.class).collect(Collectors.toList());
     SqrlConverterConfig baseConfig = configBuilder.build();
 
     //Config for original construction without a specific stage
@@ -121,6 +123,7 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
     SqrlConverterConfig config = configBuilder.build();
 
     AnnotatedLP alp = sqrlConverter.convert(relNode, config, errors);
-    return new LPAnalysis(relNode, alp, configuredStages, baseConfig);
+    return new LPAnalysis(relNode, alp, configuredStages, baseConfig, analyzedHints.getKey(),
+        analyzedHints.getValue());
   }
 }

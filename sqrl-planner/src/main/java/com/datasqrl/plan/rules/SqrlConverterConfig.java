@@ -30,6 +30,9 @@ public class SqrlConverterConfig {
   @Builder.Default
   boolean inlinePullups = false;
 
+  @Builder.Default
+  List<String> primaryKeyNames = null;
+
   public SqrlConverterConfig withStage(ExecutionStage stage) {
     return toBuilder().stage(stage).build();
   }

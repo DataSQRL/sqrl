@@ -1,5 +1,7 @@
 package com.datasqrl.function;
 
+import java.util.Optional;
+
 public enum IndexType {
   HASH, BTREE, PBTREE, TEXT, VEC_COSINE, VEC_EUCLID /*, VEC_PRODUCT */;
 
@@ -18,6 +20,15 @@ public enum IndexType {
 
   public boolean isPartitioned() {
     return this == PBTREE;
+  }
+
+  public static Optional<IndexType> fromName(String name) {
+    for (IndexType indexType : IndexType.values()) {
+      if (indexType.name().equalsIgnoreCase(name)) {
+        return Optional.of(indexType);
+      }
+    }
+    return Optional.empty();
   }
 
 
