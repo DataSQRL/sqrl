@@ -117,7 +117,7 @@ public class QueryIndexSummary {
           break; //we have broken the equality chain of this index
         }
       }
-      if (i < indexDef.numColumnsRequired()) {
+      if (i < indexDef.numEqualityColumnsRequired()) {
         //This index requires a constraint on all columns to be invocable
         coveredConjunction = EMPTY;
       } else {

@@ -44,10 +44,10 @@ public class IndexDefinition implements Comparable<IndexDefinition> {
         fieldNames, -1, IndexType.BTREE);
   }
 
-  public int numColumnsRequired() {
+  public int numEqualityColumnsRequired() {
     if (type.requiresAllColumns()) return columns.size();
     if (type.isPartitioned()) return partitionOffset;
-    return 1;
+    return 0;
   }
 
   @Override
