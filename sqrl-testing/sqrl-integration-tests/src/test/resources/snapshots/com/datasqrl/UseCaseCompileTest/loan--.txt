@@ -302,136 +302,6 @@ LogicalTableScan(table=[[loantypes_1]], hints=[[[WatermarkHint inheritPath:[] op
       {
         "type" : "args",
         "parentType" : "Query",
-        "fieldName" : "C2",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "id"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customers_2\"\nWHERE \"id\" = $1\nORDER BY \"updated_at\" DESC NULLS LAST",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "id"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "id"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "updated_at"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"id\", \"first_name\", \"last_name\", \"email\", \"phone\", \"address\", \"date_of_birth\", \"updated_at\", 1 AS \"__pk\"\nFROM \"customers_2\"\nWHERE \"id\" = $1 AND \"updated_at\" = $2\nORDER BY \"updated_at\" DESC NULLS LAST, 1",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "id"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "updated_at"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customers_2\"\nORDER BY \"updated_at\" DESC NULLS LAST, \"id\"",
-              "parameters" : [ ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "updated_at"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customers_2\"\nWHERE \"updated_at\" = $1\nORDER BY \"updated_at\" DESC NULLS LAST, \"id\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "updated_at"
-                }
-              ]
-            }
-          }
-        ]
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
         "fieldName" : "Customers",
         "matchs" : [
           {
@@ -439,47 +309,6 @@ LogicalTableScan(table=[[loantypes_1]], hints=[[[WatermarkHint inheritPath:[] op
               {
                 "type" : "variable",
                 "type" : "variable",
-                "path" : "id"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "updated_at"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"id\", \"first_name\", \"last_name\", \"email\", \"phone\", \"address\", \"date_of_birth\", \"updated_at\", 1 AS \"__pk\"\nFROM \"customers_2\"\nWHERE \"id\" = $1 AND \"updated_at\" = $2\nORDER BY \"updated_at\" DESC NULLS LAST, 1",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "id"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "updated_at"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
                 "path" : "limit"
               },
               {
@@ -553,6 +382,47 @@ LogicalTableScan(table=[[loantypes_1]], hints=[[[WatermarkHint inheritPath:[] op
                   "type" : "arg",
                   "type" : "arg",
                   "path" : "id"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "updated_at"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"id\", \"first_name\", \"last_name\", \"email\", \"phone\", \"address\", \"date_of_birth\", \"updated_at\", 1 AS \"__pk\"\nFROM \"customers_2\"\nWHERE \"id\" = $1 AND \"updated_at\" = $2\nORDER BY \"updated_at\" DESC NULLS LAST, 1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "id"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "updated_at"
                 }
               ]
             }
@@ -564,26 +434,6 @@ LogicalTableScan(table=[[loantypes_1]], hints=[[[WatermarkHint inheritPath:[] op
         "parentType" : "Query",
         "fieldName" : "LoanTypes",
         "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"loantypes_2\"\nORDER BY \"updated_at\" DESC NULLS LAST, \"id\"",
-              "parameters" : [ ]
-            }
-          },
           {
             "arguments" : [
               {
@@ -686,6 +536,26 @@ LogicalTableScan(table=[[loantypes_1]], hints=[[[WatermarkHint inheritPath:[] op
                 }
               ]
             }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"loantypes_2\"\nORDER BY \"updated_at\" DESC NULLS LAST, \"id\"",
+              "parameters" : [ ]
+            }
           }
         ]
       }
@@ -695,7 +565,7 @@ LogicalTableScan(table=[[loantypes_1]], hints=[[[WatermarkHint inheritPath:[] op
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "type Applications {\n  id: Float!\n  customer_id: Float!\n  loan_type_id: Float!\n  amount: Float!\n  duration: Float!\n  application_date: DateTime!\n  updated_at: DateTime!\n}\n\ntype C2 {\n  id: Float!\n  first_name: String!\n  last_name: String!\n  email: String!\n  phone: String!\n  address: String!\n  date_of_birth: String!\n  updated_at: DateTime!\n}\n\ntype Customers {\n  id: Float!\n  first_name: String!\n  last_name: String!\n  email: String!\n  phone: String!\n  address: String!\n  date_of_birth: String!\n  updated_at: DateTime!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype LoanTypes {\n  id: Float!\n  name: String!\n  description: String!\n  interest_rate: Float!\n  max_amount: Float!\n  min_amount: Float!\n  max_duration: Float!\n  min_duration: Float!\n  updated_at: DateTime!\n}\n\ntype Query {\n  Applications(id: Float, updated_at: DateTime, limit: Int = 10, offset: Int = 0): [Applications!]\n  C2(id: Float, updated_at: DateTime, limit: Int = 10, offset: Int = 0): [C2!]\n  Customers(id: Float, updated_at: DateTime, limit: Int = 10, offset: Int = 0): [Customers!]\n  LoanTypes(id: Float, updated_at: DateTime, limit: Int = 10, offset: Int = 0): [LoanTypes!]\n}\n"
+      "schema" : "type Applications {\n  id: Float!\n  customer_id: Float!\n  loan_type_id: Float!\n  amount: Float!\n  duration: Float!\n  application_date: DateTime!\n  updated_at: DateTime!\n}\n\ntype Customers {\n  id: Float!\n  first_name: String!\n  last_name: String!\n  email: String!\n  phone: String!\n  address: String!\n  date_of_birth: String!\n  updated_at: DateTime!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype LoanTypes {\n  id: Float!\n  name: String!\n  description: String!\n  interest_rate: Float!\n  max_amount: Float!\n  min_amount: Float!\n  max_duration: Float!\n  min_duration: Float!\n  updated_at: DateTime!\n}\n\ntype Query {\n  Applications(id: Float, updated_at: DateTime, limit: Int = 10, offset: Int = 0): [Applications!]\n  Customers(id: Float, updated_at: DateTime, limit: Int = 10, offset: Int = 0): [Customers!]\n  LoanTypes(id: Float, updated_at: DateTime, limit: Int = 10, offset: Int = 0): [LoanTypes!]\n}\n"
     }
   }
 }
