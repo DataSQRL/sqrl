@@ -10,7 +10,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Function;
 
 public class TimestampType extends AbstractBasicType<Instant> {
@@ -35,6 +34,7 @@ public class TimestampType extends AbstractBasicType<Instant> {
 
     DateTimeFormatter[] formatters = {
         DateTimeFormatter.ISO_INSTANT,
+        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSX"),
         DateTimeFormatter.ISO_DATE_TIME.withZone(ZoneId.systemDefault()),
         DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.SSS]")
             .withZone(ZoneId.systemDefault())

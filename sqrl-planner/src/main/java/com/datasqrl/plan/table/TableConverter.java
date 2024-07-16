@@ -27,6 +27,7 @@ import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.SqlCall;
+import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.validate.SqrlSqlValidator;
 
@@ -99,6 +100,15 @@ public class TableConverter {
             throw new RuntimeException(
                 String.format("Could not evaluate metadata expression: %s. Reason: %s", attribute, e.getMessage()));
           }
+        } else if (sqlNode instanceof SqlIdentifier) {
+          RelDataType relDataType = typeBuilder.build();
+
+          RelDataTypeField field = relDataType.getField(attribute,
+              false, false);
+          if (field == null) {
+            throw new RuntimeException("Could not find metadata field:" + ((SqlIdentifier) sqlNode).getSimple());
+          }
+          typeBuilder.add(nameAdjuster.uniquifyName(columnName), field.getType());
         } else { //is a metadata column
           throw new RuntimeException("Could not derive type from metadata column: " + columnName);
         }
@@ -127,7 +137,8 @@ public class TableConverter {
 
     Preconditions.checkState(baseTblConfig.getTimestampColumn().isPresent(), "timestamp column missing");
     if (!nameAdjuster.contains(baseTblConfig.getTimestampColumn().get())) {
-      throw new RuntimeException(String.format("Column not found. Must be one of: %s", nameAdjuster));
+      throw new RuntimeException(String.format("Column not found: %s. Must be one of: %s",
+          baseTblConfig.getTimestampColumn().get(), nameAdjuster));
     }
 
     TableType tableType = tableConfig.getConnectorConfig().getTableType();

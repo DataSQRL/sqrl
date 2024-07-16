@@ -38,6 +38,10 @@ public class UseCasesFullIT extends UseCasesIT {
     execute("seedshop-tutorial", "seedshop-extended.sqrl", null, "seedshop-extended");
   }
 
+  @Test //migrate to UseCasesIT after release
+  public void testLoggingToKafka() {
+    execute("logging/it-kafka", "logging-kafka.sqrl", "logging-kafka.graphqls");
+  }
 //
 //  @Test
 //  @Disabled

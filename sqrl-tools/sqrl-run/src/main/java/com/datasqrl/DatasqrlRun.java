@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.EnvironmentSettings;
@@ -31,6 +32,7 @@ import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
+@Slf4j
 public class DatasqrlRun {
   Path path = Path.of("build", "plan");
   EmbeddedKafkaCluster CLUSTER;
@@ -46,6 +48,7 @@ public class DatasqrlRun {
     startPostgres();
     startKafka();
 
+    log.info(getEnv().toString());
     // Register the custom deserializer module
     objectMapper = new ObjectMapper();
     SimpleModule module = new SimpleModule();
