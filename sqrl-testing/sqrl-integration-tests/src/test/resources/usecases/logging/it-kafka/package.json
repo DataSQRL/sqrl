@@ -4,8 +4,16 @@
   "compiler": {
     "logger": "kafka"
   },
+  "values" : {
+    "flink-config": {
+      "table.exec.source.idle-timeout": "10000 ms"
+    }
+  },
   "script": {
     "main": "logging-kafka.sqrl",
     "graphql": "logging-kafka.graphqls"
+  },
+  "test-runner": {
+    "delay-sec": 60
   }
 }

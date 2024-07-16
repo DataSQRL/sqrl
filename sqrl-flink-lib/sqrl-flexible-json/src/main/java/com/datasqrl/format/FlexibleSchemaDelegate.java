@@ -1,6 +1,8 @@
 package com.datasqrl.format;
 
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.ErrorLabel;
+import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.io.SourceRecord.Named;
 import com.datasqrl.io.SourceRecord.Raw;
@@ -49,7 +51,14 @@ public abstract class FlexibleSchemaDelegate implements DeserializationSchema<Ro
       return null;
     }
 
-    ErrorCollector errorCollector = ErrorCollector.root();
+    ErrorCollector errorCollector = new ErrorCollector(ErrorPrefix.ROOT) {
+      @Override
+      public RuntimeException exception(ErrorLabel label, String msg, Object... args) {
+        System.out.println(message);
+        return super.exception(label, msg, args);
+      }
+    };
+
     Named named = validator.verifyAndAdjust(new Raw(data, Instant.now()), errorCollector);
     if (errorCollector.hasErrors()) {
       System.out.println(ErrorPrinter.prettyPrint(errorCollector));
