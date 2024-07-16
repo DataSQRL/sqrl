@@ -3,5 +3,5 @@ IMPORT circlesource.ReusedData;
 
 EXPORT Data TO logger.LogData;
 
-/* +exec(test) */
+/*+test */
 TestTable := SELECT * FROM ReusedData;
