@@ -25,6 +25,11 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.config.ConnectorFactoryContext;
 import com.datasqrl.config.ConnectorFactoryFactory;
+import com.datasqrl.config.PackageJson;
+import com.datasqrl.config.SystemBuiltInConnectors;
+import com.datasqrl.engine.log.Log;
+import com.datasqrl.engine.log.LogFactory;
+import com.datasqrl.engine.log.LogManager;
 import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.config.TableConfig;
 import com.datasqrl.error.CollectedException;
@@ -116,7 +121,6 @@ import org.apache.calcite.sql.util.SqlBasicVisitor;
 import org.apache.calcite.sql.util.SqlShuttle;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqrlSqlValidator;
-import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.Util;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -128,9 +132,11 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
   private ErrorCollector errorCollector;
   private final ExecutionGoal executionGoal;
   private final SqrlTableFactory tableFactory;
+  private final PackageJson packageJson;
 
   private final SqlNameUtil nameUtil;
   private final ConnectorFactoryFactory connectorFactoryFactory;
+  private final LogManager logManager;
 
   private final CreateTableResolver createTableResolver;
   private final Map<SqlNode, Object> schemaTable = new HashMap<>();
@@ -219,38 +225,61 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
   public Void visit(SqrlExportDefinition node, Void context) {
     NamePath sinkPath = nameUtil.toNamePath(node.getSinkPath().names);
 
-    // Resolve through connector factory or module loader
-    Optional<TableSink> sink = connectorFactoryFactory.create(null, sinkPath.getFirst().getCanonical())
-        .map(t->t.createSourceAndSink(new ConnectorFactoryContext(sinkPath.getLast(),
-            Map.of("name", sinkPath.getLast().getDisplay()))))
-        .map(t->TableSinkImpl.create(t, sinkPath, Optional.empty()))
-        .or(()->moduleLoader.getModule(sinkPath.popLast())
-            .flatMap(m -> m.getNamespaceObject(sinkPath.getLast()))
-            .filter(t->t instanceof TableSinkObject)
-            .map(t->((TableSinkObject) t).getSink()));
-
-    if (sink.isEmpty()) {
-      addError(ErrorCode.CANNOT_RESOLVE_TABLESINK, node, "Cannot resolve table sink: %s",
-          nameUtil.toNamePath(node.getSinkPath().names).getDisplay());
-      return null;
-    }
-
     NamePath path = nameUtil.toNamePath(node.getIdentifier().names);
 
     QueryPlanner planner = framework.getQueryPlanner();
     Optional<RelOptTable> table = planner.getCatalogReader().getTableFromPath(path);
     Preconditions.checkState(table.isPresent(), "Could not find export table: %s", path.getDisplay());
-    ResolvedExport resolvedExport = exportTable(table.get().unwrap(ModifiableTable.class), sink.get(), planner.getRelBuilder(), true);
+    ModifiableTable modTable = table.get().unwrap(ModifiableTable.class);
+
+    int numSelects = modTable.getNumSelects();
+    RelNode exportRelNode = planner.getRelBuilder().scan(modTable.getNameId()).build();
+
+    Optional<SystemBuiltInConnectors> builtInSink = SystemBuiltInConnectors.forExport(sinkPath.popLast());
+    TableSink tableSink = null;
+    if (builtInSink.isPresent()) {
+      SystemBuiltInConnectors connector = builtInSink.get();
+      if (connector == SystemBuiltInConnectors.LOGGER) {
+        String logger = packageJson.getCompilerConfig().getLogger();
+        if (logger.equalsIgnoreCase("none")) {
+          return null;
+        } else if (logger.equalsIgnoreCase("print")) {
+          connector = SystemBuiltInConnectors.PRINT_SINK;
+        } else {
+          if (!logger.equalsIgnoreCase(logManager.getEngineName())) {
+            throw new IllegalStateException(String.format("The configured log engine is '%s'"
+                    + " while 'compiler.logger' is set to '%s'. Please change the logger to"
+                    + " the desired engine.",
+                logManager.getEngineName(), logger));
+          }
+          Log sinkLog = logManager.create(modTable.getNameId(), sinkPath.getLast(),
+              exportRelNode.getRowType(), List.of(), LogFactory.Timestamp.NONE);
+          tableSink = sinkLog.getSink();
+        }
+      }
+      if (tableSink == null) {
+        //Create the export for the built-in connector
+        tableSink = connectorFactoryFactory.create(connector)
+            .map(t -> t.createSourceAndSink(new ConnectorFactoryContext(sinkPath.getLast(),
+                Map.of("id", modTable.getNameId(),
+                    "name", sinkPath.getLast().getDisplay()))))
+            .map(t -> TableSinkImpl.create(t, sinkPath.popLast(), Optional.empty())).get();
+      }
+    } else {
+      Optional<TableSink> externalSink = moduleLoader.getModule(sinkPath.popLast())
+          .flatMap(m -> m.getNamespaceObject(sinkPath.getLast()))
+          .filter(t -> t instanceof TableSinkObject)
+          .map(t -> ((TableSinkObject) t).getSink());
+      if (externalSink.isEmpty()) {
+        addError(ErrorCode.CANNOT_RESOLVE_TABLESINK, node, "Cannot resolve table sink: %s",
+            nameUtil.toNamePath(node.getSinkPath().names).getDisplay());
+        return null;
+      }
+      tableSink = externalSink.get();
+    }
+    ResolvedExport resolvedExport = new ResolvedExport(modTable.getNameId(), exportRelNode, numSelects, tableSink);
     framework.getSchema().add(resolvedExport);
-
     return null;
-  }
-
-  public static ResolvedExport exportTable(ModifiableTable table, TableSink sink, RelBuilder relBuilder, boolean selectedFieldsOnly) {
-    RelNode export = relBuilder.scan(table.getNameId())
-        .build();
-    int numSelects = selectedFieldsOnly?table.getNumSelects():table.getNumColumns();
-    return new ResolvedExport(table.getNameId(), export, numSelects, sink);
   }
 
   @Override

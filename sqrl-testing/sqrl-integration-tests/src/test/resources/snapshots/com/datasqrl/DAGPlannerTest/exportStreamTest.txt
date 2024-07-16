@@ -32,7 +32,7 @@ LogicalProject(id=[$0], name=[$6], _time=[$2], _lastUpdated=[$7])
     LogicalTableScan(table=[[orders_2]])
     LogicalTableScan(table=[[customer_2]])
 
-=== print.CountStream.CountStream
+=== print.CountStream
 ID:     joinstream_1_1
 Type:   export
 Stage:  streams

@@ -49,6 +49,8 @@ public interface PackageJson {
     void setSnapshotPath(String string);
 
     boolean isAddArguments();
+
+    String getLogger();
   }
 
   interface ExplainConfig {
@@ -125,4 +127,5 @@ public interface PackageJson {
 
     ErrorCollector getErrors();
   }
+
 }

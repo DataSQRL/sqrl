@@ -85,9 +85,9 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
   protected abstract JdbcDialect getDialect();
 
   @Override
-  public EnginePhysicalPlan plan(StagePlan plan,
-      List<StageSink> inputs, ExecutionPipeline pipeline, SqrlFramework framework,
-      ErrorCollector errorCollector) {
+  public EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs,
+      ExecutionPipeline pipeline, SqrlFramework framework, ErrorCollector errorCollector) {
+
     Preconditions.checkArgument(plan instanceof DatabaseStagePlan);
     DatabaseStagePlan dbPlan = (DatabaseStagePlan) plan;
     JdbcDDLFactory factory =

@@ -25,11 +25,17 @@ public class UseCasesIT {
     execute("repository", "repo.sqrl", "repo.graphqls");
   }
 
+  @Test
+  public void testLoggingToKafka() {
+    execute("logging/it-kafka", "logging-kafka.sqrl", "logging-kafka.graphqls");
+  }
+
   protected void execute(String path, String script, String graphql) {
     execute(path, script, graphql, null);
   }
 
   protected void execute(String path, String script, String graphql, String testSuffix) {
+    Path rootDir = RESOURCES.resolve(path);
     List<String> argsList = new ArrayList<>();
     argsList.add("test");
     argsList.add(script);
@@ -39,18 +45,18 @@ public class UseCasesIT {
       argsList.add("--tests"); argsList.add("tests-"+testSuffix);
     }
     argsList.add("--profile");
-    argsList.add("../../../../../../../profiles/default");
-    execute(RESOURCES.resolve(path),
-        AssertStatusHook.INSTANCE, argsList.toArray(String[]::new));
+    argsList.add(getProjectRoot(rootDir).resolve("profiles/default").toString());
+    execute(rootDir, AssertStatusHook.INSTANCE, argsList.toArray(String[]::new));
   }
 
   protected void compile(String path, String script, String graphql) {
+    Path rootDir = RESOURCES.resolve(path);
     List<String> argsList = new ArrayList<>();
     argsList.add("compile");
     argsList.add(script);
     if (!Strings.isNullOrEmpty(graphql)) argsList.add(graphql);
     argsList.add("--profile");
-    argsList.add("../../../../../../../profiles/default");
+    argsList.add(getProjectRoot(rootDir).resolve("profiles/default").toString());
     execute(RESOURCES.resolve(path),
         AssertStatusHook.INSTANCE, argsList.toArray(a->new String[a]));
   }
@@ -62,5 +68,14 @@ public class UseCasesIT {
       fail();
     }
     return exitCode;
+  }
+
+  private Path getProjectRoot(Path script) {
+    Path currentPath = script.toAbsolutePath();
+    while (!currentPath.getFileName().toString().equals("sqrl-testing")) {
+      currentPath = currentPath.getParent();
+    }
+
+    return currentPath.getParent();
   }
 }

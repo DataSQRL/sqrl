@@ -21,6 +21,11 @@ public class CompilerConfigImpl implements PackageJson.CompilerConfig {
         .getOptional().orElse(true);
   }
 
+  @Override
+  public String getLogger() {
+    return sqrlConfig.hasKey("logger") ? sqrlConfig.asString("logger").get() : "print";
+  }
+
   public ExplainConfigImpl getExplain() {
     return new ExplainConfigImpl(sqrlConfig.getSubConfig("explain"));
   }

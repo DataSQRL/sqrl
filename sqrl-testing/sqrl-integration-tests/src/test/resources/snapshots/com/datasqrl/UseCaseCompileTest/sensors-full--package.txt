@@ -23,7 +23,7 @@ LogicalProject(machineid=[$5], sensorid=[$0], temp=[$2], timeSec=[$1])
       LogicalProject(id=[$0], machineId=[$1], placed=[$2], timestamp=[$3], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $3 DESC NULLS LAST)])
         LogicalTableScan(table=[[sensors_3]])
 
-=== print.tempWarning.tempWarning
+=== print.tempWarning
 ID:     hightemp_1_1
 Type:   export
 Stage:  streams

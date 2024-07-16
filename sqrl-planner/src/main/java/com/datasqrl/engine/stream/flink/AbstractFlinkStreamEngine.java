@@ -49,9 +49,9 @@ public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base imp
   }
 
   @Override
-  public FlinkStreamPhysicalPlan plan(StagePlan stagePlan,
-      List<StageSink> inputs, ExecutionPipeline pipeline, SqrlFramework framework,
-      ErrorCollector errorCollector) {
+  public FlinkStreamPhysicalPlan plan(StagePlan stagePlan, List<StageSink> inputs,
+      ExecutionPipeline pipeline, SqrlFramework framework, ErrorCollector errorCollector) {
+
     Preconditions.checkArgument(inputs.isEmpty());
     Preconditions.checkArgument(stagePlan instanceof StreamStagePlan);
     StreamStagePlan plan = (StreamStagePlan) stagePlan;
