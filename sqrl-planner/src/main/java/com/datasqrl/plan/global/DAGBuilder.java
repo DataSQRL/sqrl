@@ -49,7 +49,7 @@ public class DAGBuilder {
   private ErrorCollector errors;
 
   public SqrlDAG build(Collection<AnalyzedAPIQuery> queries,
-      Collection<ResolvedExport> exports) {
+      Collection<AnalyzedExport> exports) {
     Map<PhysicalRelationalTable, TableNode> table2Node = new HashMap<>();
     Multimap<SqrlNode, SqrlNode> dagInputs = HashMultimap.create();
     //1. Add all queries as sinks
@@ -66,7 +66,7 @@ public class DAGBuilder {
         EngineFeature.EXPORT)).collect(Collectors.toList());
     errors.checkFatal(!exportStages.isEmpty(), "Configured Pipeline does not include "
         + "any stages that support export: %s",pipeline);
-    for (ResolvedExport export : exports) {
+    for (AnalyzedExport export : exports) {
       String name = Name.addSuffix(export.getTable(), String.valueOf(numExports++));
       add2DAG(export.getRelNode(), getExportBaseConfig(), exportStages, dagInputs,
           stageAnalysis -> new ExportNode(stageAnalysis, export, name), table2Node);

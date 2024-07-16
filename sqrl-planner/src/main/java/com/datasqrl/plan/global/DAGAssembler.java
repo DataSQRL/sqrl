@@ -3,23 +3,23 @@ package com.datasqrl.plan.global;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.engine.database.DatabaseEngine;
+import com.datasqrl.engine.log.Log;
+import com.datasqrl.engine.log.LogManager;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.io.tables.TableType;
 import com.datasqrl.plan.RelStageRunner;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
+import com.datasqrl.plan.global.PhysicalDAGPlan.WriteSink;
 import com.datasqrl.plan.global.SqrlDAG.ExportNode;
 import com.datasqrl.plan.hints.TimestampHint;
 import com.datasqrl.plan.local.generate.QueryTableFunction;
-import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.plan.rules.AnnotatedLP;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.rules.SqrlConverterConfig;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
-import com.datasqrl.plan.table.PhysicalTable;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.calcite.SqrlRexUtil;
 import com.google.common.base.Preconditions;
@@ -48,8 +48,8 @@ public class DAGAssembler {
   private final SqrlFramework framework;
   private final SQRLConverter sqrlConverter;
   private final ExecutionPipeline pipeline;
+  private final LogManager logManager;
   private final ErrorCollector errors;
-  private final APIConnectorManager apiManager;
 
   public PhysicalDAGPlan assemble(SqrlDAG dag, Set<URL> jars, Map<String, UserDefinedFunction> udfs) {
     //We make the assumption that there is a single stream stage
@@ -128,20 +128,24 @@ public class DAGAssembler {
       databasePlans.add(new PhysicalDAGPlan.DatabaseStagePlan(database, databaseQueries, indexDefinitions));
     }
 
+    List<Log> exportLogs = new ArrayList<>();
+
     //Add exported tables
     dag.allNodesByClass(ExportNode.class).forEach(exportNode -> {
       Preconditions.checkArgument(exportNode.getChosenStage().equals(streamStage));
-      ResolvedExport export = exportNode.getExport();
+      AnalyzedExport export = exportNode.getExport();
       RelNode processedRelnode = produceWriteTree(export.getRelNode(),
           getExportBaseConfig().withStage(exportNode.getChosenStage()), errors);
       //Pick only the selected keys
       RelBuilder relBuilder1 = sqrlConverter.getRelBuilder().push(processedRelnode);
-      Preconditions.checkArgument(relBuilder1.peek().getRowType().getFieldCount()>=export.getNumSelects());
-      relBuilder1.project(CalciteUtil.getIdentityRex(relBuilder1, export.getNumSelects()));
+      if (export.getNumSelects().isPresent()) {
+        int numFields2Select = export.getNumSelects().getAsInt();
+        Preconditions.checkArgument(relBuilder1.peek().getRowType().getFieldCount()>=numFields2Select);
+        relBuilder1.project(CalciteUtil.getIdentityRex(relBuilder1, numFields2Select));
+      }
       processedRelnode = relBuilder1.build();
-      streamQueries.add(new PhysicalDAGPlan.WriteQuery(
-          new PhysicalDAGPlan.ExternalSink(exportNode.getUniqueId(), export.getSink()),
-          processedRelnode));
+      WriteSink sink = new PhysicalDAGPlan.ExternalSink(exportNode.getUniqueId(), export.getSink());
+      streamQueries.add(new PhysicalDAGPlan.WriteQuery(sink, processedRelnode));
     });
     //Add debugging output
 //    AtomicInteger debugCounter = new AtomicInteger(0);
@@ -172,10 +176,17 @@ public class DAGAssembler {
       allPlans.add(serverPlan);
     }
     Optional<ExecutionStage> logStage = pipeline.getStage(Type.LOG).map(e->e.get(0));
+    Map<String, Log> logs = logManager.getLogs();
     if (logStage.isPresent()) {
+      List<Log> sortedLogs = logs.entrySet().stream()
+          .sorted(Map.Entry.comparingByKey())
+          .map(Map.Entry::getValue)
+          .collect(Collectors.toList());
       PhysicalDAGPlan.StagePlan logPlan = new PhysicalDAGPlan.LogStagePlan(
-          logStage.get(), apiManager.getLogs());
+          logStage.get(), sortedLogs);
       allPlans.add(logPlan);
+    } else if (!logs.isEmpty()) {
+      throw new IllegalStateException("Should not have logs when no log engine is present");
     }
 
     return new PhysicalDAGPlan(allPlans, pipeline);

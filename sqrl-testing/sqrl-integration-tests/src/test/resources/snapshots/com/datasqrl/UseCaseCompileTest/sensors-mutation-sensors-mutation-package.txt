@@ -15,7 +15,7 @@ Plan:
 LogicalFilter(condition=[>($1, 50)])
   LogicalTableScan(table=[[sensorreading_2]])
 
-=== HighTempAlert.HighTempAlert
+=== kafka.HighTempAlert
 ID:     hightempalert_1_1
 Type:   export
 Stage:  streams

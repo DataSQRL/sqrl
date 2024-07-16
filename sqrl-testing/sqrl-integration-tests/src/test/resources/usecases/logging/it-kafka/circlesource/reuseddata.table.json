@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "flink" : {
+    "connector" : "kafka",
+    "topic": "data_2",
+    "properties.bootstrap.servers": "kafka:9092",
+    "scan.startup.mode": "earliest-offset",
+    "format" : "flexible-json"
+  },
+  "table" : {
+    "type" : "source",
+    "primary-key" : ["id"],
+    "timestamp" : "timestamp",
+    "watermark-millis" : "1"
+  }
+}

@@ -5,6 +5,8 @@ import static com.datasqrl.canonicalizer.Name.HIDDEN_PREFIX;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.config.PackageJson;
+import com.datasqrl.engine.log.LogManager;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.module.SqrlModule;
@@ -27,6 +29,8 @@ public class ScriptSqrlModule implements SqrlModule {
   private final ModuleLoader moduleLoader;
   private final String script;
   private Optional<SqrlSchema> schema;
+  private PackageJson sqrlConfig;
+  private LogManager logManager;
 
   private final AtomicBoolean planned = new AtomicBoolean(false);
 
@@ -53,8 +57,8 @@ public class ScriptSqrlModule implements SqrlModule {
         framework.getHintStrategyTable(), framework.getNameCanonicalizer(), schema,
         Optional.of(framework.getQueryPlanner()));
     ScriptPlanner newPlanner = new ScriptPlanner(newFramework, moduleLoader, errors,
-        planner.getExecutionGoal(), planner.getTableFactory(), planner.getNameUtil(),
-        planner.getConnectorFactoryFactory(), planner.getCreateTableResolver());
+        planner.getExecutionGoal(), planner.getTableFactory(), sqrlConfig, planner.getNameUtil(),
+        planner.getConnectorFactoryFactory(), logManager, planner.getCreateTableResolver());
 
     newPlanner.plan(
         new MainScript() {

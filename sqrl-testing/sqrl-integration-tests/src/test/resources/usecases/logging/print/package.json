@@ -1,0 +1,10 @@
+{
+  "version": "1",
+  "enabled-engines": ["kafka", "flink"],
+  "compiler": {
+    "logger": "print"
+  },
+  "script": {
+    "main": "logging-print.sqrl"
+  }
+}

@@ -36,7 +36,7 @@ LogicalProject(id=[$3], customer_id=[$4], loan_type_id=[$5], max_amount=[$8], mi
   LogicalFilter(condition=[AND(=($0, 'underwriting'), OR(>($6, $8), <($6, $9)))])
     LogicalTableScan(table=[[applicationstatus_1]])
 
-=== ApplicationAlert.ApplicationAlert
+=== kafka.ApplicationAlert
 ID:     applicationalert_1_1
 Type:   export
 Stage:  streams
@@ -304,14 +304,14 @@ LogicalProject(__pk1_id=[$0], loan_type_id=[$1], total_amount=[$2], total_loans=
       "config" : { }
     },
     {
-      "name" : "loan-applicationupdates",
+      "name" : "loan-addchatmessage",
       "numPartitions" : 1,
       "replicationFactor" : 1,
       "replicasAssignments" : { },
       "config" : { }
     },
     {
-      "name" : "loan-addchatmessage",
+      "name" : "loan-applicationupdates",
       "numPartitions" : 1,
       "replicationFactor" : 1,
       "replicasAssignments" : { },
