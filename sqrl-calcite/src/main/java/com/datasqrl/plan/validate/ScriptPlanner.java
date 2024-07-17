@@ -159,7 +159,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     map.put("primary-key", List.of("_uuid"));
     map.put("timestamp-type", "LOG_TIME");
     map.put("timestamp-name", "event_time");
-    map.put("name", logId);
+    map.put("topic", logId);
 
     Optional<TableConfig> sink = connectorFactoryFactory.create(Type.LOG, "kafka")
         .map(t->t.createSourceAndSink(new ConnectorFactoryContext(logId, map)));

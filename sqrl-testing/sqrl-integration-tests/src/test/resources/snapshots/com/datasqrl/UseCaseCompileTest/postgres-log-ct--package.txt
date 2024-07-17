@@ -1,0 +1,41 @@
+>>>pipeline_explain.txt
+=== Event
+ID:     event_2
+Type:   stream
+Stage:  streams
+Primary Key: _uuid
+Timestamp  : event_time
+Schema:
+ - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - ID: INTEGER
+ - TYPE: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - event_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Plan:
+LogicalTableScan(table=[[event_1]], hints=[[[WatermarkHint inheritPath:[] options:[3]]]]) hints[WatermarkHint options:[3]]
+
+=== logger.LogEvent
+ID:     event_2_1
+Type:   export
+Stage:  streams
+Inputs: event_2
+
+>>>flink.json
+{
+  "flinkSql" : [
+    "CREATE TEMPORARY TABLE `event_1` (\n  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `ID` INTEGER,\n  `TYPE` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL METADATA FROM 'timestamp',\n  WATERMARK FOR `event_time` AS (`event_time` - INTERVAL '0.0' SECOND)\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'Event',\n  'scan.startup.mode' = 'group-offsets'\n);",
+    "CREATE TEMPORARY TABLE `event_2_1` (\n  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `ID` INTEGER,\n  `TYPE` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n) WITH (\n  'connector' = 'print',\n  'print-identifier' = 'LogEvent'\n);",
+    "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `event_1`;",
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `event_2_1`\n(SELECT *\nFROM `table$1`)\n;\nEND;"
+  ],
+  "connectors" : [
+    "print",
+    "kafka"
+  ],
+  "formats" : [
+    "flexible-json"
+  ]
+}
+>>>postgres-log.json
+{
+  "ddl" : [ ]
+}

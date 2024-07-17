@@ -1,0 +1,6 @@
+CREATE TABLE Event (
+    ID INT,
+    TYPE VARCHAR(255)
+);
+
+EXPORT Event TO logger.LogEvent;
