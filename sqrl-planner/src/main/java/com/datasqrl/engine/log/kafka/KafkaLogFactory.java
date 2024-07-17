@@ -20,8 +20,6 @@ import org.apache.kafka.common.internals.Topic;
 
 @AllArgsConstructor
 public class KafkaLogFactory implements LogFactory {
-  public static final char[] REPLACE_CHARS = {'$'};
-  public static final char REPLACE_WITH = '-';
 
   ConnectorFactory connectorFactory;
 
@@ -29,27 +27,17 @@ public class KafkaLogFactory implements LogFactory {
   public Log create(String logId, Name logName, RelDataType schema, List<String> primaryKey,
       Timestamp timestamp) {
 
-    String topicName = sanitizeName(logId);
-    Preconditions.checkArgument(Topic.isValid(topicName), "Not a valid topic name: %s", topicName);
-    IConnectorFactoryContext connectorContext = createSinkContext(logName, topicName, timestamp.getName(),
+    Preconditions.checkArgument(Topic.isValid(logId), "Not a valid topic name: %s", logId);
+    IConnectorFactoryContext connectorContext = createSinkContext(logName, logId, timestamp.getName(),
         timestamp.getType().name(), primaryKey);
-    TableConfig logConfig = connectorFactory
-        .createSourceAndSink(connectorContext);
+    TableConfig logConfig = connectorFactory.createSourceAndSink(connectorContext);
     Optional<TableSchema> tblSchema = Optional.of(new RelDataTypeTableSchema(schema));
-    return new KafkaTopic(topicName, logName, logConfig, tblSchema, connectorContext);
+    return new KafkaTopic(logId, logName, logConfig, tblSchema, connectorContext);
   }
 
   @Override
   public String getEngineName() {
     return KafkaLogEngineFactory.ENGINE_NAME;
-  }
-
-  static String sanitizeName(String logId) {
-    String sanitizedName = logId;
-    for (char invalidChar : REPLACE_CHARS) {
-      sanitizedName = sanitizedName.replace(invalidChar, REPLACE_WITH);
-    }
-    return sanitizedName;
   }
 
   private IConnectorFactoryContext createSinkContext(Name name, String topicName,
