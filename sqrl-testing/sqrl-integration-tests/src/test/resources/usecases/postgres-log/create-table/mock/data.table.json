@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "flink" : {
+    "connector" : "datagen",
+    "number-of-rows": "10",
+    "fields.id.kind": "sequence",
+    "fields.id.start": "0",
+    "fields.id.end": "9",
+    "fields.epoch_timestamp.kind": "sequence",
+    "fields.epoch_timestamp.start": "1719318565",
+    "fields.epoch_timestamp.end": "1719319565",
+    "fields.some_value.kind": "random"
+  },
+  "table" : {
+    "type" : "source",
+    "primary-key" : ["id"],
+    "timestamp" : "timestamp",
+    "watermark-millis" : "1"
+  },
+  "metadata" : {
+    "timestamp" : {
+      "attribute" : "time.epochMilliToTimestamp(epoch_timestamp)"
+    }
+  }
+}

@@ -254,6 +254,9 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
               exportRelNode.getRowType(), List.of(), LogFactory.Timestamp.NONE);
           tableSink = sinkLog.getSink();
         }
+      } else if (connector == SystemBuiltInConnectors.LOG_ENGINE) {
+        Log sinkLog = logManager.getLogs().get(sinkPath.getLast().getDisplay());
+        tableSink = sinkLog.getSink();
       }
       if (tableSink == null) {
         //Create the export for the built-in connector
