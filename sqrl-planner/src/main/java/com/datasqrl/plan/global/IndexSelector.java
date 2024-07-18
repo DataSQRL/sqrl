@@ -11,9 +11,11 @@ import com.datasqrl.plan.global.QueryIndexSummary.IndexableFunctionCall;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.util.ArrayUtil;
 import com.datasqrl.calcite.SqrlRexUtil;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.primitives.Ints;
+import java.util.function.Function;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.adapter.enumerable.EnumerableFilter;
 import org.apache.calcite.adapter.enumerable.EnumerableNestedLoopJoin;
@@ -83,7 +85,7 @@ public class IndexSelector {
       Map<IndexDefinition, Double> indexes = new HashMap<>();
       for (int colIndex : indexedColumns) {
         indexes.put(new IndexDefinition(table.getNameId(), List.of(colIndex),
-            table.getRowType().getFieldNames(), genericType), 0.0);
+            table.getRowType().getFieldNames(), -1, genericType), 0.0);
       }
       indexedFunctions.stream().map(fcall -> getIndexDefinition(fcall, table)).flatMap(Optional::stream)
           .forEach(idxDef -> indexes.put(idxDef, Double.NaN));
@@ -97,26 +99,35 @@ public class IndexSelector {
     Optional<IndexType> specialType = config.getPreferredSpecialIndexType(fcall.getFunction()
         .getSupportedIndexes());
     return specialType.map(idxType -> new IndexDefinition(table.getNameId(), fcall.getColumnIndexes(),
-        table.getRowType().getFieldNames(), idxType));
+        table.getRowType().getFieldNames(), -1, idxType));
   }
 
   private Map<IndexDefinition, Double> optimizeIndexesWithCostMinimization(
       PhysicalRelationalTable table,
       Collection<QueryIndexSummary> indexes) {
     Map<IndexDefinition, Double> optIndexes = new HashMap<>();
-    //The baseline cost is the cost of doing the lookup with the primary key index
-    Map<QueryIndexSummary, Double> currentCost = new HashMap<>();
-    IndexDefinition pkIdx = IndexDefinition.getPrimaryKeyIndex(table.getNameId(),
-        table.getPrimaryKey().asList(), table.getRowType().getFieldNames());
-    for (QueryIndexSummary idx : indexes) {
-      currentCost.put(idx, idx.getCost(pkIdx));
-    }
-    //Determine which index candidates reduce the cost the most
+    //Determine all index candidates
     Set<IndexDefinition> candidates = new LinkedHashSet<>();
     indexes.forEach(idx -> candidates.addAll(generateIndexCandidates(idx)));
-    candidates.remove(pkIdx);
+    Function<QueryIndexSummary, Double> initialCost = idx -> idx.getBaseCost();
+    if (config.hasPrimaryKeyIndex()) {
+      //The baseline cost is the cost of doing the lookup with the primary key index
+      IndexDefinition pkIdx = IndexDefinition.getPrimaryKeyIndex(table.getNameId(),
+          table.getPrimaryKey().asList(), table.getRowType().getFieldNames());
+      initialCost = idx -> idx.getCost(pkIdx);
+      candidates.remove(pkIdx);
+    }
+    //Set initial costs
+    Map<QueryIndexSummary, Double> currentCost = new HashMap<>();
+    for (QueryIndexSummary idx : indexes) {
+      currentCost.put(idx, initialCost.apply(idx));
+    }
+    //Determine which index candidates reduce the cost the most
     double beforeTotal = total(currentCost);
     for (; ; ) {
+      if (optIndexes.size() >= config.maxIndexes()) {
+        break;
+      }
       IndexDefinition bestCandidate = null;
       Map<QueryIndexSummary, Double> bestCosts = null;
       double bestTotal = Double.POSITIVE_INFINITY;
@@ -194,6 +205,7 @@ public class IndexSelector {
           }
           break;
         case BTREE:
+        case PBTREE:
           maxIndexCols = Math.min(maxIndexCols + (inequality.isEmpty() ? 0 : 1),
               config.maxIndexColumns(indexType));
           if (maxIndexCols>0) {
@@ -210,9 +222,19 @@ public class IndexSelector {
         default:
           throw new IllegalStateException(indexType.name());
       }
-      colPermutations.forEach(
-          cols -> result.add(new IndexDefinition(queryIndexSummary.getTable().getNameId(), cols,
-              queryIndexSummary.getTable().getRowType().getFieldNames(), indexType)));
+      if (indexType.isPartitioned()) {
+        colPermutations.forEach( cols -> {
+          for (int i = 0; i <= cols.size(); i++) {
+            result.add(new IndexDefinition(queryIndexSummary.getTable().getNameId(), cols,
+                queryIndexSummary.getTable().getRowType().getFieldNames(), i, indexType));
+          }
+
+            });
+      } else {
+        colPermutations.forEach(
+            cols -> result.add(new IndexDefinition(queryIndexSummary.getTable().getNameId(), cols,
+                queryIndexSummary.getTable().getRowType().getFieldNames(), -1, indexType)));
+      }
     }
     return result;
   }

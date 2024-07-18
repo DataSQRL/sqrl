@@ -117,7 +117,7 @@ public class QueryIndexSummary {
           break; //we have broken the equality chain of this index
         }
       }
-      if (i < indexDef.getColumns().size() && indexDef.getType().requiresAllColumns()) {
+      if (i < indexDef.numEqualityColumnsRequired()) {
         //This index requires a constraint on all columns to be invocable
         coveredConjunction = EMPTY;
       } else {
@@ -130,8 +130,7 @@ public class QueryIndexSummary {
       for (IndexableFunctionCall fcall : this.functionCalls) {
         IndexableFunction function = fcall.getFunction();
         if (function.getSupportedIndexes().contains(indexType) &&
-            indexCols.containsAll(fcall.getColumnIndexes()) && (
-                !indexType.requiresAllColumns() || indexCols.size()==fcall.getColumnIndexes().size())) {
+            indexCols.containsAll(fcall.getColumnIndexes())) {
           coveredCalls.add(fcall);
         }
       }
@@ -142,6 +141,10 @@ public class QueryIndexSummary {
       }
     }
     return SqrlRelMdRowCount.getRowCount(table, coveredConjunction);
+  }
+
+  public double getBaseCost() {
+    return SqrlRelMdRowCount.getRowCount(table, EMPTY);
   }
 
   @Override

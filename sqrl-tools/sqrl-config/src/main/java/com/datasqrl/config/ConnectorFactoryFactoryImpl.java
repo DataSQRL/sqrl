@@ -56,6 +56,8 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
         return connectorConfig.map(this::createKafkaConnectorFactory);
       } else if (engineType.equals(Type.DATABASE)) {
         return connectorConfig.map(this::createJdbcConnectorFactory);
+      } else if (connectorName.equalsIgnoreCase("iceberg")) {
+        return connectorConfig.map(this::createIceberg);
       } else {
         throw new IllegalArgumentException("Unable to create connectorConfig for engineType=" + engineType.name());
       }
@@ -63,7 +65,6 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
 
     throw new RuntimeException("Connector not supported: " + connectorName);
   }
-
 
   @Override
   public ConnectorConf getConfig(String name) {

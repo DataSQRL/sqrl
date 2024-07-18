@@ -9,6 +9,7 @@ import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.config.TableConfig;
 import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.ExecutionEngine;
+import com.datasqrl.engine.database.AnalyticDatabaseEngine;
 import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.database.QueryEngine;
 import com.datasqrl.plan.global.IndexSelectorConfig;
@@ -34,7 +35,7 @@ import org.apache.flink.table.functions.FunctionDefinition;
  * a) the DDL for importing the Iceberg table from the catalog and b) the queries translated to that engine.
  */
 public abstract class AbstractJDBCTableFormatEngine extends AbstractJDBCEngine implements
-    DatabaseEngine {
+    DatabaseEngine, AnalyticDatabaseEngine {
 
   @Getter
   final EngineConfig connectorConfig;

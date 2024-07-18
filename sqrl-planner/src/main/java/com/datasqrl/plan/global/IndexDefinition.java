@@ -4,6 +4,7 @@
 package com.datasqrl.plan.global;
 
 import com.datasqrl.function.IndexType;
+import com.google.common.base.Preconditions;
 import lombok.Value;
 
 import java.util.List;
@@ -17,12 +18,16 @@ public class IndexDefinition implements Comparable<IndexDefinition> {
   String tableId;
   List<Integer> columns;
   List<String> columnNames;
+  int partitionOffset;
   IndexType type;
 
   public IndexDefinition(String tableId, List<Integer> columns, List<String> allFieldNames,
-      IndexType type) {
+      int partitionOffset, IndexType type) {
+    Preconditions.checkArgument(type.isPartitioned() ^ partitionOffset < 0, "Index must be partitioned XOR partition offset must be negative: %s | %s", type, partitionOffset);
+    Preconditions.checkArgument(partitionOffset<=columns.size(), "Invalid partition offset: %s | %s", partitionOffset, columns.size());
     this.tableId = tableId;
     this.columns = columns;
+    this.partitionOffset = partitionOffset;
     this.columnNames = columns.stream().map(allFieldNames::get)
         .collect(Collectors.toList());
     this.type = type;
@@ -36,7 +41,13 @@ public class IndexDefinition implements Comparable<IndexDefinition> {
   public static IndexDefinition getPrimaryKeyIndex(String tableId, List<Integer> primaryKeys,
       List<String> fieldNames) {
     return new IndexDefinition(tableId, primaryKeys,
-        fieldNames, IndexType.BTREE);
+        fieldNames, -1, IndexType.BTREE);
+  }
+
+  public int numEqualityColumnsRequired() {
+    if (type.requiresAllColumns()) return columns.size();
+    if (type.isPartitioned()) return partitionOffset;
+    return 0;
   }
 
   @Override
