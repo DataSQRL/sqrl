@@ -61,12 +61,29 @@ public class PhysicalDAGPlan {
 
     @NonNull
     ExecutionStage stage;
+    /**
+     * A list of all query sinks for this stage (in no particular order)
+     */
     @NonNull
     List<? extends Query> queries;
+    /**
+     * A list of all the tables that are defined in the stream stage
+     * in DAG order (i.e. from source to sink)
+     */
+    @NonNull
+    List<TableDefinition> tableDefinitions;
 
     Set<URL> jars;
 
     Map<String, UserDefinedFunction> udfs;
+
+    @Value
+    public static class TableDefinition {
+
+      String tableId;
+      RelNode relNode;
+
+    }
 
   }
 
@@ -115,6 +132,13 @@ public class PhysicalDAGPlan {
   public static class WriteQuery implements Query {
 
     final WriteSink sink;
+    /**
+     * This is the expanded Relnode for the query all the way to the sources.
+     */
+    final RelNode expandedRelNode;
+    /**
+     * This is the Relnode for this query only.
+     */
     final RelNode relNode;
     public <R, C> R accept(QueryVisitor<R, C> visitor, C context) {
       return visitor.accept(this, context);

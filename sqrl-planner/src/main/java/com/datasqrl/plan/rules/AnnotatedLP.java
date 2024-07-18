@@ -368,7 +368,7 @@ public class AnnotatedLP implements RelHolder {
     }
 
 
-   relBuilder.push(input.relNode);
+    relBuilder.push(input.relNode);
 
     Function<Integer,RelDataTypeField> getField = i -> relBuilder.peek().getRowType().getFieldList().get(i);
     Function<Integer,String> getFieldName = i -> getField.apply(i).getName();
@@ -398,7 +398,16 @@ public class AnnotatedLP implements RelHolder {
     }
     //Add any primary key columns not already added and select the best one in case of duplicates
     PrimaryKeyMap primaryKey;
-    if (!input.primaryKey.isUndefined()) {
+    if (config.primaryKeyNames!=null) {
+      //The user is manually overwriting the primary key.
+      List<Integer> chosenPks = new ArrayList<>();
+      for (String pkName : config.primaryKeyNames) {
+        OptionalInt pkIndex = IntStream.range(0, projectNames.size()).filter(i -> projectNames.get(i).equalsIgnoreCase(pkName)).findFirst();
+        errors.checkFatal(pkIndex.isPresent(), "Primary key column %s not found in query", pkName);
+        chosenPks.add(pkIndex.getAsInt());
+      }
+      primaryKey = PrimaryKeyMap.of(chosenPks);
+    } else if (!input.primaryKey.isUndefined()) {
       List<Integer> chosenPks = new ArrayList<>();
       for (int i = 0; i < input.primaryKey.getLength(); i++) {
         PrimaryKeyMap.ColumnSet columnSet = input.primaryKey.get(i);

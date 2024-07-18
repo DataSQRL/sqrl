@@ -32,7 +32,7 @@ public class ExtractUniqueSourceVisitor extends RelVisitor {
 
   public Map<String, ImportedRelationalTable> extract(List<WriteQuery> queries) {
     for (WriteQuery query : queries) {
-      extractFrom(query.getRelNode());
+      extractFrom(query.getExpandedRelNode());
     }
 
     return getTableMap();

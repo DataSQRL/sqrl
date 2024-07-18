@@ -35,7 +35,6 @@ import com.datasqrl.plan.global.PhysicalDAGPlan.WriteSink;
 import com.datasqrl.plan.table.ImportedRelationalTable;
 import com.datasqrl.sql.SqlCallRewriter;
 import com.google.common.base.Preconditions;
-import io.vertx.sqlclient.SqlResult;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -77,7 +76,6 @@ import org.apache.flink.sql.parser.ddl.SqlCreateTable;
 import org.apache.flink.sql.parser.ddl.SqlCreateView;
 import org.apache.flink.sql.parser.ddl.SqlTableColumn;
 import org.apache.flink.sql.parser.ddl.SqlTableOption;
-import org.apache.flink.sql.parser.ddl.SqlUseCatalog;
 import org.apache.flink.sql.parser.ddl.SqlWatermark;
 import org.apache.flink.sql.parser.ddl.constraint.SqlConstraintEnforcement;
 import org.apache.flink.sql.parser.ddl.constraint.SqlTableConstraint;
@@ -110,7 +108,7 @@ public class SqrlToFlinkSqlGenerator {
 
     for (WriteQuery query : writeQueries) {
       RelNode relNode = applyDowncasting(framework.getQueryPlanner().getRelBuilder(),
-          query.getRelNode(), query.getSink(), downcastClassNames);
+          query.getExpandedRelNode(), query.getSink(), downcastClassNames);
       Pair<List<SqlCreateView>, RichSqlInsert> result = process(query.getSink().getName(), relNode);
       SqlCreateTable sqlCreateTable = registerSinkTable(query.getSink(), relNode);
       sinksAndSources.add(sqlCreateTable);
@@ -561,20 +559,22 @@ public class SqrlToFlinkSqlGenerator {
   }
 
   private WriteQuery applyFlinkCompatibilityRules(WriteQuery query) {
-    RelNode relNode = query.getRelNode();
+    return new WriteQuery(query.getSink(),
+        applyFlinkCompatibilityRules(query.getExpandedRelNode()),
+        applyFlinkCompatibilityRules(query.getRelNode()));
+  }
 
+  private RelNode applyFlinkCompatibilityRules(RelNode relNode) {
     Program program = Programs.hep(List.of(PushDownWatermarkHintConfig.DEFAULT.toRule(),
             PushWatermarkHintToTableScanConfig.DEFAULT.toRule(), new ExpandTemporalJoinRule(),
             ExpandWindowHintRuleConfig.DEFAULT.toRule(),
             ShapeBushyCorrelateJoinRuleConfig.DEFAULT.toRule(),
             ExpandNestedTableFunctionRuleConfig.DEFAULT.toRule()
 
-            ), false,
+        ), false,
         FlinkDefaultRelMetadataProvider.INSTANCE());
 
-    relNode = program.run(null, relNode, query.getRelNode().getTraitSet(), List.of(), List.of());
-
-    return new WriteQuery(query.getSink(), relNode);
+    return program.run(null, relNode, relNode.getTraitSet(), List.of(), List.of());
   }
 
   private void checkPreconditions(List<? extends Query> queries) {
