@@ -11,7 +11,6 @@ import com.datasqrl.calcite.QueryPlanner;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.SqrlTableFactory;
 import com.datasqrl.calcite.SqrlToSql;
-import com.datasqrl.calcite.TimestampAssignableTable;
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlJoinBuilder;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
@@ -29,8 +28,9 @@ import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SystemBuiltInConnectors;
 import com.datasqrl.engine.log.Log;
 import com.datasqrl.engine.log.LogFactory;
+import com.datasqrl.engine.log.LogFactory.Timestamp;
+import com.datasqrl.engine.log.LogFactory.TimestampType;
 import com.datasqrl.engine.log.LogManager;
-import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.config.TableConfig;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCode;
@@ -78,8 +78,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.runtime.CalciteContextException;
 import org.apache.calcite.schema.Function;
@@ -155,23 +155,6 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     NamePath namePath = NamePath.of(statement.getName().names.toArray(String[]::new));
     String logId = statement.getName().names.get(0);
 
-    Map map = new HashMap();
-    map.put("primary-key", List.of("_uuid"));
-    map.put("timestamp-type", "LOG_TIME");
-    map.put("timestamp-name", "event_time");
-    map.put("topic", logId);
-
-    Optional<TableConfig> sink = connectorFactoryFactory.create(Type.LOG, "kafka")
-        .map(t->t.createSourceAndSink(new ConnectorFactoryContext(logId, map)));
-
-    if (sink.isEmpty()) {
-      addError(ErrorCode.CANNOT_RESOLVE_TABLESINK, statement, "Cannot resolve log: %s",
-          logId);
-      return null;
-    }
-
-    TableConfig tableConfig = sink.get();
-    this.framework.getSchema().add(new ResolvedImport(logId, tableConfig));
     TypeFactory typeFactory = TypeFactory.getTypeFactory();
     RelDataTypeBuilder fieldBuilder = CalciteUtil.getRelTypeBuilder(typeFactory);
     fieldBuilder.add(Name.system("_uuid"), typeFactory.createSqlType(SqlTypeName.VARCHAR));
@@ -181,9 +164,24 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
           SqlDataTypeSpecBuilder.create(definition.getType(), typeFactory));
     }
 
+    RelDataType relDataType = fieldBuilder.build();
+
+    Log sinkLog = logManager.create(logId, namePath.getLast(),
+        relDataType, List.of("_uuid"), new Timestamp("event_time", TimestampType.LOG_TIME));
+
+    // TODO: do we really need this?
+    if (sinkLog == null) {
+      addError(ErrorCode.CANNOT_RESOLVE_TABLESINK, statement, "Cannot resolve log: %s",
+          logId);
+      return null;
+    }
+
+    TableConfig tableConfig = sinkLog.getSource().getConfiguration();
+    this.framework.getSchema().add(new ResolvedImport(logId, tableConfig));
+
     NamespaceObject namespaceObject = createTableResolver.create(
         new TableSource(tableConfig, namePath, namePath.getLast(),
-            new RelDataTypeTableSchema(fieldBuilder.build())));
+            new RelDataTypeTableSchema(relDataType)));
     namespaceObject.apply(this, Optional.empty(), framework, errorCollector);
     return null;
   }

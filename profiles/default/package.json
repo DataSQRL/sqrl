@@ -26,7 +26,8 @@
           "table-name": "${sqrl:table}",
           "slot.name": "flink_slot",
           "decoding.plugin.name": "pgoutput",
-          "debezium.slot.drop_on_stop": "false"
+          "debezium.slot.drop_on_stop": "false",
+          "format" : "flexible-json"
         },
         "postgres-log-sink": {
           "connector": "jdbc",
@@ -34,7 +35,8 @@
           "driver": "org.postgresql.Driver",
           "username": "${JDBC_USERNAME}",
           "url": "${JDBC_URL}",
-          "table-name": "${sqrl:table}"
+          "table-name": "${sqrl:table}",
+          "format" : "flexible-json"
         },
         "kafka": {
           "connector" : "kafka",

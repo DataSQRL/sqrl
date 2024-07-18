@@ -22,14 +22,14 @@ Inputs: event_2
 >>>flink.json
 {
   "flinkSql" : [
-    "CREATE TEMPORARY TABLE `event_1` (\n  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `ID` INTEGER,\n  `TYPE` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL METADATA FROM 'timestamp',\n  WATERMARK FOR `event_time` AS (`event_time` - INTERVAL '0.0' SECOND)\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'Event',\n  'scan.startup.mode' = 'group-offsets'\n);",
+    "CREATE TEMPORARY TABLE `event_1` (\n  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `ID` INTEGER,\n  `TYPE` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL METADATA FROM 'timestamp',\n  PRIMARY KEY (`_uuid`) NOT ENFORCED,\n  WATERMARK FOR `event_time` AS (`event_time` - INTERVAL '0.0' SECOND)\n) WITH (\n  'slot.name' = 'flink_slot',\n  'format' = 'flexible-json',\n  'hostname' = 'database',\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'postgres-cdc',\n  'port' = '5432',\n  'database-name' = 'datasqrl',\n  'schema-name' = 'public',\n  'decoding.plugin.name' = 'pgoutput',\n  'table-name' = 'Event',\n  'debezium.slot.drop_on_stop' = 'false',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `event_2_1` (\n  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `ID` INTEGER,\n  `TYPE` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n) WITH (\n  'connector' = 'print',\n  'print-identifier' = 'LogEvent'\n);",
     "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `event_1`;",
     "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `event_2_1`\n(SELECT *\nFROM `table$1`)\n;\nEND;"
   ],
   "connectors" : [
     "print",
-    "kafka"
+    "postgres-cdc"
   ],
   "formats" : [
     "flexible-json"
@@ -37,5 +37,21 @@ Inputs: event_2
 }
 >>>postgres-log.json
 {
-  "ddl" : [ ]
+  "ddl" : [
+    {
+      "name" : "Event",
+      "columns" : [
+        "\"_uuid\" TEXT NOT NULL",
+        "\"ID\" INTEGER ",
+        "\"TYPE\" TEXT "
+      ],
+      "primaryKeys" : [ ],
+      "sql" : "CREATE TABLE IF NOT EXISTS Event (\"_uuid\" TEXT NOT NULL,\"ID\" INTEGER ,\"TYPE\" TEXT  );"
+    },
+    {
+      "tableName" : "Event",
+      "primaryKey" : "_uuid",
+      "sql" : "CREATE OR REPLACE FUNCTION notify_on_Event_insert()\nRETURNS TRIGGER AS $$\nBEGIN\n   PERFORM pg_notify('Event_notify', NEW._uuid::text);\n   RETURN NEW;\nEND;\n$$ LANGUAGE plpgsql;\n\nCREATE TRIGGER insert_notify_trigger\nAFTER INSERT ON Event\nFOR EACH ROW EXECUTE PROCEDURE notify_on_Event_insert();"
+    }
+  ]
 }

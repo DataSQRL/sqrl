@@ -58,7 +58,7 @@ public class PostgresLogEngine extends ExecutionEngine.Base implements LogEngine
 
   @Override
   public EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs, ExecutionPipeline pipeline,
-      SqrlFramework relBuilder, ErrorCollector errorCollector) {
+      SqrlFramework framework, ErrorCollector errorCollector) {
 
     Preconditions.checkArgument(plan instanceof LogStagePlan);
 
