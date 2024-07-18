@@ -41,7 +41,7 @@ columns:
 {
   "flink" : {
     "format" : "flexible-json",
-    "path" : "/${DATA_PATH}/products.jsonl",
+    "path" : "${DATA_PATH}/products.jsonl",
     "source.monitor-interval" : 1,
     "connector" : "filesystem"
   },

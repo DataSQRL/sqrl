@@ -116,7 +116,7 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
 
       ConnectorConfImpl engineConfig = (ConnectorConfImpl) connectorConf;
       builder.copyConnectorConfig(engineConfig);
-      builder.getConnectorConfig().setProperty("path", "/${DATA_PATH}/" + filename);
+      builder.getConnectorConfig().setProperty("path", "${DATA_PATH}/" + filename);
       builder.getConnectorConfig().setProperty("format", format);
 
       return builder.build();

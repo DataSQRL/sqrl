@@ -32,6 +32,7 @@ import com.datasqrl.plan.global.PhysicalDAGPlan.ExternalSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.Query;
 import com.datasqrl.plan.global.PhysicalDAGPlan.WriteQuery;
 import com.datasqrl.plan.global.PhysicalDAGPlan.WriteSink;
+import com.datasqrl.plan.table.Deduplication;
 import com.datasqrl.plan.table.ImportedRelationalTable;
 import com.datasqrl.sql.SqlCallRewriter;
 import com.google.common.base.Preconditions;
@@ -89,6 +90,12 @@ import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction;
 import org.apache.flink.table.planner.plan.metadata.FlinkDefaultRelMetadataProvider;
 import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
+/**
+ * Flow chart for downcasting:
+ *
+ *
+ *
+ */
 @Getter
 @AllArgsConstructor
 public class SqrlToFlinkSqlGenerator {
@@ -264,6 +271,10 @@ public class SqrlToFlinkSqlGenerator {
 //
 //      return conversionClasses.contains(relDataType.getRawType().getOriginatingClass());
   }
+
+//  private boolean engineSupportsType(ExecutionEngine executionEngine, RelDataType type) {
+//    return executionEngine.supports(type);
+//  }
 
   private Optional<ExecutionEngine> getEngine(WriteSink sink) {
      if (sink instanceof EngineSink) {

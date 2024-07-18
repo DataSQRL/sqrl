@@ -6,5 +6,7 @@ MyIcebergTable := SELECT * FROM _applications;
 
 SnowflakeQuery(@customerId: BIGINT) := SELECT * FROM MyIcebergTable WHERE customer_id = @customerId;
 
+MyJsonTable := SELECT toJson('{}') AS myJson FROM applications;
+
 /*+exec(iceberg)*/
-MySnowflakeTable := SELECT toJson('{}') AS json FROM applications;
+MySnowflakeTable := SELECT myJson, toJson('{"x":1}') AS json FROM MyJsonTable;

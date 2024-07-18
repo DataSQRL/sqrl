@@ -16,10 +16,19 @@ import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
 import com.datasqrl.util.StreamUtil;
 import com.google.common.collect.Iterables;
+import com.datasqrl.function.DowncastFunction;
+import com.datasqrl.functions.json.JsonDowncastFunction;
+import com.datasqrl.functions.vector.VectorDowncastFunction;
+import com.datasqrl.json.FlinkJsonType;
+import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
+import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
+import com.datasqrl.vector.FlinkVectorType;
 import com.google.inject.Inject;
 import java.util.List;
 import java.util.Optional;
 import lombok.NonNull;
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 public class IcebergEngine extends AbstractJDBCTableFormatEngine {
 
@@ -69,4 +78,19 @@ public class IcebergEngine extends AbstractJDBCTableFormatEngine {
     //nothing needs to be created for aws-glue
     return new IcebergPlan(enginePlan);
   }
+
+  @Override
+  public Optional<DowncastFunction> getSinkTypeCastFunction(RelDataType type) {
+    // Convert sqrl native raw types to strings
+    if (type instanceof RawRelDataType) {
+      if ((((RawRelDataType)type).getRawType().getDefaultConversion() == FlinkJsonType.class)) {
+        return Optional.of(new JsonDowncastFunction());
+      } else if ((((RawRelDataType)type).getRawType().getDefaultConversion() == FlinkVectorType.class)) {
+        return Optional.of(new VectorDowncastFunction());
+      }
+    }
+
+    return Optional.empty();
+  }
+
 }

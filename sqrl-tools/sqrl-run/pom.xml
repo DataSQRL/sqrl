@@ -81,6 +81,10 @@
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-flexible-csv</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-json</artifactId>
     </dependency>
     <dependency>

@@ -1,9 +1,10 @@
 {
   "version": 1,
   "flink" : {
-    "format" : "csv",
-    "path" : "/data/sensorreading.csv.gz",
-    "connector" : "filesystem"
+    "format" : "flexible-csv",
+    "path" : "${DATA_PATH}/sensorreading.csv.gz",
+    "connector" : "filesystem",
+    "flexible-csv.skip-header": true
   },
   "table" : {
     "type" : "source",

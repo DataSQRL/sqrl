@@ -89,7 +89,7 @@ public class DatasqrlRun {
         "JDBC_USERNAME","postgres",
         "JDBC_PASSWORD","postgres",
         //todo target?
-        "DATA_DIR",Path.of(System.getProperty("user.dir")).resolve("build/deploy/flink/data").toString(),
+        "DATA_PATH",Path.of(System.getProperty("user.dir")).resolve("build/deploy/flink/data").toString(),
         "PGHOST","localhost",
         "PGUSER","postgres",
         "PGPASSWORD","postgres",

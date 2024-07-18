@@ -209,6 +209,11 @@
         <artifactId>sqrl-flexible-json</artifactId>
         <version>${project.version}</version>
       </dependency>
+      <dependency>
+        <groupId>com.datasqrl</groupId>
+        <artifactId>sqrl-flexible-csv</artifactId>
+        <version>${project.version}</version>
+      </dependency>
       <!-- tests -->
       <dependency>
         <groupId>com.datasqrl</groupId>

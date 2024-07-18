@@ -25,7 +25,7 @@ columns:
 {
   "flink" : {
     "format" : "csv",
-    "path" : "/${DATA_PATH}/sensorreading.csv.gz",
+    "path" : "${DATA_PATH}/sensorreading.csv.gz",
     "source.monitor-interval" : 1,
     "connector" : "filesystem"
   },
