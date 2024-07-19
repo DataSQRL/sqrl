@@ -6,12 +6,13 @@ Stage:  streams
 Primary Key: id
 Timestamp  : timestamp
 Schema:
+ - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - id: BIGINT NOT NULL
  - epoch_timestamp: BIGINT NOT NULL
  - some_value: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalTableScan(table=[[data_1]], hints=[[[WatermarkHint inheritPath:[] options:[3]]]]) hints[WatermarkHint options:[3]]
+LogicalTableScan(table=[[data_1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
 === Event.Event
 ID:     data_2_1
@@ -35,7 +36,7 @@ Schema:
 Plan:
 LogicalTableScan(table=[[event_1]], hints=[[[WatermarkHint inheritPath:[] options:[5]]]]) hints[WatermarkHint options:[5]]
 
-=== logger.LogEvent
+=== print.LogEvent
 ID:     event_2_2
 Type:   export
 Stage:  streams
@@ -45,9 +46,9 @@ Inputs: event_2
 {
   "flinkSql" : [
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochmillitotimestamp` AS 'com.datasqrl.time.EpochMilliToTimestamp' LANGUAGE JAVA;",
-    "CREATE TEMPORARY TABLE `event_1` (\n  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `ID` INTEGER,\n  `EPOCH_TIMESTAMP` INTEGER,\n  `SOME_VALUE` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `TIMESTAMP` TIMESTAMP(6),\n  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL METADATA FROM 'timestamp',\n  PRIMARY KEY (`_uuid`) NOT ENFORCED,\n  WATERMARK FOR `event_time` AS (`event_time` - INTERVAL '0.0' SECOND)\n) WITH (\n  'slot.name' = 'flink_slot',\n  'format' = 'flexible-json',\n  'hostname' = 'database',\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'postgres-cdc',\n  'port' = '5432',\n  'database-name' = 'datasqrl',\n  'schema-name' = 'public',\n  'decoding.plugin.name' = 'pgoutput',\n  'table-name' = 'Event',\n  'debezium.slot.drop_on_stop' = 'false',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `data_1` (\n  `id` BIGINT NOT NULL,\n  `epoch_timestamp` BIGINT NOT NULL,\n  `some_value` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `timestamp` AS EPOCHMILLITOTIMESTAMP(`epoch_timestamp`),\n  PRIMARY KEY (`id`) NOT ENFORCED,\n  WATERMARK FOR `timestamp` AS (`timestamp` - INTERVAL '0.001' SECOND)\n) WITH (\n  'fields.id.end' = '9',\n  'fields.epoch_timestamp.kind' = 'sequence',\n  'number-of-rows' = '10',\n  'connector' = 'datagen',\n  'fields.epoch_timestamp.end' = '1719319565',\n  'fields.some_value.kind' = 'random',\n  'fields.id.kind' = 'sequence',\n  'fields.id.start' = '0',\n  'fields.epoch_timestamp.start' = '1719318565'\n);",
-    "CREATE TEMPORARY TABLE `data_2_1` (\n  `id` BIGINT NOT NULL,\n  `epoch_timestamp` BIGINT NOT NULL,\n  `some_value` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`_uuid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc',\n  'driver' = 'org.postgresql.Driver',\n  'format' = 'flexible-json',\n  'table-name' = 'Event',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `event_1` (\n  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `ID` INTEGER,\n  `EPOCH_TIMESTAMP` INTEGER,\n  `SOME_VALUE` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `TIMESTAMP` TIMESTAMP(6),\n  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL METADATA FROM 'timestamp',\n  PRIMARY KEY (`_uuid`) NOT ENFORCED,\n  WATERMARK FOR `event_time` AS (`event_time` - INTERVAL '0.0' SECOND)\n) WITH (\n  'hostname' = 'postgres_log',\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'postgres-cdc',\n  'port' = '5432',\n  'slot.name' = 'flink_slot',\n  'database-name' = 'datasqrl',\n  'schema-name' = 'public',\n  'decoding.plugin.name' = 'pgoutput',\n  'table-name' = 'Event',\n  'debezium.slot.drop_on_stop' = 'false',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `data_1` (\n  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `id` BIGINT NOT NULL,\n  `epoch_timestamp` BIGINT NOT NULL,\n  `some_value` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `timestamp` AS EPOCHMILLITOTIMESTAMP(`epoch_timestamp`),\n  PRIMARY KEY (`id`) NOT ENFORCED,\n  WATERMARK FOR `timestamp` AS (`timestamp` - INTERVAL '0.001' SECOND)\n) WITH (\n  'fields.id.end' = '9',\n  'fields.epoch_timestamp.kind' = 'sequence',\n  'number-of-rows' = '10',\n  'connector' = 'datagen',\n  'fields.epoch_timestamp.end' = '1719319565000',\n  'fields.some_value.kind' = 'random',\n  'fields._uuid.kind' = 'random',\n  'fields.id.kind' = 'sequence',\n  'fields.id.start' = '0',\n  'fields.epoch_timestamp.start' = '1719318565000'\n);",
+    "CREATE TEMPORARY TABLE `data_2_1` (\n  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `id` BIGINT NOT NULL,\n  `epoch_timestamp` BIGINT NOT NULL,\n  `some_value` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`_uuid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'Event',\n  'url' = '${POSTGRES_LOG_JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `event_2_2` (\n  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `ID` INTEGER,\n  `EPOCH_TIMESTAMP` INTEGER,\n  `SOME_VALUE` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `TIMESTAMP` TIMESTAMP(6),\n  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n) WITH (\n  'connector' = 'print',\n  'print-identifier' = 'LogEvent'\n);",
     "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `data_1`;",
     "CREATE VIEW `table$2`\nAS\nSELECT *\nFROM `event_1`;",
@@ -59,11 +60,9 @@ Inputs: event_2
     "jdbc",
     "postgres-cdc"
   ],
-  "formats" : [
-    "flexible-json"
-  ]
+  "formats" : [ ]
 }
->>>postgres-log.json
+>>>postgres_log.json
 {
   "ddl" : [
     {

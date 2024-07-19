@@ -7,7 +7,7 @@ import com.google.auto.service.AutoService;
 @AutoService(EngineFactory.class)
 public class PostgresLogEngineFactory implements EngineFactory {
 
-  public static final String ENGINE_NAME = "postgres-log";
+  public static final String ENGINE_NAME = "postgres_log";
 
   @Override
   public String getEngineName() {

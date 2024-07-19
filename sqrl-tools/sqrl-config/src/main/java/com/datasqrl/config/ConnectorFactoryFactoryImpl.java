@@ -51,7 +51,7 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
     // end
 
     Optional<ConnectorConf> connectorConfig = getConnectorConfig(connectorName);
-    if (connectorName.equals("postgres-log-source") || connectorName.equals("postgres-log-sink")) {
+    if (connectorName.equals("postgres_log-source") || connectorName.equals("postgres_log-sink")) {
       return connectorConfig.map(this::createPostgresLogConnectorFactory);
     }
 

@@ -1,6 +1,6 @@
 {
   "version": "1",
-  "enabled-engines": ["postgres-log", "flink"],
+  "enabled-engines": ["postgres_log", "flink"],
   "script": {
     "main": "postgres-log-ct.sqrl"
   },

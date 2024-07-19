@@ -2,9 +2,6 @@
   "version": "1",
   "enabled-engines": ["vertx", "postgres", "kafka", "flink"],
   "engines" : {
-    "postgres-log": {
-
-    },
     "flink" : {
       "connectors": {
         "postgres": {
@@ -15,10 +12,10 @@
           "url": "${JDBC_URL}",
           "table-name": "${sqrl:table}"
         },
-        "postgres-log-source": {
+        "postgres_log-source": {
           "connector": "postgres-cdc",
-          "hostname": "database",
-          "port": "5433",
+          "hostname": "postgres_log",
+          "port": "5432",
           "username": "${JDBC_USERNAME}",
           "password": "${JDBC_PASSWORD}",
           "database-name": "datasqrl",
@@ -26,17 +23,15 @@
           "table-name": "${sqrl:table}",
           "slot.name": "flink_slot",
           "decoding.plugin.name": "pgoutput",
-          "debezium.slot.drop_on_stop": "false",
-          "format" : "flexible-json"
+          "debezium.slot.drop_on_stop": "false"
         },
-        "postgres-log-sink": {
+        "postgres_log-sink": {
           "connector": "jdbc",
           "password": "${JDBC_PASSWORD}",
           "driver": "org.postgresql.Driver",
           "username": "${JDBC_USERNAME}",
           "url": "${POSTGRES_LOG_JDBC_URL}",
-          "table-name": "${sqrl:table}",
-          "format" : "flexible-json"
+          "table-name": "${sqrl:table}"
         },
         "kafka": {
           "connector" : "kafka",

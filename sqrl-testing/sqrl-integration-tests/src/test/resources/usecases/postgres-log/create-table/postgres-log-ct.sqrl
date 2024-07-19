@@ -9,4 +9,4 @@ CREATE TABLE Event (
 
 EXPORT Data TO log.Event;
 
-EXPORT Event TO logger.LogEvent;
+EXPORT Event TO print.LogEvent;

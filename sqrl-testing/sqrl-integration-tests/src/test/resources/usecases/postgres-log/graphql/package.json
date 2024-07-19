@@ -1,4 +1,4 @@
 {
   "version": "1",
-  "enabled-engines": ["vertx", "postgres", "postgres-log", "flink"]
+  "enabled-engines": ["vertx", "postgres", "postgres_log", "flink"]
 }

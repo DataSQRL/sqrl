@@ -1,10 +1,10 @@
 version: "3.8"
 services:
-  postgres-log:
+  postgres_log:
     build:
-      context: postgres
+      context: postgres_log
       dockerfile: Dockerfile
     ports:
-      - '5433:5432'
+      - '5432:5432'
     env_file:
       - ".env"
