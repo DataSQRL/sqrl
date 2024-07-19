@@ -18,7 +18,7 @@
         "postgres-log-source": {
           "connector": "postgres-cdc",
           "hostname": "database",
-          "port": "5432",
+          "port": "5433",
           "username": "${JDBC_USERNAME}",
           "password": "${JDBC_PASSWORD}",
           "database-name": "datasqrl",
@@ -34,7 +34,7 @@
           "password": "${JDBC_PASSWORD}",
           "driver": "org.postgresql.Driver",
           "username": "${JDBC_USERNAME}",
-          "url": "${JDBC_URL}",
+          "url": "${POSTGRES_LOG_JDBC_URL}",
           "table-name": "${sqrl:table}",
           "format" : "flexible-json"
         },

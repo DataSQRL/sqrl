@@ -53,6 +53,10 @@ services:
       database:
         condition: service_started
 </#if>
+<#if config["enabled-engines"]?seq_contains("postgres-log")>
+      postgres-log:
+        condition: service_started
+</#if>
     environment:
       - |
         FLINK_PROPERTIES=
@@ -64,3 +68,6 @@ services:
       - JDBC_USERNAME=postgres
       - JDBC_PASSWORD=postgres
       - DATA_PATH=/data
+<#if config["enabled-engines"]?seq_contains("postgres-log")>
+      - POSTGRES_LOG_JDBC_URL=jdbc:postgresql://database:5433/datasqrl
+</#if>
