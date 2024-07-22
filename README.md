@@ -28,7 +28,7 @@ DataSQRL includes a number of convenience features:
 
 ## Why DataSQRL?
 
-Data engineers spend a lot of time cobbling various tools and technologies together and maintaining all that data plumbing. And then spend more time to make sure the result performs well, scales, is robust, and observable. We are building a framework to do that for you. Our goal is to automate the data engineering busywork, so it's easier to implement, test, debug, observe, deploy, and maintain data products. 
+Data engineers spend a lot of time cobbling various tools and technologies together and maintaining all that data plumbing. And then spend more time to make sure the result performs well, scales, is robust, and observable. We are building a framework to do that for you. Like a web development framework but for data. Our goal is to automate the data engineering busywork, so it's easier to implement, test, debug, observe, deploy, and maintain data products. 
 
 ## Getting Started
 
@@ -80,6 +80,8 @@ DataSQRL extends ANSI SQL with some convenience features for data development:
 We call the result "SQRL" - it's SQL with some add-ons to make stream processing easier in SQL and give it the convenience of a development language. To get started, you can treat it as "just SQL" and make use of the additional features as you need them.
 
 DataSQRL compiles SQRL into a data processing DAG (directed acyclic graph) and links the source/sink definitions into the graph for the respective IMPORT/EXPORT statements. Data sources and sinks are resolved through a dependency manager and can be defined locally or retrieved from a repository.
+
+<!-- show dag visualization -->
 
 DataSQRL cuts the DAG into segments that get executed by the configured engines.DataSQRL uses a cost-based optimizer to cut the DAG or you can control what gets executed where through hints in the SQL script.
 
