@@ -14,7 +14,9 @@ DataSQRL integrates any combination of the following technologies:
 
 You define the data processing in SQL (with support for custom functions in Java, Scala and soon Python) and DataSQRL generates the glue code, schemas, and mappings to automatically connect and configure these components into a data pipeline or microservice. DataSQRL also generates Docker Compose templates for local execution or deployment to Kubernetes or cloud-managed services.
 
-<!-- gif showing use cases -->
+![DataSQRL Example Use Cases](docs/img/datasqrl_use_cases.gif)
+
+
 ## DataSQRL Features
 
 * 🔗 **System Integration:** Combine various data technologies into efficient data pipelines and microservices.
