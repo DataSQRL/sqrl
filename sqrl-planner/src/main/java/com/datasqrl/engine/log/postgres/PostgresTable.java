@@ -8,6 +8,7 @@ import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.io.tables.TableSinkImpl;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.plan.table.RelDataTypeTableSchema;
+import java.util.List;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -21,6 +22,7 @@ public class PostgresTable implements Log {
   TableConfig sourceConfig;
   TableConfig sinkConfig;
   RelDataTypeTableSchema tableSchema;
+  List<String> primaryKeys;
   IConnectorFactoryContext connectorContext;
 
   @Override

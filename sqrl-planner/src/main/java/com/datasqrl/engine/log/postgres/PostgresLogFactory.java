@@ -30,7 +30,7 @@ public class PostgresLogFactory implements LogFactory {
     TableConfig sourceConfig = sourceConnectorFactory.createSourceAndSink(connectorContext);
     TableConfig sinkConfig = sinkConnectorFactory.createSourceAndSink(connectorContext);
     RelDataTypeTableSchema tblSchema = new RelDataTypeTableSchema(schema);
-    return new PostgresTable(tableName, logName, sourceConfig, sinkConfig, tblSchema, connectorContext);
+    return new PostgresTable(tableName, logName, sourceConfig, sinkConfig, tblSchema, primaryKey, connectorContext);
   }
 
   @Override

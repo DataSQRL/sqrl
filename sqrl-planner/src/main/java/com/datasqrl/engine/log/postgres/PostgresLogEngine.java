@@ -75,8 +75,8 @@ public class PostgresLogEngine extends ExecutionEngine.Base implements LogEngine
       PostgresTable pgTable = (PostgresTable) log;
       String topicName = pgTable.getTopicName();
       RelDataType dataType = pgTable.getTableSchema().getRelDataType();
-      ddlStatements.add(postgresDDLFactory.createTable(topicName, dataType.getFieldList(), "_uuid"));
-      ddlStatements.add(postgresDDLFactory.createNotify(topicName, "_uuid"));
+      ddlStatements.add(postgresDDLFactory.createTable(topicName, dataType.getFieldList(), pgTable.getPrimaryKeys()));
+      ddlStatements.add(postgresDDLFactory.createNotify(topicName, pgTable.getPrimaryKeys()));
     }
 
     return new PostgresPhysicalPlan(ddlStatements);

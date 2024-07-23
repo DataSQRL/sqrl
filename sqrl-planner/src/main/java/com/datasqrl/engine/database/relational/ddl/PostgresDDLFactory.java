@@ -50,12 +50,12 @@ public class PostgresDDLFactory implements JdbcDDLFactory {
     return new CreateTableDDL(table.getNameId(), columns, pk);
   }
 
-  public CreateTableDDL createTable(String name, List<RelDataTypeField> fields, String primaryKey) {
+  public CreateTableDDL createTable(String name, List<RelDataTypeField> fields, List<String> primaryKeys) {
     List<String> columns = fields.stream()
         .map(PostgresDDLFactory::toSql)
         .collect(Collectors.toList());
 
-    return new CreateTableDDL(name, columns, Collections.singletonList(primaryKey));
+    return new CreateTableDDL(name, columns, primaryKeys);
   }
 
   public static String toSql(RelDataTypeField field) {
@@ -85,8 +85,8 @@ public class PostgresDDLFactory implements JdbcDDLFactory {
     return new CreateIndexDDL(index.getName(), index.getTableId(), columns, index.getType());
   }
 
-  public CreateNotifyTriggerDDL createNotify(String name, String pk) {
-    return new CreateNotifyTriggerDDL(name, pk);
+  public CreateNotifyTriggerDDL createNotify(String name, List<String> primaryKeys) {
+    return new CreateNotifyTriggerDDL(name, primaryKeys);
   }
 
   public static List<String> quoteIdentifier(List<String> columns) {
