@@ -1,6 +1,6 @@
 # DataSQRL
 
-DataSQRL is a flexible data development framework for building data pipelines, event-driven microservices, and other types of data products. It provides the basic structure, common patterns, and a set of tools for streamlining the development process. 
+DataSQRL is a flexible data development framework for building various types of data architectures, like data pipelines, event-driven microservices, and Kappa. It provides the basic structure, common patterns, and a set of tools for streamlining the development process. 
 
 DataSQRL integrates any combination of the following technologies:
 * **Apache Flink:** a distributed and stateful stream processing engine.
@@ -12,7 +12,7 @@ DataSQRL integrates any combination of the following technologies:
 * **Yugabyte:** a distributed open-source relational database.
 * **Vert.x:** a reactive server framework for building data APIs.
 
-You define the data processing in SQL (with support for custom functions in Java, Scala and soon Python) and DataSQRL generates the glue code, schemas, and mappings to automatically connect and configure these components into a data pipeline or microservice. DataSQRL also generates Docker Compose templates for local execution or deployment to Kubernetes or cloud-managed services.
+You define the data processing in SQL (with support for custom functions in Java, Scala and soon Python) and DataSQRL generates the glue code, schemas, and mappings to automatically connect and configure these components into a coherent data architecture. DataSQRL also generates Docker Compose templates for local execution or deployment to Kubernetes or cloud-managed services.
 
 [<img src="docs/img/datasqrl_use_cases.png">](docs/img/datasqrl_use_cases.png)
 
@@ -20,17 +20,18 @@ Some of the data architectures you can build with DataSQRL. Click to enlarge.
 
 ## DataSQRL Features
 
-* 🔗 **System Integration:** Combine various data technologies into efficient data pipelines and microservices.
+* 🔗 **System Integration:** Combine various data technologies into streamlined data architectures.
 * ☯️ **Declarative + Imperative:** Define the data flow in SQL and specific data transformations in Java, Scala, or soon Python.
-* 🧪 **Testing Framework:** Automated snapshot testing
-* 🔄 **Data Flow Optimization:** Optimize data flow between systems through data mapping, partitioning, and indexing.
-* 📦 **Dependency management:** for data sources and sinks with versioning and repository.
+* 🧪 **Testing Framework:** Automated snapshot testing.
+* 🔄 **Data Flow Optimization:** Optimize data flow between systems through data mapping, partitioning, and indexing for scalability and performance.
+* ✔️ **Consistent:** Ensure at-least or exactly-once data processing for consistent results.
+* 📦 **Dependency management:** Manage data sources and sinks with versioning and repository.
 * 📊 **GraphQL Schema Generator:** Expose processed data through a GraphQL API with subscription support for headless data services. (REST coming soon)
 * 🤖 **Integrated AI:** Support for vector data type, vector embeddings, LLM invocation, and ML model inference.
 * { } **JSON Support:** Native JSON data type and JSON schema discovery.
-* 🔍 **Visualization Tools:** for introspection and optimization of data pipeline/microservice. 
-* 🪵 **Logging framework:** for observability and debugging
-* 🚀 **Deployment Profiles:** to automate the deployment of data pipelines and microservices through configuration.
+* 🔍 **Visualization Tools:** Inspect and debug data architectures visually.
+* 🪵 **Logging framework:** for observability and debugging.
+* 🚀 **Deployment Profiles:** Automate the deployment of data architectures through configuration.
 
 ## Why DataSQRL?
 
@@ -40,7 +41,7 @@ Our goal is to eliminate the data engineering busywork, so you can focus on buil
 
 ## Getting Started
 
-Let's create a data pipeline that ingests, aggregates, stores temperature readings, and queries them through an API.
+Let's create a data architecture that ingests, aggregates, stores temperature readings, and queries them through an API.
 
 1. Create a file `metrics.sqrl` and add the following content:
 
@@ -67,7 +68,7 @@ docker run -it -rm -v $PWD:/build datasqrl/cmd compile metrics.sqrl
 ``` 
 (Use `${PWD}` in Powershell on Windows).
 
-3. Stand up the data pipeline with Docker Compose:
+3. Stand up the data architecture with Docker Compose:
 ```bash
 (cd build/deploy; docker compose up --build)
 ``` 
@@ -75,9 +76,9 @@ docker run -it -rm -v $PWD:/build datasqrl/cmd compile metrics.sqrl
    * Open [http://localhost:8888/graphiql/](http://localhost:8888/graphiql/) in your browser.
    * Run GraphQL queries against the API.
 
-Once you are done, terminate the pipeline with `CTRL-C` and take it down with `(cd build/deploy; docker compose down -v)`.
+Once you are done, terminate the system with `CTRL-C` and take it down with `(cd build/deploy; docker compose down -v)`.
 
-5. Test the data pipeline:
+5. Test the data architecture:
 ```bash
 docker run -it -rm -v $PWD:/build datasqrl/cmd test metrics.sqrl
 ```
@@ -99,7 +100,7 @@ DataSQRL extends ANSI SQL with additional features designed for data development
 
 ![Example Data Processing DAG](docs/img/dag_example.png)
 
-DataSQRL translates these SQL scripts into a data processing DAG (Directed Acyclic Graph) as visualized above, linking source and sink definitions. The cost-based optimizer cuts the DAG into segments executed by different engines (e.g. Flink, Kafka, Postgres, Vert.x), generating the necessary physical plans, schemas, and connectors for a fully integrated data pipeline or microservice. This "plan" can be instantiated by deployment profiles, such as Docker Compose templates for local execution. 
+DataSQRL translates these SQL scripts into a data processing DAG (Directed Acyclic Graph) as visualized above, linking source and sink definitions. The cost-based optimizer cuts the DAG into segments executed by different engines (e.g. Flink, Kafka, Postgres, Vert.x), generating the necessary physical plans, schemas, and connectors for a fully integrated and streamlined data architecture. This "plan" can be instantiated by deployment profiles, such as Docker Compose templates for local execution. 
 
 Check out the [documentation](https://www.datasqrl.com/docs/intro/) for more information.
 
