@@ -78,9 +78,9 @@ docker run -it -rm -v $PWD:/build datasqrl/cmd compile metrics.sqrl
 
 Once you are done, terminate the system with `CTRL-C` and take it down with `(cd build/deploy; docker compose down -v)`.
 
-5. Test the data architecture:
+5. Test the data architecture (currently requires a homebrew install of DataSQRL via `brew tap datasqrl/sqrl; brew install sqrl-cli`):
 ```bash
-docker run -it -rm -v $PWD:/build datasqrl/cmd test metrics.sqrl
+sqrl test metrics.sqrl
 ```
 
 This example uses the default engines, default configuration, and generated GraphQL schema. You can configure and change all of those to fit your needs. 
