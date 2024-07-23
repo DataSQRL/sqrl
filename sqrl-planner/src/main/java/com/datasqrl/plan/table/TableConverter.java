@@ -126,8 +126,9 @@ public class TableConverter {
 
 
     Preconditions.checkState(baseTblConfig.getTimestampColumn().isPresent(), "timestamp column missing");
-    if (!nameAdjuster.contains(baseTblConfig.getTimestampColumn().get())) {
-      throw new RuntimeException(String.format("Column not found. Must be one of: %s", nameAdjuster));
+    String timestampColumn = baseTblConfig.getTimestampColumn().get();
+    if (!nameAdjuster.contains(timestampColumn)) {
+      throw new RuntimeException(String.format("Timestamp column not found: \"%s\". Must be one of: %s", timestampColumn, nameAdjuster));
     }
 
     TableType tableType = tableConfig.getConnectorConfig().getTableType();
