@@ -12,6 +12,7 @@ import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.google.auto.service.AutoService;
 
+import java.util.Collections;
 import java.util.stream.Collectors;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
@@ -49,12 +50,12 @@ public class PostgresDDLFactory implements JdbcDDLFactory {
     return new CreateTableDDL(table.getNameId(), columns, pk);
   }
 
-  public CreateTableDDL createTable(String name, List<RelDataTypeField> fields) {
+  public CreateTableDDL createTable(String name, List<RelDataTypeField> fields, String primaryKey) {
     List<String> columns = fields.stream()
         .map(PostgresDDLFactory::toSql)
         .collect(Collectors.toList());
 
-    return new CreateTableDDL(name, columns, new ArrayList<>());
+    return new CreateTableDDL(name, columns, Collections.singletonList(primaryKey));
   }
 
   public static String toSql(RelDataTypeField field) {
