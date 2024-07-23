@@ -26,7 +26,7 @@
           "debezium.slot.drop_on_stop": "false"
         },
         "postgres_log-sink": {
-          "connector": "jdbc",
+          "connector": "jdbc-sqrl",
           "password": "${JDBC_PASSWORD}",
           "driver": "org.postgresql.Driver",
           "username": "${JDBC_USERNAME}",

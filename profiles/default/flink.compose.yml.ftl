@@ -39,7 +39,14 @@ services:
     build:
       context: flink
       dockerfile: Dockerfile
-    command: flink run /scripts/FlinkJob.jar
+    command:
+      - /bin/sh
+      - -c
+      - |
+        echo "Waiting for dependent services to be fully ready."
+        /wait
+        echo "Submitting Flink job..."
+        flink run /scripts/FlinkJob.jar
     env_file:
       - ".env"
     depends_on:
@@ -70,4 +77,5 @@ services:
       - DATA_PATH=/data
 <#if config["enabled-engines"]?seq_contains("postgres_log")>
       - POSTGRES_LOG_JDBC_URL=jdbc:postgresql://postgres_log:5432/datasqrl
+      - WAIT_HOSTS=postgres_log:5432
 </#if>

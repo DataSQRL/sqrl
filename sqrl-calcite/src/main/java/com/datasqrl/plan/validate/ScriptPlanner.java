@@ -158,7 +158,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     TypeFactory typeFactory = TypeFactory.getTypeFactory();
     RelDataTypeBuilder fieldBuilder = CalciteUtil.getRelTypeBuilder(typeFactory);
     fieldBuilder.add(Name.system("_uuid"), typeFactory.createSqlType(SqlTypeName.VARCHAR));
-//    fieldBuilder.add(Name.system("event_time"), typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3));
+    fieldBuilder.add(Name.system("event_time"), typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3));
     for (SqrlColumnDefinition definition : statement.getColumns()) {
       fieldBuilder.add(definition.getColumnName().getSimple(),
           SqlDataTypeSpecBuilder.create(definition.getType(), typeFactory));

@@ -21,6 +21,9 @@
   "metadata" : {
     "timestamp" : {
       "attribute" : "time.epochMilliToTimestamp(epoch_timestamp)"
+    },
+    "event_time" : {
+      "attribute" : "time.epochMilliToTimestamp(epoch_timestamp)"
     }
   }
 }

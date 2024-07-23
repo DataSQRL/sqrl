@@ -135,12 +135,11 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
       Map<String, Object> map = context.getMap();
       ConnectorConfImpl connectorConf1 = (ConnectorConfImpl) connectorConf;
 
-//      String topicName = sanitizeName(logId);
       TableConfigBuilderImpl builder = TableConfigImpl.builder(context.getName());
       List<String> primaryKey = (List<String>)map.get("primary-key");
       String timestampType = (String)map.get("timestamp-type");
       String timestampName = (String)map.get("timestamp-name");
-//
+
       if (primaryKey != null && !primaryKey.isEmpty()) builder.setPrimaryKey(primaryKey.toArray(new String[0]));
       if (timestampType != null && !timestampType.equalsIgnoreCase("NONE")) {//!=TimestampType.NONE
         builder.setType(ExternalDataType.source_and_sink);
@@ -194,12 +193,6 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
         builder.setType(ExternalDataType.source_and_sink);
         builder.setTimestampColumn(timestampName);
         builder.setWatermark(0);
-        if (timestampType.equalsIgnoreCase("LOG_TIME")) {
-          builder.setMetadata(timestampName, "TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)",
-              "timestamp"); //todo fix?
-        } else {
-          throw new UnsupportedOperationException("Not yet supported: " + timestampType);
-        }
       } else {
         builder.setType(ExternalDataType.sink);
       }
