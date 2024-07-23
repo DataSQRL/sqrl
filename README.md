@@ -24,7 +24,7 @@ Some of the data architectures you can build with DataSQRL. Click to enlarge.
 * ☯️ **Declarative + Imperative:** Define the data flow in SQL and specific data transformations in Java, Scala, or soon Python.
 * 🧪 **Testing Framework:** Automated snapshot testing.
 * 🔄 **Data Flow Optimization:** Optimize data flow between systems through data mapping, partitioning, and indexing for scalability and performance.
-* ✔️ **Consistent:** Ensure at-least or exactly-once data processing for consistent results.
+* ✔️ **Consistent:** Ensure at-least or exactly-once data processing for consistent results across the entire system.
 * 📦 **Dependency management:** Manage data sources and sinks with versioning and repository.
 * 📊 **GraphQL Schema Generator:** Expose processed data through a GraphQL API with subscription support for headless data services. (REST coming soon)
 * 🤖 **Integrated AI:** Support for vector data type, vector embeddings, LLM invocation, and ML model inference.
