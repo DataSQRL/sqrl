@@ -32,7 +32,6 @@ dependencies {
     implementation "org.apache.flink:flink-connector-kafka:$kafkaVersion"
     implementation "org.apache.flink:flink-connector-jdbc:$jdbcVersion"
     implementation "org.apache.flink:flink-avro-confluent-registry:$flinkVersion"
-// @Daniel: what if we make it possible to define flink dependencies in package json? would it be too weird?
     implementation "org.apache.flink:flink-connector-postgres-cdc:$postgresCdcVersion"
 
     implementation "com.datasqrl:sqrl-lib-common:$sqrlVersion"
