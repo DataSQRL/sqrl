@@ -1,5 +1,6 @@
-package com.datasqrl.functions.json;
+package com.datasqrl.functions.json.postgres;
 
+import static com.datasqrl.function.CalciteFunctionUtil.lightweightAggOp;
 import static com.datasqrl.function.CalciteFunctionUtil.lightweightOp;
 
 import com.datasqrl.json.JsonFunctions;
@@ -11,15 +12,15 @@ import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.parser.SqlParserPos;
 
 @AutoService(SqlTranslation.class)
-public class JsonExistsAggSqlTranslation extends PostgresSqlTranslation {
+public class JsonObjectAggSqlTranslation extends PostgresSqlTranslation {
 
-  public JsonExistsAggSqlTranslation() {
-    super(lightweightOp(JsonFunctions.JSON_EXISTS));
+  public JsonObjectAggSqlTranslation() {
+    super(lightweightOp(JsonFunctions.JSON_OBJECTAGG));
   }
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    lightweightOp("jsonb_path_exists").createCall(SqlParserPos.ZERO, call.getOperandList())
+    lightweightAggOp("jsonb_object_agg").createCall(SqlParserPos.ZERO, call.getOperandList())
         .unparse(writer, leftPrec, rightPrec);
   }
 }

@@ -24,6 +24,7 @@ import org.apache.calcite.rel.core.AggregateCall;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexVisitorImpl;
+import org.apache.calcite.sql.SqlOperator;
 import org.apache.flink.table.functions.FunctionDefinition;
 
 @Value
@@ -96,7 +97,7 @@ public class ExecutionAnalysis {
   public static class RexCapabilityAnalysis extends RexVisitorImpl<Void> {
 
     private final EnumSet<EngineFeature> capabilities = EnumSet.noneOf(EngineFeature.class);
-    private final Set<FunctionDefinition> functions = new HashSet();
+    private final Set<SqlOperator> functions = new HashSet();
 
     public RexCapabilityAnalysis() {
       super(true);
@@ -107,8 +108,7 @@ public class ExecutionAnalysis {
       if (SqrlRexUtil.isNOW(call.getOperator())) {
         capabilities.add(EngineFeature.NOW);
       } else {
-        FunctionUtil.getBridgedFunction(call.getOperator())
-            .ifPresent(functions::add);
+        functions.add(call.getOperator());
       }
       return super.visitCall(call);
     }

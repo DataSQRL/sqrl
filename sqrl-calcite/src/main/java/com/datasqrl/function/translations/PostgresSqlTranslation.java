@@ -5,13 +5,10 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.apache.calcite.sql.SqlOperator;
 
-@AllArgsConstructor
 @Getter
-public abstract class PostgresSqlTranslation implements SqlTranslation {
-  SqlOperator operator;
+public abstract class PostgresSqlTranslation extends DialectSqlTranslation {
 
-  @Override
-  public Dialect getDialect() {
-    return Dialect.POSTGRES;
+  public PostgresSqlTranslation(SqlOperator operator) {
+    super(Dialect.POSTGRES, operator);
   }
 }

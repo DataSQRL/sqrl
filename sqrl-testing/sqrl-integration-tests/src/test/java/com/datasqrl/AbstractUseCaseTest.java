@@ -48,7 +48,7 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
       assert Files.exists(packageFile);
       arguments.add("-c"); arguments.add(packageFile.getFileName().toString());
     }
-    arguments.add("-t"); arguments.add(deployDir.toString());
+//    arguments.add("-t"); arguments.add(deployDir.toString());
     arguments.add("--profile");
     arguments.add(getProjectRoot(script).resolve("profiles/default").toString());
     String testname = Stream.of(script, graphQlFile, packageFile)

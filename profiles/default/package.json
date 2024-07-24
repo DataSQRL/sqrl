@@ -5,7 +5,7 @@
     "flink" : {
       "connectors": {
         "postgres": {
-          "connector": "jdbc",
+          "connector": "jdbc-sqrl",
           "password": "${JDBC_PASSWORD}",
           "driver": "org.postgresql.Driver",
           "username": "${JDBC_USERNAME}",

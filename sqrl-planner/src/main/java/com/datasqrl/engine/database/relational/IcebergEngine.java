@@ -15,7 +15,6 @@ import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
 import com.datasqrl.util.StreamUtil;
-import com.google.common.collect.Iterables;
 import com.google.inject.Inject;
 import java.util.List;
 import java.util.Optional;
@@ -57,11 +56,11 @@ public class IcebergEngine extends AbstractJDBCTableFormatEngine {
           Optional<IndexDefinition> optIndex =  dbPlan.getIndexDefinitions().stream().filter(i -> i.getTableId().equals(tableId)).findFirst();
           if (optIndex.isPresent()) {
             IndexDefinition mainIndex = optIndex.get();
-            System.out.println("Table: " + tableId);
-            System.out.println("Partition columns: " + String.join(", ",  mainIndex.getColumnNames().subList(0, mainIndex.getPartitionOffset())));
-            System.out.println("Sort columns: " + String.join(", ",  mainIndex.getColumnNames().subList(mainIndex.getPartitionOffset(), mainIndex.getColumns().size())));
+//            System.out.println("Table: " + tableId);
+//            System.out.println("Partition columns: " + String.join(", ",  mainIndex.getColumnNames().subList(0, mainIndex.getPartitionOffset())));
+//            System.out.println("Sort columns: " + String.join(", ",  mainIndex.getColumnNames().subList(mainIndex.getPartitionOffset(), mainIndex.getColumns().size())));
           } else {
-            System.out.println("No partition on table: " + tableId);
+//            System.out.println("No partition on table: " + tableId);
           }
     });
 

@@ -1,5 +1,6 @@
-package com.datasqrl.functions.json;
+package com.datasqrl.functions.json.postgres;
 
+import static com.datasqrl.function.CalciteFunctionUtil.lightweightBiOp;
 import static com.datasqrl.function.CalciteFunctionUtil.lightweightOp;
 
 import com.datasqrl.json.JsonFunctions;
@@ -11,15 +12,15 @@ import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.parser.SqlParserPos;
 
 @AutoService(SqlTranslation.class)
-public class JsonArraySqlTranslation extends PostgresSqlTranslation {
+public class JsonConcatSqlTranslation extends PostgresSqlTranslation {
 
-  public JsonArraySqlTranslation() {
-    super(lightweightOp(JsonFunctions.JSON_ARRAY));
+  public JsonConcatSqlTranslation() {
+    super(lightweightOp(JsonFunctions.JSON_CONCAT));
   }
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    lightweightOp("jsonb_build_array").createCall(SqlParserPos.ZERO, call.getOperandList())
+    lightweightBiOp("||").createCall(SqlParserPos.ZERO, call.getOperandList())
         .unparse(writer, leftPrec, rightPrec);
   }
 }

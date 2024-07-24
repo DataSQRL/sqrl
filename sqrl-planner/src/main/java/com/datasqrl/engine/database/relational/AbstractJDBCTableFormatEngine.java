@@ -61,10 +61,10 @@ public abstract class AbstractJDBCTableFormatEngine extends AbstractJDBCEngine i
         queryEngines.values().stream().allMatch(queryEngine -> queryEngine.supports(capability));
   }
 
-  @Override
-  public boolean supports(FunctionDefinition function) {
-    return queryEngines.values().stream().allMatch(queryEngine -> queryEngine.supports(function));
-  }
+//  @Override
+//  public boolean supports(FunctionDefinition function) {
+//    return queryEngines.values().stream().allMatch(queryEngine -> queryEngine.supports(function));
+//  }
 
   @Override
   public TableConfig getSinkConfig(String tableName) {
