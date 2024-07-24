@@ -8,24 +8,13 @@ import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.config.TableConfig;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
-
-import com.datasqrl.function.DowncastFunction;
-import com.datasqrl.functions.json.JsonDowncastFunction;
-import com.datasqrl.functions.vector.VectorDowncastFunction;
-import com.datasqrl.json.FlinkJsonType;
-import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
-import com.datasqrl.vector.FlinkVectorType;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.flink.table.functions.FunctionDefinition;
-import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 /**
  * Describes a physical execution engine and it's capabilities.
@@ -44,7 +33,7 @@ public interface ExecutionEngine extends IExecutionEngine {
    * @param function
    * @return whether the engine can execute the given function
    */
-  boolean supports(FunctionDefinition function);
+//  boolean supports(FunctionDefinition function);
 
   /**
    * Returns the {@link TableConfig} for this engine so it can
@@ -56,36 +45,9 @@ public interface ExecutionEngine extends IExecutionEngine {
   /**
    * Create the physical plan from the {@link StagePlan} produced by the {@link com.datasqrl.plan.global.DAGPlanner}
    * for this engine.
-   *
-   * @param plan
-   * @param inputs
-   * @param pipeline
-   * @param relBuilder
-   * @param errorCollector
-   * @return
    */
   EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs,
       ExecutionPipeline pipeline, SqrlFramework framework, ErrorCollector errorCollector);
-
-  /**
-   * Engines support different sets of data types. DataSQRL uses {@link DowncastFunction} to cast SQRL native types
-   * to the data type supported by the engine.
-   *
-   * @param type The type to cast
-   * @return The downcast function to use for the given type, or empty if no type casting is needed.
-   */
-  default Optional<DowncastFunction> getSinkTypeCastFunction(RelDataType type) {
-    // Convert sqrl native raw types to strings
-    if (type instanceof RawRelDataType) {
-      if ((((RawRelDataType)type).getRawType().getDefaultConversion() == FlinkJsonType.class)) {
-        return Optional.of(new JsonDowncastFunction());
-      } else if ((((RawRelDataType)type).getRawType().getDefaultConversion() == FlinkVectorType.class)) {
-        return Optional.of(new VectorDowncastFunction());
-      }
-    }
-
-    return Optional.empty(); //assume everything is supported by default
-  }
 
   @AllArgsConstructor
   @Getter
@@ -98,11 +60,6 @@ public interface ExecutionEngine extends IExecutionEngine {
     @Override
     public boolean supports(EngineFeature capability) {
       return capabilities.contains(capability);
-    }
-
-    @Override
-    public boolean supports(FunctionDefinition function) {
-      return false;
     }
 
     @Override

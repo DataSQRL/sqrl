@@ -2,6 +2,8 @@ package com.datasqrl.plan.rules;
 
 import com.datasqrl.engine.EngineFeature;
 import lombok.Value;
+import org.apache.calcite.sql.SqlFunction;
+import org.apache.calcite.sql.SqlOperator;
 import org.apache.flink.table.functions.FunctionDefinition;
 
 public interface EngineCapability {
@@ -27,11 +29,11 @@ public interface EngineCapability {
     @Value
     class Function implements EngineCapability {
 
-      FunctionDefinition function;
+      SqlOperator function;
 
       @Override
       public String getName() {
-        return function + " (function)";
+        return function.getName() + " (function)";
       }
 
       @Override

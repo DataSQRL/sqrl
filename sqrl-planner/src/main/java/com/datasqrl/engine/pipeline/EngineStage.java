@@ -20,10 +20,10 @@ public class EngineStage implements ExecutionStage {
     return engine.supports(capability);
   }
 
-  @Override
-  public boolean supportsFunction(FunctionDefinition function) {
-    return engine.supports(function);
-  }
+//  @Override
+//  public boolean supportsFunction(FunctionDefinition function) {
+//    return engine.supports(function);
+//  }
 
 
 }

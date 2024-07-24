@@ -55,6 +55,7 @@ import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.util.ImmutableBitSet;
 import org.apache.commons.collections.ListUtils;
+import scala.annotation.meta.field;
 
 /**
  * Creates a default graphql schema based on the SQRL schema
@@ -113,6 +114,14 @@ public class GraphqlSchemaFactory {
     GraphQLSchema.Builder builder = GraphQLSchema.newSchema()
         .query(queryType)
         .additionalTypes(new LinkedHashSet<>(objectTypes));
+
+    if (queryType.getFields().isEmpty()) {
+      if (goal == ExecutionGoal.TEST) {
+        throw new RuntimeException("No queries found for test goal");
+      } else {
+        throw new RuntimeException("No queryable tables found for server");
+      }
+    }
 
     //todo: hack because we can't merge scalars with graphql-java
     if (goal != ExecutionGoal.TEST) {

@@ -1,7 +1,12 @@
-IMPORT data.applications AS _applications;
+IMPORT data.applications;
 
--- Todo: snowflake stage gets elimiated if no queries ..?
+IMPORT json.*;
 
-MyIcebergTable := SELECT * FROM _applications;
+MyIcebergTable := SELECT * FROM applications;
 
 SnowflakeQuery(@customerId: BIGINT) := SELECT * FROM MyIcebergTable WHERE customer_id = @customerId;
+
+MyJsonTable := SELECT toJson('{}') AS myJson FROM applications;
+
+/*+exec(iceberg)*/
+MySnowflakeTable := SELECT myJson, toJson('{"x":1}') AS json FROM MyJsonTable;

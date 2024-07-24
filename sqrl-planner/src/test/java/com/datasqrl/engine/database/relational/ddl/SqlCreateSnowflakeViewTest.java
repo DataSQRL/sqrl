@@ -2,6 +2,7 @@ package com.datasqrl.engine.database.relational.ddl;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.datasqrl.calcite.dialect.ExtendedSnowflakeSqlDialect;
 import com.datasqrl.calcite.dialect.snowflake.SqlCreateSnowflakeView;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
 import org.apache.calcite.sql.SqlBasicCall;
@@ -36,7 +37,7 @@ class SqlCreateSnowflakeViewTest {
 
     SqlCreateSnowflakeView createView = new SqlCreateSnowflakeView(pos, true, true, true, false, null, viewName, columnList, select, comment, true);
 
-    SqlDialect dialect = SnowflakeSqlDialect.DEFAULT;
+    SqlDialect dialect = ExtendedSnowflakeSqlDialect.DEFAULT;
     SqlPrettyWriter writer = new SqlPrettyWriter(dialect);
     createView.unparse(writer, 0, 0);
 

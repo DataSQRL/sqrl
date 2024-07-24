@@ -151,6 +151,10 @@
       <artifactId>flink-test-utils</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-connector-jdbc</artifactId>
+    </dependency>
 
   </dependencies>
 </project>

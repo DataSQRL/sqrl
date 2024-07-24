@@ -161,7 +161,6 @@ LogicalTableScan(table=[[likes_2]])
   "flinkSql" : [
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `bannedwordsfilter` AS 'com.datasqrl.text.BannedWordsFilter' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `cosinedistance` AS 'com.datasqrl.vector.CosineDistance' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `tojson` AS 'com.datasqrl.json.ToJson' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `center` AS 'com.datasqrl.vector.Center' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `format` AS 'com.datasqrl.text.Format' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `vectortodouble` AS 'com.datasqrl.vector.VectorToDouble' LANGUAGE JAVA;",
@@ -169,6 +168,7 @@ LogicalTableScan(table=[[likes_2]])
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `cosinesimilarity` AS 'com.datasqrl.vector.CosineSimilarity' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `onnxembed` AS 'com.datasqrl.vector.OnnxEmbed' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `textsearch` AS 'com.datasqrl.text.TextSearch' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `ToJson` AS 'com.datasqrl.json.ToJson' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `asciitexttestembed` AS 'com.datasqrl.vector.AsciiTextTestEmbed' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `euclideandistance` AS 'com.datasqrl.vector.EuclideanDistance' LANGUAGE JAVA;",
     "CREATE TEMPORARY TABLE `events_1` (\n  `url` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `date` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `time` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `title` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `abstract` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `location` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `speakers` ROW(`name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`, `title` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`, `company` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`) NOT NULL ARRAY NOT NULL,\n  `last_updated` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`url`, `last_updated`) NOT ENFORCED,\n  WATERMARK FOR `last_updated` AS (`last_updated` - INTERVAL '0.001' SECOND)\n) WITH (\n  'format' = 'flexible-json',\n  'path' = '/data/events.jsonl',\n  'source.monitor-interval' = '1',\n  'connector' = 'filesystem'\n);",
@@ -214,6 +214,9 @@ LogicalTableScan(table=[[likes_2]])
 >>>postgres.json
 {
   "ddl" : [
+    {
+      "sql" : "CREATE EXTENSION IF NOT EXISTS vector;"
+    },
     {
       "name" : "events_3",
       "columns" : [
@@ -262,9 +265,6 @@ LogicalTableScan(table=[[likes_2]])
         "\"eventId\""
       ],
       "sql" : "CREATE TABLE IF NOT EXISTS userlikes_1 (\"eventId\" BIGINT NOT NULL,\"userid\" TEXT NOT NULL,\"liked\" BOOLEAN NOT NULL,\"_uuid\" TEXT NOT NULL,\"event_time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"userid\",\"eventId\"));"
-    },
-    {
-      "sql" : "CREATE EXTENSION IF NOT EXISTS vector;"
     },
     {
       "indexName" : "events_3_text_c3c4",
