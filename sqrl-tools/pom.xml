@@ -3,7 +3,7 @@
   <parent>
     <groupId>com.datasqrl</groupId>
     <artifactId>sqrl-root</artifactId>
-    <version>0.5.3-SNAPSHOT</version>
+    <version>0.5.3</version>
   </parent>
 
   <artifactId>sqrl-tools</artifactId>
