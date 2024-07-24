@@ -214,6 +214,9 @@ LogicalTableScan(table=[[likes_2]])
 {
   "ddl" : [
     {
+      "sql" : "CREATE EXTENSION IF NOT EXISTS vector;"
+    },
+    {
       "name" : "events_3",
       "columns" : [
         "\"url\" TEXT NOT NULL",
@@ -261,9 +264,6 @@ LogicalTableScan(table=[[likes_2]])
         "\"eventId\""
       ],
       "sql" : "CREATE TABLE IF NOT EXISTS userlikes_1 (\"eventId\" BIGINT NOT NULL,\"userid\" TEXT NOT NULL,\"liked\" BOOLEAN NOT NULL,\"_uuid\" TEXT NOT NULL,\"event_time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"userid\",\"eventId\"));"
-    },
-    {
-      "sql" : "CREATE EXTENSION IF NOT EXISTS vector;"
     },
     {
       "indexName" : "events_3_text_c3c4",

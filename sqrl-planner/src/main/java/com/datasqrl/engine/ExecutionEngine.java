@@ -8,24 +8,13 @@ import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.config.TableConfig;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
-
-import com.datasqrl.function.DowncastFunction;
-import com.datasqrl.functions.json.JsonDowncastFunction;
-import com.datasqrl.functions.vector.VectorDowncastFunction;
-import com.datasqrl.json.FlinkJsonType;
-import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
-import com.datasqrl.vector.FlinkVectorType;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.flink.table.functions.FunctionDefinition;
-import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 /**
  * Describes a physical execution engine and it's capabilities.
