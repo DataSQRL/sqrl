@@ -1,0 +1,7 @@
+[FATAL] Could not find table: applications
+in script:<script> [9:51]:
+SnowflakeQuery(@customerId: BIGINT) := SELECT * FROM MyIcebergTable WHERE customer_id = @customerId;
+
+MyJsonTable := SELECT toJson('{}') AS myJson FROM applications;
+--------------------------------------------------^
+

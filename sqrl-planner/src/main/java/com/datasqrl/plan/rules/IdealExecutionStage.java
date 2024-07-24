@@ -23,11 +23,6 @@ public final class IdealExecutionStage implements ExecutionStage {
   }
 
   @Override
-  public boolean supportsFunction(FunctionDefinition function) {
-    return true;
-  }
-
-  @Override
   public ExecutionEngine getEngine() {
     throw new UnsupportedOperationException();
   }

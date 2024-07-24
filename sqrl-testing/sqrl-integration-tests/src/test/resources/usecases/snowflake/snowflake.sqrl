@@ -1,8 +1,8 @@
-IMPORT data.applications AS _applications;
+IMPORT data.applications;
 
 IMPORT json.*;
 
-MyIcebergTable := SELECT * FROM _applications;
+MyIcebergTable := SELECT * FROM applications;
 
 SnowflakeQuery(@customerId: BIGINT) := SELECT * FROM MyIcebergTable WHERE customer_id = @customerId;
 

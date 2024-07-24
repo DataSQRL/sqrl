@@ -5,7 +5,6 @@ import static com.datasqrl.function.CalciteFunctionUtil.lightweightOp;
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.convert.SnowflakeSqlNodeToString;
-import com.datasqrl.calcite.dialect.ExtendedSnowflakeSqlDialect;
 import com.datasqrl.calcite.dialect.snowflake.SqlCreateIcebergTableFromObjectStorage;
 import com.datasqrl.calcite.dialect.snowflake.SqlCreateSnowflakeView;
 import com.datasqrl.config.ConnectorFactoryFactory;
@@ -15,25 +14,20 @@ import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.EmptyEngineConfig;
 import com.datasqrl.config.PackageJson.EngineConfig;
-import com.datasqrl.config.TableConfig;
+import com.datasqrl.datatype.snowflake.SnowflakeIcebergDataTypeMapper;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
+import com.datasqrl.engine.stream.flink.connector.CastFunction;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.functions.json.JsonDowncastFunction;
-import com.datasqrl.functions.vector.VectorDowncastFunction;
-import com.datasqrl.json.FlinkJsonType;
-import com.datasqrl.json.JsonFunctions;
 import com.datasqrl.plan.global.PhysicalDAGPlan.DatabaseStagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.ReadQuery;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
-import com.datasqrl.plan.global.PhysicalDAGPlan.WriteSink;
 import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.datasqrl.sql.SqlDDLStatement;
 import com.datasqrl.util.StreamUtil;
-import com.datasqrl.vector.FlinkVectorType;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import java.util.ArrayList;
@@ -55,12 +49,9 @@ import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlSelect;
-import org.apache.calcite.sql.SqlUnresolvedFunction;
 import org.apache.calcite.sql.dialect.CalciteSqlDialect;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.tools.RelBuilder;
-import org.apache.flink.table.functions.FunctionDefinition;
-import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 public class SnowflakeEngine extends AbstractJDBCQueryEngine {
 
@@ -109,13 +100,14 @@ public class SnowflakeEngine extends AbstractJDBCQueryEngine {
 
     List<Map<String, String>> queries = new ArrayList<>();
 
+    SnowflakeIcebergDataTypeMapper icebergDataTypeMapper = new SnowflakeIcebergDataTypeMapper();
     for (Map.Entry<IdentifiedQuery, QueryTemplate> entry : databaseQueries.entrySet()) {
       RelNode relNode = entry.getValue().getRelNode();
       relNode = relNode.accept(new RelShuttleImpl(){
         @Override
         public RelNode visit(TableScan scan) {
           return applyUpcasting(framework.getQueryPlanner().getRelBuilder(),
-              scan);
+              scan, icebergDataTypeMapper);
         }
       });
 
@@ -145,13 +137,14 @@ public class SnowflakeEngine extends AbstractJDBCQueryEngine {
     return new SnowflakePlan(ddlStatements, queries);
   }
 
-  private RelNode applyUpcasting(RelBuilder relBuilder, RelNode relNode) {
+  private RelNode applyUpcasting(RelBuilder relBuilder, RelNode relNode,
+      SnowflakeIcebergDataTypeMapper icebergDataTypeMapper) {
     //Apply upcasting if reading a json/other function directly from the table.
     relBuilder.push(relNode);
 
     AtomicBoolean hasChanged = new AtomicBoolean();
     List<RexNode> fields = relNode.getRowType().getFieldList().stream()
-        .map(field -> convertField(field, hasChanged, relBuilder))
+        .map(field -> convertField(field, hasChanged, relBuilder, icebergDataTypeMapper))
         .collect(Collectors.toList());
 
     if (hasChanged.get()) {
@@ -161,29 +154,29 @@ public class SnowflakeEngine extends AbstractJDBCQueryEngine {
   }
 
 
-  private RexNode convertField(RelDataTypeField field, AtomicBoolean hasChanged, RelBuilder relBuilder) {
-
+  private RexNode convertField(RelDataTypeField field, AtomicBoolean hasChanged, RelBuilder relBuilder,
+      SnowflakeIcebergDataTypeMapper icebergDataTypeMapper) {
     RelDataType type = field.getType();
-
-    if (type instanceof RawRelDataType) {
-      if ((((RawRelDataType) type).getRawType().getDefaultConversion() == FlinkJsonType.class)) {
-        hasChanged.set(true);
-        SqlUnresolvedFunction parseJson = lightweightOp("PARSE_JSON");
-        return relBuilder.getRexBuilder()
-            .makeCall(parseJson, List.of(relBuilder.field(field.getIndex())));
-      } else if ((((RawRelDataType) type).getRawType().getDefaultConversion()
-          == FlinkVectorType.class)) {
-        throw new RuntimeException("Unsupported type");
-      }
+    if (icebergDataTypeMapper.nativeTypeSupport(type)) {
+      return relBuilder.field(field.getIndex());
     }
 
-    return relBuilder.field(field.getIndex());
+    Optional<CastFunction> castFunction = icebergDataTypeMapper.convertType(type);
+    if (castFunction.isEmpty()) {
+      throw new RuntimeException("Could not find upcast function for: " + type.getFullTypeString());
+    }
+
+    CastFunction castFunction1 = castFunction.get();
+
+    hasChanged.set(true);
+    return relBuilder.getRexBuilder()
+        .makeCall(castFunction1.getFunction(), List.of(relBuilder.field(field.getIndex())));
   }
 
-  @Override
-  public boolean supports(FunctionDefinition function) {
-    return true;
-  }
+//  @Override
+//  public boolean supports(FunctionDefinition function) {
+//    return true;
+//  }
 
   @Value
   public static class SnowflakePlan implements EnginePhysicalPlan {

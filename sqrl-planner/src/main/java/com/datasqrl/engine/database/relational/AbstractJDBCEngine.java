@@ -96,14 +96,14 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
 
     List<SqlDDLStatement> ddlStatements = new ArrayList<>();
 
+    List<SqlDDLStatement> typeExtensions = extractTypeExtensions(dbPlan.getQueries());
+    ddlStatements.addAll(typeExtensions);
+
     ddlStatements.addAll(
       StreamUtil.filterByClass(inputs,
             EngineSink.class)
         .map(factory::createTable)
         .collect(Collectors.toList()));
-
-    List<SqlDDLStatement> typeExtensions = extractTypeExtensions(dbPlan.getQueries());
-    ddlStatements.addAll(typeExtensions);
 
     dbPlan.getIndexDefinitions().stream().sorted()
             .map(factory::createIndex)
@@ -192,31 +192,31 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
     return new ArrayList<>(statements);
   }
 
-  @Override
-  public Optional<DowncastFunction> getSinkTypeCastFunction(RelDataType type) {
-    if (type instanceof RawRelDataType) {
-      Class<?> defaultConversion = ((RawRelDataType) type).getRawType().getDefaultConversion();
-
-      Optional<JdbcTypeSerializer> jdbcTypeSerializer = ServiceLoaderDiscovery.findFirst(JdbcTypeSerializer.class,
-            (Function<JdbcTypeSerializer, String>) JdbcTypeSerializer::getDialectId,
-            getDialect().getId(),
-            (Function<JdbcTypeSerializer, String>) jdbcTypeSerializer1 -> jdbcTypeSerializer1.getConversionClass()
-                .getTypeName(),
-            defaultConversion.getTypeName());
-
-      if (jdbcTypeSerializer.isEmpty()) {
-        return Optional.empty();
-      } else {
-        return Optional.of(new RowToJsonDowncastFunction()); //try to downcast any raw to json
-      }
-    } else if (type instanceof RelRecordType) { //type is array of rows or rows
-      return Optional.of(new RowToJsonDowncastFunction());
-    } else if (type.getComponentType() != null && !isScalar(type.getComponentType())) { //allow primitive 1d arrays
-      return Optional.of(new RowToJsonDowncastFunction());
-    }
-
-    return super.getSinkTypeCastFunction(type);
-  }
+//  @Override
+//  public Optional<DowncastFunction> getSinkTypeCastFunction(RelDataType type) {
+//    if (type instanceof RawRelDataType) {
+//      Class<?> defaultConversion = ((RawRelDataType) type).getRawType().getDefaultConversion();
+//
+//      Optional<JdbcTypeSerializer> jdbcTypeSerializer = ServiceLoaderDiscovery.findFirst(JdbcTypeSerializer.class,
+//            (Function<JdbcTypeSerializer, String>) JdbcTypeSerializer::getDialectId,
+//            getDialect().getId(),
+//            (Function<JdbcTypeSerializer, String>) jdbcTypeSerializer1 -> jdbcTypeSerializer1.getConversionClass()
+//                .getTypeName(),
+//            defaultConversion.getTypeName());
+//
+//      if (jdbcTypeSerializer.isEmpty()) {
+//        return Optional.empty();
+//      } else {
+//        return Optional.of(new RowToJsonDowncastFunction()); //try to downcast any raw to json
+//      }
+//    } else if (type instanceof RelRecordType) { //type is array of rows or rows
+//      return Optional.of(new RowToJsonDowncastFunction());
+//    } else if (type.getComponentType() != null && !isScalar(type.getComponentType())) { //allow primitive 1d arrays
+//      return Optional.of(new RowToJsonDowncastFunction());
+//    }
+//
+//    return super.getSinkTypeCastFunction(type);
+//  }
 
   private boolean isScalar(RelDataType componentType) {
     switch (componentType.getSqlTypeName()) {

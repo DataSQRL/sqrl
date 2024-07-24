@@ -66,11 +66,11 @@ public class IcebergEngine extends AbstractJDBCTableFormatEngine {
           Optional<IndexDefinition> optIndex =  dbPlan.getIndexDefinitions().stream().filter(i -> i.getTableId().equals(tableId)).findFirst();
           if (optIndex.isPresent()) {
             IndexDefinition mainIndex = optIndex.get();
-            System.out.println("Table: " + tableId);
-            System.out.println("Partition columns: " + String.join(", ",  mainIndex.getColumnNames().subList(0, mainIndex.getPartitionOffset())));
-            System.out.println("Sort columns: " + String.join(", ",  mainIndex.getColumnNames().subList(mainIndex.getPartitionOffset(), mainIndex.getColumns().size())));
+//            System.out.println("Table: " + tableId);
+//            System.out.println("Partition columns: " + String.join(", ",  mainIndex.getColumnNames().subList(0, mainIndex.getPartitionOffset())));
+//            System.out.println("Sort columns: " + String.join(", ",  mainIndex.getColumnNames().subList(mainIndex.getPartitionOffset(), mainIndex.getColumns().size())));
           } else {
-            System.out.println("No partition on table: " + tableId);
+//            System.out.println("No partition on table: " + tableId);
           }
     });
 
@@ -79,18 +79,18 @@ public class IcebergEngine extends AbstractJDBCTableFormatEngine {
     return new IcebergPlan(enginePlan);
   }
 
-  @Override
-  public Optional<DowncastFunction> getSinkTypeCastFunction(RelDataType type) {
-    // Convert sqrl native raw types to strings
-    if (type instanceof RawRelDataType) {
-      if ((((RawRelDataType)type).getRawType().getDefaultConversion() == FlinkJsonType.class)) {
-        return Optional.of(new JsonDowncastFunction());
-      } else if ((((RawRelDataType)type).getRawType().getDefaultConversion() == FlinkVectorType.class)) {
-        return Optional.of(new VectorDowncastFunction());
-      }
-    }
-
-    return Optional.empty();
-  }
+//  @Override
+//  public Optional<DowncastFunction> getSinkTypeCastFunction(RelDataType type) {
+//    // Convert sqrl native raw types to strings
+//    if (type instanceof RawRelDataType) {
+//      if ((((RawRelDataType)type).getRawType().getDefaultConversion() == FlinkJsonType.class)) {
+//        return Optional.of(new JsonDowncastFunction());
+//      } else if ((((RawRelDataType)type).getRawType().getDefaultConversion() == FlinkVectorType.class)) {
+//        return Optional.of(new VectorDowncastFunction());
+//      }
+//    }
+//
+//    return Optional.empty();
+//  }
 
 }

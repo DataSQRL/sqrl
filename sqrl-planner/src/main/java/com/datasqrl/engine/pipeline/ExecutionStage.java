@@ -8,6 +8,7 @@ import com.datasqrl.engine.ExecutionEngine;
 
 import java.util.Collection;
 
+import org.apache.calcite.sql.SqlOperator;
 import org.apache.flink.table.functions.FunctionDefinition;
 
 public interface ExecutionStage {
@@ -20,7 +21,7 @@ public interface ExecutionStage {
 
   boolean supportsFeature(EngineFeature capability);
 
-  boolean supportsFunction(FunctionDefinition function);
+//  boolean supportsFunction(FunctionDefinition function);
 
   default boolean isRead() {
     return getEngine().getType().isRead();
@@ -34,4 +35,7 @@ public interface ExecutionStage {
 
   ExecutionEngine getEngine();
 
+  default boolean supportsFunction(SqlOperator operator) {
+    return true;
+  }
 }

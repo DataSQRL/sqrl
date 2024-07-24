@@ -38,6 +38,12 @@ public class UseCasesFullIT extends UseCasesIT {
     execute("seedshop-tutorial", "seedshop-extended.sqrl", null, "seedshop-extended");
   }
 
+  @Test
+  @Disabled
+  public void testSnowflake() {
+    execute("snowflake", "snowflake.sqrl", null);
+  }
+
 //
 //  @Test
 //  @Disabled

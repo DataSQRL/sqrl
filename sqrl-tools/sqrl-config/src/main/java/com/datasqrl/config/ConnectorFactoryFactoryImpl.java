@@ -45,7 +45,7 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
     Optional<EngineConfig> engineConfig = packageJson.getEngines().getEngineConfig("flink");
     Preconditions.checkArgument(engineConfig.isPresent(), "Missing engine configuration for Flink");
     ConnectorsConfig connectors = engineConfig.get().getConnectors();
-    if (connectorName.equalsIgnoreCase("snowflake")) { //work around until we get the correct engine in
+    if (connectorName.equalsIgnoreCase("iceberg")) { //work around until we get the correct engine in
       return connectors.getConnectorConfig("iceberg").map(this::createIceberg);
     }
     // end
@@ -168,7 +168,6 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
       Map<String, Object> map = context.getMap();
       builder.copyConnectorConfig(engineConfig);
       builder.getConnectorConfig().setProperty("table-name", (String)map.get("table-name"));
-      builder.getConnectorConfig().setProperty("connector", "jdbc-sqrl");
 
       return builder.build();
     };

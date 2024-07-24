@@ -43,10 +43,10 @@ public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base imp
     this.config = config;
   }
 
-  @Override
-  public boolean supports(FunctionDefinition function) {
-    return true;
-  }
+//  @Override
+//  public boolean supports(FunctionDefinition function) {
+//    return true;
+//  }
 
   @Override
   public FlinkStreamPhysicalPlan plan(StagePlan stagePlan, List<StageSink> inputs,

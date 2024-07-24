@@ -93,12 +93,12 @@ public abstract class AbstractJDBCDatabaseEngine extends AbstractJDBCEngine impl
     throw new UnsupportedOperationException("JDBC database engines do not support query engines");
   }
 
-  @Override
-  public boolean supports(FunctionDefinition function) {
-    //TODO: @Daniel: change to determining which functions are supported by dialect & database type
-    //This is a hack - we just check that it's not a tumble window function
-    return FunctionUtil.getSqrlTimeTumbleFunction(function).isEmpty();
-  }
+//  @Override
+//  public boolean supports(FunctionDefinition function) {
+//    //TODO: @Daniel: change to determining which functions are supported by dialect & database type
+//    //This is a hack - we just check that it's not a tumble window function
+//    return FunctionUtil.getSqrlTimeTumbleFunction(function).isEmpty();
+//  }
 
   @Override
   public TableConfig getSinkConfig(String tableName) {
