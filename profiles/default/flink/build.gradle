@@ -38,6 +38,7 @@ dependencies {
     implementation "com.datasqrl:sqrl-time:$sqrlVersion"
     implementation "com.datasqrl:sqrl-text:$sqrlVersion"
     implementation "com.datasqrl:sqrl-flexible-json:$sqrlVersion"
+    implementation "com.datasqrl:sqrl-flexible-csv:$sqrlVersion"
     implementation "com.datasqrl:sqrl-vector:$sqrlVersion"
     implementation "com.datasqrl:sqrl-jdbc-1.18:$sqrlVersion"
 
