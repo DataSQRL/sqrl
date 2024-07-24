@@ -1,7 +1,7 @@
 # Default Profile
 
 The default profile for DataSQRL is automatically selected if no other profile is provided. This
-profile supports all versions past 0.5.2 and provides a Docker Compose setup for PostgreSQL, Flink,
+profile supports all versions past 0.5.3 and provides a Docker Compose setup for PostgreSQL, Flink,
 Kafka, and Vert.x HTTP server.
 
 ## Configuration Options
@@ -107,7 +107,7 @@ It is also recommended to specify the exact version used in the dependencies sec
     {
       "datasqrl.profile.default": {
         "name": "datasqrl.profile.default",
-        "version": "0.5.2",
+        "version": "0.5.3",
         "variant": "dev"
       }
     }

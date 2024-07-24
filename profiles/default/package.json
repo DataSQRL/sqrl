@@ -39,7 +39,7 @@
   },
   "package": {
     "name": "datasqrl.profile.default",
-    "version": "0.5.2",
+    "version": "0.5.3",
     "variant": "dev",
     "description": "A docker compose datasqrl profile",
     "homepage": "",
