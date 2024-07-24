@@ -6,10 +6,12 @@ import com.datasqrl.datatype.SerializeToBytes;
 import com.datasqrl.datatype.flink.FlinkDataTypeMapper;
 import com.datasqrl.engine.stream.flink.connector.CastFunction;
 import com.datasqrl.json.FlinkJsonType;
+import com.datasqrl.json.ToJson;
 import com.datasqrl.vector.FlinkVectorType;
 import com.google.auto.service.AutoService;
 import java.util.Optional;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 @AutoService(DataTypeMapper.class)
@@ -72,49 +74,21 @@ public class FlinkSqrlPostgresDataTypeMapper extends FlinkDataTypeMapper {
         }
         return false;
       case ARRAY:
-//        if (isScalar(type.getComponentType())) {
-//          return supportsType(type.getComponentType());
-//        }
-        return true;
+        return nativeTypeSupport(type.getComponentType());
       case MAP:
         return false;
       case ROW:
-        return true; //sqrl adds row to json conversion
-    }
-  }
-
-  private boolean isScalar(RelDataType componentType) {
-    switch (componentType.getSqlTypeName()) {
-      case BOOLEAN:
-      case TINYINT:
-      case SMALLINT:
-      case INTEGER:
-      case BIGINT:
-      case FLOAT:
-      case DOUBLE:
-      case CHAR:
-      case VARCHAR:
-      case BINARY:
-      case VARBINARY:
-      case DATE:
-      case TIMESTAMP:
-      case TIME_WITH_LOCAL_TIME_ZONE:
-      case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
-      case DECIMAL:
-        return true;
-      default:
         return false;
     }
   }
+
   @Override
   public Optional<CastFunction> convertType(RelDataType type) {
-    if (nativeTypeSupport(type)) {
-      return Optional.empty(); //no cast needed
-    }
 
-//    if (type.getSqlTypeName() == SqlTypeName.ARRAY && !isScalar(type.getComponentType())) {
-//      return Optional.of(new CastFunction(ToJson.class.getName(), convert(new ToJson())));
-//    }
+    if (type.getSqlTypeName() == SqlTypeName.ROW ||
+        (type.getSqlTypeName() == SqlTypeName.ARRAY && type.getComponentType().getSqlTypeName() == SqlTypeName.ROW)) {
+      return Optional.of(new CastFunction(ToJson.class.getName(), convert(new ToJson())));
+    }
 //
 //    if (type instanceof RelRecordType) {
 //      return Optional.of(new CastFunction(ToJson.class.getName(), convert(new ToJson())));

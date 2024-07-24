@@ -7,9 +7,11 @@ import com.datasqrl.datatype.SerializeToBytes;
 import com.datasqrl.datatype.flink.FlinkDataTypeMapper;
 import com.datasqrl.engine.stream.flink.connector.CastFunction;
 import com.datasqrl.json.FlinkJsonType;
+import com.datasqrl.json.ToJson;
 import com.google.auto.service.AutoService;
 import java.util.Optional;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 @AutoService(DataTypeMapper.class)
@@ -72,7 +74,7 @@ public class FlexibleJsonFlinkFormatTypeMapper extends FlinkDataTypeMapper {
         }
         return false;
       case ROW:
-        return true;
+        return false;
       case ANY:
         return false;
       case ARRAY:
@@ -82,8 +84,9 @@ public class FlexibleJsonFlinkFormatTypeMapper extends FlinkDataTypeMapper {
 
   @Override
   public Optional<CastFunction> convertType(RelDataType type) {
-    if (nativeTypeSupport(type)) {
-      return Optional.empty(); //no cast needed
+    if (type.getSqlTypeName() == SqlTypeName.ROW ||
+        (type.getSqlTypeName() == SqlTypeName.ARRAY && type.getComponentType().getSqlTypeName() == SqlTypeName.ROW)) {
+      return Optional.of(new CastFunction(ToJson.class.getName(), convert(new ToJson())));
     }
 
     // Cast needed, convert to bytes
