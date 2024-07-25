@@ -1,6 +1,6 @@
 # DataSQRL
 
-DataSQRL is a flexible data development framework for building various types of data architectures, like data pipelines, event-driven microservices, and Kappa. It provides the basic structure, common patterns, and a set of tools for streamlining the development process. 
+DataSQRL is a flexible data development framework for building various types of streaming data architectures, like data pipelines, event-driven microservices, and Kappa. It provides the basic structure, common patterns, and a set of tools for streamlining the development process. 
 
 DataSQRL integrates any combination of the following technologies:
 * **Apache Flink:** a distributed and stateful stream processing engine.
