@@ -51,11 +51,17 @@ public class PostgresDDLFactory implements JdbcDDLFactory {
   }
 
   public CreateTableDDL createTable(String name, List<RelDataTypeField> fields, List<String> primaryKeys) {
+    String tableName = quoteIdentifier(name);
+
     List<String> columns = fields.stream()
         .map(PostgresDDLFactory::toSql)
         .collect(Collectors.toList());
 
-    return new CreateTableDDL(name, columns, primaryKeys);
+    List<String> pks = primaryKeys.stream()
+        .map(PostgresDDLFactory::quoteIdentifier)
+        .collect(Collectors.toList());
+
+    return new CreateTableDDL(tableName, columns, pks);
   }
 
   public static String toSql(RelDataTypeField field) {
