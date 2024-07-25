@@ -43,9 +43,3 @@ RUN echo "-> Install JARs: Hadoop" && \
 COPY --from=build /app/build/libs/FlinkJob.jar /scripts/FlinkJob.jar
 # UDFs
 COPY data/ /data
-
-# Add the wait script to the image
-COPY --from=ghcr.io/ufoscout/docker-compose-wait:latest /wait /wait
-
-# Launch the wait tool
-CMD /wait

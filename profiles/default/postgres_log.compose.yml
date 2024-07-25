@@ -8,3 +8,8 @@ services:
       - '5432:5432'
     env_file:
       - ".env"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
