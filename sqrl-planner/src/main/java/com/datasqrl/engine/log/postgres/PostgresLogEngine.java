@@ -16,6 +16,8 @@ import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.database.relational.ddl.JdbcDDLFactory;
 import com.datasqrl.engine.database.relational.ddl.JdbcDDLServiceLoader;
 import com.datasqrl.engine.database.relational.ddl.PostgresDDLFactory;
+import com.datasqrl.engine.database.relational.ddl.statements.notify.OnNotifyDDL;
+import com.datasqrl.engine.database.relational.ddl.statements.notify.ListenDDL;
 import com.datasqrl.engine.log.Log;
 import com.datasqrl.engine.log.LogEngine;
 import com.datasqrl.engine.log.LogFactory;
@@ -24,14 +26,13 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.global.PhysicalDAGPlan.LogStagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
-import com.datasqrl.sql.SqlDDLStatement;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
-import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import lombok.Getter;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.commons.lang3.tuple.Pair;
 
 public class PostgresLogEngine extends ExecutionEngine.Base implements LogEngine {
 
@@ -68,18 +69,22 @@ public class PostgresLogEngine extends ExecutionEngine.Base implements LogEngine
 
     PostgresDDLFactory postgresDDLFactory = (PostgresDDLFactory) factory;
 
-    List<SqlDDLStatement> ddlStatements = new ArrayList<>();
+    PostgresPhysicalPlan physicalPlan = new PostgresPhysicalPlan();
 
     LogStagePlan dbPlan = (LogStagePlan) plan;
     for (Log log : dbPlan.getLogs()) {
       PostgresTable pgTable = (PostgresTable) log;
-      String topicName = pgTable.getTopicName();
+      String tableName = pgTable.getTableName();
       RelDataType dataType = pgTable.getTableSchema().getRelDataType();
-      ddlStatements.add(postgresDDLFactory.createTable(topicName, dataType.getFieldList(), pgTable.getPrimaryKeys()));
-      ddlStatements.add(postgresDDLFactory.createNotify(topicName, pgTable.getPrimaryKeys()));
+      physicalPlan.getDdl().add(postgresDDLFactory.createTable(tableName, dataType.getFieldList(), pgTable.getPrimaryKeys()));
+      physicalPlan.getDdl().add(postgresDDLFactory.createNotify(tableName, pgTable.getPrimaryKeys()));
+
+      Pair<ListenDDL, OnNotifyDDL> helperDDLs = postgresDDLFactory.createNotifyHelperDDLs(tableName, pgTable.getPrimaryKeys());
+      physicalPlan.getListenQueries().add(helperDDLs.getLeft());
+      physicalPlan.getOnNotifyQueries().add(helperDDLs.getRight());
     }
 
-    return new PostgresPhysicalPlan(ddlStatements);
+    return physicalPlan;
   }
 
 }

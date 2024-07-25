@@ -1,11 +1,11 @@
-package com.datasqrl.engine.database.relational.ddl.statements;
+package com.datasqrl.engine.database.relational.ddl.statements.notify;
 
 import com.datasqrl.sql.SqlDDLStatement;
 import java.util.List;
 import java.util.stream.Collectors;
-import lombok.Value;
+import lombok.AllArgsConstructor;
 
-@Value
+@AllArgsConstructor
 public class CreateNotifyTriggerDDL implements SqlDDLStatement {
 
   String tableName;

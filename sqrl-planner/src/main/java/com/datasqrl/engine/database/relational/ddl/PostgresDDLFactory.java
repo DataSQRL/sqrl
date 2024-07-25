@@ -6,13 +6,14 @@ package com.datasqrl.engine.database.relational.ddl;
 import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.engine.database.relational.ddl.statements.CreateIndexDDL;
-import com.datasqrl.engine.database.relational.ddl.statements.CreateNotifyTriggerDDL;
+import com.datasqrl.engine.database.relational.ddl.statements.notify.OnNotifyDDL;
+import com.datasqrl.engine.database.relational.ddl.statements.notify.ListenDDL;
+import com.datasqrl.engine.database.relational.ddl.statements.notify.CreateNotifyTriggerDDL;
 import com.datasqrl.engine.database.relational.ddl.statements.CreateTableDDL;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.google.auto.service.AutoService;
 
-import java.util.Collections;
 import java.util.stream.Collectors;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
@@ -22,6 +23,8 @@ import java.util.List;
 
 import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.pretty.SqlPrettyWriter;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 
 @AutoService(JdbcDDLFactory.class)
 public class PostgresDDLFactory implements JdbcDDLFactory {
@@ -57,9 +60,7 @@ public class PostgresDDLFactory implements JdbcDDLFactory {
         .map(PostgresDDLFactory::toSql)
         .collect(Collectors.toList());
 
-    List<String> pks = primaryKeys.stream()
-        .map(PostgresDDLFactory::quoteIdentifier)
-        .collect(Collectors.toList());
+    List<String> pks = quoteValues(primaryKeys);
 
     return new CreateTableDDL(tableName, columns, pks);
   }
@@ -95,6 +96,12 @@ public class PostgresDDLFactory implements JdbcDDLFactory {
     return new CreateNotifyTriggerDDL(name, primaryKeys);
   }
 
+  public Pair<ListenDDL, OnNotifyDDL> createNotifyHelperDDLs(String name, List<String> primaryKeys) {
+    ListenDDL listenDDL = new ListenDDL(name);
+    OnNotifyDDL onNotifyDDL = new OnNotifyDDL(quoteIdentifier(name), quoteValues(primaryKeys));
+    return new ImmutablePair<>(listenDDL, onNotifyDDL);
+  }
+
   public static List<String> quoteIdentifier(List<String> columns) {
     return columns.stream()
         .map(PostgresDDLFactory::quoteIdentifier)
@@ -102,5 +109,11 @@ public class PostgresDDLFactory implements JdbcDDLFactory {
   }
   public static String quoteIdentifier(String column) {
     return "\"" + column + "\"";
+  }
+
+  public static List<String> quoteValues(List<String> values) {
+    return values.stream()
+        .map(PostgresDDLFactory::quoteIdentifier)
+        .collect(Collectors.toList());
   }
 }

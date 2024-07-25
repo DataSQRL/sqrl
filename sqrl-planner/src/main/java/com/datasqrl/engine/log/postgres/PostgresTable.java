@@ -17,7 +17,7 @@ import lombok.Getter;
 @Getter
 public class PostgresTable implements Log {
 
-  String topicName;
+  String tableName;
   Name logName;
   TableConfig sourceConfig;
   TableConfig sinkConfig;

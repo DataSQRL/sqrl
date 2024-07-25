@@ -82,11 +82,17 @@ Inputs: event_2
       "sql" : "CREATE TABLE IF NOT EXISTS \"Event\" (\"_uuid\" TEXT NOT NULL,\"event_time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"ID\" BIGINT ,\"EPOCH_TIMESTAMP\" BIGINT ,\"SOME_VALUE\" TEXT ,\"TIMESTAMP\" TIMESTAMP WITHOUT TIME ZONE  , PRIMARY KEY (\"_uuid\"));"
     },
     {
-      "tableName" : "Event",
-      "primaryKeys" : [
-        "_uuid"
-      ],
       "sql" : "CREATE OR REPLACE FUNCTION notify_on_Event_insert()\nRETURNS TRIGGER AS $$\nBEGIN\n   PERFORM pg_notify('Event_notify', NEW._uuid::text);\n   RETURN NEW;\nEND;\n$$ LANGUAGE plpgsql;\n\nCREATE TRIGGER insert_notify_trigger\nAFTER INSERT ON \"Event\"\nFOR EACH ROW EXECUTE PROCEDURE notify_on_Event_insert();"
+    }
+  ],
+  "listenQueries" : [
+    {
+      "sql" : "LISTEN Event_notify"
+    }
+  ],
+  "onNotifyQueries" : [
+    {
+      "sql" : "SELECT * FROM \"Event\" WHERE \"_uuid\"= ?;"
     }
   ]
 }
