@@ -1,4 +1,0 @@
-IMPORT postgres-log-gql.AddEvent;
-
--- Load into postgres (as database) table
-PgTable := SELECT * FROM AddEvent;

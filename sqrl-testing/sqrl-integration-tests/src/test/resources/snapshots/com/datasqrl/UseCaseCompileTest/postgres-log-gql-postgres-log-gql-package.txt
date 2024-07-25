@@ -1,5 +1,0 @@
-[FATAL] Timestamp column not found: "event_time". Must be one of: [_uuid, eventType, timestamp, userId]
-in script:<script> [1:1]:
-IMPORT postgres-log-gql.AddEvent;
-^
-

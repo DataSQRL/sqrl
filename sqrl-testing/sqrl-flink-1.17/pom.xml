@@ -6,7 +6,7 @@
     <version>0.5.4-SNAPSHOT</version>
   </parent>
 
-  <artifactId>sqrl-flink-1.18</artifactId>
+  <artifactId>sqrl-flink-1.17</artifactId>
 
   <properties>
     <maven.compiler.source>11</maven.compiler.source>
@@ -18,71 +18,71 @@
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-core</artifactId>
-      <version>1.18.1</version>
+      <version>1.17.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-clients</artifactId>
-      <version>1.18.1</version>
+      <version>1.17.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-file-sink-common</artifactId>
-      <version>1.18.1</version>
+      <version>1.17.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-streaming-java</artifactId>
-      <version>1.18.1</version>
+      <version>1.17.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-table-api-java-bridge</artifactId>
-      <version>1.18.1</version>
+      <version>1.17.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-table-planner_2.12</artifactId>
-      <version>1.18.1</version>
+      <version>1.17.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-table-common</artifactId>
-      <version>1.18.1</version>
+      <version>1.17.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-table-runtime</artifactId>
-      <version>1.18.1</version>
+      <version>1.17.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-test-utils</artifactId>
-      <version>1.18.1</version>
+      <version>1.17.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-connector-files</artifactId>
-      <version>1.18.1</version>
+      <version>1.17.2</version>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-json</artifactId>
-      <version>1.18.1</version>
+      <version>1.17.2</version>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-hadoop-fs</artifactId>
-      <version>1.18.1</version>
+      <version>1.17.2</version>
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
@@ -105,7 +105,11 @@
       <version>1.5.0</version>
     </dependency>
     <!-- https://mvnrepository.com/artifact/org.apache.hive/hive-metastore -->
-
+    <dependency>
+      <groupId>org.apache.hive</groupId>
+      <artifactId>hive-metastore</artifactId>
+      <version>3.1.3</version>
+    </dependency>
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-mapreduce-client-core</artifactId>
@@ -120,86 +124,8 @@
 
     <dependency>
       <groupId>org.apache.iceberg</groupId>
-      <artifactId>iceberg-flink-runtime-1.18</artifactId>
+      <artifactId>iceberg-flink-runtime-1.17</artifactId>
       <version>1.5.0</version>
     </dependency>
-    <dependency>
-      <groupId>org.apache.kafka</groupId>
-      <artifactId>kafka-streams</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.kafka</groupId>
-      <artifactId>kafka-streams</artifactId>
-      <classifier>test</classifier>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-secure</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.hive</groupId>
-      <artifactId>hive-metastore</artifactId>
-      <version>3.1.3</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.iceberg</groupId>
-      <artifactId>iceberg-core</artifactId>
-      <version>1.5.2</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.iceberg</groupId>
-      <artifactId>iceberg-aws</artifactId>
-      <version>1.5.2</version>
-    </dependency>
-      <dependency>
-        <groupId>software.amazon.awssdk</groupId>
-        <artifactId>glue</artifactId>
-      </dependency>
-      <dependency>
-        <groupId>software.amazon.awssdk</groupId>
-        <artifactId>url-connection-client</artifactId>
-      </dependency>
-      <dependency>
-        <groupId>software.amazon.awssdk</groupId>
-        <artifactId>apache-client</artifactId>
-      </dependency>
-      <dependency>
-        <groupId>software.amazon.awssdk</groupId>
-        <artifactId>auth</artifactId>
-      </dependency>
-      <dependency>
-        <groupId>software.amazon.awssdk</groupId>
-        <artifactId>s3</artifactId>
-      </dependency>
-      <dependency>
-        <groupId>software.amazon.awssdk</groupId>
-        <artifactId>kms</artifactId>
-      </dependency>
-      <dependency>
-        <groupId>software.amazon.awssdk</groupId>
-        <artifactId>sts</artifactId>
-      </dependency>
-      <dependency>
-        <groupId>software.amazon.awssdk</groupId>
-        <artifactId>dynamodb</artifactId>
-      </dependency>
-      <dependency>
-        <groupId>software.amazon.awssdk</groupId>
-        <artifactId>lakeformation</artifactId>
-      </dependency>
-
   </dependencies>
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>software.amazon.awssdk</groupId>
-        <artifactId>bom</artifactId>
-        <version>2.24.5</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
-
 </project>

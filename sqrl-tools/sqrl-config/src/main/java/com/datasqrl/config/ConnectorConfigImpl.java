@@ -26,9 +26,7 @@ public class ConnectorConfigImpl implements TableConfig.ConnectorConfig {
       "filesystem", TableType.STREAM,
       "upsert-kafka", TableType.VERSIONED_STATE,
       "jdbc", TableType.LOOKUP,
-      "jdbc-sqrl", TableType.LOOKUP,
-      "datagen", TableType.STREAM,
-      "postgres-cdc", TableType.STREAM
+      "jdbc-sqrl", TableType.LOOKUP
   );
 
   public Optional<TableConfig.Format> getFormat() {
@@ -50,8 +48,7 @@ public class ConnectorConfigImpl implements TableConfig.ConnectorConfig {
     String connectorName = getConnectorName().get().toLowerCase();
     TableType tableType = CONNECTOR_TYPE_MAP.get(connectorName);
     if (tableType == null) {
-      log
-          .warn("Unrecognized connector type: {}. Defaulting to STREAM table for import.",
+      log.info("Unrecognized connector type: {}. Defaulting to STREAM table for import.",
               connectorName);
       tableType = TableType.STREAM;
     }

@@ -184,21 +184,24 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
       ConnectorConfImpl engineConfig = (ConnectorConfImpl) connectorConf;
 
       TableConfigBuilderImpl builder = TableConfigImpl.builder(context.getName());
-      List<String> primaryKey = (List<String>)map.get("primary-key");
-      String timestampType = (String)map.get("timestamp-type");
-      String timestampName = (String)map.get("timestamp-name");
 
-      if (!primaryKey.isEmpty()) builder.setPrimaryKey(primaryKey.toArray(new String[0]));
-      if (!timestampType.equalsIgnoreCase("NONE")) {//!=TimestampType.NONE
-        builder.setType(ExternalDataType.source_and_sink);
-        builder.setTimestampColumn(timestampName);
-        builder.setWatermark(0);
+      List<String> primaryKey = (List<String>)map.get("primary-key");
+      Optional.ofNullable(primaryKey)
+          .filter(pk -> !pk.isEmpty())
+          .ifPresent(pk -> builder.setPrimaryKey(pk.toArray(new String[0])));
+
+      builder.setTimestampColumn((String)map.get("timestamp-name"));
+      builder.setWatermark(0);
+
+
+      if (connectorConf.toMap().get("connector").equals("postgres-cdc")) {
+        builder.setType(ExternalDataType.source);
       } else {
         builder.setType(ExternalDataType.sink);
       }
 
       builder.copyConnectorConfig(engineConfig);
-      builder.getConnectorConfig().setProperty("table-name", (String)map.get("table-name"));
+      builder.getConnectorConfig().setProperty("table-name", map.get("table-name"));
       return builder.build();
     };
   }
