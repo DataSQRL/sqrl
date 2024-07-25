@@ -7,15 +7,15 @@ columns:
   type: "STRING"
   tests:
   - "not_null"
-- name: "id"
+- name: "ID"
   type: "BIGINT"
   tests:
   - "not_null"
-- name: "epoch_timestamp"
+- name: "EPOCH_TIMESTAMP"
   type: "BIGINT"
   tests:
   - "not_null"
-- name: "some_value"
+- name: "SOME_VALUE"
   type: "STRING"
   tests:
   - "not_null"

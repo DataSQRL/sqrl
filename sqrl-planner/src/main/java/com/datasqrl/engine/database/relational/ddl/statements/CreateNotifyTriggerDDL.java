@@ -23,7 +23,7 @@ public class CreateNotifyTriggerDDL implements SqlDDLStatement {
             "$$ LANGUAGE plpgsql;\n" +
             "\n" +
             "CREATE TRIGGER insert_notify_trigger\n" +
-            "AFTER INSERT ON %1$s\n" +
+            "AFTER INSERT ON \"%1$s\"\n" +
             "FOR EACH ROW EXECUTE PROCEDURE notify_on_%1$s_insert();", tableName, createPayload());
   }
 
