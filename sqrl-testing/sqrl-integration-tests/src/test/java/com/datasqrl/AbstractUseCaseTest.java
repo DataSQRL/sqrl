@@ -51,9 +51,6 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
 //    arguments.add("-t"); arguments.add(deployDir.toString());
     arguments.add("--profile");
     arguments.add(getProjectRoot(script).resolve("profiles/default").toString());
-    // TODO: instead of doing this, we should use package.json's profile
-    arguments.add("--profile");
-    arguments.add(getProjectRoot(script).resolve("profiles/postgres_log").toString());
     String testname = Stream.of(script, graphQlFile, packageFile)
         .map(AbstractAssetSnapshotTest::getDisplayName)
         .collect(Collectors.joining("-"));
