@@ -158,10 +158,6 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     TypeFactory typeFactory = TypeFactory.getTypeFactory();
     RelDataTypeBuilder fieldBuilder = CalciteUtil.getRelTypeBuilder(typeFactory);
     fieldBuilder.add(Name.system("_uuid"), typeFactory.createSqlType(SqlTypeName.VARCHAR));
-    // TODO: that's an ugly hack, postgres-log requires it as a field, however kafka requires it as metadata
-    if (logManager.getEngineName().equals("postgres_log")) {
-      fieldBuilder.add(Name.system("event_time"), typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3));
-    }
     for (SqrlColumnDefinition definition : statement.getColumns()) {
       fieldBuilder.add(definition.getColumnName().getSimple(),
           SqlDataTypeSpecBuilder.create(definition.getType(), typeFactory));
@@ -171,6 +167,8 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
 
     Log sinkLog = logManager.create(logId, namePath.getLast(),
         relDataType, List.of("_uuid"), new Timestamp("event_time", TimestampType.LOG_TIME));
+
+    relDataType = sinkLog.getSchema();
 
     TableConfig tableConfig = sinkLog.getSource().getConfiguration();
     this.framework.getSchema().add(new ResolvedImport(logId, tableConfig));

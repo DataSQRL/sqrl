@@ -32,7 +32,7 @@ public class KafkaLogFactory implements LogFactory {
         timestamp.getType().name(), primaryKey);
     TableConfig logConfig = connectorFactory.createSourceAndSink(connectorContext);
     Optional<TableSchema> tblSchema = Optional.of(new RelDataTypeTableSchema(schema));
-    return new KafkaTopic(logId, logName, logConfig, tblSchema, connectorContext);
+    return new KafkaTopic(logId, logName, logConfig, tblSchema, connectorContext, schema);
   }
 
   @Override

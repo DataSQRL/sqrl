@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.apache.calcite.rel.type.RelDataType;
 
 @AllArgsConstructor
 @Getter
@@ -24,6 +25,7 @@ public class PostgresTable implements Log {
   RelDataTypeTableSchema tableSchema;
   List<String> primaryKeys;
   IConnectorFactoryContext connectorContext;
+  RelDataType schema;
 
   @Override
   public TableSource getSource() {

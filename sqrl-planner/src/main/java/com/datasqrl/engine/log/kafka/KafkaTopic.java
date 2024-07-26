@@ -15,6 +15,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.util.Optional;
+import org.apache.calcite.rel.type.RelDataType;
 
 @AllArgsConstructor
 @Getter
@@ -25,6 +26,7 @@ class KafkaTopic implements Log {
   TableConfig logConfig;
   Optional<TableSchema> tableSchema;
   IConnectorFactoryContext connectorContext;
+  RelDataType schema;
 
   @Override
   public TableSource getSource() {
@@ -35,4 +37,5 @@ class KafkaTopic implements Log {
   public TableSink getSink() {
     return TableSinkImpl.create(logConfig, NamePath.of(ENGINE_NAME), tableSchema);
   }
+
 }
