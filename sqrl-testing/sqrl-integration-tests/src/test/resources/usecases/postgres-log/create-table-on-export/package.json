@@ -1,0 +1,10 @@
+{
+  "version": "1",
+  "enabled-engines": ["postgres_log", "flink"],
+  "script": {
+    "main": "postgres-log-ct-on-export.sqrl"
+  },
+  "compiler": {
+    "logger": "print"
+  }
+}
