@@ -1,0 +1,14 @@
+IMPORT mock.Data;
+
+CREATE TABLE Event (
+    ID BIGINT,
+    EPOCH_TIMESTAMP BIGINT,
+    SOME_VALUE VARCHAR,
+    TIMESTAMP TIMESTAMP(3)
+);
+
+EXPORT Data TO log.Event;
+
+IMPORT log.Event AS ImportedEvent;
+
+EXPORT ImportedEvent TO print.LogImportedEvent;
