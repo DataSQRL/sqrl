@@ -1,0 +1,21 @@
+---
+name: "data"
+schema_version: "1"
+partial_schema: false
+columns:
+- name: "_uuid"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "ID"
+  type: "BIGINT"
+  tests:
+  - "not_null"
+- name: "EPOCH_TIMESTAMP"
+  type: "BIGINT"
+  tests:
+  - "not_null"
+- name: "SOME_VALUE"
+  type: "STRING"
+  tests:
+  - "not_null"

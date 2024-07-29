@@ -165,6 +165,11 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
 
     RelDataType relDataType = fieldBuilder.build();
 
+    createAndRegisterLogEntity(logId, namePath, relDataType);
+    return null;
+  }
+
+  private Log createAndRegisterLogEntity(String logId, NamePath namePath, RelDataType relDataType) {
     Log sinkLog = logManager.create(logId, namePath.getLast(),
         relDataType, List.of("_uuid"), new Timestamp("event_time", TimestampType.LOG_TIME));
 
@@ -177,7 +182,8 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         new TableSource(tableConfig, namePath, namePath.getLast(),
             new RelDataTypeTableSchema(relDataType)));
     namespaceObject.apply(this, Optional.empty(), framework, errorCollector);
-    return null;
+
+    return sinkLog;
   }
 
   @Override
@@ -256,6 +262,9 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         }
       } else if (connector == SystemBuiltInConnectors.LOG_ENGINE) {
         Log sinkLog = logManager.getLogs().get(sinkPath.getLast().getDisplay());
+        if (sinkLog == null) {
+          sinkLog = createAndRegisterLogEntity(sinkPath.getLast().getDisplay(), sinkPath, exportRelNode.getRowType());
+        }
         tableSink = sinkLog.getSink();
       }
       if (tableSink == null) {
