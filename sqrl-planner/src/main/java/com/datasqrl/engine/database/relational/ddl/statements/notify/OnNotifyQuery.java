@@ -6,7 +6,7 @@ import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
-public class OnNotifyDDL implements SqlDDLStatement {
+public class OnNotifyQuery implements SqlDDLStatement {
 
   String tableName;
   List<String> primaryKeys;

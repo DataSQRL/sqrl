@@ -6,8 +6,9 @@ package com.datasqrl.engine.database.relational.ddl;
 import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.engine.database.relational.ddl.statements.CreateIndexDDL;
-import com.datasqrl.engine.database.relational.ddl.statements.notify.OnNotifyDDL;
-import com.datasqrl.engine.database.relational.ddl.statements.notify.ListenDDL;
+import com.datasqrl.engine.database.relational.ddl.statements.notify.ListenNotifyAssets;
+import com.datasqrl.engine.database.relational.ddl.statements.notify.OnNotifyQuery;
+import com.datasqrl.engine.database.relational.ddl.statements.notify.ListenQuery;
 import com.datasqrl.engine.database.relational.ddl.statements.notify.CreateNotifyTriggerDDL;
 import com.datasqrl.engine.database.relational.ddl.statements.CreateTableDDL;
 import com.datasqrl.plan.global.IndexDefinition;
@@ -23,8 +24,6 @@ import java.util.List;
 
 import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.pretty.SqlPrettyWriter;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 
 @AutoService(JdbcDDLFactory.class)
 public class PostgresDDLFactory implements JdbcDDLFactory {
@@ -96,10 +95,10 @@ public class PostgresDDLFactory implements JdbcDDLFactory {
     return new CreateNotifyTriggerDDL(name, primaryKeys);
   }
 
-  public Pair<ListenDDL, OnNotifyDDL> createNotifyHelperDDLs(String name, List<String> primaryKeys) {
-    ListenDDL listenDDL = new ListenDDL(name);
-    OnNotifyDDL onNotifyDDL = new OnNotifyDDL(quoteIdentifier(name), quoteValues(primaryKeys));
-    return new ImmutablePair<>(listenDDL, onNotifyDDL);
+  public ListenNotifyAssets createNotifyHelperDDLs(String name, List<String> primaryKeys) {
+    ListenQuery listenQuery = new ListenQuery(name);
+    OnNotifyQuery onNotifyQuery = new OnNotifyQuery(quoteIdentifier(name), quoteValues(primaryKeys));
+    return new ListenNotifyAssets(listenQuery, onNotifyQuery);
   }
 
   public static List<String> quoteIdentifier(List<String> columns) {

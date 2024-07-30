@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 
 
 @AllArgsConstructor
-public class ListenDDL implements SqlDDLStatement {
+public class ListenQuery implements SqlDDLStatement {
 
   String tableName;
 

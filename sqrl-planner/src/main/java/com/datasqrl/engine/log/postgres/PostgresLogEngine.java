@@ -16,8 +16,7 @@ import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.database.relational.ddl.JdbcDDLFactory;
 import com.datasqrl.engine.database.relational.ddl.JdbcDDLServiceLoader;
 import com.datasqrl.engine.database.relational.ddl.PostgresDDLFactory;
-import com.datasqrl.engine.database.relational.ddl.statements.notify.OnNotifyDDL;
-import com.datasqrl.engine.database.relational.ddl.statements.notify.ListenDDL;
+import com.datasqrl.engine.database.relational.ddl.statements.notify.ListenNotifyAssets;
 import com.datasqrl.engine.log.Log;
 import com.datasqrl.engine.log.LogEngine;
 import com.datasqrl.engine.log.LogFactory;
@@ -32,7 +31,6 @@ import java.util.EnumSet;
 import java.util.List;
 import lombok.Getter;
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.commons.lang3.tuple.Pair;
 
 public class PostgresLogEngine extends ExecutionEngine.Base implements LogEngine {
 
@@ -79,9 +77,8 @@ public class PostgresLogEngine extends ExecutionEngine.Base implements LogEngine
       physicalPlan.getDdl().add(postgresDDLFactory.createTable(tableName, dataType.getFieldList(), pgTable.getPrimaryKeys()));
       physicalPlan.getDdl().add(postgresDDLFactory.createNotify(tableName, pgTable.getPrimaryKeys()));
 
-      Pair<ListenDDL, OnNotifyDDL> helperDDLs = postgresDDLFactory.createNotifyHelperDDLs(tableName, pgTable.getPrimaryKeys());
-      physicalPlan.getListenQueries().add(helperDDLs.getLeft());
-      physicalPlan.getOnNotifyQueries().add(helperDDLs.getRight());
+      ListenNotifyAssets listenNotifyAssets = postgresDDLFactory.createNotifyHelperDDLs(tableName, pgTable.getPrimaryKeys());
+      physicalPlan.getQueries().add(listenNotifyAssets);
     }
 
     return physicalPlan;
