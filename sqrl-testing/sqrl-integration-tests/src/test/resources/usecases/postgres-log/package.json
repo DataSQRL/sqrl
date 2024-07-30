@@ -2,7 +2,7 @@
   "version": "1",
   "enabled-engines": ["postgres_log", "flink"],
   "script": {
-    "main": "postgres-log-ct-on-export.sqrl"
+    "main": "postgres-log.sqrl"
   },
   "compiler": {
     "logger": "print"
