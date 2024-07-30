@@ -2,7 +2,7 @@
   "version": "1",
   "enabled-engines": ["postgres_log", "flink"],
   "script": {
-    "main": "log-import-export.sqrl"
+    "main": "log-import-export-wct.sqrl"
   },
   "compiler": {
     "logger": "print"
