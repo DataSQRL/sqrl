@@ -11,18 +11,24 @@ import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentLookupCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentParameter;
 import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentSet;
+import com.datasqrl.graphql.server.RootGraphqlModel.CalciteQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.FieldLookupCoords;
-import com.datasqrl.graphql.server.RootGraphqlModel.FixedArgument;
 import com.datasqrl.graphql.server.RootGraphqlModel.JdbcQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.SourceParameter;
 import com.datasqrl.graphql.server.RootGraphqlModel.StringSchema;
 import com.datasqrl.graphql.server.RootGraphqlModel.VariableArgument;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import graphql.ExecutionInput;
 import graphql.ExecutionResult;
+import graphql.ExperimentalApi;
 import graphql.GraphQL;
 import graphql.GraphQLError;
+import graphql.execution.AsyncExecutionStrategy;
 import graphql.execution.instrumentation.ChainedInstrumentation;
+import graphql.incremental.DeferPayload;
+import graphql.incremental.DelayedIncrementalPartialResult;
+import graphql.incremental.IncrementalExecutionResult;
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.handler.graphql.instrumentation.JsonObjectAdapter;
 import io.vertx.ext.web.handler.graphql.instrumentation.VertxFutureAdapter;
@@ -33,12 +39,17 @@ import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.SqlConnection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -60,13 +71,16 @@ class VertxGraphQLBuilderTest {
 
   static RootGraphqlModel root = RootGraphqlModel.builder()
       .schema(StringSchema.builder().schema(""
+//          Directives.DeferDirective
+           + "directive @defer(label: String = \"No longer supported\") on INLINE_FRAGMENT\n"
+          + " "
           + "type Query { "
-          + "  customer2(customerid: Int = 2): Customer "
+          + "  customer: [Customer] "
           + "} "
           + "type Customer {"
           + "  customerid: Int "
-          + "  sameCustomer: Customer"
-          + "}").build())
+          + "}"
+         ).build())
       .coord(FieldLookupCoords.builder()
           .parentType("Customer")
           .fieldName("customerid")
@@ -76,19 +90,12 @@ class VertxGraphQLBuilderTest {
           .parentType("Query")
           .fieldName("customer")
           .match(ArgumentSet.builder()
-              .argument(FixedArgument.builder()
-                  .path("sort.customerid")
-                  .value("DESC")
-                  .build())
-              .query(new JdbcQuery("SELECT customerid FROM Customer ORDER BY customerid DESC", List.of()))
+              .query(
+                  new CalciteQuery("select STREAM *\n"
+                      + "from \"flink\".\"sales_fact_1997\"", List.of())
+              )
               .build())
-          .match(ArgumentSet.builder()
-              .argument(FixedArgument.builder()
-                  .path("sort.customerid")
-                  .value("ASC")
-                  .build())
-              .query(new JdbcQuery("SELECT customerid FROM Customer ORDER BY customerid ASC", List.of()))
-              .build())
+
           .build())
 
       .coord(ArgumentLookupCoords.builder()
@@ -114,6 +121,7 @@ class VertxGraphQLBuilderTest {
           .build())
       .build();
   private PgPool client;
+  private Vertx vertx;
 
   @SneakyThrows
   @BeforeEach
@@ -127,7 +135,7 @@ class VertxGraphQLBuilderTest {
 
     options.setCachePreparedStatements(true);
     options.setPipeliningLimit(100_000);
-
+    this.vertx = vertx;
     PgPool client = PgPool.pool(vertx, options, new PoolOptions());
     this.client = client;
 
@@ -149,28 +157,87 @@ class VertxGraphQLBuilderTest {
 
   @SneakyThrows
   @Test
+  @Disabled//requires sql gateway
   public void test() {
     GraphQL graphQL = root.accept(
         new GraphQLEngineBuilder(),
-        new VertxContext(new VertxJdbcClient(client), Map.of(), Map.of(), NameCanonicalizer.SYSTEM))
+        new VertxContext(vertx, new VertxJdbcClient(client), GraphQLServer.getCalciteClient(vertx), Map.of(), Map.of(), NameCanonicalizer.SYSTEM))
         .instrumentation(new ChainedInstrumentation(
             new JsonObjectAdapter(), VertxFutureAdapter.create()))
+        .queryExecutionStrategy(new AsyncExecutionStrategy())
         .build();
-    ExecutionResult result = graphQL.execute("{\n"
-        + "  customer2(customerid: 2) {\n"
-        + "    customerid\n"
-        + "  }\n"
-        + "}");
+    long time;
+    for (int i = 0; i < 2; i++) {
+      time = System.currentTimeMillis();
+      CountDownLatch latch = new CountDownLatch(1);
 
-    if (result.getErrors() != null && !result.getErrors().isEmpty()) {
-      fail(result.getErrors().stream()
-          .map(GraphQLError::getMessage)
-          .collect(Collectors.joining(",")));
+      ExecutionInput input = ExecutionInput.newExecutionInput().query("query {\n"
+          + "  ... @defer { customer { customerid } }"
+          + " }"
+      ).graphQLContext(
+          Map.of(ExperimentalApi.ENABLE_INCREMENTAL_SUPPORT, true)).build();
+
+      ExecutionResult initialResult = graphQL
+          .executeAsync(input)
+          .get();
+
+      IncrementalExecutionResult result = (IncrementalExecutionResult) initialResult;
+
+      Publisher<DelayedIncrementalPartialResult> delayedIncrementalResults = result
+          .getIncrementalItemPublisher();
+
+      delayedIncrementalResults.subscribe(new Subscriber<>() {
+
+        Subscription subscription;
+
+        int calls = 0;
+
+        @Override
+        public void onSubscribe(Subscription s) {
+          subscription = s;
+          //
+          // how many you request is up to you
+          subscription.request(1);
+        }
+
+        @Override
+        public void onNext(DelayedIncrementalPartialResult executionResult) {
+          //
+          // as each deferred result arrives, send it to where it needs to go
+          //
+          executionResult.getIncremental().stream().map(i -> (DeferPayload) i)
+              .map(d -> d.getData())
+              .forEach(System.out::println);
+          calls++;
+          System.out.println(executionResult.hasNext());
+          latch.countDown();
+//        subscription.request(10);
+        }
+
+        @Override
+        public void onError(Throwable t) {
+          fail(t);
+          t.printStackTrace();
+        }
+
+        @Override
+        public void onComplete() {
+          assertEquals(1, calls);
+        }
+      });
+      latch.await();
+
+      if (result.getErrors() != null && !result.getErrors().isEmpty()) {
+        fail(result.getErrors().stream()
+            .map(GraphQLError::getMessage)
+            .collect(Collectors.joining(",")));
+      }
+      String value = new ObjectMapper().writeValueAsString(result.getData());
+      System.out.println(value);
+      assertEquals(
+          "{}",
+          value);
+      System.out.println(System.currentTimeMillis() - time);
     }
-    String value = new ObjectMapper().writeValueAsString(result.getData());
-    System.out.println(value);
-    assertEquals(
-        "{\"customer2\":{\"customerid\":2}}",
-        value);
   }
 }

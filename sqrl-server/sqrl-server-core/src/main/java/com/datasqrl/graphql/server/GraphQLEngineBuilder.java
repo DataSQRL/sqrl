@@ -8,6 +8,7 @@ import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.getSubscrip
 
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentLookupCoords;
+import com.datasqrl.graphql.server.RootGraphqlModel.CalciteQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.CoordVisitor;
 import com.datasqrl.graphql.server.RootGraphqlModel.FieldLookupCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.JdbcQuery;
@@ -15,6 +16,7 @@ import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.PagedJdbcQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.QueryBaseVisitor;
 import com.datasqrl.graphql.server.RootGraphqlModel.Coords;
+import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedCalciteQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedJdbcQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedPagedJdbcQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
@@ -146,6 +148,11 @@ public class GraphQLEngineBuilder implements
   }
 
   @Override
+  public ResolvedQuery visitCalciteQuery(CalciteQuery query, Context context) {
+    return new ResolvedCalciteQuery(query);
+  }
+
+  @Override
   public ResolvedQuery visitPagedJdbcQuery(PagedJdbcQuery jdbcQuery, Context context) {
     return new ResolvedPagedJdbcQuery(jdbcQuery);
   }
@@ -176,6 +183,14 @@ public class GraphQLEngineBuilder implements
   public Object visitResolvedPagedJdbcQuery(ResolvedPagedJdbcQuery query,
       QueryExecutionContext context) {
     return context.runPagedJdbcQuery(query,
+        isList(context.getEnvironment().getFieldType()),
+        context);
+  }
+
+  @Override
+  public Object visitResolvedCalciteQuery(ResolvedCalciteQuery query,
+      QueryExecutionContext context) {
+    return context.runCalciteQuery(query,
         isList(context.getEnvironment().getFieldType()),
         context);
   }

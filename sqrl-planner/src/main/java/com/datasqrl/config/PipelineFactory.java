@@ -69,15 +69,6 @@ public class PipelineFactory {
     return Pair.of(engines.entrySet().iterator().next());
   }
 
-  public DatabaseEngine getDatabaseEngine() {
-    return (DatabaseEngine) getEngine(EngineFactory.Type.DATABASE).getRight();
-  }
-
-  public StreamEngine getStreamEngine() {
-    return (StreamEngine) getEngine(EngineFactory.Type.STREAMS).getRight();
-  }
-
-
   public ExecutionPipeline createPipeline() {
     return SimplePipeline.of(getEngines(), /*todo*/ErrorCollector.root());
   }

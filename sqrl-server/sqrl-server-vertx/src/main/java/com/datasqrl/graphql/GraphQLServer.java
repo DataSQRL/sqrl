@@ -3,16 +3,22 @@
  */
 package com.datasqrl.graphql;
 
-import static org.apache.kafka.clients.consumer.ConsumerConfig.*;
+import static org.apache.kafka.clients.consumer.ConsumerConfig.AUTO_OFFSET_RESET_CONFIG;
+import static org.apache.kafka.clients.consumer.ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG;
+import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
+import static org.apache.kafka.clients.consumer.ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG;
+import static org.apache.kafka.clients.consumer.ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG;
 import static org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG;
 import static org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG;
 
 import com.datasqrl.canonicalizer.NameCanonicalizer;
+import com.datasqrl.graphql.calcite.FlinkQuery;
+import com.datasqrl.graphql.calcite.FlinkSchema;
+import com.datasqrl.graphql.calcite.SimpleModifiableTable;
 import com.datasqrl.graphql.config.CorsHandlerOptions;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.io.SinkConsumer;
 import com.datasqrl.graphql.io.SinkProducer;
-import com.datasqrl.graphql.kafka.JsonSerializer;
 import com.datasqrl.graphql.kafka.KafkaSinkConsumer;
 import com.datasqrl.graphql.kafka.KafkaSinkProducer;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
@@ -21,9 +27,7 @@ import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoords;
 import com.datasqrl.graphql.type.SqrlVertxScalars;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.InjectableValues;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
@@ -34,11 +38,8 @@ import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.healthchecks.HealthCheckHandler;
-import io.vertx.ext.healthchecks.HealthChecks;
-import io.vertx.ext.healthchecks.Status;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
@@ -49,7 +50,6 @@ import io.vertx.ext.web.handler.graphql.GraphiQLHandler;
 import io.vertx.ext.web.handler.graphql.instrumentation.JsonObjectAdapter;
 import io.vertx.ext.web.handler.graphql.instrumentation.VertxFutureAdapter;
 import io.vertx.ext.web.handler.graphql.ws.GraphQLWSHandler;
-import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.pgclient.PgPool;
@@ -57,7 +57,9 @@ import io.vertx.pgclient.impl.PgPoolOptions;
 import io.vertx.sqlclient.SqlClient;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
+import java.lang.reflect.Field;
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -67,6 +69,11 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.calcite.jdbc.CalciteConnection;
+import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
+import org.apache.calcite.rel.type.StructKind;
+import org.apache.calcite.schema.SchemaPlus;
+import org.apache.calcite.sql.type.SqlTypeName;
 
 @Slf4j
 public class GraphQLServer extends AbstractVerticle {
@@ -79,7 +86,8 @@ public class GraphQLServer extends AbstractVerticle {
     this(readModel(), null, NameCanonicalizer.SYSTEM);
   }
 
-  public GraphQLServer(RootGraphqlModel model, ServerConfig config, NameCanonicalizer canonicalizer) {
+  public GraphQLServer(RootGraphqlModel model, ServerConfig config,
+      NameCanonicalizer canonicalizer) {
     this.model = model;
     this.config = config;
     this.canonicalizer = canonicalizer;
@@ -93,32 +101,76 @@ public class GraphQLServer extends AbstractVerticle {
     SimpleModule module = new SimpleModule();
     module.addDeserializer(String.class, new JsonEnvVarDeserializer());
     objectMapper.registerModule(module);
-    return objectMapper.readValue(
-        new File("server-model.json"),
-        RootGraphqlModel.class);
+    return objectMapper.readValue(new File("server-model.json"), RootGraphqlModel.class);
   }
 
-  public static class JsonEnvVarDeserializer extends JsonDeserializer<String> {
+  @SneakyThrows
+  public static CalciteConnection getCalciteClient(Vertx vertx) {
+    Class.forName("org.apache.calcite.jdbc.Driver");
+//    JDBCPool pool = JDBCPool.pool(vertx, new JDBCConnectOptions().setJdbcUrl("jdbc:calcite:"),
+//        new PoolOptions().setMaxSize(1));
+//    SqlConnection sqlConnection = pool.getConnection().toCompletionStage().toCompletableFuture()
+//        .get();
+//    ;
+//    CalciteConnection connection = (CalciteConnection)getInnermostConnection(sqlConnection);
+    Connection connection = DriverManager.getConnection("jdbc:calcite:");
+    CalciteConnection calciteConnection = connection.unwrap(CalciteConnection.class);
+    SchemaPlus rootSchema = calciteConnection.getRootSchema();
 
-    @Override
-    public String deserialize(JsonParser p, DeserializationContext ctxt)
-        throws IOException, JsonProcessingException {
-      String value = p.getText();
-      Pattern pattern = Pattern.compile("\\$\\{(.+?)\\}");
-      Matcher matcher = pattern.matcher(value);
-      StringBuffer result = new StringBuffer();
-      while (matcher.find()) {
-        String key = matcher.group(1);
-        String envVarValue = System.getenv(key);
-        if (envVarValue != null) {
-          matcher.appendReplacement(result, envVarValue);
-        }
-      }
-      matcher.appendTail(result);
+    FlinkSchema flinkSchema = new FlinkSchema("jdbc:flink://localhost:8083",0,0);
+    rootSchema.add("flink", flinkSchema);
+    JavaTypeFactoryImpl relDataTypeFactory = new JavaTypeFactoryImpl();
+    flinkSchema.addTable(new FlinkQuery("sales_fact_1997",  List.of(
+        "CREATE TABLE RandomData (\n" + " customerid INT, \n" + " text STRING \n" + ") WITH (\n"
+            + " 'connector' = 'datagen',\n" +
+            " 'number-of-rows'='10',\n"
+            + " 'rows-per-second'='5',\n"
+            + " 'fields.customerid.kind'='random',\n" + " 'fields.customerid.min'='1',\n"
+            + " 'fields.customerid.max'='1000',\n" + " 'fields.text.length'='10'\n" + ")"),
+        "SELECT * FROM RandomData", relDataTypeFactory.createStructType(StructKind.FULLY_QUALIFIED,
+        List.of(relDataTypeFactory.createSqlType(SqlTypeName.VARCHAR),
+            relDataTypeFactory.createSqlType(SqlTypeName.VARCHAR)), List.of("customerid", "text"))));
 
-      return result.toString();
+    rootSchema.add("mod", new SimpleModifiableTable(
+        relDataTypeFactory.createStructType(StructKind.FULLY_QUALIFIED,
+            List.of(relDataTypeFactory.createSqlType(SqlTypeName.VARCHAR),
+                relDataTypeFactory.createSqlType(SqlTypeName.VARCHAR)), List.of("customerid", "text"))
+    ));
+//
+//    PreparedStatement preparedStatement = calciteConnection.prepareStatement("INSERT INTO \"mod\" "
+//        + "VALUES(?, ?)"
+////        + "SELECT customerid + '1', text FROM (VALUES(?, ?)) as t(customerid, text)"
+//    );
+//    preparedStatement.setString(1, "1");
+//    preparedStatement.setString(2, "2");
+//
+//    System.out.println(preparedStatement.executeUpdate());
+//
+//    ResultSet resultSet = calciteConnection.createStatement()
+//        .executeQuery("SELECT * FROM \"mod\" ");
+//
+//    resultSet.next();
+//    System.out.println(resultSet.getString(1));
+
+    flinkSchema.assureOpen();
+
+    return calciteConnection;
+  }
+  public static Object getInnermostConnection(Object outerConnection) throws NoSuchFieldException, IllegalAccessException {
+    Field field = null;
+    Object currentObject = outerConnection;
+
+    // Assuming you know the field names and their depths
+    String[] fields = {"conn", "conn", "conn", "wrappedConnection"};
+    for (String fieldName : fields) {
+      field = currentObject.getClass().getDeclaredField(fieldName);
+      field.setAccessible(true);
+      currentObject = field.get(currentObject);
     }
+
+    return currentObject;
   }
+
   private Future<JsonObject> loadConfig() {
     Promise<JsonObject> promise = Promise.promise();
     vertx.fileSystem().readFile("server-config.json", result -> {
@@ -186,7 +238,8 @@ public class GraphQLServer extends AbstractVerticle {
 
     //Todo: Don't spin up the ws endpoint if there are no subscriptions
     SqlClient client = getSqlClient();
-    GraphQL graphQL = createGraphQL(client, startPromise);
+
+    GraphQL graphQL = createGraphQL(client, getCalciteClient(vertx), startPromise);
 
     CorsHandler corsHandler = toCorsHandler(this.config.getCorsHandlerOptions());
     router.route().handler(corsHandler);
@@ -205,19 +258,16 @@ public class GraphQLServer extends AbstractVerticle {
             this.config.getApolloWSOptions());
         if (this.config.getServletConfig().getGraphQLWsEndpoint()
             .equalsIgnoreCase(this.config.getServletConfig().getGraphQLEndpoint())) {
-          router.route(this.config.getServletConfig().getGraphQLEndpoint())
-              .handler(apolloWSHandler)
+          router.route(this.config.getServletConfig().getGraphQLEndpoint()).handler(apolloWSHandler)
               .handler(graphQLHandler);
         } else {
           router.route(this.config.getServletConfig().getGraphQLWsEndpoint())
               .handler(apolloWSHandler);
-          router.route(this.config.getServletConfig().getGraphQLEndpoint())
-              .handler(graphQLHandler);
+          router.route(this.config.getServletConfig().getGraphQLEndpoint()).handler(graphQLHandler);
         }
       } else {
         GraphQLWSHandler graphQLWSHandler = GraphQLWSHandler.create(graphQL);
-        router.route(this.config.getServletConfig().getGraphQLEndpoint())
-            .handler(graphQLWSHandler)
+        router.route(this.config.getServletConfig().getGraphQLEndpoint()).handler(graphQLWSHandler)
             .handler(graphQLHandler);
       }
     } else {
@@ -225,14 +275,12 @@ public class GraphQLServer extends AbstractVerticle {
     }
 
     vertx.createHttpServer(this.config.getHttpServerOptions()).requestHandler(router)
-        .listen(this.config.getHttpServerOptions().getPort())
-        .onFailure((e)-> {
+        .listen(this.config.getHttpServerOptions().getPort()).onFailure((e) -> {
           log.error("Could not start graphql server", e);
           if (!startPromise.future().isComplete()) {
             startPromise.fail(e);
           }
-        })
-        .onSuccess((s)-> {
+        }).onSuccess((s) -> {
           log.info("HTTP server started on port {}", this.config.getHttpServerOptions().getPort());
           if (!startPromise.future().isComplete()) {
             startPromise.complete();
@@ -241,22 +289,17 @@ public class GraphQLServer extends AbstractVerticle {
   }
 
   private CorsHandler toCorsHandler(CorsHandlerOptions corsHandlerOptions) {
-    CorsHandler corsHandler = corsHandlerOptions.getAllowedOrigin() != null
-        ? CorsHandler.create(corsHandlerOptions.getAllowedOrigin())
-        : CorsHandler.create();
+    CorsHandler corsHandler = corsHandlerOptions.getAllowedOrigin() != null ? CorsHandler.create(
+        corsHandlerOptions.getAllowedOrigin()) : CorsHandler.create();
 
     // Empty allowed origin list means nothing is allowed vs null which is permissive
     if (corsHandlerOptions.getAllowedOrigins() != null) {
-      corsHandler
-          .addOrigins(corsHandlerOptions.getAllowedOrigins());
+      corsHandler.addOrigins(corsHandlerOptions.getAllowedOrigins());
     }
 
-    return corsHandler
-        .allowedMethods(corsHandlerOptions.getAllowedMethods()
-            .stream()
-            .map(HttpMethod::valueOf)
-            .collect(Collectors.toSet()))
-        .allowedHeaders(corsHandlerOptions.getAllowedHeaders())
+    return corsHandler.allowedMethods(
+            corsHandlerOptions.getAllowedMethods().stream().map(HttpMethod::valueOf)
+                .collect(Collectors.toSet())).allowedHeaders(corsHandlerOptions.getAllowedHeaders())
         .exposedHeaders(corsHandlerOptions.getExposedHeaders())
         .allowCredentials(corsHandlerOptions.isAllowCredentials())
         .maxAgeSeconds(corsHandlerOptions.getMaxAgeSeconds())
@@ -265,19 +308,17 @@ public class GraphQLServer extends AbstractVerticle {
 
   private SqlClient getSqlClient() {
     return PgPool.client(vertx, this.config.getPgConnectOptions(),
-        new PgPoolOptions(this.config.getPoolOptions())
-            .setPipelined(true));
+        new PgPoolOptions(this.config.getPoolOptions()).setPipelined(true));
   }
 
-  public GraphQL createGraphQL(SqlClient client, Promise<Void> startPromise) {
+  public GraphQL createGraphQL(SqlClient client, CalciteConnection calciteClient,
+      Promise<Void> startPromise) {
     try {
-      GraphQL graphQL = model.accept(
-          new GraphQLEngineBuilder(List.of(SqrlVertxScalars.JSON)),
-          new VertxContext(new VertxJdbcClient(client), constructSinkProducers(model, vertx),
-              constructSubscriptions(model, vertx, startPromise), canonicalizer))
-          .instrumentation(new ChainedInstrumentation(
-              new JsonObjectAdapter(), VertxFutureAdapter.create()))
-          .build();
+      GraphQL graphQL = model.accept(new GraphQLEngineBuilder(List.of(SqrlVertxScalars.JSON)),
+          new VertxContext(vertx, new VertxJdbcClient(client), calciteClient,
+              constructSinkProducers(model, vertx),
+              constructSubscriptions(model, vertx, startPromise), canonicalizer)).instrumentation(
+          new ChainedInstrumentation(new JsonObjectAdapter(), VertxFutureAdapter.create())).build();
       return graphQL;
     } catch (Exception e) {
       startPromise.fail(e.getMessage());
@@ -289,7 +330,7 @@ public class GraphQLServer extends AbstractVerticle {
   Map<String, SinkConsumer> constructSubscriptions(RootGraphqlModel root, Vertx vertx,
       Promise<Void> startPromise) {
     Map<String, SinkConsumer> consumers = new HashMap<>();
-    for (SubscriptionCoords sub: root.getSubscriptions()) {
+    for (SubscriptionCoords sub : root.getSubscriptions()) {
       KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, getSourceConfig());
       consumer.subscribe(sub.getTopic())
           .onSuccess(v -> log.info("Subscribed to topic: {}", sub.getTopic()))
@@ -332,5 +373,27 @@ public class GraphQLServer extends AbstractVerticle {
       producers.put(mut.getFieldName(), sinkProducer);
     }
     return producers;
+  }
+
+  public static class JsonEnvVarDeserializer extends JsonDeserializer<String> {
+
+    @Override
+    public String deserialize(JsonParser p, DeserializationContext ctxt)
+        throws IOException {
+      String value = p.getText();
+      Pattern pattern = Pattern.compile("\\$\\{(.+?)\\}");
+      Matcher matcher = pattern.matcher(value);
+      StringBuffer result = new StringBuffer();
+      while (matcher.find()) {
+        String key = matcher.group(1);
+        String envVarValue = System.getenv(key);
+        if (envVarValue != null) {
+          matcher.appendReplacement(result, envVarValue);
+        }
+      }
+      matcher.appendTail(result);
+
+      return result.toString();
+    }
   }
 }

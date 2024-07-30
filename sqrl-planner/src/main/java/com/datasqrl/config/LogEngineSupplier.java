@@ -21,6 +21,7 @@ public class LogEngineSupplier {
   }
 
   public Optional<LogEngine> getOptional() {
-    return pipeline.getStage(Type.LOG).map(stage -> (LogEngine) stage.getEngine());
+    return pipeline.getStage(Type.LOG)
+        .map(stage -> (LogEngine) stage.get(0).getEngine());
   }
 }

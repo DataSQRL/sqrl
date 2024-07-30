@@ -70,6 +70,7 @@ type Query {
   ApplicationAlert: [ApplicationAlert!]
   ApplicationUpdates: [ApplicationUpdates!]
   CustomerChatMessage(customerid: Int!, limit: Int = 10, offset: Int = 0): [CustomerChatMessage!]
+  OptimizedCustomerChatMessage: [CustomerChatMessage!]
 }
 
 type CustomerChatMessage {

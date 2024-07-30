@@ -13,33 +13,34 @@ import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.VariableArgument;
 import com.datasqrl.graphql.server.QueryExecutionContext;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ValueNode;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.base.Preconditions;
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
 import graphql.schema.PropertyDataFetcher;
 import io.vertx.core.Future;
+import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.handler.graphql.instrumentation.JsonObjectAdapter;
 import io.vertx.ext.web.handler.graphql.schema.VertxDataFetcher;
-import io.vertx.ext.web.handler.graphql.schema.VertxPropertyDataFetcher;
+import io.vertx.sqlclient.SqlClient;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 import lombok.Value;
+import org.apache.calcite.jdbc.CalciteConnection;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 
 @Value
 public class VertxContext implements Context {
 
+  Vertx vertx;
   VertxJdbcClient sqlClient;
+  CalciteConnection calciteClient;
   Map<String, SinkProducer> sinks;
   Map<String, SinkConsumer> subscriptions;
   NameCanonicalizer canonicalizer;
@@ -55,7 +56,7 @@ public class VertxContext implements Context {
   }
 
   @Override
-  public DataFetcher<Future<?>> createArgumentLookupFetcher(GraphQLEngineBuilder server, Map<Set<Argument>, ResolvedQuery> lookupMap) {
+  public DataFetcher<CompletionStage<?>> createArgumentLookupFetcher(GraphQLEngineBuilder server, Map<Set<Argument>, ResolvedQuery> lookupMap) {
     return (env) -> {
       //Map args
       Set<Argument> argumentSet = env.getArguments().entrySet().stream()
@@ -65,12 +66,13 @@ public class VertxContext implements Context {
       //Find query
       ResolvedQuery resolvedQuery = lookupMap.get(argumentSet);
       if (resolvedQuery == null) {
-        return Future.failedFuture("Could not find query: " + env.getArguments());
+        throw new RuntimeException();
+//        return Future.failedFuture("Could not find query: " + env.getArguments());
       }
       //Execute
       QueryExecutionContext context = new VertxQueryExecutionContext(this,
           env, argumentSet);
-      return (Future)resolvedQuery.accept(server, context);
+      return (CompletionStage)resolvedQuery.accept(server, context);
     };
   }
 

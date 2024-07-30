@@ -7,7 +7,6 @@ import static com.datasqrl.engine.EngineFeature.STANDARD_DATABASE;
 
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.config.ConnectorConf;
 import com.datasqrl.config.ConnectorFactoryContext;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.EngineFactory.Type;
@@ -75,10 +74,10 @@ public class AbstractJDBCEngine extends ExecutionEngine.Base implements Database
   @Getter
   final EngineConfig connectorConfig;
 
-  private final ConnectorFactoryFactory connectorFactory;
+  protected final ConnectorFactoryFactory connectorFactory;
 
-  public AbstractJDBCEngine(@NonNull EngineConfig connectorConfig, ConnectorFactoryFactory connectorFactory) {
-    super(PostgresEngineFactory.ENGINE_NAME, Type.DATABASE, STANDARD_DATABASE);
+  public AbstractJDBCEngine(String name, @NonNull EngineConfig connectorConfig, ConnectorFactoryFactory connectorFactory) {
+    super(name, Type.DATABASE, STANDARD_DATABASE);
     this.connectorConfig = connectorConfig;
     this.connectorFactory = connectorFactory;
   }
@@ -109,7 +108,7 @@ public class AbstractJDBCEngine extends ExecutionEngine.Base implements Database
 
   @Override
   public EnginePhysicalPlan plan(StagePlan plan,
-      List<StageSink> inputs, ExecutionPipeline pipeline, SqrlFramework framework,
+      List<StagePlan> stagePlans, List<StageSink> inputs, ExecutionPipeline pipeline, SqrlFramework framework,
       ErrorCollector errorCollector) {
     Preconditions.checkArgument(plan instanceof DatabaseStagePlan);
     DatabaseStagePlan dbPlan = (DatabaseStagePlan) plan;
@@ -226,9 +225,5 @@ public class AbstractJDBCEngine extends ExecutionEngine.Base implements Database
       default:
         return false;
     }
-  }
-
-  public ConnectorConf getConnectorFactoryConfig() {
-    return connectorFactory.getConfig(getDialect().getId());
   }
 }

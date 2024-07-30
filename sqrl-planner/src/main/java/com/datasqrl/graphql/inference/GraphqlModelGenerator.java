@@ -116,7 +116,7 @@ public class GraphqlModelGenerator extends SchemaWalker {
       List<SqrlTableMacro> functions) {
 
     List<Entry<IdentifiedQuery, QueryTemplate>> queries = databaseQueries.entrySet().stream()
-        .filter(f -> ((APIQuery) f.getKey()).getNamePath().equals(path))
+        .filter(f -> f.getKey().getNamePath().equals(path))
         .collect(Collectors.toList());
 
     // No queries: use a property fetcher
@@ -129,22 +129,26 @@ public class GraphqlModelGenerator extends SchemaWalker {
 
     for (Entry<IdentifiedQuery, QueryTemplate> entry : queries) {
       JdbcQuery queryBase;
-      APIQuery query = (APIQuery) entry.getKey();
+      if (entry.getKey() instanceof APIQuery) {
+        APIQuery query = (APIQuery) entry.getKey();
 
-      String queryStr = queryPlanner.relToString(Dialect.POSTGRES,
-              queryPlanner.convertRelToDialect(Dialect.POSTGRES, entry.getValue().getRelNode()))
-          .getSql();
+        String queryStr = queryPlanner.relToString(Dialect.POSTGRES,
+                queryPlanner.convertRelToDialect(Dialect.POSTGRES, entry.getValue().getRelNode()))
+            .getSql();
 
-      if (query.isLimitOffset()) {
-        queryBase = new PagedJdbcQuery(queryStr, query.getParameters());
+        if (query.isLimitOffset()) {
+          queryBase = new PagedJdbcQuery(queryStr, query.getParameters());
+        } else {
+          queryBase = new JdbcQuery(queryStr, query.getParameters());
+        }
+
+        ArgumentSet set = ArgumentSet.builder().arguments(query.getGraphqlArguments())
+            .query(queryBase).build();
+
+        coordsBuilder.match(set);
       } else {
-        queryBase = new JdbcQuery(queryStr, query.getParameters());
+        System.out.println("Fix");
       }
-
-      ArgumentSet set = ArgumentSet.builder().arguments(query.getGraphqlArguments())
-          .query(queryBase).build();
-
-      coordsBuilder.match(set);
     }
 
     ArgumentLookupCoords coord = coordsBuilder.build();

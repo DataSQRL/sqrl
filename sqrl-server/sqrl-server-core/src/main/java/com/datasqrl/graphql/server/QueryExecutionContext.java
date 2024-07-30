@@ -1,6 +1,7 @@
 package com.datasqrl.graphql.server;
 
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
+import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedCalciteQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedPagedJdbcQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedJdbcQuery;
 import graphql.schema.DataFetchingEnvironment;
@@ -15,4 +16,7 @@ public interface QueryExecutionContext<R> {
   Object runQuery(GraphQLEngineBuilder graphQLEngineBuilder, ResolvedJdbcQuery pgQuery, boolean isList);
   Object runPagedJdbcQuery(ResolvedPagedJdbcQuery pgQuery,
       boolean isList, QueryExecutionContext context);
+
+  Object runCalciteQuery(ResolvedCalciteQuery query, boolean list,
+      QueryExecutionContext context);
 }

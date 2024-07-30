@@ -144,7 +144,16 @@
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-server-vertx</artifactId>
-      <scope>compile</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>com.apache.calcite</groupId>
+          <artifactId>calite-core</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.apache.flink</groupId>
+          <artifactId>flink-sql-jdbc-driver-bundle</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>

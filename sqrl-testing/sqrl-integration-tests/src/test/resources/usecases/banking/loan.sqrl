@@ -35,6 +35,22 @@ CustomerChatMessage := SELECT role, content, name, c.context.customerid, event_t
                         _uuid AS uuid
                        FROM AddChatMessage c ORDER BY timestamp DESC;
 
+/*+ exec(iceberg) */
+HistoricCustomerChatMessage :=
+  SELECT * FROM CustomerChatMessage
+  WHERE timestamp < NOW() - INTERVAL 1 MONTH;
+
+/*+ exec(postgres) */
+CurrentCustomerChatMessage :=
+  SELECT * FROM CustomerChatMessage
+  WHERE timestamp > NOW() - INTERVAL 1 MONTH;
+
+/*+ exec(server) */
+OptimizedCustomerChatMessage :=
+  SELECT * FROM CurrentCustomerChatMessage
+  UNION ALL
+  SELECT * FROM HistoricCustomerChatMessage;
+
 /*+test */
 LoanTypesTest := SELECT COUNT(*) as num_loan_types FROM LoanTypes;
 

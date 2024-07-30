@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.Value;
 
 /**
@@ -43,21 +44,25 @@ public class SimplePipeline implements ExecutionPipeline {
   public static SimplePipeline of(Map<String, ExecutionEngine> engines, ErrorCollector errors) {
     //The ordering of stages is critical for simple pipeline
     List<ExecutionStage> stages = new ArrayList<>();
-    getStage(Type.LOG, engines).ifPresent(stages::add);
-    Optional<EngineStage> db = getStage(Type.DATABASE, engines);
-    stages.add(getStage(Type.STREAMS, engines).orElseThrow(
+    getStage(Type.LOG, engines).ifPresent(stages::addAll);
+    Optional<List<EngineStage>> db = getStage(Type.DATABASE, engines);
+    stages.addAll(getStage(Type.STREAMS, engines).orElseThrow(
         () -> errors.exception("Need to configure a stream engine")));
-    db.ifPresent(stages::add);
-    getStage(Type.SERVER, engines).ifPresent(stages::add);
+    db.ifPresent(stages::addAll);
+    getStage(Type.SERVER, engines).ifPresent(stages::addAll);
     return new SimplePipeline(stages);
   }
 
-  private static Optional<EngineStage> getStage(Type engineType,
+  private static Optional<List<EngineStage>> getStage(Type engineType,
       Map<String, ExecutionEngine> engines) {
-    return StreamUtil.getOnlyElement(engines.entrySet().stream()
-        .filter(e -> e.getValue().getType()==engineType)
-        .map(e -> new EngineStage(e.getKey(), e.getValue())));
-
+    List<EngineStage> engineList = engines.entrySet().stream()
+        .filter(e -> e.getValue().getType() == engineType)
+        .map(e -> new EngineStage(e.getKey(), e.getValue()))
+        .collect(Collectors.toList());
+    if (engineList.isEmpty()) {
+      return Optional.empty();
+    }
+    return Optional.of(engineList);
   }
 
   @Override

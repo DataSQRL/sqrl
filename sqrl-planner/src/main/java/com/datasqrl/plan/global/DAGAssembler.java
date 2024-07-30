@@ -53,10 +53,10 @@ public class DAGAssembler {
 
   public PhysicalDAGPlan assemble(SqrlDAG dag, Set<URL> jars, Map<String, UserDefinedFunction> udfs) {
     //We make the assumption that there is a single stream stage
-    ExecutionStage streamStage = pipeline.getStage(Type.STREAMS).get();
+    ExecutionStage streamStage = pipeline.getStage(Type.STREAMS).get().get(0);
     List<PhysicalDAGPlan.WriteQuery> streamQueries = new ArrayList<>();
     //We make the assumption that there is a single (optional) server stage
-    Optional<ExecutionStage> serverStage = pipeline.getStage(Type.SERVER);
+    Optional<ExecutionStage> serverStage = pipeline.getStage(Type.SERVER).map(e->e.get(0));
     List<PhysicalDAGPlan.ReadQuery> serverQueries = new ArrayList<>();
 
     //Plan API queries and find all tables that need to be materialized
@@ -171,7 +171,7 @@ public class DAGAssembler {
           serverStage.get(), serverQueries);
       allPlans.add(serverPlan);
     }
-    Optional<ExecutionStage> logStage = pipeline.getStage(Type.LOG);
+    Optional<ExecutionStage> logStage = pipeline.getStage(Type.LOG).map(e->e.get(0));
     if (logStage.isPresent()) {
       PhysicalDAGPlan.StagePlan logPlan = new PhysicalDAGPlan.LogStagePlan(
           logStage.get(), apiManager.getLogs());
