@@ -32,8 +32,11 @@ public class CreateNotifyTriggerDDL implements SqlDDLStatement {
       throw new IllegalArgumentException("There should be at least one primary key to generate a notify payload.");
     }
 
-    return primaryKeys.stream()
-        .map(pk -> "NEW." + pk + "::text")
-        .collect(Collectors.joining(" || ',' || "));
+    String argumentList = primaryKeys.stream()
+        .map(pk ->
+            String.format("'%s', NEW.%s", pk, pk))
+        .collect(Collectors.joining(", "));
+
+    return String.format("jsonb_build_object(%s)::text", argumentList);
   }
 }

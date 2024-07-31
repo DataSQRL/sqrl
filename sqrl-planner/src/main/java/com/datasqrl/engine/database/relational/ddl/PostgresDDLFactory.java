@@ -11,6 +11,7 @@ import com.datasqrl.engine.database.relational.ddl.statements.notify.OnNotifyQue
 import com.datasqrl.engine.database.relational.ddl.statements.notify.ListenQuery;
 import com.datasqrl.engine.database.relational.ddl.statements.notify.CreateNotifyTriggerDDL;
 import com.datasqrl.engine.database.relational.ddl.statements.CreateTableDDL;
+import com.datasqrl.engine.database.relational.ddl.statements.notify.Parameter;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.google.auto.service.AutoService;
@@ -24,6 +25,7 @@ import java.util.List;
 
 import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.pretty.SqlPrettyWriter;
+import org.apache.kafka.common.protocol.types.Field.Str;
 
 @AutoService(JdbcDDLFactory.class)
 public class PostgresDDLFactory implements JdbcDDLFactory {
@@ -65,15 +67,16 @@ public class PostgresDDLFactory implements JdbcDDLFactory {
   }
 
   public static String toSql(RelDataTypeField field) {
+    String sqlType = getSqlType(field);
+    RelDataType datatype = field.getType();
+    return toSql(field.getName(), sqlType, datatype.isNullable());
+  }
+
+  public static String getSqlType(RelDataTypeField field) {
     SqlDataTypeSpec castSpec = ExtendedPostgresSqlDialect.DEFAULT.getCastSpec(field.getType());
     SqlPrettyWriter sqlPrettyWriter = new SqlPrettyWriter();
     castSpec.unparse(sqlPrettyWriter, 0, 0);
-    String name = sqlPrettyWriter.toSqlString().getSql();
-
-    RelDataType datatype = field.getType();
-
-
-    return toSql(field.getName(), name, datatype.isNullable());
+    return sqlPrettyWriter.toSqlString().getSql();
   }
 
   private static String toSql(String name, String sqlType, boolean nullable) {
@@ -95,10 +98,19 @@ public class PostgresDDLFactory implements JdbcDDLFactory {
     return new CreateNotifyTriggerDDL(name, primaryKeys);
   }
 
-  public ListenNotifyAssets createNotifyHelperDDLs(String name, List<String> primaryKeys) {
+  public ListenNotifyAssets createNotifyHelperDDLs(String name, List<RelDataTypeField> fields, List<String> primaryKeys) {
     ListenQuery listenQuery = new ListenQuery(name);
     OnNotifyQuery onNotifyQuery = new OnNotifyQuery(quoteIdentifier(name), quoteValues(primaryKeys));
-    return new ListenNotifyAssets(listenQuery, onNotifyQuery);
+    List<Parameter> parameters = primaryKeys.stream()
+        .map(pk -> {
+          RelDataTypeField matchedField = fields.stream()
+              .filter(field -> field.getName().equals(pk))
+              .findFirst()
+              .orElseThrow(() -> new RuntimeException("Field not found"));
+          return new Parameter(pk, getSqlType(matchedField));
+        })
+        .collect(Collectors.toList());
+    return new ListenNotifyAssets(listenQuery, onNotifyQuery, parameters);
   }
 
   public static List<String> quoteIdentifier(List<String> columns) {
