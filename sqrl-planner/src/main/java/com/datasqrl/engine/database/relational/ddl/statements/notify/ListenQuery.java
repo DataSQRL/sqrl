@@ -11,6 +11,6 @@ public class ListenQuery implements SqlDDLStatement {
 
   @Override
   public String getSql() {
-    return "LISTEN " + tableName + "_notify";
+    return "LISTEN " + tableName + "_notify;";
   }
 }

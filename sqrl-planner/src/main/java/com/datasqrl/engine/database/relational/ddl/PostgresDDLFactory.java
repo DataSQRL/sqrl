@@ -100,7 +100,7 @@ public class PostgresDDLFactory implements JdbcDDLFactory {
 
   public ListenNotifyAssets createNotifyHelperDDLs(String name, List<RelDataTypeField> fields, List<String> primaryKeys) {
     ListenQuery listenQuery = new ListenQuery(name);
-    OnNotifyQuery onNotifyQuery = new OnNotifyQuery(quoteIdentifier(name), quoteValues(primaryKeys));
+
     List<Parameter> parameters = primaryKeys.stream()
         .map(pk -> {
           RelDataTypeField matchedField = fields.stream()
@@ -110,6 +110,8 @@ public class PostgresDDLFactory implements JdbcDDLFactory {
           return new Parameter(pk, getSqlType(matchedField));
         })
         .collect(Collectors.toList());
+
+    OnNotifyQuery onNotifyQuery = new OnNotifyQuery(name, parameters);
     return new ListenNotifyAssets(listenQuery, onNotifyQuery, parameters);
   }
 
