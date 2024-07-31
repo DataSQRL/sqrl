@@ -12,6 +12,7 @@ import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.plan.util.PrimaryKeyMap.Builder;
 import com.datasqrl.plan.validate.ResolvedImport;
+import com.datasqrl.plan.validate.ScriptPlanner.Mutation;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.RootSqrlTable;
 import com.datasqrl.util.StreamUtil;
@@ -67,6 +68,8 @@ public class SqrlSchema extends SimpleCalciteSchema {
   private final Map<SqrlTableMacro, Object> apiExports = new HashMap<>();
   private final List<APIQuery> queries = new ArrayList<>();
   private Set<SqlNode> addlSql = new LinkedHashSet<>();
+  private final List<Mutation> createTable = new ArrayList<>();
+
 
   public SqrlSchema(TypeFactory typeFactory, NameCanonicalizer nameCanonicalizer) {
     super(null, CalciteSchema.createRootSchema(false, false).plus(), "");

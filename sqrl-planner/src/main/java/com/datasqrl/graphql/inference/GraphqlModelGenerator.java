@@ -24,6 +24,7 @@ import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.plan.queries.IdentifiedQuery;
+import com.datasqrl.plan.validate.ScriptPlanner.Mutation;
 import com.google.common.base.Preconditions;
 import graphql.language.FieldDefinition;
 import graphql.language.InputValueDefinition;
@@ -85,10 +86,14 @@ public class GraphqlModelGenerator extends SchemaWalker {
   @Override
   protected void walkMutation(APISource source, TypeDefinitionRegistry registry,
       ObjectTypeDefinition m, FieldDefinition fieldDefinition) {
-    TableSource tableSink = apiManager.getMutationSource(source,
+    TableSource tableSource = apiManager.getMutationSource(source,
         Name.system(fieldDefinition.getName()));
+    Optional<TableSource> src = schema.getCreateTable().stream()
+        .filter(t -> t.getName().equals(Name.system(fieldDefinition.getName())))
+        .map(f->f.getTableSource())
+        .findFirst();
 
-    Map<String, Object> map = tableSink.getConfiguration().getConnectorConfig().toMap();
+    Map<String, Object> map = src.orElse(tableSource).getConfiguration().getConnectorConfig().toMap();
     mutations.add(new MutationCoords(fieldDefinition.getName(), (String)map.get("topic"), Map.of()));
   }
 

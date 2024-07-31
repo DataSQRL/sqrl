@@ -12,14 +12,19 @@ import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import graphql.Scalars;
 import graphql.language.FieldDefinition;
+import graphql.schema.GraphQLFieldDefinition;
+import graphql.schema.GraphQLInputObjectField;
+import graphql.schema.GraphQLInputObjectType;
 import graphql.schema.GraphQLInputType;
 import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLNonNull;
+import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLScalarType;
 import graphql.schema.GraphQLType;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -146,6 +151,18 @@ public class GraphqlSchemaUtil {
         return getOutputType(type.getComponentType()).map(GraphQLList::list);
       case STRUCTURED:
       case ROW:
+        GraphQLObjectType.Builder builder = GraphQLObjectType.newObject();
+        String typeName = "Row_" + generateUniqueNameForType(type); // Ensure unique names for each ROW type
+        builder.name(typeName);
+        for (RelDataTypeField field : type.getFieldList()) {
+          getOutputType(field.getType())
+              .ifPresent(fieldType -> builder.field(GraphQLFieldDefinition.newFieldDefinition()
+                  .name(field.getName())
+                  .type(wrap((GraphQLOutputType) fieldType, field.getType()))
+                  .build()));
+        }
+        return Optional.of(builder.build());
+
       case BINARY:
       case VARBINARY:
       case NULL:
@@ -161,6 +178,96 @@ public class GraphqlSchemaUtil {
       default:
         return Optional.empty();
     }
+  }
+  public static final AtomicInteger i = new AtomicInteger(0);
+  private static String generateUniqueNameForType(RelDataType type) {
+    return "stream" + i.incrementAndGet();
+  }
+
+  public static Optional<GraphQLInputType> createInputTypeForRelDataType(RelDataType type) {
+    if (type.isNullable()) {
+      return getGraphQLInputType(type).map(GraphQLNonNull::nonNull);
+    }
+    return getGraphQLInputType(type);
+  }
+
+  private static Optional<GraphQLInputType> getGraphQLInputType(RelDataType type) {
+    switch (type.getSqlTypeName()) {
+      case BOOLEAN:
+        return Optional.of(Scalars.GraphQLBoolean);
+      case INTEGER:
+      case SMALLINT:
+      case TINYINT:
+      case BIGINT:
+        return Optional.of(Scalars.GraphQLInt);
+      case FLOAT:
+      case REAL:
+      case DOUBLE:
+      case DECIMAL:
+        return Optional.of(Scalars.GraphQLFloat);
+      case CHAR:
+      case VARCHAR:
+        return Optional.of(Scalars.GraphQLString);
+      case DATE:
+      case TIME:
+      case TIMESTAMP:
+        return Optional.of(CustomScalars.DATETIME);
+      case BINARY:
+      case VARBINARY:
+        return Optional.of(Scalars.GraphQLString); // Typically handled as Base64 encoded strings
+      case ARRAY:
+        return type.getComponentType() != null
+            ? getGraphQLInputType(type.getComponentType()).map(GraphQLList::list)
+            : Optional.empty();
+      case ROW:
+        return createGraphQLInputObjectType(type);
+      case MAP:
+        // Maps can be represented as a list of key-value pairs if GraphQL does not natively support maps
+        RelDataType keyType = type.getKeyType();
+        RelDataType valueType = type.getValueType();
+        if (keyType != null && valueType != null) {
+          return createGraphQLInputMapType(keyType, valueType);
+        }
+        return Optional.empty();
+      default:
+        return Optional.empty(); // Unsupported types are omitted
+    }
+  }
+
+  /**
+   * Creates a GraphQL input object type for a ROW type.
+   */
+  private static Optional<GraphQLInputType> createGraphQLInputObjectType(RelDataType rowType) {
+    GraphQLInputObjectType.Builder builder = GraphQLInputObjectType.newInputObject();
+    String typeName = "Input_" + generateUniqueNameForType(rowType);
+    builder.name(typeName);
+
+    for (RelDataTypeField field : rowType.getFieldList()) {
+      getGraphQLInputType(field.getType())
+          .ifPresent(fieldType -> builder.field(GraphQLInputObjectField.newInputObjectField()
+              .name(field.getName())
+              .type((GraphQLInputType) fieldType)
+              .build()));
+    }
+    return Optional.of(builder.build());
+  }
+
+  /**
+   * Helper to handle map types, transforming them into a list of key-value pairs.
+   */
+  private static Optional<GraphQLInputType> createGraphQLInputMapType(RelDataType keyType, RelDataType valueType) {
+    GraphQLInputObjectType mapEntryType = GraphQLInputObjectType.newInputObject()
+        .name("MapEntry")
+        .field(GraphQLInputObjectField.newInputObjectField()
+            .name("key")
+            .type((GraphQLInputType) getGraphQLInputType(keyType).orElse(Scalars.GraphQLString))
+            .build())
+        .field(GraphQLInputObjectField.newInputObjectField()
+            .name("value")
+            .type((GraphQLInputType) getGraphQLInputType(valueType).orElse(Scalars.GraphQLString))
+            .build())
+        .build();
+    return Optional.of((GraphQLInputType) GraphQLList.list(mapEntryType));
   }
 
   /**

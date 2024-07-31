@@ -53,6 +53,7 @@ import com.datasqrl.plan.local.generate.ResolvedExport;
 
 import com.datasqrl.plan.table.RelDataTypeTableSchema;
 
+import com.datasqrl.plan.util.PrimaryKeyMap.Builder;
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.NestedRelationship;
 import com.datasqrl.schema.Relationship;
@@ -160,6 +161,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     map.put("timestamp-type", "LOG_TIME");
     map.put("timestamp-name", "event_time");
     map.put("name", logId);
+    map.put("topic", logId);
 
     Optional<TableConfig> sink = connectorFactoryFactory.create(Type.LOG, "kafka")
         .map(t->t.createSourceAndSink(new ConnectorFactoryContext(logId, map)));
@@ -181,11 +183,23 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
           SqlDataTypeSpecBuilder.create(definition.getType(), typeFactory));
     }
 
-    NamespaceObject namespaceObject = createTableResolver.create(
-        new TableSource(tableConfig, namePath, namePath.getLast(),
-            new RelDataTypeTableSchema(fieldBuilder.build())));
+    RelDataTypeTableSchema relDataTypeTableSchema = new RelDataTypeTableSchema(
+        fieldBuilder.build());
+    TableSource tableSource = new TableSource(tableConfig, namePath, namePath.getLast(),
+        new RelDataTypeTableSchema(fieldBuilder.build()));
+    NamespaceObject namespaceObject = createTableResolver.create(tableSource);
     namespaceObject.apply(this, Optional.empty(), framework, errorCollector);
+    this.framework.getSchema().getCreateTable()
+        .add(new Mutation(namespaceObject.getName(), relDataTypeTableSchema, tableSource));
     return null;
+  }
+
+  @AllArgsConstructor
+  @Getter
+  public static class Mutation {
+    Name name;
+    RelDataTypeTableSchema schema;
+    TableSource tableSource;
   }
 
   @Override

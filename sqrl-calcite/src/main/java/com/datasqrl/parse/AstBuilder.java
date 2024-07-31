@@ -192,7 +192,8 @@ public class AstBuilder
   @Override
   public SqlNode visitColumnDefinition(ColumnDefinitionContext ctx) {
     return new SqrlColumnDefinition(getLocation(ctx),
-        (SqlIdentifier)ctx.identifier().accept(this), getType(ctx.type()));
+        (SqlIdentifier)ctx.identifier().accept(this),
+        new SqlDataTypeSpec(getType(ctx.type()), null, false, SqlParserPos.ZERO));
   }
 
   @Override
@@ -367,7 +368,7 @@ public class AstBuilder
       SqrlTableParamDef param = new SqrlTableParamDef(
           getLocation(fCtx),
           (SqlIdentifier)visit(fCtx.identifier()),
-          getType(fCtx.type()),
+          new SqlDataTypeSpec(getType(fCtx.type()), SqlParserPos.ZERO),
           fCtx.expression() == null ? Optional.empty() :
               Optional.of(parseExpression(fCtx.expression())),
           i);
@@ -515,23 +516,50 @@ public class AstBuilder
         .collect(toList());
   }
 
-  private SqlDataTypeSpec getType(TypeContext ctx) {
-    return new SqlDataTypeSpec(getTypeName(ctx.baseType()),
-        TimeZone.getTimeZone(ZoneId.systemDefault()),
-        ctx.NOT() == null,
-        getLocation(ctx));
+  private SqlTypeNameSpec getType(TypeContext ctx) {
+    if (ctx.rowType() != null) {
+      return getRowType(ctx.rowType(), ctx.NOT() == null, getLocation(ctx));
+    } else if (ctx.arrayType() != null) {
+      return getArrayType(ctx.arrayType(), ctx.NOT() == null, getLocation(ctx));
+    } else {
+      return getTypeName(ctx.baseType());
+    }
+  }
+
+  private SqlTypeNameSpec getRowType(RowTypeContext ctx, boolean nullable, SqlParserPos pos) {
+    List<SqlIdentifier> fieldNames = new ArrayList<>();
+    List<SqlDataTypeSpec> fieldTypes = new ArrayList<>();
+    for (RowFieldContext fieldCtx : ctx.rowFieldList().rowField()) {
+      fieldNames.add(new SqlIdentifier(fieldCtx.identifier().getText(), pos));
+      fieldTypes.add(
+          new SqlDataTypeSpec(getType(fieldCtx.type()), /*todo nullable here*/SqlParserPos.ZERO));
+    }
+    SqlRowTypeNameSpec typeNameSpec = new SqlRowTypeNameSpec(pos, fieldNames, fieldTypes);
+    return typeNameSpec;
+  }
+
+  private SqlTypeNameSpec getArrayType(ArrayTypeContext ctx, boolean nullable, SqlParserPos pos) {
+    SqlTypeNameSpec elementType = getType(ctx.type());
+    SqlCollectionTypeNameSpec typeNameSpec = new SqlCollectionTypeNameSpec(
+        elementType, SqlTypeName.ARRAY, pos);
+    return typeNameSpec;
+//    return new SqlDataTypeSpec(typeNameSpec, null, nullable, pos);
   }
 
   private SqlTypeNameSpec getTypeName(BaseTypeContext baseType) {
     SqlIdentifier id = (SqlIdentifier) visit(baseType.identifier());
-
     String typeName = Util.last(id.names);
     if (typeName.equalsIgnoreCase("int")) {
-      typeName = "INTEGER"; //exists in calcite parser conversion
+      typeName = "INTEGER"; // Already exists in Calcite for standard type conversion
+    }
+
+    // Check for ROW or ARRAY in the typeName to directly handle these cases
+    if (typeName.equalsIgnoreCase("ROW") || typeName.equalsIgnoreCase("ARRAY")) {
+      // These types are handled separately with their specific methods
+      throw new UnsupportedOperationException("ROW and ARRAY types should be handled with their specific contexts");
     }
 
     SqlTypeName sqlTypeName = SqlTypeName.get(typeName.toUpperCase(Locale.ROOT));
-
     if (sqlTypeName == null) {
       return new SqlUserDefinedTypeNameSpec(typeName, getLocation(baseType));
     }
