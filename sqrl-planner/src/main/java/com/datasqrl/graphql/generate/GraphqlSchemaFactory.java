@@ -20,18 +20,24 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.function.SqrlFunctionParameter;
 import com.datasqrl.graphql.server.CustomScalars;
+import com.datasqrl.io.tables.TableType;
+import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.plan.validate.ExecutionGoal;
+import com.datasqrl.plan.validate.ScriptPlanner.Mutation;
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.NestedRelationship;
 import com.datasqrl.schema.Relationship.JoinType;
+import com.datasqrl.schema.RootSqrlTable;
 import com.google.inject.Inject;
 import graphql.Scalars;
 import graphql.language.IntValue;
 import graphql.schema.GraphQLArgument;
 import graphql.schema.GraphQLFieldDefinition;
+import graphql.schema.GraphQLInputType;
 import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLNonNull;
 import graphql.schema.GraphQLObjectType;
+import graphql.schema.GraphQLObjectType.Builder;
 import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLScalarType;
 import graphql.schema.GraphQLSchema;
@@ -110,9 +116,13 @@ public class GraphqlSchemaFactory {
     if (queryFields.isEmpty()) {
        return null;
     }
+    GraphQLObjectType.Builder subscriptions = createSubscriptionTypes(schema);
+    GraphQLObjectType.Builder mutations = createMutationTypes(schema);
 
     GraphQLSchema.Builder builder = GraphQLSchema.newSchema()
         .query(queryType)
+        .subscription(subscriptions)
+        .mutation(mutations)
         .additionalTypes(new LinkedHashSet<>(objectTypes));
 
     if (queryType.getFields().isEmpty()) {
@@ -131,6 +141,57 @@ public class GraphqlSchemaFactory {
 
     return builder.build();
   }
+
+  private Builder createMutationTypes(SqrlSchema schema) {
+    Builder builder = GraphQLObjectType.newObject().name("Mutation");
+
+    for(Mutation mutation : schema.getCreateTable()) {
+      RelDataType type = mutation.getSchema().getRelDataType();
+
+      // Create the 'event' argument which should mirror the structure of the type
+      GraphQLInputType inputType = GraphqlSchemaUtil.createInputTypeForRelDataType(type).orElseThrow(
+          () -> new IllegalArgumentException("Could not create input type for mutation: " + mutation.getName().getDisplay())
+      );
+      GraphQLArgument inputArgument = GraphQLArgument.newArgument()
+          .name("event")
+          .type(new GraphQLNonNull(inputType))
+          .build();
+      GraphQLFieldDefinition subscriptionField = GraphQLFieldDefinition.newFieldDefinition()
+          .name(mutation.getName().getDisplay())
+          .argument(inputArgument)
+          .type(getOutputType(type).get())
+          .build();
+
+      builder.field(subscriptionField);
+    }
+    return builder;
+  }
+
+  public Builder createSubscriptionTypes(SqrlSchema schema) {
+    Builder subscriptionBuilder = GraphQLObjectType.newObject().name("Subscription");
+
+    // Retrieve streamable tables from the schema
+    List<RootSqrlTable> streamTables = schema.getTableFunctions().stream()
+        .filter(e -> e instanceof RootSqrlTable)
+        .map(e -> (RootSqrlTable) e)
+        .filter(e -> ((PhysicalRelationalTable) e.getInternalTable()).getType() == TableType.STREAM)
+        .collect(Collectors.toList());
+
+    // Define subscription fields for each streamable table
+    for (RootSqrlTable table : streamTables) {
+      String tableName = table.getName().getDisplay();
+      GraphQLFieldDefinition subscriptionField = GraphQLFieldDefinition.newFieldDefinition()
+          .name(tableName)
+          .type(getOutputType(table.getRowType()).get())
+          .build();
+
+      subscriptionBuilder.field(subscriptionField);
+    }
+
+    // Return the subscription object type builder, ready for further configuration or building
+    return subscriptionBuilder;
+  }
+
 
   private GraphQLObjectType createQueryType(ExecutionGoal goal, List<SqrlTableMacro> relationships) {
 

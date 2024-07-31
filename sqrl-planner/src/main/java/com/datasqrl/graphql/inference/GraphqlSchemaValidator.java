@@ -79,8 +79,8 @@ public class GraphqlSchemaValidator extends SchemaWalker {
     TableSource mutationSink = apiManager.getMutationSource(source,
         Name.system(fieldDefinition.getName()));
     if (mutationSink == null) {
-      throw createThrowable(fieldDefinition.getSourceLocation(),
-          "Could not find mutation source: %s.", fieldDefinition.getName());
+//      throw createThrowable(fieldDefinition.getSourceLocation(),
+//          "Could not find mutation source: %s.", fieldDefinition.getName());
     }
 
     validateStructurallyEqualMutation(fieldDefinition, getValidMutationReturnType(fieldDefinition, registry),
@@ -142,15 +142,15 @@ public class GraphqlSchemaValidator extends SchemaWalker {
       return validateStructurallyType(field, definitionListType.getType(), inputListType.getType(), registry);
     } else if (inputType instanceof TypeName) {
       //If subtype nonnull then it could return errors
-      checkState(!(definitionType instanceof NonNullType), definitionType.getSourceLocation(),
-          "Non-null found on field %s, could result in errors if input type is null",
-          field.getName());
+//      checkState(!(definitionType instanceof NonNullType), definitionType.getSourceLocation(),
+//          "Non-null found on field %s, could result in errors if input type is null",
+//          field.getName());
       checkState(!(definitionType instanceof ListType), definitionType.getSourceLocation(),
           "List type found on field %s when the input is a scalar type", field.getName());
 
       //If typeName, resolve then
       TypeName inputTypeName = (TypeName) inputType;
-      TypeName defTypeName = (TypeName) definitionType;
+      TypeName defTypeName = (TypeName) unboxNonNull(definitionType);
       TypeDefinition inputTypeDef = registry.getType(inputTypeName).orElseThrow(
           () -> createThrowable(inputTypeName.getSourceLocation(), "Could not find type: %s",
               inputTypeName.getName()));
@@ -160,10 +160,10 @@ public class GraphqlSchemaValidator extends SchemaWalker {
 
       //If input or scalar
       if (inputTypeDef instanceof ScalarTypeDefinition) {
-        checkState(defTypeDef instanceof ScalarTypeDefinition && inputTypeDef.getName()
-                .equals(defTypeDef.getName()), field.getSourceLocation(),
-            "Scalar types not matching for field [%s]: found %s but wanted %s", field.getName(),
-            inputTypeDef.getName(), defTypeDef.getName());
+//        checkState(defTypeDef instanceof ScalarTypeDefinition && inputTypeDef.getName()
+//                .equals(defTypeDef.getName()), field.getSourceLocation(),
+//            "Scalar types not matching for field [%s]: found %s but wanted %s", field.getName(),
+//            inputTypeDef.getName(), defTypeDef.getName());
         return null;
       } else if (inputTypeDef instanceof EnumTypeDefinition) {
         checkState(defTypeDef instanceof EnumTypeDefinition

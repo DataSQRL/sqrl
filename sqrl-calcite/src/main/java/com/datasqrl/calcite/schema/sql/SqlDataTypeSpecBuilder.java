@@ -42,6 +42,9 @@ public class SqlDataTypeSpecBuilder {
       SqlUserDefinedTypeNameSpec udf = (SqlUserDefinedTypeNameSpec) typeSpec.getTypeNameSpec();
       SqlIdentifier typeName = udf.getTypeName();
       SqlTypeName sqlTypeName = SqlTypeName.get(typeName.getSimple());
+      if (sqlTypeName == null) {
+        throw new RuntimeException("Could not find type: "+ typeName.getSimple());
+      }
       if (sqlTypeName == SqlTypeName.ANY) {
         return typeFactory.createTypeWithNullability(
             typeFactory.createSqlType(SqlTypeName.ANY), typeSpec.getNullable());
@@ -85,6 +88,9 @@ public class SqlDataTypeSpecBuilder {
         SqlIdentifier fieldName = fieldNames.get(i);
         SqlDataTypeSpec fieldTypeSpec = fieldTypeSpecs.get(i);
         fieldInfoBuilder.add(fieldName.getSimple(), create(fieldTypeSpec, typeFactory));
+      }
+      if (typeSpec.getNullable() == null) {
+        return typeFactory.createStructType(fieldInfoBuilder);
       }
       return typeFactory.createTypeWithNullability(
           typeFactory.createStructType(fieldInfoBuilder), typeSpec.getNullable());
