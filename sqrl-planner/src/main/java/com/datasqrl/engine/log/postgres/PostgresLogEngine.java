@@ -77,7 +77,7 @@ public class PostgresLogEngine extends ExecutionEngine.Base implements LogEngine
       physicalPlan.getDdl().add(postgresDDLFactory.createTable(tableName, dataType.getFieldList(), pgTable.getPrimaryKeys()));
       physicalPlan.getDdl().add(postgresDDLFactory.createNotify(tableName, pgTable.getPrimaryKeys()));
 
-      ListenNotifyAssets listenNotifyAssets = postgresDDLFactory.createNotifyHelperDDLs(tableName, dataType.getFieldList(), pgTable.getPrimaryKeys());
+      ListenNotifyAssets listenNotifyAssets = postgresDDLFactory.createNotifyHelperDDLs(framework, tableName, dataType, pgTable.getPrimaryKeys());
       physicalPlan.getQueries().add(listenNotifyAssets);
     }
 

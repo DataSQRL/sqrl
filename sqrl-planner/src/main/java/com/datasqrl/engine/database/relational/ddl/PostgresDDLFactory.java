@@ -3,6 +3,7 @@
  */
 package com.datasqrl.engine.database.relational.ddl;
 
+import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.engine.database.relational.ddl.statements.CreateIndexDDL;
@@ -25,7 +26,8 @@ import java.util.List;
 
 import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.pretty.SqlPrettyWriter;
-import org.apache.kafka.common.protocol.types.Field.Str;
+import org.apache.calcite.sql.validate.SqlNameMatcher;
+import org.apache.calcite.sql.validate.SqlNameMatchers;
 
 @AutoService(JdbcDDLFactory.class)
 public class PostgresDDLFactory implements JdbcDDLFactory {
@@ -98,20 +100,18 @@ public class PostgresDDLFactory implements JdbcDDLFactory {
     return new CreateNotifyTriggerDDL(name, primaryKeys);
   }
 
-  public ListenNotifyAssets createNotifyHelperDDLs(String name, List<RelDataTypeField> fields, List<String> primaryKeys) {
+  public ListenNotifyAssets createNotifyHelperDDLs(SqrlFramework framework, String name, RelDataType schema, List<String> primaryKeys) {
     ListenQuery listenQuery = new ListenQuery(name);
 
     List<Parameter> parameters = primaryKeys.stream()
         .map(pk -> {
-          RelDataTypeField matchedField = fields.stream()
-              .filter(field -> field.getName().equals(pk))
-              .findFirst()
-              .orElseThrow(() -> new RuntimeException("Field not found"));
+          SqlNameMatcher matcher = SqlNameMatchers.withCaseSensitive(false);
+          RelDataTypeField matchedField = matcher.field(schema, pk);
           return new Parameter(pk, getSqlType(matchedField));
         })
         .collect(Collectors.toList());
 
-    OnNotifyQuery onNotifyQuery = new OnNotifyQuery(name, parameters);
+    OnNotifyQuery onNotifyQuery = new OnNotifyQuery(framework, name, parameters);
     return new ListenNotifyAssets(listenQuery, onNotifyQuery, parameters);
   }
 
