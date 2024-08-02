@@ -40,9 +40,8 @@ public class SqrlDAG extends AbstractDAG<SqrlNode, SqrlDAG> {
   }
 
   public void eliminateInviableStages(ExecutionPipeline pipeline) {
-    final LinkedHashMap<ExecutionStage, StageAnalysis> x = new LinkedHashMap<>();
-
     messagePassing(node -> {
+      final LinkedHashMap<ExecutionStage, StageAnalysis> updatedStages = new LinkedHashMap<>();
       boolean hasChange = node.stageAnalysis.values().stream().filter(s -> s.isSupported())
           .map( stageAnalysis -> {
             ExecutionStage stage = stageAnalysis.getStage();
@@ -55,19 +54,19 @@ public class SqrlDAG extends AbstractDAG<SqrlNode, SqrlDAG> {
                       sa -> sa.isSupported() && compatibleStages.contains(sa.getStage()))
                   ).findAny();
               if (noCompatibleStage.isPresent()) {
-                x.put(stage, new MissingDependent(stage, upstream, noCompatibleStage.get().getName()));
+                updatedStages.put(stage, new MissingDependent(stage, upstream, noCompatibleStage.get().getName()));
                 return true;
               }
             }
             return false;
           }).anyMatch(Boolean::booleanValue);
-      x.entrySet().stream()
+      updatedStages.entrySet().stream()
               .forEach(e-> node.stageAnalysis.put(e.getKey(), e.getValue()));
 
       if (!node.hasViableStage()) {
         throw new NoPlanException(node);
       }
-      return false;
+      return hasChange;
     },100);
   }
 
