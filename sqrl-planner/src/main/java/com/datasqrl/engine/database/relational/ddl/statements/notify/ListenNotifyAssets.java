@@ -9,5 +9,5 @@ import lombok.Getter;
 public class ListenNotifyAssets {
   ListenQuery listen;
   OnNotifyQuery onNotify;
-  List<Parameter> parameters;
+  List<String> parameters;
 }

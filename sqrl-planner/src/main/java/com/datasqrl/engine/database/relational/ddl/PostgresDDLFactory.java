@@ -69,16 +69,14 @@ public class PostgresDDLFactory implements JdbcDDLFactory {
   }
 
   public static String toSql(RelDataTypeField field) {
-    String sqlType = getSqlType(field);
-    RelDataType datatype = field.getType();
-    return toSql(field.getName(), sqlType, datatype.isNullable());
-  }
-
-  public static String getSqlType(RelDataTypeField field) {
     SqlDataTypeSpec castSpec = ExtendedPostgresSqlDialect.DEFAULT.getCastSpec(field.getType());
     SqlPrettyWriter sqlPrettyWriter = new SqlPrettyWriter();
     castSpec.unparse(sqlPrettyWriter, 0, 0);
-    return sqlPrettyWriter.toSqlString().getSql();
+    String name = sqlPrettyWriter.toSqlString().getSql();
+
+    RelDataType datatype = field.getType();
+
+    return toSql(field.getName(), name, datatype.isNullable());
   }
 
   private static String toSql(String name, String sqlType, boolean nullable) {
@@ -112,7 +110,7 @@ public class PostgresDDLFactory implements JdbcDDLFactory {
         .collect(Collectors.toList());
 
     OnNotifyQuery onNotifyQuery = new OnNotifyQuery(framework, name, parameters);
-    return new ListenNotifyAssets(listenQuery, onNotifyQuery, parameters);
+    return new ListenNotifyAssets(listenQuery, onNotifyQuery, primaryKeys);
   }
 
   public static List<String> quoteIdentifier(List<String> columns) {

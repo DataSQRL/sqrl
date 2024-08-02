@@ -48,8 +48,7 @@ public class ConnectorConfigImpl implements TableConfig.ConnectorConfig {
     String connectorName = getConnectorName().get().toLowerCase();
     TableType tableType = CONNECTOR_TYPE_MAP.get(connectorName);
     if (tableType == null) {
-      log.info("Unrecognized connector type: {}. Defaulting to STREAM table for import.",
-              connectorName);
+      log.debug("Defaulting '{}' connector to STREAM table for import.", connectorName);
       tableType = TableType.STREAM;
     }
     return tableType;
