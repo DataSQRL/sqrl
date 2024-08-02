@@ -107,7 +107,7 @@ public class PostgresDDLFactory implements JdbcDDLFactory {
         .map(pk -> {
           SqlNameMatcher matcher = SqlNameMatchers.withCaseSensitive(false);
           RelDataTypeField matchedField = matcher.field(schema, pk);
-          return new Parameter(pk, getSqlType(matchedField));
+          return new Parameter(pk, matchedField);
         })
         .collect(Collectors.toList());
 

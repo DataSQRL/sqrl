@@ -7,6 +7,7 @@ import com.datasqrl.calcite.convert.RelToSqlNode;
 import com.datasqrl.calcite.convert.SqlNodeToString;
 import com.datasqrl.sql.SqlDDLStatement;
 import java.util.List;
+import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
@@ -28,19 +29,30 @@ public class OnNotifyQuery implements SqlDDLStatement {
     RelBuilder builder = planner.getRelBuilder();
 
     RelDataTypeFactory typeFactory = builder.getTypeFactory();
-    RelDataType parameterType = typeFactory.createSqlType(SqlTypeName.VARCHAR);
-
-    builder.scan(tableName);
-    for (int i = 0; i < parameters.size(); i++) {
-      Parameter parameter = parameters.get(i);
-      RexNode sqlParameter = builder.getRexBuilder().makeDynamicParam(parameterType, i);
-      RexNode castParameter = builder.getRexBuilder().makeCast(typeFactory.createSqlType(SqlTypeName.INTEGER), sqlParameter);
-      builder.filter(builder.equals(builder.field(parameter.getName()), castParameter));
+    RelDataTypeFactory.Builder fieldInfo = typeFactory.builder();
+    for (Parameter parameter : parameters) {
+      fieldInfo.add(parameter.getName(), parameter.getRelDataTypeField().getType());
     }
+    RelDataType tempSchema = fieldInfo.build();
 
-    RelNode filteredNode = builder.build();
+    Consumer<RelBuilder> queryBuilder = relBuilder -> {
+      // In the context of pg_notify, the payload is always a string. As part of generating a
+      // parameterized query below, we appropriately cast this string back to its original type
+      // when required.
+      RelDataType parameterType = typeFactory.createSqlType(SqlTypeName.VARCHAR);
 
-    RelToSqlNode.SqlNodes sqlNodes = planner.relToSql(Dialect.POSTGRES, filteredNode);
+      relBuilder.scan(tableName);
+      for (int i = 0; i < parameters.size(); i++) {
+        Parameter parameter = parameters.get(i);
+        RexNode sqlParameter = relBuilder.getRexBuilder().makeDynamicParam(parameterType, i);
+        RexNode castParameter = relBuilder.getRexBuilder().makeCast(parameter.getRelDataTypeField().getType(), sqlParameter);
+        relBuilder.filter(relBuilder.equals(relBuilder.field(parameter.getName()), castParameter));
+      }
+    };
+
+    RelNode queryPlan = planner.planQueryOnTempTable(tempSchema, tableName, queryBuilder);
+
+    RelToSqlNode.SqlNodes sqlNodes = planner.relToSql(Dialect.POSTGRES, queryPlan);
 
     SqlNodeToString.SqlStrings sqlStrings = planner.sqlToString(Dialect.POSTGRES, sqlNodes);
 

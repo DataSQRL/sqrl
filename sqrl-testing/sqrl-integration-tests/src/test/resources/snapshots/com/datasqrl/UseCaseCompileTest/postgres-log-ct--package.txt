@@ -91,7 +91,7 @@ Inputs: event_2
         "sql" : "LISTEN Event_notify;"
       },
       "onNotify" : {
-        "sql" : "SELECT * FROM \"Event\" WHERE \"_uuid\" = ?::TEXT;"
+        "sql" : "SELECT *\nFROM \"Event\"\nWHERE \"_uuid\" = $1"
       },
       "parameters" : [
         {

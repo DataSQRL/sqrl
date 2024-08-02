@@ -14,6 +14,7 @@ import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.parse.SqrlParserImpl;
 import com.datasqrl.util.DataContextImpl;
 import java.util.Arrays;
+import java.util.function.Consumer;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import org.apache.calcite.adapter.enumerable.EnumerableInterpretable;
@@ -239,6 +240,20 @@ public class QueryPlanner {
       }
 
       return ((LogicalProject) root.rel).getProjects().get(0);
+    } finally {
+      schema.removeTable(name);
+    }
+  }
+
+  public RelNode planQueryOnTempTable(RelDataType tempSchema, String name, Consumer<RelBuilder> buildQuery) {
+    try {
+      schema.add(name, new TemporaryViewTable(tempSchema));
+
+      RelBuilder builder = getRelBuilder();
+
+      buildQuery.accept(builder);
+
+      return builder.build();
     } finally {
       schema.removeTable(name);
     }
