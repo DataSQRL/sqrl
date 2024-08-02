@@ -75,8 +75,6 @@ public interface TableConfig {
     TableConfigBuilder setWatermark(long milliseconds);
     TableConfigBuilder setMetadata(@NonNull String columnName, String type, String attribute) ;
     TableConfigBuilder setPrimaryKey(String[] pks);
-    TableConfigBuilder addUuid(String columnName);
-    TableConfigBuilder addIngestTime(String columnName);
 
     TableConfig build();
   }

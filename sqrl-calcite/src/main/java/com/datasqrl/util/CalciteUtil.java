@@ -399,7 +399,8 @@ public class CalciteUtil {
     return false;
   }
 
-  public static boolean isBasicType(RelDataType type) {
+  public static boolean isPotentialPrimaryKeyType(RelDataType type) {
+    if (type.isNullable()) return false;
     if (!(type instanceof BasicSqlType)) return false;
     SqlTypeName sqlType = type.getSqlTypeName();
     switch (sqlType) {
@@ -416,6 +417,8 @@ public class CalciteUtil {
       case DATE:
       case TIME:
       case TIMESTAMP:
+      case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
+      case TIME_WITH_LOCAL_TIME_ZONE:
       case DECIMAL:
         return true;
       default:

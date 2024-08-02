@@ -17,12 +17,9 @@ import lombok.Getter;
 @Getter
 public class TableSource extends TableInput {
 
-  private final TableSchema schema;
-
   public TableSource(TableConfig configuration, NamePath path,
       Name name, TableSchema schema) {
     super(configuration, path, name, Optional.ofNullable(schema));
-    this.schema = schema;
   }
 
   public static TableSource create(TableConfig tableConfig, NamePath basePath, TableSchema schema) {

@@ -107,11 +107,11 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
 
       String filename = (String)contextData.get("filename");
       String format = (String)contextData.get("format");
+      String[] primaryKey = (String[])contextData.get("primary-key");
       TableConfigBuilderImpl builder = TableConfigImpl.builder(context.getName());
       builder.setType(ExternalDataType.source);
-      builder.addUuid("_uuid");
-      builder.setPrimaryKey(new String[]{"_uuid"});
-      builder.addIngestTime("_ingest_time");
+      builder.setPrimaryKey(primaryKey);
+      builder.setMetadataFunction("_ingest_time", "proctime()");
       builder.setTimestampColumn("_ingest_time");
 
       ConnectorConfImpl engineConfig = (ConnectorConfImpl) connectorConf;
