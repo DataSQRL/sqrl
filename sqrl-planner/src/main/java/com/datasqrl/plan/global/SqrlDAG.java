@@ -3,6 +3,7 @@ package com.datasqrl.plan.global;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.global.SqrlDAG.SqrlNode;
+import com.datasqrl.plan.global.StageAnalysis.MissingDependent;
 import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.plan.table.PhysicalTable;
 import com.datasqrl.util.AbstractDAG;
@@ -11,6 +12,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -38,6 +40,8 @@ public class SqrlDAG extends AbstractDAG<SqrlNode, SqrlDAG> {
   }
 
   public void eliminateInviableStages(ExecutionPipeline pipeline) {
+    final LinkedHashMap<ExecutionStage, StageAnalysis> x = new LinkedHashMap<>();
+
     messagePassing(node -> {
       boolean hasChange = node.stageAnalysis.values().stream().filter(s -> s.isSupported())
           .map( stageAnalysis -> {
@@ -51,13 +55,18 @@ public class SqrlDAG extends AbstractDAG<SqrlNode, SqrlDAG> {
                       sa -> sa.isSupported() && compatibleStages.contains(sa.getStage()))
                   ).findAny();
               if (noCompatibleStage.isPresent()) {
-                node.stageAnalysis.put(stage, new StageAnalysis.MissingDependent(stage, upstream, noCompatibleStage.get().getName()));
+                x.put(stage, new MissingDependent(stage, upstream, noCompatibleStage.get().getName()));
                 return true;
               }
             }
             return false;
           }).anyMatch(Boolean::booleanValue);
-      if (!node.hasViableStage()) throw new NoPlanException(node);
+      x.entrySet().stream()
+              .forEach(e-> node.stageAnalysis.put(e.getKey(), e.getValue()));
+
+      if (!node.hasViableStage()) {
+        throw new NoPlanException(node);
+      }
       return false;
     },100);
   }
