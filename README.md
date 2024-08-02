@@ -1,6 +1,6 @@
 # DataSQRL
 
-DataSQRL is a flexible data development framework for building various types of streaming data architectures, like data pipelines, event-driven microservices, and Kappa. It provides the basic structure, common patterns, and a set of tools for streamlining the development process. 
+DataSQRL is a data development framework for building various types of data architectures, like data pipelines, event-driven microservices, and Kappa. It provides the basic structure, common patterns, and a set of tools for streamlining the development process. 
 
 DataSQRL integrates any combination of the following technologies:
 * **Apache Flink:** a distributed and stateful stream processing engine.
@@ -12,7 +12,7 @@ DataSQRL integrates any combination of the following technologies:
 * **Yugabyte:** a distributed open-source relational database.
 * **Vert.x:** a reactive server framework for building data APIs.
 
-You define the data processing in SQL (with support for custom functions in Java, Scala and soon Python) and DataSQRL generates the glue code, schemas, and mappings to automatically connect and configure these components into a coherent data architecture. DataSQRL also generates Docker Compose templates for local execution or deployment to Kubernetes or cloud-managed services.
+You define the data processing in SQL (with support for custom functions in Java, Scala and soon Python) and DataSQRL generates the glue code, schemas, and mappings to automatically connect and configure these components into a streamlined data architecture. DataSQRL also generates Docker Compose templates for local execution or deployment to Kubernetes or cloud-managed services.
 
 [<img src="docs/img/datasqrl_use_cases.png">](docs/img/datasqrl_use_cases.png)
 
@@ -20,8 +20,9 @@ Some of the data architectures you can build with DataSQRL. Click to enlarge.
 
 ## DataSQRL Features
 
-* 🔗 **System Integration:** Combine various data technologies into streamlined data architectures.
+* 🔗 **System Integration:** Automates data plumbing by integrating multiple data technologies into streamlined data architectures.
 * ☯️ **Declarative + Imperative:** Define the data flow in SQL and specific data transformations in Java, Scala, or soon Python.
+* 🧑‍💻 **Developer Workflow:** Build in your IDE, run and test locally, then deploy with your CI/CD tools.
 * 🧪 **Testing Framework:** Automated snapshot testing.
 * 🔄 **Data Flow Optimization:** Optimize data flow between systems through data mapping, partitioning, and indexing for scalability and performance.
 * ✔️ **Consistent:** Ensure at-least or exactly-once data processing for consistent results across the entire system.
@@ -38,6 +39,10 @@ Some of the data architectures you can build with DataSQRL. Click to enlarge.
 Data engineers spend considerable time integrating various tools and technologies, ensuring performance, scalability, robustness, and observability. DataSQRL automates these tasks, making it easier to implement, test, debug, observe, deploy, and maintain data products. Like a web development framework, but for data. 
 
 Our goal is to eliminate the data engineering busywork, so you can focus on building and iterating on data products.
+
+[Video]
+
+Watch this 3 minute video to see how DataSQRL works or follow the "Getting Started" instructions below.
 
 ## Getting Started
 
@@ -68,7 +73,7 @@ docker run -it -rm -v $PWD:/build datasqrl/cmd compile metrics.sqrl
 ``` 
 (Use `${PWD}` in Powershell on Windows).
 
-3. Stand up the data architecture with Docker Compose:
+3. Stand up the data architecture with Docker Compose to simulate a production environment locally:
 ```bash
 (cd build/deploy; docker compose up --build)
 ``` 
@@ -78,10 +83,10 @@ docker run -it -rm -v $PWD:/build datasqrl/cmd compile metrics.sqrl
 
 Once you are done, terminate the system with `CTRL-C` and take it down with `(cd build/deploy; docker compose down -v)`.
 
-5. Test the data architecture (currently requires a homebrew install of DataSQRL via `brew tap datasqrl/sqrl; brew install sqrl-cli`):
-```bash
-sqrl test metrics.sqrl
-```
+5. For quicker development cycles, local runner, and test framework, install the DataSQRL CLI:
+   * `brew tap datasqrl/sqrl; brew install sqrl-cli` to install CLI via [homebrew](https://brew.sh/) on Mac (Linux and Windows support coming soon).
+   * `sqrl run metrics.sqrl` to run locally in seconds.
+   * `sqrl test metrics.sqrl` to run test cases with the DataSQRL test framework.
 
 This example uses the default engines, default configuration, and generated GraphQL schema. You can configure and change all of those to fit your needs. 
 
