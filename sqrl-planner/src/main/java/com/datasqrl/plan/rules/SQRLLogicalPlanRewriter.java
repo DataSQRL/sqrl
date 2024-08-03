@@ -16,7 +16,6 @@ import com.datasqrl.plan.table.*;
 import com.datasqrl.plan.util.*;
 import com.datasqrl.plan.util.TimestampAnalysis.MaxTimestamp;
 import com.datasqrl.schema.NestedRelationship;
-import com.datasqrl.util.ArrayUtil;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.calcite.SqrlRexUtil;
 import com.datasqrl.calcite.SqrlRexUtil.JoinConditionDecomposition;
@@ -239,7 +238,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     for (int i = 0; i < tuples.get(0).size(); i++) {
       int colNo = i;
       RelDataType type = fields.get(colNo).getType();
-      if (!CalciteUtil.isBasicType(type)) continue;
+      if (!CalciteUtil.isPotentialPrimaryKeyType(type)) continue;
       long uniques = tuples.stream().map(t -> t.get(colNo).getValue()).distinct().count();
       if (numRows == uniques) {
         //This is a primary key

@@ -32,15 +32,12 @@ columns:
   "metadata" : {
     "_ingest_time" : {
       "attribute" : "proctime()"
-    },
-    "_uuid" : {
-      "attribute" : "secure.Uuid()"
     }
   },
   "version" : 1,
   "table" : {
     "type" : "source",
-    "primary-key" : "_uuid",
+    "primary-key" : [ "loan_application_id", "status", "message", "event_time" ],
     "timestamp" : "_ingest_time"
   }
 }

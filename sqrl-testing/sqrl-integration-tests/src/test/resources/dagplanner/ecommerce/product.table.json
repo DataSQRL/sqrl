@@ -10,14 +10,11 @@
   "table" : {
     "type" : "source",
     "timestamp" : "_ingest_time",
-    "primary-key" : "_uuid"
+    "primary-key" : ["productid", "name", "description", "category"]
   },
   "metadata" : {
     "_ingest_time" : {
       "attribute" : "proctime()"
-    },
-    "_uuid" : {
-      "attribute" : "secure.uuid()"
     }
   }
 }

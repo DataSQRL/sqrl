@@ -16,11 +16,13 @@ import com.datasqrl.discovery.file.FilenameAnalyzer.Components;
 import com.datasqrl.discovery.file.RecordReader;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.schema.flexible.FlexibleTableSchemaHolder;
+import com.datasqrl.io.schema.flexible.converters.SchemaToRelDataTypeFactory;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.discovery.stats.DefaultSchemaGenerator;
 import com.datasqrl.discovery.stats.SourceTableStatistics;
 import com.datasqrl.schema.input.FlexibleTableSchema;
 import com.datasqrl.schema.input.SchemaAdjustmentSettings;
+import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.google.inject.Inject;
 import java.io.FileInputStream;
@@ -36,6 +38,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeField;
 
 /*
  * Infers the schema for json and csv files and creates a flexible schema for them
@@ -123,12 +127,23 @@ public class FlexibleSchemaInferencePreprocessor implements DiscoveryPreprocesso
         errors.warn("Could not infer schema for file [%s]: %s", file, subErrors);
         return;
       }
+      FlexibleTableSchemaHolder schemaHolder = new FlexibleTableSchemaHolder(schema);
+      //4. Infer primary key
+      RelDataType rowType = SchemaToRelDataTypeFactory.load(schemaHolder)
+          .map(schemaHolder, tableName, errors);
+      //We use a conservative method where each simple column is a primary key column
+      String[] primaryKey = rowType.getFieldList().stream().filter(f -> !f.getType().isNullable() && CalciteUtil.isPotentialPrimaryKeyType(f.getType()))
+          .map(RelDataTypeField::getName).toArray(String[]::new);
+
+
+      //5. Create table configuration
       TableConfig table = connectorFactory.get().createSourceAndSink(new ConnectorFactoryContext(tableName,
           Map.of("format",reader.get().getFormat(),
-              "filename", file.getFileName().toString())));
+              "filename", file.getFileName().toString(),
+              "primary-key", primaryKey)));
       TableSource tableSource = TableSource.create(table, processorContext.getName().orElse(
-          NamePath.ROOT), new FlexibleTableSchemaHolder(schema));
-      //4. Write files and add
+          NamePath.ROOT), schemaHolder);
+      //6. Write files and add
       try {
         Collection<Path> writtenFiles = writer.writeToFile(parentDir, tableSource);
         writtenFiles.forEach(processorContext::addDependency);

@@ -36,15 +36,12 @@ columns:
   "metadata" : {
     "_ingest_time" : {
       "attribute" : "proctime()"
-    },
-    "_uuid" : {
-      "attribute" : "secure.Uuid()"
     }
   },
   "version" : 1,
   "table" : {
     "type" : "source",
-    "primary-key" : "_uuid",
+    "primary-key" : [ "groupId", "groupName", "created" ],
     "timestamp" : "_ingest_time"
   }
 }

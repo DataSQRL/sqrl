@@ -58,14 +58,6 @@ public class TableConfigBuilderImpl implements TableConfig.TableConfigBuilder {
     return this;
   }
 
-  public TableConfigBuilderImpl addUuid(String columnName) {
-    return setMetadataFunction(columnName, "secure.Uuid()");
-  }
-
-  public TableConfigBuilderImpl addIngestTime(String columnName) {
-    return setMetadataFunction(columnName, "proctime()");
-  }
-
   public SqrlConfig getConnectorConfig() {
     return config.getSubConfig(TableConfigImpl.FLINK_CONNECTOR_KEY);
   }

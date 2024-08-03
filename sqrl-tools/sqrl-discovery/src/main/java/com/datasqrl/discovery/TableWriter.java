@@ -34,7 +34,7 @@ public class TableWriter {
   public Collection<Path> writeToFile(@NonNull Path destinationDir, @NonNull TableSource table) throws IOException  {
     Path tableConfigFile = destinationDir.resolve(
             table.getName().getCanonical() + TABLE_FILE_SUFFIX);
-    TableSchema ts = table.getSchema();
+    TableSchema ts = table.getTableSchema().get();
     TableConfig config = table.getConfiguration().toBuilder().build();
     config.toFile(tableConfigFile, true);
     TableSchemaFactory schemaFactory = TableSchemaFactory.loadByType(ts.getSchemaType());

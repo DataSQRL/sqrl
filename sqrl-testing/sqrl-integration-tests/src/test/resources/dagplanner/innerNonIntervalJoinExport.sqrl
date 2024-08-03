@@ -1,0 +1,9 @@
+IMPORT ecommerce.Orders;
+
+CoOrders := SELECT b.id AS beforeID, a.id AS afterID,
+                   a.time AS timestamp, b.time AS beforeTimestamp
+            FROM Orders b INNER JOIN Orders a ON b.customerid=a.customerid
+                AND b.time < a.time AND
+                b.time >= a.time - INTERVAL 10 MINUTE;
+
+Export CoOrders to logger.CoOrders;
