@@ -30,6 +30,27 @@
         "iceberg": {
           "connector": "iceberg",
           "catalog-table": "${sqrl:table}"
+        },
+        "postgres_log-source": {
+          "connector": "postgres-cdc",
+          "hostname": "postgres_log",
+          "port": "5432",
+          "username": "${JDBC_USERNAME}",
+          "password": "${JDBC_PASSWORD}",
+          "database-name": "datasqrl",
+          "schema-name": "public",
+          "table-name": "${sqrl:table}",
+          "slot.name": "flink_slot",
+          "decoding.plugin.name": "pgoutput",
+          "debezium.slot.drop_on_stop": "false"
+        },
+        "postgres_log-sink": {
+          "connector": "jdbc-sqrl",
+          "password": "${JDBC_PASSWORD}",
+          "driver": "org.postgresql.Driver",
+          "username": "${JDBC_USERNAME}",
+          "url": "${POSTGRES_LOG_JDBC_URL}",
+          "table-name": "${sqrl:table}"
         }
       }
     }

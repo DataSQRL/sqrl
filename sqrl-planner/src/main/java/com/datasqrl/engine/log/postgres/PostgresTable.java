@@ -1,41 +1,40 @@
-package com.datasqrl.engine.log.kafka;
-
-import static com.datasqrl.engine.log.kafka.KafkaLogEngineFactory.ENGINE_NAME;
+package com.datasqrl.engine.log.postgres;
 
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.ConnectorFactory.IConnectorFactoryContext;
 import com.datasqrl.config.TableConfig;
 import com.datasqrl.engine.log.Log;
-import com.datasqrl.io.tables.TableSchema;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.io.tables.TableSinkImpl;
 import com.datasqrl.io.tables.TableSource;
+import com.datasqrl.plan.table.RelDataTypeTableSchema;
+import java.util.List;
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-
-import java.util.Optional;
 import org.apache.calcite.rel.type.RelDataType;
 
 @AllArgsConstructor
 @Getter
-class KafkaTopic implements Log {
+public class PostgresTable implements Log {
 
-  String topicName;
+  String tableName;
   Name logName;
-  TableConfig logConfig;
-  Optional<TableSchema> tableSchema;
+  TableConfig sourceConfig;
+  TableConfig sinkConfig;
+  RelDataTypeTableSchema tableSchema;
+  List<String> primaryKeys;
   IConnectorFactoryContext connectorContext;
   RelDataType schema;
 
   @Override
   public TableSource getSource() {
-    return TableSource.create(logConfig, NamePath.of(ENGINE_NAME), tableSchema.get());
+    return TableSource.create(sourceConfig, logName.toNamePath(), tableSchema);
   }
 
   @Override
   public TableSink getSink() {
-    return TableSinkImpl.create(logConfig, NamePath.of(ENGINE_NAME), tableSchema);
+    return TableSinkImpl.create(sinkConfig, logName.toNamePath(), Optional.of(tableSchema));
   }
 
 }

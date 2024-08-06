@@ -13,6 +13,9 @@ ext {
     jdbcVersion = "3.1.2-1.18"
     kafkaVersion = "3.1.0-1.18"
     sqrlVersion = "0.5.3"
+<#if config["enabled-engines"]?seq_contains("postgres_log")>
+    postgresCdcVersion = "3.1.0"
+</#if>
 }
 
 repositories {
@@ -31,6 +34,9 @@ dependencies {
     implementation "org.apache.flink:flink-connector-kafka:$kafkaVersion"
     implementation "org.apache.flink:flink-connector-jdbc:$jdbcVersion"
     implementation "org.apache.flink:flink-avro-confluent-registry:$flinkVersion"
+<#if config["enabled-engines"]?seq_contains("postgres_log")>
+    implementation "org.apache.flink:flink-connector-postgres-cdc:$postgresCdcVersion"
+</#if>
 
     implementation "com.datasqrl:sqrl-lib-common:$sqrlVersion"
     implementation "com.datasqrl:sqrl-json:$sqrlVersion"

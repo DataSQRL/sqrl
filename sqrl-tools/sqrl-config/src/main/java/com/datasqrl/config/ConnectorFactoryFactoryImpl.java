@@ -51,6 +51,10 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
     // end
 
     Optional<ConnectorConf> connectorConfig = getConnectorConfig(connectorName);
+    if (connectorName.equals("postgres_log-source") || connectorName.equals("postgres_log-sink")) {
+      return connectorConfig.map(this::createPostgresLogConnectorFactory);
+    }
+
     if (engineType != null) {
       if (engineType.equals(Type.LOG)) {
         return connectorConfig.map(this::createKafkaConnectorFactory);
@@ -131,12 +135,11 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
       Map<String, Object> map = context.getMap();
       ConnectorConfImpl connectorConf1 = (ConnectorConfImpl) connectorConf;
 
-//      String topicName = sanitizeName(logId);
       TableConfigBuilderImpl builder = TableConfigImpl.builder(context.getName());
       List<String> primaryKey = (List<String>)map.get("primary-key");
       String timestampType = (String)map.get("timestamp-type");
       String timestampName = (String)map.get("timestamp-name");
-//
+
       if (primaryKey != null && !primaryKey.isEmpty()) builder.setPrimaryKey(primaryKey.toArray(new String[0]));
       if (timestampType != null && !timestampType.equalsIgnoreCase("NONE")) {//!=TimestampType.NONE
         builder.setType(ExternalDataType.source_and_sink);
@@ -168,7 +171,37 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
       Map<String, Object> map = context.getMap();
       builder.copyConnectorConfig(engineConfig);
       builder.getConnectorConfig().setProperty("table-name", (String)map.get("table-name"));
+      builder.getConnectorConfig().setProperty("connector", "jdbc-sqrl");
 
+      return builder.build();
+    };
+  }
+
+  private ConnectorFactory createPostgresLogConnectorFactory(ConnectorConf connectorConf) {
+
+    return context -> {
+      Map<String, Object> map = context.getMap();
+      ConnectorConfImpl engineConfig = (ConnectorConfImpl) connectorConf;
+
+      TableConfigBuilderImpl builder = TableConfigImpl.builder(context.getName());
+
+      List<String> primaryKey = (List<String>)map.get("primary-key");
+      Optional.ofNullable(primaryKey)
+          .filter(pk -> !pk.isEmpty())
+          .ifPresent(pk -> builder.setPrimaryKey(pk.toArray(new String[0])));
+
+      builder.setTimestampColumn((String)map.get("timestamp-name"));
+      builder.setWatermark(0);
+
+
+      if (connectorConf.toMap().get("connector").equals("postgres-cdc")) {
+        builder.setType(ExternalDataType.source);
+      } else {
+        builder.setType(ExternalDataType.sink);
+      }
+
+      builder.copyConnectorConfig(engineConfig);
+      builder.getConnectorConfig().setProperty("table-name", map.get("table-name"));
       return builder.build();
     };
   }

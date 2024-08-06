@@ -19,9 +19,9 @@ public class CreateTableDDL implements SqlDDLStatement {
   public String getSql() {
     String primaryKeyStr = "";
     if (!primaryKeys.isEmpty()) {
-      primaryKeyStr = String.format(", PRIMARY KEY (%s)", String.join(",", primaryKeys));
+      primaryKeyStr = String.format(" , PRIMARY KEY (%s)", String.join(",", primaryKeys));
     }
-    String createTable = "CREATE TABLE IF NOT EXISTS %s (%s %s);";
+    String createTable = "CREATE TABLE IF NOT EXISTS %s (%s%s);";
     String sql = String.format(createTable, name,
         String.join(",", columns), primaryKeyStr);
 

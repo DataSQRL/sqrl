@@ -3,10 +3,16 @@
  */
 package com.datasqrl.engine.database.relational.ddl;
 
+import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.engine.database.relational.ddl.statements.CreateIndexDDL;
+import com.datasqrl.engine.database.relational.ddl.statements.notify.ListenNotifyAssets;
+import com.datasqrl.engine.database.relational.ddl.statements.notify.OnNotifyQuery;
+import com.datasqrl.engine.database.relational.ddl.statements.notify.ListenQuery;
+import com.datasqrl.engine.database.relational.ddl.statements.notify.CreateNotifyTriggerDDL;
 import com.datasqrl.engine.database.relational.ddl.statements.CreateTableDDL;
+import com.datasqrl.engine.database.relational.ddl.statements.notify.Parameter;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.google.auto.service.AutoService;
@@ -20,6 +26,8 @@ import java.util.List;
 
 import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.pretty.SqlPrettyWriter;
+import org.apache.calcite.sql.validate.SqlNameMatcher;
+import org.apache.calcite.sql.validate.SqlNameMatchers;
 
 @AutoService(JdbcDDLFactory.class)
 public class PostgresDDLFactory implements JdbcDDLFactory {
@@ -29,6 +37,7 @@ public class PostgresDDLFactory implements JdbcDDLFactory {
     return JdbcDialect.Postgres;
   }
 
+  @Override
   public CreateTableDDL createTable(EngineSink table) {
     List<String> pk = new ArrayList<>();
     List<String> columns = new ArrayList<>();
@@ -47,6 +56,18 @@ public class PostgresDDLFactory implements JdbcDDLFactory {
     return new CreateTableDDL(table.getNameId(), columns, pk);
   }
 
+  public CreateTableDDL createTable(String name, List<RelDataTypeField> fields, List<String> primaryKeys) {
+    String tableName = quoteIdentifier(name);
+
+    List<String> columns = fields.stream()
+        .map(PostgresDDLFactory::toSql)
+        .collect(Collectors.toList());
+
+    List<String> pks = quoteValues(primaryKeys);
+
+    return new CreateTableDDL(tableName, columns, pks);
+  }
+
   public static String toSql(RelDataTypeField field) {
     SqlDataTypeSpec castSpec = ExtendedPostgresSqlDialect.DEFAULT.getCastSpec(field.getType());
     SqlPrettyWriter sqlPrettyWriter = new SqlPrettyWriter();
@@ -54,7 +75,6 @@ public class PostgresDDLFactory implements JdbcDDLFactory {
     String name = sqlPrettyWriter.toSqlString().getSql();
 
     RelDataType datatype = field.getType();
-
 
     return toSql(field.getName(), name, datatype.isNullable());
   }
@@ -68,9 +88,29 @@ public class PostgresDDLFactory implements JdbcDDLFactory {
     return sql.toString();
   }
 
+  @Override
   public CreateIndexDDL createIndex(IndexDefinition index) {
     List<String> columns = index.getColumnNames();
     return new CreateIndexDDL(index.getName(), index.getTableId(), columns, index.getType());
+  }
+
+  public CreateNotifyTriggerDDL createNotify(String name, List<String> primaryKeys) {
+    return new CreateNotifyTriggerDDL(name, primaryKeys);
+  }
+
+  public ListenNotifyAssets createNotifyHelperDDLs(SqrlFramework framework, String name, RelDataType schema, List<String> primaryKeys) {
+    ListenQuery listenQuery = new ListenQuery(name);
+
+    List<Parameter> parameters = primaryKeys.stream()
+        .map(pk -> {
+          SqlNameMatcher matcher = SqlNameMatchers.withCaseSensitive(false);
+          RelDataTypeField matchedField = matcher.field(schema, pk);
+          return new Parameter(pk, matchedField);
+        })
+        .collect(Collectors.toList());
+
+    OnNotifyQuery onNotifyQuery = new OnNotifyQuery(framework, name, parameters);
+    return new ListenNotifyAssets(listenQuery, onNotifyQuery, primaryKeys);
   }
 
   public static List<String> quoteIdentifier(List<String> columns) {
@@ -80,5 +120,11 @@ public class PostgresDDLFactory implements JdbcDDLFactory {
   }
   public static String quoteIdentifier(String column) {
     return "\"" + column + "\"";
+  }
+
+  public static List<String> quoteValues(List<String> values) {
+    return values.stream()
+        .map(PostgresDDLFactory::quoteIdentifier)
+        .collect(Collectors.toList());
   }
 }

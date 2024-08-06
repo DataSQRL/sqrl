@@ -1,17 +1,21 @@
 ---
-name: "gendata"
+name: "data"
 schema_version: "1"
 partial_schema: false
 columns:
-- name: "id"
+- name: "_uuid"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "ID"
   type: "BIGINT"
   tests:
   - "not_null"
-- name: "epoch_timestamp"
-  type: "TIMESTAMP"
+- name: "EPOCH_TIMESTAMP"
+  type: "BIGINT"
   tests:
   - "not_null"
-- name: "some_value"
+- name: "SOME_VALUE"
   type: "STRING"
   tests:
   - "not_null"
