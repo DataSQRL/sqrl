@@ -1,1 +1,0 @@
-Provides support for local filesystems and remote filesystems (e.g. AWS S3) as sources and sinks for DataSQRL.

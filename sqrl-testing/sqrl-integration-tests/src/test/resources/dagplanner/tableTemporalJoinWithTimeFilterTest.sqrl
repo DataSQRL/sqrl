@@ -1,0 +1,8 @@
+IMPORT time.*;
+IMPORT ecommerceTs.Customer;
+IMPORT ecommerceTs.Orders;
+IMPORT ecommerceTs.Product;
+Customer := DISTINCT Customer ON customerid ORDER BY timestamp DESC;
+Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC;
+Customer.totals := SELECT p.category as category, sum(e.quantity) as num FROM @ JOIN Orders o ON o.customerid = @.customerid
+    JOIN o.entries e JOIN Product p ON p.productid = e.productid WHERE o.time >= now() - INTERVAL 1 DAY GROUP BY category;

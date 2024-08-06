@@ -3,16 +3,22 @@
  */
 package com.datasqrl.cmd;
 
-import com.datasqrl.config.SqrlConfig;
+import com.datasqrl.config.PackageJson;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.packager.Packager;
+import com.datasqrl.plan.validate.ExecutionGoal;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "compile", description = "Compiles an SQRL script and produces all build artifacts")
 public class CompilerCommand extends AbstractCompilerCommand {
 
   @Override
-  public SqrlConfig createDefaultConfig(ErrorCollector errors) {
-    return Packager.createDockerConfig(errors);
+  public PackageJson createDefaultConfig(ErrorCollector errors) {
+    throw new RuntimeException("package.json required");
+//    return Packager.createDockerConfig(errors);
+  }
+
+  @Override
+  public ExecutionGoal getGoal() {
+    return ExecutionGoal.COMPILE;
   }
 }

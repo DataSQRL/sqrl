@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "values" : {
+    "flink-config": {
+      "table.exec.source.idle-timeout": "10000 ms"
+    }
+  }
+}

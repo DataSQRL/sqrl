@@ -1,0 +1,7 @@
+[FATAL] Mutation 'addOrder' input argument must be non-array and non-null
+in script:schema [8:3]:
+}
+type Mutation {
+  addOrder(input: OrderInput): Orders
+--^
+

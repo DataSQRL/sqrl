@@ -1,7 +1,0 @@
-[FATAL] Could not find Object type [DOESNOTEXIST]
-in script:<schema> [5:11]:
-}
-type Query {
-	orders: DOESNOTEXIST
-----------^
-

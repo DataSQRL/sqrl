@@ -1,0 +1,10 @@
+>>>product$2
+LogicalTableScan(table=[[product$1]])
+
+>>>product2$1
+LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], min=[$6])
+  LogicalJoin(condition=[true], joinType=[inner])
+    LogicalTableScan(table=[[product$2]])
+    LogicalAggregate(group=[{}], min=[MIN($2)], __timestamp=[MAX($1)])
+      LogicalTableScan(table=[[product$2]])
+

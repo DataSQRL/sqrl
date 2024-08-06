@@ -1,8 +1,0 @@
->>>errors
-[FATAL] Could not find table: x
-in script:<script> [6:2]:
-IMPORT time.*;
-CustomerById(@id: INT) := FROM 
- x WHERE customerid = @id;
--^
-

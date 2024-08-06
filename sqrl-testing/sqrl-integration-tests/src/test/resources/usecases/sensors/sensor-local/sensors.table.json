@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "flink" : {
+    "format" : "flexible-json",
+    "path" : "/data/sensors.jsonl.gz",
+    "connector" : "filesystem"
+  },
+  "table" : {
+    "type" : "source",
+    "primary-key" : ["id", "placed"],
+    "timestamp" : "placed",
+    "watermark-millis" : "1"
+  }
+}

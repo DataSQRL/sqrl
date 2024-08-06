@@ -1,0 +1,13 @@
+>>>distincton
+[FATAL] DISTINCT ON statements require stream table as input
+in script:<script> [3:1]:
+IMPORT ecommerce-data.Customer TIMESTAMP _ingest_time;
+Customer1 := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;
+Customer2 := DISTINCT Customer1 ON customerid ORDER BY _ingest_time DESC;
+^
+DataSQRL distinguishes between `state` and `stream` tables.
+This error occurred because the table type did not match
+the required type.
+
+Learn more about state vs streams tables:
+https://www.datasqrl.com/docs/reference/sqrl/table#stateVsStream

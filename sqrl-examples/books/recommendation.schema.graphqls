@@ -1,19 +1,4 @@
-type Authors {
-  author_id: Float!
-  average_rating: Float!
-  text_reviews_count: Float!
-  name: String!
-  ratings_count: Float!
-  books(limit: Int = 10, offset: Int = 0): [Books!]
-}
-
-type BookRatingCount {
-  book_id: Float!
-  num_reviews: Float!
-}
-
 type Books {
-  book_id: Float!
   isbn: String!
   text_reviews_count: String!
   country_code: String!
@@ -34,57 +19,21 @@ type Books {
   publication_year: String!
   url: String!
   image_url: String!
+  book_id: Float!
   ratings_count: String!
   work_id: String!
   title: String!
   title_without_series: String!
-  author(limit: Int = 10, offset: Int = 0): [Authors!]
   authors(limit: Int = 10, offset: Int = 0): [authors!]
-  coReviewed(otherBook_id: Float, limit: Int = 10, offset: Int = 0): [coReviewed!]
   popular_shelves(limit: Int = 10, offset: Int = 0): [popular_shelves!]
-  similar(otherBook_id: Float, limit: Int = 10, offset: Int = 0): [similar!]
-}
-
-type CoReviews {
-  previousBook_id: Float!
-  nextBook_id: Float!
-  timestamp: DateTime!
-  rating_diff: Float!
-}
-
-type CoReviewsUndirected {
-  book_id: Float!
-  otherBook_id: Float!
-  rating_diff: Float!
-  timestamp: DateTime!
 }
 
 "An RFC-3339 compliant DateTime Scalar"
 scalar DateTime
 
-type PositiveReviews {
-  user_id: String!
-  book_id: Float!
-  review_id: String!
-  rating: Float!
-  review_text: String!
-  date_added: String!
-  date_updated: String!
-  read_at: String!
-  started_at: String!
-  n_votes: Float!
-  n_comments: Float!
-  timestamp: DateTime!
-}
-
 type Query {
-  Authors(author_id: Float, limit: Int = 10, offset: Int = 0): [Authors!]
-  Books(book_id: Float, limit: Int = 10, offset: Int = 0): [Books!]
-  BookRatingCount(book_id: Float, limit: Int = 10, offset: Int = 0): [BookRatingCount!]
-  PositiveReviews(limit: Int = 10, offset: Int = 0): [PositiveReviews!]
+  Books(limit: Int = 10, offset: Int = 0): [Books!]
   Reviews(limit: Int = 10, offset: Int = 0): [Reviews!]
-  CoReviews(limit: Int = 10, offset: Int = 0): [CoReviews!]
-  CoReviewsUndirected(limit: Int = 10, offset: Int = 0): [CoReviewsUndirected!]
 }
 
 type Reviews {
@@ -103,29 +52,11 @@ type Reviews {
 }
 
 type authors {
-  book_id: Float!
   author_id: Float!
   role: String!
-  parent: Books!
-}
-
-type coReviewed {
-  otherBook_id: Float!
-  rating_diff: Float!
-  num_reviews: Float!
-  parent: Books!
 }
 
 type popular_shelves {
-  book_id: Float!
   count: Float!
   name: String!
-  parent: Books!
-}
-
-type similar {
-  otherBook_id: Float!
-  similarity: Float!
-  book(limit: Int = 10, offset: Int = 0): [Books!]
-  parent: Books!
 }

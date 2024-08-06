@@ -1,0 +1,8 @@
+>>>product$2
+LogicalTableScan(table=[[product$1]])
+
+>>>product2$1
+LogicalUnion(all=[false])
+  LogicalTableScan(table=[[product$2]])
+  LogicalTableScan(table=[[product$2]])
+

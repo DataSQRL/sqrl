@@ -2,13 +2,13 @@ package com.datasqrl.cmd;
 
 import static com.datasqrl.packager.Packager.DEFAULT_PACKAGE;
 
+import com.datasqrl.config.Dependency;
+import com.datasqrl.config.PackageJsonImpl;
 import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.NotYetImplementedException;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.packager.Publisher;
-import com.datasqrl.packager.config.Dependency;
-import com.datasqrl.packager.config.ScriptConfiguration;
 import com.datasqrl.packager.repository.LocalRepositoryImplementation;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -29,7 +29,6 @@ public class PublishCommand extends AbstractCommand {
     @Override
     protected void execute(ErrorCollector errors) throws IOException {
         if (toRemote) NotYetImplementedException.trigger("Publishing to remote repository is not yet supported");
-
         Path packageRoot = root.rootDir;
         Optional<List<Path>> packageConfigsOpt = Packager.findPackageFile(root.rootDir, root.packageFiles);
         errors.checkFatal(packageConfigsOpt.isPresent(),"Directory does not contain [%s] package configuration file",
@@ -37,11 +36,12 @@ public class PublishCommand extends AbstractCommand {
         List<Path> packageconfigs = packageConfigsOpt.get();
         Path defaultPkgConfig = packageRoot.resolve(DEFAULT_PACKAGE);
 
-        LocalRepositoryImplementation localRepo = LocalRepositoryImplementation.of(errors);
+        LocalRepositoryImplementation localRepo = LocalRepositoryImplementation.of(errors,
+            root.rootDir);
         Publisher publisher = new Publisher(errors);
 
         if (mainScript==null && packageconfigs.size()==1 && Files.isSameFile(defaultPkgConfig,packageconfigs.get(0))
-                && !SqrlConfigCommons.fromFiles(errors,defaultPkgConfig).containsKey(ScriptConfiguration.SCRIPT_KEY)) {
+                && !new PackageJsonImpl(SqrlConfigCommons.fromFiles(errors,defaultPkgConfig)).hasScriptKey()) {
             //If no main script is specified and only a single default package config and that config does not contain a script config
             //then we are publishing a data source/sink or function package (i.e. we don't need to build)
             Dependency dep = publisher.publish(packageRoot, localRepo).asDependency();

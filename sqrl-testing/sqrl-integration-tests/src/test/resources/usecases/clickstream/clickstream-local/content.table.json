@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "flink" : {
+    "format" : "flexible-json",
+    "path" : "/data/content.jsonl",
+    "connector" : "filesystem"
+  },
+  "table" : {
+    "type" : "source",
+    "primary-key" : ["url","updated"],
+    "timestamp" : "updated",
+    "watermark-millis" : "1"
+  }
+}

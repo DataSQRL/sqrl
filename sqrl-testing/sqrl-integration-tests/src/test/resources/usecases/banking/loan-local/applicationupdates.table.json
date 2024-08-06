@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "flink" : {
+    "format" : "flexible-json",
+    "path" : "/data/application_updates.jsonl",
+    "connector" : "filesystem"
+  },
+  "table" : {
+    "type" : "source",
+    "primary-key" : ["loan_application_id", "event_time"],
+    "timestamp" : "event_time",
+    "watermark-millis" : "0"
+  }
+}

@@ -1,0 +1,21 @@
+---
+name: "AddInterest"
+schema_version: "1"
+partial_schema: false
+columns:
+- name: "_uuid"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "userid"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "text"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "event_time"
+  type: "TIMESTAMP"
+  tests:
+    - "not_null"

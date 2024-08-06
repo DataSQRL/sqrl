@@ -1,7 +1,0 @@
-[FATAL] Field(s) [x] could not be found on type [Orders]. Possible fields are: [_uuid, _ingest_time, id, customerid, time, entries]
-in script:<schema> [3:3]:
-type Orders {
-  _uuid: String
-  x: Int!
---^
-

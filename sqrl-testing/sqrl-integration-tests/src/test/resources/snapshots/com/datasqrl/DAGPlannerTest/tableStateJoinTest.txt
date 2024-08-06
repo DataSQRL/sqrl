@@ -1,0 +1,927 @@
+>>>pipeline_explain.txt
+=== Customer
+ID:     customer$2
+Type:   stream
+Stage:  streams
+Primary Key: _uuid
+Timestamp  : _ingest_time
+Schema:
+ - customerid: BIGINT NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - lastUpdated: BIGINT NOT NULL
+ - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+Plan:
+LogicalTableScan(table=[[customer$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+
+=== Customer
+ID:     customer$3
+Type:   state
+Stage:  streams
+Inputs: customer$2
+Primary Key: customerid
+Timestamp  : _ingest_time
+Schema:
+ - customerid: BIGINT NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - lastUpdated: BIGINT NOT NULL
+ - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+Post Processors:
+ - topN: partition=customerid limit=1 sort=#4: _ingest_time TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
+Plan:
+LogicalTableScan(table=[[customer$2]])
+
+=== OrderCustomer
+ID:     ordercustomer$1
+Type:   state
+Stage:  streams
+Inputs: customer$3, orders$3
+Primary Key: id
+Timestamp  : __timestamp
+Schema:
+ - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+ - id: BIGINT NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - customerid: BIGINT NOT NULL
+ - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Plan:
+LogicalProject(_uuid=[$5], id=[$0], name=[$9], customerid=[$1], __timestamp=[CASE(<($4, $11), $11, $4)])
+  LogicalJoin(condition=[=($1, $7)], joinType=[inner]) hints[JoinCostHint options:[VERSIONED_STATE, VERSIONED_STATE, 1, RIGHT]]
+    LogicalFilter(condition=[=($6, 1)]) hints[DedupHint]
+      LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], _ingest_time=[$4], _uuid=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
+        LogicalTableScan(table=[[orders$3]])
+    LogicalFilter(condition=[=($6, 1)]) hints[DedupHint]
+      LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], _ingest_time=[$4], _uuid=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
+        LogicalTableScan(table=[[customer$3]])
+
+=== OrderCustomerConstant
+ID:     ordercustomerconstant$1
+Type:   state
+Stage:  streams
+Inputs: customer$3, orders$3
+Primary Key: id
+Timestamp  : __timestamp
+Schema:
+ - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+ - id: BIGINT NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - customerid: BIGINT NOT NULL
+ - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Plan:
+LogicalProject(_uuid=[$5], id=[$0], name=[$9], customerid=[$1], __timestamp=[CASE(<($4, $11), $11, $4)])
+  LogicalJoin(condition=[AND(=($1, $7), =($9, 'Robert'), >($0, 5))], joinType=[inner]) hints[JoinCostHint options:[VERSIONED_STATE, VERSIONED_STATE, 2, RIGHT]]
+    LogicalFilter(condition=[=($6, 1)]) hints[DedupHint]
+      LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], _ingest_time=[$4], _uuid=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
+        LogicalTableScan(table=[[orders$3]])
+    LogicalFilter(condition=[=($6, 1)]) hints[DedupHint]
+      LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], _ingest_time=[$4], _uuid=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
+        LogicalTableScan(table=[[customer$3]])
+
+=== OrderCustomerLeft
+ID:     ordercustomerleft$1
+Type:   state
+Stage:  streams
+Inputs: customer$3, orders$3
+Primary Key: id
+Timestamp  : __timestamp
+Schema:
+ - _uuid: CHAR(36) CHARACTER SET "UTF-16LE"
+ - id: BIGINT NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - customerid: BIGINT NOT NULL
+ - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
+Plan:
+LogicalProject(_uuid=[$12], id=[$0], name=[$9], customerid=[$1], __timestamp=[CASE(<($4, $11), $11, $4)])
+  LogicalJoin(condition=[=($1, $7)], joinType=[left]) hints[JoinCostHint options:[VERSIONED_STATE, VERSIONED_STATE, 1, RIGHT]]
+    LogicalFilter(condition=[=($6, 1)]) hints[DedupHint]
+      LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], _ingest_time=[$4], _uuid=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
+        LogicalTableScan(table=[[orders$3]])
+    LogicalFilter(condition=[=($6, 1)]) hints[DedupHint]
+      LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], _ingest_time=[$4], _uuid=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
+        LogicalTableScan(table=[[customer$3]])
+
+=== OrderCustomerLeftExcluded
+ID:     ordercustomerleftexcluded$1
+Type:   state
+Stage:  streams
+Inputs: customer$3, orders$3
+Primary Key: id
+Timestamp  : __timestamp
+Schema:
+ - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+ - id: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
+Plan:
+LogicalProject(_uuid=[$5], id=[$0], customerid=[$1], __timestamp=[CASE(<($4, $11), $11, $4)])
+  LogicalFilter(condition=[IS NULL($12)])
+    LogicalJoin(condition=[=($1, $7)], joinType=[left]) hints[JoinCostHint options:[VERSIONED_STATE, VERSIONED_STATE, 1, RIGHT]]
+      LogicalFilter(condition=[=($6, 1)]) hints[DedupHint]
+        LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], _ingest_time=[$4], _uuid=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
+          LogicalTableScan(table=[[orders$3]])
+      LogicalFilter(condition=[=($6, 1)]) hints[DedupHint]
+        LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], _ingest_time=[$4], _uuid=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
+          LogicalTableScan(table=[[customer$3]])
+
+=== OrderCustomerRight
+ID:     ordercustomerright$1
+Type:   state
+Stage:  streams
+Inputs: customer$3, orders$3
+Primary Key: _customerid0, ouuid
+Timestamp  : __timestamp
+Schema:
+ - ouuid: BIGINT NOT NULL
+ - id: BIGINT
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - customerid: BIGINT
+ - _customerid0: BIGINT NOT NULL
+ - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
+Plan:
+LogicalProject(ouuid=[COALESCE($7, 0:BIGINT)], id=[$7], name=[$2], customerid=[$8], _customerid0=[$0], __timestamp=[CASE(<($4, $11), $11, $4)])
+  LogicalJoin(condition=[=($8, $0)], joinType=[left]) hints[JoinCostHint options:[VERSIONED_STATE, VERSIONED_STATE, 1, LEFT]]
+    LogicalFilter(condition=[=($6, 1)]) hints[DedupHint]
+      LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], _ingest_time=[$4], _uuid=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
+        LogicalTableScan(table=[[customer$3]])
+    LogicalFilter(condition=[=($6, 1)]) hints[DedupHint]
+      LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], _ingest_time=[$4], _uuid=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
+        LogicalTableScan(table=[[orders$3]])
+
+=== OrderCustomerRightExcluded
+ID:     ordercustomerrightexcluded$1
+Type:   state
+Stage:  streams
+Inputs: customer$3, orders$3
+Primary Key: customerid
+Timestamp  : __timestamp
+Schema:
+ - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+ - customerid: BIGINT NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
+Plan:
+LogicalProject(_uuid=[$5], customerid=[$0], name=[$2], __timestamp=[CASE(<($4, $11), $11, $4)])
+  LogicalFilter(condition=[IS NULL($7)])
+    LogicalJoin(condition=[=($8, $0)], joinType=[left]) hints[JoinCostHint options:[VERSIONED_STATE, VERSIONED_STATE, 1, LEFT]]
+      LogicalFilter(condition=[=($6, 1)]) hints[DedupHint]
+        LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], _ingest_time=[$4], _uuid=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
+          LogicalTableScan(table=[[customer$3]])
+      LogicalFilter(condition=[=($6, 1)]) hints[DedupHint]
+        LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], _ingest_time=[$4], _uuid=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
+          LogicalTableScan(table=[[orders$3]])
+
+=== Orders
+ID:     orders$2
+Type:   stream
+Stage:  streams
+Primary Key: _uuid
+Timestamp  : _ingest_time
+Schema:
+ - id: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - entries: RecordType(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+ - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+Plan:
+LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+
+=== Orders
+ID:     orders$3
+Type:   state
+Stage:  streams
+Inputs: orders$2
+Primary Key: id
+Timestamp  : _ingest_time
+Schema:
+ - id: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - entries: RecordType(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+ - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+Post Processors:
+ - topN: partition=id limit=1 sort=#4: _ingest_time TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
+Plan:
+LogicalTableScan(table=[[orders$2]])
+
+=== Product
+ID:     product$2
+Type:   stream
+Stage:  streams
+Primary Key: _uuid
+Timestamp  : _ingest_time
+Schema:
+ - productid: BIGINT NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - description: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - category: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+Plan:
+LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+
+>>>flink.json
+{
+  "flinkSql" : [
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptostring` AS 'com.datasqrl.time.TimestampToString' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofmonth` AS 'com.datasqrl.time.EndOfMonth' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `tojson` AS 'com.datasqrl.json.ToJson' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofweek` AS 'com.datasqrl.time.EndOfWeek' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `parsetimestamp` AS 'com.datasqrl.time.ParseTimestamp' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `uuid` AS 'com.datasqrl.secure.Uuid' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochmillitotimestamp` AS 'com.datasqrl.time.EpochMilliToTimestamp' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofminute` AS 'com.datasqrl.time.EndOfMinute' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptoepoch` AS 'com.datasqrl.time.TimestampToEpoch' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofsecond` AS 'com.datasqrl.time.EndOfSecond' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochtotimestamp` AS 'com.datasqrl.time.EpochToTimestamp' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofday` AS 'com.datasqrl.time.EndOfDay' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `atzone` AS 'com.datasqrl.time.AtZone' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofhour` AS 'com.datasqrl.time.EndOfHour' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofyear` AS 'com.datasqrl.time.EndOfYear' LANGUAGE JAVA;",
+    "CREATE TEMPORARY TABLE `orders$1` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,\n  `_ingest_time` AS PROCTIME(),\n  `_uuid` AS UUID(),\n  PRIMARY KEY (`_uuid`) NOT ENFORCED\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
+    "CREATE TEMPORARY TABLE `product$1` (\n  `productid` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_ingest_time` AS PROCTIME(),\n  `_uuid` AS UUID(),\n  PRIMARY KEY (`_uuid`) NOT ENFORCED\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
+    "CREATE TEMPORARY TABLE `customer$1` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `_ingest_time` AS PROCTIME(),\n  `_uuid` AS UUID(),\n  PRIMARY KEY (`_uuid`) NOT ENFORCED\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
+    "CREATE TEMPORARY TABLE `customer$3` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,\n  PRIMARY KEY (`customerid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'customer$3',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `ordercustomer$1` (\n  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,\n  `id` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'ordercustomer$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `ordercustomerconstant$1` (\n  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,\n  `id` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'ordercustomerconstant$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `ordercustomerleft$1` (\n  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE`,\n  `id` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `customerid` BIGINT NOT NULL,\n  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,\n  PRIMARY KEY (`id`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'ordercustomerleft$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `ordercustomerleftexcluded$1` (\n  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,\n  PRIMARY KEY (`id`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'ordercustomerleftexcluded$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `ordercustomerright$1` (\n  `ouuid` BIGINT NOT NULL,\n  `id` BIGINT,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `customerid` BIGINT,\n  `_customerid0` BIGINT NOT NULL,\n  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,\n  PRIMARY KEY (`_customerid0`, `ouuid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'ordercustomerright$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `ordercustomerrightexcluded$1` (\n  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,\n  PRIMARY KEY (`customerid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'ordercustomerrightexcluded$1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `orders$3` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,\n  PRIMARY KEY (`id`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orders$3',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `product$2` (\n  `productid` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,\n  PRIMARY KEY (`_uuid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'product$2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `customer$1`;",
+    "CREATE VIEW `table$2`\nAS\nSELECT `t0`.`_uuid`, `t0`.`id`, `t2`.`name`, `t0`.`customerid`, (CASE WHEN (`t0`.`_ingest_time` < `t2`.`_ingest_time`) THEN `t2`.`_ingest_time` ELSE `t0`.`_ingest_time` END) AS `__timestamp`\nFROM (SELECT *\nFROM (SELECT `id`, `customerid`, `time`, `entries`, `_ingest_time`, `_uuid`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `_ingest_time` DESC NULLS LAST)) AS `_rownum`\nFROM `orders$1`) AS `t`\nWHERE (`_rownum` = 1)) AS `t0`\nINNER JOIN (SELECT *\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `_ingest_time`, `_uuid`, (ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `_ingest_time` DESC NULLS LAST)) AS `_rownum`\nFROM `customer$1`) AS `t1`\nWHERE (`_rownum` = 1)) AS `t2` ON (`t0`.`customerid` = `t2`.`customerid`);",
+    "CREATE VIEW `table$3`\nAS\nSELECT `t0`.`_uuid`, `t0`.`id`, `t2`.`name`, `t0`.`customerid`, (CASE WHEN (`t0`.`_ingest_time` < `t2`.`_ingest_time`) THEN `t2`.`_ingest_time` ELSE `t0`.`_ingest_time` END) AS `__timestamp`\nFROM (SELECT *\nFROM (SELECT `id`, `customerid`, `time`, `entries`, `_ingest_time`, `_uuid`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `_ingest_time` DESC NULLS LAST)) AS `_rownum`\nFROM `orders$1`) AS `t`\nWHERE (`_rownum` = 1)) AS `t0`\nINNER JOIN (SELECT *\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `_ingest_time`, `_uuid`, (ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `_ingest_time` DESC NULLS LAST)) AS `_rownum`\nFROM `customer$1`) AS `t1`\nWHERE (`_rownum` = 1)) AS `t2` ON (((`t0`.`customerid` = `t2`.`customerid`) AND (`t2`.`name` = 'Robert')) AND (`t0`.`id` > 5));",
+    "CREATE VIEW `table$4`\nAS\nSELECT `t2`.`_uuid`, `t0`.`id`, `t2`.`name`, `t0`.`customerid`, (CASE WHEN (`t0`.`_ingest_time` < `t2`.`_ingest_time`) THEN `t2`.`_ingest_time` ELSE `t0`.`_ingest_time` END) AS `__timestamp`\nFROM (SELECT *\nFROM (SELECT `id`, `customerid`, `time`, `entries`, `_ingest_time`, `_uuid`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `_ingest_time` DESC NULLS LAST)) AS `_rownum`\nFROM `orders$1`) AS `t`\nWHERE (`_rownum` = 1)) AS `t0`\nLEFT JOIN (SELECT *\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `_ingest_time`, `_uuid`, (ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `_ingest_time` DESC NULLS LAST)) AS `_rownum`\nFROM `customer$1`) AS `t1`\nWHERE (`_rownum` = 1)) AS `t2` ON (`t0`.`customerid` = `t2`.`customerid`);",
+    "CREATE VIEW `table$5`\nAS\nSELECT `t0`.`_uuid`, `t0`.`id`, `t0`.`customerid`, (CASE WHEN (`t0`.`_ingest_time` < `t2`.`_ingest_time`) THEN `t2`.`_ingest_time` ELSE `t0`.`_ingest_time` END) AS `__timestamp`\nFROM (SELECT *\nFROM (SELECT `id`, `customerid`, `time`, `entries`, `_ingest_time`, `_uuid`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `_ingest_time` DESC NULLS LAST)) AS `_rownum`\nFROM `orders$1`) AS `t`\nWHERE (`_rownum` = 1)) AS `t0`\nLEFT JOIN (SELECT *\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `_ingest_time`, `_uuid`, (ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `_ingest_time` DESC NULLS LAST)) AS `_rownum`\nFROM `customer$1`) AS `t1`\nWHERE (`_rownum` = 1)) AS `t2` ON (`t0`.`customerid` = `t2`.`customerid`)\nWHERE (`t2`.`_uuid` IS NULL);",
+    "CREATE VIEW `table$6`\nAS\nSELECT COALESCE(`t2`.`id`, 0) AS `ouuid`, `t2`.`id`, `t0`.`name`, `t2`.`customerid`, `t0`.`customerid` AS `_customerid0`, (CASE WHEN (`t0`.`_ingest_time` < `t2`.`_ingest_time`) THEN `t2`.`_ingest_time` ELSE `t0`.`_ingest_time` END) AS `__timestamp`\nFROM (SELECT *\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `_ingest_time`, `_uuid`, (ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `_ingest_time` DESC NULLS LAST)) AS `_rownum`\nFROM `customer$1`) AS `t`\nWHERE (`_rownum` = 1)) AS `t0`\nLEFT JOIN (SELECT *\nFROM (SELECT `id`, `customerid`, `time`, `entries`, `_ingest_time`, `_uuid`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `_ingest_time` DESC NULLS LAST)) AS `_rownum`\nFROM `orders$1`) AS `t1`\nWHERE (`_rownum` = 1)) AS `t2` ON (`t0`.`customerid` = `t2`.`customerid`);",
+    "CREATE VIEW `table$7`\nAS\nSELECT `t0`.`_uuid`, `t0`.`customerid`, `t0`.`name`, (CASE WHEN (`t0`.`_ingest_time` < `t2`.`_ingest_time`) THEN `t2`.`_ingest_time` ELSE `t0`.`_ingest_time` END) AS `__timestamp`\nFROM (SELECT *\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `_ingest_time`, `_uuid`, (ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `_ingest_time` DESC NULLS LAST)) AS `_rownum`\nFROM `customer$1`) AS `t`\nWHERE (`_rownum` = 1)) AS `t0`\nLEFT JOIN (SELECT *\nFROM (SELECT `id`, `customerid`, `time`, `entries`, `_ingest_time`, `_uuid`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `_ingest_time` DESC NULLS LAST)) AS `_rownum`\nFROM `orders$1`) AS `t1`\nWHERE (`_rownum` = 1)) AS `t2` ON (`t0`.`customerid` = `t2`.`customerid`)\nWHERE (`t2`.`id` IS NULL);",
+    "CREATE VIEW `table$8`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`, `_ingest_time`, `_uuid`\nFROM `orders$1`;",
+    "CREATE VIEW `table$9`\nAS\nSELECT *\nFROM `product$1`;",
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer$3`\n(SELECT *\nFROM `table$1`)\n;\nINSERT INTO `ordercustomer$1`\n(SELECT *\nFROM `table$2`)\n;\nINSERT INTO `ordercustomerconstant$1`\n(SELECT *\nFROM `table$3`)\n;\nINSERT INTO `ordercustomerleft$1`\n(SELECT *\nFROM `table$4`)\n;\nINSERT INTO `ordercustomerleftexcluded$1`\n(SELECT *\nFROM `table$5`)\n;\nINSERT INTO `ordercustomerright$1`\n(SELECT *\nFROM `table$6`)\n;\nINSERT INTO `ordercustomerrightexcluded$1`\n(SELECT *\nFROM `table$7`)\n;\nINSERT INTO `orders$3`\n(SELECT *\nFROM `table$8`)\n;\nINSERT INTO `product$2`\n(SELECT *\nFROM `table$9`)\n;\nEND;"
+  ],
+  "connectors" : [
+    "jdbc-sqrl",
+    "filesystem"
+  ],
+  "formats" : [
+    "json"
+  ]
+}
+>>>kafka.json
+{
+  "topics" : [ ]
+}
+>>>postgres.json
+{
+  "ddl" : [
+    {
+      "name" : "customer$3",
+      "columns" : [
+        "\"customerid\" BIGINT NOT NULL",
+        "\"email\" TEXT NOT NULL",
+        "\"name\" TEXT NOT NULL",
+        "\"lastUpdated\" BIGINT NOT NULL",
+        "\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL",
+        "\"_uuid\" TEXT NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"customerid\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS customer$3 (\"customerid\" BIGINT NOT NULL,\"email\" TEXT NOT NULL,\"name\" TEXT NOT NULL,\"lastUpdated\" BIGINT NOT NULL,\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"_uuid\" TEXT NOT NULL , PRIMARY KEY (\"customerid\"));"
+    },
+    {
+      "name" : "ordercustomer$1",
+      "columns" : [
+        "\"_uuid\" TEXT NOT NULL",
+        "\"id\" BIGINT NOT NULL",
+        "\"name\" TEXT NOT NULL",
+        "\"customerid\" BIGINT NOT NULL",
+        "\"__timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"id\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS ordercustomer$1 (\"_uuid\" TEXT NOT NULL,\"id\" BIGINT NOT NULL,\"name\" TEXT NOT NULL,\"customerid\" BIGINT NOT NULL,\"__timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\"));"
+    },
+    {
+      "name" : "ordercustomerconstant$1",
+      "columns" : [
+        "\"_uuid\" TEXT NOT NULL",
+        "\"id\" BIGINT NOT NULL",
+        "\"name\" TEXT NOT NULL",
+        "\"customerid\" BIGINT NOT NULL",
+        "\"__timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"id\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS ordercustomerconstant$1 (\"_uuid\" TEXT NOT NULL,\"id\" BIGINT NOT NULL,\"name\" TEXT NOT NULL,\"customerid\" BIGINT NOT NULL,\"__timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\"));"
+    },
+    {
+      "name" : "ordercustomerleft$1",
+      "columns" : [
+        "\"_uuid\" TEXT ",
+        "\"id\" BIGINT NOT NULL",
+        "\"name\" TEXT ",
+        "\"customerid\" BIGINT NOT NULL",
+        "\"__timestamp\" TIMESTAMP WITH TIME ZONE "
+      ],
+      "primaryKeys" : [
+        "\"id\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS ordercustomerleft$1 (\"_uuid\" TEXT ,\"id\" BIGINT NOT NULL,\"name\" TEXT ,\"customerid\" BIGINT NOT NULL,\"__timestamp\" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY (\"id\"));"
+    },
+    {
+      "name" : "ordercustomerleftexcluded$1",
+      "columns" : [
+        "\"_uuid\" TEXT NOT NULL",
+        "\"id\" BIGINT NOT NULL",
+        "\"customerid\" BIGINT NOT NULL",
+        "\"__timestamp\" TIMESTAMP WITH TIME ZONE "
+      ],
+      "primaryKeys" : [
+        "\"id\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS ordercustomerleftexcluded$1 (\"_uuid\" TEXT NOT NULL,\"id\" BIGINT NOT NULL,\"customerid\" BIGINT NOT NULL,\"__timestamp\" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY (\"id\"));"
+    },
+    {
+      "name" : "ordercustomerright$1",
+      "columns" : [
+        "\"ouuid\" BIGINT NOT NULL",
+        "\"id\" BIGINT ",
+        "\"name\" TEXT NOT NULL",
+        "\"customerid\" BIGINT ",
+        "\"_customerid0\" BIGINT NOT NULL",
+        "\"__timestamp\" TIMESTAMP WITH TIME ZONE "
+      ],
+      "primaryKeys" : [
+        "\"_customerid0\"",
+        "\"ouuid\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS ordercustomerright$1 (\"ouuid\" BIGINT NOT NULL,\"id\" BIGINT ,\"name\" TEXT NOT NULL,\"customerid\" BIGINT ,\"_customerid0\" BIGINT NOT NULL,\"__timestamp\" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY (\"_customerid0\",\"ouuid\"));"
+    },
+    {
+      "name" : "ordercustomerrightexcluded$1",
+      "columns" : [
+        "\"_uuid\" TEXT NOT NULL",
+        "\"customerid\" BIGINT NOT NULL",
+        "\"name\" TEXT NOT NULL",
+        "\"__timestamp\" TIMESTAMP WITH TIME ZONE "
+      ],
+      "primaryKeys" : [
+        "\"customerid\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS ordercustomerrightexcluded$1 (\"_uuid\" TEXT NOT NULL,\"customerid\" BIGINT NOT NULL,\"name\" TEXT NOT NULL,\"__timestamp\" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY (\"customerid\"));"
+    },
+    {
+      "name" : "orders$3",
+      "columns" : [
+        "\"id\" BIGINT NOT NULL",
+        "\"customerid\" BIGINT NOT NULL",
+        "\"time\" TIMESTAMP WITH TIME ZONE NOT NULL",
+        "\"entries\" JSONB NOT NULL",
+        "\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL",
+        "\"_uuid\" TEXT NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"id\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS orders$3 (\"id\" BIGINT NOT NULL,\"customerid\" BIGINT NOT NULL,\"time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"entries\" JSONB NOT NULL,\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"_uuid\" TEXT NOT NULL , PRIMARY KEY (\"id\"));"
+    },
+    {
+      "name" : "product$2",
+      "columns" : [
+        "\"productid\" BIGINT NOT NULL",
+        "\"name\" TEXT NOT NULL",
+        "\"description\" TEXT NOT NULL",
+        "\"category\" TEXT NOT NULL",
+        "\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL",
+        "\"_uuid\" TEXT NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"_uuid\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS product$2 (\"productid\" BIGINT NOT NULL,\"name\" TEXT NOT NULL,\"description\" TEXT NOT NULL,\"category\" TEXT NOT NULL,\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"_uuid\" TEXT NOT NULL , PRIMARY KEY (\"_uuid\"));"
+    },
+    {
+      "indexName" : "ordercustomerright$1_hash_c0",
+      "tableName" : "ordercustomerright$1",
+      "columns" : [
+        "ouuid"
+      ],
+      "type" : "HASH",
+      "sql" : "CREATE INDEX IF NOT EXISTS ordercustomerright$1_hash_c0 ON ordercustomerright$1 USING hash (\"ouuid\");"
+    }
+  ]
+}
+>>>vertx.json
+{
+  "model" : {
+    "coords" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Customer",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"customer$3\"\nORDER BY \"customerid\"",
+              "parameters" : [ ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "customerid"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"_ingest_time\", \"_uuid\", 1 AS \"__pk\"\nFROM \"customer$3\"\nWHERE \"customerid\" = $1\nORDER BY 1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "customerid"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "OrderCustomer",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"ordercustomer$1\"\nORDER BY \"id\"",
+              "parameters" : [ ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"_uuid\", \"id\", \"name\", \"customerid\", \"__timestamp\", 1 AS \"__pk\"\nFROM \"ordercustomer$1\"\nWHERE \"id\" = $1\nORDER BY 1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "id"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "OrderCustomerConstant",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"_uuid\", \"id\", \"name\", \"customerid\", \"__timestamp\", 1 AS \"__pk\"\nFROM \"ordercustomerconstant$1\"\nWHERE \"id\" = $1\nORDER BY 1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "id"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"ordercustomerconstant$1\"\nORDER BY \"id\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "OrderCustomerLeft",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"_uuid\", \"id\", \"name\", \"customerid\", \"__timestamp\", 1 AS \"__pk\"\nFROM \"ordercustomerleft$1\"\nWHERE \"id\" = $1\nORDER BY 1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "id"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"ordercustomerleft$1\"\nORDER BY \"id\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "OrderCustomerLeftExcluded",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"ordercustomerleftexcluded$1\"\nORDER BY \"id\"",
+              "parameters" : [ ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"_uuid\", \"id\", \"customerid\", \"__timestamp\", 1 AS \"__pk\"\nFROM \"ordercustomerleftexcluded$1\"\nWHERE \"id\" = $1\nORDER BY 1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "id"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "OrderCustomerRight",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"ordercustomerright$1\"\nORDER BY \"_customerid0\", \"ouuid\"",
+              "parameters" : [ ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "ouuid"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"ordercustomerright$1\"\nWHERE \"ouuid\" = $1\nORDER BY \"_customerid0\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "ouuid"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "OrderCustomerRightExcluded",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "customerid"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"_uuid\", \"customerid\", \"name\", \"__timestamp\", 1 AS \"__pk\"\nFROM \"ordercustomerrightexcluded$1\"\nWHERE \"customerid\" = $1\nORDER BY 1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "customerid"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"ordercustomerrightexcluded$1\"\nORDER BY \"customerid\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Orders",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\", \"_uuid\", 1 AS \"__pk\"\nFROM \"orders$3\"\nWHERE \"id\" = $1\nORDER BY 1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "id"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"orders$3\"\nORDER BY \"id\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Product",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"product$2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"_uuid\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      }
+    ],
+    "mutations" : [ ],
+    "subscriptions" : [ ],
+    "schema" : {
+      "type" : "string",
+      "type" : "string",
+      "schema" : "type Customer {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype OrderCustomer {\n  id: Float!\n  name: String!\n  customerid: Float!\n}\n\ntype OrderCustomerConstant {\n  id: Float!\n  name: String!\n  customerid: Float!\n}\n\ntype OrderCustomerLeft {\n  id: Float!\n  name: String\n  customerid: Float!\n}\n\ntype OrderCustomerLeftExcluded {\n  id: Float!\n  customerid: Float!\n}\n\ntype OrderCustomerRight {\n  ouuid: Float!\n  id: Float\n  name: String!\n  customerid: Float\n}\n\ntype OrderCustomerRightExcluded {\n  customerid: Float!\n  name: String!\n}\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries(limit: Int = 10, offset: Int = 0): [entries!]\n}\n\ntype Product {\n  productid: Float!\n  name: String!\n  description: String!\n  category: String!\n}\n\ntype Query {\n  Customer(customerid: Float, limit: Int = 10, offset: Int = 0): [Customer!]\n  OrderCustomer(id: Float, limit: Int = 10, offset: Int = 0): [OrderCustomer!]\n  OrderCustomerConstant(id: Float, limit: Int = 10, offset: Int = 0): [OrderCustomerConstant!]\n  OrderCustomerLeft(id: Float, limit: Int = 10, offset: Int = 0): [OrderCustomerLeft!]\n  OrderCustomerLeftExcluded(id: Float, limit: Int = 10, offset: Int = 0): [OrderCustomerLeftExcluded!]\n  OrderCustomerRight(ouuid: Float, limit: Int = 10, offset: Int = 0): [OrderCustomerRight!]\n  OrderCustomerRightExcluded(customerid: Float, limit: Int = 10, offset: Int = 0): [OrderCustomerRightExcluded!]\n  Orders(id: Float, limit: Int = 10, offset: Int = 0): [Orders!]\n  Product(limit: Int = 10, offset: Int = 0): [Product!]\n}\n\ntype entries {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n"
+    }
+  }
+}

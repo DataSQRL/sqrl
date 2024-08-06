@@ -1,10 +1,10 @@
 package com.datasqrl.packager.repository;
 
+import com.datasqrl.config.Dependency;
+import com.datasqrl.config.PackageConfiguration;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.packager.config.Dependency;
-import com.datasqrl.packager.config.PackageConfiguration;
 import com.datasqrl.packager.util.Zipper;
 import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.NameUtil;
@@ -26,12 +26,13 @@ public class LocalRepositoryImplementation implements Repository, CacheRepositor
 
     @Getter
     private final Path repositoryPath;
+    private final Path rootDir;
     private final ErrorCollector errors;
 
-    public static LocalRepositoryImplementation of(ErrorCollector errors) {
+    public static LocalRepositoryImplementation of(ErrorCollector errors, Path rootDir) {
         errors = errors.withLocation(ErrorPrefix.CONFIG.resolve("local-repository"));
         try {
-            return new LocalRepositoryImplementation(FileUtil.makeHiddenFolder(FileUtil.getUserRoot(), LOCAL_REPO_NAME), errors);
+            return new LocalRepositoryImplementation(FileUtil.makeHiddenFolder(FileUtil.getUserRoot(), LOCAL_REPO_NAME), rootDir, errors);
         } catch (IOException e) {
             errors.fatal("Could not write to local file system: %s", e);
             return null;
@@ -40,7 +41,9 @@ public class LocalRepositoryImplementation implements Repository, CacheRepositor
 
     @Override
     public boolean retrieveDependency(Path targetPath, Dependency dependency) throws IOException {
-        Path zipFile = dependency2Path(dependency);
+        Path path = dependency2Path(dependency);
+        Path zipFile = path
+            .resolve(FileUtil.addExtension(dependency.getVariant(), Zipper.ZIP_EXTENSION));
         if (Files.isRegularFile(zipFile)) {
             new ZipFile(zipFile.toFile()).extractAll(targetPath.toString());
             return true;
@@ -50,7 +53,8 @@ public class LocalRepositoryImplementation implements Repository, CacheRepositor
 
     @Override
     public void cacheDependency(Path zipFile, Dependency dependency) throws IOException {
-        Path destFile = dependency2Path(dependency);
+        Path destFile = dependency2Path(dependency)
+            .resolve(FileUtil.addExtension(dependency.getVariant(), Zipper.ZIP_EXTENSION));
         Path parentDir = destFile.getParent();
         if (!Files.isDirectory(parentDir)) Files.createDirectories(parentDir);
         Files.copy(zipFile, destFile);
@@ -70,8 +74,7 @@ public class LocalRepositoryImplementation implements Repository, CacheRepositor
 
     private Path dependency2Path(Dependency dependency) {
         return package2Path(dependency.getName())
-                .resolve(dependency.getVersion())
-                .resolve(FileUtil.addExtension(dependency.getVariant(), Zipper.ZIP_EXTENSION));
+                .resolve(dependency.getVersion().get());
     }
 
     private Path package2Path(String packageName) {

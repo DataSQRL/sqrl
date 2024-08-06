@@ -1,6 +1,6 @@
 package com.datasqrl.packager.repository;
 
-import com.datasqrl.packager.config.Dependency;
+import com.datasqrl.config.Dependency;
 import lombok.AllArgsConstructor;
 
 import java.io.IOException;
@@ -23,6 +23,9 @@ public class CompositeRepositoryImpl implements Repository {
 
     @Override
     public Optional<Dependency> resolveDependency(String packageName) {
+        if (!packageName.contains(".")) {
+            return Optional.empty();
+        }
         return repositories.stream().map(rep -> rep.resolveDependency(packageName))
                 .filter(Optional::isPresent).findFirst().orElse(Optional.empty());
     }

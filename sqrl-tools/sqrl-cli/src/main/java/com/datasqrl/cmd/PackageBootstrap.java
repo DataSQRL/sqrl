@@ -1,27 +1,23 @@
 package com.datasqrl.cmd;
 
-import static com.datasqrl.packager.Packager.PACKAGE_JSON;
-import static com.datasqrl.packager.Packager.PROFILES_KEY;
-import static com.datasqrl.packager.config.DependencyConfig.PKG_NAME_KEY;
-import static com.datasqrl.packager.config.DependencyConfig.VARIANT_KEY;
-import static com.datasqrl.packager.config.DependencyConfig.VERSION_KEY;
+import static com.datasqrl.config.ConnectorFactoryFactory.PRINT_SINK_NAME;
+import static com.datasqrl.packager.Packager.*;
 import static com.datasqrl.util.NameUtil.namepath2Path;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.config.SqrlConfig;
+import com.datasqrl.config.PackageJson.DependenciesConfig;
+import com.datasqrl.config.Dependency;
+import com.datasqrl.config.PackageJson;
+import com.datasqrl.config.PackageJson.ScriptConfig;
 import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;
-import com.datasqrl.io.impl.print.PrintDataSystemFactory;
+import com.datasqrl.loaders.ModuleLoaderImpl;
 import com.datasqrl.loaders.StandardLibraryLoader;
 import com.datasqrl.packager.ImportExportAnalyzer;
 import com.datasqrl.packager.ImportExportAnalyzer.Result;
 import com.datasqrl.packager.Packager;
-import com.datasqrl.packager.config.Dependency;
-import com.datasqrl.packager.config.DependencyConfig;
-import com.datasqrl.packager.config.PackageConfiguration;
-import com.datasqrl.packager.config.ScriptConfiguration;
 import com.datasqrl.packager.repository.Repository;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -39,6 +35,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
+
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 
@@ -52,9 +49,9 @@ public class PackageBootstrap {
   
 
   @SneakyThrows
-  public SqrlConfig bootstrap(Repository repository, ErrorCollector errors,
-      Function<ErrorCollector, SqrlConfig> defaultConfigFnc,
-      Function<SqrlConfig, SqrlConfig> postProcess) {
+  public PackageJson bootstrap(Repository repository, ErrorCollector errors,
+      Function<ErrorCollector, PackageJson> defaultConfigFnc,
+      Function<PackageJson, PackageJson> postProcess, Path targetDir) {
     errors = errors.withLocation(ErrorPrefix.CONFIG).resolve("package");
 
     //Create build dir to unpack resolved dependencies
@@ -63,9 +60,9 @@ public class PackageBootstrap {
     Packager.createBuildDir(buildDir);
 
     Optional<List<Path>> existingPackage = Packager.findPackageFile(rootDir, packageFiles);
-    Optional<SqrlConfig> existingConfig;
+    Optional<PackageJson> existingConfig;
     if (existingPackage.isPresent()) {
-      existingConfig = Optional.of(SqrlConfigCommons.fromFiles(errors, existingPackage.get()));
+      existingConfig = Optional.of(SqrlConfigCommons.fromFilesPackageJson(errors, existingPackage.get()));
     } else {
       existingConfig = Optional.empty();
     }
@@ -73,9 +70,8 @@ public class PackageBootstrap {
     Map<String, Dependency> dependencies = new HashMap<>();
     // Check if 'profiles' key is set, merge result with switches
     String[] profiles;
-    if (existingConfig.isPresent() && existingConfig.get().hasKey(PROFILES_KEY)) {
-      List<String> configProfiles = existingConfig.get().asList(PROFILES_KEY, String.class)
-          .get();
+    if (existingConfig.isPresent() && existingConfig.get().hasProfileKey()) {
+      List<String> configProfiles = existingConfig.get().getProfiles();
       Set<String> profileSet = new LinkedHashSet<>();
       profileSet.addAll(configProfiles);
       profileSet.addAll(Arrays.asList(this.profiles));
@@ -84,20 +80,21 @@ public class PackageBootstrap {
       profiles = this.profiles;
     }
 
+    //Create package.json from project root if exists
+    List<Path> configFiles = new ArrayList<>();
+
     //Download any profiles
     for (String profile : profiles) {
-      if (profile.contains(".")) { //possible repo profile
+      Path localProfile = rootDir.resolve(profile).resolve(PACKAGE_JSON);
+
+      if (Files.isRegularFile(localProfile)) {
+        configFiles.add(localProfile);
+      } else { // repo profile
         //check to see if it's already in the package json, download the correct dep
         Optional<Dependency> dependency;
         if (hasVersionedProfileDependency(existingConfig, profile)) {
-          SqrlConfig depConfig = existingConfig.get()
-              .getSubConfig(DependencyConfig.DEPENDENCIES_KEY)
-              .getSubConfig(profile);
-          dependency = Optional.of(new Dependency(depConfig.asString(PKG_NAME_KEY).getOptional()
-                .orElse(null),
-              depConfig.asString(VERSION_KEY).get(),
-              depConfig.asString(VARIANT_KEY).getOptional()
-                  .orElse(PackageConfiguration.DEFAULT_VARIANT)));
+          dependency = existingConfig.get().getDependencies()
+              .getDependency(profile);
         } else {
           dependency = repository.resolveDependency(profile);
         }
@@ -111,39 +108,20 @@ public class PackageBootstrap {
             throw new RuntimeException("Could not retrieve profile dependency: " + profile);
           }
         }
+
+        Path remoteProfile = rootDir.resolve(Packager.BUILD_DIR_NAME).resolve(profile).resolve(PACKAGE_JSON);
+        if (Files.isRegularFile(remoteProfile)) {
+          configFiles.add(remoteProfile);
+        }
       }
     }
 
-    //Create package.json
-    List<Path> configFiles = new ArrayList<>();
-
-    //explicit cli package overrides
-    if (!packageFiles.isEmpty()) {
-      configFiles.addAll(packageFiles);
-    } else { //check for implicit package json
-      if (Files.exists(rootDir.resolve(PACKAGE_JSON))) {
-        configFiles.add(rootDir.resolve(PACKAGE_JSON));
-      }
-    }
-
-    // Add profile config files
-    for (String profile : profiles) {
-      Path localProfile = rootDir.resolve(profile).resolve(PACKAGE_JSON);
-      Path remoteProfile = rootDir.resolve(Packager.BUILD_DIR_NAME).resolve(profile).resolve(PACKAGE_JSON);
-
-      if (Files.isRegularFile(localProfile)) {//Look for local
-        configFiles.add(localProfile);
-      } else if (Files.isRegularFile(remoteProfile)) { //look for remote
-        configFiles.add(remoteProfile);
-      } else {
-        throw new RuntimeException("Could not find profile: " + profile);
-      }
-    }
+    existingPackage.ifPresent(configFiles::addAll);
 
     if (packageFiles.isEmpty() && configFiles.isEmpty()) { //No profiles found, use default
-      SqrlConfig defaultConfig = defaultConfigFnc.apply(errors);
+      PackageJson defaultConfig = defaultConfigFnc.apply(errors);
       Path path = buildDir.resolve(PACKAGE_JSON);
-      defaultConfig.toFile(path);
+      defaultConfig.toFile(path, true);
       configFiles.add(path);
     }
 
@@ -153,28 +131,26 @@ public class PackageBootstrap {
     }
 
     // Merge all configurations
-    SqrlConfig sqrlConfig = SqrlConfigCommons.fromFiles(errors, configFiles);
-
-    sqrlConfig.setProperty(PROFILES_KEY, profiles);
+    PackageJson packageJson = SqrlConfigCommons.fromFilesPackageJson(errors, configFiles);
+    packageJson.setProfiles(profiles);
 
     //Add dependencies of discovered profiles
     dependencies.forEach((key, dep) -> {
-      sqrlConfig.getSubConfig(DependencyConfig.DEPENDENCIES_KEY).getSubConfig(key).setProperties(dep);
+      DependenciesConfig dependenciesConfig = packageJson.getDependencies();
+      dependenciesConfig.addDependency(key, dep);
     });
 
     //Override main and graphql if they are specified as command line arguments
     Optional<Path> mainScript = (files.length > 0 && files[0].getFileName().toString().toLowerCase().endsWith(".sqrl")) ? Optional.of(files[0]) : Optional.empty();
     Optional<Path> graphQLSchemaFile = (files.length > 1) ? Optional.of(files[1]) : Optional.empty();
 
-    SqrlConfig scriptConfig = ScriptConfiguration.fromScriptConfig(sqrlConfig);
-    boolean isMainScriptSet = scriptConfig.asString(ScriptConfiguration.MAIN_KEY).getOptional()
-        .isPresent();
-    boolean isGraphQLSet = scriptConfig.asString(ScriptConfiguration.GRAPHQL_KEY).getOptional()
-        .isPresent();
+    ScriptConfig scriptConfig = packageJson.getScriptConfig();
+    boolean isMainScriptSet = scriptConfig.getMainScript().isPresent();
+    boolean isGraphQLSet = scriptConfig.getGraphql().isPresent();
 
     // Set main script if not already set and if it's a regular file
     if (mainScript.isPresent() && Files.isRegularFile(relativize(mainScript))) {
-      scriptConfig.setProperty(ScriptConfiguration.MAIN_KEY, mainScript.get().toString());
+      scriptConfig.setMainScript(mainScript.get().toString());
     } else if (!isMainScriptSet && mainScript.isPresent()) {
       errors.fatal("Main script is not a regular file: %s", mainScript.get());
     } else if (!isMainScriptSet && files.length > 0) {
@@ -185,34 +161,29 @@ public class PackageBootstrap {
 
     // Set GraphQL schema file if not already set and if it's a regular file
     if (graphQLSchemaFile.isPresent() && Files.isRegularFile(relativize(graphQLSchemaFile))) {
-      scriptConfig.setProperty(ScriptConfiguration.GRAPHQL_KEY, graphQLSchemaFile.get().toString());
+      scriptConfig.setGraphql(graphQLSchemaFile.get().toString());
     } else if (!isGraphQLSet && graphQLSchemaFile.isPresent()) {
       errors.fatal("GraphQL schema file is not a regular file: %s", graphQLSchemaFile.get());
     }
 
     if (inferDependencies) {
-      inferDependencies(repository, sqrlConfig, errors);
+      inferDependencies(repository, packageJson, errors);
     }
 
-    return postProcess.apply(sqrlConfig);
+    return postProcess.apply(packageJson);
   }
 
   private Path relativize(Optional<Path> path) {
     return path.get().isAbsolute() ? path.get() : rootDir.resolve(path.get());
   }
 
-  private boolean hasVersionedProfileDependency(Optional<SqrlConfig> existingConfig, String profile) {
+  private boolean hasVersionedProfileDependency(Optional<PackageJson> existingConfig, String profile) {
     return existingConfig.isPresent()
-        && existingConfig.get()
-        .getSubConfig(DependencyConfig.DEPENDENCIES_KEY)
-        .hasSubConfig(profile)
-        && existingConfig.get()
-        .getSubConfig(DependencyConfig.DEPENDENCIES_KEY)
-        .getSubConfig(profile)
-        .asString(VERSION_KEY).getOptional().isPresent();
+        && existingConfig.get().getDependencies().getDependency(profile).isPresent()
+        && existingConfig.get().getDependencies().getDependency(profile).get().getVersion().isPresent();
   }
 
-  private void inferDependencies(Repository repository, SqrlConfig config, ErrorCollector errors) throws IOException {
+  private void inferDependencies(Repository repository, PackageJson config, ErrorCollector errors) throws IOException {
     //Analyze all local SQRL files to discovery transitive or undeclared dependencies
     //At the end, we'll add the new dependencies to the package config.
     ImportExportAnalyzer analyzer = new ImportExportAnalyzer();
@@ -228,7 +199,7 @@ public class PackageBootstrap {
     StandardLibraryLoader standardLibraryLoader = new StandardLibraryLoader();
     Set<NamePath> pkgs = new HashSet<>(allResults.getPkgs());
     pkgs.removeAll(standardLibraryLoader.loadedLibraries());
-    pkgs.remove(Name.system(PrintDataSystemFactory.SYSTEM_NAME).toNamePath());
+    pkgs.remove(Name.system(PRINT_SINK_NAME).toNamePath());
 
     Set<NamePath> unloadedDeps = new HashSet<>();
     for (NamePath packagePath : pkgs) {
@@ -250,7 +221,7 @@ public class PackageBootstrap {
 
     // Add inferred dependencies to package config
     inferredDependencies.forEach((key, dep) -> {
-      config.getSubConfig(DependencyConfig.DEPENDENCIES_KEY).getSubConfig(key).setProperties(dep);
+      config.getDependencies().addDependency(key, dep);
     });
   }
 }

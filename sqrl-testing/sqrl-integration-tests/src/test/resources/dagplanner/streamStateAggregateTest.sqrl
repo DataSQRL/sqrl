@@ -1,0 +1,6 @@
+IMPORT time.*;
+IMPORT ecommerceTs.Customer;
+IMPORT ecommerceTs.Orders;
+IMPORT ecommerceTs.Product;
+OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid;
+agg1 := SELECT o.customerid as customer, COUNT(o.id) as order_count FROM OrderCustomer o GROUP BY customer;

@@ -1,7 +1,7 @@
 name: Build and test SQRL with Maven
 on:
   pull_request:
-    branches: [ "main", "develop" ]
+    branches: [ "main", "v0.5-RC", "v0.5", "v0.5-RC2" ]
 
 jobs:
   build:
@@ -20,9 +20,7 @@ jobs:
         java-version: '11'
         distribution: 'adopt'
         cache: maven
+    - name: Build Docker image
+      run: docker build -t datasqrl/sqrl-dependencies:0.5-RC2 .
     - name: Build SQRL
-      run: mvn -T 1 -B -U -e clean install
-    - name: Upload coverage reports to Codecov
-      uses: codecov/codecov-action@v3
-      env:
-        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      run: mvn -T 1 -B -U -e clean package

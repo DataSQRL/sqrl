@@ -1,0 +1,47 @@
+{
+  "type": "record",
+  "name": "Order",
+  "fields": [
+    {
+      "name": "id",
+      "type": "long"
+    },
+    {
+      "name": "customerid",
+      "type": "long"
+    },
+    {
+      "name": "time",
+      "type": "string"
+    },
+    {
+      "name": "items",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "OrderEntry",
+          "fields": [
+            {
+              "name": "productid",
+              "type": "int"
+            },
+            {
+              "name": "quantity",
+              "type": "int"
+            },
+            {
+              "name": "unit_price",
+              "type": "double"
+            },
+            {
+              "name": "discount",
+              "type": ["null", "double"],
+              "default": null
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

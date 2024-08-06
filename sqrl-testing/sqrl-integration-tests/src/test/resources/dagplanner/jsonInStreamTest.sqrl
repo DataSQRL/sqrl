@@ -1,0 +1,17 @@
+IMPORT time.*;
+IMPORT ecommerceTs.Customer;
+IMPORT ecommerceTs.Orders;
+IMPORT ecommerceTs.Product;
+IMPORT json.*;
+IMPORT string.*;
+Customer := DISTINCT Customer ON customerid ORDER BY timestamp DESC;
+/*+ EXEC(streams) */ toJsonTable := SELECT toJson('{"a": 1}') AS obj FROM Customer;
+/*+ EXEC(streams) */ jsonArrayTable := SELECT jsonArray(customerid) AS obj FROM Customer;
+/*+ EXEC(streams) */ jsonObjectAggTable := SELECT jsonObjectAgg('key', name) AS agg FROM Customer GROUP BY name;
+/*+ EXEC(streams) */ jsonToStringTable := SELECT jsonToString(toJson('{"a": 1}')) AS obj FROM Customer;
+/*+ EXEC(streams) */ jsonExtractTable := SELECT jsonExtract(toJson('{"a": "hello"}'), CAST('$.a' AS varchar), CAST('default' AS varchar)) AS obj FROM Customer;
+/*+ EXEC(streams) */ jsonQueryTable := SELECT jsonQuery(toJson('{"a": {"b": 1}}'), '$.a') AS obj FROM Customer;
+/*+ EXEC(streams) */ jsonExistsTable := SELECT jsonExists(toJson('{"a": true}'), '$.a') AS obj FROM Customer;
+/*+ EXEC(streams) */ jsonConcatTable := SELECT jsonConcat(toJson('{"a": true}'), toJson('{"a": false}')) AS obj FROM Customer;
+/*+ EXEC(streams) */ jsonArrayAggTable := SELECT jsonArrayAgg(name) AS agg FROM Customer GROUP BY name;
+/*+ EXEC(streams) */ ObjComplex := SELECT jsonObject(concat('application#',CAST(name AS VARCHAR)), customerid) AS obj FROM Customer;

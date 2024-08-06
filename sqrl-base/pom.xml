@@ -1,9 +1,8 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
     <artifactId>sqrl-root</artifactId>
-    <groupId>com.datasqrl</groupId>
-    <version>0.4.4-SNAPSHOT</version>
+    <groupId>run.sqrl</groupId>
+    <version>0.5.0-RC3-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -11,7 +10,7 @@
     README: Dependencies that are shared between planning and execution
   -->
   <artifactId>sqrl-base</artifactId>
-  <version>0.4.4-SNAPSHOT</version>
+  <version>0.5.0-RC3-SNAPSHOT</version>
 
   <properties>
     <maven.compiler.source>11</maven.compiler.source>
@@ -22,6 +21,14 @@
   <!-- Minimal dependencies  -->
   <dependencies>
     <!-- Jackson -->
+    <dependency>
+      <groupId>run.sqrl</groupId>
+      <artifactId>sqrl-errors</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>run.sqrl</groupId>
+      <artifactId>sqrl-name</artifactId>
+    </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-core</artifactId>
@@ -70,11 +77,7 @@
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-lang3</artifactId>
     </dependency>
-    <!-- Configuration -->
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-configuration2</artifactId>
-    </dependency>
+
     <dependency>
       <groupId>commons-beanutils</groupId>
       <artifactId>commons-beanutils</artifactId>
@@ -96,6 +99,16 @@
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-slf4j-impl</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.inject</groupId>
+      <artifactId>guice</artifactId>
+      <version>7.0.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.inject.extensions</groupId>
+      <artifactId>guice-multibindings</artifactId>
+      <version>4.2.3</version>
     </dependency>
 
   </dependencies>

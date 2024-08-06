@@ -17,16 +17,16 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.regex.Pattern;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.flink.table.functions.AggregateFunction;
 import org.apache.flink.table.functions.ScalarFunction;
-import org.apache.flink.table.functions.TableFunction;
 import org.apache.flink.table.functions.UserDefinedFunction;
 
-@AutoService(Preprocessor.class)
 /*
  * Reads a jar and creates sqrl manifest entries in the build directory
  */
+@Slf4j
 public class JarPreprocessor implements Preprocessor {
 
   public static final ObjectMapper mapper = SqrlObjectMapper.INSTANCE;
@@ -52,6 +52,8 @@ public class JarPreprocessor implements Preprocessor {
           .filter(entry -> flinkUdfs.contains(getClassName(entry)))
           .forEach(entry ->
               rethrowCall(() -> processJarEntry(entry, file, processorContext, path)));
+    } catch (Exception e) {
+      log.warn("Could not jar in path:" + path, e);
     }
   }
 

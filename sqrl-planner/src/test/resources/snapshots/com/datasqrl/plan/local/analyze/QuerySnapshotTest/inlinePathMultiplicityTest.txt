@@ -1,0 +1,17 @@
+>>>product$2
+LogicalTableScan(table=[[product$1]])
+
+>>>product$3
+LogicalTableScan(table=[[product$2]])
+
+>>>product2$1
+LogicalProject(productid=[$9], productid0=[$2], __timestamp=[CASE(<($1, $8), $8, $1)])
+  LogicalJoin(condition=[=($2, $13)], joinType=[left])
+    LogicalFilter(condition=[=($6, 1)])
+      LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $2 ORDER BY $1 DESC NULLS LAST)])
+        LogicalTableScan(table=[[product$3]])
+    LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], productid6=[$2])
+      LogicalFilter(condition=[=($6, 1)])
+        LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $2 ORDER BY $1 DESC NULLS LAST)])
+          LogicalTableScan(table=[[product$3]])
+

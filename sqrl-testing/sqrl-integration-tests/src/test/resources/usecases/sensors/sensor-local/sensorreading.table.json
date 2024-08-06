@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "flink" : {
+    "format" : "csv",
+    "path" : "/data/sensorreading.csv.gz",
+    "connector" : "filesystem"
+  },
+  "table" : {
+    "type" : "source",
+    "primary-key" : ["sensorid", "time"],
+    "timestamp" : "time",
+    "watermark-millis" : "1"
+  }
+}

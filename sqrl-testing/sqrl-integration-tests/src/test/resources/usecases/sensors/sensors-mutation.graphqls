@@ -1,0 +1,39 @@
+type Query {
+  SecReading(sensorid: Int!): [SecReading!]
+  SensorMaxTemp(sensorid: Int): [SensorMaxTemp!]
+}
+
+type SecReading {
+  sensorid: Int!
+  timeSec: String!
+  temperature: Float!
+}
+
+type SensorMaxTemp {
+  sensorid: Int!
+  maxTemp: Float!
+}
+
+type Mutation {
+  AddReading(metric: ReadingInput!): CreatedReading
+}
+
+input ReadingInput {
+  sensorid: Int!
+  temperature: Float!
+}
+
+type CreatedReading {
+  event_time: String!
+  sensorid: Int!
+}
+
+type Subscription {
+  HighTempAlert(sensorid: Int): HighTempAlert
+}
+
+type HighTempAlert {
+  sensorid: Int!
+  timeSec: String!
+  temperature: Float!
+}

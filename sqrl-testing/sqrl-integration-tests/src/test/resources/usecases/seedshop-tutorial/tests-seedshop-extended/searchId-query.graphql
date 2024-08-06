@@ -1,0 +1,12 @@
+query {
+    ProductSearchWithId(query: "chinese", id: 170) {
+        id
+        name
+        sizing
+        weight_in_gram
+        type
+        category
+        usda_id
+        updated
+    }
+}
