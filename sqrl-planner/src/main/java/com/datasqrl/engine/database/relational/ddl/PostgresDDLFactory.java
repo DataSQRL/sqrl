@@ -7,6 +7,7 @@ import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.engine.database.relational.ddl.statements.CreateIndexDDL;
+import com.datasqrl.engine.database.relational.ddl.statements.InsertStatement;
 import com.datasqrl.engine.database.relational.ddl.statements.notify.ListenNotifyAssets;
 import com.datasqrl.engine.database.relational.ddl.statements.notify.OnNotifyQuery;
 import com.datasqrl.engine.database.relational.ddl.statements.notify.ListenQuery;
@@ -98,8 +99,8 @@ public class PostgresDDLFactory implements JdbcDDLFactory {
     return new CreateNotifyTriggerDDL(name, primaryKeys);
   }
 
-  public ListenNotifyAssets createNotifyHelperDDLs(SqrlFramework framework, String name, RelDataType schema, List<String> primaryKeys) {
-    ListenQuery listenQuery = new ListenQuery(name);
+  public ListenNotifyAssets createNotifyHelperDDLs(SqrlFramework framework, String tableName, RelDataType schema, List<String> primaryKeys) {
+    ListenQuery listenQuery = new ListenQuery(tableName);
 
     List<Parameter> parameters = primaryKeys.stream()
         .map(pk -> {
@@ -109,8 +110,12 @@ public class PostgresDDLFactory implements JdbcDDLFactory {
         })
         .collect(Collectors.toList());
 
-    OnNotifyQuery onNotifyQuery = new OnNotifyQuery(framework, name, parameters);
+    OnNotifyQuery onNotifyQuery = new OnNotifyQuery(framework, tableName, parameters);
     return new ListenNotifyAssets(listenQuery, onNotifyQuery, primaryKeys);
+  }
+
+  public InsertStatement createInsertHelperDMLs(String tableName, RelDataType tableSchema) {
+    return new InsertStatement(tableName, tableSchema);
   }
 
   public static List<String> quoteIdentifier(List<String> columns) {

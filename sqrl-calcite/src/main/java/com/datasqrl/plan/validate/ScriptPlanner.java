@@ -165,6 +165,11 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
 
     RelDataType relDataType = fieldBuilder.build();
 
+    createAndRegisterLogEntity(logId, namePath, relDataType);
+    return null;
+  }
+
+  private Log createAndRegisterLogEntity(String logId, NamePath namePath, RelDataType relDataType) {
     Log sinkLog = logManager.create(logId, namePath.getLast(),
         relDataType, List.of("_uuid"), new Timestamp("event_time", TimestampType.LOG_TIME));
 
@@ -177,7 +182,8 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         new TableSource(tableConfig, namePath, namePath.getLast(),
             new RelDataTypeTableSchema(relDataType)));
     namespaceObject.apply(this, Optional.empty(), framework, errorCollector);
-    return null;
+
+    return sinkLog;
   }
 
   @Override
@@ -187,24 +193,30 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     }
 
     NamePath path = nameUtil.toNamePath(node.getImportPath().names);
-    SqrlModule module = moduleLoader.getModule(path.popLast()).orElse(null);
+    if (path.getFirst().getDisplay().equals("log")) {
+      Log log = logManager.getLogs().get(path.getLast().getDisplay());
+      NamespaceObject namespaceObject = createTableResolver.create(log.getSource());
+      namespaceObject.apply(this, node.getAlias().map(SqlIdentifier::getSimple), framework, errorCollector);
+    } else {
+      SqrlModule module = moduleLoader.getModule(path.popLast()).orElse(null);
 
-    if (module == null) {
-      throw addError(ErrorCode.GENERIC, node, "Could not find module [%s] at path: [%s]",
-          path, String.join("/", path.toStringList()));
-    }
-
-    if (node.getImportPath().isStar()) {
-      if (module.getNamespaceObjects().isEmpty()) {
-        addWarn(ErrorLabel.GENERIC, node, "Module is empty: %s", path);
+      if (module == null) {
+        throw addError(ErrorCode.GENERIC, node, "Could not find module [%s] at path: [%s]",
+            path, String.join("/", path.toStringList()));
       }
 
-      module.getNamespaceObjects().forEach(obj -> obj.apply(this, Optional.empty(), framework, errorCollector));
-    } else {
-      Optional<NamespaceObject> namespaceObject = module.getNamespaceObject(path.getLast());
-      namespaceObject.map(object -> object.apply(this, Optional.of(node.getAlias().map(a -> a.names.get(0))
-              .orElse(/*retain alias*/path.getLast().getDisplay())), framework, errorCollector))
-          .orElseThrow(() -> addError(ErrorCode.GENERIC, node, "Object [%s] not found in module: %s", path.getLast(), path));
+      if (node.getImportPath().isStar()) {
+        if (module.getNamespaceObjects().isEmpty()) {
+          addWarn(ErrorLabel.GENERIC, node, "Module is empty: %s", path);
+        }
+
+        module.getNamespaceObjects().forEach(obj -> obj.apply(this, Optional.empty(), framework, errorCollector));
+      } else {
+        Optional<NamespaceObject> namespaceObject = module.getNamespaceObject(path.getLast());
+        namespaceObject.map(object -> object.apply(this, Optional.of(node.getAlias().map(a -> a.names.get(0))
+                .orElse(/*retain alias*/path.getLast().getDisplay())), framework, errorCollector))
+            .orElseThrow(() -> addError(ErrorCode.GENERIC, node, "Object [%s] not found in module: %s", path.getLast(), path));
+      }
     }
 
     return null;
@@ -250,6 +262,9 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         }
       } else if (connector == SystemBuiltInConnectors.LOG_ENGINE) {
         Log sinkLog = logManager.getLogs().get(sinkPath.getLast().getDisplay());
+        if (sinkLog == null) {
+          sinkLog = createAndRegisterLogEntity(sinkPath.getLast().getDisplay(), sinkPath, exportRelNode.getRowType());
+        }
         tableSink = sinkLog.getSink();
       }
       if (tableSink == null) {

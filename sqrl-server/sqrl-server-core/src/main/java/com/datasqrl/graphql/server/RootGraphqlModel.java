@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import graphql.schema.DataFetcher;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -85,13 +86,71 @@ public class RootGraphqlModel {
     }
   }
 
+  @JsonTypeInfo(
+      use = JsonTypeInfo.Id.NAME,
+      include = JsonTypeInfo.As.PROPERTY,
+      property = "type"
+  )
+  @JsonSubTypes({
+      @Type(value = KafkaMutationCoords.class, name = "kafka"),
+      @Type(value = PostgresLogMutationCoords.class, name = "postgres_log")
+  })
+  public static abstract class MutationCoords {
+    protected String type;
+    public abstract DataFetcher<?> accept(MutationCoordsVisitor visitor);
+    public abstract String getFieldName();
+  }
+
+  public interface MutationCoordsVisitor {
+    DataFetcher<?> visit(KafkaMutationCoords coords);
+    DataFetcher<?> visit(PostgresLogMutationCoords coords);
+  }
+
   @Getter
-  @AllArgsConstructor
   @NoArgsConstructor
-  public static class MutationCoords {
+  public static class KafkaMutationCoords extends MutationCoords {
+
+    private static final String type = "kafka";
+
     protected String fieldName;
     protected String topic;
     protected Map<String, String> sinkConfig;
+
+    public KafkaMutationCoords(String fieldName, String topic, Map<String, String> sinkConfig) {
+      this.fieldName = fieldName;
+      this.topic = topic;
+      this.sinkConfig = sinkConfig;
+    }
+
+    @Override
+    public DataFetcher<?> accept(MutationCoordsVisitor visitor) {
+      return visitor.visit(this);
+    }
+  }
+
+  @Getter
+  @NoArgsConstructor
+  public static class PostgresLogMutationCoords extends MutationCoords {
+
+    private static final String type = "postgres_log";
+
+    protected String fieldName;
+    protected String tableName;
+    protected String insertStatement;
+    protected List<String> parameters;
+
+    public PostgresLogMutationCoords(String fieldName, String tableName, String insertStatement,
+        List<String> parameters) {
+      this.fieldName = fieldName;
+      this.tableName = tableName;
+      this.insertStatement = insertStatement;
+      this.parameters = parameters;
+    }
+
+    @Override
+    public DataFetcher<?> accept(MutationCoordsVisitor visitor) {
+      return visitor.visit(this);
+    }
   }
 
   @Getter
