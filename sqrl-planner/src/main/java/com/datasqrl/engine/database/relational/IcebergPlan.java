@@ -1,5 +1,6 @@
 package com.datasqrl.engine.database.relational;
 
+import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.sql.SqlDDLStatement;
 import java.util.List;
@@ -11,4 +12,8 @@ public class IcebergPlan implements EnginePhysicalPlan {
 
   EnginePhysicalPlan plan;
 
+  @Override
+  public Type getType() {
+    return Type.DATABASE;
+  }
 }
