@@ -65,6 +65,7 @@ public class TableConverter {
 
     MetadataConfig metadataConfig = tableConfig.getMetadataConfig();
     for (String columnName : metadataConfig.getKeys()) {
+      if (nameAdjuster.contains(columnName)) continue;
       errors.checkFatal(!nameAdjuster.contains(columnName), "Metadata column name already used in data: %s", columnName);
       MetadataEntry colConfig = metadataConfig.getMetadataEntry(columnName)
           .get();

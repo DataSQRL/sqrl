@@ -93,6 +93,8 @@ expression
 
 type
     : baseType ('(' typeParameter (',' typeParameter)* ')')? (NOT NULL)?
+    | rowType (NOT NULL)?
+    | arrayType (NOT NULL)?
     ;
 
 typeParameter
@@ -102,7 +104,21 @@ typeParameter
 baseType
     : identifier
     ;
+rowType
+    : 'ROW' '<' rowFieldList '>'
+    ;
+rowFieldList
+    : rowField (',' rowField)* // List of fields in a ROW type
+    ;
 
+rowField
+    : identifier type // Field in a ROW, consisting of an identifier and a type
+    ;
+
+// Define ARRAY type which includes the type of the elements
+arrayType
+    : 'ARRAY' '<' type '>'
+    ;
 
 tableFunctionDef
    : '(' functionArgumentDef? (',' functionArgumentDef)* ')'

@@ -12,6 +12,7 @@ import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.plan.util.PrimaryKeyMap.Builder;
 import com.datasqrl.plan.validate.ResolvedImport;
+import com.datasqrl.plan.validate.ScriptPlanner.Mutation;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.RootSqrlTable;
 import com.datasqrl.util.StreamUtil;

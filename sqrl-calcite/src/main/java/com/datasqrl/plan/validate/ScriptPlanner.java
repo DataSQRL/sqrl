@@ -53,6 +53,7 @@ import com.datasqrl.plan.local.generate.ResolvedExport;
 
 import com.datasqrl.plan.table.RelDataTypeTableSchema;
 
+import com.datasqrl.plan.util.PrimaryKeyMap.Builder;
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.NestedRelationship;
 import com.datasqrl.schema.Relationship;
@@ -165,19 +166,41 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
 
     RelDataType relDataType = fieldBuilder.build();
 
+    createAndRegisterLogEntity(logId, namePath, relDataType);
+    return null;
+  }
+
+  private Log createAndRegisterLogEntity(String logId, NamePath namePath, RelDataType relDataType) {
     Log sinkLog = logManager.create(logId, namePath.getLast(),
         relDataType, List.of("_uuid"), new Timestamp("event_time", TimestampType.LOG_TIME));
 
     relDataType = sinkLog.getSchema();
 
     TableConfig tableConfig = sinkLog.getSource().getConfiguration();
-    this.framework.getSchema().add(new ResolvedImport(logId, tableConfig));
+    this.framework.getSchema().add(new ResolvedImport(logId, tableConfig, relDataType));
 
     NamespaceObject namespaceObject = createTableResolver.create(
         new TableSource(tableConfig, namePath, namePath.getLast(),
             new RelDataTypeTableSchema(relDataType)));
+//=======
+//    RelDataTypeTableSchema relDataTypeTableSchema = new RelDataTypeTableSchema(
+//        fieldBuilder.build());
+//    TableSource tableSource = new TableSource(tableConfig, namePath, namePath.getLast(),
+//        new RelDataTypeTableSchema(fieldBuilder.build()));
+//    NamespaceObject namespaceObject = createTableResolver.create(tableSource);
+//>>>>>>> 5c8d858a8 (Rough cut of subscriptions/mutations)
     namespaceObject.apply(this, Optional.empty(), framework, errorCollector);
-    return null;
+//    this.framework.getSchema().getCreateTable()
+//        .add(new Mutation(namespaceObject.getName(), relDataTypeTableSchema, tableSource));
+    return sinkLog;
+  }
+
+  @AllArgsConstructor
+  @Getter
+  public static class Mutation {
+    Name name;
+    RelDataTypeTableSchema schema;
+    TableSource tableSource;
   }
 
   @Override
@@ -227,7 +250,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     int numSelects = modTable.getNumSelects();
     RelNode exportRelNode = planner.getRelBuilder().scan(modTable.getNameId()).build();
 
-    Optional<SystemBuiltInConnectors> builtInSink = SystemBuiltInConnectors.forExport(sinkPath.popLast());
+    Optional<SystemBuiltInConnectors> builtInSink = SystemBuiltInConnectors.forExport(sinkPath.getFirst());
     TableSink tableSink = null;
     if (builtInSink.isPresent()) {
       SystemBuiltInConnectors connector = builtInSink.get();
@@ -250,6 +273,9 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         }
       } else if (connector == SystemBuiltInConnectors.LOG_ENGINE) {
         Log sinkLog = logManager.getLogs().get(sinkPath.getLast().getDisplay());
+        if (sinkLog == null) {
+          sinkLog = createAndRegisterLogEntity(sinkPath.getLast().getDisplay(), sinkPath, exportRelNode.getRowType());
+        }
         tableSink = sinkLog.getSink();
       }
       if (tableSink == null) {
