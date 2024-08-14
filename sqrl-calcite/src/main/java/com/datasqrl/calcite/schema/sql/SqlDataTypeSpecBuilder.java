@@ -3,12 +3,10 @@ package com.datasqrl.calcite.schema.sql;
 import static org.apache.calcite.sql.type.SqlTypeUtil.inCharFamily;
 import static org.apache.calcite.sql.type.SqlTypeUtil.isAtomic;
 import static org.apache.calcite.sql.type.SqlTypeUtil.isCollection;
-import static org.apache.calcite.sql.type.SqlTypeUtil.isNull;
 import static org.apache.calcite.sql.type.SqlTypeUtil.isRow;
 
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import lombok.experimental.UtilityClass;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
@@ -17,7 +15,6 @@ import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.RelRecordType;
 import org.apache.calcite.sql.SqlBasicTypeNameSpec;
 import org.apache.calcite.sql.SqlCharStringLiteral;
-import org.apache.calcite.sql.SqlCollectionTypeNameSpec;
 import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlLiteral;
@@ -38,41 +35,33 @@ import org.apache.flink.table.types.logical.RawType;
 public class SqlDataTypeSpecBuilder {
 
   public static RelDataType create(SqlDataTypeSpec typeSpec, RelDataTypeFactory typeFactory) {
+    boolean nullable = typeSpec.getNullable() != null ? typeSpec.getNullable() : true;
+
     if (typeSpec.getTypeNameSpec() instanceof SqlUserDefinedTypeNameSpec) {
       SqlUserDefinedTypeNameSpec udf = (SqlUserDefinedTypeNameSpec) typeSpec.getTypeNameSpec();
       SqlIdentifier typeName = udf.getTypeName();
       SqlTypeName sqlTypeName = SqlTypeName.get(typeName.getSimple());
-      if (sqlTypeName == SqlTypeName.ANY) {
-        return typeFactory.createTypeWithNullability(
-            typeFactory.createSqlType(SqlTypeName.ANY), typeSpec.getNullable());
+      if (sqlTypeName == null) {
+        throw new RuntimeException("Could not find type: "+ typeName.getSimple());
       }
 
       return typeFactory.createTypeWithNullability(
-          typeFactory.createSqlType(sqlTypeName), typeSpec.getNullable());
+          typeFactory.createSqlType(sqlTypeName), nullable);
     }
 
     if (typeSpec.getTypeNameSpec() instanceof SqlBasicTypeNameSpec) {
       SqlBasicTypeNameSpec basicTypeNameSpec = (SqlBasicTypeNameSpec) typeSpec.getTypeNameSpec();
       SqlIdentifier typeName = basicTypeNameSpec.getTypeName();
       SqlTypeName sqlTypeName = SqlTypeName.get(typeName.getSimple());
-      if (sqlTypeName == SqlTypeName.ANY) {
-        return typeFactory.createTypeWithNullability(
-            typeFactory.createSqlType(SqlTypeName.ANY), typeSpec.getNullable());
-      }
-
-      if (typeSpec.getNullable() != null ) {
-        return typeFactory.createTypeWithNullability(
-            typeFactory.createSqlType(sqlTypeName), typeSpec.getNullable());
-      } else {
-        return typeFactory.createSqlType(sqlTypeName);
-      }
+      return typeFactory.createTypeWithNullability(
+          typeFactory.createSqlType(sqlTypeName), nullable);
     }
 
     if (typeSpec.getTypeNameSpec() instanceof ExtendedSqlCollectionTypeNameSpec) {
       ExtendedSqlCollectionTypeNameSpec collectionTypeNameSpec = (ExtendedSqlCollectionTypeNameSpec) typeSpec.getTypeNameSpec();
       RelDataType elementType = create(collectionTypeNameSpec.getElementTypeName(), typeFactory);
       return typeFactory.createTypeWithNullability(
-          typeFactory.createArrayType(elementType, -1), typeSpec.getNullable());
+          typeFactory.createArrayType(elementType, -1), nullable);
     }
 
     if (typeSpec.getTypeNameSpec() instanceof SqlRowTypeNameSpec) {
@@ -86,8 +75,9 @@ public class SqlDataTypeSpecBuilder {
         SqlDataTypeSpec fieldTypeSpec = fieldTypeSpecs.get(i);
         fieldInfoBuilder.add(fieldName.getSimple(), create(fieldTypeSpec, typeFactory));
       }
+
       return typeFactory.createTypeWithNullability(
-          typeFactory.createStructType(fieldInfoBuilder), typeSpec.getNullable());
+          typeFactory.createStructType(fieldInfoBuilder), nullable);
     }
 //
 //    if (typeSpec.getTypeNameSpec() instanceof SqlRawTypeNameSpec) {

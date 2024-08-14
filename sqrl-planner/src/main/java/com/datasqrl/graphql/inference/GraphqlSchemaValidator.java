@@ -79,8 +79,8 @@ public class GraphqlSchemaValidator extends SchemaWalker {
     TableSource mutationSink = apiManager.getMutationSource(source,
         Name.system(fieldDefinition.getName()));
     if (mutationSink == null) {
-      throw createThrowable(fieldDefinition.getSourceLocation(),
-          "Could not find mutation source: %s.", fieldDefinition.getName());
+//      throw createThrowable(fieldDefinition.getSourceLocation(),
+//          "Could not find mutation source: %s.", fieldDefinition.getName());
     }
 
     validateStructurallyEqualMutation(fieldDefinition, getValidMutationReturnType(fieldDefinition, registry),
@@ -150,7 +150,7 @@ public class GraphqlSchemaValidator extends SchemaWalker {
 
       //If typeName, resolve then
       TypeName inputTypeName = (TypeName) inputType;
-      TypeName defTypeName = (TypeName) definitionType;
+      TypeName defTypeName = (TypeName) unboxNonNull(definitionType);
       TypeDefinition inputTypeDef = registry.getType(inputTypeName).orElseThrow(
           () -> createThrowable(inputTypeName.getSourceLocation(), "Could not find type: %s",
               inputTypeName.getName()));

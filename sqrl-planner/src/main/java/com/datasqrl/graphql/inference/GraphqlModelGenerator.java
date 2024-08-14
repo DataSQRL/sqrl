@@ -7,6 +7,7 @@ import com.datasqrl.calcite.QueryPlanner;
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.config.TableConfig;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.engine.log.Log;
 import com.datasqrl.graphql.APIConnectorManager;
@@ -24,6 +25,7 @@ import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.plan.queries.IdentifiedQuery;
+import com.datasqrl.plan.validate.ScriptPlanner.Mutation;
 import com.google.common.base.Preconditions;
 import graphql.language.FieldDefinition;
 import graphql.language.InputValueDefinition;
@@ -85,11 +87,27 @@ public class GraphqlModelGenerator extends SchemaWalker {
   @Override
   protected void walkMutation(APISource source, TypeDefinitionRegistry registry,
       ObjectTypeDefinition m, FieldDefinition fieldDefinition) {
-    TableSource tableSink = apiManager.getMutationSource(source,
+    TableSource tableSource = apiManager.getMutationSource(source,
         Name.system(fieldDefinition.getName()));
 
-    Map<String, Object> map = tableSink.getConfiguration().getConnectorConfig().toMap();
-    mutations.add(new MutationCoords(fieldDefinition.getName(), (String)map.get("topic"), Map.of()));
+    Optional<TableConfig> src = schema.getImports().stream()
+        .filter(t -> t.getName().equalsIgnoreCase(fieldDefinition.getName()))
+        .map(t->t.getTableConfig())
+        .findFirst();
+
+    String topicName;
+    if (tableSource != null) {
+      Map<String, Object> map = tableSource.getConfiguration().getConnectorConfig().toMap();
+      topicName = (String)map.get("topic");
+    } else if (src.isPresent()){
+      System.out.println();
+      Map<String, Object> map = src.get().getConnectorConfig().toMap();
+      topicName = (String)map.get("topic");
+    } else {
+      throw new RuntimeException("Could not find mutation: " + fieldDefinition.getName());
+    }
+
+    mutations.add(new MutationCoords(fieldDefinition.getName(), topicName, Map.of()));
   }
 
   @Override
