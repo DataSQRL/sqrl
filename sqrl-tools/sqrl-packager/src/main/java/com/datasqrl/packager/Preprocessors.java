@@ -24,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @AllArgsConstructor(onConstructor_=@Inject)
 public class Preprocessors {
-  public static final Set<String> EXCLUDED_DIRS = Set.of(Packager.BUILD_DIR_NAME, "deploy");
+  public static final Set<String> EXCLUDED_DIRS = Set.of("build", "deploy");
 
   Set<Preprocessor> preprocessors;
 
