@@ -44,26 +44,10 @@ public class IcebergEngine extends AbstractJDBCTableFormatEngine {
 
   @Override
   public EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs, ExecutionPipeline pipeline,
-      SqrlFramework framework, ErrorCollector errorCollector) {
+      List<StagePlan> stagePlans, SqrlFramework framework, ErrorCollector errorCollector) {
 
     EnginePhysicalPlan enginePlan = queryEngines.values().stream().findFirst().get()
-        .plan(plan, inputs, pipeline, framework, errorCollector);
-    DatabaseStagePlan dbPlan = ( DatabaseStagePlan) plan;
-
-    StreamUtil.filterByClass(inputs,
-        EngineSink.class).forEach(s -> {
-          String tableId = s.getNameId();
-          Optional<IndexDefinition> optIndex =  dbPlan.getIndexDefinitions().stream().filter(i -> i.getTableId().equals(tableId)).findFirst();
-          if (optIndex.isPresent()) {
-            IndexDefinition mainIndex = optIndex.get();
-//            System.out.println("Table: " + tableId);
-//            System.out.println("Partition columns: " + String.join(", ",  mainIndex.getColumnNames().subList(0, mainIndex.getPartitionOffset())));
-//            System.out.println("Sort columns: " + String.join(", ",  mainIndex.getColumnNames().subList(mainIndex.getPartitionOffset(), mainIndex.getColumns().size())));
-          } else {
-//            System.out.println("No partition on table: " + tableId);
-          }
-    });
-
+        .plan(plan, inputs, pipeline, stagePlans, framework, errorCollector);
 
     //nothing needs to be created for aws-glue
     return new IcebergPlan(enginePlan);

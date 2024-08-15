@@ -61,7 +61,7 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
 
   @Override
   public EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs,
-      ExecutionPipeline pipeline, SqrlFramework framework, ErrorCollector errorCollector) {
+      ExecutionPipeline pipeline, List<StagePlan> stagePlans, SqrlFramework framework, ErrorCollector errorCollector) {
 
     Preconditions.checkArgument(plan instanceof DatabaseStagePlan);
     DatabaseStagePlan dbPlan = (DatabaseStagePlan) plan;

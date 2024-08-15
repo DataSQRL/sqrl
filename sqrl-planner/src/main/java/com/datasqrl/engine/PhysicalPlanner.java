@@ -34,7 +34,7 @@ public class PhysicalPlanner {
           .collect(Collectors.toList());
 
       EnginePhysicalPlan physicalPlan = stagePlan.getStage().getEngine().plan(stagePlan, inputs,
-          plan.getPipeline(), framework, errorCollector);
+          plan.getPipeline(), plan.getStagePlans(), framework, errorCollector);
 
       physicalStages.add(new PhysicalPlan.StagePlan(stagePlan.getStage(), physicalPlan));
     }

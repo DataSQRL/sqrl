@@ -9,6 +9,7 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.TableConfig.MetadataConfig;
 import com.datasqrl.config.TableConfig.MetadataEntry;
 import com.datasqrl.config.TableConfig;
+import com.datasqrl.config.TableConfig.TableConfigBuilder;
 import com.datasqrl.config.TableConfig.TableTableConfig;
 import com.datasqrl.datatype.DataTypeMapper;
 import com.datasqrl.engine.stream.flink.connector.FlinkConnectorDataTypeMappingFactory;
@@ -23,9 +24,12 @@ import com.datasqrl.engine.stream.flink.sql.rules.ExpandWindowHintRule.ExpandWin
 import com.datasqrl.engine.stream.flink.sql.rules.PushDownWatermarkHintRule.PushDownWatermarkHintConfig;
 import com.datasqrl.engine.stream.flink.sql.rules.PushWatermarkHintToTableScanRule.PushWatermarkHintToTableScanConfig;
 import com.datasqrl.engine.stream.flink.sql.rules.ShapeBushyCorrelateJoinRule.ShapeBushyCorrelateJoinRuleConfig;
+import com.datasqrl.plan.global.IndexDefinition;
+import com.datasqrl.plan.global.PhysicalDAGPlan.DatabaseStagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.ExternalSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.Query;
+import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.WriteQuery;
 import com.datasqrl.plan.global.PhysicalDAGPlan.WriteSink;
 import com.datasqrl.plan.table.ImportedRelationalTable;
@@ -90,7 +94,7 @@ public class SqrlToFlinkSqlGenerator {
 
   SqrlFramework framework;
 
-  public SqlResult plan(List<? extends Query> stageQueries) {
+  public SqlResult plan(List<? extends Query> stageQueries, List<StagePlan> stagePlans) {
     checkPreconditions(stageQueries);
     List<WriteQuery> writeQueries = applyFlinkCompatibilityRules(stageQueries);
     Set<SqlCall> sinksAndSources = extractTableDescriptors(writeQueries);
@@ -106,7 +110,7 @@ public class SqrlToFlinkSqlGenerator {
       RelNode relNode = applyDowncasting(framework.getQueryPlanner().getRelBuilder(),
           query.getExpandedRelNode(), query.getSink(), downcastClassNames, connectorMapping);
       Pair<List<SqlCreateView>, RichSqlInsert> result = process(query.getSink().getName(), relNode);
-      SqlCreateTable sqlCreateTable = registerSinkTable(query.getSink(), relNode);
+      SqlCreateTable sqlCreateTable = registerSinkTable(query.getSink(), relNode, stagePlans);
       sinksAndSources.add(sqlCreateTable);
       queries.addAll(result.getKey());
       inserts.add(result.getValue());
@@ -366,7 +370,8 @@ public class SqrlToFlinkSqlGenerator {
     return new SqlNodeList(nodes, SqlParserPos.ZERO);
   }
 
-  private SqlCreateTable registerSinkTable(WriteSink sink, RelNode relNode) {
+  private SqlCreateTable registerSinkTable(WriteSink sink, RelNode relNode,
+      List<StagePlan> stagePlans) {
     String name;
     TableConfig tableConfig;
 
@@ -374,11 +379,32 @@ public class SqrlToFlinkSqlGenerator {
       EngineSink engineSink = (EngineSink) sink;
       TableConfig engineConfig = engineSink.getStage().getEngine().getSinkConfig(engineSink.getNameId());
 
+      Optional<StagePlan> stagePlan = stagePlans.stream()
+          .filter(f -> f.getStage() == engineSink.getStage())
+          .findFirst();
+      TableConfigBuilder builder = engineConfig.toBuilder();
+      if (stagePlan.isPresent()) {
+        StagePlan stagePlan1 = stagePlan.get();
+        if (isPartitionable(stagePlan1.getStage().getName())) {
+          DatabaseStagePlan dbPlan = (DatabaseStagePlan) stagePlan1;
+          String tableId = engineSink.getNameId();
+          Optional<IndexDefinition> optIndex =  dbPlan.getIndexDefinitions().stream()
+              .filter(i -> i.getTableId().equals(tableId))
+              .findFirst();
+          if (optIndex.isPresent()) {
+            IndexDefinition mainIndex = optIndex.get();
+            builder.setPartitionKey(mainIndex.getColumnNames());
+          }
+
+        }
+
+      }
+
       //todo check kafka
       String[] pks = IntStream.of(engineSink.getPrimaryKeys())
           .mapToObj(i -> relNode.getRowType().getFieldList().get(i).getName())
           .toArray(String[]::new);
-      tableConfig = engineConfig.toBuilder()
+      tableConfig = builder
           .setPrimaryKey(pks)
           .build();
       name = engineSink.getNameId();
@@ -391,6 +417,13 @@ public class SqrlToFlinkSqlGenerator {
     }
 
     return toCreateTable(name, relNode.getRowType(), tableConfig, true);
+  }
+
+  private boolean isPartitionable(String name) {
+    switch (name.toLowerCase()) {
+      case "iceberg": return true;
+    }
+    return false;
   }
 
   private List<SqlTableConstraint> createConstraints(List<String> primaryKey) {
