@@ -51,7 +51,9 @@ public class PackageBootstrap {
 
     Map<String, Dependency> dependencies = new HashMap<>();
     // Check if 'profiles' key is set, replace if existing
-    if (existingConfig.isPresent() && existingConfig.get().hasProfileKey()) {
+    if (profiles.length > 0) {
+      profiles = profiles;
+    } else if (existingConfig.isPresent() && existingConfig.get().hasProfileKey()) {
       profiles = existingConfig.get().getProfiles().toArray(String[]::new);
     }
 

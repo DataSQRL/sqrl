@@ -17,8 +17,10 @@ import io.vertx.core.json.JsonObject;
 import java.net.URL;
 import java.nio.file.Path;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.SneakyThrows;
@@ -36,7 +38,7 @@ public class DatasqrlRun {
   EmbeddedKafkaCluster CLUSTER;
   ObjectMapper objectMapper = new ObjectMapper();
   PostgreSQLContainer postgreSQLContainer;
-
+  AtomicBoolean isStarted = new AtomicBoolean(false);
   public static void main(String[] args) {
     DatasqrlRun run = new DatasqrlRun();
     run.run();
@@ -60,7 +62,8 @@ public class DatasqrlRun {
   @SneakyThrows
   public void startFlink() {
     Map<String, String> config = Map.of(
-        "taskmanager.network.memory.max", "1g");
+        "taskmanager.network.memory.max", "1g",
+        "table.exec.source.idle-timeout", "1 s");
     //read flink config from package.json values?
 
     Configuration configuration = Configuration.fromMap(config);
@@ -76,6 +79,7 @@ public class DatasqrlRun {
 
     for (String statement : statements) {
       if (statement.trim().isEmpty()) continue;
+      System.out.println(replaceWithEnv(statement));
       tableResult = tEnv.executeSql(replaceWithEnv(statement));
     }
     tableResult.print();
@@ -85,7 +89,7 @@ public class DatasqrlRun {
     return Map.of(
         "PROPERTIES_BOOTSTRAP_SERVERS",CLUSTER.bootstrapServers(),
         "PROPERTIES_GROUP_ID","mygroupid",
-        "JDBC_URL",postgreSQLContainer.getJdbcUrl(),
+        "JDBC_URL",isStarted.get() ? postgreSQLContainer.getJdbcUrl() : "jdbc:postgresql://127.0.0.1:5432/datasqrl",
         "JDBC_USERNAME","postgres",
         "JDBC_PASSWORD","postgres",
         //todo target?
@@ -93,7 +97,7 @@ public class DatasqrlRun {
         "PGHOST","localhost",
         "PGUSER","postgres",
         "PGPASSWORD","postgres",
-        "PGDATABASE",postgreSQLContainer.getDatabaseName()
+        "PGDATABASE","datasqrl"
     );
   }
   public String replaceWithEnv(String command) {
@@ -135,8 +139,18 @@ public class DatasqrlRun {
         .withPassword("postgres")
         .withUsername("postgres");
 
-    postgreSQLContainer.start();
-    Connection connection = postgreSQLContainer.createConnection("");
+    Connection connection;
+    try {
+      postgreSQLContainer.start();
+      connection = postgreSQLContainer.createConnection("");
+      isStarted.set(true);
+    } catch (Exception e) {
+      //attempt local connection
+      // todo: install postgres in homebrew (?), also remove the database on shutdown or reinit
+      connection = DriverManager.getConnection("jdbc:postgresql://127.0.0.1:5432/datasqrl", "postgres", "postgres");
+    }
+
+    System.out.println(path.toAbsolutePath().toString());
 
     Map map = objectMapper.readValue(path.resolve("postgres.json").toFile(), Map.class);
     List<Map<String, Object>> ddl = (List<Map<String, Object>>) map.get("ddl");
@@ -163,7 +177,7 @@ public class DatasqrlRun {
     ServerConfig serverConfig = new ServerConfig(config);
     // hack because templating doesn't work on non-strings
     serverConfig.getPgConnectOptions()
-        .setPort(postgreSQLContainer.getMappedPort(5432));
+        .setPort(isStarted.get() ? postgreSQLContainer.getMappedPort(5432): 5432);
     GraphQLServer server = new GraphQLServer(rootGraphqlModel, serverConfig,
         NameCanonicalizer.SYSTEM) {
       @Override
