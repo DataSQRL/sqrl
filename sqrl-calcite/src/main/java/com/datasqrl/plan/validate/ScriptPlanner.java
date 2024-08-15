@@ -24,7 +24,6 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.config.ConnectorFactoryContext;
 import com.datasqrl.config.ConnectorFactoryFactory;
-import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SystemBuiltInConnectors;
 import com.datasqrl.engine.log.Log;
@@ -125,7 +124,6 @@ import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqrlSqlValidator;
 import org.apache.calcite.util.Util;
 import org.apache.commons.lang3.tuple.Pair;
-import scala.collection.parallel.ParSeqLike.Updated;
 
 @AllArgsConstructor(onConstructor_=@Inject)
 @Getter
