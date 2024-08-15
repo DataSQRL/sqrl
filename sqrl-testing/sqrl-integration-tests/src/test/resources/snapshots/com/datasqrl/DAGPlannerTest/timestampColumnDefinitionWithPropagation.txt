@@ -322,7 +322,7 @@ Inputs: customercopy_1
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "type Customer {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n}\n\ntype CustomerCopy {\n  month: DateTime!\n  timestamp: DateTime!\n}\n\ntype CustomerCopyResult {\n  month: DateTime!\n  timestamp: DateTime!\n  _customerid: Float!\n  _lastUpdated: Float!\n}\n\ntype CustomerResult {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype Query {\n  Customer(customerid: Float, lastUpdated: Float, limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerCopy(limit: Int = 10, offset: Int = 0): [CustomerCopy!]\n}\n\ntype Subscription {\n  Customer: CustomerResult!\n  CustomerCopy: CustomerCopyResult!\n}\n"
+      "schema" : "type Customer {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n}\n\ntype CustomerCopy {\n  month: DateTime!\n  timestamp: DateTime!\n}\n\ntype CustomerCopyResult {\n  month: DateTime!\n  timestamp: DateTime!\n}\n\ntype CustomerResult {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype Query {\n  Customer(customerid: Float, lastUpdated: Float, limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerCopy(limit: Int = 10, offset: Int = 0): [CustomerCopy!]\n}\n\ntype Subscription {\n  Customer: CustomerResult!\n  CustomerCopy: CustomerCopyResult!\n}\n"
     }
   }
 }

@@ -30,7 +30,7 @@ Stage:  streams
 Inputs: hightemp_1
 
 === kafka.HighTemp
-ID:     hightemp_1_5
+ID:     hightemp_1_2
 Type:   export
 Stage:  streams
 Inputs: hightemp_1
@@ -125,7 +125,7 @@ LogicalFilter(condition=[>($2, ?0)])
   LogicalTableScan(table=[[secreading_1]])
 
 === kafka.SecReadingByTemp
-ID:     secreadingbytemp_1_2
+ID:     secreadingbytemp_1_3
 Type:   export
 Stage:  streams
 Inputs: secreadingbytemp_1
@@ -146,7 +146,7 @@ Plan:
 LogicalTableScan(table=[[sensorreading_1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
 === kafka.SensorReading
-ID:     sensorreading_2_3
+ID:     sensorreading_2_5
 Type:   export
 Stage:  streams
 Inputs: sensorreading_2
@@ -196,10 +196,10 @@ LogicalTableScan(table=[[sensors_2]])
     "CREATE TEMPORARY TABLE `sensorreading_2` (\n  `sensorid` BIGINT NOT NULL,\n  `time` BIGINT NOT NULL,\n  `temperature` DOUBLE NOT NULL,\n  `humidity` DOUBLE NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`sensorid`, `time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'sensorreading_2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `sensors_3` (\n  `id` BIGINT NOT NULL,\n  `machineId` BIGINT NOT NULL,\n  `placed` BIGINT NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'sensors_3',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `hightemp_1_1` (\n  `machineid` BIGINT NOT NULL,\n  `sensorid` BIGINT NOT NULL,\n  `temp` DOUBLE NOT NULL,\n  `timeSec` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n) WITH (\n  'connector' = 'print',\n  'print-identifier' = 'tempWarning'\n);",
-    "CREATE TEMPORARY TABLE `hightemp_1_5` (\n  `machineid` BIGINT NOT NULL,\n  `sensorid` BIGINT NOT NULL,\n  `temp` DOUBLE NOT NULL,\n  `timeSec` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'hightemp_1',\n  'scan.startup.mode' = 'group-offsets'\n);",
+    "CREATE TEMPORARY TABLE `hightemp_1_2` (\n  `machineid` BIGINT NOT NULL,\n  `sensorid` BIGINT NOT NULL,\n  `temp` DOUBLE NOT NULL,\n  `timeSec` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'hightemp_1',\n  'scan.startup.mode' = 'group-offsets'\n);",
     "CREATE TEMPORARY TABLE `secreading_1_4` (\n  `sensorid` BIGINT NOT NULL,\n  `timeSec` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `temp` DOUBLE NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'secreading_1',\n  'scan.startup.mode' = 'group-offsets'\n);",
-    "CREATE TEMPORARY TABLE `secreadingbytemp_1_2` (\n  `sensorid` BIGINT NOT NULL,\n  `timeSec` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `temp` DOUBLE NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'secreadingbytemp_1',\n  'scan.startup.mode' = 'group-offsets'\n);",
-    "CREATE TEMPORARY TABLE `sensorreading_2_3` (\n  `sensorid` BIGINT NOT NULL,\n  `time` BIGINT NOT NULL,\n  `temperature` DOUBLE NOT NULL,\n  `humidity` DOUBLE NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'sensorreading_2',\n  'scan.startup.mode' = 'group-offsets'\n);",
+    "CREATE TEMPORARY TABLE `secreadingbytemp_1_3` (\n  `sensorid` BIGINT NOT NULL,\n  `timeSec` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `temp` DOUBLE NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'secreadingbytemp_1',\n  'scan.startup.mode' = 'group-offsets'\n);",
+    "CREATE TEMPORARY TABLE `sensorreading_2_5` (\n  `sensorid` BIGINT NOT NULL,\n  `time` BIGINT NOT NULL,\n  `temperature` DOUBLE NOT NULL,\n  `humidity` DOUBLE NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'sensorreading_2',\n  'scan.startup.mode' = 'group-offsets'\n);",
     "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM (SELECT `id`, `machineId`, `placed`, `timestamp`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC NULLS LAST)) AS `_rownum`\nFROM `sensors_1`) AS `t`\nWHERE (`_rownum` = 1);",
     "CREATE VIEW `table$2`\nAS\nSELECT `sensorid`, ENDOFSECOND(`timestamp`) AS `timeSec`, `temperature`, `time`, `timestamp`\nFROM `sensorreading_1`;",
     "CREATE VIEW `table$3`\nAS\nSELECT `t0`.`machineId` AS `machineid`, `$cor3`.`sensorid`, `$cor3`.`temp`, `$cor3`.`timeSec`\nFROM (SELECT `sensorid`, `timeSec`, `temp`, `sensorid` AS `sensorid3`\nFROM (SELECT `sensorid`, `window_time` AS `timeSec`, AVG(`temperature`) AS `temp`\nFROM TABLE(TUMBLE((TABLE `table$2`), (DESCRIPTOR(`timestamp`)), INTERVAL '1' SECOND(4), INTERVAL '0' SECOND(1))) AS `t2`\nGROUP BY `sensorid`, `window_start`, `window_end`, `window_time`) AS `t4`\nWHERE (`temp` > 35)) AS `$cor3`\nINNER JOIN `table$1` FOR SYSTEM_TIME AS OF `$cor3`.`timeSec` AS `t0` ON (`t0`.`id` = `$cor3`.`sensorid3`);",
@@ -226,7 +226,7 @@ LogicalTableScan(table=[[sensors_2]])
     "CREATE VIEW `table$24`\nAS\nSELECT `sensorid`, ENDOFSECOND(`timestamp`) AS `timeSec`, `temperature`, `time`, `timestamp`\nFROM `sensorreading_1`;",
     "CREATE VIEW `table$25`\nAS\nSELECT *\nFROM (SELECT `sensorid`, `window_time` AS `timeSec`, AVG(`temperature`) AS `temp`\nFROM TABLE(TUMBLE((TABLE `table$24`), (DESCRIPTOR(`timestamp`)), INTERVAL '1' SECOND(4), INTERVAL '0' SECOND(1))) AS `t0`\nGROUP BY `sensorid`, `window_start`, `window_end`, `window_time`) AS `t2`\nWHERE (`temp` > ?);",
     "CREATE VIEW `table$26`\nAS\nSELECT *\nFROM `sensorreading_1`;",
-    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `hightemp_1`\n(SELECT *\nFROM `table$3`)\n;\nINSERT INTO `lasthour_1`\n(SELECT *\nFROM `table$7`)\n;\nINSERT INTO `machine_1`\n(SELECT *\nFROM `table$11`)\n;\nINSERT INTO `secreading_1`\n(SELECT *\nFROM `table$13`)\n;\nINSERT INTO `sensorreading_2`\n(SELECT *\nFROM `table$14`)\n;\nINSERT INTO `sensors_3`\n(SELECT *\nFROM `table$15`)\n;\nINSERT INTO `hightemp_1_1`\n(SELECT *\nFROM `table$18`)\n;\nINSERT INTO `hightemp_1_5`\n(SELECT *\nFROM `table$21`)\n;\nINSERT INTO `secreading_1_4`\n(SELECT *\nFROM `table$23`)\n;\nINSERT INTO `secreadingbytemp_1_2`\n(SELECT *\nFROM `table$25`)\n;\nINSERT INTO `sensorreading_2_3`\n(SELECT *\nFROM `table$26`)\n;\nEND;"
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `hightemp_1`\n(SELECT *\nFROM `table$3`)\n;\nINSERT INTO `lasthour_1`\n(SELECT *\nFROM `table$7`)\n;\nINSERT INTO `machine_1`\n(SELECT *\nFROM `table$11`)\n;\nINSERT INTO `secreading_1`\n(SELECT *\nFROM `table$13`)\n;\nINSERT INTO `sensorreading_2`\n(SELECT *\nFROM `table$14`)\n;\nINSERT INTO `sensors_3`\n(SELECT *\nFROM `table$15`)\n;\nINSERT INTO `hightemp_1_1`\n(SELECT *\nFROM `table$18`)\n;\nINSERT INTO `hightemp_1_2`\n(SELECT *\nFROM `table$21`)\n;\nINSERT INTO `secreading_1_4`\n(SELECT *\nFROM `table$23`)\n;\nINSERT INTO `secreadingbytemp_1_3`\n(SELECT *\nFROM `table$25`)\n;\nINSERT INTO `sensorreading_2_5`\n(SELECT *\nFROM `table$26`)\n;\nEND;"
   ],
   "connectors" : [
     "print",

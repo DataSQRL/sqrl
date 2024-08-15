@@ -128,7 +128,7 @@ Inputs: product_2
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype Product {\n  productid: Float!\n  name: String!\n  description: String!\n  category: String!\n  badWords: Boolean!\n  searchResult: Float!\n  format: String!\n}\n\ntype ProductResult {\n  productid: Float!\n  name: String!\n  description: String!\n  category: String!\n  _ingest_time: DateTime!\n  _uuid: String!\n  badWords: Boolean!\n  searchResult: Float!\n  format: String!\n}\n\ntype Query {\n  Product(limit: Int = 10, offset: Int = 0): [Product!]\n}\n\ntype Subscription {\n  Product: ProductResult!\n}\n"
+      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype Product {\n  productid: Float!\n  name: String!\n  description: String!\n  category: String!\n  badWords: Boolean!\n  searchResult: Float!\n  format: String!\n}\n\ntype ProductResult {\n  productid: Float!\n  name: String!\n  description: String!\n  category: String!\n  badWords: Boolean!\n  searchResult: Float!\n  format: String!\n}\n\ntype Query {\n  Product(limit: Int = 10, offset: Int = 0): [Product!]\n}\n\ntype Subscription {\n  Product: ProductResult!\n}\n"
     }
   }
 }
