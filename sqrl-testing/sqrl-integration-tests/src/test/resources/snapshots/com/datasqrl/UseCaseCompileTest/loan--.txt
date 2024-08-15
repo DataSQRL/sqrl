@@ -16,6 +16,12 @@ Schema:
 Plan:
 LogicalTableScan(table=[[applications_1]], hints=[[[WatermarkHint inheritPath:[] options:[6]]]]) hints[WatermarkHint options:[6]]
 
+=== kafka.Applications
+ID:     applications_2_3
+Type:   export
+Stage:  streams
+Inputs: applications_2
+
 === Customers
 ID:     customers_2
 Type:   stream
@@ -33,6 +39,12 @@ Schema:
  - updated_at: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
 LogicalTableScan(table=[[customers_1]], hints=[[[WatermarkHint inheritPath:[] options:[7]]]]) hints[WatermarkHint options:[7]]
+
+=== kafka.Customers
+ID:     customers_2_1
+Type:   export
+Stage:  streams
+Inputs: customers_2
 
 === LoanTypes
 ID:     loantypes_2
@@ -53,6 +65,12 @@ Schema:
 Plan:
 LogicalTableScan(table=[[loantypes_1]], hints=[[[WatermarkHint inheritPath:[] options:[8]]]]) hints[WatermarkHint options:[8]]
 
+=== kafka.LoanTypes
+ID:     loantypes_2_2
+Type:   export
+Stage:  streams
+Inputs: loantypes_2
+
 >>>flink.json
 {
   "flinkSql" : [
@@ -62,13 +80,20 @@ LogicalTableScan(table=[[loantypes_1]], hints=[[[WatermarkHint inheritPath:[] op
     "CREATE TEMPORARY TABLE `applications_2` (\n  `id` BIGINT NOT NULL,\n  `customer_id` BIGINT NOT NULL,\n  `loan_type_id` BIGINT NOT NULL,\n  `amount` DOUBLE NOT NULL,\n  `duration` BIGINT NOT NULL,\n  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'applications_2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `customers_2` (\n  `id` BIGINT NOT NULL,\n  `first_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `last_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `phone` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `address` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `date_of_birth` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'customers_2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `loantypes_2` (\n  `id` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `interest_rate` DOUBLE NOT NULL,\n  `max_amount` DOUBLE NOT NULL,\n  `min_amount` DOUBLE NOT NULL,\n  `max_duration` BIGINT NOT NULL,\n  `min_duration` BIGINT NOT NULL,\n  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'loantypes_2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `applications_2_3` (\n  `id` BIGINT NOT NULL,\n  `customer_id` BIGINT NOT NULL,\n  `loan_type_id` BIGINT NOT NULL,\n  `amount` DOUBLE NOT NULL,\n  `duration` BIGINT NOT NULL,\n  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'applications_2',\n  'scan.startup.mode' = 'group-offsets'\n);",
+    "CREATE TEMPORARY TABLE `customers_2_1` (\n  `id` BIGINT NOT NULL,\n  `first_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `last_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `phone` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `address` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `date_of_birth` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'customers_2',\n  'scan.startup.mode' = 'group-offsets'\n);",
+    "CREATE TEMPORARY TABLE `loantypes_2_2` (\n  `id` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `interest_rate` DOUBLE NOT NULL,\n  `max_amount` DOUBLE NOT NULL,\n  `min_amount` DOUBLE NOT NULL,\n  `max_duration` BIGINT NOT NULL,\n  `min_duration` BIGINT NOT NULL,\n  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'loantypes_2',\n  'scan.startup.mode' = 'group-offsets'\n);",
     "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `applications_1`;",
     "CREATE VIEW `table$2`\nAS\nSELECT *\nFROM `customers_1`;",
     "CREATE VIEW `table$3`\nAS\nSELECT *\nFROM `loantypes_1`;",
-    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `applications_2`\n(SELECT *\nFROM `table$1`)\n;\nINSERT INTO `customers_2`\n(SELECT *\nFROM `table$2`)\n;\nINSERT INTO `loantypes_2`\n(SELECT *\nFROM `table$3`)\n;\nEND;"
+    "CREATE VIEW `table$4`\nAS\nSELECT *\nFROM `applications_1`;",
+    "CREATE VIEW `table$5`\nAS\nSELECT *\nFROM `customers_1`;",
+    "CREATE VIEW `table$6`\nAS\nSELECT *\nFROM `loantypes_1`;",
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `applications_2`\n(SELECT *\nFROM `table$1`)\n;\nINSERT INTO `customers_2`\n(SELECT *\nFROM `table$2`)\n;\nINSERT INTO `loantypes_2`\n(SELECT *\nFROM `table$3`)\n;\nINSERT INTO `applications_2_3`\n(SELECT *\nFROM `table$4`)\n;\nINSERT INTO `customers_2_1`\n(SELECT *\nFROM `table$5`)\n;\nINSERT INTO `loantypes_2_2`\n(SELECT *\nFROM `table$6`)\n;\nEND;"
   ],
   "connectors" : [
     "jdbc-sqrl",
+    "kafka",
     "filesystem"
   ],
   "formats" : [
@@ -77,7 +102,29 @@ LogicalTableScan(table=[[loantypes_1]], hints=[[[WatermarkHint inheritPath:[] op
 }
 >>>kafka.json
 {
-  "topics" : [ ]
+  "topics" : [
+    {
+      "name" : "applications_2",
+      "numPartitions" : 1,
+      "replicationFactor" : 1,
+      "replicasAssignments" : { },
+      "config" : { }
+    },
+    {
+      "name" : "customers_2",
+      "numPartitions" : 1,
+      "replicationFactor" : 1,
+      "replicasAssignments" : { },
+      "config" : { }
+    },
+    {
+      "name" : "loantypes_2",
+      "numPartitions" : 1,
+      "replicationFactor" : 1,
+      "replicasAssignments" : { },
+      "config" : { }
+    }
+  ]
 }
 >>>postgres.json
 {
@@ -561,11 +608,30 @@ LogicalTableScan(table=[[loantypes_1]], hints=[[[WatermarkHint inheritPath:[] op
       }
     ],
     "mutations" : [ ],
-    "subscriptions" : [ ],
+    "subscriptions" : [
+      {
+        "fieldName" : "Applications",
+        "topic" : "applications_2",
+        "sinkConfig" : { },
+        "filters" : { }
+      },
+      {
+        "fieldName" : "Customers",
+        "topic" : "customers_2",
+        "sinkConfig" : { },
+        "filters" : { }
+      },
+      {
+        "fieldName" : "LoanTypes",
+        "topic" : "loantypes_2",
+        "sinkConfig" : { },
+        "filters" : { }
+      }
+    ],
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "type Applications {\n  id: Float!\n  customer_id: Float!\n  loan_type_id: Float!\n  amount: Float!\n  duration: Float!\n  application_date: DateTime!\n  updated_at: DateTime!\n}\n\ntype Customers {\n  id: Float!\n  first_name: String!\n  last_name: String!\n  email: String!\n  phone: String!\n  address: String!\n  date_of_birth: String!\n  updated_at: DateTime!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype LoanTypes {\n  id: Float!\n  name: String!\n  description: String!\n  interest_rate: Float!\n  max_amount: Float!\n  min_amount: Float!\n  max_duration: Float!\n  min_duration: Float!\n  updated_at: DateTime!\n}\n\ntype Query {\n  Applications(id: Float, updated_at: DateTime, limit: Int = 10, offset: Int = 0): [Applications!]\n  Customers(id: Float, updated_at: DateTime, limit: Int = 10, offset: Int = 0): [Customers!]\n  LoanTypes(id: Float, updated_at: DateTime, limit: Int = 10, offset: Int = 0): [LoanTypes!]\n}\n"
+      "schema" : "type Applications {\n  id: Float!\n  customer_id: Float!\n  loan_type_id: Float!\n  amount: Float!\n  duration: Float!\n  application_date: DateTime!\n  updated_at: DateTime!\n}\n\ntype ApplicationsResult {\n  id: Float!\n  customer_id: Float!\n  loan_type_id: Float!\n  amount: Float!\n  duration: Float!\n  application_date: DateTime!\n  updated_at: DateTime!\n}\n\ntype Customers {\n  id: Float!\n  first_name: String!\n  last_name: String!\n  email: String!\n  phone: String!\n  address: String!\n  date_of_birth: String!\n  updated_at: DateTime!\n}\n\ntype CustomersResult {\n  id: Float!\n  first_name: String!\n  last_name: String!\n  email: String!\n  phone: String!\n  address: String!\n  date_of_birth: String!\n  updated_at: DateTime!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype LoanTypes {\n  id: Float!\n  name: String!\n  description: String!\n  interest_rate: Float!\n  max_amount: Float!\n  min_amount: Float!\n  max_duration: Float!\n  min_duration: Float!\n  updated_at: DateTime!\n}\n\ntype LoanTypesResult {\n  id: Float!\n  name: String!\n  description: String!\n  interest_rate: Float!\n  max_amount: Float!\n  min_amount: Float!\n  max_duration: Float!\n  min_duration: Float!\n  updated_at: DateTime!\n}\n\ntype Query {\n  Applications(id: Float, updated_at: DateTime, limit: Int = 10, offset: Int = 0): [Applications!]\n  Customers(id: Float, updated_at: DateTime, limit: Int = 10, offset: Int = 0): [Customers!]\n  LoanTypes(id: Float, updated_at: DateTime, limit: Int = 10, offset: Int = 0): [LoanTypes!]\n}\n\ntype Subscription {\n  Applications: ApplicationsResult!\n  Customers: CustomersResult!\n  LoanTypes: LoanTypesResult!\n}\n"
     }
   }
 }

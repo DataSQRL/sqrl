@@ -17,6 +17,12 @@ LogicalProject(customerid=[$0], week=[$1], total=[$2], saved=[$3])
     LogicalProject(customerid=[$1], week=[endOfWeek($2)], $f2=[*($4, $5)], $f3=[COALESCE($6, 0.0:DECIMAL(2, 1))], id=[$0], time=[$2])
       LogicalTableScan(table=[[orders_2]])
 
+=== kafka.CustomerSpending
+ID:     customerspending_1_4
+Type:   export
+Stage:  streams
+Inputs: customerspending_1
+
 === Orders
 ID:     orders_2
 Type:   stream
@@ -33,6 +39,12 @@ Schema:
  - discount: DOUBLE
 Plan:
 LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] options:[2]]]]) hints[WatermarkHint options:[2]]
+
+=== kafka.Orders
+ID:     orders_2_3
+Type:   export
+Stage:  streams
+Inputs: orders_2
 
 === ProductRevenue
 ID:     productrevenue_1
@@ -57,6 +69,12 @@ Type:   export
 Stage:  streams
 Inputs: productrevenue_1
 
+=== kafka.ProductRevenue
+ID:     productrevenue_1_2
+Type:   export
+Stage:  streams
+Inputs: productrevenue_1
+
 >>>flink.json
 {
   "flinkSql" : [
@@ -65,19 +83,28 @@ Inputs: productrevenue_1
     "CREATE TEMPORARY TABLE `customerspending_1` (\n  `customerid` BIGINT NOT NULL,\n  `week` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `total` DOUBLE NOT NULL,\n  `saved` DOUBLE NOT NULL,\n  PRIMARY KEY (`customerid`, `week`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'customerspending_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `orders_2` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `productid` BIGINT NOT NULL,\n  `quantity` BIGINT NOT NULL,\n  `unit_price` DOUBLE NOT NULL,\n  `discount` DOUBLE,\n  PRIMARY KEY (`id`, `time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orders_2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `productrevenue_1` (\n  `productid` BIGINT NOT NULL,\n  `week` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `revenue` DOUBLE NOT NULL,\n  PRIMARY KEY (`productid`, `week`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'productrevenue_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `customerspending_1_4` (\n  `customerid` BIGINT NOT NULL,\n  `week` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `total` DOUBLE NOT NULL,\n  `saved` DOUBLE NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'customerspending_1',\n  'scan.startup.mode' = 'group-offsets'\n);",
+    "CREATE TEMPORARY TABLE `orders_2_3` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `productid` BIGINT NOT NULL,\n  `quantity` BIGINT NOT NULL,\n  `unit_price` DOUBLE NOT NULL,\n  `discount` DOUBLE\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'orders_2',\n  'scan.startup.mode' = 'group-offsets'\n);",
     "CREATE TEMPORARY TABLE `productrevenue_1_1` (\n  `productid` BIGINT NOT NULL,\n  `week` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `revenue` DOUBLE NOT NULL\n) WITH (\n  'connector' = 'print',\n  'print-identifier' = 'Revenue'\n);",
+    "CREATE TEMPORARY TABLE `productrevenue_1_2` (\n  `productid` BIGINT NOT NULL,\n  `week` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `revenue` DOUBLE NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'productrevenue_1',\n  'scan.startup.mode' = 'group-offsets'\n);",
     "CREATE VIEW `table$1`\nAS\nSELECT `customerid`, ENDOFWEEK(`time`) AS `week`, (`quantity` * `unit_price`) AS `$f2`, COALESCE(`discount`, 0.0) AS `$f3`, `id`, `time`\nFROM `orders_1`;",
     "CREATE VIEW `table$2`\nAS\nSELECT `customerid`, `window_time` AS `week`, SUM(`$f2`) AS `total`, SUM(`$f3`) AS `saved`\nFROM TABLE(TUMBLE((TABLE `table$1`), (DESCRIPTOR(`time`)), INTERVAL '604800' SECOND(9), INTERVAL '0' SECOND(1))) AS `t0`\nGROUP BY `customerid`, `window_start`, `window_end`, `window_time`;",
     "CREATE VIEW `table$3`\nAS\nSELECT *\nFROM `orders_1`;",
     "CREATE VIEW `table$4`\nAS\nSELECT `productid`, ENDOFWEEK(`time`) AS `week`, ((`quantity` * `unit_price`) - COALESCE(`discount`, 0.0)) AS `$f2`, `id`, `time`\nFROM `orders_1`;",
     "CREATE VIEW `table$5`\nAS\nSELECT `productid`, `window_time` AS `week`, SUM(`$f2`) AS `revenue`\nFROM TABLE(TUMBLE((TABLE `table$4`), (DESCRIPTOR(`time`)), INTERVAL '604800' SECOND(9), INTERVAL '0' SECOND(1))) AS `t0`\nGROUP BY `productid`, `window_start`, `window_end`, `window_time`;",
-    "CREATE VIEW `table$6`\nAS\nSELECT `productid`, ENDOFWEEK(`time`) AS `week`, ((`quantity` * `unit_price`) - COALESCE(`discount`, 0.0)) AS `$f2`, `id`, `time`\nFROM `orders_1`;",
-    "CREATE VIEW `table$7`\nAS\nSELECT `productid`, `window_time` AS `week`, SUM(`$f2`) AS `revenue`\nFROM TABLE(TUMBLE((TABLE `table$6`), (DESCRIPTOR(`time`)), INTERVAL '604800' SECOND(9), INTERVAL '0' SECOND(1))) AS `t0`\nGROUP BY `productid`, `window_start`, `window_end`, `window_time`;",
-    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customerspending_1`\n(SELECT *\nFROM `table$2`)\n;\nINSERT INTO `orders_2`\n(SELECT *\nFROM `table$3`)\n;\nINSERT INTO `productrevenue_1`\n(SELECT *\nFROM `table$5`)\n;\nINSERT INTO `productrevenue_1_1`\n(SELECT *\nFROM `table$7`)\n;\nEND;"
+    "CREATE VIEW `table$6`\nAS\nSELECT `customerid`, ENDOFWEEK(`time`) AS `week`, (`quantity` * `unit_price`) AS `$f2`, COALESCE(`discount`, 0.0) AS `$f3`, `id`, `time`\nFROM `orders_1`;",
+    "CREATE VIEW `table$7`\nAS\nSELECT `customerid`, `window_time` AS `week`, SUM(`$f2`) AS `total`, SUM(`$f3`) AS `saved`\nFROM TABLE(TUMBLE((TABLE `table$6`), (DESCRIPTOR(`time`)), INTERVAL '604800' SECOND(9), INTERVAL '0' SECOND(1))) AS `t0`\nGROUP BY `customerid`, `window_start`, `window_end`, `window_time`;",
+    "CREATE VIEW `table$8`\nAS\nSELECT *\nFROM `orders_1`;",
+    "CREATE VIEW `table$9`\nAS\nSELECT `productid`, ENDOFWEEK(`time`) AS `week`, ((`quantity` * `unit_price`) - COALESCE(`discount`, 0.0)) AS `$f2`, `id`, `time`\nFROM `orders_1`;",
+    "CREATE VIEW `table$10`\nAS\nSELECT `productid`, `window_time` AS `week`, SUM(`$f2`) AS `revenue`\nFROM TABLE(TUMBLE((TABLE `table$9`), (DESCRIPTOR(`time`)), INTERVAL '604800' SECOND(9), INTERVAL '0' SECOND(1))) AS `t0`\nGROUP BY `productid`, `window_start`, `window_end`, `window_time`;",
+    "CREATE VIEW `table$11`\nAS\nSELECT `productid`, ENDOFWEEK(`time`) AS `week`, ((`quantity` * `unit_price`) - COALESCE(`discount`, 0.0)) AS `$f2`, `id`, `time`\nFROM `orders_1`;",
+    "CREATE VIEW `table$12`\nAS\nSELECT `productid`, `window_time` AS `week`, SUM(`$f2`) AS `revenue`\nFROM TABLE(TUMBLE((TABLE `table$11`), (DESCRIPTOR(`time`)), INTERVAL '604800' SECOND(9), INTERVAL '0' SECOND(1))) AS `t0`\nGROUP BY `productid`, `window_start`, `window_end`, `window_time`;",
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customerspending_1`\n(SELECT *\nFROM `table$2`)\n;\nINSERT INTO `orders_2`\n(SELECT *\nFROM `table$3`)\n;\nINSERT INTO `productrevenue_1`\n(SELECT *\nFROM `table$5`)\n;\nINSERT INTO `customerspending_1_4`\n(SELECT *\nFROM `table$7`)\n;\nINSERT INTO `orders_2_3`\n(SELECT *\nFROM `table$8`)\n;\nINSERT INTO `productrevenue_1_1`\n(SELECT *\nFROM `table$10`)\n;\nINSERT INTO `productrevenue_1_2`\n(SELECT *\nFROM `table$12`)\n;\nEND;"
   ],
   "connectors" : [
     "print",
     "jdbc-sqrl",
+    "kafka",
     "filesystem"
   ],
   "formats" : [
@@ -86,7 +113,29 @@ Inputs: productrevenue_1
 }
 >>>kafka.json
 {
-  "topics" : [ ]
+  "topics" : [
+    {
+      "name" : "customerspending_1",
+      "numPartitions" : 1,
+      "replicationFactor" : 1,
+      "replicasAssignments" : { },
+      "config" : { }
+    },
+    {
+      "name" : "orders_2",
+      "numPartitions" : 1,
+      "replicationFactor" : 1,
+      "replicasAssignments" : { },
+      "config" : { }
+    },
+    {
+      "name" : "productrevenue_1",
+      "numPartitions" : 1,
+      "replicationFactor" : 1,
+      "replicasAssignments" : { },
+      "config" : { }
+    }
+  ]
 }
 >>>postgres.json
 {
@@ -560,11 +609,30 @@ Inputs: productrevenue_1
       }
     ],
     "mutations" : [ ],
-    "subscriptions" : [ ],
+    "subscriptions" : [
+      {
+        "fieldName" : "CustomerSpending",
+        "topic" : "customerspending_1",
+        "sinkConfig" : { },
+        "filters" : { }
+      },
+      {
+        "fieldName" : "Orders",
+        "topic" : "orders_2",
+        "sinkConfig" : { },
+        "filters" : { }
+      },
+      {
+        "fieldName" : "ProductRevenue",
+        "topic" : "productrevenue_1",
+        "sinkConfig" : { },
+        "filters" : { }
+      }
+    ],
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "type CustomerSpending {\n  customerid: Float!\n  week: DateTime!\n  total: Float!\n  saved: Float!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n\ntype ProductRevenue {\n  productid: Float!\n  week: DateTime!\n  revenue: Float!\n}\n\ntype Query {\n  CustomerSpending(customerid: Float, week: DateTime, limit: Int = 10, offset: Int = 0): [CustomerSpending!]\n  Orders(id: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [Orders!]\n  ProductRevenue(productid: Float, week: DateTime, limit: Int = 10, offset: Int = 0): [ProductRevenue!]\n}\n"
+      "schema" : "type CustomerSpending {\n  customerid: Float!\n  week: DateTime!\n  total: Float!\n  saved: Float!\n}\n\ntype CustomerSpendingResult {\n  customerid: Float!\n  week: DateTime!\n  total: Float!\n  saved: Float!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n\ntype OrdersResult {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n\ntype ProductRevenue {\n  productid: Float!\n  week: DateTime!\n  revenue: Float!\n}\n\ntype ProductRevenueResult {\n  productid: Float!\n  week: DateTime!\n  revenue: Float!\n}\n\ntype Query {\n  CustomerSpending(customerid: Float, week: DateTime, limit: Int = 10, offset: Int = 0): [CustomerSpending!]\n  Orders(id: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [Orders!]\n  ProductRevenue(productid: Float, week: DateTime, limit: Int = 10, offset: Int = 0): [ProductRevenue!]\n}\n\ntype Subscription {\n  CustomerSpending: CustomerSpendingResult!\n  Orders: OrdersResult!\n  ProductRevenue: ProductRevenueResult!\n}\n"
     }
   }
 }
