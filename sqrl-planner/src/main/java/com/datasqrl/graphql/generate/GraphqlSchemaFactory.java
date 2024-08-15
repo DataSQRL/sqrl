@@ -191,8 +191,9 @@ public class GraphqlSchemaFactory {
 
     // Retrieve streamable tables from the schema
     List<PhysicalRelationalTable> streamTables = schema.getExports().stream()
-        .filter(e->SystemBuiltInConnectors.forExport(e.getSink().getPath().getFirst()).isPresent())
-        .filter(e->SystemBuiltInConnectors.forExport(e.getSink().getPath().getFirst()).get() == SystemBuiltInConnectors.LOG_ENGINE)
+        .filter(e->e.getSink().getPath().getFirst().getCanonical().equalsIgnoreCase("kafka"))
+//        .filter(e->SystemBuiltInConnectors.forExport(e.getSink().getPath().getFirst()).isPresent())
+//        .filter(e->SystemBuiltInConnectors.forExport(e.getSink().getPath().getFirst()).get() == SystemBuiltInConnectors.LOG_ENGINE)
         .map(e->e.getRelNode().getTable().unwrap(
             PhysicalRelationalTable.class))
         .filter(e -> e.getType() == TableType.STREAM)
