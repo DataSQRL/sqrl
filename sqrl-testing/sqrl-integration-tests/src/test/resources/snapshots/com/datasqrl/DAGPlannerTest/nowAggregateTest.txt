@@ -31,7 +31,7 @@ LogicalAggregate(group=[{0, 1}], order_count=[COUNT()]) hints[TumbleAggregationH
     LogicalTableScan(table=[[orders_2]])
 
 === kafka.OrderAgg1
-ID:     orderagg1_1_2
+ID:     orderagg1_1_1
 Type:   export
 Stage:  streams
 Inputs: orderagg1_1
@@ -72,7 +72,7 @@ LogicalProject(id=[$0], time=[$2], order_count=[$5])
         LogicalTableScan(table=[[ordernow3_1]])
 
 === kafka.OrderAugment
-ID:     orderaugment_1_1
+ID:     orderaugment_1_2
 Type:   export
 Stage:  streams
 Inputs: orderaugment_1
@@ -96,7 +96,7 @@ LogicalAggregate(group=[{0, 1}], order_count=[COUNT()]) hints[TumbleAggregationH
     LogicalTableScan(table=[[orders_2]])
 
 === kafka.OrderNow1
-ID:     ordernow1_1_4
+ID:     ordernow1_1_3
 Type:   export
 Stage:  streams
 Inputs: ordernow1_1
@@ -119,7 +119,7 @@ LogicalAggregate(group=[{0}], order_count=[COUNT()]) hints[TumbleAggregationHint
     LogicalTableScan(table=[[orders_2]])
 
 === kafka.OrderNow2
-ID:     ordernow2_1_3
+ID:     ordernow2_1_4
 Type:   export
 Stage:  streams
 Inputs: ordernow2_1
@@ -232,8 +232,8 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptoepoch` AS 'com.datasqrl.time.TimestampToEpoch' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofsecond` AS 'com.datasqrl.time.EndOfSecond' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochtotimestamp` AS 'com.datasqrl.time.EpochToTimestamp' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofday` AS 'com.datasqrl.time.EndOfDay' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `atzone` AS 'com.datasqrl.time.AtZone' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofday` AS 'com.datasqrl.time.EndOfDay' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofhour` AS 'com.datasqrl.time.EndOfHour' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofyear` AS 'com.datasqrl.time.EndOfYear' LANGUAGE JAVA;",
     "CREATE TEMPORARY TABLE `customer_1` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `timestamp` AS EPOCHTOTIMESTAMP(`lastUpdated`),\n  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,\n  WATERMARK FOR `timestamp` AS (`timestamp` - INTERVAL '0.001' SECOND)\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
@@ -250,10 +250,10 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
     "CREATE TEMPORARY TABLE `ordertime1_1` (\n  `customer` BIGINT NOT NULL,\n  `bucket` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `order_count` BIGINT NOT NULL,\n  PRIMARY KEY (`customer`, `bucket`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'ordertime1_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `product_2` (\n  `productid` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,\n  PRIMARY KEY (`_uuid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'product_2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `recenttotal_1` (\n  `total` DOUBLE NOT NULL,\n  `quantity` BIGINT NOT NULL,\n  `__pk` INTEGER NOT NULL,\n  `_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`__pk`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'recenttotal_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `orderagg1_1_2` (\n  `customer` BIGINT NOT NULL,\n  `bucket` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `order_count` BIGINT NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'orderagg1_1',\n  'scan.startup.mode' = 'group-offsets'\n);",
-    "CREATE TEMPORARY TABLE `orderaugment_1_1` (\n  `id` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `order_count` BIGINT NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'orderaugment_1',\n  'scan.startup.mode' = 'group-offsets'\n);",
-    "CREATE TEMPORARY TABLE `ordernow1_1_4` (\n  `customer` BIGINT NOT NULL,\n  `bucket` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `order_count` BIGINT NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'ordernow1_1',\n  'scan.startup.mode' = 'group-offsets'\n);",
-    "CREATE TEMPORARY TABLE `ordernow2_1_3` (\n  `bucket` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `order_count` BIGINT NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'ordernow2_1',\n  'scan.startup.mode' = 'group-offsets'\n);",
+    "CREATE TEMPORARY TABLE `orderagg1_1_1` (\n  `customer` BIGINT NOT NULL,\n  `bucket` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `order_count` BIGINT NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'orderagg1_1',\n  'scan.startup.mode' = 'group-offsets'\n);",
+    "CREATE TEMPORARY TABLE `orderaugment_1_2` (\n  `id` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `order_count` BIGINT NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'orderaugment_1',\n  'scan.startup.mode' = 'group-offsets'\n);",
+    "CREATE TEMPORARY TABLE `ordernow1_1_3` (\n  `customer` BIGINT NOT NULL,\n  `bucket` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `order_count` BIGINT NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'ordernow1_1',\n  'scan.startup.mode' = 'group-offsets'\n);",
+    "CREATE TEMPORARY TABLE `ordernow2_1_4` (\n  `bucket` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `order_count` BIGINT NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'ordernow2_1',\n  'scan.startup.mode' = 'group-offsets'\n);",
     "CREATE TEMPORARY TABLE `ordertime1_1_5` (\n  `customer` BIGINT NOT NULL,\n  `bucket` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `order_count` BIGINT NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'ordertime1_1',\n  'scan.startup.mode' = 'group-offsets'\n);",
     "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `customer_1`;",
     "CREATE VIEW `table$2`\nAS\nSELECT `customerid` AS `customer`, ENDOFHOUR(`time`, 1, 15) AS `bucket`, `id`, `time`\nFROM `orders_1`;",
@@ -285,7 +285,7 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
     "CREATE VIEW `table$28`\nAS\nSELECT `window_time` AS `bucket`, COUNT(*) AS `order_count`\nFROM TABLE(TUMBLE((TABLE `table$27`), (DESCRIPTOR(`time`)), INTERVAL '86400' SECOND(8), INTERVAL '0' SECOND(1))) AS `t0`\nGROUP BY `window_start`, `window_end`, `window_time`;",
     "CREATE VIEW `table$29`\nAS\nSELECT `customerid` AS `customer`, ENDOFSECOND(`time`) AS `bucket`, `id`, `time`\nFROM `orders_1`;",
     "CREATE VIEW `table$30`\nAS\nSELECT `customer`, `window_time` AS `bucket`, COUNT(*) AS `order_count`\nFROM TABLE(TUMBLE((TABLE `table$29`), (DESCRIPTOR(`time`)), INTERVAL '1' SECOND(4), INTERVAL '0' SECOND(1))) AS `t0`\nGROUP BY `customer`, `window_start`, `window_end`, `window_time`;",
-    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer_2`\n(SELECT *\nFROM `table$1`)\n;\nINSERT INTO `orderagg1_1`\n(SELECT *\nFROM `table$3`)\n;\nINSERT INTO `orderagg2_1`\n(SELECT *\nFROM `table$4`)\n;\nINSERT INTO `orderaugment_1`\n(SELECT *\nFROM `table$7`)\n;\nINSERT INTO `ordernow1_1`\n(SELECT *\nFROM `table$9`)\n;\nINSERT INTO `ordernow2_1`\n(SELECT *\nFROM `table$11`)\n;\nINSERT INTO `ordernow3_1`\n(SELECT *\nFROM `table$13`)\n;\nINSERT INTO `orders_2`\n(SELECT *\nFROM `table$14`)\n;\nINSERT INTO `ordertime1_1`\n(SELECT *\nFROM `table$16`)\n;\nINSERT INTO `product_2`\n(SELECT *\nFROM `table$17`)\n;\nINSERT INTO `recenttotal_1`\n(SELECT *\nFROM `table$19`)\n;\nINSERT INTO `orderagg1_1_2`\n(SELECT *\nFROM `table$21`)\n;\nINSERT INTO `orderaugment_1_1`\n(SELECT *\nFROM `table$24`)\n;\nINSERT INTO `ordernow1_1_4`\n(SELECT *\nFROM `table$26`)\n;\nINSERT INTO `ordernow2_1_3`\n(SELECT *\nFROM `table$28`)\n;\nINSERT INTO `ordertime1_1_5`\n(SELECT *\nFROM `table$30`)\n;\nEND;"
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer_2`\n(SELECT *\nFROM `table$1`)\n;\nINSERT INTO `orderagg1_1`\n(SELECT *\nFROM `table$3`)\n;\nINSERT INTO `orderagg2_1`\n(SELECT *\nFROM `table$4`)\n;\nINSERT INTO `orderaugment_1`\n(SELECT *\nFROM `table$7`)\n;\nINSERT INTO `ordernow1_1`\n(SELECT *\nFROM `table$9`)\n;\nINSERT INTO `ordernow2_1`\n(SELECT *\nFROM `table$11`)\n;\nINSERT INTO `ordernow3_1`\n(SELECT *\nFROM `table$13`)\n;\nINSERT INTO `orders_2`\n(SELECT *\nFROM `table$14`)\n;\nINSERT INTO `ordertime1_1`\n(SELECT *\nFROM `table$16`)\n;\nINSERT INTO `product_2`\n(SELECT *\nFROM `table$17`)\n;\nINSERT INTO `recenttotal_1`\n(SELECT *\nFROM `table$19`)\n;\nINSERT INTO `orderagg1_1_1`\n(SELECT *\nFROM `table$21`)\n;\nINSERT INTO `orderaugment_1_2`\n(SELECT *\nFROM `table$24`)\n;\nINSERT INTO `ordernow1_1_3`\n(SELECT *\nFROM `table$26`)\n;\nINSERT INTO `ordernow2_1_4`\n(SELECT *\nFROM `table$28`)\n;\nINSERT INTO `ordertime1_1_5`\n(SELECT *\nFROM `table$30`)\n;\nEND;"
   ],
   "connectors" : [
     "jdbc-sqrl",

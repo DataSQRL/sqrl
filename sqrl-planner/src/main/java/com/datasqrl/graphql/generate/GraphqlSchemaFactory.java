@@ -202,9 +202,18 @@ public class GraphqlSchemaFactory {
     }
 
     // Define subscription fields for each streamable table
-    for (PhysicalRelationalTable table : streamTables) {
+    outer: for (PhysicalRelationalTable table : streamTables) {
       String tableName = table.getTablePath().getDisplay();
       if (tableName.startsWith(HIDDEN_PREFIX)) continue;
+
+      //check if primary keys are nullable:
+      for (int i : table.getPrimaryKey().getPkIndexes()) {
+        if (table.getRowType().getFieldList().get(i).getType().isNullable()) {
+          log.warn("Nullable primary key {} on table {}", table.getRowType().getFieldList().get(i).getName(),
+              table.getTableName().getDisplay());
+          continue outer;
+        }
+      }
 
       GraphQLFieldDefinition subscriptionField = GraphQLFieldDefinition.newFieldDefinition()
           .name(tableName)
