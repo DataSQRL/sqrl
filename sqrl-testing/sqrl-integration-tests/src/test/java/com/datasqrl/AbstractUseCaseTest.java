@@ -52,12 +52,14 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
     arguments.add("--profile");
     arguments.add(getProjectRoot(script).resolve("profiles/default").toString());
 //    arguments.add("-t"); arguments.add(deployDir.toString());
-    arguments.add("--plan");
-    Path planDir = script.getParent().getParent().resolve("plan").resolve(getDisplayName(script));
-    arguments.add(planDir.toString());
     String testname = Stream.of(script, graphQlFile, packageFile)
         .map(AbstractAssetSnapshotTest::getDisplayName)
         .collect(Collectors.joining("-"));
+    arguments.add("--plan");
+    Path planDir = script.getParent().getParent().resolve("plan")
+        .resolve(testname);
+    arguments.add(planDir.toString());
+
     this.snapshot = Snapshot.of(testname, getClass());
 //    System.out.printf("%s - %s\n", baseDir, arguments);
     AssertStatusHook hook = execute(baseDir, planDir, arguments.toArray(new String[0]));

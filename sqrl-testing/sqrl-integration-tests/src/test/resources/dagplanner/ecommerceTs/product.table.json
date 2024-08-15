@@ -11,11 +11,6 @@
     "timestamp" : "_ingest_time",
     "watermark-millis" : "1",
     "type" : "source",
-    "primary-key" : ["_uuid"]
-  },
-  "metadata" : {
-    "_uuid" : {
-      "attribute" : "secure.uuid()"
-    }
+    "primary-key" : ["productid", "name", "description", "category"]
   }
 }

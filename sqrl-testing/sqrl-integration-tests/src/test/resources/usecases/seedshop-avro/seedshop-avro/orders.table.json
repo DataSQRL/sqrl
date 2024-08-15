@@ -2,8 +2,9 @@
   "version": 1,
   "flink" : {
     "format" : "avro",
-    "bootstrap.servers": "${sys:datasqrl.kafka_servers}",
-    "group.id": "datasqrl-orders",
+    "properties.bootstrap.servers": "${PROPERTIES_BOOTSTRAP_SERVERS}",
+    "properties.group.id": "datasqrl-orders",
+    "topic": "${sqrl:topic}",
     "connector" : "kafka"
   },
   "table" : {

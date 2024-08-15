@@ -11,6 +11,7 @@ import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.Resources;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
@@ -20,11 +21,11 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.SneakyThrows;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.CompiledPlan;
@@ -32,7 +33,6 @@ import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.TableResult;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.api.internal.TableEnvironmentImpl;
-import org.apache.flink.table.operations.Operation;
 import org.apache.flink.table.operations.StatementSetOperation;
 import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -52,7 +52,8 @@ public class DatasqrlRun {
   public DatasqrlRun() {
   }
 
-  public DatasqrlRun(Path path) {
+  @VisibleForTesting
+  public void setPath(Path path) {
     this.path = path;
   }
 
@@ -100,11 +101,10 @@ public class DatasqrlRun {
       if (statement.trim().isEmpty()) {
         continue;
       }
-      System.out.println(replaceWithEnv(statement));
+//      System.out.println(replaceWithEnv(statement));
       tableResult = tEnv.executeSql(replaceWithEnv(statement));
     }
     String insert = replaceWithEnv(statements.get(statements.size() - 1));
-//    tableResult = tEnv.executeSql(insert);
     TableEnvironmentImpl tEnv1 = (TableEnvironmentImpl) tEnv;
     StatementSetOperation parse = (StatementSetOperation)tEnv1.getParser().parse(insert).get(0);
 
@@ -114,19 +114,20 @@ public class DatasqrlRun {
   }
 
   Map<String, String> getEnv() {
-    return Map.of(
-        "PROPERTIES_BOOTSTRAP_SERVERS",CLUSTER == null?"":CLUSTER.bootstrapServers(),
-        "PROPERTIES_GROUP_ID","mygroupid",
-        "JDBC_URL",isStarted.get() ? postgreSQLContainer.getJdbcUrl() : "jdbc:postgresql://127.0.0.1:5432/datasqrl",
-        "JDBC_USERNAME","postgres",
-        "JDBC_PASSWORD","postgres",
-        //todo target?
-        "DATA_PATH",Path.of(System.getProperty("user.dir")).resolve("build/deploy/flink/data").toString(),
-        "PGHOST","localhost",
-        "PGUSER","postgres",
-        "PGPASSWORD","postgres",
-        "PGDATABASE","datasqrl"
-    );
+    Map<String, String> configMap = new HashMap<>();
+    configMap.put("PROPERTIES_BOOTSTRAP_SERVERS", CLUSTER.bootstrapServers());
+    configMap.put("PROPERTIES_GROUP_ID", "mygroupid");
+    configMap.put("JDBC_URL", isStarted.get() ? postgreSQLContainer.getJdbcUrl() : "jdbc:postgresql://127.0.0.1:5432/datasqrl");
+    configMap.put("JDBC_USERNAME", "postgres");
+    configMap.put("JDBC_PASSWORD", "postgres");
+    //todo target?
+    configMap.put("DATA_PATH", Path.of(System.getProperty("user.dir")).resolve("build/deploy/flink/data").toString());
+    configMap.put("PGHOST", "localhost");
+    configMap.put("PGUSER", "postgres");
+    configMap.put("PGPASSWORD", "postgres");
+    configMap.put("PGDATABASE", "datasqrl");
+
+    return configMap;
   }
   public String replaceWithEnv(String command) {
     Map<String, String> envVariables = getEnv();
@@ -147,9 +148,14 @@ public class DatasqrlRun {
   }
 
   @SneakyThrows
-  public void startKafka() {
+  public void startKafkaCluster() {
     CLUSTER = new EmbeddedKafkaCluster(1);
     CLUSTER.start();
+  }
+
+  @SneakyThrows
+  public void startKafka() {
+    startKafkaCluster();
 
     Map map = objectMapper.readValue(path.resolve("kafka.json").toFile(), Map.class);
     List<Map<String, Object>> topics = (List<Map<String, Object>>)map.get("topics");
