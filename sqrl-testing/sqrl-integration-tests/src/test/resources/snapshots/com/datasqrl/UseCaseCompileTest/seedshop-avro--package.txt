@@ -17,6 +17,12 @@ LogicalAggregate(group=[{0}], number=[COUNT()], volume=[SUM($1)]) hints[TumbleAg
       LogicalTableScan(table=[[orders_2]])
       LogicalTableFunctionScan(invocation=[Orders.items($cor0.items)], rowType=[RecordType(INTEGER productid, INTEGER quantity, DOUBLE unit_price, DOUBLE discount)], elementType=[class [Ljava.lang.Object;])
 
+=== kafka.OrderCount
+ID:     ordercount_1_1
+Type:   export
+Stage:  streams
+Inputs: ordercount_1
+
 === Orders
 ID:     orders_2
 Type:   stream
@@ -31,6 +37,12 @@ Schema:
  - _source_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
 LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+
+=== kafka.Orders
+ID:     orders_2_2
+Type:   export
+Stage:  streams
+Inputs: orders_2
 
 >>>flink.json
 {
@@ -53,22 +65,43 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
     "CREATE TEMPORARY TABLE `orders_1` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `items` ROW(`productid` INTEGER NOT NULL, `quantity` INTEGER NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,\n  `_source_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL METADATA FROM 'timestamp',\n  WATERMARK FOR `_source_time` AS (`_source_time` - INTERVAL '0.0' SECOND)\n) WITH (\n  'format' = 'avro',\n  'bootstrap.servers' = '${sys:datasqrl.kafka_servers}',\n  'connector' = 'kafka',\n  'group.id' = 'datasqrl-orders'\n);",
     "CREATE TEMPORARY TABLE `ordercount_1` (\n  `timeSec` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `number` BIGINT NOT NULL,\n  `volume` INTEGER NOT NULL,\n  PRIMARY KEY (`timeSec`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'ordercount_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `orders_2` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `items` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  `_source_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`, `time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orders_2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `ordercount_1_1` (\n  `timeSec` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `number` BIGINT NOT NULL,\n  `volume` INTEGER NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'ordercount_1',\n  'scan.startup.mode' = 'group-offsets'\n);",
+    "CREATE TEMPORARY TABLE `orders_2_2` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `items` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  `_source_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'orders_2',\n  'scan.startup.mode' = 'group-offsets'\n);",
     "CREATE VIEW `table$1`\nAS\nSELECT ENDOFSECOND(`$cor0`.`_source_time`) AS `timeSec`, `t00`.`quantity`, `$cor0`.`id`, `$cor0`.`time`, `t00`.`productid`, `$cor0`.`_source_time`\nFROM `orders_1` AS `$cor0`,\nUNNEST(`$cor0`.`items`) AS `t00` (`productid`, `quantity`, `unit_price`, `discount`);",
     "CREATE VIEW `table$2`\nAS\nSELECT `window_time` AS `timeSec`, COUNT(*) AS `number`, SUM(`quantity`) AS `volume`\nFROM TABLE(TUMBLE((TABLE `table$1`), (DESCRIPTOR(`_source_time`)), INTERVAL '1' SECOND(4), INTERVAL '0' SECOND(1))) AS `t2`\nGROUP BY `window_start`, `window_end`, `window_time`;",
     "CREATE VIEW `table$3`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`items`) AS `items`, `_source_time`\nFROM `orders_1`;",
-    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `ordercount_1`\n(SELECT *\nFROM `table$2`)\n;\nINSERT INTO `orders_2`\n(SELECT *\nFROM `table$3`)\n;\nEND;"
+    "CREATE VIEW `table$4`\nAS\nSELECT ENDOFSECOND(`$cor0`.`_source_time`) AS `timeSec`, `t00`.`quantity`, `$cor0`.`id`, `$cor0`.`time`, `t00`.`productid`, `$cor0`.`_source_time`\nFROM `orders_1` AS `$cor0`,\nUNNEST(`$cor0`.`items`) AS `t00` (`productid`, `quantity`, `unit_price`, `discount`);",
+    "CREATE VIEW `table$5`\nAS\nSELECT `window_time` AS `timeSec`, COUNT(*) AS `number`, SUM(`quantity`) AS `volume`\nFROM TABLE(TUMBLE((TABLE `table$4`), (DESCRIPTOR(`_source_time`)), INTERVAL '1' SECOND(4), INTERVAL '0' SECOND(1))) AS `t2`\nGROUP BY `window_start`, `window_end`, `window_time`;",
+    "CREATE VIEW `table$6`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`items`) AS `items`, `_source_time`\nFROM `orders_1`;",
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `ordercount_1`\n(SELECT *\nFROM `table$2`)\n;\nINSERT INTO `orders_2`\n(SELECT *\nFROM `table$3`)\n;\nINSERT INTO `ordercount_1_1`\n(SELECT *\nFROM `table$5`)\n;\nINSERT INTO `orders_2_2`\n(SELECT *\nFROM `table$6`)\n;\nEND;"
   ],
   "connectors" : [
     "jdbc-sqrl",
     "kafka"
   ],
   "formats" : [
+    "flexible-json",
     "avro"
   ]
 }
 >>>kafka.json
 {
-  "topics" : [ ]
+  "topics" : [
+    {
+      "name" : "ordercount_1",
+      "numPartitions" : 1,
+      "replicationFactor" : 1,
+      "replicasAssignments" : { },
+      "config" : { }
+    },
+    {
+      "name" : "orders_2",
+      "numPartitions" : 1,
+      "replicationFactor" : 1,
+      "replicasAssignments" : { },
+      "config" : { }
+    }
+  ]
 }
 >>>postgres.json
 {
@@ -305,11 +338,24 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
       }
     ],
     "mutations" : [ ],
-    "subscriptions" : [ ],
+    "subscriptions" : [
+      {
+        "fieldName" : "OrderCount",
+        "topic" : "ordercount_1",
+        "sinkConfig" : { },
+        "filters" : { }
+      },
+      {
+        "fieldName" : "Orders",
+        "topic" : "orders_2",
+        "sinkConfig" : { },
+        "filters" : { }
+      }
+    ],
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype OrderCount {\n  timeSec: DateTime!\n  number: Float!\n  volume: Int!\n}\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: String!\n  items(limit: Int = 10, offset: Int = 0): [items!]\n}\n\ntype Query {\n  OrderCount(timeSec: DateTime, limit: Int = 10, offset: Int = 0): [OrderCount!]\n  Orders(id: Float, time: String, limit: Int = 10, offset: Int = 0): [Orders!]\n}\n\ntype items {\n  productid: Int!\n  quantity: Int!\n  unit_price: Float!\n  discount: Float\n}\n"
+      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype OrderCount {\n  timeSec: DateTime!\n  number: Float!\n  volume: Int!\n}\n\ntype OrderCountResult {\n  timeSec: DateTime!\n  number: Float!\n  volume: Int!\n}\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: String!\n  items(limit: Int = 10, offset: Int = 0): [items!]\n}\n\ntype OrdersResult {\n  id: Float!\n  customerid: Float!\n  time: String!\n  items: [Orders_itemsResult]!\n  _source_time: DateTime!\n}\n\ntype Orders_itemsResult {\n  productid: Int!\n  quantity: Int!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  OrderCount(timeSec: DateTime, limit: Int = 10, offset: Int = 0): [OrderCount!]\n  Orders(id: Float, time: String, limit: Int = 10, offset: Int = 0): [Orders!]\n}\n\ntype Subscription {\n  OrderCount: OrderCountResult!\n  Orders: OrdersResult!\n}\n\ntype items {\n  productid: Int!\n  quantity: Int!\n  unit_price: Float!\n  discount: Float\n}\n"
     }
   }
 }
