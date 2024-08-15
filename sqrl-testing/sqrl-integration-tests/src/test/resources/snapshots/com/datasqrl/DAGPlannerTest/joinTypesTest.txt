@@ -122,12 +122,6 @@ Schema:
 Plan:
 LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] options:[2]]]]) hints[WatermarkHint options:[2]]
 
-=== kafka.Orders
-ID:     orders_2_2
-Type:   export
-Stage:  streams
-Inputs: orders_2
-
 >>>flink.json
 {
   "flinkSql" : [
@@ -152,15 +146,13 @@ Inputs: orders_2
     "CREATE TEMPORARY TABLE `ordercustomer2_1` (\n  `id` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`, `_time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'ordercustomer2_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `orders_2` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  PRIMARY KEY (`id`, `time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orders_2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `ordercustomer2_1_1` (\n  `id` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'ordercustomer2_1',\n  'scan.startup.mode' = 'group-offsets'\n);",
-    "CREATE TEMPORARY TABLE `orders_2_2` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI=')\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'orders_2',\n  'scan.startup.mode' = 'group-offsets'\n);",
     "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `customer_1`;",
     "CREATE VIEW `table$2`\nAS\nSELECT *\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, (ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC NULLS LAST)) AS `_rownum`\nFROM `customer_1`) AS `t`\nWHERE (`_rownum` = 1);",
     "CREATE VIEW `table$3`\nAS\nSELECT `$cor0`.`id`, `t0`.`name`, `$cor0`.`time` AS `_time`\nFROM `orders_1` AS `$cor0`\nLEFT JOIN `table$2` FOR SYSTEM_TIME AS OF `$cor0`.`time` AS `t0` ON (`$cor0`.`customerid` = `t0`.`customerid`);",
     "CREATE VIEW `table$4`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders_1`;",
     "CREATE VIEW `table$5`\nAS\nSELECT *\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, (ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC NULLS LAST)) AS `_rownum`\nFROM `customer_1`) AS `t`\nWHERE (`_rownum` = 1);",
     "CREATE VIEW `table$6`\nAS\nSELECT `$cor2`.`id`, `t0`.`name`, `$cor2`.`time` AS `_time`\nFROM `orders_1` AS `$cor2`\nLEFT JOIN `table$5` FOR SYSTEM_TIME AS OF `$cor2`.`time` AS `t0` ON (`$cor2`.`customerid` = `t0`.`customerid`);",
-    "CREATE VIEW `table$7`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders_1`;",
-    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer_3`\n(SELECT *\nFROM `table$1`)\n;\nINSERT INTO `ordercustomer2_1`\n(SELECT *\nFROM `table$3`)\n;\nINSERT INTO `orders_2`\n(SELECT *\nFROM `table$4`)\n;\nINSERT INTO `ordercustomer2_1_1`\n(SELECT *\nFROM `table$6`)\n;\nINSERT INTO `orders_2_2`\n(SELECT *\nFROM `table$7`)\n;\nEND;"
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer_3`\n(SELECT *\nFROM `table$1`)\n;\nINSERT INTO `ordercustomer2_1`\n(SELECT *\nFROM `table$3`)\n;\nINSERT INTO `orders_2`\n(SELECT *\nFROM `table$4`)\n;\nINSERT INTO `ordercustomer2_1_1`\n(SELECT *\nFROM `table$6`)\n;\nEND;"
   ],
   "connectors" : [
     "jdbc-sqrl",
@@ -177,13 +169,6 @@ Inputs: orders_2
   "topics" : [
     {
       "name" : "ordercustomer2_1",
-      "numPartitions" : 1,
-      "replicationFactor" : 1,
-      "replicasAssignments" : { },
-      "config" : { }
-    },
-    {
-      "name" : "orders_2",
       "numPartitions" : 1,
       "replicationFactor" : 1,
       "replicasAssignments" : { },
@@ -678,18 +663,12 @@ Inputs: orders_2
         "topic" : "ordercustomer2_1",
         "sinkConfig" : { },
         "filters" : { }
-      },
-      {
-        "fieldName" : "Orders",
-        "topic" : "orders_2",
-        "sinkConfig" : { },
-        "filters" : { }
       }
     ],
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "type Customer {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype OrderCustomer {\n  id: Float!\n  name: String\n}\n\ntype OrderCustomer2 {\n  id: Float!\n  name: String\n}\n\ntype OrderCustomer2Result {\n  id: Float!\n  name: String\n}\n\ntype OrderCustomer3 {\n  id: Float!\n  name: String\n}\n\ntype OrderCustomer4 {\n  id: Float!\n  name: String\n}\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries(limit: Int = 10, offset: Int = 0): [entries!]\n}\n\ntype OrdersResult {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries: [Orders_entriesResult]!\n}\n\ntype Orders_entriesResult {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  Customer(customerid: Float, limit: Int = 10, offset: Int = 0): [Customer!]\n  OrderCustomer(id: Float, limit: Int = 10, offset: Int = 0): [OrderCustomer!]\n  OrderCustomer2(id: Float, limit: Int = 10, offset: Int = 0): [OrderCustomer2!]\n  OrderCustomer3(id: Float, limit: Int = 10, offset: Int = 0): [OrderCustomer3!]\n  OrderCustomer4(id: Float, limit: Int = 10, offset: Int = 0): [OrderCustomer4!]\n  Orders(id: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [Orders!]\n}\n\ntype Subscription {\n  OrderCustomer2: OrderCustomer2Result!\n  Orders: OrdersResult!\n}\n\ntype entries {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n"
+      "schema" : "type Customer {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype OrderCustomer {\n  id: Float!\n  name: String\n}\n\ntype OrderCustomer2 {\n  id: Float!\n  name: String\n}\n\ntype OrderCustomer2Result {\n  id: Float!\n  name: String\n}\n\ntype OrderCustomer3 {\n  id: Float!\n  name: String\n}\n\ntype OrderCustomer4 {\n  id: Float!\n  name: String\n}\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries(limit: Int = 10, offset: Int = 0): [entries!]\n}\n\ntype Query {\n  Customer(customerid: Float, limit: Int = 10, offset: Int = 0): [Customer!]\n  OrderCustomer(id: Float, limit: Int = 10, offset: Int = 0): [OrderCustomer!]\n  OrderCustomer2(id: Float, limit: Int = 10, offset: Int = 0): [OrderCustomer2!]\n  OrderCustomer3(id: Float, limit: Int = 10, offset: Int = 0): [OrderCustomer3!]\n  OrderCustomer4(id: Float, limit: Int = 10, offset: Int = 0): [OrderCustomer4!]\n  Orders(id: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [Orders!]\n}\n\ntype Subscription {\n  OrderCustomer2: OrderCustomer2Result!\n}\n\ntype entries {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n"
     }
   }
 }

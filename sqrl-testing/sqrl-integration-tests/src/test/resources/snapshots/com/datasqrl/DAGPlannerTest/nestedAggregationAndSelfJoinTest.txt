@@ -77,7 +77,7 @@ LogicalProject(id=[$0], _customerid=[$1], _time=[$2], _ingest_time=[$4])
     LogicalTableScan(table=[[orders_2]])
 
 === kafka.Orders2
-ID:     orders2_1_2
+ID:     orders2_1_1
 Type:   export
 Stage:  streams
 Inputs: orders2_1
@@ -96,12 +96,6 @@ Schema:
  - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
 LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
-
-=== kafka.Orders
-ID:     orders_2_4
-Type:   export
-Stage:  streams
-Inputs: orders_2
 
 === orders_by_day
 ID:     orders_by_day_1
@@ -147,7 +141,7 @@ LogicalProject(id=[$0], customerid=[$1], time=[$2], price=[$8], num=[$9], _inges
     LogicalTableScan(table=[[total_1]])
 
 === kafka.OrdersInline
-ID:     ordersinline_1_1
+ID:     ordersinline_1_2
 Type:   export
 Stage:  streams
 Inputs: ordersinline_1
@@ -203,9 +197,8 @@ LogicalProject(__pk1_id=[$0], __pk2_customerid=[$1], __pk3_time=[$2], price=[$4]
     "CREATE TEMPORARY TABLE `ordersinline_1` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `price` DOUBLE,\n  `num` BIGINT NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`, `customerid`, `time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'ordersinline_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `total_1` (\n  `__pk1_id` BIGINT NOT NULL,\n  `__pk2_customerid` BIGINT NOT NULL,\n  `__pk3_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `price` DOUBLE,\n  `num` BIGINT NOT NULL,\n  `discount` DOUBLE,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`__pk1_id`, `__pk2_customerid`, `__pk3_time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'total_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `entrycount_1_3` (\n  `price` DOUBLE,\n  `_id` BIGINT NOT NULL,\n  `_customerid` BIGINT NOT NULL,\n  `_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `_productid` BIGINT NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'entrycount_1',\n  'scan.startup.mode' = 'group-offsets'\n);",
-    "CREATE TEMPORARY TABLE `orders2_1_2` (\n  `id` BIGINT NOT NULL,\n  `_customerid` BIGINT NOT NULL,\n  `_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'orders2_1',\n  'scan.startup.mode' = 'group-offsets'\n);",
-    "CREATE TEMPORARY TABLE `orders_2_4` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'orders_2',\n  'scan.startup.mode' = 'group-offsets'\n);",
-    "CREATE TEMPORARY TABLE `ordersinline_1_1` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `price` DOUBLE,\n  `num` BIGINT NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'ordersinline_1',\n  'scan.startup.mode' = 'group-offsets'\n);",
+    "CREATE TEMPORARY TABLE `orders2_1_1` (\n  `id` BIGINT NOT NULL,\n  `_customerid` BIGINT NOT NULL,\n  `_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'orders2_1',\n  'scan.startup.mode' = 'group-offsets'\n);",
+    "CREATE TEMPORARY TABLE `ordersinline_1_2` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `price` DOUBLE,\n  `num` BIGINT NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'ordersinline_1',\n  'scan.startup.mode' = 'group-offsets'\n);",
     "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `customer_1`;",
     "CREATE VIEW `table$2`\nAS\nSELECT ((`t00`.`quantity` * `t00`.`unit_price`) - `t00`.`discount`) AS `price`, `$cor0`.`id` AS `_id`, `$cor0`.`customerid` AS `_customerid`, `$cor0`.`time` AS `_time`, `t00`.`productid` AS `_productid`, `$cor0`.`_ingest_time`\nFROM `orders_1` AS `$cor0`,\nUNNEST(`$cor0`.`entries`) AS `t00` (`productid`, `quantity`, `unit_price`, `discount`);",
     "CREATE VIEW `table$3`\nAS\nSELECT `orders_1`.`id`, `orders_1`.`customerid` AS `_customerid`, `orders_1`.`time` AS `_time`, `orders_1`.`_ingest_time`\nFROM `orders_1`\nINNER JOIN `orders_1` AS `orders_10` ON ((((`orders_1`.`id` = `orders_10`.`id`) AND (`orders_1`.`time` = `orders_10`.`time`)) AND (`orders_1`.`customerid` = `orders_10`.`customerid`)) AND (`orders_1`.`_ingest_time` = `orders_10`.`_ingest_time`));",
@@ -219,10 +212,9 @@ LogicalProject(__pk1_id=[$0], __pk2_customerid=[$1], __pk3_time=[$2], price=[$4]
     "CREATE VIEW `table$11`\nAS\nSELECT `__pk1_id`, `__pk2_customerid`, `__pk3_time`, SUM(`$f3`) AS `price`, COUNT(*) AS `num`, SUM(`discount`) AS `discount`, `window_time` AS `_ingest_time`\nFROM TABLE(TUMBLE((TABLE `table$10`), (DESCRIPTOR(`_ingest_time`)), INTERVAL '0.001' SECOND(1))) AS `t2`\nGROUP BY `__pk1_id`, `__pk2_customerid`, `__pk3_time`, `window_start`, `window_end`, `window_time`;",
     "CREATE VIEW `table$12`\nAS\nSELECT ((`t00`.`quantity` * `t00`.`unit_price`) - `t00`.`discount`) AS `price`, `$cor0`.`id` AS `_id`, `$cor0`.`customerid` AS `_customerid`, `$cor0`.`time` AS `_time`, `t00`.`productid` AS `_productid`, `$cor0`.`_ingest_time`\nFROM `orders_1` AS `$cor0`,\nUNNEST(`$cor0`.`entries`) AS `t00` (`productid`, `quantity`, `unit_price`, `discount`);",
     "CREATE VIEW `table$13`\nAS\nSELECT `orders_1`.`id`, `orders_1`.`customerid` AS `_customerid`, `orders_1`.`time` AS `_time`, `orders_1`.`_ingest_time`\nFROM `orders_1`\nINNER JOIN `orders_1` AS `orders_10` ON ((((`orders_1`.`id` = `orders_10`.`id`) AND (`orders_1`.`time` = `orders_10`.`time`)) AND (`orders_1`.`customerid` = `orders_10`.`customerid`)) AND (`orders_1`.`_ingest_time` = `orders_10`.`_ingest_time`));",
-    "CREATE VIEW `table$14`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`, `_ingest_time`\nFROM `orders_1`;",
-    "CREATE VIEW `table$15`\nAS\nSELECT `$cor1`.`id` AS `__pk1_id`, `$cor1`.`customerid` AS `__pk2_customerid`, `$cor1`.`time` AS `__pk3_time`, ((`t00`.`quantity` * `t00`.`unit_price`) - `t00`.`discount`) AS `$f3`, `t00`.`discount`, `t00`.`productid`, `$cor1`.`_ingest_time`\nFROM `orders_1` AS `$cor1`,\nUNNEST(`$cor1`.`entries`) AS `t00` (`productid`, `quantity`, `unit_price`, `discount`);",
-    "CREATE VIEW `table$16`\nAS\nSELECT `orders_1`.`id`, `orders_1`.`customerid`, `orders_1`.`time`, `t5`.`price`, `t5`.`num`, `orders_1`.`_ingest_time`\nFROM `orders_1`\nINNER JOIN (SELECT `__pk1_id`, `__pk2_customerid`, `__pk3_time`, SUM(`$f3`) AS `price`, COUNT(*) AS `num`, SUM(`discount`) AS `discount`, `window_time` AS `_ingest_time`\nFROM TABLE(TUMBLE((TABLE `table$15`), (DESCRIPTOR(`_ingest_time`)), INTERVAL '0.001' SECOND(1))) AS `t2`\nGROUP BY `__pk1_id`, `__pk2_customerid`, `__pk3_time`, `window_start`, `window_end`, `window_time`) AS `t5` ON ((((`orders_1`.`id` = `t5`.`__pk1_id`) AND (`orders_1`.`customerid` = `t5`.`__pk2_customerid`)) AND (`orders_1`.`time` = `t5`.`__pk3_time`)) AND (`orders_1`.`_ingest_time` = `t5`.`_ingest_time`));",
-    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer_3`\n(SELECT *\nFROM `table$1`)\n;\nINSERT INTO `entrycount_1`\n(SELECT *\nFROM `table$2`)\n;\nINSERT INTO `orders2_1`\n(SELECT *\nFROM `table$3`)\n;\nINSERT INTO `orders_2`\n(SELECT *\nFROM `table$4`)\n;\nINSERT INTO `orders_by_day_1`\n(SELECT *\nFROM `table$7`)\n;\nINSERT INTO `ordersinline_1`\n(SELECT *\nFROM `table$9`)\n;\nINSERT INTO `total_1`\n(SELECT *\nFROM `table$11`)\n;\nINSERT INTO `entrycount_1_3`\n(SELECT *\nFROM `table$12`)\n;\nINSERT INTO `orders2_1_2`\n(SELECT *\nFROM `table$13`)\n;\nINSERT INTO `orders_2_4`\n(SELECT *\nFROM `table$14`)\n;\nINSERT INTO `ordersinline_1_1`\n(SELECT *\nFROM `table$16`)\n;\nEND;"
+    "CREATE VIEW `table$14`\nAS\nSELECT `$cor1`.`id` AS `__pk1_id`, `$cor1`.`customerid` AS `__pk2_customerid`, `$cor1`.`time` AS `__pk3_time`, ((`t00`.`quantity` * `t00`.`unit_price`) - `t00`.`discount`) AS `$f3`, `t00`.`discount`, `t00`.`productid`, `$cor1`.`_ingest_time`\nFROM `orders_1` AS `$cor1`,\nUNNEST(`$cor1`.`entries`) AS `t00` (`productid`, `quantity`, `unit_price`, `discount`);",
+    "CREATE VIEW `table$15`\nAS\nSELECT `orders_1`.`id`, `orders_1`.`customerid`, `orders_1`.`time`, `t5`.`price`, `t5`.`num`, `orders_1`.`_ingest_time`\nFROM `orders_1`\nINNER JOIN (SELECT `__pk1_id`, `__pk2_customerid`, `__pk3_time`, SUM(`$f3`) AS `price`, COUNT(*) AS `num`, SUM(`discount`) AS `discount`, `window_time` AS `_ingest_time`\nFROM TABLE(TUMBLE((TABLE `table$14`), (DESCRIPTOR(`_ingest_time`)), INTERVAL '0.001' SECOND(1))) AS `t2`\nGROUP BY `__pk1_id`, `__pk2_customerid`, `__pk3_time`, `window_start`, `window_end`, `window_time`) AS `t5` ON ((((`orders_1`.`id` = `t5`.`__pk1_id`) AND (`orders_1`.`customerid` = `t5`.`__pk2_customerid`)) AND (`orders_1`.`time` = `t5`.`__pk3_time`)) AND (`orders_1`.`_ingest_time` = `t5`.`_ingest_time`));",
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer_3`\n(SELECT *\nFROM `table$1`)\n;\nINSERT INTO `entrycount_1`\n(SELECT *\nFROM `table$2`)\n;\nINSERT INTO `orders2_1`\n(SELECT *\nFROM `table$3`)\n;\nINSERT INTO `orders_2`\n(SELECT *\nFROM `table$4`)\n;\nINSERT INTO `orders_by_day_1`\n(SELECT *\nFROM `table$7`)\n;\nINSERT INTO `ordersinline_1`\n(SELECT *\nFROM `table$9`)\n;\nINSERT INTO `total_1`\n(SELECT *\nFROM `table$11`)\n;\nINSERT INTO `entrycount_1_3`\n(SELECT *\nFROM `table$12`)\n;\nINSERT INTO `orders2_1_1`\n(SELECT *\nFROM `table$13`)\n;\nINSERT INTO `ordersinline_1_2`\n(SELECT *\nFROM `table$15`)\n;\nEND;"
   ],
   "connectors" : [
     "jdbc-sqrl",
@@ -246,13 +238,6 @@ LogicalProject(__pk1_id=[$0], __pk2_customerid=[$1], __pk3_time=[$2], price=[$4]
     },
     {
       "name" : "orders2_1",
-      "numPartitions" : 1,
-      "replicationFactor" : 1,
-      "replicasAssignments" : { },
-      "config" : { }
-    },
-    {
-      "name" : "orders_2",
       "numPartitions" : 1,
       "replicationFactor" : 1,
       "replicasAssignments" : { },
@@ -1325,12 +1310,6 @@ LogicalProject(__pk1_id=[$0], __pk2_customerid=[$1], __pk3_time=[$2], price=[$4]
         "filters" : { }
       },
       {
-        "fieldName" : "Orders",
-        "topic" : "orders_2",
-        "sinkConfig" : { },
-        "filters" : { }
-      },
-      {
         "fieldName" : "Orders2",
         "topic" : "orders2_1",
         "sinkConfig" : { },
@@ -1346,7 +1325,7 @@ LogicalProject(__pk1_id=[$0], __pk2_customerid=[$1], __pk3_time=[$2], price=[$4]
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "type Customer {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  orders_by_day(day: DateTime, limit: Int = 10, offset: Int = 0): [orders_by_day!]\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype EntryCount {\n  price: Float\n}\n\ntype EntryCountResult {\n  price: Float\n}\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries(limit: Int = 10, offset: Int = 0): [entries!]\n  total: total\n}\n\ntype Orders2 {\n  id: Float!\n}\n\ntype Orders2Result {\n  id: Float!\n}\n\ntype OrdersInline {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  price: Float\n  num: Float!\n}\n\ntype OrdersInlineResult {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  price: Float\n  num: Float!\n}\n\ntype OrdersResult {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries: [Orders_entriesResult]!\n}\n\ntype Orders_entriesResult {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  Customer(customerid: Float, limit: Int = 10, offset: Int = 0): [Customer!]\n  EntryCount(limit: Int = 10, offset: Int = 0): [EntryCount!]\n  Orders(id: Float, customerid: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [Orders!]\n  Orders2(id: Float, limit: Int = 10, offset: Int = 0): [Orders2!]\n  OrdersInline(id: Float, customerid: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [OrdersInline!]\n}\n\ntype Subscription {\n  EntryCount: EntryCountResult!\n  Orders: OrdersResult!\n  Orders2: Orders2Result!\n  OrdersInline: OrdersInlineResult!\n}\n\ntype entries {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n\ntype orders_by_day {\n  day: DateTime!\n  total_price: Float\n  total_num: Float!\n  parent: Customer!\n}\n\ntype total {\n  price: Float\n  num: Float!\n  discount: Float\n  parent: Orders!\n}\n"
+      "schema" : "type Customer {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  orders_by_day(day: DateTime, limit: Int = 10, offset: Int = 0): [orders_by_day!]\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype EntryCount {\n  price: Float\n}\n\ntype EntryCountResult {\n  price: Float\n}\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries(limit: Int = 10, offset: Int = 0): [entries!]\n  total: total\n}\n\ntype Orders2 {\n  id: Float!\n}\n\ntype Orders2Result {\n  id: Float!\n}\n\ntype OrdersInline {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  price: Float\n  num: Float!\n}\n\ntype OrdersInlineResult {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  price: Float\n  num: Float!\n}\n\ntype Query {\n  Customer(customerid: Float, limit: Int = 10, offset: Int = 0): [Customer!]\n  EntryCount(limit: Int = 10, offset: Int = 0): [EntryCount!]\n  Orders(id: Float, customerid: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [Orders!]\n  Orders2(id: Float, limit: Int = 10, offset: Int = 0): [Orders2!]\n  OrdersInline(id: Float, customerid: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [OrdersInline!]\n}\n\ntype Subscription {\n  EntryCount: EntryCountResult!\n  Orders2: Orders2Result!\n  OrdersInline: OrdersInlineResult!\n}\n\ntype entries {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n\ntype orders_by_day {\n  day: DateTime!\n  total_price: Float\n  total_num: Float!\n  parent: Customer!\n}\n\ntype total {\n  price: Float\n  num: Float!\n  discount: Float\n  parent: Orders!\n}\n"
     }
   }
 }

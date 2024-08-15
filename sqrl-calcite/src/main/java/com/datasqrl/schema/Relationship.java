@@ -43,11 +43,6 @@ public class Relationship implements SqrlTableMacro {
     return getFullPath().getDisplay();
   }
 
-  @Override
-  public SqrlTableMacro rename(Name destName) {
-    throw new RuntimeException("Not implemented");
-  }
-
   public enum JoinType {
     NONE, PARENT, CHILD, JOIN
   }

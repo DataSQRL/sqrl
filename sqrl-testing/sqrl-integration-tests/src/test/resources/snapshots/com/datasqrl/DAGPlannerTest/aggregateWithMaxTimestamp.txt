@@ -77,12 +77,6 @@ Schema:
 Plan:
 LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] options:[2]]]]) hints[WatermarkHint options:[2]]
 
-=== kafka.Orders
-ID:     orders_2_1
-Type:   export
-Stage:  streams
-Inputs: orders_2
-
 === OrdersState
 ID:     ordersstate_1
 Type:   state
@@ -111,37 +105,25 @@ LogicalTableScan(table=[[orders_2]])
     "CREATE TEMPORARY TABLE `orderagg4_1` (\n  `customerid` BIGINT NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `count` BIGINT NOT NULL,\n  PRIMARY KEY (`customerid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orderagg4_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `orders_2` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  PRIMARY KEY (`id`, `time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orders_2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `ordersstate_1` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  PRIMARY KEY (`id`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'ordersstate_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `orders_2_1` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI=')\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'orders_2',\n  'scan.startup.mode' = 'group-offsets'\n);",
     "CREATE VIEW `table$1`\nAS\nSELECT `customerid`, COUNT(*) AS `count`, MAX(`time`) AS `__timestamp`\nFROM `orders_1`\nGROUP BY `customerid`;",
     "CREATE VIEW `table$2`\nAS\nSELECT `customerid`, MAX(`time`) AS `timestamp`, COUNT(*) AS `count`\nFROM `orders_1`\nGROUP BY `customerid`;",
     "CREATE VIEW `table$3`\nAS\nSELECT `customerid`, COUNT(*) AS `count`, MAX(`time`) AS `__timestamp`\nFROM (SELECT `id`, `customerid`, `time`, `entries`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `time` DESC NULLS LAST)) AS `_rownum`\nFROM `orders_1`) AS `t`\nWHERE (`_rownum` = 1)\nGROUP BY `customerid`;",
     "CREATE VIEW `table$4`\nAS\nSELECT `customerid`, MAX(`time`) AS `timestamp`, COUNT(*) AS `count`\nFROM (SELECT `id`, `customerid`, `time`, `entries`, (ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `time` DESC NULLS LAST)) AS `_rownum`\nFROM `orders_1`) AS `t`\nWHERE (`_rownum` = 1)\nGROUP BY `customerid`;",
     "CREATE VIEW `table$5`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders_1`;",
     "CREATE VIEW `table$6`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders_1`;",
-    "CREATE VIEW `table$7`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders_1`;",
-    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `orderagg1_1`\n(SELECT *\nFROM `table$1`)\n;\nINSERT INTO `orderagg2_1`\n(SELECT *\nFROM `table$2`)\n;\nINSERT INTO `orderagg3_1`\n(SELECT *\nFROM `table$3`)\n;\nINSERT INTO `orderagg4_1`\n(SELECT *\nFROM `table$4`)\n;\nINSERT INTO `orders_2`\n(SELECT *\nFROM `table$5`)\n;\nINSERT INTO `ordersstate_1`\n(SELECT *\nFROM `table$6`)\n;\nINSERT INTO `orders_2_1`\n(SELECT *\nFROM `table$7`)\n;\nEND;"
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `orderagg1_1`\n(SELECT *\nFROM `table$1`)\n;\nINSERT INTO `orderagg2_1`\n(SELECT *\nFROM `table$2`)\n;\nINSERT INTO `orderagg3_1`\n(SELECT *\nFROM `table$3`)\n;\nINSERT INTO `orderagg4_1`\n(SELECT *\nFROM `table$4`)\n;\nINSERT INTO `orders_2`\n(SELECT *\nFROM `table$5`)\n;\nINSERT INTO `ordersstate_1`\n(SELECT *\nFROM `table$6`)\n;\nEND;"
   ],
   "connectors" : [
     "jdbc-sqrl",
-    "kafka",
     "filesystem"
   ],
   "formats" : [
-    "flexible-json",
     "json"
   ]
 }
 >>>kafka.json
 {
-  "topics" : [
-    {
-      "name" : "orders_2",
-      "numPartitions" : 1,
-      "replicationFactor" : 1,
-      "replicasAssignments" : { },
-      "config" : { }
-    }
-  ]
+  "topics" : [ ]
 }
 >>>postgres.json
 {
@@ -658,18 +640,11 @@ LogicalTableScan(table=[[orders_2]])
       }
     ],
     "mutations" : [ ],
-    "subscriptions" : [
-      {
-        "fieldName" : "Orders",
-        "topic" : "orders_2",
-        "sinkConfig" : { },
-        "filters" : { }
-      }
-    ],
+    "subscriptions" : [ ],
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype OrderAgg1 {\n  customerid: Float!\n  count: Float!\n}\n\ntype OrderAgg2 {\n  customerid: Float!\n  timestamp: DateTime!\n  count: Float!\n}\n\ntype OrderAgg3 {\n  customerid: Float!\n  count: Float!\n}\n\ntype OrderAgg4 {\n  customerid: Float!\n  timestamp: DateTime!\n  count: Float!\n}\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries(limit: Int = 10, offset: Int = 0): [entries!]\n}\n\ntype OrdersResult {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries: [Orders_entriesResult]!\n}\n\ntype OrdersState {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries(limit: Int = 10, offset: Int = 0): [entries!]\n}\n\ntype Orders_entriesResult {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  OrderAgg1(customerid: Float, limit: Int = 10, offset: Int = 0): [OrderAgg1!]\n  OrderAgg2(customerid: Float, limit: Int = 10, offset: Int = 0): [OrderAgg2!]\n  OrderAgg3(customerid: Float, limit: Int = 10, offset: Int = 0): [OrderAgg3!]\n  OrderAgg4(customerid: Float, limit: Int = 10, offset: Int = 0): [OrderAgg4!]\n  Orders(id: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [Orders!]\n  OrdersState(id: Float, limit: Int = 10, offset: Int = 0): [OrdersState!]\n}\n\ntype Subscription {\n  Orders: OrdersResult!\n}\n\ntype entries {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n\ntype entries_ {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n"
+      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype OrderAgg1 {\n  customerid: Float!\n  count: Float!\n}\n\ntype OrderAgg2 {\n  customerid: Float!\n  timestamp: DateTime!\n  count: Float!\n}\n\ntype OrderAgg3 {\n  customerid: Float!\n  count: Float!\n}\n\ntype OrderAgg4 {\n  customerid: Float!\n  timestamp: DateTime!\n  count: Float!\n}\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries(limit: Int = 10, offset: Int = 0): [entries!]\n}\n\ntype OrdersState {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries(limit: Int = 10, offset: Int = 0): [entries!]\n}\n\ntype Query {\n  OrderAgg1(customerid: Float, limit: Int = 10, offset: Int = 0): [OrderAgg1!]\n  OrderAgg2(customerid: Float, limit: Int = 10, offset: Int = 0): [OrderAgg2!]\n  OrderAgg3(customerid: Float, limit: Int = 10, offset: Int = 0): [OrderAgg3!]\n  OrderAgg4(customerid: Float, limit: Int = 10, offset: Int = 0): [OrderAgg4!]\n  Orders(id: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [Orders!]\n  OrdersState(id: Float, limit: Int = 10, offset: Int = 0): [OrdersState!]\n}\n\ntype entries {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n\ntype entries_ {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n"
     }
   }
 }

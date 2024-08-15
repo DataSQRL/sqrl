@@ -67,8 +67,4 @@ public class RootSqrlTable implements SqrlTableMacro {
     return JoinType.NONE;
   }
 
-  @Override
-  public SqrlTableMacro rename(Name destName) {
-    return new RootSqrlTable(destName, internalTable, parameters, viewTransform, isTest);
-  }
 }
