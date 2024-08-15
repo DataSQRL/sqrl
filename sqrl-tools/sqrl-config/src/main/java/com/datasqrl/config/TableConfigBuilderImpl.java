@@ -2,6 +2,7 @@ package com.datasqrl.config;
 
 import com.datasqrl.canonicalizer.Name;
 import com.google.common.base.Preconditions;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
@@ -43,6 +44,11 @@ public class TableConfigBuilderImpl implements TableConfig.TableConfigBuilder {
   public TableConfig.TableConfigBuilder setPrimaryKey(@NonNull String[] primaryKey) {
     getBaseConfig().setProperty(TableTableConfigImpl.PRIMARYKEY_KEY, primaryKey);
     return this;
+  }
+
+  @Override
+  public void setPartitionKey(List<String> partitionKeys) {
+    getBaseConfig().setProperty(TableTableConfigImpl.PARTITIONKEY_KEY, partitionKeys);
   }
 
   public TableConfig.TableConfigBuilder setMetadata(@NonNull String columnName, String type, String attribute) {

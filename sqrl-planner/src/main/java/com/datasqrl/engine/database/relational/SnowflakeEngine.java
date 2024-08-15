@@ -72,7 +72,7 @@ public class SnowflakeEngine extends AbstractJDBCQueryEngine {
 
   @Override
   public EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs, ExecutionPipeline pipeline,
-      SqrlFramework framework, ErrorCollector errorCollector) {
+      List<StagePlan> stagePlans, SqrlFramework framework, ErrorCollector errorCollector) {
 
     List<SqlDDLStatement> ddlStatements = new ArrayList<>();
 

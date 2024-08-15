@@ -75,8 +75,10 @@ public interface TableConfig {
     TableConfigBuilder setWatermark(long milliseconds);
     TableConfigBuilder setMetadata(@NonNull String columnName, String type, String attribute) ;
     TableConfigBuilder setPrimaryKey(String[] pks);
+    void setPartitionKey(List<String> partitionKeys);
 
     TableConfig build();
+
   }
 
   interface Format {

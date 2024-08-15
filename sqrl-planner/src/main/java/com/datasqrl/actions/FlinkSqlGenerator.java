@@ -6,6 +6,7 @@ import com.datasqrl.calcite.convert.SqlNodeToString;
 import com.datasqrl.calcite.convert.SqlToStringFactory;
 import com.datasqrl.engine.stream.flink.plan.SqrlToFlinkSqlGenerator;
 import com.datasqrl.engine.stream.flink.plan.SqrlToFlinkSqlGenerator.SqlResult;
+import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StreamStagePlan;
 import com.google.inject.Inject;
 import java.util.ArrayList;
@@ -28,9 +29,10 @@ public class FlinkSqlGenerator {
 
   private final SqrlFramework framework;
 
-  public Pair<List<String>, List<SqlNode>> run(StreamStagePlan physicalPlan) {
+  public Pair<List<String>, List<SqlNode>> run(StreamStagePlan physicalPlan,
+      List<StagePlan> stagePlans) {
     SqrlToFlinkSqlGenerator sqlPlanner = new SqrlToFlinkSqlGenerator(framework);
-    SqlResult result = sqlPlanner.plan(physicalPlan.getQueries());
+    SqlResult result = sqlPlanner.plan(physicalPlan.getQueries(), stagePlans);
 
     List<SqlNode> flinkSql = new ArrayList<>();
     flinkSql.addAll(framework.getSchema().getAddlSql());

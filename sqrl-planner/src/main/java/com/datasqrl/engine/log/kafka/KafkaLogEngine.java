@@ -44,7 +44,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
 
   @Override
   public EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs, ExecutionPipeline pipeline,
-      SqrlFramework framework, ErrorCollector errorCollector) {
+      List<StagePlan> stagePlans, SqrlFramework framework, ErrorCollector errorCollector) {
     Preconditions.checkArgument(plan instanceof LogStagePlan);
 
     List<NewTopic> logTopics = ((LogStagePlan) plan).getLogs().stream()
