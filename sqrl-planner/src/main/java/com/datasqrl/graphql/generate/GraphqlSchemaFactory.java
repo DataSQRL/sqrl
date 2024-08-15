@@ -25,6 +25,7 @@ import com.datasqrl.function.SqrlFunctionParameter;
 import com.datasqrl.graphql.server.CustomScalars;
 import com.datasqrl.io.tables.TableType;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
+import com.datasqrl.plan.table.ProxyImportRelationalTable;
 import com.datasqrl.plan.table.QueryRelationalTable;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.plan.validate.ResolvedImport;
@@ -193,6 +194,7 @@ public class GraphqlSchemaFactory {
     List<PhysicalRelationalTable> streamTables = schema.getTableFunctions().stream()
         .filter(t-> t instanceof RootSqrlTable)
         .map(t->((PhysicalRelationalTable)((RootSqrlTable) t).getInternalTable()))
+        .filter(t->!(t instanceof ProxyImportRelationalTable)) //do not create subscriptions for imported tables
         .filter(t-> t.getType() == TableType.STREAM)
         .collect(Collectors.toList());
     if (streamTables.isEmpty()) {
