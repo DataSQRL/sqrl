@@ -41,7 +41,7 @@ Plan:
 LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] options:[2]]]]) hints[WatermarkHint options:[2]]
 
 === kafka.Orders
-ID:     orders_2_3
+ID:     orders_2_2
 Type:   export
 Stage:  streams
 Inputs: orders_2
@@ -70,7 +70,7 @@ Stage:  streams
 Inputs: productrevenue_1
 
 === kafka.ProductRevenue
-ID:     productrevenue_1_2
+ID:     productrevenue_1_3
 Type:   export
 Stage:  streams
 Inputs: productrevenue_1
@@ -84,9 +84,9 @@ Inputs: productrevenue_1
     "CREATE TEMPORARY TABLE `orders_2` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `productid` BIGINT NOT NULL,\n  `quantity` BIGINT NOT NULL,\n  `unit_price` DOUBLE NOT NULL,\n  `discount` DOUBLE,\n  PRIMARY KEY (`id`, `time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orders_2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `productrevenue_1` (\n  `productid` BIGINT NOT NULL,\n  `week` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `revenue` DOUBLE NOT NULL,\n  PRIMARY KEY (`productid`, `week`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'productrevenue_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `customerspending_1_4` (\n  `customerid` BIGINT NOT NULL,\n  `week` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `total` DOUBLE NOT NULL,\n  `saved` DOUBLE NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'customerspending_1',\n  'scan.startup.mode' = 'group-offsets'\n);",
-    "CREATE TEMPORARY TABLE `orders_2_3` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `productid` BIGINT NOT NULL,\n  `quantity` BIGINT NOT NULL,\n  `unit_price` DOUBLE NOT NULL,\n  `discount` DOUBLE\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'orders_2',\n  'scan.startup.mode' = 'group-offsets'\n);",
+    "CREATE TEMPORARY TABLE `orders_2_2` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `productid` BIGINT NOT NULL,\n  `quantity` BIGINT NOT NULL,\n  `unit_price` DOUBLE NOT NULL,\n  `discount` DOUBLE\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'orders_2',\n  'scan.startup.mode' = 'group-offsets'\n);",
     "CREATE TEMPORARY TABLE `productrevenue_1_1` (\n  `productid` BIGINT NOT NULL,\n  `week` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `revenue` DOUBLE NOT NULL\n) WITH (\n  'connector' = 'print',\n  'print-identifier' = 'Revenue'\n);",
-    "CREATE TEMPORARY TABLE `productrevenue_1_2` (\n  `productid` BIGINT NOT NULL,\n  `week` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `revenue` DOUBLE NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'productrevenue_1',\n  'scan.startup.mode' = 'group-offsets'\n);",
+    "CREATE TEMPORARY TABLE `productrevenue_1_3` (\n  `productid` BIGINT NOT NULL,\n  `week` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `revenue` DOUBLE NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'productrevenue_1',\n  'scan.startup.mode' = 'group-offsets'\n);",
     "CREATE VIEW `table$1`\nAS\nSELECT `customerid`, ENDOFWEEK(`time`) AS `week`, (`quantity` * `unit_price`) AS `$f2`, COALESCE(`discount`, 0.0) AS `$f3`, `id`, `time`\nFROM `orders_1`;",
     "CREATE VIEW `table$2`\nAS\nSELECT `customerid`, `window_time` AS `week`, SUM(`$f2`) AS `total`, SUM(`$f3`) AS `saved`\nFROM TABLE(TUMBLE((TABLE `table$1`), (DESCRIPTOR(`time`)), INTERVAL '604800' SECOND(9), INTERVAL '0' SECOND(1))) AS `t0`\nGROUP BY `customerid`, `window_start`, `window_end`, `window_time`;",
     "CREATE VIEW `table$3`\nAS\nSELECT *\nFROM `orders_1`;",
@@ -99,7 +99,7 @@ Inputs: productrevenue_1
     "CREATE VIEW `table$10`\nAS\nSELECT `productid`, `window_time` AS `week`, SUM(`$f2`) AS `revenue`\nFROM TABLE(TUMBLE((TABLE `table$9`), (DESCRIPTOR(`time`)), INTERVAL '604800' SECOND(9), INTERVAL '0' SECOND(1))) AS `t0`\nGROUP BY `productid`, `window_start`, `window_end`, `window_time`;",
     "CREATE VIEW `table$11`\nAS\nSELECT `productid`, ENDOFWEEK(`time`) AS `week`, ((`quantity` * `unit_price`) - COALESCE(`discount`, 0.0)) AS `$f2`, `id`, `time`\nFROM `orders_1`;",
     "CREATE VIEW `table$12`\nAS\nSELECT `productid`, `window_time` AS `week`, SUM(`$f2`) AS `revenue`\nFROM TABLE(TUMBLE((TABLE `table$11`), (DESCRIPTOR(`time`)), INTERVAL '604800' SECOND(9), INTERVAL '0' SECOND(1))) AS `t0`\nGROUP BY `productid`, `window_start`, `window_end`, `window_time`;",
-    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customerspending_1`\n(SELECT *\nFROM `table$2`)\n;\nINSERT INTO `orders_2`\n(SELECT *\nFROM `table$3`)\n;\nINSERT INTO `productrevenue_1`\n(SELECT *\nFROM `table$5`)\n;\nINSERT INTO `customerspending_1_4`\n(SELECT *\nFROM `table$7`)\n;\nINSERT INTO `orders_2_3`\n(SELECT *\nFROM `table$8`)\n;\nINSERT INTO `productrevenue_1_1`\n(SELECT *\nFROM `table$10`)\n;\nINSERT INTO `productrevenue_1_2`\n(SELECT *\nFROM `table$12`)\n;\nEND;"
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customerspending_1`\n(SELECT *\nFROM `table$2`)\n;\nINSERT INTO `orders_2`\n(SELECT *\nFROM `table$3`)\n;\nINSERT INTO `productrevenue_1`\n(SELECT *\nFROM `table$5`)\n;\nINSERT INTO `customerspending_1_4`\n(SELECT *\nFROM `table$7`)\n;\nINSERT INTO `orders_2_2`\n(SELECT *\nFROM `table$8`)\n;\nINSERT INTO `productrevenue_1_1`\n(SELECT *\nFROM `table$10`)\n;\nINSERT INTO `productrevenue_1_3`\n(SELECT *\nFROM `table$12`)\n;\nEND;"
   ],
   "connectors" : [
     "print",

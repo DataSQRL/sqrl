@@ -3,6 +3,7 @@
  */
 package com.datasqrl.graphql.generate;
 
+import static com.datasqrl.canonicalizer.Name.HIDDEN_PREFIX;
 import static com.datasqrl.canonicalizer.Name.isSystemHidden;
 
 import com.datasqrl.canonicalizer.Name;
@@ -160,6 +161,7 @@ public class GraphqlSchemaUtil {
         String typeName = generateUniqueNameForType(namePath, seen, "Result"); // Ensure unique names for each ROW type
         builder.name(typeName);
         for (RelDataTypeField field : type.getFieldList()) {
+          if (field.getName().startsWith(HIDDEN_PREFIX)) continue;
           getOutputType(field.getType(), namePath.concat(Name.system(field.getName())), seen)
               .ifPresent(fieldType -> builder.field(GraphQLFieldDefinition.newFieldDefinition()
                   .name(field.getName())
