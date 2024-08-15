@@ -24,11 +24,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.SneakyThrows;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.table.api.CompiledPlan;
 import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.TableResult;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
+import org.apache.flink.table.api.internal.TableEnvironmentImpl;
+import org.apache.flink.table.operations.Operation;
+import org.apache.flink.table.operations.StatementSetOperation;
 import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
@@ -44,7 +49,14 @@ public class DatasqrlRun {
     run.run();
   }
 
-  private void run() {
+  public DatasqrlRun() {
+  }
+
+  public DatasqrlRun(Path path) {
+    this.path = path;
+  }
+
+  public void run() {
     startPostgres();
     startKafka();
 
@@ -61,6 +73,12 @@ public class DatasqrlRun {
 
   @SneakyThrows
   public void startFlink() {
+    CompiledPlan compileFlink = compileFlink();
+    compileFlink.execute().print();
+  }
+
+  @SneakyThrows
+  public CompiledPlan compileFlink() {
     Map<String, String> config = Map.of(
         "taskmanager.network.memory.max", "1g",
         "table.exec.source.idle-timeout", "1 s");
@@ -77,17 +95,27 @@ public class DatasqrlRun {
     Map map = objectMapper.readValue(path.resolve("flink.json").toFile(), Map.class);
     List<String> statements = (List<String>) map.get("flinkSql");
 
-    for (String statement : statements) {
-      if (statement.trim().isEmpty()) continue;
+    for (int i = 0; i < statements.size()-1; i++) {
+      String statement = statements.get(i);
+      if (statement.trim().isEmpty()) {
+        continue;
+      }
       System.out.println(replaceWithEnv(statement));
       tableResult = tEnv.executeSql(replaceWithEnv(statement));
     }
-    tableResult.print();
+    String insert = replaceWithEnv(statements.get(statements.size() - 1));
+//    tableResult = tEnv.executeSql(insert);
+    TableEnvironmentImpl tEnv1 = (TableEnvironmentImpl) tEnv;
+    StatementSetOperation parse = (StatementSetOperation)tEnv1.getParser().parse(insert).get(0);
+
+    CompiledPlan plan = tEnv1.compilePlan(parse.getOperations());
+
+    return plan;
   }
 
   Map<String, String> getEnv() {
     return Map.of(
-        "PROPERTIES_BOOTSTRAP_SERVERS",CLUSTER.bootstrapServers(),
+        "PROPERTIES_BOOTSTRAP_SERVERS",CLUSTER == null?"":CLUSTER.bootstrapServers(),
         "PROPERTIES_GROUP_ID","mygroupid",
         "JDBC_URL",isStarted.get() ? postgreSQLContainer.getJdbcUrl() : "jdbc:postgresql://127.0.0.1:5432/datasqrl",
         "JDBC_USERNAME","postgres",

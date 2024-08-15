@@ -57,14 +57,12 @@ import static com.datasqrl.actions.WriteDag.DATA_DIR;
 import static com.datasqrl.actions.WriteDag.LIB_DIR;
 import static com.datasqrl.config.ScriptConfigImpl.GRAPHQL_KEY;
 import static com.datasqrl.config.ScriptConfigImpl.MAIN_KEY;
-import static com.datasqrl.packager.LambdaUtil.rethrowCall;
 import static com.datasqrl.util.NameUtil.namepath2Path;
 
 @Getter
 @AllArgsConstructor(onConstructor_=@Inject)
 public class Packager {
   public static final String BUILD_DIR_NAME = "build";
-  public static final String PLAN_DIR_NAME = "plan";
   public static final String PACKAGE_JSON = "package.json";
   public static final Path DEFAULT_PACKAGE = Path.of(Packager.PACKAGE_JSON);
 
@@ -297,19 +295,19 @@ public class Packager {
   }
 
   @SneakyThrows
-  public void postprocess(PackageJson sqrlConfig, Path rootDir, Path targetDir, PhysicalPlan plan,
+  public void postprocess(PackageJson sqrlConfig, Path rootDir, Path planDir, Path targetDir, PhysicalPlan plan,
       TestPlan testPlan, List<String> profiles) {
 
     Map<String, Object> plans = new HashMap<>();
     // We'll write a single asset for each folder in the physical plan stage
     for (StagePlan stagePlan : plan.getStagePlans()) {
-      Object planObj = writePlan(stagePlan.getStage().getName(), stagePlan.getPlan(), targetDir);
+      Object planObj = writePlan(stagePlan.getStage().getName(), stagePlan.getPlan(), targetDir, planDir);
       plans.put(stagePlan.getStage().getName(), planObj);
     }
 
     if (testPlan != null) {
-      Files.createDirectories(buildDir.getBuildDir().resolve(PLAN_DIR_NAME));
-      Path path = buildDir.getBuildDir().resolve(PLAN_DIR_NAME).resolve("test.json");
+      Files.createDirectories(planDir);
+      Path path = planDir.resolve("test.json");
 
       SqrlObjectMapper.INSTANCE.writerWithDefaultPrettyPrinter().writeValue(path.toFile(), testPlan);
       Map map = SqrlObjectMapper.INSTANCE.readValue(path.toFile(), Map.class);
@@ -321,7 +319,7 @@ public class Packager {
     for (String profile : profiles) {
       Path profilePath = PackageBootstrap.isLocalProfile(rootDir, profile)
           ? rootDir.resolve(profile)
-          : namepath2Path(rootDir.resolve(BUILD_DIR_NAME), NamePath.parse(profile));
+          : namepath2Path(buildDir.getBuildDir(), NamePath.parse(profile));
 
       copyToDeploy(targetDir, profilePath, plan, testPlan, sqrlConfig, plans);
     }
@@ -389,9 +387,9 @@ public class Packager {
   }
 
   @SneakyThrows
-  private Object writePlan(String name, EnginePhysicalPlan plan, Path targetDir) {
-    Files.createDirectories(buildDir.getBuildDir().resolve(PLAN_DIR_NAME));
-    Path path = buildDir.getBuildDir().resolve(PLAN_DIR_NAME).resolve(name + ".json");
+  private Object writePlan(String name, EnginePhysicalPlan plan, Path targetDir, Path planDir) {
+    Files.createDirectories(planDir);
+    Path path = planDir.resolve(name + ".json");
 
     SqrlObjectMapper.INSTANCE.enable(SerializationFeature.INDENT_OUTPUT);
 

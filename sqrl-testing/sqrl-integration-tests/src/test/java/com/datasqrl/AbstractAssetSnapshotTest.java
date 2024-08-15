@@ -32,6 +32,7 @@ import org.junit.jupiter.params.provider.ArgumentsProvider;
 public abstract class AbstractAssetSnapshotTest {
 
   public Path buildDir = null;
+  public Path planDir = null;
   public final Path deployDir;
   protected Snapshot snapshot;
 
@@ -72,7 +73,7 @@ public abstract class AbstractAssetSnapshotTest {
   protected void createSnapshot() {
     snapshotFiles(deployDir, getDeployDirFilter());
     snapshotFiles(buildDir, getBuildDirFilter());
-    snapshotFiles(buildDir.resolve("plan"), getPlanDirFilter());
+    snapshotFiles(planDir, getPlanDirFilter());
     snapshot.createOrValidate();
   }
 
@@ -110,7 +111,12 @@ public abstract class AbstractAssetSnapshotTest {
   }
 
   protected AssertStatusHook execute(Path rootDir, String... args) {
-    buildDir = rootDir.resolve("build");
+    return execute(rootDir, rootDir.resolve("build").resolve("plan"), args);
+  }
+
+  protected AssertStatusHook execute(Path rootDir, Path planDir, String... args) {
+    this.buildDir = rootDir.resolve("build");
+    this.planDir = planDir;
     List<String> argslist = new ArrayList<>(List.of(args));
     AssertStatusHook statusHook = new AssertStatusHook();
     int code = new RootCommand(rootDir,statusHook).getCmd().execute(argslist.toArray(String[]::new));

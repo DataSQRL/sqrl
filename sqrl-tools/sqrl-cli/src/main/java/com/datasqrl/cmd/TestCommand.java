@@ -50,9 +50,9 @@ public class TestCommand extends AbstractCompilerCommand {
 
   @SneakyThrows
   @Override
-  protected void postprocess(PackageJson sqrlConfig, Packager packager, Path targetDir, PhysicalPlan plan,
+  protected void postprocess(PackageJson sqrlConfig, Packager packager, Path planDir, Path targetDir, PhysicalPlan plan,
       TestPlan right, ErrorCollector errors) {
-    super.postprocess(sqrlConfig, packager, targetDir, plan, right, errors);
+    super.postprocess(sqrlConfig, packager, planDir, targetDir, plan, right, errors);
     List<File> dockerComposePaths = getComposePaths(targetDir);
     if (dockerComposePaths.isEmpty()) {
       throw new RuntimeException("Could not find docker compose containers");

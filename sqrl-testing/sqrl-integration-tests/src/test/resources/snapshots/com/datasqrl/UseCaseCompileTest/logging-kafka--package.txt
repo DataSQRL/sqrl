@@ -48,3 +48,164 @@ Inputs: data_2
     }
   ]
 }
+>>>postgres.json
+{
+  "ddl" : [
+    {
+      "name" : "data_2",
+      "columns" : [
+        "\"id\" BIGINT NOT NULL",
+        "\"epoch_timestamp\" BIGINT NOT NULL",
+        "\"some_value\" TEXT NOT NULL",
+        "\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"id\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS data_2 (\"id\" BIGINT NOT NULL,\"epoch_timestamp\" BIGINT NOT NULL,\"some_value\" TEXT NOT NULL,\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\"));"
+    },
+    {
+      "name" : "reuseddata_2",
+      "columns" : [
+        "\"id\" BIGINT NOT NULL",
+        "\"epoch_timestamp\" BIGINT NOT NULL",
+        "\"some_value\" TEXT NOT NULL",
+        "\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"id\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS reuseddata_2 (\"id\" BIGINT NOT NULL,\"epoch_timestamp\" BIGINT NOT NULL,\"some_value\" TEXT NOT NULL,\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\"));"
+    }
+  ]
+}
+>>>vertx.json
+{
+  "model" : {
+    "coords" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Data",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"id\", \"epoch_timestamp\", \"some_value\", \"timestamp\", 1 AS \"__pk\"\nFROM \"data_2\"\nWHERE \"id\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, 1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "id"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"data_2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"id\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "ReusedData",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"reuseddata_2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"id\"",
+              "parameters" : [ ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"id\", \"epoch_timestamp\", \"some_value\", \"timestamp\", 1 AS \"__pk\"\nFROM \"reuseddata_2\"\nWHERE \"id\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, 1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "id"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "mutations" : [ ],
+    "subscriptions" : [ ],
+    "schema" : {
+      "type" : "string",
+      "type" : "string",
+      "schema" : "type Data {\n  id: Float!\n  epoch_timestamp: Float!\n  some_value: String!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype Query {\n  Data(id: Float, limit: Int = 10, offset: Int = 0): [Data!]\n  ReusedData(id: Float, limit: Int = 10, offset: Int = 0): [Data!]\n}\n"
+    }
+  }
+}
