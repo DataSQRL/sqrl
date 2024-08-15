@@ -23,6 +23,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -44,28 +45,28 @@ public class SqrlSchema extends SimpleCalciteSchema {
 
   private final List<ResolvedExport> exports = new ArrayList<>();
   private final List<ResolvedImport> imports = new ArrayList<>();
-  private final Set<URL> jars = new HashSet<>();
+  private final Set<URL> jars = new LinkedHashSet<>();
 
   //Current table mapping
-  private final Map<NamePath, NamePath> pathToAbsolutePathMap = new HashMap<>();
+  private final Map<NamePath, NamePath> pathToAbsolutePathMap = new LinkedHashMap<>();
   //Required for looking up tables
-  private final Map<NamePath, String> pathToSysTableMap = new HashMap<>();
+  private final Map<NamePath, String> pathToSysTableMap = new LinkedHashMap<>();
 
-  private final Map<String, SqlOperator> udf = new HashMap<>();
-  private final Map<List<String>, SqlOperator> udfListMap = new HashMap<>();
-  private final Map<List<String>, SqlOperator> internalNames = new HashMap<>();
+  private final Map<String, SqlOperator> udf = new LinkedHashMap<>();
+  private final Map<List<String>, SqlOperator> udfListMap = new LinkedHashMap<>();
+  private final Map<List<String>, SqlOperator> internalNames = new LinkedHashMap<>();
 
   private final AtomicInteger uniqueCompilerId = new AtomicInteger(0);
   private final AtomicInteger uniquePkId = new AtomicInteger(0);
   private final AtomicInteger uniqueMacroInt = new AtomicInteger(0);
-  private final Map<Name, AtomicInteger> tableNameToIdMap = new HashMap<>();
+  private final Map<Name, AtomicInteger> tableNameToIdMap = new LinkedHashMap<>();
 
   //API
 
-  private final Map<APIMutation, Object> mutations = new HashMap<>();
-  private final Map<NamePath, SqrlModule> modules = new HashMap<>();
-  private final Map<APISubscription, Object> subscriptions = new HashMap<>();
-  private final Map<SqrlTableMacro, Object> apiExports = new HashMap<>();
+  private final Map<APIMutation, Object> mutations = new LinkedHashMap<>();
+  private final Map<NamePath, SqrlModule> modules = new LinkedHashMap<>();
+  private final Map<APISubscription, Object> subscriptions = new LinkedHashMap<>();
+  private final Map<SqrlTableMacro, Object> apiExports = new LinkedHashMap<>();
   private final List<APIQuery> queries = new ArrayList<>();
   private Set<SqlNode> addlSql = new LinkedHashSet<>();
 
