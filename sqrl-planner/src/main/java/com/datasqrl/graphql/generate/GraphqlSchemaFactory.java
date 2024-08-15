@@ -190,11 +190,10 @@ public class GraphqlSchemaFactory {
     Builder subscriptionBuilder = GraphQLObjectType.newObject().name("Subscription");
 
     // Retrieve streamable tables from the schema
-    List<PhysicalRelationalTable> streamTables = schema.getExports().stream()
-        .filter(e->e.getSink().getPath().getFirst().getCanonical().equalsIgnoreCase("kafka"))
-        .map(e->e.getRelNode().getTable().unwrap(
-            PhysicalRelationalTable.class))
-        .filter(e -> e.getType() == TableType.STREAM)
+    List<PhysicalRelationalTable> streamTables = schema.getTableFunctions().stream()
+        .filter(t-> t instanceof RootSqrlTable)
+        .map(t->((PhysicalRelationalTable)((RootSqrlTable) t).getInternalTable()))
+        .filter(t-> t.getType() == TableType.STREAM)
         .collect(Collectors.toList());
     if (streamTables.isEmpty()) {
       return Optional.empty();
