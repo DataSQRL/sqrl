@@ -55,14 +55,10 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
     String testname = Stream.of(script, graphQlFile, packageFile)
         .map(AbstractAssetSnapshotTest::getDisplayName)
         .collect(Collectors.joining("-"));
-    arguments.add("--plan");
-    Path planDir = script.getParent().getParent().resolve("plan")
-        .resolve(testname);
-    arguments.add(planDir.toString());
 
     this.snapshot = Snapshot.of(testname, getClass());
 //    System.out.printf("%s - %s\n", baseDir, arguments);
-    AssertStatusHook hook = execute(baseDir, planDir, arguments.toArray(new String[0]));
+    AssertStatusHook hook = execute(baseDir, arguments.toArray(new String[0]));
     if (hook.isFailed()) {
       createFailSnapshot(hook.getFailMessage());
     } else {

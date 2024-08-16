@@ -45,5 +45,5 @@ jobs:
           context: sqrl-server/sqrl-server-vertx
           file: sqrl-server/sqrl-server-vertx/Dockerfile
           push: true
-          tags: datasqrl/sqrl-server:${{ github.ref_name }},datasqrl/server:latest
+          tags: datasqrl/sqrl-server:${{ github.ref_name }},datasqrl/sqrl-server:latest
           platforms: linux/amd64,linux/arm64

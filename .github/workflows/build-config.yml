@@ -25,7 +25,7 @@ jobs:
     - name: Build SQRL
       env:
         DATASQRL_TOKEN: ${{ secrets.DATASQRL_TOKEN }}
-      run: mvn -T 1 -B -U -e clean package
+      run: mvn -T 1 -B -U -e clean verify
 #    - name: Build SQRL
 #      env:
 #        DATASQRL_TOKEN: ${{ secrets.DATASQRL_TOKEN }}

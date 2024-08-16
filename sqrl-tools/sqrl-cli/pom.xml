@@ -79,33 +79,6 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
-<!--    <dependency>-->
-<!--      <groupId>org.apache.kafka</groupId>-->
-<!--      <artifactId>kafka-clients</artifactId>-->
-<!--      <version>3.4.0</version>-->
-<!--    </dependency>-->
-
-
-<!--    <dependency>-->
-<!--      <groupId>org.apache.kafka</groupId>-->
-<!--      <artifactId>kafka-streams-test-utils</artifactId>-->
-<!--      <version>3.4.0</version>-->
-<!--    </dependency>-->
-
-<!--    <dependency>-->
-<!--      <groupId>org.apache.kafka</groupId>-->
-<!--      <artifactId>kafka-streams</artifactId>-->
-<!--      <version>3.4.0</version>-->
-<!--    </dependency>-->
-
-
-<!--    implementation 'org.apache.kafka:kafka-clients:3.4.0'-->
-<!--    implementation 'org.apache.kafka:kafka-clients:3.4.0:test'-->
-<!--    implementation 'org.apache.kafka:kafka_2.12:3.4.0'-->
-<!--    implementation 'org.apache.kafka:kafka_2.12:3.4.0:test'-->
-<!--    implementation 'org.apache.kafka:kafka-streams:3.4.0'-->
-<!--    implementation 'org.apache.kafka:kafka-streams:3.4.0:test'-->
-<!--    implementation 'org.apache.kafka:kafka-streams-test-utils:3.4.0'-->
   </dependencies>
 
   <build>
