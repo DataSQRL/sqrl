@@ -295,8 +295,9 @@ public class Packager {
   }
 
   @SneakyThrows
-  public void postprocess(PackageJson sqrlConfig, Path rootDir, Path planDir, Path targetDir, PhysicalPlan plan,
+  public void postprocess(PackageJson sqrlConfig, Path rootDir, Path targetDir, PhysicalPlan plan,
       TestPlan testPlan, List<String> profiles) {
+    Path planDir = buildDir.getBuildDir().resolve("plan");
 
     Map<String, Object> plans = new HashMap<>();
     // We'll write a single asset for each folder in the physical plan stage

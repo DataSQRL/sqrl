@@ -44,7 +44,6 @@ import picocli.CommandLine;
 @Slf4j
 public abstract class AbstractCompilerCommand extends AbstractCommand {
 
-  public static final Path DEFAULT_PLAN_DIR = Path.of("build", "deploy");
   public static final Path DEFAULT_DEPLOY_DIR = Path.of("build", "deploy");
 
   @CommandLine.Parameters(arity = "0..2", description = "Main script and (optional) API specification")
@@ -61,10 +60,6 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   @CommandLine.Option(names = {"--profile"},
       description = "An alternative set of configuration values which override the default package.json")
   protected String[] profiles = new String[0];
-
-  @CommandLine.Option(names = {"--plan"},
-      description = "Target directory for the plan jsons")
-  protected Path planDir = DEFAULT_PLAN_DIR;
 
   @SneakyThrows
   public void execute(ErrorCollector errors) {
@@ -119,7 +114,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
       addGraphql(plan.getLeft(), root.rootDir);
     }
 
-    postprocess(sqrlConfig, packager, planDir, getTargetDir(), plan.getLeft(), plan.getRight(), errors);
+    postprocess(sqrlConfig, packager, getTargetDir(), plan.getLeft(), plan.getRight(), errors);
   }
 
   private void validateTestPath(Path path) {
@@ -128,11 +123,11 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     }
   }
 
-  protected void postprocess(PackageJson sqrlConfig, Packager packager, Path planDir, Path targetDir,
+  protected void postprocess(PackageJson sqrlConfig, Packager packager, Path targetDir,
       PhysicalPlan plan, TestPlan testPlan, ErrorCollector errors) {
-    packager.postprocess(sqrlConfig, root.rootDir, planDir, getTargetDir(), plan, testPlan,
-        sqrlConfig.getProfiles());
 
+    packager.postprocess(sqrlConfig, root.rootDir, getTargetDir(), plan, testPlan,
+        sqrlConfig.getProfiles());
   }
 
   protected boolean isGenerateGraphql() {
