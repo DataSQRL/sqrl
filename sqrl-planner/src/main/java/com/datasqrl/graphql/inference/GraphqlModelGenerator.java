@@ -8,6 +8,7 @@ import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.TableConfig;
+import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.engine.log.Log;
 import com.datasqrl.graphql.APIConnectorManager;
@@ -25,7 +26,6 @@ import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.plan.queries.IdentifiedQuery;
-import com.datasqrl.plan.validate.ScriptPlanner.Mutation;
 import com.google.common.base.Preconditions;
 import graphql.language.FieldDefinition;
 import graphql.language.InputValueDefinition;
@@ -53,16 +53,18 @@ public class GraphqlModelGenerator extends SchemaWalker {
 
   private final Map<IdentifiedQuery, QueryTemplate> databaseQueries;
   private final QueryPlanner queryPlanner;
+  private final PhysicalPlan physicalPlan;
   List<Coords> coords = new ArrayList<>();
   List<MutationCoords> mutations = new ArrayList<>();
   List<SubscriptionCoords> subscriptions = new ArrayList<>();
 
   public GraphqlModelGenerator(SqlNameMatcher nameMatcher, SqrlSchema schema,
       Map<IdentifiedQuery, QueryTemplate> databaseQueries, QueryPlanner queryPlanner,
-      APIConnectorManager apiManager) {
+      APIConnectorManager apiManager, PhysicalPlan physicalPlan) {
     super(nameMatcher, schema, apiManager);
     this.databaseQueries = databaseQueries;
     this.queryPlanner = queryPlanner;
+    this.physicalPlan = physicalPlan;
   }
 
   @Override
@@ -154,9 +156,9 @@ public class GraphqlModelGenerator extends SchemaWalker {
           .getSql();
 
       if (query.isLimitOffset()) {
-        queryBase = new PagedJdbcQuery(queryStr, query.getParameters());
+        queryBase = new PagedJdbcQuery(entry.getValue().getDatabase(), queryStr, query.getParameters());
       } else {
-        queryBase = new JdbcQuery(queryStr, query.getParameters());
+        queryBase = new JdbcQuery(entry.getValue().getDatabase(), queryStr, query.getParameters());
       }
 
       ArgumentSet set = ArgumentSet.builder().arguments(query.getGraphqlArguments())

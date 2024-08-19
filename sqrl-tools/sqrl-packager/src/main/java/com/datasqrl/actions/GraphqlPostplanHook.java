@@ -30,7 +30,7 @@ public class GraphqlPostplanHook {
     if (source.isPresent()) {
       GraphqlModelGenerator modelGen = new GraphqlModelGenerator(
           framework.getCatalogReader().nameMatcher(), framework.getSchema(),
-          physicalPlan.getDatabaseQueries(), framework.getQueryPlanner(), apiManager);
+          physicalPlan.getDatabaseQueries(), framework.getQueryPlanner(), apiManager, physicalPlan);
       modelGen.walk(source.get());
       RootGraphqlModel model = RootGraphqlModel.builder().coords(modelGen.getCoords())
           .mutations(modelGen.getMutations()).subscriptions(modelGen.getSubscriptions())

@@ -142,7 +142,7 @@ class WriteTest {
                     .parentType("Query")
                     .fieldName("customer")
                     .match(ArgumentSet.builder()
-                            .query(new JdbcQuery("SELECT customerid FROM Customer", List.of()))
+                            .query(new JdbcQuery("postgres","SELECT customerid FROM Customer", List.of()))
                             .build())
                     .build())
             .mutation(new MutationCoords("addCustomer", topicName,
@@ -167,7 +167,7 @@ class WriteTest {
 
     GraphQL graphQL = model.accept(
         new GraphQLEngineBuilder(),
-        new VertxContext(new VertxJdbcClient(client), mutations, subscriptions, NameCanonicalizer.SYSTEM));
+        new VertxContext(new VertxJdbcClient(Map.of("postgres",client)), mutations, subscriptions, NameCanonicalizer.SYSTEM));
 
     ExecutionInput executionInput = ExecutionInput.newExecutionInput()
         .query("mutation ($event: CreateCustomerEvent!) { addCustomer(event: $event) { customerid, ts } }")

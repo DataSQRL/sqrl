@@ -23,23 +23,28 @@ public class UseCasesFullIT extends UseCasesIT {
 
   @Test
   public void testSensorsMutation() {
-    execute("sensors", "sensors-mutation.sqrl", "sensors-mutation.graphqls", "sensors-mutation");
+    execute("test", "sensors", "sensors-mutation.sqrl", "sensors-mutation.graphqls", "sensors-mutation");
   }
 
   @Test
   public void testSensorsFull() {
-    execute("sensors", "sensors-full.sqrl", null, "sensors-full");
+    execute("test", "sensors", "sensors-full.sqrl", null, "sensors-full");
   }
 
   @Test
   public void testSeedshopExtended() {
-    execute("seedshop-tutorial", "seedshop-extended.sqrl", null, "seedshop-extended");
+    execute("test", "seedshop-tutorial", "seedshop-extended.sqrl", null, "seedshop-extended");
   }
 
   @Test
   @Disabled
   public void testSnowflake() {
     execute("snowflake", "snowflake.sqrl", null);
+  }
+
+  @Test
+  public void testDuckdb() {
+    compile("duckdb", "duckdb.sqrl", null);
   }
 
 //

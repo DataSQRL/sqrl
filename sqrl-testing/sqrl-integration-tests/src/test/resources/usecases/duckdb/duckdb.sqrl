@@ -1,0 +1,4 @@
+IMPORT data.applications;
+
+/*+exec(iceberg)*/
+MyTable := SELECT id, 'hello world' as hello FROM applications;

@@ -11,6 +11,7 @@ import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.global.PhysicalDAGPlan.DatabaseStagePlan;
+import com.datasqrl.plan.global.PhysicalDAGPlan.ReadQuery;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
 import com.datasqrl.plan.queries.IdentifiedQuery;
@@ -34,7 +35,7 @@ public class IcebergEngine extends AbstractJDBCTableFormatEngine {
 
   @Override
   public boolean supportsQueryEngine(QueryEngine engine) {
-    return engine instanceof SnowflakeEngine;
+    return engine instanceof SnowflakeEngine || engine instanceof DuckDBEngine;
   }
 
   @Override
@@ -64,14 +65,15 @@ public class IcebergEngine extends AbstractJDBCTableFormatEngine {
 //          }
 //    });
 
-    //Ignore, to be rebased with duckdb changes
-//    QueryEngine queryEngine = queryEngines.values().stream().findFirst().get();
-//    Map<IdentifiedQuery, QueryTemplate> databaseQueries = queryEngine.updateQueries(connectorFactory, connectorConfig, dbPlan.getQueries().stream()
-//        .collect(Collectors.toMap(ReadQuery::getQuery, q -> new QueryTemplate(
-//            queryEngine.getName(),
-//            q.getRelNode()))));
+    QueryEngine queryEngine = queryEngines.values().stream().findFirst().get();
+
+    Map<IdentifiedQuery, QueryTemplate> databaseQueries = queryEngine.updateQueries(connectorFactory, connectorConfig, dbPlan.getQueries().stream()
+        .collect(Collectors.toMap(ReadQuery::getQuery, q -> new QueryTemplate(
+            queryEngine.getName(),
+            q.getRelNode()))));
 
     //nothing needs to be created for aws-glue
-    return new IcebergPlan(enginePlan);
+    return new IcebergPlan(enginePlan, databaseQueries);
   }
+
 }

@@ -132,8 +132,8 @@ public class GraphqlSchemaFactory {
     if (goal != ExecutionGoal.TEST) {
       Optional<GraphQLObjectType.Builder> subscriptions = createSubscriptionTypes(schema);
       Optional<GraphQLObjectType.Builder> mutations = createMutationTypes(schema);
-      subscriptions.map(s->builder.subscription(s));
-      mutations.map(s->builder.mutation(s));
+//      subscriptions.map(s->builder.subscription(s));
+//      mutations.map(s->builder.mutation(s));
     }
     builder.additionalTypes(new LinkedHashSet<>(objectTypes));
 

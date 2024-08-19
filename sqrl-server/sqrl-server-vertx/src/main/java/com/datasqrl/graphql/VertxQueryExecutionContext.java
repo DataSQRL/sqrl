@@ -18,6 +18,7 @@ import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
+import io.vertx.sqlclient.SqlClient;
 import io.vertx.sqlclient.Tuple;
 import java.util.List;
 import java.util.Optional;
@@ -46,10 +47,20 @@ public class VertxQueryExecutionContext implements QueryExecutionContext,
       paramObj[i] = o;
     }
 
-    ((PreparedSqrlQueryImpl) pgQuery.getPreparedQueryContainer())
-        .getPreparedQuery().execute(Tuple.from(paramObj))
-        .map(r -> resultMapper(r, isList))
-        .onSuccess(fut::complete)
+    SqlClient sqlClient = this.context.getSqlClient().getClients().get(pgQuery.getQuery().getDatabase());
+    if (sqlClient == null) {
+      throw new RuntimeException("Could not find database engine: " + pgQuery.getQuery().getDatabase());
+    }
+
+    sqlClient.query("INSTALL iceberg;").execute().compose(v ->
+        sqlClient.query("LOAD iceberg;").execute()
+    ).compose(v ->
+        // Now you can proceed with your original prepared query
+
+            ((PreparedSqrlQueryImpl) pgQuery.getPreparedQueryContainer())
+                .getPreparedQuery().execute(Tuple.from(paramObj))
+                .map(r -> resultMapper(r, isList))
+    ) .onSuccess(fut::complete)
         .onFailure(f -> {
           f.printStackTrace();
           fut.fail(f);
@@ -59,29 +70,35 @@ public class VertxQueryExecutionContext implements QueryExecutionContext,
   }
 
   @Override
-  public CompletableFuture runPagedJdbcQuery(ResolvedPagedJdbcQuery pgQuery,
+  public CompletableFuture runPagedJdbcQuery(ResolvedPagedJdbcQuery databaseQuery,
       boolean isList, QueryExecutionContext context) {
     Optional<Integer> limit = Optional.ofNullable(getEnvironment().getArgument(LIMIT));
     Optional<Integer> offset = Optional.ofNullable(getEnvironment().getArgument(OFFSET));
-    Object[] paramObj = new Object[pgQuery.getQuery().getParameters().size()];
-    for (int i = 0; i < pgQuery.getQuery().getParameters().size(); i++) {
-      JdbcParameterHandler param = pgQuery.getQuery().getParameters().get(i);
+    Object[] paramObj = new Object[databaseQuery.getQuery().getParameters().size()];
+    for (int i = 0; i < databaseQuery.getQuery().getParameters().size(); i++) {
+      JdbcParameterHandler param = databaseQuery.getQuery().getParameters().get(i);
       Object o = param.accept(this, this);
       paramObj[i] = o;
     }
 
     //Add limit + offset
     final String query = String.format("SELECT * FROM (%s) x LIMIT %s OFFSET %s",
-        pgQuery.getQuery().getSql(),
+        databaseQuery.getQuery().getSql(),
         limit.map(Object::toString).orElse("ALL"),
         offset.orElse(0)
     );
 
-    this.context.getSqlClient()
-        .getSqlClient()
-        .preparedQuery(query)
-        .execute(Tuple.from(paramObj))
-        .map(r -> resultMapper(r, isList))
+    SqlClient sqlClient = this.context.getSqlClient().getClients().get(databaseQuery.getDatabase());
+    if (sqlClient == null) {
+      throw new RuntimeException("Could not find database engine: " + databaseQuery.getDatabase());
+    }
+    sqlClient.query("INSTALL iceberg;").execute().compose(v ->
+            sqlClient.query("LOAD iceberg;").execute()
+        ).compose(v ->
+        // Now you can proceed with your original prepared query
+        sqlClient.preparedQuery(query) .execute(Tuple.from(paramObj))
+            .map(r -> resultMapper(r, isList))
+    )
         .onSuccess(fut::complete)
         .onFailure(f -> {
           f.printStackTrace();

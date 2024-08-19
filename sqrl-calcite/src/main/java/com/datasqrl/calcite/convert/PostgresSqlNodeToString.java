@@ -6,6 +6,7 @@ import com.datasqrl.calcite.SqrlConfigurations;
 import com.datasqrl.calcite.convert.RelToSqlNode.SqlNodes;
 import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
 import com.google.auto.service.AutoService;
+import org.apache.calcite.rel.rel2sql.RelToSqlConverter;
 import org.apache.calcite.sql.SqlWriterConfig;
 import org.apache.calcite.sql.pretty.SqlPrettyWriter;
 

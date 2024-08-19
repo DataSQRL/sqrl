@@ -1,6 +1,8 @@
 package com.datasqrl.calcite.dialect;
 
 
+import static org.apache.calcite.sql.SqlKind.COLLECTION_TABLE;
+
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.function.translations.SqlTranslation;
 import com.datasqrl.type.JdbcTypeSerializer;
@@ -16,6 +18,7 @@ import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.SqlDialect;
 import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
+import org.apache.calcite.sql.fun.SqlCollectionTableOperator;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.flink.table.planner.plan.schema.RawRelDataType;
@@ -122,6 +125,15 @@ public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
 
   @Override
   public void unparseCall(SqlWriter writer, SqlCall call, int leftPrec, int rightPrec) {
+    if (call.getOperator().getKind() == COLLECTION_TABLE) { //skip FROM TABLE(..) call
+      unparseCall(writer, (SqlCall)call.getOperandList().get(0), leftPrec, rightPrec);
+      return;
+    }
+
+    if (call.getOperator().getName().equalsIgnoreCase("allow_moved_paths")) {
+      System.out.println();
+    }
+
     if (translationMap.containsKey(call.getOperator().getName().toLowerCase())) {
       translationMap.get(call.getOperator().getName().toLowerCase())
           .unparse(call, writer, leftPrec, rightPrec);

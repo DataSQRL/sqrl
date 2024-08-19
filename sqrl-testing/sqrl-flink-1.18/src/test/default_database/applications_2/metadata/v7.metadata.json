@@ -1,0 +1,239 @@
+{
+  "format-version" : 2,
+  "table-uuid" : "c822de53-bfaf-4e63-a4d5-7e2d02047e9b",
+  "location" : "file:///Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test/default_database/applications_2",
+  "last-sequence-number" : 6,
+  "last-updated-ms" : 1724030846660,
+  "last-column-id" : 7,
+  "current-schema-id" : 0,
+  "schemas" : [ {
+    "type" : "struct",
+    "schema-id" : 0,
+    "identifier-field-ids" : [ 1, 7 ],
+    "fields" : [ {
+      "id" : 1,
+      "name" : "id",
+      "required" : true,
+      "type" : "long"
+    }, {
+      "id" : 2,
+      "name" : "customer_id",
+      "required" : true,
+      "type" : "long"
+    }, {
+      "id" : 3,
+      "name" : "loan_type_id",
+      "required" : true,
+      "type" : "long"
+    }, {
+      "id" : 4,
+      "name" : "amount",
+      "required" : true,
+      "type" : "double"
+    }, {
+      "id" : 5,
+      "name" : "duration",
+      "required" : true,
+      "type" : "long"
+    }, {
+      "id" : 6,
+      "name" : "application_date",
+      "required" : true,
+      "type" : "timestamptz"
+    }, {
+      "id" : 7,
+      "name" : "updated_at",
+      "required" : true,
+      "type" : "timestamptz"
+    } ]
+  } ],
+  "default-spec-id" : 0,
+  "partition-specs" : [ {
+    "spec-id" : 0,
+    "fields" : [ ]
+  } ],
+  "last-partition-id" : 999,
+  "default-sort-order-id" : 0,
+  "sort-orders" : [ {
+    "order-id" : 0,
+    "fields" : [ ]
+  } ],
+  "properties" : {
+    "connector" : "iceberg",
+    "write.parquet.compression-codec" : "zstd",
+    "catalog-table" : "applications_2",
+    "catalog-type" : "hadoop",
+    "warehouse" : "file:///Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test",
+    "catalog-name" : "mydatabase"
+  },
+  "current-snapshot-id" : 5673592077120608267,
+  "refs" : {
+    "main" : {
+      "snapshot-id" : 5673592077120608267,
+      "type" : "branch"
+    }
+  },
+  "snapshots" : [ {
+    "sequence-number" : 1,
+    "snapshot-id" : 3024399084276116779,
+    "timestamp-ms" : 1724030347500,
+    "summary" : {
+      "operation" : "append",
+      "flink.operator-id" : "bf858fcbb9c8f2c07bacd0326ffc1a92",
+      "flink.job-id" : "f410d37ed460faa36092ea13e9856e64",
+      "flink.max-committed-checkpoint-id" : "1",
+      "added-data-files" : "12",
+      "added-records" : "130",
+      "added-files-size" : "30416",
+      "changed-partition-count" : "1",
+      "total-records" : "130",
+      "total-files-size" : "30416",
+      "total-data-files" : "12",
+      "total-delete-files" : "0",
+      "total-position-deletes" : "0",
+      "total-equality-deletes" : "0"
+    },
+    "manifest-list" : "file:/Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test/default_database/applications_2/metadata/snap-3024399084276116779-1-9aebc488-2597-42c9-b277-aae46a5a66b7.avro",
+    "schema-id" : 0
+  }, {
+    "sequence-number" : 2,
+    "snapshot-id" : 6962697260031954233,
+    "parent-snapshot-id" : 3024399084276116779,
+    "timestamp-ms" : 1724030446676,
+    "summary" : {
+      "operation" : "append",
+      "flink.operator-id" : "bf858fcbb9c8f2c07bacd0326ffc1a92",
+      "flink.job-id" : "f410d37ed460faa36092ea13e9856e64",
+      "flink.max-committed-checkpoint-id" : "11",
+      "changed-partition-count" : "0",
+      "total-records" : "130",
+      "total-files-size" : "30416",
+      "total-data-files" : "12",
+      "total-delete-files" : "0",
+      "total-position-deletes" : "0",
+      "total-equality-deletes" : "0"
+    },
+    "manifest-list" : "file:/Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test/default_database/applications_2/metadata/snap-6962697260031954233-1-7d659503-db67-40ed-8bc1-7779ebceb5ad.avro",
+    "schema-id" : 0
+  }, {
+    "sequence-number" : 3,
+    "snapshot-id" : 6942471494735746238,
+    "parent-snapshot-id" : 6962697260031954233,
+    "timestamp-ms" : 1724030546674,
+    "summary" : {
+      "operation" : "append",
+      "flink.operator-id" : "bf858fcbb9c8f2c07bacd0326ffc1a92",
+      "flink.job-id" : "f410d37ed460faa36092ea13e9856e64",
+      "flink.max-committed-checkpoint-id" : "21",
+      "changed-partition-count" : "0",
+      "total-records" : "130",
+      "total-files-size" : "30416",
+      "total-data-files" : "12",
+      "total-delete-files" : "0",
+      "total-position-deletes" : "0",
+      "total-equality-deletes" : "0"
+    },
+    "manifest-list" : "file:/Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test/default_database/applications_2/metadata/snap-6942471494735746238-1-e727641b-dfae-477d-95ab-d2b84b33595a.avro",
+    "schema-id" : 0
+  }, {
+    "sequence-number" : 4,
+    "snapshot-id" : 7361220037183572420,
+    "parent-snapshot-id" : 6942471494735746238,
+    "timestamp-ms" : 1724030646700,
+    "summary" : {
+      "operation" : "append",
+      "flink.operator-id" : "bf858fcbb9c8f2c07bacd0326ffc1a92",
+      "flink.job-id" : "f410d37ed460faa36092ea13e9856e64",
+      "flink.max-committed-checkpoint-id" : "31",
+      "changed-partition-count" : "0",
+      "total-records" : "130",
+      "total-files-size" : "30416",
+      "total-data-files" : "12",
+      "total-delete-files" : "0",
+      "total-position-deletes" : "0",
+      "total-equality-deletes" : "0"
+    },
+    "manifest-list" : "file:/Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test/default_database/applications_2/metadata/snap-7361220037183572420-1-f7c87ee5-45f3-4e61-a072-a917f3bfaa85.avro",
+    "schema-id" : 0
+  }, {
+    "sequence-number" : 5,
+    "snapshot-id" : 3840778805208155957,
+    "parent-snapshot-id" : 7361220037183572420,
+    "timestamp-ms" : 1724030746677,
+    "summary" : {
+      "operation" : "append",
+      "flink.operator-id" : "bf858fcbb9c8f2c07bacd0326ffc1a92",
+      "flink.job-id" : "f410d37ed460faa36092ea13e9856e64",
+      "flink.max-committed-checkpoint-id" : "41",
+      "changed-partition-count" : "0",
+      "total-records" : "130",
+      "total-files-size" : "30416",
+      "total-data-files" : "12",
+      "total-delete-files" : "0",
+      "total-position-deletes" : "0",
+      "total-equality-deletes" : "0"
+    },
+    "manifest-list" : "file:/Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test/default_database/applications_2/metadata/snap-3840778805208155957-1-67bc8ee7-1384-4712-8686-f2588974d8ba.avro",
+    "schema-id" : 0
+  }, {
+    "sequence-number" : 6,
+    "snapshot-id" : 5673592077120608267,
+    "parent-snapshot-id" : 3840778805208155957,
+    "timestamp-ms" : 1724030846660,
+    "summary" : {
+      "operation" : "append",
+      "flink.operator-id" : "bf858fcbb9c8f2c07bacd0326ffc1a92",
+      "flink.job-id" : "f410d37ed460faa36092ea13e9856e64",
+      "flink.max-committed-checkpoint-id" : "51",
+      "changed-partition-count" : "0",
+      "total-records" : "130",
+      "total-files-size" : "30416",
+      "total-data-files" : "12",
+      "total-delete-files" : "0",
+      "total-position-deletes" : "0",
+      "total-equality-deletes" : "0"
+    },
+    "manifest-list" : "file:/Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test/default_database/applications_2/metadata/snap-5673592077120608267-1-188a5061-ba3e-42f6-9bb1-baed48bfc465.avro",
+    "schema-id" : 0
+  } ],
+  "statistics" : [ ],
+  "partition-statistics" : [ ],
+  "snapshot-log" : [ {
+    "timestamp-ms" : 1724030347500,
+    "snapshot-id" : 3024399084276116779
+  }, {
+    "timestamp-ms" : 1724030446676,
+    "snapshot-id" : 6962697260031954233
+  }, {
+    "timestamp-ms" : 1724030546674,
+    "snapshot-id" : 6942471494735746238
+  }, {
+    "timestamp-ms" : 1724030646700,
+    "snapshot-id" : 7361220037183572420
+  }, {
+    "timestamp-ms" : 1724030746677,
+    "snapshot-id" : 3840778805208155957
+  }, {
+    "timestamp-ms" : 1724030846660,
+    "snapshot-id" : 5673592077120608267
+  } ],
+  "metadata-log" : [ {
+    "timestamp-ms" : 1724030340722,
+    "metadata-file" : "file:/Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test/default_database/applications_2/metadata/v1.metadata.json"
+  }, {
+    "timestamp-ms" : 1724030347500,
+    "metadata-file" : "file:/Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test/default_database/applications_2/metadata/v2.metadata.json"
+  }, {
+    "timestamp-ms" : 1724030446676,
+    "metadata-file" : "file:/Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test/default_database/applications_2/metadata/v3.metadata.json"
+  }, {
+    "timestamp-ms" : 1724030546674,
+    "metadata-file" : "file:/Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test/default_database/applications_2/metadata/v4.metadata.json"
+  }, {
+    "timestamp-ms" : 1724030646700,
+    "metadata-file" : "file:/Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test/default_database/applications_2/metadata/v5.metadata.json"
+  }, {
+    "timestamp-ms" : 1724030746677,
+    "metadata-file" : "file:/Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test/default_database/applications_2/metadata/v6.metadata.json"
+  } ]
+}

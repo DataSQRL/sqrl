@@ -8,6 +8,7 @@ import org.apache.calcite.rel.RelNode;
 
 @Value
 public class QueryTemplate {
+  String database;
 
   RelNode relNode;
   //TODO: add parameters

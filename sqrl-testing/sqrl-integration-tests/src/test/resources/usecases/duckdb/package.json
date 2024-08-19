@@ -1,0 +1,26 @@
+{
+  "version": "1",
+  "enabled-engines": [
+    "flink",
+    "iceberg",
+    "duckdb",
+    "kafka",
+    "vertx"
+  ],
+  "values": {
+    "flink-config": {
+      "table.exec.source.idle-timeout": "1 ms"
+    }
+  },
+  "engines": {
+    "flink": {
+      "connectors" : {
+        "iceberg" : {
+          "warehouse":"file:///Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test",
+          "catalog-type":"hadoop",
+          "catalog-name": "mydatabase"
+        }
+      }
+    }
+  }
+}
