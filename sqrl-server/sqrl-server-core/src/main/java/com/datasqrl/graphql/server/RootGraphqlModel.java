@@ -209,6 +209,7 @@ public class RootGraphqlModel {
   public static class JdbcQuery implements QueryBase {
 
     final String type = "JdbcQuery";
+    String database = "postgres";
     String sql;
     @Singular
     List<JdbcParameterHandler> parameters;
@@ -225,6 +226,7 @@ public class RootGraphqlModel {
   public static class PagedJdbcQuery extends JdbcQuery {
 
     final String type = "PagedJdbcQuery";
+    String database = "postgres";
     String sql;
     @Singular
     List<JdbcParameterHandler> parameters;
@@ -406,6 +408,7 @@ public class RootGraphqlModel {
   @Getter
   @NoArgsConstructor
   public static class ResolvedPagedJdbcQuery implements ResolvedQuery {
+    String database = "postgres";
 
     PagedJdbcQuery query;
 

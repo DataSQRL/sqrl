@@ -45,23 +45,27 @@ import io.vertx.ext.web.handler.graphql.GraphQLHandler;
 import io.vertx.ext.web.handler.graphql.GraphiQLHandler;
 import io.vertx.ext.web.handler.graphql.GraphiQLHandlerBuilder;
 import io.vertx.ext.web.handler.graphql.ws.GraphQLWSHandler;
+import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.pgclient.PgPool;
 import io.vertx.pgclient.impl.PgPoolOptions;
 import io.vertx.sqlclient.SqlClient;
+import io.vertx.sqlclient.SqlConnection;
 import java.io.File;
-import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.Statement;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.duckdb.DuckDBDriver;
 
 @Slf4j
 public class GraphQLServer extends AbstractVerticle {
@@ -69,6 +73,17 @@ public class GraphQLServer extends AbstractVerticle {
   private final RootGraphqlModel model;
   private final NameCanonicalizer canonicalizer;
   private ServerConfig config;
+
+  public static void main(String[] args) {
+    Vertx vertx = Vertx.vertx();
+    vertx.deployVerticle(new GraphQLServer(), res -> {
+      if (res.succeeded()) {
+        System.out.println("Deployment id is: " + res.result());
+      } else {
+        System.out.println("Deployment failed!");
+      }
+    });
+  }
 
   public GraphQLServer() {
     this(readModel(), null, NameCanonicalizer.SYSTEM);
@@ -169,8 +184,10 @@ public class GraphQLServer extends AbstractVerticle {
       ctx.response().setStatusCode(500).end();
     });
 
-    SqlClient client = getSqlClient();
-    GraphQL graphQL = createGraphQL(client, startPromise);
+    SqlClient client = getPostgresSqlClient();
+    Map<String, SqlClient> clients = Map.of("postgres", client,
+        "duckdb", getDuckdbSqlClient());
+    GraphQL graphQL = createGraphQL(clients, startPromise);
 
     CorsHandler corsHandler = toCorsHandler(this.config.getCorsHandlerOptions());
     router.route().handler(corsHandler);
@@ -206,6 +223,42 @@ public class GraphQLServer extends AbstractVerticle {
         });
   }
 
+  @SneakyThrows
+  private SqlClient getDuckdbSqlClient() {
+    String url = "jdbc:duckdb:"; // In-memory DuckDB instance or you can specify a file path for persistence
+
+    try {
+      Class.forName("org.duckdb.DuckDBDriver");
+    } catch (ClassNotFoundException e) {
+      e.printStackTrace();
+    }
+
+    Properties props = new Properties();
+    props.setProperty(DuckDBDriver.DUCKDB_READONLY_PROPERTY, String.valueOf(true));
+    props.setProperty(DuckDBDriver.JDBC_STREAM_RESULTS, String.valueOf(true));
+//
+//    try (Connection conn = DriverManager.getConnection(url, props);
+//        Statement stmt = conn.createStatement()) {
+//
+//      stmt.execute("INSTALL iceberg;");
+//      stmt.execute("LOAD iceberg;");
+//
+//    }
+
+    final JsonObject config = new JsonObject()
+        .put("driver_class", "org.duckdb.DuckDBDriver")
+        .put("datasourceName", "pool-name")
+        .put("url", url)
+        .put("max_pool_size", 1)
+//        .put(DuckDBDriver.DUCKDB_READONLY_PROPERTY, String.valueOf(true))
+        .put(DuckDBDriver.JDBC_STREAM_RESULTS, String.valueOf(true))
+    ;
+
+    JDBCPool pool = JDBCPool.pool(vertx, config);
+
+    return pool;
+  }
+
   private CorsHandler toCorsHandler(CorsHandlerOptions corsHandlerOptions) {
     CorsHandler corsHandler = corsHandlerOptions.getAllowedOrigin() != null
         ? CorsHandler.create(corsHandlerOptions.getAllowedOrigin())
@@ -229,13 +282,13 @@ public class GraphQLServer extends AbstractVerticle {
         .allowPrivateNetwork(corsHandlerOptions.isAllowPrivateNetwork());
   }
 
-  private SqlClient getSqlClient() {
+  private SqlClient getPostgresSqlClient() {
     return PgPool.client(vertx, this.config.getPgConnectOptions(),
         new PgPoolOptions(this.config.getPoolOptions())
             .setPipelined(true));
   }
 
-  public GraphQL createGraphQL(SqlClient client, Promise<Void> startPromise) {
+  public GraphQL createGraphQL(Map<String, SqlClient> client, Promise<Void> startPromise) {
     try {
       GraphQL graphQL = model.accept(
           new GraphQLEngineBuilder(List.of(SqrlVertxScalars.JSON)),

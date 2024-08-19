@@ -101,7 +101,7 @@ public class SnowflakeEngine extends AbstractJDBCQueryEngine {
     DatabaseStagePlan dbPlan = (DatabaseStagePlan) plan;
 
     Map<IdentifiedQuery, QueryTemplate> databaseQueries = dbPlan.getQueries().stream()
-        .collect(Collectors.toMap(ReadQuery::getQuery, q -> new QueryTemplate(q.getRelNode())));
+        .collect(Collectors.toMap(ReadQuery::getQuery, q -> new QueryTemplate("snowflake", q.getRelNode())));
 
     List<Map<String, String>> queries = new ArrayList<>();
 

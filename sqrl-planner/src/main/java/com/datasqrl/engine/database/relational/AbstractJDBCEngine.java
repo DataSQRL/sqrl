@@ -85,7 +85,8 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
             .forEach(ddlStatements::add);
 
     Map<IdentifiedQuery, QueryTemplate> databaseQueries = dbPlan.getQueries().stream()
-        .collect(Collectors.toMap(ReadQuery::getQuery, q -> new QueryTemplate(q.getRelNode())));
+        .collect(Collectors.toMap(ReadQuery::getQuery, q -> new QueryTemplate(
+            getDialect().name().toLowerCase(), q.getRelNode())));
 
 //    List<Map<String, String>> queries = new ArrayList<>();
 //    QueryPlanner queryPlanner = framework.getQueryPlanner();

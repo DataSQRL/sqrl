@@ -145,7 +145,7 @@ public class GraphQLEngineBuilder implements
 
   @Override
   public ResolvedQuery visitPagedJdbcQuery(PagedJdbcQuery jdbcQuery, Context context) {
-    return new ResolvedPagedJdbcQuery(jdbcQuery);
+    return new ResolvedPagedJdbcQuery(jdbcQuery.getDatabase(), jdbcQuery);
   }
 
   @Override

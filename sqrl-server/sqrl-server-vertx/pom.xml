@@ -99,7 +99,11 @@
       <groupId>io.netty</groupId>
       <artifactId>netty-codec</artifactId>
     </dependency>
-
+    <dependency>
+      <groupId>org.duckdb</groupId>
+      <artifactId>duckdb_jdbc</artifactId>
+      <version>0.10.3</version> <!-- or the latest version -->
+    </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.datatype</groupId>
       <artifactId>jackson-datatype-jsr310</artifactId>

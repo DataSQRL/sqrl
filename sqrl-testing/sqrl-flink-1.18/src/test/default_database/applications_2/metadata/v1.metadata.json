@@ -1,0 +1,76 @@
+{
+  "format-version" : 2,
+  "table-uuid" : "c822de53-bfaf-4e63-a4d5-7e2d02047e9b",
+  "location" : "file:///Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test/default_database/applications_2",
+  "last-sequence-number" : 0,
+  "last-updated-ms" : 1724030340722,
+  "last-column-id" : 7,
+  "current-schema-id" : 0,
+  "schemas" : [ {
+    "type" : "struct",
+    "schema-id" : 0,
+    "identifier-field-ids" : [ 1, 7 ],
+    "fields" : [ {
+      "id" : 1,
+      "name" : "id",
+      "required" : true,
+      "type" : "long"
+    }, {
+      "id" : 2,
+      "name" : "customer_id",
+      "required" : true,
+      "type" : "long"
+    }, {
+      "id" : 3,
+      "name" : "loan_type_id",
+      "required" : true,
+      "type" : "long"
+    }, {
+      "id" : 4,
+      "name" : "amount",
+      "required" : true,
+      "type" : "double"
+    }, {
+      "id" : 5,
+      "name" : "duration",
+      "required" : true,
+      "type" : "long"
+    }, {
+      "id" : 6,
+      "name" : "application_date",
+      "required" : true,
+      "type" : "timestamptz"
+    }, {
+      "id" : 7,
+      "name" : "updated_at",
+      "required" : true,
+      "type" : "timestamptz"
+    } ]
+  } ],
+  "default-spec-id" : 0,
+  "partition-specs" : [ {
+    "spec-id" : 0,
+    "fields" : [ ]
+  } ],
+  "last-partition-id" : 999,
+  "default-sort-order-id" : 0,
+  "sort-orders" : [ {
+    "order-id" : 0,
+    "fields" : [ ]
+  } ],
+  "properties" : {
+    "connector" : "iceberg",
+    "write.parquet.compression-codec" : "zstd",
+    "catalog-table" : "applications_2",
+    "catalog-type" : "hadoop",
+    "warehouse" : "file:///Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test",
+    "catalog-name" : "mydatabase"
+  },
+  "current-snapshot-id" : -1,
+  "refs" : { },
+  "snapshots" : [ ],
+  "statistics" : [ ],
+  "partition-statistics" : [ ],
+  "snapshot-log" : [ ],
+  "metadata-log" : [ ]
+}

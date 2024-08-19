@@ -1,5 +1,6 @@
 package com.datasqrl.graphql;
 
+import com.datasqrl.graphql.jdbc.PreparedSqrlQueryImpl;
 import com.datasqrl.graphql.server.Context;
 import com.datasqrl.graphql.server.JdbcClient;
 import com.datasqrl.graphql.server.RootGraphqlModel.JdbcQuery;
@@ -10,18 +11,24 @@ import io.vertx.sqlclient.PreparedQuery;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.SqlClient;
+import java.util.Map;
 import lombok.Value;
 
 @Value
 public class VertxJdbcClient implements JdbcClient {
-  SqlClient sqlClient;
+  Map<String, SqlClient> clients;
 
   @Override
-  public ResolvedQuery prepareQuery(JdbcQuery pgQuery, Context context) {
-    PreparedQuery<RowSet<Row>> preparedQuery = sqlClient
-        .preparedQuery(pgQuery.getSql());
+  public ResolvedQuery prepareQuery(JdbcQuery query, Context context) {
+    SqlClient sqlClient = clients.get(query.getDatabase());
+    if (sqlClient == null) {
+      throw new RuntimeException("Could not find database engine: " + query.getDatabase());
+    }
 
-    return new ResolvedJdbcQuery(pgQuery,
+    PreparedQuery<RowSet<Row>> preparedQuery = sqlClient
+        .preparedQuery(query.getSql());
+
+    return new ResolvedJdbcQuery(query,
         new PreparedSqrlQueryImpl(preparedQuery));
   }
 

@@ -31,13 +31,13 @@ public class UseCasesIT {
   }
 
   protected void execute(String path, String script, String graphql) {
-    execute(path, script, graphql, null);
+    execute("test", path, script, graphql, null);
   }
 
-  protected void execute(String path, String script, String graphql, String testSuffix) {
+  protected void execute(String goal, String path, String script, String graphql, String testSuffix) {
     Path rootDir = RESOURCES.resolve(path);
     List<String> argsList = new ArrayList<>();
-    argsList.add("test");
+    argsList.add(goal);
     argsList.add(script);
     if (!Strings.isNullOrEmpty(graphql)) argsList.add(graphql);
     if (testSuffix!=null) {
