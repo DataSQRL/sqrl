@@ -233,24 +233,11 @@ public class GraphQLServer extends AbstractVerticle {
       e.printStackTrace();
     }
 
-    Properties props = new Properties();
-    props.setProperty(DuckDBDriver.DUCKDB_READONLY_PROPERTY, String.valueOf(true));
-    props.setProperty(DuckDBDriver.JDBC_STREAM_RESULTS, String.valueOf(true));
-//
-//    try (Connection conn = DriverManager.getConnection(url, props);
-//        Statement stmt = conn.createStatement()) {
-//
-//      stmt.execute("INSTALL iceberg;");
-//      stmt.execute("LOAD iceberg;");
-//
-//    }
-
     final JsonObject config = new JsonObject()
         .put("driver_class", "org.duckdb.DuckDBDriver")
         .put("datasourceName", "pool-name")
         .put("url", url)
         .put("max_pool_size", 1)
-//        .put(DuckDBDriver.DUCKDB_READONLY_PROPERTY, String.valueOf(true))
         .put(DuckDBDriver.JDBC_STREAM_RESULTS, String.valueOf(true))
     ;
 

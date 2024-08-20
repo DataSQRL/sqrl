@@ -48,11 +48,10 @@ public class DuckDBEngine extends AbstractJDBCQueryEngine {
       RelNode replaced = relNode.accept(new RelShuttleImpl() {
         @Override
         public RelNode visit(TableScan scan) {
-          //look for iceberg, convert
-          //iceberg_scan('/Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test/default/my_table', allow_moved_paths = true)
           Map<String, Object> map = connectorFactory.getConfig("iceberg").toMap();
           String warehouse =(String) map.get("warehouse");
-          String catalogName =(String) map.get("catalog-name");
+          String databaseName =(String) map.get("database-name") == null ? "default_database" :
+              (String)map.get("database-name");
           RexBuilder rexBuilder = new RexBuilder(new TypeFactory());
           if (warehouse.startsWith("file://")) {
             warehouse = warehouse.substring(7);
@@ -62,7 +61,7 @@ public class DuckDBEngine extends AbstractJDBCQueryEngine {
               rexBuilder.makeFlag(Params.ALLOW_MOVED_PATHS),
               rexBuilder.makeLiteral(true));
           RexNode rexNode = rexBuilder.makeCall(lightweightOp("iceberg_scan"),
-              rexBuilder.makeLiteral(warehouse+"/default_database/" + scan.getTable().getQualifiedName().get(0)),
+              rexBuilder.makeLiteral(warehouse+"/"+databaseName+"/" + scan.getTable().getQualifiedName().get(0)),
               allowMovedPaths);
 
 

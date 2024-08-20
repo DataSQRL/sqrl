@@ -7,10 +7,12 @@ import com.datasqrl.graphql.server.RootGraphqlModel.JdbcQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.PreparedSqrlQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedJdbcQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
+import io.vertx.core.Future;
 import io.vertx.sqlclient.PreparedQuery;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.SqlClient;
+import io.vertx.sqlclient.Tuple;
 import java.util.Map;
 import lombok.Value;
 
@@ -30,6 +32,24 @@ public class VertxJdbcClient implements JdbcClient {
 
     return new ResolvedJdbcQuery(query,
         new PreparedSqrlQueryImpl(preparedQuery));
+  }
+
+  public Future<RowSet<Row>> execute(String database, PreparedQuery query, Tuple tup) {
+    if (database == null) {
+      database = "postgres";
+    }
+    SqlClient sqlClient = clients.get(database);
+
+    if (database.equalsIgnoreCase("duckdb")) {
+      return sqlClient.query("INSTALL iceberg;").execute().compose(v ->
+          sqlClient.query("LOAD iceberg;").execute()).compose(t->query.execute(tup));
+    }
+    return query.execute(tup);
+  }
+
+  public Future<RowSet<Row>> execute(String database, String query, Tuple tup) {
+    SqlClient sqlClient = clients.get(database);
+    return execute(database, sqlClient.preparedQuery(query), tup);
   }
 
   @Value
