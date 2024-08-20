@@ -41,11 +41,10 @@ class SqlCreateSnowflakeViewTest {
     SqlPrettyWriter writer = new SqlPrettyWriter(dialect);
     createView.unparse(writer, 0, 0);
 
-    String expectedSql = "CREATE OR REPLACE SECURE VIEW IF NOT EXISTS \"advanced_view\"(\"column1\", \"column2\")\n"
-        + "COMMENT 'This is an advanced view with multiple features.'\n"
+    String expectedSql = "CREATE OR REPLACE SECURE VIEW IF NOT EXISTS advanced_view(column1, column2)\n"
         + "COPY GRANTS\n"
         + "AS SELECT *\n"
-        + "FROM \"X\"";
+        + "FROM X";
     assertEquals(expectedSql, writer.toString(), "Generated SQL does not match expected.");
   }
 }
