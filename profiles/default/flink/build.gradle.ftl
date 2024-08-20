@@ -13,6 +13,7 @@ ext {
     jdbcVersion = "3.1.2-1.18"
     kafkaVersion = "3.1.0-1.18"
     sqrlVersion = "0.5.3"
+    icebergVersion = "1.5.2"
 <#if config["enabled-engines"]?seq_contains("postgres_log")>
     postgresCdcVersion = "3.1.0"
 </#if>
@@ -47,6 +48,23 @@ dependencies {
     implementation "com.datasqrl:sqrl-flexible-csv:$sqrlVersion"
     implementation "com.datasqrl:sqrl-vector:$sqrlVersion"
     implementation "com.datasqrl:sqrl-jdbc-1.18:$sqrlVersion"
+
+    implementation "org.apache.hive:hive-metastore:3.1.3"
+    implementation 'org.apache.iceberg:iceberg-flink-runtime-1.18:1.5.2'
+    //implementation "org.apache.iceberg:iceberg-core:$icebergVersion"
+    //implementation "org.apache.iceberg:iceberg-aws:$icebergVersion"
+
+    implementation platform('software.amazon.awssdk:bom:2.24.5')
+    implementation "software.amazon.awssdk:apache-client"
+    implementation "software.amazon.awssdk:auth"
+    implementation "software.amazon.awssdk:iam"
+    implementation "software.amazon.awssdk:sso"
+    implementation "software.amazon.awssdk:s3"
+    implementation "software.amazon.awssdk:kms"
+    implementation "software.amazon.awssdk:glue"
+    implementation "software.amazon.awssdk:sts"
+    implementation "software.amazon.awssdk:dynamodb"
+    implementation "software.amazon.awssdk:lakeformation"
 
     // Log4j 2 dependencies
 //    testImplementation 'org.apache.logging.log4j:log4j-core:2.17.1'

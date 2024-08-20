@@ -26,6 +26,7 @@ public class SqlCreateIcebergTableFromObjectStorage extends SqlCall {
   private final SqlIdentifier tableName;
   private final SqlLiteral externalVolume;
   private final SqlLiteral catalog;
+  private final SqlLiteral catalogTableName;
   private final SqlLiteral metadataFilePath;
   private final SqlLiteral replaceInvalidCharacters;
   private final SqlLiteral comment;
@@ -35,7 +36,7 @@ public class SqlCreateIcebergTableFromObjectStorage extends SqlCall {
 
   public SqlCreateIcebergTableFromObjectStorage(SqlParserPos pos, boolean replace, boolean ifNotExists,
       SqlIdentifier tableName,
-      SqlLiteral externalVolume, SqlLiteral catalog, SqlLiteral metadataFilePath,
+      SqlLiteral externalVolume, SqlLiteral catalog, SqlLiteral catalogTableName, SqlLiteral metadataFilePath,
       SqlLiteral replaceInvalidCharacters, SqlLiteral comment, SqlNodeList tags) {
     super(pos);
     this.replace = replace;
@@ -43,6 +44,7 @@ public class SqlCreateIcebergTableFromObjectStorage extends SqlCall {
     this.tableName = Objects.requireNonNull(tableName);
     this.externalVolume = externalVolume;
     this.catalog = catalog;
+    this.catalogTableName = catalogTableName;
     this.metadataFilePath = metadataFilePath;
     this.replaceInvalidCharacters = replaceInvalidCharacters;
     this.comment = comment;
@@ -80,6 +82,8 @@ public class SqlCreateIcebergTableFromObjectStorage extends SqlCall {
       writer.keyword("CATALOG");
       writer.literal("= '" + catalog.toValue() + "'");
     }
+    writer.keyword("CATALOG_TABLE_NAME");
+    writer.literal("= '" + catalogTableName.toValue() + "'");
 
     if (metadataFilePath != null) {
       writer.keyword("METADATA_FILE_PATH");

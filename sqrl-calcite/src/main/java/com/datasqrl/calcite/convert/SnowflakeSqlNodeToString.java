@@ -15,6 +15,7 @@ public class SnowflakeSqlNodeToString implements SqlNodeToString {
   public SqlStrings convert(SqlNodes sqlNode) {
     SqlWriterConfig config = SqlPrettyWriter.config()
         .withDialect(ExtendedSnowflakeSqlDialect.DEFAULT)
+        .withQuoteAllIdentifiers(false)
         .withIndentation(0);
     SqlPrettyWriter prettyWriter = new SqlPrettyWriter(config);
     sqlNode.getSqlNode().unparse(prettyWriter, 0, 0);
