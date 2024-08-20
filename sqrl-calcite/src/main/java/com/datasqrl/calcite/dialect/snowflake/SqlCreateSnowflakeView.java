@@ -95,11 +95,11 @@ public class SqlCreateSnowflakeView extends SqlCall {
       writer.endList(frame);
     }
 
-    if (comment != null) {
-      writer.newlineAndIndent();
-      writer.keyword("COMMENT");
-      comment.unparse(writer, leftPrec, rightPrec);
-    }
+//    if (comment != null) {
+//      writer.newlineAndIndent();
+//      writer.keyword("COMMENT");
+//      comment.unparse(writer, leftPrec, rightPrec);
+//    }
 
     if (copyGrants) {
       writer.newlineAndIndent();

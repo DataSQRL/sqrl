@@ -1,5 +1,7 @@
 package com.datasqrl.sql;
 
+import static com.datasqrl.canonicalizer.Name.HIDDEN_PREFIX;
+
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentParameter;
@@ -21,8 +23,9 @@ public class DatabaseQueryFactory {
 
     return schema.getTableFunctions()
         .stream().filter(f -> !(f instanceof NestedRelationship))
+        .filter(f->!f.getDisplayName().startsWith(HIDDEN_PREFIX))
         .map(t -> new APIQuery(
-            "query" + i.incrementAndGet(),
+            t.getDisplayName(),
             NamePath.ROOT,
             framework.getQueryPlanner().expandMacros(t.getViewTransform().get()),
             t.getParameters().stream()

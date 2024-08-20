@@ -87,9 +87,14 @@ public class SnowflakeEngine extends AbstractJDBCQueryEngine {
           new SqlIdentifier(sink.getNameId(), SqlParserPos.ZERO),
           externalVolume,
           SqlLiteral.createCharString((String)engineConfig.toMap().get("catalog-name"),
-              SqlParserPos.ZERO), null,
+              SqlParserPos.ZERO),
+          SqlLiteral.createCharString(sink.getNameId(), SqlParserPos.ZERO),
+          null,
           null, null, null);
-      ddlStatements.add(()->icebergTable.toSqlString(CalciteSqlDialect.DEFAULT).getSql());
+
+      SnowflakeSqlNodeToString toString = new SnowflakeSqlNodeToString();
+      String sql = toString.convert(() -> icebergTable).getSql();
+      ddlStatements.add(()->sql);
     }
 
     Preconditions.checkArgument(plan instanceof DatabaseStagePlan);
@@ -112,20 +117,17 @@ public class SnowflakeEngine extends AbstractJDBCQueryEngine {
       });
 
 
-
       SqlParserPos pos = new SqlParserPos(0, 0);
       SqlIdentifier viewName = new SqlIdentifier(entry.getKey().getNameId(), pos);
       SqlNodeList columnList = new SqlNodeList(relNode.getRowType().getFieldList().stream()
               .map(f->new SqlIdentifier(f.getName(), SqlParserPos.ZERO))
           .collect(Collectors.toList()), pos);
 
-      SqlCharStringLiteral comment = SqlLiteral.createCharString("", pos);
-
       SqlSelect select =(SqlSelect) framework.getQueryPlanner()
           .relToSql(Dialect.SNOWFLAKE, relNode).getSqlNode();
 
-      SqlCreateSnowflakeView createView = new SqlCreateSnowflakeView(pos, true, true, false, false, null, viewName, columnList,
-          select, comment, false);
+      SqlCreateSnowflakeView createView = new SqlCreateSnowflakeView(pos, true, false, false, false, null, viewName, columnList,
+          select, null, false);
 
       SnowflakeSqlNodeToString toString = new SnowflakeSqlNodeToString();
       String sql = toString.convert(() -> createView).getSql();

@@ -23,8 +23,9 @@ public class ExtendedSnowflakeSqlDialect extends SnowflakeSqlDialect {
   static {
     DEFAULT_CONTEXT = SqlDialect.EMPTY_CONTEXT
         .withDatabaseProduct(DatabaseProduct.SNOWFLAKE)
-        .withIdentifierQuoteString("\"")
-        .withUnquotedCasing(Casing.TO_UPPER);
+//        .withIdentifierQuoteString("\"")
+//        .withUnquotedCasing(Casing.TO_UPPER)
+    ;
     DEFAULT = new ExtendedSnowflakeSqlDialect(DEFAULT_CONTEXT);
   }
   public ExtendedSnowflakeSqlDialect(Context context) {
