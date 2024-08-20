@@ -69,7 +69,7 @@ public class DatasqrlRun {
         new JsonEnvVarDeserializer(getEnv()));
     objectMapper.registerModule(module);
 
-//    startVertx();
+    startVertx();
     startFlink();
   }
 
@@ -82,8 +82,9 @@ public class DatasqrlRun {
   @SneakyThrows
   public CompiledPlan compileFlink() {
     Map<String, String> config = Map.of(
-        "taskmanager.network.memory.max", "1g",
-        "execution.checkpointing.interval", "10 sec",
+        "taskmanager.network.memory.max", "800m",
+        "taskmanager.memory.task.off-heap.size", "1g",
+        "execution.checkpointing.interval", "20 sec",
         "table.exec.source.idle-timeout", "1 s")
         ;
     //read flink config from package.json values?
@@ -159,10 +160,12 @@ public class DatasqrlRun {
   public void startKafka() {
     startKafkaCluster();
 
-    Map map = objectMapper.readValue(path.resolve("kafka.json").toFile(), Map.class);
-    List<Map<String, Object>> topics = (List<Map<String, Object>>)map.get("topics");
-    for (Map<String, Object> topic : topics) {
-      CLUSTER.createTopic((String)topic.get("name"), 1, 1);
+    if (path.resolve("kafka.json").toFile().exists()) {
+      Map map = objectMapper.readValue(path.resolve("kafka.json").toFile(), Map.class);
+      List<Map<String, Object>> topics = (List<Map<String, Object>>) map.get("topics");
+      for (Map<String, Object> topic : topics) {
+        CLUSTER.createTopic((String) topic.get("name"), 1, 1);
+      }
     }
   }
 
@@ -234,7 +237,7 @@ public class DatasqrlRun {
         System.out.println("Deployment failed!");
       }
     });
-}
+  }
 
   public static class ModelContainer {
     public RootGraphqlModel model;

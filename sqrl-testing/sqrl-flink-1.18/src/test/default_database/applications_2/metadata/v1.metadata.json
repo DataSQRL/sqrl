@@ -1,9 +1,9 @@
 {
   "format-version" : 2,
-  "table-uuid" : "c822de53-bfaf-4e63-a4d5-7e2d02047e9b",
+  "table-uuid" : "6bedc0db-30f1-4996-8fd9-41405a7b8729",
   "location" : "file:///Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test/default_database/applications_2",
   "last-sequence-number" : 0,
-  "last-updated-ms" : 1724030340722,
+  "last-updated-ms" : 1724197416385,
   "last-column-id" : 7,
   "current-schema-id" : 0,
   "schemas" : [ {
@@ -50,9 +50,19 @@
   "default-spec-id" : 0,
   "partition-specs" : [ {
     "spec-id" : 0,
-    "fields" : [ ]
+    "fields" : [ {
+      "name" : "id",
+      "transform" : "identity",
+      "source-id" : 1,
+      "field-id" : 1000
+    }, {
+      "name" : "updated_at",
+      "transform" : "identity",
+      "source-id" : 7,
+      "field-id" : 1001
+    } ]
   } ],
-  "last-partition-id" : 999,
+  "last-partition-id" : 1001,
   "default-sort-order-id" : 0,
   "sort-orders" : [ {
     "order-id" : 0,

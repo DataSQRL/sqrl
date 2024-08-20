@@ -14,8 +14,10 @@ import com.datasqrl.graphql.server.RootGraphqlModel.SourceParameter;
 import com.datasqrl.graphql.server.QueryExecutionContext;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import graphql.schema.DataFetchingEnvironment;
+import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
+import io.vertx.sqlclient.PreparedQuery;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.SqlClient;
@@ -24,6 +26,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import lombok.SneakyThrows;
@@ -47,26 +50,28 @@ public class VertxQueryExecutionContext implements QueryExecutionContext,
       paramObj[i] = o;
     }
 
-    SqlClient sqlClient = this.context.getSqlClient().getClients().get(pgQuery.getQuery().getDatabase());
+
+    SqlClient sqlClient = this.context.getSqlClient().getClients()
+        .get(pgQuery.getQuery().getDatabase());
+
     if (sqlClient == null) {
       throw new RuntimeException("Could not find database engine: " + pgQuery.getQuery().getDatabase());
     }
+    PreparedQuery<RowSet<Row>> preparedQuery = ((PreparedSqrlQueryImpl) pgQuery.getPreparedQueryContainer())
+        .getPreparedQuery();
 
-    sqlClient.query("INSTALL iceberg;").execute().compose(v ->
-        sqlClient.query("LOAD iceberg;").execute()
-    ).compose(v ->
-        // Now you can proceed with your original prepared query
+    Future<RowSet<Row>> future = this.context.getSqlClient().execute(pgQuery.getQuery().getDatabase(),
+        preparedQuery,Tuple.from(paramObj));
 
-            ((PreparedSqrlQueryImpl) pgQuery.getPreparedQueryContainer())
-                .getPreparedQuery().execute(Tuple.from(paramObj))
-                .map(r -> resultMapper(r, isList))
-    ) .onSuccess(fut::complete)
-        .onFailure(f -> {
-          f.printStackTrace();
-          fut.fail(f);
-        });
+    future
+      .map(r -> resultMapper(r, isList))
+      .onSuccess(fut::complete)
+      .onFailure(f -> {
+        f.printStackTrace();
+        fut.fail(f);
+      });
 
-    return null;
+    return new CompletableFuture();
   }
 
   @Override
@@ -89,21 +94,20 @@ public class VertxQueryExecutionContext implements QueryExecutionContext,
     );
 
     SqlClient sqlClient = this.context.getSqlClient().getClients().get(databaseQuery.getDatabase());
+
+    Future<RowSet<Row>> future = this.context.getSqlClient().execute(databaseQuery.getDatabase(),
+        query,Tuple.from(paramObj));
     if (sqlClient == null) {
       throw new RuntimeException("Could not find database engine: " + databaseQuery.getDatabase());
     }
-    sqlClient.query("INSTALL iceberg;").execute().compose(v ->
-            sqlClient.query("LOAD iceberg;").execute()
-        ).compose(v ->
-        // Now you can proceed with your original prepared query
-        sqlClient.preparedQuery(query) .execute(Tuple.from(paramObj))
-            .map(r -> resultMapper(r, isList))
-    )
-        .onSuccess(fut::complete)
-        .onFailure(f -> {
-          f.printStackTrace();
-          fut.fail(f);
-        });
+
+    future
+      .map(r -> resultMapper(r, isList))
+      .onSuccess(fut::complete)
+      .onFailure(f -> {
+        f.printStackTrace();
+        fut.fail(f);
+      });
 
     return new CompletableFuture();
   }

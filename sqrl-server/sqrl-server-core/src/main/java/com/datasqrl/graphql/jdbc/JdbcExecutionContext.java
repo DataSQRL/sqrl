@@ -15,12 +15,10 @@ import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import graphql.schema.DataFetchingEnvironment;
 import graphql.schema.PropertyDataFetcher;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -52,10 +50,6 @@ public class JdbcExecutionContext implements QueryExecutionContext,
     }
     //Look at graphql response for list type here
     PreparedSqrlQueryImpl p = ((PreparedSqrlQueryImpl) pgQuery.getPreparedQueryContainer());
-    try (Statement stmt = p.getConnection().createStatement()) {
-      stmt.execute("INSTALL iceberg;");
-      stmt.execute("LOAD iceberg;");
-    }
 
     return CompletableFuture.supplyAsync(()-> {
       try (PreparedStatement statement = p.getConnection()

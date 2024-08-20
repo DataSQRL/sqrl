@@ -130,10 +130,6 @@ public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
       return;
     }
 
-    if (call.getOperator().getName().equalsIgnoreCase("allow_moved_paths")) {
-      System.out.println();
-    }
-
     if (translationMap.containsKey(call.getOperator().getName().toLowerCase())) {
       translationMap.get(call.getOperator().getName().toLowerCase())
           .unparse(call, writer, leftPrec, rightPrec);
