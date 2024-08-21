@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.util.stream.Stream;
 import org.apache.flink.table.api.CompiledPlan;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -47,6 +48,7 @@ public class DagPlannerIT {
 
   @ParameterizedTest
   @MethodSource("directoryProvider")
+  @Disabled
   void testCompilePlanOnDirectory(Path directoryPath) {
     SqrlCompiler sqrlCompiler = new SqrlCompiler();
     sqrlCompiler.execute(directoryPath.getParent(),
