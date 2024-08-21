@@ -24,7 +24,7 @@ public abstract class SimpleBasicType<J> extends AbstractBasicType<J> {
   public static class Conversion<J> implements TypeConversion<J> {
 
     private final Class<J> clazz;
-    private final Function<String, J> stringParser;
+    protected final Function<String, J> stringParser;
     private final Set<Class> javaClasses;
 
     public Conversion(@NonNull Class<J> clazz, @NonNull Function<String, J> stringParser) {
