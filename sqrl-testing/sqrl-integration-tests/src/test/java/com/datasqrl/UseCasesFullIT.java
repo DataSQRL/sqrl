@@ -1,7 +1,5 @@
 package com.datasqrl;
 
-import com.datasqrl.cmd.AssertStatusHook;
-import java.nio.file.Path;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 

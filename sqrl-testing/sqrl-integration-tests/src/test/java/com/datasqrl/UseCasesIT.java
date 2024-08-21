@@ -25,7 +25,7 @@ public class UseCasesIT {
     execute("repository", "repo.sqrl", "repo.graphqls");
   }
 
-//  @Test
+  @Test
   public void testLoggingToKafka() {
     execute("logging/it-kafka", "logging-kafka.sqrl", "logging-kafka.graphqls");
   }

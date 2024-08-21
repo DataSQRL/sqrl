@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.CompiledPlan;
@@ -38,6 +39,7 @@ import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
+@Slf4j
 public class DatasqrlRun {
   Path path = Path.of("build", "plan");
   EmbeddedKafkaCluster CLUSTER;
@@ -183,8 +185,6 @@ public class DatasqrlRun {
       // todo: install postgres in homebrew (?), also remove the database on shutdown or reinit
       connection = DriverManager.getConnection("jdbc:postgresql://127.0.0.1:5432/datasqrl", "postgres", "postgres");
     }
-
-    System.out.println(path.toAbsolutePath().toString());
 
     Map map = objectMapper.readValue(path.resolve("postgres.json").toFile(), Map.class);
     List<Map<String, Object>> ddl = (List<Map<String, Object>>) map.get("ddl");
