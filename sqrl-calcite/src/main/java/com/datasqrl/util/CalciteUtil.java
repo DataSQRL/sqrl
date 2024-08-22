@@ -207,7 +207,7 @@ public class CalciteUtil {
 
     @Override
     public boolean appliesTo(SqlOperator operator) {
-      return operator.isName(name, false);
+      return isOperator(operator, name);
     }
 
     @Override
@@ -221,7 +221,9 @@ public class CalciteUtil {
     }
   }
 
-
+  public static boolean isOperator(SqlOperator operator, String operatorName) {
+    return operator.isName(operatorName, false);
+  }
 
 
   public static Optional<Integer> isEqualToConstant(RexNode rexNode) {

@@ -53,6 +53,8 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static com.datasqrl.error.ErrorCode.*;
+import static com.datasqrl.util.CalciteUtil.CAST_TRANSFORM;
+import static com.datasqrl.util.CalciteUtil.COALESCE_TRANSFORM;
 
 /**
  * The {@link SQRLLogicalPlanRewriter} rewrites the logical plan (i.e. {@link RelNode} produced by the transpiler.
@@ -221,7 +223,15 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
       QueryRelationalTable queryTable = tblFct.getQueryTable();
       return setRelHolder(createAnnotatedRootTable(functionScan, queryTable));
     } else {
-      throw errors.exception("Invalid table function encountered in query: %s [%s]", functionScan, tableFunction.getClass());
+      //Generic table function call
+      RelDataType rowType = functionScan.getRowType();
+      return setRelHolder(new AnnotatedLP(functionScan, TableType.STATIC,
+          determinePK(rowType),
+          Timestamps.UNDEFINED,
+          SelectIndexMap.identity(rowType.getFieldCount(), rowType.getFieldCount()),
+          Optional.empty(),
+          NowFilter.EMPTY, TopNConstraint.EMPTY,
+          SortOrder.EMPTY, List.of()));
     }
   }
 
@@ -276,14 +286,33 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     List<TimePredicate> timeFunctions = new ArrayList<>();
     List<RexNode> conjunctions = rexUtil.getConjunctions(condition);
 
-    //Identify any pk columns that are constrained by an equality constrained with a constant and remove from pk list
+
+    //Identify any columns that are constrained to a constant value and a) remove as pk if they are or b) update pk if filter is on row_number
     Set<PrimaryKeyMap.ColumnSet> pksToRemove = new HashSet<>();
+    List<Integer> newPk = null;
     for (RexNode node : conjunctions) {
       Optional<Integer> idxOpt = CalciteUtil.isEqualToConstant(node);
       idxOpt.flatMap(input.primaryKey::getForIndex).ifPresent(pksToRemove::add);
+      if (idxOpt.isPresent() && input.relNode instanceof LogicalProject) {
+        RexNode column = ((LogicalProject) input.relNode).getProjects().get(idxOpt.orElseThrow());
+        if (column instanceof RexOver && column.isA(SqlKind.ROW_NUMBER)) {
+          newPk = ((RexOver)column).getWindow().partitionKeys.stream().map(n ->  CalciteUtil.getInputRefThroughTransform(n, List.of(CAST_TRANSFORM, COALESCE_TRANSFORM)))
+              .map(opt -> opt.orElse(-1)).collect(Collectors.toUnmodifiableList());
+          if (newPk.stream().anyMatch(idx -> idx<0)) {
+            newPk = null; // Not all partition RexNodes are input refs
+          }
+        }
+      }
+
     }
     PrimaryKeyMap pk = input.primaryKey;
-    if (!pksToRemove.isEmpty()) { //Remove them
+    TableType type = input.getType();
+    if (newPk != null) {
+      pk = PrimaryKeyMap.of(newPk);
+      if (type==TableType.STREAM) { //Update type
+        type = TableType.VERSIONED_STATE;
+      }
+    } else if (!pksToRemove.isEmpty()) { //Remove them
       pk = new PrimaryKeyMap(pk.asList().stream().filter(Predicate.not(pksToRemove::contains)).collect(
           Collectors.toList()));
     }
@@ -327,7 +356,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     }
     relBuilder.filter(conjunctions);
     exec.requireRex(conjunctions);
-    return setRelHolder(input.copy().primaryKey(pk).relNode(relBuilder.build()).timestamp(timestamp)
+    return setRelHolder(input.copy().primaryKey(pk).type(type).relNode(relBuilder.build()).timestamp(timestamp)
         .nowFilter(nowFilter).build());
   }
 
@@ -816,29 +845,24 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     if (!leftInput.type.hasPrimaryKey()) {
       return processRelation(List.of(leftInput, rightInput), logicalCorrelate);
     }
-
+    leftInput = leftInput.inlineTopN(makeRelBuilder(), exec);
+    rightInput = rightInput.inlineAll(makeRelBuilder(), exec);
     final int leftSideMaxIdx = leftInput.getFieldLength();
     SelectIndexMap joinedIndexMap = leftInput.select.join(rightInput.select, leftSideMaxIdx, false);
 
-    if (rightInput.type==TableType.STATIC) {
-      RelBuilder relB = makeRelBuilder();
-      relB.push(leftInput.relNode);
-      List<RexNode> requiredNodes = logicalCorrelate.getRequiredColumns().asList().stream().map(leftInput.select::map)
-              .map(idx -> rexUtil.makeInputRef(idx, relB)).collect(Collectors.toList());
-      relB.push(rightInput.relNode);
-      relB.correlate(logicalCorrelate.getJoinType(), logicalCorrelate.getCorrelationId(), requiredNodes);
-      PrimaryKeyMap.Builder pkBuilder = leftInput.getPrimaryKey().toBuilder();
-      pkBuilder.addAll(rightInput.getPrimaryKey().remap(idx -> idx + leftSideMaxIdx).asList());
-      return setRelHolder(AnnotatedLP.build(relB.build(), leftInput.getType(),
-              pkBuilder.build(), leftInput.getTimestamp(), joinedIndexMap,
-              List.of(leftInput, rightInput))
-          .streamRoot(leftInput.streamRoot).nowFilter(leftInput.nowFilter).sort(leftInput.sort)
-          .build());
-    }
-
-    leftInput = leftInput.inlineNowFilter(makeRelBuilder(), exec);
-    rightInput = rightInput.inlineNowFilter(makeRelBuilder(), exec);
-    throw new UnsupportedOperationException("Correlate currently only supported on table functions and static data");
+    RelBuilder relB = makeRelBuilder();
+    relB.push(leftInput.relNode);
+    List<RexNode> requiredNodes = logicalCorrelate.getRequiredColumns().asList().stream().map(leftInput.select::map)
+            .map(idx -> rexUtil.makeInputRef(idx, relB)).collect(Collectors.toList());
+    relB.push(rightInput.relNode);
+    relB.correlate(logicalCorrelate.getJoinType(), logicalCorrelate.getCorrelationId(), requiredNodes);
+    PrimaryKeyMap.Builder pkBuilder = leftInput.getPrimaryKey().toBuilder();
+    pkBuilder.addAll(rightInput.getPrimaryKey().remap(idx -> idx + leftSideMaxIdx).asList());
+    return setRelHolder(AnnotatedLP.build(relB.build(), leftInput.getType(),
+            pkBuilder.build(), leftInput.getTimestamp(), joinedIndexMap,
+            List.of(leftInput, rightInput))
+        .streamRoot(leftInput.streamRoot).nowFilter(leftInput.nowFilter).sort(leftInput.sort)
+        .build());
   }
 
   private JoinModifier getJoinModifier(ImmutableList<RelHint> hints) {

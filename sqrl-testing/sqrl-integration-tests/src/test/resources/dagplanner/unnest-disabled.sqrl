@@ -1,0 +1,4 @@
+IMPORT ecommerceTs.Orders;
+
+OrderEntries := SELECT id, time, productid, discount
+                FROM Orders o CROSS JOIN UNNEST(o.entries) AS t (productid, quantity, unit_price, discount);

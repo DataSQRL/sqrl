@@ -9,3 +9,5 @@ CustomerByUpdatedAsc := DISTINCT Customer ON customerid ORDER BY lastUpdated DES
 
 CustomerByMultipleTime := DISTINCT Customer ON customerid, email ORDER BY timestamp DESC, lastUpdated ASC;
 CustomerByMultiple := DISTINCT Customer ON customerid, email ORDER BY lastUpdated DESC, timestamp ASC;
+
+ExplicitDistinct := SELECT customerid, timestamp, name FROM (SELECT *, (ROW_NUMBER() OVER (PARTITION BY customerid ORDER BY timestamp DESC)) AS _rownum FROM Customer) WHERE (_rownum = 1);
