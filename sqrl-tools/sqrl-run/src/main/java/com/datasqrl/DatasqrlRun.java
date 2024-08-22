@@ -83,8 +83,8 @@ public class DatasqrlRun {
   public CompiledPlan compileFlink() {
     Map<String, String> config = Map.of(
         "taskmanager.network.memory.max", "800m",
-        "taskmanager.memory.task.off-heap.size", "1g",
         "execution.checkpointing.interval", "20 sec",
+        "state.backend", "rocksdb",
         "table.exec.source.idle-timeout", "1 s")
         ;
     //read flink config from package.json values?
@@ -204,6 +204,9 @@ public class DatasqrlRun {
 
   @SneakyThrows
   public void startVertx() {
+    if (!path.resolve("vertx.json").toFile().exists()) {
+      return;
+    }
     RootGraphqlModel rootGraphqlModel = objectMapper.readValue(
         path.resolve("vertx.json").toFile(),
         ModelContainer.class).model;
