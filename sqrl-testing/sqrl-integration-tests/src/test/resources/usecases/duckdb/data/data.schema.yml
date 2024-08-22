@@ -1,9 +1,0 @@
----
-name: "data"
-schema_version: "1"
-partial_schema: false
-columns:
-- name: "mydata"
-  type: "BIGINT"
-  tests:
-  - "not_null"
