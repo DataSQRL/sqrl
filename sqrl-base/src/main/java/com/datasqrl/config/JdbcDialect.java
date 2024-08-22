@@ -5,7 +5,7 @@ import java.util.Optional;
 
 public enum JdbcDialect {
 
-  Postgres("PostgreSQL"), Oracle, MySQL, SQLServer, H2, SQLite, Iceberg, Snowflake, duckdb;
+  Postgres("PostgreSQL"), Oracle, MySQL, SQLServer, H2, SQLite, Iceberg, Snowflake, DuckDB;
 
   private final String[] synonyms;
 

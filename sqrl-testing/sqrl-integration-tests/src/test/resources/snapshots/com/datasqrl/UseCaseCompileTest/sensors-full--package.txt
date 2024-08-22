@@ -413,6 +413,7 @@ LogicalTableScan(table=[[sensors_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"hightemp_1\"\nORDER BY \"timeSec\" DESC, \"sensorid\"",
               "parameters" : [ ]
             }
@@ -443,6 +444,7 @@ LogicalTableScan(table=[[sensors_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"machineid\", \"sensorid\", \"temp\", \"timeSec\", 1 AS \"__pk\"\nFROM \"hightemp_1\"\nWHERE \"sensorid\" = $1 AND \"timeSec\" = $2\nORDER BY \"timeSec\" DESC, 1",
               "parameters" : [
                 {
@@ -479,6 +481,7 @@ LogicalTableScan(table=[[sensors_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"hightemp_1\"\nWHERE \"sensorid\" = $1\nORDER BY \"timeSec\" DESC",
               "parameters" : [
                 {
@@ -510,6 +513,7 @@ LogicalTableScan(table=[[sensors_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"hightemp_1\"\nWHERE \"timeSec\" = $1\nORDER BY \"timeSec\" DESC, \"sensorid\"",
               "parameters" : [
                 {
@@ -548,6 +552,7 @@ LogicalTableScan(table=[[sensors_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"machineid\", \"maxTemp\", \"avgTemp\", \"_timeSec\", 1 AS \"__pk\"\nFROM \"machine_1\"\nWHERE \"machineid\" = $1\nORDER BY 1",
               "parameters" : [
                 {
@@ -574,6 +579,7 @@ LogicalTableScan(table=[[sensors_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"machine_1\"\nORDER BY \"machineid\"",
               "parameters" : [ ]
             }
@@ -601,6 +607,7 @@ LogicalTableScan(table=[[sensors_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"sensors_3\"\nWHERE \"machineId\" = $1\nORDER BY \"id\"",
               "parameters" : [
                 {
@@ -623,6 +630,7 @@ LogicalTableScan(table=[[sensors_2]])
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"__pk1_id\", \"maxTemp\", \"avgTemp\", \"_timeSec\", 1 AS \"__pk\"\nFROM \"lasthour_1\"\nWHERE \"__pk1_id\" = $1\nORDER BY 1",
               "parameters" : [
                 {
@@ -645,6 +653,7 @@ LogicalTableScan(table=[[sensors_2]])
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"id\", \"machineId\", \"placed\", \"timestamp\", 1 AS \"__pk\"\nFROM \"sensors_3\"\nWHERE \"id\" = $1\nORDER BY 1",
               "parameters" : [
                 {
@@ -678,6 +687,7 @@ LogicalTableScan(table=[[sensors_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"secreading_1\"\nWHERE \"sensorid\" = $1\nORDER BY \"timeSec\" DESC",
               "parameters" : [
                 {
@@ -711,6 +721,7 @@ LogicalTableScan(table=[[sensors_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"secreading_1\"\nORDER BY \"timeSec\" DESC, \"sensorid\"",
               "parameters" : [ ]
             }
@@ -741,6 +752,7 @@ LogicalTableScan(table=[[sensors_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"sensorid\", \"timeSec\", \"temp\", 1 AS \"__pk\"\nFROM \"secreading_1\"\nWHERE \"sensorid\" = $1 AND \"timeSec\" = $2\nORDER BY \"timeSec\" DESC, 1",
               "parameters" : [
                 {
@@ -777,6 +789,7 @@ LogicalTableScan(table=[[sensors_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"secreading_1\"\nWHERE \"timeSec\" = $1\nORDER BY \"timeSec\" DESC, \"sensorid\"",
               "parameters" : [
                 {
@@ -808,6 +821,7 @@ LogicalTableScan(table=[[sensors_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"secreading_1\"\nWHERE \"sensorid\" = $1\nORDER BY \"timeSec\" DESC",
               "parameters" : [
                 {
@@ -836,6 +850,7 @@ LogicalTableScan(table=[[sensors_2]])
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"secreading_1\"\nWHERE \"temp\" > $1\nORDER BY \"timeSec\", \"sensorid\"",
               "parameters" : [
                 {
@@ -879,6 +894,7 @@ LogicalTableScan(table=[[sensors_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"sensorid\", \"time\", \"temperature\", \"humidity\", \"timestamp\", 1 AS \"__pk\"\nFROM \"sensorreading_2\"\nWHERE \"sensorid\" = $1 AND \"time\" = $2\nORDER BY \"timestamp\" DESC NULLS LAST, 1",
               "parameters" : [
                 {
@@ -915,6 +931,7 @@ LogicalTableScan(table=[[sensors_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"sensorreading_2\"\nWHERE \"sensorid\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"time\"",
               "parameters" : [
                 {
@@ -946,6 +963,7 @@ LogicalTableScan(table=[[sensors_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"sensorreading_2\"\nWHERE \"time\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"sensorid\"",
               "parameters" : [
                 {
@@ -972,6 +990,7 @@ LogicalTableScan(table=[[sensors_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"sensorreading_2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"sensorid\", \"time\"",
               "parameters" : [ ]
             }
@@ -999,6 +1018,7 @@ LogicalTableScan(table=[[sensors_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"sensors_3\"\nORDER BY \"id\"",
               "parameters" : [ ]
             }
@@ -1024,6 +1044,7 @@ LogicalTableScan(table=[[sensors_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"id\", \"machineId\", \"placed\", \"timestamp\", 1 AS \"__pk\"\nFROM \"sensors_3\"\nWHERE \"id\" = $1\nORDER BY 1",
               "parameters" : [
                 {

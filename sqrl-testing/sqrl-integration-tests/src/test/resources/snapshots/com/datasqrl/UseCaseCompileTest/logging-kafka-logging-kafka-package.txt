@@ -132,6 +132,7 @@ LogicalTableScan(table=[[reuseddata_1]], hints=[[[WatermarkHint inheritPath:[] o
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"id\", \"epoch_timestamp\", \"some_value\", \"timestamp\", 1 AS \"__pk\"\nFROM \"data_2\"\nWHERE \"id\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, 1",
               "parameters" : [
                 {
@@ -158,6 +159,7 @@ LogicalTableScan(table=[[reuseddata_1]], hints=[[[WatermarkHint inheritPath:[] o
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"data_2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"id\"",
               "parameters" : [ ]
             }
@@ -185,6 +187,7 @@ LogicalTableScan(table=[[reuseddata_1]], hints=[[[WatermarkHint inheritPath:[] o
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"reuseddata_2\"\nORDER BY \"ts\" DESC NULLS LAST, \"id\"",
               "parameters" : [ ]
             }
@@ -210,6 +213,7 @@ LogicalTableScan(table=[[reuseddata_1]], hints=[[[WatermarkHint inheritPath:[] o
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"id\", \"epoch_timestamp\", \"some_value\", \"timestamp\", \"ts\", 1 AS \"__pk\"\nFROM \"reuseddata_2\"\nWHERE \"id\" = $1\nORDER BY \"ts\" DESC NULLS LAST, 1",
               "parameters" : [
                 {

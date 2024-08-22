@@ -303,6 +303,7 @@ LogicalTableScan(table=[[likes_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"events_3\"\nORDER BY \"id\"",
               "parameters" : [ ]
             }
@@ -325,6 +326,7 @@ LogicalTableScan(table=[[likes_2]])
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"events_3\".\"url\", \"events_3\".\"date\", \"events_3\".\"time\", \"events_3\".\"title\", \"events_3\".\"abstract\", \"events_3\".\"location\", \"events_3\".\"speakers\", \"events_3\".\"last_updated\", \"events_3\".\"id\", \"events_3\".\"full_text\", \"events_3\".\"embedding\", \"events_3\".\"startTime\", \"events_3\".\"startTimestamp\", \"t\".\"eventId\" AS \"_eventId\"\nFROM (SELECT *\n  FROM \"userlikes_1\"\n  WHERE \"userid\" = $1) AS \"t\"\n INNER JOIN \"events_3\" ON \"t\".\"eventId\" = \"events_3\".\"id\"\nORDER BY \"events_3\".\"startTimestamp\", \"t\".\"eventId\"",
               "parameters" : [
                 {
@@ -358,6 +360,7 @@ LogicalTableScan(table=[[likes_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"events_3\".\"url\", \"events_3\".\"date\", \"events_3\".\"time\", \"events_3\".\"title\", \"events_3\".\"abstract\", \"events_3\".\"location\", \"events_3\".\"speakers\", \"events_3\".\"last_updated\", \"events_3\".\"id\", \"events_3\".\"full_text\", \"events_3\".\"embedding\", \"events_3\".\"startTime\", \"events_3\".\"startTimestamp\", 1 - (\"t\".\"interestVector\" <=> \"events_3\".\"embedding\") AS \"score\"\nFROM (SELECT *\n  FROM \"userinterests_1\"\n  WHERE \"userid\" = $1) AS \"t\",\n \"events_3\"\nORDER BY 1 - (\"t\".\"interestVector\" <=> \"events_3\".\"embedding\") DESC, \"events_3\".\"id\"",
               "parameters" : [
                 {
@@ -396,6 +399,7 @@ LogicalTableScan(table=[[likes_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"t\".\"url\", \"t\".\"date\", \"t\".\"time\", \"t\".\"title\", \"t\".\"abstract\", \"t\".\"location\", \"t\".\"speakers\", \"t\".\"last_updated\", \"t\".\"id\", \"t\".\"full_text\", \"t\".\"embedding\", \"t\".\"startTime\", \"t\".\"startTimestamp\", COALESCE(1 - (\"t0\".\"interestVector\" <=> \"t\".\"embedding\"), 0.0) AS \"score\"\nFROM (SELECT *\n  FROM \"events_3\"\n  WHERE (TO_TSVECTOR('english', COALESCE(\"title\", ' ') || ' ' || COALESCE(\"abstract\", ' ')) @@ WEBSEARCH_TO_TSQUERY('english', $1))) AS \"t\"\n LEFT JOIN (SELECT *\n  FROM \"userinterests_1\"\n  WHERE \"userid\" = $2) AS \"t0\" ON TRUE\nORDER BY COALESCE(1 - (\"t0\".\"interestVector\" <=> \"t\".\"embedding\"), 0.0) DESC, \"t\".\"id\"",
               "parameters" : [
                 {

@@ -233,6 +233,7 @@ Inputs: productrevenue_1
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"customerid\", \"week\", \"total\", \"saved\", 1 AS \"__pk\"\nFROM \"customerspending_1\"\nWHERE \"customerid\" = $1 AND \"week\" = $2\nORDER BY \"week\" DESC NULLS LAST, 1",
               "parameters" : [
                 {
@@ -269,6 +270,7 @@ Inputs: productrevenue_1
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"customerspending_1\"\nWHERE \"week\" = $1\nORDER BY \"week\" DESC NULLS LAST, \"customerid\"",
               "parameters" : [
                 {
@@ -300,6 +302,7 @@ Inputs: productrevenue_1
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"customerspending_1\"\nWHERE \"customerid\" = $1\nORDER BY \"week\" DESC NULLS LAST",
               "parameters" : [
                 {
@@ -326,6 +329,7 @@ Inputs: productrevenue_1
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"customerspending_1\"\nORDER BY \"week\" DESC NULLS LAST, \"customerid\"",
               "parameters" : [ ]
             }
@@ -358,6 +362,7 @@ Inputs: productrevenue_1
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
               "parameters" : [
                 {
@@ -384,6 +389,7 @@ Inputs: productrevenue_1
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
               "parameters" : [ ]
             }
@@ -414,6 +420,7 @@ Inputs: productrevenue_1
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"id\", \"customerid\", \"time\", \"productid\", \"quantity\", \"unit_price\", \"discount\", 1 AS \"__pk\"\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, 1",
               "parameters" : [
                 {
@@ -450,6 +457,7 @@ Inputs: productrevenue_1
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1\nORDER BY \"time\" DESC NULLS LAST",
               "parameters" : [
                 {
@@ -488,6 +496,7 @@ Inputs: productrevenue_1
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"productrevenue_1\"\nWHERE \"productid\" = $1\nORDER BY \"week\" DESC NULLS LAST",
               "parameters" : [
                 {
@@ -519,6 +528,7 @@ Inputs: productrevenue_1
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"productrevenue_1\"\nWHERE \"week\" = $1\nORDER BY \"week\" DESC NULLS LAST, \"productid\"",
               "parameters" : [
                 {
@@ -545,6 +555,7 @@ Inputs: productrevenue_1
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"productrevenue_1\"\nORDER BY \"week\" DESC NULLS LAST, \"productid\"",
               "parameters" : [ ]
             }
@@ -575,6 +586,7 @@ Inputs: productrevenue_1
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"productid\", \"week\", \"revenue\", 1 AS \"__pk\"\nFROM \"productrevenue_1\"\nWHERE \"productid\" = $1 AND \"week\" = $2\nORDER BY \"week\" DESC NULLS LAST, 1",
               "parameters" : [
                 {

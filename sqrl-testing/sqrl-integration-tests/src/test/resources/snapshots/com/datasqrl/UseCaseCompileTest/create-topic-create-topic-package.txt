@@ -117,6 +117,7 @@ Inputs: pgtable_1
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"pgtable_1\"\nORDER BY \"event_time\" DESC NULLS LAST, \"_uuid\"",
               "parameters" : [ ]
             }
