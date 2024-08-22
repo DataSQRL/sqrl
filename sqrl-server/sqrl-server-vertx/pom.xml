@@ -96,6 +96,12 @@
       <artifactId>agroal-pool</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.apache.calcite</groupId>
+      <artifactId>calcite-core</artifactId>
+      <version>1.36.0</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
       <groupId>org.reactivestreams</groupId>
       <artifactId>reactive-streams</artifactId>
     </dependency>

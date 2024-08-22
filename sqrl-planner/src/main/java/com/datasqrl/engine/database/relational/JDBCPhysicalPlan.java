@@ -3,6 +3,7 @@
  */
 package com.datasqrl.engine.database.relational;
 
+import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.engine.database.DatabasePhysicalPlan;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.sql.SqlDDLStatement;
@@ -22,4 +23,8 @@ public class JDBCPhysicalPlan implements DatabasePhysicalPlan {
   @JsonIgnore
   Map<IdentifiedQuery, QueryTemplate> queryPlans;
 
+  @Override
+  public Type getType() {
+    return Type.DATABASE;
+  }
 }

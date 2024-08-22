@@ -192,6 +192,12 @@ public class SnowflakeEngine extends AbstractJDBCQueryEngine {
     List<DatabaseView> views;
     @JsonIgnore
     Map<IdentifiedQuery, QueryTemplate> queryPlans;
+    List<Map<String, String>> queries;
+
+    @Override
+    public Type getType() {
+      return Type.QUERY;
+    }
   }
 
   @Override

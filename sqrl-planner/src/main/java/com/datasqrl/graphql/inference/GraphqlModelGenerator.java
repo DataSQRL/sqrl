@@ -7,10 +7,16 @@ import com.datasqrl.calcite.QueryPlanner;
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.config.EngineFactory.Type;
+import com.datasqrl.engine.EnginePhysicalPlan;
+import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.config.TableConfig;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.database.QueryTemplate;
+import com.datasqrl.engine.database.relational.ddl.statements.InsertStatement;
 import com.datasqrl.engine.log.Log;
+import com.datasqrl.engine.log.kafka.KafkaPhysicalPlan;
+import com.datasqrl.engine.log.postgres.PostgresPhysicalPlan;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
@@ -20,9 +26,11 @@ import com.datasqrl.graphql.server.RootGraphqlModel.Coords;
 import com.datasqrl.graphql.server.RootGraphqlModel.DuckDbQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.FieldLookupCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.JdbcQuery;
+import com.datasqrl.graphql.server.RootGraphqlModel.KafkaMutationCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.PagedDuckDbQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.PagedJdbcQuery;
+import com.datasqrl.graphql.server.RootGraphqlModel.PostgresLogMutationCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.PagedSnowflakeDbQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.SnowflakeDbQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoords;
@@ -49,6 +57,8 @@ import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.validate.SqlNameMatcher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Returns a set of table functions that satisfy a graphql schema
@@ -56,7 +66,8 @@ import org.apache.calcite.sql.validate.SqlNameMatcher;
 @Getter
 public class GraphqlModelGenerator extends SchemaWalker {
 
-  private final Map<IdentifiedQuery, QueryTemplate> databaseQueries;
+  private static final Logger log = LoggerFactory.getLogger(GraphqlModelGenerator.class);
+  private final PhysicalPlan physicalPlan;
   private final QueryPlanner queryPlanner;
   private final PhysicalPlan physicalPlan;
   List<Coords> coords = new ArrayList<>();
@@ -67,7 +78,7 @@ public class GraphqlModelGenerator extends SchemaWalker {
       Map<IdentifiedQuery, QueryTemplate> databaseQueries, QueryPlanner queryPlanner,
       APIConnectorManager apiManager, PhysicalPlan physicalPlan) {
     super(nameMatcher, schema, apiManager);
-    this.databaseQueries = databaseQueries;
+    this.physicalPlan = physicalPlan;
     this.queryPlanner = queryPlanner;
     this.physicalPlan = physicalPlan;
   }
@@ -114,6 +125,32 @@ public class GraphqlModelGenerator extends SchemaWalker {
     }
 
     mutations.add(new MutationCoords(fieldDefinition.getName(), topicName, Map.of()));
+
+    ///
+
+//    EnginePhysicalPlan logPlan = physicalPlan.getPlan(Type.LOG);
+//
+//    Map<String, Object> map = tableSink.getConfiguration().getConnectorConfig().toMap();
+//
+//    MutationCoords mutationCoords;
+//
+//    if (logPlan instanceof KafkaPhysicalPlan) {
+//      mutationCoords = new KafkaMutationCoords(fieldDefinition.getName(), (String)map.get("topic"), Map.of());
+//    } else if (logPlan instanceof PostgresPhysicalPlan) {
+//      String tableName = (String)map.get("table-name");
+//
+//      InsertStatement insertStatement = ((PostgresPhysicalPlan) logPlan).getInserts().stream()
+//          .filter(insert -> insert.getTableName().equals(tableName))
+//          .findFirst()
+//          .orElseThrow(() -> new RuntimeException("Could not find insert statement for table: " + tableName));
+//
+//      mutationCoords = new PostgresLogMutationCoords(fieldDefinition.getName(), tableName,
+//          insertStatement.getSql(), insertStatement.getParameters());
+//    } else {
+//      throw new RuntimeException("Unknown log plan: " + logPlan.getClass().getName());
+//    }
+//
+//    mutations.add(mutationCoords);
   }
 
   @Override
@@ -139,7 +176,8 @@ public class GraphqlModelGenerator extends SchemaWalker {
       FieldDefinition field, NamePath path, Optional<RelDataType> parentRel,
       List<SqrlTableMacro> functions) {
 
-    List<Entry<IdentifiedQuery, QueryTemplate>> queries = databaseQueries.entrySet().stream()
+    List<Entry<IdentifiedQuery, QueryTemplate>> queries = physicalPlan.getDatabaseQueries()
+        .entrySet().stream()
         .filter(f -> ((APIQuery) f.getKey()).getNamePath().equals(path))
         .collect(Collectors.toList());
 
