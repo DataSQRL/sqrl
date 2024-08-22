@@ -159,7 +159,6 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT \"timeSec\", \"number\", \"volume\", 1 AS \"__pk\"\nFROM \"ordercount_1\"\nWHERE \"timeSec\" = $1\nORDER BY \"timeSec\" DESC NULLS LAST, 1",
               "parameters" : [
                 {
@@ -186,7 +185,6 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"ordercount_1\"\nORDER BY \"timeSec\" DESC NULLS LAST",
               "parameters" : [ ]
             }
@@ -224,7 +222,6 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT \"id\", \"customerid\", \"time\", \"items\", \"_source_time\", 1 AS \"__pk\"\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"_source_time\" DESC NULLS LAST, 1",
               "parameters" : [
                 {
@@ -261,7 +258,6 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1\nORDER BY \"_source_time\" DESC NULLS LAST, \"time\"",
               "parameters" : [
                 {
@@ -293,7 +289,6 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"time\" = $1\nORDER BY \"_source_time\" DESC NULLS LAST, \"id\"",
               "parameters" : [
                 {
@@ -320,7 +315,6 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orders_2\"\nORDER BY \"_source_time\" DESC NULLS LAST, \"id\", \"time\"",
               "parameters" : [ ]
             }

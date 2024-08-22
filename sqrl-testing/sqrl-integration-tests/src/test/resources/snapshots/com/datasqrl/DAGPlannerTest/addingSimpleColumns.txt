@@ -188,7 +188,6 @@ LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], col1=[/(+($0, 
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orderentry_1\"\nWHERE \"time\" = $1 AND \"productid\" = $2\nORDER BY \"time\" DESC NULLS LAST, \"_id\"",
               "parameters" : [
                 {
@@ -225,7 +224,6 @@ LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], col1=[/(+($0, 
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orderentry_1\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"_id\", \"productid\"",
               "parameters" : [
                 {
@@ -257,7 +255,6 @@ LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], col1=[/(+($0, 
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orderentry_1\"\nWHERE \"productid\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"_id\"",
               "parameters" : [
                 {
@@ -284,7 +281,6 @@ LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], col1=[/(+($0, 
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orderentry_1\"\nORDER BY \"time\" DESC NULLS LAST, \"_id\", \"productid\"",
               "parameters" : [ ]
             }
@@ -317,7 +313,6 @@ LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], col1=[/(+($0, 
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
               "parameters" : [
                 {
@@ -344,7 +339,6 @@ LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], col1=[/(+($0, 
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
               "parameters" : [ ]
             }
@@ -375,7 +369,6 @@ LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], col1=[/(+($0, 
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", \"col1\", 1 AS \"__pk\"\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, 1",
               "parameters" : [
                 {
@@ -412,7 +405,6 @@ LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], col1=[/(+($0, 
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1\nORDER BY \"time\" DESC NULLS LAST",
               "parameters" : [
                 {

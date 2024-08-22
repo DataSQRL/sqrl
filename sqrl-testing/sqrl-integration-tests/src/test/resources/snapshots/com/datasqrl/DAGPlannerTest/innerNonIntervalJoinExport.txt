@@ -243,7 +243,6 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"coorders_1\"\nWHERE \"beforeID\" = $1 AND \"afterID\" = $2\nORDER BY \"__timestamp\" DESC NULLS LAST, \"_customerid\", \"beforeTimestamp\", \"timestamp\"",
               "parameters" : [
                 {
@@ -290,7 +289,6 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"coorders_1\"\nWHERE \"beforeID\" = $1 AND \"timestamp\" = $2 AND \"beforeTimestamp\" = $3\nORDER BY \"__timestamp\" DESC NULLS LAST, \"_customerid\", \"afterID\"",
               "parameters" : [
                 {
@@ -337,7 +335,6 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"coorders_1\"\nWHERE \"beforeID\" = $1 AND \"timestamp\" = $2\nORDER BY \"__timestamp\" DESC NULLS LAST, \"_customerid\", \"beforeTimestamp\", \"afterID\"",
               "parameters" : [
                 {
@@ -379,7 +376,6 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"coorders_1\"\nWHERE \"beforeID\" = $1 AND \"beforeTimestamp\" = $2\nORDER BY \"__timestamp\" DESC NULLS LAST, \"_customerid\", \"afterID\", \"timestamp\"",
               "parameters" : [
                 {
@@ -431,7 +427,6 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"coorders_1\"\nWHERE \"beforeID\" = $1 AND \"afterID\" = $2 AND \"timestamp\" = $3 AND \"beforeTimestamp\" = $4\nORDER BY \"__timestamp\" DESC NULLS LAST, \"_customerid\"",
               "parameters" : [
                 {
@@ -488,7 +483,6 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"coorders_1\"\nWHERE \"beforeID\" = $1 AND \"afterID\" = $2 AND \"timestamp\" = $3\nORDER BY \"__timestamp\" DESC NULLS LAST, \"_customerid\", \"beforeTimestamp\"",
               "parameters" : [
                 {
@@ -540,7 +534,6 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"coorders_1\"\nWHERE \"beforeID\" = $1 AND \"afterID\" = $2 AND \"beforeTimestamp\" = $3\nORDER BY \"__timestamp\" DESC NULLS LAST, \"_customerid\", \"timestamp\"",
               "parameters" : [
                 {
@@ -582,7 +575,6 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"coorders_1\"\nWHERE \"timestamp\" = $1\nORDER BY \"__timestamp\" DESC NULLS LAST, \"beforeID\", \"_customerid\", \"beforeTimestamp\", \"afterID\"",
               "parameters" : [
                 {
@@ -619,7 +611,6 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"coorders_1\"\nWHERE \"timestamp\" = $1 AND \"beforeTimestamp\" = $2\nORDER BY \"__timestamp\" DESC NULLS LAST, \"beforeID\", \"_customerid\", \"afterID\"",
               "parameters" : [
                 {
@@ -656,7 +647,6 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"coorders_1\"\nWHERE \"afterID\" = $1\nORDER BY \"__timestamp\" DESC NULLS LAST, \"beforeID\", \"_customerid\", \"beforeTimestamp\", \"timestamp\"",
               "parameters" : [
                 {
@@ -693,7 +683,6 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"coorders_1\"\nWHERE \"afterID\" = $1 AND \"beforeTimestamp\" = $2\nORDER BY \"__timestamp\" DESC NULLS LAST, \"beforeID\", \"_customerid\", \"timestamp\"",
               "parameters" : [
                 {
@@ -735,7 +724,6 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"coorders_1\"\nWHERE \"afterID\" = $1 AND \"timestamp\" = $2\nORDER BY \"__timestamp\" DESC NULLS LAST, \"beforeID\", \"_customerid\", \"beforeTimestamp\"",
               "parameters" : [
                 {
@@ -782,7 +770,6 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"coorders_1\"\nWHERE \"afterID\" = $1 AND \"timestamp\" = $2 AND \"beforeTimestamp\" = $3\nORDER BY \"__timestamp\" DESC NULLS LAST, \"beforeID\", \"_customerid\"",
               "parameters" : [
                 {
@@ -824,7 +811,6 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"coorders_1\"\nWHERE \"beforeID\" = $1\nORDER BY \"__timestamp\" DESC NULLS LAST, \"_customerid\", \"beforeTimestamp\", \"afterID\", \"timestamp\"",
               "parameters" : [
                 {
@@ -851,7 +837,6 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"coorders_1\"\nORDER BY \"__timestamp\" DESC NULLS LAST, \"beforeID\", \"_customerid\", \"beforeTimestamp\", \"afterID\", \"timestamp\"",
               "parameters" : [ ]
             }
@@ -877,7 +862,6 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"coorders_1\"\nWHERE \"beforeTimestamp\" = $1\nORDER BY \"__timestamp\" DESC NULLS LAST, \"beforeID\", \"_customerid\", \"afterID\", \"timestamp\"",
               "parameters" : [
                 {
@@ -911,7 +895,6 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orders_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\", \"customerid\", \"time\"",
               "parameters" : [ ]
             }
@@ -937,7 +920,6 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"time\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\", \"customerid\"",
               "parameters" : [
                 {
@@ -969,7 +951,6 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"customerid\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\", \"time\"",
               "parameters" : [
                 {
@@ -1006,7 +987,6 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"customerid\" = $1 AND \"time\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\"",
               "parameters" : [
                 {
@@ -1048,7 +1028,6 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"customerid\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"time\"",
               "parameters" : [
                 {
@@ -1095,7 +1074,6 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\", 1 AS \"__pk\"\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"customerid\" = $2 AND \"time\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, 1",
               "parameters" : [
                 {
@@ -1137,7 +1115,6 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"customerid\", \"time\"",
               "parameters" : [
                 {
@@ -1174,7 +1151,6 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"customerid\"",
               "parameters" : [
                 {

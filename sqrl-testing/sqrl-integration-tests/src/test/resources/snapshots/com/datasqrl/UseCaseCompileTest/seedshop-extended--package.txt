@@ -609,7 +609,6 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"customerpromotion_1\"\nORDER BY \"__pk1_id\", \"_week\" DESC",
               "parameters" : [ ]
             }
@@ -637,7 +636,6 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"customers_3\"\nORDER BY \"id\"",
               "parameters" : [ ]
             }
@@ -663,7 +661,6 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT \"id\", \"first_name\", \"last_name\", \"email\", \"ip_address\", \"country\", \"changed_on\", \"timestamp\", \"country0\", 1 AS \"__pk\"\nFROM \"customers_3\"\nWHERE \"id\" = $1\nORDER BY 1",
               "parameters" : [
                 {
@@ -686,7 +683,6 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT \"__pk1_id\", \"first_order\", \"total_spend\", \"total_saved\", \"num_orders\", \"__timestamp\", 1 AS \"__pk\"\nFROM \"order_stats_1\"\nWHERE \"__pk1_id\" = $1\nORDER BY 1",
               "parameters" : [
                 {
@@ -709,7 +705,6 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT \"id\", \"first_name\", \"last_name\", \"email\", \"ip_address\", \"country\", \"changed_on\", \"timestamp\", \"country0\", 1 AS \"__pk\"\nFROM \"customers_3\"\nWHERE \"id\" = $1\nORDER BY 1",
               "parameters" : [
                 {
@@ -743,7 +738,6 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"past_purchases_1\"\nWHERE \"__pk1_id\" = $1\nORDER BY \"__pk1_id\", \"num_orders\" DESC, \"total_quantity\" DESC, \"productid\"",
               "parameters" : [
                 {
@@ -775,7 +769,6 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT \"__pk1_id\", \"productid\", \"num_orders\", \"total_quantity\", \"__timestamp\", 1 AS \"__pk\"\nFROM (SELECT *\n  FROM \"past_purchases_1\"\n  WHERE \"__pk1_id\" = $1) AS \"t\"\nWHERE \"productid\" = $2\nORDER BY \"__pk1_id\", \"num_orders\" DESC, \"total_quantity\" DESC, 1",
               "parameters" : [
                 {
@@ -803,7 +796,6 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT \"id\", \"first_name\", \"last_name\", \"email\", \"ip_address\", \"country\", \"changed_on\", \"timestamp\", \"country0\", 1 AS \"__pk\"\nFROM \"customers_3\"\nWHERE \"id\" = $1\nORDER BY 1",
               "parameters" : [
                 {
@@ -837,7 +829,6 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"customerid\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
               "parameters" : [
                 {
@@ -871,7 +862,6 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT \"id\", \"first_name\", \"last_name\", \"email\", \"ip_address\", \"country\", \"changed_on\", \"timestamp\", \"country0\", 1 AS \"__pk\"\nFROM \"customers_3\"\nWHERE $1 = \"id\"\nORDER BY 1",
               "parameters" : [
                 {
@@ -894,7 +884,6 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT \"__pk1_id\", \"__pk3_time\", \"price\", \"saving\", 1 AS \"__pk\"\nFROM \"totals_1\"\nWHERE \"__pk1_id\" = $1 AND \"__pk3_time\" = $2\nORDER BY \"__pk3_time\" DESC NULLS LAST, 1",
               "parameters" : [
                 {
@@ -922,7 +911,6 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT \"id\", \"customerid\", \"time\", \"items\", 1 AS \"__pk\"\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, 1",
               "parameters" : [
                 {
@@ -966,7 +954,6 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT \"__pk1_id\", \"week\", \"spend\", \"saved\", 1 AS \"__pk\"\nFROM (SELECT *\n  FROM \"spending_1\"\n  WHERE \"__pk1_id\" = $1) AS \"t\"\nWHERE \"week\" = $2\nORDER BY \"__pk1_id\", \"week\" DESC, 1",
               "parameters" : [
                 {
@@ -998,7 +985,6 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"spending_1\"\nWHERE \"__pk1_id\" = $1\nORDER BY \"__pk1_id\", \"week\" DESC",
               "parameters" : [
                 {
@@ -1021,7 +1007,6 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT \"id\", \"first_name\", \"last_name\", \"email\", \"ip_address\", \"country\", \"changed_on\", \"timestamp\", \"country0\", 1 AS \"__pk\"\nFROM \"customers_3\"\nWHERE \"id\" = $1\nORDER BY 1",
               "parameters" : [
                 {
@@ -1055,7 +1040,6 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"numorders_1\"\nORDER BY \"__pk\"",
               "parameters" : [ ]
             }
@@ -1083,7 +1067,6 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
               "parameters" : [ ]
             }
@@ -1109,7 +1092,6 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
               "parameters" : [
                 {
@@ -1141,7 +1123,6 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1\nORDER BY \"time\" DESC NULLS LAST",
               "parameters" : [
                 {
@@ -1178,7 +1159,6 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT \"id\", \"customerid\", \"time\", \"items\", 1 AS \"__pk\"\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, 1",
               "parameters" : [
                 {
@@ -1217,7 +1197,6 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"products_3\"\nORDER BY \"id\"",
               "parameters" : [ ]
             }
@@ -1243,7 +1222,6 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT \"id\", \"name\", \"sizing\", \"weight_in_gram\", \"type\", \"category\", \"usda_id\", \"updated\", 1 AS \"__pk\"\nFROM \"products_3\"\nWHERE \"id\" = $1\nORDER BY 1",
               "parameters" : [
                 {
@@ -1282,7 +1260,6 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"monthly_by_country_1\"\n  WHERE \"__pk1_id\" = $1) AS \"t\"\nWHERE \"country\" = $2\nORDER BY \"month\" DESC NULLS LAST",
               "parameters" : [
                 {
@@ -1324,7 +1301,6 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT \"__pk1_id\", \"country\", \"month\", \"quantity\", \"spend\", \"weight\", 1 AS \"__pk\"\nFROM (SELECT *\n  FROM \"monthly_by_country_1\"\n  WHERE \"__pk1_id\" = $1) AS \"t\"\nWHERE \"country\" = $2 AND \"month\" = $3\nORDER BY \"month\" DESC NULLS LAST, 1",
               "parameters" : [
                 {
@@ -1361,7 +1337,6 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"monthly_by_country_1\"\nWHERE \"__pk1_id\" = $1\nORDER BY \"month\" DESC NULLS LAST, \"country\"",
               "parameters" : [
                 {
@@ -1393,7 +1368,6 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"monthly_by_country_1\"\n  WHERE \"__pk1_id\" = $1) AS \"t\"\nWHERE \"month\" = $2\nORDER BY \"month\" DESC NULLS LAST, \"country\"",
               "parameters" : [
                 {
@@ -1421,7 +1395,6 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT \"id\", \"name\", \"sizing\", \"weight_in_gram\", \"type\", \"category\", \"usda_id\", \"updated\", 1 AS \"__pk\"\nFROM \"products_3\"\nWHERE \"id\" = $1\nORDER BY 1",
               "parameters" : [
                 {
@@ -1450,7 +1423,6 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT \"id\", \"name\", \"sizing\", \"weight_in_gram\", \"type\", \"category\", \"usda_id\", \"updated\", TS_RANK_CD(TO_TSVECTOR('english', COALESCE(\"name\", ' ')), WEBSEARCH_TO_TSQUERY('english', $1)) AS \"score\"\nFROM \"products_3\"\nWHERE (TO_TSVECTOR('english', COALESCE(\"name\", ' ')) @@ WEBSEARCH_TO_TSQUERY('english', $1))\nORDER BY TS_RANK_CD(TO_TSVECTOR('english', COALESCE(\"name\", ' ')), WEBSEARCH_TO_TSQUERY('english', $1)) DESC, \"id\"",
               "parameters" : [
                 {
@@ -1484,7 +1456,6 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"products_3\"\nWHERE (TO_TSVECTOR('english', COALESCE(\"name\", ' ') || ' ' || COALESCE(\"category\", ' ')) @@ WEBSEARCH_TO_TSQUERY('english', $1)) AND \"id\" > $2\nORDER BY \"id\"",
               "parameters" : [
                 {

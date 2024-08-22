@@ -244,7 +244,6 @@ LogicalTableScan(table=[[orders_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT \"customerid\", \"count\", \"__timestamp\", 1 AS \"__pk\"\nFROM \"orderagg1_1\"\nWHERE \"customerid\" = $1\nORDER BY 1",
               "parameters" : [
                 {
@@ -271,7 +270,6 @@ LogicalTableScan(table=[[orders_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orderagg1_1\"\nORDER BY \"customerid\"",
               "parameters" : [ ]
             }
@@ -299,7 +297,6 @@ LogicalTableScan(table=[[orders_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orderagg2_1\"\nORDER BY \"customerid\"",
               "parameters" : [ ]
             }
@@ -325,7 +322,6 @@ LogicalTableScan(table=[[orders_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT \"customerid\", \"timestamp\", \"count\", 1 AS \"__pk\"\nFROM \"orderagg2_1\"\nWHERE \"customerid\" = $1\nORDER BY 1",
               "parameters" : [
                 {
@@ -364,7 +360,6 @@ LogicalTableScan(table=[[orders_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT \"customerid\", \"count\", \"__timestamp\", 1 AS \"__pk\"\nFROM \"orderagg3_1\"\nWHERE \"customerid\" = $1\nORDER BY 1",
               "parameters" : [
                 {
@@ -391,7 +386,6 @@ LogicalTableScan(table=[[orders_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orderagg3_1\"\nORDER BY \"customerid\"",
               "parameters" : [ ]
             }
@@ -419,7 +413,6 @@ LogicalTableScan(table=[[orders_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orderagg4_1\"\nORDER BY \"customerid\"",
               "parameters" : [ ]
             }
@@ -445,7 +438,6 @@ LogicalTableScan(table=[[orders_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT \"customerid\", \"timestamp\", \"count\", 1 AS \"__pk\"\nFROM \"orderagg4_1\"\nWHERE \"customerid\" = $1\nORDER BY 1",
               "parameters" : [
                 {
@@ -489,7 +481,6 @@ LogicalTableScan(table=[[orders_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, 1",
               "parameters" : [
                 {
@@ -526,7 +517,6 @@ LogicalTableScan(table=[[orders_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
               "parameters" : [
                 {
@@ -558,7 +548,6 @@ LogicalTableScan(table=[[orders_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1\nORDER BY \"time\" DESC NULLS LAST",
               "parameters" : [
                 {
@@ -585,7 +574,6 @@ LogicalTableScan(table=[[orders_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
               "parameters" : [ ]
             }
@@ -613,7 +601,6 @@ LogicalTableScan(table=[[orders_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"ordersstate_1\"\nORDER BY \"id\"",
               "parameters" : [ ]
             }
@@ -639,7 +626,6 @@ LogicalTableScan(table=[[orders_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\nFROM \"ordersstate_1\"\nWHERE \"id\" = $1\nORDER BY 1",
               "parameters" : [
                 {
