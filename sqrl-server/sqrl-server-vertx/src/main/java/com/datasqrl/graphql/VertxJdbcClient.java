@@ -1,8 +1,8 @@
 package com.datasqrl.graphql;
 
-import com.datasqrl.graphql.jdbc.PreparedSqrlQueryImpl;
 import com.datasqrl.graphql.server.Context;
 import com.datasqrl.graphql.server.JdbcClient;
+import com.datasqrl.graphql.server.RootGraphqlModel.DuckDbQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.JdbcQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.PreparedSqrlQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedJdbcQuery;
@@ -22,9 +22,11 @@ public class VertxJdbcClient implements JdbcClient {
 
   @Override
   public ResolvedQuery prepareQuery(JdbcQuery query, Context context) {
-    SqlClient sqlClient = clients.get(query.getDatabase());
+    String database = query instanceof DuckDbQuery ? "duckdb" : "postgres";
+
+    SqlClient sqlClient = clients.get(database);
     if (sqlClient == null) {
-      throw new RuntimeException("Could not find database engine: " + query.getDatabase());
+      throw new RuntimeException("Could not find database engine: " + database);
     }
 
     PreparedQuery<RowSet<Row>> preparedQuery = sqlClient

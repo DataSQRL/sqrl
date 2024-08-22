@@ -6,6 +6,8 @@ import static com.datasqrl.graphql.jdbc.SchemaConstants.OFFSET;
 import com.datasqrl.graphql.VertxJdbcClient.PreparedSqrlQueryImpl;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentParameter;
+import com.datasqrl.graphql.server.RootGraphqlModel.DuckDbQuery;
+import com.datasqrl.graphql.server.RootGraphqlModel.PagedDuckDbQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.ParameterHandlerVisitor;
 import com.datasqrl.graphql.server.RootGraphqlModel.JdbcParameterHandler;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedPagedJdbcQuery;
@@ -50,17 +52,18 @@ public class VertxQueryExecutionContext implements QueryExecutionContext,
       paramObj[i] = o;
     }
 
+    String database = pgQuery.getQuery() instanceof DuckDbQuery ? "duckdb" : "postgres";
 
     SqlClient sqlClient = this.context.getSqlClient().getClients()
-        .get(pgQuery.getQuery().getDatabase());
+        .get(database);
 
     if (sqlClient == null) {
-      throw new RuntimeException("Could not find database engine: " + pgQuery.getQuery().getDatabase());
+      throw new RuntimeException("Could not find database engine: " + database);
     }
     PreparedQuery<RowSet<Row>> preparedQuery = ((PreparedSqrlQueryImpl) pgQuery.getPreparedQueryContainer())
         .getPreparedQuery();
 
-    Future<RowSet<Row>> future = this.context.getSqlClient().execute(pgQuery.getQuery().getDatabase(),
+    Future<RowSet<Row>> future = this.context.getSqlClient().execute(database,
         preparedQuery,Tuple.from(paramObj));
 
     future
@@ -93,12 +96,14 @@ public class VertxQueryExecutionContext implements QueryExecutionContext,
         offset.orElse(0)
     );
 
-    SqlClient sqlClient = this.context.getSqlClient().getClients().get(databaseQuery.getDatabase());
+    String database = databaseQuery.getQuery() instanceof PagedDuckDbQuery ? "duckdb" : "postgres";
 
-    Future<RowSet<Row>> future = this.context.getSqlClient().execute(databaseQuery.getDatabase(),
+    SqlClient sqlClient = this.context.getSqlClient().getClients().get(database);
+
+    Future<RowSet<Row>> future = this.context.getSqlClient().execute(database,
         query,Tuple.from(paramObj));
     if (sqlClient == null) {
-      throw new RuntimeException("Could not find database engine: " + databaseQuery.getDatabase());
+      throw new RuntimeException("Could not find database engine: " + database);
     }
 
     future

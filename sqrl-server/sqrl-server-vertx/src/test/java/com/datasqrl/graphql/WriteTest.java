@@ -142,7 +142,7 @@ class WriteTest {
                     .parentType("Query")
                     .fieldName("customer")
                     .match(ArgumentSet.builder()
-                            .query(new JdbcQuery("postgres","SELECT customerid FROM Customer", List.of()))
+                            .query(new JdbcQuery("SELECT customerid FROM Customer", List.of()))
                             .build())
                     .build())
             .mutation(new MutationCoords("addCustomer", topicName,

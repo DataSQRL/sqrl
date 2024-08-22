@@ -39,17 +39,17 @@ public class JdbcExecutionContext implements QueryExecutionContext,
 
   @SneakyThrows
   @Override
-  public CompletableFuture runQuery(GraphQLEngineBuilder graphQLEngineBuilder, ResolvedJdbcQuery pgQuery,
+  public CompletableFuture runQuery(GraphQLEngineBuilder graphQLEngineBuilder, ResolvedJdbcQuery query,
       boolean isList) {
 
-    Object[] paramObj = new Object[pgQuery.getQuery().getParameters().size()];
-    for (int i = 0; i < pgQuery.getQuery().getParameters().size(); i++) {
-      JdbcParameterHandler param = pgQuery.getQuery().getParameters().get(i);
+    Object[] paramObj = new Object[query.getQuery().getParameters().size()];
+    for (int i = 0; i < query.getQuery().getParameters().size(); i++) {
+      JdbcParameterHandler param = query.getQuery().getParameters().get(i);
       Object o = param.accept(this, this);
       paramObj[i] = o;
     }
     //Look at graphql response for list type here
-    PreparedSqrlQueryImpl p = ((PreparedSqrlQueryImpl) pgQuery.getPreparedQueryContainer());
+    PreparedSqrlQueryImpl p = ((PreparedSqrlQueryImpl) query.getPreparedQueryContainer());
 
     return CompletableFuture.supplyAsync(()-> {
       try (PreparedStatement statement = p.getConnection()

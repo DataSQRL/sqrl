@@ -189,6 +189,10 @@ public class RootGraphqlModel {
     R visitJdbcQuery(JdbcQuery jdbcQuery, C context);
 
     R visitPagedJdbcQuery(PagedJdbcQuery jdbcQuery, C context);
+
+    R visitPagedDuckDbQuery(PagedDuckDbQuery pagedDuckDbQuery, C context);
+
+    R visitJDuckDbQuery(DuckDbQuery duckDbQuery, C context);
   }
 
   @JsonTypeInfo(
@@ -196,7 +200,9 @@ public class RootGraphqlModel {
       property = "type")
   @JsonSubTypes({
       @Type(value = JdbcQuery.class, name = "JdbcQuery"),
-      @Type(value = PagedJdbcQuery.class, name = "PagedJdbcQuery")
+      @Type(value = PagedJdbcQuery.class, name = "PagedJdbcQuery"),
+      @Type(value = DuckDbQuery.class, name = "DuckDbQuery"),
+      @Type(value = PagedDuckDbQuery.class, name = "PagedDuckDbQuery")
   })
   public interface QueryBase {
 
@@ -209,7 +215,6 @@ public class RootGraphqlModel {
   public static class JdbcQuery implements QueryBase {
 
     final String type = "JdbcQuery";
-    String database = "postgres";
     String sql;
     @Singular
     List<JdbcParameterHandler> parameters;
@@ -223,10 +228,25 @@ public class RootGraphqlModel {
   @Getter
   @AllArgsConstructor
   @NoArgsConstructor
+  public static class DuckDbQuery extends JdbcQuery {
+
+    final String type = "DuckDbQuery";
+    String sql;
+    @Singular
+    List<JdbcParameterHandler> parameters;
+
+    @Override
+    public <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context) {
+      return visitor.visitJDuckDbQuery(this, context);
+    }
+  }
+
+  @Getter
+  @AllArgsConstructor
+  @NoArgsConstructor
   public static class PagedJdbcQuery extends JdbcQuery {
 
     final String type = "PagedJdbcQuery";
-    String database = "postgres";
     String sql;
     @Singular
     List<JdbcParameterHandler> parameters;
@@ -234,6 +254,22 @@ public class RootGraphqlModel {
     @Override
     public <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context) {
       return visitor.visitPagedJdbcQuery(this, context);
+    }
+  }
+
+  @Getter
+  @AllArgsConstructor
+  @NoArgsConstructor
+  public static class PagedDuckDbQuery extends PagedJdbcQuery {
+
+    final String type = "PagedDuckDbQuery";
+    String sql;
+    @Singular
+    List<JdbcParameterHandler> parameters;
+
+    @Override
+    public <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context) {
+      return visitor.visitPagedDuckDbQuery(this, context);
     }
   }
 
@@ -382,6 +418,7 @@ public class RootGraphqlModel {
 
   public interface ResolvedQuery {
 
+    QueryBase getQuery();
     public <R, C> R accept(ResolvedQueryVisitor<R, C> visitor, C context);
   }
 
@@ -408,7 +445,6 @@ public class RootGraphqlModel {
   @Getter
   @NoArgsConstructor
   public static class ResolvedPagedJdbcQuery implements ResolvedQuery {
-    String database = "postgres";
 
     PagedJdbcQuery query;
 
