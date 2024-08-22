@@ -9,6 +9,7 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.preprocess.Preprocessor;
 import com.datasqrl.packager.preprocess.Preprocessor.ProcessorContext;
 import com.google.inject.Inject;
+import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -36,7 +37,7 @@ public class Preprocessors {
 
   @SneakyThrows
   private List<Path> getUserFiles(Path rootDir) {
-    return Files.walk(rootDir)
+    return Files.walk(rootDir, FileVisitOption.FOLLOW_LINKS)
         .filter(path -> !EXCLUDED_DIRS.contains(path.getFileName().toString()))
         .filter(Files::isRegularFile)
         .collect(Collectors.toList());
