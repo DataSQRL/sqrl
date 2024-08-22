@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 import com.datasqrl.config.PackageJsonImpl;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.preprocess.Preprocessor;
+import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -85,7 +86,7 @@ public class PreprocessorsTest {
 
     try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
       // Mock the behavior of Files.walk
-      mockedFiles.when(() -> Files.walk(rootDir))
+      mockedFiles.when(() -> Files.walk(rootDir, FileVisitOption.FOLLOW_LINKS))
           .thenReturn(Stream.of(excludedDirBuild, excludedDirFile, includedFile));
 
       // Mock Files.isRegularFile to return true for includedFile and false for directories
