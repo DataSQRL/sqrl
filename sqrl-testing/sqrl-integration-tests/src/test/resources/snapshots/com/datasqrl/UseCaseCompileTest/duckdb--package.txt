@@ -113,9 +113,8 @@ LogicalProject(id=[$0], hello=['hello world'], _updated_at=[$6])
               }
             ],
             "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "database" : "duckdb",
+              "type" : "PagedDuckDbQuery",
+              "type" : "PagedDuckDbQuery",
               "sql" : "SELECT *\nFROM (SELECT *\n  FROM ICEBERG_SCAN('/Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test/default_database/applications_2', ALLOW_MOVED_PATHS = TRUE)) AS \"t\"\nWHERE \"updated_at\" = $1\nORDER BY \"updated_at\" DESC NULLS LAST, \"id\"",
               "parameters" : [
                 {
@@ -140,9 +139,8 @@ LogicalProject(id=[$0], hello=['hello world'], _updated_at=[$6])
               }
             ],
             "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "database" : "duckdb",
+              "type" : "PagedDuckDbQuery",
+              "type" : "PagedDuckDbQuery",
               "sql" : "SELECT *\nFROM ICEBERG_SCAN('/Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test/default_database/applications_2', ALLOW_MOVED_PATHS = TRUE)\nORDER BY \"updated_at\" DESC NULLS LAST, \"id\"",
               "parameters" : [ ]
             }
@@ -171,9 +169,8 @@ LogicalProject(id=[$0], hello=['hello world'], _updated_at=[$6])
               }
             ],
             "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "database" : "duckdb",
+              "type" : "PagedDuckDbQuery",
+              "type" : "PagedDuckDbQuery",
               "sql" : "SELECT \"id\", \"customer_id\", \"loan_type_id\", \"amount\", \"duration\", \"application_date\", \"updated_at\", 1 AS \"__pk\"\nFROM (SELECT *\n  FROM ICEBERG_SCAN('/Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test/default_database/applications_2', ALLOW_MOVED_PATHS = TRUE)) AS \"t\"\nWHERE \"id\" = $1 AND \"updated_at\" = $2\nORDER BY \"updated_at\" DESC NULLS LAST, 1",
               "parameters" : [
                 {
@@ -208,9 +205,8 @@ LogicalProject(id=[$0], hello=['hello world'], _updated_at=[$6])
               }
             ],
             "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "database" : "duckdb",
+              "type" : "PagedDuckDbQuery",
+              "type" : "PagedDuckDbQuery",
               "sql" : "SELECT *\nFROM (SELECT *\n  FROM ICEBERG_SCAN('/Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test/default_database/applications_2', ALLOW_MOVED_PATHS = TRUE)) AS \"t\"\nWHERE \"id\" = $1\nORDER BY \"updated_at\" DESC NULLS LAST",
               "parameters" : [
                 {
@@ -242,9 +238,8 @@ LogicalProject(id=[$0], hello=['hello world'], _updated_at=[$6])
               }
             ],
             "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "database" : "duckdb",
+              "type" : "PagedDuckDbQuery",
+              "type" : "PagedDuckDbQuery",
               "sql" : "SELECT \"id\", 'hello world' AS \"hello\", \"updated_at\" AS \"_updated_at\"\nFROM ICEBERG_SCAN('/Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test/default_database/applications_2', ALLOW_MOVED_PATHS = TRUE)\nORDER BY \"updated_at\" DESC NULLS LAST, \"id\"",
               "parameters" : [ ]
             }
@@ -268,9 +263,8 @@ LogicalProject(id=[$0], hello=['hello world'], _updated_at=[$6])
               }
             ],
             "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "database" : "duckdb",
+              "type" : "PagedDuckDbQuery",
+              "type" : "PagedDuckDbQuery",
               "sql" : "SELECT *\nFROM (SELECT \"id\", 'hello world' AS \"hello\", \"updated_at\" AS \"_updated_at\"\n  FROM ICEBERG_SCAN('/Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test/default_database/applications_2', ALLOW_MOVED_PATHS = TRUE)) AS \"t0\"\nWHERE \"id\" = $1\nORDER BY \"_updated_at\" DESC NULLS LAST",
               "parameters" : [
                 {

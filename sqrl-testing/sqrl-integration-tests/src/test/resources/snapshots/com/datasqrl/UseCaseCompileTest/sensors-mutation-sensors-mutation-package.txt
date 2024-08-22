@@ -157,7 +157,6 @@ LogicalTableScan(table=[[sensorreading_1]], hints=[[[WatermarkHint inheritPath:[
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"secreading_1\"\nWHERE \"sensorid\" = $1\nORDER BY \"timeSec\" DESC NULLS LAST",
               "parameters" : [
                 {
@@ -180,7 +179,6 @@ LogicalTableScan(table=[[sensorreading_1]], hints=[[[WatermarkHint inheritPath:[
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"sensormaxtemp_1\"\nORDER BY \"sensorid\"",
               "parameters" : [ ]
             }
@@ -196,7 +194,6 @@ LogicalTableScan(table=[[sensorreading_1]], hints=[[[WatermarkHint inheritPath:[
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT \"sensorid\", \"maxTemp\", \"__timestamp\", 1 AS \"__pk\"\nFROM \"sensormaxtemp_1\"\nWHERE \"sensorid\" = $1\nORDER BY 1",
               "parameters" : [
                 {

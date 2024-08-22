@@ -139,7 +139,6 @@ LogicalProject(beforeURL=[$0], afterURL=[$3], timestamp=[$4], _userid=[$2], _tim
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"recommendation_1\"\nWHERE \"url\" = $1\nORDER BY \"url\", \"frequency\" DESC, \"rec\"",
               "parameters" : [
                 {
@@ -168,7 +167,6 @@ LogicalProject(beforeURL=[$0], afterURL=[$3], timestamp=[$4], _userid=[$2], _tim
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"trending_1\"\nORDER BY \"total\" DESC, \"url\"",
               "parameters" : [ ]
             }

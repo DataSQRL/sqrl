@@ -249,7 +249,6 @@ LogicalProject(__pk1_customerid=[$1], category=[$2], num=[$3], _time=[$0])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"customer_3\"\nORDER BY \"customerid\"",
               "parameters" : [ ]
             }
@@ -275,7 +274,6 @@ LogicalProject(__pk1_customerid=[$1], category=[$2], num=[$3], _time=[$0])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customer_3\"\nWHERE \"customerid\" = $1\nORDER BY 1",
               "parameters" : [
                 {
@@ -314,7 +312,6 @@ LogicalProject(__pk1_customerid=[$1], category=[$2], num=[$3], _time=[$0])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT \"__pk1_customerid\", \"category\", \"num\", \"_time\", 1 AS \"__pk\"\nFROM (SELECT *\n  FROM \"totals_1\"\n  WHERE \"__pk1_customerid\" = $1) AS \"t\"\nWHERE \"category\" = $2\nORDER BY 1",
               "parameters" : [
                 {
@@ -346,7 +343,6 @@ LogicalProject(__pk1_customerid=[$1], category=[$2], num=[$3], _time=[$0])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"totals_1\"\nWHERE \"__pk1_customerid\" = $1\nORDER BY \"category\"",
               "parameters" : [
                 {
@@ -369,7 +365,6 @@ LogicalProject(__pk1_customerid=[$1], category=[$2], num=[$3], _time=[$0])
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customer_3\"\nWHERE \"customerid\" = $1\nORDER BY 1",
               "parameters" : [
                 {
@@ -403,7 +398,6 @@ LogicalProject(__pk1_customerid=[$1], category=[$2], num=[$3], _time=[$0])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
               "parameters" : [ ]
             }
@@ -434,7 +428,6 @@ LogicalProject(__pk1_customerid=[$1], category=[$2], num=[$3], _time=[$0])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, 1",
               "parameters" : [
                 {
@@ -471,7 +464,6 @@ LogicalProject(__pk1_customerid=[$1], category=[$2], num=[$3], _time=[$0])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1\nORDER BY \"time\" DESC NULLS LAST",
               "parameters" : [
                 {
@@ -503,7 +495,6 @@ LogicalProject(__pk1_customerid=[$1], category=[$2], num=[$3], _time=[$0])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
               "parameters" : [
                 {
@@ -542,7 +533,6 @@ LogicalProject(__pk1_customerid=[$1], category=[$2], num=[$3], _time=[$0])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT \"productid\", \"name\", \"description\", \"category\", \"_ingest_time\", 1 AS \"__pk\"\nFROM \"product_3\"\nWHERE \"productid\" = $1\nORDER BY 1",
               "parameters" : [
                 {
@@ -569,7 +559,6 @@ LogicalProject(__pk1_customerid=[$1], category=[$2], num=[$3], _time=[$0])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_3\"\nORDER BY \"productid\"",
               "parameters" : [ ]
             }

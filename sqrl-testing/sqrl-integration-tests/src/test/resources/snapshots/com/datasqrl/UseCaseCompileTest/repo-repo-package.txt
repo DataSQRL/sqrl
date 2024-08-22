@@ -235,7 +235,6 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT(DISTINCT $1)], __timestamp=[MAX
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"package_1\"\nORDER BY \"name\"",
               "parameters" : [ ]
             }
@@ -261,7 +260,6 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT(DISTINCT $1)], __timestamp=[MAX
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT \"name\", \"_submissionTime\", 1 AS \"__pk\"\nFROM \"package_1\"\nWHERE \"name\" = $1\nORDER BY 1",
               "parameters" : [
                 {
@@ -284,7 +282,6 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT(DISTINCT $1)], __timestamp=[MAX
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"submission_2\"\nWHERE $1 = \"name\" AND \"latest\"\nORDER BY \"submissionTime\" DESC",
               "parameters" : [
                 {
@@ -323,7 +320,6 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT(DISTINCT $1)], __timestamp=[MAX
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"submission_2\"\n  WHERE $1 = \"name\") AS \"t\"\nWHERE \"version\" = $2\nORDER BY \"submissionTime\" DESC",
               "parameters" : [
                 {
@@ -365,7 +361,6 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT(DISTINCT $1)], __timestamp=[MAX
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"submission_2\"\n  WHERE $1 = \"name\") AS \"t\"\nWHERE \"version\" = $2 AND \"variant\" = $3\nORDER BY \"submissionTime\" DESC",
               "parameters" : [
                 {
@@ -402,7 +397,6 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT(DISTINCT $1)], __timestamp=[MAX
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"submission_2\"\nWHERE $1 = \"name\"\nORDER BY \"submissionTime\" DESC",
               "parameters" : [
                 {
@@ -434,7 +428,6 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT(DISTINCT $1)], __timestamp=[MAX
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"submission_2\"\n  WHERE $1 = \"name\") AS \"t\"\nWHERE \"variant\" = $2\nORDER BY \"submissionTime\" DESC",
               "parameters" : [
                 {
@@ -478,7 +471,6 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT(DISTINCT $1)], __timestamp=[MAX
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT \"topicName\", \"numPackages\", \"__timestamp\", 1 AS \"__pk\"\nFROM \"topicsearch_1\"\nWHERE \"topicName\" = $1\nORDER BY \"numPackages\" DESC, 1",
               "parameters" : [
                 {
@@ -505,7 +497,6 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT(DISTINCT $1)], __timestamp=[MAX
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"topicsearch_1\"\nORDER BY \"numPackages\" DESC, \"topicName\"",
               "parameters" : [ ]
             }
@@ -538,7 +529,6 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT(DISTINCT $1)], __timestamp=[MAX
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"topicpackages_1\"\nWHERE \"topicName\" = $1\nORDER BY \"numSubmissions\" DESC, \"pkgName\"",
               "parameters" : [
                 {
@@ -561,7 +551,6 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT(DISTINCT $1)], __timestamp=[MAX
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"submission_2\"\nWHERE $1 = \"name\" AND \"latest\"\nORDER BY \"submissionTime\" DESC",
               "parameters" : [
                 {
