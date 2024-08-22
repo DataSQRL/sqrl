@@ -20,6 +20,7 @@ import com.datasqrl.graphql.kafka.KafkaSinkConsumer;
 import com.datasqrl.graphql.kafka.KafkaSinkProducer;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import com.datasqrl.graphql.server.RootGraphqlModel;
+import com.datasqrl.graphql.server.RootGraphqlModel.KafkaMutationCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoords;
 import com.datasqrl.graphql.type.SqrlVertxScalars;
@@ -330,9 +331,12 @@ public class GraphQLServer extends AbstractVerticle {
   Map<String, SinkProducer> constructSinkProducers(RootGraphqlModel root, Vertx vertx) {
     Map<String, SinkProducer> producers = new HashMap<>();
     for (MutationCoords mut : root.getMutations()) {
-      KafkaProducer<String, String> producer = KafkaProducer.create(vertx, getSinkConfig());
-      KafkaSinkProducer sinkProducer = new KafkaSinkProducer<>(mut.getTopic(), producer);
-      producers.put(mut.getFieldName(), sinkProducer);
+      if (mut instanceof KafkaMutationCoords) {
+        KafkaMutationCoords kafkaMut = (KafkaMutationCoords) mut;
+        KafkaProducer<String, String> producer = KafkaProducer.create(vertx, getSinkConfig());
+        KafkaSinkProducer sinkProducer = new KafkaSinkProducer<>(kafkaMut.getTopic(), producer);
+        producers.put(mut.getFieldName(), sinkProducer);
+      }
     }
     return producers;
   }

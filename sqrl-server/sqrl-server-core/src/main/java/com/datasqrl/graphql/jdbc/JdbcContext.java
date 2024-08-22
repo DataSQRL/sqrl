@@ -3,7 +3,10 @@ package com.datasqrl.graphql.jdbc;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import com.datasqrl.graphql.server.Context;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
+import com.datasqrl.graphql.server.RootGraphqlModel.KafkaMutationCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoords;
+import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoordsVisitor;
+import com.datasqrl.graphql.server.RootGraphqlModel.PostgresLogMutationCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.VariableArgument;
@@ -57,8 +60,18 @@ public class JdbcContext implements Context {
   }
 
   @Override
-  public DataFetcher<?> createSinkFetcher(MutationCoords coords) {
-    throw new RuntimeException("Mutations not yet supported");
+  public MutationCoordsVisitor createSinkFetcherVisitor() {
+    return new MutationCoordsVisitor() {
+      @Override
+      public DataFetcher<?> visit(KafkaMutationCoords coords) {
+        throw new RuntimeException("Mutations not yet supported");
+      }
+
+      @Override
+      public DataFetcher<?> visit(PostgresLogMutationCoords coords) {
+        throw new RuntimeException("Mutations not yet supported");
+      }
+    };
   }
 
   @Override

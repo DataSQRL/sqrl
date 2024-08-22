@@ -4,6 +4,7 @@
 package com.datasqrl.engine;
 
 import com.datasqrl.cmd.EngineKeys;
+import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.engine.database.DatabasePhysicalPlan;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.engine.database.relational.JDBCPhysicalPlan;
@@ -32,6 +33,11 @@ public class PhysicalPlan {
 
   public <T extends EnginePhysicalPlan> Stream<T> getPlans(Class<T> clazz) {
     return StreamUtil.filterByClass(stagePlans.stream().map(StagePlan::getPlan), clazz);
+  }
+
+  public EnginePhysicalPlan getPlan(Type type) {
+    return stagePlans.stream().filter(stagePlan -> stagePlan.getPlan().getType().equals(type))
+        .map(StagePlan::getPlan).findFirst().get();
   }
 
   public EnginePhysicalPlan get(String name) {

@@ -16,6 +16,7 @@ import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.database.relational.ddl.JdbcDDLFactory;
 import com.datasqrl.engine.database.relational.ddl.JdbcDDLServiceLoader;
 import com.datasqrl.engine.database.relational.ddl.PostgresDDLFactory;
+import com.datasqrl.engine.database.relational.ddl.statements.InsertStatement;
 import com.datasqrl.engine.database.relational.ddl.statements.notify.ListenNotifyAssets;
 import com.datasqrl.engine.log.Log;
 import com.datasqrl.engine.log.LogEngine;
@@ -79,6 +80,9 @@ public class PostgresLogEngine extends ExecutionEngine.Base implements LogEngine
 
       ListenNotifyAssets listenNotifyAssets = postgresDDLFactory.createNotifyHelperDDLs(framework, tableName, dataType, pgTable.getPrimaryKeys());
       physicalPlan.getQueries().add(listenNotifyAssets);
+
+      InsertStatement insertStatement = postgresDDLFactory.createInsertHelperDMLs(tableName, dataType);
+      physicalPlan.getInserts().add(insertStatement);
     }
 
     return physicalPlan;

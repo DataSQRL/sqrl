@@ -1,0 +1,33 @@
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+
+type Query {
+  SecReading(sensorid: Int!): [SecReading!]
+  SensorMaxTemp(sensorid: Int): [SensorMaxTemp!]
+}
+
+type SecReading {
+  sensorid: Float!
+  timeSec: DateTime!
+  temp: Float!
+}
+
+type SensorMaxTemp {
+  sensorid: Float!
+  maxTemp: Float!
+}
+
+type Mutation {
+  AddReading(metric: SensorReadingInput!): CreatedReading
+}
+
+input SensorReadingInput {
+  sensorid: Int!
+  temperature: Float!
+  humidity: Float!
+}
+
+type CreatedReading {
+  event_time: String!
+  sensorid: Int!
+}
