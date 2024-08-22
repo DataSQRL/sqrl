@@ -14,8 +14,8 @@ public class LPConverterUtil {
   public static Optional<Integer> getTimestampOrderIndex(RelCollation collation, Timestamps timestamp) {
     if (collation.getFieldCollations().isEmpty()) return Optional.empty();
     RelFieldCollation fieldCol = collation.getFieldCollations().get(0);
-    if (fieldCol.direction!= Direction.DESCENDING) return Optional.empty();
-    return Optional.of(fieldCol.getFieldIndex());
+    if (timestamp.isCandidate(fieldCol.getFieldIndex())) return Optional.of(fieldCol.getFieldIndex());
+    return Optional.empty();
   }
 
   public static RelCollation getTimestampCollation(int timestampIndex) {

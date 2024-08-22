@@ -114,10 +114,9 @@ public class DAGAssembler {
         errors.checkFatal(materializedTable.getPrimaryKey().isDefined(), ErrorCode.TABLE_NOT_MATERIALIZE,"Table [%s] does not have a primary key and can therefore not be materialized", materializedTable);
         Preconditions.checkArgument(materializedTable.getTimestamp().size()<=1, "Should not have multiple timestamps at this point");
         errors.checkFatal(materializedTable.getType()== TableType.STATIC || materializedTable.getTimestamp().size()==1, ErrorCode.TABLE_NOT_MATERIALIZE, "Table [%s] does not have a timestamp and can therefore not be materialized", materializedTable);
-        RelNode processedRelnode = produceWriteTree(materializedTable.getPlannedRelNode(),
-            materializedTable.getTimestamp().getOnlyCandidate());
-        OptionalInt timestampIdx = materializedTable.getType() == TableType.STATIC ? OptionalInt.empty() :
-            OptionalInt.of(materializedTable.getTimestamp().getOnlyCandidate());
+        OptionalInt timestampIdx = materializedTable.getType().hasTimestamp() ?
+            OptionalInt.of(materializedTable.getTimestamp().getOnlyCandidate()) : OptionalInt.empty();
+        RelNode processedRelnode = produceWriteTree(materializedTable.getPlannedRelNode(), timestampIdx);
         streamQueries.add(new PhysicalDAGPlan.WriteQuery(
             new EngineSink(materializedTable.getNameId(), materializedTable.getPrimaryKey().getPkIndexes(),
                 materializedTable.getRowType(), timestampIdx, database),
@@ -216,14 +215,16 @@ public class DAGAssembler {
     AnnotatedLP alp = sqrlConverter.convert(relNode, config, errors);
     RelNode convertedRelNode = alp.getRelNode();
     //Expand to full tree
-    return produceWriteTree(convertedRelNode, alp.getTimestamp().getOnlyCandidate());
+    return produceWriteTree(convertedRelNode, alp.getTimestamp().getOnlyCandidateOptional());
   }
 
-  private RelNode produceWriteTree(RelNode convertedRelNode, int timestampIndex) {
+  private RelNode produceWriteTree(RelNode convertedRelNode, OptionalInt timestampIndex) {
     RelNode expandedRelNode = RelStageRunner.runStage(STREAM_DAG_STITCHING, convertedRelNode,
         framework.getQueryPlanner().getPlanner());
-    TimestampHint timestampHint = new TimestampHint(timestampIndex);
-    expandedRelNode = timestampHint.addHint((Hintable) expandedRelNode);
+    if (timestampIndex.isPresent()) {
+      TimestampHint timestampHint = new TimestampHint(timestampIndex.getAsInt());
+      expandedRelNode = timestampHint.addHint((Hintable) expandedRelNode);
+    }
     return expandedRelNode;
   }
 

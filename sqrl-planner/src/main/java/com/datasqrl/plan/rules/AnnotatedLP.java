@@ -144,20 +144,7 @@ public class AnnotatedLP implements RelHolder {
     relBuilder.push(relNode);
 
     SortOrder newSort = sort;
-    if (!topN.isDeduplication() && !topN.isDistinct() && (!topN.hasPartition() || !topN.hasLimit())) {
-      RelCollation collation = topN.getCollation();
-      if (topN.hasLimit()) { //It's not partitioned, so straight forward order and limit
-        if (topN.hasCollation()) {
-          relBuilder.sort(collation);
-        }
-        relBuilder.limit(0, topN.getLimit());
-        exec.requireFeature(EngineFeature.GLOBAL_SORT);
-      } else { //Lift up sort and prepend partition (if any)
-        newSort = newSort.ifEmpty(SortOrder.of(topN.getPartition(), collation));
-      }
-      return AnnotatedLP.build(relBuilder.build(), type, primaryKey, timestamp, select, this)
-          .sort(newSort).build();
-    } else { //distinct or (hasPartition and hasLimit)
+    if (topN.isDistinct() || (topN.hasPartition() && topN.hasLimit())) { //distinct or (hasPartition and hasLimit)
       final RelDataType inputType = relBuilder.peek().getRowType();
       RexBuilder rexBuilder = relBuilder.getRexBuilder();
 
@@ -241,7 +228,7 @@ public class AnnotatedLP implements RelHolder {
       relBuilder.filter(conditions);
       PrimaryKeyMap newPk = primaryKey.remap(IndexMap.IDENTITY);
       SelectIndexMap newSelect = select.remap(IndexMap.IDENTITY);
-      if (topN.isDeduplication() || topN.isDistinct()) { //Drop sort since it doesn't apply globally
+      if (topN.hasLimit(1) || topN.isDistinct()) { //Drop sort since it doesn't apply globally
         newSort = SortOrder.EMPTY;
       } else { //Add partitioned sort on top
         SortOrder sortByRowNum = SortOrder.of(topN.getPartition(),
@@ -253,6 +240,19 @@ public class AnnotatedLP implements RelHolder {
         DedupHint.of().addTo(relBuilder);
       }
       return AnnotatedLP.build(relBuilder.build(), type, newPk, timestamp, newSelect, this)
+          .sort(newSort).build();
+    } else { //!distinct && (!hasPartition || !hasLimit)
+      RelCollation collation = topN.getCollation();
+      if (topN.hasLimit()) { //It's not partitioned, so straight forward global order and limit
+        if (topN.hasCollation()) {
+          relBuilder.sort(collation);
+        }
+        relBuilder.limit(0, topN.getLimit());
+        exec.requireFeature(EngineFeature.GLOBAL_SORT);
+      } else { //Lift up sort and prepend partition (if any)
+        newSort = newSort.ifEmpty(SortOrder.of(topN.getPartition(), collation));
+      }
+      return AnnotatedLP.build(relBuilder.build(), type, primaryKey, timestamp, select, this)
           .sort(newSort).build();
     }
   }

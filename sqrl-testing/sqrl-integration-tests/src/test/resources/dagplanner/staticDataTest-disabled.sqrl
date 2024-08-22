@@ -1,6 +1,0 @@
-IMPORT time.*;
-IMPORT ecommerceTs.Customer;
-IMPORT ecommerceTs.Orders;
-IMPORT ecommerceTs.Product;
-Numbers := SELECT * FROM (VALUES (1), (2), (3), (4), (5)) AS T(id);
-OrderNumbers := SELECT o.id, o.time FROM Orders o JOIN Numbers n WHERE o.customerid = n.id;
