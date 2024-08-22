@@ -468,6 +468,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"customer_2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\", \"lastUpdated\"",
               "parameters" : [ ]
             }
@@ -498,6 +499,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customer_2\"\nWHERE \"customerid\" = $1 AND \"lastUpdated\" = $2\nORDER BY \"timestamp\" DESC NULLS LAST, 1",
               "parameters" : [
                 {
@@ -534,6 +536,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"customer_2\"\nWHERE \"lastUpdated\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\"",
               "parameters" : [
                 {
@@ -565,6 +568,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"lastUpdated\"",
               "parameters" : [
                 {
@@ -598,6 +602,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"customerdistinct_1\"\nORDER BY \"customerid\"",
               "parameters" : [ ]
             }
@@ -623,6 +628,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customerdistinct_1\"\nWHERE \"customerid\" = $1\nORDER BY 1",
               "parameters" : [
                 {
@@ -656,6 +662,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"__pk1_customerid\", \"id\", \"_time\"\nFROM (SELECT *\n  FROM (SELECT \"__pk1_customerid\", \"id\", \"_time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"id\" DESC) AS \"_rownum\", RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"id\" DESC) AS \"_rank\", DENSE_RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"id\" DESC) AS \"_denserank\"\n    FROM \"distinctorders_1\") AS \"t\"\n  WHERE \"_rownum\" = \"_rank\" AND \"_denserank\" <= 10) AS \"t0\"\nWHERE \"__pk1_customerid\" = $1\nORDER BY \"id\"",
               "parameters" : [
                 {
@@ -687,6 +694,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"__pk1_customerid\", \"id\", \"_time\", 1 AS \"__pk\"\nFROM (SELECT *\n  FROM (SELECT *\n    FROM (SELECT \"__pk1_customerid\", \"id\", \"_time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"id\" DESC) AS \"_rownum\", RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"id\" DESC) AS \"_rank\", DENSE_RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"id\" DESC) AS \"_denserank\"\n      FROM \"distinctorders_1\") AS \"t\"\n    WHERE \"_rownum\" = \"_rank\" AND \"_denserank\" <= 10) AS \"t0\"\n  WHERE \"__pk1_customerid\" = $1) AS \"t1\"\nWHERE \"id\" = $2\nORDER BY 1",
               "parameters" : [
                 {
@@ -714,6 +722,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customerdistinct_1\"\nWHERE \"customerid\" = $1\nORDER BY 1",
               "parameters" : [
                 {
@@ -747,6 +756,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"__pk1_customerid\", \"id\", \"time\"\nFROM (SELECT *\n  FROM (SELECT \"__pk1_customerid\", \"id\", \"time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_rownum\", RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_rank\", DENSE_RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_denserank\"\n    FROM \"distinctorderstime_1\") AS \"t\"\n  WHERE \"_rownum\" = \"_rank\" AND \"_denserank\" <= 10) AS \"t0\"\nWHERE \"__pk1_customerid\" = $1\nORDER BY \"id\", \"time\"",
               "parameters" : [
                 {
@@ -778,6 +788,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"__pk1_customerid\", \"id\", \"time\"\nFROM (SELECT *\n  FROM (SELECT *\n    FROM (SELECT \"__pk1_customerid\", \"id\", \"time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_rownum\", RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_rank\", DENSE_RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_denserank\"\n      FROM \"distinctorderstime_1\") AS \"t\"\n    WHERE \"_rownum\" = \"_rank\" AND \"_denserank\" <= 10) AS \"t0\"\n  WHERE \"__pk1_customerid\" = $1) AS \"t1\"\nWHERE \"time\" = $2\nORDER BY \"id\"",
               "parameters" : [
                 {
@@ -814,6 +825,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"__pk1_customerid\", \"id\", \"time\"\nFROM (SELECT *\n  FROM (SELECT *\n    FROM (SELECT \"__pk1_customerid\", \"id\", \"time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_rownum\", RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_rank\", DENSE_RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_denserank\"\n      FROM \"distinctorderstime_1\") AS \"t\"\n    WHERE \"_rownum\" = \"_rank\" AND \"_denserank\" <= 10) AS \"t0\"\n  WHERE \"__pk1_customerid\" = $1) AS \"t1\"\nWHERE \"id\" = $2\nORDER BY \"time\"",
               "parameters" : [
                 {
@@ -855,6 +867,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"__pk1_customerid\", \"id\", \"time\", 1 AS \"__pk\"\nFROM (SELECT *\n  FROM (SELECT *\n    FROM (SELECT \"__pk1_customerid\", \"id\", \"time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_rownum\", RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_rank\", DENSE_RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_denserank\"\n      FROM \"distinctorderstime_1\") AS \"t\"\n    WHERE \"_rownum\" = \"_rank\" AND \"_denserank\" <= 10) AS \"t0\"\n  WHERE \"__pk1_customerid\" = $1) AS \"t1\"\nWHERE \"id\" = $2 AND \"time\" = $3\nORDER BY 1",
               "parameters" : [
                 {
@@ -887,6 +900,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customerdistinct_1\"\nWHERE \"customerid\" = $1\nORDER BY 1",
               "parameters" : [
                 {
@@ -925,6 +939,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM (SELECT *\n  FROM (SELECT *\n    FROM (SELECT \"__pk1_customerid\", \"id\", \"time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC) AS \"_rownum\"\n      FROM \"recentorders_1\") AS \"t\"\n    WHERE \"_rownum\" <= 10) AS \"t0\"\n  WHERE \"__pk1_customerid\" = $1) AS \"t1\"\nWHERE \"id\" = $2\nORDER BY \"__pk1_customerid\", \"_rownum\", \"time\"",
               "parameters" : [
                 {
@@ -966,6 +981,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"__pk1_customerid\", \"id\", \"time\", 1 AS \"__pk\", \"_rownum\"\nFROM (SELECT *\n  FROM (SELECT *\n    FROM (SELECT \"__pk1_customerid\", \"id\", \"time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC) AS \"_rownum\"\n      FROM \"recentorders_1\") AS \"t\"\n    WHERE \"_rownum\" <= 10) AS \"t0\"\n  WHERE \"__pk1_customerid\" = $1) AS \"t1\"\nWHERE \"id\" = $2 AND \"time\" = $3\nORDER BY \"__pk1_customerid\", \"_rownum\", 1",
               "parameters" : [
                 {
@@ -1002,6 +1018,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM (SELECT *\n  FROM (SELECT \"__pk1_customerid\", \"id\", \"time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC) AS \"_rownum\"\n    FROM \"recentorders_1\") AS \"t\"\n  WHERE \"_rownum\" <= 10) AS \"t0\"\nWHERE \"__pk1_customerid\" = $1\nORDER BY \"__pk1_customerid\", \"_rownum\", \"id\", \"time\"",
               "parameters" : [
                 {
@@ -1033,6 +1050,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM (SELECT *\n  FROM (SELECT *\n    FROM (SELECT \"__pk1_customerid\", \"id\", \"time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC) AS \"_rownum\"\n      FROM \"recentorders_1\") AS \"t\"\n    WHERE \"_rownum\" <= 10) AS \"t0\"\n  WHERE \"__pk1_customerid\" = $1) AS \"t1\"\nWHERE \"time\" = $2\nORDER BY \"__pk1_customerid\", \"_rownum\", \"id\"",
               "parameters" : [
                 {
@@ -1060,6 +1078,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customerdistinct_1\"\nWHERE \"customerid\" = $1\nORDER BY 1",
               "parameters" : [
                 {
@@ -1098,6 +1117,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"customerid\", \"_timestamp\", 1 AS \"__pk\"\nFROM \"customerid_1\"\nWHERE \"customerid\" = $1\nORDER BY 1",
               "parameters" : [
                 {
@@ -1124,6 +1144,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"customerid_1\"\nORDER BY \"customerid\"",
               "parameters" : [ ]
             }
@@ -1151,6 +1172,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"customerorders_1\"\nORDER BY \"_time\" DESC NULLS LAST, \"id\"",
               "parameters" : [ ]
             }
@@ -1176,6 +1198,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"customerorders_1\"\nWHERE \"id\" = $1\nORDER BY \"_time\" DESC NULLS LAST",
               "parameters" : [
                 {
@@ -1214,6 +1237,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\nFROM \"orders_3\"\nWHERE \"id\" = $1\nORDER BY 1",
               "parameters" : [
                 {
@@ -1240,6 +1264,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orders_3\"\nORDER BY \"id\"",
               "parameters" : [ ]
             }
@@ -1277,6 +1302,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"description\", \"category\"",
               "parameters" : [
                 {
@@ -1323,6 +1349,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"description\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\"",
               "parameters" : [
                 {
@@ -1364,6 +1391,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"description\", \"category\"",
               "parameters" : [
                 {
@@ -1405,6 +1433,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1 AND \"description\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\"",
               "parameters" : [
                 {
@@ -1451,6 +1480,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"description\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"category\"",
               "parameters" : [
                 {
@@ -1492,6 +1522,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"description\"",
               "parameters" : [
                 {
@@ -1543,6 +1574,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"productid\", \"name\", \"description\", \"category\", \"_ingest_time\", 1 AS \"__pk\"\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3 AND \"category\" = $4\nORDER BY \"_ingest_time\" DESC NULLS LAST, 1",
               "parameters" : [
                 {
@@ -1599,6 +1631,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"category\"",
               "parameters" : [
                 {
@@ -1650,6 +1683,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"description\"",
               "parameters" : [
                 {
@@ -1691,6 +1725,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"category\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\"",
               "parameters" : [
                 {
@@ -1717,6 +1752,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\", \"category\"",
               "parameters" : [ ]
             }
@@ -1742,6 +1778,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"description\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"category\"",
               "parameters" : [
                 {
@@ -1773,6 +1810,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"description\", \"category\"",
               "parameters" : [
                 {
@@ -1809,6 +1847,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"description\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\"",
               "parameters" : [
                 {
@@ -1850,6 +1889,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1 AND \"description\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"category\"",
               "parameters" : [
                 {
@@ -1891,6 +1931,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"description\"",
               "parameters" : [
                 {

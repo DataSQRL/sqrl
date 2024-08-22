@@ -67,7 +67,8 @@ public class IcebergEngine extends AbstractJDBCTableFormatEngine {
 
     QueryEngine queryEngine = queryEngines.values().stream().findFirst().get();
 
-    Map<IdentifiedQuery, QueryTemplate> databaseQueries = queryEngine.updateQueries(connectorFactory, connectorConfig, dbPlan.getQueries().stream()
+    Map<IdentifiedQuery, QueryTemplate> databaseQueries = queryEngine.updateQueries(connectorFactory,
+        connectorConfig, dbPlan.getQueries().stream()
         .collect(Collectors.toMap(ReadQuery::getQuery, q -> new QueryTemplate(
             queryEngine.getName(),
             q.getRelNode()))));

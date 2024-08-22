@@ -21,15 +21,19 @@ public class RootSqrlTable implements SqrlTableMacro {
   private final Supplier<RelNode> viewTransform;
   private final NamePath fullPath;
   private final boolean isTest;
+  private final boolean isImportedTable;
+  private final Boolean hasExecHint;
 
   public RootSqrlTable(Name name, Table internalTable, List<FunctionParameter> parameters,
-      Supplier<RelNode> viewTransform, boolean isTest) {
+      Supplier<RelNode> viewTransform, boolean isTest, boolean isImportedTable, Boolean hasExecHint) {
     this.name = name;
     this.internalTable = internalTable;
     this.parameters = parameters;
     this.viewTransform = viewTransform;
     this.fullPath = NamePath.of(name);
     this.isTest = isTest;
+    this.isImportedTable = isImportedTable;
+    this.hasExecHint = hasExecHint;
   }
 
   @Override
@@ -67,4 +71,10 @@ public class RootSqrlTable implements SqrlTableMacro {
     return JoinType.NONE;
   }
 
+  /**
+   * If the table was created as part of an IMPORT statement rather than a sqrl derived table
+   */
+  public boolean isImportedTable() {
+    return isImportedTable;
+  }
 }

@@ -6,6 +6,7 @@ package com.datasqrl;
 
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.graphql.GraphQLServer;
+import com.datasqrl.graphql.JsonEnvVarDeserializer;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.fasterxml.jackson.databind.ObjectMapper;

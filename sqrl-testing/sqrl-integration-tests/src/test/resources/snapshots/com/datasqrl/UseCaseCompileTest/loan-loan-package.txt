@@ -497,6 +497,7 @@ LogicalProject(__pk1_id=[$0], loan_type_id=[$1], total_amount=[$2], total_loans=
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"applicationstatus_1\"\nORDER BY \"event_time\" DESC NULLS LAST, \"_uuid\"",
               "parameters" : [ ]
             }
@@ -519,6 +520,7 @@ LogicalProject(__pk1_id=[$0], loan_type_id=[$1], total_amount=[$2], total_loans=
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"id\", \"customer_id\", \"loan_type_id\", \"amount\", \"duration\", \"application_date\", \"updated_at\", 1 AS \"__pk\"\nFROM \"applications_3\"\nWHERE \"id\" = $1\nORDER BY 1",
               "parameters" : [
                 {
@@ -541,6 +543,7 @@ LogicalProject(__pk1_id=[$0], loan_type_id=[$1], total_amount=[$2], total_loans=
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"applicationupdates_2\"\nWHERE $1 = \"loan_application_id\"\nORDER BY \"event_time\", \"_uuid\"",
               "parameters" : [
                 {
@@ -563,6 +566,7 @@ LogicalProject(__pk1_id=[$0], loan_type_id=[$1], total_amount=[$2], total_loans=
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"id\", \"customer_id\", \"loan_type_id\", \"amount\", \"duration\", \"application_date\", \"updated_at\", 1 AS \"__pk\"\nFROM \"applications_3\"\nWHERE $1 = \"id\"\nORDER BY 1",
               "parameters" : [
                 {
@@ -585,6 +589,7 @@ LogicalProject(__pk1_id=[$0], loan_type_id=[$1], total_amount=[$2], total_loans=
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"id\", \"name\", \"description\", \"interest_rate\", \"max_amount\", \"min_amount\", \"max_duration\", \"min_duration\", \"updated_at\", 1 AS \"__pk\"\nFROM \"loantypes_3\"\nWHERE $1 = \"id\"\nORDER BY 1",
               "parameters" : [
                 {
@@ -613,6 +618,7 @@ LogicalProject(__pk1_id=[$0], loan_type_id=[$1], total_amount=[$2], total_loans=
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"id\", \"first_name\", \"last_name\", \"email\", \"phone\", \"address\", \"date_of_birth\", \"updated_at\", 1 AS \"__pk\"\nFROM \"customers_3\"\nWHERE \"id\" = $1\nORDER BY 1",
               "parameters" : [
                 {
@@ -646,6 +652,7 @@ LogicalProject(__pk1_id=[$0], loan_type_id=[$1], total_amount=[$2], total_loans=
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"applications_3\"\nWHERE $1 = \"customer_id\"\nORDER BY \"application_date\", \"id\"",
               "parameters" : [
                 {
@@ -668,6 +675,7 @@ LogicalProject(__pk1_id=[$0], loan_type_id=[$1], total_amount=[$2], total_loans=
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"overview_1\"\nWHERE \"__pk1_id\" = $1\nORDER BY \"loan_type_id\"",
               "parameters" : [
                 {
@@ -696,6 +704,7 @@ LogicalProject(__pk1_id=[$0], loan_type_id=[$1], total_amount=[$2], total_loans=
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"id\", \"name\", \"description\", \"interest_rate\", \"max_amount\", \"min_amount\", \"max_duration\", \"min_duration\", \"updated_at\", 1 AS \"__pk\"\nFROM \"loantypes_3\"\nWHERE \"id\" = $1\nORDER BY 1",
               "parameters" : [
                 {
@@ -711,6 +720,7 @@ LogicalProject(__pk1_id=[$0], loan_type_id=[$1], total_amount=[$2], total_loans=
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"loantypes_3\"\nORDER BY \"id\"",
               "parameters" : [ ]
             }
@@ -727,6 +737,7 @@ LogicalProject(__pk1_id=[$0], loan_type_id=[$1], total_amount=[$2], total_loans=
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"applicationalert_1\"\nORDER BY \"_event_time\" DESC NULLS LAST, \"_uuid\"",
               "parameters" : [ ]
             }
@@ -743,6 +754,7 @@ LogicalProject(__pk1_id=[$0], loan_type_id=[$1], total_amount=[$2], total_loans=
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"applicationupdates_2\"\nORDER BY \"event_time\" DESC NULLS LAST, \"_uuid\"",
               "parameters" : [ ]
             }
@@ -775,6 +787,7 @@ LogicalProject(__pk1_id=[$0], loan_type_id=[$1], total_amount=[$2], total_loans=
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"customerchatmessage_1\"\nWHERE \"customerid\" = $1\nORDER BY \"timestamp\" DESC, \"uuid\"",
               "parameters" : [
                 {

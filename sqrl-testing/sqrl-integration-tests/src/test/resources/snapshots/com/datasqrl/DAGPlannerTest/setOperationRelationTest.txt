@@ -286,6 +286,7 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"customerid\"\nFROM \"orders_2\"\nUNION\nSELECT \"customerid\"\nFROM \"customer_3\"",
               "parameters" : [ ]
             }
@@ -313,6 +314,7 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT COUNT(*) AS \"num_count\"\nFROM (SELECT \"customerid\"\n   FROM \"orders_2\"\n   UNION\n   SELECT \"customerid\"\n   FROM \"customer_3\") AS \"t1\"",
               "parameters" : [ ]
             }
@@ -345,6 +347,7 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customer_3\"\nWHERE \"customerid\" = $1\nORDER BY 1",
               "parameters" : [
                 {
@@ -371,6 +374,7 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"customer_3\"\nORDER BY \"customerid\"",
               "parameters" : [ ]
             }
@@ -398,6 +402,7 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", GREATEST(\"orders_2\".\"customerid\", \"t1\".\"customerid\") AS \"newid\"\nFROM \"orders_2\"\n INNER JOIN (SELECT \"customerid\"\n   FROM \"orders_2\"\n   UNION\n   SELECT \"customerid\"\n   FROM \"customer_3\") AS \"t1\" ON \"orders_2\".\"customerid\" = \"t1\".\"customerid\"\nORDER BY \"orders_2\".\"time\" DESC\nFETCH NEXT 10 ROWS ONLY",
               "parameters" : [ ]
             }
@@ -425,6 +430,7 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
               "parameters" : [ ]
             }
@@ -455,6 +461,7 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, 1",
               "parameters" : [
                 {
@@ -491,6 +498,7 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1\nORDER BY \"time\" DESC NULLS LAST",
               "parameters" : [
                 {
@@ -522,6 +530,7 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
               "parameters" : [
                 {
@@ -565,6 +574,7 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1 AND \"description\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"category\"",
               "parameters" : [
                 {
@@ -606,6 +616,7 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"description\"",
               "parameters" : [
                 {
@@ -642,6 +653,7 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"description\", \"category\"",
               "parameters" : [
                 {
@@ -683,6 +695,7 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1 AND \"description\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\"",
               "parameters" : [
                 {
@@ -724,6 +737,7 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"description\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"category\"",
               "parameters" : [
                 {
@@ -755,6 +769,7 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"category\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\"",
               "parameters" : [
                 {
@@ -786,6 +801,7 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"description\", \"category\"",
               "parameters" : [
                 {
@@ -822,6 +838,7 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"description\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\"",
               "parameters" : [
                 {
@@ -863,6 +880,7 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"description\"",
               "parameters" : [
                 {
@@ -909,6 +927,7 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"description\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\"",
               "parameters" : [
                 {
@@ -955,6 +974,7 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"description\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"category\"",
               "parameters" : [
                 {
@@ -1001,6 +1021,7 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"description\"",
               "parameters" : [
                 {
@@ -1047,6 +1068,7 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"description\", \"category\"",
               "parameters" : [
                 {
@@ -1098,6 +1120,7 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"productid\", \"name\", \"description\", \"category\", \"_ingest_time\", 1 AS \"__pk\"\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3 AND \"category\" = $4\nORDER BY \"_ingest_time\" DESC NULLS LAST, 1",
               "parameters" : [
                 {
@@ -1154,6 +1177,7 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"category\"",
               "parameters" : [
                 {
@@ -1190,6 +1214,7 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\", \"category\"",
               "parameters" : [ ]
             }

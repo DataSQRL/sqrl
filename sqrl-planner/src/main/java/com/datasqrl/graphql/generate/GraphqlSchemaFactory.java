@@ -132,8 +132,8 @@ public class GraphqlSchemaFactory {
     if (goal != ExecutionGoal.TEST) {
       Optional<GraphQLObjectType.Builder> subscriptions = createSubscriptionTypes(schema);
       Optional<GraphQLObjectType.Builder> mutations = createMutationTypes(schema);
-//      subscriptions.map(s->builder.subscription(s));
-      mutations.map(s->builder.mutation(s));
+      subscriptions.map(builder::subscription);
+      mutations.map(builder::mutation);
     }
     builder.additionalTypes(new LinkedHashSet<>(objectTypes));
 
@@ -193,6 +193,7 @@ public class GraphqlSchemaFactory {
     // Retrieve streamable tables from the schema
     List<PhysicalRelationalTable> streamTables = schema.getTableFunctions().stream()
         .filter(t-> t instanceof RootSqrlTable)
+        .filter(t->!((RootSqrlTable)t).isImportedTable() && !((RootSqrlTable)t).getHasExecHint())
         .map(t->((PhysicalRelationalTable)((RootSqrlTable) t).getInternalTable()))
         .filter(t->!(t instanceof ProxyImportRelationalTable)) //do not create subscriptions for imported tables
         .filter(t-> t.getType() == TableType.STREAM)

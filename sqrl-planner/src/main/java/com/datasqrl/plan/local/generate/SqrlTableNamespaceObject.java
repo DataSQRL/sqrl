@@ -15,6 +15,8 @@ import lombok.Getter;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.schema.Function;
 import org.apache.calcite.schema.FunctionParameter;
+import org.apache.calcite.sql.SqlHint;
+import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqrlTableFunctionDef;
 
 @Getter
@@ -28,12 +30,13 @@ public class SqrlTableNamespaceObject extends AbstractTableNamespaceObject<Physi
   private final List<FunctionParameter> functionParameters;
   private final Optional<Supplier<RelNode>> relNodeSupplier;
   private final boolean isTest;
+  private final Optional<SqlNodeList> opHints;
 
   public SqrlTableNamespaceObject(Name name, PhysicalRelationalTable table, CalciteTableFactory tableFactory,
       SqrlTableFunctionDef args,
       List<FunctionParameter> parameters, List<Function> isA, boolean materializeSelf,
       List<FunctionParameter> functionParameters, Optional<Supplier<RelNode>> relNodeSupplier,
-      ModuleLoader moduleLoader, boolean isTest) {
+      ModuleLoader moduleLoader, boolean isTest, Optional<SqlNodeList> opHints) {
     super(tableFactory, NameCanonicalizer.SYSTEM, moduleLoader);
     this.name = name;
     this.table = table;
@@ -44,13 +47,22 @@ public class SqrlTableNamespaceObject extends AbstractTableNamespaceObject<Physi
     this.functionParameters = functionParameters;
     this.relNodeSupplier = relNodeSupplier;
     this.isTest = isTest;
+    this.opHints = opHints;
   }
 
   @Override
   public boolean apply(ScriptPlanner planner, Optional<String> objectName, SqrlFramework framework, ErrorCollector errors) {
     registerScriptTable(table, framework, Optional.of(functionParameters),
-        relNodeSupplier, isTest);
+        relNodeSupplier, isTest, false, opHints.flatMap(this::execHint));
 
     return true;
+  }
+
+  private Optional<Boolean> execHint(SqlNodeList hintList) {
+    return hintList.getList()
+        .stream().map(e->(SqlHint)e)
+        .filter(e->e.getName().equalsIgnoreCase("exec"))
+        .map(e->Boolean.TRUE)
+        .findAny();
   }
 }

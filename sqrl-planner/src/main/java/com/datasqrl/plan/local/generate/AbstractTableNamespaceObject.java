@@ -63,7 +63,8 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
       SqrlFramework framework, ErrorCollector errors) {
     ProxyImportRelationalTable importTable = importTable(table,
         objectName.map(canonicalizer::name).orElse(table.getName()), errors);
-    registerScriptTable(importTable, framework, Optional.empty(), Optional.empty(), false);
+    registerScriptTable(importTable, framework, Optional.empty(), Optional.empty(), false, true,
+        Optional.empty());
     return true;
   }
 
@@ -88,7 +89,7 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
   }
 
   public void registerScriptTable(PhysicalRelationalTable table, SqrlFramework framework, Optional<List<FunctionParameter>> parameters,
-      Optional<Supplier<RelNode>> relNodeSupplier, boolean isTest) {
+      Optional<Supplier<RelNode>> relNodeSupplier, boolean isTest, boolean isImportedTable, Optional<Boolean> hasExecHint) {
 
     NamePath path =  table.getTablePath();
 
@@ -107,7 +108,7 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
           path.getFirst(),
           table,
           parameters.orElse(List.of()),
-          nodeSupplier, isTest);
+          nodeSupplier, isTest, isImportedTable, hasExecHint.orElse(false));
       framework.getSchema().addTable(tbl);
     } else { //add parent-child relationships
       NamePath parentPath = path.popLast();

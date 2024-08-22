@@ -263,6 +263,7 @@ LogicalAggregate(group=[{0}], num=[COUNT()])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"customerid\", \"time\" AS \"rowtime\"\nFROM \"orders_2\"\nUNION ALL\nSELECT \"customerid\", \"timestamp\" AS \"rowtime\"\nFROM \"customer_2\"",
               "parameters" : [ ]
             }
@@ -295,6 +296,7 @@ LogicalAggregate(group=[{0}], num=[COUNT()])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"lastUpdated\"",
               "parameters" : [
                 {
@@ -331,6 +333,7 @@ LogicalAggregate(group=[{0}], num=[COUNT()])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customer_2\"\nWHERE \"customerid\" = $1 AND \"lastUpdated\" = $2\nORDER BY \"timestamp\" DESC NULLS LAST, 1",
               "parameters" : [
                 {
@@ -362,6 +365,7 @@ LogicalAggregate(group=[{0}], num=[COUNT()])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"customer_2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\", \"lastUpdated\"",
               "parameters" : [ ]
             }
@@ -387,6 +391,7 @@ LogicalAggregate(group=[{0}], num=[COUNT()])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"customer_2\"\nWHERE \"lastUpdated\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\"",
               "parameters" : [
                 {
@@ -420,6 +425,7 @@ LogicalAggregate(group=[{0}], num=[COUNT()])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
               "parameters" : [ ]
             }
@@ -450,6 +456,7 @@ LogicalAggregate(group=[{0}], num=[COUNT()])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, 1",
               "parameters" : [
                 {
@@ -486,6 +493,7 @@ LogicalAggregate(group=[{0}], num=[COUNT()])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1\nORDER BY \"time\" DESC NULLS LAST",
               "parameters" : [
                 {
@@ -517,6 +525,7 @@ LogicalAggregate(group=[{0}], num=[COUNT()])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
               "parameters" : [
                 {
@@ -560,6 +569,7 @@ LogicalAggregate(group=[{0}], num=[COUNT()])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1 AND \"description\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"category\"",
               "parameters" : [
                 {
@@ -601,6 +611,7 @@ LogicalAggregate(group=[{0}], num=[COUNT()])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"description\"",
               "parameters" : [
                 {
@@ -637,6 +648,7 @@ LogicalAggregate(group=[{0}], num=[COUNT()])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"description\", \"category\"",
               "parameters" : [
                 {
@@ -678,6 +690,7 @@ LogicalAggregate(group=[{0}], num=[COUNT()])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1 AND \"description\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\"",
               "parameters" : [
                 {
@@ -719,6 +732,7 @@ LogicalAggregate(group=[{0}], num=[COUNT()])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"description\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"category\"",
               "parameters" : [
                 {
@@ -750,6 +764,7 @@ LogicalAggregate(group=[{0}], num=[COUNT()])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"category\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\"",
               "parameters" : [
                 {
@@ -781,6 +796,7 @@ LogicalAggregate(group=[{0}], num=[COUNT()])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"description\", \"category\"",
               "parameters" : [
                 {
@@ -817,6 +833,7 @@ LogicalAggregate(group=[{0}], num=[COUNT()])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"description\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\"",
               "parameters" : [
                 {
@@ -858,6 +875,7 @@ LogicalAggregate(group=[{0}], num=[COUNT()])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"description\"",
               "parameters" : [
                 {
@@ -904,6 +922,7 @@ LogicalAggregate(group=[{0}], num=[COUNT()])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"description\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\"",
               "parameters" : [
                 {
@@ -950,6 +969,7 @@ LogicalAggregate(group=[{0}], num=[COUNT()])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"description\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"category\"",
               "parameters" : [
                 {
@@ -996,6 +1016,7 @@ LogicalAggregate(group=[{0}], num=[COUNT()])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"description\"",
               "parameters" : [
                 {
@@ -1042,6 +1063,7 @@ LogicalAggregate(group=[{0}], num=[COUNT()])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"description\", \"category\"",
               "parameters" : [
                 {
@@ -1093,6 +1115,7 @@ LogicalAggregate(group=[{0}], num=[COUNT()])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"productid\", \"name\", \"description\", \"category\", \"_ingest_time\", 1 AS \"__pk\"\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3 AND \"category\" = $4\nORDER BY \"_ingest_time\" DESC NULLS LAST, 1",
               "parameters" : [
                 {
@@ -1149,6 +1172,7 @@ LogicalAggregate(group=[{0}], num=[COUNT()])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"category\"",
               "parameters" : [
                 {
@@ -1185,6 +1209,7 @@ LogicalAggregate(group=[{0}], num=[COUNT()])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"product_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\", \"category\"",
               "parameters" : [ ]
             }
@@ -1212,6 +1237,7 @@ LogicalAggregate(group=[{0}], num=[COUNT()])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT ENDOFDAY(\"rowtime\") AS \"day\", COUNT(*) AS \"num\"\nFROM (SELECT \"customerid\", \"time\" AS \"rowtime\"\n   FROM \"orders_2\"\n   UNION ALL\n   SELECT \"customerid\", \"timestamp\" AS \"rowtime\"\n   FROM \"customer_2\") AS \"t1\"\nGROUP BY ENDOFDAY(\"rowtime\")",
               "parameters" : [ ]
             }

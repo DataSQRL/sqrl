@@ -256,6 +256,7 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"customer_3\"\nORDER BY \"customerid\"",
               "parameters" : [ ]
             }
@@ -281,6 +282,7 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customer_3\"\nWHERE \"customerid\" = $1\nORDER BY 1",
               "parameters" : [
                 {
@@ -314,6 +316,7 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"orders_2\".\"id\", \"customer_3\".\"name\", \"orders_2\".\"time\" AS \"_time\"\nFROM \"orders_2\"\n LEFT JOIN \"customer_3\" ON \"orders_2\".\"customerid\" = \"customer_3\".\"customerid\"\nORDER BY \"orders_2\".\"id\", \"orders_2\".\"time\"",
               "parameters" : [ ]
             }
@@ -339,6 +342,7 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"customer_3\".\"name\", \"orders_2\".\"time\" AS \"_time\"\n  FROM \"orders_2\"\n   LEFT JOIN \"customer_3\" ON \"orders_2\".\"customerid\" = \"customer_3\".\"customerid\") AS \"t\"\nWHERE \"t\".\"id\" = $1\nORDER BY \"_time\"",
               "parameters" : [
                 {
@@ -377,6 +381,7 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"ordercustomer2_1\"\nWHERE \"id\" = $1\nORDER BY \"_time\" DESC NULLS LAST",
               "parameters" : [
                 {
@@ -403,6 +408,7 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"ordercustomer2_1\"\nORDER BY \"_time\" DESC NULLS LAST, \"id\"",
               "parameters" : [ ]
             }
@@ -435,6 +441,7 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"customer_3\".\"name\", \"orders_2\".\"time\" AS \"_time\"\n  FROM \"orders_2\"\n   LEFT JOIN \"customer_3\" ON \"orders_2\".\"customerid\" = \"customer_3\".\"customerid\") AS \"t\"\nWHERE \"t\".\"id\" = $1\nORDER BY \"_time\"",
               "parameters" : [
                 {
@@ -461,6 +468,7 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"orders_2\".\"id\", \"customer_3\".\"name\", \"orders_2\".\"time\" AS \"_time\"\nFROM \"orders_2\"\n LEFT JOIN \"customer_3\" ON \"orders_2\".\"customerid\" = \"customer_3\".\"customerid\"\nORDER BY \"orders_2\".\"id\", \"orders_2\".\"time\"",
               "parameters" : [ ]
             }
@@ -488,6 +496,7 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"orders_2\".\"id\", \"customer_3\".\"name\", \"orders_2\".\"time\" AS \"_time\"\nFROM \"orders_2\"\n LEFT JOIN \"customer_3\" ON \"orders_2\".\"customerid\" = \"customer_3\".\"customerid\"\nORDER BY \"orders_2\".\"id\", \"orders_2\".\"time\"",
               "parameters" : [ ]
             }
@@ -513,6 +522,7 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"customer_3\".\"name\", \"orders_2\".\"time\" AS \"_time\"\n  FROM \"orders_2\"\n   LEFT JOIN \"customer_3\" ON \"orders_2\".\"customerid\" = \"customer_3\".\"customerid\") AS \"t\"\nWHERE \"t\".\"id\" = $1\nORDER BY \"_time\"",
               "parameters" : [
                 {
@@ -556,6 +566,7 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, 1",
               "parameters" : [
                 {
@@ -592,6 +603,7 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
               "parameters" : [
                 {
@@ -623,6 +635,7 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1\nORDER BY \"time\" DESC NULLS LAST",
               "parameters" : [
                 {
@@ -649,6 +662,7 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+              "database" : "postgres",
               "sql" : "SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
               "parameters" : [ ]
             }
