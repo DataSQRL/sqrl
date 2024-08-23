@@ -41,7 +41,8 @@ import org.testcontainers.utility.DockerImageName;
 
 @Slf4j
 public class DatasqrlRun {
-  Path path = Path.of("build", "plan");
+  Path build = Path.of("build");
+  Path path = build.resolve("plan");
   EmbeddedKafkaCluster CLUSTER;
   ObjectMapper objectMapper = new ObjectMapper();
   PostgreSQLContainer postgreSQLContainer;
@@ -82,13 +83,23 @@ public class DatasqrlRun {
 
   @SneakyThrows
   public CompiledPlan compileFlink() {
-    Map<String, String> config = Map.of(
-        "taskmanager.network.memory.max", "800m",
-        "execution.checkpointing.interval", "20 sec",
-        "state.backend", "rocksdb",
-        "table.exec.source.idle-timeout", "1 s")
-        ;
-    //read flink config from package.json values?
+    //Read conf if present
+    Path packageJson = build.resolve("package.json");
+    Map<String, String> config = new HashMap<>();
+    if (packageJson.toFile().exists()) {
+      Map packageJsonMap = objectMapper.readValue(build.resolve("package.json").toFile(), Map.class);
+      Object o = packageJsonMap.get("values");
+      if (o instanceof Map) {
+        Object c = ((Map)o).get("flink-config");
+        if (c instanceof Map) {
+          config.putAll((Map)c);
+        }
+      }
+    }
+
+    config.putIfAbsent("table.exec.source.idle-timeout", "1 s");
+    config.putIfAbsent("taskmanager.network.memory.max", "800m");
+    config.putIfAbsent("execution.checkpointing.interval", "30 sec");
 
     Configuration configuration = Configuration.fromMap(config);
     StreamExecutionEnvironment sEnv = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(configuration);
@@ -105,7 +116,6 @@ public class DatasqrlRun {
       if (statement.trim().isEmpty()) {
         continue;
       }
-      System.out.println(replaceWithEnv(statement));
       tableResult = tEnv.executeSql(replaceWithEnv(statement));
     }
     String insert = replaceWithEnv(statements.get(statements.size() - 1));
