@@ -50,10 +50,13 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.apache.calcite.avatica.util.TimeUnit;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.rel2sql.FlinkRelToSqlConverter;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlCharStringLiteral;
@@ -511,7 +514,15 @@ public class SqrlToFlinkSqlGenerator {
         ), false,
         FlinkDefaultRelMetadataProvider.INSTANCE());
 
-    return program.run(null, relNode, relNode.getTraitSet(), List.of(), List.of());
+    RelNode applied = program.run(null, relNode, relNode.getTraitSet(), List.of(), List.of());
+    applied.accept(new RexShuttle() {
+      @Override
+      public RexNode visitLiteral(RexLiteral literal) {
+        return super.visitLiteral(literal);
+      }
+    });
+
+    return applied;
   }
 
   private void checkPreconditions(List<? extends Query> queries) {

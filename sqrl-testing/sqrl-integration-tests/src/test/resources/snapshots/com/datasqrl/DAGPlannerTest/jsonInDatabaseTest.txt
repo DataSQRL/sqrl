@@ -105,7 +105,7 @@ Schema:
  - _customerid: BIGINT NOT NULL
  - _timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalProject(obj=[jsonExtract(toJson('{"a": "hello"}'), '$.a':VARCHAR(2147483647) CHARACTER SET "UTF-16LE", 'default':VARCHAR(2147483647) CHARACTER SET "UTF-16LE")], _customerid=[$0], _timestamp=[$4])
+LogicalProject(obj=[jsonExtract(toJson('{"a": "hello"}'), CAST('$.a'):VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL, CAST('default'):VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL)], _customerid=[$0], _timestamp=[$4])
   LogicalTableScan(table=[[customer_3]])
 
 === jsonObjectAggTable
@@ -568,7 +568,7 @@ LogicalProject(obj=[toJson('{"a": 1}')], _customerid=[$0], _timestamp=[$4])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT COALESCE(JSONB_PATH_QUERY_FIRST(CAST('{\"a\": \"hello\"}' AS JSONB), '$.a') #>> '{}', 'default') AS \"obj\", \"customerid\" AS \"_customerid\", \"timestamp\" AS \"_timestamp\"\nFROM \"customer_3\"\nORDER BY \"customerid\"",
+              "sql" : "SELECT COALESCE(JSONB_PATH_QUERY_FIRST(CAST('{\"a\": \"hello\"}' AS JSONB), CAST('$.a' AS TEXT)) #>> '{}', CAST('default' AS TEXT)) AS \"obj\", \"customerid\" AS \"_customerid\", \"timestamp\" AS \"_timestamp\"\nFROM \"customer_3\"\nORDER BY \"customerid\"",
               "parameters" : [ ]
             }
           }

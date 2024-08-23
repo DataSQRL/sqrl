@@ -171,4 +171,5 @@ public class SqrlTypeSystem extends RelDataTypeSystemImpl {
         && SqlTypeUtil.isExactNumeric(type2)
         && (SqlTypeUtil.isDecimal(type1) || SqlTypeUtil.isDecimal(type2));
   }
+
 }
