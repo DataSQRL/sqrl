@@ -10,6 +10,7 @@ import com.google.common.collect.Iterables;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.OptionalInt;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -96,6 +97,11 @@ public class Timestamps {
   public Integer getOnlyCandidate() {
     Preconditions.checkArgument(candidates.size()==1);
     return Iterables.getOnlyElement(candidates);
+  }
+
+  public OptionalInt getOnlyCandidateOptional() {
+    Preconditions.checkArgument(candidates.size()<=1, "Expected at most one timestamp candidate");
+    return candidates.isEmpty() ? OptionalInt.empty() : OptionalInt.of(Iterables.getOnlyElement(candidates));
   }
 
   public boolean isCandidate(int index) {

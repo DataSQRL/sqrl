@@ -99,6 +99,12 @@ class SimpleCostModel implements ComputeCost {
             return 10;
           case VERSIONED_STATE:
             return 4;
+          case STATIC:
+            return 1;
+          case LOOKUP:
+            return 2;
+          case RELATION:
+            return 20;
           default:
             throw new UnsupportedOperationException();
         }

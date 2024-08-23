@@ -28,7 +28,7 @@ Schema:
  - lastUpdated: BIGINT NOT NULL
  - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Post Processors:
- - topN: partition=customerid limit=1 sort=#4: _ingest_time TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
+ - topN: partition=customerid limit=1 sort=#4: _ingest_time TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC 
 Plan:
 LogicalTableScan(table=[[customer_2]])
 
@@ -117,7 +117,7 @@ LogicalProject(__pk1_customerid=[$0], day=[$1], total_price=[$2], total_num=[$3]
       LogicalJoin(condition=[=($1, $6)], joinType=[inner]) hints[TemporalJoinHint options:[5]]
         LogicalTableScan(table=[[ordersinline_1]])
         LogicalFilter(condition=[=($5, 1)]) hints[DedupHint]
-          LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], _ingest_time=[$4], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
+          LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], _ingest_time=[$4], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS FIRST)])
             LogicalTableScan(table=[[customer_3]])
 
 === OrdersInline
@@ -203,7 +203,7 @@ LogicalProject(__pk1_id=[$0], __pk2_customerid=[$1], __pk3_time=[$2], price=[$4]
     "CREATE VIEW `table$2`\nAS\nSELECT ((`t00`.`quantity` * `t00`.`unit_price`) - `t00`.`discount`) AS `price`, `$cor0`.`id` AS `_id`, `$cor0`.`customerid` AS `_customerid`, `$cor0`.`time` AS `_time`, `t00`.`productid` AS `_productid`, `$cor0`.`_ingest_time`\nFROM `orders_1` AS `$cor0`,\nUNNEST(`$cor0`.`entries`) AS `t00` (`productid`, `quantity`, `unit_price`, `discount`);",
     "CREATE VIEW `table$3`\nAS\nSELECT `orders_1`.`id`, `orders_1`.`customerid` AS `_customerid`, `orders_1`.`time` AS `_time`, `orders_1`.`_ingest_time`\nFROM `orders_1`\nINNER JOIN `orders_1` AS `orders_10` ON ((((`orders_1`.`id` = `orders_10`.`id`) AND (`orders_1`.`time` = `orders_10`.`time`)) AND (`orders_1`.`customerid` = `orders_10`.`customerid`)) AND (`orders_1`.`_ingest_time` = `orders_10`.`_ingest_time`));",
     "CREATE VIEW `table$4`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`, `_ingest_time`\nFROM `orders_1`;",
-    "CREATE VIEW `table$5`\nAS\nSELECT *\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `_ingest_time`, (ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `_ingest_time` DESC NULLS LAST)) AS `_rownum`\nFROM `customer_1`) AS `t`\nWHERE (`_rownum` = 1);",
+    "CREATE VIEW `table$5`\nAS\nSELECT *\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `_ingest_time`, (ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `_ingest_time` DESC)) AS `_rownum`\nFROM `customer_1`) AS `t`\nWHERE (`_rownum` = 1);",
     "CREATE VIEW `table$6`\nAS\nSELECT `$cor1`.`id` AS `__pk1_id`, `$cor1`.`customerid` AS `__pk2_customerid`, `$cor1`.`time` AS `__pk3_time`, ((`t20`.`quantity` * `t20`.`unit_price`) - `t20`.`discount`) AS `$f3`, `t20`.`discount`, `t20`.`productid`, `$cor1`.`_ingest_time`\nFROM `orders_1` AS `$cor1`,\nUNNEST(`$cor1`.`entries`) AS `t20` (`productid`, `quantity`, `unit_price`, `discount`);",
     "CREATE VIEW `table$7`\nAS\nSELECT `t0`.`customerid` AS `__pk1_customerid`, ENDOFDAY(`$cor5`.`time`) AS `day`, SUM(`$cor5`.`price`) AS `total_price`, SUM(`$cor5`.`num`) AS `total_num`, MAX(`$cor5`.`_ingest_time`) AS `__timestamp`\nFROM (SELECT `orders_1`.`id`, `orders_1`.`customerid`, `orders_1`.`time`, `t7`.`price`, `t7`.`num`, `orders_1`.`_ingest_time`\nFROM `orders_1`\nINNER JOIN (SELECT `__pk1_id`, `__pk2_customerid`, `__pk3_time`, SUM(`$f3`) AS `price`, COUNT(*) AS `num`, SUM(`discount`) AS `discount`, `window_time` AS `_ingest_time`\nFROM TABLE(TUMBLE((TABLE `table$6`), (DESCRIPTOR(`_ingest_time`)), INTERVAL '0.001' SECOND(1))) AS `t4`\nGROUP BY `__pk1_id`, `__pk2_customerid`, `__pk3_time`, `window_start`, `window_end`, `window_time`) AS `t7` ON ((((`orders_1`.`id` = `t7`.`__pk1_id`) AND (`orders_1`.`customerid` = `t7`.`__pk2_customerid`)) AND (`orders_1`.`time` = `t7`.`__pk3_time`)) AND (`orders_1`.`_ingest_time` = `t7`.`_ingest_time`))) AS `$cor5`\nINNER JOIN `table$5` FOR SYSTEM_TIME AS OF `$cor5`.`_ingest_time` AS `t0` ON (`$cor5`.`customerid` = `t0`.`customerid`)\nGROUP BY `t0`.`customerid`, ENDOFDAY(`$cor5`.`time`);",
     "CREATE VIEW `table$8`\nAS\nSELECT `$cor1`.`id` AS `__pk1_id`, `$cor1`.`customerid` AS `__pk2_customerid`, `$cor1`.`time` AS `__pk3_time`, ((`t00`.`quantity` * `t00`.`unit_price`) - `t00`.`discount`) AS `$f3`, `t00`.`discount`, `t00`.`productid`, `$cor1`.`_ingest_time`\nFROM `orders_1` AS `$cor1`,\nUNNEST(`$cor1`.`entries`) AS `t00` (`productid`, `quantity`, `unit_price`, `discount`);",

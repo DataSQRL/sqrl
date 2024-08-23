@@ -28,7 +28,7 @@ Schema:
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Post Processors:
- - topN: partition=customerid limit=1 sort=#4: timestamp TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
+ - topN: partition=customerid limit=1 sort=#4: timestamp TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC 
 Plan:
 LogicalTableScan(table=[[customer_2]])
 
@@ -75,7 +75,7 @@ Schema:
  - category: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Post Processors:
- - topN: partition=productid limit=1 sort=#4: _ingest_time TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
+ - topN: partition=productid limit=1 sort=#4: _ingest_time TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC 
 Plan:
 LogicalTableScan(table=[[product_2]])
 
@@ -101,11 +101,11 @@ LogicalProject(__pk1_customerid=[$1], category=[$2], num=[$3], _time=[$0])
         LogicalJoin(condition=[=($1, $4)], joinType=[inner]) hints[TemporalJoinHint options:[2]]
           LogicalTableScan(table=[[orders_2]])
           LogicalFilter(condition=[=($5, 1)]) hints[DedupHint]
-            LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
+            LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS FIRST)])
               LogicalTableScan(table=[[customer_3]])
         LogicalTableFunctionScan(invocation=[Orders.entries($cor0.entries)], rowType=[RecordType(BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount)], elementType=[class [Ljava.lang.Object;])
       LogicalFilter(condition=[=($5, 1)]) hints[DedupHint]
-        LogicalProject(productid=[$0], name=[$1], description=[$2], category=[$3], _ingest_time=[$4], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
+        LogicalProject(productid=[$0], name=[$1], description=[$2], category=[$3], _ingest_time=[$4], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS FIRST)])
           LogicalTableScan(table=[[product_3]])
 
 >>>flink.json
@@ -136,8 +136,8 @@ LogicalProject(__pk1_customerid=[$1], category=[$2], num=[$3], _time=[$0])
     "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `customer_1`;",
     "CREATE VIEW `table$2`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders_1`;",
     "CREATE VIEW `table$3`\nAS\nSELECT *\nFROM `product_1`;",
-    "CREATE VIEW `table$4`\nAS\nSELECT *\nFROM (SELECT `productid`, `name`, `description`, `category`, `_ingest_time`, (ROW_NUMBER() OVER (PARTITION BY `productid` ORDER BY `_ingest_time` DESC NULLS LAST)) AS `_rownum`\nFROM `product_1`) AS `t`\nWHERE (`_rownum` = 1);",
-    "CREATE VIEW `table$5`\nAS\nSELECT *\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, (ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC NULLS LAST)) AS `_rownum`\nFROM `customer_1`) AS `t1`\nWHERE (`_rownum` = 1);",
+    "CREATE VIEW `table$4`\nAS\nSELECT *\nFROM (SELECT `productid`, `name`, `description`, `category`, `_ingest_time`, (ROW_NUMBER() OVER (PARTITION BY `productid` ORDER BY `_ingest_time` DESC)) AS `_rownum`\nFROM `product_1`) AS `t`\nWHERE (`_rownum` = 1);",
+    "CREATE VIEW `table$5`\nAS\nSELECT *\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, (ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC)) AS `_rownum`\nFROM `customer_1`) AS `t1`\nWHERE (`_rownum` = 1);",
     "CREATE VIEW `table$6`\nAS\nSELECT *\nFROM (SELECT *\nFROM (SELECT *\nFROM `orders_1` AS `$cor2`\nINNER JOIN `table$5` FOR SYSTEM_TIME AS OF `$cor2`.`time` AS `t2` ON (`$cor2`.`customerid` = `t2`.`customerid`)) AS `$cor0`,\nUNNEST(`$cor0`.`entries`) AS `t50` (`productid`, `quantity`, `unit_price`, `discount`)) AS `$cor1`\nINNER JOIN `table$4` FOR SYSTEM_TIME AS OF `$cor1`.`time` AS `t0` ON (`t0`.`productid` = `$cor1`.`productid`);",
     "CREATE VIEW `table$7`\nAS\nSELECT `customerid0` AS `__pk1_customerid`, `category`, SUM(`quantity`) AS `num`, `window_time` AS `_time`\nFROM TABLE(HOP((TABLE `table$6`), (DESCRIPTOR(`time`)), INTERVAL '1728' SECOND(7), INTERVAL '86400' SECOND(8))) AS `t7`\nGROUP BY `customerid0`, `category`, `window_start`, `window_end`, `window_time`;",
     "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer_3`\n(SELECT *\nFROM `table$1`)\n;\nINSERT INTO `orders_2`\n(SELECT *\nFROM `table$2`)\n;\nINSERT INTO `product_3`\n(SELECT *\nFROM `table$3`)\n;\nINSERT INTO `totals_1`\n(SELECT *\nFROM `table$7`)\n;\nEND;"

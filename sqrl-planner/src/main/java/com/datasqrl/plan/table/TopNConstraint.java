@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.calcite.rel.RelFieldCollation.NullDirection;
 
 @Value
 public class TopNConstraint implements PullupOperator {
@@ -27,15 +28,15 @@ public class TopNConstraint implements PullupOperator {
   @NonNull RelCollation collation; //third, we sort it
   @NonNull Optional<Integer> limit; //fourth, we limit the result
 
-  boolean isTimestampSort; //true, if the collation orders decreasingly by timestamp
+  boolean isTimestampOrder; //true, if the first order clause in the collation orders by timestamp
 
   public TopNConstraint(List<Integer> partition, boolean distinct, RelCollation collation,
-      Optional<Integer> limit, boolean isTimestampSort) {
+      Optional<Integer> limit, boolean isTimestampOrder) {
     this.partition = partition;
     this.distinct = distinct;
     this.collation = collation;
     this.limit = limit;
-    this.isTimestampSort = isTimestampSort;
+    this.isTimestampOrder = isTimestampOrder;
     Preconditions.checkArgument(isEmpty() || distinct || hasLimit());
     Preconditions.checkArgument(isEmpty() || !distinct || hasPartition() || !hasCollation());
   }
@@ -56,6 +57,10 @@ public class TopNConstraint implements PullupOperator {
     return limit.isPresent();
   }
 
+  public boolean hasLimit(int limit) {
+    return limit == this.limit.orElse(-1);
+  }
+
   public int getLimit() {
     Preconditions.checkArgument(hasLimit());
     return limit.get();
@@ -68,14 +73,13 @@ public class TopNConstraint implements PullupOperator {
     RelCollation newCollation = map.map(collation);
     List<Integer> newPartition = partition.stream().map(i -> map.map(i))
         .collect(Collectors.toList());
-    return new TopNConstraint(newPartition, distinct, newCollation, limit, isTimestampSort);
+    return new TopNConstraint(newPartition, distinct, newCollation, limit, isTimestampOrder);
   }
 
   public List<Integer> getIndexes() {
     return Stream.concat(collation.getFieldCollations().stream().map(c -> c.getFieldIndex()),
         partition.stream()).collect(Collectors.toList());
   }
-
 
 
   public static TopNConstraint makeDeduplication(List<Integer> partitionByIndexes,
@@ -89,7 +93,13 @@ public class TopNConstraint implements PullupOperator {
 
   public boolean isDeduplication() {
     //Deduplication may not have a partition for global/single row tables, e.g. after a global aggregation
-    return !distinct && isTimestampSort && hasLimit() && getLimit() == 1;
+    return !distinct && isTimestampOrder && hasLimit(1);
+  }
+
+  public boolean isDescendingDeduplication() {
+    //Timestamps cannot be null, so we don't have to check for null direction
+    return isDeduplication() && collation.getFieldCollations().get(0).getDirection() ==
+        RelFieldCollation.Direction.DESCENDING && collation.getFieldCollations().size()==1;
   }
 
 

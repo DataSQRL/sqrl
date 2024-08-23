@@ -196,7 +196,7 @@ public class CalciteUtil {
   public static final InputRefTransformation COALESCE_TRANSFORM = new BasicInputRefTransformation("coalesce",
           ops -> ops.size()==2 && (ops.get(1) instanceof RexLiteral), 0);
   public static final InputRefTransformation CAST_TRANSFORM = new BasicInputRefTransformation("cast",
-          ops -> ops.size()==2, 0);
+          ops -> ops.size()==1, 0);
 
   @Value
   public static class BasicInputRefTransformation implements InputRefTransformation {
@@ -207,7 +207,7 @@ public class CalciteUtil {
 
     @Override
     public boolean appliesTo(SqlOperator operator) {
-      return operator.isName(name, false);
+      return isOperator(operator, name);
     }
 
     @Override
@@ -221,7 +221,9 @@ public class CalciteUtil {
     }
   }
 
-
+  public static boolean isOperator(SqlOperator operator, String operatorName) {
+    return operator.isName(operatorName, false);
+  }
 
 
   public static Optional<Integer> isEqualToConstant(RexNode rexNode) {

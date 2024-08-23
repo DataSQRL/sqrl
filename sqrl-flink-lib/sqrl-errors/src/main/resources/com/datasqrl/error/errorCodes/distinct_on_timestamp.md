@@ -1,15 +1,7 @@
-Could not find field when trying to resolve expression.
+The sort order for the DISTINCT expression is not a timestamp order which can result in inefficient processing.
 
-Erroneous code example:
-```
-IMPORT datasqrl.seedshop.Customers;
-DistinctCustomers := DISTINCT Customers ON customerid ORDER BY name ASC;
-```
+If possible, try to use the timestamp column of the table as the sort order. This allows the stream engine to process the deduplication more efficiently.
 
-`name` is not a valid timestamp column and the order direction must be `DESC`.
+For imported tables, the timestamp column is defined in `table.json` configuration file. See: https://www.datasqrl.com/docs/reference/sqrl/connectors/#table-configuration
 
-If DataSQRL does not recognize the column in the `ORDER BY` as a valid timestamp
-column, try declaring it as a timestamp in the `IMPORT` statement:
-```
-IMPORT datasqrl.seedshop.Customers TIMESTAMP changed_on;
-```
+For other tables, the timestamp column is inferred based on the source tables.

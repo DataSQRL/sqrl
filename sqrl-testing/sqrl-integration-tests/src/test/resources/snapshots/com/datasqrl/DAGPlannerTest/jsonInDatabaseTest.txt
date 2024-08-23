@@ -28,7 +28,7 @@ Schema:
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Post Processors:
- - topN: partition=customerid limit=1 sort=#4: timestamp TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
+ - topN: partition=customerid limit=1 sort=#4: timestamp TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC 
 Plan:
 LogicalTableScan(table=[[customer_2]])
 
