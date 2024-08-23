@@ -2,13 +2,19 @@ package com.datasqrl.engine.database.relational;
 
 import static com.datasqrl.function.CalciteFunctionUtil.lightweightOp;
 
+import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.EmptyEngineConfig;
 import com.datasqrl.config.PackageJson.EngineConfig;
+import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.database.QueryTemplate;
+import com.datasqrl.engine.pipeline.ExecutionPipeline;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
+import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
 import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.google.inject.Inject;
 import java.util.List;
@@ -37,6 +43,12 @@ public class DuckDBEngine extends AbstractJDBCQueryEngine {
   @Override
   protected JdbcDialect getDialect() {
     return JdbcDialect.Postgres;
+  }
+
+  @Override
+  public EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs, ExecutionPipeline pipeline,
+      List<StagePlan> stagePlans, SqrlFramework framework, ErrorCollector errorCollector) {
+    return new DuckDBPhysicalPlan();
   }
 
   @Override
