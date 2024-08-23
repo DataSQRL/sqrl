@@ -4,9 +4,7 @@ CREATE TABLE Event (
     ID BIGINT,
     EPOCH_TIMESTAMP BIGINT,
     SOME_VALUE VARCHAR,
-    TIMESTAMP TIMESTAMP(3)
+    event_time TIMESTAMP(3) NOT NULL
 );
 
-EXPORT Data TO log.Event;
-
-EXPORT Event TO print.LogEvent;
+MyEvent := SELECT * FROM Event;

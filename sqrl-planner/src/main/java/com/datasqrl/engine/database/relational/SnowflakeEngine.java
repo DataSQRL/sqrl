@@ -186,10 +186,6 @@ public class SnowflakeEngine extends AbstractJDBCQueryEngine {
     List<SqlDDLStatement> ddl;
     List<Map<String, String>> queries;
 
-    @Override
-    public Type getType() {
-      return Type.QUERY;
-    }
   }
 
   @Override

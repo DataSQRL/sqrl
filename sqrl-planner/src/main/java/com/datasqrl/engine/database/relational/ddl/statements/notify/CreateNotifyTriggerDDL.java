@@ -1,15 +1,22 @@
 package com.datasqrl.engine.database.relational.ddl.statements.notify;
 
 import com.datasqrl.sql.SqlDDLStatement;
+import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
+import lombok.NonNull;
 
-@AllArgsConstructor
 public class CreateNotifyTriggerDDL implements SqlDDLStatement {
 
   String tableName;
   List<String> primaryKeys;
+
+  public CreateNotifyTriggerDDL(@NonNull String tableName, @NonNull List<String> primaryKeys) {
+    this.tableName = tableName;
+    Preconditions.checkState(!primaryKeys.isEmpty(), "There should be at least one primary key to generate a notify payload.");
+    this.primaryKeys = primaryKeys;
+  }
 
   @Override
   public String getSql() {
@@ -28,10 +35,6 @@ public class CreateNotifyTriggerDDL implements SqlDDLStatement {
   }
 
   private String createPayload() {
-    if (primaryKeys.isEmpty()) {
-      throw new IllegalArgumentException("There should be at least one primary key to generate a notify payload.");
-    }
-
     String argumentList = primaryKeys.stream()
         .map(pk ->
             String.format("'%s', NEW.%s", pk, pk))

@@ -63,8 +63,4 @@ public class FlinkStreamPhysicalPlan implements StreamPhysicalPlan {
     return formats;
   }
 
-  @Override
-  public Type getType() {
-    return Type.STREAMS;
-  }
 }

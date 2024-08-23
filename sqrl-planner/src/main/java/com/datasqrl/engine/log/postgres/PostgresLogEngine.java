@@ -47,8 +47,10 @@ public class PostgresLogEngine extends ExecutionEngine.Base implements LogEngine
 
     this.engineConfig = json.getEngines().getEngineConfig(ENGINE_NAME)
         .orElseGet(() -> new EmptyEngineConfig(ENGINE_NAME));
-    this.sourceConnectorFactory = connectorFactory.create(LOG, "postgres_log-source").orElse(null);
-    this.sinkConnectorFactory = connectorFactory.create(LOG, "postgres_log-sink").orElse(null);
+    this.sourceConnectorFactory = connectorFactory.create(LOG, "postgres_log-source")
+        .orElseThrow(()->new RuntimeException("Could not find postgres_log source connector"));
+    this.sinkConnectorFactory = connectorFactory.create(LOG, "postgres_log-sink")
+        .orElseThrow(()->new RuntimeException("Could not find postgres_log sink connector"));
   }
 
   @Override

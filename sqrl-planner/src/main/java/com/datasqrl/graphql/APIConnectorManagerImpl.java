@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.apache.calcite.jdbc.SqrlSchema;
@@ -120,8 +121,10 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
       String logId = table.getNameId();
       RelDataTypeField tableSchema = new RelDataTypeFieldImpl(table.getTableName().getDisplay(), -1,
           table.getRowType());
-
-      log = createLog(logId, table.getTableName(), tableSchema, List.of(), LogFactory.Timestamp.NONE);
+      List<String> pks = IntStream.of(table.getPrimaryKey().getPkIndexes())
+          .mapToObj(i -> table.getRowType().getFieldList().get(i).getName())
+          .collect(Collectors.toList());
+      log = createLog(logId, table.getTableName(), tableSchema, pks, LogFactory.Timestamp.NONE);
       sqrlSchema.getApiExports().put(sqrlTable, log);
     }
     sqrlSchema.getSubscriptions().put(subscription, log.getSink());

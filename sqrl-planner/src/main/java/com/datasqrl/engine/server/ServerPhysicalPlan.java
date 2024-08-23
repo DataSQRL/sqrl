@@ -16,8 +16,4 @@ public class ServerPhysicalPlan implements EnginePhysicalPlan {
   @Setter
   RootGraphqlModel model;
 
-  @Override
-  public Type getType() {
-    return Type.SERVER;
-  }
 }
