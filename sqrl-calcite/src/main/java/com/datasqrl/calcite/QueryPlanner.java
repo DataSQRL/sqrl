@@ -42,6 +42,7 @@ import org.apache.calcite.rel.rules.SubQueryRemoveRule;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.rex.SqrlRexBuilder;
 import org.apache.calcite.runtime.ArrayBindable;
 import org.apache.calcite.runtime.Bindable;
 import org.apache.calcite.schema.Table;
@@ -102,7 +103,7 @@ public class QueryPlanner {
     RelOptRules.MATERIALIZATION_RULES.forEach(planner::addRule);
     EnumerableRules.ENUMERABLE_RULES.forEach(planner::addRule);
 
-    this.cluster = RelOptCluster.create(planner, new RexBuilder(framework.getTypeFactory()));
+    this.cluster = RelOptCluster.create(planner, new SqrlRexBuilder(framework.getTypeFactory()));
     this.convertletTable = new ConvertletTable();
     this.defaultClassDir = new File("build/calcite/classes");
     cluster.setMetadataProvider(this.metadataProvider);

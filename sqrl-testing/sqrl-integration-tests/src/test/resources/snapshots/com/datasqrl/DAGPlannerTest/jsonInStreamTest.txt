@@ -115,7 +115,7 @@ Schema:
 Post Processors:
  - topN: partition=_customerid limit=1 sort=#2: _timestamp TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC 
 Plan:
-LogicalProject(obj=[jsonExtract(toJson('{"a": "hello"}'), '$.a':VARCHAR(2147483647) CHARACTER SET "UTF-16LE", 'default':VARCHAR(2147483647) CHARACTER SET "UTF-16LE")], _customerid=[$0], _timestamp=[$4])
+LogicalProject(obj=[jsonExtract(toJson('{"a": "hello"}'), CAST('$.a'):VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL, CAST('default'):VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL)], _customerid=[$0], _timestamp=[$4])
   LogicalTableScan(table=[[customer_3]])
 
 === jsonObjectAggTable
@@ -282,7 +282,7 @@ LogicalProject(obj=[toJson('{"a": 1}')], _customerid=[$0], _timestamp=[$4])
     "CREATE VIEW `table$3`\nAS\nSELECT JSONARRAY(`customerid`) AS `obj`, `customerid` AS `_customerid`, `timestamp` AS `_timestamp`\nFROM `customer_1`;",
     "CREATE VIEW `table$4`\nAS\nSELECT JSONCONCAT(TOJSON('{\"a\": true}'), TOJSON('{\"a\": false}')) AS `obj`, `customerid` AS `_customerid`, `timestamp` AS `_timestamp`\nFROM `customer_1`;",
     "CREATE VIEW `table$5`\nAS\nSELECT JSONEXISTS(TOJSON('{\"a\": true}'), '$.a') AS `obj`, `customerid` AS `_customerid`, `timestamp` AS `_timestamp`\nFROM `customer_1`;",
-    "CREATE VIEW `table$6`\nAS\nSELECT JSONEXTRACT(TOJSON('{\"a\": \"hello\"}'), '$.a', 'default') AS `obj`, `customerid` AS `_customerid`, `timestamp` AS `_timestamp`\nFROM `customer_1`;",
+    "CREATE VIEW `table$6`\nAS\nSELECT JSONEXTRACT(TOJSON('{\"a\": \"hello\"}'), CAST('$.a' AS VARCHAR(65536) CHARACTER SET `UTF-16LE`), CAST('default' AS VARCHAR(65536) CHARACTER SET `UTF-16LE`)) AS `obj`, `customerid` AS `_customerid`, `timestamp` AS `_timestamp`\nFROM `customer_1`;",
     "CREATE VIEW `table$7`\nAS\nSELECT JSONOBJECTAGG(`$f1`, `name`) AS `agg`, `name` AS `_name`, MAX(`timestamp`) AS `__timestamp`\nFROM (SELECT `name`, 'key' AS `$f1`, `customerid`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC) AS `_rownum`\n  FROM `customer_1`) AS `t`\nWHERE `_rownum` = 1\nGROUP BY `name`;",
     "CREATE VIEW `table$8`\nAS\nSELECT JSONQUERY(TOJSON('{\"a\": {\"b\": 1}}'), '$.a') AS `obj`, `customerid` AS `_customerid`, `timestamp` AS `_timestamp`\nFROM `customer_1`;",
     "CREATE VIEW `table$9`\nAS\nSELECT JSONTOSTRING(TOJSON('{\"a\": 1}')) AS `obj`, `customerid` AS `_customerid`, `timestamp` AS `_timestamp`\nFROM `customer_1`;",

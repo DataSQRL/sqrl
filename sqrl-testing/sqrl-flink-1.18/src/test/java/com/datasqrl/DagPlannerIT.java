@@ -4,7 +4,9 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.stream.Stream;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.table.api.CompiledPlan;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
@@ -12,6 +14,10 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
+/**
+ * !! This test uses built jars. Remember to build the jars if you're making changes and testing
+ */
+@Slf4j
 @TestInstance(TestInstance.Lifecycle.PER_CLASS) // This is to allow the method source to not be static
 public class DagPlannerIT {
 
@@ -46,10 +52,17 @@ public class DagPlannerIT {
     datasqrlRun.startKafkaCluster();
   }
 
+  List<String> disabled = List.of("tableFunctionsBasic.sqrl",
+      "tableStateJoinTest.sqrl", "tableStreamJoinTest.sqrl",
+      "selectDistinctNestedTest.sqrl");
+
   @ParameterizedTest
   @MethodSource("directoryProvider")
-  @Disabled
   void testCompilePlanOnDirectory(Path directoryPath) {
+    if (disabled.contains(directoryPath.getFileName().toString())){
+      log.warn("Skipping Disabled Test");
+      return;
+    }
     SqrlCompiler sqrlCompiler = new SqrlCompiler();
     sqrlCompiler.execute(directoryPath.getParent(),
         "compile", directoryPath.getFileName().toString());

@@ -167,6 +167,7 @@ LogicalTableScan(table=[[likes_2]])
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `parsetimestamp` AS 'com.datasqrl.time.ParseTimestamp' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `cosinesimilarity` AS 'com.datasqrl.vector.CosineSimilarity' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `onnxembed` AS 'com.datasqrl.vector.OnnxEmbed' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `split` AS 'com.datasqrl.text.Split' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `textsearch` AS 'com.datasqrl.text.TextSearch' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `ToJson` AS 'com.datasqrl.json.ToJson' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `asciitexttestembed` AS 'com.datasqrl.vector.AsciiTextTestEmbed' LANGUAGE JAVA;",
