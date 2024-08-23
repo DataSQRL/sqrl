@@ -5,6 +5,7 @@
     "iceberg",
     "duckdb",
     "kafka",
+    "postgres",
     "vertx"
   ],
   "values": {
