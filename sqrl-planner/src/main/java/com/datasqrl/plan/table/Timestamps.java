@@ -100,7 +100,7 @@ public class Timestamps {
   }
 
   public OptionalInt getOnlyCandidateOptional() {
-    Preconditions.checkArgument(candidates.size()<=1);
+    Preconditions.checkArgument(candidates.size()<=1, "Expected at most one timestamp candidate");
     return candidates.isEmpty() ? OptionalInt.empty() : OptionalInt.of(Iterables.getOnlyElement(candidates));
   }
 

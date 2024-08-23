@@ -114,8 +114,8 @@ public class DAGAssembler {
         errors.checkFatal(materializedTable.getPrimaryKey().isDefined(), ErrorCode.TABLE_NOT_MATERIALIZE,"Table [%s] does not have a primary key and can therefore not be materialized", materializedTable);
         Preconditions.checkArgument(materializedTable.getTimestamp().size()<=1, "Should not have multiple timestamps at this point");
         errors.checkFatal(materializedTable.getType()== TableType.STATIC || materializedTable.getTimestamp().size()==1, ErrorCode.TABLE_NOT_MATERIALIZE, "Table [%s] does not have a timestamp and can therefore not be materialized", materializedTable);
-        OptionalInt timestampIdx = materializedTable.getType().hasTimestamp() ?
-            OptionalInt.of(materializedTable.getTimestamp().getOnlyCandidate()) : OptionalInt.empty();
+
+        OptionalInt timestampIdx = materializedTable.getTimestamp().getOnlyCandidateOptional();
         RelNode processedRelnode = produceWriteTree(materializedTable.getPlannedRelNode(), timestampIdx);
         streamQueries.add(new PhysicalDAGPlan.WriteQuery(
             new EngineSink(materializedTable.getNameId(), materializedTable.getPrimaryKey().getPkIndexes(),

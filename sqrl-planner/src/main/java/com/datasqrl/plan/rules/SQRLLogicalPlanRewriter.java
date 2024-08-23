@@ -292,11 +292,14 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     List<Integer> newPk = null;
     for (RexNode node : conjunctions) {
       Optional<Integer> idxOpt = CalciteUtil.isEqualToConstant(node);
+      //It's a constrained primary key, remove it from the list
       idxOpt.flatMap(input.primaryKey::getForIndex).ifPresent(pksToRemove::add);
+      //Check if this is the row_number of a partitioned window-over
       if (idxOpt.isPresent() && input.relNode instanceof LogicalProject) {
         RexNode column = ((LogicalProject) input.relNode).getProjects().get(idxOpt.orElseThrow());
         if (column instanceof RexOver && column.isA(SqlKind.ROW_NUMBER)) {
-          newPk = ((RexOver)column).getWindow().partitionKeys.stream().map(n ->  CalciteUtil.getInputRefThroughTransform(n, List.of(CAST_TRANSFORM, COALESCE_TRANSFORM)))
+          newPk = ((RexOver)column).getWindow().partitionKeys.stream().map(n ->
+                  CalciteUtil.getInputRefThroughTransform(n, List.of(CAST_TRANSFORM, COALESCE_TRANSFORM)))
               .map(opt -> opt.orElse(-1)).collect(Collectors.toUnmodifiableList());
           if (newPk.stream().anyMatch(idx -> idx<0)) {
             newPk = null; // Not all partition RexNodes are input refs
