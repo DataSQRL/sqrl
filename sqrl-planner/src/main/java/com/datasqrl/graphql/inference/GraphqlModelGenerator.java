@@ -67,7 +67,6 @@ public class GraphqlModelGenerator extends SchemaWalker {
   private static final Logger log = LoggerFactory.getLogger(GraphqlModelGenerator.class);
   private final PhysicalPlan physicalPlan;
   private final QueryPlanner queryPlanner;
-  private final PhysicalPlan physicalPlan;
   List<Coords> coords = new ArrayList<>();
   List<MutationCoords> mutations = new ArrayList<>();
   List<SubscriptionCoords> subscriptions = new ArrayList<>();
@@ -78,7 +77,6 @@ public class GraphqlModelGenerator extends SchemaWalker {
     super(nameMatcher, schema, apiManager);
     this.physicalPlan = physicalPlan;
     this.queryPlanner = queryPlanner;
-    this.physicalPlan = physicalPlan;
   }
 
   @Override
@@ -111,45 +109,48 @@ public class GraphqlModelGenerator extends SchemaWalker {
         .map(t->t.getTableConfig())
         .findFirst();
 
-    String topicName;
-    if (tableSource != null) {
-      Map<String, Object> map = tableSource.getConfiguration().getConnectorConfig().toMap();
-      topicName = (String)map.get("topic");
-    } else if (src.isPresent()){
-      System.out.println();
-      Map<String, Object> map = src.get().getConnectorConfig().toMap();
-      topicName = (String)map.get("topic");
+    EnginePhysicalPlan logPlan = physicalPlan.getPlan(Type.LOG);
+
+    MutationCoords mutationCoords;
+
+    if (logPlan instanceof KafkaPhysicalPlan) {
+      String topicName;
+      if (tableSource != null) {
+        Map<String, Object> map = tableSource.getConfiguration().getConnectorConfig().toMap();
+        topicName = (String)map.get("topic");
+      } else if (src.isPresent()){
+        Map<String, Object> map = src.get().getConnectorConfig().toMap();
+        topicName = (String)map.get("topic");
+      } else {
+        throw new RuntimeException("Could not find mutation: " + fieldDefinition.getName());
+      }
+
+      mutationCoords = new KafkaMutationCoords(fieldDefinition.getName(), topicName, Map.of());
+    } else if (logPlan instanceof PostgresPhysicalPlan) {
+      String tableName;
+      if (tableSource != null) {
+        Map<String, Object> map = tableSource.getConfiguration().getConnectorConfig().toMap();
+        tableName = (String)map.get("table-name");
+      } else if (src.isPresent()){
+        // TODO: not sure if this is correct and needed
+        Map<String, Object> map = src.get().getConnectorConfig().toMap();
+        tableName = (String)map.get("table-name");
+      } else {
+        throw new RuntimeException("Could not find mutation: " + fieldDefinition.getName());
+      }
+
+      InsertStatement insertStatement = ((PostgresPhysicalPlan) logPlan).getInserts().stream()
+          .filter(insert -> insert.getTableName().equals(tableName))
+          .findFirst()
+          .orElseThrow(() -> new RuntimeException("Could not find insert statement for table: " + tableName));
+
+      mutationCoords = new PostgresLogMutationCoords(fieldDefinition.getName(), tableName,
+          insertStatement.getSql(), insertStatement.getParameters());
     } else {
-      throw new RuntimeException("Could not find mutation: " + fieldDefinition.getName());
+      throw new RuntimeException("Unknown log plan: " + logPlan.getClass().getName());
     }
 
-    mutations.add(new MutationCoords(fieldDefinition.getName(), topicName, Map.of()));
-
-    ///
-
-//    EnginePhysicalPlan logPlan = physicalPlan.getPlan(Type.LOG);
-//
-//    Map<String, Object> map = tableSink.getConfiguration().getConnectorConfig().toMap();
-//
-//    MutationCoords mutationCoords;
-//
-//    if (logPlan instanceof KafkaPhysicalPlan) {
-//      mutationCoords = new KafkaMutationCoords(fieldDefinition.getName(), (String)map.get("topic"), Map.of());
-//    } else if (logPlan instanceof PostgresPhysicalPlan) {
-//      String tableName = (String)map.get("table-name");
-//
-//      InsertStatement insertStatement = ((PostgresPhysicalPlan) logPlan).getInserts().stream()
-//          .filter(insert -> insert.getTableName().equals(tableName))
-//          .findFirst()
-//          .orElseThrow(() -> new RuntimeException("Could not find insert statement for table: " + tableName));
-//
-//      mutationCoords = new PostgresLogMutationCoords(fieldDefinition.getName(), tableName,
-//          insertStatement.getSql(), insertStatement.getParameters());
-//    } else {
-//      throw new RuntimeException("Unknown log plan: " + logPlan.getClass().getName());
-//    }
-//
-//    mutations.add(mutationCoords);
+    mutations.add(mutationCoords);
   }
 
   @Override
