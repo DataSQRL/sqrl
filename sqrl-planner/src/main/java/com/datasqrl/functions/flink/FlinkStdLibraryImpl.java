@@ -37,6 +37,8 @@ public class FlinkStdLibraryImpl extends AbstractFunctionModule implements StdLi
       BuiltInFunctionDefinitions.IS_JSON.getName(),
       //Cast not yet supported, SQRL uses a String type that is not yet compatible
       BuiltInFunctionDefinitions.CAST.getName().toUpperCase(),
+      //Use calcite's array function
+      BuiltInFunctionDefinitions.ARRAY.getName().toUpperCase(),
       //system functions that cannot be converted to bridging functions
       "FLATTEN",
       "GET",
