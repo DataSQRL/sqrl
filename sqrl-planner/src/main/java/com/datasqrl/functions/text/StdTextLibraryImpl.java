@@ -19,6 +19,7 @@ import org.apache.flink.table.functions.FunctionDefinition;
 public class StdTextLibraryImpl extends AbstractFunctionModule implements StdLibrary {
   public static final NamePath LIB_NAME = NamePath.of("text");
   public static final List<FunctionDefinition> SQRL_FUNCTIONS = List.of(
+      TextFunctions.SPLIT,
       TextFunctions.TEXT_SEARCH,
       TextFunctions.FORMAT,
       TextFunctions.BANNED_WORDS_FILTER
