@@ -33,17 +33,22 @@ public class PostgresLogFactory implements LogFactory {
 
     TypeFactory typeFactory = TypeFactory.getTypeFactory();
 
-    RelDataType patchedSchema = CalciteUtil.addField(
-        schema,
-        schema.getFieldCount(),
-        timestamp.getName(),
-        typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3),
-        typeFactory);
+//    RelDataType patchedSchema;
+//    if (schema.getField(timestamp.getName(), false, false) == null) {
+//      patchedSchema = CalciteUtil.addField(
+//          schema,
+//          schema.getFieldCount(),
+//          timestamp.getName(),
+//          typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3),
+//          typeFactory);
+//    } else {
+//      patchedSchema = schema;
+//    }
 
     TableConfig sourceConfig = sourceConnectorFactory.createSourceAndSink(connectorContext);
     TableConfig sinkConfig = sinkConnectorFactory.createSourceAndSink(connectorContext);
-    RelDataTypeTableSchema tblSchema = new RelDataTypeTableSchema(patchedSchema);
-    return new PostgresTable(tableName, logName, sourceConfig, sinkConfig, tblSchema, primaryKey, connectorContext, patchedSchema);
+    RelDataTypeTableSchema tblSchema = new RelDataTypeTableSchema(schema);
+    return new PostgresTable(tableName, logName, sourceConfig, sinkConfig, tblSchema, primaryKey, connectorContext, schema);
   }
 
   @Override

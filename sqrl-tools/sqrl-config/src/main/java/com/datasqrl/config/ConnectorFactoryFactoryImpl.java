@@ -190,7 +190,9 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
           .filter(pk -> !pk.isEmpty())
           .ifPresent(pk -> builder.setPrimaryKey(pk.toArray(new String[0])));
 
-      builder.setTimestampColumn((String)map.get("timestamp-name"));
+      String timestampName = (String) map.get("timestamp-name");
+      if (timestampName == null) timestampName = "event_time";
+      builder.setTimestampColumn(timestampName);
       builder.setWatermark(0);
 
 

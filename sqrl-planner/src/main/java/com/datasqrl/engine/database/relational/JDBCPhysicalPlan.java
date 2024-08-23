@@ -23,8 +23,4 @@ public class JDBCPhysicalPlan implements DatabasePhysicalPlan {
   @JsonIgnore
   Map<IdentifiedQuery, QueryTemplate> queryPlans;
 
-  @Override
-  public Type getType() {
-    return Type.DATABASE;
-  }
 }

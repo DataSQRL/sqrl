@@ -12,6 +12,7 @@ import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.config.TableConfig;
 import com.datasqrl.engine.PhysicalPlan;
+import com.datasqrl.engine.PhysicalPlan.StagePlan;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.engine.database.relational.ddl.statements.InsertStatement;
 import com.datasqrl.engine.log.Log;
@@ -111,11 +112,15 @@ public class GraphqlModelGenerator extends SchemaWalker {
         .map(t->t.getTableConfig())
         .findFirst();
 
-    EnginePhysicalPlan logPlan = physicalPlan.getPlan(Type.LOG);
+    //Todo: Bad instance checking, Fix to bring multiple log engines (?)
+    Optional<EnginePhysicalPlan> logPlan = physicalPlan.getStagePlans().stream()
+        .map(StagePlan::getPlan)
+        .filter(plan -> plan instanceof KafkaPhysicalPlan ||  plan instanceof PostgresPhysicalPlan)
+        .findFirst();
 
     MutationCoords mutationCoords;
 
-    if (logPlan instanceof KafkaPhysicalPlan) {
+    if (logPlan.isPresent() && logPlan.get() instanceof KafkaPhysicalPlan) {
       String topicName;
       if (tableSource != null) {
         Map<String, Object> map = tableSource.getConfiguration().getConnectorConfig().toMap();
@@ -128,7 +133,7 @@ public class GraphqlModelGenerator extends SchemaWalker {
       }
 
       mutationCoords = new KafkaMutationCoords(fieldDefinition.getName(), topicName, Map.of());
-    } else if (logPlan instanceof PostgresPhysicalPlan) {
+    } else if (logPlan.isPresent() && logPlan.get() instanceof PostgresPhysicalPlan) {
       String tableName;
       if (tableSource != null) {
         Map<String, Object> map = tableSource.getConfiguration().getConnectorConfig().toMap();
@@ -141,7 +146,7 @@ public class GraphqlModelGenerator extends SchemaWalker {
         throw new RuntimeException("Could not find mutation: " + fieldDefinition.getName());
       }
 
-      InsertStatement insertStatement = ((PostgresPhysicalPlan) logPlan).getInserts().stream()
+      InsertStatement insertStatement = ((PostgresPhysicalPlan) logPlan.get()).getInserts().stream()
           .filter(insert -> insert.getTableName().equals(tableName))
           .findFirst()
           .orElseThrow(() -> new RuntimeException("Could not find insert statement for table: " + tableName));

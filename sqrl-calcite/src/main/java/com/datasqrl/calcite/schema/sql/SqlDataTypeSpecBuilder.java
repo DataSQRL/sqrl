@@ -53,8 +53,16 @@ public class SqlDataTypeSpecBuilder {
       SqlBasicTypeNameSpec basicTypeNameSpec = (SqlBasicTypeNameSpec) typeSpec.getTypeNameSpec();
       SqlIdentifier typeName = basicTypeNameSpec.getTypeName();
       SqlTypeName sqlTypeName = SqlTypeName.get(typeName.getSimple());
-      return typeFactory.createTypeWithNullability(
-          typeFactory.createSqlType(sqlTypeName), nullable);
+      RelDataType sqlType;
+      if (basicTypeNameSpec.getPrecision() != -1 && basicTypeNameSpec.getScale() != -1) {
+        sqlType =typeFactory.createSqlType(sqlTypeName, basicTypeNameSpec.getPrecision(),
+            basicTypeNameSpec.getScale());
+      } else if (basicTypeNameSpec.getPrecision() != -1) {
+        sqlType =typeFactory.createSqlType(sqlTypeName, basicTypeNameSpec.getPrecision());
+      } else {
+        sqlType = typeFactory.createSqlType(sqlTypeName);
+      }
+      return typeFactory.createTypeWithNullability(sqlType, nullable);
     }
 
     if (typeSpec.getTypeNameSpec() instanceof ExtendedSqlCollectionTypeNameSpec) {

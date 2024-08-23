@@ -35,22 +35,6 @@ public class PhysicalPlan {
     return StreamUtil.filterByClass(stagePlans.stream().map(StagePlan::getPlan), clazz);
   }
 
-  public EnginePhysicalPlan getPlan(Type type) {
-    return stagePlans.stream().filter(stagePlan -> stagePlan.getPlan().getType().equals(type))
-        .map(StagePlan::getPlan).findFirst().get();
-  }
-
-  public EnginePhysicalPlan get(String name) {
-    switch (name.toLowerCase()) {
-      case EngineKeys.LOG: return getPlans(KafkaPhysicalPlan.class).findFirst().get();
-      case EngineKeys.DATABASE: return getPlans(JDBCPhysicalPlan.class).findFirst().get();
-      case EngineKeys.SERVER: return getPlans(ServerPhysicalPlan.class).findFirst().get();
-      case EngineKeys.STREAMS: return getPlans(FlinkStreamPhysicalPlan.class).findFirst().get();
-      default:
-        throw new RuntimeException("Could not find plan");
-    }
-  }
-
   @Value
   public static class StagePlan {
 

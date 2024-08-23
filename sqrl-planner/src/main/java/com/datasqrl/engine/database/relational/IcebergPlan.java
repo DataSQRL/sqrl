@@ -27,8 +27,4 @@ public class IcebergPlan implements DatabasePhysicalPlan {
         .findFirst().orElse(Map.of());
   }
 
-  @Override
-  public Type getType() {
-    return Type.DATABASE;
-  }
 }

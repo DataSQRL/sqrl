@@ -15,8 +15,4 @@ public class PostgresPhysicalPlan implements EnginePhysicalPlan {
   List<ListenNotifyAssets> queries = new ArrayList<>();
   List<InsertStatement> inserts = new ArrayList<>();
 
-  @Override
-  public Type getType() {
-    return Type.LOG;
-  }
 }

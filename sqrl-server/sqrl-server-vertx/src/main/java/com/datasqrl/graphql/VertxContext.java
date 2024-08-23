@@ -8,6 +8,7 @@ import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import com.datasqrl.graphql.server.Context;
 import com.datasqrl.graphql.server.JdbcClient;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
+import com.datasqrl.graphql.server.RootGraphqlModel.JdbcParameterHandler;
 import com.datasqrl.graphql.server.RootGraphqlModel.KafkaMutationCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoordsVisitor;
@@ -23,12 +24,17 @@ import graphql.schema.PropertyDataFetcher;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.handler.graphql.schema.VertxDataFetcher;
 import io.vertx.ext.web.handler.graphql.schema.VertxPropertyDataFetcher;
+import io.vertx.sqlclient.PreparedQuery;
+import io.vertx.sqlclient.Row;
+import io.vertx.sqlclient.RowSet;
+import io.vertx.sqlclient.Tuple;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -143,39 +149,34 @@ public class VertxContext implements Context {
         return VertxDataFetcher.create((env, fut) -> {
           Map entry = getEntry(env);
           entry.put("event_time", Timestamp.from(Instant.now())); // TODO: better to do it in the db
-          System.out.println(entry);
 
-          List<Object> values = coords.getParameters().stream()
-              .map(parameter -> entry.get(parameter))
-              .collect(Collectors.toList());
-
-          try (Connection conn = createConnection();
-              PreparedStatement statement = conn.prepareStatement(coords.getInsertStatement())) {
-
-            for (int i = 0; i < values.size(); i++) {
-              statement.setObject(i + 1, values.get(i));
+          Object[] paramObj = new Object[coords.getParameters().size()];
+          for (int i = 0; i < coords.getParameters().size(); i++) {
+            String param = coords.getParameters().get(i);
+            Object o = entry.get(param);
+            if (o instanceof UUID) {
+              o = ((UUID)o).toString();
+            } else if (o instanceof Timestamp) {
+              o = ((Timestamp) o).toLocalDateTime();
             }
-
-            statement.executeUpdate();
-            fut.complete(entry);
-          } catch (SQLException e) {
-            fut.fail(e);
+            paramObj[i] = o;
           }
+
+          PreparedQuery<RowSet<Row>> preparedQuery = sqlClient.getClients().get("postgres")
+              .preparedQuery(coords.getInsertStatement());
+          preparedQuery.execute(Tuple.from(paramObj))
+              .onComplete(e -> fut.complete(entry))
+              .onFailure(e -> {
+                e.printStackTrace();
+                fut.fail(e);
+              });
         });
       }
     };
   }
 
-  private Connection createConnection() throws SQLException {
-    String url = "jdbc:postgresql://localhost:5433/datasqrl";
-    Properties props = new Properties();
-    props.setProperty("user", "postgres");
-    props.setProperty("password", "postgres");
 
-    return DriverManager.getConnection(url, props);
-  }
-
-  private static Map getEntry(DataFetchingEnvironment env) {
+  private Map getEntry(DataFetchingEnvironment env) {
     //Rules:
     //- Only one argument is allowed, it doesn't matter the name
     //- input argument cannot be null.

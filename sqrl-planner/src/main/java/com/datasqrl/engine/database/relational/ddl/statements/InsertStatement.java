@@ -1,6 +1,7 @@
 package com.datasqrl.engine.database.relational.ddl.statements;
 
 import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
 import com.datasqrl.sql.SqlDDLStatement;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -50,8 +51,7 @@ public class InsertStatement implements SqlDDLStatement {
     SqlInsert sqlInsert = new SqlInsert(SqlParserPos.ZERO, SqlNodeList.EMPTY, targetTable, values, columns);
 
     // Convert the INSERT statement to a SQL string
-    SqlDialect dialect = DatabaseProduct.POSTGRESQL.getDialect();
-    String sql = addValuesKeyword(sqlInsert.toSqlString(dialect).getSql());
+    String sql = addValuesKeyword(sqlInsert.toSqlString(ExtendedPostgresSqlDialect.DEFAULT).getSql());
     return sql;
   }
 

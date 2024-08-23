@@ -10,8 +10,4 @@ public class KafkaPhysicalPlan implements EnginePhysicalPlan {
 
   List<NewTopic> topics;
 
-  @Override
-  public Type getType() {
-    return Type.LOG;
-  }
 }

@@ -38,7 +38,7 @@
         },
         "postgres_log-source": {
           "connector": "postgres-cdc",
-          "hostname": "postgres_log",
+          "hostname": "${PGHOST}",
           "port": "5432",
           "username": "${JDBC_USERNAME}",
           "password": "${JDBC_PASSWORD}",
