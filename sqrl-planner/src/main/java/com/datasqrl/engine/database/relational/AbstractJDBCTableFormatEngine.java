@@ -15,6 +15,7 @@ import com.datasqrl.engine.database.QueryEngine;
 import com.datasqrl.plan.global.IndexSelectorConfig;
 import com.google.common.base.Preconditions;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import lombok.Getter;
 import lombok.NonNull;
@@ -40,7 +41,7 @@ public abstract class AbstractJDBCTableFormatEngine extends AbstractJDBCEngine i
   @Getter
   final EngineConfig connectorConfig;
   final ConnectorFactoryFactory connectorFactory;
-  final Map<String, QueryEngine> queryEngines = new HashMap<>();
+  final Map<String, QueryEngine> queryEngines = new LinkedHashMap<>();
 
   public AbstractJDBCTableFormatEngine(String name, @NonNull EngineConfig connectorConfig, ConnectorFactoryFactory connectorFactory) {
     super(name, Type.DATABASE, STANDARD_TABLE_FORMAT);

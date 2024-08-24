@@ -98,6 +98,7 @@ LogicalProject(myJson=[$0], json=[toJson('{"x":1}')], _id=[$1], _updated_at=[$2]
 }
 >>>iceberg.json
 {
+<<<<<<< HEAD
   "plan" : {
     "ddl" : [
       {
@@ -145,6 +146,50 @@ LogicalProject(myJson=[$0], json=[toJson('{"x":1}')], _id=[$1], _updated_at=[$2]
         "sql" : "CREATE OR REPLACE VIEW Query.MySnowflakeTable-10(myJson, json, _id, _updated_at)\nAS SELECT PARSE_JSON(myJson) AS myJson, PARSE_JSON('{\"x\":1}') AS json, _id, _updated_at\nFROM myjsontable_1\nORDER BY _updated_at DESC NULLS LAST, _id"
       }
     ]
+=======
+  "ddl" : [
+    {
+      "sql" : "CREATE ICEBERG TABLE applications_2 EXTERNAL_VOLUME = 'iceberg_storage_vol' CATALOG = 'MyCatalog' CATALOG_TABLE_NAME = 'applications_2'"
+    },
+    {
+      "sql" : "CREATE ICEBERG TABLE myicebergtable_1 EXTERNAL_VOLUME = 'iceberg_storage_vol' CATALOG = 'MyCatalog' CATALOG_TABLE_NAME = 'myicebergtable_1'"
+    },
+    {
+      "sql" : "CREATE ICEBERG TABLE myjsontable_1 EXTERNAL_VOLUME = 'iceberg_storage_vol' CATALOG = 'MyCatalog' CATALOG_TABLE_NAME = 'myjsontable_1'"
+    }
+  ],
+  "engines" : {
+    "snowflake" : {
+      "ddl" : [
+        {
+          "sql" : "CREATE ICEBERG TABLE applications_2 EXTERNAL_VOLUME = 'iceberg_storage_vol' CATALOG = 'MyCatalog' CATALOG_TABLE_NAME = 'applications_2'"
+        },
+        {
+          "sql" : "CREATE ICEBERG TABLE myicebergtable_1 EXTERNAL_VOLUME = 'iceberg_storage_vol' CATALOG = 'MyCatalog' CATALOG_TABLE_NAME = 'myicebergtable_1'"
+        },
+        {
+          "sql" : "CREATE ICEBERG TABLE myjsontable_1 EXTERNAL_VOLUME = 'iceberg_storage_vol' CATALOG = 'MyCatalog' CATALOG_TABLE_NAME = 'myjsontable_1'"
+        }
+      ],
+      "views" : [
+        {
+          "sql" : "CREATE OR REPLACE VIEW MyJsonTable(myJson, _id, _updated_at)\nAS SELECT PARSE_JSON(myJson) AS myJson, _id, _updated_at\nFROM myjsontable_1\nORDER BY _updated_at DESC NULLS LAST, _id"
+        },
+        {
+          "sql" : "CREATE OR REPLACE VIEW applications(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM applications_2\nORDER BY updated_at DESC NULLS LAST, id"
+        },
+        {
+          "sql" : "CREATE OR REPLACE VIEW MyIcebergTable(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM myicebergtable_1\nORDER BY updated_at DESC NULLS LAST, id"
+        },
+        {
+          "sql" : "CREATE OR REPLACE VIEW MySnowflakeTable(myJson, json, _id, _updated_at)\nAS SELECT PARSE_JSON(myJson) AS myJson, PARSE_JSON('{\"x\":1}') AS json, _id, _updated_at\nFROM myjsontable_1\nORDER BY _updated_at DESC NULLS LAST, _id"
+        },
+        {
+          "sql" : "CREATE OR REPLACE VIEW SnowflakeQuery(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM myicebergtable_1\nWHERE customer_id = ?\nORDER BY updated_at DESC NULLS LAST, id"
+        }
+      ]
+    }
+>>>>>>> 7f60bfae7 (Finished refactoring of Iceberg engine to find better modularity between tableformat and query engines.)
   }
 }
 >>>vertx.json

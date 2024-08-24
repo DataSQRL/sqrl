@@ -18,8 +18,10 @@ import com.datasqrl.plan.global.PhysicalDAGPlan.ReadQuery;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
 import com.datasqrl.plan.queries.IdentifiedQuery;
+import com.datasqrl.sql.SqlDDLStatement;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -51,21 +53,39 @@ public class IcebergEngine extends AbstractJDBCTableFormatEngine {
   public DatabasePhysicalPlan plan(StagePlan plan, List<StageSink> inputs, ExecutionPipeline pipeline,
       List<StagePlan> stagePlans, SqrlFramework framework, ErrorCollector errorCollector) {
 
-    DatabasePhysicalPlan enginePlan = queryEngines.values().stream().findFirst().get()
-        .plan(plan, inputs, pipeline, stagePlans, framework, errorCollector);
-    enginePlan.getDdl().removeIf(ddl -> (ddl instanceof CreateIndexDDL) || (ddl instanceof DropIndexDDL));
-    DatabaseStagePlan dbPlan = (DatabaseStagePlan) plan;
+    List<SqlDDLStatement> sinkDDL;
+    //TODO: Eventually we want to create the DDL statement for Iceberg to register in the catalog independent
+    //of the registered query engines. For now, we use the DDL from one of the query engines
+//    DatabasePhysicalPlan sinkPlan = super.plan(plan, inputs, pipeline, stagePlans, framework, errorCollector);
+//    sinkPlan.removeIndexDdl();
+//    sinkDDL = sinkPlan.getDdl();
 
-    QueryEngine queryEngine = queryEngines.values().stream().findFirst().get();
 
-    Map<IdentifiedQuery, QueryTemplate> databaseQueries = queryEngine.updateQueries(connectorFactory,
-        connectorConfig, dbPlan.getQueries().stream()
-        .collect(Collectors.toMap(ReadQuery::getQuery, q -> new QueryTemplate(
-            queryEngine.getName(),
-            q.getRelNode()))));
+    //The plan for reading by each query engine
+    LinkedHashMap<String, DatabasePhysicalPlan> queryEnginePlans = new LinkedHashMap<>();
+    queryEngines.forEach((name, queryEngine) -> queryEnginePlans.put(name,
+        queryEngine.plan(connectorFactory, connectorConfig, plan, inputs, pipeline, stagePlans, framework, errorCollector)));
+
+    //We pick the first DDL from the engines
+    sinkDDL = queryEnginePlans.values().stream().map(DatabasePhysicalPlan::getDdl).findFirst().get();
+
+    //Uncomment for debug
+//    StreamUtil.filterByClass(inputs,
+//        EngineSink.class).forEach(s -> {
+//          String tableId = s.getNameId();
+//          Optional<IndexDefinition> optIndex =  dbPlan.getIndexDefinitions().stream().filter(i -> i.getTableId().equals(tableId)).findFirst();
+//          if (optIndex.isPresent()) {
+//            IndexDefinition mainIndex = optIndex.get();
+//            System.out.println("Table: " + tableId);
+//            System.out.println("Partition columns: " + String.join(", ",  mainIndex.getColumnNames().subList(0, mainIndex.getPartitionOffset())));
+//            System.out.println("Sort columns: " + String.join(", ",  mainIndex.getColumnNames().subList(mainIndex.getPartitionOffset(), mainIndex.getColumns().size())));
+//          } else {
+//            System.out.println("No partition on table: " + tableId);
+//          }
+//    });
 
     //nothing needs to be created for aws-glue
-    return new IcebergPlan(enginePlan, databaseQueries);
+    return new IcebergPlan(sinkDDL, queryEnginePlans);
   }
 
 }

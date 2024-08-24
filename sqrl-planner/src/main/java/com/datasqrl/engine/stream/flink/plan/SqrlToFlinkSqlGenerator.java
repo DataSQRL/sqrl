@@ -12,6 +12,7 @@ import com.datasqrl.config.TableConfig;
 import com.datasqrl.config.TableConfig.TableConfigBuilder;
 import com.datasqrl.config.TableConfig.TableTableConfig;
 import com.datasqrl.datatype.DataTypeMapper;
+import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.stream.flink.connector.FlinkConnectorDataTypeMappingFactory;
 import com.datasqrl.engine.stream.flink.connector.CastFunction;
 import com.datasqrl.engine.stream.flink.sql.ExtractUniqueSourceVisitor;
@@ -382,25 +383,22 @@ public class SqrlToFlinkSqlGenerator {
       EngineSink engineSink = (EngineSink) sink;
       TableConfig engineConfig = engineSink.getStage().getEngine().getSinkConfig(engineSink.getNameId());
 
-      Optional<StagePlan> stagePlan = stagePlans.stream()
+      //Add partitioning keys if engine supports them
+      StagePlan stagePlan = stagePlans.stream()
           .filter(f -> f.getStage() == engineSink.getStage())
-          .findFirst();
+          .findFirst().orElseThrow();
       TableConfigBuilder builder = engineConfig.toBuilder();
-      if (stagePlan.isPresent()) {
-        StagePlan stagePlan1 = stagePlan.get();
-        if (isPartitionable(stagePlan1.getStage().getName())) {
-          DatabaseStagePlan dbPlan = (DatabaseStagePlan) stagePlan1;
-          String tableId = engineSink.getNameId();
-          Optional<IndexDefinition> optIndex =  dbPlan.getIndexDefinitions().stream()
-              .filter(idx -> idx.getTableId().equals(tableId))
-              .filter(idx -> idx.getType().isPartitioned())
-              .findFirst();
-          if (optIndex.isPresent()) {
-            IndexDefinition partitionIndex = optIndex.get();
-            List<String> partitionColumns = partitionIndex.getColumnNames().subList(0, partitionIndex.getPartitionOffset());
-            builder.setPartitionKey(partitionColumns);
-          }
-
+      if (engineSink.getStage().supportsFeature(EngineFeature.PARTITIONING)) {
+        DatabaseStagePlan dbPlan = (DatabaseStagePlan) stagePlan;
+        String tableId = engineSink.getNameId();
+        Optional<IndexDefinition> optIndex =  dbPlan.getIndexDefinitions().stream()
+            .filter(idx -> idx.getTableId().equals(tableId))
+            .filter(idx -> idx.getType().isPartitioned())
+            .findFirst();
+        if (optIndex.isPresent()) {
+          IndexDefinition partitionIndex = optIndex.get();
+          List<String> partitionColumns = partitionIndex.getColumnNames().subList(0, partitionIndex.getPartitionOffset());
+          builder.setPartitionKey(partitionColumns);
         }
 
       }
@@ -422,13 +420,6 @@ public class SqrlToFlinkSqlGenerator {
     }
 
     return toCreateTable(name, relNode.getRowType(), tableConfig, true);
-  }
-
-  private boolean isPartitionable(String name) {
-    switch (name.toLowerCase()) {
-      case "iceberg": return true;
-    }
-    return false;
   }
 
   private List<SqlTableConstraint> createConstraints(List<String> primaryKey) {

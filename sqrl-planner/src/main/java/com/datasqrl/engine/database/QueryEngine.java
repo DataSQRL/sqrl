@@ -21,12 +21,13 @@ import java.util.Map;
 public interface QueryEngine extends ExecutionEngine {
 
   @Override
-  DatabasePhysicalPlan plan(StagePlan plan, List<StageSink> inputs,
+  default DatabasePhysicalPlan plan(StagePlan plan, List<StageSink> inputs,
+      ExecutionPipeline pipeline, List<StagePlan> stagePlans, SqrlFramework framework, ErrorCollector errorCollector) {
+    throw new UnsupportedOperationException("Query Engine planning should be invoked through TableFormatEngine via the other plan method");
+  }
+
+  DatabasePhysicalPlan plan(ConnectorFactoryFactory tableConnectorFactory, EngineConfig tableConnectorConfig,
+      StagePlan plan, List<StageSink> inputs,
       ExecutionPipeline pipeline, List<StagePlan> stagePlans, SqrlFramework framework, ErrorCollector errorCollector);
 
-
-  default Map<IdentifiedQuery, QueryTemplate> updateQueries(
-      ConnectorFactoryFactory connectorFactory, EngineConfig connectorConfig, Map<IdentifiedQuery, QueryTemplate> queries) {
-    return queries;
-  }
 }

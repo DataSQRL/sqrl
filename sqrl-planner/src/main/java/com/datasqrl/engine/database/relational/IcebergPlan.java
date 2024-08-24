@@ -8,19 +8,22 @@ import com.datasqrl.sql.SqlDDLStatement;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import lombok.Value;
 
 @Value
 public class IcebergPlan implements DatabasePhysicalPlan {
 
-  DatabasePhysicalPlan plan;
+  List<SqlDDLStatement> ddl;
 
-  @JsonIgnore
-  Map<IdentifiedQuery, QueryTemplate> queryPlans;
+  Map<String, DatabasePhysicalPlan> engines;
 
   @JsonIgnore
   @Override
-  public List<SqlDDLStatement> getDdl() {
-    return plan.getDdl();
+  public Map<IdentifiedQuery, QueryTemplate> getQueryPlans() {
+    //Return first non-empty query plan from all query engines
+    return engines.values().stream().map(DatabasePhysicalPlan::getQueryPlans).filter(Predicate.not(Map::isEmpty))
+        .findFirst().orElse(Map.of());
   }
+
 }
