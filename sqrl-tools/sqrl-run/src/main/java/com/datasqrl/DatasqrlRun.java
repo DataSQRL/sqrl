@@ -108,6 +108,8 @@ public class DatasqrlRun {
     config.putIfAbsent("table.exec.source.idle-timeout", "1 s");
     config.putIfAbsent("taskmanager.network.memory.max", "800m");
     config.putIfAbsent("execution.checkpointing.interval", "30 sec");
+    config.putIfAbsent("state.backend", "rocksdb");
+    config.putIfAbsent("table.exec.resource.default-parallelism", "1");
 
     Configuration configuration = Configuration.fromMap(config);
     StreamExecutionEnvironment sEnv = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(configuration);

@@ -10,6 +10,7 @@ import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
+import com.datasqrl.engine.database.DatabasePhysicalPlan;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.engine.database.relational.ddl.JdbcDDLFactory;
 import com.datasqrl.engine.database.relational.ddl.JdbcDDLServiceLoader;
@@ -60,7 +61,7 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
   protected abstract JdbcDialect getDialect();
 
   @Override
-  public EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs,
+  public DatabasePhysicalPlan plan(StagePlan plan, List<StageSink> inputs,
       ExecutionPipeline pipeline, List<StagePlan> stagePlans, SqrlFramework framework, ErrorCollector errorCollector) {
 
     Preconditions.checkArgument(plan instanceof DatabaseStagePlan);

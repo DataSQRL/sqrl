@@ -392,11 +392,13 @@ public class SqrlToFlinkSqlGenerator {
           DatabaseStagePlan dbPlan = (DatabaseStagePlan) stagePlan1;
           String tableId = engineSink.getNameId();
           Optional<IndexDefinition> optIndex =  dbPlan.getIndexDefinitions().stream()
-              .filter(i -> i.getTableId().equals(tableId))
+              .filter(idx -> idx.getTableId().equals(tableId))
+              .filter(idx -> idx.getType().isPartitioned())
               .findFirst();
           if (optIndex.isPresent()) {
-            IndexDefinition mainIndex = optIndex.get();
-            builder.setPartitionKey(mainIndex.getColumnNames());
+            IndexDefinition partitionIndex = optIndex.get();
+            List<String> partitionColumns = partitionIndex.getColumnNames().subList(0, partitionIndex.getPartitionOffset());
+            builder.setPartitionKey(partitionColumns);
           }
 
         }

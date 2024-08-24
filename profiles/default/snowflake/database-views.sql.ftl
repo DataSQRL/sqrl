@@ -1,5 +1,5 @@
 <#if iceberg?? && iceberg["plan"]["queries"]??>
-<#list iceberg["plan"]["queries"] as statement>
+<#list iceberg["plan"]["views"] as statement>
 ${statement["sql"]};
 
 </#list>

@@ -110,7 +110,7 @@ LogicalProject(myJson=[$0], json=[toJson('{"x":1}')], _id=[$1], _updated_at=[$2]
         "sql" : "CREATE OR REPLACE ICEBERG TABLE myjsontable_1 EXTERNAL_VOLUME = 'MyNewVolume' CATALOG = 'MyCatalog' CATALOG_TABLE_NAME = 'myjsontable_1'"
       }
     ],
-    "queries" : [
+    "views" : [
       {
         "sql" : "CREATE OR REPLACE VIEW Query.MyIcebergTable-6(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM myicebergtable_1\nWHERE updated_at = ?\nORDER BY updated_at DESC NULLS LAST, id"
       },

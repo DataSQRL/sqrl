@@ -6,8 +6,11 @@ import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.EmptyEngineConfig;
 import com.datasqrl.engine.EnginePhysicalPlan;
+import com.datasqrl.engine.database.DatabasePhysicalPlan;
 import com.datasqrl.engine.database.QueryEngine;
 import com.datasqrl.engine.database.QueryTemplate;
+import com.datasqrl.engine.database.relational.ddl.statements.CreateIndexDDL;
+import com.datasqrl.engine.database.relational.ddl.statements.DropIndexDDL;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.global.PhysicalDAGPlan.DatabaseStagePlan;
@@ -15,6 +18,7 @@ import com.datasqrl.plan.global.PhysicalDAGPlan.ReadQuery;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
 import com.datasqrl.plan.queries.IdentifiedQuery;
+import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import java.util.List;
 import java.util.Map;
@@ -44,11 +48,12 @@ public class IcebergEngine extends AbstractJDBCTableFormatEngine {
   }
 
   @Override
-  public EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs, ExecutionPipeline pipeline,
+  public DatabasePhysicalPlan plan(StagePlan plan, List<StageSink> inputs, ExecutionPipeline pipeline,
       List<StagePlan> stagePlans, SqrlFramework framework, ErrorCollector errorCollector) {
 
-    EnginePhysicalPlan enginePlan = queryEngines.values().stream().findFirst().get()
+    DatabasePhysicalPlan enginePlan = queryEngines.values().stream().findFirst().get()
         .plan(plan, inputs, pipeline, stagePlans, framework, errorCollector);
+    enginePlan.getDdl().removeIf(ddl -> (ddl instanceof CreateIndexDDL) || (ddl instanceof DropIndexDDL));
     DatabaseStagePlan dbPlan = (DatabaseStagePlan) plan;
 
     QueryEngine queryEngine = queryEngines.values().stream().findFirst().get();
