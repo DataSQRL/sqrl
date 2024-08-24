@@ -17,6 +17,9 @@ import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.datatype.snowflake.SnowflakeIcebergDataTypeMapper;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.database.DatabasePhysicalPlan;
+import com.datasqrl.engine.database.DatabaseViewPhysicalPlan;
+import com.datasqrl.engine.database.DatabaseViewPhysicalPlan.DatabaseView;
+import com.datasqrl.engine.database.DatabaseViewPhysicalPlan.DatabaseViewImpl;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.stream.flink.connector.CastFunction;
@@ -104,7 +107,7 @@ public class SnowflakeEngine extends AbstractJDBCQueryEngine {
     Map<IdentifiedQuery, QueryTemplate> databaseQueries = dbPlan.getQueries().stream()
         .collect(Collectors.toMap(ReadQuery::getQuery, q -> new QueryTemplate("snowflake", q.getRelNode())));
 
-    List<Map<String, String>> views = new ArrayList<>();
+    List<DatabaseView> views = new ArrayList<>();
 
     SnowflakeIcebergDataTypeMapper icebergDataTypeMapper = new SnowflakeIcebergDataTypeMapper();
     for (Map.Entry<IdentifiedQuery, QueryTemplate> entry : databaseQueries.entrySet()) {
@@ -119,7 +122,8 @@ public class SnowflakeEngine extends AbstractJDBCQueryEngine {
 
 
       SqlParserPos pos = new SqlParserPos(0, 0);
-      SqlIdentifier viewName = new SqlIdentifier(entry.getKey().getNameId(), pos);
+      String viewName = entry.getKey().getNameId();
+      SqlIdentifier viewNameIdentifier = new SqlIdentifier(viewName, pos);
       SqlNodeList columnList = new SqlNodeList(relNode.getRowType().getFieldList().stream()
               .map(f->new SqlIdentifier(f.getName(), SqlParserPos.ZERO))
           .collect(Collectors.toList()), pos);
@@ -127,13 +131,13 @@ public class SnowflakeEngine extends AbstractJDBCQueryEngine {
       SqlSelect select =(SqlSelect) framework.getQueryPlanner()
           .relToSql(Dialect.SNOWFLAKE, relNode).getSqlNode();
 
-      SqlCreateSnowflakeView createView = new SqlCreateSnowflakeView(pos, true, false, false, false, null, viewName, columnList,
+      SqlCreateSnowflakeView createView = new SqlCreateSnowflakeView(pos, true, false, false, false, null, viewNameIdentifier, columnList,
           select, null, false);
 
       SnowflakeSqlNodeToString toString = new SnowflakeSqlNodeToString();
       String sql = toString.convert(() -> createView).getSql();
 
-      views.add(Map.of("sql", sql));
+      views.add(new DatabaseViewImpl(viewName, sql));
     }
 
 
@@ -182,10 +186,10 @@ public class SnowflakeEngine extends AbstractJDBCQueryEngine {
 //  }
 
   @Value
-  public static class SnowflakePlan implements DatabasePhysicalPlan {
+  public static class SnowflakePlan implements DatabaseViewPhysicalPlan {
 
     List<SqlDDLStatement> ddl;
-    List<Map<String, String>> views;
+    List<DatabaseView> views;
 
     /** Snowflake does not support queries yet */
     @JsonIgnore

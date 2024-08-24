@@ -10,6 +10,7 @@ import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.EmptyEngineConfig;
 import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.engine.database.DatabasePhysicalPlan;
+import com.datasqrl.engine.database.DatabaseViewPhysicalPlan;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
@@ -18,6 +19,8 @@ import com.datasqrl.plan.global.PhysicalDAGPlan.ReadQuery;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
 import com.datasqrl.plan.queries.IdentifiedQuery;
+import com.datasqrl.sql.SqlDDLStatement;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import java.util.LinkedHashMap;
@@ -26,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.NonNull;
+import lombok.Value;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.TableScan;
@@ -93,8 +97,20 @@ public class DuckDBEngine extends AbstractJDBCQueryEngine {
     });
 
 
-    return new JDBCPhysicalPlan(physicalPlan.getDdl(), databaseQueries);
+    return new DuckDbPlan(physicalPlan.getDdl(), databaseQueries);
   }
+
+  @Value
+  public static class DuckDbPlan implements DatabaseViewPhysicalPlan {
+
+    List<SqlDDLStatement> ddl;
+    List<DatabaseView> views = List.of(); //Not supported yet
+    @JsonIgnore
+    Map<IdentifiedQuery, QueryTemplate> queryPlans;
+
+
+  }
+
 
   enum Params {
     ALLOW_MOVED_PATHS

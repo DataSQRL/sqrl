@@ -173,18 +173,23 @@ LogicalProject(myJson=[$0], json=[toJson('{"x":1}')], _id=[$1], _updated_at=[$2]
       ],
       "views" : [
         {
+          "name" : "MyJsonTable",
           "sql" : "CREATE OR REPLACE VIEW MyJsonTable(myJson, _id, _updated_at)\nAS SELECT PARSE_JSON(myJson) AS myJson, _id, _updated_at\nFROM myjsontable_1\nORDER BY _updated_at DESC NULLS LAST, _id"
         },
         {
+          "name" : "applications",
           "sql" : "CREATE OR REPLACE VIEW applications(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM applications_2\nORDER BY updated_at DESC NULLS LAST, id"
         },
         {
+          "name" : "MyIcebergTable",
           "sql" : "CREATE OR REPLACE VIEW MyIcebergTable(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM myicebergtable_1\nORDER BY updated_at DESC NULLS LAST, id"
         },
         {
+          "name" : "MySnowflakeTable",
           "sql" : "CREATE OR REPLACE VIEW MySnowflakeTable(myJson, json, _id, _updated_at)\nAS SELECT PARSE_JSON(myJson) AS myJson, PARSE_JSON('{\"x\":1}') AS json, _id, _updated_at\nFROM myjsontable_1\nORDER BY _updated_at DESC NULLS LAST, _id"
         },
         {
+          "name" : "SnowflakeQuery",
           "sql" : "CREATE OR REPLACE VIEW SnowflakeQuery(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM myicebergtable_1\nWHERE customer_id = ?\nORDER BY updated_at DESC NULLS LAST, id"
         }
       ]
