@@ -23,10 +23,10 @@ Inputs: data_2
 {
   "flinkSql" : [
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochmillitotimestamp` AS 'com.datasqrl.time.EpochMilliToTimestamp' LANGUAGE JAVA;",
-    "CREATE TEMPORARY TABLE `data_1` (\n  `id` BIGINT NOT NULL,\n  `epoch_timestamp` BIGINT NOT NULL,\n  `some_value` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `timestamp` AS EPOCHMILLITOTIMESTAMP(`epoch_timestamp`),\n  PRIMARY KEY (`id`) NOT ENFORCED,\n  WATERMARK FOR `timestamp` AS (`timestamp` - INTERVAL '0.001' SECOND)\n) WITH (\n  'fields.id.end' = '9',\n  'fields.epoch_timestamp.kind' = 'sequence',\n  'number-of-rows' = '10',\n  'connector' = 'datagen',\n  'fields.epoch_timestamp.end' = '1719319565',\n  'fields.some_value.kind' = 'random',\n  'fields.id.kind' = 'sequence',\n  'fields.id.start' = '0',\n  'fields.epoch_timestamp.start' = '1719318565'\n);",
+    "CREATE TEMPORARY TABLE `data_1` (\n  `id` BIGINT NOT NULL,\n  `epoch_timestamp` BIGINT NOT NULL,\n  `some_value` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `timestamp` AS EPOCHMILLITOTIMESTAMP(`epoch_timestamp`),\n  PRIMARY KEY (`id`) NOT ENFORCED,\n  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND\n) WITH (\n  'fields.id.end' = '9',\n  'fields.epoch_timestamp.kind' = 'sequence',\n  'number-of-rows' = '10',\n  'connector' = 'datagen',\n  'fields.epoch_timestamp.end' = '1719319565',\n  'fields.some_value.kind' = 'random',\n  'fields.id.kind' = 'sequence',\n  'fields.id.start' = '0',\n  'fields.epoch_timestamp.start' = '1719318565'\n);",
     "CREATE TEMPORARY TABLE `data_2_1` (\n  `id` BIGINT NOT NULL,\n  `epoch_timestamp` BIGINT NOT NULL,\n  `some_value` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'data_2',\n  'scan.startup.mode' = 'group-offsets'\n);",
     "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `data_1`;",
-    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `data_2_1`\n(SELECT *\nFROM `table$1`)\n;\nEND;"
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `data_2_1`\n(SELECT *\n FROM `table$1`)\n;\nEND;"
   ],
   "connectors" : [
     "datagen",

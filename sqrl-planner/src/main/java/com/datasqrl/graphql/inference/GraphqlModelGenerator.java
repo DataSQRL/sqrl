@@ -105,7 +105,6 @@ public class GraphqlModelGenerator extends SchemaWalker {
       Map<String, Object> map = tableSource.getConfiguration().getConnectorConfig().toMap();
       topicName = (String)map.get("topic");
     } else if (src.isPresent()){
-      System.out.println();
       Map<String, Object> map = src.get().getConnectorConfig().toMap();
       topicName = (String)map.get("topic");
     } else {

@@ -46,7 +46,7 @@ public class FlinkSqlGenerator {
     SqlExecute execute = new SqlExecute(sqlStatementSet, SqlParserPos.ZERO);
     flinkSql.add(execute);
 
-    SqlNodeToString sqlNodeToString = SqlToStringFactory.get(Dialect.CALCITE);
+    SqlNodeToString sqlNodeToString = SqlToStringFactory.get(Dialect.FLINK);
     Map<String, String> config = new LinkedHashMap<>();
     List<String> plan = new ArrayList<>();
     for (SqlNode sqlNode : flinkSql) {
@@ -54,7 +54,8 @@ public class FlinkSqlGenerator {
         SqlSet set = (SqlSet) sqlNode;
         config.put(set.getKeyString(), set.getValueString());
       } else {
-        plan.add(sqlNodeToString.convert(() -> sqlNode).getSql() + ";");
+        String sql = sqlNodeToString.convert(() -> sqlNode).getSql() + ";";
+        plan.add(sql);
       }
     }
     return Pair.of(plan, flinkSql);
