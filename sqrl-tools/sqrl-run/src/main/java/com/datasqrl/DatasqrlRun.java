@@ -116,10 +116,7 @@ public class DatasqrlRun {
       if (statement.trim().isEmpty()) {
         continue;
       }
-<<<<<<< Updated upstream
-=======
 //      System.out.println(replaceWithEnv(statement));
->>>>>>> Stashed changes
       tableResult = tEnv.executeSql(replaceWithEnv(statement));
     }
     String insert = replaceWithEnv(statements.get(statements.size() - 1));
