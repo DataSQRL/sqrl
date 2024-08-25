@@ -217,6 +217,7 @@ public class GraphqlSchemaUtil {
   }
 
   public static Optional<GraphQLInputType> createInputTypeForRelDataType(RelDataType type, NamePath namePath, Set<String> seen) {
+    if (namePath.getLast().isHidden()) return Optional.empty();
     if (!type.isNullable()) {
       return getGraphQLInputType(type, namePath, seen).map(GraphQLNonNull::nonNull);
     }
