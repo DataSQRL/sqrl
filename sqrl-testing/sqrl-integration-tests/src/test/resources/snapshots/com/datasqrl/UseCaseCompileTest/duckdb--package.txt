@@ -34,10 +34,10 @@ LogicalProject(id=[$0], hello=['hello world'], _updated_at=[$6])
 >>>flink.json
 {
   "flinkSql" : [
-    "CREATE TEMPORARY TABLE `applications_1` (\n  `id` BIGINT NOT NULL,\n  `customer_id` BIGINT NOT NULL,\n  `loan_type_id` BIGINT NOT NULL,\n  `amount` DOUBLE NOT NULL,\n  `duration` BIGINT NOT NULL,\n  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,\n  WATERMARK FOR `updated_at` AS (`updated_at` - INTERVAL '0.001' SECOND)\n) WITH (\n  'format' = 'flexible-json',\n  'path' = '${DATA_PATH}/applications.jsonl',\n  'source.monitor-interval' = '1',\n  'connector' = 'filesystem'\n);",
+    "CREATE TEMPORARY TABLE `applications_1` (\n  `id` BIGINT NOT NULL,\n  `customer_id` BIGINT NOT NULL,\n  `loan_type_id` BIGINT NOT NULL,\n  `amount` DOUBLE NOT NULL,\n  `duration` BIGINT NOT NULL,\n  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,\n  WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND\n) WITH (\n  'format' = 'flexible-json',\n  'path' = '${DATA_PATH}/applications.jsonl',\n  'source.monitor-interval' = '1',\n  'connector' = 'filesystem'\n);",
     "CREATE TEMPORARY TABLE `applications_2` (\n  `id` BIGINT NOT NULL,\n  `customer_id` BIGINT NOT NULL,\n  `loan_type_id` BIGINT NOT NULL,\n  `amount` DOUBLE NOT NULL,\n  `duration` BIGINT NOT NULL,\n  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED\n)\nPARTITIONED BY (`id`, `updated_at`)\nWITH (\n  'catalog-type' = 'hadoop',\n  'warehouse' = 'file:///Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test',\n  'catalog-name' = 'mydatabase',\n  'connector' = 'iceberg',\n  'catalog-table' = 'applications_2'\n);",
     "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `applications_1`;",
-    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `applications_2`\n(SELECT *\nFROM `table$1`)\n;\nEND;"
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `applications_2`\n(SELECT *\n FROM `table$1`)\n;\nEND;"
   ],
   "connectors" : [
     "iceberg",

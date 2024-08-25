@@ -87,7 +87,7 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
     "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `customer_1`;",
     "CREATE VIEW `table$2`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`, `_ingest_time`\nFROM `orders_1`;",
     "CREATE VIEW `table$3`\nAS\nSELECT *\nFROM `product_1`;",
-    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer_2`\n(SELECT *\nFROM `table$1`)\n;\nINSERT INTO `orders_2`\n(SELECT *\nFROM `table$2`)\n;\nINSERT INTO `product_2`\n(SELECT *\nFROM `table$3`)\n;\nEND;"
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer_2`\n(SELECT *\n FROM `table$1`)\n;\nINSERT INTO `orders_2`\n (SELECT *\n  FROM `table$2`)\n ;\n INSERT INTO `product_2`\n  (SELECT *\n   FROM `table$3`)\n  ;\n  END;"
   ],
   "connectors" : [
     "jdbc-sqrl",
