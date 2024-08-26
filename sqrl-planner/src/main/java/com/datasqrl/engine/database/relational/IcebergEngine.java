@@ -50,20 +50,6 @@ public class IcebergEngine extends AbstractJDBCTableFormatEngine {
     EnginePhysicalPlan enginePlan = queryEngines.values().stream().findFirst().get()
         .plan(plan, inputs, pipeline, stagePlans, framework, errorCollector);
     DatabaseStagePlan dbPlan = (DatabaseStagePlan) plan;
-    //Uncomment for debug
-//    StreamUtil.filterByClass(inputs,
-//        EngineSink.class).forEach(s -> {
-//          String tableId = s.getNameId();
-//          Optional<IndexDefinition> optIndex =  dbPlan.getIndexDefinitions().stream().filter(i -> i.getTableId().equals(tableId)).findFirst();
-//          if (optIndex.isPresent()) {
-//            IndexDefinition mainIndex = optIndex.get();
-//            System.out.println("Table: " + tableId);
-//            System.out.println("Partition columns: " + String.join(", ",  mainIndex.getColumnNames().subList(0, mainIndex.getPartitionOffset())));
-//            System.out.println("Sort columns: " + String.join(", ",  mainIndex.getColumnNames().subList(mainIndex.getPartitionOffset(), mainIndex.getColumns().size())));
-//          } else {
-//            System.out.println("No partition on table: " + tableId);
-//          }
-//    });
 
     QueryEngine queryEngine = queryEngines.values().stream().findFirst().get();
 

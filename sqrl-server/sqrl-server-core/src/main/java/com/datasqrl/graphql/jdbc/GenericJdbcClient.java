@@ -18,4 +18,9 @@ public class GenericJdbcClient implements JdbcClient {
     return new ResolvedJdbcQuery(pgQuery,
         new PreparedSqrlQueryImpl(connection, pgQuery.getSql()));
   }
+
+  @Override
+  public ResolvedQuery noPrepareQuery(JdbcQuery jdbcQuery, Context context) {
+    throw new RuntimeException("Not yet implemented");
+  }
 }

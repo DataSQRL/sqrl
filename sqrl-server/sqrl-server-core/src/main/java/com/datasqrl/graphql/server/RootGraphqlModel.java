@@ -191,8 +191,10 @@ public class RootGraphqlModel {
     R visitPagedJdbcQuery(PagedJdbcQuery jdbcQuery, C context);
 
     R visitPagedDuckDbQuery(PagedDuckDbQuery pagedDuckDbQuery, C context);
+    R visitPagedSnowflakeDbQuery(PagedSnowflakeDbQuery pagedDuckDbQuery, C context);
 
-    R visitJDuckDbQuery(DuckDbQuery duckDbQuery, C context);
+    R visitDuckDbQuery(DuckDbQuery duckDbQuery, C context);
+    R visitSnowflakeDbQuery(SnowflakeDbQuery duckDbQuery, C context);
   }
 
   @JsonTypeInfo(
@@ -202,7 +204,9 @@ public class RootGraphqlModel {
       @Type(value = JdbcQuery.class, name = "JdbcQuery"),
       @Type(value = PagedJdbcQuery.class, name = "PagedJdbcQuery"),
       @Type(value = DuckDbQuery.class, name = "DuckDbQuery"),
-      @Type(value = PagedDuckDbQuery.class, name = "PagedDuckDbQuery")
+      @Type(value = SnowflakeDbQuery.class, name = "SnowflakeDbQuery"),
+      @Type(value = PagedDuckDbQuery.class, name = "PagedDuckDbQuery"),
+      @Type(value = PagedSnowflakeDbQuery.class, name = "PagedSnowflakeDbQuery"),
   })
   public interface QueryBase {
 
@@ -237,7 +241,23 @@ public class RootGraphqlModel {
 
     @Override
     public <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context) {
-      return visitor.visitJDuckDbQuery(this, context);
+      return visitor.visitDuckDbQuery(this, context);
+    }
+  }
+
+  @Getter
+  @AllArgsConstructor
+  @NoArgsConstructor
+  public static class SnowflakeDbQuery extends JdbcQuery {
+
+    final String type = "SnowflakeDbQuery";
+    String sql;
+    @Singular
+    List<JdbcParameterHandler> parameters;
+
+    @Override
+    public <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context) {
+      return visitor.visitSnowflakeDbQuery(this, context);
     }
   }
 
@@ -270,6 +290,22 @@ public class RootGraphqlModel {
     @Override
     public <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context) {
       return visitor.visitPagedDuckDbQuery(this, context);
+    }
+  }
+
+  @Getter
+  @AllArgsConstructor
+  @NoArgsConstructor
+  public static class PagedSnowflakeDbQuery extends PagedJdbcQuery {
+
+    final String type = "PagedSnowflakeDbQuery";
+    String sql;
+    @Singular
+    List<JdbcParameterHandler> parameters;
+
+    @Override
+    public <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context) {
+      return visitor.visitPagedSnowflakeDbQuery(this, context);
     }
   }
 

@@ -23,6 +23,8 @@ import com.datasqrl.graphql.server.RootGraphqlModel.JdbcQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.PagedDuckDbQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.PagedJdbcQuery;
+import com.datasqrl.graphql.server.RootGraphqlModel.PagedSnowflakeDbQuery;
+import com.datasqrl.graphql.server.RootGraphqlModel.SnowflakeDbQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoords;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.plan.queries.APIQuery;
@@ -153,9 +155,16 @@ public class GraphqlModelGenerator extends SchemaWalker {
       JdbcQuery queryBase;
       APIQuery query = (APIQuery) entry.getKey();
 
-      String queryStr = queryPlanner.relToString(Dialect.POSTGRES,
-              queryPlanner.convertRelToDialect(Dialect.POSTGRES, entry.getValue().getRelNode()))
-          .getSql();
+      String queryStr;
+      if (entry.getValue().getDatabase().toLowerCase().equalsIgnoreCase("snowflake")) {
+        queryStr = queryPlanner.relToString(Dialect.SNOWFLAKE,
+                queryPlanner.convertRelToDialect(Dialect.SNOWFLAKE, entry.getValue().getRelNode()))
+            .getSql();
+      } else {
+        queryStr = queryPlanner.relToString(Dialect.POSTGRES,
+                queryPlanner.convertRelToDialect(Dialect.POSTGRES, entry.getValue().getRelNode()))
+            .getSql();
+      }
 
       if (query.isLimitOffset()) {
         switch (entry.getValue().getDatabase().toLowerCase()) {
@@ -166,6 +175,9 @@ public class GraphqlModelGenerator extends SchemaWalker {
           case "duckdb":
             queryBase = new PagedDuckDbQuery(queryStr, query.getParameters());
             break;
+          case "snowflake":
+            queryBase = new PagedSnowflakeDbQuery(queryStr, query.getParameters());
+            break;
         }
       } else {
         switch (entry.getValue().getDatabase().toLowerCase()) {
@@ -175,6 +187,9 @@ public class GraphqlModelGenerator extends SchemaWalker {
             break;
           case "duckdb":
             queryBase = new DuckDbQuery(queryStr, query.getParameters());
+            break;
+          case "snowflake":
+            queryBase = new SnowflakeDbQuery(queryStr, query.getParameters());
             break;
         }
       }

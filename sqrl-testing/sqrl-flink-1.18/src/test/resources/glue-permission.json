@@ -1,0 +1,18 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowGlueCatalogTableAccess",
+      "Effect": "Allow",
+      "Action": [
+        "glue:GetTable",
+        "glue:GetTables"
+      ],
+      "Resource": [
+        "arn:aws:glue:*:${AWS_ACCOUNT_ID}:table/*/*",
+        "arn:aws:glue:*:${AWS_ACCOUNT_ID}:catalog",
+        "arn:aws:glue:*:${AWS_ACCOUNT_ID}:database/${ICEBERG_DATABASE_NAME}"
+      ]
+    }
+  ]
+}

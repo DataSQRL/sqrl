@@ -130,9 +130,11 @@ public class GraphqlSchemaFactory {
     GraphQLSchema.Builder builder = GraphQLSchema.newSchema()
         .query(queryType);
     if (goal != ExecutionGoal.TEST) {
-      Optional<GraphQLObjectType.Builder> subscriptions = createSubscriptionTypes(schema);
+      if (logManager.hasLogEngine()) {
+        Optional<GraphQLObjectType.Builder> subscriptions = createSubscriptionTypes(schema);
+        subscriptions.map(builder::subscription);
+      }
       Optional<GraphQLObjectType.Builder> mutations = createMutationTypes(schema);
-      subscriptions.map(builder::subscription);
       mutations.map(builder::mutation);
     }
     builder.additionalTypes(new LinkedHashSet<>(objectTypes));

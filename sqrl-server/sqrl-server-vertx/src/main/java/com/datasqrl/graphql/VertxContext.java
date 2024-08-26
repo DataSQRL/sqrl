@@ -13,19 +13,17 @@ import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.VariableArgument;
 import com.datasqrl.graphql.server.QueryExecutionContext;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ValueNode;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.base.Preconditions;
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
+import graphql.schema.PropertyDataFetcher;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.handler.graphql.schema.VertxDataFetcher;
-import io.vertx.ext.web.handler.graphql.schema.VertxPropertyDataFetcher;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -48,9 +46,33 @@ public class VertxContext implements Context {
 
   @Override
   public DataFetcher<Object> createPropertyFetcher(String name) {
-    return VertxPropertyDataFetcher.create(name);
+    return VertxCreateCaseInsensitivePropertyDataFetcher.createCaseInsensitive(name);
   }
+  public interface VertxCreateCaseInsensitivePropertyDataFetcher {
 
+    static PropertyDataFetcher<Object> createCaseInsensitive(String propertyName) {
+      return new PropertyDataFetcher<Object>(propertyName) {
+        @Override
+        public Object get(DataFetchingEnvironment environment) {
+          Object source = environment.getSource();
+          if (source instanceof JsonObject) {
+            JsonObject jsonObject = (JsonObject) source;
+            Object value = jsonObject.getValue(getPropertyName());
+            if (value != null) {
+              return value;
+            }
+            // bad hack, remove me
+            return jsonObject.getMap().entrySet().stream()
+                .filter(e->e.getKey().equalsIgnoreCase(getPropertyName()))
+                .map(e->e.getValue())
+                .findAny()
+                .orElse(null);
+          }
+          return super.get(environment);
+        }
+      };
+    }
+  }
   @Override
   public DataFetcher<?> createArgumentLookupFetcher(GraphQLEngineBuilder server, Map<Set<Argument>, ResolvedQuery> lookupMap) {
     return VertxDataFetcher.create((env, fut) -> {

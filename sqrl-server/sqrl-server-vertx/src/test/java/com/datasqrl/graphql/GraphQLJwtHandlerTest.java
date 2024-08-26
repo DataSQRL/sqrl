@@ -99,7 +99,7 @@ class GraphQLJwtHandlerTest {
     serverConfig.setCorsHandlerOptions(new CorsHandlerOptions());
     HttpServerOptions httpServerOptions = new HttpServerOptions().setPort(8888).setHost("localhost");
     serverConfig.setHttpServerOptions(httpServerOptions);
-    server = new GraphQLServer(root, serverConfig, NameCanonicalizer.SYSTEM) {
+    server = new GraphQLServer(root, serverConfig, NameCanonicalizer.SYSTEM, Optional.empty()) {
       @Override
       public String getEnvironmentVariable(String envVar) {
         return CLUSTER.bootstrapServers();
