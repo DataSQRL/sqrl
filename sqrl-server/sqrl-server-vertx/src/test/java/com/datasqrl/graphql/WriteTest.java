@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 
 import lombok.SneakyThrows;
@@ -98,7 +99,7 @@ class WriteTest {
     PgPool client = PgPool.pool(vertx, options, new PoolOptions());
     this.client = client;
     this.model = getCustomerModel();
-    GraphQLServer graphQLServer = new GraphQLServer(null, null, null);
+    GraphQLServer graphQLServer = new GraphQLServer(null, null, null, Optional.empty());
     GraphQLServer serverSpy = Mockito.spy(graphQLServer);
     Mockito.when(serverSpy.getEnvironmentVariable("PROPERTIES_BOOTSTRAP_SERVERS"))
         .thenReturn(CLUSTER.bootstrapServers());

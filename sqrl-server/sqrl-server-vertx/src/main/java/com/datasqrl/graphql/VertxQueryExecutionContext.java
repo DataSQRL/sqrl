@@ -1,5 +1,6 @@
 package com.datasqrl.graphql;
 
+import static com.datasqrl.graphql.VertxJdbcClient.getDatabaseName;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.LIMIT;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.OFFSET;
 
@@ -52,28 +53,27 @@ public class VertxQueryExecutionContext implements QueryExecutionContext,
       paramObj[i] = o;
     }
 
-    String database = pgQuery.getQuery() instanceof DuckDbQuery ? "duckdb" : "postgres";
+    String database = getDatabaseName(pgQuery.getQuery());
 
-    SqlClient sqlClient = this.context.getSqlClient().getClients()
-        .get(database);
-
-    if (sqlClient == null) {
-      throw new RuntimeException("Could not find database engine: " + database);
+    PreparedSqrlQueryImpl preparedQueryContainer = (PreparedSqrlQueryImpl) pgQuery.getPreparedQueryContainer();
+    Future<RowSet<Row>> future;
+    if (preparedQueryContainer == null) {
+      future = this.context.getSqlClient().execute(database,
+          pgQuery.getQuery().getSql(), Tuple.from(paramObj));
+    } else {
+      PreparedQuery<RowSet<Row>> preparedQuery = preparedQueryContainer
+          .getPreparedQuery();
+      future = this.context.getSqlClient().execute(database,
+          preparedQuery, Tuple.from(paramObj));
     }
-    PreparedQuery<RowSet<Row>> preparedQuery = ((PreparedSqrlQueryImpl) pgQuery.getPreparedQueryContainer())
-        .getPreparedQuery();
-
-    Future<RowSet<Row>> future = this.context.getSqlClient().execute(database,
-        preparedQuery,Tuple.from(paramObj));
 
     future
-      .map(r -> resultMapper(r, isList))
-      .onSuccess(fut::complete)
-      .onFailure(f -> {
-        f.printStackTrace();
-        fut.fail(f);
-      });
-
+        .map(r -> resultMapper(r, isList))
+        .onSuccess(fut::complete)
+        .onFailure(f -> {
+          f.printStackTrace();
+          fut.fail(f);
+        });
     return new CompletableFuture();
   }
 
@@ -96,15 +96,10 @@ public class VertxQueryExecutionContext implements QueryExecutionContext,
         offset.orElse(0)
     );
 
-    String database = databaseQuery.getQuery() instanceof PagedDuckDbQuery ? "duckdb" : "postgres";
-
-    SqlClient sqlClient = this.context.getSqlClient().getClients().get(database);
+    String database = getDatabaseName(databaseQuery.getQuery());
 
     Future<RowSet<Row>> future = this.context.getSqlClient().execute(database,
         query,Tuple.from(paramObj));
-    if (sqlClient == null) {
-      throw new RuntimeException("Could not find database engine: " + database);
-    }
 
     future
       .map(r -> resultMapper(r, isList))

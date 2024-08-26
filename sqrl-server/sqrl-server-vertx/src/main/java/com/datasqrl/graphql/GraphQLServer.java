@@ -25,6 +25,7 @@ import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoords;
 import com.datasqrl.graphql.type.SqrlVertxScalars;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.google.common.base.Strings;
 import graphql.GraphQL;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
@@ -46,15 +47,22 @@ import io.vertx.ext.web.handler.graphql.GraphiQLHandler;
 import io.vertx.ext.web.handler.graphql.GraphiQLHandlerBuilder;
 import io.vertx.ext.web.handler.graphql.ws.GraphQLWSHandler;
 import io.vertx.jdbcclient.JDBCPool;
+import io.vertx.jdbcclient.impl.ConnectionImpl;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.pgclient.PgPool;
 import io.vertx.pgclient.impl.PgPoolOptions;
+import io.vertx.sqlclient.PreparedQuery;
+import io.vertx.sqlclient.Row;
+import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.SqlClient;
 import io.vertx.sqlclient.SqlConnection;
+import io.vertx.sqlclient.Tuple;
+import io.vertx.sqlclient.impl.SqlConnectionBase;
 import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.HashMap;
 import java.util.List;
@@ -72,6 +80,7 @@ public class GraphQLServer extends AbstractVerticle {
 
   private final RootGraphqlModel model;
   private final NameCanonicalizer canonicalizer;
+  private final Optional<String> snowflakeUrl;
   private ServerConfig config;
 
   public static void main(String[] args) {
@@ -86,26 +95,50 @@ public class GraphQLServer extends AbstractVerticle {
   }
 
   public GraphQLServer() {
-    this(readModel(), null, NameCanonicalizer.SYSTEM);
+    this(readModel(), null, NameCanonicalizer.SYSTEM, readSnowflakeUrl());
   }
 
-  public GraphQLServer(RootGraphqlModel model, ServerConfig config, NameCanonicalizer canonicalizer) {
+  @SneakyThrows
+  private static Optional<String> readSnowflakeUrl() {
+    //How to check for snowflake ?
+    File snowflakeConfig = new File("snowflake-config.json");
+    Map map = null;
+    if (snowflakeConfig.exists()) {
+      map = getObjectMapper().readValue(snowflakeConfig, Map.class);
+      if (map.isEmpty()) return Optional.empty();
+    }
+
+    String url = (String)map.get("url");
+    if (Strings.isNullOrEmpty(url)) {
+      log.warn("Url must be specified in the snowflake engine");
+      return Optional.empty();
+    }
+    return Optional.of(url);
+  }
+
+  public GraphQLServer(RootGraphqlModel model, ServerConfig config, NameCanonicalizer canonicalizer,
+      Optional<String> snowflakeUrl) {
     this.model = model;
     this.config = config;
     this.canonicalizer = canonicalizer;
+    this.snowflakeUrl = snowflakeUrl;
   }
 
   @SneakyThrows
   private static RootGraphqlModel readModel() {
+    return getObjectMapper().readValue(
+        new File("server-model.json"),
+        RootGraphqlModel.class);
+  }
+
+  public static ObjectMapper getObjectMapper() {
     ObjectMapper objectMapper = new ObjectMapper();
 
     // Register the custom deserializer module
     SimpleModule module = new SimpleModule();
     module.addDeserializer(String.class, new JsonEnvVarDeserializer());
     objectMapper.registerModule(module);
-    return objectMapper.readValue(
-        new File("server-model.json"),
-        RootGraphqlModel.class);
+    return objectMapper;
   }
 
   private Future<JsonObject> loadConfig() {
@@ -185,8 +218,11 @@ public class GraphQLServer extends AbstractVerticle {
     });
 
     SqlClient client = getPostgresSqlClient();
-    Map<String, SqlClient> clients = Map.of("postgres", client,
-        "duckdb", getDuckdbSqlClient());
+    Map<String, SqlClient> clients = new HashMap<>();
+    clients.put("postgres", client);
+    clients.put("duckdb", getDuckdbSqlClient());
+    snowflakeUrl.map(s-> clients.put("snowflake", getSnowflakeClient(s)));
+
     GraphQL graphQL = createGraphQL(clients, startPromise);
 
     CorsHandler corsHandler = toCorsHandler(this.config.getCorsHandlerOptions());
@@ -224,6 +260,23 @@ public class GraphQLServer extends AbstractVerticle {
   }
 
   @SneakyThrows
+  private SqlClient getSnowflakeClient(String url) {
+    try {
+      Class.forName("net.snowflake.client.jdbc.SnowflakeDriver");
+    } catch (ClassNotFoundException e) {
+      e.printStackTrace();
+    }
+
+    final JsonObject config = new JsonObject()
+        .put("driver_class", "net.snowflake.client.jdbc.SnowflakeDriver")
+        .put("url", url)
+        .put("CLIENT_SESSION_KEEP_ALIVE", "true");
+
+    JDBCPool pool = JDBCPool.pool(vertx, config);
+    return pool;
+  }
+
+  @SneakyThrows
   private SqlClient getDuckdbSqlClient() {
     String url = "jdbc:duckdb:"; // In-memory DuckDB instance or you can specify a file path for persistence
 
@@ -237,7 +290,7 @@ public class GraphQLServer extends AbstractVerticle {
         .put("driver_class", "org.duckdb.DuckDBDriver")
         .put("datasourceName", "pool-name")
         .put("url", url)
-        .put("max_pool_size", 1)
+//        .put("max_pool_size", 1)
         .put(DuckDBDriver.JDBC_STREAM_RESULTS, String.valueOf(true))
     ;
 

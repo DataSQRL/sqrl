@@ -22,6 +22,7 @@ import java.sql.DriverManager;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -87,7 +88,7 @@ public class DatasqrlRun {
     Path packageJson = build.resolve("package.json");
     Map<String, String> config = new HashMap<>();
     if (packageJson.toFile().exists()) {
-      Map packageJsonMap = objectMapper.readValue(build.resolve("package.json").toFile(), Map.class);
+      Map packageJsonMap = getPackageJson();
       Object o = packageJsonMap.get("values");
       if (o instanceof Map) {
         Object c = ((Map)o).get("flink-config");
@@ -128,8 +129,15 @@ public class DatasqrlRun {
     return plan;
   }
 
+  @SneakyThrows
+  private Map getPackageJson() {
+    return objectMapper.readValue(build.resolve("package.json").toFile(), Map.class);
+  }
+
   Map<String, String> getEnv() {
     Map<String, String> configMap = new HashMap<>();
+
+    configMap.putAll(System.getenv());
     configMap.put("PROPERTIES_BOOTSTRAP_SERVERS", CLUSTER.bootstrapServers());
     configMap.put("PROPERTIES_GROUP_ID", "mygroupid");
     configMap.put("JDBC_URL", isStarted.get() ? postgreSQLContainer.getJdbcUrl() : "jdbc:postgresql://127.0.0.1:5432/datasqrl");
@@ -229,12 +237,22 @@ public class DatasqrlRun {
         Map.class);
     JsonObject config = new JsonObject(json);
 
+    Map engines = (Map)getPackageJson().get("engines");
+    Map snowflake = (Map)engines.get("snowflake");
+    Optional<String> urlOpt = Optional.empty();
+    if (snowflake != null) {
+      Object url = snowflake.get("url");
+      if (url instanceof String) {
+        urlOpt = Optional.of((String)url);
+      }
+    }
+
     ServerConfig serverConfig = new ServerConfig(config);
     // hack because templating doesn't work on non-strings
     serverConfig.getPgConnectOptions()
         .setPort(isStarted.get() ? postgreSQLContainer.getMappedPort(5432): 5432);
     GraphQLServer server = new GraphQLServer(rootGraphqlModel, serverConfig,
-        NameCanonicalizer.SYSTEM) {
+        NameCanonicalizer.SYSTEM, urlOpt) {
       @Override
       public String getEnvironmentVariable(String envVar) {
         if (envVar.equalsIgnoreCase("PROPERTIES_BOOTSTRAP_SERVERS")) {

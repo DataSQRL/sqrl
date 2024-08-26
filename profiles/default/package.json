@@ -53,6 +53,9 @@
           "table-name": "${sqrl:table}"
         }
       }
+    },
+    "snowflake" : {
+      "schema-type": "aws-glue"
     }
   },
   "test-runner": {
