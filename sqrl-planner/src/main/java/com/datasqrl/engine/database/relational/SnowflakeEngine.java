@@ -83,7 +83,7 @@ public class SnowflakeEngine extends AbstractJDBCQueryEngine {
           (String)engineConfig.toMap().get("external-volume"), SqlParserPos.ZERO);
 
       SqlCreateIcebergTableFromObjectStorage icebergTable = new SqlCreateIcebergTableFromObjectStorage(SqlParserPos.ZERO,
-          false, false,
+          true, false,
           new SqlIdentifier(sink.getNameId(), SqlParserPos.ZERO),
           externalVolume,
           SqlLiteral.createCharString((String)engineConfig.toMap().get("catalog-name"),
