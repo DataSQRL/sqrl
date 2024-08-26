@@ -9,6 +9,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import lombok.SneakyThrows;
@@ -32,17 +33,18 @@ public class SnowflakeIT {
   @Test
   @Disabled
   public void test() {
-    Path directoryPath = Path.of(
-        "/Users/henneberger/sqrl/sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/snowflake");
+    Path projectRoot = getProjectRootPath();
+    Path testRoot = projectRoot.resolve("sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/snowflake");
+    Path profilePath = projectRoot.resolve("profiles/default");
     SqrlCompiler compiler = new SqrlCompiler();
-    compiler.execute(directoryPath, "compile", "--profile", "/Users/henneberger/sqrl/profiles/default");
+    compiler.execute(testRoot, "compile", "--profile", profilePath.toString());
 
-    datasqrlRun.setPath(directoryPath.resolve("build").resolve("plan"));
+    datasqrlRun.setPath(testRoot.resolve("build").resolve("plan"));
 
     datasqrlRun.run(false);
 
     Thread.sleep(1000);
-    Path schema = directoryPath.resolve("build/deploy/snowflake/database-schema.sql");
+    Path schema = testRoot.resolve("build/deploy/snowflake/database-schema.sql");
     String[] statements = Files.readString(schema).split(";");
     for (String statement : statements) {
       statement = Strings.trim(statement);
@@ -86,5 +88,17 @@ public class SnowflakeIT {
       e.printStackTrace();
       return null;
     }
+  }
+
+  private Path getProjectRootPath() {
+    Path path = Paths.get(".").toAbsolutePath().normalize();
+    Path rootPath = null;
+    while (path != null) {
+      if (path.resolve("pom.xml").toFile().exists()) {
+        rootPath = path;
+      }
+      path = path.getParent();
+    }
+    return rootPath;
   }
 }
