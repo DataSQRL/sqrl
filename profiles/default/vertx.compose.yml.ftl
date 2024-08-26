@@ -4,9 +4,13 @@ services:
     build:
       context: vertx
       dockerfile: Dockerfile
+<#if config["enabled-engines"]?seq_contains("kafka") || config["enabled-engines"]?seq_contains("postgres")>
     depends_on:
+</#if>
+<#if config["enabled-engines"]?seq_contains("postgres")>
       database:
         condition: service_started
+</#if>
 <#if config["enabled-engines"]?seq_contains("kafka")>
       kafka-setup:
         condition: service_completed_successfully
@@ -16,9 +20,13 @@ services:
     env_file:
       - ".env"
     environment:
+<#if config["enabled-engines"]?seq_contains("kafka")>
       - PROPERTIES_BOOTSTRAP_SERVERS=kafka:9092
+</#if>
+<#if config["enabled-engines"]?seq_contains("postgres")>
       - PGHOST=database
       - PGPORT=5432
       - PGDATABASE=datasqrl
       - PGUSER=postgres
       - PGPASSWORD=postgres
+</#if>
