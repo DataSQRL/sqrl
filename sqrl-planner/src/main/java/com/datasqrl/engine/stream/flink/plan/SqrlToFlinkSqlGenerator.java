@@ -398,7 +398,7 @@ public class SqrlToFlinkSqlGenerator {
         if (optIndex.isPresent()) {
           IndexDefinition partitionIndex = optIndex.get();
           List<String> partitionColumns = partitionIndex.getColumnNames().subList(0, partitionIndex.getPartitionOffset());
-          builder.setPartitionKey(partitionColumns);
+          if (!partitionColumns.isEmpty()) builder.setPartitionKey(partitionColumns);
         }
 
       }
