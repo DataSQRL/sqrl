@@ -28,7 +28,7 @@
     },
     "snowflake" : {
       "catalog-name": "MyCatalog",
-      "external-volume": "iceberg_storage_vol",
+      "external-volume": "MyNewVolume",
       "url": "jdbc:snowflake://${SNOWFLAKE_ID}.snowflakecomputing.com/?user=daniel&password=${SNOWFLAKE_PASSWORD}&warehouse=COMPUTE_WH&db=MYSNOWFLAKEDB&schema=public&disableSslHostnameVerification=true"
     }
   }

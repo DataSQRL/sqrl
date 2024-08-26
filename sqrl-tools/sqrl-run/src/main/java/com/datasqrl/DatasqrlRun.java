@@ -42,15 +42,17 @@ import org.testcontainers.utility.DockerImageName;
 
 @Slf4j
 public class DatasqrlRun {
+  // Fix override
   Path build = Path.of("build");
   Path path = build.resolve("plan");
+
   EmbeddedKafkaCluster CLUSTER;
   ObjectMapper objectMapper = new ObjectMapper();
   PostgreSQLContainer postgreSQLContainer;
   AtomicBoolean isStarted = new AtomicBoolean(false);
   public static void main(String[] args) {
     DatasqrlRun run = new DatasqrlRun();
-    run.run();
+    run.run(true);
   }
 
   public DatasqrlRun() {
@@ -59,9 +61,10 @@ public class DatasqrlRun {
   @VisibleForTesting
   public void setPath(Path path) {
     this.path = path;
+    this.build = path.getParent();
   }
 
-  public void run() {
+  public void run(boolean hold) {
     startPostgres();
     startKafka();
 
@@ -73,13 +76,17 @@ public class DatasqrlRun {
     objectMapper.registerModule(module);
 
     startVertx();
-    startFlink();
+    CompiledPlan plan = startFlink();
+    TableResult execute = plan.execute();
+    if (hold) {
+      execute.print();
+    }
   }
 
   @SneakyThrows
-  public void startFlink() {
+  public CompiledPlan startFlink() {
     CompiledPlan compileFlink = compileFlink();
-    compileFlink.execute().print();
+    return compileFlink;
   }
 
   @SneakyThrows
@@ -237,22 +244,12 @@ public class DatasqrlRun {
         Map.class);
     JsonObject config = new JsonObject(json);
 
-    Map engines = (Map)getPackageJson().get("engines");
-    Map snowflake = (Map)engines.get("snowflake");
-    Optional<String> urlOpt = Optional.empty();
-    if (snowflake != null) {
-      Object url = snowflake.get("url");
-      if (url instanceof String) {
-        urlOpt = Optional.of((String)url);
-      }
-    }
-
     ServerConfig serverConfig = new ServerConfig(config);
     // hack because templating doesn't work on non-strings
     serverConfig.getPgConnectOptions()
         .setPort(isStarted.get() ? postgreSQLContainer.getMappedPort(5432): 5432);
     GraphQLServer server = new GraphQLServer(rootGraphqlModel, serverConfig,
-        NameCanonicalizer.SYSTEM, urlOpt) {
+        NameCanonicalizer.SYSTEM, getSnowflakeUrl()) {
       @Override
       public String getEnvironmentVariable(String envVar) {
         if (envVar.equalsIgnoreCase("PROPERTIES_BOOTSTRAP_SERVERS")) {
@@ -270,6 +267,19 @@ public class DatasqrlRun {
         System.out.println("Deployment failed!");
       }
     });
+  }
+
+  public Optional<String> getSnowflakeUrl() {
+    Map engines = (Map)getPackageJson().get("engines");
+    Map snowflake = (Map)engines.get("snowflake");
+    if (snowflake != null) {
+      Object url = snowflake.get("url");
+      if (url instanceof String) {
+        return Optional.of((String)url);
+      }
+    }
+
+    return Optional.empty();
   }
 
   public static class ModelContainer {
