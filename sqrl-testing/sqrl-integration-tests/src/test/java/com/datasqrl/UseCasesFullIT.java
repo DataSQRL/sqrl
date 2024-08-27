@@ -86,7 +86,7 @@ public class UseCasesFullIT extends UseCasesIT {
     ObjectNode compileNode = mapper.createObjectNode();
     compileNode.put("sqrl-vertx-image", "vertx-latest:latest");
     compileNode.put("flink-build-image", "flink-build:latest");
-    compileNode.put("sqrl-version", "0.5.4-SNAPSHOT");
+    compileNode.put("sqrl-version", "0.5.5-SNAPSHOT");
 
     // Attach the compile object to the root node
     rootNode.set("compile", compileNode);

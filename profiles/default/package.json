@@ -2,9 +2,9 @@
   "version": "1",
   "enabled-engines": ["vertx", "postgres", "kafka", "flink"],
   "compile" : {
-    "sqrl-version": "0.5.3",
+    "sqrl-version": "0.5.4",
     "flink-build-image": "gradle:8.6-jdk11",
-    "sqrl-vertx-image": "datasqrl/sqrl-server:v0.5.3"
+    "sqrl-vertx-image": "datasqrl/sqrl-server:v0.5.4"
   },
   "engines" : {
     "flink" : {
@@ -68,7 +68,7 @@
   },
   "package": {
     "name": "datasqrl.profile.default",
-    "version": "0.5.3",
+    "version": "0.5.4",
     "variant": "dev",
     "description": "A docker compose datasqrl profile",
     "homepage": "",

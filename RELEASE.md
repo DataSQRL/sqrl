@@ -5,19 +5,16 @@ Step 1: Assure you are in a clean working main
 - git pull
 
 Prerelease:
-Update the build.gradle.ftl in the profiles to point to the new sqrl version
+Update the build.gradle.ftl and package.json in the profiles to point to the new sqrl version. Update the docker image references.
 ```
     sqrlVersion = "0.?"
 ```
 
 Update the RootCommand version from 'v0.x.0'
 
-Update the default dependency version from 'v0.x.0'
+Update the default dependency version in the cli from 'v0.x.0'
 
-Update the Dockerfile in the vertx profile:
-```
-FROM datasqrl/sqrl-server:v.0?
-```
+Commit and push this with a message "Bump version to prepare for v0.x release"
 
 Step 2: Run the command to update the POM's, add a tag, and push the new commit.
 Note: Update the release version on the command below
