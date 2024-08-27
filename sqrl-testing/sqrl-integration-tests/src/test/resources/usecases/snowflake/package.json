@@ -11,7 +11,8 @@
   ],
   "values": {
     "flink-config": {
-      "table.exec.source.idle-timeout": "1 ms"
+      "table.exec.source.idle-timeout": "1 ms",
+      "execution.checkpointing.interval": "30 sec"
     }
   },
   "engines": {

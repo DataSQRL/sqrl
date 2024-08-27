@@ -1,0 +1,301 @@
+>>>pipeline_explain.txt
+=== applications
+ID:     applications_2
+Type:   stream
+Stage:  streams
+Primary Key: id, updated_at
+Timestamp  : updated_at
+Schema:
+ - id: BIGINT NOT NULL
+ - customer_id: BIGINT NOT NULL
+ - loan_type_id: BIGINT NOT NULL
+ - amount: DOUBLE NOT NULL
+ - duration: BIGINT NOT NULL
+ - application_date: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - updated_at: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Plan:
+LogicalTableScan(table=[[applications_1]], hints=[[[WatermarkHint inheritPath:[] options:[6]]]]) hints[WatermarkHint options:[6]]
+
+=== MyTable
+ID:     mytable_1
+Type:   stream
+Stage:  database
+Inputs: applications_2
+Primary Key: id, _updated_at
+Timestamp  : _updated_at
+Schema:
+ - id: BIGINT NOT NULL
+ - hello: CHAR(11) CHARACTER SET "UTF-16LE" NOT NULL
+ - _updated_at: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Plan:
+LogicalProject(id=[$0], hello=['hello world'], _updated_at=[$6])
+  LogicalTableScan(table=[[applications_2]])
+
+>>>flink.json
+{
+  "flinkSql" : [
+    "CREATE TEMPORARY TABLE `applications_1` (\n  `id` BIGINT NOT NULL,\n  `customer_id` BIGINT NOT NULL,\n  `loan_type_id` BIGINT NOT NULL,\n  `amount` DOUBLE NOT NULL,\n  `duration` BIGINT NOT NULL,\n  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,\n  WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND\n) WITH (\n  'format' = 'flexible-json',\n  'path' = '${DATA_PATH}/applications.jsonl',\n  'source.monitor-interval' = '1',\n  'connector' = 'filesystem'\n);",
+    "CREATE TEMPORARY TABLE `applications_2` (\n  `id` BIGINT NOT NULL,\n  `customer_id` BIGINT NOT NULL,\n  `loan_type_id` BIGINT NOT NULL,\n  `amount` DOUBLE NOT NULL,\n  `duration` BIGINT NOT NULL,\n  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED\n)\nPARTITIONED BY (`id`)\nWITH (\n  'catalog-type' = 'hadoop',\n  'warehouse' = 'file:///Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test',\n  'catalog-name' = 'mydatabase',\n  'connector' = 'iceberg',\n  'catalog-table' = 'applications_2'\n);",
+    "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `applications_1`;",
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `applications_2`\n(SELECT *\n FROM `table$1`)\n;\nEND;"
+  ],
+  "connectors" : [
+    "iceberg",
+    "filesystem"
+  ],
+  "formats" : [
+    "flexible-json"
+  ]
+}
+>>>iceberg.json
+{
+  "ddl" : [
+    {
+      "name" : "applications_2",
+      "columns" : [
+        "\"id\" BIGINT NOT NULL",
+        "\"customer_id\" BIGINT NOT NULL",
+        "\"loan_type_id\" BIGINT NOT NULL",
+        "\"amount\" DOUBLE PRECISION NOT NULL",
+        "\"duration\" BIGINT NOT NULL",
+        "\"application_date\" TIMESTAMP WITH TIME ZONE NOT NULL",
+        "\"updated_at\" TIMESTAMP WITH TIME ZONE NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"id\"",
+        "\"updated_at\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS applications_2 (\"id\" BIGINT NOT NULL,\"customer_id\" BIGINT NOT NULL,\"loan_type_id\" BIGINT NOT NULL,\"amount\" DOUBLE PRECISION NOT NULL,\"duration\" BIGINT NOT NULL,\"application_date\" TIMESTAMP WITH TIME ZONE NOT NULL,\"updated_at\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\",\"updated_at\"));"
+    }
+  ],
+  "engines" : {
+    "duckdb" : {
+      "ddl" : [
+        {
+          "name" : "applications_2",
+          "columns" : [
+            "\"id\" BIGINT NOT NULL",
+            "\"customer_id\" BIGINT NOT NULL",
+            "\"loan_type_id\" BIGINT NOT NULL",
+            "\"amount\" DOUBLE PRECISION NOT NULL",
+            "\"duration\" BIGINT NOT NULL",
+            "\"application_date\" TIMESTAMP WITH TIME ZONE NOT NULL",
+            "\"updated_at\" TIMESTAMP WITH TIME ZONE NOT NULL"
+          ],
+          "primaryKeys" : [
+            "\"id\"",
+            "\"updated_at\""
+          ],
+          "sql" : "CREATE TABLE IF NOT EXISTS applications_2 (\"id\" BIGINT NOT NULL,\"customer_id\" BIGINT NOT NULL,\"loan_type_id\" BIGINT NOT NULL,\"amount\" DOUBLE PRECISION NOT NULL,\"duration\" BIGINT NOT NULL,\"application_date\" TIMESTAMP WITH TIME ZONE NOT NULL,\"updated_at\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\",\"updated_at\"));"
+        }
+      ],
+      "views" : [ ]
+    }
+  }
+}
+>>>kafka.json
+{
+  "topics" : [ ]
+}
+>>>vertx.json
+{
+  "model" : {
+    "coords" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "applications",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "updated_at"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedDuckDbQuery",
+              "type" : "PagedDuckDbQuery",
+              "sql" : "SELECT *\nFROM (SELECT *\n  FROM ICEBERG_SCAN('/Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test/default_database/applications_2', ALLOW_MOVED_PATHS = TRUE)) AS \"t\"\nWHERE \"updated_at\" = $1\nORDER BY \"updated_at\" DESC NULLS LAST, \"id\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "updated_at"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedDuckDbQuery",
+              "type" : "PagedDuckDbQuery",
+              "sql" : "SELECT *\nFROM ICEBERG_SCAN('/Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test/default_database/applications_2', ALLOW_MOVED_PATHS = TRUE)\nORDER BY \"updated_at\" DESC NULLS LAST, \"id\"",
+              "parameters" : [ ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "updated_at"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedDuckDbQuery",
+              "type" : "PagedDuckDbQuery",
+              "sql" : "SELECT \"id\", \"customer_id\", \"loan_type_id\", \"amount\", \"duration\", \"application_date\", \"updated_at\", 1 AS \"__pk\"\nFROM (SELECT *\n  FROM ICEBERG_SCAN('/Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test/default_database/applications_2', ALLOW_MOVED_PATHS = TRUE)) AS \"t\"\nWHERE \"id\" = $1 AND \"updated_at\" = $2\nORDER BY \"updated_at\" DESC NULLS LAST, 1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "id"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "updated_at"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedDuckDbQuery",
+              "type" : "PagedDuckDbQuery",
+              "sql" : "SELECT *\nFROM (SELECT *\n  FROM ICEBERG_SCAN('/Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test/default_database/applications_2', ALLOW_MOVED_PATHS = TRUE)) AS \"t\"\nWHERE \"id\" = $1\nORDER BY \"updated_at\" DESC NULLS LAST",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "id"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "MyTable",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedDuckDbQuery",
+              "type" : "PagedDuckDbQuery",
+              "sql" : "SELECT \"id\", 'hello world' AS \"hello\", \"updated_at\" AS \"_updated_at\"\nFROM ICEBERG_SCAN('/Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test/default_database/applications_2', ALLOW_MOVED_PATHS = TRUE)\nORDER BY \"updated_at\" DESC NULLS LAST, \"id\"",
+              "parameters" : [ ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedDuckDbQuery",
+              "type" : "PagedDuckDbQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"id\", 'hello world' AS \"hello\", \"updated_at\" AS \"_updated_at\"\n  FROM ICEBERG_SCAN('/Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test/default_database/applications_2', ALLOW_MOVED_PATHS = TRUE)) AS \"t0\"\nWHERE \"id\" = $1\nORDER BY \"_updated_at\" DESC NULLS LAST",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "id"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "mutations" : [ ],
+    "subscriptions" : [ ],
+    "schema" : {
+      "type" : "string",
+      "type" : "string",
+      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype MyTable {\n  id: Float!\n  hello: String!\n}\n\ntype Query {\n  applications(id: Float, updated_at: DateTime, limit: Int = 10, offset: Int = 0): [applications!]\n  MyTable(id: Float, limit: Int = 10, offset: Int = 0): [MyTable!]\n}\n\ntype applications {\n  id: Float!\n  customer_id: Float!\n  loan_type_id: Float!\n  amount: Float!\n  duration: Float!\n  application_date: DateTime!\n  updated_at: DateTime!\n}\n"
+    }
+  }
+}

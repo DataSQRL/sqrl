@@ -141,7 +141,7 @@ public class SnowflakeEngine extends AbstractJDBCQueryEngine {
     }
 
 
-    return new SnowflakePlan(ddlStatements, views);
+    return new SnowflakePlan(ddlStatements, views, databaseQueries);
   }
 
   private RelNode applyUpcasting(RelBuilder relBuilder, RelNode relNode,
@@ -190,13 +190,8 @@ public class SnowflakeEngine extends AbstractJDBCQueryEngine {
 
     List<SqlDDLStatement> ddl;
     List<DatabaseView> views;
-
-    /** Snowflake does not support queries yet */
     @JsonIgnore
-    @Override
-    public Map<IdentifiedQuery, QueryTemplate> getQueryPlans() {
-      return Map.of();
-    }
+    Map<IdentifiedQuery, QueryTemplate> queryPlans;
   }
 
   @Override

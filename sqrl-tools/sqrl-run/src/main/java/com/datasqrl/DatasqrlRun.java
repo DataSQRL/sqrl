@@ -43,7 +43,7 @@ import org.testcontainers.utility.DockerImageName;
 @Slf4j
 public class DatasqrlRun {
   // Fix override
-  Path build = Path.of("build");
+  Path build = Path.of(System.getProperty("user.dir")).resolve("build");
   Path path = build.resolve("plan");
 
   EmbeddedKafkaCluster CLUSTER;
@@ -153,7 +153,7 @@ public class DatasqrlRun {
     configMap.put("JDBC_USERNAME", "postgres");
     configMap.put("JDBC_PASSWORD", "postgres");
     //todo target?
-    configMap.put("DATA_PATH", Path.of(System.getProperty("user.dir")).resolve("build/deploy/flink/data").toString());
+    configMap.put("DATA_PATH", build.resolve("deploy/flink/data").toString());
     configMap.put("PGHOST", "localhost");
     configMap.put("PGUSER", "postgres");
     configMap.put("PGPASSWORD", "postgres");
