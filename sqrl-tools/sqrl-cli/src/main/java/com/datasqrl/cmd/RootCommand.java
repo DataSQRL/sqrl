@@ -21,10 +21,6 @@ public class RootCommand implements Runnable {
       , scope = ScopeType.INHERIT)
   protected List<Path> packageFiles = Collections.EMPTY_LIST;
 
-  @CommandLine.Option(names = {"--override"}, description = "Overrides a single attribute"
-      , scope = ScopeType.INHERIT)
-  protected List<String> overrides = List.of();
-
   @Override
   public void run() {
     CommandLine.usage(this, System.out);
