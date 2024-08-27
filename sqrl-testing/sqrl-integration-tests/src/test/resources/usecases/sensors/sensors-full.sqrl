@@ -7,10 +7,10 @@ SecReading := SELECT sensorid, endOfSecond(timestamp) as timeSec,
         avg(temperature) as temp FROM SensorReading
     GROUP BY sensorid, timeSec ORDER BY timeSec DESC;
 
-SecReadingByTemp(@temp: Int) := SELECT * FROM SecReading WHERE temp > @temp ORDER BY timeSec ASC;
+SecReadingByTemp(@temp: Int) := SELECT * FROM SecReading WHERE temp > @temp ORDER BY timeSec ASC LIMIT 10;
 
 /* Create table of sensors and relate to readings */
-Sensors := DISTINCT Sensors ON id  ORDER BY timestamp DESC;
+Sensors := DISTINCT Sensors ON id ORDER BY timestamp DESC;
 Sensors.readings := JOIN SecReading r ON r.sensorid = @.id;
 Sensors.lastHour := SELECT max(temp) as maxTemp, avg(temp) as avgTemp
                        FROM @.readings

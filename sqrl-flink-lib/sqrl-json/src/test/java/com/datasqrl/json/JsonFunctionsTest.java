@@ -130,6 +130,13 @@ class JsonFunctionsTest {
       assertEquals("value", result);
     }
 
+    @Test
+    void testValidPathBoolean() {
+      FlinkJsonType json = new FlinkJsonType(readTree("{\"key\": true}"));
+      String result = JsonFunctions.JSON_EXTRACT.eval(json, "$.key");
+      assertEquals("true", result);
+    }
+
     // Testing eval method with a default value for String
     @Test
     void testStringPathWithDefaultValue() {
@@ -141,6 +148,14 @@ class JsonFunctionsTest {
 
     // Testing eval method with a default value for boolean
     @Test
+    void testBooleanPathNormalWithDefaultValue() {
+      FlinkJsonType json = new FlinkJsonType(readTree("{\"key\": true}"));
+      boolean defaultValue = false;
+      boolean result = JsonFunctions.JSON_EXTRACT.eval(json, "$.key", defaultValue);
+      assertTrue(result);
+    }
+
+    @Test
     void testBooleanPathWithDefaultValue() {
       FlinkJsonType json = new FlinkJsonType(readTree("{\"key\": true}"));
       boolean defaultValue = false;
@@ -148,13 +163,22 @@ class JsonFunctionsTest {
       assertFalse(result);
     }
 
+    // Testing eval method with a default value for boolean:false
+    @Test
+    void testBooleanPathWithDefaultValueTrue() {
+      FlinkJsonType json = new FlinkJsonType(readTree("{\"key\": true}"));
+      boolean defaultValue = true;
+      boolean result = JsonFunctions.JSON_EXTRACT.eval(json, "$.nonexistentKey", defaultValue);
+      assertTrue(result);
+    }
+
     // Testing eval method with a default value for Double
     @Test
     void testDoublePathWithDefaultValue() {
       FlinkJsonType json = new FlinkJsonType(readTree("{\"key\": 1.23}"));
       Double defaultValue = 4.56;
-      Double result = JsonFunctions.JSON_EXTRACT.eval(json, "$.nonexistentKey", defaultValue);
-      assertEquals(defaultValue, result);
+      Double result = JsonFunctions.JSON_EXTRACT.eval(json, "$.key", defaultValue);
+      assertEquals(1.23, result);
     }
 
     // Testing eval method with a default value for Integer
@@ -162,9 +186,10 @@ class JsonFunctionsTest {
     void testIntegerPathWithDefaultValue() {
       FlinkJsonType json = new FlinkJsonType(readTree("{\"key\": 123}"));
       Integer defaultValue = 456;
-      Integer result = JsonFunctions.JSON_EXTRACT.eval(json, "$.nonexistentKey", defaultValue);
-      assertEquals(defaultValue, result);
+      Integer result = JsonFunctions.JSON_EXTRACT.eval(json, "$.key", defaultValue);
+      assertEquals(123, result);
     }
+
     @Test
     void testInvalidPath() {
       FlinkJsonType json = new FlinkJsonType(readTree("{\"key\": \"value\"}"));

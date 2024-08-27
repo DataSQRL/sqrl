@@ -159,19 +159,16 @@ LogicalTableScan(table=[[likes_2]])
 >>>flink.json
 {
   "flinkSql" : [
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `bannedwordsfilter` AS 'com.datasqrl.text.BannedWordsFilter' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `cosinedistance` AS 'com.datasqrl.vector.CosineDistance' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `center` AS 'com.datasqrl.vector.Center' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `format` AS 'com.datasqrl.text.Format' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `vectortodouble` AS 'com.datasqrl.vector.VectorToDouble' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `parsetimestamp` AS 'com.datasqrl.time.ParseTimestamp' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `cosinesimilarity` AS 'com.datasqrl.vector.CosineSimilarity' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `onnxembed` AS 'com.datasqrl.vector.OnnxEmbed' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `split` AS 'com.datasqrl.text.Split' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `textsearch` AS 'com.datasqrl.text.TextSearch' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `ToJson` AS 'com.datasqrl.json.ToJson' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `asciitexttestembed` AS 'com.datasqrl.vector.AsciiTextTestEmbed' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `center` AS 'com.datasqrl.vector.Center' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `euclideandistance` AS 'com.datasqrl.vector.EuclideanDistance' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `vectortodouble` AS 'com.datasqrl.vector.VectorToDouble' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `parsetimestamp` AS 'com.datasqrl.time.ParseTimestamp' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `cosinesimilarity` AS 'com.datasqrl.vector.CosineSimilarity' LANGUAGE JAVA;",
     "CREATE TEMPORARY TABLE `events_1` (\n  `url` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `date` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `time` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `title` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `abstract` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `location` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `speakers` ROW(`name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`, `title` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`, `company` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`) NOT NULL ARRAY NOT NULL,\n  `last_updated` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`url`, `last_updated`) NOT ENFORCED,\n  WATERMARK FOR `last_updated` AS `last_updated` - INTERVAL '0.001' SECOND\n) WITH (\n  'format' = 'flexible-json',\n  'path' = '/data/events.jsonl',\n  'source.monitor-interval' = '1',\n  'connector' = 'filesystem'\n);",
     "CREATE TEMPORARY TABLE `likes_1` (\n  `eventId` BIGINT NOT NULL,\n  `userid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `liked` BOOLEAN NOT NULL,\n  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL METADATA FROM 'timestamp',\n  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'conference-likes',\n  'scan.startup.mode' = 'group-offsets'\n);",
     "CREATE TEMPORARY TABLE `addinterest_1` (\n  `text` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `userid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL METADATA FROM 'timestamp',\n  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'conference-addinterest',\n  'scan.startup.mode' = 'group-offsets'\n);",

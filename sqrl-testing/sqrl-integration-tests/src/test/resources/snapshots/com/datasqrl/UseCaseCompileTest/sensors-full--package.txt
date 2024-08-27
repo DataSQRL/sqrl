@@ -107,29 +107,6 @@ Type:   export
 Stage:  streams
 Inputs: secreading_1
 
-=== SecReadingByTemp
-ID:     secreadingbytemp_1
-Type:   stream
-Stage:  streams
-Inputs: secreading_1
-Primary Key: sensorid, timeSec
-Timestamp  : timeSec
-Schema:
- - sensorid: BIGINT NOT NULL
- - timeSec: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
- - temp: DOUBLE NOT NULL
-Post Processors:
- - sort: #1: timeSec TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) ASC
-Plan:
-LogicalFilter(condition=[>($2, ?0)])
-  LogicalTableScan(table=[[secreading_1]])
-
-=== kafka.SecReadingByTemp
-ID:     secreadingbytemp_1_4
-Type:   export
-Stage:  streams
-Inputs: secreadingbytemp_1
-
 === SensorReading
 ID:     sensorreading_2
 Type:   stream
@@ -192,7 +169,6 @@ LogicalTableScan(table=[[sensors_2]])
     "CREATE TEMPORARY TABLE `hightemp_1_1` (\n  `machineid` BIGINT NOT NULL,\n  `sensorid` BIGINT NOT NULL,\n  `temp` DOUBLE NOT NULL,\n  `timeSec` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n) WITH (\n  'connector' = 'print',\n  'print-identifier' = 'tempWarning'\n);",
     "CREATE TEMPORARY TABLE `hightemp_1_2` (\n  `machineid` BIGINT NOT NULL,\n  `sensorid` BIGINT NOT NULL,\n  `temp` DOUBLE NOT NULL,\n  `timeSec` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'hightemp_1',\n  'scan.startup.mode' = 'group-offsets'\n);",
     "CREATE TEMPORARY TABLE `secreading_1_3` (\n  `sensorid` BIGINT NOT NULL,\n  `timeSec` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `temp` DOUBLE NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'secreading_1',\n  'scan.startup.mode' = 'group-offsets'\n);",
-    "CREATE TEMPORARY TABLE `secreadingbytemp_1_4` (\n  `sensorid` BIGINT NOT NULL,\n  `timeSec` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `temp` DOUBLE NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'secreadingbytemp_1',\n  'scan.startup.mode' = 'group-offsets'\n);",
     "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM (SELECT `id`, `machineId`, `placed`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC) AS `_rownum`\n  FROM `sensors_1`) AS `t`\nWHERE `_rownum` = 1;",
     "CREATE VIEW `table$2`\nAS\nSELECT `sensorid`, ENDOFSECOND(`timestamp`) AS `timeSec`, `temperature`, `time`, `timestamp`\nFROM `sensorreading_1`;",
     "CREATE VIEW `table$3`\nAS\nSELECT `t0`.`machineId` AS `machineid`, `$cor3`.`sensorid`, `$cor3`.`temp`, `$cor3`.`timeSec`\nFROM (SELECT `sensorid`, `timeSec`, `temp`, `sensorid` AS `sensorid3`\n  FROM (SELECT `sensorid`, `window_time` AS `timeSec`, AVG(`temperature`) AS `temp`\n    FROM TABLE(TUMBLE(TABLE `table$2`, DESCRIPTOR(`timestamp`), INTERVAL '1' SECOND(4), INTERVAL '0' SECOND(1))) AS `t2`\n    GROUP BY `sensorid`, `window_start`, `window_end`, `window_time`) AS `t4`\n  WHERE `temp` > 35) AS `$cor3`\n INNER JOIN `table$1` FOR SYSTEM_TIME AS OF `$cor3`.`timeSec` AS `t0` ON `t0`.`id` = `$cor3`.`sensorid3`;",
@@ -216,9 +192,7 @@ LogicalTableScan(table=[[sensors_2]])
     "CREATE VIEW `table$21`\nAS\nSELECT `t0`.`machineId` AS `machineid`, `$cor10`.`sensorid`, `$cor10`.`temp`, `$cor10`.`timeSec`\nFROM (SELECT `sensorid`, `timeSec`, `temp`, `sensorid` AS `sensorid3`\n  FROM (SELECT `sensorid`, `window_time` AS `timeSec`, AVG(`temperature`) AS `temp`\n    FROM TABLE(TUMBLE(TABLE `table$20`, DESCRIPTOR(`timestamp`), INTERVAL '1' SECOND(4), INTERVAL '0' SECOND(1))) AS `t2`\n    GROUP BY `sensorid`, `window_start`, `window_end`, `window_time`) AS `t4`\n  WHERE `temp` > 35) AS `$cor10`\n INNER JOIN `table$19` FOR SYSTEM_TIME AS OF `$cor10`.`timeSec` AS `t0` ON `t0`.`id` = `$cor10`.`sensorid3`;",
     "CREATE VIEW `table$22`\nAS\nSELECT `sensorid`, ENDOFSECOND(`timestamp`) AS `timeSec`, `temperature`, `time`, `timestamp`\nFROM `sensorreading_1`;",
     "CREATE VIEW `table$23`\nAS\nSELECT `sensorid`, `window_time` AS `timeSec`, AVG(`temperature`) AS `temp`\nFROM TABLE(TUMBLE(TABLE `table$22`, DESCRIPTOR(`timestamp`), INTERVAL '1' SECOND(4), INTERVAL '0' SECOND(1))) AS `t0`\nGROUP BY `sensorid`, `window_start`, `window_end`, `window_time`;",
-    "CREATE VIEW `table$24`\nAS\nSELECT `sensorid`, ENDOFSECOND(`timestamp`) AS `timeSec`, `temperature`, `time`, `timestamp`\nFROM `sensorreading_1`;",
-    "CREATE VIEW `table$25`\nAS\nSELECT *\nFROM (SELECT `sensorid`, `window_time` AS `timeSec`, AVG(`temperature`) AS `temp`\n  FROM TABLE(TUMBLE(TABLE `table$24`, DESCRIPTOR(`timestamp`), INTERVAL '1' SECOND(4), INTERVAL '0' SECOND(1))) AS `t0`\n  GROUP BY `sensorid`, `window_start`, `window_end`, `window_time`) AS `t2`\nWHERE `temp` > ?;",
-    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `hightemp_1`\n(SELECT *\n FROM `table$3`)\n;\nINSERT INTO `lasthour_1`\n (SELECT *\n  FROM `table$7`)\n ;\n INSERT INTO `machine_1`\n  (SELECT *\n   FROM `table$11`)\n  ;\n  INSERT INTO `secreading_1`\n   (SELECT *\n    FROM `table$13`)\n   ;\n   INSERT INTO `sensorreading_2`\n    (SELECT *\n     FROM `table$14`)\n    ;\n    INSERT INTO `sensors_3`\n     (SELECT *\n      FROM `table$15`)\n     ;\n     INSERT INTO `hightemp_1_1`\n      (SELECT *\n       FROM `table$18`)\n      ;\n      INSERT INTO `hightemp_1_2`\n       (SELECT *\n        FROM `table$21`)\n       ;\n       INSERT INTO `secreading_1_3`\n        (SELECT *\n         FROM `table$23`)\n        ;\n        INSERT INTO `secreadingbytemp_1_4`\n         (SELECT *\n          FROM `table$25`)\n         ;\n         END;"
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `hightemp_1`\n(SELECT *\n FROM `table$3`)\n;\nINSERT INTO `lasthour_1`\n (SELECT *\n  FROM `table$7`)\n ;\n INSERT INTO `machine_1`\n  (SELECT *\n   FROM `table$11`)\n  ;\n  INSERT INTO `secreading_1`\n   (SELECT *\n    FROM `table$13`)\n   ;\n   INSERT INTO `sensorreading_2`\n    (SELECT *\n     FROM `table$14`)\n    ;\n    INSERT INTO `sensors_3`\n     (SELECT *\n      FROM `table$15`)\n     ;\n     INSERT INTO `hightemp_1_1`\n      (SELECT *\n       FROM `table$18`)\n      ;\n      INSERT INTO `hightemp_1_2`\n       (SELECT *\n        FROM `table$21`)\n       ;\n       INSERT INTO `secreading_1_3`\n        (SELECT *\n         FROM `table$23`)\n        ;\n        END;"
   ],
   "connectors" : [
     "print",
@@ -243,13 +217,6 @@ LogicalTableScan(table=[[sensors_2]])
     },
     {
       "name" : "secreading_1",
-      "numPartitions" : 1,
-      "replicationFactor" : 1,
-      "replicasAssignments" : { },
-      "config" : { }
-    },
-    {
-      "name" : "secreadingbytemp_1",
       "numPartitions" : 1,
       "replicationFactor" : 1,
       "replicasAssignments" : { },
@@ -1050,18 +1017,12 @@ LogicalTableScan(table=[[sensors_2]])
         "topic" : "secreading_1",
         "sinkConfig" : { },
         "filters" : { }
-      },
-      {
-        "fieldName" : "SecReadingByTemp",
-        "topic" : "secreadingbytemp_1",
-        "sinkConfig" : { },
-        "filters" : { }
       }
     ],
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype HighTemp {\n  machineid: Float!\n  sensorid: Float!\n  temp: Float!\n  timeSec: DateTime!\n}\n\ntype HighTempResult {\n  machineid: Float!\n  sensorid: Float!\n  temp: Float!\n  timeSec: DateTime!\n}\n\ntype Machine {\n  machineid: Float!\n  maxTemp: Float!\n  avgTemp: Float!\n  sensors(limit: Int = 10, offset: Int = 0): [Sensors!]\n}\n\ntype Query {\n  HighTemp(sensorid: Float, timeSec: DateTime, limit: Int = 10, offset: Int = 0): [HighTemp!]\n  Machine(machineid: Float, limit: Int = 10, offset: Int = 0): [Machine!]\n  SecReading(sensorid: Float, timeSec: DateTime, limit: Int = 10, offset: Int = 0): [SecReading!]\n  SecReadingByTemp(temp: Int!): [SecReadingByTemp!]\n  SensorReading(sensorid: Float, time: Float, limit: Int = 10, offset: Int = 0): [SensorReading!]\n  Sensors(id: Float, limit: Int = 10, offset: Int = 0): [Sensors!]\n}\n\ntype SecReading {\n  sensorid: Float!\n  timeSec: DateTime!\n  temp: Float!\n}\n\ntype SecReadingByTemp {\n  sensorid: Float!\n  timeSec: DateTime!\n  temp: Float!\n}\n\ntype SecReadingByTempResult {\n  sensorid: Float!\n  timeSec: DateTime!\n  temp: Float!\n}\n\ntype SecReadingResult {\n  sensorid: Float!\n  timeSec: DateTime!\n  temp: Float!\n}\n\ntype SensorReading {\n  sensorid: Float!\n  time: Float!\n  temperature: Float!\n  humidity: Float!\n  timestamp: DateTime!\n}\n\ntype Sensors {\n  id: Float!\n  machineId: Float!\n  placed: Float!\n  timestamp: DateTime!\n  lastHour: lastHour\n  readings(limit: Int = 10, offset: Int = 0): [SecReading!]\n}\n\ntype Subscription {\n  HighTemp: HighTempResult!\n  SecReading: SecReadingResult!\n  SecReadingByTemp: SecReadingByTempResult!\n}\n\ntype lastHour {\n  maxTemp: Float!\n  avgTemp: Float!\n  parent: Sensors!\n}\n"
+      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype HighTemp {\n  machineid: Float!\n  sensorid: Float!\n  temp: Float!\n  timeSec: DateTime!\n}\n\ntype HighTempResult {\n  machineid: Float!\n  sensorid: Float!\n  temp: Float!\n  timeSec: DateTime!\n}\n\ntype Machine {\n  machineid: Float!\n  maxTemp: Float!\n  avgTemp: Float!\n  sensors(limit: Int = 10, offset: Int = 0): [Sensors!]\n}\n\ntype Query {\n  HighTemp(sensorid: Float, timeSec: DateTime, limit: Int = 10, offset: Int = 0): [HighTemp!]\n  Machine(machineid: Float, limit: Int = 10, offset: Int = 0): [Machine!]\n  SecReading(sensorid: Float, timeSec: DateTime, limit: Int = 10, offset: Int = 0): [SecReading!]\n  SecReadingByTemp(temp: Int!): [SecReadingByTemp!]\n  SensorReading(sensorid: Float, time: Float, limit: Int = 10, offset: Int = 0): [SensorReading!]\n  Sensors(id: Float, limit: Int = 10, offset: Int = 0): [Sensors!]\n}\n\ntype SecReading {\n  sensorid: Float!\n  timeSec: DateTime!\n  temp: Float!\n}\n\ntype SecReadingByTemp {\n  sensorid: Float!\n  timeSec: DateTime!\n  temp: Float!\n}\n\ntype SecReadingResult {\n  sensorid: Float!\n  timeSec: DateTime!\n  temp: Float!\n}\n\ntype SensorReading {\n  sensorid: Float!\n  time: Float!\n  temperature: Float!\n  humidity: Float!\n  timestamp: DateTime!\n}\n\ntype Sensors {\n  id: Float!\n  machineId: Float!\n  placed: Float!\n  timestamp: DateTime!\n  lastHour: lastHour\n  readings(limit: Int = 10, offset: Int = 0): [SecReading!]\n}\n\ntype Subscription {\n  HighTemp: HighTempResult!\n  SecReading: SecReadingResult!\n}\n\ntype lastHour {\n  maxTemp: Float!\n  avgTemp: Float!\n  parent: Sensors!\n}\n"
     }
   }
 }

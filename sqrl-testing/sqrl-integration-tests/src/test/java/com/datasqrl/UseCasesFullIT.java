@@ -3,7 +3,6 @@ package com.datasqrl;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-@Disabled
 public class UseCasesFullIT extends UseCasesIT {
 
   @Test
@@ -22,11 +21,13 @@ public class UseCasesFullIT extends UseCasesIT {
   }
 
   @Test
+  @Disabled //flakey
   public void testSensorsMutation() {
     execute("test", "sensors", "sensors-mutation.sqrl", "sensors-mutation.graphqls", "sensors-mutation");
   }
 
   @Test
+  @Disabled //A compressed csv bug prevents this from completed correctly
   public void testSensorsFull() {
     execute("test", "sensors", "sensors-full.sqrl", null, "sensors-full");
   }

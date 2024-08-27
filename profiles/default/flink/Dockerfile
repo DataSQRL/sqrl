@@ -16,7 +16,6 @@ FROM flink:1.18.1-scala_2.12-java11
 
 WORKDIR /opt/flink/lib
 
-
 RUN echo "-> Install JARs: AWS / Hadoop S3" && \
     curl https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.4/hadoop-aws-3.3.4.jar -O
 
@@ -30,6 +29,9 @@ RUN echo "-> Install JARs: Hadoop" && \
     curl https://repo1.maven.org/maven2/com/fasterxml/woodstox/woodstox-core/5.3.0/woodstox-core-5.3.0.jar -O && \
     curl https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-hdfs-client/3.3.4/hadoop-hdfs-client-3.3.4.jar -O && \
     curl https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-mapreduce-client-core/3.3.4/hadoop-mapreduce-client-core-3.3.4.jar -O
+
+RUN mkdir -p /opt/flink/plugins/flink-s3-fs-hadoop
+RUN ln -fs /opt/flink/opt/flink-s3-fs-hadoop-*.jar /opt/flink/plugins/flink-s3-fs-hadoop/.
 
 # Exclude this step for fat jar
 COPY --from=build /app/build/libs/FlinkJob.jar /scripts/FlinkJob.jar
