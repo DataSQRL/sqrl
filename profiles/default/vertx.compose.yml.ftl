@@ -23,10 +23,8 @@ services:
 <#if config["enabled-engines"]?seq_contains("kafka")>
       - PROPERTIES_BOOTSTRAP_SERVERS=kafka:9092
 </#if>
-<#if config["enabled-engines"]?seq_contains("postgres")>
       - PGHOST=database
       - PGPORT=5432
       - PGDATABASE=datasqrl
       - PGUSER=postgres
       - PGPASSWORD=postgres
-</#if>
