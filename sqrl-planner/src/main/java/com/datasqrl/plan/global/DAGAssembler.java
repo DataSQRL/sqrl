@@ -135,7 +135,6 @@ public class DAGAssembler {
       databasePlans.add(new PhysicalDAGPlan.DatabaseStagePlan(database, databaseQueries, indexDefinitions));
     }
 
-    List<Log> exportLogs = new ArrayList<>();
 
     //Add exported tables
     dag.allNodesByClass(ExportNode.class).forEach(exportNode -> {

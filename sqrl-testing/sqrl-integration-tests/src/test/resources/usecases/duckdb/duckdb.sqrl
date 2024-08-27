@@ -1,7 +1,7 @@
 IMPORT data.applications;
 
 /*+exec(iceberg)*/
-MyTable := SELECT id, 'hello world' as hello FROM applications;
+MyTable1 := SELECT id, 'hello world' as hello FROM applications;
 
 /*+exec(postgres)*/
-MyTable := SELECT id, 'hello world' as hello FROM applications;
+MyTable2 := SELECT id, 'hello world' as hello FROM applications;
