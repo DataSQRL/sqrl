@@ -49,6 +49,7 @@ public class SnowflakeIT {
 
   @SneakyThrows
   @Test
+  @Disabled
   //Must have SNOWFLAKE_PASSWORD in env when running test
   public void test() {
     Path projectRoot = getProjectRootPath();

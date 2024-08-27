@@ -37,12 +37,6 @@ public class UseCasesFullIT extends UseCasesIT {
   }
 
   @Test
-  @Disabled
-  public void testSnowflake() {
-    execute("snowflake", "snowflake.sqrl", null);
-  }
-
-  @Test
   public void testDuckdb() {
     compile("duckdb", "duckdb.sqrl", null);
   }
