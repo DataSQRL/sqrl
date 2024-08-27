@@ -24,10 +24,20 @@ public class ExplainConfigImpl implements PackageJson.ExplainConfig {
   @Default
   boolean text = true;
   /**
-   * Whether to print out hints and other extended information in the pipeline explanation
+   * Whether to print the SQL for the tables and queries as planned
    */
   @Default
-  boolean extended = true;
+  boolean sql = false;
+  /**
+   * Whether to print the logical plan for the tables and queries as a relational tree with hints
+   */
+  @Default
+  boolean logical = true;
+  /**
+   * Whether to print the physical plan for the tables and queries
+   */
+  @Default
+  boolean physical = false;
   /**
    * This setting is primarily used for testing to ensure that the output of explain is
    * deterministic
@@ -39,7 +49,9 @@ public class ExplainConfigImpl implements PackageJson.ExplainConfig {
     this(
         sqrlConfig.asBool("visual").getOptional().orElse(true),
         sqrlConfig.asBool("text").getOptional().orElse(true),
-        sqrlConfig.asBool("extended").getOptional().orElse(true),
+        sqrlConfig.asBool("sql").getOptional().orElse(false),
+        sqrlConfig.asBool("logical").getOptional().orElse(true),
+        sqrlConfig.asBool("physical").getOptional().orElse(false),
         sqrlConfig.asBool("sorted").getOptional().orElse(true));
   }
 }

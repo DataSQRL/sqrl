@@ -272,7 +272,7 @@ public class QueryPlanner {
         .convert(dialect, relNode);
   }
 
-  public SqlNodes relToSql(Dialect dialect, RelNode relNode) {
+  public static SqlNodes relToSql(Dialect dialect, RelNode relNode) {
     RelToSqlNode relToSql = SqlConverterFactory.get(dialect);
     return relToSql.convert(relNode);
   }
@@ -393,7 +393,7 @@ public class QueryPlanner {
     return new RexBuilder(catalogReader.getTypeFactory());
   }
 
-  public SqlStrings sqlToString(Dialect dialect, SqlNodes node) {
+  private static SqlStrings sqlToString(Dialect dialect, SqlNodes node) {
     SqlNodeToString sqlToString = SqlToStringFactory.get(dialect);
     return sqlToString.convert(node);
   }
@@ -404,7 +404,7 @@ public class QueryPlanner {
             List.of(), List.of());
   }
 
-  public SqlStrings relToString(Dialect dialect, RelNode relNode) {
+  public static SqlStrings relToString(Dialect dialect, RelNode relNode) {
     return sqlToString(dialect, relToSql(dialect, relNode));
   }
 
