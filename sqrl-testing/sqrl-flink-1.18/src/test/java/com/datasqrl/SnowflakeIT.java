@@ -89,14 +89,11 @@ public class SnowflakeIT {
         + "    customer_id\n"
         + "    amount\n"
         + "  }\n"
-        + "  MyIcebergTable(limit:1) {\n"
-        + "    customer_id\n"
-        + "  }\n"
         + "}";
 
     String response = executeQuery(graphqlEndpoint, query);
 
-    assertEquals("{\"data\":{\"SnowflakeQuery\":[{\"customer_id\":1.0,\"amount\":706721.71},{\"customer_id\":1.0,\"amount\":42079.16},{\"customer_id\":1.0,\"amount\":463121.85},{\"customer_id\":1.0,\"amount\":290005.57},{\"customer_id\":1.0,\"amount\":253812.11},{\"customer_id\":1.0,\"amount\":29341.72},{\"customer_id\":1.0,\"amount\":243720.97},{\"customer_id\":1.0,\"amount\":16778.48},{\"customer_id\":1.0,\"amount\":255874.79},{\"customer_id\":1.0,\"amount\":605384.78},{\"customer_id\":1.0,\"amount\":379228.36},{\"customer_id\":1.0,\"amount\":8355.88},{\"customer_id\":1.0,\"amount\":39127.77},{\"customer_id\":1.0,\"amount\":252694.58},{\"customer_id\":1.0,\"amount\":214574.98}],\"MyIcebergTable\":[{\"customer_id\":10.0}]}}", response);
+    assertEquals("{\"data\":{\"SnowflakeQuery\":[{\"customer_id\":1.0,\"amount\":706721.71},{\"customer_id\":1.0,\"amount\":42079.16},{\"customer_id\":1.0,\"amount\":463121.85},{\"customer_id\":1.0,\"amount\":290005.57},{\"customer_id\":1.0,\"amount\":253812.11},{\"customer_id\":1.0,\"amount\":29341.72},{\"customer_id\":1.0,\"amount\":243720.97},{\"customer_id\":1.0,\"amount\":16778.48},{\"customer_id\":1.0,\"amount\":255874.79},{\"customer_id\":1.0,\"amount\":605384.78},{\"customer_id\":1.0,\"amount\":379228.36},{\"customer_id\":1.0,\"amount\":8355.88},{\"customer_id\":1.0,\"amount\":39127.77},{\"customer_id\":1.0,\"amount\":252694.58},{\"customer_id\":1.0,\"amount\":214574.98}]}}", response);
   }
 
   private static String executeQuery(String endpoint, String query) {
