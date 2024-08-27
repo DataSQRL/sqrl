@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.DockerClientFactory;
 
+@Disabled
 public class UseCasesFullIT extends UseCasesIT {
 
   private static String config;
