@@ -116,29 +116,39 @@ public class UseCasesFullIT extends UseCasesIT {
 
   @Test
   public void testClickstream() {
-    execute("clickstream", "clickstream-teaser.sqrl", "clickstream-teaser.graphqls");
+    execute("test", "clickstream", "clickstream-teaser.sqrl", "clickstream-teaser.graphqls", null,
+        "-c", "/Users/henneberger/sqrl/sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/clickstream/package.json",
+        "-c", config);
   }
 
   @Test
   public void testConference() {
-    execute("conference", "conference.sqrl", "conference.graphqls");
+    execute("test", "conference", "conference.sqrl", "conference.graphqls", null,
+        "-c", "/Users/henneberger/sqrl/sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/banking/package.json",
+        "-c", config);
   }
 
   @Test
   @Disabled //flakey
   public void testSensorsMutation() {
-    execute("test", "sensors", "sensors-mutation.sqrl", "sensors-mutation.graphqls", "sensors-mutation");
+    execute("test", "sensors", "sensors-mutation.sqrl", null,"sensors-mutation.graphqls", "sensors-mutation",
+        "-c", "/Users/henneberger/sqrl/sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/sensors/package.json",
+        "-c", config);
   }
 
   @Test
   @Disabled //A compressed csv bug prevents this from completed correctly
   public void testSensorsFull() {
-    execute("test", "sensors", "sensors-full.sqrl", null, "sensors-full");
+    execute("test", "sensors", "sensors-full.sqrl", null,"sensors-full",
+        "-c", "/Users/henneberger/sqrl/sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/sensors/package.json",
+        "-c", config);
   }
 
   @Test
   public void testSeedshopExtended() {
-    execute("test", "seedshop-tutorial", "seedshop-extended.sqrl", null, "seedshop-extended");
+    execute("test", "seedshop-tutorial", "seedshop-extended.sqrl", null, "seedshop-extended",
+        "-c", "/Users/henneberger/sqrl/sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/seedshop-tutorial/package.json",
+        "-c", config);
   }
 
   @Test
