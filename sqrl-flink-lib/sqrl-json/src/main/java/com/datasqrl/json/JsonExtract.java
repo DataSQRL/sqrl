@@ -20,7 +20,11 @@ public class JsonExtract extends ScalarFunction {
     try {
       JsonNode jsonNode = input.getJson();
       ReadContext ctx = JsonPath.parse(jsonNode.toString());
-      return ctx.read(pathSpec);
+      Object value = ctx.read(pathSpec);
+      if (value == null) {
+        return null;
+      }
+      return value.toString();
     } catch (Exception e) {
       return null;
     }
@@ -31,7 +35,7 @@ public class JsonExtract extends ScalarFunction {
       return null;
     }
     try {
-      ReadContext ctx = JsonPath.parse(input.getJson());
+      ReadContext ctx = JsonPath.parse(input.getJson().toString());
       JsonPath parse = JsonPath.compile(pathSpec);
       return ctx.read(parse, String.class);
     } catch (Exception e) {
@@ -39,12 +43,12 @@ public class JsonExtract extends ScalarFunction {
     }
   }
 
-  public Boolean eval(FlinkJsonType input, String pathSpec, boolean defaultValue) {
+  public Boolean eval(FlinkJsonType input, String pathSpec, Boolean defaultValue) {
     if (input == null) {
       return null;
     }
     try {
-      ReadContext ctx = JsonPath.parse(input.getJson());
+      ReadContext ctx = JsonPath.parse(input.getJson().toString());
       JsonPath parse = JsonPath.compile(pathSpec);
       return ctx.read(parse, Boolean.class);
     } catch (Exception e) {
@@ -57,7 +61,7 @@ public class JsonExtract extends ScalarFunction {
       return null;
     }
     try {
-      ReadContext ctx = JsonPath.parse(input.getJson());
+      ReadContext ctx = JsonPath.parse(input.getJson().toString());
       JsonPath parse = JsonPath.compile(pathSpec);
       return ctx.read(parse, Double.class);
     } catch (Exception e) {
@@ -70,7 +74,7 @@ public class JsonExtract extends ScalarFunction {
       return null;
     }
     try {
-      ReadContext ctx = JsonPath.parse(input.getJson());
+      ReadContext ctx = JsonPath.parse(input.getJson().toString());
       JsonPath parse = JsonPath.compile(pathSpec);
       return ctx.read(parse, Integer.class);
     } catch (Exception e) {

@@ -13,8 +13,8 @@ import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.parser.SqlParserPos;
-
-@AutoService(SqlTranslation.class)
+//Disabled for now
+//@AutoService(SqlTranslation.class)
 public class JsonToStringTranslation extends SnowflakeSqlTranslation {
 
   public JsonToStringTranslation() {

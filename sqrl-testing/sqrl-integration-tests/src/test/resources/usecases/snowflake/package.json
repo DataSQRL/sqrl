@@ -15,6 +15,11 @@
       "execution.checkpointing.interval": "30 sec"
     }
   },
+  "compile" : {
+    "sqrl-version": "0.5.4-SNAPSHOT",
+    "flink-build-image": "flink-build:latest",
+    "sqrl-vertx-image": "vertx-latest:latest"
+  },
   "engines": {
     "flink": {
       "connectors" : {

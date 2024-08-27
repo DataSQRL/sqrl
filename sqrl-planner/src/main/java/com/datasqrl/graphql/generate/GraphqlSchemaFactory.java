@@ -195,6 +195,7 @@ public class GraphqlSchemaFactory {
     // Retrieve streamable tables from the schema
     List<PhysicalRelationalTable> streamTables = schema.getTableFunctions().stream()
         .filter(t-> t instanceof RootSqrlTable)
+        .filter(t->t.getParameters().isEmpty())
         .filter(t->!((RootSqrlTable)t).isImportedTable() && !((RootSqrlTable)t).getHasExecHint())
         .map(t->((PhysicalRelationalTable)((RootSqrlTable) t).getInternalTable()))
         .filter(t->!(t instanceof ProxyImportRelationalTable)) //do not create subscriptions for imported tables

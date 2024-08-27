@@ -9,8 +9,8 @@ import com.google.auto.service.AutoService;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.parser.SqlParserPos;
-
-@AutoService(SqlTranslation.class)
+//Disabled for now
+//@AutoService(SqlTranslation.class)
 public class ToJsonSqlTranslation extends SnowflakeSqlTranslation {
 
   public ToJsonSqlTranslation() {

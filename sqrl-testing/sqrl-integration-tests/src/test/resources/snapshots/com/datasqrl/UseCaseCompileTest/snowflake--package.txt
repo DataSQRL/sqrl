@@ -165,7 +165,7 @@ LogicalProject(myJson=[$0], json=[toJson('{"x":1}')], _id=[$1], _updated_at=[$2]
         },
         {
           "name" : "Query.MySnowflakeTable-10",
-          "sql" : "CREATE OR REPLACE VIEW Query.MySnowflakeTable-10(myJson, json, _id, _updated_at)\nAS SELECT PARSE_JSON(myJson) AS myJson, PARSE_JSON('{\"x\":1}') AS json, _id, _updated_at\nFROM myjsontable_1\nORDER BY _updated_at DESC NULLS LAST, _id"
+          "sql" : "CREATE OR REPLACE VIEW Query.MySnowflakeTable-10(myJson, json, _id, _updated_at)\nAS SELECT PARSE_JSON(myJson) AS myJson, TOJSON('{\"x\":1}') AS json, _id, _updated_at\nFROM myjsontable_1\nORDER BY _updated_at DESC NULLS LAST, _id"
         }
       ]
     }
@@ -483,7 +483,7 @@ LogicalProject(myJson=[$0], json=[toJson('{"x":1}')], _id=[$1], _updated_at=[$2]
             "query" : {
               "type" : "PagedSnowflakeDbQuery",
               "type" : "PagedSnowflakeDbQuery",
-              "sql" : "SELECT myJson, PARSE_JSON('{\"x\":1}') AS json, _id, _updated_at\nFROM myjsontable_1\nORDER BY _updated_at DESC NULLS LAST, _id",
+              "sql" : "SELECT myJson, TOJSON('{\"x\":1}') AS json, _id, _updated_at\nFROM myjsontable_1\nORDER BY _updated_at DESC NULLS LAST, _id",
               "parameters" : [ ]
             }
           }

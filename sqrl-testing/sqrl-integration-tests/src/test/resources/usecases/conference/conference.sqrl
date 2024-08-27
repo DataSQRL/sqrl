@@ -4,7 +4,7 @@ IMPORT conference.Likes;
 IMPORT conference.AddInterest;
 
 IMPORT string.*;
-IMPORT text.*;
+IMPORT text.textsearch;
 IMPORT vector.*;
 IMPORT time.parseTimestamp;
 
