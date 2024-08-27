@@ -8,6 +8,7 @@ import com.datasqrl.cmd.StatusHook;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.flink.calcite.shaded.com.google.common.base.Strings;
 import org.junit.jupiter.api.Disabled;
@@ -30,11 +31,11 @@ public class UseCasesIT {
     execute("logging/it-kafka", "logging-kafka.sqrl", "logging-kafka.graphqls");
   }
 
-  protected void execute(String path, String script, String graphql) {
+  public void execute(String path, String script, String graphql) {
     execute("test", path, script, graphql, null);
   }
 
-  protected void execute(String goal, String path, String script, String graphql, String testSuffix) {
+  public void execute(String goal, String path, String script, String graphql, String testSuffix, String... args) {
     Path rootDir = RESOURCES.resolve(path);
     List<String> argsList = new ArrayList<>();
     argsList.add(goal);
@@ -46,6 +47,8 @@ public class UseCasesIT {
     }
     argsList.add("--profile");
     argsList.add(getProjectRoot(rootDir).resolve("profiles/default").toString());
+    argsList.addAll(Arrays.asList(args));
+
     execute(rootDir, AssertStatusHook.INSTANCE, argsList.toArray(String[]::new));
   }
 

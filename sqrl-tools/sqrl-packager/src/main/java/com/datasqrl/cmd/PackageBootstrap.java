@@ -171,7 +171,7 @@ public class PackageBootstrap {
   }
 
   /**
-   * We want to guard against misspelling so we can throw sensible error messages
+   * We want to guard against confusion with remote repo names and filesystem paths so we can throw sensible error messages
    */
   public static boolean isLocalProfile(Path rootDir, String profile) {
     //1. Check if it's on the local file system

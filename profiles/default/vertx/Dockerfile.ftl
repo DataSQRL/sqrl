@@ -1,4 +1,4 @@
-FROM datasqrl/sqrl-server:v0.5.3
+FROM ${config["compile"]["sqrl-vertx-image"]}
 
 COPY server-model.json /opt/sqrl/server-model.json
 COPY server-config.json /opt/sqrl/server-config.json

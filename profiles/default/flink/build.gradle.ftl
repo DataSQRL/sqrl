@@ -12,7 +12,7 @@ ext {
     flinkVersion = "1.18.1"
     jdbcVersion = "3.1.2-1.18"
     kafkaVersion = "3.1.0-1.18"
-    sqrlVersion = "0.5.3"
+    sqrlVersion = "${config["compile"]["sqrl-version"]}"
     icebergVersion = "1.5.2"
 <#if config["enabled-engines"]?seq_contains("postgres_log")>
     postgresCdcVersion = "3.1.0"

@@ -1,5 +1,5 @@
 # Stage 1: Building the dependencies and the fat JAR
-FROM gradle:8.6-jdk11 AS build
+FROM ${config["compile"]["flink-build-image"]} AS build
 
 WORKDIR /app
 
