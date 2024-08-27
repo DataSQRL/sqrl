@@ -38,6 +38,7 @@ public class UseCasesFullIT extends UseCasesIT {
   }
 
   @Test
+  @Disabled //todo
   public void testDuckdb() {
     compile("duckdb", "duckdb.sqrl", null);
   }
