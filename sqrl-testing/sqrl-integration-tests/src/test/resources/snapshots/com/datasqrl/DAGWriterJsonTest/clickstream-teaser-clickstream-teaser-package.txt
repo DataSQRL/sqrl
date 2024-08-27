@@ -6,7 +6,7 @@
   "stage" : "postgres",
   "inputs" : [ "recommendation_1" ],
   "plan" : "LogicalFilter(condition=[=($0, ?0)])\n  LogicalTableScan(table=[[recommendation_1]])\n",
-  "sql" : "SELECT *\nFROM \"recommendation_1\"\nWHERE \"url\" = $1"
+  "sql" : "SELECT *\nFROM `recommendation_1`\nWHERE (`url` = ?)"
 }, {
   "id" : "Query.Trending-2",
   "name" : "Query.Trending-2",
@@ -14,7 +14,7 @@
   "stage" : "postgres",
   "inputs" : [ "trending_1" ],
   "plan" : "LogicalTableScan(table=[[trending_1]])\n",
-  "sql" : "SELECT *\nFROM \"trending_1\""
+  "sql" : "SELECT *\nFROM `trending_1`"
 }, {
   "id" : "click_1",
   "name" : "clickstream-local.click",
@@ -28,7 +28,7 @@
   "stage" : "flink",
   "inputs" : [ "click_1" ],
   "plan" : "LogicalTableScan(table=[[click_1]], hints=[[[WatermarkHint inheritPath:[] options:[1]]]]) hints[WatermarkHint options:[1]]\n",
-  "sql" : "SELECT *\nFROM \"click_1\"",
+  "sql" : "SELECT *\nFROM `click_1`",
   "primary_key" : [ "url", "userid", "timestamp" ],
   "timestamp" : "timestamp",
   "schema" : [ {
@@ -49,7 +49,7 @@
   "stage" : "flink",
   "inputs" : [ "visitafter_1" ],
   "plan" : "LogicalProject(url=[$0], rec=[$1], frequency=[$2], __timestamp=[$3])\n  LogicalAggregate(group=[{0, 1}], frequency=[COUNT()], __timestamp=[MAX($2)])\n    LogicalTableScan(table=[[visitafter_1]])\n",
-  "sql" : "SELECT \"beforeURL\" AS \"url\", \"afterURL\" AS \"rec\", COUNT(*) AS \"frequency\", MAX(\"timestamp\") AS \"__timestamp\"\nFROM \"visitafter_1\"\nGROUP BY \"beforeURL\", \"afterURL\"",
+  "sql" : "SELECT `beforeURL` AS `url`, `afterURL` AS `rec`, COUNT(*) AS `frequency`, MAX(`timestamp`) AS `__timestamp`\nFROM `visitafter_1`\nGROUP BY `beforeURL`, `afterURL`",
   "primary_key" : [ "url", "rec" ],
   "timestamp" : "__timestamp",
   "schema" : [ {
@@ -76,7 +76,7 @@
   "stage" : "flink",
   "inputs" : [ "click_2" ],
   "plan" : "LogicalProject(url=[$0], total=[$2], _timestamp=[$1])\n  LogicalAggregate(group=[{0, 1}], total=[COUNT()]) hints[SlidingAggregationHint options:[1, 86400000, 1728000]]\n    LogicalTableScan(table=[[click_2]])\n",
-  "sql" : "SELECT \"url\", COUNT(*) AS \"total\", \"timestamp\" AS \"_timestamp\"\nFROM \"click_2\"\nGROUP BY \"url\", \"timestamp\"",
+  "sql" : "SELECT `url`, COUNT(*) AS `total`, `timestamp` AS `_timestamp`\nFROM `click_2`\nGROUP BY `url`, `timestamp`",
   "primary_key" : [ "url" ],
   "timestamp" : "_timestamp",
   "schema" : [ {
@@ -103,7 +103,7 @@
   "stage" : "flink",
   "inputs" : [ "click_2" ],
   "plan" : "LogicalProject(beforeURL=[$0], afterURL=[$3], timestamp=[$4], _userid=[$2], _timestamp0=[$1])\n  LogicalJoin(condition=[AND(=($2, $5), <($1, $4), >=($1, -($4, *(60000:INTERVAL MINUTE, 10))))], joinType=[inner]) hints[IntervalJoin]\n    LogicalTableScan(table=[[click_2]])\n    LogicalTableScan(table=[[click_2]])\n",
-  "sql" : "SELECT \"click_2\".\"url\" AS \"beforeURL\", \"click_20\".\"url\" AS \"afterURL\", \"click_20\".\"timestamp\", \"click_2\".\"userid\" AS \"_userid\", \"click_2\".\"timestamp\" AS \"_timestamp0\"\nFROM \"click_2\"\n INNER JOIN \"click_2\" AS \"click_20\" ON \"click_2\".\"userid\" = \"click_20\".\"userid\" AND \"click_2\".\"timestamp\" < \"click_20\".\"timestamp\" AND \"click_2\".\"timestamp\" >= \"click_20\".\"timestamp\" - INTERVAL '1' MINUTE * 10",
+  "sql" : "SELECT `click_2`.`url` AS `beforeURL`, `click_20`.`url` AS `afterURL`, `click_20`.`timestamp`, `click_2`.`userid` AS `_userid`, `click_2`.`timestamp` AS `_timestamp0`\nFROM `click_2`\nINNER JOIN `click_2` AS `click_20` ON (((`click_2`.`userid` = `click_20`.`userid`) AND (`click_2`.`timestamp` < `click_20`.`timestamp`)) AND (`click_2`.`timestamp` >= (`click_20`.`timestamp` - (INTERVAL '1' MINUTE * 10))))",
   "primary_key" : [ "beforeURL", "_userid", "_timestamp0", "afterURL", "timestamp" ],
   "timestamp" : "timestamp",
   "schema" : [ {

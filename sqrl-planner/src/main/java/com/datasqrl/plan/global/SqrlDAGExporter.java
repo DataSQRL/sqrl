@@ -130,7 +130,7 @@ public class SqrlDAGExporter {
 
     private String toSql(RelNode relNode) {
         if (!includeSQL) return null;
-        return QueryPlanner.relToString(Dialect.POSTGRES, relNode).getSql();
+        return QueryPlanner.relToString(Dialect.CALCITE, relNode).getSql();
     }
 
     private static List<PostProcessor> convert(PullupOperator.Container pullups, List<RelDataTypeField> fields) {
