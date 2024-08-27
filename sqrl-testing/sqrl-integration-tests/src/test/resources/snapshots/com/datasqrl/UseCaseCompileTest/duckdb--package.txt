@@ -35,7 +35,7 @@ LogicalProject(id=[$0], hello=['hello world'], _updated_at=[$6])
 {
   "flinkSql" : [
     "CREATE TEMPORARY TABLE `applications_1` (\n  `id` BIGINT NOT NULL,\n  `customer_id` BIGINT NOT NULL,\n  `loan_type_id` BIGINT NOT NULL,\n  `amount` DOUBLE NOT NULL,\n  `duration` BIGINT NOT NULL,\n  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,\n  WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND\n) WITH (\n  'format' = 'flexible-json',\n  'path' = '${DATA_PATH}/applications.jsonl',\n  'source.monitor-interval' = '1',\n  'connector' = 'filesystem'\n);",
-    "CREATE TEMPORARY TABLE `applications_2` (\n  `id` BIGINT NOT NULL,\n  `customer_id` BIGINT NOT NULL,\n  `loan_type_id` BIGINT NOT NULL,\n  `amount` DOUBLE NOT NULL,\n  `duration` BIGINT NOT NULL,\n  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED\n)\nPARTITIONED BY (`id`, `updated_at`)\nWITH (\n  'catalog-type' = 'hadoop',\n  'warehouse' = 'file:///Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test',\n  'catalog-name' = 'mydatabase',\n  'connector' = 'iceberg',\n  'catalog-table' = 'applications_2'\n);",
+    "CREATE TEMPORARY TABLE `applications_2` (\n  `id` BIGINT NOT NULL,\n  `customer_id` BIGINT NOT NULL,\n  `loan_type_id` BIGINT NOT NULL,\n  `amount` DOUBLE NOT NULL,\n  `duration` BIGINT NOT NULL,\n  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED\n)\nPARTITIONED BY (`id`)\nWITH (\n  'catalog-type' = 'hadoop',\n  'warehouse' = 'file:///Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test',\n  'catalog-name' = 'mydatabase',\n  'connector' = 'iceberg',\n  'catalog-table' = 'applications_2'\n);",
     "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `applications_1`;",
     "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `applications_2`\n(SELECT *\n FROM `table$1`)\n;\nEND;"
   ],
@@ -49,36 +49,48 @@ LogicalProject(id=[$0], hello=['hello world'], _updated_at=[$6])
 }
 >>>iceberg.json
 {
-  "plan" : {
-    "ddl" : [
-      {
-        "name" : "applications_2",
-        "columns" : [
-          "\"id\" BIGINT NOT NULL",
-          "\"customer_id\" BIGINT NOT NULL",
-          "\"loan_type_id\" BIGINT NOT NULL",
-          "\"amount\" DOUBLE PRECISION NOT NULL",
-          "\"duration\" BIGINT NOT NULL",
-          "\"application_date\" TIMESTAMP WITH TIME ZONE NOT NULL",
-          "\"updated_at\" TIMESTAMP WITH TIME ZONE NOT NULL"
-        ],
-        "primaryKeys" : [
-          "\"id\"",
-          "\"updated_at\""
-        ],
-        "sql" : "CREATE TABLE IF NOT EXISTS applications_2 (\"id\" BIGINT NOT NULL,\"customer_id\" BIGINT NOT NULL,\"loan_type_id\" BIGINT NOT NULL,\"amount\" DOUBLE PRECISION NOT NULL,\"duration\" BIGINT NOT NULL,\"application_date\" TIMESTAMP WITH TIME ZONE NOT NULL,\"updated_at\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\",\"updated_at\"));"
-      },
-      {
-        "indexName" : "applications_2_pbtree_c0c6",
-        "tableName" : "applications_2",
-        "columns" : [
-          "id",
-          "updated_at"
-        ],
-        "type" : "PBTREE",
-        "sql" : "CREATE INDEX IF NOT EXISTS applications_2_pbtree_c0c6 ON applications_2 USING pbtree (\"id\",\"updated_at\");"
-      }
-    ]
+  "ddl" : [
+    {
+      "name" : "applications_2",
+      "columns" : [
+        "\"id\" BIGINT NOT NULL",
+        "\"customer_id\" BIGINT NOT NULL",
+        "\"loan_type_id\" BIGINT NOT NULL",
+        "\"amount\" DOUBLE PRECISION NOT NULL",
+        "\"duration\" BIGINT NOT NULL",
+        "\"application_date\" TIMESTAMP WITH TIME ZONE NOT NULL",
+        "\"updated_at\" TIMESTAMP WITH TIME ZONE NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"id\"",
+        "\"updated_at\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS applications_2 (\"id\" BIGINT NOT NULL,\"customer_id\" BIGINT NOT NULL,\"loan_type_id\" BIGINT NOT NULL,\"amount\" DOUBLE PRECISION NOT NULL,\"duration\" BIGINT NOT NULL,\"application_date\" TIMESTAMP WITH TIME ZONE NOT NULL,\"updated_at\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\",\"updated_at\"));"
+    }
+  ],
+  "engines" : {
+    "duckdb" : {
+      "ddl" : [
+        {
+          "name" : "applications_2",
+          "columns" : [
+            "\"id\" BIGINT NOT NULL",
+            "\"customer_id\" BIGINT NOT NULL",
+            "\"loan_type_id\" BIGINT NOT NULL",
+            "\"amount\" DOUBLE PRECISION NOT NULL",
+            "\"duration\" BIGINT NOT NULL",
+            "\"application_date\" TIMESTAMP WITH TIME ZONE NOT NULL",
+            "\"updated_at\" TIMESTAMP WITH TIME ZONE NOT NULL"
+          ],
+          "primaryKeys" : [
+            "\"id\"",
+            "\"updated_at\""
+          ],
+          "sql" : "CREATE TABLE IF NOT EXISTS applications_2 (\"id\" BIGINT NOT NULL,\"customer_id\" BIGINT NOT NULL,\"loan_type_id\" BIGINT NOT NULL,\"amount\" DOUBLE PRECISION NOT NULL,\"duration\" BIGINT NOT NULL,\"application_date\" TIMESTAMP WITH TIME ZONE NOT NULL,\"updated_at\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\",\"updated_at\"));"
+        }
+      ],
+      "views" : [ ]
+    }
   }
 }
 >>>kafka.json

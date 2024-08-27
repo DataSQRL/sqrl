@@ -43,7 +43,7 @@ import org.testcontainers.utility.DockerImageName;
 @Slf4j
 public class DatasqrlRun {
   // Fix override
-  Path build = Path.of("build");
+  Path build = Path.of(System.getProperty("user.dir")).resolve("build");
   Path path = build.resolve("plan");
 
   EmbeddedKafkaCluster CLUSTER;
@@ -108,6 +108,8 @@ public class DatasqrlRun {
     config.putIfAbsent("table.exec.source.idle-timeout", "1 s");
     config.putIfAbsent("taskmanager.network.memory.max", "800m");
     config.putIfAbsent("execution.checkpointing.interval", "30 sec");
+    config.putIfAbsent("state.backend", "rocksdb");
+    config.putIfAbsent("table.exec.resource.default-parallelism", "1");
 
     Configuration configuration = Configuration.fromMap(config);
     StreamExecutionEnvironment sEnv = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(configuration);
@@ -151,7 +153,7 @@ public class DatasqrlRun {
     configMap.put("JDBC_USERNAME", "postgres");
     configMap.put("JDBC_PASSWORD", "postgres");
     //todo target?
-    configMap.put("DATA_PATH", Path.of(System.getProperty("user.dir")).resolve("build/deploy/flink/data").toString());
+    configMap.put("DATA_PATH", build.resolve("deploy/flink/data").toString());
     configMap.put("PGHOST", "localhost");
     configMap.put("PGUSER", "postgres");
     configMap.put("PGPASSWORD", "postgres");

@@ -16,6 +16,10 @@ import com.datasqrl.config.PackageJson.EmptyEngineConfig;
 import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.datatype.snowflake.SnowflakeIcebergDataTypeMapper;
 import com.datasqrl.engine.EnginePhysicalPlan;
+import com.datasqrl.engine.database.DatabasePhysicalPlan;
+import com.datasqrl.engine.database.DatabaseViewPhysicalPlan;
+import com.datasqrl.engine.database.DatabaseViewPhysicalPlan.DatabaseView;
+import com.datasqrl.engine.database.DatabaseViewPhysicalPlan.DatabaseViewImpl;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.stream.flink.connector.CastFunction;
@@ -28,6 +32,7 @@ import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
 import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.datasqrl.sql.SqlDDLStatement;
 import com.datasqrl.util.StreamUtil;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import java.util.ArrayList;
@@ -44,12 +49,10 @@ import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexNode;
-import org.apache.calcite.sql.SqlCharStringLiteral;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlSelect;
-import org.apache.calcite.sql.dialect.CalciteSqlDialect;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.tools.RelBuilder;
 
@@ -71,7 +74,8 @@ public class SnowflakeEngine extends AbstractJDBCQueryEngine {
   }
 
   @Override
-  public EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs, ExecutionPipeline pipeline,
+  public DatabasePhysicalPlan plan(ConnectorFactoryFactory tableConnectorFactory, EngineConfig tableConnectorConfig,
+      StagePlan plan, List<StageSink> inputs, ExecutionPipeline pipeline,
       List<StagePlan> stagePlans, SqrlFramework framework, ErrorCollector errorCollector) {
 
     List<SqlDDLStatement> ddlStatements = new ArrayList<>();
@@ -103,7 +107,7 @@ public class SnowflakeEngine extends AbstractJDBCQueryEngine {
     Map<IdentifiedQuery, QueryTemplate> databaseQueries = dbPlan.getQueries().stream()
         .collect(Collectors.toMap(ReadQuery::getQuery, q -> new QueryTemplate("snowflake", q.getRelNode())));
 
-    List<Map<String, String>> queries = new ArrayList<>();
+    List<DatabaseView> views = new ArrayList<>();
 
     SnowflakeIcebergDataTypeMapper icebergDataTypeMapper = new SnowflakeIcebergDataTypeMapper();
     for (Map.Entry<IdentifiedQuery, QueryTemplate> entry : databaseQueries.entrySet()) {
@@ -118,7 +122,8 @@ public class SnowflakeEngine extends AbstractJDBCQueryEngine {
 
 
       SqlParserPos pos = new SqlParserPos(0, 0);
-      SqlIdentifier viewName = new SqlIdentifier(entry.getKey().getNameId(), pos);
+      String viewName = entry.getKey().getNameId();
+      SqlIdentifier viewNameIdentifier = new SqlIdentifier(viewName, pos);
       SqlNodeList columnList = new SqlNodeList(relNode.getRowType().getFieldList().stream()
               .map(f->new SqlIdentifier(f.getName(), SqlParserPos.ZERO))
           .collect(Collectors.toList()), pos);
@@ -126,17 +131,17 @@ public class SnowflakeEngine extends AbstractJDBCQueryEngine {
       SqlSelect select =(SqlSelect) framework.getQueryPlanner()
           .relToSql(Dialect.SNOWFLAKE, relNode).getSqlNode();
 
-      SqlCreateSnowflakeView createView = new SqlCreateSnowflakeView(pos, true, false, false, false, null, viewName, columnList,
+      SqlCreateSnowflakeView createView = new SqlCreateSnowflakeView(pos, true, false, false, false, null, viewNameIdentifier, columnList,
           select, null, false);
 
       SnowflakeSqlNodeToString toString = new SnowflakeSqlNodeToString();
       String sql = toString.convert(() -> createView).getSql();
 
-      queries.add(Map.of("sql", sql));
+      views.add(new DatabaseViewImpl(viewName, sql));
     }
 
 
-    return new SnowflakePlan(ddlStatements, queries);
+    return new SnowflakePlan(ddlStatements, views, databaseQueries);
   }
 
   private RelNode applyUpcasting(RelBuilder relBuilder, RelNode relNode,
@@ -181,11 +186,12 @@ public class SnowflakeEngine extends AbstractJDBCQueryEngine {
 //  }
 
   @Value
-  public static class SnowflakePlan implements EnginePhysicalPlan {
+  public static class SnowflakePlan implements DatabaseViewPhysicalPlan {
 
     List<SqlDDLStatement> ddl;
-    List<Map<String, String>> queries;
-
+    List<DatabaseView> views;
+    @JsonIgnore
+    Map<IdentifiedQuery, QueryTemplate> queryPlans;
   }
 
   @Override

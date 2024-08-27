@@ -80,8 +80,8 @@ LogicalProject(myJson=[$0], json=[toJson('{"x":1}')], _id=[$1], _updated_at=[$2]
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `jsonconcat` AS 'com.datasqrl.json.JsonConcat' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `jsontostring` AS 'com.datasqrl.json.JsonToString' LANGUAGE JAVA;",
     "CREATE TEMPORARY TABLE `applications_1` (\n  `id` BIGINT NOT NULL,\n  `customer_id` BIGINT NOT NULL,\n  `loan_type_id` BIGINT NOT NULL,\n  `amount` DOUBLE NOT NULL,\n  `duration` BIGINT NOT NULL,\n  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,\n  WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND\n) WITH (\n  'format' = 'flexible-json',\n  'path' = '${DATA_PATH}/applications.jsonl',\n  'source.monitor-interval' = '1',\n  'connector' = 'filesystem'\n);",
-    "CREATE TEMPORARY TABLE `applications_2` (\n  `id` BIGINT NOT NULL,\n  `customer_id` BIGINT NOT NULL,\n  `loan_type_id` BIGINT NOT NULL,\n  `amount` DOUBLE NOT NULL,\n  `duration` BIGINT NOT NULL,\n  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED\n)\nPARTITIONED BY (`id`, `updated_at`)\nWITH (\n  'io-impl' = 'org.apache.iceberg.aws.s3.S3FileIO',\n  'connector' = 'iceberg',\n  'catalog-impl' = 'org.apache.iceberg.aws.glue.GlueCatalog',\n  'catalog-database' = 'mydatabase',\n  'catalog-table' = 'applications_2',\n  'warehouse' = 's3://daniel-iceberg-table-test',\n  'catalog-name' = 'mydatabase'\n);",
-    "CREATE TEMPORARY TABLE `myicebergtable_1` (\n  `id` BIGINT NOT NULL,\n  `customer_id` BIGINT NOT NULL,\n  `loan_type_id` BIGINT NOT NULL,\n  `amount` DOUBLE NOT NULL,\n  `duration` BIGINT NOT NULL,\n  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED\n)\nPARTITIONED BY (`id`, `updated_at`)\nWITH (\n  'io-impl' = 'org.apache.iceberg.aws.s3.S3FileIO',\n  'connector' = 'iceberg',\n  'catalog-impl' = 'org.apache.iceberg.aws.glue.GlueCatalog',\n  'catalog-database' = 'mydatabase',\n  'catalog-table' = 'myicebergtable_1',\n  'warehouse' = 's3://daniel-iceberg-table-test',\n  'catalog-name' = 'mydatabase'\n);",
+    "CREATE TEMPORARY TABLE `applications_2` (\n  `id` BIGINT NOT NULL,\n  `customer_id` BIGINT NOT NULL,\n  `loan_type_id` BIGINT NOT NULL,\n  `amount` DOUBLE NOT NULL,\n  `duration` BIGINT NOT NULL,\n  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED\n)\nPARTITIONED BY (`id`)\nWITH (\n  'io-impl' = 'org.apache.iceberg.aws.s3.S3FileIO',\n  'connector' = 'iceberg',\n  'catalog-impl' = 'org.apache.iceberg.aws.glue.GlueCatalog',\n  'catalog-database' = 'mydatabase',\n  'catalog-table' = 'applications_2',\n  'warehouse' = 's3://daniel-iceberg-table-test',\n  'catalog-name' = 'mydatabase'\n);",
+    "CREATE TEMPORARY TABLE `myicebergtable_1` (\n  `id` BIGINT NOT NULL,\n  `customer_id` BIGINT NOT NULL,\n  `loan_type_id` BIGINT NOT NULL,\n  `amount` DOUBLE NOT NULL,\n  `duration` BIGINT NOT NULL,\n  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED\n)\nPARTITIONED BY (`id`)\nWITH (\n  'io-impl' = 'org.apache.iceberg.aws.s3.S3FileIO',\n  'connector' = 'iceberg',\n  'catalog-impl' = 'org.apache.iceberg.aws.glue.GlueCatalog',\n  'catalog-database' = 'mydatabase',\n  'catalog-table' = 'myicebergtable_1',\n  'warehouse' = 's3://daniel-iceberg-table-test',\n  'catalog-name' = 'mydatabase'\n);",
     "CREATE TEMPORARY TABLE `myjsontable_1` (\n  `myJson` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `_id` BIGINT NOT NULL,\n  `_updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`_id`, `_updated_at`) NOT ENFORCED\n) WITH (\n  'io-impl' = 'org.apache.iceberg.aws.s3.S3FileIO',\n  'connector' = 'iceberg',\n  'catalog-impl' = 'org.apache.iceberg.aws.glue.GlueCatalog',\n  'catalog-database' = 'mydatabase',\n  'catalog-table' = 'myjsontable_1',\n  'warehouse' = 's3://daniel-iceberg-table-test',\n  'catalog-name' = 'mydatabase'\n);",
     "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `applications_1`;",
     "CREATE VIEW `table$2`\nAS\nSELECT *\nFROM `applications_1`;",
@@ -98,53 +98,77 @@ LogicalProject(myJson=[$0], json=[toJson('{"x":1}')], _id=[$1], _updated_at=[$2]
 }
 >>>iceberg.json
 {
-  "plan" : {
-    "ddl" : [
-      {
-        "sql" : "CREATE OR REPLACE ICEBERG TABLE applications_2 EXTERNAL_VOLUME = 'MyNewVolume' CATALOG = 'MyCatalog' CATALOG_TABLE_NAME = 'applications_2'"
-      },
-      {
-        "sql" : "CREATE OR REPLACE ICEBERG TABLE myicebergtable_1 EXTERNAL_VOLUME = 'MyNewVolume' CATALOG = 'MyCatalog' CATALOG_TABLE_NAME = 'myicebergtable_1'"
-      },
-      {
-        "sql" : "CREATE OR REPLACE ICEBERG TABLE myjsontable_1 EXTERNAL_VOLUME = 'MyNewVolume' CATALOG = 'MyCatalog' CATALOG_TABLE_NAME = 'myjsontable_1'"
-      }
-    ],
-    "queries" : [
-      {
-        "sql" : "CREATE OR REPLACE VIEW Query.MyIcebergTable-6(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM myicebergtable_1\nWHERE updated_at = ?\nORDER BY updated_at DESC NULLS LAST, id"
-      },
-      {
-        "sql" : "CREATE OR REPLACE VIEW Query.MyIcebergTable-5(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM myicebergtable_1\nORDER BY updated_at DESC NULLS LAST, id"
-      },
-      {
-        "sql" : "CREATE OR REPLACE VIEW Query.MyIcebergTable-8(id, customer_id, loan_type_id, amount, duration, application_date, updated_at, __pk)\nAS SELECT id, customer_id, loan_type_id, amount, duration, application_date, updated_at, 1 AS __pk\nFROM myicebergtable_1\nWHERE id = ? AND updated_at = ?\nORDER BY updated_at DESC NULLS LAST, 1"
-      },
-      {
-        "sql" : "CREATE OR REPLACE VIEW Query.MyIcebergTable-7(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM myicebergtable_1\nWHERE id = ?\nORDER BY updated_at DESC NULLS LAST"
-      },
-      {
-        "sql" : "CREATE OR REPLACE VIEW Query.applications-2(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM applications_2\nWHERE updated_at = ?\nORDER BY updated_at DESC NULLS LAST, id"
-      },
-      {
-        "sql" : "CREATE OR REPLACE VIEW Query.MyJsonTable-9(myJson, _id, _updated_at)\nAS SELECT PARSE_JSON(myJson) AS myJson, _id, _updated_at\nFROM myjsontable_1\nORDER BY _updated_at DESC NULLS LAST, _id"
-      },
-      {
-        "sql" : "CREATE OR REPLACE VIEW Query.applications-1(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM applications_2\nORDER BY updated_at DESC NULLS LAST, id"
-      },
-      {
-        "sql" : "CREATE OR REPLACE VIEW Query.applications-4(id, customer_id, loan_type_id, amount, duration, application_date, updated_at, __pk)\nAS SELECT id, customer_id, loan_type_id, amount, duration, application_date, updated_at, 1 AS __pk\nFROM applications_2\nWHERE id = ? AND updated_at = ?\nORDER BY updated_at DESC NULLS LAST, 1"
-      },
-      {
-        "sql" : "CREATE OR REPLACE VIEW Query.applications-3(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM applications_2\nWHERE id = ?\nORDER BY updated_at DESC NULLS LAST"
-      },
-      {
-        "sql" : "CREATE OR REPLACE VIEW Query.SnowflakeQuery-11(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM myicebergtable_1\nWHERE customer_id = ?\nORDER BY updated_at DESC NULLS LAST, id"
-      },
-      {
-        "sql" : "CREATE OR REPLACE VIEW Query.MySnowflakeTable-10(myJson, json, _id, _updated_at)\nAS SELECT PARSE_JSON(myJson) AS myJson, PARSE_JSON('{\"x\":1}') AS json, _id, _updated_at\nFROM myjsontable_1\nORDER BY _updated_at DESC NULLS LAST, _id"
-      }
-    ]
+  "ddl" : [
+    {
+      "sql" : "CREATE OR REPLACE ICEBERG TABLE applications_2 EXTERNAL_VOLUME = 'MyNewVolume' CATALOG = 'MyCatalog' CATALOG_TABLE_NAME = 'applications_2'"
+    },
+    {
+      "sql" : "CREATE OR REPLACE ICEBERG TABLE myicebergtable_1 EXTERNAL_VOLUME = 'MyNewVolume' CATALOG = 'MyCatalog' CATALOG_TABLE_NAME = 'myicebergtable_1'"
+    },
+    {
+      "sql" : "CREATE OR REPLACE ICEBERG TABLE myjsontable_1 EXTERNAL_VOLUME = 'MyNewVolume' CATALOG = 'MyCatalog' CATALOG_TABLE_NAME = 'myjsontable_1'"
+    }
+  ],
+  "engines" : {
+    "snowflake" : {
+      "ddl" : [
+        {
+          "sql" : "CREATE OR REPLACE ICEBERG TABLE applications_2 EXTERNAL_VOLUME = 'MyNewVolume' CATALOG = 'MyCatalog' CATALOG_TABLE_NAME = 'applications_2'"
+        },
+        {
+          "sql" : "CREATE OR REPLACE ICEBERG TABLE myicebergtable_1 EXTERNAL_VOLUME = 'MyNewVolume' CATALOG = 'MyCatalog' CATALOG_TABLE_NAME = 'myicebergtable_1'"
+        },
+        {
+          "sql" : "CREATE OR REPLACE ICEBERG TABLE myjsontable_1 EXTERNAL_VOLUME = 'MyNewVolume' CATALOG = 'MyCatalog' CATALOG_TABLE_NAME = 'myjsontable_1'"
+        }
+      ],
+      "views" : [
+        {
+          "name" : "Query.MyIcebergTable-6",
+          "sql" : "CREATE OR REPLACE VIEW Query.MyIcebergTable-6(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM myicebergtable_1\nWHERE updated_at = ?\nORDER BY updated_at DESC NULLS LAST, id"
+        },
+        {
+          "name" : "Query.MyIcebergTable-5",
+          "sql" : "CREATE OR REPLACE VIEW Query.MyIcebergTable-5(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM myicebergtable_1\nORDER BY updated_at DESC NULLS LAST, id"
+        },
+        {
+          "name" : "Query.MyIcebergTable-8",
+          "sql" : "CREATE OR REPLACE VIEW Query.MyIcebergTable-8(id, customer_id, loan_type_id, amount, duration, application_date, updated_at, __pk)\nAS SELECT id, customer_id, loan_type_id, amount, duration, application_date, updated_at, 1 AS __pk\nFROM myicebergtable_1\nWHERE id = ? AND updated_at = ?\nORDER BY updated_at DESC NULLS LAST, 1"
+        },
+        {
+          "name" : "Query.MyIcebergTable-7",
+          "sql" : "CREATE OR REPLACE VIEW Query.MyIcebergTable-7(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM myicebergtable_1\nWHERE id = ?\nORDER BY updated_at DESC NULLS LAST"
+        },
+        {
+          "name" : "Query.applications-2",
+          "sql" : "CREATE OR REPLACE VIEW Query.applications-2(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM applications_2\nWHERE updated_at = ?\nORDER BY updated_at DESC NULLS LAST, id"
+        },
+        {
+          "name" : "Query.MyJsonTable-9",
+          "sql" : "CREATE OR REPLACE VIEW Query.MyJsonTable-9(myJson, _id, _updated_at)\nAS SELECT PARSE_JSON(myJson) AS myJson, _id, _updated_at\nFROM myjsontable_1\nORDER BY _updated_at DESC NULLS LAST, _id"
+        },
+        {
+          "name" : "Query.applications-1",
+          "sql" : "CREATE OR REPLACE VIEW Query.applications-1(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM applications_2\nORDER BY updated_at DESC NULLS LAST, id"
+        },
+        {
+          "name" : "Query.applications-4",
+          "sql" : "CREATE OR REPLACE VIEW Query.applications-4(id, customer_id, loan_type_id, amount, duration, application_date, updated_at, __pk)\nAS SELECT id, customer_id, loan_type_id, amount, duration, application_date, updated_at, 1 AS __pk\nFROM applications_2\nWHERE id = ? AND updated_at = ?\nORDER BY updated_at DESC NULLS LAST, 1"
+        },
+        {
+          "name" : "Query.applications-3",
+          "sql" : "CREATE OR REPLACE VIEW Query.applications-3(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM applications_2\nWHERE id = ?\nORDER BY updated_at DESC NULLS LAST"
+        },
+        {
+          "name" : "Query.SnowflakeQuery-11",
+          "sql" : "CREATE OR REPLACE VIEW Query.SnowflakeQuery-11(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM myicebergtable_1\nWHERE customer_id = ?\nORDER BY updated_at DESC NULLS LAST, id"
+        },
+        {
+          "name" : "Query.MySnowflakeTable-10",
+          "sql" : "CREATE OR REPLACE VIEW Query.MySnowflakeTable-10(myJson, json, _id, _updated_at)\nAS SELECT PARSE_JSON(myJson) AS myJson, PARSE_JSON('{\"x\":1}') AS json, _id, _updated_at\nFROM myjsontable_1\nORDER BY _updated_at DESC NULLS LAST, _id"
+        }
+      ]
+    }
   }
 }
 >>>vertx.json

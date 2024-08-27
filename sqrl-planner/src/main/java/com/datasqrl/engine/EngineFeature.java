@@ -35,6 +35,8 @@ public enum EngineFeature {
   MATERIALIZE_ON_KEY,
   //Engine supports relations (i.e. no primary key)
   RELATIONS,
+  //Engine supports partitioning by key on write
+  PARTITIONING,
   //Engine supports data monitoring
   DATA_MONITORING;
 
@@ -46,7 +48,7 @@ public enum EngineFeature {
       MULTI_RANK, TABLE_FUNCTION_SCAN, RELATIONS, DENORMALIZE);
 
   public static EnumSet<EngineFeature> STANDARD_TABLE_FORMAT = EnumSet.of(MATERIALIZE_ON_KEY,
-      DENORMALIZE);
+      DENORMALIZE, PARTITIONING);
 
   public static EnumSet<EngineFeature> STANDARD_QUERY = EnumSet.of(NOW, GLOBAL_SORT,
       MULTI_RANK, TABLE_FUNCTION_SCAN, RELATIONS);
