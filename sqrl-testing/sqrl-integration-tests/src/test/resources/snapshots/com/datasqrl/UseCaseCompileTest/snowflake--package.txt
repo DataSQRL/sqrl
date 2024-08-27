@@ -174,7 +174,350 @@ LogicalProject(myJson=[$0], json=[toJson('{"x":1}')], _id=[$1], _updated_at=[$2]
 >>>vertx.json
 {
   "model" : {
-    "coords" : [ ],
+    "coords" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "applications",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "updated_at"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedSnowflakeDbQuery",
+              "type" : "PagedSnowflakeDbQuery",
+              "sql" : "SELECT *\nFROM applications_2\nWHERE updated_at = ?\nORDER BY updated_at DESC NULLS LAST, id",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "updated_at"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedSnowflakeDbQuery",
+              "type" : "PagedSnowflakeDbQuery",
+              "sql" : "SELECT *\nFROM applications_2\nORDER BY updated_at DESC NULLS LAST, id",
+              "parameters" : [ ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "updated_at"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedSnowflakeDbQuery",
+              "type" : "PagedSnowflakeDbQuery",
+              "sql" : "SELECT id, customer_id, loan_type_id, amount, duration, application_date, updated_at, 1 AS __pk\nFROM applications_2\nWHERE id = ? AND updated_at = ?\nORDER BY updated_at DESC NULLS LAST, 1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "id"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "updated_at"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedSnowflakeDbQuery",
+              "type" : "PagedSnowflakeDbQuery",
+              "sql" : "SELECT *\nFROM applications_2\nWHERE id = ?\nORDER BY updated_at DESC NULLS LAST",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "id"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "MyIcebergTable",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "updated_at"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedSnowflakeDbQuery",
+              "type" : "PagedSnowflakeDbQuery",
+              "sql" : "SELECT *\nFROM myicebergtable_1\nWHERE updated_at = ?\nORDER BY updated_at DESC NULLS LAST, id",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "updated_at"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedSnowflakeDbQuery",
+              "type" : "PagedSnowflakeDbQuery",
+              "sql" : "SELECT *\nFROM myicebergtable_1\nORDER BY updated_at DESC NULLS LAST, id",
+              "parameters" : [ ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "updated_at"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedSnowflakeDbQuery",
+              "type" : "PagedSnowflakeDbQuery",
+              "sql" : "SELECT id, customer_id, loan_type_id, amount, duration, application_date, updated_at, 1 AS __pk\nFROM myicebergtable_1\nWHERE id = ? AND updated_at = ?\nORDER BY updated_at DESC NULLS LAST, 1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "id"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "updated_at"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedSnowflakeDbQuery",
+              "type" : "PagedSnowflakeDbQuery",
+              "sql" : "SELECT *\nFROM myicebergtable_1\nWHERE id = ?\nORDER BY updated_at DESC NULLS LAST",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "id"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "MyJsonTable",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedSnowflakeDbQuery",
+              "type" : "PagedSnowflakeDbQuery",
+              "sql" : "SELECT *\nFROM myjsontable_1\nORDER BY _updated_at DESC NULLS LAST, _id",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "MySnowflakeTable",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedSnowflakeDbQuery",
+              "type" : "PagedSnowflakeDbQuery",
+              "sql" : "SELECT myJson, PARSE_JSON('{\"x\":1}') AS json, _id, _updated_at\nFROM myjsontable_1\nORDER BY _updated_at DESC NULLS LAST, _id",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "SnowflakeQuery",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "customerId"
+              }
+            ],
+            "query" : {
+              "type" : "SnowflakeDbQuery",
+              "type" : "SnowflakeDbQuery",
+              "sql" : "SELECT *\nFROM myicebergtable_1\nWHERE customer_id = ?\nORDER BY updated_at DESC NULLS LAST, id",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "customerId"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
     "mutations" : [ ],
     "subscriptions" : [ ],
     "schema" : {
