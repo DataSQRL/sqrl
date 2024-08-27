@@ -2,7 +2,7 @@
 === OrderAgg1
 ID:     orderagg1_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: orders_2
 Primary Key: customerid
 Timestamp  : __timestamp
@@ -17,7 +17,7 @@ LogicalAggregate(group=[{1}], count=[COUNT()], __timestamp=[MAX($2)])
 === OrderAgg2
 ID:     orderagg2_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: orders_2
 Primary Key: customerid
 Timestamp  : timestamp
@@ -32,7 +32,7 @@ LogicalAggregate(group=[{1}], timestamp=[MAX($2)], count=[COUNT()])
 === OrderAgg3
 ID:     orderagg3_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: ordersstate_1
 Primary Key: customerid
 Timestamp  : __timestamp
@@ -49,7 +49,7 @@ LogicalAggregate(group=[{1}], count=[COUNT()], __timestamp=[MAX($2)])
 === OrderAgg4
 ID:     orderagg4_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: ordersstate_1
 Primary Key: customerid
 Timestamp  : timestamp
@@ -66,7 +66,7 @@ LogicalAggregate(group=[{1}], timestamp=[MAX($2)], count=[COUNT()])
 === Orders
 ID:     orders_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: id, time
 Timestamp  : time
 Schema:
@@ -80,7 +80,7 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
 === OrdersState
 ID:     ordersstate_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: orders_2
 Primary Key: id
 Timestamp  : time

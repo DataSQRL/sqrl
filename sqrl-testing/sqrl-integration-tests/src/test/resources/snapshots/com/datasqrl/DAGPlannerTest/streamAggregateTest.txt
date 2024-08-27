@@ -2,7 +2,7 @@
 === Customer
 ID:     customer_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: customerid, lastUpdated
 Timestamp  : timestamp
 Schema:
@@ -17,7 +17,7 @@ LogicalTableScan(table=[[customer_1]], hints=[[[WatermarkHint inheritPath:[] opt
 === OrderAgg1
 ID:     orderagg1_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: orders_2
 Primary Key: customer
 Timestamp  : __timestamp
@@ -33,7 +33,7 @@ LogicalAggregate(group=[{0}], order_count=[COUNT()], __timestamp=[MAX($2)])
 === OrderAgg2
 ID:     orderagg2_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: orders_2
 Primary Key: __pk
 Timestamp  : __timestamp
@@ -49,7 +49,7 @@ LogicalProject(order_count=[$0], __pk=[1], __timestamp=[$1])
 === Orders
 ID:     orders_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: id, time
 Timestamp  : time
 Schema:
@@ -63,7 +63,7 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
 === Ordertime1
 ID:     ordertime1_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: orders_2
 Primary Key: customer, bucket
 Timestamp  : bucket
@@ -79,13 +79,13 @@ LogicalAggregate(group=[{0, 1}], order_count=[COUNT()]) hints[TumbleAggregationH
 === kafka.Ordertime1
 ID:     ordertime1_1_1
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: ordertime1_1
 
 === Ordertime2
 ID:     ordertime2_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: orders_2
 Primary Key: customer, bucket
 Timestamp  : bucket
@@ -101,13 +101,13 @@ LogicalAggregate(group=[{0, 1}], order_count=[COUNT()]) hints[TumbleAggregationH
 === kafka.Ordertime2
 ID:     ordertime2_1_2
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: ordertime2_1
 
 === Ordertime3
 ID:     ordertime3_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: orders_2
 Primary Key: customer, bucket
 Timestamp  : bucket
@@ -123,13 +123,13 @@ LogicalAggregate(group=[{0, 1}], order_count=[COUNT()]) hints[TumbleAggregationH
 === kafka.Ordertime3
 ID:     ordertime3_1_3
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: ordertime3_1
 
 === Product
 ID:     product_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: productid, name, description, category
 Timestamp  : _ingest_time
 Schema:

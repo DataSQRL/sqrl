@@ -2,7 +2,7 @@
 === applications
 ID:     applications_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: id, updated_at
 Timestamp  : updated_at
 Schema:
@@ -19,7 +19,7 @@ LogicalTableScan(table=[[applications_1]], hints=[[[WatermarkHint inheritPath:[]
 === MyTable1
 ID:     mytable1_1
 Type:   stream
-Stage:  database
+Stage:  iceberg
 Inputs: applications_2
 Primary Key: id, _updated_at
 Timestamp  : _updated_at
@@ -34,7 +34,7 @@ LogicalProject(id=[$0], hello=['hello world'], _updated_at=[$6])
 === MyTable2
 ID:     mytable2_1
 Type:   stream
-Stage:  database
+Stage:  postgres
 Inputs: applications_2
 Primary Key: id, _updated_at
 Timestamp  : _updated_at

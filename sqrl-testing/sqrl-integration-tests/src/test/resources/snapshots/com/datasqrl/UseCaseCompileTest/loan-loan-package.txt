@@ -2,7 +2,7 @@
 === AddChatMessage
 ID:     addchatmessage_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: _uuid
 Timestamp  : event_time
 Schema:
@@ -18,7 +18,7 @@ LogicalTableScan(table=[[addchatmessage_1]], hints=[[[WatermarkHint inheritPath:
 === ApplicationAlert
 ID:     applicationalert_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: applicationstatus_1
 Primary Key: _uuid
 Timestamp  : _event_time
@@ -39,13 +39,13 @@ LogicalProject(id=[$3], customer_id=[$4], loan_type_id=[$5], max_amount=[$8], mi
 === kafka.ApplicationAlert
 ID:     applicationalert_1_1
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: applicationalert_1
 
 === Applications
 ID:     applications_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: id, updated_at
 Timestamp  : updated_at
 Schema:
@@ -62,7 +62,7 @@ LogicalTableScan(table=[[applications_1]], hints=[[[WatermarkHint inheritPath:[]
 === Applications
 ID:     applications_3
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: applications_2
 Primary Key: id
 Timestamp  : updated_at
@@ -82,7 +82,7 @@ LogicalTableScan(table=[[applications_2]])
 === ApplicationStatus
 ID:     applicationstatus_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: applications_3, applicationupdates_2, loantypes_3
 Primary Key: _uuid
 Timestamp  : event_time
@@ -113,7 +113,7 @@ LogicalProject(status=[$1], message=[$2], event_time=[$4], id=[$5], customer_id=
 === ApplicationUpdates
 ID:     applicationupdates_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: _uuid
 Timestamp  : event_time
 Schema:
@@ -128,7 +128,7 @@ LogicalTableScan(table=[[applicationupdates_1]], hints=[[[WatermarkHint inheritP
 === CustomerChatMessage
 ID:     customerchatmessage_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: addchatmessage_2
 Primary Key: uuid
 Timestamp  : timestamp
@@ -148,7 +148,7 @@ LogicalProject(role=[$0], content=[$1], name=[$2], customerid=[$3.customerid], t
 === Customers
 ID:     customers_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: id, updated_at
 Timestamp  : updated_at
 Schema:
@@ -166,7 +166,7 @@ LogicalTableScan(table=[[customers_1]], hints=[[[WatermarkHint inheritPath:[] op
 === Customers
 ID:     customers_3
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customers_2
 Primary Key: id
 Timestamp  : updated_at
@@ -187,7 +187,7 @@ LogicalTableScan(table=[[customers_2]])
 === LoanTypes
 ID:     loantypes_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: id, updated_at
 Timestamp  : updated_at
 Schema:
@@ -206,7 +206,7 @@ LogicalTableScan(table=[[loantypes_1]], hints=[[[WatermarkHint inheritPath:[] op
 === LoanTypes
 ID:     loantypes_3
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: loantypes_2
 Primary Key: id
 Timestamp  : updated_at
@@ -228,7 +228,7 @@ LogicalTableScan(table=[[loantypes_2]])
 === overview
 ID:     overview_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: applications_3, customers_3
 Primary Key: __pk1_id, loan_type_id
 Timestamp  : __timestamp

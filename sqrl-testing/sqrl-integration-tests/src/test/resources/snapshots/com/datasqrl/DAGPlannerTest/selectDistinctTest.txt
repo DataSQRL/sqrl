@@ -2,7 +2,7 @@
 === Customer
 ID:     customer_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: customerid, lastUpdated
 Timestamp  : timestamp
 Schema:
@@ -17,7 +17,7 @@ LogicalTableScan(table=[[customer_1]], hints=[[[WatermarkHint inheritPath:[] opt
 === CustomerId
 ID:     customerid_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customer_2
 Primary Key: customerid
 Timestamp  : _timestamp
@@ -33,7 +33,7 @@ LogicalProject(customerid=[$0], _timestamp=[$4])
 === CustomerOrders
 ID:     customerorders_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: customerid_1, orders_2
 Primary Key: id, _time
 Timestamp  : _time
@@ -52,13 +52,13 @@ LogicalProject(id=[$0], customerid=[$4], _time=[$2])
 === kafka.CustomerOrders
 ID:     customerorders_1_1
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: customerorders_1
 
 === Orders
 ID:     orders_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: id, time
 Timestamp  : time
 Schema:
@@ -72,7 +72,7 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
 === Product
 ID:     product_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: productid, name, description, category
 Timestamp  : _ingest_time
 Schema:

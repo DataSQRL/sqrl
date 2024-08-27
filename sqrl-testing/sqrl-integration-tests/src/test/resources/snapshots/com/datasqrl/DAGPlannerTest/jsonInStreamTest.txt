@@ -2,7 +2,7 @@
 === Customer
 ID:     customer_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: customerid, lastUpdated
 Timestamp  : timestamp
 Schema:
@@ -17,7 +17,7 @@ LogicalTableScan(table=[[customer_1]], hints=[[[WatermarkHint inheritPath:[] opt
 === Customer
 ID:     customer_3
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customer_2
 Primary Key: customerid
 Timestamp  : timestamp
@@ -35,7 +35,7 @@ LogicalTableScan(table=[[customer_2]])
 === jsonArrayAggTable
 ID:     jsonarrayaggtable_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customer_3
 Primary Key: _name
 Timestamp  : __timestamp
@@ -53,7 +53,7 @@ LogicalProject(agg=[$1], _name=[$0], __timestamp=[$2])
 === jsonArrayTable
 ID:     jsonarraytable_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customer_3
 Primary Key: _customerid
 Timestamp  : _timestamp
@@ -70,7 +70,7 @@ LogicalProject(obj=[jsonArray($0)], _customerid=[$0], _timestamp=[$4])
 === jsonConcatTable
 ID:     jsonconcattable_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customer_3
 Primary Key: _customerid
 Timestamp  : _timestamp
@@ -87,7 +87,7 @@ LogicalProject(obj=[jsonConcat(toJson('{"a": true}'), toJson('{"a": false}'))], 
 === jsonExistsTable
 ID:     jsonexiststable_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customer_3
 Primary Key: _customerid
 Timestamp  : _timestamp
@@ -104,7 +104,7 @@ LogicalProject(obj=[jsonExists(toJson('{"a": true}'), '$.a')], _customerid=[$0],
 === jsonExtractTable
 ID:     jsonextracttable_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customer_3
 Primary Key: _customerid
 Timestamp  : _timestamp
@@ -121,7 +121,7 @@ LogicalProject(obj=[jsonExtract(toJson('{"a": "hello"}'), '$.a':VARCHAR(21474836
 === jsonObjectAggTable
 ID:     jsonobjectaggtable_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customer_3
 Primary Key: _name
 Timestamp  : __timestamp
@@ -139,7 +139,7 @@ LogicalProject(agg=[$1], _name=[$0], __timestamp=[$2])
 === jsonQueryTable
 ID:     jsonquerytable_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customer_3
 Primary Key: _customerid
 Timestamp  : _timestamp
@@ -156,7 +156,7 @@ LogicalProject(obj=[jsonQuery(toJson('{"a": {"b": 1}}'), '$.a')], _customerid=[$
 === jsonToStringTable
 ID:     jsontostringtable_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customer_3
 Primary Key: _customerid
 Timestamp  : _timestamp
@@ -173,7 +173,7 @@ LogicalProject(obj=[jsonToString(toJson('{"a": 1}'))], _customerid=[$0], _timest
 === ObjComplex
 ID:     objcomplex_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customer_3
 Primary Key: _customerid
 Timestamp  : _timestamp
@@ -190,7 +190,7 @@ LogicalProject(obj=[jsonObject(CONCAT('application#', $2), $0)], _customerid=[$0
 === Orders
 ID:     orders_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: id, time
 Timestamp  : time
 Schema:
@@ -204,7 +204,7 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
 === Product
 ID:     product_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: productid, name, description, category
 Timestamp  : _ingest_time
 Schema:
@@ -219,7 +219,7 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
 === toJsonTable
 ID:     tojsontable_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customer_3
 Primary Key: _customerid
 Timestamp  : _timestamp

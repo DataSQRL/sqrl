@@ -2,7 +2,7 @@
 === OrderEntry
 ID:     orderentry_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: orders_2
 Primary Key: _id, time, productid
 Timestamp  : time
@@ -21,13 +21,13 @@ LogicalProject(col1=[$4], time=[$2], productid=[$5], discount=[$8], _id=[$0])
 === kafka.OrderEntry
 ID:     orderentry_1_1
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: orderentry_1
 
 === Orders
 ID:     orders_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: id, time
 Timestamp  : time
 Schema:

@@ -2,7 +2,7 @@
 === Customer
 ID:     customer_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: customerid, lastUpdated
 Timestamp  : timestamp
 Schema:
@@ -17,7 +17,7 @@ LogicalTableScan(table=[[customer_1]], hints=[[[WatermarkHint inheritPath:[] opt
 === OrderCustomer
 ID:     ordercustomer_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: customer_2, orders_2
 Primary Key: id, _time, _lastUpdated
 Timestamp  : _time
@@ -36,13 +36,13 @@ LogicalProject(id=[$0], name=[$6], customerid=[$1], _time=[$2], _lastUpdated=[$7
 === kafka.OrderCustomer
 ID:     ordercustomer_1_1
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: ordercustomer_1
 
 === OrderCustomerConstant
 ID:     ordercustomerconstant_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: customer_2, orders_2
 Primary Key: id, time, _lastUpdated
 Timestamp  : time
@@ -61,13 +61,13 @@ LogicalProject(time=[$2], id=[$0], name=[$6], customerid=[$1], _lastUpdated=[$7]
 === kafka.OrderCustomerConstant
 ID:     ordercustomerconstant_1_2
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: ordercustomerconstant_1
 
 === OrderCustomerLeft
 ID:     ordercustomerleft_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: customer_2, orders_2
 Primary Key: id, _time, ctime
 Timestamp  : __timestamp
@@ -88,13 +88,13 @@ LogicalProject(cid=[COALESCE($4, 0:BIGINT)], ctime=[COALESCE($7, 0:BIGINT)], id=
 === kafka.OrderCustomerLeft
 ID:     ordercustomerleft_1_3
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: ordercustomerleft_1
 
 === OrderCustomerLeftExcluded
 ID:     ordercustomerleftexcluded_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: customer_2, orders_2
 Primary Key: id, time
 Timestamp  : time
@@ -112,13 +112,13 @@ LogicalProject(time=[$2], id=[$0], customerid=[$1])
 === kafka.OrderCustomerLeftExcluded
 ID:     ordercustomerleftexcluded_1_4
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: ordercustomerleftexcluded_1
 
 === OrderCustomerRight
 ID:     ordercustomerright_1
 Type:   stream
-Stage:  database
+Stage:  postgres
 Inputs: customer_2, orders_2
 Primary Key: _customerid0, _lastUpdated, ouuid, _time
 Timestamp  : __timestamp
@@ -141,7 +141,7 @@ LogicalProject(ouuid=[COALESCE($5, 0:BIGINT)], otime=[COALESCE($7, proctime())],
 === OrderCustomerRightExcluded
 ID:     ordercustomerrightexcluded_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: customer_2, orders_2
 Primary Key: customerid, lastUpdated
 Timestamp  : __timestamp
@@ -160,13 +160,13 @@ LogicalProject(lastUpdated=[$3], customerid=[$0], name=[$2], __timestamp=[CASE(<
 === kafka.OrderCustomerRightExcluded
 ID:     ordercustomerrightexcluded_1_5
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: ordercustomerrightexcluded_1
 
 === Orders
 ID:     orders_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: id, time
 Timestamp  : time
 Schema:
@@ -180,7 +180,7 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
 === Product
 ID:     product_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: productid, name, description, category
 Timestamp  : _ingest_time
 Schema:

@@ -2,7 +2,7 @@
 === AddEvent
 ID:     addevent_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: _uuid
 Timestamp  : event_time
 Schema:
@@ -17,7 +17,7 @@ LogicalTableScan(table=[[addevent_1]], hints=[[[WatermarkHint inheritPath:[] opt
 === PgTable
 ID:     pgtable_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: addevent_2
 Primary Key: _uuid
 Timestamp  : event_time
@@ -33,7 +33,7 @@ LogicalTableScan(table=[[addevent_2]])
 === kafka.PgTable
 ID:     pgtable_1_1
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: pgtable_1
 
 >>>flink.json

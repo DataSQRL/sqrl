@@ -2,7 +2,7 @@
 === Customer
 ID:     customer_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: customerid, email, name, lastUpdated
 Timestamp  : _ingest_time
 Schema:
@@ -17,7 +17,7 @@ LogicalTableScan(table=[[customer_1]], hints=[[[WatermarkHint inheritPath:[] opt
 === Customer
 ID:     customer_3
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customer_2
 Primary Key: customerid
 Timestamp  : _ingest_time
@@ -35,7 +35,7 @@ LogicalTableScan(table=[[customer_2]])
 === EntryCount
 ID:     entrycount_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: orders_2
 Primary Key: _id, _customerid, _time, _productid
 Timestamp  : _ingest_time
@@ -55,13 +55,13 @@ LogicalProject(price=[-(*($6, $7), $8)], _id=[$0], _customerid=[$1], _time=[$2],
 === kafka.EntryCount
 ID:     entrycount_1_1
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: entrycount_1
 
 === Orders2
 ID:     orders2_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: orders_2
 Primary Key: id, _customerid, _time
 Timestamp  : _ingest_time
@@ -79,13 +79,13 @@ LogicalProject(id=[$0], _customerid=[$1], _time=[$2], _ingest_time=[$4])
 === kafka.Orders2
 ID:     orders2_1_2
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: orders2_1
 
 === Orders
 ID:     orders_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: id, customerid, time
 Timestamp  : _ingest_time
 Schema:
@@ -100,7 +100,7 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
 === orders_by_day
 ID:     orders_by_day_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customer_3, ordersinline_1
 Primary Key: __pk1_customerid, day
 Timestamp  : __timestamp
@@ -123,7 +123,7 @@ LogicalProject(__pk1_customerid=[$0], day=[$1], total_price=[$2], total_num=[$3]
 === OrdersInline
 ID:     ordersinline_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: orders_2, total_1
 Primary Key: id, customerid, time
 Timestamp  : _ingest_time
@@ -143,13 +143,13 @@ LogicalProject(id=[$0], customerid=[$1], time=[$2], price=[$8], num=[$9], _inges
 === kafka.OrdersInline
 ID:     ordersinline_1_3
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: ordersinline_1
 
 === total
 ID:     total_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: orders_2
 Primary Key: __pk1_id, __pk2_customerid, __pk3_time
 Timestamp  : _ingest_time

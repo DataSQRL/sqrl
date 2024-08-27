@@ -2,7 +2,7 @@
 === _OrderItems
 ID:     _orderitems_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: orders_2
 Primary Key: id, time, productid
 Timestamp  : time
@@ -23,7 +23,7 @@ LogicalProject(id=[$0], time=[$2], customerid=[$1], productid=[$4], quantity=[$5
 === CustomerPromotion
 ID:     customerpromotion_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: customers_3, spending_1
 Primary Key: __pk1_id, _week
 Timestamp  : _week
@@ -49,19 +49,19 @@ LogicalProject(first_name=[$5], last_name=[$6], email=[$7], spend=[$2], saved=[$
 === mySinkPackage.promotion
 ID:     customerpromotion_1_1
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: customerpromotion_1
 
 === kafka.CustomerPromotion
 ID:     customerpromotion_1_2
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: customerpromotion_1
 
 === Customers
 ID:     customers_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: id, changed_on
 Timestamp  : timestamp
 Schema:
@@ -79,7 +79,7 @@ LogicalTableScan(table=[[customers_1]], hints=[[[WatermarkHint inheritPath:[] op
 === Customers
 ID:     customers_3
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customers_2
 Primary Key: id
 Timestamp  : timestamp
@@ -102,7 +102,7 @@ LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], ip_address=
 === CustomersWithSpending
 ID:     customerswithspending_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customers_3, order_stats_1
 Primary Key: id
 Timestamp  : __timestamp16
@@ -122,7 +122,7 @@ LogicalProject(id=[$0], email=[$3], spend=[$12], __timestamp16=[CASE(<($7, $15),
 === HighSpendingUsers
 ID:     highspendingusers_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customers_3, order_stats_1
 Primary Key: id
 Timestamp  : __timestamp16
@@ -142,7 +142,7 @@ LogicalProject(id=[$0], email=[$3], __timestamp16=[CASE(<($7, $15), $15, $7)])
 === monthly_by_country
 ID:     monthly_by_country_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: _orderitems_1, customers_3, products_3
 Primary Key: __pk1_id, country, month
 Timestamp  : month
@@ -170,7 +170,7 @@ LogicalProject(__pk1_id=[$0], country=[$1], month=[$2], quantity=[$3], spend=[$4
 === NumOrders
 ID:     numorders_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: orders_2
 Primary Key: __pk
 Timestamp  : __timestamp
@@ -186,7 +186,7 @@ LogicalProject(count=[$0], __pk=[1], __timestamp=[$1])
 === order_stats
 ID:     order_stats_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customers_3, orders_2, totals_1
 Primary Key: __pk1_id
 Timestamp  : __timestamp
@@ -213,7 +213,7 @@ LogicalProject(__pk1_id=[$0], first_order=[$1], total_spend=[$2], total_saved=[$
 === OrderCountry
 ID:     ordercountry_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: customers_3, orders_2
 Primary Key: _id, time
 Timestamp  : time
@@ -232,13 +232,13 @@ LogicalProject(time=[$2], country=[$9], _id=[$0])
 === kafka.OrderCountry
 ID:     ordercountry_1_3
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: ordercountry_1
 
 === OrderCountryInner
 ID:     ordercountryinner_1
 Type:   state
-Stage:  database
+Stage:  postgres
 Inputs: customers_3, orders_2
 Primary Key: _id, time
 Timestamp  : time
@@ -255,7 +255,7 @@ LogicalProject(time=[$2], country=[$9], _id=[$0])
 === Orders
 ID:     orders_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: id, time
 Timestamp  : time
 Schema:
@@ -269,7 +269,7 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
 === past_purchases
 ID:     past_purchases_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customers_3, orders_2
 Primary Key: __pk1_id, productid
 Timestamp  : __timestamp
@@ -295,7 +295,7 @@ LogicalProject(__pk1_id=[$0], productid=[$1], num_orders=[$2], total_quantity=[$
 === Products
 ID:     products_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: id, updated
 Timestamp  : updated
 Schema:
@@ -313,7 +313,7 @@ LogicalTableScan(table=[[products_1]], hints=[[[WatermarkHint inheritPath:[] opt
 === Products
 ID:     products_3
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: products_2
 Primary Key: id
 Timestamp  : updated
@@ -334,7 +334,7 @@ LogicalTableScan(table=[[products_2]])
 === RecentTotal
 ID:     recenttotal_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: orders_2
 Primary Key: __pk
 Timestamp  : _time
@@ -356,7 +356,7 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
 === spending
 ID:     spending_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: customers_3, orders_2, totals_1
 Primary Key: __pk1_id, week
 Timestamp  : week
@@ -384,7 +384,7 @@ LogicalProject(__pk1_id=[$0], week=[$1], spend=[$2], saved=[$3])
 === totals
 ID:     totals_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: orders_2
 Primary Key: __pk1_id, __pk3_time
 Timestamp  : __pk3_time

@@ -2,7 +2,7 @@
 === Customer
 ID:     customer_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: customerid, lastUpdated
 Timestamp  : timestamp
 Schema:
@@ -17,7 +17,7 @@ LogicalTableScan(table=[[customer_1]], hints=[[[WatermarkHint inheritPath:[] opt
 === Customer
 ID:     customer_3
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customer_2
 Primary Key: customerid
 Timestamp  : timestamp
@@ -35,7 +35,7 @@ LogicalTableScan(table=[[customer_2]])
 === OrderCustomer
 ID:     ordercustomer_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customer_3, orders_3
 Primary Key: id
 Timestamp  : time
@@ -57,7 +57,7 @@ LogicalProject(time=[$2], id=[$0], name=[$7], customerid=[$1])
 === OrderCustomerConstant
 ID:     ordercustomerconstant_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customer_3, orders_3
 Primary Key: id
 Timestamp  : time
@@ -79,7 +79,7 @@ LogicalProject(time=[$2], id=[$0], name=[$7], customerid=[$1])
 === OrderCustomerLeft
 ID:     ordercustomerleft_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customer_3, orders_3
 Primary Key: id
 Timestamp  : __timestamp
@@ -102,7 +102,7 @@ LogicalProject(lastUpdated=[$8], id=[$0], name=[$7], customerid=[$1], __timestam
 === OrderCustomerLeftExcluded
 ID:     ordercustomerleftexcluded_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customer_3, orders_3
 Primary Key: id
 Timestamp  : time
@@ -124,7 +124,7 @@ LogicalProject(time=[$2], id=[$0], customerid=[$1])
 === OrderCustomerRight
 ID:     ordercustomerright_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customer_3, orders_3
 Primary Key: _customerid0, ouuid
 Timestamp  : __timestamp
@@ -148,7 +148,7 @@ LogicalProject(ouuid=[COALESCE($6, 0:BIGINT)], id=[$6], name=[$2], customerid=[$
 === OrderCustomerRightExcluded
 ID:     ordercustomerrightexcluded_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customer_3, orders_3
 Primary Key: customerid
 Timestamp  : __timestamp
@@ -171,7 +171,7 @@ LogicalProject(lastUpdated=[$3], customerid=[$0], name=[$2], __timestamp=[CASE(<
 === Orders
 ID:     orders_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: id, time
 Timestamp  : time
 Schema:
@@ -185,7 +185,7 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
 === Orders
 ID:     orders_3
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: orders_2
 Primary Key: id
 Timestamp  : time
@@ -202,7 +202,7 @@ LogicalTableScan(table=[[orders_2]])
 === Product
 ID:     product_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: productid, name, description, category
 Timestamp  : _ingest_time
 Schema:

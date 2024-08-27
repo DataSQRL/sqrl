@@ -2,7 +2,7 @@
 === Applications
 ID:     applications_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: id, updated_at
 Timestamp  : updated_at
 Schema:
@@ -19,7 +19,7 @@ LogicalTableScan(table=[[applications_1]], hints=[[[WatermarkHint inheritPath:[]
 === Customers
 ID:     customers_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: id, updated_at
 Timestamp  : updated_at
 Schema:
@@ -37,7 +37,7 @@ LogicalTableScan(table=[[customers_1]], hints=[[[WatermarkHint inheritPath:[] op
 === LoanTypes
 ID:     loantypes_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: id, updated_at
 Timestamp  : updated_at
 Schema:

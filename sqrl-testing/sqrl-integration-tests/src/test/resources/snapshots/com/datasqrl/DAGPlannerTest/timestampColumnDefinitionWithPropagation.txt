@@ -2,7 +2,7 @@
 === Customer
 ID:     customer_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: customerid, lastUpdated
 Timestamp  : timestamp
 Schema:
@@ -17,7 +17,7 @@ LogicalTableScan(table=[[customer_1]], hints=[[[WatermarkHint inheritPath:[] opt
 === CustomerCopy
 ID:     customercopy_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: customer_2
 Primary Key: _customerid, _lastUpdated
 Timestamp  : timestamp
@@ -33,7 +33,7 @@ LogicalProject(month=[endOfMonth(endOfMonth($4))], timestamp=[$4], _customerid=[
 === kafka.CustomerCopy
 ID:     customercopy_1_1
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: customercopy_1
 
 >>>flink.json

@@ -2,7 +2,7 @@
 === CustomerSpending
 ID:     customerspending_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: orders_2
 Primary Key: customerid, week
 Timestamp  : week
@@ -22,13 +22,13 @@ LogicalProject(customerid=[$0], week=[$1], total=[$2], saved=[$3])
 === kafka.CustomerSpending
 ID:     customerspending_1_1
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: customerspending_1
 
 === Orders
 ID:     orders_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: id, time
 Timestamp  : time
 Schema:
@@ -47,7 +47,7 @@ LogicalProject(id=[$0], customerid=[$1], time=[$2], productid=[$3], quantity=[$4
 === ProductRevenue
 ID:     productrevenue_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: orders_2
 Primary Key: productid, week
 Timestamp  : week
@@ -65,7 +65,7 @@ LogicalAggregate(group=[{0, 1}], revenue=[SUM($2)]) hints[TumbleAggregationHint 
 === kafka.ProductRevenue
 ID:     productrevenue_1_2
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: productrevenue_1
 
 >>>flink.json

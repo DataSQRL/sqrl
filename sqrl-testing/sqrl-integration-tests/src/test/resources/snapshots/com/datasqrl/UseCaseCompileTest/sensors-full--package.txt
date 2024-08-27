@@ -2,7 +2,7 @@
 === HighTemp
 ID:     hightemp_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: secreading_1, sensors_3
 Primary Key: sensorid, timeSec
 Timestamp  : timeSec
@@ -26,19 +26,19 @@ LogicalProject(machineid=[$5], sensorid=[$0], temp=[$2], timeSec=[$1])
 === print.tempWarning
 ID:     hightemp_1_1
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: hightemp_1
 
 === kafka.HighTemp
 ID:     hightemp_1_2
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: hightemp_1
 
 === lastHour
 ID:     lasthour_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: secreading_1, sensors_3
 Primary Key: __pk1_id
 Timestamp  : _timeSec
@@ -62,7 +62,7 @@ LogicalProject(__pk1_id=[$1], maxTemp=[$2], avgTemp=[$3], _timeSec=[$0])
 === Machine
 ID:     machine_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: secreading_1, sensors_3
 Primary Key: machineid
 Timestamp  : _timeSec
@@ -86,7 +86,7 @@ LogicalProject(machineid=[$1], maxTemp=[$2], avgTemp=[$3], _timeSec=[$0])
 === SecReading
 ID:     secreading_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: sensorreading_2
 Primary Key: sensorid, timeSec
 Timestamp  : timeSec
@@ -104,13 +104,13 @@ LogicalAggregate(group=[{0, 1}], temp=[AVG($2)]) hints[TumbleAggregationHint opt
 === kafka.SecReading
 ID:     secreading_1_3
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: secreading_1
 
 === SecReadingByTemp
 ID:     secreadingbytemp_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: secreading_1
 Primary Key: sensorid, timeSec
 Timestamp  : timeSec
@@ -127,13 +127,13 @@ LogicalFilter(condition=[>($2, ?0)])
 === kafka.SecReadingByTemp
 ID:     secreadingbytemp_1_4
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: secreadingbytemp_1
 
 === SensorReading
 ID:     sensorreading_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: sensorid, time
 Timestamp  : timestamp
 Schema:
@@ -148,7 +148,7 @@ LogicalTableScan(table=[[sensorreading_1]], hints=[[[WatermarkHint inheritPath:[
 === Sensors
 ID:     sensors_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: id, placed
 Timestamp  : timestamp
 Schema:
@@ -162,7 +162,7 @@ LogicalTableScan(table=[[sensors_1]], hints=[[[WatermarkHint inheritPath:[] opti
 === Sensors
 ID:     sensors_3
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: sensors_2
 Primary Key: id
 Timestamp  : timestamp

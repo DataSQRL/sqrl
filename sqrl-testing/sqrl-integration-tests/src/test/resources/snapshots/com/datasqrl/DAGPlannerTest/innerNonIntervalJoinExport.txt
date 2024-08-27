@@ -2,7 +2,7 @@
 === CoOrders
 ID:     coorders_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: orders_2
 Primary Key: beforeID, _customerid, beforeTimestamp, afterID, timestamp
 Timestamp  : __timestamp
@@ -22,19 +22,19 @@ LogicalProject(beforeID=[$0], afterID=[$5], timestamp=[$7], beforeTimestamp=[$2]
 === logger.CoOrders
 ID:     coorders_1_1
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: coorders_1
 
 === kafka.CoOrders
 ID:     coorders_1_2
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: coorders_1
 
 === Orders
 ID:     orders_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: id, customerid, time
 Timestamp  : _ingest_time
 Schema:
