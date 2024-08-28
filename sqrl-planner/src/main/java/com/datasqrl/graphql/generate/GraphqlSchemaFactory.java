@@ -205,6 +205,7 @@ public class GraphqlSchemaFactory {
       return Optional.empty();
     }
 
+    boolean foundAny = false;
     // Define subscription fields for each streamable table
     outer: for (PhysicalRelationalTable table : streamTables) {
       String tableName = table.getTablePath().getDisplay();
@@ -218,6 +219,7 @@ public class GraphqlSchemaFactory {
           continue outer;
         }
       }
+      foundAny = true;
 
       GraphQLFieldDefinition subscriptionField = GraphQLFieldDefinition.newFieldDefinition()
           .name(tableName)
@@ -225,6 +227,10 @@ public class GraphqlSchemaFactory {
           .build();
 
       subscriptionBuilder.field(subscriptionField);
+    }
+
+    if (!foundAny) {
+      return Optional.empty();
     }
 
     return Optional.of(subscriptionBuilder);
