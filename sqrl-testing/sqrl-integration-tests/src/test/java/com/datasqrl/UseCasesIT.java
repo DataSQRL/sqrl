@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
  * Tests some use cases in the test/resources/usecases folder using the `test` command.
  */
 public class UseCasesIT {
+  protected static final Path PROJECT_ROOT = getProjectRoot();
   private static final Path RESOURCES = Paths.get("src/test/resources/usecases");
 
 
@@ -73,12 +74,18 @@ public class UseCasesIT {
     return exitCode;
   }
 
-  private Path getProjectRoot(Path script) {
+  protected static Path getProjectRoot(Path script) {
     Path currentPath = script.toAbsolutePath();
     while (!currentPath.getFileName().toString().equals("sqrl-testing")) {
       currentPath = currentPath.getParent();
     }
 
     return currentPath.getParent();
+  }
+
+  protected static Path getProjectRoot() {
+    String userDir = System.getProperty("user.dir");
+    Path path = Path.of(userDir);
+    return getProjectRoot(path);
   }
 }

@@ -32,7 +32,7 @@ public class UseCasesFullIT extends UseCasesIT {
     DockerClient dockerClient = DockerClientFactory.instance().client();
 
     // Define the path to the Dockerfile
-    File dockerfile = new File("/Users/henneberger/sqrl");
+    File dockerfile = PROJECT_ROOT.toFile();
 
     // Build and tag the Docker image
     BuildImageCmd buildImageCmd = dockerClient.buildImageCmd(dockerfile)
@@ -56,7 +56,7 @@ public class UseCasesFullIT extends UseCasesIT {
     DockerClient dockerClient = DockerClientFactory.instance().client();
 
     // Define the path to the Dockerfile
-    File dockerfile = new File("/Users/henneberger/sqrl/sqrl-server/sqrl-server-vertx");
+    File dockerfile = PROJECT_ROOT.resolve("sqrl-server/sqrl-server-vertx").toFile();
 
     // Build and tag the Docker image
     BuildImageCmd buildImageCmd = dockerClient.buildImageCmd(dockerfile)
@@ -110,21 +110,21 @@ public class UseCasesFullIT extends UseCasesIT {
   @Test
   public void testBanking() {
     execute("test","banking", "loan.sqrl", "loan.graphqls", null,
-        "-c", "/Users/henneberger/sqrl/sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/banking/package.json",
+        "-c", PROJECT_ROOT.resolve("sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/banking/package.json").toString(),
         "-c", config);
   }
 
   @Test
   public void testClickstream() {
     execute("test", "clickstream", "clickstream-teaser.sqrl", "clickstream-teaser.graphqls", null,
-        "-c", "/Users/henneberger/sqrl/sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/clickstream/package.json",
+        "-c", PROJECT_ROOT.resolve("sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/clickstream/package.json").toString(),
         "-c", config);
   }
 
   @Test
   public void testConference() {
     execute("test", "conference", "conference.sqrl", "conference.graphqls", null,
-        "-c", "/Users/henneberger/sqrl/sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/banking/package.json",
+        "-c", PROJECT_ROOT.resolve("sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/banking/package.json").toString(),
         "-c", config);
   }
 
@@ -132,7 +132,7 @@ public class UseCasesFullIT extends UseCasesIT {
   @Disabled //flakey
   public void testSensorsMutation() {
     execute("test", "sensors", "sensors-mutation.sqrl", null,"sensors-mutation.graphqls", "sensors-mutation",
-        "-c", "/Users/henneberger/sqrl/sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/sensors/package.json",
+        "-c", PROJECT_ROOT.resolve("sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/sensors/package.json").toString(),
         "-c", config);
   }
 
@@ -140,14 +140,14 @@ public class UseCasesFullIT extends UseCasesIT {
   @Disabled //A compressed csv bug prevents this from completed correctly
   public void testSensorsFull() {
     execute("test", "sensors", "sensors-full.sqrl", null,"sensors-full",
-        "-c", "/Users/henneberger/sqrl/sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/sensors/package.json",
+        "-c", PROJECT_ROOT.resolve("sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/sensors/package.json").toString(),
         "-c", config);
   }
 
   @Test
   public void testSeedshopExtended() {
     execute("test", "seedshop-tutorial", "seedshop-extended.sqrl", null, "seedshop-extended",
-        "-c", "/Users/henneberger/sqrl/sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/seedshop-tutorial/package.json",
+        "-c", PROJECT_ROOT.resolve("sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/seedshop-tutorial/package.json").toString(),
         "-c", config);
   }
 
