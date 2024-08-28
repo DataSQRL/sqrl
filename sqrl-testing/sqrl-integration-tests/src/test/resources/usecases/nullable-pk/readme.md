@@ -1,0 +1,1 @@
+This test triggers a nullable primary key failure.
