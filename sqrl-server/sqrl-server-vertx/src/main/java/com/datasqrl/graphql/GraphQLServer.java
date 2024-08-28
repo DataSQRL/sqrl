@@ -106,6 +106,8 @@ public class GraphQLServer extends AbstractVerticle {
     if (snowflakeConfig.exists()) {
       map = getObjectMapper().readValue(snowflakeConfig, Map.class);
       if (map.isEmpty()) return Optional.empty();
+    } else {
+      return Optional.empty();
     }
 
     String url = (String)map.get("url");
