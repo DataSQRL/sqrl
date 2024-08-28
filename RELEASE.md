@@ -37,22 +37,7 @@ Step 3: Go to github and go to 'Tags'. Create a new release on the newly created
 Step 4: Go to docker hub and assure the new tag exists:
 https://hub.docker.com/repositories/datasqrl
 
-Post release profile update:
-Update Dockercompose in flink profiles to point to the new version.
-```
-FROM datasqrl/sqrl-dependencies:0.? as m2-dependencies
-```
+Step 5: Release the homebrew cli command:
+- zip the sqrl-cli.jar and sqrl-run.jar and create a sha and update the homebrew-sqrl repo.
 
-Update the build.gradle.ftl to point to the new snapshot
-```
-    sqrlVersion = "0.?-SNAPSHOT"
-```
-
-Doc updates:
-Update the playbook to include the new dependencies
-
-Build updates:
-If updating to an RC branch, add it to the build-config.yml branches.
-
-
-Step 5: Test the SQRL command on something!
+Step 6: Test the SQRL command on something!
