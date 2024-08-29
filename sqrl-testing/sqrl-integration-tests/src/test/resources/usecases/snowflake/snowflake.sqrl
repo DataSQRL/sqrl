@@ -1,12 +1,8 @@
 IMPORT data.applications;
 
-IMPORT json.*;
-
 MyIcebergTable := SELECT * FROM applications;
 
 SnowflakeQuery(@customerId: BIGINT) := SELECT * FROM MyIcebergTable WHERE customer_id = @customerId;
 
-MyJsonTable := SELECT toJson('{}') AS myJson FROM applications;
-
 /*+exec(iceberg)*/
-MySnowflakeTable := SELECT myJson, toJson('{"x":1}') AS json FROM MyJsonTable;
+MySnowflakeTable := SELECT * FROM MyIcebergTable;
