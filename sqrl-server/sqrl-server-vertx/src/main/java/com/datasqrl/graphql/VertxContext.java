@@ -157,19 +157,18 @@ public class VertxContext implements Context {
             if (o instanceof UUID) {
               o = ((UUID)o).toString();
             } else if (o instanceof Timestamp) {
-              o = ((Timestamp) o).toLocalDateTime();
+              o = ((Timestamp) o).toLocalDateTime().atOffset(ZoneOffset.UTC);
             }
             paramObj[i] = o;
           }
 
+          String insertStatement = coords.getInsertStatement();
+
           PreparedQuery<RowSet<Row>> preparedQuery = sqlClient.getClients().get("postgres")
-              .preparedQuery(coords.getInsertStatement());
+              .preparedQuery(insertStatement);
           preparedQuery.execute(Tuple.from(paramObj))
               .onComplete(e -> fut.complete(entry))
-              .onFailure(e -> {
-                e.printStackTrace();
-                fut.fail(e);
-              });
+              .onFailure(e -> log.error("An error happened while executing the query: " + insertStatement, e));
         });
       }
     };
