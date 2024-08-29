@@ -2,7 +2,7 @@
 === Numbers2
 ID:     numbers2_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Primary Key: id
 Timestamp  : -
 Schema:
@@ -13,7 +13,7 @@ LogicalValues(tuples=[[{ 1 }, { 2 }, { 3 }, { 4 }, { 4 }]])
 === Numbers
 ID:     numbers_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Primary Key: id
 Timestamp  : -
 Schema:
@@ -24,7 +24,7 @@ LogicalValues(tuples=[[{ 1 }, { 2 }, { 3 }, { 4 }, { 5 }]])
 === NumbersLarge
 ID:     numberslarge_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Primary Key: id
 Timestamp  : -
 Schema:
@@ -35,7 +35,7 @@ LogicalValues(tuples=[[{ 0 }, { 1 }, { 2 }, { 3 }, { 4 }, { 5 }, { 6 }, { 7 }, {
 === OrderNumbers2
 ID:     ordernumbers2_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: orders_2
 Primary Key: id, time
 Timestamp  : time
@@ -51,13 +51,13 @@ LogicalProject(id=[$0], time=[$2])
 === kafka.OrderNumbers2
 ID:     ordernumbers2_1_2
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: ordernumbers2_1
 
 === OrderNumbers
 ID:     ordernumbers_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: numbers_1, orders_2
 Primary Key: id, time
 Timestamp  : time
@@ -73,13 +73,13 @@ LogicalProject(id=[$0], time=[$2])
 === kafka.OrderNumbers
 ID:     ordernumbers_1_1
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: ordernumbers_1
 
 === OrderPairs2
 ID:     orderpairs2_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: orders_2
 Primary Key: id, time, pk
 Timestamp  : time
@@ -96,13 +96,13 @@ LogicalProject(id=[$0], time=[$2], pk=[$5])
 === kafka.OrderPairs2
 ID:     orderpairs2_1_4
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: orderpairs2_1
 
 === OrderPairs
 ID:     orderpairs_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: orders_2
 Primary Key: id, time, _id0
 Timestamp  : time
@@ -119,13 +119,13 @@ LogicalProject(id=[$0], time=[$2], _id0=[$4])
 === kafka.OrderPairs
 ID:     orderpairs_1_3
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: orderpairs_1
 
 === Orders
 ID:     orders_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: id, time
 Timestamp  : time
 Schema:

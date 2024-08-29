@@ -2,7 +2,7 @@
 === _OrderItems
 ID:     _orderitems_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: orders_2
 Primary Key: id, time, productid
 Timestamp  : time
@@ -23,7 +23,7 @@ LogicalProject(id=[$0], time=[$2], customerid=[$1], productid=[$4], quantity=[$5
 === CustomerProductVisits
 ID:     customerproductvisits_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: productvisit_2
 Primary Key: customerid, productid
 Timestamp  : _event_time
@@ -42,7 +42,7 @@ LogicalProject(customerid=[$0], productid=[$1], visits=[$3], _event_time=[$2])
 === Customers
 ID:     customers_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: id, changed_on
 Timestamp  : timestamp
 Schema:
@@ -60,7 +60,7 @@ LogicalTableScan(table=[[customers_1]], hints=[[[WatermarkHint inheritPath:[] op
 === Customers
 ID:     customers_3
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customers_2
 Primary Key: id
 Timestamp  : timestamp
@@ -83,7 +83,7 @@ LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], ip_address=
 === monthly_by_country
 ID:     monthly_by_country_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: _orderitems_1, customers_3, products_3
 Primary Key: __pk1_id, country, month
 Timestamp  : month
@@ -111,7 +111,7 @@ LogicalProject(__pk1_id=[$0], country=[$1], month=[$2], quantity=[$3], spend=[$4
 === Orders
 ID:     orders_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: id, time
 Timestamp  : time
 Schema:
@@ -125,7 +125,7 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
 === past_purchases
 ID:     past_purchases_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customers_3, orders_2
 Primary Key: __pk1_id, productid
 Timestamp  : __timestamp
@@ -151,7 +151,7 @@ LogicalProject(__pk1_id=[$0], productid=[$1], num_orders=[$2], total_quantity=[$
 === Products
 ID:     products_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: id, updated
 Timestamp  : updated
 Schema:
@@ -169,7 +169,7 @@ LogicalTableScan(table=[[products_1]], hints=[[[WatermarkHint inheritPath:[] opt
 === Products
 ID:     products_3
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: products_2
 Primary Key: id
 Timestamp  : updated
@@ -190,7 +190,7 @@ LogicalTableScan(table=[[products_2]])
 === ProductVisit
 ID:     productvisit_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: _uuid
 Timestamp  : event_time
 Schema:
@@ -204,7 +204,7 @@ LogicalTableScan(table=[[productvisit_1]], hints=[[[WatermarkHint inheritPath:[]
 === spending
 ID:     spending_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: customers_3, orders_2, totals_1
 Primary Key: __pk1_id, week
 Timestamp  : week
@@ -232,7 +232,7 @@ LogicalProject(__pk1_id=[$0], week=[$1], spend=[$2], saved=[$3])
 === totals
 ID:     totals_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: orders_2
 Primary Key: __pk1_id, __pk3_time
 Timestamp  : __pk3_time

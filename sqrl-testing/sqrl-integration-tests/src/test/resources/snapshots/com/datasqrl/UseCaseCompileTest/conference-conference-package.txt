@@ -2,7 +2,7 @@
 === AddInterest
 ID:     addinterest_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: _uuid
 Timestamp  : event_time
 Schema:
@@ -18,7 +18,7 @@ LogicalProject(text=[$0], userid=[$1], _uuid=[$2], event_time=[$3], embedding=[a
 === Events
 ID:     events_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: url, last_updated
 Timestamp  : last_updated
 Schema:
@@ -42,7 +42,7 @@ LogicalProject(url=[$0], date=[$1], time=[$2], title=[$3], abstract=[$4], locati
 === Events
 ID:     events_3
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: events_2
 Primary Key: id
 Timestamp  : last_updated
@@ -68,7 +68,7 @@ LogicalTableScan(table=[[events_2]])
 === Likes
 ID:     likes_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: _uuid
 Timestamp  : event_time
 Schema:
@@ -83,7 +83,7 @@ LogicalTableScan(table=[[likes_1]], hints=[[[WatermarkHint inheritPath:[] option
 === LikeVector
 ID:     likevector_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: events_3, likes_2
 Primary Key: _uuid
 Timestamp  : event_time
@@ -107,7 +107,7 @@ LogicalProject(userid=[$1], embedding=[$15], title=[$8], abstract=[$9], location
 === UserInterests
 ID:     userinterests_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: userinterestvectors_1
 Primary Key: userid
 Timestamp  : __timestamp
@@ -122,7 +122,7 @@ LogicalAggregate(group=[{0}], interestVector=[center($1)], __timestamp=[MAX($2)]
 === UserInterestVectors
 ID:     userinterestvectors_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: addinterest_2, likevector_1
 Primary Key: __pk_0
 Timestamp  : event_time
@@ -141,7 +141,7 @@ LogicalUnion(all=[true])
 === UserLikes
 ID:     userlikes_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: likes_2
 Primary Key: userid, eventId
 Timestamp  : event_time

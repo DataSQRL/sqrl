@@ -2,7 +2,7 @@
 === CombinedStream
 ID:     combinedstream_1
 Type:   relation
-Stage:  database
+Stage:  postgres
 Inputs: customer_2, orders_2
 Primary Key: -
 Timestamp  : -
@@ -18,7 +18,7 @@ LogicalUnion(all=[true])
 === Customer
 ID:     customer_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: customerid, email, name, lastUpdated
 Timestamp  : _ingest_time
 Schema:
@@ -33,7 +33,7 @@ LogicalTableScan(table=[[customer_1]], hints=[[[WatermarkHint inheritPath:[] opt
 === Orders
 ID:     orders_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: id, customerid, time
 Timestamp  : _ingest_time
 Schema:
@@ -48,7 +48,7 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
 === Product
 ID:     product_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: productid, name, description, category
 Timestamp  : _ingest_time
 Schema:

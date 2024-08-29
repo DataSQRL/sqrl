@@ -3,6 +3,7 @@
  */
 package com.datasqrl.engine.pipeline;
 
+import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.ExecutionEngine;
 import lombok.Value;

@@ -1,5 +1,7 @@
 package com.datasqrl.plan.global;
 
+import com.datasqrl.calcite.Dialect;
+import com.datasqrl.calcite.QueryPlanner;
 import com.datasqrl.io.tables.TableType;
 import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.plan.rules.SqrlRelMetadataProvider;
@@ -8,6 +10,7 @@ import com.datasqrl.plan.util.RelWriterWithHints;
 import com.datasqrl.plan.util.TimePredicate;
 import com.datasqrl.util.CalciteHacks;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -42,13 +45,23 @@ public class SqrlDAGExporter {
     @Builder.Default
     boolean withHints = false;
 
+    @Builder.Default
+    boolean includeLogicalPlan = true;
+
+    @Builder.Default
+    boolean includeSQL = true;
+
+    //TODO: We don't yet have the physical plans in the this DAG exporter
+    @Builder.Default
+    boolean includePhysicalPlan = true;
+
 
     public List<Node> export(SqrlDAG dag) {
         CalciteHacks.resetToSqrlMetadataProvider();
         List<Node> result = new ArrayList<>();
         for (SqrlDAG.SqrlNode node : dag) {
             List<String> inputs = dag.getInputs(node).stream().map(SqrlDAG.SqrlNode::getId).sorted().collect(Collectors.toUnmodifiableList());
-            String stage = node.getChosenStage().getEngine().getType().name().toLowerCase();
+            String stage = node.getChosenStage().getEngine().getName().toLowerCase();
             if (node instanceof SqrlDAG.TableNode) {
                 SqrlDAG.TableNode tableNode = (SqrlDAG.TableNode)node;
                 PhysicalRelationalTable table = (PhysicalRelationalTable) tableNode.getTable();
@@ -71,6 +84,7 @@ public class SqrlDAGExporter {
                         .stage(stage)
                         .inputs(importInput!=null?List.of(importInput):inputs)
                         .plan(explain(table.getPlannedRelNode()))
+                        .sql(toSql(table.getPlannedRelNode()))
                         .primary_key(table.getPrimaryKey().isUndefined()?null:table.getPrimaryKey().asList().stream().map(fields::get).map(RelDataTypeField::getName).collect(Collectors.toUnmodifiableList()))
                         .timestamp(table.getTimestamp().is(Timestamps.Type.UNDEFINED)?"-":fields.get(table.getTimestamp().getOnlyCandidate()).getName())
                         .schema(fields.stream().map(field -> new SchemaColumn(field.getName(), field.getType().getFullTypeString())).collect(Collectors.toUnmodifiableList()))
@@ -94,6 +108,7 @@ public class SqrlDAGExporter {
                         .type(NodeType.QUERY.getName())
                         .stage(stage)
                         .plan(explain(query.getBaseQuery().getRelNode()))
+                        .sql(toSql(query.getBaseQuery().getRelNode()))
                         .inputs(inputs)
                         .build());
             } else {
@@ -104,12 +119,18 @@ public class SqrlDAGExporter {
     }
 
     private String explain(RelNode relNode) {
+        if (!includeLogicalPlan) return null;
         CalciteHacks.resetToSqrlMetadataProvider();
         if (withHints) {
             return RelWriterWithHints.explain(relNode);
         } else {
             return relNode.explain();
         }
+    }
+
+    private String toSql(RelNode relNode) {
+        if (!includeSQL) return null;
+        return QueryPlanner.relToString(Dialect.CALCITE, relNode).getSql();
     }
 
     private static List<PostProcessor> convert(PullupOperator.Container pullups, List<RelDataTypeField> fields) {
@@ -217,12 +238,18 @@ public class SqrlDAGExporter {
     public static class Query extends Node {
 
         String plan;
+        String sql;
 
         String planToString() {
             StringBuilder s = new StringBuilder();
-            s.append("Plan:").append(LINEBREAK);
-            s.append(plan);
+            if (!Strings.isNullOrEmpty(plan)) {
+                s.append("Plan:").append(LINEBREAK);
+                s.append(plan);
 //            s.append("---------------------").append(LINEBREAK);
+            }
+            if (!Strings.isNullOrEmpty(sql)) {
+                s.append("SQL: ").append(sql);
+            }
             return s.toString();
         }
         @Override

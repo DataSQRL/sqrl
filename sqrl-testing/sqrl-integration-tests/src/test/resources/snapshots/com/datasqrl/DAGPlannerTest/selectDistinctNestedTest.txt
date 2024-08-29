@@ -2,7 +2,7 @@
 === Customer
 ID:     customer_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: customerid, lastUpdated
 Timestamp  : timestamp
 Schema:
@@ -17,7 +17,7 @@ LogicalTableScan(table=[[customer_1]], hints=[[[WatermarkHint inheritPath:[] opt
 === Orders
 ID:     orders_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: id, time
 Timestamp  : time
 Schema:
@@ -31,7 +31,7 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
 === Product
 ID:     product_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: productid, name, description, category
 Timestamp  : _ingest_time
 Schema:
@@ -46,7 +46,7 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
 === ProductId
 ID:     productid_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: orders_2
 Primary Key: productid
 Timestamp  : _time
@@ -64,7 +64,7 @@ LogicalProject(productid=[$4], _time=[$2])
 === ProductOrders
 ID:     productorders_1
 Type:   state
-Stage:  database
+Stage:  postgres
 Inputs: orders_2, productid_1
 Primary Key: id, _time, productid, _productid0
 Timestamp  : _time
@@ -85,7 +85,7 @@ LogicalProject(id=[$0], productid=[$4], _time=[$2], _productid0=[$6])
 === suborders
 ID:     suborders_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: orders_2, productid_1
 Primary Key: __pk1_productid, orderid
 Timestamp  : lastOrder

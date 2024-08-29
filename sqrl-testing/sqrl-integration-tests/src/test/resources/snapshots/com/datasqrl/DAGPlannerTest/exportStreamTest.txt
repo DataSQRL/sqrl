@@ -2,7 +2,7 @@
 === Customer
 ID:     customer_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: customerid, lastUpdated
 Timestamp  : timestamp
 Schema:
@@ -17,7 +17,7 @@ LogicalTableScan(table=[[customer_1]], hints=[[[WatermarkHint inheritPath:[] opt
 === JoinStream
 ID:     joinstream_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: customer_2, orders_2
 Primary Key: id, _time, _lastUpdated
 Timestamp  : _time
@@ -35,19 +35,19 @@ LogicalProject(id=[$0], name=[$6], _time=[$2], _lastUpdated=[$7])
 === print.CountStream
 ID:     joinstream_1_1
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: joinstream_1
 
 === kafka.JoinStream
 ID:     joinstream_1_2
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: joinstream_1
 
 === Orders
 ID:     orders_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: id, time
 Timestamp  : time
 Schema:
@@ -61,7 +61,7 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
 === Product
 ID:     product_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: productid, name, description, category
 Timestamp  : _ingest_time
 Schema:

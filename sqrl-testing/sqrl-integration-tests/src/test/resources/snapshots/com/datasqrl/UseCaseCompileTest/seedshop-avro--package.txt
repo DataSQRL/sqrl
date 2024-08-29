@@ -2,7 +2,7 @@
 === OrderCount
 ID:     ordercount_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: orders_2
 Primary Key: timeSec
 Timestamp  : timeSec
@@ -20,13 +20,13 @@ LogicalAggregate(group=[{0}], number=[COUNT()], volume=[SUM($1)]) hints[TumbleAg
 === kafka.OrderCount
 ID:     ordercount_1_1
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: ordercount_1
 
 === Orders
 ID:     orders_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: id, time
 Timestamp  : _source_time
 Schema:

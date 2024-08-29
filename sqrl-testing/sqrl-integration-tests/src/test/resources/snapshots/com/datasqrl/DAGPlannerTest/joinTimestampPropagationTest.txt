@@ -2,7 +2,7 @@
 === Customer
 ID:     customer_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: customerid, email, name, lastUpdated
 Timestamp  : _ingest_time
 Schema:
@@ -17,7 +17,7 @@ LogicalTableScan(table=[[customer_1]], hints=[[[WatermarkHint inheritPath:[] opt
 === OrderCustomer1
 ID:     ordercustomer1_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: customer_2, orders_2
 Primary Key: id, _customerid, _time, _email, name, _lastUpdated
 Timestamp  : __timestamp
@@ -38,13 +38,13 @@ LogicalProject(id=[$0], name=[$7], _customerid=[$1], _time=[$2], _email=[$6], _l
 === kafka.OrderCustomer1
 ID:     ordercustomer1_1_1
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: ordercustomer1_1
 
 === OrderCustomer2
 ID:     ordercustomer2_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: customer_2, orders_2
 Primary Key: id, _customerid, _time, _email, name, _lastUpdated
 Timestamp  : timestamp
@@ -65,13 +65,13 @@ LogicalProject(id=[$0], name=[$7], timestamp=[GREATEST($4, $9)], _customerid=[$1
 === kafka.OrderCustomer2
 ID:     ordercustomer2_1_2
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: ordercustomer2_1
 
 === OrderCustomer3
 ID:     ordercustomer3_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: customer_2, orders_2, product_2
 Primary Key: id, _customerid, _time, _email, name, _lastUpdated, name0, _description, _category
 Timestamp  : __timestamp
@@ -97,13 +97,13 @@ LogicalProject(id=[$0], name=[$7], name0=[$11], _customerid=[$1], _time=[$2], _e
 === kafka.OrderCustomer3
 ID:     ordercustomer3_1_3
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: ordercustomer3_1
 
 === Orders
 ID:     orders_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: id, customerid, time
 Timestamp  : _ingest_time
 Schema:
@@ -118,7 +118,7 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
 === Product
 ID:     product_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: productid, name, description, category
 Timestamp  : _ingest_time
 Schema:

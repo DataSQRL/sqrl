@@ -2,7 +2,7 @@
 === Package
 ID:     package_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: submission_2
 Primary Key: name
 Timestamp  : _submissionTime
@@ -18,7 +18,7 @@ LogicalProject(name=[$0], _submissionTime=[$15])
 === Submission
 ID:     submission_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: name, submissionTime
 Timestamp  : submissionTime
 Schema:
@@ -48,7 +48,7 @@ LogicalProject(name=[$0], version=[$1], variant=[$2], latest=[$3], type=[$4], li
 === TopicPackages
 ID:     topicpackages_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: submission_2
 Primary Key: pkgName, topicName
 Timestamp  : lastSubmission
@@ -69,7 +69,7 @@ LogicalAggregate(group=[{0, 1}], numSubmissions=[COUNT()], lastSubmission=[MAX($
 === TopicSearch
 ID:     topicsearch_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: submission_2
 Primary Key: topicName
 Timestamp  : __timestamp
