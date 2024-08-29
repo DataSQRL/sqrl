@@ -53,6 +53,21 @@
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
+      <artifactId>vertx-micrometer-metrics</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-registry-prometheus</artifactId>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/com.symbaloo/graphql-micrometer -->
+    <dependency>
+      <groupId>com.symbaloo</groupId>
+      <artifactId>graphql-micrometer</artifactId>
+      <version>1.0.1</version>
+    </dependency>
+
+    <dependency>
+      <groupId>io.vertx</groupId>
       <artifactId>vertx-junit5</artifactId>
       <scope>test</scope>
       <!-- JUnit 4 is no longer necessary, so we exclude it -->

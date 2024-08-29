@@ -26,12 +26,17 @@ import com.datasqrl.graphql.type.SqrlVertxScalars;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.common.base.Strings;
+import com.symbaloo.graphqlmicrometer.MicrometerInstrumentation;
 import graphql.GraphQL;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.prometheusmetrics.PrometheusConfig;
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.jwt.JWTAuth;
@@ -50,6 +55,9 @@ import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.jdbcclient.impl.ConnectionImpl;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
 import io.vertx.kafka.client.producer.KafkaProducer;
+import io.vertx.micrometer.MicrometerMetricsOptions;
+import io.vertx.micrometer.backends.BackendRegistries;
+import io.vertx.micrometer.backends.BackendRegistry;
 import io.vertx.pgclient.PgPool;
 import io.vertx.pgclient.impl.PgPoolOptions;
 import io.vertx.sqlclient.PreparedQuery;
@@ -84,7 +92,13 @@ public class GraphQLServer extends AbstractVerticle {
   private ServerConfig config;
 
   public static void main(String[] args) {
-    Vertx vertx = Vertx.vertx();
+    PrometheusMeterRegistry prometheusMeterRegistry = new PrometheusMeterRegistry(
+        PrometheusConfig.DEFAULT);
+    MicrometerMetricsOptions metricsOptions = new MicrometerMetricsOptions()
+        .setMicrometerRegistry(prometheusMeterRegistry)
+        .setEnabled(true);
+    Vertx vertx = Vertx.vertx(new VertxOptions().setMetricsOptions(metricsOptions));
+
     vertx.deployVerticle(new GraphQLServer(), res -> {
       if (res.succeeded()) {
         System.out.println("Deployment id is: " + res.result());
@@ -199,6 +213,15 @@ public class GraphQLServer extends AbstractVerticle {
   protected void setupServer(Promise<Void> startPromise) {
     Router router = Router.router(vertx);
     router.route().handler(LoggerHandler.create());
+
+    MeterRegistry registry = BackendRegistries.getDefaultNow();
+    if (registry instanceof PrometheusMeterRegistry) {
+      router.route("/metrics").handler(ctx -> {
+        ctx.response().putHeader("content-type", "text/plain");
+        ctx.response().end(((PrometheusMeterRegistry)registry).scrape());
+      });
+    }
+
     if (this.config.getGraphiQLHandlerOptions() != null) {
       GraphiQLHandlerBuilder handlerBuilder = GraphiQLHandler.builder(vertx)
           .with(this.config.getGraphiQLHandlerOptions());
@@ -332,11 +355,15 @@ public class GraphQLServer extends AbstractVerticle {
 
   public GraphQL createGraphQL(Map<String, SqlClient> client, Promise<Void> startPromise) {
     try {
-      GraphQL graphQL = model.accept(
+      GraphQL.Builder graphQL = model.accept(
           new GraphQLEngineBuilder(List.of(SqrlVertxScalars.JSON)),
           new VertxContext(new VertxJdbcClient(client), constructSinkProducers(model, vertx),
               constructSubscriptions(model, vertx, startPromise), canonicalizer));
-      return graphQL;
+      MeterRegistry meterRegistry = BackendRegistries.getDefaultNow();
+      if (meterRegistry != null) {
+        graphQL.instrumentation(new MicrometerInstrumentation(meterRegistry));
+      }
+      return graphQL.build();
     } catch (Exception e) {
       startPromise.fail(e.getMessage());
       e.printStackTrace();

@@ -433,7 +433,17 @@
         <artifactId>reactor-core</artifactId>
         <version>${projectreactor.version}</version>
       </dependency>
-
+      <!-- vertx metrics -->
+      <dependency>
+        <groupId>io.vertx</groupId>
+        <artifactId>vertx-micrometer-metrics</artifactId>
+        <version>${vertx.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.micrometer</groupId>
+        <artifactId>micrometer-registry-prometheus</artifactId>
+        <version>1.13.3</version>
+      </dependency>
       <!-- required for vertx jdbc -->
       <dependency>
         <groupId>io.agroal</groupId>

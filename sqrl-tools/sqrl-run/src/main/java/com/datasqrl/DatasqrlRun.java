@@ -13,8 +13,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.Resources;
+import io.micrometer.prometheusmetrics.PrometheusConfig;
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
 import io.vertx.core.json.JsonObject;
+import io.vertx.micrometer.MicrometerMetricsOptions;
 import java.net.URL;
 import java.nio.file.Path;
 import java.sql.Connection;
@@ -261,7 +265,14 @@ public class DatasqrlRun {
       }
     };
 
-    Vertx vertx = Vertx.vertx();
+    PrometheusMeterRegistry prometheusMeterRegistry = new PrometheusMeterRegistry(
+        PrometheusConfig.DEFAULT);
+    MicrometerMetricsOptions metricsOptions = new MicrometerMetricsOptions()
+        .setMicrometerRegistry(prometheusMeterRegistry)
+        .setEnabled(true);
+
+    Vertx vertx = Vertx.vertx(new VertxOptions().setMetricsOptions(metricsOptions));
+
     vertx.deployVerticle(server, res -> {
       if (res.succeeded()) {
         System.out.println("Deployment id is: " + res.result());

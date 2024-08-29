@@ -53,7 +53,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 public class GraphQLEngineBuilder implements
-    RootVisitor<GraphQL, Context>,
+    RootVisitor<GraphQL.Builder, Context>,
     CoordVisitor<DataFetcher<?>, Context>,
     SchemaVisitor<TypeDefinitionRegistry, Object>,
     QueryBaseVisitor<ResolvedQuery, Context>,
@@ -87,7 +87,7 @@ public class GraphQLEngineBuilder implements
   }
 
   @Override
-  public GraphQL visitRoot(RootGraphqlModel root, Context context) {
+  public GraphQL.Builder visitRoot(RootGraphqlModel root, Context context) {
     TypeDefinitionRegistry registry = root.schema.accept(this, null);
 
     GraphQLCodeRegistry.Builder codeRegistry = GraphQLCodeRegistry.newCodeRegistry();
@@ -119,7 +119,7 @@ public class GraphQLEngineBuilder implements
     GraphQLSchema graphQLSchema = new SchemaGenerator()
         .makeExecutableSchema(registry, wiring);
 
-    return GraphQL.newGraphQL(graphQLSchema).build();
+    return GraphQL.newGraphQL(graphQLSchema);
   }
 
   private RuntimeWiring createWiring(TypeDefinitionRegistry registry, GraphQLCodeRegistry.Builder codeRegistry) {

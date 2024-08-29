@@ -168,7 +168,8 @@ class WriteTest {
 
     GraphQL graphQL = model.accept(
         new GraphQLEngineBuilder(),
-        new VertxContext(new VertxJdbcClient(Map.of("postgres",client)), mutations, subscriptions, NameCanonicalizer.SYSTEM));
+        new VertxContext(new VertxJdbcClient(Map.of("postgres",client)), mutations, subscriptions, NameCanonicalizer.SYSTEM))
+        .build();
 
     ExecutionInput executionInput = ExecutionInput.newExecutionInput()
         .query("mutation ($event: CreateCustomerEvent!) { addCustomer(event: $event) { customerid, ts } }")
