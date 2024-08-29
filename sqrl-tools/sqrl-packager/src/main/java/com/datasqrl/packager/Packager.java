@@ -353,6 +353,8 @@ public class Packager {
         .forEach(path -> {
           try {
             Path destination = buildDir.resolve(LIB_DIR).resolve(path.getFileName());
+            // Ensure the parent directories exist
+            Files.createDirectories(destination.getParent());
             Files.copy(path, destination, StandardCopyOption.REPLACE_EXISTING);
           } catch (IOException e) {
             e.printStackTrace();
