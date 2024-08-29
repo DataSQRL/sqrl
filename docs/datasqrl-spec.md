@@ -180,11 +180,11 @@ A deployment profile can also be downloaded from the repository when it's fully 
 }
 ```
 
-Learn more about [deployment profiles](../deployments).
+Learn more about [deployment profiles](/docs/sqrl/deployments).
 
 ### Values
 
-The `values` section of the [DataSQRL configuration](../datasqrl-spec) allows you to specify configuration values that are passed through to the deployment profile and can be referenced in the deployment profile templates. See [deployment profiles](../deployments) for more information.
+The `values` section of the [DataSQRL configuration](/docs/sqrl/datasqrl-spec) allows you to specify configuration values that are passed through to the deployment profile and can be referenced in the deployment profile templates. See [deployment profiles](/docs/sqrl/deployments) for more information.
 
 The default deployment profiles supports a `flink-config` section to allow injecting additional flink runtime configuration. You can use this section of the configuration to specify any [Flink configuration option](https://nightlies.apache.org/flink/flink-docs-stable/docs/dev/table/config/).
 

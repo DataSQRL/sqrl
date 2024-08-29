@@ -153,7 +153,7 @@ docker run --rm -v $PWD:/build datasqrl/cmd publish --local
 
 ### How repository resolution works
 
-A repository contains DataSQRL packages. When compiling an SQRL script, the DataSQRL compiler retrieves dependencies declared in the [package configuration](/docs/reference/sqrl/datasqrl-spec) and unpacks them in the build directory.
+A repository contains DataSQRL packages. When compiling an SQRL script, the DataSQRL compiler retrieves dependencies declared in the [package configuration](/docs/sqrl/datasqrl-spec) and unpacks them in the build directory.
 
 The remote DataSQRL directory is hosted at [https://dev.datasqrl.com](https://dev.datasqrl.com). Packages in the remote repository can be retrieved from any machine running the DataSQRL compiler with access to the internet.
 
