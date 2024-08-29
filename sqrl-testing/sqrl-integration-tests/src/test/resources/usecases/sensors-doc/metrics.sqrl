@@ -11,3 +11,5 @@ SensorMaxTemp := SELECT sensorid, max(temp) as maxTemp
                  FROM SecReading
                  WHERE timeSec >= now() - INTERVAL 1 MINUTE
                  GROUP BY sensorid;
+
+EXPORT SensorReading TO log.LogSensorReading;

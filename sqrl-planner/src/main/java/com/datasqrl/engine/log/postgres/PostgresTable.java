@@ -25,11 +25,10 @@ public class PostgresTable implements Log {
   RelDataTypeTableSchema tableSchema;
   List<String> primaryKeys;
   IConnectorFactoryContext connectorContext;
-  RelDataType schema;
 
   public PostgresTable(String tableName, Name logName, TableConfig sourceConfig,
       TableConfig sinkConfig, RelDataTypeTableSchema tableSchema, List<String> primaryKeys,
-      IConnectorFactoryContext connectorContext, RelDataType schema) {
+      IConnectorFactoryContext connectorContext) {
     this.tableName = tableName;
     this.logName = logName;
     this.sourceConfig = sourceConfig;
@@ -38,7 +37,6 @@ public class PostgresTable implements Log {
     Preconditions.checkState(!primaryKeys.isEmpty(), "Postgres table should have primary keys");
     this.primaryKeys = primaryKeys;
     this.connectorContext = connectorContext;
-    this.schema = schema;
   }
 
   @Override
@@ -49,6 +47,11 @@ public class PostgresTable implements Log {
   @Override
   public TableSink getSink() {
     return TableSinkImpl.create(sinkConfig, logName.toNamePath(), Optional.of(tableSchema));
+  }
+
+  @Override
+  public RelDataType getSchema() {
+    return tableSchema.getRelDataType();
   }
 
 }

@@ -1,6 +1,5 @@
 package com.datasqrl.engine.database.relational.ddl.statements;
 
-import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
 import com.datasqrl.sql.SqlDDLStatement;
 import java.util.ArrayList;
@@ -11,8 +10,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.sql.SqlDialect;
-import org.apache.calcite.sql.SqlDialect.DatabaseProduct;
 import org.apache.calcite.sql.SqlDynamicParam;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlInsert;
