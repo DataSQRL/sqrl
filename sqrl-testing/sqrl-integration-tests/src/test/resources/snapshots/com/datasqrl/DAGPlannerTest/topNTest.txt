@@ -2,7 +2,7 @@
 === Customer
 ID:     customer_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: customerid, lastUpdated
 Timestamp  : timestamp
 Schema:
@@ -17,7 +17,7 @@ LogicalTableScan(table=[[customer_1]], hints=[[[WatermarkHint inheritPath:[] opt
 === CustomerDistinct
 ID:     customerdistinct_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customer_2
 Primary Key: customerid
 Timestamp  : timestamp
@@ -35,7 +35,7 @@ LogicalTableScan(table=[[customer_2]])
 === CustomerId
 ID:     customerid_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customer_2
 Primary Key: customerid
 Timestamp  : _timestamp
@@ -51,7 +51,7 @@ LogicalProject(customerid=[$0], _timestamp=[$4])
 === CustomerOrders
 ID:     customerorders_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: customerid_1, orders_2
 Primary Key: id, _time
 Timestamp  : _time
@@ -70,13 +70,13 @@ LogicalProject(id=[$0], customerid=[$4], _time=[$2])
 === kafka.CustomerOrders
 ID:     customerorders_1_1
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: customerorders_1
 
 === distinctOrders
 ID:     distinctorders_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customerdistinct_1, orders_2
 Primary Key: __pk1_customerid, id
 Timestamp  : _time
@@ -97,7 +97,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], _time=[$2])
 === distinctOrdersTime
 ID:     distinctorderstime_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customerdistinct_1, orders_2
 Primary Key: __pk1_customerid, id, time
 Timestamp  : time
@@ -118,7 +118,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
 === Orders
 ID:     orders_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: id, time
 Timestamp  : time
 Schema:
@@ -132,7 +132,7 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
 === Orders
 ID:     orders_3
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: orders_2
 Primary Key: id
 Timestamp  : time
@@ -149,7 +149,7 @@ LogicalTableScan(table=[[orders_2]])
 === Product
 ID:     product_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: productid, name, description, category
 Timestamp  : _ingest_time
 Schema:
@@ -164,7 +164,7 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
 === recentOrders
 ID:     recentorders_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customerdistinct_1, orders_2
 Primary Key: __pk1_customerid, id, time
 Timestamp  : time

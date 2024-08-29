@@ -57,7 +57,11 @@ public interface PackageJson {
 
     boolean isText();
 
-    boolean isExtended();
+    boolean isSql();
+
+    boolean isLogical();
+
+    boolean isPhysical();
 
     boolean isSorted();
 

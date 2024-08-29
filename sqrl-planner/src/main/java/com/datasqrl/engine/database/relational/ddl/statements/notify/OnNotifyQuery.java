@@ -52,10 +52,7 @@ public class OnNotifyQuery implements SqlDDLStatement {
 
     RelNode queryPlan = planner.planQueryOnTempTable(tempSchema, tableName, queryBuilder);
 
-    RelToSqlNode.SqlNodes sqlNodes = planner.relToSql(Dialect.POSTGRES, queryPlan);
-
-    SqlNodeToString.SqlStrings sqlStrings = planner.sqlToString(Dialect.POSTGRES, sqlNodes);
-
+    SqlNodeToString.SqlStrings sqlStrings = QueryPlanner.relToString(Dialect.POSTGRES, queryPlan);
     return sqlStrings.getSql();
   }
 

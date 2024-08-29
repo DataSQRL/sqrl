@@ -2,7 +2,7 @@
 === Click
 ID:     click_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: url, userid, timestamp
 Timestamp  : timestamp
 Schema:
@@ -15,7 +15,7 @@ LogicalTableScan(table=[[click_1]], hints=[[[WatermarkHint inheritPath:[] option
 === Recommendation
 ID:     recommendation_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: visitafter_1
 Primary Key: url, rec
 Timestamp  : __timestamp
@@ -34,7 +34,7 @@ LogicalProject(url=[$0], rec=[$1], frequency=[$2], __timestamp=[$3])
 === Trending
 ID:     trending_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: click_2
 Primary Key: url
 Timestamp  : _timestamp
@@ -53,7 +53,7 @@ LogicalProject(url=[$0], total=[$2], _timestamp=[$1])
 === VisitAfter
 ID:     visitafter_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: click_2
 Primary Key: beforeURL, _userid, _timestamp0, afterURL, timestamp
 Timestamp  : timestamp

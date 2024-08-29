@@ -2,7 +2,7 @@
 === CombinedIds
 ID:     combinedids_1
 Type:   relation
-Stage:  database
+Stage:  postgres
 Inputs: customer_3, orders_2
 Primary Key: -
 Timestamp  : -
@@ -18,7 +18,7 @@ LogicalUnion(all=[false])
 === CombinedIdsCount
 ID:     combinedidscount_1
 Type:   relation
-Stage:  database
+Stage:  postgres
 Inputs: combinedids_1
 Primary Key: -
 Timestamp  : -
@@ -31,7 +31,7 @@ LogicalAggregate(group=[{}], num_count=[COUNT()])
 === Customer
 ID:     customer_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: customerid, lastUpdated
 Timestamp  : timestamp
 Schema:
@@ -46,7 +46,7 @@ LogicalTableScan(table=[[customer_1]], hints=[[[WatermarkHint inheritPath:[] opt
 === Customer
 ID:     customer_3
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customer_2
 Primary Key: customerid
 Timestamp  : timestamp
@@ -64,7 +64,7 @@ LogicalTableScan(table=[[customer_2]])
 === OrderJoin
 ID:     orderjoin_1
 Type:   relation
-Stage:  database
+Stage:  postgres
 Inputs: combinedids_1, orders_2
 Primary Key: -
 Timestamp  : -
@@ -82,7 +82,7 @@ LogicalSort(sort0=[$1], dir0=[DESC], fetch=[10])
 === Orders
 ID:     orders_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: id, time
 Timestamp  : time
 Schema:
@@ -96,7 +96,7 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
 === Product
 ID:     product_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: productid, name, description, category
 Timestamp  : _ingest_time
 Schema:

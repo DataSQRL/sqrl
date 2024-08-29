@@ -2,7 +2,7 @@
 === CustomerSpending
 ID:     customerspending_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: orders_2
 Primary Key: customerid, week
 Timestamp  : week
@@ -20,13 +20,13 @@ LogicalProject(customerid=[$0], week=[$1], total=[$2], saved=[$3])
 === kafka.CustomerSpending
 ID:     customerspending_1_2
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: customerspending_1
 
 === Orders
 ID:     orders_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: id, time
 Timestamp  : time
 Schema:
@@ -43,7 +43,7 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
 === ProductRevenue
 ID:     productrevenue_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: orders_2
 Primary Key: productid, week
 Timestamp  : week
@@ -60,13 +60,13 @@ LogicalProject(productid=[$0], week=[$1], revenue=[$2])
 === print.Revenue
 ID:     productrevenue_1_1
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: productrevenue_1
 
 === kafka.ProductRevenue
 ID:     productrevenue_1_3
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: productrevenue_1
 
 >>>flink.json

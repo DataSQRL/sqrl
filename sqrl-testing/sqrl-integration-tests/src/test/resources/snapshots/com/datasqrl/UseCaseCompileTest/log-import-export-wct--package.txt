@@ -2,7 +2,7 @@
 === Data
 ID:     data_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: ID
 Timestamp  : TIMESTAMP
 Schema:
@@ -18,13 +18,13 @@ LogicalTableScan(table=[[data_1]], hints=[[[WatermarkHint inheritPath:[] options
 === Event.Event
 ID:     data_2_1
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: data_2
 
 === ImportedEvent
 ID:     importedevent_2
 Type:   state
-Stage:  streams
+Stage:  flink
 Primary Key: _uuid
 Timestamp  : event_time
 Schema:
@@ -40,7 +40,7 @@ LogicalTableScan(table=[[importedevent_1]], hints=[[[WatermarkHint inheritPath:[
 === print.LogImportedEvent
 ID:     importedevent_2_2
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: importedevent_2
 
 >>>flink.json

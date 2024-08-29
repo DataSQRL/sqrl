@@ -2,7 +2,7 @@
 === Product
 ID:     product_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: productid, name, description, category
 Timestamp  : _ingest_time
 Schema:
@@ -17,7 +17,7 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
 === ProductFilter1
 ID:     productfilter1_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: product_2
 Primary Key: productid, name, description, category
 Timestamp  : _ingest_time
@@ -34,13 +34,13 @@ LogicalFilter(condition=[ARRAY_CONTAINS(ARRAY(CAST('one'):VARCHAR(2147483647) CH
 === kafka.ProductFilter1
 ID:     productfilter1_1_1
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: productfilter1_1
 
 === ProductFilter2
 ID:     productfilter2_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: product_2
 Primary Key: productid, name, description, category
 Timestamp  : _ingest_time
@@ -57,7 +57,7 @@ LogicalFilter(condition=[ARRAY_CONTAINS(split('one, two', ','), $1)])
 === kafka.ProductFilter2
 ID:     productfilter2_1_2
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: productfilter2_1
 
 >>>flink.json

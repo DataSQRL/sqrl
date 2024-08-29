@@ -2,7 +2,7 @@
 === Customer
 ID:     customer_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: customerid, lastUpdated
 Timestamp  : timestamp
 Schema:
@@ -17,7 +17,7 @@ LogicalTableScan(table=[[customer_1]], hints=[[[WatermarkHint inheritPath:[] opt
 === HistoricOrders
 ID:     historicorders_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: orders_2
 Primary Key: id, time
 Timestamp  : time
@@ -34,13 +34,13 @@ LogicalTableScan(table=[[orders_2]])
 === kafka.HistoricOrders
 ID:     historicorders_1_1
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: historicorders_1
 
 === OrderAgg1
 ID:     orderagg1_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: orderfilter_1
 Primary Key: customer, bucket
 Timestamp  : bucket
@@ -58,13 +58,13 @@ LogicalAggregate(group=[{0, 1}], order_count=[COUNT()]) hints[TumbleAggregationH
 === kafka.OrderAgg1
 ID:     orderagg1_1_2
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: orderagg1_1
 
 === OrderAgg2
 ID:     orderagg2_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: orders_2
 Primary Key: customer, bucket
 Timestamp  : bucket
@@ -82,13 +82,13 @@ LogicalAggregate(group=[{0, 1}], order_count=[COUNT()]) hints[TumbleAggregationH
 === kafka.OrderAgg2
 ID:     orderagg2_1_3
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: orderagg2_1
 
 === OrderFilter
 ID:     orderfilter_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: orders_2
 Primary Key: id, time
 Timestamp  : time
@@ -105,13 +105,13 @@ LogicalTableScan(table=[[orders_2]])
 === kafka.OrderFilter
 ID:     orderfilter_1_4
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: orderfilter_1
 
 === Orders
 ID:     orders_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: id, time
 Timestamp  : time
 Schema:
@@ -125,7 +125,7 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
 === Product
 ID:     product_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: productid, name, description, category
 Timestamp  : _ingest_time
 Schema:
@@ -140,7 +140,7 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
 === RecentOrders
 ID:     recentorders_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: orders_2
 Primary Key: id, time
 Timestamp  : time
@@ -157,7 +157,7 @@ LogicalTableScan(table=[[orders_2]])
 === kafka.RecentOrders
 ID:     recentorders_1_5
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: recentorders_1
 
 >>>flink.json

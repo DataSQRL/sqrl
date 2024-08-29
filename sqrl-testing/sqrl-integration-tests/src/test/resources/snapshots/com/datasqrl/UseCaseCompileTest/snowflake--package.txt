@@ -2,7 +2,7 @@
 === applications
 ID:     applications_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: id, updated_at
 Timestamp  : updated_at
 Schema:
@@ -19,7 +19,7 @@ LogicalTableScan(table=[[applications_1]], hints=[[[WatermarkHint inheritPath:[]
 === MyIcebergTable
 ID:     myicebergtable_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: applications_2
 Primary Key: id, updated_at
 Timestamp  : updated_at
@@ -37,7 +37,7 @@ LogicalTableScan(table=[[applications_2]])
 === MySnowflakeTable
 ID:     mysnowflaketable_1
 Type:   stream
-Stage:  database
+Stage:  iceberg
 Inputs: myicebergtable_1
 Primary Key: id, updated_at
 Timestamp  : updated_at

@@ -27,6 +27,7 @@ public class WriteDag {
   public static final String DATA_DIR = "data";
   public static final String EXPLAIN_TEXT_FILENAME = "pipeline_explain.txt";
   public static final String EXPLAIN_VISUAL_FILENAME = "pipeline_visual.html";
+  public static final String EXPLAIN_JSON_FILENAME = "pipeline_explain.json";
 
   public static final String VISUAL_HTML_FILENAME = "visualize_dag.html";
 
@@ -46,7 +47,10 @@ public class WriteDag {
       SqrlDAGExporter exporter = SqrlDAGExporter.builder()
           .includeQueries(false)
           .includeImports(false)
-          .withHints(explainConfig.isExtended())
+          .withHints(true)
+          .includeLogicalPlan(explainConfig.isLogical())
+          .includeSQL(explainConfig.isSql())
+          .includePhysicalPlan(explainConfig.isPhysical())
           .build();
       List<Node> nodes = exporter.export(dag);
       if (explainConfig.isSorted()) Collections.sort(nodes); //make order deterministic
@@ -57,7 +61,10 @@ public class WriteDag {
       SqrlDAGExporter exporter = SqrlDAGExporter.builder()
           .includeQueries(true)
           .includeImports(true)
-          .withHints(explainConfig.isExtended())
+          .withHints(true)
+          .includeLogicalPlan(true)
+          .includeSQL(true)
+          .includePhysicalPlan(true)
           .build();
       List<Node> nodes = exporter.export(dag);
       if (explainConfig.isSorted()) Collections.sort(nodes); //make order deterministic
@@ -65,6 +72,7 @@ public class WriteDag {
       String htmlFile = Resources.toString(Resources.getResource(VISUAL_HTML_FILENAME), Charsets.UTF_8);
       htmlFile = htmlFile.replace(DAG_PLACEHOLDER, jsonContent);
       writeFile(buildDir.getBuildDir().resolve(EXPLAIN_VISUAL_FILENAME),htmlFile);
+      writeFile(buildDir.getBuildDir().resolve(EXPLAIN_JSON_FILENAME),jsonContent);
     }
   }
 

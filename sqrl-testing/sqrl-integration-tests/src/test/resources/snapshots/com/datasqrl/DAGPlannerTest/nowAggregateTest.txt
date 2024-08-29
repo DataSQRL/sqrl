@@ -2,7 +2,7 @@
 === Customer
 ID:     customer_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: customerid, lastUpdated
 Timestamp  : timestamp
 Schema:
@@ -17,7 +17,7 @@ LogicalTableScan(table=[[customer_1]], hints=[[[WatermarkHint inheritPath:[] opt
 === OrderAgg1
 ID:     orderagg1_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: orders_2
 Primary Key: customer, bucket
 Timestamp  : bucket
@@ -33,13 +33,13 @@ LogicalAggregate(group=[{0, 1}], order_count=[COUNT()]) hints[TumbleAggregationH
 === kafka.OrderAgg1
 ID:     orderagg1_1_1
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: orderagg1_1
 
 === OrderAgg2
 ID:     orderagg2_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: orders_2
 Primary Key: __pk
 Timestamp  : __timestamp
@@ -55,7 +55,7 @@ LogicalProject(order_count=[$0], __pk=[1], __timestamp=[$1])
 === OrderAugment
 ID:     orderaugment_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: ordernow3_1, orders_2
 Primary Key: id, time
 Timestamp  : time
@@ -74,13 +74,13 @@ LogicalProject(id=[$0], time=[$2], order_count=[$5])
 === kafka.OrderAugment
 ID:     orderaugment_1_2
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: orderaugment_1
 
 === OrderNow1
 ID:     ordernow1_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: orders_2
 Primary Key: customer, bucket
 Timestamp  : bucket
@@ -98,13 +98,13 @@ LogicalAggregate(group=[{0, 1}], order_count=[COUNT()]) hints[TumbleAggregationH
 === kafka.OrderNow1
 ID:     ordernow1_1_3
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: ordernow1_1
 
 === OrderNow2
 ID:     ordernow2_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: orders_2
 Primary Key: bucket
 Timestamp  : bucket
@@ -121,13 +121,13 @@ LogicalAggregate(group=[{0}], order_count=[COUNT()]) hints[TumbleAggregationHint
 === kafka.OrderNow2
 ID:     ordernow2_1_4
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: ordernow2_1
 
 === OrderNow3
 ID:     ordernow3_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: orders_2
 Primary Key: customer
 Timestamp  : _time
@@ -146,7 +146,7 @@ LogicalProject(customer=[$0], order_count=[$2], _time=[$1])
 === Orders
 ID:     orders_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: id, time
 Timestamp  : time
 Schema:
@@ -160,7 +160,7 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
 === Ordertime1
 ID:     ordertime1_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: orders_2
 Primary Key: customer, bucket
 Timestamp  : bucket
@@ -176,13 +176,13 @@ LogicalAggregate(group=[{0, 1}], order_count=[COUNT()]) hints[TumbleAggregationH
 === kafka.Ordertime1
 ID:     ordertime1_1_5
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: ordertime1_1
 
 === Product
 ID:     product_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: productid, name, description, category
 Timestamp  : _ingest_time
 Schema:
@@ -197,7 +197,7 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
 === RecentTotal
 ID:     recenttotal_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: orders_2
 Primary Key: __pk
 Timestamp  : _time

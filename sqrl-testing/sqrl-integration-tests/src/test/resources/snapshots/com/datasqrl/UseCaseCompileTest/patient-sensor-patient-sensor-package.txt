@@ -2,7 +2,7 @@
 === lastHour
 ID:     lasthour_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: observationgroup_2, patientlasthour_1
 Primary Key: __pk1_groupId, __pk3_created
 Timestamp  : __pk3_created
@@ -25,7 +25,7 @@ LogicalProject(__pk1_groupId=[$0], __pk3_created=[$1], maxTemp=[$2], minTemp=[$3
 === ObservationGroup
 ID:     observationgroup_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: groupId, created
 Timestamp  : created
 Schema:
@@ -39,7 +39,7 @@ LogicalTableScan(table=[[observationgroup_1]], hints=[[[WatermarkHint inheritPat
 === PatientHourly
 ID:     patienthourly_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: sensors_3, smoothreading_1
 Primary Key: patientid, timeHour
 Timestamp  : timeHour
@@ -62,7 +62,7 @@ LogicalAggregate(group=[{0, 1}], avgTemp=[AVG($2)], maxTemp=[MAX($2)], minTemp=[
 === PatientLastHour
 ID:     patientlasthour_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: sensors_3, smoothreading_1
 Primary Key: patientid
 Timestamp  : _timeMin
@@ -87,7 +87,7 @@ LogicalProject(patientid=[$1], avgTemp=[$2], maxTemp=[$3], minTemp=[$4], _timeMi
 === SensorReading
 ID:     sensorreading_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: _uuid
 Timestamp  : event_time
 Schema:
@@ -101,7 +101,7 @@ LogicalTableScan(table=[[sensorreading_1]], hints=[[[WatermarkHint inheritPath:[
 === Sensors
 ID:     sensors_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: id, placed
 Timestamp  : placedTimestamp
 Schema:
@@ -115,7 +115,7 @@ LogicalTableScan(table=[[sensors_1]], hints=[[[WatermarkHint inheritPath:[] opti
 === Sensors
 ID:     sensors_3
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: sensors_2
 Primary Key: id
 Timestamp  : placedTimestamp
@@ -132,7 +132,7 @@ LogicalTableScan(table=[[sensors_2]])
 === SmoothReading
 ID:     smoothreading_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: sensorreading_2
 Primary Key: sensorid, timeMin
 Timestamp  : timeMin
@@ -148,7 +148,7 @@ LogicalAggregate(group=[{0, 1}], smoothTemp=[AVG($2)]) hints[TumbleAggregationHi
 === TempAlert
 ID:     tempalert_1
 Type:   stream
-Stage:  streams
+Stage:  flink
 Inputs: sensors_3, smoothreading_1
 Primary Key: sensorid, timeMin
 Timestamp  : timeMin
@@ -170,13 +170,13 @@ LogicalProject(patientid=[$5], sensorid=[$0], smoothTemp=[$2], timeMin=[$1])
 === print.tempWarning
 ID:     tempalert_1_1
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: tempalert_1
 
 === kafka.TempAlert
 ID:     tempalert_1_2
 Type:   export
-Stage:  streams
+Stage:  flink
 Inputs: tempalert_1
 
 >>>flink.json

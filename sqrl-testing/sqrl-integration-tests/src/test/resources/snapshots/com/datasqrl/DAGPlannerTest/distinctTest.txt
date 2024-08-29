@@ -2,7 +2,7 @@
 === Customer
 ID:     customer_2
 Type:   stream
-Stage:  streams
+Stage:  flink
 Primary Key: customerid, lastUpdated
 Timestamp  : timestamp
 Schema:
@@ -17,7 +17,7 @@ LogicalTableScan(table=[[customer_1]], hints=[[[WatermarkHint inheritPath:[] opt
 === CustomerByMultiple
 ID:     customerbymultiple_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customer_2
 Primary Key: customerid, email
 Timestamp  : timestamp
@@ -36,7 +36,7 @@ LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timesta
 === CustomerByMultipleTime
 ID:     customerbymultipletime_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customer_2
 Primary Key: customerid, email
 Timestamp  : timestamp
@@ -55,7 +55,7 @@ LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timesta
 === CustomerByTime2
 ID:     customerbytime2_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customer_2
 Primary Key: customerid
 Timestamp  : timestamp
@@ -73,7 +73,7 @@ LogicalTableScan(table=[[customer_2]])
 === CustomerByTime
 ID:     customerbytime_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customer_2
 Primary Key: customerid
 Timestamp  : timestamp
@@ -91,7 +91,7 @@ LogicalTableScan(table=[[customer_2]])
 === CustomerByTimeAsc
 ID:     customerbytimeasc_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customer_2
 Primary Key: customerid
 Timestamp  : timestamp
@@ -110,7 +110,7 @@ LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timesta
 === CustomerByUpdated
 ID:     customerbyupdated_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customer_2
 Primary Key: customerid
 Timestamp  : timestamp
@@ -129,7 +129,7 @@ LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timesta
 === CustomerByUpdatedAsc
 ID:     customerbyupdatedasc_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customer_2
 Primary Key: customerid
 Timestamp  : timestamp
@@ -148,7 +148,7 @@ LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timesta
 === ExplicitDistinct
 ID:     explicitdistinct_1
 Type:   state
-Stage:  streams
+Stage:  flink
 Inputs: customer_2
 Primary Key: customerid
 Timestamp  : timestamp
