@@ -3,6 +3,7 @@
   "enabled-engines": [
     "flink",
     "iceberg",
+    "postgres",
     "duckdb",
     "kafka",
     "vertx"
