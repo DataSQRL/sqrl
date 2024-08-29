@@ -23,7 +23,7 @@ Inputs: data_2
 
 === ImportedEvent
 ID:     importedevent_2
-Type:   stream
+Type:   state
 Stage:  streams
 Primary Key: _uuid
 Timestamp  : event_time
