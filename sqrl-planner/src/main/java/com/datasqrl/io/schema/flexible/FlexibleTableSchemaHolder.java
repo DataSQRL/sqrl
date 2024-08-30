@@ -37,7 +37,7 @@ public class FlexibleTableSchemaHolder implements TableSchema {
     if (Strings.isNullOrEmpty(definition)) {
       SchemaExport schemaExport = new SchemaExport();
       TableDefinition schemaDef = schemaExport.export(schema);
-      return new Deserializer().writeYML(schemaDef);
+      return Deserializer.INSTANCE.writeYML(schemaDef);
     }
     return definition;
   }

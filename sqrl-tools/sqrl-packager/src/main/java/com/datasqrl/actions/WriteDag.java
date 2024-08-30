@@ -68,7 +68,7 @@ public class WriteDag {
           .build();
       List<Node> nodes = exporter.export(dag);
       if (explainConfig.isSorted()) Collections.sort(nodes); //make order deterministic
-      String jsonContent = new Deserializer().toJson(nodes);
+      String jsonContent = Deserializer.INSTANCE.toJson(nodes);
       String htmlFile = Resources.toString(Resources.getResource(VISUAL_HTML_FILENAME), Charsets.UTF_8);
       htmlFile = htmlFile.replace(DAG_PLACEHOLDER, jsonContent);
       writeFile(buildDir.getBuildDir().resolve(EXPLAIN_VISUAL_FILENAME),htmlFile);

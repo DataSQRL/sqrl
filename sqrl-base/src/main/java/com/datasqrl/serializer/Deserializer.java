@@ -20,11 +20,12 @@ import lombok.Getter;
 
 @Getter
 public class Deserializer {
+  public static Deserializer INSTANCE = new Deserializer();
 
   final ObjectMapper jsonMapper;
   final YAMLMapper yamlMapper;
 
-  public Deserializer() {
+  protected Deserializer() {
     SimpleModule module = new SqrlSerializerModule();
     jsonMapper = new ObjectMapper()
         .registerModule(new Jdk8Module())

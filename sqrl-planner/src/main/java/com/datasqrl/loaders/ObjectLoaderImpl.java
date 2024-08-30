@@ -62,7 +62,7 @@ public class ObjectLoaderImpl implements ObjectLoader {
     this.logManager = logManager;
   }
 
-  final static Deserializer SERIALIZER = new Deserializer();
+  final static Deserializer SERIALIZER = Deserializer.INSTANCE;
 
   @Override
   public String toString() {

@@ -4,8 +4,8 @@ import com.datasqrl.serializer.Deserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class SqrlObjectMapper {
-  public static ObjectMapper INSTANCE = new Deserializer()
+  public static final ObjectMapper INSTANCE = Deserializer.INSTANCE
       .getJsonMapper();
-  public static ObjectMapper YAML_INSTANCE = new Deserializer()
+  public static final ObjectMapper YAML_INSTANCE = Deserializer.INSTANCE
       .getYamlMapper();
 }
