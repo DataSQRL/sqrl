@@ -160,7 +160,7 @@ public class DatasqrlRun {
     configMap.put("DATA_PATH", build.resolve("deploy/flink/data").toString());
     configMap.put("PGHOST", "localhost");
     configMap.put("PGUSER", "postgres");
-    configMap.put("PGPORT", postgreSQLContainer.getMappedPort(5432).toString());
+    configMap.put("PGPORT", isStarted.get() ? postgreSQLContainer.getMappedPort(5432).toString() : "5432") ;
     configMap.put("PGPASSWORD", "postgres");
     configMap.put("PGDATABASE", "datasqrl");
 

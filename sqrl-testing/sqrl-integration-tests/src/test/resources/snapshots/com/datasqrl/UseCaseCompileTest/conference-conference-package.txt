@@ -414,11 +414,13 @@ LogicalTableScan(table=[[likes_2]])
     ],
     "mutations" : [
       {
+        "type" : "kafka",
         "fieldName" : "Likes",
         "topic" : "conference-likes",
         "sinkConfig" : { }
       },
       {
+        "type" : "kafka",
         "fieldName" : "AddInterest",
         "topic" : "conference-addinterest",
         "sinkConfig" : { }

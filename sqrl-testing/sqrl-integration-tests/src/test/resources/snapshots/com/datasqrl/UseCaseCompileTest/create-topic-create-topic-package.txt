@@ -126,6 +126,7 @@ Inputs: pgtable_1
     ],
     "mutations" : [
       {
+        "type" : "kafka",
         "fieldName" : "AddEvent",
         "topic" : "create-topic-addevent",
         "sinkConfig" : { }

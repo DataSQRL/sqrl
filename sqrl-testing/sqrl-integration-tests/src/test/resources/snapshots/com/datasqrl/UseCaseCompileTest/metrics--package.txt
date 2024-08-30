@@ -1,0 +1,315 @@
+>>>pipeline_explain.txt
+=== SecReading
+ID:     secreading_1
+Type:   state
+Stage:  flink
+Inputs: sensorreading_2
+Primary Key: sensorid, timeSec
+Timestamp  : __timestamp
+Schema:
+ - sensorid: BIGINT NOT NULL
+ - timeSec: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - temp: DECIMAL(10, 5) NOT NULL
+ - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Plan:
+LogicalAggregate(group=[{0, 1}], temp=[AVG($2)], __timestamp=[MAX($4)])
+  LogicalProject(sensorid=[$0], timeSec=[endOfSecond($4)], temperature=[$1], _uuid=[$3], event_time=[$4])
+    LogicalTableScan(table=[[sensorreading_2]])
+
+=== SensorMaxTemp
+ID:     sensormaxtemp_1
+Type:   state
+Stage:  postgres
+Inputs: secreading_1
+Primary Key: sensorid
+Timestamp  : __timestamp
+Schema:
+ - sensorid: BIGINT NOT NULL
+ - maxTemp: DECIMAL(10, 5) NOT NULL
+ - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Plan:
+LogicalAggregate(group=[{0}], maxTemp=[MAX($2)], __timestamp=[MAX($3)])
+  LogicalFilter(condition=[>=($1, -(NOW(), *(60000:INTERVAL MINUTE, 1)))])
+    LogicalTableScan(table=[[secreading_1]])
+
+=== SensorReading
+ID:     sensorreading_2
+Type:   state
+Stage:  flink
+Primary Key: _uuid
+Timestamp  : event_time
+Schema:
+ - sensorid: BIGINT NOT NULL
+ - temperature: DECIMAL(10, 5) NOT NULL
+ - humidity: DECIMAL(10, 5) NOT NULL
+ - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - event_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Plan:
+LogicalTableScan(table=[[sensorreading_1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+
+=== LogSensorReading.LogSensorReading
+ID:     sensorreading_2_1
+Type:   export
+Stage:  flink
+Inputs: sensorreading_2
+
+>>>schema.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+
+type Query {
+  SecReading(sensorid: Int!): [SecReading!]
+  SensorMaxTemp(sensorid: Int): [SensorMaxTemp!]
+}
+
+type SecReading {
+  sensorid: Float!
+  timeSec: DateTime!
+  temp: Float!
+}
+
+type SensorMaxTemp {
+  sensorid: Float!
+  maxTemp: Float!
+}
+
+type Mutation {
+  AddReading(metric: SensorReadingInput!): CreatedReading
+}
+
+input SensorReadingInput {
+  sensorid: Int!
+  temperature: Float!
+  humidity: Float!
+}
+
+type CreatedReading {
+  event_time: String!
+  sensorid: Int!
+}
+
+>>>flink.json
+{
+  "flinkSql" : [
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofsecond` AS 'com.datasqrl.time.EndOfSecond' LANGUAGE JAVA;",
+    "CREATE TEMPORARY TABLE `sensorreading_1` (\n  `sensorid` BIGINT NOT NULL,\n  `temperature` DECIMAL(10, 5) NOT NULL,\n  `humidity` DECIMAL(10, 5) NOT NULL,\n  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`_uuid`) NOT ENFORCED,\n  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND\n) WITH (\n  'hostname' = '${PGHOST}',\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'postgres-cdc',\n  'port' = '5432',\n  'slot.name' = 'flink_slot',\n  'database-name' = 'datasqrl',\n  'schema-name' = 'public',\n  'decoding.plugin.name' = 'pgoutput',\n  'table-name' = 'schemaAddreading',\n  'debezium.slot.drop_on_stop' = 'false',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `secreading_1` (\n  `sensorid` BIGINT NOT NULL,\n  `timeSec` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `temp` DECIMAL(10, 5) NOT NULL,\n  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`sensorid`, `timeSec`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'secreading_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `sensorreading_2_1` (\n  `sensorid` BIGINT NOT NULL,\n  `temperature` DECIMAL(10, 5) NOT NULL,\n  `humidity` DECIMAL(10, 5) NOT NULL,\n  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`_uuid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'LogSensorReading',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE VIEW `table$1`\nAS\nSELECT `sensorid`, ENDOFSECOND(`event_time`) AS `timeSec`, AVG(`temperature`) AS `temp`, MAX(`event_time`) AS `__timestamp`\nFROM `sensorreading_1`\nGROUP BY `sensorid`, ENDOFSECOND(`event_time`);",
+    "CREATE VIEW `table$2`\nAS\nSELECT *\nFROM `sensorreading_1`;",
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `secreading_1`\n(SELECT *\n FROM `table$1`)\n;\nINSERT INTO `sensorreading_2_1`\n (SELECT *\n  FROM `table$2`)\n ;\n END;"
+  ],
+  "connectors" : [
+    "jdbc-sqrl",
+    "postgres-cdc"
+  ],
+  "formats" : [ ]
+}
+>>>postgres.json
+{
+  "ddl" : [
+    {
+      "name" : "secreading_1",
+      "columns" : [
+        "\"sensorid\" BIGINT NOT NULL",
+        "\"timeSec\" TIMESTAMP WITH TIME ZONE NOT NULL",
+        "\"temp\" NUMERIC NOT NULL",
+        "\"__timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"sensorid\"",
+        "\"timeSec\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS secreading_1 (\"sensorid\" BIGINT NOT NULL,\"timeSec\" TIMESTAMP WITH TIME ZONE NOT NULL,\"temp\" NUMERIC NOT NULL,\"__timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"sensorid\",\"timeSec\"));"
+    },
+    {
+      "indexName" : "secreading_1_btree_c1",
+      "tableName" : "secreading_1",
+      "columns" : [
+        "timeSec"
+      ],
+      "type" : "BTREE",
+      "sql" : "CREATE INDEX IF NOT EXISTS secreading_1_btree_c1 ON secreading_1 USING btree (\"timeSec\");"
+    }
+  ]
+}
+>>>postgres_log.json
+{
+  "ddl" : [
+    {
+      "name" : "\"LogSensorReading\"",
+      "columns" : [
+        "\"sensorid\" BIGINT NOT NULL",
+        "\"temperature\" NUMERIC NOT NULL",
+        "\"humidity\" NUMERIC NOT NULL",
+        "\"_uuid\" TEXT NOT NULL",
+        "\"event_time\" TIMESTAMP WITH TIME ZONE NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"_uuid\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS \"LogSensorReading\" (\"sensorid\" BIGINT NOT NULL,\"temperature\" NUMERIC NOT NULL,\"humidity\" NUMERIC NOT NULL,\"_uuid\" TEXT NOT NULL,\"event_time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"_uuid\"));"
+    },
+    {
+      "sql" : "CREATE OR REPLACE FUNCTION notify_on_LogSensorReading_insert()\nRETURNS TRIGGER AS $$\nBEGIN\n   PERFORM pg_notify('LogSensorReading_notify', jsonb_build_object('_uuid', NEW._uuid)::text);\n   RETURN NEW;\nEND;\n$$ LANGUAGE plpgsql;\n\nCREATE TRIGGER insert_notify_trigger\nAFTER INSERT ON \"LogSensorReading\"\nFOR EACH ROW EXECUTE PROCEDURE notify_on_LogSensorReading_insert();"
+    },
+    {
+      "name" : "\"schemaAddreading\"",
+      "columns" : [
+        "\"sensorid\" BIGINT NOT NULL",
+        "\"temperature\" NUMERIC NOT NULL",
+        "\"humidity\" NUMERIC NOT NULL",
+        "\"_uuid\" TEXT NOT NULL",
+        "\"event_time\" TIMESTAMP WITH TIME ZONE NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"_uuid\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS \"schemaAddreading\" (\"sensorid\" BIGINT NOT NULL,\"temperature\" NUMERIC NOT NULL,\"humidity\" NUMERIC NOT NULL,\"_uuid\" TEXT NOT NULL,\"event_time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"_uuid\"));"
+    },
+    {
+      "sql" : "CREATE OR REPLACE FUNCTION notify_on_schemaAddreading_insert()\nRETURNS TRIGGER AS $$\nBEGIN\n   PERFORM pg_notify('schemaAddreading_notify', jsonb_build_object('_uuid', NEW._uuid)::text);\n   RETURN NEW;\nEND;\n$$ LANGUAGE plpgsql;\n\nCREATE TRIGGER insert_notify_trigger\nAFTER INSERT ON \"schemaAddreading\"\nFOR EACH ROW EXECUTE PROCEDURE notify_on_schemaAddreading_insert();"
+    }
+  ],
+  "queries" : [
+    {
+      "listen" : {
+        "sql" : "LISTEN LogSensorReading_notify;"
+      },
+      "onNotify" : {
+        "sql" : "SELECT *\nFROM \"LogSensorReading\"\nWHERE \"_uuid\" = $1"
+      },
+      "parameters" : [
+        "_uuid"
+      ]
+    },
+    {
+      "listen" : {
+        "sql" : "LISTEN schemaAddreading_notify;"
+      },
+      "onNotify" : {
+        "sql" : "SELECT *\nFROM \"schemaAddreading\"\nWHERE \"_uuid\" = $1"
+      },
+      "parameters" : [
+        "_uuid"
+      ]
+    }
+  ],
+  "inserts" : [
+    {
+      "tableName" : "LogSensorReading",
+      "parameters" : [
+        "sensorid",
+        "temperature",
+        "humidity",
+        "_uuid",
+        "event_time"
+      ],
+      "sql" : "INSERT INTO \"LogSensorReading\" (\"sensorid\", \"temperature\", \"humidity\", \"_uuid\", \"event_time\") VALUES\n($1, $2, $3, $4, $5)"
+    },
+    {
+      "tableName" : "schemaAddreading",
+      "parameters" : [
+        "sensorid",
+        "temperature",
+        "humidity",
+        "_uuid",
+        "event_time"
+      ],
+      "sql" : "INSERT INTO \"schemaAddreading\" (\"sensorid\", \"temperature\", \"humidity\", \"_uuid\", \"event_time\") VALUES\n($1, $2, $3, $4, $5)"
+    }
+  ]
+}
+>>>vertx.json
+{
+  "model" : {
+    "coords" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "SecReading",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "sensorid"
+              }
+            ],
+            "query" : {
+              "type" : "JdbcQuery",
+              "type" : "JdbcQuery",
+              "sql" : "SELECT *\nFROM \"secreading_1\"\nWHERE \"sensorid\" = $1\nORDER BY \"timeSec\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "sensorid"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "SensorMaxTemp",
+        "matchs" : [
+          {
+            "arguments" : [ ],
+            "query" : {
+              "type" : "JdbcQuery",
+              "type" : "JdbcQuery",
+              "sql" : "SELECT \"sensorid\", MAX(\"temp\") AS \"maxTemp\", MAX(\"__timestamp\") AS \"__timestamp\"\nFROM \"secreading_1\"\nWHERE \"timeSec\" >= CURRENT_TIMESTAMP - INTERVAL '1' MINUTE * 1\nGROUP BY \"sensorid\"\nORDER BY \"sensorid\"",
+              "parameters" : [ ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "sensorid"
+              }
+            ],
+            "query" : {
+              "type" : "JdbcQuery",
+              "type" : "JdbcQuery",
+              "sql" : "SELECT \"sensorid\", MAX(\"temp\") AS \"maxTemp\", MAX(\"__timestamp\") AS \"__timestamp\", 1 AS \"__pk\"\nFROM \"secreading_1\"\nWHERE \"timeSec\" >= CURRENT_TIMESTAMP - INTERVAL '1' MINUTE * 1\nGROUP BY \"sensorid\"\nHAVING \"sensorid\" = $1\nORDER BY 1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "sensorid"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "mutations" : [
+      {
+        "type" : "postgres_log",
+        "fieldName" : "AddReading",
+        "tableName" : "schemaAddreading",
+        "insertStatement" : "INSERT INTO \"schemaAddreading\" (\"sensorid\", \"temperature\", \"humidity\", \"_uuid\", \"event_time\") VALUES\n($1, $2, $3, $4, $5)",
+        "parameters" : [
+          "sensorid",
+          "temperature",
+          "humidity",
+          "_uuid",
+          "event_time"
+        ]
+      }
+    ],
+    "subscriptions" : [ ],
+    "schema" : {
+      "type" : "string",
+      "type" : "string",
+      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype Query {\n  SecReading(sensorid: Int!): [SecReading!]\n  SensorMaxTemp(sensorid: Int): [SensorMaxTemp!]\n}\n\ntype SecReading {\n  sensorid: Float!\n  timeSec: DateTime!\n  temp: Float!\n}\n\ntype SensorMaxTemp {\n  sensorid: Float!\n  maxTemp: Float!\n}\n\ntype Mutation {\n  AddReading(metric: SensorReadingInput!): CreatedReading\n}\n\ninput SensorReadingInput {\n  sensorid: Int!\n  temperature: Float!\n  humidity: Float!\n}\n\ntype CreatedReading {\n  event_time: String!\n  sensorid: Int!\n}\n"
+    }
+  }
+}

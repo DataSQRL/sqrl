@@ -458,6 +458,7 @@ Inputs: tempalert_1
     ],
     "mutations" : [
       {
+        "type" : "kafka",
         "fieldName" : "AddReading",
         "topic" : "patient-sensor-addreading",
         "sinkConfig" : { }
