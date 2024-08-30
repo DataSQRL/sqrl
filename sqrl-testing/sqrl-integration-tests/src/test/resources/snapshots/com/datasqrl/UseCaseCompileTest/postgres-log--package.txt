@@ -152,14 +152,14 @@ LogicalTableScan(table=[[event_2]])
   "inserts" : [
     {
       "tableName" : "Event",
+      "sql" : "INSERT INTO \"Event\" (\"_uuid\", \"ID\", \"EPOCH_TIMESTAMP\", \"SOME_VALUE\", \"event_time\") VALUES\n($1, $2, $3, $4, $5)",
       "params" : [
         "_uuid",
         "ID",
         "EPOCH_TIMESTAMP",
         "SOME_VALUE",
         "event_time"
-      ],
-      "sql" : "INSERT INTO \"Event\" (\"_uuid\", \"ID\", \"EPOCH_TIMESTAMP\", \"SOME_VALUE\", \"event_time\") VALUES\n($1, $2, $3, $4, $5)"
+      ]
     }
   ]
 }

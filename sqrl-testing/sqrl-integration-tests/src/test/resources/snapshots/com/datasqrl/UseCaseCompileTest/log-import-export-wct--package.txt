@@ -101,6 +101,7 @@ Inputs: importedevent_2
   "inserts" : [
     {
       "tableName" : "Event",
+      "sql" : "INSERT INTO \"Event\" (\"_uuid\", \"ID\", \"EPOCH_TIMESTAMP\", \"SOME_VALUE\", \"TIMESTAMP\", \"event_time\") VALUES\n($1, $2, $3, $4, $5, $6)",
       "params" : [
         "_uuid",
         "ID",
@@ -108,8 +109,7 @@ Inputs: importedevent_2
         "SOME_VALUE",
         "TIMESTAMP",
         "event_time"
-      ],
-      "sql" : "INSERT INTO \"Event\" (\"_uuid\", \"ID\", \"EPOCH_TIMESTAMP\", \"SOME_VALUE\", \"TIMESTAMP\", \"event_time\") VALUES\n($1, $2, $3, $4, $5, $6)"
+      ]
     }
   ]
 }
