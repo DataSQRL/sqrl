@@ -77,7 +77,7 @@ public class RepositoryTest {
         .map(s -> StringUtil.removeFromEnd(s, Zipper.ZIP_EXTENSION)).findAny().get();
     Path pubFile = Files.find(outputPath, 1, (p, a) -> p.getFileName().toString().endsWith("json"))
         .findFirst().get();
-    Publication pub = new Deserializer().mapJsonFile(pubFile, Publication.class);
+    Publication pub = Deserializer.INSTANCE.mapJsonFile(pubFile, Publication.class);
     assertEquals(pub.getUniqueId(), uid);
     assertTrue(Instant.now().compareTo(Instant.parse(pub.getSubmissionTime())) > 0);
     return pub;

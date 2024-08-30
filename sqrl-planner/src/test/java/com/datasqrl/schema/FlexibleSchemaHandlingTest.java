@@ -93,7 +93,7 @@ public class FlexibleSchemaHandlingTest {
   public List<FlexibleTableSchema> getSchemas(InputSchema inputSchema) {
     SchemaImport importer = new SchemaImport(Constraint.FACTORY_LOOKUP, NameCanonicalizer.SYSTEM);
     ErrorCollector errors = ErrorCollector.root();
-    Deserializer deserializer = new Deserializer();
+    Deserializer deserializer = Deserializer.INSTANCE;
     List<FlexibleTableSchema> schemas = Files.list(inputSchema.packageDir)
             .sorted()
             .filter(f -> f.getFileName().toString().endsWith(FlexibleTableSchemaFactory.SCHEMA_EXTENSION))

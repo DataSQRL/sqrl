@@ -5,7 +5,11 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.ServiceLoader;
+import java.util.stream.Collectors;
 
 public class SqrlSerializerModule extends SimpleModule {
 
@@ -15,19 +19,32 @@ public class SqrlSerializerModule extends SimpleModule {
   }
 
   private void registerSqrlModules() {
-    ServiceLoader<JacksonDeserializer> jacksonDeserializers = ServiceLoader.load(JacksonDeserializer.class);
+    List<JacksonDeserializer> jacksonDeserializers =
+        cache(JacksonDeserializer.class);
     for (JacksonDeserializer deserializer : jacksonDeserializers) {
       super.addDeserializer(deserializer.getSuperType(), deserializer);
     }
 
-    ServiceLoader<StdDeserializer> deserializers = ServiceLoader.load(StdDeserializer.class);
+    List<StdDeserializer> deserializers =
+        cache(StdDeserializer.class);
     for (StdDeserializer deserializer : deserializers) {
       super.addDeserializer(deserializer.getValueClass(), deserializer);
     }
 
-    ServiceLoader<StdSerializer> serializers = ServiceLoader.load(StdSerializer.class);
+    List<StdSerializer> serializers =
+        cache(StdSerializer.class);
     for (StdSerializer serializer : serializers) {
       super.addSerializer(serializer);
     }
    }
+   private static final Map<Class, List<Object>> cache = new HashMap<>();
+   private static <T> List<T> cache(Class<T> clazz) {
+    if (cache.containsKey(clazz)) {
+      return (List<T>)cache.get(clazz);
+    }
+    return ServiceLoader.load(clazz)
+        .stream()
+        .map(m->m.get())
+        .collect(Collectors.toList());
+  }
 }

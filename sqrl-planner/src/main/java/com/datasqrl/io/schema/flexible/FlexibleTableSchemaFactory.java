@@ -23,7 +23,7 @@ public class FlexibleTableSchemaFactory implements TableSchemaFactory {
 
   @Override
   public FlexibleTableSchemaHolder create(String schemaDefinition, Optional<Path> location, ErrorCollector errors) {
-    Deserializer deserializer = new Deserializer();
+    Deserializer deserializer = Deserializer.INSTANCE;
     TableDefinition schemaDef = deserializer.mapYAML(schemaDefinition, TableDefinition.class);
     SchemaImport importer = new SchemaImport(Constraint.FACTORY_LOOKUP, NameCanonicalizer.SYSTEM);
     FlexibleTableSchema tableSchema = importer.convert(schemaDef, errors).get();

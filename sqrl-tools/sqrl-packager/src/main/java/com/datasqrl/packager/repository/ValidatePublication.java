@@ -48,7 +48,7 @@ public class ValidatePublication implements PublishRepository {
       Path pkgFile = outputDir.resolve(String.format(PUBLICATION_FILENAME_FORMAT, pubTime.toEpochMilli(), uniqueId));
       try {
         Files.copy(zipFile, destFile);
-        new Deserializer().writeJson(pkgFile, publication);
+        Deserializer.INSTANCE.writeJson(pkgFile, publication);
       } catch (IOException ex) {
         throw errors.handle(ex);
       }

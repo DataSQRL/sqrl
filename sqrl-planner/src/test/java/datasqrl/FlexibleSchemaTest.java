@@ -77,7 +77,7 @@ class FlexibleSchemaTest {
 
   @SneakyThrows
   public String getSchema(Path path) {
-    Deserializer deserializer = new Deserializer();
+    Deserializer deserializer = Deserializer.INSTANCE;
     TableDefinition tableDefinition = deserializer.mapYAMLFile(path,
         TableDefinition.class);
     String json = deserializer.getJsonMapper().writeValueAsString(tableDefinition);
