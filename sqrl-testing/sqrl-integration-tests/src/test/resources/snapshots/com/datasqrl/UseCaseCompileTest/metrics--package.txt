@@ -198,7 +198,7 @@ type CreatedReading {
   "inserts" : [
     {
       "tableName" : "LogSensorReading",
-      "parameters" : [
+      "params" : [
         "sensorid",
         "temperature",
         "humidity",
@@ -209,7 +209,7 @@ type CreatedReading {
     },
     {
       "tableName" : "schemaAddreading",
-      "parameters" : [
+      "params" : [
         "sensorid",
         "temperature",
         "humidity",

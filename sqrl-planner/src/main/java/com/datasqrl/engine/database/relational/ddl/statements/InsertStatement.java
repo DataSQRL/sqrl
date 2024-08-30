@@ -7,7 +7,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.SqlDynamicParam;
@@ -28,7 +27,7 @@ public class InsertStatement implements SqlDDLStatement {
     return tableName;
   }
 
-  public List<String> getParameters() {
+  public List<String> getParams() {
     return tableSchema.getFieldList().stream()
         .map(RelDataTypeField::getName)
         .collect(Collectors.toList());

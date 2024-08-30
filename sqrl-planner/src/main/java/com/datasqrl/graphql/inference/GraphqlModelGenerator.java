@@ -149,7 +149,7 @@ public class GraphqlModelGenerator extends SchemaWalker {
           .orElseThrow(() -> new RuntimeException("Could not find insert statement for table: " + tableName));
 
       mutationCoords = new PostgresLogMutationCoords(fieldDefinition.getName(), tableName,
-          insertStatement.getSql(), insertStatement.getParameters());
+          insertStatement.getSql(), insertStatement.getParams());
     } else {
       throw new RuntimeException("Unknown log plan: " + logPlan.getClass().getName());
     }

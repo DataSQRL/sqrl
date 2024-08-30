@@ -101,7 +101,7 @@ Inputs: importedevent_2
   "inserts" : [
     {
       "tableName" : "Event",
-      "parameters" : [
+      "params" : [
         "_uuid",
         "ID",
         "EPOCH_TIMESTAMP",
