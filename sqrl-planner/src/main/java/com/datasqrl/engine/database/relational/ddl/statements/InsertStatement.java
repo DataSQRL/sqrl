@@ -20,10 +20,19 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 @AllArgsConstructor
 public class InsertStatement implements SqlDDLStatement {
 
-  @Getter
   String tableName;
 
   RelDataType tableSchema;
+
+  public String getTableName() {
+    return tableName;
+  }
+
+  public List<String> getParameters() {
+    return tableSchema.getFieldList().stream()
+        .map(RelDataTypeField::getName)
+        .collect(Collectors.toList());
+  }
 
   @Override
   public String getSql() {
@@ -50,12 +59,6 @@ public class InsertStatement implements SqlDDLStatement {
     // Convert the INSERT statement to a SQL string
     String sql = addValuesKeyword(new PostgresSqlNodeToString().convert(()->sqlInsert).getSql());
     return sql;
-  }
-
-  public List<String> getParameters() {
-    return tableSchema.getFieldList().stream()
-        .map(RelDataTypeField::getName)
-        .collect(Collectors.toList());
   }
 
   // workaround as SqlInsert does not support VALUES keyword ??? TODO
