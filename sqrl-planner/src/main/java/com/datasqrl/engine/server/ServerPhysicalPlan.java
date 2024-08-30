@@ -1,6 +1,5 @@
 package com.datasqrl.engine.server;
 
-import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.graphql.SqrlObjectMapper;
 import com.datasqrl.graphql.server.RootGraphqlModel;
@@ -15,5 +14,4 @@ public class ServerPhysicalPlan implements EnginePhysicalPlan {
 
   @Setter
   RootGraphqlModel model;
-
 }

@@ -70,8 +70,9 @@ public class LogEngineIT {
         + "}";
 
     String response = executeQuery(graphqlEndpoint, mut);
+
     Thread.sleep(2000);
-   String query = "{\n"
+    String query = "{\n"
        + "  MyEvent {\n"
        + "    ID\n"
        + "  }\n"

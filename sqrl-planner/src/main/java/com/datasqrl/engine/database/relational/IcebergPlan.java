@@ -1,6 +1,5 @@
 package com.datasqrl.engine.database.relational;
 
-import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.database.DatabasePhysicalPlan;
 import com.datasqrl.engine.database.QueryTemplate;

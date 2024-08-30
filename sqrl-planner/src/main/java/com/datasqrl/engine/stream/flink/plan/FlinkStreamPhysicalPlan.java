@@ -3,7 +3,6 @@
  */
 package com.datasqrl.engine.stream.flink.plan;
 
-import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.engine.stream.StreamPhysicalPlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StreamStagePlan;
 import java.util.HashSet;
@@ -62,5 +61,4 @@ public class FlinkStreamPhysicalPlan implements StreamPhysicalPlan {
     }
     return formats;
   }
-
 }
