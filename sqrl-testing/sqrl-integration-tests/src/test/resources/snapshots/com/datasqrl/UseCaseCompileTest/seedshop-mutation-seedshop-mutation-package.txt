@@ -1025,6 +1025,7 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
     ],
     "mutations" : [
       {
+        "type" : "kafka",
         "fieldName" : "ProductVisit",
         "topic" : "seedshop-mutation-productvisit",
         "sinkConfig" : { }

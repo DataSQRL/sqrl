@@ -1,7 +1,5 @@
 package com.datasqrl.engine.database.relational;
 
-import static com.datasqrl.function.CalciteFunctionUtil.lightweightOp;
-
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.convert.SnowflakeSqlNodeToString;
@@ -15,7 +13,6 @@ import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.EmptyEngineConfig;
 import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.datatype.snowflake.SnowflakeIcebergDataTypeMapper;
-import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.database.DatabasePhysicalPlan;
 import com.datasqrl.engine.database.DatabaseViewPhysicalPlan;
 import com.datasqrl.engine.database.DatabaseViewPhysicalPlan.DatabaseView;

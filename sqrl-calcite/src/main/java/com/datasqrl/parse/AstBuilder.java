@@ -20,7 +20,7 @@ import com.datasqrl.calcite.SqrlConformance;
 import com.datasqrl.parse.SqlBaseParser.*;
 import com.datasqrl.sql.parser.impl.SqrlSqlParserImpl;
 import com.google.common.base.Preconditions;
-import java.time.ZoneId;
+import java.math.BigDecimal;
 import lombok.SneakyThrows;
 import lombok.Value;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -525,7 +525,7 @@ public class AstBuilder
     } else if (ctx.arrayType() != null) {
       typeNameSpec = getArrayType(ctx.arrayType(), getLocation(ctx));
     } else {
-      typeNameSpec = getTypeName(ctx.baseType());
+      typeNameSpec = getTypeName(ctx, ctx.baseType());
     }
     SqlDataTypeSpec sqlDataTypeSpec = new SqlDataTypeSpec(typeNameSpec, null, nullable,
         SqlParserPos.ZERO);
@@ -551,7 +551,7 @@ public class AstBuilder
     return typeNameSpec;
   }
 
-  private SqlTypeNameSpec getTypeName(BaseTypeContext baseType) {
+  private SqlTypeNameSpec getTypeName(TypeContext ctx, BaseTypeContext baseType) {
     SqlIdentifier id = (SqlIdentifier) visit(baseType.identifier());
     String typeName = Util.last(id.names);
     if (typeName.equalsIgnoreCase("int")) {
@@ -568,7 +568,24 @@ public class AstBuilder
     if (sqlTypeName == null) {
       return new SqlUserDefinedTypeNameSpec(typeName, getLocation(baseType));
     }
+    if (!ctx.typeParameter().isEmpty()) {
+      //todo: we assume precision, need to fill out the rest
+      List<SqlNode> params = visit(ctx.typeParameter(), SqlNode.class);
+      SqlLiteral literal = (SqlLiteral) params.get(0);
+      return new SqlBasicTypeNameSpec(sqlTypeName,
+          ((BigDecimal)literal.getValue()).intValue(), getLocation(baseType));
+    }
+
     return new SqlBasicTypeNameSpec(sqlTypeName, getLocation(baseType));
+  }
+
+  @Override
+  public SqlNode visitTypeParameter(TypeParameterContext ctx) {
+    if (ctx.INTEGER_VALUE() != null) {
+      return SqlNumericLiteral.createExactNumeric(ctx.getText(), getLocation(ctx));
+    }
+
+    return ctx.type().accept(this);
   }
 
   @Override

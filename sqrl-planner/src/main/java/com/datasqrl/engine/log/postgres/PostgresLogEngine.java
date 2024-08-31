@@ -16,6 +16,7 @@ import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.database.relational.ddl.JdbcDDLFactory;
 import com.datasqrl.engine.database.relational.ddl.JdbcDDLServiceLoader;
 import com.datasqrl.engine.database.relational.ddl.PostgresDDLFactory;
+import com.datasqrl.engine.database.relational.ddl.statements.InsertStatement;
 import com.datasqrl.engine.database.relational.ddl.statements.notify.ListenNotifyAssets;
 import com.datasqrl.engine.log.Log;
 import com.datasqrl.engine.log.LogEngine;
@@ -25,8 +26,10 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.global.PhysicalDAGPlan.LogStagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
+import com.datasqrl.sql.SqlDDLStatement;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import lombok.Getter;
@@ -46,8 +49,10 @@ public class PostgresLogEngine extends ExecutionEngine.Base implements LogEngine
 
     this.engineConfig = json.getEngines().getEngineConfig(ENGINE_NAME)
         .orElseGet(() -> new EmptyEngineConfig(ENGINE_NAME));
-    this.sourceConnectorFactory = connectorFactory.create(LOG, "postgres_log-source").orElse(null);
-    this.sinkConnectorFactory = connectorFactory.create(LOG, "postgres_log-sink").orElse(null);
+    this.sourceConnectorFactory = connectorFactory.create(LOG, "postgres_log-source")
+        .orElseThrow(()->new RuntimeException("Could not find postgres_log source connector"));
+    this.sinkConnectorFactory = connectorFactory.create(LOG, "postgres_log-sink")
+        .orElseThrow(()->new RuntimeException("Could not find postgres_log sink connector"));
   }
 
   @Override
@@ -67,21 +72,25 @@ public class PostgresLogEngine extends ExecutionEngine.Base implements LogEngine
 
     PostgresDDLFactory postgresDDLFactory = (PostgresDDLFactory) factory;
 
-    PostgresPhysicalPlan physicalPlan = new PostgresPhysicalPlan();
-
+    List<SqlDDLStatement> ddl = new ArrayList<>();
+    List<ListenNotifyAssets> queries = new ArrayList<>();
+    List<InsertStatement> inserts = new ArrayList<>();
     LogStagePlan dbPlan = (LogStagePlan) plan;
     for (Log log : dbPlan.getLogs()) {
       PostgresTable pgTable = (PostgresTable) log;
       String tableName = pgTable.getTableName();
       RelDataType dataType = pgTable.getTableSchema().getRelDataType();
-      physicalPlan.getDdl().add(postgresDDLFactory.createTable(tableName, dataType.getFieldList(), pgTable.getPrimaryKeys()));
-      physicalPlan.getDdl().add(postgresDDLFactory.createNotify(tableName, pgTable.getPrimaryKeys()));
+      ddl.add(postgresDDLFactory.createTable(tableName, dataType.getFieldList(), pgTable.getPrimaryKeys()));
+      ddl.add(postgresDDLFactory.createNotify(tableName, pgTable.getPrimaryKeys()));
 
       ListenNotifyAssets listenNotifyAssets = postgresDDLFactory.createNotifyHelperDDLs(framework, tableName, dataType, pgTable.getPrimaryKeys());
-      physicalPlan.getQueries().add(listenNotifyAssets);
+      queries.add(listenNotifyAssets);
+
+      InsertStatement insertStatement = postgresDDLFactory.createInsertHelperDMLs(tableName, dataType);
+      inserts.add(insertStatement);
     }
 
-    return physicalPlan;
+    return new PostgresLogPhysicalPlan(ddl, queries, inserts);
   }
 
 }

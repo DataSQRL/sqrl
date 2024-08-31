@@ -17,6 +17,7 @@ import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentLookupCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentSet;
 import com.datasqrl.graphql.server.RootGraphqlModel.JdbcQuery;
+import com.datasqrl.graphql.server.RootGraphqlModel.KafkaMutationCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.StringSchema;
 import com.google.common.collect.Maps;
@@ -146,7 +147,7 @@ class WriteTest {
                             .query(new JdbcQuery("SELECT customerid FROM Customer", List.of()))
                             .build())
                     .build())
-            .mutation(new MutationCoords("addCustomer", topicName,
+            .mutation(new KafkaMutationCoords("addCustomer", topicName,
                 Map.of()))
             .build();
   }

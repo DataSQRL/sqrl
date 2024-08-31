@@ -790,11 +790,13 @@ LogicalProject(__pk1_id=[$0], loan_type_id=[$1], total_amount=[$2], total_loans=
     ],
     "mutations" : [
       {
+        "type" : "kafka",
         "fieldName" : "ApplicationUpdates",
         "topic" : "loan-applicationupdates",
         "sinkConfig" : { }
       },
       {
+        "type" : "kafka",
         "fieldName" : "AddChatMessage",
         "topic" : "loan-addchatmessage",
         "sinkConfig" : { }

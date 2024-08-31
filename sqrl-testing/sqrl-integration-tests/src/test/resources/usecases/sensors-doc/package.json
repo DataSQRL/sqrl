@@ -1,0 +1,11 @@
+{
+  "version": "1",
+  "enabled-engines": ["vertx", "postgres", "postgres_log", "flink"],
+  "script": {
+    "main": "metrics.sqrl",
+    "graphql": "schema.graphqls"
+  },
+  "compiler": {
+    "logger": "print"
+  }
+}

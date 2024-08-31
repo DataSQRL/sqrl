@@ -4,6 +4,7 @@
 package com.datasqrl.engine;
 
 import com.datasqrl.cmd.EngineKeys;
+import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.engine.database.DatabasePhysicalPlan;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.engine.database.relational.JDBCPhysicalPlan;
@@ -32,17 +33,6 @@ public class PhysicalPlan {
 
   public <T extends EnginePhysicalPlan> Stream<T> getPlans(Class<T> clazz) {
     return StreamUtil.filterByClass(stagePlans.stream().map(StagePlan::getPlan), clazz);
-  }
-
-  public EnginePhysicalPlan get(String name) {
-    switch (name.toLowerCase()) {
-      case EngineKeys.LOG: return getPlans(KafkaPhysicalPlan.class).findFirst().get();
-      case EngineKeys.DATABASE: return getPlans(JDBCPhysicalPlan.class).findFirst().get();
-      case EngineKeys.SERVER: return getPlans(ServerPhysicalPlan.class).findFirst().get();
-      case EngineKeys.STREAMS: return getPlans(FlinkStreamPhysicalPlan.class).findFirst().get();
-      default:
-        throw new RuntimeException("Could not find plan");
-    }
   }
 
   @Value

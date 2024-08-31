@@ -209,6 +209,7 @@ LogicalTableScan(table=[[sensorreading_1]], hints=[[[WatermarkHint inheritPath:[
     ],
     "mutations" : [
       {
+        "type" : "kafka",
         "fieldName" : "AddReading",
         "topic" : "sensors-mutation-addreading",
         "sinkConfig" : { }

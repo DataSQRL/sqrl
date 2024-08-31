@@ -160,6 +160,7 @@ public class DatasqrlRun {
     configMap.put("DATA_PATH", build.resolve("deploy/flink/data").toString());
     configMap.put("PGHOST", "localhost");
     configMap.put("PGUSER", "postgres");
+    configMap.put("PGPORT", isStarted.get() ? postgreSQLContainer.getMappedPort(5432).toString() : "5432") ;
     configMap.put("PGPASSWORD", "postgres");
     configMap.put("PGDATABASE", "datasqrl");
 
@@ -206,12 +207,15 @@ public class DatasqrlRun {
   public void startPostgres() {
     if (path.resolve("postgres.json").toFile().exists()) { //todo fix
 
-      postgreSQLContainer = new PostgreSQLContainer(
+      postgreSQLContainer = (PostgreSQLContainer)new PostgreSQLContainer(
           DockerImageName.parse("ankane/pgvector:v0.5.0")
               .asCompatibleSubstituteFor("postgres"))
           .withDatabaseName("datasqrl")
           .withPassword("postgres")
-          .withUsername("postgres");
+          .withUsername("postgres")
+          .withEnv("POSTGRES_INITDB_ARGS", "--data-checksums")
+          .withEnv("POSTGRES_HOST_AUTH_METHOD", "trust")
+          .withCommand("postgres -c wal_level=logical");
 
       Map map = objectMapper.readValue(path.resolve("postgres.json").toFile(), Map.class);
       List<Map<String, Object>> ddl = (List<Map<String, Object>>) map.get("ddl");
@@ -220,6 +224,12 @@ public class DatasqrlRun {
         postgreSQLContainer.start();
         connection = postgreSQLContainer.createConnection("");
         isStarted.set(true);
+        connection.createStatement().execute("ALTER SYSTEM SET wal_level = logical;");
+        connection.createStatement().execute("ALTER SYSTEM SET max_replication_slots = 4;");
+        connection.createStatement().execute("ALTER SYSTEM SET max_wal_senders = 4;");
+        connection.createStatement().execute("ALTER SYSTEM SET wal_sender_timeout = 0;");
+        connection.createStatement().execute("SELECT pg_reload_conf();");
+
       } catch (Exception e) {
         //attempt local connection
         // todo: install postgres in homebrew (?), also remove the database on shutdown or reinit
@@ -231,6 +241,15 @@ public class DatasqrlRun {
       for (Map<String, Object> statement : ddl) {
         String sql = (String) statement.get("sql");
         connection.createStatement().execute(sql);
+      }
+
+      if (path.resolve("postgres_log.json").toFile().exists()) { //todo fix\
+        Map logs = objectMapper.readValue(path.resolve("postgres_log.json").toFile(), Map.class);
+        List<Map> log = (List<Map>)logs.get("ddl");
+        for (Map m : log) {
+          String sql = (String) m.get("sql");
+          connection.createStatement().execute(sql);
+        }
       }
     }
   }

@@ -3,24 +3,23 @@
  */
 package com.datasqrl.util;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import lombok.NonNull;
-import lombok.SneakyThrows;
-import lombok.Value;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
-import org.junit.jupiter.api.TestInfo;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
+import lombok.NonNull;
+import lombok.SneakyThrows;
+import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
+import org.junit.jupiter.api.TestInfo;
 
 @Slf4j
 public class SnapshotTest {
@@ -42,7 +41,6 @@ public class SnapshotTest {
 
   @Value
   public static class Snapshot {
-
     public static final String CONTENT_DELIMITER = "\n";
     public static final String HEADER_PREFIX = ">>>";
     public static final String HEADER_DELIMITER = "-";
