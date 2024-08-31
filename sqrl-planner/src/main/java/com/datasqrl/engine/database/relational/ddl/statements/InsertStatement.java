@@ -2,6 +2,7 @@ package com.datasqrl.engine.database.relational.ddl.statements;
 
 import com.datasqrl.calcite.convert.PostgresSqlNodeToString;
 import com.datasqrl.sql.SqlDDLStatement;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -16,6 +17,7 @@ import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.parser.SqlParserPos;
 
+@JsonPropertyOrder({"tableName", "sql", "params"})
 @AllArgsConstructor
 public class InsertStatement implements SqlDDLStatement {
 
