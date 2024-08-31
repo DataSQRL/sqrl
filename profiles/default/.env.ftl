@@ -1,10 +1,4 @@
-<#assign composeFiles = "">
-<#list config["enabled-engines"] as engine>
-  <#if engine != "postgres_log">
-    <#assign composeFiles = composeFiles + engine + ".compose.yml:">
-  </#if>
-</#list>
-COMPOSE_FILE=${composeFiles?remove_ending(":")}
+COMPOSE_FILE=${config["enabled-engines"]?map(engine -> engine + ".compose.yml")?join(":")}
 AWS_REGION=${r"${AWS_REGION:-us-east-1}"}
 AWS_ACCESS_KEY_ID=${r"${AWS_ACCESS_KEY_ID:-myaccesskey}"}
 AWS_SECRET_ACCESS_KEY=${r"${AWS_SECRET_ACCESS_KEY:-mysecretkey}"}
