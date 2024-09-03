@@ -34,7 +34,7 @@ public class PostgresLogFactory implements LogFactory {
     TypeFactory typeFactory = TypeFactory.getTypeFactory();
 
     RelDataType patchedSchema;
-    if (schema.getField(timestamp.getName(), false, false) == null) {
+    if (timestamp != Timestamp.NONE && schema.getField(timestamp.getName(), false, false) == null) {
       patchedSchema = CalciteUtil.addField(
           schema,
           schema.getFieldCount(),

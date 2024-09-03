@@ -4,16 +4,20 @@ import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.graphql.io.SinkConsumer;
 import com.datasqrl.graphql.io.SinkProducer;
+import com.datasqrl.graphql.kafka.KafkaDataFetcherFactory;
+import com.datasqrl.graphql.postgres_log.PostgresDataFetcherFactory;
 import com.datasqrl.graphql.server.Context;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import com.datasqrl.graphql.server.JdbcClient;
 import com.datasqrl.graphql.server.QueryExecutionContext;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.KafkaMutationCoords;
+import com.datasqrl.graphql.server.RootGraphqlModel.KafkaSubscriptionCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoordsVisitor;
 import com.datasqrl.graphql.server.RootGraphqlModel.PostgresLogMutationCoords;
+import com.datasqrl.graphql.server.RootGraphqlModel.PostgresSubscriptionCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
-import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoords;
+import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoordsVisitor;
 import com.datasqrl.graphql.server.RootGraphqlModel.VariableArgument;
 import com.google.common.base.Preconditions;
 import graphql.schema.DataFetcher;
@@ -163,6 +167,21 @@ public class VertxContext implements Context {
     };
   }
 
+  @Override
+  public SubscriptionCoordsVisitor createSubscriptionFetcherVisitor() {
+    return new SubscriptionCoordsVisitor() {
+      @Override
+      public DataFetcher<?> visit(KafkaSubscriptionCoords coords) {
+        return KafkaDataFetcherFactory.create(subscriptions, coords);
+      }
+
+      @Override
+      public DataFetcher<?> visit(PostgresSubscriptionCoords coords) {
+        return PostgresDataFetcherFactory.create(subscriptions, coords);
+      }
+    };
+  }
+
 
   private Map getEntry(DataFetchingEnvironment env) {
     //Rules:
@@ -179,45 +198,4 @@ public class VertxContext implements Context {
     return entry;
   }
 
-  @Override
-  public DataFetcher<?> createSubscriptionFetcher(SubscriptionCoords coords, Map<String, String> filters) {
-    SinkConsumer consumer = subscriptions.get(coords.getFieldName());
-    Preconditions.checkNotNull(consumer, "Could not find subscription consumer: {}", coords.getFieldName());
-
-    Flux<Object> deferredFlux = Flux.<Object>create(sink ->
-        consumer.listen(sink::next, sink::error, (x) -> sink.complete())).share();
-
-    return new DataFetcher<>() {
-      @Override
-      public Publisher<Object> get(DataFetchingEnvironment env) throws Exception {
-        return deferredFlux.filter(entry -> !filterSubscription(entry, env.getArguments()));
-      }
-
-      private boolean filterSubscription(Object data, Map<String, Object> args) {
-        if (args == null) {
-          return false;
-        }
-        for (Map.Entry<String, String> filter : filters.entrySet()) {
-          Object argValue = args.get(filter.getKey());
-          if (argValue == null) continue;
-
-          Map<String, Object> objectMap;
-          if (data instanceof Map) {
-            objectMap = (Map) data;
-          } else if (data instanceof JsonObject) {
-            objectMap = ((JsonObject)data).getMap();
-          } else {
-            objectMap = Map.of();
-          }
-
-          Object retrievedData = objectMap.get(filter.getValue());
-          if (!argValue.equals(retrievedData)) {
-            return true;
-          }
-        }
-
-        return false;
-      }
-    };
-  }
 }

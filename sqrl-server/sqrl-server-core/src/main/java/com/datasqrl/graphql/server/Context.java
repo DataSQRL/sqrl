@@ -1,12 +1,9 @@
 package com.datasqrl.graphql.server;
 
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
-import com.datasqrl.graphql.server.RootGraphqlModel.KafkaMutationCoords;
-import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoordsVisitor;
-import com.datasqrl.graphql.server.RootGraphqlModel.PostgresLogMutationCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
-import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoords;
+import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoordsVisitor;
 import graphql.schema.DataFetcher;
 import java.util.Map;
 import java.util.Set;
@@ -22,5 +19,5 @@ public interface Context {
 
   MutationCoordsVisitor createSinkFetcherVisitor();
 
-  DataFetcher<?> createSubscriptionFetcher(SubscriptionCoords coords, Map<String, String> filters);
+  SubscriptionCoordsVisitor createSubscriptionFetcherVisitor();
 }

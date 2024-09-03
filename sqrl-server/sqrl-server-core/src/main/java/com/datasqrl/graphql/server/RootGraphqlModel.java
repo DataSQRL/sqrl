@@ -88,7 +88,6 @@ public class RootGraphqlModel {
 
   @JsonTypeInfo(
       use = JsonTypeInfo.Id.NAME,
-      include = JsonTypeInfo.As.PROPERTY,
       property = "type"
   )
   @JsonSubTypes({
@@ -153,15 +152,60 @@ public class RootGraphqlModel {
     }
   }
 
+  @JsonTypeInfo(
+      use = JsonTypeInfo.Id.NAME,
+      property = "type"
+  )
+  @JsonSubTypes({
+      @Type(value = KafkaSubscriptionCoords.class, name = "kafka"),
+      @Type(value = PostgresSubscriptionCoords.class, name = "postgres_log")
+  })
+  public static abstract class SubscriptionCoords {
+    protected String type;
+    public abstract DataFetcher<?> accept(SubscriptionCoordsVisitor visitor);
+    public abstract String getFieldName();
+  }
+
+  public interface SubscriptionCoordsVisitor {
+    DataFetcher<?> visit(KafkaSubscriptionCoords coords);
+    DataFetcher<?> visit(PostgresSubscriptionCoords coords);
+  }
+
   @Getter
   @AllArgsConstructor
   @NoArgsConstructor
   @Builder
-  public static class SubscriptionCoords {
+  public static class KafkaSubscriptionCoords extends SubscriptionCoords {
+
+    private static final String type = "kafka";
+
     protected String fieldName;
     protected String topic;
     protected Map<String, String> sinkConfig;
     protected Map<String, String> filters;
+
+    @Override
+    public DataFetcher<?> accept(SubscriptionCoordsVisitor visitor) {
+      return visitor.visit(this);
+    }
+  }
+
+
+  @Getter
+  @AllArgsConstructor
+  @NoArgsConstructor
+  public static class PostgresSubscriptionCoords extends SubscriptionCoords {
+
+    private static final String type = "postgres_log";
+
+    protected String fieldName;
+    protected String tableName;
+    protected Map<String, String> filters;
+
+    @Override
+    public DataFetcher<?> accept(SubscriptionCoordsVisitor visitor) {
+      return visitor.visit(this);
+    }
   }
 
   public interface CoordVisitor<R, C> {

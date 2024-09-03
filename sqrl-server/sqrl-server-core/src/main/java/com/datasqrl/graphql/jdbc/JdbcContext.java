@@ -4,11 +4,12 @@ import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import com.datasqrl.graphql.server.Context;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.KafkaMutationCoords;
-import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoords;
+import com.datasqrl.graphql.server.RootGraphqlModel.KafkaSubscriptionCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoordsVisitor;
 import com.datasqrl.graphql.server.RootGraphqlModel.PostgresLogMutationCoords;
+import com.datasqrl.graphql.server.RootGraphqlModel.PostgresSubscriptionCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
-import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoords;
+import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoordsVisitor;
 import com.datasqrl.graphql.server.RootGraphqlModel.VariableArgument;
 import com.datasqrl.graphql.server.QueryExecutionContext;
 import graphql.schema.DataFetcher;
@@ -75,8 +76,18 @@ public class JdbcContext implements Context {
   }
 
   @Override
-  public DataFetcher<?> createSubscriptionFetcher(SubscriptionCoords coords,
-      Map<String, String> filters) {
-    throw new RuntimeException("Subscriptions not yet supported");
+  public SubscriptionCoordsVisitor createSubscriptionFetcherVisitor() {
+    return new SubscriptionCoordsVisitor() {
+      @Override
+      public DataFetcher<?> visit(KafkaSubscriptionCoords coords) {
+        throw new RuntimeException("Subscriptions not yet supported");
+      }
+
+      @Override
+      public DataFetcher<?> visit(PostgresSubscriptionCoords coords) {
+        throw new RuntimeException("Subscriptions not yet supported");
+      }
+    };
   }
+
 }
