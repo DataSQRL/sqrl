@@ -6,6 +6,6 @@
     "graphql": "schema.graphqls"
   },
   "compiler": {
-    "logger": "print"
+    "logger": "none"
   }
 }

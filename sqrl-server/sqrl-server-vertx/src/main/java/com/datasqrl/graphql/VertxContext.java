@@ -4,17 +4,19 @@ import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.graphql.io.SinkConsumer;
 import com.datasqrl.graphql.io.SinkProducer;
+import com.datasqrl.graphql.kafka.KafkaDataFetcherFactory;
+import com.datasqrl.graphql.postgres_log.PostgresDataFetcherFactory;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import com.datasqrl.graphql.server.Context;
 import com.datasqrl.graphql.server.JdbcClient;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
-import com.datasqrl.graphql.server.RootGraphqlModel.JdbcParameterHandler;
 import com.datasqrl.graphql.server.RootGraphqlModel.KafkaMutationCoords;
-import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoords;
+import com.datasqrl.graphql.server.RootGraphqlModel.KafkaSubscriptionCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoordsVisitor;
 import com.datasqrl.graphql.server.RootGraphqlModel.PostgresLogMutationCoords;
+import com.datasqrl.graphql.server.RootGraphqlModel.PostgresSubscriptionCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
-import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoords;
+import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoordsVisitor;
 import com.datasqrl.graphql.server.RootGraphqlModel.VariableArgument;
 import com.datasqrl.graphql.server.QueryExecutionContext;
 import com.google.common.base.Preconditions;
@@ -23,31 +25,20 @@ import graphql.schema.DataFetchingEnvironment;
 import graphql.schema.PropertyDataFetcher;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.handler.graphql.schema.VertxDataFetcher;
-import io.vertx.ext.web.handler.graphql.schema.VertxPropertyDataFetcher;
 import io.vertx.sqlclient.PreparedQuery;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import lombok.SneakyThrows;
 import lombok.Value;
-import org.apache.calcite.jdbc.CalciteConnection;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -174,6 +165,21 @@ public class VertxContext implements Context {
     };
   }
 
+  @Override
+  public SubscriptionCoordsVisitor createSubscriptionFetcherVisitor() {
+    return new SubscriptionCoordsVisitor() {
+      @Override
+      public DataFetcher<?> visit(KafkaSubscriptionCoords coords) {
+        return KafkaDataFetcherFactory.create(subscriptions, coords);
+      }
+
+      @Override
+      public DataFetcher<?> visit(PostgresSubscriptionCoords coords) {
+        return PostgresDataFetcherFactory.create(subscriptions, coords);
+      }
+    };
+  }
+
 
   private Map getEntry(DataFetchingEnvironment env) {
     //Rules:
@@ -190,45 +196,4 @@ public class VertxContext implements Context {
     return entry;
   }
 
-  @Override
-  public DataFetcher<?> createSubscriptionFetcher(SubscriptionCoords coords, Map<String, String> filters) {
-    SinkConsumer consumer = subscriptions.get(coords.getFieldName());
-    Preconditions.checkNotNull(consumer, "Could not find subscription consumer: {}", coords.getFieldName());
-
-    Flux<Object> deferredFlux = Flux.<Object>create(sink ->
-        consumer.listen(sink::next, sink::error, (x) -> sink.complete())).share();
-
-    return new DataFetcher<>() {
-      @Override
-      public Publisher<Object> get(DataFetchingEnvironment env) throws Exception {
-        return deferredFlux.filter(entry -> !filterSubscription(entry, env.getArguments()));
-      }
-
-      private boolean filterSubscription(Object data, Map<String, Object> args) {
-        if (args == null) {
-          return false;
-        }
-        for (Map.Entry<String, String> filter : filters.entrySet()) {
-          Object argValue = args.get(filter.getKey());
-          if (argValue == null) continue;
-
-          Map<String, Object> objectMap;
-          if (data instanceof Map) {
-            objectMap = (Map) data;
-          } else if (data instanceof JsonObject) {
-            objectMap = ((JsonObject)data).getMap();
-          } else {
-            objectMap = Map.of();
-          }
-
-          Object retrievedData = objectMap.get(filter.getValue());
-          if (!argValue.equals(retrievedData)) {
-            return true;
-          }
-        }
-
-        return false;
-      }
-    };
-  }
 }

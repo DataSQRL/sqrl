@@ -21,7 +21,9 @@ import com.datasqrl.graphql.kafka.KafkaSinkProducer;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.RootGraphqlModel.KafkaMutationCoords;
+import com.datasqrl.graphql.server.RootGraphqlModel.KafkaSubscriptionCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoords;
+import com.datasqrl.graphql.server.RootGraphqlModel.PostgresSubscriptionCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoords;
 import com.datasqrl.graphql.type.SqrlVertxScalars;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -376,12 +378,21 @@ public class GraphQLServer extends AbstractVerticle {
       Promise<Void> startPromise) {
     Map<String, SinkConsumer> consumers = new HashMap<>();
     for (SubscriptionCoords sub: root.getSubscriptions()) {
-      KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, getSourceConfig());
-      consumer.subscribe(sub.getTopic())
-          .onSuccess(v -> log.info("Subscribed to topic: {}", sub.getTopic()))
-          .onFailure(startPromise::fail);
+      if (sub instanceof KafkaSubscriptionCoords) {
+        KafkaSubscriptionCoords kafkaSub = (KafkaSubscriptionCoords) sub;
+        KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, getSourceConfig());
+        consumer.subscribe(kafkaSub.getTopic())
+            .onSuccess(v -> log.info("Subscribed to topic: {}", kafkaSub.getTopic()))
+            .onFailure(startPromise::fail);
 
-      consumers.put(sub.getFieldName(), new KafkaSinkConsumer<>(consumer));
+        consumers.put(sub.getFieldName(), new KafkaSinkConsumer<>(consumer));
+      } else if (sub instanceof PostgresSubscriptionCoords) {
+        PostgresSubscriptionCoords pgSub = (PostgresSubscriptionCoords) sub;
+
+
+      } else {
+        throw new IllegalArgumentException("Unknown subscription type: " + sub.getClass());
+      }
     }
     return consumers;
   }
