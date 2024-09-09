@@ -201,6 +201,9 @@ public class RootGraphqlModel {
     protected String fieldName;
     protected String tableName;
     protected Map<String, String> filters;
+    protected String listenQuery;
+    protected String onNotifyQuery;
+    protected List<String> parameters;
 
     @Override
     public DataFetcher<?> accept(SubscriptionCoordsVisitor visitor) {

@@ -106,7 +106,8 @@ class WriteTest {
         .thenReturn(CLUSTER.bootstrapServers());
 
     this.mutations = serverSpy.constructSinkProducers(model, vertx);
-    this.subscriptions = serverSpy.constructSubscriptions(model, vertx, Promise.promise());
+    // hack (Soma) pass vertxJdbcClient
+    this.subscriptions = serverSpy.constructSubscriptions(model, vertx, Promise.promise(), null);
   }
 
   private Properties getKafkaProps() {

@@ -18,6 +18,8 @@ import com.datasqrl.graphql.io.SinkConsumer;
 import com.datasqrl.graphql.io.SinkProducer;
 import com.datasqrl.graphql.kafka.KafkaSinkConsumer;
 import com.datasqrl.graphql.kafka.KafkaSinkProducer;
+import com.datasqrl.graphql.postgres_log.PostgresListenNotifyConsumer;
+import com.datasqrl.graphql.postgres_log.PostgresSinkConsumer;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.RootGraphqlModel.KafkaMutationCoords;
@@ -358,10 +360,11 @@ public class GraphQLServer extends AbstractVerticle {
 
   public GraphQL createGraphQL(Map<String, SqlClient> client, Promise<Void> startPromise) {
     try {
+      VertxJdbcClient vertxJdbcClient = new VertxJdbcClient(client);
       GraphQL.Builder graphQL = model.accept(
           new GraphQLEngineBuilder(List.of(SqrlVertxScalars.JSON)),
-          new VertxContext(new VertxJdbcClient(client), constructSinkProducers(model, vertx),
-              constructSubscriptions(model, vertx, startPromise), canonicalizer));
+          new VertxContext(vertxJdbcClient, constructSinkProducers(model, vertx),
+              constructSubscriptions(model, vertx, startPromise, vertxJdbcClient), canonicalizer));
       MeterRegistry meterRegistry = BackendRegistries.getDefaultNow();
       if (meterRegistry != null) {
         graphQL.instrumentation(new MicrometerInstrumentation(meterRegistry));
@@ -375,7 +378,7 @@ public class GraphQLServer extends AbstractVerticle {
   }
 
   Map<String, SinkConsumer> constructSubscriptions(RootGraphqlModel root, Vertx vertx,
-      Promise<Void> startPromise) {
+      Promise<Void> startPromise, VertxJdbcClient client) {
     Map<String, SinkConsumer> consumers = new HashMap<>();
     for (SubscriptionCoords sub: root.getSubscriptions()) {
       if (sub instanceof KafkaSubscriptionCoords) {
@@ -388,13 +391,23 @@ public class GraphQLServer extends AbstractVerticle {
         consumers.put(sub.getFieldName(), new KafkaSinkConsumer<>(consumer));
       } else if (sub instanceof PostgresSubscriptionCoords) {
         PostgresSubscriptionCoords pgSub = (PostgresSubscriptionCoords) sub;
+        PostgresListenNotifyConsumer pgConsumer = new PostgresListenNotifyConsumer(client, getConn(),
+            pgSub.getListenQuery(), pgSub.getOnNotifyQuery(), pgSub.getParameters());
 
+        PostgresSinkConsumer pgSinkConsumer = new PostgresSinkConsumer(pgConsumer);
 
+        consumers.put(pgSub.getFieldName(), pgSinkConsumer);
       } else {
         throw new IllegalArgumentException("Unknown subscription type: " + sub.getClass());
       }
     }
     return consumers;
+  }
+
+  // hack (Soma) get conn differently
+  @SneakyThrows
+  private Connection getConn() {
+    return DriverManager.getConnection("jdbc:postgresql://localhost:5432/datasqrl", "postgres", "postgres");
   }
 
   Map<String, String> getSourceConfig() {
