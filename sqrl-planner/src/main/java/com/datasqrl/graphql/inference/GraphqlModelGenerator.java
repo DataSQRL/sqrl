@@ -13,6 +13,7 @@ import com.datasqrl.config.TableConfig;
 import com.datasqrl.engine.PhysicalPlan.StagePlan;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.engine.database.relational.ddl.statements.InsertStatement;
+import com.datasqrl.engine.database.relational.ddl.statements.notify.ListenNotifyAssets;
 import com.datasqrl.engine.log.Log;
 import com.datasqrl.engine.log.kafka.KafkaPhysicalPlan;
 import com.datasqrl.engine.log.postgres.PostgresLogPhysicalPlan;
@@ -107,7 +108,20 @@ public class GraphqlModelGenerator extends SchemaWalker {
       subscriptionCoords = new KafkaSubscriptionCoords(fieldName, topic, Map.of(), filters);
     } else if (logPlan.isPresent() && logPlan.get() instanceof PostgresLogPhysicalPlan) {
       String tableName = (String) log.getConnectorContext().getMap().get("table-name");
-      subscriptionCoords = new PostgresSubscriptionCoords(fieldName, tableName, filters);
+
+      ListenNotifyAssets listenNotifyAssets = ((PostgresLogPhysicalPlan) logPlan.get())
+          .getQueries().stream()
+          .filter(query -> query.getListen().getTableName().equals(tableName))
+          .findFirst()
+          .orElseThrow(
+              () -> new RuntimeException("Could not find query statement for table: " + tableName)
+          );
+
+      subscriptionCoords = new PostgresSubscriptionCoords(
+          fieldName, tableName, filters,
+          listenNotifyAssets.getListen().getSql(),
+          listenNotifyAssets.getOnNotify().getSql(),
+          listenNotifyAssets.getParameters());
     } else {
       throw new RuntimeException("Unknown log plan: " + logPlan.getClass().getName());
     }

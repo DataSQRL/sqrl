@@ -42,6 +42,11 @@ public class PostgresDataFetcherFactory {
           }
 
           Object retrievedData = objectMap.get(filter.getValue());
+          // hack (Soma), graphql argument as long?
+          if (argValue instanceof Integer) {
+            argValue = Long.valueOf((Integer) argValue);
+          }
+
           if (!argValue.equals(retrievedData)) {
             return true;
           }
