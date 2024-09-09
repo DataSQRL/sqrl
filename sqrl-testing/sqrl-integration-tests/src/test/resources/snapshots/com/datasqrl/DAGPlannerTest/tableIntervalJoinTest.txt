@@ -33,12 +33,6 @@ LogicalProject(id=[$0], name=[$6], customerid=[$1], _time=[$2], _lastUpdated=[$7
     LogicalTableScan(table=[[orders_2]])
     LogicalTableScan(table=[[customer_2]])
 
-=== kafka.OrderCustomer2
-ID:     ordercustomer2_1_2
-Type:   export
-Stage:  flink
-Inputs: ordercustomer2_1
-
 === OrderCustomer3
 ID:     ordercustomer3_1
 Type:   stream
@@ -58,12 +52,6 @@ LogicalProject(id=[$0], name=[$6], customerid=[$1], _time=[$2], _lastUpdated=[$7
     LogicalTableScan(table=[[orders_2]])
     LogicalTableScan(table=[[customer_2]])
 
-=== kafka.OrderCustomer3
-ID:     ordercustomer3_1_3
-Type:   export
-Stage:  flink
-Inputs: ordercustomer3_1
-
 === OrderCustomer
 ID:     ordercustomer_1
 Type:   stream
@@ -82,12 +70,6 @@ LogicalProject(id=[$0], name=[$6], customerid=[$1], _time=[$2], _lastUpdated=[$7
   LogicalJoin(condition=[AND(=($1, $4), >($2, $8), <=($2, +($8, *(86400000:INTERVAL DAY, 31))))], joinType=[inner]) hints[IntervalJoin]
     LogicalTableScan(table=[[orders_2]])
     LogicalTableScan(table=[[customer_2]])
-
-=== kafka.OrderCustomer
-ID:     ordercustomer_1_1
-Type:   export
-Stage:  flink
-Inputs: ordercustomer_1
 
 === Orders
 ID:     orders_2
@@ -145,55 +127,25 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
     "CREATE TEMPORARY TABLE `ordercustomer_1` (\n  `id` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `_lastUpdated` BIGINT NOT NULL,\n  PRIMARY KEY (`id`, `_time`, `_lastUpdated`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'ordercustomer_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `orders_2` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  PRIMARY KEY (`id`, `time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orders_2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `product_2` (\n  `productid` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`productid`, `name`, `description`, `category`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'product_2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `ordercustomer2_1_2` (\n  `id` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `_lastUpdated` BIGINT NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'ordercustomer2_1',\n  'scan.startup.mode' = 'group-offsets'\n);",
-    "CREATE TEMPORARY TABLE `ordercustomer3_1_3` (\n  `id` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `_lastUpdated` BIGINT NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'ordercustomer3_1',\n  'scan.startup.mode' = 'group-offsets'\n);",
-    "CREATE TEMPORARY TABLE `ordercustomer_1_1` (\n  `id` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `_lastUpdated` BIGINT NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'ordercustomer_1',\n  'scan.startup.mode' = 'group-offsets'\n);",
     "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `customer_1`;",
     "CREATE VIEW `table$2`\nAS\nSELECT `orders_1`.`id`, `customer_1`.`name`, `orders_1`.`customerid`, `orders_1`.`time` AS `_time`, `customer_1`.`lastUpdated` AS `_lastUpdated`\nFROM `orders_1`\n INNER JOIN `customer_1` ON `orders_1`.`customerid` = `customer_1`.`customerid` AND `orders_1`.`time` > `customer_1`.`timestamp` AND `orders_1`.`time` <= `customer_1`.`timestamp` + INTERVAL '1' DAY * 31;",
     "CREATE VIEW `table$3`\nAS\nSELECT `orders_1`.`id`, `customer_1`.`name`, `orders_1`.`customerid`, `orders_1`.`time` AS `_time`, `customer_1`.`lastUpdated` AS `_lastUpdated`\nFROM `orders_1`\n INNER JOIN `customer_1` ON `orders_1`.`customerid` = `customer_1`.`customerid` AND `orders_1`.`time` >= `customer_1`.`timestamp` + INTERVAL '1' DAY * 2 AND `orders_1`.`time` <= `customer_1`.`timestamp` + INTERVAL '1' DAY * 31;",
     "CREATE VIEW `table$4`\nAS\nSELECT `orders_1`.`id`, `customer_1`.`name`, `orders_1`.`customerid`, `orders_1`.`time` AS `_time`, `customer_1`.`lastUpdated` AS `_lastUpdated`\nFROM `orders_1`\n INNER JOIN `customer_1` ON `orders_1`.`customerid` = `customer_1`.`customerid` AND `orders_1`.`time` > `customer_1`.`timestamp` AND `orders_1`.`time` <= `customer_1`.`timestamp` + INTERVAL '1' DAY * 31;",
     "CREATE VIEW `table$5`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders_1`;",
     "CREATE VIEW `table$6`\nAS\nSELECT *\nFROM `product_1`;",
-    "CREATE VIEW `table$7`\nAS\nSELECT `orders_1`.`id`, `customer_1`.`name`, `orders_1`.`customerid`, `orders_1`.`time` AS `_time`, `customer_1`.`lastUpdated` AS `_lastUpdated`\nFROM `orders_1`\n INNER JOIN `customer_1` ON `orders_1`.`customerid` = `customer_1`.`customerid` AND `orders_1`.`time` > `customer_1`.`timestamp` AND `orders_1`.`time` <= `customer_1`.`timestamp` + INTERVAL '1' DAY * 31;",
-    "CREATE VIEW `table$8`\nAS\nSELECT `orders_1`.`id`, `customer_1`.`name`, `orders_1`.`customerid`, `orders_1`.`time` AS `_time`, `customer_1`.`lastUpdated` AS `_lastUpdated`\nFROM `orders_1`\n INNER JOIN `customer_1` ON `orders_1`.`customerid` = `customer_1`.`customerid` AND `orders_1`.`time` >= `customer_1`.`timestamp` + INTERVAL '1' DAY * 2 AND `orders_1`.`time` <= `customer_1`.`timestamp` + INTERVAL '1' DAY * 31;",
-    "CREATE VIEW `table$9`\nAS\nSELECT `orders_1`.`id`, `customer_1`.`name`, `orders_1`.`customerid`, `orders_1`.`time` AS `_time`, `customer_1`.`lastUpdated` AS `_lastUpdated`\nFROM `orders_1`\n INNER JOIN `customer_1` ON `orders_1`.`customerid` = `customer_1`.`customerid` AND `orders_1`.`time` > `customer_1`.`timestamp` AND `orders_1`.`time` <= `customer_1`.`timestamp` + INTERVAL '1' DAY * 31;",
-    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer_2`\n(SELECT *\n FROM `table$1`)\n;\nINSERT INTO `ordercustomer2_1`\n (SELECT *\n  FROM `table$2`)\n ;\n INSERT INTO `ordercustomer3_1`\n  (SELECT *\n   FROM `table$3`)\n  ;\n  INSERT INTO `ordercustomer_1`\n   (SELECT *\n    FROM `table$4`)\n   ;\n   INSERT INTO `orders_2`\n    (SELECT *\n     FROM `table$5`)\n    ;\n    INSERT INTO `product_2`\n     (SELECT *\n      FROM `table$6`)\n     ;\n     INSERT INTO `ordercustomer2_1_2`\n      (SELECT *\n       FROM `table$7`)\n      ;\n      INSERT INTO `ordercustomer3_1_3`\n       (SELECT *\n        FROM `table$8`)\n       ;\n       INSERT INTO `ordercustomer_1_1`\n        (SELECT *\n         FROM `table$9`)\n        ;\n        END;"
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer_2`\n(SELECT *\n FROM `table$1`)\n;\nINSERT INTO `ordercustomer2_1`\n (SELECT *\n  FROM `table$2`)\n ;\n INSERT INTO `ordercustomer3_1`\n  (SELECT *\n   FROM `table$3`)\n  ;\n  INSERT INTO `ordercustomer_1`\n   (SELECT *\n    FROM `table$4`)\n   ;\n   INSERT INTO `orders_2`\n    (SELECT *\n     FROM `table$5`)\n    ;\n    INSERT INTO `product_2`\n     (SELECT *\n      FROM `table$6`)\n     ;\n     END;"
   ],
   "connectors" : [
     "jdbc-sqrl",
-    "kafka",
     "filesystem"
   ],
   "formats" : [
-    "flexible-json",
     "json"
   ]
 }
 >>>kafka.json
 {
-  "topics" : [
-    {
-      "name" : "ordercustomer2_1",
-      "numPartitions" : 1,
-      "replicationFactor" : 1,
-      "replicasAssignments" : { },
-      "config" : { }
-    },
-    {
-      "name" : "ordercustomer3_1",
-      "numPartitions" : 1,
-      "replicationFactor" : 1,
-      "replicasAssignments" : { },
-      "config" : { }
-    },
-    {
-      "name" : "ordercustomer_1",
-      "numPartitions" : 1,
-      "replicationFactor" : 1,
-      "replicasAssignments" : { },
-      "config" : { }
-    }
-  ]
+  "topics" : [ ]
 }
 >>>postgres.json
 {
@@ -1467,30 +1419,11 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
       }
     ],
     "mutations" : [ ],
-    "subscriptions" : [
-      {
-        "fieldName" : "OrderCustomer",
-        "topic" : "ordercustomer_1",
-        "sinkConfig" : { },
-        "filters" : { }
-      },
-      {
-        "fieldName" : "OrderCustomer2",
-        "topic" : "ordercustomer2_1",
-        "sinkConfig" : { },
-        "filters" : { }
-      },
-      {
-        "fieldName" : "OrderCustomer3",
-        "topic" : "ordercustomer3_1",
-        "sinkConfig" : { },
-        "filters" : { }
-      }
-    ],
+    "subscriptions" : [ ],
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "type Customer {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype OrderCustomer {\n  id: Float!\n  name: String!\n  customerid: Float!\n}\n\ntype OrderCustomer2 {\n  id: Float!\n  name: String!\n  customerid: Float!\n}\n\ntype OrderCustomer2Result {\n  id: Float!\n  name: String!\n  customerid: Float!\n}\n\ntype OrderCustomer3 {\n  id: Float!\n  name: String!\n  customerid: Float!\n}\n\ntype OrderCustomer3Result {\n  id: Float!\n  name: String!\n  customerid: Float!\n}\n\ntype OrderCustomerResult {\n  id: Float!\n  name: String!\n  customerid: Float!\n}\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries(limit: Int = 10, offset: Int = 0): [entries!]\n}\n\ntype Product {\n  productid: Float!\n  name: String!\n  description: String!\n  category: String!\n}\n\ntype Query {\n  Customer(customerid: Float, lastUpdated: Float, limit: Int = 10, offset: Int = 0): [Customer!]\n  OrderCustomer(id: Float, limit: Int = 10, offset: Int = 0): [OrderCustomer!]\n  OrderCustomer2(id: Float, limit: Int = 10, offset: Int = 0): [OrderCustomer2!]\n  OrderCustomer3(id: Float, limit: Int = 10, offset: Int = 0): [OrderCustomer3!]\n  Orders(id: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [Orders!]\n  Product(productid: Float, name: String, description: String, category: String, limit: Int = 10, offset: Int = 0): [Product!]\n}\n\ntype Subscription {\n  OrderCustomer: OrderCustomerResult!\n  OrderCustomer2: OrderCustomer2Result!\n  OrderCustomer3: OrderCustomer3Result!\n}\n\ntype entries {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n"
+      "schema" : "type Customer {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype OrderCustomer {\n  id: Float!\n  name: String!\n  customerid: Float!\n}\n\ntype OrderCustomer2 {\n  id: Float!\n  name: String!\n  customerid: Float!\n}\n\ntype OrderCustomer3 {\n  id: Float!\n  name: String!\n  customerid: Float!\n}\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries(limit: Int = 10, offset: Int = 0): [entries!]\n}\n\ntype Product {\n  productid: Float!\n  name: String!\n  description: String!\n  category: String!\n}\n\ntype Query {\n  Customer(customerid: Float, lastUpdated: Float, limit: Int = 10, offset: Int = 0): [Customer!]\n  OrderCustomer(id: Float, limit: Int = 10, offset: Int = 0): [OrderCustomer!]\n  OrderCustomer2(id: Float, limit: Int = 10, offset: Int = 0): [OrderCustomer2!]\n  OrderCustomer3(id: Float, limit: Int = 10, offset: Int = 0): [OrderCustomer3!]\n  Orders(id: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [Orders!]\n  Product(productid: Float, name: String, description: String, category: String, limit: Int = 10, offset: Int = 0): [Product!]\n}\n\ntype entries {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n"
     }
   }
 }
