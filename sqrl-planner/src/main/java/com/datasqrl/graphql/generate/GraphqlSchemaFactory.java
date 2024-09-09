@@ -130,7 +130,7 @@ public class GraphqlSchemaFactory {
     GraphQLSchema.Builder builder = GraphQLSchema.newSchema()
         .query(queryType);
     if (goal != ExecutionGoal.TEST) {
-      if (logManager.hasLogEngine()) {
+      if (logManager.hasLogEngine() && System.getenv().get("ENABLE_SUBSCRIPTIONS") != null) {
         Optional<GraphQLObjectType.Builder> subscriptions = createSubscriptionTypes(schema);
         subscriptions.map(builder::subscription);
       }
