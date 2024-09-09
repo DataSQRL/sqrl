@@ -64,7 +64,7 @@ SensorMaxTempTest := SELECT * FROM SensorMaxTemp ORDER BY sensorid DESC;
 ```
 2. Compile the SQRL file
 ```bash
-docker run -it -rm -v $PWD:/build datasqrl/cmd compile metrics.sqrl
+docker run -it --rm -v $PWD:/build datasqrl/cmd compile metrics.sqrl
 ``` 
 (Use `${PWD}` in Powershell on Windows).
 
