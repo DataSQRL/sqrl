@@ -9,26 +9,19 @@ import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.plan.validate.ExecutionGoal;
-import com.datasqrl.util.SqrlObjectMapper;
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.BuildImageResultCallback;
-import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.InspectContainerResponse;
-import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
-import com.github.dockerjava.core.command.LogContainerResultCallback;
-import com.github.dockerjava.core.command.PullImageResultCallback;
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
 import com.github.dockerjava.transport.DockerHttpClient;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.stream.Stream;
 import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
 import java.io.File;
@@ -37,7 +30,6 @@ import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -81,60 +73,27 @@ public class TestCommand extends AbstractCompilerCommand {
   protected void postprocess(PackageJson sqrlConfig, Packager packager, Path targetDir, PhysicalPlan plan,
       TestPlan right, ErrorCollector errors) {
     super.postprocess(sqrlConfig, packager, targetDir, plan, right, errors);
-    executeDockerCompose(targetDir.toFile());
-    //    List<File> dockerComposePaths = getComposePaths(targetDir);
-//    if (dockerComposePaths.isEmpty()) {
-//      throw new RuntimeException("Could not find docker compose containers");
-//    }
-//
-//    Logger logger = LoggerFactory.getLogger(TestCommand.class);
-//
-//    // Start Docker containers
-//    for (File dockerComposePath : dockerComposePaths) {
-//      Map<String, Object> services = SqrlObjectMapper.YAML_INSTANCE.readValue(dockerComposePath, Map.class);
-//      Map<String, Object> servicesMap = (Map<String, Object>) services.get("services");
-//
-//      for (Map.Entry<String, Object> serviceEntry : servicesMap.entrySet()) {
-//        String serviceName = serviceEntry.getKey();
-//        Map<String, Object> serviceDetails = (Map<String, Object>) serviceEntry.getValue();
-//
-//        Map build = (Map) serviceDetails.get("build");
-//
-//        BuildImageResultCallback dockerfile = dockerClient.buildImageCmd(
-//                new File((String) build.get("dockerfile"))).
-//            .exec(new BuildImageResultCallback()).awaitCompletion();
-//
-//        CreateContainerResponse containerResponse = dockerClient
-//            .createContainerCmd(dockerfile.awaitImageId())
-//            .con
-//            .withName(serviceName)
-//            .exec();
-//
-//        dockerClient.startContainerCmd(containerResponse.getId()).exec();
-//
-//        dockerClient.logContainerCmd(containerResponse.getId())
-//            .withFollowStream(true)
-//            .withStdOut(true)
-//            .withStdErr(true)
-//            .exec(new LogContainerResultCallback() {
-//              @Override
-//              public void onNext(Frame item) {
-//                logger.info(new String(item.getPayload()));
-//                super.onNext(item);
-//              }
-//            });
-//      }
-//    }
+    executeDockerCompose(targetDir.toFile(), "up", "--build");
 
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-
-//      log.info("Shutting down, stopping the environment...");
-      stopAllContainers();
+      System.out.println("Shutting down, stopping the environment...");
+      executeDockerCompose(targetDir.toFile(), "down");
     }));
 
     // Monitor the test container
-    String testServiceName = "test_service_name"; // Replace with actual service name
-    Optional<String> containerIdOpt = getContainerIdByName(testServiceName);
+    String testServiceName = "deploy-test-1"; // Replace with actual service name
+    Optional<String> containerIdOpt = Optional.empty();
+
+    // Loop until the container starts or a timeout occurs
+    long startTime = System.currentTimeMillis();
+    long timeout = 60000; // Timeout after 60 seconds
+    while(System.currentTimeMillis() - startTime < timeout && !containerIdOpt.isPresent()) {
+      containerIdOpt = getContainerIdByName(testServiceName);
+      if (!containerIdOpt.isPresent()) {
+        // Sleep for a short time to avoid busy waiting
+        Thread.sleep(1000);
+      }
+    }
 
     if (containerIdOpt.isPresent()) {
       String containerId = containerIdOpt.get();
@@ -176,32 +135,34 @@ public class TestCommand extends AbstractCompilerCommand {
     }
   }
 
-  private void executeDockerCompose(File dockerComposeDir) {
+  private void executeDockerCompose(File dockerComposeDir, String... args) {
+    String[] baseCommand = {"docker", "compose"};
+    String[] fullCommand = Stream.concat(Arrays.stream(baseCommand), Arrays.stream(args))
+        .toArray(String[]::new);
     ProcessBuilder processBuilder = new ProcessBuilder();
     processBuilder.redirectErrorStream(true);
     processBuilder.directory(dockerComposeDir.getAbsoluteFile());
-    processBuilder.command("docker", "compose", "up", "--build");
+    processBuilder.command(fullCommand);
 
     try {
       Process process = processBuilder.start();
 
-      try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-        String line;
-        while ((line = reader.readLine()) != null) {
-//          log.info(line);
-          System.out.println(line);
+      new Thread(() -> {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+          String line;
+          while ((line = reader.readLine()) != null) {
+            System.out.println(line);
+          }
+        } catch (IOException e) {
+          e.printStackTrace();
         }
-      }
+      }).start();
 
-      int exitCode = process.waitFor();
-      if (exitCode != 0) {
-        throw new RuntimeException("Docker Compose command failed with exit code " + exitCode);
-      }
-
-    } catch (IOException | InterruptedException e) {
+    } catch (IOException e) {
       throw new RuntimeException("Failed to execute Docker Compose command", e);
     }
   }
+
   @SneakyThrows
   private List<File> getComposePaths(Path targetDir) {
     return Files.list(targetDir)
@@ -215,11 +176,6 @@ public class TestCommand extends AbstractCompilerCommand {
         .filter(container -> container.getNames()[0].equals("/" + name))
         .map(container -> container.getId())
         .findFirst();
-  }
-
-  private void stopAllContainers() {
-    dockerClient.listContainersCmd().exec().forEach(container ->
-        dockerClient.stopContainerCmd(container.getId()).exec());
   }
 
   @Override
