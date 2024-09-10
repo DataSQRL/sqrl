@@ -25,7 +25,7 @@ public class UseCaseCompileTest extends AbstractUseCaseTest {
 
   static class UseCaseFiles extends SqrlScriptsAndLocalPackages {
     public UseCaseFiles() {
-      super(USECASE_DIR);
+      super(USECASE_DIR, true);
     }
   }
 }

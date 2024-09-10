@@ -1,0 +1,3 @@
+IMPORT ecommerceTs.Order;
+
+OrderTable := SELECT * FROM `Order` o JOIN `Order` o2;

@@ -82,11 +82,12 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
   public abstract static class SqrlScriptsAndLocalPackages implements ArgumentsProvider {
 
     private final Path directory;
+    private final boolean includeFails;
 
     @Override
     public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
       //Look for all package jsons
-      return getSQRLScripts(directory).flatMap(path -> {
+      return getSQRLScripts(directory, includeFails).flatMap(path -> {
         List<Path> pkgFiles = getPackageFiles(path.getParent());
         Collections.sort(pkgFiles);
         if (pkgFiles.isEmpty()) pkgFiles.add(null);

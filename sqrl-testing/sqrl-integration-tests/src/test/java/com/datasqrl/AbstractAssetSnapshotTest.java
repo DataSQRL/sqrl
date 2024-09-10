@@ -158,12 +158,15 @@ public abstract class AbstractAssetSnapshotTest {
   private static final String SQRL_EXTENSION = ".sqrl";
 
   @SneakyThrows
-  public static Stream<Path> getSQRLScripts(Path directory) {
+  public static Stream<Path> getSQRLScripts(Path directory, boolean includeFail) {
     return Files.walk(directory)
         .filter(path -> !Files.isDirectory(path))
         .filter(path -> path.toString().endsWith(SQRL_EXTENSION))
         .filter(path-> !path.toString().contains("/build/"))
-        .filter(path -> TestNameModifier.of(path)!=TestNameModifier.disabled)
+        .filter(path -> {
+          TestNameModifier mod = TestNameModifier.of(path);
+          return mod==TestNameModifier.none || (includeFail && mod==TestNameModifier.fail);
+        })
         .sorted();
   }
 
@@ -189,10 +192,11 @@ public abstract class AbstractAssetSnapshotTest {
   public abstract static class SqrlScriptArgumentsProvider implements ArgumentsProvider {
 
     Path directory;
+    boolean includeFail;
 
     @Override
     public Stream<? extends Arguments> provideArguments(ExtensionContext context) throws IOException {
-      return getSQRLScripts(directory).map(Arguments::of);
+      return getSQRLScripts(directory, includeFail).map(Arguments::of);
     }
   }
 }

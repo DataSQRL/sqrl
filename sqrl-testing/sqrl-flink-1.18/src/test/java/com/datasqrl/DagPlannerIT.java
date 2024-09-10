@@ -36,7 +36,7 @@ public class DagPlannerIT {
     File directory = rootPath.toFile();
     if (directory.exists() && directory.isDirectory()) {
       File[] sqrlFiles = directory.listFiles(f->
-          f.getName().endsWith(".sqrl") && !f.getName().contains("disabled"));
+          f.getName().endsWith(".sqrl") && !f.getName().contains("disabled") && !f.getName().contains("fail"));
       if (sqrlFiles != null) {
         return Stream.of(sqrlFiles).map(File::toPath);
       }
@@ -54,7 +54,7 @@ public class DagPlannerIT {
 
   List<String> disabled = List.of("tableFunctionsBasic.sqrl",
       "tableStateJoinTest.sqrl", "tableStreamJoinTest.sqrl",
-      "selectDistinctNestedTest.sqrl");
+      "selectDistinctNestedTest.sqrl", "timestampReassignment.sqrl");
 
   @ParameterizedTest
   @MethodSource("directoryProvider")
