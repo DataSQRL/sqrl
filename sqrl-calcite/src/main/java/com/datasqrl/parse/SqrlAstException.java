@@ -21,15 +21,15 @@ public class SqrlAstException extends RuntimeException {
   private final SqlParserPos pos;
   private final String message;
 
-  public SqrlAstException(ErrorLabel errorLabel, SqlParserPos pos, String message, String... args) {
+  public SqrlAstException(ErrorLabel errorLabel, SqlParserPos pos, String message, Object... args) {
     this(Optional.empty(), errorLabel, pos, message, args);
   }
 
-  public SqrlAstException(Optional<Throwable> cause, ErrorLabel errorLabel, SqlParserPos pos, String message, String... args) {
+  public SqrlAstException(Optional<Throwable> cause, ErrorLabel errorLabel, SqlParserPos pos, String message, Object... args) {
     super(message, cause.orElse(null), true, true);
     this.errorLabel = errorLabel;
     this.pos = pos;
-    this.message = message == null ? null :String.format(message, (Object[]) args);
+    this.message = message == null ? null :String.format(message, args);
   }
 
   public ErrorLocation.FileLocation getLocation() {

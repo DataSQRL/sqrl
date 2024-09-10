@@ -9,6 +9,7 @@ import com.datasqrl.util.SnapshotTest.Snapshot;
 import com.google.common.base.Strings;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -50,7 +51,7 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
     }
 //    arguments.add("-t"); arguments.add(deployDir.toString());
     arguments.add("--profile");
-    arguments.add(getProjectRoot(script).resolve("profiles/default").toString());
+    arguments.add(getProjectRoot().resolve("profiles/default").toString());
 //    arguments.add("-t"); arguments.add(deployDir.toString());
     String testname = Stream.of(script, graphQlFile, packageFile)
         .map(AbstractAssetSnapshotTest::getDisplayName)
@@ -97,12 +98,11 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
     }
   }
 
-  private Path getProjectRoot(Path script) {
-    Path currentPath = script.toAbsolutePath();
+  private Path getProjectRoot() {
+    Path currentPath = Paths.get(System.getProperty("user.dir"));
     while (!currentPath.getFileName().toString().equals("sqrl-testing")) {
       currentPath = currentPath.getParent();
     }
-
     return currentPath.getParent();
   }
 }

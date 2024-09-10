@@ -245,7 +245,7 @@ public class GraphqlSchemaValidator extends SchemaWalker {
     TypeName name = (TypeName) type;
 
     TypeDefinition typeDef = registry.getType(name).orElseThrow(
-        () -> createThrowable(name.getSourceLocation(), "Could not find return type: %s"));
+        () -> createThrowable(name.getSourceLocation(), "Could not find return type: %s", name.getName()));
     checkState(typeDef instanceof ObjectTypeDefinition, typeDef.getSourceLocation(),
         "Return must be an object type: %s", fieldDefinition.getName());
 
