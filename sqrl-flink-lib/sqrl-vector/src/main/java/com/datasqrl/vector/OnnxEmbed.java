@@ -22,10 +22,6 @@ import org.tribuo.interop.onnx.extractors.Tokenizer;
  * Computes a vector embedding for the given string based on the provided ONNX vector embedding model.
  * The embedding model should be stored in a directory that is accessible at runtime.
  */
-@FunctionHint(
-    input = {@DataTypeHint("String"), @DataTypeHint("String")},
-    output = @DataTypeHint("FlinkVectorType")
-)
 public class OnnxEmbed extends ScalarFunction {
 
 

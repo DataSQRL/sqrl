@@ -15,6 +15,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -196,7 +197,8 @@ public abstract class AbstractAssetSnapshotTest {
 
     @Override
     public Stream<? extends Arguments> provideArguments(ExtensionContext context) throws IOException {
-      return getSQRLScripts(directory, includeFail).sorted().map(Arguments::of);
+      return getSQRLScripts(directory, includeFail)
+          .sorted(Comparator.comparing(c -> c.toFile().getName().toLowerCase())).map(Arguments::of);
     }
   }
 }
