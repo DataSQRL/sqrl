@@ -278,12 +278,12 @@ LogicalProject(obj=[toJson('{"a": 1}')], _customerid=[$0], _timestamp=[$4])
     "CREATE TEMPORARY TABLE `product_2` (\n  `productid` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`productid`, `name`, `description`, `category`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'product_2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `tojsontable_1` (\n  `obj` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  `_customerid` BIGINT NOT NULL,\n  `_timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`_customerid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'tojsontable_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `customer_1`;",
-    "CREATE VIEW `table$2`\nAS\nSELECT JSONARRAYAGG(`name`) AS `agg`, `name` AS `_name`, MAX(`timestamp`) AS `__timestamp`\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC) AS `_rownum`\n  FROM `customer_1`) AS `t`\nWHERE `_rownum` = 1\nGROUP BY `name`;",
+    "CREATE VIEW `table$2`\nAS\nSELECT JSONARRAYAGG(`name`) AS `agg`, `name` AS `_name`, MAX(`timestamp`) AS `__timestamp`\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC) AS `_rownum`\n  FROM `customer_1`) AS `t0`\nWHERE `_rownum` = 1\nGROUP BY `name`;",
     "CREATE VIEW `table$3`\nAS\nSELECT JSONARRAY(`customerid`) AS `obj`, `customerid` AS `_customerid`, `timestamp` AS `_timestamp`\nFROM `customer_1`;",
     "CREATE VIEW `table$4`\nAS\nSELECT JSONCONCAT(TOJSON('{\"a\": true}'), TOJSON('{\"a\": false}')) AS `obj`, `customerid` AS `_customerid`, `timestamp` AS `_timestamp`\nFROM `customer_1`;",
     "CREATE VIEW `table$5`\nAS\nSELECT JSONEXISTS(TOJSON('{\"a\": true}'), '$.a') AS `obj`, `customerid` AS `_customerid`, `timestamp` AS `_timestamp`\nFROM `customer_1`;",
     "CREATE VIEW `table$6`\nAS\nSELECT JSONEXTRACT(TOJSON('{\"a\": \"hello\"}'), CAST('$.a' AS VARCHAR(65536) CHARACTER SET `UTF-16LE`), CAST('default' AS VARCHAR(65536) CHARACTER SET `UTF-16LE`)) AS `obj`, `customerid` AS `_customerid`, `timestamp` AS `_timestamp`\nFROM `customer_1`;",
-    "CREATE VIEW `table$7`\nAS\nSELECT JSONOBJECTAGG(`$f1`, `name`) AS `agg`, `name` AS `_name`, MAX(`timestamp`) AS `__timestamp`\nFROM (SELECT `name`, 'key' AS `$f1`, `customerid`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC) AS `_rownum`\n  FROM `customer_1`) AS `t`\nWHERE `_rownum` = 1\nGROUP BY `name`;",
+    "CREATE VIEW `table$7`\nAS\nSELECT JSONOBJECTAGG(`$f1`, `name`) AS `agg`, `name` AS `_name`, MAX(`timestamp`) AS `__timestamp`\nFROM (SELECT `name`, 'key' AS `$f1`, `customerid`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC) AS `_rownum`\n  FROM `customer_1`) AS `t0`\nWHERE `_rownum` = 1\nGROUP BY `name`;",
     "CREATE VIEW `table$8`\nAS\nSELECT JSONQUERY(TOJSON('{\"a\": {\"b\": 1}}'), '$.a') AS `obj`, `customerid` AS `_customerid`, `timestamp` AS `_timestamp`\nFROM `customer_1`;",
     "CREATE VIEW `table$9`\nAS\nSELECT JSONTOSTRING(TOJSON('{\"a\": 1}')) AS `obj`, `customerid` AS `_customerid`, `timestamp` AS `_timestamp`\nFROM `customer_1`;",
     "CREATE VIEW `table$10`\nAS\nSELECT JSONOBJECT(CONCAT('application#', `name`), `customerid`) AS `obj`, `customerid` AS `_customerid`, `timestamp` AS `_timestamp`\nFROM `customer_1`;",
@@ -586,7 +586,11 @@ LogicalProject(obj=[toJson('{"a": 1}')], _customerid=[$0], _timestamp=[$4])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"customer_3\"\nWHERE \"customerid\" = $1",
+=======
+              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customer_3\"\nWHERE \"customerid\" = $1\nORDER BY '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -954,7 +958,11 @@ LogicalProject(obj=[toJson('{"a": 1}')], _customerid=[$0], _timestamp=[$4])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST",
+=======
+              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1606,7 +1614,11 @@ LogicalProject(obj=[toJson('{"a": 1}')], _customerid=[$0], _timestamp=[$4])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3 AND \"category\" = $4\nORDER BY \"_ingest_time\" DESC NULLS LAST",
+=======
+              "sql" : "SELECT \"productid\", \"name\", \"description\", \"category\", \"_ingest_time\", 1 AS \"__pk\"\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3 AND \"category\" = $4\nORDER BY \"_ingest_time\" DESC NULLS LAST, '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",

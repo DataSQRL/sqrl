@@ -132,7 +132,11 @@ LogicalTableScan(table=[[reuseddata_1]], hints=[[[WatermarkHint inheritPath:[] o
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"data_2\"\nWHERE \"id\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST",
+=======
+              "sql" : "SELECT \"id\", \"epoch_timestamp\", \"some_value\", \"timestamp\", 1 AS \"__pk\"\nFROM \"data_2\"\nWHERE \"id\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -210,7 +214,11 @@ LogicalTableScan(table=[[reuseddata_1]], hints=[[[WatermarkHint inheritPath:[] o
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"reuseddata_2\"\nWHERE \"id\" = $1\nORDER BY \"ts\" DESC NULLS LAST",
+=======
+              "sql" : "SELECT \"id\", \"epoch_timestamp\", \"some_value\", \"timestamp\", \"ts\", 1 AS \"__pk\"\nFROM \"reuseddata_2\"\nWHERE \"id\" = $1\nORDER BY \"ts\" DESC NULLS LAST, '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",

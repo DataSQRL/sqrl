@@ -5,6 +5,7 @@ package com.datasqrl.plan;
 
 import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.engine.stream.flink.sql.rules.ToStubAggRule;
+import com.datasqrl.engine.stream.flink.sql.rules.ToStubAggRule.ToStubAggRuleConfig;
 import com.datasqrl.plan.rules.DAGFunctionExpansionRule;
 import com.datasqrl.plan.rules.DAGTableExpansionRule.Read;
 import com.datasqrl.plan.rules.DAGTableExpansionRule.Write;
@@ -86,7 +87,7 @@ public class OptimizationStage {
   public static final OptimizationStage READ_QUERY_OPTIMIZATION = new OptimizationStage(
       "ReadQueryOptimization",
       Programs.sequence(
-          Programs.hep(List.of(ToStubAggRule.Config.DEFAULT.toRule()),
+          Programs.hep(List.of(ToStubAggRuleConfig.DEFAULT.toRule()),
               true, SqrlRelMetadataProvider.INSTANCE),
           SQRLPrograms.ENUMERABLE_VOLCANO), Optional.of(EnumerableConvention.INSTANCE)
   );

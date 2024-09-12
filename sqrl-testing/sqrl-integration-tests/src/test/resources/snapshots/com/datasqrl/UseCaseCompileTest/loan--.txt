@@ -282,7 +282,11 @@ LogicalTableScan(table=[[loantypes_1]], hints=[[[WatermarkHint inheritPath:[] op
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"applications_2\"\nWHERE \"id\" = $1 AND \"updated_at\" = $2\nORDER BY \"updated_at\" DESC NULLS LAST",
+=======
+              "sql" : "SELECT \"id\", \"customer_id\", \"loan_type_id\", \"amount\", \"duration\", \"application_date\", \"updated_at\", 1 AS \"__pk\"\nFROM \"applications_2\"\nWHERE \"id\" = $1 AND \"updated_at\" = $2\nORDER BY \"updated_at\" DESC NULLS LAST, '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -412,7 +416,11 @@ LogicalTableScan(table=[[loantypes_1]], hints=[[[WatermarkHint inheritPath:[] op
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"customers_2\"\nWHERE \"id\" = $1 AND \"updated_at\" = $2\nORDER BY \"updated_at\" DESC NULLS LAST",
+=======
+              "sql" : "SELECT \"id\", \"first_name\", \"last_name\", \"email\", \"phone\", \"address\", \"date_of_birth\", \"updated_at\", 1 AS \"__pk\"\nFROM \"customers_2\"\nWHERE \"id\" = $1 AND \"updated_at\" = $2\nORDER BY \"updated_at\" DESC NULLS LAST, '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -460,7 +468,11 @@ LogicalTableScan(table=[[loantypes_1]], hints=[[[WatermarkHint inheritPath:[] op
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"loantypes_2\"\nWHERE \"id\" = $1 AND \"updated_at\" = $2\nORDER BY \"updated_at\" DESC NULLS LAST",
+=======
+              "sql" : "SELECT \"id\", \"name\", \"description\", \"interest_rate\", \"max_amount\", \"min_amount\", \"max_duration\", \"min_duration\", \"updated_at\", 1 AS \"__pk\"\nFROM \"loantypes_2\"\nWHERE \"id\" = $1 AND \"updated_at\" = $2\nORDER BY \"updated_at\" DESC NULLS LAST, '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",

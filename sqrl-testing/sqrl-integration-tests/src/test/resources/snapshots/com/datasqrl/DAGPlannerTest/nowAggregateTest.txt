@@ -220,23 +220,23 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
     "CREATE TEMPORARY TABLE `recenttotal_1` (\n  `total` DOUBLE NOT NULL,\n  `quantity` BIGINT NOT NULL,\n  `__pk` INTEGER NOT NULL,\n  `_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`__pk`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'recenttotal_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `customer_1`;",
     "CREATE VIEW `table$2`\nAS\nSELECT `customerid` AS `customer`, ENDOFHOUR(`time`, 1, 15) AS `bucket`, `id`, `time`\nFROM `orders_1`;",
-    "CREATE VIEW `table$3`\nAS\nSELECT `customer`, `window_time` AS `bucket`, COUNT(*) AS `order_count`\nFROM TABLE(TUMBLE(TABLE `table$2`, DESCRIPTOR(`time`), INTERVAL '3600' SECOND(7), INTERVAL '900' SECOND(6))) AS `t0`\nGROUP BY `customer`, `window_start`, `window_end`, `window_time`;",
+    "CREATE VIEW `table$3`\nAS\nSELECT `customer`, `window_time` AS `bucket`, COUNT(*) AS `order_count`\nFROM TABLE(TUMBLE(TABLE `table$2`, DESCRIPTOR(`time`), INTERVAL '3600' SECOND(7), INTERVAL '900' SECOND(6))) AS `t1`\nGROUP BY `customer`, `window_start`, `window_end`, `window_time`;",
     "CREATE VIEW `table$4`\nAS\nSELECT COUNT(*) AS `order_count`, 1 AS `__pk`, MAX(`time`) AS `__timestamp`\nFROM `orders_1`;",
     "CREATE VIEW `table$5`\nAS\nSELECT `customerid` AS `customer`, `id`, `time`\nFROM `orders_1`;",
-    "CREATE VIEW `table$6`\nAS\nSELECT *\nFROM (SELECT `customer`, `order_count`, `_time`, ROW_NUMBER() OVER (PARTITION BY `customer` ORDER BY `_time` DESC NULLS LAST) AS `_rownum`\n  FROM (SELECT `customer`, COUNT(*) AS `order_count`, `window_time` AS `_time`\n    FROM TABLE(HOP(TABLE `table$5`, DESCRIPTOR(`time`), INTERVAL '13824' SECOND(8), INTERVAL '691200' SECOND(9))) AS `t0`\n    GROUP BY `customer`, `window_start`, `window_end`, `window_time`) AS `t3`) AS `t4`\nWHERE `_rownum` = 1;",
-    "CREATE VIEW `table$7`\nAS\nSELECT `$cor1`.`id`, `$cor1`.`time`, `t5`.`order_count`\nFROM `orders_1` AS `$cor1`\n INNER JOIN `table$6` FOR SYSTEM_TIME AS OF `$cor1`.`time` AS `t5` ON `$cor1`.`customerid` = `t5`.`customer`;",
+    "CREATE VIEW `table$6`\nAS\nSELECT *\nFROM (SELECT `customer`, `order_count`, `_time`, ROW_NUMBER() OVER (PARTITION BY `customer` ORDER BY `_time` DESC NULLS LAST) AS `_rownum`\n  FROM (SELECT `customer`, COUNT(*) AS `order_count`, `window_time` AS `_time`\n    FROM TABLE(HOP(TABLE `table$5`, DESCRIPTOR(`time`), INTERVAL '13824' SECOND(8), INTERVAL '691200' SECOND(9))) AS `t1`\n    GROUP BY `customer`, `window_start`, `window_end`, `window_time`) AS `t4`) AS `t5`\nWHERE `_rownum` = 1;",
+    "CREATE VIEW `table$7`\nAS\nSELECT `$cor1`.`id`, `$cor1`.`time`, `t6`.`order_count`\nFROM `orders_1` AS `$cor1`\n INNER JOIN `table$6` FOR SYSTEM_TIME AS OF `$cor1`.`time` AS `t6` ON `$cor1`.`customerid` = `t6`.`customer`;",
     "CREATE VIEW `table$8`\nAS\nSELECT `customerid` AS `customer`, ENDOFDAY(`time`) AS `bucket`, `id`, `time`\nFROM `orders_1`;",
-    "CREATE VIEW `table$9`\nAS\nSELECT `customer`, `window_time` AS `bucket`, COUNT(*) AS `order_count`\nFROM TABLE(TUMBLE(TABLE `table$8`, DESCRIPTOR(`time`), INTERVAL '86400' SECOND(8), INTERVAL '0' SECOND(1))) AS `t0`\nGROUP BY `customer`, `window_start`, `window_end`, `window_time`;",
+    "CREATE VIEW `table$9`\nAS\nSELECT `customer`, `window_time` AS `bucket`, COUNT(*) AS `order_count`\nFROM TABLE(TUMBLE(TABLE `table$8`, DESCRIPTOR(`time`), INTERVAL '86400' SECOND(8), INTERVAL '0' SECOND(1))) AS `t1`\nGROUP BY `customer`, `window_start`, `window_end`, `window_time`;",
     "CREATE VIEW `table$10`\nAS\nSELECT ENDOFDAY(`time`) AS `bucket`, `id`, `time`\nFROM `orders_1`;",
-    "CREATE VIEW `table$11`\nAS\nSELECT `window_time` AS `bucket`, COUNT(*) AS `order_count`\nFROM TABLE(TUMBLE(TABLE `table$10`, DESCRIPTOR(`time`), INTERVAL '86400' SECOND(8), INTERVAL '0' SECOND(1))) AS `t0`\nGROUP BY `window_start`, `window_end`, `window_time`;",
+    "CREATE VIEW `table$11`\nAS\nSELECT `window_time` AS `bucket`, COUNT(*) AS `order_count`\nFROM TABLE(TUMBLE(TABLE `table$10`, DESCRIPTOR(`time`), INTERVAL '86400' SECOND(8), INTERVAL '0' SECOND(1))) AS `t1`\nGROUP BY `window_start`, `window_end`, `window_time`;",
     "CREATE VIEW `table$12`\nAS\nSELECT `customerid` AS `customer`, `id`, `time`\nFROM `orders_1`;",
-    "CREATE VIEW `table$13`\nAS\nSELECT `customer`, COUNT(*) AS `order_count`, `window_time` AS `_time`\nFROM TABLE(HOP(TABLE `table$12`, DESCRIPTOR(`time`), INTERVAL '13824' SECOND(8), INTERVAL '691200' SECOND(9))) AS `t0`\nGROUP BY `customer`, `window_start`, `window_end`, `window_time`;",
+    "CREATE VIEW `table$13`\nAS\nSELECT `customer`, COUNT(*) AS `order_count`, `window_time` AS `_time`\nFROM TABLE(HOP(TABLE `table$12`, DESCRIPTOR(`time`), INTERVAL '13824' SECOND(8), INTERVAL '691200' SECOND(9))) AS `t1`\nGROUP BY `customer`, `window_start`, `window_end`, `window_time`;",
     "CREATE VIEW `table$14`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders_1`;",
     "CREATE VIEW `table$15`\nAS\nSELECT `customerid` AS `customer`, ENDOFSECOND(`time`) AS `bucket`, `id`, `time`\nFROM `orders_1`;",
-    "CREATE VIEW `table$16`\nAS\nSELECT `customer`, `window_time` AS `bucket`, COUNT(*) AS `order_count`\nFROM TABLE(TUMBLE(TABLE `table$15`, DESCRIPTOR(`time`), INTERVAL '1' SECOND(4), INTERVAL '0' SECOND(1))) AS `t0`\nGROUP BY `customer`, `window_start`, `window_end`, `window_time`;",
+    "CREATE VIEW `table$16`\nAS\nSELECT `customer`, `window_time` AS `bucket`, COUNT(*) AS `order_count`\nFROM TABLE(TUMBLE(TABLE `table$15`, DESCRIPTOR(`time`), INTERVAL '1' SECOND(4), INTERVAL '0' SECOND(1))) AS `t1`\nGROUP BY `customer`, `window_start`, `window_end`, `window_time`;",
     "CREATE VIEW `table$17`\nAS\nSELECT *\nFROM `product_1`;",
-    "CREATE VIEW `table$18`\nAS\nSELECT `t00`.`unit_price` * `t00`.`quantity` AS `$f0`, `t00`.`quantity`, `$cor0`.`id`, `$cor0`.`time`, `t00`.`productid`\nFROM `orders_1` AS `$cor0`,\n UNNEST(`$cor0`.`entries`) AS `t00` (`productid`, `quantity`, `unit_price`, `discount`);",
-    "CREATE VIEW `table$19`\nAS\nSELECT SUM(`$f0`) AS `total`, SUM(`quantity`) AS `quantity`, 1 AS `__pk`, `window_time` AS `_time`\nFROM TABLE(HOP(TABLE `table$18`, DESCRIPTOR(`time`), INTERVAL '12096' SECOND(8), INTERVAL '604800' SECOND(9))) AS `t2`\nGROUP BY `window_start`, `window_end`, `window_time`;",
+    "CREATE VIEW `table$18`\nAS\nSELECT `t10`.`unit_price` * `t10`.`quantity` AS `$f0`, `t10`.`quantity`, `$cor0`.`id`, `$cor0`.`time`, `t10`.`productid`\nFROM `orders_1` AS `$cor0`,\n UNNEST(`$cor0`.`entries`) AS `t10` (`productid`, `quantity`, `unit_price`, `discount`);",
+    "CREATE VIEW `table$19`\nAS\nSELECT SUM(`$f0`) AS `total`, SUM(`quantity`) AS `quantity`, 1 AS `__pk`, `window_time` AS `_time`\nFROM TABLE(HOP(TABLE `table$18`, DESCRIPTOR(`time`), INTERVAL '12096' SECOND(8), INTERVAL '604800' SECOND(9))) AS `t3`\nGROUP BY `window_start`, `window_end`, `window_time`;",
     "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer_2`\n(SELECT *\n FROM `table$1`)\n;\nINSERT INTO `orderagg1_1`\n (SELECT *\n  FROM `table$3`)\n ;\n INSERT INTO `orderagg2_1`\n  (SELECT *\n   FROM `table$4`)\n  ;\n  INSERT INTO `orderaugment_1`\n   (SELECT *\n    FROM `table$7`)\n   ;\n   INSERT INTO `ordernow1_1`\n    (SELECT *\n     FROM `table$9`)\n    ;\n    INSERT INTO `ordernow2_1`\n     (SELECT *\n      FROM `table$11`)\n     ;\n     INSERT INTO `ordernow3_1`\n      (SELECT *\n       FROM `table$13`)\n      ;\n      INSERT INTO `orders_2`\n       (SELECT *\n        FROM `table$14`)\n       ;\n       INSERT INTO `ordertime1_1`\n        (SELECT *\n         FROM `table$16`)\n        ;\n        INSERT INTO `product_2`\n         (SELECT *\n          FROM `table$17`)\n         ;\n         INSERT INTO `recenttotal_1`\n          (SELECT *\n           FROM `table$19`)\n          ;\n          END;"
   ],
   "connectors" : [
@@ -564,7 +564,11 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1 AND \"lastUpdated\" = $2\nORDER BY \"timestamp\" DESC NULLS LAST",
+=======
+              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customer_2\"\nWHERE \"customerid\" = $1 AND \"lastUpdated\" = $2\nORDER BY \"timestamp\" DESC NULLS LAST, '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -674,7 +678,11 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"orderagg1_1\"\nWHERE \"customer\" = $1 AND \"bucket\" = $2\nORDER BY \"bucket\" DESC NULLS LAST",
+=======
+              "sql" : "SELECT \"customer\", \"bucket\", \"order_count\", 1 AS \"__pk\"\nFROM \"orderagg1_1\"\nWHERE \"customer\" = $1 AND \"bucket\" = $2\nORDER BY \"bucket\" DESC NULLS LAST, '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -882,7 +890,11 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"orderaugment_1\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST",
+=======
+              "sql" : "SELECT \"id\", \"time\", \"order_count\", 1 AS \"__pk\"\nFROM \"orderaugment_1\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1164,7 +1176,11 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"ordernow3_1\"\nWHERE \"customer\" = $1",
+=======
+              "sql" : "SELECT \"customer\", \"order_count\", \"_time\", 1 AS \"__pk\"\nFROM \"ordernow3_1\"\nWHERE \"customer\" = $1\nORDER BY '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1207,7 +1223,11 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST",
+=======
+              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1419,7 +1439,11 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"ordertime1_1\"\nWHERE \"customer\" = $1 AND \"bucket\" = $2\nORDER BY \"bucket\" DESC NULLS LAST",
+=======
+              "sql" : "SELECT \"customer\", \"bucket\", \"order_count\", 1 AS \"__pk\"\nFROM \"ordertime1_1\"\nWHERE \"customer\" = $1 AND \"bucket\" = $2\nORDER BY \"bucket\" DESC NULLS LAST, '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1938,7 +1962,11 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3 AND \"category\" = $4\nORDER BY \"_ingest_time\" DESC NULLS LAST",
+=======
+              "sql" : "SELECT \"productid\", \"name\", \"description\", \"category\", \"_ingest_time\", 1 AS \"__pk\"\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3 AND \"category\" = $4\nORDER BY \"_ingest_time\" DESC NULLS LAST, '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",

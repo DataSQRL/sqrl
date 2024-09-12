@@ -179,16 +179,16 @@ LogicalProject(__pk1_id=[$0], __pk2_customerid=[$1], __pk3_time=[$2], price=[$4]
     "CREATE TEMPORARY TABLE `ordersinline_1` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `price` DOUBLE,\n  `num` BIGINT NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`, `customerid`, `time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'ordersinline_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `total_1` (\n  `__pk1_id` BIGINT NOT NULL,\n  `__pk2_customerid` BIGINT NOT NULL,\n  `__pk3_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `price` DOUBLE,\n  `num` BIGINT NOT NULL,\n  `discount` DOUBLE,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`__pk1_id`, `__pk2_customerid`, `__pk3_time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'total_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `customer_1`;",
-    "CREATE VIEW `table$2`\nAS\nSELECT `t00`.`quantity` * `t00`.`unit_price` - `t00`.`discount` AS `price`, `$cor0`.`id` AS `_id`, `$cor0`.`customerid` AS `_customerid`, `$cor0`.`time` AS `_time`, `t00`.`productid` AS `_productid`, `$cor0`.`_ingest_time`\nFROM `orders_1` AS `$cor0`,\n UNNEST(`$cor0`.`entries`) AS `t00` (`productid`, `quantity`, `unit_price`, `discount`);",
-    "CREATE VIEW `table$3`\nAS\nSELECT `orders_1`.`id`, `orders_1`.`customerid` AS `_customerid`, `orders_1`.`time` AS `_time`, `orders_1`.`_ingest_time`\nFROM `orders_1`\n INNER JOIN `orders_1` AS `orders_10` ON `orders_1`.`id` = `orders_10`.`id` AND `orders_1`.`time` = `orders_10`.`time` AND `orders_1`.`customerid` = `orders_10`.`customerid` AND `orders_1`.`_ingest_time` = `orders_10`.`_ingest_time`;",
+    "CREATE VIEW `table$2`\nAS\nSELECT `t10`.`quantity` * `t10`.`unit_price` - `t10`.`discount` AS `price`, `$cor0`.`id` AS `_id`, `$cor0`.`customerid` AS `_customerid`, `$cor0`.`time` AS `_time`, `t10`.`productid` AS `_productid`, `$cor0`.`_ingest_time`\nFROM `orders_1` AS `$cor0`,\n UNNEST(`$cor0`.`entries`) AS `t10` (`productid`, `quantity`, `unit_price`, `discount`);",
+    "CREATE VIEW `table$3`\nAS\nSELECT `t`.`id`, `t`.`customerid` AS `_customerid`, `t`.`time` AS `_time`, `t`.`_ingest_time`\nFROM `orders_1` AS `t`\n INNER JOIN `orders_1` AS `t0` ON `t`.`id` = `t0`.`id` AND `t`.`time` = `t0`.`time` AND `t`.`customerid` = `t0`.`customerid` AND `t`.`_ingest_time` = `t0`.`_ingest_time`;",
     "CREATE VIEW `table$4`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`, `_ingest_time`\nFROM `orders_1`;",
-    "CREATE VIEW `table$5`\nAS\nSELECT *\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `_ingest_time`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `_ingest_time` DESC) AS `_rownum`\n  FROM `customer_1`) AS `t`\nWHERE `_rownum` = 1;",
-    "CREATE VIEW `table$6`\nAS\nSELECT `$cor1`.`id` AS `__pk1_id`, `$cor1`.`customerid` AS `__pk2_customerid`, `$cor1`.`time` AS `__pk3_time`, `t20`.`quantity` * `t20`.`unit_price` - `t20`.`discount` AS `$f3`, `t20`.`discount`, `t20`.`productid`, `$cor1`.`_ingest_time`\nFROM `orders_1` AS `$cor1`,\n UNNEST(`$cor1`.`entries`) AS `t20` (`productid`, `quantity`, `unit_price`, `discount`);",
-    "CREATE VIEW `table$7`\nAS\nSELECT `t0`.`customerid` AS `__pk1_customerid`, ENDOFDAY(`$cor5`.`time`) AS `day`, SUM(`$cor5`.`price`) AS `total_price`, SUM(`$cor5`.`num`) AS `total_num`, MAX(`$cor5`.`_ingest_time`) AS `__timestamp`\nFROM (SELECT `orders_1`.`id`, `orders_1`.`customerid`, `orders_1`.`time`, `t7`.`price`, `t7`.`num`, `orders_1`.`_ingest_time`\n  FROM `orders_1`\n   INNER JOIN (SELECT `__pk1_id`, `__pk2_customerid`, `__pk3_time`, SUM(`$f3`) AS `price`, COUNT(*) AS `num`, SUM(`discount`) AS `discount`, `window_time` AS `_ingest_time`\n    FROM TABLE(TUMBLE(TABLE `table$6`, DESCRIPTOR(`_ingest_time`), INTERVAL '0.001' SECOND(1))) AS `t4`\n    GROUP BY `__pk1_id`, `__pk2_customerid`, `__pk3_time`, `window_start`, `window_end`, `window_time`) AS `t7` ON `orders_1`.`id` = `t7`.`__pk1_id` AND `orders_1`.`customerid` = `t7`.`__pk2_customerid` AND `orders_1`.`time` = `t7`.`__pk3_time` AND `orders_1`.`_ingest_time` = `t7`.`_ingest_time`) AS `$cor5`\n INNER JOIN `table$5` FOR SYSTEM_TIME AS OF `$cor5`.`_ingest_time` AS `t0` ON `$cor5`.`customerid` = `t0`.`customerid`\nGROUP BY `t0`.`customerid`, ENDOFDAY(`$cor5`.`time`);",
-    "CREATE VIEW `table$8`\nAS\nSELECT `$cor1`.`id` AS `__pk1_id`, `$cor1`.`customerid` AS `__pk2_customerid`, `$cor1`.`time` AS `__pk3_time`, `t00`.`quantity` * `t00`.`unit_price` - `t00`.`discount` AS `$f3`, `t00`.`discount`, `t00`.`productid`, `$cor1`.`_ingest_time`\nFROM `orders_1` AS `$cor1`,\n UNNEST(`$cor1`.`entries`) AS `t00` (`productid`, `quantity`, `unit_price`, `discount`);",
-    "CREATE VIEW `table$9`\nAS\nSELECT `orders_1`.`id`, `orders_1`.`customerid`, `orders_1`.`time`, `t5`.`price`, `t5`.`num`, `orders_1`.`_ingest_time`\nFROM `orders_1`\n INNER JOIN (SELECT `__pk1_id`, `__pk2_customerid`, `__pk3_time`, SUM(`$f3`) AS `price`, COUNT(*) AS `num`, SUM(`discount`) AS `discount`, `window_time` AS `_ingest_time`\n  FROM TABLE(TUMBLE(TABLE `table$8`, DESCRIPTOR(`_ingest_time`), INTERVAL '0.001' SECOND(1))) AS `t2`\n  GROUP BY `__pk1_id`, `__pk2_customerid`, `__pk3_time`, `window_start`, `window_end`, `window_time`) AS `t5` ON `orders_1`.`id` = `t5`.`__pk1_id` AND `orders_1`.`customerid` = `t5`.`__pk2_customerid` AND `orders_1`.`time` = `t5`.`__pk3_time` AND `orders_1`.`_ingest_time` = `t5`.`_ingest_time`;",
-    "CREATE VIEW `table$10`\nAS\nSELECT `$cor1`.`id` AS `__pk1_id`, `$cor1`.`customerid` AS `__pk2_customerid`, `$cor1`.`time` AS `__pk3_time`, `t00`.`quantity` * `t00`.`unit_price` - `t00`.`discount` AS `$f3`, `t00`.`discount`, `t00`.`productid`, `$cor1`.`_ingest_time`\nFROM `orders_1` AS `$cor1`,\n UNNEST(`$cor1`.`entries`) AS `t00` (`productid`, `quantity`, `unit_price`, `discount`);",
-    "CREATE VIEW `table$11`\nAS\nSELECT `__pk1_id`, `__pk2_customerid`, `__pk3_time`, SUM(`$f3`) AS `price`, COUNT(*) AS `num`, SUM(`discount`) AS `discount`, `window_time` AS `_ingest_time`\nFROM TABLE(TUMBLE(TABLE `table$10`, DESCRIPTOR(`_ingest_time`), INTERVAL '0.001' SECOND(1))) AS `t2`\nGROUP BY `__pk1_id`, `__pk2_customerid`, `__pk3_time`, `window_start`, `window_end`, `window_time`;",
+    "CREATE VIEW `table$5`\nAS\nSELECT *\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `_ingest_time`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `_ingest_time` DESC) AS `_rownum`\n  FROM `customer_1`) AS `t0`\nWHERE `_rownum` = 1;",
+    "CREATE VIEW `table$6`\nAS\nSELECT `$cor1`.`id` AS `__pk1_id`, `$cor1`.`customerid` AS `__pk2_customerid`, `$cor1`.`time` AS `__pk3_time`, `t50`.`quantity` * `t50`.`unit_price` - `t50`.`discount` AS `$f3`, `t50`.`discount`, `t50`.`productid`, `$cor1`.`_ingest_time`\nFROM `orders_1` AS `$cor1`,\n UNNEST(`$cor1`.`entries`) AS `t50` (`productid`, `quantity`, `unit_price`, `discount`);",
+    "CREATE VIEW `table$7`\nAS\nSELECT `t1`.`customerid` AS `__pk1_customerid`, ENDOFDAY(`$cor5`.`time`) AS `day`, SUM(`$cor5`.`price`) AS `total_price`, SUM(`$cor5`.`num`) AS `total_num`, MAX(`$cor5`.`_ingest_time`) AS `__timestamp`\nFROM (SELECT `t2`.`id`, `t2`.`customerid`, `t2`.`time`, `t10`.`price`, `t10`.`num`, `t2`.`_ingest_time`\n  FROM `orders_1` AS `t2`\n   INNER JOIN (SELECT `__pk1_id`, `__pk2_customerid`, `__pk3_time`, SUM(`$f3`) AS `price`, COUNT(*) AS `num`, SUM(`discount`) AS `discount`, `window_time` AS `_ingest_time`\n    FROM TABLE(TUMBLE(TABLE `table$6`, DESCRIPTOR(`_ingest_time`), INTERVAL '0.001' SECOND(1))) AS `t7`\n    GROUP BY `__pk1_id`, `__pk2_customerid`, `__pk3_time`, `window_start`, `window_end`, `window_time`) AS `t10` ON `t2`.`id` = `t10`.`__pk1_id` AND `t2`.`customerid` = `t10`.`__pk2_customerid` AND `t2`.`time` = `t10`.`__pk3_time` AND `t2`.`_ingest_time` = `t10`.`_ingest_time`) AS `$cor5`\n INNER JOIN `table$5` FOR SYSTEM_TIME AS OF `$cor5`.`_ingest_time` AS `t1` ON `$cor5`.`customerid` = `t1`.`customerid`\nGROUP BY `t1`.`customerid`, ENDOFDAY(`$cor5`.`time`);",
+    "CREATE VIEW `table$8`\nAS\nSELECT `$cor1`.`id` AS `__pk1_id`, `$cor1`.`customerid` AS `__pk2_customerid`, `$cor1`.`time` AS `__pk3_time`, `t20`.`quantity` * `t20`.`unit_price` - `t20`.`discount` AS `$f3`, `t20`.`discount`, `t20`.`productid`, `$cor1`.`_ingest_time`\nFROM `orders_1` AS `$cor1`,\n UNNEST(`$cor1`.`entries`) AS `t20` (`productid`, `quantity`, `unit_price`, `discount`);",
+    "CREATE VIEW `table$9`\nAS\nSELECT `t`.`id`, `t`.`customerid`, `t`.`time`, `t7`.`price`, `t7`.`num`, `t`.`_ingest_time`\nFROM `orders_1` AS `t`\n INNER JOIN (SELECT `__pk1_id`, `__pk2_customerid`, `__pk3_time`, SUM(`$f3`) AS `price`, COUNT(*) AS `num`, SUM(`discount`) AS `discount`, `window_time` AS `_ingest_time`\n  FROM TABLE(TUMBLE(TABLE `table$8`, DESCRIPTOR(`_ingest_time`), INTERVAL '0.001' SECOND(1))) AS `t4`\n  GROUP BY `__pk1_id`, `__pk2_customerid`, `__pk3_time`, `window_start`, `window_end`, `window_time`) AS `t7` ON `t`.`id` = `t7`.`__pk1_id` AND `t`.`customerid` = `t7`.`__pk2_customerid` AND `t`.`time` = `t7`.`__pk3_time` AND `t`.`_ingest_time` = `t7`.`_ingest_time`;",
+    "CREATE VIEW `table$10`\nAS\nSELECT `$cor1`.`id` AS `__pk1_id`, `$cor1`.`customerid` AS `__pk2_customerid`, `$cor1`.`time` AS `__pk3_time`, `t10`.`quantity` * `t10`.`unit_price` - `t10`.`discount` AS `$f3`, `t10`.`discount`, `t10`.`productid`, `$cor1`.`_ingest_time`\nFROM `orders_1` AS `$cor1`,\n UNNEST(`$cor1`.`entries`) AS `t10` (`productid`, `quantity`, `unit_price`, `discount`);",
+    "CREATE VIEW `table$11`\nAS\nSELECT `__pk1_id`, `__pk2_customerid`, `__pk3_time`, SUM(`$f3`) AS `price`, COUNT(*) AS `num`, SUM(`discount`) AS `discount`, `window_time` AS `_ingest_time`\nFROM TABLE(TUMBLE(TABLE `table$10`, DESCRIPTOR(`_ingest_time`), INTERVAL '0.001' SECOND(1))) AS `t3`\nGROUP BY `__pk1_id`, `__pk2_customerid`, `__pk3_time`, `window_start`, `window_end`, `window_time`;",
     "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer_3`\n(SELECT *\n FROM `table$1`)\n;\nINSERT INTO `entrycount_1`\n (SELECT *\n  FROM `table$2`)\n ;\n INSERT INTO `orders2_1`\n  (SELECT *\n   FROM `table$3`)\n  ;\n  INSERT INTO `orders_2`\n   (SELECT *\n    FROM `table$4`)\n   ;\n   INSERT INTO `orders_by_day_1`\n    (SELECT *\n     FROM `table$7`)\n    ;\n    INSERT INTO `ordersinline_1`\n     (SELECT *\n      FROM `table$9`)\n     ;\n     INSERT INTO `total_1`\n      (SELECT *\n       FROM `table$11`)\n      ;\n      END;"
   ],
   "connectors" : [
@@ -411,7 +411,11 @@ LogicalProject(__pk1_id=[$0], __pk2_customerid=[$1], __pk3_time=[$2], price=[$4]
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"customer_3\"\nWHERE \"customerid\" = $1",
+=======
+              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"_ingest_time\", 1 AS \"__pk\"\nFROM \"customer_3\"\nWHERE \"customerid\" = $1\nORDER BY '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -449,7 +453,11 @@ LogicalProject(__pk1_id=[$0], __pk2_customerid=[$1], __pk3_time=[$2], price=[$4]
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"orders_by_day_1\"\n  WHERE \"__pk1_customerid\" = $1) AS \"t\"\nWHERE \"day\" = $2",
+=======
+              "sql" : "SELECT \"__pk1_customerid\", \"day\", \"total_price\", \"total_num\", \"__timestamp\", 1 AS \"__pk\"\nFROM (SELECT *\n  FROM \"orders_by_day_1\"\n  WHERE \"__pk1_customerid\" = $1) AS \"t\"\nWHERE \"day\" = $2\nORDER BY '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "source",
@@ -502,7 +510,11 @@ LogicalProject(__pk1_id=[$0], __pk2_customerid=[$1], __pk3_time=[$2], price=[$4]
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"customer_3\"\nWHERE \"customerid\" = $1",
+=======
+              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"_ingest_time\", 1 AS \"__pk\"\nFROM \"customer_3\"\nWHERE \"customerid\" = $1\nORDER BY '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "source",
@@ -813,7 +825,11 @@ LogicalProject(__pk1_id=[$0], __pk2_customerid=[$1], __pk3_time=[$2], price=[$4]
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"customerid\" = $2 AND \"time\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST",
+=======
+              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\", 1 AS \"__pk\"\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"customerid\" = $2 AND \"time\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -845,7 +861,11 @@ LogicalProject(__pk1_id=[$0], __pk2_customerid=[$1], __pk3_time=[$2], price=[$4]
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"total_1\"\nWHERE \"__pk1_id\" = $1 AND \"__pk2_customerid\" = $2 AND \"__pk3_time\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST",
+=======
+              "sql" : "SELECT \"__pk1_id\", \"__pk2_customerid\", \"__pk3_time\", \"price\", \"num\", \"discount\", \"_ingest_time\", 1 AS \"__pk\"\nFROM \"total_1\"\nWHERE \"__pk1_id\" = $1 AND \"__pk2_customerid\" = $2 AND \"__pk3_time\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "source",
@@ -877,7 +897,11 @@ LogicalProject(__pk1_id=[$0], __pk2_customerid=[$1], __pk3_time=[$2], price=[$4]
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"customerid\" = $2 AND \"time\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST",
+=======
+              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\", 1 AS \"__pk\"\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"customerid\" = $2 AND \"time\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "source",
@@ -1034,7 +1058,11 @@ LogicalProject(__pk1_id=[$0], __pk2_customerid=[$1], __pk3_time=[$2], price=[$4]
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"ordersinline_1\"\nWHERE \"id\" = $1 AND \"customerid\" = $2 AND \"time\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST",
+=======
+              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"price\", \"num\", \"_ingest_time\", 1 AS \"__pk\"\nFROM \"ordersinline_1\"\nWHERE \"id\" = $1 AND \"customerid\" = $2 AND \"time\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",

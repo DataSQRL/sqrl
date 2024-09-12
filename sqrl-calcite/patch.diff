@@ -1,6 +1,6 @@
-42a43
+41a42
 > import org.apache.calcite.sql.JoinModifier;
-1033,1044c1034,1046
+1120,1131c1121,1133
 <         stmt = SqlSetOption(Span.of(), null)
 <     |
 <         stmt = SqlAlter()
@@ -27,7 +27,7 @@
 > //        stmt = SqlDrop()
 > //    |
 > //</#if>
-1046,1059c1048,1061
+1133,1146c1135,1148
 <     |
 <         stmt = SqlExplain()
 <     |
@@ -57,14 +57,7 @@
 > //        stmt = SqlMerge()
 > //    |
 > //        stmt = SqlProcedureCall()
-1875,1902d1876
-< }
-< 
-< SqlLiteral JoinType() :
-< {
-<     JoinType joinType;
-< }
-< {
+1963,1980c1965,2007
 <     (
 <     LOOKAHEAD(3) // required for "LEFT SEMI JOIN" in Babel
 < <#list (parser.joinTypes!default.parser.joinTypes) as method>
@@ -83,196 +76,57 @@
 <     |
 <         <CROSS> <JOIN> { joinType = JoinType.CROSS; }
 <     )
-<     {
-<         return joinType.symbol(getPos());
-<     }
-1909c1883
-<     final SqlLiteral natural, joinType, on, using;
 ---
->     final SqlLiteral natural, joinType, on, using, modifier;
-1914c1888,1931
-<     joinType = JoinType()
----
->      (
->             LOOKAHEAD(3)
->             <LEFT> <TEMPORAL> <JOIN> { joinType = JoinType.LEFT.symbol(getPos()); modifier = JoinModifier.TEMPORAL.symbol(getPos()); }
->         |
->             LOOKAHEAD(3)
->             <LEFT> <INTERVAL> <JOIN> { joinType = JoinType.LEFT.symbol(getPos()); modifier = JoinModifier.INTERVAL.symbol(getPos());}
->         |
->             LOOKAHEAD(3)
->             <LEFT> <DEFAULT_> <JOIN> { joinType = JoinType.LEFT.symbol(getPos()); modifier = JoinModifier.DEFAULT.symbol(getPos());}
->         |
->             LOOKAHEAD(3)
->             <RIGHT> <TEMPORAL> <JOIN> { joinType = JoinType.RIGHT.symbol(getPos()); modifier = JoinModifier.TEMPORAL.symbol(getPos());}
->         |
->             LOOKAHEAD(3)
->             <RIGHT> <INTERVAL> <JOIN> { joinType = JoinType.RIGHT.symbol(getPos()); modifier = JoinModifier.INTERVAL.symbol(getPos());}
->         |
->             LOOKAHEAD(3)
->             <RIGHT> <DEFAULT_> <JOIN> { joinType = JoinType.RIGHT.symbol(getPos());modifier = JoinModifier.DEFAULT.symbol(getPos()); }
->         |
->             <TEMPORAL> <JOIN> { joinType = JoinType.INNER.symbol(getPos()); modifier = JoinModifier.TEMPORAL.symbol(getPos());}
->         |
->             <INTERVAL> <JOIN> { joinType = JoinType.INNER.symbol(getPos()); modifier = JoinModifier.INTERVAL.symbol(getPos());}
->         |
->             <DEFAULT_> <JOIN> { joinType = JoinType.INNER.symbol(getPos()); modifier = JoinModifier.DEFAULT.symbol(getPos());}
->         |
->             <JOIN> { joinType = JoinType.INNER.symbol(getPos()); modifier = JoinModifier.DEFAULT.symbol(getPos());}
->         |
->             <INNER> <JOIN> { joinType = JoinType.INNER.symbol(getPos()); modifier = JoinModifier.NONE.symbol(getPos());}
->         |
->             LOOKAHEAD(3)
->             <LEFT> <OUTER> <JOIN> { joinType = JoinType.LEFT.symbol(getPos()); modifier = JoinModifier.OUTER.symbol(getPos());}
->         |
->             <LEFT> <JOIN> { joinType = JoinType.LEFT.symbol(getPos()); modifier = JoinModifier.DEFAULT.symbol(getPos()); }
->         |
->             LOOKAHEAD(3)
->             <RIGHT> <OUTER> <JOIN> { joinType = JoinType.RIGHT.symbol(getPos()); modifier = JoinModifier.OUTER.symbol(getPos());}
->         |
->             <RIGHT> <JOIN> { joinType = JoinType.RIGHT.symbol(getPos()); modifier = JoinModifier.DEFAULT.symbol(getPos()); }
->         |
->             <FULL> [ <OUTER> ] <JOIN> { joinType = JoinType.FULL.symbol(getPos()); modifier = JoinModifier.NONE.symbol(getPos());}
->         |
->             <CROSS> <JOIN> { joinType = JoinType.CROSS.symbol(getPos()); modifier = JoinModifier.NONE.symbol(getPos());}
->         )
-> 
-1925c1942,1943
-<                 condition);
----
->                 condition,
->                 modifier);
-1936c1954,1955
-<                 new SqlNodeList(list.getList(), Span.of(using).end(this)));
----
->                 new SqlNodeList(list.getList(), Span.of(using).end(this)),
->                 modifier);
-1946c1965,1966
-<                 null);
----
->                 null,
->                 modifier);
-1969c1989
-<     SqlLiteral natural, joinType, joinConditionType;
----
->     SqlLiteral natural, joinType, joinConditionType, modifier;
-1991c2011,2053
-<             joinType = JoinType()
----
->             (
->                 LOOKAHEAD(3)
->                 <LEFT> <TEMPORAL> <JOIN> { joinType = JoinType.LEFT.symbol(getPos()); modifier = JoinModifier.TEMPORAL.symbol(getPos()); }
->             |
->                 LOOKAHEAD(3)
->                 <LEFT> <INTERVAL> <JOIN> { joinType = JoinType.LEFT.symbol(getPos()); modifier = JoinModifier.INTERVAL.symbol(getPos());}
->             |
->                 LOOKAHEAD(3)
->                 <LEFT> <DEFAULT_> <JOIN> { joinType = JoinType.LEFT.symbol(getPos()); modifier = JoinModifier.DEFAULT.symbol(getPos());}
->             |
->                 LOOKAHEAD(3)
->                 <RIGHT> <TEMPORAL> <JOIN> { joinType = JoinType.RIGHT.symbol(getPos()); modifier = JoinModifier.TEMPORAL.symbol(getPos());}
->             |
->                 LOOKAHEAD(3)
->                 <RIGHT> <INTERVAL> <JOIN> { joinType = JoinType.RIGHT.symbol(getPos()); modifier = JoinModifier.INTERVAL.symbol(getPos());}
->             |
->                 LOOKAHEAD(3)
->                 <RIGHT> <DEFAULT_> <JOIN> { joinType = JoinType.RIGHT.symbol(getPos());modifier = JoinModifier.DEFAULT.symbol(getPos()); }
->             |
->                 <TEMPORAL> <JOIN> { joinType = JoinType.INNER.symbol(getPos()); modifier = JoinModifier.TEMPORAL.symbol(getPos());}
->             |
->                 <INTERVAL> <JOIN> { joinType = JoinType.INNER.symbol(getPos()); modifier = JoinModifier.INTERVAL.symbol(getPos());}
->             |
->                 <DEFAULT_> <JOIN> { joinType = JoinType.INNER.symbol(getPos()); modifier = JoinModifier.DEFAULT.symbol(getPos());}
->             |
->                 <JOIN> { joinType = JoinType.INNER.symbol(getPos()); modifier = JoinModifier.DEFAULT.symbol(getPos());}
->             |
->                 <INNER> <JOIN> { joinType = JoinType.INNER.symbol(getPos()); modifier = JoinModifier.NONE.symbol(getPos());}
->             |
->                 LOOKAHEAD(3)
->                 <LEFT> <OUTER> <JOIN> { joinType = JoinType.LEFT.symbol(getPos()); modifier = JoinModifier.OUTER.symbol(getPos());}
->             |
->                 <LEFT> <JOIN> { joinType = JoinType.LEFT.symbol(getPos()); modifier = JoinModifier.DEFAULT.symbol(getPos()); }
->             |
->                 LOOKAHEAD(3)
->                 <RIGHT> <OUTER> <JOIN> { joinType = JoinType.RIGHT.symbol(getPos()); modifier = JoinModifier.OUTER.symbol(getPos());}
->             |
->                 <RIGHT> <JOIN> { joinType = JoinType.RIGHT.symbol(getPos()); modifier = JoinModifier.DEFAULT.symbol(getPos()); }
->             |
->                 <FULL> [ <OUTER> ] <JOIN> { joinType = JoinType.FULL.symbol(getPos()); modifier = JoinModifier.NONE.symbol(getPos());}
->             |
->                 <CROSS> <JOIN> { joinType = JoinType.CROSS.symbol(getPos()); modifier = JoinModifier.NONE.symbol(getPos());}
->             )
-2004c2066,2067
-<                         condition);
----
->                         condition,
->                         modifier);
-2017c2080,2081
-<                         new SqlNodeList(list.getList(), Span.of(joinConditionType).end(this)));
----
->                         new SqlNodeList(list.getList(), Span.of(joinConditionType).end(this)),
->                         modifier);
-2027c2091,2092
-<                         null);
----
->                         null,
->                         modifier);
-3845a3911,3912
+>       (
+>          LOOKAHEAD(3)
+>          <LEFT> <TEMPORAL> <JOIN> { joinType = JoinType.LEFT_TEMPORAL; }
+>      |
+>          LOOKAHEAD(3)
+>          <LEFT> <INTERVAL> <JOIN> { joinType = JoinType.LEFT_INTERVAL;}
+>      |
+>          LOOKAHEAD(3)
+>          <LEFT> <DEFAULT_> <JOIN> { joinType = JoinType.LEFT_DEFAULT;}
+>      |
+>          LOOKAHEAD(3)
+>          <RIGHT> <TEMPORAL> <JOIN> { joinType = JoinType.RIGHT_TEMPORAL;}
+>      |
+>          LOOKAHEAD(3)
+>          <RIGHT> <INTERVAL> <JOIN> { joinType = JoinType.RIGHT_INTERVAL;}
+>      |
+>          LOOKAHEAD(3)
+>          <RIGHT> <DEFAULT_> <JOIN> { joinType = JoinType.RIGHT_DEFAULT;}
+>      |
+>          <TEMPORAL> <JOIN> { joinType = JoinType.INNER_TEMPORAL;}
+>      |
+>          <INTERVAL> <JOIN> { joinType = JoinType.INNER_INTERVAL;}
+>      |
+>          <DEFAULT_> <JOIN> { joinType = JoinType.INNER_DEFAULT;}
+>      |
+>          <JOIN> { joinType = JoinType.INNER_DEFAULT;}
+>      |
+>          <INNER> <JOIN> { joinType = JoinType.INNER;}
+>      |
+>          LOOKAHEAD(3)
+>          <LEFT> <OUTER> <JOIN> { joinType = JoinType.LEFT_OUTER;}
+>      |
+>          <LEFT> <JOIN> { joinType = JoinType.LEFT_DEFAULT; }
+>      |
+>          LOOKAHEAD(3)
+>          <RIGHT> <OUTER> <JOIN> { joinType = JoinType.RIGHT_OUTER;}
+>      |
+>          <RIGHT> <JOIN> { joinType = JoinType.RIGHT_DEFAULT; }
+>      |
+>          <FULL> [ <OUTER> ] <JOIN> { joinType = JoinType.FULL;}
+>      |
+>          <CROSS> <JOIN> { joinType = JoinType.CROSS;}
+>      )
+4020a4048,4049
 >         //SQRL required for keyword 'date'
 >         LOOKAHEAD(2)
-3869a3937,3938
+4044a4074,4075
 >     //SQRL Required to allow the keyword 'user'
 >         LOOKAHEAD(2)
-3940,3987c4009,4056
-< 
-< /**
-<  * Parses "SET &lt;NAME&gt; = VALUE" or "RESET &lt;NAME&gt;", without a leading
-<  * "ALTER &lt;SCOPE&gt;".
-<  */
-< SqlSetOption SqlSetOption(Span s, String scope) :
-< {
-<     SqlIdentifier name;
-<     final SqlNode val;
-< }
-< {
-<     (
-<         <SET> {
-<             s.add(this);
-<         }
-<         name = CompoundIdentifier()
-<         <EQ>
-<         (
-<             val = Literal()
-<         |
-<             val = SimpleIdentifier()
-<         |
-<             <ON> {
-<                 // OFF is handled by SimpleIdentifier, ON handled here.
-<                 val = new SqlIdentifier(token.image.toUpperCase(Locale.ROOT),
-<                     getPos());
-<             }
-<         )
-<         {
-<             return new SqlSetOption(s.end(val), scope, name, val);
-<         }
-<     |
-<         <RESET> {
-<             s.add(this);
-<         }
-<         (
-<             name = CompoundIdentifier()
-<         |
-<             <ALL> {
-<                 name = new SqlIdentifier(token.image.toUpperCase(Locale.ROOT),
-<                     getPos());
-<             }
-<         )
-<         {
-<             return new SqlSetOption(s.end(name), scope, name, null);
-<         }
-<     )
-< }
----
+4116a4148,4195
 > //
 > ///**
 > // * Parses "SET &lt;NAME&gt; = VALUE" or "RESET &lt;NAME&gt;", without a leading
@@ -321,7 +175,56 @@
 > //        }
 > //    )
 > //}
-3993,4014c4062,4083
+4119,4166d4197
+<  * Parses "SET &lt;NAME&gt; = VALUE" or "RESET &lt;NAME&gt;", without a leading
+<  * "ALTER &lt;SCOPE&gt;".
+<  */
+< SqlSetOption SqlSetOption(Span s, String scope) :
+< {
+<     SqlIdentifier name;
+<     final SqlNode val;
+< }
+< {
+<     (
+<         <SET> {
+<             s.add(this);
+<         }
+<         name = CompoundIdentifier()
+<         <EQ>
+<         (
+<             val = Literal()
+<         |
+<             val = SimpleIdentifier()
+<         |
+<             <ON> {
+<                 // OFF is handled by SimpleIdentifier, ON handled here.
+<                 val = new SqlIdentifier(token.image.toUpperCase(Locale.ROOT),
+<                     getPos());
+<             }
+<         )
+<         {
+<             return new SqlSetOption(s.end(val), scope, name, val);
+<         }
+<     |
+<         <RESET> {
+<             s.add(this);
+<         }
+<         (
+<             name = CompoundIdentifier()
+<         |
+<             <ALL> {
+<                 name = new SqlIdentifier(token.image.toUpperCase(Locale.ROOT),
+<                     getPos());
+<             }
+<         )
+<         {
+<             return new SqlSetOption(s.end(name), scope, name, null);
+<         }
+<     )
+< }
+< 
+< /**
+4170,4191c4201,4222
 < SqlAlter SqlAlter() :
 < {
 <     final Span s;
@@ -367,10 +270,7 @@
 > //        return alterNode;
 > //    }
 > //}
-4391a4461,4462
->     //SQRL Add lookahead to resolve ambiguity of a time literal
->     LOOKAHEAD(2)
-6721,6724c6792,6795
+6939,6942c6970,6973
 < 
 < /**
 <  * Parses a reserved word which is used as the name of a function.
@@ -380,11 +280,12 @@
 > ///**
 > // * Parses a reserved word which is used as the name of a function.
 > // */
-6730,6741c6801,6812
+6948,6960c6979,6991
 <         <ABS>
 <     |   <AVG>
 <     |   <CARDINALITY>
 <     |   <CEILING>
+<     |   <CHAR>
 <     |   <CHAR_LENGTH>
 <     |   <CHARACTER_LENGTH>
 <     |   <COALESCE>
@@ -397,7 +298,8 @@
 > //        <ABS>
 > //    |   <AVG>
 > //    |   <CARDINALITY>
->       <CEILING>
+>        <CEILING>
+>       |   <CHAR>
 > //    |   <CHAR_LENGTH>
 > //    |   <CHARACTER_LENGTH>
 > //    |   <COALESCE>
@@ -406,7 +308,7 @@
 > //    |   <COVAR_SAMP>
 > //    |   <CUME_DIST>
 > //    |   <COUNT>
-6745,6749c6816,6820
+6964,6968c6995,6999
 <     |   <DENSE_RANK>
 <     |   <ELEMENT>
 <     |   <EVERY>
@@ -418,7 +320,7 @@
 > //    |   <EVERY>
 > //    |   <EXP>
 > //    |   <FIRST_VALUE>
-6751,6756c6822,6826
+6970,6975c7001,7005
 <     |   <FUSION>
 <     |   <INTERSECTION>
 <     |   <GROUPING>
@@ -431,7 +333,7 @@
 > //    |   <GROUPING>
 > //    |   <LAG>
 > //    |   <LEAD>
-6758,6764c6828,6834
+6977,6983c7007,7013
 <     |   <LAST_VALUE>
 <     |   <LN>
 <     |   <LOCALTIME>
@@ -447,7 +349,7 @@
 > //    |   <LOWER>
 > //    |   <MAX>
 > //    |   <MIN>
-6766,6777c6836,6846
+6985,7007c7015,7036
 <     |   <MOD>
 <     |   <MONTH>
 <     |   <NTH_VALUE>
@@ -455,41 +357,46 @@
 <     |   <NULLIF>
 <     |   <OCTET_LENGTH>
 <     |   <PERCENT_RANK>
+<     |   <PERCENTILE_CONT>
+<     |   <PERCENTILE_DISC>
 <     |   <POWER>
 <     |   <RANK>
 <     |   <REGR_COUNT>
 <     |   <REGR_SXX>
 <     |   <REGR_SYY>
----
-> //    |   <MOD>
-> //    |   <NTH_VALUE>
-> //    |   <NTILE>
-> //    |   <NULLIF>
-> //    |   <OCTET_LENGTH>
-> //    |   <PERCENT_RANK>
-> //    |   <POWER>
-> //    |   <RANK>
-> //    |   <REGR_COUNT>
-> //    |   <REGR_SXX>
-> //    |   <REGR_SYY>
-6779,6780c6848
+<     |   <RIGHT>
 <     |   <ROW_NUMBER>
 <     |   <SECOND>
----
-> //    |   <ROW_NUMBER>
-6782,6786c6850,6854
+<     |   <SOME>
 <     |   <SQRT>
 <     |   <STDDEV_POP>
 <     |   <STDDEV_SAMP>
 <     |   <SUM>
 <     |   <UPPER>
 ---
+> //    |   <MOD>
+> //    |   <MONTH>
+> //    |   <NTH_VALUE>
+> //    |   <NTILE>
+> //    |   <NULLIF>
+> //    |   <OCTET_LENGTH>
+> //    |   <PERCENT_RANK>
+> //    |   <PERCENTILE_CONT>
+> //    |   <PERCENTILE_DISC>
+> //    |   <POWER>
+> //    |   <RANK>
+> //    |   <REGR_COUNT>
+> //    |   <REGR_SXX>
+> //    |   <REGR_SYY>
+>     |   <RIGHT>
+> //    |   <ROW_NUMBER>
+>     |   <SOME>
 > //    |   <SQRT>
 > //    |   <STDDEV_POP>
 > //    |   <STDDEV_SAMP>
 > //    |   <SUM>
 > //    |   <UPPER>
-6788,6791c6856,6857
+7009,7012c7038,7039
 <     |   <USER>
 <     |   <VAR_POP>
 <     |   <VAR_SAMP>
@@ -497,121 +404,121 @@
 ---
 > //    |   <VAR_POP>
 > //    |   <VAR_SAMP>
-7083c7149
+7305c7332
 < |   < ABS: "ABS" >
 ---
 > //|   < ABS: "ABS" >
-7113c7179
+7337c7364
 < |   < AVG: "AVG" >
 ---
 > //|   < AVG: "AVG" >
-7131c7197
+7355c7382
 < |   < CARDINALITY: "CARDINALITY" >
 ---
 > //|   < CARDINALITY: "CARDINALITY" >
-7143c7209
+7367c7394
 < |   < CHAR_LENGTH: "CHAR_LENGTH" >
 ---
 > //|   < CHAR_LENGTH: "CHAR_LENGTH" >
-7145c7211
+7369c7396
 < |   < CHARACTER_LENGTH: "CHARACTER_LENGTH" >
 ---
 > //|   < CHARACTER_LENGTH: "CHARACTER_LENGTH" >
-7156c7222
+7380c7407
 < |   < COALESCE: "COALESCE" >
 ---
 > //|   < COALESCE: "COALESCE" >
-7163c7229
+7387c7414
 < |   < COLLECT: "COLLECT" >
 ---
 > //|   < COLLECT: "COLLECT" >
-7188,7189c7254,7255
+7412,7413c7439,7440
 < |   < COVAR_POP: "COVAR_POP" >
 < |   < COVAR_SAMP: "COVAR_SAMP" >
 ---
 > //|   < COVAR_POP: "COVAR_POP" >
 > //|   < COVAR_SAMP: "COVAR_SAMP" >
-7193c7259
+7417c7444
 < |   < CUME_DIST: "CUME_DIST" >
 ---
 > //|   < CUME_DIST: "CUME_DIST" >
-7230c7296
+7454c7481
 < |   < DENSE_RANK: "DENSE_RANK" >
 ---
 > //|   < DENSE_RANK: "DENSE_RANK" >
-7253c7319
+7478c7505
 < |   < ELEMENT: "ELEMENT" >
 ---
 > //|   < ELEMENT: "ELEMENT" >
-7273c7339
+7498c7525
 < |   < EXP: "EXP" >
 ---
 > //|   < EXP: "EXP" >
-7283c7349
+7508c7535
 < |   < FIRST_VALUE: "FIRST_VALUE">
 ---
 > //|   < FIRST_VALUE: "FIRST_VALUE">
-7298c7364
+7523c7550
 < |   < FUSION: "FUSION" >
 ---
 > //|   < FUSION: "FUSION" >
-7340c7406
+7568c7595
 < |   < INTERSECTION: "INTERSECTION" >
 ---
 > //|   < INTERSECTION: "INTERSECTION" >
-7363c7429
+7591c7618
 < |   < LAG: "LAG" >
 ---
 > //|   < LAG: "LAG" >
-7367c7433
+7595c7622
 < |   < LAST_VALUE: "LAST_VALUE" >
 ---
 > //|   < LAST_VALUE: "LAST_VALUE" >
-7369c7435
+7597c7624
 < |   < LEAD: "LEAD" >
 ---
 > //|   < LEAD: "LEAD" >
-7378c7444
+7606c7633
 < |   < LN: "LN" >
 ---
 > //|   < LN: "LN" >
-7391c7457
+7619c7646
 < |   < MAX: "MAX" >
 ---
 > //|   < MAX: "MAX" >
-7403c7469
+7631c7658
 < |   < MIN: "MIN" >
 ---
 > //|   < MIN: "MIN" >
-7407c7473
+7635c7662
 < |   < MOD: "MOD" >
 ---
 > //|   < MOD: "MOD" >
-7430c7496
+7658c7685
 < |   < NTH_VALUE: "NTH_VALUE" >
 ---
 > //|   < NTH_VALUE: "NTH_VALUE" >
-7434c7500
+7662c7689
 < |   < NULLIF: "NULLIF" >
 ---
 > //|   < NULLIF: "NULLIF" >
-7440c7506
+7668c7695
 < |   < OCTET_LENGTH: "OCTET_LENGTH" >
 ---
 > //|   < OCTET_LENGTH: "OCTET_LENGTH" >
-7484c7550
+7712c7739
 < |   < PERCENT_RANK: "PERCENT_RANK" >
 ---
 > //|   < PERCENT_RANK: "PERCENT_RANK" >
-7494c7560
+7722c7749
 < |   < POWER: "POWER" >
 ---
 > //|   < POWER: "POWER" >
-7508c7574
+7736c7763
 < |   < RANK: "RANK" >
 ---
 > //|   < RANK: "RANK" >
-7516,7518c7582,7584
+7744,7746c7771,7773
 < |   < REGR_AVGX: "REGR_AVGX" >
 < |   < REGR_AVGY: "REGR_AVGY" >
 < |   < REGR_COUNT: "REGR_COUNT" >
@@ -619,34 +526,34 @@
 > //|   < REGR_AVGX: "REGR_AVGX" >
 > //|   < REGR_AVGY: "REGR_AVGY" >
 > //|   < REGR_COUNT: "REGR_COUNT" >
-7552c7618
+7781c7808
 < |   < ROW_NUMBER: "ROW_NUMBER" >
 ---
 > //|   < ROW_NUMBER: "ROW_NUMBER" >
-7653,7654c7719,7720
+7883,7884c7910,7911
 < |   < STDDEV_POP: "STDDEV_POP" >
 < |   < STDDEV_SAMP: "STDDEV_SAMP" >
 ---
 > //|   < STDDEV_POP: "STDDEV_POP" >
 > //|   < STDDEV_SAMP: "STDDEV_SAMP" >
-7665c7731
+7896c7923
 < |   < SUM: "SUM" >
 ---
 > //|   < SUM: "SUM" >
-7717c7783
+7949c7976
 < |   < UPPER: "UPPER" >
 ---
 > //|   < UPPER: "UPPER" >
-7732,7733c7798,7799
+7964,7965c7991,7992
 < |   < VAR_POP: "VAR_POP" >
 < |   < VAR_SAMP: "VAR_SAMP" >
 ---
 > //|   < VAR_POP: "VAR_POP" >
 > //|   < VAR_SAMP: "VAR_SAMP" >
-7875c7941
+8107c8134
 <     < #CHARSETNAME: (["a"-"z","A"-"Z","0"-"9"])
 ---
 >     < #CHARSETNAME: (["a"-"z","A"-"Z","0"-"9","@"])
-8139a8206,8207
+8388a8416,8417
 >         //sqrl u0040 is @
 >         "\u0040",

@@ -136,10 +136,10 @@ LogicalProject(__pk1_customerid=[$1], category=[$2], num=[$3], _time=[$0])
     "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `customer_1`;",
     "CREATE VIEW `table$2`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders_1`;",
     "CREATE VIEW `table$3`\nAS\nSELECT *\nFROM `product_1`;",
-    "CREATE VIEW `table$4`\nAS\nSELECT *\nFROM (SELECT `productid`, `name`, `description`, `category`, `_ingest_time`, ROW_NUMBER() OVER (PARTITION BY `productid` ORDER BY `_ingest_time` DESC) AS `_rownum`\n  FROM `product_1`) AS `t`\nWHERE `_rownum` = 1;",
-    "CREATE VIEW `table$5`\nAS\nSELECT *\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC) AS `_rownum`\n  FROM `customer_1`) AS `t1`\nWHERE `_rownum` = 1;",
-    "CREATE VIEW `table$6`\nAS\nSELECT *\nFROM (SELECT *\n  FROM (SELECT *\n    FROM `orders_1` AS `$cor2`\n     INNER JOIN `table$5` FOR SYSTEM_TIME AS OF `$cor2`.`time` AS `t2` ON `$cor2`.`customerid` = `t2`.`customerid`) AS `$cor0`,\n   UNNEST(`$cor0`.`entries`) AS `t50` (`productid`, `quantity`, `unit_price`, `discount`)) AS `$cor1`\n INNER JOIN `table$4` FOR SYSTEM_TIME AS OF `$cor1`.`time` AS `t0` ON `t0`.`productid` = `$cor1`.`productid`;",
-    "CREATE VIEW `table$7`\nAS\nSELECT `customerid0` AS `__pk1_customerid`, `category`, SUM(`quantity`) AS `num`, `window_time` AS `_time`\nFROM TABLE(HOP(TABLE `table$6`, DESCRIPTOR(`time`), INTERVAL '1728' SECOND(7), INTERVAL '86400' SECOND(8))) AS `t7`\nGROUP BY `customerid0`, `category`, `window_start`, `window_end`, `window_time`;",
+    "CREATE VIEW `table$4`\nAS\nSELECT *\nFROM (SELECT `productid`, `name`, `description`, `category`, `_ingest_time`, ROW_NUMBER() OVER (PARTITION BY `productid` ORDER BY `_ingest_time` DESC) AS `_rownum`\n  FROM `product_1`) AS `t0`\nWHERE `_rownum` = 1;",
+    "CREATE VIEW `table$5`\nAS\nSELECT *\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC) AS `_rownum`\n  FROM `customer_1`) AS `t3`\nWHERE `_rownum` = 1;",
+    "CREATE VIEW `table$6`\nAS\nSELECT *\nFROM (SELECT *\n  FROM (SELECT *\n    FROM `orders_1` AS `$cor2`\n     INNER JOIN `table$5` FOR SYSTEM_TIME AS OF `$cor2`.`time` AS `t4` ON `$cor2`.`customerid` = `t4`.`customerid`) AS `$cor0`,\n   UNNEST(`$cor0`.`entries`) AS `t80` (`productid`, `quantity`, `unit_price`, `discount`)) AS `$cor1`\n INNER JOIN `table$4` FOR SYSTEM_TIME AS OF `$cor1`.`time` AS `t1` ON `t1`.`productid` = `$cor1`.`productid`;",
+    "CREATE VIEW `table$7`\nAS\nSELECT `customerid0` AS `__pk1_customerid`, `category`, SUM(`quantity`) AS `num`, `window_time` AS `_time`\nFROM TABLE(HOP(TABLE `table$6`, DESCRIPTOR(`time`), INTERVAL '1728' SECOND(7), INTERVAL '86400' SECOND(8))) AS `t10`\nGROUP BY `customerid0`, `category`, `window_start`, `window_end`, `window_time`;",
     "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer_3`\n(SELECT *\n FROM `table$1`)\n;\nINSERT INTO `orders_2`\n (SELECT *\n  FROM `table$2`)\n ;\n INSERT INTO `product_3`\n  (SELECT *\n   FROM `table$3`)\n  ;\n  INSERT INTO `totals_1`\n   (SELECT *\n    FROM `table$7`)\n   ;\n   END;"
   ],
   "connectors" : [
@@ -274,7 +274,11 @@ LogicalProject(__pk1_customerid=[$1], category=[$2], num=[$3], _time=[$0])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"customer_3\"\nWHERE \"customerid\" = $1",
+=======
+              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customer_3\"\nWHERE \"customerid\" = $1\nORDER BY '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -312,7 +316,11 @@ LogicalProject(__pk1_customerid=[$1], category=[$2], num=[$3], _time=[$0])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"totals_1\"\n  WHERE \"__pk1_customerid\" = $1) AS \"t\"\nWHERE \"category\" = $2",
+=======
+              "sql" : "SELECT \"__pk1_customerid\", \"category\", \"num\", \"_time\", 1 AS \"__pk\"\nFROM (SELECT *\n  FROM \"totals_1\"\n  WHERE \"__pk1_customerid\" = $1) AS \"t\"\nWHERE \"category\" = $2\nORDER BY '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "source",
@@ -365,7 +373,11 @@ LogicalProject(__pk1_customerid=[$1], category=[$2], num=[$3], _time=[$0])
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"customer_3\"\nWHERE \"customerid\" = $1",
+=======
+              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customer_3\"\nWHERE \"customerid\" = $1\nORDER BY '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "source",
@@ -428,7 +440,11 @@ LogicalProject(__pk1_customerid=[$1], category=[$2], num=[$3], _time=[$0])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST",
+=======
+              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -533,7 +549,11 @@ LogicalProject(__pk1_customerid=[$1], category=[$2], num=[$3], _time=[$0])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"product_3\"\nWHERE \"productid\" = $1",
+=======
+              "sql" : "SELECT \"productid\", \"name\", \"description\", \"category\", \"_ingest_time\", 1 AS \"__pk\"\nFROM \"product_3\"\nWHERE \"productid\" = $1\nORDER BY '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",

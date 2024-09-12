@@ -260,7 +260,11 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT(DISTINCT $1)], __timestamp=[MAX
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"package_1\"\nWHERE \"name\" = $1",
+=======
+              "sql" : "SELECT \"name\", \"_submissionTime\", 1 AS \"__pk\"\nFROM \"package_1\"\nWHERE \"name\" = $1\nORDER BY '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -471,7 +475,11 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT(DISTINCT $1)], __timestamp=[MAX
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"topicsearch_1\"\nWHERE \"topicName\" = $1\nORDER BY \"numPackages\" DESC",
+=======
+              "sql" : "SELECT \"topicName\", \"numPackages\", \"__timestamp\", 1 AS \"__pk\"\nFROM \"topicsearch_1\"\nWHERE \"topicName\" = $1\nORDER BY \"numPackages\" DESC, '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",

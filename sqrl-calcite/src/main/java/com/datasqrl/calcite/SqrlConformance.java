@@ -134,6 +134,11 @@ public class SqrlConformance implements SqlConformance {
   }
 
   @Override
+  public boolean isOffsetLimitAllowed() {
+    return false;
+  }
+
+  @Override
   public boolean allowGeometry() {
     return false;
   }
@@ -156,6 +161,11 @@ public class SqrlConformance implements SqlConformance {
   @Override
   public boolean allowQualifyingCommonColumn() {
     return false;
+  }
+
+  @Override
+  public SqlLibrary semantics() {
+    return null;
   }
 
 //  @Override

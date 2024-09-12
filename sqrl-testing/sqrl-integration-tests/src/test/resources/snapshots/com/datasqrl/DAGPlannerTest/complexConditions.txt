@@ -63,9 +63,10 @@ LogicalProject(id=[$0], time=[$2], _i=[$8])
     LogicalJoin(condition=[=($1, $7)], joinType=[left]) hints[JoinCostHint options:[STATE, STATE, 1, NONE]]
       LogicalJoin(condition=[true], joinType=[inner]) hints[JoinCostHint options:[STREAM, STATE, 0, RIGHT]]
         LogicalTableScan(table=[[orders_2]])
-        LogicalAggregate(group=[{}], c=[COUNT()], ck=[COUNT($0)], __timestamp=[MAX($4)])
-          LogicalFilter(condition=[=($2, CAST('foo'):VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL)])
-            LogicalTableScan(table=[[customer_2]])
+        LogicalProject(c=[$0], ck=[$0], __timestamp=[$1])
+          LogicalAggregate(group=[{}], c=[COUNT()], __timestamp=[MAX($4)])
+            LogicalFilter(condition=[=($2, CAST('foo'):VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL)])
+              LogicalTableScan(table=[[customer_2]])
       LogicalAggregate(group=[{0, 1}], __timestamp=[MAX($3)])
         LogicalProject(customerid=[$0], i=[true], lastUpdated=[$3], timestamp=[$4])
           LogicalFilter(condition=[=($2, CAST('foo'):VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL)])
@@ -270,7 +271,11 @@ LogicalProject(id=[$0], time=[$2], cc=[CASE(IS NULL($7), 0:BIGINT, $7)])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1 AND \"lastUpdated\" = $2\nORDER BY \"timestamp\" DESC NULLS LAST",
+=======
+              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customer_2\"\nWHERE \"customerid\" = $1 AND \"lastUpdated\" = $2\nORDER BY \"timestamp\" DESC NULLS LAST, '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -431,7 +436,11 @@ LogicalProject(id=[$0], time=[$2], cc=[CASE(IS NULL($7), 0:BIGINT, $7)])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST",
+=======
+              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -592,7 +601,11 @@ LogicalProject(id=[$0], time=[$2], cc=[CASE(IS NULL($7), 0:BIGINT, $7)])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\n  FROM \"orders_2\"\n   INNER JOIN (SELECT SINGLE_VALUE(\"customerid\") AS \"$f0\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo') AS \"t0\" ON \"orders_2\".\"customerid\" > \"t0\".\"$f0\") AS \"t1\"\nWHERE \"t1\".\"id\" = $1 AND \"t1\".\"time\" = $2",
+=======
+              "sql" : "SELECT \"id\", \"time\", 1 AS \"__pk\"\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\n  FROM \"orders_2\"\n   INNER JOIN (SELECT SINGLE_VALUE(\"customerid\") AS \"$f0\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo') AS \"t0\" ON \"orders_2\".\"customerid\" > \"t0\".\"$f0\") AS \"t1\"\nWHERE \"t1\".\"id\" = $1 AND \"t1\".\"time\" = $2\nORDER BY '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -630,7 +643,7 @@ LogicalProject(id=[$0], time=[$2], cc=[CASE(IS NULL($7), 0:BIGINT, $7)])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t3\".\"i\" AS \"_i\"\nFROM \"orders_2\",\n  (SELECT COUNT(*) AS \"c\", COUNT(\"customerid\") AS \"ck\", MAX(\"timestamp\") AS \"__timestamp\"\n  FROM \"customer_2\"\n  WHERE \"name\" = 'foo') AS \"t0\"\n LEFT JOIN (SELECT \"customerid\", TRUE AS \"i\", MAX(\"timestamp\") AS \"__timestamp\"\n  FROM \"customer_2\"\n  WHERE \"name\" = 'foo'\n  GROUP BY \"customerid\", TRUE) AS \"t3\" ON \"orders_2\".\"customerid\" = \"t3\".\"customerid\"\nWHERE \"t0\".\"c\" = 0 OR \"t3\".\"i\" IS NULL AND \"t0\".\"ck\" >= \"t0\".\"c\"\nORDER BY \"orders_2\".\"id\", \"orders_2\".\"time\", \"t3\".\"i\"",
+              "sql" : "SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t4\".\"i\" AS \"_i\"\nFROM \"orders_2\"\n CROSS JOIN (SELECT COUNT(*) AS \"c\", COUNT(*) AS \"ck\", MAX(\"timestamp\") AS \"__timestamp\"\n  FROM \"customer_2\"\n  WHERE \"name\" = 'foo') AS \"t1\"\n LEFT JOIN (SELECT \"customerid\", TRUE AS \"i\", MAX(\"timestamp\") AS \"__timestamp\"\n  FROM \"customer_2\"\n  WHERE \"name\" = 'foo'\n  GROUP BY \"customerid\", TRUE) AS \"t4\" ON \"orders_2\".\"customerid\" = \"t4\".\"customerid\"\nWHERE \"t1\".\"c\" = 0 OR \"t4\".\"i\" IS NULL AND \"t1\".\"ck\" >= \"t1\".\"c\"\nORDER BY \"orders_2\".\"id\", \"orders_2\".\"time\", \"t4\".\"i\"",
               "parameters" : [ ]
             }
           },
@@ -655,7 +668,7 @@ LogicalProject(id=[$0], time=[$2], cc=[CASE(IS NULL($7), 0:BIGINT, $7)])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t3\".\"i\" AS \"_i\"\n  FROM \"orders_2\",\n    (SELECT COUNT(*) AS \"c\", COUNT(\"customerid\") AS \"ck\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo') AS \"t0\"\n   LEFT JOIN (SELECT \"customerid\", TRUE AS \"i\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo'\n    GROUP BY \"customerid\", TRUE) AS \"t3\" ON \"orders_2\".\"customerid\" = \"t3\".\"customerid\"\n  WHERE \"t0\".\"c\" = 0 OR \"t3\".\"i\" IS NULL AND \"t0\".\"ck\" >= \"t0\".\"c\") AS \"t5\"\nWHERE \"t5\".\"time\" = $1\nORDER BY \"id\", \"_i\"",
+              "sql" : "SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t4\".\"i\" AS \"_i\"\n  FROM \"orders_2\"\n   CROSS JOIN (SELECT COUNT(*) AS \"c\", COUNT(*) AS \"ck\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo') AS \"t1\"\n   LEFT JOIN (SELECT \"customerid\", TRUE AS \"i\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo'\n    GROUP BY \"customerid\", TRUE) AS \"t4\" ON \"orders_2\".\"customerid\" = \"t4\".\"customerid\"\n  WHERE \"t1\".\"c\" = 0 OR \"t4\".\"i\" IS NULL AND \"t1\".\"ck\" >= \"t1\".\"c\") AS \"t6\"\nWHERE \"t6\".\"time\" = $1\nORDER BY \"id\", \"_i\"",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -686,7 +699,7 @@ LogicalProject(id=[$0], time=[$2], cc=[CASE(IS NULL($7), 0:BIGINT, $7)])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t3\".\"i\" AS \"_i\"\n  FROM \"orders_2\",\n    (SELECT COUNT(*) AS \"c\", COUNT(\"customerid\") AS \"ck\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo') AS \"t0\"\n   LEFT JOIN (SELECT \"customerid\", TRUE AS \"i\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo'\n    GROUP BY \"customerid\", TRUE) AS \"t3\" ON \"orders_2\".\"customerid\" = \"t3\".\"customerid\"\n  WHERE \"t0\".\"c\" = 0 OR \"t3\".\"i\" IS NULL AND \"t0\".\"ck\" >= \"t0\".\"c\") AS \"t5\"\nWHERE \"t5\".\"id\" = $1\nORDER BY \"time\", \"_i\"",
+              "sql" : "SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t4\".\"i\" AS \"_i\"\n  FROM \"orders_2\"\n   CROSS JOIN (SELECT COUNT(*) AS \"c\", COUNT(*) AS \"ck\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo') AS \"t1\"\n   LEFT JOIN (SELECT \"customerid\", TRUE AS \"i\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo'\n    GROUP BY \"customerid\", TRUE) AS \"t4\" ON \"orders_2\".\"customerid\" = \"t4\".\"customerid\"\n  WHERE \"t1\".\"c\" = 0 OR \"t4\".\"i\" IS NULL AND \"t1\".\"ck\" >= \"t1\".\"c\") AS \"t6\"\nWHERE \"t6\".\"id\" = $1\nORDER BY \"time\", \"_i\"",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -722,7 +735,7 @@ LogicalProject(id=[$0], time=[$2], cc=[CASE(IS NULL($7), 0:BIGINT, $7)])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t3\".\"i\" AS \"_i\"\n  FROM \"orders_2\",\n    (SELECT COUNT(*) AS \"c\", COUNT(\"customerid\") AS \"ck\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo') AS \"t0\"\n   LEFT JOIN (SELECT \"customerid\", TRUE AS \"i\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo'\n    GROUP BY \"customerid\", TRUE) AS \"t3\" ON \"orders_2\".\"customerid\" = \"t3\".\"customerid\"\n  WHERE \"t0\".\"c\" = 0 OR \"t3\".\"i\" IS NULL AND \"t0\".\"ck\" >= \"t0\".\"c\") AS \"t5\"\nWHERE \"t5\".\"id\" = $1 AND \"t5\".\"time\" = $2\nORDER BY \"_i\"",
+              "sql" : "SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t4\".\"i\" AS \"_i\"\n  FROM \"orders_2\"\n   CROSS JOIN (SELECT COUNT(*) AS \"c\", COUNT(*) AS \"ck\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo') AS \"t1\"\n   LEFT JOIN (SELECT \"customerid\", TRUE AS \"i\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo'\n    GROUP BY \"customerid\", TRUE) AS \"t4\" ON \"orders_2\".\"customerid\" = \"t4\".\"customerid\"\n  WHERE \"t1\".\"c\" = 0 OR \"t4\".\"i\" IS NULL AND \"t1\".\"ck\" >= \"t1\".\"c\") AS \"t6\"\nWHERE \"t6\".\"id\" = $1 AND \"t6\".\"time\" = $2\nORDER BY \"_i\"",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -852,7 +865,11 @@ LogicalProject(id=[$0], time=[$2], cc=[CASE(IS NULL($7), 0:BIGINT, $7)])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\n  FROM \"orders_2\"\n   INNER JOIN (SELECT \"customerid\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo'\n    GROUP BY \"customerid\") AS \"t0\" ON \"orders_2\".\"customerid\" = \"t0\".\"customerid\") AS \"t1\"\nWHERE \"t1\".\"id\" = $1 AND \"t1\".\"time\" = $2",
+=======
+              "sql" : "SELECT \"id\", \"time\", 1 AS \"__pk\"\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\n  FROM \"orders_2\"\n   INNER JOIN (SELECT \"customerid\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo'\n    GROUP BY \"customerid\") AS \"t0\" ON \"orders_2\".\"customerid\" = \"t0\".\"customerid\") AS \"t1\"\nWHERE \"t1\".\"id\" = $1 AND \"t1\".\"time\" = $2\nORDER BY '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -982,7 +999,11 @@ LogicalProject(id=[$0], time=[$2], cc=[CASE(IS NULL($7), 0:BIGINT, $7)])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", CASE WHEN \"t6\".\"EXPR$0\" IS NULL THEN 0 ELSE \"t6\".\"EXPR$0\" END AS \"cc\"\n  FROM \"orders_2\"\n   INNER JOIN (SELECT \"customerid\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo'\n    GROUP BY \"customerid\") AS \"t0\" ON \"orders_2\".\"customerid\" = \"t0\".\"customerid\"\n   LEFT JOIN (SELECT \"t4\".\"customerid\" AS \"customerid0\", COUNT(*) AS \"EXPR$0\", MAX(CASE WHEN \"customer_20\".\"timestamp\" < \"t4\".\"__timestamp\" THEN \"t4\".\"__timestamp\" ELSE \"customer_20\".\"timestamp\" END) AS \"__timestamp\"\n    FROM \"customer_2\" AS \"customer_20\"\n     INNER JOIN (SELECT \"orders_20\".\"customerid\", MAX(CASE WHEN \"orders_20\".\"time\" < \"t2\".\"__timestamp\" THEN \"t2\".\"__timestamp\" ELSE \"orders_20\".\"time\" END) AS \"__timestamp\"\n      FROM \"orders_2\" AS \"orders_20\"\n       INNER JOIN (SELECT \"customerid\", MAX(\"timestamp\") AS \"__timestamp\"\n        FROM \"customer_2\"\n        WHERE \"name\" = 'foo'\n        GROUP BY \"customerid\") AS \"t2\" ON \"orders_20\".\"customerid\" = \"t2\".\"customerid\"\n      GROUP BY \"orders_20\".\"customerid\") AS \"t4\" ON \"customer_20\".\"customerid\" > \"t4\".\"customerid\"\n    GROUP BY \"t4\".\"customerid\") AS \"t6\" ON \"orders_2\".\"customerid\" = \"t6\".\"customerid0\") AS \"t7\"\nWHERE \"t7\".\"id\" = $1 AND \"t7\".\"time\" = $2",
+=======
+              "sql" : "SELECT \"id\", \"time\", \"cc\", 1 AS \"__pk\"\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", CASE WHEN \"t6\".\"EXPR$0\" IS NULL THEN 0 ELSE \"t6\".\"EXPR$0\" END AS \"cc\"\n  FROM \"orders_2\"\n   INNER JOIN (SELECT \"customerid\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo'\n    GROUP BY \"customerid\") AS \"t0\" ON \"orders_2\".\"customerid\" = \"t0\".\"customerid\"\n   LEFT JOIN (SELECT \"t4\".\"customerid\" AS \"customerid0\", COUNT(*) AS \"EXPR$0\", MAX(CASE WHEN \"customer_20\".\"timestamp\" < \"t4\".\"__timestamp\" THEN \"t4\".\"__timestamp\" ELSE \"customer_20\".\"timestamp\" END) AS \"__timestamp\"\n    FROM \"customer_2\" AS \"customer_20\"\n     INNER JOIN (SELECT \"orders_20\".\"customerid\", MAX(CASE WHEN \"orders_20\".\"time\" < \"t2\".\"__timestamp\" THEN \"t2\".\"__timestamp\" ELSE \"orders_20\".\"time\" END) AS \"__timestamp\"\n      FROM \"orders_2\" AS \"orders_20\"\n       INNER JOIN (SELECT \"customerid\", MAX(\"timestamp\") AS \"__timestamp\"\n        FROM \"customer_2\"\n        WHERE \"name\" = 'foo'\n        GROUP BY \"customerid\") AS \"t2\" ON \"orders_20\".\"customerid\" = \"t2\".\"customerid\"\n      GROUP BY \"orders_20\".\"customerid\") AS \"t4\" ON \"customer_20\".\"customerid\" > \"t4\".\"customerid\"\n    GROUP BY \"t4\".\"customerid\") AS \"t6\" ON \"orders_2\".\"customerid\" = \"t6\".\"customerid0\") AS \"t7\"\nWHERE \"t7\".\"id\" = $1 AND \"t7\".\"time\" = $2\nORDER BY '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",

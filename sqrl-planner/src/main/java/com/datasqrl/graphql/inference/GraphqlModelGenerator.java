@@ -37,6 +37,7 @@ import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.plan.queries.IdentifiedQuery;
+import com.datasqrl.util.CalciteHacks;
 import com.google.common.base.Preconditions;
 import graphql.language.FieldDefinition;
 import graphql.language.InputValueDefinition;
@@ -196,6 +197,7 @@ public class GraphqlModelGenerator extends SchemaWalker {
     for (Entry<IdentifiedQuery, QueryTemplate> entry : queries) {
       JdbcQuery queryBase;
       APIQuery query = (APIQuery) entry.getKey();
+      CalciteHacks.resetToSqrlMetadataProvider();
 
       String queryStr;
       if (entry.getValue().getDatabase().toLowerCase().equalsIgnoreCase("snowflake")) {

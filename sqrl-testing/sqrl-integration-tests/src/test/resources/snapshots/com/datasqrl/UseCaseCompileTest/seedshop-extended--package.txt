@@ -324,35 +324,35 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
     "CREATE TEMPORARY TABLE `spending_1` (\n  `__pk1_id` BIGINT NOT NULL,\n  `week` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `spend` DOUBLE NOT NULL,\n  `saved` DOUBLE NOT NULL,\n  PRIMARY KEY (`__pk1_id`, `week`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'spending_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `totals_1` (\n  `__pk1_id` BIGINT NOT NULL,\n  `__pk3_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `price` DOUBLE NOT NULL,\n  `saving` DOUBLE NOT NULL,\n  PRIMARY KEY (`__pk1_id`, `__pk3_time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'totals_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `customerpromotion_1_1` (\n  `first_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `last_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `spend` DOUBLE NOT NULL,\n  `saved` DOUBLE NOT NULL\n) WITH (\n  'format' = 'flexible-json',\n  'path' = '/tmp/sink/',\n  'connector' = 'filesystem'\n);",
-    "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, `country0`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC) AS `_rownum`\n  FROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, COALESCE(`country`, 'none') AS `country0`\n    FROM `customers_1`) AS `t`) AS `t0`\nWHERE `_rownum` = 1;",
-    "CREATE VIEW `table$2`\nAS\nSELECT *\nFROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, `country0`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC) AS `_rownum`\n  FROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, COALESCE(`country`, 'none') AS `country0`\n    FROM `customers_1`) AS `t2`) AS `t3`\nWHERE `_rownum` = 1;",
-    "CREATE VIEW `table$3`\nAS\nSELECT `$cor0`.`id` AS `__pk1_id`, `$cor0`.`time` AS `__pk2_time`, `t80`.`quantity` * `t80`.`unit_price` - COALESCE(`t80`.`discount`, 0.0) AS `$f2`, COALESCE(`t80`.`discount`, 0.0) AS `$f3`, `t80`.`productid`\nFROM `orders_1` AS `$cor0`,\n UNNEST(`$cor0`.`items`) AS `t80` (`productid`, `quantity`, `unit_price`, `discount`);",
-    "CREATE VIEW `table$4`\nAS\nSELECT `t6`.`__pk3_id`, ENDOFWEEK(`t6`.`time`) AS `week`, `t13`.`price`, `t13`.`saving`, `t6`.`id`, `t6`.`time`\nFROM (SELECT `t4`.`id` AS `__pk3_id`, `$cor11`.`id`, `$cor11`.`customerid`, `$cor11`.`time`, `$cor11`.`items`\n  FROM (SELECT `id`, `customerid`, `time`, `items`, `customerid` AS `customerid4`\n    FROM `orders_1`) AS `$cor11`\n   INNER JOIN `table$2` FOR SYSTEM_TIME AS OF `$cor11`.`time` AS `t4` ON `t4`.`id` = `$cor11`.`customerid4`) AS `t6`\n INNER JOIN (SELECT `__pk1_id`, `window_time` AS `__pk3_time`, SUM(`$f2`) AS `price`, SUM(`$f3`) AS `saving`\n  FROM TABLE(TUMBLE(TABLE `table$3`, DESCRIPTOR(`__pk2_time`), INTERVAL '0.001' SECOND(1))) AS `t10`\n  GROUP BY `__pk1_id`, `window_start`, `window_end`, `window_time`) AS `t13` ON `t6`.`id` = `t13`.`__pk1_id` AND `t6`.`time` = `t13`.`__pk3_time`;",
-    "CREATE VIEW `table$5`\nAS\nSELECT `t1`.`first_name`, `t1`.`last_name`, `t1`.`email`, `$cor10`.`spend`, `$cor10`.`saved`, `$cor10`.`__pk1_id`, `$cor10`.`week` AS `_week`\nFROM (SELECT *\n  FROM (SELECT `__pk3_id` AS `__pk1_id`, `window_time` AS `week`, SUM(`price`) AS `spend`, SUM(`saving`) AS `saved`\n    FROM TABLE(TUMBLE(TABLE `table$4`, DESCRIPTOR(`time`), INTERVAL '604800' SECOND(9), INTERVAL '0' SECOND(1))) AS `t15`\n    GROUP BY `__pk3_id`, `window_start`, `window_end`, `window_time`) AS `t18`\n  WHERE `spend` > 250) AS `$cor10`\n INNER JOIN `table$1` FOR SYSTEM_TIME AS OF `$cor10`.`week` AS `t1` ON `t1`.`id` = `$cor10`.`__pk1_id`;",
+    "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, `country0`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC) AS `_rownum`\n  FROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, COALESCE(`country`, 'none') AS `country0`\n    FROM `customers_1`) AS `t0`) AS `t1`\nWHERE `_rownum` = 1;",
+    "CREATE VIEW `table$2`\nAS\nSELECT *\nFROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, `country0`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC) AS `_rownum`\n  FROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, COALESCE(`country`, 'none') AS `country0`\n    FROM `customers_1`) AS `t4`) AS `t5`\nWHERE `_rownum` = 1;",
+    "CREATE VIEW `table$3`\nAS\nSELECT `$cor0`.`id` AS `__pk1_id`, `$cor0`.`time` AS `__pk2_time`, `t120`.`quantity` * `t120`.`unit_price` - COALESCE(`t120`.`discount`, 0.0) AS `$f2`, COALESCE(`t120`.`discount`, 0.0) AS `$f3`, `t120`.`productid`\nFROM `orders_1` AS `$cor0`,\n UNNEST(`$cor0`.`items`) AS `t120` (`productid`, `quantity`, `unit_price`, `discount`);",
+    "CREATE VIEW `table$4`\nAS\nSELECT `t9`.`__pk3_id`, ENDOFWEEK(`t9`.`time`) AS `week`, `t17`.`price`, `t17`.`saving`, `t9`.`id`, `t9`.`time`\nFROM (SELECT `t6`.`id` AS `__pk3_id`, `$cor11`.`id`, `$cor11`.`customerid`, `$cor11`.`time`, `$cor11`.`items`\n  FROM (SELECT `id`, `customerid`, `time`, `items`, `customerid` AS `customerid4`\n    FROM `orders_1`) AS `$cor11`\n   INNER JOIN `table$2` FOR SYSTEM_TIME AS OF `$cor11`.`time` AS `t6` ON `t6`.`id` = `$cor11`.`customerid4`) AS `t9`\n INNER JOIN (SELECT `__pk1_id`, `window_time` AS `__pk3_time`, SUM(`$f2`) AS `price`, SUM(`$f3`) AS `saving`\n  FROM TABLE(TUMBLE(TABLE `table$3`, DESCRIPTOR(`__pk2_time`), INTERVAL '0.001' SECOND(1))) AS `t14`\n  GROUP BY `__pk1_id`, `window_start`, `window_end`, `window_time`) AS `t17` ON `t9`.`id` = `t17`.`__pk1_id` AND `t9`.`time` = `t17`.`__pk3_time`;",
+    "CREATE VIEW `table$5`\nAS\nSELECT `t2`.`first_name`, `t2`.`last_name`, `t2`.`email`, `$cor10`.`spend`, `$cor10`.`saved`, `$cor10`.`__pk1_id`, `$cor10`.`week` AS `_week`\nFROM (SELECT *\n  FROM (SELECT `__pk3_id` AS `__pk1_id`, `window_time` AS `week`, SUM(`price`) AS `spend`, SUM(`saving`) AS `saved`\n    FROM TABLE(TUMBLE(TABLE `table$4`, DESCRIPTOR(`time`), INTERVAL '604800' SECOND(9), INTERVAL '0' SECOND(1))) AS `t19`\n    GROUP BY `__pk3_id`, `window_start`, `window_end`, `window_time`) AS `t22`\n  WHERE `spend` > 250) AS `$cor10`\n INNER JOIN `table$1` FOR SYSTEM_TIME AS OF `$cor10`.`week` AS `t2` ON `t2`.`id` = `$cor10`.`__pk1_id`;",
     "CREATE VIEW `table$6`\nAS\nSELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, COALESCE(`country`, 'none') AS `country0`\nFROM `customers_1`;",
-    "CREATE VIEW `table$7`\nAS\nSELECT *\nFROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, `country0`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC) AS `_rownum`\n  FROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, COALESCE(`country`, 'none') AS `country0`\n    FROM `customers_1`) AS `t`) AS `t0`\nWHERE `_rownum` = 1;",
-    "CREATE VIEW `table$8`\nAS\nSELECT *\nFROM (SELECT `id`, `name`, `sizing`, `weight_in_gram`, `type`, `category`, `usda_id`, `updated`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated` DESC) AS `_rownum`\n  FROM `products_1`) AS `t2`\nWHERE `_rownum` = 1;",
-    "CREATE VIEW `table$9`\nAS\nSELECT `$cor13`.`id0` AS `__pk6_id`, `t1`.`country0` AS `country`, ENDOFMONTH(`$cor13`.`time`) AS `month`, `$cor13`.`quantity`, `$cor13`.`quantity` * `$cor13`.`unit_price` AS `$f4`, `$cor13`.`quantity` * `$cor13`.`weight_in_gram` AS `$f5`, `$cor13`.`id`, `$cor13`.`time`, `$cor13`.`productid`\nFROM (SELECT *\n  FROM (SELECT `$cor9`.`id`, `$cor9`.`time`, `$cor9`.`customerid`, `t50`.`productid`, `t50`.`quantity`, `t50`.`unit_price`, `t50`.`discount`\n    FROM `orders_1` AS `$cor9`,\n     UNNEST(`$cor9`.`items`) AS `t50` (`productid`, `quantity`, `unit_price`, `discount`)) AS `$cor14`\n   INNER JOIN `table$8` FOR SYSTEM_TIME AS OF `$cor14`.`time` AS `t3` ON `$cor14`.`productid` = `t3`.`id`) AS `$cor13`\n INNER JOIN `table$7` FOR SYSTEM_TIME AS OF `$cor13`.`time` AS `t1` ON `$cor13`.`customerid` = `t1`.`id`;",
-    "CREATE VIEW `table$10`\nAS\nSELECT `__pk6_id` AS `__pk1_id`, `country`, `window_time` AS `month`, SUM(`quantity`) AS `quantity`, SUM(`$f4`) AS `spend`, SUM(`$f5`) AS `weight`\nFROM TABLE(TUMBLE(TABLE `table$9`, DESCRIPTOR(`time`), INTERVAL '2629746' SECOND(10), INTERVAL '0' SECOND(1))) AS `t9`\nGROUP BY `__pk6_id`, `country`, `window_start`, `window_end`, `window_time`;",
+    "CREATE VIEW `table$7`\nAS\nSELECT *\nFROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, `country0`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC) AS `_rownum`\n  FROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, COALESCE(`country`, 'none') AS `country0`\n    FROM `customers_1`) AS `t0`) AS `t1`\nWHERE `_rownum` = 1;",
+    "CREATE VIEW `table$8`\nAS\nSELECT *\nFROM (SELECT `id`, `name`, `sizing`, `weight_in_gram`, `type`, `category`, `usda_id`, `updated`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated` DESC) AS `_rownum`\n  FROM `products_1`) AS `t4`\nWHERE `_rownum` = 1;",
+    "CREATE VIEW `table$9`\nAS\nSELECT `$cor13`.`id0` AS `__pk6_id`, `t2`.`country0` AS `country`, ENDOFMONTH(`$cor13`.`time`) AS `month`, `$cor13`.`quantity`, `$cor13`.`quantity` * `$cor13`.`unit_price` AS `$f4`, `$cor13`.`quantity` * `$cor13`.`weight_in_gram` AS `$f5`, `$cor13`.`id`, `$cor13`.`time`, `$cor13`.`productid`\nFROM (SELECT *\n  FROM (SELECT `$cor9`.`id`, `$cor9`.`time`, `$cor9`.`customerid`, `t80`.`productid`, `t80`.`quantity`, `t80`.`unit_price`, `t80`.`discount`\n    FROM `orders_1` AS `$cor9`,\n     UNNEST(`$cor9`.`items`) AS `t80` (`productid`, `quantity`, `unit_price`, `discount`)) AS `$cor14`\n   INNER JOIN `table$8` FOR SYSTEM_TIME AS OF `$cor14`.`time` AS `t5` ON `$cor14`.`productid` = `t5`.`id`) AS `$cor13`\n INNER JOIN `table$7` FOR SYSTEM_TIME AS OF `$cor13`.`time` AS `t2` ON `$cor13`.`customerid` = `t2`.`id`;",
+    "CREATE VIEW `table$10`\nAS\nSELECT `__pk6_id` AS `__pk1_id`, `country`, `window_time` AS `month`, SUM(`quantity`) AS `quantity`, SUM(`$f4`) AS `spend`, SUM(`$f5`) AS `weight`\nFROM TABLE(TUMBLE(TABLE `table$9`, DESCRIPTOR(`time`), INTERVAL '2629746' SECOND(10), INTERVAL '0' SECOND(1))) AS `t12`\nGROUP BY `__pk6_id`, `country`, `window_start`, `window_end`, `window_time`;",
     "CREATE VIEW `table$11`\nAS\nSELECT COUNT(*) AS `count`, 1 AS `__pk`, MAX(`time`) AS `__timestamp`\nFROM `orders_1`;",
-    "CREATE VIEW `table$12`\nAS\nSELECT *\nFROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, `country0`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC) AS `_rownum`\n  FROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, COALESCE(`country`, 'none') AS `country0`\n    FROM `customers_1`) AS `t`) AS `t0`\nWHERE `_rownum` = 1;",
-    "CREATE VIEW `table$13`\nAS\nSELECT `$cor0`.`id` AS `__pk1_id`, `$cor0`.`time` AS `__pk2_time`, `t50`.`quantity` * `t50`.`unit_price` - COALESCE(`t50`.`discount`, 0.0) AS `$f2`, COALESCE(`t50`.`discount`, 0.0) AS `$f3`, `t50`.`productid`\nFROM `orders_1` AS `$cor0`,\n UNNEST(`$cor0`.`items`) AS `t50` (`productid`, `quantity`, `unit_price`, `discount`);",
-    "CREATE VIEW `table$14`\nAS\nSELECT `t3`.`__pk4_id` AS `__pk1_id`, MIN(`t3`.`time`) AS `first_order`, SUM(`t10`.`price`) AS `total_spend`, SUM(`t10`.`saving`) AS `total_saved`, COUNT(*) AS `num_orders`, MAX(`t3`.`time`) AS `__timestamp`\nFROM (SELECT `t1`.`id` AS `__pk4_id`, `$cor17`.`id`, `$cor17`.`customerid`, `$cor17`.`time`, `$cor17`.`items`\n  FROM (SELECT `id`, `customerid`, `time`, `items`, `customerid` AS `customerid4`\n    FROM `orders_1`) AS `$cor17`\n   INNER JOIN `table$12` FOR SYSTEM_TIME AS OF `$cor17`.`time` AS `t1` ON `t1`.`id` = `$cor17`.`customerid4`) AS `t3`\n INNER JOIN (SELECT `__pk1_id`, `window_time` AS `__pk3_time`, SUM(`$f2`) AS `price`, SUM(`$f3`) AS `saving`\n  FROM TABLE(TUMBLE(TABLE `table$13`, DESCRIPTOR(`__pk2_time`), INTERVAL '0.001' SECOND(1))) AS `t7`\n  GROUP BY `__pk1_id`, `window_start`, `window_end`, `window_time`) AS `t10` ON `t3`.`id` = `t10`.`__pk1_id` AND `t3`.`time` = `t10`.`__pk3_time`\nGROUP BY `t3`.`__pk4_id`;",
+    "CREATE VIEW `table$12`\nAS\nSELECT *\nFROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, `country0`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC) AS `_rownum`\n  FROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, COALESCE(`country`, 'none') AS `country0`\n    FROM `customers_1`) AS `t0`) AS `t1`\nWHERE `_rownum` = 1;",
+    "CREATE VIEW `table$13`\nAS\nSELECT `$cor0`.`id` AS `__pk1_id`, `$cor0`.`time` AS `__pk2_time`, `t80`.`quantity` * `t80`.`unit_price` - COALESCE(`t80`.`discount`, 0.0) AS `$f2`, COALESCE(`t80`.`discount`, 0.0) AS `$f3`, `t80`.`productid`\nFROM `orders_1` AS `$cor0`,\n UNNEST(`$cor0`.`items`) AS `t80` (`productid`, `quantity`, `unit_price`, `discount`);",
+    "CREATE VIEW `table$14`\nAS\nSELECT `t5`.`__pk4_id` AS `__pk1_id`, MIN(`t5`.`time`) AS `first_order`, SUM(`t13`.`price`) AS `total_spend`, SUM(`t13`.`saving`) AS `total_saved`, COUNT(*) AS `num_orders`, MAX(`t5`.`time`) AS `__timestamp`\nFROM (SELECT `t2`.`id` AS `__pk4_id`, `$cor17`.`id`, `$cor17`.`customerid`, `$cor17`.`time`, `$cor17`.`items`\n  FROM (SELECT `id`, `customerid`, `time`, `items`, `customerid` AS `customerid4`\n    FROM `orders_1`) AS `$cor17`\n   INNER JOIN `table$12` FOR SYSTEM_TIME AS OF `$cor17`.`time` AS `t2` ON `t2`.`id` = `$cor17`.`customerid4`) AS `t5`\n INNER JOIN (SELECT `__pk1_id`, `window_time` AS `__pk3_time`, SUM(`$f2`) AS `price`, SUM(`$f3`) AS `saving`\n  FROM TABLE(TUMBLE(TABLE `table$13`, DESCRIPTOR(`__pk2_time`), INTERVAL '0.001' SECOND(1))) AS `t10`\n  GROUP BY `__pk1_id`, `window_start`, `window_end`, `window_time`) AS `t13` ON `t5`.`id` = `t13`.`__pk1_id` AND `t5`.`time` = `t13`.`__pk3_time`\nGROUP BY `t5`.`__pk4_id`;",
     "CREATE VIEW `table$15`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`items`) AS `items`\nFROM `orders_1`;",
-    "CREATE VIEW `table$16`\nAS\nSELECT *\nFROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, `country0`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC) AS `_rownum`\n  FROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, COALESCE(`country`, 'none') AS `country0`\n    FROM `customers_1`) AS `t`) AS `t0`\nWHERE `_rownum` = 1;",
-    "CREATE VIEW `table$17`\nAS\nSELECT `$cor7`.`id0` AS `__pk1_id`, `t40`.`productid`, COUNT(*) AS `num_orders`, SUM(`t40`.`quantity`) AS `total_quantity`, MAX(`$cor7`.`time`) AS `__timestamp`\nFROM (SELECT *\n  FROM `orders_1` AS `$cor19`\n   INNER JOIN `table$16` FOR SYSTEM_TIME AS OF `$cor19`.`time` AS `t1` ON `$cor19`.`customerid` = `t1`.`id`) AS `$cor7`,\n UNNEST(`$cor7`.`items`) AS `t40` (`productid`, `quantity`, `unit_price`, `discount`)\nGROUP BY `$cor7`.`id0`, `t40`.`productid`;",
+    "CREATE VIEW `table$16`\nAS\nSELECT *\nFROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, `country0`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC) AS `_rownum`\n  FROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, COALESCE(`country`, 'none') AS `country0`\n    FROM `customers_1`) AS `t0`) AS `t1`\nWHERE `_rownum` = 1;",
+    "CREATE VIEW `table$17`\nAS\nSELECT `$cor7`.`id0` AS `__pk1_id`, `t60`.`productid`, COUNT(*) AS `num_orders`, SUM(`t60`.`quantity`) AS `total_quantity`, MAX(`$cor7`.`time`) AS `__timestamp`\nFROM (SELECT *\n  FROM `orders_1` AS `$cor19`\n   INNER JOIN `table$16` FOR SYSTEM_TIME AS OF `$cor19`.`time` AS `t2` ON `$cor19`.`customerid` = `t2`.`id`) AS `$cor7`,\n UNNEST(`$cor7`.`items`) AS `t60` (`productid`, `quantity`, `unit_price`, `discount`)\nGROUP BY `$cor7`.`id0`, `t60`.`productid`;",
     "CREATE VIEW `table$18`\nAS\nSELECT *\nFROM `products_1`;",
-    "CREATE VIEW `table$19`\nAS\nSELECT *\nFROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, `country0`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC) AS `_rownum`\n  FROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, COALESCE(`country`, 'none') AS `country0`\n    FROM `customers_1`) AS `t`) AS `t0`\nWHERE `_rownum` = 1;",
-    "CREATE VIEW `table$20`\nAS\nSELECT `$cor0`.`id` AS `__pk1_id`, `$cor0`.`time` AS `__pk2_time`, `t50`.`quantity` * `t50`.`unit_price` - COALESCE(`t50`.`discount`, 0.0) AS `$f2`, COALESCE(`t50`.`discount`, 0.0) AS `$f3`, `t50`.`productid`\nFROM `orders_1` AS `$cor0`,\n UNNEST(`$cor0`.`items`) AS `t50` (`productid`, `quantity`, `unit_price`, `discount`);",
-    "CREATE VIEW `table$21`\nAS\nSELECT `t3`.`__pk3_id`, ENDOFWEEK(`t3`.`time`) AS `week`, `t10`.`price`, `t10`.`saving`, `t3`.`id`, `t3`.`time`\nFROM (SELECT `t1`.`id` AS `__pk3_id`, `$cor21`.`id`, `$cor21`.`customerid`, `$cor21`.`time`, `$cor21`.`items`\n  FROM (SELECT `id`, `customerid`, `time`, `items`, `customerid` AS `customerid4`\n    FROM `orders_1`) AS `$cor21`\n   INNER JOIN `table$19` FOR SYSTEM_TIME AS OF `$cor21`.`time` AS `t1` ON `t1`.`id` = `$cor21`.`customerid4`) AS `t3`\n INNER JOIN (SELECT `__pk1_id`, `window_time` AS `__pk3_time`, SUM(`$f2`) AS `price`, SUM(`$f3`) AS `saving`\n  FROM TABLE(TUMBLE(TABLE `table$20`, DESCRIPTOR(`__pk2_time`), INTERVAL '0.001' SECOND(1))) AS `t7`\n  GROUP BY `__pk1_id`, `window_start`, `window_end`, `window_time`) AS `t10` ON `t3`.`id` = `t10`.`__pk1_id` AND `t3`.`time` = `t10`.`__pk3_time`;",
-    "CREATE VIEW `table$22`\nAS\nSELECT `__pk3_id` AS `__pk1_id`, `window_time` AS `week`, SUM(`price`) AS `spend`, SUM(`saving`) AS `saved`\nFROM TABLE(TUMBLE(TABLE `table$21`, DESCRIPTOR(`time`), INTERVAL '604800' SECOND(9), INTERVAL '0' SECOND(1))) AS `t12`\nGROUP BY `__pk3_id`, `window_start`, `window_end`, `window_time`;",
-    "CREATE VIEW `table$23`\nAS\nSELECT `$cor0`.`id` AS `__pk1_id`, `$cor0`.`time` AS `__pk2_time`, `t00`.`quantity` * `t00`.`unit_price` - COALESCE(`t00`.`discount`, 0.0) AS `$f2`, COALESCE(`t00`.`discount`, 0.0) AS `$f3`, `t00`.`productid`\nFROM `orders_1` AS `$cor0`,\n UNNEST(`$cor0`.`items`) AS `t00` (`productid`, `quantity`, `unit_price`, `discount`);",
-    "CREATE VIEW `table$24`\nAS\nSELECT `__pk1_id`, `window_time` AS `__pk3_time`, SUM(`$f2`) AS `price`, SUM(`$f3`) AS `saving`\nFROM TABLE(TUMBLE(TABLE `table$23`, DESCRIPTOR(`__pk2_time`), INTERVAL '0.001' SECOND(1))) AS `t2`\nGROUP BY `__pk1_id`, `window_start`, `window_end`, `window_time`;",
-    "CREATE VIEW `table$25`\nAS\nSELECT *\nFROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, `country0`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC) AS `_rownum`\n  FROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, COALESCE(`country`, 'none') AS `country0`\n    FROM `customers_1`) AS `t`) AS `t0`\nWHERE `_rownum` = 1;",
-    "CREATE VIEW `table$26`\nAS\nSELECT *\nFROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, `country0`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC) AS `_rownum`\n  FROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, COALESCE(`country`, 'none') AS `country0`\n    FROM `customers_1`) AS `t2`) AS `t3`\nWHERE `_rownum` = 1;",
-    "CREATE VIEW `table$27`\nAS\nSELECT `$cor0`.`id` AS `__pk1_id`, `$cor0`.`time` AS `__pk2_time`, `t80`.`quantity` * `t80`.`unit_price` - COALESCE(`t80`.`discount`, 0.0) AS `$f2`, COALESCE(`t80`.`discount`, 0.0) AS `$f3`, `t80`.`productid`\nFROM `orders_1` AS `$cor0`,\n UNNEST(`$cor0`.`items`) AS `t80` (`productid`, `quantity`, `unit_price`, `discount`);",
-    "CREATE VIEW `table$28`\nAS\nSELECT `t6`.`__pk3_id`, ENDOFWEEK(`t6`.`time`) AS `week`, `t13`.`price`, `t13`.`saving`, `t6`.`id`, `t6`.`time`\nFROM (SELECT `t4`.`id` AS `__pk3_id`, `$cor24`.`id`, `$cor24`.`customerid`, `$cor24`.`time`, `$cor24`.`items`\n  FROM (SELECT `id`, `customerid`, `time`, `items`, `customerid` AS `customerid4`\n    FROM `orders_1`) AS `$cor24`\n   INNER JOIN `table$26` FOR SYSTEM_TIME AS OF `$cor24`.`time` AS `t4` ON `t4`.`id` = `$cor24`.`customerid4`) AS `t6`\n INNER JOIN (SELECT `__pk1_id`, `window_time` AS `__pk3_time`, SUM(`$f2`) AS `price`, SUM(`$f3`) AS `saving`\n  FROM TABLE(TUMBLE(TABLE `table$27`, DESCRIPTOR(`__pk2_time`), INTERVAL '0.001' SECOND(1))) AS `t10`\n  GROUP BY `__pk1_id`, `window_start`, `window_end`, `window_time`) AS `t13` ON `t6`.`id` = `t13`.`__pk1_id` AND `t6`.`time` = `t13`.`__pk3_time`;",
-    "CREATE VIEW `table$29`\nAS\nSELECT `t1`.`first_name`, `t1`.`last_name`, `t1`.`email`, `$cor23`.`spend`, `$cor23`.`saved`\nFROM (SELECT *\n  FROM (SELECT `__pk3_id` AS `__pk1_id`, `window_time` AS `week`, SUM(`price`) AS `spend`, SUM(`saving`) AS `saved`\n    FROM TABLE(TUMBLE(TABLE `table$28`, DESCRIPTOR(`time`), INTERVAL '604800' SECOND(9), INTERVAL '0' SECOND(1))) AS `t15`\n    GROUP BY `__pk3_id`, `window_start`, `window_end`, `window_time`) AS `t18`\n  WHERE `spend` > 250) AS `$cor23`\n INNER JOIN `table$25` FOR SYSTEM_TIME AS OF `$cor23`.`week` AS `t1` ON `t1`.`id` = `$cor23`.`__pk1_id`;",
+    "CREATE VIEW `table$19`\nAS\nSELECT *\nFROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, `country0`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC) AS `_rownum`\n  FROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, COALESCE(`country`, 'none') AS `country0`\n    FROM `customers_1`) AS `t0`) AS `t1`\nWHERE `_rownum` = 1;",
+    "CREATE VIEW `table$20`\nAS\nSELECT `$cor0`.`id` AS `__pk1_id`, `$cor0`.`time` AS `__pk2_time`, `t80`.`quantity` * `t80`.`unit_price` - COALESCE(`t80`.`discount`, 0.0) AS `$f2`, COALESCE(`t80`.`discount`, 0.0) AS `$f3`, `t80`.`productid`\nFROM `orders_1` AS `$cor0`,\n UNNEST(`$cor0`.`items`) AS `t80` (`productid`, `quantity`, `unit_price`, `discount`);",
+    "CREATE VIEW `table$21`\nAS\nSELECT `t5`.`__pk3_id`, ENDOFWEEK(`t5`.`time`) AS `week`, `t13`.`price`, `t13`.`saving`, `t5`.`id`, `t5`.`time`\nFROM (SELECT `t2`.`id` AS `__pk3_id`, `$cor21`.`id`, `$cor21`.`customerid`, `$cor21`.`time`, `$cor21`.`items`\n  FROM (SELECT `id`, `customerid`, `time`, `items`, `customerid` AS `customerid4`\n    FROM `orders_1`) AS `$cor21`\n   INNER JOIN `table$19` FOR SYSTEM_TIME AS OF `$cor21`.`time` AS `t2` ON `t2`.`id` = `$cor21`.`customerid4`) AS `t5`\n INNER JOIN (SELECT `__pk1_id`, `window_time` AS `__pk3_time`, SUM(`$f2`) AS `price`, SUM(`$f3`) AS `saving`\n  FROM TABLE(TUMBLE(TABLE `table$20`, DESCRIPTOR(`__pk2_time`), INTERVAL '0.001' SECOND(1))) AS `t10`\n  GROUP BY `__pk1_id`, `window_start`, `window_end`, `window_time`) AS `t13` ON `t5`.`id` = `t13`.`__pk1_id` AND `t5`.`time` = `t13`.`__pk3_time`;",
+    "CREATE VIEW `table$22`\nAS\nSELECT `__pk3_id` AS `__pk1_id`, `window_time` AS `week`, SUM(`price`) AS `spend`, SUM(`saving`) AS `saved`\nFROM TABLE(TUMBLE(TABLE `table$21`, DESCRIPTOR(`time`), INTERVAL '604800' SECOND(9), INTERVAL '0' SECOND(1))) AS `t15`\nGROUP BY `__pk3_id`, `window_start`, `window_end`, `window_time`;",
+    "CREATE VIEW `table$23`\nAS\nSELECT `$cor0`.`id` AS `__pk1_id`, `$cor0`.`time` AS `__pk2_time`, `t10`.`quantity` * `t10`.`unit_price` - COALESCE(`t10`.`discount`, 0.0) AS `$f2`, COALESCE(`t10`.`discount`, 0.0) AS `$f3`, `t10`.`productid`\nFROM `orders_1` AS `$cor0`,\n UNNEST(`$cor0`.`items`) AS `t10` (`productid`, `quantity`, `unit_price`, `discount`);",
+    "CREATE VIEW `table$24`\nAS\nSELECT `__pk1_id`, `window_time` AS `__pk3_time`, SUM(`$f2`) AS `price`, SUM(`$f3`) AS `saving`\nFROM TABLE(TUMBLE(TABLE `table$23`, DESCRIPTOR(`__pk2_time`), INTERVAL '0.001' SECOND(1))) AS `t3`\nGROUP BY `__pk1_id`, `window_start`, `window_end`, `window_time`;",
+    "CREATE VIEW `table$25`\nAS\nSELECT *\nFROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, `country0`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC) AS `_rownum`\n  FROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, COALESCE(`country`, 'none') AS `country0`\n    FROM `customers_1`) AS `t0`) AS `t1`\nWHERE `_rownum` = 1;",
+    "CREATE VIEW `table$26`\nAS\nSELECT *\nFROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, `country0`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC) AS `_rownum`\n  FROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, COALESCE(`country`, 'none') AS `country0`\n    FROM `customers_1`) AS `t4`) AS `t5`\nWHERE `_rownum` = 1;",
+    "CREATE VIEW `table$27`\nAS\nSELECT `$cor0`.`id` AS `__pk1_id`, `$cor0`.`time` AS `__pk2_time`, `t120`.`quantity` * `t120`.`unit_price` - COALESCE(`t120`.`discount`, 0.0) AS `$f2`, COALESCE(`t120`.`discount`, 0.0) AS `$f3`, `t120`.`productid`\nFROM `orders_1` AS `$cor0`,\n UNNEST(`$cor0`.`items`) AS `t120` (`productid`, `quantity`, `unit_price`, `discount`);",
+    "CREATE VIEW `table$28`\nAS\nSELECT `t9`.`__pk3_id`, ENDOFWEEK(`t9`.`time`) AS `week`, `t17`.`price`, `t17`.`saving`, `t9`.`id`, `t9`.`time`\nFROM (SELECT `t6`.`id` AS `__pk3_id`, `$cor24`.`id`, `$cor24`.`customerid`, `$cor24`.`time`, `$cor24`.`items`\n  FROM (SELECT `id`, `customerid`, `time`, `items`, `customerid` AS `customerid4`\n    FROM `orders_1`) AS `$cor24`\n   INNER JOIN `table$26` FOR SYSTEM_TIME AS OF `$cor24`.`time` AS `t6` ON `t6`.`id` = `$cor24`.`customerid4`) AS `t9`\n INNER JOIN (SELECT `__pk1_id`, `window_time` AS `__pk3_time`, SUM(`$f2`) AS `price`, SUM(`$f3`) AS `saving`\n  FROM TABLE(TUMBLE(TABLE `table$27`, DESCRIPTOR(`__pk2_time`), INTERVAL '0.001' SECOND(1))) AS `t14`\n  GROUP BY `__pk1_id`, `window_start`, `window_end`, `window_time`) AS `t17` ON `t9`.`id` = `t17`.`__pk1_id` AND `t9`.`time` = `t17`.`__pk3_time`;",
+    "CREATE VIEW `table$29`\nAS\nSELECT `t2`.`first_name`, `t2`.`last_name`, `t2`.`email`, `$cor23`.`spend`, `$cor23`.`saved`\nFROM (SELECT *\n  FROM (SELECT `__pk3_id` AS `__pk1_id`, `window_time` AS `week`, SUM(`price`) AS `spend`, SUM(`saving`) AS `saved`\n    FROM TABLE(TUMBLE(TABLE `table$28`, DESCRIPTOR(`time`), INTERVAL '604800' SECOND(9), INTERVAL '0' SECOND(1))) AS `t19`\n    GROUP BY `__pk3_id`, `window_start`, `window_end`, `window_time`) AS `t22`\n  WHERE `spend` > 250) AS `$cor23`\n INNER JOIN `table$25` FOR SYSTEM_TIME AS OF `$cor23`.`week` AS `t2` ON `t2`.`id` = `$cor23`.`__pk1_id`;",
     "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customerpromotion_1`\n(SELECT *\n FROM `table$5`)\n;\nINSERT INTO `customers_3`\n (SELECT *\n  FROM `table$6`)\n ;\n INSERT INTO `monthly_by_country_1`\n  (SELECT *\n   FROM `table$10`)\n  ;\n  INSERT INTO `numorders_1`\n   (SELECT *\n    FROM `table$11`)\n   ;\n   INSERT INTO `order_stats_1`\n    (SELECT *\n     FROM `table$14`)\n    ;\n    INSERT INTO `orders_2`\n     (SELECT *\n      FROM `table$15`)\n     ;\n     INSERT INTO `past_purchases_1`\n      (SELECT *\n       FROM `table$17`)\n      ;\n      INSERT INTO `products_3`\n       (SELECT *\n        FROM `table$18`)\n       ;\n       INSERT INTO `spending_1`\n        (SELECT *\n         FROM `table$22`)\n        ;\n        INSERT INTO `totals_1`\n         (SELECT *\n          FROM `table$24`)\n         ;\n         INSERT INTO `customerpromotion_1_1`\n          (SELECT *\n           FROM `table$29`)\n          ;\n          END;"
   ],
   "connectors" : [
@@ -640,7 +640,11 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"customers_3\"\nWHERE \"id\" = $1",
+=======
+              "sql" : "SELECT \"id\", \"first_name\", \"last_name\", \"email\", \"ip_address\", \"country\", \"changed_on\", \"timestamp\", \"country0\", 1 AS \"__pk\"\nFROM \"customers_3\"\nWHERE \"id\" = $1\nORDER BY '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -662,7 +666,11 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"order_stats_1\"\nWHERE \"__pk1_id\" = $1",
+=======
+              "sql" : "SELECT \"__pk1_id\", \"first_order\", \"total_spend\", \"total_saved\", \"num_orders\", \"__timestamp\", 1 AS \"__pk\"\nFROM \"order_stats_1\"\nWHERE \"__pk1_id\" = $1\nORDER BY '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "source",
@@ -684,7 +692,11 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"customers_3\"\nWHERE \"id\" = $1",
+=======
+              "sql" : "SELECT \"id\", \"first_name\", \"last_name\", \"email\", \"ip_address\", \"country\", \"changed_on\", \"timestamp\", \"country0\", 1 AS \"__pk\"\nFROM \"customers_3\"\nWHERE \"id\" = $1\nORDER BY '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "source",
@@ -748,7 +760,11 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"past_purchases_1\"\n  WHERE \"__pk1_id\" = $1) AS \"t\"\nWHERE \"productid\" = $2\nORDER BY \"__pk1_id\", \"num_orders\" DESC, \"total_quantity\" DESC",
+=======
+              "sql" : "SELECT \"__pk1_id\", \"productid\", \"num_orders\", \"total_quantity\", \"__timestamp\", 1 AS \"__pk\"\nFROM (SELECT *\n  FROM \"past_purchases_1\"\n  WHERE \"__pk1_id\" = $1) AS \"t\"\nWHERE \"productid\" = $2\nORDER BY \"__pk1_id\", \"num_orders\" DESC, \"total_quantity\" DESC, '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "source",
@@ -775,7 +791,11 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"customers_3\"\nWHERE \"id\" = $1",
+=======
+              "sql" : "SELECT \"id\", \"first_name\", \"last_name\", \"email\", \"ip_address\", \"country\", \"changed_on\", \"timestamp\", \"country0\", 1 AS \"__pk\"\nFROM \"customers_3\"\nWHERE \"id\" = $1\nORDER BY '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "source",
@@ -841,7 +861,11 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"customers_3\"\nWHERE $1 = \"id\"",
+=======
+              "sql" : "SELECT \"id\", \"first_name\", \"last_name\", \"email\", \"ip_address\", \"country\", \"changed_on\", \"timestamp\", \"country0\", 1 AS \"__pk\"\nFROM \"customers_3\"\nWHERE $1 = \"id\"\nORDER BY '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "source",
@@ -863,7 +887,11 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"totals_1\"\nWHERE \"__pk1_id\" = $1 AND \"__pk3_time\" = $2\nORDER BY \"__pk3_time\" DESC NULLS LAST",
+=======
+              "sql" : "SELECT \"__pk1_id\", \"__pk3_time\", \"price\", \"saving\", 1 AS \"__pk\"\nFROM \"totals_1\"\nWHERE \"__pk1_id\" = $1 AND \"__pk3_time\" = $2\nORDER BY \"__pk3_time\" DESC NULLS LAST, '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "source",
@@ -890,7 +918,11 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST",
+=======
+              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"items\", 1 AS \"__pk\"\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "source",
@@ -933,7 +965,11 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"spending_1\"\n  WHERE \"__pk1_id\" = $1) AS \"t\"\nWHERE \"week\" = $2\nORDER BY \"__pk1_id\", \"week\" DESC",
+=======
+              "sql" : "SELECT \"__pk1_id\", \"week\", \"spend\", \"saved\", 1 AS \"__pk\"\nFROM (SELECT *\n  FROM \"spending_1\"\n  WHERE \"__pk1_id\" = $1) AS \"t\"\nWHERE \"week\" = $2\nORDER BY \"__pk1_id\", \"week\" DESC, '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "source",
@@ -986,7 +1022,11 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"customers_3\"\nWHERE \"id\" = $1",
+=======
+              "sql" : "SELECT \"id\", \"first_name\", \"last_name\", \"email\", \"ip_address\", \"country\", \"changed_on\", \"timestamp\", \"country0\", 1 AS \"__pk\"\nFROM \"customers_3\"\nWHERE \"id\" = $1\nORDER BY '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "source",
@@ -1138,7 +1178,11 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST",
+=======
+              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"items\", 1 AS \"__pk\"\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1201,7 +1245,11 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"products_3\"\nWHERE \"id\" = $1",
+=======
+              "sql" : "SELECT \"id\", \"name\", \"sizing\", \"weight_in_gram\", \"type\", \"category\", \"usda_id\", \"updated\", 1 AS \"__pk\"\nFROM \"products_3\"\nWHERE \"id\" = $1\nORDER BY '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1280,7 +1328,11 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"monthly_by_country_1\"\n  WHERE \"__pk1_id\" = $1) AS \"t\"\nWHERE \"country\" = $2 AND \"month\" = $3\nORDER BY \"month\" DESC NULLS LAST",
+=======
+              "sql" : "SELECT \"__pk1_id\", \"country\", \"month\", \"quantity\", \"spend\", \"weight\", 1 AS \"__pk\"\nFROM (SELECT *\n  FROM \"monthly_by_country_1\"\n  WHERE \"__pk1_id\" = $1) AS \"t\"\nWHERE \"country\" = $2 AND \"month\" = $3\nORDER BY \"month\" DESC NULLS LAST, '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "source",
@@ -1374,7 +1426,11 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"products_3\"\nWHERE \"id\" = $1",
+=======
+              "sql" : "SELECT \"id\", \"name\", \"sizing\", \"weight_in_gram\", \"type\", \"category\", \"usda_id\", \"updated\", 1 AS \"__pk\"\nFROM \"products_3\"\nWHERE \"id\" = $1\nORDER BY '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "source",

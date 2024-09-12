@@ -11,11 +11,14 @@ import org.apache.calcite.adapter.enumerable.AggImplementor;
 import org.apache.calcite.adapter.enumerable.AggResetContext;
 import org.apache.calcite.adapter.enumerable.AggResultContext;
 import org.apache.calcite.linq4j.tree.Expression;
+import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
 import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.AggregateCall;
+import org.apache.calcite.rel.core.RelFactories;
 import org.apache.calcite.rel.logical.LogicalAggregate;
+import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.rules.TransformationRule;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
@@ -25,6 +28,7 @@ import org.apache.calcite.schema.ImplementableAggFunction;
 import org.apache.calcite.sql.SqlAggFunction;
 import org.apache.calcite.sql.validate.SqlUserDefinedAggFunction;
 import org.apache.flink.table.planner.functions.bridging.BridgingSqlAggFunction;
+import org.immutables.value.Value;
 
 /**
  * Rewrites flink's bridging functions to stub implementable rules for index selection
@@ -32,9 +36,10 @@ import org.apache.flink.table.planner.functions.bridging.BridgingSqlAggFunction;
 public class ToStubAggRule extends RelRule<ToStubAggRule.Config>
     implements TransformationRule {
 
-  public ToStubAggRule() {
-    super(ToStubAggRule.Config.DEFAULT);
+  protected ToStubAggRule(Config config) {
+    super(config);
   }
+
 
   @SneakyThrows
   @Override
@@ -118,17 +123,18 @@ public class ToStubAggRule extends RelRule<ToStubAggRule.Config>
         fn.requiresGroupOrder());
   }
 
-  /** Rule configuration. */
-  public interface Config extends RelRule.Config {
-    ToStubAggRule.Config DEFAULT = EMPTY
-        .withOperandSupplier(b0 ->
+  @Value.Immutable
+  public interface ToStubAggRuleConfig extends RelRule.Config {
+    PushDownWatermarkHintRule.Config DEFAULT = ImmutableToStubAggRuleConfig.builder()
+        .relBuilderFactory(RelFactories.LOGICAL_BUILDER)
+        .description("ToStubAggRuleConfig")
+        .operandSupplier(b0 ->
             b0.operand(LogicalAggregate.class).oneInput(
                 b1 -> b1.operand(RelNode.class).anyInputs()))
-        .withDescription("ToStubAggRule")
-        .as(ToStubAggRule.Config.class);
+        .build();
 
-    @Override default ToStubAggRule toRule() {
-      return new ToStubAggRule();
+    @Override default RelOptRule toRule() {
+      return new ToStubAggRule(this);
     }
   }
 }

@@ -30,7 +30,7 @@ public class Relationship implements SqrlTableMacro {
   private final boolean isTest;
 
   @Override
-  public RelDataType getRowType(RelDataTypeFactory relDataTypeFactory, List<Object> list) {
+  public RelDataType getRowType(RelDataTypeFactory relDataTypeFactory, List<? extends Object> list) {
     return getRowType();
   }
 

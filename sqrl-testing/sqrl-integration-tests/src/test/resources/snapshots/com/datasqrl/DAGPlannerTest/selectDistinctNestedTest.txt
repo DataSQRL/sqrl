@@ -137,8 +137,8 @@ LogicalAggregate(group=[{0, 1}], numOrders=[COUNT()], lastOrder=[MAX($2)])
     "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `customer_1`;",
     "CREATE VIEW `table$2`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders_1`;",
     "CREATE VIEW `table$3`\nAS\nSELECT *\nFROM `product_1`;",
-    "CREATE VIEW `table$4`\nAS\nSELECT `t00`.`productid`, `$cor0`.`time` AS `_time`\nFROM `orders_1` AS `$cor0`,\n UNNEST(`$cor0`.`entries`) AS `t00` (`productid`, `quantity`, `unit_price`, `discount`);",
-    "CREATE VIEW `table$5`\nAS\nSELECT `$cor2`.`productid` AS `__pk1_productid`, `$cor2`.`id` AS `orderid`, COUNT(*) AS `numOrders`, MAX(`$cor2`.`time`) AS `lastOrder`\nFROM (`orders_1`, (SELECT *\n   FROM (SELECT `t1`.`productid`, `t1`.`_time`, ROW_NUMBER() OVER (PARTITION BY `t1`.`productid` ORDER BY `t1`.`_time` DESC NULLS LAST) AS `_rownum`\n     FROM (SELECT `t00`.`productid`, `$cor0`.`time` AS `_time`\n       FROM `orders_1` AS `$cor0`,\n        UNNEST(`$cor0`.`entries`) AS `t00` (`productid`, `quantity`, `unit_price`, `discount`)) AS `t1`) AS `t2`\n   WHERE `_rownum` = 1) AS `t3`) AS `$cor2`,\n LATERAL (SELECT *\n  FROM UNNEST (SELECT `$cor2`.`_rownum` AS `$f0`\n    FROM (VALUES  (0)) AS `t` (`ZERO`)) AS `t5` (`productid`, `quantity`, `unit_price`, `discount`)\n  WHERE `productid` = `$cor2`.`customerid`) AS `t6`\nGROUP BY `$cor2`.`productid`, `$cor2`.`id`;",
+    "CREATE VIEW `table$4`\nAS\nSELECT `t10`.`productid`, `$cor0`.`time` AS `_time`\nFROM `orders_1` AS `$cor0`,\n UNNEST(`$cor0`.`entries`) AS `t10` (`productid`, `quantity`, `unit_price`, `discount`);",
+    "CREATE VIEW `table$5`\nAS\nSELECT `$cor2`.`productid` AS `__pk1_productid`, `$cor2`.`id` AS `orderid`, COUNT(*) AS `numOrders`, MAX(`$cor2`.`time`) AS `lastOrder`\nFROM (`orders_1` AS `t`, (SELECT *\n   FROM (SELECT `t3`.`productid`, `t3`.`_time`, ROW_NUMBER() OVER (PARTITION BY `t3`.`productid` ORDER BY `t3`.`_time` DESC NULLS LAST) AS `_rownum`\n     FROM (SELECT `t20`.`productid`, `$cor0`.`time` AS `_time`\n       FROM `orders_1` AS `$cor0`,\n        UNNEST(`$cor0`.`entries`) AS `t20` (`productid`, `quantity`, `unit_price`, `discount`)) AS `t3`) AS `t4`\n   WHERE `_rownum` = 1) AS `t5`) AS `$cor2`,\n LATERAL (SELECT *\n  FROM UNNEST (SELECT `$cor2`.`_rownum` AS `$f0`\n    FROM (VALUES (0)) AS `t` (`ZERO`)) AS `t7` (`productid`, `quantity`, `unit_price`, `discount`)\n  WHERE `productid` = `$cor2`.`customerid`) AS `t8`\nGROUP BY `$cor2`.`productid`, `$cor2`.`id`;",
     "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer_2`\n(SELECT *\n FROM `table$1`)\n;\nINSERT INTO `orders_2`\n (SELECT *\n  FROM `table$2`)\n ;\n INSERT INTO `product_2`\n  (SELECT *\n   FROM `table$3`)\n  ;\n  INSERT INTO `productid_1`\n   (SELECT *\n    FROM `table$4`)\n   ;\n   INSERT INTO `suborders_1`\n    (SELECT *\n     FROM `table$5`)\n    ;\n    END;"
   ],
   "connectors" : [
@@ -355,7 +355,11 @@ LogicalAggregate(group=[{0, 1}], numOrders=[COUNT()], lastOrder=[MAX($2)])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1 AND \"lastUpdated\" = $2\nORDER BY \"timestamp\" DESC NULLS LAST",
+=======
+              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customer_2\"\nWHERE \"customerid\" = $1 AND \"lastUpdated\" = $2\nORDER BY \"timestamp\" DESC NULLS LAST, '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -516,7 +520,11 @@ LogicalAggregate(group=[{0, 1}], numOrders=[COUNT()], lastOrder=[MAX($2)])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST",
+=======
+              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1148,7 +1156,11 @@ LogicalAggregate(group=[{0, 1}], numOrders=[COUNT()], lastOrder=[MAX($2)])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3 AND \"category\" = $4\nORDER BY \"_ingest_time\" DESC NULLS LAST",
+=======
+              "sql" : "SELECT \"productid\", \"name\", \"description\", \"category\", \"_ingest_time\", 1 AS \"__pk\"\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3 AND \"category\" = $4\nORDER BY \"_ingest_time\" DESC NULLS LAST, '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1272,7 +1284,11 @@ LogicalAggregate(group=[{0, 1}], numOrders=[COUNT()], lastOrder=[MAX($2)])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"productid_1\"\nWHERE \"productid\" = $1",
+=======
+              "sql" : "SELECT \"productid\", \"_time\", 1 AS \"__pk\"\nFROM \"productid_1\"\nWHERE \"productid\" = $1\nORDER BY '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1336,7 +1352,11 @@ LogicalAggregate(group=[{0, 1}], numOrders=[COUNT()], lastOrder=[MAX($2)])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"suborders_1\"\n  WHERE \"__pk1_productid\" = $1) AS \"t\"\nWHERE \"orderid\" = $2\nORDER BY \"__pk1_productid\", \"numOrders\" DESC",
+=======
+              "sql" : "SELECT \"__pk1_productid\", \"orderid\", \"numOrders\", \"lastOrder\", 1 AS \"__pk\"\nFROM (SELECT *\n  FROM \"suborders_1\"\n  WHERE \"__pk1_productid\" = $1) AS \"t\"\nWHERE \"orderid\" = $2\nORDER BY \"__pk1_productid\", \"numOrders\" DESC, '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "source",
@@ -1363,7 +1383,11 @@ LogicalAggregate(group=[{0, 1}], numOrders=[COUNT()], lastOrder=[MAX($2)])
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"productid_1\"\nWHERE \"productid\" = $1",
+=======
+              "sql" : "SELECT \"productid\", \"_time\", 1 AS \"__pk\"\nFROM \"productid_1\"\nWHERE \"productid\" = $1\nORDER BY '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "source",

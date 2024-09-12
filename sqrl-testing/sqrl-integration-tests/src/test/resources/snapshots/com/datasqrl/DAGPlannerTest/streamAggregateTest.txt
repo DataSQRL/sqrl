@@ -157,11 +157,11 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
     "CREATE VIEW `table$3`\nAS\nSELECT COUNT(*) AS `order_count`, 1 AS `__pk`, MAX(`time`) AS `__timestamp`\nFROM `orders_1`;",
     "CREATE VIEW `table$4`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders_1`;",
     "CREATE VIEW `table$5`\nAS\nSELECT `customerid` AS `customer`, ENDOFSECOND(`time`) AS `bucket`, `id`, `time`\nFROM `orders_1`;",
-    "CREATE VIEW `table$6`\nAS\nSELECT `customer`, `window_time` AS `bucket`, COUNT(*) AS `order_count`\nFROM TABLE(TUMBLE(TABLE `table$5`, DESCRIPTOR(`time`), INTERVAL '1' SECOND(4), INTERVAL '0' SECOND(1))) AS `t0`\nGROUP BY `customer`, `window_start`, `window_end`, `window_time`;",
+    "CREATE VIEW `table$6`\nAS\nSELECT `customer`, `window_time` AS `bucket`, COUNT(*) AS `order_count`\nFROM TABLE(TUMBLE(TABLE `table$5`, DESCRIPTOR(`time`), INTERVAL '1' SECOND(4), INTERVAL '0' SECOND(1))) AS `t1`\nGROUP BY `customer`, `window_start`, `window_end`, `window_time`;",
     "CREATE VIEW `table$7`\nAS\nSELECT `customerid` AS `customer`, ENDOFMINUTE(`time`, 1, 15) AS `bucket`, `id`, `time`\nFROM `orders_1`;",
-    "CREATE VIEW `table$8`\nAS\nSELECT `customer`, `window_time` AS `bucket`, COUNT(*) AS `order_count`\nFROM TABLE(TUMBLE(TABLE `table$7`, DESCRIPTOR(`time`), INTERVAL '60' SECOND(5), INTERVAL '15' SECOND(5))) AS `t0`\nGROUP BY `customer`, `window_start`, `window_end`, `window_time`;",
+    "CREATE VIEW `table$8`\nAS\nSELECT `customer`, `window_time` AS `bucket`, COUNT(*) AS `order_count`\nFROM TABLE(TUMBLE(TABLE `table$7`, DESCRIPTOR(`time`), INTERVAL '60' SECOND(5), INTERVAL '15' SECOND(5))) AS `t1`\nGROUP BY `customer`, `window_start`, `window_end`, `window_time`;",
     "CREATE VIEW `table$9`\nAS\nSELECT `customerid` AS `customer`, ENDOFHOUR(`time`, 5, 30) AS `bucket`, `id`, `time`\nFROM `orders_1`;",
-    "CREATE VIEW `table$10`\nAS\nSELECT `customer`, `window_time` AS `bucket`, COUNT(*) AS `order_count`\nFROM TABLE(TUMBLE(TABLE `table$9`, DESCRIPTOR(`time`), INTERVAL '18000' SECOND(8), INTERVAL '1800' SECOND(7))) AS `t0`\nGROUP BY `customer`, `window_start`, `window_end`, `window_time`;",
+    "CREATE VIEW `table$10`\nAS\nSELECT `customer`, `window_time` AS `bucket`, COUNT(*) AS `order_count`\nFROM TABLE(TUMBLE(TABLE `table$9`, DESCRIPTOR(`time`), INTERVAL '18000' SECOND(8), INTERVAL '1800' SECOND(7))) AS `t1`\nGROUP BY `customer`, `window_start`, `window_end`, `window_time`;",
     "CREATE VIEW `table$11`\nAS\nSELECT *\nFROM `product_1`;",
     "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer_2`\n(SELECT *\n FROM `table$1`)\n;\nINSERT INTO `orderagg1_1`\n (SELECT *\n  FROM `table$2`)\n ;\n INSERT INTO `orderagg2_1`\n  (SELECT *\n   FROM `table$3`)\n  ;\n  INSERT INTO `orders_2`\n   (SELECT *\n    FROM `table$4`)\n   ;\n   INSERT INTO `ordertime1_1`\n    (SELECT *\n     FROM `table$6`)\n    ;\n    INSERT INTO `ordertime2_1`\n     (SELECT *\n      FROM `table$8`)\n     ;\n     INSERT INTO `ordertime3_1`\n      (SELECT *\n       FROM `table$10`)\n      ;\n      INSERT INTO `product_2`\n       (SELECT *\n        FROM `table$11`)\n       ;\n       END;"
   ],
@@ -444,7 +444,11 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1 AND \"lastUpdated\" = $2\nORDER BY \"timestamp\" DESC NULLS LAST",
+=======
+              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customer_2\"\nWHERE \"customerid\" = $1 AND \"lastUpdated\" = $2\nORDER BY \"timestamp\" DESC NULLS LAST, '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -549,7 +553,11 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"orderagg1_1\"\nWHERE \"customer\" = $1",
+=======
+              "sql" : "SELECT \"customer\", \"order_count\", \"__timestamp\", 1 AS \"__pk\"\nFROM \"orderagg1_1\"\nWHERE \"customer\" = $1\nORDER BY '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -670,7 +678,11 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST",
+=======
+              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -851,7 +863,11 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"ordertime1_1\"\nWHERE \"customer\" = $1 AND \"bucket\" = $2\nORDER BY \"bucket\" DESC NULLS LAST",
+=======
+              "sql" : "SELECT \"customer\", \"bucket\", \"order_count\", 1 AS \"__pk\"\nFROM \"ordertime1_1\"\nWHERE \"customer\" = $1 AND \"bucket\" = $2\nORDER BY \"bucket\" DESC NULLS LAST, '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -981,7 +997,11 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"ordertime2_1\"\nWHERE \"customer\" = $1 AND \"bucket\" = $2\nORDER BY \"bucket\" DESC NULLS LAST",
+=======
+              "sql" : "SELECT \"customer\", \"bucket\", \"order_count\", 1 AS \"__pk\"\nFROM \"ordertime2_1\"\nWHERE \"customer\" = $1 AND \"bucket\" = $2\nORDER BY \"bucket\" DESC NULLS LAST, '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1029,7 +1049,11 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"ordertime3_1\"\nWHERE \"customer\" = $1 AND \"bucket\" = $2\nORDER BY \"bucket\" DESC NULLS LAST",
+=======
+              "sql" : "SELECT \"customer\", \"bucket\", \"order_count\", 1 AS \"__pk\"\nFROM \"ordertime3_1\"\nWHERE \"customer\" = $1 AND \"bucket\" = $2\nORDER BY \"bucket\" DESC NULLS LAST, '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1445,7 +1469,11 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3 AND \"category\" = $4\nORDER BY \"_ingest_time\" DESC NULLS LAST",
+=======
+              "sql" : "SELECT \"productid\", \"name\", \"description\", \"category\", \"_ingest_time\", 1 AS \"__pk\"\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3 AND \"category\" = $4\nORDER BY \"_ingest_time\" DESC NULLS LAST, '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",

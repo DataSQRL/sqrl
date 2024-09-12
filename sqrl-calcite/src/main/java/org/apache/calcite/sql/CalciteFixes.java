@@ -7,6 +7,7 @@ import org.apache.calcite.sql.util.SqlShuttle;
 import org.apache.calcite.sql.util.SqlVisitor;
 import org.apache.calcite.sql.validate.SelectScope;
 import org.apache.calcite.sql.validate.SqlValidator;
+import org.apache.flink.calcite.shaded.org.checkerframework.checker.nullness.qual.Nullable;
 
 public class CalciteFixes {
 

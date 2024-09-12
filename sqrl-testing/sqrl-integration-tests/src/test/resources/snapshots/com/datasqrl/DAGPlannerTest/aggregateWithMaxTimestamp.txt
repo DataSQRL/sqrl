@@ -107,8 +107,8 @@ LogicalTableScan(table=[[orders_2]])
     "CREATE TEMPORARY TABLE `ordersstate_1` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  PRIMARY KEY (`id`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'ordersstate_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE VIEW `table$1`\nAS\nSELECT `customerid`, COUNT(*) AS `count`, MAX(`time`) AS `__timestamp`\nFROM `orders_1`\nGROUP BY `customerid`;",
     "CREATE VIEW `table$2`\nAS\nSELECT `customerid`, MAX(`time`) AS `timestamp`, COUNT(*) AS `count`\nFROM `orders_1`\nGROUP BY `customerid`;",
-    "CREATE VIEW `table$3`\nAS\nSELECT `customerid`, COUNT(*) AS `count`, MAX(`time`) AS `__timestamp`\nFROM (SELECT `id`, `customerid`, `time`, `entries`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `time` DESC) AS `_rownum`\n  FROM `orders_1`) AS `t`\nWHERE `_rownum` = 1\nGROUP BY `customerid`;",
-    "CREATE VIEW `table$4`\nAS\nSELECT `customerid`, MAX(`time`) AS `timestamp`, COUNT(*) AS `count`\nFROM (SELECT `id`, `customerid`, `time`, `entries`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `time` DESC) AS `_rownum`\n  FROM `orders_1`) AS `t`\nWHERE `_rownum` = 1\nGROUP BY `customerid`;",
+    "CREATE VIEW `table$3`\nAS\nSELECT `customerid`, COUNT(*) AS `count`, MAX(`time`) AS `__timestamp`\nFROM (SELECT `id`, `customerid`, `time`, `entries`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `time` DESC) AS `_rownum`\n  FROM `orders_1`) AS `t0`\nWHERE `_rownum` = 1\nGROUP BY `customerid`;",
+    "CREATE VIEW `table$4`\nAS\nSELECT `customerid`, MAX(`time`) AS `timestamp`, COUNT(*) AS `count`\nFROM (SELECT `id`, `customerid`, `time`, `entries`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `time` DESC) AS `_rownum`\n  FROM `orders_1`) AS `t0`\nWHERE `_rownum` = 1\nGROUP BY `customerid`;",
     "CREATE VIEW `table$5`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders_1`;",
     "CREATE VIEW `table$6`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders_1`;",
     "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `orderagg1_1`\n(SELECT *\n FROM `table$1`)\n;\nINSERT INTO `orderagg2_1`\n (SELECT *\n  FROM `table$2`)\n ;\n INSERT INTO `orderagg3_1`\n  (SELECT *\n   FROM `table$3`)\n  ;\n  INSERT INTO `orderagg4_1`\n   (SELECT *\n    FROM `table$4`)\n   ;\n   INSERT INTO `orders_2`\n    (SELECT *\n     FROM `table$5`)\n    ;\n    INSERT INTO `ordersstate_1`\n     (SELECT *\n      FROM `table$6`)\n     ;\n     END;"
@@ -244,7 +244,11 @@ LogicalTableScan(table=[[orders_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"orderagg1_1\"\nWHERE \"customerid\" = $1",
+=======
+              "sql" : "SELECT \"customerid\", \"count\", \"__timestamp\", 1 AS \"__pk\"\nFROM \"orderagg1_1\"\nWHERE \"customerid\" = $1\nORDER BY '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -322,7 +326,11 @@ LogicalTableScan(table=[[orders_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"orderagg2_1\"\nWHERE \"customerid\" = $1",
+=======
+              "sql" : "SELECT \"customerid\", \"timestamp\", \"count\", 1 AS \"__pk\"\nFROM \"orderagg2_1\"\nWHERE \"customerid\" = $1\nORDER BY '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -360,7 +368,11 @@ LogicalTableScan(table=[[orders_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"orderagg3_1\"\nWHERE \"customerid\" = $1",
+=======
+              "sql" : "SELECT \"customerid\", \"count\", \"__timestamp\", 1 AS \"__pk\"\nFROM \"orderagg3_1\"\nWHERE \"customerid\" = $1\nORDER BY '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -438,7 +450,11 @@ LogicalTableScan(table=[[orders_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"orderagg4_1\"\nWHERE \"customerid\" = $1",
+=======
+              "sql" : "SELECT \"customerid\", \"timestamp\", \"count\", 1 AS \"__pk\"\nFROM \"orderagg4_1\"\nWHERE \"customerid\" = $1\nORDER BY '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -481,7 +497,11 @@ LogicalTableScan(table=[[orders_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST",
+=======
+              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -626,7 +646,11 @@ LogicalTableScan(table=[[orders_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"ordersstate_1\"\nWHERE \"id\" = $1",
+=======
+              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\nFROM \"ordersstate_1\"\nWHERE \"id\" = $1\nORDER BY '1'",
+>>>>>>> 1644ef409 (Bump to flink 1.19)
               "parameters" : [
                 {
                   "type" : "arg",

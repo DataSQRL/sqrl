@@ -138,4 +138,9 @@ public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
 
     super.unparseCall(writer, call, leftPrec, rightPrec);
   }
+
+  @Override
+  public boolean supportsGroupByLiteral() {
+    return true;
+  }
 }
