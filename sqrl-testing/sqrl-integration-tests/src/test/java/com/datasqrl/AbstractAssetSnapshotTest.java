@@ -196,7 +196,7 @@ public abstract class AbstractAssetSnapshotTest {
 
     @Override
     public Stream<? extends Arguments> provideArguments(ExtensionContext context) throws IOException {
-      return getSQRLScripts(directory, includeFail).map(Arguments::of);
+      return getSQRLScripts(directory, includeFail).sorted().map(Arguments::of);
     }
   }
 }
