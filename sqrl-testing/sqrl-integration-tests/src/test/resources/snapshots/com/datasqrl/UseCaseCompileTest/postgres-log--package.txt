@@ -194,10 +194,14 @@ LogicalTableScan(table=[[event_2]])
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
 <<<<<<< HEAD
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"data_2\"\nWHERE \"ID\" = $1\nORDER BY \"TIMESTAMP\" DESC NULLS LAST",
 =======
               "sql" : "SELECT \"_uuid\", \"ID\", \"EPOCH_TIMESTAMP\", \"SOME_VALUE\", \"TIMESTAMP\", \"event_time\", 1 AS \"__pk\"\nFROM \"data_2\"\nWHERE \"ID\" = $1\nORDER BY \"TIMESTAMP\" DESC NULLS LAST, '1'",
 >>>>>>> 1644ef409 (Bump to flink 1.19)
+=======
+              "sql" : "SELECT \"_uuid\", \"ID\", \"EPOCH_TIMESTAMP\", \"SOME_VALUE\", \"TIMESTAMP\", \"event_time\", 1 AS \"__pk\"\nFROM \"data_2\"\nWHERE \"ID\" = $1\nORDER BY \"TIMESTAMP\" DESC NULLS LAST, 1",
+>>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",

@@ -510,10 +510,14 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
 <<<<<<< HEAD
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"customer_3\"\nWHERE \"customerid\" = $1",
 =======
               "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customer_3\"\nWHERE \"customerid\" = $1\nORDER BY '1'",
 >>>>>>> 1644ef409 (Bump to flink 1.19)
+=======
+              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customer_3\"\nWHERE \"customerid\" = $1\nORDER BY 1",
+>>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -572,10 +576,14 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
 <<<<<<< HEAD
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"ordercustomer_1\"\nWHERE \"id\" = $1",
 =======
               "sql" : "SELECT \"time\", \"id\", \"name\", \"customerid\", 1 AS \"__pk\"\nFROM \"ordercustomer_1\"\nWHERE \"id\" = $1\nORDER BY '1'",
 >>>>>>> 1644ef409 (Bump to flink 1.19)
+=======
+              "sql" : "SELECT \"time\", \"id\", \"name\", \"customerid\", 1 AS \"__pk\"\nFROM \"ordercustomer_1\"\nWHERE \"id\" = $1\nORDER BY 1",
+>>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -614,10 +622,14 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
 <<<<<<< HEAD
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"ordercustomerconstant_1\"\nWHERE \"id\" = $1",
 =======
               "sql" : "SELECT \"time\", \"id\", \"name\", \"customerid\", 1 AS \"__pk\"\nFROM \"ordercustomerconstant_1\"\nWHERE \"id\" = $1\nORDER BY '1'",
 >>>>>>> 1644ef409 (Bump to flink 1.19)
+=======
+              "sql" : "SELECT \"time\", \"id\", \"name\", \"customerid\", 1 AS \"__pk\"\nFROM \"ordercustomerconstant_1\"\nWHERE \"id\" = $1\nORDER BY 1",
+>>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -676,10 +688,14 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
 <<<<<<< HEAD
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"ordercustomerleft_1\"\nWHERE \"id\" = $1",
 =======
               "sql" : "SELECT \"lastUpdated\", \"id\", \"name\", \"customerid\", \"__timestamp\", 1 AS \"__pk\"\nFROM \"ordercustomerleft_1\"\nWHERE \"id\" = $1\nORDER BY '1'",
 >>>>>>> 1644ef409 (Bump to flink 1.19)
+=======
+              "sql" : "SELECT \"lastUpdated\", \"id\", \"name\", \"customerid\", \"__timestamp\", 1 AS \"__pk\"\nFROM \"ordercustomerleft_1\"\nWHERE \"id\" = $1\nORDER BY 1",
+>>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -738,10 +754,14 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
 <<<<<<< HEAD
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"ordercustomerleftexcluded_1\"\nWHERE \"id\" = $1",
 =======
               "sql" : "SELECT \"time\", \"id\", \"customerid\", 1 AS \"__pk\"\nFROM \"ordercustomerleftexcluded_1\"\nWHERE \"id\" = $1\nORDER BY '1'",
 >>>>>>> 1644ef409 (Bump to flink 1.19)
+=======
+              "sql" : "SELECT \"time\", \"id\", \"customerid\", 1 AS \"__pk\"\nFROM \"ordercustomerleftexcluded_1\"\nWHERE \"id\" = $1\nORDER BY 1",
+>>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -858,10 +878,14 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
 <<<<<<< HEAD
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"ordercustomerrightexcluded_1\"\nWHERE \"customerid\" = $1",
 =======
               "sql" : "SELECT \"lastUpdated\", \"customerid\", \"name\", \"__timestamp\", 1 AS \"__pk\"\nFROM \"ordercustomerrightexcluded_1\"\nWHERE \"customerid\" = $1\nORDER BY '1'",
 >>>>>>> 1644ef409 (Bump to flink 1.19)
+=======
+              "sql" : "SELECT \"lastUpdated\", \"customerid\", \"name\", \"__timestamp\", 1 AS \"__pk\"\nFROM \"ordercustomerrightexcluded_1\"\nWHERE \"customerid\" = $1\nORDER BY 1",
+>>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -920,10 +944,14 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
 <<<<<<< HEAD
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"orders_3\"\nWHERE \"id\" = $1",
 =======
               "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\nFROM \"orders_3\"\nWHERE \"id\" = $1\nORDER BY '1'",
 >>>>>>> 1644ef409 (Bump to flink 1.19)
+=======
+              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\nFROM \"orders_3\"\nWHERE \"id\" = $1\nORDER BY 1",
+>>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1540,10 +1568,14 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
 <<<<<<< HEAD
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3 AND \"category\" = $4\nORDER BY \"_ingest_time\" DESC NULLS LAST",
 =======
               "sql" : "SELECT \"productid\", \"name\", \"description\", \"category\", \"_ingest_time\", 1 AS \"__pk\"\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3 AND \"category\" = $4\nORDER BY \"_ingest_time\" DESC NULLS LAST, '1'",
 >>>>>>> 1644ef409 (Bump to flink 1.19)
+=======
+              "sql" : "SELECT \"productid\", \"name\", \"description\", \"category\", \"_ingest_time\", 1 AS \"__pk\"\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3 AND \"category\" = $4\nORDER BY \"_ingest_time\" DESC NULLS LAST, 1",
+>>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",

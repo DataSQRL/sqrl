@@ -163,10 +163,14 @@ LogicalTableScan(table=[[sensorreading_1]], hints=[[[WatermarkHint inheritPath:[
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
 <<<<<<< HEAD
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"sensormaxtemp_1\"\nWHERE \"sensorid\" = $1",
 =======
               "sql" : "SELECT \"sensorid\", \"maxTemp\", \"_timeSec\", 1 AS \"__pk\"\nFROM \"sensormaxtemp_1\"\nWHERE \"sensorid\" = $1\nORDER BY '1'",
 >>>>>>> 1644ef409 (Bump to flink 1.19)
+=======
+              "sql" : "SELECT \"sensorid\", \"maxTemp\", \"_timeSec\", 1 AS \"__pk\"\nFROM \"sensormaxtemp_1\"\nWHERE \"sensorid\" = $1\nORDER BY 1",
+>>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",

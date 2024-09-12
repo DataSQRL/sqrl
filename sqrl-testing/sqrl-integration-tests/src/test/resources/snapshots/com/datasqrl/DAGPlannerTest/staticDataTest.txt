@@ -237,10 +237,14 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
 <<<<<<< HEAD
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"numbers_1\"\nWHERE \"id\" = $1",
 =======
               "sql" : "SELECT \"id\", 1 AS \"__pk\"\nFROM \"numbers_1\"\nWHERE \"id\" = $1\nORDER BY '1'",
 >>>>>>> 1644ef409 (Bump to flink 1.19)
+=======
+              "sql" : "SELECT \"id\", 1 AS \"__pk\"\nFROM \"numbers_1\"\nWHERE \"id\" = $1\nORDER BY 1",
+>>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -299,10 +303,14 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
 <<<<<<< HEAD
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"numbers2_1\"\nWHERE \"id\" = $1",
 =======
               "sql" : "SELECT \"id\", 1 AS \"__pk\"\nFROM \"numbers2_1\"\nWHERE \"id\" = $1\nORDER BY '1'",
 >>>>>>> 1644ef409 (Bump to flink 1.19)
+=======
+              "sql" : "SELECT \"id\", 1 AS \"__pk\"\nFROM \"numbers2_1\"\nWHERE \"id\" = $1\nORDER BY 1",
+>>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -361,10 +369,14 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
 <<<<<<< HEAD
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"numberslarge_1\"\nWHERE \"id\" = $1",
 =======
               "sql" : "SELECT \"id\", 1 AS \"__pk\"\nFROM \"numberslarge_1\"\nWHERE \"id\" = $1\nORDER BY '1'",
 >>>>>>> 1644ef409 (Bump to flink 1.19)
+=======
+              "sql" : "SELECT \"id\", 1 AS \"__pk\"\nFROM \"numberslarge_1\"\nWHERE \"id\" = $1\nORDER BY 1",
+>>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -459,10 +471,14 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
 <<<<<<< HEAD
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\n  FROM \"orders_2\"\n   INNER JOIN \"numbers_1\" ON \"orders_2\".\"customerid\" = CAST(\"numbers_1\".\"id\" AS BIGINT)) AS \"t\"\nWHERE \"t\".\"id\" = $1 AND \"t\".\"time\" = $2\nORDER BY \"time\" DESC NULLS LAST",
 =======
               "sql" : "SELECT \"id\", \"time\", 1 AS \"__pk\"\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\n  FROM \"orders_2\"\n   INNER JOIN \"numbers_1\" ON \"orders_2\".\"customerid\" = CAST(\"numbers_1\".\"id\" AS BIGINT)) AS \"t\"\nWHERE \"t\".\"id\" = $1 AND \"t\".\"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, '1'",
 >>>>>>> 1644ef409 (Bump to flink 1.19)
+=======
+              "sql" : "SELECT \"id\", \"time\", 1 AS \"__pk\"\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\n  FROM \"orders_2\"\n   INNER JOIN \"numbers_1\" ON \"orders_2\".\"customerid\" = CAST(\"numbers_1\".\"id\" AS BIGINT)) AS \"t\"\nWHERE \"t\".\"id\" = $1 AND \"t\".\"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, 1",
+>>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -562,10 +578,14 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
 <<<<<<< HEAD
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\n  FROM \"orders_2\"\n   INNER JOIN (VALUES  (1),\n      (2),\n      (3),\n      (4),\n      (4)) AS \"t\" (\"id\") ON \"orders_2\".\"customerid\" = CAST(\"t\".\"id\" AS BIGINT)) AS \"t0\"\nWHERE \"t0\".\"id\" = $1 AND \"t0\".\"time\" = $2\nORDER BY \"time\" DESC NULLS LAST",
 =======
               "sql" : "SELECT \"id\", \"time\", 1 AS \"__pk\"\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\n  FROM \"orders_2\"\n   INNER JOIN (VALUES (1),\n      (2),\n      (3),\n      (4),\n      (4)) AS \"t\" (\"id\") ON \"orders_2\".\"customerid\" = CAST(\"t\".\"id\" AS BIGINT)) AS \"t0\"\nWHERE \"t0\".\"id\" = $1 AND \"t0\".\"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, '1'",
 >>>>>>> 1644ef409 (Bump to flink 1.19)
+=======
+              "sql" : "SELECT \"id\", \"time\", 1 AS \"__pk\"\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\n  FROM \"orders_2\"\n   INNER JOIN (VALUES (1),\n      (2),\n      (3),\n      (4),\n      (4)) AS \"t\" (\"id\") ON \"orders_2\".\"customerid\" = CAST(\"t\".\"id\" AS BIGINT)) AS \"t0\"\nWHERE \"t0\".\"id\" = $1 AND \"t0\".\"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, 1",
+>>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -872,10 +892,14 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
 <<<<<<< HEAD
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t\".\"pk\"\n  FROM \"orders_2\",\n    (VALUES  (1, 1),\n      (2, 2),\n      (3, 3),\n      (4, 4),\n      (4, 4)) AS \"t\" (\"id\", \"pk\")) AS \"t0\"\nWHERE \"t0\".\"id\" = $1 AND \"t0\".\"time\" = $2 AND \"t0\".\"pk\" = $3\nORDER BY \"time\" DESC NULLS LAST",
 =======
               "sql" : "SELECT \"id\", \"time\", \"pk\", 1 AS \"__pk\"\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t\".\"pk\"\n  FROM \"orders_2\",\n    (VALUES (1, 1),\n      (2, 2),\n      (3, 3),\n      (4, 4),\n      (4, 4)) AS \"t\" (\"id\", \"pk\")) AS \"t0\"\nWHERE \"t0\".\"id\" = $1 AND \"t0\".\"time\" = $2 AND \"t0\".\"pk\" = $3\nORDER BY \"time\" DESC NULLS LAST, '1'",
 >>>>>>> 1644ef409 (Bump to flink 1.19)
+=======
+              "sql" : "SELECT \"id\", \"time\", \"pk\", 1 AS \"__pk\"\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t\".\"pk\"\n  FROM \"orders_2\",\n    (VALUES (1, 1),\n      (2, 2),\n      (3, 3),\n      (4, 4),\n      (4, 4)) AS \"t\" (\"id\", \"pk\")) AS \"t0\"\nWHERE \"t0\".\"id\" = $1 AND \"t0\".\"time\" = $2 AND \"t0\".\"pk\" = $3\nORDER BY \"time\" DESC NULLS LAST, 1",
+>>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1206,10 +1230,14 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
 <<<<<<< HEAD
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST",
 =======
               "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, '1'",
 >>>>>>> 1644ef409 (Bump to flink 1.19)
+=======
+              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, 1",
+>>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",

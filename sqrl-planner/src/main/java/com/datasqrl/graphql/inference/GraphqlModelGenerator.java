@@ -197,7 +197,6 @@ public class GraphqlModelGenerator extends SchemaWalker {
     for (Entry<IdentifiedQuery, QueryTemplate> entry : queries) {
       JdbcQuery queryBase;
       APIQuery query = (APIQuery) entry.getKey();
-      CalciteHacks.resetToSqrlMetadataProvider();
 
       String queryStr;
       if (entry.getValue().getDatabase().toLowerCase().equalsIgnoreCase("snowflake")) {

@@ -802,10 +802,14 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
 <<<<<<< HEAD
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"customers_3\"\nWHERE \"id\" = $1",
 =======
               "sql" : "SELECT \"id\", \"first_name\", \"last_name\", \"email\", \"ip_address\", \"country\", \"changed_on\", \"timestamp\", \"country0\", 1 AS \"__pk\"\nFROM \"customers_3\"\nWHERE \"id\" = $1\nORDER BY '1'",
 >>>>>>> 1644ef409 (Bump to flink 1.19)
+=======
+              "sql" : "SELECT \"id\", \"first_name\", \"last_name\", \"email\", \"ip_address\", \"country\", \"changed_on\", \"timestamp\", \"country0\", 1 AS \"__pk\"\nFROM \"customers_3\"\nWHERE \"id\" = $1\nORDER BY 1",
+>>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -828,10 +832,14 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
 <<<<<<< HEAD
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"order_stats_1\"\nWHERE \"__pk1_id\" = $1",
 =======
               "sql" : "SELECT \"__pk1_id\", \"first_order\", \"total_spend\", \"total_saved\", \"num_orders\", \"__timestamp\", 1 AS \"__pk\"\nFROM \"order_stats_1\"\nWHERE \"__pk1_id\" = $1\nORDER BY '1'",
 >>>>>>> 1644ef409 (Bump to flink 1.19)
+=======
+              "sql" : "SELECT \"__pk1_id\", \"first_order\", \"total_spend\", \"total_saved\", \"num_orders\", \"__timestamp\", 1 AS \"__pk\"\nFROM \"order_stats_1\"\nWHERE \"__pk1_id\" = $1\nORDER BY 1",
+>>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "source",
@@ -854,10 +862,14 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
 <<<<<<< HEAD
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"customers_3\"\nWHERE \"id\" = $1",
 =======
               "sql" : "SELECT \"id\", \"first_name\", \"last_name\", \"email\", \"ip_address\", \"country\", \"changed_on\", \"timestamp\", \"country0\", 1 AS \"__pk\"\nFROM \"customers_3\"\nWHERE \"id\" = $1\nORDER BY '1'",
 >>>>>>> 1644ef409 (Bump to flink 1.19)
+=======
+              "sql" : "SELECT \"id\", \"first_name\", \"last_name\", \"email\", \"ip_address\", \"country\", \"changed_on\", \"timestamp\", \"country0\", 1 AS \"__pk\"\nFROM \"customers_3\"\nWHERE \"id\" = $1\nORDER BY 1",
+>>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "source",
@@ -922,10 +934,14 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
 <<<<<<< HEAD
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"past_purchases_1\"\n  WHERE \"__pk1_id\" = $1) AS \"t\"\nWHERE \"productid\" = $2\nORDER BY \"__pk1_id\", \"num_orders\" DESC, \"total_quantity\" DESC",
 =======
               "sql" : "SELECT \"__pk1_id\", \"productid\", \"num_orders\", \"total_quantity\", \"__timestamp\", 1 AS \"__pk\"\nFROM (SELECT *\n  FROM \"past_purchases_1\"\n  WHERE \"__pk1_id\" = $1) AS \"t\"\nWHERE \"productid\" = $2\nORDER BY \"__pk1_id\", \"num_orders\" DESC, \"total_quantity\" DESC, '1'",
 >>>>>>> 1644ef409 (Bump to flink 1.19)
+=======
+              "sql" : "SELECT \"__pk1_id\", \"productid\", \"num_orders\", \"total_quantity\", \"__timestamp\", 1 AS \"__pk\"\nFROM (SELECT *\n  FROM \"past_purchases_1\"\n  WHERE \"__pk1_id\" = $1) AS \"t\"\nWHERE \"productid\" = $2\nORDER BY \"__pk1_id\", \"num_orders\" DESC, \"total_quantity\" DESC, 1",
+>>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "source",
@@ -953,10 +969,14 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
 <<<<<<< HEAD
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"customers_3\"\nWHERE \"id\" = $1",
 =======
               "sql" : "SELECT \"id\", \"first_name\", \"last_name\", \"email\", \"ip_address\", \"country\", \"changed_on\", \"timestamp\", \"country0\", 1 AS \"__pk\"\nFROM \"customers_3\"\nWHERE \"id\" = $1\nORDER BY '1'",
 >>>>>>> 1644ef409 (Bump to flink 1.19)
+=======
+              "sql" : "SELECT \"id\", \"first_name\", \"last_name\", \"email\", \"ip_address\", \"country\", \"changed_on\", \"timestamp\", \"country0\", 1 AS \"__pk\"\nFROM \"customers_3\"\nWHERE \"id\" = $1\nORDER BY 1",
+>>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "source",
@@ -1023,10 +1043,14 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
 <<<<<<< HEAD
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"customers_3\"\nWHERE $1 = \"id\"",
 =======
               "sql" : "SELECT \"id\", \"first_name\", \"last_name\", \"email\", \"ip_address\", \"country\", \"changed_on\", \"timestamp\", \"country0\", 1 AS \"__pk\"\nFROM \"customers_3\"\nWHERE $1 = \"id\"\nORDER BY '1'",
 >>>>>>> 1644ef409 (Bump to flink 1.19)
+=======
+              "sql" : "SELECT \"id\", \"first_name\", \"last_name\", \"email\", \"ip_address\", \"country\", \"changed_on\", \"timestamp\", \"country0\", 1 AS \"__pk\"\nFROM \"customers_3\"\nWHERE $1 = \"id\"\nORDER BY 1",
+>>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "source",
@@ -1049,10 +1073,14 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
 <<<<<<< HEAD
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"totals_1\"\nWHERE \"__pk1_id\" = $1 AND \"__pk3_time\" = $2\nORDER BY \"__pk3_time\" DESC NULLS LAST",
 =======
               "sql" : "SELECT \"__pk1_id\", \"__pk3_time\", \"price\", \"saving\", 1 AS \"__pk\"\nFROM \"totals_1\"\nWHERE \"__pk1_id\" = $1 AND \"__pk3_time\" = $2\nORDER BY \"__pk3_time\" DESC NULLS LAST, '1'",
 >>>>>>> 1644ef409 (Bump to flink 1.19)
+=======
+              "sql" : "SELECT \"__pk1_id\", \"__pk3_time\", \"price\", \"saving\", 1 AS \"__pk\"\nFROM \"totals_1\"\nWHERE \"__pk1_id\" = $1 AND \"__pk3_time\" = $2\nORDER BY \"__pk3_time\" DESC NULLS LAST, 1",
+>>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "source",
@@ -1080,10 +1108,14 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
 <<<<<<< HEAD
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST",
 =======
               "sql" : "SELECT \"id\", \"customerid\", \"time\", \"items\", 1 AS \"__pk\"\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, '1'",
 >>>>>>> 1644ef409 (Bump to flink 1.19)
+=======
+              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"items\", 1 AS \"__pk\"\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, 1",
+>>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "source",
@@ -1127,10 +1159,14 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
 <<<<<<< HEAD
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"spending_1\"\n  WHERE \"__pk1_id\" = $1) AS \"t\"\nWHERE \"week\" = $2\nORDER BY \"__pk1_id\", \"week\" DESC",
 =======
               "sql" : "SELECT \"__pk1_id\", \"week\", \"spend\", \"saved\", 1 AS \"__pk\"\nFROM (SELECT *\n  FROM \"spending_1\"\n  WHERE \"__pk1_id\" = $1) AS \"t\"\nWHERE \"week\" = $2\nORDER BY \"__pk1_id\", \"week\" DESC, '1'",
 >>>>>>> 1644ef409 (Bump to flink 1.19)
+=======
+              "sql" : "SELECT \"__pk1_id\", \"week\", \"spend\", \"saved\", 1 AS \"__pk\"\nFROM (SELECT *\n  FROM \"spending_1\"\n  WHERE \"__pk1_id\" = $1) AS \"t\"\nWHERE \"week\" = $2\nORDER BY \"__pk1_id\", \"week\" DESC, 1",
+>>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "source",
@@ -1184,10 +1220,14 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
 <<<<<<< HEAD
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"customers_3\"\nWHERE \"id\" = $1",
 =======
               "sql" : "SELECT \"id\", \"first_name\", \"last_name\", \"email\", \"ip_address\", \"country\", \"changed_on\", \"timestamp\", \"country0\", 1 AS \"__pk\"\nFROM \"customers_3\"\nWHERE \"id\" = $1\nORDER BY '1'",
 >>>>>>> 1644ef409 (Bump to flink 1.19)
+=======
+              "sql" : "SELECT \"id\", \"first_name\", \"last_name\", \"email\", \"ip_address\", \"country\", \"changed_on\", \"timestamp\", \"country0\", 1 AS \"__pk\"\nFROM \"customers_3\"\nWHERE \"id\" = $1\nORDER BY 1",
+>>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "source",
@@ -1246,10 +1286,14 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
 <<<<<<< HEAD
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"customerswithspending_1\"\nWHERE \"id\" = $1",
 =======
               "sql" : "SELECT \"id\", \"email\", \"spend\", \"__timestamp16\", 1 AS \"__pk\"\nFROM \"customerswithspending_1\"\nWHERE \"id\" = $1\nORDER BY '1'",
 >>>>>>> 1644ef409 (Bump to flink 1.19)
+=======
+              "sql" : "SELECT \"id\", \"email\", \"spend\", \"__timestamp16\", 1 AS \"__pk\"\nFROM \"customerswithspending_1\"\nWHERE \"id\" = $1\nORDER BY 1",
+>>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1288,10 +1332,14 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
 <<<<<<< HEAD
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"highspendingusers_1\"\nWHERE \"id\" = $1",
 =======
               "sql" : "SELECT \"id\", \"email\", \"__timestamp16\", 1 AS \"__pk\"\nFROM \"highspendingusers_1\"\nWHERE \"id\" = $1\nORDER BY '1'",
 >>>>>>> 1644ef409 (Bump to flink 1.19)
+=======
+              "sql" : "SELECT \"id\", \"email\", \"__timestamp16\", 1 AS \"__pk\"\nFROM \"highspendingusers_1\"\nWHERE \"id\" = $1\nORDER BY 1",
+>>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1580,10 +1628,14 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
 <<<<<<< HEAD
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST",
 =======
               "sql" : "SELECT \"id\", \"customerid\", \"time\", \"items\", 1 AS \"__pk\"\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, '1'",
 >>>>>>> 1644ef409 (Bump to flink 1.19)
+=======
+              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"items\", 1 AS \"__pk\"\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, 1",
+>>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1627,10 +1679,14 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
 <<<<<<< HEAD
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"products_3\"\nWHERE \"id\" = $1",
 =======
               "sql" : "SELECT \"id\", \"name\", \"sizing\", \"weight_in_gram\", \"type\", \"category\", \"usda_id\", \"updated\", 1 AS \"__pk\"\nFROM \"products_3\"\nWHERE \"id\" = $1\nORDER BY '1'",
 >>>>>>> 1644ef409 (Bump to flink 1.19)
+=======
+              "sql" : "SELECT \"id\", \"name\", \"sizing\", \"weight_in_gram\", \"type\", \"category\", \"usda_id\", \"updated\", 1 AS \"__pk\"\nFROM \"products_3\"\nWHERE \"id\" = $1\nORDER BY 1",
+>>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1694,10 +1750,14 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
 <<<<<<< HEAD
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"monthly_by_country_1\"\n  WHERE \"__pk1_id\" = $1) AS \"t\"\nWHERE \"country\" = $2 AND \"month\" = $3\nORDER BY \"month\" DESC NULLS LAST",
 =======
               "sql" : "SELECT \"__pk1_id\", \"country\", \"month\", \"quantity\", \"spend\", \"weight\", 1 AS \"__pk\"\nFROM (SELECT *\n  FROM \"monthly_by_country_1\"\n  WHERE \"__pk1_id\" = $1) AS \"t\"\nWHERE \"country\" = $2 AND \"month\" = $3\nORDER BY \"month\" DESC NULLS LAST, '1'",
 >>>>>>> 1644ef409 (Bump to flink 1.19)
+=======
+              "sql" : "SELECT \"__pk1_id\", \"country\", \"month\", \"quantity\", \"spend\", \"weight\", 1 AS \"__pk\"\nFROM (SELECT *\n  FROM \"monthly_by_country_1\"\n  WHERE \"__pk1_id\" = $1) AS \"t\"\nWHERE \"country\" = $2 AND \"month\" = $3\nORDER BY \"month\" DESC NULLS LAST, 1",
+>>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "source",
@@ -1828,10 +1888,14 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
 <<<<<<< HEAD
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"products_3\"\nWHERE \"id\" = $1",
 =======
               "sql" : "SELECT \"id\", \"name\", \"sizing\", \"weight_in_gram\", \"type\", \"category\", \"usda_id\", \"updated\", 1 AS \"__pk\"\nFROM \"products_3\"\nWHERE \"id\" = $1\nORDER BY '1'",
 >>>>>>> 1644ef409 (Bump to flink 1.19)
+=======
+              "sql" : "SELECT \"id\", \"name\", \"sizing\", \"weight_in_gram\", \"type\", \"category\", \"usda_id\", \"updated\", 1 AS \"__pk\"\nFROM \"products_3\"\nWHERE \"id\" = $1\nORDER BY 1",
+>>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "source",

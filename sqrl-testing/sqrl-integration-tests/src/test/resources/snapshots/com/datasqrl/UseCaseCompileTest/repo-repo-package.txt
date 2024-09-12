@@ -261,10 +261,14 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT(DISTINCT $1)], __timestamp=[MAX
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
 <<<<<<< HEAD
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"package_1\"\nWHERE \"name\" = $1",
 =======
               "sql" : "SELECT \"name\", \"_submissionTime\", 1 AS \"__pk\"\nFROM \"package_1\"\nWHERE \"name\" = $1\nORDER BY '1'",
 >>>>>>> 1644ef409 (Bump to flink 1.19)
+=======
+              "sql" : "SELECT \"name\", \"_submissionTime\", 1 AS \"__pk\"\nFROM \"package_1\"\nWHERE \"name\" = $1\nORDER BY 1",
+>>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -476,10 +480,14 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT(DISTINCT $1)], __timestamp=[MAX
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
 <<<<<<< HEAD
+<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"topicsearch_1\"\nWHERE \"topicName\" = $1\nORDER BY \"numPackages\" DESC",
 =======
               "sql" : "SELECT \"topicName\", \"numPackages\", \"__timestamp\", 1 AS \"__pk\"\nFROM \"topicsearch_1\"\nWHERE \"topicName\" = $1\nORDER BY \"numPackages\" DESC, '1'",
 >>>>>>> 1644ef409 (Bump to flink 1.19)
+=======
+              "sql" : "SELECT \"topicName\", \"numPackages\", \"__timestamp\", 1 AS \"__pk\"\nFROM \"topicsearch_1\"\nWHERE \"topicName\" = $1\nORDER BY \"numPackages\" DESC, 1",
+>>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",
