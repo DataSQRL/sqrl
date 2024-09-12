@@ -519,7 +519,7 @@ LogicalProject(__pk1_id=[$0], loan_type_id=[$1], total_amount=[$2], total_loans=
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-              "sql" : "SELECT \"id\", \"customer_id\", \"loan_type_id\", \"amount\", \"duration\", \"application_date\", \"updated_at\", 1 AS \"__pk\"\nFROM \"applications_3\"\nWHERE \"id\" = $1\nORDER BY 1",
+              "sql" : "SELECT *\nFROM \"applications_3\"\nWHERE \"id\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -563,7 +563,7 @@ LogicalProject(__pk1_id=[$0], loan_type_id=[$1], total_amount=[$2], total_loans=
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-              "sql" : "SELECT \"id\", \"customer_id\", \"loan_type_id\", \"amount\", \"duration\", \"application_date\", \"updated_at\", 1 AS \"__pk\"\nFROM \"applications_3\"\nWHERE $1 = \"id\"\nORDER BY 1",
+              "sql" : "SELECT *\nFROM \"applications_3\"\nWHERE $1 = \"id\"",
               "parameters" : [
                 {
                   "type" : "source",
@@ -585,7 +585,7 @@ LogicalProject(__pk1_id=[$0], loan_type_id=[$1], total_amount=[$2], total_loans=
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-              "sql" : "SELECT \"id\", \"name\", \"description\", \"interest_rate\", \"max_amount\", \"min_amount\", \"max_duration\", \"min_duration\", \"updated_at\", 1 AS \"__pk\"\nFROM \"loantypes_3\"\nWHERE $1 = \"id\"\nORDER BY 1",
+              "sql" : "SELECT *\nFROM \"loantypes_3\"\nWHERE $1 = \"id\"",
               "parameters" : [
                 {
                   "type" : "source",
@@ -613,7 +613,7 @@ LogicalProject(__pk1_id=[$0], loan_type_id=[$1], total_amount=[$2], total_loans=
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-              "sql" : "SELECT \"id\", \"first_name\", \"last_name\", \"email\", \"phone\", \"address\", \"date_of_birth\", \"updated_at\", 1 AS \"__pk\"\nFROM \"customers_3\"\nWHERE \"id\" = $1\nORDER BY 1",
+              "sql" : "SELECT *\nFROM \"customers_3\"\nWHERE \"id\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -696,7 +696,7 @@ LogicalProject(__pk1_id=[$0], loan_type_id=[$1], total_amount=[$2], total_loans=
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-              "sql" : "SELECT \"id\", \"name\", \"description\", \"interest_rate\", \"max_amount\", \"min_amount\", \"max_duration\", \"min_duration\", \"updated_at\", 1 AS \"__pk\"\nFROM \"loantypes_3\"\nWHERE \"id\" = $1\nORDER BY 1",
+              "sql" : "SELECT *\nFROM \"loantypes_3\"\nWHERE \"id\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",

@@ -564,7 +564,7 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customer_2\"\nWHERE \"customerid\" = $1 AND \"lastUpdated\" = $2\nORDER BY \"timestamp\" DESC NULLS LAST, 1",
+              "sql" : "SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1 AND \"lastUpdated\" = $2\nORDER BY \"timestamp\" DESC NULLS LAST",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -674,7 +674,7 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"customer\", \"bucket\", \"order_count\", 1 AS \"__pk\"\nFROM \"orderagg1_1\"\nWHERE \"customer\" = $1 AND \"bucket\" = $2\nORDER BY \"bucket\" DESC NULLS LAST, 1",
+              "sql" : "SELECT *\nFROM \"orderagg1_1\"\nWHERE \"customer\" = $1 AND \"bucket\" = $2\nORDER BY \"bucket\" DESC NULLS LAST",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -882,7 +882,7 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"id\", \"time\", \"order_count\", 1 AS \"__pk\"\nFROM \"orderaugment_1\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, 1",
+              "sql" : "SELECT *\nFROM \"orderaugment_1\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -961,7 +961,7 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT \"customer\", \"bucket\", \"order_count\", 1 AS \"__pk\"\n  FROM \"ordernow1_1\"\n  WHERE \"customer\" = $1 AND \"bucket\" = $2) AS \"t0\"\nWHERE CURRENT_TIMESTAMP < (\"bucket\" + INTERVAL '777600' SECOND(9))\nORDER BY \"bucket\" DESC NULLS LAST, \"__pk\"",
+              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"ordernow1_1\"\n  WHERE \"customer\" = $1 AND \"bucket\" = $2) AS \"t\"\nWHERE CURRENT_TIMESTAMP < (\"bucket\" + INTERVAL '777600' SECOND(9))\nORDER BY \"bucket\" DESC NULLS LAST",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1106,7 +1106,7 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT \"bucket\", \"order_count\", 1 AS \"__pk\"\n  FROM \"ordernow2_1\"\n  WHERE \"bucket\" = $1) AS \"t0\"\nWHERE CURRENT_TIMESTAMP < (\"bucket\" + INTERVAL '777600' SECOND(9))\nORDER BY \"bucket\" DESC NULLS LAST, \"__pk\"",
+              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"ordernow2_1\"\n  WHERE \"bucket\" = $1) AS \"t\"\nWHERE CURRENT_TIMESTAMP < (\"bucket\" + INTERVAL '777600' SECOND(9))\nORDER BY \"bucket\" DESC NULLS LAST",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1164,7 +1164,7 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"customer\", \"order_count\", \"_time\", 1 AS \"__pk\"\nFROM \"ordernow3_1\"\nWHERE \"customer\" = $1\nORDER BY 1",
+              "sql" : "SELECT *\nFROM \"ordernow3_1\"\nWHERE \"customer\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1207,7 +1207,7 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, 1",
+              "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1419,7 +1419,7 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"customer\", \"bucket\", \"order_count\", 1 AS \"__pk\"\nFROM \"ordertime1_1\"\nWHERE \"customer\" = $1 AND \"bucket\" = $2\nORDER BY \"bucket\" DESC NULLS LAST, 1",
+              "sql" : "SELECT *\nFROM \"ordertime1_1\"\nWHERE \"customer\" = $1 AND \"bucket\" = $2\nORDER BY \"bucket\" DESC NULLS LAST",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1938,7 +1938,7 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"productid\", \"name\", \"description\", \"category\", \"_ingest_time\", 1 AS \"__pk\"\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3 AND \"category\" = $4\nORDER BY \"_ingest_time\" DESC NULLS LAST, 1",
+              "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3 AND \"category\" = $4\nORDER BY \"_ingest_time\" DESC NULLS LAST",
               "parameters" : [
                 {
                   "type" : "arg",

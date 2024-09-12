@@ -141,7 +141,7 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"timeSec\", \"number\", \"volume\", 1 AS \"__pk\"\nFROM \"ordercount_1\"\nWHERE \"timeSec\" = $1\nORDER BY \"timeSec\" DESC NULLS LAST, 1",
+              "sql" : "SELECT *\nFROM \"ordercount_1\"\nWHERE \"timeSec\" = $1\nORDER BY \"timeSec\" DESC NULLS LAST",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -204,7 +204,7 @@ LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] optio
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"items\", \"_source_time\", 1 AS \"__pk\"\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"_source_time\" DESC NULLS LAST, 1",
+              "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"_source_time\" DESC NULLS LAST",
               "parameters" : [
                 {
                   "type" : "arg",

@@ -193,7 +193,7 @@ LogicalTableScan(table=[[event_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"_uuid\", \"ID\", \"EPOCH_TIMESTAMP\", \"SOME_VALUE\", \"TIMESTAMP\", \"event_time\", 1 AS \"__pk\"\nFROM \"data_2\"\nWHERE \"ID\" = $1\nORDER BY \"TIMESTAMP\" DESC NULLS LAST, 1",
+              "sql" : "SELECT *\nFROM \"data_2\"\nWHERE \"ID\" = $1\nORDER BY \"TIMESTAMP\" DESC NULLS LAST",
               "parameters" : [
                 {
                   "type" : "arg",

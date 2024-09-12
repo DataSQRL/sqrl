@@ -110,6 +110,8 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
     Pair<List<OptimizerHint>,List<SqlHint>> analyzedHints = OptimizerHint.fromSqlHints(hints, errors);
     //TODO: put other SQLHints back on the relnode after we are done, i.e. pass them through
     SqrlConverterConfig.SqrlConverterConfigBuilder configBuilder = SqrlConverterConfig.builder();
+    //Add default primary key if it has none
+    configBuilder.addDefaultPrimaryKey(true);
     //Apply only generic optimizer hints (pipeline optimization happens in the DAGPlanner)
     StreamUtil.filterByClass(analyzedHints.getKey(), ConverterHint.class)
         .forEach(h -> h.add2Config(configBuilder, errors));

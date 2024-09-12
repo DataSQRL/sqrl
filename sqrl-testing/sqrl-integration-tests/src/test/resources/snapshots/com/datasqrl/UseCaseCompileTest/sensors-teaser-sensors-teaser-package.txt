@@ -162,7 +162,7 @@ LogicalTableScan(table=[[sensorreading_1]], hints=[[[WatermarkHint inheritPath:[
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-              "sql" : "SELECT \"sensorid\", \"maxTemp\", \"_timeSec\", 1 AS \"__pk\"\nFROM \"sensormaxtemp_1\"\nWHERE \"sensorid\" = $1\nORDER BY 1",
+              "sql" : "SELECT *\nFROM \"sensormaxtemp_1\"\nWHERE \"sensorid\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
