@@ -413,7 +413,7 @@ LogicalProject(customerid=[$0], timestamp=[$4], name=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customer_2\"\nWHERE \"customerid\" = $1 AND \"lastUpdated\" = $2\nORDER BY \"timestamp\" DESC NULLS LAST, 1",
+              "sql" : "SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1 AND \"lastUpdated\" = $2\nORDER BY \"timestamp\" DESC NULLS LAST",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -523,7 +523,7 @@ LogicalProject(customerid=[$0], timestamp=[$4], name=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customerbymultiple_1\"\nWHERE \"customerid\" = $1 AND \"email\" = $2\nORDER BY 1",
+              "sql" : "SELECT *\nFROM \"customerbymultiple_1\"\nWHERE \"customerid\" = $1 AND \"email\" = $2",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -653,7 +653,7 @@ LogicalProject(customerid=[$0], timestamp=[$4], name=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customerbymultipletime_1\"\nWHERE \"customerid\" = $1 AND \"email\" = $2\nORDER BY 1",
+              "sql" : "SELECT *\nFROM \"customerbymultipletime_1\"\nWHERE \"customerid\" = $1 AND \"email\" = $2",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -798,7 +798,7 @@ LogicalProject(customerid=[$0], timestamp=[$4], name=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customerbytime_1\"\nWHERE \"customerid\" = $1\nORDER BY 1",
+              "sql" : "SELECT *\nFROM \"customerbytime_1\"\nWHERE \"customerid\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -856,7 +856,7 @@ LogicalProject(customerid=[$0], timestamp=[$4], name=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customerbytime2_1\"\nWHERE \"customerid\" = $1\nORDER BY 1",
+              "sql" : "SELECT *\nFROM \"customerbytime2_1\"\nWHERE \"customerid\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -914,7 +914,7 @@ LogicalProject(customerid=[$0], timestamp=[$4], name=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customerbytimeasc_1\"\nWHERE \"customerid\" = $1\nORDER BY 1",
+              "sql" : "SELECT *\nFROM \"customerbytimeasc_1\"\nWHERE \"customerid\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -972,7 +972,7 @@ LogicalProject(customerid=[$0], timestamp=[$4], name=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customerbyupdated_1\"\nWHERE \"customerid\" = $1\nORDER BY 1",
+              "sql" : "SELECT *\nFROM \"customerbyupdated_1\"\nWHERE \"customerid\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1030,7 +1030,7 @@ LogicalProject(customerid=[$0], timestamp=[$4], name=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customerbyupdatedasc_1\"\nWHERE \"customerid\" = $1\nORDER BY 1",
+              "sql" : "SELECT *\nFROM \"customerbyupdatedasc_1\"\nWHERE \"customerid\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1068,7 +1068,7 @@ LogicalProject(customerid=[$0], timestamp=[$4], name=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"customerid\", \"timestamp\", \"name\", 1 AS \"__pk\"\nFROM \"explicitdistinct_1\"\nWHERE \"customerid\" = $1\nORDER BY 1",
+              "sql" : "SELECT *\nFROM \"explicitdistinct_1\"\nWHERE \"customerid\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",

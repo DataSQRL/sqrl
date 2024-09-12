@@ -441,7 +441,7 @@ public class AnnotatedLP implements RelHolder {
         }
         chosenPks.add(newChosenPkIdx);
       }
-      if (input.primaryKey.getLength() == 0) {
+      if (input.primaryKey.getLength() == 0 && config.addDefaultPrimaryKey) {
         //If we don't have a primary key, we add a static one to resolve uniqueness in the database
         chosenPks = List.of(projectIndexes.size());
         projectIndexes.add(PK_LITERAL_IDENTIFIER);

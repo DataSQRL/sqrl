@@ -101,7 +101,7 @@ LogicalTableScan(table=[[myicebergtable_1]])
         },
         {
           "name" : "Query.MyIcebergTable-8",
-          "sql" : "CREATE OR REPLACE VIEW Query.MyIcebergTable-8(id, customer_id, loan_type_id, amount, duration, application_date, updated_at, __pk)\nAS SELECT id, customer_id, loan_type_id, amount, duration, application_date, updated_at, 1 AS __pk\nFROM myicebergtable_1\nWHERE id = ? AND updated_at = ?\nORDER BY updated_at DESC NULLS LAST, 1"
+          "sql" : "CREATE OR REPLACE VIEW Query.MyIcebergTable-8(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM myicebergtable_1\nWHERE id = ? AND updated_at = ?\nORDER BY updated_at DESC NULLS LAST"
         },
         {
           "name" : "Query.MyIcebergTable-7",
@@ -117,7 +117,7 @@ LogicalTableScan(table=[[myicebergtable_1]])
         },
         {
           "name" : "Query.applications-4",
-          "sql" : "CREATE OR REPLACE VIEW Query.applications-4(id, customer_id, loan_type_id, amount, duration, application_date, updated_at, __pk)\nAS SELECT id, customer_id, loan_type_id, amount, duration, application_date, updated_at, 1 AS __pk\nFROM applications_2\nWHERE id = ? AND updated_at = ?\nORDER BY updated_at DESC NULLS LAST, 1"
+          "sql" : "CREATE OR REPLACE VIEW Query.applications-4(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM applications_2\nWHERE id = ? AND updated_at = ?\nORDER BY updated_at DESC NULLS LAST"
         },
         {
           "name" : "Query.applications-3",
@@ -133,7 +133,7 @@ LogicalTableScan(table=[[myicebergtable_1]])
         },
         {
           "name" : "Query.MySnowflakeTable-12",
-          "sql" : "CREATE OR REPLACE VIEW Query.MySnowflakeTable-12(id, customer_id, loan_type_id, amount, duration, application_date, updated_at, __pk)\nAS SELECT id, customer_id, loan_type_id, amount, duration, application_date, updated_at, 1 AS __pk\nFROM myicebergtable_1\nWHERE id = ? AND updated_at = ?\nORDER BY updated_at DESC NULLS LAST, 1"
+          "sql" : "CREATE OR REPLACE VIEW Query.MySnowflakeTable-12(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM myicebergtable_1\nWHERE id = ? AND updated_at = ?\nORDER BY updated_at DESC NULLS LAST"
         },
         {
           "name" : "Query.MySnowflakeTable-11",
@@ -233,7 +233,7 @@ LogicalTableScan(table=[[myicebergtable_1]])
             "query" : {
               "type" : "PagedSnowflakeDbQuery",
               "type" : "PagedSnowflakeDbQuery",
-              "sql" : "SELECT id, customer_id, loan_type_id, amount, duration, application_date, updated_at, 1 AS __pk\nFROM applications_2\nWHERE id = ? AND updated_at = ?\nORDER BY updated_at DESC NULLS LAST, 1",
+              "sql" : "SELECT *\nFROM applications_2\nWHERE id = ? AND updated_at = ?\nORDER BY updated_at DESC NULLS LAST",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -363,7 +363,7 @@ LogicalTableScan(table=[[myicebergtable_1]])
             "query" : {
               "type" : "PagedSnowflakeDbQuery",
               "type" : "PagedSnowflakeDbQuery",
-              "sql" : "SELECT id, customer_id, loan_type_id, amount, duration, application_date, updated_at, 1 AS __pk\nFROM myicebergtable_1\nWHERE id = ? AND updated_at = ?\nORDER BY updated_at DESC NULLS LAST, 1",
+              "sql" : "SELECT *\nFROM myicebergtable_1\nWHERE id = ? AND updated_at = ?\nORDER BY updated_at DESC NULLS LAST",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -462,7 +462,7 @@ LogicalTableScan(table=[[myicebergtable_1]])
             "query" : {
               "type" : "PagedSnowflakeDbQuery",
               "type" : "PagedSnowflakeDbQuery",
-              "sql" : "SELECT id, customer_id, loan_type_id, amount, duration, application_date, updated_at, 1 AS __pk\nFROM myicebergtable_1\nWHERE id = ? AND updated_at = ?\nORDER BY updated_at DESC NULLS LAST, 1",
+              "sql" : "SELECT *\nFROM myicebergtable_1\nWHERE id = ? AND updated_at = ?\nORDER BY updated_at DESC NULLS LAST",
               "parameters" : [
                 {
                   "type" : "arg",
