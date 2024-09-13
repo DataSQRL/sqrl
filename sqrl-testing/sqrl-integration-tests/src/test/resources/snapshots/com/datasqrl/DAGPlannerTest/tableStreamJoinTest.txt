@@ -68,7 +68,7 @@ Schema:
  - _time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
 Plan:
-LogicalProject(cid=[COALESCE($4, 0:BIGINT)], ctime=[COALESCE($7, 0:BIGINT)], id=[$0], name=[$6], customerid=[$1], _time=[$2], __timestamp=[CASE(<($2, $8), $8, $2)])
+LogicalProject(cid=[COALESCE($4, 0:BIGINT)], ctime=[COALESCE($7, 0:BIGINT)], id=[$0], name=[$6], customerid=[$1], _time=[$2], __timestamp=[GREATEST($2, $8)])
   LogicalJoin(condition=[=($1, $4)], joinType=[left]) hints[JoinCostHint options:[STREAM, STREAM, 1, NONE]]
     LogicalTableScan(table=[[orders_2]])
     LogicalTableScan(table=[[customer_2]])
@@ -109,7 +109,7 @@ Schema:
  - _time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
  - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
 Plan:
-LogicalProject(ouuid=[COALESCE($5, 0:BIGINT)], otime=[COALESCE($7, proctime())], id=[$5], name=[$2], customerid=[$6], _customerid0=[$0], _lastUpdated=[$3], _time=[$7], __timestamp=[CASE(<($4, $7), $7, $4)])
+LogicalProject(ouuid=[COALESCE($5, 0:BIGINT)], otime=[COALESCE($7, proctime())], id=[$5], name=[$2], customerid=[$6], _customerid0=[$0], _lastUpdated=[$3], _time=[$7], __timestamp=[GREATEST($4, $7)])
   LogicalJoin(condition=[=($6, $0)], joinType=[left]) hints[JoinCostHint options:[STREAM, STREAM, 1, NONE]]
     LogicalTableScan(table=[[customer_2]])
     LogicalTableScan(table=[[orders_2]])
@@ -127,7 +127,7 @@ Schema:
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
 Plan:
-LogicalProject(lastUpdated=[$3], customerid=[$0], name=[$2], __timestamp=[CASE(<($4, $7), $7, $4)])
+LogicalProject(lastUpdated=[$3], customerid=[$0], name=[$2], __timestamp=[GREATEST($4, $7)])
   LogicalFilter(condition=[AND(IS NULL($5), IS NULL($7))])
     LogicalJoin(condition=[=($6, $0)], joinType=[left]) hints[JoinCostHint options:[STREAM, STREAM, 1, NONE]]
       LogicalTableScan(table=[[customer_2]])
@@ -677,7 +677,7 @@ LogicalTableScan(table=[[product_1]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT COALESCE(\"customer_2\".\"customerid\", 0) AS \"cid\", COALESCE(\"customer_2\".\"lastUpdated\", 0) AS \"ctime\", \"orders_2\".\"id\", \"customer_2\".\"name\", \"orders_2\".\"customerid\", \"orders_2\".\"time\" AS \"_time\", CASE WHEN \"orders_2\".\"time\" < \"customer_2\".\"timestamp\" THEN \"customer_2\".\"timestamp\" ELSE \"orders_2\".\"time\" END AS \"__timestamp\"\nFROM \"orders_2\"\n LEFT JOIN \"customer_2\" ON \"orders_2\".\"customerid\" = \"customer_2\".\"customerid\"\nORDER BY CASE WHEN \"orders_2\".\"time\" < \"customer_2\".\"timestamp\" THEN \"customer_2\".\"timestamp\" ELSE \"orders_2\".\"time\" END DESC NULLS LAST, \"orders_2\".\"id\", \"orders_2\".\"time\", COALESCE(\"customer_2\".\"lastUpdated\", 0)",
+              "sql" : "SELECT COALESCE(\"customer_2\".\"customerid\", 0) AS \"cid\", COALESCE(\"customer_2\".\"lastUpdated\", 0) AS \"ctime\", \"orders_2\".\"id\", \"customer_2\".\"name\", \"orders_2\".\"customerid\", \"orders_2\".\"time\" AS \"_time\", GREATEST(\"orders_2\".\"time\", \"customer_2\".\"timestamp\") AS \"__timestamp\"\nFROM \"orders_2\"\n LEFT JOIN \"customer_2\" ON \"orders_2\".\"customerid\" = \"customer_2\".\"customerid\"\nORDER BY GREATEST(\"orders_2\".\"time\", \"customer_2\".\"timestamp\") DESC NULLS LAST, \"orders_2\".\"id\", \"orders_2\".\"time\", COALESCE(\"customer_2\".\"lastUpdated\", 0)",
               "parameters" : [ ]
             }
           },
@@ -702,7 +702,7 @@ LogicalTableScan(table=[[product_1]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT COALESCE(\"customer_2\".\"customerid\", 0) AS \"cid\", COALESCE(\"customer_2\".\"lastUpdated\", 0) AS \"ctime\", \"orders_2\".\"id\", \"customer_2\".\"name\", \"orders_2\".\"customerid\", \"orders_2\".\"time\" AS \"_time\", CASE WHEN \"orders_2\".\"time\" < \"customer_2\".\"timestamp\" THEN \"customer_2\".\"timestamp\" ELSE \"orders_2\".\"time\" END AS \"__timestamp\"\n  FROM \"orders_2\"\n   LEFT JOIN \"customer_2\" ON \"orders_2\".\"customerid\" = \"customer_2\".\"customerid\") AS \"t\"\nWHERE \"t\".\"id\" = $1\nORDER BY \"__timestamp\" DESC NULLS LAST, \"_time\", \"ctime\"",
+              "sql" : "SELECT *\nFROM (SELECT COALESCE(\"customer_2\".\"customerid\", 0) AS \"cid\", COALESCE(\"customer_2\".\"lastUpdated\", 0) AS \"ctime\", \"orders_2\".\"id\", \"customer_2\".\"name\", \"orders_2\".\"customerid\", \"orders_2\".\"time\" AS \"_time\", GREATEST(\"orders_2\".\"time\", \"customer_2\".\"timestamp\") AS \"__timestamp\"\n  FROM \"orders_2\"\n   LEFT JOIN \"customer_2\" ON \"orders_2\".\"customerid\" = \"customer_2\".\"customerid\") AS \"t\"\nWHERE \"t\".\"id\" = $1\nORDER BY \"__timestamp\" DESC NULLS LAST, \"_time\", \"ctime\"",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -733,7 +733,7 @@ LogicalTableScan(table=[[product_1]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT COALESCE(\"customer_2\".\"customerid\", 0) AS \"cid\", COALESCE(\"customer_2\".\"lastUpdated\", 0) AS \"ctime\", \"orders_2\".\"id\", \"customer_2\".\"name\", \"orders_2\".\"customerid\", \"orders_2\".\"time\" AS \"_time\", CASE WHEN \"orders_2\".\"time\" < \"customer_2\".\"timestamp\" THEN \"customer_2\".\"timestamp\" ELSE \"orders_2\".\"time\" END AS \"__timestamp\"\n  FROM \"orders_2\"\n   LEFT JOIN \"customer_2\" ON \"orders_2\".\"customerid\" = \"customer_2\".\"customerid\") AS \"t\"\nWHERE \"t\".\"ctime\" = $1\nORDER BY \"__timestamp\" DESC NULLS LAST, \"id\", \"_time\"",
+              "sql" : "SELECT *\nFROM (SELECT COALESCE(\"customer_2\".\"customerid\", 0) AS \"cid\", COALESCE(\"customer_2\".\"lastUpdated\", 0) AS \"ctime\", \"orders_2\".\"id\", \"customer_2\".\"name\", \"orders_2\".\"customerid\", \"orders_2\".\"time\" AS \"_time\", GREATEST(\"orders_2\".\"time\", \"customer_2\".\"timestamp\") AS \"__timestamp\"\n  FROM \"orders_2\"\n   LEFT JOIN \"customer_2\" ON \"orders_2\".\"customerid\" = \"customer_2\".\"customerid\") AS \"t\"\nWHERE \"t\".\"ctime\" = $1\nORDER BY \"__timestamp\" DESC NULLS LAST, \"id\", \"_time\"",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -769,7 +769,7 @@ LogicalTableScan(table=[[product_1]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT COALESCE(\"customer_2\".\"customerid\", 0) AS \"cid\", COALESCE(\"customer_2\".\"lastUpdated\", 0) AS \"ctime\", \"orders_2\".\"id\", \"customer_2\".\"name\", \"orders_2\".\"customerid\", \"orders_2\".\"time\" AS \"_time\", CASE WHEN \"orders_2\".\"time\" < \"customer_2\".\"timestamp\" THEN \"customer_2\".\"timestamp\" ELSE \"orders_2\".\"time\" END AS \"__timestamp\"\n  FROM \"orders_2\"\n   LEFT JOIN \"customer_2\" ON \"orders_2\".\"customerid\" = \"customer_2\".\"customerid\") AS \"t\"\nWHERE \"t\".\"ctime\" = $1 AND \"t\".\"id\" = $2\nORDER BY \"__timestamp\" DESC NULLS LAST, \"_time\"",
+              "sql" : "SELECT *\nFROM (SELECT COALESCE(\"customer_2\".\"customerid\", 0) AS \"cid\", COALESCE(\"customer_2\".\"lastUpdated\", 0) AS \"ctime\", \"orders_2\".\"id\", \"customer_2\".\"name\", \"orders_2\".\"customerid\", \"orders_2\".\"time\" AS \"_time\", GREATEST(\"orders_2\".\"time\", \"customer_2\".\"timestamp\") AS \"__timestamp\"\n  FROM \"orders_2\"\n   LEFT JOIN \"customer_2\" ON \"orders_2\".\"customerid\" = \"customer_2\".\"customerid\") AS \"t\"\nWHERE \"t\".\"ctime\" = $1 AND \"t\".\"id\" = $2\nORDER BY \"__timestamp\" DESC NULLS LAST, \"_time\"",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -942,7 +942,7 @@ LogicalTableScan(table=[[product_1]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT COALESCE(\"orders_2\".\"id\", 0) AS \"ouuid\", COALESCE(\"orders_2\".\"time\", PROCTIME()) AS \"otime\", \"orders_2\".\"id\", \"customer_2\".\"name\", \"orders_2\".\"customerid\", \"customer_2\".\"customerid\" AS \"_customerid0\", \"customer_2\".\"lastUpdated\" AS \"_lastUpdated\", \"orders_2\".\"time\" AS \"_time\", CASE WHEN \"customer_2\".\"timestamp\" < \"orders_2\".\"time\" THEN \"orders_2\".\"time\" ELSE \"customer_2\".\"timestamp\" END AS \"__timestamp\"\n  FROM \"customer_2\"\n   LEFT JOIN \"orders_2\" ON \"customer_2\".\"customerid\" = \"orders_2\".\"customerid\") AS \"t\"\nWHERE \"t\".\"ouuid\" = $1\nORDER BY \"__timestamp\" DESC NULLS LAST, \"_customerid0\", \"_lastUpdated\", \"_time\"",
+              "sql" : "SELECT *\nFROM (SELECT COALESCE(\"orders_2\".\"id\", 0) AS \"ouuid\", COALESCE(\"orders_2\".\"time\", PROCTIME()) AS \"otime\", \"orders_2\".\"id\", \"customer_2\".\"name\", \"orders_2\".\"customerid\", \"customer_2\".\"customerid\" AS \"_customerid0\", \"customer_2\".\"lastUpdated\" AS \"_lastUpdated\", \"orders_2\".\"time\" AS \"_time\", GREATEST(\"customer_2\".\"timestamp\", \"orders_2\".\"time\") AS \"__timestamp\"\n  FROM \"customer_2\"\n   LEFT JOIN \"orders_2\" ON \"customer_2\".\"customerid\" = \"orders_2\".\"customerid\") AS \"t\"\nWHERE \"t\".\"ouuid\" = $1\nORDER BY \"__timestamp\" DESC NULLS LAST, \"_customerid0\", \"_lastUpdated\", \"_time\"",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -968,7 +968,7 @@ LogicalTableScan(table=[[product_1]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT COALESCE(\"orders_2\".\"id\", 0) AS \"ouuid\", COALESCE(\"orders_2\".\"time\", PROCTIME()) AS \"otime\", \"orders_2\".\"id\", \"customer_2\".\"name\", \"orders_2\".\"customerid\", \"customer_2\".\"customerid\" AS \"_customerid0\", \"customer_2\".\"lastUpdated\" AS \"_lastUpdated\", \"orders_2\".\"time\" AS \"_time\", CASE WHEN \"customer_2\".\"timestamp\" < \"orders_2\".\"time\" THEN \"orders_2\".\"time\" ELSE \"customer_2\".\"timestamp\" END AS \"__timestamp\"\nFROM \"customer_2\"\n LEFT JOIN \"orders_2\" ON \"customer_2\".\"customerid\" = \"orders_2\".\"customerid\"\nORDER BY CASE WHEN \"customer_2\".\"timestamp\" < \"orders_2\".\"time\" THEN \"orders_2\".\"time\" ELSE \"customer_2\".\"timestamp\" END DESC NULLS LAST, \"customer_2\".\"customerid\", \"customer_2\".\"lastUpdated\", COALESCE(\"orders_2\".\"id\", 0), \"orders_2\".\"time\"",
+              "sql" : "SELECT COALESCE(\"orders_2\".\"id\", 0) AS \"ouuid\", COALESCE(\"orders_2\".\"time\", PROCTIME()) AS \"otime\", \"orders_2\".\"id\", \"customer_2\".\"name\", \"orders_2\".\"customerid\", \"customer_2\".\"customerid\" AS \"_customerid0\", \"customer_2\".\"lastUpdated\" AS \"_lastUpdated\", \"orders_2\".\"time\" AS \"_time\", GREATEST(\"customer_2\".\"timestamp\", \"orders_2\".\"time\") AS \"__timestamp\"\nFROM \"customer_2\"\n LEFT JOIN \"orders_2\" ON \"customer_2\".\"customerid\" = \"orders_2\".\"customerid\"\nORDER BY GREATEST(\"customer_2\".\"timestamp\", \"orders_2\".\"time\") DESC NULLS LAST, \"customer_2\".\"customerid\", \"customer_2\".\"lastUpdated\", COALESCE(\"orders_2\".\"id\", 0), \"orders_2\".\"time\"",
               "parameters" : [ ]
             }
           }
@@ -995,7 +995,7 @@ LogicalTableScan(table=[[product_1]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"customer_2\".\"lastUpdated\", \"customer_2\".\"customerid\", \"customer_2\".\"name\", CASE WHEN \"customer_2\".\"timestamp\" < \"orders_2\".\"time\" THEN \"orders_2\".\"time\" ELSE \"customer_2\".\"timestamp\" END AS \"__timestamp\"\nFROM \"customer_2\"\n LEFT JOIN \"orders_2\" ON \"customer_2\".\"customerid\" = \"orders_2\".\"customerid\"\nWHERE \"orders_2\".\"id\" IS NULL AND \"orders_2\".\"time\" IS NULL\nORDER BY CASE WHEN \"customer_2\".\"timestamp\" < \"orders_2\".\"time\" THEN \"orders_2\".\"time\" ELSE \"customer_2\".\"timestamp\" END DESC NULLS LAST, \"customer_2\".\"customerid\", \"customer_2\".\"lastUpdated\"",
+              "sql" : "SELECT \"customer_2\".\"lastUpdated\", \"customer_2\".\"customerid\", \"customer_2\".\"name\", GREATEST(\"customer_2\".\"timestamp\", \"orders_2\".\"time\") AS \"__timestamp\"\nFROM \"customer_2\"\n LEFT JOIN \"orders_2\" ON \"customer_2\".\"customerid\" = \"orders_2\".\"customerid\"\nWHERE \"orders_2\".\"id\" IS NULL AND \"orders_2\".\"time\" IS NULL\nORDER BY GREATEST(\"customer_2\".\"timestamp\", \"orders_2\".\"time\") DESC NULLS LAST, \"customer_2\".\"customerid\", \"customer_2\".\"lastUpdated\"",
               "parameters" : [ ]
             }
           },
@@ -1025,7 +1025,7 @@ LogicalTableScan(table=[[product_1]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT \"customer_2\".\"lastUpdated\", \"customer_2\".\"customerid\", \"customer_2\".\"name\", CASE WHEN \"customer_2\".\"timestamp\" < \"orders_2\".\"time\" THEN \"orders_2\".\"time\" ELSE \"customer_2\".\"timestamp\" END AS \"__timestamp\"\n  FROM \"customer_2\"\n   LEFT JOIN \"orders_2\" ON \"customer_2\".\"customerid\" = \"orders_2\".\"customerid\"\n  WHERE \"orders_2\".\"id\" IS NULL AND \"orders_2\".\"time\" IS NULL) AS \"t0\"\nWHERE \"t0\".\"lastUpdated\" = $1 AND \"t0\".\"customerid\" = $2\nORDER BY \"__timestamp\" DESC NULLS LAST",
+              "sql" : "SELECT *\nFROM (SELECT \"customer_2\".\"lastUpdated\", \"customer_2\".\"customerid\", \"customer_2\".\"name\", GREATEST(\"customer_2\".\"timestamp\", \"orders_2\".\"time\") AS \"__timestamp\"\n  FROM \"customer_2\"\n   LEFT JOIN \"orders_2\" ON \"customer_2\".\"customerid\" = \"orders_2\".\"customerid\"\n  WHERE \"orders_2\".\"id\" IS NULL AND \"orders_2\".\"time\" IS NULL) AS \"t0\"\nWHERE \"t0\".\"lastUpdated\" = $1 AND \"t0\".\"customerid\" = $2\nORDER BY \"__timestamp\" DESC NULLS LAST",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1061,7 +1061,7 @@ LogicalTableScan(table=[[product_1]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT \"customer_2\".\"lastUpdated\", \"customer_2\".\"customerid\", \"customer_2\".\"name\", CASE WHEN \"customer_2\".\"timestamp\" < \"orders_2\".\"time\" THEN \"orders_2\".\"time\" ELSE \"customer_2\".\"timestamp\" END AS \"__timestamp\"\n  FROM \"customer_2\"\n   LEFT JOIN \"orders_2\" ON \"customer_2\".\"customerid\" = \"orders_2\".\"customerid\"\n  WHERE \"orders_2\".\"id\" IS NULL AND \"orders_2\".\"time\" IS NULL) AS \"t0\"\nWHERE \"t0\".\"lastUpdated\" = $1\nORDER BY \"__timestamp\" DESC NULLS LAST, \"customerid\"",
+              "sql" : "SELECT *\nFROM (SELECT \"customer_2\".\"lastUpdated\", \"customer_2\".\"customerid\", \"customer_2\".\"name\", GREATEST(\"customer_2\".\"timestamp\", \"orders_2\".\"time\") AS \"__timestamp\"\n  FROM \"customer_2\"\n   LEFT JOIN \"orders_2\" ON \"customer_2\".\"customerid\" = \"orders_2\".\"customerid\"\n  WHERE \"orders_2\".\"id\" IS NULL AND \"orders_2\".\"time\" IS NULL) AS \"t0\"\nWHERE \"t0\".\"lastUpdated\" = $1\nORDER BY \"__timestamp\" DESC NULLS LAST, \"customerid\"",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1092,7 +1092,7 @@ LogicalTableScan(table=[[product_1]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT \"customer_2\".\"lastUpdated\", \"customer_2\".\"customerid\", \"customer_2\".\"name\", CASE WHEN \"customer_2\".\"timestamp\" < \"orders_2\".\"time\" THEN \"orders_2\".\"time\" ELSE \"customer_2\".\"timestamp\" END AS \"__timestamp\"\n  FROM \"customer_2\"\n   LEFT JOIN \"orders_2\" ON \"customer_2\".\"customerid\" = \"orders_2\".\"customerid\"\n  WHERE \"orders_2\".\"id\" IS NULL AND \"orders_2\".\"time\" IS NULL) AS \"t0\"\nWHERE \"t0\".\"customerid\" = $1\nORDER BY \"__timestamp\" DESC NULLS LAST, \"lastUpdated\"",
+              "sql" : "SELECT *\nFROM (SELECT \"customer_2\".\"lastUpdated\", \"customer_2\".\"customerid\", \"customer_2\".\"name\", GREATEST(\"customer_2\".\"timestamp\", \"orders_2\".\"time\") AS \"__timestamp\"\n  FROM \"customer_2\"\n   LEFT JOIN \"orders_2\" ON \"customer_2\".\"customerid\" = \"orders_2\".\"customerid\"\n  WHERE \"orders_2\".\"id\" IS NULL AND \"orders_2\".\"time\" IS NULL) AS \"t0\"\nWHERE \"t0\".\"customerid\" = $1\nORDER BY \"__timestamp\" DESC NULLS LAST, \"lastUpdated\"",
               "parameters" : [
                 {
                   "type" : "arg",
