@@ -93,6 +93,20 @@ To use Avro schema, take the Avro schema file and place it into the package with
 
 You don't need to make any modifications to your Avro schema file.
 
+The 'timestamp_mapping.legacy' should be set to false to map timestamp types correctly. See the [flink docs](https://nightlies.apache.org/flink/flink-docs-release-1.20/docs/connectors/table/formats/avro/#timestamp_mapping-legacy) for more details. For example:
+
+```json
+{
+  "version": 1,
+  "flink": {
+    "format": "avro",
+    "connector": "kafka",
+    ...
+    "timestamp_mapping.legacy": false
+  }
+}
+```
+
 ### SQL
 
 :::note

@@ -49,6 +49,8 @@ public interface TableConfig {
 
     Map<String, Object> toMap();
 
+    void setProperty(String key, Object value);
+
     Optional<Format> getFormat();
 
     TableType getTableType();
