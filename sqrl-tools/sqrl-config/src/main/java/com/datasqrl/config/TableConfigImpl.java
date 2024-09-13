@@ -22,6 +22,7 @@ public class TableConfigImpl implements TableConfig {
   public static final String TABLE_KEY = "table";
   public static String METADATA_COLUMN_TYPE_KEY = "type";
   public static String METADATA_COLUMN_ATTRIBUTE_KEY = "attribute";
+  public static String METADATA_VIRTUAL_ATTRIBUTE_KEY = "virtual";
   @NonNull Name name;
   @NonNull SqrlConfig config;
 

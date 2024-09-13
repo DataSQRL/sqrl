@@ -7,6 +7,7 @@ import com.datasqrl.engine.log.Log;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.io.tables.TableSink;
+import com.datasqrl.io.tables.TableType;
 import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.datasqrl.util.StreamUtil;
 import java.net.URL;
@@ -140,6 +141,8 @@ public class PhysicalDAGPlan {
      * This is the Relnode for this query only.
      */
     final RelNode relNode;
+
+    final TableType type;
     public <R, C> R accept(QueryVisitor<R, C> visitor, C context) {
       return visitor.accept(this, context);
     }

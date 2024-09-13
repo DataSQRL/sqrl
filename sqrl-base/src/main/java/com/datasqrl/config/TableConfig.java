@@ -36,6 +36,8 @@ public interface TableConfig {
     Optional<String> getType();
 
     Optional<String> getAttribute();
+
+    Optional<Boolean> getVirtual();
   }
 
   interface MetadataConfig {
@@ -43,6 +45,8 @@ public interface TableConfig {
     List<String> getKeys();
 
     Optional<MetadataEntry> getMetadataEntry(String columnName);
+
+    Map<String, MetadataEntry> toMap();
   }
 
   interface ConnectorConfig {
