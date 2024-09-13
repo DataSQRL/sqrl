@@ -60,7 +60,7 @@ public class FlexibleSchemaHandlingTest {
           ErrorCollector errors = ErrorCollector.root();
           FlexibleTableSchemaHolder tableSchema = new FlexibleTableSchemaHolder(table);
           RelDataType dataType = SchemaToRelDataTypeFactory.load(tableSchema)
-              .map(tableSchema, tableName, errors);
+              .map(tableSchema, null, tableName, errors);
           assertFalse(errors.hasErrors(), errors.toString());
           if (alias.isPresent()) {
             continue;

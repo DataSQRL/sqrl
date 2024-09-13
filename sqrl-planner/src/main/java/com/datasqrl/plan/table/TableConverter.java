@@ -52,7 +52,7 @@ public class TableConverter {
       dataType = ((RelDataTypeTableSchema) tableSchema).getRelDataType();
     } else {
       dataType = SchemaToRelDataTypeFactory.load(tableSchema)
-          .map(tableSchema, tableName, errors);
+          .map(tableSchema, tableConfig, tableName, errors);
     }
     if (dataType==null) {
       throw errors.exception(ErrorCode.SCHEMA_ERROR, "Could not convert schema for table: %s", tableName);

@@ -4,6 +4,7 @@
 package com.datasqrl.io.schema.flexible.converters;
 
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.config.TableConfig;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSchema;
 import com.datasqrl.io.schema.flexible.FlexibleTableConverter;
@@ -22,7 +23,7 @@ public class FlexibleSchemaToRelDataTypeFactory implements SchemaToRelDataTypeFa
   }
 
   @Override
-  public RelDataType map(TableSchema schema, Name tableName, ErrorCollector errors) {
+  public RelDataType map(TableSchema schema, TableConfig tableConfig, Name tableName, ErrorCollector errors) {
     Preconditions.checkArgument(schema instanceof FlexibleTableSchemaHolder);
     FlexibleTableSchemaHolder holder = (FlexibleTableSchemaHolder)schema;
     FlexibleTableConverter converter = new FlexibleTableConverter(holder.getSchema(), tableName);

@@ -5,135 +5,100 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.util.StreamUtil;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Optional;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Field;
 import org.apache.avro.Schema.Type;
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.flink.formats.avro.typeutils.AvroSchemaConverter;
+import org.apache.flink.table.types.DataType;
 
 @AllArgsConstructor
 public class AvroToRelDataTypeConverter {
 
-  private final TypeFactory typeFactory;
   private final ErrorCollector errors;
+  private final Set<Schema> processedSchemas;
+  private final boolean legacyTimestampMapping;
 
-  public AvroToRelDataTypeConverter(ErrorCollector errors) {
-    this(TypeFactory.getTypeFactory(), errors);
+  public AvroToRelDataTypeConverter(ErrorCollector errors, boolean legacyTimestampMapping) {
+    this(errors, Collections.newSetFromMap(new IdentityHashMap<>()), legacyTimestampMapping);
   }
 
   public RelDataType convert(Schema schema) {
-    return convertAvroSchemaToCalciteType(schema, NamePath.ROOT);
+    validateSchema(schema, NamePath.ROOT);
+
+    DataType dataType = AvroSchemaConverter.convertToDataType(schema.toString(false),
+        legacyTimestampMapping);
+
+    TypeFactory typeFactory = TypeFactory.getTypeFactory();
+
+    return typeFactory.createFieldTypeFromLogicalType(
+        dataType.getLogicalType());
   }
 
-  private RelDataType convertAvroSchemaToCalciteType(Schema schema, NamePath path) {
-    RelDataType relType;
+  private void validateSchema(Schema schema, NamePath path) {
+    // Check if the schema has already been processed
+    if (!processedSchemas.add(schema)) {
+      throw errors.exception(ErrorCode.SCHEMA_ERROR, "Recursive schemas are not supported: %s", path);
+    }
+
     switch (schema.getType()) {
       case UNION:
-        boolean containsNull = schema.getTypes().stream().anyMatch(type -> type.getType().equals(Type.NULL));
-        Optional<Schema> innerType;
-        try {
-          innerType = StreamUtil.getOnlyElement(
-              schema.getTypes().stream().filter(type -> !type.getType().equals(Type.NULL)));
-        } catch (IllegalArgumentException e) {
-          errors.fatal(ErrorCode.SCHEMA_ERROR, "Only AVRO unions with a single non-null type are supported, but found multiple types at: %",path);
-          return null;
-        }
-        if (innerType.isEmpty()) {
-          errors.fatal(ErrorCode.SCHEMA_ERROR, "Only AVRO unions with a single non-null type are supported, but found no types at: %",path);
-          return null;
-        }
-        relType = convertAvroSchemaToCalciteType(innerType.get(), path);
-        if (relType==null) return null;
-        if (containsNull) relType = typeFactory.createTypeWithNullability(relType, true);
-        return relType;
-      case RECORD:
-        List<String> fieldNames = new ArrayList<>();
-        List<RelDataType> fieldTypes = new ArrayList<>();
-        for (Field field : schema.getFields()) {
-          relType = convertAvroSchemaToCalciteType(field.schema(), path.concat(
-              Name.system(field.name())));
-          if (relType!=null) {
-            fieldNames.add(field.name());
-            fieldTypes.add(relType);
+        List<Schema> nonNullTypes = new ArrayList<>();
+        for (Schema memberSchema : schema.getTypes()) {
+          if (memberSchema.getType() != Type.NULL) {
+            nonNullTypes.add(memberSchema);
           }
         }
-        if (fieldTypes.isEmpty()) {
-          errors.fatal(ErrorCode.SCHEMA_ERROR, "AVRO record does not contain any valid field at: %",path);
-          return null;
+
+        if (nonNullTypes.size() != 1) {
+          throw errors.exception(ErrorCode.SCHEMA_ERROR,
+              "Only AVRO unions with a single non-null type are supported, but found %d non-null types at: %s",
+              nonNullTypes.size(), path);
         }
-        return notNull(typeFactory.createStructType(fieldTypes, fieldNames));
+
+        Schema innerSchema = nonNullTypes.get(0);
+        validateSchema(innerSchema, path);
+        break;
+      case RECORD:
+        for (Field field : schema.getFields()) {
+          validateSchema(field.schema(),
+              path.concat(Name.system(field.name())));
+        }
+        break;
       case ARRAY:
-        relType = convertAvroSchemaToCalciteType(schema.getElementType(), path);
-        if (relType==null) return null;
-        return notNull(typeFactory.createArrayType(relType, -1));
+        validateSchema(schema.getElementType(), path);
+        break;
       case MAP:
-        relType = convertAvroSchemaToCalciteType(schema.getValueType(), path);
-        if (relType==null) return null;
-        return notNull(typeFactory.createMapType(typeFactory.createSqlType(SqlTypeName.VARCHAR), relType));
-      default: //primitives
-        relType = getPrimitive(schema, path);
-        if (relType!=null) relType = notNull(relType);
-        return relType;
+        validateSchema(schema.getValueType(), path);
+        break;
+      default: // primitives
+        validatePrimitive(schema, path);
+        break;
     }
   }
 
-  private RelDataType getPrimitive(Schema schema, NamePath path) {
+  private void validatePrimitive(Schema schema, NamePath path) {
     switch (schema.getType()) {
       case FIXED:
-        if (logicalTypeEquals(schema, "decimal")) {
-          return notNull(typeFactory.createSqlType(SqlTypeName.DECIMAL));
-        } else {
-          errors.fatal(ErrorCode.SCHEMA_ERROR, "Unrecognized FIXED type in AVRO schema [%s] at: %s", schema, path);
-          return null;
-        }
       case ENUM:
       case STRING:
-        return typeFactory.createSqlType(SqlTypeName.VARCHAR);
       case BYTES:
-        return typeFactory.createSqlType(SqlTypeName.VARBINARY);
       case INT:
-        if (logicalTypeEquals(schema, "date")) {
-          return typeFactory.createSqlType(SqlTypeName.DATE);
-        } else if (logicalTypeEquals(schema, "time-millis")) {
-          return typeFactory.createSqlType(SqlTypeName.TIME);
-        } else {
-          return typeFactory.createSqlType(SqlTypeName.INTEGER);
-        }
       case LONG:
-        if (logicalTypeEquals(schema, "timestamp-millis")) {
-          return TypeFactory.makeTimestampType(typeFactory);
-        } else {
-          return typeFactory.createSqlType(SqlTypeName.BIGINT);
-        }
       case FLOAT:
-        return typeFactory.createSqlType(SqlTypeName.FLOAT);
       case DOUBLE:
-        return typeFactory.createSqlType(SqlTypeName.DOUBLE);
       case BOOLEAN:
-        return typeFactory.createSqlType(SqlTypeName.BOOLEAN);
       case NULL:
-        errors.fatal(ErrorCode.SCHEMA_ERROR, "NULL not supported as type at: %s", path);
-        return null;
+        return;
       default:
-        errors.fatal(ErrorCode.SCHEMA_ERROR, "Unrecognized AVRO Type [%s] at: %s", schema.getType(), path);
-        return null;
+        throw errors.exception(ErrorCode.SCHEMA_ERROR, "Unrecognized AVRO Type [%s] at: %s",
+            schema.getType(), path);
     }
   }
-
-  private static boolean logicalTypeEquals(Schema schema, String typeName) {
-    return schema.getLogicalType()!=null && schema.getLogicalType().getName().equalsIgnoreCase(typeName);
-  }
-
-
-  private RelDataType notNull(RelDataType type) {
-    return typeFactory.createTypeWithNullability(type, false);
-  }
-
-
-
 }

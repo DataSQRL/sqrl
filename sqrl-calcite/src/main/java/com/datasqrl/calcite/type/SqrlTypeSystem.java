@@ -1,6 +1,7 @@
 package com.datasqrl.calcite.type;
 
 import static org.apache.calcite.sql.type.SqlTypeName.DECIMAL;
+import static org.apache.flink.table.planner.utils.ShortcutUtils.unwrapTypeFactory;
 
 import javax.annotation.Nullable;
 import org.apache.calcite.rel.type.RelDataType;
@@ -9,8 +10,11 @@ import org.apache.calcite.rel.type.RelDataTypeFactoryImpl;
 import org.apache.calcite.rel.type.RelDataTypeSystemImpl;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.type.SqlTypeUtil;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
+import org.apache.flink.table.planner.calcite.FlinkTypeSystem;
 import org.apache.flink.table.types.logical.DecimalType;
 import org.apache.flink.table.types.logical.LocalZonedTimestampType;
+import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.TimestampType;
 import org.apache.flink.table.types.logical.utils.LogicalTypeMerging;
 import org.apache.flink.util.function.QuadFunction;
@@ -18,10 +22,11 @@ import org.apache.flink.util.function.QuadFunction;
 
 //TODO: This is a copy of org.apache.flink.table.planner.calcite.FlinkTypeSystem, we'll port to sqrl types soon
 public class SqrlTypeSystem extends RelDataTypeSystemImpl {
-  public static final SqrlTypeSystem INSTANCE =
-      new SqrlTypeSystem();
+  public static final SqrlTypeSystem INSTANCE = new SqrlTypeSystem();
   public static final DecimalType DECIMAL_SYSTEM_DEFAULT =
       new DecimalType(DecimalType.MAX_PRECISION, 18);
+
+  private SqrlTypeSystem() {}
 
   @Override
   public int getMaxNumericPrecision() {
@@ -41,7 +46,7 @@ public class SqrlTypeSystem extends RelDataTypeSystemImpl {
       case VARCHAR:
       case VARBINARY:
         // Calcite will limit the length of the VARCHAR field to 65536
-        return Integer.MAX_VALUE;//Integer.MAX_VALUE;
+        return Integer.MAX_VALUE;
       case TIMESTAMP:
         // by default we support timestamp with microseconds precision (Timestamp(6))
         return TimestampType.DEFAULT_PRECISION;
@@ -60,7 +65,7 @@ public class SqrlTypeSystem extends RelDataTypeSystemImpl {
       case CHAR:
       case VARBINARY:
       case BINARY:
-        return Integer.MAX_VALUE;//Integer.MAX_VALUE;
+        return Integer.MAX_VALUE;
 
       case TIMESTAMP:
         // The maximum precision of TIMESTAMP is 3 in Calcite,
@@ -81,6 +86,21 @@ public class SqrlTypeSystem extends RelDataTypeSystemImpl {
     // this fixes the problem of CASE WHEN with different length string literals but get wrong
     // result with additional space suffix
     return true;
+  }
+
+  @Override
+  public RelDataType deriveAvgAggType(
+      RelDataTypeFactory typeFactory, RelDataType argRelDataType) {
+    LogicalType argType = FlinkTypeFactory.toLogicalType(argRelDataType);
+    LogicalType resultType = LogicalTypeMerging.findAvgAggType(argType);
+    return unwrapTypeFactory(typeFactory).createFieldTypeFromLogicalType(resultType);
+  }
+
+  @Override
+  public RelDataType deriveSumType(RelDataTypeFactory typeFactory, RelDataType argRelDataType) {
+    LogicalType argType = FlinkTypeFactory.toLogicalType(argRelDataType);
+    LogicalType resultType = LogicalTypeMerging.findSumAggType(argType);
+    return unwrapTypeFactory(typeFactory).createFieldTypeFromLogicalType(resultType);
   }
 
   @Override
@@ -171,5 +191,4 @@ public class SqrlTypeSystem extends RelDataTypeSystemImpl {
         && SqlTypeUtil.isExactNumeric(type2)
         && (SqlTypeUtil.isDecimal(type1) || SqlTypeUtil.isDecimal(type2));
   }
-
 }
