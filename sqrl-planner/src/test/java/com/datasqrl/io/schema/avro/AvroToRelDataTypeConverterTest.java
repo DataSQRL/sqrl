@@ -26,7 +26,7 @@ public class AvroToRelDataTypeConverterTest {
   @BeforeEach
   public void setUp() {
     errors = ErrorCollector.root();
-    converter = new AvroToRelDataTypeConverter(errors, true);
+    converter = new AvroToRelDataTypeConverter(errors, false);
   }
 
   @Test
@@ -109,23 +109,35 @@ public class AvroToRelDataTypeConverterTest {
     LogicalTypes.timeMicros().addToSchema(timeMicrosSchema);
     RelDataType timeMicrosType = converter.convert(timeMicrosSchema);
     assertEquals(SqlTypeName.TIME, timeMicrosType.getSqlTypeName());
-    // Note: Flink only supports precision 3, this is converted in the RelDataTypeSystem
-    //  so even though this gets passed 6, the resulting precision will be 3.
     assertEquals(0, timeMicrosType.getPrecision());
 
     // Timestamp (millis)
     Schema timestampMillisSchema = Schema.create(Type.LONG);
     LogicalTypes.timestampMillis().addToSchema(timestampMillisSchema);
     RelDataType timestampMillisType = converter.convert(timestampMillisSchema);
-    assertEquals(SqlTypeName.TIMESTAMP, timestampMillisType.getSqlTypeName());
+    assertEquals(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, timestampMillisType.getSqlTypeName());
     assertEquals(3, timestampMillisType.getPrecision());
 
     // Timestamp (micros)
     Schema timestampMicrosSchema = Schema.create(Type.LONG);
     LogicalTypes.timestampMicros().addToSchema(timestampMicrosSchema);
     RelDataType timestampMicrosType = converter.convert(timestampMicrosSchema);
-    assertEquals(SqlTypeName.TIMESTAMP, timestampMicrosType.getSqlTypeName());
+    assertEquals(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, timestampMicrosType.getSqlTypeName());
     assertEquals(6, timestampMicrosType.getPrecision());
+
+    // Local Timestamp (millis)
+    Schema timestampLocalMillisSchema = Schema.create(Type.LONG);
+    LogicalTypes.localTimestampMillis().addToSchema(timestampLocalMillisSchema);
+    RelDataType timestampLocalMillisType = converter.convert(timestampLocalMillisSchema);
+    assertEquals(SqlTypeName.TIMESTAMP, timestampLocalMillisType.getSqlTypeName());
+    assertEquals(3, timestampLocalMillisType.getPrecision());
+
+    // Local Timestamp (micros)
+    Schema timestampLocalMicrosSchema = Schema.create(Type.LONG);
+    LogicalTypes.localTimestampMicros().addToSchema(timestampLocalMicrosSchema);
+    RelDataType timestampLocalMicrosType = converter.convert(timestampLocalMicrosSchema);
+    assertEquals(SqlTypeName.TIMESTAMP, timestampLocalMicrosType.getSqlTypeName());
+    assertEquals(6, timestampLocalMicrosType.getPrecision());
 
     // UUID
     Schema uuidSchema = Schema.create(Type.STRING);
@@ -313,7 +325,7 @@ public class AvroToRelDataTypeConverterTest {
     RelDataType arrayType = converter.convert(arraySchema);
     assertEquals(SqlTypeName.ARRAY, arrayType.getSqlTypeName());
     RelDataType elementType = arrayType.getComponentType();
-    assertEquals(SqlTypeName.TIMESTAMP, elementType.getSqlTypeName());
+    assertEquals(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, elementType.getSqlTypeName());
     assertEquals(6, elementType.getPrecision());
   }
 
