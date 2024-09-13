@@ -372,15 +372,7 @@ Inputs: tempalert_1
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-<<<<<<< HEAD
-<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"lasthour_1\"\nWHERE \"__pk1_groupId\" = $1 AND \"__pk3_created\" = $2\nORDER BY \"__pk3_created\" DESC NULLS LAST",
-=======
-              "sql" : "SELECT \"__pk1_groupId\", \"__pk3_created\", \"maxTemp\", \"minTemp\", 1 AS \"__pk\"\nFROM \"lasthour_1\"\nWHERE \"__pk1_groupId\" = $1 AND \"__pk3_created\" = $2\nORDER BY \"__pk3_created\" DESC NULLS LAST, '1'",
->>>>>>> 1644ef409 (Bump to flink 1.19)
-=======
-              "sql" : "SELECT \"__pk1_groupId\", \"__pk3_created\", \"maxTemp\", \"minTemp\", 1 AS \"__pk\"\nFROM \"lasthour_1\"\nWHERE \"__pk1_groupId\" = $1 AND \"__pk3_created\" = $2\nORDER BY \"__pk3_created\" DESC NULLS LAST, 1",
->>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "source",
@@ -451,15 +443,7 @@ Inputs: tempalert_1
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-<<<<<<< HEAD
-<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"patientlasthour_1\"\nWHERE \"patientid\" = $1",
-=======
-              "sql" : "SELECT \"patientid\", \"avgTemp\", \"maxTemp\", \"minTemp\", \"_timeMin\", 1 AS \"__pk\"\nFROM \"patientlasthour_1\"\nWHERE \"patientid\" = $1\nORDER BY '1'",
->>>>>>> 1644ef409 (Bump to flink 1.19)
-=======
-              "sql" : "SELECT \"patientid\", \"avgTemp\", \"maxTemp\", \"minTemp\", \"_timeMin\", 1 AS \"__pk\"\nFROM \"patientlasthour_1\"\nWHERE \"patientid\" = $1\nORDER BY 1",
->>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",

@@ -411,15 +411,7 @@ LogicalProject(__pk1_id=[$0], __pk2_customerid=[$1], __pk3_time=[$2], price=[$4]
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-<<<<<<< HEAD
-<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"customer_3\"\nWHERE \"customerid\" = $1",
-=======
-              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"_ingest_time\", 1 AS \"__pk\"\nFROM \"customer_3\"\nWHERE \"customerid\" = $1\nORDER BY '1'",
->>>>>>> 1644ef409 (Bump to flink 1.19)
-=======
-              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"_ingest_time\", 1 AS \"__pk\"\nFROM \"customer_3\"\nWHERE \"customerid\" = $1\nORDER BY 1",
->>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -457,15 +449,7 @@ LogicalProject(__pk1_id=[$0], __pk2_customerid=[$1], __pk3_time=[$2], price=[$4]
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-<<<<<<< HEAD
-<<<<<<< HEAD
               "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"orders_by_day_1\"\n  WHERE \"__pk1_customerid\" = $1) AS \"t\"\nWHERE \"day\" = $2",
-=======
-              "sql" : "SELECT \"__pk1_customerid\", \"day\", \"total_price\", \"total_num\", \"__timestamp\", 1 AS \"__pk\"\nFROM (SELECT *\n  FROM \"orders_by_day_1\"\n  WHERE \"__pk1_customerid\" = $1) AS \"t\"\nWHERE \"day\" = $2\nORDER BY '1'",
->>>>>>> 1644ef409 (Bump to flink 1.19)
-=======
-              "sql" : "SELECT \"__pk1_customerid\", \"day\", \"total_price\", \"total_num\", \"__timestamp\", 1 AS \"__pk\"\nFROM (SELECT *\n  FROM \"orders_by_day_1\"\n  WHERE \"__pk1_customerid\" = $1) AS \"t\"\nWHERE \"day\" = $2\nORDER BY 1",
->>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "source",
@@ -518,15 +502,7 @@ LogicalProject(__pk1_id=[$0], __pk2_customerid=[$1], __pk3_time=[$2], price=[$4]
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-<<<<<<< HEAD
-<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"customer_3\"\nWHERE \"customerid\" = $1",
-=======
-              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"_ingest_time\", 1 AS \"__pk\"\nFROM \"customer_3\"\nWHERE \"customerid\" = $1\nORDER BY '1'",
->>>>>>> 1644ef409 (Bump to flink 1.19)
-=======
-              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"_ingest_time\", 1 AS \"__pk\"\nFROM \"customer_3\"\nWHERE \"customerid\" = $1\nORDER BY 1",
->>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "source",
@@ -837,15 +813,7 @@ LogicalProject(__pk1_id=[$0], __pk2_customerid=[$1], __pk3_time=[$2], price=[$4]
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-<<<<<<< HEAD
-<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"customerid\" = $2 AND \"time\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST",
-=======
-              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\", 1 AS \"__pk\"\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"customerid\" = $2 AND \"time\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, '1'",
->>>>>>> 1644ef409 (Bump to flink 1.19)
-=======
-              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\", 1 AS \"__pk\"\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"customerid\" = $2 AND \"time\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, 1",
->>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -877,15 +845,7 @@ LogicalProject(__pk1_id=[$0], __pk2_customerid=[$1], __pk3_time=[$2], price=[$4]
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-<<<<<<< HEAD
-<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"total_1\"\nWHERE \"__pk1_id\" = $1 AND \"__pk2_customerid\" = $2 AND \"__pk3_time\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST",
-=======
-              "sql" : "SELECT \"__pk1_id\", \"__pk2_customerid\", \"__pk3_time\", \"price\", \"num\", \"discount\", \"_ingest_time\", 1 AS \"__pk\"\nFROM \"total_1\"\nWHERE \"__pk1_id\" = $1 AND \"__pk2_customerid\" = $2 AND \"__pk3_time\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, '1'",
->>>>>>> 1644ef409 (Bump to flink 1.19)
-=======
-              "sql" : "SELECT \"__pk1_id\", \"__pk2_customerid\", \"__pk3_time\", \"price\", \"num\", \"discount\", \"_ingest_time\", 1 AS \"__pk\"\nFROM \"total_1\"\nWHERE \"__pk1_id\" = $1 AND \"__pk2_customerid\" = $2 AND \"__pk3_time\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, 1",
->>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "source",
@@ -917,15 +877,7 @@ LogicalProject(__pk1_id=[$0], __pk2_customerid=[$1], __pk3_time=[$2], price=[$4]
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-<<<<<<< HEAD
-<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"customerid\" = $2 AND \"time\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST",
-=======
-              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\", 1 AS \"__pk\"\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"customerid\" = $2 AND \"time\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, '1'",
->>>>>>> 1644ef409 (Bump to flink 1.19)
-=======
-              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\", 1 AS \"__pk\"\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"customerid\" = $2 AND \"time\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, 1",
->>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "source",
@@ -1082,15 +1034,7 @@ LogicalProject(__pk1_id=[$0], __pk2_customerid=[$1], __pk3_time=[$2], price=[$4]
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-<<<<<<< HEAD
-<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"ordersinline_1\"\nWHERE \"id\" = $1 AND \"customerid\" = $2 AND \"time\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST",
-=======
-              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"price\", \"num\", \"_ingest_time\", 1 AS \"__pk\"\nFROM \"ordersinline_1\"\nWHERE \"id\" = $1 AND \"customerid\" = $2 AND \"time\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, '1'",
->>>>>>> 1644ef409 (Bump to flink 1.19)
-=======
-              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"price\", \"num\", \"_ingest_time\", 1 AS \"__pk\"\nFROM \"ordersinline_1\"\nWHERE \"id\" = $1 AND \"customerid\" = $2 AND \"time\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, 1",
->>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",

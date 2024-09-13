@@ -479,15 +479,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-<<<<<<< HEAD
-<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1 AND \"lastUpdated\" = $2\nORDER BY \"timestamp\" DESC NULLS LAST",
-=======
-              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customer_2\"\nWHERE \"customerid\" = $1 AND \"lastUpdated\" = $2\nORDER BY \"timestamp\" DESC NULLS LAST, '1'",
->>>>>>> 1644ef409 (Bump to flink 1.19)
-=======
-              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customer_2\"\nWHERE \"customerid\" = $1 AND \"lastUpdated\" = $2\nORDER BY \"timestamp\" DESC NULLS LAST, 1",
->>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -612,15 +604,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-<<<<<<< HEAD
-<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"customerdistinct_1\"\nWHERE \"customerid\" = $1",
-=======
-              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customerdistinct_1\"\nWHERE \"customerid\" = $1\nORDER BY '1'",
->>>>>>> 1644ef409 (Bump to flink 1.19)
-=======
-              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customerdistinct_1\"\nWHERE \"customerid\" = $1\nORDER BY 1",
->>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -684,15 +668,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-<<<<<<< HEAD
-<<<<<<< HEAD
               "sql" : "SELECT \"__pk1_customerid\", \"id\", \"_time\"\nFROM (SELECT *\n  FROM (SELECT *\n    FROM (SELECT \"__pk1_customerid\", \"id\", \"_time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"id\" DESC) AS \"_rownum\", RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"id\" DESC) AS \"_rank\", DENSE_RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"id\" DESC) AS \"_denserank\"\n      FROM \"distinctorders_1\") AS \"t\"\n    WHERE \"_rownum\" = \"_rank\" AND \"_denserank\" <= 10) AS \"t0\"\n  WHERE \"__pk1_customerid\" = $1) AS \"t1\"\nWHERE \"id\" = $2",
-=======
-              "sql" : "SELECT \"__pk1_customerid\", \"id\", \"_time\", 1 AS \"__pk\"\nFROM (SELECT *\n  FROM (SELECT *\n    FROM (SELECT \"__pk1_customerid\", \"id\", \"_time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"id\" DESC) AS \"_rownum\", RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"id\" DESC) AS \"_rank\", DENSE_RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"id\" DESC) AS \"_denserank\"\n      FROM \"distinctorders_1\") AS \"t\"\n    WHERE \"_rownum\" = \"_rank\" AND \"_denserank\" <= 10) AS \"t0\"\n  WHERE \"__pk1_customerid\" = $1) AS \"t1\"\nWHERE \"id\" = $2\nORDER BY '1'",
->>>>>>> 1644ef409 (Bump to flink 1.19)
-=======
-              "sql" : "SELECT \"__pk1_customerid\", \"id\", \"_time\", 1 AS \"__pk\"\nFROM (SELECT *\n  FROM (SELECT *\n    FROM (SELECT \"__pk1_customerid\", \"id\", \"_time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"id\" DESC) AS \"_rownum\", RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"id\" DESC) AS \"_rank\", DENSE_RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"id\" DESC) AS \"_denserank\"\n      FROM \"distinctorders_1\") AS \"t\"\n    WHERE \"_rownum\" = \"_rank\" AND \"_denserank\" <= 10) AS \"t0\"\n  WHERE \"__pk1_customerid\" = $1) AS \"t1\"\nWHERE \"id\" = $2\nORDER BY 1",
->>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "source",
@@ -719,15 +695,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-<<<<<<< HEAD
-<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"customerdistinct_1\"\nWHERE \"customerid\" = $1",
-=======
-              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customerdistinct_1\"\nWHERE \"customerid\" = $1\nORDER BY '1'",
->>>>>>> 1644ef409 (Bump to flink 1.19)
-=======
-              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customerdistinct_1\"\nWHERE \"customerid\" = $1\nORDER BY 1",
->>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "source",
@@ -868,15 +836,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-<<<<<<< HEAD
-<<<<<<< HEAD
               "sql" : "SELECT \"__pk1_customerid\", \"id\", \"time\"\nFROM (SELECT *\n  FROM (SELECT *\n    FROM (SELECT \"__pk1_customerid\", \"id\", \"time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_rownum\", RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_rank\", DENSE_RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_denserank\"\n      FROM \"distinctorderstime_1\") AS \"t\"\n    WHERE \"_rownum\" = \"_rank\" AND \"_denserank\" <= 10) AS \"t0\"\n  WHERE \"__pk1_customerid\" = $1) AS \"t1\"\nWHERE \"id\" = $2 AND \"time\" = $3",
-=======
-              "sql" : "SELECT \"__pk1_customerid\", \"id\", \"time\", 1 AS \"__pk\"\nFROM (SELECT *\n  FROM (SELECT *\n    FROM (SELECT \"__pk1_customerid\", \"id\", \"time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_rownum\", RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_rank\", DENSE_RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_denserank\"\n      FROM \"distinctorderstime_1\") AS \"t\"\n    WHERE \"_rownum\" = \"_rank\" AND \"_denserank\" <= 10) AS \"t0\"\n  WHERE \"__pk1_customerid\" = $1) AS \"t1\"\nWHERE \"id\" = $2 AND \"time\" = $3\nORDER BY '1'",
->>>>>>> 1644ef409 (Bump to flink 1.19)
-=======
-              "sql" : "SELECT \"__pk1_customerid\", \"id\", \"time\", 1 AS \"__pk\"\nFROM (SELECT *\n  FROM (SELECT *\n    FROM (SELECT \"__pk1_customerid\", \"id\", \"time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_rownum\", RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_rank\", DENSE_RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_denserank\"\n      FROM \"distinctorderstime_1\") AS \"t\"\n    WHERE \"_rownum\" = \"_rank\" AND \"_denserank\" <= 10) AS \"t0\"\n  WHERE \"__pk1_customerid\" = $1) AS \"t1\"\nWHERE \"id\" = $2 AND \"time\" = $3\nORDER BY 1",
->>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "source",
@@ -908,15 +868,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-<<<<<<< HEAD
-<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"customerdistinct_1\"\nWHERE \"customerid\" = $1",
-=======
-              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customerdistinct_1\"\nWHERE \"customerid\" = $1\nORDER BY '1'",
->>>>>>> 1644ef409 (Bump to flink 1.19)
-=======
-              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customerdistinct_1\"\nWHERE \"customerid\" = $1\nORDER BY 1",
->>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "source",
@@ -995,15 +947,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-<<<<<<< HEAD
-<<<<<<< HEAD
               "sql" : "SELECT *\nFROM (SELECT *\n  FROM (SELECT *\n    FROM (SELECT \"__pk1_customerid\", \"id\", \"time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC) AS \"_rownum\"\n      FROM \"recentorders_1\") AS \"t\"\n    WHERE \"_rownum\" <= 10) AS \"t0\"\n  WHERE \"__pk1_customerid\" = $1) AS \"t1\"\nWHERE \"id\" = $2 AND \"time\" = $3\nORDER BY \"__pk1_customerid\", \"_rownum\"",
-=======
-              "sql" : "SELECT \"__pk1_customerid\", \"id\", \"time\", 1 AS \"__pk\", \"_rownum\"\nFROM (SELECT *\n  FROM (SELECT *\n    FROM (SELECT \"__pk1_customerid\", \"id\", \"time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC) AS \"_rownum\"\n      FROM \"recentorders_1\") AS \"t\"\n    WHERE \"_rownum\" <= 10) AS \"t0\"\n  WHERE \"__pk1_customerid\" = $1) AS \"t1\"\nWHERE \"id\" = $2 AND \"time\" = $3\nORDER BY \"__pk1_customerid\", \"_rownum\", '1'",
->>>>>>> 1644ef409 (Bump to flink 1.19)
-=======
-              "sql" : "SELECT \"__pk1_customerid\", \"id\", \"time\", 1 AS \"__pk\", \"_rownum\"\nFROM (SELECT *\n  FROM (SELECT *\n    FROM (SELECT \"__pk1_customerid\", \"id\", \"time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC) AS \"_rownum\"\n      FROM \"recentorders_1\") AS \"t\"\n    WHERE \"_rownum\" <= 10) AS \"t0\"\n  WHERE \"__pk1_customerid\" = $1) AS \"t1\"\nWHERE \"id\" = $2 AND \"time\" = $3\nORDER BY \"__pk1_customerid\", \"_rownum\", 1",
->>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "source",
@@ -1097,15 +1041,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-<<<<<<< HEAD
-<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"customerdistinct_1\"\nWHERE \"customerid\" = $1",
-=======
-              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customerdistinct_1\"\nWHERE \"customerid\" = $1\nORDER BY '1'",
->>>>>>> 1644ef409 (Bump to flink 1.19)
-=======
-              "sql" : "SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", 1 AS \"__pk\"\nFROM \"customerdistinct_1\"\nWHERE \"customerid\" = $1\nORDER BY 1",
->>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "source",
@@ -1143,15 +1079,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-<<<<<<< HEAD
-<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"customerid_1\"\nWHERE \"customerid\" = $1",
-=======
-              "sql" : "SELECT \"customerid\", \"_timestamp\", 1 AS \"__pk\"\nFROM \"customerid_1\"\nWHERE \"customerid\" = $1\nORDER BY '1'",
->>>>>>> 1644ef409 (Bump to flink 1.19)
-=======
-              "sql" : "SELECT \"customerid\", \"_timestamp\", 1 AS \"__pk\"\nFROM \"customerid_1\"\nWHERE \"customerid\" = $1\nORDER BY 1",
->>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1267,15 +1195,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-<<<<<<< HEAD
-<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"orders_3\"\nWHERE \"id\" = $1",
-=======
-              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\nFROM \"orders_3\"\nWHERE \"id\" = $1\nORDER BY '1'",
->>>>>>> 1644ef409 (Bump to flink 1.19)
-=======
-              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\nFROM \"orders_3\"\nWHERE \"id\" = $1\nORDER BY 1",
->>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1604,15 +1524,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-<<<<<<< HEAD
-<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3 AND \"category\" = $4\nORDER BY \"_ingest_time\" DESC NULLS LAST",
-=======
-              "sql" : "SELECT \"productid\", \"name\", \"description\", \"category\", \"_ingest_time\", 1 AS \"__pk\"\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3 AND \"category\" = $4\nORDER BY \"_ingest_time\" DESC NULLS LAST, '1'",
->>>>>>> 1644ef409 (Bump to flink 1.19)
-=======
-              "sql" : "SELECT \"productid\", \"name\", \"description\", \"category\", \"_ingest_time\", 1 AS \"__pk\"\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3 AND \"category\" = $4\nORDER BY \"_ingest_time\" DESC NULLS LAST, 1",
->>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",

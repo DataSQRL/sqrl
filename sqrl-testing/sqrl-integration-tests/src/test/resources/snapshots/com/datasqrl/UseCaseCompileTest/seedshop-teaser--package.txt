@@ -199,15 +199,7 @@ Inputs: productrevenue_1
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-<<<<<<< HEAD
-<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"customerspending_1\"\nWHERE \"customerid\" = $1 AND \"week\" = $2\nORDER BY \"week\" DESC NULLS LAST",
-=======
-              "sql" : "SELECT \"customerid\", \"week\", \"total\", \"saved\", 1 AS \"__pk\"\nFROM \"customerspending_1\"\nWHERE \"customerid\" = $1 AND \"week\" = $2\nORDER BY \"week\" DESC NULLS LAST, '1'",
->>>>>>> 1644ef409 (Bump to flink 1.19)
-=======
-              "sql" : "SELECT \"customerid\", \"week\", \"total\", \"saved\", 1 AS \"__pk\"\nFROM \"customerspending_1\"\nWHERE \"customerid\" = $1 AND \"week\" = $2\nORDER BY \"week\" DESC NULLS LAST, 1",
->>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -388,15 +380,7 @@ Inputs: productrevenue_1
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-<<<<<<< HEAD
-<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST",
-=======
-              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"productid\", \"quantity\", \"unit_price\", \"discount\", 1 AS \"__pk\"\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, '1'",
->>>>>>> 1644ef409 (Bump to flink 1.19)
-=======
-              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"productid\", \"quantity\", \"unit_price\", \"discount\", 1 AS \"__pk\"\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, 1",
->>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -557,15 +541,7 @@ Inputs: productrevenue_1
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-<<<<<<< HEAD
-<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"productrevenue_1\"\nWHERE \"productid\" = $1 AND \"week\" = $2\nORDER BY \"week\" DESC NULLS LAST",
-=======
-              "sql" : "SELECT \"productid\", \"week\", \"revenue\", 1 AS \"__pk\"\nFROM \"productrevenue_1\"\nWHERE \"productid\" = $1 AND \"week\" = $2\nORDER BY \"week\" DESC NULLS LAST, '1'",
->>>>>>> 1644ef409 (Bump to flink 1.19)
-=======
-              "sql" : "SELECT \"productid\", \"week\", \"revenue\", 1 AS \"__pk\"\nFROM \"productrevenue_1\"\nWHERE \"productid\" = $1 AND \"week\" = $2\nORDER BY \"week\" DESC NULLS LAST, 1",
->>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",

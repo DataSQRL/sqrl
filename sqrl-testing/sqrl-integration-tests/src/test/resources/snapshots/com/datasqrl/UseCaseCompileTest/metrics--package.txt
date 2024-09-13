@@ -239,15 +239,7 @@ type CreatedReading {
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-<<<<<<< HEAD
-<<<<<<< HEAD
               "sql" : "SELECT \"sensorid\", MAX(\"temp\") AS \"maxTemp\", MAX(\"__timestamp\") AS \"__timestamp\"\nFROM \"secreading_1\"\nWHERE \"timeSec\" >= CURRENT_TIMESTAMP - INTERVAL '1' MINUTE * 1\nGROUP BY \"sensorid\"\nHAVING \"sensorid\" = $1",
-=======
-              "sql" : "SELECT \"sensorid\", MAX(\"temp\") AS \"maxTemp\", MAX(\"__timestamp\") AS \"__timestamp\", 1 AS \"__pk\"\nFROM \"secreading_1\"\nWHERE \"timeSec\" >= CURRENT_TIMESTAMP - INTERVAL '1' MINUTE * 1\nGROUP BY \"sensorid\"\nHAVING \"sensorid\" = $1\nORDER BY '1'",
->>>>>>> 1644ef409 (Bump to flink 1.19)
-=======
-              "sql" : "SELECT \"sensorid\", \"maxTemp\", \"__timestamp\", 1 AS \"__pk\"\nFROM (SELECT \"sensorid\", MAX(\"temp\") AS \"maxTemp\", MAX(\"__timestamp\") AS \"__timestamp\"\n  FROM \"secreading_1\"\n  WHERE \"timeSec\" >= CURRENT_TIMESTAMP - INTERVAL '1' MINUTE * 1\n  GROUP BY \"sensorid\"\n  HAVING \"sensorid\" = $1) AS \"t1\"\nORDER BY 1",
->>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",

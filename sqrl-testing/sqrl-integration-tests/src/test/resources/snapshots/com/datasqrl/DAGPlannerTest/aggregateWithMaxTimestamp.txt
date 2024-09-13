@@ -244,15 +244,7 @@ LogicalTableScan(table=[[orders_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-<<<<<<< HEAD
-<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"orderagg1_1\"\nWHERE \"customerid\" = $1",
-=======
-              "sql" : "SELECT \"customerid\", \"count\", \"__timestamp\", 1 AS \"__pk\"\nFROM \"orderagg1_1\"\nWHERE \"customerid\" = $1\nORDER BY '1'",
->>>>>>> 1644ef409 (Bump to flink 1.19)
-=======
-              "sql" : "SELECT \"customerid\", \"count\", \"__timestamp\", 1 AS \"__pk\"\nFROM \"orderagg1_1\"\nWHERE \"customerid\" = $1\nORDER BY 1",
->>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -330,15 +322,7 @@ LogicalTableScan(table=[[orders_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-<<<<<<< HEAD
-<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"orderagg2_1\"\nWHERE \"customerid\" = $1",
-=======
-              "sql" : "SELECT \"customerid\", \"timestamp\", \"count\", 1 AS \"__pk\"\nFROM \"orderagg2_1\"\nWHERE \"customerid\" = $1\nORDER BY '1'",
->>>>>>> 1644ef409 (Bump to flink 1.19)
-=======
-              "sql" : "SELECT \"customerid\", \"timestamp\", \"count\", 1 AS \"__pk\"\nFROM \"orderagg2_1\"\nWHERE \"customerid\" = $1\nORDER BY 1",
->>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -376,15 +360,7 @@ LogicalTableScan(table=[[orders_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-<<<<<<< HEAD
-<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"orderagg3_1\"\nWHERE \"customerid\" = $1",
-=======
-              "sql" : "SELECT \"customerid\", \"count\", \"__timestamp\", 1 AS \"__pk\"\nFROM \"orderagg3_1\"\nWHERE \"customerid\" = $1\nORDER BY '1'",
->>>>>>> 1644ef409 (Bump to flink 1.19)
-=======
-              "sql" : "SELECT \"customerid\", \"count\", \"__timestamp\", 1 AS \"__pk\"\nFROM \"orderagg3_1\"\nWHERE \"customerid\" = $1\nORDER BY 1",
->>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -462,15 +438,7 @@ LogicalTableScan(table=[[orders_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-<<<<<<< HEAD
-<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"orderagg4_1\"\nWHERE \"customerid\" = $1",
-=======
-              "sql" : "SELECT \"customerid\", \"timestamp\", \"count\", 1 AS \"__pk\"\nFROM \"orderagg4_1\"\nWHERE \"customerid\" = $1\nORDER BY '1'",
->>>>>>> 1644ef409 (Bump to flink 1.19)
-=======
-              "sql" : "SELECT \"customerid\", \"timestamp\", \"count\", 1 AS \"__pk\"\nFROM \"orderagg4_1\"\nWHERE \"customerid\" = $1\nORDER BY 1",
->>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -513,15 +481,7 @@ LogicalTableScan(table=[[orders_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-<<<<<<< HEAD
-<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST",
-=======
-              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, '1'",
->>>>>>> 1644ef409 (Bump to flink 1.19)
-=======
-              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, 1",
->>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",
@@ -666,15 +626,7 @@ LogicalTableScan(table=[[orders_2]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-<<<<<<< HEAD
-<<<<<<< HEAD
               "sql" : "SELECT *\nFROM \"ordersstate_1\"\nWHERE \"id\" = $1",
-=======
-              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\nFROM \"ordersstate_1\"\nWHERE \"id\" = $1\nORDER BY '1'",
->>>>>>> 1644ef409 (Bump to flink 1.19)
-=======
-              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", 1 AS \"__pk\"\nFROM \"ordersstate_1\"\nWHERE \"id\" = $1\nORDER BY 1",
->>>>>>> 77e0bf85a (Fix conformance)
               "parameters" : [
                 {
                   "type" : "arg",
