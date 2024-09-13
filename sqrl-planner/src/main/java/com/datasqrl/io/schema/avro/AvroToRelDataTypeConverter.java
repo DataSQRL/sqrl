@@ -6,11 +6,11 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 import lombok.AllArgsConstructor;
-import org.apache.avro.LogicalType;
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Field;
 import org.apache.avro.Schema.Type;
@@ -22,14 +22,13 @@ import org.apache.flink.table.types.DataType;
 public class AvroToRelDataTypeConverter {
 
   private final ErrorCollector errors;
-  private final Map<Schema, RelDataType> typeCache;
+  private final Set<Schema> processedSchemas;
   private final boolean legacyTimestampMapping;
 
   public AvroToRelDataTypeConverter(ErrorCollector errors, boolean legacyTimestampMapping) {
-    this(errors, new IdentityHashMap<>(), legacyTimestampMapping);
+    this(errors, Collections.newSetFromMap(new IdentityHashMap<>()), legacyTimestampMapping);
   }
 
-  //timestamp_mapping.legacy
   public RelDataType convert(Schema schema) {
     validateSchema(schema, NamePath.ROOT);
 
@@ -44,8 +43,8 @@ public class AvroToRelDataTypeConverter {
 
   private void validateSchema(Schema schema, NamePath path) {
     // Check if the schema has already been processed
-    if (typeCache.containsKey(schema)) {
-      throw errors.exception(ErrorCode.SCHEMA_ERROR, "Recursive schema's not yet supported: %s", path);
+    if (!processedSchemas.add(schema)) {
+      throw errors.exception(ErrorCode.SCHEMA_ERROR, "Recursive schemas are not supported: %s", path);
     }
 
     switch (schema.getType()) {
@@ -65,13 +64,8 @@ public class AvroToRelDataTypeConverter {
 
         Schema innerSchema = nonNullTypes.get(0);
         validateSchema(innerSchema, path);
-
-        typeCache.put(schema, null);
         break;
       case RECORD:
-        // Create a placeholder RelDataType and put it in the cache to handle recursion
-        typeCache.put(schema, null);
-
         for (Field field : schema.getFields()) {
           validateSchema(field.schema(),
               path.concat(Name.system(field.name())));
@@ -79,21 +73,17 @@ public class AvroToRelDataTypeConverter {
         break;
       case ARRAY:
         validateSchema(schema.getElementType(), path);
-        typeCache.put(schema, null);
         break;
       case MAP:
         validateSchema(schema.getValueType(), path);
-        typeCache.put(schema, null);
         break;
       default: // primitives
         validatePrimitive(schema, path);
-        typeCache.put(schema, null);
         break;
     }
   }
 
   private void validatePrimitive(Schema schema, NamePath path) {
-    LogicalType logicalType = schema.getLogicalType();
     switch (schema.getType()) {
       case FIXED:
       case ENUM:
