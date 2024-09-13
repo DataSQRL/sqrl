@@ -412,20 +412,9 @@ public class SqrlRexUtil {
     if (colIndexes.size()==1) {
       return rexBuilder.makeInputRef(input, colIndexes.get(0));
     } else { //size >=2
-      int col1Idx = colIndexes.get(0), col2Idx = colIndexes.get(1);
-      Preconditions.checkArgument(col1Idx>=0 && col2Idx >= 0 && col1Idx!=col2Idx);
-      RexInputRef col1 = rexBuilder.makeInputRef(input, col1Idx);
-      RexInputRef col2 = rexBuilder.makeInputRef(input, col2Idx);
-      ArrayList<Integer> remaining = new ArrayList<>(colIndexes.subList(2, colIndexes.size()));
-      if (remaining.isEmpty()) {
-        return rexBuilder.makeCall(SqlStdOperatorTable.CASE, rexBuilder.makeCall(SqlStdOperatorTable.LESS_THAN, col1, col2), col2, col1);
-      } else {
-        return rexBuilder.makeCall(SqlStdOperatorTable.CASE, rexBuilder.makeCall(SqlStdOperatorTable.LESS_THAN, col1, col2),
-            greatestNotNull(ListUtils.union(List.of(col2Idx), remaining), input),
-            greatestNotNull(ListUtils.union(List.of(col1Idx), remaining), input));
-      }
+      RexNode[] args = colIndexes.stream().map(idx -> rexBuilder.makeInputRef(input, idx)).toArray(RexNode[]::new);
+      return rexBuilder.makeCall(DefaultFunctions.GREATEST, args);
     }
-
   }
 
   public RexNode makeInputRef(int colIdx, RelBuilder builder) {
