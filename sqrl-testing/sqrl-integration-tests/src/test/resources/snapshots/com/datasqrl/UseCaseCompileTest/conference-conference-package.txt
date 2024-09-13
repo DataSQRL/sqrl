@@ -12,7 +12,7 @@ Schema:
  - event_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - embedding: RAW('com.datasqrl.vector.FlinkVectorType', 'ADVjb20uZGF0YXNxcmwudmVjdG9yLkZsaW5rVmVjdG9yVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAEALWNvbS5kYXRhc3FybC52ZWN0b3IuRmxpbmtWZWN0b3JUeXBlU2VyaWFsaXplcg==')
 Plan:
-LogicalProject(text=[$0], userid=[$1], _uuid=[$2], event_time=[$3], embedding=[asciiTextTestEmbed($0)]) hints[WatermarkHint options:[3]]
+LogicalProject(text=[$0], userid=[$1], _uuid=[$2], event_time=[$3], embedding=[asciiTextTestEmbed($0)])
   LogicalTableScan(table=[[addinterest_1]])
 
 === Events
@@ -36,7 +36,7 @@ Schema:
  - startTime: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - startTimestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
 Plan:
-LogicalProject(url=[$0], date=[$1], time=[$2], title=[$3], abstract=[$4], location=[$5], speakers=[$6], last_updated=[$7], id=[COALESCE(CAST(REGEXP_EXTRACT($0, '(\d*)$')):BIGINT, 0:BIGINT)], full_text=[CONCAT($3, '\n', $4)], embedding=[asciiTextTestEmbed(CONCAT($3, '\n', $4))], startTime=[CONCAT(TRIM(FLAG(BOTH), ' ', REGEXP_EXTRACT($1, '^[^-]*')), ' ', TRIM(FLAG(BOTH), ' ', REGEXP_EXTRACT($2, '\d\d?:\d\d\s(AM|PM)')))], startTimestamp=[parseTimestamp(CONCAT(CONCAT(TRIM(FLAG(BOTH), ' ', REGEXP_EXTRACT($1, '^[^-]*')), ' ', TRIM(FLAG(BOTH), ' ', REGEXP_EXTRACT($2, '\d\d?:\d\d\s(AM|PM)'))), ' PDT'), 'MMMM d, yyyy h:mm a z')]) hints[WatermarkHint options:[7]]
+LogicalProject(url=[$0], date=[$1], time=[$2], title=[$3], abstract=[$4], location=[$5], speakers=[$6], last_updated=[$7], id=[COALESCE(CAST(REGEXP_EXTRACT($0, '(\d*)$')):BIGINT, 0:BIGINT)], full_text=[CONCAT($3, '\n', $4)], embedding=[asciiTextTestEmbed(CONCAT($3, '\n', $4))], startTime=[CONCAT(TRIM(FLAG(BOTH), ' ', REGEXP_EXTRACT($1, '^[^-]*')), ' ', TRIM(FLAG(BOTH), ' ', REGEXP_EXTRACT($2, '\d\d?:\d\d\s(AM|PM)')))], startTimestamp=[parseTimestamp(CONCAT(CONCAT(TRIM(FLAG(BOTH), ' ', REGEXP_EXTRACT($1, '^[^-]*')), ' ', TRIM(FLAG(BOTH), ' ', REGEXP_EXTRACT($2, '\d\d?:\d\d\s(AM|PM)'))), ' PDT'), 'MMMM d, yyyy h:mm a z')])
   LogicalTableScan(table=[[events_1]])
 
 === Events
@@ -78,7 +78,7 @@ Schema:
  - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - event_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalTableScan(table=[[likes_1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+LogicalTableScan(table=[[likes_1]])
 
 === LikeVector
 ID:     likevector_1

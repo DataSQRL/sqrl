@@ -21,6 +21,8 @@ import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
 import org.apache.calcite.sql.fun.SqlCollectionTableOperator;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.calcite.sql.validate.SqlConformance;
+import org.apache.calcite.sql.validate.SqlConformanceEnum;
 import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
@@ -35,7 +37,8 @@ public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
   static {
     DEFAULT_CONTEXT = SqlDialect.EMPTY_CONTEXT.withDatabaseProduct(DatabaseProduct.POSTGRESQL)
         .withIdentifierQuoteString("\"").withUnquotedCasing(Casing.TO_LOWER)
-        .withDataTypeSystem(POSTGRESQL_TYPE_SYSTEM);
+        .withDataTypeSystem(POSTGRESQL_TYPE_SYSTEM)
+        .withConformance(new PostgresConformance());
     DEFAULT = new ExtendedPostgresSqlDialect(DEFAULT_CONTEXT);
   }
 
@@ -52,6 +55,11 @@ public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
         .collect(Collectors.toMap(JdbcTypeSerializer::getConversionClass,
             JdbcTypeSerializer::dialectTypeName));
     return jdbcTypeSerializer;
+  }
+
+  @Override
+  public SqlConformance getConformance() {
+    return new PostgresConformance();
   }
 
   public SqlDataTypeSpec getCastSpec(RelDataType type) {
@@ -137,5 +145,10 @@ public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
     }
 
     super.unparseCall(writer, call, leftPrec, rightPrec);
+  }
+
+  @Override
+  public boolean supportsGroupByLiteral() {
+    return true;
   }
 }

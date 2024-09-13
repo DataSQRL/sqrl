@@ -39,6 +39,7 @@ import org.apache.calcite.sql.type.SqlTypeUtil;
 import org.apache.calcite.sql.util.SqlBasicVisitor;
 import org.apache.calcite.sql.validate.SqlNameMatcher;
 import org.apache.calcite.sql.validate.SqlNameMatchers;
+import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.util.BarfingInvocationHandler;
 import org.apache.calcite.util.ConversionUtil;
 import org.apache.calcite.util.Glossary;
@@ -76,9 +77,15 @@ import static org.apache.calcite.util.Static.RESOURCE;
 /**
  * Contains utility functions related to SQL parsing, all static.
  *
- * SQRL modifications: Use a different SqlOperatorTable
+ * SQRL modifications: Use a different SqlOperatorTable, use namematcher
  */
 public abstract class SqlUtil {
+  //~ Constants --------------------------------------------------------------
+
+  /** Prefix for generated column aliases. Ends with '$' so that human-written
+   * queries are unlikely to accidentally reference the generated name. */
+  public static final String GENERATED_EXPR_ALIAS_PREFIX = "EXPR$";
+
   //~ Methods ----------------------------------------------------------------
 
   /** Returns the AND of two expressions.
@@ -129,22 +136,22 @@ public abstract class SqlUtil {
       SqlNode node,
       ArrayList<SqlNode> list) {
     switch (node.getKind()) {
-    case JOIN:
-      SqlJoin join = (SqlJoin) node;
-      flatten(
-          join.getLeft(),
-          list);
-      flatten(
-          join.getRight(),
-          list);
-      return;
-    case AS:
-      SqlCall call = (SqlCall) node;
-      flatten(call.operand(0), list);
-      return;
-    default:
-      list.add(node);
-      return;
+      case JOIN:
+        SqlJoin join = (SqlJoin) node;
+        flatten(
+            join.getLeft(),
+            list);
+        flatten(
+            join.getRight(),
+            list);
+        return;
+      case AS:
+        SqlCall call = (SqlCall) node;
+        flatten(call.operand(0), list);
+        return;
+      default:
+        list.add(node);
+        return;
     }
   }
 
@@ -205,7 +212,7 @@ public abstract class SqlUtil {
   public static boolean isNull(SqlNode node) {
     return isNullLiteral(node, false)
         || node.getKind() == SqlKind.CAST
-            && isNull(((SqlCall) node).operand(0));
+        && isNull(((SqlCall) node).operand(0));
   }
 
   /**
@@ -233,17 +240,17 @@ public abstract class SqlUtil {
       return false;
     }
     switch (node.getKind()) {
-    case CAST:
-      // "CAST(e AS type)" is literal if "e" is literal
-      return isLiteral(((SqlCall) node).operand(0), true);
-    case MAP_VALUE_CONSTRUCTOR:
-    case ARRAY_VALUE_CONSTRUCTOR:
-      return ((SqlCall) node).getOperandList().stream()
-          .allMatch(o -> isLiteral(o, true));
-    case DEFAULT:
-      return true; // DEFAULT is always NULL
-    default:
-      return false;
+      case CAST:
+        // "CAST(e AS type)" is literal if "e" is literal
+        return isLiteral(((SqlCall) node).operand(0), true);
+      case MAP_VALUE_CONSTRUCTOR:
+      case ARRAY_VALUE_CONSTRUCTOR:
+        return ((SqlCall) node).getOperandList().stream()
+            .allMatch(o -> isLiteral(o, true));
+      case DEFAULT:
+        return true; // DEFAULT is always NULL
+      default:
+        return false;
     }
   }
 
@@ -313,17 +320,17 @@ public abstract class SqlUtil {
     }
     if (call.operandCount() == 0) {
       switch (call.getOperator().getSyntax()) {
-      case FUNCTION_ID:
-        // For example, the "LOCALTIME" function appears as "LOCALTIME"
-        // when it has 0 args, not "LOCALTIME()".
-        return;
-      case FUNCTION_STAR: // E.g. "COUNT(*)"
-      case FUNCTION: // E.g. "RANK()"
-//      case ORDERED_FUNCTION: // E.g. "STRING_AGG(x)"
-        // fall through - dealt with below
-        break;
-      default:
-        break;
+        case FUNCTION_ID:
+          // For example, the "LOCALTIME" function appears as "LOCALTIME"
+          // when it has 0 args, not "LOCALTIME()".
+          return;
+        case FUNCTION_STAR: // E.g. "COUNT(*)"
+        case FUNCTION: // E.g. "RANK()"
+//        case ORDERED_FUNCTION: // E.g. "STRING_AGG(x)"
+          // fall through - dealt with below
+          break;
+        default:
+          break;
       }
     }
     final SqlWriter.Frame frame =
@@ -334,11 +341,11 @@ public abstract class SqlUtil {
     }
     if (call.operandCount() == 0) {
       switch (call.getOperator().getSyntax()) {
-      case FUNCTION_STAR:
-        writer.sep("*");
-        break;
-      default:
-        break;
+        case FUNCTION_STAR:
+          writer.sep("*");
+          break;
+        default:
+          break;
       }
     }
     for (SqlNode operand : call.getOperandList()) {
@@ -370,6 +377,9 @@ public abstract class SqlUtil {
       boolean asFunctionID) {
     final boolean isUnquotedSimple = identifier.isSimple()
         && !identifier.getParserPosition().isQuoted();
+    final SqlOperator operator = isUnquotedSimple
+        ? SqlValidatorUtil.lookupSqlFunctionByID(SqlStdOperatorTable.instance(), identifier, null)
+        : null;
     boolean unparsedAsFunc = false;
     final SqlWriter.Frame frame =
         writer.startList(SqlWriter.FrameTypeEnum.IDENTIFIER);
@@ -398,6 +408,7 @@ public abstract class SqlUtil {
         final SqlParserPos pos = identifier.getComponentParserPosition(i);
         if (name.equals("")) {
           writer.print("*");
+          writer.setNeedWhitespace(true);
         } else {
           writer.identifier(name, pos.isQuoted());
         }
@@ -601,12 +612,12 @@ public abstract class SqlUtil {
     opTab.lookupOperatorOverloads(funcName, category, syntax, sqlOperators,
         nameMatcher);
     switch (syntax) {
-    case FUNCTION:
-      return Iterators.filter(sqlOperators.iterator(),
-          Predicates.instanceOf(SqlFunction.class));
-    default:
-      return Iterators.filter(sqlOperators.iterator(),
-          operator -> Objects.requireNonNull(operator, "operator").getSyntax() == syntax);
+      case FUNCTION:
+        return Iterators.filter(sqlOperators.iterator(),
+            Predicates.instanceOf(SqlFunction.class));
+      default:
+        return Iterators.filter(sqlOperators.iterator(),
+            operator -> Objects.requireNonNull(operator, "operator").getSyntax() == syntax);
     }
   }
 
@@ -787,43 +798,51 @@ public abstract class SqlUtil {
    */
   public static SqlNode getSelectListItem(SqlNode query, int i) {
     switch (query.getKind()) {
-    case SELECT:
-      SqlSelect select = (SqlSelect) query;
-      final SqlNode from = stripAs(select.getFrom());
-      if (from != null && from.getKind() == SqlKind.VALUES) {
-        // They wrote "VALUES (x, y)", but the validator has
-        // converted this into "SELECT * FROM VALUES (x, y)".
-        return getSelectListItem(from, i);
-      }
-      final SqlNodeList fields = select.getSelectList();
+      case SELECT:
+        SqlSelect select = (SqlSelect) query;
+        final SqlNode from = stripAs(select.getFrom());
+        if (from != null && from.getKind() == SqlKind.VALUES) {
+          // They wrote "VALUES (x, y)", but the validator has
+          // converted this into "SELECT * FROM VALUES (x, y)".
+          return getSelectListItem(from, i);
+        }
+        final SqlNodeList fields = select.getSelectList();
 
-      assert fields != null : "fields must not be null in " + select;
-      // Range check the index to avoid index out of range.  This
-      // could be expanded to actually check to see if the select
-      // list is a "*"
-      if (i >= fields.size()) {
-        i = 0;
-      }
-      return fields.get(i);
+        assert fields != null : "fields must not be null in " + select;
+        // Range check the index to avoid index out of range.  This
+        // could be expanded to actually check to see if the select
+        // list is a "*"
+        if (i >= fields.size()) {
+          i = 0;
+        }
+        return fields.get(i);
 
-    case VALUES:
-      SqlCall call = (SqlCall) query;
-      assert call.operandCount() > 0
-          : "VALUES must have at least one operand";
-      final SqlCall row = call.operand(0);
-      assert row.operandCount() > i : "VALUES has too few columns";
-      return row.operand(i);
+      case VALUES:
+        SqlCall call = (SqlCall) query;
+        assert call.operandCount() > 0
+            : "VALUES must have at least one operand";
+        final SqlCall row = call.operand(0);
+        assert row.operandCount() > i : "VALUES has too few columns";
+        return row.operand(i);
 
-    default:
-      // Unexpected type of query.
-      throw Util.needToImplement(query);
+      default:
+        // Unexpected type of query.
+        throw Util.needToImplement(query);
     }
   }
 
   public static String deriveAliasFromOrdinal(int ordinal) {
-    // Use a '$' so that queries can't easily reference the
-    // generated name.
-    return "EXPR$" + ordinal;
+    return GENERATED_EXPR_ALIAS_PREFIX + ordinal;
+  }
+
+  /**
+   * Whether the alias is generated by calcite.
+   * @param alias not null
+   * @return true if alias is generated by calcite, otherwise false
+   */
+  public static boolean isGeneratedAlias(String alias) {
+    assert alias != null;
+    return alias.toUpperCase(Locale.ROOT).startsWith(GENERATED_EXPR_ALIAS_PREFIX);
   }
 
   /**
@@ -937,7 +956,7 @@ public abstract class SqlUtil {
   /**
    * Creates the type of an {@link org.apache.calcite.util.NlsString}.
    *
-   * <p>The type inherits the The NlsString's {@link Charset} and
+   * <p>The type inherits the NlsString's {@link Charset} and
    * {@link SqlCollation}, if they are set, otherwise it gets the system
    * defaults.
    *
@@ -977,24 +996,24 @@ public abstract class SqlUtil {
    */
   public static @Nullable String translateCharacterSetName(String name) {
     switch (name) {
-    case "BIG5":
-      return "Big5";
-    case "LATIN1":
-      return "ISO-8859-1";
-    case "UTF8":
-      return "UTF-8";
-    case "UTF16":
-    case "UTF-16":
-      return ConversionUtil.NATIVE_UTF16_CHARSET_NAME;
-    case "GB2312":
-    case "GBK":
-    case "UTF-16BE":
-    case "UTF-16LE":
-    case "ISO-8859-1":
-    case "UTF-8":
-      return name;
-    default:
-      return null;
+      case "BIG5":
+        return "Big5";
+      case "LATIN1":
+        return "ISO-8859-1";
+      case "UTF8":
+        return "UTF-8";
+      case "UTF16":
+      case "UTF-16":
+        return ConversionUtil.NATIVE_UTF16_CHARSET_NAME;
+      case "GB2312":
+      case "GBK":
+      case "UTF-16BE":
+      case "UTF-16LE":
+      case "ISO-8859-1":
+      case "UTF-8":
+        return name;
+      default:
+        return null;
     }
   }
 
@@ -1101,18 +1120,18 @@ public abstract class SqlUtil {
 
       final RelHint.Builder builder = RelHint.builder(hintName);
       switch (sqlHint.getOptionFormat()) {
-      case EMPTY:
-        // do nothing.
-        break;
-      case LITERAL_LIST:
-      case ID_LIST:
-        builder.hintOptions(sqlHint.getOptionList());
-        break;
-      case KV_LIST:
-        builder.hintOptions(sqlHint.getOptionKVPairs());
-        break;
-      default:
-        throw new AssertionError("Unexpected hint option format");
+        case EMPTY:
+          // do nothing.
+          break;
+        case LITERAL_LIST:
+        case ID_LIST:
+          builder.hintOptions(sqlHint.getOptionList());
+          break;
+        case KV_LIST:
+          builder.hintOptions(sqlHint.getOptionKVPairs());
+          break;
+        default:
+          throw new AssertionError("Unexpected hint option format");
       }
       final RelHint relHint = builder.build();
       if (hintStrategies.validateHint(relHint)) {
@@ -1148,28 +1167,28 @@ public abstract class SqlUtil {
   public static SqlNode createCall(SqlOperator op, SqlParserPos pos,
       List<SqlNode> operands) {
     switch (op.kind) {
-    case OR:
-    case AND:
-      // In RexNode trees, OR and AND have any number of children;
-      // SqlCall requires exactly 2. So, convert to a balanced binary
-      // tree for OR/AND, left-deep binary tree for others.
-      switch (operands.size()) {
-      case 0:
-        return SqlLiteral.createBoolean(op.kind == SqlKind.AND, pos);
-      case 1:
-        return operands.get(0);
-      default:
-        return createBalancedCall(op, pos, operands, 0, operands.size());
-      case 2:
-      case 3:
-      case 4:
-      case 5:
+      case OR:
+      case AND:
+        // In RexNode trees, OR and AND have any number of children;
+        // SqlCall requires exactly 2. So, convert to a balanced binary
+        // tree for OR/AND, left-deep binary tree for others.
+        switch (operands.size()) {
+          case 0:
+            return SqlLiteral.createBoolean(op.kind == SqlKind.AND, pos);
+          case 1:
+            return operands.get(0);
+          default:
+            return createBalancedCall(op, pos, operands, 0, operands.size());
+          case 2:
+          case 3:
+          case 4:
+          case 5:
+            // fall through
+        }
         // fall through
-      }
-      // fall through
-      break;
-    default:
-      break;
+        break;
+      default:
+        break;
     }
     if (op instanceof SqlBinaryOperator && operands.size() > 2) {
       return createLeftCall(op, pos, operands);

@@ -42,7 +42,7 @@ Schema:
  - variant0: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - repoURL: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
 Plan:
-LogicalProject(name=[$0], version=[$1], variant=[$2], latest=[$3], type=[$4], license=[$5], repository=[$6], homepage=[$7], documentation=[$8], readme=[$9], description=[$10], uniqueId=[$11], file=[$12], hash=[$13], authorid=[$14], submissionTime=[$15], keywords=[$16], variant0=[COALESCE($2, 'default')], repoURL=[CONCAT('https://repository.datasqrl.com/', $12)]) hints[WatermarkHint options:[15]]
+LogicalProject(name=[$0], version=[$1], variant=[$2], latest=[$3], type=[$4], license=[$5], repository=[$6], homepage=[$7], documentation=[$8], readme=[$9], description=[$10], uniqueId=[$11], file=[$12], hash=[$13], authorid=[$14], submissionTime=[$15], keywords=[$16], variant0=[COALESCE($2, 'default')], repoURL=[CONCAT('https://repository.datasqrl.com/', $12)])
   LogicalTableScan(table=[[submission_1]])
 
 === TopicPackages

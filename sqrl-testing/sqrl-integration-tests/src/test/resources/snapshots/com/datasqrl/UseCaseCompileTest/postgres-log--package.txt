@@ -13,7 +13,7 @@ Schema:
  - TIMESTAMP: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - event_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalTableScan(table=[[data_1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+LogicalTableScan(table=[[data_1]])
 
 === Event
 ID:     event_2
@@ -28,7 +28,7 @@ Schema:
  - SOME_VALUE: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - event_time: TIMESTAMP(3) NOT NULL
 Plan:
-LogicalTableScan(table=[[event_1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+LogicalTableScan(table=[[event_1]])
 
 === MyEvent
 ID:     myevent_1

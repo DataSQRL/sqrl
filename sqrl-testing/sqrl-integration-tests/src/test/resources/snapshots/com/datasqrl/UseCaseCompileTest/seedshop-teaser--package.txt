@@ -32,7 +32,7 @@ Schema:
  - unit_price: DOUBLE NOT NULL
  - discount: DOUBLE
 Plan:
-LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] options:[2]]]]) hints[WatermarkHint options:[2]]
+LogicalTableScan(table=[[orders_1]])
 
 === ProductRevenue
 ID:     productrevenue_1

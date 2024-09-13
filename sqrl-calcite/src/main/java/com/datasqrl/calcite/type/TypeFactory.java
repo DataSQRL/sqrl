@@ -12,7 +12,6 @@ import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeFactoryImpl;
-import org.apache.calcite.runtime.Geometries;
 import org.apache.calcite.sql.type.BasicSqlType;
 import org.apache.calcite.sql.type.IntervalSqlType;
 import org.apache.calcite.sql.type.SqlTypeName;
@@ -121,8 +120,6 @@ public class TypeFactory extends FlinkTypeFactory {
           case BINARY:
           case VARBINARY:
             return ByteString.class;
-          case GEOMETRY:
-            return Geometries.Geom.class;
           case SYMBOL:
             return Enum.class;
           case ANY:

@@ -10,7 +10,7 @@ Schema:
  - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - userid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
 Plan:
-LogicalTableScan(table=[[click_1]], hints=[[[WatermarkHint inheritPath:[] options:[1]]]]) hints[WatermarkHint options:[1]]
+LogicalTableScan(table=[[click_1]])
 
 === Recommendation
 ID:     recommendation_1

@@ -13,7 +13,7 @@ import org.apache.calcite.schema.TableFunction;
 public interface SqrlTableMacro extends TableFunction {
 
   @Override
-  default Type getElementType(List<Object> list) {
+  default Type getElementType(List<? extends Object> list) {
     return Object[].class;
   }
 

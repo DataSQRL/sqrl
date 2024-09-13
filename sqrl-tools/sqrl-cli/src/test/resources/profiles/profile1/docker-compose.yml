@@ -13,7 +13,7 @@ services:
       - ./database-schema.sql:/docker-entrypoint-initdb.d/init-schema.sql
 
   flink-jobmanager:
-    image: flink:1.16.1-scala_2.12-java11
+    image: flink:1.19.0-scala_2.12-java11
     ports:
       - "8081:8081"
     command: /bin/bash /exec/init-flink.sh jobmanager
@@ -23,7 +23,7 @@ services:
         jobmanager.rpc.address: flink-jobmanager
 
   flink-taskmanager:
-    image: flink:1.16.1-scala_2.12-java11
+    image: flink:1.19.0-scala_2.12-java11
     depends_on:
       - flink-jobmanager
     command: /bin/bash /exec/init-flink.sh taskmanager

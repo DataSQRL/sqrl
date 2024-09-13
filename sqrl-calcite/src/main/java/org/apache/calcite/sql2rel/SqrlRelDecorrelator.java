@@ -52,15 +52,15 @@ public class SqrlRelDecorrelator extends RelDecorrelator {
   }
 
 
-  public Frame decorrelateRel(Correlate rel) {
-    Frame frame = super.decorrelateRel(rel);
-    if (frame == null) {
-      return null;
-    }
-    RelNode newRel = relBuilder.push(frame.r)
-        .hints(rel.getHints())
-        .build();
-
-    return register(rel, newRel, frame.oldToNewOutputs, frame.corDefOutputs);
-  }
+//  public Frame decorrelateRel(Correlate rel) {
+//    Frame frame = super.decorrelateRel(rel);
+//    if (frame == null) {
+//      return null;
+//    }
+//    RelNode newRel = relBuilder.push(frame.r)
+//        .hints(rel.getHints())
+//        .build();
+//
+//    return register(rel, newRel, frame.oldToNewOutputs, frame.corDefOutputs);
+//  }
 }

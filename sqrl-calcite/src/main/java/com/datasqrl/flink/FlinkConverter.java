@@ -30,9 +30,12 @@ import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.TableConfig;
 import org.apache.flink.table.api.ValidationException;
 import org.apache.flink.table.catalog.CatalogManager;
+import org.apache.flink.table.catalog.CatalogStoreHolder;
 import org.apache.flink.table.catalog.ContextResolvedFunction;
 import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.catalog.GenericInMemoryCatalog;
+import org.apache.flink.table.factories.CatalogStoreFactory;
+import org.apache.flink.table.factories.TableFactoryUtil;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.functions.FunctionIdentifier;
 import org.apache.flink.table.functions.FunctionKind;
@@ -48,6 +51,9 @@ import org.apache.flink.table.types.inference.TypeInference;
 public class FlinkConverter {
 
   static EnvironmentSettings settings = EnvironmentSettings.newInstance().build();
+
+  static final CatalogStoreFactory catalogStoreFactory = TableFactoryUtil.findAndCreateCatalogStoreFactory(
+      settings.getConfiguration(), settings.getUserClassLoader());
   public static CatalogManager catalogManager = CatalogManager.newBuilder()
       .classLoader(FlinkConverter.class.getClassLoader())
       .config(TableConfig.getDefault())
@@ -57,6 +63,13 @@ public class FlinkConverter {
               settings.getBuiltInCatalogName(),
               settings.getBuiltInDatabaseName()))
       .executionConfig(new ExecutionConfig())
+      .catalogStoreHolder(CatalogStoreHolder.newBuilder()
+          .catalogStore(catalogStoreFactory.createCatalogStore())
+          .factory(TableFactoryUtil.findAndCreateCatalogStoreFactory(
+                  settings.getConfiguration(), settings.getUserClassLoader()))
+          .config(TableConfig.getDefault())
+          .classloader(settings.getUserClassLoader())
+          .build())
       .build();
 
   TypeFactory typeFactory;

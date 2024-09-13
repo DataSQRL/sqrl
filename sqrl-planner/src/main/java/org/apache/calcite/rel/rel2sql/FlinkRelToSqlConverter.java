@@ -2,13 +2,9 @@ package org.apache.calcite.rel.rel2sql;
 
 import com.datasqrl.engine.stream.flink.sql.calcite.FlinkDialect;
 import com.datasqrl.engine.stream.flink.sql.model.QueryPipelineItem;
-import com.datasqrl.plan.hints.SqrlHint;
-import com.datasqrl.plan.hints.WatermarkHint;
-import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import lombok.Getter;
@@ -218,29 +214,6 @@ public class FlinkRelToSqlConverter extends RelToSqlConverter {
   @Override
   public Result visit(Project project) {
     Result result = super.visit(project);
-    Optional<WatermarkHint> watermark = SqrlHint.fromRel(project, WatermarkHint.CONSTRUCTOR);
-    /*
-     * If there is a watermark, we need to rewrite the expression to remove it since it'll be
-     * pushed into the stream.
-     */
-    if (watermark.isPresent()) {
-      int index = watermark.get().getTimestampIdx();
-
-      //Watermark was moved into the stream, remove the expression.
-      SqlSelect select = (SqlSelect) result.node;
-
-      SqlNode node = select.getSelectList().get(index);
-      //If it is a call, rewrite it to an identifier
-      if (node instanceof SqlCall) {
-        SqlCall call = (SqlCall) node;
-        Preconditions.checkState(call.getKind() == SqlKind.AS);
-        SqlIdentifier identifier = (SqlIdentifier) call.getOperandList().get(1);
-
-        SqlIdentifier newItem = new SqlIdentifier(List.of(//result.neededAlias,
-            identifier.names.get(identifier.names.size() - 1)), SqlParserPos.ZERO);
-        select.getSelectList().set(index, newItem);
-      }
-    }
 
     //Don't remove the project as it may have other expressions
     return result;

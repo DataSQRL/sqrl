@@ -31,7 +31,7 @@ Schema:
  - entries: RecordType(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
  - col1: BIGINT NOT NULL
 Plan:
-LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], col1=[/(+($0, $1), 2)]) hints[WatermarkHint options:[2]]
+LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], col1=[/(+($0, $1), 2)])
   LogicalTableScan(table=[[orders_1]])
 
 >>>flink.json

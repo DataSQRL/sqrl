@@ -34,7 +34,7 @@ Schema:
  - created: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - patients: RecordType(BIGINT NOT NULL patientId) NOT NULL ARRAY NOT NULL
 Plan:
-LogicalTableScan(table=[[observationgroup_1]], hints=[[[WatermarkHint inheritPath:[] options:[2]]]]) hints[WatermarkHint options:[2]]
+LogicalTableScan(table=[[observationgroup_1]])
 
 === PatientHourly
 ID:     patienthourly_1
@@ -96,7 +96,7 @@ Schema:
  - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - event_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalTableScan(table=[[sensorreading_1]], hints=[[[WatermarkHint inheritPath:[] options:[3]]]]) hints[WatermarkHint options:[3]]
+LogicalTableScan(table=[[sensorreading_1]])
 
 === Sensors
 ID:     sensors_2
@@ -110,7 +110,7 @@ Schema:
  - placed: BIGINT NOT NULL
  - placedTimestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalTableScan(table=[[sensors_1]], hints=[[[WatermarkHint inheritPath:[] options:[3]]]]) hints[WatermarkHint options:[3]]
+LogicalTableScan(table=[[sensors_1]])
 
 === Sensors
 ID:     sensors_3

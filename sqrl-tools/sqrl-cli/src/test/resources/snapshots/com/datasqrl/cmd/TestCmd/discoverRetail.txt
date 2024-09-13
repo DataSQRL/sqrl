@@ -1,7 +1,0 @@
->>>output
-customer.schema.yml
-customer.table.json
-orders.schema.yml
-orders.table.json
-product.schema.yml
-product.table.json

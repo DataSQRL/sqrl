@@ -27,7 +27,7 @@ public class NestedRelationship extends Relationship {
   }
 
   @Override
-  public RelDataType getRowType(RelDataTypeFactory relDataTypeFactory, List<Object> list) {
+  public RelDataType getRowType(RelDataTypeFactory relDataTypeFactory, List<? extends Object> list) {
     return getRowType();
   }
 

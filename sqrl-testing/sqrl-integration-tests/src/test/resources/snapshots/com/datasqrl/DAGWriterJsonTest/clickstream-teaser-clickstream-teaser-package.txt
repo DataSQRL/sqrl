@@ -27,7 +27,7 @@
   "type" : "stream",
   "stage" : "flink",
   "inputs" : [ "click_1" ],
-  "plan" : "LogicalTableScan(table=[[click_1]], hints=[[[WatermarkHint inheritPath:[] options:[1]]]]) hints[WatermarkHint options:[1]]\n",
+  "plan" : "LogicalTableScan(table=[[click_1]])\n",
   "sql" : "SELECT *\nFROM `click_1`",
   "primary_key" : [ "url", "userid", "timestamp" ],
   "timestamp" : "timestamp",

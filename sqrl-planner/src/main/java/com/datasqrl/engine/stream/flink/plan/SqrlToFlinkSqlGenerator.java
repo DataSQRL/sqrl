@@ -22,8 +22,6 @@ import com.datasqrl.engine.stream.flink.sql.model.QueryPipelineItem;
 import com.datasqrl.engine.stream.flink.sql.rules.ExpandNestedTableFunctionRule.ExpandNestedTableFunctionRuleConfig;
 import com.datasqrl.engine.stream.flink.sql.rules.ExpandTemporalJoinRule;
 import com.datasqrl.engine.stream.flink.sql.rules.ExpandWindowHintRule.ExpandWindowHintRuleConfig;
-import com.datasqrl.engine.stream.flink.sql.rules.PushDownWatermarkHintRule.PushDownWatermarkHintConfig;
-import com.datasqrl.engine.stream.flink.sql.rules.PushWatermarkHintToTableScanRule.PushWatermarkHintToTableScanConfig;
 import com.datasqrl.engine.stream.flink.sql.rules.ShapeBushyCorrelateJoinRule.ShapeBushyCorrelateJoinRuleConfig;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.plan.global.PhysicalDAGPlan.DatabaseStagePlan;
@@ -498,8 +496,8 @@ public class SqrlToFlinkSqlGenerator {
   }
 
   private RelNode applyFlinkCompatibilityRules(RelNode relNode) {
-    Program program = Programs.hep(List.of(PushDownWatermarkHintConfig.DEFAULT.toRule(),
-            PushWatermarkHintToTableScanConfig.DEFAULT.toRule(), new ExpandTemporalJoinRule(),
+    Program program = Programs.hep(List.of(
+            new ExpandTemporalJoinRule(),
             ExpandWindowHintRuleConfig.DEFAULT.toRule(),
             ShapeBushyCorrelateJoinRuleConfig.DEFAULT.toRule(),
             ExpandNestedTableFunctionRuleConfig.DEFAULT.toRule()

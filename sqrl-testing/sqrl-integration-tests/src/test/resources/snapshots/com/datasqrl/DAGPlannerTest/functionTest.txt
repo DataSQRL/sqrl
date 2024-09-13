@@ -15,7 +15,7 @@ Schema:
  - searchResult: DOUBLE NOT NULL
  - format: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
 Plan:
-LogicalProject(productid=[$0], name=[$1], description=[$2], category=[$3], _ingest_time=[$4], badWords=[bannedWordsFilter($1)], searchResult=[textsearch('garden gnome', $3, $1)], format=[formatting('Go buy: %s in %s with id=%s', $1, $3, CAST($0):VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL)]) hints[WatermarkHint options:[4]]
+LogicalProject(productid=[$0], name=[$1], description=[$2], category=[$3], _ingest_time=[$4], badWords=[bannedWordsFilter($1)], searchResult=[textsearch('garden gnome', $3, $1)], format=[formatting('Go buy: %s in %s with id=%s', $1, $3, CAST($0):VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL)])
   LogicalTableScan(table=[[product_1]])
 
 >>>flink.json
