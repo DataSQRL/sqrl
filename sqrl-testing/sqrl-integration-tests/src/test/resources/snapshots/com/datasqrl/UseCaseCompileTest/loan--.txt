@@ -14,7 +14,7 @@ Schema:
  - application_date: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - updated_at: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalTableScan(table=[[applications_1]], hints=[[[WatermarkHint inheritPath:[] options:[6]]]]) hints[WatermarkHint options:[6]]
+LogicalTableScan(table=[[applications_1]])
 
 === Customers
 ID:     customers_2
@@ -32,7 +32,7 @@ Schema:
  - date_of_birth: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - updated_at: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalTableScan(table=[[customers_1]], hints=[[[WatermarkHint inheritPath:[] options:[7]]]]) hints[WatermarkHint options:[7]]
+LogicalTableScan(table=[[customers_1]])
 
 === LoanTypes
 ID:     loantypes_2
@@ -51,7 +51,7 @@ Schema:
  - min_duration: BIGINT NOT NULL
  - updated_at: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalTableScan(table=[[loantypes_1]], hints=[[[WatermarkHint inheritPath:[] options:[8]]]]) hints[WatermarkHint options:[8]]
+LogicalTableScan(table=[[loantypes_1]])
 
 >>>flink.json
 {

@@ -35,7 +35,7 @@ Schema:
  - discount: DOUBLE
  - total: DOUBLE NOT NULL
 Plan:
-LogicalProject(id=[$0], customerid=[$1], time=[$2], productid=[$3], quantity=[$4], unit_price=[$5], discount=[$6], total=[-(*($4, $5), COALESCE($6, 0.0:DOUBLE))]) hints[WatermarkHint options:[2]]
+LogicalProject(id=[$0], customerid=[$1], time=[$2], productid=[$3], quantity=[$4], unit_price=[$5], discount=[$6], total=[-(*($4, $5), COALESCE($6, 0.0:DOUBLE))])
   LogicalTableScan(table=[[orders_1]])
 
 === ProductRevenue

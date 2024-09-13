@@ -12,7 +12,7 @@ Schema:
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalTableScan(table=[[customer_1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+LogicalTableScan(table=[[customer_1]])
 
 === JoinStream
 ID:     joinstream_1
@@ -50,7 +50,7 @@ Schema:
  - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - entries: RecordType(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
 Plan:
-LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] options:[2]]]]) hints[WatermarkHint options:[2]]
+LogicalTableScan(table=[[orders_1]])
 
 === Product
 ID:     product_2
@@ -65,7 +65,7 @@ Schema:
  - category: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+LogicalTableScan(table=[[product_1]])
 
 >>>flink.json
 {
@@ -94,10 +94,10 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
     "CREATE TEMPORARY TABLE `product_2` (\n  `productid` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`productid`, `name`, `description`, `category`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'product_2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `joinstream_1_1` (\n  `id` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL\n) WITH (\n  'connector' = 'print',\n  'print-identifier' = 'CountStream'\n);",
     "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `customer_1`;",
-    "CREATE VIEW `table$2`\nAS\nSELECT `t`.`id`, `t0`.`name`, `t`.`time` AS `_time`, `t0`.`lastUpdated` AS `_lastUpdated`\nFROM `orders_1` AS `t`\n INNER JOIN `customer_1` AS `t0` ON `t`.`customerid` = `t0`.`customerid`;",
+    "CREATE VIEW `table$2`\nAS\nSELECT `orders_1`.`id`, `customer_1`.`name`, `orders_1`.`time` AS `_time`, `customer_1`.`lastUpdated` AS `_lastUpdated`\nFROM `orders_1`\n INNER JOIN `customer_1` ON `orders_1`.`customerid` = `customer_1`.`customerid`;",
     "CREATE VIEW `table$3`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders_1`;",
     "CREATE VIEW `table$4`\nAS\nSELECT *\nFROM `product_1`;",
-    "CREATE VIEW `table$5`\nAS\nSELECT `t`.`id`, `t0`.`name`\nFROM `orders_1` AS `t`\n INNER JOIN `customer_1` AS `t0` ON `t`.`customerid` = `t0`.`customerid`;",
+    "CREATE VIEW `table$5`\nAS\nSELECT `orders_1`.`id`, `customer_1`.`name`\nFROM `orders_1`\n INNER JOIN `customer_1` ON `orders_1`.`customerid` = `customer_1`.`customerid`;",
     "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer_2`\n(SELECT *\n FROM `table$1`)\n;\nINSERT INTO `joinstream_1`\n (SELECT *\n  FROM `table$2`)\n ;\n INSERT INTO `orders_2`\n  (SELECT *\n   FROM `table$3`)\n  ;\n  INSERT INTO `product_2`\n   (SELECT *\n    FROM `table$4`)\n   ;\n   INSERT INTO `joinstream_1_1`\n    (SELECT *\n     FROM `table$5`)\n    ;\n    END;"
   ],
   "connectors" : [

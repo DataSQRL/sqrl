@@ -4,7 +4,6 @@ import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.global.AnalyzedAPIQuery;
-import com.datasqrl.plan.hints.WatermarkHint;
 import com.datasqrl.plan.local.generate.QueryTableFunction;
 import com.datasqrl.plan.table.AddedColumn;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
@@ -93,12 +92,6 @@ public class SQRLConverter {
       exec.requireRex(column.getBaseExpression()); //Make sure the stage supports the column
       int addedIndex = column.appendTo(builder, index, select);
       select = select.add(addedIndex);
-    }
-    if (addWatermark) { //TODO: remove
-      int timestampIdx = table.getTimestamp().getOnlyCandidate();
-      Preconditions.checkArgument(timestampIdx < physicalTable.getNumColumns());
-      WatermarkHint watermarkHint = new WatermarkHint(timestampIdx);
-      watermarkHint.addTo(builder);
     }
     return new TablePlan(builder.build(), pullups);
   }

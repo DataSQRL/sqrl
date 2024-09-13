@@ -12,7 +12,7 @@ Schema:
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalTableScan(table=[[customer_1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+LogicalTableScan(table=[[customer_1]])
 
 === OrderAgg1
 ID:     orderagg1_1
@@ -58,7 +58,7 @@ Schema:
  - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - entries: RecordType(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
 Plan:
-LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] options:[2]]]]) hints[WatermarkHint options:[2]]
+LogicalTableScan(table=[[orders_1]])
 
 === Ordertime1
 ID:     ordertime1_1
@@ -121,7 +121,7 @@ Schema:
  - category: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+LogicalTableScan(table=[[product_1]])
 
 >>>flink.json
 {
@@ -157,11 +157,11 @@ LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] opti
     "CREATE VIEW `table$3`\nAS\nSELECT COUNT(*) AS `order_count`, 1 AS `__pk`, MAX(`time`) AS `__timestamp`\nFROM `orders_1`;",
     "CREATE VIEW `table$4`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders_1`;",
     "CREATE VIEW `table$5`\nAS\nSELECT `customerid` AS `customer`, ENDOFSECOND(`time`) AS `bucket`, `id`, `time`\nFROM `orders_1`;",
-    "CREATE VIEW `table$6`\nAS\nSELECT `customer`, `window_time` AS `bucket`, COUNT(*) AS `order_count`\nFROM TABLE(TUMBLE(TABLE `table$5`, DESCRIPTOR(`time`), INTERVAL '1' SECOND(4), INTERVAL '0' SECOND(1))) AS `t1`\nGROUP BY `customer`, `window_start`, `window_end`, `window_time`;",
+    "CREATE VIEW `table$6`\nAS\nSELECT `customer`, `window_time` AS `bucket`, COUNT(*) AS `order_count`\nFROM TABLE(TUMBLE(TABLE `table$5`, DESCRIPTOR(`time`), INTERVAL '1' SECOND(4), INTERVAL '0' SECOND(1))) AS `t0`\nGROUP BY `customer`, `window_start`, `window_end`, `window_time`;",
     "CREATE VIEW `table$7`\nAS\nSELECT `customerid` AS `customer`, ENDOFMINUTE(`time`, 1, 15) AS `bucket`, `id`, `time`\nFROM `orders_1`;",
-    "CREATE VIEW `table$8`\nAS\nSELECT `customer`, `window_time` AS `bucket`, COUNT(*) AS `order_count`\nFROM TABLE(TUMBLE(TABLE `table$7`, DESCRIPTOR(`time`), INTERVAL '60' SECOND(5), INTERVAL '15' SECOND(5))) AS `t1`\nGROUP BY `customer`, `window_start`, `window_end`, `window_time`;",
+    "CREATE VIEW `table$8`\nAS\nSELECT `customer`, `window_time` AS `bucket`, COUNT(*) AS `order_count`\nFROM TABLE(TUMBLE(TABLE `table$7`, DESCRIPTOR(`time`), INTERVAL '60' SECOND(5), INTERVAL '15' SECOND(5))) AS `t0`\nGROUP BY `customer`, `window_start`, `window_end`, `window_time`;",
     "CREATE VIEW `table$9`\nAS\nSELECT `customerid` AS `customer`, ENDOFHOUR(`time`, 5, 30) AS `bucket`, `id`, `time`\nFROM `orders_1`;",
-    "CREATE VIEW `table$10`\nAS\nSELECT `customer`, `window_time` AS `bucket`, COUNT(*) AS `order_count`\nFROM TABLE(TUMBLE(TABLE `table$9`, DESCRIPTOR(`time`), INTERVAL '18000' SECOND(8), INTERVAL '1800' SECOND(7))) AS `t1`\nGROUP BY `customer`, `window_start`, `window_end`, `window_time`;",
+    "CREATE VIEW `table$10`\nAS\nSELECT `customer`, `window_time` AS `bucket`, COUNT(*) AS `order_count`\nFROM TABLE(TUMBLE(TABLE `table$9`, DESCRIPTOR(`time`), INTERVAL '18000' SECOND(8), INTERVAL '1800' SECOND(7))) AS `t0`\nGROUP BY `customer`, `window_start`, `window_end`, `window_time`;",
     "CREATE VIEW `table$11`\nAS\nSELECT *\nFROM `product_1`;",
     "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer_2`\n(SELECT *\n FROM `table$1`)\n;\nINSERT INTO `orderagg1_1`\n (SELECT *\n  FROM `table$2`)\n ;\n INSERT INTO `orderagg2_1`\n  (SELECT *\n   FROM `table$3`)\n  ;\n  INSERT INTO `orders_2`\n   (SELECT *\n    FROM `table$4`)\n   ;\n   INSERT INTO `ordertime1_1`\n    (SELECT *\n     FROM `table$6`)\n    ;\n    INSERT INTO `ordertime2_1`\n     (SELECT *\n      FROM `table$8`)\n     ;\n     INSERT INTO `ordertime3_1`\n      (SELECT *\n       FROM `table$10`)\n      ;\n      INSERT INTO `product_2`\n       (SELECT *\n        FROM `table$11`)\n       ;\n       END;"
   ],

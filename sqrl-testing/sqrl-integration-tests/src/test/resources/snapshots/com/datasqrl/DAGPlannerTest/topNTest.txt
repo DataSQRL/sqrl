@@ -12,7 +12,7 @@ Schema:
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalTableScan(table=[[customer_1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+LogicalTableScan(table=[[customer_1]])
 
 === CustomerDistinct
 ID:     customerdistinct_1
@@ -121,7 +121,7 @@ Schema:
  - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - entries: RecordType(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
 Plan:
-LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] options:[2]]]]) hints[WatermarkHint options:[2]]
+LogicalTableScan(table=[[orders_1]])
 
 === Orders
 ID:     orders_3
@@ -153,7 +153,7 @@ Schema:
  - category: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+LogicalTableScan(table=[[product_1]])
 
 === recentOrders
 ID:     recentorders_1
@@ -209,16 +209,16 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
     "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `customer_1`;",
     "CREATE VIEW `table$2`\nAS\nSELECT *\nFROM `customer_1`;",
     "CREATE VIEW `table$3`\nAS\nSELECT `customerid`, `timestamp` AS `_timestamp`\nFROM `customer_1`;",
-    "CREATE VIEW `table$4`\nAS\nSELECT *\nFROM (SELECT `customerid`, `_timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `_timestamp` DESC NULLS LAST) AS `_rownum`\n  FROM (SELECT `customerid`, `timestamp` AS `_timestamp`\n    FROM `customer_1`) AS `t0`) AS `t1`\nWHERE `_rownum` = 1;",
-    "CREATE VIEW `table$5`\nAS\nSELECT `$cor0`.`id`, `t2`.`customerid`, `$cor0`.`time` AS `_time`\nFROM `orders_1` AS `$cor0`\n INNER JOIN `table$4` FOR SYSTEM_TIME AS OF `$cor0`.`time` AS `t2` ON `$cor0`.`customerid` = `t2`.`customerid`;",
-    "CREATE VIEW `table$6`\nAS\nSELECT *\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC) AS `_rownum`\n  FROM `customer_1`) AS `t0`\nWHERE `_rownum` = 1;",
-    "CREATE VIEW `table$7`\nAS\nSELECT `t1`.`customerid` AS `__pk1_customerid`, `$cor2`.`id`, `$cor2`.`time` AS `_time`\nFROM `orders_1` AS `$cor2`\n INNER JOIN `table$6` FOR SYSTEM_TIME AS OF `$cor2`.`time` AS `t1` ON `t1`.`customerid` = `$cor2`.`customerid`;",
-    "CREATE VIEW `table$8`\nAS\nSELECT *\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC) AS `_rownum`\n  FROM `customer_1`) AS `t0`\nWHERE `_rownum` = 1;",
-    "CREATE VIEW `table$9`\nAS\nSELECT `t1`.`customerid` AS `__pk1_customerid`, `$cor4`.`id`, `$cor4`.`time`\nFROM `orders_1` AS `$cor4`\n INNER JOIN `table$8` FOR SYSTEM_TIME AS OF `$cor4`.`time` AS `t1` ON `t1`.`customerid` = `$cor4`.`customerid`;",
+    "CREATE VIEW `table$4`\nAS\nSELECT *\nFROM (SELECT `customerid`, `_timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `_timestamp` DESC NULLS LAST) AS `_rownum`\n  FROM (SELECT `customerid`, `timestamp` AS `_timestamp`\n    FROM `customer_1`) AS `t`) AS `t0`\nWHERE `_rownum` = 1;",
+    "CREATE VIEW `table$5`\nAS\nSELECT `$cor0`.`id`, `t1`.`customerid`, `$cor0`.`time` AS `_time`\nFROM `orders_1` AS `$cor0`\n INNER JOIN `table$4` FOR SYSTEM_TIME AS OF `$cor0`.`time` AS `t1` ON `$cor0`.`customerid` = `t1`.`customerid`;",
+    "CREATE VIEW `table$6`\nAS\nSELECT *\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC) AS `_rownum`\n  FROM `customer_1`) AS `t`\nWHERE `_rownum` = 1;",
+    "CREATE VIEW `table$7`\nAS\nSELECT `t0`.`customerid` AS `__pk1_customerid`, `$cor2`.`id`, `$cor2`.`time` AS `_time`\nFROM `orders_1` AS `$cor2`\n INNER JOIN `table$6` FOR SYSTEM_TIME AS OF `$cor2`.`time` AS `t0` ON `t0`.`customerid` = `$cor2`.`customerid`;",
+    "CREATE VIEW `table$8`\nAS\nSELECT *\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC) AS `_rownum`\n  FROM `customer_1`) AS `t`\nWHERE `_rownum` = 1;",
+    "CREATE VIEW `table$9`\nAS\nSELECT `t0`.`customerid` AS `__pk1_customerid`, `$cor4`.`id`, `$cor4`.`time`\nFROM `orders_1` AS `$cor4`\n INNER JOIN `table$8` FOR SYSTEM_TIME AS OF `$cor4`.`time` AS `t0` ON `t0`.`customerid` = `$cor4`.`customerid`;",
     "CREATE VIEW `table$10`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders_1`;",
     "CREATE VIEW `table$11`\nAS\nSELECT *\nFROM `product_1`;",
-    "CREATE VIEW `table$12`\nAS\nSELECT *\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC) AS `_rownum`\n  FROM `customer_1`) AS `t0`\nWHERE `_rownum` = 1;",
-    "CREATE VIEW `table$13`\nAS\nSELECT `t1`.`customerid` AS `__pk1_customerid`, `$cor6`.`id`, `$cor6`.`time`\nFROM `orders_1` AS `$cor6`\n INNER JOIN `table$12` FOR SYSTEM_TIME AS OF `$cor6`.`time` AS `t1` ON `t1`.`customerid` = `$cor6`.`customerid`;",
+    "CREATE VIEW `table$12`\nAS\nSELECT *\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC) AS `_rownum`\n  FROM `customer_1`) AS `t`\nWHERE `_rownum` = 1;",
+    "CREATE VIEW `table$13`\nAS\nSELECT `t0`.`customerid` AS `__pk1_customerid`, `$cor6`.`id`, `$cor6`.`time`\nFROM `orders_1` AS `$cor6`\n INNER JOIN `table$12` FOR SYSTEM_TIME AS OF `$cor6`.`time` AS `t0` ON `t0`.`customerid` = `$cor6`.`customerid`;",
     "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer_2`\n(SELECT *\n FROM `table$1`)\n;\nINSERT INTO `customerdistinct_1`\n (SELECT *\n  FROM `table$2`)\n ;\n INSERT INTO `customerid_1`\n  (SELECT *\n   FROM `table$3`)\n  ;\n  INSERT INTO `customerorders_1`\n   (SELECT *\n    FROM `table$5`)\n   ;\n   INSERT INTO `distinctorders_1`\n    (SELECT *\n     FROM `table$7`)\n    ;\n    INSERT INTO `distinctorderstime_1`\n     (SELECT *\n      FROM `table$9`)\n     ;\n     INSERT INTO `orders_3`\n      (SELECT *\n       FROM `table$10`)\n      ;\n      INSERT INTO `product_2`\n       (SELECT *\n        FROM `table$11`)\n       ;\n       INSERT INTO `recentorders_1`\n        (SELECT *\n         FROM `table$13`)\n        ;\n        END;"
   ],
   "connectors" : [

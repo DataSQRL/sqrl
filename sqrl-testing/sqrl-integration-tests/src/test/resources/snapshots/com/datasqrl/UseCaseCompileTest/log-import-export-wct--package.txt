@@ -13,7 +13,7 @@ Schema:
  - TIMESTAMP: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - event_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalTableScan(table=[[data_1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+LogicalTableScan(table=[[data_1]])
 
 === Event.Event
 ID:     data_2_1
@@ -35,7 +35,7 @@ Schema:
  - TIMESTAMP: TIMESTAMP(3)
  - event_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalTableScan(table=[[importedevent_1]], hints=[[[WatermarkHint inheritPath:[] options:[5]]]]) hints[WatermarkHint options:[5]]
+LogicalTableScan(table=[[importedevent_1]])
 
 === print.LogImportedEvent
 ID:     importedevent_2_2

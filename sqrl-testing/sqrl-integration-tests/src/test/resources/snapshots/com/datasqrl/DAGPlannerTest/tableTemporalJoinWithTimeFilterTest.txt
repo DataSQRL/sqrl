@@ -12,7 +12,7 @@ Schema:
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalTableScan(table=[[customer_1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+LogicalTableScan(table=[[customer_1]])
 
 === Customer
 ID:     customer_3
@@ -44,7 +44,7 @@ Schema:
  - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - entries: RecordType(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
 Plan:
-LogicalTableScan(table=[[orders_1]], hints=[[[WatermarkHint inheritPath:[] options:[2]]]]) hints[WatermarkHint options:[2]]
+LogicalTableScan(table=[[orders_1]])
 
 === Product
 ID:     product_2
@@ -59,7 +59,7 @@ Schema:
  - category: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalTableScan(table=[[product_1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+LogicalTableScan(table=[[product_1]])
 
 === Product
 ID:     product_3
@@ -136,10 +136,10 @@ LogicalProject(__pk1_customerid=[$1], category=[$2], num=[$3], _time=[$0])
     "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `customer_1`;",
     "CREATE VIEW `table$2`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders_1`;",
     "CREATE VIEW `table$3`\nAS\nSELECT *\nFROM `product_1`;",
-    "CREATE VIEW `table$4`\nAS\nSELECT *\nFROM (SELECT `productid`, `name`, `description`, `category`, `_ingest_time`, ROW_NUMBER() OVER (PARTITION BY `productid` ORDER BY `_ingest_time` DESC) AS `_rownum`\n  FROM `product_1`) AS `t0`\nWHERE `_rownum` = 1;",
-    "CREATE VIEW `table$5`\nAS\nSELECT *\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC) AS `_rownum`\n  FROM `customer_1`) AS `t3`\nWHERE `_rownum` = 1;",
-    "CREATE VIEW `table$6`\nAS\nSELECT *\nFROM (SELECT *\n  FROM (SELECT *\n    FROM `orders_1` AS `$cor2`\n     INNER JOIN `table$5` FOR SYSTEM_TIME AS OF `$cor2`.`time` AS `t4` ON `$cor2`.`customerid` = `t4`.`customerid`) AS `$cor0`,\n   UNNEST(`$cor0`.`entries`) AS `t80` (`productid`, `quantity`, `unit_price`, `discount`)) AS `$cor1`\n INNER JOIN `table$4` FOR SYSTEM_TIME AS OF `$cor1`.`time` AS `t1` ON `t1`.`productid` = `$cor1`.`productid`;",
-    "CREATE VIEW `table$7`\nAS\nSELECT `customerid0` AS `__pk1_customerid`, `category`, SUM(`quantity`) AS `num`, `window_time` AS `_time`\nFROM TABLE(HOP(TABLE `table$6`, DESCRIPTOR(`time`), INTERVAL '1728' SECOND(7), INTERVAL '86400' SECOND(8))) AS `t10`\nGROUP BY `customerid0`, `category`, `window_start`, `window_end`, `window_time`;",
+    "CREATE VIEW `table$4`\nAS\nSELECT *\nFROM (SELECT `productid`, `name`, `description`, `category`, `_ingest_time`, ROW_NUMBER() OVER (PARTITION BY `productid` ORDER BY `_ingest_time` DESC) AS `_rownum`\n  FROM `product_1`) AS `t`\nWHERE `_rownum` = 1;",
+    "CREATE VIEW `table$5`\nAS\nSELECT *\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC) AS `_rownum`\n  FROM `customer_1`) AS `t1`\nWHERE `_rownum` = 1;",
+    "CREATE VIEW `table$6`\nAS\nSELECT *\nFROM (SELECT *\n  FROM (SELECT *\n    FROM `orders_1` AS `$cor2`\n     INNER JOIN `table$5` FOR SYSTEM_TIME AS OF `$cor2`.`time` AS `t2` ON `$cor2`.`customerid` = `t2`.`customerid`) AS `$cor0`,\n   UNNEST(`$cor0`.`entries`) AS `t50` (`productid`, `quantity`, `unit_price`, `discount`)) AS `$cor1`\n INNER JOIN `table$4` FOR SYSTEM_TIME AS OF `$cor1`.`time` AS `t0` ON `t0`.`productid` = `$cor1`.`productid`;",
+    "CREATE VIEW `table$7`\nAS\nSELECT `customerid0` AS `__pk1_customerid`, `category`, SUM(`quantity`) AS `num`, `window_time` AS `_time`\nFROM TABLE(HOP(TABLE `table$6`, DESCRIPTOR(`time`), INTERVAL '1728' SECOND(7), INTERVAL '86400' SECOND(8))) AS `t7`\nGROUP BY `customerid0`, `category`, `window_start`, `window_end`, `window_time`;",
     "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer_3`\n(SELECT *\n FROM `table$1`)\n;\nINSERT INTO `orders_2`\n (SELECT *\n  FROM `table$2`)\n ;\n INSERT INTO `product_3`\n  (SELECT *\n   FROM `table$3`)\n  ;\n  INSERT INTO `totals_1`\n   (SELECT *\n    FROM `table$7`)\n   ;\n   END;"
   ],
   "connectors" : [

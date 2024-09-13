@@ -13,7 +13,7 @@ Schema:
  - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - event_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalTableScan(table=[[addchatmessage_1]], hints=[[[WatermarkHint inheritPath:[] options:[5]]]]) hints[WatermarkHint options:[5]]
+LogicalTableScan(table=[[addchatmessage_1]])
 
 === ApplicationAlert
 ID:     applicationalert_1
@@ -57,7 +57,7 @@ Schema:
  - application_date: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - updated_at: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalTableScan(table=[[applications_1]], hints=[[[WatermarkHint inheritPath:[] options:[6]]]]) hints[WatermarkHint options:[6]]
+LogicalTableScan(table=[[applications_1]])
 
 === Applications
 ID:     applications_3
@@ -123,7 +123,7 @@ Schema:
  - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - event_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalTableScan(table=[[applicationupdates_1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+LogicalTableScan(table=[[applicationupdates_1]])
 
 === CustomerChatMessage
 ID:     customerchatmessage_1
@@ -161,7 +161,7 @@ Schema:
  - date_of_birth: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - updated_at: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalTableScan(table=[[customers_1]], hints=[[[WatermarkHint inheritPath:[] options:[7]]]]) hints[WatermarkHint options:[7]]
+LogicalTableScan(table=[[customers_1]])
 
 === Customers
 ID:     customers_3
@@ -201,7 +201,7 @@ Schema:
  - min_duration: BIGINT NOT NULL
  - updated_at: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalTableScan(table=[[loantypes_1]], hints=[[[WatermarkHint inheritPath:[] options:[8]]]]) hints[WatermarkHint options:[8]]
+LogicalTableScan(table=[[loantypes_1]])
 
 === LoanTypes
 ID:     loantypes_3
@@ -267,21 +267,21 @@ LogicalProject(__pk1_id=[$0], loan_type_id=[$1], total_amount=[$2], total_loans=
     "CREATE TEMPORARY TABLE `loantypes_3` (\n  `id` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `interest_rate` DOUBLE NOT NULL,\n  `max_amount` DOUBLE NOT NULL,\n  `min_amount` DOUBLE NOT NULL,\n  `max_duration` BIGINT NOT NULL,\n  `min_duration` BIGINT NOT NULL,\n  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'loantypes_3',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `overview_1` (\n  `__pk1_id` BIGINT NOT NULL,\n  `loan_type_id` BIGINT NOT NULL,\n  `total_amount` DOUBLE NOT NULL,\n  `total_loans` BIGINT NOT NULL,\n  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`__pk1_id`, `loan_type_id`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'overview_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `applicationalert_1_1` (\n  `id` BIGINT NOT NULL,\n  `customer_id` BIGINT NOT NULL,\n  `loan_type_id` BIGINT NOT NULL,\n  `max_amount` DOUBLE NOT NULL,\n  `min_amount` DOUBLE NOT NULL,\n  `amount` DOUBLE NOT NULL,\n  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.auto.offset.reset' = 'earliest',\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.group.id' = '${PROPERTIES_GROUP_ID}',\n  'topic' = 'applicationalert_1',\n  'scan.startup.mode' = 'group-offsets'\n);",
-    "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM (SELECT `id`, `name`, `description`, `interest_rate`, `max_amount`, `min_amount`, `max_duration`, `min_duration`, `updated_at`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated_at` DESC) AS `_rownum`\n  FROM `loantypes_1`) AS `t0`\nWHERE `_rownum` = 1;",
-    "CREATE VIEW `table$2`\nAS\nSELECT *\nFROM (SELECT `id`, `customer_id`, `loan_type_id`, `amount`, `duration`, `application_date`, `updated_at`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated_at` DESC) AS `_rownum`\n  FROM `applications_1`) AS `t3`\nWHERE `_rownum` = 1;",
-    "CREATE VIEW `table$3`\nAS\nSELECT `id`, `customer_id`, `loan_type_id`, `max_amount`, `min_amount`, `amount`, `_uuid`, `event_time` AS `_event_time`\nFROM (SELECT `$cor1`.`status`, `$cor1`.`message`, `$cor1`.`event_time`, `$cor1`.`id`, `$cor1`.`customer_id`, `$cor1`.`loan_type_id`, `$cor1`.`amount`, `$cor1`.`duration`, `t1`.`max_amount`, `t1`.`min_amount`, `$cor1`.`_uuid`\n  FROM (SELECT *\n    FROM `applicationupdates_1` AS `$cor2`\n     INNER JOIN `table$2` FOR SYSTEM_TIME AS OF `$cor2`.`event_time` AS `t4` ON `t4`.`id` = `$cor2`.`loan_application_id`) AS `$cor1`\n   INNER JOIN `table$1` FOR SYSTEM_TIME AS OF `$cor1`.`event_time` AS `t1` ON `t1`.`id` = `$cor1`.`loan_type_id`) AS `t7`\nWHERE `t7`.`status` = CAST('underwriting' AS VARCHAR(65536) CHARACTER SET `UTF-16LE`) AND (`t7`.`amount` > `t7`.`max_amount` OR `t7`.`amount` < `t7`.`min_amount`);",
+    "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM (SELECT `id`, `name`, `description`, `interest_rate`, `max_amount`, `min_amount`, `max_duration`, `min_duration`, `updated_at`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated_at` DESC) AS `_rownum`\n  FROM `loantypes_1`) AS `t`\nWHERE `_rownum` = 1;",
+    "CREATE VIEW `table$2`\nAS\nSELECT *\nFROM (SELECT `id`, `customer_id`, `loan_type_id`, `amount`, `duration`, `application_date`, `updated_at`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated_at` DESC) AS `_rownum`\n  FROM `applications_1`) AS `t1`\nWHERE `_rownum` = 1;",
+    "CREATE VIEW `table$3`\nAS\nSELECT `id`, `customer_id`, `loan_type_id`, `max_amount`, `min_amount`, `amount`, `_uuid`, `event_time` AS `_event_time`\nFROM (SELECT `$cor1`.`status`, `$cor1`.`message`, `$cor1`.`event_time`, `$cor1`.`id`, `$cor1`.`customer_id`, `$cor1`.`loan_type_id`, `$cor1`.`amount`, `$cor1`.`duration`, `t0`.`max_amount`, `t0`.`min_amount`, `$cor1`.`_uuid`\n  FROM (SELECT *\n    FROM `applicationupdates_1` AS `$cor2`\n     INNER JOIN `table$2` FOR SYSTEM_TIME AS OF `$cor2`.`event_time` AS `t2` ON `t2`.`id` = `$cor2`.`loan_application_id`) AS `$cor1`\n   INNER JOIN `table$1` FOR SYSTEM_TIME AS OF `$cor1`.`event_time` AS `t0` ON `t0`.`id` = `$cor1`.`loan_type_id`) AS `t4`\nWHERE `t4`.`status` = CAST('underwriting' AS VARCHAR(65536) CHARACTER SET `UTF-16LE`) AND (`t4`.`amount` > `t4`.`max_amount` OR `t4`.`amount` < `t4`.`min_amount`);",
     "CREATE VIEW `table$4`\nAS\nSELECT *\nFROM `applications_1`;",
-    "CREATE VIEW `table$5`\nAS\nSELECT *\nFROM (SELECT `id`, `name`, `description`, `interest_rate`, `max_amount`, `min_amount`, `max_duration`, `min_duration`, `updated_at`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated_at` DESC) AS `_rownum`\n  FROM `loantypes_1`) AS `t0`\nWHERE `_rownum` = 1;",
-    "CREATE VIEW `table$6`\nAS\nSELECT *\nFROM (SELECT `id`, `customer_id`, `loan_type_id`, `amount`, `duration`, `application_date`, `updated_at`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated_at` DESC) AS `_rownum`\n  FROM `applications_1`) AS `t3`\nWHERE `_rownum` = 1;",
-    "CREATE VIEW `table$7`\nAS\nSELECT `$cor3`.`status`, `$cor3`.`message`, `$cor3`.`event_time`, `$cor3`.`id`, `$cor3`.`customer_id`, `$cor3`.`loan_type_id`, `$cor3`.`amount`, `$cor3`.`duration`, `t1`.`max_amount`, `t1`.`min_amount`, `$cor3`.`_uuid`\nFROM (SELECT *\n  FROM `applicationupdates_1` AS `$cor4`\n   INNER JOIN `table$6` FOR SYSTEM_TIME AS OF `$cor4`.`event_time` AS `t4` ON `t4`.`id` = `$cor4`.`loan_application_id`) AS `$cor3`\n INNER JOIN `table$5` FOR SYSTEM_TIME AS OF `$cor3`.`event_time` AS `t1` ON `t1`.`id` = `$cor3`.`loan_type_id`;",
+    "CREATE VIEW `table$5`\nAS\nSELECT *\nFROM (SELECT `id`, `name`, `description`, `interest_rate`, `max_amount`, `min_amount`, `max_duration`, `min_duration`, `updated_at`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated_at` DESC) AS `_rownum`\n  FROM `loantypes_1`) AS `t`\nWHERE `_rownum` = 1;",
+    "CREATE VIEW `table$6`\nAS\nSELECT *\nFROM (SELECT `id`, `customer_id`, `loan_type_id`, `amount`, `duration`, `application_date`, `updated_at`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated_at` DESC) AS `_rownum`\n  FROM `applications_1`) AS `t1`\nWHERE `_rownum` = 1;",
+    "CREATE VIEW `table$7`\nAS\nSELECT `$cor3`.`status`, `$cor3`.`message`, `$cor3`.`event_time`, `$cor3`.`id`, `$cor3`.`customer_id`, `$cor3`.`loan_type_id`, `$cor3`.`amount`, `$cor3`.`duration`, `t0`.`max_amount`, `t0`.`min_amount`, `$cor3`.`_uuid`\nFROM (SELECT *\n  FROM `applicationupdates_1` AS `$cor4`\n   INNER JOIN `table$6` FOR SYSTEM_TIME AS OF `$cor4`.`event_time` AS `t2` ON `t2`.`id` = `$cor4`.`loan_application_id`) AS `$cor3`\n INNER JOIN `table$5` FOR SYSTEM_TIME AS OF `$cor3`.`event_time` AS `t0` ON `t0`.`id` = `$cor3`.`loan_type_id`;",
     "CREATE VIEW `table$8`\nAS\nSELECT *\nFROM `applicationupdates_1`;",
     "CREATE VIEW `table$9`\nAS\nSELECT `role`, `content`, `name`, `context`.`customerid`, `event_time` AS `timestamp`, `_uuid` AS `uuid`\nFROM `addchatmessage_1`;",
     "CREATE VIEW `table$10`\nAS\nSELECT *\nFROM `customers_1`;",
     "CREATE VIEW `table$11`\nAS\nSELECT *\nFROM `loantypes_1`;",
-    "CREATE VIEW `table$12`\nAS\nSELECT `t1`.`id` AS `__pk1_id`, `t4`.`loan_type_id`, SUM(`t4`.`amount`) AS `total_amount`, COUNT(*) AS `total_loans`, MAX(CASE WHEN `t1`.`updated_at` < `t4`.`updated_at` THEN `t4`.`updated_at` ELSE `t1`.`updated_at` END) AS `__timestamp`\nFROM (SELECT *\n  FROM (SELECT `id`, `first_name`, `last_name`, `email`, `phone`, `address`, `date_of_birth`, `updated_at`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated_at` DESC) AS `_rownum`\n    FROM `customers_1`) AS `t0`\n  WHERE `_rownum` = 1) AS `t1`\n INNER JOIN (SELECT *\n  FROM (SELECT `id`, `customer_id`, `loan_type_id`, `amount`, `duration`, `application_date`, `updated_at`, `customer_id` AS `customer_id7`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated_at` DESC) AS `_rownum`\n    FROM `applications_1`) AS `t3`\n  WHERE `_rownum` = 1) AS `t4` ON `t1`.`id` = `t4`.`customer_id7`\nGROUP BY `t1`.`id`, `t4`.`loan_type_id`;",
-    "CREATE VIEW `table$13`\nAS\nSELECT *\nFROM (SELECT `id`, `name`, `description`, `interest_rate`, `max_amount`, `min_amount`, `max_duration`, `min_duration`, `updated_at`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated_at` DESC) AS `_rownum`\n  FROM `loantypes_1`) AS `t0`\nWHERE `_rownum` = 1;",
-    "CREATE VIEW `table$14`\nAS\nSELECT *\nFROM (SELECT `id`, `customer_id`, `loan_type_id`, `amount`, `duration`, `application_date`, `updated_at`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated_at` DESC) AS `_rownum`\n  FROM `applications_1`) AS `t3`\nWHERE `_rownum` = 1;",
-    "CREATE VIEW `table$15`\nAS\nSELECT `id`, `customer_id`, `loan_type_id`, `max_amount`, `min_amount`, `amount`, `_uuid`, `event_time` AS `_event_time`\nFROM (SELECT `$cor7`.`status`, `$cor7`.`message`, `$cor7`.`event_time`, `$cor7`.`id`, `$cor7`.`customer_id`, `$cor7`.`loan_type_id`, `$cor7`.`amount`, `$cor7`.`duration`, `t1`.`max_amount`, `t1`.`min_amount`, `$cor7`.`_uuid`\n  FROM (SELECT *\n    FROM `applicationupdates_1` AS `$cor8`\n     INNER JOIN `table$14` FOR SYSTEM_TIME AS OF `$cor8`.`event_time` AS `t4` ON `t4`.`id` = `$cor8`.`loan_application_id`) AS `$cor7`\n   INNER JOIN `table$13` FOR SYSTEM_TIME AS OF `$cor7`.`event_time` AS `t1` ON `t1`.`id` = `$cor7`.`loan_type_id`) AS `t7`\nWHERE `t7`.`status` = CAST('underwriting' AS VARCHAR(65536) CHARACTER SET `UTF-16LE`) AND (`t7`.`amount` > `t7`.`max_amount` OR `t7`.`amount` < `t7`.`min_amount`);",
+    "CREATE VIEW `table$12`\nAS\nSELECT `t0`.`id` AS `__pk1_id`, `t2`.`loan_type_id`, SUM(`t2`.`amount`) AS `total_amount`, COUNT(*) AS `total_loans`, MAX(CASE WHEN `t0`.`updated_at` < `t2`.`updated_at` THEN `t2`.`updated_at` ELSE `t0`.`updated_at` END) AS `__timestamp`\nFROM (SELECT *\n  FROM (SELECT `id`, `first_name`, `last_name`, `email`, `phone`, `address`, `date_of_birth`, `updated_at`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated_at` DESC) AS `_rownum`\n    FROM `customers_1`) AS `t`\n  WHERE `_rownum` = 1) AS `t0`\n INNER JOIN (SELECT *\n  FROM (SELECT `id`, `customer_id`, `loan_type_id`, `amount`, `duration`, `application_date`, `updated_at`, `customer_id` AS `customer_id7`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated_at` DESC) AS `_rownum`\n    FROM `applications_1`) AS `t1`\n  WHERE `_rownum` = 1) AS `t2` ON `t0`.`id` = `t2`.`customer_id7`\nGROUP BY `t0`.`id`, `t2`.`loan_type_id`;",
+    "CREATE VIEW `table$13`\nAS\nSELECT *\nFROM (SELECT `id`, `name`, `description`, `interest_rate`, `max_amount`, `min_amount`, `max_duration`, `min_duration`, `updated_at`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated_at` DESC) AS `_rownum`\n  FROM `loantypes_1`) AS `t`\nWHERE `_rownum` = 1;",
+    "CREATE VIEW `table$14`\nAS\nSELECT *\nFROM (SELECT `id`, `customer_id`, `loan_type_id`, `amount`, `duration`, `application_date`, `updated_at`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated_at` DESC) AS `_rownum`\n  FROM `applications_1`) AS `t1`\nWHERE `_rownum` = 1;",
+    "CREATE VIEW `table$15`\nAS\nSELECT `id`, `customer_id`, `loan_type_id`, `max_amount`, `min_amount`, `amount`, `_uuid`, `event_time` AS `_event_time`\nFROM (SELECT `$cor7`.`status`, `$cor7`.`message`, `$cor7`.`event_time`, `$cor7`.`id`, `$cor7`.`customer_id`, `$cor7`.`loan_type_id`, `$cor7`.`amount`, `$cor7`.`duration`, `t0`.`max_amount`, `t0`.`min_amount`, `$cor7`.`_uuid`\n  FROM (SELECT *\n    FROM `applicationupdates_1` AS `$cor8`\n     INNER JOIN `table$14` FOR SYSTEM_TIME AS OF `$cor8`.`event_time` AS `t2` ON `t2`.`id` = `$cor8`.`loan_application_id`) AS `$cor7`\n   INNER JOIN `table$13` FOR SYSTEM_TIME AS OF `$cor7`.`event_time` AS `t0` ON `t0`.`id` = `$cor7`.`loan_type_id`) AS `t4`\nWHERE `t4`.`status` = CAST('underwriting' AS VARCHAR(65536) CHARACTER SET `UTF-16LE`) AND (`t4`.`amount` > `t4`.`max_amount` OR `t4`.`amount` < `t4`.`min_amount`);",
     "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `applicationalert_1`\n(SELECT *\n FROM `table$3`)\n;\nINSERT INTO `applications_3`\n (SELECT *\n  FROM `table$4`)\n ;\n INSERT INTO `applicationstatus_1`\n  (SELECT *\n   FROM `table$7`)\n  ;\n  INSERT INTO `applicationupdates_2`\n   (SELECT *\n    FROM `table$8`)\n   ;\n   INSERT INTO `customerchatmessage_1`\n    (SELECT *\n     FROM `table$9`)\n    ;\n    INSERT INTO `customers_3`\n     (SELECT *\n      FROM `table$10`)\n     ;\n     INSERT INTO `loantypes_3`\n      (SELECT *\n       FROM `table$11`)\n      ;\n      INSERT INTO `overview_1`\n       (SELECT *\n        FROM `table$12`)\n       ;\n       INSERT INTO `applicationalert_1_1`\n        (SELECT *\n         FROM `table$15`)\n        ;\n        END;"
   ],
   "connectors" : [
