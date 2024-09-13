@@ -300,7 +300,7 @@ LogicalTableScan(table=[[product_1]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"orders_2\".\"customerid\" AS \"customer\", COUNT(*) AS \"order_count\", MAX(\"orders_2\".\"time\") AS \"__timestamp\"\nFROM \"orders_2\"\n INNER JOIN \"customer_2\" ON \"orders_2\".\"customerid\" = \"customer_2\".\"customerid\"\nGROUP BY \"orders_2\".\"customerid\"\nHAVING \"customer\" = $1",
+              "sql" : "SELECT \"orders_2\".\"customerid\" AS \"customer\", COUNT(*) AS \"order_count\", MAX(\"orders_2\".\"time\") AS \"__timestamp\"\nFROM \"orders_2\"\n INNER JOIN \"customer_2\" ON \"orders_2\".\"customerid\" = \"customer_2\".\"customerid\"\nGROUP BY \"orders_2\".\"customerid\"\nHAVING \"orders_2\".\"customerid\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",

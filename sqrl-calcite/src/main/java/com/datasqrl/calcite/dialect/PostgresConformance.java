@@ -27,7 +27,7 @@ public class PostgresConformance implements SqlConformance {
 
   @Override
   public boolean isHavingAlias() {
-    return true; // PostgreSQL allows using aliases in HAVING clauses.
+    return false; // PostgreSQL does not allow using aliases in HAVING clauses.
   }
 
   @Override
