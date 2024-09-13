@@ -125,7 +125,7 @@ public class ToStubAggRule extends RelRule<ToStubAggRule.Config>
 
   @Value.Immutable
   public interface ToStubAggRuleConfig extends RelRule.Config {
-    PushDownWatermarkHintRule.Config DEFAULT = ImmutableToStubAggRuleConfig.builder()
+    ToStubAggRule.Config DEFAULT = ImmutableToStubAggRuleConfig.builder()
         .relBuilderFactory(RelFactories.LOGICAL_BUILDER)
         .description("ToStubAggRuleConfig")
         .operandSupplier(b0 ->
