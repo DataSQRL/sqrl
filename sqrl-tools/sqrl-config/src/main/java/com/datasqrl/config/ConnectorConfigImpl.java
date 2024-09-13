@@ -66,6 +66,11 @@ public class ConnectorConfigImpl implements TableConfig.ConnectorConfig {
   }
 
   @Override
+  public void setProperty(String key, Object value) {
+    config.setProperty(key, value);
+  }
+
+  @Override
   public String toString() {
     return "ConnectorConfigImpl{"+config.toMap().toString()+"}";
   }

@@ -27,6 +27,8 @@ public class AvroSchemaToRelDataTypeFactory implements SchemaToRelDataTypeFactor
     Schema avroSchema = ((AvroSchemaHolder)schema).getSchema();
 
     boolean legacyTimestampMapping = getLegacyTimestampMapping(tableConfig);
+
+
     AvroToRelDataTypeConverter converter = new AvroToRelDataTypeConverter(errors, legacyTimestampMapping);
     return converter.convert(avroSchema);
   }
@@ -41,6 +43,8 @@ public class AvroSchemaToRelDataTypeFactory implements SchemaToRelDataTypeFactor
       log.warn("Expected boolean type for 'timestamp_mapping.legacy'");
     }
 
+    log.warn("Avro value 'timestamp_mapping.legacy' is not set to 'false'. "
+        + "This should be added to your table config for flink version 1.19 and later.");
     return true; //default value
   }
 }
