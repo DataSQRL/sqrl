@@ -15,7 +15,7 @@ LogicalAggregate(group=[{0}], number=[COUNT()], volume=[SUM($1)]) hints[TumbleAg
   LogicalProject(timeSec=[endOfSecond($4)], quantity=[$6], id=[$0], time=[$2], productid=[$5], _source_time=[$4])
     LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{3}])
       LogicalTableScan(table=[[orders_2]])
-      LogicalTableFunctionScan(invocation=[Orders.items($cor0.items)], rowType=[RecordType(INTEGER productid, INTEGER quantity, DOUBLE unit_price, DOUBLE discount)], elementType=[class [Ljava.lang.Object;])
+      LogicalTableFunctionScan(invocation=[Orders.items($cor0.items)], rowType=[RecordType:peek_no_expand(INTEGER productid, INTEGER quantity, DOUBLE unit_price, DOUBLE discount)], elementType=[class [Ljava.lang.Object;])
 
 === Orders
 ID:     orders_2
@@ -27,7 +27,7 @@ Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
  - time: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - items: RecordType(INTEGER NOT NULL productid, INTEGER NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+ - items: RecordType:peek_no_expand(INTEGER NOT NULL productid, INTEGER NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
  - _source_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
 LogicalTableScan(table=[[orders_1]])
@@ -50,7 +50,7 @@ LogicalTableScan(table=[[orders_1]])
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofday` AS 'com.datasqrl.time.EndOfDay' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofhour` AS 'com.datasqrl.time.EndOfHour' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofyear` AS 'com.datasqrl.time.EndOfYear' LANGUAGE JAVA;",
-    "CREATE TEMPORARY TABLE `orders_1` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `items` ROW(`productid` INTEGER NOT NULL, `quantity` INTEGER NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,\n  `_source_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL METADATA FROM 'timestamp',\n  WATERMARK FOR `_source_time` AS `_source_time` - INTERVAL '0.0' SECOND\n) WITH (\n  'format' = 'avro',\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'properties.group.id' = 'datasqrl-orders',\n  'topic' = '${sqrl:topic}',\n  'connector' = 'kafka'\n);",
+    "CREATE TEMPORARY TABLE `orders_1` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `items` ROW(`productid` INTEGER NOT NULL, `quantity` INTEGER NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,\n  `_source_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL METADATA FROM 'timestamp',\n  WATERMARK FOR `_source_time` AS `_source_time` - INTERVAL '0.0' SECOND\n) WITH (\n  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',\n  'connector' = 'kafka',\n  'format' = 'avro',\n  'properties.group.id' = 'datasqrl-orders',\n  'topic' = '${sqrl:topic}',\n  'timestamp_mapping.legacy' = 'false'\n);",
     "CREATE TEMPORARY TABLE `ordercount_1` (\n  `timeSec` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `number` BIGINT NOT NULL,\n  `volume` INTEGER NOT NULL,\n  PRIMARY KEY (`timeSec`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'ordercount_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `orders_2` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `items` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  `_source_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`, `time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orders_2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE VIEW `table$1`\nAS\nSELECT ENDOFSECOND(`$cor0`.`_source_time`) AS `timeSec`, `t00`.`quantity`, `$cor0`.`id`, `$cor0`.`time`, `t00`.`productid`, `$cor0`.`_source_time`\nFROM `orders_1` AS `$cor0`,\n UNNEST(`$cor0`.`items`) AS `t00` (`productid`, `quantity`, `unit_price`, `discount`);",

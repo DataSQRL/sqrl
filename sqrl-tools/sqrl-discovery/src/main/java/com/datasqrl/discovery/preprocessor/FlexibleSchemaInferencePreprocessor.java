@@ -130,7 +130,7 @@ public class FlexibleSchemaInferencePreprocessor implements DiscoveryPreprocesso
       FlexibleTableSchemaHolder schemaHolder = new FlexibleTableSchemaHolder(schema);
       //4. Infer primary key
       RelDataType rowType = SchemaToRelDataTypeFactory.load(schemaHolder)
-          .map(schemaHolder, tableName, errors);
+          .map(schemaHolder, null, tableName, errors);
       //We use a conservative method where each simple column is a primary key column
       String[] primaryKey = rowType.getFieldList().stream().filter(f -> !f.getType().isNullable() && CalciteUtil.isPotentialPrimaryKeyType(f.getType()))
           .map(RelDataTypeField::getName).toArray(String[]::new);
