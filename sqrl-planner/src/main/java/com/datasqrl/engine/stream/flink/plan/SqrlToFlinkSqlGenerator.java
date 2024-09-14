@@ -204,7 +204,6 @@ public class SqrlToFlinkSqlGenerator {
       ImportedRelationalTable table = entry.getValue();
       TableConfig tableConfig = table.getTableSource().getConfiguration();
 
-      // Replace the builder with direct function call
       SqlCreateTable sqlCreateTable = FlinkSqlNodeFactory.createTable(
           tableName,
           table.getRowType(),
@@ -271,7 +270,6 @@ public class SqrlToFlinkSqlGenerator {
       throw new RuntimeException("Could not identify write sink type.");
     }
 
-    // Replace the builder with direct function call
     SqlCreateTable sqlCreateTable = FlinkSqlNodeFactory.createTable(
         name,
         relNode.getRowType(),
