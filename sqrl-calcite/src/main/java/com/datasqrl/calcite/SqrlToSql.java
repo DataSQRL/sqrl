@@ -23,6 +23,7 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.plan.hints.TopNHint.Type;
 import com.datasqrl.util.SqlNameUtil;
+import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator.NameMatcher;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
@@ -64,6 +65,7 @@ import org.apache.calcite.sql.SqlUnresolvedFunction;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlShuttle;
+import org.apache.calcite.sql.validate.SqlNameMatcher;
 
 public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
   final QueryPlanner planner;
@@ -120,9 +122,11 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
 
       List<String> columns = catalogReader.getTableFromPath(result.getCurrentPath()).get()
           .unwrap(ModifiableTable.class).getRowType().getFieldNames();
+      SqlNameMatcher nameMatcher = catalogReader.nameMatcher();
+
       List<SqlNode> newNodes = new ArrayList<>();
       for (String column : columns) {
-        if (!fieldNames.contains(column)) {
+        if (!containsFieldName(fieldNames, column, nameMatcher)) {
           newNodes.add(new SqlIdentifier(column, SqlParserPos.ZERO));
           fieldNames.add(column);
         }
@@ -167,6 +171,15 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
 
     return new Result(select.build(), result.getCurrentPath(), List.of(), List.of(), Optional.empty(),
         result.params);
+  }
+
+  private boolean containsFieldName(Collection<String> fieldNames, String column, SqlNameMatcher nameMatcher) {
+    for (String fieldName : fieldNames) {
+      if (nameMatcher.matches(fieldName, column)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private void determineIsA(SqlSelect call, Context newContext, Result result) {
