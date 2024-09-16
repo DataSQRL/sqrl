@@ -1,15 +1,14 @@
 package com.datasqrl.calcite;
 
-import static com.datasqrl.plan.validate.ScriptPlanner.addError;
 import static com.datasqrl.plan.validate.ScriptPlanner.isSelfTable;
 import static com.datasqrl.plan.validate.ScriptPlanner.isVariable;
 import static org.apache.calcite.sql.SqlUtil.stripAs;
 
-import com.datasqrl.calcite.SqrlToSql.Context;
-import com.datasqrl.calcite.SqrlToSql.Result;
 import com.datasqrl.calcite.NormalizeTablePath.PathItem;
 import com.datasqrl.calcite.NormalizeTablePath.SelfTablePathItem;
 import com.datasqrl.calcite.NormalizeTablePath.TablePathResult;
+import com.datasqrl.calcite.SqrlToSql.Context;
+import com.datasqrl.calcite.SqrlToSql.Result;
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlAliasCallBuilder;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlCallBuilder;
@@ -23,7 +22,6 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.plan.hints.TopNHint.Type;
 import com.datasqrl.util.SqlNameUtil;
-import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator.NameMatcher;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
@@ -47,7 +45,6 @@ import org.apache.calcite.schema.Function;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.CalciteFixes;
-import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlFunctionCategory;
 import org.apache.calcite.sql.SqlHint;
