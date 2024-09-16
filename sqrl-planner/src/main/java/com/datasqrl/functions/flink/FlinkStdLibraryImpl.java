@@ -24,6 +24,7 @@ public class FlinkStdLibraryImpl extends AbstractFunctionModule implements StdLi
 //      BuiltInFunctionDefinitions.NOW.getClass().getName(), //use our NOW
       //Provided by calcite std library
       BuiltInFunctionDefinitions.COALESCE.getName(),
+      BuiltInFunctionDefinitions.COUNT.getName(),
       BuiltInFunctionDefinitions.JSON_VALUE.getName(),
       BuiltInFunctionDefinitions.JSON_ARRAY.getName(),
       BuiltInFunctionDefinitions.JSON_EXISTS.getName(),
