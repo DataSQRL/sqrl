@@ -394,7 +394,7 @@ public class QueryPlanner {
     return new RexBuilder(catalogReader.getTypeFactory());
   }
 
-  private static SqlStrings sqlToString(Dialect dialect, SqlNodes node) {
+  public static SqlStrings sqlToString(Dialect dialect, SqlNodes node) {
     SqlNodeToString sqlToString = SqlToStringFactory.get(dialect);
     return sqlToString.convert(node);
   }

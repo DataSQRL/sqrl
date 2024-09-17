@@ -13,11 +13,9 @@ import com.datasqrl.io.tables.TableType;
 import com.datasqrl.plan.RelStageRunner;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.ExternalSink;
-import com.datasqrl.plan.global.PhysicalDAGPlan.WriteSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StreamStagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StreamStagePlan.TableDefinition;
 import com.datasqrl.plan.global.SqrlDAG.ExportNode;
-import com.datasqrl.plan.global.SqrlDAG.QueryNode;
 import com.datasqrl.plan.global.SqrlDAG.SqrlNode;
 import com.datasqrl.plan.global.SqrlDAG.TableNode;
 import com.datasqrl.plan.hints.TimestampHint;
@@ -120,7 +118,7 @@ public class DAGAssembler {
         streamQueries.add(new PhysicalDAGPlan.WriteQuery(
             new EngineSink(materializedTable.getNameId(), materializedTable.getPrimaryKey().getPkIndexes(),
                 materializedTable.getRowType(), timestampIdx, database),
-            processedRelnode, materializedTable.getPlannedRelNode()));
+            processedRelnode, materializedTable.getPlannedRelNode(), materializedTable.getType()));
       }
 
       //Third, pick index structures for materialized tables
@@ -151,7 +149,8 @@ public class DAGAssembler {
       processedRelnode = relBuilder1.build();
       ExternalSink externalSink = new ExternalSink(exportNode.getUniqueId(), export.getSink());
       streamQueries.add(new PhysicalDAGPlan.WriteQuery(externalSink,
-          processedRelnode, export.getRelNode()));
+          processedRelnode, export.getRelNode(), externalSink.getTableSink().getConfiguration().getConnectorConfig().getTableType()
+      ));
     });
     //Add debugging output
 //    AtomicInteger debugCounter = new AtomicInteger(0);

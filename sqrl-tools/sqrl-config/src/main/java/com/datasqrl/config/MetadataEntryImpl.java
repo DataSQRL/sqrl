@@ -17,4 +17,9 @@ public class MetadataEntryImpl implements TableConfig.MetadataEntry {
   public Optional<String> getAttribute() {
     return sqrlConfig.asString(TableConfigImpl.METADATA_COLUMN_ATTRIBUTE_KEY).getOptional();
   }
+
+  @Override
+  public Optional<Boolean> getVirtual() {
+    return sqrlConfig.asBool(TableConfigImpl.METADATA_VIRTUAL_ATTRIBUTE_KEY).getOptional();
+  }
 }

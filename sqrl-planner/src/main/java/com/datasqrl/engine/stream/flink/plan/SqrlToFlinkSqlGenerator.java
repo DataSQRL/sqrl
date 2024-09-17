@@ -3,18 +3,17 @@ package com.datasqrl.engine.stream.flink.plan;
 import com.datasqrl.DefaultFunctions;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
-import com.datasqrl.calcite.schema.sql.SqlDataTypeSpecBuilder;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.config.TableConfig;
 import com.datasqrl.config.TableConfig.MetadataConfig;
 import com.datasqrl.config.TableConfig.MetadataEntry;
-import com.datasqrl.config.TableConfig;
 import com.datasqrl.config.TableConfig.TableConfigBuilder;
 import com.datasqrl.config.TableConfig.TableTableConfig;
 import com.datasqrl.datatype.DataTypeMapper;
 import com.datasqrl.engine.EngineFeature;
-import com.datasqrl.engine.stream.flink.connector.FlinkConnectorDataTypeMappingFactory;
 import com.datasqrl.engine.stream.flink.connector.CastFunction;
+import com.datasqrl.engine.stream.flink.connector.FlinkConnectorDataTypeMappingFactory;
 import com.datasqrl.engine.stream.flink.sql.ExtractUniqueSourceVisitor;
 import com.datasqrl.engine.stream.flink.sql.FlinkRelToSqlNode;
 import com.datasqrl.engine.stream.flink.sql.FlinkRelToSqlNode.FlinkSqlNodes;
@@ -34,53 +33,23 @@ import com.datasqrl.plan.global.PhysicalDAGPlan.WriteSink;
 import com.datasqrl.plan.table.ImportedRelationalTable;
 import com.datasqrl.sql.SqlCallRewriter;
 import com.google.common.base.Preconditions;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import io.vertx.sqlclient.SqlResult;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.apache.calcite.avatica.util.TimeUnit;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.rel2sql.FlinkRelToSqlConverter;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
-import org.apache.calcite.rex.RexShuttle;
-import org.apache.calcite.sql.SqlBasicCall;
-import org.apache.calcite.sql.SqlCall;
-import org.apache.calcite.sql.SqlCharStringLiteral;
-import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlIntervalQualifier;
-import org.apache.calcite.sql.SqlLiteral;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlNodeList;
-import org.apache.calcite.sql.SqlOperator;
-import org.apache.calcite.sql.SqlSelect;
-import org.apache.calcite.sql.fun.SqlStdOperatorTable;
-import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.calcite.sql.*;
 import org.apache.calcite.tools.Program;
 import org.apache.calcite.tools.Programs;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.flink.sql.parser.ddl.SqlCreateFunction;
-import org.apache.flink.sql.parser.ddl.SqlCreateTable;
-import org.apache.flink.sql.parser.ddl.SqlCreateView;
-import org.apache.flink.sql.parser.ddl.SqlTableColumn;
-import org.apache.flink.sql.parser.ddl.SqlTableOption;
-import org.apache.flink.sql.parser.ddl.SqlWatermark;
-import org.apache.flink.sql.parser.ddl.constraint.SqlConstraintEnforcement;
+import org.apache.flink.sql.parser.ddl.*;
 import org.apache.flink.sql.parser.ddl.constraint.SqlTableConstraint;
-import org.apache.flink.sql.parser.ddl.constraint.SqlUniqueSpec;
 import org.apache.flink.sql.parser.dml.RichSqlInsert;
 import org.apache.flink.table.functions.BuiltInFunctionDefinition;
 import org.apache.flink.table.functions.UserDefinedFunction;
@@ -88,13 +57,19 @@ import org.apache.flink.table.planner.functions.bridging.BridgingSqlAggFunction;
 import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction;
 import org.apache.flink.table.planner.plan.metadata.FlinkDefaultRelMetadataProvider;
 
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
 @Getter
 @AllArgsConstructor
+@Slf4j
 public class SqrlToFlinkSqlGenerator {
-  private final ExtractUniqueSourceVisitor uniqueSourceExtractor = new ExtractUniqueSourceVisitor();
-  final FlinkRelToSqlNode toSql = new FlinkRelToSqlNode();
 
-  SqrlFramework framework;
+  private final ExtractUniqueSourceVisitor uniqueSourceExtractor = new ExtractUniqueSourceVisitor();
+  private final FlinkRelToSqlNode toSql = new FlinkRelToSqlNode();
+  private final SqrlFramework framework;
 
   public SqlResult plan(List<? extends Query> stageQueries, List<StagePlan> stagePlans) {
     checkPreconditions(stageQueries);
@@ -107,6 +82,9 @@ public class SqrlToFlinkSqlGenerator {
 
     for (WriteQuery query : writeQueries) {
       TableConfig tableConfig = getTableConfig(query.getSink());
+      if (query.getType().isState() && tableConfig.getConnectorConfig().getTableType().isStream()) {
+        log.warn("Attempting to write a stream to a state table. This may fail at runtime.");
+      }
       FlinkConnectorDataTypeMappingFactory mappingFactory = new FlinkConnectorDataTypeMappingFactory();
       Optional<DataTypeMapper> connectorMapping = mappingFactory.getConnectorMapping(tableConfig);
       RelNode relNode = applyDowncasting(framework.getQueryPlanner().getRelBuilder(),
@@ -124,54 +102,29 @@ public class SqrlToFlinkSqlGenerator {
 
   private Pair<List<SqlCreateView>, RichSqlInsert> process(String name, RelNode relNode) {
     FlinkSqlNodes convert = toSql.convert(relNode);
-
     SqlNode topLevelQuery = convert.getSqlNode();
-    List<SqlCreateView> queries = convert.getQueryList()
-        .stream()
-        .map(this::createQuery)
+    List<SqlCreateView> queries = convert.getQueryList().stream()
+        .map(q -> FlinkSqlNodeFactory.createView(q.getTableName(), q.getNode()))
         .collect(Collectors.toList());
 
     FlinkRelToSqlConverter relToSqlConverter = new FlinkRelToSqlConverter(toSql.getAtomicInteger());
     QueryPipelineItem queryPipelineItem = relToSqlConverter.create(topLevelQuery);
-    SqlCreateView query = createQuery(queryPipelineItem);
+    SqlCreateView query = FlinkSqlNodeFactory.createView(queryPipelineItem.getTableName(),
+        queryPipelineItem.getNode());
     queries.add(query);
 
-    SqlSelect select = new SqlSelectBuilder()
-        .setFrom(query.getViewName())
-        .build();
+    SqlSelect select = new SqlSelectBuilder().setFrom(query.getViewName()).build();
 
-    return Pair.of(queries, createInsert(select, name));
-  }
-
-  private SqlCreateView createQuery(QueryPipelineItem q) {
-    return new SqlCreateView(SqlParserPos.ZERO,
-        identifier(q.getTableName()),
-        SqlNodeList.EMPTY,
-        q.getNode(),
-        false,
-        false,
-        false,
-        null,
-        null
-    );
-  }
-
-  private RichSqlInsert createInsert(SqlNode source, String target) {
-    return new RichSqlInsert(SqlParserPos.ZERO, SqlNodeList.EMPTY, SqlNodeList.EMPTY,
-        identifier(target), source, null, null);
-  }
-
-  public static SqlIdentifier identifier(String str) {
-    return new SqlIdentifier(str, SqlParserPos.ZERO);
+    return Pair.of(queries, FlinkSqlNodeFactory.createInsert(select, name));
   }
 
   private RelNode applyDowncasting(RelBuilder relBuilder, RelNode relNode, WriteSink writeSink,
       Map<String, String> downcastClassNames, Optional<DataTypeMapper> connectorMapping) {
     relBuilder.push(relNode);
-
     AtomicBoolean hasChanged = new AtomicBoolean();
-    List<RexNode> fields = relNode.getRowType().getFieldList().stream()
-        .map(field -> convertField(field, hasChanged, relBuilder, writeSink, downcastClassNames, connectorMapping))
+
+    List<RexNode> fields = relNode.getRowType().getFieldList().stream().map(
+            field -> convertField(field, hasChanged, relBuilder, downcastClassNames, connectorMapping))
         .collect(Collectors.toList());
 
     if (hasChanged.get()) {
@@ -181,28 +134,22 @@ public class SqrlToFlinkSqlGenerator {
   }
 
   private RexNode convertField(RelDataTypeField field, AtomicBoolean hasChanged,
-      RelBuilder relBuilder, WriteSink writeSink, Map<String, String> downcastClassNames,
+      RelBuilder relBuilder, Map<String, String> downcastClassNames,
       Optional<DataTypeMapper> connectorMapping) {
-    if (connectorMapping.isEmpty()) {
+    if (connectorMapping.isEmpty() || connectorMapping.get().nativeTypeSupport(field.getType())) {
       return relBuilder.field(field.getIndex());
     }
 
-    DataTypeMapper mapping = connectorMapping.get();
-    if (mapping.nativeTypeSupport(field.getType())) {
-      return relBuilder.field(field.getIndex());
-    }
-
-    Optional<CastFunction> downcastFunction = mapping.convertType(field.getType());
-
+    Optional<CastFunction> downcastFunction = connectorMapping.get().convertType(field.getType());
     if (downcastFunction.isEmpty()) {
-      throw new RuntimeException("Could not find downcast function for : " + field.getType().getFullTypeString());
+      throw new RuntimeException(
+          "Could not find downcast function for: " + field.getType().getFullTypeString());
     }
 
     CastFunction castFunction = downcastFunction.get();
-
     downcastClassNames.put(castFunction.getFunction().getName(), castFunction.getClassName());
-
     hasChanged.set(true);
+
     return relBuilder.getRexBuilder()
         .makeCall(castFunction.getFunction(), List.of(relBuilder.field(field.getIndex())));
   }
@@ -222,158 +169,62 @@ public class SqrlToFlinkSqlGenerator {
   private List<SqlCreateFunction> extractFunctions(List<WriteQuery> writeQueries,
       Map<String, String> downcastClassNames) {
     Map<String, String> mutableUdfs = framework.getSqrlOperatorTable().getUdfs().entrySet().stream()
-        .filter(f->isUdf(f.getValue()))
-        .collect(Collectors.toMap(Entry::getKey, e->extractFunctionClass(e.getValue()).getName()));
+        .filter(f -> isUdf(f.getValue())).collect(
+            Collectors.toMap(Map.Entry::getKey, e -> extractFunctionClass(e.getValue()).getName()));
 
     mutableUdfs.putAll(downcastClassNames);
-    //exclude sqrl NOW for flink's NOW
     mutableUdfs.remove(DefaultFunctions.NOW.getName().toLowerCase());
 
-    List<SqlCreateFunction> functionList = new ArrayList<>();
-    for (Map.Entry<String, String> fnc : mutableUdfs.entrySet()) {
-      functionList.add(createFunction(fnc.getKey(), fnc.getValue()));
-    }
-
-    return functionList;
+    return mutableUdfs.entrySet().stream()
+        .map(entry -> FlinkSqlNodeFactory.createFunction(entry.getKey(), entry.getValue()))
+        .collect(Collectors.toList());
   }
 
   private boolean isUdf(SqlOperator o) {
-    Class aClass = extractFunctionClass(o);
-    if (aClass == BuiltInFunctionDefinition.class) return false;
-    return UserDefinedFunction.class.isAssignableFrom(aClass);
+    Class<?> functionClass = extractFunctionClass(o);
+    return UserDefinedFunction.class.isAssignableFrom(functionClass)
+        && functionClass != BuiltInFunctionDefinition.class;
   }
 
-  private Class extractFunctionClass(SqlOperator o) {
+  private Class<?> extractFunctionClass(SqlOperator o) {
     if (o instanceof BridgingSqlFunction) {
-      BridgingSqlFunction bridgingSqlFunction = (BridgingSqlFunction) o;
-      return bridgingSqlFunction.getResolvedFunction().getDefinition().getClass();
+      return ((BridgingSqlFunction) o).getResolvedFunction().getDefinition().getClass();
     } else if (o instanceof BridgingSqlAggFunction) {
-      BridgingSqlAggFunction bridgingSqlFunction = (BridgingSqlAggFunction) o;
-      return bridgingSqlFunction.getResolvedFunction().getDefinition().getClass();
+      return ((BridgingSqlAggFunction) o).getResolvedFunction().getDefinition().getClass();
     }
     return o.getClass();
-  }
-
-  public SqlCreateFunction createFunction(String name, String clazz) {
-    return new SqlCreateFunction(SqlParserPos.ZERO,
-        identifier(name),
-        SqlLiteral.createCharString(clazz, SqlParserPos.ZERO),
-        "JAVA",
-        true,
-        true,
-        false,
-        new SqlNodeList(SqlParserPos.ZERO));
   }
 
   private Set<SqlCall> extractTableDescriptors(List<WriteQuery> queries) {
     Map<String, ImportedRelationalTable> tables = uniqueSourceExtractor.extract(queries);
 
-    Set<SqlCall> sinksAndSources = new LinkedHashSet<>();
-    for (Map.Entry<String, ImportedRelationalTable> table : tables.entrySet()) {
-      String tableName = table.getKey();
-      SqlCreateTable sqlCreateTable = toCreateTable(tableName, table.getValue().getRowType(),
-          table.getValue().getTableSource().getConfiguration(), false);
+    Set<SqlCall> sources = new LinkedHashSet<>();
+    for (Map.Entry<String, ImportedRelationalTable> entry : tables.entrySet()) {
+      String tableName = entry.getKey();
+      ImportedRelationalTable table = entry.getValue();
+      TableConfig tableConfig = table.getTableSource().getConfiguration();
 
-      sinksAndSources.add(sqlCreateTable);
+      SqlCreateTable sqlCreateTable = FlinkSqlNodeFactory.createTable(
+          tableName,
+          table.getRowType(),
+          tableConfig.getBase().getPartitionKey(),
+          tableConfig.getBase().getWatermarkMillis(),
+          tableConfig.getBase().getTimestampColumn().map(NamePath::parse)
+              .map(NamePath::getLast)
+              .map(Name::getDisplay),
+          tableConfig.getMetadataConfig().toMap(),
+          tableConfig.getPrimaryKeyConstraint(),
+          new HashMap<>(tableConfig.getConnectorConfig().toMap()),
+          e -> framework.getQueryPlanner().parseCall(e)
+      );
+
+      sources.add(sqlCreateTable);
     }
 
-    return sinksAndSources;
+    return sources;
   }
 
-  public SqlCreateTable toCreateTable(String name, RelDataType relDataType, TableConfig tableConfig,
-      boolean isSink) {
-    TableTableConfig base = tableConfig.getBase();
-
-    return new SqlCreateTable(SqlParserPos.ZERO,
-        identifier(name),
-        createColumns(relDataType, tableConfig),
-        createConstraints(tableConfig.getPrimaryKeyConstraint()),
-        createProperties(tableConfig),
-        tableConfig.getBase().getPartitionKey().isPresent() ?
-            createPartitionKeys(tableConfig.getBase().getPartitionKey().get()) : SqlNodeList.EMPTY,
-        base.getWatermarkMillis()>=0 && !isSink ? createWatermark(tableConfig) : null,
-        createComment(),
-        true,
-        false
-    );
-  }
-
-  private SqlWatermark createWatermark(TableConfig tableConfig) {
-    TableTableConfig base = tableConfig.getBase();
-    Optional<String> timestampColumn = base.getTimestampColumn()
-        .map(f->NamePath.parse(f).getLast().getDisplay());
-    if (timestampColumn.isEmpty()) {
-      return null;
-    }
-
-    long timestampMs = base.getWatermarkMillis();
-    return new SqlWatermark(SqlParserPos.ZERO,
-        identifier(timestampColumn.get()),
-        boundedStrategy(identifier(timestampColumn.get()), Double.toString(timestampMs/1000d)));
-  }
-
-  public SqlNodeList createColumns(RelDataType relDataType, TableConfig tableConfig) {
-    List<RelDataTypeField> fieldList = relDataType.getFieldList();
-    if (fieldList.isEmpty()) {
-      return SqlNodeList.EMPTY;
-    }
-    List<SqlNode> nodes = new ArrayList<>();
-
-    MetadataConfig metadataConfig = tableConfig.getMetadataConfig();
-
-    Map<Name, SqlNode> metadataMap = new HashMap<>();
-    for (String columnNameStr : metadataConfig.getKeys()) {
-      Name columnName = Name.system(columnNameStr);
-
-      MetadataEntry metadataEntry = metadataConfig.getMetadataEntry(columnNameStr)
-          .get();
-
-      Optional<String> attribute = metadataEntry.getAttribute();
-      SqlNode node;
-      if (attribute.isEmpty()) {
-        node = SqlLiteral.createCharString(metadataEntry.getType().get(), SqlParserPos.ZERO);
-      } else { //is fnc call
-        node = framework.getQueryPlanner().parseCall(attribute.get());
-        if (node instanceof SqlIdentifier) {
-          node = SqlLiteral.createCharString(metadataEntry.getAttribute().get(), SqlParserPos.ZERO);
-        } else {
-          SqlCallRewriter callRewriter = new SqlCallRewriter();
-          callRewriter.performCallRewrite((SqlCall) node);
-        }
-      }
-
-      metadataMap.put(columnName, node);
-    }
-
-    for (RelDataTypeField column : fieldList) {
-      Name columnName = Name.system(column.getName());
-      SqlNode node;
-      if (metadataMap.containsKey(columnName)) {
-        SqlNode metadataFnc = metadataMap.get(columnName);
-        if (metadataFnc instanceof SqlCall) {//Is a computed column
-          node = new SqlTableColumn.SqlComputedColumn(SqlParserPos.ZERO,
-            identifier(column.getKey()), null,
-              metadataFnc);
-        } else {
-          node = new SqlTableColumn.SqlMetadataColumn(SqlParserPos.ZERO,
-              identifier(column.getKey()), null,
-              SqlDataTypeSpecBuilder.convertTypeToFlinkSpec(column.getType()),
-              metadataFnc,
-              false);
-        }
-      } else {
-        node = new SqlTableColumn.SqlRegularColumn(SqlParserPos.ZERO,
-            identifier(column.getKey()), null,
-            SqlDataTypeSpecBuilder.convertTypeToFlinkSpec(column.getType()), null);
-      }
-      nodes.add(node);
-    }
-
-    return new SqlNodeList(nodes, SqlParserPos.ZERO);
-  }
-
-  private SqlCreateTable registerSinkTable(WriteSink sink, RelNode relNode,
-      List<StagePlan> stagePlans) {
+  private SqlCreateTable registerSinkTable(WriteSink sink, RelNode relNode, List<StagePlan> stagePlans) {
     String name;
     TableConfig tableConfig;
 
@@ -381,33 +232,35 @@ public class SqrlToFlinkSqlGenerator {
       EngineSink engineSink = (EngineSink) sink;
       TableConfig engineConfig = engineSink.getStage().getEngine().getSinkConfig(engineSink.getNameId());
 
-      //Add partitioning keys if engine supports them
       StagePlan stagePlan = stagePlans.stream()
           .filter(f -> f.getStage() == engineSink.getStage())
-          .findFirst().orElseThrow();
-      TableConfigBuilder builder = engineConfig.toBuilder();
+          .findFirst()
+          .orElseThrow();
+
+      TableConfigBuilder configBuilder = engineConfig.toBuilder();
+
       if (engineSink.getStage().supportsFeature(EngineFeature.PARTITIONING)) {
         DatabaseStagePlan dbPlan = (DatabaseStagePlan) stagePlan;
         String tableId = engineSink.getNameId();
-        Optional<IndexDefinition> optIndex =  dbPlan.getIndexDefinitions().stream()
+        Optional<IndexDefinition> optIndex = dbPlan.getIndexDefinitions().stream()
             .filter(idx -> idx.getTableId().equals(tableId))
             .filter(idx -> idx.getType().isPartitioned())
             .findFirst();
-        if (optIndex.isPresent()) {
-          IndexDefinition partitionIndex = optIndex.get();
-          List<String> partitionColumns = partitionIndex.getColumnNames().subList(0, partitionIndex.getPartitionOffset());
-          if (!partitionColumns.isEmpty()) builder.setPartitionKey(partitionColumns);
-        }
-
+        optIndex.ifPresent(partitionIndex -> {
+          List<String> partitionColumns = partitionIndex.getColumnNames()
+              .subList(0, partitionIndex.getPartitionOffset());
+          if (!partitionColumns.isEmpty()) {
+            configBuilder.setPartitionKey(partitionColumns);
+          }
+        });
       }
 
-      //todo check kafka
       String[] pks = IntStream.of(engineSink.getPrimaryKeys())
           .mapToObj(i -> relNode.getRowType().getFieldList().get(i).getName())
           .toArray(String[]::new);
-      tableConfig = builder
-          .setPrimaryKey(pks)
-          .build();
+      configBuilder.setPrimaryKey(pks);
+
+      tableConfig = configBuilder.build();
       name = engineSink.getNameId();
     } else if (sink instanceof ExternalSink) {
       ExternalSink externalSink = (ExternalSink) sink;
@@ -417,118 +270,49 @@ public class SqrlToFlinkSqlGenerator {
       throw new RuntimeException("Could not identify write sink type.");
     }
 
-    return toCreateTable(name, relNode.getRowType(), tableConfig, true);
-  }
+    SqlCreateTable sqlCreateTable = FlinkSqlNodeFactory.createTable(
+        name,
+        relNode.getRowType(),
+        tableConfig.getBase().getPartitionKey(),
+        -1,
+        Optional.empty(),
+        tableConfig.getMetadataConfig().toMap(),
+        tableConfig.getPrimaryKeyConstraint(),
+        new HashMap<>(tableConfig.getConnectorConfig().toMap()),
+        e -> framework.getQueryPlanner().parseCall(e)
+    );
 
-  private List<SqlTableConstraint> createConstraints(List<String> primaryKey) {
-    if (primaryKey.isEmpty()) return List.of();
-
-    SqlLiteral pk = SqlUniqueSpec.PRIMARY_KEY.symbol(SqlParserPos.ZERO);
-    SqlTableConstraint sqlTableConstraint = new SqlTableConstraint(null, pk,
-        new SqlNodeList(primaryKey.stream().map(SqrlToFlinkSqlGenerator::identifier).collect(Collectors.toList()),
-            SqlParserPos.ZERO),
-        SqlConstraintEnforcement.NOT_ENFORCED.symbol(SqlParserPos.ZERO),
-        true,
-        SqlParserPos.ZERO);
-
-    return List.of(sqlTableConstraint);
-  }
-
-
-  private SqlNodeList createProperties(TableConfig tableConfig) {
-    Map<String, Object> options = new HashMap<>(tableConfig.getConnectorConfig()
-        .toMap());
-    options.remove("version"); //why are these here?
-    options.remove("type");
-    if (options.isEmpty()) {
-      return SqlNodeList.EMPTY;
-    }
-    List<SqlNode> props = new ArrayList<>();
-    for (Map.Entry<String, Object> option : options.entrySet()) {
-      props.add(new SqlTableOption(
-          SqlLiteral.createCharString(option.getKey(), SqlParserPos.ZERO),
-          SqlLiteral.createCharString(option.getValue().toString(), SqlParserPos.ZERO), //todo: all strings?
-          SqlParserPos.ZERO));
-    }
-
-    return new SqlNodeList(props, SqlParserPos.ZERO);
-  }
-
-  private SqlNodeList createPartitionKeys(List<String> pks) {
-    List<SqlIdentifier> partitionKeys = pks
-        .stream().map(key -> new SqlIdentifier(key, SqlParserPos.ZERO))
-        .collect(Collectors.toList());
-
-    return new SqlNodeList(partitionKeys, SqlParserPos.ZERO);
-  }
-
-  private SqlCharStringLiteral createComment() {
-    return null;//comment.map(c->SqlLiteral.createCharString(c, SqlParserPos.ZERO))
-//        .orElse(null);
-  }
-
-  private SqlNode boundedStrategy(SqlNode watermark, String delay) {
-    return new SqlBasicCall(
-        SqlStdOperatorTable.MINUS,
-        new SqlNode[] {
-            watermark,
-            SqlLiteral.createInterval(
-                1,
-                delay,
-                new SqlIntervalQualifier(
-                    TimeUnit.SECOND, TimeUnit.SECOND, SqlParserPos.ZERO),
-                SqlParserPos.ZERO)
-        },
-        SqlParserPos.ZERO);
-  }
-
-  private List<WriteQuery> applyFlinkCompatibilityRules(List<? extends Query> queries) {
-    List<WriteQuery> collect = queries.stream()
-        .map(q -> applyFlinkCompatibilityRules((WriteQuery) q)).collect(Collectors.toList());
-
-    return collect;
-  }
-
-  private WriteQuery applyFlinkCompatibilityRules(WriteQuery query) {
-    return new WriteQuery(query.getSink(),
-        applyFlinkCompatibilityRules(query.getExpandedRelNode()),
-        applyFlinkCompatibilityRules(query.getRelNode()));
-  }
-
-  private RelNode applyFlinkCompatibilityRules(RelNode relNode) {
-    Program program = Programs.hep(List.of(
-            new ExpandTemporalJoinRule(),
-            ExpandWindowHintRuleConfig.DEFAULT.toRule(),
-            ShapeBushyCorrelateJoinRuleConfig.DEFAULT.toRule(),
-            ExpandNestedTableFunctionRuleConfig.DEFAULT.toRule()
-
-        ), false,
-        FlinkDefaultRelMetadataProvider.INSTANCE());
-
-    RelNode applied = program.run(null, relNode, relNode.getTraitSet(), List.of(), List.of());
-    applied.accept(new RexShuttle() {
-      @Override
-      public RexNode visitLiteral(RexLiteral literal) {
-        return super.visitLiteral(literal);
-      }
-    });
-
-    return applied;
+    return sqlCreateTable;
   }
 
   private void checkPreconditions(List<? extends Query> queries) {
-    checkQueriesAreWriteQuery(queries);
+    queries.forEach(query -> Preconditions.checkState(query instanceof WriteQuery,
+        "Unexpected query type when creating executable plan"));
   }
 
-  private void checkQueriesAreWriteQuery(List<? extends Query> queries) {
-    for (Query query : queries) {
-      Preconditions.checkState(query instanceof WriteQuery,
-          "Unexpected query type when creating executable plan");
-    }
+  private List<WriteQuery> applyFlinkCompatibilityRules(List<? extends Query> queries) {
+    return queries.stream().map(q -> applyFlinkCompatibilityRules((WriteQuery) q))
+        .collect(Collectors.toList());
+  }
+
+  private WriteQuery applyFlinkCompatibilityRules(WriteQuery query) {
+    return new WriteQuery(query.getSink(), applyFlinkCompatibilityRules(query.getExpandedRelNode()),
+        applyFlinkCompatibilityRules(query.getRelNode()), query.getType());
+  }
+
+  private RelNode applyFlinkCompatibilityRules(RelNode relNode) {
+    Program program = Programs.hep(
+        List.of(new ExpandTemporalJoinRule(), ExpandWindowHintRuleConfig.DEFAULT.toRule(),
+            ShapeBushyCorrelateJoinRuleConfig.DEFAULT.toRule(),
+            ExpandNestedTableFunctionRuleConfig.DEFAULT.toRule()), false,
+        FlinkDefaultRelMetadataProvider.INSTANCE());
+
+    return program.run(null, relNode, relNode.getTraitSet(), List.of(), List.of());
   }
 
   @lombok.Value
   public static class SqlResult {
+
     private Set<SqlCall> sinksSources;
     private List<RichSqlInsert> inserts;
     private List<SqlCreateView> queries;
