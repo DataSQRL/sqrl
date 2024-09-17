@@ -145,6 +145,25 @@ LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timesta
     LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $3 DESC NULLS FIRST)])
       LogicalTableScan(table=[[customer_2]])
 
+=== CustomerVaryingCase
+ID:     customervaryingcase_1
+Type:   state
+Stage:  flink
+Inputs: customer_2
+Primary Key: customerID
+Timestamp  : timestamp
+Schema:
+ - customerID: BIGINT NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - lastUpdated: BIGINT NOT NULL
+ - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Plan:
+LogicalProject(customerID=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
+  LogicalFilter(condition=[=($5, 1)])
+    LogicalProject(customerID=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $3 DESC NULLS FIRST)])
+      LogicalTableScan(table=[[customer_2]])
+
 === ExplicitDistinct
 ID:     explicitdistinct_1
 Type:   state
@@ -175,6 +194,7 @@ LogicalProject(customerid=[$0], timestamp=[$4], name=[$2])
     "CREATE TEMPORARY TABLE `customerbytimeasc_1` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`customerid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'customerbytimeasc_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `customerbyupdated_1` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`customerid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'customerbyupdated_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `customerbyupdatedasc_1` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`customerid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'customerbyupdatedasc_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `customervaryingcase_1` (\n  `customerID` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`customerID`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'customervaryingcase_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `explicitdistinct_1` (\n  `customerid` BIGINT NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  PRIMARY KEY (`customerid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'explicitdistinct_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `customer_1`;",
     "CREATE VIEW `table$2`\nAS\nSELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid`, `email` ORDER BY `lastUpdated` DESC, `timestamp`) AS `_rownum`\n  FROM `customer_1`) AS `t`\nWHERE `_rownum` = 1;",
@@ -184,8 +204,9 @@ LogicalProject(customerid=[$0], timestamp=[$4], name=[$2])
     "CREATE VIEW `table$6`\nAS\nSELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp`) AS `_rownum`\n  FROM `customer_1`) AS `t`\nWHERE `_rownum` = 1;",
     "CREATE VIEW `table$7`\nAS\nSELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `lastUpdated` DESC) AS `_rownum`\n  FROM `customer_1`) AS `t`\nWHERE `_rownum` = 1;",
     "CREATE VIEW `table$8`\nAS\nSELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `lastUpdated` DESC) AS `_rownum`\n  FROM `customer_1`) AS `t`\nWHERE `_rownum` = 1;",
-    "CREATE VIEW `table$9`\nAS\nSELECT `customerid`, `timestamp`, `name`\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC) AS `_rownum`\n  FROM `customer_1`) AS `t`\nWHERE `_rownum` = 1;",
-    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer_2`\n(SELECT *\n FROM `table$1`)\n;\nINSERT INTO `customerbymultiple_1`\n (SELECT *\n  FROM `table$2`)\n ;\n INSERT INTO `customerbymultipletime_1`\n  (SELECT *\n   FROM `table$3`)\n  ;\n  INSERT INTO `customerbytime2_1`\n   (SELECT *\n    FROM `table$4`)\n   ;\n   INSERT INTO `customerbytime_1`\n    (SELECT *\n     FROM `table$5`)\n    ;\n    INSERT INTO `customerbytimeasc_1`\n     (SELECT *\n      FROM `table$6`)\n     ;\n     INSERT INTO `customerbyupdated_1`\n      (SELECT *\n       FROM `table$7`)\n      ;\n      INSERT INTO `customerbyupdatedasc_1`\n       (SELECT *\n        FROM `table$8`)\n       ;\n       INSERT INTO `explicitdistinct_1`\n        (SELECT *\n         FROM `table$9`)\n        ;\n        END;"
+    "CREATE VIEW `table$9`\nAS\nSELECT `customerID`, `email`, `name`, `lastUpdated`, `timestamp`\nFROM (SELECT `customerid` AS `customerID`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `lastUpdated` DESC) AS `_rownum`\n  FROM `customer_1`) AS `t`\nWHERE `_rownum` = 1;",
+    "CREATE VIEW `table$10`\nAS\nSELECT `customerid`, `timestamp`, `name`\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC) AS `_rownum`\n  FROM `customer_1`) AS `t`\nWHERE `_rownum` = 1;",
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer_2`\n(SELECT *\n FROM `table$1`)\n;\nINSERT INTO `customerbymultiple_1`\n (SELECT *\n  FROM `table$2`)\n ;\n INSERT INTO `customerbymultipletime_1`\n  (SELECT *\n   FROM `table$3`)\n  ;\n  INSERT INTO `customerbytime2_1`\n   (SELECT *\n    FROM `table$4`)\n   ;\n   INSERT INTO `customerbytime_1`\n    (SELECT *\n     FROM `table$5`)\n    ;\n    INSERT INTO `customerbytimeasc_1`\n     (SELECT *\n      FROM `table$6`)\n     ;\n     INSERT INTO `customerbyupdated_1`\n      (SELECT *\n       FROM `table$7`)\n      ;\n      INSERT INTO `customerbyupdatedasc_1`\n       (SELECT *\n        FROM `table$8`)\n       ;\n       INSERT INTO `customervaryingcase_1`\n        (SELECT *\n         FROM `table$9`)\n        ;\n        INSERT INTO `explicitdistinct_1`\n         (SELECT *\n          FROM `table$10`)\n         ;\n         END;"
   ],
   "connectors" : [
     "jdbc-sqrl",
@@ -316,6 +337,20 @@ LogicalProject(customerid=[$0], timestamp=[$4], name=[$2])
         "\"customerid\""
       ],
       "sql" : "CREATE TABLE IF NOT EXISTS customerbyupdatedasc_1 (\"customerid\" BIGINT NOT NULL,\"email\" TEXT NOT NULL,\"name\" TEXT NOT NULL,\"lastUpdated\" BIGINT NOT NULL,\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\"));"
+    },
+    {
+      "name" : "customervaryingcase_1",
+      "columns" : [
+        "\"customerID\" BIGINT NOT NULL",
+        "\"email\" TEXT NOT NULL",
+        "\"name\" TEXT NOT NULL",
+        "\"lastUpdated\" BIGINT NOT NULL",
+        "\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"customerID\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS customervaryingcase_1 (\"customerID\" BIGINT NOT NULL,\"email\" TEXT NOT NULL,\"name\" TEXT NOT NULL,\"lastUpdated\" BIGINT NOT NULL,\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerID\"));"
     },
     {
       "name" : "explicitdistinct_1",
@@ -632,6 +667,26 @@ LogicalProject(customerid=[$0], timestamp=[$4], name=[$2])
               {
                 "type" : "variable",
                 "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"customerbymultipletime_1\"\nORDER BY \"customerid\", \"email\"",
+              "parameters" : [ ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
                 "path" : "customerid"
               },
               {
@@ -697,26 +752,6 @@ LogicalProject(customerid=[$0], timestamp=[$4], name=[$2])
                   "path" : "customerid"
                 }
               ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customerbymultipletime_1\"\nORDER BY \"customerid\", \"email\"",
-              "parameters" : [ ]
             }
           },
           {
@@ -1045,6 +1080,64 @@ LogicalProject(customerid=[$0], timestamp=[$4], name=[$2])
       {
         "type" : "args",
         "parentType" : "Query",
+        "fieldName" : "CustomerVaryingCase",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "customerID"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"customervaryingcase_1\"\nWHERE \"customerID\" = $1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "customerID"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"customervaryingcase_1\"\nORDER BY \"customerID\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
         "fieldName" : "ExplicitDistinct",
         "matchs" : [
           {
@@ -1106,7 +1199,7 @@ LogicalProject(customerid=[$0], timestamp=[$4], name=[$2])
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "type Customer {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n}\n\ntype CustomerByMultiple {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n}\n\ntype CustomerByMultipleTime {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n}\n\ntype CustomerByTime {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n}\n\ntype CustomerByTime2 {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n}\n\ntype CustomerByTimeAsc {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n}\n\ntype CustomerByUpdated {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n}\n\ntype CustomerByUpdatedAsc {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype ExplicitDistinct {\n  customerid: Float!\n  timestamp: DateTime!\n  name: String!\n}\n\ntype Query {\n  Customer(customerid: Float, lastUpdated: Float, limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerByMultiple(customerid: Float, email: String, limit: Int = 10, offset: Int = 0): [CustomerByMultiple!]\n  CustomerByMultipleTime(customerid: Float, email: String, limit: Int = 10, offset: Int = 0): [CustomerByMultipleTime!]\n  CustomerByTime(customerid: Float, limit: Int = 10, offset: Int = 0): [CustomerByTime!]\n  CustomerByTime2(customerid: Float, limit: Int = 10, offset: Int = 0): [CustomerByTime2!]\n  CustomerByTimeAsc(customerid: Float, limit: Int = 10, offset: Int = 0): [CustomerByTimeAsc!]\n  CustomerByUpdated(customerid: Float, limit: Int = 10, offset: Int = 0): [CustomerByUpdated!]\n  CustomerByUpdatedAsc(customerid: Float, limit: Int = 10, offset: Int = 0): [CustomerByUpdatedAsc!]\n  ExplicitDistinct(customerid: Float, limit: Int = 10, offset: Int = 0): [ExplicitDistinct!]\n}\n"
+      "schema" : "type Customer {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n}\n\ntype CustomerByMultiple {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n}\n\ntype CustomerByMultipleTime {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n}\n\ntype CustomerByTime {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n}\n\ntype CustomerByTime2 {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n}\n\ntype CustomerByTimeAsc {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n}\n\ntype CustomerByUpdated {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n}\n\ntype CustomerByUpdatedAsc {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n}\n\ntype CustomerVaryingCase {\n  customerID: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype ExplicitDistinct {\n  customerid: Float!\n  timestamp: DateTime!\n  name: String!\n}\n\ntype Query {\n  Customer(customerid: Float, lastUpdated: Float, limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerByMultiple(customerid: Float, email: String, limit: Int = 10, offset: Int = 0): [CustomerByMultiple!]\n  CustomerByMultipleTime(customerid: Float, email: String, limit: Int = 10, offset: Int = 0): [CustomerByMultipleTime!]\n  CustomerByTime(customerid: Float, limit: Int = 10, offset: Int = 0): [CustomerByTime!]\n  CustomerByTime2(customerid: Float, limit: Int = 10, offset: Int = 0): [CustomerByTime2!]\n  CustomerByTimeAsc(customerid: Float, limit: Int = 10, offset: Int = 0): [CustomerByTimeAsc!]\n  CustomerByUpdated(customerid: Float, limit: Int = 10, offset: Int = 0): [CustomerByUpdated!]\n  CustomerByUpdatedAsc(customerid: Float, limit: Int = 10, offset: Int = 0): [CustomerByUpdatedAsc!]\n  CustomerVaryingCase(customerID: Float, limit: Int = 10, offset: Int = 0): [CustomerVaryingCase!]\n  ExplicitDistinct(customerid: Float, limit: Int = 10, offset: Int = 0): [ExplicitDistinct!]\n}\n"
     }
   }
 }

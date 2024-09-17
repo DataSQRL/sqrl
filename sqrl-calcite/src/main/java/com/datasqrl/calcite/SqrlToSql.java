@@ -1,15 +1,14 @@
 package com.datasqrl.calcite;
 
-import static com.datasqrl.plan.validate.ScriptPlanner.addError;
 import static com.datasqrl.plan.validate.ScriptPlanner.isSelfTable;
 import static com.datasqrl.plan.validate.ScriptPlanner.isVariable;
 import static org.apache.calcite.sql.SqlUtil.stripAs;
 
-import com.datasqrl.calcite.SqrlToSql.Context;
-import com.datasqrl.calcite.SqrlToSql.Result;
 import com.datasqrl.calcite.NormalizeTablePath.PathItem;
 import com.datasqrl.calcite.NormalizeTablePath.SelfTablePathItem;
 import com.datasqrl.calcite.NormalizeTablePath.TablePathResult;
+import com.datasqrl.calcite.SqrlToSql.Context;
+import com.datasqrl.calcite.SqrlToSql.Result;
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlAliasCallBuilder;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlCallBuilder;
@@ -46,7 +45,6 @@ import org.apache.calcite.schema.Function;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.CalciteFixes;
-import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlFunctionCategory;
 import org.apache.calcite.sql.SqlHint;
@@ -64,6 +62,7 @@ import org.apache.calcite.sql.SqlUnresolvedFunction;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlShuttle;
+import org.apache.calcite.sql.validate.SqlNameMatcher;
 
 public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
   final QueryPlanner planner;
@@ -120,9 +119,11 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
 
       List<String> columns = catalogReader.getTableFromPath(result.getCurrentPath()).get()
           .unwrap(ModifiableTable.class).getRowType().getFieldNames();
+      SqlNameMatcher nameMatcher = catalogReader.nameMatcher();
+
       List<SqlNode> newNodes = new ArrayList<>();
       for (String column : columns) {
-        if (!fieldNames.contains(column)) {
+        if (!containsFieldName(fieldNames, column, nameMatcher)) {
           newNodes.add(new SqlIdentifier(column, SqlParserPos.ZERO));
           fieldNames.add(column);
         }
@@ -167,6 +168,15 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
 
     return new Result(select.build(), result.getCurrentPath(), List.of(), List.of(), Optional.empty(),
         result.params);
+  }
+
+  private boolean containsFieldName(Collection<String> fieldNames, String column, SqlNameMatcher nameMatcher) {
+    for (String fieldName : fieldNames) {
+      if (nameMatcher.matches(fieldName, column)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private void determineIsA(SqlSelect call, Context newContext, Result result) {
