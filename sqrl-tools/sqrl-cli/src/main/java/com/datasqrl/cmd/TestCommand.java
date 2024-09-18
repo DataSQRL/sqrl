@@ -86,7 +86,7 @@ public class TestCommand extends AbstractCompilerCommand {
 
     // Loop until the container starts or a timeout occurs
     long startTime = System.currentTimeMillis();
-    long timeout = 60000; // Timeout after 60 seconds
+    long timeout = 120000; // Timeout after 60 seconds
     while(System.currentTimeMillis() - startTime < timeout && !containerIdOpt.isPresent()) {
       containerIdOpt = getContainerIdByName(testServiceName);
       if (!containerIdOpt.isPresent()) {
