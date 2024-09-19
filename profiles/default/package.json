@@ -30,7 +30,7 @@
           "connector" : "filesystem",
           "format" : "${sqrl:format}",
           "path" : "${sqrl:filepath}",
-          "source.monitor-interval" : 1
+          "source.monitor-interval" : 10000
         },
         "iceberg": {
           "connector": "iceberg",
