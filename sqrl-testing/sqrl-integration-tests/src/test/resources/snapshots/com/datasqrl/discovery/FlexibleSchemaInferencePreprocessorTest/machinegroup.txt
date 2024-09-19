@@ -30,7 +30,7 @@ columns:
   "flink" : {
     "format" : "flexible-json",
     "path" : "${DATA_PATH}/machinegroup.jsonl.gz",
-    "source.monitor-interval" : 1,
+    "source.monitor-interval" : 10000,
     "connector" : "filesystem"
   },
   "metadata" : {
