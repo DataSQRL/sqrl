@@ -17,6 +17,7 @@ public class StdStringLibraryImpl extends AbstractFunctionModule implements StdL
   private static List<NamespaceObject> stringFunctions = java.util.List.of(
       createFunctionFromFlink("length", "CHAR_LENGTH"),
       createFunctionFromFlink("upper", "UPPER"),
+      createFunctionFromFlink("lower", "LOWER"),
       createFunctionFromFlink("position", "POSITION"),
       createFunctionFromStdOpTable("trim"), //flink's trim fnc has addl args
       createFunctionFromFlink("ltrim", "LTRIM"),
