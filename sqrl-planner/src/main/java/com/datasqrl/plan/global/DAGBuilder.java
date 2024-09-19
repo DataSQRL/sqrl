@@ -84,7 +84,7 @@ public class DAGBuilder {
 
     //Try all stages to determine which one are viable
     Map<ExecutionStage, StageAnalysis> stageAnalysis = tryStages(stages, stage ->
-        TablePlan.of(sqrlConverter.convert(relnode, configBuilder.stage(stage).build(), errors)));
+        TablePlan.of(sqrlConverter.convert(relnode, configBuilder.stage(stage).build(), errors.onlyErrors())));
     SqrlNode node = nodeConstructor.apply(stageAnalysis);
     //Add all input nodes
     inputTables.stream().map(table -> getInputTable(table, dagInputs, table2Node)).forEach( input ->
@@ -100,20 +100,13 @@ public class DAGBuilder {
     configBuilder.sourceTableConsumer(inputTables::add);
     List<ExecutionStage> stages = table.getSupportedStages(pipeline, errors);
     Map<ExecutionStage, StageAnalysis> stageAnalysis = tryStages(stages, stage ->
-        sqrlConverter.convert(table, configBuilder.stage(stage).build(), errors));
+        sqrlConverter.convert(table, configBuilder.stage(stage).build(), errors.onlyErrors()));
     TableNode node = new TableNode(stageAnalysis, table);
     table2Node.put(table,node);
     //Since it's a DAG, we can recursively add tables to source without running the risk of a loop
     inputTables.stream().map(inputTbl -> getInputTable(inputTbl, dagInputs, table2Node)).forEach( input ->
         dagInputs.put(node,input));
     return node;
-  }
-
-  public Map<ExecutionStage, StageAnalysis> planStages(PhysicalTable table) {
-    SqrlConverterConfig.SqrlConverterConfigBuilder configBuilder = table.getBaseConfig();
-    List<ExecutionStage> stages = table.getSupportedStages(pipeline, errors);
-    return tryStages(stages, stage ->
-        sqrlConverter.convert(table, configBuilder.stage(stage).build(), errors));
   }
 
   private Map<ExecutionStage, StageAnalysis> tryStages(List<ExecutionStage> stages,
