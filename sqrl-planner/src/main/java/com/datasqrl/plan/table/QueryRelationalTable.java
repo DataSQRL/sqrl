@@ -5,6 +5,7 @@ import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.plan.hints.OptimizerHint;
 import com.datasqrl.plan.rules.LPAnalysis;
 import com.datasqrl.plan.rules.SqrlConverterConfig;
 import java.util.List;
@@ -34,6 +35,10 @@ public class QueryRelationalTable extends PhysicalRelationalTable {
     Preconditions.checkArgument(analyzedLP.getConvertedRelnode().select.isIdentity(), "We assume an identity select");
     this.analyzedLP = analyzedLP;
     this.streamRoot = analyzedLP.getConvertedRelnode().getStreamRoot();
+  }
+
+  public List<OptimizerHint> getOptimizerHints() {
+    return analyzedLP.getSqrlHints();
   }
 
   public RelNode getOriginalRelnode() {

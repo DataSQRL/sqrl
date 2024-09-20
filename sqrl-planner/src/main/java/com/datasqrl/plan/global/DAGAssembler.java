@@ -119,16 +119,25 @@ public class DAGAssembler {
             new EngineSink(materializedTable.getNameId(), materializedTable.getPrimaryKey().getPkIndexes(),
                 materializedTable.getRowType(), timestampIdx, database),
             processedRelnode, materializedTable.getPlannedRelNode(), materializedTable.getType()));
+
       }
 
       //Third, pick index structures for materialized tables
       //Pick index structures for database tables based on the database queries
       IndexSelector indexSelector = new IndexSelector(framework,
           ((DatabaseEngine) database.getEngine()).getIndexSelectorConfig());
+      Map<String, List<IndexDefinition>> indexHintsByTable = new LinkedHashMap<>();
+
       Collection<QueryIndexSummary> queryIndexSummaries = databaseQueries.stream().map(indexSelector::getIndexSelection)
           .flatMap(List::stream).collect(Collectors.toList());
-      Collection<IndexDefinition> indexDefinitions = indexSelector.optimizeIndexes(queryIndexSummaries)
-          .keySet();
+      List<IndexDefinition> indexDefinitions = new ArrayList<>(indexSelector.optimizeIndexes(queryIndexSummaries)
+          .keySet());
+      materializedTables.forEach(table -> indexSelector.getIndexHints(table).ifPresent(indexHints -> {
+        //First, remove all generated indexes for that table...
+        indexDefinitions.removeIf(idx -> idx.getTableId().equals(table.getNameId()));
+        //and overwrite with the specified ones
+        indexDefinitions.addAll(indexHints);
+      }));
       databasePlans.add(new PhysicalDAGPlan.DatabaseStagePlan(database, databaseQueries, indexDefinitions));
     }
 
