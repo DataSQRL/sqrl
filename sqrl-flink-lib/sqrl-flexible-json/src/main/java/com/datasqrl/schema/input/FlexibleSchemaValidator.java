@@ -48,9 +48,9 @@ public class FlexibleSchemaValidator implements SchemaValidator, Serializable {
 
   public SourceRecord.Named verifyAndAdjust(SourceRecord.Raw record, ErrorCollector errors) {
     //verify meta data
-    errors.checkFatal(record.hasUUID(),"Input record does not have UUID");
-    errors.checkFatal(record.getIngestTime()!=null, "Input record does not ingest timestamp");
-    errors.checkFatal(!hasSourceTimestamp || record.getSourceTime()!=null, "Input record does not have source timestamp");
+    errors.checkFatal(record.hasUUID(),"Input record does not have UUID: %s [table=%s]", record, tableSchema.getName());
+    errors.checkFatal(record.getIngestTime()!=null, "Input record does not ingest timestamp: %s [table=%s]", record, tableSchema.getName());
+    errors.checkFatal(!hasSourceTimestamp || record.getSourceTime()!=null, "Input record does not have source timestamp: %s [table=%s]", record, tableSchema.getName());
     Map<Name, Object> result = verifyAndAdjust(record.getData(),
         tableSchema.getFields(), errors);
     return record.replaceData(result);
@@ -67,7 +67,7 @@ public class FlexibleSchemaValidator implements SchemaValidator, Serializable {
       Optional<FlexibleFieldSchema.Field> field = relationSchema.getFieldByName(name);
       if (field.isEmpty()) {
         if (!settings.dropFields()) {
-          errors.fatal("Field is not defined in schema: %s", field);
+          errors.fatal("Field is not defined in schema: %s [table=%s]", name, tableSchema.getName());
         }
       } else {
         Pair<Name, Object> fieldResult = null;
@@ -110,7 +110,7 @@ public class FlexibleSchemaValidator implements SchemaValidator, Serializable {
             deepenArray(Collections.EMPTY_LIST, ft.getArrayDepth() - 1));
       }
     }
-    errors.fatal("Field [%s] has non-null constraint but record contains null value", field);
+    errors.fatal("Field [%s] has non-null constraint but record contains null value [table=%s]", field.getName(), tableSchema.getName());
     return null;
   }
 
@@ -143,8 +143,8 @@ public class FlexibleSchemaValidator implements SchemaValidator, Serializable {
       Object converted = verifyAndAdjust(data, match, field, typeSignature.getArrayDepth(), errors);
       return ImmutablePair.of(FlexibleSchemaHelper.getCombinedName(field, match), converted);
     } else {
-      errors.notice("Cannot match field data [%s] onto schema field [%s], hence field is ignored",
-          data, field);
+      errors.notice("Cannot match field data [%s] onto schema field [%s], hence field is ignored [table=%s]",
+          data, field.getName(), tableSchema.getName());
       return null;
     }
   }
@@ -158,7 +158,7 @@ public class FlexibleSchemaValidator implements SchemaValidator, Serializable {
       for (Object o : col) {
         if (o == null) {
           if (!settings.removeListNulls()) {
-            errors.fatal("Array contains null values: [%s]", col);
+            errors.fatal("Array contains null values: [%s] [field=%s, table=%s]", col, field.getName(), tableSchema);
           }
         } else {
           result.add(convertDataToMatchedType(o, type, field, errors));
@@ -179,23 +179,24 @@ public class FlexibleSchemaValidator implements SchemaValidator, Serializable {
               verifyAndAdjust(data, nestedFieldType, nestedField, 0, errors));
           return result;
         } else {
-          errors.fatal("Expected composite object [%s]", data);
+          errors.fatal("Expected composite object [%s] [field=%s, table=%s]", data, field.getName(), tableSchema.getName());
           return null;
         }
       } else {
         assert type instanceof BasicType;
-        return cast2BasicType(data, (BasicType) type, errors);
+        return cast2BasicType(data, (BasicType) type, field, errors);
       }
     }
   }
 
-  private Object cast2BasicType(Object data, BasicType type, ErrorCollector errors) {
+  private Object cast2BasicType(Object data, BasicType type, FlexibleFieldSchema.Field field,
+      ErrorCollector errors) {
     if (type instanceof StringType) {
       if (data instanceof String) {
         return data;
       } else { //Cast to string
         if (!settings.castDataType()) {
-          errors.fatal("Expected string but got: %s", data);
+          errors.fatal("Expected string but got: %s [field=%s, table=%s]", data, field.getName(), tableSchema.getName());
         }
         return data.toString();
       }
@@ -203,11 +204,11 @@ public class FlexibleSchemaValidator implements SchemaValidator, Serializable {
     if (data instanceof String || data instanceof Map) {
       //The datatype was detected
       if (!settings.castDataType()) {
-        errors.fatal("Encountered [%s] but expected [%s]", data, type);
+        errors.fatal("Encountered [%s] but expected [%s] [field=%s, table=%s]", data, type, field.getName(), tableSchema.getName());
       }
       Optional<Object> result = type.conversion().parseDetected(data, errors);
       if (result.isEmpty()) {
-        errors.fatal("Could not parse [%s] for type [%s]", data, type);
+        errors.fatal("Could not parse [%s] for type [%s] [field=%s, table=%s]", data, type, field.getName(), tableSchema.getName());
         return null;
       } else {
         data = result.get();
@@ -216,7 +217,7 @@ public class FlexibleSchemaValidator implements SchemaValidator, Serializable {
     try {
       return type.conversion().convert(data);
     } catch (IllegalArgumentException e) {
-      errors.fatal("Could not convert [%s] to type [%s]", data, type);
+      errors.fatal("Could not convert [%s] to type [%s] [field=%s, table=%s]", data, type, field.getName(), tableSchema.getName());
       return null;
     }
   }
@@ -241,7 +242,8 @@ public class FlexibleSchemaValidator implements SchemaValidator, Serializable {
         //Need to nest array to match depth
         data = deepenArray(data, type.getArrayDepth() - detectedArrayDepth);
       } else {
-        errors.fatal("Array [%s] does not have same dimension as schema [%s]", data, type);
+        errors.fatal("Array [%s] does not have same dimension as schema [%s] [field=%s, table=%s]",
+            data, type, field.getName(), tableSchema.getName());
       }
     }
     return data;
