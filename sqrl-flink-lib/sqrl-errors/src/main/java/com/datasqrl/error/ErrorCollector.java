@@ -101,7 +101,7 @@ public class ErrorCollector implements Iterable<ErrorMessage>, Serializable {
   }
 
   public ErrorCollector withConfig(Path file) {
-    return withConfig(file.getFileName().toString());
+    return withConfig(file.toString());
   }
 
   public ErrorCollector withConfig(URI uri) {

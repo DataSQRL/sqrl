@@ -1,0 +1,14 @@
+{
+  "flink" : {
+  },
+  "table" : {
+    "primary-key" : ["customerid", "lastUpdated"],
+    "partition-key" : ["customerid"],
+    "watermark-millis" : "1"
+  },
+  "metadata" : {
+    "timestamp" : {
+      "attribute" : "time.epochToTimestamp(lastUpdated)"
+    }
+  }
+}

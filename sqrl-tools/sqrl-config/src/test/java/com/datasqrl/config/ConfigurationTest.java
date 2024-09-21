@@ -147,7 +147,7 @@ public class ConfigurationTest {
 
   @AfterEach
   @SneakyThrows
-  private void deleteTempFile() {
+  public void deleteTempFile() {
     if (tempFile!=null) {
       Files.deleteIfExists(tempFile);
       tempFile = null;
