@@ -1,0 +1,16 @@
+{
+  "package": {
+    "name": "nandorsoma.examples.logistics-shipping",
+    "version": "0.1.8",
+    "variant": "dev",
+    "latest": true,
+    "type": "source",
+    "license": "ASFv2",
+    "readme": "# Readme of the project",
+    "repository": "https://github.com/DataSQRL/datasqrl-examples/tree/main/logistics",
+    "homepage": "https://www.datasqrl.com/docs/docs/logistics",
+    "description": "Logistics example for datasqrl.com",
+    "documentation": "https://www.datasqrl.com/docs/docs/logistics",
+    "topics": ["datasqrl", "example", "logistics", "shipping", "test"]
+  }
+}

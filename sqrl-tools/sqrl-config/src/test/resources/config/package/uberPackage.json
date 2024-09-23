@@ -1,0 +1,125 @@
+// This is a complete package.json example containing all properties identified in the codebase and examples.
+// It is intentionally invalid and not used in tests. Its purpose is to provide a reference for how a full package.json could be structured.
+// Additionally, it includes comments that can assist in generating a JSON schema quickly in ChatGPT.
+{
+  "version": "1", // when specified the value should be a string
+  "enabled-engines": ["vertx", "postgres", "kafka", "flink", "iceberg", "snowflake"], // when specified the list should contain at least one element and the list should contain strings
+  "compile" : { // when specified this map(dictionary) should contain at least one element
+    "sqrl-version": "0.5.4", // when specified the value should be a string with a version maching this pattern
+    "flink-build-image": "gradle:8.6-jdk11", // when specified the value should be a string
+    "sqrl-vertx-image": "datasqrl/sqrl-server:v0.5.4" // when specified the value should be a string
+  },
+  "script": { // when specified this map(dictionary) should contain at least one element
+    "main": "recommendation.sqrl", // when specified the value should be a string
+    "graphql": "recommendation.graphqls" // when specified the value should be a string
+  },
+  "profiles": [ // when specified the list should contain at least one element and the list should contain strings
+    "datasqrl.profile.default",
+    "datasqrl.profile.redpanda"
+  ],
+  "engines" : { // when specified this map(dictionary) should contain at least one element
+    "flink" : { // when specified this map(dictionary) should contain at least one element
+      "connectors": {  // when specified this map(dictionary) should contain at least one element
+        "postgres": {  // when specified this map(dictionary) should contain at least one element
+          "connector": "jdbc-sqrl", // when specified the value should be a string
+          "password": "${JDBC_PASSWORD}", // when specified the value should be a string
+          "driver": "org.postgresql.Driver", // when specified the value should be a string
+          "username": "${JDBC_USERNAME}", // when specified the value should be a string
+          "url": "${JDBC_URL}", // when specified the value should be a string
+          "table-name": "${sqrl:table}" // when specified the value should be a string
+        },
+        "kafka": { // when specified this map(dictionary) should contain at least one element
+          "connector" : "kafka", // when specified the value should be a string
+          "format" : "flexible-json", // when specified the value should be a string
+          "properties.bootstrap.servers": "${PROPERTIES_BOOTSTRAP_SERVERS}", // when specified the value should be a string
+          "properties.group.id": "${PROPERTIES_GROUP_ID}", // when specified the value should be a string
+          "scan.startup.mode" : "group-offsets", // when specified the value should be a string
+          "properties.auto.offset.reset" : "earliest", // when specified the value should be a string
+          "topic" : "${sqrl:topic}" // when specified the value should be a string
+        },
+        "localfile": { // when specified this map(dictionary) should contain at least one element
+          "connector" : "filesystem", // when specified the value should be a string
+          "format" : "${sqrl:format}", // when specified the value should be a string
+          "path" : "${sqrl:filepath}", // when specified the value should be a string
+          "source.monitor-interval" : 1 // when specified the value should be an intereger
+        },
+        "iceberg": { // when specified this map(dictionary) should contain at least one element
+          "connector": "iceberg", // when specified the value should be a string
+          "catalog-table": "${sqrl:table}" // when specified the value should be a string
+        },
+        "postgres_log-source": { // when specified this map(dictionary) should contain at least one element
+          "connector": "postgres-cdc", // when specified the value should be a string
+          "hostname": "${PGHOST}", // when specified the value should be a string
+          "port": "5432", // when specified the value should be a string but should contain a valid port number
+          "username": "${JDBC_USERNAME}", // when specified the value should be a string
+          "password": "${JDBC_PASSWORD}", // when specified the value should be a string
+          "database-name": "datasqrl", // when specified the value should be a string
+          "schema-name": "public", // when specified the value should be a string
+          "table-name": "${sqrl:table}", // when specified the value should be a string
+          "slot.name": "flink_slot", // when specified the value should be a string
+          "decoding.plugin.name": "pgoutput", // when specified the value should be a string
+          "debezium.slot.drop_on_stop": "false" // when specified the value should be a string
+        },
+        "postgres_log-sink": { // when specified this map(dictionary) should contain at least one element
+          "connector": "jdbc-sqrl", // when specified the value should be a string
+          "password": "${JDBC_PASSWORD}", // when specified the value should be a string
+          "driver": "org.postgresql.Driver", // when specified the value should be a string
+          "username": "${JDBC_USERNAME}", // when specified the value should be a string
+          "url": "${JDBC_URL}", // when specified the value should be a string
+          "table-name": "${sqrl:table}" // when specified the value should be a string
+        }
+      }
+    },
+    "snowflake" : { // when specified this map(dictionary) should contain at least one element
+      "catalog-name": "NSCatalog", // when specified the value should be a string and the snowflake map should contain "external-volume" key as well.
+      "external-volume": "iceberg_storage_vol_2", // when specified the value should be a string and the snowflake map should contain "catalog-name" key as well.
+      "schema-type": "aws-glue" // when specified the value should be a string
+    }
+  },
+  "values" : { // when specified this map(dictionary) should contain at least one element
+    "flink-config" : { // when specified this map(dictionary) should contain at least one element
+      "execution.checkpointing.interval": "10 sec" // when specified the value should be a string, but if we can validate that a duration is written here that would be nice
+    },
+    "mountDir": "${SQRL_DIR}/embedding:/embedding", // when specified the value should be a string
+    "create-topics" : ["clickstream", "content"] // when specified the value should be a string
+  },
+  "test-runner": { // when specified this map(dictionary) should contain at least one element
+    "delay-sec": 30 // when specified the value should be an integer
+  },
+  "dependencies": [{ // when specified the list should contain at least one element and the list should contain objects
+    "clickstream" : { // when specified this map(dictionary) should contain all three elements: name, version, variant and all of them should have a string value
+      "name": "clickstream-kafka",
+      "version": "1",
+      "variant": "dev"
+    },
+    "content" : {
+      "name": "content-kafka",
+      "version": "1",
+      "variant": "dev"
+    },
+    "datasqrl.profile.default" : {
+      "name": "datasqrl.profile.default",
+      "version": "0.5.2",
+      "variant": "dev"
+    },
+    "datasqrl.profile.redpanda" : {
+      "name": "datasqrl.profile.redpanda",
+      "version": "0.5.2",
+      "variant": "dev"
+    }
+  }],
+  "package": {
+    "name": "nandorsoma.examples.logistics-shipping", // when package is specified this field is mandatory and the value should be a string
+    "version": "0.1.8", // when package is specified this field is mandatory and the value should be a string
+    "variant": "dev", // when specified the value should be a string
+    "latest": true, // when package is specified this field is mandatory and the value should be a boolean
+    "type": "source", // when specified the value should be a string
+    "license": "ASFv2", // when specified the value should be a string
+    "readme": "# Readme of the project", // when specified the value should be a string
+    "repository": "https://github.com/DataSQRL/datasqrl-examples/tree/main/logistics", // when specified the value should be an url
+    "homepage": "https://www.datasqrl.com/docs/docs/logistics", // when specified the value should be an url
+    "description": "Logistics example for datasqrl.com", // when specified the value should be a string
+    "documentation": "https://www.datasqrl.com/docs/docs/logistics", // when specified the value should be an url
+    "topics": ["datasqrl", "example", "logistcs", "shipping", "test"] // when specified the list should contain at least one element and the list should contain strings
+  }
+}
