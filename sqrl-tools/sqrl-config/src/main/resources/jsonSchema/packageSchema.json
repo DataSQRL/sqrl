@@ -29,6 +29,16 @@
       },
       "additionalProperties": false
     },
+    "compiler": {
+      "type": "object",
+      "minProperties": 1,
+      "properties": {
+        "logger": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
     "script": {
       "type": "object",
       "minProperties": 1,
@@ -270,12 +280,7 @@
         "flink-config": {
           "type": "object",
           "minProperties": 1,
-          "properties": {
-            "execution.checkpointing.interval": {
-              "type": "string"
-            }
-          },
-          "additionalProperties": false
+          "additionalProperties": true
         },
         "mountDir": {
           "type": "string"

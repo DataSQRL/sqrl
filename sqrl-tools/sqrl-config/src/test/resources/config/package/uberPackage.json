@@ -9,6 +9,9 @@
     "flink-build-image": "gradle:8.6-jdk11", // when specified the value should be a string
     "sqrl-vertx-image": "datasqrl/sqrl-server:v0.5.4" // when specified the value should be a string
   },
+  "compiler": { // when specified this map(dictionary) should contain at least one element
+    "logger": "kafka" // when specified the value should be a string
+  },
   "script": { // when specified this map(dictionary) should contain at least one element
     "main": "recommendation.sqrl", // when specified the value should be a string
     "graphql": "recommendation.graphqls" // when specified the value should be a string
@@ -78,7 +81,7 @@
   },
   "values" : { // when specified this map(dictionary) should contain at least one element
     "flink-config" : { // when specified this map(dictionary) should contain at least one element
-      "execution.checkpointing.interval": "10 sec" // when specified the value should be a string, but if we can validate that a duration is written here that would be nice
+      "execution.checkpointing.interval": "10 sec" // do not validate for exact properties because there are many and they are not under our control. TODO: Or do we want to somehow map flink properties here to help the user? Would be nice but not sure if we can keep it up to date.
     },
     "mountDir": "${SQRL_DIR}/embedding:/embedding", // when specified the value should be a string
     "create-topics" : ["clickstream", "content"] // when specified the value should be a string

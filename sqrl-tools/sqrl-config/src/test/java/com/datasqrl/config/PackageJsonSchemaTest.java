@@ -21,7 +21,8 @@ public class PackageJsonSchemaTest {
       "missingCompileSection.json",
       "validDependencies.json",
       "missingProfilesField.json",
-      "validPackageWithUrls.json"
+      "validPackageWithUrls.json",
+      "onlyVersionFieldExists.json"
   })
   public void testValidConfigFile(String configFileName) {
     ErrorCollector errors = ErrorCollector.root();
