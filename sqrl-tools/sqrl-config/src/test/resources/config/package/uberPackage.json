@@ -4,12 +4,22 @@
 {
   "version": "1", // when specified the value should be a string
   "enabled-engines": ["vertx", "postgres", "kafka", "flink", "iceberg", "snowflake"], // when specified the list should contain at least one element and the list should contain strings
-  "compile" : { // when specified this map(dictionary) should contain at least one element
-    "sqrl-version": "0.5.4", // when specified the value should be a string with a version maching this pattern
+  "compile": { // when specified this map(dictionary) should contain at least one element
+    "sqrl-version": "0.5.4", // when specified the value should be a string with a version matching this pattern
     "flink-build-image": "gradle:8.6-jdk11", // when specified the value should be a string
     "sqrl-vertx-image": "datasqrl/sqrl-server:v0.5.4" // when specified the value should be a string
   },
-  "compiler": { // when specified this map(dictionary) should contain at least one element
+  "compiler": { // when specified this map(dictionary) should contain at least one element,
+    "explain": { // when specified this map(dictionary) should contain at least one element
+      "visual": true, // when specified the value should be a boolean
+      "physical": false, // when specified the value should be a boolean
+      "logical": false, // when specified the value should be a boolean
+      "text": false, // when specified the value should be a boolean
+      "sorted": true, // when specified the value should be a boolean
+      "sql": false // when specified the value should be a boolean
+    },
+    "snapshotPath": "/tmp/snapshots", // when specified the value should be a string
+    "addArguments": false, // when specified the value should be a boolean
     "logger": "kafka" // when specified the value should be a string
   },
   "script": { // when specified this map(dictionary) should contain at least one element
@@ -20,8 +30,8 @@
     "datasqrl.profile.default",
     "datasqrl.profile.redpanda"
   ],
-  "engines" : { // when specified this map(dictionary) should contain at least one element
-    "flink" : { // when specified this map(dictionary) should contain at least one element
+  "engines": { // when specified this map(dictionary) should contain at least one element
+    "flink": { // when specified this map(dictionary) should contain at least one element
       "connectors": {  // when specified this map(dictionary) should contain at least one element
         "postgres": {  // when specified this map(dictionary) should contain at least one element
           "connector": "jdbc-sqrl", // when specified the value should be a string
@@ -32,19 +42,19 @@
           "table-name": "${sqrl:table}" // when specified the value should be a string
         },
         "kafka": { // when specified this map(dictionary) should contain at least one element
-          "connector" : "kafka", // when specified the value should be a string
-          "format" : "flexible-json", // when specified the value should be a string
+          "connector": "kafka", // when specified the value should be a string
+          "format": "flexible-json", // when specified the value should be a string
           "properties.bootstrap.servers": "${PROPERTIES_BOOTSTRAP_SERVERS}", // when specified the value should be a string
           "properties.group.id": "${PROPERTIES_GROUP_ID}", // when specified the value should be a string
-          "scan.startup.mode" : "group-offsets", // when specified the value should be a string
-          "properties.auto.offset.reset" : "earliest", // when specified the value should be a string
-          "topic" : "${sqrl:topic}" // when specified the value should be a string
+          "scan.startup.mode": "group-offsets", // when specified the value should be a string
+          "properties.auto.offset.reset": "earliest", // when specified the value should be a string
+          "topic": "${sqrl:topic}" // when specified the value should be a string
         },
         "localfile": { // when specified this map(dictionary) should contain at least one element
-          "connector" : "filesystem", // when specified the value should be a string
-          "format" : "${sqrl:format}", // when specified the value should be a string
-          "path" : "${sqrl:filepath}", // when specified the value should be a string
-          "source.monitor-interval" : 1 // when specified the value should be an intereger
+          "connector": "filesystem", // when specified the value should be a string
+          "format": "${sqrl:format}", // when specified the value should be a string
+          "path": "${sqrl:filepath}", // when specified the value should be a string
+          "source.monitor-interval": 1 // when specified the value should be an intereger
         },
         "iceberg": { // when specified this map(dictionary) should contain at least one element
           "connector": "iceberg", // when specified the value should be a string
@@ -73,39 +83,39 @@
         }
       }
     },
-    "snowflake" : { // when specified this map(dictionary) should contain at least one element
+    "snowflake": { // when specified this map(dictionary) should contain at least one element
       "catalog-name": "NSCatalog", // when specified the value should be a string and the snowflake map should contain "external-volume" key as well.
       "external-volume": "iceberg_storage_vol_2", // when specified the value should be a string and the snowflake map should contain "catalog-name" key as well.
       "schema-type": "aws-glue" // when specified the value should be a string
     }
   },
-  "values" : { // when specified this map(dictionary) should contain at least one element
-    "flink-config" : { // when specified this map(dictionary) should contain at least one element
+  "values": { // when specified this map(dictionary) should contain at least one element
+    "flink-config": { // when specified this map(dictionary) should contain at least one element
       "execution.checkpointing.interval": "10 sec" // do not validate for exact properties because there are many and they are not under our control. TODO: Or do we want to somehow map flink properties here to help the user? Would be nice but not sure if we can keep it up to date.
     },
     "mountDir": "${SQRL_DIR}/embedding:/embedding", // when specified the value should be a string
-    "create-topics" : ["clickstream", "content"] // when specified the value should be a string
+    "create-topics": ["clickstream", "content"] // when specified the value should be a string
   },
   "test-runner": { // when specified this map(dictionary) should contain at least one element
     "delay-sec": 30 // when specified the value should be an integer
   },
   "dependencies": [{ // when specified the list should contain at least one element and the list should contain objects
-    "clickstream" : { // when specified this map(dictionary) should contain all three elements: name, version, variant and all of them should have a string value
+    "clickstream": { // when specified this map(dictionary) should contain all three elements: name, version, variant and all of them should have a string value
       "name": "clickstream-kafka",
       "version": "1",
       "variant": "dev"
     },
-    "content" : {
+    "content": {
       "name": "content-kafka",
       "version": "1",
       "variant": "dev"
     },
-    "datasqrl.profile.default" : {
+    "datasqrl.profile.default": {
       "name": "datasqrl.profile.default",
       "version": "0.5.2",
       "variant": "dev"
     },
-    "datasqrl.profile.redpanda" : {
+    "datasqrl.profile.redpanda": {
       "name": "datasqrl.profile.redpanda",
       "version": "0.5.2",
       "variant": "dev"

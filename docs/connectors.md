@@ -19,7 +19,7 @@ An example table configuration file is shown below followed by the documentation
 
 ```json
 {
-  "version": 1,
+  "version": "1",
   "table" : {
     "type" : "source",
     "primary-key" : ["id", "time"],
@@ -97,7 +97,7 @@ The 'timestamp_mapping.legacy' should be set to false to map timestamp types cor
 
 ```json
 {
-  "version": 1,
+  "version": "1",
   "flink": {
     "format": "avro",
     "connector": "kafka",

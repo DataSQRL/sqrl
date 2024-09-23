@@ -33,11 +33,40 @@
       "type": "object",
       "minProperties": 1,
       "properties": {
+        "explain": {
+          "type": "object",
+          "minProperties": 1,
+          "properties": {
+            "visual": {
+              "type": "boolean"
+            },
+            "physical": {
+              "type": "boolean"
+            },
+            "logical": {
+              "type": "boolean"
+            },
+            "text": {
+              "type": "boolean"
+            },
+            "sorted": {
+              "type": "boolean"
+            },
+            "sql": {
+              "type": "boolean"
+            }
+          }
+        },
+        "snapshotPath": {
+          "type": "string"
+        },
+        "addArguments": {
+          "type": "boolean"
+        },
         "logger": {
           "type": "string"
         }
-      },
-      "additionalProperties": false
+      }
     },
     "script": {
       "type": "object",
