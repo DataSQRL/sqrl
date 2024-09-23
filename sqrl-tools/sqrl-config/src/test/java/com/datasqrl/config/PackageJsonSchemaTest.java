@@ -43,7 +43,8 @@ public class PackageJsonSchemaTest {
       "missingRequiredDependencyFields.json",
       "invalidDurationInFlinkConfig.json",
       "emptyTestRunner.json",
-      "invalidUrlInPackage.json"
+      "invalidUrlInPackage.json",
+      "emptyPropertiesInPackage.json"
   })
   public void testInvalidConfigFile(String configFileName) {
     testForErrors(errors -> SqrlConfigCommons.fromFilesPackageJson(errors,

@@ -427,57 +427,7 @@
     },
     "package": {
       "type": "object",
-      "required": [
-        "name",
-        "version",
-        "latest"
-      ],
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "version": {
-          "type": "string"
-        },
-        "variant": {
-          "type": "string"
-        },
-        "latest": {
-          "type": "boolean"
-        },
-        "type": {
-          "type": "string"
-        },
-        "license": {
-          "type": "string"
-        },
-        "readme": {
-          "type": "string"
-        },
-        "repository": {
-          "type": "string",
-          "format": "uri"
-        },
-        "homepage": {
-          "type": "string",
-          "format": "uri"
-        },
-        "description": {
-          "type": "string"
-        },
-        "documentation": {
-          "type": "string",
-          "format": "uri"
-        },
-        "topics": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "minItems": 1
-        }
-      },
-      "additionalProperties": false
+      "minProperties": 1
     }
   },
   "additionalProperties": false
