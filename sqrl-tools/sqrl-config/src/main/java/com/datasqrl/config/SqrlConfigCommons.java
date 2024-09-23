@@ -4,18 +4,15 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ResourceFileUtil;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
-import com.networknt.schema.InputFormat;
 import com.networknt.schema.JsonSchema;
 import com.networknt.schema.JsonSchemaFactory;
 import com.networknt.schema.SpecVersion.VersionFlag;
 import com.networknt.schema.ValidationMessage;
-import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.lang.reflect.Field;
@@ -351,16 +348,16 @@ public class SqrlConfigCommons implements SqrlConfig {
 
   public static TableConfigImpl fromFilesTableConfig(@NonNull Name name, ErrorCollector errors,
       @NonNull List<Path> files) {
-    return new TableConfigImpl(name, fromFiles(errors, Optional.of("/jsonSchema/tableConfig.json"), files));
+    return new TableConfigImpl(name, fromFiles(errors, "/jsonSchema/tableConfig.json", files));
   }
 
   public static PackageJson fromFilesPackageJson(ErrorCollector errors, @NonNull List<Path> files) {
-    return new PackageJsonImpl(fromFiles(errors, Optional.of("/jsonSchema/packageSchema.json"), files));
+    return new PackageJsonImpl(fromFiles(errors, "/jsonSchema/packageSchema.json", files));
   }
 
-  public static boolean validateJsonFile(Path jsonFilePath, Optional<String> schemaResourcePath,
+  public static boolean validateJsonFile(Path jsonFilePath, String schemaResourcePath,
       ErrorCollector errors) {
-    if (schemaResourcePath.isEmpty())
+    if (schemaResourcePath == null)
       return true;
     ErrorCollector allErrors = errors.abortOnFatal(false); //so we can collect all errors
     ObjectMapper mapper = new ObjectMapper();
@@ -371,11 +368,11 @@ public class SqrlConfigCommons implements SqrlConfig {
       allErrors.fatal("Could not read json file [%s]: %s", jsonFilePath, e);
       return false;
     }
-    String jsonSchema = ResourceFileUtil.readResourceFileContents(schemaResourcePath.get());
+    String jsonSchema = ResourceFileUtil.readResourceFileContents(schemaResourcePath);
     try {
       schemaNode = mapper.readTree(jsonSchema);
     } catch (IOException e) {
-      allErrors.fatal("Could not parse json schema file [%s]: %s", schemaResourcePath.get(),
+      allErrors.fatal("Could not parse json schema file [%s]: %s", schemaResourcePath,
           e);
       return false;
     }
@@ -396,10 +393,10 @@ public class SqrlConfigCommons implements SqrlConfig {
   }
 
   public static SqrlConfig fromFiles(ErrorCollector errors, @NonNull Path firstFile) {
-    return fromFiles(errors, Optional.empty(), List.of(firstFile));
+    return fromFiles(errors, null, List.of(firstFile));
   }
 
-  public static SqrlConfig fromFiles(ErrorCollector errors, Optional<String> jsonSchemaResource, @NonNull List<Path> files) {
+  public static SqrlConfig fromFiles(ErrorCollector errors, String jsonSchemaResource, @NonNull List<Path> files) {
     Preconditions.checkArgument(files!=null && !files.isEmpty(),"Need to provide at least one configuration file");
     Configurations configs = new Configurations();
     boolean isValid = true;
