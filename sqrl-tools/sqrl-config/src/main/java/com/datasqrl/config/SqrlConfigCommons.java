@@ -355,7 +355,7 @@ public class SqrlConfigCommons implements SqrlConfig {
   }
 
   public static PackageJson fromFilesPackageJson(ErrorCollector errors, @NonNull List<Path> files) {
-    return new PackageJsonImpl(fromFiles(errors, Optional.empty(), files));
+    return new PackageJsonImpl(fromFiles(errors, Optional.of("/jsonSchema/packageSchema.json"), files));
   }
 
   public static boolean validateJsonFile(Path jsonFilePath, Optional<String> schemaResourcePath,
