@@ -63,9 +63,13 @@ public class DagPlannerIT {
       log.warn("Skipping Disabled Test");
       return;
     }
+
+    Path root = getProjectRoot(directoryPath);
+
     SqrlCompiler sqrlCompiler = new SqrlCompiler();
     sqrlCompiler.execute(directoryPath.getParent(),
-        "compile", directoryPath.getFileName().toString());
+        "compile", directoryPath.getFileName().toString(),
+        "--profile", root.resolve("profiles/default").toString());
 
     datasqrlRun.setPath(directoryPath.getParent().resolve("build").resolve("plan"));
     try {
@@ -74,5 +78,16 @@ public class DagPlannerIT {
     } catch (Exception e) {
       fail("Failed to compile plan for directory: " + directoryPath, e);
     }
+  }
+
+  private Path getProjectRoot(Path directoryPath) {
+    Path currentPath = directoryPath.toAbsolutePath();
+    while (currentPath != null) {
+      if (new File(currentPath.resolve(".git").toString()).exists()) {
+        return currentPath;
+      }
+      currentPath = currentPath.getParent();
+    }
+    return null;
   }
 }
