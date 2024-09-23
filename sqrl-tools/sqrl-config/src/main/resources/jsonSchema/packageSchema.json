@@ -18,7 +18,7 @@
       "properties": {
         "sqrl-version": {
           "type": "string",
-          "pattern": "^\\d+\\.\\d+\\.\\d+$"
+          "pattern": "^\\d+\\.\\d+\\.\\d+(-SNAPSHOT)?$"
         },
         "flink-build-image": {
           "type": "string"
@@ -179,9 +179,6 @@
                     "connector": {
                       "type": "string"
                     },
-                    "catalog-table": {
-                      "type": "string"
-                    },
                     "warehouse": {
                       "type": "string"
                     },
@@ -191,7 +188,13 @@
                     "io-impl": {
                       "type": "string"
                     },
+                    "catalog-table": {
+                      "type": "string"
+                    },
                     "catalog-name": {
+                      "type": "string"
+                    },
+                    "catalog-type": {
                       "type": "string"
                     },
                     "catalog-database": {
@@ -218,8 +221,7 @@
                       "type": "string"
                     },
                     "port": {
-                      "type": "string",
-                      "pattern": "^\\d{1,5}$"
+                      "type": "string"
                     },
                     "username": {
                       "type": "string"
@@ -290,6 +292,9 @@
               "type": "string"
             },
             "schema-type": {
+              "type": "string"
+            },
+            "url": {
               "type": "string"
             }
           },

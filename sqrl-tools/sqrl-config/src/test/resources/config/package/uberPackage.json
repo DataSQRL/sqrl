@@ -5,7 +5,7 @@
   "version": "1", // when specified the value should be a string
   "enabled-engines": ["vertx", "postgres", "kafka", "flink", "iceberg", "snowflake"], // when specified the list should contain at least one element and the list should contain strings
   "compile": { // when specified this map(dictionary) should contain at least one element
-    "sqrl-version": "0.5.4", // when specified the value should be a string with a version matching this pattern
+    "sqrl-version": "0.5.4", // when specified the value should be a string with a version matching this pattern + optionally `-SNAPSHOT`
     "flink-build-image": "gradle:8.6-jdk11", // when specified the value should be a string
     "sqrl-vertx-image": "datasqrl/sqrl-server:v0.5.4" // when specified the value should be a string
   },
@@ -57,13 +57,20 @@
           "source.monitor-interval": 1 // when specified the value should be an intereger
         },
         "iceberg": { // when specified this map(dictionary) should contain at least one element
-          "connector": "iceberg", // when specified the value should be a string
+          "connector" : "iceberg", // when specified the value should be a string
+          "warehouse":"s3://iceberg-bucket", // when specified the value should be a string
+          "catalog-impl":"org.apache.iceberg.aws.glue.GlueCatalog", // when specified the value should be a string
+          "io-impl":"org.apache.iceberg.aws.s3.S3FileIO", // when specified the value should be a string
           "catalog-table": "${sqrl:table}" // when specified the value should be a string
+          "catalog-name": "MyCatalog", // when specified the value should be a string
+          "catalog-type": "hadoop", // when specified the value should be a string
+          "catalog-database": "MyDatabase", // when specified the value should be a string
+          "write.upsert.enabled":"true" // when specified the value should be a string
         },
         "postgres_log-source": { // when specified this map(dictionary) should contain at least one element
           "connector": "postgres-cdc", // when specified the value should be a string
           "hostname": "${PGHOST}", // when specified the value should be a string
-          "port": "5432", // when specified the value should be a string but should contain a valid port number
+          "port": "5432", // when specified the value should be a string
           "username": "${JDBC_USERNAME}", // when specified the value should be a string
           "password": "${JDBC_PASSWORD}", // when specified the value should be a string
           "database-name": "datasqrl", // when specified the value should be a string
@@ -87,6 +94,7 @@
       "catalog-name": "NSCatalog", // when specified the value should be a string and the snowflake map should contain "external-volume" key as well.
       "external-volume": "iceberg_storage_vol_2", // when specified the value should be a string and the snowflake map should contain "catalog-name" key as well.
       "schema-type": "aws-glue" // when specified the value should be a string
+      "url": "jdbc:snowflake://${SNOWFLAKE_ID}.snowflakecomputing.com/?user=${SNOWFLAKE_USER}&password=${SNOWFLAKE_PASSWORD}&warehouse=COMPUTE_WH&db=MYSNOWFLAKEDB&schema=public&disableSslHostnameVerification=true" // when specified the value should be a string
     }
   },
   "values": { // when specified this map(dictionary) should contain at least one element
