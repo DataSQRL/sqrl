@@ -127,15 +127,22 @@ The physical plan that DataSQRL generates for Kafka includes:
 * External table registration through catalog integration. The Snowflake connector currently support AWS Glue.
 * View definitions for the logical tables.
 
-To define the catalog integration for Snowflake:
+To define the catalog integration for Snowflake, set the `${SNOWFLAKE_ID}`, `${SNOWFLAKE_USER}` and `${SNOWFLAKE_PASSWORD}`
+environment variables and configure these properties in the `snowflake` section of the package configuration.
 ```json
 {
-  "snowflake" : {
-    "catalog-name": "MyCatalog",
-    "external-volume": "iceberg_storage_vol"
+  "version": "1",
+  "engines" : {
+    "snowflake" : {
+      "catalog-name": "MyCatalog",
+      "external-volume": "iceberg_storage_vol"
+    }
   }
 }
 ```
+
+When using the default profile these properties are also configurable with the respective
+environment variables: `${SNOWFLAKE_CATALOG_NAME}`, `${SNOWFLAKE_EXTERNAL_VOLUME}`
 
 ### Compiler
 
