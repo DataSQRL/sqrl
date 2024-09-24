@@ -49,7 +49,6 @@ public class DagPlannerIT {
   @BeforeAll
   static void beforeAll() {
     datasqrlRun = new DatasqrlRun();
-    datasqrlRun.startKafkaCluster();
   }
 
   List<String> disabled = List.of("tableFunctionsBasic.sqrl",

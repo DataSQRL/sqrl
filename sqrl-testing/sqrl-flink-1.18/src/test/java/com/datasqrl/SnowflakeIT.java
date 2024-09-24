@@ -44,7 +44,7 @@ public class SnowflakeIT {
   @BeforeAll
   static void beforeAll() {
     datasqrlRun = new DatasqrlRun();
-    datasqrlRun.startKafkaCluster();
+//    datasqrlRun.startKafkaCluster();
   }
 
   @SneakyThrows

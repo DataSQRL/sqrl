@@ -6,6 +6,7 @@ package com.datasqrl.cmd;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import lombok.Getter;
 import lombok.NonNull;
 import picocli.CommandLine;
@@ -28,10 +29,16 @@ public class RootCommand implements Runnable {
 
   final Path rootDir;
   final StatusHook statusHook;
+  final Map<String, String> env;
 
   public RootCommand(@NonNull Path rootDir, @NonNull StatusHook statusHook) {
+    this(rootDir, statusHook, Map.of());
+  }
+
+  public RootCommand(@NonNull Path rootDir, @NonNull StatusHook statusHook, Map<String, String> env) {
     this.rootDir = rootDir;
     this.statusHook = statusHook;
+    this.env = env;
   }
 
   public RootCommand(@NonNull Path rootDir) {

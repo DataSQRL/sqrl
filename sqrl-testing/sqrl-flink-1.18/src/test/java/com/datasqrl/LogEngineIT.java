@@ -38,7 +38,6 @@ public class LogEngineIT {
   @BeforeAll
   static void beforeAll() {
     datasqrlRun = new DatasqrlRun();
-    datasqrlRun.startKafkaCluster();
   }
 
   @SneakyThrows

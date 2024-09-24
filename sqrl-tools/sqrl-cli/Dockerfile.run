@@ -1,0 +1,52 @@
+# Use the official Ubuntu 22.04 as base image
+FROM ubuntu:22.04
+
+# Set environment variables
+ENV FLINK_VERSION=1.19.1
+ENV FLINK_HOME=/opt/flink
+ENV KAFKA_HOME=/opt/redpanda
+ENV POSTGRES_VERSION=14
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install necessary packages
+RUN apt-get update && apt-get install -y \
+    wget \
+    openjdk-17-jdk \
+    netcat \
+    curl \
+    unzip \
+    tar \
+    procps \
+    ca-certificates \
+    gnupg \
+    lsb-release \
+    postgresql-$POSTGRES_VERSION
+
+# Install Flink
+RUN wget -qO- https://archive.apache.org/dist/flink/flink-${FLINK_VERSION}/flink-${FLINK_VERSION}-bin-scala_2.12.tgz | \
+    tar -xz -C /opt/ && \
+    ln -s /opt/flink-${FLINK_VERSION} ${FLINK_HOME}
+
+# Add the Redpanda repository
+RUN curl -1sLf 'https://dl.redpanda.com/nzc4ZYQK3WRGd9sy/redpanda/cfg/setup/bash.deb.sh' | bash
+
+# Install Redpanda
+RUN apt-get update && apt-get install -y redpanda
+
+# Expose default Redpanda ports
+# EXPOSE 9092 9644
+
+# Copy the application JAR from the local folder to /opt/
+COPY target/sqrl-cli.jar /opt/sqrl-cli.jar
+
+# Copy the entrypoint script
+COPY entrypoint-run.sh /entrypoint-run.sh
+RUN chmod +x /entrypoint-run.sh
+
+RUN sed -i 's/localhost/0.0.0.0/g' ${FLINK_HOME}/conf/*
+
+WORKDIR /build
+
+# Set the entrypoint
+ENTRYPOINT ["/entrypoint-run.sh"]
+

@@ -10,14 +10,34 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import org.apache.flink.calcite.shaded.com.google.common.base.Strings;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.redpanda.RedpandaContainer;
+import org.testcontainers.utility.DockerImageName;
 
 /**
  * Tests some use cases in the test/resources/usecases folder using the `test` command.
  */
+@Testcontainers
 public class UseCasesIT {
+  @Container
+  private PostgreSQLContainer testDatabase =
+      new PostgreSQLContainer(DockerImageName.parse("ankane/pgvector:v0.5.0")
+          .asCompatibleSubstituteFor("postgres"))
+          .withDatabaseName("foo")
+          .withUsername("foo")
+          .withPassword("secret")
+          .withDatabaseName("datasqrl");
+
+  @Container
+  RedpandaContainer container =
+      new RedpandaContainer("docker.redpanda.com/redpandadata/redpanda:v23.1.2");
+
   protected static final Path PROJECT_ROOT = getProjectRoot();
   private static final Path RESOURCES = Paths.get("src/test/resources/usecases");
 
@@ -65,8 +85,21 @@ public class UseCasesIT {
         AssertStatusHook.INSTANCE, argsList.toArray(a->new String[a]));
   }
 
-  public static int execute(Path rootDir, StatusHook hook, String... args) {
-    RootCommand rootCommand = new RootCommand(rootDir, hook);
+  public int execute(Path rootDir, StatusHook hook, String... args) {
+
+    Map<String, String> env = Map.of(
+        "JDBC_URL", testDatabase.getJdbcUrl(),
+        "PGHOST", testDatabase.getHost(),
+        "PGUSER", testDatabase.getUsername(),
+        "JDBC_USERNAME", testDatabase.getUsername(),
+        "JDBC_PASSWORD", testDatabase.getPassword(),
+        "PGPORT", testDatabase.getMappedPort(PostgreSQLContainer.POSTGRESQL_PORT).toString(),
+        "PGPASSWORD", testDatabase.getPassword(),
+        "PGDATABASE", testDatabase.getDatabaseName(),
+        "PROPERTIES_BOOTSTRAP_SERVERS", container.getBootstrapServers(),
+        "JMETER_HOME", "/Users/henneberger/Downloads/apache-jmeter-5.6.3"
+    );
+    RootCommand rootCommand = new RootCommand(rootDir, hook, env);
     int exitCode = rootCommand.getCmd().execute(args) + (hook.isSuccess() ? 0 : 1);
     if (exitCode != 0) {
       fail();

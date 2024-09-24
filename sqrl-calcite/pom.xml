@@ -63,6 +63,7 @@
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-jdbc-1.16</artifactId>
+      <scope>provided</scope>
     </dependency>
   </dependencies>
   <build>
