@@ -19,6 +19,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import org.apache.flink.calcite.shaded.com.google.common.base.Strings;
+import org.apache.flink.test.junit5.InjectMiniCluster;
+import org.apache.flink.test.junit5.MiniClusterExtension;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.DeleteTopicsResult;
 import org.apache.kafka.clients.admin.ListTopicsResult;
@@ -26,6 +28,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -36,6 +39,7 @@ import org.testcontainers.utility.DockerImageName;
  * Tests some use cases in the test/resources/usecases folder using the `test` command.
  */
 @Testcontainers
+@ExtendWith(MiniClusterExtension.class)
 public class UseCasesIT {
   private PostgreSQLContainer testDatabase;
 
@@ -112,9 +116,9 @@ public class UseCasesIT {
 
   @Test
   public void testDuckdb() {
-    compile("duckdb", "duckdb.sqrl", null);
-//    execute("compile","duckdb", "duckdb.sqrl", null, "queries",
-//        "-c", PROJECT_ROOT.resolve("sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/duckdb/package.json").toString());
+//    compile("duckdb", "duckdb.sqrl", null);
+    execute("test","duckdb", "duckdb.sqrl", null, "queries",
+        "-c", PROJECT_ROOT.resolve("sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/duckdb/package.json").toString());
   }
 
   public void execute(String path, String script, String graphql) {

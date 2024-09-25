@@ -166,14 +166,6 @@ public class TestCommand extends AbstractCompilerCommand {
     System.out.println("\u001B[31m" + line + "\u001B[0m");
   }
 
-  @SneakyThrows
-  private List<File> getComposePaths(Path targetDir) {
-    return Files.list(targetDir)
-        .filter(f->f.getFileName().toString().endsWith("compose.yml"))
-        .map(f->f.toFile())
-        .collect(Collectors.toList());
-  }
-
   @Override
   public ExecutionGoal getGoal() {
     return ExecutionGoal.TEST;

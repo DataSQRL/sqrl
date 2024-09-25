@@ -141,7 +141,7 @@ public class DatasqrlRun {
     config.putIfAbsent("execution.checkpointing.min-pause", "20 s");
     config.putIfAbsent("state.backend", "rocksdb");
     config.putIfAbsent("table.exec.resource.default-parallelism", "1");
-    config.putIfAbsent("execution.target", "remote");
+    config.putIfAbsent("execution.target", "local");
     config.putIfAbsent("rest.address", "localhost");
 
     Configuration configuration = Configuration.fromMap(config);
@@ -154,7 +154,20 @@ public class DatasqrlRun {
     };
     URLClassLoader urlClassLoader = new URLClassLoader(urls);
 
-    StreamExecutionEnvironment sEnv = new StreamExecutionEnvironment(configuration, urlClassLoader);
+
+    //todo: check to see if execution.target is local or remote. If local, use getExe
+    String mode = config.get("execution.target");
+    StreamExecutionEnvironment sEnv;
+    switch (mode){
+      case "local":
+        //todo udfs?
+        sEnv = StreamExecutionEnvironment.getExecutionEnvironment();
+        break;
+      default:
+      case "remote":
+        sEnv = new StreamExecutionEnvironment(configuration, urlClassLoader);
+    }
+
     sEnv.configure(configuration, urlClassLoader);
 
     EnvironmentSettings tEnvConfig = EnvironmentSettings.newInstance()
@@ -178,7 +191,7 @@ public class DatasqrlRun {
       tableResult = tEnv.executeSql(replaceWithEnv(statement));
     }
     String insert = replaceWithEnv(statements.get(statements.size() - 1));
-//    tEnv.executeSql(insert);
+
     TableEnvironmentImpl tEnv1 = (TableEnvironmentImpl) tEnv;
 
     StatementSetOperation parse = (StatementSetOperation)tEnv1.getParser().parse(insert).get(0);
