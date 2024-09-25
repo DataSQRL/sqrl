@@ -141,7 +141,7 @@ public class DatasqrlRun {
     config.putIfAbsent("execution.checkpointing.min-pause", "20 s");
     config.putIfAbsent("state.backend", "rocksdb");
     config.putIfAbsent("table.exec.resource.default-parallelism", "1");
-    config.putIfAbsent("execution.target", "local");
+    config.putIfAbsent("execution.target", "remote");
     config.putIfAbsent("rest.address", "localhost");
 
     Configuration configuration = Configuration.fromMap(config);
