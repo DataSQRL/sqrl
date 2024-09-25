@@ -17,9 +17,8 @@ public class ResourceFileUtil {
                 contentBuilder.append(currentLine).append("\n");
             }
         } catch (IOException | NullPointerException e) {
-            e.printStackTrace();
+            throw new IllegalArgumentException("Unable to read resource file: " + resourcePath, e);
         }
-
         return contentBuilder.toString();
     }
 

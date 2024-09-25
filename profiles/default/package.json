@@ -60,7 +60,10 @@
       }
     },
     "snowflake" : {
-      "schema-type": "aws-glue"
+      "schema-type": "aws-glue",
+      "catalog-name": "${SNOWFLAKE_CATALOG_NAME}",
+      "external-volume": "${SNOWFLAKE_EXTERNAL_VOLUME}",
+      "url": "jdbc:snowflake://${SNOWFLAKE_ID}.snowflakecomputing.com/?user=${SNOWFLAKE_USER}&password=${SNOWFLAKE_PASSWORD}&warehouse=COMPUTE_WH&db=MYSNOWFLAKEDB&schema=public&disableSslHostnameVerification=true"
     }
   },
   "test-runner": {
@@ -70,9 +73,10 @@
     "name": "datasqrl.profile.default",
     "version": "0.5.4",
     "variant": "dev",
+    "latest": true,
     "description": "A docker compose datasqrl profile",
-    "homepage": "",
-    "documentation": "",
+    "homepage": "https://dev.datasqrl.com/datasqrl/packages/datasqrl.profile.default",
+    "documentation": "https://dev.datasqrl.com/datasqrl/packages/datasqrl.profile.default",
     "topics": [ "profile" ]
   }
 }

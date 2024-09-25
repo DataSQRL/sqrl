@@ -1,0 +1,7 @@
+{
+  "values": {
+    "flink-config": {
+      "execution.checkpointing.interval": "invalid-duration"
+    }
+  }
+}

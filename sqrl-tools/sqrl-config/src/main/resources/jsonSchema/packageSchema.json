@@ -1,0 +1,434 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string"
+    },
+    "enabled-engines": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "compile": {
+      "type": "object",
+      "minProperties": 1,
+      "properties": {
+        "sqrl-version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+(-SNAPSHOT)?$"
+        },
+        "flink-build-image": {
+          "type": "string"
+        },
+        "sqrl-vertx-image": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "compiler": {
+      "type": "object",
+      "minProperties": 1,
+      "properties": {
+        "explain": {
+          "type": "object",
+          "minProperties": 1,
+          "properties": {
+            "visual": {
+              "type": "boolean"
+            },
+            "physical": {
+              "type": "boolean"
+            },
+            "logical": {
+              "type": "boolean"
+            },
+            "text": {
+              "type": "boolean"
+            },
+            "sorted": {
+              "type": "boolean"
+            },
+            "sql": {
+              "type": "boolean"
+            }
+          }
+        },
+        "snapshotPath": {
+          "type": "string"
+        },
+        "addArguments": {
+          "type": "boolean"
+        },
+        "logger": {
+          "type": "string"
+        }
+      }
+    },
+    "script": {
+      "type": "object",
+      "minProperties": 1,
+      "properties": {
+        "main": {
+          "type": "string"
+        },
+        "graphql": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "profiles": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "engines": {
+      "type": "object",
+      "minProperties": 1,
+      "properties": {
+        "flink": {
+          "type": "object",
+          "minProperties": 1,
+          "properties": {
+            "connectors": {
+              "type": "object",
+              "minProperties": 1,
+              "properties": {
+                "postgres": {
+                  "type": "object",
+                  "minProperties": 1,
+                  "properties": {
+                    "connector": {
+                      "type": "string"
+                    },
+                    "password": {
+                      "type": "string"
+                    },
+                    "driver": {
+                      "type": "string"
+                    },
+                    "username": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string"
+                    },
+                    "table-name": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "kafka": {
+                  "type": "object",
+                  "minProperties": 1,
+                  "properties": {
+                    "connector": {
+                      "type": "string"
+                    },
+                    "format": {
+                      "type": "string"
+                    },
+                    "properties.bootstrap.servers": {
+                      "type": "string"
+                    },
+                    "properties.group.id": {
+                      "type": "string"
+                    },
+                    "scan.startup.mode": {
+                      "type": "string"
+                    },
+                    "properties.auto.offset.reset": {
+                      "type": "string"
+                    },
+                    "topic": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "localfile": {
+                  "type": "object",
+                  "minProperties": 1,
+                  "properties": {
+                    "connector": {
+                      "type": "string"
+                    },
+                    "format": {
+                      "type": "string"
+                    },
+                    "path": {
+                      "type": "string"
+                    },
+                    "source.monitor-interval": {
+                      "type": "integer"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "iceberg": {
+                  "type": "object",
+                  "minProperties": 1,
+                  "properties": {
+                    "connector": {
+                      "type": "string"
+                    },
+                    "warehouse": {
+                      "type": "string"
+                    },
+                    "catalog-impl": {
+                      "type": "string"
+                    },
+                    "io-impl": {
+                      "type": "string"
+                    },
+                    "catalog-table": {
+                      "type": "string"
+                    },
+                    "catalog-name": {
+                      "type": "string"
+                    },
+                    "catalog-type": {
+                      "type": "string"
+                    },
+                    "catalog-database": {
+                      "type": "string"
+                    },
+                    "write.upsert.enabled": {
+                      "type": "string",
+                      "enum": [
+                        "true",
+                        "false"
+                      ]
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "postgres_log-source": {
+                  "type": "object",
+                  "minProperties": 1,
+                  "properties": {
+                    "connector": {
+                      "type": "string"
+                    },
+                    "hostname": {
+                      "type": "string"
+                    },
+                    "port": {
+                      "type": "string"
+                    },
+                    "username": {
+                      "type": "string"
+                    },
+                    "password": {
+                      "type": "string"
+                    },
+                    "database-name": {
+                      "type": "string"
+                    },
+                    "schema-name": {
+                      "type": "string"
+                    },
+                    "table-name": {
+                      "type": "string"
+                    },
+                    "slot.name": {
+                      "type": "string"
+                    },
+                    "decoding.plugin.name": {
+                      "type": "string"
+                    },
+                    "debezium.slot.drop_on_stop": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "postgres_log-sink": {
+                  "type": "object",
+                  "minProperties": 1,
+                  "properties": {
+                    "connector": {
+                      "type": "string"
+                    },
+                    "password": {
+                      "type": "string"
+                    },
+                    "driver": {
+                      "type": "string"
+                    },
+                    "username": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string"
+                    },
+                    "table-name": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "snowflake": {
+          "type": "object",
+          "minProperties": 2,
+          "properties": {
+            "catalog-name": {
+              "type": "string"
+            },
+            "external-volume": {
+              "type": "string"
+            },
+            "schema-type": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "catalog-name",
+            "external-volume"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "values": {
+      "type": "object",
+      "minProperties": 1,
+      "properties": {
+        "flink-config": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": true
+        },
+        "mountDir": {
+          "type": "string"
+        },
+        "create-topics": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "test-runner": {
+      "type": "object",
+      "minProperties": 1,
+      "properties": {
+        "delay-sec": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "minProperties": 1,
+        "properties": {
+          "clickstream": {
+            "type": "object",
+            "required": [
+              "name",
+              "version",
+              "variant"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string"
+              },
+              "variant": {
+                "type": "string"
+              }
+            }
+          },
+          "content": {
+            "type": "object",
+            "required": [
+              "name",
+              "version",
+              "variant"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string"
+              },
+              "variant": {
+                "type": "string"
+              }
+            }
+          },
+          "datasqrl.profile.default": {
+            "type": "object",
+            "required": [
+              "name",
+              "version",
+              "variant"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string"
+              },
+              "variant": {
+                "type": "string"
+              }
+            }
+          },
+          "datasqrl.profile.redpanda": {
+            "type": "object",
+            "required": [
+              "name",
+              "version",
+              "variant"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string"
+              },
+              "variant": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "minItems": 1
+    },
+    "package": {
+      "type": "object",
+      "minProperties": 1
+    }
+  },
+  "additionalProperties": false
+}

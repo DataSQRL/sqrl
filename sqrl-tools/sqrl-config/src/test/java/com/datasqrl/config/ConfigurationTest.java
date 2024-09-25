@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import com.datasqrl.error.ErrorCollector;
 
+import com.datasqrl.error.ErrorPrinter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
@@ -147,7 +149,7 @@ public class ConfigurationTest {
 
   @AfterEach
   @SneakyThrows
-  private void deleteTempFile() {
+  public void deleteTempFile() {
     if (tempFile!=null) {
       Files.deleteIfExists(tempFile);
       tempFile = null;
@@ -187,6 +189,17 @@ public class ConfigurationTest {
 
     ConstraintClass obj;
 
+  }
+
+  public static void testForErrors(Consumer<ErrorCollector> failure) {
+    ErrorCollector errors = ErrorCollector.root();
+    try {
+      failure.accept(errors);
+      fail();
+    } catch (Exception e) {
+      System.out.println(ErrorPrinter.prettyPrint(errors));
+      assertTrue(errors.isFatal());
+    }
   }
 
 }
