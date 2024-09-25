@@ -210,8 +210,7 @@ public class DatasqrlRun {
 
     StatementSetOperation parse = (StatementSetOperation)tEnv1.getParser().parse(insert).get(0);
 
-    CompiledPlan plan = tEnv1.compilePlan(parse.getOperations());
-    return plan;
+    return tEnv1.compilePlan(parse.getOperations());
   }
 
   private void collectJarURLs(List<URL> jarURLs, String dirEnvVar) {

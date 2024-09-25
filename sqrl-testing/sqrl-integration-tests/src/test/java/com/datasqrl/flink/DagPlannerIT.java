@@ -5,7 +5,9 @@ import static org.junit.jupiter.api.Assertions.fail;
 import com.datasqrl.DatasqrlRun;
 import java.io.File;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.table.api.CompiledPlan;
@@ -13,13 +15,28 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.redpanda.RedpandaContainer;
+import org.testcontainers.utility.DockerImageName;
 
-/**
- * !! This test uses built jars. Remember to build the jars if you're making changes and testing
- */
 @Slf4j
 @TestInstance(TestInstance.Lifecycle.PER_CLASS) // This is to allow the method source to not be static
+@Testcontainers
 public class DagPlannerIT {
+  @Container
+  private PostgreSQLContainer testDatabase =
+      new PostgreSQLContainer(DockerImageName.parse("ankane/pgvector:v0.5.0")
+          .asCompatibleSubstituteFor("postgres"))
+          .withDatabaseName("foo")
+          .withUsername("foo")
+          .withPassword("secret")
+          .withDatabaseName("datasqrl");
+
+  @Container
+  RedpandaContainer testKafka =
+      new RedpandaContainer("docker.redpanda.com/redpandadata/redpanda:v23.1.2");
 
   // Method to provide the directories as test arguments
   static Stream<Path> directoryProvider() {
@@ -44,20 +61,26 @@ public class DagPlannerIT {
     return Stream.empty();
   }
 
-  static DatasqrlRun datasqrlRun;
-
-  @BeforeAll
-  static void beforeAll() {
-    datasqrlRun = new DatasqrlRun();
-  }
-
-  List<String> disabled = List.of("tableFunctionsBasic.sqrl",
-      "tableStateJoinTest.sqrl", "tableStreamJoinTest.sqrl",
-      "selectDistinctNestedTest.sqrl", "timestampReassignment.sqrl");
+  List<String> disabled = List.of("selectDistinctNestedTest.sqrl",
+      "timestampReassignment.sqrl");
 
   @ParameterizedTest
   @MethodSource("directoryProvider")
   void testCompilePlanOnDirectory(Path directoryPath) {
+    Map<String, String> env = new HashMap<>();
+    env.put("EXECUTION_MODE", "local");
+    env.put("JDBC_URL", testDatabase.getJdbcUrl());
+    env.put("PGHOST", testDatabase.getHost());
+    env.put("PGUSER", testDatabase.getUsername());
+    env.put("JDBC_USERNAME", testDatabase.getUsername());
+    env.put("JDBC_PASSWORD", testDatabase.getPassword());
+    env.put("PGPORT", testDatabase.getMappedPort(PostgreSQLContainer.POSTGRESQL_PORT).toString());
+    env.put("PGPASSWORD", testDatabase.getPassword());
+    env.put("PGDATABASE", testDatabase.getDatabaseName());
+    env.put("PROPERTIES_BOOTSTRAP_SERVERS", testKafka.getBootstrapServers());
+
+    DatasqrlRun datasqrlRun = new DatasqrlRun(directoryPath.getParent().resolve("build").resolve("plan"), env);
+
     if (disabled.contains(directoryPath.getFileName().toString())){
       log.warn("Skipping Disabled Test");
       return;
@@ -70,7 +93,6 @@ public class DagPlannerIT {
         "compile", directoryPath.getFileName().toString(),
         "--profile", root.resolve("profiles/default").toString());
 
-    datasqrlRun.setPath(directoryPath.getParent().resolve("build").resolve("plan"));
     try {
       CompiledPlan plan = datasqrlRun.compileFlink();
       // plan.execute().print(); Uncomment if execution is required
