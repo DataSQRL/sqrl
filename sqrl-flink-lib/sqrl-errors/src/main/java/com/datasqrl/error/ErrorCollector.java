@@ -20,24 +20,27 @@ import lombok.NonNull;
 public class ErrorCollector implements Iterable<ErrorMessage>, Serializable {
 
   private static final boolean DEFAULT_ABORT_ON_FATAL = true;
+  private static final boolean DEFAULT_REPORT_ERRORS_ONLY = false;
 
   @Getter
   private final ErrorLocation location;
   private final ErrorCollection errors;
   private final boolean abortOnFatal;
+  private final boolean reportErrorsOnly;
 
   /*
   ==== CONSTRUCTORS ====
    */
 
-  private ErrorCollector(ErrorLocation location, ErrorCollection errors, boolean abortOnFatal) {
+  private ErrorCollector(ErrorLocation location, ErrorCollection errors, boolean abortOnFatal, boolean reportErrorsOnly) {
     this.location = location;
     this.errors = errors;
     this.abortOnFatal = abortOnFatal;
+    this.reportErrorsOnly = reportErrorsOnly;
   }
 
   public ErrorCollector(ErrorLocation location, ErrorCollection errors) {
-    this(location, errors, DEFAULT_ABORT_ON_FATAL);
+    this(location, errors, DEFAULT_ABORT_ON_FATAL, DEFAULT_REPORT_ERRORS_ONLY);
   }
 
   public ErrorCollector(@NonNull ErrorLocation location) {
@@ -49,11 +52,15 @@ public class ErrorCollector implements Iterable<ErrorMessage>, Serializable {
   }
 
   public ErrorCollector fromPrefix(@NonNull ErrorPrefix prefix) {
-    return new ErrorCollector(prefix, errors, abortOnFatal);
+    return new ErrorCollector(prefix, errors, abortOnFatal, reportErrorsOnly);
   }
 
   public ErrorCollector abortOnFatal(boolean abortOnFatal) {
-    return new ErrorCollector(location, errors, abortOnFatal);
+    return new ErrorCollector(location, errors, abortOnFatal, reportErrorsOnly);
+  }
+
+  public ErrorCollector onlyErrors() {
+    return new ErrorCollector(location, errors, abortOnFatal, true);
   }
 
   /*
@@ -65,7 +72,7 @@ public class ErrorCollector implements Iterable<ErrorMessage>, Serializable {
   }
 
   public ErrorCollector withSource(SourceMap sourceMap) {
-    return new ErrorCollector(location.withSourceMap(sourceMap), errors, abortOnFatal);
+    return new ErrorCollector(location.withSourceMap(sourceMap), errors, abortOnFatal, reportErrorsOnly);
   }
 
   public ErrorCollector withSource(String sourceContent) {
@@ -73,7 +80,7 @@ public class ErrorCollector implements Iterable<ErrorMessage>, Serializable {
   }
 
   public ErrorCollector resolve(String sub) {
-    return new ErrorCollector(location.resolve(sub), errors, abortOnFatal);
+    return new ErrorCollector(location.resolve(sub), errors, abortOnFatal, reportErrorsOnly);
   }
 
 //  public ErrorCollector resolve(Name sub) {
@@ -81,15 +88,15 @@ public class ErrorCollector implements Iterable<ErrorMessage>, Serializable {
 //  }
 
   public ErrorCollector atFile(FileRange file) {
-    return new ErrorCollector(location.atFile(file), errors, abortOnFatal);
+    return new ErrorCollector(location.atFile(file), errors, abortOnFatal, reportErrorsOnly);
   }
 
   public ErrorCollector atFile(FileLocation file) {
-    return new ErrorCollector(location.atFile(file), errors, abortOnFatal);
+    return new ErrorCollector(location.atFile(file), errors, abortOnFatal, reportErrorsOnly);
   }
 
   public ErrorCollector withLocation(ErrorLocation location) {
-    return new ErrorCollector(location, errors, abortOnFatal);
+    return new ErrorCollector(location, errors, abortOnFatal, reportErrorsOnly);
   }
 
   public ErrorCollector withScript(Path file, String scriptContent) {
@@ -155,6 +162,7 @@ public class ErrorCollector implements Iterable<ErrorMessage>, Serializable {
    */
 
   protected void addInternal(@NonNull ErrorMessage error) {
+    if (reportErrorsOnly && !error.isFatal()) return;
     errors.addInternal(error);
   }
 

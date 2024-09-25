@@ -85,7 +85,7 @@ public class DAGPlanner {
     dag.allNodesByClass(SqrlDAG.TableNode.class).forEach( tableNode -> {
       PhysicalTable table = tableNode.getTable();
       SqrlConverterConfig config = table.getBaseConfig().build();
-      table.setPlannedRelNode(sqrlConverter.convert(table, config, errors));
+      table.setPlannedRelNode(sqrlConverter.convert(table, config, errors.onlyErrors()));
     });
   }
 
