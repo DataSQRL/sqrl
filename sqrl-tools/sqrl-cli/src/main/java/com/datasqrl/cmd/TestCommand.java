@@ -22,10 +22,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.flink.api.common.JobID;
+import org.apache.flink.api.common.JobStatus;
+import org.apache.flink.core.execution.JobClient;
 import org.apache.flink.table.api.TableResult;
 import picocli.CommandLine;
 
@@ -56,8 +59,8 @@ public class TestCommand extends AbstractCompilerCommand {
   @SneakyThrows
   @Override
   protected void postprocess(PackageJson sqrlConfig, Packager packager, Path targetDir, PhysicalPlan plan,
-      TestPlan right, ErrorCollector errors) {
-    super.postprocess(sqrlConfig, packager, targetDir, plan, right, errors);
+      TestPlan right, Path snapshotPath, ErrorCollector errors) {
+    super.postprocess(sqrlConfig, packager, targetDir, plan, right, snapshotPath, errors);
     Path planPath = root.rootDir.resolve("build").resolve("plan");
     DatasqrlRun run = new DatasqrlRun(planPath, root.getEnv());
     TableResult result = run.run(false);
@@ -78,7 +81,20 @@ public class TestCommand extends AbstractCompilerCommand {
       sqrlConfig.getTestConfig().flatMap(TestRunnerConfiguration::getDelaySec)
           .ifPresent(sec -> {
             try {
-              Thread.sleep(sec.toMillis());
+              for (int i = 0; i < sec.getSeconds(); i++) {
+                //break early if job is done
+                try {
+                  CompletableFuture<JobStatus> jobStatusCompletableFuture = result.getJobClient()
+                      .map(JobClient::getJobStatus).get();
+                  JobStatus status = jobStatusCompletableFuture.get(1, TimeUnit.SECONDS);
+                  if (status == JobStatus.FINISHED || status == JobStatus.CANCELED) {
+                    break;
+                  }
+                } catch (Exception e) {};
+
+                Thread.sleep(1000);
+              }
+
             } catch (Exception e) {
             }
           });
@@ -89,10 +105,10 @@ public class TestCommand extends AbstractCompilerCommand {
         //Execute queries
         String data = executeQuery(query.getQuery());
         //Snapshot result
-        snapshot(root.rootDir.resolve("snapshots"), query.getName(), data, errors);
+        snapshot(snapshotPath, query.getName(), data, errors);
       }
     } finally {
-      result.getJobClient().get().cancel();
+      run.stop();
     }
   }
 
@@ -123,7 +139,8 @@ public class TestCommand extends AbstractCompilerCommand {
       Files.createDirectories(snapshotDir);
     }
 
-    Path snapshotPath = snapshotDir.resolve(name + ".snapshot");
+    Path snapshotPath = snapshotDir.resolve(name+".snapshot");
+
     if (Files.exists(snapshotPath)) {
       String existingSnapshot = new String(Files.readAllBytes(snapshotPath), "UTF-8");
       if (!existingSnapshot.equals(currentResponse)) {

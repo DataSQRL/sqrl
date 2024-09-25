@@ -2,7 +2,7 @@
   "version": 1,
   "flink" : {
     "format" : "flexible-json",
-    "path" : "/data/events.jsonl",
+    "path" : "${DATA_PATH}/events.jsonl",
     "source.monitor-interval" : 1,
     "connector" : "filesystem"
   },

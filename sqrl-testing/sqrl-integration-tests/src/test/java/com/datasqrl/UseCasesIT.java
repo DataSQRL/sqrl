@@ -7,11 +7,23 @@ import com.datasqrl.cmd.RootCommand;
 import com.datasqrl.cmd.StatusHook;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 import org.apache.flink.calcite.shaded.com.google.common.base.Strings;
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.DeleteTopicsResult;
+import org.apache.kafka.clients.admin.ListTopicsResult;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -25,22 +37,32 @@ import org.testcontainers.utility.DockerImageName;
  */
 @Testcontainers
 public class UseCasesIT {
-  @Container
-  private PostgreSQLContainer testDatabase =
-      new PostgreSQLContainer(DockerImageName.parse("ankane/pgvector:v0.5.0")
-          .asCompatibleSubstituteFor("postgres"))
-          .withDatabaseName("foo")
-          .withUsername("foo")
-          .withPassword("secret")
-          .withDatabaseName("datasqrl");
+  private PostgreSQLContainer testDatabase;
 
-  @Container
-  RedpandaContainer container =
-      new RedpandaContainer("docker.redpanda.com/redpandadata/redpanda:v23.1.2");
+  RedpandaContainer testKafka;
 
   protected static final Path PROJECT_ROOT = getProjectRoot();
   private static final Path RESOURCES = Paths.get("src/test/resources/usecases");
+  @BeforeEach
+  public void setUp() {
+    // Start a new PostgreSQL container for each test
+    testDatabase = new PostgreSQLContainer<>(DockerImageName.parse("ankane/pgvector:v0.5.0")
+        .asCompatibleSubstituteFor("postgres"))
+        .withDatabaseName("datasqrl")
+        .withUsername("foo")
+        .withPassword("secret");
+    testDatabase.start();
 
+    // Start a new Redpanda container for each test
+    testKafka = new RedpandaContainer("docker.redpanda.com/redpandadata/redpanda:v23.1.2");
+    testKafka.start();
+  }
+
+  @AfterEach
+  public void tearDown() throws Exception {
+    testDatabase.stop();
+    testKafka.stop();
+  }
 
   @Test //Done
   public void testRepository() {
@@ -50,6 +72,49 @@ public class UseCasesIT {
   @Test
   public void testLoggingToKafka() {
     execute("logging/it-kafka", "logging-kafka.sqrl", "logging-kafka.graphqls");
+  }
+
+  @Test
+  public void testBanking() {
+    execute("test","banking", "loan.sqrl", "loan.graphqls", null,
+        "-c", PROJECT_ROOT.resolve("sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/banking/package.json").toString());
+  }
+
+  @Test
+  public void testClickstream() {
+    execute("test", "clickstream", "clickstream-teaser.sqrl", "clickstream-teaser.graphqls", null,
+        "-c", PROJECT_ROOT.resolve("sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/clickstream/package.json").toString());
+  }
+
+  @Test
+  public void testConference() {
+    execute("test", "conference", "conference.sqrl", "conference.graphqls", null,
+        "-c", PROJECT_ROOT.resolve("sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/banking/package.json").toString());
+  }
+
+  @Test
+  public void testSensorsMutation() {
+    execute("test", "sensors", "sensors-mutation.sqrl", "sensors-mutation.graphqls", "sensors-mutation",
+        "-c", PROJECT_ROOT.resolve("sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/sensors/package.json").toString());
+  }
+
+  @Test
+  public void testSensorsFull() {
+    execute("test", "sensors", "sensors-full.sqrl", null,"sensors-full",
+        "-c", PROJECT_ROOT.resolve("sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/sensors/package.json").toString());
+  }
+
+  @Test
+  public void testSeedshopExtended() {
+    execute("test", "seedshop-tutorial", "seedshop-extended.sqrl", null, "seedshop-extended",
+        "-c", PROJECT_ROOT.resolve("sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/seedshop-tutorial/package.json").toString());
+  }
+
+  @Test
+  public void testDuckdb() {
+    compile("duckdb", "duckdb.sqrl", null);
+//    execute("compile","duckdb", "duckdb.sqrl", null, "queries",
+//        "-c", PROJECT_ROOT.resolve("sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/duckdb/package.json").toString());
   }
 
   public void execute(String path, String script, String graphql) {
@@ -66,11 +131,11 @@ public class UseCasesIT {
       argsList.add("-s"); argsList.add("snapshots-"+testSuffix);
       argsList.add("--tests"); argsList.add("tests-"+testSuffix);
     }
-    argsList.add("--profile");
-    argsList.add(getProjectRoot(rootDir).resolve("profiles/default").toString());
+//    argsList.add("--profile");
+//    argsList.add(getProjectRoot(rootDir).resolve("profiles/default").toString());
     argsList.addAll(Arrays.asList(args));
 
-    execute(rootDir, AssertStatusHook.INSTANCE, argsList.toArray(String[]::new));
+    execute(rootDir, new AssertStatusHook(), argsList.toArray(String[]::new));
   }
 
   protected void compile(String path, String script, String graphql) {
@@ -82,23 +147,22 @@ public class UseCasesIT {
     argsList.add("--profile");
     argsList.add(getProjectRoot(rootDir).resolve("profiles/default").toString());
     execute(RESOURCES.resolve(path),
-        AssertStatusHook.INSTANCE, argsList.toArray(a->new String[a]));
+        new AssertStatusHook(), argsList.toArray(a->new String[a]));
   }
 
   public int execute(Path rootDir, StatusHook hook, String... args) {
+    Map<String, String> env = new HashMap<>();
+    env.put("JDBC_URL", testDatabase.getJdbcUrl());
+    env.put("PGHOST", testDatabase.getHost());
+    env.put("PGUSER", testDatabase.getUsername());
+    env.put("JDBC_USERNAME", testDatabase.getUsername());
+    env.put("JDBC_PASSWORD", testDatabase.getPassword());
+    env.put("PGPORT", testDatabase.getMappedPort(PostgreSQLContainer.POSTGRESQL_PORT).toString());
+    env.put("PGPASSWORD", testDatabase.getPassword());
+    env.put("PGDATABASE", testDatabase.getDatabaseName());
+    env.put("PROPERTIES_BOOTSTRAP_SERVERS", testKafka.getBootstrapServers());
 
-    Map<String, String> env = Map.of(
-        "JDBC_URL", testDatabase.getJdbcUrl(),
-        "PGHOST", testDatabase.getHost(),
-        "PGUSER", testDatabase.getUsername(),
-        "JDBC_USERNAME", testDatabase.getUsername(),
-        "JDBC_PASSWORD", testDatabase.getPassword(),
-        "PGPORT", testDatabase.getMappedPort(PostgreSQLContainer.POSTGRESQL_PORT).toString(),
-        "PGPASSWORD", testDatabase.getPassword(),
-        "PGDATABASE", testDatabase.getDatabaseName(),
-        "PROPERTIES_BOOTSTRAP_SERVERS", container.getBootstrapServers(),
-        "JMETER_HOME", "/Users/henneberger/Downloads/apache-jmeter-5.6.3"
-    );
+    env.put("DATA_PATH", rootDir.resolve("build/deploy/flink/data").toAbsolutePath().toString());
     RootCommand rootCommand = new RootCommand(rootDir, hook, env);
     int exitCode = rootCommand.getCmd().execute(args) + (hook.isSuccess() ? 0 : 1);
     if (exitCode != 0) {

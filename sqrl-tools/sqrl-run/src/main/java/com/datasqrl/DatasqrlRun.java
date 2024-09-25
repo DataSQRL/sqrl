@@ -19,14 +19,16 @@ import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.micrometer.MicrometerMetricsOptions;
+import java.io.File;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.regex.Matcher;
@@ -54,6 +56,10 @@ public class DatasqrlRun {
   Path path = build.resolve("plan");
 
   ObjectMapper objectMapper = new ObjectMapper();
+
+  Vertx vertx;
+  TableResult execute;
+
   public static void main(String[] args) {
     DatasqrlRun run = new DatasqrlRun();
     run.run(true);
@@ -91,11 +97,20 @@ public class DatasqrlRun {
 
     startVertx();
     CompiledPlan plan = startFlink();
-    TableResult execute = plan.execute();
+    execute = plan.execute();
     if (hold) {
       execute.print();
     }
     return execute;
+  }
+
+  public void stop() {
+    if (execute != null) {
+      execute.getJobClient().get().cancel();
+    }
+    if (vertx != null) {
+      vertx.close();
+    }
   }
 
   @SneakyThrows
@@ -126,30 +141,46 @@ public class DatasqrlRun {
     config.putIfAbsent("execution.checkpointing.min-pause", "20 s");
     config.putIfAbsent("state.backend", "rocksdb");
     config.putIfAbsent("table.exec.resource.default-parallelism", "1");
+    config.putIfAbsent("execution.target", "remote");
+    config.putIfAbsent("rest.address", "localhost");
 
     Configuration configuration = Configuration.fromMap(config);
+    String udfJarPath = "/Users/henneberger/sqrl/sqrl-testing/sqrl-integration-tests/src/test/resources/udf/build/deploy/flink/lib/myjavafunction-0.1.0-snapshot-all.jar";
+//    String sqrlRunJarPath = "/Users/henneberger/sqrl/sqrl-tools/sqrl-run/target/sqrl-run.jar";
 
-    StreamExecutionEnvironment sEnv = StreamExecutionEnvironment.createRemoteEnvironment(//configuration);
-        "localhost", 8081, configuration);
+    URL[] urls = {
+        new File(udfJarPath).toURI().toURL(),
+//        new File(sqrlRunJarPath).toURI().toURL()
+    };
+    URLClassLoader urlClassLoader = new URLClassLoader(urls);
+
+    StreamExecutionEnvironment sEnv = new StreamExecutionEnvironment(configuration, urlClassLoader);
+    sEnv.configure(configuration, urlClassLoader);
+
     EnvironmentSettings tEnvConfig = EnvironmentSettings.newInstance()
-        .withConfiguration(configuration).build();
+        .withConfiguration(configuration)
+        .withClassLoader(urlClassLoader)
+        .build();
+
     StreamTableEnvironment tEnv = StreamTableEnvironment.create(sEnv, tEnvConfig);
     TableResult tableResult = null;
 
     Map map = objectMapper.readValue(path.resolve("flink.json").toFile(), Map.class);
     List<String> statements = (List<String>) map.get("flinkSql");
 
-    tEnv.executeSql("ADD JAR '/Users/henneberger/sqrl/sqrl-tools/sqrl-run/target/sqrl-run.jar'");
+    tEnv.executeSql("ADD JAR '/Users/henneberger/sqrl/sqrl-testing/sqrl-integration-tests/src/test/resources/udf/build/deploy/flink/lib/myjavafunction-0.1.0-snapshot-all.jar'");
+//    tEnv.executeSql("ADD JAR '/Users/henneberger/sqrl/sqrl-tools/sqrl-run/target/sqrl-run.jar'");
     for (int i = 0; i < statements.size()-1; i++) {
       String statement = statements.get(i);
       if (statement.trim().isEmpty()) {
         continue;
       }
-//      System.out.println(replaceWithEnv(statement));
       tableResult = tEnv.executeSql(replaceWithEnv(statement));
     }
     String insert = replaceWithEnv(statements.get(statements.size() - 1));
+//    tEnv.executeSql(insert);
     TableEnvironmentImpl tEnv1 = (TableEnvironmentImpl) tEnv;
+
     StatementSetOperation parse = (StatementSetOperation)tEnv1.getParser().parse(insert).get(0);
 
     CompiledPlan plan = tEnv1.compilePlan(parse.getOperations());
@@ -274,7 +305,7 @@ public class DatasqrlRun {
         .setMicrometerRegistry(prometheusMeterRegistry)
         .setEnabled(true);
 
-    Vertx vertx = Vertx.vertx(new VertxOptions().setMetricsOptions(metricsOptions));
+    vertx = Vertx.vertx(new VertxOptions().setMetricsOptions(metricsOptions));
 
     vertx.deployVerticle(server, res -> {
       if (res.succeeded()) {

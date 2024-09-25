@@ -7,7 +7,6 @@ import com.datasqrl.error.ErrorPrinter;
 import lombok.Getter;
 
 public class AssertStatusHook implements StatusHook {
-  public static AssertStatusHook INSTANCE = new AssertStatusHook();
   private boolean failed;
   @Getter
   private String failMessage = null;
