@@ -21,7 +21,6 @@
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-core</artifactId>
       <version>1.19.1</version>
-      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
@@ -33,19 +32,21 @@
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-streaming-java</artifactId>
       <version>1.19.1</version>
-      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-table-api-java-bridge</artifactId>
       <version>1.19.1</version>
-      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-server-vertx</artifactId>
     </dependency>
-
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-table-planner_2.12</artifactId>
+      <version>1.19.1</version>
+    </dependency>
     <dependency>
       <groupId>org.apache.kafka</groupId>
       <artifactId>kafka-clients</artifactId>

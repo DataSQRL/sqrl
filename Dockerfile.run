@@ -1,14 +1,14 @@
 # Stage 1: Build Stage
-FROM gradle:7.6-jdk17 AS build
+FROM gradle:8.6-jdk11 AS build
 
 # Set the working directory
 WORKDIR /home/gradle/project
 
 # Copy the project files
-COPY . /home/gradle/project
+COPY sqrl-tools/sqrl-run/gradle-deps/build.gradle /home/gradle/project/build.gradle
 
 # Build the project and run the copyDependencies task
-RUN gradle build copyDependencies --no-daemon
+RUN gradle build shadowjar --no-daemon
 
 # Use the official Ubuntu 22.04 as base image
 FROM ubuntu:22.04
@@ -24,6 +24,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
     wget \
     openjdk-17-jdk \
+    ssh \
     netcat \
     curl \
     unzip \
@@ -46,21 +47,26 @@ RUN curl -1sLf 'https://dl.redpanda.com/nzc4ZYQK3WRGd9sy/redpanda/cfg/setup/bash
 RUN apt-get update && apt-get install -y redpanda
 
 # Expose default Redpanda ports
-# EXPOSE 9092 9644
+EXPOSE 8080 8081 8888 9092 9644
 
 # Copy the dependencies from the build stage
-COPY --from=build /home/gradle/project/dependencies/ /opt/libs/
+COPY --from=build /home/gradle/project/build/libs/ /opt/system_libs/
 
 # Copy the application JAR from the local folder to /opt/
 COPY sqrl-tools/sqrl-cli/target/sqrl-cli.jar /opt/sqrl/sqrl-cli.jar
 COPY sqrl-tools/sqrl-run/target/sqrl-run.jar /opt/sqrl/sqrl-run.jar
 COPY sqrl-tools/sqrl-test/target/sqrl-test.jar /opt/sqrl/sqrl-test.jar
+COPY sqrl-flink-lib/sqrl-jdbc-1.19/target/sqrl-jdbc-1.19-0.5.5-SNAPSHOT.jar /opt/system_libs/sqrl-jdbc-1.19-0.5.5-SNAPSHOT.jar
 
 # Copy the entrypoint script
 COPY entrypoint-run.sh /entrypoint-run.sh
 RUN chmod +x /entrypoint-run.sh
 
 RUN sed -i 's/localhost/0.0.0.0/g' ${FLINK_HOME}/conf/*
+
+RUN service postgresql start && \
+    su - postgres -c "psql -U postgres -c \"ALTER USER postgres WITH PASSWORD 'postgres';\"" && \
+    su - postgres -c "psql -U postgres -c \"CREATE DATABASE datasqrl;\""
 
 WORKDIR /build
 

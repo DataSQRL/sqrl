@@ -1,5 +1,8 @@
 #!/bin/bash
 
+echo 'Compiling...this takes about 10 seconds'
+java -jar "/opt/sqrl/sqrl-cli.jar" "$@"
+
 if [ "$1" == "run" ] || [ "$1" == "test" ]; then
    # Determine the jar to run
     if [ "$1" == "run" ]; then
@@ -11,6 +14,7 @@ if [ "$1" == "run" ] || [ "$1" == "test" ]; then
     if [ -z "$FLINK_HOST" ]; then
         echo "Starting Flink..."
         ${FLINK_HOME}/bin/start-cluster.sh
+        ${FLINK_HOME}/bin/taskmanager.sh start
         export FLINK_HOST=localhost
         export FLINK_PORT=8081
     fi
@@ -21,6 +25,7 @@ if [ "$1" == "run" ] || [ "$1" == "test" ]; then
         rpk redpanda start --schema-registry-addr 0.0.0.0:8086 --overprovisioned --smp 1 --memory 1G --reserve-memory 0M --node-id 0 --check=false &
         export KAFKA_HOST=localhost
         export KAFKA_PORT=9092
+        export PROPERTIES_BOOTSTRAP_SERVERS=localhost:9092
     fi
 
     # Start Postgres if POSTGRES_HOST is not set
@@ -29,8 +34,15 @@ if [ "$1" == "run" ] || [ "$1" == "test" ]; then
         service postgresql start
         export POSTGRES_HOST=localhost
         export POSTGRES_PORT=5432
+        export JDBC_URL="jdbc:postgresql://localhost:5432/datasqrl"
+        export PGHOST="localhost"
+        export PGUSER="postgres"
+        export JDBC_USERNAME="postgres"
+        export JDBC_PASSWORD="postgres"
+        export PGPORT=5432
+        export PGPASSWORD="postgres"
+        export PGDATABASE="datasqrl"
     fi
-
 
     # Wait for Flink to start
     echo "Waiting for Flink to start..."
@@ -54,11 +66,11 @@ if [ "$1" == "run" ] || [ "$1" == "test" ]; then
     done
 
     # Set the classpath
-    SYSTEM_JAR_PATH=""
+    export UDF_JAR_DIR="/build/build/deploy/flink/lib"
+    export SYSTEM_JAR_DIR="/opt/system_libs/"
 
     echo "All services are up. Starting the main application..."
     echo "$@"
-    bash
 
     exec java -jar "/opt/sqrl/$JAR_NAME" "$@"
 else

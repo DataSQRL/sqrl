@@ -236,6 +236,7 @@ public class DatasqrlRun {
     for (URL jarURL : jarURLs) {
       String jarPath = jarURL.toURI().getPath();
       String addJarStatement = "ADD JAR '" + jarPath + "'";
+      System.out.println(addJarStatement);
       tEnv.executeSql(addJarStatement);
     }
   }
