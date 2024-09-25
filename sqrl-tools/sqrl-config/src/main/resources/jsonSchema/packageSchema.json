@@ -177,16 +177,48 @@
           "type": "array",
           "items": {
             "type": "object",
-            "minProperties": 1
-          },
-          "minItems": 1
+            "patternProperties": {
+              ".*": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "version": {
+                    "type": "string"
+                  },
+                  "variant": {
+                    "type": "string"
+                  }
+                },
+                "required": ["name", "version"],
+                "additionalProperties": false
+              }
+            }
+          }
         },
         {
           "type": "object",
-          "minProperties": 1
+          "patternProperties": {
+            ".*": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "version": {
+                  "type": "string"
+                },
+                "variant": {
+                  "type": "string"
+                }
+              },
+              "required": ["name", "version"],
+              "additionalProperties": false
+            }
+          }
         }
       ]
-
     },
     "package": {
       "type": "object",
