@@ -1,3 +1,15 @@
+# Stage 1: Build Stage
+FROM gradle:7.6-jdk17 AS build
+
+# Set the working directory
+WORKDIR /home/gradle/project
+
+# Copy the project files
+COPY . /home/gradle/project
+
+# Build the project and run the copyDependencies task
+RUN gradle build copyDependencies --no-daemon
+
 # Use the official Ubuntu 22.04 as base image
 FROM ubuntu:22.04
 
@@ -36,8 +48,13 @@ RUN apt-get update && apt-get install -y redpanda
 # Expose default Redpanda ports
 # EXPOSE 9092 9644
 
+# Copy the dependencies from the build stage
+COPY --from=build /home/gradle/project/dependencies/ /opt/libs/
+
 # Copy the application JAR from the local folder to /opt/
-COPY target/sqrl-cli.jar /opt/sqrl-cli.jar
+COPY sqrl-tools/sqrl-cli/target/sqrl-cli.jar /opt/sqrl/sqrl-cli.jar
+COPY sqrl-tools/sqrl-run/target/sqrl-run.jar /opt/sqrl/sqrl-run.jar
+COPY sqrl-tools/sqrl-test/target/sqrl-test.jar /opt/sqrl/sqrl-test.jar
 
 # Copy the entrypoint script
 COPY entrypoint-run.sh /entrypoint-run.sh

@@ -1,6 +1,12 @@
 #!/bin/bash
 
-if [ "$1" == "run" ]; then
+if [ "$1" == "run" ] || [ "$1" == "test" ]; then
+   # Determine the jar to run
+    if [ "$1" == "run" ]; then
+        JAR_NAME="sqrl-run.jar"
+    else
+        JAR_NAME="sqrl-test.jar"
+    fi
     # Start Flink if FLINK_HOST is not set
     if [ -z "$FLINK_HOST" ]; then
         echo "Starting Flink..."
@@ -47,11 +53,14 @@ if [ "$1" == "run" ]; then
         sleep 2
     done
 
+    # Set the classpath
+    SYSTEM_JAR_PATH=""
+
     echo "All services are up. Starting the main application..."
     echo "$@"
     bash
 
-    exec java -jar /opt/sqrl-cli.jar "$@"
+    exec java -jar "/opt/sqrl/$JAR_NAME" "$@"
 else
     # Execute any other command provided
     exec "$@"

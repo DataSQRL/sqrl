@@ -52,26 +52,27 @@ public class UdfIT {
         "/Users/henneberger/sqrl/sqrl-testing/sqrl-integration-tests/src/test/resources/udf");
 
     execute(path, StatusHook.NONE,"compile", "myudf.sqrl");
-
+    Map<String, String> env = Map.of(
+        "JDBC_URL", testDatabase.getJdbcUrl(),
+        "PGHOST", testDatabase.getHost(),
+        "PGUSER", testDatabase.getUsername(),
+        "JDBC_USERNAME", testDatabase.getUsername(),
+        "JDBC_PASSWORD", testDatabase.getPassword(),
+        "PGPORT", testDatabase.getMappedPort(PostgreSQLContainer.POSTGRESQL_PORT).toString(),
+        "PGPASSWORD", testDatabase.getPassword(),
+        "PGDATABASE", testDatabase.getDatabaseName(),
+        "UDF_JAR_DIR",
+        "/Users/henneberger/sqrl/sqrl-testing/sqrl-integration-tests/src/test/resources/udf/build/deploy/flink/lib",
+        "PROPERTIES_BOOTSTRAP_SERVERS", container.getBootstrapServers()
+    );
     DatasqrlRun run = new DatasqrlRun(path.resolve("build").resolve("plan"),
-        Map.of(
-            "JDBC_URL", testDatabase.getJdbcUrl(),
-            "PGHOST", testDatabase.getHost(),
-            "PGUSER", testDatabase.getUsername(),
-            "JDBC_USERNAME", testDatabase.getUsername(),
-            "JDBC_PASSWORD", testDatabase.getPassword(),
-            "PGPORT", testDatabase.getMappedPort(PostgreSQLContainer.POSTGRESQL_PORT).toString(),
-            "PGPASSWORD", testDatabase.getPassword(),
-            "PGDATABASE", testDatabase.getDatabaseName(),
-            "PROPERTIES_BOOTSTRAP_SERVERS", container.getBootstrapServers()
-        ));
+       env);
     TableResult run1 = run.run(false);
 
     int count = 10;
 //    postGraphQLMutations(count);
     getGraphqlQuery();
-
-//    run1.getJobClient().get().cancel();
+    run.stop();
   }
 
   @SneakyThrows

@@ -146,7 +146,7 @@ public class DatasqrlRun {
     config.putIfAbsent("execution.checkpointing.min-pause", "20 s");
     config.putIfAbsent("state.backend", "rocksdb");
     config.putIfAbsent("table.exec.resource.default-parallelism", "1");
-    config.putIfAbsent("execution.target", "local");
+    config.putIfAbsent("execution.target", "remote");
     config.putIfAbsent("rest.address", "localhost");
 
     Configuration configuration = Configuration.fromMap(config);
@@ -193,8 +193,6 @@ public class DatasqrlRun {
     // Add JARs to the TableEnvironment
     addJarsToTableEnvironment(tEnv, jarURLs);
 
-//    tEnv.executeSql("ADD JAR '/Users/henneberger/sqrl/sqrl-testing/sqrl-integration-tests/src/test/resources/udf/build/deploy/flink/lib/myjavafunction-0.1.0-snapshot-all.jar'");
-//    tEnv.executeSql("ADD JAR '/Users/henneberger/sqrl/sqrl-tools/sqrl-run/target/sqrl-run.jar'");
     for (int i = 0; i < statements.size()-1; i++) {
       String statement = statements.get(i);
       if (statement.trim().isEmpty()) {
