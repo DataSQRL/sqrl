@@ -107,14 +107,14 @@ public class UseCasesIT {
   }
 
   @Test
-//  @Disabled //todo needs more time
+  @Disabled //todo needs more time
   public void testSensorsFull() {
     execute("test", "sensors", "sensors-full.sqrl", null,"sensors-full",
         "-c", PROJECT_ROOT.resolve("sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/sensors/package.json").toString());
   }
 
   @Test
-//  @Disabled //todo fix CustomerPromotionTest
+  @Disabled //todo fix CustomerPromotionTest
   public void testSeedshopExtended() {
     execute("test", "seedshop-tutorial", "seedshop-extended.sqrl", null, "seedshop-extended",
         "-c", PROJECT_ROOT.resolve("sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/seedshop-tutorial/package.json").toString());
