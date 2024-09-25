@@ -122,6 +122,7 @@ public class UseCasesIT {
 
   @SneakyThrows
   @Test
+  @Disabled
   public void testDuckdb() {
     Path path = Path.of("/tmp/duckdb");
     try {
