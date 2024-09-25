@@ -172,6 +172,12 @@ public class UseCasesIT {
     if (exitCode != 0) {
       fail();
     }
+
+    DatasqrlTest test = new DatasqrlTest(null, rootDir.resolve("build/plan"), env);
+    int run = test.run();
+    if (run != 0) {
+      fail();
+    }
     return exitCode;
   }
 

@@ -1,8 +1,9 @@
-package com.datasqrl;
+package com.datasqrl.flink;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import com.datasqrl.DatasqrlRun;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -15,7 +16,6 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import lombok.SneakyThrows;
 import org.apache.directory.api.util.Strings;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;

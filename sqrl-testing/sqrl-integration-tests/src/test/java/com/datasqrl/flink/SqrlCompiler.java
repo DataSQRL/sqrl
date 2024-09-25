@@ -1,4 +1,4 @@
-package com.datasqrl;
+package com.datasqrl.flink;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;

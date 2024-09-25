@@ -20,11 +20,16 @@ import io.vertx.core.VertxOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.micrometer.MicrometerMetricsOptions;
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -141,19 +146,23 @@ public class DatasqrlRun {
     config.putIfAbsent("execution.checkpointing.min-pause", "20 s");
     config.putIfAbsent("state.backend", "rocksdb");
     config.putIfAbsent("table.exec.resource.default-parallelism", "1");
-    config.putIfAbsent("execution.target", "remote");
+    config.putIfAbsent("execution.target", "local");
     config.putIfAbsent("rest.address", "localhost");
 
     Configuration configuration = Configuration.fromMap(config);
-    String udfJarPath = "/Users/henneberger/sqrl/sqrl-testing/sqrl-integration-tests/src/test/resources/udf/build/deploy/flink/lib/myjavafunction-0.1.0-snapshot-all.jar";
-//    String sqrlRunJarPath = "/Users/henneberger/sqrl/sqrl-tools/sqrl-run/target/sqrl-run.jar";
 
-    URL[] urls = {
-        new File(udfJarPath).toURI().toURL(),
-//        new File(sqrlRunJarPath).toURI().toURL()
-    };
-    URLClassLoader urlClassLoader = new URLClassLoader(urls);
+    // Read environment variables and collect JAR URLs
+    String udfJarDirEnv = getenv("UDF_JAR_DIR");
+    String systemJarDirEnv = getenv("SYSTEM_JAR_DIR");
 
+    List<URL> jarURLs = new ArrayList<>();
+
+    // Collect JARs from directories
+    collectJarURLs(jarURLs, udfJarDirEnv);
+    collectJarURLs(jarURLs, systemJarDirEnv);
+
+    // Create URLClassLoader with collected JARs
+    URLClassLoader urlClassLoader = new URLClassLoader(jarURLs.toArray(new URL[0]));
 
     //todo: check to see if execution.target is local or remote. If local, use getExe
     String mode = config.get("execution.target");
@@ -181,7 +190,10 @@ public class DatasqrlRun {
     Map map = objectMapper.readValue(path.resolve("flink.json").toFile(), Map.class);
     List<String> statements = (List<String>) map.get("flinkSql");
 
-    tEnv.executeSql("ADD JAR '/Users/henneberger/sqrl/sqrl-testing/sqrl-integration-tests/src/test/resources/udf/build/deploy/flink/lib/myjavafunction-0.1.0-snapshot-all.jar'");
+    // Add JARs to the TableEnvironment
+    addJarsToTableEnvironment(tEnv, jarURLs);
+
+//    tEnv.executeSql("ADD JAR '/Users/henneberger/sqrl/sqrl-testing/sqrl-integration-tests/src/test/resources/udf/build/deploy/flink/lib/myjavafunction-0.1.0-snapshot-all.jar'");
 //    tEnv.executeSql("ADD JAR '/Users/henneberger/sqrl/sqrl-tools/sqrl-run/target/sqrl-run.jar'");
     for (int i = 0; i < statements.size()-1; i++) {
       String statement = statements.get(i);
@@ -200,8 +212,33 @@ public class DatasqrlRun {
     return plan;
   }
 
+  private void collectJarURLs(List<URL> jarURLs, String dirEnvVar) {
+    if (dirEnvVar != null && !dirEnvVar.isEmpty()) {
+      Path dirPath = Paths.get(dirEnvVar);
+      if (Files.exists(dirPath) && Files.isDirectory(dirPath)) {
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(dirPath, "*.jar")) {
+          for (Path jarFile : stream) {
+            URL jarURL = jarFile.toUri().toURL();
+            jarURLs.add(jarURL);
+          }
+        } catch (IOException e) {
+          // Handle exception or log it
+          e.printStackTrace();
+        }
+      }
+    }
+  }
+
   @SneakyThrows
-  private Map getPackageJson() {
+  private void addJarsToTableEnvironment(StreamTableEnvironment tEnv, List<URL> jarURLs) {
+    for (URL jarURL : jarURLs) {
+      String jarPath = jarURL.toURI().getPath();
+      String addJarStatement = "ADD JAR '" + jarPath + "'";
+      tEnv.executeSql(addJarStatement);
+    }
+  }
+  @SneakyThrows
+  protected Map getPackageJson() {
     return objectMapper.readValue(build.resolve("package.json").toFile(), Map.class);
   }
 

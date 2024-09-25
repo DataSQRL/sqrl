@@ -1,7 +1,8 @@
-package com.datasqrl;
+package com.datasqrl.flink;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
+import com.datasqrl.DatasqrlRun;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
@@ -9,7 +10,6 @@ import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.table.api.CompiledPlan;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
