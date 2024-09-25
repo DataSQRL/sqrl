@@ -62,7 +62,11 @@
       "allOf": [
         {
           "if": {
-            "properties": { "type": { "const": "source" } }
+            "properties": {
+              "type": {
+                "contains": { "const": "source" }
+              }
+            }
           },
           "then": {
             "required": ["primary-key", "timestamp"]

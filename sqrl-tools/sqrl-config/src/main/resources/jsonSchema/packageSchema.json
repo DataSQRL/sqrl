@@ -3,22 +3,34 @@
   "type": "object",
   "properties": {
     "version": {
-      "type": "string"
+      "type": "string",
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "integer"
+        }
+      ]
     },
     "enabled-engines": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "minItems": 1
+      "oneOf": [
+        {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        },
+        {
+          "type": "string"
+        }
+      ]
     },
     "compile": {
       "type": "object",
       "minProperties": 1,
       "properties": {
         "sqrl-version": {
-          "type": "string",
-          "pattern": "^\\d+\\.\\d+\\.\\d+(-SNAPSHOT)?$"
+          "type": "string"
         },
         "flink-build-image": {
           "type": "string"
@@ -82,11 +94,16 @@
       "additionalProperties": false
     },
     "profiles": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "minItems": 1
+      "oneOf": [
+        {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        },
+        {
+          "type": "string"
+        }
+      ]
     },
     "engines": {
       "type": "object",
@@ -98,188 +115,9 @@
           "properties": {
             "connectors": {
               "type": "object",
-              "minProperties": 1,
-              "properties": {
-                "postgres": {
-                  "type": "object",
-                  "minProperties": 1,
-                  "properties": {
-                    "connector": {
-                      "type": "string"
-                    },
-                    "password": {
-                      "type": "string"
-                    },
-                    "driver": {
-                      "type": "string"
-                    },
-                    "username": {
-                      "type": "string"
-                    },
-                    "url": {
-                      "type": "string"
-                    },
-                    "table-name": {
-                      "type": "string"
-                    }
-                  },
-                  "additionalProperties": false
-                },
-                "kafka": {
-                  "type": "object",
-                  "minProperties": 1,
-                  "properties": {
-                    "connector": {
-                      "type": "string"
-                    },
-                    "format": {
-                      "type": "string"
-                    },
-                    "properties.bootstrap.servers": {
-                      "type": "string"
-                    },
-                    "properties.group.id": {
-                      "type": "string"
-                    },
-                    "scan.startup.mode": {
-                      "type": "string"
-                    },
-                    "properties.auto.offset.reset": {
-                      "type": "string"
-                    },
-                    "topic": {
-                      "type": "string"
-                    }
-                  },
-                  "additionalProperties": false
-                },
-                "localfile": {
-                  "type": "object",
-                  "minProperties": 1,
-                  "properties": {
-                    "connector": {
-                      "type": "string"
-                    },
-                    "format": {
-                      "type": "string"
-                    },
-                    "path": {
-                      "type": "string"
-                    },
-                    "source.monitor-interval": {
-                      "type": "integer"
-                    }
-                  },
-                  "additionalProperties": false
-                },
-                "iceberg": {
-                  "type": "object",
-                  "minProperties": 1,
-                  "properties": {
-                    "connector": {
-                      "type": "string"
-                    },
-                    "warehouse": {
-                      "type": "string"
-                    },
-                    "catalog-impl": {
-                      "type": "string"
-                    },
-                    "io-impl": {
-                      "type": "string"
-                    },
-                    "catalog-table": {
-                      "type": "string"
-                    },
-                    "catalog-name": {
-                      "type": "string"
-                    },
-                    "catalog-type": {
-                      "type": "string"
-                    },
-                    "catalog-database": {
-                      "type": "string"
-                    },
-                    "write.upsert.enabled": {
-                      "type": "string",
-                      "enum": [
-                        "true",
-                        "false"
-                      ]
-                    }
-                  },
-                  "additionalProperties": false
-                },
-                "postgres_log-source": {
-                  "type": "object",
-                  "minProperties": 1,
-                  "properties": {
-                    "connector": {
-                      "type": "string"
-                    },
-                    "hostname": {
-                      "type": "string"
-                    },
-                    "port": {
-                      "type": "string"
-                    },
-                    "username": {
-                      "type": "string"
-                    },
-                    "password": {
-                      "type": "string"
-                    },
-                    "database-name": {
-                      "type": "string"
-                    },
-                    "schema-name": {
-                      "type": "string"
-                    },
-                    "table-name": {
-                      "type": "string"
-                    },
-                    "slot.name": {
-                      "type": "string"
-                    },
-                    "decoding.plugin.name": {
-                      "type": "string"
-                    },
-                    "debezium.slot.drop_on_stop": {
-                      "type": "string"
-                    }
-                  },
-                  "additionalProperties": false
-                },
-                "postgres_log-sink": {
-                  "type": "object",
-                  "minProperties": 1,
-                  "properties": {
-                    "connector": {
-                      "type": "string"
-                    },
-                    "password": {
-                      "type": "string"
-                    },
-                    "driver": {
-                      "type": "string"
-                    },
-                    "username": {
-                      "type": "string"
-                    },
-                    "url": {
-                      "type": "string"
-                    },
-                    "table-name": {
-                      "type": "string"
-                    }
-                  },
-                  "additionalProperties": false
-                }
-              },
-              "additionalProperties": false
+              "minProperties": 1
             }
-          },
-          "additionalProperties": false
+          }
         },
         "snowflake": {
           "type": "object",
@@ -304,8 +142,7 @@
           ],
           "additionalProperties": false
         }
-      },
-      "additionalProperties": false
+      }
     },
     "values": {
       "type": "object",
@@ -320,110 +157,36 @@
           "type": "string"
         },
         "create-topics": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "minItems": 1
+          "oneOf": [
+            {
+              "type": "array",
+              "items": { "type": "string" },
+              "minItems": 1
+            },
+            {
+              "type": "string"
+            }
+          ]
         }
       },
-      "additionalProperties": false
-    },
-    "test-runner": {
-      "type": "object",
-      "minProperties": 1,
-      "properties": {
-        "delay-sec": {
-          "type": "integer"
-        }
-      },
-      "additionalProperties": false
+      "additionalProperties": true
     },
     "dependencies": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "minProperties": 1,
-        "properties": {
-          "clickstream": {
+      "oneOf": [
+        {
+          "type": "array",
+          "items": {
             "type": "object",
-            "required": [
-              "name",
-              "version",
-              "variant"
-            ],
-            "properties": {
-              "name": {
-                "type": "string"
-              },
-              "version": {
-                "type": "string"
-              },
-              "variant": {
-                "type": "string"
-              }
-            }
+            "minProperties": 1
           },
-          "content": {
-            "type": "object",
-            "required": [
-              "name",
-              "version",
-              "variant"
-            ],
-            "properties": {
-              "name": {
-                "type": "string"
-              },
-              "version": {
-                "type": "string"
-              },
-              "variant": {
-                "type": "string"
-              }
-            }
-          },
-          "datasqrl.profile.default": {
-            "type": "object",
-            "required": [
-              "name",
-              "version",
-              "variant"
-            ],
-            "properties": {
-              "name": {
-                "type": "string"
-              },
-              "version": {
-                "type": "string"
-              },
-              "variant": {
-                "type": "string"
-              }
-            }
-          },
-          "datasqrl.profile.redpanda": {
-            "type": "object",
-            "required": [
-              "name",
-              "version",
-              "variant"
-            ],
-            "properties": {
-              "name": {
-                "type": "string"
-              },
-              "version": {
-                "type": "string"
-              },
-              "variant": {
-                "type": "string"
-              }
-            }
-          }
+          "minItems": 1
+        },
+        {
+          "type": "object",
+          "minProperties": 1
         }
-      },
-      "minItems": 1
+      ]
+
     },
     "package": {
       "type": "object",
