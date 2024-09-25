@@ -196,7 +196,7 @@ public class UseCasesIT {
     env.put("PROPERTIES_BOOTSTRAP_SERVERS", testKafka.getBootstrapServers());
 
     env.put("DATA_PATH", rootDir.resolve("build/deploy/flink/data").toAbsolutePath().toString());
-    RootCommand rootCommand = new RootCommand(rootDir, hook, env);
+    RootCommand rootCommand = new RootCommand(rootDir, hook);
     int exitCode = rootCommand.getCmd().execute(args) + (hook.isSuccess() ? 0 : 1);
     if (exitCode != 0) {
       fail();

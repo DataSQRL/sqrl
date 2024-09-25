@@ -38,13 +38,6 @@ public class TestCommand extends AbstractCompilerCommand {
         ExecutionGoal.TEST);
   }
 
-  @SneakyThrows
-  @Override
-  protected void postprocess(PackageJson sqrlConfig, Packager packager, Path targetDir, PhysicalPlan plan,
-      TestPlan right, Path snapshotPath, ErrorCollector errors) {
-    super.postprocess(sqrlConfig, packager, targetDir, plan, right, snapshotPath, errors);
-  }
-
   @Override
   public ExecutionGoal getGoal() {
     return ExecutionGoal.TEST;

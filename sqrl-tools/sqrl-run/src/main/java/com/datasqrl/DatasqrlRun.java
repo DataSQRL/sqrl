@@ -173,12 +173,13 @@ public class DatasqrlRun {
     StreamExecutionEnvironment sEnv;
     switch (mode){
       case "local":
-        //todo udfs?
+        //Note: jar UDFs are not supported for local execution due to classloader limitations of flink
         sEnv = StreamExecutionEnvironment.getExecutionEnvironment();
         break;
       default:
       case "remote":
         sEnv = new StreamExecutionEnvironment(configuration, urlClassLoader);
+        break;
     }
 
     sEnv.configure(configuration, urlClassLoader);
@@ -280,38 +281,40 @@ public class DatasqrlRun {
 
   @SneakyThrows
   public void initKafka() {
-    if (path.resolve("kafka.json").toFile().exists()) {
-      Map<String, Object> map = objectMapper.readValue(path.resolve("kafka.json").toFile(), Map.class);
-      List<Map<String, Object>> topics = (List<Map<String, Object>>) map.get("topics");
+    if (!path.resolve("kafka.json").toFile().exists()) {
+      return;
+    }
+    Map<String, Object> map = objectMapper.readValue(path.resolve("kafka.json").toFile(), Map.class);
+    List<Map<String, Object>> topics = (List<Map<String, Object>>) map.get("topics");
 
-      Properties props = new Properties();
-      props.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, getenv("PROPERTIES_BOOTSTRAP_SERVERS"));
-      try (AdminClient adminClient = AdminClient.create(props)) {
-        for (Map<String, Object> topic : topics) {
-          NewTopic newTopic = new NewTopic((String) topic.get("name"), 1, (short) 1);
-          adminClient.createTopics(Collections.singletonList(newTopic)).all().get();
-        }
+    Properties props = new Properties();
+    props.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, getenv("PROPERTIES_BOOTSTRAP_SERVERS"));
+    try (AdminClient adminClient = AdminClient.create(props)) {
+      for (Map<String, Object> topic : topics) {
+        NewTopic newTopic = new NewTopic((String) topic.get("name"), 1, (short) 1);
+        adminClient.createTopics(Collections.singletonList(newTopic)).all().get();
       }
     }
   }
 
   @SneakyThrows
   public void initPostgres() {
-    if (path.resolve("postgres.json").toFile().exists()) {
-      Map<String, Object> map = objectMapper.readValue(path.resolve("postgres.json").toFile(), Map.class);
-      List<Map<String, Object>> ddl = (List<Map<String, Object>>) map.get("ddl");
+    if (!path.resolve("postgres.json").toFile().exists()) {
+      return;
+    }
+    Map<String, Object> map = objectMapper.readValue(path.resolve("postgres.json").toFile(), Map.class);
+    List<Map<String, Object>> ddl = (List<Map<String, Object>>) map.get("ddl");
 
-      //todo env + default
-      String format = String.format("jdbc:postgresql://%s:%s/%s",
-          getenv("PGHOST"), getenv("PGPORT"), getenv("PGDATABASE"));
-      try (Connection connection = DriverManager.getConnection(format, getenv("PGUSER"), getenv("PGPASSWORD"))) {
-        for (Map<String, Object> statement : ddl) {
-          String sql = (String) statement.get("sql");
-          connection.createStatement().execute(sql);
-        }
-      } catch (Exception e) {
-        e.printStackTrace();
+    //todo env + default
+    String format = String.format("jdbc:postgresql://%s:%s/%s",
+        getenv("PGHOST"), getenv("PGPORT"), getenv("PGDATABASE"));
+    try (Connection connection = DriverManager.getConnection(format, getenv("PGUSER"), getenv("PGPASSWORD"))) {
+      for (Map<String, Object> statement : ddl) {
+        String sql = (String) statement.get("sql");
+        connection.createStatement().execute(sql);
       }
+    } catch (Exception e) {
+      e.printStackTrace();
     }
   }
 

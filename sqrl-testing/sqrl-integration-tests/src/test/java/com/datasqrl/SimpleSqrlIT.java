@@ -1,5 +1,6 @@
 package com.datasqrl;
 
+import static com.datasqrl.UseCasesIT.PROJECT_ROOT;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import com.datasqrl.cmd.RootCommand;
@@ -42,8 +43,7 @@ public class SimpleSqrlIT {
   @SneakyThrows
   @Test
   public void test() {
-    Path path = Path.of(
-        "/Users/henneberger/sqrl/sqrl-testing/sqrl-integration-tests/src/test/resources/simple");
+    Path path = PROJECT_ROOT.resolve("sqrl-testing/sqrl-integration-tests/src/test/resources/simple");
 
     execute(path, StatusHook.NONE,"compile", "test.sqrl");
 
