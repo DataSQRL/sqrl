@@ -17,7 +17,7 @@
     "flink": {
       "connectors" : {
         "iceberg" : {
-          "warehouse":"file:///Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test",
+          "warehouse":"/tmp/duckdb",
           "catalog-type":"hadoop",
           "catalog-name": "mydatabase"
         }

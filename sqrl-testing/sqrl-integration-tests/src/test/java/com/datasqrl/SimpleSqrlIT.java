@@ -49,6 +49,7 @@ public class SimpleSqrlIT {
 
     DatasqrlRun run = new DatasqrlRun(path.resolve("build").resolve("plan"),
         Map.of(
+            "EXECUTION_MODE", "local",
             "JDBC_URL", testDatabase.getJdbcUrl(),
             "PGHOST", testDatabase.getHost(),
             "PGUSER", testDatabase.getUsername(),
@@ -65,7 +66,7 @@ public class SimpleSqrlIT {
     postGraphQLMutations(count);
     getGraphqlQuery();
 
-    run1.getJobClient().get().cancel();
+    run.stop();
   }
 
   @SneakyThrows

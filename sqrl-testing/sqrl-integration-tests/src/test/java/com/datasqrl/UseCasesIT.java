@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.fail;
 import com.datasqrl.cmd.AssertStatusHook;
 import com.datasqrl.cmd.RootCommand;
 import com.datasqrl.cmd.StatusHook;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
@@ -18,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import lombok.SneakyThrows;
 import org.apache.flink.calcite.shaded.com.google.common.base.Strings;
 import org.apache.flink.test.junit5.InjectMiniCluster;
 import org.apache.flink.test.junit5.MiniClusterExtension;
@@ -97,28 +100,53 @@ public class UseCasesIT {
   }
 
   @Test
+//  @Disabled //todo needs more time?
   public void testSensorsMutation() {
     execute("test", "sensors", "sensors-mutation.sqrl", "sensors-mutation.graphqls", "sensors-mutation",
         "-c", PROJECT_ROOT.resolve("sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/sensors/package.json").toString());
   }
 
   @Test
+//  @Disabled //todo needs more time
   public void testSensorsFull() {
     execute("test", "sensors", "sensors-full.sqrl", null,"sensors-full",
         "-c", PROJECT_ROOT.resolve("sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/sensors/package.json").toString());
   }
 
   @Test
+//  @Disabled //todo fix CustomerPromotionTest
   public void testSeedshopExtended() {
     execute("test", "seedshop-tutorial", "seedshop-extended.sqrl", null, "seedshop-extended",
         "-c", PROJECT_ROOT.resolve("sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/seedshop-tutorial/package.json").toString());
   }
 
+  @SneakyThrows
   @Test
   public void testDuckdb() {
-//    compile("duckdb", "duckdb.sqrl", null);
+    Path path = Path.of("/tmp/duckdb");
+    try {
+      deleteDirectory(path);
+    } catch (Exception e) {}
+
+    Files.createDirectories(path);
+
     execute("test","duckdb", "duckdb.sqrl", null, "queries",
         "-c", PROJECT_ROOT.resolve("sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/duckdb/package.json").toString());
+
+    deleteDirectory(path);
+  }
+
+  // Helper method to recursively delete a directory and all files
+  private void deleteDirectory(Path directory) throws IOException {
+    Files.walk(directory)
+        .sorted((path1, path2) -> path2.compareTo(path1)) // Sort in reverse order to delete files first
+        .forEach(path -> {
+          try {
+            Files.delete(path);
+          } catch (IOException e) {
+            throw new RuntimeException("Failed to delete " + path, e);
+          }
+        });
   }
 
   public void execute(String path, String script, String graphql) {
@@ -156,6 +184,7 @@ public class UseCasesIT {
 
   public int execute(Path rootDir, StatusHook hook, String... args) {
     Map<String, String> env = new HashMap<>();
+    env.put("EXECUTION_MODE", "local");
     env.put("JDBC_URL", testDatabase.getJdbcUrl());
     env.put("PGHOST", testDatabase.getHost());
     env.put("PGUSER", testDatabase.getUsername());

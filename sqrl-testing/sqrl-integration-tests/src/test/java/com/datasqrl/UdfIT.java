@@ -19,6 +19,7 @@ import lombok.SneakyThrows;
 import org.apache.flink.table.api.TableResult;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -26,7 +27,11 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.redpanda.RedpandaContainer;
 import org.testcontainers.utility.DockerImageName;
 
+/**
+ * Requires an externally running flink cluster to submit
+ */
 @Testcontainers
+@Disabled //todo add remote flink cluster
 public class UdfIT {
   @Container
   private PostgreSQLContainer testDatabase =
