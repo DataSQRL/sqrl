@@ -1,0 +1,15 @@
+IMPORT ecommerceTs.Orders AS _Orders;
+
+/*+index(btree, id) */
+MyOrdersIndexBtree := SELECT * FROM _Orders WHERE id > 10;
+
+/*+index(hash, customerid) */
+MyOrdersIndexHash := SELECT * FROM _Orders WHERE id > 10;
+
+/*+index */
+MyOrdersNoIndex := SELECT * FROM _Orders WHERE id > 10;
+
+-- TODO: Two index hints causes a parsing error
+
+MyOrdersNoHint := SELECT * FROM _Orders WHERE id > 10;
+

@@ -1,7 +1,16 @@
-IMPORT data.applications;
+IMPORT data.applications AS _Applications;
+
+/*+partition_key(id) */
+MyApplications1 := SELECT * FROM _Applications;
+
+/*+partition_key */
+MyApplications2 := SELECT * FROM _Applications;
 
 /*+exec(iceberg)*/
-MyTable := SELECT id, 'hello world' as hello FROM applications;
+MyTable := SELECT id, 'hello world' as hello FROM MyApplications1;
+
+/*+exec(iceberg)*/
+MyTable2 := SELECT id, 'hello world' as hello FROM MyApplications2;
 
 /*+exec(postgres)*/
-MyTable2 := SELECT id, 'hello world' as hello FROM applications;
+MyTable1 := SELECT id, 'hello world' as hello FROM MyApplications1;

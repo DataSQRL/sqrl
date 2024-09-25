@@ -8,14 +8,19 @@ import com.datasqrl.function.IndexType;
 import com.datasqrl.plan.OptimizationStage;
 import com.datasqrl.plan.RelStageRunner;
 import com.datasqrl.plan.global.QueryIndexSummary.IndexableFunctionCall;
+import com.datasqrl.plan.hints.IndexHint;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
+import com.datasqrl.plan.table.PhysicalTable;
+import com.datasqrl.plan.table.QueryRelationalTable;
 import com.datasqrl.util.ArrayUtil;
 import com.datasqrl.calcite.SqrlRexUtil;
+import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.primitives.Ints;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.adapter.enumerable.EnumerableFilter;
 import org.apache.calcite.adapter.enumerable.EnumerableNestedLoopJoin;
@@ -23,6 +28,7 @@ import org.apache.calcite.rel.RelFieldCollation;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelVisitor;
 import org.apache.calcite.rel.core.*;
+import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexDynamicParam;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
@@ -63,6 +69,30 @@ public class IndexSelector {
       optIndexes.putAll(optimizeIndexes(table, callsByTable.get(table)));
     }
     return optIndexes;
+  }
+
+  private static IndexDefinition getIndexFromHint(PhysicalRelationalTable table, IndexHint hint) {
+    List<String> colNames = hint.getColumnNames();
+    List<Integer> colIdx = hint.getColumnNames().stream().map(colName -> {
+      RelDataTypeField field = table.getRowType().getField(colName, false, true);
+      Preconditions.checkArgument(field!=null, "Could not find indexed field %s for table %s in index hint %s", colName, table, hint);
+      return field.getIndex();
+    }).collect(Collectors.toUnmodifiableList());
+    return new IndexDefinition(table.getNameId(), colIdx, table.getRowType().getFieldNames(),
+        hint.getIndexType().isPartitioned()? colNames.size() : -1, hint.getIndexType());
+  }
+
+  public Optional<List<IndexDefinition>> getIndexHints(PhysicalRelationalTable table) {
+    List<IndexHint> indexHints = StreamUtil.filterByClass(table.getOptimizerHints(), IndexHint.class)
+        .collect(Collectors.toUnmodifiableList());
+    if (!indexHints.isEmpty()) {
+      return Optional.of(indexHints.stream().filter(IndexHint::isValid)
+          .filter(idxHint -> config.supportedIndexTypes().contains(idxHint.getIndexType()))
+          .map(idxHint -> getIndexFromHint(table, idxHint))
+          .collect(Collectors.toUnmodifiableList()));
+    } else {
+      return Optional.empty();
+    }
   }
 
   private Map<IndexDefinition, Double> optimizeIndexes(PhysicalRelationalTable table,

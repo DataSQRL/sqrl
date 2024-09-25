@@ -9,6 +9,7 @@ import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.io.tables.TableType;
+import com.datasqrl.plan.hints.OptimizerHint;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.rules.SqrlConverterConfig;
 import com.datasqrl.plan.table.PullupOperator.Container;
@@ -92,6 +93,10 @@ public abstract class PhysicalRelationalTable extends ScriptRelationalTable impl
 
   public void assignStage(ExecutionStage stage) {
     this.assignedStage = Optional.of(stage);
+  }
+
+  public List<OptimizerHint> getOptimizerHints() {
+    return List.of();
   }
 
   @Override
