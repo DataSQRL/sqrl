@@ -223,6 +223,10 @@
     "package": {
       "type": "object",
       "minProperties": 1
+    },
+    "test-runner": {
+      "type": "object",
+      "minProperties": 1
     }
   },
   "additionalProperties": false
