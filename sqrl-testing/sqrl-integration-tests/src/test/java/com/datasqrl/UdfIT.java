@@ -17,8 +17,6 @@ import java.nio.file.Path;
 import java.util.Map;
 import lombok.SneakyThrows;
 import org.apache.flink.table.api.TableResult;
-import org.gradle.tooling.GradleConnector;
-import org.gradle.tooling.ProjectConnection;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.PostgreSQLContainer;

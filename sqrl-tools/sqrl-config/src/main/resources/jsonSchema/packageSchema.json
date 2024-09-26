@@ -3,7 +3,6 @@
   "type": "object",
   "properties": {
     "version": {
-      "type": "string",
       "oneOf": [
         {
           "type": "string"
