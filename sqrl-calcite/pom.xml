@@ -62,7 +62,7 @@
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-jdbc-1.16</artifactId>
+      <artifactId>sqrl-jdbc-1.19</artifactId>
     </dependency>
   </dependencies>
   <build>

@@ -50,7 +50,7 @@ public class UseCasesIT {
     argsList.add(getProjectRoot(rootDir).resolve("profiles/default").toString());
     argsList.addAll(Arrays.asList(args));
 
-    execute(rootDir, AssertStatusHook.INSTANCE, argsList.toArray(String[]::new));
+    execute(rootDir, new AssertStatusHook(), argsList.toArray(String[]::new));
   }
 
   protected void compile(String path, String script, String graphql) {
@@ -62,7 +62,7 @@ public class UseCasesIT {
     argsList.add("--profile");
     argsList.add(getProjectRoot(rootDir).resolve("profiles/default").toString());
     execute(RESOURCES.resolve(path),
-        AssertStatusHook.INSTANCE, argsList.toArray(a->new String[a]));
+        new AssertStatusHook(), argsList.toArray(a->new String[a]));
   }
 
   public static int execute(Path rootDir, StatusHook hook, String... args) {

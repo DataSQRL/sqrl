@@ -24,7 +24,7 @@ public class UseCasesFullIT extends UseCasesIT {
   public static void buildContainers() {
     config = writeProfile();
     buildVertx();
-    buildFlinkLib();
+//    buildFlinkLib();
   }
 
   public static void buildFlinkLib() {

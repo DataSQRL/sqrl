@@ -18,9 +18,14 @@
 
 package org.apache.flink.table.planner.calcite;
 
+import org.apache.calcite.plan.RelOptCluster;
+import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.sql.validate.SqlValidatorImpl;
+import org.apache.calcite.tools.FrameworkConfig;
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.table.api.ValidationException;
+import org.apache.flink.table.api.config.TableConfigOptions;
+import org.apache.flink.table.planner.utils.ShortcutUtils;
 import org.apache.flink.table.types.logical.DecimalType;
 
 import org.apache.calcite.rel.type.RelDataType;
@@ -54,6 +59,23 @@ public class FlinkCalciteSqlValidator extends SqlValidatorImpl {
     // Enables CallContext#getOutputDataType() when validating SQL expressions.
     private SqlNode sqlNodeForExpectedOutputType;
     private RelDataType expectedOutputType;
+
+    public FlinkCalciteSqlValidator(
+        SqlOperatorTable opTab,
+        SqlValidatorCatalogReader catalogReader,
+        RelDataTypeFactory typeFactory,
+        SqlValidator.Config config,
+        RelOptTable.ToRelContext toRelcontext,
+        RelOptCluster relOptCluster,
+        FrameworkConfig frameworkConfig) {
+        super(opTab, catalogReader, typeFactory, config);
+//        this.relOptCluster = relOptCluster;
+//        this.toRelContext = toRelcontext;
+//        this.frameworkConfig = frameworkConfig;
+//        this.columnExpansionStrategies =
+//            ShortcutUtils.unwrapTableConfig(relOptCluster)
+//                .get(TableConfigOptions.TABLE_COLUMN_EXPANSION_STRATEGY);
+    }
 
     public FlinkCalciteSqlValidator(
             SqlOperatorTable opTab,

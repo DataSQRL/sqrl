@@ -1,0 +1,87 @@
+plugins {
+    id 'java'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+}
+
+group 'com.example'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = '11'
+
+ext {
+    flinkVersion = "1.19.1"
+    jdbcVersion = "3.2.0-1.19"
+    kafkaVersion = "3.2.0-1.19"
+    sqrlVersion = "0.5.4"
+    icebergVersion = "1.6.0"
+    postgresCdcVersion = "3.1.0"
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven {
+        url "https://packages.confluent.io/maven/"
+    }
+}
+
+dependencies {
+    compileOnly "org.apache.flink:flink-java:$flinkVersion"
+    compileOnly "org.apache.flink:flink-streaming-java:$flinkVersion"
+    compileOnly "org.apache.flink:flink-table-api-java-bridge:$flinkVersion"
+
+    implementation "org.apache.flink:flink-s3-fs-hadoop:$flinkVersion"
+    implementation "org.apache.flink:flink-connector-kafka:$kafkaVersion"
+    implementation "org.apache.flink:flink-connector-jdbc:$jdbcVersion"
+    implementation "org.apache.flink:flink-csv:$flinkVersion"
+    implementation "org.apache.flink:flink-avro-confluent-registry:$flinkVersion"
+    implementation "org.apache.flink:flink-connector-postgres-cdc:$postgresCdcVersion"
+
+    implementation "org.apache.flink:flink-connector-kafka:$kafkaVersion"
+    implementation "org.apache.flink:flink-connector-jdbc:$jdbcVersion"
+    implementation "org.apache.flink:flink-avro-confluent-registry:$flinkVersion"
+    implementation "org.apache.flink:flink-connector-postgres-cdc:$postgresCdcVersion"
+
+    implementation "com.datasqrl:sqrl-lib-common:$sqrlVersion"
+    implementation "com.datasqrl:sqrl-json:$sqrlVersion"
+    implementation "com.datasqrl:sqrl-secure:$sqrlVersion"
+    implementation "com.datasqrl:sqrl-time:$sqrlVersion"
+    implementation "com.datasqrl:sqrl-text:$sqrlVersion"
+    implementation "com.datasqrl:sqrl-flexible-json:$sqrlVersion"
+    implementation "com.datasqrl:sqrl-flexible-csv:$sqrlVersion"
+    implementation "com.datasqrl:sqrl-vector:$sqrlVersion"
+
+////
+    implementation "org.apache.hive:hive-metastore:3.1.3"
+    implementation 'org.apache.iceberg:iceberg-flink-runtime-1.19:1.6.0'
+////
+    implementation platform('software.amazon.awssdk:bom:2.24.5')
+    implementation "software.amazon.awssdk:apache-client"
+    implementation "software.amazon.awssdk:auth"
+    implementation "software.amazon.awssdk:iam"
+    implementation "software.amazon.awssdk:sso"
+    implementation "software.amazon.awssdk:s3"
+    implementation "software.amazon.awssdk:kms"
+    implementation "software.amazon.awssdk:glue"
+    implementation "software.amazon.awssdk:sts"
+
+//    testRuntimeOnly fileTree(dir: 'lib', include: '*.jar')
+}
+
+task copyDependencies(type: Copy) {
+    from configurations.runtimeClasspath
+    into 'build/dependencies'
+}
+
+shadowJar {
+    mergeServiceFiles()
+    manifest {
+        attributes 'Main-Class': 'com.datasqrl.FlinkMain'
+    }
+    from('.') {
+        include 'lib/**'
+        into('.')
+    }
+    zip64 = true
+    archiveFileName = 'FlinkDeps.jar'
+}

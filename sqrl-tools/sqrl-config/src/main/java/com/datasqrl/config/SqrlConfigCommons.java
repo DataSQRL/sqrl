@@ -415,7 +415,9 @@ public class SqrlConfigCommons implements SqrlConfig {
       }
     }
     String configFilename = files.get(0).toString();
-    if (!isValid) throw errors.exception("Configuration file invalid: %s", files);
+    if (!isValid) {
+      throw errors.exception("Configuration file invalid: %s", files);
+    }
     return
         new SqrlConfigCommons(errors.withConfig(configFilename), configFilename, combinedConfiguration, "");
   }
