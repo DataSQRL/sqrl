@@ -117,6 +117,24 @@
               "minProperties": 1
             }
           }
+        },
+        "snowflake": {
+          "type": "object",
+          "properties": {
+            "catalog-name": {
+              "type": "string"
+            },
+            "external-volume": {
+              "type": "string"
+            },
+            "schema-type": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
         }
       }
     },
@@ -202,7 +220,12 @@
     },
     "test-runner": {
       "type": "object",
-      "minProperties": 1
+      "minProperties": 1,
+      "properties": {
+        "delay-sec": {
+          "type": "integer"
+        }
+      }
     }
   },
   "additionalProperties": false
