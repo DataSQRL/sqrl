@@ -9,6 +9,7 @@ import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.discovery.preprocessor.FlexibleSchemaInferencePreprocessor;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.inject.SqrlInjector;
 import com.datasqrl.inject.StatefulModule;
 import com.datasqrl.packager.preprocess.Preprocessor.ProcessorContext;
@@ -39,7 +40,13 @@ public class FlexibleSchemaInferencePreprocessorTest extends AbstractAssetSnapsh
 
   protected FlexibleSchemaInferencePreprocessorTest() {
     super(FILES_DIR.resolve("output"));
-    packageJson = SqrlConfigCommons.fromFilesPackageJson(errors, List.of(Path.of("../../profiles/default/package.json")));
+    try {
+      packageJson = SqrlConfigCommons.fromFilesPackageJson(errors,
+          List.of(Path.of("../../profiles/default/package.json")));
+    } catch (Exception e) {
+        System.out.println(ErrorPrinter.prettyPrint(errors));
+        throw e;
+      }
     Injector injector = Guice.createInjector(
         new SqrlInjector(ErrorCollector.root(), FILES_DIR, super.deployDir, packageJson, ExecutionGoal.COMPILE, null),
         new StatefulModule(new SqrlSchema(new TypeFactory(), NameCanonicalizer.SYSTEM)));
@@ -57,7 +64,8 @@ public class FlexibleSchemaInferencePreprocessorTest extends AbstractAssetSnapsh
     String filename = file.getFileName().toString();
     assertTrue(preprocessor.getPattern().matcher(filename).matches());
     this.snapshot = Snapshot.of(getDisplayName(file), getClass());
-    preprocessor.processFile(targetFile, new ProcessorContext(deployDir, buildDir, packageJson), errors);
+    preprocessor.processFile(targetFile, new ProcessorContext(deployDir, buildDir, packageJson),
+          errors);
     createSnapshot();
   }
 
