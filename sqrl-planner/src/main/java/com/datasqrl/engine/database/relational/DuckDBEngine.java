@@ -36,7 +36,11 @@ import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.logical.LogicalTableFunctionScan;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
+import org.apache.calcite.sql.parser.SqlParserPos;
 
 public class DuckDBEngine extends AbstractJDBCQueryEngine {
 
@@ -53,6 +57,7 @@ public class DuckDBEngine extends AbstractJDBCQueryEngine {
   protected JdbcDialect getDialect() {
     return JdbcDialect.Postgres;
   }
+
 
   @Override
   public DatabasePhysicalPlan plan(ConnectorFactoryFactory connectorFactory, EngineConfig connectorConfig,
@@ -97,18 +102,15 @@ public class DuckDBEngine extends AbstractJDBCQueryEngine {
     });
 
 
-    return new DuckDbPlan(physicalPlan.getDdl(), databaseQueries);
+    return new JDBCPhysicalPlan(physicalPlan.getDdl(), List.of(), databaseQueries);
   }
 
-  @Value
-  public static class DuckDbPlan implements DatabaseViewPhysicalPlan {
 
-    List<SqlDDLStatement> ddl;
-    List<DatabaseView> views = List.of(); //Not supported yet
-    @JsonIgnore
-    Map<IdentifiedQuery, QueryTemplate> queryPlans;
-
-
+  @Override
+  protected String createView(SqlIdentifier viewNameIdentifier, SqlParserPos pos,
+      SqlNodeList columnList, SqlNode viewSqlNode) {
+    //We currently don't support views in DuckDB and replace them with empty list in the #plan method above
+    return "";
   }
 
 

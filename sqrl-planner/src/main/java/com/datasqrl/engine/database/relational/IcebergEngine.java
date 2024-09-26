@@ -26,6 +26,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.NonNull;
+import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlNodeList;
+import org.apache.calcite.sql.parser.SqlParserPos;
 
 public class IcebergEngine extends AbstractJDBCTableFormatEngine {
 
@@ -87,5 +91,12 @@ public class IcebergEngine extends AbstractJDBCTableFormatEngine {
     //nothing needs to be created for aws-glue
     return new IcebergPlan(sinkDDL, queryEnginePlans);
   }
+
+  @Override
+  protected String createView(SqlIdentifier viewNameIdentifier, SqlParserPos pos,
+      SqlNodeList columnList, SqlNode viewSqlNode) {
+    throw new UnsupportedOperationException("Should not be called since we overwrite #plan");
+  }
+
 
 }

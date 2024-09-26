@@ -79,7 +79,7 @@ public class DAGAssembler {
         queriesByStage.put(query.getChosenStage(), apiQuery);
       }
     });
-    //Extract all tables and function for serverScanVisitor
+    //Extract all tables and function from serverScanVisitor
     Stream.concat(serverScanVisitor.scanTables.stream().map(DatabaseQuery::of),
             serverScanVisitor.scanFunctions.stream().map(DatabaseQuery::of))
         .forEach(q -> queriesByStage.put(q.getAssignedStage(), q));

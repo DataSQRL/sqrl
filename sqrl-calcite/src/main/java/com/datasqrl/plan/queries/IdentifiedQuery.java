@@ -1,19 +1,16 @@
 package com.datasqrl.plan.queries;
 
-import lombok.Value;
+import com.datasqrl.canonicalizer.Name;
+import java.util.Optional;
 
 public interface IdentifiedQuery {
 
   String getNameId();
 
-  static IdentifiedQuery of(String nameId) {
-    return new Instance(nameId);
-  }
-
-  @Value
-  class Instance implements IdentifiedQuery {
-    String nameId;
-  }
-
+  /**
+   * @return If this query defines a view, it returns the name of the underlying table that defined it,
+   *    * else it returns empty
+   */
+  public Optional<Name> getViewName();
 
 }
