@@ -29,11 +29,11 @@ public class SqlCreatePostgresView extends SqlCall {
   private final boolean replace;
   private final SqlIdentifier viewName;
   private final SqlNodeList columnList;
-  private final SqlSelect select;
+  private final SqlNode select;
 
   public SqlCreatePostgresView(SqlParserPos pos, boolean replace,
       SqlIdentifier viewName, SqlNodeList columnList,
-      SqlSelect select) {
+      SqlNode select) {
     super(pos);
     this.replace = replace;
     this.viewName = Objects.requireNonNull(viewName);

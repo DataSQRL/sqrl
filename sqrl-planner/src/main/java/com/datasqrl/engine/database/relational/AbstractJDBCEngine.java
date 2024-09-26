@@ -52,6 +52,7 @@ import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.parser.SqlParserPos;
@@ -114,7 +115,7 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
           .map(f->new SqlIdentifier(f.getName(), SqlParserPos.ZERO))
           .collect(Collectors.toList()), pos);
 
-      SqlSelect select =(SqlSelect) framework.getQueryPlanner()
+      SqlNode select =(SqlNode) framework.getQueryPlanner()
           .relToSql(Dialect.POSTGRES, relNode).getSqlNode();
 
       SqlCreatePostgresView createView = new SqlCreatePostgresView(pos, true,
