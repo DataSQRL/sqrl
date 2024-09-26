@@ -9,11 +9,11 @@ version '1.0-SNAPSHOT'
 sourceCompatibility = '11'
 
 ext {
-    flinkVersion = "1.18.1"
-    jdbcVersion = "3.1.2-1.18"
-    kafkaVersion = "3.1.0-1.18"
+    flinkVersion = "1.19.1"
+    jdbcVersion = "3.2.0-1.19"
+    kafkaVersion = "3.2.0-1.19"
     sqrlVersion = "${config["compile"]["sqrl-version"]}"
-    icebergVersion = "1.5.2"
+    icebergVersion = "1.6.0"
 <#if config["enabled-engines"]?seq_contains("postgres_log")>
     postgresCdcVersion = "3.1.0"
 </#if>
@@ -50,7 +50,7 @@ dependencies {
     implementation "com.datasqrl:sqrl-jdbc-1.18:$sqrlVersion"
 
     implementation "org.apache.hive:hive-metastore:3.1.3"
-    implementation 'org.apache.iceberg:iceberg-flink-runtime-1.18:1.5.2'
+    implementation 'org.apache.iceberg:iceberg-flink-runtime-1.19:1.6.0'
     //implementation "org.apache.iceberg:iceberg-core:$icebergVersion"
     //implementation "org.apache.iceberg:iceberg-aws:$icebergVersion"
 

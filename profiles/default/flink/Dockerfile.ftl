@@ -12,7 +12,7 @@ COPY . /app/
 # Create fat jar
 RUN gradle --no-daemon --console=plain shadowJar
 
-FROM flink:1.18.1-scala_2.12-java11
+FROM flink:1.19.1-scala_2.12-java11
 
 WORKDIR /opt/flink/lib
 

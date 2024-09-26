@@ -56,7 +56,13 @@ COPY --from=build /home/gradle/project/build/libs/ /opt/system_libs/
 COPY sqrl-tools/sqrl-cli/target/sqrl-cli.jar /opt/sqrl/sqrl-cli.jar
 COPY sqrl-tools/sqrl-run/target/sqrl-run.jar /opt/sqrl/sqrl-run.jar
 COPY sqrl-tools/sqrl-test/target/sqrl-test.jar /opt/sqrl/sqrl-test.jar
+
+# Todo: added manually since it's not available on maven yet
 COPY sqrl-flink-lib/sqrl-jdbc-1.19/target/sqrl-jdbc-1.19-0.5.5-SNAPSHOT.jar /opt/system_libs/sqrl-jdbc-1.19-0.5.5-SNAPSHOT.jar
+
+# Add s3 plugin
+RUN mkdir -p /opt/flink/plugins/flink-s3-fs-hadoop
+RUN ln -fs /opt/flink/opt/flink-s3-fs-hadoop-*.jar /opt/flink/plugins/flink-s3-fs-hadoop/.
 
 # Copy the entrypoint script
 COPY entrypoint-run.sh /entrypoint-run.sh
