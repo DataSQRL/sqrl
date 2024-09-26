@@ -63,9 +63,7 @@
         {
           "if": {
             "properties": {
-              "type": {
-                "contains": { "const": "source" }
-              }
+              "type": { "const": "source" }
             }
           },
           "then": {
