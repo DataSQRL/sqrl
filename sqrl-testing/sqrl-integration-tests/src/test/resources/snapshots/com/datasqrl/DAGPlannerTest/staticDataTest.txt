@@ -207,124 +207,112 @@ LogicalTableScan(table=[[orders_1]])
   ],
   "views" : [
     {
-      "name" : "Query.Orders-27",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Orders-27\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\""
+      "name" : "Orders",
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\""
     },
     {
-      "name" : "Query.Orders-28",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Orders-28\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\""
+      "name" : "Orders",
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\""
     },
     {
-      "name" : "Query.Orders-29",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Orders-29\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1\nORDER BY \"time\" DESC NULLS LAST"
+      "name" : "Orders",
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1\nORDER BY \"time\" DESC NULLS LAST"
     },
     {
-      "name" : "Query.OrderPairs2-25",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderPairs2-25\"(\"id\", \"time\", \"pk\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t\".\"pk\"\n  FROM \"orders_2\",\n    (VALUES (1, 1),\n      (2, 2),\n      (3, 3),\n      (4, 4),\n      (4, 4)) AS \"t\" (\"id\", \"pk\")) AS \"t0\"\nWHERE \"t0\".\"id\" = $1 AND \"t0\".\"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, \"pk\""
+      "name" : "OrderPairs2",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderPairs2\"(\"id\", \"time\", \"pk\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t\".\"pk\"\n  FROM \"orders_2\",\n    (VALUES (1, 1),\n      (2, 2),\n      (3, 3),\n      (4, 4),\n      (4, 4)) AS \"t\" (\"id\", \"pk\")) AS \"t0\"\nWHERE \"t0\".\"id\" = $1 AND \"t0\".\"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, \"pk\""
     },
     {
-      "name" : "Query.Orders-30",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Orders-30\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST"
+      "name" : "Orders",
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST"
     },
     {
-      "name" : "Query.OrderPairs2-26",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderPairs2-26\"(\"id\", \"time\", \"pk\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t\".\"pk\"\n  FROM \"orders_2\",\n    (VALUES (1, 1),\n      (2, 2),\n      (3, 3),\n      (4, 4),\n      (4, 4)) AS \"t\" (\"id\", \"pk\")) AS \"t0\"\nWHERE \"t0\".\"id\" = $1 AND \"t0\".\"time\" = $2 AND \"t0\".\"pk\" = $3\nORDER BY \"time\" DESC NULLS LAST"
+      "name" : "OrderPairs2",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderPairs2\"(\"id\", \"time\", \"pk\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t\".\"pk\"\n  FROM \"orders_2\",\n    (VALUES (1, 1),\n      (2, 2),\n      (3, 3),\n      (4, 4),\n      (4, 4)) AS \"t\" (\"id\", \"pk\")) AS \"t0\"\nWHERE \"t0\".\"id\" = $1 AND \"t0\".\"time\" = $2 AND \"t0\".\"pk\" = $3\nORDER BY \"time\" DESC NULLS LAST"
     },
     {
-      "name" : "Query.OrderPairs2-23",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderPairs2-23\"(\"id\", \"time\", \"pk\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t\".\"pk\"\n  FROM \"orders_2\",\n    (VALUES (1, 1),\n      (2, 2),\n      (3, 3),\n      (4, 4),\n      (4, 4)) AS \"t\" (\"id\", \"pk\")) AS \"t0\"\nWHERE \"t0\".\"id\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"pk\""
+      "name" : "OrderPairs2",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderPairs2\"(\"id\", \"time\", \"pk\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t\".\"pk\"\n  FROM \"orders_2\",\n    (VALUES (1, 1),\n      (2, 2),\n      (3, 3),\n      (4, 4),\n      (4, 4)) AS \"t\" (\"id\", \"pk\")) AS \"t0\"\nWHERE \"t0\".\"id\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"pk\""
     },
     {
-      "name" : "Query.OrderPairs2-24",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderPairs2-24\"(\"id\", \"time\", \"pk\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t\".\"pk\"\n  FROM \"orders_2\",\n    (VALUES (1, 1),\n      (2, 2),\n      (3, 3),\n      (4, 4),\n      (4, 4)) AS \"t\" (\"id\", \"pk\")) AS \"t0\"\nWHERE \"t0\".\"id\" = $1 AND \"t0\".\"pk\" = $2\nORDER BY \"time\" DESC NULLS LAST"
+      "name" : "OrderPairs2",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderPairs2\"(\"id\", \"time\", \"pk\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t\".\"pk\"\n  FROM \"orders_2\",\n    (VALUES (1, 1),\n      (2, 2),\n      (3, 3),\n      (4, 4),\n      (4, 4)) AS \"t\" (\"id\", \"pk\")) AS \"t0\"\nWHERE \"t0\".\"id\" = $1 AND \"t0\".\"pk\" = $2\nORDER BY \"time\" DESC NULLS LAST"
     },
     {
-      "name" : "Query.OrderPairs2-21",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderPairs2-21\"(\"id\", \"time\", \"pk\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t\".\"pk\"\n  FROM \"orders_2\",\n    (VALUES (1, 1),\n      (2, 2),\n      (3, 3),\n      (4, 4),\n      (4, 4)) AS \"t\" (\"id\", \"pk\")) AS \"t0\"\nWHERE \"t0\".\"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\", \"pk\""
+      "name" : "OrderPairs2",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderPairs2\"(\"id\", \"time\", \"pk\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t\".\"pk\"\n  FROM \"orders_2\",\n    (VALUES (1, 1),\n      (2, 2),\n      (3, 3),\n      (4, 4),\n      (4, 4)) AS \"t\" (\"id\", \"pk\")) AS \"t0\"\nWHERE \"t0\".\"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\", \"pk\""
     },
     {
-      "name" : "Query.OrderPairs2-22",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderPairs2-22\"(\"id\", \"time\", \"pk\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t\".\"pk\"\n  FROM \"orders_2\",\n    (VALUES (1, 1),\n      (2, 2),\n      (3, 3),\n      (4, 4),\n      (4, 4)) AS \"t\" (\"id\", \"pk\")) AS \"t0\"\nWHERE \"t0\".\"time\" = $1 AND \"t0\".\"pk\" = $2\nORDER BY \"time\" DESC NULLS LAST, \"id\""
+      "name" : "OrderPairs2",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderPairs2\"(\"id\", \"time\", \"pk\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t\".\"pk\"\n  FROM \"orders_2\",\n    (VALUES (1, 1),\n      (2, 2),\n      (3, 3),\n      (4, 4),\n      (4, 4)) AS \"t\" (\"id\", \"pk\")) AS \"t0\"\nWHERE \"t0\".\"time\" = $1 AND \"t0\".\"pk\" = $2\nORDER BY \"time\" DESC NULLS LAST, \"id\""
     },
     {
-      "name" : "Query.OrderPairs2-20",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderPairs2-20\"(\"id\", \"time\", \"pk\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t\".\"pk\"\n  FROM \"orders_2\",\n    (VALUES (1, 1),\n      (2, 2),\n      (3, 3),\n      (4, 4),\n      (4, 4)) AS \"t\" (\"id\", \"pk\")) AS \"t0\"\nWHERE \"t0\".\"pk\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\""
+      "name" : "OrderPairs2",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderPairs2\"(\"id\", \"time\", \"pk\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t\".\"pk\"\n  FROM \"orders_2\",\n    (VALUES (1, 1),\n      (2, 2),\n      (3, 3),\n      (4, 4),\n      (4, 4)) AS \"t\" (\"id\", \"pk\")) AS \"t0\"\nWHERE \"t0\".\"pk\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\""
     },
     {
-      "name" : "Query.NumbersLarge-6",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.NumbersLarge-6\"(\"id\") AS SELECT *\nFROM \"numberslarge_1\"\nWHERE \"id\" = $1"
+      "name" : "NumbersLarge",
+      "sql" : "CREATE OR REPLACE VIEW \"NumbersLarge\"(\"id\") AS SELECT *\nFROM \"numberslarge_1\"\nORDER BY \"id\""
     },
     {
-      "name" : "Query.NumbersLarge-5",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.NumbersLarge-5\"(\"id\") AS SELECT *\nFROM \"numberslarge_1\"\nORDER BY \"id\""
+      "name" : "OrderNumbers",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderNumbers\"(\"id\", \"time\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\n  FROM \"orders_2\"\n   INNER JOIN \"numbers_1\" ON \"orders_2\".\"customerid\" = CAST(\"numbers_1\".\"id\" AS BIGINT)) AS \"t\"\nWHERE \"t\".\"id\" = $1\nORDER BY \"time\" DESC NULLS LAST"
     },
     {
-      "name" : "Query.OrderNumbers-9",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderNumbers-9\"(\"id\", \"time\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\n  FROM \"orders_2\"\n   INNER JOIN \"numbers_1\" ON \"orders_2\".\"customerid\" = CAST(\"numbers_1\".\"id\" AS BIGINT)) AS \"t\"\nWHERE \"t\".\"id\" = $1\nORDER BY \"time\" DESC NULLS LAST"
+      "name" : "OrderNumbers",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderNumbers\"(\"id\", \"time\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\n  FROM \"orders_2\"\n   INNER JOIN \"numbers_1\" ON \"orders_2\".\"customerid\" = CAST(\"numbers_1\".\"id\" AS BIGINT)) AS \"t\"\nWHERE \"t\".\"id\" = $1 AND \"t\".\"time\" = $2\nORDER BY \"time\" DESC NULLS LAST"
     },
     {
-      "name" : "Query.OrderNumbers-10",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderNumbers-10\"(\"id\", \"time\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\n  FROM \"orders_2\"\n   INNER JOIN \"numbers_1\" ON \"orders_2\".\"customerid\" = CAST(\"numbers_1\".\"id\" AS BIGINT)) AS \"t\"\nWHERE \"t\".\"id\" = $1 AND \"t\".\"time\" = $2\nORDER BY \"time\" DESC NULLS LAST"
+      "name" : "OrderNumbers",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderNumbers\"(\"id\", \"time\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\n  FROM \"orders_2\"\n   INNER JOIN \"numbers_1\" ON \"orders_2\".\"customerid\" = CAST(\"numbers_1\".\"id\" AS BIGINT)) AS \"t\"\nWHERE \"t\".\"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\""
     },
     {
-      "name" : "Query.OrderNumbers-8",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderNumbers-8\"(\"id\", \"time\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\n  FROM \"orders_2\"\n   INNER JOIN \"numbers_1\" ON \"orders_2\".\"customerid\" = CAST(\"numbers_1\".\"id\" AS BIGINT)) AS \"t\"\nWHERE \"t\".\"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\""
+      "name" : "OrderNumbers2",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderNumbers2\"(\"id\", \"time\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\n  FROM \"orders_2\"\n   INNER JOIN (VALUES (1),\n      (2),\n      (3),\n      (4),\n      (4)) AS \"t\" (\"id\") ON \"orders_2\".\"customerid\" = CAST(\"t\".\"id\" AS BIGINT)) AS \"t0\"\nWHERE \"t0\".\"id\" = $1 AND \"t0\".\"time\" = $2\nORDER BY \"time\" DESC NULLS LAST"
     },
     {
-      "name" : "Query.Numbers2-4",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Numbers2-4\"(\"id\") AS SELECT *\nFROM \"numbers2_1\"\nWHERE \"id\" = $1"
+      "name" : "OrderPairs",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderPairs\"(\"id\", \"time\", \"_id0\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t\".\"id\" AS \"_id0\"\n  FROM \"orders_2\",\n    (VALUES (1, 1),\n      (2, 2),\n      (3, 3),\n      (4, 4),\n      (4, 4)) AS \"t\" (\"id\", \"pk\")) AS \"t0\"\nWHERE \"t0\".\"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\", \"_id0\""
     },
     {
-      "name" : "Query.Numbers-2",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Numbers-2\"(\"id\") AS SELECT *\nFROM \"numbers_1\"\nWHERE \"id\" = $1"
+      "name" : "OrderNumbers2",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderNumbers2\"(\"id\", \"time\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\n  FROM \"orders_2\"\n   INNER JOIN (VALUES (1),\n      (2),\n      (3),\n      (4),\n      (4)) AS \"t\" (\"id\") ON \"orders_2\".\"customerid\" = CAST(\"t\".\"id\" AS BIGINT)) AS \"t0\"\nWHERE \"t0\".\"id\" = $1\nORDER BY \"time\" DESC NULLS LAST"
     },
     {
-      "name" : "Query.OrderNumbers2-14",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderNumbers2-14\"(\"id\", \"time\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\n  FROM \"orders_2\"\n   INNER JOIN (VALUES (1),\n      (2),\n      (3),\n      (4),\n      (4)) AS \"t\" (\"id\") ON \"orders_2\".\"customerid\" = CAST(\"t\".\"id\" AS BIGINT)) AS \"t0\"\nWHERE \"t0\".\"id\" = $1 AND \"t0\".\"time\" = $2\nORDER BY \"time\" DESC NULLS LAST"
+      "name" : "OrderPairs",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderPairs\"(\"id\", \"time\", \"_id0\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t\".\"id\" AS \"_id0\"\n  FROM \"orders_2\",\n    (VALUES (1, 1),\n      (2, 2),\n      (3, 3),\n      (4, 4),\n      (4, 4)) AS \"t\" (\"id\", \"pk\")) AS \"t0\"\nWHERE \"t0\".\"id\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"_id0\""
     },
     {
-      "name" : "Query.OrderPairs-16",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderPairs-16\"(\"id\", \"time\", \"_id0\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t\".\"id\" AS \"_id0\"\n  FROM \"orders_2\",\n    (VALUES (1, 1),\n      (2, 2),\n      (3, 3),\n      (4, 4),\n      (4, 4)) AS \"t\" (\"id\", \"pk\")) AS \"t0\"\nWHERE \"t0\".\"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\", \"_id0\""
+      "name" : "OrderNumbers",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderNumbers\"(\"id\", \"time\") AS SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\nFROM \"orders_2\"\n INNER JOIN \"numbers_1\" ON \"orders_2\".\"customerid\" = CAST(\"numbers_1\".\"id\" AS BIGINT)\nORDER BY \"orders_2\".\"time\" DESC NULLS LAST, \"orders_2\".\"id\""
     },
     {
-      "name" : "Query.OrderNumbers2-13",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderNumbers2-13\"(\"id\", \"time\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\n  FROM \"orders_2\"\n   INNER JOIN (VALUES (1),\n      (2),\n      (3),\n      (4),\n      (4)) AS \"t\" (\"id\") ON \"orders_2\".\"customerid\" = CAST(\"t\".\"id\" AS BIGINT)) AS \"t0\"\nWHERE \"t0\".\"id\" = $1\nORDER BY \"time\" DESC NULLS LAST"
+      "name" : "OrderNumbers2",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderNumbers2\"(\"id\", \"time\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\n  FROM \"orders_2\"\n   INNER JOIN (VALUES (1),\n      (2),\n      (3),\n      (4),\n      (4)) AS \"t\" (\"id\") ON \"orders_2\".\"customerid\" = CAST(\"t\".\"id\" AS BIGINT)) AS \"t0\"\nWHERE \"t0\".\"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\""
     },
     {
-      "name" : "Query.OrderPairs-17",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderPairs-17\"(\"id\", \"time\", \"_id0\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t\".\"id\" AS \"_id0\"\n  FROM \"orders_2\",\n    (VALUES (1, 1),\n      (2, 2),\n      (3, 3),\n      (4, 4),\n      (4, 4)) AS \"t\" (\"id\", \"pk\")) AS \"t0\"\nWHERE \"t0\".\"id\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"_id0\""
+      "name" : "OrderPairs",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderPairs\"(\"id\", \"time\", \"_id0\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t\".\"id\" AS \"_id0\"\n  FROM \"orders_2\",\n    (VALUES (1, 1),\n      (2, 2),\n      (3, 3),\n      (4, 4),\n      (4, 4)) AS \"t\" (\"id\", \"pk\")) AS \"t0\"\nWHERE \"t0\".\"id\" = $1 AND \"t0\".\"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, \"_id0\""
     },
     {
-      "name" : "Query.OrderNumbers-7",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderNumbers-7\"(\"id\", \"time\") AS SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\nFROM \"orders_2\"\n INNER JOIN \"numbers_1\" ON \"orders_2\".\"customerid\" = CAST(\"numbers_1\".\"id\" AS BIGINT)\nORDER BY \"orders_2\".\"time\" DESC NULLS LAST, \"orders_2\".\"id\""
+      "name" : "OrderNumbers2",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderNumbers2\"(\"id\", \"time\") AS SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\nFROM \"orders_2\"\n INNER JOIN (VALUES (1),\n    (2),\n    (3),\n    (4),\n    (4)) AS \"t\" (\"id\") ON \"orders_2\".\"customerid\" = CAST(\"t\".\"id\" AS BIGINT)\nORDER BY \"orders_2\".\"time\" DESC NULLS LAST, \"orders_2\".\"id\""
     },
     {
-      "name" : "Query.OrderNumbers2-12",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderNumbers2-12\"(\"id\", \"time\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\n  FROM \"orders_2\"\n   INNER JOIN (VALUES (1),\n      (2),\n      (3),\n      (4),\n      (4)) AS \"t\" (\"id\") ON \"orders_2\".\"customerid\" = CAST(\"t\".\"id\" AS BIGINT)) AS \"t0\"\nWHERE \"t0\".\"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\""
+      "name" : "Numbers",
+      "sql" : "CREATE OR REPLACE VIEW \"Numbers\"(\"id\") AS SELECT *\nFROM \"numbers_1\"\nORDER BY \"id\""
     },
     {
-      "name" : "Query.OrderPairs-18",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderPairs-18\"(\"id\", \"time\", \"_id0\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t\".\"id\" AS \"_id0\"\n  FROM \"orders_2\",\n    (VALUES (1, 1),\n      (2, 2),\n      (3, 3),\n      (4, 4),\n      (4, 4)) AS \"t\" (\"id\", \"pk\")) AS \"t0\"\nWHERE \"t0\".\"id\" = $1 AND \"t0\".\"time\" = $2\nORDER BY \"time\" DESC NULLS LAST, \"_id0\""
+      "name" : "OrderPairs",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderPairs\"(\"id\", \"time\", \"_id0\") AS SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t\".\"id\" AS \"_id0\"\nFROM \"orders_2\",\n  (VALUES (1, 1),\n    (2, 2),\n    (3, 3),\n    (4, 4),\n    (4, 4)) AS \"t\" (\"id\", \"pk\")\nORDER BY \"orders_2\".\"time\" DESC NULLS LAST, \"orders_2\".\"id\", \"t\".\"id\""
     },
     {
-      "name" : "Query.OrderNumbers2-11",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderNumbers2-11\"(\"id\", \"time\") AS SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\nFROM \"orders_2\"\n INNER JOIN (VALUES (1),\n    (2),\n    (3),\n    (4),\n    (4)) AS \"t\" (\"id\") ON \"orders_2\".\"customerid\" = CAST(\"t\".\"id\" AS BIGINT)\nORDER BY \"orders_2\".\"time\" DESC NULLS LAST, \"orders_2\".\"id\""
+      "name" : "OrderPairs2",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderPairs2\"(\"id\", \"time\", \"pk\") AS SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t\".\"pk\"\nFROM \"orders_2\",\n  (VALUES (1, 1),\n    (2, 2),\n    (3, 3),\n    (4, 4),\n    (4, 4)) AS \"t\" (\"id\", \"pk\")\nORDER BY \"orders_2\".\"time\" DESC NULLS LAST, \"orders_2\".\"id\", \"t\".\"pk\""
     },
     {
-      "name" : "Query.Numbers-1",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Numbers-1\"(\"id\") AS SELECT *\nFROM \"numbers_1\"\nORDER BY \"id\""
-    },
-    {
-      "name" : "Query.OrderPairs-15",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderPairs-15\"(\"id\", \"time\", \"_id0\") AS SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t\".\"id\" AS \"_id0\"\nFROM \"orders_2\",\n  (VALUES (1, 1),\n    (2, 2),\n    (3, 3),\n    (4, 4),\n    (4, 4)) AS \"t\" (\"id\", \"pk\")\nORDER BY \"orders_2\".\"time\" DESC NULLS LAST, \"orders_2\".\"id\", \"t\".\"id\""
-    },
-    {
-      "name" : "Query.OrderPairs2-19",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderPairs2-19\"(\"id\", \"time\", \"pk\") AS SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t\".\"pk\"\nFROM \"orders_2\",\n  (VALUES (1, 1),\n    (2, 2),\n    (3, 3),\n    (4, 4),\n    (4, 4)) AS \"t\" (\"id\", \"pk\")\nORDER BY \"orders_2\".\"time\" DESC NULLS LAST, \"orders_2\".\"id\", \"t\".\"pk\""
-    },
-    {
-      "name" : "Query.Numbers2-3",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Numbers2-3\"(\"id\") AS SELECT *\nFROM \"numbers2_1\"\nORDER BY \"id\""
+      "name" : "Numbers2",
+      "sql" : "CREATE OR REPLACE VIEW \"Numbers2\"(\"id\") AS SELECT *\nFROM \"numbers2_1\"\nORDER BY \"id\""
     }
   ]
 }

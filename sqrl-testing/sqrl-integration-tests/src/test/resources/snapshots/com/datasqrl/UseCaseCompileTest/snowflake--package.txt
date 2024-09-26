@@ -92,56 +92,56 @@ LogicalTableScan(table=[[myicebergtable_1]])
       ],
       "views" : [
         {
-          "name" : "Query.MyIcebergTable-6",
-          "sql" : "CREATE OR REPLACE VIEW Query.MyIcebergTable-6(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM myicebergtable_1\nWHERE updated_at = ?\nORDER BY updated_at DESC NULLS LAST, id"
+          "name" : "MyIcebergTable",
+          "sql" : "CREATE OR REPLACE VIEW MyIcebergTable(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM myicebergtable_1\nWHERE updated_at = ?\nORDER BY updated_at DESC NULLS LAST, id"
         },
         {
-          "name" : "Query.MyIcebergTable-5",
-          "sql" : "CREATE OR REPLACE VIEW Query.MyIcebergTable-5(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM myicebergtable_1\nORDER BY updated_at DESC NULLS LAST, id"
+          "name" : "MyIcebergTable",
+          "sql" : "CREATE OR REPLACE VIEW MyIcebergTable(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM myicebergtable_1\nORDER BY updated_at DESC NULLS LAST, id"
         },
         {
-          "name" : "Query.MyIcebergTable-8",
-          "sql" : "CREATE OR REPLACE VIEW Query.MyIcebergTable-8(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM myicebergtable_1\nWHERE id = ? AND updated_at = ?\nORDER BY updated_at DESC NULLS LAST"
+          "name" : "MyIcebergTable",
+          "sql" : "CREATE OR REPLACE VIEW MyIcebergTable(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM myicebergtable_1\nWHERE id = ? AND updated_at = ?\nORDER BY updated_at DESC NULLS LAST"
         },
         {
-          "name" : "Query.MyIcebergTable-7",
-          "sql" : "CREATE OR REPLACE VIEW Query.MyIcebergTable-7(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM myicebergtable_1\nWHERE id = ?\nORDER BY updated_at DESC NULLS LAST"
+          "name" : "MyIcebergTable",
+          "sql" : "CREATE OR REPLACE VIEW MyIcebergTable(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM myicebergtable_1\nWHERE id = ?\nORDER BY updated_at DESC NULLS LAST"
         },
         {
-          "name" : "Query.applications-2",
-          "sql" : "CREATE OR REPLACE VIEW Query.applications-2(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM applications_2\nWHERE updated_at = ?\nORDER BY updated_at DESC NULLS LAST, id"
+          "name" : "applications",
+          "sql" : "CREATE OR REPLACE VIEW applications(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM applications_2\nWHERE updated_at = ?\nORDER BY updated_at DESC NULLS LAST, id"
         },
         {
-          "name" : "Query.applications-1",
-          "sql" : "CREATE OR REPLACE VIEW Query.applications-1(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM applications_2\nORDER BY updated_at DESC NULLS LAST, id"
+          "name" : "applications",
+          "sql" : "CREATE OR REPLACE VIEW applications(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM applications_2\nORDER BY updated_at DESC NULLS LAST, id"
         },
         {
-          "name" : "Query.applications-4",
-          "sql" : "CREATE OR REPLACE VIEW Query.applications-4(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM applications_2\nWHERE id = ? AND updated_at = ?\nORDER BY updated_at DESC NULLS LAST"
+          "name" : "applications",
+          "sql" : "CREATE OR REPLACE VIEW applications(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM applications_2\nWHERE id = ? AND updated_at = ?\nORDER BY updated_at DESC NULLS LAST"
         },
         {
-          "name" : "Query.applications-3",
-          "sql" : "CREATE OR REPLACE VIEW Query.applications-3(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM applications_2\nWHERE id = ?\nORDER BY updated_at DESC NULLS LAST"
+          "name" : "applications",
+          "sql" : "CREATE OR REPLACE VIEW applications(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM applications_2\nWHERE id = ?\nORDER BY updated_at DESC NULLS LAST"
         },
         {
-          "name" : "Query.SnowflakeQuery-13",
-          "sql" : "CREATE OR REPLACE VIEW Query.SnowflakeQuery-13(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM myicebergtable_1\nWHERE customer_id = ?\nORDER BY updated_at DESC NULLS LAST, id"
+          "name" : "SnowflakeQuery",
+          "sql" : "CREATE OR REPLACE VIEW SnowflakeQuery(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM myicebergtable_1\nWHERE customer_id = ?\nORDER BY updated_at DESC NULLS LAST, id"
         },
         {
-          "name" : "Query.MySnowflakeTable-9",
-          "sql" : "CREATE OR REPLACE VIEW Query.MySnowflakeTable-9(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM myicebergtable_1\nORDER BY updated_at DESC NULLS LAST, id"
+          "name" : "MySnowflakeTable",
+          "sql" : "CREATE OR REPLACE VIEW MySnowflakeTable(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM myicebergtable_1\nORDER BY updated_at DESC NULLS LAST, id"
         },
         {
-          "name" : "Query.MySnowflakeTable-12",
-          "sql" : "CREATE OR REPLACE VIEW Query.MySnowflakeTable-12(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM myicebergtable_1\nWHERE id = ? AND updated_at = ?\nORDER BY updated_at DESC NULLS LAST"
+          "name" : "MySnowflakeTable",
+          "sql" : "CREATE OR REPLACE VIEW MySnowflakeTable(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM myicebergtable_1\nWHERE id = ? AND updated_at = ?\nORDER BY updated_at DESC NULLS LAST"
         },
         {
-          "name" : "Query.MySnowflakeTable-11",
-          "sql" : "CREATE OR REPLACE VIEW Query.MySnowflakeTable-11(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM myicebergtable_1\nWHERE id = ?\nORDER BY updated_at DESC NULLS LAST"
+          "name" : "MySnowflakeTable",
+          "sql" : "CREATE OR REPLACE VIEW MySnowflakeTable(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM myicebergtable_1\nWHERE id = ?\nORDER BY updated_at DESC NULLS LAST"
         },
         {
-          "name" : "Query.MySnowflakeTable-10",
-          "sql" : "CREATE OR REPLACE VIEW Query.MySnowflakeTable-10(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM myicebergtable_1\nWHERE updated_at = ?\nORDER BY updated_at DESC NULLS LAST, id"
+          "name" : "MySnowflakeTable",
+          "sql" : "CREATE OR REPLACE VIEW MySnowflakeTable(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM myicebergtable_1\nWHERE updated_at = ?\nORDER BY updated_at DESC NULLS LAST, id"
         }
       ]
     }

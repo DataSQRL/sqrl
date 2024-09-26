@@ -425,168 +425,144 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
   ],
   "views" : [
     {
-      "name" : "Query.Product-39",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-39\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"description\", \"category\""
+      "name" : "Product",
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"description\", \"category\""
     },
     {
-      "name" : "Query.Product-38",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-38\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"description\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\""
+      "name" : "Product",
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"description\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\""
     },
     {
-      "name" : "recentOrders.parent-19",
-      "sql" : "CREATE OR REPLACE VIEW \"recentOrders.parent-19\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerdistinct_1\"\nWHERE \"customerid\" = $1"
+      "name" : "CustomerDistinct",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerDistinct\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerdistinct_1\"\nORDER BY \"customerid\""
     },
     {
-      "name" : "Query.CustomerDistinct-5",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CustomerDistinct-5\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerdistinct_1\"\nORDER BY \"customerid\""
+      "name" : "Product",
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"description\", \"category\""
     },
     {
-      "name" : "Query.Product-35",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-35\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"description\", \"category\""
+      "name" : "Product",
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1 AND \"description\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\""
     },
     {
-      "name" : "Query.CustomerDistinct-6",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CustomerDistinct-6\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerdistinct_1\"\nWHERE \"customerid\" = $1"
+      "name" : "Product",
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"description\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"category\""
     },
     {
-      "name" : "Query.Product-34",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-34\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1 AND \"description\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\""
+      "name" : "Product",
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"description\""
     },
     {
-      "name" : "Query.Product-37",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-37\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"description\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"category\""
+      "name" : "Customer",
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\", \"lastUpdated\""
     },
     {
-      "name" : "Query.Product-36",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-36\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"description\""
+      "name" : "Customer",
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1 AND \"lastUpdated\" = $2\nORDER BY \"timestamp\" DESC NULLS LAST"
     },
     {
-      "name" : "Query.Customer-1",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Customer-1\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\", \"lastUpdated\""
+      "name" : "CustomerOrders",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerOrders\"(\"id\", \"customerid\", \"_time\") AS SELECT *\nFROM \"customerorders_1\"\nORDER BY \"_time\" DESC NULLS LAST, \"id\""
     },
     {
-      "name" : "Query.Orders-25",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Orders-25\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_3\"\nWHERE \"id\" = $1"
+      "name" : "Customer",
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nWHERE \"lastUpdated\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\""
     },
     {
-      "name" : "Query.Customer-4",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Customer-4\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1 AND \"lastUpdated\" = $2\nORDER BY \"timestamp\" DESC NULLS LAST"
+      "name" : "Customer",
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"lastUpdated\""
     },
     {
-      "name" : "Query.CustomerOrders-22",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CustomerOrders-22\"(\"id\", \"customerid\", \"_time\") AS SELECT *\nFROM \"customerorders_1\"\nORDER BY \"_time\" DESC NULLS LAST, \"id\""
+      "name" : "Product",
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3 AND \"category\" = $4\nORDER BY \"_ingest_time\" DESC NULLS LAST"
     },
     {
-      "name" : "Query.Customer-2",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Customer-2\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nWHERE \"lastUpdated\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\""
+      "name" : "Product",
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"category\""
     },
     {
-      "name" : "Query.Customer-3",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Customer-3\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"lastUpdated\""
+      "name" : "Product",
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"description\""
     },
     {
-      "name" : "distinctOrders.parent-9",
-      "sql" : "CREATE OR REPLACE VIEW \"distinctOrders.parent-9\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerdistinct_1\"\nWHERE \"customerid\" = $1"
+      "name" : "Product",
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"category\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\""
     },
     {
-      "name" : "distinctOrdersTime.parent-14",
-      "sql" : "CREATE OR REPLACE VIEW \"distinctOrdersTime.parent-14\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerdistinct_1\"\nWHERE \"customerid\" = $1"
+      "name" : "Product",
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\", \"category\""
     },
     {
-      "name" : "Query.Product-42",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-42\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3 AND \"category\" = $4\nORDER BY \"_ingest_time\" DESC NULLS LAST"
+      "name" : "Product",
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"description\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"category\""
     },
     {
-      "name" : "Query.Product-41",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-41\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"category\""
+      "name" : "CustomerDistinct.distinctOrdersTime",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerDistinct.distinctOrdersTime\"(\"__pk1_customerid\", \"id\", \"time\") AS SELECT \"__pk1_customerid\", \"id\", \"time\"\nFROM (SELECT *\n  FROM (SELECT \"__pk1_customerid\", \"id\", \"time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_rownum\", RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_rank\", DENSE_RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_denserank\"\n    FROM \"distinctorderstime_1\") AS \"t\"\n  WHERE \"_rownum\" = \"_rank\" AND \"_denserank\" <= 10) AS \"t0\"\nWHERE \"__pk1_customerid\" = $1\nORDER BY \"id\", \"time\""
     },
     {
-      "name" : "Query.Product-40",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-40\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"description\""
+      "name" : "CustomerDistinct.distinctOrdersTime",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerDistinct.distinctOrdersTime\"(\"__pk1_customerid\", \"id\", \"time\") AS SELECT \"__pk1_customerid\", \"id\", \"time\"\nFROM (SELECT *\n  FROM (SELECT *\n    FROM (SELECT \"__pk1_customerid\", \"id\", \"time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_rownum\", RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_rank\", DENSE_RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_denserank\"\n      FROM \"distinctorderstime_1\") AS \"t\"\n    WHERE \"_rownum\" = \"_rank\" AND \"_denserank\" <= 10) AS \"t0\"\n  WHERE \"__pk1_customerid\" = $1) AS \"t1\"\nWHERE \"time\" = $2\nORDER BY \"id\""
     },
     {
-      "name" : "Query.Product-28",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-28\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"category\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\""
+      "name" : "CustomerDistinct.distinctOrdersTime",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerDistinct.distinctOrdersTime\"(\"__pk1_customerid\", \"id\", \"time\") AS SELECT \"__pk1_customerid\", \"id\", \"time\"\nFROM (SELECT *\n  FROM (SELECT *\n    FROM (SELECT \"__pk1_customerid\", \"id\", \"time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_rownum\", RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_rank\", DENSE_RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_denserank\"\n      FROM \"distinctorderstime_1\") AS \"t\"\n    WHERE \"_rownum\" = \"_rank\" AND \"_denserank\" <= 10) AS \"t0\"\n  WHERE \"__pk1_customerid\" = $1) AS \"t1\"\nWHERE \"id\" = $2\nORDER BY \"time\""
     },
     {
-      "name" : "Query.Product-27",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-27\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\", \"category\""
+      "name" : "CustomerDistinct.distinctOrdersTime",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerDistinct.distinctOrdersTime\"(\"__pk1_customerid\", \"id\", \"time\") AS SELECT \"__pk1_customerid\", \"id\", \"time\"\nFROM (SELECT *\n  FROM (SELECT *\n    FROM (SELECT \"__pk1_customerid\", \"id\", \"time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_rownum\", RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_rank\", DENSE_RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_denserank\"\n      FROM \"distinctorderstime_1\") AS \"t\"\n    WHERE \"_rownum\" = \"_rank\" AND \"_denserank\" <= 10) AS \"t0\"\n  WHERE \"__pk1_customerid\" = $1) AS \"t1\"\nWHERE \"id\" = $2 AND \"time\" = $3"
     },
     {
-      "name" : "Query.Product-29",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-29\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"description\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"category\""
+      "name" : "CustomerOrders",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerOrders\"(\"id\", \"customerid\", \"_time\") AS SELECT *\nFROM \"customerorders_1\"\nWHERE \"id\" = $1\nORDER BY \"_time\" DESC NULLS LAST"
     },
     {
-      "name" : "CustomerDistinct.distinctOrdersTime-10",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerDistinct.distinctOrdersTime-10\"(\"__pk1_customerid\", \"id\", \"time\") AS SELECT \"__pk1_customerid\", \"id\", \"time\"\nFROM (SELECT *\n  FROM (SELECT \"__pk1_customerid\", \"id\", \"time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_rownum\", RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_rank\", DENSE_RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_denserank\"\n    FROM \"distinctorderstime_1\") AS \"t\"\n  WHERE \"_rownum\" = \"_rank\" AND \"_denserank\" <= 10) AS \"t0\"\nWHERE \"__pk1_customerid\" = $1\nORDER BY \"id\", \"time\""
+      "name" : "CustomerDistinct.distinctOrders",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerDistinct.distinctOrders\"(\"__pk1_customerid\", \"id\", \"_time\") AS SELECT \"__pk1_customerid\", \"id\", \"_time\"\nFROM (SELECT *\n  FROM (SELECT \"__pk1_customerid\", \"id\", \"_time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"id\" DESC) AS \"_rownum\", RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"id\" DESC) AS \"_rank\", DENSE_RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"id\" DESC) AS \"_denserank\"\n    FROM \"distinctorders_1\") AS \"t\"\n  WHERE \"_rownum\" = \"_rank\" AND \"_denserank\" <= 10) AS \"t0\"\nWHERE \"__pk1_customerid\" = $1\nORDER BY \"id\""
     },
     {
-      "name" : "CustomerDistinct.distinctOrdersTime-11",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerDistinct.distinctOrdersTime-11\"(\"__pk1_customerid\", \"id\", \"time\") AS SELECT \"__pk1_customerid\", \"id\", \"time\"\nFROM (SELECT *\n  FROM (SELECT *\n    FROM (SELECT \"__pk1_customerid\", \"id\", \"time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_rownum\", RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_rank\", DENSE_RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_denserank\"\n      FROM \"distinctorderstime_1\") AS \"t\"\n    WHERE \"_rownum\" = \"_rank\" AND \"_denserank\" <= 10) AS \"t0\"\n  WHERE \"__pk1_customerid\" = $1) AS \"t1\"\nWHERE \"time\" = $2\nORDER BY \"id\""
+      "name" : "CustomerDistinct.recentOrders",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerDistinct.recentOrders\"(\"__pk1_customerid\", \"id\", \"time\", \"_rownum\") AS SELECT *\nFROM (SELECT *\n  FROM (SELECT *\n    FROM (SELECT \"__pk1_customerid\", \"id\", \"time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC) AS \"_rownum\"\n      FROM \"recentorders_1\") AS \"t\"\n    WHERE \"_rownum\" <= 10) AS \"t0\"\n  WHERE \"__pk1_customerid\" = $1) AS \"t1\"\nWHERE \"id\" = $2\nORDER BY \"__pk1_customerid\", \"_rownum\", \"time\""
     },
     {
-      "name" : "CustomerDistinct.distinctOrdersTime-12",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerDistinct.distinctOrdersTime-12\"(\"__pk1_customerid\", \"id\", \"time\") AS SELECT \"__pk1_customerid\", \"id\", \"time\"\nFROM (SELECT *\n  FROM (SELECT *\n    FROM (SELECT \"__pk1_customerid\", \"id\", \"time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_rownum\", RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_rank\", DENSE_RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_denserank\"\n      FROM \"distinctorderstime_1\") AS \"t\"\n    WHERE \"_rownum\" = \"_rank\" AND \"_denserank\" <= 10) AS \"t0\"\n  WHERE \"__pk1_customerid\" = $1) AS \"t1\"\nWHERE \"id\" = $2\nORDER BY \"time\""
+      "name" : "CustomerDistinct.distinctOrders",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerDistinct.distinctOrders\"(\"__pk1_customerid\", \"id\", \"_time\") AS SELECT \"__pk1_customerid\", \"id\", \"_time\"\nFROM (SELECT *\n  FROM (SELECT *\n    FROM (SELECT \"__pk1_customerid\", \"id\", \"_time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"id\" DESC) AS \"_rownum\", RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"id\" DESC) AS \"_rank\", DENSE_RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"id\" DESC) AS \"_denserank\"\n      FROM \"distinctorders_1\") AS \"t\"\n    WHERE \"_rownum\" = \"_rank\" AND \"_denserank\" <= 10) AS \"t0\"\n  WHERE \"__pk1_customerid\" = $1) AS \"t1\"\nWHERE \"id\" = $2"
     },
     {
-      "name" : "CustomerDistinct.distinctOrdersTime-13",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerDistinct.distinctOrdersTime-13\"(\"__pk1_customerid\", \"id\", \"time\") AS SELECT \"__pk1_customerid\", \"id\", \"time\"\nFROM (SELECT *\n  FROM (SELECT *\n    FROM (SELECT \"__pk1_customerid\", \"id\", \"time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_rownum\", RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_rank\", DENSE_RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC, \"id\") AS \"_denserank\"\n      FROM \"distinctorderstime_1\") AS \"t\"\n    WHERE \"_rownum\" = \"_rank\" AND \"_denserank\" <= 10) AS \"t0\"\n  WHERE \"__pk1_customerid\" = $1) AS \"t1\"\nWHERE \"id\" = $2 AND \"time\" = $3"
+      "name" : "CustomerDistinct.recentOrders",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerDistinct.recentOrders\"(\"__pk1_customerid\", \"id\", \"time\", \"_rownum\") AS SELECT *\nFROM (SELECT *\n  FROM (SELECT *\n    FROM (SELECT \"__pk1_customerid\", \"id\", \"time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC) AS \"_rownum\"\n      FROM \"recentorders_1\") AS \"t\"\n    WHERE \"_rownum\" <= 10) AS \"t0\"\n  WHERE \"__pk1_customerid\" = $1) AS \"t1\"\nWHERE \"id\" = $2 AND \"time\" = $3\nORDER BY \"__pk1_customerid\", \"_rownum\""
     },
     {
-      "name" : "Query.CustomerId-21",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CustomerId-21\"(\"customerid\", \"_timestamp\") AS SELECT *\nFROM \"customerid_1\"\nWHERE \"customerid\" = $1"
+      "name" : "Orders",
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_3\"\nORDER BY \"id\""
     },
     {
-      "name" : "Query.CustomerOrders-23",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CustomerOrders-23\"(\"id\", \"customerid\", \"_time\") AS SELECT *\nFROM \"customerorders_1\"\nWHERE \"id\" = $1\nORDER BY \"_time\" DESC NULLS LAST"
+      "name" : "CustomerDistinct.recentOrders",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerDistinct.recentOrders\"(\"__pk1_customerid\", \"id\", \"time\", \"_rownum\") AS SELECT *\nFROM (SELECT *\n  FROM (SELECT \"__pk1_customerid\", \"id\", \"time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC) AS \"_rownum\"\n    FROM \"recentorders_1\") AS \"t\"\n  WHERE \"_rownum\" <= 10) AS \"t0\"\nWHERE \"__pk1_customerid\" = $1\nORDER BY \"__pk1_customerid\", \"_rownum\", \"id\", \"time\""
     },
     {
-      "name" : "CustomerDistinct.distinctOrders-7",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerDistinct.distinctOrders-7\"(\"__pk1_customerid\", \"id\", \"_time\") AS SELECT \"__pk1_customerid\", \"id\", \"_time\"\nFROM (SELECT *\n  FROM (SELECT \"__pk1_customerid\", \"id\", \"_time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"id\" DESC) AS \"_rownum\", RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"id\" DESC) AS \"_rank\", DENSE_RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"id\" DESC) AS \"_denserank\"\n    FROM \"distinctorders_1\") AS \"t\"\n  WHERE \"_rownum\" = \"_rank\" AND \"_denserank\" <= 10) AS \"t0\"\nWHERE \"__pk1_customerid\" = $1\nORDER BY \"id\""
+      "name" : "CustomerDistinct.recentOrders",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerDistinct.recentOrders\"(\"__pk1_customerid\", \"id\", \"time\", \"_rownum\") AS SELECT *\nFROM (SELECT *\n  FROM (SELECT *\n    FROM (SELECT \"__pk1_customerid\", \"id\", \"time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC) AS \"_rownum\"\n      FROM \"recentorders_1\") AS \"t\"\n    WHERE \"_rownum\" <= 10) AS \"t0\"\n  WHERE \"__pk1_customerid\" = $1) AS \"t1\"\nWHERE \"time\" = $2\nORDER BY \"__pk1_customerid\", \"_rownum\", \"id\""
     },
     {
-      "name" : "CustomerDistinct.recentOrders-17",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerDistinct.recentOrders-17\"(\"__pk1_customerid\", \"id\", \"time\", \"_rownum\") AS SELECT *\nFROM (SELECT *\n  FROM (SELECT *\n    FROM (SELECT \"__pk1_customerid\", \"id\", \"time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC) AS \"_rownum\"\n      FROM \"recentorders_1\") AS \"t\"\n    WHERE \"_rownum\" <= 10) AS \"t0\"\n  WHERE \"__pk1_customerid\" = $1) AS \"t1\"\nWHERE \"id\" = $2\nORDER BY \"__pk1_customerid\", \"_rownum\", \"time\""
+      "name" : "Product",
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"description\", \"category\""
     },
     {
-      "name" : "CustomerDistinct.distinctOrders-8",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerDistinct.distinctOrders-8\"(\"__pk1_customerid\", \"id\", \"_time\") AS SELECT \"__pk1_customerid\", \"id\", \"_time\"\nFROM (SELECT *\n  FROM (SELECT *\n    FROM (SELECT \"__pk1_customerid\", \"id\", \"_time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"id\" DESC) AS \"_rownum\", RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"id\" DESC) AS \"_rank\", DENSE_RANK() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"id\" DESC) AS \"_denserank\"\n      FROM \"distinctorders_1\") AS \"t\"\n    WHERE \"_rownum\" = \"_rank\" AND \"_denserank\" <= 10) AS \"t0\"\n  WHERE \"__pk1_customerid\" = $1) AS \"t1\"\nWHERE \"id\" = $2"
+      "name" : "Product",
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"description\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\""
     },
     {
-      "name" : "CustomerDistinct.recentOrders-18",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerDistinct.recentOrders-18\"(\"__pk1_customerid\", \"id\", \"time\", \"_rownum\") AS SELECT *\nFROM (SELECT *\n  FROM (SELECT *\n    FROM (SELECT \"__pk1_customerid\", \"id\", \"time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC) AS \"_rownum\"\n      FROM \"recentorders_1\") AS \"t\"\n    WHERE \"_rownum\" <= 10) AS \"t0\"\n  WHERE \"__pk1_customerid\" = $1) AS \"t1\"\nWHERE \"id\" = $2 AND \"time\" = $3\nORDER BY \"__pk1_customerid\", \"_rownum\""
+      "name" : "Product",
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1 AND \"description\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"category\""
     },
     {
-      "name" : "Query.Orders-24",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Orders-24\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_3\"\nORDER BY \"id\""
+      "name" : "Product",
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"description\""
     },
     {
-      "name" : "CustomerDistinct.recentOrders-15",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerDistinct.recentOrders-15\"(\"__pk1_customerid\", \"id\", \"time\", \"_rownum\") AS SELECT *\nFROM (SELECT *\n  FROM (SELECT \"__pk1_customerid\", \"id\", \"time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC) AS \"_rownum\"\n    FROM \"recentorders_1\") AS \"t\"\n  WHERE \"_rownum\" <= 10) AS \"t0\"\nWHERE \"__pk1_customerid\" = $1\nORDER BY \"__pk1_customerid\", \"_rownum\", \"id\", \"time\""
-    },
-    {
-      "name" : "CustomerDistinct.recentOrders-16",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerDistinct.recentOrders-16\"(\"__pk1_customerid\", \"id\", \"time\", \"_rownum\") AS SELECT *\nFROM (SELECT *\n  FROM (SELECT *\n    FROM (SELECT \"__pk1_customerid\", \"id\", \"time\", ROW_NUMBER() OVER (PARTITION BY \"__pk1_customerid\" ORDER BY \"time\" DESC) AS \"_rownum\"\n      FROM \"recentorders_1\") AS \"t\"\n    WHERE \"_rownum\" <= 10) AS \"t0\"\n  WHERE \"__pk1_customerid\" = $1) AS \"t1\"\nWHERE \"time\" = $2\nORDER BY \"__pk1_customerid\", \"_rownum\", \"id\""
-    },
-    {
-      "name" : "Query.Product-31",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-31\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"description\", \"category\""
-    },
-    {
-      "name" : "Query.Product-30",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-30\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"description\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\""
-    },
-    {
-      "name" : "Query.Product-33",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-33\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1 AND \"description\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"category\""
-    },
-    {
-      "name" : "Query.Product-32",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-32\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"description\""
-    },
-    {
-      "name" : "Query.CustomerId-20",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CustomerId-20\"(\"customerid\", \"_timestamp\") AS SELECT *\nFROM \"customerid_1\"\nORDER BY \"customerid\""
+      "name" : "CustomerId",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerId\"(\"customerid\", \"_timestamp\") AS SELECT *\nFROM \"customerid_1\"\nORDER BY \"customerid\""
     }
   ]
 }

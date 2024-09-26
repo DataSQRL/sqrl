@@ -110,24 +110,24 @@ LogicalProject(month=[endOfMonth(endOfMonth($4))], timestamp=[$4], _customerid=[
   ],
   "views" : [
     {
-      "name" : "Query.CustomerCopy-5",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CustomerCopy-5\"(\"month\", \"timestamp\", \"_customerid\", \"_lastUpdated\") AS SELECT *\nFROM \"customercopy_1\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"_customerid\", \"_lastUpdated\""
+      "name" : "CustomerCopy",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerCopy\"(\"month\", \"timestamp\", \"_customerid\", \"_lastUpdated\") AS SELECT *\nFROM \"customercopy_1\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"_customerid\", \"_lastUpdated\""
     },
     {
-      "name" : "Query.Customer-1",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Customer-1\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\", \"lastUpdated\""
+      "name" : "Customer",
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\", \"lastUpdated\""
     },
     {
-      "name" : "Query.Customer-4",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Customer-4\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1 AND \"lastUpdated\" = $2\nORDER BY \"timestamp\" DESC NULLS LAST"
+      "name" : "Customer",
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1 AND \"lastUpdated\" = $2\nORDER BY \"timestamp\" DESC NULLS LAST"
     },
     {
-      "name" : "Query.Customer-2",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Customer-2\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nWHERE \"lastUpdated\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\""
+      "name" : "Customer",
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nWHERE \"lastUpdated\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\""
     },
     {
-      "name" : "Query.Customer-3",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Customer-3\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"lastUpdated\""
+      "name" : "Customer",
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"lastUpdated\""
     }
   ]
 }

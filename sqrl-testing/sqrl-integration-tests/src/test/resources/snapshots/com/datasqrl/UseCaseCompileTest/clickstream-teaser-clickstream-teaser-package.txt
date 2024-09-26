@@ -120,12 +120,12 @@ LogicalProject(beforeURL=[$0], afterURL=[$3], timestamp=[$4], _userid=[$2], _tim
   ],
   "views" : [
     {
-      "name" : "Query.Recommendation-1",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Recommendation-1\"(\"url\", \"rec\", \"frequency\", \"__timestamp\") AS SELECT *\nFROM \"recommendation_1\"\nWHERE \"url\" = $1\nORDER BY \"url\", \"frequency\" DESC, \"rec\""
+      "name" : "Recommendation",
+      "sql" : "CREATE OR REPLACE VIEW \"Recommendation\"(\"url\", \"rec\", \"frequency\", \"__timestamp\") AS SELECT *\nFROM \"recommendation_1\"\nWHERE \"url\" = $1\nORDER BY \"url\", \"frequency\" DESC, \"rec\""
     },
     {
-      "name" : "Query.Trending-2",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Trending-2\"(\"url\", \"total\", \"_timestamp\") AS SELECT *\nFROM \"trending_1\"\nORDER BY \"total\" DESC, \"url\""
+      "name" : "Trending",
+      "sql" : "CREATE OR REPLACE VIEW \"Trending\"(\"url\", \"total\", \"_timestamp\") AS SELECT *\nFROM \"trending_1\"\nORDER BY \"total\" DESC, \"url\""
     }
   ]
 }

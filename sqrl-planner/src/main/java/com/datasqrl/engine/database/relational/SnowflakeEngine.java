@@ -117,10 +117,12 @@ public class SnowflakeEngine extends AbstractJDBCQueryEngine {
               scan, icebergDataTypeMapper);
         }
       });
-
+      if (hasDynamicParam(relNode)) {
+        continue;
+      }
 
       SqlParserPos pos = new SqlParserPos(0, 0);
-      String viewName = entry.getKey().getNameId();
+      String viewName = getViewName(entry.getKey());
       SqlIdentifier viewNameIdentifier = new SqlIdentifier(viewName, pos);
       SqlNodeList columnList = new SqlNodeList(relNode.getRowType().getFieldList().stream()
               .map(f->new SqlIdentifier(f.getName(), SqlParserPos.ZERO))

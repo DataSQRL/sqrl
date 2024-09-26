@@ -207,12 +207,12 @@ LogicalProject(status=[$1], message=[$2], event_time=[$3], id=[$4], customer_id=
       ],
       "views" : [
         {
-          "name" : "ApplicationStatus",
-          "sql" : "CREATE OR REPLACE VIEW ApplicationStatus(status, message, event_time, id, customer_id, loan_type_id, amount, duration, max_amount, min_amount, _loan_application_id)\nAS SELECT *\nFROM applicationstatus_1\nORDER BY event_time DESC NULLS LAST, _loan_application_id"
+          "name" : "",
+          "sql" : "CREATE OR REPLACE VIEW *(status, message, event_time, id, customer_id, loan_type_id, amount, duration, max_amount, min_amount, _loan_application_id)\nAS SELECT *\nFROM applicationstatus_1\nORDER BY event_time DESC NULLS LAST, _loan_application_id"
         },
         {
-          "name" : "ApplicationInfo",
-          "sql" : "CREATE OR REPLACE VIEW ApplicationInfo(id, customer_id, loan_type_id, amount, duration, application_date, updated_at, id0, name, description, interest_rate, max_amount, min_amount, max_duration, min_duration, updated_at0, id1)\nAS SELECT _applications_3.id, _applications_3.customer_id, _applications_3.loan_type_id, _applications_3.amount, _applications_3.duration, _applications_3.application_date, _applications_3.updated_at, _loantypes_3.id AS id0, _loantypes_3.name, _loantypes_3.description, _loantypes_3.interest_rate, _loantypes_3.max_amount, _loantypes_3.min_amount, _loantypes_3.max_duration, _loantypes_3.min_duration, _loantypes_3.updated_at AS updated_at0, _loantypes_30.id AS id1\nFROM _applications_3\nINNER JOIN _loantypes_3 ON _applications_3.loan_type_id = _loantypes_3.id\nLEFT JOIN _loantypes_3 AS _loantypes_30 ON _applications_3.customer_id = _loantypes_30.id\nORDER BY _applications_3.id"
+          "name" : "",
+          "sql" : "CREATE OR REPLACE VIEW *(id, customer_id, loan_type_id, amount, duration, application_date, updated_at, id0, name, description, interest_rate, max_amount, min_amount, max_duration, min_duration, updated_at0, id1)\nAS SELECT _applications_3.id, _applications_3.customer_id, _applications_3.loan_type_id, _applications_3.amount, _applications_3.duration, _applications_3.application_date, _applications_3.updated_at, _loantypes_3.id AS id0, _loantypes_3.name, _loantypes_3.description, _loantypes_3.interest_rate, _loantypes_3.max_amount, _loantypes_3.min_amount, _loantypes_3.max_duration, _loantypes_3.min_duration, _loantypes_3.updated_at AS updated_at0, _loantypes_30.id AS id1\nFROM _applications_3\nINNER JOIN _loantypes_3 ON _applications_3.loan_type_id = _loantypes_3.id\nLEFT JOIN _loantypes_3 AS _loantypes_30 ON _applications_3.customer_id = _loantypes_30.id\nORDER BY _applications_3.id"
         }
       ]
     }

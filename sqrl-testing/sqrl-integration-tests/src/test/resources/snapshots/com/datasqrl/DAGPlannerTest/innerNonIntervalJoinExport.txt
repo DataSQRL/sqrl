@@ -191,100 +191,100 @@ LogicalTableScan(table=[[orders_1]])
   ],
   "views" : [
     {
-      "name" : "Query.CoOrders-13",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CoOrders-13\"(\"beforeID\", \"afterID\", \"timestamp\", \"beforeTimestamp\", \"_customerid\", \"__timestamp\") AS SELECT *\nFROM \"coorders_1\"\nWHERE \"beforeID\" = $1 AND \"afterID\" = $2\nORDER BY \"__timestamp\" DESC NULLS LAST, \"_customerid\", \"beforeTimestamp\", \"timestamp\""
+      "name" : "CoOrders",
+      "sql" : "CREATE OR REPLACE VIEW \"CoOrders\"(\"beforeID\", \"afterID\", \"timestamp\", \"beforeTimestamp\", \"_customerid\", \"__timestamp\") AS SELECT *\nFROM \"coorders_1\"\nWHERE \"beforeID\" = $1 AND \"afterID\" = $2\nORDER BY \"__timestamp\" DESC NULLS LAST, \"_customerid\", \"beforeTimestamp\", \"timestamp\""
     },
     {
-      "name" : "Query.CoOrders-12",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CoOrders-12\"(\"beforeID\", \"afterID\", \"timestamp\", \"beforeTimestamp\", \"_customerid\", \"__timestamp\") AS SELECT *\nFROM \"coorders_1\"\nWHERE \"beforeID\" = $1 AND \"timestamp\" = $2 AND \"beforeTimestamp\" = $3\nORDER BY \"__timestamp\" DESC NULLS LAST, \"_customerid\", \"afterID\""
+      "name" : "CoOrders",
+      "sql" : "CREATE OR REPLACE VIEW \"CoOrders\"(\"beforeID\", \"afterID\", \"timestamp\", \"beforeTimestamp\", \"_customerid\", \"__timestamp\") AS SELECT *\nFROM \"coorders_1\"\nWHERE \"beforeID\" = $1 AND \"timestamp\" = $2 AND \"beforeTimestamp\" = $3\nORDER BY \"__timestamp\" DESC NULLS LAST, \"_customerid\", \"afterID\""
     },
     {
-      "name" : "Query.CoOrders-11",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CoOrders-11\"(\"beforeID\", \"afterID\", \"timestamp\", \"beforeTimestamp\", \"_customerid\", \"__timestamp\") AS SELECT *\nFROM \"coorders_1\"\nWHERE \"beforeID\" = $1 AND \"timestamp\" = $2\nORDER BY \"__timestamp\" DESC NULLS LAST, \"_customerid\", \"beforeTimestamp\", \"afterID\""
+      "name" : "CoOrders",
+      "sql" : "CREATE OR REPLACE VIEW \"CoOrders\"(\"beforeID\", \"afterID\", \"timestamp\", \"beforeTimestamp\", \"_customerid\", \"__timestamp\") AS SELECT *\nFROM \"coorders_1\"\nWHERE \"beforeID\" = $1 AND \"timestamp\" = $2\nORDER BY \"__timestamp\" DESC NULLS LAST, \"_customerid\", \"beforeTimestamp\", \"afterID\""
     },
     {
-      "name" : "Query.CoOrders-10",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CoOrders-10\"(\"beforeID\", \"afterID\", \"timestamp\", \"beforeTimestamp\", \"_customerid\", \"__timestamp\") AS SELECT *\nFROM \"coorders_1\"\nWHERE \"beforeID\" = $1 AND \"beforeTimestamp\" = $2\nORDER BY \"__timestamp\" DESC NULLS LAST, \"_customerid\", \"afterID\", \"timestamp\""
+      "name" : "CoOrders",
+      "sql" : "CREATE OR REPLACE VIEW \"CoOrders\"(\"beforeID\", \"afterID\", \"timestamp\", \"beforeTimestamp\", \"_customerid\", \"__timestamp\") AS SELECT *\nFROM \"coorders_1\"\nWHERE \"beforeID\" = $1 AND \"beforeTimestamp\" = $2\nORDER BY \"__timestamp\" DESC NULLS LAST, \"_customerid\", \"afterID\", \"timestamp\""
     },
     {
-      "name" : "Query.CoOrders-16",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CoOrders-16\"(\"beforeID\", \"afterID\", \"timestamp\", \"beforeTimestamp\", \"_customerid\", \"__timestamp\") AS SELECT *\nFROM \"coorders_1\"\nWHERE \"beforeID\" = $1 AND \"afterID\" = $2 AND \"timestamp\" = $3 AND \"beforeTimestamp\" = $4\nORDER BY \"__timestamp\" DESC NULLS LAST, \"_customerid\""
+      "name" : "CoOrders",
+      "sql" : "CREATE OR REPLACE VIEW \"CoOrders\"(\"beforeID\", \"afterID\", \"timestamp\", \"beforeTimestamp\", \"_customerid\", \"__timestamp\") AS SELECT *\nFROM \"coorders_1\"\nWHERE \"beforeID\" = $1 AND \"afterID\" = $2 AND \"timestamp\" = $3 AND \"beforeTimestamp\" = $4\nORDER BY \"__timestamp\" DESC NULLS LAST, \"_customerid\""
     },
     {
-      "name" : "Query.CoOrders-15",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CoOrders-15\"(\"beforeID\", \"afterID\", \"timestamp\", \"beforeTimestamp\", \"_customerid\", \"__timestamp\") AS SELECT *\nFROM \"coorders_1\"\nWHERE \"beforeID\" = $1 AND \"afterID\" = $2 AND \"timestamp\" = $3\nORDER BY \"__timestamp\" DESC NULLS LAST, \"_customerid\", \"beforeTimestamp\""
+      "name" : "CoOrders",
+      "sql" : "CREATE OR REPLACE VIEW \"CoOrders\"(\"beforeID\", \"afterID\", \"timestamp\", \"beforeTimestamp\", \"_customerid\", \"__timestamp\") AS SELECT *\nFROM \"coorders_1\"\nWHERE \"beforeID\" = $1 AND \"afterID\" = $2 AND \"timestamp\" = $3\nORDER BY \"__timestamp\" DESC NULLS LAST, \"_customerid\", \"beforeTimestamp\""
     },
     {
-      "name" : "Query.CoOrders-14",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CoOrders-14\"(\"beforeID\", \"afterID\", \"timestamp\", \"beforeTimestamp\", \"_customerid\", \"__timestamp\") AS SELECT *\nFROM \"coorders_1\"\nWHERE \"beforeID\" = $1 AND \"afterID\" = $2 AND \"beforeTimestamp\" = $3\nORDER BY \"__timestamp\" DESC NULLS LAST, \"_customerid\", \"timestamp\""
+      "name" : "CoOrders",
+      "sql" : "CREATE OR REPLACE VIEW \"CoOrders\"(\"beforeID\", \"afterID\", \"timestamp\", \"beforeTimestamp\", \"_customerid\", \"__timestamp\") AS SELECT *\nFROM \"coorders_1\"\nWHERE \"beforeID\" = $1 AND \"afterID\" = $2 AND \"beforeTimestamp\" = $3\nORDER BY \"__timestamp\" DESC NULLS LAST, \"_customerid\", \"timestamp\""
     },
     {
-      "name" : "Query.Orders-17",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Orders-17\"(\"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\", \"customerid\", \"time\""
+      "name" : "Orders",
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\", \"customerid\", \"time\""
     },
     {
-      "name" : "Query.Orders-18",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Orders-18\"(\"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"time\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\", \"customerid\""
+      "name" : "Orders",
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"time\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\", \"customerid\""
     },
     {
-      "name" : "Query.Orders-19",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Orders-19\"(\"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"customerid\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\", \"time\""
+      "name" : "Orders",
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"customerid\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\", \"time\""
     },
     {
-      "name" : "Query.CoOrders-3",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CoOrders-3\"(\"beforeID\", \"afterID\", \"timestamp\", \"beforeTimestamp\", \"_customerid\", \"__timestamp\") AS SELECT *\nFROM \"coorders_1\"\nWHERE \"timestamp\" = $1\nORDER BY \"__timestamp\" DESC NULLS LAST, \"beforeID\", \"_customerid\", \"beforeTimestamp\", \"afterID\""
+      "name" : "CoOrders",
+      "sql" : "CREATE OR REPLACE VIEW \"CoOrders\"(\"beforeID\", \"afterID\", \"timestamp\", \"beforeTimestamp\", \"_customerid\", \"__timestamp\") AS SELECT *\nFROM \"coorders_1\"\nWHERE \"timestamp\" = $1\nORDER BY \"__timestamp\" DESC NULLS LAST, \"beforeID\", \"_customerid\", \"beforeTimestamp\", \"afterID\""
     },
     {
-      "name" : "Query.CoOrders-4",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CoOrders-4\"(\"beforeID\", \"afterID\", \"timestamp\", \"beforeTimestamp\", \"_customerid\", \"__timestamp\") AS SELECT *\nFROM \"coorders_1\"\nWHERE \"timestamp\" = $1 AND \"beforeTimestamp\" = $2\nORDER BY \"__timestamp\" DESC NULLS LAST, \"beforeID\", \"_customerid\", \"afterID\""
+      "name" : "CoOrders",
+      "sql" : "CREATE OR REPLACE VIEW \"CoOrders\"(\"beforeID\", \"afterID\", \"timestamp\", \"beforeTimestamp\", \"_customerid\", \"__timestamp\") AS SELECT *\nFROM \"coorders_1\"\nWHERE \"timestamp\" = $1 AND \"beforeTimestamp\" = $2\nORDER BY \"__timestamp\" DESC NULLS LAST, \"beforeID\", \"_customerid\", \"afterID\""
     },
     {
-      "name" : "Query.Orders-20",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Orders-20\"(\"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"customerid\" = $1 AND \"time\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\""
+      "name" : "Orders",
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"customerid\" = $1 AND \"time\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\""
     },
     {
-      "name" : "Query.CoOrders-5",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CoOrders-5\"(\"beforeID\", \"afterID\", \"timestamp\", \"beforeTimestamp\", \"_customerid\", \"__timestamp\") AS SELECT *\nFROM \"coorders_1\"\nWHERE \"afterID\" = $1\nORDER BY \"__timestamp\" DESC NULLS LAST, \"beforeID\", \"_customerid\", \"beforeTimestamp\", \"timestamp\""
+      "name" : "CoOrders",
+      "sql" : "CREATE OR REPLACE VIEW \"CoOrders\"(\"beforeID\", \"afterID\", \"timestamp\", \"beforeTimestamp\", \"_customerid\", \"__timestamp\") AS SELECT *\nFROM \"coorders_1\"\nWHERE \"afterID\" = $1\nORDER BY \"__timestamp\" DESC NULLS LAST, \"beforeID\", \"_customerid\", \"beforeTimestamp\", \"timestamp\""
     },
     {
-      "name" : "Query.CoOrders-6",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CoOrders-6\"(\"beforeID\", \"afterID\", \"timestamp\", \"beforeTimestamp\", \"_customerid\", \"__timestamp\") AS SELECT *\nFROM \"coorders_1\"\nWHERE \"afterID\" = $1 AND \"beforeTimestamp\" = $2\nORDER BY \"__timestamp\" DESC NULLS LAST, \"beforeID\", \"_customerid\", \"timestamp\""
+      "name" : "CoOrders",
+      "sql" : "CREATE OR REPLACE VIEW \"CoOrders\"(\"beforeID\", \"afterID\", \"timestamp\", \"beforeTimestamp\", \"_customerid\", \"__timestamp\") AS SELECT *\nFROM \"coorders_1\"\nWHERE \"afterID\" = $1 AND \"beforeTimestamp\" = $2\nORDER BY \"__timestamp\" DESC NULLS LAST, \"beforeID\", \"_customerid\", \"timestamp\""
     },
     {
-      "name" : "Query.CoOrders-7",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CoOrders-7\"(\"beforeID\", \"afterID\", \"timestamp\", \"beforeTimestamp\", \"_customerid\", \"__timestamp\") AS SELECT *\nFROM \"coorders_1\"\nWHERE \"afterID\" = $1 AND \"timestamp\" = $2\nORDER BY \"__timestamp\" DESC NULLS LAST, \"beforeID\", \"_customerid\", \"beforeTimestamp\""
+      "name" : "CoOrders",
+      "sql" : "CREATE OR REPLACE VIEW \"CoOrders\"(\"beforeID\", \"afterID\", \"timestamp\", \"beforeTimestamp\", \"_customerid\", \"__timestamp\") AS SELECT *\nFROM \"coorders_1\"\nWHERE \"afterID\" = $1 AND \"timestamp\" = $2\nORDER BY \"__timestamp\" DESC NULLS LAST, \"beforeID\", \"_customerid\", \"beforeTimestamp\""
     },
     {
-      "name" : "Query.Orders-23",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Orders-23\"(\"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"customerid\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"time\""
+      "name" : "Orders",
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"customerid\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"time\""
     },
     {
-      "name" : "Query.CoOrders-8",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CoOrders-8\"(\"beforeID\", \"afterID\", \"timestamp\", \"beforeTimestamp\", \"_customerid\", \"__timestamp\") AS SELECT *\nFROM \"coorders_1\"\nWHERE \"afterID\" = $1 AND \"timestamp\" = $2 AND \"beforeTimestamp\" = $3\nORDER BY \"__timestamp\" DESC NULLS LAST, \"beforeID\", \"_customerid\""
+      "name" : "CoOrders",
+      "sql" : "CREATE OR REPLACE VIEW \"CoOrders\"(\"beforeID\", \"afterID\", \"timestamp\", \"beforeTimestamp\", \"_customerid\", \"__timestamp\") AS SELECT *\nFROM \"coorders_1\"\nWHERE \"afterID\" = $1 AND \"timestamp\" = $2 AND \"beforeTimestamp\" = $3\nORDER BY \"__timestamp\" DESC NULLS LAST, \"beforeID\", \"_customerid\""
     },
     {
-      "name" : "Query.Orders-24",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Orders-24\"(\"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"customerid\" = $2 AND \"time\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST"
+      "name" : "Orders",
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"customerid\" = $2 AND \"time\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST"
     },
     {
-      "name" : "Query.CoOrders-9",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CoOrders-9\"(\"beforeID\", \"afterID\", \"timestamp\", \"beforeTimestamp\", \"_customerid\", \"__timestamp\") AS SELECT *\nFROM \"coorders_1\"\nWHERE \"beforeID\" = $1\nORDER BY \"__timestamp\" DESC NULLS LAST, \"_customerid\", \"beforeTimestamp\", \"afterID\", \"timestamp\""
+      "name" : "CoOrders",
+      "sql" : "CREATE OR REPLACE VIEW \"CoOrders\"(\"beforeID\", \"afterID\", \"timestamp\", \"beforeTimestamp\", \"_customerid\", \"__timestamp\") AS SELECT *\nFROM \"coorders_1\"\nWHERE \"beforeID\" = $1\nORDER BY \"__timestamp\" DESC NULLS LAST, \"_customerid\", \"beforeTimestamp\", \"afterID\", \"timestamp\""
     },
     {
-      "name" : "Query.Orders-21",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Orders-21\"(\"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"customerid\", \"time\""
+      "name" : "Orders",
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"customerid\", \"time\""
     },
     {
-      "name" : "Query.Orders-22",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Orders-22\"(\"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"customerid\""
+      "name" : "Orders",
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"customerid\""
     },
     {
-      "name" : "Query.CoOrders-1",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CoOrders-1\"(\"beforeID\", \"afterID\", \"timestamp\", \"beforeTimestamp\", \"_customerid\", \"__timestamp\") AS SELECT *\nFROM \"coorders_1\"\nORDER BY \"__timestamp\" DESC NULLS LAST, \"beforeID\", \"_customerid\", \"beforeTimestamp\", \"afterID\", \"timestamp\""
+      "name" : "CoOrders",
+      "sql" : "CREATE OR REPLACE VIEW \"CoOrders\"(\"beforeID\", \"afterID\", \"timestamp\", \"beforeTimestamp\", \"_customerid\", \"__timestamp\") AS SELECT *\nFROM \"coorders_1\"\nORDER BY \"__timestamp\" DESC NULLS LAST, \"beforeID\", \"_customerid\", \"beforeTimestamp\", \"afterID\", \"timestamp\""
     },
     {
-      "name" : "Query.CoOrders-2",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CoOrders-2\"(\"beforeID\", \"afterID\", \"timestamp\", \"beforeTimestamp\", \"_customerid\", \"__timestamp\") AS SELECT *\nFROM \"coorders_1\"\nWHERE \"beforeTimestamp\" = $1\nORDER BY \"__timestamp\" DESC NULLS LAST, \"beforeID\", \"_customerid\", \"afterID\", \"timestamp\""
+      "name" : "CoOrders",
+      "sql" : "CREATE OR REPLACE VIEW \"CoOrders\"(\"beforeID\", \"afterID\", \"timestamp\", \"beforeTimestamp\", \"_customerid\", \"__timestamp\") AS SELECT *\nFROM \"coorders_1\"\nWHERE \"beforeTimestamp\" = $1\nORDER BY \"__timestamp\" DESC NULLS LAST, \"beforeID\", \"_customerid\", \"afterID\", \"timestamp\""
     }
   ]
 }

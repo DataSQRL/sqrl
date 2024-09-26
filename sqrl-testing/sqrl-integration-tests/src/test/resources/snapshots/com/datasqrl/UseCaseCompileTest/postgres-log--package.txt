@@ -116,20 +116,20 @@ LogicalTableScan(table=[[event_2]])
   ],
   "views" : [
     {
-      "name" : "Query.Data-2",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Data-2\"(\"_uuid\", \"ID\", \"EPOCH_TIMESTAMP\", \"SOME_VALUE\", \"TIMESTAMP\", \"event_time\") AS SELECT *\nFROM \"data_2\"\nWHERE \"ID\" = $1\nORDER BY \"TIMESTAMP\" DESC NULLS LAST"
+      "name" : "Data",
+      "sql" : "CREATE OR REPLACE VIEW \"Data\"(\"_uuid\", \"ID\", \"EPOCH_TIMESTAMP\", \"SOME_VALUE\", \"TIMESTAMP\", \"event_time\") AS SELECT *\nFROM \"data_2\"\nWHERE \"ID\" = $1\nORDER BY \"TIMESTAMP\" DESC NULLS LAST"
     },
     {
-      "name" : "Query.MyEvent-4",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.MyEvent-4\"(\"_uuid\", \"ID\", \"EPOCH_TIMESTAMP\", \"SOME_VALUE\", \"event_time\") AS SELECT *\nFROM \"myevent_1\"\nORDER BY \"_uuid\""
+      "name" : "MyEvent",
+      "sql" : "CREATE OR REPLACE VIEW \"MyEvent\"(\"_uuid\", \"ID\", \"EPOCH_TIMESTAMP\", \"SOME_VALUE\", \"event_time\") AS SELECT *\nFROM \"myevent_1\"\nORDER BY \"_uuid\""
     },
     {
-      "name" : "Query.Event-3",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Event-3\"(\"_uuid\", \"ID\", \"EPOCH_TIMESTAMP\", \"SOME_VALUE\", \"event_time\") AS SELECT *\nFROM \"event_2\"\nORDER BY \"_uuid\""
+      "name" : "Event",
+      "sql" : "CREATE OR REPLACE VIEW \"Event\"(\"_uuid\", \"ID\", \"EPOCH_TIMESTAMP\", \"SOME_VALUE\", \"event_time\") AS SELECT *\nFROM \"event_2\"\nORDER BY \"_uuid\""
     },
     {
-      "name" : "Query.Data-1",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Data-1\"(\"_uuid\", \"ID\", \"EPOCH_TIMESTAMP\", \"SOME_VALUE\", \"TIMESTAMP\", \"event_time\") AS SELECT *\nFROM \"data_2\"\nORDER BY \"TIMESTAMP\" DESC NULLS LAST, \"ID\""
+      "name" : "Data",
+      "sql" : "CREATE OR REPLACE VIEW \"Data\"(\"_uuid\", \"ID\", \"EPOCH_TIMESTAMP\", \"SOME_VALUE\", \"TIMESTAMP\", \"event_time\") AS SELECT *\nFROM \"data_2\"\nORDER BY \"TIMESTAMP\" DESC NULLS LAST, \"ID\""
     }
   ]
 }

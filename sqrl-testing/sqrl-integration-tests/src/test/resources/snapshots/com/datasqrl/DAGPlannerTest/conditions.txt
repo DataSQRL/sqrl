@@ -289,196 +289,196 @@ LogicalFilter(condition=[ARRAY_CONTAINS(split('one, two', ','), $1)])
   ],
   "views" : [
     {
-      "name" : "Query.Product-16",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-16\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3 AND \"category\" = $4\nORDER BY \"_ingest_time\" DESC NULLS LAST"
+      "name" : "Product",
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3 AND \"category\" = $4\nORDER BY \"_ingest_time\" DESC NULLS LAST"
     },
     {
-      "name" : "Query.Product-13",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-13\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"description\", \"category\""
+      "name" : "Product",
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"description\", \"category\""
     },
     {
-      "name" : "Query.Product-12",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-12\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"description\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\""
+      "name" : "Product",
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"description\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\""
     },
     {
-      "name" : "Query.Product-15",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-15\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"category\""
+      "name" : "Product",
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"category\""
     },
     {
-      "name" : "Query.Product-14",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-14\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"description\""
+      "name" : "Product",
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"description\""
     },
     {
-      "name" : "Query.Product-3",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-3\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"description\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"category\""
+      "name" : "Product",
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"description\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"category\""
     },
     {
-      "name" : "Query.Product-4",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-4\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"description\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\""
+      "name" : "Product",
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"description\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\""
     },
     {
-      "name" : "Query.Product-1",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-1\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\", \"category\""
+      "name" : "Product",
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\", \"category\""
     },
     {
-      "name" : "Query.Product-2",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-2\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"category\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\""
+      "name" : "Product",
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"category\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\""
     },
     {
-      "name" : "Query.Product-7",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-7\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1 AND \"description\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"category\""
+      "name" : "Product",
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1 AND \"description\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"category\""
     },
     {
-      "name" : "Query.Product-8",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-8\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1 AND \"description\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\""
+      "name" : "Product",
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1 AND \"description\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\""
     },
     {
-      "name" : "Query.ProductFilter1-19",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.ProductFilter1-19\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter1_1\"\nWHERE \"description\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"category\""
+      "name" : "ProductFilter1",
+      "sql" : "CREATE OR REPLACE VIEW \"ProductFilter1\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter1_1\"\nWHERE \"description\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"category\""
     },
     {
-      "name" : "Query.Product-5",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-5\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"description\", \"category\""
+      "name" : "Product",
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"description\", \"category\""
     },
     {
-      "name" : "Query.Product-6",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-6\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"description\""
+      "name" : "Product",
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"description\""
     },
     {
-      "name" : "Query.ProductFilter1-27",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.ProductFilter1-27\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter1_1\"\nWHERE \"productid\" = $1 AND \"description\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"category\""
+      "name" : "ProductFilter1",
+      "sql" : "CREATE OR REPLACE VIEW \"ProductFilter1\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter1_1\"\nWHERE \"productid\" = $1 AND \"description\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"category\""
     },
     {
-      "name" : "Query.ProductFilter1-26",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.ProductFilter1-26\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter1_1\"\nWHERE \"productid\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"description\""
+      "name" : "ProductFilter1",
+      "sql" : "CREATE OR REPLACE VIEW \"ProductFilter1\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter1_1\"\nWHERE \"productid\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"description\""
     },
     {
-      "name" : "Query.Product-9",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-9\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"description\", \"category\""
+      "name" : "Product",
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"description\", \"category\""
     },
     {
-      "name" : "Query.ProductFilter1-29",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.ProductFilter1-29\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter1_1\"\nWHERE \"productid\" = $1 AND \"name\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"description\", \"category\""
+      "name" : "ProductFilter1",
+      "sql" : "CREATE OR REPLACE VIEW \"ProductFilter1\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter1_1\"\nWHERE \"productid\" = $1 AND \"name\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"description\", \"category\""
     },
     {
-      "name" : "Query.ProductFilter2-38",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.ProductFilter2-38\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter2_1\"\nWHERE \"name\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"description\""
+      "name" : "ProductFilter2",
+      "sql" : "CREATE OR REPLACE VIEW \"ProductFilter2\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter2_1\"\nWHERE \"name\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"description\""
     },
     {
-      "name" : "Query.ProductFilter1-28",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.ProductFilter1-28\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter1_1\"\nWHERE \"productid\" = $1 AND \"description\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\""
+      "name" : "ProductFilter1",
+      "sql" : "CREATE OR REPLACE VIEW \"ProductFilter1\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter1_1\"\nWHERE \"productid\" = $1 AND \"description\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\""
     },
     {
-      "name" : "Query.ProductFilter2-39",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.ProductFilter2-39\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter2_1\"\nWHERE \"name\" = $1 AND \"description\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"category\""
+      "name" : "ProductFilter2",
+      "sql" : "CREATE OR REPLACE VIEW \"ProductFilter2\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter2_1\"\nWHERE \"name\" = $1 AND \"description\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"category\""
     },
     {
-      "name" : "Query.ProductFilter1-23",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.ProductFilter1-23\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter1_1\"\nWHERE \"name\" = $1 AND \"description\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"category\""
+      "name" : "ProductFilter1",
+      "sql" : "CREATE OR REPLACE VIEW \"ProductFilter1\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter1_1\"\nWHERE \"name\" = $1 AND \"description\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"category\""
     },
     {
-      "name" : "Query.ProductFilter2-36",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.ProductFilter2-36\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter2_1\"\nWHERE \"description\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\""
+      "name" : "ProductFilter2",
+      "sql" : "CREATE OR REPLACE VIEW \"ProductFilter2\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter2_1\"\nWHERE \"description\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\""
     },
     {
-      "name" : "Query.ProductFilter1-22",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.ProductFilter1-22\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter1_1\"\nWHERE \"name\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"description\""
+      "name" : "ProductFilter1",
+      "sql" : "CREATE OR REPLACE VIEW \"ProductFilter1\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter1_1\"\nWHERE \"name\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"description\""
     },
     {
-      "name" : "Query.ProductFilter2-37",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.ProductFilter2-37\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter2_1\"\nWHERE \"name\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"description\", \"category\""
+      "name" : "ProductFilter2",
+      "sql" : "CREATE OR REPLACE VIEW \"ProductFilter2\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter2_1\"\nWHERE \"name\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"description\", \"category\""
     },
     {
-      "name" : "Query.ProductFilter1-25",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.ProductFilter1-25\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter1_1\"\nWHERE \"productid\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"description\", \"category\""
+      "name" : "ProductFilter1",
+      "sql" : "CREATE OR REPLACE VIEW \"ProductFilter1\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter1_1\"\nWHERE \"productid\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"description\", \"category\""
     },
     {
-      "name" : "Query.ProductFilter2-34",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.ProductFilter2-34\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter2_1\"\nWHERE \"category\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\""
+      "name" : "ProductFilter2",
+      "sql" : "CREATE OR REPLACE VIEW \"ProductFilter2\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter2_1\"\nWHERE \"category\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\""
     },
     {
-      "name" : "Query.ProductFilter1-24",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.ProductFilter1-24\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter1_1\"\nWHERE \"name\" = $1 AND \"description\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\""
+      "name" : "ProductFilter1",
+      "sql" : "CREATE OR REPLACE VIEW \"ProductFilter1\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter1_1\"\nWHERE \"name\" = $1 AND \"description\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\""
     },
     {
-      "name" : "Query.ProductFilter2-35",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.ProductFilter2-35\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter2_1\"\nWHERE \"description\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"category\""
+      "name" : "ProductFilter2",
+      "sql" : "CREATE OR REPLACE VIEW \"ProductFilter2\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter2_1\"\nWHERE \"description\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"category\""
     },
     {
-      "name" : "Query.ProductFilter2-33",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.ProductFilter2-33\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter2_1\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\", \"category\""
+      "name" : "ProductFilter2",
+      "sql" : "CREATE OR REPLACE VIEW \"ProductFilter2\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter2_1\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\", \"category\""
     },
     {
-      "name" : "Query.ProductFilter1-21",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.ProductFilter1-21\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter1_1\"\nWHERE \"name\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"description\", \"category\""
+      "name" : "ProductFilter1",
+      "sql" : "CREATE OR REPLACE VIEW \"ProductFilter1\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter1_1\"\nWHERE \"name\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"description\", \"category\""
     },
     {
-      "name" : "Query.ProductFilter1-20",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.ProductFilter1-20\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter1_1\"\nWHERE \"description\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\""
+      "name" : "ProductFilter1",
+      "sql" : "CREATE OR REPLACE VIEW \"ProductFilter1\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter1_1\"\nWHERE \"description\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\""
     },
     {
-      "name" : "Query.ProductFilter1-18",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.ProductFilter1-18\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter1_1\"\nWHERE \"category\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\""
+      "name" : "ProductFilter1",
+      "sql" : "CREATE OR REPLACE VIEW \"ProductFilter1\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter1_1\"\nWHERE \"category\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\""
     },
     {
-      "name" : "Query.ProductFilter1-17",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.ProductFilter1-17\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter1_1\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\", \"category\""
+      "name" : "ProductFilter1",
+      "sql" : "CREATE OR REPLACE VIEW \"ProductFilter1\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter1_1\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\", \"category\""
     },
     {
-      "name" : "Query.ProductFilter2-47",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.ProductFilter2-47\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter2_1\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"category\""
+      "name" : "ProductFilter2",
+      "sql" : "CREATE OR REPLACE VIEW \"ProductFilter2\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter2_1\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"category\""
     },
     {
-      "name" : "Query.ProductFilter2-48",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.ProductFilter2-48\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter2_1\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3 AND \"category\" = $4\nORDER BY \"_ingest_time\" DESC NULLS LAST"
+      "name" : "ProductFilter2",
+      "sql" : "CREATE OR REPLACE VIEW \"ProductFilter2\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter2_1\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3 AND \"category\" = $4\nORDER BY \"_ingest_time\" DESC NULLS LAST"
     },
     {
-      "name" : "Query.ProductFilter2-45",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.ProductFilter2-45\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter2_1\"\nWHERE \"productid\" = $1 AND \"name\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"description\", \"category\""
+      "name" : "ProductFilter2",
+      "sql" : "CREATE OR REPLACE VIEW \"ProductFilter2\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter2_1\"\nWHERE \"productid\" = $1 AND \"name\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"description\", \"category\""
     },
     {
-      "name" : "Query.ProductFilter2-46",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.ProductFilter2-46\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter2_1\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"description\""
+      "name" : "ProductFilter2",
+      "sql" : "CREATE OR REPLACE VIEW \"ProductFilter2\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter2_1\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"description\""
     },
     {
-      "name" : "Query.ProductFilter1-30",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.ProductFilter1-30\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter1_1\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"description\""
+      "name" : "ProductFilter1",
+      "sql" : "CREATE OR REPLACE VIEW \"ProductFilter1\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter1_1\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"description\""
     },
     {
-      "name" : "Query.ProductFilter2-43",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.ProductFilter2-43\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter2_1\"\nWHERE \"productid\" = $1 AND \"description\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"category\""
+      "name" : "ProductFilter2",
+      "sql" : "CREATE OR REPLACE VIEW \"ProductFilter2\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter2_1\"\nWHERE \"productid\" = $1 AND \"description\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"category\""
     },
     {
-      "name" : "Query.ProductFilter2-44",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.ProductFilter2-44\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter2_1\"\nWHERE \"productid\" = $1 AND \"description\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\""
+      "name" : "ProductFilter2",
+      "sql" : "CREATE OR REPLACE VIEW \"ProductFilter2\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter2_1\"\nWHERE \"productid\" = $1 AND \"description\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\""
     },
     {
-      "name" : "Query.Product-11",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-11\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"description\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"category\""
+      "name" : "Product",
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"description\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"category\""
     },
     {
-      "name" : "Query.ProductFilter1-32",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.ProductFilter1-32\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter1_1\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3 AND \"category\" = $4\nORDER BY \"_ingest_time\" DESC NULLS LAST"
+      "name" : "ProductFilter1",
+      "sql" : "CREATE OR REPLACE VIEW \"ProductFilter1\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter1_1\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3 AND \"category\" = $4\nORDER BY \"_ingest_time\" DESC NULLS LAST"
     },
     {
-      "name" : "Query.ProductFilter2-41",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.ProductFilter2-41\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter2_1\"\nWHERE \"productid\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"description\", \"category\""
+      "name" : "ProductFilter2",
+      "sql" : "CREATE OR REPLACE VIEW \"ProductFilter2\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter2_1\"\nWHERE \"productid\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"description\", \"category\""
     },
     {
-      "name" : "Query.Product-10",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-10\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"description\""
+      "name" : "Product",
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"description\""
     },
     {
-      "name" : "Query.ProductFilter1-31",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.ProductFilter1-31\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter1_1\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"category\""
+      "name" : "ProductFilter1",
+      "sql" : "CREATE OR REPLACE VIEW \"ProductFilter1\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter1_1\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"category\""
     },
     {
-      "name" : "Query.ProductFilter2-42",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.ProductFilter2-42\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter2_1\"\nWHERE \"productid\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"description\""
+      "name" : "ProductFilter2",
+      "sql" : "CREATE OR REPLACE VIEW \"ProductFilter2\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter2_1\"\nWHERE \"productid\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"description\""
     },
     {
-      "name" : "Query.ProductFilter2-40",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.ProductFilter2-40\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter2_1\"\nWHERE \"name\" = $1 AND \"description\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\""
+      "name" : "ProductFilter2",
+      "sql" : "CREATE OR REPLACE VIEW \"ProductFilter2\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"productfilter2_1\"\nWHERE \"name\" = $1 AND \"description\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\""
     }
   ]
 }

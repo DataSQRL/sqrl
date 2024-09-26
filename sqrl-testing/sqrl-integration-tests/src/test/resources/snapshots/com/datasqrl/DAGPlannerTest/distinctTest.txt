@@ -394,108 +394,72 @@ LogicalProject(customerid=[$0], timestamp=[$4], name=[$2])
   ],
   "views" : [
     {
-      "name" : "Query.CustomerByUpdated-19",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CustomerByUpdated-19\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerbyupdated_1\"\nORDER BY \"customerid\""
+      "name" : "CustomerByUpdated",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerByUpdated\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerbyupdated_1\"\nORDER BY \"customerid\""
     },
     {
-      "name" : "Query.CustomerByMultiple-8",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CustomerByMultiple-8\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerbymultiple_1\"\nWHERE \"customerid\" = $1 AND \"email\" = $2"
+      "name" : "CustomerByTime2",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerByTime2\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerbytime2_1\"\nORDER BY \"customerid\""
     },
     {
-      "name" : "Query.CustomerByTime2-15",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CustomerByTime2-15\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerbytime2_1\"\nORDER BY \"customerid\""
+      "name" : "Customer",
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\", \"lastUpdated\""
     },
     {
-      "name" : "Query.Customer-1",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Customer-1\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\", \"lastUpdated\""
+      "name" : "CustomerByMultiple",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerByMultiple\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerbymultiple_1\"\nWHERE \"customerid\" = $1\nORDER BY \"email\""
     },
     {
-      "name" : "Query.CustomerByMultiple-7",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CustomerByMultiple-7\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerbymultiple_1\"\nWHERE \"customerid\" = $1\nORDER BY \"email\""
+      "name" : "Customer",
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1 AND \"lastUpdated\" = $2\nORDER BY \"timestamp\" DESC NULLS LAST"
     },
     {
-      "name" : "Query.CustomerByTime2-16",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CustomerByTime2-16\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerbytime2_1\"\nWHERE \"customerid\" = $1"
+      "name" : "Customer",
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nWHERE \"lastUpdated\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\""
     },
     {
-      "name" : "Query.Customer-4",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Customer-4\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1 AND \"lastUpdated\" = $2\nORDER BY \"timestamp\" DESC NULLS LAST"
+      "name" : "Customer",
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"lastUpdated\""
     },
     {
-      "name" : "Query.CustomerVaryingCase-24",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CustomerVaryingCase-24\"(\"customerID\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customervaryingcase_1\"\nWHERE \"customerID\" = $1"
+      "name" : "CustomerVaryingCase",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerVaryingCase\"(\"customerID\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customervaryingcase_1\"\nORDER BY \"customerID\""
     },
     {
-      "name" : "Query.Customer-2",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Customer-2\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nWHERE \"lastUpdated\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\""
+      "name" : "CustomerByMultipleTime",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerByMultipleTime\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerbymultipletime_1\"\nORDER BY \"customerid\", \"email\""
     },
     {
-      "name" : "Query.Customer-3",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Customer-3\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"lastUpdated\""
+      "name" : "CustomerByMultiple",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerByMultiple\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerbymultiple_1\"\nWHERE \"email\" = $1\nORDER BY \"customerid\""
     },
     {
-      "name" : "Query.CustomerVaryingCase-23",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CustomerVaryingCase-23\"(\"customerID\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customervaryingcase_1\"\nORDER BY \"customerID\""
+      "name" : "CustomerByMultiple",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerByMultiple\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerbymultiple_1\"\nORDER BY \"customerid\", \"email\""
     },
     {
-      "name" : "Query.CustomerByMultipleTime-9",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CustomerByMultipleTime-9\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerbymultipletime_1\"\nORDER BY \"customerid\", \"email\""
+      "name" : "ExplicitDistinct",
+      "sql" : "CREATE OR REPLACE VIEW \"ExplicitDistinct\"(\"customerid\", \"timestamp\", \"name\") AS SELECT *\nFROM \"explicitdistinct_1\"\nORDER BY \"customerid\""
     },
     {
-      "name" : "Query.CustomerByMultiple-6",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CustomerByMultiple-6\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerbymultiple_1\"\nWHERE \"email\" = $1\nORDER BY \"customerid\""
+      "name" : "CustomerByTime",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerByTime\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerbytime_1\"\nORDER BY \"customerid\""
     },
     {
-      "name" : "Query.CustomerByMultiple-5",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CustomerByMultiple-5\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerbymultiple_1\"\nORDER BY \"customerid\", \"email\""
+      "name" : "CustomerByTimeAsc",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerByTimeAsc\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerbytimeasc_1\"\nORDER BY \"customerid\""
     },
     {
-      "name" : "Query.ExplicitDistinct-26",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.ExplicitDistinct-26\"(\"customerid\", \"timestamp\", \"name\") AS SELECT *\nFROM \"explicitdistinct_1\"\nWHERE \"customerid\" = $1"
+      "name" : "CustomerByMultipleTime",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerByMultipleTime\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerbymultipletime_1\"\nWHERE \"customerid\" = $1\nORDER BY \"email\""
     },
     {
-      "name" : "Query.ExplicitDistinct-25",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.ExplicitDistinct-25\"(\"customerid\", \"timestamp\", \"name\") AS SELECT *\nFROM \"explicitdistinct_1\"\nORDER BY \"customerid\""
+      "name" : "CustomerByMultipleTime",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerByMultipleTime\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerbymultipletime_1\"\nWHERE \"email\" = $1\nORDER BY \"customerid\""
     },
     {
-      "name" : "Query.CustomerByTime-13",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CustomerByTime-13\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerbytime_1\"\nORDER BY \"customerid\""
-    },
-    {
-      "name" : "Query.CustomerByTime-14",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CustomerByTime-14\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerbytime_1\"\nWHERE \"customerid\" = $1"
-    },
-    {
-      "name" : "Query.CustomerByMultipleTime-12",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CustomerByMultipleTime-12\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerbymultipletime_1\"\nWHERE \"customerid\" = $1 AND \"email\" = $2"
-    },
-    {
-      "name" : "Query.CustomerByTimeAsc-17",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CustomerByTimeAsc-17\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerbytimeasc_1\"\nORDER BY \"customerid\""
-    },
-    {
-      "name" : "Query.CustomerByMultipleTime-11",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CustomerByMultipleTime-11\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerbymultipletime_1\"\nWHERE \"customerid\" = $1\nORDER BY \"email\""
-    },
-    {
-      "name" : "Query.CustomerByTimeAsc-18",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CustomerByTimeAsc-18\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerbytimeasc_1\"\nWHERE \"customerid\" = $1"
-    },
-    {
-      "name" : "Query.CustomerByUpdated-20",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CustomerByUpdated-20\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerbyupdated_1\"\nWHERE \"customerid\" = $1"
-    },
-    {
-      "name" : "Query.CustomerByMultipleTime-10",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CustomerByMultipleTime-10\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerbymultipletime_1\"\nWHERE \"email\" = $1\nORDER BY \"customerid\""
-    },
-    {
-      "name" : "Query.CustomerByUpdatedAsc-21",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CustomerByUpdatedAsc-21\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerbyupdatedasc_1\"\nORDER BY \"customerid\""
-    },
-    {
-      "name" : "Query.CustomerByUpdatedAsc-22",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.CustomerByUpdatedAsc-22\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerbyupdatedasc_1\"\nWHERE \"customerid\" = $1"
+      "name" : "CustomerByUpdatedAsc",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerByUpdatedAsc\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerbyupdatedasc_1\"\nORDER BY \"customerid\""
     }
   ]
 }

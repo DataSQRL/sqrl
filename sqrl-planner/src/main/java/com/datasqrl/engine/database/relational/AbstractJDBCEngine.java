@@ -6,14 +6,11 @@ package com.datasqrl.engine.database.relational;
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.convert.PostgresSqlNodeToString;
-import com.datasqrl.calcite.convert.SnowflakeSqlNodeToString;
 import com.datasqrl.calcite.dialect.postgres.SqlCreatePostgresView;
-import com.datasqrl.calcite.dialect.snowflake.SqlCreateSnowflakeView;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.engine.EngineFeature;
-import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.database.DatabasePhysicalPlan;
 import com.datasqrl.engine.database.DatabaseViewPhysicalPlan.DatabaseView;
@@ -28,6 +25,7 @@ import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.ReadQuery;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
+import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.datasqrl.sql.PgExtension;
 import com.datasqrl.sql.SqlDDLStatement;
@@ -41,20 +39,19 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.RelShuttleImpl;
-import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexCall;
+import org.apache.calcite.rex.RexDynamicParam;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
-import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
@@ -107,9 +104,11 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
     //Create database views
     for (Map.Entry<IdentifiedQuery, QueryTemplate> entry : databaseQueries.entrySet()) {
       RelNode relNode = entry.getValue().getRelNode();
-
+      if (hasDynamicParam(relNode)) {
+        continue;
+      }
       SqlParserPos pos = new SqlParserPos(0, 0);
-      String viewName = entry.getKey().getNameId();
+      String viewName = getViewName(entry.getKey());
       SqlIdentifier viewNameIdentifier = new SqlIdentifier(viewName, pos);
       SqlNodeList columnList = new SqlNodeList(relNode.getRowType().getFieldList().stream()
           .map(f->new SqlIdentifier(f.getName(), SqlParserPos.ZERO))
@@ -131,6 +130,25 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
     return new JDBCPhysicalPlan(ddlStatements,
         views,
         databaseQueries);
+  }
+
+  protected boolean hasDynamicParam(RelNode relNode) {
+    AtomicBoolean hasParam = new AtomicBoolean(false);
+    relNode.accept(new RexShuttle(){
+      @Override
+      public RexNode visitDynamicParam(RexDynamicParam dynamicParam) {
+        hasParam.set(true);
+        return super.visitDynamicParam(dynamicParam);
+      }
+    });
+    return hasParam.get();
+  }
+
+  protected String getViewName(IdentifiedQuery query) {
+    if (query instanceof APIQuery) {
+      return ((APIQuery) query).getNamePath().getDisplay();
+    }
+    return query.getNameId();
   }
 
   private List<SqlDDLStatement> extractTypeExtensions(List<ReadQuery> queries) {
