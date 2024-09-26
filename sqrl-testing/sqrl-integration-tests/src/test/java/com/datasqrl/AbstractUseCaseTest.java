@@ -56,10 +56,12 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
     String testname = Stream.of(script, graphQlFile, packageFile)
         .map(AbstractAssetSnapshotTest::getDisplayName)
         .collect(Collectors.joining("-"));
-
-    this.snapshot = Snapshot.of(testname, getClass());
-//    System.out.printf("%s - %s\n", baseDir, arguments);
     AssertStatusHook hook = execute(baseDir, arguments.toArray(new String[0]));
+    snapshot(testname, hook);
+  }
+
+  public void snapshot(String testname, AssertStatusHook hook) {
+    this.snapshot = Snapshot.of(testname, getClass());
     if (hook.isFailed()) {
       createFailSnapshot(hook.getFailMessage());
     } else {

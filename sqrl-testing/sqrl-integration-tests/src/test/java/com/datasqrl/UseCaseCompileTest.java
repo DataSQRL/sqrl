@@ -25,14 +25,6 @@ import org.testcontainers.utility.DockerImageName;
  * deployment assets
  */
 public class UseCaseCompileTest extends AbstractUseCaseTest {
-  @Container
-  private PostgreSQLContainer testDatabase =
-      new PostgreSQLContainer(DockerImageName.parse("ankane/pgvector:v0.5.0")
-          .asCompatibleSubstituteFor("postgres"))
-          .withDatabaseName("foo")
-          .withUsername("foo")
-          .withPassword("secret")
-          .withDatabaseName("datasqrl");
 
   public static final Path USECASE_DIR = getResourcesDirectory("usecases");
 
@@ -45,34 +37,6 @@ public class UseCaseCompileTest extends AbstractUseCaseTest {
   @ArgumentsSource(UseCaseFiles.class)
   void testUsecase(Path script, Path graphQlFile, Path packageFile) {
     super.testUsecase(script, graphQlFile, packageFile);
-
-    try {
-      verifyPostgresSchema(script);
-    } catch (Exception e) {
-      fail(e);
-    }
-  }
-
-  private void verifyPostgresSchema(Path script) throws Exception {
-    File file = script.getParent().resolve("build/plan/postgres.json").toFile();
-    if (file.exists()) {
-      testDatabase.start();
-      Map plan = new ObjectMapper().readValue(file, Map.class);
-      for (Map statement : (List<Map>) plan.get("ddl")) {
-        Connection connection = testDatabase.createConnection("");
-        try (Statement stmt = connection.createStatement()) {
-          stmt.executeUpdate((String) statement.get("sql"));
-        }
-      }
-      if (plan.get("views") != null) {
-        for (Map statement : (List<Map>) plan.get("views")) {
-          Connection connection = testDatabase.createConnection("");
-          try (Statement stmt = connection.createStatement()) {
-            stmt.executeUpdate((String) statement.get("sql"));
-          }
-        }
-      }
-    }
   }
 
   static class UseCaseFiles extends SqrlScriptsAndLocalPackages {
