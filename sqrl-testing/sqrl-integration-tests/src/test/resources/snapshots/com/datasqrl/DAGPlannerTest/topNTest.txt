@@ -426,27 +426,27 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
   "views" : [
     {
       "name" : "CustomerDistinct",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerDistinct\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerdistinct_1\"\nORDER BY \"customerid\""
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerDistinct\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerdistinct_1\"\nORDER BY \"customerid\";"
     },
     {
       "name" : "Customer",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\", \"lastUpdated\""
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\", \"lastUpdated\";"
     },
     {
       "name" : "CustomerOrders",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerOrders\"(\"id\", \"customerid\", \"_time\") AS SELECT *\nFROM \"customerorders_1\"\nORDER BY \"_time\" DESC NULLS LAST, \"id\""
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerOrders\"(\"id\", \"customerid\", \"_time\") AS SELECT *\nFROM \"customerorders_1\"\nORDER BY \"_time\" DESC NULLS LAST, \"id\";"
     },
     {
       "name" : "Product",
-      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\", \"category\""
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\", \"category\";"
     },
     {
       "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_3\"\nORDER BY \"id\""
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_3\"\nORDER BY \"id\";"
     },
     {
       "name" : "CustomerId",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerId\"(\"customerid\", \"_timestamp\") AS SELECT *\nFROM \"customerid_1\"\nORDER BY \"customerid\""
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerId\"(\"customerid\", \"_timestamp\") AS SELECT *\nFROM \"customerid_1\"\nORDER BY \"customerid\";"
     }
   ]
 }

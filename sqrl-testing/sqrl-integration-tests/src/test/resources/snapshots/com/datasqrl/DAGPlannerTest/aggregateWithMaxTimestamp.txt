@@ -216,27 +216,27 @@ LogicalTableScan(table=[[orders_2]])
   "views" : [
     {
       "name" : "OrderAgg3",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderAgg3\"(\"customerid\", \"count\", \"__timestamp\") AS SELECT *\nFROM \"orderagg3_1\"\nORDER BY \"customerid\""
+      "sql" : "CREATE OR REPLACE VIEW \"OrderAgg3\"(\"customerid\", \"count\", \"__timestamp\") AS SELECT *\nFROM \"orderagg3_1\"\nORDER BY \"customerid\";"
     },
     {
       "name" : "OrderAgg2",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderAgg2\"(\"customerid\", \"timestamp\", \"count\") AS SELECT *\nFROM \"orderagg2_1\"\nORDER BY \"customerid\""
+      "sql" : "CREATE OR REPLACE VIEW \"OrderAgg2\"(\"customerid\", \"timestamp\", \"count\") AS SELECT *\nFROM \"orderagg2_1\"\nORDER BY \"customerid\";"
     },
     {
       "name" : "OrderAgg1",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderAgg1\"(\"customerid\", \"count\", \"__timestamp\") AS SELECT *\nFROM \"orderagg1_1\"\nORDER BY \"customerid\""
+      "sql" : "CREATE OR REPLACE VIEW \"OrderAgg1\"(\"customerid\", \"count\", \"__timestamp\") AS SELECT *\nFROM \"orderagg1_1\"\nORDER BY \"customerid\";"
     },
     {
       "name" : "OrdersState",
-      "sql" : "CREATE OR REPLACE VIEW \"OrdersState\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"ordersstate_1\"\nORDER BY \"id\""
+      "sql" : "CREATE OR REPLACE VIEW \"OrdersState\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"ordersstate_1\"\nORDER BY \"id\";"
     },
     {
       "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\""
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\";"
     },
     {
       "name" : "OrderAgg4",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderAgg4\"(\"customerid\", \"timestamp\", \"count\") AS SELECT *\nFROM \"orderagg4_1\"\nORDER BY \"customerid\""
+      "sql" : "CREATE OR REPLACE VIEW \"OrderAgg4\"(\"customerid\", \"timestamp\", \"count\") AS SELECT *\nFROM \"orderagg4_1\"\nORDER BY \"customerid\";"
     }
   ]
 }

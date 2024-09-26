@@ -100,11 +100,11 @@ LogicalTableScan(table=[[orders_1]])
   "views" : [
     {
       "name" : "",
-      "sql" : "CREATE OR REPLACE VIEW *(\"id\", \"customerid\", \"time\", \"items\", \"_source_time\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"_source_time\" DESC NULLS LAST, \"id\", \"time\""
+      "sql" : "CREATE OR REPLACE VIEW *(\"id\", \"customerid\", \"time\", \"items\", \"_source_time\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"_source_time\" DESC NULLS LAST, \"id\", \"time\";"
     },
     {
       "name" : "",
-      "sql" : "CREATE OR REPLACE VIEW *(\"timeSec\", \"number\", \"volume\") AS SELECT *\nFROM \"ordercount_1\"\nORDER BY \"timeSec\" DESC NULLS LAST"
+      "sql" : "CREATE OR REPLACE VIEW *(\"timeSec\", \"number\", \"volume\") AS SELECT *\nFROM \"ordercount_1\"\nORDER BY \"timeSec\" DESC NULLS LAST;"
     }
   ]
 }

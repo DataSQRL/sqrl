@@ -323,7 +323,7 @@ Inputs: tempalert_1
   "views" : [
     {
       "name" : "ObservationGroup",
-      "sql" : "CREATE OR REPLACE VIEW \"ObservationGroup\"(\"groupId\", \"groupName\", \"created\", \"patients\") AS SELECT *\nFROM \"observationgroup_2\"\nORDER BY \"created\" DESC NULLS LAST, \"groupId\""
+      "sql" : "CREATE OR REPLACE VIEW \"ObservationGroup\"(\"groupId\", \"groupName\", \"created\", \"patients\") AS SELECT *\nFROM \"observationgroup_2\"\nORDER BY \"created\" DESC NULLS LAST, \"groupId\";"
     }
   ]
 }

@@ -485,19 +485,19 @@ LogicalProject(__pk1_id=[$0], loan_type_id=[$1], total_amount=[$2], total_loans=
   "views" : [
     {
       "name" : "ApplicationUpdates",
-      "sql" : "CREATE OR REPLACE VIEW \"ApplicationUpdates\"(\"loan_application_id\", \"status\", \"message\", \"_uuid\", \"event_time\") AS SELECT *\nFROM \"applicationupdates_2\"\nORDER BY \"event_time\" DESC NULLS LAST, \"_uuid\""
+      "sql" : "CREATE OR REPLACE VIEW \"ApplicationUpdates\"(\"loan_application_id\", \"status\", \"message\", \"_uuid\", \"event_time\") AS SELECT *\nFROM \"applicationupdates_2\"\nORDER BY \"event_time\" DESC NULLS LAST, \"_uuid\";"
     },
     {
       "name" : "ApplicationStatus",
-      "sql" : "CREATE OR REPLACE VIEW \"ApplicationStatus\"(\"status\", \"message\", \"event_time\", \"id\", \"customer_id\", \"loan_type_id\", \"amount\", \"duration\", \"max_amount\", \"min_amount\", \"_uuid\") AS SELECT *\nFROM \"applicationstatus_1\"\nORDER BY \"event_time\" DESC NULLS LAST, \"_uuid\""
+      "sql" : "CREATE OR REPLACE VIEW \"ApplicationStatus\"(\"status\", \"message\", \"event_time\", \"id\", \"customer_id\", \"loan_type_id\", \"amount\", \"duration\", \"max_amount\", \"min_amount\", \"_uuid\") AS SELECT *\nFROM \"applicationstatus_1\"\nORDER BY \"event_time\" DESC NULLS LAST, \"_uuid\";"
     },
     {
       "name" : "LoanTypes",
-      "sql" : "CREATE OR REPLACE VIEW \"LoanTypes\"(\"id\", \"name\", \"description\", \"interest_rate\", \"max_amount\", \"min_amount\", \"max_duration\", \"min_duration\", \"updated_at\") AS SELECT *\nFROM \"loantypes_3\"\nORDER BY \"id\""
+      "sql" : "CREATE OR REPLACE VIEW \"LoanTypes\"(\"id\", \"name\", \"description\", \"interest_rate\", \"max_amount\", \"min_amount\", \"max_duration\", \"min_duration\", \"updated_at\") AS SELECT *\nFROM \"loantypes_3\"\nORDER BY \"id\";"
     },
     {
       "name" : "ApplicationAlert",
-      "sql" : "CREATE OR REPLACE VIEW \"ApplicationAlert\"(\"id\", \"customer_id\", \"loan_type_id\", \"max_amount\", \"min_amount\", \"amount\", \"_uuid\", \"_event_time\") AS SELECT *\nFROM \"applicationalert_1\"\nORDER BY \"_event_time\" DESC NULLS LAST, \"_uuid\""
+      "sql" : "CREATE OR REPLACE VIEW \"ApplicationAlert\"(\"id\", \"customer_id\", \"loan_type_id\", \"max_amount\", \"min_amount\", \"amount\", \"_uuid\", \"_event_time\") AS SELECT *\nFROM \"applicationalert_1\"\nORDER BY \"_event_time\" DESC NULLS LAST, \"_uuid\";"
     }
   ]
 }

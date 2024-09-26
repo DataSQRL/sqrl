@@ -111,11 +111,11 @@ LogicalProject(month=[endOfMonth(endOfMonth($4))], timestamp=[$4], _customerid=[
   "views" : [
     {
       "name" : "CustomerCopy",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerCopy\"(\"month\", \"timestamp\", \"_customerid\", \"_lastUpdated\") AS SELECT *\nFROM \"customercopy_1\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"_customerid\", \"_lastUpdated\""
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerCopy\"(\"month\", \"timestamp\", \"_customerid\", \"_lastUpdated\") AS SELECT *\nFROM \"customercopy_1\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"_customerid\", \"_lastUpdated\";"
     },
     {
       "name" : "Customer",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\", \"lastUpdated\""
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\", \"lastUpdated\";"
     }
   ]
 }

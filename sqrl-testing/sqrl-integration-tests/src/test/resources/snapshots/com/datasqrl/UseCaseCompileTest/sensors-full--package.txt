@@ -322,23 +322,23 @@ LogicalTableScan(table=[[sensors_2]])
   "views" : [
     {
       "name" : "Machine",
-      "sql" : "CREATE OR REPLACE VIEW \"Machine\"(\"machineid\", \"maxTemp\", \"avgTemp\", \"_timeSec\") AS SELECT *\nFROM \"machine_1\"\nORDER BY \"machineid\""
+      "sql" : "CREATE OR REPLACE VIEW \"Machine\"(\"machineid\", \"maxTemp\", \"avgTemp\", \"_timeSec\") AS SELECT *\nFROM \"machine_1\"\nORDER BY \"machineid\";"
     },
     {
       "name" : "Sensors",
-      "sql" : "CREATE OR REPLACE VIEW \"Sensors\"(\"id\", \"machineId\", \"placed\", \"timestamp\") AS SELECT *\nFROM \"sensors_3\"\nORDER BY \"id\""
+      "sql" : "CREATE OR REPLACE VIEW \"Sensors\"(\"id\", \"machineId\", \"placed\", \"timestamp\") AS SELECT *\nFROM \"sensors_3\"\nORDER BY \"id\";"
     },
     {
       "name" : "HighTemp",
-      "sql" : "CREATE OR REPLACE VIEW \"HighTemp\"(\"machineid\", \"sensorid\", \"temp\", \"timeSec\") AS SELECT *\nFROM \"hightemp_1\"\nORDER BY \"timeSec\" DESC, \"sensorid\""
+      "sql" : "CREATE OR REPLACE VIEW \"HighTemp\"(\"machineid\", \"sensorid\", \"temp\", \"timeSec\") AS SELECT *\nFROM \"hightemp_1\"\nORDER BY \"timeSec\" DESC, \"sensorid\";"
     },
     {
       "name" : "SecReading",
-      "sql" : "CREATE OR REPLACE VIEW \"SecReading\"(\"sensorid\", \"timeSec\", \"temp\") AS SELECT *\nFROM \"secreading_1\"\nORDER BY \"timeSec\" DESC, \"sensorid\""
+      "sql" : "CREATE OR REPLACE VIEW \"SecReading\"(\"sensorid\", \"timeSec\", \"temp\") AS SELECT *\nFROM \"secreading_1\"\nORDER BY \"timeSec\" DESC, \"sensorid\";"
     },
     {
       "name" : "SensorReading",
-      "sql" : "CREATE OR REPLACE VIEW \"SensorReading\"(\"sensorid\", \"time\", \"temperature\", \"humidity\", \"timestamp\") AS SELECT *\nFROM \"sensorreading_2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"sensorid\", \"time\""
+      "sql" : "CREATE OR REPLACE VIEW \"SensorReading\"(\"sensorid\", \"time\", \"temperature\", \"humidity\", \"timestamp\") AS SELECT *\nFROM \"sensorreading_2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"sensorid\", \"time\";"
     }
   ]
 }

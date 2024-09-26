@@ -726,43 +726,43 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
   "views" : [
     {
       "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"items\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\""
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"items\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\";"
     },
     {
       "name" : "CustomersWithSpending",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomersWithSpending\"(\"id\", \"email\", \"spend\", \"__timestamp16\") AS SELECT *\nFROM \"customerswithspending_1\"\nORDER BY \"id\""
+      "sql" : "CREATE OR REPLACE VIEW \"CustomersWithSpending\"(\"id\", \"email\", \"spend\", \"__timestamp16\") AS SELECT *\nFROM \"customerswithspending_1\"\nORDER BY \"id\";"
     },
     {
       "name" : "OrderCountry",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderCountry\"(\"time\", \"country\", \"_id\") AS SELECT *\nFROM \"ordercountry_1\"\nORDER BY \"time\" DESC NULLS LAST, \"_id\""
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCountry\"(\"time\", \"country\", \"_id\") AS SELECT *\nFROM \"ordercountry_1\"\nORDER BY \"time\" DESC NULLS LAST, \"_id\";"
     },
     {
       "name" : "OrderCountryInner",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderCountryInner\"(\"time\", \"country\", \"_id\") AS SELECT \"orders_2\".\"time\", \"customers_3\".\"country\", \"orders_2\".\"id\" AS \"_id\"\nFROM \"orders_2\"\n INNER JOIN \"customers_3\" ON \"orders_2\".\"customerid\" = \"customers_3\".\"id\"\nORDER BY \"orders_2\".\"id\", \"orders_2\".\"time\""
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCountryInner\"(\"time\", \"country\", \"_id\") AS SELECT \"orders_2\".\"time\", \"customers_3\".\"country\", \"orders_2\".\"id\" AS \"_id\"\nFROM \"orders_2\"\n INNER JOIN \"customers_3\" ON \"orders_2\".\"customerid\" = \"customers_3\".\"id\"\nORDER BY \"orders_2\".\"id\", \"orders_2\".\"time\";"
     },
     {
       "name" : "CustomerPromotion",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerPromotion\"(\"first_name\", \"last_name\", \"email\", \"spend\", \"saved\", \"__pk1_id\", \"_week\") AS SELECT *\nFROM \"customerpromotion_1\"\nORDER BY \"__pk1_id\", \"_week\" DESC"
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerPromotion\"(\"first_name\", \"last_name\", \"email\", \"spend\", \"saved\", \"__pk1_id\", \"_week\") AS SELECT *\nFROM \"customerpromotion_1\"\nORDER BY \"__pk1_id\", \"_week\" DESC;"
     },
     {
       "name" : "NumOrders",
-      "sql" : "CREATE OR REPLACE VIEW \"NumOrders\"(\"count\", \"__pk\", \"__timestamp\") AS SELECT *\nFROM \"numorders_1\"\nORDER BY \"__pk\""
+      "sql" : "CREATE OR REPLACE VIEW \"NumOrders\"(\"count\", \"__pk\", \"__timestamp\") AS SELECT *\nFROM \"numorders_1\"\nORDER BY \"__pk\";"
     },
     {
       "name" : "Products",
-      "sql" : "CREATE OR REPLACE VIEW \"Products\"(\"id\", \"name\", \"sizing\", \"weight_in_gram\", \"type\", \"category\", \"usda_id\", \"updated\") AS SELECT *\nFROM \"products_3\"\nORDER BY \"id\""
+      "sql" : "CREATE OR REPLACE VIEW \"Products\"(\"id\", \"name\", \"sizing\", \"weight_in_gram\", \"type\", \"category\", \"usda_id\", \"updated\") AS SELECT *\nFROM \"products_3\"\nORDER BY \"id\";"
     },
     {
       "name" : "Customers",
-      "sql" : "CREATE OR REPLACE VIEW \"Customers\"(\"id\", \"first_name\", \"last_name\", \"email\", \"ip_address\", \"country\", \"changed_on\", \"timestamp\", \"country0\") AS SELECT *\nFROM \"customers_3\"\nORDER BY \"id\""
+      "sql" : "CREATE OR REPLACE VIEW \"Customers\"(\"id\", \"first_name\", \"last_name\", \"email\", \"ip_address\", \"country\", \"changed_on\", \"timestamp\", \"country0\") AS SELECT *\nFROM \"customers_3\"\nORDER BY \"id\";"
     },
     {
       "name" : "HighSpendingUsers",
-      "sql" : "CREATE OR REPLACE VIEW \"HighSpendingUsers\"(\"id\", \"email\", \"__timestamp16\") AS SELECT *\nFROM \"highspendingusers_1\"\nORDER BY \"id\""
+      "sql" : "CREATE OR REPLACE VIEW \"HighSpendingUsers\"(\"id\", \"email\", \"__timestamp16\") AS SELECT *\nFROM \"highspendingusers_1\"\nORDER BY \"id\";"
     },
     {
       "name" : "RecentTotal",
-      "sql" : "CREATE OR REPLACE VIEW \"RecentTotal\"(\"total\", \"quantity\", \"__pk\", \"_time\") AS SELECT *\nFROM \"recenttotal_1\"\nORDER BY \"__pk\""
+      "sql" : "CREATE OR REPLACE VIEW \"RecentTotal\"(\"total\", \"quantity\", \"__pk\", \"_time\") AS SELECT *\nFROM \"recenttotal_1\"\nORDER BY \"__pk\";"
     }
   ]
 }

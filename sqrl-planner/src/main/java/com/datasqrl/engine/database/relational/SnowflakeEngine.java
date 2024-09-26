@@ -50,7 +50,6 @@ import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
-import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.tools.RelBuilder;
 
@@ -117,7 +116,7 @@ public class SnowflakeEngine extends AbstractJDBCQueryEngine {
               scan, icebergDataTypeMapper);
         }
       });
-      if (hasDynamicParam(relNode)) {
+      if (hasParams(entry.getKey())) {
         continue;
       }
 
@@ -135,7 +134,7 @@ public class SnowflakeEngine extends AbstractJDBCQueryEngine {
           select, null, false);
 
       SnowflakeSqlNodeToString toString = new SnowflakeSqlNodeToString();
-      String sql = toString.convert(() -> createView).getSql();
+      String sql = toString.convert(() -> createView).getSql() + ";";
 
       views.add(new DatabaseViewImpl(viewName, sql));
     }

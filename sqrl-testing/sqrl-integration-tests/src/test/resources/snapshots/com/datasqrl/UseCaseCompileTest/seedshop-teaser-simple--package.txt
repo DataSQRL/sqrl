@@ -162,15 +162,15 @@ LogicalAggregate(group=[{0, 1}], revenue=[SUM($2)]) hints[TumbleAggregationHint 
   "views" : [
     {
       "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"productid\", \"quantity\", \"unit_price\", \"discount\", \"total\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\""
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"productid\", \"quantity\", \"unit_price\", \"discount\", \"total\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\";"
     },
     {
       "name" : "CustomerSpending",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerSpending\"(\"customerid\", \"week\", \"total\", \"saved\") AS SELECT *\nFROM \"customerspending_1\"\nORDER BY \"week\" DESC, \"customerid\""
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerSpending\"(\"customerid\", \"week\", \"total\", \"saved\") AS SELECT *\nFROM \"customerspending_1\"\nORDER BY \"week\" DESC, \"customerid\";"
     },
     {
       "name" : "ProductRevenue",
-      "sql" : "CREATE OR REPLACE VIEW \"ProductRevenue\"(\"productid\", \"week\", \"revenue\") AS SELECT *\nFROM \"productrevenue_1\"\nORDER BY \"week\" DESC, \"productid\""
+      "sql" : "CREATE OR REPLACE VIEW \"ProductRevenue\"(\"productid\", \"week\", \"revenue\") AS SELECT *\nFROM \"productrevenue_1\"\nORDER BY \"week\" DESC, \"productid\";"
     }
   ]
 }

@@ -278,7 +278,7 @@ LogicalTableScan(table=[[likes_2]])
   "views" : [
     {
       "name" : "Events",
-      "sql" : "CREATE OR REPLACE VIEW \"Events\"(\"url\", \"date\", \"time\", \"title\", \"abstract\", \"location\", \"speakers\", \"last_updated\", \"id\", \"full_text\", \"embedding\", \"startTime\", \"startTimestamp\") AS SELECT *\nFROM \"events_3\"\nORDER BY \"id\""
+      "sql" : "CREATE OR REPLACE VIEW \"Events\"(\"url\", \"date\", \"time\", \"title\", \"abstract\", \"location\", \"speakers\", \"last_updated\", \"id\", \"full_text\", \"embedding\", \"startTime\", \"startTimestamp\") AS SELECT *\nFROM \"events_3\"\nORDER BY \"id\";"
     }
   ]
 }

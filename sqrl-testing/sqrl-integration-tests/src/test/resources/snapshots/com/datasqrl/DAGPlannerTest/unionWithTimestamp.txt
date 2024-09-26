@@ -240,23 +240,23 @@ LogicalAggregate(group=[{0}], num=[COUNT()])
   "views" : [
     {
       "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\""
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\";"
     },
     {
       "name" : "Customer",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\", \"lastUpdated\""
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\", \"lastUpdated\";"
     },
     {
       "name" : "StreamCount",
-      "sql" : "CREATE OR REPLACE VIEW \"StreamCount\"(\"day\", \"num\") AS SELECT ENDOFDAY(\"rowtime\") AS \"day\", COUNT(*) AS \"num\"\nFROM (SELECT \"customerid\", \"time\" AS \"rowtime\"\n   FROM \"orders_2\"\n   UNION ALL\n   SELECT \"customerid\", \"timestamp\" AS \"rowtime\"\n   FROM \"customer_2\") AS \"t1\"\nGROUP BY ENDOFDAY(\"rowtime\")"
+      "sql" : "CREATE OR REPLACE VIEW \"StreamCount\"(\"day\", \"num\") AS SELECT ENDOFDAY(\"rowtime\") AS \"day\", COUNT(*) AS \"num\"\nFROM (SELECT \"customerid\", \"time\" AS \"rowtime\"\n   FROM \"orders_2\"\n   UNION ALL\n   SELECT \"customerid\", \"timestamp\" AS \"rowtime\"\n   FROM \"customer_2\") AS \"t1\"\nGROUP BY ENDOFDAY(\"rowtime\");"
     },
     {
       "name" : "CombinedStream",
-      "sql" : "CREATE OR REPLACE VIEW \"CombinedStream\"(\"customerid\", \"rowtime\") AS SELECT \"customerid\", \"time\" AS \"rowtime\"\nFROM \"orders_2\"\nUNION ALL\nSELECT \"customerid\", \"timestamp\" AS \"rowtime\"\nFROM \"customer_2\""
+      "sql" : "CREATE OR REPLACE VIEW \"CombinedStream\"(\"customerid\", \"rowtime\") AS SELECT \"customerid\", \"time\" AS \"rowtime\"\nFROM \"orders_2\"\nUNION ALL\nSELECT \"customerid\", \"timestamp\" AS \"rowtime\"\nFROM \"customer_2\";"
     },
     {
       "name" : "Product",
-      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\", \"category\""
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\", \"category\";"
     }
   ]
 }

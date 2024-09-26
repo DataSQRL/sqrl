@@ -379,55 +379,55 @@ LogicalProject(obj=[toJson('{"a": 1}')], _customerid=[$0], _timestamp=[$4])
   "views" : [
     {
       "name" : "Product",
-      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\", \"category\""
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\", \"category\";"
     },
     {
       "name" : "jsonQueryTable",
-      "sql" : "CREATE OR REPLACE VIEW \"jsonQueryTable\"(\"obj\", \"_customerid\", \"_timestamp\") AS SELECT JSONB_PATH_QUERY(CAST('{\"a\": {\"b\": 1}}' AS JSONB), '$.a') AS \"obj\", \"customerid\" AS \"_customerid\", \"timestamp\" AS \"_timestamp\"\nFROM \"customer_3\"\nORDER BY \"customerid\""
+      "sql" : "CREATE OR REPLACE VIEW \"jsonQueryTable\"(\"obj\", \"_customerid\", \"_timestamp\") AS SELECT JSONB_PATH_QUERY(CAST('{\"a\": {\"b\": 1}}' AS JSONB), '$.a') AS \"obj\", \"customerid\" AS \"_customerid\", \"timestamp\" AS \"_timestamp\"\nFROM \"customer_3\"\nORDER BY \"customerid\";"
     },
     {
       "name" : "Customer",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_3\"\nORDER BY \"customerid\""
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_3\"\nORDER BY \"customerid\";"
     },
     {
       "name" : "jsonArrayAggTable",
-      "sql" : "CREATE OR REPLACE VIEW \"jsonArrayAggTable\"(\"agg\", \"_name\", \"__timestamp\") AS SELECT JSONB_AGG(\"name\") AS \"agg\", \"name\" AS \"_name\", MAX(\"timestamp\") AS \"__timestamp\"\nFROM \"customer_3\"\nGROUP BY \"name\"\nORDER BY \"name\""
+      "sql" : "CREATE OR REPLACE VIEW \"jsonArrayAggTable\"(\"agg\", \"_name\", \"__timestamp\") AS SELECT JSONB_AGG(\"name\") AS \"agg\", \"name\" AS \"_name\", MAX(\"timestamp\") AS \"__timestamp\"\nFROM \"customer_3\"\nGROUP BY \"name\"\nORDER BY \"name\";"
     },
     {
       "name" : "jsonConcatTable",
-      "sql" : "CREATE OR REPLACE VIEW \"jsonConcatTable\"(\"obj\", \"_customerid\", \"_timestamp\") AS SELECT CAST('{\"a\": true}' AS JSONB) || CAST('{\"a\": false}' AS JSONB) AS \"obj\", \"customerid\" AS \"_customerid\", \"timestamp\" AS \"_timestamp\"\nFROM \"customer_3\"\nORDER BY \"customerid\""
+      "sql" : "CREATE OR REPLACE VIEW \"jsonConcatTable\"(\"obj\", \"_customerid\", \"_timestamp\") AS SELECT CAST('{\"a\": true}' AS JSONB) || CAST('{\"a\": false}' AS JSONB) AS \"obj\", \"customerid\" AS \"_customerid\", \"timestamp\" AS \"_timestamp\"\nFROM \"customer_3\"\nORDER BY \"customerid\";"
     },
     {
       "name" : "jsonExistsTable",
-      "sql" : "CREATE OR REPLACE VIEW \"jsonExistsTable\"(\"obj\", \"_customerid\", \"_timestamp\") AS SELECT JSONB_PATH_EXISTS(CAST('{\"a\": true}' AS JSONB), '$.a') AS \"obj\", \"customerid\" AS \"_customerid\", \"timestamp\" AS \"_timestamp\"\nFROM \"customer_3\"\nORDER BY \"customerid\""
+      "sql" : "CREATE OR REPLACE VIEW \"jsonExistsTable\"(\"obj\", \"_customerid\", \"_timestamp\") AS SELECT JSONB_PATH_EXISTS(CAST('{\"a\": true}' AS JSONB), '$.a') AS \"obj\", \"customerid\" AS \"_customerid\", \"timestamp\" AS \"_timestamp\"\nFROM \"customer_3\"\nORDER BY \"customerid\";"
     },
     {
       "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\""
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\";"
     },
     {
       "name" : "ObjComplex",
-      "sql" : "CREATE OR REPLACE VIEW \"ObjComplex\"(\"obj\", \"_customerid\", \"_timestamp\") AS SELECT JSONB_BUILD_OBJECT(CONCAT('application#', \"name\"), \"customerid\") AS \"obj\", \"customerid\" AS \"_customerid\", \"timestamp\" AS \"_timestamp\"\nFROM \"customer_3\"\nORDER BY \"customerid\""
+      "sql" : "CREATE OR REPLACE VIEW \"ObjComplex\"(\"obj\", \"_customerid\", \"_timestamp\") AS SELECT JSONB_BUILD_OBJECT(CONCAT('application#', \"name\"), \"customerid\") AS \"obj\", \"customerid\" AS \"_customerid\", \"timestamp\" AS \"_timestamp\"\nFROM \"customer_3\"\nORDER BY \"customerid\";"
     },
     {
       "name" : "jsonToStringTable",
-      "sql" : "CREATE OR REPLACE VIEW \"jsonToStringTable\"(\"obj\", \"_customerid\", \"_timestamp\") AS SELECT CAST('{\"a\": 1}' AS JSONB) #>> '{}' AS \"obj\", \"customerid\" AS \"_customerid\", \"timestamp\" AS \"_timestamp\"\nFROM \"customer_3\"\nORDER BY \"customerid\""
+      "sql" : "CREATE OR REPLACE VIEW \"jsonToStringTable\"(\"obj\", \"_customerid\", \"_timestamp\") AS SELECT CAST('{\"a\": 1}' AS JSONB) #>> '{}' AS \"obj\", \"customerid\" AS \"_customerid\", \"timestamp\" AS \"_timestamp\"\nFROM \"customer_3\"\nORDER BY \"customerid\";"
     },
     {
       "name" : "jsonArrayTable",
-      "sql" : "CREATE OR REPLACE VIEW \"jsonArrayTable\"(\"obj\", \"_customerid\", \"_timestamp\") AS SELECT JSONB_BUILD_ARRAY(\"customerid\") AS \"obj\", \"customerid\" AS \"_customerid\", \"timestamp\" AS \"_timestamp\"\nFROM \"customer_3\"\nORDER BY \"customerid\""
+      "sql" : "CREATE OR REPLACE VIEW \"jsonArrayTable\"(\"obj\", \"_customerid\", \"_timestamp\") AS SELECT JSONB_BUILD_ARRAY(\"customerid\") AS \"obj\", \"customerid\" AS \"_customerid\", \"timestamp\" AS \"_timestamp\"\nFROM \"customer_3\"\nORDER BY \"customerid\";"
     },
     {
       "name" : "toJsonTable",
-      "sql" : "CREATE OR REPLACE VIEW \"toJsonTable\"(\"obj\", \"_customerid\", \"_timestamp\") AS SELECT CAST('{\"a\": 1}' AS JSONB) AS \"obj\", \"customerid\" AS \"_customerid\", \"timestamp\" AS \"_timestamp\"\nFROM \"customer_3\"\nORDER BY \"customerid\""
+      "sql" : "CREATE OR REPLACE VIEW \"toJsonTable\"(\"obj\", \"_customerid\", \"_timestamp\") AS SELECT CAST('{\"a\": 1}' AS JSONB) AS \"obj\", \"customerid\" AS \"_customerid\", \"timestamp\" AS \"_timestamp\"\nFROM \"customer_3\"\nORDER BY \"customerid\";"
     },
     {
       "name" : "jsonExtractTable",
-      "sql" : "CREATE OR REPLACE VIEW \"jsonExtractTable\"(\"obj\", \"_customerid\", \"_timestamp\") AS SELECT JSONEXTRACT(CAST('{\"a\": \"hello\"}' AS JSONB), CAST('$.a' AS TEXT), CAST('default' AS TEXT)) AS \"obj\", \"customerid\" AS \"_customerid\", \"timestamp\" AS \"_timestamp\"\nFROM \"customer_3\"\nORDER BY \"customerid\""
+      "sql" : "CREATE OR REPLACE VIEW \"jsonExtractTable\"(\"obj\", \"_customerid\", \"_timestamp\") AS SELECT JSONEXTRACT(CAST('{\"a\": \"hello\"}' AS JSONB), CAST('$.a' AS TEXT), CAST('default' AS TEXT)) AS \"obj\", \"customerid\" AS \"_customerid\", \"timestamp\" AS \"_timestamp\"\nFROM \"customer_3\"\nORDER BY \"customerid\";"
     },
     {
       "name" : "jsonObjectAggTable",
-      "sql" : "CREATE OR REPLACE VIEW \"jsonObjectAggTable\"(\"agg\", \"_name\", \"__timestamp\") AS SELECT JSONB_OBJECT_AGG('key', \"name\") AS \"agg\", \"name\" AS \"_name\", MAX(\"timestamp\") AS \"__timestamp\"\nFROM \"customer_3\"\nGROUP BY \"name\"\nORDER BY \"name\""
+      "sql" : "CREATE OR REPLACE VIEW \"jsonObjectAggTable\"(\"agg\", \"_name\", \"__timestamp\") AS SELECT JSONB_OBJECT_AGG('key', \"name\") AS \"agg\", \"name\" AS \"_name\", MAX(\"timestamp\") AS \"__timestamp\"\nFROM \"customer_3\"\nGROUP BY \"name\"\nORDER BY \"name\";"
     }
   ]
 }

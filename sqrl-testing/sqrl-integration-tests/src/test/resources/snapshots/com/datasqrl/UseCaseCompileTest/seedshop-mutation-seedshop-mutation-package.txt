@@ -477,7 +477,7 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
   "views" : [
     {
       "name" : "Products",
-      "sql" : "CREATE OR REPLACE VIEW \"Products\"(\"id\", \"name\", \"sizing\", \"weight_in_gram\", \"type\", \"category\", \"usda_id\", \"updated\") AS SELECT *\nFROM \"products_3\"\nORDER BY \"id\""
+      "sql" : "CREATE OR REPLACE VIEW \"Products\"(\"id\", \"name\", \"sizing\", \"weight_in_gram\", \"type\", \"category\", \"usda_id\", \"updated\") AS SELECT *\nFROM \"products_3\"\nORDER BY \"id\";"
     }
   ]
 }

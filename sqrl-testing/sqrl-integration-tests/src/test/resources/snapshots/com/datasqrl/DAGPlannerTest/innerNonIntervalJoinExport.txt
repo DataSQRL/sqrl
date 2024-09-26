@@ -192,11 +192,11 @@ LogicalTableScan(table=[[orders_1]])
   "views" : [
     {
       "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\", \"customerid\", \"time\""
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\", \"customerid\", \"time\";"
     },
     {
       "name" : "CoOrders",
-      "sql" : "CREATE OR REPLACE VIEW \"CoOrders\"(\"beforeID\", \"afterID\", \"timestamp\", \"beforeTimestamp\", \"_customerid\", \"__timestamp\") AS SELECT *\nFROM \"coorders_1\"\nORDER BY \"__timestamp\" DESC NULLS LAST, \"beforeID\", \"_customerid\", \"beforeTimestamp\", \"afterID\", \"timestamp\""
+      "sql" : "CREATE OR REPLACE VIEW \"CoOrders\"(\"beforeID\", \"afterID\", \"timestamp\", \"beforeTimestamp\", \"_customerid\", \"__timestamp\") AS SELECT *\nFROM \"coorders_1\"\nORDER BY \"__timestamp\" DESC NULLS LAST, \"beforeID\", \"_customerid\", \"beforeTimestamp\", \"afterID\", \"timestamp\";"
     }
   ]
 }

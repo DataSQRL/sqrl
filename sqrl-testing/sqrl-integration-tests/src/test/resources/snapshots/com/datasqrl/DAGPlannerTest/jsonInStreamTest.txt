@@ -538,55 +538,55 @@ LogicalProject(obj=[toJson('{"a": 1}')], _customerid=[$0], _timestamp=[$4])
   "views" : [
     {
       "name" : "Product",
-      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\", \"category\""
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\", \"category\";"
     },
     {
       "name" : "jsonQueryTable",
-      "sql" : "CREATE OR REPLACE VIEW \"jsonQueryTable\"(\"obj\", \"_customerid\", \"_timestamp\") AS SELECT *\nFROM \"jsonquerytable_1\"\nORDER BY \"_customerid\""
+      "sql" : "CREATE OR REPLACE VIEW \"jsonQueryTable\"(\"obj\", \"_customerid\", \"_timestamp\") AS SELECT *\nFROM \"jsonquerytable_1\"\nORDER BY \"_customerid\";"
     },
     {
       "name" : "Customer",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_3\"\nORDER BY \"customerid\""
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_3\"\nORDER BY \"customerid\";"
     },
     {
       "name" : "jsonArrayAggTable",
-      "sql" : "CREATE OR REPLACE VIEW \"jsonArrayAggTable\"(\"agg\", \"_name\", \"__timestamp\") AS SELECT *\nFROM \"jsonarrayaggtable_1\"\nORDER BY \"_name\""
+      "sql" : "CREATE OR REPLACE VIEW \"jsonArrayAggTable\"(\"agg\", \"_name\", \"__timestamp\") AS SELECT *\nFROM \"jsonarrayaggtable_1\"\nORDER BY \"_name\";"
     },
     {
       "name" : "jsonConcatTable",
-      "sql" : "CREATE OR REPLACE VIEW \"jsonConcatTable\"(\"obj\", \"_customerid\", \"_timestamp\") AS SELECT *\nFROM \"jsonconcattable_1\"\nORDER BY \"_customerid\""
+      "sql" : "CREATE OR REPLACE VIEW \"jsonConcatTable\"(\"obj\", \"_customerid\", \"_timestamp\") AS SELECT *\nFROM \"jsonconcattable_1\"\nORDER BY \"_customerid\";"
     },
     {
       "name" : "jsonExistsTable",
-      "sql" : "CREATE OR REPLACE VIEW \"jsonExistsTable\"(\"obj\", \"_customerid\", \"_timestamp\") AS SELECT *\nFROM \"jsonexiststable_1\"\nORDER BY \"_customerid\""
+      "sql" : "CREATE OR REPLACE VIEW \"jsonExistsTable\"(\"obj\", \"_customerid\", \"_timestamp\") AS SELECT *\nFROM \"jsonexiststable_1\"\nORDER BY \"_customerid\";"
     },
     {
       "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\""
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\";"
     },
     {
       "name" : "ObjComplex",
-      "sql" : "CREATE OR REPLACE VIEW \"ObjComplex\"(\"obj\", \"_customerid\", \"_timestamp\") AS SELECT *\nFROM \"objcomplex_1\"\nORDER BY \"_customerid\""
+      "sql" : "CREATE OR REPLACE VIEW \"ObjComplex\"(\"obj\", \"_customerid\", \"_timestamp\") AS SELECT *\nFROM \"objcomplex_1\"\nORDER BY \"_customerid\";"
     },
     {
       "name" : "jsonToStringTable",
-      "sql" : "CREATE OR REPLACE VIEW \"jsonToStringTable\"(\"obj\", \"_customerid\", \"_timestamp\") AS SELECT *\nFROM \"jsontostringtable_1\"\nORDER BY \"_customerid\""
+      "sql" : "CREATE OR REPLACE VIEW \"jsonToStringTable\"(\"obj\", \"_customerid\", \"_timestamp\") AS SELECT *\nFROM \"jsontostringtable_1\"\nORDER BY \"_customerid\";"
     },
     {
       "name" : "jsonArrayTable",
-      "sql" : "CREATE OR REPLACE VIEW \"jsonArrayTable\"(\"obj\", \"_customerid\", \"_timestamp\") AS SELECT *\nFROM \"jsonarraytable_1\"\nORDER BY \"_customerid\""
+      "sql" : "CREATE OR REPLACE VIEW \"jsonArrayTable\"(\"obj\", \"_customerid\", \"_timestamp\") AS SELECT *\nFROM \"jsonarraytable_1\"\nORDER BY \"_customerid\";"
     },
     {
       "name" : "toJsonTable",
-      "sql" : "CREATE OR REPLACE VIEW \"toJsonTable\"(\"obj\", \"_customerid\", \"_timestamp\") AS SELECT *\nFROM \"tojsontable_1\"\nORDER BY \"_customerid\""
+      "sql" : "CREATE OR REPLACE VIEW \"toJsonTable\"(\"obj\", \"_customerid\", \"_timestamp\") AS SELECT *\nFROM \"tojsontable_1\"\nORDER BY \"_customerid\";"
     },
     {
       "name" : "jsonExtractTable",
-      "sql" : "CREATE OR REPLACE VIEW \"jsonExtractTable\"(\"obj\", \"_customerid\", \"_timestamp\") AS SELECT *\nFROM \"jsonextracttable_1\"\nORDER BY \"_customerid\""
+      "sql" : "CREATE OR REPLACE VIEW \"jsonExtractTable\"(\"obj\", \"_customerid\", \"_timestamp\") AS SELECT *\nFROM \"jsonextracttable_1\"\nORDER BY \"_customerid\";"
     },
     {
       "name" : "jsonObjectAggTable",
-      "sql" : "CREATE OR REPLACE VIEW \"jsonObjectAggTable\"(\"agg\", \"_name\", \"__timestamp\") AS SELECT *\nFROM \"jsonobjectaggtable_1\"\nORDER BY \"_name\""
+      "sql" : "CREATE OR REPLACE VIEW \"jsonObjectAggTable\"(\"agg\", \"_name\", \"__timestamp\") AS SELECT *\nFROM \"jsonobjectaggtable_1\"\nORDER BY \"_name\";"
     }
   ]
 }

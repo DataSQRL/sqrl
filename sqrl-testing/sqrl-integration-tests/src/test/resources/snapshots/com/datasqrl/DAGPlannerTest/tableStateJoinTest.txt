@@ -461,39 +461,39 @@ LogicalTableScan(table=[[product_1]])
   "views" : [
     {
       "name" : "Product",
-      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\", \"category\""
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\", \"category\";"
     },
     {
       "name" : "Customer",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_3\"\nORDER BY \"customerid\""
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_3\"\nORDER BY \"customerid\";"
     },
     {
       "name" : "OrderCustomerRightExcluded",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerRightExcluded\"(\"lastUpdated\", \"customerid\", \"name\", \"__timestamp\") AS SELECT *\nFROM \"ordercustomerrightexcluded_1\"\nORDER BY \"customerid\""
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerRightExcluded\"(\"lastUpdated\", \"customerid\", \"name\", \"__timestamp\") AS SELECT *\nFROM \"ordercustomerrightexcluded_1\"\nORDER BY \"customerid\";"
     },
     {
       "name" : "OrderCustomerLeftExcluded",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerLeftExcluded\"(\"time\", \"id\", \"customerid\") AS SELECT *\nFROM \"ordercustomerleftexcluded_1\"\nORDER BY \"id\""
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerLeftExcluded\"(\"time\", \"id\", \"customerid\") AS SELECT *\nFROM \"ordercustomerleftexcluded_1\"\nORDER BY \"id\";"
     },
     {
       "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_3\"\nORDER BY \"id\""
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_3\"\nORDER BY \"id\";"
     },
     {
       "name" : "OrderCustomer",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomer\"(\"time\", \"id\", \"name\", \"customerid\") AS SELECT *\nFROM \"ordercustomer_1\"\nORDER BY \"id\""
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomer\"(\"time\", \"id\", \"name\", \"customerid\") AS SELECT *\nFROM \"ordercustomer_1\"\nORDER BY \"id\";"
     },
     {
       "name" : "OrderCustomerConstant",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerConstant\"(\"time\", \"id\", \"name\", \"customerid\") AS SELECT *\nFROM \"ordercustomerconstant_1\"\nORDER BY \"id\""
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerConstant\"(\"time\", \"id\", \"name\", \"customerid\") AS SELECT *\nFROM \"ordercustomerconstant_1\"\nORDER BY \"id\";"
     },
     {
       "name" : "OrderCustomerRight",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerRight\"(\"ouuid\", \"id\", \"name\", \"customerid\", \"_customerid0\", \"__timestamp\") AS SELECT *\nFROM \"ordercustomerright_1\"\nORDER BY \"_customerid0\", \"ouuid\""
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerRight\"(\"ouuid\", \"id\", \"name\", \"customerid\", \"_customerid0\", \"__timestamp\") AS SELECT *\nFROM \"ordercustomerright_1\"\nORDER BY \"_customerid0\", \"ouuid\";"
     },
     {
       "name" : "OrderCustomerLeft",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerLeft\"(\"lastUpdated\", \"id\", \"name\", \"customerid\", \"__timestamp\") AS SELECT *\nFROM \"ordercustomerleft_1\"\nORDER BY \"id\""
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerLeft\"(\"lastUpdated\", \"id\", \"name\", \"customerid\", \"__timestamp\") AS SELECT *\nFROM \"ordercustomerleft_1\"\nORDER BY \"id\";"
     }
   ]
 }

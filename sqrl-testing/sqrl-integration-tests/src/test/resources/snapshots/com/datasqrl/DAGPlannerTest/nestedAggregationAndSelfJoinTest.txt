@@ -363,23 +363,23 @@ LogicalProject(__pk1_id=[$0], __pk2_customerid=[$1], __pk3_time=[$2], price=[$4]
   "views" : [
     {
       "name" : "Customer",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"_ingest_time\") AS SELECT *\nFROM \"customer_3\"\nORDER BY \"customerid\""
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"_ingest_time\") AS SELECT *\nFROM \"customer_3\"\nORDER BY \"customerid\";"
     },
     {
       "name" : "OrdersInline",
-      "sql" : "CREATE OR REPLACE VIEW \"OrdersInline\"(\"id\", \"customerid\", \"time\", \"price\", \"num\", \"_ingest_time\") AS SELECT *\nFROM \"ordersinline_1\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\", \"customerid\", \"time\""
+      "sql" : "CREATE OR REPLACE VIEW \"OrdersInline\"(\"id\", \"customerid\", \"time\", \"price\", \"num\", \"_ingest_time\") AS SELECT *\nFROM \"ordersinline_1\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\", \"customerid\", \"time\";"
     },
     {
       "name" : "Orders2",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders2\"(\"id\", \"_customerid\", \"_time\", \"_ingest_time\") AS SELECT *\nFROM \"orders2_1\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\", \"_customerid\", \"_time\""
+      "sql" : "CREATE OR REPLACE VIEW \"Orders2\"(\"id\", \"_customerid\", \"_time\", \"_ingest_time\") AS SELECT *\nFROM \"orders2_1\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\", \"_customerid\", \"_time\";"
     },
     {
       "name" : "EntryCount",
-      "sql" : "CREATE OR REPLACE VIEW \"EntryCount\"(\"price\", \"_id\", \"_customerid\", \"_time\", \"_productid\", \"_ingest_time\") AS SELECT *\nFROM \"entrycount_1\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"_id\", \"_customerid\", \"_time\", \"_productid\""
+      "sql" : "CREATE OR REPLACE VIEW \"EntryCount\"(\"price\", \"_id\", \"_customerid\", \"_time\", \"_productid\", \"_ingest_time\") AS SELECT *\nFROM \"entrycount_1\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"_id\", \"_customerid\", \"_time\", \"_productid\";"
     },
     {
       "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\", \"customerid\", \"time\""
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\", \"customerid\", \"time\";"
     }
   ]
 }

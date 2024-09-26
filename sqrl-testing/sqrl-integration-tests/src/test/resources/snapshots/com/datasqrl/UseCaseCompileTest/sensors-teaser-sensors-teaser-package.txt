@@ -107,7 +107,7 @@ LogicalTableScan(table=[[sensorreading_1]])
   "views" : [
     {
       "name" : "SensorMaxTemp",
-      "sql" : "CREATE OR REPLACE VIEW \"SensorMaxTemp\"(\"sensorid\", \"maxTemp\", \"_timeSec\") AS SELECT *\nFROM \"sensormaxtemp_1\"\nORDER BY \"sensorid\""
+      "sql" : "CREATE OR REPLACE VIEW \"SensorMaxTemp\"(\"sensorid\", \"maxTemp\", \"_timeSec\") AS SELECT *\nFROM \"sensormaxtemp_1\"\nORDER BY \"sensorid\";"
     }
   ]
 }

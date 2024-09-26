@@ -167,15 +167,15 @@ LogicalTableScan(table=[[loantypes_1]])
   "views" : [
     {
       "name" : "Customers",
-      "sql" : "CREATE OR REPLACE VIEW \"Customers\"(\"id\", \"first_name\", \"last_name\", \"email\", \"phone\", \"address\", \"date_of_birth\", \"updated_at\") AS SELECT *\nFROM \"customers_2\"\nORDER BY \"updated_at\" DESC NULLS LAST, \"id\""
+      "sql" : "CREATE OR REPLACE VIEW \"Customers\"(\"id\", \"first_name\", \"last_name\", \"email\", \"phone\", \"address\", \"date_of_birth\", \"updated_at\") AS SELECT *\nFROM \"customers_2\"\nORDER BY \"updated_at\" DESC NULLS LAST, \"id\";"
     },
     {
       "name" : "Applications",
-      "sql" : "CREATE OR REPLACE VIEW \"Applications\"(\"id\", \"customer_id\", \"loan_type_id\", \"amount\", \"duration\", \"application_date\", \"updated_at\") AS SELECT *\nFROM \"applications_2\"\nORDER BY \"updated_at\" DESC NULLS LAST, \"id\""
+      "sql" : "CREATE OR REPLACE VIEW \"Applications\"(\"id\", \"customer_id\", \"loan_type_id\", \"amount\", \"duration\", \"application_date\", \"updated_at\") AS SELECT *\nFROM \"applications_2\"\nORDER BY \"updated_at\" DESC NULLS LAST, \"id\";"
     },
     {
       "name" : "LoanTypes",
-      "sql" : "CREATE OR REPLACE VIEW \"LoanTypes\"(\"id\", \"name\", \"description\", \"interest_rate\", \"max_amount\", \"min_amount\", \"max_duration\", \"min_duration\", \"updated_at\") AS SELECT *\nFROM \"loantypes_2\"\nORDER BY \"updated_at\" DESC NULLS LAST, \"id\""
+      "sql" : "CREATE OR REPLACE VIEW \"LoanTypes\"(\"id\", \"name\", \"description\", \"interest_rate\", \"max_amount\", \"min_amount\", \"max_duration\", \"min_duration\", \"updated_at\") AS SELECT *\nFROM \"loantypes_2\"\nORDER BY \"updated_at\" DESC NULLS LAST, \"id\";"
     }
   ]
 }

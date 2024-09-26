@@ -93,15 +93,15 @@ LogicalTableScan(table=[[myicebergtable_1]])
       "views" : [
         {
           "name" : "MyIcebergTable",
-          "sql" : "CREATE OR REPLACE VIEW MyIcebergTable(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM myicebergtable_1\nORDER BY updated_at DESC NULLS LAST, id"
+          "sql" : "CREATE OR REPLACE VIEW MyIcebergTable(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM myicebergtable_1\nORDER BY updated_at DESC NULLS LAST, id;"
         },
         {
           "name" : "applications",
-          "sql" : "CREATE OR REPLACE VIEW applications(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM applications_2\nORDER BY updated_at DESC NULLS LAST, id"
+          "sql" : "CREATE OR REPLACE VIEW applications(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM applications_2\nORDER BY updated_at DESC NULLS LAST, id;"
         },
         {
           "name" : "MySnowflakeTable",
-          "sql" : "CREATE OR REPLACE VIEW MySnowflakeTable(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM myicebergtable_1\nORDER BY updated_at DESC NULLS LAST, id"
+          "sql" : "CREATE OR REPLACE VIEW MySnowflakeTable(id, customer_id, loan_type_id, amount, duration, application_date, updated_at)\nAS SELECT *\nFROM myicebergtable_1\nORDER BY updated_at DESC NULLS LAST, id;"
         }
       ]
     }

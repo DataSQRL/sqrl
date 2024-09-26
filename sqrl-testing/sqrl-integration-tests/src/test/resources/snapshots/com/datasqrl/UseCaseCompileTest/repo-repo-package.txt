@@ -212,11 +212,11 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT(DISTINCT $1)], __timestamp=[MAX
   "views" : [
     {
       "name" : "TopicSearch",
-      "sql" : "CREATE OR REPLACE VIEW \"TopicSearch\"(\"topicName\", \"numPackages\", \"__timestamp\") AS SELECT *\nFROM \"topicsearch_1\"\nORDER BY \"numPackages\" DESC, \"topicName\""
+      "sql" : "CREATE OR REPLACE VIEW \"TopicSearch\"(\"topicName\", \"numPackages\", \"__timestamp\") AS SELECT *\nFROM \"topicsearch_1\"\nORDER BY \"numPackages\" DESC, \"topicName\";"
     },
     {
       "name" : "Package",
-      "sql" : "CREATE OR REPLACE VIEW \"Package\"(\"name\", \"_submissionTime\") AS SELECT *\nFROM \"package_1\"\nORDER BY \"name\""
+      "sql" : "CREATE OR REPLACE VIEW \"Package\"(\"name\", \"_submissionTime\") AS SELECT *\nFROM \"package_1\"\nORDER BY \"name\";"
     }
   ]
 }

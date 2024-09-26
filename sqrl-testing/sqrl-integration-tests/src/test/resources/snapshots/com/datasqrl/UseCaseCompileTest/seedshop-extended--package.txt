@@ -565,23 +565,23 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
   "views" : [
     {
       "name" : "CustomerPromotion",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerPromotion\"(\"first_name\", \"last_name\", \"email\", \"spend\", \"saved\", \"__pk1_id\", \"_week\") AS SELECT *\nFROM \"customerpromotion_1\"\nORDER BY \"__pk1_id\", \"_week\" DESC"
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerPromotion\"(\"first_name\", \"last_name\", \"email\", \"spend\", \"saved\", \"__pk1_id\", \"_week\") AS SELECT *\nFROM \"customerpromotion_1\"\nORDER BY \"__pk1_id\", \"_week\" DESC;"
     },
     {
       "name" : "Customers",
-      "sql" : "CREATE OR REPLACE VIEW \"Customers\"(\"id\", \"first_name\", \"last_name\", \"email\", \"ip_address\", \"country\", \"changed_on\", \"timestamp\", \"country0\") AS SELECT *\nFROM \"customers_3\"\nORDER BY \"id\""
+      "sql" : "CREATE OR REPLACE VIEW \"Customers\"(\"id\", \"first_name\", \"last_name\", \"email\", \"ip_address\", \"country\", \"changed_on\", \"timestamp\", \"country0\") AS SELECT *\nFROM \"customers_3\"\nORDER BY \"id\";"
     },
     {
       "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"items\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\""
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"items\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\";"
     },
     {
       "name" : "NumOrders",
-      "sql" : "CREATE OR REPLACE VIEW \"NumOrders\"(\"count\", \"__pk\", \"__timestamp\") AS SELECT *\nFROM \"numorders_1\"\nORDER BY \"__pk\""
+      "sql" : "CREATE OR REPLACE VIEW \"NumOrders\"(\"count\", \"__pk\", \"__timestamp\") AS SELECT *\nFROM \"numorders_1\"\nORDER BY \"__pk\";"
     },
     {
       "name" : "Products",
-      "sql" : "CREATE OR REPLACE VIEW \"Products\"(\"id\", \"name\", \"sizing\", \"weight_in_gram\", \"type\", \"category\", \"usda_id\", \"updated\") AS SELECT *\nFROM \"products_3\"\nORDER BY \"id\""
+      "sql" : "CREATE OR REPLACE VIEW \"Products\"(\"id\", \"name\", \"sizing\", \"weight_in_gram\", \"type\", \"category\", \"usda_id\", \"updated\") AS SELECT *\nFROM \"products_3\"\nORDER BY \"id\";"
     }
   ]
 }

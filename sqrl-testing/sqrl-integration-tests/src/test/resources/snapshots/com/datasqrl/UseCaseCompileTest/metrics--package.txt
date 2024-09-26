@@ -136,7 +136,7 @@ type CreatedReading {
   "views" : [
     {
       "name" : "SensorMaxTemp",
-      "sql" : "CREATE OR REPLACE VIEW \"SensorMaxTemp\"(\"sensorid\", \"maxTemp\", \"__timestamp\") AS SELECT \"sensorid\", MAX(\"temp\") AS \"maxTemp\", MAX(\"__timestamp\") AS \"__timestamp\"\nFROM \"secreading_1\"\nWHERE \"timeSec\" >= CURRENT_TIMESTAMP - INTERVAL '1' MINUTE * 1\nGROUP BY \"sensorid\"\nORDER BY \"sensorid\""
+      "sql" : "CREATE OR REPLACE VIEW \"SensorMaxTemp\"(\"sensorid\", \"maxTemp\", \"__timestamp\") AS SELECT \"sensorid\", MAX(\"temp\") AS \"maxTemp\", MAX(\"__timestamp\") AS \"__timestamp\"\nFROM \"secreading_1\"\nWHERE \"timeSec\" >= CURRENT_TIMESTAMP - INTERVAL '1' MINUTE * 1\nGROUP BY \"sensorid\"\nORDER BY \"sensorid\";"
     }
   ]
 }

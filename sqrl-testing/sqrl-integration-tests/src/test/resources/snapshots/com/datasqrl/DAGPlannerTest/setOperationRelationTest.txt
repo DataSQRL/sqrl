@@ -263,27 +263,27 @@ LogicalTableScan(table=[[product_1]])
   "views" : [
     {
       "name" : "CombinedIds",
-      "sql" : "CREATE OR REPLACE VIEW \"CombinedIds\"(\"customerid\") AS SELECT \"customerid\"\nFROM \"orders_2\"\nUNION\nSELECT \"customerid\"\nFROM \"customer_3\""
+      "sql" : "CREATE OR REPLACE VIEW \"CombinedIds\"(\"customerid\") AS SELECT \"customerid\"\nFROM \"orders_2\"\nUNION\nSELECT \"customerid\"\nFROM \"customer_3\";"
     },
     {
       "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\""
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\";"
     },
     {
       "name" : "CombinedIdsCount",
-      "sql" : "CREATE OR REPLACE VIEW \"CombinedIdsCount\"(\"num_count\") AS SELECT COUNT(*) AS \"num_count\"\nFROM (SELECT \"customerid\"\n   FROM \"orders_2\"\n   UNION\n   SELECT \"customerid\"\n   FROM \"customer_3\") AS \"t1\""
+      "sql" : "CREATE OR REPLACE VIEW \"CombinedIdsCount\"(\"num_count\") AS SELECT COUNT(*) AS \"num_count\"\nFROM (SELECT \"customerid\"\n   FROM \"orders_2\"\n   UNION\n   SELECT \"customerid\"\n   FROM \"customer_3\") AS \"t1\";"
     },
     {
       "name" : "Customer",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_3\"\nORDER BY \"customerid\""
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_3\"\nORDER BY \"customerid\";"
     },
     {
       "name" : "OrderJoin",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderJoin\"(\"id\", \"time\", \"newid\") AS SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", GREATEST(\"orders_2\".\"customerid\", \"t1\".\"customerid\") AS \"newid\"\nFROM \"orders_2\"\n INNER JOIN (SELECT \"customerid\"\n   FROM \"orders_2\"\n   UNION\n   SELECT \"customerid\"\n   FROM \"customer_3\") AS \"t1\" ON \"orders_2\".\"customerid\" = \"t1\".\"customerid\"\nORDER BY \"orders_2\".\"time\" DESC\nFETCH NEXT 10 ROWS ONLY"
+      "sql" : "CREATE OR REPLACE VIEW \"OrderJoin\"(\"id\", \"time\", \"newid\") AS SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", GREATEST(\"orders_2\".\"customerid\", \"t1\".\"customerid\") AS \"newid\"\nFROM \"orders_2\"\n INNER JOIN (SELECT \"customerid\"\n   FROM \"orders_2\"\n   UNION\n   SELECT \"customerid\"\n   FROM \"customer_3\") AS \"t1\" ON \"orders_2\".\"customerid\" = \"t1\".\"customerid\"\nORDER BY \"orders_2\".\"time\" DESC\nFETCH NEXT 10 ROWS ONLY;"
     },
     {
       "name" : "Product",
-      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\", \"category\""
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\", \"category\";"
     }
   ]
 }

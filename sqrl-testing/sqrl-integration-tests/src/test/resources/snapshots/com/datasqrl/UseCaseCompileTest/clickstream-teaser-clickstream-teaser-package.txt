@@ -121,7 +121,7 @@ LogicalProject(beforeURL=[$0], afterURL=[$3], timestamp=[$4], _userid=[$2], _tim
   "views" : [
     {
       "name" : "Trending",
-      "sql" : "CREATE OR REPLACE VIEW \"Trending\"(\"url\", \"total\", \"_timestamp\") AS SELECT *\nFROM \"trending_1\"\nORDER BY \"total\" DESC, \"url\""
+      "sql" : "CREATE OR REPLACE VIEW \"Trending\"(\"url\", \"total\", \"_timestamp\") AS SELECT *\nFROM \"trending_1\"\nORDER BY \"total\" DESC, \"url\";"
     }
   ]
 }

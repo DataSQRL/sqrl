@@ -302,23 +302,23 @@ LogicalAggregate(group=[{0, 1}], numOrders=[COUNT()], lastOrder=[MAX($2)])
   "views" : [
     {
       "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\""
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\";"
     },
     {
       "name" : "Customer",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\", \"lastUpdated\""
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\", \"lastUpdated\";"
     },
     {
       "name" : "ProductId",
-      "sql" : "CREATE OR REPLACE VIEW \"ProductId\"(\"productid\", \"_time\") AS SELECT *\nFROM \"productid_1\"\nORDER BY \"productid\""
+      "sql" : "CREATE OR REPLACE VIEW \"ProductId\"(\"productid\", \"_time\") AS SELECT *\nFROM \"productid_1\"\nORDER BY \"productid\";"
     },
     {
       "name" : "ProductOrders",
-      "sql" : "CREATE OR REPLACE VIEW \"ProductOrders\"(\"id\", \"productid\", \"_time\", \"_productid0\") AS SELECT \"$cor1\".\"id\", \"$cor1\".\"productid\", \"$cor1\".\"time\" AS \"_time\", \"t0\".\"productid\" AS \"_productid0\"\nFROM (\"orders_2\", \"productid_1\") AS \"$cor1\"\n INNER JOIN LATERAL (SELECT *\n  FROM (SELECT *\n    FROM ORDERS.ENTRIES(\"$cor1\".\"_time\")) AS \"t\"\n  WHERE \"productid\" = \"$cor1\".\"id\") AS \"t0\"\nORDER BY \"$cor1\".\"id\", \"$cor1\".\"time\", \"$cor1\".\"productid\", \"t0\".\"productid\""
+      "sql" : "CREATE OR REPLACE VIEW \"ProductOrders\"(\"id\", \"productid\", \"_time\", \"_productid0\") AS SELECT \"$cor1\".\"id\", \"$cor1\".\"productid\", \"$cor1\".\"time\" AS \"_time\", \"t0\".\"productid\" AS \"_productid0\"\nFROM (\"orders_2\", \"productid_1\") AS \"$cor1\"\n INNER JOIN LATERAL (SELECT *\n  FROM (SELECT *\n    FROM ORDERS.ENTRIES(\"$cor1\".\"_time\")) AS \"t\"\n  WHERE \"productid\" = \"$cor1\".\"id\") AS \"t0\"\nORDER BY \"$cor1\".\"id\", \"$cor1\".\"time\", \"$cor1\".\"productid\", \"t0\".\"productid\";"
     },
     {
       "name" : "Product",
-      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\", \"category\""
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\", \"category\";"
     }
   ]
 }

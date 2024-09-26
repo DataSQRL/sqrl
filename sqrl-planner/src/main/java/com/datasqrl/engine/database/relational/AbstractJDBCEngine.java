@@ -44,8 +44,6 @@ import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.RelShuttle;
-import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexDynamicParam;
@@ -106,7 +104,7 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
     //Create database views
     for (Map.Entry<IdentifiedQuery, QueryTemplate> entry : databaseQueries.entrySet()) {
       RelNode relNode = entry.getValue().getRelNode();
-      if (hasDynamicParam(relNode)) {
+      if (hasParams(entry.getKey())) {
         continue;
       }
       SqlParserPos pos = new SqlParserPos(0, 0);
@@ -124,7 +122,7 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
           select);
 
       PostgresSqlNodeToString toString = new PostgresSqlNodeToString();
-      String sql = toString.convert(() -> createView).getSql();
+      String sql = toString.convert(() -> createView).getSql() + ";";
 
       views.add(new DatabaseViewImpl(viewName, sql));
     }
@@ -134,16 +132,11 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
         databaseQueries);
   }
 
-  protected boolean hasDynamicParam(RelNode relNode) {
-    AtomicBoolean hasParam = new AtomicBoolean(false);
-    CalciteUtil.applyRexShuttleRecursively(relNode, new RexShuttle(){
-      @Override
-      public RexNode visitDynamicParam(RexDynamicParam dynamicParam) {
-        hasParam.set(true);
-        return super.visitDynamicParam(dynamicParam);
-      }
-    });
-    return hasParam.get();
+  protected boolean hasParams(IdentifiedQuery query) {
+    if (query instanceof APIQuery) {
+      return !((APIQuery) query).getParameters().isEmpty();
+    }
+    return true;
   }
 
   protected String getViewName(IdentifiedQuery query) {

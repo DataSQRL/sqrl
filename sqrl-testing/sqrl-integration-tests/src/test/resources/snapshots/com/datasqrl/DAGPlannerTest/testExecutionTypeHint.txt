@@ -359,27 +359,27 @@ LogicalTableScan(table=[[product_1]])
   "views" : [
     {
       "name" : "CustomerAgg1",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerAgg1\"(\"customerid\", \"num\", \"_ingest_time\") AS SELECT *\nFROM \"customeragg1_1\"\nORDER BY \"customerid\""
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerAgg1\"(\"customerid\", \"num\", \"_ingest_time\") AS SELECT *\nFROM \"customeragg1_1\"\nORDER BY \"customerid\";"
     },
     {
       "name" : "Customer",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"_ingest_time\") AS SELECT *\nFROM \"customer_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"customerid\", \"email\", \"name\", \"lastUpdated\""
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"_ingest_time\") AS SELECT *\nFROM \"customer_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"customerid\", \"email\", \"name\", \"lastUpdated\";"
     },
     {
       "name" : "CustomerAgg3",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerAgg3\"(\"customerid\", \"num\", \"_ingest_time\") AS SELECT *\nFROM \"customeragg3_1\"\nORDER BY \"customerid\""
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerAgg3\"(\"customerid\", \"num\", \"_ingest_time\") AS SELECT *\nFROM \"customeragg3_1\"\nORDER BY \"customerid\";"
     },
     {
       "name" : "CustomerAgg2",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerAgg2\"(\"customerid\", \"num\", \"__timestamp\") AS SELECT \"customerid\", COUNT(*) AS \"num\", MAX(\"_ingest_time\") AS \"__timestamp\"\nFROM \"customer_2\"\nWHERE CURRENT_TIMESTAMP < (\"_ingest_time\" + INTERVAL '3600' SECOND(7))\nGROUP BY \"customerid\"\nORDER BY \"customerid\""
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerAgg2\"(\"customerid\", \"num\", \"__timestamp\") AS SELECT \"customerid\", COUNT(*) AS \"num\", MAX(\"_ingest_time\") AS \"__timestamp\"\nFROM \"customer_2\"\nWHERE CURRENT_TIMESTAMP < (\"_ingest_time\" + INTERVAL '3600' SECOND(7))\nGROUP BY \"customerid\"\nORDER BY \"customerid\";"
     },
     {
       "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\", \"customerid\", \"time\""
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\", \"customerid\", \"time\";"
     },
     {
       "name" : "Product",
-      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\", \"category\""
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\", \"category\";"
     }
   ]
 }
