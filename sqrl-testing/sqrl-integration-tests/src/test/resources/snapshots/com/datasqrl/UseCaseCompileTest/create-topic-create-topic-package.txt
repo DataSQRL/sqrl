@@ -90,6 +90,12 @@ Inputs: pgtable_1
       ],
       "sql" : "CREATE TABLE IF NOT EXISTS pgtable_1 (\"timestamp\" TIMESTAMP WITHOUT TIME ZONE NOT NULL,\"userId\" NUMERIC NOT NULL,\"eventType\" TEXT NOT NULL,\"_uuid\" TEXT NOT NULL,\"event_time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"_uuid\"));"
     }
+  ],
+  "views" : [
+    {
+      "name" : "Query.PgTable-1",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.PgTable-1\"(\"timestamp\", \"userId\", \"eventType\", \"_uuid\", \"event_time\") AS SELECT *\nFROM \"pgtable_1\"\nORDER BY \"event_time\" DESC NULLS LAST, \"_uuid\""
+    }
   ]
 }
 >>>vertx.json

@@ -190,6 +190,72 @@ LogicalFilter(condition=[>($0, 10)])
       "type" : "HASH",
       "sql" : "CREATE INDEX IF NOT EXISTS myordersnohint_1_hash_c2 ON myordersnohint_1 USING hash (\"time\");"
     }
+  ],
+  "views" : [
+    {
+      "name" : "Query.MyOrdersNoIndex-16",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.MyOrdersNoIndex-16\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"myordersnoindex_1\"\nORDER BY \"time\" DESC NULLS LAST, \"id\""
+    },
+    {
+      "name" : "Query.MyOrdersNoIndex-17",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.MyOrdersNoIndex-17\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"myordersnoindex_1\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\""
+    },
+    {
+      "name" : "Query.MyOrdersNoIndex-18",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.MyOrdersNoIndex-18\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"myordersnoindex_1\"\nWHERE \"id\" = $1\nORDER BY \"time\" DESC NULLS LAST"
+    },
+    {
+      "name" : "Query.MyOrdersNoIndex-19",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.MyOrdersNoIndex-19\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"myordersnoindex_1\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST"
+    },
+    {
+      "name" : "Query.MyOrdersNoHint-13",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.MyOrdersNoHint-13\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"myordersnohint_1\"\nWHERE \"id\" = $1\nORDER BY \"time\" DESC NULLS LAST"
+    },
+    {
+      "name" : "Query.MyOrdersNoHint-12",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.MyOrdersNoHint-12\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"myordersnohint_1\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\""
+    },
+    {
+      "name" : "Query.MyOrdersIndexHash-9",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.MyOrdersIndexHash-9\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"myordersindexhash_1\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST"
+    },
+    {
+      "name" : "Query.MyOrdersNoHint-11",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.MyOrdersNoHint-11\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"myordersnohint_1\"\nORDER BY \"time\" DESC NULLS LAST, \"id\""
+    },
+    {
+      "name" : "Query.MyOrdersNoHint-14",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.MyOrdersNoHint-14\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"myordersnohint_1\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST"
+    },
+    {
+      "name" : "Query.MyOrdersIndexBtree-4",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.MyOrdersIndexBtree-4\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"myordersindexbtree_1\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST"
+    },
+    {
+      "name" : "Query.MyOrdersIndexHash-7",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.MyOrdersIndexHash-7\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"myordersindexhash_1\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\""
+    },
+    {
+      "name" : "Query.MyOrdersIndexBtree-3",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.MyOrdersIndexBtree-3\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"myordersindexbtree_1\"\nWHERE \"id\" = $1\nORDER BY \"time\" DESC NULLS LAST"
+    },
+    {
+      "name" : "Query.MyOrdersIndexHash-8",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.MyOrdersIndexHash-8\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"myordersindexhash_1\"\nWHERE \"id\" = $1\nORDER BY \"time\" DESC NULLS LAST"
+    },
+    {
+      "name" : "Query.MyOrdersIndexBtree-2",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.MyOrdersIndexBtree-2\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"myordersindexbtree_1\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\""
+    },
+    {
+      "name" : "Query.MyOrdersIndexBtree-1",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.MyOrdersIndexBtree-1\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"myordersindexbtree_1\"\nORDER BY \"time\" DESC NULLS LAST, \"id\""
+    },
+    {
+      "name" : "Query.MyOrdersIndexHash-6",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.MyOrdersIndexHash-6\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"myordersindexhash_1\"\nORDER BY \"time\" DESC NULLS LAST, \"id\""
+    }
   ]
 }
 >>>vertx.json

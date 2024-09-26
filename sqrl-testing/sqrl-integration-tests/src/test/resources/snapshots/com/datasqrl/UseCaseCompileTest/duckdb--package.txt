@@ -241,6 +241,48 @@ LogicalProject(id=[$0], hello=['hello world'], _updated_at=[$6])
       ],
       "sql" : "CREATE TABLE IF NOT EXISTS myapplications2_1 (\"id\" BIGINT NOT NULL,\"customer_id\" BIGINT NOT NULL,\"loan_type_id\" BIGINT NOT NULL,\"amount\" DOUBLE PRECISION NOT NULL,\"duration\" BIGINT NOT NULL,\"application_date\" TIMESTAMP WITH TIME ZONE NOT NULL,\"updated_at\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\",\"updated_at\"));"
     }
+  ],
+  "views" : [
+    {
+      "name" : "Query.MyApplications1-1",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.MyApplications1-1\"(\"id\", \"customer_id\", \"loan_type_id\", \"amount\", \"duration\", \"application_date\", \"updated_at\") AS SELECT *\nFROM \"myapplications1_1\"\nORDER BY \"updated_at\" DESC NULLS LAST, \"id\""
+    },
+    {
+      "name" : "Query.MyTable1-11",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.MyTable1-11\"(\"id\", \"hello\", \"_updated_at\") AS SELECT \"id\", 'hello world' AS \"hello\", \"updated_at\" AS \"_updated_at\"\nFROM \"myapplications1_1\"\nORDER BY \"updated_at\" DESC NULLS LAST, \"id\""
+    },
+    {
+      "name" : "Query.MyApplications1-4",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.MyApplications1-4\"(\"id\", \"customer_id\", \"loan_type_id\", \"amount\", \"duration\", \"application_date\", \"updated_at\") AS SELECT *\nFROM \"myapplications1_1\"\nWHERE \"id\" = $1 AND \"updated_at\" = $2\nORDER BY \"updated_at\" DESC NULLS LAST"
+    },
+    {
+      "name" : "Query.MyApplications1-3",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.MyApplications1-3\"(\"id\", \"customer_id\", \"loan_type_id\", \"amount\", \"duration\", \"application_date\", \"updated_at\") AS SELECT *\nFROM \"myapplications1_1\"\nWHERE \"id\" = $1\nORDER BY \"updated_at\" DESC NULLS LAST"
+    },
+    {
+      "name" : "Query.MyApplications1-2",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.MyApplications1-2\"(\"id\", \"customer_id\", \"loan_type_id\", \"amount\", \"duration\", \"application_date\", \"updated_at\") AS SELECT *\nFROM \"myapplications1_1\"\nWHERE \"updated_at\" = $1\nORDER BY \"updated_at\" DESC NULLS LAST, \"id\""
+    },
+    {
+      "name" : "Query.MyTable1-12",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.MyTable1-12\"(\"id\", \"hello\", \"_updated_at\") AS SELECT *\nFROM (SELECT \"id\", 'hello world' AS \"hello\", \"updated_at\" AS \"_updated_at\"\n  FROM \"myapplications1_1\") AS \"t\"\nWHERE \"id\" = $1\nORDER BY \"_updated_at\" DESC NULLS LAST"
+    },
+    {
+      "name" : "Query.MyApplications2-8",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.MyApplications2-8\"(\"id\", \"customer_id\", \"loan_type_id\", \"amount\", \"duration\", \"application_date\", \"updated_at\") AS SELECT *\nFROM \"myapplications2_1\"\nWHERE \"id\" = $1 AND \"updated_at\" = $2\nORDER BY \"updated_at\" DESC NULLS LAST"
+    },
+    {
+      "name" : "Query.MyApplications2-7",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.MyApplications2-7\"(\"id\", \"customer_id\", \"loan_type_id\", \"amount\", \"duration\", \"application_date\", \"updated_at\") AS SELECT *\nFROM \"myapplications2_1\"\nWHERE \"id\" = $1\nORDER BY \"updated_at\" DESC NULLS LAST"
+    },
+    {
+      "name" : "Query.MyApplications2-6",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.MyApplications2-6\"(\"id\", \"customer_id\", \"loan_type_id\", \"amount\", \"duration\", \"application_date\", \"updated_at\") AS SELECT *\nFROM \"myapplications2_1\"\nWHERE \"updated_at\" = $1\nORDER BY \"updated_at\" DESC NULLS LAST, \"id\""
+    },
+    {
+      "name" : "Query.MyApplications2-5",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.MyApplications2-5\"(\"id\", \"customer_id\", \"loan_type_id\", \"amount\", \"duration\", \"application_date\", \"updated_at\") AS SELECT *\nFROM \"myapplications2_1\"\nORDER BY \"updated_at\" DESC NULLS LAST, \"id\""
+    }
   ]
 }
 >>>vertx.json

@@ -162,6 +162,56 @@ Inputs: productrevenue_1
       "type" : "HASH",
       "sql" : "CREATE INDEX IF NOT EXISTS productrevenue_1_hash_c1 ON productrevenue_1 USING hash (\"week\");"
     }
+  ],
+  "views" : [
+    {
+      "name" : "Query.CustomerSpending-4",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.CustomerSpending-4\"(\"customerid\", \"week\", \"total\", \"saved\") AS SELECT *\nFROM \"customerspending_1\"\nWHERE \"customerid\" = $1 AND \"week\" = $2\nORDER BY \"week\" DESC NULLS LAST"
+    },
+    {
+      "name" : "Query.Orders-6",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.Orders-6\"(\"id\", \"customerid\", \"time\", \"productid\", \"quantity\", \"unit_price\", \"discount\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\""
+    },
+    {
+      "name" : "Query.Orders-5",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.Orders-5\"(\"id\", \"customerid\", \"time\", \"productid\", \"quantity\", \"unit_price\", \"discount\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\""
+    },
+    {
+      "name" : "Query.CustomerSpending-2",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.CustomerSpending-2\"(\"customerid\", \"week\", \"total\", \"saved\") AS SELECT *\nFROM \"customerspending_1\"\nWHERE \"week\" = $1\nORDER BY \"week\" DESC NULLS LAST, \"customerid\""
+    },
+    {
+      "name" : "Query.CustomerSpending-3",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.CustomerSpending-3\"(\"customerid\", \"week\", \"total\", \"saved\") AS SELECT *\nFROM \"customerspending_1\"\nWHERE \"customerid\" = $1\nORDER BY \"week\" DESC NULLS LAST"
+    },
+    {
+      "name" : "Query.CustomerSpending-1",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.CustomerSpending-1\"(\"customerid\", \"week\", \"total\", \"saved\") AS SELECT *\nFROM \"customerspending_1\"\nORDER BY \"week\" DESC NULLS LAST, \"customerid\""
+    },
+    {
+      "name" : "Query.Orders-8",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.Orders-8\"(\"id\", \"customerid\", \"time\", \"productid\", \"quantity\", \"unit_price\", \"discount\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST"
+    },
+    {
+      "name" : "Query.Orders-7",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.Orders-7\"(\"id\", \"customerid\", \"time\", \"productid\", \"quantity\", \"unit_price\", \"discount\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1\nORDER BY \"time\" DESC NULLS LAST"
+    },
+    {
+      "name" : "Query.ProductRevenue-11",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.ProductRevenue-11\"(\"productid\", \"week\", \"revenue\") AS SELECT *\nFROM \"productrevenue_1\"\nWHERE \"productid\" = $1\nORDER BY \"week\" DESC NULLS LAST"
+    },
+    {
+      "name" : "Query.ProductRevenue-10",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.ProductRevenue-10\"(\"productid\", \"week\", \"revenue\") AS SELECT *\nFROM \"productrevenue_1\"\nWHERE \"week\" = $1\nORDER BY \"week\" DESC NULLS LAST, \"productid\""
+    },
+    {
+      "name" : "Query.ProductRevenue-9",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.ProductRevenue-9\"(\"productid\", \"week\", \"revenue\") AS SELECT *\nFROM \"productrevenue_1\"\nORDER BY \"week\" DESC NULLS LAST, \"productid\""
+    },
+    {
+      "name" : "Query.ProductRevenue-12",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.ProductRevenue-12\"(\"productid\", \"week\", \"revenue\") AS SELECT *\nFROM \"productrevenue_1\"\nWHERE \"productid\" = $1 AND \"week\" = $2\nORDER BY \"week\" DESC NULLS LAST"
+    }
   ]
 }
 >>>vertx.json

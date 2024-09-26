@@ -96,5 +96,15 @@ LogicalTableScan(table=[[orders_1]])
       ],
       "sql" : "CREATE TABLE IF NOT EXISTS orders_2 (\"id\" BIGINT NOT NULL,\"customerid\" BIGINT NOT NULL,\"time\" TEXT NOT NULL,\"items\" JSONB NOT NULL,\"_source_time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\",\"time\"));"
     }
+  ],
+  "views" : [
+    {
+      "name" : "Orders",
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"items\", \"_source_time\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"_source_time\" DESC NULLS LAST, \"id\", \"time\""
+    },
+    {
+      "name" : "OrderCount",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCount\"(\"timeSec\", \"number\", \"volume\") AS SELECT *\nFROM \"ordercount_1\"\nORDER BY \"timeSec\" DESC NULLS LAST"
+    }
   ]
 }

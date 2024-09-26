@@ -3,7 +3,12 @@
  */
 package com.datasqrl.engine.database.relational;
 
+import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.calcite.convert.PostgresSqlNodeToString;
+import com.datasqrl.calcite.convert.SnowflakeSqlNodeToString;
+import com.datasqrl.calcite.dialect.postgres.SqlCreatePostgresView;
+import com.datasqrl.calcite.dialect.snowflake.SqlCreateSnowflakeView;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.config.JdbcDialect;
@@ -11,6 +16,8 @@ import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.database.DatabasePhysicalPlan;
+import com.datasqrl.engine.database.DatabaseViewPhysicalPlan.DatabaseView;
+import com.datasqrl.engine.database.DatabaseViewPhysicalPlan.DatabaseViewImpl;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.engine.database.relational.ddl.JdbcDDLFactory;
 import com.datasqrl.engine.database.relational.ddl.JdbcDDLServiceLoader;
@@ -38,10 +45,16 @@ import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.RelShuttleImpl;
+import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
+import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlNodeList;
+import org.apache.calcite.sql.SqlSelect;
+import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 /**
@@ -89,17 +102,34 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
         .collect(Collectors.toMap(ReadQuery::getQuery, q -> new QueryTemplate(
             getDialect().name().toLowerCase(), q.getRelNode())));
 
-//    List<Map<String, String>> queries = new ArrayList<>();
-//    QueryPlanner queryPlanner = framework.getQueryPlanner();
-//    for (QueryTemplate template : databaseQueries.values()) {
-//      String sql = queryPlanner.relToString(mapDialect(getDialect()),
-//          template.getRelNode())
-//          .getSql();
-//      //todo: migrate this to a full form for consumption by downstream engines
-//      queries.add(Map.of("sql", sql + ";"));
-//    }
+    List<DatabaseView> views = new ArrayList<>();
+    //Create database views
+    for (Map.Entry<IdentifiedQuery, QueryTemplate> entry : databaseQueries.entrySet()) {
+      RelNode relNode = entry.getValue().getRelNode();
 
-    return new JDBCPhysicalPlan(ddlStatements, databaseQueries);
+      SqlParserPos pos = new SqlParserPos(0, 0);
+      String viewName = entry.getKey().getNameId();
+      SqlIdentifier viewNameIdentifier = new SqlIdentifier(viewName, pos);
+      SqlNodeList columnList = new SqlNodeList(relNode.getRowType().getFieldList().stream()
+          .map(f->new SqlIdentifier(f.getName(), SqlParserPos.ZERO))
+          .collect(Collectors.toList()), pos);
+
+      SqlSelect select =(SqlSelect) framework.getQueryPlanner()
+          .relToSql(Dialect.POSTGRES, relNode).getSqlNode();
+
+      SqlCreatePostgresView createView = new SqlCreatePostgresView(pos, true,
+          viewNameIdentifier, columnList,
+          select);
+
+      PostgresSqlNodeToString toString = new PostgresSqlNodeToString();
+      String sql = toString.convert(() -> createView).getSql();
+
+      views.add(new DatabaseViewImpl(viewName, sql));
+    }
+
+    return new JDBCPhysicalPlan(ddlStatements,
+        views,
+        databaseQueries);
   }
 
   private List<SqlDDLStatement> extractTypeExtensions(List<ReadQuery> queries) {
