@@ -86,12 +86,9 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     }
 
     if (goal == ExecutionGoal.TEST) {
-      Set<String> enabledEngines = new HashSet<>(sqrlConfig.getEnabledEngines());
-      enabledEngines.add(EngineKeys.TEST);
-      enabledEngines.add(EngineKeys.DATABASE);
-      enabledEngines.add(EngineKeys.SERVER);
-
-      sqrlConfig.setPipeline(new ArrayList<>(enabledEngines));
+      List<String> defaultKeys = List.of(EngineKeys.TEST, EngineKeys.DATABASE, EngineKeys.LOG,
+          EngineKeys.SERVER, EngineKeys.STREAMS);
+      sqrlConfig.setPipeline(defaultKeys);
     }
 
     DirectoryManager.prepareTargetDirectory(getTargetDir());
