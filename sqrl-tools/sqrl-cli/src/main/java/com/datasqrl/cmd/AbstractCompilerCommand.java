@@ -31,9 +31,12 @@ import com.google.inject.Injector;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -83,9 +86,12 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     }
 
     if (goal == ExecutionGoal.TEST) {
-      List<String> defaultKeys = List.of(EngineKeys.TEST, EngineKeys.DATABASE, EngineKeys.LOG,
-          EngineKeys.SERVER, EngineKeys.STREAMS);
-      sqrlConfig.setPipeline(defaultKeys);
+      Set<String> enabledEngines = new HashSet<>(sqrlConfig.getEnabledEngines());
+      enabledEngines.add(EngineKeys.TEST);
+      enabledEngines.add(EngineKeys.DATABASE);
+      enabledEngines.add(EngineKeys.SERVER);
+
+      sqrlConfig.setPipeline(new ArrayList<>(enabledEngines));
     }
 
     DirectoryManager.prepareTargetDirectory(getTargetDir());
@@ -114,7 +120,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
       addGraphql(plan.getLeft(), root.rootDir);
     }
 
-    postprocess(sqrlConfig, packager, getTargetDir(), plan.getLeft(), plan.getRight(), errors);
+    postprocess(sqrlConfig, packager, getTargetDir(), plan.getLeft(), plan.getRight(), snapshotPath, errors);
   }
 
   private void validateTestPath(Path path) {
@@ -124,7 +130,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   }
 
   protected void postprocess(PackageJson sqrlConfig, Packager packager, Path targetDir,
-      PhysicalPlan plan, TestPlan testPlan, ErrorCollector errors) {
+      PhysicalPlan plan, TestPlan testPlan, Path snapshotPath, ErrorCollector errors) {
 
     packager.postprocess(sqrlConfig, root.rootDir, getTargetDir(), plan, testPlan,
         sqrlConfig.getProfiles());

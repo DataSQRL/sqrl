@@ -165,7 +165,6 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     }
 
     RelDataType relDataType = fieldBuilder.build();
-
     createAndRegisterLogEntity(logId, namePath, relDataType);
     return null;
   }
@@ -182,16 +181,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     NamespaceObject namespaceObject = createTableResolver.create(
         new TableSource(tableConfig, namePath, namePath.getLast(),
             new RelDataTypeTableSchema(relDataType)));
-//=======
-//    RelDataTypeTableSchema relDataTypeTableSchema = new RelDataTypeTableSchema(
-//        fieldBuilder.build());
-//    TableSource tableSource = new TableSource(tableConfig, namePath, namePath.getLast(),
-//        new RelDataTypeTableSchema(fieldBuilder.build()));
-//    NamespaceObject namespaceObject = createTableResolver.create(tableSource);
-//>>>>>>> 5c8d858a8 (Rough cut of subscriptions/mutations)
     namespaceObject.apply(this, Optional.empty(), framework, errorCollector);
-//    this.framework.getSchema().getCreateTable()
-//        .add(new Mutation(namespaceObject.getName(), relDataTypeTableSchema, tableSource));
     return sinkLog;
   }
 

@@ -46,7 +46,7 @@ public class ExternalUseCasesIT {
     argsList.add("-c");
     argsList.add(packageFilename);
     UseCasesIT.execute(rootDir,
-        AssertStatusHook.INSTANCE, argsList.toArray(String[]::new));
+        new AssertStatusHook(), argsList.toArray(String[]::new));
   }
 
 

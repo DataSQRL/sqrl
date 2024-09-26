@@ -156,6 +156,11 @@
         <artifactId>sqrl-jdbc-1.18</artifactId>
         <version>${project.version}</version>
       </dependency>
+      <dependency>
+        <groupId>com.datasqrl</groupId>
+        <artifactId>sqrl-jdbc-1.19</artifactId>
+        <version>${project.version}</version>
+      </dependency>
       <!-- examples-->
       <dependency>
         <groupId>com.datasqrl</groupId>

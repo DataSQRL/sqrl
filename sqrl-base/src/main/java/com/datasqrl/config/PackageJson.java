@@ -40,6 +40,8 @@ public interface PackageJson {
 
   boolean hasScriptKey();
 
+  Optional<TestRunnerConfiguration> getTestConfig();
+
   interface CompilerConfig {
 
     ExplainConfig getExplain();

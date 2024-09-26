@@ -1,0 +1,25 @@
+plugins {
+    id 'java'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+}
+
+group = 'com.myudf'
+version = '0.1.0-SNAPSHOT'
+
+sourceCompatibility = '11'
+targetCompatibility = '11'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compileOnly 'com.google.auto.service:auto-service:1.0.1'
+    annotationProcessor 'com.google.auto.service:auto-service:1.0.1'
+    compileOnly 'org.apache.flink:flink-table-api-java-bridge:1.19.1'
+}
+
+shadowJar {
+    mergeServiceFiles()
+    zip64 = true
+}

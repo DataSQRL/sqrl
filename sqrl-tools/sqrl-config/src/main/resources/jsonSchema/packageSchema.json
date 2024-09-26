@@ -3,7 +3,6 @@
   "type": "object",
   "properties": {
     "version": {
-      "type": "string",
       "oneOf": [
         {
           "type": "string"
@@ -118,29 +117,6 @@
               "minProperties": 1
             }
           }
-        },
-        "snowflake": {
-          "type": "object",
-          "minProperties": 2,
-          "properties": {
-            "catalog-name": {
-              "type": "string"
-            },
-            "external-volume": {
-              "type": "string"
-            },
-            "schema-type": {
-              "type": "string"
-            },
-            "url": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "catalog-name",
-            "external-volume"
-          ],
-          "additionalProperties": false
         }
       }
     },

@@ -15,7 +15,6 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.DockerClientFactory;
 
-@Disabled
 public class UseCasesFullIT extends UseCasesIT {
 
   private static String config;
@@ -24,7 +23,7 @@ public class UseCasesFullIT extends UseCasesIT {
   public static void buildContainers() {
     config = writeProfile();
     buildVertx();
-    buildFlinkLib();
+//    buildFlinkLib();
   }
 
   public static void buildFlinkLib() {

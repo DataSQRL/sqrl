@@ -3,6 +3,7 @@ package com.datasqrl.config;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
@@ -16,6 +17,7 @@ public class PackageJsonImpl implements PackageJson {
   public static final String PACKAGE_KEY = "package";
   public static final String PIPELINE_KEY = "enabled-engines";
   public static final String CONNECTORS_KEY = "connectors";
+  public static final String TEST_RUNNER_KEY = "test-runner";
 
   private SqrlConfig sqrlConfig;
 
@@ -98,6 +100,14 @@ public class PackageJsonImpl implements PackageJson {
   public boolean hasScriptKey() {
     //ScriptConfiguration.SCRIPT_KEY
     return false;
+  }
+
+  @Override
+  public Optional<TestRunnerConfiguration> getTestConfig() {
+    if (sqrlConfig.hasSubConfig(TEST_RUNNER_KEY)) {
+      return Optional.of(new TestRunnerConfigImpl(sqrlConfig.getSubConfig(TEST_RUNNER_KEY)));
+    }
+    return Optional.empty();
   }
 
   @Override

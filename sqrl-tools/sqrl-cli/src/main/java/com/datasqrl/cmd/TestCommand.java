@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.ContainerState;
@@ -27,6 +28,7 @@ import org.testcontainers.containers.DockerComposeContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import picocli.CommandLine;
 
+@Slf4j
 @CommandLine.Command(name = "test", description = "Tests a SQRL script")
 public class TestCommand extends AbstractCompilerCommand {
   @CommandLine.Option(names = {"-s", "--snapshot"},
@@ -50,9 +52,9 @@ public class TestCommand extends AbstractCompilerCommand {
 
   @SneakyThrows
   @Override
-  protected void postprocess(PackageJson sqrlConfig, Packager packager, Path targetDir, PhysicalPlan plan,
-      TestPlan right, ErrorCollector errors) {
-    super.postprocess(sqrlConfig, packager, targetDir, plan, right, errors);
+  protected void postprocess(PackageJson sqrlConfig, Packager packager, Path targetDir,
+      PhysicalPlan plan, TestPlan testPlan, Path snapshotPath, ErrorCollector errors) {
+    super.postprocess(sqrlConfig, packager, targetDir, plan, testPlan, snapshotPath, errors);
     List<File> dockerComposePaths = getComposePaths(targetDir);
     if (dockerComposePaths.isEmpty()) {
       throw new RuntimeException("Could not find docker compose containers");
