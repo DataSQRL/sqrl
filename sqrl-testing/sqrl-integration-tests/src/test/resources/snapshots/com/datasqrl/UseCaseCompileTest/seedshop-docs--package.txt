@@ -725,30 +725,6 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
   ],
   "views" : [
     {
-      "name" : "Customers.purchases",
-      "sql" : "CREATE OR REPLACE VIEW \"Customers.purchases\"(\"id\", \"customerid\", \"time\", \"items\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"customerid\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\""
-    },
-    {
-      "name" : "Customers.past_purchases",
-      "sql" : "CREATE OR REPLACE VIEW \"Customers.past_purchases\"(\"__pk1_id\", \"productid\", \"num_orders\", \"total_quantity\", \"__timestamp\") AS SELECT *\nFROM \"past_purchases_1\"\nWHERE \"__pk1_id\" = $1\nORDER BY \"__pk1_id\", \"num_orders\" DESC, \"total_quantity\" DESC, \"productid\""
-    },
-    {
-      "name" : "Customers.past_purchases",
-      "sql" : "CREATE OR REPLACE VIEW \"Customers.past_purchases\"(\"__pk1_id\", \"productid\", \"num_orders\", \"total_quantity\", \"__timestamp\") AS SELECT *\nFROM (SELECT *\n  FROM \"past_purchases_1\"\n  WHERE \"__pk1_id\" = $1) AS \"t\"\nWHERE \"productid\" = $2\nORDER BY \"__pk1_id\", \"num_orders\" DESC, \"total_quantity\" DESC"
-    },
-    {
-      "name" : "Orders.totals.parent",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders.totals.parent\"(\"id\", \"customerid\", \"time\", \"items\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST"
-    },
-    {
-      "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"items\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\""
-    },
-    {
-      "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"items\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1\nORDER BY \"time\" DESC NULLS LAST"
-    },
-    {
       "name" : "Orders",
       "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"items\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\""
     },
@@ -757,24 +733,12 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
       "sql" : "CREATE OR REPLACE VIEW \"CustomersWithSpending\"(\"id\", \"email\", \"spend\", \"__timestamp16\") AS SELECT *\nFROM \"customerswithspending_1\"\nORDER BY \"id\""
     },
     {
-      "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"items\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST"
-    },
-    {
-      "name" : "OrderCountry",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderCountry\"(\"time\", \"country\", \"_id\") AS SELECT *\nFROM \"ordercountry_1\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"_id\""
-    },
-    {
       "name" : "OrderCountry",
       "sql" : "CREATE OR REPLACE VIEW \"OrderCountry\"(\"time\", \"country\", \"_id\") AS SELECT *\nFROM \"ordercountry_1\"\nORDER BY \"time\" DESC NULLS LAST, \"_id\""
     },
     {
       "name" : "OrderCountryInner",
       "sql" : "CREATE OR REPLACE VIEW \"OrderCountryInner\"(\"time\", \"country\", \"_id\") AS SELECT \"orders_2\".\"time\", \"customers_3\".\"country\", \"orders_2\".\"id\" AS \"_id\"\nFROM \"orders_2\"\n INNER JOIN \"customers_3\" ON \"orders_2\".\"customerid\" = \"customers_3\".\"id\"\nORDER BY \"orders_2\".\"id\", \"orders_2\".\"time\""
-    },
-    {
-      "name" : "OrderCountryInner",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderCountryInner\"(\"time\", \"country\", \"_id\") AS SELECT *\nFROM (SELECT \"orders_2\".\"time\", \"customers_3\".\"country\", \"orders_2\".\"id\" AS \"_id\"\n  FROM \"orders_2\"\n   INNER JOIN \"customers_3\" ON \"orders_2\".\"customerid\" = \"customers_3\".\"id\") AS \"t\"\nWHERE \"t\".\"time\" = $1\nORDER BY \"_id\""
     },
     {
       "name" : "CustomerPromotion",
@@ -789,40 +753,12 @@ LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
       "sql" : "CREATE OR REPLACE VIEW \"Products\"(\"id\", \"name\", \"sizing\", \"weight_in_gram\", \"type\", \"category\", \"usda_id\", \"updated\") AS SELECT *\nFROM \"products_3\"\nORDER BY \"id\""
     },
     {
-      "name" : "Products.monthly_by_country",
-      "sql" : "CREATE OR REPLACE VIEW \"Products.monthly_by_country\"(\"__pk1_id\", \"country\", \"month\", \"quantity\", \"spend\", \"weight\") AS SELECT *\nFROM (SELECT *\n  FROM \"monthly_by_country_1\"\n  WHERE \"__pk1_id\" = $1) AS \"t\"\nWHERE \"country\" = $2 AND \"month\" = $3\nORDER BY \"month\" DESC NULLS LAST"
-    },
-    {
-      "name" : "Products.monthly_by_country",
-      "sql" : "CREATE OR REPLACE VIEW \"Products.monthly_by_country\"(\"__pk1_id\", \"country\", \"month\", \"quantity\", \"spend\", \"weight\") AS SELECT *\nFROM (SELECT *\n  FROM \"monthly_by_country_1\"\n  WHERE \"__pk1_id\" = $1) AS \"t\"\nWHERE \"month\" = $2\nORDER BY \"month\" DESC NULLS LAST, \"country\""
-    },
-    {
-      "name" : "Products.monthly_by_country",
-      "sql" : "CREATE OR REPLACE VIEW \"Products.monthly_by_country\"(\"__pk1_id\", \"country\", \"month\", \"quantity\", \"spend\", \"weight\") AS SELECT *\nFROM (SELECT *\n  FROM \"monthly_by_country_1\"\n  WHERE \"__pk1_id\" = $1) AS \"t\"\nWHERE \"country\" = $2\nORDER BY \"month\" DESC NULLS LAST"
-    },
-    {
-      "name" : "Products.monthly_by_country",
-      "sql" : "CREATE OR REPLACE VIEW \"Products.monthly_by_country\"(\"__pk1_id\", \"country\", \"month\", \"quantity\", \"spend\", \"weight\") AS SELECT *\nFROM \"monthly_by_country_1\"\nWHERE \"__pk1_id\" = $1\nORDER BY \"month\" DESC NULLS LAST, \"country\""
-    },
-    {
-      "name" : "Orders.totals",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders.totals\"(\"__pk1_id\", \"__pk3_time\", \"price\", \"saving\") AS SELECT *\nFROM \"totals_1\"\nWHERE \"__pk1_id\" = $1 AND \"__pk3_time\" = $2\nORDER BY \"__pk3_time\" DESC NULLS LAST"
-    },
-    {
       "name" : "Customers",
       "sql" : "CREATE OR REPLACE VIEW \"Customers\"(\"id\", \"first_name\", \"last_name\", \"email\", \"ip_address\", \"country\", \"changed_on\", \"timestamp\", \"country0\") AS SELECT *\nFROM \"customers_3\"\nORDER BY \"id\""
     },
     {
       "name" : "HighSpendingUsers",
       "sql" : "CREATE OR REPLACE VIEW \"HighSpendingUsers\"(\"id\", \"email\", \"__timestamp16\") AS SELECT *\nFROM \"highspendingusers_1\"\nORDER BY \"id\""
-    },
-    {
-      "name" : "Customers.spending",
-      "sql" : "CREATE OR REPLACE VIEW \"Customers.spending\"(\"__pk1_id\", \"week\", \"spend\", \"saved\") AS SELECT *\nFROM (SELECT *\n  FROM \"spending_1\"\n  WHERE \"__pk1_id\" = $1) AS \"t\"\nWHERE \"week\" = $2\nORDER BY \"__pk1_id\", \"week\" DESC"
-    },
-    {
-      "name" : "Customers.spending",
-      "sql" : "CREATE OR REPLACE VIEW \"Customers.spending\"(\"__pk1_id\", \"week\", \"spend\", \"saved\") AS SELECT *\nFROM \"spending_1\"\nWHERE \"__pk1_id\" = $1\nORDER BY \"__pk1_id\", \"week\" DESC"
     },
     {
       "name" : "RecentTotal",

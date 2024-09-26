@@ -333,56 +333,8 @@ LogicalTableScan(table=[[sensors_2]])
       "sql" : "CREATE OR REPLACE VIEW \"HighTemp\"(\"machineid\", \"sensorid\", \"temp\", \"timeSec\") AS SELECT *\nFROM \"hightemp_1\"\nORDER BY \"timeSec\" DESC, \"sensorid\""
     },
     {
-      "name" : "HighTemp",
-      "sql" : "CREATE OR REPLACE VIEW \"HighTemp\"(\"machineid\", \"sensorid\", \"temp\", \"timeSec\") AS SELECT *\nFROM \"hightemp_1\"\nWHERE \"sensorid\" = $1 AND \"timeSec\" = $2\nORDER BY \"timeSec\" DESC"
-    },
-    {
       "name" : "SecReading",
       "sql" : "CREATE OR REPLACE VIEW \"SecReading\"(\"sensorid\", \"timeSec\", \"temp\") AS SELECT *\nFROM \"secreading_1\"\nORDER BY \"timeSec\" DESC, \"sensorid\""
-    },
-    {
-      "name" : "SecReadingByTemp",
-      "sql" : "CREATE OR REPLACE VIEW \"SecReadingByTemp\"(\"sensorid\", \"timeSec\", \"temp\") AS SELECT *\nFROM (SELECT \"sensorid\", \"timeSec\", \"temp\"\n  FROM \"secreading_1\"\n  WHERE \"temp\" > $1\n  ORDER BY \"timeSec\"\n  FETCH NEXT 10 ROWS ONLY) AS \"t0\"\nORDER BY \"timeSec\" DESC"
-    },
-    {
-      "name" : "Machine.sensors",
-      "sql" : "CREATE OR REPLACE VIEW \"Machine.sensors\"(\"id\", \"machineId\", \"placed\", \"timestamp\") AS SELECT *\nFROM \"sensors_3\"\nWHERE \"machineId\" = $1\nORDER BY \"id\""
-    },
-    {
-      "name" : "HighTemp",
-      "sql" : "CREATE OR REPLACE VIEW \"HighTemp\"(\"machineid\", \"sensorid\", \"temp\", \"timeSec\") AS SELECT *\nFROM \"hightemp_1\"\nWHERE \"sensorid\" = $1\nORDER BY \"timeSec\" DESC"
-    },
-    {
-      "name" : "HighTemp",
-      "sql" : "CREATE OR REPLACE VIEW \"HighTemp\"(\"machineid\", \"sensorid\", \"temp\", \"timeSec\") AS SELECT *\nFROM \"hightemp_1\"\nWHERE \"timeSec\" = $1\nORDER BY \"timeSec\" DESC, \"sensorid\""
-    },
-    {
-      "name" : "SecReading",
-      "sql" : "CREATE OR REPLACE VIEW \"SecReading\"(\"sensorid\", \"timeSec\", \"temp\") AS SELECT *\nFROM \"secreading_1\"\nWHERE \"sensorid\" = $1 AND \"timeSec\" = $2\nORDER BY \"timeSec\" DESC"
-    },
-    {
-      "name" : "SecReading",
-      "sql" : "CREATE OR REPLACE VIEW \"SecReading\"(\"sensorid\", \"timeSec\", \"temp\") AS SELECT *\nFROM \"secreading_1\"\nWHERE \"timeSec\" = $1\nORDER BY \"timeSec\" DESC, \"sensorid\""
-    },
-    {
-      "name" : "SecReading",
-      "sql" : "CREATE OR REPLACE VIEW \"SecReading\"(\"sensorid\", \"timeSec\", \"temp\") AS SELECT *\nFROM \"secreading_1\"\nWHERE \"sensorid\" = $1\nORDER BY \"timeSec\" DESC"
-    },
-    {
-      "name" : "SensorReading",
-      "sql" : "CREATE OR REPLACE VIEW \"SensorReading\"(\"sensorid\", \"time\", \"temperature\", \"humidity\", \"timestamp\") AS SELECT *\nFROM \"sensorreading_2\"\nWHERE \"sensorid\" = $1 AND \"time\" = $2\nORDER BY \"timestamp\" DESC NULLS LAST"
-    },
-    {
-      "name" : "SensorReading",
-      "sql" : "CREATE OR REPLACE VIEW \"SensorReading\"(\"sensorid\", \"time\", \"temperature\", \"humidity\", \"timestamp\") AS SELECT *\nFROM \"sensorreading_2\"\nWHERE \"sensorid\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"time\""
-    },
-    {
-      "name" : "Sensors.readings",
-      "sql" : "CREATE OR REPLACE VIEW \"Sensors.readings\"(\"sensorid\", \"timeSec\", \"temp\") AS SELECT *\nFROM \"secreading_1\"\nWHERE \"sensorid\" = $1\nORDER BY \"timeSec\" DESC"
-    },
-    {
-      "name" : "SensorReading",
-      "sql" : "CREATE OR REPLACE VIEW \"SensorReading\"(\"sensorid\", \"time\", \"temperature\", \"humidity\", \"timestamp\") AS SELECT *\nFROM \"sensorreading_2\"\nWHERE \"time\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"sensorid\""
     },
     {
       "name" : "SensorReading",

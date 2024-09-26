@@ -137,31 +137,7 @@ LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], col1=[/(+($0, 
   "views" : [
     {
       "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\", \"col1\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\""
-    },
-    {
-      "name" : "Orders",
       "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\", \"col1\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\""
-    },
-    {
-      "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\", \"col1\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST"
-    },
-    {
-      "name" : "OrderEntry",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderEntry\"(\"col1\", \"time\", \"productid\", \"discount\", \"_id\") AS SELECT *\nFROM \"orderentry_1\"\nWHERE \"time\" = $1 AND \"productid\" = $2\nORDER BY \"time\" DESC NULLS LAST, \"_id\""
-    },
-    {
-      "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\", \"col1\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1\nORDER BY \"time\" DESC NULLS LAST"
-    },
-    {
-      "name" : "OrderEntry",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderEntry\"(\"col1\", \"time\", \"productid\", \"discount\", \"_id\") AS SELECT *\nFROM \"orderentry_1\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"_id\", \"productid\""
-    },
-    {
-      "name" : "OrderEntry",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderEntry\"(\"col1\", \"time\", \"productid\", \"discount\", \"_id\") AS SELECT *\nFROM \"orderentry_1\"\nWHERE \"productid\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"_id\""
     },
     {
       "name" : "OrderEntry",

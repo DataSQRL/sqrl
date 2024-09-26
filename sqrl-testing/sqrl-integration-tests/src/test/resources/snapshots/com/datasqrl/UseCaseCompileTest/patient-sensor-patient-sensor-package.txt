@@ -322,20 +322,8 @@ Inputs: tempalert_1
   ],
   "views" : [
     {
-      "name" : "ObservationGroup.lastHour",
-      "sql" : "CREATE OR REPLACE VIEW \"ObservationGroup.lastHour\"(\"__pk1_groupId\", \"__pk3_created\", \"maxTemp\", \"minTemp\") AS SELECT *\nFROM \"lasthour_1\"\nWHERE \"__pk1_groupId\" = $1 AND \"__pk3_created\" = $2\nORDER BY \"__pk3_created\" DESC NULLS LAST"
-    },
-    {
-      "name" : "PatientHourly",
-      "sql" : "CREATE OR REPLACE VIEW \"PatientHourly\"(\"patientid\", \"timeHour\", \"avgTemp\", \"maxTemp\", \"minTemp\") AS SELECT *\nFROM \"patienthourly_1\"\nWHERE \"patientid\" = $1\nORDER BY \"timeHour\" DESC NULLS LAST"
-    },
-    {
       "name" : "ObservationGroup",
       "sql" : "CREATE OR REPLACE VIEW \"ObservationGroup\"(\"groupId\", \"groupName\", \"created\", \"patients\") AS SELECT *\nFROM \"observationgroup_2\"\nORDER BY \"created\" DESC NULLS LAST, \"groupId\""
-    },
-    {
-      "name" : "ObservationGroup",
-      "sql" : "CREATE OR REPLACE VIEW \"ObservationGroup\"(\"groupId\", \"groupName\", \"created\", \"patients\") AS SELECT *\nFROM \"observationgroup_2\"\nWHERE \"groupId\" = $1\nORDER BY \"created\" DESC NULLS LAST"
     }
   ]
 }

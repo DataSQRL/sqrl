@@ -484,20 +484,8 @@ LogicalProject(__pk1_id=[$0], loan_type_id=[$1], total_amount=[$2], total_loans=
   ],
   "views" : [
     {
-      "name" : "Customers.overview",
-      "sql" : "CREATE OR REPLACE VIEW \"Customers.overview\"(\"__pk1_id\", \"loan_type_id\", \"total_amount\", \"total_loans\", \"__timestamp\") AS SELECT *\nFROM \"overview_1\"\nWHERE \"__pk1_id\" = $1\nORDER BY \"loan_type_id\""
-    },
-    {
       "name" : "ApplicationUpdates",
       "sql" : "CREATE OR REPLACE VIEW \"ApplicationUpdates\"(\"loan_application_id\", \"status\", \"message\", \"_uuid\", \"event_time\") AS SELECT *\nFROM \"applicationupdates_2\"\nORDER BY \"event_time\" DESC NULLS LAST, \"_uuid\""
-    },
-    {
-      "name" : "CustomerChatMessage",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerChatMessage\"(\"role\", \"content\", \"name\", \"customerid\", \"timestamp\", \"uuid\") AS SELECT *\nFROM \"customerchatmessage_1\"\nWHERE \"customerid\" = $1\nORDER BY \"timestamp\" DESC, \"uuid\""
-    },
-    {
-      "name" : "Applications.updates",
-      "sql" : "CREATE OR REPLACE VIEW \"Applications.updates\"(\"loan_application_id\", \"status\", \"message\", \"_uuid\", \"event_time\") AS SELECT *\nFROM \"applicationupdates_2\"\nWHERE $1 = \"loan_application_id\"\nORDER BY \"event_time\", \"_uuid\""
     },
     {
       "name" : "ApplicationStatus",
@@ -510,10 +498,6 @@ LogicalProject(__pk1_id=[$0], loan_type_id=[$1], total_amount=[$2], total_loans=
     {
       "name" : "ApplicationAlert",
       "sql" : "CREATE OR REPLACE VIEW \"ApplicationAlert\"(\"id\", \"customer_id\", \"loan_type_id\", \"max_amount\", \"min_amount\", \"amount\", \"_uuid\", \"_event_time\") AS SELECT *\nFROM \"applicationalert_1\"\nORDER BY \"_event_time\" DESC NULLS LAST, \"_uuid\""
-    },
-    {
-      "name" : "Customers.applications",
-      "sql" : "CREATE OR REPLACE VIEW \"Customers.applications\"(\"id\", \"customer_id\", \"loan_type_id\", \"amount\", \"duration\", \"application_date\", \"updated_at\") AS SELECT *\nFROM \"applications_3\"\nWHERE $1 = \"customer_id\"\nORDER BY \"application_date\", \"id\""
     }
   ]
 }

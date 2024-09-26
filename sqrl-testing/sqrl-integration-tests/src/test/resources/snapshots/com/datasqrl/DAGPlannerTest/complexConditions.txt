@@ -217,44 +217,16 @@ LogicalProject(id=[$0], time=[$2], cc=[CASE(IS NULL($7), 0:BIGINT, $7)])
   ],
   "views" : [
     {
-      "name" : "SelectOrders1",
-      "sql" : "CREATE OR REPLACE VIEW \"SelectOrders1\"(\"id\", \"time\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\n  FROM \"orders_2\"\n   INNER JOIN (SELECT SINGLE_VALUE(\"customerid\") AS \"$f0\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo') AS \"t0\" ON \"orders_2\".\"customerid\" > \"t0\".\"$f0\") AS \"t1\"\nWHERE \"t1\".\"id\" = $1\nORDER BY \"time\""
-    },
-    {
       "name" : "SelectOrders2",
       "sql" : "CREATE OR REPLACE VIEW \"SelectOrders2\"(\"id\", \"time\", \"_i\") AS SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t4\".\"i\" AS \"_i\"\nFROM \"orders_2\"\n CROSS JOIN (SELECT COUNT(*) AS \"c\", COUNT(*) AS \"ck\", MAX(\"timestamp\") AS \"__timestamp\"\n  FROM \"customer_2\"\n  WHERE \"name\" = 'foo') AS \"t1\"\n LEFT JOIN (SELECT \"customerid\", TRUE AS \"i\", MAX(\"timestamp\") AS \"__timestamp\"\n  FROM \"customer_2\"\n  WHERE \"name\" = 'foo'\n  GROUP BY \"customerid\", TRUE) AS \"t4\" ON \"orders_2\".\"customerid\" = \"t4\".\"customerid\"\nWHERE \"t1\".\"c\" = 0 OR \"t4\".\"i\" IS NULL AND \"t1\".\"ck\" >= \"t1\".\"c\"\nORDER BY \"orders_2\".\"id\", \"orders_2\".\"time\", \"t4\".\"i\""
-    },
-    {
-      "name" : "SelectOrders1",
-      "sql" : "CREATE OR REPLACE VIEW \"SelectOrders1\"(\"id\", \"time\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\n  FROM \"orders_2\"\n   INNER JOIN (SELECT SINGLE_VALUE(\"customerid\") AS \"$f0\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo') AS \"t0\" ON \"orders_2\".\"customerid\" > \"t0\".\"$f0\") AS \"t1\"\nWHERE \"t1\".\"time\" = $1\nORDER BY \"id\""
-    },
-    {
-      "name" : "SelectOrders2",
-      "sql" : "CREATE OR REPLACE VIEW \"SelectOrders2\"(\"id\", \"time\", \"_i\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t4\".\"i\" AS \"_i\"\n  FROM \"orders_2\"\n   CROSS JOIN (SELECT COUNT(*) AS \"c\", COUNT(*) AS \"ck\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo') AS \"t1\"\n   LEFT JOIN (SELECT \"customerid\", TRUE AS \"i\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo'\n    GROUP BY \"customerid\", TRUE) AS \"t4\" ON \"orders_2\".\"customerid\" = \"t4\".\"customerid\"\n  WHERE \"t1\".\"c\" = 0 OR \"t4\".\"i\" IS NULL AND \"t1\".\"ck\" >= \"t1\".\"c\") AS \"t6\"\nWHERE \"t6\".\"time\" = $1\nORDER BY \"id\", \"_i\""
     },
     {
       "name" : "SelectOrders1",
       "sql" : "CREATE OR REPLACE VIEW \"SelectOrders1\"(\"id\", \"time\") AS SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\nFROM \"orders_2\"\n INNER JOIN (SELECT SINGLE_VALUE(\"customerid\") AS \"$f0\", MAX(\"timestamp\") AS \"__timestamp\"\n  FROM \"customer_2\"\n  WHERE \"name\" = 'foo') AS \"t0\" ON \"orders_2\".\"customerid\" > \"t0\".\"$f0\"\nORDER BY \"orders_2\".\"id\", \"orders_2\".\"time\""
     },
     {
-      "name" : "SelectOrders2",
-      "sql" : "CREATE OR REPLACE VIEW \"SelectOrders2\"(\"id\", \"time\", \"_i\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t4\".\"i\" AS \"_i\"\n  FROM \"orders_2\"\n   CROSS JOIN (SELECT COUNT(*) AS \"c\", COUNT(*) AS \"ck\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo') AS \"t1\"\n   LEFT JOIN (SELECT \"customerid\", TRUE AS \"i\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo'\n    GROUP BY \"customerid\", TRUE) AS \"t4\" ON \"orders_2\".\"customerid\" = \"t4\".\"customerid\"\n  WHERE \"t1\".\"c\" = 0 OR \"t4\".\"i\" IS NULL AND \"t1\".\"ck\" >= \"t1\".\"c\") AS \"t6\"\nWHERE \"t6\".\"id\" = $1\nORDER BY \"time\", \"_i\""
-    },
-    {
-      "name" : "SelectOrders2",
-      "sql" : "CREATE OR REPLACE VIEW \"SelectOrders2\"(\"id\", \"time\", \"_i\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t4\".\"i\" AS \"_i\"\n  FROM \"orders_2\"\n   CROSS JOIN (SELECT COUNT(*) AS \"c\", COUNT(*) AS \"ck\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo') AS \"t1\"\n   LEFT JOIN (SELECT \"customerid\", TRUE AS \"i\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo'\n    GROUP BY \"customerid\", TRUE) AS \"t4\" ON \"orders_2\".\"customerid\" = \"t4\".\"customerid\"\n  WHERE \"t1\".\"c\" = 0 OR \"t4\".\"i\" IS NULL AND \"t1\".\"ck\" >= \"t1\".\"c\") AS \"t6\"\nWHERE \"t6\".\"id\" = $1 AND \"t6\".\"time\" = $2\nORDER BY \"_i\""
-    },
-    {
       "name" : "SelectOrders3",
       "sql" : "CREATE OR REPLACE VIEW \"SelectOrders3\"(\"id\", \"time\") AS SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\nFROM \"orders_2\"\n INNER JOIN (SELECT \"customerid\", MAX(\"timestamp\") AS \"__timestamp\"\n  FROM \"customer_2\"\n  WHERE \"name\" = 'foo'\n  GROUP BY \"customerid\") AS \"t0\" ON \"orders_2\".\"customerid\" = \"t0\".\"customerid\"\nORDER BY \"orders_2\".\"id\", \"orders_2\".\"time\""
-    },
-    {
-      "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\""
-    },
-    {
-      "name" : "SelectOrders3",
-      "sql" : "CREATE OR REPLACE VIEW \"SelectOrders3\"(\"id\", \"time\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\n  FROM \"orders_2\"\n   INNER JOIN (SELECT \"customerid\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo'\n    GROUP BY \"customerid\") AS \"t0\" ON \"orders_2\".\"customerid\" = \"t0\".\"customerid\") AS \"t1\"\nWHERE \"t1\".\"time\" = $1\nORDER BY \"id\""
     },
     {
       "name" : "Orders",
@@ -265,40 +237,8 @@ LogicalProject(id=[$0], time=[$2], cc=[CASE(IS NULL($7), 0:BIGINT, $7)])
       "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\", \"lastUpdated\""
     },
     {
-      "name" : "Customer",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1 AND \"lastUpdated\" = $2\nORDER BY \"timestamp\" DESC NULLS LAST"
-    },
-    {
-      "name" : "Customer",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nWHERE \"lastUpdated\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\""
-    },
-    {
-      "name" : "Customer",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"lastUpdated\""
-    },
-    {
-      "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST"
-    },
-    {
-      "name" : "SelectOrders3",
-      "sql" : "CREATE OR REPLACE VIEW \"SelectOrders3\"(\"id\", \"time\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\n  FROM \"orders_2\"\n   INNER JOIN (SELECT \"customerid\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo'\n    GROUP BY \"customerid\") AS \"t0\" ON \"orders_2\".\"customerid\" = \"t0\".\"customerid\") AS \"t1\"\nWHERE \"t1\".\"id\" = $1\nORDER BY \"time\""
-    },
-    {
       "name" : "SelectOrders4",
       "sql" : "CREATE OR REPLACE VIEW \"SelectOrders4\"(\"id\", \"time\", \"cc\") AS SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", CASE WHEN \"t6\".\"EXPR$0\" IS NULL THEN 0 ELSE \"t6\".\"EXPR$0\" END AS \"cc\"\nFROM \"orders_2\"\n INNER JOIN (SELECT \"customerid\", MAX(\"timestamp\") AS \"__timestamp\"\n  FROM \"customer_2\"\n  WHERE \"name\" = 'foo'\n  GROUP BY \"customerid\") AS \"t0\" ON \"orders_2\".\"customerid\" = \"t0\".\"customerid\"\n LEFT JOIN (SELECT \"t4\".\"customerid\" AS \"customerid0\", COUNT(*) AS \"EXPR$0\", MAX(GREATEST(\"customer_20\".\"timestamp\", \"t4\".\"__timestamp\")) AS \"__timestamp\"\n  FROM \"customer_2\" AS \"customer_20\"\n   INNER JOIN (SELECT \"orders_20\".\"customerid\", MAX(GREATEST(\"orders_20\".\"time\", \"t2\".\"__timestamp\")) AS \"__timestamp\"\n    FROM \"orders_2\" AS \"orders_20\"\n     INNER JOIN (SELECT \"customerid\", MAX(\"timestamp\") AS \"__timestamp\"\n      FROM \"customer_2\"\n      WHERE \"name\" = 'foo'\n      GROUP BY \"customerid\") AS \"t2\" ON \"orders_20\".\"customerid\" = \"t2\".\"customerid\"\n    GROUP BY \"orders_20\".\"customerid\") AS \"t4\" ON \"customer_20\".\"customerid\" > \"t4\".\"customerid\"\n  GROUP BY \"t4\".\"customerid\") AS \"t6\" ON \"orders_2\".\"customerid\" = \"t6\".\"customerid0\"\nORDER BY \"orders_2\".\"id\", \"orders_2\".\"time\""
-    },
-    {
-      "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1\nORDER BY \"time\" DESC NULLS LAST"
-    },
-    {
-      "name" : "SelectOrders4",
-      "sql" : "CREATE OR REPLACE VIEW \"SelectOrders4\"(\"id\", \"time\", \"cc\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", CASE WHEN \"t6\".\"EXPR$0\" IS NULL THEN 0 ELSE \"t6\".\"EXPR$0\" END AS \"cc\"\n  FROM \"orders_2\"\n   INNER JOIN (SELECT \"customerid\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo'\n    GROUP BY \"customerid\") AS \"t0\" ON \"orders_2\".\"customerid\" = \"t0\".\"customerid\"\n   LEFT JOIN (SELECT \"t4\".\"customerid\" AS \"customerid0\", COUNT(*) AS \"EXPR$0\", MAX(GREATEST(\"customer_20\".\"timestamp\", \"t4\".\"__timestamp\")) AS \"__timestamp\"\n    FROM \"customer_2\" AS \"customer_20\"\n     INNER JOIN (SELECT \"orders_20\".\"customerid\", MAX(GREATEST(\"orders_20\".\"time\", \"t2\".\"__timestamp\")) AS \"__timestamp\"\n      FROM \"orders_2\" AS \"orders_20\"\n       INNER JOIN (SELECT \"customerid\", MAX(\"timestamp\") AS \"__timestamp\"\n        FROM \"customer_2\"\n        WHERE \"name\" = 'foo'\n        GROUP BY \"customerid\") AS \"t2\" ON \"orders_20\".\"customerid\" = \"t2\".\"customerid\"\n      GROUP BY \"orders_20\".\"customerid\") AS \"t4\" ON \"customer_20\".\"customerid\" > \"t4\".\"customerid\"\n    GROUP BY \"t4\".\"customerid\") AS \"t6\" ON \"orders_2\".\"customerid\" = \"t6\".\"customerid0\") AS \"t7\"\nWHERE \"t7\".\"id\" = $1\nORDER BY \"time\""
-    },
-    {
-      "name" : "SelectOrders4",
-      "sql" : "CREATE OR REPLACE VIEW \"SelectOrders4\"(\"id\", \"time\", \"cc\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", CASE WHEN \"t6\".\"EXPR$0\" IS NULL THEN 0 ELSE \"t6\".\"EXPR$0\" END AS \"cc\"\n  FROM \"orders_2\"\n   INNER JOIN (SELECT \"customerid\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo'\n    GROUP BY \"customerid\") AS \"t0\" ON \"orders_2\".\"customerid\" = \"t0\".\"customerid\"\n   LEFT JOIN (SELECT \"t4\".\"customerid\" AS \"customerid0\", COUNT(*) AS \"EXPR$0\", MAX(GREATEST(\"customer_20\".\"timestamp\", \"t4\".\"__timestamp\")) AS \"__timestamp\"\n    FROM \"customer_2\" AS \"customer_20\"\n     INNER JOIN (SELECT \"orders_20\".\"customerid\", MAX(GREATEST(\"orders_20\".\"time\", \"t2\".\"__timestamp\")) AS \"__timestamp\"\n      FROM \"orders_2\" AS \"orders_20\"\n       INNER JOIN (SELECT \"customerid\", MAX(\"timestamp\") AS \"__timestamp\"\n        FROM \"customer_2\"\n        WHERE \"name\" = 'foo'\n        GROUP BY \"customerid\") AS \"t2\" ON \"orders_20\".\"customerid\" = \"t2\".\"customerid\"\n      GROUP BY \"orders_20\".\"customerid\") AS \"t4\" ON \"customer_20\".\"customerid\" > \"t4\".\"customerid\"\n    GROUP BY \"t4\".\"customerid\") AS \"t6\" ON \"orders_2\".\"customerid\" = \"t6\".\"customerid0\") AS \"t7\"\nWHERE \"t7\".\"time\" = $1\nORDER BY \"id\""
     }
   ]
 }

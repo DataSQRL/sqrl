@@ -212,43 +212,11 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT(DISTINCT $1)], __timestamp=[MAX
   "views" : [
     {
       "name" : "TopicSearch",
-      "sql" : "CREATE OR REPLACE VIEW \"TopicSearch\"(\"topicName\", \"numPackages\", \"__timestamp\") AS SELECT *\nFROM \"topicsearch_1\"\nWHERE \"topicName\" = $1\nORDER BY \"numPackages\" DESC"
-    },
-    {
-      "name" : "TopicSearch",
       "sql" : "CREATE OR REPLACE VIEW \"TopicSearch\"(\"topicName\", \"numPackages\", \"__timestamp\") AS SELECT *\nFROM \"topicsearch_1\"\nORDER BY \"numPackages\" DESC, \"topicName\""
-    },
-    {
-      "name" : "TopicPackages.latest",
-      "sql" : "CREATE OR REPLACE VIEW \"TopicPackages.latest\"(\"name\", \"version\", \"variant\", \"latest\", \"type\", \"license\", \"repository\", \"homepage\", \"documentation\", \"readme\", \"description\", \"uniqueId\", \"file\", \"hash\", \"authorid\", \"submissionTime\", \"keywords\", \"variant0\", \"repoURL\") AS SELECT *\nFROM \"submission_2\"\nWHERE $1 = \"name\" AND \"latest\"\nORDER BY \"submissionTime\" DESC"
-    },
-    {
-      "name" : "Package.versions",
-      "sql" : "CREATE OR REPLACE VIEW \"Package.versions\"(\"name\", \"version\", \"variant\", \"latest\", \"type\", \"license\", \"repository\", \"homepage\", \"documentation\", \"readme\", \"description\", \"uniqueId\", \"file\", \"hash\", \"authorid\", \"submissionTime\", \"keywords\", \"variant0\", \"repoURL\") AS SELECT *\nFROM (SELECT *\n  FROM \"submission_2\"\n  WHERE $1 = \"name\") AS \"t\"\nWHERE \"version\" = $2\nORDER BY \"submissionTime\" DESC"
     },
     {
       "name" : "Package",
       "sql" : "CREATE OR REPLACE VIEW \"Package\"(\"name\", \"_submissionTime\") AS SELECT *\nFROM \"package_1\"\nORDER BY \"name\""
-    },
-    {
-      "name" : "Package.versions",
-      "sql" : "CREATE OR REPLACE VIEW \"Package.versions\"(\"name\", \"version\", \"variant\", \"latest\", \"type\", \"license\", \"repository\", \"homepage\", \"documentation\", \"readme\", \"description\", \"uniqueId\", \"file\", \"hash\", \"authorid\", \"submissionTime\", \"keywords\", \"variant0\", \"repoURL\") AS SELECT *\nFROM (SELECT *\n  FROM \"submission_2\"\n  WHERE $1 = \"name\") AS \"t\"\nWHERE \"version\" = $2 AND \"variant\" = $3\nORDER BY \"submissionTime\" DESC"
-    },
-    {
-      "name" : "TopicPackages",
-      "sql" : "CREATE OR REPLACE VIEW \"TopicPackages\"(\"pkgName\", \"topicName\", \"numSubmissions\", \"lastSubmission\") AS SELECT *\nFROM \"topicpackages_1\"\nWHERE \"topicName\" = $1\nORDER BY \"numSubmissions\" DESC, \"pkgName\""
-    },
-    {
-      "name" : "Package.versions",
-      "sql" : "CREATE OR REPLACE VIEW \"Package.versions\"(\"name\", \"version\", \"variant\", \"latest\", \"type\", \"license\", \"repository\", \"homepage\", \"documentation\", \"readme\", \"description\", \"uniqueId\", \"file\", \"hash\", \"authorid\", \"submissionTime\", \"keywords\", \"variant0\", \"repoURL\") AS SELECT *\nFROM \"submission_2\"\nWHERE $1 = \"name\"\nORDER BY \"submissionTime\" DESC"
-    },
-    {
-      "name" : "Package.latest",
-      "sql" : "CREATE OR REPLACE VIEW \"Package.latest\"(\"name\", \"version\", \"variant\", \"latest\", \"type\", \"license\", \"repository\", \"homepage\", \"documentation\", \"readme\", \"description\", \"uniqueId\", \"file\", \"hash\", \"authorid\", \"submissionTime\", \"keywords\", \"variant0\", \"repoURL\") AS SELECT *\nFROM \"submission_2\"\nWHERE $1 = \"name\" AND \"latest\"\nORDER BY \"submissionTime\" DESC"
-    },
-    {
-      "name" : "Package.versions",
-      "sql" : "CREATE OR REPLACE VIEW \"Package.versions\"(\"name\", \"version\", \"variant\", \"latest\", \"type\", \"license\", \"repository\", \"homepage\", \"documentation\", \"readme\", \"description\", \"uniqueId\", \"file\", \"hash\", \"authorid\", \"submissionTime\", \"keywords\", \"variant0\", \"repoURL\") AS SELECT *\nFROM (SELECT *\n  FROM \"submission_2\"\n  WHERE $1 = \"name\") AS \"t\"\nWHERE \"variant\" = $2\nORDER BY \"submissionTime\" DESC"
     }
   ]
 }

@@ -406,32 +406,12 @@ LogicalProject(customerid=[$0], timestamp=[$4], name=[$2])
       "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\", \"lastUpdated\""
     },
     {
-      "name" : "CustomerByMultiple",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerByMultiple\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerbymultiple_1\"\nWHERE \"customerid\" = $1\nORDER BY \"email\""
-    },
-    {
-      "name" : "Customer",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1 AND \"lastUpdated\" = $2\nORDER BY \"timestamp\" DESC NULLS LAST"
-    },
-    {
-      "name" : "Customer",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nWHERE \"lastUpdated\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\""
-    },
-    {
-      "name" : "Customer",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"lastUpdated\""
-    },
-    {
       "name" : "CustomerVaryingCase",
       "sql" : "CREATE OR REPLACE VIEW \"CustomerVaryingCase\"(\"customerID\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customervaryingcase_1\"\nORDER BY \"customerID\""
     },
     {
       "name" : "CustomerByMultipleTime",
       "sql" : "CREATE OR REPLACE VIEW \"CustomerByMultipleTime\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerbymultipletime_1\"\nORDER BY \"customerid\", \"email\""
-    },
-    {
-      "name" : "CustomerByMultiple",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerByMultiple\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerbymultiple_1\"\nWHERE \"email\" = $1\nORDER BY \"customerid\""
     },
     {
       "name" : "CustomerByMultiple",
@@ -448,14 +428,6 @@ LogicalProject(customerid=[$0], timestamp=[$4], name=[$2])
     {
       "name" : "CustomerByTimeAsc",
       "sql" : "CREATE OR REPLACE VIEW \"CustomerByTimeAsc\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerbytimeasc_1\"\nORDER BY \"customerid\""
-    },
-    {
-      "name" : "CustomerByMultipleTime",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerByMultipleTime\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerbymultipletime_1\"\nWHERE \"customerid\" = $1\nORDER BY \"email\""
-    },
-    {
-      "name" : "CustomerByMultipleTime",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerByMultipleTime\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerbymultipletime_1\"\nWHERE \"email\" = $1\nORDER BY \"customerid\""
     },
     {
       "name" : "CustomerByUpdatedAsc",

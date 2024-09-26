@@ -327,80 +327,24 @@ LogicalTableScan(table=[[orders_1]])
   ],
   "views" : [
     {
-      "name" : "Customer3",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer3\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", \"updatedTime\") AS SELECT *\nFROM \"customer3_1\"\nWHERE \"customerid\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"lastUpdated\""
-    },
-    {
       "name" : "Customer",
       "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\", \"lastUpdated\""
-    },
-    {
-      "name" : "Customer3",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer3\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", \"updatedTime\") AS SELECT *\nFROM \"customer3_1\"\nWHERE \"lastUpdated\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\""
     },
     {
       "name" : "CustomerByTime2",
       "sql" : "CREATE OR REPLACE VIEW \"CustomerByTime2\"(\"updatedTime\", \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerbytime2_1\"\nORDER BY \"customerid\""
     },
     {
-      "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST"
-    },
-    {
-      "name" : "Customer3",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer3\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", \"updatedTime\") AS SELECT *\nFROM \"customer3_1\"\nWHERE \"customerid\" = $1 AND \"lastUpdated\" = $2\nORDER BY \"timestamp\" DESC NULLS LAST"
-    },
-    {
       "name" : "CustomerByTime3",
       "sql" : "CREATE OR REPLACE VIEW \"CustomerByTime3\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", \"updatedTime\") AS SELECT *\nFROM \"customerbytime3_1\"\nORDER BY \"customerid\""
-    },
-    {
-      "name" : "Customer",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1 AND \"lastUpdated\" = $2\nORDER BY \"timestamp\" DESC NULLS LAST"
-    },
-    {
-      "name" : "OrderCustomerJoin",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerJoin\"(\"id\", \"customerid\", \"time\", \"entries\", \"updatedTime\", \"customerid0\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"ordercustomerjoin_1\"\nWHERE \"id\" = $1\nORDER BY \"time\" DESC NULLS LAST"
-    },
-    {
-      "name" : "Customer",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nWHERE \"lastUpdated\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\""
-    },
-    {
-      "name" : "Customer",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"lastUpdated\""
     },
     {
       "name" : "Customer2",
       "sql" : "CREATE OR REPLACE VIEW \"Customer2\"(\"updatedTime\", \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer2_1\"\nORDER BY \"updatedTime\" DESC NULLS LAST, \"customerid\", \"lastUpdated\""
     },
     {
-      "name" : "Customer2",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer2\"(\"updatedTime\", \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer2_1\"\nWHERE \"customerid\" = $1\nORDER BY \"updatedTime\" DESC NULLS LAST, \"lastUpdated\""
-    },
-    {
       "name" : "OrderCustomerJoin",
       "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerJoin\"(\"id\", \"customerid\", \"time\", \"entries\", \"updatedTime\", \"customerid0\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"ordercustomerjoin_1\"\nORDER BY \"time\" DESC NULLS LAST, \"id\""
-    },
-    {
-      "name" : "Customer2",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer2\"(\"updatedTime\", \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer2_1\"\nWHERE \"lastUpdated\" = $1\nORDER BY \"updatedTime\" DESC NULLS LAST, \"customerid\""
-    },
-    {
-      "name" : "OrderCustomerJoin",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerJoin\"(\"id\", \"customerid\", \"time\", \"entries\", \"updatedTime\", \"customerid0\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"ordercustomerjoin_1\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\""
-    },
-    {
-      "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\""
-    },
-    {
-      "name" : "Customer2",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer2\"(\"updatedTime\", \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer2_1\"\nWHERE \"customerid\" = $1 AND \"lastUpdated\" = $2\nORDER BY \"updatedTime\" DESC NULLS LAST"
-    },
-    {
-      "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1\nORDER BY \"time\" DESC NULLS LAST"
     },
     {
       "name" : "Customer3",
@@ -409,10 +353,6 @@ LogicalTableScan(table=[[orders_1]])
     {
       "name" : "Orders",
       "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\""
-    },
-    {
-      "name" : "OrderCustomerJoin",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerJoin\"(\"id\", \"customerid\", \"time\", \"entries\", \"updatedTime\", \"customerid0\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"ordercustomerjoin_1\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST"
     }
   ]
 }

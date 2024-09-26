@@ -511,103 +511,19 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
   "views" : [
     {
       "name" : "OrderAgg1",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderAgg1\"(\"customer\", \"bucket\", \"order_count\") AS SELECT *\nFROM \"orderagg1_1\"\nWHERE \"customer\" = $1 AND \"bucket\" = $2\nORDER BY \"bucket\" DESC NULLS LAST"
-    },
-    {
-      "name" : "Product",
-      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"description\", \"category\""
-    },
-    {
-      "name" : "Product",
-      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1 AND \"description\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\""
-    },
-    {
-      "name" : "OrderAgg1",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderAgg1\"(\"customer\", \"bucket\", \"order_count\") AS SELECT *\nFROM \"orderagg1_1\"\nWHERE \"bucket\" = $1\nORDER BY \"bucket\" DESC NULLS LAST, \"customer\""
-    },
-    {
-      "name" : "OrderAgg1",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderAgg1\"(\"customer\", \"bucket\", \"order_count\") AS SELECT *\nFROM \"orderagg1_1\"\nWHERE \"customer\" = $1\nORDER BY \"bucket\" DESC NULLS LAST"
-    },
-    {
-      "name" : "Product",
-      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"description\", \"category\""
-    },
-    {
-      "name" : "OrderAgg1",
       "sql" : "CREATE OR REPLACE VIEW \"OrderAgg1\"(\"customer\", \"bucket\", \"order_count\") AS SELECT *\nFROM \"orderagg1_1\"\nORDER BY \"bucket\" DESC NULLS LAST, \"customer\""
-    },
-    {
-      "name" : "Product",
-      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"description\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\""
-    },
-    {
-      "name" : "Product",
-      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1 AND \"description\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"category\""
-    },
-    {
-      "name" : "Product",
-      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"description\""
     },
     {
       "name" : "Customer",
       "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\", \"lastUpdated\""
     },
     {
-      "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST"
-    },
-    {
-      "name" : "Customer",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1 AND \"lastUpdated\" = $2\nORDER BY \"timestamp\" DESC NULLS LAST"
-    },
-    {
-      "name" : "Customer",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nWHERE \"lastUpdated\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\""
-    },
-    {
-      "name" : "Customer",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"lastUpdated\""
-    },
-    {
-      "name" : "OrderAugment",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderAugment\"(\"id\", \"time\", \"order_count\") AS SELECT *\nFROM \"orderaugment_1\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\""
-    },
-    {
       "name" : "OrderAugment",
       "sql" : "CREATE OR REPLACE VIEW \"OrderAugment\"(\"id\", \"time\", \"order_count\") AS SELECT *\nFROM \"orderaugment_1\"\nORDER BY \"time\" DESC NULLS LAST, \"id\""
     },
     {
-      "name" : "Product",
-      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"description\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\""
-    },
-    {
-      "name" : "Product",
-      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"description\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"category\""
-    },
-    {
       "name" : "RecentTotal",
       "sql" : "CREATE OR REPLACE VIEW \"RecentTotal\"(\"total\", \"quantity\", \"__pk\", \"_time\") AS SELECT *\nFROM \"recenttotal_1\"\nORDER BY \"__pk\""
-    },
-    {
-      "name" : "Product",
-      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"description\""
-    },
-    {
-      "name" : "Product",
-      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"description\", \"category\""
-    },
-    {
-      "name" : "Ordertime1",
-      "sql" : "CREATE OR REPLACE VIEW \"Ordertime1\"(\"customer\", \"bucket\", \"order_count\") AS SELECT *\nFROM \"ordertime1_1\"\nWHERE \"bucket\" = $1\nORDER BY \"bucket\" DESC NULLS LAST, \"customer\""
-    },
-    {
-      "name" : "Ordertime1",
-      "sql" : "CREATE OR REPLACE VIEW \"Ordertime1\"(\"customer\", \"bucket\", \"order_count\") AS SELECT *\nFROM \"ordertime1_1\"\nWHERE \"customer\" = $1\nORDER BY \"bucket\" DESC NULLS LAST"
-    },
-    {
-      "name" : "Product",
-      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"description\""
     },
     {
       "name" : "Ordertime1",
@@ -618,52 +534,8 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
       "sql" : "CREATE OR REPLACE VIEW \"OrderNow3\"(\"customer\", \"order_count\", \"_time\") AS SELECT *\nFROM \"ordernow3_1\"\nORDER BY \"customer\""
     },
     {
-      "name" : "Product",
-      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3 AND \"category\" = $4\nORDER BY \"_ingest_time\" DESC NULLS LAST"
-    },
-    {
-      "name" : "Product",
-      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"category\""
-    },
-    {
-      "name" : "Ordertime1",
-      "sql" : "CREATE OR REPLACE VIEW \"Ordertime1\"(\"customer\", \"bucket\", \"order_count\") AS SELECT *\nFROM \"ordertime1_1\"\nWHERE \"customer\" = $1 AND \"bucket\" = $2\nORDER BY \"bucket\" DESC NULLS LAST"
-    },
-    {
-      "name" : "OrderAugment",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderAugment\"(\"id\", \"time\", \"order_count\") AS SELECT *\nFROM \"orderaugment_1\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST"
-    },
-    {
-      "name" : "OrderAugment",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderAugment\"(\"id\", \"time\", \"order_count\") AS SELECT *\nFROM \"orderaugment_1\"\nWHERE \"id\" = $1\nORDER BY \"time\" DESC NULLS LAST"
-    },
-    {
       "name" : "OrderNow2",
       "sql" : "CREATE OR REPLACE VIEW \"OrderNow2\"(\"bucket\", \"order_count\") AS SELECT *\nFROM \"ordernow2_1\"\nWHERE CURRENT_TIMESTAMP < (\"bucket\" + INTERVAL '777600' SECOND(9))\nORDER BY \"bucket\" DESC NULLS LAST"
-    },
-    {
-      "name" : "OrderNow2",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderNow2\"(\"bucket\", \"order_count\") AS SELECT *\nFROM (SELECT *\n  FROM \"ordernow2_1\"\n  WHERE \"bucket\" = $1) AS \"t\"\nWHERE CURRENT_TIMESTAMP < (\"bucket\" + INTERVAL '777600' SECOND(9))\nORDER BY \"bucket\" DESC NULLS LAST"
-    },
-    {
-      "name" : "OrderNow1",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderNow1\"(\"customer\", \"bucket\", \"order_count\") AS SELECT *\nFROM (SELECT *\n  FROM \"ordernow1_1\"\n  WHERE \"customer\" = $1 AND \"bucket\" = $2) AS \"t\"\nWHERE CURRENT_TIMESTAMP < (\"bucket\" + INTERVAL '777600' SECOND(9))\nORDER BY \"bucket\" DESC NULLS LAST"
-    },
-    {
-      "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\""
-    },
-    {
-      "name" : "OrderNow1",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderNow1\"(\"customer\", \"bucket\", \"order_count\") AS SELECT *\nFROM (SELECT *\n  FROM \"ordernow1_1\"\n  WHERE \"customer\" = $1) AS \"t\"\nWHERE CURRENT_TIMESTAMP < (\"bucket\" + INTERVAL '777600' SECOND(9))\nORDER BY \"bucket\" DESC NULLS LAST"
-    },
-    {
-      "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1\nORDER BY \"time\" DESC NULLS LAST"
-    },
-    {
-      "name" : "OrderNow1",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderNow1\"(\"customer\", \"bucket\", \"order_count\") AS SELECT *\nFROM (SELECT *\n  FROM \"ordernow1_1\"\n  WHERE \"bucket\" = $1) AS \"t\"\nWHERE CURRENT_TIMESTAMP < (\"bucket\" + INTERVAL '777600' SECOND(9))\nORDER BY \"bucket\" DESC NULLS LAST, \"customer\""
     },
     {
       "name" : "OrderNow1",
@@ -676,14 +548,6 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
     {
       "name" : "Product",
       "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\", \"category\""
-    },
-    {
-      "name" : "Product",
-      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"description\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"category\""
-    },
-    {
-      "name" : "Product",
-      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"category\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\""
     },
     {
       "name" : "OrderAgg2",

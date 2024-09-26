@@ -362,56 +362,16 @@ LogicalProject(__pk1_id=[$0], __pk2_customerid=[$1], __pk3_time=[$2], price=[$4]
   ],
   "views" : [
     {
-      "name" : "OrdersInline",
-      "sql" : "CREATE OR REPLACE VIEW \"OrdersInline\"(\"id\", \"customerid\", \"time\", \"price\", \"num\", \"_ingest_time\") AS SELECT *\nFROM \"ordersinline_1\"\nWHERE \"id\" = $1 AND \"customerid\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"time\""
-    },
-    {
-      "name" : "OrdersInline",
-      "sql" : "CREATE OR REPLACE VIEW \"OrdersInline\"(\"id\", \"customerid\", \"time\", \"price\", \"num\", \"_ingest_time\") AS SELECT *\nFROM \"ordersinline_1\"\nWHERE \"id\" = $1 AND \"customerid\" = $2 AND \"time\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST"
-    },
-    {
-      "name" : "OrdersInline",
-      "sql" : "CREATE OR REPLACE VIEW \"OrdersInline\"(\"id\", \"customerid\", \"time\", \"price\", \"num\", \"_ingest_time\") AS SELECT *\nFROM \"ordersinline_1\"\nWHERE \"id\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"customerid\", \"time\""
-    },
-    {
       "name" : "Customer",
       "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"_ingest_time\") AS SELECT *\nFROM \"customer_3\"\nORDER BY \"customerid\""
-    },
-    {
-      "name" : "OrdersInline",
-      "sql" : "CREATE OR REPLACE VIEW \"OrdersInline\"(\"id\", \"customerid\", \"time\", \"price\", \"num\", \"_ingest_time\") AS SELECT *\nFROM \"ordersinline_1\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"customerid\""
-    },
-    {
-      "name" : "OrdersInline",
-      "sql" : "CREATE OR REPLACE VIEW \"OrdersInline\"(\"id\", \"customerid\", \"time\", \"price\", \"num\", \"_ingest_time\") AS SELECT *\nFROM \"ordersinline_1\"\nWHERE \"customerid\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\", \"time\""
-    },
-    {
-      "name" : "OrdersInline",
-      "sql" : "CREATE OR REPLACE VIEW \"OrdersInline\"(\"id\", \"customerid\", \"time\", \"price\", \"num\", \"_ingest_time\") AS SELECT *\nFROM \"ordersinline_1\"\nWHERE \"customerid\" = $1 AND \"time\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\""
     },
     {
       "name" : "OrdersInline",
       "sql" : "CREATE OR REPLACE VIEW \"OrdersInline\"(\"id\", \"customerid\", \"time\", \"price\", \"num\", \"_ingest_time\") AS SELECT *\nFROM \"ordersinline_1\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\", \"customerid\", \"time\""
     },
     {
-      "name" : "OrdersInline",
-      "sql" : "CREATE OR REPLACE VIEW \"OrdersInline\"(\"id\", \"customerid\", \"time\", \"price\", \"num\", \"_ingest_time\") AS SELECT *\nFROM \"ordersinline_1\"\nWHERE \"time\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\", \"customerid\""
-    },
-    {
       "name" : "Orders2",
       "sql" : "CREATE OR REPLACE VIEW \"Orders2\"(\"id\", \"_customerid\", \"_time\", \"_ingest_time\") AS SELECT *\nFROM \"orders2_1\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\", \"_customerid\", \"_time\""
-    },
-    {
-      "name" : "Orders2",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders2\"(\"id\", \"_customerid\", \"_time\", \"_ingest_time\") AS SELECT *\nFROM \"orders2_1\"\nWHERE \"id\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"_customerid\", \"_time\""
-    },
-    {
-      "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"customerid\""
-    },
-    {
-      "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"customerid\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"time\""
     },
     {
       "name" : "EntryCount",
@@ -419,39 +379,7 @@ LogicalProject(__pk1_id=[$0], __pk2_customerid=[$1], __pk3_time=[$2], price=[$4]
     },
     {
       "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"customerid\" = $1 AND \"time\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\""
-    },
-    {
-      "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"customerid\", \"time\""
-    },
-    {
-      "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"customerid\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\", \"time\""
-    },
-    {
-      "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"time\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\", \"customerid\""
-    },
-    {
-      "name" : "Orders",
       "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\", \"customerid\", \"time\""
-    },
-    {
-      "name" : "Orders.total.parent",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders.total.parent\"(\"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"customerid\" = $2 AND \"time\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST"
-    },
-    {
-      "name" : "Orders.total",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders.total\"(\"__pk1_id\", \"__pk2_customerid\", \"__pk3_time\", \"price\", \"num\", \"discount\", \"_ingest_time\") AS SELECT *\nFROM \"total_1\"\nWHERE \"__pk1_id\" = $1 AND \"__pk2_customerid\" = $2 AND \"__pk3_time\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST"
-    },
-    {
-      "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"customerid\" = $2 AND \"time\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST"
-    },
-    {
-      "name" : "Customer.orders_by_day",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer.orders_by_day\"(\"__pk1_customerid\", \"day\", \"total_price\", \"total_num\", \"__timestamp\") AS SELECT *\nFROM \"orders_by_day_1\"\nWHERE \"__pk1_customerid\" = $1\nORDER BY \"day\""
     }
   ]
 }

@@ -135,10 +135,6 @@ type CreatedReading {
   ],
   "views" : [
     {
-      "name" : "SecReading",
-      "sql" : "CREATE OR REPLACE VIEW \"SecReading\"(\"sensorid\", \"timeSec\", \"temp\", \"__timestamp\") AS SELECT *\nFROM \"secreading_1\"\nWHERE \"sensorid\" = $1\nORDER BY \"timeSec\""
-    },
-    {
       "name" : "SensorMaxTemp",
       "sql" : "CREATE OR REPLACE VIEW \"SensorMaxTemp\"(\"sensorid\", \"maxTemp\", \"__timestamp\") AS SELECT \"sensorid\", MAX(\"temp\") AS \"maxTemp\", MAX(\"__timestamp\") AS \"__timestamp\"\nFROM \"secreading_1\"\nWHERE \"timeSec\" >= CURRENT_TIMESTAMP - INTERVAL '1' MINUTE * 1\nGROUP BY \"sensorid\"\nORDER BY \"sensorid\""
     }

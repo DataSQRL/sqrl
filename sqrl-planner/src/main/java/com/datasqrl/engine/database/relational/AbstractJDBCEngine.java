@@ -44,6 +44,8 @@ import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.RelShuttle;
+import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexDynamicParam;
@@ -134,7 +136,7 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
 
   protected boolean hasDynamicParam(RelNode relNode) {
     AtomicBoolean hasParam = new AtomicBoolean(false);
-    relNode.accept(new RexShuttle(){
+    CalciteUtil.applyRexShuttleRecursively(relNode, new RexShuttle(){
       @Override
       public RexNode visitDynamicParam(RexDynamicParam dynamicParam) {
         hasParam.set(true);

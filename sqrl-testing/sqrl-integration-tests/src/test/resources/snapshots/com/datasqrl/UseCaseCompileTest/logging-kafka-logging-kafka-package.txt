@@ -103,16 +103,8 @@ LogicalTableScan(table=[[reuseddata_1]])
   ],
   "views" : [
     {
-      "name" : "Data",
-      "sql" : "CREATE OR REPLACE VIEW \"Data\"(\"id\", \"epoch_timestamp\", \"some_value\", \"timestamp\") AS SELECT *\nFROM \"data_2\"\nWHERE \"id\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST"
-    },
-    {
       "name" : "ReusedData",
       "sql" : "CREATE OR REPLACE VIEW \"ReusedData\"(\"id\", \"epoch_timestamp\", \"some_value\", \"timestamp\", \"ts\") AS SELECT *\nFROM \"reuseddata_2\"\nORDER BY \"ts\" DESC NULLS LAST, \"id\""
-    },
-    {
-      "name" : "ReusedData",
-      "sql" : "CREATE OR REPLACE VIEW \"ReusedData\"(\"id\", \"epoch_timestamp\", \"some_value\", \"timestamp\", \"ts\") AS SELECT *\nFROM \"reuseddata_2\"\nWHERE \"id\" = $1\nORDER BY \"ts\" DESC NULLS LAST"
     },
     {
       "name" : "Data",

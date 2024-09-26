@@ -165,52 +165,16 @@ Inputs: productrevenue_1
   ],
   "views" : [
     {
-      "name" : "CustomerSpending",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerSpending\"(\"customerid\", \"week\", \"total\", \"saved\") AS SELECT *\nFROM \"customerspending_1\"\nWHERE \"customerid\" = $1 AND \"week\" = $2\nORDER BY \"week\" DESC NULLS LAST"
-    },
-    {
-      "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"productid\", \"quantity\", \"unit_price\", \"discount\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\""
-    },
-    {
       "name" : "Orders",
       "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"productid\", \"quantity\", \"unit_price\", \"discount\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\""
-    },
-    {
-      "name" : "CustomerSpending",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerSpending\"(\"customerid\", \"week\", \"total\", \"saved\") AS SELECT *\nFROM \"customerspending_1\"\nWHERE \"week\" = $1\nORDER BY \"week\" DESC NULLS LAST, \"customerid\""
-    },
-    {
-      "name" : "CustomerSpending",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerSpending\"(\"customerid\", \"week\", \"total\", \"saved\") AS SELECT *\nFROM \"customerspending_1\"\nWHERE \"customerid\" = $1\nORDER BY \"week\" DESC NULLS LAST"
     },
     {
       "name" : "CustomerSpending",
       "sql" : "CREATE OR REPLACE VIEW \"CustomerSpending\"(\"customerid\", \"week\", \"total\", \"saved\") AS SELECT *\nFROM \"customerspending_1\"\nORDER BY \"week\" DESC NULLS LAST, \"customerid\""
     },
     {
-      "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"productid\", \"quantity\", \"unit_price\", \"discount\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST"
-    },
-    {
-      "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"productid\", \"quantity\", \"unit_price\", \"discount\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1\nORDER BY \"time\" DESC NULLS LAST"
-    },
-    {
-      "name" : "ProductRevenue",
-      "sql" : "CREATE OR REPLACE VIEW \"ProductRevenue\"(\"productid\", \"week\", \"revenue\") AS SELECT *\nFROM \"productrevenue_1\"\nWHERE \"productid\" = $1\nORDER BY \"week\" DESC NULLS LAST"
-    },
-    {
-      "name" : "ProductRevenue",
-      "sql" : "CREATE OR REPLACE VIEW \"ProductRevenue\"(\"productid\", \"week\", \"revenue\") AS SELECT *\nFROM \"productrevenue_1\"\nWHERE \"week\" = $1\nORDER BY \"week\" DESC NULLS LAST, \"productid\""
-    },
-    {
       "name" : "ProductRevenue",
       "sql" : "CREATE OR REPLACE VIEW \"ProductRevenue\"(\"productid\", \"week\", \"revenue\") AS SELECT *\nFROM \"productrevenue_1\"\nORDER BY \"week\" DESC NULLS LAST, \"productid\""
-    },
-    {
-      "name" : "ProductRevenue",
-      "sql" : "CREATE OR REPLACE VIEW \"ProductRevenue\"(\"productid\", \"week\", \"revenue\") AS SELECT *\nFROM \"productrevenue_1\"\nWHERE \"productid\" = $1 AND \"week\" = $2\nORDER BY \"week\" DESC NULLS LAST"
     }
   ]
 }
