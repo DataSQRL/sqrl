@@ -51,8 +51,6 @@ public class UseCaseCompileTest extends AbstractUseCaseTest {
     } catch (Exception e) {
       fail(e);
     }
-    System.out.println();
-    //attempt to install all tables and views
   }
 
   private void verifyPostgresSchema(Path script) throws Exception {
@@ -66,8 +64,8 @@ public class UseCaseCompileTest extends AbstractUseCaseTest {
           stmt.executeUpdate((String) statement.get("sql"));
         }
       }
-      if (plan.get("view") != null) {
-        for (Map statement : (List<Map>) plan.get("view")) {
+      if (plan.get("views") != null) {
+        for (Map statement : (List<Map>) plan.get("views")) {
           Connection connection = testDatabase.createConnection("");
           try (Statement stmt = connection.createStatement()) {
             stmt.executeUpdate((String) statement.get("sql"));
