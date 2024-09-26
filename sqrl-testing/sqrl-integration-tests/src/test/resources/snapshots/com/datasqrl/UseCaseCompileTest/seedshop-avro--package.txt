@@ -109,6 +109,32 @@ LogicalTableScan(table=[[orders_1]])
       "type" : "HASH",
       "sql" : "CREATE INDEX IF NOT EXISTS orders_2_hash_c2 ON orders_2 USING hash (\"time\");"
     }
+  ],
+  "views" : [
+    {
+      "name" : "Query.Orders-6",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.Orders-6\"(\"id\", \"customerid\", \"time\", \"items\", \"_source_time\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"_source_time\" DESC NULLS LAST"
+    },
+    {
+      "name" : "Query.Orders-5",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.Orders-5\"(\"id\", \"customerid\", \"time\", \"items\", \"_source_time\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1\nORDER BY \"_source_time\" DESC NULLS LAST, \"time\""
+    },
+    {
+      "name" : "Query.Orders-4",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.Orders-4\"(\"id\", \"customerid\", \"time\", \"items\", \"_source_time\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"time\" = $1\nORDER BY \"_source_time\" DESC NULLS LAST, \"id\""
+    },
+    {
+      "name" : "Query.Orders-3",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.Orders-3\"(\"id\", \"customerid\", \"time\", \"items\", \"_source_time\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"_source_time\" DESC NULLS LAST, \"id\", \"time\""
+    },
+    {
+      "name" : "Query.OrderCount-2",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderCount-2\"(\"timeSec\", \"number\", \"volume\") AS SELECT *\nFROM \"ordercount_1\"\nWHERE \"timeSec\" = $1\nORDER BY \"timeSec\" DESC NULLS LAST"
+    },
+    {
+      "name" : "Query.OrderCount-1",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderCount-1\"(\"timeSec\", \"number\", \"volume\") AS SELECT *\nFROM \"ordercount_1\"\nORDER BY \"timeSec\" DESC NULLS LAST"
+    }
   ]
 }
 >>>vertx.json

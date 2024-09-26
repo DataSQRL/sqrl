@@ -113,6 +113,24 @@ LogicalTableScan(table=[[event_2]])
       ],
       "sql" : "CREATE TABLE IF NOT EXISTS myevent_1 (\"_uuid\" TEXT NOT NULL,\"ID\" BIGINT ,\"EPOCH_TIMESTAMP\" BIGINT ,\"SOME_VALUE\" TEXT ,\"event_time\" TIMESTAMP WITHOUT TIME ZONE NOT NULL , PRIMARY KEY (\"_uuid\"));"
     }
+  ],
+  "views" : [
+    {
+      "name" : "Query.Data-2",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.Data-2\"(\"_uuid\", \"ID\", \"EPOCH_TIMESTAMP\", \"SOME_VALUE\", \"TIMESTAMP\", \"event_time\") AS SELECT *\nFROM \"data_2\"\nWHERE \"ID\" = $1\nORDER BY \"TIMESTAMP\" DESC NULLS LAST"
+    },
+    {
+      "name" : "Query.MyEvent-4",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.MyEvent-4\"(\"_uuid\", \"ID\", \"EPOCH_TIMESTAMP\", \"SOME_VALUE\", \"event_time\") AS SELECT *\nFROM \"myevent_1\"\nORDER BY \"_uuid\""
+    },
+    {
+      "name" : "Query.Event-3",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.Event-3\"(\"_uuid\", \"ID\", \"EPOCH_TIMESTAMP\", \"SOME_VALUE\", \"event_time\") AS SELECT *\nFROM \"event_2\"\nORDER BY \"_uuid\""
+    },
+    {
+      "name" : "Query.Data-1",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.Data-1\"(\"_uuid\", \"ID\", \"EPOCH_TIMESTAMP\", \"SOME_VALUE\", \"TIMESTAMP\", \"event_time\") AS SELECT *\nFROM \"data_2\"\nORDER BY \"TIMESTAMP\" DESC NULLS LAST, \"ID\""
+    }
   ]
 }
 >>>postgres_log.json

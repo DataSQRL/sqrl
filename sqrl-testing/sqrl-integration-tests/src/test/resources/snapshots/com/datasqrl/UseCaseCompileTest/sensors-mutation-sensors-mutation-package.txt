@@ -135,6 +135,20 @@ LogicalTableScan(table=[[sensorreading_1]])
       ],
       "sql" : "CREATE TABLE IF NOT EXISTS sensormaxtemp_1 (\"sensorid\" BIGINT NOT NULL,\"maxTemp\" NUMERIC NOT NULL,\"__timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"sensorid\"));"
     }
+  ],
+  "views" : [
+    {
+      "name" : "Query.SecReading-1",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.SecReading-1\"(\"sensorid\", \"timeSec\", \"temperature\") AS SELECT *\nFROM \"secreading_1\"\nWHERE \"sensorid\" = $1\nORDER BY \"timeSec\" DESC NULLS LAST"
+    },
+    {
+      "name" : "Query.SensorMaxTemp-2",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.SensorMaxTemp-2\"(\"sensorid\", \"maxTemp\", \"__timestamp\") AS SELECT *\nFROM \"sensormaxtemp_1\"\nORDER BY \"sensorid\""
+    },
+    {
+      "name" : "Query.SensorMaxTemp-3",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.SensorMaxTemp-3\"(\"sensorid\", \"maxTemp\", \"__timestamp\") AS SELECT *\nFROM \"sensormaxtemp_1\"\nWHERE \"sensorid\" = $1"
+    }
   ]
 }
 >>>vertx.json

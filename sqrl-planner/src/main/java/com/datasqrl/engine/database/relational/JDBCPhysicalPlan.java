@@ -3,23 +3,22 @@
  */
 package com.datasqrl.engine.database.relational;
 
-import com.datasqrl.engine.database.DatabasePhysicalPlan;
+import com.datasqrl.engine.database.DatabaseViewPhysicalPlan;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.sql.SqlDDLStatement;
 import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import lombok.Value;
 
 @Value
-public class JDBCPhysicalPlan implements DatabasePhysicalPlan {
+public class JDBCPhysicalPlan implements DatabaseViewPhysicalPlan {
 
   List<SqlDDLStatement> ddl;
+  List<DatabaseView> views;
 
   //todo remove
   @JsonIgnore
   Map<IdentifiedQuery, QueryTemplate> queryPlans;
-
 }

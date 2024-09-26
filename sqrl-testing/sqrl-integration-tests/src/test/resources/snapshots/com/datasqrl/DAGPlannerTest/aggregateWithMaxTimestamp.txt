@@ -212,6 +212,64 @@ LogicalTableScan(table=[[orders_2]])
       "type" : "HASH",
       "sql" : "CREATE INDEX IF NOT EXISTS orders_2_hash_c2 ON orders_2 USING hash (\"time\");"
     }
+  ],
+  "views" : [
+    {
+      "name" : "Query.OrderAgg3-6",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderAgg3-6\"(\"customerid\", \"count\", \"__timestamp\") AS SELECT *\nFROM \"orderagg3_1\"\nWHERE \"customerid\" = $1"
+    },
+    {
+      "name" : "Query.OrderAgg3-5",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderAgg3-5\"(\"customerid\", \"count\", \"__timestamp\") AS SELECT *\nFROM \"orderagg3_1\"\nORDER BY \"customerid\""
+    },
+    {
+      "name" : "Query.OrderAgg2-3",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderAgg2-3\"(\"customerid\", \"timestamp\", \"count\") AS SELECT *\nFROM \"orderagg2_1\"\nORDER BY \"customerid\""
+    },
+    {
+      "name" : "Query.OrderAgg2-4",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderAgg2-4\"(\"customerid\", \"timestamp\", \"count\") AS SELECT *\nFROM \"orderagg2_1\"\nWHERE \"customerid\" = $1"
+    },
+    {
+      "name" : "Query.OrderAgg1-2",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderAgg1-2\"(\"customerid\", \"count\", \"__timestamp\") AS SELECT *\nFROM \"orderagg1_1\"\nWHERE \"customerid\" = $1"
+    },
+    {
+      "name" : "Query.OrderAgg1-1",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderAgg1-1\"(\"customerid\", \"count\", \"__timestamp\") AS SELECT *\nFROM \"orderagg1_1\"\nORDER BY \"customerid\""
+    },
+    {
+      "name" : "Query.OrdersState-14",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.OrdersState-14\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"ordersstate_1\"\nORDER BY \"id\""
+    },
+    {
+      "name" : "Query.OrdersState-15",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.OrdersState-15\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"ordersstate_1\"\nWHERE \"id\" = $1"
+    },
+    {
+      "name" : "Query.Orders-12",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.Orders-12\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST"
+    },
+    {
+      "name" : "Query.Orders-10",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.Orders-10\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\""
+    },
+    {
+      "name" : "Query.Orders-11",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.Orders-11\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1\nORDER BY \"time\" DESC NULLS LAST"
+    },
+    {
+      "name" : "Query.Orders-9",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.Orders-9\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\""
+    },
+    {
+      "name" : "Query.OrderAgg4-7",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderAgg4-7\"(\"customerid\", \"timestamp\", \"count\") AS SELECT *\nFROM \"orderagg4_1\"\nORDER BY \"customerid\""
+    },
+    {
+      "name" : "Query.OrderAgg4-8",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderAgg4-8\"(\"customerid\", \"timestamp\", \"count\") AS SELECT *\nFROM \"orderagg4_1\"\nWHERE \"customerid\" = $1"
+    }
   ]
 }
 >>>vertx.json

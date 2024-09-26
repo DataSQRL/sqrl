@@ -48,6 +48,7 @@ import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlLiteral;
+import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.parser.SqlParserPos;
@@ -125,7 +126,7 @@ public class SnowflakeEngine extends AbstractJDBCQueryEngine {
               .map(f->new SqlIdentifier(f.getName(), SqlParserPos.ZERO))
           .collect(Collectors.toList()), pos);
 
-      SqlSelect select =(SqlSelect) framework.getQueryPlanner()
+      SqlNode select = framework.getQueryPlanner()
           .relToSql(Dialect.SNOWFLAKE, relNode).getSqlNode();
 
       SqlCreateSnowflakeView createView = new SqlCreateSnowflakeView(pos, true, false, false, false, null, viewNameIdentifier, columnList,

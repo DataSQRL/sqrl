@@ -31,7 +31,7 @@ public class SqlCreateSnowflakeView extends SqlCall {
 
   private final SqlIdentifier viewName;
   private final SqlNodeList columnList;
-  private final SqlSelect select;
+  private final SqlNode select;
   private final boolean replace;
   private final boolean ifNotExists;
   private final boolean secure;
@@ -42,7 +42,7 @@ public class SqlCreateSnowflakeView extends SqlCall {
 
   public SqlCreateSnowflakeView(SqlParserPos pos, boolean replace, boolean ifNotExists, boolean secure,
       boolean recursive, SqlIdentifier tempOption, SqlIdentifier viewName, SqlNodeList columnList,
-      SqlSelect select, SqlCharStringLiteral comment, boolean copyGrants) {
+      SqlNode select, SqlCharStringLiteral comment, boolean copyGrants) {
     super(pos);
     this.replace = replace;
     this.ifNotExists = ifNotExists;

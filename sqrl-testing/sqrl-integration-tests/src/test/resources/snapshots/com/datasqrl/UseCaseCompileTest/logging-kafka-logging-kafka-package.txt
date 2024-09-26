@@ -100,6 +100,24 @@ LogicalTableScan(table=[[reuseddata_1]])
       ],
       "sql" : "CREATE TABLE IF NOT EXISTS reuseddata_2 (\"id\" BIGINT NOT NULL,\"epoch_timestamp\" BIGINT NOT NULL,\"some_value\" TEXT NOT NULL,\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL,\"ts\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\"));"
     }
+  ],
+  "views" : [
+    {
+      "name" : "Query.Data-2",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.Data-2\"(\"id\", \"epoch_timestamp\", \"some_value\", \"timestamp\") AS SELECT *\nFROM \"data_2\"\nWHERE \"id\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST"
+    },
+    {
+      "name" : "Query.ReusedData-3",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.ReusedData-3\"(\"id\", \"epoch_timestamp\", \"some_value\", \"timestamp\", \"ts\") AS SELECT *\nFROM \"reuseddata_2\"\nORDER BY \"ts\" DESC NULLS LAST, \"id\""
+    },
+    {
+      "name" : "Query.ReusedData-4",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.ReusedData-4\"(\"id\", \"epoch_timestamp\", \"some_value\", \"timestamp\", \"ts\") AS SELECT *\nFROM \"reuseddata_2\"\nWHERE \"id\" = $1\nORDER BY \"ts\" DESC NULLS LAST"
+    },
+    {
+      "name" : "Query.Data-1",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.Data-1\"(\"id\", \"epoch_timestamp\", \"some_value\", \"timestamp\") AS SELECT *\nFROM \"data_2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"id\""
+    }
   ]
 }
 >>>vertx.json

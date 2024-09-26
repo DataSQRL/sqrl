@@ -163,6 +163,56 @@ LogicalTableScan(table=[[loantypes_1]])
       "type" : "HASH",
       "sql" : "CREATE INDEX IF NOT EXISTS loantypes_2_hash_c8 ON loantypes_2 USING hash (\"updated_at\");"
     }
+  ],
+  "views" : [
+    {
+      "name" : "Query.Customers-5",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.Customers-5\"(\"id\", \"first_name\", \"last_name\", \"email\", \"phone\", \"address\", \"date_of_birth\", \"updated_at\") AS SELECT *\nFROM \"customers_2\"\nORDER BY \"updated_at\" DESC NULLS LAST, \"id\""
+    },
+    {
+      "name" : "Query.LoanTypes-12",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.LoanTypes-12\"(\"id\", \"name\", \"description\", \"interest_rate\", \"max_amount\", \"min_amount\", \"max_duration\", \"min_duration\", \"updated_at\") AS SELECT *\nFROM \"loantypes_2\"\nWHERE \"id\" = $1 AND \"updated_at\" = $2\nORDER BY \"updated_at\" DESC NULLS LAST"
+    },
+    {
+      "name" : "Query.Customers-6",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.Customers-6\"(\"id\", \"first_name\", \"last_name\", \"email\", \"phone\", \"address\", \"date_of_birth\", \"updated_at\") AS SELECT *\nFROM \"customers_2\"\nWHERE \"updated_at\" = $1\nORDER BY \"updated_at\" DESC NULLS LAST, \"id\""
+    },
+    {
+      "name" : "Query.LoanTypes-10",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.LoanTypes-10\"(\"id\", \"name\", \"description\", \"interest_rate\", \"max_amount\", \"min_amount\", \"max_duration\", \"min_duration\", \"updated_at\") AS SELECT *\nFROM \"loantypes_2\"\nWHERE \"updated_at\" = $1\nORDER BY \"updated_at\" DESC NULLS LAST, \"id\""
+    },
+    {
+      "name" : "Query.LoanTypes-11",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.LoanTypes-11\"(\"id\", \"name\", \"description\", \"interest_rate\", \"max_amount\", \"min_amount\", \"max_duration\", \"min_duration\", \"updated_at\") AS SELECT *\nFROM \"loantypes_2\"\nWHERE \"id\" = $1\nORDER BY \"updated_at\" DESC NULLS LAST"
+    },
+    {
+      "name" : "Query.Customers-7",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.Customers-7\"(\"id\", \"first_name\", \"last_name\", \"email\", \"phone\", \"address\", \"date_of_birth\", \"updated_at\") AS SELECT *\nFROM \"customers_2\"\nWHERE \"id\" = $1\nORDER BY \"updated_at\" DESC NULLS LAST"
+    },
+    {
+      "name" : "Query.Customers-8",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.Customers-8\"(\"id\", \"first_name\", \"last_name\", \"email\", \"phone\", \"address\", \"date_of_birth\", \"updated_at\") AS SELECT *\nFROM \"customers_2\"\nWHERE \"id\" = $1 AND \"updated_at\" = $2\nORDER BY \"updated_at\" DESC NULLS LAST"
+    },
+    {
+      "name" : "Query.Applications-1",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.Applications-1\"(\"id\", \"customer_id\", \"loan_type_id\", \"amount\", \"duration\", \"application_date\", \"updated_at\") AS SELECT *\nFROM \"applications_2\"\nORDER BY \"updated_at\" DESC NULLS LAST, \"id\""
+    },
+    {
+      "name" : "Query.Applications-2",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.Applications-2\"(\"id\", \"customer_id\", \"loan_type_id\", \"amount\", \"duration\", \"application_date\", \"updated_at\") AS SELECT *\nFROM \"applications_2\"\nWHERE \"updated_at\" = $1\nORDER BY \"updated_at\" DESC NULLS LAST, \"id\""
+    },
+    {
+      "name" : "Query.Applications-3",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.Applications-3\"(\"id\", \"customer_id\", \"loan_type_id\", \"amount\", \"duration\", \"application_date\", \"updated_at\") AS SELECT *\nFROM \"applications_2\"\nWHERE \"id\" = $1\nORDER BY \"updated_at\" DESC NULLS LAST"
+    },
+    {
+      "name" : "Query.LoanTypes-9",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.LoanTypes-9\"(\"id\", \"name\", \"description\", \"interest_rate\", \"max_amount\", \"min_amount\", \"max_duration\", \"min_duration\", \"updated_at\") AS SELECT *\nFROM \"loantypes_2\"\nORDER BY \"updated_at\" DESC NULLS LAST, \"id\""
+    },
+    {
+      "name" : "Query.Applications-4",
+      "sql" : "CREATE OR REPLACE VIEW \"Query.Applications-4\"(\"id\", \"customer_id\", \"loan_type_id\", \"amount\", \"duration\", \"application_date\", \"updated_at\") AS SELECT *\nFROM \"applications_2\"\nWHERE \"id\" = $1 AND \"updated_at\" = $2\nORDER BY \"updated_at\" DESC NULLS LAST"
+    }
   ]
 }
 >>>vertx.json
