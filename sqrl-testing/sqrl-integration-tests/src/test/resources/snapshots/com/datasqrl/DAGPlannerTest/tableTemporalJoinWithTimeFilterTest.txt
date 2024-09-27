@@ -225,48 +225,16 @@ LogicalProject(__pk1_customerid=[$1], category=[$2], num=[$3], _time=[$0])
   ],
   "views" : [
     {
-      "name" : "Customer.totals-4",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer.totals-4\"(\"__pk1_customerid\", \"category\", \"num\", \"_time\") AS SELECT *\nFROM (SELECT *\n  FROM \"totals_1\"\n  WHERE \"__pk1_customerid\" = $1) AS \"t\"\nWHERE \"category\" = $2"
+      "name" : "Orders",
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\";"
     },
     {
-      "name" : "Query.Orders-6",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Orders-6\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\""
+      "name" : "Customer",
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_3\"\nORDER BY \"customerid\";"
     },
     {
-      "name" : "Customer.totals-3",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer.totals-3\"(\"__pk1_customerid\", \"category\", \"num\", \"_time\") AS SELECT *\nFROM \"totals_1\"\nWHERE \"__pk1_customerid\" = $1\nORDER BY \"category\""
-    },
-    {
-      "name" : "Query.Product-12",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-12\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_3\"\nWHERE \"productid\" = $1"
-    },
-    {
-      "name" : "Query.Customer-1",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Customer-1\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_3\"\nORDER BY \"customerid\""
-    },
-    {
-      "name" : "Query.Orders-9",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Orders-9\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST"
-    },
-    {
-      "name" : "totals.parent-5",
-      "sql" : "CREATE OR REPLACE VIEW \"totals.parent-5\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_3\"\nWHERE \"customerid\" = $1"
-    },
-    {
-      "name" : "Query.Orders-8",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Orders-8\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1\nORDER BY \"time\" DESC NULLS LAST"
-    },
-    {
-      "name" : "Query.Product-11",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-11\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_3\"\nORDER BY \"productid\""
-    },
-    {
-      "name" : "Query.Orders-7",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Orders-7\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\""
-    },
-    {
-      "name" : "Query.Customer-2",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Customer-2\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_3\"\nWHERE \"customerid\" = $1"
+      "name" : "Product",
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_3\"\nORDER BY \"productid\";"
     }
   ]
 }

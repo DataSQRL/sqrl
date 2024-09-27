@@ -3,11 +3,13 @@
  */
 package com.datasqrl.plan.queries;
 
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.JdbcParameterHandler;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import lombok.EqualsAndHashCode;
 import lombok.EqualsAndHashCode.Include;
 import lombok.ToString;
@@ -31,4 +33,12 @@ public class APIQuery implements IdentifiedQuery {
   List<Argument> graphqlArguments;
   // Has a limit/offset
   boolean isLimitOffset;
+
+
+  @Override
+  public Optional<Name> getViewName() {
+    if (!getParameters().isEmpty()) return Optional.empty();
+    return Optional.of(namePath.getLast());
+  }
+
 }

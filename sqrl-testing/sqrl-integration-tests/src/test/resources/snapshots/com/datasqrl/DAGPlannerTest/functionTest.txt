@@ -120,68 +120,8 @@ LogicalProject(productid=[$0], name=[$1], description=[$2], category=[$3], _inge
   ],
   "views" : [
     {
-      "name" : "Query.Product-16",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-16\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\", \"badWords\", \"searchResult\", \"format\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3 AND \"category\" = $4\nORDER BY \"_ingest_time\" DESC NULLS LAST"
-    },
-    {
-      "name" : "Query.Product-13",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-13\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\", \"badWords\", \"searchResult\", \"format\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"description\", \"category\""
-    },
-    {
-      "name" : "Query.Product-12",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-12\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\", \"badWords\", \"searchResult\", \"format\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"description\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\""
-    },
-    {
-      "name" : "Query.Product-15",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-15\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\", \"badWords\", \"searchResult\", \"format\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"category\""
-    },
-    {
-      "name" : "Query.Product-14",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-14\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\", \"badWords\", \"searchResult\", \"format\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"description\""
-    },
-    {
-      "name" : "Query.Product-3",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-3\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\", \"badWords\", \"searchResult\", \"format\") AS SELECT *\nFROM \"product_2\"\nWHERE \"description\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"category\""
-    },
-    {
-      "name" : "Query.Product-4",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-4\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\", \"badWords\", \"searchResult\", \"format\") AS SELECT *\nFROM \"product_2\"\nWHERE \"description\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\""
-    },
-    {
-      "name" : "Query.Product-1",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-1\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\", \"badWords\", \"searchResult\", \"format\") AS SELECT *\nFROM \"product_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\", \"category\""
-    },
-    {
-      "name" : "Query.Product-2",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-2\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\", \"badWords\", \"searchResult\", \"format\") AS SELECT *\nFROM \"product_2\"\nWHERE \"category\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\""
-    },
-    {
-      "name" : "Query.Product-7",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-7\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\", \"badWords\", \"searchResult\", \"format\") AS SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1 AND \"description\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"category\""
-    },
-    {
-      "name" : "Query.Product-8",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-8\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\", \"badWords\", \"searchResult\", \"format\") AS SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1 AND \"description\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\""
-    },
-    {
-      "name" : "Query.Product-5",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-5\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\", \"badWords\", \"searchResult\", \"format\") AS SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"description\", \"category\""
-    },
-    {
-      "name" : "Query.Product-6",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-6\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\", \"badWords\", \"searchResult\", \"format\") AS SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"description\""
-    },
-    {
-      "name" : "Query.Product-9",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-9\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\", \"badWords\", \"searchResult\", \"format\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"description\", \"category\""
-    },
-    {
-      "name" : "Query.Product-11",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-11\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\", \"badWords\", \"searchResult\", \"format\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"description\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"category\""
-    },
-    {
-      "name" : "Query.Product-10",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-10\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\", \"badWords\", \"searchResult\", \"format\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"description\""
+      "name" : "Product",
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\", \"badWords\", \"searchResult\", \"format\") AS SELECT *\nFROM \"product_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\", \"category\";"
     }
   ]
 }

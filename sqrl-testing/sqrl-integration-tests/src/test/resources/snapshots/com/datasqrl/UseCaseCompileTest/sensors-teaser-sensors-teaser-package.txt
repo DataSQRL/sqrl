@@ -106,16 +106,8 @@ LogicalTableScan(table=[[sensorreading_1]])
   ],
   "views" : [
     {
-      "name" : "Query.SecReading-1",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.SecReading-1\"(\"sensorid\", \"timeSec\", \"temp\") AS SELECT *\nFROM \"secreading_1\"\nWHERE \"sensorid\" = $1\nORDER BY \"timeSec\" DESC NULLS LAST"
-    },
-    {
-      "name" : "Query.SensorMaxTemp-2",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.SensorMaxTemp-2\"(\"sensorid\", \"maxTemp\", \"_timeSec\") AS SELECT *\nFROM \"sensormaxtemp_1\"\nORDER BY \"sensorid\""
-    },
-    {
-      "name" : "Query.SensorMaxTemp-3",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.SensorMaxTemp-3\"(\"sensorid\", \"maxTemp\", \"_timeSec\") AS SELECT *\nFROM \"sensormaxtemp_1\"\nWHERE \"sensorid\" = $1"
+      "name" : "SensorMaxTemp",
+      "sql" : "CREATE OR REPLACE VIEW \"SensorMaxTemp\"(\"sensorid\", \"maxTemp\", \"_timeSec\") AS SELECT *\nFROM \"sensormaxtemp_1\"\nORDER BY \"sensorid\";"
     }
   ]
 }

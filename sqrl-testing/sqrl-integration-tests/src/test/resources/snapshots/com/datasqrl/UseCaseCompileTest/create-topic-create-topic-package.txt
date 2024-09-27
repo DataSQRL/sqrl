@@ -93,8 +93,8 @@ Inputs: pgtable_1
   ],
   "views" : [
     {
-      "name" : "Query.PgTable-1",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.PgTable-1\"(\"timestamp\", \"userId\", \"eventType\", \"_uuid\", \"event_time\") AS SELECT *\nFROM \"pgtable_1\"\nORDER BY \"event_time\" DESC NULLS LAST, \"_uuid\""
+      "name" : "PgTable",
+      "sql" : "CREATE OR REPLACE VIEW \"PgTable\"(\"timestamp\", \"userId\", \"eventType\", \"_uuid\", \"event_time\") AS SELECT *\nFROM \"pgtable_1\"\nORDER BY \"event_time\" DESC NULLS LAST, \"_uuid\";"
     }
   ]
 }

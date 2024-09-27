@@ -335,180 +335,40 @@ LogicalTableScan(table=[[product_1]])
   ],
   "views" : [
     {
-      "name" : "Query.Product-39",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-39\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"description\""
+      "name" : "Customer",
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\", \"lastUpdated\";"
     },
     {
-      "name" : "Query.Product-38",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-38\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"description\", \"category\""
+      "name" : "Orders",
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\";"
     },
     {
-      "name" : "Query.Product-35",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-35\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"description\""
+      "name" : "OrderCustomerLeftExcluded",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerLeftExcluded\"(\"time\", \"id\", \"customerid\") AS SELECT \"orders_2\".\"time\", \"orders_2\".\"id\", \"orders_2\".\"customerid\"\nFROM \"orders_2\"\n LEFT JOIN \"customer_2\" ON \"orders_2\".\"customerid\" = \"customer_2\".\"customerid\"\nWHERE \"customer_2\".\"customerid\" IS NULL AND \"customer_2\".\"lastUpdated\" IS NULL\nORDER BY \"orders_2\".\"time\" DESC NULLS LAST, \"orders_2\".\"id\";"
     },
     {
-      "name" : "Query.Product-34",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-34\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"description\", \"category\""
+      "name" : "OrderCustomerRightExcluded",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerRightExcluded\"(\"lastUpdated\", \"customerid\", \"name\", \"__timestamp\") AS SELECT \"customer_2\".\"lastUpdated\", \"customer_2\".\"customerid\", \"customer_2\".\"name\", GREATEST(\"customer_2\".\"timestamp\", \"orders_2\".\"time\") AS \"__timestamp\"\nFROM \"customer_2\"\n LEFT JOIN \"orders_2\" ON \"customer_2\".\"customerid\" = \"orders_2\".\"customerid\"\nWHERE \"orders_2\".\"id\" IS NULL AND \"orders_2\".\"time\" IS NULL\nORDER BY GREATEST(\"customer_2\".\"timestamp\", \"orders_2\".\"time\") DESC NULLS LAST, \"customer_2\".\"customerid\", \"customer_2\".\"lastUpdated\";"
     },
     {
-      "name" : "Query.Product-37",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-37\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1 AND \"description\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\""
+      "name" : "OrderCustomerRight",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerRight\"(\"ouuid\", \"otime\", \"id\", \"name\", \"customerid\", \"_customerid0\", \"_lastUpdated\", \"_time\", \"__timestamp\") AS SELECT COALESCE(\"orders_2\".\"id\", 0) AS \"ouuid\", COALESCE(\"orders_2\".\"time\", PROCTIME()) AS \"otime\", \"orders_2\".\"id\", \"customer_2\".\"name\", \"orders_2\".\"customerid\", \"customer_2\".\"customerid\" AS \"_customerid0\", \"customer_2\".\"lastUpdated\" AS \"_lastUpdated\", \"orders_2\".\"time\" AS \"_time\", GREATEST(\"customer_2\".\"timestamp\", \"orders_2\".\"time\") AS \"__timestamp\"\nFROM \"customer_2\"\n LEFT JOIN \"orders_2\" ON \"customer_2\".\"customerid\" = \"orders_2\".\"customerid\"\nORDER BY GREATEST(\"customer_2\".\"timestamp\", \"orders_2\".\"time\") DESC NULLS LAST, \"customer_2\".\"customerid\", \"customer_2\".\"lastUpdated\", COALESCE(\"orders_2\".\"id\", 0), \"orders_2\".\"time\";"
     },
     {
-      "name" : "Query.Product-36",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-36\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1 AND \"description\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"category\""
+      "name" : "OrderCustomerConstant",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerConstant\"(\"time\", \"id\", \"name\", \"customerid\", \"_lastUpdated\") AS SELECT \"orders_2\".\"time\", \"orders_2\".\"id\", \"customer_2\".\"name\", \"orders_2\".\"customerid\", \"customer_2\".\"lastUpdated\" AS \"_lastUpdated\"\nFROM \"orders_2\"\n INNER JOIN \"customer_2\" ON \"orders_2\".\"customerid\" = \"customer_2\".\"customerid\" AND \"customer_2\".\"name\" = 'Robert' AND \"orders_2\".\"id\" > 5\nORDER BY \"orders_2\".\"time\" DESC NULLS LAST, \"orders_2\".\"id\", \"customer_2\".\"lastUpdated\";"
     },
     {
-      "name" : "Query.Orders-27",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Orders-27\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1\nORDER BY \"time\" DESC NULLS LAST"
+      "name" : "Product",
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\", \"category\";"
     },
     {
-      "name" : "Query.Customer-1",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Customer-1\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\", \"lastUpdated\""
+      "name" : "OrderCustomerLeft",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerLeft\"(\"cid\", \"ctime\", \"id\", \"name\", \"customerid\", \"_time\", \"__timestamp\") AS SELECT COALESCE(\"customer_2\".\"customerid\", 0) AS \"cid\", COALESCE(\"customer_2\".\"lastUpdated\", 0) AS \"ctime\", \"orders_2\".\"id\", \"customer_2\".\"name\", \"orders_2\".\"customerid\", \"orders_2\".\"time\" AS \"_time\", GREATEST(\"orders_2\".\"time\", \"customer_2\".\"timestamp\") AS \"__timestamp\"\nFROM \"orders_2\"\n LEFT JOIN \"customer_2\" ON \"orders_2\".\"customerid\" = \"customer_2\".\"customerid\"\nORDER BY GREATEST(\"orders_2\".\"time\", \"customer_2\".\"timestamp\") DESC NULLS LAST, \"orders_2\".\"id\", \"orders_2\".\"time\", COALESCE(\"customer_2\".\"lastUpdated\", 0);"
     },
     {
-      "name" : "Query.Orders-28",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Orders-28\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST"
-    },
-    {
-      "name" : "Query.Orders-25",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Orders-25\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\""
-    },
-    {
-      "name" : "Query.Orders-26",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Orders-26\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\""
-    },
-    {
-      "name" : "Query.Customer-4",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Customer-4\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1 AND \"lastUpdated\" = $2\nORDER BY \"timestamp\" DESC NULLS LAST"
-    },
-    {
-      "name" : "Query.Customer-2",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Customer-2\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nWHERE \"lastUpdated\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\""
-    },
-    {
-      "name" : "Query.Customer-3",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Customer-3\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"lastUpdated\""
-    },
-    {
-      "name" : "Query.OrderCustomerLeftExcluded-15",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderCustomerLeftExcluded-15\"(\"time\", \"id\", \"customerid\") AS SELECT \"orders_2\".\"time\", \"orders_2\".\"id\", \"orders_2\".\"customerid\"\nFROM \"orders_2\"\n LEFT JOIN \"customer_2\" ON \"orders_2\".\"customerid\" = \"customer_2\".\"customerid\"\nWHERE \"customer_2\".\"customerid\" IS NULL AND \"customer_2\".\"lastUpdated\" IS NULL\nORDER BY \"orders_2\".\"time\" DESC NULLS LAST, \"orders_2\".\"id\""
-    },
-    {
-      "name" : "Query.OrderCustomerLeftExcluded-17",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderCustomerLeftExcluded-17\"(\"time\", \"id\", \"customerid\") AS SELECT *\nFROM (SELECT \"orders_2\".\"time\", \"orders_2\".\"id\", \"orders_2\".\"customerid\"\n  FROM \"orders_2\"\n   LEFT JOIN \"customer_2\" ON \"orders_2\".\"customerid\" = \"customer_2\".\"customerid\"\n  WHERE \"customer_2\".\"customerid\" IS NULL AND \"customer_2\".\"lastUpdated\" IS NULL) AS \"t0\"\nWHERE \"t0\".\"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\""
-    },
-    {
-      "name" : "Query.OrderCustomerLeftExcluded-16",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderCustomerLeftExcluded-16\"(\"time\", \"id\", \"customerid\") AS SELECT *\nFROM (SELECT \"orders_2\".\"time\", \"orders_2\".\"id\", \"orders_2\".\"customerid\"\n  FROM \"orders_2\"\n   LEFT JOIN \"customer_2\" ON \"orders_2\".\"customerid\" = \"customer_2\".\"customerid\"\n  WHERE \"customer_2\".\"customerid\" IS NULL AND \"customer_2\".\"lastUpdated\" IS NULL) AS \"t0\"\nWHERE \"t0\".\"id\" = $1\nORDER BY \"time\" DESC NULLS LAST"
-    },
-    {
-      "name" : "Query.OrderCustomerRight-20",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderCustomerRight-20\"(\"ouuid\", \"otime\", \"id\", \"name\", \"customerid\", \"_customerid0\", \"_lastUpdated\", \"_time\", \"__timestamp\") AS SELECT *\nFROM (SELECT COALESCE(\"orders_2\".\"id\", 0) AS \"ouuid\", COALESCE(\"orders_2\".\"time\", PROCTIME()) AS \"otime\", \"orders_2\".\"id\", \"customer_2\".\"name\", \"orders_2\".\"customerid\", \"customer_2\".\"customerid\" AS \"_customerid0\", \"customer_2\".\"lastUpdated\" AS \"_lastUpdated\", \"orders_2\".\"time\" AS \"_time\", GREATEST(\"customer_2\".\"timestamp\", \"orders_2\".\"time\") AS \"__timestamp\"\n  FROM \"customer_2\"\n   LEFT JOIN \"orders_2\" ON \"customer_2\".\"customerid\" = \"orders_2\".\"customerid\") AS \"t\"\nWHERE \"t\".\"ouuid\" = $1\nORDER BY \"__timestamp\" DESC NULLS LAST, \"_customerid0\", \"_lastUpdated\", \"_time\""
-    },
-    {
-      "name" : "Query.Product-42",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-42\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"description\", \"category\""
-    },
-    {
-      "name" : "Query.Product-41",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-41\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"description\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\""
-    },
-    {
-      "name" : "Query.Product-44",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-44\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"category\""
-    },
-    {
-      "name" : "Query.Product-43",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-43\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"description\""
-    },
-    {
-      "name" : "Query.OrderCustomerLeftExcluded-18",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderCustomerLeftExcluded-18\"(\"time\", \"id\", \"customerid\") AS SELECT *\nFROM (SELECT \"orders_2\".\"time\", \"orders_2\".\"id\", \"orders_2\".\"customerid\"\n  FROM \"orders_2\"\n   LEFT JOIN \"customer_2\" ON \"orders_2\".\"customerid\" = \"customer_2\".\"customerid\"\n  WHERE \"customer_2\".\"customerid\" IS NULL AND \"customer_2\".\"lastUpdated\" IS NULL) AS \"t0\"\nWHERE \"t0\".\"time\" = $1 AND \"t0\".\"id\" = $2\nORDER BY \"time\" DESC NULLS LAST"
-    },
-    {
-      "name" : "Query.Product-40",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-40\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"description\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"category\""
-    },
-    {
-      "name" : "Query.OrderCustomerConstant-10",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderCustomerConstant-10\"(\"time\", \"id\", \"name\", \"customerid\", \"_lastUpdated\") AS SELECT *\nFROM (SELECT \"orders_2\".\"time\", \"orders_2\".\"id\", \"customer_2\".\"name\", \"orders_2\".\"customerid\", \"customer_2\".\"lastUpdated\" AS \"_lastUpdated\"\n  FROM \"orders_2\"\n   INNER JOIN \"customer_2\" ON \"orders_2\".\"customerid\" = \"customer_2\".\"customerid\" AND \"customer_2\".\"name\" = 'Robert' AND \"orders_2\".\"id\" > 5) AS \"t\"\nWHERE \"t\".\"time\" = $1 AND \"t\".\"id\" = $2\nORDER BY \"time\" DESC NULLS LAST, \"_lastUpdated\""
-    },
-    {
-      "name" : "Query.Product-45",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-45\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3 AND \"category\" = $4\nORDER BY \"_ingest_time\" DESC NULLS LAST"
-    },
-    {
-      "name" : "Query.OrderCustomerConstant-9",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderCustomerConstant-9\"(\"time\", \"id\", \"name\", \"customerid\", \"_lastUpdated\") AS SELECT *\nFROM (SELECT \"orders_2\".\"time\", \"orders_2\".\"id\", \"customer_2\".\"name\", \"orders_2\".\"customerid\", \"customer_2\".\"lastUpdated\" AS \"_lastUpdated\"\n  FROM \"orders_2\"\n   INNER JOIN \"customer_2\" ON \"orders_2\".\"customerid\" = \"customer_2\".\"customerid\" AND \"customer_2\".\"name\" = 'Robert' AND \"orders_2\".\"id\" > 5) AS \"t\"\nWHERE \"t\".\"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\", \"_lastUpdated\""
-    },
-    {
-      "name" : "Query.OrderCustomerConstant-8",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderCustomerConstant-8\"(\"time\", \"id\", \"name\", \"customerid\", \"_lastUpdated\") AS SELECT *\nFROM (SELECT \"orders_2\".\"time\", \"orders_2\".\"id\", \"customer_2\".\"name\", \"orders_2\".\"customerid\", \"customer_2\".\"lastUpdated\" AS \"_lastUpdated\"\n  FROM \"orders_2\"\n   INNER JOIN \"customer_2\" ON \"orders_2\".\"customerid\" = \"customer_2\".\"customerid\" AND \"customer_2\".\"name\" = 'Robert' AND \"orders_2\".\"id\" > 5) AS \"t\"\nWHERE \"t\".\"id\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"_lastUpdated\""
-    },
-    {
-      "name" : "Query.OrderCustomerRightExcluded-21",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderCustomerRightExcluded-21\"(\"lastUpdated\", \"customerid\", \"name\", \"__timestamp\") AS SELECT \"customer_2\".\"lastUpdated\", \"customer_2\".\"customerid\", \"customer_2\".\"name\", GREATEST(\"customer_2\".\"timestamp\", \"orders_2\".\"time\") AS \"__timestamp\"\nFROM \"customer_2\"\n LEFT JOIN \"orders_2\" ON \"customer_2\".\"customerid\" = \"orders_2\".\"customerid\"\nWHERE \"orders_2\".\"id\" IS NULL AND \"orders_2\".\"time\" IS NULL\nORDER BY GREATEST(\"customer_2\".\"timestamp\", \"orders_2\".\"time\") DESC NULLS LAST, \"customer_2\".\"customerid\", \"customer_2\".\"lastUpdated\""
-    },
-    {
-      "name" : "Query.OrderCustomerRight-19",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderCustomerRight-19\"(\"ouuid\", \"otime\", \"id\", \"name\", \"customerid\", \"_customerid0\", \"_lastUpdated\", \"_time\", \"__timestamp\") AS SELECT COALESCE(\"orders_2\".\"id\", 0) AS \"ouuid\", COALESCE(\"orders_2\".\"time\", PROCTIME()) AS \"otime\", \"orders_2\".\"id\", \"customer_2\".\"name\", \"orders_2\".\"customerid\", \"customer_2\".\"customerid\" AS \"_customerid0\", \"customer_2\".\"lastUpdated\" AS \"_lastUpdated\", \"orders_2\".\"time\" AS \"_time\", GREATEST(\"customer_2\".\"timestamp\", \"orders_2\".\"time\") AS \"__timestamp\"\nFROM \"customer_2\"\n LEFT JOIN \"orders_2\" ON \"customer_2\".\"customerid\" = \"orders_2\".\"customerid\"\nORDER BY GREATEST(\"customer_2\".\"timestamp\", \"orders_2\".\"time\") DESC NULLS LAST, \"customer_2\".\"customerid\", \"customer_2\".\"lastUpdated\", COALESCE(\"orders_2\".\"id\", 0), \"orders_2\".\"time\""
-    },
-    {
-      "name" : "Query.OrderCustomerConstant-7",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderCustomerConstant-7\"(\"time\", \"id\", \"name\", \"customerid\", \"_lastUpdated\") AS SELECT \"orders_2\".\"time\", \"orders_2\".\"id\", \"customer_2\".\"name\", \"orders_2\".\"customerid\", \"customer_2\".\"lastUpdated\" AS \"_lastUpdated\"\nFROM \"orders_2\"\n INNER JOIN \"customer_2\" ON \"orders_2\".\"customerid\" = \"customer_2\".\"customerid\" AND \"customer_2\".\"name\" = 'Robert' AND \"orders_2\".\"id\" > 5\nORDER BY \"orders_2\".\"time\" DESC NULLS LAST, \"orders_2\".\"id\", \"customer_2\".\"lastUpdated\""
-    },
-    {
-      "name" : "Query.Product-31",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-31\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"category\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\""
-    },
-    {
-      "name" : "Query.Product-30",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-30\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\", \"category\""
-    },
-    {
-      "name" : "Query.Product-33",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-33\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"description\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\""
-    },
-    {
-      "name" : "Query.OrderCustomerLeft-11",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderCustomerLeft-11\"(\"cid\", \"ctime\", \"id\", \"name\", \"customerid\", \"_time\", \"__timestamp\") AS SELECT COALESCE(\"customer_2\".\"customerid\", 0) AS \"cid\", COALESCE(\"customer_2\".\"lastUpdated\", 0) AS \"ctime\", \"orders_2\".\"id\", \"customer_2\".\"name\", \"orders_2\".\"customerid\", \"orders_2\".\"time\" AS \"_time\", GREATEST(\"orders_2\".\"time\", \"customer_2\".\"timestamp\") AS \"__timestamp\"\nFROM \"orders_2\"\n LEFT JOIN \"customer_2\" ON \"orders_2\".\"customerid\" = \"customer_2\".\"customerid\"\nORDER BY GREATEST(\"orders_2\".\"time\", \"customer_2\".\"timestamp\") DESC NULLS LAST, \"orders_2\".\"id\", \"orders_2\".\"time\", COALESCE(\"customer_2\".\"lastUpdated\", 0)"
-    },
-    {
-      "name" : "Query.Product-32",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.Product-32\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nWHERE \"description\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"category\""
-    },
-    {
-      "name" : "Query.OrderCustomerLeft-12",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderCustomerLeft-12\"(\"cid\", \"ctime\", \"id\", \"name\", \"customerid\", \"_time\", \"__timestamp\") AS SELECT *\nFROM (SELECT COALESCE(\"customer_2\".\"customerid\", 0) AS \"cid\", COALESCE(\"customer_2\".\"lastUpdated\", 0) AS \"ctime\", \"orders_2\".\"id\", \"customer_2\".\"name\", \"orders_2\".\"customerid\", \"orders_2\".\"time\" AS \"_time\", GREATEST(\"orders_2\".\"time\", \"customer_2\".\"timestamp\") AS \"__timestamp\"\n  FROM \"orders_2\"\n   LEFT JOIN \"customer_2\" ON \"orders_2\".\"customerid\" = \"customer_2\".\"customerid\") AS \"t\"\nWHERE \"t\".\"id\" = $1\nORDER BY \"__timestamp\" DESC NULLS LAST, \"_time\", \"ctime\""
-    },
-    {
-      "name" : "Query.OrderCustomer-5",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderCustomer-5\"(\"id\", \"name\", \"customerid\", \"_time\", \"_lastUpdated\") AS SELECT \"orders_2\".\"id\", \"customer_2\".\"name\", \"orders_2\".\"customerid\", \"orders_2\".\"time\" AS \"_time\", \"customer_2\".\"lastUpdated\" AS \"_lastUpdated\"\nFROM \"orders_2\"\n INNER JOIN \"customer_2\" ON \"orders_2\".\"customerid\" = \"customer_2\".\"customerid\"\nORDER BY \"orders_2\".\"time\" DESC NULLS LAST, \"orders_2\".\"id\", \"customer_2\".\"lastUpdated\""
-    },
-    {
-      "name" : "Query.OrderCustomerLeft-13",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderCustomerLeft-13\"(\"cid\", \"ctime\", \"id\", \"name\", \"customerid\", \"_time\", \"__timestamp\") AS SELECT *\nFROM (SELECT COALESCE(\"customer_2\".\"customerid\", 0) AS \"cid\", COALESCE(\"customer_2\".\"lastUpdated\", 0) AS \"ctime\", \"orders_2\".\"id\", \"customer_2\".\"name\", \"orders_2\".\"customerid\", \"orders_2\".\"time\" AS \"_time\", GREATEST(\"orders_2\".\"time\", \"customer_2\".\"timestamp\") AS \"__timestamp\"\n  FROM \"orders_2\"\n   LEFT JOIN \"customer_2\" ON \"orders_2\".\"customerid\" = \"customer_2\".\"customerid\") AS \"t\"\nWHERE \"t\".\"ctime\" = $1\nORDER BY \"__timestamp\" DESC NULLS LAST, \"id\", \"_time\""
-    },
-    {
-      "name" : "Query.OrderCustomerRightExcluded-24",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderCustomerRightExcluded-24\"(\"lastUpdated\", \"customerid\", \"name\", \"__timestamp\") AS SELECT *\nFROM (SELECT \"customer_2\".\"lastUpdated\", \"customer_2\".\"customerid\", \"customer_2\".\"name\", GREATEST(\"customer_2\".\"timestamp\", \"orders_2\".\"time\") AS \"__timestamp\"\n  FROM \"customer_2\"\n   LEFT JOIN \"orders_2\" ON \"customer_2\".\"customerid\" = \"orders_2\".\"customerid\"\n  WHERE \"orders_2\".\"id\" IS NULL AND \"orders_2\".\"time\" IS NULL) AS \"t0\"\nWHERE \"t0\".\"lastUpdated\" = $1 AND \"t0\".\"customerid\" = $2\nORDER BY \"__timestamp\" DESC NULLS LAST"
-    },
-    {
-      "name" : "Query.OrderCustomer-6",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderCustomer-6\"(\"id\", \"name\", \"customerid\", \"_time\", \"_lastUpdated\") AS SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"customer_2\".\"name\", \"orders_2\".\"customerid\", \"orders_2\".\"time\" AS \"_time\", \"customer_2\".\"lastUpdated\" AS \"_lastUpdated\"\n  FROM \"orders_2\"\n   INNER JOIN \"customer_2\" ON \"orders_2\".\"customerid\" = \"customer_2\".\"customerid\") AS \"t\"\nWHERE \"t\".\"id\" = $1\nORDER BY \"_time\" DESC NULLS LAST, \"_lastUpdated\""
-    },
-    {
-      "name" : "Query.OrderCustomerLeft-14",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderCustomerLeft-14\"(\"cid\", \"ctime\", \"id\", \"name\", \"customerid\", \"_time\", \"__timestamp\") AS SELECT *\nFROM (SELECT COALESCE(\"customer_2\".\"customerid\", 0) AS \"cid\", COALESCE(\"customer_2\".\"lastUpdated\", 0) AS \"ctime\", \"orders_2\".\"id\", \"customer_2\".\"name\", \"orders_2\".\"customerid\", \"orders_2\".\"time\" AS \"_time\", GREATEST(\"orders_2\".\"time\", \"customer_2\".\"timestamp\") AS \"__timestamp\"\n  FROM \"orders_2\"\n   LEFT JOIN \"customer_2\" ON \"orders_2\".\"customerid\" = \"customer_2\".\"customerid\") AS \"t\"\nWHERE \"t\".\"ctime\" = $1 AND \"t\".\"id\" = $2\nORDER BY \"__timestamp\" DESC NULLS LAST, \"_time\""
-    },
-    {
-      "name" : "Query.OrderCustomerRightExcluded-23",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderCustomerRightExcluded-23\"(\"lastUpdated\", \"customerid\", \"name\", \"__timestamp\") AS SELECT *\nFROM (SELECT \"customer_2\".\"lastUpdated\", \"customer_2\".\"customerid\", \"customer_2\".\"name\", GREATEST(\"customer_2\".\"timestamp\", \"orders_2\".\"time\") AS \"__timestamp\"\n  FROM \"customer_2\"\n   LEFT JOIN \"orders_2\" ON \"customer_2\".\"customerid\" = \"orders_2\".\"customerid\"\n  WHERE \"orders_2\".\"id\" IS NULL AND \"orders_2\".\"time\" IS NULL) AS \"t0\"\nWHERE \"t0\".\"lastUpdated\" = $1\nORDER BY \"__timestamp\" DESC NULLS LAST, \"customerid\""
-    },
-    {
-      "name" : "Query.OrderCustomerRightExcluded-22",
-      "sql" : "CREATE OR REPLACE VIEW \"Query.OrderCustomerRightExcluded-22\"(\"lastUpdated\", \"customerid\", \"name\", \"__timestamp\") AS SELECT *\nFROM (SELECT \"customer_2\".\"lastUpdated\", \"customer_2\".\"customerid\", \"customer_2\".\"name\", GREATEST(\"customer_2\".\"timestamp\", \"orders_2\".\"time\") AS \"__timestamp\"\n  FROM \"customer_2\"\n   LEFT JOIN \"orders_2\" ON \"customer_2\".\"customerid\" = \"orders_2\".\"customerid\"\n  WHERE \"orders_2\".\"id\" IS NULL AND \"orders_2\".\"time\" IS NULL) AS \"t0\"\nWHERE \"t0\".\"customerid\" = $1\nORDER BY \"__timestamp\" DESC NULLS LAST, \"lastUpdated\""
+      "name" : "OrderCustomer",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomer\"(\"id\", \"name\", \"customerid\", \"_time\", \"_lastUpdated\") AS SELECT \"orders_2\".\"id\", \"customer_2\".\"name\", \"orders_2\".\"customerid\", \"orders_2\".\"time\" AS \"_time\", \"customer_2\".\"lastUpdated\" AS \"_lastUpdated\"\nFROM \"orders_2\"\n INNER JOIN \"customer_2\" ON \"orders_2\".\"customerid\" = \"customer_2\".\"customerid\"\nORDER BY \"orders_2\".\"time\" DESC NULLS LAST, \"orders_2\".\"id\", \"customer_2\".\"lastUpdated\";"
     }
   ]
 }

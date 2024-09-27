@@ -26,7 +26,7 @@ public class DatabaseQueryFactory {
         .filter(f->!f.getDisplayName().startsWith(HIDDEN_PREFIX))
         .map(t -> new APIQuery(
             t.getDisplayName(),
-            NamePath.ROOT,
+            t.getFullPath(),
             framework.getQueryPlanner().expandMacros(t.getViewTransform().get()),
             t.getParameters().stream()
                 .map(p -> new ArgumentParameter(p.getName()))
