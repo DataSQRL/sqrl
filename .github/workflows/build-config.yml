@@ -28,10 +28,10 @@ jobs:
       run: mvn -T 1 -B -U -e clean verify
 
     - name: Build Docker image
-      run: docker build -t sqrl-test ./sqrl/sqrl-tools
+      run: docker build -t sqrl-test ./sqrl-tools
 
     - name: Run Docker container and execute tests
-      working-directory: ./sqrl/sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/conference
+      working-directory: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/conference
       run: |
         docker run -it -p 8888:8888 -p 8081:8081 --rm -v $PWD:/build sqrl-test test conference.sqrl conference.graphqls
       continue-on-error: false
