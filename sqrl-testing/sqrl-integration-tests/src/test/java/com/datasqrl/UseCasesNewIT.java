@@ -111,6 +111,7 @@ public class UseCasesNewIT {
 
   @SneakyThrows
   @Test
+  @Disabled//OOMs in build server
   public void testDuckdb() {
     Path path = Path.of("/tmp/duckdb");
     try {
