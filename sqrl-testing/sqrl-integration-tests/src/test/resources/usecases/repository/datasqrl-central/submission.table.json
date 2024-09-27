@@ -2,7 +2,7 @@
   "version": 1,
   "flink" : {
     "format" : "flexible-json",
-    "path" : "/data/repodata.jsonl",
+    "path" : "${DATA_PATH}/repodata.jsonl",
     "connector" : "filesystem"
   },
   "table" : {

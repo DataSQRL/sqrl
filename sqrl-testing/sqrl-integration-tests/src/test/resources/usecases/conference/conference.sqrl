@@ -21,7 +21,7 @@ Events := DISTINCT Events ON id ORDER BY last_updated DESC;
 /*+test */
 CountEventsTest := SELECT COUNT(*) as num_events FROM Events;
 /*+test */
-EventsSubsetTest := SELECT * FROM Events ORDER BY url LIMIT 5;
+EventsSubsetTest := SELECT url, date, title FROM Events ORDER BY url LIMIT 5;
 
 AddInterest.embedding := asciiTextTestEmbed(text);
 

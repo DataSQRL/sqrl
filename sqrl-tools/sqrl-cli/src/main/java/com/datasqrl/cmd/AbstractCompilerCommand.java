@@ -87,7 +87,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
 
     if (goal == ExecutionGoal.TEST) {
       List<String> defaultKeys = List.of(EngineKeys.TEST, EngineKeys.DATABASE, EngineKeys.LOG,
-          EngineKeys.SERVER, EngineKeys.STREAMS);
+          EngineKeys.ICEBERG, EngineKeys.DUCKDB, EngineKeys.SERVER, EngineKeys.STREAMS);
       sqrlConfig.setPipeline(defaultKeys);
     }
 

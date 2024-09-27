@@ -23,11 +23,12 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.SneakyThrows;
@@ -40,26 +41,38 @@ import org.apache.flink.table.api.TableResult;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.api.internal.TableEnvironmentImpl;
 import org.apache.flink.table.operations.StatementSetOperation;
-import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.utility.DockerImageName;
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.apache.kafka.clients.admin.NewTopic;
 
 @Slf4j
 public class DatasqrlRun {
+
+  private final Map<String, String> env;
   // Fix override
   Path build = Path.of(System.getProperty("user.dir")).resolve("build");
   Path path = build.resolve("plan");
 
-  EmbeddedKafkaCluster CLUSTER;
   ObjectMapper objectMapper = new ObjectMapper();
-  PostgreSQLContainer postgreSQLContainer;
-  AtomicBoolean isStarted = new AtomicBoolean(false);
+
+  Vertx vertx;
+  TableResult execute;
+
   public static void main(String[] args) {
     DatasqrlRun run = new DatasqrlRun();
     run.run(true);
   }
 
   public DatasqrlRun() {
+    this.env = System.getenv();
+  }
+
+  public DatasqrlRun(Path path, Map<String, String> env) {
+    Map<String, String> newEnv = new HashMap<>();
+    newEnv.putAll(System.getenv());
+    newEnv.putAll(env);
+    this.env = newEnv;
+    setPath(path);
   }
 
   @VisibleForTesting
@@ -68,22 +81,35 @@ public class DatasqrlRun {
     this.build = path.getParent();
   }
 
-  public void run(boolean hold) {
-    startPostgres();
-    startKafka();
+  public TableResult run(boolean hold) {
+    initPostgres();
+    initKafka();
 
     // Register the custom deserializer module
     objectMapper = new ObjectMapper();
     SimpleModule module = new SimpleModule();
-    module.addDeserializer(String.class,
-        new JsonEnvVarDeserializer(getEnv()));
+    module.addDeserializer(String.class, new JsonEnvVarDeserializer(env));
     objectMapper.registerModule(module);
 
     startVertx();
     CompiledPlan plan = startFlink();
-    TableResult execute = plan.execute();
+    execute = plan.execute();
     if (hold) {
       execute.print();
+    }
+    return execute;
+  }
+
+  public void stop() {
+    if (execute != null) {
+      try {
+        execute.getJobClient().get().cancel();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
+    if (vertx != null) {
+      vertx.close();
     }
   }
 
@@ -112,15 +138,28 @@ public class DatasqrlRun {
     config.putIfAbsent("table.exec.source.idle-timeout", "1 s");
     config.putIfAbsent("taskmanager.network.memory.max", "800m");
     config.putIfAbsent("execution.checkpointing.interval", "30 sec");
+    config.putIfAbsent("execution.checkpointing.min-pause", "20 s");
     config.putIfAbsent("state.backend", "rocksdb");
     config.putIfAbsent("table.exec.resource.default-parallelism", "1");
+    config.putIfAbsent("rest.address", "localhost");
+    config.putIfAbsent("rest.port", "8081");
 
     Configuration configuration = Configuration.fromMap(config);
-    StreamExecutionEnvironment sEnv = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(configuration);
+
+    StreamExecutionEnvironment sEnv = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(
+        configuration);
+
     EnvironmentSettings tEnvConfig = EnvironmentSettings.newInstance()
-        .withConfiguration(configuration).build();
+        .withConfiguration(configuration)
+        .build();
+
     StreamTableEnvironment tEnv = StreamTableEnvironment.create(sEnv, tEnvConfig);
     TableResult tableResult = null;
+
+    Path flinkPath = path.resolve("flink.json");
+    if (!flinkPath.toFile().exists()) {
+      throw new RuntimeException("Could not find flink plan.");
+    }
 
     Map map = objectMapper.readValue(path.resolve("flink.json").toFile(), Map.class);
     List<String> statements = (List<String>) map.get("flinkSql");
@@ -130,44 +169,29 @@ public class DatasqrlRun {
       if (statement.trim().isEmpty()) {
         continue;
       }
-//      System.out.println(replaceWithEnv(statement));
-      tableResult = tEnv.executeSql(replaceWithEnv(statement));
+      try {
+        tableResult = tEnv.executeSql(replaceWithEnv(statement));
+      } catch (Exception e) {
+        System.out.println("Could not execute statement: " + statement);
+        throw e;
+      }
     }
     String insert = replaceWithEnv(statements.get(statements.size() - 1));
+
     TableEnvironmentImpl tEnv1 = (TableEnvironmentImpl) tEnv;
+
     StatementSetOperation parse = (StatementSetOperation)tEnv1.getParser().parse(insert).get(0);
 
-    CompiledPlan plan = tEnv1.compilePlan(parse.getOperations());
-
-    return plan;
+    return tEnv1.compilePlan(parse.getOperations());
   }
 
   @SneakyThrows
-  private Map getPackageJson() {
+  protected Map getPackageJson() {
     return objectMapper.readValue(build.resolve("package.json").toFile(), Map.class);
   }
 
-  Map<String, String> getEnv() {
-    Map<String, String> configMap = new HashMap<>();
-
-    configMap.putAll(System.getenv());
-    configMap.put("PROPERTIES_BOOTSTRAP_SERVERS", CLUSTER.bootstrapServers());
-    configMap.put("PROPERTIES_GROUP_ID", "mygroupid");
-    configMap.put("JDBC_URL", isStarted.get() ? postgreSQLContainer.getJdbcUrl() : "jdbc:postgresql://127.0.0.1:5432/datasqrl");
-    configMap.put("JDBC_USERNAME", "postgres");
-    configMap.put("JDBC_PASSWORD", "postgres");
-    //todo target?
-    configMap.put("DATA_PATH", build.resolve("deploy/flink/data").toString());
-    configMap.put("PGHOST", "localhost");
-    configMap.put("PGUSER", "postgres");
-    configMap.put("PGPORT", isStarted.get() ? postgreSQLContainer.getMappedPort(5432).toString() : "5432") ;
-    configMap.put("PGPASSWORD", "postgres");
-    configMap.put("PGDATABASE", "datasqrl");
-
-    return configMap;
-  }
   public String replaceWithEnv(String command) {
-    Map<String, String> envVariables = getEnv();
+    Map<String, String> envVariables = env;
     Pattern pattern = Pattern.compile("\\$\\{(.*?)\\}");
 
     String substitutedStr = command;
@@ -185,73 +209,46 @@ public class DatasqrlRun {
   }
 
   @SneakyThrows
-  public void startKafkaCluster() {
-    CLUSTER = new EmbeddedKafkaCluster(1);
-    CLUSTER.start();
-  }
+  public void initKafka() {
+    if (!path.resolve("kafka.json").toFile().exists()) {
+      return;
+    }
+    Map<String, Object> map = objectMapper.readValue(path.resolve("kafka.json").toFile(), Map.class);
+    List<Map<String, Object>> topics = (List<Map<String, Object>>) map.get("topics");
 
-  @SneakyThrows
-  public void startKafka() {
-    startKafkaCluster();
-
-    if (path.resolve("kafka.json").toFile().exists()) {
-      Map map = objectMapper.readValue(path.resolve("kafka.json").toFile(), Map.class);
-      List<Map<String, Object>> topics = (List<Map<String, Object>>) map.get("topics");
+    Properties props = new Properties();
+    props.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, getenv("PROPERTIES_BOOTSTRAP_SERVERS"));
+    try (AdminClient adminClient = AdminClient.create(props)) {
       for (Map<String, Object> topic : topics) {
-        CLUSTER.createTopic((String) topic.get("name"), 1, 1);
+        NewTopic newTopic = new NewTopic((String) topic.get("name"), 1, (short) 1);
+        adminClient.createTopics(Collections.singletonList(newTopic)).all().get();
       }
     }
   }
 
   @SneakyThrows
-  public void startPostgres() {
-    if (path.resolve("postgres.json").toFile().exists()) { //todo fix
+  public void initPostgres() {
+    if (!path.resolve("postgres.json").toFile().exists()) {
+      return;
+    }
+    Map<String, Object> map = objectMapper.readValue(path.resolve("postgres.json").toFile(), Map.class);
+    List<Map<String, Object>> ddl = (List<Map<String, Object>>) map.get("ddl");
 
-      postgreSQLContainer = (PostgreSQLContainer)new PostgreSQLContainer(
-          DockerImageName.parse("ankane/pgvector:v0.5.0")
-              .asCompatibleSubstituteFor("postgres"))
-          .withDatabaseName("datasqrl")
-          .withPassword("postgres")
-          .withUsername("postgres")
-          .withEnv("POSTGRES_INITDB_ARGS", "--data-checksums")
-          .withEnv("POSTGRES_HOST_AUTH_METHOD", "trust")
-          .withCommand("postgres -c wal_level=logical");
-
-      Map map = objectMapper.readValue(path.resolve("postgres.json").toFile(), Map.class);
-      List<Map<String, Object>> ddl = (List<Map<String, Object>>) map.get("ddl");
-      Connection connection;
-      try {
-        postgreSQLContainer.start();
-        connection = postgreSQLContainer.createConnection("");
-        isStarted.set(true);
-        connection.createStatement().execute("ALTER SYSTEM SET wal_level = logical;");
-        connection.createStatement().execute("ALTER SYSTEM SET max_replication_slots = 4;");
-        connection.createStatement().execute("ALTER SYSTEM SET max_wal_senders = 4;");
-        connection.createStatement().execute("ALTER SYSTEM SET wal_sender_timeout = 0;");
-        connection.createStatement().execute("SELECT pg_reload_conf();");
-
-      } catch (Exception e) {
-        //attempt local connection
-        // todo: install postgres in homebrew (?), also remove the database on shutdown or reinit
-        connection = DriverManager.getConnection("jdbc:postgresql://127.0.0.1:5432/datasqrl",
-            "postgres", "postgres");
-
-      }
-
+    //todo env + default
+    String format = String.format("jdbc:postgresql://%s:%s/%s",
+        getenv("PGHOST"), getenv("PGPORT"), getenv("PGDATABASE"));
+    try (Connection connection = DriverManager.getConnection(format, getenv("PGUSER"), getenv("PGPASSWORD"))) {
       for (Map<String, Object> statement : ddl) {
         String sql = (String) statement.get("sql");
         connection.createStatement().execute(sql);
       }
-
-      if (path.resolve("postgres_log.json").toFile().exists()) { //todo fix\
-        Map logs = objectMapper.readValue(path.resolve("postgres_log.json").toFile(), Map.class);
-        List<Map> log = (List<Map>)logs.get("ddl");
-        for (Map m : log) {
-          String sql = (String) m.get("sql");
-          connection.createStatement().execute(sql);
-        }
-      }
+    } catch (Exception e) {
+      e.printStackTrace();
     }
+  }
+
+  private String getenv(String key) {
+    return this.env.get(key);
   }
 
   @SneakyThrows
@@ -264,23 +261,24 @@ public class DatasqrlRun {
         ModelContainer.class).model;
 
     URL resource = Resources.getResource("server-config.json");
-    Map json = objectMapper.readValue(
-        resource,
-        Map.class);
+    Map<String, Object> json = objectMapper.readValue(resource, Map.class);
     JsonObject config = new JsonObject(json);
 
     ServerConfig serverConfig = new ServerConfig(config);
-    // hack because templating doesn't work on non-strings
+
+    // Set Postgres connection options from environment variables
     serverConfig.getPgConnectOptions()
-        .setPort(isStarted.get() ? postgreSQLContainer.getMappedPort(5432): 5432);
+        .setHost(getenv("PGHOST"))
+        .setPort(Integer.parseInt(getenv("PGPORT")))
+        .setUser(getenv("PGUSER"))
+        .setPassword(getenv("PGPASSWORD"))
+        .setDatabase(getenv("PGDATABASE"));
+
     GraphQLServer server = new GraphQLServer(rootGraphqlModel, serverConfig,
         NameCanonicalizer.SYSTEM, getSnowflakeUrl()) {
       @Override
       public String getEnvironmentVariable(String envVar) {
-        if (envVar.equalsIgnoreCase("PROPERTIES_BOOTSTRAP_SERVERS")) {
-          return CLUSTER.bootstrapServers();
-        }
-        return null;
+        return getenv(envVar);
       }
     };
 
@@ -290,7 +288,7 @@ public class DatasqrlRun {
         .setMicrometerRegistry(prometheusMeterRegistry)
         .setEnabled(true);
 
-    Vertx vertx = Vertx.vertx(new VertxOptions().setMetricsOptions(metricsOptions));
+    vertx = Vertx.vertx(new VertxOptions().setMetricsOptions(metricsOptions));
 
     vertx.deployVerticle(server, res -> {
       if (res.succeeded()) {

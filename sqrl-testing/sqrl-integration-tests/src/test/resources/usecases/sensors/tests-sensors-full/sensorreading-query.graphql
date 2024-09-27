@@ -1,7 +1,6 @@
 query {
     SensorReading(limit: 13, offset: 431) {
         sensorid
-        time
         temperature
         humidity
     }

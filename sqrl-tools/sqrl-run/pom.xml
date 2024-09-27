@@ -114,39 +114,6 @@
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-jdbc-1.19</artifactId>
     </dependency>
-<!--    <dependency>-->
-<!--      <groupId>org.apache.hadoop</groupId>-->
-<!--      <artifactId>hadoop-common</artifactId>-->
-<!--      <version>2.10.2</version>-->
-<!--    </dependency>-->
-<!--    <dependency>-->
-<!--      <groupId>org.apache.hadoop</groupId>-->
-<!--      <artifactId>hadoop-hdfs</artifactId>-->
-<!--      <version>2.10.2</version>-->
-<!--    </dependency>-->
-<!--    &lt;!&ndash; https://mvnrepository.com/artifact/org.apache.iceberg/iceberg-hive-metastore &ndash;&gt;-->
-<!--    <dependency>-->
-<!--      <groupId>org.apache.iceberg</groupId>-->
-<!--      <artifactId>iceberg-hive-metastore</artifactId>-->
-<!--      <version>1.6.0</version>-->
-<!--    </dependency>-->
-<!--    &lt;!&ndash; https://mvnrepository.com/artifact/org.apache.hive/hive-metastore &ndash;&gt;-->
-<!--    <dependency>-->
-<!--      <groupId>org.apache.hive</groupId>-->
-<!--      <artifactId>hive-metastore</artifactId>-->
-<!--      <version>3.1.3</version>-->
-<!--    </dependency>-->
-<!--    <dependency>-->
-<!--      <groupId>org.apache.hadoop</groupId>-->
-<!--      <artifactId>hadoop-mapreduce-client-core</artifactId>-->
-<!--      <version>3.1.0</version>-->
-<!--    </dependency>-->
-
-    <!-- util -->
-<!--    <dependency>-->
-<!--      <groupId>info.picocli</groupId>-->
-<!--      <artifactId>picocli</artifactId>-->
-<!--    </dependency>-->
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>testcontainers</artifactId>
@@ -215,21 +182,10 @@
         </exclusion>
       </exclusions>
     </dependency>
-
-    <!-- Test jars -->
-<!--    <dependency>-->
-<!--      <groupId>org.mockito</groupId>-->
-<!--      <artifactId>mockito-core</artifactId>-->
-<!--    </dependency>-->
-<!--    <dependency>-->
-<!--      <groupId>org.mockito</groupId>-->
-<!--      <artifactId>mockito-junit-jupiter</artifactId>-->
-<!--    </dependency>-->
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-server-vertx</artifactId>
     </dependency>
-
     <dependency>
       <groupId>org.apache.kafka</groupId>
       <artifactId>kafka-clients</artifactId>

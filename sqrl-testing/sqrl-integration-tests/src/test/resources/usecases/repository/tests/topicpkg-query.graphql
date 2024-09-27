@@ -2,7 +2,6 @@
   TopicPackages(topicName: "example") {
     topicName
     pkgName
-    lastSubmission
     numSubmissions
     latest {
       version

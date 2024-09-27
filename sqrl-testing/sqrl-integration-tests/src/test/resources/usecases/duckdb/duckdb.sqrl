@@ -1,16 +1,19 @@
 IMPORT data.applications AS _Applications;
 
 /*+partition_key(id) */
-MyApplications1 := SELECT * FROM _Applications;
+_MyApplications1 := SELECT * FROM _Applications;
 
 /*+partition_key */
-MyApplications2 := SELECT * FROM _Applications;
+_MyApplications2 := SELECT * FROM _Applications;
+
+/*index(hash, id) */
+_MyApplications3 := SELECT * FROM _Applications;
 
 /*+exec(iceberg)*/
-MyTable := SELECT id, 'hello world' as hello FROM MyApplications1;
+MyTable1 := SELECT id, 'hello world' as hello FROM _MyApplications1;
 
 /*+exec(iceberg)*/
-MyTable2 := SELECT id, 'hello world' as hello FROM MyApplications2;
+MyTable2 := SELECT id, 'hello world' as hello FROM _MyApplications2;
 
 /*+exec(postgres)*/
-MyTable1 := SELECT id, 'hello world' as hello FROM MyApplications1;
+MyTable3 := SELECT id, 'hello world' as hello FROM _MyApplications3;

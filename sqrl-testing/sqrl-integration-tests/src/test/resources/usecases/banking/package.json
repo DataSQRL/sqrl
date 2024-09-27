@@ -5,5 +5,8 @@
     "flink-config": {
       "table.exec.source.idle-timeout": "1 ms"
     }
+  },
+  "test-runner": {
+    "delay-sec": 10
   }
 }
