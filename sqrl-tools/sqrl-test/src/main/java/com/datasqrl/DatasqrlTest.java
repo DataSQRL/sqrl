@@ -47,7 +47,7 @@ public class DatasqrlTest {
 
   @SneakyThrows
   public int run() {
-    DatasqrlNewRun run = new DatasqrlNewRun(planPath, env);
+    DatasqrlRun run = new DatasqrlRun(planPath, env);
     TableResult result = run.run(false);
     List<Exception> exceptions = new ArrayList<>();
 

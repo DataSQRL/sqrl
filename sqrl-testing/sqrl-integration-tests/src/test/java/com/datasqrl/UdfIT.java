@@ -17,10 +17,8 @@ import java.nio.file.Path;
 import java.util.Map;
 import lombok.SneakyThrows;
 import org.apache.flink.table.api.TableResult;
-import org.apache.flink.test.junit5.MiniClusterExtension;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -70,7 +68,7 @@ public class UdfIT {
         "/Users/henneberger/sqrl/sqrl-testing/sqrl-integration-tests/src/test/resources/udf/build/deploy/flink/lib",
         "PROPERTIES_BOOTSTRAP_SERVERS", container.getBootstrapServers()
     );
-    DatasqrlNewRun run = new DatasqrlNewRun(path.resolve("build").resolve("plan"),
+    DatasqrlRun run = new DatasqrlRun(path.resolve("build").resolve("plan"),
        env);
     TableResult run1 = run.run(false);
 

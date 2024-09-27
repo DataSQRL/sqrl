@@ -47,7 +47,7 @@ public class SimpleSqrlIT {
 
     execute(path, StatusHook.NONE,"compile", "test.sqrl");
 
-    DatasqrlNewRun run = new DatasqrlNewRun(path.resolve("build").resolve("plan"),
+    DatasqrlRun run = new DatasqrlRun(path.resolve("build").resolve("plan"),
         Map.of(
             "EXECUTION_MODE", "local",
             "JDBC_URL", testDatabase.getJdbcUrl(),
