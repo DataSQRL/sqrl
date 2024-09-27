@@ -6,4 +6,6 @@ public class EngineKeys {
   public static final String STREAMS = "flink";
   public static final String DATABASE = "postgres";
   public static final String TEST = "test";
+  public static final String ICEBERG = "iceberg";
+  public static final String DUCKDB = "duckdb";
 }

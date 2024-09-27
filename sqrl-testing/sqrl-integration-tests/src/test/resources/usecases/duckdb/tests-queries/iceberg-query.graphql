@@ -1,5 +1,5 @@
 query {
-    MyTable {
+    MyTable1 {
         id
         hello
     }

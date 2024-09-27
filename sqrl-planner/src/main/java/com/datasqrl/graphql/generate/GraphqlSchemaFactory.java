@@ -141,7 +141,7 @@ public class GraphqlSchemaFactory {
 
     if (queryType.getFields().isEmpty()) {
       if (goal == ExecutionGoal.TEST) {
-        throw new RuntimeException("No queries found for test goal");
+        return null; //may have test folder
       } else {
         throw new RuntimeException("No queryable tables found for server");
       }

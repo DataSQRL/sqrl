@@ -16,8 +16,8 @@ Schema:
 Plan:
 LogicalTableScan(table=[[_applications_1]])
 
-=== MyApplications1
-ID:     myapplications1_1
+=== _MyApplications1
+ID:     _myapplications1_1
 Type:   stream
 Stage:  flink
 Inputs: _applications_2
@@ -34,8 +34,26 @@ Schema:
 Plan:
 LogicalTableScan(table=[[_applications_2]])
 
-=== MyApplications2
-ID:     myapplications2_1
+=== _MyApplications2
+ID:     _myapplications2_1
+Type:   stream
+Stage:  flink
+Inputs: _applications_2
+Primary Key: id, updated_at
+Timestamp  : updated_at
+Schema:
+ - id: BIGINT NOT NULL
+ - customer_id: BIGINT NOT NULL
+ - loan_type_id: BIGINT NOT NULL
+ - amount: DOUBLE NOT NULL
+ - duration: BIGINT NOT NULL
+ - application_date: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - updated_at: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Plan:
+LogicalTableScan(table=[[_applications_2]])
+
+=== _MyApplications3
+ID:     _myapplications3_1
 Type:   stream
 Stage:  flink
 Inputs: _applications_2
@@ -55,8 +73,8 @@ LogicalTableScan(table=[[_applications_2]])
 === MyTable1
 ID:     mytable1_1
 Type:   stream
-Stage:  postgres
-Inputs: myapplications1_1
+Stage:  iceberg
+Inputs: _myapplications1_1
 Primary Key: id, _updated_at
 Timestamp  : _updated_at
 Schema:
@@ -65,13 +83,13 @@ Schema:
  - _updated_at: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
 LogicalProject(id=[$0], hello=['hello world'], _updated_at=[$6])
-  LogicalTableScan(table=[[myapplications1_1]])
+  LogicalTableScan(table=[[_myapplications1_1]])
 
 === MyTable2
 ID:     mytable2_1
 Type:   stream
 Stage:  iceberg
-Inputs: myapplications2_1
+Inputs: _myapplications2_1
 Primary Key: id, _updated_at
 Timestamp  : _updated_at
 Schema:
@@ -80,13 +98,13 @@ Schema:
  - _updated_at: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
 LogicalProject(id=[$0], hello=['hello world'], _updated_at=[$6])
-  LogicalTableScan(table=[[myapplications2_1]])
+  LogicalTableScan(table=[[_myapplications2_1]])
 
-=== MyTable
-ID:     mytable_1
+=== MyTable3
+ID:     mytable3_1
 Type:   stream
-Stage:  iceberg
-Inputs: myapplications1_1
+Stage:  postgres
+Inputs: _myapplications3_1
 Primary Key: id, _updated_at
 Timestamp  : _updated_at
 Schema:
@@ -95,21 +113,19 @@ Schema:
  - _updated_at: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
 LogicalProject(id=[$0], hello=['hello world'], _updated_at=[$6])
-  LogicalTableScan(table=[[myapplications1_1]])
+  LogicalTableScan(table=[[_myapplications3_1]])
 
 >>>flink.json
 {
   "flinkSql" : [
     "CREATE TEMPORARY TABLE `_applications_1` (\n  `id` BIGINT NOT NULL,\n  `customer_id` BIGINT NOT NULL,\n  `loan_type_id` BIGINT NOT NULL,\n  `amount` DOUBLE NOT NULL,\n  `duration` BIGINT NOT NULL,\n  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,\n  WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND\n) WITH (\n  'format' = 'flexible-json',\n  'path' = '${DATA_PATH}/applications.jsonl',\n  'source.monitor-interval' = '1',\n  'connector' = 'filesystem'\n);",
-    "CREATE TEMPORARY TABLE `myapplications1_1` (\n  `id` BIGINT NOT NULL,\n  `customer_id` BIGINT NOT NULL,\n  `loan_type_id` BIGINT NOT NULL,\n  `amount` DOUBLE NOT NULL,\n  `duration` BIGINT NOT NULL,\n  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED\n)\nPARTITIONED BY (`id`)\nWITH (\n  'catalog-type' = 'hadoop',\n  'warehouse' = 'file:///Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test',\n  'catalog-name' = 'mydatabase',\n  'connector' = 'iceberg',\n  'catalog-table' = 'myapplications1_1'\n);",
-    "CREATE TEMPORARY TABLE `myapplications2_1` (\n  `id` BIGINT NOT NULL,\n  `customer_id` BIGINT NOT NULL,\n  `loan_type_id` BIGINT NOT NULL,\n  `amount` DOUBLE NOT NULL,\n  `duration` BIGINT NOT NULL,\n  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED\n) WITH (\n  'catalog-type' = 'hadoop',\n  'warehouse' = 'file:///Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test',\n  'catalog-name' = 'mydatabase',\n  'connector' = 'iceberg',\n  'catalog-table' = 'myapplications2_1'\n);",
-    "CREATE TEMPORARY TABLE `myapplications1_1` (\n  `id` BIGINT NOT NULL,\n  `customer_id` BIGINT NOT NULL,\n  `loan_type_id` BIGINT NOT NULL,\n  `amount` DOUBLE NOT NULL,\n  `duration` BIGINT NOT NULL,\n  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'myapplications1_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `myapplications2_1` (\n  `id` BIGINT NOT NULL,\n  `customer_id` BIGINT NOT NULL,\n  `loan_type_id` BIGINT NOT NULL,\n  `amount` DOUBLE NOT NULL,\n  `duration` BIGINT NOT NULL,\n  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'myapplications2_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `_myapplications1_1` (\n  `id` BIGINT NOT NULL,\n  `customer_id` BIGINT NOT NULL,\n  `loan_type_id` BIGINT NOT NULL,\n  `amount` DOUBLE NOT NULL,\n  `duration` BIGINT NOT NULL,\n  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED\n)\nPARTITIONED BY (`id`)\nWITH (\n  'catalog-type' = 'hadoop',\n  'warehouse' = 'file:///Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test',\n  'catalog-name' = 'mydatabase',\n  'connector' = 'iceberg',\n  'catalog-table' = '_myapplications1_1'\n);",
+    "CREATE TEMPORARY TABLE `_myapplications2_1` (\n  `id` BIGINT NOT NULL,\n  `customer_id` BIGINT NOT NULL,\n  `loan_type_id` BIGINT NOT NULL,\n  `amount` DOUBLE NOT NULL,\n  `duration` BIGINT NOT NULL,\n  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED\n) WITH (\n  'catalog-type' = 'hadoop',\n  'warehouse' = 'file:///Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test',\n  'catalog-name' = 'mydatabase',\n  'connector' = 'iceberg',\n  'catalog-table' = '_myapplications2_1'\n);",
+    "CREATE TEMPORARY TABLE `_myapplications3_1` (\n  `id` BIGINT NOT NULL,\n  `customer_id` BIGINT NOT NULL,\n  `loan_type_id` BIGINT NOT NULL,\n  `amount` DOUBLE NOT NULL,\n  `duration` BIGINT NOT NULL,\n  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = '_myapplications3_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `_applications_1`;",
     "CREATE VIEW `table$2`\nAS\nSELECT *\nFROM `_applications_1`;",
     "CREATE VIEW `table$3`\nAS\nSELECT *\nFROM `_applications_1`;",
-    "CREATE VIEW `table$4`\nAS\nSELECT *\nFROM `_applications_1`;",
-    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `myapplications1_1`\n(SELECT *\n FROM `table$1`)\n;\nINSERT INTO `myapplications2_1`\n (SELECT *\n  FROM `table$2`)\n ;\n INSERT INTO `myapplications1_1`\n  (SELECT *\n   FROM `table$3`)\n  ;\n  INSERT INTO `myapplications2_1`\n   (SELECT *\n    FROM `table$4`)\n   ;\n   END;"
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `_myapplications1_1`\n(SELECT *\n FROM `table$1`)\n;\nINSERT INTO `_myapplications2_1`\n (SELECT *\n  FROM `table$2`)\n ;\n INSERT INTO `_myapplications3_1`\n  (SELECT *\n   FROM `table$3`)\n  ;\n  END;"
   ],
   "connectors" : [
     "jdbc-sqrl",
@@ -124,7 +140,7 @@ LogicalProject(id=[$0], hello=['hello world'], _updated_at=[$6])
 {
   "ddl" : [
     {
-      "name" : "myapplications1_1",
+      "name" : "_myapplications1_1",
       "columns" : [
         "\"id\" BIGINT NOT NULL",
         "\"customer_id\" BIGINT NOT NULL",
@@ -138,10 +154,10 @@ LogicalProject(id=[$0], hello=['hello world'], _updated_at=[$6])
         "\"id\"",
         "\"updated_at\""
       ],
-      "sql" : "CREATE TABLE IF NOT EXISTS myapplications1_1 (\"id\" BIGINT NOT NULL,\"customer_id\" BIGINT NOT NULL,\"loan_type_id\" BIGINT NOT NULL,\"amount\" DOUBLE PRECISION NOT NULL,\"duration\" BIGINT NOT NULL,\"application_date\" TIMESTAMP WITH TIME ZONE NOT NULL,\"updated_at\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\",\"updated_at\"));"
+      "sql" : "CREATE TABLE IF NOT EXISTS _myapplications1_1 (\"id\" BIGINT NOT NULL,\"customer_id\" BIGINT NOT NULL,\"loan_type_id\" BIGINT NOT NULL,\"amount\" DOUBLE PRECISION NOT NULL,\"duration\" BIGINT NOT NULL,\"application_date\" TIMESTAMP WITH TIME ZONE NOT NULL,\"updated_at\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\",\"updated_at\"));"
     },
     {
-      "name" : "myapplications2_1",
+      "name" : "_myapplications2_1",
       "columns" : [
         "\"id\" BIGINT NOT NULL",
         "\"customer_id\" BIGINT NOT NULL",
@@ -155,14 +171,14 @@ LogicalProject(id=[$0], hello=['hello world'], _updated_at=[$6])
         "\"id\"",
         "\"updated_at\""
       ],
-      "sql" : "CREATE TABLE IF NOT EXISTS myapplications2_1 (\"id\" BIGINT NOT NULL,\"customer_id\" BIGINT NOT NULL,\"loan_type_id\" BIGINT NOT NULL,\"amount\" DOUBLE PRECISION NOT NULL,\"duration\" BIGINT NOT NULL,\"application_date\" TIMESTAMP WITH TIME ZONE NOT NULL,\"updated_at\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\",\"updated_at\"));"
+      "sql" : "CREATE TABLE IF NOT EXISTS _myapplications2_1 (\"id\" BIGINT NOT NULL,\"customer_id\" BIGINT NOT NULL,\"loan_type_id\" BIGINT NOT NULL,\"amount\" DOUBLE PRECISION NOT NULL,\"duration\" BIGINT NOT NULL,\"application_date\" TIMESTAMP WITH TIME ZONE NOT NULL,\"updated_at\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\",\"updated_at\"));"
     }
   ],
   "engines" : {
     "duckdb" : {
       "ddl" : [
         {
-          "name" : "myapplications1_1",
+          "name" : "_myapplications1_1",
           "columns" : [
             "\"id\" BIGINT NOT NULL",
             "\"customer_id\" BIGINT NOT NULL",
@@ -176,10 +192,10 @@ LogicalProject(id=[$0], hello=['hello world'], _updated_at=[$6])
             "\"id\"",
             "\"updated_at\""
           ],
-          "sql" : "CREATE TABLE IF NOT EXISTS myapplications1_1 (\"id\" BIGINT NOT NULL,\"customer_id\" BIGINT NOT NULL,\"loan_type_id\" BIGINT NOT NULL,\"amount\" DOUBLE PRECISION NOT NULL,\"duration\" BIGINT NOT NULL,\"application_date\" TIMESTAMP WITH TIME ZONE NOT NULL,\"updated_at\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\",\"updated_at\"));"
+          "sql" : "CREATE TABLE IF NOT EXISTS _myapplications1_1 (\"id\" BIGINT NOT NULL,\"customer_id\" BIGINT NOT NULL,\"loan_type_id\" BIGINT NOT NULL,\"amount\" DOUBLE PRECISION NOT NULL,\"duration\" BIGINT NOT NULL,\"application_date\" TIMESTAMP WITH TIME ZONE NOT NULL,\"updated_at\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\",\"updated_at\"));"
         },
         {
-          "name" : "myapplications2_1",
+          "name" : "_myapplications2_1",
           "columns" : [
             "\"id\" BIGINT NOT NULL",
             "\"customer_id\" BIGINT NOT NULL",
@@ -193,7 +209,7 @@ LogicalProject(id=[$0], hello=['hello world'], _updated_at=[$6])
             "\"id\"",
             "\"updated_at\""
           ],
-          "sql" : "CREATE TABLE IF NOT EXISTS myapplications2_1 (\"id\" BIGINT NOT NULL,\"customer_id\" BIGINT NOT NULL,\"loan_type_id\" BIGINT NOT NULL,\"amount\" DOUBLE PRECISION NOT NULL,\"duration\" BIGINT NOT NULL,\"application_date\" TIMESTAMP WITH TIME ZONE NOT NULL,\"updated_at\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\",\"updated_at\"));"
+          "sql" : "CREATE TABLE IF NOT EXISTS _myapplications2_1 (\"id\" BIGINT NOT NULL,\"customer_id\" BIGINT NOT NULL,\"loan_type_id\" BIGINT NOT NULL,\"amount\" DOUBLE PRECISION NOT NULL,\"duration\" BIGINT NOT NULL,\"application_date\" TIMESTAMP WITH TIME ZONE NOT NULL,\"updated_at\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\",\"updated_at\"));"
         }
       ],
       "views" : [ ]
@@ -208,7 +224,7 @@ LogicalProject(id=[$0], hello=['hello world'], _updated_at=[$6])
 {
   "ddl" : [
     {
-      "name" : "myapplications1_1",
+      "name" : "_myapplications3_1",
       "columns" : [
         "\"id\" BIGINT NOT NULL",
         "\"customer_id\" BIGINT NOT NULL",
@@ -222,38 +238,13 @@ LogicalProject(id=[$0], hello=['hello world'], _updated_at=[$6])
         "\"id\"",
         "\"updated_at\""
       ],
-      "sql" : "CREATE TABLE IF NOT EXISTS myapplications1_1 (\"id\" BIGINT NOT NULL,\"customer_id\" BIGINT NOT NULL,\"loan_type_id\" BIGINT NOT NULL,\"amount\" DOUBLE PRECISION NOT NULL,\"duration\" BIGINT NOT NULL,\"application_date\" TIMESTAMP WITH TIME ZONE NOT NULL,\"updated_at\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\",\"updated_at\"));"
-    },
-    {
-      "name" : "myapplications2_1",
-      "columns" : [
-        "\"id\" BIGINT NOT NULL",
-        "\"customer_id\" BIGINT NOT NULL",
-        "\"loan_type_id\" BIGINT NOT NULL",
-        "\"amount\" DOUBLE PRECISION NOT NULL",
-        "\"duration\" BIGINT NOT NULL",
-        "\"application_date\" TIMESTAMP WITH TIME ZONE NOT NULL",
-        "\"updated_at\" TIMESTAMP WITH TIME ZONE NOT NULL"
-      ],
-      "primaryKeys" : [
-        "\"id\"",
-        "\"updated_at\""
-      ],
-      "sql" : "CREATE TABLE IF NOT EXISTS myapplications2_1 (\"id\" BIGINT NOT NULL,\"customer_id\" BIGINT NOT NULL,\"loan_type_id\" BIGINT NOT NULL,\"amount\" DOUBLE PRECISION NOT NULL,\"duration\" BIGINT NOT NULL,\"application_date\" TIMESTAMP WITH TIME ZONE NOT NULL,\"updated_at\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\",\"updated_at\"));"
+      "sql" : "CREATE TABLE IF NOT EXISTS _myapplications3_1 (\"id\" BIGINT NOT NULL,\"customer_id\" BIGINT NOT NULL,\"loan_type_id\" BIGINT NOT NULL,\"amount\" DOUBLE PRECISION NOT NULL,\"duration\" BIGINT NOT NULL,\"application_date\" TIMESTAMP WITH TIME ZONE NOT NULL,\"updated_at\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\",\"updated_at\"));"
     }
   ],
   "views" : [
     {
-      "name" : "MyApplications1",
-      "sql" : "CREATE OR REPLACE VIEW \"MyApplications1\"(\"id\", \"customer_id\", \"loan_type_id\", \"amount\", \"duration\", \"application_date\", \"updated_at\") AS SELECT *\nFROM \"myapplications1_1\"\nORDER BY \"updated_at\" DESC NULLS LAST, \"id\";"
-    },
-    {
-      "name" : "MyTable1",
-      "sql" : "CREATE OR REPLACE VIEW \"MyTable1\"(\"id\", \"hello\", \"_updated_at\") AS SELECT \"id\", 'hello world' AS \"hello\", \"updated_at\" AS \"_updated_at\"\nFROM \"myapplications1_1\"\nORDER BY \"updated_at\" DESC NULLS LAST, \"id\";"
-    },
-    {
-      "name" : "MyApplications2",
-      "sql" : "CREATE OR REPLACE VIEW \"MyApplications2\"(\"id\", \"customer_id\", \"loan_type_id\", \"amount\", \"duration\", \"application_date\", \"updated_at\") AS SELECT *\nFROM \"myapplications2_1\"\nORDER BY \"updated_at\" DESC NULLS LAST, \"id\";"
+      "name" : "MyTable3",
+      "sql" : "CREATE OR REPLACE VIEW \"MyTable3\"(\"id\", \"hello\", \"_updated_at\") AS SELECT \"id\", 'hello world' AS \"hello\", \"updated_at\" AS \"_updated_at\"\nFROM \"_myapplications3_1\"\nORDER BY \"updated_at\" DESC NULLS LAST, \"id\";"
     }
   ]
 }
@@ -264,324 +255,6 @@ LogicalProject(id=[$0], hello=['hello world'], _updated_at=[$6])
       {
         "type" : "args",
         "parentType" : "Query",
-        "fieldName" : "MyApplications1",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"myapplications1_1\"\nORDER BY \"updated_at\" DESC NULLS LAST, \"id\"",
-              "parameters" : [ ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "id"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "updated_at"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"myapplications1_1\"\nWHERE \"id\" = $1 AND \"updated_at\" = $2\nORDER BY \"updated_at\" DESC NULLS LAST",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "id"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "updated_at"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "id"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"myapplications1_1\"\nWHERE \"id\" = $1\nORDER BY \"updated_at\" DESC NULLS LAST",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "id"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "updated_at"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"myapplications1_1\"\nWHERE \"updated_at\" = $1\nORDER BY \"updated_at\" DESC NULLS LAST, \"id\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "updated_at"
-                }
-              ]
-            }
-          }
-        ]
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "MyApplications2",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "id"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "updated_at"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"myapplications2_1\"\nWHERE \"id\" = $1 AND \"updated_at\" = $2\nORDER BY \"updated_at\" DESC NULLS LAST",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "id"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "updated_at"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "id"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"myapplications2_1\"\nWHERE \"id\" = $1\nORDER BY \"updated_at\" DESC NULLS LAST",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "id"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "updated_at"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"myapplications2_1\"\nWHERE \"updated_at\" = $1\nORDER BY \"updated_at\" DESC NULLS LAST, \"id\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "updated_at"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"myapplications2_1\"\nORDER BY \"updated_at\" DESC NULLS LAST, \"id\"",
-              "parameters" : [ ]
-            }
-          }
-        ]
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "MyTable",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "id"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedDuckDbQuery",
-              "type" : "PagedDuckDbQuery",
-              "sql" : "SELECT *\nFROM (SELECT \"id\", 'hello world' AS \"hello\", \"updated_at\" AS \"_updated_at\"\n  FROM ICEBERG_SCAN('/Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test/default_database/myapplications1_1', ALLOW_MOVED_PATHS = TRUE)) AS \"t0\"\nWHERE \"id\" = $1\nORDER BY \"_updated_at\" DESC NULLS LAST",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "id"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedDuckDbQuery",
-              "type" : "PagedDuckDbQuery",
-              "sql" : "SELECT \"id\", 'hello world' AS \"hello\", \"updated_at\" AS \"_updated_at\"\nFROM ICEBERG_SCAN('/Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test/default_database/myapplications1_1', ALLOW_MOVED_PATHS = TRUE)\nORDER BY \"updated_at\" DESC NULLS LAST, \"id\"",
-              "parameters" : [ ]
-            }
-          }
-        ]
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
         "fieldName" : "MyTable1",
         "matchs" : [
           {
@@ -589,26 +262,6 @@ LogicalProject(id=[$0], hello=['hello world'], _updated_at=[$6])
               {
                 "type" : "variable",
                 "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"id\", 'hello world' AS \"hello\", \"updated_at\" AS \"_updated_at\"\nFROM \"myapplications1_1\"\nORDER BY \"updated_at\" DESC NULLS LAST, \"id\"",
-              "parameters" : [ ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
                 "path" : "id"
               },
               {
@@ -623,9 +276,9 @@ LogicalProject(id=[$0], hello=['hello world'], _updated_at=[$6])
               }
             ],
             "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT \"id\", 'hello world' AS \"hello\", \"updated_at\" AS \"_updated_at\"\n  FROM \"myapplications1_1\") AS \"t\"\nWHERE \"id\" = $1\nORDER BY \"_updated_at\" DESC NULLS LAST",
+              "type" : "PagedDuckDbQuery",
+              "type" : "PagedDuckDbQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"id\", 'hello world' AS \"hello\", \"updated_at\" AS \"_updated_at\"\n  FROM ICEBERG_SCAN('/Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test/default_database/_myapplications1_1', ALLOW_MOVED_PATHS = TRUE)) AS \"t0\"\nWHERE \"id\" = $1\nORDER BY \"_updated_at\" DESC NULLS LAST",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -633,6 +286,26 @@ LogicalProject(id=[$0], hello=['hello world'], _updated_at=[$6])
                   "path" : "id"
                 }
               ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedDuckDbQuery",
+              "type" : "PagedDuckDbQuery",
+              "sql" : "SELECT \"id\", 'hello world' AS \"hello\", \"updated_at\" AS \"_updated_at\"\nFROM ICEBERG_SCAN('/Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test/default_database/_myapplications1_1', ALLOW_MOVED_PATHS = TRUE)\nORDER BY \"updated_at\" DESC NULLS LAST, \"id\"",
+              "parameters" : [ ]
             }
           }
         ]
@@ -647,6 +320,26 @@ LogicalProject(id=[$0], hello=['hello world'], _updated_at=[$6])
               {
                 "type" : "variable",
                 "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedDuckDbQuery",
+              "type" : "PagedDuckDbQuery",
+              "sql" : "SELECT \"id\", 'hello world' AS \"hello\", \"updated_at\" AS \"_updated_at\"\nFROM ICEBERG_SCAN('/Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test/default_database/_myapplications2_1', ALLOW_MOVED_PATHS = TRUE)\nORDER BY \"updated_at\" DESC NULLS LAST, \"id\"",
+              "parameters" : [ ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
                 "path" : "id"
               },
               {
@@ -663,7 +356,45 @@ LogicalProject(id=[$0], hello=['hello world'], _updated_at=[$6])
             "query" : {
               "type" : "PagedDuckDbQuery",
               "type" : "PagedDuckDbQuery",
-              "sql" : "SELECT *\nFROM (SELECT \"id\", 'hello world' AS \"hello\", \"updated_at\" AS \"_updated_at\"\n  FROM ICEBERG_SCAN('/Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test/default_database/myapplications2_1', ALLOW_MOVED_PATHS = TRUE)) AS \"t0\"\nWHERE \"id\" = $1\nORDER BY \"_updated_at\" DESC NULLS LAST",
+              "sql" : "SELECT *\nFROM (SELECT \"id\", 'hello world' AS \"hello\", \"updated_at\" AS \"_updated_at\"\n  FROM ICEBERG_SCAN('/Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test/default_database/_myapplications2_1', ALLOW_MOVED_PATHS = TRUE)) AS \"t0\"\nWHERE \"id\" = $1\nORDER BY \"_updated_at\" DESC NULLS LAST",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "id"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "MyTable3",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"id\", 'hello world' AS \"hello\", \"updated_at\" AS \"_updated_at\"\n  FROM \"_myapplications3_1\") AS \"t\"\nWHERE \"id\" = $1\nORDER BY \"_updated_at\" DESC NULLS LAST",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -687,9 +418,9 @@ LogicalProject(id=[$0], hello=['hello world'], _updated_at=[$6])
               }
             ],
             "query" : {
-              "type" : "PagedDuckDbQuery",
-              "type" : "PagedDuckDbQuery",
-              "sql" : "SELECT \"id\", 'hello world' AS \"hello\", \"updated_at\" AS \"_updated_at\"\nFROM ICEBERG_SCAN('/Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test/default_database/myapplications2_1', ALLOW_MOVED_PATHS = TRUE)\nORDER BY \"updated_at\" DESC NULLS LAST, \"id\"",
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"id\", 'hello world' AS \"hello\", \"updated_at\" AS \"_updated_at\"\nFROM \"_myapplications3_1\"\nORDER BY \"updated_at\" DESC NULLS LAST, \"id\"",
               "parameters" : [ ]
             }
           }
@@ -701,7 +432,7 @@ LogicalProject(id=[$0], hello=['hello world'], _updated_at=[$6])
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype MyApplications1 {\n  id: Float!\n  customer_id: Float!\n  loan_type_id: Float!\n  amount: Float!\n  duration: Float!\n  application_date: DateTime!\n  updated_at: DateTime!\n}\n\ntype MyApplications2 {\n  id: Float!\n  customer_id: Float!\n  loan_type_id: Float!\n  amount: Float!\n  duration: Float!\n  application_date: DateTime!\n  updated_at: DateTime!\n}\n\ntype MyTable {\n  id: Float!\n  hello: String!\n}\n\ntype MyTable1 {\n  id: Float!\n  hello: String!\n}\n\ntype MyTable2 {\n  id: Float!\n  hello: String!\n}\n\ntype Query {\n  MyApplications1(id: Float, updated_at: DateTime, limit: Int = 10, offset: Int = 0): [MyApplications1!]\n  MyApplications2(id: Float, updated_at: DateTime, limit: Int = 10, offset: Int = 0): [MyApplications2!]\n  MyTable(id: Float, limit: Int = 10, offset: Int = 0): [MyTable!]\n  MyTable1(id: Float, limit: Int = 10, offset: Int = 0): [MyTable1!]\n  MyTable2(id: Float, limit: Int = 10, offset: Int = 0): [MyTable2!]\n}\n"
+      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype MyTable1 {\n  id: Float!\n  hello: String!\n}\n\ntype MyTable2 {\n  id: Float!\n  hello: String!\n}\n\ntype MyTable3 {\n  id: Float!\n  hello: String!\n}\n\ntype Query {\n  MyTable1(id: Float, limit: Int = 10, offset: Int = 0): [MyTable1!]\n  MyTable2(id: Float, limit: Int = 10, offset: Int = 0): [MyTable2!]\n  MyTable3(id: Float, limit: Int = 10, offset: Int = 0): [MyTable3!]\n}\n"
     }
   }
 }

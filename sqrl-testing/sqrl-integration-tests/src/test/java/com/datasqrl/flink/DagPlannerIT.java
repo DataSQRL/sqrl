@@ -2,6 +2,7 @@
 //
 //import static org.junit.jupiter.api.Assertions.fail;
 //
+//import com.datasqrl.DatasqrlNewRun;
 //import com.datasqrl.DatasqrlRun;
 //import java.io.File;
 //import java.nio.file.Path;
@@ -79,7 +80,7 @@
 //    env.put("PGDATABASE", testDatabase.getDatabaseName());
 //    env.put("PROPERTIES_BOOTSTRAP_SERVERS", testKafka.getBootstrapServers());
 //
-//    DatasqrlRun datasqrlRun = new DatasqrlRun(directoryPath.getParent().resolve("build").resolve("plan"), env);
+//    DatasqrlNewRun datasqrlRun = new DatasqrlNewRun(directoryPath.getParent().resolve("build").resolve("plan"), env);
 //
 //    if (disabled.contains(directoryPath.getFileName().toString())){
 //      log.warn("Skipping Disabled Test");
@@ -87,11 +88,6 @@
 //    }
 //
 //    Path root = getProjectRoot(directoryPath);
-//
-//    SqrlCompiler sqrlCompiler = new SqrlCompiler();
-//    sqrlCompiler.execute(directoryPath.getParent(),
-//        "compile", directoryPath.getFileName().toString(),
-//        "--profile", root.resolve("profiles/default").toString());
 //
 //    try {
 //      CompiledPlan plan = datasqrlRun.compileFlink();

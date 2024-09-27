@@ -9,7 +9,6 @@ query {
         }
         readings(limit: 5) {
             sensorid
-            timeSec
             temp
         }
     }

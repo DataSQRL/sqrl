@@ -34,4 +34,4 @@ HighTemp := SELECT machineid, sensorid, temp, timeSec
 /*+test */
 HighTempTest := SELECT COUNT(*) as num, AVG(temp) as avg_temp FROM HighTemp;
 
-EXPORT HighTemp TO print.tempWarning;
+/* EXPORT HighTemp TO print.tempWarning;*/

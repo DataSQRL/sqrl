@@ -2,7 +2,7 @@
   "version": 1,
   "flink" : {
     "format" : "flexible-json",
-    "path" : "/data/likes.jsonl",
+    "path" : "${DATA_PATH}/likes.jsonl",
     "source.monitor-interval" : 1,
     "connector" : "filesystem"
   },

@@ -7,7 +7,6 @@ query {
         type
         category
         usda_id
-        updated
         score
     }
 }
