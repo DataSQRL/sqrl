@@ -16,7 +16,7 @@
     }
   },
   "compile" : {
-    "sqrl-version": "0.5.4-SNAPSHOT",
+    "sqrl-version": "0.5.5",
     "flink-build-image": "flink-build:latest",
     "sqrl-vertx-image": "vertx-latest:latest"
   },

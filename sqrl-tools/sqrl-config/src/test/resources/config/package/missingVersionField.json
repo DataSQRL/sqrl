@@ -1,6 +1,6 @@
 {
   "enabled-engines": ["vertx"],
   "compile": {
-    "sqrl-version": "0.5.4"
+    "sqrl-version": "0.5.5"
   }
 }

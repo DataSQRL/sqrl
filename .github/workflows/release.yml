@@ -34,8 +34,8 @@ jobs:
       - name: Build and Push sqrl-cli Latest
         uses: docker/build-push-action@v3
         with:
-          context: sqrl-tools/sqrl-cli
-          file: sqrl-tools/sqrl-cli/Dockerfile
+          context: sqrl-tools
+          file: sqrl-tools/Dockerfile
           push: true
           tags: datasqrl/cmd:${{ github.ref_name }},datasqrl/cmd:latest
           platforms: linux/amd64,linux/arm64
