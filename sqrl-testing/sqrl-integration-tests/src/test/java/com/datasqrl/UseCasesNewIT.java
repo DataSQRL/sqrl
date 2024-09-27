@@ -73,39 +73,39 @@ public class UseCasesNewIT {
 
   @Test
   public void testBanking() {
-    execute("test","banking", "loan.sqrl", "loan.graphqls", null,
+    execute("compile","banking", "loan.sqrl", "loan.graphqls", null,
         "-c", PROJECT_ROOT.resolve("sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/banking/package.json").toString());
   }
 
   @Test
   public void testClickstream() {
-    execute("test", "clickstream", "clickstream-teaser.sqrl", "clickstream-teaser.graphqls", null,
+    execute("compile", "clickstream", "clickstream-teaser.sqrl", "clickstream-teaser.graphqls", null,
         "-c", PROJECT_ROOT.resolve("sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/clickstream/package.json").toString());
   }
 
   @Test
   public void testConference() {
-    execute("test", "conference", "conference.sqrl", "conference.graphqls", null,
+    execute("compile", "conference", "conference.sqrl", "conference.graphqls", null,
         "-c", PROJECT_ROOT.resolve("sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/banking/package.json").toString());
   }
 
   @Test
   public void testSensorsMutation() {
-    execute("test", "sensors", "sensors-mutation.sqrl", "sensors-mutation.graphqls", "sensors-mutation",
+    execute("compile", "sensors", "sensors-mutation.sqrl", "sensors-mutation.graphqls", "sensors-mutation",
         "-c", PROJECT_ROOT.resolve("sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/sensors/package.json").toString());
   }
 
   @Test
   @Disabled//still a bit flaky, need to move to somewhere with longer run times
   public void testSensorsFull() {
-    execute("test", "sensors", "sensors-full.sqrl", null,"sensors-full",
+    execute("compile", "sensors", "sensors-full.sqrl", null,"sensors-full",
         "-c", PROJECT_ROOT.resolve("sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/sensors/package.json").toString());
   }
 
   @Test
   @Disabled//issue with CustomerPromotionTest (to debug)
   public void testSeedshopExtended() {
-    execute("test", "seedshop-tutorial", "seedshop-extended.sqrl", null, "seedshop-extended",
+    execute("compile", "seedshop-tutorial", "seedshop-extended.sqrl", null, "seedshop-extended",
         "-c", PROJECT_ROOT.resolve("sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/seedshop-tutorial/package.json").toString());
   }
 
@@ -119,7 +119,7 @@ public class UseCasesNewIT {
 
     Files.createDirectories(path);
 
-    execute("test","duckdb", "duckdb.sqrl", null, "queries",
+    execute("compile","duckdb", "duckdb.sqrl", null, "queries",
         "-c", PROJECT_ROOT.resolve("sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/duckdb/package.json").toString());
 
     deleteDirectory(path);
@@ -139,7 +139,7 @@ public class UseCasesNewIT {
   }
 
   public void execute(String path, String script, String graphql) {
-    execute("test", path, script, graphql, null);
+    execute("compile", path, script, graphql, null);
   }
 
   public void execute(String goal, String path, String script, String graphql, String testSuffix, String... args) {
