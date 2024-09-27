@@ -36,6 +36,8 @@ COPY sqrl-test/target/sqrl-test.jar /opt/sqrl/sqrl-test.jar
 
 COPY dockerrun.sh /opt/sqrl/dockerrun.sh
 
+ENV TZ=America/Los_Angeles
+
 # Expose default Redpanda ports
 EXPOSE 8080 8081 8888 9092 9644
 
