@@ -23,6 +23,7 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -215,6 +216,26 @@ public class DatasqrlRun {
     }
     Map<String, Object> map = objectMapper.readValue(path.resolve("kafka.json").toFile(), Map.class);
     List<Map<String, Object>> topics = (List<Map<String, Object>>) map.get("topics");
+
+    if (topics == null) {
+      return;
+    }
+
+    List<Map<String, Object>> mutableTopics = new ArrayList<>(topics);
+
+    Object o = getPackageJson().get("values");
+    if (o instanceof Map) {
+      Map vals = (Map) o;
+      Object o1 = vals.get("create-topics");
+      if (o1 instanceof List) {
+        List topicList = (List)o1;
+        for (Object t : topicList) {
+          if (t instanceof String) {
+            mutableTopics.add(Map.of("name", (String)t));
+          }
+        }
+      }
+    }
 
     Properties props = new Properties();
     props.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, getenv("PROPERTIES_BOOTSTRAP_SERVERS"));
