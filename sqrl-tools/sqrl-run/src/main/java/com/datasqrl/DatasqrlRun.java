@@ -238,9 +238,12 @@ public class DatasqrlRun {
     }
 
     Properties props = new Properties();
+    if (getenv("PROPERTIES_BOOTSTRAP_SERVERS") == null) {
+      throw new RuntimeException("${PROPERTIES_BOOTSTRAP_SERVERS} is not set");
+    }
     props.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, getenv("PROPERTIES_BOOTSTRAP_SERVERS"));
     try (AdminClient adminClient = AdminClient.create(props)) {
-      for (Map<String, Object> topic : topics) {
+      for (Map<String, Object> topic : mutableTopics) {
         NewTopic newTopic = new NewTopic((String) topic.get("name"), 1, (short) 1);
         adminClient.createTopics(Collections.singletonList(newTopic)).all().get();
       }
