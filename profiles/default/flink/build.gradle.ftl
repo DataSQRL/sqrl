@@ -47,7 +47,7 @@ dependencies {
     implementation "com.datasqrl:sqrl-flexible-json:$sqrlVersion"
     implementation "com.datasqrl:sqrl-flexible-csv:$sqrlVersion"
     implementation "com.datasqrl:sqrl-vector:$sqrlVersion"
-    implementation "com.datasqrl:sqrl-jdbc-1.18:$sqrlVersion"
+    implementation "com.datasqrl:sqrl-jdbc-1.19:$sqrlVersion"
 
 <#if config["enabled-engines"]?seq_contains("iceberg")>
     implementation "org.apache.hive:hive-metastore:3.1.3"
