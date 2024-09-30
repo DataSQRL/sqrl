@@ -43,6 +43,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 @Slf4j
 public class FullUsecasesIT {
   private static final Path RESOURCES = Paths.get("src/test/resources/usecases");
+  private static final Path USE_CASES = RESOURCES.resolve("usecases");
 
   private Snapshot snapshot;
 
@@ -115,7 +116,7 @@ public class FullUsecasesIT {
     TestExtension testExtension = testExtensions.create(param.getTestName());
     testExtension.setup();
 
-    Path rootDir = RESOURCES.resolve(param.getParentDirectory()).resolve(param.getUseCaseName());
+    Path rootDir = USE_CASES.resolve(param.getUseCaseName());
 
     SqrlScriptExecutor executor = SqrlScriptExecutor.builder()
         .rootDir(rootDir)
@@ -199,7 +200,7 @@ public class FullUsecasesIT {
   }
 
   static List<UseCaseTestParameter> useCaseProvider() throws Exception {
-    Path useCasesDir = RESOURCES.resolve("usecases");
+    Path useCasesDir = USE_CASES;
     List<UseCaseTestParameter> params = new ArrayList<>();
 
     Files.list(useCasesDir).filter(Files::isDirectory).forEach(dir -> {

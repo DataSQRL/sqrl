@@ -28,187 +28,96 @@ import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
 import software.amazon.awssdk.services.s3.model.S3Object;
 
 public class SnowflakeTestExtension implements TestExtension {
-    Region region = Region.US_EAST_1;
-    String databaseName = "mydatabase";
 
-    public void eraseGlue() {
+  Region region = Region.US_EAST_1;
+  String databaseName = "mydatabase";
 
-      GlueClient glueClient = GlueClient.builder()
-          .region(region)
-          .credentialsProvider(ProfileCredentialsProvider.create())
-          .build();
+  public void eraseGlue() {
 
-      try {
-        // List all tables in the database
-        GetTablesRequest getTablesRequest = GetTablesRequest.builder()
-            .databaseName(databaseName)
-            .build();
+    GlueClient glueClient = GlueClient.builder()
+        .region(region)
+        .credentialsProvider(ProfileCredentialsProvider.create())
+        .build();
 
-        GetTablesResponse getTablesResponse = glueClient.getTables(getTablesRequest);
-
-        // Delete each table
-        for (Table table : getTablesResponse.tableList()) {
-          DeleteTableRequest deleteTableRequest = DeleteTableRequest.builder()
-              .databaseName(databaseName)
-              .name(table.name())
-              .build();
-
-          glueClient.deleteTable(deleteTableRequest);
-          System.out.println("Deleted table: " + table.name());
-        }
-
-        System.out.println("All tables deleted from the Glue database: " + databaseName);
-
-      } catch (GlueException e) {
-        System.err.println("Failed to delete tables: " + e.awsErrorDetails().errorMessage());
-        e.printStackTrace();
-      } finally {
-        glueClient.close();
-      }
-    }
-
-    public void eraseS3() {
-      String bucketName = "daniel-iceberg-table-test";
-
-      Region region = Region.US_EAST_1; // Change the region if necessary
-      S3Client s3 = S3Client.builder()
-          .region(region)
-          .credentialsProvider(ProfileCredentialsProvider.create())
-          .build();
-
-      // List all objects in the bucket
-      ListObjectsV2Request listObjectsReq = ListObjectsV2Request.builder()
-          .bucket(bucketName)
-          .build();
-
-      ListObjectsV2Response listObjectsRes;
-
-      do {
-        listObjectsRes = s3.listObjectsV2(listObjectsReq);
-
-        for (S3Object s3Object : listObjectsRes.contents()) {
-          // Delete each object
-          DeleteObjectRequest deleteObjectReq = DeleteObjectRequest.builder()
-              .bucket(bucketName)
-              .key(s3Object.key())
-              .build();
-
-          s3.deleteObject(deleteObjectReq);
-          System.out.println("Deleted: " + s3Object.key());
-        }
-
-        // If there are more objects to delete, set the continuation token
-        listObjectsReq = listObjectsReq.toBuilder()
-            .continuationToken(listObjectsRes.nextContinuationToken())
-            .build();
-
-      } while (listObjectsRes.isTruncated());
-
-      s3.close();
-      System.out.println("All files deleted from the bucket: " + bucketName);
-    }
-
-    @Override
-    public void teardown() {
-      eraseGlue();
-      eraseS3();
-    }
-
-    @Override
-    public void setup() {
-      eraseGlue();
-      eraseS3();
-    }
-
-    @SneakyThrows
-    //Must have SNOWFLAKE_PASSWORD in env when running test
-    public void test() {
-      Path projectRoot = getProjectRootPath();
-      Path testRoot = projectRoot.resolve("sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/snowflake");
-      Path profilePath = projectRoot.resolve("profiles/default");
-
-//      execute(testRoot,new AssertStatusHook(), "test",
-//          "-c", PROJECT_ROOT.resolve("sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/snowflake/package.json").toString());
-
-      int count = 5;
-      while (!hasTable() && count != 0) {
-        System.out.println("Still waiting for glue table....");
-        Thread.sleep(10000);
-        count -= 1;
-      }
-      System.out.println("Waiting for job to finish");
-      Thread.sleep(100000);
-//
-//      Path schema = testRoot.resolve("build/deploy/snowflake/snowflake-schema.sql");
-//      String[] statements = Files.readString(schema).split(";");
-//      for (String statement : statements) {
-//        statement = org.apache.directory.api.util.Strings.trim(statement);
-//
-//        if (org.apache.directory.api.util.Strings.isEmpty(statement)) continue;
-//        try (Connection connection = DriverManager.getConnection(
-//            datasqrlRun.getSnowflakeUrl().get())) {
-//          connection.createStatement().execute(statement);
-//        }
-//      }
-
-      String graphqlEndpoint = "http://localhost:8888/graphql";
-      String query = "query {\n"
-          + "  SnowflakeQuery(customerId:1) {\n"
-          + "    customer_id\n"
-          + "    amount\n"
-          + "  }\n"
-          + "}";
-
-      String response = executeQuery(graphqlEndpoint, query);
-
-      assertEquals("{\"data\":{\"SnowflakeQuery\":[{\"customer_id\":1.0,\"amount\":706721.71},{\"customer_id\":1.0,\"amount\":42079.16},{\"customer_id\":1.0,\"amount\":463121.85},{\"customer_id\":1.0,\"amount\":290005.57},{\"customer_id\":1.0,\"amount\":253812.11},{\"customer_id\":1.0,\"amount\":29341.72},{\"customer_id\":1.0,\"amount\":243720.97},{\"customer_id\":1.0,\"amount\":16778.48},{\"customer_id\":1.0,\"amount\":255874.79},{\"customer_id\":1.0,\"amount\":605384.78},{\"customer_id\":1.0,\"amount\":379228.36},{\"customer_id\":1.0,\"amount\":8355.88},{\"customer_id\":1.0,\"amount\":39127.77},{\"customer_id\":1.0,\"amount\":252694.58},{\"customer_id\":1.0,\"amount\":214574.98}]}}", response);
-    }
-
-    private static String executeQuery(String endpoint, String query) {
-      HttpClient client = HttpClient.newHttpClient();
-      HttpRequest request = HttpRequest.newBuilder()
-          .uri(URI.create(endpoint))
-          .header("Content-Type", "application/graphql")
-          .POST(HttpRequest.BodyPublishers.ofString(query))
-          .build();
-
-      try {
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        return response.body();
-      } catch (IOException | InterruptedException e) {
-        e.printStackTrace();
-        return null;
-      }
-    }
-
-    private Path getProjectRootPath() {
-      Path path = Paths.get(".").toAbsolutePath().normalize();
-      Path rootPath = null;
-      while (path != null) {
-        if (path.resolve("pom.xml").toFile().exists()) {
-          rootPath = path;
-        }
-        path = path.getParent();
-      }
-      return rootPath;
-    }
-
-    public boolean hasTable() {
+    try {
+      // List all tables in the database
       GetTablesRequest getTablesRequest = GetTablesRequest.builder()
           .databaseName(databaseName)
           .build();
 
-      GlueClient glueClient = GlueClient.builder()
-          .region(region)
-          .credentialsProvider(ProfileCredentialsProvider.create())
-          .build();
-
       GetTablesResponse getTablesResponse = glueClient.getTables(getTablesRequest);
 
+      // Delete each table
       for (Table table : getTablesResponse.tableList()) {
-        return true;
+        DeleteTableRequest deleteTableRequest = DeleteTableRequest.builder()
+            .databaseName(databaseName)
+            .name(table.name())
+            .build();
+
+        glueClient.deleteTable(deleteTableRequest);
+        System.out.println("Deleted table: " + table.name());
       }
 
-      return false;
+      System.out.println("All tables deleted from the Glue database: " + databaseName);
+
+    } catch (GlueException e) {
+      System.err.println("Failed to delete tables: " + e.awsErrorDetails().errorMessage());
+      e.printStackTrace();
+    } finally {
+      glueClient.close();
     }
   }
+
+  public void eraseS3() {
+    String bucketName = "daniel-iceberg-table-test";
+
+    Region region = Region.US_EAST_1; // Change the region if necessary
+    S3Client s3 = S3Client.builder()
+        .region(region)
+        .credentialsProvider(ProfileCredentialsProvider.create())
+        .build();
+
+    // List all objects in the bucket
+    ListObjectsV2Request listObjectsReq = ListObjectsV2Request.builder()
+        .bucket(bucketName)
+        .build();
+
+    ListObjectsV2Response listObjectsRes;
+
+    do {
+      listObjectsRes = s3.listObjectsV2(listObjectsReq);
+
+      for (S3Object s3Object : listObjectsRes.contents()) {
+        // Delete each object
+        DeleteObjectRequest deleteObjectReq = DeleteObjectRequest.builder()
+            .bucket(bucketName)
+            .key(s3Object.key())
+            .build();
+
+        s3.deleteObject(deleteObjectReq);
+        System.out.println("Deleted: " + s3Object.key());
+      }
+
+      // If there are more objects to delete, set the continuation token
+      listObjectsReq = listObjectsReq.toBuilder()
+          .continuationToken(listObjectsRes.nextContinuationToken())
+          .build();
+
+    } while (listObjectsRes.isTruncated());
+
+    s3.close();
+    System.out.println("All files deleted from the bucket: " + bucketName);
+  }
+
+  @Override
+  public void teardown() {
+    eraseGlue();
+    eraseS3();
+  }
+
+  @Override
+  public void setup() {
+    eraseGlue();
+    eraseS3();
+  }
+}
