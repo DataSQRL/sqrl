@@ -33,7 +33,13 @@ jobs:
     - name: Run Docker container and execute tests
       working-directory: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/conference
       run: |
-        docker run -i -p 8888:8888 -p 8081:8081 --rm -v $PWD:/build sqrl-test test conference.sqrl conference.graphqls
+        docker run -i -p 8888:8888 -p 8081:8081 --rm -v $PWD:/build sqrl-test test conference.sqrl conference.graphqls --snapshot snapshots-conference --tests tests-conference
+      continue-on-error: false
+
+    - name: Run Docker container and execute tests
+      working-directory: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/duckdb
+      run: |
+        docker run -i -p 8888:8888 -p 8081:8081 --rm -v $PWD:/build sqrl-test test duckdb.sqrl  --snapshot snapshots-duckdb --tests tests-duckdb
       continue-on-error: false
 
     - name: Check Docker return code
