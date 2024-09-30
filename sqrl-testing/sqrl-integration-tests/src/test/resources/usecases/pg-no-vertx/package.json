@@ -1,0 +1,7 @@
+{
+  "version": "1",
+  "enabled-engines": ["postgres", "flink"],
+  "test-runner": {
+    "delay-sec": 5
+  }
+}

@@ -34,6 +34,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.flink.api.common.JobStatus;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.CompiledPlan;
@@ -104,9 +105,13 @@ public class DatasqrlRun {
   public void stop() {
     if (execute != null) {
       try {
-        execute.getJobClient().get().cancel();
+        JobStatus status = execute.getJobClient().get().getJobStatus().get();
+        if (status != JobStatus.FINISHED) {
+          execute.getJobClient().get().cancel();
+        }
       } catch (Exception e) {
-        e.printStackTrace();
+        //allow failure if job already ended
+//        e.printStackTrace();
       }
     }
     if (vertx != null) {
@@ -138,12 +143,19 @@ public class DatasqrlRun {
 
     config.putIfAbsent("table.exec.source.idle-timeout", "1 s");
     config.putIfAbsent("taskmanager.network.memory.max", "800m");
-    config.putIfAbsent("execution.checkpointing.interval", "30 sec");
+    config.putIfAbsent("execution.checkpointing.interval", "30 s");
     config.putIfAbsent("execution.checkpointing.min-pause", "20 s");
     config.putIfAbsent("state.backend", "rocksdb");
     config.putIfAbsent("table.exec.resource.default-parallelism", "1");
     config.putIfAbsent("rest.address", "localhost");
     config.putIfAbsent("rest.port", "8081");
+
+    //Exposed for tests
+    if (env.get("FLINK_RESTART_STRATEGY") != null) {
+      config.putIfAbsent("restart-strategy.type", "fixed-delay");
+      config.putIfAbsent("restart-strategy.fixed-delay.attempts", "0");
+      config.putIfAbsent("restart-strategy.fixed-delay.delay", "5 s");
+    }
 
     Configuration configuration = Configuration.fromMap(config);
 
@@ -269,6 +281,20 @@ public class DatasqrlRun {
     } catch (Exception e) {
       e.printStackTrace();
     }
+
+    if (!path.resolve("vertx.json").toFile().exists()) {
+      List<Map<String, Object>> views = (List<Map<String, Object>>) map.get("views");
+
+      try (Connection connection = DriverManager.getConnection(format, getenv("PGUSER"), getenv("PGPASSWORD"))) {
+        for (Map<String, Object> statement : views) {
+          String sql = (String) statement.get("sql");
+          connection.createStatement().execute(sql);
+        }
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
+
   }
 
   private String getenv(String key) {
@@ -291,12 +317,14 @@ public class DatasqrlRun {
     ServerConfig serverConfig = new ServerConfig(config);
 
     // Set Postgres connection options from environment variables
-    serverConfig.getPgConnectOptions()
-        .setHost(getenv("PGHOST"))
-        .setPort(Integer.parseInt(getenv("PGPORT")))
-        .setUser(getenv("PGUSER"))
-        .setPassword(getenv("PGPASSWORD"))
-        .setDatabase(getenv("PGDATABASE"));
+    if (path.resolve("postgres.json").toFile().exists()) {
+      serverConfig.getPgConnectOptions()
+          .setHost(getenv("PGHOST"))
+          .setPort(Integer.parseInt(getenv("PGPORT")))
+          .setUser(getenv("PGUSER"))
+          .setPassword(getenv("PGPASSWORD"))
+          .setDatabase(getenv("PGDATABASE"));
+    }
 
     GraphQLServer server = new GraphQLServer(rootGraphqlModel, serverConfig,
         NameCanonicalizer.SYSTEM, getSnowflakeUrl()) {

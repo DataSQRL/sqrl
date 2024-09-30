@@ -6,3 +6,6 @@ SnowflakeQuery(@customerId: BIGINT) := SELECT * FROM MyIcebergTable WHERE custom
 
 /*+exec(iceberg)*/
 MySnowflakeTable := SELECT * FROM MyIcebergTable;
+
+/*+test*/
+MySnowflakeTableTest := SELECT * FROM MySnowflakeTable;

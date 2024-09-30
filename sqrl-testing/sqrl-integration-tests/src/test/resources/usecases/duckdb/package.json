@@ -25,6 +25,6 @@
     }
   },
   "test-runner": {
-    "delay-sec": 30
+    "delay-sec": 40
   }
 }

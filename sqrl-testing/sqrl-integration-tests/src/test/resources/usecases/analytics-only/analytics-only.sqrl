@@ -19,7 +19,7 @@ ApplicationInfo := SELECT a.*, t.*, t2.id FROM _Applications a
     LEFT JOIN _LoanTypes t2 ON t2.id = a.customer_id;
 
 /*+test */
-ApplicationStatusTest := SELECT status, COUNT(1) AS num FROM ApplicationStatus ORDER BY status ASC;
+ApplicationStatusTest := SELECT status, COUNT(1) AS num FROM ApplicationStatus GROUP BY status ORDER BY status ASC;
 
 /*+test */
 ApplicationInfoTest := SELECT COUNT(1) AS num FROM ApplicationInfo;

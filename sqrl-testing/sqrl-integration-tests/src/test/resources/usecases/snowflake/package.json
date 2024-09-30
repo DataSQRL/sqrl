@@ -12,13 +12,9 @@
   "values": {
     "flink-config": {
       "table.exec.source.idle-timeout": "1 ms",
-      "execution.checkpointing.interval": "30 sec"
+      "execution.checkpointing.min-pause": "5 s",
+      "execution.checkpointing.interval": "30 s"
     }
-  },
-  "compile" : {
-    "sqrl-version": "0.5.5",
-    "flink-build-image": "flink-build:latest",
-    "sqrl-vertx-image": "vertx-latest:latest"
   },
   "engines": {
     "flink": {
@@ -37,5 +33,8 @@
       "external-volume": "MyNewVolume",
       "url": "jdbc:snowflake://${SNOWFLAKE_ID}.snowflakecomputing.com/?user=${SNOWFLAKE_USER}&password=${SNOWFLAKE_PASSWORD}&warehouse=COMPUTE_WH&db=MYSNOWFLAKEDB&schema=public&disableSslHostnameVerification=true"
     }
+  },
+  "test-runner": {
+    "delay-sec": 35
   }
 }
