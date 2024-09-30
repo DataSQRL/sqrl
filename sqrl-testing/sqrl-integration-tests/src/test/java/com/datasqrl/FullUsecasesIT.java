@@ -55,6 +55,10 @@ public class FullUsecasesIT {
 
   List<ScriptCriteria> disabledScripts = List.of(
       new ScriptCriteria("sensors-mutation.sqrl", "test"), //flaky
+      new ScriptCriteria("duckdb.sqrl", "test"), //fails in build server
+      new ScriptCriteria("duckdb.sqrl", "run"), //fails in build server
+      new ScriptCriteria("snowflake.sqrl", "test"), //fails in build server
+      new ScriptCriteria("snowflake.sqrl", "run"), //fails in build server
       new ScriptCriteria("sensors-full.sqrl", "test"), //flaky
       new ScriptCriteria("sensors-full.sqrl", "run"), //flaky
       new ScriptCriteria("postgres-log.sqrl", "test"), // invalid flink sql
@@ -63,7 +67,6 @@ public class FullUsecasesIT {
       new ScriptCriteria("seedshop-extended.sqrl", "test"), // CustomerPromotionTest issue
       new ScriptCriteria("seedshop-extended.sqrl", "run"), // CustomerPromotionTest issue
 //      new ScriptCriteria("snowflake.sqrl", "run"), // sometimes snowflake doesn't respond fast enough
-      new ScriptCriteria("snowflake.sqrl", "test"), // cannot read from s3 over duckdb
       new ScriptCriteria("src.sqrl", "test"), // file location incorrect
       new ScriptCriteria("src.sqrl", "run"), // file location incorrect
       new ScriptCriteria("src-import.sqrl", "test"), // file location incorrect
