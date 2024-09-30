@@ -14,7 +14,7 @@ DataSQRL integrates any combination of the following technologies:
 
 You define the data processing in SQL (with support for custom functions in Java, Scala and soon Python) and DataSQRL generates the glue code, schemas, and mappings to automatically connect and configure these components into a coherent data architecture. DataSQRL also generates Docker Compose templates for local execution or deployment to Kubernetes or cloud-managed services.
 
-[<img src="docs/img/datasqrl_use_cases.png">](docs/img/datasqrl_use_cases.png)
+[<img src="whitepaper/img/datasqrl_use_cases.png">](docs/img/datasqrl_use_cases.png)
 
 Some of the data architectures you can build with DataSQRL. Click to enlarge.
 
@@ -98,7 +98,7 @@ DataSQRL extends ANSI SQL with additional features designed for data development
 * **Stream Processing SQL**: Enhanced SQL statements for stream processing.
 * **Nested Structures**: Natively support nested data structures like JSON.
 
-![Example Data Processing DAG](docs/img/dag_example.png)
+![Example Data Processing DAG](whitepaper/img/dag_example.png)
 
 DataSQRL translates these SQL scripts into a data processing DAG (Directed Acyclic Graph) as visualized above, linking source and sink definitions. The cost-based optimizer cuts the DAG into segments executed by different engines (e.g. Flink, Kafka, Postgres, Vert.x), generating the necessary physical plans, schemas, and connectors for a fully integrated and streamlined data architecture. This "plan" can be instantiated by deployment profiles, such as Docker Compose templates for local execution. 
 
@@ -106,7 +106,7 @@ Check out the [documentation](https://www.datasqrl.com/docs/intro/) for more inf
 
 ## Contributing
 
-![Contribute to DataSQRL](docs/img/undraw_code.svg)
+![Contribute to DataSQRL](whitepaper/img/undraw_code.svg)
 
 We aim to enable data engineers to build data products quickly, removing the barriers posed by complex data plumbing. Your feedback is invaluable in achieving this goal. Let us know what works and what doesn't by filing GitHub issues or in the [DataSQRL Slack community]((https://join.slack.com/t/datasqrlcommunity/shared_invite/zt-2l3rl1g6o-im6YXYCqU7t55CNaHqz_Kg)).
 
