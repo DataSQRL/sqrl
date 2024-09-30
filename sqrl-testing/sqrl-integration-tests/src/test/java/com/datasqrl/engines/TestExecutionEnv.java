@@ -32,6 +32,8 @@ import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import lombok.AllArgsConstructor;
@@ -113,7 +115,13 @@ public class TestExecutionEnv implements TestEngineVisitor<Void, TestEnvContext>
     if (context.getParam().getTestPath() != null) {
       Path testPath = context.rootDir.resolve(context.getParam().getTestPath());
       try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(testPath, "*.graphql")) {
-        for (Path path : directoryStream) {
+        List<Path> paths = new ArrayList<>();
+        directoryStream.forEach(paths::add);
+
+        // Sort the paths by filename
+        paths.sort(Comparator.comparing(p -> p.getFileName().toString()));
+
+        for (Path path : paths) {
           String query = Files.readString(path);
           String s = executeQuery(query);
           snapshot.addContent(s, path.getFileName().toString());
