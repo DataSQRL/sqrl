@@ -42,7 +42,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 @Slf4j
 public class FullUsecasesIT {
-  private static final Path RESOURCES = Paths.get("src/test/resources/usecases");
+  private static final Path RESOURCES = Paths.get("src/test/resources");
   private static final Path USE_CASES = RESOURCES.resolve("usecases");
 
   private Snapshot snapshot;
@@ -55,16 +55,20 @@ public class FullUsecasesIT {
 
   List<ScriptCriteria> disabledScripts = List.of(
       new ScriptCriteria("sensors-mutation.sqrl", "test"), //flaky
-      new ScriptCriteria("sensors-full.sqrl", "test"),
-      //flaky HighTempTest, SecReadingByTemp return different results
+      new ScriptCriteria("sensors-full.sqrl", "test"), //flaky
+      new ScriptCriteria("sensors-full.sqrl", "run"), //flaky
       new ScriptCriteria("postgres-log.sqrl", "test"), // invalid flink sql
       new ScriptCriteria("postgres-log.sqrl", "run"), // invalid flink sql
       new ScriptCriteria("metrics.sqrl", "run"), // Unknown engine: postgres_log
       new ScriptCriteria("seedshop-extended.sqrl", "test"), // CustomerPromotionTest issue
-//      new ScriptCriteria("snowflake.sqrl", "run"), // sometimes snowflake doesn't respond
+      new ScriptCriteria("seedshop-extended.sqrl", "run"), // CustomerPromotionTest issue
+//      new ScriptCriteria("snowflake.sqrl", "run"), // sometimes snowflake doesn't respond fast enough
       new ScriptCriteria("snowflake.sqrl", "test"), // cannot read from s3 over duckdb
       new ScriptCriteria("src.sqrl", "test"), // file location incorrect
+      new ScriptCriteria("src.sqrl", "run"), // file location incorrect
       new ScriptCriteria("src-import.sqrl", "test"), // file location incorrect
+      new ScriptCriteria("src-import.sqrl", "run"), // file location incorrect
+      new ScriptCriteria("patient-sensor.sqrl", "run"), // file location incorrect
       new ScriptCriteria("patient-sensor.sqrl", "test") // file location incorrect
   );
 

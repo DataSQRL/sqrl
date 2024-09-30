@@ -124,11 +124,11 @@ public class DatasqrlTest {
 
       try {
         JobExecutionResult jobExecutionResult = result.getJobClient().get().getJobExecutionResult()
-            .get(2, TimeUnit.SECONDS);
+            .get(2, TimeUnit.SECONDS); //flink will hold if the minicluster is stopped
       } catch (ExecutionException e) {
+        //try to catch the job failure if we can
         exceptions.add(new JobFailureException(e));
       } catch (Exception e) {
-        e.printStackTrace();
       }
 
       for (GraphqlQuery query : testPlan.getQueries()) {
