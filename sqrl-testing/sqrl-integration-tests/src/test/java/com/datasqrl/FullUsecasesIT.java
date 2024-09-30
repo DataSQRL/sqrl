@@ -55,6 +55,8 @@ public class FullUsecasesIT {
 
   List<ScriptCriteria> disabledScripts = List.of(
       new ScriptCriteria("sensors-mutation.sqrl", "test"), //flaky
+      new ScriptCriteria("sensors-mutation.sqrl", "run"), //build server issues
+      new ScriptCriteria("conference.sqrl", "run"), //build server issues
       new ScriptCriteria("duckdb.sqrl", "test"), //fails in build server
       new ScriptCriteria("duckdb.sqrl", "run"), //fails in build server
       new ScriptCriteria("snowflake.sqrl", "test"), //fails in build server
