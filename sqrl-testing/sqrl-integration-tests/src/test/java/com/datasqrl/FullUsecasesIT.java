@@ -41,7 +41,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 @Slf4j
-@Disabled
 public class FullUsecasesIT {
   private static final Path RESOURCES = Paths.get("src/test/resources");
   private static final Path USE_CASES = RESOURCES.resolve("usecases");
