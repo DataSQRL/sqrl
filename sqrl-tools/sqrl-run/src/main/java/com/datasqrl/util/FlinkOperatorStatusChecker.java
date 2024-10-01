@@ -112,7 +112,7 @@ public class FlinkOperatorStatusChecker {
         currentWriteRecords, previous.writeRecords);
     // If the read or write records haven't changed, we consider the operator idle
     return currentReadRecords
-        == previous.readRecords;// && currentWriteRecords == previous.writeRecords;
+        == previous.readRecords && currentWriteRecords == previous.writeRecords;
   }
 
 
@@ -126,22 +126,6 @@ public class FlinkOperatorStatusChecker {
       this.readRecords = readRecords;
       this.writeRecords = writeRecords;
     }
-  }
-
-  public boolean isOperatorIdle(String jobId, String vertexId) throws Exception {
-    String metricsUrl =
-        FLINK_REST_URL + "/jobs/" + jobId + "/vertices/" + vertexId + "/metrics?get=numRecordsOut";
-    String jsonResponse = getResponseFromUrl(metricsUrl);
-
-    // Parse the JSON response and get the numRecordsOut metric
-    long numRecordsOut = parseNumRecordsOut(jsonResponse);
-
-    // Implement logic to check if the operator is idle
-    // For simplicity, return true if numRecordsOut has not increased
-    // You can cache the previous value of numRecordsOut and compare with the new value
-
-    return hasMetricStopped(
-        numRecordsOut); // Implement this to track if the metric has stopped increasing
   }
 
   public String getResponseFromUrl(String urlString) throws Exception {
@@ -163,23 +147,5 @@ public class FlinkOperatorStatusChecker {
     } else {
       throw new RuntimeException("Failed to get metrics, HTTP response code: " + status);
     }
-  }
-
-  // Placeholder for parsing the list of vertex IDs from the Flink REST API response
-  public String[] getVertexIdsFromJson(String jsonResponse) {
-    // Parse the JSON and extract vertex (operator) IDs
-    return new String[]{}; // Replace with actual implementation
-  }
-
-  // Placeholder for parsing numRecordsOut metric from the Flink REST API response
-  public long parseNumRecordsOut(String jsonResponse) {
-    // Parse the JSON and extract the numRecordsOut value
-    return 0; // Replace with actual implementation
-  }
-
-  // Placeholder to track if the metric has stopped increasing
-  public boolean hasMetricStopped(long numRecordsOut) {
-    // Implement logic to track if numRecordsOut has stopped increasing over time
-    return false; // Replace with actual logic
   }
 }

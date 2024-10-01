@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import com.datasqrl.cmd.AssertStatusHook;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SqrlConfigCommons;
+import com.datasqrl.config.TestRunnerConfiguration;
 import com.datasqrl.engines.TestContainersForTestGoal;
 import com.datasqrl.engines.TestContainersForTestGoal.TestContainerHook;
 import com.datasqrl.engines.TestEngine.EngineFactory;
@@ -20,6 +21,8 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -62,8 +65,8 @@ public class FullUsecasesIT {
       new ScriptCriteria("sensors-mutation.sqrl", "run"), //build server issues
       new ScriptCriteria("conference.sqrl", "test"), //minicluster has different results??
       new ScriptCriteria("conference.sqrl", "run"), //build server issues
-      new ScriptCriteria("duckdb.sqrl", "test"), //fails in build server
-      new ScriptCriteria("duckdb.sqrl", "run"), //fails in build server
+//      new ScriptCriteria("duckdb.sqrl", "test"), //fails in build server
+//      new ScriptCriteria("duckdb.sqrl", "run"), //fails in build server
       new ScriptCriteria("snowflake.sqrl", "test"), //fails in build server
       new ScriptCriteria("snowflake.sqrl", "run"), //fails in build server
       new ScriptCriteria("sensors-full.sqrl", "test"), //flaky
@@ -186,10 +189,16 @@ public class FullUsecasesIT {
           run = new DatasqrlRun(context.getRootDir().resolve("build/plan"),
               context.getEnv());
           TableResult result = run.run(false);
-
-          FlinkOperatorStatusChecker flinkOperatorStatusChecker = new FlinkOperatorStatusChecker(
-              result.getJobClient().get().getJobID().toString());
-          flinkOperatorStatusChecker.run();
+         long delaySec = packageJson.getTestConfig().flatMap(TestRunnerConfiguration::getDelaySec)
+              .map(Duration::getSeconds)
+              .orElse((long) -1);
+          if (delaySec == -1 ) {
+            FlinkOperatorStatusChecker flinkOperatorStatusChecker = new FlinkOperatorStatusChecker(
+                result.getJobClient().get().getJobID().toString());
+            flinkOperatorStatusChecker.run();
+          } else {
+            Thread.sleep(delaySec * 1000);
+          }
 
           switch (result.getResultKind()) {
             case SUCCESS:

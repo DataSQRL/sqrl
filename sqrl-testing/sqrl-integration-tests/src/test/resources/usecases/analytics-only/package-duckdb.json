@@ -8,14 +8,16 @@
   ],
   "values": {
     "flink-config": {
-      "table.exec.source.idle-timeout": "1 ms"
+      "table.exec.source.idle-timeout": "1 ms",
+      "execution.checkpointing.interval": "6 s",
+      "execution.checkpointing.min-pause": "2 s"
     }
   },
   "engines": {
     "flink": {
       "connectors" : {
         "iceberg" : {
-          "warehouse":"file:///Users/henneberger/sqrl/sqrl-testing/sqrl-flink-1.18/src/test",
+          "warehouse":"/tmp/duckdb",
           "catalog-type":"hadoop",
           "catalog-name": "mydatabase"
         }
@@ -23,6 +25,6 @@
     }
   },
   "test-runner": {
-    "delay-sec": -1
+    "delay-sec": 15
   }
 }
