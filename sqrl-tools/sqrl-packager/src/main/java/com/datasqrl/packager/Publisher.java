@@ -27,7 +27,7 @@ public class Publisher {
         Preconditions.checkArgument(Files.isDirectory(packageRoot));
         Path packageInfo = packageRoot.resolve(Packager.PACKAGE_JSON);
         errors.checkFatal(Files.isRegularFile(packageInfo),"Directory does not contain [%s] package configuration file", packageInfo);
-        PackageJson pkgConfig = SqrlConfigCommons.fromFilesPackageJson(errors, List.of(packageInfo));
+        PackageJson pkgConfig = SqrlConfigCommons.fromFilesPublishPackageJson(errors, List.of(packageInfo));
 
         try {
             PackageConfigurationImpl packageConfig = (PackageConfigurationImpl) pkgConfig.getPackageConfig();
