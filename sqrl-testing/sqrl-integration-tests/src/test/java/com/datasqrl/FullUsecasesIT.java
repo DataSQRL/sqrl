@@ -15,6 +15,7 @@ import com.datasqrl.engines.TestExecutionEnv.TestEnvContext;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.tests.TestExtension;
 import com.datasqrl.tests.UseCaseTestExtensions;
+import com.datasqrl.util.FlinkOperatorStatusChecker;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.SnapshotTest.Snapshot;
 import java.nio.file.DirectoryStream;
@@ -34,6 +35,7 @@ import lombok.SneakyThrows;
 import lombok.ToString;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.flink.table.api.TableResult;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -166,12 +168,14 @@ public class FullUsecasesIT {
         try {
           run = new DatasqrlRun(context.getRootDir().resolve("build/plan"),
               context.getEnv());
-          run.run(false);
-          Duration duration = packageJson.getTestConfig().flatMap(
-                  TestRunnerConfiguration::getDelaySec)
-              .orElse(Duration.of(5, ChronoUnit.SECONDS));
-          //wait some time before executing tests (todo How long?)
-          Thread.sleep(duration.toMillis());
+          TableResult result = run.run(false);
+
+          FlinkOperatorStatusChecker flinkOperatorStatusChecker = new FlinkOperatorStatusChecker(
+              result.getJobClient().get().getJobID().toString());
+          flinkOperatorStatusChecker.run();
+          try {
+            result.getJobClient().get().cancel();
+          } catch (Exception e) {}
         } catch (Exception e) {
           e.printStackTrace();
           fail(e);

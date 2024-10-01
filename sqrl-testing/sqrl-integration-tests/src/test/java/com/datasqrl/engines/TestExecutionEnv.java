@@ -198,6 +198,8 @@ public class TestExecutionEnv implements TestEngineVisitor<Void, TestEnvContext>
 
   @Override
   public Void visit(FlinkTestEngine engine, TestEnvContext context) {
+    //todo test for flink-only use cases
+
     return null;
   }
 

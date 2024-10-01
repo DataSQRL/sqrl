@@ -7,5 +7,8 @@
   },
   "compiler": {
     "logger": "print"
+  },
+  "test-runner": {
+    "delay-sec": -1
   }
 }

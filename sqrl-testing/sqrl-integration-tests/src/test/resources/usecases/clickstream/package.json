@@ -2,6 +2,6 @@
   "version": "1",
   "enabled-engines": ["vertx", "postgres", "flink"],
   "test-runner": {
-    "delay-sec": 10
+    "delay-sec": -1
   }
 }

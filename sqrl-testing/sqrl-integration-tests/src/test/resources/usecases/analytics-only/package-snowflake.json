@@ -20,5 +20,8 @@
         }
       }
     }
+  },
+  "test-runner": {
+    "delay-sec": -1
   }
 }

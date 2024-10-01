@@ -7,6 +7,6 @@
     }
   },
   "test-runner": {
-    "delay-sec": 10
+    "delay-sec": -1
   }
 }

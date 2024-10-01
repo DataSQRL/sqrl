@@ -1,5 +1,6 @@
 package com.datasqrl;
 
+import com.datasqrl.util.FlinkOperatorStatusChecker;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -96,32 +97,38 @@ public class DatasqrlTest {
         }
       }
 
-      try {
-        for (int i = 0; i < delaySec; i++) {
-          //break early if job is done
-          try {
-            CompletableFuture<JobStatus> jobStatusCompletableFuture = result.getJobClient()
-                .map(JobClient::getJobStatus).get();
-            JobStatus status = jobStatusCompletableFuture.get(1, TimeUnit.SECONDS);
-            if (status == JobStatus.FAILED) {
-              exceptions.add(new JobFailureException());
+      if (delaySec == -1) {
+        FlinkOperatorStatusChecker flinkOperatorStatusChecker = new FlinkOperatorStatusChecker(
+            result.getJobClient().get().getJobID().toString());
+        flinkOperatorStatusChecker.run();
+      } else {
+        try {
+          for (int i = 0; i < delaySec; i++) {
+            //break early if job is done
+            try {
+              CompletableFuture<JobStatus> jobStatusCompletableFuture = result.getJobClient()
+                  .map(JobClient::getJobStatus).get();
+              JobStatus status = jobStatusCompletableFuture.get(1, TimeUnit.SECONDS);
+              if (status == JobStatus.FAILED) {
+                exceptions.add(new JobFailureException());
+                break;
+              }
+
+              if (status == JobStatus.FINISHED || status == JobStatus.CANCELED) {
+                break;
+              }
+
+            } catch (Exception e) {
               break;
             }
 
-            if (status == JobStatus.FINISHED || status == JobStatus.CANCELED) {
-              break;
-            }
-
-          } catch (Exception e) {
-            break;
+            Thread.sleep(1000);
           }
 
-          Thread.sleep(1000);
+        } catch (Exception e) {
         }
-
-      } catch (Exception e) {
       }
-
+      
       try {
         JobExecutionResult jobExecutionResult = result.getJobClient().get().getJobExecutionResult()
             .get(2, TimeUnit.SECONDS); //flink will hold if the minicluster is stopped
