@@ -65,8 +65,8 @@ public class FullUsecasesIT {
       new ScriptCriteria("sensors-mutation.sqrl", "run"), //build server issues
       new ScriptCriteria("conference.sqrl", "test"), //minicluster has different results??
       new ScriptCriteria("conference.sqrl", "run"), //build server issues
-//      new ScriptCriteria("duckdb.sqrl", "test"), //fails in build server
-//      new ScriptCriteria("duckdb.sqrl", "run"), //fails in build server
+      new ScriptCriteria("duckdb.sqrl", "test"), //fails in build server
+      new ScriptCriteria("duckdb.sqrl", "run"), //fails in build server
       new ScriptCriteria("snowflake.sqrl", "test"), //fails in build server
       new ScriptCriteria("snowflake.sqrl", "run"), //fails in build server
       new ScriptCriteria("sensors-full.sqrl", "test"), //flaky
