@@ -20,7 +20,7 @@
     "flink": {
       "connectors" : {
         "iceberg" : {
-          "warehouse":"/tmp/duckdb",
+          "warehouse":"duckdb",
           "catalog-type":"hadoop",
           "catalog-name": "mydatabase"
         }
