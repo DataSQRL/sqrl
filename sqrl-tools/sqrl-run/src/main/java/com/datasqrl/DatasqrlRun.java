@@ -159,8 +159,14 @@ public class DatasqrlRun {
 
     Configuration configuration = Configuration.fromMap(config);
 
-    StreamExecutionEnvironment sEnv = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(
-        configuration);
+
+    StreamExecutionEnvironment sEnv;
+
+    try {
+      sEnv = StreamExecutionEnvironment.getExecutionEnvironment(configuration);
+    } catch (Exception e) {
+      sEnv = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(configuration);
+    }
 
     EnvironmentSettings tEnvConfig = EnvironmentSettings.newInstance()
         .withConfiguration(configuration)

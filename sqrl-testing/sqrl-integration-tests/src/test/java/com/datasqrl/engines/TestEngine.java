@@ -170,6 +170,21 @@ public interface TestEngine {
       }
       return new TestEngines(packageJson, testEngines);
     }
+
+    public TestEngines createAll() {
+      List<TestEngine> testEngines = new ArrayList<>();
+      for (String engine : List.of("postgres", "kafka", "snowflake")) {
+        Function<PackageJson, TestEngine> constructor = TestEngine.getEngineConstructor(engine);
+        if (constructor != null) {
+          testEngines.add(constructor.apply(null));
+        } else {
+          // Handle unknown engine
+          System.err.println("Unknown engine: " + engine);
+          throw new IllegalArgumentException("Unknown engine: " + engine);
+        }
+      }
+      return new TestEngines(null, testEngines);
+    }
   }
 
   interface TestEngineVisitor<R, C> {

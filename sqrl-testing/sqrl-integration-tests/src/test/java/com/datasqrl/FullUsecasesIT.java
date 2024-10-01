@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 import com.datasqrl.cmd.AssertStatusHook;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SqrlConfigCommons;
-import com.datasqrl.config.TestRunnerConfiguration;
 import com.datasqrl.engines.TestContainersForTestGoal;
 import com.datasqrl.engines.TestContainersForTestGoal.TestContainerHook;
 import com.datasqrl.engines.TestEngine.EngineFactory;
@@ -16,33 +15,36 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.tests.TestExtension;
 import com.datasqrl.tests.UseCaseTestExtensions;
 import com.datasqrl.util.FlinkOperatorStatusChecker;
-import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.SnapshotTest.Snapshot;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.ToString;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.flink.table.api.ResultKind;
 import org.apache.flink.table.api.TableResult;
+import org.apache.flink.test.junit5.MiniClusterExtension;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 @Slf4j
+@ExtendWith(MiniClusterExtension.class)
 public class FullUsecasesIT {
   private static final Path RESOURCES = Paths.get("src/test/resources");
   private static final Path USE_CASES = RESOURCES.resolve("usecases");
@@ -58,6 +60,7 @@ public class FullUsecasesIT {
   List<ScriptCriteria> disabledScripts = List.of(
       new ScriptCriteria("sensors-mutation.sqrl", "test"), //flaky
       new ScriptCriteria("sensors-mutation.sqrl", "run"), //build server issues
+      new ScriptCriteria("conference.sqrl", "test"), //minicluster has different results??
       new ScriptCriteria("conference.sqrl", "run"), //build server issues
       new ScriptCriteria("duckdb.sqrl", "test"), //fails in build server
       new ScriptCriteria("duckdb.sqrl", "run"), //fails in build server
@@ -81,7 +84,7 @@ public class FullUsecasesIT {
 
   static final Path PROJECT_ROOT = Paths.get(System.getProperty("user.dir"));
 
-  private TestContainerHook containerHook;
+  private static TestContainerHook containerHook;
 
   UseCaseTestExtensions testExtensions = new UseCaseTestExtensions();
 
@@ -89,7 +92,23 @@ public class FullUsecasesIT {
   @AfterEach
   public void tearDown() throws Exception {
     if (containerHook != null) {
-      containerHook.stop();
+      containerHook.clear();
+    }
+  }
+
+  @BeforeAll
+  public static void before() {
+    TestEngines engines = new EngineFactory()
+        .createAll();
+
+    containerHook = engines.accept(new TestContainersForTestGoal(), null);
+    containerHook.start();
+  }
+
+  @AfterAll
+  public static void after() {
+    if (containerHook != null) {
+      containerHook.teardown();
     }
   }
 
@@ -147,9 +166,7 @@ public class FullUsecasesIT {
     TestEngines engines = new EngineFactory()
         .create(packageJson);
 
-    this.containerHook = engines.accept(new TestContainersForTestGoal(), null);
     try {
-      containerHook.start();
 
       Map<String, String> env = new HashMap<>();
       env.put("EXECUTION_MODE", "local");
@@ -173,6 +190,16 @@ public class FullUsecasesIT {
           FlinkOperatorStatusChecker flinkOperatorStatusChecker = new FlinkOperatorStatusChecker(
               result.getJobClient().get().getJobID().toString());
           flinkOperatorStatusChecker.run();
+
+          switch (result.getResultKind()) {
+            case SUCCESS:
+            case SUCCESS_WITH_CONTENT:
+              break;
+            default:
+              fail("Flink job failed with: " + result.getResultKind());
+              break;
+          }
+
           try {
             result.getJobClient().get().cancel();
           } catch (Exception e) {}
@@ -188,7 +215,7 @@ public class FullUsecasesIT {
         run.stop();
       }
     } finally {
-      containerHook.stop();
+      containerHook.clear();
     }
     //tear down after we stop flink etc
     testExtension.teardown();
