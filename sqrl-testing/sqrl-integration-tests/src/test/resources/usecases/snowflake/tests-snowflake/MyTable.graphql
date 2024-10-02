@@ -1,0 +1,5 @@
+query {
+    SnowflakeQuery(customerId: 2) {
+        customer_id
+    }
+}

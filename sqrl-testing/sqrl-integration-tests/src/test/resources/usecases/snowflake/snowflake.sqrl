@@ -1,8 +1,7 @@
-IMPORT data.applications;
+IMPORT data.applications as _applications;
+IMPORT data.applications as _applications2;
 
-MyIcebergTable := SELECT * FROM applications;
-
-SnowflakeQuery(@customerId: BIGINT) := SELECT * FROM MyIcebergTable WHERE customer_id = @customerId;
+SnowflakeQuery(@customerId: BIGINT) := SELECT * FROM _applications WHERE customer_id = @customerId;
 
 /*+exec(iceberg)*/
-MySnowflakeTable := SELECT * FROM MyIcebergTable;
+MySnowflakeTable := SELECT * FROM _applications2;

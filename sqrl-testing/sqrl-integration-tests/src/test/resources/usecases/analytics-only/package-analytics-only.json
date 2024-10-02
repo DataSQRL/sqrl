@@ -1,0 +1,30 @@
+{
+  "version": "1",
+  "enabled-engines": [
+    "flink",
+    "iceberg",
+    "duckdb",
+    "vertx"
+  ],
+  "values": {
+    "flink-config": {
+      "table.exec.source.idle-timeout": "1 ms",
+      "execution.checkpointing.interval": "6 s",
+      "execution.checkpointing.min-pause": "2 s"
+    }
+  },
+  "engines": {
+    "flink": {
+      "connectors" : {
+        "iceberg" : {
+          "warehouse":"/tmp/duckdb",
+          "catalog-type":"hadoop",
+          "catalog-name": "mydatabase"
+        }
+      }
+    }
+  },
+  "test-runner": {
+    "delay-sec": 15
+  }
+}

@@ -1,3 +1,0 @@
-IMPORT `table`.applications;
-
-MyTable := SELECT * FROM applications;

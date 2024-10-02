@@ -1,0 +1,1 @@
+MyView := SELECT * FROM (VALUES (1), (2)) AS t(val);

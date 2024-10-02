@@ -168,11 +168,6 @@
       <artifactId>client</artifactId>
     </dependency>
 
-    <!-- aws specific -->
-    <dependency>
-      <groupId>software.amazon.msk</groupId>
-      <artifactId>aws-msk-iam-auth</artifactId>
-    </dependency>
 
     <!-- Test -->
     <dependency>

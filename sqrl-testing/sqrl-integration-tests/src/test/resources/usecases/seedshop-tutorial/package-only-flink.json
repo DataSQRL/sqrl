@@ -1,4 +1,7 @@
 {
   "version": "1",
-  "enabled-engines": ["flink"]
+  "enabled-engines": ["flink"],
+  "test-runner": {
+    "delay-sec": -1
+  }
 }

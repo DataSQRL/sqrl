@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "flink" : {
+    "format" : "flexible-json",
+    "path" : "${DATA_PATH}/applications.jsonl",
+    "source.monitor-interval" : 1,
+    "connector" : "filesystem"
+  },
+  "table" : {
+    "type" : "source",
+    "primary-key" : ["id","updated_at"],
+    "timestamp" : "updated_at",
+    "watermark-millis" : "1"
+  }
+}

@@ -6,7 +6,7 @@
     "properties.group.id": "datasqrl-orders",
     "topic": "${sqrl:topic}",
     "connector" : "kafka",
-    "timestamp_mapping.legacy" : false
+    "avro.timestamp_mapping.legacy" : false
   },
   "table" : {
     "type" : "source",

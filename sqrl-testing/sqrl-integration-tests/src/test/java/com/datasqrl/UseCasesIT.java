@@ -17,21 +17,8 @@ import org.junit.jupiter.api.Test;
 /**
  * Tests some use cases in the test/resources/usecases folder using the `test` command.
  */
-@Disabled
 public class UseCasesIT {
-  protected static final Path PROJECT_ROOT = getProjectRoot();
   private static final Path RESOURCES = Paths.get("src/test/resources/usecases");
-
-
-  @Test //Done
-  public void testRepository() {
-    execute("repository", "repo.sqrl", "repo.graphqls");
-  }
-
-  @Test
-  public void testLoggingToKafka() {
-    execute("logging/it-kafka", "logging-kafka.sqrl", "logging-kafka.graphqls");
-  }
 
   public void execute(String path, String script, String graphql) {
     execute("test", path, script, graphql, null);

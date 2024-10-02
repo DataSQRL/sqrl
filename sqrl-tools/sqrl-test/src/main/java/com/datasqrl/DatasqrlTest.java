@@ -1,23 +1,30 @@
 package com.datasqrl;
 
+import com.datasqrl.util.FlinkOperatorStatusChecker;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
+import org.apache.commons.collections.ListUtils;
+import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.JobStatus;
 import org.apache.flink.core.execution.JobClient;
+import org.apache.flink.runtime.client.JobExecutionException;
 import org.apache.flink.table.api.TableResult;
 
 public class DatasqrlTest {
@@ -48,10 +55,11 @@ public class DatasqrlTest {
   @SneakyThrows
   public int run() {
     DatasqrlRun run = new DatasqrlRun(planPath, env);
-    TableResult result = run.run(false);
     List<Exception> exceptions = new ArrayList<>();
 
     try {
+      TableResult result = run.run(false);
+
       ObjectMapper objectMapper = new ObjectMapper();
       //todo add file check
 
@@ -60,9 +68,22 @@ public class DatasqrlTest {
 
       Thread.sleep(1000);
 
+      Map compilerMap = (Map) run.getPackageJson().get("compiler");
+      String snapshotPathString = (String) compilerMap.get("snapshotPath");
+      Path snapshotDir = Path.of(snapshotPathString);
+
+      // Check if the directory exists, create it if it doesn’t
+      if (!Files.exists(snapshotDir)) {
+        Files.createDirectories(snapshotDir);
+      }
+
       for (GraphqlQuery query : testPlan.getMutations()) {
         //Execute queries
         String data = executeQuery(query.getQuery());
+
+        //Snapshot result
+        Path snapshotPath = snapshotDir.resolve(query.getName() + ".snapshot");
+        snapshot(snapshotPath, query.getName(), data, exceptions);
       }
 
       long delaySec = 30;
@@ -76,34 +97,72 @@ public class DatasqrlTest {
         }
       }
 
-      try {
-        for (int i = 0; i < delaySec; i++) {
-          //break early if job is done
-          try {
-            CompletableFuture<JobStatus> jobStatusCompletableFuture = result.getJobClient()
-                .map(JobClient::getJobStatus).get();
-            JobStatus status = jobStatusCompletableFuture.get(1, TimeUnit.SECONDS);
-            if (status == JobStatus.FINISHED || status == JobStatus.CANCELED) {
+      if (delaySec == -1) {
+        FlinkOperatorStatusChecker flinkOperatorStatusChecker = new FlinkOperatorStatusChecker(
+            result.getJobClient().get().getJobID().toString());
+        flinkOperatorStatusChecker.run();
+      } else {
+        try {
+          for (int i = 0; i < delaySec; i++) {
+            //break early if job is done
+            try {
+              CompletableFuture<JobStatus> jobStatusCompletableFuture = result.getJobClient()
+                  .map(JobClient::getJobStatus).get();
+              JobStatus status = jobStatusCompletableFuture.get(1, TimeUnit.SECONDS);
+              if (status == JobStatus.FAILED) {
+                exceptions.add(new JobFailureException());
+                break;
+              }
+
+              if (status == JobStatus.FINISHED || status == JobStatus.CANCELED) {
+                break;
+              }
+
+            } catch (Exception e) {
               break;
             }
-          } catch (Exception e) {
+
+            Thread.sleep(1000);
           }
 
-          Thread.sleep(1000);
+        } catch (Exception e) {
         }
-
+      }
+      
+      try {
+        JobExecutionResult jobExecutionResult = result.getJobClient().get().getJobExecutionResult()
+            .get(2, TimeUnit.SECONDS); //flink will hold if the minicluster is stopped
+      } catch (ExecutionException e) {
+        //try to catch the job failure if we can
+        exceptions.add(new JobFailureException(e));
       } catch (Exception e) {
       }
-
-      Map compilerMap = (Map) run.getPackageJson().get("compiler");
-      String snapshotPathString = (String) compilerMap.get("snapshotPath");
-      Path snapshotPath = Path.of(snapshotPathString);
 
       for (GraphqlQuery query : testPlan.getQueries()) {
         //Execute queries
         String data = executeQuery(query.getQuery());
+
         //Snapshot result
+        Path snapshotPath = snapshotDir.resolve(query.getName() + ".snapshot");
         snapshot(snapshotPath, query.getName(), data, exceptions);
+      }
+
+      List<String> expectedSnapshotsQueries = testPlan.getQueries().stream()
+          .map(f->f.getName() + ".snapshot")
+          .collect(Collectors.toList());
+      List<String> expectedSnapshotsMutations = testPlan.getMutations().stream()
+          .map(f->f.getName() + ".snapshot")
+          .collect(Collectors.toList());
+      List<String> expectedSnapshots = ListUtils.union(expectedSnapshotsQueries, expectedSnapshotsMutations);
+      // Check all snapshots in the directory
+      try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(snapshotDir, "*.snapshot")) {
+        for (Path path : directoryStream) {
+          String snapshotFileName = path.getFileName().toString();
+          if (!expectedSnapshots.contains(snapshotFileName)) {
+            // Snapshot exists on filesystem but missing in the test results
+            exceptions.add(new MissingSnapshotException(snapshotFileName));
+          }
+        }
       }
     } finally {
       run.stop();
@@ -118,6 +177,15 @@ public class DatasqrlTest {
           logRed("Snapshot mismatch for test: " + ex.getTestName());
           logRed("Expected: " + ex.getExpected());
           logRed("Actual  : " + ex.getActual());
+          exitCode = 1;
+        } else if (e instanceof JobFailureException) {
+          JobFailureException ex = (JobFailureException) e;
+          logRed("Flink job failed to start.");
+          ex.printStackTrace();
+          exitCode = 1;
+        } else if (e instanceof MissingSnapshotException) {
+          MissingSnapshotException ex = (MissingSnapshotException) e;
+          logRed("Snapshot on filesystem but not in result: " + ex.getTestName());
           exitCode = 1;
         } else if (e instanceof SnapshotCreationException) {
           SnapshotCreationException ex = (SnapshotCreationException) e;
@@ -158,15 +226,11 @@ public class DatasqrlTest {
   }
 
   @SneakyThrows
-  private void snapshot(Path snapshotDir, String name, String currentResponse,
+  private void snapshot(Path snapshotPath, String name, String currentResponse,
       List<Exception> exceptions) {
-    // Check if the directory exists, create it if it doesn’t
-    if (!Files.exists(snapshotDir)) {
-      Files.createDirectories(snapshotDir);
-    }
 
-    Path snapshotPath = snapshotDir.resolve(name + ".snapshot");
 
+    // Existing snapshot logic
     if (Files.exists(snapshotPath)) {
       String existingSnapshot = new String(Files.readAllBytes(snapshotPath), "UTF-8");
       if (!existingSnapshot.equals(currentResponse)) {

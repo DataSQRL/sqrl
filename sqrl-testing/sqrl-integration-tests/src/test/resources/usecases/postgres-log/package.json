@@ -30,5 +30,8 @@
   },
   "script": {
     "main": "postgres-log.sqrl"
+  },
+  "test-runner": {
+    "delay-sec": -1
   }
 }
