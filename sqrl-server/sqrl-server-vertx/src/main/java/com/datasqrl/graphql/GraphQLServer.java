@@ -57,31 +57,18 @@ import io.vertx.ext.web.handler.graphql.GraphiQLHandler;
 import io.vertx.ext.web.handler.graphql.GraphiQLHandlerBuilder;
 import io.vertx.ext.web.handler.graphql.ws.GraphQLWSHandler;
 import io.vertx.jdbcclient.JDBCPool;
-import io.vertx.jdbcclient.impl.ConnectionImpl;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.micrometer.MicrometerMetricsOptions;
 import io.vertx.micrometer.backends.BackendRegistries;
-import io.vertx.micrometer.backends.BackendRegistry;
 import io.vertx.pgclient.PgPool;
 import io.vertx.pgclient.impl.PgPoolOptions;
-import io.vertx.sqlclient.PreparedQuery;
-import io.vertx.sqlclient.Row;
-import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.SqlClient;
-import io.vertx.sqlclient.SqlConnection;
-import io.vertx.sqlclient.Tuple;
-import io.vertx.sqlclient.impl.SqlConnectionBase;
 import java.io.File;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.Statement;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
@@ -372,7 +359,7 @@ public class GraphQLServer extends AbstractVerticle {
       return graphQL.build();
     } catch (Exception e) {
       startPromise.fail(e.getMessage());
-      e.printStackTrace();
+      log.error("Unable to create GraphQL", e);
       throw e;
     }
   }
@@ -391,8 +378,9 @@ public class GraphQLServer extends AbstractVerticle {
         consumers.put(sub.getFieldName(), new KafkaSinkConsumer<>(consumer));
       } else if (sub instanceof PostgresSubscriptionCoords) {
         PostgresSubscriptionCoords pgSub = (PostgresSubscriptionCoords) sub;
-        PostgresListenNotifyConsumer pgConsumer = new PostgresListenNotifyConsumer(client, getConn(),
-            pgSub.getListenQuery(), pgSub.getOnNotifyQuery(), pgSub.getParameters());
+        PostgresListenNotifyConsumer pgConsumer = new PostgresListenNotifyConsumer(client,
+            pgSub.getListenQuery(), pgSub.getOnNotifyQuery(), pgSub.getParameters(), vertx,
+            config.getPgConnectOptions());
 
         PostgresSinkConsumer pgSinkConsumer = new PostgresSinkConsumer(pgConsumer);
 
@@ -402,12 +390,6 @@ public class GraphQLServer extends AbstractVerticle {
       }
     }
     return consumers;
-  }
-
-  // hack (Soma) get conn differently
-  @SneakyThrows
-  private Connection getConn() {
-    return DriverManager.getConnection("jdbc:postgresql://localhost:5432/datasqrl", "postgres", "postgres");
   }
 
   Map<String, String> getSourceConfig() {
