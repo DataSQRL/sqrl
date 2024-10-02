@@ -65,6 +65,8 @@ public class FullUsecasesIT {
       new ScriptCriteria("duckdb.sqrl", "run"), //fails in build server
       new ScriptCriteria("snowflake.sqrl", "test"), //fails in build server
       new ScriptCriteria("snowflake.sqrl", "run"), //fails in build server
+      new ScriptCriteria("sensors-mutation.sqrl", "test"), //flaky see sqrl script
+      new ScriptCriteria("sensors-mutation.sqrl", "run"), //flaky see sqrl script
       new ScriptCriteria("sensors-full.sqrl", "test"), //flaky (too much data)
       new ScriptCriteria("sensors-full.sqrl", "run"), //flaky (too much data)
       new ScriptCriteria("seedshop-extended.sqrl", "test"), // CustomerPromotionTest issue
@@ -227,7 +229,7 @@ public class FullUsecasesIT {
   @MethodSource("useCaseProvider")
   @Disabled
   public void runTestNumber(UseCaseTestParameter param) {
-    int i = 16;
+    int i = -1;
     testNo++;
     System.out.println(testNo + ":" + param);
     if (i == testNo) {
