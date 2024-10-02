@@ -161,9 +161,9 @@ public class FullUsecasesIT {
 
       Map<String, String> env = new HashMap<>();
       env.putAll(System.getenv());
-      env.put("EXECUTION_MODE", "local");
       env.putAll(containerHook.getEnv());
       env.put("DATA_PATH", rootDir.resolve("build/deploy/flink/data").toAbsolutePath().toString());
+      env.put("UDF_PATH", rootDir.resolve("build/deploy/flink/lib").toAbsolutePath().toString());
 
       //Run the test
       TestEnvContext context = TestEnvContext.builder()
@@ -229,7 +229,7 @@ public class FullUsecasesIT {
   @MethodSource("useCaseProvider")
   @Disabled
   public void runTestNumber(UseCaseTestParameter param) {
-    int i = -1;
+    int i = 31;
     testNo++;
     System.out.println(testNo + ":" + param);
     if (i == testNo) {

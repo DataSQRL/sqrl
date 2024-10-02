@@ -20,6 +20,7 @@ import io.vertx.core.VertxOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.micrometer.MicrometerMetricsOptions;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -32,6 +33,7 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.api.common.JobStatus;
@@ -149,6 +151,36 @@ public class DatasqrlRun {
     config.putIfAbsent("table.exec.resource.default-parallelism", "1");
     config.putIfAbsent("rest.address", "localhost");
     config.putIfAbsent("rest.port", "8081");
+    config.putIfAbsent("execution.target", "local"); //mini cluster
+    config.putIfAbsent("execution.attached", "true"); //mini cluster
+
+    String udfPath = getenv("UDF_PATH");
+    List<URL> jarUrls = new ArrayList<>();
+    if (udfPath != null) {
+      Path udfDir = Path.of(udfPath);
+      if (udfDir.toFile().exists() && udfDir.toFile().isDirectory()) {
+        // Iterate over all files in the directory and add JARs to the list
+        try (var stream = java.nio.file.Files.list(udfDir)) {
+          stream.filter(file -> file.toString().endsWith(".jar"))
+              .forEach(file -> {
+                try {
+                  jarUrls.add(file.toUri().toURL());
+                } catch (Exception e) {
+                  log.error("Error adding JAR to classpath: " + file, e);
+                }
+              });
+        }
+      } else {
+//        throw new RuntimeException("UDF_PATH is not a valid directory: " + udfPath);
+      }
+    }
+
+    // Add UDF JARs to classpath
+    URL[] urlArray = jarUrls.toArray(new URL[0]);
+    ClassLoader udfClassLoader = new URLClassLoader(urlArray, getClass().getClassLoader());
+
+    config.putIfAbsent("pipeline.classpaths", jarUrls.stream().map(URL::toString)
+        .collect(Collectors.joining(",")));
 
     //Exposed for tests
     if (env.get("FLINK_RESTART_STRATEGY") != null) {
@@ -159,17 +191,17 @@ public class DatasqrlRun {
 
     Configuration configuration = Configuration.fromMap(config);
 
-
     StreamExecutionEnvironment sEnv;
 
     try {
-      sEnv = StreamExecutionEnvironment.getExecutionEnvironment(configuration);
+      sEnv = new StreamExecutionEnvironment(configuration, udfClassLoader);
     } catch (Exception e) {
-      sEnv = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(configuration);
+      throw e;
     }
 
     EnvironmentSettings tEnvConfig = EnvironmentSettings.newInstance()
         .withConfiguration(configuration)
+        .withClassLoader(udfClassLoader)
         .build();
 
     StreamTableEnvironment tEnv = StreamTableEnvironment.create(sEnv, tEnvConfig);

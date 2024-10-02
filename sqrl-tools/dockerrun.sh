@@ -4,6 +4,7 @@ cd /build
 
 # Todo: there is a target flag we need to parse and set
 export DATA_PATH=/build/build/deploy/flink/data
+export UDF_PATH=/build/build/deploy/flink/lib
 
 echo 'Compiling...this takes about 10 seconds'
 java -jar /opt/sqrl/sqrl-cli.jar ${@}
