@@ -102,7 +102,7 @@ The 'timestamp_mapping.legacy' should be set to false to map timestamp types cor
     "format": "avro",
     "connector": "kafka",
     ...
-    "timestamp_mapping.legacy": false
+    "avro.timestamp_mapping.legacy": false
   }
 }
 ```
