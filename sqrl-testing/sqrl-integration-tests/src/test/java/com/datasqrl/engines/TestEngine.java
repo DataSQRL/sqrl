@@ -41,6 +41,20 @@ public interface TestEngine {
   }
 
   @Getter
+  class PostgresLogTestEngine extends AbstractTestEngine {
+    private static final String name = "postgres_log";
+
+    public PostgresLogTestEngine(PackageJson packageJson) {
+
+    }
+
+    @Override
+    public <R, C> R accept(TestEngineVisitor<R, C> visitor, C context) {
+      return visitor.visit(this, context);
+    }
+  }
+
+  @Getter
   class KafkaTestEngine extends AbstractTestEngine {
 
     static final String name = "kafka";
@@ -147,6 +161,7 @@ public interface TestEngine {
 
     static {
       registerEngine(PostgresTestEngine.name, PostgresTestEngine::new);
+      registerEngine(PostgresLogTestEngine.name, PostgresLogTestEngine::new);
       registerEngine(KafkaTestEngine.name, KafkaTestEngine::new);
       registerEngine(IcebergTestEngine.name, IcebergTestEngine::new);
       registerEngine(DuckdbTestEngine.name, DuckdbTestEngine::new);
@@ -195,6 +210,7 @@ public interface TestEngine {
     }
 
     R visit(PostgresTestEngine engine, C context);
+    R visit(PostgresLogTestEngine engine, C context);
 
     R visit(KafkaTestEngine engine, C context);
 

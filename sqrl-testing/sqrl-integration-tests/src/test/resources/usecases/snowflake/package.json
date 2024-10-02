@@ -12,8 +12,8 @@
   "values": {
     "flink-config": {
       "table.exec.source.idle-timeout": "1 ms",
-      "execution.checkpointing.min-pause": "5 s",
-      "execution.checkpointing.interval": "30 s"
+      "execution.checkpointing.min-pause": "2 s",
+      "execution.checkpointing.interval": "8 s"
     }
   },
   "engines": {
@@ -35,6 +35,6 @@
     }
   },
   "test-runner": {
-    "delay-sec": -1
+    "delay-sec": 20
   }
 }

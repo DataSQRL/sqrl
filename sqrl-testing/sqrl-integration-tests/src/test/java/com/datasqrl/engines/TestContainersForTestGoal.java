@@ -5,6 +5,7 @@ import com.datasqrl.engines.TestEngine.DuckdbTestEngine;
 import com.datasqrl.engines.TestEngine.FlinkTestEngine;
 import com.datasqrl.engines.TestEngine.IcebergTestEngine;
 import com.datasqrl.engines.TestEngine.KafkaTestEngine;
+import com.datasqrl.engines.TestEngine.PostgresLogTestEngine;
 import com.datasqrl.engines.TestEngine.PostgresTestEngine;
 import com.datasqrl.engines.TestEngine.SnowflakeTestEngine;
 import com.datasqrl.engines.TestEngine.TestEngineVisitor;
@@ -82,6 +83,11 @@ public class TestContainersForTestGoal implements TestEngineVisitor<TestContaine
         return env;
       }
     };
+  }
+
+  @Override
+  public TestContainerHook visit(PostgresLogTestEngine engine, Void context) {
+    return new NoopTestContainerHook();
   }
 
   @Override

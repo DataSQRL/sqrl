@@ -61,28 +61,28 @@ public class FullUsecasesIT {
   }
 
   List<ScriptCriteria> disabledScripts = List.of(
-      new ScriptCriteria("sensors-mutation.sqrl", "test"), //flaky
-      new ScriptCriteria("sensors-mutation.sqrl", "run"), //build server issues
-      new ScriptCriteria("conference.sqrl", "test"), //minicluster has different results??
-      new ScriptCriteria("conference.sqrl", "run"), //build server issues
+//      new ScriptCriteria("sensors-mutation.sqrl", "test"), //flaky
+//      new ScriptCriteria("sensors-mutation.sqrl", "run"), //build server issues
+//      new ScriptCriteria("conference.sqrl", "test"), //minicluster has different results??
+//      new ScriptCriteria("conference.sqrl", "run"), //build server issues
       new ScriptCriteria("duckdb.sqrl", "test"), //fails in build server
       new ScriptCriteria("duckdb.sqrl", "run"), //fails in build server
-      new ScriptCriteria("snowflake.sqrl", "test"), //fails in build server
-      new ScriptCriteria("snowflake.sqrl", "run"), //fails in build server
-      new ScriptCriteria("sensors-full.sqrl", "test"), //flaky
-      new ScriptCriteria("sensors-full.sqrl", "run"), //flaky
-      new ScriptCriteria("postgres-log.sqrl", "test"), // invalid flink sql
-      new ScriptCriteria("postgres-log.sqrl", "run"), // invalid flink sql
-      new ScriptCriteria("metrics.sqrl", "run"), // Unknown engine: postgres_log
+//      new ScriptCriteria("snowflake.sqrl", "test"), //fails in build server
+//      new ScriptCriteria("snowflake.sqrl", "run"), //fails in build server
+      new ScriptCriteria("sensors-full.sqrl", "test"), //flaky (too much data)
+      new ScriptCriteria("sensors-full.sqrl", "run"), //flaky (too much data)
+//      new ScriptCriteria("postgres-log.sqrl", "test"), // invalid flink sql
+//      new ScriptCriteria("postgres-log.sqrl", "run"), // invalid flink sql
+//      new ScriptCriteria("metrics.sqrl", "run"), // Unknown engine: postgres_log
       new ScriptCriteria("seedshop-extended.sqrl", "test"), // CustomerPromotionTest issue
-      new ScriptCriteria("seedshop-extended.sqrl", "run"), // CustomerPromotionTest issue
-//      new ScriptCriteria("snowflake.sqrl", "run"), // sometimes snowflake doesn't respond fast enough
-      new ScriptCriteria("src.sqrl", "test"), // file location incorrect
-      new ScriptCriteria("src.sqrl", "run"), // file location incorrect
-      new ScriptCriteria("src-import.sqrl", "test"), // file location incorrect
-      new ScriptCriteria("src-import.sqrl", "run"), // file location incorrect
-      new ScriptCriteria("patient-sensor.sqrl", "run"), // file location incorrect
-      new ScriptCriteria("patient-sensor.sqrl", "test") // file location incorrect
+      new ScriptCriteria("seedshop-extended.sqrl", "run") // CustomerPromotionTest issue
+////      new ScriptCriteria("snowflake.sqrl", "run"), // sometimes snowflake doesn't respond fast enough
+//      new ScriptCriteria("src.sqrl", "test"), // file location incorrect
+//      new ScriptCriteria("src.sqrl", "run"), // file location incorrect
+//      new ScriptCriteria("src-import.sqrl", "test"), // file location incorrect
+//      new ScriptCriteria("src-import.sqrl", "run"), // file location incorrect
+//      new ScriptCriteria("patient-sensor.sqrl", "run"), // file location incorrect
+//      new ScriptCriteria("patient-sensor.sqrl", "test") // file location incorrect
   );
 
   static final Path PROJECT_ROOT = Paths.get(System.getProperty("user.dir"));
@@ -166,12 +166,13 @@ public class FullUsecasesIT {
     PackageJson packageJson = SqrlConfigCommons.fromFilesPackageJson(ErrorCollector.root(),
         List.of(rootDir.resolve("build").resolve("package.json")));
 
-    TestEngines engines = new EngineFactory()
-        .create(packageJson);
 
     try {
+      TestEngines engines = new EngineFactory()
+          .create(packageJson);
 
       Map<String, String> env = new HashMap<>();
+      env.putAll(System.getenv());
       env.put("EXECUTION_MODE", "local");
       env.putAll(containerHook.getEnv());
       env.put("DATA_PATH", rootDir.resolve("build/deploy/flink/data").toAbsolutePath().toString());

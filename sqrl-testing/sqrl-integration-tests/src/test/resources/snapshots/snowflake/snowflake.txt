@@ -1,0 +1,4 @@
+>>>MySnowflakeTable
+22, 2, 1, 13176.46, 54, 2023-05-17 14:42:06.704, 2023-05-17 14:42:06.704
+>>>MyTable.graphql
+{"data":{"SnowflakeQuery":[{"customer_id":2.0}]}}

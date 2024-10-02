@@ -11,6 +11,7 @@ import com.datasqrl.engines.TestEngine.DuckdbTestEngine;
 import com.datasqrl.engines.TestEngine.FlinkTestEngine;
 import com.datasqrl.engines.TestEngine.IcebergTestEngine;
 import com.datasqrl.engines.TestEngine.KafkaTestEngine;
+import com.datasqrl.engines.TestEngine.PostgresLogTestEngine;
 import com.datasqrl.engines.TestEngine.PostgresTestEngine;
 import com.datasqrl.engines.TestEngine.SnowflakeTestEngine;
 import com.datasqrl.engines.TestEngine.TestEngineVisitor;
@@ -77,6 +78,11 @@ public class TestExecutionEnv implements TestEngineVisitor<Void, TestEnvContext>
       }
     }
 
+    return null;
+  }
+
+  @Override
+  public Void visit(PostgresLogTestEngine engine, TestEnvContext context) {
     return null;
   }
 
