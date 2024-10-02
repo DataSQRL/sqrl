@@ -65,7 +65,8 @@ public class PostgresListenNotifyConsumer {
 
     List<Object> paramObj = new ArrayList<>();
 
-    //hack (Soma)
+    // TODO (Soma) - We need to properly handle the payload types here.
+    //  This is hard coded currently and tailored to the sensors example.
     for (String parameter : parameters) {
       if (parameter.equals("timeSec")) {
         paramObj.add(OffsetDateTime.parse(jsonPayload.getString(parameter)));
@@ -77,6 +78,10 @@ public class PostgresListenNotifyConsumer {
       }
     }
 
+    // TODO (Soma) - It feels odd that we are using vertx a bit differently compared to how we
+    //  handle the notifications. This is the accepted way of running queries in the codebase
+    //  however in case on notifications we are forced to use PGConnection since that's the
+    //  only way currently to listen to notifications.
     PreparedQuery<RowSet<Row>> preparedQuery = sqlClient.getClients().get("postgres").preparedQuery(onNotifyQuery);
 
     preparedQuery.execute(Tuple.from(paramObj))
