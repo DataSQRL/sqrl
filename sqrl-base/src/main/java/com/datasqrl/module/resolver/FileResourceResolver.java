@@ -21,10 +21,6 @@ public class FileResourceResolver implements ResourceResolver {
     this.baseDir = baseDir;
   }
 
-  public Optional<URI> resolve(Path path) {
-    return Optional.of(path.toFile().toURI());
-  }
-
   @Override
   public String toString() {
     return "FileResourceResolver[" + baseDir + ']';
@@ -50,5 +46,14 @@ public class FileResourceResolver implements ResourceResolver {
       return Optional.empty();
     }
     return Optional.of(path);
+  }
+
+  @Override
+  public Optional<Path> resolve(Path path) {
+    Path resolved = baseDir.resolve(path);
+    if (Files.exists(resolved)) {
+      return Optional.of(resolved);
+    }
+    return Optional.empty();
   }
 }
