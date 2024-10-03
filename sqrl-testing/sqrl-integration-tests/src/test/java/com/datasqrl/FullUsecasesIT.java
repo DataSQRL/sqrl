@@ -165,6 +165,14 @@ public class FullUsecasesIT {
       env.putAll(containerHook.getEnv());
       env.put("DATA_PATH", rootDir.resolve("build/deploy/flink/data").toAbsolutePath().toString());
 
+      // Log test run
+      log.info("The test parameters\n" +
+               "Test name: " + param.getTestName() + "\n" +
+               "Test path: " + rootDir + "\n" +
+               "Test sqrl file: " + param.getSqrlFileName() + "\n" +
+               "Test graphql file: " + param.getGraphqlFileName() + "\n"
+      );
+
       //Run the test
       TestEnvContext context = TestEnvContext.builder()
           .env(env)
