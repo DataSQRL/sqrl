@@ -5,6 +5,7 @@ package com.datasqrl.engine.stream.flink.plan;
 
 import com.datasqrl.engine.stream.StreamPhysicalPlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StreamStagePlan;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -13,6 +14,7 @@ import lombok.Value;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.flink.sql.parser.ddl.SqlCreateTable;
 import org.apache.flink.sql.parser.ddl.SqlTableOption;
+import org.apache.flink.table.api.CompiledPlan;
 
 @Getter
 public class FlinkStreamPhysicalPlan implements StreamPhysicalPlan {
@@ -22,11 +24,14 @@ public class FlinkStreamPhysicalPlan implements StreamPhysicalPlan {
   private final Set<String> connectors;
   private final Set<String> formats;
 
-  public FlinkStreamPhysicalPlan( List<String> flinkSql,
-      List<SqlNode> sqlNodes) {
+  private final String compliedPlan;
+
+  public FlinkStreamPhysicalPlan(List<String> flinkSql,
+      List<SqlNode> sqlNodes, String compliedPlan) {
     this.flinkSql = flinkSql;
     this.connectors = extractConnectors(sqlNodes);
     this.formats = extractFormats(sqlNodes);
+    this.compliedPlan = compliedPlan;
   }
 
   private Set<String> extractConnectors(List<SqlNode> sqlNodes) {

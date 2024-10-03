@@ -6,6 +6,7 @@ package com.datasqrl.engine.stream.flink;
 import static com.datasqrl.engine.EngineFeature.STANDARD_STREAM;
 
 import com.datasqrl.actions.FlinkSqlGenerator;
+import com.datasqrl.actions.FlinkSqlGenerator.FlinkSqlGeneratorResult;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.config.EngineFactory.Type;
@@ -56,9 +57,9 @@ public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base imp
     StreamStagePlan plan = (StreamStagePlan) stagePlan;
     FlinkSqlGenerator generator = new FlinkSqlGenerator(framework);
 
+    FlinkSqlGeneratorResult flinkSql = generator.run(plan, stagePlans);
 
-    Pair<List<String>, List<SqlNode>> flinkSql = generator.run(plan, stagePlans);
-    return new FlinkStreamPhysicalPlan(flinkSql.getLeft(), flinkSql.getRight());
+    return new FlinkStreamPhysicalPlan(flinkSql.getPlan(), flinkSql.getFlinkSql(), flinkSql.getCompiledPlan().asJsonString());
   }
 
   @Override
