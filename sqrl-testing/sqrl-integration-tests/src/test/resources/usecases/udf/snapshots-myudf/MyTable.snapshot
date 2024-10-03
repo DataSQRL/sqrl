@@ -1,1 +1,1 @@
-{"data":{"MyTable":[{"val":1},{"val":2},{"val":3},{"val":4},{"val":5},{"val":6},{"val":7},{"val":8},{"val":9},{"val":10}]}}
+{"data":{"MyTable":[{"val":1,"myFnc":2.0},{"val":2,"myFnc":4.0},{"val":3,"myFnc":6.0},{"val":4,"myFnc":8.0},{"val":5,"myFnc":10.0},{"val":6,"myFnc":12.0},{"val":7,"myFnc":14.0},{"val":8,"myFnc":16.0},{"val":9,"myFnc":18.0},{"val":10,"myFnc":20.0}]}}
