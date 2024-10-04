@@ -49,10 +49,10 @@ public class FileResourceResolver implements ResourceResolver {
   }
 
   @Override
-  public Optional<Path> resolve(Path path) {
-    Path resolved = baseDir.resolve(path);
-    if (Files.exists(resolved)) {
-      return Optional.of(resolved);
+  public Optional<Path> resolve(Path relativePath) {
+    Path resolvedPath = baseDir.resolve(relativePath);
+    if (Files.exists(resolvedPath)) {
+      return Optional.of(resolvedPath);
     }
     return Optional.empty();
   }

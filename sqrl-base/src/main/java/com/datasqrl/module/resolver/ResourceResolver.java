@@ -14,7 +14,7 @@ public interface ResourceResolver {
 
   Optional<Path> resolveFile(NamePath namePath);
 
-  Optional<Path> resolve(Path path);
+  Optional<Path> resolve(Path relativePath);
 
   static URL toURL(URI uri) {
     try {

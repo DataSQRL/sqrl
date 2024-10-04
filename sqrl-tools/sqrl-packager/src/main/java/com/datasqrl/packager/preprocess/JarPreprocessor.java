@@ -89,22 +89,9 @@ public class JarPreprocessor implements Preprocessor {
       processorContext.addLibrary(path);
     }
 
-    copyFileWithStructure(path, processorContext.getBuildDir());
+    processorContext.addDependency(path);
 
     return null;
-  }
-
-  public static void copyFileWithStructure(Path sourcePath, Path targetFolder) throws IOException {
-    Path targetPath = targetFolder.resolve(sourcePath.getParent());  // Retain folder structure
-
-    // Ensure the target directories exist
-    Files.createDirectories(targetPath);
-
-    // Define the final target file path
-    Path targetFilePath = targetPath.resolve(sourcePath.getFileName());
-
-    // Copy the file from source to target, replacing it if it already exists
-    Files.copy(sourcePath, targetFilePath);
   }
 
   /**
