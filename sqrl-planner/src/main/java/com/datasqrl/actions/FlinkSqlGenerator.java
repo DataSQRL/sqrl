@@ -44,6 +44,7 @@ import org.apache.flink.table.operations.StatementSetOperation;
 @Slf4j
 public class FlinkSqlGenerator {
 
+  public static final String COMPILED_PLAN_JSON = "compiled-plan.json";
   private final SqrlFramework framework;
   private final BuildPath buildPath;
 
@@ -80,7 +81,8 @@ public class FlinkSqlGenerator {
     CompiledPlan compiledPlan = null;
     try {
       compiledPlan = createCompiledPlan(result, physicalPlan);
-      Path path = buildPath.getBuildDir().resolve("compiled-plan.json");
+      Path path = buildPath.getBuildDir().resolve(COMPILED_PLAN_JSON);
+
       compiledPlan.writeToFile(path.toAbsolutePath().toString(),
           true);
     } catch (Exception e) {

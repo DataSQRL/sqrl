@@ -53,6 +53,7 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.datasqrl.actions.FlinkSqlGenerator.COMPILED_PLAN_JSON;
 import static com.datasqrl.actions.WriteDag.DATA_DIR;
 import static com.datasqrl.actions.WriteDag.LIB_DIR;
 import static com.datasqrl.config.ScriptConfigImpl.GRAPHQL_KEY;
@@ -329,6 +330,17 @@ public class Packager {
     moveFolder(targetDir, DATA_DIR);
     copyJarFiles(buildDir.getBuildDir());
     moveFolder(targetDir, LIB_DIR);
+    copyCompiledPlan(buildDir.getBuildDir(), targetDir);
+  }
+
+  @SneakyThrows
+  private void copyCompiledPlan(Path buildDir, Path targetDir) {
+    if (Files.exists(buildDir.resolve(COMPILED_PLAN_JSON))) {
+      Path destFolder = targetDir.resolve("flink");
+      Files.createDirectories(destFolder);
+      Files.copy(buildDir.resolve(COMPILED_PLAN_JSON),
+          targetDir.resolve("flink").resolve(COMPILED_PLAN_JSON), StandardCopyOption.REPLACE_EXISTING);
+    }
   }
 
   private void copyDataFiles(Path buildDir) throws IOException {
