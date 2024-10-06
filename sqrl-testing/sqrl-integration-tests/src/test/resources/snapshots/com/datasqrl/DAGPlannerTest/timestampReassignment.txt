@@ -159,8 +159,7 @@ LogicalTableScan(table=[[orders_1]])
   ],
   "formats" : [
     "json"
-  ],
-  "compliedPlan" : ""
+  ]
 }
 >>>kafka.json
 {

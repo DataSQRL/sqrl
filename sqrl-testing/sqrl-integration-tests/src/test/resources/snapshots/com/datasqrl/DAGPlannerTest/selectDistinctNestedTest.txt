@@ -147,8 +147,7 @@ LogicalAggregate(group=[{0, 1}], numOrders=[COUNT()], lastOrder=[MAX($2)])
   ],
   "formats" : [
     "json"
-  ],
-  "compliedPlan" : ""
+  ]
 }
 >>>kafka.json
 {

@@ -197,8 +197,7 @@ LogicalProject(__pk1_id=[$0], __pk2_customerid=[$1], __pk3_time=[$2], price=[$4]
   ],
   "formats" : [
     "json"
-  ],
-  "compliedPlan" : ""
+  ]
 }
 >>>kafka.json
 {
