@@ -4,6 +4,7 @@ import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.convert.SqlNodeToString;
 import com.datasqrl.calcite.convert.SqlToStringFactory;
+import com.datasqrl.config.BuildPath;
 import com.datasqrl.engine.stream.flink.plan.SqrlToFlinkSqlGenerator;
 import com.datasqrl.engine.stream.flink.plan.SqrlToFlinkSqlGenerator.SqlResult;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
@@ -11,6 +12,7 @@ import com.datasqrl.plan.global.PhysicalDAGPlan.StreamStagePlan;
 import com.google.inject.Inject;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -43,6 +45,7 @@ import org.apache.flink.table.operations.StatementSetOperation;
 public class FlinkSqlGenerator {
 
   private final SqrlFramework framework;
+  private final BuildPath buildPath;
 
   public FlinkSqlGeneratorResult run(StreamStagePlan physicalPlan,
       List<StagePlan> stagePlans) {
@@ -77,11 +80,14 @@ public class FlinkSqlGenerator {
     CompiledPlan compiledPlan = null;
     try {
       compiledPlan = createCompiledPlan(result, physicalPlan);
+      Path path = buildPath.getBuildDir().resolve("compiled-plan.json");
+      compiledPlan.writeToFile(path.toAbsolutePath().toString(),
+          true);
     } catch (Exception e) {
       log.warn("Could not prepare compiled plan: " + e.getMessage());
     }
 
-    return new FlinkSqlGeneratorResult(plan, flinkSql, compiledPlan);
+    return new FlinkSqlGeneratorResult(plan, flinkSql);
   }
 
   private CompiledPlan createCompiledPlan(SqlResult result, StreamStagePlan physicalPlan) {
@@ -93,7 +99,7 @@ public class FlinkSqlGenerator {
     Map<String, String> config = new HashMap<>();
     config.put("pipeline.classpaths", physicalPlan.getJars().stream().map(URL::toString)
         .collect(Collectors.joining(",")));
-    StreamExecutionEnvironment sEnv = StreamExecutionEnvironment.getExecutionEnvironment(Configuration.fromMap(config));
+    StreamExecutionEnvironment sEnv = StreamExecutionEnvironment.createLocalEnvironment(Configuration.fromMap(config));
 
     EnvironmentSettings tEnvConfig = EnvironmentSettings.newInstance()
         .withConfiguration(Configuration.fromMap(config))
@@ -131,6 +137,5 @@ public class FlinkSqlGenerator {
   public class FlinkSqlGeneratorResult {
     List<String> plan;
     List<SqlNode> flinkSql;
-    CompiledPlan compiledPlan;
   }
 }

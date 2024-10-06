@@ -20,8 +20,7 @@ LogicalValues(tuples=[[{ 1 }, { 2 }]])
   "connectors" : [
     "jdbc-sqrl"
   ],
-  "formats" : [ ],
-  "compliedPlan" : "{\n  \"flinkVersion\" : \"1.19\",\n  \"nodes\" : [ {\n    \"id\" : 1344,\n    \"type\" : \"stream-exec-values_1\",\n    \"tuples\" : [ [ {\n      \"kind\" : \"LITERAL\",\n      \"value\" : 1,\n      \"type\" : \"INT NOT NULL\"\n    } ], [ {\n      \"kind\" : \"LITERAL\",\n      \"value\" : 2,\n      \"type\" : \"INT NOT NULL\"\n    } ] ],\n    \"outputType\" : \"ROW<`val` INT NOT NULL>\",\n    \"description\" : \"Values(tuples=[[{ 1 }, { 2 }]])\",\n    \"inputProperties\" : [ ]\n  }, {\n    \"id\" : 1345,\n    \"type\" : \"stream-exec-sink_1\",\n    \"configuration\" : {\n      \"table.exec.sink.keyed-shuffle\" : \"AUTO\",\n      \"table.exec.sink.not-null-enforcer\" : \"ERROR\",\n      \"table.exec.sink.rowtime-inserter\" : \"ENABLED\",\n      \"table.exec.sink.type-length-enforcer\" : \"IGNORE\",\n      \"table.exec.sink.upsert-materialize\" : \"AUTO\"\n    },\n    \"dynamicTableSink\" : {\n      \"table\" : {\n        \"identifier\" : \"`default_catalog`.`default_database`.`myview_1`\"\n      }\n    },\n    \"inputChangelogMode\" : [ \"INSERT\" ],\n    \"inputProperties\" : [ {\n      \"requiredDistribution\" : {\n        \"type\" : \"UNKNOWN\"\n      },\n      \"damBehavior\" : \"PIPELINED\",\n      \"priority\" : 0\n    } ],\n    \"outputType\" : \"ROW<`val` INT NOT NULL>\",\n    \"description\" : \"Sink(table=[default_catalog.default_database.myview_1], fields=[val])\"\n  } ],\n  \"edges\" : [ {\n    \"source\" : 1344,\n    \"target\" : 1345,\n    \"shuffle\" : {\n      \"type\" : \"FORWARD\"\n    },\n    \"shuffleMode\" : \"PIPELINED\"\n  } ]\n}"
+  "formats" : [ ]
 }
 >>>postgres.json
 {

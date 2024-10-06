@@ -24,14 +24,12 @@ public class FlinkStreamPhysicalPlan implements StreamPhysicalPlan {
   private final Set<String> connectors;
   private final Set<String> formats;
 
-  private final String compliedPlan;
 
   public FlinkStreamPhysicalPlan(List<String> flinkSql,
-      List<SqlNode> sqlNodes, String compliedPlan) {
+      List<SqlNode> sqlNodes) {
     this.flinkSql = flinkSql;
     this.connectors = extractConnectors(sqlNodes);
     this.formats = extractFormats(sqlNodes);
-    this.compliedPlan = compliedPlan;
   }
 
   private Set<String> extractConnectors(List<SqlNode> sqlNodes) {
