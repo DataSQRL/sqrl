@@ -1,7 +1,7 @@
 {
   "version": "1",
   "package": {
-    "version": "0.5.5_test",
+    "version": "0.5.6_test",
     "variant": "default",
     "latest": true,
     "type": "source",
