@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.commons.collections.ListUtils;
@@ -35,6 +36,7 @@ import org.apache.flink.table.operations.StatementSetOperation;
  *
  */
 @AllArgsConstructor(onConstructor_ = @Inject)
+@Slf4j
 public class FlinkSqlGenerator {
 
   private final SqrlFramework framework;
@@ -69,9 +71,14 @@ public class FlinkSqlGenerator {
       }
     }
 
-    CompiledPlan compiledPlan = createCompiledPlan(result);
+    CompiledPlan compiledPlan = null;
+    try {
+      compiledPlan = createCompiledPlan(result);
+    } catch (Exception e) {
+      log.error("Could not prepare compiled plan", e);
+    }
 
-    return new FlinkSqlGeneratorResult(plan, flinkSql, compiledPlan);
+      return new FlinkSqlGeneratorResult(plan, flinkSql, compiledPlan);
   }
 
   private CompiledPlan createCompiledPlan(SqlResult result) {
