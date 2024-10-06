@@ -48,8 +48,8 @@ public abstract class AbstractAssetSnapshotTest {
 
   @AfterEach
   public void clearDirs() throws IOException {
-    clearDir(deployDir);
-    clearDir(buildDir);
+//    clearDir(deployDir);
+//    clearDir(buildDir);
   }
 
   public Predicate<Path> getBuildDirFilter() {
