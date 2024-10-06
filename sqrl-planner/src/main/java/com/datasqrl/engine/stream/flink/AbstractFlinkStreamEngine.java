@@ -59,7 +59,8 @@ public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base imp
 
     FlinkSqlGeneratorResult flinkSql = generator.run(plan, stagePlans);
 
-    return new FlinkStreamPhysicalPlan(flinkSql.getPlan(), flinkSql.getFlinkSql(), flinkSql.getCompiledPlan().asJsonString());
+    return new FlinkStreamPhysicalPlan(flinkSql.getPlan(), flinkSql.getFlinkSql(),
+        flinkSql.getCompiledPlan() != null ? flinkSql.getCompiledPlan().asJsonString() : "");
   }
 
   @Override

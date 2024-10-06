@@ -9,17 +9,20 @@ import com.datasqrl.engine.stream.flink.plan.SqrlToFlinkSqlGenerator.SqlResult;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StreamStagePlan;
 import com.google.inject.Inject;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.commons.collections.ListUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.sql.parser.ddl.SqlSet;
 import org.apache.flink.sql.parser.dml.SqlExecute;
@@ -73,24 +76,28 @@ public class FlinkSqlGenerator {
 
     CompiledPlan compiledPlan = null;
     try {
-      compiledPlan = createCompiledPlan(result);
+      compiledPlan = createCompiledPlan(result, physicalPlan);
     } catch (Exception e) {
-      log.error("Could not prepare compiled plan", e);
+      log.warn("Could not prepare compiled plan: " + e.getMessage());
     }
 
-      return new FlinkSqlGeneratorResult(plan, flinkSql, compiledPlan);
+    return new FlinkSqlGeneratorResult(plan, flinkSql, compiledPlan);
   }
 
-  private CompiledPlan createCompiledPlan(SqlResult result) {
+  private CompiledPlan createCompiledPlan(SqlResult result, StreamStagePlan physicalPlan) {
     List<SqlNode> stubSchema = result.getStubSchema();
     stubSchema = ListUtils.union(stubSchema, result.getQueries());
 
-    StreamExecutionEnvironment sEnv;
-
-    sEnv = StreamExecutionEnvironment.getExecutionEnvironment(Configuration.fromMap(Map.of()));
+    URL[] urlArray =  physicalPlan.getJars().toArray(new URL[0]);
+    ClassLoader udfClassLoader = new URLClassLoader(urlArray, getClass().getClassLoader());
+    Map<String, String> config = new HashMap<>();
+    config.put("pipeline.classpaths", physicalPlan.getJars().stream().map(URL::toString)
+        .collect(Collectors.joining(",")));
+    StreamExecutionEnvironment sEnv = StreamExecutionEnvironment.getExecutionEnvironment(Configuration.fromMap(config));
 
     EnvironmentSettings tEnvConfig = EnvironmentSettings.newInstance()
-        .withConfiguration(Configuration.fromMap(Map.of()))
+        .withConfiguration(Configuration.fromMap(config))
+        .withClassLoader(udfClassLoader)
         .build();
 
     StreamTableEnvironment tEnv = StreamTableEnvironment.create(sEnv, tEnvConfig);
