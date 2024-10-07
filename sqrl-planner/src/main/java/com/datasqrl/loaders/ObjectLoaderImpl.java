@@ -25,7 +25,6 @@ import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.StringUtil;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Preconditions;
-import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
@@ -180,8 +179,9 @@ public class ObjectLoaderImpl implements ObjectLoader {
     String jarPath = json.get("jarPath").asText();
     String functionClassName = json.get("functionClass").asText();
 
-    URL jarUrl = new File(jarPath).toURI().toURL();
-    Class<?> functionClass = loadClass(jarPath, functionClassName);
+    Optional<Path> resolvedJarPath = resourceResolver.resolve(Path.of(jarPath));
+    URL jarUrl = resolvedJarPath.get().toUri().toURL();
+    Class<?> functionClass = loadClass(jarUrl, functionClassName);
     Preconditions.checkArgument(UDF_FUNCTION_CLASS.isAssignableFrom(functionClass), "Class is not a UserDefinedFunction");
 
     UserDefinedFunction udf = (UserDefinedFunction) functionClass.getDeclaredConstructor().newInstance();
@@ -191,8 +191,8 @@ public class ObjectLoaderImpl implements ObjectLoader {
   }
 
   @SneakyThrows
-  private Class<?> loadClass(String jarPath, String functionClassName) {
-    URL[] urls = {new File(jarPath).toURI().toURL()};
+  private Class<?> loadClass(URL jarUrl, String functionClassName) {
+    URL[] urls = { jarUrl };
     URLClassLoader classLoader = new URLClassLoader(urls, Thread.currentThread().getContextClassLoader());
     return Class.forName(functionClassName, true, classLoader);
   }
