@@ -13,7 +13,6 @@ import com.datasqrl.graphql.server.RootGraphqlModel.DuckDbQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.FieldLookupCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.JdbcQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoords;
-import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoordsVisitor;
 import com.datasqrl.graphql.server.RootGraphqlModel.PagedDuckDbQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.PagedJdbcQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.PagedSnowflakeDbQuery;
@@ -61,6 +60,7 @@ public class GraphQLEngineBuilder implements
     ResolvedQueryVisitor<CompletableFuture, QueryExecutionContext> {
 
   private List<GraphQLScalarType> addlTypes;
+  private SubscriptionConfiguration<DataFetcher<?>> subscriptionConfiguration;
 
   public static final ObjectTypeDefinition DUMMY_QUERY = ObjectTypeDefinition.newObjectTypeDefinition()
       .name("Query")
@@ -70,12 +70,28 @@ public class GraphQLEngineBuilder implements
           .build())
       .build();
 
-  public GraphQLEngineBuilder() {
-    addlTypes = new ArrayList<>();
+  private GraphQLEngineBuilder(Builder builder) {
+    this.addlTypes = builder.addlTypes;
+    this.subscriptionConfiguration = builder.subscriptionConfiguration;
   }
 
-  public GraphQLEngineBuilder(List<GraphQLScalarType> addlTypes) {
-    this.addlTypes = addlTypes;
+  public static class Builder {
+    private List<GraphQLScalarType> addlTypes = new ArrayList<>();
+    private SubscriptionConfiguration<DataFetcher<?>> subscriptionConfiguration;
+
+    public Builder withAdditionalTypes(List<GraphQLScalarType> types) {
+      this.addlTypes = types;
+      return this;
+    }
+
+    public Builder withSubscriptionConfiguration(SubscriptionConfiguration<DataFetcher<?>> configurer) {
+      this.subscriptionConfiguration = configurer;
+      return this;
+    }
+
+    public GraphQLEngineBuilder build() {
+      return new GraphQLEngineBuilder(this);
+    }
   }
 
   @Override
@@ -110,7 +126,7 @@ public class GraphQLEngineBuilder implements
 
     if (root.subscriptions != null) {
       for (SubscriptionCoords sc : root.subscriptions) {
-        DataFetcher<?> subscriptionFetcher = sc.accept(context.createSubscriptionFetcherVisitor(), context);
+        DataFetcher<?> subscriptionFetcher = sc.accept(subscriptionConfiguration.createSubscriptionFetcherVisitor(), context);
         codeRegistry.dataFetcher(
             FieldCoordinates.coordinates(getSubscriptionTypeName(registry), sc.getFieldName()), subscriptionFetcher);
       }
