@@ -162,13 +162,13 @@ public class RootGraphqlModel {
   })
   public static abstract class SubscriptionCoords {
     protected String type;
-    public abstract DataFetcher<?> accept(SubscriptionCoordsVisitor visitor);
+    public abstract <R, C> R accept(SubscriptionCoordsVisitor<R, C> visitor, C context);
     public abstract String getFieldName();
   }
 
-  public interface SubscriptionCoordsVisitor {
-    DataFetcher<?> visit(KafkaSubscriptionCoords coords);
-    DataFetcher<?> visit(PostgresSubscriptionCoords coords);
+  public interface SubscriptionCoordsVisitor<R, C> {
+    R visit(KafkaSubscriptionCoords coords, C context);
+    R visit(PostgresSubscriptionCoords coords, C context);
   }
 
   @Getter
@@ -185,8 +185,8 @@ public class RootGraphqlModel {
     protected Map<String, String> filters;
 
     @Override
-    public DataFetcher<?> accept(SubscriptionCoordsVisitor visitor) {
-      return visitor.visit(this);
+    public <R, C> R accept(SubscriptionCoordsVisitor<R, C> visitor, C context) {
+      return visitor.visit(this, context);
     }
   }
 
@@ -206,8 +206,8 @@ public class RootGraphqlModel {
     protected List<String> parameters;
 
     @Override
-    public DataFetcher<?> accept(SubscriptionCoordsVisitor visitor) {
-      return visitor.visit(this);
+    public <R, C> R accept(SubscriptionCoordsVisitor<R, C> visitor, C context) {
+      return visitor.visit(this, context);
     }
   }
 

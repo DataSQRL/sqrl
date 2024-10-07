@@ -110,7 +110,7 @@ public class GraphQLEngineBuilder implements
 
     if (root.subscriptions != null) {
       for (SubscriptionCoords sc : root.subscriptions) {
-        DataFetcher<?> subscriptionFetcher = sc.accept(context.createSubscriptionFetcherVisitor());
+        DataFetcher<?> subscriptionFetcher = sc.accept(context.createSubscriptionFetcherVisitor(), context);
         codeRegistry.dataFetcher(
             FieldCoordinates.coordinates(getSubscriptionTypeName(registry), sc.getFieldName()), subscriptionFetcher);
       }

@@ -168,15 +168,15 @@ public class VertxContext implements Context {
   }
 
   @Override
-  public SubscriptionCoordsVisitor createSubscriptionFetcherVisitor() {
-    return new SubscriptionCoordsVisitor() {
+  public SubscriptionCoordsVisitor<DataFetcher<?>, Context> createSubscriptionFetcherVisitor() {
+    return new SubscriptionCoordsVisitor<>() {
       @Override
-      public DataFetcher<?> visit(KafkaSubscriptionCoords coords) {
+      public DataFetcher<?> visit(KafkaSubscriptionCoords coords, Context context) {
         return KafkaDataFetcherFactory.create(subscriptions, coords);
       }
 
       @Override
-      public DataFetcher<?> visit(PostgresSubscriptionCoords coords) {
+      public DataFetcher<?> visit(PostgresSubscriptionCoords coords, Context context) {
         return PostgresDataFetcherFactory.create(subscriptions, coords);
       }
     };

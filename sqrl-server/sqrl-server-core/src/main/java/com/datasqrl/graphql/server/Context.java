@@ -19,5 +19,5 @@ public interface Context {
 
   MutationCoordsVisitor createSinkFetcherVisitor();
 
-  SubscriptionCoordsVisitor createSubscriptionFetcherVisitor();
+  SubscriptionCoordsVisitor<DataFetcher<?>, Context> createSubscriptionFetcherVisitor();
 }
