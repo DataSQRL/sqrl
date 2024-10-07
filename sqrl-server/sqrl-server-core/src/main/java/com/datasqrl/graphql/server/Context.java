@@ -18,6 +18,4 @@ public interface Context {
   DataFetcher<?> createArgumentLookupFetcher(GraphQLEngineBuilder server, Map<Set<Argument>, ResolvedQuery> lookupMap);
 
   MutationCoordsVisitor createSinkFetcherVisitor();
-
-  SubscriptionCoordsVisitor<DataFetcher<?>, Context> createSubscriptionFetcherVisitor();
 }

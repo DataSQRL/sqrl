@@ -75,19 +75,4 @@ public class JdbcContext implements Context {
     };
   }
 
-  @Override
-  public SubscriptionCoordsVisitor createSubscriptionFetcherVisitor() {
-    return new SubscriptionCoordsVisitor() {
-      @Override
-      public Object visit(KafkaSubscriptionCoords coords, Object context) {
-        throw new RuntimeException("Subscriptions not yet supported");
-      }
-
-      @Override
-      public Object visit(PostgresSubscriptionCoords coords, Object context) {
-        throw new RuntimeException("Subscriptions not yet supported");
-      }
-    };
-  }
-
 }

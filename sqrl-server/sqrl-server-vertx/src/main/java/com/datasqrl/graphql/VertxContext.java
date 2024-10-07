@@ -2,22 +2,19 @@ package com.datasqrl.graphql;
 
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.ReservedName;
-import com.datasqrl.graphql.io.SinkConsumer;
 import com.datasqrl.graphql.io.SinkProducer;
 import com.datasqrl.graphql.kafka.KafkaDataFetcherFactory;
 import com.datasqrl.graphql.postgres_log.PostgresDataFetcherFactory;
+import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import com.datasqrl.graphql.server.Context;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import com.datasqrl.graphql.server.JdbcClient;
 import com.datasqrl.graphql.server.QueryExecutionContext;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.KafkaMutationCoords;
-import com.datasqrl.graphql.server.RootGraphqlModel.KafkaSubscriptionCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoordsVisitor;
 import com.datasqrl.graphql.server.RootGraphqlModel.PostgresLogMutationCoords;
-import com.datasqrl.graphql.server.RootGraphqlModel.PostgresSubscriptionCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
-import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoordsVisitor;
 import com.datasqrl.graphql.server.RootGraphqlModel.VariableArgument;
 import com.google.common.base.Preconditions;
 import graphql.schema.DataFetcher;
@@ -39,10 +36,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.Value;
-import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import reactor.core.publisher.Flux;
 
 @Value
 public class VertxContext implements Context {
@@ -50,7 +45,6 @@ public class VertxContext implements Context {
   private static final Logger log = LoggerFactory.getLogger(VertxContext.class);
   VertxJdbcClient sqlClient;
   Map<String, SinkProducer> sinks;
-  Map<String, SinkConsumer> subscriptions;
   NameCanonicalizer canonicalizer;
 
   @Override
@@ -163,21 +157,6 @@ public class VertxContext implements Context {
               .onComplete(e -> fut.complete(entry))
               .onFailure(e -> log.error("An error happened while executing the query: " + insertStatement, e));
         });
-      }
-    };
-  }
-
-  @Override
-  public SubscriptionCoordsVisitor<DataFetcher<?>, Context> createSubscriptionFetcherVisitor() {
-    return new SubscriptionCoordsVisitor<>() {
-      @Override
-      public DataFetcher<?> visit(KafkaSubscriptionCoords coords, Context context) {
-        return KafkaDataFetcherFactory.create(subscriptions, coords);
-      }
-
-      @Override
-      public DataFetcher<?> visit(PostgresSubscriptionCoords coords, Context context) {
-        return PostgresDataFetcherFactory.create(subscriptions, coords);
       }
     };
   }

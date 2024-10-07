@@ -18,9 +18,7 @@ import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentLookupCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentSet;
 import com.datasqrl.graphql.server.RootGraphqlModel.JdbcQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.KafkaMutationCoords;
-import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.StringSchema;
-import com.google.common.collect.Maps;
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import graphql.GraphQL;
@@ -32,7 +30,6 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
 import java.time.Duration;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -47,7 +44,6 @@ import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -169,8 +165,10 @@ class WriteTest {
     consumer.subscribe(Collections.singletonList(topicName));
 
     GraphQL graphQL = model.accept(
-        new GraphQLEngineBuilder(),
-        new VertxContext(new VertxJdbcClient(Map.of("postgres",client)), mutations, subscriptions, NameCanonicalizer.SYSTEM))
+        new GraphQLEngineBuilder.Builder()
+            .withSubscriptionConfiguration(new SubscriptionConfigurationImpl(subscriptions))
+            .build(),
+        new VertxContext(new VertxJdbcClient(Map.of("postgres",client)), mutations, NameCanonicalizer.SYSTEM))
         .build();
 
     ExecutionInput executionInput = ExecutionInput.newExecutionInput()

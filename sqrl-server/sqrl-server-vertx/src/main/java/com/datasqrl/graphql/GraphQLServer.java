@@ -349,9 +349,14 @@ public class GraphQLServer extends AbstractVerticle {
     try {
       VertxJdbcClient vertxJdbcClient = new VertxJdbcClient(client);
       GraphQL.Builder graphQL = model.accept(
-          new GraphQLEngineBuilder(List.of(SqrlVertxScalars.JSON)),
-          new VertxContext(vertxJdbcClient, constructSinkProducers(model, vertx),
-              constructSubscriptions(model, vertx, startPromise, vertxJdbcClient), canonicalizer));
+          new GraphQLEngineBuilder.Builder()
+              .withAdditionalTypes(List.of(SqrlVertxScalars.JSON))
+              .withSubscriptionConfiguration(
+                  new SubscriptionConfigurationImpl(
+                      constructSubscriptions(model, vertx, startPromise, vertxJdbcClient))
+              )
+              .build(),
+          new VertxContext(vertxJdbcClient, constructSinkProducers(model, vertx), canonicalizer));
       MeterRegistry meterRegistry = BackendRegistries.getDefaultNow();
       if (meterRegistry != null) {
         graphQL.instrumentation(new MicrometerInstrumentation(meterRegistry));
