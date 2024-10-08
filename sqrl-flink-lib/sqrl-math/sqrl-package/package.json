@@ -1,0 +1,16 @@
+{
+  "version": "1",
+  "package": {
+    "name": "datasqrl.functions.math",
+    "version": "0.5.5",
+    "variant": "default",
+    "latest": true,
+    "type": "source",
+    "license": "ASFv2",
+    "repository": "https://todo.com",
+    "homepage": "https://todo.com",
+    "description": "todo",
+    "documentation": "https://todo.com/README.md",
+    "topics": ["datasqrl", "function", "math"]
+  }
+}
