@@ -52,12 +52,10 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
       public DataFetcher<?> visit(KafkaMutationCoords coords, Context context) {
         Map<String, SinkProducer> sinks = new HashMap<>();
         for (MutationCoords mut : root.getMutations()) {
-          if (mut instanceof KafkaMutationCoords) {
-            KafkaMutationCoords kafkaMut = (KafkaMutationCoords) mut;
-            KafkaProducer<String, String> producer = KafkaProducer.create(vertx, getSinkConfig());
-            KafkaSinkProducer sinkProducer = new KafkaSinkProducer<>(kafkaMut.getTopic(), producer);
-            sinks.put(mut.getFieldName(), sinkProducer);
-          }
+          KafkaMutationCoords kafkaMut = (KafkaMutationCoords) mut;
+          KafkaProducer<String, String> producer = KafkaProducer.create(vertx, getSinkConfig());
+          KafkaSinkProducer sinkProducer = new KafkaSinkProducer<>(kafkaMut.getTopic(), producer);
+          sinks.put(mut.getFieldName(), sinkProducer);
         }
 
         SinkProducer emitter = sinks.get(coords.getFieldName());

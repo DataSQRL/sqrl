@@ -8,11 +8,12 @@ import static org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.graphql.config.ServerConfig;
-import com.datasqrl.graphql.io.SinkConsumer;
-import com.datasqrl.graphql.io.SinkProducer;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentLookupCoords;
@@ -33,7 +34,6 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Properties;
 
 import lombok.SneakyThrows;
@@ -47,7 +47,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mockito;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -72,8 +71,6 @@ class WriteTest {
   //Todo Add Kafka
 
   private PgPool client;
-  Map<String, SinkProducer> mutations;
-  Map<String, SinkConsumer> subscriptions;
 
   Vertx vertx;
   RootGraphqlModel model;
@@ -97,17 +94,14 @@ class WriteTest {
     options.setCachePreparedStatements(true);
     options.setPipeliningLimit(100_000);
 
-    ServerConfig config = Mockito.mock(ServerConfig.class);
-    Mockito.when(config.getPgConnectOptions()).thenReturn(options);
+    config = mock(ServerConfig.class);
+    when(config.getPgConnectOptions()).thenReturn(options);
+    when(config.getEnvironmentVariable(any())).thenReturn(CLUSTER.bootstrapServers());
 
     PgPool client = PgPool.pool(vertx, options, new PoolOptions());
     this.client = client;
     this.vertx = vertx;
     this.model = getCustomerModel();
-    GraphQLServer graphQLServer = new GraphQLServer(null, null, null, Optional.empty());
-    GraphQLServer serverSpy = Mockito.spy(graphQLServer);
-    Mockito.when(serverSpy.getEnvironmentVariable("PROPERTIES_BOOTSTRAP_SERVERS"))
-        .thenReturn(CLUSTER.bootstrapServers());
   }
 
   private Properties getKafkaProps() {

@@ -348,8 +348,4 @@ public class GraphQLServer extends AbstractVerticle {
     }
   }
 
-  public String getEnvironmentVariable(String envVar) {
-    return System.getenv(envVar);
-  }
-
 }

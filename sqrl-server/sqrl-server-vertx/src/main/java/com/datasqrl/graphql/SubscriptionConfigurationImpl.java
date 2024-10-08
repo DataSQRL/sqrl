@@ -51,8 +51,10 @@ public class SubscriptionConfigurationImpl implements SubscriptionConfiguration<
           KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, getSourceConfig());
           consumer.subscribe(kafkaSub.getTopic())
               .onSuccess(v -> log.info("Subscribed to topic: {}", kafkaSub.getTopic()))
-              .onFailure(startPromise::fail);
-
+              .onFailure(err -> {
+                log.error("Failed to subscribe to topic: {}", kafkaSub.getTopic(), err);
+                startPromise.fail(err);
+              });
           subscriptions.put(sub.getFieldName(), new KafkaSinkConsumer<>(consumer));
         }
         return KafkaDataFetcherFactory.create(subscriptions, coords);
