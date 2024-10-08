@@ -16,6 +16,4 @@ public interface Context {
   DataFetcher<Object> createPropertyFetcher(String name);
 
   DataFetcher<?> createArgumentLookupFetcher(GraphQLEngineBuilder server, Map<Set<Argument>, ResolvedQuery> lookupMap);
-
-  MutationCoordsVisitor createSinkFetcherVisitor();
 }

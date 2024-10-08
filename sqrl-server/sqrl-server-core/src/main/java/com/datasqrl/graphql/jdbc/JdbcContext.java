@@ -60,19 +60,4 @@ public class JdbcContext implements Context {
     };
   }
 
-  @Override
-  public MutationCoordsVisitor createSinkFetcherVisitor() {
-    return new MutationCoordsVisitor() {
-      @Override
-      public DataFetcher<?> visit(KafkaMutationCoords coords) {
-        throw new RuntimeException("Mutations not yet supported");
-      }
-
-      @Override
-      public DataFetcher<?> visit(PostgresLogMutationCoords coords) {
-        throw new RuntimeException("Mutations not yet supported");
-      }
-    };
-  }
-
 }

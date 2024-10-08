@@ -86,7 +86,12 @@ class GraphQLJwtHandlerTest {
             .build())
         .build();
 
-    serverConfig = new ServerConfig();
+    serverConfig = new ServerConfig() {
+      @Override
+      public String getEnvironmentVariable(String envVar) {
+        return CLUSTER.bootstrapServers();
+      }
+    };
     serverConfig.setAuthOptions(new JWTAuthOptions()
         .addPubSecKey(new PubSecKeyOptions()
             .setAlgorithm("HS256")
@@ -96,22 +101,7 @@ class GraphQLJwtHandlerTest {
     serverConfig.setCorsHandlerOptions(new CorsHandlerOptions());
     HttpServerOptions httpServerOptions = new HttpServerOptions().setPort(8888).setHost("localhost");
     serverConfig.setHttpServerOptions(httpServerOptions);
-    server = new GraphQLServer(root, serverConfig, NameCanonicalizer.SYSTEM, Optional.empty()) {
-      @Override
-      public String getEnvironmentVariable(String envVar) {
-        return CLUSTER.bootstrapServers();
-      }
-
-      Map<String, String> getSourceConfig() {
-        Map<String, String> conf = new HashMap<>();
-        conf.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
-        conf.put(GROUP_ID_CONFIG, UUID.randomUUID().toString());
-        conf.put(KEY_DESERIALIZER_CLASS_CONFIG, "com.datasqrl.graphql.kafka.JsonDeserializer");
-        conf.put(VALUE_DESERIALIZER_CLASS_CONFIG, "com.datasqrl.graphql.kafka.JsonDeserializer");
-        conf.put(AUTO_OFFSET_RESET_CONFIG, "earliest");
-        return conf;
-      }
-    };
+    server = new GraphQLServer(root, serverConfig, NameCanonicalizer.SYSTEM, Optional.empty());
     vertx.deployVerticle(server)
         .onSuccess((c)->testContext.completeNow())
         .onFailure((c)->fail("Could not start")).toCompletionStage().toCompletableFuture().get();
@@ -222,10 +212,9 @@ class GraphQLJwtHandlerTest {
             KafkaProducer producer =  KafkaProducer.create(Vertx.vertx(), props);
             JsonObject jsonMessage = new JsonObject().put("val", "x");
             producer.send(new KafkaProducerRecordImpl("mytopic", jsonMessage.toString()),(Handler<AsyncResult<RecordMetadata>>)(metadata)->{
-//              System.out.println(metadata.result().getTopic());
-//              System.out.println(metadata.result().getTimestamp());
+              System.out.println(metadata.result().getTopic());
+              System.out.println(metadata.result().getTimestamp());
             });
-
           }
         });
       } else {

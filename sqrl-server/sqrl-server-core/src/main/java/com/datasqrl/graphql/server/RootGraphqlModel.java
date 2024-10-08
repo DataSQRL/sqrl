@@ -9,7 +9,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import graphql.schema.DataFetcher;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -96,13 +95,14 @@ public class RootGraphqlModel {
   })
   public static abstract class MutationCoords {
     protected String type;
-    public abstract DataFetcher<?> accept(MutationCoordsVisitor visitor);
+    public abstract <R, C> R accept(MutationCoordsVisitor<R, C> visitor, C context);
     public abstract String getFieldName();
   }
 
-  public interface MutationCoordsVisitor {
-    DataFetcher<?> visit(KafkaMutationCoords coords);
-    DataFetcher<?> visit(PostgresLogMutationCoords coords);
+  public interface MutationCoordsVisitor<R, C> {
+    R visit(KafkaMutationCoords coords, C context);
+    R visit(PostgresLogMutationCoords coords, C c
+    );
   }
 
   @Getter
@@ -122,8 +122,8 @@ public class RootGraphqlModel {
     }
 
     @Override
-    public DataFetcher<?> accept(MutationCoordsVisitor visitor) {
-      return visitor.visit(this);
+    public <R, C> R accept(MutationCoordsVisitor<R, C> visitor, C context) {
+      return visitor.visit(this, context);
     }
   }
 
@@ -147,8 +147,8 @@ public class RootGraphqlModel {
     }
 
     @Override
-    public DataFetcher<?> accept(MutationCoordsVisitor visitor) {
-      return visitor.visit(this);
+    public <R, C> R accept(MutationCoordsVisitor<R, C> visitor, C context) {
+      return visitor.visit(this, context);
     }
   }
 
