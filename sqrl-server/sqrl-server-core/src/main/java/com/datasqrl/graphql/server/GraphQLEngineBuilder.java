@@ -59,8 +59,9 @@ public class GraphQLEngineBuilder implements
     QueryBaseVisitor<ResolvedQuery, Context>,
     ResolvedQueryVisitor<CompletableFuture, QueryExecutionContext> {
 
-  private List<GraphQLScalarType> addlTypes;
-  private SubscriptionConfiguration<DataFetcher<?>> subscriptionConfiguration;
+  private final List<GraphQLScalarType> addlTypes;
+  private final SubscriptionConfiguration<DataFetcher<?>> subscriptionConfiguration;
+  private final MutationConfiguration<DataFetcher<?>> mutationConfiguration;
 
   public static final ObjectTypeDefinition DUMMY_QUERY = ObjectTypeDefinition.newObjectTypeDefinition()
       .name("Query")
@@ -73,11 +74,13 @@ public class GraphQLEngineBuilder implements
   private GraphQLEngineBuilder(Builder builder) {
     this.addlTypes = builder.addlTypes;
     this.subscriptionConfiguration = builder.subscriptionConfiguration;
+    this.mutationConfiguration = builder.mutationConfiguration;
   }
 
   public static class Builder {
     private List<GraphQLScalarType> addlTypes = new ArrayList<>();
     private SubscriptionConfiguration<DataFetcher<?>> subscriptionConfiguration;
+    private MutationConfiguration<DataFetcher<?>> mutationConfiguration;
 
     public Builder withAdditionalTypes(List<GraphQLScalarType> types) {
       this.addlTypes = types;
@@ -86,6 +89,11 @@ public class GraphQLEngineBuilder implements
 
     public Builder withSubscriptionConfiguration(SubscriptionConfiguration<DataFetcher<?>> configurer) {
       this.subscriptionConfiguration = configurer;
+      return this;
+    }
+
+    public Builder withMutationConfiguration(MutationConfiguration<DataFetcher<?>> configurer) {
+      this.mutationConfiguration = configurer;
       return this;
     }
 
@@ -118,7 +126,7 @@ public class GraphQLEngineBuilder implements
 
     if (root.mutations != null) {
       for (MutationCoords mc : root.mutations) {
-        DataFetcher<?> fetcher = mc.accept(context.createSinkFetcherVisitor());
+        DataFetcher<?> fetcher = mc.accept(mutationConfiguration.createSinkFetcherVisitor(), context);
         codeRegistry.dataFetcher(
             FieldCoordinates.coordinates(getMutationTypeName(registry), mc.getFieldName()), fetcher);
       }

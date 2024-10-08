@@ -44,7 +44,6 @@ public class VertxContext implements Context {
 
   private static final Logger log = LoggerFactory.getLogger(VertxContext.class);
   VertxJdbcClient sqlClient;
-  Map<String, SinkProducer> sinks;
   NameCanonicalizer canonicalizer;
 
   @Override
@@ -102,79 +101,6 @@ public class VertxContext implements Context {
           env, argumentSet, fut);
       resolvedQuery.accept(server, context);
     });
-  }
-
-  @Override
-  public MutationCoordsVisitor createSinkFetcherVisitor() {
-    return new MutationCoordsVisitor() {
-      @Override
-      public DataFetcher<?> visit(KafkaMutationCoords coords) {
-        SinkProducer emitter = sinks.get(coords.getFieldName());
-
-        Preconditions.checkNotNull(emitter, "Could not find sink for field: %s", coords.getFieldName());
-        return VertxDataFetcher.create((env, fut) -> {
-
-          Map entry = getEntry(env);
-
-          emitter.send(entry)
-              .onSuccess(sinkResult->{
-                //Add timestamp from sink to result
-                ZonedDateTime dateTime = ZonedDateTime.ofInstant(sinkResult.getSourceTime(), ZoneOffset.UTC);
-                entry.put(ReservedName.MUTATION_TIME.getCanonical(), dateTime.toLocalDateTime());
-
-                fut.complete(entry);
-              })
-              .onFailure((m)->
-                  fut.fail(m)
-              );
-        });
-      }
-
-      @Override
-      public DataFetcher<?> visit(PostgresLogMutationCoords coords) {
-
-        return VertxDataFetcher.create((env, fut) -> {
-          Map entry = getEntry(env);
-          entry.put("event_time", Timestamp.from(Instant.now())); // TODO: better to do it in the db
-
-          Object[] paramObj = new Object[coords.getParameters().size()];
-          for (int i = 0; i < coords.getParameters().size(); i++) {
-            String param = coords.getParameters().get(i);
-            Object o = entry.get(param);
-            if (o instanceof UUID) {
-              o = ((UUID)o).toString();
-            } else if (o instanceof Timestamp) {
-              o = ((Timestamp) o).toLocalDateTime().atOffset(ZoneOffset.UTC);
-            }
-            paramObj[i] = o;
-          }
-
-          String insertStatement = coords.getInsertStatement();
-
-          PreparedQuery<RowSet<Row>> preparedQuery = sqlClient.getClients().get("postgres")
-              .preparedQuery(insertStatement);
-          preparedQuery.execute(Tuple.from(paramObj))
-              .onComplete(e -> fut.complete(entry))
-              .onFailure(e -> log.error("An error happened while executing the query: " + insertStatement, e));
-        });
-      }
-    };
-  }
-
-
-  private Map getEntry(DataFetchingEnvironment env) {
-    //Rules:
-    //- Only one argument is allowed, it doesn't matter the name
-    //- input argument cannot be null.
-    Map<String, Object> args = env.getArguments();
-
-    Map entry = (Map)args.entrySet().stream()
-        .findFirst().map(Entry::getValue).get();
-
-    //Add UUID for event
-    UUID uuid = UUID.randomUUID();
-    entry.put(ReservedName.MUTATION_PRIMARY_KEY.getDisplay(), uuid);
-    return entry;
   }
 
 }

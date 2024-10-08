@@ -105,7 +105,4 @@ public class PostgresListenNotifyConsumer {
         .onFailure(e -> log.error("An error happened while executing the query: " + onNotifyQuery, e));
   }
 
-  public void handle(Consumer<Map<String, Object>> onNewRecord) {
-
-  }
 }

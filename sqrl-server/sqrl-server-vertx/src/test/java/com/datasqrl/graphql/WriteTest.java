@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.datasqrl.canonicalizer.NameCanonicalizer;
+import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.io.SinkConsumer;
 import com.datasqrl.graphql.io.SinkProducer;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
@@ -74,8 +75,11 @@ class WriteTest {
   Map<String, SinkProducer> mutations;
   Map<String, SinkConsumer> subscriptions;
 
+  Vertx vertx;
   RootGraphqlModel model;
   String topicName = "topic-1";
+
+  ServerConfig config;
 
   @SneakyThrows
   @BeforeEach
@@ -93,17 +97,17 @@ class WriteTest {
     options.setCachePreparedStatements(true);
     options.setPipeliningLimit(100_000);
 
+    ServerConfig config = Mockito.mock(ServerConfig.class);
+    Mockito.when(config.getPgConnectOptions()).thenReturn(options);
+
     PgPool client = PgPool.pool(vertx, options, new PoolOptions());
     this.client = client;
+    this.vertx = vertx;
     this.model = getCustomerModel();
     GraphQLServer graphQLServer = new GraphQLServer(null, null, null, Optional.empty());
     GraphQLServer serverSpy = Mockito.spy(graphQLServer);
     Mockito.when(serverSpy.getEnvironmentVariable("PROPERTIES_BOOTSTRAP_SERVERS"))
         .thenReturn(CLUSTER.bootstrapServers());
-
-    this.mutations = serverSpy.constructSinkProducers(model, vertx);
-    // TODO (Soma) pass vertxJdbcClient
-    this.subscriptions = serverSpy.constructSubscriptions(model, vertx, Promise.promise(), null);
   }
 
   private Properties getKafkaProps() {
@@ -166,9 +170,10 @@ class WriteTest {
 
     GraphQL graphQL = model.accept(
         new GraphQLEngineBuilder.Builder()
-            .withSubscriptionConfiguration(new SubscriptionConfigurationImpl(subscriptions))
+            .withMutationConfiguration(new MutationConfigurationImpl(model, vertx, config))
+            .withSubscriptionConfiguration(new SubscriptionConfigurationImpl(model, vertx, config, Promise.promise(), null))
             .build(),
-        new VertxContext(new VertxJdbcClient(Map.of("postgres",client)), mutations, NameCanonicalizer.SYSTEM))
+        new VertxContext(new VertxJdbcClient(Map.of("postgres",client)), NameCanonicalizer.SYSTEM))
         .build();
 
     ExecutionInput executionInput = ExecutionInput.newExecutionInput()
