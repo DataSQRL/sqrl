@@ -140,6 +140,7 @@ Inputs: pgtable_1
     ],
     "subscriptions" : [
       {
+        "type" : "kafka",
         "fieldName" : "PgTable",
         "topic" : "pgtable_1",
         "sinkConfig" : { },
