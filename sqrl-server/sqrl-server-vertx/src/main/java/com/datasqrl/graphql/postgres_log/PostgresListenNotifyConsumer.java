@@ -65,16 +65,22 @@ public class PostgresListenNotifyConsumer {
 
     List<Object> paramObj = new ArrayList<>();
 
-    // TODO (Soma) - We need to properly handle the payload types here.
-    //  This is hard coded currently and tailored to the sensors example.
+    // TODO (Soma) - This could be further improved. We chose json because that keeps the
+    //  datatype information, but Dates are an exception. Maybe we need to save the datatype
+    //  to the plan.
     for (String parameter : parameters) {
-      if (parameter.equals("timeSec")) {
-        paramObj.add(OffsetDateTime.parse(jsonPayload.getString(parameter)));
+      Object value = jsonPayload.getValue(parameter);
 
-      } else if (parameter.equals("sensorid")) {
-        paramObj.add(jsonPayload.getInteger(parameter));
+      if (value instanceof String) {
+        // Check if it's a datetime string and parse it
+        String strValue = (String) value;
+        if (strValue.matches("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*$")) {
+          paramObj.add(OffsetDateTime.parse(strValue));
+        } else {
+          paramObj.add(strValue); // handle other strings
+        }
       } else {
-        throw new IllegalArgumentException("Unknown parameter: " + parameter);
+        paramObj.add(value);
       }
     }
 
@@ -89,13 +95,7 @@ public class PostgresListenNotifyConsumer {
           if (asyncResult.succeeded()) {
             RowSet<Row> rows = asyncResult.result();
             for (Row row : rows) {
-              Map<String, Object> resultMap = new HashMap<>();
-              for (Row rowValue : rows) {
-                for (int i = 0; i < row.size(); i++) {
-                  resultMap.put(row.getColumnName(i), rowValue.getValue(i));
-                }
-              }
-              listener.accept(resultMap);
+              listener.accept(row.toJson());
             }
           } else {
             log.error("An error happened while executing the query: {}", onNotifyQuery,
