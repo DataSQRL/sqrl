@@ -14,7 +14,7 @@ public class Zipper {
 
     public static final String ZIP_EXTENSION = ".zip";
 
-    public static void compress(Path zipFile, Path directory) throws IOException {
+    public static void compress(Path zipFile, Path directory, Path... additionalFiles) throws IOException {
         Files.deleteIfExists(zipFile);
         ExcludeFileFilter excludeFilter = file -> file.getName().endsWith(ZIP_EXTENSION);
         ZipParameters zipParameters = new ZipParameters();
@@ -23,6 +23,10 @@ public class Zipper {
         for (Path p : Files.list(directory).collect(Collectors.toList())) {
             if (Files.isRegularFile(p) && !FileUtil.isExtension(p, ZIP_EXTENSION)) zip.addFile(p.toFile());
             else if (Files.isDirectory(p)) zip.addFolder(p.toFile(), zipParameters);
+        }
+        for (Path additionalFile : additionalFiles) {
+            if (Files.isRegularFile(additionalFile)) zip.addFile(additionalFile.toFile());
+            else if (Files.isDirectory(additionalFile)) zip.addFolder(additionalFile.toFile(), zipParameters);
         }
     }
 

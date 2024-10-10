@@ -29,6 +29,8 @@ public interface PackageConfiguration {
 
   List<String> getTopics();
 
+  List<String> getSources();
+
   void checkInitialized();
 
   Dependency asDependency();

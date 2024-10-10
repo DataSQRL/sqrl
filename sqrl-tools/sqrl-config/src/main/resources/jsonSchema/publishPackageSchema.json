@@ -47,6 +47,13 @@
           "items": {
             "type": "string"
           }
+        },
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
         }
       },
       "required": ["name", "version", "latest"],
