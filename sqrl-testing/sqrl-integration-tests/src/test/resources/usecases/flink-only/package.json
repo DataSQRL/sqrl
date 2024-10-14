@@ -1,0 +1,12 @@
+{
+  "version": "1",
+  "enabled-engines": ["flink"],
+  "values" : {
+    "flink-config": {
+      "table.exec.source.idle-timeout": "1 ms"
+    }
+  },
+  "test-runner": {
+    "delay-sec": -1
+  }
+}

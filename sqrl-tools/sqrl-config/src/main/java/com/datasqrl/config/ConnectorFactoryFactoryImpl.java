@@ -63,7 +63,7 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
       } else if (connectorName.equalsIgnoreCase("iceberg")) {
         return connectorConfig.map(this::createIceberg);
       } else {
-        throw new IllegalArgumentException("Unable to create connectorConfig for engineType=" + engineType.name());
+        return connectorConfig.map(this::createGeneric);
       }
     }
 
@@ -76,6 +76,18 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
         .get().getConnectors();
     Optional<ConnectorConf> connectorConfig = connectors.getConnectorConfig(name);
     return connectorConfig.get();
+  }
+
+  private ConnectorFactory createGeneric(ConnectorConf connectorConf) {
+    // todo template this
+    return context -> {
+      Map<String, Object> map = connectorConf.toMap();
+      TableConfigBuilderImpl builder = TableConfigImpl.builder(context.getName());
+      map.entrySet().forEach(e->
+          builder.getConnectorConfig().setProperty(e.getKey(), e.getValue()));
+      builder.setType(ExternalDataType.source_and_sink);
+      return builder.build();
+    };
   }
 
   private ConnectorFactory createIceberg(ConnectorConf connectorConf) {
