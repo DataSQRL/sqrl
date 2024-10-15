@@ -80,7 +80,7 @@ public class JarPreprocessor implements Preprocessor {
       ObjectNode obj = mapper.createObjectNode();
       obj.put("language", "java");
       obj.put("functionClass", clazz);
-      obj.put("jarPath", path.toString());
+      obj.put("jarPath", processorContext.getRootDir().relativize(path).toString());
 
       // Create a file in a temporary directory
       String functionName = clazz.substring(clazz.lastIndexOf('.') + 1);
