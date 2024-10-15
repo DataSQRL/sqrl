@@ -89,11 +89,8 @@ public class JarPreprocessor implements Preprocessor {
       processorContext.addLibrary(path);
     }
 
-    processorContext.addDependency(path);
-
     return null;
   }
-
   /**
    * Checks if the jar entry is valid
    */
