@@ -7,8 +7,7 @@ import java.util.Optional;
 import lombok.Value;
 
 @Value
-public
-class PipelineStageHint implements OptimizerHint {
+public class PipelineStageHint implements OptimizerHint {
 
   public static final String HINT_NAME = "exec";
 

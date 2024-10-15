@@ -36,6 +36,9 @@
           "connector": "iceberg",
           "catalog-table": "${sqrl:table}"
         },
+        "blackhole": {
+          "connector": "blackhole"
+        },
         "postgres_log-source": {
           "connector": "postgres-cdc",
           "hostname": "${PGHOST}",
