@@ -2,7 +2,7 @@
   "version": 1,
   "flink" : {
     "format" : "csv",
-    "path" : "/mnt/build/data",
+    "path" : "${DATA_PATH}",
     "connector" : "filesystem"
   },
   "table" : {
