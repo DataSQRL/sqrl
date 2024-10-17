@@ -2,7 +2,7 @@
   "version": 1,
   "flink" : {
     "format" : "json",
-    "path" : "/mnt/build/data",
+    "path" : "${DATA_PATH}",
     "connector" : "filesystem",
     "source.path.regex-pattern" : "to be determined"
   },
