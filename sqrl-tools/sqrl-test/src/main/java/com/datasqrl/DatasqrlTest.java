@@ -87,6 +87,7 @@ public class DatasqrlTest {
       }
 
       long delaySec = 30;
+      int requiredCheckpoints = 0;
       //todo: fix get package json
       Object testRunner = run.getPackageJson().get("test-runner");
       if (testRunner instanceof Map) {
@@ -95,11 +96,15 @@ public class DatasqrlTest {
         if (o instanceof Number) {
           delaySec = ((Number) o).longValue();
         }
+        Object c = testRunnerMap.get("required-checkpoints");
+        if (c instanceof Number) {
+          requiredCheckpoints = ((Number) c).intValue();
+        }
       }
 
       if (delaySec == -1) {
         FlinkOperatorStatusChecker flinkOperatorStatusChecker = new FlinkOperatorStatusChecker(
-            result.getJobClient().get().getJobID().toString());
+            result.getJobClient().get().getJobID().toString(), requiredCheckpoints);
         flinkOperatorStatusChecker.run();
       } else {
         try {

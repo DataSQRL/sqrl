@@ -14,6 +14,7 @@
     "graphql": "logging-kafka.graphqls"
   },
   "test-runner": {
-    "delay-sec": 10
+    "delay-sec" : -1,
+    "required-checkpoints" : 1
   }
 }

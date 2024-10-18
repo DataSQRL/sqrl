@@ -15,4 +15,9 @@ public class TestRunnerConfigImpl implements TestRunnerConfiguration {
         .getOptional()
         .map(sec->Duration.of(sec, ChronoUnit.SECONDS));
   }
+
+  public Optional<Integer> getRequiredCheckpoints() {
+    return sqrlConfig.asInt("required-checkpoints")
+        .getOptional();
+  }
 }

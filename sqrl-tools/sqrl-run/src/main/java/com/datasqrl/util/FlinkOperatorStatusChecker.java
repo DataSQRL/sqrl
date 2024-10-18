@@ -15,37 +15,38 @@ import lombok.SneakyThrows;
 public class FlinkOperatorStatusChecker {
 
   private static final String FLINK_REST_URL = "http://localhost:8081"; // Adjust to your Flink REST URL
-  private String JOB_ID = "<your-deployment-id-here>"; // Set your Flink job ID
-  private static final long POLLING_INTERVAL_MS = 1000; // Poll every 1 seconds
+  private String JOB_ID; // Set your Flink job ID
+  private static final long POLLING_INTERVAL_MS = 1000; // Poll every 1 second
+  private int requiredSuccessfulCheckpoints;
 
   public void run() {
     try {
-      boolean operatorsStopped = checkIfOperatorsStoppedPropagating(JOB_ID);
-      if (operatorsStopped) {
-        System.out.println("Operators have stopped propagating data.");
+      boolean conditionsMet = checkIfOperatorsStoppedAndCheckpointsCompleted(JOB_ID);
+      if (conditionsMet) {
+        System.out.println("Operators have stopped propagating data and required checkpoints have been completed.");
       } else {
-        System.out.println("Operators are still processing data.");
+        System.out.println("Operators are still processing data or required checkpoints not completed yet.");
       }
     } catch (Exception e) {
-      e.printStackTrace();
+      // Can throw if job finishes early (bounded jobs)
     }
   }
 
-  public boolean checkIfOperatorsStoppedPropagating(String jobId) throws Exception {
-    // You can define a threshold for the number of consecutive polls where metrics don't change
-    int threshold = 2;
+  public boolean checkIfOperatorsStoppedAndCheckpointsCompleted(String jobId) throws Exception {
+    int threshold = 2; // Number of consecutive idle polls required
     int consecutiveIdlePolls = 0;
 
     while (true) {
       boolean isIdle = checkIfAllOperatorsIdle(jobId);
+      boolean checkpointsCompleted = checkIfRequiredCheckpointsCompleted(jobId);
 
-      if (isIdle) {
+      if (isIdle && checkpointsCompleted) {
         consecutiveIdlePolls++;
         if (consecutiveIdlePolls >= threshold) {
-          return true; // The operators have stopped propagating data
+          return true; // Conditions met
         }
       } else {
-        consecutiveIdlePolls = 0; // Reset counter if operators are still processing data
+        consecutiveIdlePolls = 0; // Reset counter if conditions not met
       }
 
       // Sleep before the next poll
@@ -55,15 +56,9 @@ public class FlinkOperatorStatusChecker {
 
   public boolean checkIfAllOperatorsIdle(String jobId) throws Exception {
     String taskMetricsUrl = FLINK_REST_URL + "/jobs/" + jobId; // Get the job details
-    try {
-      String jsonResponse = getResponseFromUrl(taskMetricsUrl);
-      // Parse the vertex (operator) metrics
-      return areAllVerticesIdle(jsonResponse);
-    } catch (Exception e) {
-      //connection can close if standalone job finishes
-      return true;
-    }
-
+    String jsonResponse = getResponseFromUrl(taskMetricsUrl);
+    // Parse the vertex (operator) metrics
+    return areAllVerticesIdle(jsonResponse);
   }
 
   @SneakyThrows
@@ -75,14 +70,13 @@ public class FlinkOperatorStatusChecker {
     for (JsonNode vertexElement : verticesArray) {
       ObjectNode vertex = (ObjectNode) vertexElement;
       if (!isVertexIdle(vertex)) {
-        System.out.println("vertex not idle");
+        System.out.println("Vertex not idle");
         return false; // If any operator is not idle, return false
       }
     }
-    System.out.println("all finished");
+    System.out.println("All operators are idle");
     return true; // All operators are idle
   }
-
 
   public static boolean isVertexIdle(ObjectNode vertex) {
     ObjectNode metrics = (ObjectNode) vertex.get("metrics");
@@ -97,7 +91,7 @@ public class FlinkOperatorStatusChecker {
             + writeRecords);
 
     // Check if both read and write records have stopped increasing
-    return hasMetricsStopped(vertex.get("id").toString(), readRecords, writeRecords);
+    return hasMetricsStopped(vertex.get("id").asText(), readRecords, writeRecords);
   }
 
   // Keeps track of the previous values of the operator metrics
@@ -111,10 +105,8 @@ public class FlinkOperatorStatusChecker {
     System.out.printf("%s %d %d %d %d%n", vertexId, currentReadRecords, previous.readRecords,
         currentWriteRecords, previous.writeRecords);
     // If the read or write records haven't changed, we consider the operator idle
-    return currentReadRecords
-        == previous.readRecords && currentWriteRecords == previous.writeRecords;
+    return currentReadRecords == previous.readRecords && currentWriteRecords == previous.writeRecords;
   }
-
 
   // Data class to store previous operator metrics
   static class OperatorMetrics {
@@ -147,5 +139,21 @@ public class FlinkOperatorStatusChecker {
     } else {
       throw new RuntimeException("Failed to get metrics, HTTP response code: " + status);
     }
+  }
+
+  public boolean checkIfRequiredCheckpointsCompleted(String jobId) throws Exception {
+    String checkpointsUrl = FLINK_REST_URL + "/jobs/" + jobId + "/checkpoints"; // Get the checkpoints info
+    String jsonResponse = getResponseFromUrl(checkpointsUrl);
+    int completedCheckpoints = getCompletedCheckpointsCount(jsonResponse);
+    System.out.println("Completed checkpoints: " + completedCheckpoints);
+    return completedCheckpoints >= requiredSuccessfulCheckpoints;
+  }
+
+  public int getCompletedCheckpointsCount(String jsonResponse) throws Exception {
+    ObjectMapper mapper = new ObjectMapper();
+    JsonNode jsonObject = mapper.readTree(jsonResponse);
+    JsonNode countsNode = jsonObject.get("counts");
+    int completedCheckpoints = countsNode.get("completed").asInt();
+    return completedCheckpoints;
   }
 }
