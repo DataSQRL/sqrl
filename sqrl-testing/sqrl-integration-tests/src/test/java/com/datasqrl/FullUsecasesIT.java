@@ -76,7 +76,9 @@ public class FullUsecasesIT {
       new ScriptCriteria("analytics-only.sqrl", "test"),
       new ScriptCriteria("analytics-only.sqrl", "run"),
       new ScriptCriteria("seedshop-extended.sqrl", "test"), // CustomerPromotionTest issue
-      new ScriptCriteria("seedshop-extended.sqrl", "run") // CustomerPromotionTest issue
+      new ScriptCriteria("seedshop-extended.sqrl", "run"), // CustomerPromotionTest issue
+      new ScriptCriteria("patient-sensor.sqrl", "test"), //missing data
+      new ScriptCriteria("patient-sensor.sqrl", "run") //missing data
   );
 
   static final Path PROJECT_ROOT = Paths.get(System.getProperty("user.dir"));
