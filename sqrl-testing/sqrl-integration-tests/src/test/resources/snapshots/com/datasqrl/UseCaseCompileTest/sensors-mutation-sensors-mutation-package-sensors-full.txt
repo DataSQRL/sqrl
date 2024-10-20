@@ -223,6 +223,7 @@ LogicalTableScan(table=[[sensorreading_1]])
     ],
     "subscriptions" : [
       {
+        "type" : "kafka",
         "fieldName" : "HighTempAlert",
         "topic" : "hightempalert_1",
         "sinkConfig" : { },

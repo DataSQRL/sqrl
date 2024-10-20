@@ -31,3 +31,13 @@ type CreatedReading {
   event_time: String!
   sensorid: Int!
 }
+
+type Subscription {
+  HighTempAlert(sensorid: Int): HighTempAlert
+}
+
+type HighTempAlert {
+  sensorid: Int!
+  timeSec: String!
+  temp: Float!
+}
