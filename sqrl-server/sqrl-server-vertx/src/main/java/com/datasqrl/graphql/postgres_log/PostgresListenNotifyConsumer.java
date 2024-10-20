@@ -10,11 +10,8 @@ import io.vertx.sqlclient.PreparedQuery;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
@@ -65,23 +62,10 @@ public class PostgresListenNotifyConsumer {
 
     List<Object> paramObj = new ArrayList<>();
 
-    // TODO (Soma) - This could be further improved. We chose json because that keeps the
-    //  datatype information, but Dates are an exception. Maybe we need to save the datatype
-    //  to the plan.
+    // TODO: properly do datatype conversion
     for (String parameter : parameters) {
       Object value = jsonPayload.getValue(parameter);
-
-      if (value instanceof String) {
-        // Check if it's a datetime string and parse it
-        String strValue = (String) value;
-        if (strValue.matches("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*$")) {
-          paramObj.add(OffsetDateTime.parse(strValue));
-        } else {
-          paramObj.add(strValue); // handle other strings
-        }
-      } else {
-        paramObj.add(value);
-      }
+      paramObj.add(value);
     }
 
     // TODO (Soma) - It feels odd that we are using vertx a bit differently compared to how we

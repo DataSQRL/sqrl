@@ -42,15 +42,6 @@ public class PostgresDataFetcherFactory {
           }
 
           Object retrievedData = objectMap.get(filter.getValue());
-          // TODO (Soma) - This is needed because it seems like in graphql there is no Long type.
-          //  When filtering by an ID, the type unfortunately does not match the type of the data
-          //  in the database, which is Long. This mismatch occurs because, in GraphQL, the ID
-          //  is defined as an Int.
-          //  This is a temporary workaround.
-          if (argValue instanceof Integer) {
-            argValue = Long.valueOf((Integer) argValue);
-          }
-
           if (!argValue.equals(retrievedData)) {
             return true;
           }
