@@ -264,11 +264,13 @@ public class DatasqrlTest {
   private static final String RESET = "\u001B[0m";
 
   private void logGreen(String line) {
-    log.info(GREEN + "{}" + RESET, line);
+    log.info(line);
+    System.out.println(GREEN + line + RESET);
   }
 
   private void logRed(String line) {
-    log.error(RED + "{}" + RESET, line);
+    log.error(line);
+    System.out.println(RED + line + RESET);
   }
 
   //Todo: Unify with other testplan
