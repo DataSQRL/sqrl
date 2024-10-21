@@ -189,9 +189,11 @@ public class FullUsecasesIT {
          long delaySec = packageJson.getTestConfig().flatMap(TestRunnerConfiguration::getDelaySec)
               .map(Duration::getSeconds)
               .orElse((long) -1);
-          if (delaySec == -1 ) {
+         int requiredCheckpoints = packageJson.getTestConfig().flatMap(TestRunnerConfiguration::getRequiredCheckpoints)
+              .orElse(0);
+          if (delaySec == -1) {
             FlinkOperatorStatusChecker flinkOperatorStatusChecker = new FlinkOperatorStatusChecker(
-                result.getJobClient().get().getJobID().toString());
+                result.getJobClient().get().getJobID().toString(), requiredCheckpoints);
             flinkOperatorStatusChecker.run();
           } else {
             Thread.sleep(delaySec * 1000);
@@ -237,7 +239,7 @@ public class FullUsecasesIT {
   @MethodSource("useCaseProvider")
   @Disabled
   public void runTestNumber(UseCaseTestParameter param) {
-    int i = 31;
+    int i = 19;
     testNo++;
     System.out.println(testNo + ":" + param);
     if (i == testNo) {

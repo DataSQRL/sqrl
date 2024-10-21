@@ -28,6 +28,7 @@
     }
   },
   "test-runner": {
-    "delay-sec": 15
+    "delay-sec" : -1,
+    "required-checkpoints" : 1
   }
 }
