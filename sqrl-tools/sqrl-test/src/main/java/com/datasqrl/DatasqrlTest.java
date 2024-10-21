@@ -2,6 +2,8 @@ package com.datasqrl;
 
 import com.datasqrl.util.FlinkOperatorStatusChecker;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -180,25 +182,26 @@ public class DatasqrlTest {
       for (Exception e : exceptions) {
         if (e instanceof SnapshotMismatchException) {
           SnapshotMismatchException ex = (SnapshotMismatchException) e;
-          log.error("Snapshot mismatch for test: {}\nExpected: {}\nActual  : {}",
-              ex.getTestName(), ex.getExpected(), ex.getActual());
+          logRed("Snapshot mismatch for test: " + ex.getTestName() + "\n" +
+              "Expected: " + ex.getExpected() + "\n" +
+              "Actual  : " + ex.getActual());
           exitCode = 1;
         } else if (e instanceof JobFailureException) {
-          log.error("Flink job failed to start.", e);
+          logRed("Flink job failed to start.\n" + getStackTraceAsString(e));
           exitCode = 1;
         } else if (e instanceof MissingSnapshotException) {
           MissingSnapshotException ex = (MissingSnapshotException) e;
-          log.error("Snapshot on filesystem but not in result for test: {}", ex.getTestName());
+          logRed("Snapshot on filesystem but not in result: " + ex.getTestName());
           exitCode = 1;
         } else if (e instanceof SnapshotCreationException) {
           SnapshotCreationException ex = (SnapshotCreationException) e;
-          log.info("Snapshot created for test: {}\nRerun to verify.", ex.getTestName());
+          logGreen("Snapshot created for test: " + ex.getTestName() + "\nRerun to verify.");
           exitCode = 1;
         } else if (e instanceof SnapshotOkException) {
           SnapshotOkException ex = (SnapshotOkException) e;
-          log.info("Snapshot OK for {}", ex.getTestName());
+          logGreen("Snapshot OK for " + ex.getTestName());
         } else {
-          log.error("An error occurred: {}", e.getMessage(), e);
+          logRed("Error occurred: " + e.getMessage() + "\n" + getStackTraceAsString(e));
           exitCode = 1;
         }
       }
@@ -206,6 +209,17 @@ public class DatasqrlTest {
 
     return exitCode;
   }
+
+  private String getStackTraceAsString(Exception e) {
+    try (StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw)) {
+      e.printStackTrace(pw);
+      return sw.toString();
+    } catch (Exception ex) {
+      return "Failed to get stack trace: " + ex.getMessage();
+    }
+  }
+
 
   @SneakyThrows
   private String executeQuery(String query) {
@@ -230,6 +244,7 @@ public class DatasqrlTest {
   private void snapshot(Path snapshotPath, String name, String currentResponse,
       List<Exception> exceptions) {
 
+
     // Existing snapshot logic
     if (Files.exists(snapshotPath)) {
       String existingSnapshot = new String(Files.readAllBytes(snapshotPath), "UTF-8");
@@ -242,6 +257,18 @@ public class DatasqrlTest {
       Files.write(snapshotPath, currentResponse.getBytes("UTF-8"));
       exceptions.add(new SnapshotCreationException(name));
     }
+  }
+
+  private static final String GREEN = "\u001B[32m";
+  private static final String RED = "\u001B[31m";
+  private static final String RESET = "\u001B[0m";
+
+  private void logGreen(String line) {
+    log.info(GREEN + "{}" + RESET, line);
+  }
+
+  private void logRed(String line) {
+    log.error(RED + "{}" + RESET, line);
   }
 
   //Todo: Unify with other testplan
