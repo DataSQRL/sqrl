@@ -161,9 +161,17 @@ public class FullUsecasesIT {
 
       Map<String, String> env = new HashMap<>();
       env.putAll(System.getenv());
-      env.put("EXECUTION_MODE", "local");
       env.putAll(containerHook.getEnv());
       env.put("DATA_PATH", rootDir.resolve("build/deploy/flink/data").toAbsolutePath().toString());
+      env.put("UDF_PATH", rootDir.resolve("build/deploy/flink/lib").toAbsolutePath().toString());
+
+      // Log test run
+      log.info("The test parameters\n" +
+               "Test name: " + param.getTestName() + "\n" +
+               "Test path: " + rootDir + "\n" +
+               "Test sqrl file: " + param.getSqrlFileName() + "\n" +
+               "Test graphql file: " + param.getGraphqlFileName() + "\n"
+      );
 
       //Run the test
       TestEnvContext context = TestEnvContext.builder()
@@ -181,9 +189,11 @@ public class FullUsecasesIT {
          long delaySec = packageJson.getTestConfig().flatMap(TestRunnerConfiguration::getDelaySec)
               .map(Duration::getSeconds)
               .orElse((long) -1);
-          if (delaySec == -1 ) {
+         int requiredCheckpoints = packageJson.getTestConfig().flatMap(TestRunnerConfiguration::getRequiredCheckpoints)
+              .orElse(0);
+          if (delaySec == -1) {
             FlinkOperatorStatusChecker flinkOperatorStatusChecker = new FlinkOperatorStatusChecker(
-                result.getJobClient().get().getJobID().toString());
+                result.getJobClient().get().getJobID().toString(), requiredCheckpoints);
             flinkOperatorStatusChecker.run();
           } else {
             Thread.sleep(delaySec * 1000);
@@ -229,7 +239,7 @@ public class FullUsecasesIT {
   @MethodSource("useCaseProvider")
   @Disabled
   public void runTestNumber(UseCaseTestParameter param) {
-    int i = -1;
+    int i = 19;
     testNo++;
     System.out.println(testNo + ":" + param);
     if (i == testNo) {

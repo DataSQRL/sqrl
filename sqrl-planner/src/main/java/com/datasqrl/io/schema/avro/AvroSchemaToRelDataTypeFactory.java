@@ -36,7 +36,7 @@ public class AvroSchemaToRelDataTypeFactory implements SchemaToRelDataTypeFactor
   private boolean getLegacyTimestampMapping(TableConfig tableConfig) {
     if (tableConfig == null) return true;
     Map<String, Object> configMap = tableConfig.getConnectorConfig().toMap();
-    Object legacy = configMap.get("timestamp_mapping.legacy");
+    Object legacy = configMap.get("avro.timestamp_mapping.legacy");
     if (legacy instanceof Boolean) {
       return (Boolean) legacy;
     } else if (legacy != null) {

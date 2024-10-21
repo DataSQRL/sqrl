@@ -3,15 +3,9 @@
  */
 package com.datasqrl.engine;
 
-import com.datasqrl.cmd.EngineKeys;
-import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.engine.database.DatabasePhysicalPlan;
 import com.datasqrl.engine.database.QueryTemplate;
-import com.datasqrl.engine.database.relational.JDBCPhysicalPlan;
-import com.datasqrl.engine.log.kafka.KafkaPhysicalPlan;
 import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.datasqrl.engine.server.ServerPhysicalPlan;
-import com.datasqrl.engine.stream.flink.plan.FlinkStreamPhysicalPlan;
 import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.datasqrl.util.StreamUtil;
 import java.util.List;

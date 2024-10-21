@@ -2,6 +2,6 @@
   "version": "1",
   "enabled-engines": [],
   "compile": {
-    "sqrl-version": "0.5.5"
+    "sqrl-version": "0.5.6"
   }
 }

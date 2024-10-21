@@ -1,0 +1,6 @@
+query MyTable {
+  MyTable {
+    val
+    myFnc
+  }
+}

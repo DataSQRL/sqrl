@@ -13,6 +13,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -89,12 +90,14 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
     @Override
     public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
       //Look for all package jsons
-      return getSQRLScripts(directory, includeFails).flatMap(path -> {
+      return getSQRLScripts(directory, includeFails)
+          .sorted(Comparator.comparing(p -> p.toFile().getName()))
+          .flatMap(path -> {
         List<Path> pkgFiles = getPackageFiles(path.getParent());
-        Collections.sort(pkgFiles);
+        Collections.sort(pkgFiles, Comparator.comparing(p -> p.toFile().getName()));
         if (pkgFiles.isEmpty()) pkgFiles.add(null);
         List<Path> graphQLFiles = getScriptGraphQLFiles(path);
-        Collections.sort(graphQLFiles);
+        Collections.sort(graphQLFiles, Comparator.comparing(p -> p.toFile().getName()));
         if (graphQLFiles.isEmpty()) graphQLFiles.add(null);
         return graphQLFiles.stream().flatMap(gql -> pkgFiles.stream().map(pkg -> Arguments.of(path, gql, pkg)));
       });

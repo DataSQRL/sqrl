@@ -5,9 +5,9 @@
   "version": "1", // when specified the value should be a string
   "enabled-engines": ["vertx", "postgres", "kafka", "flink", "iceberg", "snowflake"], // when specified the list should contain at least one element and the list should contain strings
   "compile": { // when specified this map(dictionary) should contain at least one element
-    "sqrl-version": "0.5.5", // when specified the value should be a string with a version matching this pattern + optionally `-SNAPSHOT`
+    "sqrl-version": "0.5.6", // when specified the value should be a string with a version matching this pattern + optionally `-SNAPSHOT`
     "flink-build-image": "gradle:8.6-jdk11", // when specified the value should be a string
-    "sqrl-vertx-image": "datasqrl/sqrl-server:v0.5.5" // when specified the value should be a string
+    "sqrl-vertx-image": "datasqrl/sqrl-server:v0.5.6" // when specified the value should be a string
   },
   "compiler": { // when specified this map(dictionary) should contain at least one element,
     "explain": { // when specified this map(dictionary) should contain at least one element

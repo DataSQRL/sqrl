@@ -1,0 +1,15 @@
+{
+  "version": "1",
+  "package": {
+    "version": "0.5.6_test",
+    "variant": "default",
+    "latest": true,
+    "type": "source",
+    "license": "ASFv2",
+    "repository": "https://github.com/DataSQRL/datasqrl-examples/tree/main/logistics-shipping-geodata",
+    "homepage": "https://github.com/DataSQRL/datasqrl-examples/tree/main/logistics-shipping-geodata",
+    "description": "A Description",
+    "documentation": "https://github.com/DataSQRL/datasqrl-examples/blob/main/logistics-shipping-geodata/README.md",
+    "topics": ["datasqrl", "example", "logistics", "shipping"]
+  }
+}

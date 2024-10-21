@@ -3,12 +3,12 @@
   <parent>
     <groupId>com.datasqrl</groupId>
     <artifactId>sqrl-flink-lib</artifactId>
-    <version>0.5.6-SNAPSHOT</version>
+    <version>0.5.7-SNAPSHOT</version>
   </parent>
 
   <groupId>com.datasqrl</groupId>
   <artifactId>sqrl-h2-1.16</artifactId>
-  <version>0.5.6-SNAPSHOT</version>
+  <version>0.5.7-SNAPSHOT</version>
   <description>H2 Sink</description>
 
   <url>https://www.datasqrl.com/</url>
