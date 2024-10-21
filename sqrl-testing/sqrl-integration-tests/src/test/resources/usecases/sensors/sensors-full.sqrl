@@ -15,6 +15,7 @@ Sensors.readings := JOIN SecReading r ON r.sensorid = @.id;
 Sensors.lastHour := SELECT max(temp) as maxTemp, avg(temp) as avgTemp
                        FROM @.readings
                        WHERE timeSec >= now() - INTERVAL 1 HOUR;
+
 /* Create table of machines with recent temperature */
 Machine := SELECT machineid, max(temp) as maxTemp,
     avg(temp) as avgTemp

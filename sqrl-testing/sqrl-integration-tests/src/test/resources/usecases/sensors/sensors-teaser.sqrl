@@ -1,11 +1,22 @@
 IMPORT sensor-local.SensorReading; -- Import sensor data
 IMPORT time.endOfSecond;  -- Import time function
+
 /* Aggregate sensor readings to second */
 SecReading := SELECT sensorid, endOfSecond(timestamp) as timeSec,
         avg(temperature) as temp FROM SensorReading
-    GROUP BY sensorid, timeSec;
+    GROUP BY sensorid, timeSec ORDER BY timeSec DESC;
+
 /* Get max temperature in last minute */
 SensorMaxTemp := SELECT sensorid, max(temp) as maxTemp
     FROM SecReading
     WHERE timeSec >= now() - INTERVAL 1 MINUTE
-    GROUP BY sensorid;
+    GROUP BY sensorid
+    ORDER BY maxTemp DESC;
+
+/* =======TEST CASES======== */
+
+/*+test */
+SecReadingTest := SELECT * FROM SecReading ORDER BY timeSec DESC, temp DESC LIMIT 5;
+
+/*+test */
+SensorMaxTempTest := SELECT * FROM SensorMaxTemp ORDER BY maxTemp DESC LIMIT 5;
