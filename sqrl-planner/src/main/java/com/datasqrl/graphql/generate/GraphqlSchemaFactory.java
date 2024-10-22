@@ -98,7 +98,7 @@ public class GraphqlSchemaFactory {
     this.logManager = logManager;
   }
 
-  public GraphQLSchema generate(ExecutionGoal goal) {
+  public Optional<GraphQLSchema> generate(ExecutionGoal goal) {
     this.objectPathToTables = schema.getTableFunctions().stream()
         .collect(Collectors.groupingBy(e -> e.getFullPath().popLast(),
             LinkedHashMap::new, Collectors.toList()));
@@ -123,7 +123,7 @@ public class GraphqlSchemaFactory {
     postProcess();
 
     if (queryFields.isEmpty()) {
-       return null;
+       return Optional.empty();
     }
 
 
@@ -141,7 +141,7 @@ public class GraphqlSchemaFactory {
 
     if (queryType.getFields().isEmpty()) {
       if (goal == ExecutionGoal.TEST) {
-        return null; //may have test folder
+        return Optional.empty(); //may have test folder
       } else {
         throw new RuntimeException("No queryable tables found for server");
       }
@@ -157,7 +157,7 @@ public class GraphqlSchemaFactory {
       ;
     }
 
-    return builder.build();
+    return Optional.of(builder.build());
   }
 
   private Optional<Builder> createMutationTypes(SqrlSchema schema) {

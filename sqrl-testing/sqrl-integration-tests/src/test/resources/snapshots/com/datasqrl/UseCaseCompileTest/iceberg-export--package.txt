@@ -1,0 +1,40 @@
+>>>pipeline_explain.txt
+=== _Applications
+ID:     _applications_2
+Type:   stream
+Stage:  flink
+Primary Key: id, updated_at
+Timestamp  : updated_at
+Schema:
+ - id: BIGINT NOT NULL
+ - customer_id: BIGINT NOT NULL
+ - loan_type_id: BIGINT NOT NULL
+ - amount: DOUBLE NOT NULL
+ - duration: BIGINT NOT NULL
+ - application_date: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - updated_at: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Plan:
+LogicalTableScan(table=[[_applications_1]])
+
+=== iceberg.iceberg-sink
+ID:     _applications_2_1
+Type:   export
+Stage:  flink
+Inputs: _applications_2
+
+>>>flink.json
+{
+  "flinkSql" : [
+    "CREATE TEMPORARY TABLE `_applications_1` (\n  `id` BIGINT NOT NULL,\n  `customer_id` BIGINT NOT NULL,\n  `loan_type_id` BIGINT NOT NULL,\n  `amount` DOUBLE NOT NULL,\n  `duration` BIGINT NOT NULL,\n  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,\n  WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND\n) WITH (\n  'format' = 'flexible-json',\n  'path' = '${DATA_PATH}/applications.jsonl',\n  'source.monitor-interval' = '1',\n  'connector' = 'filesystem'\n);",
+    "CREATE TEMPORARY TABLE `_applications_2_1` (\n  `id` BIGINT NOT NULL,\n  `customer_id` BIGINT NOT NULL,\n  `loan_type_id` BIGINT NOT NULL,\n  `amount` DOUBLE NOT NULL,\n  `duration` BIGINT NOT NULL,\n  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED\n) WITH (\n  'catalog-type' = 'hadoop',\n  'connector' = 'iceberg',\n  'warehouse' = '/tmp/duckdb',\n  'catalog-name' = 'mydatabase',\n  'catalog-table' = 'my-table'\n);",
+    "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `_applications_1`;",
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `_applications_2_1`\n(SELECT *\n FROM `table$1`)\n;\nEND;"
+  ],
+  "connectors" : [
+    "iceberg",
+    "filesystem"
+  ],
+  "formats" : [
+    "flexible-json"
+  ]
+}
