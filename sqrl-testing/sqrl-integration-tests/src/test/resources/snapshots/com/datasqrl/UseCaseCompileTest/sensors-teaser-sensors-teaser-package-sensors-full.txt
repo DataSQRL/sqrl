@@ -10,6 +10,8 @@ Schema:
  - sensorid: BIGINT NOT NULL
  - timeSec: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - temp: DOUBLE NOT NULL
+Post Processors:
+ - sort: #1: timeSec TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC
 Plan:
 LogicalAggregate(group=[{0, 1}], temp=[AVG($2)]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 1000, 0]]
   LogicalProject(sensorid=[$0], timeSec=[endOfSecond($4)], temperature=[$2], time=[$1], timestamp=[$4])
@@ -28,6 +30,7 @@ Schema:
  - _timeSec: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Post Processors:
  - topN: partition=sensorid limit=1 sort=#2: _timeSec TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
+ - sort: #1: maxTemp DOUBLE DESC
 Plan:
 LogicalProject(sensorid=[$0], maxTemp=[$2], _timeSec=[$1])
   LogicalAggregate(group=[{0, 1}], maxTemp=[MAX($2)]) hints[SlidingAggregationHint options:[1, 60000, 1200]]
@@ -107,7 +110,7 @@ LogicalTableScan(table=[[sensorreading_1]])
   "views" : [
     {
       "name" : "SensorMaxTemp",
-      "sql" : "CREATE OR REPLACE VIEW \"SensorMaxTemp\"(\"sensorid\", \"maxTemp\", \"_timeSec\") AS SELECT *\nFROM \"sensormaxtemp_1\"\nORDER BY \"sensorid\";"
+      "sql" : "CREATE OR REPLACE VIEW \"SensorMaxTemp\"(\"sensorid\", \"maxTemp\", \"_timeSec\") AS SELECT *\nFROM \"sensormaxtemp_1\"\nORDER BY \"maxTemp\" DESC, \"sensorid\";"
     }
   ]
 }
@@ -131,7 +134,7 @@ LogicalTableScan(table=[[sensorreading_1]])
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-              "sql" : "SELECT *\nFROM \"secreading_1\"\nWHERE \"sensorid\" = $1\nORDER BY \"timeSec\" DESC NULLS LAST",
+              "sql" : "SELECT *\nFROM \"secreading_1\"\nWHERE \"sensorid\" = $1\nORDER BY \"timeSec\" DESC",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -153,7 +156,7 @@ LogicalTableScan(table=[[sensorreading_1]])
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-              "sql" : "SELECT *\nFROM \"sensormaxtemp_1\"\nORDER BY \"sensorid\"",
+              "sql" : "SELECT *\nFROM \"sensormaxtemp_1\"\nORDER BY \"maxTemp\" DESC, \"sensorid\"",
               "parameters" : [ ]
             }
           },
@@ -168,7 +171,7 @@ LogicalTableScan(table=[[sensorreading_1]])
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-              "sql" : "SELECT *\nFROM \"sensormaxtemp_1\"\nWHERE \"sensorid\" = $1",
+              "sql" : "SELECT *\nFROM \"sensormaxtemp_1\"\nWHERE \"sensorid\" = $1\nORDER BY \"maxTemp\" DESC",
               "parameters" : [
                 {
                   "type" : "arg",
