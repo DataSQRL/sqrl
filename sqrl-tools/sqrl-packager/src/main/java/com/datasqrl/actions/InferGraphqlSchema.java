@@ -52,34 +52,46 @@ public class InferGraphqlSchema {
   private final ExecutionGoal goal;
 
   @SneakyThrows
-  public String inferGraphQLSchema() {
-    GraphQLSchema gqlSchema = schemaFactory.generate(ExecutionGoal.COMPILE);
+  public Optional<String> inferGraphQLSchema() {
+    Optional<GraphQLSchema> gqlSchema = schemaFactory.generate(ExecutionGoal.COMPILE);
 
     SchemaPrinter.Options opts = SchemaPrinter.Options.defaultOptions()
         .setComparators(GraphqlTypeComparatorRegistry.AS_IS_REGISTRY)
         .includeDirectives(false);
 
-    return new SchemaPrinter(opts).print(gqlSchema);
+    return gqlSchema.map(s->new SchemaPrinter(opts).print(s));
   }
 
   public Optional<APISource> run(Optional<Path> testsPath) {
     if (pipeline.getStage(Type.SERVER).isEmpty()) {
       return Optional.empty();
     }
+    SchemaPrinter.Options opts = SchemaPrinter.Options.defaultOptions()
+        .setComparators(GraphqlTypeComparatorRegistry.AS_IS_REGISTRY)
+        .includeDirectives(false);
 
-    APISource apiSchema = graphqlSourceFactory.get()
-        .orElseGet(() ->
-            new APISourceImpl(Name.system("<schema>"),
-                inferGraphQLSchema()));
+    Optional<APISource> apiSource = graphqlSourceFactory.get()
+        .or(()->inferGraphQLSchema()
+            .map(schema -> new APISourceImpl(Name.system("<schema>"), schema)));
+    if (apiSource.isEmpty()) {
+      //no schema could be found, exiting
+      if (goal == ExecutionGoal.TEST) {
+        //generate only the test schema and do not merge
+        return schemaFactory.generate(ExecutionGoal.TEST)
+            .map(s->new SchemaPrinter(opts).print(s))
+            .map(s-> new APISourceImpl(Name.system("<schema>"), s));
+      }
 
+      return apiSource;
+    }
+
+    APISource apiSchema = apiSource.get();
     // merge in test schema
     if (goal == ExecutionGoal.TEST) {
-      GraphQLSchema gqlSchema = schemaFactory.generate(ExecutionGoal.TEST);
-      if (gqlSchema != null) {
-        SchemaPrinter.Options opts = SchemaPrinter.Options.defaultOptions()
-            .setComparators(GraphqlTypeComparatorRegistry.AS_IS_REGISTRY)
-            .includeDirectives(false);
-        String testSchema = new SchemaPrinter(opts).print(gqlSchema);
+      Optional<GraphQLSchema> gqlSchema = schemaFactory.generate(ExecutionGoal.TEST);
+      if (gqlSchema.isPresent()) {
+
+        String testSchema = new SchemaPrinter(opts).print(gqlSchema.get());
 
         TypeDefinitionRegistry schemaDef = parser.parse(apiSchema.getSchemaDefinition());
 
