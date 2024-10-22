@@ -347,6 +347,10 @@ public class DatasqrlRun {
     RootGraphqlModel rootGraphqlModel = objectMapper.readValue(
         path.resolve("vertx.json").toFile(),
         ModelContainer.class).model;
+    if (rootGraphqlModel == null) {
+      return; //no graphql server queries
+    }
+
 
     URL resource = Resources.getResource("server-config.json");
     Map<String, Object> json = objectMapper.readValue(resource, Map.class);
