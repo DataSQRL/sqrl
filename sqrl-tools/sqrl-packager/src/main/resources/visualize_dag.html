@@ -1,163 +1,18 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <title>Visualize DAG with Cytoscape.js</title>
-    <script src="https://unpkg.com/cytoscape@latest/dist/cytoscape.min.js"></script>
-    <script src="https://unpkg.com/@dagrejs/dagre@latest/dist/dagre.min.js"></script>
-    <script src="https://unpkg.com/cytoscape-dagre@latest/cytoscape-dagre.js"></script>
-
-    <style>
-        #cy {
-            width: 100%;
-            height: 100%;
-            position: absolute;
-            left: 0;
-            top: 0;
-        }
-        #sideinfo {
-            position: absolute;
-            right: 0;
-            width: 30%;
-            height: 100vh;
-            background-color: #f8f9fa;
-            padding: 20px;
-            overflow: auto;
-            display: none;
-            font-family: sans-serif;
-        }
-
-        textarea {
-            white-space: pre;
-            overflow: auto;
-        }
-    </style>
-</head>
-<body>
-<div id="cy"></div>
-<div id="sideinfo">
-    <button id="close-info" style="position: absolute; right: 10px; top: 10px;">X</button>
-    <h2>Table Information</h2>
-    <div id="info-content"></div>
-</div>
-<script>
-    let nodes = ${DAG}
-</script>
-<script>
-    document.getElementById('close-info').addEventListener('click', function() {
-        document.getElementById('sideinfo').style.display = 'none';
-    });
-
-    let cyNodes = nodes.map(function(node) {
-        return { data: node };
-    });
-
-    let cyEdges = [].concat.apply([], nodes.map(function(node) {
-        return node.inputs.map(function(input) {
-            return { data: { source: input, target: node.id } };
-        });
-    }))
-
-    let backgroundColors = ['hsl(214, 30.7%, 74.6%)', 'hsl(30, 74.8%, 79%)', 'hsl(2, 55.8%, 79.6%)', 'hsl(175, 25.1%, 80.9%)', 'hsl(105, 28.7%, 74.2%)', 'hsl(47, 73.8%, 82.05%)', 'hsl(312, 20.2%, 78.65%)', 'hsl(355, 73.8%, 89.5%)', 'hsl(23, 21%, 74.3%)', 'hsl(20, 7.8%, 84.9%)'];
-
-    let stageColors = new Map();
-    let uniqueId = 0;
-
-    nodes.forEach(node => {
-        if (!stageColors.has(node.stage)) {
-            stageColors.set(node.stage, backgroundColors[uniqueId++]);
-        }
-    });
-
-    let cy = cytoscape({
-        container: document.getElementById('cy'),
-
-        style: cytoscape.stylesheet()
-            .selector('node')
-            .css({
-                'font-weight': 'bold',
-                'label': 'data(name)',
-                "text-valign" : "center",
-                "text-halign" : "center",
-                'width': 'label',
-                'padding': '10px',
-                'height': 'label',
-                'background-color': function(node) {
-                    return stageColors.get(node.data('stage'));
-                }
-            })
-            .selector('edge')
-            .css({
-                'curve-style': 'bezier',
-                'target-arrow-shape': 'triangle'
-            })
-            .selector('node[type="stream"]')
-            .css({
-                'shape': 'roundrectangle'
-            })
-            .selector('node[type="state"]')
-            .css({
-                'shape': 'rectangle'
-            })
-            .selector('node[type="relation"]')
-            .css({
-                'shape': 'cut-rectangle'
-            })
-            .selector('node[type="import"], node[type="export"]')
-            .css({
-                'font-weight': 'normal',
-                'shape': 'ellipse'
-            })
-            .selector('node[type="query"]')
-            .css({
-                'font-weight': 'normal',
-                'shape': 'tag'
-            }),
-
-        elements: {
-            nodes: cyNodes,
-            edges: cyEdges
-        },
-
-        layout: {
-            name: 'dagre'
-        }
-    });
-    cy.on('tap', 'node', function(evt){
-        let node = evt.target;
-        let type = node.data('type');
-        let content;
-        if (['stream','state','relation'].includes(type)) {
-            content = `
-                <p><strong>Name:</strong> ${node.data('name')}</p>
-                <p><strong>Type:</strong> ${node.data('type')}</p>
-                <p><strong>Stage:</strong> ${node.data('stage')}</p>
-                <p><strong>Schema:</strong></p>
-                <ul>
-                    ${node.data('schema').map(field => `<li>${field.name}: ${field.type}</li>`).join('')}
-                </ul>
-                <p><strong>Primary Key:</strong> ${node.data('primary_key').join(', ')}</p>
-                <p><strong>Timestamp:</strong> ${node.data('timestamp')}</p>
-                <p><strong>Id:</strong> ${node.data('id')}</p>
-                <p><strong>Plan:</strong></p>
-                <textarea style="width:100%;" rows="${Math.max(7,node.data('plan').split('\n').length+1)}" readonly>${node.data('plan')}</textarea>
-            `;
-        } else if (type === 'query') {
-            content = `
-                <p><strong>Type:</strong> ${node.data('type')}</p>
-                <p><strong>Id:</strong> ${node.data('name')}</p>
-                <p><strong>Plan:</strong></p>
-                <textarea style="width:100%;" rows="${node.data('plan').split('\n').length}" readonly>${node.data('plan')}</textarea>
-            `;
-        } else {
-            content = `
-                <p><strong>Name:</strong> ${node.data('name')}</p>
-                <p><strong>Type:</strong> ${node.data('type')}</p>
-                <p><strong>Id:</strong> ${node.data('id')}</p>
-            `;
-        }
-        document.getElementById('info-content').innerHTML = content;
-        document.getElementById('sideinfo').style.display = 'block';
-    });
-</script>
-</body>
+    <script src="https://www.unpkg.com/@datasqrl/dag-visualization@latest/dist/umd/index.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://www.unpkg.com/@datasqrl/dag-visualization@latest/dist/index.css"
+    />
+  </head>
+  <body>
+    <div id="graph"></div>
+    <script>
+      let nodes = ${DAG}
+      DAGVisualization.renderGraph(document.getElementById('graph'), nodes)
+    </script>
+  </body>
 </html>
