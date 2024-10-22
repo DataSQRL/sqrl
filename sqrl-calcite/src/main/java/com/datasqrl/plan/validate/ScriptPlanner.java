@@ -24,6 +24,7 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.config.ConnectorFactoryContext;
 import com.datasqrl.config.ConnectorFactoryFactory;
+import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SystemBuiltInConnectors;
 import com.datasqrl.engine.log.Log;
@@ -283,16 +284,25 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
             .map(t -> TableSinkImpl.create(t, sinkPath.popLast(), Optional.empty())).get();
       }
     } else {
-      Optional<TableSink> externalSink = moduleLoader.getModule(sinkPath.popLast())
-          .flatMap(m -> m.getNamespaceObject(sinkPath.getLast()))
-          .filter(t -> t instanceof TableSinkObject)
-          .map(t -> ((TableSinkObject) t).getSink());
+      Optional<NamespaceObject> externalSink = moduleLoader.getModule(sinkPath.popLast())
+          .flatMap(m -> m.getNamespaceObject(sinkPath.getLast()));
       if (externalSink.isEmpty()) {
-        addError(ErrorCode.CANNOT_RESOLVE_TABLESINK, node, "Cannot resolve table sink: %s",
-            nameUtil.toNamePath(node.getSinkPath().names).getDisplay());
-        return null;
+          //Create the export for the built-in connector
+          tableSink = connectorFactoryFactory.create(Type.STREAMS, sinkPath.getFirst().getCanonical())
+              .map(t -> t.createSourceAndSink(new ConnectorFactoryContext(sinkPath.getLast(),
+                  Map.of("id", modTable.getNameId(),
+                      "name", sinkPath.getLast().getDisplay()))))
+              .map(t -> TableSinkImpl.create(t, sinkPath.popLast(), Optional.empty())).get();
+          if (tableSink == null) {
+            addError(ErrorCode.CANNOT_RESOLVE_TABLESINK, node, "Cannot resolve table sink: %s",
+                nameUtil.toNamePath(node.getSinkPath().names).getDisplay());
+            return null;
+          }
+      } else {
+        tableSink = externalSink
+            .filter(t -> t instanceof TableSinkObject)
+            .map(t -> ((TableSinkObject) t).getSink()).get();
       }
-      tableSink = externalSink.get();
     }
     ResolvedExport resolvedExport = new ResolvedExport(modTable.getNameId(), exportRelNode, numSelects, tableSink);
     framework.getSchema().add(resolvedExport);
