@@ -1,0 +1,195 @@
+>>>pipeline_explain.txt
+=== SecReading
+ID:     secreading_1
+Type:   stream
+Stage:  flink
+Inputs: sensorreading_2
+Primary Key: sensorid, timeSec
+Timestamp  : timeSec
+Schema:
+ - sensorid: BIGINT NOT NULL
+ - timeSec: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - temp: DOUBLE NOT NULL
+Post Processors:
+ - sort: #1: timeSec TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC
+Plan:
+LogicalAggregate(group=[{0, 1}], temp=[AVG($2)]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 1000, 0]]
+  LogicalProject(sensorid=[$0], timeSec=[endOfSecond($4)], temperature=[$2], time=[$1], timestamp=[$4])
+    LogicalTableScan(table=[[sensorreading_2]])
+
+=== SensorMaxTemp
+ID:     sensormaxtemp_1
+Type:   state
+Stage:  flink
+Inputs: secreading_1
+Primary Key: sensorid
+Timestamp  : _timeSec
+Schema:
+ - sensorid: BIGINT NOT NULL
+ - maxTemp: DOUBLE NOT NULL
+ - _timeSec: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Post Processors:
+ - topN: partition=sensorid limit=1 sort=#2: _timeSec TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
+ - sort: #1: maxTemp DOUBLE DESC
+Plan:
+LogicalProject(sensorid=[$0], maxTemp=[$2], _timeSec=[$1])
+  LogicalAggregate(group=[{0, 1}], maxTemp=[MAX($2)]) hints[SlidingAggregationHint options:[1, 60000, 1200]]
+    LogicalTableScan(table=[[secreading_1]])
+
+=== SensorReading
+ID:     sensorreading_2
+Type:   stream
+Stage:  flink
+Primary Key: sensorid, time
+Timestamp  : timestamp
+Schema:
+ - sensorid: BIGINT NOT NULL
+ - time: BIGINT NOT NULL
+ - temperature: DOUBLE NOT NULL
+ - humidity: DOUBLE NOT NULL
+ - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Plan:
+LogicalTableScan(table=[[sensorreading_1]])
+
+>>>flink.json
+{
+  "flinkSql" : [
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochmillitotimestamp` AS 'com.datasqrl.time.EpochMilliToTimestamp' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofsecond` AS 'com.datasqrl.time.EndOfSecond' LANGUAGE JAVA;",
+    "CREATE TEMPORARY TABLE `sensorreading_1` (\n  `sensorid` BIGINT NOT NULL,\n  `time` BIGINT NOT NULL,\n  `temperature` DOUBLE NOT NULL,\n  `humidity` DOUBLE NOT NULL,\n  `timestamp` AS EPOCHMILLITOTIMESTAMP(`time`),\n  PRIMARY KEY (`sensorid`, `time`) NOT ENFORCED,\n  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND\n) WITH (\n  'format' = 'flexible-csv',\n  'path' = '${DATA_PATH}/sensorreading.csv.gz',\n  'connector' = 'filesystem',\n  'flexible-csv.skip-header' = 'true'\n);",
+    "CREATE TEMPORARY TABLE `secreading_1` (\n  `sensorid` BIGINT NOT NULL,\n  `timeSec` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `temp` DOUBLE NOT NULL,\n  PRIMARY KEY (`sensorid`, `timeSec`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'secreading_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `sensormaxtemp_1` (\n  `sensorid` BIGINT NOT NULL,\n  `maxTemp` DOUBLE NOT NULL,\n  `_timeSec` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`sensorid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'sensormaxtemp_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE VIEW `table$1`\nAS\nSELECT `sensorid`, ENDOFSECOND(`timestamp`) AS `timeSec`, `temperature`, `time`, `timestamp`\nFROM `sensorreading_1`;",
+    "CREATE VIEW `table$2`\nAS\nSELECT `sensorid`, `window_time` AS `timeSec`, AVG(`temperature`) AS `temp`\nFROM TABLE(TUMBLE(TABLE `table$1`, DESCRIPTOR(`timestamp`), INTERVAL '1' SECOND(4), INTERVAL '0' SECOND(1))) AS `t0`\nGROUP BY `sensorid`, `window_start`, `window_end`, `window_time`;",
+    "CREATE VIEW `table$3`\nAS\nSELECT `sensorid`, ENDOFSECOND(`timestamp`) AS `timeSec`, `temperature`, `time`, `timestamp`\nFROM `sensorreading_1`;",
+    "CREATE VIEW `table$4`\nAS\nSELECT `sensorid`, `window_time` AS `timeSec`, AVG(`temperature`) AS `temp`\nFROM TABLE(TUMBLE(TABLE `table$3`, DESCRIPTOR(`timestamp`), INTERVAL '1' SECOND(4), INTERVAL '0' SECOND(1))) AS `t0`\nGROUP BY `sensorid`, `window_start`, `window_end`, `window_time`;",
+    "CREATE VIEW `table$5`\nAS\nSELECT `sensorid`, MAX(`temp`) AS `maxTemp`, `window_time` AS `_timeSec`\nFROM TABLE(HOP(TABLE `table$4`, DESCRIPTOR(`timeSec`), INTERVAL '1.2' SECOND(4), INTERVAL '60' SECOND(5))) AS `t3`\nGROUP BY `sensorid`, `window_start`, `window_end`, `window_time`;",
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `secreading_1`\n(SELECT *\n FROM `table$2`)\n;\nINSERT INTO `sensormaxtemp_1`\n (SELECT *\n  FROM `table$5`)\n ;\n END;"
+  ],
+  "connectors" : [
+    "jdbc-sqrl",
+    "filesystem"
+  ],
+  "formats" : [
+    "flexible-csv"
+  ]
+}
+>>>kafka.json
+{
+  "topics" : [ ]
+}
+>>>postgres.json
+{
+  "ddl" : [
+    {
+      "name" : "secreading_1",
+      "columns" : [
+        "\"sensorid\" BIGINT NOT NULL",
+        "\"timeSec\" TIMESTAMP WITH TIME ZONE NOT NULL",
+        "\"temp\" DOUBLE PRECISION NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"sensorid\"",
+        "\"timeSec\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS secreading_1 (\"sensorid\" BIGINT NOT NULL,\"timeSec\" TIMESTAMP WITH TIME ZONE NOT NULL,\"temp\" DOUBLE PRECISION NOT NULL , PRIMARY KEY (\"sensorid\",\"timeSec\"));"
+    },
+    {
+      "name" : "sensormaxtemp_1",
+      "columns" : [
+        "\"sensorid\" BIGINT NOT NULL",
+        "\"maxTemp\" DOUBLE PRECISION NOT NULL",
+        "\"_timeSec\" TIMESTAMP WITH TIME ZONE NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"sensorid\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS sensormaxtemp_1 (\"sensorid\" BIGINT NOT NULL,\"maxTemp\" DOUBLE PRECISION NOT NULL,\"_timeSec\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"sensorid\"));"
+    }
+  ],
+  "views" : [
+    {
+      "name" : "SensorMaxTemp",
+      "sql" : "CREATE OR REPLACE VIEW \"SensorMaxTemp\"(\"sensorid\", \"maxTemp\", \"_timeSec\") AS SELECT *\nFROM \"sensormaxtemp_1\"\nORDER BY \"maxTemp\" DESC, \"sensorid\";"
+    }
+  ]
+}
+>>>vertx.json
+{
+  "model" : {
+    "coords" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "SecReading",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "sensorid"
+              }
+            ],
+            "query" : {
+              "type" : "JdbcQuery",
+              "type" : "JdbcQuery",
+              "sql" : "SELECT *\nFROM \"secreading_1\"\nWHERE \"sensorid\" = $1\nORDER BY \"timeSec\" DESC",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "sensorid"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "SensorMaxTemp",
+        "matchs" : [
+          {
+            "arguments" : [ ],
+            "query" : {
+              "type" : "JdbcQuery",
+              "type" : "JdbcQuery",
+              "sql" : "SELECT *\nFROM \"sensormaxtemp_1\"\nORDER BY \"maxTemp\" DESC, \"sensorid\"",
+              "parameters" : [ ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "sensorid"
+              }
+            ],
+            "query" : {
+              "type" : "JdbcQuery",
+              "type" : "JdbcQuery",
+              "sql" : "SELECT *\nFROM \"sensormaxtemp_1\"\nWHERE \"sensorid\" = $1\nORDER BY \"maxTemp\" DESC",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "sensorid"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "mutations" : [ ],
+    "subscriptions" : [ ],
+    "schema" : {
+      "type" : "string",
+      "type" : "string",
+      "schema" : "type Query {\n  SecReading(sensorid: Int!): [SecReading!]\n  SensorMaxTemp(sensorid: Int): [SensorMaxTemp!]\n}\n\ntype SecReading {\n  sensorid: Int!\n  timeSec: String!\n  temp: Float!\n}\n\ntype SensorMaxTemp {\n  sensorid: Int!\n  maxTemp: Float!\n}"
+    }
+  }
+}
