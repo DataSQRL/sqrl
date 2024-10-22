@@ -1,6 +1,3 @@
 IMPORT loan-local.Applications AS _Applications;
 
-/*+test*/
-Apps := SELECT * FROM _Applications LIMIT 1;
-
 EXPORT _Applications TO iceberg.iceberg-sink;
