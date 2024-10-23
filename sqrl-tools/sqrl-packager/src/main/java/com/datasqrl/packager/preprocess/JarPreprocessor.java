@@ -81,6 +81,7 @@ public class JarPreprocessor implements Preprocessor {
       obj.put("language", "java");
       obj.put("functionClass", clazz);
       obj.put("jarPath", path.toString());
+      obj.put("type", "local");
 
       // Create a file in a temporary directory
       String functionName = clazz.substring(clazz.lastIndexOf('.') + 1);

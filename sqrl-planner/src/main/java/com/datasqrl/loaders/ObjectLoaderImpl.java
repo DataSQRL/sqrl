@@ -23,6 +23,7 @@ import com.datasqrl.serializer.Deserializer;
 import com.datasqrl.util.BaseFileUtil;
 import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.StringUtil;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Preconditions;
 import java.io.File;
@@ -37,6 +38,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import org.apache.flink.table.functions.UserDefinedFunction;
+import scala.tools.cmd.Opt;
 
 public class ObjectLoaderImpl implements ObjectLoader {
 
@@ -179,6 +181,14 @@ public class ObjectLoaderImpl implements ObjectLoader {
     ObjectNode json = SERIALIZER.mapJsonFile(path, ObjectNode.class);
     String jarPath = json.get("jarPath").asText();
     String functionClassName = json.get("functionClass").asText();
+    JsonNode type = json.get("type");
+
+    if (type != null && "remote".equals(type.asText())) {
+      Optional<Path> resolvedPath = resourceResolver.resolve(Path.of(jarPath));
+      if (resolvedPath.isPresent()) {
+        jarPath = resolvedPath.get().toString();
+      }
+    }
 
     URL jarUrl = new File(jarPath).toURI().toURL();
     Class<?> functionClass = loadClass(jarPath, functionClassName);
