@@ -23,8 +23,10 @@ import com.datasqrl.serializer.Deserializer;
 import com.datasqrl.util.BaseFileUtil;
 import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.StringUtil;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Preconditions;
+import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
@@ -36,6 +38,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import org.apache.flink.table.functions.UserDefinedFunction;
+import scala.tools.cmd.Opt;
 
 public class ObjectLoaderImpl implements ObjectLoader {
 
@@ -178,10 +181,17 @@ public class ObjectLoaderImpl implements ObjectLoader {
     ObjectNode json = SERIALIZER.mapJsonFile(path, ObjectNode.class);
     String jarPath = json.get("jarPath").asText();
     String functionClassName = json.get("functionClass").asText();
+    JsonNode type = json.get("type");
 
-    Optional<Path> resolvedJarPath = resourceResolver.resolve(Path.of(jarPath));
-    URL jarUrl = resolvedJarPath.get().toUri().toURL();
-    Class<?> functionClass = loadClass(jarUrl, functionClassName);
+    if (type != null && "remote".equals(type.asText())) {
+      Optional<Path> resolvedPath = resourceResolver.resolve(Path.of(jarPath));
+      if (resolvedPath.isPresent()) {
+        jarPath = resolvedPath.get().toString();
+      }
+    }
+
+    URL jarUrl = new File(jarPath).toURI().toURL();
+    Class<?> functionClass = loadClass(jarPath, functionClassName);
     Preconditions.checkArgument(UDF_FUNCTION_CLASS.isAssignableFrom(functionClass), "Class is not a UserDefinedFunction");
 
     UserDefinedFunction udf = (UserDefinedFunction) functionClass.getDeclaredConstructor().newInstance();
@@ -191,8 +201,8 @@ public class ObjectLoaderImpl implements ObjectLoader {
   }
 
   @SneakyThrows
-  private Class<?> loadClass(URL jarUrl, String functionClassName) {
-    URL[] urls = { jarUrl };
+  private Class<?> loadClass(String jarPath, String functionClassName) {
+    URL[] urls = {new File(jarPath).toURI().toURL()};
     URLClassLoader classLoader = new URLClassLoader(urls, Thread.currentThread().getContextClassLoader());
     return Class.forName(functionClassName, true, classLoader);
   }
