@@ -20,13 +20,14 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.ListUtils;
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.JobStatus;
 import org.apache.flink.core.execution.JobClient;
-import org.apache.flink.runtime.client.JobExecutionException;
 import org.apache.flink.table.api.TableResult;
 
+@Slf4j
 public class DatasqrlTest {
 
   private final Path basePath;
@@ -179,29 +180,25 @@ public class DatasqrlTest {
       for (Exception e : exceptions) {
         if (e instanceof SnapshotMismatchException) {
           SnapshotMismatchException ex = (SnapshotMismatchException) e;
-          logRed("Snapshot mismatch for test: " + ex.getTestName());
-          logRed("Expected: " + ex.getExpected());
-          logRed("Actual  : " + ex.getActual());
+          log.error("Snapshot mismatch for test: {}\nExpected: {}\nActual  : {}",
+              ex.getTestName(), ex.getExpected(), ex.getActual());
           exitCode = 1;
         } else if (e instanceof JobFailureException) {
-          JobFailureException ex = (JobFailureException) e;
-          logRed("Flink job failed to start.");
-          ex.printStackTrace();
+          log.error("Flink job failed to start.", e);
           exitCode = 1;
         } else if (e instanceof MissingSnapshotException) {
           MissingSnapshotException ex = (MissingSnapshotException) e;
-          logRed("Snapshot on filesystem but not in result: " + ex.getTestName());
+          log.error("Snapshot on filesystem but not in result for test: {}", ex.getTestName());
           exitCode = 1;
         } else if (e instanceof SnapshotCreationException) {
           SnapshotCreationException ex = (SnapshotCreationException) e;
-          logGreen("Snapshot created for test: " + ex.getTestName());
-          logGreen("Rerun to verify.");
+          log.info("Snapshot created for test: {}\nRerun to verify.", ex.getTestName());
           exitCode = 1;
         } else if (e instanceof SnapshotOkException) {
           SnapshotOkException ex = (SnapshotOkException) e;
-          logGreen("Snapshot OK for " + ex.getTestName());
+          log.info("Snapshot OK for {}", ex.getTestName());
         } else {
-          System.err.println(e.getMessage());
+          log.error("An error occurred: {}", e.getMessage(), e);
           exitCode = 1;
         }
       }
@@ -209,7 +206,6 @@ public class DatasqrlTest {
 
     return exitCode;
   }
-
 
   @SneakyThrows
   private String executeQuery(String query) {
@@ -234,7 +230,6 @@ public class DatasqrlTest {
   private void snapshot(Path snapshotPath, String name, String currentResponse,
       List<Exception> exceptions) {
 
-
     // Existing snapshot logic
     if (Files.exists(snapshotPath)) {
       String existingSnapshot = new String(Files.readAllBytes(snapshotPath), "UTF-8");
@@ -247,14 +242,6 @@ public class DatasqrlTest {
       Files.write(snapshotPath, currentResponse.getBytes("UTF-8"));
       exceptions.add(new SnapshotCreationException(name));
     }
-  }
-
-  private void logGreen(String line) {
-    System.out.println("\u001B[32m" + line + "\u001B[0m");
-  }
-
-  private void logRed(String line) {
-    System.out.println("\u001B[31m" + line + "\u001B[0m");
   }
 
   //Todo: Unify with other testplan
