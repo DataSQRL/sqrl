@@ -241,12 +241,20 @@ public class FullUsecasesIT {
   @MethodSource("useCaseProvider")
   @Disabled
   public void runTestNumber(UseCaseTestParameter param) {
-    int i = 19;
+    int i = -1;
     testNo++;
     System.out.println(testNo + ":" + param);
     if (i == testNo) {
       testUseCase(param);
     }
+  }
+
+  @ParameterizedTest
+  @MethodSource("useCaseProvider")
+  @Disabled
+  public void printUseCaseNumbers(UseCaseTestParameter param) {
+    testNo++;
+    System.out.println(testNo + ":" + param);
   }
 
   static List<UseCaseTestParameter> useCaseProvider() throws Exception {
