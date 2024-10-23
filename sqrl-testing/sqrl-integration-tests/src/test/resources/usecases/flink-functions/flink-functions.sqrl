@@ -2,7 +2,7 @@ IMPORT flink.*; -- Import flink functions
 IMPORT numbers-local.Numbers; -- Import numeric data
 
 /* Create data sources */
-UnmodifiedData := SELECT * FROM Numbers ORDER BY id;
+UnmodifiedData := SELECT id, avg(x) AS x, avg(y) as y FROM Numbers GROUP BY id ORDER BY id;
 
 /* =======TEST CASES======== */
 
@@ -18,6 +18,6 @@ ComparisonTest := SELECT id,
                   ORDER BY id;
 
 /*+test */
-UnmodifiedTest := SELECT *
+UnmodifiedTest := SELECT id, x, y
                   FROM UnmodifiedData;
 
