@@ -1,0 +1,23 @@
+IMPORT flink.*; -- Import flink functions
+IMPORT numbers-local.Numbers; -- Import numeric data
+
+/* Create data sources */
+UnmodifiedData := SELECT * FROM Numbers ORDER BY id;
+
+/* =======TEST CASES======== */
+
+/*+test */
+ComparisonTest := SELECT id,
+                   x = y AS eq,
+                   x <> y AS not_eq,
+                   x > y AS greater,
+                   x >= y AS greater_or_eq,
+                   x < y AS lesser,
+                   x <= y AS lesser_or_eq
+                  FROM UnmodifiedData
+                  ORDER BY id;
+
+/*+test */
+UnmodifiedTest := SELECT *
+                  FROM UnmodifiedData;
+
