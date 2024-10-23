@@ -472,6 +472,7 @@ Inputs: tempalert_1
     ],
     "subscriptions" : [
       {
+        "type" : "kafka",
         "fieldName" : "TempAlert",
         "topic" : "tempalert_1",
         "sinkConfig" : { },
