@@ -23,6 +23,7 @@ import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URL;
 import java.net.http.HttpClient;
+import java.net.http.HttpConnectTimeoutException;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
@@ -134,7 +135,14 @@ public class RemoteRepositoryImplementation implements Repository, PublishReposi
             .timeout(Duration.of(10, ChronoUnit.SECONDS))
             .build();
 
-    HttpResponse<String> response = client.send(requestBuilder.build(), BodyHandlers.ofString());
+    HttpResponse<String> response;
+	try {
+		response = client.send(requestBuilder.build(), BodyHandlers.ofString());
+	} catch (HttpConnectTimeoutException e) {
+		HttpConnectTimeoutException error = new HttpConnectTimeoutException(String.format("HTTP connect timed out. uri: %s", repositoryServerURI));
+		error.initCause(e);
+		throw error;
+	}
     int statusCode = response.statusCode();
     if (statusCode != 200) {
       String message =
