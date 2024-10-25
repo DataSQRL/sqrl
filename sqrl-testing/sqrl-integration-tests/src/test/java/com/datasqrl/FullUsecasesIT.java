@@ -71,8 +71,8 @@ public class FullUsecasesIT {
       new ScriptCriteria("sensors-full.sqrl", "run"), //flaky (too much data)
       //new ScriptCriteria("sensors-teaser.sqrl", "test"),
       //new ScriptCriteria("season-teaser.sqrl", "run"),
-//      new ScriptCriteria("flink-functions.sqrl", "test"),
-//      new ScriptCriteria("flink-functions.sqrl", "run"),
+//      new ScriptCriteria("comparison-functions.sqrl", "test"),
+//      new ScriptCriteria("comparison-functions.sqrl", "run"),
       new ScriptCriteria("analytics-only", "test"),
       new ScriptCriteria("analytics-only", "run"),
       new ScriptCriteria("seedshop-extended.sqrl", "test"), // CustomerPromotionTest issue
