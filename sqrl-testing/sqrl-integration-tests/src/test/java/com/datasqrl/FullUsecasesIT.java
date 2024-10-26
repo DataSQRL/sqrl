@@ -73,8 +73,8 @@ public class FullUsecasesIT {
       //new ScriptCriteria("season-teaser.sqrl", "run"),
 //      new ScriptCriteria("comparison-functions.sqrl", "test"),
 //      new ScriptCriteria("comparison-functions.sqrl", "run"),
-      new ScriptCriteria("analytics-only", "test"),
-      new ScriptCriteria("analytics-only", "run"),
+      new ScriptCriteria("analytics-only.sqrl", "test"),
+      new ScriptCriteria("analytics-only.sqrl", "run"),
       new ScriptCriteria("seedshop-extended.sqrl", "test"), // CustomerPromotionTest issue
       new ScriptCriteria("seedshop-extended.sqrl", "run") // CustomerPromotionTest issue
   );
