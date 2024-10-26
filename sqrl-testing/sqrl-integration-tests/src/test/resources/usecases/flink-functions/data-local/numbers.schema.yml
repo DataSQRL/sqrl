@@ -15,6 +15,10 @@ columns:
   type: "FLOAT"
   tests:
     - "not_null"
+- name: "z"
+  type: "FLOAT"
+  tests:
+    - "not_null"
 - name: "timestamp"
   type: "TIMESTAMP"
   tests:
