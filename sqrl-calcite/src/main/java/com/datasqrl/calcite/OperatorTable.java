@@ -25,13 +25,18 @@ public class OperatorTable implements SqlOperatorTable {
     this.schema = schema;
   }
 
+  public OperatorTable(SqrlSchema schema, SqlOperatorTable chain) {
+    this.chain = new SqlOperatorTable[]{chain};
+    this.schema = schema;
+  }
+
   @Override
   public void lookupOperatorOverloads(SqlIdentifier sqlIdentifier, SqlFunctionCategory sqlFunctionCategory, SqlSyntax sqlSyntax, List<SqlOperator> list, SqlNameMatcher sqlNameMatcher) {
-    SqlOperator fn = sqlNameMatcher.get(schema.getUdfListMap(), List.of(), List.of(sqlIdentifier.getSimple()));
-    if (fn != null) {
-      list.add(fn);
-    }
-
+//    SqlOperator fn = sqlNameMatcher.get(schema.getUdfListMap(), List.of(), List.of(sqlIdentifier.getSimple()));
+//    if (fn != null) {
+//      list.add(fn);
+//    }
+//
     for (SqlOperatorTable table : chain) {
       table.lookupOperatorOverloads(sqlIdentifier, sqlFunctionCategory, sqlSyntax, list, sqlNameMatcher);
     }

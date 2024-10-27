@@ -202,7 +202,7 @@ public class SqrlRexUtil {
   }
 
   public static boolean isNOW(SqlOperator operator) {
-    return operator.equals(DefaultFunctions.NOW);
+    return operator.getName().equalsIgnoreCase("NOW");
   }
 
   public static RexFinder findFunction(Predicate<SqlOperator> operatorMatch) {
