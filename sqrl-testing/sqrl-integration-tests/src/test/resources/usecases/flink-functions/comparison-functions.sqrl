@@ -48,9 +48,9 @@ BetweenTest := SELECT id,
 
 /*+ test */
 InTest := SELECT id,
-                 x IN (y,z) as Includes,
-                 x NOT IN (y,z) as Not_Includes,
-                 x IN (SELECT x FROM UnmodifiedNumericData ORDER BY id LIMIT 5) as Sub_Includes
+                 x IN (y,z) as includes,
+                 x NOT IN (y,z) as not_includes,
+                 x IN (SELECT x FROM UnmodifiedNumericData ORDER BY id LIMIT 5) as sub_includes
           FROM UnmodifiedNumericData
           ORDER BY id;
 
