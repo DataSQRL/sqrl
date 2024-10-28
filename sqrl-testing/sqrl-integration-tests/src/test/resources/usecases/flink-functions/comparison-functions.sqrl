@@ -28,7 +28,7 @@ ComparisonTest := SELECT id,
                   FROM UnmodifiedNumericData
                   ORDER BY id;
 
-/*+ test */
+/*+test */
 BetweenTest := SELECT id,
                       x BETWEEN ASYMMETRIC y AND z AS a_sym,
                       x BETWEEN SYMMETRIC y AND z as sym,
@@ -37,16 +37,16 @@ BetweenTest := SELECT id,
                FROM UnmodifiedNumericData
                ORDER BY id;
 
-/*+ test */
-/* LikeTest := SELECT id,
-/*                   word LIKE '%al' AS like_word,
-/*                   word NOT LIKE 'e%' AS not_like_word,
-/*                   sentence SIMILAR TO '.*to be.*' AS similar_to,
-/*                   sentence NOT SIMILAR TO '.*and.*' AS not_similar_to
-/*            FROM  UnmodifiedTextData
-/*            ORDER BY id;
+/*+test */
+ LikeTest := SELECT id,
+                   word LIKE '%al' AS like_word,
+                   word NOT LIKE 'e%' AS not_like_word,
+                   sentence SIMILAR TO '.*to be.*' AS similar_to,
+                   sentence NOT SIMILAR TO '.*and.*' AS not_similar_to
+             FROM  UnmodifiedTextData
+             ORDER BY id;
 
-/*+ test */
+/*+test */
 InTest := SELECT id,
                  x IN (y,z) as includes,
                  x NOT IN (y,z) as not_includes,
@@ -66,5 +66,3 @@ UnmodifiedNumericData := SELECT id,
                                 x,
                                 y
                          FROM UnmodifiedNumericData;
-
-

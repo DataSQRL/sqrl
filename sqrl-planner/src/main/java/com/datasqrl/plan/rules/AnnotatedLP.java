@@ -125,6 +125,11 @@ public class AnnotatedLP implements RelHolder {
     return relNode.getRowType().getFieldCount();
   }
 
+  public List<String> getFieldNamesWithIndex(List<Integer> indexes) {
+    List<RelDataTypeField> alpFields = relNode.getRowType().getFieldList();
+    return indexes.stream().map(i -> alpFields.get(i).getName() + "[" + i + "]").collect(Collectors.toList());
+  }
+
   /**
    * Called to inline the TopNConstraint on top of the input relation. This will inline a nowFilter
    * if present
@@ -415,7 +420,7 @@ public class AnnotatedLP implements RelHolder {
         int[] newPkIndexes = IntStream.range(0, projectIndexes.size()).filter(idx -> columnSet.contains(projectIndexes.get(idx))).toArray();
         List<Integer> oldPkIndexes = Arrays.stream(newPkIndexes).mapToObj(projectIndexes::get).collect(Collectors.toList());
         if (newPkIndexes.length > 1) {
-          errors.warn(MULTIPLE_PRIMARY_KEY, "A primary key column is mapped to multiple columns in query: %s",
+          errors.notice(MULTIPLE_PRIMARY_KEY, "A primary key column is mapped to multiple columns in query: %s",
                   oldPkIndexes.stream().map(getFieldName).collect(Collectors.toList()));
         }
         if (newPkIndexes.length == 0) {

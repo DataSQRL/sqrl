@@ -3,7 +3,8 @@
  */
 package com.datasqrl.calcite;
 
-import com.datasqrl.DefaultFunctions;
+import static com.datasqrl.function.CalciteFunctionUtil.lightweightOp;
+
 import com.datasqrl.plan.hints.DedupHint;
 import com.datasqrl.plan.hints.SqrlHint;
 import com.datasqrl.plan.util.SelectIndexMap;
@@ -52,6 +53,7 @@ import org.apache.calcite.sql.SqlBinaryOperator;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
+import org.apache.calcite.sql.type.ReturnTypes;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.calcite.tools.RelBuilder;
@@ -202,7 +204,7 @@ public class SqrlRexUtil {
   }
 
   public static boolean isNOW(SqlOperator operator) {
-    return operator.equals(DefaultFunctions.NOW);
+    return operator.getName().equalsIgnoreCase("NOW");
   }
 
   public static RexFinder findFunction(Predicate<SqlOperator> operatorMatch) {
@@ -413,7 +415,7 @@ public class SqrlRexUtil {
       return rexBuilder.makeInputRef(input, colIndexes.get(0));
     } else { //size >=2
       RexNode[] args = colIndexes.stream().map(idx -> rexBuilder.makeInputRef(input, idx)).toArray(RexNode[]::new);
-      return rexBuilder.makeCall(DefaultFunctions.GREATEST, args);
+      return rexBuilder.makeCall(lightweightOp("GREATEST", ReturnTypes.ARG0), args);
     }
   }
 

@@ -301,6 +301,7 @@ public class SqrlConfigCommons implements SqrlConfig {
       String fullKey = getFullKey(localKey);
       if (config.containsKey(fullKey)) {
         Object value;
+        //TODO: Generalize instead of hard-coding
         if (localKey.equalsIgnoreCase("enabled-engines")) {
           value = config.getList(fullKey);
         } else {

@@ -1,7 +1,0 @@
->>>errors
-[FATAL] Selected column is missing a name. Try using the AS keyword.
-in script:<script> [2:13]:
-IMPORT ecommerce-data.Orders TIMESTAMP time;
-X := SELECT 0 FROM Orders UNION ALL SELECT 0 FROM Orders;
-------------^
-

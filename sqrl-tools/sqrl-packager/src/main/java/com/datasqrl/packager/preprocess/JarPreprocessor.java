@@ -20,6 +20,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.flink.table.functions.AggregateFunction;
+import org.apache.flink.table.functions.AsyncScalarFunction;
 import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.table.functions.TableAggregateFunction;
 import org.apache.flink.table.functions.TableFunction;
@@ -39,8 +40,9 @@ public class JarPreprocessor implements Preprocessor {
       AggregateFunction.class.getCanonicalName(),
       UserDefinedFunction.class.getCanonicalName(),
       TableFunction.class.getCanonicalName(),
-      TableAggregateFunction.class.getCanonicalName()
-      );
+      TableAggregateFunction.class.getCanonicalName(),
+      AsyncScalarFunction.class.getCanonicalName()
+    );
 
   @Override
   public Pattern getPattern() {
@@ -80,11 +82,12 @@ public class JarPreprocessor implements Preprocessor {
       ObjectNode obj = mapper.createObjectNode();
       obj.put("language", "java");
       obj.put("functionClass", clazz);
-      obj.put("jarPath", path.toString());
+      obj.put("jarPath", path.toFile().getName());
 
       // Create a file in a temporary directory
       String functionName = clazz.substring(clazz.lastIndexOf('.') + 1);
       File toFile = createTempFile(obj, functionName);
+      processorContext.addDependency(path);
       processorContext.addDependency(toFile.toPath());
       processorContext.addLibrary(path);
     }

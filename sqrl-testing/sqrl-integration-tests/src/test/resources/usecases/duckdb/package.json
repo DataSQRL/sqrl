@@ -20,6 +20,7 @@
     "flink": {
       "connectors" : {
         "iceberg" : {
+          "write.parquet.page-size-bytes": 1000,
           "warehouse":"/tmp/duckdb",
           "catalog-type":"hadoop",
           "catalog-name": "mydatabase"

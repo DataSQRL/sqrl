@@ -1,6 +1,0 @@
->>>errors
-[FATAL] Cannot assign timestamp to multiple import items
-in script:<script> [1:8]:
-IMPORT ecommerce-data.* TIMESTAMP _ingest_time AS c_ts;
--------^
-

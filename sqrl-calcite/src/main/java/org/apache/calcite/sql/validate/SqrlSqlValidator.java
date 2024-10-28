@@ -37,6 +37,7 @@ import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
+import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlOperatorTable;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.type.SqlTypeUtil;
@@ -169,26 +170,5 @@ public class SqrlSqlValidator extends FlinkCalciteSqlValidator {
 
   public SqlNode getAggregate(SqlSelect select) {
     return super.getAggregate(select);
-  }
-
-  public RelDataType inferReturnType(RelDataType relDataType, SqlCall sqlCall,
-      CatalogReader catalogReader) {
-    final ListScope tableScope = new ListScope(getEmptyScope()) {
-      @Override
-      public SqlNode getNode() {
-        return sqlCall;
-      }
-    };
-
-    TableNamespace tableNamespace = new TableNamespace(this, RelOptTableImpl.create(
-        catalogReader, relDataType, relDataType.getFieldNames(), null
-    ));
-    tableScope.addChild(tableNamespace, "", false);
-    validateCall(sqlCall, tableScope);
-    performUnconditionalRewrites(sqlCall, false);
-
-    return sqlCall.getOperator()
-        .getReturnTypeInference()
-        .inferReturnType(new SqlCallBinding(this, tableScope, sqlCall));
   }
 }

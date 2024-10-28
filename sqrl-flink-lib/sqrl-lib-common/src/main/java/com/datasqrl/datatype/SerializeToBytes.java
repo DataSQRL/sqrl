@@ -1,7 +1,5 @@
 package com.datasqrl.datatype;
 
-import com.datasqrl.json.FlinkJsonType;
-import java.lang.reflect.Field;
 import lombok.SneakyThrows;
 import org.apache.flink.api.common.typeutils.TypeSerializer;
 import org.apache.flink.core.memory.DataOutputSerializer;

@@ -12,14 +12,15 @@ import org.apache.flink.table.types.inference.InputTypeStrategies;
 import org.apache.flink.table.types.inference.InputTypeStrategy;
 import org.apache.flink.table.types.inference.TypeInference;
 import org.apache.flink.table.types.inference.TypeStrategies;
+import org.apache.flink.util.jackson.JacksonMapperFactory;
 
 /**
  * Creates a JSON array from the list of JSON objects and scalar values.
  */
 public class JsonArray extends ScalarFunction {
+  private static final ObjectMapper mapper = JacksonMapperFactory.createObjectMapper();
 
   public FlinkJsonType eval(Object... objects) {
-    ObjectMapper mapper = new ObjectMapper();
     ArrayNode arrayNode = mapper.createArrayNode();
 
     for (Object value : objects) {

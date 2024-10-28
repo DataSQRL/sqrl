@@ -7,7 +7,7 @@ public interface StatusHook {
 
   void onSuccess();
 
-  void onFailure(Exception e, ErrorCollector errors);
+  void onFailure(Throwable e, ErrorCollector errors);
   boolean isSuccess();
 
   boolean isFailed();
@@ -20,7 +20,7 @@ public interface StatusHook {
     }
 
     @Override
-    public void onFailure(Exception e, ErrorCollector errors) {
+    public void onFailure(Throwable e, ErrorCollector errors) {
       e.printStackTrace();
       failed = true;
     }
@@ -47,7 +47,7 @@ public interface StatusHook {
     }
 
     @Override
-    public void onFailure(Exception e, ErrorCollector errors) {
+    public void onFailure(Throwable e, ErrorCollector errors) {
       failed = true;
     }
 
