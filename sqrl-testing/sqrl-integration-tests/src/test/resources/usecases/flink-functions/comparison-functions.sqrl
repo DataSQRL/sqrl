@@ -38,13 +38,13 @@ BetweenTest := SELECT id,
                ORDER BY id;
 
 /*+ test */
-/* LikeTest := SELECT id,
-/*                   word LIKE '%al' AS like_word,
-/*                   word NOT LIKE 'e%' AS not_like_word,
-/*                   sentence SIMILAR TO '.*to be.*' AS similar_to,
-/*                   sentence NOT SIMILAR TO '.*and.*' AS not_similar_to
-/*            FROM  UnmodifiedTextData
-/*            ORDER BY id;
+ LikeTest := SELECT id,
+                   word LIKE '%al' AS like_word,
+                   word NOT LIKE 'e%' AS not_like_word,
+                   sentence SIMILAR TO '.*to be.*' AS similar_to,
+                   sentence NOT SIMILAR TO '.*and.*' AS not_similar_to
+             FROM  UnmodifiedTextData
+             ORDER BY id;
 
 /*+ test */
 InTest := SELECT id,
