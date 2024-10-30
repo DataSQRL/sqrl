@@ -10,7 +10,7 @@ Schema:
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
- - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - _ingest_time: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
 Plan:
 LogicalTableScan(table=[[customer_1]])
 
@@ -26,9 +26,9 @@ Schema:
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
- - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - _ingest_time: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
 Post Processors:
- - topN: partition=customerid limit=1 sort=#4: _ingest_time TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC 
+ - topN: partition=customerid limit=1 sort=#4: _ingest_time TIMESTAMP_LTZ(3) *PROCTIME* DESC 
 Plan:
 LogicalTableScan(table=[[customer_2]])
 
@@ -45,7 +45,7 @@ Schema:
  - _customerid: BIGINT NOT NULL
  - _time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - _productid: BIGINT NOT NULL
- - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - _ingest_time: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
 Plan:
 LogicalProject(price=[-(*($6, $7), $8)], _id=[$0], _customerid=[$1], _time=[$2], _productid=[$5], _ingest_time=[$4])
   LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{3}])
@@ -63,7 +63,7 @@ Schema:
  - id: BIGINT NOT NULL
  - _customerid: BIGINT NOT NULL
  - _time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
- - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - _ingest_time: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
 Plan:
 LogicalProject(id=[$0], _customerid=[$1], _time=[$2], _ingest_time=[$4])
   LogicalJoin(condition=[AND(=($5, $0), =($7, $2), =($6, $1), =($9, $4))], joinType=[inner]) hints[IntervalJoin]
@@ -81,7 +81,7 @@ Schema:
  - customerid: BIGINT NOT NULL
  - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - entries: RecordType(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
- - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - _ingest_time: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
 Plan:
 LogicalTableScan(table=[[orders_1]])
 
@@ -97,7 +97,7 @@ Schema:
  - day: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - total_price: DOUBLE
  - total_num: BIGINT NOT NULL
- - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - __timestamp: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
 Plan:
 LogicalProject(__pk1_customerid=[$0], day=[$1], total_price=[$2], total_num=[$3], __timestamp=[$4])
   LogicalAggregate(group=[{0, 1}], total_price=[SUM($2)], total_num=[SUM($3)], __timestamp=[MAX($7)])
@@ -121,7 +121,7 @@ Schema:
  - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - price: DOUBLE
  - num: BIGINT NOT NULL
- - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - _ingest_time: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
 Plan:
 LogicalProject(id=[$0], customerid=[$1], time=[$2], price=[$8], num=[$9], _ingest_time=[$4])
   LogicalJoin(condition=[AND(=($0, $5), =($1, $6), =($2, $7), =($11, $4))], joinType=[inner]) hints[IntervalJoin]
@@ -142,7 +142,7 @@ Schema:
  - price: DOUBLE
  - num: BIGINT NOT NULL
  - discount: DOUBLE
- - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - _ingest_time: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
 Plan:
 LogicalProject(__pk1_id=[$0], __pk2_customerid=[$1], __pk3_time=[$2], price=[$4], num=[$5], discount=[$6], _ingest_time=[$3])
   LogicalAggregate(group=[{0, 1, 2, 6}], price=[SUM($3)], num=[COUNT()], discount=[SUM($4)]) hints[TumbleAggregationHint options:[6, INSTANT, 6, 1, 0]]

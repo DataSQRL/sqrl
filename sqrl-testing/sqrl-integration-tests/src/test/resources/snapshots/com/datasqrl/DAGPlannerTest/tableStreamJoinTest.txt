@@ -68,7 +68,7 @@ Schema:
  - _time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
 Plan:
-LogicalProject(cid=[COALESCE($4, 0:BIGINT)], ctime=[COALESCE($7, 0:BIGINT)], id=[$0], name=[$6], customerid=[$1], _time=[$2], __timestamp=[GREATEST($2, $8)])
+LogicalProject(cid=[coalesce($4, 0:BIGINT)], ctime=[coalesce($7, 0:BIGINT)], id=[$0], name=[$6], customerid=[$1], _time=[$2], __timestamp=[GREATEST($2, $8)])
   LogicalJoin(condition=[=($1, $4)], joinType=[left]) hints[JoinCostHint options:[STREAM, STREAM, 1, NONE]]
     LogicalTableScan(table=[[orders_2]])
     LogicalTableScan(table=[[customer_2]])
@@ -109,7 +109,7 @@ Schema:
  - _time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
  - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
 Plan:
-LogicalProject(ouuid=[COALESCE($5, 0:BIGINT)], otime=[COALESCE($7, proctime())], id=[$5], name=[$2], customerid=[$6], _customerid0=[$0], _lastUpdated=[$3], _time=[$7], __timestamp=[GREATEST($4, $7)])
+LogicalProject(ouuid=[coalesce($5, 0:BIGINT)], otime=[coalesce($7, PROCTIME())], id=[$5], name=[$2], customerid=[$6], _customerid0=[$0], _lastUpdated=[$3], _time=[$7], __timestamp=[GREATEST($4, $7)])
   LogicalJoin(condition=[=($6, $0)], joinType=[left]) hints[JoinCostHint options:[STREAM, STREAM, 1, NONE]]
     LogicalTableScan(table=[[customer_2]])
     LogicalTableScan(table=[[orders_2]])

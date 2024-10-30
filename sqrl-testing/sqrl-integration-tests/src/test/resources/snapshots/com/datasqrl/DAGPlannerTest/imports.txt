@@ -10,7 +10,7 @@ Schema:
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
- - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - _ingest_time: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
 Plan:
 LogicalTableScan(table=[[customer_1]])
 
@@ -25,7 +25,7 @@ Schema:
  - customerid: BIGINT NOT NULL
  - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - entries: RecordType(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
- - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - _ingest_time: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
 Plan:
 LogicalTableScan(table=[[orders_1]])
 
@@ -40,7 +40,7 @@ Schema:
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - description: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - category: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - _ingest_time: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
 Plan:
 LogicalTableScan(table=[[product_1]])
 

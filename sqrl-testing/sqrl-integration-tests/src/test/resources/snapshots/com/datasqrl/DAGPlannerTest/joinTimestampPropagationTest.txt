@@ -10,7 +10,7 @@ Schema:
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
- - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - _ingest_time: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
 Plan:
 LogicalTableScan(table=[[customer_1]])
 
@@ -28,7 +28,7 @@ Schema:
  - _time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - _email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - _lastUpdated: BIGINT NOT NULL
- - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - __timestamp: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
 Plan:
 LogicalProject(id=[$0], name=[$7], _customerid=[$1], _time=[$2], _email=[$6], _lastUpdated=[$8], __timestamp=[GREATEST($4, $9)])
   LogicalJoin(condition=[=($1, $5)], joinType=[inner]) hints[JoinCostHint options:[STREAM, STREAM, 1, NONE]]
@@ -45,7 +45,7 @@ Timestamp  : timestamp
 Schema:
  - id: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
  - _customerid: BIGINT NOT NULL
  - _time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - _email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -73,7 +73,7 @@ Schema:
  - _lastUpdated: BIGINT NOT NULL
  - _description: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - _category: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - __timestamp: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
 Plan:
 LogicalProject(id=[$0], name=[$7], name0=[$11], _customerid=[$1], _time=[$2], _email=[$6], _lastUpdated=[$8], _description=[$12], _category=[$13], __timestamp=[GREATEST($4, $9, $14)])
   LogicalJoin(condition=[=($10, $5)], joinType=[inner]) hints[JoinCostHint options:[STREAM, STREAM, 1, NONE]]
@@ -93,7 +93,7 @@ Schema:
  - customerid: BIGINT NOT NULL
  - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - entries: RecordType(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
- - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - _ingest_time: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
 Plan:
 LogicalTableScan(table=[[orders_1]])
 
@@ -108,7 +108,7 @@ Schema:
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - description: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - category: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - _ingest_time: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
 Plan:
 LogicalTableScan(table=[[product_1]])
 

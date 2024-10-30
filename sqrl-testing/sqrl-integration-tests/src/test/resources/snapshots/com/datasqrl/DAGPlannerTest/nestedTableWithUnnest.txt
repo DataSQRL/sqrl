@@ -28,7 +28,7 @@ Schema:
 Plan:
 LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
   LogicalAggregate(group=[{0, 1}], price=[SUM($2)], agg#1=[SUM($3)]) hints[TumbleAggregationHint options:[1, INSTANT, 1, 1, 0]]
-    LogicalProject(__pk1_id=[$0], __pk2_time=[$2], $f2=[*($5, $6)], $f3=[COALESCE($7, 0.0:DECIMAL(2, 1))], productid=[$4])
+    LogicalProject(__pk1_id=[$0], __pk2_time=[$2], $f2=[*($5, $6)], $f3=[coalesce($7, 0.0:DECIMAL(2, 1))], productid=[$4])
       LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{3}])
         LogicalTableScan(table=[[orders_2]])
         LogicalTableFunctionScan(invocation=[Orders.entries($cor0.entries)], rowType=[RecordType(BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount)], elementType=[class [Ljava.lang.Object;])

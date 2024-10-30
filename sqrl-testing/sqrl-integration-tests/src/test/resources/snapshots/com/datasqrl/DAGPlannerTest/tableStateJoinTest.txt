@@ -136,7 +136,7 @@ Schema:
  - _customerid0: BIGINT NOT NULL
  - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
 Plan:
-LogicalProject(ouuid=[COALESCE($6, 0:BIGINT)], id=[$6], name=[$2], customerid=[$7], _customerid0=[$0], __timestamp=[GREATEST($4, $8)])
+LogicalProject(ouuid=[coalesce($6, 0:BIGINT)], id=[$6], name=[$2], customerid=[$7], _customerid0=[$0], __timestamp=[GREATEST($4, $8)])
   LogicalJoin(condition=[=($7, $0)], joinType=[left]) hints[JoinCostHint options:[VERSIONED_STATE, VERSIONED_STATE, 1, LEFT]]
     LogicalFilter(condition=[=($5, 1)]) hints[DedupHint]
       LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS FIRST)])

@@ -12,7 +12,7 @@ Schema:
  - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - beforeTimestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - _customerid: BIGINT NOT NULL
- - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - __timestamp: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
 Plan:
 LogicalProject(beforeID=[$0], afterID=[$5], timestamp=[$7], beforeTimestamp=[$2], _customerid=[$1], __timestamp=[GREATEST($4, $9)])
   LogicalJoin(condition=[AND(=($1, $6), <($2, $7), >=($2, -($7, *(60000:INTERVAL MINUTE, 10))))], joinType=[inner]) hints[JoinCostHint options:[STREAM, STREAM, 1, NONE]]
@@ -36,7 +36,7 @@ Schema:
  - customerid: BIGINT NOT NULL
  - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - entries: RecordType(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
- - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - _ingest_time: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
 Plan:
 LogicalTableScan(table=[[orders_1]])
 

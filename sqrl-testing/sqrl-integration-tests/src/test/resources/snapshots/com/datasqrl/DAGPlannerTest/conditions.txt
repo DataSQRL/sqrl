@@ -28,7 +28,7 @@ Schema:
  - category: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalFilter(condition=[ARRAY_CONTAINS(ARRAY(CAST('one'):VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL, CAST('two'):VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL), $1)])
+LogicalFilter(condition=[array_contains(ARRAY(CAST('one'):VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL, CAST('two'):VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL), $1)])
   LogicalTableScan(table=[[product_2]])
 
 === ProductFilter2
@@ -45,7 +45,7 @@ Schema:
  - category: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalFilter(condition=[ARRAY_CONTAINS(split('one, two', ','), $1)])
+LogicalFilter(condition=[array_contains(split('one, two', ','), $1)])
   LogicalTableScan(table=[[product_2]])
 
 >>>flink.json
