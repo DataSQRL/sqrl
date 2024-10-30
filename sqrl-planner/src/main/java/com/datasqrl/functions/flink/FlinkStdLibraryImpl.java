@@ -58,7 +58,8 @@ public class FlinkStdLibraryImpl extends AbstractFunctionModule implements StdLi
       "WITHOUT_COLUMNS",
       "AS",
       "STREAM_RECORD_TIMESTAMP",
-      "RANGE_TO"
+      "RANGE_TO",
+      "LIKE"
   );
 
   private static List<NamespaceObject> SQL_FUNCTIONS = getAllFunctionsFromFlink();

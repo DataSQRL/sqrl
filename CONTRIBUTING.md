@@ -85,5 +85,15 @@ git config user.signingkey D2A162EAE1016F3G
 git config commit.gpgsign true
 ```
 
+You also need to add the public key to your github profile for the signing to be verified. 
+
+To do so, go to your github settings page, select the `SSH and GPG keys` tab. 
+
+Press `New GPG Key`, then enter a name for the key and the outputs of the following command. 
+
+```
+gpg --armor --export D2A162EAE1016F3G
+```
+
 ## License
 By contributing to DataSQRL, you agree that your contributions will be licensed under the Elastic License 2.0.

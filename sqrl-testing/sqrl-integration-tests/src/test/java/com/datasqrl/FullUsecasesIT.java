@@ -69,6 +69,12 @@ public class FullUsecasesIT {
       new ScriptCriteria("sensors-mutation.sqrl", "run"), //flaky see sqrl script
       new ScriptCriteria("sensors-full.sqrl", "test"), //flaky (too much data)
       new ScriptCriteria("sensors-full.sqrl", "run"), //flaky (too much data)
+      //new ScriptCriteria("sensors-teaser.sqrl", "test"),
+      //new ScriptCriteria("season-teaser.sqrl", "run"),
+//      new ScriptCriteria("comparison-functions.sqrl", "test"),
+//      new ScriptCriteria("comparison-functions.sqrl", "run"),
+      new ScriptCriteria("analytics-only.sqrl", "test"),
+      new ScriptCriteria("analytics-only.sqrl", "run"),
       new ScriptCriteria("seedshop-extended.sqrl", "test"), // CustomerPromotionTest issue
       new ScriptCriteria("seedshop-extended.sqrl", "run") // CustomerPromotionTest issue
   );
