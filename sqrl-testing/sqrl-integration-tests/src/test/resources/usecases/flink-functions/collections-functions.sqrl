@@ -1,0 +1,16 @@
+IMPORT flink.*; -- Import flink functions
+IMPORT data-local.Arrays; -- Import array data
+
+/* Create numeric data source */
+UnmodifiedArrayData := SELECT id,
+                              timestamp,
+                              items
+                       FROM Arrays ORDER BY id;
+
+
+/* =======TEST CASES======== */
+
+/*+test */
+UnmodifiedArrayDataTest := SELECT *
+                           FROM UnmodifiedArrayData
+                           ORDER BY id;

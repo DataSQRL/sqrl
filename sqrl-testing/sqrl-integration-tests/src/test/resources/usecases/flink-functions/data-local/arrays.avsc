@@ -1,0 +1,43 @@
+{
+  "type": "record",
+  "name": "Order",
+  "fields": [
+    {
+      "name": "id",
+      "type": "long"
+    },
+    {
+      "name": "timestamp",
+      "type": "string"
+    },
+    {
+      "name": "items",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "OrderEntry",
+          "fields": [
+            {
+              "name": "id",
+              "type": "int"
+            },
+            {
+              "name": "number",
+              "type": "int"
+            },
+            {
+              "name": "decimal",
+              "type": "double"
+            },
+            {
+              "name": "fraction",
+              "type": ["null", "double"],
+              "default": null
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
