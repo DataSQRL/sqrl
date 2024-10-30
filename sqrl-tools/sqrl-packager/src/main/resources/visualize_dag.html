@@ -11,8 +11,20 @@
   <body>
     <div id="graph"></div>
     <script>
-      let nodes = ${DAG}
-      DAGVisualization.renderGraph(document.getElementById('graph'), nodes)
+      let elements = ${DAG}
+      const nodes = elements.map(function (node) {
+        return { data: node };
+      });
+
+      const edges = elements.flatMap((node) =>
+        (node?.inputs || []).map((input) => ({
+          data: { source: input, target: node?.id },
+        }))
+      );
+      DAGVisualization.renderGraph(document.getElementById("graph"), {
+        nodes,
+        edges,
+      });
     </script>
   </body>
 </html>
