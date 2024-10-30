@@ -17,8 +17,8 @@ public class SqrlFrameworkImpl extends SqrlFramework {
         SqrlHintStrategyTable.getHintStrategyTable(), NameCanonicalizer.SYSTEM,
         schema);
 
-    DefaultFunctions functions = new DefaultFunctions();
-    functions.getDefaultFunctions()
-        .forEach((key, value) -> getSchema().addFunction(key, value));
+//    DefaultFunctions functions = new DefaultFunctions();
+//    functions.getDefaultFunctions()
+//        .forEach((key, value) -> getSchema().addFunction(key, value));
   }
 }

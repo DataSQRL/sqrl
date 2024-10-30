@@ -37,6 +37,7 @@ import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
+import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlOperatorTable;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.type.SqlTypeUtil;
@@ -187,7 +188,10 @@ public class SqrlSqlValidator extends FlinkCalciteSqlValidator {
     validateCall(sqlCall, tableScope);
     performUnconditionalRewrites(sqlCall, false);
 
-    return sqlCall.getOperator()
+    SqlOperator operator = sqlCall.getOperator();
+    //we need to resolve the function
+    handleUnresolvedFunction(sqlCall, operator, List.of(), List.of());
+    return operator
         .getReturnTypeInference()
         .inferReturnType(new SqlCallBinding(this, tableScope, sqlCall));
   }

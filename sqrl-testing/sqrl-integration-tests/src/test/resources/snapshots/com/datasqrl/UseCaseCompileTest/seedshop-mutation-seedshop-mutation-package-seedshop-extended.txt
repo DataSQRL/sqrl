@@ -77,7 +77,7 @@ Schema:
 Post Processors:
  - topN: partition=id limit=1 sort=#7: timestamp TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC 
 Plan:
-LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], ip_address=[$4], country=[$5], changed_on=[$6], timestamp=[$7], country0=[COALESCE($5, 'none')])
+LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], ip_address=[$4], country=[$5], changed_on=[$6], timestamp=[$7], country0=[coalesce($5, 'none')])
   LogicalTableScan(table=[[customers_2]])
 
 === monthly_by_country
@@ -244,7 +244,7 @@ Schema:
 Plan:
 LogicalProject(__pk1_id=[$0], __pk3_time=[$1], price=[$2], saving=[$3])
   LogicalAggregate(group=[{0, 1}], agg#0=[SUM($2)], agg#1=[SUM($3)]) hints[TumbleAggregationHint options:[1, INSTANT, 1, 1, 0]]
-    LogicalProject(__pk1_id=[$0], __pk2_time=[$2], $f2=[-(*($5, $6), COALESCE($7, 0.0:DECIMAL(2, 1)))], $f3=[COALESCE($7, 0.0:DECIMAL(2, 1))], productid=[$4])
+    LogicalProject(__pk1_id=[$0], __pk2_time=[$2], $f2=[-(*($5, $6), coalesce($7, 0.0:DECIMAL(2, 1)))], $f3=[coalesce($7, 0.0:DECIMAL(2, 1))], productid=[$4])
       LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{3}])
         LogicalTableScan(table=[[orders_2]])
         LogicalTableFunctionScan(invocation=[Orders.items($cor0.items)], rowType=[RecordType(BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount)], elementType=[class [Ljava.lang.Object;])

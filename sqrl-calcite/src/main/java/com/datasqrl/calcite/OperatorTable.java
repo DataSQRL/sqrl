@@ -2,8 +2,10 @@ package com.datasqrl.calcite;
 
 import com.google.inject.Inject;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.sql.SqlFunctionCategory;
 import org.apache.calcite.sql.SqlIdentifier;
@@ -32,15 +34,23 @@ public class OperatorTable implements SqlOperatorTable {
 
   @Override
   public void lookupOperatorOverloads(SqlIdentifier sqlIdentifier, SqlFunctionCategory sqlFunctionCategory, SqlSyntax sqlSyntax, List<SqlOperator> list, SqlNameMatcher sqlNameMatcher) {
-//    SqlOperator fn = sqlNameMatcher.get(schema.getUdfListMap(), List.of(), List.of(sqlIdentifier.getSimple()));
-//    if (fn != null) {
-//      list.add(fn);
-//    }
-//
+    //todo: convert to flink fncs and skip this
+    if (sqlIdentifier.names.size() == 1) {
+      SqlOperator fn = sqlNameMatcher.get(schema.getUdfListMap(), List.of(),
+          List.of(sqlIdentifier.getSimple()));
+      if (fn != null) {
+        list.add(fn);
+      }
+    }
+
     for (SqlOperatorTable table : chain) {
       table.lookupOperatorOverloads(sqlIdentifier, sqlFunctionCategory, sqlSyntax, list, sqlNameMatcher);
     }
 
+    //dedupe
+    List dedup = new ArrayList<>(new HashSet<>(list));
+    list.clear();
+    list.addAll(dedup);
   }
 
   @Override

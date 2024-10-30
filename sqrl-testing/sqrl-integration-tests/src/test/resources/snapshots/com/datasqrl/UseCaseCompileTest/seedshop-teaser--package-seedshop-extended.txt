@@ -14,7 +14,7 @@ Schema:
 Plan:
 LogicalProject(customerid=[$0], week=[$1], total=[$2], saved=[$3])
   LogicalAggregate(group=[{0, 1}], total=[SUM($2)], agg#1=[SUM($3)]) hints[TumbleAggregationHint options:[1, FUNCTION, 5, 604800000, 0]]
-    LogicalProject(customerid=[$1], week=[endOfWeek($2)], $f2=[*($4, $5)], $f3=[COALESCE($6, 0.0:DECIMAL(2, 1))], id=[$0], time=[$2])
+    LogicalProject(customerid=[$1], week=[endOfWeek($2)], $f2=[*($4, $5)], $f3=[coalesce($6, 0.0:DECIMAL(2, 1))], id=[$0], time=[$2])
       LogicalTableScan(table=[[orders_2]])
 
 === Orders
@@ -48,7 +48,7 @@ Schema:
 Plan:
 LogicalProject(productid=[$0], week=[$1], revenue=[$2])
   LogicalAggregate(group=[{0, 1}], agg#0=[SUM($2)]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 604800000, 0]]
-    LogicalProject(productid=[$3], week=[endOfWeek($2)], $f2=[-(*($4, $5), COALESCE($6, 0.0:DECIMAL(2, 1)))], id=[$0], time=[$2])
+    LogicalProject(productid=[$3], week=[endOfWeek($2)], $f2=[-(*($4, $5), coalesce($6, 0.0:DECIMAL(2, 1)))], id=[$0], time=[$2])
       LogicalTableScan(table=[[orders_2]])
 
 === print.Revenue

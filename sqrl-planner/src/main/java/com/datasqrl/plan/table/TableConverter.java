@@ -26,6 +26,7 @@ import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
@@ -93,10 +94,13 @@ public class TableConverter {
 
           addModules(framework, moduleLoader, errors, callRewriter.getFncModules());
           try {
-            RelDataType relDataType1 = sqlValidator.inferReturnType(typeBuilder.build(),
-                (SqlCall) sqlNode,
-                framework.getCatalogReader());
-            typeBuilder.add(nameAdjuster.uniquifyName(columnName), relDataType1);
+            RexNode rexNode = framework.getQueryPlanner()
+                .planExpression(sqlNode, typeBuilder.build());
+
+//            RelDataType relDataType1 = sqlValidator.inferReturnType(typeBuilder.build(),
+//                (SqlCall) sqlNode,
+//                framework.getCatalogReader());
+            typeBuilder.add(nameAdjuster.uniquifyName(columnName), rexNode.getType());
           } catch (Exception e) {
             throw new RuntimeException(
                 String.format("Could not evaluate metadata expression: %s. Reason: %s", attribute, e.getMessage()));

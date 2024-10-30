@@ -1,27 +1,17 @@
 package com.datasqrl.calcite;
 
 import com.datasqrl.calcite.type.TypeFactory;
-import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 
-import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.google.inject.Inject;
-import com.google.inject.Singleton;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.apache.calcite.config.CalciteConnectionConfigImpl;
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.rel.hint.HintStrategyTable;
 import org.apache.calcite.rel.metadata.RelMetadataProvider;
-import org.apache.calcite.sql.SqlDialect;
-import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlOperatorTable;
-import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 
 import java.util.Properties;
 import org.apache.calcite.sql.type.SqlTypeName;
@@ -30,12 +20,10 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.table.api.internal.TableEnvExtractor;
 import org.apache.flink.table.api.internal.TableEnvironmentImpl;
 import org.apache.flink.table.catalog.FunctionCatalog;
-import org.apache.flink.table.planner.calcite.FlinkRexBuilder;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.calcite.FlinkTypeSystem;
 import org.apache.flink.table.planner.calcite.RexFactory;
 import org.apache.flink.table.planner.catalog.FunctionCatalogOperatorTable;
-import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
 
 @Getter
 public class SqrlFramework {
