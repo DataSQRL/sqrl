@@ -16,6 +16,7 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.sql.SqlFunction;
 import org.apache.flink.table.catalog.UnresolvedIdentifier;
+import org.apache.flink.table.functions.BuiltInFunctionDefinition;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.functions.UserDefinedFunction;
 import org.apache.flink.table.resource.ResourceType;
@@ -37,9 +38,8 @@ public class FlinkUdfNsObject implements FunctionNamespaceObject<FunctionDefinit
   @SneakyThrows
   @Override
   public boolean apply(ScriptPlanner planner, Optional<String> objectName, SqrlFramework framework, ErrorCollector errors) {
-    String name = objectName.orElseGet(() -> getFunctionName(function));
+    String name = objectName.orElseGet(() -> getThisFunctionName(function));
 
-    UserDefinedFunction udf = (UserDefinedFunction) function;
     jarUrl.ifPresent(url-> {
       try {
         framework.getFlinkFunctionCatalog()
@@ -49,30 +49,32 @@ public class FlinkUdfNsObject implements FunctionNamespaceObject<FunctionDefinit
       }
     });
 
-    //TODO: Remove all below and only preserve jar location
-    framework.getFlinkFunctionCatalog()
-        .registerCatalogFunction(UnresolvedIdentifier.of(name), udf.getClass(), true);
-
-    FlinkConverter flinkConverter = new FlinkConverter((TypeFactory) framework.getQueryPlanner().getCatalogReader()
-        .getTypeFactory());
-
-
-    Optional<SqlFunction> convertedFunction = flinkConverter
-        .convertFunction(name, function);
-
-    if (convertedFunction.isEmpty()) {
-      log.info("Could not resolve function: " + name);
-      return false;
+    if (function instanceof UserDefinedFunction) {
+      UserDefinedFunction udf = (UserDefinedFunction)function;
+      framework.getFlinkFunctionCatalog()
+          .registerCatalogFunction(UnresolvedIdentifier.of(name), udf.getClass(), true);
+      framework.getSchema().getUdf().put(name, udf);
+    } else if (function instanceof BuiltInFunctionDefinition) {
+      //if name is different from function name, create function alias
+      framework.getSchema().addFunctionAlias(name, ((BuiltInFunctionDefinition) function).getSqlName());
     }
-
-    framework.getSchema()
-        .addFunction(name, convertedFunction.get());
 
     jarUrl.ifPresent((url)->framework.getSchema().addJar(url));
     return true;
   }
+  public String getThisFunctionName(FunctionDefinition function) {
+    if (function instanceof BuiltInFunctionDefinition) {
+      return this.name.getDisplay();
+    }
+
+    return getFunctionNameFromClass(function.getClass()).getDisplay();
+  }
 
   public static String getFunctionName(FunctionDefinition function) {
+    if (function instanceof BuiltInFunctionDefinition) {
+      return ((BuiltInFunctionDefinition) function).getName();
+    }
+
     return getFunctionNameFromClass(function.getClass()).getDisplay();
   }
   public static Name getFunctionNameFromClass(Class clazz) {

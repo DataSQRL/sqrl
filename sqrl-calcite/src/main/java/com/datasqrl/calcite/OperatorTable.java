@@ -35,12 +35,10 @@ public class OperatorTable implements SqlOperatorTable {
   @Override
   public void lookupOperatorOverloads(SqlIdentifier sqlIdentifier, SqlFunctionCategory sqlFunctionCategory, SqlSyntax sqlSyntax, List<SqlOperator> list, SqlNameMatcher sqlNameMatcher) {
     //todo: convert to flink fncs and skip this
-    if (sqlIdentifier.names.size() == 1) {
-      SqlOperator fn = sqlNameMatcher.get(schema.getUdfListMap(), List.of(),
-          List.of(sqlIdentifier.getSimple()));
-      if (fn != null) {
-        list.add(fn);
-      }
+    if (sqlIdentifier.names.size() == 1 &&
+        schema.getFncAlias().containsKey(sqlIdentifier.names.get(0))) {
+      sqlIdentifier = new SqlIdentifier(schema.getFncAlias().get(sqlIdentifier.names.get(0)),
+          sqlIdentifier.getParserPosition());
     }
 
     for (SqlOperatorTable table : chain) {
@@ -55,10 +53,6 @@ public class OperatorTable implements SqlOperatorTable {
 
   @Override
   public List<SqlOperator> getOperatorList() {
-    return new ArrayList<>(schema.getUdf().values());
-  }
-
-  public Map<String, SqlOperator> getUdfs() {
-    return schema.getUdf();
+    return new ArrayList<>();
   }
 }

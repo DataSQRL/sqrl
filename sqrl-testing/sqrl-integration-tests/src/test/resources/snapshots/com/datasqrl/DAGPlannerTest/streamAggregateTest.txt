@@ -73,7 +73,7 @@ Schema:
  - order_count: BIGINT NOT NULL
 Plan:
 LogicalAggregate(group=[{0, 1}], order_count=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 3, 1000, 0]]
-  LogicalProject(customer=[$1], bucket=[endOfSecond($2)], id=[$0], time=[$2])
+  LogicalProject(customer=[$1], bucket=[endOfsecond($2)], id=[$0], time=[$2])
     LogicalTableScan(table=[[orders_2]])
 
 === Ordertime2
@@ -126,21 +126,21 @@ LogicalTableScan(table=[[product_1]])
 >>>flink.json
 {
   "flinkSql" : [
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptostring` AS 'com.datasqrl.time.TimestampToString' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofmonth` AS 'com.datasqrl.time.EndOfMonth' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptoepochmilli` AS 'com.datasqrl.time.TimestampToEpochMilli' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofweek` AS 'com.datasqrl.time.EndOfWeek' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `parsetimestamp` AS 'com.datasqrl.time.ParseTimestamp' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochmillitotimestamp` AS 'com.datasqrl.time.EpochMilliToTimestamp' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestampToString` AS 'com.datasqrl.time.TimestampToString' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestampToEpochMilli` AS 'com.datasqrl.time.TimestampToEpochMilli' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endOfWeek` AS 'com.datasqrl.time.EndOfWeek' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endOfHour` AS 'com.datasqrl.time.EndOfHour' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endOfYear` AS 'com.datasqrl.time.EndOfYear' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `atZone` AS 'com.datasqrl.time.AtZone' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endOfMonth` AS 'com.datasqrl.time.EndOfMonth' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestampToEpoch` AS 'com.datasqrl.time.TimestampToEpoch' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochMilliToTimestamp` AS 'com.datasqrl.time.EpochMilliToTimestamp' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `ToJson` AS 'com.datasqrl.json.ToJson' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofminute` AS 'com.datasqrl.time.EndOfMinute' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptoepoch` AS 'com.datasqrl.time.TimestampToEpoch' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofsecond` AS 'com.datasqrl.time.EndOfSecond' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochtotimestamp` AS 'com.datasqrl.time.EpochToTimestamp' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `atzone` AS 'com.datasqrl.time.AtZone' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofday` AS 'com.datasqrl.time.EndOfDay' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofhour` AS 'com.datasqrl.time.EndOfHour' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofyear` AS 'com.datasqrl.time.EndOfYear' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochToTimestamp` AS 'com.datasqrl.time.EpochToTimestamp' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `parseTimestamp` AS 'com.datasqrl.time.ParseTimestamp' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endOfDay` AS 'com.datasqrl.time.EndOfDay' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endOfMinute` AS 'com.datasqrl.time.EndOfMinute' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endOfSecond` AS 'com.datasqrl.time.EndOfSecond' LANGUAGE JAVA;",
     "CREATE TEMPORARY TABLE `customer_1` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `timestamp` AS EPOCHTOTIMESTAMP(`lastUpdated`),\n  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,\n  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
     "CREATE TEMPORARY TABLE `orders_1` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,\n  PRIMARY KEY (`id`, `time`) NOT ENFORCED,\n  WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
     "CREATE TEMPORARY TABLE `product_1` (\n  `productid` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`productid`, `name`, `description`, `category`) NOT ENFORCED,\n  WATERMARK FOR `_ingest_time` AS `_ingest_time` - INTERVAL '0.001' SECOND\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
@@ -156,11 +156,11 @@ LogicalTableScan(table=[[product_1]])
     "CREATE VIEW `table$2`\nAS\nSELECT `customerid` AS `customer`, COUNT(*) AS `order_count`, MAX(`time`) AS `__timestamp`\nFROM `orders_1`\nGROUP BY `customerid`;",
     "CREATE VIEW `table$3`\nAS\nSELECT COUNT(*) AS `order_count`, 1 AS `__pk`, MAX(`time`) AS `__timestamp`\nFROM `orders_1`;",
     "CREATE VIEW `table$4`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders_1`;",
-    "CREATE VIEW `table$5`\nAS\nSELECT `customerid` AS `customer`, ENDOFSECOND(`time`) AS `bucket`, `id`, `time`\nFROM `orders_1`;",
+    "CREATE VIEW `table$5`\nAS\nSELECT `customerid` AS `customer`, `default_catalog`.`default_database`.`endOfsecond`(`time`) AS `bucket`, `id`, `time`\nFROM `orders_1`;",
     "CREATE VIEW `table$6`\nAS\nSELECT `customer`, `window_time` AS `bucket`, COUNT(*) AS `order_count`\nFROM TABLE(TUMBLE(TABLE `table$5`, DESCRIPTOR(`time`), INTERVAL '1' SECOND(4), INTERVAL '0' SECOND(1))) AS `t0`\nGROUP BY `customer`, `window_start`, `window_end`, `window_time`;",
-    "CREATE VIEW `table$7`\nAS\nSELECT `customerid` AS `customer`, ENDOFMINUTE(`time`, 1, 15) AS `bucket`, `id`, `time`\nFROM `orders_1`;",
+    "CREATE VIEW `table$7`\nAS\nSELECT `customerid` AS `customer`, `default_catalog`.`default_database`.`endOfMinute`(`time`, 1, 15) AS `bucket`, `id`, `time`\nFROM `orders_1`;",
     "CREATE VIEW `table$8`\nAS\nSELECT `customer`, `window_time` AS `bucket`, COUNT(*) AS `order_count`\nFROM TABLE(TUMBLE(TABLE `table$7`, DESCRIPTOR(`time`), INTERVAL '60' SECOND(5), INTERVAL '15' SECOND(5))) AS `t0`\nGROUP BY `customer`, `window_start`, `window_end`, `window_time`;",
-    "CREATE VIEW `table$9`\nAS\nSELECT `customerid` AS `customer`, ENDOFHOUR(`time`, 5, 30) AS `bucket`, `id`, `time`\nFROM `orders_1`;",
+    "CREATE VIEW `table$9`\nAS\nSELECT `customerid` AS `customer`, `default_catalog`.`default_database`.`endOfHour`(`time`, 5, 30) AS `bucket`, `id`, `time`\nFROM `orders_1`;",
     "CREATE VIEW `table$10`\nAS\nSELECT `customer`, `window_time` AS `bucket`, COUNT(*) AS `order_count`\nFROM TABLE(TUMBLE(TABLE `table$9`, DESCRIPTOR(`time`), INTERVAL '18000' SECOND(8), INTERVAL '1800' SECOND(7))) AS `t0`\nGROUP BY `customer`, `window_start`, `window_end`, `window_time`;",
     "CREATE VIEW `table$11`\nAS\nSELECT *\nFROM `product_1`;",
     "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer_2`\n(SELECT *\n FROM `table$1`)\n;\nINSERT INTO `orderagg1_1`\n (SELECT *\n  FROM `table$2`)\n ;\n INSERT INTO `orderagg2_1`\n  (SELECT *\n   FROM `table$3`)\n  ;\n  INSERT INTO `orders_2`\n   (SELECT *\n    FROM `table$4`)\n   ;\n   INSERT INTO `ordertime1_1`\n    (SELECT *\n     FROM `table$6`)\n    ;\n    INSERT INTO `ordertime2_1`\n     (SELECT *\n      FROM `table$8`)\n     ;\n     INSERT INTO `ordertime3_1`\n      (SELECT *\n       FROM `table$10`)\n      ;\n      INSERT INTO `product_2`\n       (SELECT *\n        FROM `table$11`)\n       ;\n       END;"

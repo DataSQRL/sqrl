@@ -26,16 +26,15 @@ public class NamespaceObjectUtil {
   }
 
   public static NamespaceObject createFunctionFromFlink(String name, String originalName) {
-    FlinkConverter converter = new FlinkConverter(TypeFactory.getTypeFactory());
+//    FlinkConverter converter = new FlinkConverter(TypeFactory.getTypeFactory());
 
     Optional<BuiltInFunctionDefinition> function = getFunctionByNameFromClass(BuiltInFunctionDefinitions.class,
         BuiltInFunctionDefinition.class,
         originalName.toUpperCase(Locale.ROOT));
     Preconditions.checkArgument(function.isPresent(), "Could not find function %s", name);
     BuiltInFunctionDefinition fnc = function.get();
-    SqlFunction sqlFunction = converter.convertFunction(originalName, fnc).get();
-
-    return new CalciteFunctionNsObject(Name.system(name), sqlFunction, originalName);
+//    SqlFunction sqlFunction = converter.convertFunction(originalName, fnc).get();
+    return new FlinkUdfNsObject(name, fnc, Optional.empty());
   }
 
   public static NamespaceObject createFunctionFromStdOpTable(String name) {

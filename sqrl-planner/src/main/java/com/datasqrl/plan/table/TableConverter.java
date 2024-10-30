@@ -97,9 +97,6 @@ public class TableConverter {
             RexNode rexNode = framework.getQueryPlanner()
                 .planExpression(sqlNode, typeBuilder.build());
 
-//            RelDataType relDataType1 = sqlValidator.inferReturnType(typeBuilder.build(),
-//                (SqlCall) sqlNode,
-//                framework.getCatalogReader());
             typeBuilder.add(nameAdjuster.uniquifyName(columnName), rexNode.getType());
           } catch (Exception e) {
             throw new RuntimeException(

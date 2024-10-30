@@ -171,28 +171,4 @@ public class SqrlSqlValidator extends FlinkCalciteSqlValidator {
   public SqlNode getAggregate(SqlSelect select) {
     return super.getAggregate(select);
   }
-
-  public RelDataType inferReturnType(RelDataType relDataType, SqlCall sqlCall,
-      CatalogReader catalogReader) {
-    final ListScope tableScope = new ListScope(getEmptyScope()) {
-      @Override
-      public SqlNode getNode() {
-        return sqlCall;
-      }
-    };
-
-    TableNamespace tableNamespace = new TableNamespace(this, RelOptTableImpl.create(
-        catalogReader, relDataType, relDataType.getFieldNames(), null
-    ));
-    tableScope.addChild(tableNamespace, "", false);
-    validateCall(sqlCall, tableScope);
-    performUnconditionalRewrites(sqlCall, false);
-
-    SqlOperator operator = sqlCall.getOperator();
-    //we need to resolve the function
-    handleUnresolvedFunction(sqlCall, operator, List.of(), List.of());
-    return operator
-        .getReturnTypeInference()
-        .inferReturnType(new SqlCallBinding(this, tableScope, sqlCall));
-  }
 }

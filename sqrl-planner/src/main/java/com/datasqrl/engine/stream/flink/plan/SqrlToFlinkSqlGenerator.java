@@ -173,8 +173,8 @@ public class SqrlToFlinkSqlGenerator {
 
   private List<SqlCreateFunction> extractFunctions(List<WriteQuery> writeQueries,
       Map<String, String> downcastClassNames) {
-    Map<String, String> mutableUdfs = framework.getSqrlOperatorTable().getUdfs().entrySet().stream()
-        .filter(f -> isUdf(f.getValue())).collect(
+    Map<String, String> mutableUdfs = framework.getSchema().getUdf().entrySet().stream()
+            .collect(
             Collectors.toMap(Map.Entry::getKey, e -> extractFunctionClass(e.getValue()).getName()));
 
     mutableUdfs.putAll(downcastClassNames);
@@ -185,18 +185,12 @@ public class SqrlToFlinkSqlGenerator {
         .collect(Collectors.toList());
   }
 
-  private boolean isUdf(SqlOperator o) {
-    Class<?> functionClass = extractFunctionClass(o);
-    return UserDefinedFunction.class.isAssignableFrom(functionClass)
-        && functionClass != BuiltInFunctionDefinition.class;
-  }
-
-  private Class<?> extractFunctionClass(SqlOperator o) {
-    if (o instanceof BridgingSqlFunction) {
-      return ((BridgingSqlFunction) o).getResolvedFunction().getDefinition().getClass();
-    } else if (o instanceof BridgingSqlAggFunction) {
-      return ((BridgingSqlAggFunction) o).getResolvedFunction().getDefinition().getClass();
-    }
+  private Class<?> extractFunctionClass(UserDefinedFunction o) {
+//    if (o instanceof BridgingSqlFunction) {
+//      return ((BridgingSqlFunction) o).getResolvedFunction().getDefinition().getClass();
+//    } else if (o instanceof BridgingSqlAggFunction) {
+//      return ((BridgingSqlAggFunction) o).getResolvedFunction().getDefinition().getClass();
+//    }
     return o.getClass();
   }
 
