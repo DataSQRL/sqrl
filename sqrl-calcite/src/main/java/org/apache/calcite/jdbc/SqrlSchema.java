@@ -55,8 +55,6 @@ public class SqrlSchema extends SimpleCalciteSchema {
   private final Map<NamePath, String> pathToSysTableMap = new LinkedHashMap<>();
 
   private final Map<String, UserDefinedFunction> udf = new LinkedHashMap<>();
-  private final Map<List<String>, SqlOperator> udfListMap = new LinkedHashMap<>();
-  private final Map<List<String>, SqlOperator> internalNames = new LinkedHashMap<>();
 
   private final AtomicInteger uniqueCompilerId = new AtomicInteger(0);
   private final AtomicInteger uniquePkId = new AtomicInteger(0);
@@ -162,12 +160,6 @@ public class SqrlSchema extends SimpleCalciteSchema {
   @VisibleForTesting
   public SqrlTableMacro getTableFunction(String name) {
     return (SqrlTableMacro)Iterables.getOnlyElement(getFunctions(name, false));
-  }
-
-  public void addFunction(String canonicalName, SqlOperator function) {
-//    this.udf.put(nameCanonicalizer.getCanonical(canonicalName), function);
-    this.udfListMap.put(List.of(nameCanonicalizer.getCanonical(canonicalName)), function);
-//    this.internalNames.put(List.of(function.getName()), function);
   }
 
   public void addAdditionalSql(Set<SqlNode> addlSql) {

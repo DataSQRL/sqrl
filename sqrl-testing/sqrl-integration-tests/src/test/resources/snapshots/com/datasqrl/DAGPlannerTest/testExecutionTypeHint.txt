@@ -45,7 +45,7 @@ Schema:
  - _ingest_time: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
 Plan:
 LogicalAggregate(group=[{0}], num=[COUNT()], __timestamp=[MAX($4)])
-  LogicalFilter(condition=[<(NOW(), +($4, 3600000:INTERVAL SECOND(7)))])
+  LogicalFilter(condition=[<(now(), +($4, 3600000:INTERVAL SECOND(7)))])
     LogicalTableScan(table=[[customer_2]])
 
 === CustomerAgg3
@@ -127,7 +127,7 @@ LogicalTableScan(table=[[product_1]])
     "CREATE VIEW `table$3`\nAS\nSELECT `customerid`, COUNT(*) AS `num`, `window_time` AS `_ingest_time`\nFROM TABLE(HOP(TABLE `table$2`, DESCRIPTOR(`_ingest_time`), INTERVAL '72' SECOND(5), INTERVAL '3600' SECOND(7))) AS `t`\nGROUP BY `customerid`, `window_start`, `window_end`, `window_time`;",
     "CREATE VIEW `table$4`\nAS\nSELECT *\nFROM `customer_1`;",
     "CREATE VIEW `table$5`\nAS\nSELECT `customerid`, COUNT(*) AS `num`, `window_time` AS `_ingest_time`\nFROM TABLE(HOP(TABLE `table$4`, DESCRIPTOR(`_ingest_time`), INTERVAL '72' SECOND(5), INTERVAL '3600' SECOND(7))) AS `t`\nGROUP BY `customerid`, `window_start`, `window_end`, `window_time`;",
-    "CREATE VIEW `table$6`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`, `_ingest_time`\nFROM `orders_1`;",
+    "CREATE VIEW `table$6`\nAS\nSELECT `id`, `customerid`, `time`, `default_catalog`.`default_database`.`ToJson`(`entries`) AS `entries`, `_ingest_time`\nFROM `orders_1`;",
     "CREATE VIEW `table$7`\nAS\nSELECT *\nFROM `product_1`;",
     "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer_2`\n(SELECT *\n FROM `table$1`)\n;\nINSERT INTO `customeragg1_1`\n (SELECT *\n  FROM `table$3`)\n ;\n INSERT INTO `customeragg3_1`\n  (SELECT *\n   FROM `table$5`)\n  ;\n  INSERT INTO `orders_2`\n   (SELECT *\n    FROM `table$6`)\n   ;\n   INSERT INTO `product_2`\n    (SELECT *\n     FROM `table$7`)\n    ;\n    END;"
   ],

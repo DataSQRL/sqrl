@@ -8,6 +8,8 @@ import com.datasqrl.json.FlinkJsonType;
 import com.google.auto.service.AutoService;
 import java.util.Optional;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.flink.table.functions.ScalarFunction;
+import org.apache.flink.table.functions.UserDefinedFunction;
 import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 @AutoService(DataTypeMapper.class)
@@ -80,12 +82,18 @@ public class SnowflakeIcebergDataTypeMapper implements DataTypeMapper {
     if (type instanceof RawRelDataType) {
       RawRelDataType rawRelDataType = (RawRelDataType) type;
       if (rawRelDataType.getRawType().getDefaultConversion() == FlinkJsonType.class) {
-        return Optional.of(
-            new CastFunction("PARSE_JSON",
-                lightweightOp("PARSE_JSON")));
+        throw new RuntimeException("Writing json to snowflake not yet supported");
       }
     }
 
     return Optional.empty(); //Could not create type
+  }
+
+  //This is hacky but we will need type inference support
+  public static class PARSE_JSON extends ScalarFunction {
+    //No-op function for type inferencing
+    String eval(FlinkJsonType json) {
+      return null;
+    }
   }
 }

@@ -1,6 +1,5 @@
 package com.datasqrl.calcite;
 
-import com.datasqrl.DefaultFunctions;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.plan.hints.SqrlHintStrategyTable;
 import com.datasqrl.plan.rules.SqrlRelMetadataProvider;

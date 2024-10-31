@@ -1,5 +1,7 @@
 package com.datasqrl.datatype.flink.jdbc;
 
+import static com.datasqrl.function.CalciteFunctionUtil.lightweightOp;
+
 import com.datasqrl.config.TableConfig;
 import com.datasqrl.datatype.DataTypeMapper;
 import com.datasqrl.datatype.SerializeToBytes;
@@ -89,10 +91,6 @@ public class FlinkSqrlPostgresDataTypeMapper extends FlinkDataTypeMapper {
         type.getSqlTypeName() == SqlTypeName.ROW || type.getSqlTypeName() == SqlTypeName.ARRAY) {
       return Optional.of(new CastFunction(ToJson.class.getName(), convert(new ToJson())));
     }
-//
-//    if (type instanceof RelRecordType) {
-//      return Optional.of(new CastFunction(ToJson.class.getName(), convert(new ToJson())));
-//    }
 
     // Cast needed, convert to bytes
     return Optional.of(

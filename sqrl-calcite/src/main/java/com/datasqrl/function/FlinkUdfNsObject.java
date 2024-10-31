@@ -1,9 +1,7 @@
 package com.datasqrl.function;
 
 import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.flink.FlinkConverter;
 import com.datasqrl.module.FunctionNamespaceObject;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.plan.validate.ScriptPlanner;

@@ -231,7 +231,7 @@ LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
     "CREATE VIEW `table$11`\nAS\nSELECT `window_time` AS `bucket`, COUNT(*) AS `order_count`\nFROM TABLE(TUMBLE(TABLE `table$10`, DESCRIPTOR(`time`), INTERVAL '86400' SECOND(8), INTERVAL '0' SECOND(1))) AS `t0`\nGROUP BY `window_start`, `window_end`, `window_time`;",
     "CREATE VIEW `table$12`\nAS\nSELECT `customerid` AS `customer`, `id`, `time`\nFROM `orders_1`;",
     "CREATE VIEW `table$13`\nAS\nSELECT `customer`, COUNT(*) AS `order_count`, `window_time` AS `_time`\nFROM TABLE(HOP(TABLE `table$12`, DESCRIPTOR(`time`), INTERVAL '13824' SECOND(8), INTERVAL '691200' SECOND(9))) AS `t0`\nGROUP BY `customer`, `window_start`, `window_end`, `window_time`;",
-    "CREATE VIEW `table$14`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders_1`;",
+    "CREATE VIEW `table$14`\nAS\nSELECT `id`, `customerid`, `time`, `default_catalog`.`default_database`.`ToJson`(`entries`) AS `entries`\nFROM `orders_1`;",
     "CREATE VIEW `table$15`\nAS\nSELECT `customerid` AS `customer`, `default_catalog`.`default_database`.`endOfSecond`(`time`) AS `bucket`, `id`, `time`\nFROM `orders_1`;",
     "CREATE VIEW `table$16`\nAS\nSELECT `customer`, `window_time` AS `bucket`, COUNT(*) AS `order_count`\nFROM TABLE(TUMBLE(TABLE `table$15`, DESCRIPTOR(`time`), INTERVAL '1' SECOND(4), INTERVAL '0' SECOND(1))) AS `t0`\nGROUP BY `customer`, `window_start`, `window_end`, `window_time`;",
     "CREATE VIEW `table$17`\nAS\nSELECT *\nFROM `product_1`;",

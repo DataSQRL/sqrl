@@ -3,7 +3,8 @@
  */
 package com.datasqrl.plan.util;
 
-import com.datasqrl.DefaultFunctions;
+import static com.datasqrl.function.CalciteFunctionUtil.lightweightOp;
+
 import com.datasqrl.util.CalciteUtil;
 import com.google.common.base.Preconditions;
 import java.util.List;
@@ -16,6 +17,8 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
+import org.apache.calcite.sql.type.ReturnTypes;
+import org.apache.calcite.sql.type.SqlTypeName;
 
 /**
  * Represents a timestamp predicate that is normalized into the form: smallerIndex <=/= largerIndex
@@ -142,7 +145,7 @@ public class TimePredicate {
           if (useCurrentTime) {
               return rexBuilder.makeCall(SqlStdOperatorTable.CURRENT_TIMESTAMP);
           } else {
-              return rexBuilder.makeCall(DefaultFunctions.NOW);
+              return rexBuilder.makeCall(lightweightOp("now", ReturnTypes.explicit(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3)));
           }
       }
     throw new UnsupportedOperationException("Invalid index: " + index);

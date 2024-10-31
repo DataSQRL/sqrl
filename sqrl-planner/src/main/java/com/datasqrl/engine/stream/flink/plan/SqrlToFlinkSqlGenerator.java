@@ -1,15 +1,11 @@
 package com.datasqrl.engine.stream.flink.plan;
 
-import com.datasqrl.DefaultFunctions;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.TableConfig;
-import com.datasqrl.config.TableConfig.MetadataConfig;
-import com.datasqrl.config.TableConfig.MetadataEntry;
 import com.datasqrl.config.TableConfig.TableConfigBuilder;
-import com.datasqrl.config.TableConfig.TableTableConfig;
 import com.datasqrl.datatype.DataTypeMapper;
 import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.stream.flink.connector.CastFunction;
@@ -31,31 +27,26 @@ import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.WriteQuery;
 import com.datasqrl.plan.global.PhysicalDAGPlan.WriteSink;
 import com.datasqrl.plan.table.ImportedRelationalTable;
-import com.datasqrl.sql.SqlCallRewriter;
 import com.google.common.base.Preconditions;
-import io.vertx.sqlclient.SqlResult;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.rel2sql.FlinkRelToSqlConverter;
-import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.*;
+import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.calcite.sql.validate.SqlNameMatchers;
 import org.apache.calcite.tools.Program;
 import org.apache.calcite.tools.Programs;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.collections.ListUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.sql.parser.ddl.*;
-import org.apache.flink.sql.parser.ddl.constraint.SqlTableConstraint;
 import org.apache.flink.sql.parser.dml.RichSqlInsert;
-import org.apache.flink.table.functions.BuiltInFunctionDefinition;
+import org.apache.flink.table.catalog.UnresolvedIdentifier;
 import org.apache.flink.table.functions.UserDefinedFunction;
-import org.apache.flink.table.planner.functions.bridging.BridgingSqlAggFunction;
-import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction;
 import org.apache.flink.table.planner.plan.metadata.FlinkDefaultRelMetadataProvider;
 
 import java.util.*;
@@ -129,7 +120,7 @@ public class SqrlToFlinkSqlGenerator {
     AtomicBoolean hasChanged = new AtomicBoolean();
 
     List<RexNode> fields = relNode.getRowType().getFieldList().stream().map(
-            field -> convertField(field, hasChanged, relBuilder, downcastClassNames, connectorMapping))
+            field -> convertField(field, hasChanged, relBuilder, downcastClassNames, connectorMapping, relNode))
         .collect(Collectors.toList());
 
     if (hasChanged.get()) {
@@ -140,7 +131,7 @@ public class SqrlToFlinkSqlGenerator {
 
   private RexNode convertField(RelDataTypeField field, AtomicBoolean hasChanged,
       RelBuilder relBuilder, Map<String, String> downcastClassNames,
-      Optional<DataTypeMapper> connectorMapping) {
+      Optional<DataTypeMapper> connectorMapping, RelNode relNode) {
     if (connectorMapping.isEmpty() || connectorMapping.get().nativeTypeSupport(field.getType())) {
       return relBuilder.field(field.getIndex());
     }
@@ -152,11 +143,22 @@ public class SqrlToFlinkSqlGenerator {
     }
 
     CastFunction castFunction = downcastFunction.get();
-    downcastClassNames.put(castFunction.getFunction().getName(), castFunction.getClassName());
+    downcastClassNames.put(castFunction.getFunction().getClass().getSimpleName(), castFunction.getClassName());
+
+    framework.getFlinkFunctionCatalog().registerCatalogFunction(
+        UnresolvedIdentifier.of(castFunction.getFunction().getClass().getSimpleName()),
+        castFunction.getFunction().getClass(), true);
+
     hasChanged.set(true);
 
+    List<SqlOperator> list = new ArrayList<>();
+    framework.getSqrlOperatorTable()
+        .lookupOperatorOverloads(new SqlIdentifier(castFunction.getFunction().getClass().getSimpleName(), SqlParserPos.ZERO),
+            SqlFunctionCategory.USER_DEFINED_FUNCTION,
+            SqlSyntax.FUNCTION, list, SqlNameMatchers.liberal());
+
     return relBuilder.getRexBuilder()
-        .makeCall(castFunction.getFunction(), List.of(relBuilder.field(field.getIndex())));
+        .makeCall(list.get(0), List.of(relBuilder.field(field.getIndex())));
   }
 
   private TableConfig getTableConfig(WriteSink sink) {
@@ -178,7 +180,7 @@ public class SqrlToFlinkSqlGenerator {
             Collectors.toMap(Map.Entry::getKey, e -> extractFunctionClass(e.getValue()).getName()));
 
     mutableUdfs.putAll(downcastClassNames);
-    mutableUdfs.remove(DefaultFunctions.NOW.getName().toLowerCase());
+    mutableUdfs.remove("NOW".toLowerCase());
 
     return mutableUdfs.entrySet().stream()
         .map(entry -> FlinkSqlNodeFactory.createFunction(entry.getKey(), entry.getValue()))

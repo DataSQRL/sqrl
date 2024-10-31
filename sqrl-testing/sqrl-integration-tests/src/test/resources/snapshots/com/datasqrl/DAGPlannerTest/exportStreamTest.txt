@@ -95,7 +95,7 @@ LogicalTableScan(table=[[product_1]])
     "CREATE TEMPORARY TABLE `joinstream_1_1` (\n  `id` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL\n) WITH (\n  'connector' = 'print',\n  'print-identifier' = 'CountStream'\n);",
     "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `customer_1`;",
     "CREATE VIEW `table$2`\nAS\nSELECT `orders_1`.`id`, `customer_1`.`name`, `orders_1`.`time` AS `_time`, `customer_1`.`lastUpdated` AS `_lastUpdated`\nFROM `orders_1`\n INNER JOIN `customer_1` ON `orders_1`.`customerid` = `customer_1`.`customerid`;",
-    "CREATE VIEW `table$3`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders_1`;",
+    "CREATE VIEW `table$3`\nAS\nSELECT `id`, `customerid`, `time`, `default_catalog`.`default_database`.`ToJson`(`entries`) AS `entries`\nFROM `orders_1`;",
     "CREATE VIEW `table$4`\nAS\nSELECT *\nFROM `product_1`;",
     "CREATE VIEW `table$5`\nAS\nSELECT `orders_1`.`id`, `customer_1`.`name`\nFROM `orders_1`\n INNER JOIN `customer_1` ON `orders_1`.`customerid` = `customer_1`.`customerid`;",
     "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer_2`\n(SELECT *\n FROM `table$1`)\n;\nINSERT INTO `joinstream_1`\n (SELECT *\n  FROM `table$2`)\n ;\n INSERT INTO `orders_2`\n  (SELECT *\n   FROM `table$3`)\n  ;\n  INSERT INTO `product_2`\n   (SELECT *\n    FROM `table$4`)\n   ;\n   INSERT INTO `joinstream_1_1`\n    (SELECT *\n     FROM `table$5`)\n    ;\n    END;"

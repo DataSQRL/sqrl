@@ -215,7 +215,7 @@ LogicalProject(__pk1_customerid=[$4], id=[$0], time=[$2])
     "CREATE VIEW `table$7`\nAS\nSELECT `t0`.`customerid` AS `__pk1_customerid`, `$cor2`.`id`, `$cor2`.`time` AS `_time`\nFROM `orders_1` AS `$cor2`\n INNER JOIN `table$6` FOR SYSTEM_TIME AS OF `$cor2`.`time` AS `t0` ON `t0`.`customerid` = `$cor2`.`customerid`;",
     "CREATE VIEW `table$8`\nAS\nSELECT *\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC) AS `_rownum`\n  FROM `customer_1`) AS `t`\nWHERE `_rownum` = 1;",
     "CREATE VIEW `table$9`\nAS\nSELECT `t0`.`customerid` AS `__pk1_customerid`, `$cor4`.`id`, `$cor4`.`time`\nFROM `orders_1` AS `$cor4`\n INNER JOIN `table$8` FOR SYSTEM_TIME AS OF `$cor4`.`time` AS `t0` ON `t0`.`customerid` = `$cor4`.`customerid`;",
-    "CREATE VIEW `table$10`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders_1`;",
+    "CREATE VIEW `table$10`\nAS\nSELECT `id`, `customerid`, `time`, `default_catalog`.`default_database`.`ToJson`(`entries`) AS `entries`\nFROM `orders_1`;",
     "CREATE VIEW `table$11`\nAS\nSELECT *\nFROM `product_1`;",
     "CREATE VIEW `table$12`\nAS\nSELECT *\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC) AS `_rownum`\n  FROM `customer_1`) AS `t`\nWHERE `_rownum` = 1;",
     "CREATE VIEW `table$13`\nAS\nSELECT `t0`.`customerid` AS `__pk1_customerid`, `$cor6`.`id`, `$cor6`.`time`\nFROM `orders_1` AS `$cor6`\n INNER JOIN `table$12` FOR SYSTEM_TIME AS OF `$cor6`.`time` AS `t0` ON `t0`.`customerid` = `$cor6`.`customerid`;",

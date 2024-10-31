@@ -142,7 +142,7 @@ LogicalTableScan(table=[[orders_1]])
     "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `customer_1`;",
     "CREATE VIEW `table$2`\nAS\nSELECT *\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC) AS `_rownum`\n  FROM `customer_1`) AS `t`\nWHERE `_rownum` = 1;",
     "CREATE VIEW `table$3`\nAS\nSELECT `$cor0`.`id`, `t0`.`name`, `$cor0`.`time` AS `_time`\nFROM `orders_1` AS `$cor0`\n LEFT JOIN `table$2` FOR SYSTEM_TIME AS OF `$cor0`.`time` AS `t0` ON `$cor0`.`customerid` = `t0`.`customerid`;",
-    "CREATE VIEW `table$4`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders_1`;",
+    "CREATE VIEW `table$4`\nAS\nSELECT `id`, `customerid`, `time`, `default_catalog`.`default_database`.`ToJson`(`entries`) AS `entries`\nFROM `orders_1`;",
     "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer_3`\n(SELECT *\n FROM `table$1`)\n;\nINSERT INTO `ordercustomer2_1`\n (SELECT *\n  FROM `table$3`)\n ;\n INSERT INTO `orders_2`\n  (SELECT *\n   FROM `table$4`)\n  ;\n  END;"
   ],
   "connectors" : [
