@@ -11,6 +11,52 @@ UnmodifiedArrayData := SELECT id,
 /* =======TEST CASES======== */
 
 /*+test */
+CardinalityTest := SELECT id,
+                          CARDINALITY(items) as cardinality,
+                          items[1] as array_at_int,
+                          ELEMENT([1]) as element_sole_value,
+                          ELEMENT([]) as element_empty,
+                          ARRAY_APPEND(items, 1) as append_array,
+                          ARRAY_CONTAINS([1,2,3,4], [3]) as array_contains,
+                          ARRAY_DISTINCT(items) as array_distinct,
+                          ARRAY_POSITION([1,2,3,4], [3]) as array_position,
+                          ARRAY_PREPEND(items, 3) as array_prepend,
+                          ARRAY_REMOVE([1,2,3,4], [3]) as array_remove,
+                          ARRAY_REVERSE(items) as array_reverse,
+                          ARRAY_SLICE(items,0,2) as array_slice,
+                          ARRAY_SORT(items) as array_sort,
+                          ARRAY_UNION([1,2,3,4], [3,4,5,6]) as array_union,
+                          ARRAY_CONCAT([1,2,3], [4,5,6]) as array_concat,
+                          ARRAY_EXCPET([1,2,3], [4,5,6]) as array_except,
+                          ARRAY_INTERSECT([1,2,3], [4,5,6]) as array_interscept,
+                          ARRAY_MAX(items) as array_max,
+                          ARRAY_JOIN(items, delimiter[;]) as array_join,
+                          ARRAY_MIN(items) as array_min
+                   FROM UnmodifiedArrayData
+                   ORDER BY id;
+
+/*+test */
+ArrayTest := SELECT id,
+                    ARRAY_APPEND(items, 1) as append_array,
+                    ARRAY_CONTAINS([1,2,3,4], [3]) as array_contains,
+                    ARRAY_DISTINCT(items) as array_distinct,
+                    ARRAY_POSITION([1,2,3,4], [3]) as array_position,
+                    ARRAY_PREPEND(items, 3) as array_prepend,
+                    ARRAY_REMOVE([1,2,3,4], [3]) as array_remove,
+                    ARRAY_REVERSE(items) as array_reverse,
+                    ARRAY_SLICE(items,0,2) as array_slice,
+                    ARRAY_SORT(items) as array_sort,
+                    ARRAY_UNION([1,2,3,4], [3,4,5,6]) as array_union,
+                    ARRAY_CONCAT([1,2,3], [4,5,6]) as array_concat,
+                    ARRAY_EXCPET([1,2,3], [4,5,6]) as array_except,
+                    ARRAY_INTERSECT([1,2,3], [4,5,6]) as array_interscept,
+                    ARRAY_MAX(items) as array_max,
+                    ARRAY_JOIN(items, delimiter[;]) as array_join,
+                    ARRAY_MIN(items) as array_min
+             FROM UnmodifiedArrayData
+             ORDER BY id;
+
+/*+test */
 UnmodifiedArrayDataTest := SELECT *
                            FROM UnmodifiedArrayData
                            ORDER BY id;
