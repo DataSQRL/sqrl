@@ -15,6 +15,13 @@ public interface JdbcTypeSerializer<D, S> {
 
   GenericSerializationConverter<S> getSerializerConverter(LogicalType type);
 
+  default boolean supportsType(LogicalType type) {
+    return type.getDefaultConversion() == getConversionClass();
+  }
+
+  /**
+   * SQRL serializers must do null handling
+   */
   interface GenericSerializationConverter<T> {
     T create();
   }

@@ -1,2 +1,4 @@
 com.datasqrl.type.PostgresRowTypeSerializer
 com.datasqrl.type.PostgresJsonTypeSerializer
+com.datasqrl.type.PostgresTimestampTypeSerializer
+com.datasqrl.type.PostgresArrayTypeSerializer

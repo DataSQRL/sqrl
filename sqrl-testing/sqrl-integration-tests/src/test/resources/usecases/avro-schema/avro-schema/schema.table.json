@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "flink" : {
+    "format" : "flexible-json",
+    "path" : "${DATA_PATH}/schema.jsonl",
+    "connector" : "filesystem"
+  },
+  "table" : {
+    "type" : "source",
+    "primary-key" : ["uuidField", "timestampMillisField"],
+    "timestamp" : "timestampMillisField",
+    "watermark-millis" : "0"
+  }
+
+}

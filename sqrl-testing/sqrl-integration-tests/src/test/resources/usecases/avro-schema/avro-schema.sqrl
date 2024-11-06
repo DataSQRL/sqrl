@@ -1,0 +1,3 @@
+IMPORT avro-schema.Schema;
+
+MySchema := SELECT * FROM Schema;

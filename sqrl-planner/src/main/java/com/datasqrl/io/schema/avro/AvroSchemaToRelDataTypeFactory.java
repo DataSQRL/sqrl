@@ -2,6 +2,7 @@ package com.datasqrl.io.schema.avro;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.config.TableConfig;
+import com.datasqrl.config.TableConfig.ConnectorConfig;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.schema.flexible.converters.SchemaToRelDataTypeFactory;
 import com.datasqrl.io.tables.TableSchema;
@@ -36,12 +37,7 @@ public class AvroSchemaToRelDataTypeFactory implements SchemaToRelDataTypeFactor
   private boolean getLegacyTimestampMapping(TableConfig tableConfig) {
     if (tableConfig == null) return true;
     Map<String, Object> configMap = tableConfig.getConnectorConfig().toMap();
-    //Todo update this to extract avro format specifically from other connectors
-    Object format = configMap.get("format");
-    if (format == null) {
-      format = configMap.get("value.format");
-    }
-    if (format instanceof String && !((String) format).equalsIgnoreCase("avro")) {
+    if (!usesAvroFormat(tableConfig.getConnectorConfig())) {
       return false;
     }
 
@@ -55,5 +51,10 @@ public class AvroSchemaToRelDataTypeFactory implements SchemaToRelDataTypeFactor
     log.warn("Avro value 'timestamp_mapping.legacy' is not set to 'false'. "
         + "This should be added to your table config for flink version 1.19 and later.");
     return true; //default value
+  }
+
+  private boolean usesAvroFormat(ConnectorConfig configMap) {
+    return configMap.getFormat().isPresent()
+        && configMap.getFormat().get().getName().equalsIgnoreCase("avro");
   }
 }

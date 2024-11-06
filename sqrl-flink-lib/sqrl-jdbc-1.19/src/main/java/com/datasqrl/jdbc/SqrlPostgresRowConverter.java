@@ -19,123 +19,85 @@
 package com.datasqrl.jdbc;
 
 import com.datasqrl.type.JdbcTypeSerializer;
-import java.lang.reflect.Type;
-import java.util.Map;
+import java.util.List;
 import java.util.ServiceLoader;
 import java.util.stream.Collectors;
-import lombok.SneakyThrows;
-import org.apache.flink.connector.jdbc.statement.FieldNamedPreparedStatement;
-import org.apache.flink.table.data.GenericArrayData;
-import org.apache.flink.table.data.RowData;
-import org.apache.flink.table.types.logical.ArrayType;
+import org.apache.flink.connector.jdbc.converter.AbstractJdbcRowConverter;
+import org.apache.flink.connector.jdbc.databases.postgres.dialect.PostgresRowConverter;
 import org.apache.flink.table.types.logical.LogicalType;
+import org.apache.flink.table.types.logical.LogicalTypeRoot;
 import org.apache.flink.table.types.logical.RowType;
-import org.apache.flink.table.types.logical.utils.LogicalTypeUtils;
-import org.postgresql.jdbc.PgArray;
 
 /**
  * Runtime converter that responsible to convert between JDBC object and Flink internal object for
  * PostgreSQL.
  *
- * SQRL:Add array support
+ * SQRL: Adds additional serializers
  */
-public class SqrlPostgresRowConverter extends SqrlBaseJdbcRowConverter {
+public class SqrlPostgresRowConverter extends PostgresRowConverter {
 
     private static final long serialVersionUID = 1L;
 
-    public static final Map<Type, JdbcTypeSerializer<JdbcDeserializationConverter,
-        JdbcSerializationConverter>> sqrlSerializers = discoverSerializers();
+    public static final List<JdbcTypeSerializer> sqrlSerializers = discoverSerializers();
 
-    private static Map<Type, JdbcTypeSerializer<JdbcDeserializationConverter, JdbcSerializationConverter>> discoverSerializers() {
+    private static List<JdbcTypeSerializer> discoverSerializers() {
         return ServiceLoader.load(JdbcTypeSerializer.class)
             .stream()
             .map(f->f.get())
             .filter(f->f.getDialectId().equalsIgnoreCase("postgres"))
-            .collect(Collectors.toMap(JdbcTypeSerializer::getConversionClass, t->t));
-    }
-
-    @Override
-    public String converterName() {
-        return "PostgreSQL";
+            .collect(Collectors.toList());
     }
 
     public SqrlPostgresRowConverter(RowType rowType) {
         super(rowType);
     }
 
-    @SneakyThrows
-    public void setRow(LogicalType type, RowData val, int index,
-        FieldNamedPreparedStatement statement) {
-        SqrlFieldNamedPreparedStatementImpl flinkPreparedStatement = (SqrlFieldNamedPreparedStatementImpl) statement;
-        for (int idx : flinkPreparedStatement.getIndexMapping()[index]) {
-//            RowData row = val.getRow(index, ((RowType) type).getFieldCount());
-//            java.sql.Array sqlArray = flinkPreparedStatement.getStatement()
-//                .getConnection().createArrayOf("bytea", );
-            flinkPreparedStatement.getStatement().setBytes(idx, new byte[0]);
-        }
-    }
-
-
     @Override
     public JdbcDeserializationConverter createInternalConverter(LogicalType type) {
-        if (sqrlSerializers.containsKey(type.getDefaultConversion())) {
-            return sqrlSerializers.get(type.getDefaultConversion())
+        if (sqrlSupportsType(type)) {
+            return getSqrlType(type)
                 .getDeserializerConverter().create();
-        } else {
-            return super.createInternalConverter(type);
         }
+
+        return super.createInternalConverter(type);
+    }
+
+    protected AbstractJdbcRowConverter.JdbcSerializationConverter createNullableExternalConverter(LogicalType type) {
+        //SQRL: Remove array type check
+        return this.wrapIntoNullableExternalConverter(this.createExternalConverter(type), type);
+    }
+
+    private JdbcTypeSerializer<JdbcDeserializationConverter, JdbcSerializationConverter> getSqrlType(LogicalType type) {
+        for (JdbcTypeSerializer serializer : sqrlSerializers) {
+            if (serializer.supportsType(type)) {
+                return serializer;
+            }
+        }
+        throw new RuntimeException("Could not find sqrl postgres type serializer");
+    }
+
+    private boolean sqrlSupportsType(LogicalType type) {
+      return sqrlSerializers.stream().anyMatch(serializer -> serializer.supportsType(type));
     }
 
     @Override
     protected JdbcSerializationConverter wrapIntoNullableExternalConverter(
         JdbcSerializationConverter jdbcSerializationConverter, LogicalType type) {
-        if (sqrlSerializers.containsKey(type.getDefaultConversion())) {
-            return jdbcSerializationConverter::serialize;
-        } else {
-            return super.wrapIntoNullableExternalConverter(jdbcSerializationConverter, type);
+        // SQRL serializers must account for null handling
+        if (sqrlSupportsType(type)) {
+            return jdbcSerializationConverter;
         }
+
+        return super.wrapIntoNullableExternalConverter(jdbcSerializationConverter, type);
     }
 
     @Override
     protected JdbcSerializationConverter createExternalConverter(LogicalType type) {
-        if (sqrlSerializers.containsKey(type.getDefaultConversion())) {
-            return sqrlSerializers.get(type.getDefaultConversion())
+        if (sqrlSupportsType(type)) {
+            return getSqrlType(type)
                 .getSerializerConverter(type)
                 .create();
-        } else {
-            return super.createExternalConverter(type);
         }
-    }
-
-    @Override
-    protected String getArrayType() {
-        return "bytea";
-    }
-
-
-    @Override
-    public JdbcDeserializationConverter createArrayConverter(ArrayType arrayType) {
-        // Since PGJDBC 42.2.15 (https://github.com/pgjdbc/pgjdbc/pull/1194) bytea[] is wrapped in
-        // primitive byte arrays
-        final Class<?> elementClass =
-                LogicalTypeUtils.toInternalConversionClass(arrayType.getElementType());
-        final JdbcDeserializationConverter elementConverter =
-                createNullableInternalConverter(arrayType.getElementType());
-        return val -> {
-            //sqrl: check if scalar array
-
-            Object[] in;
-            if (val instanceof PgArray) {
-                PgArray pgArray = (PgArray) val;
-                in = (Object[]) pgArray.getArray();
-            } else {
-                in = (Object[])val;
-            }
-            final Object[] array = (Object[]) java.lang.reflect.Array.newInstance(elementClass, in.length);
-            for (int i = 0; i < in.length; i++) {
-                array[i] = elementConverter.deserialize(in[i]);
-            }
-            return new GenericArrayData(array);
-        };
+        return super.createExternalConverter(type);
     }
 }

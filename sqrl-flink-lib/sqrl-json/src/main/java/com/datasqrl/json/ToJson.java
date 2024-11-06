@@ -47,10 +47,12 @@ public class ToJson extends ScalarFunction {
     if (json instanceof Row) {
       Row row = (Row) json;
       ObjectNode objectNode = mapper.createObjectNode();
-      Set<String> fieldNames = row.getFieldNames(true);
-      if (fieldNames == null)
-        return mapper.createObjectNode();
-      fieldNames.forEach(f -> objectNode.putPOJO(f, unboxFlinkToJsonNode(row.getField(f))));
+      String[] fieldNames = row.getFieldNames(true).toArray(new String[0]);  // Get field names in an array
+      for (String fieldName : fieldNames) {
+        Object field = row.getField(fieldName);
+        objectNode.set(fieldName, unboxFlinkToJsonNode(field));  // Recursively unbox each field
+      }
+      return objectNode;
     } else if (json instanceof Row[]) {
       Row[] rows = (Row[]) json;
       ArrayNode arrayNode = mapper.createArrayNode();
@@ -58,15 +60,11 @@ public class ToJson extends ScalarFunction {
         if (row == null) {
           arrayNode.addNull();
         } else {
-          ObjectNode objectNode = mapper.createObjectNode();
-          Set<String> fieldNames = row.getFieldNames(true);
-          if (fieldNames == null) continue;
-          fieldNames.forEach(f -> objectNode.putPOJO(f, unboxFlinkToJsonNode(row.getField(f))));
-          arrayNode.add(objectNode);
+          arrayNode.add(unboxFlinkToJsonNode(row));  // Recursively unbox each row in the array
         }
       }
       return arrayNode;
     }
-    return mapper.getNodeFactory().pojoNode(json);
+    return mapper.valueToTree(json);  // Directly serialize other types
   }
 }

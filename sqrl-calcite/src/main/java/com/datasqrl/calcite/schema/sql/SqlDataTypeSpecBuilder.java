@@ -27,6 +27,7 @@ import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.type.SqlTypeUtil;
 import org.apache.flink.sql.parser.type.ExtendedSqlCollectionTypeNameSpec;
 import org.apache.flink.sql.parser.type.ExtendedSqlRowTypeNameSpec;
+import org.apache.flink.sql.parser.type.SqlMapTypeNameSpec;
 import org.apache.flink.sql.parser.type.SqlRawTypeNameSpec;
 import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 import org.apache.flink.table.types.logical.RawType;
@@ -87,15 +88,14 @@ public class SqlDataTypeSpecBuilder {
       return typeFactory.createTypeWithNullability(
           typeFactory.createStructType(fieldInfoBuilder), nullable);
     }
-//
-//    if (typeSpec.getTypeNameSpec() instanceof SqlRawTypeNameSpec) {
-//      SqlRawTypeNameSpec rawTypeNameSpec = (SqlRawTypeNameSpec) typeSpec.getTypeNameSpec();
-//      RawType<?> rawType = new RawType<>(
-//          (Class<?>) rawTypeNameSpec.getClass().getName(),
-//          rawTypeNameSpec.getSerializerString().toString());
-//
-//      return new RawRelDataType(rawType, typeSpec.getNullable());
-//    }
+
+    if (typeSpec.getTypeNameSpec() instanceof SqlMapTypeNameSpec) {
+      SqlMapTypeNameSpec mapTypeNameSpec = (SqlMapTypeNameSpec) typeSpec.getTypeNameSpec();
+      RelDataType keyType = create(mapTypeNameSpec.getKeyType(), typeFactory);
+      RelDataType valueType = create(mapTypeNameSpec.getValType(), typeFactory);
+      return typeFactory.createTypeWithNullability(
+          typeFactory.createMapType(keyType, valueType), nullable);
+    }
 
     throw new UnsupportedOperationException("Unsupported type when create RelDataType: " + typeSpec.getTypeNameSpec());
   }
@@ -138,10 +138,16 @@ public class SqlDataTypeSpecBuilder {
                   SqlParserPos.ZERO),
               SqlLiteral.createCharString(rawType.getSerializerString(), SqlParserPos.ZERO),
               SqlParserPos.ZERO);
-        } else if (!isRow(type)) {
-          throw new UnsupportedOperationException(
-              "Unsupported type when convertTypeToSpec: " + typeName);
-        } else {
+        } else if (typeName == SqlTypeName.MAP) {
+          RelDataType keyType = type.getKeyType();
+          RelDataType valueType = type.getValueType();
+          SqlDataTypeSpec keyTypeSpec = convertTypeToSpec(keyType);
+          SqlDataTypeSpec valueTypeSpec = convertTypeToSpec(valueType);
+          typeNameSpec = new SqlMapTypeNameSpec(
+              new SqlDataTypeSpec(keyTypeSpec.getTypeNameSpec(), SqlParserPos.ZERO),
+              new SqlDataTypeSpec(valueTypeSpec.getTypeNameSpec(), SqlParserPos.ZERO),
+              SqlParserPos.ZERO);
+        } else if (isRow(type)) {
           RelRecordType recordType = (RelRecordType) type;
           List<RelDataTypeField> fields = recordType.getFieldList();
           List<SqlIdentifier> fieldNames = fields.stream()
@@ -152,6 +158,9 @@ public class SqlDataTypeSpecBuilder {
           typeNameSpec = new ExtendedSqlRowTypeNameSpec(SqlParserPos.ZERO, fieldNames, fieldTypes,
               fieldNames.stream().map(e -> (SqlCharStringLiteral) null)
                   .collect(Collectors.toList()), true);
+        } else {
+          throw new UnsupportedOperationException(
+              "Unsupported type when convertTypeToSpec: " + typeName);
         }
       }
     } else {

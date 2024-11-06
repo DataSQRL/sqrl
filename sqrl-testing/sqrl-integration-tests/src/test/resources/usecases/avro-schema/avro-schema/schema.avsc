@@ -1,0 +1,359 @@
+{
+  "type": "record",
+  "name": "TestRecord",
+  "namespace": "com.example.avro",
+  "fields": [
+    {
+      "name": "uuidField",
+      "type": {
+        "type": "string",
+        "logicalType": "uuid"
+      },
+      "doc": "A UUID string field"
+    },
+    //    {
+    //      "name": "fixedField",
+    //      "type": {
+    //        "type": "fixed",
+    //        "name": "Fixed16",
+    //        "size": 16
+    //      },
+    //      "doc": "A fixed-size 16-byte field"
+    //    },
+    //    {
+    //      "name": "nullableFixedField",
+    //      "type": ["null", {
+    //        "type": "fixed",
+    //        "name": "NullableFixed16",
+    //        "size": 16
+    //      }],
+    //      "default": null,
+    //      "doc": "A nullable fixed-size 16-byte field"
+    //    },
+    {
+      "name": "timestampMillisField",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      "doc": "A timestamp with millisecond precision"
+    },
+    {
+      "name": "nullableTimestampMillisField",
+      "type": ["null", {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      }],
+      "default": null,
+      "doc": "A nullable timestamp with millisecond precision"
+    },
+    {
+      "name": "timestampMicrosField",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-micros"
+      },
+      "doc": "A timestamp with microsecond precision"
+    },
+    {
+      "name": "nullableTimestampMicrosField",
+      "type": ["null", {
+        "type": "long",
+        "logicalType": "timestamp-micros"
+      }],
+      "default": null,
+      "doc": "A nullable timestamp with microsecond precision"
+    },
+    //    {
+    //      "name": "dateField",
+    //      "type": {
+    //        "type": "int",
+    //        "logicalType": "date"
+    //      },
+    //      "doc": "A date field representing days since the UNIX epoch"
+    //    },
+    //    {
+    //      "name": "nullableDateField",
+    //      "type": ["null", {
+    //        "type": "int",
+    //        "logicalType": "date"
+    //      }],
+    //      "default": null,
+    //      "doc": "A nullable date field"
+    //    },
+    //    {
+    //      "name": "timeMillisField",
+    //      "type": {
+    //        "type": "int",
+    //        "logicalType": "time-millis"
+    //      },
+    //      "doc": "A time field with millisecond precision"
+    //    },
+    //    {
+    //      "name": "nullableTimeMillisField",
+    //      "type": ["null", {
+    //        "type": "int",
+    //        "logicalType": "time-millis"
+    //      }],
+    //      "default": null,
+    //      "doc": "A nullable time field with millisecond precision"
+    //    },
+    //    {
+    //      "name": "timeMicrosField",
+    //      "type": {
+    //        "type": "long",
+    //        "logicalType": "time-micros"
+    //      },
+    //      "doc": "A time field with microsecond precision"
+    //    },
+    //    {
+    //      "name": "nullableTimeMicrosField",
+    //      "type": ["null", {
+    //        "type": "long",
+    //        "logicalType": "time-micros"
+    //      }],
+    //      "default": null,
+    //      "doc": "A nullable time field with microsecond precision"
+    //    },
+    {
+      "name": "complexArrayField",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "ArrayItemRecord",
+          "fields": [
+            {
+              "name": "itemFieldOne",
+              "type": "int"
+            },
+            {
+              "name": "itemFieldTwo",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "doc": "An array of complex nested records"
+    },
+    {
+      "name": "nullableComplexArrayField",
+      "type": ["null", {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "NullableArrayItemRecord",
+          "fields": [
+            {
+              "name": "nullableItemFieldOne",
+              "type": ["null", "double"],
+              "default": null
+            },
+            {
+              "name": "nullableItemFieldTwo",
+              "type": ["null", "boolean"],
+              "default": null
+            }
+          ]
+        }
+      }],
+      "default": null,
+      "doc": "A nullable array of complex nested records"
+    },
+    {
+      "name": "multiNestedRecord",
+      "type": {
+        "type": "record",
+        "name": "MultiNestedRecord",
+        "fields": [
+          {
+            "name": "nestedLevelOne",
+            "type": {
+              "type": "record",
+              "name": "NestedLevelOne",
+              "fields": [
+                {
+                  "name": "levelOneField",
+                  "type": "string"
+                },
+                {
+                  "name": "nestedLevelTwo",
+                  "type": {
+                    "type": "record",
+                    "name": "NestedLevelTwo",
+                    "fields": [
+                      {
+                        "name": "levelTwoField",
+                        "type": "int"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "doc": "A multi-level nested record"
+    },
+    {
+      "name": "stringField",
+      "type": "string",
+      "doc": "A required string field"
+    },
+    {
+      "name": "nullableStringField",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "A nullable string field"
+    },
+    {
+      "name": "intField",
+      "type": "int",
+      "doc": "A required integer field"
+    },
+    {
+      "name": "nullableIntField",
+      "type": ["null", "int"],
+      "default": null,
+      "doc": "A nullable integer field"
+    },
+    {
+      "name": "longField",
+      "type": "long",
+      "doc": "A required long field"
+    },
+    {
+      "name": "nullableLongField",
+      "type": ["null", "long"],
+      "default": null,
+      "doc": "A nullable long field"
+    },
+    {
+      "name": "floatField",
+      "type": "float",
+      "doc": "A required float field"
+    },
+    {
+      "name": "nullableFloatField",
+      "type": ["null", "float"],
+      "default": null,
+      "doc": "A nullable float field"
+    },
+    {
+      "name": "doubleField",
+      "type": "double",
+      "doc": "A required double field"
+    },
+    {
+      "name": "nullableDoubleField",
+      "type": ["null", "double"],
+      "default": null,
+      "doc": "A nullable double field"
+    },
+    {
+      "name": "booleanField",
+      "type": "boolean",
+      "doc": "A required boolean field"
+    },
+    {
+      "name": "nullableBooleanField",
+      "type": ["null", "boolean"],
+      "default": null,
+      "doc": "A nullable boolean field"
+    },
+//    {
+//      "name": "bytesField",
+//      "type": "bytes",
+//      "doc": "A required bytes field"
+//    },
+//    {
+//      "name": "nullableBytesField",
+//      "type": ["null", "bytes"],
+//      "default": null,
+//      "doc": "A nullable bytes field"
+//    },
+    {
+      "name": "enumField",
+      "type": {
+        "type": "enum",
+        "name": "TestEnum",
+        "symbols": ["ONE", "TWO", "THREE"]
+      },
+      "doc": "An enum field"
+    },
+    {
+      "name": "nullableEnumField",
+      "type": ["null", {
+        "type": "enum",
+        "name": "NullableTestEnum",
+        "symbols": ["FOUR", "FIVE", "SIX"]
+      }],
+      "default": null,
+      "doc": "A nullable enum field"
+    },
+    {
+      "name": "arrayField",
+      "type": {
+        "type": "array",
+        "items": "string"
+      },
+      "doc": "An array of strings"
+    },
+    {
+      "name": "nullableArrayField",
+      "type": ["null", {
+        "type": "array",
+        "items": "int"
+      }],
+      "default": null,
+      "doc": "A nullable array of integers"
+    },
+    {
+      "name": "nestedRecord",
+      "type": {
+        "type": "record",
+        "name": "NestedRecord",
+        "fields": [
+          {
+            "name": "nestedStringField",
+            "type": "string"
+          },
+          {
+            "name": "nestedIntField",
+            "type": "int"
+          },
+          {
+            "name": "nestedArrayField",
+            "type": {
+              "type": "array",
+              "items": "float"
+            }
+          }
+        ]
+      },
+      "doc": "A nested record"
+    },
+    {
+      "name": "nullableNestedRecord",
+      "type": ["null", {
+        "type": "record",
+        "name": "NullableNestedRecord",
+        "fields": [
+          {
+            "name": "nullableNestedStringField",
+            "type": ["null", "string"],
+            "default": null
+          },
+          {
+            "name": "nullableNestedLongField",
+            "type": ["null", "long"],
+            "default": null
+          }
+        ]
+      }],
+      "default": null,
+      "doc": "A nullable nested record"
+    }
+  ]
+}

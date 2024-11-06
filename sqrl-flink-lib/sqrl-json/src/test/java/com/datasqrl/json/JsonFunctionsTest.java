@@ -2,9 +2,11 @@ package com.datasqrl.json;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.Map;
 import lombok.SneakyThrows;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.flink.types.Row;
 import org.apache.flink.types.RowKind;
 import org.junit.jupiter.api.Nested;
@@ -30,6 +32,26 @@ class JsonFunctionsTest {
       FlinkJsonType result = JsonFunctions.TO_JSON.eval(rows);
       assertNotNull(result);
       assertEquals("[{\"key\":\"”value”\"}]", result.getJson().toString());
+    }
+
+    @SneakyThrows
+    @Test
+    void testSingleRowSerialization() {
+      // Create a single Row object with named fields
+      Row row = Row.withNames();
+      row.setField("field1", "value1");
+      row.setField("field2", 123);
+      row.setField("field3", true);
+
+      // Call the eval method directly with the Row to test unboxing
+      FlinkJsonType result = JsonFunctions.TO_JSON.eval(row);
+
+      // Assert that the JSON result matches the expected serialized output
+      assertNotNull(result);
+      assertEquals(
+          new ObjectMapper().readValue(
+              "{\"field1\":\"value1\",\"field2\":123,\"field3\":true}", ObjectNode.class),
+          result.getJson());
     }
 
     @Test

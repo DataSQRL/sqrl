@@ -11,7 +11,10 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.plan.queries.APISource;
 import graphql.language.FieldDefinition;
+import graphql.language.ListType;
+import graphql.language.NonNullType;
 import graphql.language.ObjectTypeDefinition;
+import graphql.language.Type;
 import graphql.language.TypeDefinition;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
@@ -110,8 +113,34 @@ public abstract class SchemaWalker {
           walk(type1, path, Optional.of(relRecordType), registry);
           return;
         } else if (relDataTypeField.getType().getComponentType() != null) {
-          //array todo
-          throw new RuntimeException();
+          // Handle array types
+          RelDataType componentType = relDataTypeField.getType().getComponentType();
+
+          // Unwrap the field's type to get the element type
+          Type<?> fieldType = field.getType();
+          fieldType = unwrapNonNullType(fieldType);
+
+          if (fieldType instanceof ListType) {
+            Type<?> elementType = ((ListType) fieldType).getType();
+            elementType = unwrapNonNullType(elementType);
+
+            if (componentType instanceof RelRecordType) {
+              // The array contains records
+              ObjectTypeDefinition type1 = registry.getType(elementType)
+                  .filter(f -> f instanceof ObjectTypeDefinition)
+                  .map(f -> (ObjectTypeDefinition) f)
+                  .orElseThrow(); // Ensure it is an object type
+
+              RelRecordType relRecordType = (RelRecordType) componentType;
+              walk(type1, path, Optional.of(relRecordType), registry);
+            } else {
+              // The array contains scalar types
+              visitScalar(type, field, path, rel.get(), relDataTypeField);
+            }
+          } else {
+            throw new RuntimeException("Expected ListType for array field");
+          }
+          return;
         }
 
         visitScalar(type, field, path, rel.get(), relDataTypeField);
@@ -122,6 +151,14 @@ public abstract class SchemaWalker {
     visitUnknownObject(type, field, path, rel);
 
     //Is not a scalar or a table function, do nothing
+  }
+
+  private Type<?> unwrapNonNullType(Type<?> type) {
+    if (type instanceof NonNullType) {
+      return unwrapNonNullType(((NonNullType) type).getType());
+    } else {
+      return type;
+    }
   }
 
   protected abstract void visitUnknownObject(ObjectTypeDefinition type, FieldDefinition field,
