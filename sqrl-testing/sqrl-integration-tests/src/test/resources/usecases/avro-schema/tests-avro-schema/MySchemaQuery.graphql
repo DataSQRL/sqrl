@@ -5,6 +5,12 @@ query {
         nullableTimestampMillisField
         timestampMicrosField
         nullableTimestampMicrosField
+        dateField
+        nullableDateField
+        timeMillisField
+        nullableTimeMillisField
+        timeMicrosField
+        nullableTimeMicrosField
         stringField
         nullableStringField
         intField

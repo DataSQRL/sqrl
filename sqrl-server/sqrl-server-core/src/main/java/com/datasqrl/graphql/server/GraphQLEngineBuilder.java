@@ -127,7 +127,10 @@ public class GraphQLEngineBuilder implements
     RuntimeWiring.Builder wiring = RuntimeWiring.newRuntimeWiring()
         .codeRegistry(codeRegistry)
         .scalar(CustomScalars.Double)
-        .scalar(CustomScalars.DATETIME);
+        .scalar(CustomScalars.DATETIME)
+        .scalar(CustomScalars.DATE)
+        .scalar(CustomScalars.TIME)
+        ;
 
     addlTypes.forEach(t->wiring.scalar(t));
 

@@ -16,9 +16,10 @@ public class BasicTypeManager {
   public static final BasicType<?>[] ALL_TYPES = {
       BooleanType.INSTANCE,
       TimestampType.INSTANCE,
-      BigIntType.INSTANCE, DoubleType.INSTANCE,
+      BigIntType.INSTANCE,
+      DoubleType.INSTANCE,
       IntervalType.INSTANCE,
-      StringType.INSTANCE
+      StringType.INSTANCE,
   };
 
   public static final Map<Class, BasicType<?>> JAVA_TO_TYPE = Arrays.stream(ALL_TYPES).flatMap(t -> {

@@ -61,16 +61,26 @@ public class TimestampType extends AbstractBasicType<Instant> {
       super(Instant.class, new StringParser());
     }
 
-    @Override
-    public Instant convert(Object o) {
-      if (o instanceof Instant) {
-        return (Instant) o;
+      @Override
+      public Instant convert(Object o) {
+          if (o instanceof Instant) {
+              return (Instant) o;
+          }
+          if (o instanceof Number) {
+              long value = ((Number) o).longValue();
+              if (value > 1_000_000_000_000L) {
+                  // Value is in milliseconds
+                  return Instant.ofEpochMilli(value);
+              } else if (value > 1_000_000_000L) {
+                  // Value is in seconds
+                  return Instant.ofEpochSecond(value);
+              } else {
+                  // Value is in microseconds
+                  return Instant.ofEpochMilli(value / 1_000);
+              }
+          }
+          throw new IllegalArgumentException("Invalid type to convert: " + o.getClass());
       }
-      if (o instanceof Number) {
-        return Instant.ofEpochSecond(((Number) o).longValue());
-      }
-      throw new IllegalArgumentException("Invalid type to convert: " + o.getClass());
-    }
 
     @Override
     public Optional<Integer> getTypeDistance(BasicType fromType) {

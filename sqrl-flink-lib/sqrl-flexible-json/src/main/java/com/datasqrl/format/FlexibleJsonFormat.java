@@ -112,48 +112,65 @@ public class FlexibleJsonFormat implements DeserializationFormatFactory,
         case INTEGER:
         case BIGINT:
         case FLOAT:
-        case DOUBLE:
         case DATE:
+        case DOUBLE:
         case TIME_WITHOUT_TIME_ZONE:
+          // Handle numeric and boolean types
+          builder.setTypes(List.of(new FieldType(
+              Name.system(field.getName()),
+              getType(field.getType(), this::createFlexibleTableSchema),
+              0,
+              field.getType().isNullable() ? List.of() : List.of(NotNull.INSTANCE)
+          )));
+          break;
+//          // Date handling, represented as days since epoch
+//          builder.setTypes(List.of(new FieldType(
+//              Name.system(field.getName()),
+//              getType(field.getType(), this::createFlexibleTableSchema),
+//              0,
+//              field.getType().isNullable() ? List.of() : List.of(NotNull.INSTANCE)
+//          )));
+//          break;
         case TIMESTAMP_WITHOUT_TIME_ZONE:
         case TIMESTAMP_WITH_TIME_ZONE:
         case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
-        case INTERVAL_YEAR_MONTH:
-        case INTERVAL_DAY_TIME:
-          builder.setTypes(List.of(new FieldType(Name.system(field.getName()),
-              getType(field.getType(), this::createFlexibleTableSchema), 0,
-              field.getType().isNullable() ? List.of() : List.of(NotNull.INSTANCE))));
+          builder.setTypes(List.of(new FieldType(
+              Name.system(field.getName()),
+              getType(field.getType(), this::createFlexibleTableSchema),
+              0,
+              field.getType().isNullable() ? List.of() : List.of(NotNull.INSTANCE)
+          )));
           break;
         case BINARY:
         case VARBINARY:
+          // Handle binary types if needed
           break;
         case ARRAY:
-          //todo: array depth
+          // Array handling with type depth
           ArrayType arrayType = (ArrayType) field.getType();
-          builder.setTypes(List.of(new FieldType(Name.system(field.getName()),
-              getType(arrayType.getElementType(), this::createFlexibleTableSchema), 1,
-              field.getType().isNullable() ? List.of() : List.of(NotNull.INSTANCE))));
-
+          builder.setTypes(List.of(new FieldType(
+              Name.system(field.getName()),
+              getType(arrayType.getElementType(), this::createFlexibleTableSchema),
+              1,
+              field.getType().isNullable() ? List.of() : List.of(NotNull.INSTANCE)
+          )));
           break;
         case MULTISET:
-          break;
         case MAP:
-          break;
         case ROW:
-          builder.setTypes(List.of(new FieldType(Name.system(field.getName()),
-              createFlexibleTableSchema((RowType)field.getType()), 0,
-              field.getType().isNullable() ? List.of() : List.of(NotNull.INSTANCE))));
+          // Recursive handling for nested rows
+          builder.setTypes(List.of(new FieldType(
+              Name.system(field.getName()),
+              createFlexibleTableSchema((RowType) field.getType()),
+              0,
+              field.getType().isNullable() ? List.of() : List.of(NotNull.INSTANCE)
+          )));
           break;
         case DISTINCT_TYPE:
-          break;
         case STRUCTURED_TYPE:
-          break;
         case NULL:
-          break;
         case RAW:
-          break;
         case SYMBOL:
-          break;
         case UNRESOLVED:
           break;
       }
@@ -161,14 +178,14 @@ public class FlexibleJsonFormat implements DeserializationFormatFactory,
       types.add(builder.build());
     }
 
-
     return new RelationType(types);
   }
-
   private Type getType(LogicalType type, Function<RowType, Type> rowCallback) {
     switch (type.getTypeRoot()) {
       case CHAR:
       case VARCHAR:
+      case DATE:
+      case TIME_WITHOUT_TIME_ZONE:
         return StringType.INSTANCE;
       case BOOLEAN:
         return BooleanType.INSTANCE;
@@ -184,8 +201,6 @@ public class FlexibleJsonFormat implements DeserializationFormatFactory,
       case INTEGER:
       case BIGINT:
         return BigIntType.INSTANCE;
-      case DATE:
-      case TIME_WITHOUT_TIME_ZONE:
       case TIMESTAMP_WITHOUT_TIME_ZONE:
       case TIMESTAMP_WITH_TIME_ZONE:
       case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
@@ -194,7 +209,7 @@ public class FlexibleJsonFormat implements DeserializationFormatFactory,
       case INTERVAL_DAY_TIME:
         return IntervalType.INSTANCE;
       case ROW:
-        return rowCallback.apply((RowType)type);
+        return rowCallback.apply((RowType) type);
       case ARRAY:
       case MULTISET:
       case MAP:
@@ -204,6 +219,7 @@ public class FlexibleJsonFormat implements DeserializationFormatFactory,
       case RAW:
       case SYMBOL:
       case UNRESOLVED:
+        break;
     }
     throw new RuntimeException("Cannot use flexible schema with type: " + type.getTypeRoot().name());
   }

@@ -1,7 +1,10 @@
 package com.datasqrl.graphql.server;
 
 import graphql.Scalars;
+import graphql.scalars.ExtendedScalars;
+import graphql.scalars.datetime.DateScalar;
 import graphql.scalars.datetime.DateTimeScalar;
+import graphql.scalars.datetime.TimeScalar;
 import graphql.schema.Coercing;
 import graphql.schema.GraphQLScalarType;
 import java.math.BigDecimal;
@@ -40,5 +43,7 @@ public class CustomScalars {
       .build();
 
 
-  public static final GraphQLScalarType DATETIME = DateTimeScalar.INSTANCE;
+  public static final GraphQLScalarType DATETIME =  ExtendedScalars.DateTime;
+  public static final GraphQLScalarType DATE =  ExtendedScalars.Date;
+  public static final GraphQLScalarType TIME = ExtendedScalars.LocalTime;
 }
