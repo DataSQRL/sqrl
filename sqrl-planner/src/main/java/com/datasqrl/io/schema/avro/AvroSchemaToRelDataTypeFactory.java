@@ -28,7 +28,7 @@ public class AvroSchemaToRelDataTypeFactory implements SchemaToRelDataTypeFactor
 
     boolean legacyTimestampMapping = getLegacyTimestampMapping(tableConfig);
 
-    AvroToRelDataTypeConverter converter = new AvroToRelDataTypeConverter(errors, legacyTimestampMapping);
+    AvroToRelDataTypeConverter converter = new AvroToRelDataTypeConverter(errors);
     return converter.convert(avroSchema);
   }
 

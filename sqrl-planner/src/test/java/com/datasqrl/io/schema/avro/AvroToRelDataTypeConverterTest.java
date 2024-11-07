@@ -26,7 +26,7 @@ public class AvroToRelDataTypeConverterTest {
   @BeforeEach
   public void setUp() {
     errors = ErrorCollector.root();
-    converter = new AvroToRelDataTypeConverter(errors, false);
+    converter = new AvroToRelDataTypeConverter(errors);
   }
 
   @Test
