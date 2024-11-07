@@ -108,11 +108,11 @@ public class GraphqlSchemaFactory {
     for (Map.Entry<NamePath, List<SqrlTableMacro>> path : fieldPathToTables.entrySet()) {
       if (path.getKey().getLast().isHidden()) continue;
 
-      if (goal == ExecutionGoal.TEST) {
-        if (!path.getValue().get(0).isTest()) continue;
-      } else {
-        if (path.getValue().get(0).isTest()) continue;
-      }
+//      if (goal == ExecutionGoal.TEST) {
+//        if (!path.getValue().get(0).isTest()) continue;
+//      } else {
+//        if (path.getValue().get(0).isTest()) continue;
+//      }
       Optional<GraphQLObjectType> graphQLObjectType = generateObject(path.getValue(),
           objectPathToTables.getOrDefault(path.getKey(), List.of()));
       graphQLObjectType.map(objectTypes::add);

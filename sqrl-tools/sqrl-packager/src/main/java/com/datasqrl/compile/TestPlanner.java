@@ -28,15 +28,21 @@ import graphql.language.TypeName;
 import graphql.language.VariableDefinition;
 import graphql.language.VariableReference;
 import graphql.parser.Parser;
+import graphql.schema.idl.SchemaPrinter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.sql.type.SqlTypeName;
 
 @AllArgsConstructor(onConstructor_ = @Inject)
 public class TestPlanner {
@@ -118,39 +124,16 @@ public class TestPlanner {
         // Todo: use overloaded lookup
         SqrlTableMacro macro = framework.getSchema().getTableFunctions(NamePath.of(def.getName())).get(0);
         if (macro.isTest()) {
-          OperationDefinition operation = processOperation(def.getName(), (ObjectTypeDefinition) unbox(def.getType(), document), def.getInputValueDefinitions());
+          OperationDefinition operation = processOperation(def.getName(), (ObjectTypeDefinition) unbox(def.getType(), document), def.getInputValueDefinitions(),
+              macro.getRowType(), document);
           queries.add(operation);
         }
       }
       return queries;
     }
-    private TypeDefinition<?> unbox(Type type, Document document) {
-      if (type instanceof NonNullType) {
-        return unbox(((NonNullType) type).getType(), document);
-      }
-      if (type instanceof ListType) {
-        return unbox(((ListType) type).getType(), document);
-      }
 
-      if (type instanceof TypeName) {
-        String typeName = ((TypeName) type).getName();
-        for (Definition definition : document.getDefinitions()) {
-          if (definition instanceof TypeDefinition && ((TypeDefinition<?>) definition).getName().equals(typeName)) {
-            return (TypeDefinition<?>) definition;
-          }
-        }
-        throw new IllegalArgumentException("Type " + typeName + " not found in document");
-      }
-      // In case the type is already a TypeDefinition, just return it
-      if (type instanceof TypeDefinition) {
-        return (TypeDefinition<?>) type;
-      }
-
-      throw new IllegalArgumentException("Unknown type encountered: " + type);
-    }
-
-
-    private OperationDefinition processOperation(String name, ObjectTypeDefinition type, List<InputValueDefinition> inputValueDefinitions) {
+    private OperationDefinition processOperation(String name, ObjectTypeDefinition type, List<InputValueDefinition> inputValueDefinitions,
+        RelDataType rowType, Document document) {
       // Construct the operation definition
       OperationDefinition.Builder operationBuilder = OperationDefinition.newOperationDefinition()
           .name(name)
@@ -163,16 +146,8 @@ public class TestPlanner {
 
       operationBuilder.variableDefinitions(variableDefinitions);
 
-      // Construct the selection set with all fields of the type
-      List<Selection> fieldSelections = type.getFieldDefinitions().stream()
-          .map(fieldDef -> Field.newField()
-              .name(fieldDef.getName())
-              // Assume all scalar or ID fields for simplicity, no nested objects or lists
-//              .selectionSet(new SelectionSet(new ArrayList<>()))
-              .build())
-          .collect(Collectors.toList());
-
-      SelectionSet selectionSet = new SelectionSet(fieldSelections);
+      // Build the selection set recursively for nested fields
+      SelectionSet selectionSet = buildSelectionSet(type, rowType, document);
 
       // Create the field for the operation
       Field.Builder fieldBuilder = Field.newField()
@@ -190,12 +165,123 @@ public class TestPlanner {
       Field field = fieldBuilder.build();
       operationBuilder.selectionSet(new SelectionSet(List.of(field)));
 
-      return operationBuilder.build();
+      OperationDefinition build = operationBuilder.build();
+      return build;
     }
+
 
     @Override
     public Object visitObjectTypeDefinition(ObjectTypeDefinition node, Object context) {
       return super.visitObjectTypeDefinition(node, context);
     }
+  }
+  private SelectionSet buildSelectionSet(ObjectTypeDefinition type, RelDataType rowType, Document document) {
+    List<Selection> selections = new ArrayList<>();
+
+    // Build a map from field names to RelDataTypeField for rowType
+    Map<String, RelDataTypeField> rowTypeFields = rowType.getFieldList().stream()
+        .collect(Collectors.toMap(RelDataTypeField::getName, Function.identity()));
+
+    // Iterate over the fields in the ObjectTypeDefinition
+    for (FieldDefinition fieldDef : type.getFieldDefinitions()) {
+      String fieldName = fieldDef.getName();
+      Field.Builder fieldBuilder = Field.newField()
+          .name(fieldName);
+
+      RelDataTypeField rowField = rowTypeFields.get(fieldName);
+
+      if (rowField == null) {
+        // Field not found in rowType, skip or handle error
+        continue;
+      }
+
+      // Get the type of the field
+      RelDataType fieldType = rowField.getType();
+
+      Type gqlFieldType = fieldDef.getType();
+
+      if (isScalarType(fieldType)) {
+        // Scalar type, no selection set needed
+      } else if (fieldType.getSqlTypeName() == SqlTypeName.ARRAY &&
+        fieldType.getComponentType().getSqlTypeName() == SqlTypeName.ROW
+      ) {
+        // Array type
+        RelDataType componentType = fieldType.getComponentType();
+
+        // Unbox the GraphQL type
+        TypeDefinition<?> gqlComponentType = unbox(gqlFieldType, document);
+
+        if (gqlComponentType instanceof ObjectTypeDefinition) {
+          // Build selection set for the component type
+          SelectionSet nestedSelectionSet = buildSelectionSet(
+              (ObjectTypeDefinition) gqlComponentType,
+              componentType,
+              document);
+          fieldBuilder.selectionSet(nestedSelectionSet);
+        }
+      } else if (fieldType.getSqlTypeName() == SqlTypeName.ROW) {
+        // Nested object
+        TypeDefinition<?> gqlFieldTypeDef = unbox(gqlFieldType, document);
+        if (gqlFieldTypeDef instanceof ObjectTypeDefinition) {
+          SelectionSet nestedSelectionSet = buildSelectionSet(
+              (ObjectTypeDefinition) gqlFieldTypeDef,
+              fieldType,
+              document);
+          fieldBuilder.selectionSet(nestedSelectionSet);
+        }
+      }
+
+      selections.add(fieldBuilder.build());
+    }
+
+    return new SelectionSet(selections);
+  }
+
+  private boolean isScalarType(RelDataType type) {
+    switch (type.getSqlTypeName()) {
+      case BOOLEAN:
+      case TINYINT:
+      case SMALLINT:
+      case INTEGER:
+      case BIGINT:
+      case FLOAT:
+      case REAL:
+      case DOUBLE:
+      case DECIMAL:
+      case CHAR:
+      case VARCHAR:
+      case DATE:
+      case TIME:
+      case TIMESTAMP:
+        return true;
+      default:
+        return false;
+    }
+  }
+
+
+  public TypeDefinition<?> unbox(Type type, Document document) {
+    if (type instanceof NonNullType) {
+      return unbox(((NonNullType) type).getType(), document);
+    }
+    if (type instanceof ListType) {
+      return unbox(((ListType) type).getType(), document);
+    }
+
+    if (type instanceof TypeName) {
+      String typeName = ((TypeName) type).getName();
+      for (Definition definition : document.getDefinitions()) {
+        if (definition instanceof TypeDefinition && ((TypeDefinition<?>) definition).getName().equals(typeName)) {
+          return (TypeDefinition<?>) definition;
+        }
+      }
+      throw new IllegalArgumentException("Type " + typeName + " not found in document");
+    }
+    // In case the type is already a TypeDefinition, just return it
+    if (type instanceof TypeDefinition) {
+      return (TypeDefinition<?>) type;
+    }
+
+    throw new IllegalArgumentException("Unknown type encountered: " + type);
   }
 }

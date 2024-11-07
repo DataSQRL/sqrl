@@ -11,25 +11,25 @@
       },
       "doc": "A UUID string field"
     },
-    //    {
-    //      "name": "fixedField",
-    //      "type": {
-    //        "type": "fixed",
-    //        "name": "Fixed16",
-    //        "size": 16
-    //      },
-    //      "doc": "A fixed-size 16-byte field"
-    //    },
-    //    {
-    //      "name": "nullableFixedField",
-    //      "type": ["null", {
-    //        "type": "fixed",
-    //        "name": "NullableFixed16",
-    //        "size": 16
-    //      }],
-    //      "default": null,
-    //      "doc": "A nullable fixed-size 16-byte field"
-    //    },
+//    {
+//      "name": "fixedField",
+//      "type": {
+//        "type": "fixed",
+//        "name": "Fixed16",
+//        "size": 16
+//      },
+//      "doc": "A fixed-size 16-byte field"
+//    },
+//    {
+//      "name": "nullableFixedField",
+//      "type": ["null", {
+//        "type": "fixed",
+//        "name": "NullableFixed16",
+//        "size": 16
+//      }],
+//      "default": null,
+//      "doc": "A nullable fixed-size 16-byte field"
+//    },
     {
       "name": "timestampMillisField",
       "type": {
@@ -354,6 +354,16 @@
       }],
       "default": null,
       "doc": "A nullable nested record"
+    },
+    {
+      "name": "decimalField",
+      "type": {
+        "type": "bytes",
+        "logicalType": "decimal",
+        "precision": 10,
+        "scale": 2
+      },
+      "doc": "A decimal field with specified precision and scale"
     }
   ]
 }
