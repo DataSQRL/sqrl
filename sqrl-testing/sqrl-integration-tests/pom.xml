@@ -2,7 +2,7 @@
   <parent>
     <groupId>com.datasqrl</groupId>
     <artifactId>sqrl-testing</artifactId>
-    <version>0.5.8-SNAPSHOT</version>
+    <version>0.5.8</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -201,7 +201,7 @@
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-test</artifactId>
-      <version>0.5.8-SNAPSHOT</version>
+      <version>0.5.8</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
