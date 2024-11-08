@@ -140,7 +140,9 @@ public class FullUsecasesIT {
       log.warn("Skipping disabled test:" + param.getSqrlFileName());
       return;
     }
-    this.snapshot = new Snapshot(param.testName, param.getSqrlFileName().substring(0, param.getSqrlFileName().length()-5), new StringBuilder());
+    this.snapshot = Snapshot.of(
+        FullUsecasesIT.class, param.testName,
+        param.getSqrlFileName().substring(0, param.getSqrlFileName().length()-5));
     TestExtension testExtension = testExtensions.create(param.getTestName());
     testExtension.setup();
 
