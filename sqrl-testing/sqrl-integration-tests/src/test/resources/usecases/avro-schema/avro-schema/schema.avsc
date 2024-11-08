@@ -160,42 +160,42 @@
       "default": null,
       "doc": "A nullable array of complex nested records"
     },
-//    {
-//      "name": "multiNestedRecord",
-//      "type": {
-//        "type": "record",
-//        "name": "MultiNestedRecord",
-//        "fields": [
-//          {
-//            "name": "nestedLevelOne",
-//            "type": {
-//              "type": "record",
-//              "name": "NestedLevelOne",
-//              "fields": [
-//                {
-//                  "name": "levelOneField",
-//                  "type": "string"
-//                },
-//                {
-//                  "name": "nestedLevelTwo",
-//                  "type": {
-//                    "type": "record",
-//                    "name": "NestedLevelTwo",
-//                    "fields": [
-//                      {
-//                        "name": "levelTwoField",
-//                        "type": "int"
-//                      }
-//                    ]
-//                  }
-//                }
-//              ]
-//            }
-//          }
-//        ]
-//      },
-//      "doc": "A multi-level nested record"
-//    },
+    {
+      "name": "multiNestedRecord",
+      "type": {
+        "type": "record",
+        "name": "MultiNestedRecord",
+        "fields": [
+          {
+            "name": "nestedLevelOne",
+            "type": {
+              "type": "record",
+              "name": "NestedLevelOne",
+              "fields": [
+                {
+                  "name": "levelOneField",
+                  "type": "string"
+                },
+                {
+                  "name": "nestedLevelTwo",
+                  "type": {
+                    "type": "record",
+                    "name": "NestedLevelTwo",
+                    "fields": [
+                      {
+                        "name": "levelTwoField",
+                        "type": "int"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "doc": "A multi-level nested record"
+    },
     {
       "name": "stringField",
       "type": "string",
@@ -309,53 +309,53 @@
 //      "default": null,
 //      "doc": "A nullable array of integers"
 //    },
-//    {
-//      "name": "nestedRecord",
-//      "type": {
-//        "type": "record",
-//        "name": "NestedRecord",
-//        "fields": [
+    {
+      "name": "nestedRecord",
+      "type": {
+        "type": "record",
+        "name": "NestedRecord",
+        "fields": [
+          {
+            "name": "nestedStringField",
+            "type": "string"
+          },
+          {
+            "name": "nestedIntField",
+            "type": "int"
+          }
+//        ,
 //          {
-//            "name": "nestedStringField",
-//            "type": "string"
-//          },
-//          {
-//            "name": "nestedIntField",
-//            "type": "int"
+//            "name": "nestedArrayField",
+//            "type": {
+//              "type": "array",
+//              "items": "float"
+//            }
 //          }
-////        ,
-////          {
-////            "name": "nestedArrayField",
-////            "type": {
-////              "type": "array",
-////              "items": "float"
-////            }
-////          }
-//        ]
-//      },
-//      "doc": "A nested record"
-//    },
-//    {
-//      "name": "nullableNestedRecord",
-//      "type": ["null", {
-//        "type": "record",
-//        "name": "NullableNestedRecord",
-//        "fields": [
-//          {
-//            "name": "nullableNestedStringField",
-//            "type": ["null", "string"],
-//            "default": null
-//          },
-//          {
-//            "name": "nullableNestedLongField",
-//            "type": ["null", "long"],
-//            "default": null
-//          }
-//        ]
-//      }],
-//      "default": null,
-//      "doc": "A nullable nested record"
-//    },
+        ]
+      },
+      "doc": "A nested record"
+    },
+    {
+      "name": "nullableNestedRecord",
+      "type": ["null", {
+        "type": "record",
+        "name": "NullableNestedRecord",
+        "fields": [
+          {
+            "name": "nullableNestedStringField",
+            "type": ["null", "string"],
+            "default": null
+          },
+          {
+            "name": "nullableNestedLongField",
+            "type": ["null", "long"],
+            "default": null
+          }
+        ]
+      }],
+      "default": null,
+      "doc": "A nullable nested record"
+    },
     {
       "name": "decimalField",
       "type": {
