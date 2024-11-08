@@ -9,6 +9,7 @@ import org.apache.flink.table.annotation.DataTypeHint;
 import org.apache.flink.table.annotation.FunctionHint;
 import org.apache.flink.table.annotation.InputGroup;
 import org.apache.flink.table.functions.AggregateFunction;
+import org.apache.flink.table.functions.FunctionContext;
 import org.apache.flink.util.jackson.JacksonMapperFactory;
 
 /**
@@ -18,7 +19,7 @@ import org.apache.flink.util.jackson.JacksonMapperFactory;
 @FunctionHint(output = @DataTypeHint(value= "RAW", bridgedTo = FlinkJsonType.class, rawSerializer = FlinkJsonTypeSerializer.class))
 public class JsonObjectAgg extends AggregateFunction<Object, ObjectAgg> {
 
-  private final ObjectMapper mapper = JacksonMapperFactory.createObjectMapper();
+  private static final ObjectMapper mapper = JacksonMapperFactory.createObjectMapper();
 
   @Override
   public ObjectAgg createAccumulator() {
