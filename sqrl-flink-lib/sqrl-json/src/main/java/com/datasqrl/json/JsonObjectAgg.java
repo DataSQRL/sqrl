@@ -9,7 +9,6 @@ import org.apache.flink.table.annotation.DataTypeHint;
 import org.apache.flink.table.annotation.FunctionHint;
 import org.apache.flink.table.annotation.InputGroup;
 import org.apache.flink.table.functions.AggregateFunction;
-import org.apache.flink.table.functions.FunctionContext;
 import org.apache.flink.util.jackson.JacksonMapperFactory;
 
 /**
