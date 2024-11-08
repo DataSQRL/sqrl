@@ -42,6 +42,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -134,7 +135,7 @@ public class FullUsecasesIT {
   @SneakyThrows
   @ParameterizedTest
   @MethodSource("useCaseProvider")
-  public void testUseCase(UseCaseTestParameter param) {
+  public void testUseCase(UseCaseTestParameter param, TestInfo testInfo) {
     if (disabledScripts.contains(new ScriptCriteria(param.getSqrlFileName(), param.getGoal()))) {
       log.warn("Skipping disabled test:" + param.getSqrlFileName());
       return;
@@ -244,12 +245,12 @@ public class FullUsecasesIT {
   @ParameterizedTest
   @MethodSource("useCaseProvider")
   @Disabled
-  public void runTestNumber(UseCaseTestParameter param) {
+  public void runTestNumber(UseCaseTestParameter param, TestInfo testInfo) {
     int i = -1;
     testNo++;
     System.out.println(testNo + ":" + param);
     if (i == testNo) {
-      testUseCase(param);
+      testUseCase(param, testInfo);
     }
   }
 

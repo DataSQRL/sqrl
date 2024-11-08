@@ -64,23 +64,23 @@
       "default": null,
       "doc": "A nullable timestamp with microsecond precision"
     },
-//    {
-//      "name": "dateField",
-//      "type": {
-//        "type": "int",
-//        "logicalType": "date"
-//      },
-//      "doc": "A date field representing days since the UNIX epoch"
-//    },
-//    {
-//      "name": "nullableDateField",
-//      "type": ["null", {
-//        "type": "int",
-//        "logicalType": "date"
-//      }],
-//      "default": null,
-//      "doc": "A nullable date field"
-//    },
+    {
+      "name": "dateField",
+      "type": {
+        "type": "int",
+        "logicalType": "date"
+      },
+      "doc": "A date field representing days since the UNIX epoch"
+    },
+    {
+      "name": "nullableDateField",
+      "type": ["null", {
+        "type": "int",
+        "logicalType": "date"
+      }],
+      "default": null,
+      "doc": "A nullable date field"
+    },
 //    {
 //      "name": "timeMillisField",
 //      "type": {

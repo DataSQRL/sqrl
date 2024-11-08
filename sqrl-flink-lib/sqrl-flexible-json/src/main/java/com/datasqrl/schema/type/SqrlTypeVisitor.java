@@ -44,4 +44,7 @@ public interface SqrlTypeVisitor<R, C> {
     return visitType(type, context);
   }
 
+  default R visitObjectType(ObjectType type, C context) {
+    return visitType(type, context);
+  }
 }

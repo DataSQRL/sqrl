@@ -1,6 +1,7 @@
 package com.datasqrl.graphql.server;
 
 import graphql.Scalars;
+import graphql.scalars.ExtendedScalars;
 import graphql.scalars.datetime.DateTimeScalar;
 import graphql.schema.Coercing;
 import graphql.schema.GraphQLScalarType;
@@ -41,4 +42,5 @@ public class CustomScalars {
 
 
   public static final GraphQLScalarType DATETIME = DateTimeScalar.INSTANCE;
+  public static final GraphQLScalarType DATE =  ExtendedScalars.Date;
 }

@@ -5,8 +5,8 @@ query {
         nullableTimestampMillisField
         timestampMicrosField
         nullableTimestampMicrosField
-#        dateField
-#        nullableDateField
+        dateField
+        nullableDateField
 #        timeMillisField
 #        nullableTimeMillisField
 #        timeMicrosField
