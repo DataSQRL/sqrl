@@ -3,26 +3,11 @@
  */
 package com.datasqrl.graphql;
 
-import static org.apache.kafka.clients.consumer.ConsumerConfig.AUTO_OFFSET_RESET_CONFIG;
-import static org.apache.kafka.clients.consumer.ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG;
-import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
-import static org.apache.kafka.clients.consumer.ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG;
-import static org.apache.kafka.clients.consumer.ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG;
-import static org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG;
-import static org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG;
-
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.graphql.config.CorsHandlerOptions;
 import com.datasqrl.graphql.config.ServerConfig;
-import com.datasqrl.graphql.io.SinkConsumer;
-import com.datasqrl.graphql.io.SinkProducer;
-import com.datasqrl.graphql.kafka.KafkaSinkConsumer;
-import com.datasqrl.graphql.kafka.KafkaSinkProducer;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import com.datasqrl.graphql.server.RootGraphqlModel;
-import com.datasqrl.graphql.server.RootGraphqlModel.KafkaMutationCoords;
-import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoords;
-import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoords;
 import com.datasqrl.graphql.type.SqrlVertxScalars;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
@@ -53,32 +38,16 @@ import io.vertx.ext.web.handler.graphql.GraphiQLHandler;
 import io.vertx.ext.web.handler.graphql.GraphiQLHandlerBuilder;
 import io.vertx.ext.web.handler.graphql.ws.GraphQLWSHandler;
 import io.vertx.jdbcclient.JDBCPool;
-import io.vertx.jdbcclient.impl.ConnectionImpl;
-import io.vertx.kafka.client.consumer.KafkaConsumer;
-import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.micrometer.MicrometerMetricsOptions;
 import io.vertx.micrometer.backends.BackendRegistries;
-import io.vertx.micrometer.backends.BackendRegistry;
 import io.vertx.pgclient.PgPool;
 import io.vertx.pgclient.impl.PgPoolOptions;
-import io.vertx.sqlclient.PreparedQuery;
-import io.vertx.sqlclient.Row;
-import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.SqlClient;
-import io.vertx.sqlclient.SqlConnection;
-import io.vertx.sqlclient.Tuple;
-import io.vertx.sqlclient.impl.SqlConnectionBase;
 import java.io.File;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.Statement;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Properties;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -356,10 +325,17 @@ public class GraphQLServer extends AbstractVerticle {
 
   public GraphQL createGraphQL(Map<String, SqlClient> client, Promise<Void> startPromise) {
     try {
+      VertxJdbcClient vertxJdbcClient = new VertxJdbcClient(client);
       GraphQL.Builder graphQL = model.accept(
-          new GraphQLEngineBuilder(List.of(SqrlVertxScalars.JSON)),
-          new VertxContext(new VertxJdbcClient(client), constructSinkProducers(model, vertx),
-              constructSubscriptions(model, vertx, startPromise), canonicalizer));
+          new GraphQLEngineBuilder.Builder()
+              .withAdditionalTypes(List.of(SqrlVertxScalars.JSON))
+              .withMutationConfiguration(
+                  new MutationConfigurationImpl(model, vertx, config))
+              .withSubscriptionConfiguration(
+                  new SubscriptionConfigurationImpl(model, vertx, config, startPromise, vertxJdbcClient)
+              )
+              .build(),
+          new VertxContext(vertxJdbcClient, canonicalizer));
       MeterRegistry meterRegistry = BackendRegistries.getDefaultNow();
       if (meterRegistry != null) {
         graphQL.instrumentation(new MicrometerInstrumentation(meterRegistry));
@@ -367,59 +343,9 @@ public class GraphQLServer extends AbstractVerticle {
       return graphQL.build();
     } catch (Exception e) {
       startPromise.fail(e.getMessage());
-      e.printStackTrace();
+      log.error("Unable to create GraphQL", e);
       throw e;
     }
   }
 
-  Map<String, SinkConsumer> constructSubscriptions(RootGraphqlModel root, Vertx vertx,
-      Promise<Void> startPromise) {
-    Map<String, SinkConsumer> consumers = new HashMap<>();
-    for (SubscriptionCoords sub: root.getSubscriptions()) {
-      KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, getSourceConfig());
-      consumer.subscribe(sub.getTopic())
-          .onSuccess(v -> log.info("Subscribed to topic: {}", sub.getTopic()))
-          .onFailure(startPromise::fail);
-
-      consumers.put(sub.getFieldName(), new KafkaSinkConsumer<>(consumer));
-    }
-    return consumers;
-  }
-
-  Map<String, String> getSourceConfig() {
-    Map<String, String> conf = new HashMap<>();
-    conf.put(BOOTSTRAP_SERVERS_CONFIG, getEnvironmentVariable("PROPERTIES_BOOTSTRAP_SERVERS"));
-    conf.put(GROUP_ID_CONFIG, UUID.randomUUID().toString());
-    conf.put(KEY_DESERIALIZER_CLASS_CONFIG, "com.datasqrl.graphql.kafka.JsonDeserializer");
-    conf.put(VALUE_DESERIALIZER_CLASS_CONFIG, "com.datasqrl.graphql.kafka.JsonDeserializer");
-    conf.put(AUTO_OFFSET_RESET_CONFIG, "latest");
-    return conf;
-  }
-
-  public String getEnvironmentVariable(String envVar) {
-    return System.getenv(envVar);
-  }
-
-  Map<String, String> getSinkConfig() {
-    Map<String, String> conf = new HashMap<>();
-    conf.put(BOOTSTRAP_SERVERS_CONFIG, getEnvironmentVariable("PROPERTIES_BOOTSTRAP_SERVERS"));
-    conf.put(GROUP_ID_CONFIG, UUID.randomUUID().toString());
-    conf.put(KEY_SERIALIZER_CLASS_CONFIG, "com.datasqrl.graphql.kafka.JsonSerializer");
-    conf.put(VALUE_SERIALIZER_CLASS_CONFIG, "com.datasqrl.graphql.kafka.JsonSerializer");
-
-    return conf;
-  }
-
-  Map<String, SinkProducer> constructSinkProducers(RootGraphqlModel root, Vertx vertx) {
-    Map<String, SinkProducer> producers = new HashMap<>();
-    for (MutationCoords mut : root.getMutations()) {
-      if (mut instanceof KafkaMutationCoords) {
-        KafkaMutationCoords kafkaMut = (KafkaMutationCoords) mut;
-        KafkaProducer<String, String> producer = KafkaProducer.create(vertx, getSinkConfig());
-        KafkaSinkProducer sinkProducer = new KafkaSinkProducer<>(kafkaMut.getTopic(), producer);
-        producers.put(mut.getFieldName(), sinkProducer);
-      }
-    }
-    return producers;
-  }
 }
