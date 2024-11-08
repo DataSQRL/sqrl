@@ -150,7 +150,9 @@ public class GraphqlSchemaFactory {
     //todo: hack because we can't merge scalars with graphql-java
     if (goal != ExecutionGoal.TEST) {
       builder
-        .additionalType(CustomScalars.DATETIME);
+        .additionalType(CustomScalars.DATETIME)
+        .additionalType(CustomScalars.DATE)
+      ;
     }
 
     return builder.build();

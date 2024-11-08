@@ -1166,7 +1166,7 @@ LogicalTableScan(table=[[orders_1]])
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "type CoOrders {\n  beforeID: Float!\n  afterID: Float!\n  timestamp: DateTime!\n  beforeTimestamp: DateTime!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries(limit: Int = 10, offset: Int = 0): [entries!]\n}\n\ntype Query {\n  CoOrders(beforeID: Float, afterID: Float, timestamp: DateTime, beforeTimestamp: DateTime, limit: Int = 10, offset: Int = 0): [CoOrders!]\n  Orders(id: Float, customerid: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [Orders!]\n}\n\ntype entries {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n"
+      "schema" : "type CoOrders {\n  beforeID: Float!\n  afterID: Float!\n  timestamp: DateTime!\n  beforeTimestamp: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries(limit: Int = 10, offset: Int = 0): [entries!]\n}\n\ntype Query {\n  CoOrders(beforeID: Float, afterID: Float, timestamp: DateTime, beforeTimestamp: DateTime, limit: Int = 10, offset: Int = 0): [CoOrders!]\n  Orders(id: Float, customerid: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [Orders!]\n}\n\ntype entries {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n"
     }
   }
 }

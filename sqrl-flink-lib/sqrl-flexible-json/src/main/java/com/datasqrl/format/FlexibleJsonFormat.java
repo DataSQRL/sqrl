@@ -6,9 +6,7 @@ import static org.apache.flink.formats.json.JsonFormatOptions.MAP_NULL_KEY_LITER
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.io.tables.SchemaValidator;
-import com.datasqrl.schema.constraint.Constraint;
 import com.datasqrl.schema.constraint.NotNull;
-import com.datasqrl.schema.input.FlexibleFieldSchema.Field;
 import com.datasqrl.schema.input.FlexibleFieldSchema.Field.Builder;
 import com.datasqrl.schema.input.FlexibleFieldSchema.FieldType;
 import com.datasqrl.schema.input.FlexibleSchemaValidator;
@@ -23,6 +21,7 @@ import com.datasqrl.schema.type.basic.BigIntType;
 import com.datasqrl.schema.type.basic.BooleanType;
 import com.datasqrl.schema.type.basic.DoubleType;
 import com.datasqrl.schema.type.basic.IntervalType;
+import com.datasqrl.schema.type.basic.ObjectType;
 import com.datasqrl.schema.type.basic.StringType;
 import com.datasqrl.schema.type.basic.TimestampType;
 import java.util.ArrayList;
@@ -167,6 +166,8 @@ public class FlexibleJsonFormat implements DeserializationFormatFactory,
 
   private Type getType(LogicalType type, Function<RowType, Type> rowCallback) {
     switch (type.getTypeRoot()) {
+      case DATE: //do not alter date field during schema adjustment
+        return ObjectType.INSTANCE;
       case CHAR:
       case VARCHAR:
         return StringType.INSTANCE;
@@ -184,7 +185,6 @@ public class FlexibleJsonFormat implements DeserializationFormatFactory,
       case INTEGER:
       case BIGINT:
         return BigIntType.INSTANCE;
-      case DATE:
       case TIME_WITHOUT_TIME_ZONE:
       case TIMESTAMP_WITHOUT_TIME_ZONE:
       case TIMESTAMP_WITH_TIME_ZONE:

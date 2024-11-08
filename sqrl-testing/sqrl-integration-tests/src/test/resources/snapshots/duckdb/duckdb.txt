@@ -1,4 +1,0 @@
->>>iceberg-query.graphql
-{"data":{"MyTable1":[{"id":22.0,"hello":"hello world"}]}}
->>>postgres-query.graphql
-{"data":{"MyTable2":[{"id":22.0,"hello":"hello world"}]}}
