@@ -12,19 +12,8 @@
     <div id="graph"></div>
     <script>
       let elements = ${DAG}
-      const nodes = elements.map(function (node) {
-        return { data: node };
-      });
 
-      const edges = elements.flatMap((node) =>
-        (node?.inputs || []).map((input) => ({
-          data: { source: input, target: node?.id },
-        }))
-      );
-      DAGVisualization.renderGraph(document.getElementById("graph"), {
-        nodes,
-        edges,
-      });
+      DAGVisualization.renderGraph(document.getElementById("graph"), elements);
     </script>
   </body>
 </html>
