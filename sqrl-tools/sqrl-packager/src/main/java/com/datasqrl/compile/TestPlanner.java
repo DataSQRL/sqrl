@@ -177,7 +177,7 @@ public class TestPlanner {
   private SelectionSet buildSelectionSet(ObjectTypeDefinition type, RelDataType rowType, Document document) {
     List<Selection> selections = type.getFieldDefinitions().stream()
         .filter(f->rowType.getField(f.getName(), false, false) != null) //must be a field on table
-//        .filter(f->!f.getName().startsWith(HIDDEN_PREFIX))
+        .filter(f->!f.getName().startsWith(HIDDEN_PREFIX))
         .map(fieldDef -> createSelection(fieldDef, rowType, document))
         .collect(Collectors.toList());
 
