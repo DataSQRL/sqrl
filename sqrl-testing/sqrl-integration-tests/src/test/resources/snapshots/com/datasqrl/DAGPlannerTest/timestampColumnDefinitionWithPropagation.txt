@@ -286,7 +286,7 @@ LogicalProject(month=[endOfMonth(endOfMonth($4))], timestamp=[$4], _customerid=[
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "type Customer {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n}\n\ntype CustomerCopy {\n  month: DateTime!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype Query {\n  Customer(customerid: Float, lastUpdated: Float, limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerCopy(limit: Int = 10, offset: Int = 0): [CustomerCopy!]\n}\n"
+      "schema" : "type Customer {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n}\n\ntype CustomerCopy {\n  month: DateTime!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\ntype Query {\n  Customer(customerid: Float, lastUpdated: Float, limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerCopy(limit: Int = 10, offset: Int = 0): [CustomerCopy!]\n}\n"
     }
   }
 }

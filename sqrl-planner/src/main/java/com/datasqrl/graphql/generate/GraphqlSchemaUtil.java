@@ -133,6 +133,7 @@ public class GraphqlSchemaUtil {
       case DATE:
         return Optional.of(CustomScalars.DATE);
       case TIME:
+        return Optional.of(CustomScalars.TIME);
       case TIME_WITH_LOCAL_TIME_ZONE:
       case TIMESTAMP:
       case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
@@ -245,6 +246,7 @@ public class GraphqlSchemaUtil {
       case DATE:
         return Optional.of(CustomScalars.DATE);
       case TIME:
+        return Optional.of(CustomScalars.TIME);
       case TIMESTAMP:
         return Optional.of(CustomScalars.DATETIME);
       case BINARY:
