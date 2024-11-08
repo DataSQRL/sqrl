@@ -166,7 +166,8 @@ public class FlexibleJsonFormat implements DeserializationFormatFactory,
 
   private Type getType(LogicalType type, Function<RowType, Type> rowCallback) {
     switch (type.getTypeRoot()) {
-      case DATE: //do not alter date field during schema adjustment
+      case DATE: //do not alter fields during schema adjustment
+      case TIME_WITHOUT_TIME_ZONE:
         return ObjectType.INSTANCE;
       case CHAR:
       case VARCHAR:
@@ -185,7 +186,6 @@ public class FlexibleJsonFormat implements DeserializationFormatFactory,
       case INTEGER:
       case BIGINT:
         return BigIntType.INSTANCE;
-      case TIME_WITHOUT_TIME_ZONE:
       case TIMESTAMP_WITHOUT_TIME_ZONE:
       case TIMESTAMP_WITH_TIME_ZONE:
       case TIMESTAMP_WITH_LOCAL_TIME_ZONE:

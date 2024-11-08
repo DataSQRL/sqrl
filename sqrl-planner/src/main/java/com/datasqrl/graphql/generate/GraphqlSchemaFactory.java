@@ -152,6 +152,7 @@ public class GraphqlSchemaFactory {
       builder
         .additionalType(CustomScalars.DATETIME)
         .additionalType(CustomScalars.DATE)
+        .additionalType(CustomScalars.TIME)
       ;
     }
 

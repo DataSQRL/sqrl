@@ -797,7 +797,7 @@ LogicalProject(productid=[$0], name=[$1], description=[$2], category=[$3], _inge
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype Product {\n  productid: Float!\n  name: String!\n  description: String!\n  category: String!\n  badWords: Boolean!\n  searchResult: Float!\n  format: String!\n}\n\ntype Query {\n  Product(productid: Float, name: String, description: String, category: String, limit: Int = 10, offset: Int = 0): [Product!]\n}\n"
+      "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\ntype Product {\n  productid: Float!\n  name: String!\n  description: String!\n  category: String!\n  badWords: Boolean!\n  searchResult: Float!\n  format: String!\n}\n\ntype Query {\n  Product(productid: Float, name: String, description: String, category: String, limit: Int = 10, offset: Int = 0): [Product!]\n}\n"
     }
   }
 }

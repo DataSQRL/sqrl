@@ -153,6 +153,7 @@ public class GraphQLEngineBuilder implements
         .scalar(CustomScalars.Double)
         .scalar(CustomScalars.DATETIME)
         .scalar(CustomScalars.DATE)
+        .scalar(CustomScalars.TIME)
         ;
 
     addlTypes.forEach(t->wiring.scalar(t));

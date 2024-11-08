@@ -7,10 +7,10 @@ query {
         nullableTimestampMicrosField
         dateField
         nullableDateField
-#        timeMillisField
-#        nullableTimeMillisField
-#        timeMicrosField
-#        nullableTimeMicrosField
+        timeMillisField
+        nullableTimeMillisField
+        timeMicrosField
+        nullableTimeMicrosField
         stringField
         nullableStringField
         intField

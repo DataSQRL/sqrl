@@ -81,40 +81,40 @@
       "default": null,
       "doc": "A nullable date field"
     },
-//    {
-//      "name": "timeMillisField",
-//      "type": {
-//        "type": "int",
-//        "logicalType": "time-millis"
-//      },
-//      "doc": "A time field with millisecond precision"
-//    },
-//    {
-//      "name": "nullableTimeMillisField",
-//      "type": ["null", {
-//        "type": "int",
-//        "logicalType": "time-millis"
-//      }],
-//      "default": null,
-//      "doc": "A nullable time field with millisecond precision"
-//    },
-//    {
-//      "name": "timeMicrosField",
-//      "type": {
-//        "type": "long",
-//        "logicalType": "time-micros"
-//      },
-//      "doc": "A time field with microsecond precision"
-//    },
-//    {
-//      "name": "nullableTimeMicrosField",
-//      "type": ["null", {
-//        "type": "long",
-//        "logicalType": "time-micros"
-//      }],
-//      "default": null,
-//      "doc": "A nullable time field with microsecond precision"
-//    },
+    {
+      "name": "timeMillisField",
+      "type": {
+        "type": "int",
+        "logicalType": "time-millis"
+      },
+      "doc": "A time field with millisecond precision"
+    },
+    {
+      "name": "nullableTimeMillisField",
+      "type": ["null", {
+        "type": "int",
+        "logicalType": "time-millis"
+      }],
+      "default": null,
+      "doc": "A nullable time field with millisecond precision"
+    },
+    {
+      "name": "timeMicrosField",
+      "type": {
+        "type": "long",
+        "logicalType": "time-micros"
+      },
+      "doc": "A time field with microsecond precision"
+    },
+    {
+      "name": "nullableTimeMicrosField",
+      "type": ["null", {
+        "type": "long",
+        "logicalType": "time-micros"
+      }],
+      "default": null,
+      "doc": "A nullable time field with microsecond precision"
+    },
 //    {
 //      "name": "complexArrayField",
 //      "type": {
