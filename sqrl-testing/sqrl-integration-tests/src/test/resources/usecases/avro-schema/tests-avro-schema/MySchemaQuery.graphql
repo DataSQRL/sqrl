@@ -11,6 +11,14 @@ query {
         nullableTimeMillisField
         timeMicrosField
         nullableTimeMicrosField
+        complexArrayField {
+            itemFieldOne
+            itemFieldTwo
+        }
+        nullableComplexArrayField {
+            nullableItemFieldOne
+            nullableItemFieldTwo
+        }
         stringField
         nullableStringField
         intField
@@ -27,14 +35,6 @@ query {
         nullableEnumField
 #        arrayField
 #        nullableArrayField
-#        complexArrayField {
-#            itemFieldOne
-#            itemFieldTwo
-#        }
-#        nullableComplexArrayField {
-#            nullableItemFieldOne
-#            nullableItemFieldTwo
-#        }
 #        nestedRecord {
 #            nestedStringField
 #            nestedIntField

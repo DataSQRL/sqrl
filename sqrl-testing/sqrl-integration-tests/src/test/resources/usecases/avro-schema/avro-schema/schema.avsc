@@ -115,51 +115,51 @@
       "default": null,
       "doc": "A nullable time field with microsecond precision"
     },
-//    {
-//      "name": "complexArrayField",
-//      "type": {
-//        "type": "array",
-//        "items": {
-//          "type": "record",
-//          "name": "ArrayItemRecord",
-//          "fields": [
-//            {
-//              "name": "itemFieldOne",
-//              "type": "int"
-//            },
-//            {
-//              "name": "itemFieldTwo",
-//              "type": "string"
-//            }
-//          ]
-//        }
-//      },
-//      "doc": "An array of complex nested records"
-//    },
-//    {
-//      "name": "nullableComplexArrayField",
-//      "type": ["null", {
-//        "type": "array",
-//        "items": {
-//          "type": "record",
-//          "name": "NullableArrayItemRecord",
-//          "fields": [
-//            {
-//              "name": "nullableItemFieldOne",
-//              "type": ["null", "double"],
-//              "default": null
-//            },
-//            {
-//              "name": "nullableItemFieldTwo",
-//              "type": ["null", "boolean"],
-//              "default": null
-//            }
-//          ]
-//        }
-//      }],
-//      "default": null,
-//      "doc": "A nullable array of complex nested records"
-//    },
+    {
+      "name": "complexArrayField",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "ArrayItemRecord",
+          "fields": [
+            {
+              "name": "itemFieldOne",
+              "type": "int"
+            },
+            {
+              "name": "itemFieldTwo",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "doc": "An array of complex nested records"
+    },
+    {
+      "name": "nullableComplexArrayField",
+      "type": ["null", {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "NullableArrayItemRecord",
+          "fields": [
+            {
+              "name": "nullableItemFieldOne",
+              "type": ["null", "double"],
+              "default": null
+            },
+            {
+              "name": "nullableItemFieldTwo",
+              "type": ["null", "boolean"],
+              "default": null
+            }
+          ]
+        }
+      }],
+      "default": null,
+      "doc": "A nullable array of complex nested records"
+    },
 //    {
 //      "name": "multiNestedRecord",
 //      "type": {
