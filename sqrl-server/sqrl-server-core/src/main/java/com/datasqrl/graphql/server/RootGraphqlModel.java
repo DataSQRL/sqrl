@@ -154,7 +154,8 @@ public class RootGraphqlModel {
 
   @JsonTypeInfo(
       use = JsonTypeInfo.Id.NAME,
-      property = "type"
+      property = "type",
+      defaultImpl = KafkaSubscriptionCoords.class
   )
   @JsonSubTypes({
       @Type(value = KafkaSubscriptionCoords.class, name = "kafka"),
