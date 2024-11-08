@@ -66,7 +66,7 @@ public class FlinkPostgresDataTypeMapper extends FlinkDataTypeMapper {
       case VARBINARY:
         return true;
       case ARRAY:
-        return nativeTypeSupport(type.getComponentType());
+        return false;
       case MAP:
         return false;
       case ROW:

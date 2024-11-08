@@ -292,23 +292,23 @@
       "default": null,
       "doc": "A nullable enum field"
     },
-//    {
-//      "name": "arrayField",
-//      "type": {
-//        "type": "array",
-//        "items": "string"
-//      },
-//      "doc": "An array of strings"
-//    },
-//    {
-//      "name": "nullableArrayField",
-//      "type": ["null", {
-//        "type": "array",
-//        "items": "int"
-//      }],
-//      "default": null,
-//      "doc": "A nullable array of integers"
-//    },
+    {
+      "name": "arrayField",
+      "type": {
+        "type": "array",
+        "items": "string"
+      },
+      "doc": "An array of strings"
+    },
+    {
+      "name": "nullableArrayField",
+      "type": ["null", {
+        "type": "array",
+        "items": "int"
+      }],
+      "default": null,
+      "doc": "A nullable array of integers"
+    },
     {
       "name": "nestedRecord",
       "type": {
@@ -322,15 +322,14 @@
           {
             "name": "nestedIntField",
             "type": "int"
+          },
+          {
+            "name": "nestedArrayField",
+            "type": {
+              "type": "array",
+              "items": "float"
+            }
           }
-//        ,
-//          {
-//            "name": "nestedArrayField",
-//            "type": {
-//              "type": "array",
-//              "items": "float"
-//            }
-//          }
         ]
       },
       "doc": "A nested record"

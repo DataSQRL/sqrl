@@ -74,7 +74,7 @@ public class FlinkSqrlPostgresDataTypeMapper extends FlinkDataTypeMapper {
         }
         return false;
       case ARRAY:
-        return nativeTypeSupport(type.getComponentType());
+        return false;
       case MAP:
         return false;
       case ROW:
@@ -85,8 +85,7 @@ public class FlinkSqrlPostgresDataTypeMapper extends FlinkDataTypeMapper {
   @Override
   public Optional<CastFunction> convertType(RelDataType type) {
 
-    if (type.getSqlTypeName() == SqlTypeName.ROW ||
-        (type.getSqlTypeName() == SqlTypeName.ARRAY && type.getComponentType().getSqlTypeName() == SqlTypeName.ROW)) {
+    if (type.getSqlTypeName() == SqlTypeName.ROW || type.getSqlTypeName() == SqlTypeName.ARRAY) {
       return Optional.of(new CastFunction(ToJson.class.getName(), convert(new ToJson())));
     }
 //
