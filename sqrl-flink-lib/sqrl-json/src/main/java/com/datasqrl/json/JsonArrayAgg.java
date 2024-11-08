@@ -9,14 +9,14 @@ import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.Arra
 import org.apache.flink.table.annotation.DataTypeHint;
 import org.apache.flink.table.annotation.FunctionHint;
 import org.apache.flink.table.functions.AggregateFunction;
+import org.apache.flink.util.jackson.JacksonMapperFactory;
 
 /**
  * Aggregation function that aggregates JSON objects into a JSON array.
  */
 public class JsonArrayAgg extends AggregateFunction<FlinkJsonType, ArrayAgg> {
 
-  private final ObjectMapper mapper = new ObjectMapper();
-
+  private static final ObjectMapper mapper = JacksonMapperFactory.createObjectMapper();
 
   @Override
   public ArrayAgg createAccumulator() {

@@ -11,14 +11,6 @@ query {
         nullableTimeMillisField
         timeMicrosField
         nullableTimeMicrosField
-        complexArrayField {
-            itemFieldOne
-            itemFieldTwo
-        }
-        nullableComplexArrayField {
-            nullableItemFieldOne
-            nullableItemFieldTwo
-        }
         stringField
         nullableStringField
         intField
@@ -33,25 +25,36 @@ query {
         nullableBooleanField
         enumField
         nullableEnumField
-#        arrayField
-#        nullableArrayField
-#        nestedRecord {
-#            nestedStringField
-#            nestedIntField
-#            nestedArrayField
-#        }
-#        nullableNestedRecord {
-#            nullableNestedStringField
-#            nullableNestedLongField
-#        }
-#        multiNestedRecord {
-#            nestedLevelOne {
-#                levelOneField
-#                nestedLevelTwo {
-#                    levelTwoField
-#                }
-#            }
-#        }
         decimalField
+        complexArrayField {
+            itemFieldOne
+            itemFieldTwo
+        }
+        multiNestedRecord {
+            nestedLevelOne {
+                levelOneField
+                nestedLevelTwo {
+                    levelTwoField
+                }
+            }
+        }
+        nullableComplexArrayField {
+            nullableItemFieldOne
+            nullableItemFieldTwo
+        }
+        nestedRecord {
+            nestedStringField
+            nestedIntField
+#            nestedArrayField
+        }
+        nullableNestedRecord {
+            nullableNestedStringField
+            nullableNestedLongField
+        }
     }
+
+
+    #        arrayField
+    #        nullableArrayField
+
 }
