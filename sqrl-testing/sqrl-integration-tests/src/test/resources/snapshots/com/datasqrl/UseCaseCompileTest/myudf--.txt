@@ -15,6 +15,7 @@ LogicalProject(val=[$0], myFnc=[MyScalarFunction(CAST($0):BIGINT, CAST($0):BIGIN
 >>>flink.json
 {
   "flinkSql" : [
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `MyAsyncScalarFunction` AS 'com.myudf.MyAsyncScalarFunction' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `MyScalarFunction` AS 'com.myudf.MyScalarFunction' LANGUAGE JAVA;",
     "CREATE TEMPORARY TABLE `mytable_1` (\n  `val` INTEGER NOT NULL,\n  `myFnc` BIGINT,\n  PRIMARY KEY (`val`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'mytable_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE VIEW `table$1`\nAS\nSELECT `val`, `default_catalog`.`default_database`.`MyScalarFunction`(CAST(`val` AS BIGINT), CAST(`val` AS BIGINT)) AS `myFnc`\nFROM (VALUES (1),\n    (2),\n    (3),\n    (4),\n    (5),\n    (6),\n    (7),\n    (8),\n    (9),\n    (10)) AS `t` (`val`);",
