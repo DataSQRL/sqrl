@@ -119,7 +119,7 @@ LogicalProject(val=[$0], myFnc=[MyScalarFunction(CAST($0):BIGINT, CAST($0):BIGIN
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\ntype MyTable {\n  val: Int!\n  myFnc: Float\n}\n\ntype Query {\n  MyTable(val: Int, limit: Int = 10, offset: Int = 0): [MyTable!]\n}\n"
+      "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\ntype MyTable {\n  val: Int!\n  myFnc: Float\n}\n\ntype Query {\n  MyTable(val: Int, limit: Int = 10, offset: Int = 0): [MyTable!]\n}\n"
     }
   }
 }

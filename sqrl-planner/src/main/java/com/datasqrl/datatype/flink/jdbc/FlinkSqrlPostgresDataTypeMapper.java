@@ -85,7 +85,8 @@ public class FlinkSqrlPostgresDataTypeMapper extends FlinkDataTypeMapper {
   @Override
   public Optional<CastFunction> convertType(RelDataType type) {
 
-    if (type.getSqlTypeName() == SqlTypeName.ROW || type.getSqlTypeName() == SqlTypeName.ARRAY) {
+    if (type.getSqlTypeName() == SqlTypeName.MAP ||
+        type.getSqlTypeName() == SqlTypeName.ROW || type.getSqlTypeName() == SqlTypeName.ARRAY) {
       return Optional.of(new CastFunction(ToJson.class.getName(), convert(new ToJson())));
     }
 //

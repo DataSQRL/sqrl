@@ -328,7 +328,6 @@ public class GraphQLServer extends AbstractVerticle {
       VertxJdbcClient vertxJdbcClient = new VertxJdbcClient(client);
       GraphQL.Builder graphQL = model.accept(
           new GraphQLEngineBuilder.Builder()
-              .withAdditionalTypes(List.of(SqrlVertxScalars.JSON))
               .withMutationConfiguration(
                   new MutationConfigurationImpl(model, vertx, config))
               .withSubscriptionConfiguration(

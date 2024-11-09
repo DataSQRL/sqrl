@@ -9,10 +9,8 @@ import static com.datasqrl.canonicalizer.Name.isSystemHidden;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.graphql.server.CustomScalars;
-import com.datasqrl.graphql.type.SqrlVertxScalars;
-import com.datasqrl.json.GraphqlGeneratorMapping;
+import com.datasqrl.json.FlinkJsonType;
 import com.datasqrl.schema.Multiplicity;
-import com.datasqrl.util.ServiceLoaderDiscovery;
 import graphql.Scalars;
 import graphql.language.FieldDefinition;
 import graphql.schema.GraphQLFieldDefinition;
@@ -23,15 +21,12 @@ import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLNonNull;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
-import graphql.schema.GraphQLScalarType;
 import graphql.schema.GraphQLType;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
@@ -39,22 +34,6 @@ import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 @Slf4j
 public class GraphqlSchemaUtil {
-  public static final Map<Class, GraphqlGeneratorMapping> addlScalars = ServiceLoaderDiscovery
-      .getAll(GraphqlGeneratorMapping.class)
-      .stream()
-      .collect(Collectors.toMap(GraphqlGeneratorMapping::getConversionClass, t->t));
-  public static final Map<String, GraphQLScalarType> allScalars = createScalarMap();
-
-  private static Map<String, GraphQLScalarType> createScalarMap() {
-    return Stream.of(
-        Scalars.GraphQLBoolean,
-        Scalars.GraphQLFloat,
-        Scalars.GraphQLInt,
-        Scalars.GraphQLString,
-        Scalars.GraphQLID,
-        SqrlVertxScalars.JSON
-    ).collect(Collectors.toMap(GraphQLScalarType::getName, t->t));
-  }
 
   public static GraphQLOutputType wrap(GraphQLOutputType gqlType, RelDataType type) {
     if (!type.isNullable()) {
@@ -106,14 +85,8 @@ public class GraphqlSchemaUtil {
         if (type instanceof RawRelDataType) {
           RawRelDataType rawRelDataType = (RawRelDataType) type;
           Class<?> originatingClass = rawRelDataType.getRawType().getOriginatingClass();
-          if (addlScalars.containsKey(originatingClass)) {
-            String scalarName = addlScalars.get(originatingClass).getScalarName();
-            GraphQLScalarType graphQLScalarType = allScalars.get(scalarName);
-            if (graphQLScalarType == null) {
-              log.warn("Graphql type not supported: {}", scalarName);
-              return Optional.empty();
-            }
-            return Optional.of(graphQLScalarType);
+          if (originatingClass.isAssignableFrom(FlinkJsonType.class)) {
+            return Optional.of(CustomScalars.JSON);
           }
         }
 
@@ -171,14 +144,14 @@ public class GraphqlSchemaUtil {
                   .build()));
         }
         return Optional.of(builder.build());
-
+      case MAP:
+        return Optional.of(CustomScalars.JSON);
       case BINARY:
       case VARBINARY:
       case NULL:
       case ANY:
       case SYMBOL:
       case DISTINCT:
-      case MAP:
       case CURSOR:
       case COLUMN_LIST:
       case DYNAMIC_STAR:
@@ -259,13 +232,7 @@ public class GraphqlSchemaUtil {
       case ROW:
         return createGraphQLInputObjectType(type, namePath, seen);
       case MAP:
-        // Maps can be represented as a list of key-value pairs if GraphQL does not natively support maps
-        RelDataType keyType = type.getKeyType();
-        RelDataType valueType = type.getValueType();
-        if (keyType != null && valueType != null) {
-          return createGraphQLInputMapType(keyType, valueType, namePath, seen);
-        }
-        return Optional.empty();
+        return Optional.of(CustomScalars.JSON);
       default:
         return Optional.empty(); // Unsupported types are omitted
     }

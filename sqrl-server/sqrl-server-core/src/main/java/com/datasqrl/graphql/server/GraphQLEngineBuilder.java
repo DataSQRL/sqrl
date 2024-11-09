@@ -154,6 +154,7 @@ public class GraphQLEngineBuilder implements
         .scalar(CustomScalars.DATETIME)
         .scalar(CustomScalars.DATE)
         .scalar(CustomScalars.TIME)
+        .scalar(CustomScalars.JSON)
         ;
 
     addlTypes.forEach(t->wiring.scalar(t));

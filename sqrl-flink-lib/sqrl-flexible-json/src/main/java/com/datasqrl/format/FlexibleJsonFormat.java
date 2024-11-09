@@ -119,6 +119,7 @@ public class FlexibleJsonFormat implements DeserializationFormatFactory,
         case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
         case INTERVAL_YEAR_MONTH:
         case INTERVAL_DAY_TIME:
+        case MAP:
           builder.setTypes(List.of(new FieldType(Name.system(field.getName()),
               getType(field.getType(), this::createFlexibleTableSchema), 0,
               field.getType().isNullable() ? List.of() : List.of(NotNull.INSTANCE))));
@@ -135,8 +136,6 @@ public class FlexibleJsonFormat implements DeserializationFormatFactory,
 
           break;
         case MULTISET:
-          break;
-        case MAP:
           break;
         case ROW:
           builder.setTypes(List.of(new FieldType(Name.system(field.getName()),
@@ -168,6 +167,7 @@ public class FlexibleJsonFormat implements DeserializationFormatFactory,
     switch (type.getTypeRoot()) {
       case DATE: //do not alter fields during schema adjustment
       case TIME_WITHOUT_TIME_ZONE:
+      case MAP:
         return ObjectType.INSTANCE;
       case CHAR:
       case VARCHAR:
@@ -197,7 +197,6 @@ public class FlexibleJsonFormat implements DeserializationFormatFactory,
         return rowCallback.apply((RowType)type);
       case ARRAY:
       case MULTISET:
-      case MAP:
       case DISTINCT_TYPE:
       case STRUCTURED_TYPE:
       case NULL:
