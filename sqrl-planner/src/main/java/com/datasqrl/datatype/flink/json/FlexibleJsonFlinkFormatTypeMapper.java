@@ -91,7 +91,7 @@ public class FlexibleJsonFlinkFormatTypeMapper extends FlinkDataTypeMapper {
 
     // Cast needed, convert to bytes
     return Optional.of(
-        new CastFunction(SerializeToBytes.class.getSimpleName(),
+        new CastFunction(SerializeToBytes.class.getName(),
             convert(new SerializeToBytes())));
   }
 
