@@ -171,14 +171,30 @@ public class GraphqlSchemaUtil {
                   .build()));
         }
         return Optional.of(builder.build());
-
+      case MAP:
+        RelDataType keyType = type.getKeyType();
+        RelDataType valueType = type.getValueType();
+        if (keyType != null && valueType != null) {
+          GraphQLObjectType mapEntryType = GraphQLObjectType.newObject()
+              .name("MapEntry" + generateUniqueNameForType(namePath, seen, ""))
+              .field(GraphQLFieldDefinition.newFieldDefinition()
+                  .name("key")
+                  .type(wrap(getOutputType(keyType, namePath, seen).orElse(Scalars.GraphQLString), keyType))
+                  .build())
+              .field(GraphQLFieldDefinition.newFieldDefinition()
+                  .name("value")
+                  .type(wrap(getOutputType(valueType, namePath, seen).orElse(Scalars.GraphQLString), valueType))
+                  .build())
+              .build();
+          return Optional.of(GraphQLList.list(mapEntryType));
+        }
+        return Optional.empty();
       case BINARY:
       case VARBINARY:
       case NULL:
       case ANY:
       case SYMBOL:
       case DISTINCT:
-      case MAP:
       case CURSOR:
       case COLUMN_LIST:
       case DYNAMIC_STAR:

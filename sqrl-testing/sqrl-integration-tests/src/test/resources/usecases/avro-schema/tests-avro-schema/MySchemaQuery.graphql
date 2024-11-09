@@ -53,6 +53,8 @@ query {
             nullableNestedStringField
             nullableNestedLongField
         }
+        mapField
+        nullableMapField
     }
 
 }

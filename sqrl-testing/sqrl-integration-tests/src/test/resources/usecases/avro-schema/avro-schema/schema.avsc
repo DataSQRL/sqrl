@@ -364,6 +364,23 @@
         "scale": 2
       },
       "doc": "A decimal field with specified precision and scale"
+    },
+    {
+      "name": "mapField",
+      "type": {
+        "type": "map",
+        "values": "string"
+      },
+      "doc": "A map with string values"
+    },
+    {
+      "name": "nullableMapField",
+      "type": ["null", {
+        "type": "map",
+        "values": "string"
+      }],
+      "default": null,
+      "doc": "A nullable map with string values"
     }
   ]
 }

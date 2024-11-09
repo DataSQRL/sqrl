@@ -116,10 +116,10 @@ public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
           break;
         // May need to create user-defined types in PostgreSQL or use JSON/JSONB types
         case ROW:
+        case MAP:
           castSpec = "jsonb";
           break;
         case SYMBOL:
-        case MAP:
         default:
           return (SqlDataTypeSpec) super.getCastSpec(type);
       }
