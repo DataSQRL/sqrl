@@ -88,12 +88,4 @@ public class SnowflakeIcebergDataTypeMapper implements DataTypeMapper {
 
     return Optional.empty(); //Could not create type
   }
-
-  //This is hacky but we will need type inference support
-  public static class PARSE_JSON extends ScalarFunction {
-    //No-op function for type inferencing
-    String eval(FlinkJsonType json) {
-      return null;
-    }
-  }
 }

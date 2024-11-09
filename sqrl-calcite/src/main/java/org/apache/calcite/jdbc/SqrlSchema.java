@@ -61,6 +61,8 @@ public class SqrlSchema extends SimpleCalciteSchema {
   private final AtomicInteger uniqueMacroInt = new AtomicInteger(0);
   private final Map<Name, AtomicInteger> tableNameToIdMap = new LinkedHashMap<>();
 
+  private final Map<String, String> fncAlias = new HashMap<>();
+
   //API
 
   private final Map<APIMutation, Object> mutations = new LinkedHashMap<>();
@@ -170,9 +172,7 @@ public class SqrlSchema extends SimpleCalciteSchema {
     return this.functionMap;
   }
 
-  @Getter
-  Map<String, String> fncAlias = new HashMap<>();
   public void addFunctionAlias(String name, String function) {
-    fncAlias.put(name, function);
+    fncAlias.put(name.toLowerCase(), function);
   }
 }

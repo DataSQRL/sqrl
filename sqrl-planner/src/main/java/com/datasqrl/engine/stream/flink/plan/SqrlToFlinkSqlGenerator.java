@@ -188,11 +188,6 @@ public class SqrlToFlinkSqlGenerator {
   }
 
   private Class<?> extractFunctionClass(UserDefinedFunction o) {
-//    if (o instanceof BridgingSqlFunction) {
-//      return ((BridgingSqlFunction) o).getResolvedFunction().getDefinition().getClass();
-//    } else if (o instanceof BridgingSqlAggFunction) {
-//      return ((BridgingSqlAggFunction) o).getResolvedFunction().getDefinition().getClass();
-//    }
     return o.getClass();
   }
 

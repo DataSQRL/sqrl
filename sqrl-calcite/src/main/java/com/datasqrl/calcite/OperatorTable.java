@@ -34,10 +34,10 @@ public class OperatorTable implements SqlOperatorTable {
 
   @Override
   public void lookupOperatorOverloads(SqlIdentifier sqlIdentifier, SqlFunctionCategory sqlFunctionCategory, SqlSyntax sqlSyntax, List<SqlOperator> list, SqlNameMatcher sqlNameMatcher) {
-    //todo: convert to flink fncs and skip this
+    //Support aliasing instead of converting functions
     if (sqlIdentifier.names.size() == 1 &&
-        schema.getFncAlias().containsKey(sqlIdentifier.names.get(0))) {
-      sqlIdentifier = new SqlIdentifier(schema.getFncAlias().get(sqlIdentifier.names.get(0)),
+        schema.getFncAlias().containsKey(sqlIdentifier.names.get(0).toLowerCase())) {
+      sqlIdentifier = new SqlIdentifier(schema.getFncAlias().get(sqlIdentifier.names.get(0).toLowerCase()),
           sqlIdentifier.getParserPosition());
     }
 
