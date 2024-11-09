@@ -10,7 +10,7 @@ Schema:
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
- - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - _ingest_time: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
 Plan:
 LogicalTableScan(table=[[customer_1]])
 
@@ -26,9 +26,9 @@ Schema:
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
- - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - _ingest_time: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
 Post Processors:
- - topN: partition=customerid limit=1 sort=#4: _ingest_time TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC 
+ - topN: partition=customerid limit=1 sort=#4: _ingest_time TIMESTAMP_LTZ(3) *PROCTIME* DESC 
 Plan:
 LogicalTableScan(table=[[customer_2]])
 
@@ -45,7 +45,7 @@ Schema:
  - _customerid: BIGINT NOT NULL
  - _time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - _productid: BIGINT NOT NULL
- - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - _ingest_time: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
 Plan:
 LogicalProject(price=[-(*($6, $7), $8)], _id=[$0], _customerid=[$1], _time=[$2], _productid=[$5], _ingest_time=[$4])
   LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{3}])
@@ -63,7 +63,7 @@ Schema:
  - id: BIGINT NOT NULL
  - _customerid: BIGINT NOT NULL
  - _time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
- - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - _ingest_time: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
 Plan:
 LogicalProject(id=[$0], _customerid=[$1], _time=[$2], _ingest_time=[$4])
   LogicalJoin(condition=[AND(=($5, $0), =($7, $2), =($6, $1), =($9, $4))], joinType=[inner]) hints[IntervalJoin]
@@ -81,7 +81,7 @@ Schema:
  - customerid: BIGINT NOT NULL
  - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - entries: RecordType(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
- - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - _ingest_time: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
 Plan:
 LogicalTableScan(table=[[orders_1]])
 
@@ -97,7 +97,7 @@ Schema:
  - day: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - total_price: DOUBLE
  - total_num: BIGINT NOT NULL
- - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - __timestamp: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
 Plan:
 LogicalProject(__pk1_customerid=[$0], day=[$1], total_price=[$2], total_num=[$3], __timestamp=[$4])
   LogicalAggregate(group=[{0, 1}], total_price=[SUM($2)], total_num=[SUM($3)], __timestamp=[MAX($7)])
@@ -121,7 +121,7 @@ Schema:
  - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - price: DOUBLE
  - num: BIGINT NOT NULL
- - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - _ingest_time: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
 Plan:
 LogicalProject(id=[$0], customerid=[$1], time=[$2], price=[$8], num=[$9], _ingest_time=[$4])
   LogicalJoin(condition=[AND(=($0, $5), =($1, $6), =($2, $7), =($11, $4))], joinType=[inner]) hints[IntervalJoin]
@@ -142,7 +142,7 @@ Schema:
  - price: DOUBLE
  - num: BIGINT NOT NULL
  - discount: DOUBLE
- - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - _ingest_time: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
 Plan:
 LogicalProject(__pk1_id=[$0], __pk2_customerid=[$1], __pk3_time=[$2], price=[$4], num=[$5], discount=[$6], _ingest_time=[$3])
   LogicalAggregate(group=[{0, 1, 2, 6}], price=[SUM($3)], num=[COUNT()], discount=[SUM($4)]) hints[TumbleAggregationHint options:[6, INSTANT, 6, 1, 0]]
@@ -154,21 +154,21 @@ LogicalProject(__pk1_id=[$0], __pk2_customerid=[$1], __pk3_time=[$2], price=[$4]
 >>>flink.json
 {
   "flinkSql" : [
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptostring` AS 'com.datasqrl.time.TimestampToString' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofmonth` AS 'com.datasqrl.time.EndOfMonth' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptoepochmilli` AS 'com.datasqrl.time.TimestampToEpochMilli' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofweek` AS 'com.datasqrl.time.EndOfWeek' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `parsetimestamp` AS 'com.datasqrl.time.ParseTimestamp' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochmillitotimestamp` AS 'com.datasqrl.time.EpochMilliToTimestamp' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestampToString` AS 'com.datasqrl.time.TimestampToString' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestampToEpochMilli` AS 'com.datasqrl.time.TimestampToEpochMilli' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endOfWeek` AS 'com.datasqrl.time.EndOfWeek' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endOfHour` AS 'com.datasqrl.time.EndOfHour' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endOfYear` AS 'com.datasqrl.time.EndOfYear' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `atZone` AS 'com.datasqrl.time.AtZone' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endOfMonth` AS 'com.datasqrl.time.EndOfMonth' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestampToEpoch` AS 'com.datasqrl.time.TimestampToEpoch' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochMilliToTimestamp` AS 'com.datasqrl.time.EpochMilliToTimestamp' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `ToJson` AS 'com.datasqrl.json.ToJson' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofminute` AS 'com.datasqrl.time.EndOfMinute' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptoepoch` AS 'com.datasqrl.time.TimestampToEpoch' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofsecond` AS 'com.datasqrl.time.EndOfSecond' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochtotimestamp` AS 'com.datasqrl.time.EpochToTimestamp' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `atzone` AS 'com.datasqrl.time.AtZone' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofday` AS 'com.datasqrl.time.EndOfDay' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofhour` AS 'com.datasqrl.time.EndOfHour' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofyear` AS 'com.datasqrl.time.EndOfYear' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochToTimestamp` AS 'com.datasqrl.time.EpochToTimestamp' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `parseTimestamp` AS 'com.datasqrl.time.ParseTimestamp' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endOfDay` AS 'com.datasqrl.time.EndOfDay' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endOfMinute` AS 'com.datasqrl.time.EndOfMinute' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endOfSecond` AS 'com.datasqrl.time.EndOfSecond' LANGUAGE JAVA;",
     "CREATE TEMPORARY TABLE `customer_1` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `_ingest_time` AS PROCTIME(),\n  PRIMARY KEY (`customerid`, `email`, `name`, `lastUpdated`) NOT ENFORCED\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
     "CREATE TEMPORARY TABLE `orders_1` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,\n  `_ingest_time` AS PROCTIME(),\n  PRIMARY KEY (`id`, `customerid`, `time`) NOT ENFORCED\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
     "CREATE TEMPORARY TABLE `customer_3` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`customerid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'customer_3',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
@@ -181,10 +181,10 @@ LogicalProject(__pk1_id=[$0], __pk2_customerid=[$1], __pk3_time=[$2], price=[$4]
     "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `customer_1`;",
     "CREATE VIEW `table$2`\nAS\nSELECT `t00`.`quantity` * `t00`.`unit_price` - `t00`.`discount` AS `price`, `$cor0`.`id` AS `_id`, `$cor0`.`customerid` AS `_customerid`, `$cor0`.`time` AS `_time`, `t00`.`productid` AS `_productid`, `$cor0`.`_ingest_time`\nFROM `orders_1` AS `$cor0`,\n UNNEST(`$cor0`.`entries`) AS `t00` (`productid`, `quantity`, `unit_price`, `discount`);",
     "CREATE VIEW `table$3`\nAS\nSELECT `orders_1`.`id`, `orders_1`.`customerid` AS `_customerid`, `orders_1`.`time` AS `_time`, `orders_1`.`_ingest_time`\nFROM `orders_1`\n INNER JOIN `orders_1` AS `orders_10` ON `orders_1`.`id` = `orders_10`.`id` AND `orders_1`.`time` = `orders_10`.`time` AND `orders_1`.`customerid` = `orders_10`.`customerid` AND `orders_1`.`_ingest_time` = `orders_10`.`_ingest_time`;",
-    "CREATE VIEW `table$4`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`, `_ingest_time`\nFROM `orders_1`;",
+    "CREATE VIEW `table$4`\nAS\nSELECT `id`, `customerid`, `time`, `default_catalog`.`default_database`.`ToJson`(`entries`) AS `entries`, `_ingest_time`\nFROM `orders_1`;",
     "CREATE VIEW `table$5`\nAS\nSELECT *\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `_ingest_time`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `_ingest_time` DESC) AS `_rownum`\n  FROM `customer_1`) AS `t`\nWHERE `_rownum` = 1;",
     "CREATE VIEW `table$6`\nAS\nSELECT `$cor1`.`id` AS `__pk1_id`, `$cor1`.`customerid` AS `__pk2_customerid`, `$cor1`.`time` AS `__pk3_time`, `t20`.`quantity` * `t20`.`unit_price` - `t20`.`discount` AS `$f3`, `t20`.`discount`, `t20`.`productid`, `$cor1`.`_ingest_time`\nFROM `orders_1` AS `$cor1`,\n UNNEST(`$cor1`.`entries`) AS `t20` (`productid`, `quantity`, `unit_price`, `discount`);",
-    "CREATE VIEW `table$7`\nAS\nSELECT `t0`.`customerid` AS `__pk1_customerid`, ENDOFDAY(`$cor5`.`time`) AS `day`, SUM(`$cor5`.`price`) AS `total_price`, SUM(`$cor5`.`num`) AS `total_num`, MAX(`$cor5`.`_ingest_time`) AS `__timestamp`\nFROM (SELECT `orders_1`.`id`, `orders_1`.`customerid`, `orders_1`.`time`, `t7`.`price`, `t7`.`num`, `orders_1`.`_ingest_time`\n  FROM `orders_1`\n   INNER JOIN (SELECT `__pk1_id`, `__pk2_customerid`, `__pk3_time`, SUM(`$f3`) AS `price`, COUNT(*) AS `num`, SUM(`discount`) AS `discount`, `window_time` AS `_ingest_time`\n    FROM TABLE(TUMBLE(TABLE `table$6`, DESCRIPTOR(`_ingest_time`), INTERVAL '0.001' SECOND(1))) AS `t4`\n    GROUP BY `__pk1_id`, `__pk2_customerid`, `__pk3_time`, `window_start`, `window_end`, `window_time`) AS `t7` ON `orders_1`.`id` = `t7`.`__pk1_id` AND `orders_1`.`customerid` = `t7`.`__pk2_customerid` AND `orders_1`.`time` = `t7`.`__pk3_time` AND `orders_1`.`_ingest_time` = `t7`.`_ingest_time`) AS `$cor5`\n INNER JOIN `table$5` FOR SYSTEM_TIME AS OF `$cor5`.`_ingest_time` AS `t0` ON `$cor5`.`customerid` = `t0`.`customerid`\nGROUP BY `t0`.`customerid`, ENDOFDAY(`$cor5`.`time`);",
+    "CREATE VIEW `table$7`\nAS\nSELECT `t0`.`customerid` AS `__pk1_customerid`, `default_catalog`.`default_database`.`endOfDay`(`$cor5`.`time`) AS `day`, SUM(`$cor5`.`price`) AS `total_price`, SUM(`$cor5`.`num`) AS `total_num`, MAX(`$cor5`.`_ingest_time`) AS `__timestamp`\nFROM (SELECT `orders_1`.`id`, `orders_1`.`customerid`, `orders_1`.`time`, `t7`.`price`, `t7`.`num`, `orders_1`.`_ingest_time`\n  FROM `orders_1`\n   INNER JOIN (SELECT `__pk1_id`, `__pk2_customerid`, `__pk3_time`, SUM(`$f3`) AS `price`, COUNT(*) AS `num`, SUM(`discount`) AS `discount`, `window_time` AS `_ingest_time`\n    FROM TABLE(TUMBLE(TABLE `table$6`, DESCRIPTOR(`_ingest_time`), INTERVAL '0.001' SECOND(1))) AS `t4`\n    GROUP BY `__pk1_id`, `__pk2_customerid`, `__pk3_time`, `window_start`, `window_end`, `window_time`) AS `t7` ON `orders_1`.`id` = `t7`.`__pk1_id` AND `orders_1`.`customerid` = `t7`.`__pk2_customerid` AND `orders_1`.`time` = `t7`.`__pk3_time` AND `orders_1`.`_ingest_time` = `t7`.`_ingest_time`) AS `$cor5`\n INNER JOIN `table$5` FOR SYSTEM_TIME AS OF `$cor5`.`_ingest_time` AS `t0` ON `$cor5`.`customerid` = `t0`.`customerid`\nGROUP BY `t0`.`customerid`, `default_catalog`.`default_database`.`endOfDay`(`$cor5`.`time`);",
     "CREATE VIEW `table$8`\nAS\nSELECT `$cor1`.`id` AS `__pk1_id`, `$cor1`.`customerid` AS `__pk2_customerid`, `$cor1`.`time` AS `__pk3_time`, `t00`.`quantity` * `t00`.`unit_price` - `t00`.`discount` AS `$f3`, `t00`.`discount`, `t00`.`productid`, `$cor1`.`_ingest_time`\nFROM `orders_1` AS `$cor1`,\n UNNEST(`$cor1`.`entries`) AS `t00` (`productid`, `quantity`, `unit_price`, `discount`);",
     "CREATE VIEW `table$9`\nAS\nSELECT `orders_1`.`id`, `orders_1`.`customerid`, `orders_1`.`time`, `t5`.`price`, `t5`.`num`, `orders_1`.`_ingest_time`\nFROM `orders_1`\n INNER JOIN (SELECT `__pk1_id`, `__pk2_customerid`, `__pk3_time`, SUM(`$f3`) AS `price`, COUNT(*) AS `num`, SUM(`discount`) AS `discount`, `window_time` AS `_ingest_time`\n  FROM TABLE(TUMBLE(TABLE `table$8`, DESCRIPTOR(`_ingest_time`), INTERVAL '0.001' SECOND(1))) AS `t2`\n  GROUP BY `__pk1_id`, `__pk2_customerid`, `__pk3_time`, `window_start`, `window_end`, `window_time`) AS `t5` ON `orders_1`.`id` = `t5`.`__pk1_id` AND `orders_1`.`customerid` = `t5`.`__pk2_customerid` AND `orders_1`.`time` = `t5`.`__pk3_time` AND `orders_1`.`_ingest_time` = `t5`.`_ingest_time`;",
     "CREATE VIEW `table$10`\nAS\nSELECT `$cor1`.`id` AS `__pk1_id`, `$cor1`.`customerid` AS `__pk2_customerid`, `$cor1`.`time` AS `__pk3_time`, `t00`.`quantity` * `t00`.`unit_price` - `t00`.`discount` AS `$f3`, `t00`.`discount`, `t00`.`productid`, `$cor1`.`_ingest_time`\nFROM `orders_1` AS `$cor1`,\n UNNEST(`$cor1`.`entries`) AS `t00` (`productid`, `quantity`, `unit_price`, `discount`);",
