@@ -44,4 +44,5 @@ public class CustomScalars {
   public static final GraphQLScalarType DATETIME = DateTimeScalar.INSTANCE;
   public static final GraphQLScalarType DATE =  ExtendedScalars.Date;
   public static final GraphQLScalarType TIME =  ExtendedScalars.LocalTime;
+  public static final GraphQLScalarType JSON =  ExtendedScalars.Json;
 }
