@@ -24,6 +24,8 @@ query {
         booleanField
         nullableBooleanField
         enumField
+        arrayField
+        nullableArrayField
         nullableEnumField
         decimalField
         complexArrayField {
@@ -45,16 +47,12 @@ query {
         nestedRecord {
             nestedStringField
             nestedIntField
-#            nestedArrayField
+            nestedArrayField
         }
         nullableNestedRecord {
             nullableNestedStringField
             nullableNestedLongField
         }
     }
-
-
-    #        arrayField
-    #        nullableArrayField
 
 }

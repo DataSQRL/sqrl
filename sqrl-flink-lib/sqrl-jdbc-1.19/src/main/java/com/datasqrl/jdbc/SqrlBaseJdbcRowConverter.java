@@ -50,10 +50,6 @@ public abstract class SqrlBaseJdbcRowConverter extends AbstractJdbcRowConverter 
           jdbcSerializationConverter.serialize(val, index, statement);
         }
       };
-    } else if (type.getTypeRoot() == ROW) {
-      return (val, index, statement) -> setRow(type, val, index, statement);
-    } else if (type.getTypeRoot() == MAP) {
-      return (val, index, statement) -> setRow(type, val, index, statement);
     }
     return super.wrapIntoNullableExternalConverter(jdbcSerializationConverter, type);
   }
@@ -87,27 +83,10 @@ public abstract class SqrlBaseJdbcRowConverter extends AbstractJdbcRowConverter 
         return (val, index, statement) ->
             statement.setTimestamp(
                 index, val.getTimestamp(index, tsPrecision).toTimestamp());
-      case ARRAY:
-        return (val, index, statement) -> setArray(type, val, index, statement);
-      case ROW:
-        return (val, index, statement) -> setRow(type, val, index, statement);
-      case MAP:
-        return (val, index, statement) -> setRow(type, val, index, statement);
       case MULTISET:
       case RAW:
       default:
         return super.createExternalConverter(type);
-    }
-  }
-
-  public abstract void setRow(LogicalType type, RowData val, int index,
-      FieldNamedPreparedStatement statement);
-  @SneakyThrows
-  public void setArray(LogicalType type, RowData val, int index, FieldNamedPreparedStatement statement) {
-    SqrlFieldNamedPreparedStatementImpl flinkPreparedStatement = (SqrlFieldNamedPreparedStatementImpl) statement;
-    for (int idx : flinkPreparedStatement.getIndexMapping()[index]) {
-      ArrayData arrayData = val.getArray(index);
-      createSqlArrayObject(type, arrayData, idx, flinkPreparedStatement.getStatement());
     }
   }
 

@@ -99,7 +99,7 @@ public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
           castSpec = "TIMESTAMP WITH TIME ZONE";
           break;
         case ARRAY:
-          castSpec = getCastSpec(type.getComponentType()) + "[]";
+          castSpec = "jsonb";
           break;
         case BINARY:
         case VARBINARY:
