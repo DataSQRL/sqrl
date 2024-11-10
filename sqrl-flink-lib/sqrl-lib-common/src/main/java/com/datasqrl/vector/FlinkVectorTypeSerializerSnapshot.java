@@ -1,6 +1,5 @@
 package com.datasqrl.vector;
 
-import com.datasqrl.json.FlinkJsonType;
 import java.io.IOException;
 import org.apache.flink.api.common.typeutils.TypeSerializer;
 import org.apache.flink.api.common.typeutils.TypeSerializerSchemaCompatibility;
