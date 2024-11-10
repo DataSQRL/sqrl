@@ -3,7 +3,6 @@ package com.datasqrl.engine.stream.flink.sql.calcite;
 import org.apache.calcite.avatica.util.Casing;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.sql.SqlDialect;
-import org.apache.calcite.sql.validate.SqlConformance;
 import org.apache.flink.sql.parser.validate.FlinkSqlConformance;
 
 public class FlinkDialect extends SqlDialect {

@@ -18,6 +18,7 @@ import org.apache.calcite.rel.logical.LogicalAggregate;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
+import org.apache.calcite.sql.SqlDialect;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.tools.Programs;
 
@@ -31,7 +32,7 @@ public class DialectCallConverter {
     this.planner = planner;
   }
 
-  public RelNode convert(Dialect dialect, RelNode relNode) {
+  public RelNode convert(SqlDialect dialect, RelNode relNode) {
     Map<SqlOperator, RuleTransform> transforms = extractFunctionTransforms(relNode);
 
     List<RelRule> rules = new ArrayList<>();

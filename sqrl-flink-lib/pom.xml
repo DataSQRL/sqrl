@@ -31,6 +31,7 @@
     <module>sqrl-flexible-csv</module>
     <module>sqrl-name</module>
     <module>sqrl-errors</module>
+    <module>sqrl-translate-common</module>
   </modules>
 
   <description>Parent pom</description>
@@ -104,6 +105,12 @@
       <dependency>
         <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-jdbc-1.18</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.datasqrl</groupId>
+        <artifactId>sqrl-jdbc-1.19</artifactId>
         <version>${project.version}</version>
       </dependency>
 

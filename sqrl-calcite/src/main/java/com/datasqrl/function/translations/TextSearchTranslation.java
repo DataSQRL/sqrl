@@ -5,6 +5,7 @@ import com.datasqrl.calcite.convert.SimpleCallTransform;
 import com.datasqrl.calcite.convert.SimpleCallTransform.SimpleCallTransformConfig;
 import com.datasqrl.calcite.convert.SimplePredicateTransform;
 import com.datasqrl.calcite.convert.SimplePredicateTransform.SimplePredicateTransformConfig;
+import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
 import com.datasqrl.calcite.function.RuleTransform;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.function.PgSpecificOperatorTable;
@@ -18,16 +19,18 @@ import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.sql.SqlDialect;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlOperator;
+import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 
 @AutoService(RuleTransform.class)
 public class TextSearchTranslation implements RuleTransform {
 
   @Override
-  public List<RelRule> transform(Dialect dialect, SqlOperator operator) {
-    if (dialect != Dialect.POSTGRES) {
+  public List<RelRule> transform(SqlDialect dialect, SqlOperator operator) {
+    if (!dialect.getClass().isAssignableFrom(ExtendedPostgresSqlDialect.class)) {
       return List.of();
     }
     return List.of(
