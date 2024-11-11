@@ -89,11 +89,17 @@ public class GraphqlModelGenerator extends SchemaWalker {
     APISubscription apiSubscription = new APISubscription(Name.system(fieldDefinition.getName()),
         source);
     SqrlTableMacro tableFunction = schema.getTableFunction(fieldDefinition.getName());
+    if (tableFunction == null) {
+      throw new RuntimeException("Table '" + fieldDefinition.getName() + "' does not exist in the schema.");
+    }
     Log log = apiManager.addSubscription(apiSubscription, tableFunction);
 
     Map<String, String> filters = new HashMap<>();
     for (InputValueDefinition input : fieldDefinition.getInputValueDefinitions()) {
       RelDataTypeField field = nameMatcher.field(tableFunction.getRowType(), input.getName());
+      if (field == null) {
+        throw new RuntimeException("Field '" + input.getName() + "' does not exist in subscription '" + fieldDefinition.getName() + "'.");
+      }
       filters.put(input.getName(), field.getName());
     }
 
@@ -122,12 +128,15 @@ public class GraphqlModelGenerator extends SchemaWalker {
           listenNotifyAssets.getListen().getSql(),
           listenNotifyAssets.getOnNotify().getSql(),
           listenNotifyAssets.getParameters());
+    } else if (logPlan.isEmpty()) {
+      throw new RuntimeException("No log plan found. Ensure that a log plan is configured and available.");
     } else {
-      throw new RuntimeException("Unknown log plan: " + logPlan.getClass().getName());
+      throw new RuntimeException("Unknown log plan type: " + logPlan.get().getClass().getName());
     }
 
     subscriptions.add(subscriptionCoords);
   }
+
 
   @Override
   protected void walkMutation(APISource source, TypeDefinitionRegistry registry,
@@ -154,6 +163,9 @@ public class GraphqlModelGenerator extends SchemaWalker {
         topicName = (String) map.get("topic");
       } else {
         throw new RuntimeException("Could not find mutation: " + fieldDefinition.getName());
+      }
+      if (topicName == null) {
+        throw new RuntimeException("Missing 'topic' configuration for mutation '" + fieldDefinition.getName() + "'.");
       }
 
       mutationCoords = new KafkaMutationCoords(fieldDefinition.getName(), topicName, Map.of());
@@ -285,7 +297,7 @@ public class GraphqlModelGenerator extends SchemaWalker {
     Set<Set<Argument>> matches = coord.getMatchs().stream().map(ArgumentSet::getArguments)
         .collect(Collectors.toSet());
     Preconditions.checkState(coord.getMatchs().size() == matches.size(),
-        "Internal error");
+        "Internal error. Duplicate argument sets found in query matches for '" + field.getName() + "'.");
 
     coords.add(coord);
   }
