@@ -9,7 +9,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import graphql.schema.DataFetcher;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -88,7 +87,6 @@ public class RootGraphqlModel {
 
   @JsonTypeInfo(
       use = JsonTypeInfo.Id.NAME,
-      include = JsonTypeInfo.As.PROPERTY,
       property = "type"
   )
   @JsonSubTypes({
@@ -97,13 +95,14 @@ public class RootGraphqlModel {
   })
   public static abstract class MutationCoords {
     protected String type;
-    public abstract DataFetcher<?> accept(MutationCoordsVisitor visitor);
+    public abstract <R, C> R accept(MutationCoordsVisitor<R, C> visitor, C context);
     public abstract String getFieldName();
   }
 
-  public interface MutationCoordsVisitor {
-    DataFetcher<?> visit(KafkaMutationCoords coords);
-    DataFetcher<?> visit(PostgresLogMutationCoords coords);
+  public interface MutationCoordsVisitor<R, C> {
+    R visit(KafkaMutationCoords coords, C context);
+    R visit(PostgresLogMutationCoords coords, C c
+    );
   }
 
   @Getter
@@ -123,8 +122,8 @@ public class RootGraphqlModel {
     }
 
     @Override
-    public DataFetcher<?> accept(MutationCoordsVisitor visitor) {
-      return visitor.visit(this);
+    public <R, C> R accept(MutationCoordsVisitor<R, C> visitor, C context) {
+      return visitor.visit(this, context);
     }
   }
 
@@ -148,20 +147,69 @@ public class RootGraphqlModel {
     }
 
     @Override
-    public DataFetcher<?> accept(MutationCoordsVisitor visitor) {
-      return visitor.visit(this);
+    public <R, C> R accept(MutationCoordsVisitor<R, C> visitor, C context) {
+      return visitor.visit(this, context);
     }
+  }
+
+  @JsonTypeInfo(
+      use = JsonTypeInfo.Id.NAME,
+      property = "type",
+      defaultImpl = KafkaSubscriptionCoords.class
+  )
+  @JsonSubTypes({
+      @Type(value = KafkaSubscriptionCoords.class, name = "kafka"),
+      @Type(value = PostgresSubscriptionCoords.class, name = "postgres_log")
+  })
+  public static abstract class SubscriptionCoords {
+    protected String type;
+    public abstract <R, C> R accept(SubscriptionCoordsVisitor<R, C> visitor, C context);
+    public abstract String getFieldName();
+  }
+
+  public interface SubscriptionCoordsVisitor<R, C> {
+    R visit(KafkaSubscriptionCoords coords, C context);
+    R visit(PostgresSubscriptionCoords coords, C context);
   }
 
   @Getter
   @AllArgsConstructor
   @NoArgsConstructor
   @Builder
-  public static class SubscriptionCoords {
+  public static class KafkaSubscriptionCoords extends SubscriptionCoords {
+
+    private static final String type = "kafka";
+
     protected String fieldName;
     protected String topic;
     protected Map<String, String> sinkConfig;
     protected Map<String, String> filters;
+
+    @Override
+    public <R, C> R accept(SubscriptionCoordsVisitor<R, C> visitor, C context) {
+      return visitor.visit(this, context);
+    }
+  }
+
+
+  @Getter
+  @AllArgsConstructor
+  @NoArgsConstructor
+  public static class PostgresSubscriptionCoords extends SubscriptionCoords {
+
+    private static final String type = "postgres_log";
+
+    protected String fieldName;
+    protected String tableName;
+    protected Map<String, String> filters;
+    protected String listenQuery;
+    protected String onNotifyQuery;
+    protected List<String> parameters;
+
+    @Override
+    public <R, C> R accept(SubscriptionCoordsVisitor<R, C> visitor, C context) {
+      return visitor.visit(this, context);
+    }
   }
 
   public interface CoordVisitor<R, C> {

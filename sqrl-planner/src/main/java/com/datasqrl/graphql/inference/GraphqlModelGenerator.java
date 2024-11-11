@@ -13,6 +13,7 @@ import com.datasqrl.config.TableConfig;
 import com.datasqrl.engine.PhysicalPlan.StagePlan;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.engine.database.relational.ddl.statements.InsertStatement;
+import com.datasqrl.engine.database.relational.ddl.statements.notify.ListenNotifyAssets;
 import com.datasqrl.engine.log.Log;
 import com.datasqrl.engine.log.kafka.KafkaPhysicalPlan;
 import com.datasqrl.engine.log.postgres.PostgresLogPhysicalPlan;
@@ -25,11 +26,13 @@ import com.datasqrl.graphql.server.RootGraphqlModel.DuckDbQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.FieldLookupCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.JdbcQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.KafkaMutationCoords;
+import com.datasqrl.graphql.server.RootGraphqlModel.KafkaSubscriptionCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.PagedDuckDbQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.PagedJdbcQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.PostgresLogMutationCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.PagedSnowflakeDbQuery;
+import com.datasqrl.graphql.server.RootGraphqlModel.PostgresSubscriptionCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.SnowflakeDbQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoords;
 import com.datasqrl.io.tables.TableSource;
@@ -94,9 +97,36 @@ public class GraphqlModelGenerator extends SchemaWalker {
       filters.put(input.getName(), field.getName());
     }
 
-    subscriptions.add(new SubscriptionCoords(fieldDefinition.getName(),
-        (String)log.getConnectorContext().getMap().get("topic"), Map.of(),
-        filters));
+    Optional<EnginePhysicalPlan> logPlan = getLogPlan();
+
+    String fieldName = fieldDefinition.getName();
+
+    SubscriptionCoords subscriptionCoords;
+
+    if (logPlan.isPresent() && logPlan.get() instanceof KafkaPhysicalPlan) {
+      String topic = (String) log.getConnectorContext().getMap().get("topic");
+      subscriptionCoords = new KafkaSubscriptionCoords(fieldName, topic, Map.of(), filters);
+    } else if (logPlan.isPresent() && logPlan.get() instanceof PostgresLogPhysicalPlan) {
+      String tableName = (String) log.getConnectorContext().getMap().get("table-name");
+
+      ListenNotifyAssets listenNotifyAssets = ((PostgresLogPhysicalPlan) logPlan.get())
+          .getQueries().stream()
+          .filter(query -> query.getListen().getTableName().equals(tableName))
+          .findFirst()
+          .orElseThrow(
+              () -> new RuntimeException("Could not find query statement for table: " + tableName)
+          );
+
+      subscriptionCoords = new PostgresSubscriptionCoords(
+          fieldName, tableName, filters,
+          listenNotifyAssets.getListen().getSql(),
+          listenNotifyAssets.getOnNotify().getSql(),
+          listenNotifyAssets.getParameters());
+    } else {
+      throw new RuntimeException("Unknown log plan: " + logPlan.getClass().getName());
+    }
+
+    subscriptions.add(subscriptionCoords);
   }
 
   @Override
@@ -107,14 +137,10 @@ public class GraphqlModelGenerator extends SchemaWalker {
 
     Optional<TableConfig> src = schema.getImports().stream()
         .filter(t -> t.getName().equalsIgnoreCase(fieldDefinition.getName()))
-        .map(t->t.getTableConfig())
+        .map(t -> t.getTableConfig())
         .findFirst();
 
-    //Todo: Bad instance checking, Fix to bring multiple log engines (?)
-    Optional<EnginePhysicalPlan> logPlan = physicalPlan.getStagePlans().stream()
-        .map(StagePlan::getPlan)
-        .filter(plan -> plan instanceof KafkaPhysicalPlan ||  plan instanceof PostgresLogPhysicalPlan)
-        .findFirst();
+    Optional<EnginePhysicalPlan> logPlan = getLogPlan();
 
     MutationCoords mutationCoords;
 
@@ -122,10 +148,10 @@ public class GraphqlModelGenerator extends SchemaWalker {
       String topicName;
       if (tableSource != null) {
         Map<String, Object> map = tableSource.getConfiguration().getConnectorConfig().toMap();
-        topicName = (String)map.get("topic");
-      } else if (src.isPresent()){
+        topicName = (String) map.get("topic");
+      } else if (src.isPresent()) {
         Map<String, Object> map = src.get().getConnectorConfig().toMap();
-        topicName = (String)map.get("topic");
+        topicName = (String) map.get("topic");
       } else {
         throw new RuntimeException("Could not find mutation: " + fieldDefinition.getName());
       }
@@ -135,19 +161,22 @@ public class GraphqlModelGenerator extends SchemaWalker {
       String tableName;
       if (tableSource != null) {
         Map<String, Object> map = tableSource.getConfiguration().getConnectorConfig().toMap();
-        tableName = (String)map.get("table-name");
-      } else if (src.isPresent()){
+        tableName = (String) map.get("table-name");
+      } else if (src.isPresent()) {
         // TODO: not sure if this is correct and needed
         Map<String, Object> map = src.get().getConnectorConfig().toMap();
-        tableName = (String)map.get("table-name");
+        tableName = (String) map.get("table-name");
       } else {
         throw new RuntimeException("Could not find mutation: " + fieldDefinition.getName());
       }
 
-      InsertStatement insertStatement = ((PostgresLogPhysicalPlan) logPlan.get()).getInserts().stream()
+      InsertStatement insertStatement = ((PostgresLogPhysicalPlan) logPlan.get())
+          .getInserts().stream()
           .filter(insert -> insert.getTableName().equals(tableName))
           .findFirst()
-          .orElseThrow(() -> new RuntimeException("Could not find insert statement for table: " + tableName));
+          .orElseThrow(
+              () -> new RuntimeException("Could not find insert statement for table: " + tableName)
+          );
 
       mutationCoords = new PostgresLogMutationCoords(fieldDefinition.getName(), tableName,
           insertStatement.getSql(), insertStatement.getParams());
@@ -156,6 +185,15 @@ public class GraphqlModelGenerator extends SchemaWalker {
     }
 
     mutations.add(mutationCoords);
+  }
+
+  private Optional<EnginePhysicalPlan> getLogPlan() {
+    //Todo: Bad instance checking, Fix to bring multiple log engines (?)
+    Optional<EnginePhysicalPlan> logPlan = physicalPlan.getStagePlans().stream()
+        .map(StagePlan::getPlan)
+        .filter(plan -> plan instanceof KafkaPhysicalPlan || plan instanceof PostgresLogPhysicalPlan)
+        .findFirst();
+    return logPlan;
   }
 
   @Override

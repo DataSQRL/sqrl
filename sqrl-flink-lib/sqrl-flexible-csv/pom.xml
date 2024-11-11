@@ -3,12 +3,12 @@
   <parent>
     <groupId>com.datasqrl</groupId>
     <artifactId>sqrl-flink-lib</artifactId>
-    <version>0.5.8-SNAPSHOT</version>
+    <version>0.5.9-SNAPSHOT</version>
   </parent>
 
   <groupId>com.datasqrl</groupId>
   <artifactId>sqrl-flexible-csv</artifactId>
-  <version>0.5.8-SNAPSHOT</version>
+  <version>0.5.9-SNAPSHOT</version>
 
   <properties>
     <maven.compiler.source>11</maven.compiler.source>

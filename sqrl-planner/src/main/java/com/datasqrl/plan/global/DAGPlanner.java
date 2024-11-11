@@ -90,9 +90,9 @@ public class DAGPlanner {
   }
 
   public PhysicalDAGPlan assemble(SqrlDAG logicalDag,
-      Set<URL> jars, Map<String, UserDefinedFunction> udfs) {
+      Set<URL> jars) {
     //Stitch DAG together
-    return assembler.assemble(logicalDag, jars, udfs);
+    return assembler.assemble(logicalDag, jars);
   }
 
   public SqrlDAG planLogical() {
@@ -103,26 +103,11 @@ public class DAGPlanner {
   }
 
   public PhysicalDAGPlan planPhysical(SqrlDAG dag) {
-    return assemble(dag, framework.getSchema().getJars(),
-        extractFlinkFunctions(framework.getSqrlOperatorTable()));
+    return assemble(dag, framework.getSchema().getJars());
   }
 
   public PhysicalDAGPlan plan() {
-    return assemble(planLogical(), framework.getSchema().getJars(),
-        extractFlinkFunctions(framework.getSqrlOperatorTable()));
-  }
-
-  public Map<String, UserDefinedFunction> extractFlinkFunctions(
-      OperatorTable sqrlOperatorTable) {
-    Map<String, UserDefinedFunction> fncs = new HashMap<>();
-    for (Map.Entry<String, SqlOperator> fnc : sqrlOperatorTable.getUdfs().entrySet()) {
-      Optional<FunctionDefinition> definition = FunctionUtil.getBridgedFunction(fnc.getValue());
-      if (definition.isPresent()) {
-        if (definition.get() instanceof UserDefinedFunction) {
-          fncs.put(fnc.getKey(), (UserDefinedFunction)definition.get());
-        }
-      }
-    }
-    return fncs;
+    return assemble(planLogical(), framework.getSchema().getJars()
+    );
   }
 }

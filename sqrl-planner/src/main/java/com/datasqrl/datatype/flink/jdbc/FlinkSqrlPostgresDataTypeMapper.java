@@ -1,5 +1,7 @@
 package com.datasqrl.datatype.flink.jdbc;
 
+import static com.datasqrl.function.CalciteFunctionUtil.lightweightOp;
+
 import com.datasqrl.config.TableConfig;
 import com.datasqrl.datatype.DataTypeMapper;
 import com.datasqrl.datatype.SerializeToBytes;
@@ -74,7 +76,7 @@ public class FlinkSqrlPostgresDataTypeMapper extends FlinkDataTypeMapper {
         }
         return false;
       case ARRAY:
-        return nativeTypeSupport(type.getComponentType());
+        return false;
       case MAP:
         return false;
       case ROW:
@@ -85,18 +87,14 @@ public class FlinkSqrlPostgresDataTypeMapper extends FlinkDataTypeMapper {
   @Override
   public Optional<CastFunction> convertType(RelDataType type) {
 
-    if (type.getSqlTypeName() == SqlTypeName.ROW ||
-        (type.getSqlTypeName() == SqlTypeName.ARRAY && type.getComponentType().getSqlTypeName() == SqlTypeName.ROW)) {
+    if (type.getSqlTypeName() == SqlTypeName.MAP ||
+        type.getSqlTypeName() == SqlTypeName.ROW || type.getSqlTypeName() == SqlTypeName.ARRAY) {
       return Optional.of(new CastFunction(ToJson.class.getName(), convert(new ToJson())));
     }
-//
-//    if (type instanceof RelRecordType) {
-//      return Optional.of(new CastFunction(ToJson.class.getName(), convert(new ToJson())));
-//    }
 
     // Cast needed, convert to bytes
     return Optional.of(
-        new CastFunction(SerializeToBytes.class.getSimpleName(),
+        new CastFunction(SerializeToBytes.class.getName(),
             convert(new SerializeToBytes())));
   }
 

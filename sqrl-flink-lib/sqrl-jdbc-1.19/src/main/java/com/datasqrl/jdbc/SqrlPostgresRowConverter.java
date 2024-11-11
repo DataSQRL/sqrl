@@ -63,19 +63,6 @@ public class SqrlPostgresRowConverter extends SqrlBaseJdbcRowConverter {
         super(rowType);
     }
 
-    @SneakyThrows
-    public void setRow(LogicalType type, RowData val, int index,
-        FieldNamedPreparedStatement statement) {
-        SqrlFieldNamedPreparedStatementImpl flinkPreparedStatement = (SqrlFieldNamedPreparedStatementImpl) statement;
-        for (int idx : flinkPreparedStatement.getIndexMapping()[index]) {
-//            RowData row = val.getRow(index, ((RowType) type).getFieldCount());
-//            java.sql.Array sqlArray = flinkPreparedStatement.getStatement()
-//                .getConnection().createArrayOf("bytea", );
-            flinkPreparedStatement.getStatement().setBytes(idx, new byte[0]);
-        }
-    }
-
-
     @Override
     public JdbcDeserializationConverter createInternalConverter(LogicalType type) {
         if (sqrlSerializers.containsKey(type.getDefaultConversion())) {
