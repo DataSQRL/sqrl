@@ -1,0 +1,21 @@
+subscription MySchemaSubscription {
+    MySchema {
+        dateField
+        nullableDateField
+        stringField
+        nullableStringField
+        intField
+        nullableIntField
+        longField
+        nullableLongField
+        floatField
+        nullableFloatField
+        doubleField
+        nullableDoubleField
+        booleanField
+        nullableBooleanField
+        enumField
+        nullableEnumField
+        decimalField
+    }
+}

@@ -130,7 +130,7 @@ public class GraphqlSchemaFactory {
     GraphQLSchema.Builder builder = GraphQLSchema.newSchema()
         .query(queryType);
     if (goal != ExecutionGoal.TEST) {
-      if (logManager.hasLogEngine() && System.getenv().get("ENABLE_SUBSCRIPTIONS") != null) {
+      if (true) {
         Optional<GraphQLObjectType.Builder> subscriptions = createSubscriptionTypes(schema);
         subscriptions.map(builder::subscription);
       }
@@ -226,6 +226,7 @@ public class GraphqlSchemaFactory {
 
       GraphQLFieldDefinition subscriptionField = GraphQLFieldDefinition.newFieldDefinition()
           .name(tableName)
+          .arguments(createArgumentsWithOptionalScalars(schema.getTableFunctions().get(0)))
           .type(createOutputTypeForRelDataType(table.getRowType(), NamePath.of(tableName), seen).get())
           .build();
 
@@ -241,6 +242,20 @@ public class GraphqlSchemaFactory {
     return Optional.of(subscriptionBuilder);
   }
 
+
+  private List<GraphQLArgument> createArgumentsWithOptionalScalars(SqrlTableMacro field) {
+    if (!allowedArguments(field)) {
+      return List.of();
+    }
+
+    return field.getRowType().getFieldList().stream()
+        .filter(p -> getInputType(p.getType(), NamePath.of(p.getName()), seen).isPresent())
+        .map(parameter -> GraphQLArgument.newArgument()
+            .name(parameter.getName())
+            .type(getInputType(parameter.getType(), NamePath.of(parameter.getName()), seen).get()) // No nonNull here
+            .build())
+        .collect(Collectors.toList());
+  }
 
   private GraphQLObjectType createQueryType(ExecutionGoal goal, List<SqrlTableMacro> relationships) {
 

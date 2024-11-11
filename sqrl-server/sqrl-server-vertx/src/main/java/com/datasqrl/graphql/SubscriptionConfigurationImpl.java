@@ -8,6 +8,7 @@ import static org.apache.kafka.clients.consumer.ConsumerConfig.VALUE_DESERIALIZE
 
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.io.SinkConsumer;
+import com.datasqrl.graphql.kafka.JsonDeserializer;
 import com.datasqrl.graphql.kafka.KafkaDataFetcherFactory;
 import com.datasqrl.graphql.kafka.KafkaSinkConsumer;
 import com.datasqrl.graphql.postgres_log.PostgresDataFetcherFactory;
@@ -83,8 +84,8 @@ public class SubscriptionConfigurationImpl implements SubscriptionConfiguration<
     Map<String, String> conf = new HashMap<>();
     conf.put(BOOTSTRAP_SERVERS_CONFIG, config.getEnvironmentVariable("PROPERTIES_BOOTSTRAP_SERVERS"));
     conf.put(GROUP_ID_CONFIG, UUID.randomUUID().toString());
-    conf.put(KEY_DESERIALIZER_CLASS_CONFIG, "com.datasqrl.graphql.kafka.JsonDeserializer");
-    conf.put(VALUE_DESERIALIZER_CLASS_CONFIG, "com.datasqrl.graphql.kafka.JsonDeserializer");
+    conf.put(KEY_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class.getName());
+    conf.put(VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class.getName());
     conf.put(AUTO_OFFSET_RESET_CONFIG, "latest");
     return conf;
   }

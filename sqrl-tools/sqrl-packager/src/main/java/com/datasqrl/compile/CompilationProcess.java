@@ -22,10 +22,12 @@ import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.plan.validate.ScriptPlanner;
 import com.google.inject.Inject;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
 import org.apache.commons.lang3.tuple.Pair;
 
 @AllArgsConstructor(onConstructor_=@Inject)
@@ -61,6 +63,7 @@ public class CompilationProcess {
     planner.plan(mainScript, composite);
     postcompileHooks();
     Optional<APISource> source = inferencePostcompileHook.run(testsPath);
+    source.ifPresent(s->writeGraphql(s));
     SqrlDAG dag = dagPlanner.planLogical();
     PhysicalDAGPlan dagPlan = dagPlanner.planPhysical(dag);
 
@@ -76,6 +79,11 @@ public class CompilationProcess {
     }
     writeDeploymentArtifactsHook.run(dag);
     return Pair.of(physicalPlan, testPlan);
+  }
+
+  @SneakyThrows
+  private void writeGraphql(APISource s) {
+    Files.write(Path.of("scheam.graphqls"), s.getSchemaDefinition().getBytes(StandardCharsets.UTF_8));
   }
 
   private void postcompileHooks() {

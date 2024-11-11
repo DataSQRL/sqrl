@@ -3,13 +3,14 @@
   "flink" : {
     "format" : "flexible-json",
     "path" : "${DATA_PATH}/schema.jsonl",
-    "connector" : "filesystem"
+    "connector" : "filesystem",
+    "source.monitor-interval" : 1
+
   },
   "table" : {
     "type" : "source",
-    "primary-key" : ["uuidField", "timestampMillisField"],
-    "timestamp" : "timestampMillisField",
+    "primary-key" : ["_uuid", "event_time"],
+    "timestamp" : "event_time",
     "watermark-millis" : "0"
   }
-
 }

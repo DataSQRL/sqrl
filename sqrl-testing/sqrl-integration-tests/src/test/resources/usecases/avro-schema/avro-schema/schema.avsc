@@ -4,7 +4,7 @@
   "namespace": "com.example.avro",
   "fields": [
     {
-      "name": "uuidField",
+      "name": "_uuid",
       "type": {
         "type": "string",
         "logicalType": "uuid"
@@ -31,7 +31,7 @@
 //      "doc": "A nullable fixed-size 16-byte field"
 //    },
     {
-      "name": "timestampMillisField",
+      "name": "event_time",
       "type": {
         "type": "long",
         "logicalType": "timestamp-millis"
@@ -47,23 +47,7 @@
       "default": null,
       "doc": "A nullable timestamp with millisecond precision"
     },
-    {
-      "name": "timestampMicrosField",
-      "type": {
-        "type": "long",
-        "logicalType": "timestamp-micros"
-      },
-      "doc": "A timestamp with microsecond precision"
-    },
-    {
-      "name": "nullableTimestampMicrosField",
-      "type": ["null", {
-        "type": "long",
-        "logicalType": "timestamp-micros"
-      }],
-      "default": null,
-      "doc": "A nullable timestamp with microsecond precision"
-    },
+
     {
       "name": "dateField",
       "type": {

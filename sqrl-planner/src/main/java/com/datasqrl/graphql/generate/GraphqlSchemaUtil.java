@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 @Slf4j
@@ -59,8 +60,15 @@ public class GraphqlSchemaUtil {
   }
 
   public static Optional<GraphQLInputType> getInputType(RelDataType type, NamePath namePath, Set<String> seen) {
-    return getInOutType(type, namePath, seen)
-        .map(f->(GraphQLInputType)f);
+    if (type.getSqlTypeName() == SqlTypeName.ARRAY || type.getSqlTypeName() == SqlTypeName.MULTISET ||
+    type.getSqlTypeName() == SqlTypeName.ROW
+    ) {
+      return Optional.empty(); // Exclude arrays
+    }
+
+    Optional<GraphQLInputType> graphQLInputType = getInOutType(type, namePath, seen)
+          .map(f -> (GraphQLInputType) f);
+      return graphQLInputType;
   }
 
   public static Optional<GraphQLOutputType> getOutputType(RelDataType type, NamePath namePath, Set<String> seen) {
@@ -185,18 +193,20 @@ public class GraphqlSchemaUtil {
 
   public static Optional<GraphQLOutputType> createOutputTypeForRelDataType(RelDataType type,
       NamePath namePath, Set<String> seen) {
+    Optional<GraphQLOutputType> outputType = getOutputType(type, namePath, seen);
     if (!type.isNullable()) {
-      return getOutputType(type, namePath, seen).map(GraphQLNonNull::nonNull);
+      return outputType.map(GraphQLNonNull::nonNull);
     }
-    return getOutputType(type, namePath, seen);
+    return outputType;
   }
 
   public static Optional<GraphQLInputType> createInputTypeForRelDataType(RelDataType type, NamePath namePath, Set<String> seen) {
     if (namePath.getLast().isHidden()) return Optional.empty();
+    Optional<GraphQLInputType> graphQLInputType = getGraphQLInputType(type, namePath, seen);
     if (!type.isNullable()) {
-      return getGraphQLInputType(type, namePath, seen).map(GraphQLNonNull::nonNull);
+      return graphQLInputType.map(GraphQLNonNull::nonNull);
     }
-    return getGraphQLInputType(type, namePath, seen);
+    return graphQLInputType;
   }
 
   private static Optional<GraphQLInputType> getGraphQLInputType(RelDataType type, NamePath namePath, Set<String> seen) {
@@ -220,7 +230,10 @@ public class GraphqlSchemaUtil {
         return Optional.of(CustomScalars.DATE);
       case TIME:
         return Optional.of(CustomScalars.TIME);
+      case TIME_WITH_LOCAL_TIME_ZONE:
+        break;
       case TIMESTAMP:
+      case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
         return Optional.of(CustomScalars.DATETIME);
       case BINARY:
       case VARBINARY:
@@ -233,9 +246,36 @@ public class GraphqlSchemaUtil {
         return createGraphQLInputObjectType(type, namePath, seen);
       case MAP:
         return Optional.of(CustomScalars.JSON);
+      case INTERVAL_YEAR:
+      case INTERVAL_YEAR_MONTH:
+      case INTERVAL_MONTH:
+      case INTERVAL_DAY:
+      case INTERVAL_DAY_HOUR:
+      case INTERVAL_DAY_MINUTE:
+      case INTERVAL_DAY_SECOND:
+      case INTERVAL_HOUR:
+      case INTERVAL_HOUR_MINUTE:
+      case INTERVAL_HOUR_SECOND:
+      case INTERVAL_MINUTE:
+      case INTERVAL_MINUTE_SECOND:
+      case INTERVAL_SECOND:
+      case NULL:
+      case UNKNOWN:
+      case ANY:
+      case SYMBOL:
+      case MULTISET:
+      case DISTINCT:
+      case STRUCTURED:
+      case OTHER:
+      case CURSOR:
+      case COLUMN_LIST:
+      case DYNAMIC_STAR:
+      case GEOMETRY:
+      case SARG:
       default:
-        return Optional.empty(); // Unsupported types are omitted
+        break;
     }
+    return Optional.empty(); // Unsupported types are omitted
   }
 
   /**

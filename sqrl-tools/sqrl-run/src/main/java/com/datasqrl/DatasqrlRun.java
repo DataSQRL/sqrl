@@ -96,11 +96,7 @@ public class DatasqrlRun {
     objectMapper.registerModule(module);
 
     startVertx();
-    CompiledPlan plan = startFlink();
-    execute = plan.execute();
-    if (hold) {
-      execute.print();
-    }
+
     return execute;
   }
 
