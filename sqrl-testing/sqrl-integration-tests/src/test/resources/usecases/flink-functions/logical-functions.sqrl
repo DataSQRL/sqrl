@@ -1,0 +1,33 @@
+IMPORT flink.*; -- Import flink functions
+IMPORT data-local.Booleans; -- Import boolean data
+
+/* Create numeric data source */
+UnmodifiedBooleanData := SELECT id,
+                                a AS a,
+                                b AS b
+                         FROM Booleans ORDER BY id;
+
+/* =======TEST CASES======== */
+
+/*+test */
+BooleanTest := SELECT id,
+                      a OR b AS or_operator,
+                      a || b as or_table_operator,
+                      a AND b AS and_operator,
+                      /* a && b AS and_table_operator, */
+                      NOT a AS not_operator,
+                      /* !a AS not_table_operator, */
+                      a IS FALSE as is_false,
+                      a IS NOT FALSE as is_not_false,
+                      a IS TRUE as is_true,
+                      a IS NOT TRUE as is_true,
+                      a IS UNKNOWN as is_unknown,
+                      a IS NOT UNKNOWN as is_not_unknown
+               FROM UnmodifiedBooleanData
+               ORDER BY id;
+
+/*+test */
+UnmodifiedBooleanTest := SELECT id,
+                                a AS a,
+                                b AS b
+                         FROM UnmodifiedBooleanData ORDER BY id;

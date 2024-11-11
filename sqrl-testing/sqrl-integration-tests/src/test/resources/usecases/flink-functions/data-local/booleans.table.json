@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "flink" : {
+    "format" : "flexible-json",
+    "path" : "${DATA_PATH}/booleans.jsonl",
+    "connector" : "filesystem"
+  },
+  "table" : {
+    "type" : "source",
+    "primary-key" : ["id"],
+    "timestamp" : "timestamp",
+    "watermark-millis" : "1"
+  }
+}
