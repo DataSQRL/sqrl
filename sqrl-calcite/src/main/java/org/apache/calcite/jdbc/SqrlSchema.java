@@ -37,6 +37,8 @@ import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.util.NameMultimap;
+import org.apache.flink.table.functions.FunctionDefinition;
+import org.apache.flink.table.functions.UserDefinedFunction;
 
 @Getter
 @Singleton
@@ -52,14 +54,14 @@ public class SqrlSchema extends SimpleCalciteSchema {
   //Required for looking up tables
   private final Map<NamePath, String> pathToSysTableMap = new LinkedHashMap<>();
 
-  private final Map<String, SqlOperator> udf = new LinkedHashMap<>();
-  private final Map<List<String>, SqlOperator> udfListMap = new LinkedHashMap<>();
-  private final Map<List<String>, SqlOperator> internalNames = new LinkedHashMap<>();
+  private final Map<String, UserDefinedFunction> udf = new LinkedHashMap<>();
 
   private final AtomicInteger uniqueCompilerId = new AtomicInteger(0);
   private final AtomicInteger uniquePkId = new AtomicInteger(0);
   private final AtomicInteger uniqueMacroInt = new AtomicInteger(0);
   private final Map<Name, AtomicInteger> tableNameToIdMap = new LinkedHashMap<>();
+
+  private final Map<String, String> fncAlias = new HashMap<>();
 
   //API
 
@@ -162,17 +164,15 @@ public class SqrlSchema extends SimpleCalciteSchema {
     return (SqrlTableMacro)Iterables.getOnlyElement(getFunctions(name, false));
   }
 
-  public void addFunction(String canonicalName, SqlOperator function) {
-    this.udf.put(nameCanonicalizer.getCanonical(canonicalName), function);
-    this.udfListMap.put(List.of(nameCanonicalizer.getCanonical(canonicalName)), function);
-    this.internalNames.put(List.of(function.getName()), function);
-  }
-
   public void addAdditionalSql(Set<SqlNode> addlSql) {
     this.addlSql.addAll(addlSql);
   }
 
   public NameMultimap<FunctionEntry> getFunctionMap() {
     return this.functionMap;
+  }
+
+  public void addFunctionAlias(String name, String function) {
+    fncAlias.put(name.toLowerCase(), function);
   }
 }

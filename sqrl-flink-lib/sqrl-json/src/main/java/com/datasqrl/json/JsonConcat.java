@@ -9,8 +9,6 @@ import org.apache.flink.table.functions.ScalarFunction;
  */
 public class JsonConcat extends ScalarFunction {
 
-  private final ObjectMapper mapper = new ObjectMapper();
-
   public FlinkJsonType eval(FlinkJsonType json1, FlinkJsonType json2) {
     if (json1 == null || json2 == null) {
       return null;

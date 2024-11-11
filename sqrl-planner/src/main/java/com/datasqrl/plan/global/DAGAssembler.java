@@ -38,7 +38,6 @@ import org.apache.calcite.rel.core.TableFunctionScan;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.hint.Hintable;
 import org.apache.calcite.tools.RelBuilder;
-import org.apache.flink.table.functions.UserDefinedFunction;
 
 import java.net.URL;
 import java.util.*;
@@ -56,7 +55,7 @@ public class DAGAssembler {
   private final LogManager logManager;
   private final ErrorCollector errors;
 
-  public PhysicalDAGPlan assemble(SqrlDAG dag, Set<URL> jars, Map<String, UserDefinedFunction> udfs) {
+  public PhysicalDAGPlan assemble(SqrlDAG dag, Set<URL> jars) {
     //We make the assumption that there is a single stream stage
     ExecutionStage streamStage = pipeline.getStage(Type.STREAMS).get().get(0);
     List<PhysicalDAGPlan.WriteQuery> streamQueries = new ArrayList<>();
@@ -185,7 +184,7 @@ public class DAGAssembler {
       }
     }
     PhysicalDAGPlan.StagePlan streamPlan = new StreamStagePlan(streamStage, streamQueries,
-        streamTables, jars, udfs);
+        streamTables, jars);
 
     //Collect all the stage plans
     List<PhysicalDAGPlan.StagePlan> allPlans = new ArrayList<>();

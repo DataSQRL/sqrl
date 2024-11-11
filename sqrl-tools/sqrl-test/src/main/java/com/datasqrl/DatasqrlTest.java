@@ -63,9 +63,6 @@ public class DatasqrlTest {
       ObjectMapper objectMapper = new ObjectMapper();
       //todo add file check
 
-      TestPlan testPlan = objectMapper.readValue(planPath.resolve("test.json").toFile(),
-          TestPlan.class);
-
       Thread.sleep(1000);
 
       Map compilerMap = (Map) run.getPackageJson().get("compiler");
@@ -77,13 +74,21 @@ public class DatasqrlTest {
         Files.createDirectories(snapshotDir);
       }
 
-      for (GraphqlQuery query : testPlan.getMutations()) {
-        //Execute queries
-        String data = executeQuery(query.getQuery());
 
-        //Snapshot result
-        Path snapshotPath = snapshotDir.resolve(query.getName() + ".snapshot");
-        snapshot(snapshotPath, query.getName(), data, exceptions);
+      //It is possible that no test plan exists, such as no test queries.
+      // We will still let exports run, though we may want to replace them with blackhole sinks
+      if (Files.exists(planPath.resolve("test.json"))) {
+
+        TestPlan testPlan = objectMapper.readValue(planPath.resolve("test.json").toFile(),
+            TestPlan.class);
+        for (GraphqlQuery query : testPlan.getMutations()) {
+          //Execute queries
+          String data = executeQuery(query.getQuery());
+
+          //Snapshot result
+          Path snapshotPath = snapshotDir.resolve(query.getName() + ".snapshot");
+          snapshot(snapshotPath, query.getName(), data, exceptions);
+        }
       }
 
       long delaySec = 30;
@@ -143,29 +148,36 @@ public class DatasqrlTest {
       } catch (Exception e) {
       }
 
-      for (GraphqlQuery query : testPlan.getQueries()) {
-        //Execute queries
-        String data = executeQuery(query.getQuery());
+      if (Files.exists(planPath.resolve("test.json"))) {
 
-        //Snapshot result
-        Path snapshotPath = snapshotDir.resolve(query.getName() + ".snapshot");
-        snapshot(snapshotPath, query.getName(), data, exceptions);
-      }
+        TestPlan testPlan = objectMapper.readValue(planPath.resolve("test.json").toFile(),
+            TestPlan.class);
+        for (GraphqlQuery query : testPlan.getQueries()) {
+          //Execute queries
+          String data = executeQuery(query.getQuery());
 
-      List<String> expectedSnapshotsQueries = testPlan.getQueries().stream()
-          .map(f->f.getName() + ".snapshot")
-          .collect(Collectors.toList());
-      List<String> expectedSnapshotsMutations = testPlan.getMutations().stream()
-          .map(f->f.getName() + ".snapshot")
-          .collect(Collectors.toList());
-      List<String> expectedSnapshots = ListUtils.union(expectedSnapshotsQueries, expectedSnapshotsMutations);
-      // Check all snapshots in the directory
-      try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(snapshotDir, "*.snapshot")) {
-        for (Path path : directoryStream) {
-          String snapshotFileName = path.getFileName().toString();
-          if (!expectedSnapshots.contains(snapshotFileName)) {
-            // Snapshot exists on filesystem but missing in the test results
-            exceptions.add(new MissingSnapshotException(snapshotFileName));
+          //Snapshot result
+          Path snapshotPath = snapshotDir.resolve(query.getName() + ".snapshot");
+          snapshot(snapshotPath, query.getName(), data, exceptions);
+        }
+
+        List<String> expectedSnapshotsQueries = testPlan.getQueries().stream()
+            .map(f -> f.getName() + ".snapshot")
+            .collect(Collectors.toList());
+        List<String> expectedSnapshotsMutations = testPlan.getMutations().stream()
+            .map(f -> f.getName() + ".snapshot")
+            .collect(Collectors.toList());
+        List<String> expectedSnapshots = ListUtils.union(expectedSnapshotsQueries,
+            expectedSnapshotsMutations);
+        // Check all snapshots in the directory
+        try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(snapshotDir,
+            "*.snapshot")) {
+          for (Path path : directoryStream) {
+            String snapshotFileName = path.getFileName().toString();
+            if (!expectedSnapshots.contains(snapshotFileName)) {
+              // Snapshot exists on filesystem but missing in the test results
+              exceptions.add(new MissingSnapshotException(snapshotFileName));
+            }
           }
         }
       }

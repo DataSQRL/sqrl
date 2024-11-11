@@ -1,5 +1,6 @@
 package com.datasqrl;
 
+import static com.datasqrl.UseCasesIT.getProjectRoot;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import com.datasqrl.cmd.RootCommand;
@@ -45,6 +46,8 @@ public class SqrlScriptExecutor {
     if (getPackageJsonPath() != null) {
       argsList.addAll(Arrays.asList("-c", getPackageJsonPath()));
     }
+    argsList.add("--profile");
+    argsList.add(getProjectRoot().resolve("profiles/default").toString());
     // Execute the command
     RootCommand rootCommand = new RootCommand(rootDir, hook);
     int exitCode =

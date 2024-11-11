@@ -41,7 +41,6 @@ public class FlexibleTypeMatcher implements Serializable {
       List<FlexibleFieldSchema.FieldType> fieldTypes, boolean force) {
     FlexibleFieldSchema.FieldType match;
     if (type instanceof RelationType) {
-      assert arrayDepth == 1;
       match = fieldTypes.stream().filter(ft -> ft.getType() instanceof RelationType).findFirst()
           .orElse(null);
       if (match == null && force) {

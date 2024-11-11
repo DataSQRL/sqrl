@@ -15,9 +15,10 @@ LogicalProject(val=[$0], myFnc=[MyScalarFunction(CAST($0):BIGINT, CAST($0):BIGIN
 >>>flink.json
 {
   "flinkSql" : [
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `myscalarfunction` AS 'com.myudf.MyScalarFunction' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `MyAsyncScalarFunction` AS 'com.myudf.MyAsyncScalarFunction' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `MyScalarFunction` AS 'com.myudf.MyScalarFunction' LANGUAGE JAVA;",
     "CREATE TEMPORARY TABLE `mytable_1` (\n  `val` INTEGER NOT NULL,\n  `myFnc` BIGINT,\n  PRIMARY KEY (`val`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'mytable_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE VIEW `table$1`\nAS\nSELECT `val`, MYSCALARFUNCTION(CAST(`val` AS BIGINT), CAST(`val` AS BIGINT)) AS `myFnc`\nFROM (VALUES (1),\n    (2),\n    (3),\n    (4),\n    (5),\n    (6),\n    (7),\n    (8),\n    (9),\n    (10)) AS `t` (`val`);",
+    "CREATE VIEW `table$1`\nAS\nSELECT `val`, `default_catalog`.`default_database`.`MyScalarFunction`(CAST(`val` AS BIGINT), CAST(`val` AS BIGINT)) AS `myFnc`\nFROM (VALUES (1),\n    (2),\n    (3),\n    (4),\n    (5),\n    (6),\n    (7),\n    (8),\n    (9),\n    (10)) AS `t` (`val`);",
     "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `mytable_1`\n(SELECT *\n FROM `table$1`)\n;\nEND;"
   ],
   "connectors" : [
@@ -119,7 +120,7 @@ LogicalProject(val=[$0], myFnc=[MyScalarFunction(CAST($0):BIGINT, CAST($0):BIGIN
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype MyTable {\n  val: Int!\n  myFnc: Float\n}\n\ntype Query {\n  MyTable(val: Int, limit: Int = 10, offset: Int = 0): [MyTable!]\n}\n"
+      "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\ntype MyTable {\n  val: Int!\n  myFnc: Float\n}\n\ntype Query {\n  MyTable(val: Int, limit: Int = 10, offset: Int = 0): [MyTable!]\n}\n"
     }
   }
 }

@@ -27,6 +27,7 @@ import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.type.SqlTypeUtil;
 import org.apache.flink.sql.parser.type.ExtendedSqlCollectionTypeNameSpec;
 import org.apache.flink.sql.parser.type.ExtendedSqlRowTypeNameSpec;
+import org.apache.flink.sql.parser.type.SqlMapTypeNameSpec;
 import org.apache.flink.sql.parser.type.SqlRawTypeNameSpec;
 import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 import org.apache.flink.table.types.logical.RawType;
@@ -139,8 +140,14 @@ public class SqlDataTypeSpecBuilder {
               SqlLiteral.createCharString(rawType.getSerializerString(), SqlParserPos.ZERO),
               SqlParserPos.ZERO);
         } else if (!isRow(type)) {
-          throw new UnsupportedOperationException(
-              "Unsupported type when convertTypeToSpec: " + typeName);
+          RelDataType keyType = type.getKeyType();
+          RelDataType valueType = type.getValueType();
+          SqlDataTypeSpec keyTypeSpec = convertTypeToSpec(keyType);
+          SqlDataTypeSpec valueTypeSpec = convertTypeToSpec(valueType);
+          typeNameSpec = new SqlMapTypeNameSpec(
+              new SqlDataTypeSpec(keyTypeSpec.getTypeNameSpec(), SqlParserPos.ZERO),
+              new SqlDataTypeSpec(valueTypeSpec.getTypeNameSpec(), SqlParserPos.ZERO),
+              SqlParserPos.ZERO);
         } else {
           RelRecordType recordType = (RelRecordType) type;
           List<RelDataTypeField> fields = recordType.getFieldList();

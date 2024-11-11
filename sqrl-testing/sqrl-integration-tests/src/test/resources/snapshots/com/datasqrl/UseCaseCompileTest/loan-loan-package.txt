@@ -822,6 +822,7 @@ LogicalProject(__pk1_id=[$0], loan_type_id=[$1], total_amount=[$2], total_loans=
     ],
     "subscriptions" : [
       {
+        "type" : "kafka",
         "fieldName" : "ApplicationAlert",
         "topic" : "applicationalert_1",
         "sinkConfig" : { },
