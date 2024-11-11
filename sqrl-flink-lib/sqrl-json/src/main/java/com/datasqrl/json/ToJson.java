@@ -1,24 +1,22 @@
 package com.datasqrl.json;
 
-import java.util.Set;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ArrayNode;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ObjectNode;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.POJONode;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ValueNode;
 import org.apache.flink.table.annotation.DataTypeHint;
 import org.apache.flink.table.annotation.InputGroup;
 import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.types.Row;
+import org.apache.flink.util.jackson.JacksonMapperFactory;
 
 /**
  * Parses a JSON object from string
  */
 public class ToJson extends ScalarFunction {
 
-  public static final ObjectMapper mapper = new ObjectMapper();
+  public static final ObjectMapper mapper = JacksonMapperFactory.createObjectMapper();
 
   public FlinkJsonType eval(String json) {
     if (json == null) {
@@ -47,10 +45,12 @@ public class ToJson extends ScalarFunction {
     if (json instanceof Row) {
       Row row = (Row) json;
       ObjectNode objectNode = mapper.createObjectNode();
-      Set<String> fieldNames = row.getFieldNames(true);
-      if (fieldNames == null)
-        return mapper.createObjectNode();
-      fieldNames.forEach(f -> objectNode.putPOJO(f, unboxFlinkToJsonNode(row.getField(f))));
+      String[] fieldNames = row.getFieldNames(true).toArray(new String[0]);  // Get field names in an array
+      for (String fieldName : fieldNames) {
+        Object field = row.getField(fieldName);
+        objectNode.set(fieldName, unboxFlinkToJsonNode(field));  // Recursively unbox each field
+      }
+      return objectNode;
     } else if (json instanceof Row[]) {
       Row[] rows = (Row[]) json;
       ArrayNode arrayNode = mapper.createArrayNode();
@@ -58,15 +58,11 @@ public class ToJson extends ScalarFunction {
         if (row == null) {
           arrayNode.addNull();
         } else {
-          ObjectNode objectNode = mapper.createObjectNode();
-          Set<String> fieldNames = row.getFieldNames(true);
-          if (fieldNames == null) continue;
-          fieldNames.forEach(f -> objectNode.putPOJO(f, unboxFlinkToJsonNode(row.getField(f))));
-          arrayNode.add(objectNode);
+          arrayNode.add(unboxFlinkToJsonNode(row));  // Recursively unbox each row in the array
         }
       }
       return arrayNode;
     }
-    return mapper.getNodeFactory().pojoNode(json);
+    return mapper.valueToTree(json);  // Directly serialize other types
   }
 }

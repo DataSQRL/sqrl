@@ -1,28 +1,29 @@
 package com.datasqrl.calcite;
 
 import com.datasqrl.calcite.type.TypeFactory;
-import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 
-import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.google.inject.Inject;
-import com.google.inject.Singleton;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.apache.calcite.config.CalciteConnectionConfigImpl;
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.rel.hint.HintStrategyTable;
 import org.apache.calcite.rel.metadata.RelMetadataProvider;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.fun.SqlStdOperatorTable;
+import org.apache.calcite.sql.SqlOperatorTable;
 
 import java.util.Properties;
 import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.calcite.sql.util.SqlOperatorTables;
+import org.apache.flink.configuration.Configuration;
+import org.apache.flink.table.api.internal.TableEnvExtractor;
+import org.apache.flink.table.api.internal.TableEnvironmentImpl;
+import org.apache.flink.table.catalog.FunctionCatalog;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
+import org.apache.flink.table.planner.calcite.FlinkTypeSystem;
+import org.apache.flink.table.planner.calcite.RexFactory;
+import org.apache.flink.table.planner.catalog.FunctionCatalogOperatorTable;
 
 @Getter
 public class SqrlFramework {
@@ -33,6 +34,7 @@ public class SqrlFramework {
   private final SqrlSchema schema;
   private final HintStrategyTable hintStrategyTable;
   private final NameCanonicalizer nameCanonicalizer;
+  private final FunctionCatalog flinkFunctionCatalog; //Flink's function catalog (for udfs)
   private QueryPlanner queryPlanner;
   private final RelMetadataProvider relMetadataProvider;
 
@@ -65,7 +67,21 @@ public class SqrlFramework {
 
     this.nameCanonicalizer = nameCanonicalizer;
     this.catalogReader = new CatalogReader(schema, typeFactory, config);
-    this.sqrlOperatorTable = new OperatorTable(catalogReader, schema);
+    TableEnvironmentImpl tableEnvironment = TableEnvironmentImpl.create(
+        Configuration.fromMap(Map.of()));
+    this.flinkFunctionCatalog = TableEnvExtractor.getFunctionCatalog(tableEnvironment);
+
+    SqlOperatorTable chain = SqlOperatorTables.chain(
+        new FunctionCatalogOperatorTable(
+            flinkFunctionCatalog,
+            tableEnvironment.getCatalogManager().getDataTypeFactory(),
+            typeFactory,
+            new RexFactory(
+                new FlinkTypeFactory(getClass().getClassLoader(), FlinkTypeSystem.INSTANCE),
+                () -> null, () -> null, (x) -> null)),
+        new OperatorTable(catalogReader, schema));
+    this.sqrlOperatorTable = new OperatorTable(schema, chain);
+
     this.queryPlanner = planner.orElseGet(this::resetPlanner);
   }
 

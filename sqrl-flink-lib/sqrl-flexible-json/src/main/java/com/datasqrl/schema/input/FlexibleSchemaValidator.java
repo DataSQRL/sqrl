@@ -12,6 +12,7 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.schema.type.Type;
 import com.datasqrl.schema.type.basic.BasicType;
+import com.datasqrl.schema.type.basic.ObjectType;
 import com.datasqrl.schema.type.basic.StringType;
 import lombok.NonNull;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -133,6 +134,10 @@ public class FlexibleSchemaValidator implements SchemaValidator, Serializable {
 
   private Pair<Name, Object> verifyAndAdjust(Object data, FlexibleFieldSchema.Field field,
       ErrorCollector errors) {
+    if (field.getTypes().get(0).getType().equals(ObjectType.INSTANCE)) {
+      return ImmutablePair.of(FlexibleSchemaHelper.getCombinedName(field, field.getTypes().get(0)), data);
+    }
+
     List<FlexibleFieldSchema.FieldType> types = field.getTypes();
     Optional<Simple> typeSignatureOpt = TypeSignatureUtil.detectSimpleTypeSignature(data, s -> detectType(s, types),
         m -> detectType(m, types));
