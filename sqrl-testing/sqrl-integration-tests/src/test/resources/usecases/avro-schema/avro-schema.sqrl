@@ -1,0 +1,4 @@
+IMPORT avro-schema.Schema;
+
+/*+test*/
+MySchema := SELECT * FROM Schema;

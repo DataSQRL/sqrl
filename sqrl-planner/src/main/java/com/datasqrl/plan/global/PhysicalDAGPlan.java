@@ -76,8 +76,6 @@ public class PhysicalDAGPlan {
 
     Set<URL> jars;
 
-    Map<String, UserDefinedFunction> udfs;
-
     @Value
     public static class TableDefinition {
 

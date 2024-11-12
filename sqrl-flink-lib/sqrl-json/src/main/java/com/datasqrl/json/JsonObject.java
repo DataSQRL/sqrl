@@ -12,6 +12,7 @@ import org.apache.flink.table.types.inference.InputTypeStrategies;
 import org.apache.flink.table.types.inference.InputTypeStrategy;
 import org.apache.flink.table.types.inference.TypeInference;
 import org.apache.flink.table.types.inference.TypeStrategies;
+import org.apache.flink.util.jackson.JacksonMapperFactory;
 
 /**
  * Creates a JSON object from key-value pairs, where the key is mapped to a field with the
@@ -20,13 +21,13 @@ import org.apache.flink.table.types.inference.TypeStrategies;
  * same key, the last pair is added to the JSON object.
  */
 public class JsonObject extends ScalarFunction {
+  static final ObjectMapper mapper = JacksonMapperFactory.createObjectMapper();
 
   public FlinkJsonType eval(Object... objects) {
     if (objects.length % 2 != 0) {
       throw new IllegalArgumentException("Arguments should be in key-value pairs");
     }
 
-    ObjectMapper mapper = new ObjectMapper();
     ObjectNode objectNode = mapper.createObjectNode();
 
     for (int i = 0; i < objects.length; i += 2) {

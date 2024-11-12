@@ -5,8 +5,6 @@ package com.datasqrl.engine.database.relational;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.calcite.convert.PostgresSqlNodeToString;
-import com.datasqrl.calcite.dialect.postgres.SqlCreatePostgresView;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.config.JdbcDialect;
@@ -53,11 +51,16 @@ import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
+import org.apache.calcite.sql.SqlFunctionCategory;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
+import org.apache.calcite.sql.SqlOperator;
+import org.apache.calcite.sql.SqlSyntax;
 import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.calcite.sql.validate.SqlNameMatchers;
 import org.apache.calcite.tools.RelBuilder;
+import org.apache.flink.table.catalog.UnresolvedIdentifier;
 import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 /**
@@ -119,7 +122,7 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
         relNode = relNode.accept(new RelShuttleImpl(){
           @Override
           public RelNode visit(TableScan scan) {
-            return applyUpcasting(framework.getQueryPlanner().getRelBuilder(),
+            return applyUpcasting(framework, framework.getQueryPlanner().getRelBuilder(),
                 scan, upCastingMapper.get());
           }
         });
@@ -154,14 +157,14 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
     return Optional.empty();
   }
 
-  private RelNode applyUpcasting(RelBuilder relBuilder, RelNode relNode,
+  private RelNode applyUpcasting(SqrlFramework framework, RelBuilder relBuilder, RelNode relNode,
       DataTypeMapper icebergDataTypeMapper) {
     //Apply upcasting if reading a json/other function directly from the table.
     relBuilder.push(relNode);
 
     AtomicBoolean hasChanged = new AtomicBoolean();
     List<RexNode> fields = relNode.getRowType().getFieldList().stream()
-        .map(field -> convertField(field, hasChanged, relBuilder, icebergDataTypeMapper))
+        .map(field -> convertField(framework, field, hasChanged, relBuilder, icebergDataTypeMapper))
         .collect(Collectors.toList());
 
     if (hasChanged.get()) {
@@ -171,7 +174,7 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
   }
 
 
-  private RexNode convertField(RelDataTypeField field, AtomicBoolean hasChanged, RelBuilder relBuilder,
+  private RexNode convertField(SqrlFramework framework, RelDataTypeField field, AtomicBoolean hasChanged, RelBuilder relBuilder,
       DataTypeMapper icebergDataTypeMapper) {
     RelDataType type = field.getType();
     if (icebergDataTypeMapper.nativeTypeSupport(type)) {
@@ -186,8 +189,21 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
     CastFunction castFunction1 = castFunction.get();
 
     hasChanged.set(true);
+
+    framework.getFlinkFunctionCatalog().registerCatalogFunction(
+        UnresolvedIdentifier.of(castFunction1.getFunction().getClass().getSimpleName()),
+        castFunction1.getFunction().getClass(), true);
+
+    hasChanged.set(true);
+
+    List<SqlOperator> list = new ArrayList<>();
+    framework.getSqrlOperatorTable()
+        .lookupOperatorOverloads(new SqlIdentifier(castFunction1.getFunction().getClass().getSimpleName(), SqlParserPos.ZERO),
+            SqlFunctionCategory.USER_DEFINED_FUNCTION,
+            SqlSyntax.FUNCTION, list, SqlNameMatchers.liberal());
+
     return relBuilder.getRexBuilder()
-        .makeCall(castFunction1.getFunction(), List.of(relBuilder.field(field.getIndex())));
+        .makeCall(list.get(0), List.of(relBuilder.field(field.getIndex())));
   }
 
 

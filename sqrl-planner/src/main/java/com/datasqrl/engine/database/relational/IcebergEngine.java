@@ -71,8 +71,9 @@ public class IcebergEngine extends AbstractJDBCTableFormatEngine {
         queryEngine.plan(connectorFactory, connectorConfig, plan, inputs, pipeline, stagePlans, framework, errorCollector)));
 
     //We pick the first DDL from the engines
-    sinkDDL = queryEnginePlans.values().stream().map(DatabasePhysicalPlan::getDdl).findFirst().get();
-
+    sinkDDL = queryEnginePlans.values().stream().map(DatabasePhysicalPlan::getDdl).findFirst()
+        .orElse(List.of());
+    
     //Uncomment for debug
 //    StreamUtil.filterByClass(inputs,
 //        EngineSink.class).forEach(s -> {

@@ -66,7 +66,7 @@ public class FlinkPostgresDataTypeMapper extends FlinkDataTypeMapper {
       case VARBINARY:
         return true;
       case ARRAY:
-        return nativeTypeSupport(type.getComponentType());
+        return false;
       case MAP:
         return false;
       case ROW:
@@ -96,7 +96,7 @@ public class FlinkPostgresDataTypeMapper extends FlinkDataTypeMapper {
 
     // Cast needed, convert to bytes
     return Optional.of(
-        new CastFunction(SerializeToBytes.class.getSimpleName(),
+        new CastFunction(SerializeToBytes.class.getName(),
             convert(new SerializeToBytes())));
   }
 

@@ -4,7 +4,6 @@ import com.datasqrl.sql.SqlDDLStatement;
 import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.stream.Collectors;
-import lombok.AllArgsConstructor;
 import lombok.NonNull;
 
 public class CreateNotifyTriggerDDL implements SqlDDLStatement {
@@ -37,7 +36,7 @@ public class CreateNotifyTriggerDDL implements SqlDDLStatement {
   private String createPayload() {
     String argumentList = primaryKeys.stream()
         .map(pk ->
-            String.format("'%s', NEW.%s", pk, pk))
+            String.format("'%s', NEW.\"%s\"", pk, pk))
         .collect(Collectors.joining(", "));
 
     return String.format("jsonb_build_object(%s)::text", argumentList);
