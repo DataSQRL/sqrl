@@ -189,7 +189,8 @@ public class ObjectLoaderImpl implements ObjectLoader {
     UserDefinedFunction udf = (UserDefinedFunction) functionClass.getDeclaredConstructor().newInstance();
 
     // Return a namespace object containing the created function
-    return List.of(new FlinkUdfNsObject(FlinkUdfNsObject.getFunctionName(udf), udf, Optional.of(jarUrl)));
+    String functionName = FlinkUdfNsObject.getFunctionName(udf);
+    return List.of(new FlinkUdfNsObject(functionName, udf, functionName, Optional.of(jarUrl)));
   }
 
   @SneakyThrows
