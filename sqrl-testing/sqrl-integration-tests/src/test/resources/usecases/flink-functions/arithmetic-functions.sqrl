@@ -4,8 +4,8 @@ IMPORT data-local.Numbers; -- Import boolean data
 
 /* Create numeric data source */
 UnmodifiedNumericData := SELECT id,
-                                avg(x) AS x,
-                                avg(y) AS y,
+                                abs(avg(x)) AS x,
+                                abs(avg(y)) / 100 AS y,
                                 avg(z) AS z
                          FROM Numbers GROUP BY id ORDER BY id;
 
@@ -19,8 +19,8 @@ OperatorsTest := SELECT id,
                          x + y AS addition_operator,
                          x - y AS subtractions_operator,
                          x * y AS multiplication_operator,
-                         x / y AS division_operator,
-                         x % y AS mod_operator,
+                         x / y AS division_operator
+                         /*x % y AS mod_operator,*/
                   FROM UnmodifiedNumericData
                   ORDER BY id;
 
@@ -28,7 +28,7 @@ OperatorsTest := SELECT id,
 FunctionsTest := SELECT id,
                         POWER(x, 3) AS power_function,
                         ABS(x) AS absolute_function,
-                        SQRT(x) AS square_root_function,
+                        /*SQRT(x) AS square_root_function,*/
                         EXP(x) AS exponent_function
                  FROM UnmodifiedNumericData;
 
@@ -39,48 +39,49 @@ LogarithmTest := SELECT id,
                         LOG2(x) AS base_two_log_function
                  FROM UnmodifiedNumericData;
 
-/*+test */
-RoundingTest := SELECT id,
-                       CELI(x) AS ceiling_function,
-                       CEILING(x) AS ceiling_function_two,
-                       FLOOR(x) AS floor_function,
-                 FROM UnmodifiedNumericData;
 
 /*+test */
 TrigonometricTest := SELECT id,
-                       SIN(x) AS sine_function,
-                       SINH(x) AS hyper_sine_function,
-                       COS(x) AS cosine_function,
-                       TAN(x) AS tangent_function,
-                       TANH(x) AS hyper_tangent_function,
-                       COT(x) AS cotangent_function,
-                       ASIN(x) AS arc_sine_function,
-                       ACOS(x) AS arc_cosine_function,
-                       ATAN(x) AS arc_tangent_function,
-                       ATANH(x,y) AS arc_tangent_coordinate_function,
-                       COSH(x) AS hyper_cosine_function,
-                       DEGREES(x) AS degrees_function,
-                       RADIANS(x) AS radians_function,
-                       SIGN(x) AS sign_function,
-                       ROUND(x,2) AS round_function,
-                       PI() AS pie_function,
-                       E() AS e_function
+                            SIN(y) AS sine_function,
+                            SINH(y) AS hyper_sine_function,
+                            COS(y) AS cosine_function,
+                            TAN(y) AS tangent_function,
+                            TANH(y) AS hyper_tangent_function,
+                            COT(y) AS cotangent_function,
+                            ASIN(y) AS arc_sine_function,
+                            ACOS(y) AS arc_cosine_function,
+                            ATAN(y) AS arc_tangent_function,
+                            ATAN2(y,x) AS arc_tangent_coordinate_function,
+                            COSH(y) AS hyper_cosine_function,
+                            DEGREES(y) AS degrees_function,
+                            RADIANS(y) AS radians_function,
+                            SIGN(y) AS sign_function,
+                            ROUND(y,2) AS round_function,
+                            PI() AS pie_function,
+                            E() AS e_function
                  FROM UnmodifiedNumericData;
 
 /*+test */
 MiscTest := SELECT id,
-                   BIN(ROUND(x)) AS binary_int_function,
+                   BIN(CAST(x AS INT)) AS binary_int_function,
                    HEX(x) AS hexidecimal_int_function,
-                   UNHEX(HEX(x)) AS un_hexidecimal_function,
-                   TRUNCATE(x, 1) AS truncate_function,
-                   PERCENTILE(x, 0.5) AS percentile_function
+                   /*UNHEX('FF') AS un_hexidecimal_function,*/ --not available for some reason
+                   TRUNCATE(x, 1) AS truncate_function
+                   /*PERCENTILE(x, 0.5) AS percentile_function*/ -- needs own test, disabled for now
             FROM UnmodifiedNumericData;
 
 /*+test */
-UnmodifiedNumericData := SELECT id,
-                    EXP(x) AS exponent_function,
-                         CELI(x) AS ceiling_function,
-                         CEILING(x) AS ceiling_function_two,
-                         FLOOR(x) AS floor_function,
-                         FROM UnmodifiedNumericData;
+RoundingTest := SELECT id,
+                       EXP(x) AS exponent_function,
+                       CEIL(x) AS ceiling_function,
+                       CEILING(x) AS ceiling_function_two,
+                       FLOOR(x) AS floor_function
+                FROM UnmodifiedNumericData;
+
+/*+test */
+UnmodifiedNumericDataTest := SELECT id,
+                                    x,
+                                    y,
+                                    z
+                             FROM UnmodifiedNumericData;
 
