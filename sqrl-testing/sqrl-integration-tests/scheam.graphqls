@@ -1,0 +1,355 @@
+"An RFC-3339 compliant Full Date Scalar"
+scalar Date
+
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+
+"A JSON scalar"
+scalar JSON
+
+"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`."
+scalar LocalTime
+
+type MySchema {
+  event_time: DateTime!
+  nullableTimestampMillisField: DateTime
+  dateField: Date!
+  nullableDateField: Date
+  timeMillisField: LocalTime!
+  nullableTimeMillisField: LocalTime
+  timeMicrosField: LocalTime!
+  nullableTimeMicrosField: LocalTime
+  stringField: String!
+  nullableStringField: String
+  intField: Int!
+  nullableIntField: Int
+  longField: Float!
+  nullableLongField: Float
+  floatField: Float!
+  nullableFloatField: Float
+  doubleField: Float!
+  nullableDoubleField: Float
+  booleanField: Boolean!
+  nullableBooleanField: Boolean
+  enumField: String!
+  nullableEnumField: String
+  arrayField: [String]!
+  nullableArrayField: [Int]
+  decimalField: Float!
+  mapField: JSON!
+  nullableMapField: JSON
+  complexArrayField(limit: Int = 10, offset: Int = 0): [complexArrayField!]
+  multiNestedRecord: multiNestedRecord!
+  nestedRecord: nestedRecord!
+  nullableComplexArrayField(limit: Int = 10, offset: Int = 0): [nullableComplexArrayField!]
+  nullableNestedRecord: nullableNestedRecord
+}
+
+type MySchemaResult {
+  event_time: DateTime!
+  nullableTimestampMillisField: DateTime
+  dateField: Date!
+  nullableDateField: Date
+  timeMillisField: LocalTime!
+  nullableTimeMillisField: LocalTime
+  timeMicrosField: LocalTime!
+  nullableTimeMicrosField: LocalTime
+  complexArrayField: [MySchema_complexArrayFieldResult]!
+  nullableComplexArrayField: [MySchema_nullableComplexArrayFieldResult]
+  multiNestedRecord: MySchema_multiNestedRecordResult!
+  stringField: String!
+  nullableStringField: String
+  intField: Int!
+  nullableIntField: Int
+  longField: Float!
+  nullableLongField: Float
+  floatField: Float!
+  nullableFloatField: Float
+  doubleField: Float!
+  nullableDoubleField: Float
+  booleanField: Boolean!
+  nullableBooleanField: Boolean
+  enumField: String!
+  nullableEnumField: String
+  arrayField: [String]!
+  nullableArrayField: [Int]
+  nestedRecord: MySchema_nestedRecordResult!
+  nullableNestedRecord: MySchema_nullableNestedRecordResult
+  decimalField: Float!
+  mapField: JSON!
+  nullableMapField: JSON
+}
+
+type MySchema_ {
+  event_time: DateTime!
+  nullableTimestampMillisField: DateTime
+  dateField: Date!
+  nullableDateField: Date
+  timeMillisField: LocalTime!
+  nullableTimeMillisField: LocalTime
+  timeMicrosField: LocalTime!
+  nullableTimeMicrosField: LocalTime
+  stringField: String!
+  nullableStringField: String
+  intField: Int!
+  nullableIntField: Int
+  longField: Float!
+  nullableLongField: Float
+  floatField: Float!
+  nullableFloatField: Float
+  doubleField: Float!
+  nullableDoubleField: Float
+  booleanField: Boolean!
+  nullableBooleanField: Boolean
+  enumField: String!
+  nullableEnumField: String
+  arrayField: [String]!
+  nullableArrayField: [Int]
+  decimalField: Float!
+  mapField: JSON!
+  nullableMapField: JSON
+  complexArrayField(limit: Int = 10, offset: Int = 0): [complexArrayField!]
+  nestedRecord: nestedRecord!
+  nullableComplexArrayField(limit: Int = 10, offset: Int = 0): [nullableComplexArrayField!]
+  nullableNestedRecord: nullableNestedRecord
+}
+
+type MySchema_complexArrayFieldResult {
+  itemFieldOne: Int!
+  itemFieldTwo: String!
+}
+
+type MySchema_multiNestedRecordResult {
+  nestedLevelOne: MySchema_multiNestedRecord_nestedLevelOneResult!
+}
+
+type MySchema_multiNestedRecord_nestedLevelOneResult {
+  levelOneField: String!
+  nestedLevelTwo: MySchema_multiNestedRecord_nestedLevelOne_nestedLevelTwoResult!
+}
+
+type MySchema_multiNestedRecord_nestedLevelOne_nestedLevelTwoResult {
+  levelTwoField: Int!
+}
+
+type MySchema_nestedRecordResult {
+  nestedStringField: String!
+  nestedIntField: Int!
+  nestedArrayField: [Float]!
+}
+
+type MySchema_nullableComplexArrayFieldResult {
+  nullableItemFieldOne: Float
+  nullableItemFieldTwo: Boolean
+}
+
+type MySchema_nullableNestedRecordResult {
+  nullableNestedStringField: String
+  nullableNestedLongField: Float
+}
+
+type Query {
+  Schema(event_time: DateTime, limit: Int = 10, offset: Int = 0): [Schema!]
+  MySchema(event_time: DateTime, limit: Int = 10, offset: Int = 0): [MySchema!]
+}
+
+type Schema {
+  event_time: DateTime!
+  nullableTimestampMillisField: DateTime
+  dateField: Date!
+  nullableDateField: Date
+  timeMillisField: LocalTime!
+  nullableTimeMillisField: LocalTime
+  timeMicrosField: LocalTime!
+  nullableTimeMicrosField: LocalTime
+  stringField: String!
+  nullableStringField: String
+  intField: Int!
+  nullableIntField: Int
+  longField: Float!
+  nullableLongField: Float
+  floatField: Float!
+  nullableFloatField: Float
+  doubleField: Float!
+  nullableDoubleField: Float
+  booleanField: Boolean!
+  nullableBooleanField: Boolean
+  enumField: String!
+  nullableEnumField: String
+  arrayField: [String]!
+  nullableArrayField: [Int]
+  decimalField: Float!
+  mapField: JSON!
+  nullableMapField: JSON
+  complexArrayField(limit: Int = 10, offset: Int = 0): [complexArrayField!]
+  multiNestedRecord: multiNestedRecord!
+  nestedRecord: nestedRecord!
+  nullableComplexArrayField(limit: Int = 10, offset: Int = 0): [nullableComplexArrayField!]
+  nullableNestedRecord: nullableNestedRecord
+}
+
+type Schema_ {
+  event_time: DateTime!
+  nullableTimestampMillisField: DateTime
+  dateField: Date!
+  nullableDateField: Date
+  timeMillisField: LocalTime!
+  nullableTimeMillisField: LocalTime
+  timeMicrosField: LocalTime!
+  nullableTimeMicrosField: LocalTime
+  stringField: String!
+  nullableStringField: String
+  intField: Int!
+  nullableIntField: Int
+  longField: Float!
+  nullableLongField: Float
+  floatField: Float!
+  nullableFloatField: Float
+  doubleField: Float!
+  nullableDoubleField: Float
+  booleanField: Boolean!
+  nullableBooleanField: Boolean
+  enumField: String!
+  nullableEnumField: String
+  arrayField: [String]!
+  nullableArrayField: [Int]
+  decimalField: Float!
+  mapField: JSON!
+  nullableMapField: JSON
+  complexArrayField(limit: Int = 10, offset: Int = 0): [complexArrayField!]
+  nestedRecord: nestedRecord!
+  nullableComplexArrayField(limit: Int = 10, offset: Int = 0): [nullableComplexArrayField!]
+  nullableNestedRecord: nullableNestedRecord
+}
+
+type Subscription {
+  MySchema(_uuid: String, event_time: DateTime, nullableTimestampMillisField: DateTime, dateField: Date, nullableDateField: Date, timeMillisField: LocalTime, nullableTimeMillisField: LocalTime, timeMicrosField: LocalTime, nullableTimeMicrosField: LocalTime, stringField: String, nullableStringField: String, intField: Int, nullableIntField: Int, longField: Float, nullableLongField: Float, floatField: Float, nullableFloatField: Float, doubleField: Float, nullableDoubleField: Float, booleanField: Boolean, nullableBooleanField: Boolean, enumField: String, nullableEnumField: String, decimalField: Float, mapField: JSON, nullableMapField: JSON): MySchemaResult!
+}
+
+type complexArrayField {
+  itemFieldOne: Int!
+  itemFieldTwo: String!
+}
+
+type complexArrayField_ {
+  itemFieldOne: Int!
+  itemFieldTwo: String!
+}
+
+type complexArrayField__ {
+  itemFieldOne: Int!
+  itemFieldTwo: String!
+}
+
+type complexArrayField___ {
+  itemFieldOne: Int!
+  itemFieldTwo: String!
+}
+
+type multiNestedRecord {
+  nestedLevelOne: nestedLevelOne!
+}
+
+type multiNestedRecord_ {
+  nestedLevelOne: nestedLevelOne!
+}
+
+type nestedLevelOne {
+  levelOneField: String!
+  nestedLevelTwo: nestedLevelTwo!
+}
+
+type nestedLevelOne_ {
+  levelOneField: String!
+  nestedLevelTwo: nestedLevelTwo!
+}
+
+type nestedLevelOne__ {
+  levelOneField: String!
+  nestedLevelTwo: nestedLevelTwo!
+}
+
+type nestedLevelOne___ {
+  levelOneField: String!
+  nestedLevelTwo: nestedLevelTwo!
+}
+
+type nestedLevelTwo {
+  levelTwoField: Int!
+}
+
+type nestedLevelTwo_ {
+  levelTwoField: Int!
+}
+
+type nestedLevelTwo__ {
+  levelTwoField: Int!
+}
+
+type nestedLevelTwo___ {
+  levelTwoField: Int!
+}
+
+type nestedRecord {
+  nestedStringField: String!
+  nestedIntField: Int!
+  nestedArrayField: [Float]!
+}
+
+type nestedRecord_ {
+  nestedStringField: String!
+  nestedIntField: Int!
+  nestedArrayField: [Float]!
+}
+
+type nestedRecord__ {
+  nestedStringField: String!
+  nestedIntField: Int!
+  nestedArrayField: [Float]!
+}
+
+type nestedRecord___ {
+  nestedStringField: String!
+  nestedIntField: Int!
+  nestedArrayField: [Float]!
+}
+
+type nullableComplexArrayField {
+  nullableItemFieldOne: Float
+  nullableItemFieldTwo: Boolean
+}
+
+type nullableComplexArrayField_ {
+  nullableItemFieldOne: Float
+  nullableItemFieldTwo: Boolean
+}
+
+type nullableComplexArrayField__ {
+  nullableItemFieldOne: Float
+  nullableItemFieldTwo: Boolean
+}
+
+type nullableComplexArrayField___ {
+  nullableItemFieldOne: Float
+  nullableItemFieldTwo: Boolean
+}
+
+type nullableNestedRecord {
+  nullableNestedStringField: String
+  nullableNestedLongField: Float
+}
+
+type nullableNestedRecord_ {
+  nullableNestedStringField: String
+  nullableNestedLongField: Float
+}
+
+type nullableNestedRecord__ {
+  nullableNestedStringField: String
+  nullableNestedLongField: Float
+}
+
+type nullableNestedRecord___ {
+  nullableNestedStringField: String
+  nullableNestedLongField: Float
+}

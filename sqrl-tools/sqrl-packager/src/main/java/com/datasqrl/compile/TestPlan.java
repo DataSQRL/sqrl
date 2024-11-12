@@ -13,6 +13,7 @@ public class TestPlan {
 
   List<GraphqlQuery> queries;
   List<GraphqlQuery> mutations;
+  List<GraphqlQuery> subscriptions;
 
   @AllArgsConstructor
   @NoArgsConstructor

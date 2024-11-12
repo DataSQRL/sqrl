@@ -52,6 +52,7 @@ public class TestPlanner {
     Parser parser = new Parser();
     List<GraphqlQuery> queries = new ArrayList<>();
     List<GraphqlQuery> mutations = new ArrayList<>();
+    List<GraphqlQuery> subscriptions = new ArrayList<>();
 
     testsPath.ifPresent((p) -> {
       try (Stream<Path> paths = Files.walk(p)) {
@@ -65,7 +66,7 @@ public class TestPlanner {
                 throw new RuntimeException(e);
               }
               Document document = parser.parseDocument(content);
-              extractQueriesAndMutations(document, queries, mutations, file.getFileName().toString().replace(".graphql", ""));
+              extractQueriesAndMutations(document, queries, mutations,subscriptions, file.getFileName().toString().replace(".graphql", ""));
             });
       } catch (IOException e) {
         e.printStackTrace();
@@ -81,10 +82,10 @@ public class TestPlanner {
       queries.add(new GraphqlQuery(definition1.getName(),
           AstPrinter.printAst(definition1)));
     }
-    return new TestPlan(queries, mutations);
+    return new TestPlan(queries, mutations, subscriptions);
   }
 
-  private void extractQueriesAndMutations(Document document, List<GraphqlQuery> queries, List<GraphqlQuery> mutations, String prefix) {
+  private void extractQueriesAndMutations(Document document, List<GraphqlQuery> queries, List<GraphqlQuery> mutations, List<GraphqlQuery> subscriptions, String prefix) {
     for (Definition definition : document.getDefinitions()) {
       if (definition instanceof OperationDefinition) {
         OperationDefinition operationDefinition = (OperationDefinition) definition;
@@ -93,6 +94,8 @@ public class TestPlanner {
           queries.add(query);
         } else if (operationDefinition.getOperation() == Operation.MUTATION) {
           mutations.add(query);
+        } else if (operationDefinition.getOperation() == Operation.SUBSCRIPTION) {
+          subscriptions.add(query);
         }
       }
     }

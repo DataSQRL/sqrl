@@ -26,7 +26,7 @@ public class KafkaDataFetcherFactory {
       }
 
       private boolean filterSubscription(Object data, Map<String, Object> args) {
-        if (args == null) {
+        if (args == null || args.isEmpty()) {
           return false;
         }
         for (Map.Entry<String, String> filter : coords.getFilters().entrySet()) {
