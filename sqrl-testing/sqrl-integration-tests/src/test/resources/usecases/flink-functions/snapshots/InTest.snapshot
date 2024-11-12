@@ -1,1 +1,0 @@
-{"errors":[{"message":"Exception while fetching data (/InTest) : ERROR: non-integer constant in GROUP BY (42601)","locations":[{"line":2,"column":3}],"path":["InTest"],"extensions":{"classification":"DataFetchingException"}}],"data":{"InTest":null}}
