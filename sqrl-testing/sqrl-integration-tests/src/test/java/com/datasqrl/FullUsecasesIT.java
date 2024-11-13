@@ -62,8 +62,8 @@ public class FullUsecasesIT {
   }
 
   List<ScriptCriteria> disabledScripts = List.of(
-      new ScriptCriteria("duckdb.sqrl", "test"), //fails in build server
-      new ScriptCriteria("duckdb.sqrl", "run"), //fails in build server
+//      new ScriptCriteria("duckdb.sqrl", "test"), //fails in build server
+//      new ScriptCriteria("duckdb.sqrl", "run"), //fails in build server
       new ScriptCriteria("snowflake.sqrl", "test"), //fails in build server
       new ScriptCriteria("snowflake.sqrl", "run"), //fails in build server
       new ScriptCriteria("sensors-mutation.sqrl", "test"), //flaky see sqrl script
@@ -74,8 +74,8 @@ public class FullUsecasesIT {
       //new ScriptCriteria("season-teaser.sqrl", "run"),
 //      new ScriptCriteria("comparison-functions.sqrl", "test"),
 //      new ScriptCriteria("comparison-functions.sqrl", "run"),
-      new ScriptCriteria("analytics-only.sqrl", "test"),
-      new ScriptCriteria("analytics-only.sqrl", "run"),
+//      new ScriptCriteria("analytics-only.sqrl", "test"),
+//      new ScriptCriteria("analytics-only.sqrl", "run"),
       new ScriptCriteria("seedshop-extended.sqrl", "test"), // CustomerPromotionTest issue
       new ScriptCriteria("seedshop-extended.sqrl", "run") // CustomerPromotionTest issue
   );
@@ -248,7 +248,7 @@ public class FullUsecasesIT {
   @MethodSource("useCaseProvider")
   @Disabled
   public void runTestNumber(UseCaseTestParameter param, TestInfo testInfo) {
-    int i = 27;
+    int i = -1;
     testNo++;
     System.out.println(testNo + ":" + param);
     if (i == testNo) {
