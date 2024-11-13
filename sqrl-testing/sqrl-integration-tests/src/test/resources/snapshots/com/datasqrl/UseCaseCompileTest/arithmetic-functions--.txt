@@ -1,0 +1,232 @@
+>>>pipeline_explain.txt
+=== Numbers
+ID:     numbers_2
+Type:   stream
+Stage:  flink
+Primary Key: id
+Timestamp  : timestamp
+Schema:
+ - id: BIGINT NOT NULL
+ - x: DOUBLE NOT NULL
+ - y: DOUBLE NOT NULL
+ - z: DOUBLE NOT NULL
+ - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Plan:
+LogicalTableScan(table=[[numbers_1]])
+
+=== UnmodifiedNumericData
+ID:     unmodifiednumericdata_1
+Type:   stream
+Stage:  flink
+Inputs: numbers_2
+Primary Key: id
+Timestamp  : _timestamp
+Schema:
+ - id: BIGINT NOT NULL
+ - x: DOUBLE NOT NULL
+ - y: DOUBLE NOT NULL
+ - z: DOUBLE NOT NULL
+ - _timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Post Processors:
+ - sort: #0: id BIGINT ASC
+Plan:
+LogicalProject(id=[$0], x=[ABS($2)], y=[/(ABS($3), 100)], z=[$4], _timestamp=[$1])
+  LogicalAggregate(group=[{0, 4}], agg#0=[AVG($1)], agg#1=[AVG($2)], z=[AVG($3)]) hints[TumbleAggregationHint options:[4, INSTANT, 4, 1, 0]]
+    LogicalTableScan(table=[[numbers_2]])
+
+>>>flink.json
+{
+  "flinkSql" : [
+    "CREATE TEMPORARY TABLE `numbers_1` (\n  `id` BIGINT NOT NULL,\n  `x` DOUBLE NOT NULL,\n  `y` DOUBLE NOT NULL,\n  `z` DOUBLE NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`) NOT ENFORCED,\n  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND\n) WITH (\n  'format' = 'flexible-json',\n  'path' = '${DATA_PATH}/numbers.jsonl',\n  'connector' = 'filesystem'\n);",
+    "CREATE TEMPORARY TABLE `numbers_2` (\n  `id` BIGINT NOT NULL,\n  `x` DOUBLE NOT NULL,\n  `y` DOUBLE NOT NULL,\n  `z` DOUBLE NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'numbers_2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `unmodifiednumericdata_1` (\n  `id` BIGINT NOT NULL,\n  `x` DOUBLE NOT NULL,\n  `y` DOUBLE NOT NULL,\n  `z` DOUBLE NOT NULL,\n  `_timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'unmodifiednumericdata_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `numbers_1`;",
+    "CREATE VIEW `table$2`\nAS\nSELECT *\nFROM `numbers_1`;",
+    "CREATE VIEW `table$3`\nAS\nSELECT `id`, ABS(AVG(`x`)) AS `x`, ABS(AVG(`y`)) / 100 AS `y`, AVG(`z`) AS `z`, `window_time` AS `_timestamp`\nFROM TABLE(TUMBLE(TABLE `table$2`, DESCRIPTOR(`timestamp`), INTERVAL '0.001' SECOND(1))) AS `t`\nGROUP BY `id`, `window_start`, `window_end`, `window_time`;",
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `numbers_2`\n(SELECT *\n FROM `table$1`)\n;\nINSERT INTO `unmodifiednumericdata_1`\n (SELECT *\n  FROM `table$3`)\n ;\n END;"
+  ],
+  "connectors" : [
+    "jdbc-sqrl",
+    "filesystem"
+  ],
+  "formats" : [
+    "flexible-json"
+  ]
+}
+>>>kafka.json
+{
+  "topics" : [ ]
+}
+>>>postgres.json
+{
+  "ddl" : [
+    {
+      "name" : "numbers_2",
+      "columns" : [
+        "\"id\" BIGINT NOT NULL",
+        "\"x\" DOUBLE PRECISION NOT NULL",
+        "\"y\" DOUBLE PRECISION NOT NULL",
+        "\"z\" DOUBLE PRECISION NOT NULL",
+        "\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"id\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS numbers_2 (\"id\" BIGINT NOT NULL,\"x\" DOUBLE PRECISION NOT NULL,\"y\" DOUBLE PRECISION NOT NULL,\"z\" DOUBLE PRECISION NOT NULL,\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\"));"
+    },
+    {
+      "name" : "unmodifiednumericdata_1",
+      "columns" : [
+        "\"id\" BIGINT NOT NULL",
+        "\"x\" DOUBLE PRECISION NOT NULL",
+        "\"y\" DOUBLE PRECISION NOT NULL",
+        "\"z\" DOUBLE PRECISION NOT NULL",
+        "\"_timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"id\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS unmodifiednumericdata_1 (\"id\" BIGINT NOT NULL,\"x\" DOUBLE PRECISION NOT NULL,\"y\" DOUBLE PRECISION NOT NULL,\"z\" DOUBLE PRECISION NOT NULL,\"_timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\"));"
+    }
+  ],
+  "views" : [
+    {
+      "name" : "UnmodifiedNumericData",
+      "sql" : "CREATE OR REPLACE VIEW \"UnmodifiedNumericData\"(\"id\", \"x\", \"y\", \"z\", \"_timestamp\") AS SELECT *\nFROM \"unmodifiednumericdata_1\"\nORDER BY \"id\";"
+    },
+    {
+      "name" : "Numbers",
+      "sql" : "CREATE OR REPLACE VIEW \"Numbers\"(\"id\", \"x\", \"y\", \"z\", \"timestamp\") AS SELECT *\nFROM \"numbers_2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"id\";"
+    }
+  ]
+}
+>>>vertx.json
+{
+  "model" : {
+    "coords" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Numbers",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"numbers_2\"\nWHERE \"id\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "id"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"numbers_2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"id\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "UnmodifiedNumericData",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"unmodifiednumericdata_1\"\nWHERE \"id\" = $1\nORDER BY \"id\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "id"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"unmodifiednumericdata_1\"\nORDER BY \"id\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      }
+    ],
+    "mutations" : [ ],
+    "subscriptions" : [ ],
+    "schema" : {
+      "type" : "string",
+      "type" : "string",
+      "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\ntype Numbers {\n  id: Float!\n  x: Float!\n  y: Float!\n  z: Float!\n  timestamp: DateTime!\n}\n\ntype Query {\n  Numbers(id: Float, limit: Int = 10, offset: Int = 0): [Numbers!]\n  UnmodifiedNumericData(id: Float, limit: Int = 10, offset: Int = 0): [UnmodifiedNumericData!]\n}\n\ntype UnmodifiedNumericData {\n  id: Float!\n  x: Float!\n  y: Float!\n  z: Float!\n}\n"
+    }
+  }
+}

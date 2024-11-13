@@ -66,5 +66,3 @@ UnmodifiedNumericData := SELECT id,
                                 x,
                                 y
                          FROM UnmodifiedNumericData;
-
-
