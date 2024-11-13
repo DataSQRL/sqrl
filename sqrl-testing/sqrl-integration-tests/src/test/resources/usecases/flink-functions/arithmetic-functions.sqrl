@@ -29,14 +29,15 @@ FunctionsTest := SELECT id,
                         POWER(x, 3) AS power_function,
                         ABS(x) AS absolute_function,
                         /*SQRT(x) AS square_root_function,*/
-                        EXP(x) AS exponent_function
+                        TRUNCATE(EXP(x), 3) AS exponent_function
                  FROM UnmodifiedNumericData;
 
 /*+test */
 LogarithmTest := SELECT id,
                         LN(x) AS natural_log_function,
                         LOG10(x) AS base_ten_log_function,
-                        LOG2(x) AS base_two_log_function
+                        LOG2(x) AS base_two_log_function,
+                        LOG(x) AS default_log_function
                  FROM UnmodifiedNumericData;
 
 
@@ -72,7 +73,7 @@ MiscTest := SELECT id,
 
 /*+test */
 RoundingTest := SELECT id,
-                       EXP(x) AS exponent_function,
+                       TRUNCATE(EXP(x), 3) AS exponent_function,
                        CEIL(x) AS ceiling_function,
                        CEILING(x) AS ceiling_function_two,
                        FLOOR(x) AS floor_function
