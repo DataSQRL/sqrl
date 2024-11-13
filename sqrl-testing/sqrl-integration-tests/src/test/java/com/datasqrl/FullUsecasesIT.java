@@ -42,6 +42,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -134,12 +135,14 @@ public class FullUsecasesIT {
   @SneakyThrows
   @ParameterizedTest
   @MethodSource("useCaseProvider")
-  public void testUseCase(UseCaseTestParameter param) {
+  public void testUseCase(UseCaseTestParameter param, TestInfo testInfo) {
     if (disabledScripts.contains(new ScriptCriteria(param.getSqrlFileName(), param.getGoal()))) {
       log.warn("Skipping disabled test:" + param.getSqrlFileName());
       return;
     }
-    this.snapshot = new Snapshot(param.testName, param.getSqrlFileName().substring(0, param.getSqrlFileName().length()-5), new StringBuilder());
+    this.snapshot = Snapshot.of(
+        FullUsecasesIT.class, param.testName,
+        param.getSqrlFileName().substring(0, param.getSqrlFileName().length()-5));
     TestExtension testExtension = testExtensions.create(param.getTestName());
     testExtension.setup();
 
@@ -244,13 +247,21 @@ public class FullUsecasesIT {
   @ParameterizedTest
   @MethodSource("useCaseProvider")
   @Disabled
-  public void runTestNumber(UseCaseTestParameter param) {
-    int i = 19;
+  public void runTestNumber(UseCaseTestParameter param, TestInfo testInfo) {
+    int i = 27;
     testNo++;
     System.out.println(testNo + ":" + param);
     if (i == testNo) {
-      testUseCase(param);
+      testUseCase(param, testInfo);
     }
+  }
+
+  @ParameterizedTest
+  @MethodSource("useCaseProvider")
+  @Disabled
+  public void printUseCaseNumbers(UseCaseTestParameter param) {
+    testNo++;
+    System.out.println(testNo + ":" + param);
   }
 
   static List<UseCaseTestParameter> useCaseProvider() throws Exception {

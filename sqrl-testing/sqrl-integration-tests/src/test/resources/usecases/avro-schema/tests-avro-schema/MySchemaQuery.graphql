@@ -1,0 +1,60 @@
+query {
+    Schema {
+        uuidField
+        timestampMillisField
+        nullableTimestampMillisField
+        timestampMicrosField
+        nullableTimestampMicrosField
+        dateField
+        nullableDateField
+        timeMillisField
+        nullableTimeMillisField
+        timeMicrosField
+        nullableTimeMicrosField
+        stringField
+        nullableStringField
+        intField
+        nullableIntField
+        longField
+        nullableLongField
+        floatField
+        nullableFloatField
+        doubleField
+        nullableDoubleField
+        booleanField
+        nullableBooleanField
+        enumField
+        arrayField
+        nullableArrayField
+        nullableEnumField
+        decimalField
+        complexArrayField {
+            itemFieldOne
+            itemFieldTwo
+        }
+        multiNestedRecord {
+            nestedLevelOne {
+                levelOneField
+                nestedLevelTwo {
+                    levelTwoField
+                }
+            }
+        }
+        nullableComplexArrayField {
+            nullableItemFieldOne
+            nullableItemFieldTwo
+        }
+        nestedRecord {
+            nestedStringField
+            nestedIntField
+            nestedArrayField
+        }
+        nullableNestedRecord {
+            nullableNestedStringField
+            nullableNestedLongField
+        }
+        mapField
+        nullableMapField
+    }
+
+}

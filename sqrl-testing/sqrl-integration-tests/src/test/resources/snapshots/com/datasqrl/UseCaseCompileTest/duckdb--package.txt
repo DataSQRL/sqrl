@@ -432,7 +432,7 @@ LogicalProject(id=[$0], hello=['hello world'], _updated_at=[$6])
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype MyTable1 {\n  id: Float!\n  hello: String!\n}\n\ntype MyTable2 {\n  id: Float!\n  hello: String!\n}\n\ntype MyTable3 {\n  id: Float!\n  hello: String!\n}\n\ntype Query {\n  MyTable1(id: Float, limit: Int = 10, offset: Int = 0): [MyTable1!]\n  MyTable2(id: Float, limit: Int = 10, offset: Int = 0): [MyTable2!]\n  MyTable3(id: Float, limit: Int = 10, offset: Int = 0): [MyTable3!]\n}\n"
+      "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\ntype MyTable1 {\n  id: Float!\n  hello: String!\n}\n\ntype MyTable2 {\n  id: Float!\n  hello: String!\n}\n\ntype MyTable3 {\n  id: Float!\n  hello: String!\n}\n\ntype Query {\n  MyTable1(id: Float, limit: Int = 10, offset: Int = 0): [MyTable1!]\n  MyTable2(id: Float, limit: Int = 10, offset: Int = 0): [MyTable2!]\n  MyTable3(id: Float, limit: Int = 10, offset: Int = 0): [MyTable3!]\n}\n"
     }
   }
 }

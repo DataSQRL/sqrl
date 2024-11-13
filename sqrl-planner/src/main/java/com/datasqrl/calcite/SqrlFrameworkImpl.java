@@ -1,6 +1,5 @@
 package com.datasqrl.calcite;
 
-import com.datasqrl.DefaultFunctions;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.plan.hints.SqrlHintStrategyTable;
 import com.datasqrl.plan.rules.SqrlRelMetadataProvider;
@@ -16,9 +15,5 @@ public class SqrlFrameworkImpl extends SqrlFramework {
     super(SqrlRelMetadataProvider.INSTANCE,
         SqrlHintStrategyTable.getHintStrategyTable(), NameCanonicalizer.SYSTEM,
         schema);
-
-    DefaultFunctions functions = new DefaultFunctions();
-    functions.getDefaultFunctions()
-        .forEach((key, value) -> getSchema().addFunction(key, value));
   }
 }

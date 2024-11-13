@@ -88,7 +88,7 @@ Schema:
  - id: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - customerid: BIGINT NOT NULL
- - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
+ - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
 LogicalProject(lastUpdated=[$8], id=[$0], name=[$7], customerid=[$1], __timestamp=[GREATEST($2, $9)])
   LogicalJoin(condition=[=($1, $5)], joinType=[left]) hints[JoinCostHint options:[VERSIONED_STATE, VERSIONED_STATE, 1, RIGHT]]
@@ -134,9 +134,9 @@ Schema:
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - customerid: BIGINT
  - _customerid0: BIGINT NOT NULL
- - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
+ - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalProject(ouuid=[COALESCE($6, 0:BIGINT)], id=[$6], name=[$2], customerid=[$7], _customerid0=[$0], __timestamp=[GREATEST($4, $8)])
+LogicalProject(ouuid=[coalesce($6, 0:BIGINT)], id=[$6], name=[$2], customerid=[$7], _customerid0=[$0], __timestamp=[GREATEST($4, $8)])
   LogicalJoin(condition=[=($7, $0)], joinType=[left]) hints[JoinCostHint options:[VERSIONED_STATE, VERSIONED_STATE, 1, LEFT]]
     LogicalFilter(condition=[=($5, 1)]) hints[DedupHint]
       LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS FIRST)])
@@ -156,7 +156,7 @@ Schema:
  - lastUpdated: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
+ - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
 LogicalProject(lastUpdated=[$3], customerid=[$0], name=[$2], __timestamp=[GREATEST($4, $8)])
   LogicalFilter(condition=[IS NULL($6)])
@@ -217,31 +217,31 @@ LogicalTableScan(table=[[product_1]])
 >>>flink.json
 {
   "flinkSql" : [
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptostring` AS 'com.datasqrl.time.TimestampToString' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofmonth` AS 'com.datasqrl.time.EndOfMonth' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptoepochmilli` AS 'com.datasqrl.time.TimestampToEpochMilli' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofweek` AS 'com.datasqrl.time.EndOfWeek' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `parsetimestamp` AS 'com.datasqrl.time.ParseTimestamp' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochmillitotimestamp` AS 'com.datasqrl.time.EpochMilliToTimestamp' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestampToString` AS 'com.datasqrl.time.TimestampToString' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestampToEpochMilli` AS 'com.datasqrl.time.TimestampToEpochMilli' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endOfWeek` AS 'com.datasqrl.time.EndOfWeek' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endOfHour` AS 'com.datasqrl.time.EndOfHour' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endOfYear` AS 'com.datasqrl.time.EndOfYear' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `atZone` AS 'com.datasqrl.time.AtZone' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endOfMonth` AS 'com.datasqrl.time.EndOfMonth' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestampToEpoch` AS 'com.datasqrl.time.TimestampToEpoch' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochMilliToTimestamp` AS 'com.datasqrl.time.EpochMilliToTimestamp' LANGUAGE JAVA;",
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `ToJson` AS 'com.datasqrl.json.ToJson' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofminute` AS 'com.datasqrl.time.EndOfMinute' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptoepoch` AS 'com.datasqrl.time.TimestampToEpoch' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofsecond` AS 'com.datasqrl.time.EndOfSecond' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochtotimestamp` AS 'com.datasqrl.time.EpochToTimestamp' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `atzone` AS 'com.datasqrl.time.AtZone' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofday` AS 'com.datasqrl.time.EndOfDay' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofhour` AS 'com.datasqrl.time.EndOfHour' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofyear` AS 'com.datasqrl.time.EndOfYear' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochToTimestamp` AS 'com.datasqrl.time.EpochToTimestamp' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `parseTimestamp` AS 'com.datasqrl.time.ParseTimestamp' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endOfDay` AS 'com.datasqrl.time.EndOfDay' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endOfMinute` AS 'com.datasqrl.time.EndOfMinute' LANGUAGE JAVA;",
+    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endOfSecond` AS 'com.datasqrl.time.EndOfSecond' LANGUAGE JAVA;",
     "CREATE TEMPORARY TABLE `customer_1` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `timestamp` AS EPOCHTOTIMESTAMP(`lastUpdated`),\n  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,\n  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
     "CREATE TEMPORARY TABLE `orders_1` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,\n  PRIMARY KEY (`id`, `time`) NOT ENFORCED,\n  WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
     "CREATE TEMPORARY TABLE `product_1` (\n  `productid` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`productid`, `name`, `description`, `category`) NOT ENFORCED,\n  WATERMARK FOR `_ingest_time` AS `_ingest_time` - INTERVAL '0.001' SECOND\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
     "CREATE TEMPORARY TABLE `customer_3` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`customerid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'customer_3',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `ordercustomer_1` (\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `id` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  PRIMARY KEY (`id`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'ordercustomer_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `ordercustomerconstant_1` (\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `id` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  PRIMARY KEY (`id`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'ordercustomerconstant_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `ordercustomerleft_1` (\n  `lastUpdated` BIGINT,\n  `id` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `customerid` BIGINT NOT NULL,\n  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,\n  PRIMARY KEY (`id`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'ordercustomerleft_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `ordercustomerleft_1` (\n  `lastUpdated` BIGINT,\n  `id` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `customerid` BIGINT NOT NULL,\n  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'ordercustomerleft_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `ordercustomerleftexcluded_1` (\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  PRIMARY KEY (`id`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'ordercustomerleftexcluded_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `ordercustomerright_1` (\n  `ouuid` BIGINT NOT NULL,\n  `id` BIGINT,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `customerid` BIGINT,\n  `_customerid0` BIGINT NOT NULL,\n  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,\n  PRIMARY KEY (`_customerid0`, `ouuid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'ordercustomerright_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `ordercustomerrightexcluded_1` (\n  `lastUpdated` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,\n  PRIMARY KEY (`customerid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'ordercustomerrightexcluded_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `ordercustomerright_1` (\n  `ouuid` BIGINT NOT NULL,\n  `id` BIGINT,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `customerid` BIGINT,\n  `_customerid0` BIGINT NOT NULL,\n  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`_customerid0`, `ouuid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'ordercustomerright_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `ordercustomerrightexcluded_1` (\n  `lastUpdated` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`customerid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'ordercustomerrightexcluded_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `orders_3` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  PRIMARY KEY (`id`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orders_3',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `product_2` (\n  `productid` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`productid`, `name`, `description`, `category`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'product_2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `customer_1`;",
@@ -251,7 +251,7 @@ LogicalTableScan(table=[[product_1]])
     "CREATE VIEW `table$5`\nAS\nSELECT `t0`.`time`, `t0`.`id`, `t0`.`customerid`\nFROM (SELECT *\n  FROM (SELECT `id`, `customerid`, `time`, `entries`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `time` DESC) AS `_rownum`\n    FROM `orders_1`) AS `t`\n  WHERE `_rownum` = 1) AS `t0`\n LEFT JOIN (SELECT *\n  FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC) AS `_rownum`\n    FROM `customer_1`) AS `t1`\n  WHERE `_rownum` = 1) AS `t2` ON `t0`.`customerid` = `t2`.`customerid`\nWHERE `t2`.`customerid` IS NULL;",
     "CREATE VIEW `table$6`\nAS\nSELECT COALESCE(`t2`.`id`, 0) AS `ouuid`, `t2`.`id`, `t0`.`name`, `t2`.`customerid`, `t0`.`customerid` AS `_customerid0`, GREATEST(`t0`.`timestamp`, `t2`.`time`) AS `__timestamp`\nFROM (SELECT *\n  FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC) AS `_rownum`\n    FROM `customer_1`) AS `t`\n  WHERE `_rownum` = 1) AS `t0`\n LEFT JOIN (SELECT *\n  FROM (SELECT `id`, `customerid`, `time`, `entries`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `time` DESC) AS `_rownum`\n    FROM `orders_1`) AS `t1`\n  WHERE `_rownum` = 1) AS `t2` ON `t0`.`customerid` = `t2`.`customerid`;",
     "CREATE VIEW `table$7`\nAS\nSELECT `t0`.`lastUpdated`, `t0`.`customerid`, `t0`.`name`, GREATEST(`t0`.`timestamp`, `t2`.`time`) AS `__timestamp`\nFROM (SELECT *\n  FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC) AS `_rownum`\n    FROM `customer_1`) AS `t`\n  WHERE `_rownum` = 1) AS `t0`\n LEFT JOIN (SELECT *\n  FROM (SELECT `id`, `customerid`, `time`, `entries`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `time` DESC) AS `_rownum`\n    FROM `orders_1`) AS `t1`\n  WHERE `_rownum` = 1) AS `t2` ON `t0`.`customerid` = `t2`.`customerid`\nWHERE `t2`.`id` IS NULL;",
-    "CREATE VIEW `table$8`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders_1`;",
+    "CREATE VIEW `table$8`\nAS\nSELECT `id`, `customerid`, `time`, `default_catalog`.`default_database`.`ToJson`(`entries`) AS `entries`\nFROM `orders_1`;",
     "CREATE VIEW `table$9`\nAS\nSELECT *\nFROM `product_1`;",
     "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer_3`\n(SELECT *\n FROM `table$1`)\n;\nINSERT INTO `ordercustomer_1`\n (SELECT *\n  FROM `table$2`)\n ;\n INSERT INTO `ordercustomerconstant_1`\n  (SELECT *\n   FROM `table$3`)\n  ;\n  INSERT INTO `ordercustomerleft_1`\n   (SELECT *\n    FROM `table$4`)\n   ;\n   INSERT INTO `ordercustomerleftexcluded_1`\n    (SELECT *\n     FROM `table$5`)\n    ;\n    INSERT INTO `ordercustomerright_1`\n     (SELECT *\n      FROM `table$6`)\n     ;\n     INSERT INTO `ordercustomerrightexcluded_1`\n      (SELECT *\n       FROM `table$7`)\n      ;\n      INSERT INTO `orders_3`\n       (SELECT *\n        FROM `table$8`)\n       ;\n       INSERT INTO `product_2`\n        (SELECT *\n         FROM `table$9`)\n        ;\n        END;"
   ],
@@ -317,12 +317,12 @@ LogicalTableScan(table=[[product_1]])
         "\"id\" BIGINT NOT NULL",
         "\"name\" TEXT ",
         "\"customerid\" BIGINT NOT NULL",
-        "\"__timestamp\" TIMESTAMP WITH TIME ZONE "
+        "\"__timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL"
       ],
       "primaryKeys" : [
         "\"id\""
       ],
-      "sql" : "CREATE TABLE IF NOT EXISTS ordercustomerleft_1 (\"lastUpdated\" BIGINT ,\"id\" BIGINT NOT NULL,\"name\" TEXT ,\"customerid\" BIGINT NOT NULL,\"__timestamp\" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY (\"id\"));"
+      "sql" : "CREATE TABLE IF NOT EXISTS ordercustomerleft_1 (\"lastUpdated\" BIGINT ,\"id\" BIGINT NOT NULL,\"name\" TEXT ,\"customerid\" BIGINT NOT NULL,\"__timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\"));"
     },
     {
       "name" : "ordercustomerleftexcluded_1",
@@ -344,13 +344,13 @@ LogicalTableScan(table=[[product_1]])
         "\"name\" TEXT NOT NULL",
         "\"customerid\" BIGINT ",
         "\"_customerid0\" BIGINT NOT NULL",
-        "\"__timestamp\" TIMESTAMP WITH TIME ZONE "
+        "\"__timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL"
       ],
       "primaryKeys" : [
         "\"_customerid0\"",
         "\"ouuid\""
       ],
-      "sql" : "CREATE TABLE IF NOT EXISTS ordercustomerright_1 (\"ouuid\" BIGINT NOT NULL,\"id\" BIGINT ,\"name\" TEXT NOT NULL,\"customerid\" BIGINT ,\"_customerid0\" BIGINT NOT NULL,\"__timestamp\" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY (\"_customerid0\",\"ouuid\"));"
+      "sql" : "CREATE TABLE IF NOT EXISTS ordercustomerright_1 (\"ouuid\" BIGINT NOT NULL,\"id\" BIGINT ,\"name\" TEXT NOT NULL,\"customerid\" BIGINT ,\"_customerid0\" BIGINT NOT NULL,\"__timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"_customerid0\",\"ouuid\"));"
     },
     {
       "name" : "ordercustomerrightexcluded_1",
@@ -358,12 +358,12 @@ LogicalTableScan(table=[[product_1]])
         "\"lastUpdated\" BIGINT NOT NULL",
         "\"customerid\" BIGINT NOT NULL",
         "\"name\" TEXT NOT NULL",
-        "\"__timestamp\" TIMESTAMP WITH TIME ZONE "
+        "\"__timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL"
       ],
       "primaryKeys" : [
         "\"customerid\""
       ],
-      "sql" : "CREATE TABLE IF NOT EXISTS ordercustomerrightexcluded_1 (\"lastUpdated\" BIGINT NOT NULL,\"customerid\" BIGINT NOT NULL,\"name\" TEXT NOT NULL,\"__timestamp\" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY (\"customerid\"));"
+      "sql" : "CREATE TABLE IF NOT EXISTS ordercustomerrightexcluded_1 (\"lastUpdated\" BIGINT NOT NULL,\"customerid\" BIGINT NOT NULL,\"name\" TEXT NOT NULL,\"__timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\"));"
     },
     {
       "name" : "orders_3",
@@ -1633,7 +1633,7 @@ LogicalTableScan(table=[[product_1]])
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "type Customer {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype OrderCustomer {\n  time: DateTime!\n  id: Float!\n  name: String!\n  customerid: Float!\n}\n\ntype OrderCustomerConstant {\n  time: DateTime!\n  id: Float!\n  name: String!\n  customerid: Float!\n}\n\ntype OrderCustomerLeft {\n  lastUpdated: Float\n  id: Float!\n  name: String\n  customerid: Float!\n}\n\ntype OrderCustomerLeftExcluded {\n  time: DateTime!\n  id: Float!\n  customerid: Float!\n}\n\ntype OrderCustomerRight {\n  ouuid: Float!\n  id: Float\n  name: String!\n  customerid: Float\n}\n\ntype OrderCustomerRightExcluded {\n  lastUpdated: Float!\n  customerid: Float!\n  name: String!\n}\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries(limit: Int = 10, offset: Int = 0): [entries!]\n}\n\ntype Product {\n  productid: Float!\n  name: String!\n  description: String!\n  category: String!\n}\n\ntype Query {\n  Customer(customerid: Float, limit: Int = 10, offset: Int = 0): [Customer!]\n  OrderCustomer(id: Float, limit: Int = 10, offset: Int = 0): [OrderCustomer!]\n  OrderCustomerConstant(id: Float, limit: Int = 10, offset: Int = 0): [OrderCustomerConstant!]\n  OrderCustomerLeft(id: Float, limit: Int = 10, offset: Int = 0): [OrderCustomerLeft!]\n  OrderCustomerLeftExcluded(id: Float, limit: Int = 10, offset: Int = 0): [OrderCustomerLeftExcluded!]\n  OrderCustomerRight(ouuid: Float, limit: Int = 10, offset: Int = 0): [OrderCustomerRight!]\n  OrderCustomerRightExcluded(customerid: Float, limit: Int = 10, offset: Int = 0): [OrderCustomerRightExcluded!]\n  Orders(id: Float, limit: Int = 10, offset: Int = 0): [Orders!]\n  Product(productid: Float, name: String, description: String, category: String, limit: Int = 10, offset: Int = 0): [Product!]\n}\n\ntype entries {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n"
+      "schema" : "type Customer {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\ntype OrderCustomer {\n  time: DateTime!\n  id: Float!\n  name: String!\n  customerid: Float!\n}\n\ntype OrderCustomerConstant {\n  time: DateTime!\n  id: Float!\n  name: String!\n  customerid: Float!\n}\n\ntype OrderCustomerLeft {\n  lastUpdated: Float\n  id: Float!\n  name: String\n  customerid: Float!\n}\n\ntype OrderCustomerLeftExcluded {\n  time: DateTime!\n  id: Float!\n  customerid: Float!\n}\n\ntype OrderCustomerRight {\n  ouuid: Float!\n  id: Float\n  name: String!\n  customerid: Float\n}\n\ntype OrderCustomerRightExcluded {\n  lastUpdated: Float!\n  customerid: Float!\n  name: String!\n}\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries(limit: Int = 10, offset: Int = 0): [entries!]\n}\n\ntype Product {\n  productid: Float!\n  name: String!\n  description: String!\n  category: String!\n}\n\ntype Query {\n  Customer(customerid: Float, limit: Int = 10, offset: Int = 0): [Customer!]\n  OrderCustomer(id: Float, limit: Int = 10, offset: Int = 0): [OrderCustomer!]\n  OrderCustomerConstant(id: Float, limit: Int = 10, offset: Int = 0): [OrderCustomerConstant!]\n  OrderCustomerLeft(id: Float, limit: Int = 10, offset: Int = 0): [OrderCustomerLeft!]\n  OrderCustomerLeftExcluded(id: Float, limit: Int = 10, offset: Int = 0): [OrderCustomerLeftExcluded!]\n  OrderCustomerRight(ouuid: Float, limit: Int = 10, offset: Int = 0): [OrderCustomerRight!]\n  OrderCustomerRightExcluded(customerid: Float, limit: Int = 10, offset: Int = 0): [OrderCustomerRightExcluded!]\n  Orders(id: Float, limit: Int = 10, offset: Int = 0): [Orders!]\n  Product(productid: Float, name: String, description: String, category: String, limit: Int = 10, offset: Int = 0): [Product!]\n}\n\ntype entries {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n"
     }
   }
 }

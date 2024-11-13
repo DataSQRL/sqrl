@@ -347,12 +347,21 @@ public class DatasqrlRun {
     RootGraphqlModel rootGraphqlModel = objectMapper.readValue(
         path.resolve("vertx.json").toFile(),
         ModelContainer.class).model;
+    if (rootGraphqlModel == null) {
+      return; //no graphql server queries
+    }
+
 
     URL resource = Resources.getResource("server-config.json");
     Map<String, Object> json = objectMapper.readValue(resource, Map.class);
     JsonObject config = new JsonObject(json);
 
-    ServerConfig serverConfig = new ServerConfig(config);
+    ServerConfig serverConfig = new ServerConfig(config) {
+      @Override
+      public String getEnvironmentVariable(String envVar) {
+        return getenv(envVar);
+      }
+    };
 
     // Set Postgres connection options from environment variables
     if (path.resolve("postgres.json").toFile().exists()) {
@@ -365,12 +374,7 @@ public class DatasqrlRun {
     }
 
     GraphQLServer server = new GraphQLServer(rootGraphqlModel, serverConfig,
-        NameCanonicalizer.SYSTEM, getSnowflakeUrl()) {
-      @Override
-      public String getEnvironmentVariable(String envVar) {
-        return getenv(envVar);
-      }
-    };
+        NameCanonicalizer.SYSTEM, getSnowflakeUrl());
 
     PrometheusMeterRegistry prometheusMeterRegistry = new PrometheusMeterRegistry(
         PrometheusConfig.DEFAULT);

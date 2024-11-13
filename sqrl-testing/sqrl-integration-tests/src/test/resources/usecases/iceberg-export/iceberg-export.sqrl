@@ -1,0 +1,3 @@
+IMPORT loan-local.Applications AS _Applications;
+
+EXPORT _Applications TO iceberg.iceberg-sink;
