@@ -22,6 +22,7 @@ import org.apache.flink.util.jackson.JacksonMapperFactory;
 
 //@Slf4j
 public abstract class FlexibleSchemaDelegate implements DeserializationSchema<RowData> {
+
   protected DeserializationSchema schema;
   protected final SchemaValidator validator;
   protected ObjectMapper objectMapper;
@@ -43,34 +44,34 @@ public abstract class FlexibleSchemaDelegate implements DeserializationSchema<Ro
 
   @Override
   public void deserialize(byte[] message, Collector<RowData> out) throws IOException {
-    if (message == null) {
-      System.out.println("message is null for json record, skipping");
-      return;
-    }
-
-    Map<String, Object> data = parse(message);
-    if (data == null) {
-      System.out.println("data is null for json record, skipping");
-      return;
-    }
-
-    ErrorCollector errorCollector = new ErrorCollector(ErrorPrefix.ROOT) {
-      @Override
-      public RuntimeException exception(ErrorLabel label, String msg, Object... args) {
-        System.out.println(message);
-        return super.exception(label, msg, args);
-      }
-    };
-
-    Named named = validator.verifyAndAdjust(new Raw(data, Instant.now()), errorCollector);
-    if (errorCollector.hasErrors()) {
-      System.out.println("json record has validation errors, skipping");
-      System.out.println(ErrorPrinter.prettyPrint(errorCollector));
-      return;
-    }
-
-    JsonNode jsonNode = objectMapper.valueToTree(named.getData());
     try {
+      if (message == null) {
+        System.out.println("message is null for json record, skipping");
+        return;
+      }
+
+      Map<String, Object> data = parse(message);
+      if (data == null) {
+        System.out.println("data is null for json record, skipping");
+        return;
+      }
+
+      ErrorCollector errorCollector = new ErrorCollector(ErrorPrefix.ROOT) {
+        @Override
+        public RuntimeException exception(ErrorLabel label, String msg, Object... args) {
+          System.out.println(message);
+          return super.exception(label, msg, args);
+        }
+      };
+
+      Named named = validator.verifyAndAdjust(new Raw(data, Instant.now()), errorCollector);
+      if (errorCollector.hasErrors()) {
+        System.out.println("json record has validation errors, skipping");
+        System.out.println(ErrorPrinter.prettyPrint(errorCollector));
+        return;
+      }
+
+      JsonNode jsonNode = objectMapper.valueToTree(named.getData());
       RowData deserialize = (RowData) schema.deserialize(jsonNode.toString().getBytes());
       out.collect(deserialize);
     } catch (Exception e) {
