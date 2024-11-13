@@ -28,7 +28,7 @@ public class NamespaceObjectUtil {
         originalName.toUpperCase(Locale.ROOT));
     Preconditions.checkArgument(function.isPresent(), "Could not find function %s", name);
     BuiltInFunctionDefinition fnc = function.get();
-    return new FlinkUdfNsObject(name, fnc, Optional.empty());
+    return new FlinkUdfNsObject(name, fnc, originalName, Optional.empty());
   }
 
   public static NamespaceObject createFunctionFromStdOpTable(String name) {
@@ -40,7 +40,8 @@ public class NamespaceObjectUtil {
   public static NamespaceObject createNsObject(FunctionDefinition function) {
     Preconditions.checkArgument(function instanceof FunctionDefinition,
         "All SQRL function implementations must extend FunctionDefinition: %s", function.getClass());
-    return new FlinkUdfNsObject(getFunctionNameFromClass(function.getClass()), function, Optional.empty());
+    String functionNameFromClass = getFunctionNameFromClass(function.getClass());
+    return new FlinkUdfNsObject(functionNameFromClass, function, functionNameFromClass, Optional.empty());
   }
 
   static String getFunctionNameFromClass(Class clazz) {

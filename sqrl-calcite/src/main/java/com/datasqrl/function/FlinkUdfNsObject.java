@@ -25,11 +25,14 @@ import org.apache.flink.table.resource.ResourceUri;
 public class FlinkUdfNsObject implements FunctionNamespaceObject<FunctionDefinition> {
   Name name;
   FunctionDefinition function;
+  private final String sqlName;
   Optional<URL> jarUrl;
 
-  public FlinkUdfNsObject(String name, FunctionDefinition function, Optional<URL> jarUrl) {
+  public FlinkUdfNsObject(String name, FunctionDefinition function, String sqlName,
+      Optional<URL> jarUrl) {
     this.name = Name.system(name);
     this.function = function;
+    this.sqlName = sqlName;
     this.jarUrl = jarUrl;
   }
 
@@ -54,7 +57,7 @@ public class FlinkUdfNsObject implements FunctionNamespaceObject<FunctionDefinit
       framework.getSchema().getUdf().put(name, udf);
     } else if (function instanceof BuiltInFunctionDefinition) {
       //if name is different from function name, create function alias
-      framework.getSchema().addFunctionAlias(name, ((BuiltInFunctionDefinition) function).getSqlName());
+      framework.getSchema().addFunctionAlias(name.toLowerCase(), sqlName.toLowerCase());
     }
 
     jarUrl.ifPresent((url)->framework.getSchema().addJar(url));
