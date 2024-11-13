@@ -25,11 +25,13 @@ import com.google.inject.Inject;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeFamily;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.type.SqlTypeFamily;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.SqrlSqlValidator;
 
@@ -147,7 +149,7 @@ public class TableConverter {
       RelDataType fieldType = field.getType();
 
       if (!isValidFlinkWatermarkType(fieldType)) {
-        throw new RuntimeException(String.format("Timestamp column \"%s\" has invalid type: %s. Valid types are INT, BIGINT, TIMESTAMP, or TIMESTAMP_LTZ", timestampColumn,
+        throw new RuntimeException(String.format("Timestamp column \"%s\" has invalid type: %s.", timestampColumn,
             fieldType));
       }
     }
@@ -176,11 +178,9 @@ public class TableConverter {
   }
 
   private boolean isValidFlinkWatermarkType(RelDataType type) {
-    SqlTypeName typeName = type.getSqlTypeName();
-    return typeName == SqlTypeName.INTEGER
-        || typeName == SqlTypeName.BIGINT
-        || typeName == SqlTypeName.TIMESTAMP
-        || typeName == SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE;
+    return SqlTypeFamily.DATETIME_INTERVAL.contains(type)
+         || SqlTypeFamily.DATETIME.contains(type)
+         || SqlTypeFamily.NUMERIC.contains(type);
   }
 
   private boolean isValidDatatype(String datatype) {
