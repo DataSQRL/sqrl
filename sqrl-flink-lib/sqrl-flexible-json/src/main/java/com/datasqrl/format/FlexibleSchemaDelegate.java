@@ -17,6 +17,7 @@ import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.json.JsonRead
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.flink.table.data.RowData;
+import org.apache.flink.util.Collector;
 import org.apache.flink.util.jackson.JacksonMapperFactory;
 
 //@Slf4j
@@ -41,14 +42,16 @@ public abstract class FlexibleSchemaDelegate implements DeserializationSchema<Ro
   }
 
   @Override
-  public RowData deserialize(byte[] message) throws IOException {
+  public void deserialize(byte[] message, Collector<RowData> out) throws IOException {
     if (message == null) {
-      return null;
+      System.out.println("message is null for json record, skipping");
+      return;
     }
 
     Map<String, Object> data = parse(message);
     if (data == null) {
-      return null;
+      System.out.println("data is null for json record, skipping");
+      return;
     }
 
     ErrorCollector errorCollector = new ErrorCollector(ErrorPrefix.ROOT) {
@@ -61,12 +64,24 @@ public abstract class FlexibleSchemaDelegate implements DeserializationSchema<Ro
 
     Named named = validator.verifyAndAdjust(new Raw(data, Instant.now()), errorCollector);
     if (errorCollector.hasErrors()) {
+      System.out.println("json record has validation errors, skipping");
       System.out.println(ErrorPrinter.prettyPrint(errorCollector));
-      return null;
+      return;
     }
 
     JsonNode jsonNode = objectMapper.valueToTree(named.getData());
-    return (RowData) schema.deserialize(jsonNode.toString().getBytes());
+    try {
+      RowData deserialize = (RowData) schema.deserialize(jsonNode.toString().getBytes());
+      out.collect(deserialize);
+    } catch (Exception e) {
+      System.out.println("json record has could not be deserialized, skipping");
+      e.printStackTrace();
+    }
+  }
+
+  @Override
+  public RowData deserialize(byte[] message) throws IOException {
+    return null;
   }
 
   public abstract Map<String, Object> parse(byte[] message);
