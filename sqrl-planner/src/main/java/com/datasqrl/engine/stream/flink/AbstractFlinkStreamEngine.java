@@ -56,13 +56,8 @@ public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base imp
     Preconditions.checkArgument(inputs.isEmpty());
     Preconditions.checkArgument(stagePlan instanceof StreamStagePlan);
     StreamStagePlan plan = (StreamStagePlan) stagePlan;
-    try {
-      FlinkSqlGeneratorResult flinkSql = generator.run(plan, stagePlans);
-      return new FlinkStreamPhysicalPlan(flinkSql.getPlan(), flinkSql.getFlinkSql());
-    } catch (Throwable e) {
-      errorCollector.exception("Error in FlinkSQL generation caused by: %s", e.getMessage());
-      throw e;
-    }
+    FlinkSqlGeneratorResult flinkSql = generator.run(plan, stagePlans);
+    return new FlinkStreamPhysicalPlan(flinkSql.getPlan(), flinkSql.getFlinkSql());
   }
 
   @Override
