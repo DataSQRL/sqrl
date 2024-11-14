@@ -1,5 +1,6 @@
 package com.datasqrl;
 
+import static com.datasqrl.packager.Packager.PACKAGE_JSON;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import com.datasqrl.cmd.AssertStatusHook;
@@ -17,12 +18,12 @@ import com.datasqrl.tests.TestExtension;
 import com.datasqrl.tests.UseCaseTestExtensions;
 import com.datasqrl.util.FlinkOperatorStatusChecker;
 import com.datasqrl.util.SnapshotTest.Snapshot;
+import com.google.common.io.Resources;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,11 +34,8 @@ import lombok.SneakyThrows;
 import lombok.ToString;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.flink.table.api.ResultKind;
 import org.apache.flink.table.api.TableResult;
 import org.apache.flink.test.junit5.MiniClusterExtension;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -161,7 +159,7 @@ public class FullUsecasesIT {
     executor.execute(new AssertStatusHook());
 
     PackageJson packageJson = SqrlConfigCommons.fromFilesPackageJson(ErrorCollector.root(),
-        List.of(rootDir.resolve("build").resolve("package.json")));
+        Resources.getResource(PACKAGE_JSON), List.of(rootDir.resolve("build").resolve("package.json")));
 
 
     try {

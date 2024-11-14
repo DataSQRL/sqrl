@@ -9,12 +9,12 @@ import com.datasqrl.config.PackageJson.DependenciesConfig;
 import com.datasqrl.config.Dependency;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.ScriptConfig;
-import com.datasqrl.config.PackageJsonImpl;
 import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.packager.repository.Repository;
+import com.google.common.io.Resources;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -47,7 +47,7 @@ public class PackageBootstrap {
     Optional<List<Path>> existingPackage = Packager.findPackageFile(rootDir, packageFiles);
     Optional<PackageJson> existingConfig;
     existingConfig = existingPackage.map(
-        paths -> SqrlConfigCommons.fromFilesPackageJson(errors, paths));
+        paths -> SqrlConfigCommons.fromFilesPackageJson(errors, Resources.getResource(PACKAGE_JSON), paths));
 
     Map<String, Dependency> dependencies = new HashMap<>();
     // Check if 'profiles' key is set, replace if existing
@@ -117,7 +117,8 @@ public class PackageBootstrap {
     }
 
     // Merge all configurations
-    PackageJson packageJson = SqrlConfigCommons.fromFilesPackageJson(errors, configFiles);
+    PackageJson packageJson = SqrlConfigCommons.fromFilesPackageJson(errors,
+        Resources.getResource(PACKAGE_JSON), configFiles);
     packageJson.setProfiles(profiles);
 
     //Add dependencies of discovered profiles
@@ -156,7 +157,7 @@ public class PackageBootstrap {
   }
 
   public PackageJson createDefaultConfig(ErrorCollector errors) {
-    PackageJson packageJson = new PackageJsonImpl();
+    PackageJson packageJson = SqrlConfigCommons.fromBaseResource(errors);
 
     return setDefaultConfig(packageJson);
   }

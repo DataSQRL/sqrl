@@ -5,6 +5,7 @@ import static com.datasqrl.config.ConfigurationTest.testForErrors;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import com.datasqrl.error.ErrorCollector;
+import com.google.common.io.Resources;
 import java.nio.file.Path;
 import java.util.List;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -27,7 +28,7 @@ public class PackageJsonSchemaTest {
   public void testValidConfigFile(String configFileName) {
     ErrorCollector errors = ErrorCollector.root();
     try {
-      SqrlConfigCommons.fromFilesPackageJson(errors, List.of(TEST_CASES.resolve(configFileName)));
+      SqrlConfigCommons.fromFilesPackageJson(errors, Resources.getResource("package.json"), List.of(TEST_CASES.resolve(configFileName)));
     } catch (Exception e) {
       fail("Unexpected error: " + errors.getErrors().toString());
     }
@@ -48,6 +49,6 @@ public class PackageJsonSchemaTest {
   })
   public void testInvalidConfigFile(String configFileName) {
     testForErrors(errors -> SqrlConfigCommons.fromFilesPackageJson(errors,
-        List.of(CONFIG_DIR.resolve(configFileName))));
+        Resources.getResource("package.json"), List.of(CONFIG_DIR.resolve(configFileName))));
   }
 }
