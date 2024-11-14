@@ -1,6 +1,0 @@
->>>product$2
-LogicalTableScan(table=[[product$1]])
-
->>>product$3
-LogicalTableScan(table=[[product$2]])
-

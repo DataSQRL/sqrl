@@ -1,6 +1,0 @@
->>>import
-[FATAL] Could not find import object: ecommerce-data.Customerrr
-in script:<script> [1:8]:
-IMPORT ecommerce-data.Customerrr
--------^
-
