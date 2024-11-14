@@ -288,7 +288,7 @@ public class TestCmd {
     }
 
     @Override
-    public void onFailure(Exception e, ErrorCollector errors) {
+    public void onFailure(Throwable e, ErrorCollector errors) {
       snapshot.addContent(ErrorPrinter.prettyPrint(errors));
     }
 

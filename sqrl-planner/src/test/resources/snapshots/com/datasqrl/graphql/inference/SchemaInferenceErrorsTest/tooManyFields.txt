@@ -1,7 +1,0 @@
-[FATAL] Unknown field at location x. Possible scalars are [_uuid, _ingest_time, id, customerid, time, entries]
-in script:schema [3:3]:
-type Orders {
-  _uuid: String
-  x: Int!
---^
-

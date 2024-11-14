@@ -1,8 +1,0 @@
->>>orders-hasTimestamp
-RecordType(BIGINT id, BIGINT customerid, BIGINT time, RecordType(INTEGER _idx, BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount) ARRAY items)
->>>orders
-RecordType(BIGINT id, BIGINT customerid, BIGINT time, RecordType(INTEGER _idx, BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount) ARRAY items)
->>>products-hasTimestamp
-RecordType(BIGINT id, VARCHAR(2147483647) name, VARCHAR(2147483647) sizing, BIGINT weight_in_gram, VARCHAR(2147483647) type, VARCHAR(2147483647) category, BIGINT usda_id, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) updated)
->>>products
-RecordType(BIGINT id, VARCHAR(2147483647) name, VARCHAR(2147483647) sizing, BIGINT weight_in_gram, VARCHAR(2147483647) type, VARCHAR(2147483647) category, BIGINT usda_id, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) updated)
