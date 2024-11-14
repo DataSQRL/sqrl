@@ -125,6 +125,11 @@ public class AnnotatedLP implements RelHolder {
     return relNode.getRowType().getFieldCount();
   }
 
+  public List<String> getFieldNamesWithIndex(List<Integer> indexes) {
+    List<RelDataTypeField> alpFields = relNode.getRowType().getFieldList();
+    return indexes.stream().map(i -> alpFields.get(i).getName() + "[" + i + "]").collect(Collectors.toList());
+  }
+
   /**
    * Called to inline the TopNConstraint on top of the input relation. This will inline a nowFilter
    * if present
