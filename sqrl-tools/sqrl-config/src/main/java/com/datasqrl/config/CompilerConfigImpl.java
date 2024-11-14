@@ -26,6 +26,16 @@ public class CompilerConfigImpl implements PackageJson.CompilerConfig {
     return sqrlConfig.hasKey("logger") ? sqrlConfig.asString("logger").get() : "print";
   }
 
+  @Override
+  public Optional<String> getTargetDataPath() {
+    return sqrlConfig.asString("target-data-path").getOptional();
+  }
+
+  @Override
+  public Optional<String> getTargetLibPath() {
+    return sqrlConfig.asString("target-lib-path").getOptional();
+  }
+
   public ExplainConfigImpl getExplain() {
     return new ExplainConfigImpl(sqrlConfig.getSubConfig("explain"));
   }

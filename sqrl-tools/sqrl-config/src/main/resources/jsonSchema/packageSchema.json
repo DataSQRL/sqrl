@@ -44,6 +44,12 @@
       "type": "object",
       "minProperties": 1,
       "properties": {
+        "target-data-path": {
+          "type": "string"
+        },
+        "target-lib-path": {
+          "type": "string"
+        },
         "explain": {
           "type": "object",
           "minProperties": 1,
