@@ -248,7 +248,7 @@ public class FullUsecasesIT {
   @MethodSource("useCaseProvider")
   @Disabled
   public void runTestNumber(UseCaseTestParameter param, TestInfo testInfo) {
-    int i = -1;
+    int i = 28;
     testNo++;
     System.out.println(testNo + ":" + param);
     if (i == testNo) {
