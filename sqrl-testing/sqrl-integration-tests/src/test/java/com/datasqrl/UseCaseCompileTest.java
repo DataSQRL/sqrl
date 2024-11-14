@@ -2,7 +2,6 @@ package com.datasqrl;
 
 import java.nio.file.Path;
 import lombok.SneakyThrows;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
@@ -29,11 +28,5 @@ public class UseCaseCompileTest extends AbstractUseCaseTest {
     public UseCaseFiles() {
       super(USECASE_DIR, true);
     }
-  }
-
-
-  @Test
-  public void testSingleProject() {
-    super.execute(Path.of("/Users/matthias/git/cloud-backend"), "compile", "-c", "package-dynamic-kafka.json");
   }
 }

@@ -420,7 +420,7 @@ public class AnnotatedLP implements RelHolder {
         int[] newPkIndexes = IntStream.range(0, projectIndexes.size()).filter(idx -> columnSet.contains(projectIndexes.get(idx))).toArray();
         List<Integer> oldPkIndexes = Arrays.stream(newPkIndexes).mapToObj(projectIndexes::get).collect(Collectors.toList());
         if (newPkIndexes.length > 1) {
-          errors.warn(MULTIPLE_PRIMARY_KEY, "A primary key column is mapped to multiple columns in query: %s",
+          errors.notice(MULTIPLE_PRIMARY_KEY, "A primary key column is mapped to multiple columns in query: %s",
                   oldPkIndexes.stream().map(getFieldName).collect(Collectors.toList()));
         }
         if (newPkIndexes.length == 0) {
