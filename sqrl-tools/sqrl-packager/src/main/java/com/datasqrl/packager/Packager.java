@@ -38,7 +38,6 @@ import java.io.Writer;
 import java.nio.file.FileVisitResult;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
@@ -54,15 +53,13 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.datasqrl.actions.FlinkSqlGenerator.COMPILED_PLAN_JSON;
-import static com.datasqrl.actions.WriteDag.DATA_DIR;
-import static com.datasqrl.actions.WriteDag.LIB_DIR;
 import static com.datasqrl.config.ScriptConfigImpl.GRAPHQL_KEY;
 import static com.datasqrl.config.ScriptConfigImpl.MAIN_KEY;
 import static com.datasqrl.util.NameUtil.namepath2Path;
 
 @Getter
-@AllArgsConstructor(onConstructor_=@Inject)
 public class Packager {
+
   public static final String BUILD_DIR_NAME = "build";
   public static final String PACKAGE_JSON = "package.json";
   public static final Path DEFAULT_PACKAGE = Path.of(Packager.PACKAGE_JSON);
@@ -73,6 +70,28 @@ public class Packager {
   private final BuildPath buildDir;
   private final Preprocessors preprocessors;
   private final ImportExportAnalyzer analyzer;
+  private final String dataDir;
+  private final String libDir;
+
+  @Inject
+  public Packager(Repository repository,
+      RootPath rootDir,
+      PackageJson config,
+      BuildPath buildDir,
+      Preprocessors preprocessors,
+      ImportExportAnalyzer analyzer) {
+    this.repository = repository;
+    this.rootDir = rootDir;
+    this.config = config;
+    this.buildDir = buildDir;
+    this.preprocessors = preprocessors;
+    this.analyzer = analyzer;
+
+    this.dataDir = config.getCompilerConfig().getTargetDataPath()
+        .orElse("flink/data");
+    this.libDir = config.getCompilerConfig().getTargetLibPath()
+        .orElse("flink/lib");
+  }
 
   public void preprocess(ErrorCollector errors) {
     errors.checkFatal(
@@ -93,14 +112,15 @@ public class Packager {
 
   @SneakyThrows
   private void inferDependencies(ErrorCollector errors) {
-    //Analyze all local SQRL files to discovery transitive or undeclared dependencies
-    //At the end, we'll add the new dependencies to the package config.
+    // Analyze all local SQRL files to discover transitive or undeclared dependencies
+    // At the end, we'll add the new dependencies to the package config.
 
-    //Only infer on main script
+    // Only infer on main script
     String mainScriptPath = config.getScriptConfig().getMainScript()
         .orElseThrow(() -> new RuntimeException("No main script specified"));
 
-    Set<NamePath> unresolvedDeps = analyzer.analyze(rootDir.getRootDir().resolve(mainScriptPath), errors);
+    Set<NamePath> unresolvedDeps = analyzer.analyze(rootDir.getRootDir().resolve(mainScriptPath),
+        errors);
 
     List<Dependency> dependencies = unresolvedDeps.stream()
         .flatMap(dep -> {
@@ -108,7 +128,7 @@ public class Packager {
             return repository.resolveDependency(dep.toString())
                 .stream();
           } catch (Exception e) {
-            //suppress any exception
+            // Suppress any exception
             return Optional.<Dependency>empty()
                 .stream();
           }
@@ -142,9 +162,10 @@ public class Packager {
   }
 
   @SneakyThrows
-  private Stream<NamePath> retrieveDependencies(Map<String, ? extends Dependency> dependencies, ErrorCollector errors) {
+  private Stream<NamePath> retrieveDependencies(Map<String, ? extends Dependency> dependencies,
+      ErrorCollector errors) {
     List<Optional<NamePath>> deps = new ArrayList<>();
-    for(Map.Entry<String, ? extends Dependency> entry : dependencies.entrySet()) {
+    for (Map.Entry<String, ? extends Dependency> entry : dependencies.entrySet()) {
       Optional<NamePath> namePath =
           retrieveDependency(rootDir.getRootDir(), buildDir.getBuildDir(),
               NamePath.parse(entry.getKey()),
@@ -160,18 +181,19 @@ public class Packager {
   private void copyFilesToBuildDir(ErrorCollector errors) throws IOException {
     Map<String, Optional<Path>> destinationPaths = copyScriptFilesToBuildDir().entrySet()
         .stream()
-        .collect(Collectors.toMap(Entry::getKey, v->canonicalizePath(v.getValue())));
-    //Files should exist, if error occurs its internal, hence we create root error collector
+        .collect(Collectors.toMap(Entry::getKey, v -> canonicalizePath(v.getValue())));
+    // Files should exist, if error occurs it's internal, hence we create root error collector
     addFileToPackageJsonConfig(buildDir.getBuildDir(), config.getScriptConfig(),
         destinationPaths, errors);
-
   }
 
-  public static void addFileToPackageJsonConfig(Path rootDir, ScriptConfig scriptConfig, Map<String, Optional<Path>> filesByKey,
+  public static void addFileToPackageJsonConfig(Path rootDir, ScriptConfig scriptConfig,
+      Map<String, Optional<Path>> filesByKey,
       ErrorCollector errors) {
     filesByKey.forEach((key, file) -> {
       if (file.isPresent()) {
-        errors.checkFatal(Files.isRegularFile(file.get()), "Could not locate %s file: %s", key, file.get());
+        errors.checkFatal(Files.isRegularFile(file.get()), "Could not locate %s file: %s", key,
+            file.get());
         String normalizedPath = rootDir.relativize(file.get()).normalize().toString();
         if (key.equals(MAIN_KEY)) {
           scriptConfig.setMainScript(normalizedPath);
@@ -183,16 +205,16 @@ public class Packager {
   }
 
   public static Optional<Path> canonicalizePath(Optional<Path> path) {
-     return path.map(Packager::canonicalizePath);
+    return path.map(Packager::canonicalizePath);
   }
 
   public static Path canonicalizePath(Path path) {
-     return Path.of(path.toString().toLowerCase());
+    return Path.of(path.toString().toLowerCase());
   }
 
   /**
-   * Copies all the files in the script configuration section of the config to the build dir
-   * and either normalizes the file or preserves the relative path.
+   * Copies all the files in the script configuration section of the config to the build dir and
+   * either normalizes the file or preserves the relative path.
    *
    * @throws IOException
    */
@@ -200,14 +222,16 @@ public class Packager {
     ScriptConfig scriptConfig = config.getScriptConfig();
     Map<String, Optional<Path>> destinationPaths = new HashMap<>();
     if (scriptConfig.getMainScript().isPresent()) {
-      Path destinationPath = copyRelativeFile(rootDir.getRootDir().resolve(scriptConfig.getMainScript().get()), rootDir.getRootDir(),
+      Path destinationPath = copyRelativeFile(
+          rootDir.getRootDir().resolve(scriptConfig.getMainScript().get()), rootDir.getRootDir(),
           buildDir.getBuildDir());
-      destinationPaths.put(MAIN_KEY,Optional.of(destinationPath));
+      destinationPaths.put(MAIN_KEY, Optional.of(destinationPath));
     }
     if (scriptConfig.getGraphql().isPresent()) {
-      Path destinationPath = copyRelativeFile(rootDir.getRootDir().resolve(scriptConfig.getGraphql().get()), rootDir.getRootDir(),
+      Path destinationPath = copyRelativeFile(
+          rootDir.getRootDir().resolve(scriptConfig.getGraphql().get()), rootDir.getRootDir(),
           buildDir.getBuildDir());
-      destinationPaths.put(GRAPHQL_KEY,Optional.of(destinationPath));
+      destinationPaths.put(GRAPHQL_KEY, Optional.of(destinationPath));
     }
     return destinationPaths;
   }
@@ -216,7 +240,7 @@ public class Packager {
    * Helper function to preprocess files.
    */
   private void preProcessFiles(PackageJson config, ErrorCollector errors) throws IOException {
-    //Preprocessor will normalize files
+    // Preprocessor will normalize files
     preprocessors.handle(
         PreprocessorsContext.builder()
             .rootDir(rootDir.getRootDir())
@@ -242,7 +266,8 @@ public class Packager {
     }
   }
 
-  private boolean retrieveDependency(Path rootDir, Path buildDir, NamePath packagePath, Dependency dependency)
+  private boolean retrieveDependency(Path rootDir, Path buildDir, NamePath packagePath,
+      Dependency dependency)
       throws IOException {
     Path targetPath = namepath2Path(buildDir, packagePath);
     Preconditions.checkArgument(FileUtil.isEmptyDirectory(targetPath),
@@ -258,7 +283,8 @@ public class Packager {
       // Copy the entire directory from source to target
       Files.walkFileTree(sourcePath, new SimpleFileVisitor<Path>() {
         @Override
-        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
+            throws IOException {
           Path targetDir = targetPath.resolve(sourcePath.relativize(dir));
           Files.createDirectories(targetDir);
           return FileVisitResult.CONTINUE;
@@ -266,7 +292,8 @@ public class Packager {
 
         @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-          Files.copy(file, targetPath.resolve(sourcePath.relativize(file)), StandardCopyOption.REPLACE_EXISTING);
+          Files.copy(file, targetPath.resolve(sourcePath.relativize(file)),
+              StandardCopyOption.REPLACE_EXISTING);
           return FileVisitResult.CONTINUE;
         }
       });
@@ -303,7 +330,8 @@ public class Packager {
     Map<String, Object> plans = new HashMap<>();
     // We'll write a single asset for each folder in the physical plan stage
     for (StagePlan stagePlan : plan.getStagePlans()) {
-      Object planObj = writePlan(stagePlan.getStage().getName(), stagePlan.getPlan(), targetDir, planDir);
+      Object planObj = writePlan(stagePlan.getStage().getName(), stagePlan.getPlan(), targetDir,
+          planDir);
       plans.put(stagePlan.getStage().getName(), planObj);
     }
 
@@ -311,13 +339,14 @@ public class Packager {
       Files.createDirectories(planDir);
       Path path = planDir.resolve("test.json");
 
-      SqrlObjectMapper.INSTANCE.writerWithDefaultPrettyPrinter().writeValue(path.toFile(), testPlan);
+      SqrlObjectMapper.INSTANCE.writerWithDefaultPrettyPrinter()
+          .writeValue(path.toFile(), testPlan);
       Map map = SqrlObjectMapper.INSTANCE.readValue(path.toFile(), Map.class);
       plans.put("test", map);
     }
 
     // Copy profiles
-    Collections.reverse(profiles); //Reversing profiles so last one wins
+    Collections.reverse(profiles); // Reversing profiles so last one wins
     for (String profile : profiles) {
       Path profilePath = PackageBootstrap.isLocalProfile(rootDir, profile)
           ? rootDir.resolve(profile)
@@ -326,10 +355,10 @@ public class Packager {
       copyToDeploy(targetDir, profilePath, plan, testPlan, sqrlConfig, plans);
     }
 
-    copyDataFiles(buildDir.getBuildDir());
-    moveFolder(targetDir, DATA_DIR);
-    copyJarFiles(buildDir.getBuildDir());
-    moveFolder(targetDir, LIB_DIR);
+    // Copy data files directly to target directory
+    copyDataFiles(buildDir.getBuildDir(), targetDir);
+    // Copy jar files directly to target directory
+    copyJarFiles(buildDir.getBuildDir(), targetDir);
     copyCompiledPlan(buildDir.getBuildDir(), targetDir);
   }
 
@@ -339,33 +368,21 @@ public class Packager {
       Path destFolder = targetDir.resolve("flink");
       Files.createDirectories(destFolder);
       Files.copy(buildDir.resolve(COMPILED_PLAN_JSON),
-          targetDir.resolve("flink").resolve(COMPILED_PLAN_JSON), StandardCopyOption.REPLACE_EXISTING);
+          targetDir.resolve("flink").resolve(COMPILED_PLAN_JSON),
+          StandardCopyOption.REPLACE_EXISTING);
     }
   }
 
-  private void copyDataFiles(Path buildDir) throws IOException {
+  private void copyDataFiles(Path buildDir, Path targetDir) throws IOException {
+    Path targetDataDir = targetDir.resolve(dataDir);
+    Files.createDirectories(targetDataDir);
     Files.walk(buildDir)
-        .filter(path -> (path.toString().endsWith(".jsonl") || path.toString().endsWith(".csv") ) && !Files.isDirectory(path))
-        .filter(path -> !path.startsWith(buildDir.resolve(DATA_DIR)))
+        .filter(path -> (path.toString().endsWith(".jsonl") || path.toString().endsWith(".csv"))
+            && !Files.isDirectory(path))
+        .filter(path -> !path.startsWith(targetDataDir))
         .forEach(path -> {
           try {
-            Path destination = buildDir.resolve(DATA_DIR).resolve(path.getFileName());
-            destination.toFile().mkdirs();
-            Files.copy(path, destination, StandardCopyOption.REPLACE_EXISTING);
-          } catch (IOException e) {
-            e.printStackTrace();
-          }
-        });
-  }
-
-  private void copyJarFiles(Path buildDir) throws IOException {
-    Files.walk(buildDir)
-        .filter(path -> path.toString().endsWith(".jar") && !Files.isDirectory(path))
-        .filter(path -> !path.startsWith(buildDir.resolve(LIB_DIR)))
-        .forEach(path -> {
-          try {
-            Path destination = buildDir.resolve(LIB_DIR).resolve(path.getFileName());
-            // Ensure the parent directories exist
+            Path destination = targetDataDir.resolve(path.getFileName());
             Files.createDirectories(destination.getParent());
             Files.copy(path, destination, StandardCopyOption.REPLACE_EXISTING);
           } catch (IOException e) {
@@ -374,31 +391,21 @@ public class Packager {
         });
   }
 
-  @SneakyThrows
-  private void moveFolder(Path targetDir, String folderName) {
-    Path targetPath = targetDir.resolve("flink").resolve(folderName);
-    Files.createDirectories(targetPath);
-    Path sourcePath = buildDir.getBuildDir().resolve(folderName);
-    if (!Files.isDirectory(sourcePath)) {
-      return;
-    }
-    // Move each file individually, replacing existing files
-    try (Stream<Path> stream = Files.walk(sourcePath)) {
-      stream.forEach(sourceFile -> {
-        try {
-          Path relativePath = sourcePath.relativize(sourceFile);
-          Path targetFile = targetPath.resolve(relativePath);
-          if (Files.isDirectory(sourceFile)) {
-            Files.createDirectories(targetFile);
-          } else {
-            Files.createDirectories(targetFile.getParent());
-            Files.move(sourceFile, targetFile, StandardCopyOption.REPLACE_EXISTING);
+  private void copyJarFiles(Path buildDir, Path targetDir) throws IOException {
+    Path targetLibDir = targetDir.resolve(libDir);
+    Files.createDirectories(targetLibDir);
+    Files.walk(buildDir)
+        .filter(path -> path.toString().endsWith(".jar") && !Files.isDirectory(path))
+        .filter(path -> !path.startsWith(targetLibDir))
+        .forEach(path -> {
+          try {
+            Path destination = targetLibDir.resolve(path.getFileName());
+            Files.createDirectories(destination.getParent());
+            Files.copy(path, destination, StandardCopyOption.REPLACE_EXISTING);
+          } catch (IOException e) {
+            e.printStackTrace();
           }
-        } catch (IOException e) {
-          throw new RuntimeException("Error moving file: " + sourceFile, e);
-        }
-      });
-    }
+        });
   }
 
   @SneakyThrows
@@ -423,8 +430,8 @@ public class Packager {
     }
 
     Map<String, Object> templateConfig = new HashMap<>();
-    templateConfig.put("config", sqrlConfig.toMap()); //Add SQRL config
-    templateConfig.put("environment", System.getenv()); //Add environmental variables
+    templateConfig.put("config", sqrlConfig.toMap()); // Add SQRL config
+    templateConfig.put("environment", System.getenv()); // Add environmental variables
     templateConfig.putAll(plans);
     // Copy each file and directory from the profile path to the target directory
     if (!Files.isDirectory(profile)) {
@@ -433,22 +440,28 @@ public class Packager {
     Set<String> enabledEngines = new HashSet<>(sqrlConfig.getEnabledEngines());
 
     Set<String> possibleEngines = ServiceLoaderDiscovery.getAll(
-        EngineFactory.class).stream()
-        .map(e->e.getEngineName())
+            EngineFactory.class).stream()
+        .map(e -> e.getEngineName())
         .collect(Collectors.toSet());
     possibleEngines.add("test");
 
     try (Stream<Path> stream = Files.list(profile)) {
       List<Path> baseProfilePaths = stream.collect(Collectors.toList());
       for (Path sourcePath : baseProfilePaths) {
-        //filter for engines
+        // Filter for engines
         String profileEngineName = sourcePath.getFileName().toString().split("\\.")[0];
-        if (possibleEngines.contains(profileEngineName) && //Exclude any engines not selected
-            !enabledEngines.contains(profileEngineName)) continue;
-        if (sourcePath.getFileName().toString().equalsIgnoreCase("package.json")) continue;
+        if (possibleEngines.contains(profileEngineName) && // Exclude any engines not selected
+            !enabledEngines.contains(profileEngineName)) {
+          continue;
+        }
+        if (sourcePath.getFileName().toString().equalsIgnoreCase("package.json")) {
+          continue;
+        }
 
         Path destinationPath = targetDir.resolve(profile.relativize(sourcePath)).toAbsolutePath();
-        if (Files.isDirectory(destinationPath) || Files.isRegularFile(trimFtl(destinationPath))) continue; //skip existing to allow overloads
+        if (Files.isDirectory(destinationPath) || Files.isRegularFile(trimFtl(destinationPath))) {
+          continue; // Skip existing to allow overloads
+        }
 
         copy(profile, targetDir, sourcePath, templateConfig);
       }
@@ -457,7 +470,8 @@ public class Packager {
 
   private Path trimFtl(Path destinationPath) {
     return destinationPath.getFileName().toString().endsWith(".ftl") ?
-        destinationPath.getParent().resolve(destinationPath.getFileName().toString().substring(0,destinationPath.getFileName().toString().length()-4 ))
+        destinationPath.getParent().resolve(destinationPath.getFileName().toString()
+            .substring(0, destinationPath.getFileName().toString().length() - 4))
         : destinationPath;
   }
 
@@ -490,7 +504,7 @@ public class Packager {
       return;
     }
 
-    // configure Freemarker
+    // Configure Freemarker
     Configuration cfg = new Configuration(Configuration.VERSION_2_3_32);
     cfg.setDirectoryForTemplateLoading(path.getParent().toFile());
     cfg.setDefaultEncoding("UTF-8");
@@ -499,18 +513,18 @@ public class Packager {
 
     cfg.setSharedVariable("jsonEncode", new JsonEncoderMethod());
 
-    // extract the template filename
+    // Extract the template filename
     String templateName = path.getFileName().toString();
 
-    // load and process the template
+    // Load and process the template
     Template template = cfg.getTemplate(templateName);
     Writer out = new StringWriter();
     template.process(config, out);
 
-    // remove .ftl extension
+    // Remove .ftl extension
     String outputFileName = templateName.substring(0, templateName.length() - 4);
 
-    // write
+    // Write
     Path outputPath = destination.getParent().resolve(outputFileName);
     Files.write(outputPath, out.toString().getBytes());
   }
@@ -541,7 +555,8 @@ public class Packager {
         return Optional.empty();
       }
     } else {
-      return Optional.of(packageFiles.stream().map(rootDir::resolve).collect(Collectors.toUnmodifiableList()));
+      return Optional.of(
+          packageFiles.stream().map(rootDir::resolve).collect(Collectors.toUnmodifiableList()));
     }
   }
 

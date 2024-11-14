@@ -53,6 +53,10 @@ public interface PackageJson {
     boolean isAddArguments();
 
     String getLogger();
+
+    Optional<String> getTargetDataPath();
+
+    Optional<String> getTargetLibPath();
   }
 
   interface ExplainConfig {
