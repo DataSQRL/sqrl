@@ -22,21 +22,21 @@ CardinalityTest := SELECT id,
 /*+test */
 ArrayTest := SELECT id,
                     /*ARRAY_APPEND(ARRAY[1, 2, 3], 4) as append_array,*/
-                    /*ARRAY_CONTAINS(items, 3) as array_contains,*/
-                    ARRAY_DISTINCT(items) as array_distinct,
-                    /*ARRAY_POSITION(ARRAY[1,2,3,4], ARRAY[3]) as array_position,*/
+                    ARRAY_CONTAINS(ARRAY['1','2','3','4'], '3') as array_contains,
+                    ARRAY_DISTINCT(ARRAY['1','1','2','2']) as array_distinct,
+                    ARRAY_POSITION(ARRAY['1','2','3','4'], '3') as array_position,
                     /*ARRAY_PREPEND(items, 3) as array_prepend,*/
-                    /*ARRAY_REMOVE(ARRAY[1,2,3,4], ARRAY[3]) as array_remove,*/
+                    /*ARRAY_REMOVE(ARRAY['1','2','3','4'], ARRAY['3']) as array_remove,*/
                     ARRAY_REVERSE(items) as array_reverse,
-                    ARRAY_SLICE(items,0,2) as array_slice
+                    ARRAY_SLICE(items,0,2) as array_slice,
                     /*ARRAY_SORT(items) as array_sort,*/
-                    /*ARRAY_UNION(ARRAY[1,2,3,4], ARRAY[3,4,5,6]) as array_union,*/
-                    /*ARRAY_CONCAT(ARRAY[1,2,3], ARRAY[4,5,6]) as array_concat,*/
-                    /*ARRAY_EXCPET(ARRAY[1,2,3], ARRAY[4,5,6]) as array_except,*/
-                    /*ARRAY_INTERSECT(ARRAY[1,2,3], ARRAY[4,5,6]) as array_interscept,*/
-                    /*ARRAY_MAX(items) as array_max,*/
-                    /*ARRAY_JOIN(items, ';') as array_join,*/
-                    /*ARRAY_MIN(items) as array_min*/
+                    ARRAY_UNION(ARRAY['1','2','3','4'], ARRAY['3','4','5','6']) as array_union,
+                    ARRAY_CONCAT(ARRAY['1','2','3'], ARRAY['4','5','6']) as array_concat,
+                    /*ARRAY_EXCEPT(ARRAY[1,2,3], ARRAY[4,5,6]) as array_except,*/
+                    /*ARRAY_INTERSECT(ARRAY[1,2,3], ARRAY[4,5,6]) as array_intersect,*/
+                    ARRAY_MAX(ARRAY[1,2,3]) as array_max,
+                    ARRAY_JOIN(ARRAY['1','2','3'], ';') as array_join,
+                    ARRAY_MIN(ARRAY[1,2,3]) as array_min
              FROM UnmodifiedArrayData
              ORDER BY id;
 
@@ -44,11 +44,11 @@ ArrayTest := SELECT id,
 MapTest := SELECT id,
                CARDINALITY(ARRAY['a','b','c']) as cardinality,
                items[1]['number'] as map_at_key,
-               /*MAP_KEYS(MAP['a', 1, 'b', 2]) as map_keys*/
+               MAP_KEYS(MAP['a', 1, 'b', 2]) as map_keys,
                /*MAP_UNION(MAP['key1', 'original', 'key2', 'value2'], MAP['key1', 'override', 'key3', 'value3']) as map_union,*/
                MAP_VALUES(MAP['key1', 'original', 'key2', 'value2']) as map_values,
-               MAP_ENTRIES(MAP['key1', 'original', 'key2', 'value2']) as map_entries
-               /*MAP_FROM_ARRAYS(ARRAY['a','b','c','d'], ARRAY['1','2','3','4']) as map_from_arrays*/
+               MAP_ENTRIES(MAP['key1', 'original', 'key2', 'value2']) as map_entries,
+               MAP_FROM_ARRAYS(ARRAY['a','b','c','d'], ARRAY['1','2','3','4']) as map_from_arrays
         FROM UnmodifiedArrayData
         ORDER BY id;
 
