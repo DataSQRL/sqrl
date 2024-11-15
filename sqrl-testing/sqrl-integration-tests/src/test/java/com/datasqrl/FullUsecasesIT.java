@@ -74,8 +74,10 @@ public class FullUsecasesIT {
       //new ScriptCriteria("season-teaser.sqrl", "run"),
 //      new ScriptCriteria("comparison-functions.sqrl", "test"),
 //      new ScriptCriteria("comparison-functions.sqrl", "run"),
-//      new ScriptCriteria("analytics-only.sqrl", "test"),
-//      new ScriptCriteria("analytics-only.sqrl", "run"),
+      new ScriptCriteria("analytics-only.sqrl", "test"),
+      new ScriptCriteria("analytics-only.sqrl", "run"),
+      new ScriptCriteria("postgres-log.sqrl", "test"),
+      new ScriptCriteria("postgres-log.sqrl", "run"),
       new ScriptCriteria("seedshop-extended.sqrl", "test"), // CustomerPromotionTest issue
       new ScriptCriteria("seedshop-extended.sqrl", "run") // CustomerPromotionTest issue
   );
@@ -248,7 +250,7 @@ public class FullUsecasesIT {
   @MethodSource("useCaseProvider")
   @Disabled
   public void runTestNumber(UseCaseTestParameter param, TestInfo testInfo) {
-    int i = 28;
+    int i = -1;
     testNo++;
     System.out.println(testNo + ":" + param);
     if (i == testNo) {
