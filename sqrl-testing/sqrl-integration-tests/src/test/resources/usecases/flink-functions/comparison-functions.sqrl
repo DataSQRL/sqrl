@@ -62,7 +62,7 @@ UnmodifiedTextDataTest := SELECT id,
                           FROM UnmodifiedTextData;
 
 /*+test */
-UnmodifiedNumericData := SELECT id,
-                                x,
-                                y
-                         FROM UnmodifiedNumericData;
+UnmodifiedNumericDataTest := SELECT id,
+                                    x,
+                                    y
+                             FROM UnmodifiedNumericData;
