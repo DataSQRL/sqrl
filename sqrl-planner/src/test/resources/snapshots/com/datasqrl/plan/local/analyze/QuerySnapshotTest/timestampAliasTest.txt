@@ -1,3 +1,0 @@
->>>o$2
-LogicalTableScan(table=[[o$1]])
-

@@ -907,12 +907,26 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     if (!inputs.stream().allMatch(alp -> {
       errors.checkFatal(alp.select.equals(select),
               "Input streams select different columns");
+      if (!alp.primaryKey.equals(pk)) {
+        errors.warn("Union of streams with different primary keys (both column names and positions must align): %s vs %s",
+            alp.getFieldNamesWithIndex(alp.primaryKey.asSimpleList()), inputs.get(0).getFieldNamesWithIndex(pk.asSimpleList()));
+        return false;
+      }
+      if (!alp.timestamp.equals(timestamp)) {
+        errors.warn("Union of streams with different timestamps (both column names and positions must align): %s vs %s",
+            alp.getFieldNamesWithIndex(alp.timestamp.asList()), inputs.get(0).getFieldNamesWithIndex(timestamp.asList()));
+        return false;
+      }
       List<RelDataTypeField> alpFields = alp.relNode.getRowType().getFieldList();
-      return alp.primaryKey.equals(pk)
-              && alp.timestamp.equals(timestamp)
-              && pk.asList().stream().allMatch(col -> fields.get(col.getOnly()).equals(alpFields.get(col.getOnly())));
+      for (Integer pkIndex : pk.asSimpleList()) {
+        if (!fields.get(pkIndex).equals(alpFields.get(pkIndex))) {
+          errors.warn("Union of streams with different primary key column types: %s vs %s",
+              fields.get(pkIndex), alpFields.get(pkIndex));
+          return false;
+        }
+      }
+      return true;
     })) {
-      errors.warn("Union of stream with different primary keys");
       return processRelation(rawInputs, logicalUnion);
     }
 

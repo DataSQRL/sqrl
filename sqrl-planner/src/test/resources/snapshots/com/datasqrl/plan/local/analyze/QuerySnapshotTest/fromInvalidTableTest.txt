@@ -1,8 +1,0 @@
->>>errors
-[FATAL] Could not find table: x
-in script:<script> [5:32]:
-IMPORT ecommerce-data.Orders TIMESTAMP time;
-IMPORT ecommerce-data.Product TIMESTAMP _ingest_time;
-CustomerById(@id: INT) := FROM x WHERE customerid = @id;
--------------------------------^
-

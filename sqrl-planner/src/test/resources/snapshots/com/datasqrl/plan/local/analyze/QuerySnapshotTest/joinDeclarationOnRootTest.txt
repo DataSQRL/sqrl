@@ -1,7 +1,0 @@
->>>errors
-[FATAL] Cannot assign join declaration on root
-in script:<script> [2:1]:
-IMPORT ecommerce-data.Product TIMESTAMP _ingest_time;
-Product2 := JOIN Product;
-^
-

@@ -1,8 +1,0 @@
->>>errors
-[FATAL] At line 3, column 29: Table 'joinDeclaration' not found
-in script:<script> [3:29]:
-IMPORT ecommerce-data.Product TIMESTAMP _ingest_time;
-Product.joinDeclaration := JOIN Product ON @.productid = Product.productid;
-Product.total := SELECT SUM(joinDeclaration.productid) AS totals FROM @;
-----------------------------^
-
