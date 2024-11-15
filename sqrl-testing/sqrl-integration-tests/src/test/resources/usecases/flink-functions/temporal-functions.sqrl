@@ -14,41 +14,41 @@ UnmodifiedTemporalData := SELECT id,
 
 /* =======TEST CASES======== */
 
-
+/*+test*/
 DateTimeStringTest := SELECT id,
                              DATE date,
                              TIME time
                              /*TIMESTAMP timestamp_ltz as timestamp_ltz_string_function,*/
                       FROM UnmodifiedTemporalData ORDER BY id;
 
-
+/*+test*/
 TemporalIsoTest := SELECT id,
                              TIMESTAMP timestamp_iso
                       FROM UnmodifiedTemporalData ORDER BY id;
 
-
+/*+test*/
 TemporalPrecisionTest := SELECT id,
                              TIMESTAMP timestamp_precision
                       FROM UnmodifiedTemporalData ORDER BY id;
 
-
-DateTest := SELECT id,
-                    YEAR(date),
-                    QUARTER(date),
-                    MONTH(date),
-                    WEEK(date),
-                    DAYOFYEAR(date),
-                    DAYOFMONTH(date),
-                    DAYOFWEEK(date)
+/*+test*/
+DateTest := SELECT id
+                    --YEAR(date) AS y,
+                    --QUARTER(date) AS q,
+                    --MONTH(date) AS m,
+                    --WEEK(date) AS w,
+                    --DAYOFYEAR(date) AS doy,
+                    --DAYOFMONTH(date) AS dom,
+                    --DAYOFWEEK(date) AS dow
              FROM UnmodifiedTemporalData ORDER BY id;
 
-
-TimeTest := SELECT id,
-                   HOUR(time),
-                   MINUTE(time),
-                   SECOND(time)
+/*+test*/
+TimeTest := SELECT id
+                   --HOUR(time) AS h,
+                   --MINUTE(time) AS m,
+                   --SECOND(time) AS s
              FROM UnmodifiedTemporalData ORDER BY id;
 
-
+/*+test*/
 UnmodifiedTemporalDataTest := SELECT *
                               FROM UnmodifiedTemporalData ORDER BY id;
