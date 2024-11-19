@@ -266,6 +266,7 @@
         <configuration>
           <redeploy>true</redeploy>
           <attach>true</attach>
+          <launcher>com.datasqrl.graphql.SqrlLauncher</launcher>
         </configuration>
       </plugin>
     </plugins>
