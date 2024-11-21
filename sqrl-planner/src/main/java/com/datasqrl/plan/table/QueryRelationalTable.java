@@ -16,6 +16,7 @@ import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.sql.SqlNode;
 
 public class QueryRelationalTable extends PhysicalRelationalTable {
 
@@ -42,7 +43,11 @@ public class QueryRelationalTable extends PhysicalRelationalTable {
   }
 
   public RelNode getOriginalRelnode() {
-    return analyzedLP.getOriginalRelnode();
+    return analyzedLP.getOriginalRelNode();
+  }
+
+  public SqlNode getOriginalSqlNode() {
+    return analyzedLP.getOriginalSqlNode();
   }
 
   @Override

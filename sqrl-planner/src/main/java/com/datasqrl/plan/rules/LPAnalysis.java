@@ -7,11 +7,14 @@ import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.SqlHint;
+import org.apache.calcite.sql.SqlNode;
 
 @Value
 public class LPAnalysis {
 
-  @NonNull RelNode originalRelnode;
+  @NonNull RelNode originalRelNode;
+
+  @NonNull SqlNode originalSqlNode;
 
   @NonNull AnnotatedLP convertedRelnode;
 

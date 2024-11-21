@@ -33,6 +33,7 @@ import org.apache.calcite.rel.hint.RelHint;
 import org.apache.calcite.schema.Function;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.sql.SqlHint;
+import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.lang3.tuple.Pair;
@@ -46,13 +47,11 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
   private final SQRLConverter sqrlConverter;
 
   @Override
-  public void createTable(ModuleLoader moduleLoader, List<String> path, RelNode input, List<RelHint> hints,
+  public void createTable(ModuleLoader moduleLoader, List<String> path, RelNode input, SqlNode inputSQL,
       Optional<SqlNodeList> opHints,
       List<FunctionParameter> parameters, List<Function> isA, boolean materializeSelf,
       Optional<Supplier<RelNode>> relNodeSupplier, ErrorCollector errors, boolean isTest) {
-    LPAnalysis analyzedLP = convertToVanillaSQL(
-        input, framework.getQueryPlanner().getRelBuilder(),
-        opHints, errors);
+    LPAnalysis analyzedLP = convertToVanillaSQL(input, inputSQL, opHints, errors);
 
     NamePath names = nameUtil.toNamePath(path);
 
@@ -104,8 +103,8 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
 
 
   //Converts SQRL statements into vanilla SQL
-  private LPAnalysis convertToVanillaSQL(RelNode relNode,
-      RelBuilder relBuilder, Optional<SqlNodeList> hints, ErrorCollector errors) {
+  private LPAnalysis convertToVanillaSQL(RelNode relNode, SqlNode sqlNode,
+      Optional<SqlNodeList> hints, ErrorCollector errors) {
     //Parse all optimizer hints
     Pair<List<OptimizerHint>,List<SqlHint>> analyzedHints = OptimizerHint.fromSqlHints(hints, errors);
     //TODO: put other SQLHints back on the relnode after we are done, i.e. pass them through
@@ -125,7 +124,7 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
     SqrlConverterConfig config = configBuilder.build();
 
     AnnotatedLP alp = sqrlConverter.convert(relNode, config, errors);
-    return new LPAnalysis(relNode, alp, configuredStages, baseConfig, analyzedHints.getKey(),
+    return new LPAnalysis(relNode, sqlNode, alp, configuredStages, baseConfig, analyzedHints.getKey(),
         analyzedHints.getValue());
   }
 }

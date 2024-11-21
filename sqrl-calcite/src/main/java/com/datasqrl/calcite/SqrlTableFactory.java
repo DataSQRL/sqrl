@@ -9,11 +9,12 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.hint.RelHint;
 import org.apache.calcite.schema.Function;
 import org.apache.calcite.schema.FunctionParameter;
+import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 
 public interface SqrlTableFactory {
 
-  void createTable(ModuleLoader moduleLoader, List<String> path, RelNode input, List<RelHint> hints,
+  void createTable(ModuleLoader moduleLoader, List<String> path, RelNode input, SqlNode inputSQL,
       Optional<SqlNodeList> opHints,
       List<FunctionParameter> parameters, List<Function> isA, boolean materializeSelf,
       Optional<Supplier<RelNode>> nodeSupplier, ErrorCollector errors, boolean isTest);

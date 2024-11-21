@@ -84,7 +84,7 @@ public class SqrlDAGExporter {
                         .stage(stage)
                         .inputs(importInput!=null?List.of(importInput):inputs)
                         .plan(explain(table.getPlannedRelNode()))
-                        .sql(toSql(table.getPlannedRelNode()))
+                        .sql(toSql(table))
                         .primary_key(table.getPrimaryKey().isUndefined()?null:table.getPrimaryKey().asList().stream().map(fields::get).map(RelDataTypeField::getName).collect(Collectors.toUnmodifiableList()))
                         .timestamp(table.getTimestamp().is(Timestamps.Type.UNDEFINED)?"-":fields.get(table.getTimestamp().getOnlyCandidate()).getName())
                         .schema(fields.stream().map(field -> new SchemaColumn(field.getName(), field.getType().getFullTypeString())).collect(Collectors.toUnmodifiableList()))
@@ -126,6 +126,12 @@ public class SqrlDAGExporter {
         } else {
             return relNode.explain();
         }
+    }
+
+    private String toSql(PhysicalRelationalTable table) {
+        if (!includeSQL) return null;
+        if (!(table instanceof QueryRelationalTable)) return null;
+        return QueryPlanner.sqlToString(Dialect.CALCITE, () -> table.unwrap(QueryRelationalTable.class).getOriginalSqlNode()).getSql();
     }
 
     private String toSql(RelNode relNode) {
