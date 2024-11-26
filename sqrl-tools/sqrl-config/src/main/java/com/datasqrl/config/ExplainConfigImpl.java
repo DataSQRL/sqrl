@@ -39,11 +39,13 @@ public class ExplainConfigImpl implements PackageJson.ExplainConfig {
   @Default
   boolean physical = false;
   /**
-   * This setting is primarily used for testing to ensure that the output of explain is
-   * deterministic
+   * Sorts the nodes in the DAG by id (i.e. their internal name).
+   * This is set to true by default to ensure a deterministic order of the DAG plan
+   * that can be used for testing.
+   * Set to false if you need the original DAG order.
    */
   @Default
-  boolean sorted = true; //TODO: set to false and overwrite in test case injector
+  boolean sorted = true;
 
   public ExplainConfigImpl(SqrlConfig sqrlConfig) {
     this(
