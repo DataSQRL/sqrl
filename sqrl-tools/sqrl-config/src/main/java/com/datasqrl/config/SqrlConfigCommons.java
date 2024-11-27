@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
+import com.google.common.io.Resources;
 import com.networknt.schema.JsonSchema;
 import com.networknt.schema.JsonSchemaFactory;
 import com.networknt.schema.SpecVersion.VersionFlag;
@@ -40,6 +41,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
+import lombok.SneakyThrows;
 import org.apache.commons.configuration2.BaseHierarchicalConfiguration;
 import org.apache.commons.configuration2.CombinedConfiguration;
 import org.apache.commons.configuration2.Configuration;
@@ -349,15 +351,21 @@ public class SqrlConfigCommons implements SqrlConfig {
 
   public static TableConfigImpl fromFilesTableConfig(@NonNull Name name, ErrorCollector errors,
       @NonNull List<Path> files) {
-    return new TableConfigImpl(name, fromFiles(errors, "/jsonSchema/tableConfig.json", files));
+    return new TableConfigImpl(name, fromFiles(errors, "/jsonSchema/tableConfig.json", Optional.empty(), files));
   }
 
-  public static PackageJson fromFilesPackageJson(ErrorCollector errors, @NonNull List<Path> files) {
-    return new PackageJsonImpl(fromFiles(errors, "/jsonSchema/packageSchema.json", files));
+  public static PackageJson fromFilesPackageJson(ErrorCollector errors, URL base, @NonNull List<Path> files) {
+    return new PackageJsonImpl(fromFiles(errors, "/jsonSchema/packageSchema.json", Optional.of(base), files));
   }
 
   public static PackageJson fromFilesPublishPackageJson(ErrorCollector errors, @NonNull List<Path> files) {
-    return new PackageJsonImpl(fromFiles(errors, "/jsonSchema/publishPackageSchema.json", files));
+    return new PackageJsonImpl(fromFiles(errors, "/jsonSchema/publishPackageSchema.json", Optional.empty(),
+        files));
+  }
+
+  public static PackageJson fromBaseResource(ErrorCollector errors) {
+    URL resource = Resources.getResource("package.json");
+    return new PackageJsonImpl(fromURL(errors, resource));
   }
 
   public static boolean validateJsonFile(Path jsonFilePath, String schemaResourcePath,
@@ -398,16 +406,22 @@ public class SqrlConfigCommons implements SqrlConfig {
   }
 
   public static SqrlConfig fromFiles(ErrorCollector errors, @NonNull Path firstFile) {
-    return fromFiles(errors, null, List.of(firstFile));
+    return fromFiles(errors, null, Optional.empty(), List.of(firstFile));
   }
 
-  public static SqrlConfig fromFiles(ErrorCollector errors, String jsonSchemaResource, @NonNull List<Path> files) {
+  @SneakyThrows
+  public static SqrlConfig fromFiles(ErrorCollector errors, String jsonSchemaResource, Optional<URL> base, @NonNull List<Path> files) {
     Preconditions.checkArgument(files!=null && !files.isEmpty(),"Need to provide at least one configuration file");
     Configurations configs = new Configurations();
     boolean isValid = true;
 
     NodeCombiner combiner = new OverrideCombiner();
     CombinedConfiguration combinedConfiguration = new CombinedConfiguration(combiner);
+    if (base.isPresent()) {
+      Configuration nextconfig = configs.fileBased(JSONConfiguration.class, base.get());
+      combinedConfiguration.addConfiguration(nextconfig);
+    }
+
     for (int i = files.size()-1; i >= 0; i--) { //iterate backwards so last file takes precedence
       Path file = files.get(i);
       ErrorCollector localErrors = errors.withConfig(file);

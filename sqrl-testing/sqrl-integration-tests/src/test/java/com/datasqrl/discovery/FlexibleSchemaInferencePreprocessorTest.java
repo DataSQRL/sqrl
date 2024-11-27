@@ -1,5 +1,6 @@
 package com.datasqrl.discovery;
 
+import static com.datasqrl.packager.Packager.PACKAGE_JSON;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.datasqrl.AbstractAssetSnapshotTest;
@@ -15,6 +16,7 @@ import com.datasqrl.inject.StatefulModule;
 import com.datasqrl.packager.preprocess.Preprocessor.ProcessorContext;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.util.SnapshotTest.Snapshot;
+import com.google.common.io.Resources;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import java.nio.file.Files;
@@ -42,7 +44,7 @@ public class FlexibleSchemaInferencePreprocessorTest extends AbstractAssetSnapsh
     super(FILES_DIR.resolve("output"));
     try {
       packageJson = SqrlConfigCommons.fromFilesPackageJson(errors,
-          List.of(Path.of("../../profiles/default/package.json")));
+          Resources.getResource(PACKAGE_JSON), List.of(Path.of("../../profiles/default/package.json")));
     } catch (Exception e) {
         System.out.println(ErrorPrinter.prettyPrint(errors));
         throw e;
