@@ -1,12 +1,9 @@
 package com.datasqrl.calcite.dialect;
 
 
-import static org.apache.calcite.sql.SqlKind.COLLECTION_TABLE;
-
-import com.datasqrl.calcite.Dialect;
 import com.datasqrl.function.translations.SqlTranslation;
+import com.datasqrl.function.util.ServiceLoaderDiscovery;
 import com.datasqrl.type.JdbcTypeSerializer;
-import com.datasqrl.util.ServiceLoaderDiscovery;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.calcite.avatica.util.Casing;
@@ -16,19 +13,18 @@ import org.apache.calcite.sql.SqlAlienSystemTypeNameSpec;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.SqlDialect;
+import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
-import org.apache.calcite.sql.fun.SqlCollectionTableOperator;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.SqlConformance;
-import org.apache.calcite.sql.validate.SqlConformanceEnum;
 import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
 
   public static final Map<String, SqlTranslation> translationMap = ServiceLoaderDiscovery.getAll(SqlTranslation.class)
-      .stream().filter(f->f.getDialect() == Dialect.POSTGRES)
+      .stream().filter(f->f.getSqlDialect().getClass().isAssignableFrom(ExtendedPostgresSqlDialect.class))
       .collect(Collectors.toMap(f->f.getOperator().getName().toLowerCase(), f->f));
 
   public static final ExtendedPostgresSqlDialect.Context DEFAULT_CONTEXT;
@@ -37,7 +33,7 @@ public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
   static {
     DEFAULT_CONTEXT = SqlDialect.EMPTY_CONTEXT.withDatabaseProduct(DatabaseProduct.POSTGRESQL)
         .withIdentifierQuoteString("\"").withUnquotedCasing(Casing.TO_LOWER)
-        .withDataTypeSystem(POSTGRESQL_TYPE_SYSTEM)
+        .withDataTypeSystem(PostgresqlSqlDialect.POSTGRESQL_TYPE_SYSTEM)
         .withConformance(new PostgresConformance());
     DEFAULT = new ExtendedPostgresSqlDialect(DEFAULT_CONTEXT);
   }
@@ -51,7 +47,7 @@ public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
   private static Map<Class, String> getForeignCastSpecs() {
     Map<Class, String> jdbcTypeSerializer = ServiceLoaderDiscovery.getAll(JdbcTypeSerializer.class)
         .stream()
-        .filter(f->f.getDialectId().equalsIgnoreCase(Dialect.POSTGRES.name()))
+        .filter(f->f.getDialectId().equalsIgnoreCase("POSTGRES"))
         .collect(Collectors.toMap(JdbcTypeSerializer::getConversionClass,
             JdbcTypeSerializer::dialectTypeName));
     return jdbcTypeSerializer;
@@ -133,7 +129,7 @@ public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
 
   @Override
   public void unparseCall(SqlWriter writer, SqlCall call, int leftPrec, int rightPrec) {
-    if (call.getOperator().getKind() == COLLECTION_TABLE) { //skip FROM TABLE(..) call
+    if (call.getOperator().getKind() == SqlKind.COLLECTION_TABLE) { //skip FROM TABLE(..) call
       unparseCall(writer, (SqlCall)call.getOperandList().get(0), leftPrec, rightPrec);
       return;
     }

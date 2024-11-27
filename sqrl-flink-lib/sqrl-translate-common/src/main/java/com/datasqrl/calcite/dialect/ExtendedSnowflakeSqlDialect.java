@@ -1,8 +1,7 @@
 package com.datasqrl.calcite.dialect;
 
-import com.datasqrl.calcite.Dialect;
 import com.datasqrl.function.translations.SqlTranslation;
-import com.datasqrl.util.ServiceLoaderDiscovery;
+import com.datasqrl.function.util.ServiceLoaderDiscovery;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.calcite.avatica.util.Casing;
@@ -14,7 +13,7 @@ import org.apache.calcite.sql.dialect.SnowflakeSqlDialect;
 public class ExtendedSnowflakeSqlDialect extends SnowflakeSqlDialect {
   public static final Map<String, SqlTranslation> translationMap = ServiceLoaderDiscovery
       .getAll(SqlTranslation.class)
-      .stream().filter(f->f.getDialect() == Dialect.SNOWFLAKE)
+      .stream().filter(f->f.getSqlDialect().getClass().isAssignableFrom(ExtendedSnowflakeSqlDialect.class))
       .collect(Collectors.toMap(f->f.getOperator().getName().toLowerCase(), f->f));
 
   public static final SqlDialect.Context DEFAULT_CONTEXT;

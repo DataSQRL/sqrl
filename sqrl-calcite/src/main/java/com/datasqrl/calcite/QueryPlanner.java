@@ -8,9 +8,13 @@ import com.datasqrl.calcite.convert.SqlConverterFactory;
 import com.datasqrl.calcite.convert.SqlNodeToString;
 import com.datasqrl.calcite.convert.SqlNodeToString.SqlStrings;
 import com.datasqrl.calcite.convert.SqlToStringFactory;
+import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
+import com.datasqrl.calcite.dialect.ExtendedSnowflakeSqlDialect;
 import com.datasqrl.calcite.schema.ExpandTableMacroRule.ExpandTableMacroConfig;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
 import com.datasqrl.canonicalizer.ReservedName;
+import com.datasqrl.engine.stream.flink.sql.calcite.FlinkDialect;
+import com.datasqrl.jdbc.SqrlPostgresDialect;
 import com.datasqrl.parse.SqrlParserImpl;
 import com.datasqrl.util.DataContextImpl;
 import java.util.Arrays;
@@ -270,7 +274,22 @@ public class QueryPlanner {
 
   public RelNode convertRelToDialect(Dialect dialect, RelNode relNode) {
     return new DialectCallConverter(planner)
-        .convert(dialect, relNode);
+        .convert(dialectToSqlDialect(dialect), relNode);
+  }
+
+  //temporary until we remove the Dialect enum
+  private SqlDialect dialectToSqlDialect(Dialect dialect) {
+    switch (dialect){
+      case SQRL:
+      case CALCITE:
+      case POSTGRES:
+        return ExtendedPostgresSqlDialect.DEFAULT;
+      case FLINK:
+        return FlinkDialect.DEFAULT;
+      case SNOWFLAKE:
+        return ExtendedSnowflakeSqlDialect.DEFAULT;
+    }
+    throw new RuntimeException("Unknown dialect:" + dialect);
   }
 
   public static SqlNodes relToSql(Dialect dialect, RelNode relNode) {
