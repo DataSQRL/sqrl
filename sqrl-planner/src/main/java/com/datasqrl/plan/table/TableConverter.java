@@ -25,11 +25,14 @@ import com.google.inject.Inject;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeFamily;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.type.SqlTypeFamily;
+import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.SqrlSqlValidator;
 
 import java.util.List;
@@ -136,11 +139,19 @@ public class TableConverter {
       pkIndexes[i]=getFieldIndex(finalType, primaryKeys.get(i));
     }
 
+    // Validate watermark column
+    if (baseTblConfig.getTimestampColumn().isPresent()) {
+      String timestampColumn = baseTblConfig.getTimestampColumn().get();
+      if (!nameAdjuster.contains(timestampColumn)) {
+        throw new RuntimeException(String.format("Timestamp column not found: \"%s\".", timestampColumn));
+      }
+      RelDataTypeField field = finalType.getField(timestampColumn, true, false);
+      RelDataType fieldType = field.getType();
 
-    Preconditions.checkState(baseTblConfig.getTimestampColumn().isPresent(), "timestamp column missing");
-    String timestampColumn = baseTblConfig.getTimestampColumn().get();
-    if (!nameAdjuster.contains(timestampColumn)) {
-      throw new RuntimeException(String.format("Timestamp column not found: \"%s\". Must be one of: %s", timestampColumn, nameAdjuster));
+      if (!isValidFlinkWatermarkType(fieldType)) {
+        throw new RuntimeException(String.format("Timestamp column \"%s\" has invalid type: %s.", timestampColumn,
+            fieldType));
+      }
     }
 
     TableType tableType = tableConfig.getConnectorConfig().getTableType();
@@ -164,6 +175,12 @@ public class TableConverter {
     RelDataTypeField field = type.getField(fieldName,true, false);
     Preconditions.checkNotNull(field, "Could not find field: %s", fieldName);
     return field.getIndex();
+  }
+
+  private boolean isValidFlinkWatermarkType(RelDataType type) {
+    return SqlTypeFamily.DATETIME_INTERVAL.contains(type)
+         || SqlTypeFamily.DATETIME.contains(type)
+         || SqlTypeFamily.NUMERIC.contains(type);
   }
 
   private boolean isValidDatatype(String datatype) {
