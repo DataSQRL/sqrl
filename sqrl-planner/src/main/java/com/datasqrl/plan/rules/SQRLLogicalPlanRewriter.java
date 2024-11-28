@@ -421,6 +421,13 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
         Preconditions.checkArgument(!partition.isEmpty());
         Preconditions.checkArgument(!collation.getFieldCollations().isEmpty());
         Optional<Integer> timestampOrder = LPConverterUtil.getTimestampOrderIndex(collation, timestamp);
+        if (config.isFilterDistinctOrder()) {
+          if (timestampOrder.isPresent()) {
+            errors.notice("No filtering necessary since timestamp order is used.");
+          } else {
+            //Add
+          }
+        }
         if (baseInput.type.isStream()) {
           if (timestampOrder.isEmpty()) {
             errors.warn(DISTINCT_ON_TIMESTAMP,

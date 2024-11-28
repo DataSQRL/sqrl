@@ -10,3 +10,8 @@ FROM Orders;
 
 FilteredOrders := SELECT id, customerid, time, _ingest_time FROM OrdersLag WHERE customerid != previous_customerid;
 
+/*+filtered_distinct_order */
+DistinctOrderWithTs := DISTINCT Orders ON id ORDER BY _ingest_time DESC;
+
+/*+filtered_distinct_order */
+DistinctOrderWoutTs := DISTINCT Orders ON id ORDER BY time DESC;
