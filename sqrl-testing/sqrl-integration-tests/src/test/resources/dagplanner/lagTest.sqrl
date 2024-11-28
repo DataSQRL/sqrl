@@ -1,0 +1,12 @@
+IMPORT ecommerce.Orders;
+
+OrdersLag := SELECT
+    id,
+    customerid,
+    time,
+    _ingest_time,
+    lag(customerid, 1) over (partition by id order by _ingest_time) previous_customerid
+FROM Orders;
+
+FilteredOrders := SELECT id, customerid, time, _ingest_time FROM OrdersLag WHERE customerid != previous_customerid;
+
