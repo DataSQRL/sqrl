@@ -9,8 +9,11 @@ import com.google.common.base.Preconditions;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -20,9 +23,12 @@ import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.avatica.util.TimeUnit;
+import org.apache.calcite.rel.RelFieldCollation;
+import org.apache.calcite.rel.RelFieldCollation.NullDirection;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.AggregateCall;
+import org.apache.calcite.rel.core.Window;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
@@ -30,18 +36,23 @@ import org.apache.calcite.rel.type.StructKind;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexDynamicParam;
+import org.apache.calcite.rex.RexFieldCollation;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
+import org.apache.calcite.rex.RexWindowBounds;
 import org.apache.calcite.sql.SqlIntervalQualifier;
 import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlOperator;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.ArraySqlType;
 import org.apache.calcite.sql.type.BasicSqlType;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.tools.RelBuilder;
+import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 import org.apache.flink.table.functions.FunctionDefinition;
 
 public class CalciteUtil {
@@ -399,6 +410,89 @@ public class CalciteUtil {
       return RexLiteral.intValue(literal) == 0;
     }
     return false;
+  }
+
+  public static void addFilteredDeduplication(RelBuilder relB, int timestampIdx, List<Integer> partition, int orderColIdx) {
+    Preconditions.checkArgument(!partition.contains(timestampIdx), "Timestamp column cannot be part of the partition");
+    Preconditions.checkArgument(!partition.contains(orderColIdx), "Order column cannot be part of the partition");
+    RexBuilder rexBuilder = relB.getCluster().getRexBuilder();
+
+    List<RexNode> partitionKeys = getSelectRex(relB, partition);
+    int numFields = relB.peek().getRowType().getFieldCount();
+    List<Integer> originalFieldIdx = IntStream.range(0,numFields).boxed().collect(Collectors.toUnmodifiableList());
+
+    // MAX function over the window
+    RexNode rexOver = rexBuilder.makeOver(
+        relB.field(orderColIdx).getType(),
+        SqlStdOperatorTable.MAX,
+        ImmutableList.of(relB.field(orderColIdx)),
+        partitionKeys,
+        ImmutableList.of(new RexFieldCollation(relB.field(timestampIdx), Set.of(SqlKind.DESCENDING))),
+        RexWindowBounds.UNBOUNDED_PRECEDING,
+        RexWindowBounds.CURRENT_ROW,
+        false,
+        true,
+        false,
+        false,
+        true
+    );
+
+    // Adding projection that computes a running max for the order col
+    List<RexNode> projects = new ArrayList<>(relB.fields());
+    projects.add(rexOver);
+    relB.project(projects);
+
+    // Filter out rows that aren't bigger or equal to the running max for order col (i.e. out of order data)
+    RexNode condition = relB.call(SqlStdOperatorTable.GREATER_THAN_OR_EQUAL, relB.field(orderColIdx), relB.field(numFields));
+    relB.filter(condition);
+
+    //Compute the lag for all columns other than the order and timestamp column, ordered by timestamp
+    Function<Integer, RexNode> lagFunction = idx -> rexBuilder.makeOver(
+        relB.field(idx).getType(),
+        SqlStdOperatorTable.LAG,
+        ImmutableList.of(relB.field(idx), rexBuilder.makeExactLiteral(BigDecimal.ONE)),
+        partitionKeys,
+        ImmutableList.of(new RexFieldCollation(relB.field(timestampIdx), Set.of(SqlKind.DESCENDING))),
+        RexWindowBounds.UNBOUNDED_PRECEDING,
+        RexWindowBounds.CURRENT_ROW,
+        false,
+        true,
+        false,
+        false,
+        true
+    );
+
+    projects = new ArrayList<>(relB.fields(originalFieldIdx));
+    Map<Integer, Integer> lagPairs = new HashMap<>();
+    int offset = numFields;
+    for (int i = 0; i < numFields; i++) {
+      if (i==orderColIdx || i==timestampIdx) continue;
+      projects.add(lagFunction.apply(i));
+      lagPairs.put(i, offset++);
+    }
+    relB.project(projects);
+
+    //Filter out records where all column values (other than timestamp and order col) are identical
+    List<RexNode> anyColumnDifferent = new ArrayList<>();
+    //unless it's the first record which we check by looking if all lag columns are null
+    RexNode isFirstRow = relB.and(lagPairs.values().stream()
+        .map(idx -> relB.isNull(relB.field(idx)))
+        .collect(Collectors.toList()));
+    anyColumnDifferent.add(isFirstRow);
+    for (int i = 0; i < numFields; i++) {
+      if (i==orderColIdx || i==timestampIdx) continue;
+      RexNode col = relB.field(i);
+      RexNode colLag = relB.field(lagPairs.get(i));
+
+      RexNode notEqualCondition = relB.call(SqlStdOperatorTable.NOT_EQUALS, col, colLag);
+      anyColumnDifferent.add(relB.and(relB.isNotNull(col), relB.isNotNull(colLag), notEqualCondition));
+      anyColumnDifferent.add(relB.and(relB.isNull(col), relB.isNotNull(colLag)));
+      anyColumnDifferent.add(relB.and(relB.isNotNull(col), relB.isNull(colLag)));
+    }
+    relB.filter(relB.or(anyColumnDifferent));
+
+    //Project to original fields
+    relB.project(relB.fields(originalFieldIdx));
   }
 
   public static boolean isPotentialPrimaryKeyType(RelDataType type) {

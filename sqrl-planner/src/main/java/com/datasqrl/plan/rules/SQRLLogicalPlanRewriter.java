@@ -425,12 +425,19 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
           if (timestampOrder.isPresent()) {
             errors.notice("No filtering necessary since timestamp order is used.");
           } else {
-            //Add
+            //Check conditions for filtered distinct
+            errors.checkFatal(baseInput.type.isStream(),"Filtered distinct only supported on streams");
+            errors.checkFatal(collation.getFieldCollations().size()==1, "Filtered distinct requires a single order column");
+            RelFieldCollation fieldCol = collation.getFieldCollations().get(0);
+            errors.checkFatal(fieldCol.direction.isDescending(), "Filtered distinct requires descending order");
+            errors.checkFatal(timestamp.size()==1, "Filtered distinct requires a single timestamp column, but found: %", timestamp); //TODO: replace with fieldname & index
+
+            CalciteUtil.addFilteredDeduplication(relB, timestamp.getOnlyCandidate(), partition, fieldCol.getFieldIndex());
           }
         }
         if (baseInput.type.isStream()) {
           if (timestampOrder.isEmpty()) {
-            errors.warn(DISTINCT_ON_TIMESTAMP,
+            errors.notice(DISTINCT_ON_TIMESTAMP,
                 "DISTINCT ON statements is not ordered by timestamp");
           } else {
             timestamp = Timestamps.ofFixed(timestampOrder.get());
