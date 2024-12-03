@@ -1,16 +1,15 @@
 {
   "version": 1,
   "flink" : {
-    "format" : "json",
-    "path" : "file:/mock",
+    "format" : "flexible-json",
+    "path" : "${DATA_PATH}/orders.jsonl",
     "source.monitor-interval" : 10000,
-    "connector" : "filesystem",
-    "source.path.regex-pattern" : ""
+    "connector" : "filesystem"
   },
   "table" : {
     "type" : "source",
     "timestamp" : "_ingest_time",
-    "primary-key" : ["customerid", "lastUpdated"]
+    "primary-key" : ["id", "customerid", "time"]
   },
   "metadata" : {
     "_ingest_time" : {

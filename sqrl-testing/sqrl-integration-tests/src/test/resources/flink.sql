@@ -1,6 +1,6 @@
 CREATE TABLE fake0 (
  name STRING,
- metric INT,
+ metric INT NOT NULL,
  label STRING,
  seq BIGINT,
  noise BIGINT,
@@ -52,7 +52,7 @@ FROM (
 WHERE rn = 1;
 
 CREATE VIEW Dedup2 AS
-SELECT name, metric
+SELECT name, metric, cdc
 FROM (
          SELECT *,
                 ROW_NUMBER() OVER (PARTITION BY name ORDER BY cdc DESC) as rn
@@ -81,8 +81,6 @@ FROM (
      )
 WHERE rn = 1;
 
-CREATE VIEW JoinedDedup AS
-    SELECT * FROM fake1 a INNER JOIN fake2 b on a.name = b.name;
 
 CREATE VIEW AggregatedStocks AS
 SELECT name, SUM(metric) AS metric, window_time AS ts

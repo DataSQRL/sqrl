@@ -42,7 +42,7 @@ public class SimpleFlinkSQLTest {
       }
       result = tableEnv.executeSql("EXECUTE STATEMENT SET BEGIN\n"
           + "INSERT INTO PrintSinkFilter SELECT name, metric, cdc, ts FROM Dedup1;\n"
-          + "INSERT INTO PrintSinkDedup SELECT name, metric, 0 AS cdc, TO_TIMESTAMP('1970-01-01 00:00:00') AS ts FROM Dedup2;\n"
+          + "INSERT INTO PrintSinkDedup SELECT name, metric, cdc, TO_TIMESTAMP('1970-01-01 00:00:00') AS ts FROM Dedup2;\n"
           + "INSERT INTO InputData SELECT name, metric, cdc, ts FROM fake1;\n"
           + "END;\n");
       result.await();

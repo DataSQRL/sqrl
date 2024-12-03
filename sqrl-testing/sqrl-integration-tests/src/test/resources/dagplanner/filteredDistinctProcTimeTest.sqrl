@@ -1,0 +1,14 @@
+IMPORT ecommerce.Orders;
+IMPORT ecommerce.Customer;
+
+OrderFields := SELECT id, time, customerid, _ingest_time FROM Orders;
+
+/*+filtered_distinct_order */
+DistinctOrderWithTs := DISTINCT Orders ON id ORDER BY _ingest_time DESC;
+
+/*+filtered_distinct_order */
+DistinctOrderFieldsWoutTs := DISTINCT OrderFields ON id ORDER BY time DESC;
+
+/*+filtered_distinct_order */
+DistinctCustomerWoutTs := DISTINCT Customer ON customerid ORDER BY lastUpdated DESC;
+
