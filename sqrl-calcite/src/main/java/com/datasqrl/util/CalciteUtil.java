@@ -9,8 +9,11 @@ import com.google.common.base.Preconditions;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -20,9 +23,13 @@ import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.avatica.util.TimeUnit;
+import org.apache.calcite.rel.RelFieldCollation;
+import org.apache.calcite.rel.RelFieldCollation.NullDirection;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.AggregateCall;
+import org.apache.calcite.rel.core.Window;
+import org.apache.calcite.rel.logical.LogicalFilter;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
@@ -30,19 +37,26 @@ import org.apache.calcite.rel.type.StructKind;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexDynamicParam;
+import org.apache.calcite.rex.RexFieldCollation;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
+import org.apache.calcite.rex.RexWindowBounds;
 import org.apache.calcite.sql.SqlIntervalQualifier;
 import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlOperator;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.ArraySqlType;
 import org.apache.calcite.sql.type.BasicSqlType;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.tools.RelBuilder;
+import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
+import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableSet;
 import org.apache.flink.table.functions.FunctionDefinition;
+import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
 
 public class CalciteUtil {
 
@@ -399,6 +413,101 @@ public class CalciteUtil {
       return RexLiteral.intValue(literal) == 0;
     }
     return false;
+  }
+
+  public static void addFilteredDeduplication(RelBuilder relB, int timestampIdx, List<Integer> partition, int orderColIdx) {
+    Preconditions.checkArgument(!partition.contains(timestampIdx), "Timestamp column cannot be part of the partition");
+    Preconditions.checkArgument(!partition.contains(orderColIdx), "Order column cannot be part of the partition");
+    RexBuilder rexBuilder = relB.getCluster().getRexBuilder();
+
+    List<RexNode> partitionKeys = getSelectRex(relB, partition);
+    List<String> fieldNames = relB.peek().getRowType().getFieldNames();
+    int numFields = fieldNames.size();
+    List<Integer> originalFieldIdx = IntStream.range(0,numFields).boxed().collect(Collectors.toUnmodifiableList());
+
+    // MAX function over the window
+    RexNode rexOver = rexBuilder.makeOver(
+        relB.field(orderColIdx).getType(),
+        SqlStdOperatorTable.MAX,
+        ImmutableList.of(relB.field(orderColIdx)),
+        partitionKeys,
+        ImmutableList.of(new RexFieldCollation(relB.field(timestampIdx), Set.of())),
+        RexWindowBounds.UNBOUNDED_PRECEDING,
+        RexWindowBounds.CURRENT_ROW,
+        false,
+        true,
+        false,
+        false,
+        true
+    );
+
+    // Adding projection that computes a running max for the order col
+    List<RexNode> projects = new ArrayList<>(relB.fields());
+    projects.add(rexOver);
+    relB.project(projects);
+
+    // Filter out rows that aren't bigger or equal to the running max for order col (i.e. out of order data)
+    RexNode condition = relB.call(SqlStdOperatorTable.GREATER_THAN_OR_EQUAL, relB.field(orderColIdx), relB.field(numFields));
+    relB.filter(condition);
+
+    //Compute the lag for all columns other than the order and timestamp column, ordered by timestamp
+    Function<Integer, RexNode> lagFunction = idx -> rexBuilder.makeOver(
+        relB.field(idx).getType(),
+        FlinkSqlOperatorTable.LAG,
+        ImmutableList.of(relB.field(idx), rexBuilder.makeExactLiteral(BigDecimal.ONE)),
+        partitionKeys,
+        ImmutableList.of(new RexFieldCollation(relB.field(timestampIdx), Set.of())),
+        RexWindowBounds.UNBOUNDED_PRECEDING,
+        RexWindowBounds.CURRENT_ROW,
+        false,
+        true,
+        false,
+        false,
+        false
+    );
+
+    projects = new ArrayList<>(relB.fields(originalFieldIdx));
+    Map<Integer, Integer> lagPairs = new HashMap<>();
+    int offset = numFields;
+    for (int i = 0; i < numFields; i++) {
+      if (i==orderColIdx || i==timestampIdx || partition.contains(i)) continue;
+      projects.add(lagFunction.apply(i));
+      lagPairs.put(i, offset++);
+    }
+    relB.project(projects);
+    Preconditions.checkArgument(!lagPairs.isEmpty(), "Expected at least column that's not a partition key or timestamp");
+
+    //Filter out records where all column values other than timestamps, order column, and partition columns are identical
+    //NOTE: We have to compose some logical formula manually to avoid reduction
+    List<RexNode> anyColumnDifferent = new ArrayList<>();
+    //unless it's the first record which we check by looking if all lag columns are null
+    List<RexNode> allColsNull = lagPairs.values().stream()
+        .map(idx -> relB.isNull(relB.field(idx)))
+        .collect(Collectors.toList());
+    RexNode isFirstRow = allColsNull.size()==1?allColsNull.get(0):
+        rexBuilder.makeCall(SqlStdOperatorTable.AND, allColsNull);
+    anyColumnDifferent.add(isFirstRow);
+    for (int i = 0; i < numFields; i++) {
+      if (i==orderColIdx || i==timestampIdx || partition.contains(i)) continue;
+      RexNode col = relB.field(i);
+      Preconditions.checkArgument(!CalciteUtil.isNestedTable(col.getType()),
+          "Filtered distinct not supported on nested data [column %s]", fieldNames.get(i));
+      RexNode colLag = relB.field(lagPairs.get(i));
+
+      RexNode notEqualCondition = relB.call(SqlStdOperatorTable.NOT_EQUALS, col, colLag);
+      anyColumnDifferent.add(notEqualCondition);
+      if (col.getType().isNullable()) {
+        anyColumnDifferent.add(rexBuilder.makeCall(SqlStdOperatorTable.AND,
+            List.of(relB.isNull(col), relB.isNotNull(colLag))));
+        anyColumnDifferent.add(rexBuilder.makeCall(SqlStdOperatorTable.AND,
+            List.of(relB.isNotNull(col), relB.isNull(colLag))));
+      }
+    }
+    relB.push(LogicalFilter.create(relB.peek(), rexBuilder.makeCall(SqlStdOperatorTable.OR,anyColumnDifferent), ImmutableSet.of()));
+//    relB.filter();
+
+    //Project to original fields
+    relB.project(relB.fields(originalFieldIdx));
   }
 
   public static boolean isPotentialPrimaryKeyType(RelDataType type) {
