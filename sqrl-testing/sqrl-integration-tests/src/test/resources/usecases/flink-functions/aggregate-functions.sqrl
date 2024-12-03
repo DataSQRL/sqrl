@@ -1,0 +1,173 @@
+IMPORT flink.*; -- Import flink functions
+IMPORT data-local.Numbers; -- Import boolean data
+
+
+/* Create numeric data source */
+UnmodifiedNumericData := SELECT id,
+                                abs(avg(z)) AS x,
+                                abs(avg(y)) / 100 AS y,
+                                abs(avg(z)) AS z,
+                                date
+                         FROM Numbers GROUP BY id, date ORDER BY id;
+
+/* =======TEST CASES======== */
+
+/*+test */
+BasicTest := SELECT id,
+                    COUNT(x) as default_count,
+                    COUNT(DISTINCT x) as distinct_count,
+                    SUM(x) as default_sum,
+                    SUM(DISTINCT x) as distinct_sum,
+                    AVG(x) as default_average,
+                    AVG(DISTINCT x) as distinct_average,
+                    MAX(x) as default_max,
+                    MAX(DISTINCT x) as distinct_max,
+                    MIN(x) as default_min,
+                    MIN(DISTINCT x) as distinct_min
+              FROM UnmodifiedNumericData
+              GROUP BY id
+              ORDER BY id;
+
+/*+test */
+STDDEVTest := SELECT id,
+                     STDDEV_POP(y) as default_stddev_pop,
+                     STDDEV_POP(DISTINCT y) as distinct_stddev_pop,
+                     STDDEV_SAMP(y) as default_stddev_samp,
+                     STDDEV_SAMP(DISTINCT y) as distinct_stddev_samp
+              FROM UnmodifiedNumericData
+              GROUP BY id
+              ORDER BY id;
+
+/*+test */
+VARTest := SELECT id,
+                  VAR_POP(x) as default_var_pop,
+                  VAR_POP(DISTINCT x) as distinct_var_pop,
+                  VAR_SAMP(x) as default_var_samp,
+                  VAR_SAMP(DISTINCT x) as distinct_var_samp,
+                  VARIANCE(x) as default_variance,
+                  VARIANCE(DISTINCT x) as distinct_variance
+           FROM UnmodifiedNumericData
+           GROUP BY id
+           ORDER BY id;
+
+/*+test */
+CollectTest := SELECT id,
+                      COLLECT(z) as default_collect,
+                      COLLECT(DISTINCT z) as distinct_collect
+               FROM UnmodifiedNumericData
+               GROUP BY id
+               ORDER BY id;
+
+/*+test */
+RankTest := SELECT x,
+                   RANK() OVER (ORDER BY x DESC) as rank_with_gaps,
+                   DENSE_RANK() OVER (ORDER BY x DESC) as dense_rank,
+                   ROW_NUMBER() OVER (ORDER BY x DESC) as sequential_rank
+            FROM UnmodifiedNumericData
+            GROUP BY x
+            ORDER BY x;
+
+/*+test */
+LEADTest := SELECT id,
+                   x,
+                   LEAD(x) OVER (
+                       ORDER BY date
+                   ) as next_day_numeral,
+                   LEAD(x, 2) OVER (
+                       ORDER BY date
+                   ) as two_days_ahead_numeral,
+                   LEAD(x, 1, 0) OVER (
+                       ORDER BY date
+                   ) as next_day_numeral_with_default
+            FROM UnmodifiedNumericData
+            GROUP BY id
+            ORDER BY id;
+
+/*+test */
+LAGTest := SELECT id,
+                  x,
+                  LEAD(x) OVER (
+                      ORDER BY date
+                  ) as next_day_numeral,
+                  LEAD(x, 2) OVER (
+                      ORDER BY date
+                  ) as two_days_ahead_numeral,
+                  LEAD(x, 1, 0) OVER (
+                      ORDER BY date
+                  ) as next_day_numeral_with_default
+            FROM UnmodifiedNumericData
+            GROUP BY id
+            ORDER BY id;
+
+/*+test */
+FIRSTTest := SELECT id,
+                    x,
+                    FIRST_VALUE(x) OVER (
+                            PARTITION BY id
+                            ORDER BY date
+                    ) as first_value
+             FROM UnmodifiedNumericData
+             GROUP BY id
+             ORDER BY id;
+
+/*+test */
+LASTTest := SELECT id,
+                    x,
+                    LAST_VALUE(x) OVER (
+                            PARTITION BY id
+                            ORDER BY date
+                    ) as last_value
+             FROM UnmodifiedNumericData
+             GROUP BY id
+             ORDER BY id;
+
+/*+test */
+LISTAGGTest := SELECT id,
+                       x,
+                       LISTAGG(id, ', ') WITHIN GROUP (
+                           ORDER BY date
+                       ) as date_list
+               FROM UnmodifiedNumericData
+               GROUP BY id
+               ORDER BY id;
+
+/*+test */
+CUMEDISTTest := SELECT id,
+                        x,
+                        CUME_DIST() OVER (
+                            ORDER BY x DESC
+                        ) as x_percentile
+                FROM UnmodifiedNumericData
+                GROUP BY id
+                ORDER BY id;
+
+/*+test */
+PERCENTRANKTest := SELECT id,
+                           x,
+                           PERCENT_RANK() OVER (
+                                  ORDER BY x DESC
+                              ) as relative_rank
+                   FROM UnmodifiedNumericData
+                   GROUP BY id
+                   ORDER BY id;
+
+-- /*+test */
+-- NTILETest := SELECT id,
+--                 NTILE(4) OVER (ORDER BY x DESC) as quartile,
+--                 NTILE(10) OVER (ORDER BY x DESC) as decile
+--             FROM UnmodifiedNumericData
+--             ORDER BY x DESC;
+
+-- /*+test */
+-- ARRAYAGGTest := SELECT id,
+--                        ARRAY_AGG(x ORDER BY y DESC) as array_agg,
+--                        ARRAY_AGG(DISTINCT z) as distinct_array_agg
+--                 FROM UnmodifiedNumericData
+--                 ORDER BY id;
+
+/*+test */
+UnmodifiedNumericDataTest := SELECT id,
+                                    x,
+                                    y,
+                                    z
+                             FROM UnmodifiedNumericData;

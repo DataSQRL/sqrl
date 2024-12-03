@@ -23,3 +23,7 @@ columns:
   type: "TIMESTAMP"
   tests:
     - "not_null"
+- name: "date"
+  type: "STRING"
+  tests:
+    - "not_null"
