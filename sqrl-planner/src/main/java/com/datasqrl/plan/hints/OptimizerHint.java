@@ -37,12 +37,16 @@ public interface OptimizerHint {
               "Expected a single option for [%s] hint but found: %s", PipelineStageHint.HINT_NAME,
               options);
           optHints.add(new PipelineStageHint(options.get(0).trim()));
-        } else if (hintname.equalsIgnoreCase(IndexHint.INDEX_HINT) || hintname.equalsIgnoreCase(IndexHint.PARTITION_KEY_HINT)) {
+        } else if (hintname.equalsIgnoreCase(IndexHint.INDEX_HINT) || hintname.equalsIgnoreCase(
+            IndexHint.PARTITION_KEY_HINT)) {
           optHints.add(IndexHint.of(hintname, hint.getOptionList(), errors));
         } else if (hintname.equalsIgnoreCase(PrimaryKeyHint.HINT_NAME)) {
           List<String> options = hint.getOptionList();
-          errors.checkFatal(options!=null && !options.isEmpty(), "%s hint requires at least one column as argument", PrimaryKeyHint.HINT_NAME);
+          errors.checkFatal(options != null && !options.isEmpty(),
+              "%s hint requires at least one column as argument", PrimaryKeyHint.HINT_NAME);
           optHints.add(new PrimaryKeyHint(options));
+        } else if (hintname.equalsIgnoreCase(FilteredDistinctOrderHint.HINT_NAME)) {
+          optHints.add(new FilteredDistinctOrderHint());
         } else {
           otherHints.add(hint);
         }

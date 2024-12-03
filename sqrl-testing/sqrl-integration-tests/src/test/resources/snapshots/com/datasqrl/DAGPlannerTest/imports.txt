@@ -3,11 +3,11 @@
 ID:     customer_2
 Type:   stream
 Stage:  flink
-Primary Key: customerid, email, name, lastUpdated
+Primary Key: customerid, lastUpdated
 Timestamp  : _ingest_time
 Schema:
  - customerid: BIGINT NOT NULL
- - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
  - _ingest_time: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
@@ -48,10 +48,10 @@ LogicalTableScan(table=[[product_1]])
 {
   "flinkSql" : [
     "CREATE TEMPORARY FUNCTION IF NOT EXISTS `ToJson` AS 'com.datasqrl.json.ToJson' LANGUAGE JAVA;",
-    "CREATE TEMPORARY TABLE `customer_1` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `_ingest_time` AS PROCTIME(),\n  PRIMARY KEY (`customerid`, `email`, `name`, `lastUpdated`) NOT ENFORCED\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
+    "CREATE TEMPORARY TABLE `customer_1` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `_ingest_time` AS PROCTIME(),\n  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
     "CREATE TEMPORARY TABLE `orders_1` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,\n  `_ingest_time` AS PROCTIME(),\n  PRIMARY KEY (`id`, `customerid`, `time`) NOT ENFORCED\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
     "CREATE TEMPORARY TABLE `product_1` (\n  `productid` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_ingest_time` AS PROCTIME(),\n  PRIMARY KEY (`productid`, `name`, `description`, `category`) NOT ENFORCED\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
-    "CREATE TEMPORARY TABLE `customer_2` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`customerid`, `email`, `name`, `lastUpdated`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'customer_2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `customer_2` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'customer_2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `orders_2` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`, `customerid`, `time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orders_2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE TEMPORARY TABLE `product_2` (\n  `productid` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`productid`, `name`, `description`, `category`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'product_2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `customer_1`;",
@@ -78,18 +78,16 @@ LogicalTableScan(table=[[product_1]])
       "name" : "customer_2",
       "columns" : [
         "\"customerid\" BIGINT NOT NULL",
-        "\"email\" TEXT NOT NULL",
+        "\"email\" TEXT ",
         "\"name\" TEXT NOT NULL",
         "\"lastUpdated\" BIGINT NOT NULL",
         "\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL"
       ],
       "primaryKeys" : [
         "\"customerid\"",
-        "\"email\"",
-        "\"name\"",
         "\"lastUpdated\""
       ],
-      "sql" : "CREATE TABLE IF NOT EXISTS customer_2 (\"customerid\" BIGINT NOT NULL,\"email\" TEXT NOT NULL,\"name\" TEXT NOT NULL,\"lastUpdated\" BIGINT NOT NULL,\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\",\"email\",\"name\",\"lastUpdated\"));"
+      "sql" : "CREATE TABLE IF NOT EXISTS customer_2 (\"customerid\" BIGINT NOT NULL,\"email\" TEXT ,\"name\" TEXT NOT NULL,\"lastUpdated\" BIGINT NOT NULL,\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\",\"lastUpdated\"));"
     },
     {
       "name" : "orders_2",
@@ -125,57 +123,13 @@ LogicalTableScan(table=[[product_1]])
       "sql" : "CREATE TABLE IF NOT EXISTS product_2 (\"productid\" BIGINT NOT NULL,\"name\" TEXT NOT NULL,\"description\" TEXT NOT NULL,\"category\" TEXT NOT NULL,\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"productid\",\"name\",\"description\",\"category\"));"
     },
     {
-      "indexName" : "customer_2_btree_c0c2",
+      "indexName" : "customer_2_hash_c3",
       "tableName" : "customer_2",
       "columns" : [
-        "customerid",
-        "name"
-      ],
-      "type" : "BTREE",
-      "sql" : "CREATE INDEX IF NOT EXISTS customer_2_btree_c0c2 ON customer_2 USING btree (\"customerid\",\"name\");"
-    },
-    {
-      "indexName" : "customer_2_btree_c1c2c3",
-      "tableName" : "customer_2",
-      "columns" : [
-        "email",
-        "name",
         "lastUpdated"
       ],
-      "type" : "BTREE",
-      "sql" : "CREATE INDEX IF NOT EXISTS customer_2_btree_c1c2c3 ON customer_2 USING btree (\"email\",\"name\",\"lastUpdated\");"
-    },
-    {
-      "indexName" : "customer_2_btree_c1c3c0",
-      "tableName" : "customer_2",
-      "columns" : [
-        "email",
-        "lastUpdated",
-        "customerid"
-      ],
-      "type" : "BTREE",
-      "sql" : "CREATE INDEX IF NOT EXISTS customer_2_btree_c1c3c0 ON customer_2 USING btree (\"email\",\"lastUpdated\",\"customerid\");"
-    },
-    {
-      "indexName" : "customer_2_btree_c2c3c0",
-      "tableName" : "customer_2",
-      "columns" : [
-        "name",
-        "lastUpdated",
-        "customerid"
-      ],
-      "type" : "BTREE",
-      "sql" : "CREATE INDEX IF NOT EXISTS customer_2_btree_c2c3c0 ON customer_2 USING btree (\"name\",\"lastUpdated\",\"customerid\");"
-    },
-    {
-      "indexName" : "customer_2_btree_c3c0",
-      "tableName" : "customer_2",
-      "columns" : [
-        "lastUpdated",
-        "customerid"
-      ],
-      "type" : "BTREE",
-      "sql" : "CREATE INDEX IF NOT EXISTS customer_2_btree_c3c0 ON customer_2 USING btree (\"lastUpdated\",\"customerid\");"
+      "type" : "HASH",
+      "sql" : "CREATE INDEX IF NOT EXISTS customer_2_hash_c3 ON customer_2 USING hash (\"lastUpdated\");"
     },
     {
       "indexName" : "orders_2_btree_c1c2",
@@ -253,16 +207,16 @@ LogicalTableScan(table=[[product_1]])
   ],
   "views" : [
     {
-      "name" : "Customer",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"_ingest_time\") AS SELECT *\nFROM \"customer_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"customerid\", \"email\", \"name\", \"lastUpdated\";"
+      "name" : "Orders",
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\", \"customerid\", \"time\";"
     },
     {
       "name" : "Product",
       "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\", \"category\";"
     },
     {
-      "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\", \"customerid\", \"time\";"
+      "name" : "Customer",
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"_ingest_time\") AS SELECT *\nFROM \"customer_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"customerid\", \"lastUpdated\";"
     }
   ]
 }
@@ -280,21 +234,6 @@ LogicalTableScan(table=[[product_1]])
               {
                 "type" : "variable",
                 "type" : "variable",
-                "path" : "email"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "name"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "lastUpdated"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
                 "path" : "limit"
               },
               {
@@ -306,156 +245,7 @@ LogicalTableScan(table=[[product_1]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customer_2\"\nWHERE \"email\" = $1 AND \"name\" = $2 AND \"lastUpdated\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"customerid\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "email"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "name"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "lastUpdated"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "customerid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"email\", \"name\", \"lastUpdated\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "customerid"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "email"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "lastUpdated"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customer_2\"\nWHERE \"email\" = $1 AND \"lastUpdated\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"customerid\", \"name\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "email"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "lastUpdated"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "email"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "name"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customer_2\"\nWHERE \"email\" = $1 AND \"name\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"customerid\", \"lastUpdated\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "email"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "name"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customer_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"customerid\", \"email\", \"name\", \"lastUpdated\"",
+              "sql" : "SELECT *\nFROM \"customer_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"customerid\", \"lastUpdated\"",
               "parameters" : [ ]
             }
           },
@@ -464,7 +254,7 @@ LogicalTableScan(table=[[product_1]])
               {
                 "type" : "variable",
                 "type" : "variable",
-                "path" : "name"
+                "path" : "customerid"
               },
               {
                 "type" : "variable",
@@ -485,48 +275,17 @@ LogicalTableScan(table=[[product_1]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customer_2\"\nWHERE \"name\" = $1 AND \"lastUpdated\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"customerid\", \"email\"",
+              "sql" : "SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1 AND \"lastUpdated\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST",
               "parameters" : [
                 {
                   "type" : "arg",
                   "type" : "arg",
-                  "path" : "name"
+                  "path" : "customerid"
                 },
                 {
                   "type" : "arg",
                   "type" : "arg",
                   "path" : "lastUpdated"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "email"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customer_2\"\nWHERE \"email\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"customerid\", \"name\", \"lastUpdated\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "email"
                 }
               ]
             }
@@ -552,7 +311,7 @@ LogicalTableScan(table=[[product_1]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customer_2\"\nWHERE \"lastUpdated\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"customerid\", \"email\", \"name\"",
+              "sql" : "SELECT *\nFROM \"customer_2\"\nWHERE \"lastUpdated\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"customerid\"",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -567,47 +326,11 @@ LogicalTableScan(table=[[product_1]])
               {
                 "type" : "variable",
                 "type" : "variable",
-                "path" : "name"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customer_2\"\nWHERE \"name\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"customerid\", \"email\", \"lastUpdated\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "name"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
                 "path" : "customerid"
               },
               {
                 "type" : "variable",
                 "type" : "variable",
-                "path" : "lastUpdated"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
                 "path" : "limit"
               },
               {
@@ -619,313 +342,12 @@ LogicalTableScan(table=[[product_1]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1 AND \"lastUpdated\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"email\", \"name\"",
+              "sql" : "SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"lastUpdated\"",
               "parameters" : [
                 {
                   "type" : "arg",
                   "type" : "arg",
                   "path" : "customerid"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "lastUpdated"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "customerid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "name"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "lastUpdated"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1 AND \"name\" = $2 AND \"lastUpdated\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"email\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "customerid"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "name"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "lastUpdated"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "customerid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "name"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1 AND \"name\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"email\", \"lastUpdated\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "customerid"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "name"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "customerid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "email"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "lastUpdated"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1 AND \"email\" = $2 AND \"lastUpdated\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "customerid"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "email"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "lastUpdated"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "customerid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "email"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1 AND \"email\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"lastUpdated\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "customerid"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "email"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "customerid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "email"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "name"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "lastUpdated"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1 AND \"email\" = $2 AND \"name\" = $3 AND \"lastUpdated\" = $4\nORDER BY \"_ingest_time\" DESC NULLS LAST",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "customerid"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "email"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "name"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "lastUpdated"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "customerid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "email"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "name"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1 AND \"email\" = $2 AND \"name\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"lastUpdated\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "customerid"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "email"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "name"
                 }
               ]
             }
@@ -937,26 +359,6 @@ LogicalTableScan(table=[[product_1]])
         "parentType" : "Query",
         "fieldName" : "Orders",
         "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"orders_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\", \"customerid\", \"time\"",
-              "parameters" : [ ]
-            }
-          },
           {
             "arguments" : [
               {
@@ -993,11 +395,6 @@ LogicalTableScan(table=[[product_1]])
               {
                 "type" : "variable",
                 "type" : "variable",
-                "path" : "customerid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
                 "path" : "limit"
               },
               {
@@ -1009,96 +406,8 @@ LogicalTableScan(table=[[product_1]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"customerid\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\", \"time\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "customerid"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "customerid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "time"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"customerid\" = $1 AND \"time\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "customerid"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "time"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "id"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "customerid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"customerid\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"time\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "id"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "customerid"
-                }
-              ]
+              "sql" : "SELECT *\nFROM \"orders_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\", \"customerid\", \"time\"",
+              "parameters" : [ ]
             }
           },
           {
@@ -1162,37 +471,6 @@ LogicalTableScan(table=[[product_1]])
               {
                 "type" : "variable",
                 "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"customerid\", \"time\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "id"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "id"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
                 "path" : "time"
               },
               {
@@ -1223,6 +501,150 @@ LogicalTableScan(table=[[product_1]])
                 }
               ]
             }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "customerid"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"customerid\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"time\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "id"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "customerid"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"customerid\", \"time\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "id"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "customerid"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "time"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"customerid\" = $1 AND \"time\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "customerid"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "time"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "customerid"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"customerid\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\", \"time\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "customerid"
+                }
+              ]
+            }
           }
         ]
       },
@@ -1231,436 +653,6 @@ LogicalTableScan(table=[[product_1]])
         "parentType" : "Query",
         "fieldName" : "Product",
         "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "productid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "name"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "category"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"description\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "productid"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "name"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "category"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "productid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "name"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"description\", \"category\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "productid"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "name"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "productid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "category"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"description\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "productid"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "category"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "productid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"description\", \"category\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "productid"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "productid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "description"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "category"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"description\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "productid"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "description"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "category"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "productid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "description"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"description\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"category\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "productid"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "description"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "productid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "name"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "description"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "category"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3 AND \"category\" = $4\nORDER BY \"_ingest_time\" DESC NULLS LAST",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "productid"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "name"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "description"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "category"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "productid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "name"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "description"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"category\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "productid"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "name"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "description"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "description"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"description\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"category\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "description"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "category"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"category\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "category"
-                }
-              ]
-            }
-          },
           {
             "arguments" : [
               {
@@ -1707,6 +699,11 @@ LogicalTableScan(table=[[product_1]])
               {
                 "type" : "variable",
                 "type" : "variable",
+                "path" : "description"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
                 "path" : "limit"
               },
               {
@@ -1718,8 +715,14 @@ LogicalTableScan(table=[[product_1]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"product_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\", \"category\"",
-              "parameters" : [ ]
+              "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"description\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"category\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "description"
+                }
+              ]
             }
           },
           {
@@ -1799,6 +802,129 @@ LogicalTableScan(table=[[product_1]])
               {
                 "type" : "variable",
                 "type" : "variable",
+                "path" : "category"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"category\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "category"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"product_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\", \"category\"",
+              "parameters" : [ ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "name"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "description"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1 AND \"description\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"category\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "name"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "description"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "productid"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"description\", \"category\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "productid"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
                 "path" : "name"
               },
               {
@@ -1850,6 +976,11 @@ LogicalTableScan(table=[[product_1]])
               {
                 "type" : "variable",
                 "type" : "variable",
+                "path" : "productid"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
                 "path" : "name"
               },
               {
@@ -1871,8 +1002,13 @@ LogicalTableScan(table=[[product_1]])
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1 AND \"description\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"category\"",
+              "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"category\"",
               "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "productid"
+                },
                 {
                   "type" : "arg",
                   "type" : "arg",
@@ -1885,6 +1021,292 @@ LogicalTableScan(table=[[product_1]])
                 }
               ]
             }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "productid"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "name"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "category"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"description\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "productid"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "name"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "category"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "productid"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "name"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "description"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "category"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3 AND \"category\" = $4\nORDER BY \"_ingest_time\" DESC NULLS LAST",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "productid"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "name"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "description"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "category"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "productid"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "description"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"description\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"category\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "productid"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "description"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "productid"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "category"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"description\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "productid"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "category"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "productid"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "name"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"description\", \"category\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "productid"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "name"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "productid"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "description"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "category"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"description\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "productid"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "description"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "category"
+                }
+              ]
+            }
           }
         ]
       }
@@ -1894,7 +1316,7 @@ LogicalTableScan(table=[[product_1]])
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "type Customer {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries(limit: Int = 10, offset: Int = 0): [entries!]\n}\n\ntype Product {\n  productid: Float!\n  name: String!\n  description: String!\n  category: String!\n}\n\ntype Query {\n  Customer(customerid: Float, email: String, name: String, lastUpdated: Float, limit: Int = 10, offset: Int = 0): [Customer!]\n  Orders(id: Float, customerid: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [Orders!]\n  Product(productid: Float, name: String, description: String, category: String, limit: Int = 10, offset: Int = 0): [Product!]\n}\n\ntype entries {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n"
+      "schema" : "type Customer {\n  customerid: Float!\n  email: String\n  name: String!\n  lastUpdated: Float!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries(limit: Int = 10, offset: Int = 0): [entries!]\n}\n\ntype Product {\n  productid: Float!\n  name: String!\n  description: String!\n  category: String!\n}\n\ntype Query {\n  Customer(customerid: Float, lastUpdated: Float, limit: Int = 10, offset: Int = 0): [Customer!]\n  Orders(id: Float, customerid: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [Orders!]\n  Product(productid: Float, name: String, description: String, category: String, limit: Int = 10, offset: Int = 0): [Product!]\n}\n\ntype entries {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n"
     }
   }
 }

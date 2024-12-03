@@ -10,7 +10,7 @@
   "table" : {
     "type" : "source",
     "timestamp" : "_ingest_time",
-    "primary-key" : ["customerid", "email", "name", "lastUpdated"]
+    "primary-key" : ["customerid", "lastUpdated"]
   },
   "metadata" : {
     "_ingest_time" : {

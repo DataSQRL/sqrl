@@ -1,8 +1,0 @@
->>>errors
-[FATAL] Could not find table: Product.parent
-in script:<script> [3:65]:
-IMPORT ecommerce-data.Product TIMESTAMP _ingest_time;
-Product.joinDeclaration := JOIN Product ON @.productid = Product.productid;
-Product.table := SELECT * FROM @, (SELECT MIN(productid) FROM @.parent);
-----------------------------------------------------------------^
-

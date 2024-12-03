@@ -1,6 +1,0 @@
-[FATAL] Unknown field at location missingField. Possible scalars are [_uuid, _ingest_time, id, customerid, time, entries]
-in script:schema [2:3]:
-type Orders {
-  missingField: String
---^
-

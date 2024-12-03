@@ -1,8 +1,0 @@
->>>errors
-[FATAL] Expected one side of the join to be stream and the other temporal state.
-in script:<script> [5:1]:
-IMPORT ecommerce-data.Orders TIMESTAMP time;
-IMPORT ecommerce-data.Product TIMESTAMP _ingest_time;
-CustomerOrders := SELECT o.id, c.name FROM Orders o TEMPORAL JOIN Customer c ON o.customerid=c.customerid;
-^
-

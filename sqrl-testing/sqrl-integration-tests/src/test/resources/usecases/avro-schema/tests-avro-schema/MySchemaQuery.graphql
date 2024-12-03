@@ -48,6 +48,7 @@ query {
             nestedStringField
             nestedIntField
             nestedArrayField
+            nestedMapField
         }
         nullableNestedRecord {
             nullableNestedStringField

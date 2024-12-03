@@ -1,9 +1,0 @@
->>>orders$2
-LogicalTableScan(table=[[orders$1]])
-
->>>x$1
-LogicalProject(__pk1$_uuid=[$0], discount=[$10], _idx=[$6], _time=[$4])
-  LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{5}])
-    LogicalTableScan(table=[[orders$2]])
-    LogicalTableFunctionScan(invocation=[Orders.entries($cor0.entries)], rowType=[RecordType(INTEGER _idx, BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount)], elementType=[class [Ljava.lang.Object;])
-

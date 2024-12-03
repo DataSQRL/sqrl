@@ -1,7 +1,0 @@
->>>errors
-[FATAL] Nested unions not yet supported
-in script:<script> [2:19]:
-IMPORT ecommerce-data.Product TIMESTAMP _ingest_time;
-Product.nested := SELECT * FROM Product
-------------------^
-

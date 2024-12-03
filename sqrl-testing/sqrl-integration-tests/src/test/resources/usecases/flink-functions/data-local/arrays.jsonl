@@ -1,0 +1,10 @@
+{"id":1001,"timestamp":"2023-04-04T00:00:00Z","items":[{"id":101,"number":5,"decimal":23.45,"fraction":0.75},{"id":102,"number":2,"decimal":12.99,"fraction":null}]}
+{"id":1002,"timestamp":"2023-04-04T00:00:00Z","items":[{"id":201,"number":1,"decimal":99.99,"fraction":0.33}]}
+{"id":1003,"timestamp":"2023-04-04T00:00:00Z","items":[{"id":301,"number":3,"decimal":45.50,"fraction":0.5},{"id":302,"number":1,"decimal":15.75,"fraction":0.25},{"id":303,"number":4,"decimal":8.99,"fraction":null}]}
+{"id":1004,"timestamp":"2023-04-04T00:00:00Z","items":[{"id":401,"number":2,"decimal":199.99,"fraction":0.8}]}
+{"id":1005,"timestamp":"2023-04-04T00:00:00Z","items":[{"id":501,"number":1,"decimal":549.99,"fraction":null}]}
+{"id":1006,"timestamp":"2023-04-04T00:00:00Z","items":[{"id":601,"number":6,"decimal":9.99,"fraction":0.15},{"id":602,"number":3,"decimal":24.99,"fraction":0.45}]}
+{"id":1007,"timestamp":"2023-04-04T00:00:00Z","items":[{"id":701,"number":1,"decimal":299.99,"fraction":0.9}]}
+{"id":1008,"timestamp":"2023-04-04T00:00:00Z","items":[{"id":801,"number":2,"decimal":79.99,"fraction":null},{"id":802,"number":1,"decimal":129.99,"fraction":0.6}]}
+{"id":1009,"timestamp":"2023-04-04T00:00:00Z","items":[{"id":901,"number":4,"decimal":19.99,"fraction":0.2}]}
+{"id":1010,"timestamp":"2023-04-04T00:00:00Z","items":[{"id":1001,"number":1,"decimal":999.99,"fraction":0.95},{"id":1002,"number":2,"decimal":49.99,"fraction":null}]}

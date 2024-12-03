@@ -1,7 +1,0 @@
->>>errors
-[FATAL] Order by statement must be specified
-in script:<script> [2:1]:
-IMPORT ecommerce-data.Product TIMESTAMP _ingest_time;
-Product := DISTINCT Product ON productid;
-^
-
