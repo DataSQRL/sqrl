@@ -1,7 +1,0 @@
->>>order_time$1
-LogicalProject(time=[$4], time0=[20:17:40], _uuid=[$0])
-  LogicalTableScan(table=[[orders$2]])
-
->>>orders$2
-LogicalTableScan(table=[[orders$1]])
-

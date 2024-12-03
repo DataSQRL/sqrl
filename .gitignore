@@ -7,7 +7,6 @@ sqrl-examples/nutshop/data-medium/
 ## Test settings
 ##############################
 sqrl-core/src/test/resources/local.properties
-plan
 
 ##############################
 ## Java

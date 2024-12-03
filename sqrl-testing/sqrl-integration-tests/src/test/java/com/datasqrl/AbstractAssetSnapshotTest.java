@@ -1,5 +1,7 @@
 package com.datasqrl;
 
+import static com.datasqrl.UseCasesIT.getProjectRoot;
+
 import com.datasqrl.cmd.AssertStatusHook;
 import com.datasqrl.cmd.RootCommand;
 import com.datasqrl.util.FileUtil;
@@ -111,10 +113,15 @@ public abstract class AbstractAssetSnapshotTest {
   }
 
   protected AssertStatusHook execute(Path rootDir, String... args) {
+    return execute(rootDir, new ArrayList<>(List.of(args)));
+  }
+
+  protected AssertStatusHook execute(Path rootDir, List<String> argsList) {
     this.buildDir = rootDir.resolve("build");
-    List<String> argslist = new ArrayList<>(List.of(args));
+    argsList.add("--profile");
+    argsList.add(getProjectRoot().resolve("profiles/default").toString());
     AssertStatusHook statusHook = new AssertStatusHook();
-    int code = new RootCommand(rootDir,statusHook).getCmd().execute(argslist.toArray(String[]::new));
+    int code = new RootCommand(rootDir,statusHook).getCmd().execute(argsList.toArray(String[]::new));
     if (statusHook.isSuccess()) Assertions.assertEquals(0, code);
     return statusHook;
   }

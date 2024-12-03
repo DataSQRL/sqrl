@@ -1,8 +1,0 @@
->>>errors
-[FATAL] At line 5, column 54: Column 'badColumn' not found in any table
-in script:<script> [5:54]:
-IMPORT ecommerce-data.Orders TIMESTAMP time;
-IMPORT ecommerce-data.Product TIMESTAMP _ingest_time;
-Customer := DISTINCT Customer ON customerid ORDER BY badColumn DESC;
------------------------------------------------------^
-

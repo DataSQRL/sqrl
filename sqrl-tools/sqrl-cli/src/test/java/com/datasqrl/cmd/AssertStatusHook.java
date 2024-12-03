@@ -16,7 +16,7 @@ public class AssertStatusHook implements StatusHook {
   }
 
   @Override
-  public void onFailure(Exception e, ErrorCollector errors) {
+  public void onFailure(Throwable e, ErrorCollector errors) {
     failMessage = ErrorPrinter.prettyPrint(errors);
     failed = true;
   }

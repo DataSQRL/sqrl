@@ -329,6 +329,14 @@
               "type": "array",
               "items": "float"
             }
+          },
+          {
+            "name": "nestedMapField",
+            "type": {
+              "type": "map",
+              "values": "string"
+            },
+            "doc": "A map with string values"
           }
         ]
       },

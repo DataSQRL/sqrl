@@ -111,7 +111,7 @@ public class SqlDataTypeSpecBuilder {
       return new SqlDataTypeSpec(new SqlBasicTypeNameSpec(SqlTypeName.ANY, SqlParserPos.ZERO), SqlParserPos.ZERO);
     }
 
-    return SqlTypeUtil.convertTypeToSpec(type);
+    return SqlDataTypeSpecBuilder.convertTypeToSpec(type);
   }
 
   // Unparses with NOT NULL
