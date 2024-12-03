@@ -9,8 +9,6 @@ columns:
   - "not_null"
 - name: "email"
   type: "STRING"
-  tests:
-  - "not_null"
 - name: "name"
   type: "STRING"
   tests:

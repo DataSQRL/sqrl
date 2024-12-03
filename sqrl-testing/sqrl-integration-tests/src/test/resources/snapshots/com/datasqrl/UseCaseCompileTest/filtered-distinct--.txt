@@ -1,0 +1,504 @@
+>>>pipeline_explain.txt
+=== DistinctOrders
+ID:     distinctorders_1
+Type:   state
+Stage:  flink
+Inputs: orders_2
+Primary Key: id
+Timestamp  : _ingest_time
+Schema:
+ - id: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - productid: BIGINT NOT NULL
+ - quantity: BIGINT NOT NULL
+ - unit_price: DOUBLE
+ - discount: DOUBLE
+ - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Plan:
+LogicalProject(id=[$0], customerid=[$1], time=[$2], productid=[$3], quantity=[$4], unit_price=[$5], discount=[$6], _ingest_time=[$7])
+  LogicalFilter(condition=[=($8, 1)])
+    LogicalProject(id=[$0], customerid=[$1], time=[$2], productid=[$3], quantity=[$4], unit_price=[$5], discount=[$6], _ingest_time=[$7], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS FIRST)])
+      LogicalFilter(condition=[OR(AND(IS NULL($8), IS NULL($9), IS NULL($10), IS NULL($11), IS NULL($12)), <>($1, $8), <>($3, $9), <>($4, $10), <>($5, $11), AND(IS NULL($5), IS NOT NULL($11)), AND(IS NOT NULL($5), IS NULL($11)), <>($6, $12), AND(IS NULL($6), IS NOT NULL($12)), AND(IS NOT NULL($6), IS NULL($12)))])
+        LogicalProject(id=[$0], customerid=[$1], time=[$2], productid=[$3], quantity=[$4], unit_price=[$5], discount=[$6], _ingest_time=[$7], $f8=[LAG($1, 1) OVER (PARTITION BY $0 ORDER BY $7)], $f9=[LAG($3, 1) OVER (PARTITION BY $0 ORDER BY $7)], $f10=[LAG($4, 1) OVER (PARTITION BY $0 ORDER BY $7)], $f11=[LAG($5, 1) OVER (PARTITION BY $0 ORDER BY $7)], $f12=[LAG($6, 1) OVER (PARTITION BY $0 ORDER BY $7)])
+          LogicalFilter(condition=[>=($2, $8)])
+            LogicalProject(id=[$0], customerid=[$1], time=[$2], productid=[$3], quantity=[$4], unit_price=[$5], discount=[$6], _ingest_time=[$7], $f8=[MAX($2) IGNORE NULLS OVER (PARTITION BY $0 ORDER BY $7)])
+              LogicalTableScan(table=[[orders_2]])
+
+=== Orders
+ID:     orders_2
+Type:   stream
+Stage:  flink
+Primary Key: id, customerid, time
+Timestamp  : _ingest_time
+Schema:
+ - id: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - productid: BIGINT NOT NULL
+ - quantity: BIGINT NOT NULL
+ - unit_price: DOUBLE
+ - discount: DOUBLE
+ - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Plan:
+LogicalTableScan(table=[[orders_1]])
+
+>>>flink.json
+{
+  "flinkSql" : [
+    "CREATE TEMPORARY TABLE `orders_1` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `productid` BIGINT NOT NULL,\n  `quantity` BIGINT NOT NULL,\n  `unit_price` DOUBLE,\n  `discount` DOUBLE,\n  `_ingest_time` AS PROCTIME(),\n  PRIMARY KEY (`id`, `customerid`, `time`) NOT ENFORCED\n) WITH (\n  'format' = 'flexible-json',\n  'path' = '${DATA_PATH}/orders.jsonl',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem'\n);",
+    "CREATE TEMPORARY TABLE `distinctorders_1` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `productid` BIGINT NOT NULL,\n  `quantity` BIGINT NOT NULL,\n  `unit_price` DOUBLE,\n  `discount` DOUBLE,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'distinctorders_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TEMPORARY TABLE `orders_2` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `productid` BIGINT NOT NULL,\n  `quantity` BIGINT NOT NULL,\n  `unit_price` DOUBLE,\n  `discount` DOUBLE,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`, `customerid`, `time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orders_2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE VIEW `table$1`\nAS\nSELECT `id`, `customerid`, `time`, `productid`, `quantity`, `unit_price`, `discount`, `_ingest_time`\nFROM (SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `unit_price`, `discount`, `_ingest_time`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `time` DESC) AS `_rownum`\n  FROM (SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `unit_price`, `discount`, `_ingest_time`, LAG(`customerid`, 1) OVER (PARTITION BY `id` ORDER BY `_ingest_time`) AS `$f8`, LAG(`productid`, 1) OVER (PARTITION BY `id` ORDER BY `_ingest_time`) AS `$f9`, LAG(`quantity`, 1) OVER (PARTITION BY `id` ORDER BY `_ingest_time`) AS `$f10`, LAG(`unit_price`, 1) OVER (PARTITION BY `id` ORDER BY `_ingest_time`) AS `$f11`, LAG(`discount`, 1) OVER (PARTITION BY `id` ORDER BY `_ingest_time`) AS `$f12`\n    FROM (SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `unit_price`, `discount`, `_ingest_time`, MAX(`time`) OVER (PARTITION BY `id` ORDER BY `_ingest_time` RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS `$f8`\n      FROM `orders_1`) AS `t`\n    WHERE `time` >= `$f8`) AS `t1`\n  WHERE `$f8` IS NULL AND `$f9` IS NULL AND `$f10` IS NULL AND `$f11` IS NULL AND `$f12` IS NULL OR `customerid` <> `$f8` OR (`productid` <> `$f9` OR (`quantity` <> `$f10` OR `unit_price` <> `$f11`)) OR (`unit_price` IS NULL AND `$f11` IS NOT NULL OR `unit_price` IS NOT NULL AND `$f11` IS NULL OR (`discount` <> `$f12` OR (`discount` IS NULL AND `$f12` IS NOT NULL OR `discount` IS NOT NULL AND `$f12` IS NULL)))) AS `t3`\nWHERE `_rownum` = 1;",
+    "CREATE VIEW `table$2`\nAS\nSELECT *\nFROM `orders_1`;",
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `distinctorders_1`\n(SELECT *\n FROM `table$1`)\n;\nINSERT INTO `orders_2`\n (SELECT *\n  FROM `table$2`)\n ;\n END;"
+  ],
+  "connectors" : [
+    "jdbc-sqrl",
+    "filesystem"
+  ],
+  "formats" : [
+    "flexible-json"
+  ]
+}
+>>>kafka.json
+{
+  "topics" : [ ]
+}
+>>>postgres.json
+{
+  "ddl" : [
+    {
+      "name" : "distinctorders_1",
+      "columns" : [
+        "\"id\" BIGINT NOT NULL",
+        "\"customerid\" BIGINT NOT NULL",
+        "\"time\" TIMESTAMP WITH TIME ZONE NOT NULL",
+        "\"productid\" BIGINT NOT NULL",
+        "\"quantity\" BIGINT NOT NULL",
+        "\"unit_price\" DOUBLE PRECISION ",
+        "\"discount\" DOUBLE PRECISION ",
+        "\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"id\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS distinctorders_1 (\"id\" BIGINT NOT NULL,\"customerid\" BIGINT NOT NULL,\"time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"productid\" BIGINT NOT NULL,\"quantity\" BIGINT NOT NULL,\"unit_price\" DOUBLE PRECISION ,\"discount\" DOUBLE PRECISION ,\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\"));"
+    },
+    {
+      "name" : "orders_2",
+      "columns" : [
+        "\"id\" BIGINT NOT NULL",
+        "\"customerid\" BIGINT NOT NULL",
+        "\"time\" TIMESTAMP WITH TIME ZONE NOT NULL",
+        "\"productid\" BIGINT NOT NULL",
+        "\"quantity\" BIGINT NOT NULL",
+        "\"unit_price\" DOUBLE PRECISION ",
+        "\"discount\" DOUBLE PRECISION ",
+        "\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL"
+      ],
+      "primaryKeys" : [
+        "\"id\"",
+        "\"customerid\"",
+        "\"time\""
+      ],
+      "sql" : "CREATE TABLE IF NOT EXISTS orders_2 (\"id\" BIGINT NOT NULL,\"customerid\" BIGINT NOT NULL,\"time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"productid\" BIGINT NOT NULL,\"quantity\" BIGINT NOT NULL,\"unit_price\" DOUBLE PRECISION ,\"discount\" DOUBLE PRECISION ,\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\",\"customerid\",\"time\"));"
+    },
+    {
+      "indexName" : "orders_2_btree_c1c2",
+      "tableName" : "orders_2",
+      "columns" : [
+        "customerid",
+        "time"
+      ],
+      "type" : "BTREE",
+      "sql" : "CREATE INDEX IF NOT EXISTS orders_2_btree_c1c2 ON orders_2 USING btree (\"customerid\",\"time\");"
+    },
+    {
+      "indexName" : "orders_2_btree_c2c0",
+      "tableName" : "orders_2",
+      "columns" : [
+        "time",
+        "id"
+      ],
+      "type" : "BTREE",
+      "sql" : "CREATE INDEX IF NOT EXISTS orders_2_btree_c2c0 ON orders_2 USING btree (\"time\",\"id\");"
+    }
+  ],
+  "views" : [
+    {
+      "name" : "DistinctOrders",
+      "sql" : "CREATE OR REPLACE VIEW \"DistinctOrders\"(\"id\", \"customerid\", \"time\", \"productid\", \"quantity\", \"unit_price\", \"discount\", \"_ingest_time\") AS SELECT *\nFROM \"distinctorders_1\"\nORDER BY \"id\";"
+    },
+    {
+      "name" : "Orders",
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"productid\", \"quantity\", \"unit_price\", \"discount\", \"_ingest_time\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\", \"customerid\", \"time\";"
+    }
+  ]
+}
+>>>vertx.json
+{
+  "model" : {
+    "coords" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "DistinctOrders",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"distinctorders_1\"\nORDER BY \"id\"",
+              "parameters" : [ ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"distinctorders_1\"\nWHERE \"id\" = $1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "id"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Orders",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "customerid"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "time"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"customerid\" = $1 AND \"time\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "customerid"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "time"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "customerid"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"customerid\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\", \"time\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "customerid"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "customerid"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "time"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"customerid\" = $2 AND \"time\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "id"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "customerid"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "time"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "time"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"time\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\", \"customerid\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "time"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"orders_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"id\", \"customerid\", \"time\"",
+              "parameters" : [ ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "customerid"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"customerid\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"time\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "id"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "customerid"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "time"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"customerid\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "id"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "time"
+                }
+              ]
+            }
+          },
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"customerid\", \"time\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "id"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "mutations" : [ ],
+    "subscriptions" : [ ],
+    "schema" : {
+      "type" : "string",
+      "type" : "string",
+      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype DistinctOrders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  productid: Float!\n  quantity: Float!\n  unit_price: Float\n  discount: Float\n}\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  productid: Float!\n  quantity: Float!\n  unit_price: Float\n  discount: Float\n}\n\ntype Query {\n  DistinctOrders(id: Float, limit: Int = 10, offset: Int = 0): [DistinctOrders!]\n  Orders(id: Float, customerid: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [Orders!]\n}\n"
+    }
+  }
+}

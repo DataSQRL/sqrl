@@ -11,7 +11,7 @@ import lombok.NonNull;
 import picocli.CommandLine;
 import picocli.CommandLine.ScopeType;
 
-@CommandLine.Command(name = "datasqrl", mixinStandardHelpOptions = true, version = "v0.5.8",
+@CommandLine.Command(name = "datasqrl", mixinStandardHelpOptions = true, version = "v0.5.9",
     subcommands = {CompilerCommand.class,
          PublishCommand.class, TestCommand.class, LoginCommand.class, RunCommand.class})
 @Getter
