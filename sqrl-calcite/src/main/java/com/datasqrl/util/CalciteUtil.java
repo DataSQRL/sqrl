@@ -452,7 +452,7 @@ public class CalciteUtil {
 
     //Compute the lag for all columns other than the order and timestamp column, ordered by timestamp
     Function<Integer, RexNode> lagFunction = idx -> rexBuilder.makeOver(
-        relB.field(idx).getType(),
+        rexBuilder.getTypeFactory().createTypeWithNullability(relB.field(idx).getType(), true),
         FlinkSqlOperatorTable.LAG,
         ImmutableList.of(relB.field(idx), rexBuilder.makeExactLiteral(BigDecimal.ONE)),
         partitionKeys,
@@ -478,14 +478,11 @@ public class CalciteUtil {
     Preconditions.checkArgument(!lagPairs.isEmpty(), "Expected at least column that's not a partition key or timestamp");
 
     //Filter out records where all column values other than timestamps, order column, and partition columns are identical
-    //NOTE: We have to compose some logical formula manually to avoid reduction
     List<RexNode> anyColumnDifferent = new ArrayList<>();
     //unless it's the first record which we check by looking if all lag columns are null
-    List<RexNode> allColsNull = lagPairs.values().stream()
+    RexNode isFirstRow = relB.and(lagPairs.values().stream()
         .map(idx -> relB.isNull(relB.field(idx)))
-        .collect(Collectors.toList());
-    RexNode isFirstRow = allColsNull.size()==1?allColsNull.get(0):
-        rexBuilder.makeCall(SqlStdOperatorTable.AND, allColsNull);
+        .collect(Collectors.toList()));
     anyColumnDifferent.add(isFirstRow);
     for (int i = 0; i < numFields; i++) {
       if (i==orderColIdx || i==timestampIdx || partition.contains(i)) continue;
@@ -497,15 +494,11 @@ public class CalciteUtil {
       RexNode notEqualCondition = relB.call(SqlStdOperatorTable.NOT_EQUALS, col, colLag);
       anyColumnDifferent.add(notEqualCondition);
       if (col.getType().isNullable()) {
-        anyColumnDifferent.add(rexBuilder.makeCall(SqlStdOperatorTable.AND,
-            List.of(relB.isNull(col), relB.isNotNull(colLag))));
-        anyColumnDifferent.add(rexBuilder.makeCall(SqlStdOperatorTable.AND,
-            List.of(relB.isNotNull(col), relB.isNull(colLag))));
+        anyColumnDifferent.add(relB.and(List.of(relB.isNull(col), relB.isNotNull(colLag))));
+        anyColumnDifferent.add(relB.and(List.of(relB.isNotNull(col), relB.isNull(colLag))));
       }
     }
-    relB.push(LogicalFilter.create(relB.peek(), rexBuilder.makeCall(SqlStdOperatorTable.OR,anyColumnDifferent), ImmutableSet.of()));
-//    relB.filter();
-
+    relB.filter(relB.or(anyColumnDifferent));
     //Project to original fields
     relB.project(relB.fields(originalFieldIdx));
   }
