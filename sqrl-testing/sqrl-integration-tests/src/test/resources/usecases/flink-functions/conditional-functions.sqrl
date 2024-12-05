@@ -1,0 +1,86 @@
+IMPORT flink.*; -- Import flink functions
+IMPORT data-local.Booleans; -- Import boolean data
+
+
+/* Create numeric data source */
+UnmodifiedBooleanData := SELECT id,
+                                a AS a,
+                                b AS b
+                         FROM Booleans ORDER BY id;
+
+
+/* =======TEST CASES======== */
+
+
+/*+test */
+CaseTest := SELECT id,
+                   CASE
+                    WHEN a is TRUE THEN 'IS TRUE'
+                    WHEN a is FALSE THEN 'IS FALSE'
+                    ELSE 'IS NULL'
+                   END as case_function
+             FROM UnmodifiedBooleanData ORDER BY id;
+
+/*+test */
+CaseValueTest := SELECT id,
+                        a,
+                        CASE a
+                         WHEN TRUE THEN 'IS TRUE'
+                         WHEN FALSE THEN 'IS FALSE'
+                         ELSE 'IS NULL'
+                        END as case_value_function
+                 FROM UnmodifiedBooleanData ORDER BY id;
+
+/*+test */
+NULLIFTest := SELECT id,
+                     NULLIF(TRUE,TRUE) as null_if_null,
+                     NULLIF(TRUE,FALSE) as null_if_TRUE
+                     -- NULLIF(a,b) as null_error
+              FROM UnmodifiedBooleanData ORDER BY id;
+
+/*+test */
+COALESCETest := SELECT id,
+                 COALESCE(NULL, 'success') as coalease_second,
+                 COALESCE('success', NULL) as coalesce_first
+                 -- COALESCE(NULL, NULL, NULL) as coalesce_null
+          FROM UnmodifiedBooleanData ORDER BY id;
+
+/*+test */
+IFTest := SELECT id,
+                 IF(a = b, a, b) as if_function
+          FROM UnmodifiedBooleanData ORDER BY id;
+
+/*+test */
+IFNULLTest := SELECT id
+                 --IFNULL(CAST(NULL as int), 'NULL') as if_null_function
+                 --IFNULL(123, 'NOT NULL') as if_numeric_function,
+                 --IFNULL('test', 'NOT NULL') as if_string_function
+          FROM UnmodifiedBooleanData ORDER BY id;
+
+/*+test */
+ISTEST := SELECT id
+                 --IS_ALPHA('123'),
+                 --IS_ALPHA('qwe'),
+                 --IS_DECIMAL('1.23'),
+                 --IS_DECIMAL('q.we'),
+                 --IS_DIGIT('qwe'),
+                 --IS_DIGIT('123')
+          FROM UnmodifiedBooleanData ORDER BY id;
+
+/*+test */
+GreatestTest := SELECT id,
+                       -- GREATEST(100, NULL, 200, NULL) as greatest_numeric,
+                       GREATEST('one', 'two', 'three') as greatest_string
+                FROM UnmodifiedBooleanData ORDER BY id;
+
+/*+test */
+LeastTest := SELECT id,
+                    -- LEAST(100, NULL, 200, NULL) as least_numeric,
+                    LEAST('one', 'two', 'three') as least_string
+                FROM UnmodifiedBooleanData ORDER BY id;
+
+/*+test */
+UnmodifiedBooleanTest := SELECT id,
+                                a AS a,
+                                b AS b
+                         FROM UnmodifiedBooleanData ORDER BY id;
