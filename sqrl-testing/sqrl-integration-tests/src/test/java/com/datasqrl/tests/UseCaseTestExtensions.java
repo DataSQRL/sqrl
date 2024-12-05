@@ -13,6 +13,9 @@ public class UseCaseTestExtensions {
     if (scriptName.equals("iceberg-export")) {
       return new IcebergTestExtension();
     }
+    if (scriptName.equals("banking")) {
+    	return new BankingTestExtension();
+    }
     return TestExtension.NOOP;
   }
 
