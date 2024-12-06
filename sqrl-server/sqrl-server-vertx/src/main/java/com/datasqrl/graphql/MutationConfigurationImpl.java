@@ -69,7 +69,7 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
               .onSuccess(sinkResult->{
                 //Add timestamp from sink to result
                 ZonedDateTime dateTime = ZonedDateTime.ofInstant(sinkResult.getSourceTime(), ZoneOffset.UTC);
-                entry.put(ReservedName.MUTATION_TIME.getCanonical(), dateTime.toLocalDateTime());
+                entry.put(ReservedName.MUTATION_TIME.getCanonical(), dateTime.toOffsetDateTime());
 
                 fut.complete(entry);
               })
