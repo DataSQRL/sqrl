@@ -1,0 +1,103 @@
+IMPORT flink.*; -- Import flink functions
+IMPORT data-local.Numbers; -- Import boolean data
+
+
+/* Create numeric data source */
+UnmodifiedNumericData := SELECT id,
+                                abs(avg(x)) AS x,
+                                abs(avg(y)) / 100 AS y,
+                                avg(z) AS z
+                         FROM Numbers GROUP BY id ORDER BY id;
+
+
+/* =======TEST CASES======== */
+
+
+/*+test */
+DecimalConversionsTest := SELECT id,
+                                 -- Decimal conversions (expanded)
+                                 --CAST(42.5 AS TINYINT) AS decimal_to_tinyint,
+                                 --CAST(42.5 AS SMALLINT) AS decimal_to_smallint,
+                                 CAST(42.5 AS INT) AS decimal_to_int,
+                                 CAST(42.5 AS BIGINT) AS decimal_to_bigint,
+                                 CAST(42.5 AS FLOAT) AS decimal_to_float,
+                                 CAST(42.5 AS DOUBLE) AS decimal_to_double,
+                                 CAST(42.5 AS DECIMAL(10,2)) AS decimal_to_decimal
+                          FROM UnmodifiedNumericData;
+
+/*+test */
+NumericStringConversionsTest := SELECT id,
+                                      -- String from all numeric types
+                                       CAST(CAST(42 AS TINYINT) AS VARCHAR) AS tinyint_to_string,
+                                       CAST(CAST(42 AS SMALLINT) AS VARCHAR) AS smallint_to_string,
+                                       CAST(CAST(42 AS INT) AS VARCHAR) AS int_to_string,
+                                       CAST(CAST(42 AS BIGINT) AS VARCHAR) AS bigint_to_string,
+                                       CAST(CAST(42 AS FLOAT) AS VARCHAR) AS float_to_string,
+                                       CAST(CAST(42 AS DOUBLE) AS VARCHAR) AS double_to_string,
+                                       CAST(CAST(42.5 AS DECIMAL(10,2)) AS VARCHAR) AS decimal_to_string
+                                FROM UnmodifiedNumericData;
+
+/*+test */
+StringNumericConversionsTest := SELECT id,
+                                        -- String to all numeric types
+                                        --CAST('42.5' AS TINYINT) AS string_to_tinyint,
+                                        CAST('42.5' AS SMALLINT) AS string_to_smallint,
+                                        CAST('42.5' AS INT) AS string_to_int,
+                                        CAST('42.5' AS BIGINT) AS string_to_bigint,
+                                        CAST('42.5' AS FLOAT) AS string_to_float,
+                                        CAST('42.5' AS DOUBLE) AS string_to_double,
+                                        CAST('42.5' AS DECIMAL(10,2)) AS string_to_decimal
+                                FROM UnmodifiedNumericData;
+
+/*+test */
+BooleanConversionsTest := SELECT id,
+                                 --CAST(TRUE AS VARCHAR) AS boolean_to_string,
+                                 --CAST(FALSE AS VARCHAR) AS false_to_string,
+                                 --CAST('True' AS BOOLEAN) AS string_to_boolean,
+                                 CAST(1 AS BOOLEAN) AS int_to_boolean,
+                                 CAST(0 AS BOOLEAN) AS zero_to_boolean
+                                 --CAST(CAST(True AS BOOLEAN) AS INT) AS boolean_to_int
+                          FROM UnmodifiedNumericData;
+
+/*+test */
+DateTimeConversionsTest := SELECT id,
+                                  -- Date/Time conversions (expanded)
+                                  CAST('2024-01-01' AS DATE) AS string_to_date,
+                                  CAST(DATE '2024-01-01' AS VARCHAR) AS date_to_string,
+                                  CAST('2024-01-01 12:00:00' AS TIMESTAMP) AS string_to_timestamp,
+                                  CAST(TIMESTAMP '2024-01-01 12:00:00' AS VARCHAR) AS timestamp_to_string,
+                                  CAST(DATE '2024-01-01' AS TIMESTAMP) AS date_to_timestamp,
+                                  CAST(TIMESTAMP '2024-01-01 12:00:00' AS DATE) AS timestamp_to_date,
+                                  --CAST(CURRENT_TIME AS VARCHAR) AS time_to_string,
+                                  CAST('12:00:00' AS TIME) AS string_to_time
+                                  --CAST(CURRENT_TIMESTAMP AS VARCHAR) AS current_timestamp_to_string
+                          FROM UnmodifiedNumericData;
+
+/*+test */
+BinaryConversionsTest := SELECT id
+                                --CAST('Hello' AS BINARY) AS string_to_binary,
+                                --CAST('Hello' AS VARBINARY) AS string_to_varbinary,
+                                --CAST(CAST('Hello' AS BINARY) AS VARCHAR) AS binary_to_string,
+                                --CAST(CAST('Hello' AS VARBINARY) AS VARCHAR) AS varbinary_to_string
+                          FROM UnmodifiedNumericData;
+
+/*+test */
+TypeOfTest := SELECT id
+                     -- Function not mapped properly
+                     --TYPE_OF(123) as int_type,
+                     --TYPE_OF(123.45) as decimal_type,
+                     --TYPE_OF('hello') as string_type,
+                     --TYPE_OF(ARRAY[1,2,3]) as array_type,
+                     --TYPE_OF(MAP['key', 'value']) as map_type,
+                     --TYPEOF(ROW(1, 'a')) as row_type,
+                     --TYPE_OF(TRUE) as boolean_type,
+                     --TYPE_OF(CAST(NULL AS INT)) as null_type
+              FROM UnmodifiedNumericData;
+
+/*+test */
+UnmodifiedNumericDataTest := SELECT id,
+                                    x,
+                                    y,
+                                    z
+                             FROM UnmodifiedNumericData;
+
