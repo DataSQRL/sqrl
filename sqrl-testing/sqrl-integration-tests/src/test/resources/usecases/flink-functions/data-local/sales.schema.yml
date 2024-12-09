@@ -1,0 +1,29 @@
+---
+name: "sales"
+schema_version: "1"
+partial_schema: false
+columns:
+  - name: "id"
+    type: "String"
+    tests:
+      - "not_null"
+  - name: "region"
+    type: "String"
+    tests:
+      - "not_null"
+  - name: "country"
+    type: "String"
+    tests:
+      - "not_null"
+  - name: "product"
+    type: "String"
+    tests:
+      - "not_null"
+  - name: "amount"
+    type: "FLOAT"
+    tests:
+      - "not_null"
+  - name: "timestamp"
+    type: "TIMESTAMP"
+    tests:
+      - "not_null"
