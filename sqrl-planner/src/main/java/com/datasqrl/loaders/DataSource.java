@@ -15,7 +15,7 @@ import java.util.Optional;
 @Slf4j
 public class DataSource {
 
-  public static final String TABLE_FILE_SUFFIX = ".table.json";
+  public static final String TABLE_FILE_SUFFIX = ".table.sql";
   public static final String DATASYSTEM_FILE_PREFIX = "dynamic.sink";
 
   public Optional<TableSource> readTableSource(TableSchema tableSchema, TableConfig tableConfig,

@@ -9,6 +9,7 @@ import static com.datasqrl.packager.Packager.PACKAGE_JSON;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.compile.CompilationProcess;
+import com.datasqrl.compile.CompilationProcessV2;
 import com.datasqrl.compile.DirectoryManager;
 import com.datasqrl.compile.TestPlan;
 import com.datasqrl.config.PackageJson;
@@ -104,7 +105,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
       return;
     }
 
-    CompilationProcess compilationProcess = injector.getInstance(CompilationProcess.class);
+    CompilationProcessV2 compilationProcess = injector.getInstance(CompilationProcessV2.class);
     testsPath.ifPresent(this::validateTestPath);
 
     Pair<PhysicalPlan, TestPlan> plan = compilationProcess.executeCompilation(testsPath);

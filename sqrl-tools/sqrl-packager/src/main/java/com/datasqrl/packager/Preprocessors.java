@@ -4,6 +4,7 @@ import static com.datasqrl.packager.Packager.canonicalizePath;
 import static com.datasqrl.util.NameUtil.namepath2Path;
 
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.config.BuildPath;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.preprocess.Preprocessor;
@@ -107,7 +108,7 @@ public class Preprocessors {
   @SneakyThrows
   private void copy(Set<Path> libraries, Path buildDir) {
     if (!libraries.isEmpty()) {
-      Path libDir = buildDir.resolve("lib");
+      Path libDir = buildDir.resolve(BuildPath.UDF_DIR);
       Files.createDirectories(libDir);
       libraries.forEach(library -> copy(library.toAbsolutePath(), libDir));
     }

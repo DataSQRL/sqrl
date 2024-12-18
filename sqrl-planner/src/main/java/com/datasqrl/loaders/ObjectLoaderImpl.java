@@ -14,6 +14,7 @@ import com.datasqrl.io.tables.TableSchema;
 import com.datasqrl.io.tables.TableSchemaFactory;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.io.tables.TableSource;
+import com.datasqrl.loaders.FlinkTableNamespaceObject.FlinkTable;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.module.SqrlModule;
 import com.datasqrl.module.TableNamespaceObject;
@@ -120,7 +121,7 @@ public class ObjectLoaderImpl implements ObjectLoader {
   private List<TableNamespaceObject> loadTable(Path path, NamePath basePath, List<Path> allItemsInPath) {
     String tableName = StringUtil.removeFromEnd(ResourceResolver.getFileName(path),DataSource.TABLE_FILE_SUFFIX);
     errors.checkFatal(Name.validName(tableName), "Not a valid table name: %s", tableName);
-    TableConfig tableConfig = tableConfigFactory.load(path, Name.system(tableName), errors);
+    String tableSQL = Files.readString(path);
 
     //Find all files associated with the table, i.e. that start with the table name followed by '.'
     List<Path> tablesFiles = allItemsInPath.stream().filter( file -> {
@@ -139,37 +140,7 @@ public class ObjectLoaderImpl implements ObjectLoader {
     errors.checkFatal(tableSchemas.size()<=1, "Found multiple schemas for table %s with configuration %s", tableName, path);
     Optional<TableSchema> tableSchema = tableSchemas.stream().findFirst();
 
-    ExternalDataType tableType = tableConfig.getBase().getType();
-
-    if (tableType == ExternalDataType.source ||
-        tableType == ExternalDataType.source_and_sink) {
-      errors.checkFatal(tableSchema.isPresent(), "Could not find schema file [%s] for table [%s]",
-          basePath + "/" + tableConfig.getName().getDisplay(), path);
-    }
-
-    switch (tableType) {
-      case source:
-        return new DataSource()
-            .readTableSource(tableSchema.get(), tableConfig, errors, basePath)
-            .map(t->new TableSourceNamespaceObject(t, tableFactory, moduleLoader))
-            .map(t->(TableNamespaceObject) t)
-            .map(List::of)
-            .orElse(List.of());
-      case sink:
-        return new DataSource()
-            .readTableSink(tableSchema, tableConfig, basePath)
-            .map(TableSinkNamespaceObject::new)
-            .map(t->(TableNamespaceObject) t)
-            .map(List::of).orElse(List.of());
-      case source_and_sink:
-        TableSource source = new DataSource().readTableSource(tableSchema.get(), tableConfig, errors, basePath)
-            .get();
-        TableSink sink = new DataSource().readTableSink(tableSchema, tableConfig, basePath)
-            .get();
-        return List.of(new TableSourceSinkNamespaceObject(source, sink, tableFactory, moduleLoader));
-      default:
-        throw new RuntimeException("Unknown table type: "+ tableType);
-    }
+    return List.of(new FlinkTableNamespaceObject(new FlinkTable(Name.system(tableName), tableSQL, path, tableSchema)));
   }
 
 
