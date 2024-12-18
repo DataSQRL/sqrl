@@ -162,12 +162,31 @@ public class FlinkSqlNodeFactory {
     );
   }
 
+  public static SqlCreateTable createTable(String tableName, RelDataType relDataType) {
+    return new SqlCreateTable(
+        SqlParserPos.ZERO,
+        FlinkSqlNodeFactory.identifier(tableName),
+        createColumns(relDataType),
+        Collections.emptyList(),
+        FlinkSqlNodeFactory.createProperties(Map.of("connector","datagen")),
+        SqlNodeList.EMPTY,
+        null,
+        null,
+        true,
+        false
+    );
+  }
+
   private static SqlWatermark createWatermark(String ts, long watermarkMillis) {
     SqlIdentifier eventTimeColumn = FlinkSqlNodeFactory.identifier(ts);
     return FlinkSqlNodeFactory.createWatermark(
         eventTimeColumn,
         FlinkSqlNodeFactory.boundedStrategy(eventTimeColumn, Double.toString(watermarkMillis / 1000d))
     );
+  }
+
+  public static SqlNodeList createColumns(RelDataType relDataType) {
+    return createColumns(relDataType, Collections.emptyMap(), null);
   }
 
   private static SqlNodeList createColumns(RelDataType relDataType, Map<String, MetadataEntry> metadataConfig,
