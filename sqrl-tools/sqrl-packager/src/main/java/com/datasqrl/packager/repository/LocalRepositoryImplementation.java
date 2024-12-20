@@ -43,7 +43,9 @@ public class LocalRepositoryImplementation implements Repository, CacheRepositor
     public boolean retrieveDependency(Path targetPath, Dependency dependency) throws IOException {
         Path zipFile = getZipFilePath(dependency);
         if (Files.isRegularFile(zipFile)) {
-            new ZipFile(zipFile.toFile()).extractAll(targetPath.toString());
+            try(ZipFile zf = new ZipFile(zipFile.toFile());){
+            	zf.extractAll(targetPath.toString());
+            }
             return true;
         }
         return false;

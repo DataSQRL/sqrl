@@ -1,9 +1,9 @@
-FROM eclipse-temurin:11.0.22_7-jdk
+FROM azul/zulu-openjdk:17-jdk-crac-latest
 WORKDIR /usr/src/app
 ARG POSTGRES_VERSION=15
 
 RUN apt-get update && \
-    apt-get install -y lsb-release gnupg && \
+    apt-get install -y lsb-release gnupg wget curl criu && \
     rm -rf /var/lib/apt/lists/*
 
 # Add postgresql repo
@@ -25,7 +25,7 @@ RUN service postgresql start && \
 
 
 # Add the Redpanda repository
-RUN curl -1sLf 'https://dl.redpanda.com/nzc4ZYQK3WRGd9sy/redpanda/cfg/setup/bash.deb.sh' | bash
+RUN set -x && set -e && curl -1sLf 'https://dl.redpanda.com/nzc4ZYQK3WRGd9sy/redpanda/cfg/setup/bash.deb.sh' | bash
 
 # Install Redpanda
 RUN apt-get update && apt-get install -y redpanda
