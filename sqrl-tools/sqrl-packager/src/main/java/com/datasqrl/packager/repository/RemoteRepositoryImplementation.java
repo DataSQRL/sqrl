@@ -99,7 +99,9 @@ public class RemoteRepositoryImplementation implements Repository, PublishReposi
           downloadHash);
 
       // Extract the zip file
-      new ZipFile(zipFile.toFile()).extractAll(targetPath.toString());
+      try (ZipFile zf = new ZipFile(zipFile.toFile())) {
+    	zf.extractAll(targetPath.toString());
+      }
 
       // Cache downloaded package
       if (cacheRepository != null) cacheRepository.cacheDependency(zipFile, dependency);

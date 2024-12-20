@@ -80,6 +80,11 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.crac</groupId>
+      <artifactId>crac</artifactId>
+      <version>1.5.0</version>
+    </dependency>
   </dependencies>
 
   <build>

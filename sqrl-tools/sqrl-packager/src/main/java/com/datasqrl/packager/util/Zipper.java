@@ -19,10 +19,11 @@ public class Zipper {
         ExcludeFileFilter excludeFilter = file -> file.getName().endsWith(ZIP_EXTENSION);
         ZipParameters zipParameters = new ZipParameters();
         zipParameters.setExcludeFileFilter(excludeFilter);
-        ZipFile zip = new ZipFile(zipFile.toFile());
-        for (Path p : Files.list(directory).collect(Collectors.toList())) {
-            if (Files.isRegularFile(p) && !FileUtil.isExtension(p, ZIP_EXTENSION)) zip.addFile(p.toFile());
-            else if (Files.isDirectory(p)) zip.addFolder(p.toFile(), zipParameters);
+        try(ZipFile zip = new ZipFile(zipFile.toFile());) {
+	        for (Path p : Files.list(directory).collect(Collectors.toList())) {
+	            if (Files.isRegularFile(p) && !FileUtil.isExtension(p, ZIP_EXTENSION)) zip.addFile(p.toFile());
+	            else if (Files.isDirectory(p)) zip.addFolder(p.toFile(), zipParameters);
+	        }
         }
     }
 
