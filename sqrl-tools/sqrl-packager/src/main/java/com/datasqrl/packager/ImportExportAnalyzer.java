@@ -40,18 +40,19 @@ public class ImportExportAnalyzer implements
   private final MainScriptImpl mainScript;
   @SneakyThrows
   public Set<NamePath> analyze(Path sqrlScript, ErrorCollector errors) {
-    ScriptNode node;
-    try {
-      String scriptContent = mainScript.getContent();
-      errors = errors.withSchema("<schema>", scriptContent);
-
-      node = parser.parse(scriptContent);
-    } catch (Exception e) {
-      errors.warn("Could not compile SQRL script %s", sqrlScript);
-      throw errors.handle(e);
-    }
-
-    return node.accept(this, null);
+    //TODO: use new parser
+    return Set.of();
+//    ScriptNode node;
+//    try {
+//      String scriptContent = mainScript.getContent();
+//      errors = errors.withSchema("<schema>", scriptContent);
+//      node = parser.parse(scriptContent);
+//    } catch (Exception e) {
+//      errors.warn("Could not compile SQRL script %s", sqrlScript);
+//      throw errors.handle(e);
+//    }
+//
+//    return node.accept(this, null);
   }
 
   @Override

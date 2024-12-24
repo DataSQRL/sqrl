@@ -1,5 +1,7 @@
-package com.datasqrl.flinkwrapper;
+package com.datasqrl.flinkwrapper.parser;
 
+import com.datasqrl.error.ErrorLocation.FileLocation;
+import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -35,7 +37,7 @@ public class SqlScriptStatementSplitter {
    * @param script The SQL script content.
    * @return A list of individual SQL statements.
    */
-  public List<String> splitStatements(String script) {
+  public List<ParsedObject<String>> splitStatements(String script) {
     String formatted =
         formatEndOfSqlFile(script)
             .replaceAll(LINE_COMMENT_PATTERN, "");
@@ -43,42 +45,39 @@ public class SqlScriptStatementSplitter {
       formatted = formatted.replaceAll(BLOCK_COMMENT_PATTERN, "");
     }
 
-    List<String> statements = new ArrayList<>();
+    List<ParsedObject<String>> statements = new ArrayList<>();
 
     StringBuilder current = null;
-    boolean statementSet = false;
+    int statementLineNo = 0;
+    int lineNo = 0;
     for (String line : formatted.split(LINE_DELIMITER)) {
-      String trimmed = line.trim();
-      if (trimmed.isBlank()) {
-        continue;
-      }
-      if (current == null) {
+      lineNo++;
+      if (line.isBlank()) continue;
+      if (current==null) {
+        statementLineNo = lineNo;
         current = new StringBuilder();
       }
-      if (trimmed.startsWith("EXECUTE STATEMENT SET")) {
-        statementSet = true;
-      }
-      current.append(trimmed);
+      current.append(line);
       current.append(LINE_DELIMITER);
-      if (trimmed.endsWith(STATEMENT_DELIMITER)) {
-        if (!statementSet || trimmed.equalsIgnoreCase("END;")) {
-          statements.add(current.toString());
-          current = null;
-          statementSet = false;
-        }
+      if (line.endsWith(STATEMENT_DELIMITER)) {
+        statements.add(new ParsedObject<>(current.toString(), new FileLocation(statementLineNo, 1)));
+        current = null;
       }
     }
     return statements;
   }
 
-  public int countLines(String statement) {
-    int count = 0;
-    for (char c : statement.toCharArray()) {
-      if (c == '\n') {
-        count++;
+  public static FileLocation computeOffset(String statement, int position) {
+    Preconditions.checkArgument(position>=0 && position<=statement.length());
+    int lineNo = 1, columnNo = 1;
+    for (int i = 0; i < position; i++) {
+      columnNo++;
+      if (statement.charAt(i) == '\n') {
+        lineNo++;
+        columnNo = 1;
       }
     }
-    return count;
+    return new FileLocation(lineNo, columnNo);
   }
 
   /**

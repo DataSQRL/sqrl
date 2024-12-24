@@ -1,0 +1,29 @@
+[WARN] No table file [product] for schema file [src/test/resources/dagplanner/ecommerce/product.schema.yml], hence schema is ignored
+in config:package.json:
+
+[WARN] No table file [orders] for schema file [src/test/resources/dagplanner/ecommerce/orders.schema.yml], hence schema is ignored
+in config:package.json:
+
+[WARN] No table file [customer] for schema file [src/test/resources/dagplanner/ecommerce/customer.schema.yml], hence schema is ignored
+in config:package.json:
+
+[WARN] No table file [product] for schema file [src/test/resources/dagplanner/ecommerceTs/product.schema.yml], hence schema is ignored
+in config:package.json:
+
+[WARN] No table file [orders] for schema file [src/test/resources/dagplanner/ecommerceTs/orders.schema.yml], hence schema is ignored
+in config:package.json:
+
+[FATAL] Hint block contains non-hints
+in script:parsererror-hints-fail.sqrl [7:28]:
+  */ /* ignored comment */
+/*+ primary_key(id, name), index(name), another(key) */
+/*+ primary_key(id, name), index(name); another(key) */
+---------------------------^
+Invalid HINT provided.
+
+A hint comment block has the following structure
+```
+/*+ hint1, hint2(argument) */
+```
+Make sure a hint comment block contains ONLY hints and no other comments. Move additional comments into a separate comment block.
+

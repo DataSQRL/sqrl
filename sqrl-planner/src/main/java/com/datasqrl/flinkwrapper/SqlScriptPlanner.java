@@ -1,24 +1,28 @@
 package com.datasqrl.flinkwrapper;
 
 
+import static com.datasqrl.flinkwrapper.parser.StatementParserException.checkFatal;
+
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.engine.log.Log;
 import com.datasqrl.engine.stream.flink.plan.FlinkSqlNodeFactory;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.error.ErrorLocation.FileLocation;
+import com.datasqrl.flinkwrapper.parser.ParsedObject;
+import com.datasqrl.flinkwrapper.parser.SqlScriptStatementSplitter;
+import com.datasqrl.flinkwrapper.parser.SqrlCreateTableStatement;
+import com.datasqrl.flinkwrapper.parser.SqrlExportStatement;
+import com.datasqrl.flinkwrapper.parser.SqrlImportStatement;
 import com.datasqrl.flinkwrapper.parser.SqrlStatement;
-import com.datasqrl.flinkwrapper.parser.SqrlStatement.Type;
 import com.datasqrl.flinkwrapper.parser.SqrlStatementParser;
+import com.datasqrl.flinkwrapper.parser.StatementParserException;
 import com.datasqrl.io.schema.flexible.converters.SchemaToRelDataTypeFactory;
 import com.datasqrl.io.tables.TableSchema;
 import com.datasqrl.loaders.FlinkTableNamespaceObject;
 import com.datasqrl.loaders.FlinkTableNamespaceObject.FlinkTable;
 import com.datasqrl.loaders.ModuleLoader;
-import com.datasqrl.loaders.TableSourceNamespaceObject;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.module.SqrlModule;
 import com.datasqrl.plan.MainScript;
@@ -31,8 +35,10 @@ import java.util.Optional;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.flink.sql.parser.ddl.SqlCreateTable;
+import org.apache.flink.table.operations.Operation;
 
 @AllArgsConstructor(onConstructor_=@Inject)
 public class SqlScriptPlanner {
@@ -49,18 +55,13 @@ public class SqlScriptPlanner {
     ErrorCollector scriptErrors = errorCollector.withScript(mainScript.getPath().orElse(Path.of("undefined")),
         mainScript.getContent());
 
-    List<String> statements = sqlSplitter.splitStatements(mainScript.getContent());
+    List<ParsedObject<String>> statements = sqlSplitter.splitStatements(mainScript.getContent());
 
-    int lineNo = 1;
-
-    for (String statement : statements) {
+    for (ParsedObject<String> statement : statements) {
       ErrorCollector lineErrors = scriptErrors
-          .atFile(new FileLocation(lineNo, 1));
+          .atFile(statement.getFileLocation());
       try {
-        planStatement(statement, sqrlEnv.withErrors(lineErrors));
-        if (lineErrors.hasErrors()) {
-          throw new CollectedException(new RuntimeException("Script cannot validate"));
-        }
+        planStatement(statement.get(), sqrlEnv.withErrors(lineErrors));
       } catch (CollectedException e) {
         throw e;
       } catch (Exception e) {
@@ -76,30 +77,39 @@ public class SqlScriptPlanner {
 
 
   private void planStatement(String sqlStatement, SqrlEnvironment sqrlEnv) throws SqlParseException {
-    //See if this is a special
-    String sqlBefore = sqlStatement;
+    //Check if this a SQRL statement
     Optional<SqrlStatement> sqrlStatement = sqrlParser.parse(sqlStatement);
     if (sqrlStatement.isPresent()) {
       SqrlStatement stmt = sqrlStatement.get();
-      if (stmt.getType()== Type.IMPORT) {
-        addImport(stmt.getPackageIdentifier().get(), stmt.getIdentifier(), sqrlEnv);
-        return;
-      } else if (stmt.getType()== Type.EXPORT) {
-        addExport(stmt.getIdentifier().get(), stmt.getPackageIdentifier().get(), sqrlEnv);
-        return;
+      //Imports and exports are special cases
+      if (stmt instanceof SqrlImportStatement) {
+        addImport((SqrlImportStatement) stmt, sqrlEnv);
+      } else if (stmt instanceof SqrlExportStatement) {
+        addExport((SqrlExportStatement) stmt, sqrlEnv);
+      } else if (stmt instanceof SqrlCreateTableStatement) {
+        Operation createTable = sqrlEnv.parse(((SqrlCreateTableStatement) stmt).getCreateTable().get());
+        SqlNode sqlNode = sqrlEnv.parseSQL(((SqrlCreateTableStatement) stmt).getCreateTable().get());
+        System.out.println(createTable.asSummaryString());
       } else {
-        Preconditions.checkArgument(stmt.isDefinition());
-        sqlStatement = stmt.rewriteSQL();
+        stmt.apply(sqrlEnv);
+      }
+    } else {
+      //If it's not a SQRL statement, just pass through
+      try {
+        sqrlEnv.executeSQL(sqlStatement);
+      } catch (Exception e) {
+        throw StatementParserException.from(e, FileLocation.START, 0);
       }
     }
-    sqrlEnv.executeSQL(sqlStatement);
   }
 
-  private void addImport(SqlIdentifier packageIdentifier, Optional<SqlIdentifier> name, SqrlEnvironment sqrlEnv) {
-    System.out.println("Adding import " + packageIdentifier.toString() + " as " + name);
-    sqrlEnv.getErrors().checkFatal(!packageIdentifier.isStar() || name.isEmpty(), ErrorCode.IMPORT_CANNOT_BE_ALIASED, "Import cannot be aliased");
+  public static final Name STAR = Name.system("*");
 
-    NamePath path = nameUtil.toNamePath(packageIdentifier.names);
+  private void addImport(SqrlImportStatement importStmt, SqrlEnvironment sqrlEnv) {
+    NamePath path = importStmt.getPackageIdentifier().get();
+    boolean isStar = path.getLast().equals(STAR);
+    checkFatal(!isStar || importStmt.getAlias().isEmpty(), ErrorCode.IMPORT_CANNOT_BE_ALIASED, "Import cannot be aliased");
+
     if (path.getFirst().getDisplay().equals("log")) {
       //TODO: implement import for log
 //      Log log = logManager.getLogs().get(path.getLast().getDisplay());
@@ -111,7 +121,7 @@ public class SqlScriptPlanner {
       sqrlEnv.getErrors().checkFatal(module!=null, "Could not find module [%s] at path: [%s]",
           path, String.join("/", path.toStringList()));
 
-      if (packageIdentifier.isStar()) {
+      if (isStar) {
         if (module.getNamespaceObjects().isEmpty()) {
           sqrlEnv.getErrors().warn("Module is empty: %s", path);
         }
@@ -122,8 +132,14 @@ public class SqlScriptPlanner {
       } else {
         Optional<NamespaceObject> namespaceObject = module.getNamespaceObject(path.getLast());
         sqrlEnv.getErrors().checkFatal(namespaceObject.isPresent(), "Object [%s] not found in module: %s", path.getLast(), path);
+        Name tableName = path.getLast();
+        if (importStmt.getAlias().isPresent()) {
+          NamePath aliasPath = importStmt.getAlias().get();
+          checkFatal(aliasPath.size()==1, ErrorCode.INVALID_IMPORT, "Invalid table name - paths not supported");
+          tableName = aliasPath.getFirst();
+        }
         addImport(namespaceObject.get(),
-            Optional.of(name.map(a -> a.names.get(0)).orElse(/*retain alias*/path.getLast().getDisplay())),
+            Optional.of(tableName.getDisplay()),
             sqrlEnv);
       }
     }
@@ -152,8 +168,8 @@ public class SqlScriptPlanner {
     sqrlEnv.executeSQL(tableSql);
   }
 
-  private void addExport(SqlIdentifier tableName, SqlIdentifier packageIdentifier, SqrlEnvironment sqrlEnv) {
-    System.out.println("Adding export " + tableName + " to " + packageIdentifier);
+  private void addExport(SqrlExportStatement exportStmt, SqrlEnvironment sqrlEnv) {
+    System.out.println("Adding export " + exportStmt.getTableIdentifier() + " to " + exportStmt.getTableIdentifier());
   }
 
 

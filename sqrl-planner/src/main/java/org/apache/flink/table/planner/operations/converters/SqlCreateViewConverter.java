@@ -47,7 +47,6 @@ public class SqlCreateViewConverter implements SqlNodeConverter<SqlCreateView> {
         UnresolvedIdentifier.of(sqlCreateView.fullViewName());
     ObjectIdentifier identifier =
         context.getCatalogManager().qualifyIdentifier(unresolvedIdentifier);
-
     String viewComment =
         sqlCreateView
             .getComment()

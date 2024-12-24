@@ -1,0 +1,20 @@
+[WARN] No table file [product] for schema file [src/test/resources/dagplanner/ecommerce/product.schema.yml], hence schema is ignored
+in config:package.json:
+
+[WARN] No table file [orders] for schema file [src/test/resources/dagplanner/ecommerce/orders.schema.yml], hence schema is ignored
+in config:package.json:
+
+[WARN] No table file [customer] for schema file [src/test/resources/dagplanner/ecommerce/customer.schema.yml], hence schema is ignored
+in config:package.json:
+
+[WARN] No table file [product] for schema file [src/test/resources/dagplanner/ecommerceTs/product.schema.yml], hence schema is ignored
+in config:package.json:
+
+[WARN] No table file [orders] for schema file [src/test/resources/dagplanner/ecommerceTs/orders.schema.yml], hence schema is ignored
+in config:package.json:
+
+[FATAL] Object [Order] not found in module: ecommerceTs.Order
+in script:imports-fail.sqrl [1:1]:
+IMPORT ecommerceTs.Order;
+^
+

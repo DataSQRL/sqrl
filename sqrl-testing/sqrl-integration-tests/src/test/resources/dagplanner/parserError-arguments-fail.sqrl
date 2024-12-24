@@ -1,0 +1,5 @@
+IMPORT ecommerceTs.Customer;
+
+CustomerQuery($id: BIGINT,
+             $arg2: STRING,
+             arg3: INT) := SELECT * FROM Customer WHERE customerid = $id;

@@ -1,23 +1,44 @@
 package com.datasqrl.flinkwrapper.parser;
 
+import static com.datasqrl.flinkwrapper.parser.StatementParserException.checkFatal;
+
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.flinkwrapper.parser.SqrlStatement.Type;
-import com.google.common.base.Preconditions;
+import com.datasqrl.error.ErrorCode;
+import com.datasqrl.error.ErrorLocation.FileLocation;
+import com.datasqrl.util.SqlNameUtil;
+import com.google.inject.Inject;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.apache.calcite.runtime.Pattern.Op;
-import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlNode;
+import lombok.AllArgsConstructor;
 import org.apache.calcite.sql.parser.SqlParseException;
-import org.apache.calcite.sql.parser.SqlParser;
+import org.apache.commons.lang3.tuple.Pair;
 
+/**
+ * A lightweight REGEX based parser to identify and parse SQRL specific SQL statements.
+ *
+ * The goal is to pass most of the actual parsing into the Flink parser to remain compatible with Flink and
+ * make it easier to maintain that compatibility. That's why we are using a REGEX based approach to wrap around
+ * the Calcite parser that Flink uses.
+ *
+ * A particular challenge is maintaining the AST offsets to correctly pinpoint the source of errors.
+ * This is handled through {@link ParsedObject}.
+ */
+@AllArgsConstructor(onConstructor_=@Inject)
 public class SqrlStatementParser {
 
-  public static final String IDENTIFIER_REGEX = "[\\w\\.`-]+?";
-  public static final String BEGINNING_COMMENT = "^(((/\\*)+?[\\w\\W]*?(\\*/))|(\\s*))*";
+  public static final String IDENTIFIER_REGEX = "[\\w\\.`*-]+?";
+  public static final String COMMENT_REGEX = "(/\\*)+?[\\w\\W]*?(\\*/)";
+  public static final String BEGINNING_COMMENT = "^(("+ COMMENT_REGEX +")|(\\s*))*";
   public static final String IMPORT_EXPORT_REGEX = BEGINNING_COMMENT + "(?<fullmatch>import|export)";
-  public static final String SQRL_DEFINITION_REGEX = BEGINNING_COMMENT + "(?<fullmatch>(?<tablename>"+IDENTIFIER_REGEX+")\\s*(:=))";
+  public static final String SQRL_DEFINITION_REGEX = BEGINNING_COMMENT + "(?<fullmatch>(?<tablename>"+IDENTIFIER_REGEX+")\\s*(\\((?<arguments>[\\w$:,()\\s]+?)\\))?\\s*:=)";
+  public static final String CREATE_TABLE_REGEX = BEGINNING_COMMENT + "(?<fullmatch>create\\s+(temporary\\s+)?table)";
+
 
   public static final Pattern IMPORT_PARSER = Pattern.compile("(?<package>"+IDENTIFIER_REGEX+")(\\s+AS\\s+(?<identifier>"+IDENTIFIER_REGEX+")\\s*)?;",
       Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
@@ -26,66 +47,177 @@ public class SqrlStatementParser {
 
   private static final Pattern IMPORT_EXPORT = Pattern.compile(IMPORT_EXPORT_REGEX,
       Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
-
   private static final Pattern SQRL_DEFINITION = Pattern.compile(SQRL_DEFINITION_REGEX,
       Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+  private static final Pattern CREATE_TABLE = Pattern.compile(CREATE_TABLE_REGEX,
+      Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
-  public SqrlStatementParser() {
+  public static final String DISTINCT_REGEX = "DISTINCT\\s+(?<from>"+SqrlStatementParser.IDENTIFIER_REGEX+")\\s+ON\\s+(?<columns>.+?)\\s+ORDER\\s+BY\\s+(?<remaining>.*);";
 
-  }
+  public static final Pattern DISTINCT_PARSER = Pattern.compile(DISTINCT_REGEX,
+      Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+
+
+  public static final char ARGUMENT_PREFIX = '$';
+  public static final String ARGUMENT_REGEX = "\\s*\\$(?<name>\\w+)\\s*:\\s*(?<type>[\\w()]+?)\\s*(,\\s*|$)";
+  public static final Pattern ARGUMENT_PARSER = Pattern.compile(ARGUMENT_REGEX,
+      Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
   public Optional<SqrlStatement> parse(String statement) throws SqlParseException {
-    int commentEnd = 0;
-
     Matcher importExportMatcher = IMPORT_EXPORT.matcher(statement);
     if (importExportMatcher.find()) { //it's an import or export statement
-      String directiveName = importExportMatcher.group("fullmatch");
-      commentEnd = importExportMatcher.end()-directiveName.length();
-      String comment = statement.substring(0,commentEnd);
+      String directive = importExportMatcher.group("fullmatch");
+      int commentEnd = importExportMatcher.end()-directive.length();
+      String comment = statement.substring(0,commentEnd); //For now, hints on import/export are ignored
       String body = statement.substring(importExportMatcher.end()).trim();
-      SqrlStatement.Type directive = SqrlStatement.Type.fromStatement(directiveName).get();
-      Preconditions.checkArgument(directive == Type.IMPORT || directive == Type.EXPORT);
 
-      //TODO: use a lightweight parser for this for better error-handling
-      Pattern pattern = directive==Type.IMPORT?IMPORT_PARSER:EXPORT_PARSER;
-      Matcher matcher = pattern.matcher(body);
-      Preconditions.checkArgument(matcher.find(), "Could not parse [%s] statement due to invalid syntax: %s", directive, body);
-      String identifier = matcher.group("identifier");
-      String packageIdentifier = matcher.group("package");
-      return Optional.of(new SqrlStatement(directive,
-          Optional.ofNullable(parseIdentifier(identifier)), Optional.ofNullable(identifier),
-          Optional.of(parseIdentifier(packageIdentifier)), Optional.empty(), comment));
+      if (directive.equalsIgnoreCase("import")) {
+        Matcher subMatcher = IMPORT_PARSER.matcher(body);
+        checkFatal(subMatcher.find(), ErrorCode.INVALID_IMPORT, "Could not parse IMPORT statement");
+        ParsedObject<NamePath> packageIdentifier = parseNamePath(subMatcher, "package", statement);
+        ParsedObject<NamePath> alias = parseNamePath(subMatcher, "identifier", statement);
+        checkFatal(packageIdentifier.isPresent(), ErrorCode.INVALID_IMPORT, "Missing package path");
+        return Optional.of(new SqrlImportStatement(packageIdentifier, alias));
+      } else if (directive.equalsIgnoreCase("export")) {
+        Matcher subMatcher = EXPORT_PARSER.matcher(body);
+        checkFatal(subMatcher.find(), ErrorCode.INVALID_IMPORT, "Could not parse IMPORT statement");
+        ParsedObject<NamePath> packageIdentifier = parseNamePath(subMatcher, "package", statement);
+        ParsedObject<NamePath> tableName = parseNamePath(subMatcher, "identifier", statement);
+        checkFatal(packageIdentifier.isPresent(), ErrorCode.INVALID_EXPORT, "Missing package path");
+        checkFatal(packageIdentifier.isPresent(), ErrorCode.INVALID_EXPORT, "Missing table");
+        return Optional.of(new SqrlExportStatement(tableName, packageIdentifier));
+      } else {
+        //This should not happen
+        throw new UnsupportedOperationException("Unexpected import/export directive: " + directive);
+      }
+
     }
 
     Matcher sqrlDefinition = SQRL_DEFINITION.matcher(statement);
-    if (sqrlDefinition.find()) { //it's an import or export statement
-      String tableName = sqrlDefinition.group("tablename");
-      commentEnd = sqrlDefinition.end()-sqrlDefinition.group("fullmatch").length();
-      String comment = statement.substring(0,commentEnd);
-      String definition = statement.substring(sqrlDefinition.end()).trim();
-      Optional<SqrlStatement.Type> type = SqrlStatement.Type.fromStatement(definition);
-      Preconditions.checkArgument(type.isPresent(), "Invalid SQRL definition, expected one of [%s]:\n %s",
-          SqrlStatement.Type.getDefinitions(), definition);
-      return Optional.of(new SqrlStatement(type.get(),
-          Optional.of(parseIdentifier(tableName)), Optional.ofNullable(tableName),
-          Optional.empty(), Optional.of(definition), comment));
+    if (sqrlDefinition.find()) { //it's a SQRL definition
+      ParsedObject<NamePath> tableName = parseNamePath(sqrlDefinition.group("tablename"),
+          statement, sqrlDefinition.start("tablename"));
+      int commentEnd = sqrlDefinition.start("fullmatch");
+      SqrlComments comment = SqrlComments.parse(parse(statement.substring(0,commentEnd), statement, 0));
+      ParsedObject<String> definitionBody = parse(statement.substring(sqrlDefinition.end()), statement,
+          sqrlDefinition.end());
+
+      ParsedObject<String> arguments = parse(sqrlDefinition, "arguments", statement);
+      //Identify SQL keyword
+      Pattern sqlKeywordPattern = Pattern.compile("^\\s*(\\w+)");
+      Matcher matcher = sqlKeywordPattern.matcher(definitionBody.get());
+      checkFatal(matcher.find(), ErrorCode.INVALID_SQRL_DEFINITION, "Could not parse SQRL statement");
+      String keyword = matcher.group(1).trim();
+      SqrlDefinition definition = null;
+      if (keyword.equalsIgnoreCase("SELECT")) {
+        if (arguments.isEmpty()) {
+          definition = new SqrlTableDefinition(tableName, definitionBody, comment);
+        } else {
+          //Parse arguments
+          Matcher argMatcher = ARGUMENT_PARSER.matcher(arguments.get());
+          Map<Name, ParsedObject<String>> argumentMap = new HashMap<>();
+          int lastMatchEnd = 0;
+          while (argMatcher.find()) {
+            checkFatal(lastMatchEnd==argMatcher.start(), relativeLocation(arguments, lastMatchEnd), ErrorCode.INVALID_TABLE_FUNCTION_ARGUMENTS, "Argument list contains invalid arguments");
+            ParsedObject<Name> argName = arguments.fromOffset(parseName(argMatcher, "name", arguments.get()));
+            checkFatal(argName.isPresent(), argName.getFileLocation(), ErrorCode.INVALID_TABLE_FUNCTION_ARGUMENTS, "Invalid argument name");
+            ParsedObject<String> typeName = arguments.fromOffset(parse(argMatcher, "type", arguments.get()));
+            checkFatal(typeName.isPresent(), typeName.getFileLocation(), ErrorCode.INVALID_TABLE_FUNCTION_ARGUMENTS, "Invalid argument type");
+            argumentMap.put(argName.get(), typeName);
+            lastMatchEnd = argMatcher.end();
+          }
+          checkFatal(lastMatchEnd==arguments.get().length(), relativeLocation(arguments, lastMatchEnd), ErrorCode.INVALID_TABLE_FUNCTION_ARGUMENTS, "Argument list contains invalid arguments");
+          Pair<String, List<Name>> processedBody = replaceTableFunctionVariables(definitionBody.get(), List.copyOf(argumentMap.keySet()));
+          definition = new SqrlTableFunctionStatement(tableName, definitionBody.map(x -> processedBody.getKey()), comment, argumentMap, processedBody.getRight());
+        }
+      } else if (keyword.equalsIgnoreCase("DISTINCT")) {
+        checkFatal(arguments.isEmpty(), ErrorCode.INVALID_SQRL_DEFINITION, "Table function not supported for operation");
+        Matcher distinctMatcher = DISTINCT_PARSER.matcher(definitionBody.get());
+        checkFatal(distinctMatcher.find(), ErrorCode.INVALID_SQRL_DEFINITION, "Could not parse [DISTINCT] statement.");
+        ParsedObject<NamePath> from = definitionBody.fromOffset(parseNamePath(distinctMatcher, "from", definitionBody.get()));
+        ParsedObject<String> columns = definitionBody.fromOffset(parse(distinctMatcher, "columns", definitionBody.get()));
+        ParsedObject<String> remaining = definitionBody.fromOffset(parse(distinctMatcher, "remaining", definitionBody.get()));
+        definition = new SqrlDistinctStatement(tableName, comment, from, columns, remaining);
+      } else if (keyword.equalsIgnoreCase("JOIN")) {
+        checkFatal(arguments.isEmpty(), ErrorCode.INVALID_SQRL_DEFINITION, "Table function not supported for operation");
+        definition = new SqrlRelationshipStatement(tableName.map(NamePath::popLast), definitionBody, comment, tableName.map(NamePath::getLast));
+      } else {
+        new StatementParserException(ErrorCode.INVALID_SQRL_DEFINITION, definitionBody.getFileLocation(), "Not a valid SQRL operation: %s", keyword);
+      }
+
+      return Optional.of(definition);
     }
 
-    //TODO: add support for table functions
+    Matcher createTable = CREATE_TABLE.matcher(statement);
+    if (createTable.find()) {
+      ParsedObject<String> createTableStmt = parse(statement.substring(createTable.start("fullmatch")), statement,
+          createTable.start("fullmatch"));
+      return Optional.of(new SqrlCreateTableStatement(createTableStmt));
+    }
 
     return Optional.empty();
   }
 
-  private SqlIdentifier parseIdentifier(String identifier) throws SqlParseException {
-    if (identifier==null) return null;
-    SqlParser parser = SqlParser.create(identifier);
-    SqlNode sqlNode = parser.parseExpression();
-
-    if (sqlNode instanceof SqlIdentifier) {
-      return (SqlIdentifier) sqlNode;
-    } else {
-      throw new IllegalArgumentException("The provided string is not a valid SQL identifier: " + identifier);
+  public static Pair<String, List<Name>> replaceTableFunctionVariables(String body, List<Name> arguments) {
+    List<Name> argumentIndexes = new ArrayList<>();
+    String bodyLower = body.toLowerCase();
+    StringBuilder resultBuilder = new StringBuilder();
+    int i = 0;
+    while (i < body.length()) {
+      boolean matched = false;
+      if (body.charAt(i) == ARGUMENT_PREFIX) {
+        for (Name argument : arguments) {
+          if (bodyLower.startsWith(argument.getCanonical(), i+1)) {
+            argumentIndexes.add(argument);
+            resultBuilder.append("?");
+            for (int k = 0; k < argument.length(); k++) {
+              resultBuilder.append(" ");
+            }
+            i += argument.length()+1;
+            matched = true;
+            break;
+          }
+        }
+      }
+      if (!matched) {
+        resultBuilder.append(body.charAt(i));
+        i++;
+      }
     }
+    return Pair.of(resultBuilder.toString(), argumentIndexes);
+  }
+
+
+  static FileLocation relativeLocation(ParsedObject<String> base, int charOffset) {
+    return base.getFileLocation().add(computeFileLocation(base.get(), charOffset));
+  }
+
+  static FileLocation computeFileLocation(String statement, int charOffset) {
+    return SqlScriptStatementSplitter.computeOffset(statement, charOffset);
+  }
+
+  static ParsedObject<String> parse(Matcher matcher, String groupName, String statement) {
+    String content = matcher.group(groupName);
+    return parse(content, statement, content!=null?matcher.start(groupName):0);
+  }
+
+  static ParsedObject<String> parse(String content, String statement, int charOffset) {
+    if (content==null) return new ParsedObject<>(null, FileLocation.START);
+
+    FileLocation fileLocation = computeFileLocation(statement, charOffset);
+    return new ParsedObject<>(content, fileLocation);
+  }
+
+  static ParsedObject<NamePath> parseNamePath(String identifier, String statement, int charOffset) {
+    return parse(identifier, statement, charOffset).map(NamePath::parse);
+  }
+
+  static ParsedObject<NamePath> parseNamePath(Matcher matcher, String groupName, String statement) {
+    return parse(matcher, groupName, statement).map(NamePath::parse);
+  }
+
+  static ParsedObject<Name> parseName(Matcher matcher, String groupName, String statement) {
+    return parse(matcher, groupName, statement).map(Name::system);
   }
 
 }

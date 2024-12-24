@@ -1,0 +1,29 @@
+[WARN] No table file [product] for schema file [src/test/resources/dagplanner/ecommerce/product.schema.yml], hence schema is ignored
+in config:package.json:
+
+[WARN] No table file [orders] for schema file [src/test/resources/dagplanner/ecommerce/orders.schema.yml], hence schema is ignored
+in config:package.json:
+
+[WARN] No table file [customer] for schema file [src/test/resources/dagplanner/ecommerce/customer.schema.yml], hence schema is ignored
+in config:package.json:
+
+[WARN] No table file [product] for schema file [src/test/resources/dagplanner/ecommerceTs/product.schema.yml], hence schema is ignored
+in config:package.json:
+
+[WARN] No table file [orders] for schema file [src/test/resources/dagplanner/ecommerceTs/orders.schema.yml], hence schema is ignored
+in config:package.json:
+
+[FATAL] Argument list contains invalid arguments
+in script:parsererror-arguments-fail.sqrl [5:14]:
+CustomerQuery($id: BIGINT,
+             $arg2: STRING,
+             arg3: INT) := SELECT * FROM Customer WHERE customerid = $id;
+-------------^
+Invalid table function arguments provided.
+
+Table function arguments have the form
+```
+($argument: INT, $arg2: STRING)
+```
+and are separated by comma.
+
