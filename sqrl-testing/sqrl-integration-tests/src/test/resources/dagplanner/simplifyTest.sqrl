@@ -1,0 +1,33 @@
+IMPORT ecommerceTs.Customer;
+
+CustomerByTime2 := DISTINCT Customer ON customerid ORDER BY `timestamp` DESC NULLS LAST;
+CustomerByMultipleTime := DISTINCT Customer ON customerid, email ORDER BY `timestamp` DESC, lastUpdated ASC;
+
+ExplicitDistinct := SELECT customerid, `timestamp`, name FROM (SELECT *, (ROW_NUMBER() OVER (PARTITION BY customerid ORDER BY `timestamp` DESC)) AS _rownum FROM Customer) WHERE (_rownum = 1);
+
+Customer.related := JOIN Customer other ON this.customerid = other.customerid ORDER BY other.`timestamp`;
+
+/** This is for selected customers
+    and their orders
+  */ /* ignored comment */
+/*+ primary_key(id, name), index(name) */
+SelectCustomers := SELECT * From Customer WHERE customerid > 0 ORDER BY `timestamp` DESC LIMIT 10;
+
+CREATE TABLE Orders (
+    orderid INT,
+    amount FLOAT,
+    PRIMARY KEY (orderid) NOT ENFORCED
+);
+
+/*+ test, query */
+/*+filtered_distinct_order*/
+CustomerTimeWindow := SELECT
+                          window_start, window_end,
+                          COUNT(DISTINCT email) AS unique_email_count
+                      FROM TABLE(
+                              TUMBLE(TABLE Customer, DESCRIPTOR(`timestamp`), INTERVAL '1' MINUTE)
+                           )
+                      GROUP BY
+                          window_start, window_end;
+
+CustomerQuery($id: BIGINT) := SELECT * FROM Customer WHERE customerid = $id;
