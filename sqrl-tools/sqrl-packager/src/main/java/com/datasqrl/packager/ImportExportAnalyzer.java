@@ -32,11 +32,8 @@ public class ImportExportAnalyzer {
   private final MainScriptImpl mainScript;
 
   @SneakyThrows
-  public Set<NamePath> analyze(Path sqrlScript, ErrorCollector errors) {
-    ErrorCollector scriptErrors = errors.withScript(mainScript.getPath().orElse(Path.of("undefined")),
-        mainScript.getContent());
-
-    return sqrlParser.parseScript(mainScript.getContent(), scriptErrors).stream()
+  public Set<NamePath> analyze(String scriptContent, ErrorCollector errors) {
+    return sqrlParser.parseScript(scriptContent, errors).stream()
         .map(ParsedObject::get)
         .flatMap(stmt -> {
           NamePath path;

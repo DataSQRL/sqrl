@@ -54,8 +54,7 @@ public class SqlScriptPlanner {
 
 
   public void plan(MainScript mainScript, SqrlEnvironment sqrlEnv) {
-    ErrorCollector scriptErrors = errorCollector.withScript(mainScript.getPath().orElse(Path.of("undefined")),
-        mainScript.getContent());
+    ErrorCollector scriptErrors = errorCollector.withScript(mainScript.getPath(), mainScript.getContent());
 
     List<ParsedObject<SQLStatement>> statements = sqrlParser.parseScript(mainScript.getContent(), scriptErrors);
 
@@ -146,8 +145,7 @@ public class SqlScriptPlanner {
     Name tableName = alias.map(Name::system).orElse(flinkTable.getName());
     String tableSql = flinkTable.getFlinkSQL();
     //TODO: replace name and use SqlIdentifier for proper escaping
-    sqrlEnv.withErrors(errorCollector.withScript(flinkTable.getFlinkSqlFile(),
-        tableSql));
+    sqrlEnv.withErrors(errorCollector.withScript(flinkTable.getFlinkSqlFile(), tableSql));
     tableSql = SqlScriptStatementSplitter.formatEndOfSqlFile(tableSql);
     Preconditions.checkArgument(tableSql.endsWith(";\n"));
     if (flinkTable.getSchema().isPresent()) {

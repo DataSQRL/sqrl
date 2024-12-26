@@ -19,6 +19,7 @@ import com.datasqrl.engine.PhysicalPlan.StagePlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.Preprocessors.PreprocessorsContext;
 import com.datasqrl.packager.repository.Repository;
+import com.datasqrl.plan.MainScript;
 import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.datasqrl.util.SqrlObjectMapper;
@@ -73,6 +74,7 @@ public class Packager {
   private final BuildPath buildDir;
   private final Preprocessors preprocessors;
   private final ImportExportAnalyzer analyzer;
+  private final MainScript mainScript;
 
   public void preprocess(ErrorCollector errors) {
     errors.checkFatal(
@@ -100,7 +102,8 @@ public class Packager {
     String mainScriptPath = config.getScriptConfig().getMainScript()
         .orElseThrow(() -> new RuntimeException("No main script specified"));
 
-    Set<NamePath> unresolvedDeps = analyzer.analyze(rootDir.getRootDir().resolve(mainScriptPath), errors);
+    ErrorCollector scriptErrors = errors.withScript(mainScript.getPath(), mainScript.getContent());
+    Set<NamePath> unresolvedDeps = analyzer.analyze(mainScript.getContent(), scriptErrors);
 
     List<Dependency> dependencies = unresolvedDeps.stream()
         .flatMap(dep -> {
@@ -108,7 +111,7 @@ public class Packager {
             return repository.resolveDependency(dep.toString())
                 .stream();
           } catch (Exception e) {
-            //suppress any exception
+            //suppress any exception, those will be thrown when we actually plan the script
             return Optional.<Dependency>empty()
                 .stream();
           }
