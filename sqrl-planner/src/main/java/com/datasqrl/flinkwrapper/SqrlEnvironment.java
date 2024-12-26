@@ -92,7 +92,7 @@ public class SqrlEnvironment {
   }
 
   public Operation parse(String sqlStatement) {
-
+    SqlNode sqlNode = parseSQL(sqlStatement);
     return tEnv.getParser().parse(sqlStatement).get(0);
   }
 

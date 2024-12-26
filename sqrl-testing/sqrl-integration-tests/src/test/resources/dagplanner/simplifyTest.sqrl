@@ -16,7 +16,7 @@ SelectCustomers := SELECT * From Customer WHERE customerid > 0 ORDER BY `timesta
 CREATE TABLE Orders (
     orderid INT,
     amount FLOAT,
-    PRIMARY KEY (orderid) NOT ENFORCED
+    PRIMARY KEY (orderid)
 );
 
 /*+ test, query */
