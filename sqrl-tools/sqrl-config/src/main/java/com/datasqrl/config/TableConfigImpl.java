@@ -28,17 +28,6 @@ public class TableConfigImpl implements TableConfig {
 
   public static final String FORMAT_NAME_KEY = "name";
 
-  public TableConfigImpl load(@NonNull URI uri, @NonNull Name name,
-      @NonNull ErrorCollector errors) {
-    SqrlConfig config = SqrlConfigCommons.fromURL(errors, ResourceResolver.toURL(uri));
-    return new TableConfigImpl(name, config);
-  }
-
-  public TableConfigImpl load(@NonNull Path path, @NonNull Name name,
-      @NonNull ErrorCollector errors) {
-    return SqrlConfigCommons.fromFilesTableConfig(name, errors, List.of(path));
-  }
-
   public static TableConfigBuilderImpl builder(String name) {
     return builder(Name.system(name));
   }

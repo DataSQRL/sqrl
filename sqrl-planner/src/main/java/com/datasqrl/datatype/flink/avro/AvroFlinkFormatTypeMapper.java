@@ -1,7 +1,6 @@
 package com.datasqrl.datatype.flink.avro;
 
 import com.datasqrl.config.TableConfig;
-import com.datasqrl.config.TableConfig.Format;
 import com.datasqrl.datatype.DataTypeMapper;
 import com.datasqrl.datatype.SerializeToBytes;
 import com.datasqrl.datatype.flink.FlinkDataTypeMapper;
@@ -100,15 +99,9 @@ public class AvroFlinkFormatTypeMapper extends FlinkDataTypeMapper {
 
   @Override
   public boolean isTypeOf(TableConfig tableConfig) {
-    Optional<Format> formatOpt = tableConfig.getConnectorConfig().getFormat();
-    if (formatOpt.isEmpty()) {
-      return false;
-    }
-
-    Format format = formatOpt.get();
-
-
-    return format.getName().equalsIgnoreCase("avro") || format.getName()
-        .equalsIgnoreCase("avro-confluent");
+    return tableConfig.getConnectorConfig().getFormat().map(
+        format -> format.equalsIgnoreCase("avro") ||
+            format.equalsIgnoreCase("avro-confluent")
+    ).orElse(false);
   }
 }
