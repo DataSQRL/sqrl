@@ -22,7 +22,6 @@ public abstract class SqrlDefinition implements SqrlStatement {
   ParsedObject<String> definitionBody;
   SqrlComments comments;
 
-  @Override
   public void apply(SqrlEnvironment sqrlEnv) {
     String prefix = String.format("CREATE TEMPORARY VIEW %s AS ", tableName.get().toString());
     try {

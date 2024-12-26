@@ -10,9 +10,12 @@ import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLocation.FileLocation;
+import com.datasqrl.flinkwrapper.parser.FlinkSQLStatement;
 import com.datasqrl.flinkwrapper.parser.ParsedObject;
+import com.datasqrl.flinkwrapper.parser.SQLStatement;
 import com.datasqrl.flinkwrapper.parser.SqlScriptStatementSplitter;
 import com.datasqrl.flinkwrapper.parser.SqrlCreateTableStatement;
+import com.datasqrl.flinkwrapper.parser.SqrlDefinition;
 import com.datasqrl.flinkwrapper.parser.SqrlExportStatement;
 import com.datasqrl.flinkwrapper.parser.SqrlImportStatement;
 import com.datasqrl.flinkwrapper.parser.SqrlStatement;
@@ -34,7 +37,6 @@ import java.util.List;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.flink.sql.parser.ddl.SqlCreateTable;
@@ -44,7 +46,7 @@ import org.apache.flink.table.operations.Operation;
 public class SqlScriptPlanner {
 
   private ErrorCollector errorCollector;
-  private SqlScriptStatementSplitter sqlSplitter;
+
   private ModuleLoader moduleLoader;
   private SqrlStatementParser sqrlParser;
   private final SqlNameUtil nameUtil;
@@ -55,9 +57,9 @@ public class SqlScriptPlanner {
     ErrorCollector scriptErrors = errorCollector.withScript(mainScript.getPath().orElse(Path.of("undefined")),
         mainScript.getContent());
 
-    List<ParsedObject<String>> statements = sqlSplitter.splitStatements(mainScript.getContent());
+    List<ParsedObject<SQLStatement>> statements = sqrlParser.parseScript(mainScript.getContent(), scriptErrors);
 
-    for (ParsedObject<String> statement : statements) {
+    for (ParsedObject<SQLStatement> statement : statements) {
       ErrorCollector lineErrors = scriptErrors
           .atFile(statement.getFileLocation());
       try {
@@ -76,27 +78,20 @@ public class SqlScriptPlanner {
   }
 
 
-  private void planStatement(String sqlStatement, SqrlEnvironment sqrlEnv) throws SqlParseException {
-    //Check if this a SQRL statement
-    Optional<SqrlStatement> sqrlStatement = sqrlParser.parse(sqlStatement);
-    if (sqrlStatement.isPresent()) {
-      SqrlStatement stmt = sqrlStatement.get();
-      //Imports and exports are special cases
-      if (stmt instanceof SqrlImportStatement) {
-        addImport((SqrlImportStatement) stmt, sqrlEnv);
-      } else if (stmt instanceof SqrlExportStatement) {
-        addExport((SqrlExportStatement) stmt, sqrlEnv);
-      } else if (stmt instanceof SqrlCreateTableStatement) {
-        Operation createTable = sqrlEnv.parse(((SqrlCreateTableStatement) stmt).getCreateTable().get());
-        SqlNode sqlNode = sqrlEnv.parseSQL(((SqrlCreateTableStatement) stmt).getCreateTable().get());
-        System.out.println(createTable.asSummaryString());
-      } else {
-        stmt.apply(sqrlEnv);
-      }
-    } else {
-      //If it's not a SQRL statement, just pass through
+  private void planStatement(SQLStatement stmt, SqrlEnvironment sqrlEnv) throws SqlParseException {
+    if (stmt instanceof SqrlImportStatement) {
+      addImport((SqrlImportStatement) stmt, sqrlEnv);
+    } else if (stmt instanceof SqrlExportStatement) {
+      addExport((SqrlExportStatement) stmt, sqrlEnv);
+    } else if (stmt instanceof SqrlCreateTableStatement) {
+      Operation createTable = sqrlEnv.parse(((SqrlCreateTableStatement) stmt).getCreateTable().get());
+      SqlNode sqlNode = sqrlEnv.parseSQL(((SqrlCreateTableStatement) stmt).getCreateTable().get());
+      System.out.println(createTable.asSummaryString());
+    } else if (stmt instanceof SqrlDefinition) {
+      ((SqrlDefinition)stmt).apply(sqrlEnv);
+    } else if (stmt instanceof FlinkSQLStatement) {
       try {
-        sqrlEnv.executeSQL(sqlStatement);
+        sqrlEnv.executeSQL(((FlinkSQLStatement)stmt).getSql().get());
       } catch (Exception e) {
         throw StatementParserException.from(e, FileLocation.START, 0);
       }

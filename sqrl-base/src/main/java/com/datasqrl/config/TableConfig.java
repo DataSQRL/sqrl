@@ -13,13 +13,17 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
 
+/**
+ * Wraps a Flink CREATE TABLE definition to provide an abstracted interface to table definitions
+ * for the DataSQRL codebase with simple methods to access table configuration.
+ *
+ * Of particular importance is the table builder which is used to build sinks during DAG cutting.
+
+  TODO: trim this down once we get rid of SqrlToFlinkSQLGenerator and TableConverter
+ */
 public interface TableConfig {
 
-  TableConfig load(URI uri, Name last, ErrorCollector errors);
-
   ConnectorConfig getConnectorConfig();
-
-  MetadataConfig getMetadataConfig();
 
   TableTableConfig getBase();
 
@@ -31,23 +35,6 @@ public interface TableConfig {
 
   void toFile(Path tableConfigFile, boolean pretty);
 
-  interface MetadataEntry {
-
-    Optional<String> getType();
-
-    Optional<String> getAttribute();
-
-    Optional<Boolean> getVirtual();
-  }
-
-  interface MetadataConfig {
-
-    List<String> getKeys();
-
-    Optional<MetadataEntry> getMetadataEntry(String columnName);
-
-    Map<String, MetadataEntry> toMap();
-  }
 
   interface ConnectorConfig {
 
@@ -87,5 +74,29 @@ public interface TableConfig {
     TableConfig build();
 
   }
+
+  /* TODO: remove the following once we get rid of SqrlToFlinkSQLGenerator and TableConverter
+   */
+
+  MetadataConfig getMetadataConfig();
+
+  interface MetadataEntry {
+
+    Optional<String> getType();
+
+    Optional<String> getAttribute();
+
+    Optional<Boolean> getVirtual();
+  }
+
+  interface MetadataConfig {
+
+    List<String> getKeys();
+
+    Optional<MetadataEntry> getMetadataEntry(String columnName);
+
+    Map<String, MetadataEntry> toMap();
+  }
+
 
 }

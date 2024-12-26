@@ -5,8 +5,8 @@ import static com.datasqrl.flinkwrapper.parser.StatementParserException.checkFat
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.error.ErrorCode;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLocation.FileLocation;
-import com.datasqrl.util.SqlNameUtil;
 import com.google.inject.Inject;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -63,7 +63,26 @@ public class SqrlStatementParser {
   public static final Pattern ARGUMENT_PARSER = Pattern.compile(ARGUMENT_REGEX,
       Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
-  public Optional<SqrlStatement> parse(String statement) throws SqlParseException {
+  private SqlScriptStatementSplitter sqlSplitter;
+
+  public List<ParsedObject<SQLStatement>> parseScript(String script, ErrorCollector scriptErrors) {
+    List<ParsedObject<SQLStatement>> sqlStatements = new ArrayList<>();
+    ErrorCollector localErrors = scriptErrors;
+    try {
+      List<ParsedObject<String>> statements = sqlSplitter.splitStatements(script);
+      for (ParsedObject<String> statement : statements) {
+        localErrors = scriptErrors.atFile(statement.getFileLocation());
+        Optional<SqrlStatement> sqrlStatement = parseStatement(statement.get());
+        sqlStatements.add(statement.map(x -> sqrlStatement.map(SQLStatement.class::cast)
+            .orElseGet(() -> new FlinkSQLStatement(statement))));
+      }
+    } catch (StatementParserException e) {
+      throw localErrors.handle(e);
+    }
+    return sqlStatements;
+  }
+
+  public Optional<SqrlStatement> parseStatement(String statement) {
     Matcher importExportMatcher = IMPORT_EXPORT.matcher(statement);
     if (importExportMatcher.find()) { //it's an import or export statement
       String directive = importExportMatcher.group("fullmatch");
