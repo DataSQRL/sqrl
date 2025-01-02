@@ -74,12 +74,21 @@
       <url>https://github.com/henneberger</url>
     </developer>
   </developers>
+
+  <distributionManagement>
+    <snapshotRepository>
+      <id>github</id>
+      <url>https://maven.pkg.github.com/DataSQRL/acorn-java</url>
+    </snapshotRepository>
+  </distributionManagement>
+
   <scm>
     <connection>scm:git:https://github.com/DataSQRL/sqrl.git</connection>
     <url>https://github.com/DataSQRL/sqrl</url>
     <developerConnection>scm:git:https://github.com/DataSQRL/sqrl.git</developerConnection>
     <tag>HEAD</tag>
   </scm>
+
   <profiles>
     <profile>
       <id>update-snapshots</id>
@@ -147,6 +156,27 @@
                   </execution>
                 </executions>
               </plugin>
+            </plugins>
+        </build>
+    </profile>
+    <profile>
+        <id>skip-publishing</id>
+
+        <activation>
+          <property>
+            <name>skipPublishing</name>
+          </property>
+        </activation>
+
+        <build>
+            <plugins>
+                <plugin>
+                    <groupId>org.sonatype.central</groupId>
+                    <artifactId>central-publishing-maven-plugin</artifactId>
+                    <configuration>
+                        <skipPublishing>true</skipPublishing>
+                    </configuration>
+                </plugin>
             </plugins>
         </build>
     </profile>
