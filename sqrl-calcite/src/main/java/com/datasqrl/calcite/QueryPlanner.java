@@ -194,6 +194,10 @@ public class QueryPlanner {
    */
   @SneakyThrows
   public RelDataType parseDatatype(String datatype) {
+    // Must be flink types
+    datatype = datatype.replaceAll("TIMESTAMP_WITH_LOCAL_TIME_ZONE",
+        "TIMESTAMP_LTZ");
+
     // Addl type aliases for graphql
     if (datatype.equalsIgnoreCase("datetime")) {
       return this.cluster.getTypeFactory().createSqlType(SqlTypeName.TIMESTAMP, 3);

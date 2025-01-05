@@ -80,8 +80,9 @@ public class TableConverter {
               "Not a valid SQRL data type. Please check the documentation for supported SQRL types.");
         }
         String datatype = type.get();
-        typeBuilder.add(nameAdjuster.uniquifyName(columnName),
-            planner.parseDatatype(datatype));
+        RelDataType metadataType = planner.getRelBuilder().getTypeFactory()
+            .createTypeWithNullability(planner.parseDatatype(datatype), false);
+        typeBuilder.add(nameAdjuster.uniquifyName(columnName), metadataType);
       } else if (colConfig.getAttribute().isPresent()){
         String attribute = colConfig.getAttribute().get();
         SqlNode sqlNode = framework.getQueryPlanner().parseCall(attribute);
