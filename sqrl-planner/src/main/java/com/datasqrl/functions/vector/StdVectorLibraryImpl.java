@@ -4,7 +4,6 @@ import static com.datasqrl.vector.VectorFunctions.ASCII_TEXT_TEST_EMBED;
 import static com.datasqrl.vector.VectorFunctions.CENTER;
 import static com.datasqrl.vector.VectorFunctions.COSINE_DISTANCE;
 import static com.datasqrl.vector.VectorFunctions.COSINE_SIMILARITY;
-import static com.datasqrl.vector.VectorFunctions.DOUBLE_TO_VECTOR;
 import static com.datasqrl.vector.VectorFunctions.EUCLIDEAN_DISTANCE;
 import static com.datasqrl.vector.VectorFunctions.ONNX_EMBED;
 import static com.datasqrl.vector.VectorFunctions.VEC_TO_DOUBLE;
@@ -29,7 +28,6 @@ public class StdVectorLibraryImpl extends AbstractFunctionModule implements StdL
       COSINE_DISTANCE,
       EUCLIDEAN_DISTANCE,
       VEC_TO_DOUBLE,
-      DOUBLE_TO_VECTOR,
       ONNX_EMBED,
       ASCII_TEXT_TEST_EMBED,
       CENTER
