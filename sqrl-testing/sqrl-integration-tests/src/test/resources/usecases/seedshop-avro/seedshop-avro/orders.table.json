@@ -17,7 +17,7 @@
   "metadata" : {
     "_source_time" : {
       "attribute" : "timestamp",
-      "type": "TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)"
+      "type": "TIMESTAMP_LTZ(3)"
     }
   }
 
