@@ -29,7 +29,7 @@
     <log4j.version>2.23.1</log4j.version>
     <scala.version>2.12</scala.version>
     <guava.version>31.1-jre</guava.version>
-    <lombok.version>1.18.34</lombok.version>
+    <lombok.version>1.18.24</lombok.version>
     <commonsio.version>2.11.0</commonsio.version>
     <commons-lang3.version>3.12.0</commons-lang3.version>
     <commons-config.version>2.9.0</commons-config.version>
@@ -97,7 +97,7 @@
       <scope>provided</scope>
     </dependency>
 
-        <!-- common test infra-->
+    <!-- common test infra-->
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-engine</artifactId>
@@ -111,7 +111,7 @@
   </dependencies>
   <dependencyManagement>
     <dependencies>
-            <!-- SQRL deps, please keep this in order -->
+      <!-- SQRL deps, please keep this in order -->
       <dependency>
         <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-base</artifactId>
@@ -162,7 +162,7 @@
         <artifactId>sqrl-jdbc-1.19</artifactId>
         <version>${project.version}</version>
       </dependency>
-            <!-- examples-->
+      <!-- examples-->
       <dependency>
         <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-examples</artifactId>
@@ -170,7 +170,7 @@
       </dependency>
 
 
-            <!-- planner -->
+      <!-- planner -->
       <dependency>
         <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-calcite</artifactId>
@@ -221,13 +221,13 @@
         <artifactId>sqrl-flexible-csv</artifactId>
         <version>${project.version}</version>
       </dependency>
-            <!-- tests -->
+      <!-- tests -->
       <dependency>
         <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-integration-tests</artifactId>
         <version>${project.version}</version>
       </dependency>
-            <!-- tools -->
+      <!-- tools -->
       <dependency>
         <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-cli</artifactId>
@@ -248,7 +248,7 @@
         <artifactId>sqrl-run</artifactId>
         <version>${project.version}</version>
       </dependency>
-            <!-- sqrl test jars-->
+      <!-- sqrl test jars-->
       <dependency>
         <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-calcite</artifactId>
@@ -272,7 +272,7 @@
         <version>${project.version}</version>
       </dependency>
 
-            <!-- Test utils -->
+      <!-- Test utils -->
       <dependency>
         <groupId>com.theokanning.openai-gpt3-java</groupId>
         <artifactId>service</artifactId>
@@ -280,7 +280,7 @@
         <scope>test</scope>
       </dependency>
 
-            <!-- General utils -->
+      <!-- General utils -->
       <dependency>
         <groupId>com.google.protobuf</groupId>
         <artifactId>protobuf-java</artifactId>
@@ -364,7 +364,7 @@
         <version>${graphql-java.version}</version>
       </dependency>
 
-            <!-- Vertx -->
+      <!-- Vertx -->
       <dependency>
         <groupId>io.vertx</groupId>
         <artifactId>vertx-kafka-client</artifactId>
@@ -410,7 +410,7 @@
         <artifactId>vertx-junit5</artifactId>
         <version>${vertx.version}</version>
         <scope>test</scope>
-                <!-- JUnit 4 is no longer necessary, so we exclude it -->
+        <!-- JUnit 4 is no longer necessary, so we exclude it -->
         <exclusions>
           <exclusion>
             <groupId>junit</groupId>
@@ -434,13 +434,13 @@
         <artifactId>vertx-web</artifactId>
         <version>${vertx.version}</version>
       </dependency>
-            <!-- required for vertx subscriptions -->
+      <!-- required for vertx subscriptions -->
       <dependency>
         <groupId>io.projectreactor</groupId>
         <artifactId>reactor-core</artifactId>
         <version>${projectreactor.version}</version>
       </dependency>
-            <!-- vertx metrics -->
+      <!-- vertx metrics -->
       <dependency>
         <groupId>io.vertx</groupId>
         <artifactId>vertx-micrometer-metrics</artifactId>
@@ -451,7 +451,7 @@
         <artifactId>micrometer-registry-prometheus</artifactId>
         <version>1.13.3</version>
       </dependency>
-            <!-- required for vertx jdbc -->
+      <!-- required for vertx jdbc -->
       <dependency>
         <groupId>io.agroal</groupId>
         <artifactId>agroal-pool</artifactId>
@@ -463,7 +463,7 @@
         <version>${reactive-streams.version}</version>
       </dependency>
 
-            <!-- validation -->
+      <!-- validation -->
       <dependency>
         <groupId>javax.validation</groupId>
         <artifactId>validation-api</artifactId>
@@ -476,7 +476,7 @@
         <version>${glassfish.version}</version>
       </dependency>
 
-            <!-- Flink -->
+      <!-- Flink -->
       <dependency>
         <groupId>org.apache.flink</groupId>
         <artifactId>flink-core</artifactId>
@@ -564,7 +564,7 @@
         <version>3.2.0-1.19</version>
       </dependency>
 
-            <!-- calcite -->
+      <!-- calcite -->
       <dependency>
         <groupId>org.immutables</groupId>
         <artifactId>value</artifactId>
@@ -572,14 +572,14 @@
         <scope>compile</scope>
       </dependency>
 
-            <!-- stream: csv -->
+      <!-- stream: csv -->
       <dependency>
         <groupId>com.opencsv</groupId>
         <artifactId>opencsv</artifactId>
         <version>${opencsv.version}</version>
       </dependency>
 
-            <!-- stream: sources -->
+      <!-- stream: sources -->
       <dependency>
         <groupId>org.apache.kafka</groupId>
         <artifactId>kafka-clients</artifactId>
@@ -625,14 +625,14 @@
         <scope>test</scope>
       </dependency>
 
-            <!-- formats -->
+      <!-- formats -->
       <dependency>
         <groupId>org.apache.avro</groupId>
         <artifactId>avro</artifactId>
         <version>${avro.version}</version>
       </dependency>
 
-            <!-- database: postgres -->
+      <!-- database: postgres -->
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-codec</artifactId>
@@ -643,7 +643,7 @@
         <artifactId>postgresql</artifactId>
         <version>${postgres.version}</version>
       </dependency>
-            <!-- postgres required libs -->
+      <!-- postgres required libs -->
       <dependency>
         <groupId>com.ongres.scram</groupId>
         <artifactId>common</artifactId>
@@ -655,14 +655,14 @@
         <version>${scram.version}</version>
       </dependency>
 
-            <!-- database: h2 -->
+      <!-- database: h2 -->
       <dependency>
         <groupId>com.h2database</groupId>
         <artifactId>h2</artifactId>
         <version>${h2.version}</version>
       </dependency>
 
-            <!-- jackson -->
+      <!-- jackson -->
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-core</artifactId>
@@ -698,7 +698,7 @@
         <artifactId>jackson-dataformat-yaml</artifactId>
         <version>${jackson.version}</version>
       </dependency>
-            <!-- JSON SChema -->
+      <!-- JSON SChema -->
       <dependency>
         <groupId>com.networknt</groupId>
         <artifactId>json-schema-validator</artifactId>
@@ -711,7 +711,7 @@
         <version>${freemarker.version}</version>
       </dependency>
 
-            <!-- testing -->
+      <!-- testing -->
       <dependency>
         <groupId>org.mockito</groupId>
         <artifactId>mockito-core</artifactId>
@@ -735,7 +735,7 @@
         <artifactId>junit-jupiter</artifactId>
         <version>${testcontainers.version}</version>
         <scope>test</scope>
-                <!-- JUnit 4 is no longer necessary, so we exclude it -->
+        <!-- JUnit 4 is no longer necessary, so we exclude it -->
         <exclusions>
           <exclusion>
             <groupId>junit</groupId>
@@ -774,7 +774,7 @@
         <scope>test</scope>
       </dependency>
 
-            <!-- logging -->
+      <!-- logging -->
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
@@ -796,7 +796,7 @@
         <version>${log4j.version}</version>
       </dependency>
 
-            <!-- build -->
+      <!-- build -->
       <dependency>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -811,12 +811,12 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
-    <!--    <scm>-->
-    <!--        <url>https://github.com/DataSQRL/sqrl.git</url>-->
-    <!--        <connection>scm:git:git@github.com:DataSQRL/sqrl.git</connection>-->
-    <!--        <developerConnection>scm:git:git@github.com:DataSQRL/sqrl.git</developerConnection>-->
-    <!--      <tag>HEAD</tag>-->
-    <!--  </scm>-->
+  <!--    <scm>-->
+  <!--        <url>https://github.com/DataSQRL/sqrl.git</url>-->
+  <!--        <connection>scm:git:git@github.com:DataSQRL/sqrl.git</connection>-->
+  <!--        <developerConnection>scm:git:git@github.com:DataSQRL/sqrl.git</developerConnection>-->
+  <!--      <tag>HEAD</tag>-->
+  <!--  </scm>-->
   <build>
     <plugins>
 
@@ -876,7 +876,7 @@
           </execution>
         </executions>
         <configuration>
-                    <!-- do not build an empty jar if the project is
+          <!-- do not build an empty jar if the project is
                e.g. a pom project -->
           <skipIfEmpty>true</skipIfEmpty>
           <archive>
