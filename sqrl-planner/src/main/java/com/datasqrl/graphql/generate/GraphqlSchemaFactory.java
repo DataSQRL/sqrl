@@ -19,17 +19,14 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 
 import com.datasqrl.config.PackageJson.CompilerConfig;
-import com.datasqrl.config.SystemBuiltInConnectors;
 import com.datasqrl.engine.log.LogManager;
 import com.datasqrl.function.SqrlFunctionParameter;
 import com.datasqrl.graphql.server.CustomScalars;
 import com.datasqrl.io.tables.TableType;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.plan.table.ProxyImportRelationalTable;
-import com.datasqrl.plan.table.QueryRelationalTable;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.plan.validate.ResolvedImport;
-import com.datasqrl.plan.validate.ScriptPlanner.Mutation;
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.NestedRelationship;
 import com.datasqrl.schema.Relationship.JoinType;
@@ -67,7 +64,6 @@ import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.util.ImmutableBitSet;
 import org.apache.commons.collections.ListUtils;
-import scala.annotation.meta.field;
 
 /**
  * Creates a default graphql schema based on the SQRL schema
@@ -98,7 +94,7 @@ public class GraphqlSchemaFactory {
     this.logManager = logManager;
   }
 
-  public Optional<GraphQLSchema> generate(ExecutionGoal goal) {
+  public Optional<GraphQLSchema> generate() {
     this.objectPathToTables = schema.getTableFunctions().stream()
         .collect(Collectors.groupingBy(e -> e.getFullPath().popLast(),
             LinkedHashMap::new, Collectors.toList()));
@@ -108,17 +104,12 @@ public class GraphqlSchemaFactory {
     for (Map.Entry<NamePath, List<SqrlTableMacro>> path : fieldPathToTables.entrySet()) {
       if (path.getKey().getLast().isHidden()) continue;
 
-//      if (goal == ExecutionGoal.TEST) {
-//        if (!path.getValue().get(0).isTest()) continue;
-//      } else {
-//        if (path.getValue().get(0).isTest()) continue;
-//      }
       Optional<GraphQLObjectType> graphQLObjectType = generateObject(path.getValue(),
           objectPathToTables.getOrDefault(path.getKey(), List.of()));
       graphQLObjectType.map(objectTypes::add);
     }
 
-    GraphQLObjectType queryType = createQueryType(goal, objectPathToTables.get(NamePath.ROOT));
+    GraphQLObjectType queryType = createQueryType(objectPathToTables.get(NamePath.ROOT));
 
     postProcess();
 
@@ -126,36 +117,26 @@ public class GraphqlSchemaFactory {
        return Optional.empty();
     }
 
-
     GraphQLSchema.Builder builder = GraphQLSchema.newSchema()
         .query(queryType);
-    if (goal != ExecutionGoal.TEST) {
-      if (logManager.hasLogEngine() && System.getenv().get("ENABLE_SUBSCRIPTIONS") != null) {
-        Optional<GraphQLObjectType.Builder> subscriptions = createSubscriptionTypes(schema);
-        subscriptions.map(builder::subscription);
-      }
-      Optional<GraphQLObjectType.Builder> mutations = createMutationTypes(schema);
-      mutations.map(builder::mutation);
+    if (logManager.hasLogEngine() && System.getenv().get("ENABLE_SUBSCRIPTIONS") != null) {
+      Optional<GraphQLObjectType.Builder> subscriptions = createSubscriptionTypes(schema);
+      subscriptions.map(builder::subscription);
     }
+    Optional<GraphQLObjectType.Builder> mutations = createMutationTypes(schema);
+    mutations.map(builder::mutation);
     builder.additionalTypes(new LinkedHashSet<>(objectTypes));
 
     if (queryType.getFields().isEmpty()) {
-      if (goal == ExecutionGoal.TEST) {
-        return Optional.empty(); //may have test folder
-      } else {
-        throw new RuntimeException("No queryable tables found for server");
-      }
+      return Optional.empty(); //may have test folder
     }
 
-    //todo: hack because we can't merge scalars with graphql-java
-    if (goal != ExecutionGoal.TEST) {
-      builder
-        .additionalType(CustomScalars.DATETIME)
-        .additionalType(CustomScalars.DATE)
-        .additionalType(CustomScalars.TIME)
-        .additionalType(CustomScalars.JSON)
-      ;
-    }
+    builder
+      .additionalType(CustomScalars.DATETIME)
+      .additionalType(CustomScalars.DATE)
+      .additionalType(CustomScalars.TIME)
+      .additionalType(CustomScalars.JSON)
+    ;
 
     return Optional.of(builder.build());
   }
@@ -242,19 +223,13 @@ public class GraphqlSchemaFactory {
   }
 
 
-  private GraphQLObjectType createQueryType(ExecutionGoal goal, List<SqrlTableMacro> relationships) {
+  private GraphQLObjectType createQueryType(List<SqrlTableMacro> relationships) {
 
     List<GraphQLFieldDefinition> fields = new ArrayList<>();
 
     for (SqrlTableMacro rel : relationships) {
       String name = rel.getAbsolutePath().getDisplay();
       if (name.startsWith(HIDDEN_PREFIX) || !isValidGraphQLName(name)) continue;
-
-      if (goal == ExecutionGoal.TEST) {
-        if (!rel.isTest()) continue;
-      } else {
-        if (rel.isTest()) continue;
-      }
 
       GraphQLFieldDefinition field = GraphQLFieldDefinition.newFieldDefinition()
           .name(rel.getAbsolutePath().getDisplay())

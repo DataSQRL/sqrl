@@ -52,7 +52,6 @@ public class GraphqlQueryBuilder {
   private final AtomicInteger queryCounter = new AtomicInteger();
 
   SqrlFramework framework;
-  APIConnectorManager apiManager;
   SqlNameUtil nameUtil;
 
   public APIQuery create(List<ArgCombination> arg, SqrlTableMacro macro,
