@@ -54,6 +54,16 @@ public class DataTypeTest {
       assertEquals(3, type.getPrecision());
       assertTrue(type.isNullable());
     }
+
+    @Test
+    @DisplayName("Parse TIMESTAMP Type")
+    void testParseTimestampLtz() {
+      String datatype = "TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)";
+      RelDataType type = queryPlanner.parseDatatype(datatype);
+      assertEquals(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, type.getSqlTypeName());
+      assertEquals(3, type.getPrecision());
+      assertTrue(type.isNullable());
+    }
   }
 
   @Nested
@@ -128,7 +138,7 @@ public class DataTypeTest {
     @Test
     @DisplayName("Parse MAP Type")
     void testParseMapType() {
-      String datatype = "MAP<STRING, INTEGER>";
+      String datatype = "MAP<STRING, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)>";
       RelDataType type = queryPlanner.parseDatatype(datatype);
       assertEquals(SqlTypeName.MAP, type.getSqlTypeName());
 
@@ -136,7 +146,7 @@ public class DataTypeTest {
       RelDataType valueType = type.getValueType();
 
       assertEquals(SqlTypeName.VARCHAR, keyType.getSqlTypeName());
-      assertEquals(SqlTypeName.INTEGER, valueType.getSqlTypeName());
+      assertEquals(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, valueType.getSqlTypeName());
       assertTrue(type.isNullable());
     }
 

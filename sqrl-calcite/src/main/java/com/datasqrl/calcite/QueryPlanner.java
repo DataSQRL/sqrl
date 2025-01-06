@@ -195,7 +195,7 @@ public class QueryPlanner {
   @SneakyThrows
   public RelDataType parseDatatype(String datatype) {
     // Must be flink types
-    datatype = datatype.toUpperCase().replaceAll("TIMESTAMP_WITH_LOCAL_TIME_ZONE",
+    datatype = datatype.replaceAll("TIMESTAMP_WITH_LOCAL_TIME_ZONE",
         "TIMESTAMP_LTZ");
 
     // Addl type aliases for graphql
