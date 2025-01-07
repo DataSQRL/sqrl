@@ -107,7 +107,7 @@ It is also recommended to specify the exact version used in the dependencies sec
     {
       "datasqrl.profile.default": {
         "name": "datasqrl.profile.default",
-        "version": "0.5.9",
+        "version": "0.5.10",
         "variant": "dev"
       }
     }
