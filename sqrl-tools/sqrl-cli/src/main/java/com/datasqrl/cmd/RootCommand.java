@@ -13,7 +13,7 @@ import picocli.CommandLine.ScopeType;
 
 @CommandLine.Command(name = "datasqrl", mixinStandardHelpOptions = true, version = "v0.5.9",
     subcommands = {CompilerCommand.class,
-         PublishCommand.class, TestCommand.class, LoginCommand.class, RunCommand.class})
+         PublishCommand.class, TestCommand.class, LoginCommand.class, RunCommand.class, CompilationServerCommand.class})
 @Getter
 public class RootCommand implements Runnable {
 
