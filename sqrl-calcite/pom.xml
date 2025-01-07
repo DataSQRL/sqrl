@@ -2,12 +2,12 @@
   <parent>
     <artifactId>sqrl-root</artifactId>
     <groupId>com.datasqrl</groupId>
-    <version>0.5.10-SNAPSHOT</version>
+    <version>0.5.10</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>sqrl-calcite</artifactId>
-  <version>0.5.10-SNAPSHOT</version>
+  <version>0.5.10</version>
 
   <!--
     README: Dependencies that are shared between planning and utility modules
