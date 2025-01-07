@@ -19,15 +19,9 @@ import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.util.SqlNameUtil;
 import com.google.inject.Inject;
-import graphql.language.FieldDefinition;
-import graphql.language.ObjectTypeDefinition;
-import graphql.language.ScalarTypeDefinition;
-import graphql.language.TypeDefinition;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphqlTypeComparatorRegistry;
 import graphql.schema.idl.SchemaPrinter;
-import graphql.schema.idl.TypeDefinitionRegistry;
-import graphql.schema.idl.UnExecutableSchemaGenerator;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 
@@ -51,7 +45,7 @@ public class InferGraphqlSchema {
 
   @SneakyThrows
   public Optional<String> inferGraphQLSchema() {
-    Optional<GraphQLSchema> gqlSchema = schemaFactory.generate(ExecutionGoal.COMPILE);
+    Optional<GraphQLSchema> gqlSchema = schemaFactory.generate();
 
     SchemaPrinter.Options opts = SchemaPrinter.Options.defaultOptions()
         .setComparators(GraphqlTypeComparatorRegistry.AS_IS_REGISTRY)
@@ -66,17 +60,13 @@ public class InferGraphqlSchema {
     }
 
     SchemaPrinter.Options opts = createSchemaPrinterOptions();
-    Optional<APISource> apiSource = getApiSource(opts);
+    Optional<APISource> apiSource = getApiSource(goal);
 
     if (apiSource.isEmpty()) {
       return handleNoApiSource(opts);
     }
 
     APISource apiSchema = apiSource.get();
-
-    if (goal == ExecutionGoal.TEST) {
-      apiSchema = mergeTestSchema(apiSchema, opts, testsPath);
-    }
 
     ErrorCollector apiErrors = setErrorCollectorSchema(apiSchema, errorCollector);
 
@@ -106,17 +96,24 @@ public class InferGraphqlSchema {
         .includeDirectives(false);
   }
 
-  // Retrieves the API source, either from the factory or by inferring the schema
-  private Optional<APISource> getApiSource(SchemaPrinter.Options opts) {
+  private Optional<APISource> getApiSource(ExecutionGoal goal) {
+    if (goal == ExecutionGoal.TEST) {
+      return generateSchema();
+    }
+
     return graphqlSourceFactory.get()
-        .or(() -> inferGraphQLSchema()
-            .map(schemaString -> new APISourceImpl(Name.system("<schema>"), schemaString)));
+        .or(this::generateSchema);
+  }
+
+  private Optional<APISource> generateSchema() {
+    return inferGraphQLSchema()
+        .map(schemaString -> new APISourceImpl(Name.system("<schema>"), schemaString));
   }
 
   // Handles the case when no API source is found
   private Optional<APISource> handleNoApiSource(SchemaPrinter.Options opts) {
     if (goal == ExecutionGoal.TEST) {
-      Optional<APISource> apiSource = schemaFactory.generate(ExecutionGoal.TEST)
+      Optional<APISource> apiSource = schemaFactory.generate()
           .map(gqlSchema -> new SchemaPrinter(opts).print(gqlSchema))
           .map(schemaString -> new APISourceImpl(Name.system("<schema>"), schemaString));
 
@@ -128,73 +125,6 @@ public class InferGraphqlSchema {
     return Optional.empty();
   }
 
-  // Merges the test schema into the API schema if the goal is TEST
-  @SneakyThrows
-  private APISource mergeTestSchema(APISource apiSchema, SchemaPrinter.Options opts, Optional<Path> testsPath) {
-    Optional<GraphQLSchema> gqlSchema = schemaFactory.generate(ExecutionGoal.TEST);
-    if (gqlSchema.isPresent()) {
-      String testSchemaString = new SchemaPrinter(opts).print(gqlSchema.get());
-
-      TypeDefinitionRegistry schemaDef = parser.parse(apiSchema.getSchemaDefinition());
-      TypeDefinitionRegistry testDef = parser.parse(testSchemaString);
-
-      // Merge Query type
-      ObjectTypeDefinition mergedQuery = mergeQueryType(schemaDef, testDef, testsPath);
-
-      // Remove overlapping types from testDef
-      removeOverlappingTypes(schemaDef, testDef);
-
-      // Replace Query type in schemaDef with mergedQuery
-      schemaDef.remove(schemaDef.getType("Query").get());
-      schemaDef.add(mergedQuery);
-
-      // Merge the two TypeDefinitionRegistries
-      TypeDefinitionRegistry mergedDef = schemaDef.merge(testDef);
-
-      // Generate combined schema string
-      String combinedSchema = new SchemaPrinter(opts)
-          .print(UnExecutableSchemaGenerator.makeUnExecutableSchema(mergedDef));
-
-      // Return new APISource with combined schema
-      return apiSchema.clone(combinedSchema);
-    }
-    return apiSchema;
-  }
-
-  // Merges the Query types from schemaDef and testDef
-  private ObjectTypeDefinition mergeQueryType(TypeDefinitionRegistry schemaDef, TypeDefinitionRegistry testDef, Optional<Path> testsPath) {
-    ObjectTypeDefinition schemaQuery = (ObjectTypeDefinition) schemaDef.getType("Query").get();
-    ObjectTypeDefinition testQuery = (ObjectTypeDefinition) testDef.getType("Query").get();
-
-    List<FieldDefinition> mergedFields = new ArrayList<>();
-
-    if (testsPath.isPresent()) {
-      mergedFields.addAll(schemaQuery.getFieldDefinitions());
-    }
-    mergedFields.addAll(testQuery.getFieldDefinitions());
-
-    return ObjectTypeDefinition.newObjectTypeDefinition()
-        .name("Query")
-        .fieldDefinitions(mergedFields)
-        .build();
-  }
-
-  // Removes overlapping types from testDef that are already in schemaDef
-  private void removeOverlappingTypes(TypeDefinitionRegistry schemaDef, TypeDefinitionRegistry testDef) {
-    // Remove Query type from testDef
-    testDef.remove(testDef.getType("Query").get());
-
-    // Remove types that are already in schemaDef from testDef
-    for (TypeDefinition<?> type : schemaDef.types().values()) {
-      testDef.remove(type);
-    }
-
-    // Remove scalars that are already in schemaDef from testDef
-    for (ScalarTypeDefinition scalar : schemaDef.scalars().values()) {
-      testDef.remove(scalar);
-    }
-  }
-
   // Validates the schema and generates queries and subscriptions
   private void validateAndGenerateQueries(APISource apiSchema, ErrorCollector apiErrors) {
     GraphqlSchemaValidator schemaValidator = new GraphqlSchemaValidator(framework, apiManager);
@@ -203,7 +133,7 @@ public class InferGraphqlSchema {
     GraphqlQueryGenerator queryGenerator = new GraphqlQueryGenerator(
         framework.getCatalogReader().nameMatcher(),
         framework.getSchema(),
-        new GraphqlQueryBuilder(framework, apiManager, new SqlNameUtil(NameCanonicalizer.SYSTEM)),
+        new GraphqlQueryBuilder(framework, new SqlNameUtil(NameCanonicalizer.SYSTEM)),
         apiManager
     );
 
