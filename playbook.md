@@ -7,7 +7,7 @@ a maven subdirectory.
 
 ## How to build Parser in Intellij
 
-1. Run sqrl-parser > Plugins > antlr4:antlr4
+1. Run sqrl-calcite > Plugins > antlr4:antlr4
 2. Refresh maven dependencies
 
 ## Helpful commands while developing
