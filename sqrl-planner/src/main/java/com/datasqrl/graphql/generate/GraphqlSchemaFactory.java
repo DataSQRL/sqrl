@@ -120,6 +120,7 @@ public class GraphqlSchemaFactory {
 
     GraphQLObjectType queryType = createQueryType(goal, objectPathToTables.get(NamePath.ROOT));
 
+    // cleaning of invalid objectTypes
     postProcess();
 
     if (queryFields.isEmpty()) {
@@ -137,7 +138,7 @@ public class GraphqlSchemaFactory {
       Optional<GraphQLObjectType.Builder> mutations = createMutationTypes(schema);
       mutations.map(builder::mutation);
     }
-    builder.additionalTypes(new LinkedHashSet<>(objectTypes));
+    builder.additionalTypes(new LinkedHashSet<>(objectTypes)); // the inferred types
 
     if (queryType.getFields().isEmpty()) {
       if (goal == ExecutionGoal.TEST) {
