@@ -59,7 +59,7 @@ public class GraphQLEngineBuilder implements
     QueryBaseVisitor<ResolvedQuery, Context>,
     ResolvedQueryVisitor<CompletableFuture, QueryExecutionContext> {
 
-  private final List<GraphQLScalarType> addlTypes;
+  private final List<GraphQLScalarType> extendedScalarTypes;
   private final SubscriptionConfiguration<DataFetcher<?>> subscriptionConfiguration;
   private final MutationConfiguration<DataFetcher<?>> mutationConfiguration;
 
@@ -72,18 +72,18 @@ public class GraphQLEngineBuilder implements
       .build();
 
   private GraphQLEngineBuilder(Builder builder) {
-    this.addlTypes = builder.addlTypes;
+    this.extendedScalarTypes = builder.extendedScalarTypes;
     this.subscriptionConfiguration = builder.subscriptionConfiguration;
     this.mutationConfiguration = builder.mutationConfiguration;
   }
 
   public static class Builder {
-    private List<GraphQLScalarType> addlTypes = new ArrayList<>();
+    private List<GraphQLScalarType> extendedScalarTypes = new ArrayList<>();
     private SubscriptionConfiguration<DataFetcher<?>> subscriptionConfiguration;
     private MutationConfiguration<DataFetcher<?>> mutationConfiguration;
 
-    public Builder withAdditionalTypes(List<GraphQLScalarType> types) {
-      this.addlTypes = types;
+    public Builder withExtendedScalarTypes(List<GraphQLScalarType> types) {
+      this.extendedScalarTypes = types;
       return this;
     }
 
@@ -157,7 +157,7 @@ public class GraphQLEngineBuilder implements
         .scalar(CustomScalars.JSON)
         ;
 
-    addlTypes.forEach(t->wiring.scalar(t));
+    extendedScalarTypes.forEach(t->wiring.scalar(t));
 
     for (Map.Entry<String, TypeDefinition> typeEntry : registry.types().entrySet()) {
       if (typeEntry.getValue() instanceof InterfaceTypeDefinition) {
