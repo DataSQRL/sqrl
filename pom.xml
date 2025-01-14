@@ -55,6 +55,7 @@
     <junit.jupiter.version>5.8.2</junit.jupiter.version>
     <calcite.version>1.27.0</calcite.version>
     <graphql-java.version>19.2</graphql-java.version>
+    <graphql-java-extended-scalars.version>19.1</graphql-java-extended-scalars.version>
     <projectreactor.version>3.5.6</projectreactor.version>
     <avro.version>1.11.3</avro.version>
     <freemarker.version>2.3.32</freemarker.version>
@@ -418,6 +419,12 @@
         <groupId>com.esotericsoftware.kryo</groupId>
         <artifactId>kryo</artifactId>
         <version>2.24.0</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.graphql-java</groupId>
+        <artifactId>graphql-java-extended-scalars</artifactId>
+        <version>${graphql-java-extended-scalars.version}</version>
       </dependency>
 
       <dependency>
