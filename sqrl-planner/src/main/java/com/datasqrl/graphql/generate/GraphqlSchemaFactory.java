@@ -37,6 +37,7 @@ import com.datasqrl.schema.RootSqrlTable;
 import com.google.inject.Inject;
 import graphql.Scalars;
 import graphql.language.IntValue;
+import graphql.scalars.ExtendedScalars;
 import graphql.schema.GraphQLArgument;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLInputType;
@@ -80,6 +81,7 @@ public class GraphqlSchemaFactory {
   private final Set<String> usedNames = new HashSet<>();
   private final SqrlSchema schema;
   private final boolean addArguments;
+  private final boolean extendedScalarTypes;
   private final LogManager logManager;
   // Root path signifying the 'Query' type.
   private Map<NamePath, List<SqrlTableMacro>> objectPathToTables;
@@ -89,13 +91,14 @@ public class GraphqlSchemaFactory {
 
   @Inject
   public GraphqlSchemaFactory(SqrlSchema schema, CompilerConfig config, LogManager logManager) {
-    this(schema, config.isAddArguments(), logManager);
+    this(schema, config.isAddArguments(), config.isExtendedScalarTypes(), logManager);
   }
 
-  public GraphqlSchemaFactory(SqrlSchema schema, boolean addArguments, LogManager logManager) {
+  public GraphqlSchemaFactory(SqrlSchema schema, boolean addArguments, boolean extendedScalarTypes, LogManager logManager) {
     this.schema = schema;
     this.addArguments = addArguments;
     this.logManager = logManager;
+    this.extendedScalarTypes = extendedScalarTypes;
   }
 
   public Optional<GraphQLSchema> generate(ExecutionGoal goal) {
@@ -130,6 +133,9 @@ public class GraphqlSchemaFactory {
 
     GraphQLSchema.Builder builder = GraphQLSchema.newSchema()
         .query(queryType);
+    if (extendedScalarTypes) {
+      builder.additionalTypes(Set.of(ExtendedScalars.GraphQLBigInteger));
+    }
     if (goal != ExecutionGoal.TEST) {
       if (logManager.hasLogEngine() && System.getenv().get("ENABLE_SUBSCRIPTIONS") != null) {
         Optional<GraphQLObjectType.Builder> subscriptions = createSubscriptionTypes(schema);
