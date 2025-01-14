@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.common.base.Strings;
 import com.symbaloo.graphqlmicrometer.MicrometerInstrumentation;
 import graphql.GraphQL;
+import graphql.scalars.ExtendedScalars;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.prometheusmetrics.PrometheusConfig;
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
@@ -327,8 +328,8 @@ public class GraphQLServer extends AbstractVerticle {
               .withMutationConfiguration(
                   new MutationConfigurationImpl(model, vertx, config))
               .withSubscriptionConfiguration(
-                  new SubscriptionConfigurationImpl(model, vertx, config, startPromise, vertxJdbcClient)
-              )
+                  new SubscriptionConfigurationImpl(model, vertx, config, startPromise, vertxJdbcClient))
+              .withExtendedScalarTypes(List.of(ExtendedScalars.GraphQLBigInteger))
               .build(),
           new VertxContext(vertxJdbcClient));
       MeterRegistry meterRegistry = BackendRegistries.getDefaultNow();
