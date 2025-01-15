@@ -7,6 +7,7 @@ import com.datasqrl.config.BuildPath;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.engine.stream.flink.plan.FlinkSqlNodeFactory;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.flinkwrapper.parser.ParsedObject;
 import com.datasqrl.flinkwrapper.tables.FlinkTableBuilder;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
@@ -29,6 +30,7 @@ import lombok.SneakyThrows;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlOrderBy;
@@ -139,49 +141,52 @@ public class Sqrl2FlinkSQLTranslator {
     return sqlNode;
   }
 
-  public void addView(SqlNode tableDef, String originalSql, ErrorCollector errors) {
-    Preconditions.checkArgument(tableDef instanceof SqlCreateView || tableDef instanceof SqlAlterViewAs,
-        "Unexpected table definition: " + tableDef);
-    //If the query has a top level order, we need to pull it out first
-    final SqlNode queryWithoutSort;
-    if (tableDef instanceof SqlCreateView) {
-      SqlCreateView viewDef = (SqlCreateView) tableDef;
-      SqlNode query = removeSort(viewDef.getQuery());
-      queryWithoutSort = query==viewDef.getQuery()?viewDef:
-          new SqlCreateView(viewDef.getParserPosition(),
-          viewDef.getViewName(), viewDef.getFieldList(), query, viewDef.getReplace(),
-          viewDef.isTemporary(), viewDef.isIfNotExists(),
-          viewDef.getComment().orElse(null), viewDef.getProperties().orElse(null));
+  public void addView(SqlNode viewDef, String originalSql, ErrorCollector errors) {
+    Preconditions.checkArgument(viewDef instanceof SqlCreateView || viewDef instanceof SqlAlterViewAs,
+        "Unexpected view definition: " + viewDef);
+    /* Stage 1: DAG-level rewriting
+      In this stage, we try to pull up/out any operators that we want to rewrite as we plan the DAG.
+      We attach those to the DAG nodes. Note, that the actual "pulling out" happens during RelNode analysis
+      in stage 2. In stage 1, we just finalize the SqlNode that gets passed to Flink.
+      Step 1.1: If query has a top level order, we pull it out, so we can later add it to the query if necessary.
+     */
+    final SqlNode rewrittenViewDef;
+    if (viewDef instanceof SqlCreateView) {
+      SqlCreateView createView = (SqlCreateView) viewDef;
+      SqlNode query = removeSort(createView.getQuery());
+      rewrittenViewDef = query==createView.getQuery()?createView:
+          new SqlCreateView(createView.getParserPosition(),
+          createView.getViewName(), createView.getFieldList(), query, createView.getReplace(),
+          createView.isTemporary(), createView.isIfNotExists(),
+          createView.getComment().orElse(null), createView.getProperties().orElse(null));
     } else {
-      SqlAlterViewAs alterDef = (SqlAlterViewAs) tableDef;
-      SqlNode query = removeSort(alterDef.getNewQuery());
-      queryWithoutSort = query==alterDef.getNewQuery()?alterDef:
-          new SqlAlterViewAs(alterDef.getParserPosition(), alterDef.getViewIdentifier(), query);
+      SqlAlterViewAs alterView = (SqlAlterViewAs) viewDef;
+      SqlNode query = removeSort(alterView.getNewQuery());
+      rewrittenViewDef = query==alterView.getNewQuery()?alterView:
+          new SqlAlterViewAs(alterView.getParserPosition(), alterView.getViewIdentifier(), query);
     }
 
-    //Analyze relRoot
-    //Flink modifies the SqlSelect node during validation, so we have to re-create it from the original SQL
+    /* Stage 2: Analyze the RelNode/RelRoot
+
+      NOTE: Flink modifies the SqlSelect node during validation, so we have to re-create it from the original SQL
+     */
+    //
     RelRoot relRoot = toRelRoot(parseSQL(originalSql));
     System.out.println(relRoot.rel);
 
 
-    //Create DAG node
+    /* Stage 3: Create DAG nodes and edges based on analysis
+
+     */
 
 
-
-    executeSqlNode(queryWithoutSort);
+    // Finally, add the view to Flink using the rewritten SqlNode from stage 1.
+    executeSqlNode(rewrittenViewDef);
   }
 
-  public void addRelationship() {
-
-  }
-
-  public void addTableFunction() {
-
-  }
-
-  private void addTableFunctionInternal() {
-    //add to internal table function map
+  public void addTableFunctionInternal(RelNode relNode, NamePath path, List<FunctionParameter> parameters) {
+    //Add to DAG
+    System.out.println("TBL FCT: " + relNode.explain());
   }
 
   public void addImport(String tableName, SqlCreateTable tableDefinition, Optional<RelDataType> schema) {

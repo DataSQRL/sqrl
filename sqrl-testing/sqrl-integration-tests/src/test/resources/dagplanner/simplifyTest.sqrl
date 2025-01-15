@@ -8,6 +8,10 @@ ExplicitDistinct := SELECT customerid, `timestamp`, name FROM (SELECT *, (ROW_NU
 
 Customer.related := JOIN Customer other ON this.customerid = other.customerid ORDER BY other.`timestamp`;
 
+Customer.related($length : INT) := JOIN Customer other ON this.customerid = other.customerid
+                AND CHAR_LENGTH(other..email) >= $length ORDER BY other.`timestamp`;
+
+
 /** This is for selected customers
     and their orders
   */ /* ignored comment */

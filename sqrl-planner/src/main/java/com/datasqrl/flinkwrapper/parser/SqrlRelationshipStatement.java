@@ -2,26 +2,25 @@ package com.datasqrl.flinkwrapper.parser;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.error.ErrorLocation.FileLocation;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.apache.calcite.sql.SqlIdentifier;
 
-public class SqrlRelationshipStatement extends SqrlDefinition {
+public class SqrlRelationshipStatement extends SqrlTableFunctionStatement {
 
-  public static final String RELATIONSHP_TABLE_NAME = "__Relationship";
-  private static AtomicInteger counter = new AtomicInteger(0);
+  ParsedObject<NamePath> relationshipPath;
 
-  ParsedObject<NamePath> rootTable;
-  ParsedObject<Name> relationshipName;
+  public SqrlRelationshipStatement(ParsedObject<NamePath> relationshipPath,
+      ParsedObject<String> definitionBody, SqrlComments comments,
+      Map<Name, ParsedObject<String>> arguments, List<Name> argumentIndexes) {
+    super(relationshipPath.map(x -> NamePath.of(x.getLast())),
+        definitionBody.map(body -> String.format("SELECT * FROM %s this %s", relationshipPath.get().popLast(), body)),
+            comments, arguments, argumentIndexes);
+    this.relationshipPath = relationshipPath;
+  }
 
-  public SqrlRelationshipStatement(ParsedObject<NamePath> tableName,
-      ParsedObject<String> definitionBody,
-      SqrlComments comments, ParsedObject<Name> relationshipName) {
-    super(tableName.map(x -> NamePath.of(RELATIONSHP_TABLE_NAME+counter.incrementAndGet())),
-        definitionBody.map(body -> String.format("SELECT * FROM %s this %s", tableName.get(), body)),
-            comments);
-    this.relationshipName = relationshipName;
-    this.rootTable = tableName;
+  public NamePath getPath() {
+    return relationshipPath.get();
   }
 
 }

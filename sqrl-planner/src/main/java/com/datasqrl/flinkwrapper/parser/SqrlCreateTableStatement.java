@@ -1,5 +1,6 @@
 package com.datasqrl.flinkwrapper.parser;
 
+import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.datasqrl.flinkwrapper.Sqrl2FlinkSQLTranslator;
 import com.google.common.base.Preconditions;
 import lombok.Value;
@@ -12,11 +13,12 @@ public class SqrlCreateTableStatement implements SqrlDdlStatement {
   ParsedObject<String> createTable;
   SqrlComments comments;
 
-  public SqlCreateTable toSqlNode(Sqrl2FlinkSQLTranslator sqrlEnv) {
-    SqlNode result = StatementParserException.handleParseErrors(sqrlEnv::parseSQL, createTable.get(),
-        createTable.getFileLocation(), 0);
-    Preconditions.checkArgument(result instanceof SqlCreateTable, "Not a valid CREATE TABLE statement: %s", result);
-    return (SqlCreateTable) result;
+  public String toSql(Sqrl2FlinkSQLTranslator sqrlEnv) {
+    return createTable.get();
   }
 
+  @Override
+  public FileLocation mapSqlLocation(FileLocation location) {
+    return createTable.getFileLocation().add(location);
+  }
 }

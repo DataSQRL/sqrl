@@ -1,10 +1,8 @@
 package com.datasqrl.flinkwrapper.parser;
 
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.datasqrl.flinkwrapper.Sqrl2FlinkSQLTranslator;
 import java.util.List;
-import org.apache.calcite.sql.SqlNode;
 
 public class SqrlDistinctStatement extends SqrlDefinition {
 
@@ -24,8 +22,8 @@ public class SqrlDistinctStatement extends SqrlDefinition {
   public static final String FILTERED_DISTINCT_HINT_NAME = "filtered_distinct_order";
 
 
-  public ParsedSql toSqlNode(Sqrl2FlinkSQLTranslator sqrlEnv, List<StackableStatement> stack) {
-    ParsedSql parsed = super.toSqlNode(sqrlEnv, stack);
+  public String toSql(Sqrl2FlinkSQLTranslator sqrlEnv, List<StackableStatement> stack) {
+    String sql = super.toSql(sqrlEnv, stack);
     //Rewrite statement
     boolean isFilteredDistinct = comments.getHints().stream().filter(ParsedObject::isPresent)
         .map(ParsedObject::get).anyMatch(hint -> hint.getName().equalsIgnoreCase(FILTERED_DISTINCT_HINT_NAME));
@@ -37,7 +35,7 @@ public class SqrlDistinctStatement extends SqrlDefinition {
     3) Convert the result back to SQLNode and return: SqrlToFlinkSQLGenerator but since this is "simple" SQL a simple unparse might do
      */
 
-    return parsed;
+    return sql;
   }
 
 }

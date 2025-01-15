@@ -5,10 +5,10 @@ import static com.datasqrl.flinkwrapper.parser.SqlScriptStatementSplitter.remove
 
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.error.ErrorLabel;
+import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.datasqrl.flinkwrapper.Sqrl2FlinkSQLTranslator;
 import com.google.common.base.Preconditions;
 import java.util.List;
-import org.apache.calcite.sql.SqlNode;
 import org.apache.commons.collections4.ListUtils;
 
 public class SqrlAddColumnStatement extends SqrlDefinition implements StackableStatement {
@@ -23,7 +23,7 @@ public class SqrlAddColumnStatement extends SqrlDefinition implements StackableS
     super(tableName, definitionBody, comments);
   }
 
-  public ParsedSql toSqlNode(Sqrl2FlinkSQLTranslator sqrlEnv, List<StackableStatement> stack) {
+  public String toSql(Sqrl2FlinkSQLTranslator sqrlEnv, List<StackableStatement> stack) {
     StatementParserException.checkFatal(tableName.get().size()>1, tableName.getFileLocation(), ErrorLabel.GENERIC,
         "Column expression requires column name: %s", tableName.get());
     NamePath table = this.tableName.get().popLast();
@@ -40,10 +40,17 @@ public class SqrlAddColumnStatement extends SqrlDefinition implements StackableS
       innerSql = addColumn(columName, removeStatementDelimiter(column.definitionBody.get()), innerSql);
     }
     String sql = String.format(ALTER_VIEW_PREFIX + "%s", table.toString(), addStatementDelimiter(innerSql));
-    SqlNode sqlNode = StatementParserException.handleParseErrors(sqrlEnv::parseSQL, sql,
-        definitionBody.getFileLocation(), ALTER_VIEW_PREFIX.length() + ADD_COLUMN_PREFIX.length());
-    return new ParsedSql(sqlNode, sql);
+    return sql;
+  }
 
+  String getPrefix() {
+    return String.format(ALTER_VIEW_PREFIX + ADD_COLUMN_PREFIX, this.tableName.get().popLast());
+  }
+
+  @Override
+  public FileLocation mapSqlLocation(FileLocation location) {
+    return definitionBody.getFileLocation().add(
+        SQLStatement.removeFirstRowOffset(location, getPrefix().length()));
   }
 
   private static String addColumn(String columnName, String columnExpression, String innerBody) {

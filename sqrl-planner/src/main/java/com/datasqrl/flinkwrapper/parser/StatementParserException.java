@@ -38,37 +38,23 @@ public class StatementParserException extends RuntimeException {
     }
   }
 
-  public static StatementParserException from(Exception e, FileLocation reference, int firstRowAddition) {
-    if (e.getCause() instanceof SqlParseException) {
-      SqlParseException cause = (SqlParseException) e.getCause();
-      FileLocation location = convertPosition(cause.getPos());
-      if (location.getLine()==1) {
-        location = new FileLocation(1, Math.max(location.getOffset()-firstRowAddition,1));
-      }
-      location = reference.add(location);
-      String message = cause.getMessage();
-      message = message.replaceAll(" at line \\d*, column \\d*", ""); //remove line number from message
-      return new StatementParserException(location, e, message);
-    } else {
-      return new StatementParserException(reference, e);
-    }
-  }
+//  public static StatementParserException from(Exception e, FileLocation reference, int firstRowAddition) {
+//    if (e.getCause() instanceof SqlParseException) {
+//      SqlParseException cause = (SqlParseException) e.getCause();
+//      FileLocation location = convertPosition(cause.getPos());
+//      if (location.getLine()==1) {
+//        location = new FileLocation(1, Math.max(location.getOffset()-firstRowAddition,1));
+//      }
+//      location = reference.add(location);
+//      String message = cause.getMessage();
+//      message = message.replaceAll(" at line \\d*, column \\d*", ""); //remove line number from message
+//      return new StatementParserException(location, e, message);
+//    } else {
+//      return new StatementParserException(reference, e);
+//    }
+//  }
 
-  public static<R,I> R handleParseErrors(Function<I,R> parsingFunction, I input) {
-    return handleParseErrors(parsingFunction, input, FileLocation.START, 0);
-  }
 
-  public static<R,I> R handleParseErrors(Function<I,R> parsingFunction, I input, FileLocation reference, int firstRowAddition) {
-    try {
-      return parsingFunction.apply(input);
-    } catch (Exception e) {
-      throw StatementParserException.from(e, reference, firstRowAddition);
-    }
-  }
-
-  public static FileLocation convertPosition(SqlParserPos parsePos) {
-    return new FileLocation(parsePos.getLineNum(), parsePos.getColumnNum());
-  }
 
 
 }

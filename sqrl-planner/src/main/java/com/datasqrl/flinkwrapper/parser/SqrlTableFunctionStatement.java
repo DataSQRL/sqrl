@@ -9,12 +9,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.Getter;
 import org.apache.commons.lang3.tuple.Pair;
 
+@Getter
 public class SqrlTableFunctionStatement extends SqrlDefinition {
 
-  private Map<Name, ParsedObject<String>> arguments;
-  private List<Name> argumentIndexes;
+  private final Map<Name, ParsedObject<String>> arguments;
+  private final List<Name> argumentIndexes;
 
   public SqrlTableFunctionStatement(ParsedObject<NamePath> tableName,
       ParsedObject<String> definitionBody,
@@ -22,6 +24,10 @@ public class SqrlTableFunctionStatement extends SqrlDefinition {
     super(tableName, definitionBody, comments);
     this.arguments = arguments;
     this.argumentIndexes = argumentIndexes;
+  }
+
+  public NamePath getPath() {
+    return tableName.get();
   }
 
 

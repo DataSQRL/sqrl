@@ -1,12 +1,11 @@
 package com.datasqrl.flinkwrapper.parser;
 
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.datasqrl.flinkwrapper.Sqrl2FlinkSQLTranslator;
 import java.util.List;
 import lombok.AllArgsConstructor;
-import org.apache.calcite.rel.RelRoot;
 import org.apache.calcite.sql.SqlNode;
-import org.apache.flink.table.operations.Operation;
 
 /**
  * A partially parsed SQRL definition. Some elements are extracted but the
@@ -22,12 +21,20 @@ public abstract class SqrlDefinition implements SqrlStatement {
   final ParsedObject<String> definitionBody;
   final SqrlComments comments;
 
-  public ParsedSql toSqlNode(Sqrl2FlinkSQLTranslator sqrlEnv, List<StackableStatement> stack) {
-    String prefix = String.format("CREATE VIEW %s AS ", tableName.get().toString());
-    String sql = prefix + definitionBody.get();
-    SqlNode sqlNode = StatementParserException.handleParseErrors(sqrlEnv::parseSQL, sql,
-        definitionBody.getFileLocation(), prefix.length());
-    return new ParsedSql(sqlNode, sql);
+
+
+  public String toSql(Sqrl2FlinkSQLTranslator sqrlEnv, List<StackableStatement> stack) {
+    String prefix = getPrefix();
+    return prefix + definitionBody.get();
   }
 
+  String getPrefix() {
+    return String.format("CREATE VIEW %s AS ", tableName.get().toString());
+  }
+
+  @Override
+  public FileLocation mapSqlLocation(FileLocation location) {
+    return definitionBody.getFileLocation().add(
+        SQLStatement.removeFirstRowOffset(location, getPrefix().length()));
+  }
 }

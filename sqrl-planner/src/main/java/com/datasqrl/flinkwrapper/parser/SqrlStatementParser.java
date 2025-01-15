@@ -10,6 +10,7 @@ import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.google.inject.Inject;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -128,13 +129,18 @@ public class SqrlStatementParser {
       checkFatal(matcher.find(), ErrorCode.INVALID_SQRL_DEFINITION, "Could not parse SQRL statement");
       String keyword = matcher.group(1).trim();
       SqrlDefinition definition = null;
-      if (keyword.equalsIgnoreCase("SELECT")) {
+      if (keyword.equalsIgnoreCase("SELECT") || keyword.equalsIgnoreCase("JOIN")) {
         if (arguments.isEmpty()) {
-          definition = new SqrlTableDefinition(tableName, definitionBody, comment);
+          if (keyword.equalsIgnoreCase("SELECT")) {
+            definition = new SqrlTableDefinition(tableName, definitionBody, comment);
+          } else {
+            definition = new SqrlRelationshipStatement(tableName, definitionBody, comment,
+                Map.of(), List.of());
+          }
         } else {
           //Parse arguments
           Matcher argMatcher = ARGUMENT_PARSER.matcher(arguments.get());
-          Map<Name, ParsedObject<String>> argumentMap = new HashMap<>();
+          Map<Name, ParsedObject<String>> argumentMap = new LinkedHashMap<>();
           int lastMatchEnd = 0;
           while (argMatcher.find()) {
             checkFatal(lastMatchEnd==argMatcher.start(), relativeLocation(arguments, lastMatchEnd), ErrorCode.INVALID_TABLE_FUNCTION_ARGUMENTS, "Argument list contains invalid arguments");
@@ -147,7 +153,14 @@ public class SqrlStatementParser {
           }
           checkFatal(lastMatchEnd==arguments.get().length(), relativeLocation(arguments, lastMatchEnd), ErrorCode.INVALID_TABLE_FUNCTION_ARGUMENTS, "Argument list contains invalid arguments");
           Pair<String, List<Name>> processedBody = replaceTableFunctionVariables(definitionBody.get(), List.copyOf(argumentMap.keySet()));
-          definition = new SqrlTableFunctionStatement(tableName, definitionBody.map(x -> processedBody.getKey()), comment, argumentMap, processedBody.getRight());
+          definitionBody = definitionBody.map(x -> processedBody.getKey());
+          if (keyword.equalsIgnoreCase("SELECT")) {
+            definition = new SqrlTableFunctionStatement(tableName, definitionBody, comment,
+                argumentMap, processedBody.getRight());
+          } else {
+            definition = new SqrlRelationshipStatement(tableName, definitionBody, comment,
+                argumentMap, processedBody.getRight());
+          }
         }
       } else if (keyword.equalsIgnoreCase("DISTINCT")) {
         checkFatal(arguments.isEmpty(), ErrorCode.INVALID_SQRL_DEFINITION, "Table function not supported for operation");
@@ -157,9 +170,6 @@ public class SqrlStatementParser {
         ParsedObject<String> columns = definitionBody.fromOffset(parse(distinctMatcher, "columns", definitionBody.get()));
         ParsedObject<String> remaining = definitionBody.fromOffset(parse(distinctMatcher, "remaining", definitionBody.get()));
         definition = new SqrlDistinctStatement(tableName, comment, from, columns, remaining);
-      } else if (keyword.equalsIgnoreCase("JOIN")) {
-        checkFatal(arguments.isEmpty(), ErrorCode.INVALID_SQRL_DEFINITION, "Table function not supported for operation");
-        definition = new SqrlRelationshipStatement(tableName.map(NamePath::popLast), definitionBody, comment, tableName.map(NamePath::getLast));
       } else {
         //We assume it's a column expression
         checkFatal(arguments.isEmpty(), ErrorCode.INVALID_SQRL_DEFINITION, "Column definitions do not support arguments");

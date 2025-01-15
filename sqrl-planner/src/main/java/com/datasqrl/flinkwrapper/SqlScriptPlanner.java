@@ -1,6 +1,7 @@
 package com.datasqrl.flinkwrapper;
 
 
+import static com.datasqrl.flinkwrapper.parser.ParsePosUtil.convertPosition;
 import static com.datasqrl.flinkwrapper.parser.StatementParserException.checkFatal;
 
 import com.datasqrl.canonicalizer.Name;
@@ -28,7 +29,6 @@ import com.datasqrl.flinkwrapper.parser.SqrlRelationshipStatement;
 import com.datasqrl.flinkwrapper.parser.SqrlStatementParser;
 import com.datasqrl.flinkwrapper.parser.SqrlTableFunctionStatement;
 import com.datasqrl.flinkwrapper.parser.StackableStatement;
-import com.datasqrl.flinkwrapper.parser.StatementParserException;
 import com.datasqrl.function.FlinkUdfNsObject;
 import com.datasqrl.io.schema.flexible.converters.SchemaToRelDataTypeFactory;
 import com.datasqrl.loaders.FlinkTableNamespaceObject;
@@ -47,12 +47,21 @@ import java.util.List;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Value;
+import org.apache.calcite.rel.RelRoot;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.runtime.CalciteContextException;
+import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.parser.SqlParseException;
+import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.flink.runtime.entrypoint.FlinkParseException;
+import org.apache.flink.sql.parser.ddl.SqlAlterTable;
+import org.apache.flink.sql.parser.ddl.SqlAlterView;
 import org.apache.flink.sql.parser.ddl.SqlAlterViewAs;
 import org.apache.flink.sql.parser.ddl.SqlCreateTable;
 import org.apache.flink.sql.parser.ddl.SqlCreateView;
+import org.apache.flink.sql.parser.ddl.SqlDropTable;
+import org.apache.flink.sql.parser.ddl.SqlDropView;
 import org.apache.flink.table.functions.UserDefinedFunction;
 
 @AllArgsConstructor(onConstructor_=@Inject)
@@ -80,11 +89,34 @@ public class SqlScriptPlanner {
       } catch (CollectedException e) {
         throw e;
       } catch (Exception e) {
+        //Map errors from the Flink parser/planner by adjusting the line numbers
+        if (e instanceof org.apache.flink.table.api.SqlParserException) {
+          e = (Exception)e.getCause();
+        }
+        FileLocation location = null;
+        String message = null;
+        if (e instanceof SqlParseException) {
+          location = convertPosition(((SqlParseException) e).getPos());
+          message = e.getMessage();
+          message = message.replaceAll(" at line \\d*, column \\d*", ""); //remove line number from message
+        }
+        if (e instanceof CalciteContextException) {
+          CalciteContextException calciteException = (CalciteContextException) e;
+          location = new FileLocation(calciteException.getPosLine(), calciteException.getPosColumn());
+          message = calciteException.getMessage();
+          message = message.replaceAll("From line \\d*, column \\d* to line \\d*, column \\d*: ", ""); //remove line number from message
+        }
+        if (location != null) {
+          location = sqlStatement.mapSqlLocation(location);
+          scriptErrors.atFile(statement.getFileLocation().add(location)).fatal(message);
+        }
+
         //Print stack trace for unknown exceptions
         if (e.getMessage() == null || e instanceof IllegalStateException
             || e instanceof NullPointerException) {
           e.printStackTrace();
         }
+        //Use registered error handlers
         throw lineErrors.handle(e);
       }
       if (sqlStatement instanceof StackableStatement) {
@@ -103,34 +135,41 @@ public class SqlScriptPlanner {
     } else if (stmt instanceof SqrlExportStatement) {
       addExport((SqrlExportStatement) stmt, sqrlEnv);
     } else if (stmt instanceof SqrlCreateTableStatement) {
-      SqlCreateTable createTableSQL = ((SqrlCreateTableStatement) stmt).toSqlNode(sqrlEnv);
-      sqrlEnv.createTable(createTableSQL);
+      SqlNode node = sqrlEnv.parseSQL(((SqrlCreateTableStatement) stmt).toSql(sqrlEnv));
+      Preconditions.checkArgument(node instanceof SqlCreateTable);
+      sqrlEnv.createTable((SqlCreateTable)node);
     } else if (stmt instanceof SqrlDefinition) {
       SqrlDefinition sqrlDef = (SqrlDefinition) stmt;
-      ParsedSql parsed = sqrlDef.toSqlNode(sqrlEnv, statementStack);
+      String originalSql = sqrlDef.toSql(sqrlEnv, statementStack);
+      SqlNode sqlNode = sqrlEnv.parseSQL(originalSql);
       //Relationships and Table functions require special handling
-      if (stmt instanceof SqrlRelationshipStatement) {
-        //TODO
-      } else if (stmt instanceof SqrlTableFunctionStatement) {
-        //TODO
+      RelRoot relRoot = sqrlEnv.toRelRoot(sqlNode);
+      if (stmt instanceof SqrlTableFunctionStatement) {
+        SqrlTableFunctionStatement tblFctStmt = (SqrlTableFunctionStatement) stmt;
+        if (stmt instanceof SqrlRelationshipStatement) {
+          //Add WHERE clause for primary key on left-most join table and restrict top-level SELECT to only indexes from right-most table
+        }
+        //Convert arguments to resolved parameters
+        List<FunctionParameter> parameters = List.of();
+        sqrlEnv.addTableFunctionInternal(relRoot.rel, tblFctStmt.getPath(), parameters);
       } else {
-        sqrlEnv.addView(parsed.getSqlNode(), parsed.getOriginalSql(), errors);
+        sqrlEnv.addView(sqlNode, originalSql, errors);
       }
     } else if (stmt instanceof FlinkSQLStatement) { //Some other Flink table statement we pass right through
       FlinkSQLStatement flinkStmt = (FlinkSQLStatement) stmt;
-      try {
-        SqlNode node = sqrlEnv.parseSQL(flinkStmt.getSql().get());
-        if (node instanceof SqlCreateView || node instanceof SqlAlterViewAs) {
-          //plan like other definitions from above
-          sqrlEnv.addView(node, flinkStmt.getSql().get(), errors);
-        } else if (node instanceof SqlCreateTable) {
-          sqrlEnv.createTable((SqlCreateTable)node);
-        } else {
-          //just pass through
-          sqrlEnv.executeSqlNode(node);
-        }
-      } catch (Exception e) {
-        throw StatementParserException.from(e, FileLocation.START, 0);
+      SqlNode node = sqrlEnv.parseSQL(flinkStmt.getSql().get());
+      if (node instanceof SqlCreateView || node instanceof SqlAlterViewAs) {
+        //plan like other definitions from above
+        sqrlEnv.addView(node, flinkStmt.getSql().get(), errors);
+      } else if (node instanceof SqlCreateTable) {
+        sqrlEnv.createTable((SqlCreateTable)node);
+      } else if (node instanceof SqlAlterTable || node instanceof SqlAlterView) {
+        errors.fatal("Renaming or altering tables is not supported. Rename them directly in the script or IMPORT AS.");
+      } else if (node instanceof SqlDropTable || node instanceof SqlDropView) {
+        errors.fatal("Removing tables is not supported. The DAG planner automatically removes unused tables.");
+      } else {
+        //just pass through
+        sqrlEnv.executeSqlNode(node);
       }
     }
   }
