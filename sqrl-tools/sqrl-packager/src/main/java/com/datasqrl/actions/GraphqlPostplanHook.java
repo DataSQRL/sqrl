@@ -22,7 +22,7 @@ public class GraphqlPostplanHook {
   private final APIConnectorManager apiManager;
 
   public Optional<RootGraphqlModel> updatePlan(Optional<APISource> source, PhysicalPlan physicalPlan) {
-    if (pipeline.getStage(Type.SERVER).isEmpty()) {
+    if (pipeline.getStageByType(Type.SERVER).isEmpty()) {
       return Optional.empty();
     }
 

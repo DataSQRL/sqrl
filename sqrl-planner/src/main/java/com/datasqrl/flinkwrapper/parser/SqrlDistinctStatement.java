@@ -2,6 +2,9 @@ package com.datasqrl.flinkwrapper.parser;
 
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.error.ErrorLocation.FileLocation;
+import com.datasqrl.flinkwrapper.Sqrl2FlinkSQLTranslator;
+import java.util.List;
+import org.apache.calcite.sql.SqlNode;
 
 public class SqrlDistinctStatement extends SqrlDefinition {
 
@@ -16,6 +19,25 @@ public class SqrlDistinctStatement extends SqrlDefinition {
                                           columns.get(), from.get(), remaining.get()),
             columns.getFileLocation()),
         comments);
+  }
+
+  public static final String FILTERED_DISTINCT_HINT_NAME = "filtered_distinct_order";
+
+
+  public ParsedSql toSqlNode(Sqrl2FlinkSQLTranslator sqrlEnv, List<StackableStatement> stack) {
+    ParsedSql parsed = super.toSqlNode(sqrlEnv, stack);
+    //Rewrite statement
+    boolean isFilteredDistinct = comments.getHints().stream().filter(ParsedObject::isPresent)
+        .map(ParsedObject::get).anyMatch(hint -> hint.getName().equalsIgnoreCase(FILTERED_DISTINCT_HINT_NAME));
+
+    /*TODO: (this should not require writing new code, just copying/rearranging existing code)
+    0) Convert to Relnode: RelRoot relRoot = sqrlEnv.toRelRoot(sql);
+    1) Extract code from TopN conversion to create deduplication SQL: AnnotatedLP#inlineTopN
+    2) If filtered distinct and order by is not by ROWTIME, add LAG using the Calcite util method: CalciteUtil#addFilteredDeduplication
+    3) Convert the result back to SQLNode and return: SqrlToFlinkSQLGenerator but since this is "simple" SQL a simple unparse might do
+     */
+
+    return parsed;
   }
 
 }

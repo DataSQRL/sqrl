@@ -10,15 +10,12 @@ import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlanner;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.flinkwrapper.SqlScriptPlanner;
-import com.datasqrl.flinkwrapper.SqrlEnvironment;
+import com.datasqrl.flinkwrapper.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.graphql.APIConnectorManagerImpl;
 import com.datasqrl.graphql.inference.GraphQLMutationExtraction;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.plan.MainScript;
 import com.datasqrl.plan.global.DAGPlanner;
-import com.datasqrl.plan.global.PhysicalDAGPlan;
-import com.datasqrl.plan.global.SqrlDAG;
-import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.google.inject.Inject;
 import java.nio.file.Path;
@@ -49,7 +46,7 @@ public class CompilationProcessV2 {
 
   public Pair<PhysicalPlan, TestPlan> executeCompilation(Optional<Path> testsPath) {
 
-    SqrlEnvironment environment = new SqrlEnvironment(buildPath, moduleLoader);
+    Sqrl2FlinkSQLTranslator environment = new Sqrl2FlinkSQLTranslator(buildPath);
     planner.plan(mainScript, environment);
     return null;
 //    postcompileHooks();

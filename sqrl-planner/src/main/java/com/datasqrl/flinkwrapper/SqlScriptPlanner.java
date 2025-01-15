@@ -5,42 +5,55 @@ import static com.datasqrl.flinkwrapper.parser.StatementParserException.checkFat
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.engine.stream.flink.plan.FlinkSqlNodeFactory;
+import com.datasqrl.config.EngineFactory.Type;
+import com.datasqrl.config.PackageJson;
+import com.datasqrl.config.SystemBuiltInConnectors;
+import com.datasqrl.engine.pipeline.ExecutionPipeline;
+import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.datasqrl.flinkwrapper.parser.FlinkSQLStatement;
 import com.datasqrl.flinkwrapper.parser.ParsedObject;
+import com.datasqrl.flinkwrapper.parser.ParsedSql;
 import com.datasqrl.flinkwrapper.parser.SQLStatement;
 import com.datasqrl.flinkwrapper.parser.SqlScriptStatementSplitter;
 import com.datasqrl.flinkwrapper.parser.SqrlCreateTableStatement;
 import com.datasqrl.flinkwrapper.parser.SqrlDefinition;
 import com.datasqrl.flinkwrapper.parser.SqrlExportStatement;
 import com.datasqrl.flinkwrapper.parser.SqrlImportStatement;
-import com.datasqrl.flinkwrapper.parser.SqrlStatement;
+import com.datasqrl.flinkwrapper.parser.SqrlRelationshipStatement;
 import com.datasqrl.flinkwrapper.parser.SqrlStatementParser;
+import com.datasqrl.flinkwrapper.parser.SqrlTableFunctionStatement;
+import com.datasqrl.flinkwrapper.parser.StackableStatement;
 import com.datasqrl.flinkwrapper.parser.StatementParserException;
+import com.datasqrl.function.FlinkUdfNsObject;
 import com.datasqrl.io.schema.flexible.converters.SchemaToRelDataTypeFactory;
-import com.datasqrl.io.tables.TableSchema;
 import com.datasqrl.loaders.FlinkTableNamespaceObject;
 import com.datasqrl.loaders.FlinkTableNamespaceObject.FlinkTable;
 import com.datasqrl.loaders.ModuleLoader;
+import com.datasqrl.loaders.ScriptSqrlModule.ScriptNamespaceObject;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.module.SqrlModule;
 import com.datasqrl.plan.MainScript;
+import com.datasqrl.plan.table.RelDataTypeTableSchema;
 import com.datasqrl.util.SqlNameUtil;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
-import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
+import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.parser.SqlParseException;
+import org.apache.flink.sql.parser.ddl.SqlAlterViewAs;
 import org.apache.flink.sql.parser.ddl.SqlCreateTable;
-import org.apache.flink.table.operations.Operation;
+import org.apache.flink.sql.parser.ddl.SqlCreateView;
+import org.apache.flink.table.functions.UserDefinedFunction;
 
 @AllArgsConstructor(onConstructor_=@Inject)
 public class SqlScriptPlanner {
@@ -50,19 +63,20 @@ public class SqlScriptPlanner {
   private ModuleLoader moduleLoader;
   private SqrlStatementParser sqrlParser;
   private final SqlNameUtil nameUtil;
+  private final PackageJson packageJson;
+  private final ExecutionPipeline pipeline;
 
 
 
-  public void plan(MainScript mainScript, SqrlEnvironment sqrlEnv) {
+  public void plan(MainScript mainScript, Sqrl2FlinkSQLTranslator sqrlEnv) {
     ErrorCollector scriptErrors = errorCollector.withScript(mainScript.getPath(), mainScript.getContent());
-
     List<ParsedObject<SQLStatement>> statements = sqrlParser.parseScript(mainScript.getContent(), scriptErrors);
-
+    List<StackableStatement> statementStack = new ArrayList<>();
     for (ParsedObject<SQLStatement> statement : statements) {
-      ErrorCollector lineErrors = scriptErrors
-          .atFile(statement.getFileLocation());
+      ErrorCollector lineErrors = scriptErrors.atFile(statement.getFileLocation());
+      SQLStatement sqlStatement = statement.get();
       try {
-        planStatement(statement.get(), sqrlEnv.withErrors(lineErrors));
+        planStatement(sqlStatement, statementStack, sqrlEnv, lineErrors);
       } catch (CollectedException e) {
         throw e;
       } catch (Exception e) {
@@ -73,24 +87,48 @@ public class SqlScriptPlanner {
         }
         throw lineErrors.handle(e);
       }
+      if (sqlStatement instanceof StackableStatement) {
+        StackableStatement stackableStatement = (StackableStatement) sqlStatement;
+        if (stackableStatement.isRoot()) statementStack = new ArrayList<>();
+        statementStack.add(stackableStatement);
+      } else {
+        statementStack = new ArrayList<>();
+      }
     }
   }
 
-
-  private void planStatement(SQLStatement stmt, SqrlEnvironment sqrlEnv) throws SqlParseException {
+  private void planStatement(SQLStatement stmt, List<StackableStatement> statementStack, Sqrl2FlinkSQLTranslator sqrlEnv, ErrorCollector errors) throws SqlParseException {
     if (stmt instanceof SqrlImportStatement) {
-      addImport((SqrlImportStatement) stmt, sqrlEnv);
+      addImport((SqrlImportStatement) stmt, sqrlEnv, errors);
     } else if (stmt instanceof SqrlExportStatement) {
       addExport((SqrlExportStatement) stmt, sqrlEnv);
     } else if (stmt instanceof SqrlCreateTableStatement) {
-      Operation createTable = sqrlEnv.parse(((SqrlCreateTableStatement) stmt).getCreateTable().get());
-      SqlNode sqlNode = sqrlEnv.parseSQL(((SqrlCreateTableStatement) stmt).getCreateTable().get());
-      System.out.println(createTable.asSummaryString());
+      SqlCreateTable createTableSQL = ((SqrlCreateTableStatement) stmt).toSqlNode(sqrlEnv);
+      sqrlEnv.createTable(createTableSQL);
     } else if (stmt instanceof SqrlDefinition) {
-      ((SqrlDefinition)stmt).apply(sqrlEnv);
-    } else if (stmt instanceof FlinkSQLStatement) {
+      SqrlDefinition sqrlDef = (SqrlDefinition) stmt;
+      ParsedSql parsed = sqrlDef.toSqlNode(sqrlEnv, statementStack);
+      //Relationships and Table functions require special handling
+      if (stmt instanceof SqrlRelationshipStatement) {
+        //TODO
+      } else if (stmt instanceof SqrlTableFunctionStatement) {
+        //TODO
+      } else {
+        sqrlEnv.addView(parsed.getSqlNode(), parsed.getOriginalSql(), errors);
+      }
+    } else if (stmt instanceof FlinkSQLStatement) { //Some other Flink table statement we pass right through
+      FlinkSQLStatement flinkStmt = (FlinkSQLStatement) stmt;
       try {
-        sqrlEnv.executeSQL(((FlinkSQLStatement)stmt).getSql().get());
+        SqlNode node = sqrlEnv.parseSQL(flinkStmt.getSql().get());
+        if (node instanceof SqlCreateView || node instanceof SqlAlterViewAs) {
+          //plan like other definitions from above
+          sqrlEnv.addView(node, flinkStmt.getSql().get(), errors);
+        } else if (node instanceof SqlCreateTable) {
+          sqrlEnv.createTable((SqlCreateTable)node);
+        } else {
+          //just pass through
+          sqrlEnv.executeSqlNode(node);
+        }
       } catch (Exception e) {
         throw StatementParserException.from(e, FileLocation.START, 0);
       }
@@ -99,70 +137,147 @@ public class SqlScriptPlanner {
 
   public static final Name STAR = Name.system("*");
 
-  private void addImport(SqrlImportStatement importStmt, SqrlEnvironment sqrlEnv) {
+  private void addImport(SqrlImportStatement importStmt, Sqrl2FlinkSQLTranslator sqrlEnv, ErrorCollector errors) {
     NamePath path = importStmt.getPackageIdentifier().get();
     boolean isStar = path.getLast().equals(STAR);
-    checkFatal(!isStar || importStmt.getAlias().isEmpty(), ErrorCode.IMPORT_CANNOT_BE_ALIASED, "Import cannot be aliased");
+    checkFatal(!isStar || importStmt.getAlias().isEmpty(), importStmt.getAlias().getFileLocation(),
+        ErrorCode.IMPORT_CANNOT_BE_ALIASED, "Import cannot be aliased");
 
-    if (path.getFirst().getDisplay().equals("log")) {
-      //TODO: implement import for log
-//      Log log = logManager.getLogs().get(path.getLast().getDisplay());
-//      NamespaceObject namespaceObject = createTableResolver.create(log.getSource());
-//      namespaceObject.apply(this, node.getAlias().map(SqlIdentifier::getSimple), framework, errorCollector);
-    } else {
-      SqrlModule module = moduleLoader.getModule(path.popLast()).orElse(null);
+    SqrlModule module = moduleLoader.getModule(path.popLast()).orElse(null);
+    checkFatal(module!=null, importStmt.getPackageIdentifier().getFileLocation(), ErrorLabel.GENERIC,
+        "Could not find module [%s] at path: [%s]", path, String.join("/", path.toStringList()));
 
-      sqrlEnv.getErrors().checkFatal(module!=null, "Could not find module [%s] at path: [%s]",
-          path, String.join("/", path.toStringList()));
-
-      if (isStar) {
-        if (module.getNamespaceObjects().isEmpty()) {
-          sqrlEnv.getErrors().warn("Module is empty: %s", path);
-        }
-//        module.getNamespaceObjects().forEach(obj -> obj.apply(this, Optional.empty(), framework, errorCollector));
-        for (NamespaceObject namespaceObject : module.getNamespaceObjects()) {
-          addImport(namespaceObject, Optional.empty(), sqrlEnv);
-        }
-      } else {
-        Optional<NamespaceObject> namespaceObject = module.getNamespaceObject(path.getLast());
-        sqrlEnv.getErrors().checkFatal(namespaceObject.isPresent(), "Object [%s] not found in module: %s", path.getLast(), path);
-        Name tableName = path.getLast();
-        if (importStmt.getAlias().isPresent()) {
-          NamePath aliasPath = importStmt.getAlias().get();
-          checkFatal(aliasPath.size()==1, ErrorCode.INVALID_IMPORT, "Invalid table name - paths not supported");
-          tableName = aliasPath.getFirst();
-        }
-        addImport(namespaceObject.get(),
-            Optional.of(tableName.getDisplay()),
-            sqrlEnv);
+    if (isStar) {
+      if (module.getNamespaceObjects().isEmpty()) {
+        errors.warn("Module is empty: %s", path);
       }
+      for (NamespaceObject namespaceObject : module.getNamespaceObjects()) {
+        addImport(namespaceObject, Optional.empty(), sqrlEnv);
+      }
+    } else {
+      Optional<NamespaceObject> namespaceObject = module.getNamespaceObject(path.getLast());
+      errors.checkFatal(namespaceObject.isPresent(), "Object [%s] not found in module: %s", path.getLast(), path);
+      Name tableName = path.getLast();
+      if (importStmt.getAlias().isPresent()) {
+        NamePath aliasPath = importStmt.getAlias().get();
+        checkFatal(aliasPath.size()==1, ErrorCode.INVALID_IMPORT, "Invalid table name - paths not supported");
+        tableName = aliasPath.getFirst();
+      }
+      addImport(namespaceObject.get(),
+          Optional.of(tableName.getDisplay()),
+          sqrlEnv);
     }
   }
 
-  private void addImport(NamespaceObject table, Optional<String> alias, SqrlEnvironment sqrlEnv) {
-    Preconditions.checkArgument(table instanceof FlinkTableNamespaceObject);
-    FlinkTable flinkTable = ((FlinkTableNamespaceObject) table).getTable();
-    Name tableName = alias.map(Name::system).orElse(flinkTable.getName());
-    String tableSql = flinkTable.getFlinkSQL();
-    //TODO: replace name and use SqlIdentifier for proper escaping
-    sqrlEnv.withErrors(errorCollector.withScript(flinkTable.getFlinkSqlFile(), tableSql));
-    tableSql = SqlScriptStatementSplitter.formatEndOfSqlFile(tableSql);
-    Preconditions.checkArgument(tableSql.endsWith(";\n"));
-    if (flinkTable.getSchema().isPresent()) {
-      String schemaTableName = tableName.getDisplay()+"__schema";
-      TableSchema tableSchema = flinkTable.getSchema().get();
-      RelDataType dataType = SchemaToRelDataTypeFactory.load(tableSchema)
-          .map(tableSchema, null, tableName, sqrlEnv.getErrors());
-      SqlCreateTable schemaTable = FlinkSqlNodeFactory.createTable(schemaTableName, dataType);
-      sqrlEnv.executeSqlNode(schemaTable);
-      //Append LIKE
-      tableSql = tableSql.substring(0, tableSql.length()-2) + " LIKE " + schemaTableName + " ;\n";
+  private void addImport(NamespaceObject nsObject, Optional<String> alias, Sqrl2FlinkSQLTranslator sqrlEnv) {
+    if (nsObject instanceof FlinkTableNamespaceObject) {
+      //TODO: for a create table statement without options (connector), we manage it internally
+      // add pass it to Log engine for augmentation after validating/adding event-id and event-time metadata columns & checking no watermark/partition/constraint is present
+      ExternalFlinkTable flinkTable = ExternalFlinkTable.fromNamespaceObject((FlinkTableNamespaceObject) nsObject,
+          alias, sqrlEnv, errorCollector);
+      sqrlEnv.addImport(flinkTable.tableName.getDisplay(), flinkTable.sqlCreateTable , flinkTable.schema);
+    } else if (nsObject instanceof FlinkUdfNsObject) {
+      FlinkUdfNsObject fnsObject = (FlinkUdfNsObject) nsObject;
+      Preconditions.checkArgument(fnsObject.getFunction() instanceof UserDefinedFunction, "Expected UDF: " + fnsObject.getFunction());
+      Class<?> udfClass = fnsObject.getFunction().getClass();
+      String name = alias.orElseGet(() -> FlinkUdfNsObject.getFunctionNameFromClass(udfClass).getDisplay());
+      sqrlEnv.addFunction(name, udfClass.getName());
+    } else if (nsObject instanceof ScriptNamespaceObject) {
+      //TODO: 1) if this is a * import, then import inline (throw exception if trying to import only a specific table)
+      // 2) if import ends in script, plan script into separate database (with name of script or alias) via CREATE/USE DATABASE
+      throw new UnsupportedOperationException("Script imports not yet implemented");
+    } else {
+      throw new UnsupportedOperationException("Unexpected object imported: " + nsObject);
     }
-    sqrlEnv.executeSQL(tableSql);
   }
 
-  private void addExport(SqrlExportStatement exportStmt, SqrlEnvironment sqrlEnv) {
+  private void addExport(SqrlExportStatement exportStmt, Sqrl2FlinkSQLTranslator sqrlEnv) {
     System.out.println("Adding export " + exportStmt.getTableIdentifier() + " to " + exportStmt.getTableIdentifier());
+    NamePath sinkPath = exportStmt.getPackageIdentifier().get();
+    NamePath tablePath = exportStmt.getTableIdentifier().get();
+
+
+    Optional<SystemBuiltInConnectors> builtInSink = SystemBuiltInConnectors.forExport(sinkPath.getFirst())
+        .filter(x -> sinkPath.size()==2);
+    if (builtInSink.isPresent()) {
+      SystemBuiltInConnectors connector = builtInSink.get();
+      ExecutionStage exportStage;
+      if (connector == SystemBuiltInConnectors.LOG_ENGINE) {
+        Optional<ExecutionStage> logStage = pipeline.getStageByType(Type.LOG);
+        errorCollector.checkFatal(logStage.isPresent(), "Cannot export to log since no log engine has been configured");
+        exportStage = logStage.get();
+      } else {
+        String engineName = connector.getName().getCanonical();
+        if (connector == SystemBuiltInConnectors.LOGGER) {
+          engineName = packageJson.getCompilerConfig().getLogger();
+          if (engineName.equalsIgnoreCase("none")) {
+            return; //simply ignore
+          }
+        }
+        Optional<ExecutionStage> optStage = pipeline.getStage(engineName);
+        errorCollector.checkFatal(optStage.isPresent(), "The configured logger `%s` under 'compiler.logger' is not a configured engine.", engineName);
+        exportStage = optStage.get();
+      }
+      sqrlEnv.addGeneratedExport(tablePath, exportStage, sinkPath.getLast());
+    } else {
+      SqrlModule module = moduleLoader.getModule(sinkPath.popLast()).orElse(null);
+      checkFatal(module!=null, exportStmt.getPackageIdentifier().getFileLocation(), ErrorLabel.GENERIC,
+          "Could not find module [%s] at path: [%s]", sinkPath, String.join("/", sinkPath.toStringList()));
+
+      Optional<NamespaceObject> sinkObj = module.getNamespaceObject(sinkPath.getLast());
+      checkFatal(sinkObj.isPresent(), exportStmt.getPackageIdentifier().getFileLocation(), ErrorLabel.GENERIC,
+          "Could not find table [%s] in module [%s]", sinkPath.getLast(), module);
+      checkFatal(sinkObj.get() instanceof FlinkTableNamespaceObject, exportStmt.getPackageIdentifier().getFileLocation(), ErrorLabel.GENERIC,
+          "Not a valid sink table [%s] in module [%s]", sinkPath.getLast(), module);
+      FlinkTableNamespaceObject sinkTable = (FlinkTableNamespaceObject) sinkObj.get();
+
+      ExternalFlinkTable flinkTable = ExternalFlinkTable.fromNamespaceObject(sinkTable,
+          Optional.of(sinkPath.popLast().getDisplay()), sqrlEnv, errorCollector);
+      sqrlEnv.addExternalExport(tablePath, flinkTable.sqlCreateTable, flinkTable.schema);
+    }
+
+
+
+  }
+
+  @Value
+  public static class ExternalFlinkTable {
+
+    Name tableName;
+    SqlCreateTable sqlCreateTable;
+    Optional<RelDataType> schema;
+
+    public static ExternalFlinkTable fromNamespaceObject(FlinkTableNamespaceObject nsObject,
+        Optional<String> alias,
+        Sqrl2FlinkSQLTranslator sqrlEnv, ErrorCollector errorCollector) {
+      FlinkTable flinkTable = nsObject.getTable();
+      Name tableName = alias.map(Name::system).orElse(flinkTable.getName());
+
+      //Parse SQL
+      String tableSql = flinkTable.getFlinkSQL();
+      ErrorCollector tableError = errorCollector.withScript(flinkTable.getFlinkSqlFile(), tableSql);
+      tableSql = SqlScriptStatementSplitter.formatEndOfSqlFile(tableSql);
+      SqlNode tableSqlNode;
+      try {
+        tableSqlNode = sqrlEnv.parseSQL(tableSql);
+      } catch (Exception e) {
+        throw tableError.handle(e);
+      }
+      tableError.checkFatal(tableSqlNode instanceof SqlCreateTable, "Expected CREATE TABLE statement");
+
+      //Schema conversion
+      Optional<RelDataType> schema = flinkTable.getSchema().map(tableSchema -> {
+        if (tableSchema instanceof RelDataTypeTableSchema) {
+          return ((RelDataTypeTableSchema) tableSchema).getRelDataType();
+        } else {
+          return SchemaToRelDataTypeFactory.load(tableSchema)
+              .map(tableSchema, null, tableName, errorCollector);
+        }
+      });
+
+      return new ExternalFlinkTable(tableName, (SqlCreateTable)tableSqlNode, schema);
+    }
+
   }
 
 

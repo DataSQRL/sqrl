@@ -19,7 +19,7 @@ public interface EngineFactory {
   Class<? extends IExecutionEngine> getFactoryClass();
 
   enum Type {
-    STREAMS, DATABASE, SERVER, LOG, QUERY;
+    STREAMS, DATABASE, SERVER, LOG, QUERY, EXPORT;
 
     public boolean isWrite() {
       return this == STREAMS;

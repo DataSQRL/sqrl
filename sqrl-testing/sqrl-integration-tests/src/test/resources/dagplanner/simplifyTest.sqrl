@@ -1,4 +1,5 @@
 IMPORT ecommerceTs.Customer;
+IMPORT ecommerceTs.Orders AS ExternalOrders;
 
 CustomerByTime2 := DISTINCT Customer ON customerid ORDER BY `timestamp` DESC NULLS LAST;
 CustomerByMultipleTime := DISTINCT Customer ON customerid, email ORDER BY `timestamp` DESC, lastUpdated ASC;
@@ -13,10 +14,13 @@ Customer.related := JOIN Customer other ON this.customerid = other.customerid OR
 /*+ primary_key(id, name), index(name) */
 SelectCustomers := SELECT * From Customer WHERE customerid > 0 ORDER BY `timestamp` DESC LIMIT 10;
 
+UnnestOrders := SELECT o.id, o.customerid, o.`time`, e.productid, e.quantity, e.discount FROM ExternalOrders o CROSS JOIN UNNEST(entries) e;
+UnnestOrders.newId := id + productid;
+
 CREATE TABLE Orders (
     orderid INT,
     amount FLOAT,
-    PRIMARY KEY (orderid)
+    PRIMARY KEY (orderid) NOT ENFORCED
 );
 
 /*+ test, query */

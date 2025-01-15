@@ -96,7 +96,7 @@ public class InferGraphqlSchema {
 
   // Checks if the server stage is present in the execution pipeline
   private boolean isServerStagePresent() {
-    return pipeline.getStage(Type.SERVER).isPresent();
+    return pipeline.getStageByType(Type.SERVER).isPresent();
   }
 
   // Creates the SchemaPrinter options

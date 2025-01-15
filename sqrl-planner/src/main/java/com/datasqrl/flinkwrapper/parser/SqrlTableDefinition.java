@@ -11,7 +11,7 @@ import lombok.AllArgsConstructor;
  *
  * As such, we try to do our best to keep offsets so we can map errors back.
  */
-public class SqrlTableDefinition extends SqrlDefinition {
+public class SqrlTableDefinition extends SqrlDefinition implements StackableStatement {
 
   public SqrlTableDefinition(ParsedObject<NamePath> tableName,
       ParsedObject<String> definitionBody,
@@ -19,4 +19,8 @@ public class SqrlTableDefinition extends SqrlDefinition {
     super(tableName, definitionBody, comments);
   }
 
+  @Override
+  public boolean isRoot() {
+    return true;
+  }
 }

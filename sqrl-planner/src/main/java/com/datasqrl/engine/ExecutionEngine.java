@@ -36,6 +36,8 @@ public interface ExecutionEngine extends IExecutionEngine {
 //  boolean supports(FunctionDefinition function);
 
   /**
+   * TODO: remove in favor of ConnectorFactory for sink creation
+   *
    * Returns the {@link TableConfig} for this engine so it can
    * be used as a sink by a previous stage in the pipeline.
    * @return

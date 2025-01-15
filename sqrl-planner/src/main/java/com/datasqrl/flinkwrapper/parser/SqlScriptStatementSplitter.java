@@ -97,4 +97,16 @@ public class SqlScriptStatementSplitter {
     return formatted.toString();
   }
 
+  public static String removeStatementDelimiter(String statement) {
+    if (statement.trim().endsWith(STATEMENT_DELIMITER)) {
+      int idx = statement.lastIndexOf(STATEMENT_DELIMITER);
+      return statement.substring(0, idx);
+    }
+    return statement;
+  }
+
+  public static String addStatementDelimiter(String statement) {
+    return statement + STATEMENT_DELIMITER;
+  }
+
 }

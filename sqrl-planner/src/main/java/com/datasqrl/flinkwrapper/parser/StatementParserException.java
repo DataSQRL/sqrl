@@ -2,6 +2,7 @@ package com.datasqrl.flinkwrapper.parser;
 
 import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.error.ErrorLocation.FileLocation;
+import java.util.function.Function;
 import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.flink.table.api.SqlParserException;
@@ -50,6 +51,18 @@ public class StatementParserException extends RuntimeException {
       return new StatementParserException(location, e, message);
     } else {
       return new StatementParserException(reference, e);
+    }
+  }
+
+  public static<R,I> R handleParseErrors(Function<I,R> parsingFunction, I input) {
+    return handleParseErrors(parsingFunction, input, FileLocation.START, 0);
+  }
+
+  public static<R,I> R handleParseErrors(Function<I,R> parsingFunction, I input, FileLocation reference, int firstRowAddition) {
+    try {
+      return parsingFunction.apply(input);
+    } catch (Exception e) {
+      throw StatementParserException.from(e, reference, firstRowAddition);
     }
   }
 

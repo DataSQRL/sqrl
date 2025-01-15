@@ -17,4 +17,10 @@ public class ConnectorsConfigImpl implements ConnectorsConfig {
     return Optional.of(
         new ConnectorConfImpl(sqrlConfig.getSubConfig(name)));
   }
+
+  @Override
+  public ConnectorConf getConnectorConfigOrErr(String name) {
+    sqrlConfig.validateSubConfig(name);
+    return new ConnectorConfImpl(sqrlConfig.getSubConfig(name));
+  }
 }

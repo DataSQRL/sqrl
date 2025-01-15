@@ -112,7 +112,7 @@ public class FlinkSqlNodeFactory {
     List<SqlNode> props = options.entrySet().stream()
         .map(option -> new SqlTableOption(
             SqlLiteral.createCharString(option.getKey(), SqlParserPos.ZERO),
-            SqlLiteral.createCharString(option.getValue().toString(), SqlParserPos.ZERO),
+            SqlLiteral.createCharString(Objects.toString(option.getValue()), SqlParserPos.ZERO),
             SqlParserPos.ZERO
         ))
         .collect(Collectors.toList());
@@ -177,7 +177,7 @@ public class FlinkSqlNodeFactory {
     );
   }
 
-  private static SqlWatermark createWatermark(String ts, long watermarkMillis) {
+  public static SqlWatermark createWatermark(String ts, long watermarkMillis) {
     SqlIdentifier eventTimeColumn = FlinkSqlNodeFactory.identifier(ts);
     return FlinkSqlNodeFactory.createWatermark(
         eventTimeColumn,

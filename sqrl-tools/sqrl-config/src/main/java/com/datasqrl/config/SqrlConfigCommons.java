@@ -90,6 +90,11 @@ public class SqrlConfigCommons implements SqrlConfig {
         .hasNext(); // If there is at least one key, return true
   }
 
+  @Override
+  public void validateSubConfig(String name) {
+    errors.checkFatal(hasSubConfig(name), "Missing sub-configuration under key: %s", getFullKey(name));
+  }
+
   private String getPrefix(String name) {
     return getFullKey(name) + DELIMITER;
   }

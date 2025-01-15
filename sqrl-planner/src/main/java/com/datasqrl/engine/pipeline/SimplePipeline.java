@@ -5,6 +5,7 @@ package com.datasqrl.engine.pipeline;
 
 import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.engine.ExecutionEngine;
+import com.datasqrl.engine.export.PrintEngine;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
@@ -51,6 +52,7 @@ public class SimplePipeline implements ExecutionPipeline {
     errors.checkFatal(streamStage.isPresent(), "Need to configure an enabled stream engine");
     List<EngineStage> dbStages = getStage(Type.DATABASE, engines);
     Optional<EngineStage> serverStage = getSingleStage(Type.SERVER, engines);
+    List<EngineStage> exportStages = getStage(Type.EXPORT, engines);
 
     logStage.ifPresent(ls -> {
       stages.add(ls);
@@ -66,6 +68,10 @@ public class SimplePipeline implements ExecutionPipeline {
       streamStage.ifPresent(ss -> upstream.put(dbStage, ss));
       serverStage.ifPresent(vs -> downstream.put(dbStage, vs));
     }
+    for (EngineStage exportStage : exportStages) {
+      stages.add(exportStage);
+      streamStage.ifPresent(ss -> downstream.put(exportStage, ss));
+    }
     serverStage.ifPresent(vs -> {
       stages.add(vs);
       dbStages.forEach(dbs -> upstream.put(vs, dbs));
@@ -77,6 +83,7 @@ public class SimplePipeline implements ExecutionPipeline {
         downstream.put(stage, stage);
       }
     }
+
 
     return new SimplePipeline(stages.stream().map(ExecutionStage.class::cast).collect(Collectors.toUnmodifiableList()),
         upstream, downstream);

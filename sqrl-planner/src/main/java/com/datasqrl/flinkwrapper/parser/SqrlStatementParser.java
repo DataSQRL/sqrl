@@ -72,17 +72,15 @@ public class SqrlStatementParser {
       List<ParsedObject<String>> statements = sqlSplitter.splitStatements(script);
       for (ParsedObject<String> statement : statements) {
         localErrors = scriptErrors.atFile(statement.getFileLocation());
-        Optional<SqrlStatement> sqrlStatement = parseStatement(statement.get());
-        sqlStatements.add(statement.map(x -> sqrlStatement.map(SQLStatement.class::cast)
-            .orElseGet(() -> new FlinkSQLStatement(statement))));
-      }
+        sqlStatements.add(statement.map(this::parseStatement));
+     }
     } catch (StatementParserException e) {
       throw localErrors.handle(e);
     }
     return sqlStatements;
   }
 
-  public Optional<SqrlStatement> parseStatement(String statement) {
+  public SQLStatement parseStatement(String statement) {
     Matcher importExportMatcher = IMPORT_EXPORT.matcher(statement);
     if (importExportMatcher.find()) { //it's an import or export statement
       String directive = importExportMatcher.group("fullmatch");
@@ -90,13 +88,14 @@ public class SqrlStatementParser {
       String comment = statement.substring(0,commentEnd); //For now, hints on import/export are ignored
       String body = statement.substring(importExportMatcher.end()).trim();
 
+      //#1: Imports and Exports
       if (directive.equalsIgnoreCase("import")) {
         Matcher subMatcher = IMPORT_PARSER.matcher(body);
         checkFatal(subMatcher.find(), ErrorCode.INVALID_IMPORT, "Could not parse IMPORT statement");
         ParsedObject<NamePath> packageIdentifier = parseNamePath(subMatcher, "package", statement);
         ParsedObject<NamePath> alias = parseNamePath(subMatcher, "identifier", statement);
         checkFatal(packageIdentifier.isPresent(), ErrorCode.INVALID_IMPORT, "Missing package path");
-        return Optional.of(new SqrlImportStatement(packageIdentifier, alias));
+        return new SqrlImportStatement(packageIdentifier, alias);
       } else if (directive.equalsIgnoreCase("export")) {
         Matcher subMatcher = EXPORT_PARSER.matcher(body);
         checkFatal(subMatcher.find(), ErrorCode.INVALID_IMPORT, "Could not parse IMPORT statement");
@@ -104,7 +103,7 @@ public class SqrlStatementParser {
         ParsedObject<NamePath> tableName = parseNamePath(subMatcher, "identifier", statement);
         checkFatal(packageIdentifier.isPresent(), ErrorCode.INVALID_EXPORT, "Missing package path");
         checkFatal(packageIdentifier.isPresent(), ErrorCode.INVALID_EXPORT, "Missing table");
-        return Optional.of(new SqrlExportStatement(tableName, packageIdentifier));
+        return new SqrlExportStatement(tableName, packageIdentifier);
       } else {
         //This should not happen
         throw new UnsupportedOperationException("Unexpected import/export directive: " + directive);
@@ -112,6 +111,7 @@ public class SqrlStatementParser {
 
     }
 
+    //#2: SQRL Table Definitions
     Matcher sqrlDefinition = SQRL_DEFINITION.matcher(statement);
     if (sqrlDefinition.find()) { //it's a SQRL definition
       ParsedObject<NamePath> tableName = parseNamePath(sqrlDefinition.group("tablename"),
@@ -161,20 +161,27 @@ public class SqrlStatementParser {
         checkFatal(arguments.isEmpty(), ErrorCode.INVALID_SQRL_DEFINITION, "Table function not supported for operation");
         definition = new SqrlRelationshipStatement(tableName.map(NamePath::popLast), definitionBody, comment, tableName.map(NamePath::getLast));
       } else {
+        //We assume it's a column expression
+        checkFatal(arguments.isEmpty(), ErrorCode.INVALID_SQRL_DEFINITION, "Column definitions do not support arguments");
+        definition = new SqrlAddColumnStatement(tableName, definitionBody, comment);
         new StatementParserException(ErrorCode.INVALID_SQRL_DEFINITION, definitionBody.getFileLocation(), "Not a valid SQRL operation: %s", keyword);
       }
 
-      return Optional.of(definition);
+      return definition;
     }
 
+    //#3: Create Table
     Matcher createTable = CREATE_TABLE.matcher(statement);
     if (createTable.find()) {
       ParsedObject<String> createTableStmt = parse(statement.substring(createTable.start("fullmatch")), statement,
           createTable.start("fullmatch"));
-      return Optional.of(new SqrlCreateTableStatement(createTableStmt));
+      int commentEnd = createTable.start("fullmatch");
+      SqrlComments comment = SqrlComments.parse(parse(statement.substring(0,commentEnd), statement, 0));
+      return new SqrlCreateTableStatement(createTableStmt, comment);
     }
 
-    return Optional.empty();
+    //#4: If none of the regex match, we assume it's a Flink SQL statement
+    return new FlinkSQLStatement(new ParsedObject<>(statement, FileLocation.START));
   }
 
   public static Pair<String, List<Name>> replaceTableFunctionVariables(String body, List<Name> arguments) {

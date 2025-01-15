@@ -8,6 +8,8 @@ import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.IExecutionEngine;
 import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.database.QueryEngine;
+import com.datasqrl.engine.export.PrintEngine;
+import com.datasqrl.engine.export.PrintEngineFactory;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.SimplePipeline;
 import com.datasqrl.engine.stream.StreamEngine;
@@ -16,12 +18,15 @@ import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.datasqrl.util.StreamUtil;
 import com.google.inject.Injector;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NonNull;
+import org.apache.commons.collections.ListUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 /**
@@ -29,6 +34,8 @@ import org.apache.commons.lang3.tuple.Pair;
  * <p>
  */
 public class PipelineFactory {
+
+  public static final List<String> defaultEngines = List.of(PrintEngineFactory.NAME);
 
   private final Injector injector;
   private final List<String> enabledEngines;
@@ -44,7 +51,9 @@ public class PipelineFactory {
 
   private Map<String, ExecutionEngine> getEngines(Optional<EngineFactory.Type> engineType) {
     Map<String, ExecutionEngine> engines = new HashMap<>();
-    for (String engineId : enabledEngines) {
+    Set<String> allEngines = new HashSet<>(enabledEngines);
+    allEngines.addAll(defaultEngines);
+    for (String engineId : allEngines) {
       if (engineId.equalsIgnoreCase(EngineKeys.TEST)) continue;
       EngineFactory engineFactory = ServiceLoaderDiscovery.get(
           EngineFactory.class,
