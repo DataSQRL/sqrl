@@ -105,7 +105,7 @@ public class GraphqlSchemaFactory {
         .collect(Collectors.groupingBy(SqrlTableMacro::getAbsolutePath,
             LinkedHashMap::new, Collectors.toList()));
     for (Map.Entry<NamePath, List<SqrlTableMacro>> path : fieldPathToTables.entrySet()) {
-      if (path.getKey().getLast().isHidden()) continue;
+      if (path.getKey().getLast().isHidden()) continue; // hidden object not exposed in graphQL queries
 
 //      if (goal == ExecutionGoal.TEST) {
 //        if (!path.getValue().get(0).isTest()) continue;
