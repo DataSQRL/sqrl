@@ -203,9 +203,14 @@ public class QueryPlanner {
       return this.cluster.getTypeFactory().createSqlType(SqlTypeName.TIMESTAMP, 3);
     }
 
+    if (datatype.equalsIgnoreCase("BigInteger")) {
+      return this.cluster.getTypeFactory().createSqlType(SqlTypeName.BIGINT);
+    }
+
     String create = String.format("CREATE TABLE x (col %s)", datatype);
     SqlCreateTable parse = (SqlCreateTable)parse(Dialect.FLINK, create);
     SqlDataTypeSpec typeSpec = ((SqlRegularColumn) parse.getColumnList().get(0)).getType();
+
     return typeSpec.deriveType(createSqlValidator());
   }
 
