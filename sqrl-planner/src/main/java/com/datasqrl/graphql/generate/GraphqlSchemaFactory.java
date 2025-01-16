@@ -108,16 +108,16 @@ public class GraphqlSchemaFactory {
     this.fieldPathToTables = schema.getTableFunctions().stream()
         .collect(Collectors.groupingBy(SqrlTableMacro::getAbsolutePath,
             LinkedHashMap::new, Collectors.toList()));
-    for (Map.Entry<NamePath, List<SqrlTableMacro>> path : fieldPathToTables.entrySet()) {
-      if (path.getKey().getLast().isHidden()) continue; // hidden object not exposed in graphQL queries
+    for (Map.Entry<NamePath, List<SqrlTableMacro>> field : fieldPathToTables.entrySet()) {
+      if (field.getKey().getLast().isHidden()) continue; // hidden field not exposed in graphQL queries
 
 //      if (goal == ExecutionGoal.TEST) {
 //        if (!path.getValue().get(0).isTest()) continue;
 //      } else {
 //        if (path.getValue().get(0).isTest()) continue;
 //      }
-      Optional<GraphQLObjectType> graphQLObjectType = generateObject(path.getValue(),
-          objectPathToTables.getOrDefault(path.getKey(), List.of()));
+      Optional<GraphQLObjectType> graphQLObjectType = generateObject(field.getValue(), // list of table functions de field is in
+          objectPathToTables.getOrDefault(field.getKey(), List.of())); // List of table functions relationships
       graphQLObjectType.map(objectTypes::add);
     }
 
@@ -133,7 +133,7 @@ public class GraphqlSchemaFactory {
 
     GraphQLSchema.Builder builder = GraphQLSchema.newSchema()
         .query(queryType);
-    if (extendedScalarTypes) {
+    if (extendedScalarTypes) { // use the plural parameter name in place of only bigInteger to avoid having a conf parameter of each special type mapping feature in the future
       builder.additionalTypes(Set.of(ExtendedScalars.GraphQLBigInteger));
     }
     if (goal != ExecutionGoal.TEST) {
@@ -181,7 +181,7 @@ public class GraphqlSchemaFactory {
       RelDataType type = mutation.getRelDataType();
 
       // Create the 'event' argument which should mirror the structure of the type
-      GraphQLInputType inputType = GraphqlSchemaUtil.createInputTypeForRelDataType(type, NamePath.of(name), seen).orElseThrow(
+      GraphQLInputType inputType = GraphqlSchemaUtil.createInputTypeForRelDataType(type, NamePath.of(name), seen, extendedScalarTypes).orElseThrow(
           () -> new IllegalArgumentException("Could not create input type for mutation: " + mutation.getName()));
 
       GraphQLArgument inputArgument = GraphQLArgument.newArgument()
@@ -192,7 +192,7 @@ public class GraphqlSchemaFactory {
       GraphQLFieldDefinition subscriptionField = GraphQLFieldDefinition.newFieldDefinition()
           .name(name)
           .argument(inputArgument)
-          .type(createOutputTypeForRelDataType(type, NamePath.of(name), seen).get())
+          .type(createOutputTypeForRelDataType(type, NamePath.of(name), seen, extendedScalarTypes).get())
           .build();
 
       builder.field(subscriptionField);
@@ -233,7 +233,7 @@ public class GraphqlSchemaFactory {
 
       GraphQLFieldDefinition subscriptionField = GraphQLFieldDefinition.newFieldDefinition()
           .name(tableName)
-          .type(createOutputTypeForRelDataType(table.getRowType(), NamePath.of(tableName), seen).get())
+          .type(createOutputTypeForRelDataType(table.getRowType(), NamePath.of(tableName), seen, extendedScalarTypes).get())
           .build();
 
       subscriptionFields.add(subscriptionField);
@@ -287,22 +287,23 @@ public class GraphqlSchemaFactory {
     //Todo check: The multiple table macros should all point to the same relnode type
 
     Map<Name, List<SqrlTableMacro>> relByName = relationships.stream()
-        .collect(Collectors.groupingBy(g -> g.getFullPath().getLast(),
+        .collect(Collectors.groupingBy(g -> g.getFullPath().getLast(), //map from relationship field to list of table functions
             LinkedHashMap::new, Collectors.toList()));
 
-    SqrlTableMacro first = tableMacros.get(0);
-    RelDataType rowType = first.getRowType();
+    SqrlTableMacro first = tableMacros.get(0); // take the first table function the field is in
+    RelDataType rowType = first.getRowType(); // and extract its calcite schema.
     //todo: check that all table macros are compatible
 //    for (int i = 1; i < tableMacros.size(); i++) {
 //    }
 
+    // create the graphQL fields for non-relationship fields
     List<GraphQLFieldDefinition> fields = new ArrayList<>();
     for (RelDataTypeField field : rowType.getFieldList()) {
       if (!relByName.containsKey(Name.system(field.getName()))) {
         createRelationshipField(field).map(fields::add);
       }
     }
-
+    // create the graphQL fields for relationship fields
     for (Map.Entry<Name, List<SqrlTableMacro>> rel : relByName.entrySet()) {
       createRelationshipField(rel.getValue()).map(fields::add);
     }
@@ -374,10 +375,10 @@ public class GraphqlSchemaFactory {
     } else {
       return parameters.stream()
           .filter(p->!((SqrlFunctionParameter)p).isInternal())
-          .filter(p->getInputType(p.getType(null), NamePath.of(p.getName()), seen).isPresent())
+          .filter(p->getInputType(p.getType(null), NamePath.of(p.getName()), seen, extendedScalarTypes).isPresent())
           .map(parameter -> GraphQLArgument.newArgument()
               .name(((SqrlFunctionParameter)parameter).getVariableName())
-              .type(nonNull(getInputType(parameter.getType(null), NamePath.of(parameter.getName()), seen).get()))
+              .type(nonNull(getInputType(parameter.getType(null), NamePath.of(parameter.getName()), seen, extendedScalarTypes).get()))
               .build()).collect(Collectors.toList());
     }
   }
@@ -424,12 +425,12 @@ public class GraphqlSchemaFactory {
 
     return primaryKeys
         .stream()
-        .filter(f -> getInputType(f.getType(), NamePath.of(tableName), seen).isPresent())
+        .filter(f -> getInputType(f.getType(), NamePath.of(tableName), seen, extendedScalarTypes).isPresent())
         .filter(f -> isValidGraphQLName(f.getName()))
         .filter(this::isVisible)
         .map(f -> GraphQLArgument.newArgument()
             .name(f.getName())
-            .type(getInputType(f.getType(), NamePath.of(f.getName()), seen).get())
+            .type(getInputType(f.getType(), NamePath.of(f.getName()), seen, extendedScalarTypes).get())
             .build())
         .collect(Collectors.toList());
   }
@@ -445,7 +446,7 @@ public class GraphqlSchemaFactory {
   }
 
   private Optional<GraphQLFieldDefinition> createRelationshipField(RelDataTypeField field) {
-    return getOutputType(field.getType(), NamePath.of(field.getName()), seen)
+    return getOutputType(field.getType(), NamePath.of(field.getName()), seen, extendedScalarTypes)
         .filter(f->isValidGraphQLName(field.getName()))
         .filter(f->isVisible(field))
         .map(t -> GraphQLFieldDefinition.newFieldDefinition()
