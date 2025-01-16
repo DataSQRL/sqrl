@@ -185,6 +185,8 @@ public class QueryPlanner {
       return this.cluster.getTypeFactory().createSqlType(SqlTypeName.INTEGER);
     } else if (datatype.equalsIgnoreCase("datetime")) {
       return this.cluster.getTypeFactory().createSqlType(SqlTypeName.TIMESTAMP, 3);
+    } else if (datatype.equalsIgnoreCase("BigInteger")) {
+        return this.cluster.getTypeFactory().createSqlType(SqlTypeName.BIGINT);
     }
 
     // Todo fix: only supporting precision for non-alien types
