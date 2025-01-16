@@ -9,7 +9,7 @@ import com.datasqrl.config.GraphqlSourceFactory;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlanner;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
-import com.datasqrl.flinkwrapper.SqlScriptPlanner;
+import com.datasqrl.flinkwrapper.planner.SqlScriptPlanner;
 import com.datasqrl.flinkwrapper.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.graphql.APIConnectorManagerImpl;
 import com.datasqrl.graphql.inference.GraphQLMutationExtraction;

@@ -1,4 +1,4 @@
-package com.datasqrl.flinkwrapper;
+package com.datasqrl.flinkwrapper.planner;
 
 
 import static com.datasqrl.flinkwrapper.parser.ParsePosUtil.convertPosition;
@@ -16,9 +16,10 @@ import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.error.ErrorLocation.FileLocation;
+import com.datasqrl.flinkwrapper.Sqrl2FlinkSQLTranslator;
+import com.datasqrl.flinkwrapper.hint.PlannerHints;
 import com.datasqrl.flinkwrapper.parser.FlinkSQLStatement;
 import com.datasqrl.flinkwrapper.parser.ParsedObject;
-import com.datasqrl.flinkwrapper.parser.ParsedSql;
 import com.datasqrl.flinkwrapper.parser.SQLStatement;
 import com.datasqrl.flinkwrapper.parser.SqlScriptStatementSplitter;
 import com.datasqrl.flinkwrapper.parser.SqrlCreateTableStatement;
@@ -30,7 +31,6 @@ import com.datasqrl.flinkwrapper.parser.SqrlStatement;
 import com.datasqrl.flinkwrapper.parser.SqrlStatementParser;
 import com.datasqrl.flinkwrapper.parser.SqrlTableFunctionStatement;
 import com.datasqrl.flinkwrapper.parser.StackableStatement;
-import com.datasqrl.flinkwrapper.planner.PlannerHints;
 import com.datasqrl.function.FlinkUdfNsObject;
 import com.datasqrl.io.schema.flexible.converters.SchemaToRelDataTypeFactory;
 import com.datasqrl.loaders.FlinkTableNamespaceObject;
@@ -57,8 +57,6 @@ import org.apache.calcite.runtime.CalciteContextException;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.parser.SqlParseException;
-import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.flink.runtime.entrypoint.FlinkParseException;
 import org.apache.flink.sql.parser.ddl.SqlAlterTable;
 import org.apache.flink.sql.parser.ddl.SqlAlterView;
 import org.apache.flink.sql.parser.ddl.SqlAlterViewAs;
@@ -113,6 +111,7 @@ public class SqlScriptPlanner {
         }
         if (location != null) {
           location = sqlStatement.mapSqlLocation(location);
+          e.printStackTrace();
           scriptErrors.atFile(statement.getFileLocation().add(location)).fatal(message);
         }
 
@@ -196,8 +195,14 @@ public class SqlScriptPlanner {
   private void addImport(SqrlImportStatement importStmt, Sqrl2FlinkSQLTranslator sqrlEnv, ErrorCollector errors) {
     NamePath path = importStmt.getPackageIdentifier().get();
     boolean isStar = path.getLast().equals(STAR);
-    checkFatal(!isStar || importStmt.getAlias().isEmpty(), importStmt.getAlias().getFileLocation(),
-        ErrorCode.IMPORT_CANNOT_BE_ALIASED, "Import cannot be aliased");
+
+    //Alias
+    Optional<Name> alias = Optional.empty();
+    if (importStmt.getAlias().isPresent()) {
+      NamePath aliasPath = importStmt.getAlias().get();
+      checkFatal(aliasPath.size()==1, ErrorCode.INVALID_IMPORT, "Invalid table name - paths not supported");
+      alias = Optional.of(aliasPath.getFirst());
+    }
 
     SqrlModule module = moduleLoader.getModule(path.popLast()).orElse(null);
     checkFatal(module!=null, importStmt.getPackageIdentifier().getFileLocation(), ErrorLabel.GENERIC,
@@ -208,19 +213,15 @@ public class SqlScriptPlanner {
         errors.warn("Module is empty: %s", path);
       }
       for (NamespaceObject namespaceObject : module.getNamespaceObjects()) {
-        addImport(namespaceObject, Optional.empty(), sqrlEnv);
+        //For multiple imports, the alias serves as a prefix.
+        addImport(namespaceObject, alias.map(x -> x.append(namespaceObject.getName()).getDisplay()), sqrlEnv);
       }
     } else {
       Optional<NamespaceObject> namespaceObject = module.getNamespaceObject(path.getLast());
       errors.checkFatal(namespaceObject.isPresent(), "Object [%s] not found in module: %s", path.getLast(), path);
-      Name tableName = path.getLast();
-      if (importStmt.getAlias().isPresent()) {
-        NamePath aliasPath = importStmt.getAlias().get();
-        checkFatal(aliasPath.size()==1, ErrorCode.INVALID_IMPORT, "Invalid table name - paths not supported");
-        tableName = aliasPath.getFirst();
-      }
+
       addImport(namespaceObject.get(),
-          Optional.of(tableName.getDisplay()),
+          Optional.of(alias.orElse(path.getLast()).getDisplay()),
           sqrlEnv);
     }
   }

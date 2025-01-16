@@ -19,9 +19,9 @@ public class SqrlTableFunctionStatement extends SqrlDefinition {
   private final List<Name> argumentIndexes;
 
   public SqrlTableFunctionStatement(ParsedObject<NamePath> tableName,
-      ParsedObject<String> definitionBody, boolean isSubscription,
+      ParsedObject<String> definitionBody, AccessModifier access,
       SqrlComments comments, Map<Name, ParsedObject<String>> arguments, List<Name> argumentIndexes) {
-    super(tableName, definitionBody, isSubscription, comments);
+    super(tableName, definitionBody, access, comments);
     this.arguments = arguments;
     this.argumentIndexes = argumentIndexes;
   }

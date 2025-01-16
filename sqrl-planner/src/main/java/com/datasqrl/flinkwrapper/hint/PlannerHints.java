@@ -1,7 +1,6 @@
-package com.datasqrl.flinkwrapper.planner;
+package com.datasqrl.flinkwrapper.hint;
 
 import com.datasqrl.flinkwrapper.parser.SqrlComments;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.Value;

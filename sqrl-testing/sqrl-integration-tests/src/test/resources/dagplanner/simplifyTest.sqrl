@@ -1,7 +1,10 @@
 IMPORT ecommerceTs.Customer;
 IMPORT ecommerceTs.Orders AS ExternalOrders;
+IMPORT ecommerceTs.* AS _;
 
 CustomerByTime2 := DISTINCT Customer ON customerid ORDER BY `timestamp` DESC NULLS LAST;
+
+AnotherCustomer := SELECT customerid, email FROM _customer WHERE customerid > 100;
 
 /*+filtered_distinct_order*/
 CustomerByMultipleTime := DISTINCT Customer ON customerid, email ORDER BY `timestamp` DESC, lastUpdated ASC;

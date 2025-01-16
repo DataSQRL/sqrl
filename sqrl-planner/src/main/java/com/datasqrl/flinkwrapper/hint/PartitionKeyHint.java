@@ -1,23 +1,23 @@
-package com.datasqrl.flinkwrapper.planner;
+package com.datasqrl.flinkwrapper.hint;
 
 import com.datasqrl.flinkwrapper.parser.ParsedObject;
 import com.datasqrl.flinkwrapper.parser.SqrlHint;
 import com.google.auto.service.AutoService;
 
-public class IndexHint extends PlannerHint {
+public class PartitionKeyHint extends PlannerHint {
 
-  public static final String HINT_NAME = "index";
+  public static final String HINT_NAME = "partition_key";
 
-  protected IndexHint(ParsedObject<SqrlHint> source) {
-    super(source, Type.DAG);
+  protected PartitionKeyHint(ParsedObject<SqrlHint> source) {
+    super(source, Type.ANALYZER);
   }
 
   @AutoService(Factory.class)
-  public static class IndexHintFactory implements Factory {
+  public static class PartitionKeyFactory implements Factory {
 
     @Override
     public PlannerHint create(ParsedObject<SqrlHint> source) {
-      return new IndexHint(source);
+      return new PartitionKeyHint(source);
     }
 
     @Override

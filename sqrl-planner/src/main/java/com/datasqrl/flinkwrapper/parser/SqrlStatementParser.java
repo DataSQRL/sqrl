@@ -127,6 +127,9 @@ public class SqrlStatementParser {
       ParsedObject<String> definitionBody = parse(statement.substring(sqrlDefinition.end()), statement,
           sqrlDefinition.end());
 
+      AccessModifier access = AccessModifier.QUERY;
+      if (tableName.get().getLast().isHidden()) access = AccessModifier.HIDDEN;
+
       ParsedObject<String> arguments = parse(sqrlDefinition, "arguments", statement);
       //Identify SQL keyword
       Pattern sqlKeywordPattern = Pattern.compile("^\\s*(\\w+)");
@@ -137,18 +140,19 @@ public class SqrlStatementParser {
       SqrlDefinition definition = null;
       if (keyword.equalsIgnoreCase(SELECT_KEYWORD) || keyword.equalsIgnoreCase(JOIN_KEYWORD)
           || keyword.equalsIgnoreCase(SUBSCRIBE_KEYWORD)) {
-        boolean isSubscribe = false;
         if (keyword.equalsIgnoreCase(SUBSCRIBE_KEYWORD)) { //Remove the keyword from definition body
-          isSubscribe = true;
+          checkFatal(access!=AccessModifier.HIDDEN, ErrorCode.INVALID_SQRL_DEFINITION, "Cannot subscribe to hidden table: %s", tableName.get());
+          access = AccessModifier.SUBSCRIPTION;
           int newDefinitionStart = sqrlDefinition.end() + keywordEnd;
           definitionBody = parse(statement.substring(newDefinitionStart), statement, newDefinitionStart);
         }
+
         if (arguments.isEmpty()) {
           if (keyword.equalsIgnoreCase(JOIN_KEYWORD)) {
             definition = new SqrlRelationshipStatement(tableName, definitionBody, comment,
                 Map.of(), List.of());
           } else {
-            definition = new SqrlTableDefinition(tableName, definitionBody, isSubscribe, comment);
+            definition = new SqrlTableDefinition(tableName, definitionBody, access, comment);
           }
         } else {
           //Parse arguments
@@ -171,7 +175,7 @@ public class SqrlStatementParser {
             definition = new SqrlRelationshipStatement(tableName, definitionBody, comment,
                 argumentMap, processedBody.getRight());
           } else {
-            definition = new SqrlTableFunctionStatement(tableName, definitionBody, isSubscribe, comment,
+            definition = new SqrlTableFunctionStatement(tableName, definitionBody, access, comment,
                 argumentMap, processedBody.getRight());
           }
         }
@@ -182,7 +186,7 @@ public class SqrlStatementParser {
         ParsedObject<NamePath> from = definitionBody.fromOffset(parseNamePath(distinctMatcher, "from", definitionBody.get()));
         ParsedObject<String> columns = definitionBody.fromOffset(parse(distinctMatcher, "columns", definitionBody.get()));
         ParsedObject<String> remaining = definitionBody.fromOffset(parse(distinctMatcher, "remaining", definitionBody.get()));
-        definition = new SqrlDistinctStatement(tableName, comment, from, columns, remaining);
+        definition = new SqrlDistinctStatement(tableName, comment, access, from, columns, remaining);
       } else {
         //We assume it's a column expression
         checkFatal(arguments.isEmpty(), ErrorCode.INVALID_SQRL_DEFINITION, "Column definitions do not support arguments");

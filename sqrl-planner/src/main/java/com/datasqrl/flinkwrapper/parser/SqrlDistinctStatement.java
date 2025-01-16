@@ -11,13 +11,14 @@ public class SqrlDistinctStatement extends SqrlDefinition {
   public SqrlDistinctStatement(
       ParsedObject<NamePath> tableName,
       SqrlComments comments,
+      AccessModifier access,
       ParsedObject<NamePath> from,
       ParsedObject<String> columns,
       ParsedObject<String> remaining) {
     super(tableName,
         new ParsedObject<>(String.format("SELECT %s FROM (SELECT * FROM %s ORDER BY %s)",
                                           columns.get(), from.get(), remaining.get()),
-            columns.getFileLocation()), false,
+            columns.getFileLocation()), access,
         comments.removeHintsByName(FILTERED_DISTINCT_HINT_NAME::equalsIgnoreCase));
     isFilteredDistinct = comments.containsHintByName(FILTERED_DISTINCT_HINT_NAME::equalsIgnoreCase);
   }

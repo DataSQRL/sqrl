@@ -21,7 +21,7 @@ public abstract class SqrlDefinition implements SqrlStatement {
 
   final ParsedObject<NamePath> tableName;
   final ParsedObject<String> definitionBody;
-  final boolean isSubscription;
+  final AccessModifier access;
   final SqrlComments comments;
 
   public String toSql(Sqrl2FlinkSQLTranslator sqrlEnv, List<StackableStatement> stack) {

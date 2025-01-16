@@ -1,4 +1,4 @@
-package com.datasqrl.flinkwrapper.planner;
+package com.datasqrl.flinkwrapper.hint;
 
 import com.datasqrl.flinkwrapper.parser.ParsedObject;
 import com.datasqrl.flinkwrapper.parser.SqrlHint;

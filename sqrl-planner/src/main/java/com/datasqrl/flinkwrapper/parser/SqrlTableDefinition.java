@@ -14,9 +14,9 @@ import lombok.AllArgsConstructor;
 public class SqrlTableDefinition extends SqrlDefinition implements StackableStatement {
 
   public SqrlTableDefinition(ParsedObject<NamePath> tableName,
-      ParsedObject<String> definitionBody, boolean isSubscription,
+      ParsedObject<String> definitionBody, AccessModifier access,
       SqrlComments comments) {
-    super(tableName, definitionBody, isSubscription, comments);
+    super(tableName, definitionBody, access, comments);
   }
 
   @Override

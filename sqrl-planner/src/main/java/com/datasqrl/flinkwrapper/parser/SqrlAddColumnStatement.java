@@ -20,7 +20,7 @@ public class SqrlAddColumnStatement extends SqrlDefinition implements StackableS
   public SqrlAddColumnStatement(ParsedObject<NamePath> tableName,
       ParsedObject<String> definitionBody,
       SqrlComments comments) {
-    super(tableName, definitionBody, false, comments);
+    super(tableName, definitionBody, AccessModifier.INHERIT, comments);
   }
 
   public String toSql(Sqrl2FlinkSQLTranslator sqrlEnv, List<StackableStatement> stack) {

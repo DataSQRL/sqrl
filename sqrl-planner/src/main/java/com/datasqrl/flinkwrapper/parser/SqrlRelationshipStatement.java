@@ -15,7 +15,7 @@ public class SqrlRelationshipStatement extends SqrlTableFunctionStatement {
       Map<Name, ParsedObject<String>> arguments, List<Name> argumentIndexes) {
     super(relationshipPath.map(x -> NamePath.of(x.getLast())),
         definitionBody.map(body -> String.format("SELECT * FROM %s this %s", relationshipPath.get().popLast(), body)),
-            false, comments, arguments, argumentIndexes);
+            AccessModifier.INHERIT, comments, arguments, argumentIndexes);
     this.relationshipPath = relationshipPath;
   }
 
