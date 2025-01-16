@@ -58,6 +58,11 @@ public class SqrlStatementParser {
   public static final Pattern DISTINCT_PARSER = Pattern.compile(DISTINCT_REGEX,
       Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
+  public static final String SELECT_KEYWORD = "select";
+  public static final String JOIN_KEYWORD = "join";
+  public static final String DISTINCT_KEYWORD = "distinct";
+  public static final String SUBSCRIBE_KEYWORD = "subscribe";
+
 
   public static final char ARGUMENT_PREFIX = '$';
   public static final String ARGUMENT_REGEX = "\\s*\\$(?<name>\\w+)\\s*:\\s*(?<type>[\\w()]+?)\\s*(,\\s*|$)";
@@ -128,14 +133,22 @@ public class SqrlStatementParser {
       Matcher matcher = sqlKeywordPattern.matcher(definitionBody.get());
       checkFatal(matcher.find(), ErrorCode.INVALID_SQRL_DEFINITION, "Could not parse SQRL statement");
       String keyword = matcher.group(1).trim();
+      int keywordEnd = matcher.end(1);
       SqrlDefinition definition = null;
-      if (keyword.equalsIgnoreCase("SELECT") || keyword.equalsIgnoreCase("JOIN")) {
+      if (keyword.equalsIgnoreCase(SELECT_KEYWORD) || keyword.equalsIgnoreCase(JOIN_KEYWORD)
+          || keyword.equalsIgnoreCase(SUBSCRIBE_KEYWORD)) {
+        boolean isSubscribe = false;
+        if (keyword.equalsIgnoreCase(SUBSCRIBE_KEYWORD)) { //Remove the keyword from definition body
+          isSubscribe = true;
+          int newDefinitionStart = sqrlDefinition.end() + keywordEnd;
+          definitionBody = parse(statement.substring(newDefinitionStart), statement, newDefinitionStart);
+        }
         if (arguments.isEmpty()) {
-          if (keyword.equalsIgnoreCase("SELECT")) {
-            definition = new SqrlTableDefinition(tableName, definitionBody, comment);
-          } else {
+          if (keyword.equalsIgnoreCase(JOIN_KEYWORD)) {
             definition = new SqrlRelationshipStatement(tableName, definitionBody, comment,
                 Map.of(), List.of());
+          } else {
+            definition = new SqrlTableDefinition(tableName, definitionBody, isSubscribe, comment);
           }
         } else {
           //Parse arguments
@@ -154,15 +167,15 @@ public class SqrlStatementParser {
           checkFatal(lastMatchEnd==arguments.get().length(), relativeLocation(arguments, lastMatchEnd), ErrorCode.INVALID_TABLE_FUNCTION_ARGUMENTS, "Argument list contains invalid arguments");
           Pair<String, List<Name>> processedBody = replaceTableFunctionVariables(definitionBody.get(), List.copyOf(argumentMap.keySet()));
           definitionBody = definitionBody.map(x -> processedBody.getKey());
-          if (keyword.equalsIgnoreCase("SELECT")) {
-            definition = new SqrlTableFunctionStatement(tableName, definitionBody, comment,
+          if (keyword.equalsIgnoreCase(JOIN_KEYWORD)) {
+            definition = new SqrlRelationshipStatement(tableName, definitionBody, comment,
                 argumentMap, processedBody.getRight());
           } else {
-            definition = new SqrlRelationshipStatement(tableName, definitionBody, comment,
+            definition = new SqrlTableFunctionStatement(tableName, definitionBody, isSubscribe, comment,
                 argumentMap, processedBody.getRight());
           }
         }
-      } else if (keyword.equalsIgnoreCase("DISTINCT")) {
+      } else if (keyword.equalsIgnoreCase(DISTINCT_KEYWORD)) {
         checkFatal(arguments.isEmpty(), ErrorCode.INVALID_SQRL_DEFINITION, "Table function not supported for operation");
         Matcher distinctMatcher = DISTINCT_PARSER.matcher(definitionBody.get());
         checkFatal(distinctMatcher.find(), ErrorCode.INVALID_SQRL_DEFINITION, "Could not parse [DISTINCT] statement.");

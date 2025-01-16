@@ -2,6 +2,8 @@ IMPORT ecommerceTs.Customer;
 IMPORT ecommerceTs.Orders AS ExternalOrders;
 
 CustomerByTime2 := DISTINCT Customer ON customerid ORDER BY `timestamp` DESC NULLS LAST;
+
+/*+filtered_distinct_order*/
 CustomerByMultipleTime := DISTINCT Customer ON customerid, email ORDER BY `timestamp` DESC, lastUpdated ASC;
 
 ExplicitDistinct := SELECT customerid, `timestamp`, name FROM (SELECT *, (ROW_NUMBER() OVER (PARTITION BY customerid ORDER BY `timestamp` DESC)) AS _rownum FROM Customer) WHERE (_rownum = 1);
@@ -9,7 +11,7 @@ ExplicitDistinct := SELECT customerid, `timestamp`, name FROM (SELECT *, (ROW_NU
 Customer.related := JOIN Customer other ON this.customerid = other.customerid ORDER BY other.`timestamp`;
 
 Customer.related($length : INT) := JOIN Customer other ON this.customerid = other.customerid
-                AND CHAR_LENGTH(other..email) >= $length ORDER BY other.`timestamp`;
+                AND CHAR_LENGTH(other.email) >= $length ORDER BY other.`timestamp`;
 
 
 /** This is for selected customers
@@ -17,6 +19,10 @@ Customer.related($length : INT) := JOIN Customer other ON this.customerid = othe
   */ /* ignored comment */
 /*+ primary_key(id, name), index(name) */
 SelectCustomers := SELECT * From Customer WHERE customerid > 0 ORDER BY `timestamp` DESC LIMIT 10;
+
+CustomerSubscription := SUBSCRIBE SELECT * FROM Customer;
+
+CustomerSubscriptionById($minId : INT) := SUBSCRIBE SELECT * FROM Customer WHERE customerid > $minId;
 
 UnnestOrders := SELECT o.id, o.customerid, o.`time`, e.productid, e.quantity, e.discount FROM ExternalOrders o CROSS JOIN UNNEST(entries) e;
 UnnestOrders.newId := id + productid;
@@ -27,8 +33,6 @@ CREATE TABLE Orders (
     PRIMARY KEY (orderid) NOT ENFORCED
 );
 
-/*+ test, query */
-/*+filtered_distinct_order*/
 CustomerTimeWindow := SELECT
                           window_start, window_end,
                           COUNT(DISTINCT email) AS unique_email_count
@@ -37,5 +41,8 @@ CustomerTimeWindow := SELECT
                            )
                       GROUP BY
                           window_start, window_end;
+
+/*+ test, query */
+CustomerTimeWindowTest := SELECT * FROM CustomerTimeWindow ORDER BY window_end DESC;
 
 CustomerQuery($id: BIGINT) := SELECT * FROM Customer WHERE customerid = $id;

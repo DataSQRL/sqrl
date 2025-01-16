@@ -26,9 +26,11 @@ import com.datasqrl.flinkwrapper.parser.SqrlDefinition;
 import com.datasqrl.flinkwrapper.parser.SqrlExportStatement;
 import com.datasqrl.flinkwrapper.parser.SqrlImportStatement;
 import com.datasqrl.flinkwrapper.parser.SqrlRelationshipStatement;
+import com.datasqrl.flinkwrapper.parser.SqrlStatement;
 import com.datasqrl.flinkwrapper.parser.SqrlStatementParser;
 import com.datasqrl.flinkwrapper.parser.SqrlTableFunctionStatement;
 import com.datasqrl.flinkwrapper.parser.StackableStatement;
+import com.datasqrl.flinkwrapper.planner.PlannerHints;
 import com.datasqrl.function.FlinkUdfNsObject;
 import com.datasqrl.io.schema.flexible.converters.SchemaToRelDataTypeFactory;
 import com.datasqrl.loaders.FlinkTableNamespaceObject;
@@ -39,6 +41,7 @@ import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.module.SqrlModule;
 import com.datasqrl.plan.MainScript;
 import com.datasqrl.plan.table.RelDataTypeTableSchema;
+import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.util.SqlNameUtil;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
@@ -47,6 +50,7 @@ import java.util.List;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Value;
+import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.runtime.CalciteContextException;
@@ -74,6 +78,7 @@ public class SqlScriptPlanner {
   private final SqlNameUtil nameUtil;
   private final PackageJson packageJson;
   private final ExecutionPipeline pipeline;
+  private final ExecutionGoal executionGoal;
 
 
 
@@ -130,6 +135,11 @@ public class SqlScriptPlanner {
   }
 
   private void planStatement(SQLStatement stmt, List<StackableStatement> statementStack, Sqrl2FlinkSQLTranslator sqrlEnv, ErrorCollector errors) throws SqlParseException {
+    //Process hints
+    PlannerHints hints = PlannerHints.EMPTY;
+    if (stmt instanceof SqrlStatement) {
+      hints = PlannerHints.fromHints(((SqrlStatement)stmt).getComments());
+    }
     if (stmt instanceof SqrlImportStatement) {
       addImport((SqrlImportStatement) stmt, sqrlEnv, errors);
     } else if (stmt instanceof SqrlExportStatement) {
@@ -140,18 +150,25 @@ public class SqlScriptPlanner {
       sqrlEnv.createTable((SqlCreateTable)node);
     } else if (stmt instanceof SqrlDefinition) {
       SqrlDefinition sqrlDef = (SqrlDefinition) stmt;
+      //Ignore test tables (that are not queries) when we are not running tests
+      if (executionGoal!=ExecutionGoal.TEST && hints.isTest() && !hints.isQuery()) return;
       String originalSql = sqrlDef.toSql(sqrlEnv, statementStack);
       SqlNode sqlNode = sqrlEnv.parseSQL(originalSql);
       //Relationships and Table functions require special handling
       RelRoot relRoot = sqrlEnv.toRelRoot(sqlNode);
-      if (stmt instanceof SqrlTableFunctionStatement) {
-        SqrlTableFunctionStatement tblFctStmt = (SqrlTableFunctionStatement) stmt;
+      if (stmt instanceof SqrlTableFunctionStatement || hints.isQuerySink()) {
         if (stmt instanceof SqrlRelationshipStatement) {
           //Add WHERE clause for primary key on left-most join table and restrict top-level SELECT to only indexes from right-most table
         }
-        //Convert arguments to resolved parameters
-        List<FunctionParameter> parameters = List.of();
-        sqrlEnv.addTableFunctionInternal(relRoot.rel, tblFctStmt.getPath(), parameters);
+        RelNode processedFunction = relRoot.rel;
+        List<FunctionParameter> parameters;
+        if (stmt instanceof SqrlTableFunctionStatement) {
+          //Convert arguments to resolved parameters and update RexDynamicParam to point to the right argument
+          parameters = List.of();
+        } else {
+          parameters = List.of();
+        }
+        sqrlEnv.addTableFunctionInternal(processedFunction, sqrlDef.getPath(), parameters);
       } else {
         sqrlEnv.addView(sqlNode, originalSql, errors);
       }
