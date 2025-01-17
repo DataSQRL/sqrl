@@ -115,7 +115,7 @@ Apache Iceberg is a table format that can be used as a database engine with Data
 
 The `iceberg` engine requires an enabled query engine to execute queries against it.
 
-The physical plan that DataSQRL generates for Kafka includes:
+The physical plan that DataSQRL generates for Iceberg includes:
 * Table DDL statements for the physical tables
 * Catalog registration for registering the tables in the associated catalog, e.g. AWS Glue.
 
@@ -123,7 +123,7 @@ The physical plan that DataSQRL generates for Kafka includes:
 
 Snowflake is a query engine that can be used in combination with a table format as a database in DataSQRL.
 
-The physical plan that DataSQRL generates for Kafka includes:
+The physical plan that DataSQRL generates for Snowflake includes:
 * External table registration through catalog integration. The Snowflake connector currently support AWS Glue.
 * View definitions for the logical tables.
 
