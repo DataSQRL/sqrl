@@ -186,6 +186,7 @@ Integration tests for the DataSQRL build tool can be found in
 
 Especially 
 - _com.datasqrl.DAGPlannerTest_ is a parametrized test that runs the compilation of various input sqrl scripts available in _src/test/resources/dagplanner_
+- _com.datasqrl.UseCaseCompileTest_ is a parametrized test that runs the compilation of various use cases (complete projects - sqrl scripts, configuration, synthetic sources, sinks -) available in _src/test/resources/usecases_.
 - _com.datasqrl.FullUsecasesIT_ is a parametrized test that runs the actual pipelines generated from various use cases (complete projects - sqrl scripts, configuration, synthetic sources, sinks -) available in _src/test/resources/usecases_.
 This test uses [testContainers](https://testcontainers.com/) and requires a valid local docker installation.  
 
