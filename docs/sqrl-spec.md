@@ -16,6 +16,8 @@ SQRL recognizes several distinct table types, each with unique characteristics a
 - **STATIC**: Consists of data that does not change over time, such as constants, table functions, or nested data structures. This type is treated as universally valid across all time points.
 
 These table types will be used throughout this specification to further describe the semantics of sql queries.
+DataSQRL executes a pipeline divided into stages (stream, log, database, server) executed on different engines (Kafka, Flink, PostGreSQL, Vert.x, ...).
+It is important to notice that the almost all the table types can be executed on all the stages provided that the engine is compatible with the table types semantics described above.  
 
 ## Functions
 Functions in SQRL are designed to be engine-agnostic, ensuring that their implementation is consistent across different platforms and execution environments. This uniformity is crucial for maintaining the semantic integrity of functions when executed under various systems.
