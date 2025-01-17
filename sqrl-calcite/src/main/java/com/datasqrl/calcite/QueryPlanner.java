@@ -207,6 +207,7 @@ public class QueryPlanner {
       return this.cluster.getTypeFactory().createSqlType(SqlTypeName.BIGINT);
     }
 
+    // hack to make Flink parser generate Calcite types
     String create = String.format("CREATE TABLE x (col %s)", datatype);
     SqlCreateTable parse = (SqlCreateTable)parse(Dialect.FLINK, create);
     SqlDataTypeSpec typeSpec = ((SqlRegularColumn) parse.getColumnList().get(0)).getType();
