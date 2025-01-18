@@ -154,7 +154,7 @@ public class SqlScriptPlanner {
       String originalSql = sqrlDef.toSql(sqrlEnv, statementStack);
       SqlNode sqlNode = sqrlEnv.parseSQL(originalSql);
       //Relationships and Table functions require special handling
-      RelRoot relRoot = sqrlEnv.toRelRoot(sqlNode);
+      RelRoot relRoot = sqrlEnv.viewtoRelRoot(sqlNode);
       if (stmt instanceof SqrlTableFunctionStatement || hints.isQuerySink()) {
         if (stmt instanceof SqrlRelationshipStatement) {
           //Add WHERE clause for primary key on left-most join table and restrict top-level SELECT to only indexes from right-most table
@@ -169,14 +169,14 @@ public class SqlScriptPlanner {
         }
         sqrlEnv.addTableFunctionInternal(processedFunction, sqrlDef.getPath(), parameters);
       } else {
-        sqrlEnv.addView(sqlNode, originalSql, errors);
+        sqrlEnv.addView(sqlNode, originalSql, hints, errors);
       }
     } else if (stmt instanceof FlinkSQLStatement) { //Some other Flink table statement we pass right through
       FlinkSQLStatement flinkStmt = (FlinkSQLStatement) stmt;
       SqlNode node = sqrlEnv.parseSQL(flinkStmt.getSql().get());
       if (node instanceof SqlCreateView || node instanceof SqlAlterViewAs) {
         //plan like other definitions from above
-        sqrlEnv.addView(node, flinkStmt.getSql().get(), errors);
+        sqrlEnv.addView(node, flinkStmt.getSql().get(), hints, errors);
       } else if (node instanceof SqlCreateTable) {
         sqrlEnv.createTable((SqlCreateTable)node);
       } else if (node instanceof SqlAlterTable || node instanceof SqlAlterView) {

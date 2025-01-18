@@ -269,6 +269,11 @@ public class FlinkSqlNodeFactory {
     return FlinkSqlNodeFactory.createProperties(options);
   }
 
+  public static SqlSelect selectAllFromTable(SqlIdentifier tableName) {
+    return new SqlSelect(SqlParserPos.ZERO, null, SqlNodeList.of(SqlIdentifier.STAR), tableName,
+        null, null, null, null, null, null, null, null);
+  }
+
   // Interface for parsing expressions
   public interface MetadataExpressionParser {
     SqlNode parseExpression(String expression);

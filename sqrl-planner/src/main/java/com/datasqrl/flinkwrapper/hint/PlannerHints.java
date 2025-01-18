@@ -2,6 +2,7 @@ package com.datasqrl.flinkwrapper.hint;
 
 import com.datasqrl.flinkwrapper.parser.SqrlComments;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.Value;
 
@@ -22,6 +23,10 @@ public class PlannerHints {
 
   public boolean isQuerySink() {
     return isTest() || isQuery();
+  }
+
+  public<H> Optional<H> getHint(Class<H> hintClass) {
+    return hints.stream().filter(hintClass::isInstance).map(hintClass::cast).findFirst();
   }
 
   public static PlannerHints fromHints(SqrlComments comments) {

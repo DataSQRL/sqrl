@@ -15,4 +15,5 @@ public abstract class TableNode extends PipelineNode {
   public String getId() {
     return getIdentifier().asSummaryString();
   }
+
 }

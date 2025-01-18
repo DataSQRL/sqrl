@@ -8,6 +8,7 @@ import com.datasqrl.plan.rules.SqrlConverterConfig.SqrlConverterConfigBuilder;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.datasqrl.util.ServiceLoaderException;
 import com.google.common.base.Preconditions;
+import java.util.List;
 import lombok.Getter;
 
 @Getter
@@ -21,6 +22,10 @@ public abstract class PlannerHint {
     Preconditions.checkArgument(source.isPresent());
     this.source = source;
     this.type = type;
+  }
+
+  public List<String> getOptions() {
+    return source.get().getOptions();
   }
 
   public String getName() {

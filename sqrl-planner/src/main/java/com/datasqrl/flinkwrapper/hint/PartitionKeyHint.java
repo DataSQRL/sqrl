@@ -9,7 +9,7 @@ public class PartitionKeyHint extends PlannerHint {
   public static final String HINT_NAME = "partition_key";
 
   protected PartitionKeyHint(ParsedObject<SqrlHint> source) {
-    super(source, Type.ANALYZER);
+    super(source, Type.DAG);
   }
 
   @AutoService(Factory.class)

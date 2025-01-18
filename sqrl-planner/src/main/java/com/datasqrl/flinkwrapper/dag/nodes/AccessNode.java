@@ -1,8 +1,8 @@
 package com.datasqrl.flinkwrapper.dag.nodes;
 
-public class QueryNode extends PipelineNode {
+public class AccessNode extends PipelineNode {
 
-  protected QueryNode() {
+  protected AccessNode() {
     super("query");
   }
 

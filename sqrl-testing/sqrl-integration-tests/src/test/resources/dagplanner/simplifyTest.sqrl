@@ -4,12 +4,17 @@ IMPORT ecommerceTs.* AS _;
 
 CustomerByTime2 := DISTINCT Customer ON customerid ORDER BY `timestamp` DESC NULLS LAST;
 
-AnotherCustomer := SELECT customerid, email FROM _customer WHERE customerid > 100;
+AnotherCustomer := SELECT customerid, email, lastUpdated FROM _customer WHERE customerid > 100;
 
 /*+filtered_distinct_order*/
 CustomerByMultipleTime := DISTINCT Customer ON customerid, email ORDER BY `timestamp` DESC, lastUpdated ASC;
 
 ExplicitDistinct := SELECT customerid, `timestamp`, name FROM (SELECT *, (ROW_NUMBER() OVER (PARTITION BY customerid ORDER BY `timestamp` DESC)) AS _rownum FROM Customer) WHERE (_rownum = 1);
+
+InvalidDistinct := SELECT customerid, `timestamp`, name AS namee FROM (SELECT *, (ROW_NUMBER() OVER (PARTITION BY customerid ORDER BY `timestamp` DESC)) AS _rownum FROM Customer) WHERE (_rownum = 1);
+
+MissedTemporalJoin := SELECT * FROM ExternalOrders o JOIN ExplicitDistinct c ON o.customerid = c.customerid;
+TemporalJoin := SELECT * FROM ExternalOrders o JOIN ExplicitDistinct FOR SYSTEM_TIME AS OF `time` c ON o.customerid = c.customerid;
 
 Customer.related := JOIN Customer other ON this.customerid = other.customerid ORDER BY other.`timestamp`;
 
@@ -20,7 +25,7 @@ Customer.related($length : INT) := JOIN Customer other ON this.customerid = othe
 /** This is for selected customers
     and their orders
   */ /* ignored comment */
-/*+ primary_key(id, name), index(name) */
+/*+ primary_key(customerid, name), index(name) */
 SelectCustomers := SELECT * From Customer WHERE customerid > 0 ORDER BY `timestamp` DESC LIMIT 10;
 
 CustomerSubscription := SUBSCRIBE SELECT * FROM Customer;

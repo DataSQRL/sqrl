@@ -219,6 +219,18 @@ public class SqrlRexUtil {
     };
   }
 
+  public static RexFinder findInputRef(Predicate<RexInputRef> matcher) {
+    return new RexFinder<Void>() {
+      @Override
+      public Void visitInputRef(RexInputRef ref) {
+        if (matcher.test(ref)) {
+          throw Util.FoundOne.NULL;
+        }
+        return super.visitInputRef(ref);
+      }
+    };
+  }
+
   public static RexFinder<RexInputRef> findRexInputRefByIndex(final int index) {
     return new RexFinder<RexInputRef>() {
       @Override

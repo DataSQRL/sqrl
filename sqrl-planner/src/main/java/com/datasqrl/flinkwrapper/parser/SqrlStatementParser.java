@@ -128,7 +128,6 @@ public class SqrlStatementParser {
           sqrlDefinition.end());
 
       AccessModifier access = AccessModifier.QUERY;
-      if (tableName.get().getLast().isHidden()) access = AccessModifier.HIDDEN;
 
       ParsedObject<String> arguments = parse(sqrlDefinition, "arguments", statement);
       //Identify SQL keyword
@@ -141,7 +140,6 @@ public class SqrlStatementParser {
       if (keyword.equalsIgnoreCase(SELECT_KEYWORD) || keyword.equalsIgnoreCase(JOIN_KEYWORD)
           || keyword.equalsIgnoreCase(SUBSCRIBE_KEYWORD)) {
         if (keyword.equalsIgnoreCase(SUBSCRIBE_KEYWORD)) { //Remove the keyword from definition body
-          checkFatal(access!=AccessModifier.HIDDEN, ErrorCode.INVALID_SQRL_DEFINITION, "Cannot subscribe to hidden table: %s", tableName.get());
           access = AccessModifier.SUBSCRIPTION;
           int newDefinitionStart = sqrlDefinition.end() + keywordEnd;
           definitionBody = parse(statement.substring(newDefinitionStart), statement, newDefinitionStart);
