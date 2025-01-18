@@ -1150,7 +1150,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
       PkAndSelect pkAndSelect = addedTimestamp.getKey();
       Timestamps timestamp = addedTimestamp.getValue();
 
-                                                                                              //Convert now-filter to sliding window and add as hint
+      //Convert now-filter to sliding window and add as hint
       long intervalWidthMs = nowFilter.getPredicate().getIntervalLength();
       // TODO: extract slide-width from hint
       long slideWidthMs = intervalWidthMs / config.getSlideWindowPanes();

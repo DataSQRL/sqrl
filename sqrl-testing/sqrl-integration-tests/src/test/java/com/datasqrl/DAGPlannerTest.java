@@ -53,7 +53,7 @@ public class DAGPlannerTest extends AbstractAssetSnapshotTest {
 
   static class DagPlannerSQRLFiles extends SqrlScriptArgumentsProvider {
     public DagPlannerSQRLFiles() {
-      super(SCRIPT_DIR, false);
+      super(SCRIPT_DIR, true);
     }
   }
 

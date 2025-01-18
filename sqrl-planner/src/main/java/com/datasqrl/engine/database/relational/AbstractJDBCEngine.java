@@ -158,13 +158,13 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
   }
 
   private RelNode applyUpcasting(SqrlFramework framework, RelBuilder relBuilder, RelNode relNode,
-      DataTypeMapper icebergDataTypeMapper) {
+      DataTypeMapper dataTypeMapper) {
     //Apply upcasting if reading a json/other function directly from the table.
     relBuilder.push(relNode);
 
     AtomicBoolean hasChanged = new AtomicBoolean();
     List<RexNode> fields = relNode.getRowType().getFieldList().stream()
-        .map(field -> convertField(framework, field, hasChanged, relBuilder, icebergDataTypeMapper))
+        .map(field -> convertField(framework, field, hasChanged, relBuilder, dataTypeMapper))
         .collect(Collectors.toList());
 
     if (hasChanged.get()) {
@@ -175,13 +175,13 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
 
 
   private RexNode convertField(SqrlFramework framework, RelDataTypeField field, AtomicBoolean hasChanged, RelBuilder relBuilder,
-      DataTypeMapper icebergDataTypeMapper) {
+      DataTypeMapper dataTypeMapper) {
     RelDataType type = field.getType();
-    if (icebergDataTypeMapper.nativeTypeSupport(type)) {
+    if (dataTypeMapper.nativeTypeSupport(type)) {
       return relBuilder.field(field.getIndex());
     }
 
-    Optional<CastFunction> castFunction = icebergDataTypeMapper.convertType(type);
+    Optional<CastFunction> castFunction = dataTypeMapper.convertType(type);
     if (castFunction.isEmpty()) {
       throw new RuntimeException("Could not find upcast function for: " + type.getFullTypeString());
     }

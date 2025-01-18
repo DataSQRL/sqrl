@@ -1,15 +1,15 @@
 IMPORT ecommerceTs.Customer;
 
-CustomerByTime := DISTINCT Customer ON customerid ORDER BY timestamp DESC;
-CustomerByTime2 := DISTINCT Customer ON customerid ORDER BY timestamp DESC NULLS LAST;
-CustomerByTimeAsc := DISTINCT Customer ON customerid ORDER BY timestamp ASC;
+CustomerByTime := DISTINCT Customer ON customerid ORDER BY `timestamp` DESC;
+CustomerByTime2 := DISTINCT Customer ON customerid ORDER BY `timestamp` DESC NULLS LAST;
+CustomerByTimeAsc := DISTINCT Customer ON customerid ORDER BY `timestamp` ASC;
 
 CustomerByUpdated := DISTINCT Customer ON customerid ORDER BY lastUpdated DESC;
 CustomerByUpdatedAsc := DISTINCT Customer ON customerid ORDER BY lastUpdated DESC;
 
-CustomerByMultipleTime := DISTINCT Customer ON customerid, email ORDER BY timestamp DESC, lastUpdated ASC;
-CustomerByMultiple := DISTINCT Customer ON customerid, email ORDER BY lastUpdated DESC, timestamp ASC;
+CustomerByMultipleTime := DISTINCT Customer ON customerid, email ORDER BY `timestamp` DESC, lastUpdated ASC;
+CustomerByMultiple := DISTINCT Customer ON customerid, email ORDER BY lastUpdated DESC, `timestamp` ASC;
 
 CustomerVaryingCase := DISTINCT Customer ON customerID ORDER BY lastUpdated DESC;
 
-ExplicitDistinct := SELECT customerid, timestamp, name FROM (SELECT *, (ROW_NUMBER() OVER (PARTITION BY customerid ORDER BY timestamp DESC)) AS _rownum FROM Customer) WHERE (_rownum = 1);
+ExplicitDistinct := SELECT customerid, `timestamp`, name FROM (SELECT *, (ROW_NUMBER() OVER (PARTITION BY customerid ORDER BY `timestamp` DESC)) AS _rownum FROM Customer) WHERE (_rownum = 1);

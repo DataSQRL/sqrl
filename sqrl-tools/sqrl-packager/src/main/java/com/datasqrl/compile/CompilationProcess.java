@@ -15,14 +15,12 @@ import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.loaders.ModuleLoaderComposite;
 import com.datasqrl.plan.MainScript;
 import com.datasqrl.plan.global.DAGPlanner;
-import com.datasqrl.plan.global.LogicalDAGPlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.global.SqrlDAG;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.plan.validate.ScriptPlanner;
 import com.google.inject.Inject;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
@@ -49,7 +47,7 @@ public class CompilationProcess {
   private final TestPlanner testPlanner;
 
   public Pair<PhysicalPlan, TestPlan> executeCompilation(Optional<Path> testsPath) {
-    pipeline.getStage(Type.SERVER)
+    pipeline.getStageByType(Type.SERVER)
         .flatMap(p->graphqlSourceFactory.get())
         .ifPresent(graphQLMutationExtraction::analyze);
 

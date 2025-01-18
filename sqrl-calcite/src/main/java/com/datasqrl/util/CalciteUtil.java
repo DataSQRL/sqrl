@@ -36,7 +36,9 @@ import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.StructKind;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexCall;
+import org.apache.calcite.rex.RexCorrelVariable;
 import org.apache.calcite.rex.RexDynamicParam;
+import org.apache.calcite.rex.RexFieldAccess;
 import org.apache.calcite.rex.RexFieldCollation;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexLiteral;
@@ -57,11 +59,24 @@ import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableSet;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
+import org.apache.flink.table.planner.plan.schema.TimeIndicatorRelDataType;
 
 public class CalciteUtil {
 
   public static boolean isNestedTable(RelDataType type) {
     return getNestedTableType(type).isPresent();
+  }
+
+  public static boolean isRowTime(RelDataType type) {
+    if (!(type instanceof TimeIndicatorRelDataType)) return false;
+    return true;
+  }
+
+  public static Optional<Integer> findBestRowTimeIndex(RelDataType type) {
+    return type.getFieldList().stream()
+        .filter(field -> isRowTime(field.getType()))
+        .map(RelDataTypeField::getIndex)
+        .findFirst();
   }
 
   public static Optional<RelDataType> getNestedTableType(RelDataType type) {
@@ -145,6 +160,13 @@ public class CalciteUtil {
       }
     }
     return fieldNames;
+  }
+
+  public static Optional<Integer> getInputRef(RexNode rexNode) {
+    if (rexNode instanceof RexInputRef) { //Direct mapping
+      return Optional.of(((RexInputRef) rexNode).getIndex());
+    }
+    return Optional.empty();
   }
 
   /**
@@ -256,8 +278,18 @@ public class CalciteUtil {
     return Optional.empty();
   }
 
+  public static int indexOf(String columnName, RelDataType type) {
+    RelDataTypeField field = type.getField(columnName, false, false);
+    if (field == null) return -1;
+    else return field.getIndex();
+  }
+
   public static boolean isConstant(RexNode rexNode) {
-    return rexNode instanceof RexLiteral || rexNode instanceof RexDynamicParam;
+    if (rexNode instanceof RexLiteral || rexNode instanceof RexDynamicParam) return true;
+    if (rexNode instanceof RexFieldAccess) {
+      if (((RexFieldAccess) rexNode).getReferenceExpr() instanceof RexCorrelVariable) return true;
+    }
+    return false;
   }
 
   public static void addProjection(@NonNull RelBuilder relBuilder, @NonNull List<Integer> selectIdx,

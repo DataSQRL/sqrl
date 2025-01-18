@@ -45,6 +45,10 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
     Optional<EngineConfig> engineConfig = packageJson.getEngines().getEngineConfig("flink");
     Preconditions.checkArgument(engineConfig.isPresent(), "Missing engine configuration for Flink");
     ConnectorsConfig connectors = engineConfig.get().getConnectors();
+
+
+    //TODO: Move the rest of this method into the respective engines
+
     if (connectorName.equalsIgnoreCase("iceberg")) { //work around until we get the correct engine in
       return connectors.getConnectorConfig("iceberg").map(this::createIceberg);
     }
@@ -72,11 +76,12 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
 
   @Override
   public ConnectorConf getConfig(String name) {
-    ConnectorsConfig connectors = packageJson.getEngines().getEngineConfig("flink")
-        .get().getConnectors();
-    Optional<ConnectorConf> connectorConfig = connectors.getConnectorConfig(name);
-    return connectorConfig.get();
+    ConnectorsConfig connectors = packageJson.getEngines().getEngineConfigOrErr("flink")
+        .getConnectors();
+    return connectors.getConnectorConfigOrErr(name);
   }
+
+  //## TODO: move the rest of this class into the respective engines
 
   private ConnectorFactory createIceberg(ConnectorConf connectorConf) {
     // todo template this

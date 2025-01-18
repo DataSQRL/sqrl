@@ -57,10 +57,10 @@ public class DAGAssembler {
 
   public PhysicalDAGPlan assemble(SqrlDAG dag, Set<URL> jars) {
     //We make the assumption that there is a single stream stage
-    ExecutionStage streamStage = pipeline.getStage(Type.STREAMS).get().get(0);
+    ExecutionStage streamStage = pipeline.getStageByType(Type.STREAMS).orElseThrow();
     List<PhysicalDAGPlan.WriteQuery> streamQueries = new ArrayList<>();
     //We make the assumption that there is a single (optional) server stage
-    Optional<ExecutionStage> serverStage = pipeline.getStage(Type.SERVER).map(e->e.get(0));
+    Optional<ExecutionStage> serverStage = pipeline.getStageByType(Type.SERVER);
     List<PhysicalDAGPlan.ReadQuery> serverQueries = new ArrayList<>();
 
     //Plan API queries and find all tables that need to be materialized
@@ -196,7 +196,7 @@ public class DAGAssembler {
           serverStage.get(), serverQueries);
       allPlans.add(serverPlan);
     }
-    Optional<ExecutionStage> logStage = pipeline.getStage(Type.LOG).map(e->e.get(0));
+    Optional<ExecutionStage> logStage = pipeline.getStageByType(Type.LOG);
     Map<String, Log> logs = logManager.getLogs();
     if (logStage.isPresent()) {
       List<Log> sortedLogs = logs.entrySet().stream()

@@ -39,7 +39,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     super(KafkaLogEngineFactory.ENGINE_NAME, Type.LOG, EnumSet.noneOf(EngineFeature.class));
     this.engineConfig = json.getEngines().getEngineConfig(KafkaLogEngineFactory.ENGINE_NAME)
         .orElseGet(() -> new EmptyEngineConfig(KafkaLogEngineFactory.ENGINE_NAME));
-    this.connectorFactory = connectorFactory.create(Type.LOG, "kafka").orElse(null);
+    this.connectorFactory = connectorFactory.create(Type.LOG, "kafka")
+        .orElseThrow(()->new RuntimeException("Could not find kafka connector"));
   }
 
   @Override

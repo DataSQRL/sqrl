@@ -112,7 +112,7 @@ public class FlinkSqlNodeFactory {
     List<SqlNode> props = options.entrySet().stream()
         .map(option -> new SqlTableOption(
             SqlLiteral.createCharString(option.getKey(), SqlParserPos.ZERO),
-            SqlLiteral.createCharString(option.getValue().toString(), SqlParserPos.ZERO),
+            SqlLiteral.createCharString(Objects.toString(option.getValue()), SqlParserPos.ZERO),
             SqlParserPos.ZERO
         ))
         .collect(Collectors.toList());
@@ -162,12 +162,31 @@ public class FlinkSqlNodeFactory {
     );
   }
 
-  private static SqlWatermark createWatermark(String ts, long watermarkMillis) {
+  public static SqlCreateTable createTable(String tableName, RelDataType relDataType) {
+    return new SqlCreateTable(
+        SqlParserPos.ZERO,
+        FlinkSqlNodeFactory.identifier(tableName),
+        createColumns(relDataType),
+        Collections.emptyList(),
+        FlinkSqlNodeFactory.createProperties(Map.of("connector","datagen")),
+        SqlNodeList.EMPTY,
+        null,
+        null,
+        true,
+        false
+    );
+  }
+
+  public static SqlWatermark createWatermark(String ts, long watermarkMillis) {
     SqlIdentifier eventTimeColumn = FlinkSqlNodeFactory.identifier(ts);
     return FlinkSqlNodeFactory.createWatermark(
         eventTimeColumn,
         FlinkSqlNodeFactory.boundedStrategy(eventTimeColumn, Double.toString(watermarkMillis / 1000d))
     );
+  }
+
+  public static SqlNodeList createColumns(RelDataType relDataType) {
+    return createColumns(relDataType, Collections.emptyMap(), null);
   }
 
   private static SqlNodeList createColumns(RelDataType relDataType, Map<String, MetadataEntry> metadataConfig,
@@ -248,6 +267,11 @@ public class FlinkSqlNodeFactory {
       return SqlNodeList.EMPTY;
     }
     return FlinkSqlNodeFactory.createProperties(options);
+  }
+
+  public static SqlSelect selectAllFromTable(SqlIdentifier tableName) {
+    return new SqlSelect(SqlParserPos.ZERO, null, SqlNodeList.of(SqlIdentifier.STAR), tableName,
+        null, null, null, null, null, null, null, null);
   }
 
   // Interface for parsing expressions

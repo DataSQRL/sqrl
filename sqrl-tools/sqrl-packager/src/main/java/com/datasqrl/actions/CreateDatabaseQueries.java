@@ -17,8 +17,8 @@ public class CreateDatabaseQueries {
   private final DatabaseQueryFactory databaseQueryFactory;
 
   public void run() {
-    if (pipeline.getStage(Type.DATABASE).isPresent() &&
-        pipeline.getStage(Type.SERVER).isEmpty()) {
+    if (!pipeline.getStagesByType(Type.DATABASE).isEmpty() &&
+        pipeline.getStageByType(Type.SERVER).isEmpty()) {
       List<APIQuery> apiQueries = databaseQueryFactory.generateQueries(framework.getSchema());
       apiQueries.forEach(q->framework.getSchema().getQueries().add(q));
     }

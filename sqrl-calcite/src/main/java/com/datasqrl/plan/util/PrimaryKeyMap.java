@@ -1,5 +1,6 @@
 package com.datasqrl.plan.util;
 
+import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
 import java.io.Serializable;
@@ -12,6 +13,8 @@ import com.google.common.collect.Iterables;
 import lombok.*;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.flink.table.api.Schema.UnresolvedPrimaryKey;
+import org.checkerframework.checker.units.qual.C;
 
 /**
  * This class keeps track of the column indexes that are part of the primary key.
@@ -52,6 +55,15 @@ public class PrimaryKeyMap implements Serializable {
     return of(IntStream.of(pks).boxed().collect(Collectors.toList()));
   }
 
+  public static PrimaryKeyMap of(List<String> names, RelDataType type) {
+    return PrimaryKeyMap.of(names.stream()
+        .map(name -> {
+          int idx = CalciteUtil.indexOf(name, type);
+          if (idx < 0) throw new IllegalArgumentException("Primary key column not found in table: " + name);
+          return idx;
+        }).collect(Collectors.toList()));
+  }
+
   public static Builder build() {
     return new Builder();
   }
@@ -59,6 +71,11 @@ public class PrimaryKeyMap implements Serializable {
   public boolean isUndefined() {
     return undefined;
   }
+
+  public boolean isDefined() {
+    return !undefined;
+  }
+
 
   @Override
   public boolean equals(Object o) {
@@ -88,6 +105,7 @@ public class PrimaryKeyMap implements Serializable {
   }
 
   public int getLength() {
+    if (undefined) return -1;
     return columns.size();
   }
 
@@ -148,6 +166,16 @@ public class PrimaryKeyMap implements Serializable {
     public int getOnly() {
       Preconditions.checkArgument(isSimple());
       return Iterables.getOnlyElement(indexes);
+    }
+
+    public boolean isEmpty() {
+      return indexes.isEmpty();
+    }
+
+    public ColumnSet intersect(ColumnSet other) {
+      Set<Integer> intersection = new HashSet<>(indexes);
+      intersection.retainAll(other.indexes);
+      return new ColumnSet(intersection);
     }
 
     public boolean contains(int index) {

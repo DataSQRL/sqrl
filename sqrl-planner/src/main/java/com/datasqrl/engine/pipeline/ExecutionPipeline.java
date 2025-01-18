@@ -4,13 +4,11 @@
 package com.datasqrl.engine.pipeline;
 
 import com.datasqrl.config.EngineFactory.Type;
-import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.util.StreamUtil;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public interface ExecutionPipeline {
 
@@ -31,8 +29,14 @@ public interface ExecutionPipeline {
   default Optional<ExecutionStage> getStage(String name) {
     return StreamUtil.getOnlyElement(getStages().stream().filter(s -> s.getName().equalsIgnoreCase(name)));
   }
+
   default Optional<ExecutionStage> getStageByType(String type) {
     return StreamUtil.getOnlyElement(getStages().stream().filter(s -> s.getEngine().getType().name().equalsIgnoreCase(type)));
+  }
+
+  default Optional<ExecutionStage> getStageByType(Type type) {
+    return StreamUtil.getOnlyElement(getStages().stream()
+        .filter(s -> s.getEngine().getType().equals(type)));
   }
 
   /**
@@ -43,12 +47,12 @@ public interface ExecutionPipeline {
    * @param type
    * @return the stage for a given {@link Type}.
    */
-  default Optional<List<ExecutionStage>> getStage(Type type) {
-    List<ExecutionStage> executionStageStream = getStages().stream()
+  default List<ExecutionStage> getStagesByType(Type type) {
+    return getStages().stream()
         .filter(s -> s.getEngine().getType().equals(type))
         .collect(Collectors.toList());
-    return executionStageStream.isEmpty() ? Optional.empty() : Optional.of(executionStageStream);
   }
+
 
 
 }

@@ -28,8 +28,15 @@ interface SqrlConfig {
    */
   int getVersion();
 
-  public SqrlConfig getSubConfig(String name);
-  public boolean hasSubConfig(String name);
+  SqrlConfig getSubConfig(String name);
+
+  boolean hasSubConfig(String name);
+
+  /**
+   * Throws an error if the sub configuration does not exist or is empty
+   * @param name
+   */
+  void validateSubConfig(String name);
 
   /**
    * Returns the keys that are at the local level in the configuration

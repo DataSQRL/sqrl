@@ -16,7 +16,7 @@ import org.apache.calcite.schema.Table;
 @Getter
 public class RootSqrlTable implements SqrlTableMacro {
   private final Name name;
-  private final Table internalTable;
+  private final Table internalTable; //TODO: remove, since this should be taken off during DAG planning
   private final List<FunctionParameter> parameters;
   private final Supplier<RelNode> viewTransform;
   private final NamePath fullPath;
