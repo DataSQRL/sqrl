@@ -1,6 +1,5 @@
 package com.datasqrl.calcite;
 
-import static com.datasqrl.calcite.type.TypeFactory.getTypeFactory;
 import static com.datasqrl.parse.AstBuilder.createParserConfig;
 
 import com.datasqrl.calcite.convert.RelToSqlNode;
@@ -14,7 +13,16 @@ import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.parse.SqrlParserImpl;
 import com.datasqrl.util.DataContextImpl;
+import java.io.File;
+import java.io.Serializable;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -60,16 +68,6 @@ import org.apache.calcite.sql2rel.SqrlSqlToRelConverter;
 import org.apache.calcite.tools.Programs;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.javac.JaninoCompiler;
-
-import java.io.File;
-import java.io.Serializable;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import org.apache.flink.sql.parser.ddl.SqlCreateTable;
 import org.apache.flink.sql.parser.ddl.SqlTableColumn.SqlRegularColumn;
 import org.apache.flink.sql.parser.validate.FlinkSqlConformance;
@@ -203,11 +201,12 @@ public class QueryPlanner {
       return this.cluster.getTypeFactory().createSqlType(SqlTypeName.TIMESTAMP, 3);
     }
 
+    // map graphql-java-extended-scalars GraphQLBigInteger (which maps to "BigInteger" String literal in graphql.scalars.java.JavaPrimitives) to calcite BIGINT
     if (datatype.equalsIgnoreCase("BigInteger")) {
       return this.cluster.getTypeFactory().createSqlType(SqlTypeName.BIGINT);
     }
 
-    // hack to make Flink parser generate Calcite types
+    // For other types, delegate to Flink planner to create Calcite types
     String create = String.format("CREATE TABLE x (col %s)", datatype);
     SqlCreateTable parse = (SqlCreateTable)parse(Dialect.FLINK, create);
     SqlDataTypeSpec typeSpec = ((SqlRegularColumn) parse.getColumnList().get(0)).getType();
