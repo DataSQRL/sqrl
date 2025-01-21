@@ -98,6 +98,15 @@ public class DataTypeTest {
     }
   }
 
+  @Test
+  @DisplayName("Parse 'BigInteger' to BIGINT")
+  void testParseBigInteger() {
+    String datatype = "BigInteger";
+    RelDataType type = queryPlanner.parseDatatype(datatype);
+    assertEquals(SqlTypeName.BIGINT, type.getSqlTypeName());
+    assertFalse(type.isNullable());
+  }
+
   @Nested
   @DisplayName("Test Type Aliases")
   class TypeAliasesTest {
