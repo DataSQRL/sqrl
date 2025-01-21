@@ -45,7 +45,6 @@ import io.vertx.pgclient.impl.PgPoolOptions;
 import io.vertx.sqlclient.SqlClient;
 import java.io.File;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -53,6 +52,9 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.duckdb.DuckDBDriver;
 
+/**
+ * This Verticle is responsible for configuring the GraphQL server, setting up routes, metrics etc that will be deployed inside vert.x.
+ */
 @Slf4j
 public class GraphQLServer extends AbstractVerticle {
 
