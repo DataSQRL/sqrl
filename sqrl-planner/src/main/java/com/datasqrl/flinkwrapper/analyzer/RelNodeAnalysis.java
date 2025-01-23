@@ -26,8 +26,6 @@ public class RelNodeAnalysis implements RelHolder, AbstractAnalysis {
   @NonNull @Builder.Default
   PrimaryKeyMap primaryKey = PrimaryKeyMap.UNDEFINED;
   @Builder.Default
-  boolean isMostRecentDistinct = false;
-  @Builder.Default
   Optional<TableAnalysis> streamRoot = Optional.empty();
   @Builder.Default
   boolean hasNowFilter = false;

@@ -9,11 +9,15 @@ import static com.datasqrl.util.CalciteUtil.CAST_TRANSFORM;
 import static com.datasqrl.util.CalciteUtil.COALESCE_TRANSFORM;
 
 import com.datasqrl.flinkwrapper.TableAnalysisLookup;
+import com.datasqrl.flinkwrapper.analyzer.cost.CostAnalysis;
+import com.datasqrl.flinkwrapper.analyzer.cost.JoinCostAnalysis;
 import com.datasqrl.plan.rules.SqrlRelShuttle;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.rel.RelFieldCollation;
 import org.apache.calcite.rel.SingleRel;
 import org.apache.calcite.rel.core.Uncollect;
+import org.apache.calcite.rel.hint.Hintable;
 import org.apache.calcite.rel.logical.LogicalCalc;
 import org.apache.calcite.rel.logical.LogicalExchange;
 import org.apache.calcite.rel.logical.LogicalIntersect;
@@ -79,8 +83,8 @@ import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 import org.apache.flink.table.catalog.ObjectIdentifier;
+import org.apache.flink.table.planner.calcite.FlinkRelBuilder;
 import org.apache.flink.table.planner.functions.sql.SqlWindowTableFunction;
-import org.apache.flink.table.planner.plan.nodes.calcite.LogicalWatermarkAssigner;
 import org.apache.flink.table.planner.plan.schema.TableSourceTable;
 
 /**
@@ -128,28 +132,34 @@ import org.apache.flink.table.planner.plan.schema.TableSourceTable;
 @Slf4j
 public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
 
-  final RelNode relNode;
+  final RelNode originalRelnode;
   final SqrlRexUtil rexUtil;
   final TableAnalysisLookup tableLookup;
+  final FlinkRelBuilder relBuilder;
+  final CalciteCatalogReader catalog;
   final ErrorCollector errors;
 
   private final List<TableAnalysis> sourceTables = new ArrayList<>();
   private final CapabilityAnalysis capabilityAnalysis = new CapabilityAnalysis();
-  private final List<JoinCostHint> costHints = new ArrayList<>(); //TODO: Generalize to general cost hints
+  private final List<CostAnalysis> costAnalyses = new ArrayList<>(); //TODO: Generalize to general cost hints
+  private boolean hasMostRecentDistinct = false;
 
   protected RelNodeAnalysis intermediateAnalysis = null;
 
 
   public SQRLLogicalPlanAnalyzer(@NonNull RelNode relNode, @NonNull TableAnalysisLookup tableLookup,
+      CalciteCatalogReader catalog, FlinkRelBuilder relBuilder,
       @NonNull ErrorCollector errors) {
-    this.relNode = relNode;
+    this.originalRelnode = relNode;
     this.rexUtil = new SqrlRexUtil(relNode.getCluster().getRexBuilder());
     this.tableLookup = tableLookup;
     this.errors = errors;
+    this.relBuilder = relBuilder;
+    this.catalog = catalog;
   }
 
   public TableAnalysis analyze(ObjectIdentifier identifier, PlannerHints hints) {
-    RelNodeAnalysis analysis = analyzeRelNode(relNode);
+    RelNodeAnalysis analysis = analyzeRelNode(originalRelnode);
 
     if (analysis.type.isStream() && CalciteUtil.findBestRowTimeIndex(analysis.relNode.getRowType()).isEmpty()) {
       //If we don't have a rowtime, let's check if we lost it when all inputs had a rowtime
@@ -166,16 +176,16 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     if (pkHint.isPresent()) {
       try {
         analysis = analysis.toBuilder().primaryKey(
-            PrimaryKeyMap.of(pkHint.get().getPkColumns(),analysis.getRelNode().getRowType())).build();
+            PrimaryKeyMap.of(pkHint.get().getPkColumns(),analysis.getRowType())).build();
       } catch (IllegalArgumentException e) {
         throw new StatementParserException(pkHint.get().getSource().getFileLocation(), e);
       }
     }
     return new TableAnalysis(identifier,
-        analysis.relNode, analysis.type, analysis.primaryKey,
-        analysis.isMostRecentDistinct, analysis.streamRoot,
+        analysis.relNode, originalRelnode, analysis.type, analysis.primaryKey,
+        hasMostRecentDistinct, analysis.streamRoot,
         sourceTables, Optional.empty(),
-        capabilityAnalysis.getRequiredCapabilities(), hints);
+        capabilityAnalysis.getRequiredCapabilities(), costAnalyses);
   }
 
   /**
@@ -190,7 +200,9 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     Optional<TableAnalysis> tableAnalysis = tableLookup.lookupTable(input);
     if (tableAnalysis.isPresent()) {
       sourceTables.add(tableAnalysis.get());
-      return tableAnalysis.get().toRelNode(input);
+      RelOptTable table = catalog.getTable(tableAnalysis.get().getIdentifier().toList());
+      LogicalTableScan scan = new LogicalTableScan(input.getCluster(), input.getTraitSet(), (input instanceof Hintable)?((Hintable)input).getHints():List.of(), table);
+      return tableAnalysis.get().toRelNode(scan);
     } else {
       input.accept(this);
       RelNodeAnalysis analysis = this.intermediateAnalysis;
@@ -207,6 +219,10 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     return relNode.getInputs().stream().map(this::analyzeRelNode).collect(Collectors.toList());
   }
 
+  private RelNode updateRelnode(RelNode relNode, List<RelNode> newInputs) {
+    return relNode.copy(relNode.getTraitSet(), newInputs);
+  }
+
   protected RelNode setProcessResult(RelNodeAnalysis analysis) {
     this.intermediateAnalysis = analysis;
     RelNode result = analysis.relNode;
@@ -221,16 +237,24 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     if (relNode instanceof TableFunctionScan) {
       return visit((TableFunctionScan) relNode);
     } else if (relNode instanceof Uncollect) {
-      return setProcessResult(RelNodeAnalysis.builder().type(TableType.STATIC).relNode(relNode).build());
+      return visit((Uncollect) relNode);
     }
 
     //Default handling: if it has a single child, pass through, else use defaults
+    List<RelNodeAnalysis> children = getInputAnalyses(relNode);
     if (relNode.getInputs().size()==1) {
-      RelNodeAnalysis child = getInputAnalyses(relNode).get(0);
-      return setProcessResult(child.toBuilder().relNode(relNode).isMostRecentDistinct(false).build());
+      RelNodeAnalysis child = children.get(0);
+      return setProcessResult(child.toBuilder().relNode(updateRelnode(relNode, List.of(child.relNode))).build());
     } else {
-      return setProcessResult(RelNodeAnalysis.builder().relNode(relNode).build());
+      return setProcessResult(RelNodeAnalysis.builder().relNode(
+          updateRelnode(relNode, children.stream().map(RelNodeAnalysis::getRelNode).collect(Collectors.toList())))
+          .build());
     }
+  }
+
+  public RelNode visit(Uncollect uncollect) {
+    return setProcessResult(RelNodeAnalysis.builder().type(TableType.STATIC)
+        .relNode(uncollect).build());
   }
 
   @Override
@@ -245,7 +269,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
   }
 
   private RelNode sourceTable(RelNodeAnalysis tableAnalysis) {
-    if (CalciteUtil.hasNestedTable(tableAnalysis.getRelNode().getRowType())) {
+    if (CalciteUtil.hasNestedTable(tableAnalysis.getRowType())) {
       capabilityAnalysis.add(EngineFeature.DENORMALIZE);
     }
     return setProcessResult(tableAnalysis);
@@ -269,7 +293,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
       if (functionScan.getInputs().size()==1) {
         RelNodeAnalysis input = getInputAnalyses(functionScan).get(0);
         if (input.hasNowFilter) errors.notice("Rewrite now-filter followed by a window aggregation to a sliding time window");
-        return setProcessResult(input.toBuilder().relNode(functionScan).isMostRecentDistinct(false).hasNowFilter(false).build());
+        return setProcessResult(input.toBuilder().relNode(functionScan).hasNowFilter(false).build());
       }
     }
     //Generic table function call
@@ -308,22 +332,6 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
   private static final SqrlRexUtil.RexFinder FIND_NOW = SqrlRexUtil.findFunction(SqrlRexUtil::isNOW);
   private static final SqrlRexUtil.RexFinder FIND_ROWTIME_REF = SqrlRexUtil.findInputRef(ref -> CalciteUtil.isRowTime(ref.getType()));
 
-  private final boolean isTableScan(RelNode relNode) {
-    if (relNode instanceof TableScan) {
-      return true;
-    } else if (relNode instanceof LogicalWatermarkAssigner) {
-      return isTableScan(((LogicalWatermarkAssigner) relNode).getInput());
-    } else if (relNode instanceof LogicalProject) {
-      //check if it is trivial
-      LogicalProject project = (LogicalProject) relNode;
-      if (!project.getRowType().equals(project.getInput().getRowType())) return false;
-      for (int i = 0; i < project.getProjects().size(); i++) {
-        if (CalciteUtil.getInputRef(project.getProjects().get(i)).orElse(-1)!=i) return false;
-      }
-      return true;
-    }
-    return false;
-  }
 
   @Override
   public RelNode visit(LogicalFilter logicalFilter) {
@@ -346,11 +354,10 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
         LogicalProject project = (LogicalProject) input.relNode;
         RexNode column = project.getProjects().get(idxOpt.orElseThrow());
         //to be most recent distinct: a) only single filter on row_number, b) all other projects are RexInputRef,
-        // c) over is ordered by timestamp DESC and d) the input must be a table scan.
+        // c) over is ordered by timestamp DESC
         isMostRecentDistinct = conjunctions.size()==1 //a
             && IntStream.range(0, project.getProjects().size()).filter(i -> i!= idxOpt.get())
-            .mapToObj(project.getProjects()::get).map(CalciteUtil::getInputRef).allMatch(Optional::isPresent) //b
-            && isTableScan(project.getInput()); //d
+            .mapToObj(project.getProjects()::get).map(CalciteUtil::getInputRef).allMatch(Optional::isPresent); //b
         if (column instanceof RexOver && column.isA(SqlKind.ROW_NUMBER)) {
           RexWindow window = ((RexOver) column).getWindow();
           newPk = window.partitionKeys.stream().map(n ->
@@ -370,8 +377,8 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
           }
         }
       }
-
     }
+    if (isMostRecentDistinct) hasMostRecentDistinct = true;
     PrimaryKeyMap pk = input.primaryKey;
     TableType type = input.getType();
     if (newPk != null) {
@@ -385,7 +392,9 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     }
 
     boolean hasNowFilter = FIND_NOW.foundIn(condition);
-    return setProcessResult(input.toBuilder().relNode(logicalFilter).type(type).primaryKey(pk).isMostRecentDistinct(isMostRecentDistinct)
+    return setProcessResult(input.toBuilder()
+        .relNode(updateRelnode(logicalFilter, List.of(input.relNode)))
+        .type(type).primaryKey(pk)
         .hasNowFilter(hasNowFilter).build());
   }
 
@@ -412,9 +421,6 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
           idx -> resultType.getFieldNames().get(exp.i)
               .equalsIgnoreCase(inputType.getFieldNames().get(idx))).isEmpty()) isTrivialProject = false;
     }
-    if (isTrivialProject && inputType.equals(resultType)) {
-      return setProcessResult(input);
-    }
     //Map the primary key columns
     PrimaryKeyMap pk = PrimaryKeyMap.UNDEFINED;
     boolean lostPrimaryKeyMapping = false;
@@ -435,9 +441,9 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
       }
       if (!lostPrimaryKeyMapping) pk = pkBuilder.build();
     }
-    RelNodeAnalysis.RelNodeAnalysisBuilder builder = input.toBuilder().relNode(logicalProject).primaryKey(pk);
-    if (!isTrivialProject || lostPrimaryKeyMapping) builder.isMostRecentDistinct(false);
-    return setProcessResult(builder.build());
+    return setProcessResult(input.toBuilder()
+        .relNode(updateRelnode(logicalProject, List.of(input.relNode)))
+        .primaryKey(pk).build());
   }
 
   @Override
@@ -514,7 +520,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
         isTemporalJoin = true;
         rootTable = streamSide.streamRoot;
       } else {
-        RelDataType streamType = streamSide.getRelNode().getRowType();
+        RelDataType streamType = streamSide.getRowType();
         Optional<Integer> rowTimeIdx = CalciteUtil.findBestRowTimeIndex(streamType);
         rowTimeIdx.ifPresent(integer -> errors.notice(
             "You can rewrite the join as a temporal join for greater efficiency by adding: FOR SYSTEM_TIME AS OF `%s`",
@@ -592,10 +598,12 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     }
 
     //Default joins without primary key constraints or interval bounds can be expensive, so we create a hint for the cost model
-    costHints.add(new JoinCostHint(leftIn.type, rightIn.type, eqDecomp.getEqualities().size(), singletonSide));
+    costAnalyses.add(new JoinCostAnalysis(leftIn.type, rightIn.type, eqDecomp.getEqualities().size(), singletonSide));
 
-    return setProcessResult(new RelNodeAnalysis(logicalJoin, resultType, joinedPk,
-        false, rootTable, leftIn.hasNowFilter || rightIn.hasNowFilter
+    return setProcessResult(new RelNodeAnalysis(
+        updateRelnode(logicalJoin, List.of(leftIn.relNode, rightIn.relNode)),
+        resultType, joinedPk,
+        rootTable, leftIn.hasNowFilter || rightIn.hasNowFilter
         ));
   }
 
@@ -617,8 +625,10 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
       pk = pkBuilder.build();
     }
 
-    return setProcessResult(new RelNodeAnalysis(logicalCorrelate, leftIn.type, pk,
-        false, leftIn.getStreamRoot(), leftIn.hasNowFilter || rightIn.hasNowFilter
+    return setProcessResult(new RelNodeAnalysis(
+        updateRelnode(logicalCorrelate, List.of(leftIn.relNode, rightIn.relNode)),
+        leftIn.type, pk,
+        leftIn.getStreamRoot(), leftIn.hasNowFilter || rightIn.hasNowFilter
     ));
   }
 
@@ -662,7 +672,10 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
         streamRoot = Optional.empty();
       }
     }
-    return setProcessResult(new RelNodeAnalysis(setOperation, resultType, pk, false, streamRoot, nowFilter));
+    return setProcessResult(new RelNodeAnalysis(
+        updateRelnode(setOperation,inputs.stream().map(RelNodeAnalysis::getRelNode).collect(
+            Collectors.toList()))
+            , resultType, pk, streamRoot, nowFilter));
   }
 
   @Override
@@ -714,7 +727,9 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     if (input.type==STREAM && groupByFieldNames.contains("window_start") && groupByFieldNames.contains("window_end")) {
       resultType = STREAM;
     }
-    return setProcessResult(new RelNodeAnalysis(aggregate, resultType, pk, false, streamRoot, false));
+    return setProcessResult(new RelNodeAnalysis(
+        updateRelnode(aggregate, List.of(input.relNode)),
+        resultType, pk, streamRoot, false));
   }
 
   @Override
@@ -733,7 +748,9 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     } else {
       errors.notice("For efficient pattern matching, make sure the input data is a stream");
     }
-    return setProcessResult(RelNodeAnalysis.builder().type(STATE).relNode(logicalMatch).build());
+    return setProcessResult(RelNodeAnalysis.builder().type(STATE)
+        .relNode(updateRelnode(logicalMatch, List.of(input.relNode)))
+        .build());
   }
 
   @Override

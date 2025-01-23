@@ -11,19 +11,17 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
 
+@AllArgsConstructor
 public abstract class PipelineNode implements AbstractDAG.Node, Comparable<PipelineNode> {
 
-  private final String type;
+  private final @NonNull String type;
 
   @Getter
-  Map<ExecutionStage, StageAnalysis> stageAnalysis = null;
-
-  protected PipelineNode(@NonNull String type) {
-    this.type = type;
-  }
+  private final Map<ExecutionStage, StageAnalysis> stageAnalysis;
 
   public String getName() {
     return type + " " + getId();
@@ -33,6 +31,11 @@ public abstract class PipelineNode implements AbstractDAG.Node, Comparable<Pipel
 
   public boolean hasViableStage() {
     return stageAnalysis.values().stream().anyMatch(stage -> stage.isSupported());
+  }
+
+  public<C extends PipelineNode> C unwrap(Class<C> clazz) {
+    Preconditions.checkArgument(clazz.isInstance(this));
+    return (C)this;
   }
 
   /**

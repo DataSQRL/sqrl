@@ -55,4 +55,7 @@ CustomerTimeWindow := SELECT
 /*+ test, query */
 CustomerTimeWindowTest := SELECT * FROM CustomerTimeWindow ORDER BY window_end DESC;
 
-CustomerQuery($id: BIGINT) := SELECT * FROM Customer WHERE customerid = $id;
+CustomerQuery($id: BIGINT) := SELECT * FROM AnotherCustomer WHERE customerid = $id;
+
+EXPORT CustomerTimeWindow TO print.TimeWindow;
+EXPORT TemporalJoin TO mysink.customersink;

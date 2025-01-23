@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.calcite.sql.SqrlAssignment;
 import org.apache.calcite.sql.SqrlExpressionQuery;
+import org.apache.flink.table.catalog.ObjectIdentifier;
 
 @AllArgsConstructor(onConstructor_=@Inject)
 public class SqlNameUtil {
@@ -44,5 +45,9 @@ public class SqlNameUtil {
     } else {
       return path.popLast();
     }
+  }
+
+  public static ObjectIdentifier toIdentifier(NamePath path) {
+    return ObjectIdentifier.of("default_catalog", "default_database", path.getLast().getDisplay());
   }
 }

@@ -6,8 +6,12 @@ import static com.datasqrl.util.CalciteUtil.COALESCE_TRANSFORM;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.engine.stream.flink.sql.FlinkRelToSqlNode;
 import com.datasqrl.engine.stream.flink.sql.calcite.FlinkDialect;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.flinkwrapper.Sqrl2FlinkSQLTranslator;
+import com.datasqrl.flinkwrapper.Sqrl2FlinkSQLTranslator.ViewAnalysis;
+import com.datasqrl.flinkwrapper.hint.PlannerHints;
 import com.datasqrl.util.CalciteUtil;
+import com.datasqrl.util.SqlNameUtil;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -51,13 +55,14 @@ public class SqrlDistinctStatement extends SqrlDefinition {
     String sql = super.toSql(sqrlEnv, stack);
     System.out.println(sql);
     SqlNode view = sqrlEnv.parseSQL(sql);
-    Pair<RelNode,RelBuilder> rels = sqrlEnv.viewToRelBuilder(view);
-    RelBuilder relB = rels.getRight();
+    ViewAnalysis viewAnalysis = sqrlEnv.analyzeView(view, SqlNameUtil.toIdentifier(getTableName().get()),
+        PlannerHints.EMPTY, ErrorCollector.root());
+    RelBuilder relB = viewAnalysis.getRelBuilder();
 
     //Rewrite statement
     if (isFilteredDistinct) {
       //Because we define the view above, we know this is a project->filter->project(rowNum)->logicalwatermark
-      LogicalProject project = (LogicalProject)rels.getLeft();
+      LogicalProject project = (LogicalProject)viewAnalysis.getRelNode();
       LogicalFilter filter = (LogicalFilter) project.getInput();
       LogicalProject rowNum = (LogicalProject) filter.getInput();
       RexOver over = (RexOver) rowNum.getProjects().get(rowNum.getProjects().size()-1); //last one is over
@@ -72,7 +77,7 @@ public class SqrlDistinctStatement extends SqrlDefinition {
       relB.project(rowNum.getProjects());
       relB.filter(filter.getCondition());
     } else {
-      relB.push(rels.getLeft());
+      relB.push(viewAnalysis.getRelNode());
     }
     //Filter out last field
     relB.project(CalciteUtil.getIdentityRex(relB, relB.peek().getRowType().getFieldCount()-1));

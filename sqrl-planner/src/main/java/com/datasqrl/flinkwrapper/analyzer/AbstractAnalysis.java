@@ -30,6 +30,12 @@ public interface AbstractAnalysis {
     return getField(idx).getName();
   }
 
+  default int getFieldIndex(String fieldName) {
+    RelDataTypeField field = getRowType().getField(fieldName, false, false);
+    if (field == null) return -1;
+    else return field.getIndex();
+  }
+
   default Optional<Integer> getRowTime() {
     if (!hasRowType()) return Optional.empty();
     return CalciteUtil.findBestRowTimeIndex(getRowType());

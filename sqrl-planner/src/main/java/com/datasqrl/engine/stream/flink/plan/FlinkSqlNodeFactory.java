@@ -17,11 +17,16 @@ import org.apache.flink.sql.parser.dml.RichSqlInsert;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import org.apache.flink.table.catalog.ObjectIdentifier;
 
 public class FlinkSqlNodeFactory {
 
   public static SqlIdentifier identifier(String str) {
     return new SqlIdentifier(str, SqlParserPos.ZERO);
+  }
+
+  public static SqlIdentifier identifier(ObjectIdentifier identifier) {
+    return new SqlIdentifier(identifier.toList(), SqlParserPos.ZERO);
   }
 
   public static SqlCreateView createView(String tableName, SqlNode query) {

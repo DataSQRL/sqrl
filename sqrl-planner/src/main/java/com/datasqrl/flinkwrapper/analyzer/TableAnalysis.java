@@ -1,6 +1,7 @@
 package com.datasqrl.flinkwrapper.analyzer;
 
 
+import com.datasqrl.flinkwrapper.analyzer.cost.CostAnalysis;
 import com.datasqrl.flinkwrapper.hint.PlannerHints;
 import com.datasqrl.flinkwrapper.tables.SourceTableAnalysis;
 import com.datasqrl.io.tables.TableType;
@@ -17,7 +18,6 @@ import lombok.NonNull;
 import lombok.ToString.Exclude;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.type.RelDataType;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 
 @Builder
@@ -28,13 +28,14 @@ public class TableAnalysis implements AbstractAnalysis {
 
   @NonNull @Include
   ObjectIdentifier identifier;
-  RelNode relNode;
+  RelNode collapsedRelnode;
+  RelNode originalRelnode;
   @NonNull @Builder.Default
   TableType type = TableType.RELATION;
   @NonNull @Builder.Default
   PrimaryKeyMap primaryKey = PrimaryKeyMap.UNDEFINED;
   @Builder.Default
-  boolean isMostRecentDistinct = false;
+  boolean hasMostRecentDistinct = false;
   @Builder.Default @Exclude
   Optional<TableAnalysis> streamRoot = Optional.empty();
   @Builder.Default @Exclude
@@ -44,7 +45,7 @@ public class TableAnalysis implements AbstractAnalysis {
   @Builder.Default
   Set<EngineCapability> requiredCapabilities = Set.of();
   @Builder.Default
-  PlannerHints hints = PlannerHints.EMPTY;
+  List<CostAnalysis> costs = List.of();
 
   public Optional<TableAnalysis> getStreamRoot() {
     if (streamRoot == null && primaryKey.isDefined()) return Optional.of(this);
@@ -59,6 +60,10 @@ public class TableAnalysis implements AbstractAnalysis {
     return sourceTable.isPresent();
   }
 
+  public RelNode getRelNode() {
+    return collapsedRelnode;
+  }
+
   public static TableAnalysis of(
       @NonNull ObjectIdentifier identifier,
       @NonNull SourceTableAnalysis sourceTable,
@@ -66,7 +71,8 @@ public class TableAnalysis implements AbstractAnalysis {
       @NonNull PrimaryKeyMap primaryKey) {
     return TableAnalysis.builder()
         .identifier(identifier)
-        .relNode(null)
+        .collapsedRelnode(null)
+        .originalRelnode(null)
         .type(type)
         .primaryKey(primaryKey)
         .sourceTable(Optional.of(sourceTable))
@@ -75,12 +81,12 @@ public class TableAnalysis implements AbstractAnalysis {
   }
 
   public RelNodeAnalysis toRelNode(RelNode relNode) {
-    return new RelNodeAnalysis(relNode, type, primaryKey, isMostRecentDistinct, getStreamRoot(), false);
+    return new RelNodeAnalysis(relNode, type, primaryKey, getStreamRoot(), false);
   }
 
   public boolean matches(RelNode otherRelNode) {
-    if (this.relNode==null) return false;
-    return this.relNode.deepEquals(otherRelNode);
+    if (this.originalRelnode ==null) return false;
+    return this.originalRelnode.deepEquals(otherRelNode);
   }
 
 }

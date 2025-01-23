@@ -466,9 +466,10 @@ public class CalciteUtil {
     for (Integer colIndex : columnIndexes) {
       RelDataTypeField field = fields.get(colIndex);
       int ordinal = paramCounter.incrementAndGet();
-      RexNode condition = relB.equals(relB.field(colIndex), new RexDynamicParam(field.getType(), ordinal));
+      RexDynamicParam param = new RexDynamicParam(field.getType(), ordinal);
+      RexNode condition = relB.equals(relB.field(colIndex), param);
       if (field.getType().isNullable()) {
-        condition = relB.or(condition, relB.isNull(relB.field(colIndex)));
+        condition = relB.or(condition, relB.and(relB.isNull(param),relB.isNull(relB.field(colIndex))));
       }
       conditions.add(condition);
       parameters.add(new SqrlFunctionParameter(field.getName(), Optional.empty(),
