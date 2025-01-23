@@ -13,7 +13,7 @@ public class SqrlCreateTableStatement implements SqrlDdlStatement {
   ParsedObject<String> createTable;
   SqrlComments comments;
 
-  public String toSql(Sqrl2FlinkSQLTranslator sqrlEnv) {
+  public String toSql() {
     return createTable.get();
   }
 

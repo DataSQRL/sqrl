@@ -3,7 +3,10 @@
  */
 package com.datasqrl.util;
 
+import com.datasqrl.calcite.schema.sql.SqlDataTypeSpecBuilder;
 import com.datasqrl.function.InputPreservingFunction;
+import com.datasqrl.function.SqrlFunctionParameter;
+import com.datasqrl.function.SqrlFunctionParameter.CasedParameter;
 import com.google.common.base.Preconditions;
 
 import java.math.BigDecimal;
@@ -14,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -445,6 +449,34 @@ public class CalciteUtil {
       return RexLiteral.intValue(literal) == 0;
     }
     return false;
+  }
+
+
+  public static List<SqrlFunctionParameter> addFilterByColumn(RelBuilder relB, List<Integer> columnIndexes) {
+    return addFilterByColumn(relB, columnIndexes, 0);
+  }
+
+  public static List<SqrlFunctionParameter> addFilterByColumn(RelBuilder relB, List<Integer> columnIndexes, int paramOffset) {
+    Preconditions.checkArgument(!columnIndexes.isEmpty());
+    List<RelDataTypeField> fields = relB.peek().getRowType().getFieldList();
+    Preconditions.checkArgument(columnIndexes.stream().allMatch(i -> i < fields.size()),"Invalid column indexes: %s", columnIndexes);
+    AtomicInteger paramCounter = new AtomicInteger(paramOffset);
+    List<RexNode> conditions = new ArrayList<>();
+    List<SqrlFunctionParameter> parameters = new ArrayList<>();
+    for (Integer colIndex : columnIndexes) {
+      RelDataTypeField field = fields.get(colIndex);
+      int ordinal = paramCounter.incrementAndGet();
+      RexNode condition = relB.equals(relB.field(colIndex), new RexDynamicParam(field.getType(), ordinal));
+      if (field.getType().isNullable()) {
+        condition = relB.or(condition, relB.isNull(relB.field(colIndex)));
+      }
+      conditions.add(condition);
+      parameters.add(new SqrlFunctionParameter(field.getName(), Optional.empty(),
+          SqlDataTypeSpecBuilder.create(field.getType()), ordinal, field.getType(),
+          false, new CasedParameter(field.getName())));
+    }
+    relB.filter(relB.and(conditions));
+    return parameters;
   }
 
   public static void addFilteredDeduplication(RelBuilder relB, int timestampIdx, List<Integer> partition, int orderColIdx) {

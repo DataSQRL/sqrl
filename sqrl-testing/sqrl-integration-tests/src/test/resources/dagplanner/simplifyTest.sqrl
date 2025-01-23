@@ -4,9 +4,11 @@ IMPORT ecommerceTs.* AS _;
 
 CustomerByTime2 := DISTINCT Customer ON customerid ORDER BY `timestamp` DESC NULLS LAST;
 
+/*+filtered_distinct_order*/
+CustomerFilteredDistinct := DISTINCT Customer ON customerid ORDER BY lastUpdated DESC;
+
 AnotherCustomer := SELECT customerid, email, lastUpdated FROM _customer WHERE customerid > 100;
 
-/*+filtered_distinct_order*/
 CustomerByMultipleTime := DISTINCT Customer ON customerid, email ORDER BY `timestamp` DESC, lastUpdated ASC;
 
 ExplicitDistinct := SELECT customerid, `timestamp`, name FROM (SELECT *, (ROW_NUMBER() OVER (PARTITION BY customerid ORDER BY `timestamp` DESC)) AS _rownum FROM Customer) WHERE (_rownum = 1);
@@ -45,7 +47,7 @@ CustomerTimeWindow := SELECT
                           window_start, window_end,
                           COUNT(DISTINCT email) AS unique_email_count
                       FROM TABLE(
-                              TUMBLE(TABLE Customer, DESCRIPTOR(`timestamp`), INTERVAL '1' MINUTE)
+                              TUMBLE(TABLE SelectCustomers, DESCRIPTOR(`timestamp`), INTERVAL '1' MINUTE)
                            )
                       GROUP BY
                           window_start, window_end;

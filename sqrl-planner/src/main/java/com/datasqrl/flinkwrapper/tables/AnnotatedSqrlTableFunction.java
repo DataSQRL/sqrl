@@ -20,6 +20,7 @@ import org.apache.calcite.schema.FunctionParameter;
 @Getter
 public class AnnotatedSqrlTableFunction extends SqrlTableFunction implements SqrlTableMacro {
 
+  private final Supplier<RelNode> viewTransform;
   private final Name name;
   private final NamePath fullPath;
   private final boolean isTest;
@@ -27,7 +28,8 @@ public class AnnotatedSqrlTableFunction extends SqrlTableFunction implements Sqr
   public AnnotatedSqrlTableFunction(List<FunctionParameter> parameters,
       Supplier<RelNode> viewTransform, Name name, NamePath fullPath, boolean isTest,
       TableAnalysis tableAnalysis) {
-    super(parameters, viewTransform, tableAnalysis);
+    super(parameters, viewTransform.get().getRowType(), tableAnalysis);
+    this.viewTransform = viewTransform;
     this.name = name;
     this.fullPath = fullPath;
     this.isTest = isTest;

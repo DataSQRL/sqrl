@@ -6,16 +6,22 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.BuildPath;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.engine.stream.flink.plan.FlinkSqlNodeFactory;
+import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
+import com.datasqrl.engine.stream.flink.sql.calcite.FlinkDialect;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.flinkwrapper.analyzer.RelNodeAnalysis;
 import com.datasqrl.flinkwrapper.analyzer.SQRLLogicalPlanAnalyzer;
 import com.datasqrl.flinkwrapper.analyzer.TableAnalysis;
 import com.datasqrl.flinkwrapper.hint.PlannerHints;
 import com.datasqrl.flinkwrapper.tables.FlinkConnectorConfigImpl;
 import com.datasqrl.flinkwrapper.tables.FlinkTableBuilder;
+import com.datasqrl.flinkwrapper.tables.LogEngineTableMetadata;
+import com.datasqrl.flinkwrapper.tables.SourceTableAnalysis;
 import com.datasqrl.flinkwrapper.tables.SqrlTableFunction;
+import com.datasqrl.function.SqrlFunctionParameter;
 import com.datasqrl.plan.util.PrimaryKeyMap;
+import com.datasqrl.util.CalciteUtil;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.HashMultimap;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.MalformedURLException;
@@ -30,19 +36,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import javax.annotation.Nullable;
 import lombok.SneakyThrows;
+import lombok.Value;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
+import org.apache.calcite.rel.rel2sql.WatermarkRemoverRelToSqlConverter;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.schema.FunctionParameter;
-import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlOrderBy;
 import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.calcite.sql2rel.SqlToRelConverter;
+import org.apache.calcite.tools.RelBuilder;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.sql.parser.ddl.SqlAlterViewAs;
 import org.apache.flink.sql.parser.ddl.SqlCreateTable;
@@ -51,6 +64,7 @@ import org.apache.flink.sql.parser.ddl.SqlCreateView;
 import org.apache.flink.sql.parser.ddl.SqlTableLike;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.EnvironmentSettings;
+import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.TableException;
 import org.apache.flink.table.api.TableResult;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
@@ -70,10 +84,11 @@ import org.apache.flink.table.planner.operations.SqlNodeToOperationConversion;
 import org.apache.flink.table.planner.parse.CalciteParser;
 import org.apache.flink.table.planner.utils.RowLevelModificationContextUtils;
 
-public class Sqrl2FlinkSQLTranslator {
+public class Sqrl2FlinkSQLTranslator implements TableAnalysisLookup {
 
   public static final String SCHEMA_SUFFIX = "__schema";
-  public static final String EXPORT_SUFFIX = "__export";
+  public static final String TABLE_DEFINITION_SUFFIX = "__def";
+  public static final String EXPORT_SUFFIX = "_";
 
 
   private final StreamTableEnvironmentImpl tEnv;
@@ -83,7 +98,10 @@ public class Sqrl2FlinkSQLTranslator {
 
   private final AtomicInteger exportTableCounter = new AtomicInteger(0);
   private final Map<NamePath, SqrlTableMacro> tableMacros = new HashMap<>();
-  private final Map<ObjectIdentifier, TableAnalysis> tableMap = new HashMap<>();
+  private final Map<ObjectIdentifier, TableAnalysis> sourceTableMap = new HashMap<>();
+  private final HashMultimap<Integer, TableAnalysis> tableMap = HashMultimap.create();
+
+  private final FlinkSqlScriptBuilder sqlScript = new FlinkSqlScriptBuilder();
 
   public Sqrl2FlinkSQLTranslator(BuildPath buildPath) {
     List<URL> jarUrls = getUdfUrls(buildPath);
@@ -113,6 +131,26 @@ public class Sqrl2FlinkSQLTranslator {
 
   }
 
+  private void registerTable(TableAnalysis tableAnalysis) {
+    if (tableAnalysis.isSource()) {
+      sourceTableMap.put(tableAnalysis.getIdentifier(), tableAnalysis);
+    } else {
+      tableMap.put(tableAnalysis.getRelNode().deepHashCode(), tableAnalysis);
+    }
+  }
+
+  @Override
+  public TableAnalysis lookupSourceTable(ObjectIdentifier objectId) {
+    return sourceTableMap.get(objectId);
+  }
+
+  @Override
+  public Optional<TableAnalysis> lookupTable(RelNode relNode) {
+    int hashCode = relNode.deepHashCode();
+    return tableMap.get(hashCode).stream().filter(tbl -> tbl.matches(relNode)).findFirst();
+  }
+
+
   private SqlNodeConvertContext getConvertContext() {
     return new SqlNodeConvertContext(validatorSupplier.get(), catalogManager);
   }
@@ -129,8 +167,32 @@ public class Sqrl2FlinkSQLTranslator {
     return tEnv.getParser().parse(sqlStatement).get(0);
   }
 
+  public SqlNode toSqlNode(RelNode relNode) {
+    WatermarkRemoverRelToSqlConverter rel2sql = new WatermarkRemoverRelToSqlConverter(FlinkDialect.DEFAULT);
+    return rel2sql.visitRoot(relNode).asStatement();
+  }
+
+  public String toSqlString(SqlNode sqlNode) {
+    return RelToFlinkSql.convertToString(sqlNode);
+  }
+
+
+
   public RelRoot viewtoRelRoot(SqlNode sqlNode) {
+    return processView(sqlNode, this::toRelRoot);
+  }
+
+  public Pair<RelNode,RelBuilder> viewToRelBuilder(SqlNode sqlNode) {
+    return processView(sqlNode, (query, planner) -> {
+      RelRoot root = toRelRoot(query, planner);
+      RelBuilder relB = getRelBuilder(planner);
+      return Pair.of(root.rel, relB);
+    });
+  }
+
+  private<R> R processView(SqlNode sqlNode, BiFunction<SqlNode, FlinkPlannerImpl, R> postprocess) {
     FlinkPlannerImpl flinkPlanner = this.validatorSupplier.get();
+
     SqlNode validated = flinkPlanner.validate(sqlNode);
     RowLevelModificationContextUtils.clearContext();
     final SqlNode query;
@@ -139,7 +201,7 @@ public class Sqrl2FlinkSQLTranslator {
     } else if (validated instanceof SqlAlterViewAs) {
       query = ((SqlAlterViewAs) validated).getNewQuery();
     } else throw new UnsupportedOperationException("Unexpected SQLnode: " + validated);
-    return toRelRoot(query, flinkPlanner);
+    return postprocess.apply(query, flinkPlanner);
   }
 
   public RelRoot toRelRoot(SqlNode query, @Nullable FlinkPlannerImpl flinkPlanner) {
@@ -149,6 +211,15 @@ public class Sqrl2FlinkSQLTranslator {
     return context.toRelRoot(validatedQuery);
   }
 
+  public RelBuilder getRelBuilder(@Nullable FlinkPlannerImpl flinkPlanner) {
+    if (flinkPlanner == null) flinkPlanner = this.validatorSupplier.get();
+    SqlToRelConverter.Config config = flinkPlanner.config().getSqlToRelConverterConfig().withAddJsonTypeOperatorEnabled(false);
+    return
+        config.getRelBuilderFactory()
+            .create(flinkPlanner.cluster(), null)
+            .transform(config.getRelBuilderConfigTransform());
+  }
+
   private SqlNode removeSort(SqlNode sqlNode) {
     if (sqlNode instanceof SqlOrderBy) {
       return ((SqlOrderBy)sqlNode).query;
@@ -156,7 +227,22 @@ public class Sqrl2FlinkSQLTranslator {
     return sqlNode;
   }
 
-  public void addView(SqlNode viewDef, String originalSql, PlannerHints hints, ErrorCollector errors) {
+  public SqlNode updateViewQuery(SqlNode updatedQuery, SqlNode viewDef) {
+    if (viewDef instanceof SqlCreateView) {
+      SqlCreateView createView = (SqlCreateView) viewDef;
+      return updatedQuery==createView.getQuery()?createView:
+          new SqlCreateView(createView.getParserPosition(),
+              createView.getViewName(), createView.getFieldList(), updatedQuery, createView.getReplace(),
+              createView.isTemporary(), createView.isIfNotExists(),
+              createView.getComment().orElse(null), createView.getProperties().orElse(null));
+    } else {
+      SqlAlterViewAs alterView = (SqlAlterViewAs) viewDef;
+      return updatedQuery==alterView.getNewQuery()?alterView:
+          new SqlAlterViewAs(alterView.getParserPosition(), alterView.getViewIdentifier(), updatedQuery);
+    }
+  }
+
+  public List<SqrlTableFunction> addView(SqlNode viewDef, String originalSql, PlannerHints hints, ErrorCollector errors) {
     Preconditions.checkArgument(viewDef instanceof SqlCreateView || viewDef instanceof SqlAlterViewAs,
         "Unexpected view definition: " + viewDef);
     /* Stage 1: DAG-level rewriting
@@ -165,22 +251,11 @@ public class Sqrl2FlinkSQLTranslator {
       in stage 2. In stage 1, we just finalize the SqlNode that gets passed to Flink.
       Step 1.1: If query has a top level order, we pull it out, so we can later add it to the query if necessary.
      */
-    final SqlNode rewrittenViewDef;
-    if (viewDef instanceof SqlCreateView) {
-      SqlCreateView createView = (SqlCreateView) viewDef;
-      SqlNode query = removeSort(createView.getQuery());
-      rewrittenViewDef = query==createView.getQuery()?createView:
-          new SqlCreateView(createView.getParserPosition(),
-          createView.getViewName(), createView.getFieldList(), query, createView.getReplace(),
-          createView.isTemporary(), createView.isIfNotExists(),
-          createView.getComment().orElse(null), createView.getProperties().orElse(null));
-    } else {
-      SqlAlterViewAs alterView = (SqlAlterViewAs) viewDef;
-      SqlNode query = removeSort(alterView.getNewQuery());
-      rewrittenViewDef = query==alterView.getNewQuery()?alterView:
-          new SqlAlterViewAs(alterView.getParserPosition(), alterView.getViewIdentifier(), query);
-    }
-
+    final SqlNode query = removeSort(viewDef instanceof SqlCreateView?
+        ((SqlCreateView) viewDef).getQuery():
+        ((SqlAlterViewAs)viewDef).getNewQuery());
+    final SqlNode rewrittenViewDef = updateViewQuery(query, viewDef);
+    // Add the view to Flink using the rewritten SqlNode from stage 1.
     Operation op = executeSqlNode(rewrittenViewDef);
     ObjectIdentifier identifier;
     if (op instanceof AlterViewAsOperation) identifier = ((AlterViewAsOperation) op).getViewIdentifier();
@@ -194,14 +269,33 @@ public class Sqrl2FlinkSQLTranslator {
      */
     //
     RelRoot relRoot = viewtoRelRoot(parseSQL(originalSql));
-    SQRLLogicalPlanAnalyzer analyzer = new SQRLLogicalPlanAnalyzer(relRoot.rel, tableMap::get, errors);
+    SQRLLogicalPlanAnalyzer analyzer = new SQRLLogicalPlanAnalyzer(relRoot.rel, this, errors);
     TableAnalysis tableAnalysis = analyzer.analyze(identifier, hints);
-    tableMap.put(identifier, tableAnalysis);
+    registerTable(tableAnalysis);
     System.out.println(tableAnalysis);
     System.out.println(identifier.getObjectName() + " PRIMARY KEY: " + (tableAnalysis.getPrimaryKey().isDefined()?tableAnalysis.getPrimaryKey().asSimpleList():""));
+    System.out.println(identifier.getObjectName() + " INPUTS: " + (tableAnalysis.getFromTables().stream().map(TableAnalysis::getIdentifier).collect(
+        Collectors.toList())));
 
+    return makeFunctions(tableAnalysis);
+  }
 
-    // Finally, add the view to Flink using the rewritten SqlNode from stage 1.
+  /**
+   * Produces one table function for a full scan and one for lookup by primary key
+   * @param tableAnalysis
+   * @return
+   */
+  private List<SqrlTableFunction> makeFunctions(TableAnalysis tableAnalysis) {
+    List<SqrlTableFunction> functions = new ArrayList<>();
+    //TODO: add default sort (stream?timestamp desc+ pk columns asc) if top level is not logicalsort
+    functions.add(new SqrlTableFunction(List.of(), tableAnalysis.getRowType(), tableAnalysis));
+    if (tableAnalysis.getPrimaryKey().isDefined()) {
+      RelBuilder relB = getRelBuilder(null);
+      relB.push(tableAnalysis.getRelNode());
+      List<SqrlFunctionParameter> parameters = CalciteUtil.addFilterByColumn(relB, tableAnalysis.getSimplePrimaryKey().asSimpleList());
+      functions.add(new SqrlTableFunction((List)parameters, tableAnalysis.getRowType(), tableAnalysis));
+    }
+    return functions;
   }
 
   public void addTableFunctionInternal(RelNode relNode, NamePath path, List<FunctionParameter> parameters) {
@@ -209,46 +303,53 @@ public class Sqrl2FlinkSQLTranslator {
     System.out.println("TBL FCT: " + relNode.explain());
   }
 
-  public SqrlTableFunction addImport(String tableName, SqlCreateTable tableDefinition, Optional<RelDataType> schema) {
-    CreateTableOperation tableOp = addTable(Optional.of(tableName), tableDefinition, schema);
-    return addSourceTable(tableOp, false);
+  public List<SqrlTableFunction> addImport(String tableName, String tableDefinition,
+      Optional<RelDataType> schema,
+      Function<FlinkTableBuilder, LogEngineTableMetadata> logEngineBuilder) {
+    return addSourceTable(addTable(Optional.of(tableName), tableDefinition, schema, logEngineBuilder));
   }
 
   public void addGeneratedExport(NamePath exportedTable, ExecutionStage stage, Name sinkName) {
     //TODO: add to dag
   }
 
-  public void addExternalExport(NamePath exportedTable, SqlCreateTable tableDefinition, Optional<RelDataType> schema) {
+  public String addExternalExport(NamePath exportedTable, String tableDefinition, Optional<RelDataType> schema) {
     String exportTableName = exportedTable.getLast().getDisplay() + EXPORT_SUFFIX + exportTableCounter.incrementAndGet();
-    CreateTableOperation tableOp = addTable(Optional.of(exportTableName), tableDefinition, schema);
-    //TODO: add to dag
+    AddTableResult result = addTable(Optional.of(exportTableName), tableDefinition, schema, (x) -> {
+      throw new UnsupportedOperationException("Export tables require connector configuration");
+    });
+    return result.baseTableName;
   }
 
-  public SqrlTableFunction createTable(SqlCreateTable tableDefinition) {
-    CreateTableOperation tableOp = addTable(Optional.empty(), tableDefinition, Optional.empty());
-    return addSourceTable(tableOp, tableDefinition.getPropertyList().isEmpty());
+  public List<SqrlTableFunction> createTable(String tableDefinition,
+      Function<FlinkTableBuilder, LogEngineTableMetadata> logEngineBuilder) {
+    AddTableResult result = addTable(Optional.empty(), tableDefinition, Optional.empty(), logEngineBuilder);
+    return addSourceTable(result);
   }
 
-  private SqrlTableFunction addSourceTable(CreateTableOperation tableOp, boolean isMutation) {
-    RelRoot tableRelRoot = toRelRoot(FlinkSqlNodeFactory.selectAllFromTable(
-        FlinkSqlNodeFactory.identifier(tableOp.getTableIdentifier().getObjectName())), null);
-    RelNode tableRelNode = tableRelRoot.rel;
-    //Map primary key
-    PrimaryKeyMap pk = tableOp.getCatalogTable().getUnresolvedSchema().getPrimaryKey()
-        .map(names -> PrimaryKeyMap.of(names.getColumnNames(), tableRelNode.getRowType()))
-        .orElse(PrimaryKeyMap.UNDEFINED);
-    FlinkConnectorConfigImpl connector = new FlinkConnectorConfigImpl(tableOp.getCatalogTable().getOptions());
-    TableAnalysis tableAnalysis = TableAnalysis.of(tableOp.getTableIdentifier(), tableRelNode, connector.getTableType(), pk);
-    tableMap.put(tableOp.getTableIdentifier(), tableAnalysis);
-    System.out.println(tableAnalysis);
-    return new SqrlTableFunction(List.of(), () -> tableRelNode, tableAnalysis);
+  private List<SqrlTableFunction> addSourceTable(AddTableResult addResult) {
+    SqlCreateView view = FlinkSqlNodeFactory.createView(addResult.tableName, FlinkSqlNodeFactory.selectAllFromTable(
+        FlinkSqlNodeFactory.identifier(addResult.baseTableName)));
+    return addView(view, toSqlString(view), PlannerHints.EMPTY, ErrorCollector.root());
   }
 
-  private CreateTableOperation addTable(Optional<String> tableName, SqlCreateTable tableDefinition, Optional<RelDataType> schema) {
+  @Value
+  private static class AddTableResult {
+    String tableName;
+    String baseTableName;
+  }
+
+  private AddTableResult addTable(Optional<String> tableName, String createTableSql,
+      Optional<RelDataType> schema, Function<FlinkTableBuilder, LogEngineTableMetadata> logEngineBuilder) {
+    SqlNode tableSqlNode = parseSQL(createTableSql);
+    Preconditions.checkArgument(tableSqlNode instanceof SqlCreateTable, "Expected CREATE TABLE statement");
+    SqlCreateTable tableDefinition = (SqlCreateTable) tableSqlNode;
     SqlCreateTable fullTable = tableDefinition;
+    final String finalTableName = tableName.orElse(tableDefinition.getTableName().getSimple());
+    final String baseTableName = finalTableName+TABLE_DEFINITION_SUFFIX;
     if (schema.isPresent()) {
       //Use LIKE to merge schema with table definition
-      String schemaTableName = tableName.orElse(tableDefinition.getTableName().getSimple())+SCHEMA_SUFFIX;
+      String schemaTableName = finalTableName+SCHEMA_SUFFIX;
       SqlCreateTable schemaTable = FlinkSqlNodeFactory.createTable(schemaTableName, schema.get());
       executeSqlNode(schemaTable);
 
@@ -256,7 +357,7 @@ public class Sqrl2FlinkSQLTranslator {
           FlinkSqlNodeFactory.identifier(schemaTableName),
           List.of());
       fullTable = new SqlCreateTableLike(tableDefinition.getParserPosition(),
-          tableName.map(FlinkSqlNodeFactory::identifier).orElse(tableDefinition.getTableName()),
+          FlinkSqlNodeFactory.identifier(baseTableName),
           tableDefinition.getColumnList(),
           tableDefinition.getTableConstraints(),
           tableDefinition.getPropertyList(),
@@ -269,7 +370,7 @@ public class Sqrl2FlinkSQLTranslator {
     } else if (tableName.isPresent()) {
       //Replace name but leave everything else
       fullTable = new SqlCreateTable(tableDefinition.getParserPosition(),
-          FlinkSqlNodeFactory.identifier(tableName.get()),
+          FlinkSqlNodeFactory.identifier(baseTableName),
           tableDefinition.getColumnList(),
           tableDefinition.getTableConstraints(),
           tableDefinition.getPropertyList(),
@@ -279,15 +380,35 @@ public class Sqrl2FlinkSQLTranslator {
           tableDefinition.isTemporary(),
           tableDefinition.ifNotExists);
     }
+    LogEngineTableMetadata createMedata = null;
     if (fullTable.getPropertyList().isEmpty()) { //it's an internal CREATE TABLE for a mutation
       FlinkTableBuilder tableBuilder = FlinkTableBuilder.toBuilder(fullTable);
-      //TODO: get connector config from log engine, check for event-key and event-time
-      tableBuilder.setConnectorOptions(Map.of("connector","datagen"));
-      //TODO: if primary key is enforced make it an upsert stream
+      tableBuilder.setName(baseTableName);
+      createMedata = logEngineBuilder.apply(tableBuilder);
+      //TODO: plan operation but don't execute it so we can get the schema, then pull out computed columns and make those "fixed"
+      //since they will be computed on the server
       fullTable = tableBuilder.buildSql(false);
     }
     CreateTableOperation tableOp = (CreateTableOperation)executeSqlNode(fullTable);
-    return tableOp;
+    //Create table analysis
+    Schema flinkSchema = tableOp.getCatalogTable().getUnresolvedSchema();
+    //Map primary key
+    PrimaryKeyMap pk = flinkSchema.getPrimaryKey()
+        .map(flinkPk -> PrimaryKeyMap.of(
+            flinkPk.getColumnNames().stream().map(name ->
+                IntStream.range(0,flinkSchema.getColumns().size())
+                    .filter(i -> flinkSchema.getColumns().get(i).getName().equalsIgnoreCase(name)).findFirst().getAsInt()
+            ).collect(Collectors.toList())
+        ))
+        .orElse(PrimaryKeyMap.UNDEFINED);
+    FlinkConnectorConfigImpl connector = new FlinkConnectorConfigImpl(tableOp.getCatalogTable().getOptions());
+    TableAnalysis tableAnalysis = TableAnalysis.of(tableOp.getTableIdentifier(),
+        new SourceTableAnalysis(connector, flinkSchema, createMedata),
+        connector.getTableType(), pk);
+    registerTable(tableAnalysis);
+    System.out.println(tableAnalysis);
+
+    return new AddTableResult(finalTableName, baseTableName);
   }
 
 

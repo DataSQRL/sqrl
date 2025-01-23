@@ -26,6 +26,7 @@ public class PrimaryKeyMap implements Serializable {
   public static final PrimaryKeyMap UNDEFINED = new PrimaryKeyMap();
   @Singular
   final List<ColumnSet> columns;
+  @Getter
   final boolean undefined;
 
   public PrimaryKeyMap(List<ColumnSet> columns) {
@@ -68,12 +69,8 @@ public class PrimaryKeyMap implements Serializable {
     return new Builder();
   }
 
-  public boolean isUndefined() {
-    return undefined;
-  }
-
   public boolean isDefined() {
-    return !undefined;
+    return !isUndefined();
   }
 
 
@@ -126,6 +123,12 @@ public class PrimaryKeyMap implements Serializable {
   public List<Integer> asSimpleList() {
     Preconditions.checkArgument(isSimple(), "Not a simple primary key");
     return columns.stream().map(ColumnSet::getOnly).collect(Collectors.toUnmodifiableList());
+  }
+
+  public PrimaryKeyMap makeSimple(RelDataType rowType) {
+    if (undefined) return this;
+    return PrimaryKeyMap.of(columns.stream().map(colSet -> colSet.pickBest(rowType))
+        .collect(Collectors.toUnmodifiableList()));
   }
 
   public List<ColumnSet> asSubList(int length) {

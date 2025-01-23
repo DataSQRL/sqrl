@@ -11,12 +11,14 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import lombok.Getter;
 import lombok.NonNull;
 
 public abstract class PipelineNode implements AbstractDAG.Node, Comparable<PipelineNode> {
 
   private final String type;
 
+  @Getter
   Map<ExecutionStage, StageAnalysis> stageAnalysis = null;
 
   protected PipelineNode(@NonNull String type) {

@@ -18,7 +18,7 @@ public class SqrlFunctionParameter implements FunctionParameter {
 
   private final String name;
   private final Optional<SqlNode> defaultValue;
-  private final SqlDataTypeSpec type;
+  private final SqlDataTypeSpec type; //TODO: This doesn't seem to be used - can we remove?
   private final int ordinal;
   private final RelDataType relDataType;
   private final boolean isInternal;

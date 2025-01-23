@@ -63,7 +63,7 @@ public class SqrlToFlinkSqlGenerator {
   private final FlinkRelToSqlNode toSql = new FlinkRelToSqlNode();
   private final SqrlFramework framework;
 
-  public SqlResult plan(List<? extends Query> stageQueries, List<StagePlan> stagePlans) {
+  public FlinkSqlResult plan(List<? extends Query> stageQueries, List<StagePlan> stagePlans) {
     checkPreconditions(stageQueries);
     List<WriteQuery> writeQueries = applyFlinkCompatibilityRules(stageQueries);
     Set<SqlCall> sinksAndSources = extractTableDescriptors(writeQueries);
@@ -93,7 +93,7 @@ public class SqrlToFlinkSqlGenerator {
     }
 
     List<SqlCreateFunction> functions = extractFunctions(writeQueries, downcastClassNames);
-    return new SqlResult(sinksAndSources, ListUtils.union(stubSources, stubSinks), inserts, queries, functions);
+    return new FlinkSqlResult(sinksAndSources, ListUtils.union(stubSources, stubSinks), inserts, queries, functions);
   }
 
   private Pair<List<SqlCreateView>, RichSqlInsert> process(String name, RelNode relNode) {
@@ -395,17 +395,4 @@ public class SqrlToFlinkSqlGenerator {
     return program.run(null, relNode, relNode.getTraitSet(), List.of(), List.of());
   }
 
-  @lombok.Value
-  public static class SqlResult {
-
-    private Set<SqlCall> sinksSources;
-    private List<SqlCall> stubSinksSources;
-    private List<RichSqlInsert> inserts;
-    private List<SqlCreateView> queries;
-    private List<SqlCreateFunction> functions;
-
-    public List<SqlNode> getStubSchema() {
-      return ListUtils.union(functions, stubSinksSources);
-    }
-  }
 }

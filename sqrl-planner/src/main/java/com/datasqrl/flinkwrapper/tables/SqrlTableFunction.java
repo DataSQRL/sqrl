@@ -18,12 +18,12 @@ import org.apache.calcite.schema.TableFunction;
 public class SqrlTableFunction implements TableFunction {
 
   private final List<FunctionParameter> parameters;
-  private final Supplier<RelNode> viewTransform;
+  private final RelDataType rowType;
   private final TableAnalysis tableAnalysis;
 
   @Override
   public RelDataType getRowType(RelDataTypeFactory relDataTypeFactory, List<? extends Object> list) {
-    return viewTransform.get().getRowType();
+    return rowType;
   }
 
   @Override

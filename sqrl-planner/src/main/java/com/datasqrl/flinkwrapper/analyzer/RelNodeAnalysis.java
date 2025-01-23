@@ -11,12 +11,13 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.SuperBuilder;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 
 @Getter
 @Builder(toBuilder = true)
 @AllArgsConstructor
-public class RelNodeAnalysis implements RelHolder {
+public class RelNodeAnalysis implements RelHolder, AbstractAnalysis {
 
   @NonNull
   RelNode relNode;
@@ -30,18 +31,6 @@ public class RelNodeAnalysis implements RelHolder {
   Optional<TableAnalysis> streamRoot = Optional.empty();
   @Builder.Default
   boolean hasNowFilter = false;
-
-  public int getFieldLength() {
-    return relNode.getRowType().getFieldCount();
-  }
-
-  public RelDataTypeField getField(int idx) {
-    return relNode.getRowType().getFieldList().get(idx);
-  }
-
-  public String getFieldName(int idx) {
-    return getField(idx).getName();
-  }
 
 
 }

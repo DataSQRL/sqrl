@@ -19,8 +19,8 @@ import lombok.Value;
 @AllArgsConstructor
 public class SqlScriptStatementSplitter {
 
-  private static final String STATEMENT_DELIMITER = ";"; // a statement should end with `;`
-  private static final String LINE_DELIMITER = "\n";
+  public static final String STATEMENT_DELIMITER = ";"; // a statement should end with `;`
+  public static final String LINE_DELIMITER = "\n";
 
   private static final String LINE_COMMENT_PATTERN = "--.*";
   public static final String BLOCK_COMMENT_PATTERN = "((/\\*)+?[\\w\\W]+?(\\*/)+)";
@@ -106,6 +106,7 @@ public class SqlScriptStatementSplitter {
   }
 
   public static String addStatementDelimiter(String statement) {
+    if (statement.trim().endsWith(STATEMENT_DELIMITER)) return statement;
     return statement + STATEMENT_DELIMITER;
   }
 

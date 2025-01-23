@@ -9,6 +9,7 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SystemBuiltInConnectors;
+import com.datasqrl.engine.log.LogEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.CollectedException;
@@ -17,6 +18,8 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.datasqrl.flinkwrapper.Sqrl2FlinkSQLTranslator;
+import com.datasqrl.flinkwrapper.analyzer.TableAnalysis;
+import com.datasqrl.flinkwrapper.dag.DAGBuilder;
 import com.datasqrl.flinkwrapper.hint.PlannerHints;
 import com.datasqrl.flinkwrapper.parser.FlinkSQLStatement;
 import com.datasqrl.flinkwrapper.parser.ParsedObject;
@@ -31,6 +34,8 @@ import com.datasqrl.flinkwrapper.parser.SqrlStatement;
 import com.datasqrl.flinkwrapper.parser.SqrlStatementParser;
 import com.datasqrl.flinkwrapper.parser.SqrlTableFunctionStatement;
 import com.datasqrl.flinkwrapper.parser.StackableStatement;
+import com.datasqrl.flinkwrapper.tables.FlinkTableBuilder;
+import com.datasqrl.flinkwrapper.tables.LogEngineTableMetadata;
 import com.datasqrl.function.FlinkUdfNsObject;
 import com.datasqrl.io.schema.flexible.converters.SchemaToRelDataTypeFactory;
 import com.datasqrl.loaders.FlinkTableNamespaceObject;
@@ -47,7 +52,9 @@ import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;
@@ -78,7 +85,7 @@ public class SqlScriptPlanner {
   private final ExecutionPipeline pipeline;
   private final ExecutionGoal executionGoal;
 
-
+  private final DAGBuilder dagBuilder = new DAGBuilder();
 
   public void plan(MainScript mainScript, Sqrl2FlinkSQLTranslator sqrlEnv) {
     ErrorCollector scriptErrors = errorCollector.withScript(mainScript.getPath(), mainScript.getContent());
@@ -144,9 +151,7 @@ public class SqlScriptPlanner {
     } else if (stmt instanceof SqrlExportStatement) {
       addExport((SqrlExportStatement) stmt, sqrlEnv);
     } else if (stmt instanceof SqrlCreateTableStatement) {
-      SqlNode node = sqrlEnv.parseSQL(((SqrlCreateTableStatement) stmt).toSql(sqrlEnv));
-      Preconditions.checkArgument(node instanceof SqlCreateTable);
-      sqrlEnv.createTable((SqlCreateTable)node);
+      sqrlEnv.createTable(((SqrlCreateTableStatement) stmt).toSql(), getLogEngineBuilder());
     } else if (stmt instanceof SqrlDefinition) {
       SqrlDefinition sqrlDef = (SqrlDefinition) stmt;
       //Ignore test tables (that are not queries) when we are not running tests
@@ -157,7 +162,7 @@ public class SqlScriptPlanner {
       RelRoot relRoot = sqrlEnv.viewtoRelRoot(sqlNode);
       if (stmt instanceof SqrlTableFunctionStatement || hints.isQuerySink()) {
         if (stmt instanceof SqrlRelationshipStatement) {
-          //Add WHERE clause for primary key on left-most join table and restrict top-level SELECT to only indexes from right-most table
+          //Add WHERE clause for primary key, since it's the leftmost table, we just have to filter on the indexes at the top - no special handling needed
         }
         RelNode processedFunction = relRoot.rel;
         List<FunctionParameter> parameters;
@@ -178,7 +183,7 @@ public class SqlScriptPlanner {
         //plan like other definitions from above
         sqrlEnv.addView(node, flinkStmt.getSql().get(), hints, errors);
       } else if (node instanceof SqlCreateTable) {
-        sqrlEnv.createTable((SqlCreateTable)node);
+        sqrlEnv.createTable(flinkStmt.getSql().get(), getLogEngineBuilder());
       } else if (node instanceof SqlAlterTable || node instanceof SqlAlterView) {
         errors.fatal("Renaming or altering tables is not supported. Rename them directly in the script or IMPORT AS.");
       } else if (node instanceof SqlDropTable || node instanceof SqlDropView) {
@@ -231,8 +236,13 @@ public class SqlScriptPlanner {
       //TODO: for a create table statement without options (connector), we manage it internally
       // add pass it to Log engine for augmentation after validating/adding event-id and event-time metadata columns & checking no watermark/partition/constraint is present
       ExternalFlinkTable flinkTable = ExternalFlinkTable.fromNamespaceObject((FlinkTableNamespaceObject) nsObject,
-          alias, sqrlEnv, errorCollector);
-      sqrlEnv.addImport(flinkTable.tableName.getDisplay(), flinkTable.sqlCreateTable , flinkTable.schema);
+          alias, errorCollector);
+      try {
+        sqrlEnv.addImport(flinkTable.tableName.getDisplay(), flinkTable.sqlCreateTable,
+            flinkTable.schema, getLogEngineBuilder());
+      } catch (Throwable e) {
+        throw flinkTable.errorCollector.handle(e);
+      }
     } else if (nsObject instanceof FlinkUdfNsObject) {
       FlinkUdfNsObject fnsObject = (FlinkUdfNsObject) nsObject;
       Preconditions.checkArgument(fnsObject.getFunction() instanceof UserDefinedFunction, "Expected UDF: " + fnsObject.getFunction());
@@ -248,10 +258,24 @@ public class SqlScriptPlanner {
     }
   }
 
+  private Function<FlinkTableBuilder, LogEngineTableMetadata> getLogEngineBuilder() {
+    Optional<ExecutionStage> logStage = pipeline.getStageByType(Type.LOG);
+    Preconditions.checkArgument(logStage.isPresent());
+    LogEngine engine = (LogEngine) logStage.get().getEngine();
+    return tableBuilder -> {
+      //TODO: get connector config from log engine, check for event-key and event-time
+      tableBuilder.setConnectorOptions(Map.of("connector","datagen"));
+      //TODO: if primary key is enforced make it an upsert stream
+      //engine.createTable(tableBuilder)
+      return null;
+    };
+  }
+
   private void addExport(SqrlExportStatement exportStmt, Sqrl2FlinkSQLTranslator sqrlEnv) {
     System.out.println("Adding export " + exportStmt.getTableIdentifier() + " to " + exportStmt.getTableIdentifier());
     NamePath sinkPath = exportStmt.getPackageIdentifier().get();
     NamePath tablePath = exportStmt.getTableIdentifier().get();
+    TableAnalysis table = null; //TODO: lookup table by tablePath
 
 
     Optional<SystemBuiltInConnectors> builtInSink = SystemBuiltInConnectors.forExport(sinkPath.getFirst())
@@ -289,8 +313,9 @@ public class SqlScriptPlanner {
       FlinkTableNamespaceObject sinkTable = (FlinkTableNamespaceObject) sinkObj.get();
 
       ExternalFlinkTable flinkTable = ExternalFlinkTable.fromNamespaceObject(sinkTable,
-          Optional.of(sinkPath.popLast().getDisplay()), sqrlEnv, errorCollector);
-      sqrlEnv.addExternalExport(tablePath, flinkTable.sqlCreateTable, flinkTable.schema);
+          Optional.of(sinkPath.popLast().getDisplay()), errorCollector);
+      Optional<RelDataType> schema = flinkTable.schema.or(() -> Optional.of(table.getRowType()));
+      sqrlEnv.addExternalExport(tablePath, flinkTable.sqlCreateTable, schema);
     }
 
 
@@ -301,12 +326,12 @@ public class SqlScriptPlanner {
   public static class ExternalFlinkTable {
 
     Name tableName;
-    SqlCreateTable sqlCreateTable;
+    String sqlCreateTable;
     Optional<RelDataType> schema;
+    ErrorCollector errorCollector;
 
     public static ExternalFlinkTable fromNamespaceObject(FlinkTableNamespaceObject nsObject,
-        Optional<String> alias,
-        Sqrl2FlinkSQLTranslator sqrlEnv, ErrorCollector errorCollector) {
+        Optional<String> alias, ErrorCollector errorCollector) {
       FlinkTable flinkTable = nsObject.getTable();
       Name tableName = alias.map(Name::system).orElse(flinkTable.getName());
 
@@ -314,13 +339,7 @@ public class SqlScriptPlanner {
       String tableSql = flinkTable.getFlinkSQL();
       ErrorCollector tableError = errorCollector.withScript(flinkTable.getFlinkSqlFile(), tableSql);
       tableSql = SqlScriptStatementSplitter.formatEndOfSqlFile(tableSql);
-      SqlNode tableSqlNode;
-      try {
-        tableSqlNode = sqrlEnv.parseSQL(tableSql);
-      } catch (Exception e) {
-        throw tableError.handle(e);
-      }
-      tableError.checkFatal(tableSqlNode instanceof SqlCreateTable, "Expected CREATE TABLE statement");
+
 
       //Schema conversion
       Optional<RelDataType> schema = flinkTable.getSchema().map(tableSchema -> {
@@ -332,7 +351,7 @@ public class SqlScriptPlanner {
         }
       });
 
-      return new ExternalFlinkTable(tableName, (SqlCreateTable)tableSqlNode, schema);
+      return new ExternalFlinkTable(tableName, tableSql, schema, tableError);
     }
 
   }

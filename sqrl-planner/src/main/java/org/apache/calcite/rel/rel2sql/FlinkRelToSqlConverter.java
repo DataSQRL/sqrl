@@ -42,6 +42,10 @@ import org.apache.flink.table.planner.calcite.FlinkTypeSystem;
 import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
 import org.apache.flink.table.planner.plan.nodes.calcite.LogicalWatermarkAssigner;
 
+/**
+ * The original RelToSqlConverter
+ * DO NOT REMOVE
+ */
 @Getter
 public class FlinkRelToSqlConverter extends RelToSqlConverter {
 

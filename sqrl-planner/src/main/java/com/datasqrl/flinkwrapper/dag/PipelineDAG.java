@@ -1,7 +1,8 @@
-package com.datasqrl.flinkwrapper.dag.nodes;
+package com.datasqrl.flinkwrapper.dag;
 
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
+import com.datasqrl.flinkwrapper.dag.nodes.PipelineNode;
 import com.datasqrl.plan.global.StageAnalysis;
 import com.datasqrl.plan.global.StageAnalysis.MissingDependent;
 import com.datasqrl.util.AbstractDAG;
@@ -32,7 +33,7 @@ public class PipelineDAG extends AbstractDAG<PipelineNode, PipelineDAG> {
   public void eliminateInviableStages(ExecutionPipeline pipeline) {
     messagePassing(node -> {
       final LinkedHashMap<ExecutionStage, StageAnalysis> updatedStages = new LinkedHashMap<>();
-      boolean hasChange = node.stageAnalysis.values().stream().filter(s -> s.isSupported())
+      boolean hasChange = node.getStageAnalysis().values().stream().filter(s -> s.isSupported())
           .map( stageAnalysis -> {
             ExecutionStage stage = stageAnalysis.getStage();
             //Each input/output node must have a viable upstream/downstream stage, otherwise this stage isn't viable
@@ -40,7 +41,7 @@ public class PipelineDAG extends AbstractDAG<PipelineNode, PipelineDAG> {
               Set<ExecutionStage> compatibleStages = upstream?pipeline.getUpStreamFrom(stage):
                   pipeline.getDownStreamFrom(stage);
               Optional<PipelineNode> noCompatibleStage = (upstream?getInputs(node):getOutputs(node)).
-                  stream().filter(ngh -> !ngh.stageAnalysis.values().stream().anyMatch(
+                  stream().filter(ngh -> !ngh.getStageAnalysis().values().stream().anyMatch(
                       sa -> sa.isSupported() && compatibleStages.contains(sa.getStage()))
                   ).findAny();
               if (noCompatibleStage.isPresent()) {
@@ -51,7 +52,7 @@ public class PipelineDAG extends AbstractDAG<PipelineNode, PipelineDAG> {
             return false;
           }).anyMatch(Boolean::booleanValue);
       updatedStages.entrySet().stream()
-          .forEach(e-> node.stageAnalysis.put(e.getKey(), e.getValue()));
+          .forEach(e-> node.getStageAnalysis().put(e.getKey(), e.getValue()));
 
       if (!node.hasViableStage()) {
         throw new NoPlanException(node);

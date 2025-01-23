@@ -2,6 +2,7 @@ package com.datasqrl.flinkwrapper.analyzer;
 
 
 import com.datasqrl.flinkwrapper.hint.PlannerHints;
+import com.datasqrl.flinkwrapper.tables.SourceTableAnalysis;
 import com.datasqrl.io.tables.TableType;
 import com.datasqrl.plan.rules.EngineCapability;
 import com.datasqrl.plan.util.PrimaryKeyMap;
@@ -10,22 +11,23 @@ import java.util.Optional;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.EqualsAndHashCode;
+import lombok.EqualsAndHashCode.Include;
 import lombok.NonNull;
-import lombok.ToString;
 import lombok.ToString.Exclude;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.type.RelDataType;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 
 @Builder
 @Value
 @AllArgsConstructor
-public class TableAnalysis {
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+public class TableAnalysis implements AbstractAnalysis {
 
-  @NonNull
+  @NonNull @Include
   ObjectIdentifier identifier;
-  @NonNull
   RelNode relNode;
   @NonNull @Builder.Default
   TableType type = TableType.RELATION;
@@ -35,8 +37,10 @@ public class TableAnalysis {
   boolean isMostRecentDistinct = false;
   @Builder.Default @Exclude
   Optional<TableAnalysis> streamRoot = Optional.empty();
-  @Builder.Default
-  List<ObjectIdentifier> sourceTables = List.of();
+  @Builder.Default @Exclude
+  List<TableAnalysis> fromTables = List.of(); //Present for derived tables/views
+  @Builder.Default @Exclude
+  Optional<SourceTableAnalysis> sourceTable = Optional.empty(); //Present for created tables
   @Builder.Default
   Set<EngineCapability> requiredCapabilities = Set.of();
   @Builder.Default
@@ -47,22 +51,36 @@ public class TableAnalysis {
     return streamRoot;
   }
 
+  public PrimaryKeyMap getSimplePrimaryKey() {
+    return primaryKey.makeSimple(getRowType());
+  }
+
+  public boolean isSource() {
+    return sourceTable.isPresent();
+  }
+
   public static TableAnalysis of(
       @NonNull ObjectIdentifier identifier,
-      @NonNull RelNode relNode,
+      @NonNull SourceTableAnalysis sourceTable,
       @NonNull TableType type,
       @NonNull PrimaryKeyMap primaryKey) {
     return TableAnalysis.builder()
         .identifier(identifier)
-        .relNode(relNode)
+        .relNode(null)
         .type(type)
         .primaryKey(primaryKey)
+        .sourceTable(Optional.of(sourceTable))
         .streamRoot(null)
         .build();
   }
 
   public RelNodeAnalysis toRelNode(RelNode relNode) {
     return new RelNodeAnalysis(relNode, type, primaryKey, isMostRecentDistinct, getStreamRoot(), false);
+  }
+
+  public boolean matches(RelNode otherRelNode) {
+    if (this.relNode==null) return false;
+    return this.relNode.deepEquals(otherRelNode);
   }
 
 }
