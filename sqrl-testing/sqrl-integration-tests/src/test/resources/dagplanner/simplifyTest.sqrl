@@ -18,9 +18,9 @@ InvalidDistinct := SELECT customerid, `timestamp`, name AS namee FROM (SELECT *,
 MissedTemporalJoin := SELECT * FROM ExternalOrders o JOIN ExplicitDistinct c ON o.customerid = c.customerid;
 TemporalJoin := SELECT * FROM ExternalOrders o JOIN ExplicitDistinct FOR SYSTEM_TIME AS OF `time` c ON o.customerid = c.customerid;
 
-Customer.related := JOIN Customer other ON this.customerid = other.customerid ORDER BY other.`timestamp`;
+Customer.related := SELECT * FROM Customer other WHERE this.customerid = other.customerid ORDER BY other.`timestamp`;
 
-Customer.related($length : INT) := JOIN Customer other ON this.customerid = other.customerid
+Customer.related($length : INT) := SELECT * FROM Customer other WHERE this.customerid = other.customerid
                 AND CHAR_LENGTH(other.email) >= $length ORDER BY other.`timestamp`;
 
 
@@ -52,7 +52,7 @@ CustomerTimeWindow := SELECT
                       GROUP BY
                           window_start, window_end;
 
-/*+ test, query */
+/*+ test, workload */
 CustomerTimeWindowTest := SELECT * FROM CustomerTimeWindow ORDER BY window_end DESC;
 
 CustomerQuery($id: BIGINT) := SELECT * FROM AnotherCustomer WHERE customerid = $id;

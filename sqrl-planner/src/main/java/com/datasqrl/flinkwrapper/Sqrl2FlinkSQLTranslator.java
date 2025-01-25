@@ -8,15 +8,19 @@ import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.engine.stream.flink.plan.FlinkSqlNodeFactory;
 import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.ErrorLabel;
+import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.datasqrl.flinkwrapper.analyzer.SQRLLogicalPlanAnalyzer;
+import com.datasqrl.flinkwrapper.analyzer.SQRLLogicalPlanAnalyzer.ViewAnalysis;
 import com.datasqrl.flinkwrapper.analyzer.TableAnalysis;
 import com.datasqrl.flinkwrapper.hint.PlannerHints;
+import com.datasqrl.flinkwrapper.parser.ParsedField;
+import com.datasqrl.flinkwrapper.parser.StatementParserException;
 import com.datasqrl.flinkwrapper.tables.FlinkConnectorConfigImpl;
 import com.datasqrl.flinkwrapper.tables.FlinkTableBuilder;
 import com.datasqrl.flinkwrapper.tables.LogEngineTableMetadata;
 import com.datasqrl.flinkwrapper.tables.SourceTableAnalysis;
 import com.datasqrl.plan.util.PrimaryKeyMap;
-import com.datasqrl.util.SqlNameUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultimap;
 import java.io.IOException;
@@ -32,7 +36,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -48,9 +51,9 @@ import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlOrderBy;
+import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql2rel.SqlToRelConverter;
-import org.apache.calcite.tools.RelBuilder;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.sql.parser.ddl.SqlAlterViewAs;
 import org.apache.flink.sql.parser.ddl.SqlCreateTable;
@@ -58,10 +61,13 @@ import org.apache.flink.sql.parser.ddl.SqlCreateTableLike;
 import org.apache.flink.sql.parser.ddl.SqlCreateView;
 import org.apache.flink.sql.parser.ddl.SqlTableLike;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.Schema;
+import org.apache.flink.table.api.Schema.UnresolvedColumn;
+import org.apache.flink.table.api.Schema.UnresolvedPhysicalColumn;
+import org.apache.flink.table.api.SqlParserException;
 import org.apache.flink.table.api.TableException;
-import org.apache.flink.table.api.TableResult;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.api.bridge.java.internal.StreamTableEnvironmentImpl;
 import org.apache.flink.table.api.internal.TableResultInternal;
@@ -79,6 +85,8 @@ import org.apache.flink.table.planner.operations.SqlNodeConvertContext;
 import org.apache.flink.table.planner.operations.SqlNodeToOperationConversion;
 import org.apache.flink.table.planner.parse.CalciteParser;
 import org.apache.flink.table.planner.utils.RowLevelModificationContextUtils;
+import org.apache.flink.table.types.AbstractDataType;
+import org.apache.flink.table.types.DataType;
 
 public class Sqrl2FlinkSQLTranslator implements TableAnalysisLookup {
 
@@ -149,7 +157,6 @@ public class Sqrl2FlinkSQLTranslator implements TableAnalysisLookup {
     return new SqlNodeConvertContext(validatorSupplier.get(), catalogManager);
   }
 
-
   public SqlNode parseSQL(String sqlStatement) {
     SqlNodeList sqlNodeList = calciteSupplier.get().parseSqlList(sqlStatement);
     List<SqlNode> parsed = sqlNodeList.getList();
@@ -169,14 +176,9 @@ public class Sqrl2FlinkSQLTranslator implements TableAnalysisLookup {
     return RelToFlinkSql.convertToString(sqlNode);
   }
 
-  @Value
-  public static class ViewAnalysis {
-    RelNode relNode;
-    RelBuilder relBuilder;
-    TableAnalysis tableAnalysis;
-  }
 
-  public ViewAnalysis analyzeView(SqlNode sqlNode, @Nullable ObjectIdentifier identifier,
+
+  public ViewAnalysis analyzeView(SqlNode sqlNode,
       PlannerHints hints, ErrorCollector errors) {
     FlinkPlannerImpl flinkPlanner = this.validatorSupplier.get();
 
@@ -194,8 +196,7 @@ public class Sqrl2FlinkSQLTranslator implements TableAnalysisLookup {
         flinkPlanner.getOrCreateSqlValidator().getCatalogReader().unwrap(CalciteCatalogReader.class),
         relBuilder,
         errors);
-    TableAnalysis tableAnalysis = analyzer.analyze(identifier, hints);
-    return new ViewAnalysis(tableAnalysis.getCollapsedRelnode(), relBuilder, tableAnalysis);
+    return analyzer.analyze(hints);
   }
 
   public RelRoot toRelRoot(SqlNode query, @Nullable FlinkPlannerImpl flinkPlanner) {
@@ -253,8 +254,14 @@ public class Sqrl2FlinkSQLTranslator implements TableAnalysisLookup {
     // Add the view to Flink using the rewritten SqlNode from stage 1.
     Operation op = executeSqlNode(rewrittenViewDef);
     ObjectIdentifier identifier;
-    if (op instanceof AlterViewAsOperation) identifier = ((AlterViewAsOperation) op).getViewIdentifier();
-    else if (op instanceof CreateViewOperation) identifier = ((CreateViewOperation) op).getViewIdentifier();
+    Schema schema;
+    if (op instanceof AlterViewAsOperation) {
+      identifier = ((AlterViewAsOperation) op).getViewIdentifier();
+      schema = ((AlterViewAsOperation) op).getNewView().getUnresolvedSchema();
+    } else if (op instanceof CreateViewOperation) {
+      identifier = ((CreateViewOperation) op).getViewIdentifier();
+      schema = ((CreateViewOperation) op).getCatalogView().getUnresolvedSchema();
+    }
     else throw new UnsupportedOperationException(op.getClass().toString());
 
 
@@ -263,8 +270,11 @@ public class Sqrl2FlinkSQLTranslator implements TableAnalysisLookup {
       NOTE: Flink modifies the SqlSelect node during validation, so we have to re-create it from the original SQL
      */
     //
-    ViewAnalysis viewAnalysis = analyzeView(parseSQL(originalSql), identifier, hints, errors);
-    TableAnalysis tableAnalysis = viewAnalysis.getTableAnalysis();
+    ViewAnalysis viewAnalysis = analyzeView(parseSQL(originalSql), hints, errors);
+    TableAnalysis tableAnalysis = viewAnalysis.getTableAnalysis()
+        .identifier(identifier)
+        .flinkDataType(extractDataTypeFromSchema(schema))
+        .build();
     registerTable(tableAnalysis);
     System.out.println(tableAnalysis);
     System.out.println(identifier.getObjectName() + " PRIMARY KEY: " + (tableAnalysis.getPrimaryKey().isDefined()?tableAnalysis.getPrimaryKey().asSimpleList():""));
@@ -293,12 +303,11 @@ public class Sqrl2FlinkSQLTranslator implements TableAnalysisLookup {
 ////    return functions;
 //  }
 
-  public void addTableFunctionInternal(String originalSql, NamePath path, List<FunctionParameter> parameters) {
+  public void addTableFunction(String originalSql, NamePath path, List<FunctionParameter> parameters) {
     //Add to DAG
     SqlNode sqlNode = parseSQL(originalSql);
-    ViewAnalysis viewAnalysis = analyzeView(sqlNode, SqlNameUtil.toIdentifier(path),
-        PlannerHints.EMPTY, ErrorCollector.root());
-    System.out.println("TBL FCT: " + viewAnalysis.relNode.explain());
+    ViewAnalysis viewAnalysis = analyzeView(sqlNode, PlannerHints.EMPTY, ErrorCollector.root());
+    System.out.println("TBL FCT: " + viewAnalysis.getRelNode().explain());
   }
 
   public TableAnalysis addImport(String tableName, String tableDefinition,
@@ -324,9 +333,13 @@ public class Sqrl2FlinkSQLTranslator implements TableAnalysisLookup {
     return addSourceTable(result);
   }
 
+  private SqlCreateView createScanView(String viewName, ObjectIdentifier id) {
+    return  FlinkSqlNodeFactory.createView(viewName, FlinkSqlNodeFactory.selectAllFromTable(
+        FlinkSqlNodeFactory.identifier(id)));
+  }
+
   private TableAnalysis addSourceTable(AddTableResult addResult) {
-    SqlCreateView view = FlinkSqlNodeFactory.createView(addResult.tableName, FlinkSqlNodeFactory.selectAllFromTable(
-        FlinkSqlNodeFactory.identifier(addResult.baseTableIdentifier)));
+    SqlCreateView view = createScanView(addResult.tableName, addResult.baseTableIdentifier);
     return addView(toSqlString(view), PlannerHints.EMPTY, ErrorCollector.root());
   }
 
@@ -408,32 +421,89 @@ public class Sqrl2FlinkSQLTranslator implements TableAnalysisLookup {
     return new AddTableResult(finalTableName, tableOp.getTableIdentifier());
   }
 
-
   public void addFunction(String name, String clazz) {
     executeSqlNode(FlinkSqlNodeFactory.createFunction(name, clazz));
   }
-
 
   private static void checkResultOk(TableResultInternal result) {
     Preconditions.checkArgument(result == TableResultInternal.TABLE_RESULT_OK, "Result is not OK: %s", result);
   }
 
+  private DataType extractDataTypeFromSchema(Schema schema) {
+    List<DataTypes.Field> fields = new ArrayList<>();
+    for (int i = 0; i < schema.getColumns().size(); i++) {
+      UnresolvedColumn column = schema.getColumns().get(i);
+      DataType resultType = null;
+      if (column instanceof UnresolvedPhysicalColumn) {
+        AbstractDataType type = ((UnresolvedPhysicalColumn) column).getDataType();
+        if (type instanceof DataType) {
+          resultType = (DataType) type;
+        }
+      }
+      if (resultType == null) {
+        throw new StatementParserException(ErrorLabel.GENERIC, new FileLocation(i, 1),
+            "Invalid type: " + column);
+      } else {
+        fields.add(DataTypes.FIELD(column.getName(), resultType));
+      }
+    }
+    return DataTypes.ROW(fields);
+  }
+
+  @Value
+  public static class ParsedDataType {
+    RelDataType relDataType;
+    DataType dataType;
+  }
+
+  public static final String DUMMY_TABLE_NAME = "__sqrlinternal_types";
+  public static final String DROP_DUMMY_TABLE = "DROP TABLE " + DUMMY_TABLE_NAME + ";";
+
+  public ParsedDataType parseDataTypes(List<ParsedField> fieldList) {
+    Preconditions.checkArgument(!fieldList.isEmpty());
+    String createTableStatement = "CREATE TEMPORARY TABLE " + DUMMY_TABLE_NAME + "("
+        + fieldList.stream().map(arg -> arg.getName().get() + " " + arg.getType().get())
+        .collect(Collectors.joining(",\n")) + ");";
+    try {
+      CreateTableOperation op = (CreateTableOperation) executeSQL(createTableStatement);
+      Schema schema = op.getCatalogTable().getUnresolvedSchema();
+      DataType dataType = extractDataTypeFromSchema(schema);
+      ViewAnalysis viewAnalysis = analyzeView(createScanView("x", op.getTableIdentifier()),
+          PlannerHints.EMPTY, ErrorCollector.root());
+      //Remove the table we created
+      executeSQL(DROP_DUMMY_TABLE);
+      return new ParsedDataType(viewAnalysis.getRelNode().getRowType(), dataType);
+    } catch (SqlParserException e) {
+      FileLocation location = fieldList.get(0).getType().getFileLocation();
+      if (e.getCause() instanceof SqlParseException) {
+        int fieldPosition = ((SqlParseException) e.getCause()).getPos().getLineNum();
+        location = fieldList.get(fieldPosition).getType().getFileLocation();
+      }
+      throw new StatementParserException(location, e);
+    }
+
+  }
+
   @SneakyThrows
-  public TableResult executeSQL(String sqlStatement) {
+  public Operation executeSQL(String sqlStatement) {
     //TODO: handle test hints
     System.out.println("SQL: " + sqlStatement);
-    return tEnv.executeSql(sqlStatement);
+    return executeSqlNode(parseSQL(sqlStatement));
   }
 
   public Operation executeSqlNode(SqlNode sqlNode) {
     System.out.println("SQL: " + getConvertContext().toQuotedSqlString(sqlNode));
-    Operation operation = SqlNodeToOperationConversion.convert(validatorSupplier.get(), catalogManager, sqlNode)
-            .orElseThrow(() -> new TableException("Unsupported query: " + sqlNode));
+    Operation operation = getOperation(sqlNode);
     executeOperation(operation);
     return operation;
   }
 
-  public void executeOperation(Operation operation) {
+  private Operation getOperation(SqlNode sqlNode) {
+    return SqlNodeToOperationConversion.convert(validatorSupplier.get(), catalogManager, sqlNode)
+        .orElseThrow(() -> new TableException("Unsupported query: " + sqlNode));
+  }
+
+  private void executeOperation(Operation operation) {
     checkResultOk(tEnv.executeInternal(operation));
   }
 

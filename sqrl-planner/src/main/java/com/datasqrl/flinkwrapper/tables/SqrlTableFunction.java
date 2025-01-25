@@ -2,6 +2,7 @@ package com.datasqrl.flinkwrapper.tables;
 
 import com.datasqrl.flinkwrapper.analyzer.RelNodeAnalysis;
 import com.datasqrl.flinkwrapper.analyzer.TableAnalysis;
+import com.datasqrl.schema.Multiplicity;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.function.Supplier;
@@ -20,6 +21,7 @@ public class SqrlTableFunction implements TableFunction {
   private final List<FunctionParameter> parameters;
   private final RelDataType rowType;
   private final TableAnalysis tableAnalysis;
+  private final Multiplicity multiplicity = Multiplicity.MANY;
 
   @Override
   public RelDataType getRowType(RelDataTypeFactory relDataTypeFactory, List<? extends Object> list) {

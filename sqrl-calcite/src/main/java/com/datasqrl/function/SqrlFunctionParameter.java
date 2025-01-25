@@ -16,13 +16,16 @@ import org.apache.calcite.sql.validate.SqlNameMatcher;
 @Getter
 public class SqrlFunctionParameter implements FunctionParameter {
 
-  private final String name;
-  private final Optional<SqlNode> defaultValue;
-  private final SqlDataTypeSpec type; //TODO: This doesn't seem to be used - can we remove?
-  private final int ordinal;
-  private final RelDataType relDataType;
-  private final boolean isInternal;
-  private final ParameterName parentName;
+  String s = "MyTable.function($column: BIGINT) := JOIN Othertable o ON o.x = $column AND o.y = this.column";
+
+  //This is the name of the argument:
+  private final String name; //TODO: make sure the column name is properly resolved against the parent table: relDataType.getField(name, false, false)
+  private final Optional<SqlNode> defaultValue; //TODO: remove
+  private final SqlDataTypeSpec type; //TODO: This doesn't seem to be used - can we remove? Same as relDataType
+  private final int ordinal; //the ordinal within the query
+  private final RelDataType relDataType;  //this is the type of the argument
+  private final boolean isInternal; //if true, this is a column on the "this" table, else a user provided argument
+  private final ParameterName parentName; //TODO: remove; this is for case sensitiviy and name matching, could this just be the name of the parent field?
 
   public SqrlFunctionParameter(String name, Optional<SqlNode> defaultValue, SqlDataTypeSpec type,
       int ordinal, RelDataType relDataType, boolean isInternal, ParameterName parentName) {

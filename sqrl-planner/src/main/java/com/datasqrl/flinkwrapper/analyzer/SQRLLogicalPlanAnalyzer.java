@@ -12,6 +12,7 @@ import com.datasqrl.flinkwrapper.TableAnalysisLookup;
 import com.datasqrl.flinkwrapper.analyzer.cost.CostAnalysis;
 import com.datasqrl.flinkwrapper.analyzer.cost.JoinCostAnalysis;
 import com.datasqrl.plan.rules.SqrlRelShuttle;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.rel.RelFieldCollation;
@@ -81,6 +82,7 @@ import org.apache.calcite.rex.RexWindow;
 import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
+import org.apache.calcite.tools.RelBuilder;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.planner.calcite.FlinkRelBuilder;
@@ -158,7 +160,14 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     this.catalog = catalog;
   }
 
-  public TableAnalysis analyze(ObjectIdentifier identifier, PlannerHints hints) {
+  @Value
+  public static class ViewAnalysis {
+    RelNode relNode;
+    RelBuilder relBuilder;
+    TableAnalysis.TableAnalysisBuilder tableAnalysis;
+  }
+
+  public ViewAnalysis analyze(PlannerHints hints) {
     RelNodeAnalysis analysis = analyzeRelNode(originalRelnode);
 
     if (analysis.type.isStream() && CalciteUtil.findBestRowTimeIndex(analysis.relNode.getRowType()).isEmpty()) {
@@ -181,11 +190,17 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
         throw new StatementParserException(pkHint.get().getSource().getFileLocation(), e);
       }
     }
-    return new TableAnalysis(identifier,
-        analysis.relNode, originalRelnode, analysis.type, analysis.primaryKey,
-        hasMostRecentDistinct, analysis.streamRoot,
-        sourceTables, Optional.empty(),
-        capabilityAnalysis.getRequiredCapabilities(), costAnalyses);
+    TableAnalysis.TableAnalysisBuilder tableAnalysis = TableAnalysis.builder()
+        .collapsedRelnode(analysis.relNode)
+        .originalRelnode(originalRelnode)
+        .type(analysis.getType())
+        .primaryKey(analysis.primaryKey)
+        .hasMostRecentDistinct(hasMostRecentDistinct)
+        .streamRoot(analysis.streamRoot)
+        .fromTables(sourceTables)
+        .requiredCapabilities(capabilityAnalysis.getRequiredCapabilities())
+        .costs(costAnalyses);
+    return new ViewAnalysis(analysis.relNode, relBuilder, tableAnalysis);
   }
 
   /**

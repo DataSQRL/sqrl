@@ -2,6 +2,8 @@ package com.datasqrl.flinkwrapper.parser;
 
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.error.ErrorLocation.FileLocation;
+import java.util.LinkedHashMap;
+import java.util.List;
 import lombok.AllArgsConstructor;
 
 /**
@@ -23,4 +25,10 @@ public class SqrlTableDefinition extends SqrlDefinition implements StackableStat
   public boolean isRoot() {
     return true;
   }
+
+  public SqrlTableFunctionStatement toFunction() {
+    return new SqrlTableFunctionStatement(tableName, definitionBody, access, comments,
+        List.of(), List.of());
+  }
+
 }

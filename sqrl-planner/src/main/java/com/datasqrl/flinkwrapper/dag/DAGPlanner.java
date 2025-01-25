@@ -20,6 +20,7 @@ public class DAGPlanner {
   private final ErrorCollector errors;
 
   public PipelineDAG optimize(PipelineDAG dag) {
+    dag = dag.trimToSinks();
     for (PipelineNode node : dag) {
       if (!node.hasViableStage()) {
         errors.fatal("Could not find execution stage for [%s]. Stage analysis below.\n%s",node.getName(), node.toString());
@@ -53,6 +54,14 @@ public class DAGPlanner {
 
   public PhysicalDAGPlan assemble(PipelineDAG dag) {
     //move assembler logic here
+    //1st: find all the cuts between flink and materialization (db+log) stages or sinks
+    //generate a sink for each in the respective engine and insert into
+
+    //2nd: for each materialization stage, find all cuts to server or sinks
+    //generate queries for those
+
+    //3rd: build table functions for server stage: for now, those are trivial
+
     return null;
   }
 

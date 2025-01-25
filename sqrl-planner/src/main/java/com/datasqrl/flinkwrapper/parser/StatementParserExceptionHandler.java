@@ -12,7 +12,7 @@ public class StatementParserExceptionHandler implements ErrorHandler<StatementPa
   @Override
   public ErrorMessage handle(StatementParserException e, ErrorLocation baseLocation) {
     return new ErrorMessage.Implementation(e.errorLabel, e.getMessage(),
-        baseLocation.atFile(baseLocation.getFileLocation().add(e.fileLocation)),
+        baseLocation.hasFile()?baseLocation.atFile(baseLocation.getFileLocation().add(e.fileLocation)):baseLocation.atFile(e.fileLocation),
         ErrorMessage.Severity.FATAL);
   }
 

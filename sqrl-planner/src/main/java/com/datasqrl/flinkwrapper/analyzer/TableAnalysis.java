@@ -19,6 +19,7 @@ import lombok.ToString.Exclude;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;
 import org.apache.flink.table.catalog.ObjectIdentifier;
+import org.apache.flink.table.types.DataType;
 
 @Builder
 @Value
@@ -30,6 +31,7 @@ public class TableAnalysis implements AbstractAnalysis {
   ObjectIdentifier identifier;
   RelNode collapsedRelnode;
   RelNode originalRelnode;
+  DataType flinkDataType;
   @NonNull @Builder.Default
   TableType type = TableType.RELATION;
   @NonNull @Builder.Default
@@ -41,7 +43,7 @@ public class TableAnalysis implements AbstractAnalysis {
   @Builder.Default @Exclude
   List<TableAnalysis> fromTables = List.of(); //Present for derived tables/views
   @Builder.Default @Exclude
-  Optional<SourceTableAnalysis> sourceTable = Optional.empty(); //Present for created tables
+  Optional<SourceTableAnalysis> sourceTable = Optional.empty(); //Present for created source tables
   @Builder.Default
   Set<EngineCapability> requiredCapabilities = Set.of();
   @Builder.Default

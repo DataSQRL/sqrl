@@ -30,11 +30,19 @@ public abstract class SqrlDefinition implements SqrlStatement {
   }
 
   String getPrefix() {
-    return String.format("CREATE VIEW %s AS ", tableName.get().toString());
+    return String.format("CREATE VIEW %s AS ", tableName.get().getLast().getDisplay());
   }
 
   public NamePath getPath() {
     return tableName.get();
+  }
+
+  public boolean isTable() {
+    return tableName.get().size()==1;
+  }
+
+  public boolean isRelationship() {
+    return !isTable();
   }
 
   @Override

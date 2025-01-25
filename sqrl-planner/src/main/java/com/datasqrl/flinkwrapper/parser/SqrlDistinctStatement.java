@@ -8,7 +8,7 @@ import com.datasqrl.engine.stream.flink.sql.FlinkRelToSqlNode;
 import com.datasqrl.engine.stream.flink.sql.calcite.FlinkDialect;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.flinkwrapper.Sqrl2FlinkSQLTranslator;
-import com.datasqrl.flinkwrapper.Sqrl2FlinkSQLTranslator.ViewAnalysis;
+import com.datasqrl.flinkwrapper.analyzer.SQRLLogicalPlanAnalyzer.ViewAnalysis;
 import com.datasqrl.flinkwrapper.hint.PlannerHints;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.SqlNameUtil;
@@ -55,8 +55,7 @@ public class SqrlDistinctStatement extends SqrlDefinition {
     String sql = super.toSql(sqrlEnv, stack);
     System.out.println(sql);
     SqlNode view = sqrlEnv.parseSQL(sql);
-    ViewAnalysis viewAnalysis = sqrlEnv.analyzeView(view, SqlNameUtil.toIdentifier(getTableName().get()),
-        PlannerHints.EMPTY, ErrorCollector.root());
+    ViewAnalysis viewAnalysis = sqrlEnv.analyzeView(view, PlannerHints.EMPTY, ErrorCollector.root());
     RelBuilder relB = viewAnalysis.getRelBuilder();
 
     //Rewrite statement

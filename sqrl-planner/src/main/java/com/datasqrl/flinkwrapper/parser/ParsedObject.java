@@ -2,11 +2,15 @@ package com.datasqrl.flinkwrapper.parser;
 
 import com.datasqrl.error.ErrorLocation.FileLocation;
 import java.util.function.Function;
+import lombok.EqualsAndHashCode;
+import lombok.EqualsAndHashCode.Include;
 import lombok.Value;
 
 @Value
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class ParsedObject<O> {
 
+  @Include
   O object;
   FileLocation fileLocation;
 

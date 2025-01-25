@@ -6,18 +6,17 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.error.ErrorLocation.FileLocation;
+import com.datasqrl.flinkwrapper.parser.SqrlTableFunctionStatement.ParsedArgument;
 import com.google.inject.Inject;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.AllArgsConstructor;
-import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.commons.lang3.tuple.Pair;
 
 /**
@@ -63,6 +62,7 @@ public class SqrlStatementParser {
   public static final String DISTINCT_KEYWORD = "distinct";
   public static final String SUBSCRIBE_KEYWORD = "subscribe";
 
+  public static final String SELF_REFERENCE_KEYWORD = "this.";
 
   public static final char ARGUMENT_PREFIX = '$';
   public static final String ARGUMENT_REGEX = "\\s*\\$(?<name>\\w+)\\s*:\\s*(?<type>[\\w()]+?)\\s*(,\\s*|$)";
@@ -122,6 +122,9 @@ public class SqrlStatementParser {
     if (sqrlDefinition.find()) { //it's a SQRL definition
       ParsedObject<NamePath> tableName = parseNamePath(sqrlDefinition.group("tablename"),
           statement, sqrlDefinition.start("tablename"));
+      checkFatal(tableName.isPresent(), tableName.getFileLocation(), ErrorCode.INVALID_SQRL_DEFINITION, "Invalid name for definition");
+      checkFatal(tableName.get().size()<=2, tableName.getFileLocation(), ErrorCode.INVALID_SQRL_DEFINITION, "Invalid name for definition: %s", tableName.get());
+      boolean isRelationship = tableName.get().size()>1;
       int commentEnd = sqrlDefinition.start("fullmatch");
       SqrlComments comment = SqrlComments.parse(parse(statement.substring(0,commentEnd), statement, 0));
       ParsedObject<String> definitionBody = parse(statement.substring(sqrlDefinition.end()), statement,
@@ -137,45 +140,52 @@ public class SqrlStatementParser {
       String keyword = matcher.group(1).trim();
       int keywordEnd = matcher.end(1);
       SqrlDefinition definition = null;
-      if (keyword.equalsIgnoreCase(SELECT_KEYWORD) || keyword.equalsIgnoreCase(JOIN_KEYWORD)
+      if (keyword.equalsIgnoreCase(SELECT_KEYWORD)
           || keyword.equalsIgnoreCase(SUBSCRIBE_KEYWORD)) {
         if (keyword.equalsIgnoreCase(SUBSCRIBE_KEYWORD)) { //Remove the keyword from definition body
+          checkFatal(!isRelationship, tableName.getFileLocation(), ErrorCode.INVALID_SQRL_DEFINITION, "Cannot subscribe for a relationship");
           access = AccessModifier.SUBSCRIPTION;
           int newDefinitionStart = sqrlDefinition.end() + keywordEnd;
           definitionBody = parse(statement.substring(newDefinitionStart), statement, newDefinitionStart);
         }
-
-        if (arguments.isEmpty()) {
-          if (keyword.equalsIgnoreCase(JOIN_KEYWORD)) {
-            definition = new SqrlRelationshipStatement(tableName, definitionBody, comment,
-                Map.of(), List.of());
-          } else {
+        if (arguments.isEmpty() && !isRelationship) {
             definition = new SqrlTableDefinition(tableName, definitionBody, access, comment);
-          }
         } else {
-          //Parse arguments
-          Matcher argMatcher = ARGUMENT_PARSER.matcher(arguments.get());
-          Map<Name, ParsedObject<String>> argumentMap = new LinkedHashMap<>();
-          int lastMatchEnd = 0;
-          while (argMatcher.find()) {
-            checkFatal(lastMatchEnd==argMatcher.start(), relativeLocation(arguments, lastMatchEnd), ErrorCode.INVALID_TABLE_FUNCTION_ARGUMENTS, "Argument list contains invalid arguments");
-            ParsedObject<Name> argName = arguments.fromOffset(parseName(argMatcher, "name", arguments.get()));
-            checkFatal(argName.isPresent(), argName.getFileLocation(), ErrorCode.INVALID_TABLE_FUNCTION_ARGUMENTS, "Invalid argument name");
-            ParsedObject<String> typeName = arguments.fromOffset(parse(argMatcher, "type", arguments.get()));
-            checkFatal(typeName.isPresent(), typeName.getFileLocation(), ErrorCode.INVALID_TABLE_FUNCTION_ARGUMENTS, "Invalid argument type");
-            argumentMap.put(argName.get(), typeName);
-            lastMatchEnd = argMatcher.end();
+          //Parse arguments if there are any
+          LinkedHashMap<Name, ParsedArgument> argumentMap = new LinkedHashMap<>();
+          if (!arguments.isEmpty()) {
+            Matcher argMatcher = ARGUMENT_PARSER.matcher(arguments.get());
+            int lastMatchEnd = 0;
+            while (argMatcher.find()) {
+              checkFatal(lastMatchEnd == argMatcher.start(),
+                  relativeLocation(arguments, lastMatchEnd),
+                  ErrorCode.INVALID_TABLE_FUNCTION_ARGUMENTS,
+                  "Argument list contains invalid arguments");
+              ParsedObject<Name> argName = arguments.fromOffset(
+                  parseName(argMatcher, "name", arguments.get()));
+              checkFatal(argName.isPresent(), argName.getFileLocation(),
+                  ErrorCode.INVALID_TABLE_FUNCTION_ARGUMENTS, "Invalid argument name");
+              checkFatal(!argumentMap.containsKey(argName.get()), argName.getFileLocation(),
+                  ErrorCode.INVALID_TABLE_FUNCTION_ARGUMENTS, "Duplicate argument: %s",
+                  argName.get());
+              ParsedObject<String> typeName = arguments.fromOffset(
+                  parse(argMatcher, "type", arguments.get()));
+              checkFatal(typeName.isPresent(), typeName.getFileLocation(),
+                  ErrorCode.INVALID_TABLE_FUNCTION_ARGUMENTS, "Invalid argument type");
+              argumentMap.put(argName.get(), new ParsedArgument(argName.map(Name::getDisplay),
+                  typeName, false, argumentMap.size()+1));
+              lastMatchEnd = argMatcher.end();
+            }
+            checkFatal(lastMatchEnd == arguments.get().length(),
+                relativeLocation(arguments, lastMatchEnd),
+                ErrorCode.INVALID_TABLE_FUNCTION_ARGUMENTS,
+                "Argument list contains invalid arguments");
           }
-          checkFatal(lastMatchEnd==arguments.get().length(), relativeLocation(arguments, lastMatchEnd), ErrorCode.INVALID_TABLE_FUNCTION_ARGUMENTS, "Argument list contains invalid arguments");
-          Pair<String, List<Name>> processedBody = replaceTableFunctionVariables(definitionBody.get(), List.copyOf(argumentMap.keySet()));
+          Pair<String, List<ParsedArgument>> processedBody = replaceTableFunctionVariables(definitionBody.get(), argumentMap, statement);
+          //TODO: check that parent fields and arguments don't clash
           definitionBody = definitionBody.map(x -> processedBody.getKey());
-          if (keyword.equalsIgnoreCase(JOIN_KEYWORD)) {
-            definition = new SqrlRelationshipStatement(tableName, definitionBody, comment,
-                argumentMap, processedBody.getRight());
-          } else {
-            definition = new SqrlTableFunctionStatement(tableName, definitionBody, access, comment,
-                argumentMap, processedBody.getRight());
-          }
+          definition = new SqrlTableFunctionStatement(tableName, definitionBody, access, comment,
+              List.copyOf(argumentMap.values()), processedBody.getRight());
         }
       } else if (keyword.equalsIgnoreCase(DISTINCT_KEYWORD)) {
         checkFatal(arguments.isEmpty(), ErrorCode.INVALID_SQRL_DEFINITION, "Table function not supported for operation");
@@ -209,28 +219,60 @@ public class SqrlStatementParser {
     return new FlinkSQLStatement(new ParsedObject<>(statement, FileLocation.START));
   }
 
-  public static Pair<String, List<Name>> replaceTableFunctionVariables(String body, List<Name> arguments) {
-    List<Name> argumentIndexes = new ArrayList<>();
+  public static Pair<String, List<ParsedArgument>> replaceTableFunctionVariables(String body, LinkedHashMap<Name,
+      ParsedArgument> functionArguments, String fullStatement) {
+    List<ParsedArgument> argumentIndexes = new ArrayList<>();
     String bodyLower = body.toLowerCase();
     StringBuilder resultBuilder = new StringBuilder();
     int i = 0;
     while (i < body.length()) {
-      boolean matched = false;
+      int matchedLength = 0;
       if (body.charAt(i) == ARGUMENT_PREFIX) {
-        for (Name argument : arguments) {
-          if (bodyLower.startsWith(argument.getCanonical(), i+1)) {
-            argumentIndexes.add(argument);
-            resultBuilder.append("?");
-            for (int k = 0; k < argument.length(); k++) {
-              resultBuilder.append(" ");
-            }
-            i += argument.length()+1;
-            matched = true;
+        for (Map.Entry<Name,ParsedArgument> fctArgument : functionArguments.entrySet()) {
+          if (bodyLower.startsWith(fctArgument.getKey().getCanonical(), i+1)) {
+            matchedLength = fctArgument.getKey().length()+1; //add length of argument prefix
+            argumentIndexes.add(new ParsedArgument(
+                parse(body.substring(i+1, i+1+fctArgument.getKey().getCanonical().length()),fullStatement,i+1),
+                fctArgument.getValue().getType(), false, fctArgument.getValue().getOrdinal()));
             break;
           }
         }
+      } else if (bodyLower.startsWith(SELF_REFERENCE_KEYWORD, i)) {
+        //Match until empty space
+        int length = body.length();
+        int startPosition = i+SELF_REFERENCE_KEYWORD.length();
+        int endPosition = startPosition;
+        while (endPosition < length && !Character.isWhitespace(body.charAt(endPosition))) {
+          endPosition++;
+        }
+        //TODO: need to parse this as a SQLIdentifier using the CalciteParser#parseIdentifier from Sqrl2FlinkSQLTranslator to handle escaped fields
+        ParsedObject<String> argumentName = parse(body.substring(startPosition, endPosition), fullStatement, i);
+        Name argName = Name.system(argumentName.get());
+        ParsedArgument existing = functionArguments.get(argName);
+
+        if (existing!=null && existing.isParentField()) {
+          argumentIndexes.add(new ParsedArgument(argumentName, new ParsedObject<>(null, FileLocation.START),
+              true, existing.getOrdinal())
+          );
+        } else if (existing!=null) {
+          throw new StatementParserException(ErrorLabel.GENERIC, existing.getName()
+              .getFileLocation(), "Function argument clashes with name on parent table [%s]. Please rename.", existing.getName().get());
+        } else {
+          ParsedArgument arg = new ParsedArgument(argumentName, new ParsedObject<>(null, FileLocation.START),
+              true, functionArguments.size()+1);
+          functionArguments.put(argName, arg);
+          argumentIndexes.add(arg);
+        }
+        matchedLength = endPosition-i;
       }
-      if (!matched) {
+      if (matchedLength>0) {
+        resultBuilder.append("?");
+        for (int k = 0; k < matchedLength-1; k++) { //subtract length of '?'
+          resultBuilder.append(" ");
+        }
+        i += matchedLength;
+      }
+      else {
         resultBuilder.append(body.charAt(i));
         i++;
       }

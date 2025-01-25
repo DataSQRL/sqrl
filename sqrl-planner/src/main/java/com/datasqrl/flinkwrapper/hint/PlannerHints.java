@@ -17,12 +17,12 @@ public class PlannerHints {
     return hints.stream().anyMatch(TestHint.class::isInstance);
   }
 
-  public boolean isQuery() {
-    return hints.stream().anyMatch(QueryHint.class::isInstance);
+  public boolean isWorkload() {
+    return hints.stream().anyMatch(WorkloadHint.class::isInstance);
   }
 
   public boolean isQuerySink() {
-    return isTest() || isQuery();
+    return isTest() || isWorkload();
   }
 
   public<H> Optional<H> getHint(Class<H> hintClass) {

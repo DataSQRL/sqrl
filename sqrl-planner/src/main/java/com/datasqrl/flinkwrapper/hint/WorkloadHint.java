@@ -4,21 +4,21 @@ import com.datasqrl.flinkwrapper.parser.ParsedObject;
 import com.datasqrl.flinkwrapper.parser.SqrlHint;
 import com.google.auto.service.AutoService;
 
-public class QueryHint extends PlannerHint {
+public class WorkloadHint extends PlannerHint {
 
-  public static final String HINT_NAME = "query";
+  public static final String HINT_NAME = "workload";
 
-  protected QueryHint(ParsedObject<SqrlHint> source) {
+  protected WorkloadHint(ParsedObject<SqrlHint> source) {
     super(source, Type.DAG);
   }
 
 
   @AutoService(Factory.class)
-  public static class TestHintFactory implements Factory {
+  public static class WorkLoadHintFactory implements Factory {
 
     @Override
     public PlannerHint create(ParsedObject<SqrlHint> source) {
-      return new QueryHint(source);
+      return new WorkloadHint(source);
     }
 
     @Override

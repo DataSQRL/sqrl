@@ -34,9 +34,9 @@ import com.datasqrl.flinkwrapper.parser.SqrlCreateTableStatement;
 import com.datasqrl.flinkwrapper.parser.SqrlDefinition;
 import com.datasqrl.flinkwrapper.parser.SqrlExportStatement;
 import com.datasqrl.flinkwrapper.parser.SqrlImportStatement;
-import com.datasqrl.flinkwrapper.parser.SqrlRelationshipStatement;
 import com.datasqrl.flinkwrapper.parser.SqrlStatement;
 import com.datasqrl.flinkwrapper.parser.SqrlStatementParser;
+import com.datasqrl.flinkwrapper.parser.SqrlTableDefinition;
 import com.datasqrl.flinkwrapper.parser.SqrlTableFunctionStatement;
 import com.datasqrl.flinkwrapper.parser.StackableStatement;
 import com.datasqrl.flinkwrapper.parser.StatementParserException;
@@ -58,7 +58,6 @@ import com.datasqrl.plan.global.StageAnalysis.Cost;
 import com.datasqrl.plan.global.StageAnalysis.MissingCapability;
 import com.datasqrl.plan.rules.EngineCapability;
 import com.datasqrl.plan.rules.EngineCapability.Feature;
-import com.datasqrl.plan.rules.ExecutionAnalysis;
 import com.datasqrl.plan.table.RelDataTypeTableSchema;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.util.SqlNameUtil;
@@ -71,7 +70,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Value;
@@ -87,7 +85,6 @@ import org.apache.flink.sql.parser.ddl.SqlCreateTable;
 import org.apache.flink.sql.parser.ddl.SqlCreateView;
 import org.apache.flink.sql.parser.ddl.SqlDropTable;
 import org.apache.flink.sql.parser.ddl.SqlDropView;
-import org.apache.flink.table.api.SqlParserException;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.functions.UserDefinedFunction;
 
@@ -198,21 +195,19 @@ public class SqlScriptPlanner {
     } else if (stmt instanceof SqrlDefinition) {
       SqrlDefinition sqrlDef = (SqrlDefinition) stmt;
       //Ignore test tables (that are not queries) when we are not running tests
-      if (executionGoal!=ExecutionGoal.TEST && hints.isTest() && !hints.isQuery()) return;
+      if (executionGoal!=ExecutionGoal.TEST && hints.isTest() && !hints.isWorkload()) return;
+      else if (hints.isQuerySink()) {
+        if (sqrlDef instanceof SqrlTableDefinition) sqrlDef = ((SqrlTableDefinition) stmt).toFunction();
+        checkFatal(sqrlDef instanceof SqrlTableFunctionStatement, sqrlDef.getTableName().getFileLocation(), ErrorLabel.GENERIC,
+            "Only tables and functions can be tests and workloads");
+      }
       String originalSql = sqrlDef.toSql(sqrlEnv, statementStack);
       //Relationships and Table functions require special handling
-      if (stmt instanceof SqrlTableFunctionStatement || hints.isQuerySink()) {
-        if (stmt instanceof SqrlRelationshipStatement) {
-          //Add WHERE clause for primary key, since it's the leftmost table, we just have to filter on the indexes at the top - no special handling needed
-        }
+      if (sqrlDef instanceof SqrlTableFunctionStatement) {
+        //TODO: for functions, we have to deduplicate the RexDynamicParam with a RexShuffle
         List<FunctionParameter> parameters;
-        if (stmt instanceof SqrlTableFunctionStatement) {
-          //Convert arguments to resolved parameters and update RexDynamicParam to point to the right argument
-          parameters = List.of();
-        } else {
-          parameters = List.of();
-        }
-        sqrlEnv.addTableFunctionInternal(originalSql, sqrlDef.getPath(), parameters);
+
+        //sqrlEnv.addTableFunction(originalSql, sqrlDef.getPath(), parameters);
       } else {
         addTableToDag(sqrlEnv.addView(originalSql, hints, errors), hints);
       }
