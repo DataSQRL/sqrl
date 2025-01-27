@@ -50,7 +50,7 @@ public class CompilationProcess {
   private final MainScript mainScript;
   private final PhysicalPlanner physicalPlanner; // 5. PHYSICAL PLANNER: match preliminary physical plan (step 4) stages to configured engines to generate the physical plan
                                                 // that bookkeeps everything needed for the engine environment (topics for kafka, tablespace for postGre, flinkSQL compiled plan, ...)
-  private final GraphqlPostplanHook graphqlPostplanHook; // 6. PHYSICAL PLANNER creates a graphQL model (based on the database queries and the physical plan) and walk it to bookkeep the requests to be made for each type of graphQL query (query, mutation subscription) for each type of engine
+  private final GraphqlPostplanHook graphqlPostplanHook; // 6. PHYSICAL PLANNER: walks the GraphQL schema to create the graphQL model - which encapsulates the GraphQL schema and entry points (queries, mutations, subscriptions) - using the physical plan and the database queries
   private final CreateDatabaseQueries createDatabaseQueries; // 1.4. TRANSPILER: Based on the logicalPlan (calcite schema) keep track of the APIQueries (wrapper that links together database query parameters, graphQL query and corresponding Calcite relNode in the logical plan) for the table functions.
                                                             // This is useful to be able to expose data through DataBase requests and/or GraphQL requests.
   private final InferGraphqlSchema inferencePostcompileHook; // 1.5. TRANSPILER: generate the GraphQL schema from the logicalPlan if the user has not provided one.
