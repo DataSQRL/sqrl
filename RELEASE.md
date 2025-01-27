@@ -53,6 +53,18 @@ mvn deploy
 
 After it completes, go to [https://central.sonatype.com/publishing](https://central.sonatype.com/publishing) and go to 'Publish' to publish the new maven libraries.
 
+## Release SQRL Default Profile
+### Prestep: Log in to sqrl repo
+```
+sqrl login
+```
+
+### 1. Upload default profile to SQRL
+Go to `profiles/default` and run the release:
+```
+sqrl publish
+```
+
 ## Release the CLI
 ### 1. Rebuild the project
 You must rebuild all of sqrl.
