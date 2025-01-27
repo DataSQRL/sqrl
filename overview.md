@@ -182,14 +182,18 @@ usability features to help the user and produce useful error messages.
 
 Integration tests for the DataSQRL build tool can be found in
 `sqrl-testing/sqrl-integration-tests`
+
 [How to run the integration tests](playbook.md#to-run-int-test)
 
 Especially 
 - _com.datasqrl.DAGPlannerTest_ is a parametrized test that runs the compilation of various input sqrl scripts available in _src/test/resources/dagplanner_
-- _com.datasqrl.UseCaseCompileTest_ is a parametrized test that runs the compilation of various use cases (complete projects - sqrl scripts, configuration, synthetic sources, sinks -) available in _src/test/resources/usecases_.
-- _com.datasqrl.FullUsecasesIT_ is a parametrized test that runs the actual pipelines generated from various use cases (complete projects - sqrl scripts, configuration, synthetic sources, sinks -) available in _src/test/resources/usecases_.
+- _com.datasqrl.UseCaseCompileTest_ is a parametrized test that runs the compilation of various use cases (complete projects - sqrl scripts, configuration, synthetic sources, sinks -)
+available in _src/test/resources/usecases_ and creates compile plan snapshots. These snapshots are compared to reference ones in the test assertions
+- _com.datasqrl.FullUsecasesIT_ is a parametrized test that runs the actual pipelines generated from various use cases (complete projects - sqrl scripts, configuration, synthetic sources, sinks -) 
+available in _src/test/resources/usecases_ and creates snapshots. These snapshots are compared to reference ones in the test assertions (when test goal is called)
 This test uses [testContainers](https://testcontainers.com/) and requires a valid local docker installation.  
 
+To run these parametrized tests for a single test parameter in the IDE, first run the whole test case and then you could run the test for a single parameter.
 ## DataSQRL Runtime
 
 The DataSQRL project also contains some runtime components that get executed
