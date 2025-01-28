@@ -157,7 +157,7 @@ public class FlinkSqlNodeFactory {
         partitionKeysNode,
         watermark,
         null,
-        true,
+        false,
         false
     );
   }
