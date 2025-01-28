@@ -11,6 +11,7 @@ import com.datasqrl.calcite.convert.SqlToStringFactory;
 import com.datasqrl.calcite.schema.ExpandTableMacroRule.ExpandTableMacroConfig;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
 import com.datasqrl.canonicalizer.ReservedName;
+import com.datasqrl.graphql.server.CustomScalars;
 import com.datasqrl.parse.SqrlParserImpl;
 import com.datasqrl.util.DataContextImpl;
 import java.util.Arrays;
@@ -185,7 +186,7 @@ public class QueryPlanner {
       return this.cluster.getTypeFactory().createSqlType(SqlTypeName.INTEGER);
     } else if (datatype.equalsIgnoreCase("datetime")) {
       return this.cluster.getTypeFactory().createSqlType(SqlTypeName.TIMESTAMP, 3);
-    } else if (datatype.equalsIgnoreCase("BigInteger")) {
+    } else if (datatype.equalsIgnoreCase(CustomScalars.GRAPHQL_BIGINTEGER.getName())) {
         return this.cluster.getTypeFactory().createSqlType(SqlTypeName.BIGINT);
     }
 
