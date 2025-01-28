@@ -423,15 +423,16 @@
 
       <dependency>
         <groupId>com.graphql-java</groupId>
-        <artifactId>graphql-java-extended-scalars</artifactId>
-        <version>${graphql-java-extended-scalars.version}</version>
+        <artifactId>graphql-java</artifactId>
+        <version>${graphql-java.version}</version>
       </dependency>
 
       <dependency>
         <groupId>com.graphql-java</groupId>
-        <artifactId>graphql-java</artifactId>
-        <version>${graphql-java.version}</version>
+        <artifactId>graphql-java-extended-scalars</artifactId>
+        <version>${graphql-java-extended-scalars.version}</version>
       </dependency>
+
 
       <!-- Vertx -->
       <dependency>

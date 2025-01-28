@@ -5,15 +5,14 @@ package com.datasqrl.graphql;
 
 import com.datasqrl.graphql.config.CorsHandlerOptions;
 import com.datasqrl.graphql.config.ServerConfig;
+import com.datasqrl.graphql.server.CustomScalars;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import com.datasqrl.graphql.server.RootGraphqlModel;
-import com.datasqrl.graphql.type.SqrlVertxScalars;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.common.base.Strings;
 import com.symbaloo.graphqlmicrometer.MicrometerInstrumentation;
 import graphql.GraphQL;
-import graphql.scalars.ExtendedScalars;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.prometheusmetrics.PrometheusConfig;
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
@@ -329,7 +328,7 @@ public class GraphQLServer extends AbstractVerticle {
                   new MutationConfigurationImpl(model, vertx, config))
               .withSubscriptionConfiguration(
                   new SubscriptionConfigurationImpl(model, vertx, config, startPromise, vertxJdbcClient))
-              .withExtendedScalarTypes(List.of(ExtendedScalars.GraphQLBigInteger))
+              .withExtendedScalarTypes(List.of(CustomScalars.GRAPHQL_BIGINTEGER))
               .build(),
           new VertxContext(vertxJdbcClient));
       MeterRegistry meterRegistry = BackendRegistries.getDefaultNow();
