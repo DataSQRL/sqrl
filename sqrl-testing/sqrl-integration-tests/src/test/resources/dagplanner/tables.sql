@@ -1,6 +1,6 @@
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofmonth` AS 'com.datasqrl.time.EndOfMonth' LANGUAGE JAVA;
 
-CREATE TEMPORARY TABLE `source_table` (
+CREATE TABLE `source_table` (
   id INT NOT NULL,
   data STRING,
   event_time TIMESTAMP(3),
