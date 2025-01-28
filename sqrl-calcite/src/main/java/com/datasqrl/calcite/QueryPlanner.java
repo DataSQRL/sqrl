@@ -11,6 +11,7 @@ import com.datasqrl.calcite.convert.SqlToStringFactory;
 import com.datasqrl.calcite.schema.ExpandTableMacroRule.ExpandTableMacroConfig;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
 import com.datasqrl.canonicalizer.ReservedName;
+import com.datasqrl.graphql.server.CustomScalars;
 import com.datasqrl.parse.SqrlParserImpl;
 import com.datasqrl.util.DataContextImpl;
 import java.io.File;
@@ -201,8 +202,7 @@ public class QueryPlanner {
       return this.cluster.getTypeFactory().createSqlType(SqlTypeName.TIMESTAMP, 3);
     }
 
-    // map graphql-java-extended-scalars GraphQLBigInteger (which maps to "BigInteger" String literal in graphql.scalars.java.JavaPrimitives) to calcite BIGINT
-    if (datatype.equalsIgnoreCase("BigInteger")) {
+    if (datatype.equalsIgnoreCase(CustomScalars.GRAPHQL_BIGINTEGER.getName())) {
       return this.cluster.getTypeFactory().createSqlType(SqlTypeName.BIGINT);
     }
 
