@@ -134,7 +134,7 @@ public class GraphqlSchemaFactory {
     GraphQLSchema.Builder builder = GraphQLSchema.newSchema()
         .query(queryType);
     if (extendedScalarTypes) { // use the plural parameter name in place of only bigInteger to avoid having a conf parameter of each special type mapping feature in the future
-      builder.additionalTypes(Set.of(ExtendedScalars.GraphQLBigInteger));
+      builder.additionalTypes(Set.of(CustomScalars.GRAPHQL_BIGINTEGER));
     }
     if (goal != ExecutionGoal.TEST) {
       if (logManager.hasLogEngine() && System.getenv().get("ENABLE_SUBSCRIPTIONS") != null) {

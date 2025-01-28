@@ -99,9 +99,9 @@ public class DataTypeTest {
   }
 
   @Test
-  @DisplayName("Parse 'BigInteger' to BIGINT")
+  @DisplayName("Parse 'GraphQLBigInteger' to BIGINT")
   void testParseBigInteger() {
-    String datatype = "BigInteger";
+    String datatype = "GraphQLBigInteger";
     RelDataType type = queryPlanner.parseDatatype(datatype);
     assertEquals(SqlTypeName.BIGINT, type.getSqlTypeName());
     assertFalse(type.isNullable());
