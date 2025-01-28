@@ -86,16 +86,8 @@ public class VertxContext implements Context {
         return;
       }
       //Execute
-      final MeterRegistry meterRegistry = BackendRegistries.getDefaultNow();
-      Optional<Counter> counter = Optional.empty();
-      if (meterRegistry != null) {
-        counter = Optional.of(Counter.builder("graphql.query" + argumentSet + ".count")
-                .description("Number of GraphQL queries executed for query " + argumentSet)
-                .register(meterRegistry));
-      }
-
       QueryExecutionContext context = new VertxQueryExecutionContext(this,
-          env, argumentSet, future, counter);
+          env, argumentSet, future);
       resolvedQuery.accept(server, context);
     });
   }
