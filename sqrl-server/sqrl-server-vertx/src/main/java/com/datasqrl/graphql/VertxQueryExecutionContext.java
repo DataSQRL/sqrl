@@ -46,7 +46,6 @@ public class VertxQueryExecutionContext
   DataFetchingEnvironment environment;
   Set<Argument> arguments;
   Promise<Object> future; // basically Vert.x completableFuture
-  Optional<Counter> queryCounter;
 
   @Override
   public CompletableFuture runQuery(GraphQLEngineBuilder server, ResolvedJdbcQuery pgQuery,
@@ -70,7 +69,7 @@ public class VertxQueryExecutionContext
     // map the resultSet to json for GraphQL response
     future
         .map(r -> resultMapper(r, isList))
-        .onSuccess(result -> {queryCounter.ifPresent(Counter::increment); this.future.complete(result);})
+        .onSuccess(result -> this.future.complete(result))
         .onFailure(f -> {
           f.printStackTrace();
           this.future.fail(f);
@@ -99,7 +98,7 @@ public class VertxQueryExecutionContext
 
     future
       .map(r -> resultMapper(r, isList))
-      .onSuccess(result -> {queryCounter.ifPresent(Counter::increment); this.future.complete(result);})
+      .onSuccess(result -> this.future.complete(result))
       .onFailure(f -> {
         f.printStackTrace();
         this.future.fail(f);
