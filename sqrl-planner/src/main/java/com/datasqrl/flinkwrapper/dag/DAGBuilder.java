@@ -1,6 +1,8 @@
 package com.datasqrl.flinkwrapper.dag;
 
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.flinkwrapper.analyzer.TableAnalysis;
 import com.datasqrl.flinkwrapper.dag.nodes.ExportNode;
 import com.datasqrl.flinkwrapper.dag.nodes.PipelineNode;
 import com.datasqrl.flinkwrapper.dag.nodes.TableFunctionNode;
@@ -21,12 +23,17 @@ public class DAGBuilder {
   Map<ObjectIdentifier, PipelineNode> nodeLookup = new HashMap<>();
   @Getter
   Map<NamePath, SqrlTableFunction> apiFunctions = new HashMap<>();
+  @Getter
+  Map<NamePath, TableAnalysis> apiMutations = new HashMap<>();
 
 
   public void add(TableNode node) {
     nodeLookup.put(node.getIdentifier(), node);
     node.getTableAnalysis().getFromTables().forEach(inputTable ->
         dagInputs.put(node, Objects.requireNonNull(nodeLookup.get(inputTable.getIdentifier()))));
+    if (node.isMutation()) {
+      apiMutations.put(NamePath.of(node.getIdentifier().getObjectName()), node.getTableAnalysis());
+    }
   }
 
   public void add(TableFunctionNode node) {

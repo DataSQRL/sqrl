@@ -43,7 +43,7 @@ import com.datasqrl.flinkwrapper.parser.StackableStatement;
 import com.datasqrl.flinkwrapper.parser.StatementParserException;
 import com.datasqrl.flinkwrapper.tables.AccessVisibility;
 import com.datasqrl.flinkwrapper.tables.FlinkTableBuilder;
-import com.datasqrl.flinkwrapper.tables.LogEngineTableMetadata;
+import com.datasqrl.flinkwrapper.tables.EngineTableDefinition;
 import com.datasqrl.flinkwrapper.tables.SqrlTableFunction;
 import com.datasqrl.function.FlinkUdfNsObject;
 import com.datasqrl.io.schema.flexible.converters.SchemaToRelDataTypeFactory;
@@ -312,6 +312,10 @@ public class SqlScriptPlanner {
     Preconditions.checkArgument(source.isSource());
     TableNode sourceNode = new TableNode(source, getSourceSinkStageAnalysis());
     dagBuilder.add(sourceNode);
+    EngineTableDefinition logEngineMetadata = source.getSourceTable().get().getMutationDefinition();
+    if (source.getSourceTable().get().getMutationDefinition() != null) {
+
+    }
     AccessVisibility visibility = new AccessVisibility(AccessModifier.QUERY, false, true,
         Name.system(tableAnalysis.getIdentifier().getObjectName()).isHidden());
     addTableToDag(tableAnalysis, PlannerHints.EMPTY, visibility, sqrlEnv);
@@ -416,7 +420,7 @@ public class SqlScriptPlanner {
     }
   }
 
-  private Function<FlinkTableBuilder, LogEngineTableMetadata> getLogEngineBuilder() {
+  private Function<FlinkTableBuilder, EngineTableDefinition> getLogEngineBuilder() {
     Optional<ExecutionStage> logStage = pipeline.getStageByType(Type.LOG);
     Preconditions.checkArgument(logStage.isPresent());
     LogEngine engine = (LogEngine) logStage.get().getEngine();

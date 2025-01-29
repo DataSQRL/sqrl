@@ -167,7 +167,7 @@ public class FlinkSqlNodeFactory {
     );
   }
 
-  public static SqlCreateTable createTable(String tableName, RelDataType relDataType) {
+  public static SqlCreateTable createTable(String tableName, RelDataType relDataType, boolean isTemporary) {
     return new SqlCreateTable(
         SqlParserPos.ZERO,
         FlinkSqlNodeFactory.identifier(tableName),
@@ -177,7 +177,7 @@ public class FlinkSqlNodeFactory {
         SqlNodeList.EMPTY,
         null,
         null,
-        true,
+        isTemporary,
         false
     );
   }

@@ -1,14 +1,10 @@
 package com.datasqrl.flinkwrapper.dag.nodes;
 
 
-import com.datasqrl.engine.log.LogEngine;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.flinkwrapper.analyzer.TableAnalysis;
-import com.datasqrl.flinkwrapper.tables.SourceTableAnalysis;
 import com.datasqrl.plan.global.StageAnalysis;
-import com.google.common.base.Preconditions;
 import java.util.Map;
-import java.util.Optional;
 import lombok.Getter;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 
@@ -28,7 +24,7 @@ public class TableNode extends PipelineNode {
 
   public boolean isMutation() {
     if (!isSource()) return false;
-    return tableAnalysis.getSourceTable().get().getLogMetadata()!=null;
+    return tableAnalysis.getSourceTable().get().getMutationDefinition()!=null;
   }
 
   public ObjectIdentifier getIdentifier() {

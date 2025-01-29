@@ -20,7 +20,7 @@ import com.datasqrl.flinkwrapper.parser.SqrlTableFunctionStatement.ParsedArgumen
 import com.datasqrl.flinkwrapper.parser.StatementParserException;
 import com.datasqrl.flinkwrapper.tables.FlinkConnectorConfigImpl;
 import com.datasqrl.flinkwrapper.tables.FlinkTableBuilder;
-import com.datasqrl.flinkwrapper.tables.LogEngineTableMetadata;
+import com.datasqrl.flinkwrapper.tables.EngineTableDefinition;
 import com.datasqrl.flinkwrapper.tables.SourceTableAnalysis;
 import com.datasqrl.flinkwrapper.tables.SqrlFunctionParameter;
 import com.datasqrl.flinkwrapper.tables.SqrlTableFunction;
@@ -30,7 +30,6 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.lang.reflect.Type;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -54,18 +53,15 @@ import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rex.RexDynamicParam;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.schema.FunctionParameter;
-import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlOrderBy;
 import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql2rel.SqlToRelConverter;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.sql.parser.ddl.SqlAlterViewAs;
@@ -84,10 +80,8 @@ import org.apache.flink.table.api.SqlParserException;
 import org.apache.flink.table.api.TableException;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.api.bridge.java.internal.StreamTableEnvironmentImpl;
-import org.apache.flink.table.api.internal.TableEnvironmentImpl;
 import org.apache.flink.table.api.internal.TableResultInternal;
 import org.apache.flink.table.catalog.CatalogManager;
-import org.apache.flink.table.catalog.FunctionCatalog;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.operations.Operation;
 import org.apache.flink.table.operations.ddl.AlterViewAsOperation;
@@ -376,7 +370,7 @@ public class Sqrl2FlinkSQLTranslator implements TableAnalysisLookup {
 
   public TableAnalysis addImport(String tableName, String tableDefinition,
       Optional<RelDataType> schema,
-      Function<FlinkTableBuilder, LogEngineTableMetadata> logEngineBuilder) {
+      Function<FlinkTableBuilder, EngineTableDefinition> logEngineBuilder) {
     return addSourceTable(addTable(Optional.of(tableName), tableDefinition, schema, logEngineBuilder));
   }
 
@@ -392,7 +386,7 @@ public class Sqrl2FlinkSQLTranslator implements TableAnalysisLookup {
   }
 
   public TableAnalysis createTable(String tableDefinition,
-      Function<FlinkTableBuilder, LogEngineTableMetadata> logEngineBuilder) {
+      Function<FlinkTableBuilder, EngineTableDefinition> logEngineBuilder) {
     AddTableResult result = addTable(Optional.empty(), tableDefinition, Optional.empty(), logEngineBuilder);
     return addSourceTable(result);
   }
@@ -414,7 +408,7 @@ public class Sqrl2FlinkSQLTranslator implements TableAnalysisLookup {
   }
 
   private AddTableResult addTable(Optional<String> tableName, String createTableSql,
-      Optional<RelDataType> schema, Function<FlinkTableBuilder, LogEngineTableMetadata> logEngineBuilder) {
+      Optional<RelDataType> schema, Function<FlinkTableBuilder, EngineTableDefinition> logEngineBuilder) {
     SqlNode tableSqlNode = parseSQL(createTableSql);
     Preconditions.checkArgument(tableSqlNode instanceof SqlCreateTable, "Expected CREATE TABLE statement");
     SqlCreateTable tableDefinition = (SqlCreateTable) tableSqlNode;
@@ -424,7 +418,8 @@ public class Sqrl2FlinkSQLTranslator implements TableAnalysisLookup {
     if (schema.isPresent()) {
       //Use LIKE to merge schema with table definition
       String schemaTableName = finalTableName+SCHEMA_SUFFIX;
-      SqlCreateTable schemaTable = FlinkSqlNodeFactory.createTable(schemaTableName, schema.get());
+      //This should be a temporary table
+      SqlCreateTable schemaTable = FlinkSqlNodeFactory.createTable(schemaTableName, schema.get(), true);
       executeSqlNode(schemaTable);
 
       SqlTableLike likeClause = new SqlTableLike(SqlParserPos.ZERO,
@@ -454,7 +449,7 @@ public class Sqrl2FlinkSQLTranslator implements TableAnalysisLookup {
           tableDefinition.isTemporary(),
           tableDefinition.ifNotExists);
     }
-    LogEngineTableMetadata createMedata = null;
+    EngineTableDefinition createMedata = null;
     if (fullTable.getPropertyList().isEmpty()) { //it's an internal CREATE TABLE for a mutation
       FlinkTableBuilder tableBuilder = FlinkTableBuilder.toBuilder(fullTable);
       tableBuilder.setName(baseTableName);
