@@ -13,7 +13,7 @@ public class TableFunctionNode extends PipelineNode {
   private final SqrlTableFunction function;
 
   public TableFunctionNode(SqrlTableFunction function, Map<ExecutionStage, StageAnalysis> stageAnalysis) {
-    super("access", stageAnalysis);
+    super("function", stageAnalysis);
     this.function = function;
   }
 
@@ -23,7 +23,7 @@ public class TableFunctionNode extends PipelineNode {
 
   @Override
   public String getId() {
-    return "";
+    return function.getFullPath().toString();
   }
 
   @Override
