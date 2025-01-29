@@ -47,7 +47,7 @@ public class SqlNameUtil {
     }
   }
 
-  public static ObjectIdentifier toIdentifier(NamePath path) {
-    return ObjectIdentifier.of("default_catalog", "default_database", path.getLast().getDisplay());
+  public static ObjectIdentifier toIdentifier(Name name) {
+    return ObjectIdentifier.of("default_catalog", "default_database", name.getDisplay());
   }
 }

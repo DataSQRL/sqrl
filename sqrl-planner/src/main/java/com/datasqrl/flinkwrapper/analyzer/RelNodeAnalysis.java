@@ -14,6 +14,12 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 
+/**
+ * Intermediate analysis used by the {@link SQRLLogicalPlanAnalyzer} to keep track of
+ * information as it processes the relational operator tree of {@link RelNode}s.
+ *
+ * @see TableAnalysis for more information
+ */
 @Getter
 @Builder(toBuilder = true)
 @AllArgsConstructor

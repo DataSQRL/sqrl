@@ -34,6 +34,9 @@ CustomerSubscription := SUBSCRIBE SELECT * FROM Customer;
 
 CustomerSubscriptionById($minId : INT) := SUBSCRIBE SELECT * FROM Customer WHERE customerid > $minId;
 
+TableFunctionCallsTblFct($arg1 : INT, $arg2: INT) := SELECT * FROM Table(CustomerSubscriptionById($arg2)) WHERE customerid > $arg1;
+
+
 UnnestOrders := SELECT o.id, o.customerid, o.`time`, e.productid, e.quantity, e.discount FROM ExternalOrders o CROSS JOIN UNNEST(entries) e;
 UnnestOrders.newId := id + productid;
 

@@ -16,8 +16,6 @@ import org.apache.calcite.sql.validate.SqlNameMatcher;
 @Getter
 public class SqrlFunctionParameter implements FunctionParameter {
 
-  String s = "MyTable.function($column: BIGINT) := JOIN Othertable o ON o.x = $column AND o.y = this.column";
-
   //This is the name of the argument:
   private final String name; //TODO: make sure the column name is properly resolved against the parent table: relDataType.getField(name, false, false)
   private final Optional<SqlNode> defaultValue; //TODO: remove

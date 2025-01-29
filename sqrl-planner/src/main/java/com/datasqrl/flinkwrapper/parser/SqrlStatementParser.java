@@ -173,7 +173,7 @@ public class SqrlStatementParser {
               checkFatal(typeName.isPresent(), typeName.getFileLocation(),
                   ErrorCode.INVALID_TABLE_FUNCTION_ARGUMENTS, "Invalid argument type");
               argumentMap.put(argName.get(), new ParsedArgument(argName.map(Name::getDisplay),
-                  typeName, false, argumentMap.size()+1));
+                  typeName, argumentMap.size()+1));
               lastMatchEnd = argMatcher.end();
             }
             checkFatal(lastMatchEnd == arguments.get().length(),
@@ -231,9 +231,8 @@ public class SqrlStatementParser {
         for (Map.Entry<Name,ParsedArgument> fctArgument : functionArguments.entrySet()) {
           if (bodyLower.startsWith(fctArgument.getKey().getCanonical(), i+1)) {
             matchedLength = fctArgument.getKey().length()+1; //add length of argument prefix
-            argumentIndexes.add(new ParsedArgument(
-                parse(body.substring(i+1, i+1+fctArgument.getKey().getCanonical().length()),fullStatement,i+1),
-                fctArgument.getValue().getType(), false, fctArgument.getValue().getOrdinal()));
+            argumentIndexes.add(fctArgument.getValue().withName(
+                parse(body.substring(i+1, i+1+fctArgument.getKey().getCanonical().length()),fullStatement,i+1)));
             break;
           }
         }
@@ -249,17 +248,14 @@ public class SqrlStatementParser {
         ParsedObject<String> argumentName = parse(body.substring(startPosition, endPosition), fullStatement, i);
         Name argName = Name.system(argumentName.get());
         ParsedArgument existing = functionArguments.get(argName);
+        if (existing!=null) {
+          checkFatal(existing.isParentField(), existing.getName().getFileLocation(), ErrorCode.INVALID_TABLE_FUNCTION_ARGUMENTS,
+              "Function argument clashes with name on parent table [%s]. Please rename.", existing.getName().get());
 
-        if (existing!=null && existing.isParentField()) {
-          argumentIndexes.add(new ParsedArgument(argumentName, new ParsedObject<>(null, FileLocation.START),
-              true, existing.getOrdinal())
+          argumentIndexes.add(new ParsedArgument(argumentName, existing.getOrdinal())
           );
-        } else if (existing!=null) {
-          throw new StatementParserException(ErrorLabel.GENERIC, existing.getName()
-              .getFileLocation(), "Function argument clashes with name on parent table [%s]. Please rename.", existing.getName().get());
-        } else {
-          ParsedArgument arg = new ParsedArgument(argumentName, new ParsedObject<>(null, FileLocation.START),
-              true, functionArguments.size()+1);
+        } else { //new argument
+          ParsedArgument arg = new ParsedArgument(argumentName, functionArguments.size()+1);
           functionArguments.put(argName, arg);
           argumentIndexes.add(arg);
         }

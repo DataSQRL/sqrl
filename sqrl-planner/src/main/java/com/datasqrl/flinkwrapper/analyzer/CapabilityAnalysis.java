@@ -14,6 +14,9 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexVisitorImpl;
 import org.apache.calcite.sql.SqlOperator;
 
+/**
+ * Analyzes the engine capabilities needed to execute a particular query
+ */
 public class CapabilityAnalysis extends RexVisitorImpl<Void> {
 
   @Getter

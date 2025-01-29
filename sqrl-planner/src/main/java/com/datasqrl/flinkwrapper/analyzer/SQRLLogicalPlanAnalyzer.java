@@ -34,7 +34,6 @@ import com.datasqrl.flinkwrapper.hint.PrimaryKeyHint;
 import com.datasqrl.flinkwrapper.parser.StatementParserException;
 import com.datasqrl.flinkwrapper.tables.SqrlTableFunction;
 import com.datasqrl.io.tables.TableType;
-import com.datasqrl.plan.hints.JoinCostHint;
 import com.datasqrl.plan.rules.AnnotatedLP;
 import com.datasqrl.plan.rules.JoinAnalysis.Side;
 import com.datasqrl.plan.table.PullupOperator;
@@ -90,45 +89,11 @@ import org.apache.flink.table.planner.functions.sql.SqlWindowTableFunction;
 import org.apache.flink.table.planner.plan.schema.TableSourceTable;
 
 /**
- * The {@link SQRLLogicalPlanAnalyzer} rewrites the logical plan (i.e. {@link RelNode} produced by the transpiler.
+ * Analyses a view to produce a {@link ViewAnalysis} which includes the {@link TableAnalysis}
+ * that has information about the query needed for subsequent planning and optimization.
  *
- * The logical plan rewriting serves a number of purposes:
- * <ul>
- *     <li>Convert convenience features introduced by the transpiler (e.g. {@code DISTINCT ON} statements or nested limits)
- *     to proper Relnodes that can be processed by engines. The transpiler adds hints to the relnodes that this class
- *     expands to proper relational algebra (e.g. convert {@code DISTINCT ON} to a partitioned window-over with filter on row_number).
- *     </li>
- *     <li>Keep track of primary key columns and timestamps which are needed to write row data to a database (i.e. to materialize
- *     data). This class attempts to infer the primary key and timestamp from the relational operator and expressions and
- *     pulls those columns through if the user does not explicitly select them.
- *     </li>
- *     <li>Keep track of the {@link TableType} of each Relnode so that we can infer optimizations and likely user intent
- *     for ambiguous relational operators. For example, a default join between a stream and a state table on the state table's primary
- *     key is rewritten as a temporal join since that is the most likely intent of the user. If the user does not want a
- *     temporal join, they can explicitly declare the join to be an inner join.
- *     The {@link TableType} is also used in cost modeling and picking the right connectors.
- *     In addition, we keep track of potential time tumbling windows in {@link AnnotatedLP#timestamp} to infer when a user
- *     intents to execute a time windowed operation (e.g. window aggregation, join, or TopN).
- *     The overall goal is to rewrite "normal" SQL that users are likely to write into optimized stream processing SQL
- *     that uses time windows where possible.
- *     </li>
- *     <li>Pull up relational operators that can be executed later in the pipeline/DAG without changing semantics.
- *     A key goal for DataSQRL is making it easier to materialize data in stream, but some operations like sorting or filtering
- *     on the current time are very expensive in the stream and cheap in the database (i.e. later in the pipeline/DAG).
- *     Hence, we try to identify and pull up such expensive operations to produce more optimal DAGs. See {@link PullupOperator}
- *     for the types of operators we pull up.
- *     For the same reason, we keep track of the {@link AnnotatedLP#streamRoot} when processing streams so we can determine
- *     when we are doing operations on a single stream record for nested data, so we can add a small time window for efficient
- *     on stream processing and avoid creating state.
- *     </li>
- * </ul>
- *
- *
- * We keep track of the metadata for a RelNode in the {@link AnnotatedLP} class. This class implements a visitor pattern
- * over RelNodes that creates the {@link AnnotatedLP} for each RelNode.
- * We try to process all RelNodes by computing the associated metadata and pullups in {@link AnnotatedLP}. If that is not
- * possible (e.g. certain set operations do not allow primary key inference) we treat a RelNode as a {@link TableType#RELATION}
- * and don't do any extra processing.
+ * As the query is analyzed, the analyzer detects inefficiencies or optimization opportunities and
+ * creates info messages through the {@link ErrorCollector} for the user.
  *
  */
 @Slf4j
@@ -141,7 +106,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
   final CalciteCatalogReader catalog;
   final ErrorCollector errors;
 
-  private final List<TableAnalysis> sourceTables = new ArrayList<>();
+  private final List<TableOrFunctionAnalysis> sourceTables = new ArrayList<>();
   private final CapabilityAnalysis capabilityAnalysis = new CapabilityAnalysis();
   private final List<CostAnalysis> costAnalyses = new ArrayList<>(); //TODO: Generalize to general cost hints
   private boolean hasMostRecentDistinct = false;
@@ -172,7 +137,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
 
     if (analysis.type.isStream() && CalciteUtil.findBestRowTimeIndex(analysis.relNode.getRowType()).isEmpty()) {
       //If we don't have a rowtime, let's check if we lost it when all inputs had a rowtime
-      if (sourceTables.stream().filter(TableAnalysis::hasRowType).map(TableAnalysis::getRowType)
+      if (sourceTables.stream().filter(TableOrFunctionAnalysis::hasRowType).map(TableOrFunctionAnalysis::getRowType)
           .map(CalciteUtil::findBestRowTimeIndex).allMatch(Optional::isPresent)) {
         errors.notice("This table does not propagate the source row time columns: %s",
             sourceTables.stream().map(tbl -> tbl.getRowTime().map(tbl::getFieldName)).collect(
@@ -299,7 +264,8 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
       if (tableFunction instanceof SqrlTableFunction) {
         capabilityAnalysis.add(EngineFeature.TABLE_FUNCTION_SCAN); //We only support table functions on the read side
         SqrlTableFunction sqrlFct = (SqrlTableFunction) tableFunction;
-        return sourceTable(sqrlFct.getTableAnalysis().toRelNode(functionScan));
+        sourceTables.add(sqrlFct);
+        return sourceTable(sqrlFct.getFunctionAnalysis().toRelNode(functionScan));
       }
     } else if (call.getOperator() instanceof SqlWindowTableFunction) {
       //It's a flink time window function

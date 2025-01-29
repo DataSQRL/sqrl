@@ -12,7 +12,7 @@ import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.flinkwrapper.dag.DAGBuilder;
 import com.datasqrl.flinkwrapper.dag.DAGPlanner;
 import com.datasqrl.flinkwrapper.dag.PipelineDAG;
-import com.datasqrl.flinkwrapper.planner.SqlScriptPlanner;
+import com.datasqrl.flinkwrapper.SqlScriptPlanner;
 import com.datasqrl.flinkwrapper.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.graphql.APIConnectorManagerImpl;
 import com.datasqrl.graphql.inference.GraphQLMutationExtraction;
@@ -53,6 +53,8 @@ public class CompilationProcessV2 {
     DAGBuilder dagBuilder = planner.getDagBuilder();
     PipelineDAG dag = dagPlanner.optimize(dagBuilder.getDag());
     System.out.println(dag);
+    dagBuilder.getApiFunctions().forEach((name, function) ->
+        System.out.println(name + ": " + function.getFunctionAnalysis().getRowType().toString()));
 
     return null;
 //    postcompileHooks();

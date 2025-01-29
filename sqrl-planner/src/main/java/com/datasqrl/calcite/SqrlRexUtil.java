@@ -82,9 +82,11 @@ public class SqrlRexUtil {
   public static Optional<Integer> getLimit(RexNode limit) {
     if (limit == null) {
       return Optional.empty();
+    } else if (limit instanceof RexLiteral) {
+      return Optional.of(((RexLiteral) limit).getValueAs(Integer.class));
+    } else {
+      return Optional.empty();
     }
-    Preconditions.checkArgument(limit instanceof RexLiteral);
-    return Optional.of(((RexLiteral) limit).getValueAs(Integer.class));
   }
 
   public RexBuilder getBuilder() {
