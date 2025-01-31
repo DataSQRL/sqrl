@@ -5,6 +5,7 @@ import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.convert.SqlNodeToString;
 import com.datasqrl.calcite.convert.SqlToStringFactory;
 import com.datasqrl.config.BuildPath;
+import com.datasqrl.config.PackageJson;
 import com.datasqrl.engine.stream.flink.plan.SqrlToFlinkSqlGenerator;
 import com.datasqrl.engine.stream.flink.plan.SqrlToFlinkSqlGenerator.SqlResult;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
@@ -18,6 +19,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Value;
@@ -47,6 +49,7 @@ public class FlinkSqlGenerator {
   public static final String COMPILED_PLAN_JSON = "compiled-plan.json";
   private final SqrlFramework framework;
   private final BuildPath buildPath;
+  private final PackageJson sqrlConfig;
 
   public FlinkSqlGeneratorResult run(StreamStagePlan physicalPlan,
       List<StagePlan> stagePlans) {
@@ -101,6 +104,23 @@ public class FlinkSqlGenerator {
     Map<String, String> config = new HashMap<>();
     config.put("pipeline.classpaths", physicalPlan.getJars().stream().map(URL::toString)
         .collect(Collectors.joining(",")));
+    if (!framework.getSchema().getPythonUdfs().isEmpty()) {
+      String paths = framework.getSchema().getPythonUdfs().stream()
+          .map(e->e.getPath())
+          .distinct()
+          .collect(Collectors.joining(","));
+
+      Map<String, Object> flinkConfig = Optional.ofNullable(sqrlConfig.toMap().get("values"))
+      .map(e->(Map)e)
+      .flatMap(e->Optional.ofNullable(e.get("flink-config")))
+      .map(e->(Map)e)
+      .get();
+
+      String execClientKey = "python.client.executable";
+      String execClient = (String)flinkConfig.get(execClientKey);
+      config.put("python.files", paths);
+      config.put("python.client.executable",  execClient);
+    }
     StreamExecutionEnvironment sEnv = StreamExecutionEnvironment.createLocalEnvironment(Configuration.fromMap(config));
 
     EnvironmentSettings tEnvConfig = EnvironmentSettings.newInstance()

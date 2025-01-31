@@ -1,0 +1,10 @@
+{
+  "version": "1",
+  "values": {
+    "flink-config": {
+      "python.files": "PATH_TO_PY_FOLDER (e.g py-fncs)",
+      "python.client.executable": "PATH_TO_PYTHON",
+      "python.executable": "PATH_TO_PYTHON"
+    }
+  }
+}

@@ -4,6 +4,7 @@ import com.datasqrl.calcite.schema.sql.SqlDataTypeSpecBuilder;
 import com.datasqrl.config.TableConfig.MetadataEntry;
 import com.datasqrl.sql.SqlCallRewriter;
 import org.apache.calcite.avatica.util.TimeUnit;
+import org.apache.calcite.jdbc.SqrlSchema.PythonUdf;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.*;
@@ -17,6 +18,7 @@ import org.apache.flink.sql.parser.dml.RichSqlInsert;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import org.apache.flink.table.functions.python.PythonScalarFunction;
 
 public class FlinkSqlNodeFactory {
 
@@ -47,6 +49,20 @@ public class FlinkSqlNodeFactory {
         source,
         null,
         null
+    );
+  }
+
+  public static SqlCreateFunction createPythonFunction(PythonUdf pythonUdf) {
+    return new SqlCreateFunction(
+        SqlParserPos.ZERO,
+        identifier(pythonUdf.getName().getDisplay()),
+        SqlLiteral.createCharString(pythonUdf.getDirectory().getLast().toNamePath() //file name + udf name
+            .concat(pythonUdf.getName()).getDisplay(), SqlParserPos.ZERO),
+        "PYTHON",
+        true,
+        true,
+        false,
+        new SqlNodeList(SqlParserPos.ZERO)
     );
   }
 

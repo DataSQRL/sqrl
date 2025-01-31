@@ -1,0 +1,12 @@
+IMPORT py-fncs.my-udf.sum_two_numbers_udf;
+IMPORT py-fncs.my-math.py_sin;
+IMPORT py-fncs.my-math.py_cos;
+
+MyTable := SELECT val, sum_two_numbers_udf(val, val) AS myFnc,
+                  py_sin(val) AS s, py_cos(val) AS c
+           FROM (VALUES ((CAST(0.1 AS FLOAT)))) AS t(val);
+
+/*+test */
+MyTable2 := SELECT val, sum_two_numbers_udf(val, val) AS myFnc,
+                   py_sin(val) AS s, py_cos(val) AS c
+           FROM (VALUES ((CAST(0.1 AS FLOAT)))) AS t(val);

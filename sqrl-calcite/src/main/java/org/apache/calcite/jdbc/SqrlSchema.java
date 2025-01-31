@@ -10,9 +10,7 @@ import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.plan.queries.APIMutation;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISubscription;
-import com.datasqrl.plan.util.PrimaryKeyMap.Builder;
 import com.datasqrl.plan.validate.ResolvedImport;
-import com.datasqrl.plan.validate.ScriptPlanner.Mutation;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.RootSqrlTable;
 import com.datasqrl.util.StreamUtil;
@@ -32,12 +30,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.Getter;
+import lombok.Value;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.util.NameMultimap;
-import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.functions.UserDefinedFunction;
 
 @Getter
@@ -55,6 +52,7 @@ public class SqrlSchema extends SimpleCalciteSchema {
   private final Map<NamePath, String> pathToSysTableMap = new LinkedHashMap<>();
 
   private final Map<String, UserDefinedFunction> udf = new LinkedHashMap<>();
+  private final Set<PythonUdf> pythonUdfs = new HashSet<>();
 
   private final AtomicInteger uniqueCompilerId = new AtomicInteger(0);
   private final AtomicInteger uniquePkId = new AtomicInteger(0);
@@ -174,5 +172,12 @@ public class SqrlSchema extends SimpleCalciteSchema {
 
   public void addFunctionAlias(String name, String function) {
     fncAlias.put(name.toLowerCase(), function);
+  }
+
+  @Value
+  public static class PythonUdf {
+    NamePath directory;
+    Name name;
+    String path;
   }
 }
