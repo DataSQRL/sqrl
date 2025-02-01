@@ -20,24 +20,6 @@ public class StdVectorLibraryTest {
   };
 
   @Test
-  @Disabled("requires local onnx model")
-  public void testEmbeddingSimilarityCenter() {
-    String modelPath = "/Users/matthias/Data/jupyter/miniLMv2/model_quantized.onnx";
-    String[] sentences = {
-        "I like iced coffee because its refreshing chill and robust flavor provide a delightful pick-me-up at any time of day",
-        "I enjoy iced coffee because it offers a cool, refreshing twist to the traditional hot beverage, making it a perfect drink for warmer weather.",
-        "Sloths are unique mammals known for their slow movement and spending most of their time hanging upside down in trees."
-    };
-    FlinkVectorType[] results = new FlinkVectorType[sentences.length];
-    for (int i = 0; i < sentences.length; i++) {
-      results[i] = VectorFunctions.ONNX_EMBED.eval(sentences[i], modelPath);
-      FlinkVectorType compare = VectorFunctions.DOUBLE_TO_VECTOR.eval(VECTORS[i]);
-      assertEquals(VectorFunctions.COSINE_SIMILARITY.eval(results[i],compare),1.0, 0.0000001);
-//      System.out.println(Arrays.toString(VectorFunctions.VEC_TO_DOUBLE.eval(results[i])));
-    }
-  }
-
-  @Test
   public void testSimilarityCenter() {
     FlinkVectorType[] results = new FlinkVectorType[VECTORS.length];
     for (int i = 0; i < results.length; i++) {

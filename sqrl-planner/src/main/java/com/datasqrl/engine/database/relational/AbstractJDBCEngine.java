@@ -6,7 +6,7 @@ package com.datasqrl.engine.database.relational;
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.config.EngineFactory.Type;
+import com.datasqrl.config.EngineType;
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.datatype.DataTypeMapper;
 import com.datasqrl.engine.EngineFeature;
@@ -72,7 +72,7 @@ import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 @Slf4j
 public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements ExecutionEngine {
 
-  public AbstractJDBCEngine(@NonNull String name, @NonNull Type type,
+  public AbstractJDBCEngine(@NonNull String name, @NonNull EngineType type,
       @NonNull EnumSet<EngineFeature> capabilities) {
     super(name, type, capabilities);
   }

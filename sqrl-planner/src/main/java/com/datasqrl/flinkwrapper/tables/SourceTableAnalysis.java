@@ -1,5 +1,7 @@
 package com.datasqrl.flinkwrapper.tables;
 
+import com.datasqrl.engine.database.EngineCreateTable;
+import com.datasqrl.engine.log.LogCreateInsertTopic;
 import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.Value;
@@ -23,5 +25,5 @@ public class SourceTableAnalysis {
    * It contains the metadata information from the log engine on where to write the data
    */
   @Nullable
-  EngineTableDefinition mutationDefinition;
+  LogCreateInsertTopic mutationDefinition;
 }

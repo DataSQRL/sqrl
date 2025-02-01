@@ -4,7 +4,7 @@
 package com.datasqrl.engine;
 
 import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.config.EngineFactory.Type;
+import com.datasqrl.config.EngineType;
 import com.datasqrl.config.TableConfig;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
@@ -56,7 +56,7 @@ public interface ExecutionEngine extends IExecutionEngine {
   abstract class Base implements ExecutionEngine {
 
     protected final @NonNull String name;
-    protected final @NonNull Type type;
+    protected final @NonNull EngineType type;
     protected final @NonNull EnumSet<EngineFeature> capabilities;
 
     @Override

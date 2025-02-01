@@ -3,7 +3,7 @@
  */
 package com.datasqrl.plan.table;
 
-import com.datasqrl.config.EngineFactory.Type;
+import com.datasqrl.config.EngineType;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.canonicalizer.Name;
@@ -26,7 +26,7 @@ public class ImportedRelationalTableImpl extends SourceRelationalTableImpl imple
 
   //Currently, we hardcode all table sources to support only stream engines
   private final Predicate<ExecutionStage> supportsStage =
-      stage -> stage.getEngine().getType() == Type.STREAMS;
+      stage -> stage.getEngine().getType() == EngineType.STREAMS;
 
   public ImportedRelationalTableImpl(@NonNull Name nameId, RelDataType baseRowType,
       TableSource tableSource) {

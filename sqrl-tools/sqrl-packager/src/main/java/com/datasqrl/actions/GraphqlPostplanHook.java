@@ -1,7 +1,7 @@
 package com.datasqrl.actions;
 
 import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.config.EngineFactory.Type;
+import com.datasqrl.config.EngineType;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.server.ServerPhysicalPlan;
@@ -22,7 +22,7 @@ public class GraphqlPostplanHook {
   private final APIConnectorManager apiManager;
 
   public Optional<RootGraphqlModel> updatePlan(Optional<APISource> source, PhysicalPlan physicalPlan) {
-    if (pipeline.getStageByType(Type.SERVER).isEmpty()) {
+    if (pipeline.getStageByType(EngineType.SERVER).isEmpty()) {
       return Optional.empty();
     }
 

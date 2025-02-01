@@ -4,22 +4,19 @@ import static com.datasqrl.engine.EngineFeature.STANDARD_TABLE_FORMAT;
 
 import com.datasqrl.config.ConnectorFactoryContext;
 import com.datasqrl.config.ConnectorFactoryFactory;
-import com.datasqrl.config.EngineFactory.Type;
+import com.datasqrl.config.EngineType;
 import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.config.TableConfig;
 import com.datasqrl.engine.EngineFeature;
-import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.database.AnalyticDatabaseEngine;
 import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.database.QueryEngine;
 import com.datasqrl.plan.global.IndexSelectorConfig;
 import com.google.common.base.Preconditions;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import lombok.Getter;
 import lombok.NonNull;
-import org.apache.flink.table.functions.FunctionDefinition;
 
 /**
  * Abstract implementation of a relational table format database engine.
@@ -44,7 +41,7 @@ public abstract class AbstractJDBCTableFormatEngine extends AbstractJDBCEngine i
   final Map<String, QueryEngine> queryEngines = new LinkedHashMap<>();
 
   public AbstractJDBCTableFormatEngine(String name, @NonNull EngineConfig connectorConfig, ConnectorFactoryFactory connectorFactory) {
-    super(name, Type.DATABASE, STANDARD_TABLE_FORMAT);
+    super(name, EngineType.DATABASE, STANDARD_TABLE_FORMAT);
     this.connectorConfig = connectorConfig;
     this.connectorFactory = connectorFactory;
   }
@@ -70,7 +67,7 @@ public abstract class AbstractJDBCTableFormatEngine extends AbstractJDBCEngine i
   @Override
   public TableConfig getSinkConfig(String tableName) {
     return connectorFactory
-        .create(Type.DATABASE, getDialect().getId())
+        .create(EngineType.DATABASE, getDialect().getId())
         .orElseThrow(()-> new RuntimeException("Could not obtain sink for dialect: " + getDialect()))
         .createSourceAndSink(
             new ConnectorFactoryContext(tableName, Map.of("table-name", tableName)));

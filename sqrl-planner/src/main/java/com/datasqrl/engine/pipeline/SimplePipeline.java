@@ -3,11 +3,9 @@
  */
 package com.datasqrl.engine.pipeline;
 
-import com.datasqrl.config.EngineFactory.Type;
+import com.datasqrl.config.EngineType;
 import com.datasqrl.engine.ExecutionEngine;
-import com.datasqrl.engine.export.PrintEngine;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultimap;
 import java.util.ArrayList;
@@ -47,12 +45,12 @@ public class SimplePipeline implements ExecutionPipeline {
 
     List<EngineStage> stages = new ArrayList<>();
     //A simple pipeline expects a certain set of stages
-    Optional<EngineStage> logStage = getSingleStage(Type.LOG, engines);
-    Optional<EngineStage> streamStage = getSingleStage(Type.STREAMS, engines);
+    Optional<EngineStage> logStage = getSingleStage(EngineType.LOG, engines);
+    Optional<EngineStage> streamStage = getSingleStage(EngineType.STREAMS, engines);
     errors.checkFatal(streamStage.isPresent(), "Need to configure an enabled stream engine");
-    List<EngineStage> dbStages = getStage(Type.DATABASE, engines);
-    Optional<EngineStage> serverStage = getSingleStage(Type.SERVER, engines);
-    List<EngineStage> exportStages = getStage(Type.EXPORT, engines);
+    List<EngineStage> dbStages = getStage(EngineType.DATABASE, engines);
+    Optional<EngineStage> serverStage = getSingleStage(EngineType.SERVER, engines);
+    List<EngineStage> exportStages = getStage(EngineType.EXPORT, engines);
 
     logStage.ifPresent(ls -> {
       stages.add(ls);
@@ -89,7 +87,7 @@ public class SimplePipeline implements ExecutionPipeline {
         upstream, downstream);
   }
 
-  private static List<EngineStage> getStage(Type engineType,
+  private static List<EngineStage> getStage(EngineType engineType,
       Map<String, ExecutionEngine> engines) {
     List<EngineStage> engineList = engines.entrySet().stream()
         .filter(e -> e.getValue().getType() == engineType)
@@ -98,7 +96,7 @@ public class SimplePipeline implements ExecutionPipeline {
     return engineList;
   }
 
-  private static Optional<EngineStage> getSingleStage(Type engineType, Map<String, ExecutionEngine> engines) {
+  private static Optional<EngineStage> getSingleStage(EngineType engineType, Map<String, ExecutionEngine> engines) {
     List<EngineStage> engineList = getStage(engineType, engines);
     if (engineList.size()==1) return Optional.of(engineList.get(0));
     else if (engineList.isEmpty()) return Optional.empty();

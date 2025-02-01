@@ -6,9 +6,10 @@ import static com.datasqrl.flinkwrapper.parser.StatementParserException.checkFat
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.config.EngineFactory.Type;
+import com.datasqrl.config.EngineType;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SystemBuiltInConnectors;
+import com.datasqrl.engine.log.LogCreateInsertTopic;
 import com.datasqrl.engine.log.LogEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
@@ -43,7 +44,6 @@ import com.datasqrl.flinkwrapper.parser.StackableStatement;
 import com.datasqrl.flinkwrapper.parser.StatementParserException;
 import com.datasqrl.flinkwrapper.tables.AccessVisibility;
 import com.datasqrl.flinkwrapper.tables.FlinkTableBuilder;
-import com.datasqrl.flinkwrapper.tables.EngineTableDefinition;
 import com.datasqrl.flinkwrapper.tables.SqrlTableFunction;
 import com.datasqrl.function.FlinkUdfNsObject;
 import com.datasqrl.io.schema.flexible.converters.SchemaToRelDataTypeFactory;
@@ -105,8 +105,9 @@ public class SqlScriptPlanner {
   @Getter
   private final DAGBuilder dagBuilder;
   private final ExecutionStage streamStage;
-  private final List<ExecutionStage> computeStages;
+  private final List<ExecutionStage> tableStages;
   private final List<ExecutionStage> queryStages;
+  private final List<ExecutionStage> subscriptionStages;
   private final AtomicInteger exportTableCounter = new AtomicInteger(0);
 
 
@@ -122,12 +123,17 @@ public class SqlScriptPlanner {
     this.executionGoal = executionGoal;
 
     this.dagBuilder = new DAGBuilder();
-    Optional<ExecutionStage> streamStage = pipeline.getStageByType(Type.STREAMS);
+    Optional<ExecutionStage> streamStage = pipeline.getStageByType(EngineType.STREAMS);
     errorCollector.checkFatal(streamStage.isPresent(), "Need to configure a stream execution engine");
     this.streamStage = streamStage.get();
-    this.computeStages = pipeline.getStages().stream().filter(ExecutionStage::isCompute).collect(
+    /* to support server execution, we add server_query to tables and query Stages
+    and server_subscribe to tables and subscription stages.
+     */
+    this.tableStages = pipeline.getStages().stream().filter(stage -> stage.getType().isDataStore() || stage.getType()==EngineType.STREAMS).collect(
         Collectors.toList());
-    this.queryStages = pipeline.getStages().stream().filter(ExecutionStage::isRead).collect(
+    this.queryStages = pipeline.getStages().stream().filter(stage -> stage.getType()==EngineType.DATABASE).collect(
+        Collectors.toList());
+    this.subscriptionStages = pipeline.getStages().stream().filter(stage -> stage.getType()==EngineType.LOG).collect(
         Collectors.toList());
   }
 
@@ -312,10 +318,6 @@ public class SqlScriptPlanner {
     Preconditions.checkArgument(source.isSource());
     TableNode sourceNode = new TableNode(source, getSourceSinkStageAnalysis());
     dagBuilder.add(sourceNode);
-    EngineTableDefinition logEngineMetadata = source.getSourceTable().get().getMutationDefinition();
-    if (source.getSourceTable().get().getMutationDefinition() != null) {
-
-    }
     AccessVisibility visibility = new AccessVisibility(AccessModifier.QUERY, false, true,
         Name.system(tableAnalysis.getIdentifier().getObjectName()).isHidden());
     addTableToDag(tableAnalysis, PlannerHints.EMPTY, visibility, sqrlEnv);
@@ -369,9 +371,15 @@ public class SqlScriptPlanner {
     return availableStages;
   }
 
+  private List<ExecutionStage> determineViableStages(AccessModifier access) {
+    if (access == AccessModifier.QUERY) return queryStages;
+    else if (access == AccessModifier.SUBSCRIPTION) return subscriptionStages;
+    else return tableStages;
+  }
+
   private void addTableToDag(TableAnalysis tableAnalysis, PlannerHints hints, AccessVisibility visibility,
       Sqrl2FlinkSQLTranslator sqrlEnv) {
-    List<ExecutionStage> availableStages = determineStages(computeStages,hints);
+    List<ExecutionStage> availableStages = determineStages(tableStages,hints);
 
     TableNode tableNode = new TableNode(tableAnalysis, getStageAnalysis(tableAnalysis, availableStages));
     dagBuilder.add(tableNode);
@@ -388,9 +396,10 @@ public class SqlScriptPlanner {
   }
 
   private void addFunctionToDag(SqrlTableFunction function, PlannerHints hints) {
-    List<ExecutionStage> availableStages = determineStages(queryStages,hints);
+    List<ExecutionStage> availableStages = determineStages(determineViableStages(function.getVisibility().getAccess()),hints);
     dagBuilder.add(new TableFunctionNode(function, getStageAnalysis(function.getFunctionAnalysis(), availableStages)));
   }
+
 
   private void addImport(NamespaceObject nsObject, Optional<String> alias, Sqrl2FlinkSQLTranslator sqrlEnv) {
     if (nsObject instanceof FlinkTableNamespaceObject) {
@@ -420,8 +429,8 @@ public class SqlScriptPlanner {
     }
   }
 
-  private Function<FlinkTableBuilder, EngineTableDefinition> getLogEngineBuilder() {
-    Optional<ExecutionStage> logStage = pipeline.getStageByType(Type.LOG);
+  private Function<FlinkTableBuilder, LogCreateInsertTopic> getLogEngineBuilder() {
+    Optional<ExecutionStage> logStage = pipeline.getStageByType(EngineType.LOG);
     Preconditions.checkArgument(logStage.isPresent());
     LogEngine engine = (LogEngine) logStage.get().getEngine();
     return tableBuilder -> {
@@ -453,7 +462,7 @@ public class SqlScriptPlanner {
       SystemBuiltInConnectors connector = builtInSink.get();
       ExecutionStage exportStage;
       if (connector == SystemBuiltInConnectors.LOG_ENGINE) {
-        Optional<ExecutionStage> logStage = pipeline.getStageByType(Type.LOG);
+        Optional<ExecutionStage> logStage = pipeline.getStageByType(EngineType.LOG);
         errorCollector.checkFatal(logStage.isPresent(), "Cannot export to log since no log engine has been configured");
         exportStage = logStage.get();
       } else {

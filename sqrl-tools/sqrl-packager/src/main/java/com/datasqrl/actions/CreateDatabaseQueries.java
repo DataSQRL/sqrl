@@ -1,7 +1,7 @@
 package com.datasqrl.actions;
 
 import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.config.EngineFactory.Type;
+import com.datasqrl.config.EngineType;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.sql.DatabaseQueryFactory;
@@ -17,8 +17,8 @@ public class CreateDatabaseQueries {
   private final DatabaseQueryFactory databaseQueryFactory;
 
   public void run() {
-    if (!pipeline.getStagesByType(Type.DATABASE).isEmpty() &&
-        pipeline.getStageByType(Type.SERVER).isEmpty()) {
+    if (!pipeline.getStagesByType(EngineType.DATABASE).isEmpty() &&
+        pipeline.getStageByType(EngineType.SERVER).isEmpty()) {
       List<APIQuery> apiQueries = databaseQueryFactory.generateQueries(framework.getSchema());
       apiQueries.forEach(q->framework.getSchema().getQueries().add(q));
     }

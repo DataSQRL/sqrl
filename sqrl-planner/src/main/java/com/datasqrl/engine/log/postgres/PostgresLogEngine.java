@@ -1,6 +1,6 @@
 package com.datasqrl.engine.log.postgres;
 
-import static com.datasqrl.config.EngineFactory.Type.LOG;
+import static com.datasqrl.config.EngineType.LOG;
 import static com.datasqrl.engine.log.postgres.PostgresLogEngineFactory.ENGINE_NAME;
 
 import com.datasqrl.calcite.SqrlFramework;

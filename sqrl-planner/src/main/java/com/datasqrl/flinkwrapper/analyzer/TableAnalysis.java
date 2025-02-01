@@ -1,7 +1,9 @@
 package com.datasqrl.flinkwrapper.analyzer;
 
 
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.flinkwrapper.analyzer.cost.CostAnalysis;
+import com.datasqrl.flinkwrapper.hint.PlannerHints;
 import com.datasqrl.flinkwrapper.tables.SourceTableAnalysis;
 import com.datasqrl.io.tables.TableType;
 import com.datasqrl.plan.rules.EngineCapability;
@@ -88,6 +90,19 @@ public class TableAnalysis implements TableOrFunctionAnalysis {
    */
   @Builder.Default
   List<CostAnalysis> costs = List.of();
+
+  /**
+   * The planner hints attached to this table definition
+   */
+  @Builder.Default
+  PlannerHints hints = PlannerHints.EMPTY;
+
+  /**
+   * The error collector for the corresponding table definition
+   * for when we need to produce table specific errors
+   */
+  @Builder.Default
+  ErrorCollector errors = ErrorCollector.root();
 
   public Optional<TableAnalysis> getStreamRoot() {
     if (streamRoot == null && primaryKey.isDefined()) return Optional.of(this);

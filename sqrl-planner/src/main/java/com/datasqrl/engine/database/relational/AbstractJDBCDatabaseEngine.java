@@ -7,7 +7,7 @@ import static com.datasqrl.engine.EngineFeature.STANDARD_DATABASE;
 
 import com.datasqrl.config.ConnectorFactoryContext;
 import com.datasqrl.config.ConnectorFactoryFactory;
-import com.datasqrl.config.EngineFactory.Type;
+import com.datasqrl.config.EngineType;
 import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.config.TableConfig;
 import com.datasqrl.engine.database.DatabaseEngine;
@@ -30,7 +30,7 @@ public abstract class AbstractJDBCDatabaseEngine extends AbstractJDBCEngine impl
   private final ConnectorFactoryFactory connectorFactory;
 
   public AbstractJDBCDatabaseEngine(String name, @NonNull EngineConfig connectorConfig, ConnectorFactoryFactory connectorFactory) {
-    super(name, Type.DATABASE, STANDARD_DATABASE);
+    super(name, EngineType.DATABASE, STANDARD_DATABASE);
     this.connectorConfig = connectorConfig;
     this.connectorFactory = connectorFactory;
   }
@@ -55,7 +55,7 @@ public abstract class AbstractJDBCDatabaseEngine extends AbstractJDBCEngine impl
   @Override
   public TableConfig getSinkConfig(String tableName) {
     return connectorFactory
-        .create(Type.DATABASE, getDialect().getId())
+        .create(EngineType.DATABASE, getDialect().getId())
         .orElseThrow(()-> new RuntimeException("Could not obtain sink for dialect: " + getDialect()))
         .createSourceAndSink(
             new ConnectorFactoryContext(tableName, Map.of("table-name", tableName)));

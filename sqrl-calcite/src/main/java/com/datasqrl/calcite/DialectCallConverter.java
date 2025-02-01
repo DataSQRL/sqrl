@@ -1,6 +1,6 @@
 package com.datasqrl.calcite;
 
-import com.datasqrl.calcite.function.RuleTransform;
+import com.datasqrl.calcite.function.OperatorRuleTransform;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import java.util.ArrayList;
@@ -21,10 +21,20 @@ import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.tools.Programs;
 
+/**
+ * Converts functions to the given dialect via rule transformations.
+ * Rule transformations are implemented as {@link OperatorRuleTransform} for "structural" transformations
+ * that have to happen at the {@link RelNode} level.
+ *
+ * Simpler transformations that only require switching out the function name or parameter order
+ * should be implemented via {@link com.datasqrl.function.translations.SqlTranslation} which happen
+ * during unparsing.
+ */
 public class DialectCallConverter {
   private final RelOptPlanner planner;
 
-  public static final Map<Name, RuleTransform> transformMap = ServiceLoaderDiscovery.getAll(RuleTransform.class)
+  public static final Map<Name, OperatorRuleTransform> transformMap = ServiceLoaderDiscovery.getAll(
+          OperatorRuleTransform.class)
       .stream().collect(Collectors.toMap(t->Name.system(t.getRuleOperatorName()), t->t));
 
   public DialectCallConverter(RelOptPlanner planner) {
@@ -32,10 +42,10 @@ public class DialectCallConverter {
   }
 
   public RelNode convert(Dialect dialect, RelNode relNode) {
-    Map<SqlOperator, RuleTransform> transforms = extractFunctionTransforms(relNode);
+    Map<SqlOperator, OperatorRuleTransform> transforms = extractFunctionTransforms(relNode);
 
     List<RelRule> rules = new ArrayList<>();
-    for (Entry<SqlOperator, RuleTransform> transform : transforms.entrySet()) {
+    for (Entry<SqlOperator, OperatorRuleTransform> transform : transforms.entrySet()) {
       rules.addAll(transform.getValue().transform(dialect, transform.getKey()));
     }
 
@@ -46,14 +56,14 @@ public class DialectCallConverter {
     return relNode;
   }
 
-  private Map<SqlOperator, RuleTransform> extractFunctionTransforms(RelNode relNode) {
-    Map<SqlOperator, RuleTransform> transforms = new HashMap<>();
+  private Map<SqlOperator, OperatorRuleTransform> extractFunctionTransforms(RelNode relNode) {
+    Map<SqlOperator, OperatorRuleTransform> transforms = new HashMap<>();
     relNode.accept(new RelShuttleImpl() {
 
       @Override
       public RelNode visit(LogicalAggregate aggregate) {
         for (AggregateCall call : aggregate.getAggCallList()) {
-          RuleTransform transform = transformMap.get(
+          OperatorRuleTransform transform = transformMap.get(
               Name.system(call.getAggregation().getName()));
           if (transform != null) {
             transforms.put(call.getAggregation(), transform);
@@ -68,7 +78,7 @@ public class DialectCallConverter {
         parent.accept(new RexShuttle(){
           @Override
           public RexNode visitCall(RexCall call) {
-            RuleTransform transform = transformMap.get(
+            OperatorRuleTransform transform = transformMap.get(
                 Name.system(call.getOperator().getName()));
             if (transform != null) {
               transforms.put(call.getOperator(), transform);

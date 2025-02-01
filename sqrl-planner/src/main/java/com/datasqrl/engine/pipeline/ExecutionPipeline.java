@@ -3,7 +3,7 @@
  */
 package com.datasqrl.engine.pipeline;
 
-import com.datasqrl.config.EngineFactory.Type;
+import com.datasqrl.config.EngineType;
 import com.datasqrl.util.StreamUtil;
 import java.util.List;
 import java.util.Optional;
@@ -34,20 +34,20 @@ public interface ExecutionPipeline {
     return StreamUtil.getOnlyElement(getStages().stream().filter(s -> s.getEngine().getType().name().equalsIgnoreCase(type)));
   }
 
-  default Optional<ExecutionStage> getStageByType(Type type) {
+  default Optional<ExecutionStage> getStageByType(EngineType type) {
     return StreamUtil.getOnlyElement(getStages().stream()
         .filter(s -> s.getEngine().getType().equals(type)));
   }
 
   /**
    * We currently make the simplifying assumption that an {@link ExecutionPipeline} contains at most
-   * one stage for any {@link Type}. This is not true in full generality and
+   * one stage for any {@link EngineType}. This is not true in full generality and
    * requires significant changes to the DAGPlanner and import mechanism to support.
    *
    * @param type
-   * @return the stage for a given {@link Type}.
+   * @return the stage for a given {@link EngineType}.
    */
-  default List<ExecutionStage> getStagesByType(Type type) {
+  default List<ExecutionStage> getStagesByType(EngineType type) {
     return getStages().stream()
         .filter(s -> s.getEngine().getType().equals(type))
         .collect(Collectors.toList());

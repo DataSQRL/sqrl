@@ -9,7 +9,7 @@ import com.datasqrl.actions.FlinkSqlGenerator;
 import com.datasqrl.actions.FlinkSqlGenerator.FlinkSqlGeneratorResult;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.config.PackageJson.EngineConfig;
-import com.datasqrl.config.EngineFactory.Type;
+import com.datasqrl.config.EngineType;
 import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
@@ -39,7 +39,7 @@ public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base imp
   FlinkSqlGenerator generator;
 
   public AbstractFlinkStreamEngine(EngineConfig config, FlinkSqlGenerator generator) {
-    super(FlinkEngineFactory.ENGINE_NAME, Type.STREAMS, FLINK_CAPABILITIES);
+    super(FlinkEngineFactory.ENGINE_NAME, EngineType.STREAMS, FLINK_CAPABILITIES);
     this.config = config;
     this.generator = generator;
   }

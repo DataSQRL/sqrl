@@ -8,11 +8,9 @@ import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.IExecutionEngine;
 import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.database.QueryEngine;
-import com.datasqrl.engine.export.PrintEngine;
 import com.datasqrl.engine.export.PrintEngineFactory;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.SimplePipeline;
-import com.datasqrl.engine.stream.StreamEngine;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.datasqrl.util.StreamUtil;
@@ -26,7 +24,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NonNull;
-import org.apache.commons.collections.ListUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 /**
@@ -49,7 +46,7 @@ public class PipelineFactory {
     this.engineConfig = engineConfig;
   }
 
-  private Map<String, ExecutionEngine> getEngines(Optional<EngineFactory.Type> engineType) {
+  private Map<String, ExecutionEngine> getEngines(Optional<EngineType> engineType) {
     Map<String, ExecutionEngine> engines = new HashMap<>();
     Set<String> allEngines = new HashSet<>(enabledEngines);
     allEngines.addAll(defaultEngines);
@@ -79,7 +76,7 @@ public class PipelineFactory {
     return getEngines(Optional.empty());
   }
 
-  public Pair<String,ExecutionEngine> getEngine(EngineFactory.Type type) {
+  public Pair<String,ExecutionEngine> getEngine(EngineType type) {
     Map<String,ExecutionEngine> engines = getEngines(Optional.of(type));
     //Todo: error collector
     ErrorCollector errors = ErrorCollector.root();

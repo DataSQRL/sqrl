@@ -4,7 +4,7 @@ package com.datasqrl.engine.log.kafka;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.config.ConnectorFactory;
 import com.datasqrl.config.ConnectorFactoryFactory;
-import com.datasqrl.config.EngineFactory.Type;
+import com.datasqrl.config.EngineType;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.EmptyEngineConfig;
 import com.datasqrl.config.PackageJson.EngineConfig;
@@ -36,10 +36,10 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
   @Inject
   public KafkaLogEngine(PackageJson json,
       ConnectorFactoryFactory connectorFactory) {
-    super(KafkaLogEngineFactory.ENGINE_NAME, Type.LOG, EnumSet.noneOf(EngineFeature.class));
+    super(KafkaLogEngineFactory.ENGINE_NAME, EngineType.LOG, EnumSet.noneOf(EngineFeature.class));
     this.engineConfig = json.getEngines().getEngineConfig(KafkaLogEngineFactory.ENGINE_NAME)
         .orElseGet(() -> new EmptyEngineConfig(KafkaLogEngineFactory.ENGINE_NAME));
-    this.connectorFactory = connectorFactory.create(Type.LOG, "kafka")
+    this.connectorFactory = connectorFactory.create(EngineType.LOG, "kafka")
         .orElseThrow(()->new RuntimeException("Could not find kafka connector"));
   }
 

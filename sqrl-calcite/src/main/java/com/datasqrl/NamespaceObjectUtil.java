@@ -37,7 +37,7 @@ public class NamespaceObjectUtil {
             SqlOperator.class, name).get(), name);
   }
 
-  public static NamespaceObject createNsObject(FunctionDefinition function) {
+  public static FlinkUdfNsObject createNsObject(FunctionDefinition function) {
     Preconditions.checkArgument(function instanceof FunctionDefinition,
         "All SQRL function implementations must extend FunctionDefinition: %s", function.getClass());
     String functionNameFromClass = getFunctionNameFromClass(function.getClass());

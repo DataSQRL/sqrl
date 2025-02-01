@@ -23,4 +23,8 @@ public interface DatabasePhysicalPlan extends EnginePhysicalPlan {
 
   Map<IdentifiedQuery, QueryTemplate> getQueryPlans();
 
+  default void optimize() {
+
+  }
+
 }

@@ -4,7 +4,7 @@ import com.datasqrl.actions.CreateDatabaseQueries;
 import com.datasqrl.actions.GraphqlPostplanHook;
 import com.datasqrl.actions.InferGraphqlSchema;
 import com.datasqrl.actions.WriteDag;
-import com.datasqrl.config.EngineFactory.Type;
+import com.datasqrl.config.EngineType;
 import com.datasqrl.config.GraphqlSourceFactory;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlanner;
@@ -47,7 +47,7 @@ public class CompilationProcess {
   private final TestPlanner testPlanner;
 
   public Pair<PhysicalPlan, TestPlan> executeCompilation(Optional<Path> testsPath) {
-    pipeline.getStageByType(Type.SERVER)
+    pipeline.getStageByType(EngineType.SERVER)
         .flatMap(p->graphqlSourceFactory.get())
         .ifPresent(graphQLMutationExtraction::analyze);
 

@@ -47,11 +47,6 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>org.tribuo</groupId>
-      <artifactId>tribuo-onnx</artifactId>
-      <version>4.3.1</version>
-    </dependency>
-    <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
       <version>${postgres.version}</version>

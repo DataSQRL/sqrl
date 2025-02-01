@@ -18,11 +18,9 @@ import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.SqlDialect;
 import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
-import org.apache.calcite.sql.fun.SqlCollectionTableOperator;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.SqlConformance;
-import org.apache.calcite.sql.validate.SqlConformanceEnum;
 import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
@@ -42,13 +40,13 @@ public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
     DEFAULT = new ExtendedPostgresSqlDialect(DEFAULT_CONTEXT);
   }
 
-  private static final Map<Class, String> foreignCastSpecMap = getForeignCastSpecs();
+  private static final Map<Class, String> foreignTypesCastSpecMap = getForeignTypesCastSpecs();
 
   public ExtendedPostgresSqlDialect(Context context) {
     super(context);
   }
 
-  private static Map<Class, String> getForeignCastSpecs() {
+  private static Map<Class, String> getForeignTypesCastSpecs() {
     Map<Class, String> jdbcTypeSerializer = ServiceLoaderDiscovery.getAll(JdbcTypeSerializer.class)
         .stream()
         .filter(f->f.getDialectId().equalsIgnoreCase(Dialect.POSTGRES.name()))
@@ -62,6 +60,7 @@ public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
     return new PostgresConformance();
   }
 
+  @Override
   public SqlDataTypeSpec getCastSpec(RelDataType type) {
     String castSpec;
     if (type.getComponentType() instanceof RelRecordType) {
@@ -69,8 +68,8 @@ public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
     } else if (type instanceof RawRelDataType) {
       RawRelDataType rawRelDataType = (RawRelDataType) type;
       Class<?> originatingClass = rawRelDataType.getRawType().getOriginatingClass();
-      if (foreignCastSpecMap.containsKey(originatingClass)) {
-        castSpec = foreignCastSpecMap.get(originatingClass);
+      if (foreignTypesCastSpecMap.containsKey(originatingClass)) {
+        castSpec = foreignTypesCastSpecMap.get(originatingClass);
       } else {
         throw new RuntimeException("Could not find type name for: %s" + type);
       }

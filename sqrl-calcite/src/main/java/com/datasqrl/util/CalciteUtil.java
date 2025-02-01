@@ -313,6 +313,16 @@ public class CalciteUtil {
     return rexList;
   }
 
+  public static void addColumn(@NonNull RelBuilder relBuilder, @NonNull RexNode rexNode, @NonNull String columnName) {
+    int cols = relBuilder.peek().getRowType().getFieldCount();
+    List<RexNode> selects = CalciteUtil.getIdentityRex(relBuilder, cols);
+    selects.add(rexNode);
+    List<String> fieldNames = IntStream.range(0,cols+1).mapToObj(i -> i<cols?null:columnName).collect(
+        Collectors.toList());
+    assert selects.size() == fieldNames.size();
+    relBuilder.project(selects, fieldNames);
+  }
+
   public static void addProjection(@NonNull RelBuilder relBuilder, @NonNull List<Integer> selectIdx,
       List<String> fieldNames, boolean force) {
     if (fieldNames == null || fieldNames.isEmpty()) {

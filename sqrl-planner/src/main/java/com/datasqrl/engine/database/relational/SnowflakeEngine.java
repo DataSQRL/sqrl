@@ -1,13 +1,11 @@
 package com.datasqrl.engine.database.relational;
 
-import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.convert.SnowflakeSqlNodeToString;
 import com.datasqrl.calcite.dialect.snowflake.SqlCreateIcebergTableFromObjectStorage;
 import com.datasqrl.calcite.dialect.snowflake.SqlCreateSnowflakeView;
 import com.datasqrl.config.ConnectorFactoryFactory;
-import com.datasqrl.config.EngineFactory;
-import com.datasqrl.config.EngineFactory.Type;
+import com.datasqrl.config.EngineType;
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.EmptyEngineConfig;
@@ -15,33 +13,19 @@ import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.datatype.DataTypeMapper;
 import com.datasqrl.datatype.snowflake.SnowflakeIcebergDataTypeMapper;
 import com.datasqrl.engine.database.DatabasePhysicalPlan;
-import com.datasqrl.engine.database.DatabaseViewPhysicalPlan;
-import com.datasqrl.engine.database.DatabaseViewPhysicalPlan.DatabaseView;
-import com.datasqrl.engine.database.DatabaseViewPhysicalPlan.DatabaseViewImpl;
-import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.plan.global.PhysicalDAGPlan.DatabaseStagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
-import com.datasqrl.plan.global.PhysicalDAGPlan.ReadQuery;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
-import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.datasqrl.sql.SqlDDLStatement;
 import com.datasqrl.util.StreamUtil;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.NonNull;
-import lombok.Value;
-import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.RelShuttleImpl;
-import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
@@ -114,7 +98,7 @@ public class SnowflakeEngine extends AbstractJDBCQueryEngine {
 
 
   @Override
-  public @NonNull EngineFactory.Type getType() {
-    return Type.QUERY;
+  public @NonNull EngineType getType() {
+    return EngineType.QUERY;
   }
 }

@@ -1,7 +1,7 @@
 package com.datasqrl.plan.global;
 
 import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.config.EngineFactory.Type;
+import com.datasqrl.config.EngineType;
 import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.log.Log;
 import com.datasqrl.engine.log.LogManager;
@@ -57,10 +57,10 @@ public class DAGAssembler {
 
   public PhysicalDAGPlan assemble(SqrlDAG dag, Set<URL> jars) {
     //We make the assumption that there is a single stream stage
-    ExecutionStage streamStage = pipeline.getStageByType(Type.STREAMS).orElseThrow();
+    ExecutionStage streamStage = pipeline.getStageByType(EngineType.STREAMS).orElseThrow();
     List<PhysicalDAGPlan.WriteQuery> streamQueries = new ArrayList<>();
     //We make the assumption that there is a single (optional) server stage
-    Optional<ExecutionStage> serverStage = pipeline.getStageByType(Type.SERVER);
+    Optional<ExecutionStage> serverStage = pipeline.getStageByType(EngineType.SERVER);
     List<PhysicalDAGPlan.ReadQuery> serverQueries = new ArrayList<>();
 
     //Plan API queries and find all tables that need to be materialized
@@ -69,7 +69,7 @@ public class DAGAssembler {
     dag.allNodesByClass(SqrlDAG.QueryNode.class).forEach( query -> {
       ExecutionStage stage = query.getChosenStage();
       AnalyzedAPIQuery apiQuery = query.getQuery();
-      if (stage.getEngine().getType()==Type.SERVER) { //this must be the serverStage by assumption
+      if (stage.getEngine().getType()== EngineType.SERVER) { //this must be the serverStage by assumption
         RelNode relNode = apiQuery.getRelNode(serverStage.get(), sqrlConverter, errors);
         relNode = RelStageRunner.runStage(SERVER_DAG_STITCHING, relNode, framework.getQueryPlanner().getPlanner());
         serverScanVisitor.findScans(relNode);
@@ -87,7 +87,7 @@ public class DAGAssembler {
 
     //We want to preserve pipeline order in our iteration
     for (ExecutionStage database : Iterables.filter(pipeline.getStages(),queriesByStage::containsKey)) {
-      Preconditions.checkArgument(database.getEngine().getType() == Type.DATABASE);
+      Preconditions.checkArgument(database.getEngine().getType() == EngineType.DATABASE);
       List<PhysicalDAGPlan.ReadQuery> databaseQueries = new ArrayList<>();
 
       VisitTableScans tableScanVisitor = new VisitTableScans();
@@ -196,7 +196,7 @@ public class DAGAssembler {
           serverStage.get(), serverQueries);
       allPlans.add(serverPlan);
     }
-    Optional<ExecutionStage> logStage = pipeline.getStageByType(Type.LOG);
+    Optional<ExecutionStage> logStage = pipeline.getStageByType(EngineType.LOG);
     Map<String, Log> logs = logManager.getLogs();
     if (logStage.isPresent()) {
       List<Log> sortedLogs = logs.entrySet().stream()

@@ -1,6 +1,7 @@
 package com.datasqrl.engine.export;
 
 import com.datasqrl.config.EngineFactory;
+import com.datasqrl.config.EngineType;
 import com.datasqrl.engine.IExecutionEngine;
 import com.google.auto.service.AutoService;
 
@@ -15,8 +16,8 @@ public class PrintEngineFactory implements EngineFactory  {
   }
 
   @Override
-  public Type getEngineType() {
-    return Type.EXPORT;
+  public EngineType getEngineType() {
+    return EngineType.EXPORT;
   }
 
   @Override

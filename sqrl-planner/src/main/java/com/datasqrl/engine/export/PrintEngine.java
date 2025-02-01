@@ -1,11 +1,10 @@
 package com.datasqrl.engine.export;
 
 import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.config.EngineFactory.Type;
+import com.datasqrl.config.EngineType;
 import com.datasqrl.config.TableConfig;
 import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.EnginePhysicalPlan;
-import com.datasqrl.engine.ExportEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
@@ -36,7 +35,7 @@ public class PrintEngine implements ExportEngine {
   }
 
   @Override
-  public Type getType() {
-    return Type.EXPORT;
+  public EngineType getType() {
+    return EngineType.EXPORT;
   }
 }

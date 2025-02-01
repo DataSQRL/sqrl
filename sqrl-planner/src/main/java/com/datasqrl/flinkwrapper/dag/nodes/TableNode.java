@@ -1,15 +1,18 @@
 package com.datasqrl.flinkwrapper.dag.nodes;
 
 
+import com.datasqrl.engine.database.EngineCreateTable;
+import com.datasqrl.engine.log.LogCreateInsertTopic;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.flinkwrapper.analyzer.TableAnalysis;
 import com.datasqrl.plan.global.StageAnalysis;
 import java.util.Map;
+import java.util.Optional;
 import lombok.Getter;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 
 @Getter
-public class TableNode extends PipelineNode {
+public class TableNode extends PlannedNode {
 
   final TableAnalysis tableAnalysis;
 
@@ -23,12 +26,17 @@ public class TableNode extends PipelineNode {
   }
 
   public boolean isMutation() {
-    if (!isSource()) return false;
-    return tableAnalysis.getSourceTable().get().getMutationDefinition()!=null;
+    return getMutation().isPresent();
   }
 
-  public ObjectIdentifier getIdentifier() {
-    return tableAnalysis.getIdentifier();
+  public Optional<LogCreateInsertTopic> getMutation() {
+    if (!isSource()) return Optional.empty();
+    return Optional.ofNullable(tableAnalysis.getSourceTable().get().getMutationDefinition());
+  }
+
+  @Override
+  public TableAnalysis getAnalysis() {
+    return tableAnalysis;
   }
 
   @Override

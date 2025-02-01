@@ -3,7 +3,7 @@ package com.datasqrl.actions;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
-import com.datasqrl.config.EngineFactory.Type;
+import com.datasqrl.config.EngineType;
 import com.datasqrl.config.GraphqlSourceFactory;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
@@ -96,7 +96,7 @@ public class InferGraphqlSchema {
 
   // Checks if the server stage is present in the execution pipeline
   private boolean isServerStagePresent() {
-    return pipeline.getStageByType(Type.SERVER).isPresent();
+    return pipeline.getStageByType(EngineType.SERVER).isPresent();
   }
 
   // Creates the SchemaPrinter options

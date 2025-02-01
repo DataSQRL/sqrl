@@ -4,21 +4,15 @@ import static com.datasqrl.function.CalciteFunctionUtil.lightweightOp;
 import static com.datasqrl.function.PgSpecificOperatorTable.JsonToString;
 
 import com.datasqrl.calcite.Dialect;
-import com.datasqrl.calcite.convert.SimpleCallTransform;
 import com.datasqrl.calcite.convert.SimpleCallTransform.SimpleCallTransformConfig;
-import com.datasqrl.calcite.function.RuleTransform;
-import com.datasqrl.calcite.type.TypeFactory;
+import com.datasqrl.calcite.function.OperatorRuleTransform;
 import com.google.auto.service.AutoService;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlFunction;
-import org.apache.calcite.sql.SqlJsonEmptyOrError;
-import org.apache.calcite.sql.SqlJsonValueEmptyOrErrorBehavior;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.type.SqlTypeName;
@@ -26,8 +20,8 @@ import org.apache.calcite.sql.type.SqlTypeName;
 /**
  * Extracts a scalar value based on a JSON path.
  */
-@AutoService(RuleTransform.class)
-public class JsonExtractTranslation implements RuleTransform {
+@AutoService(OperatorRuleTransform.class)
+public class JsonExtractTranslation implements OperatorRuleTransform {
 
   public static final SqlFunction PG_JSONB_PATH_QUERY_FIRST = lightweightOp(
       "jsonb_path_query_first");

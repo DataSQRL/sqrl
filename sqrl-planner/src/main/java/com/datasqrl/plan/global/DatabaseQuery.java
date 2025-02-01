@@ -1,8 +1,7 @@
 package com.datasqrl.plan.global;
 
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.config.EngineFactory.Type;
-import com.datasqrl.engine.ExecutionEngine;
+import com.datasqrl.config.EngineType;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.local.generate.QueryTableFunction;
@@ -32,14 +31,14 @@ public interface DatabaseQuery {
     Preconditions.checkArgument(vTable.isRoot());
     ExecutionStage stage = vTable.getAssignedStage().get();
     //TODO: We don't yet support server queries directly against materialized tables. Need a database stage in between.
-    Preconditions.checkArgument(stage.getEngine().getType()==Type.DATABASE, "We do not yet support queries directly against stream");
+    Preconditions.checkArgument(stage.getEngine().getType()== EngineType.DATABASE, "We do not yet support queries directly against stream");
     return new Instance(vTable.getNameId(), vTable.getTableName(), List.of(), vTable.getPlannedRelNode(), stage);
   }
 
   static DatabaseQuery.Instance of(QueryTableFunction function) {
     QueryRelationalTable queryTable = function.getQueryTable();
     ExecutionStage assignedStage = queryTable.getAssignedStage().get();
-    Preconditions.checkArgument(assignedStage.getEngine().getType()== Type.DATABASE);
+    Preconditions.checkArgument(assignedStage.getEngine().getType()== EngineType.DATABASE);
     return new Instance(queryTable.getNameId(), queryTable.getTableName(), function.getParameters(), queryTable.getPlannedRelNode(), assignedStage);
   }
 

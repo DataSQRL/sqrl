@@ -12,15 +12,9 @@ import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.parser.SqlParserPos;
 
 @AutoService(SqlTranslation.class)
-public class JsonObjectAggSqlTranslation extends PostgresSqlTranslation {
+public class JsonObjectAggSqlTranslation extends PostgresSqlTranslation.Simple {
 
   public JsonObjectAggSqlTranslation() {
-    super(lightweightOp(JsonFunctions.JSON_OBJECTAGG));
-  }
-
-  @Override
-  public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    lightweightAggOp("jsonb_object_agg").createCall(SqlParserPos.ZERO, call.getOperandList())
-        .unparse(writer, leftPrec, rightPrec);
+    super(JsonFunctions.JSON_OBJECTAGG, "jsonb_object_agg");
   }
 }

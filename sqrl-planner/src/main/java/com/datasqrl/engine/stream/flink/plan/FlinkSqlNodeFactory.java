@@ -55,6 +55,18 @@ public class FlinkSqlNodeFactory {
     );
   }
 
+  public static RichSqlInsert createInsert(SqlNode source, ObjectIdentifier targetTable) {
+    return new RichSqlInsert(
+        SqlParserPos.ZERO,
+        SqlNodeList.EMPTY,
+        SqlNodeList.EMPTY,
+        identifier(targetTable),
+        source,
+        null,
+        null
+    );
+  }
+
   public static SqlCreateFunction createFunction(String name, String clazz) {
     return new SqlCreateFunction(
         SqlParserPos.ZERO,

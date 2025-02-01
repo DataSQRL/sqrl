@@ -15,8 +15,6 @@ public class VectorFunctions {
 
   public static final DoubleToVector DOUBLE_TO_VECTOR = new DoubleToVector();
 
-  public static final OnnxEmbed ONNX_EMBED = new OnnxEmbed();
-
   public static final AsciiTextTestEmbed ASCII_TEXT_TEST_EMBED = new AsciiTextTestEmbed();
 
   public static final Center CENTER = new Center();
@@ -27,7 +25,6 @@ public class VectorFunctions {
     EUCLIDEAN_DISTANCE,
     VEC_TO_DOUBLE,
     DOUBLE_TO_VECTOR,
-    ONNX_EMBED,
     ASCII_TEXT_TEST_EMBED,
     CENTER
   );

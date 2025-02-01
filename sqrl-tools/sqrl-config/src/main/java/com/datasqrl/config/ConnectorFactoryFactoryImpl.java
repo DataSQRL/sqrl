@@ -1,6 +1,5 @@
 package com.datasqrl.config;
 
-import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.config.PackageJson.EngineConfig;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
@@ -39,7 +38,7 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
   }
 
   @Override
-  public Optional<ConnectorFactory> create(Type engineType, String connectorName) {
+  public Optional<ConnectorFactory> create(EngineType engineType, String connectorName) {
 
     // from conflict, include into the new logic
     Optional<EngineConfig> engineConfig = packageJson.getEngines().getEngineConfig("flink");
@@ -60,9 +59,9 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
     }
 
     if (engineType != null) {
-      if (engineType.equals(Type.LOG)) {
+      if (engineType.equals(EngineType.LOG)) {
         return connectorConfig.map(this::createKafkaConnectorFactory);
-      } else if (engineType.equals(Type.DATABASE)) {
+      } else if (engineType.equals(EngineType.DATABASE)) {
         return connectorConfig.map(this::createJdbcConnectorFactory);
       } else if (connectorName.equalsIgnoreCase("iceberg")) {
         return connectorConfig.map(this::createIceberg);

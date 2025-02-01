@@ -30,6 +30,10 @@ public class PipelineDAG extends AbstractDAG<PipelineNode, PipelineDAG> {
     return super.allNodesByClass(clazz).sorted();
   }
 
+  public<T extends PipelineNode> Stream<T> allNodesByClassAndStage(Class<T> clazz, ExecutionStage stage) {
+    return super.allNodesByClass(clazz).filter(node -> node.getChosenStage().equals(stage)).sorted();
+  }
+
   public void eliminateInviableStages(ExecutionPipeline pipeline) {
     messagePassing(node -> {
       final LinkedHashMap<ExecutionStage, StageAnalysis> updatedStages = new LinkedHashMap<>();

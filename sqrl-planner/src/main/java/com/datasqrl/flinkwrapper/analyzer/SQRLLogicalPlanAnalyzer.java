@@ -164,7 +164,9 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
         .streamRoot(analysis.streamRoot)
         .fromTables(sourceTables)
         .requiredCapabilities(capabilityAnalysis.getRequiredCapabilities())
-        .costs(costAnalyses);
+        .costs(costAnalyses)
+        .hints(hints)
+        .errors(errors);
     return new ViewAnalysis(analysis.relNode, relBuilder, tableAnalysis);
   }
 
@@ -240,7 +242,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
   @Override
   public RelNode visit(TableScan tableScan) {
     RelOptTable table = tableScan.getTable();
-    Preconditions.checkArgument(table != null && table instanceof TableSourceTable);
+    Preconditions.checkArgument(table instanceof TableSourceTable);
     ObjectIdentifier tablePath = ((TableSourceTable)table).contextResolvedTable().getIdentifier();
     TableAnalysis tableAnalysis = tableLookup.lookupSourceTable(tablePath);
     errors.checkFatal(tableAnalysis!=null, "Could not find table: %s", tablePath);

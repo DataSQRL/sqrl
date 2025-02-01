@@ -10,4 +10,8 @@ import org.apache.flink.table.functions.UserDefinedFunction;
 public class CastFunction {
   String className;
   UserDefinedFunction function;
+
+  public String getName() {
+    return getFunction().getClass().getSimpleName();
+  }
 }

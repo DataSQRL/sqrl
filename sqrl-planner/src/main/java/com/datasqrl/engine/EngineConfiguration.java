@@ -3,7 +3,7 @@
  */
 package com.datasqrl.engine;
 
-import com.datasqrl.config.EngineFactory.Type;
+import com.datasqrl.config.EngineType;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.serializer.JacksonDeserializer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -20,7 +20,7 @@ public interface EngineConfiguration extends Serializable {
   String getEngineName();
 
   @JsonIgnore
-  Type getEngineType();
+  EngineType getEngineType();
 
   ExecutionEngine initialize(@NonNull ErrorCollector errors);
 
