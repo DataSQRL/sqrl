@@ -2,7 +2,6 @@ package com.datasqrl.flinkwrapper.dag;
 
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.EngineType;
-import com.datasqrl.datatype.DataTypeMapper;
 import com.datasqrl.datatype.DataTypeMapping;
 import com.datasqrl.datatype.DataTypeMapping.Direction;
 import com.datasqrl.engine.EngineFeature;
@@ -13,10 +12,8 @@ import com.datasqrl.engine.export.ExportEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.engine.server.ServerEngine;
-import com.datasqrl.engine.stream.flink.connector.CastFunction;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.flinkwrapper.Sqrl2FlinkSQLTranslator;
-import com.datasqrl.flinkwrapper.TableAnalysisLookup;
 import com.datasqrl.flinkwrapper.analyzer.TableAnalysis;
 import com.datasqrl.flinkwrapper.dag.nodes.ExportNode;
 import com.datasqrl.flinkwrapper.dag.nodes.PipelineNode;
@@ -33,13 +30,17 @@ import com.datasqrl.flinkwrapper.tables.AccessVisibility;
 import com.datasqrl.flinkwrapper.tables.FlinkTableBuilder;
 import com.datasqrl.flinkwrapper.tables.SqrlTableFunction;
 import com.datasqrl.function.SqrlCastFunction;
-import com.datasqrl.plan.global.PhysicalDAGPlan.WriteSink;
 import com.datasqrl.plan.util.PrimaryKeyMap;
 import com.datasqrl.util.CalciteUtil;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -55,16 +56,9 @@ import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.schema.TableFunction;
-import org.apache.calcite.sql.SqlFunctionCategory;
-import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlOperator;
-import org.apache.calcite.sql.SqlSyntax;
-import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.calcite.sql.validate.SqlNameMatchers;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.flink.table.catalog.ObjectIdentifier;
-import org.apache.flink.table.catalog.UnresolvedIdentifier;
 import org.apache.flink.table.planner.calcite.FlinkRelBuilder;
 import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
 import org.apache.flink.table.planner.plan.schema.TableSourceTable;
@@ -129,7 +123,7 @@ public class DAGPlanner {
     Map<InputTableKey, ObjectIdentifier> streamTableMapping = new HashMap<>();
     List<EnginePhysicalPlan> plans = new ArrayList<>();
     //move assembler logic here
-    //1st: find all the cuts between flink and materialization (db+log) stages or sinks
+    //##1st: find all the cuts between flink and materialization (db+log) stages or sinks
     //generate a sink for each in the respective engine and insert into
     dag.allNodesByClassAndStage(TableNode.class, streamStage).forEach(node -> {
       ObjectIdentifier fromTableId = node.getIdentifier();
@@ -159,7 +153,7 @@ public class DAGPlanner {
             ExportEngine exportEngine = (ExportEngine) exportStage.getEngine();
             FlinkTableBuilder tblBuilder = new FlinkTableBuilder();
 
-            //1st: determine primary key and partition key (if present)
+            //#1st: determine primary key and partition key (if present)
             PrimaryKeyMap pk = deterinePrimaryKey(nodeTable, relBuilder, exportStage);
             if (pk.isDefined()) {
               List<RelDataTypeField> fields = relBuilder.peek().getRowType().getFieldList();
@@ -170,11 +164,11 @@ public class DAGPlanner {
             nodeTable.getHints().getHint(PartitionKeyHint.class).ifPresent(
                 partitionKeyHint -> tblBuilder.setPartition(partitionKeyHint.getOptions()));
 
-            //2nd: apply type casting
+            //#2nd: apply type casting
             mapTypes(relBuilder, nodeTable.getRowType(), sqrlEnv, exportEngine.getTypeMapping(), Direction.TO_ENGINE);
 
-            //3rd: create table
-            EngineCreateTable createdTable = exportEngine.createTable(tblBuilder, relBuilder.peek().getRowType());
+            //#3rd: create table
+            EngineCreateTable createdTable = exportEngine.createTable(exportStage, tblBuilder, relBuilder.peek().getRowType());
             exportPlans.get(exportStage).table(createdTable);
             targetTable = sqrlEnv.createSinkTable(tblBuilder);
             streamTableMapping.put(new InputTableKey(exportStage, fromTableId), targetTable);
@@ -220,8 +214,15 @@ public class DAGPlanner {
           dbPlan.query(new Query(function, plannedRelNode));
         }
       });
-      plans.add(dbEngine.plan(dbPlan.build())); //this attaches the planned queries to the SqrlTableFunction
+      plans.add(dbEngine.plan(dbPlan.build()));
     }
+    //This builds all export plans which includes attaching executable queries to SqrlTableFunctions
+    exportPlans.forEach((stage, planBuilder) -> {
+      MaterializationStagePlan stagePlan = planBuilder.build();
+      EnginePhysicalPlan physicalPlan = ((ExportEngine)stage.getEngine()).plan(stagePlan);
+      plans.add(physicalPlan);
+    });
+
 
     //3rd: build table functions for server stage
     if (serverStage.isPresent()) {

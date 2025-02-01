@@ -42,12 +42,14 @@ public interface ExecutionEngine extends IExecutionEngine {
    * be used as a sink by a previous stage in the pipeline.
    * @return
    */
+  @Deprecated
   TableConfig getSinkConfig(String sinkName);
 
   /**
    * Create the physical plan from the {@link StagePlan} produced by the {@link com.datasqrl.plan.global.DAGPlanner}
    * for this engine.
    */
+  @Deprecated
   EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs,
       ExecutionPipeline pipeline, List<StagePlan> stagePlans, SqrlFramework framework, ErrorCollector errorCollector);
 

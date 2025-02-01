@@ -72,7 +72,7 @@ public class SqrlTableFunction implements TableFunction, TableOrFunctionAnalysis
    * After planning, this represents the executable query for this function
    */
   @Nullable @Default @Setter
-  private ExecutableQuery plannedQuery = null;
+  private ExecutableQuery executableQuery = null;
 
   @Override
   public RelDataType getRowType(RelDataTypeFactory relDataTypeFactory, List<? extends Object> list) {
