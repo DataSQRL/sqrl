@@ -57,10 +57,13 @@ public class SimplePipeline implements ExecutionPipeline {
     logStage.ifPresent(ls -> {
       stages.add(ls);
       streamStage.ifPresent(ss -> downstream.put(ls, ss));
+      streamStage.ifPresent(ss -> upstream.put(ls, ss));
+      serverStage.ifPresent(vs -> downstream.put(ls, vs));
     });
     streamStage.ifPresent(ss -> {
       stages.add(ss);
       logStage.ifPresent(ls -> upstream.put(ss, ls));
+      logStage.ifPresent(ls -> downstream.put(ss, ls));
       dbStages.forEach(dbs -> downstream.put(ss, dbs));
     });
     for (EngineStage dbStage : dbStages) {
@@ -75,6 +78,7 @@ public class SimplePipeline implements ExecutionPipeline {
     serverStage.ifPresent(vs -> {
       stages.add(vs);
       dbStages.forEach(dbs -> upstream.put(vs, dbs));
+      logStage.ifPresent(ls -> upstream.put(vs, ls));
     });
     //Engines that support computation can have themselves as up/downstream
     for (EngineStage stage : stages) {
