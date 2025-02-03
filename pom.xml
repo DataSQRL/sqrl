@@ -920,6 +920,9 @@
           <includes>
             <include>**/*IT.java</include>
           </includes>
+          <environmentVariables>
+             <TZ>America/Los_Angeles</TZ>
+          </environmentVariables>
         </configuration>
       </plugin>
     </plugins>
