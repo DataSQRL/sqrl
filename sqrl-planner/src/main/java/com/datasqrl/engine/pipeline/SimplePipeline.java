@@ -17,7 +17,8 @@ import java.util.stream.Collectors;
 import lombok.Value;
 
 /**
- * Simple pipeline that does not support any branching (i.e. it's a straight line)
+ * A simple pipeline that has a single stream, log, and server engine with support
+ * for multiple databases.
  */
 @Value
 public class SimplePipeline implements ExecutionPipeline {
@@ -49,6 +50,7 @@ public class SimplePipeline implements ExecutionPipeline {
     Optional<EngineStage> streamStage = getSingleStage(EngineType.STREAMS, engines);
     errors.checkFatal(streamStage.isPresent(), "Need to configure an enabled stream engine");
     List<EngineStage> dbStages = getStage(EngineType.DATABASE, engines);
+    //TODO: create two stages for each configured server: one for logStage and one for dbStages
     Optional<EngineStage> serverStage = getSingleStage(EngineType.SERVER, engines);
     List<EngineStage> exportStages = getStage(EngineType.EXPORT, engines);
 

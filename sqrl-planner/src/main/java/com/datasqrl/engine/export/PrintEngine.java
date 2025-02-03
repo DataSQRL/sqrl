@@ -1,33 +1,46 @@
 package com.datasqrl.engine.export;
 
 import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.config.ConnectorConf;
+import com.datasqrl.config.ConnectorConf.Context;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.EngineType;
-import com.datasqrl.config.PackageJson;
-import com.datasqrl.config.PackageJson.EmptyEngineConfig;
 import com.datasqrl.config.TableConfig;
 import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.EnginePhysicalPlan;
-import com.datasqrl.engine.log.kafka.KafkaLogEngineFactory;
+import com.datasqrl.engine.database.EngineCreateTable;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
+import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.v2.tables.FlinkTableBuilder;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
 import com.google.inject.Inject;
-import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import org.apache.calcite.rel.type.RelDataType;
 
 public class PrintEngine implements ExportEngine {
 
+  private final Optional<ConnectorConf> connectorConf;
+
   @Inject
-  public PrintEngine(PackageJson json,
-      ConnectorFactoryFactory connectorFactory) {
-    this.engineConfig = json.getEngines().getEngineConfig(KafkaLogEngineFactory.ENGINE_NAME)
-        .orElseGet(() -> new EmptyEngineConfig(KafkaLogEngineFactory.ENGINE_NAME));
-    this.connectorFactory = connectorFactory.create(EngineType.LOG, "kafka")
-        .orElseThrow(()->new RuntimeException("Could not find kafka connector"));
+  public PrintEngine(ConnectorFactoryFactory connectorFactory) {
+    this.connectorConf = connectorFactory.getOptionalConfig(PrintEngineFactory.NAME);
   }
 
+  @Override
+  public EngineCreateTable createTable(ExecutionStage stage, String tableName,
+      FlinkTableBuilder tableBuilder, RelDataType relDataType) {
+    if (connectorConf.isPresent()) {
+      tableBuilder.setConnectorOptions(connectorConf.get().toMapWithSubstitution(
+          Context.builder().tableName(tableName).build()));
+    } else {
+      tableBuilder.setConnectorOptions(Map.of("connector", "print"));
+    }
+    return EngineCreateTable.NONE;
+  }
 
   @Override
   public boolean supports(EngineFeature capability) {

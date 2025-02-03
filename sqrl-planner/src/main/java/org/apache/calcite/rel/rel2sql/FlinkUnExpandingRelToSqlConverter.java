@@ -1,19 +1,10 @@
 package org.apache.calcite.rel.rel2sql;
 
-import com.datasqrl.engine.stream.flink.plan.FlinkSqlNodeFactory;
-import com.datasqrl.flinkwrapper.TableAnalysisLookup;
-import com.datasqrl.flinkwrapper.analyzer.TableAnalysis;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import org.apache.calcite.rel.RelNode;
+import com.datasqrl.v2.TableAnalysisLookup;
 import org.apache.calcite.sql.SqlDialect;
 import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlSelect;
-import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 import org.apache.flink.table.planner.plan.nodes.calcite.LogicalWatermarkAssigner;
 
 public class FlinkUnExpandingRelToSqlConverter extends RelToSqlConverter {

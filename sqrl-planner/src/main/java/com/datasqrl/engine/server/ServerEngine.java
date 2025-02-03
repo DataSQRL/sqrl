@@ -5,7 +5,7 @@ package com.datasqrl.engine.server;
 
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
-import com.datasqrl.flinkwrapper.dag.plan.ServerStagePlan;
+import com.datasqrl.v2.dag.plan.ServerStagePlan;
 
 /**
  * The server engine is a combination of the server core (the graphql engine) and the

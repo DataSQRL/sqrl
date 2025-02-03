@@ -29,6 +29,11 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
   }
 
   @Override
+  public EnginePhysicalPlan plan(com.datasqrl.v2.dag.plan.ServerStagePlan serverPlan) {
+    return null;
+  }
+
+  @Override
   public EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs,
       ExecutionPipeline pipeline, List<StagePlan> stagePlans, SqrlFramework framework, ErrorCollector errorCollector) {
 

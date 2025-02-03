@@ -80,6 +80,13 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
     return connectors.getConnectorConfigOrErr(name);
   }
 
+  @Override
+  public Optional<ConnectorConf> getOptionalConfig(String name) {
+    ConnectorsConfig connectors = packageJson.getEngines().getEngineConfigOrErr("flink")
+        .getConnectors();
+    return connectors.getConnectorConfig(name);
+  }
+
   //## TODO: move the rest of this class into the respective engines
 
   private ConnectorFactory createIceberg(ConnectorConf connectorConf) {

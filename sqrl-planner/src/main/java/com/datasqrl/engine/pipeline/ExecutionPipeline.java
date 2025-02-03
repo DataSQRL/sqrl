@@ -4,6 +4,7 @@
 package com.datasqrl.engine.pipeline;
 
 import com.datasqrl.config.EngineType;
+import com.datasqrl.engine.server.ServerEngine;
 import com.datasqrl.util.StreamUtil;
 import java.util.List;
 import java.util.Optional;
@@ -16,6 +17,14 @@ public interface ExecutionPipeline {
 
   default List<ExecutionStage> getReadStages() {
     return getStages().stream().filter(ExecutionStage::isRead).collect(Collectors.toList());
+  }
+
+  /**
+   * An execution pipeline can only have a single server engine
+   * @return
+   */
+  default Optional<ServerEngine> getServerEngine() {
+    return StreamUtil.getOnlyElement(getStagesByType(EngineType.SERVER).stream().map(stage -> (ServerEngine)stage.getEngine()).distinct());
   }
 
   default boolean hasReadStages() {
