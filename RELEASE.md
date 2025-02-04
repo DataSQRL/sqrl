@@ -29,7 +29,7 @@ Create a commit under main with the message `Prepare for v0.?.?` and push.
 ## Release SQRL
 ### 1. Run the maven release command
 Note: Update the release version on the command below. This will trigger the git release processes and create tag.
-
+Note: the mvn release plugin uses the http github url defined in the SCM part to push. Please use you github personal access token to log in while pushing.
 `
 mvn --batch-mode release:clean release:prepare -DreleaseVersion=0.?.? -DskipTests -Darguments=-DskipTests
 `
