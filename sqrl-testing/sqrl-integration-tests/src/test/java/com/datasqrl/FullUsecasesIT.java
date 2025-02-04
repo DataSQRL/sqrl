@@ -70,6 +70,8 @@ public class FullUsecasesIT {
       new ScriptCriteria("sensors-mutation.sqrl", "run"), //flaky see sqrl script
       new ScriptCriteria("sensors-full.sqrl", "test"), //flaky (too much data)
       new ScriptCriteria("sensors-full.sqrl", "run"), //flaky (too much data)
+      new ScriptCriteria("pyudf-disabled.sqrl", "run"), //needs py env
+      new ScriptCriteria("pyudf-disabled.sqrl", "test"), //needs py env
       //new ScriptCriteria("sensors-teaser.sqrl", "test"),
       //new ScriptCriteria("season-teaser.sqrl", "run"),
 //      new ScriptCriteria("comparison-functions.sqrl", "test"),
