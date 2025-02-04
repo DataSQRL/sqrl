@@ -15,7 +15,7 @@
           "driver": "org.postgresql.Driver",
           "username": "${JDBC_USERNAME}",
           "url": "${JDBC_URL}",
-          "table-name": "${sqrl:table}"
+          "table-name": "${sqrl:table-name}"
         },
         "kafka": {
           "connector" : "kafka",
@@ -24,7 +24,15 @@
           "properties.group.id": "${PROPERTIES_GROUP_ID}",
           "scan.startup.mode" : "group-offsets",
           "properties.auto.offset.reset" : "earliest",
-          "topic" : "${sqrl:topic}"
+          "topic" : "${sqrl:table-name}"
+        },
+        "kafka-upsert": {
+          "connector" : "upsert-kafka",
+          "value.format" : "flexible-json",
+          "properties.bootstrap.servers": "${PROPERTIES_BOOTSTRAP_SERVERS}",
+          "properties.group.id": "${PROPERTIES_GROUP_ID}",
+          "key.format": "raw",
+          "topic" : "${sqrl:table-name}"
         },
         "localfile": {
           "connector" : "filesystem",

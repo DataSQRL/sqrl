@@ -6,6 +6,9 @@ import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.EmptyEngineConfig;
+import com.datasqrl.datatype.DataTypeMapping;
+import com.datasqrl.datatype.flink.jdbc.FlinkSqrlPostgresDataTypeMapper;
+import com.datasqrl.engine.database.DatabaseEngine;
 import com.google.inject.Inject;
 import lombok.NonNull;
 import org.apache.calcite.sql.SqlIdentifier;
@@ -24,6 +27,11 @@ public class PostgresJdbcEngine extends AbstractJDBCDatabaseEngine {
     super(PostgresEngineFactory.ENGINE_NAME, json.getEngines().getEngineConfig(PostgresEngineFactory.ENGINE_NAME)
             .orElseGet(()-> new EmptyEngineConfig(PostgresEngineFactory.ENGINE_NAME)),
         connectorFactory);
+  }
+
+  @Override
+  public DataTypeMapping getTypeMapping() {
+    return new FlinkSqrlPostgresDataTypeMapper();
   }
 
   @Override

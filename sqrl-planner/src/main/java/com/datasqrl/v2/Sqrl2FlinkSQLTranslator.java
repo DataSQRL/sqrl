@@ -105,6 +105,7 @@ import org.apache.flink.table.api.SqlParserException;
 import org.apache.flink.table.api.TableException;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.api.bridge.java.internal.StreamTableEnvironmentImpl;
+import org.apache.flink.table.api.internal.TableEnvironmentImpl;
 import org.apache.flink.table.api.internal.TableResultInternal;
 import org.apache.flink.table.catalog.CatalogManager;
 import org.apache.flink.table.catalog.ObjectIdentifier;
@@ -233,8 +234,13 @@ public class Sqrl2FlinkSQLTranslator implements TableAnalysisLookup {
 
   public FlinkPhysicalPlan compilePlan() {
     SqlExecute execute = planBuilder.getExecuteStatement();
-    StatementSetOperation statmentSetOp = (StatementSetOperation) getOperation(execute);
-    CompiledPlan compiledPlan = tEnv.compilePlan(statmentSetOp.getOperations());
+    //StatementSetOperation statmentSetOp = (StatementSetOperation) getOperation(execute);
+    String insert = toSqlString(execute) + ";";
+    StatementSetOperation parse = (StatementSetOperation)tEnv.getParser().parse(insert).get(0);
+    CompiledPlan compiledPlan = tEnv.compilePlan(parse.getOperations());
+
+//    CompiledPlan compiledPlan = tEnv.compilePlanSql(execute.toString());
+//    CompiledPlan compiledPlan = tEnv.compilePlan(statmentSetOp.getOperations());
     return planBuilder.build(compiledPlan);
   }
 

@@ -5,18 +5,26 @@ package com.datasqrl.engine.database.relational;
 
 import static com.datasqrl.engine.EngineFeature.STANDARD_DATABASE;
 
+import com.datasqrl.config.ConnectorConf;
 import com.datasqrl.config.ConnectorFactoryContext;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.EngineType;
 import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.config.TableConfig;
+import com.datasqrl.datatype.DataTypeMapping;
+import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.database.DatabaseEngine;
+import com.datasqrl.engine.database.EngineCreateTable;
 import com.datasqrl.engine.database.QueryEngine;
+import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.global.IndexSelectorConfig;
+import com.datasqrl.v2.dag.plan.MaterializationStagePlan;
+import com.datasqrl.v2.tables.FlinkTableBuilder;
 import java.util.Map;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.calcite.rel.type.RelDataType;
 
 /**
  * Abstract implementation of a JDBC-compatible database engine.
@@ -26,13 +34,16 @@ public abstract class AbstractJDBCDatabaseEngine extends AbstractJDBCEngine impl
 
 
   @Getter
-  final EngineConfig connectorConfig;
+  final EngineConfig engineConfig;
+  final ConnectorConf connector;
+
   private final ConnectorFactoryFactory connectorFactory;
 
-  public AbstractJDBCDatabaseEngine(String name, @NonNull EngineConfig connectorConfig, ConnectorFactoryFactory connectorFactory) {
+  public AbstractJDBCDatabaseEngine(String name, @NonNull EngineConfig engineConfig, ConnectorFactoryFactory connectorFactory) {
     super(name, EngineType.DATABASE, STANDARD_DATABASE);
-    this.connectorConfig = connectorConfig;
+    this.engineConfig = engineConfig;
     this.connectorFactory = connectorFactory;
+    this.connector = connectorFactory.getConfig(getName());
   }
 
   @Override
@@ -45,7 +56,19 @@ public abstract class AbstractJDBCDatabaseEngine extends AbstractJDBCEngine impl
     throw new UnsupportedOperationException("JDBC database engines do not support query engines");
   }
 
-//  @Override
+  @Override
+  public EngineCreateTable createTable(ExecutionStage stage, String originalTableName,
+      FlinkTableBuilder tableBuilder, RelDataType relDataType) {
+    tableBuilder.setConnectorOptions(Map.of("connector", "blackhole"));
+    return EngineCreateTable.NONE;
+  }
+
+  @Override
+  public EnginePhysicalPlan plan(MaterializationStagePlan stagePlan) {
+    return DatabaseEngine.super.plan(stagePlan);
+  }
+
+  //  @Override
 //  public boolean supports(FunctionDefinition function) {
 //    //TODO: @Daniel: change to determining which functions are supported by dialect & database type
 //    //This is a hack - we just check that it's not a tumble window function

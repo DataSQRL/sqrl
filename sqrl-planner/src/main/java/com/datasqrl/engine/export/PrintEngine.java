@@ -40,8 +40,8 @@ public class PrintEngine implements ExportEngine {
               .origTableName(originalTableName)
               .build()));
     } else {
-      tableBuilder.setConnectorOptions(Map.of("connector", "print"));
-      tableBuilder.setConnectorOptions(Map.of("print-identifier", originalTableName));
+      tableBuilder.setConnectorOptions(Map.of("connector", "print",
+          "print-identifier", originalTableName));
     }
     return EngineCreateTable.NONE;
   }
