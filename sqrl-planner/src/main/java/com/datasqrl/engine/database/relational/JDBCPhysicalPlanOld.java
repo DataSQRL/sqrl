@@ -13,7 +13,8 @@ import java.util.Map;
 import lombok.Value;
 
 @Value
-public class JDBCPhysicalPlan implements DatabaseViewPhysicalPlan {
+@Deprecated
+public class JDBCPhysicalPlanOld implements DatabaseViewPhysicalPlan {
 
   List<SqlDDLStatement> ddl;
   List<DatabaseView> views;

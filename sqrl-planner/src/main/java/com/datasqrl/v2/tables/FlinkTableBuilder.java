@@ -64,6 +64,10 @@ public class FlinkTableBuilder {
     return this;
   }
 
+  public Map<String, String> getConnectorOptions() {
+    return FlinkSqlNodeFactory.propertiesToMap(getPropertyList());
+  }
+
   public FlinkTableBuilder setDummyConnector() {
     return setConnectorOptions(Map.of("connector","datagen"));
   }

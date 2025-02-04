@@ -81,6 +81,7 @@ import org.apache.calcite.sql.validate.SqlNameMatchers;
 import org.apache.calcite.sql2rel.SqlToRelConverter;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.sql.parser.ddl.SqlAlterViewAs;
+import org.apache.flink.sql.parser.ddl.SqlCreateFunction;
 import org.apache.flink.sql.parser.ddl.SqlCreateTable;
 import org.apache.flink.sql.parser.ddl.SqlCreateTableLike;
 import org.apache.flink.sql.parser.ddl.SqlCreateView;
@@ -104,6 +105,8 @@ import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.operations.Operation;
 import org.apache.flink.table.operations.StatementSetOperation;
 import org.apache.flink.table.operations.ddl.AlterViewAsOperation;
+import org.apache.flink.table.operations.ddl.CreateCatalogFunctionOperation;
+import org.apache.flink.table.operations.ddl.CreateOperation;
 import org.apache.flink.table.operations.ddl.CreateTableOperation;
 import org.apache.flink.table.operations.ddl.CreateViewOperation;
 import org.apache.flink.table.planner.calcite.CalciteConfigBuilder;
@@ -171,7 +174,7 @@ public class Sqrl2FlinkSQLTranslator {
     //Register SQRL standard functions
     StreamUtil.filterByClass(ServiceLoaderDiscovery.getAll(StdLibrary.class), AbstractFunctionModule.class)
         .flatMap(fctModule -> fctModule.getFunctions().stream())
-        .forEach(fct -> this.addUserDefinedFunction(fct.getSqlName(), fct.getFunction().getClass().getName()));
+        .forEach(fct -> this.addUserDefinedFunction(fct.getSqlName(), fct.getFunction().getClass().getName(), true));
 
   }
 
@@ -206,8 +209,9 @@ public class Sqrl2FlinkSQLTranslator {
   public FlinkPhysicalPlan compilePlan() {
     SqlExecute execute = planBuilder.getExecuteStatement();
     //StatementSetOperation statmentSetOp = (StatementSetOperation) getOperation(execute);
-    String insert = toSqlString(execute) + ";";
-    StatementSetOperation parse = (StatementSetOperation)tEnv.getParser().parse(insert).get(0);
+    String insert = toSqlString(execute);
+    planBuilder.add(execute, insert);
+    StatementSetOperation parse = (StatementSetOperation)tEnv.getParser().parse(insert + ";").get(0);
     CompiledPlan compiledPlan = tEnv.compilePlan(parse.getOperations());
 
 //    CompiledPlan compiledPlan = tEnv.compilePlanSql(execute.toString());
@@ -583,8 +587,15 @@ public class Sqrl2FlinkSQLTranslator {
     return list.get(0);
   }
 
-  public void addUserDefinedFunction(String name, String clazz) {
-    executeSqlNode(FlinkSqlNodeFactory.createFunction(name, clazz));
+  public void addUserDefinedFunction(String name, String clazz, boolean isSystem) {
+    SqlCreateFunction functionSql = FlinkSqlNodeFactory.createFunction(name, clazz, isSystem);
+    Operation addFctOp = executeSqlNode(functionSql);
+    //Function definitions are not in the compiled plan, have to add them explicitly but with fully resolved identifier
+    if (addFctOp instanceof CreateCatalogFunctionOperation) {
+      functionSql = FlinkSqlNodeFactory.createFunction(FlinkSqlNodeFactory.identifier(
+          ((CreateCatalogFunctionOperation) addFctOp).getFunctionIdentifier()), clazz, isSystem);
+    }
+    planBuilder.addFunction(toSqlString(functionSql));
   }
 
   private static void checkResultOk(TableResultInternal result) {

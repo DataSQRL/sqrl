@@ -183,7 +183,7 @@ public class SqrlToFlinkSqlGenerator {
     mutableUdfs.remove("NOW".toLowerCase());
 
     return mutableUdfs.entrySet().stream()
-        .map(entry -> FlinkSqlNodeFactory.createFunction(entry.getKey(), entry.getValue()))
+        .map(entry -> FlinkSqlNodeFactory.createFunction(entry.getKey(), entry.getValue(), false))
         .collect(Collectors.toList());
   }
 

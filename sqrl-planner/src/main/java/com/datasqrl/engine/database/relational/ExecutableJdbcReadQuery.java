@@ -4,6 +4,7 @@ import com.datasqrl.engine.ExecutableQuery;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import java.util.List;
 import java.util.Optional;
+import lombok.Builder;
 import lombok.Value;
 
 /**
@@ -16,6 +17,7 @@ import lombok.Value;
  * to the function parameters which the optional parameterMap does.
  */
 @Value
+@Builder
 public class ExecutableJdbcReadQuery implements ExecutableQuery {
 
   ExecutionStage stage;

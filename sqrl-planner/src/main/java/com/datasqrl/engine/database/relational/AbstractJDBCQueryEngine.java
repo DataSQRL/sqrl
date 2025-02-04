@@ -14,12 +14,8 @@ import lombok.NonNull;
  */
 public abstract class AbstractJDBCQueryEngine extends AbstractJDBCEngine implements QueryEngine {
 
-  @Getter
-  final EngineConfig connectorConfig;
-
-  public AbstractJDBCQueryEngine(String name, @NonNull EngineConfig connectorConfig, ConnectorFactoryFactory connectorFactory) {
-    super(name, EngineType.QUERY, STANDARD_QUERY);
-    this.connectorConfig = connectorConfig;
+  public AbstractJDBCQueryEngine(String name, @NonNull EngineConfig engineConfig, ConnectorFactoryFactory connectorFactory) {
+    super(name, EngineType.QUERY, STANDARD_QUERY, engineConfig, connectorFactory);
   }
 
 }

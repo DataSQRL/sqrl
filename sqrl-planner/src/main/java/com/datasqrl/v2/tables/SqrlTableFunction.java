@@ -79,6 +79,10 @@ public class SqrlTableFunction implements TableFunction, TableOrFunctionAnalysis
     return functionAnalysis.getRowType();
   }
 
+  public boolean hasParameters() {
+    return !parameters.isEmpty();
+  }
+
   public String getFunctionCatalogName() {
     Preconditions.checkArgument(fullPath.size()==1);
     return fullPath.getLast().getDisplay();

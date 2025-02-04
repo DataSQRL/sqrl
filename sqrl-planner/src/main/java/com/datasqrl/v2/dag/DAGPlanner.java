@@ -150,58 +150,61 @@ public class DAGPlanner {
           //Create sink
           ExecutionStage exportStage = null;
           ObjectIdentifier targetTable = null;
+          String originalTableName = null;
           if (downstream instanceof ExportNode) {
             ExportNode exportNode = (ExportNode) downstream;
+            originalTableName = exportNode.getSinkName();
             if (exportNode.getSinkTo().isPresent()) {
               exportStage = exportNode.getSinkTo().get();
             } else {
               //Special case, we sink directly to table
               targetTable = exportNode.getCreatedSinkTable().get();
               sqrlEnv.insertInto(sqrlEnv.getTableScan(node.getIdentifier()).build(), targetTable);
+              continue;
             }
           } else { //We are sinking into another engine
             exportStage = downstream.getChosenStage();
-            if (!downstreamStages.add(exportStage)) exportStage = null;
+            originalTableName = node.getTableAnalysis().getName();
+            if (!downstreamStages.add(exportStage)) continue;
           }
-          if (exportStage != null) {
-            Preconditions.checkArgument(exportStage.getEngine().getType().supportsExport(), "Execution stage [%s] does not support exporting [%s]", exportStage, node);
-            ExportEngine exportEngine = (ExportEngine) exportStage.getEngine();
-            if (exportEngine.getType().isDataStore() && node.getTableAnalysis().isHasMostRecentDistinct()) {
-              //If we are sinking to a datastore and the node is a most recent distinct, we can remove that node
-              //since materializing into the table on primary key has the same effect and is more efficient
-              errors.checkFatal(node.getTableAnalysis().getPrimaryKey().isDefined(), "Expected primary key: %s", node);
-              node = (TableNode) Iterables.getOnlyElement(dag.getInputs(node));
-            }
-            FlinkRelBuilder relBuilder = sqrlEnv.getTableScan(node.getIdentifier());
-            FlinkTableBuilder tblBuilder = new FlinkTableBuilder();
-            ObjectIdentifier fromTableId = node.getIdentifier();
-            TableAnalysis nodeTable = node.getTableAnalysis();
-            tblBuilder.setName(externalNameFct.apply(nodeTable.getName()));
-            //#1st: determine primary key and partition key (if present)
-            PrimaryKeyMap pk = deterinePrimaryKey(nodeTable, relBuilder, exportStage);
-            if (pk.isDefined()) {
-              List<RelDataTypeField> fields = relBuilder.peek().getRowType().getFieldList();
-              List<String> pkColNames = pk.asSimpleList().stream().map(fields::get).map(RelDataTypeField::getName).collect(
-                  Collectors.toList());
-              tblBuilder.setPrimaryKey(pkColNames);
-            }
-            nodeTable.getHints().getHint(PartitionKeyHint.class).ifPresent(
-                partitionKeyHint -> tblBuilder.setPartition(partitionKeyHint.getOptions()));
-
-            //#2nd: apply type casting
-            mapTypes(relBuilder, nodeTable.getRowType(), sqrlEnv, exportEngine.getTypeMapping(), Direction.TO_ENGINE);
-
-            //#3rd: create table
-            RelDataType datatype = relBuilder.peek().getRowType();
-            tblBuilder.setRelDataType(datatype);
-            EngineCreateTable createdTable = exportEngine.createTable(exportStage,
-                nodeTable.getName(), tblBuilder, datatype);
-            exportPlans.get(exportStage).table(createdTable);
-            targetTable = sqrlEnv.createSinkTable(tblBuilder);
-            streamTableMapping.put(new InputTableKey(exportStage, fromTableId), targetTable);
-            //Finally: add insert statement to sink into table
-            sqrlEnv.insertInto(relBuilder.build(), targetTable);
+          assert exportStage != null;
+          Preconditions.checkArgument(exportStage.getEngine().getType().supportsExport(), "Execution stage [%s] does not support exporting [%s]", exportStage, node);
+          ExportEngine exportEngine = (ExportEngine) exportStage.getEngine();
+          if (exportEngine.getType().isDataStore() && node.getTableAnalysis().isHasMostRecentDistinct()) {
+            //If we are sinking to a datastore and the node is a most recent distinct, we can remove that node
+            //since materializing into the table on primary key has the same effect and is more efficient
+            errors.checkFatal(node.getTableAnalysis().getPrimaryKey().isDefined(), "Expected primary key: %s", node);
+            node = (TableNode) Iterables.getOnlyElement(dag.getInputs(node));
           }
+          FlinkRelBuilder relBuilder = sqrlEnv.getTableScan(node.getIdentifier());
+          FlinkTableBuilder tblBuilder = new FlinkTableBuilder();
+          ObjectIdentifier fromTableId = node.getIdentifier();
+          TableAnalysis nodeTable = node.getTableAnalysis();
+          tblBuilder.setName(externalNameFct.apply(originalTableName));
+          //#1st: determine primary key and partition key (if present)
+          PrimaryKeyMap pk = deterinePrimaryKey(nodeTable, relBuilder, exportStage);
+          if (pk.isDefined()) {
+            List<RelDataTypeField> fields = relBuilder.peek().getRowType().getFieldList();
+            List<String> pkColNames = pk.asSimpleList().stream().map(fields::get).map(RelDataTypeField::getName).collect(
+                Collectors.toList());
+            tblBuilder.setPrimaryKey(pkColNames);
+          }
+          nodeTable.getHints().getHint(PartitionKeyHint.class).ifPresent(
+              partitionKeyHint -> tblBuilder.setPartition(partitionKeyHint.getOptions()));
+
+          //#2nd: apply type casting
+          mapTypes(relBuilder, nodeTable.getRowType(), sqrlEnv, exportEngine.getTypeMapping(), Direction.TO_ENGINE);
+
+          //#3rd: create table
+          RelDataType datatype = relBuilder.peek().getRowType();
+          tblBuilder.setRelDataType(datatype);
+          EngineCreateTable createdTable = exportEngine.createTable(exportStage,
+              originalTableName, tblBuilder, datatype);
+          exportPlans.get(exportStage).table(createdTable);
+          targetTable = sqrlEnv.createSinkTable(tblBuilder);
+          streamTableMapping.put(new InputTableKey(exportStage, fromTableId), targetTable);
+          //Finally: add insert statement to sink into table
+          sqrlEnv.insertInto(relBuilder.build(), targetTable);
         }
       }
     });
@@ -244,12 +247,6 @@ public class DAGPlanner {
       });
       plans.add(dbEngine.plan(dbPlan.build()));
     }
-    //This builds all export plans which includes attaching executable queries to SqrlTableFunctions
-    exportPlans.forEach((stage, planBuilder) -> {
-      MaterializationStagePlan stagePlan = planBuilder.build();
-      EnginePhysicalPlan physicalPlan = ((ExportEngine)stage.getEngine()).plan(stagePlan);
-      plans.add(physicalPlan);
-    });
 
 
     //3rd: build table functions for server stage

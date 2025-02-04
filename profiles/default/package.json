@@ -14,7 +14,7 @@
           "password": "${JDBC_PASSWORD}",
           "driver": "org.postgresql.Driver",
           "username": "${JDBC_USERNAME}",
-          "url": "${JDBC_URL}",
+          "url": "jdbc:postgresql://${JDBC_URL}",
           "table-name": "${sqrl:table-name}"
         },
         "kafka": {
@@ -62,7 +62,7 @@
           "password": "${JDBC_PASSWORD}",
           "driver": "org.postgresql.Driver",
           "username": "${JDBC_USERNAME}",
-          "url": "${JDBC_URL}",
+          "url": "jdbc:postgresql://${JDBC_URL}",
           "table-name": "${sqrl:table}"
         }
       }

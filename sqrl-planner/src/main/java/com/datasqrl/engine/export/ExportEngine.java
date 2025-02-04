@@ -23,18 +23,12 @@ public interface ExportEngine extends ExecutionEngine {
    * @param relDataType The datatype for the columns in the table.
    * @return
    */
-  default EngineCreateTable createTable(ExecutionStage stage, String originalTableName,
-      FlinkTableBuilder tableBuilder, RelDataType relDataType) {
-    return null;
-  }
+  EngineCreateTable createTable(ExecutionStage stage, String originalTableName,
+      FlinkTableBuilder tableBuilder, RelDataType relDataType);
 
-  default DataTypeMapping getTypeMapping() {
-    return DataTypeMapping.NONE;
-  }
+  DataTypeMapping getTypeMapping();
 
-  default EnginePhysicalPlan plan(MaterializationStagePlan stagePlan) {
-    return null;
-  }
+
 
 
 }

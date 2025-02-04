@@ -32,18 +32,9 @@ import org.apache.calcite.rel.type.RelDataType;
 @Slf4j
 public abstract class AbstractJDBCDatabaseEngine extends AbstractJDBCEngine implements DatabaseEngine {
 
-
-  @Getter
-  final EngineConfig engineConfig;
-  final ConnectorConf connector;
-
-  private final ConnectorFactoryFactory connectorFactory;
-
   public AbstractJDBCDatabaseEngine(String name, @NonNull EngineConfig engineConfig, ConnectorFactoryFactory connectorFactory) {
-    super(name, EngineType.DATABASE, STANDARD_DATABASE);
-    this.engineConfig = engineConfig;
+    super(name, EngineType.DATABASE, STANDARD_DATABASE, engineConfig, connectorFactory);
     this.connectorFactory = connectorFactory;
-    this.connector = connectorFactory.getConfig(getName());
   }
 
   @Override
@@ -56,18 +47,6 @@ public abstract class AbstractJDBCDatabaseEngine extends AbstractJDBCEngine impl
     throw new UnsupportedOperationException("JDBC database engines do not support query engines");
   }
 
-  @Override
-  public EngineCreateTable createTable(ExecutionStage stage, String originalTableName,
-      FlinkTableBuilder tableBuilder, RelDataType relDataType) {
-    tableBuilder.setConnectorOptions(Map.of("connector", "blackhole"));
-    return EngineCreateTable.NONE;
-  }
-
-  @Override
-  public EnginePhysicalPlan plan(MaterializationStagePlan stagePlan) {
-    return DatabaseEngine.super.plan(stagePlan);
-  }
-
   //  @Override
 //  public boolean supports(FunctionDefinition function) {
 //    //TODO: @Daniel: change to determining which functions are supported by dialect & database type
@@ -75,7 +54,11 @@ public abstract class AbstractJDBCDatabaseEngine extends AbstractJDBCEngine impl
 //    return FunctionUtil.getSqrlTimeTumbleFunction(function).isEmpty();
 //  }
 
+  @Deprecated
+  private final ConnectorFactoryFactory connectorFactory;
+
   @Override
+  @Deprecated
   public TableConfig getSinkConfig(String tableName) {
     return connectorFactory
         .create(EngineType.DATABASE, getDialect().getId())
@@ -85,6 +68,7 @@ public abstract class AbstractJDBCDatabaseEngine extends AbstractJDBCEngine impl
   }
 
   @Override
+  @Deprecated
   public IndexSelectorConfig getIndexSelectorConfig() {
     return IndexSelectorConfigByDialect.of(getDialect());
   }

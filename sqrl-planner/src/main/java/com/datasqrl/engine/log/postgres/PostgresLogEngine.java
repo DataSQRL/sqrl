@@ -10,9 +10,12 @@ import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.EmptyEngineConfig;
 import com.datasqrl.config.PackageJson.EngineConfig;
+import com.datasqrl.datatype.DataTypeMapping;
+import com.datasqrl.datatype.flink.jdbc.FlinkSqrlPostgresDataTypeMapper;
 import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
+import com.datasqrl.engine.database.EngineCreateTable;
 import com.datasqrl.engine.database.relational.ddl.JdbcDDLFactory;
 import com.datasqrl.engine.database.relational.ddl.JdbcDDLServiceLoader;
 import com.datasqrl.engine.database.relational.ddl.PostgresDDLFactory;
@@ -22,11 +25,14 @@ import com.datasqrl.engine.log.Log;
 import com.datasqrl.engine.log.LogEngine;
 import com.datasqrl.engine.log.LogFactory;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
+import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.global.PhysicalDAGPlan.LogStagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
 import com.datasqrl.sql.SqlDDLStatement;
+import com.datasqrl.v2.dag.plan.MaterializationStagePlan;
+import com.datasqrl.v2.tables.FlinkTableBuilder;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import java.util.ArrayList;
@@ -93,4 +99,19 @@ public class PostgresLogEngine extends ExecutionEngine.Base implements LogEngine
     return new PostgresLogPhysicalPlan(ddl, queries, inserts);
   }
 
+  @Override
+  public EnginePhysicalPlan plan(MaterializationStagePlan stagePlan) {
+    throw new UnsupportedOperationException("not yet supported");
+  }
+
+  @Override
+  public EngineCreateTable createTable(ExecutionStage stage, String originalTableName,
+      FlinkTableBuilder tableBuilder, RelDataType relDataType) {
+    throw new UnsupportedOperationException("not yet supported");
+  }
+
+  @Override
+  public DataTypeMapping getTypeMapping() {
+    return new FlinkSqrlPostgresDataTypeMapper();
+  }
 }

@@ -6,12 +6,14 @@ import com.datasqrl.config.ConnectorConf.Context;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.EngineType;
 import com.datasqrl.config.TableConfig;
+import com.datasqrl.datatype.DataTypeMapping;
 import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.database.EngineCreateTable;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.v2.dag.plan.MaterializationStagePlan;
 import com.datasqrl.v2.tables.FlinkTableBuilder;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
@@ -44,6 +46,11 @@ public class PrintEngine implements ExportEngine {
           "print-identifier", originalTableName));
     }
     return EngineCreateTable.NONE;
+  }
+
+  @Override
+  public DataTypeMapping getTypeMapping() {
+    return DataTypeMapping.NONE;
   }
 
   @Override

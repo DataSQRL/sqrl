@@ -10,7 +10,7 @@ import org.apache.flink.table.catalog.ObjectIdentifier;
 @Getter
 public class ExportNode extends PipelineNode {
 
-  private final String sinkId;
+  private final String sinkName;
 
   private final Optional<ExecutionStage> sinkTo;
   private final Optional<ObjectIdentifier> createdSinkTable;
@@ -19,7 +19,7 @@ public class ExportNode extends PipelineNode {
   public ExportNode(Map<ExecutionStage, StageAnalysis> stageAnalysis,
       String sinkId, Optional<ExecutionStage> sinkTo, Optional<ObjectIdentifier> createdSinkTable) {
     super("export", stageAnalysis);
-    this.sinkId = sinkId;
+    this.sinkName = sinkId;
     this.sinkTo = sinkTo;
     this.createdSinkTable = createdSinkTable;
   }
@@ -31,7 +31,7 @@ public class ExportNode extends PipelineNode {
 
   @Override
   public String getId() {
-    return sinkId;
+    return sinkName;
   }
 
 }

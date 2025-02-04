@@ -16,6 +16,9 @@ import org.apache.flink.sql.parser.dml.RichSqlInsert;
 import org.apache.flink.sql.parser.dml.SqlExecute;
 import org.apache.flink.sql.parser.dml.SqlStatementSet;
 import org.apache.flink.table.api.CompiledPlan;
+import org.apache.flink.table.operations.ddl.CreateCatalogFunctionOperation;
+import org.apache.flink.table.operations.ddl.CreateOperation;
+import org.apache.flink.table.operations.ddl.CreateTempSystemFunctionOperation;
 
 @Value
 @Builder
@@ -24,6 +27,7 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
   List<String> flinkSql;
   Set<String> connectors;
   Set<String> formats;
+  Set<String> functions;
   @JsonIgnore
   String compiledPlan;
 
@@ -33,8 +37,8 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
     List<SqlNode> nodes = new ArrayList<>();
     Set<String> connectors = new HashSet<>();
     Set<String> formats = new HashSet<>();
+    Set<String> functions = new HashSet<>();
     List<RichSqlInsert> statementSet = new ArrayList<>();
-    //TODO: add compiled plan
 
     public void addInsert(RichSqlInsert insert) {
       statementSet.add(insert);
@@ -42,6 +46,10 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
 
     public void add(SqlNode sqlNode, Sqrl2FlinkSQLTranslator sqrlEnv) {
       add(sqlNode, sqrlEnv.toSqlString(sqlNode));
+    }
+
+    public void addFunction(String createFunction) {
+      functions.add(createFunction);
     }
 
     public void add(SqlNode node, String nodeSql) {
@@ -73,7 +81,7 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
     }
 
     public FlinkPhysicalPlan build(CompiledPlan compiledPlan) {
-      return new FlinkPhysicalPlan(flinkSql, connectors, formats, compiledPlan.asJsonString());
+      return new FlinkPhysicalPlan(flinkSql, connectors, formats, functions, compiledPlan.asJsonString());
     }
 
 

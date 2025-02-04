@@ -12,6 +12,7 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.global.PhysicalDAGPlan.ServerStagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
+import com.datasqrl.v2.tables.SqrlTableFunction;
 import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.Set;
@@ -30,7 +31,10 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
 
   @Override
   public EnginePhysicalPlan plan(com.datasqrl.v2.dag.plan.ServerStagePlan serverPlan) {
-    return null;
+    serverPlan.getFunctions().stream().filter(fct -> fct.getExecutableQuery()==null).forEach(fct -> {
+      throw new IllegalStateException("Function has not been planned: " + fct);
+    });
+    return serverPlan;
   }
 
   @Override

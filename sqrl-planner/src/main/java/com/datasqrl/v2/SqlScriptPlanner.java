@@ -417,7 +417,7 @@ public class SqlScriptPlanner {
       Preconditions.checkArgument(fnsObject.getFunction() instanceof UserDefinedFunction, "Expected UDF: " + fnsObject.getFunction());
       Class<?> udfClass = fnsObject.getFunction().getClass();
       String name = alias.orElseGet(() -> FlinkUdfNsObject.getFunctionNameFromClass(udfClass).getDisplay());
-      sqrlEnv.addUserDefinedFunction(name, udfClass.getName());
+      sqrlEnv.addUserDefinedFunction(name, udfClass.getName(), false);
     } else if (nsObject instanceof ScriptNamespaceObject) {
       //TODO: 1) if this is a * import, then import inline (throw exception if trying to import only a specific table)
       // 2) if import ends in script, plan script into separate database (with name of script or alias) via CREATE/USE DATABASE
@@ -450,7 +450,8 @@ public class SqlScriptPlanner {
         exportStmt.getTableIdentifier().getFileLocation(), "Could not find table: %s",
         tablePath.toString())).unwrap(TableNode.class);
 
-    String exportTableName = tablePath.getLast().getDisplay() + EXPORT_SUFFIX + exportTableCounter.incrementAndGet();
+    String exportTableName = sinkName.getDisplay();
+    String exportTableId = exportTableName + EXPORT_SUFFIX + exportTableCounter.incrementAndGet();
     Map<ExecutionStage, StageAnalysis> stageAnalysis = getSourceSinkStageAnalysis();
     ExportNode exportNode;
 
@@ -492,7 +493,7 @@ public class SqlScriptPlanner {
           Optional.of(sinkName.getDisplay()), errorCollector);
       Optional<RelDataType> schema = flinkTable.schema.or(() -> Optional.of(inputNode.getTableAnalysis().getRowType()));
       try {
-        ObjectIdentifier tableId = sqrlEnv.addExternalExport(exportTableName, flinkTable.sqlCreateTable, schema);
+        ObjectIdentifier tableId = sqrlEnv.addExternalExport(exportTableId, flinkTable.sqlCreateTable, schema);
         exportNode = new ExportNode(stageAnalysis, exportTableName, Optional.empty(), Optional.of(tableId));
       } catch (Throwable e) {
         throw flinkTable.errorCollector.handle(e);

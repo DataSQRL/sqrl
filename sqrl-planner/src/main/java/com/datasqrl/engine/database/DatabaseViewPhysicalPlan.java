@@ -3,7 +3,7 @@ package com.datasqrl.engine.database;
 import java.util.List;
 import lombok.Value;
 
-public interface DatabaseViewPhysicalPlan extends DatabasePhysicalPlan {
+public interface DatabaseViewPhysicalPlan extends DatabasePhysicalPlanOld {
 
   List<DatabaseView> getViews();
 

@@ -67,15 +67,19 @@ public class FlinkSqlNodeFactory {
     );
   }
 
-  public static SqlCreateFunction createFunction(String name, String clazz) {
+  public static SqlCreateFunction createFunction(String name, String clazz, boolean isSystem) {
+    return createFunction(identifier(name), clazz, isSystem);
+  }
+
+  public static SqlCreateFunction createFunction(SqlIdentifier identifier, String clazz, boolean isSystem) {
     return new SqlCreateFunction(
         SqlParserPos.ZERO,
-        identifier(name),
+        identifier,
         SqlLiteral.createCharString(clazz, SqlParserPos.ZERO),
         "JAVA",
         true,
-        true,
         false,
+        isSystem,
         new SqlNodeList(SqlParserPos.ZERO)
     );
   }
@@ -135,6 +139,17 @@ public class FlinkSqlNodeFactory {
         .collect(Collectors.toList());
 
     return new SqlNodeList(props, SqlParserPos.ZERO);
+  }
+
+  public static Map<String, String> propertiesToMap(SqlNodeList nodeList) {
+    Map<String, String> result = new HashMap<>();
+    for (SqlNode node : nodeList) {
+      SqlTableOption option = (SqlTableOption) node;
+      SqlLiteral keyLiteral = (SqlLiteral) option.getKey();
+      SqlLiteral valueLiteral = (SqlLiteral) option.getValue();
+      result.put(keyLiteral.toValue(), valueLiteral.toValue());
+    }
+    return result;
   }
 
   public static SqlNodeList createPartitionKeys(List<String> partitionKeys) {

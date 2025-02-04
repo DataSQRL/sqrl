@@ -6,18 +6,27 @@ package com.datasqrl.engine.database.relational;
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.config.ConnectorConf;
+import com.datasqrl.config.ConnectorConf.Context;
+import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.EngineType;
 import com.datasqrl.config.JdbcDialect;
+import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.datatype.DataTypeMapper;
 import com.datasqrl.engine.EngineFeature;
+import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
-import com.datasqrl.engine.database.DatabasePhysicalPlan;
+import com.datasqrl.engine.database.DatabasePhysicalPlanOld;
 import com.datasqrl.engine.database.DatabaseViewPhysicalPlan.DatabaseView;
 import com.datasqrl.engine.database.DatabaseViewPhysicalPlan.DatabaseViewImpl;
+import com.datasqrl.engine.database.EngineCreateTable;
 import com.datasqrl.engine.database.QueryTemplate;
+import com.datasqrl.engine.database.relational.JdbcStatementFactory.QueryResult;
 import com.datasqrl.engine.database.relational.ddl.JdbcDDLFactory;
 import com.datasqrl.engine.database.relational.ddl.JdbcDDLServiceLoader;
+import com.datasqrl.engine.export.ExportEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
+import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.engine.stream.flink.connector.CastFunction;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.global.PhysicalDAGPlan.DatabaseStagePlan;
@@ -26,11 +35,14 @@ import com.datasqrl.plan.global.PhysicalDAGPlan.ReadQuery;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
 import com.datasqrl.plan.queries.IdentifiedQuery;
-import com.datasqrl.sql.PgExtension;
+import com.datasqrl.sql.DatabaseExtension;
 import com.datasqrl.sql.SqlDDLStatement;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.datasqrl.util.StreamUtil;
+import com.datasqrl.v2.dag.plan.MaterializationStagePlan;
+import com.datasqrl.v2.tables.FlinkTableBuilder;
+import com.datasqrl.v2.tables.SqrlTableFunction;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -41,6 +53,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.rel.RelNode;
@@ -72,15 +85,63 @@ import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 @Slf4j
 public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements ExecutionEngine {
 
+  @Getter
+  protected final EngineConfig engineConfig;
+  protected final ConnectorConf connector;
+
   public AbstractJDBCEngine(@NonNull String name, @NonNull EngineType type,
-      @NonNull EnumSet<EngineFeature> capabilities) {
+      @NonNull EnumSet<EngineFeature> capabilities,
+      @NonNull EngineConfig engineConfig, @NonNull ConnectorFactoryFactory connectorFactory) {
     super(name, type, capabilities);
+    this.engineConfig = engineConfig;
+    this.connector = connectorFactory.getConfig(getName());
   }
 
   protected abstract JdbcDialect getDialect();
 
+  public EngineCreateTable createTable(ExecutionStage stage, String originalTableName,
+      FlinkTableBuilder tableBuilder, RelDataType relDataType) {
+    String tableName = tableBuilder.getTableName();
+    tableBuilder.setConnectorOptions(connector.toMapWithSubstitution(Context.builder()
+        .tableName(tableName).origTableName(originalTableName).build()));
+    return new JdbcEngineCreateTable(tableBuilder, relDataType);
+  }
+
+  protected abstract JdbcStatementFactory getStatementFactory();
+
+  public EnginePhysicalPlan plan(MaterializationStagePlan stagePlan) {
+    JdbcStatementFactory stmtFactory = getStatementFactory();
+    JdbcPhysicalPlan.JdbcPhysicalPlanBuilder planBuilder = JdbcPhysicalPlan.builder();
+    planBuilder.stage(stagePlan.getStage());
+    //Create extensions
+    planBuilder.statements(stmtFactory.extractExtensions(stagePlan.getQueries()));
+    //Create tables
+    stagePlan.getTables().stream().map(JdbcEngineCreateTable.class::cast)
+        .map(stmtFactory::createTable).forEach(planBuilder::statement);
+    //Create executable queries & views
+    if (stmtFactory.supportsQueries()) {
+      stagePlan.getQueries().forEach(query -> {
+        planBuilder.query(query.getRelNode());
+        SqrlTableFunction function = query.getFunction();
+        QueryResult result = stmtFactory.createQuery(query, function.hasParameters());
+        if (result.getExecQueryBuilder()!=null && function.getExecutableQuery()==null) {
+          function.setExecutableQuery(result.getExecQueryBuilder().stage(stagePlan.getStage()).build());
+        }
+        if (result.getView()!=null) {
+          planBuilder.statement(result.getView());
+        }
+      });
+    }
+    return planBuilder.build();
+  }
+
+  /*
+  == OLD CODE ==
+   */
+
   @Override
-  public DatabasePhysicalPlan plan(StagePlan plan, List<StageSink> inputs,
+  @Deprecated
+  public DatabasePhysicalPlanOld plan(StagePlan plan, List<StageSink> inputs,
       ExecutionPipeline pipeline, List<StagePlan> stagePlans, SqrlFramework framework, ErrorCollector errorCollector) {
 
     Preconditions.checkArgument(plan instanceof DatabaseStagePlan);
@@ -127,7 +188,7 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
           }
         });
       }
-      SqlParserPos pos = new SqlParserPos(0, 0);
+      SqlParserPos pos = SqlParserPos.ZERO;
       String viewName = optViewName.get().getDisplay();
       SqlIdentifier viewNameIdentifier = new SqlIdentifier(viewName, pos);
       SqlNodeList columnList = new SqlNodeList(relNode.getRowType().getFieldList().stream()
@@ -141,11 +202,12 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
       views.add(new DatabaseViewImpl(viewName, viewSql));
     }
 
-    return new JDBCPhysicalPlan(ddlStatements,
+    return new JDBCPhysicalPlanOld(ddlStatements,
         views,
         databaseQueries);
   }
 
+  @Deprecated
   abstract protected String createView(SqlIdentifier viewNameIdentifier, SqlParserPos pos, SqlNodeList columnList, SqlNode viewSqlNode);
 
   /**
@@ -153,10 +215,12 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
    * to restore the original type.
    * @return
    */
+  @Deprecated
   protected Optional<DataTypeMapper> getUpCastingMapper() {
     return Optional.empty();
   }
 
+  @Deprecated
   private RelNode applyUpcasting(SqrlFramework framework, RelBuilder relBuilder, RelNode relNode,
       DataTypeMapper dataTypeMapper) {
     //Apply upcasting if reading a json/other function directly from the table.
@@ -174,6 +238,7 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
   }
 
 
+  @Deprecated
   private RexNode convertField(SqrlFramework framework, RelDataTypeField field, AtomicBoolean hasChanged, RelBuilder relBuilder,
       DataTypeMapper dataTypeMapper) {
     RelDataType type = field.getType();
@@ -207,8 +272,9 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
   }
 
 
+  @Deprecated
   private List<SqlDDLStatement> extractTypeExtensions(List<ReadQuery> queries) {
-    List<PgExtension> extensions = ServiceLoaderDiscovery.getAll(PgExtension.class);
+    List<DatabaseExtension> extensions = ServiceLoaderDiscovery.getAll(DatabaseExtension.class);
 
     return queries.stream()
         .flatMap(relNode -> extractTypeExtensions(relNode.getRelNode(), extensions).stream())
@@ -217,27 +283,28 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
   }
 
   //todo: currently vector specific
-  private List<SqlDDLStatement> extractTypeExtensions(RelNode relNode, List<PgExtension> extensions) {
+  @Deprecated
+  private List<SqlDDLStatement> extractTypeExtensions(RelNode relNode, List<DatabaseExtension> extensions) {
     Set<SqlDDLStatement> statements = new HashSet<>();
     //look at relnodes to see if we use a vector type
     for (RelDataTypeField field : relNode.getRowType().getFieldList()) {
 
-      for (PgExtension extension : extensions) {
+      for (DatabaseExtension extension : extensions) {
         if (field.getType() instanceof RawRelDataType &&
             ((RawRelDataType) field.getType()).getRawType().getOriginatingClass()
                 == extension.typeClass())
-          statements.add(extension.getExtensionDdl());
+          statements.add(() -> extension.getExtensionDdl());
       }
     }
 
     CalciteUtil.applyRexShuttleRecursively(relNode, new RexShuttle() {
       @Override
       public RexNode visitCall(RexCall call) {
-        for (PgExtension extension : extensions) {
-          for (String function : extension.operators()) {
+        for (DatabaseExtension extension : extensions) {
+          for (Name function : extension.operators()) {
             if (function.equals(
-                Name.system(call.getOperator().getName().toLowerCase()))) {
-              statements.add(extension.getExtensionDdl());
+                Name.system(call.getOperator().getName()))) {
+              statements.add(() -> extension.getExtensionDdl());
             }
           }
         }
