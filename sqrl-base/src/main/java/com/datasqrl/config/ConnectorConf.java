@@ -4,8 +4,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Predicate;
 import lombok.Builder;
+import lombok.Singular;
 import lombok.Value;
 
+/**
+ * TODO: change value type in map to 'String'
+ */
 public interface ConnectorConf {
 
   Map<String, Object> toMap();
@@ -23,10 +27,14 @@ public interface ConnectorConf {
   @Builder
   class Context {
     String tableName;
+    String origTableName;
+    @Singular
+    Map<String,String> variables;
 
     public Map<String,String> toVariables() {
-      Map<String,String> vars = new HashMap<>();
-      if (tableName!=null) vars.put("tableName", tableName);
+      Map<String,String> vars = new HashMap<>(variables);
+      if (tableName!=null) vars.put("table-name", tableName);
+      if (origTableName!=null) vars.put("original-table-name", origTableName);
       return vars;
     }
   }

@@ -50,6 +50,10 @@ public class FlinkTableBuilder {
     return this;
   }
 
+  public String getTableName() {
+    return tableName.getSimple();
+  }
+
   public FlinkTableBuilder setRelDataType(RelDataType relDataType) {
     setColumnList(FlinkSqlNodeFactory.createColumns(relDataType));
     return this;

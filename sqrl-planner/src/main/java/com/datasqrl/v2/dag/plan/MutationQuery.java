@@ -2,13 +2,17 @@ package com.datasqrl.v2.dag.plan;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.engine.ExecutableQuery;
-import com.datasqrl.engine.log.LogCreateTopic;
+import com.datasqrl.engine.database.EngineCreateTable;
 import com.datasqrl.engine.pipeline.ExecutionStage;
-import java.util.Optional;
+import com.datasqrl.v2.tables.MutationComputedColumn;
+import java.util.List;
+import lombok.Builder;
+import lombok.Singular;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
 
 @Value
+@Builder
 public class MutationQuery implements ExecutableQuery {
 
   /**
@@ -22,18 +26,20 @@ public class MutationQuery implements ExecutableQuery {
   /**
    * The topic that the mutation is written into
    */
-  LogCreateTopic createTopic;
+  EngineCreateTable createTopic;
   /**
    * The data type of the input data for the mutation
    */
   RelDataType inputDataType;
   /**
-   * The name of the uuid and timestamp column (if any) as defined in the CREATE TABLE statement.
-   *
-   * TODO: We want to generalize this to allow arbitrary upfront computations
-   * on the server and not have this hardcoded to just these two columns.
+   * The data type of the result data for the mutation
    */
-  Optional<String> uuidColumnName;
-  Optional<String> timestampColumnName;
+  RelDataType outputDataType;
+  /**
+   * The columns that are computed and not provided
+   * explicitly by the user
+   */
+  @Singular
+  List<MutationComputedColumn> computedColumns;
 
 }

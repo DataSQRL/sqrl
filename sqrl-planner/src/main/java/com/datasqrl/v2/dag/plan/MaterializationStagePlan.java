@@ -1,8 +1,9 @@
 package com.datasqrl.v2.dag.plan;
 
+import com.datasqrl.calcite.SqrlRexUtil;
 import com.datasqrl.engine.database.EngineCreateTable;
-import com.datasqrl.engine.log.LogCreateTopic;
 import com.datasqrl.engine.pipeline.ExecutionStage;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.v2.tables.SqrlTableFunction;
 import java.util.List;
 import lombok.Singular;
@@ -35,12 +36,23 @@ public class MaterializationStagePlan {
    * All the mutations we write to this stage, only applies to logs
    */
   @Singular
-  List<LogCreateTopic> mutations;
+  List<EngineCreateTable> mutations;
+
+  /**
+   * Passed through since the engines might need it for query manipulation
+   */
+  Utils utils;
 
   @Value
   public static class Query {
     SqrlTableFunction function;
     RelNode relNode;
+    ErrorCollector errors;
+  }
+
+  @Value
+  public static class Utils {
+    SqrlRexUtil rexUtil;
   }
 
 

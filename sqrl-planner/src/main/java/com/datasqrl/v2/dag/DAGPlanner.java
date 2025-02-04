@@ -2,6 +2,8 @@ package com.datasqrl.v2.dag;
 
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.EngineType;
+import com.datasqrl.config.PackageJson;
+import com.datasqrl.config.PackageJson.OutputConfig;
 import com.datasqrl.datatype.DataTypeMapping;
 import com.datasqrl.datatype.DataTypeMapping.Direction;
 import com.datasqrl.engine.EngineFeature;
@@ -70,6 +72,7 @@ public class DAGPlanner {
 
   private final ExecutionPipeline pipeline;
   private final ErrorCollector errors;
+  private final PackageJson packageJson;
 
   public PipelineDAG optimize(PipelineDAG dag) {
     dag = dag.trimToSinks();
@@ -111,9 +114,10 @@ public class DAGPlanner {
     List<ExecutionStage> dataStoreStages = pipeline.getStages().stream()
         .filter(stage -> stage.getEngine().getType().isDataStore()).collect(Collectors.toList());
 
+    MaterializationStagePlan.Utils engineUtils = new MaterializationStagePlan.Utils(sqrlEnv.getRexUtil());
     Map<ExecutionStage, MaterializationStagePlanBuilder> exportPlans = pipeline.getStages().stream()
         .filter(stage -> stage.getEngine().getType().supportsExport()).collect(Collectors.toMap(
-            Function.identity(), s -> MaterializationStagePlan.builder().stage(s)));
+            Function.identity(), s -> MaterializationStagePlan.builder().utils(engineUtils).stage(s)));
 
     Optional<ExecutionStage> logStage = pipeline.getStageByType(EngineType.LOG);
     if (logStage.isPresent()) {
@@ -127,7 +131,13 @@ public class DAGPlanner {
     }
 
     Map<InputTableKey, ObjectIdentifier> streamTableMapping = new HashMap<>();
-    AtomicInteger exportTableCounter = new AtomicInteger(0);
+    final AtomicInteger exportTableCounter = new AtomicInteger(0);
+    final OutputConfig outputConfig = packageJson.getCompilerConfig().getOutput();
+    Function<String,String> externalNameFct = name -> {
+      String result = name+outputConfig.getTableSuffix();
+      if (outputConfig.isAddUid()) result +="_"+exportTableCounter.incrementAndGet();
+      return result;
+    };
     List<EnginePhysicalPlan> plans = new ArrayList<>();
     //move assembler logic here
     //##1st: find all the cuts between flink and materialization (db+log) stages or sinks
@@ -138,7 +148,6 @@ public class DAGPlanner {
         if (downstream instanceof ExportNode || !downstream.getChosenStage().equals(streamStage)) {
           //Create sink
           ExecutionStage exportStage = null;
-          FlinkRelBuilder relBuilder = sqrlEnv.getRelBuilder(null);
           ObjectIdentifier targetTable = null;
           if (downstream instanceof ExportNode) {
             ExportNode exportNode = (ExportNode) downstream;
@@ -147,9 +156,9 @@ public class DAGPlanner {
             } else {
               //Special case, we sink directly to table
               targetTable = exportNode.getCreatedSinkTable().get();
-              relBuilder.scan(node.getIdentifier(), Map.of());
+              sqrlEnv.insertInto(sqrlEnv.getTableScan(node.getIdentifier()).build(), targetTable);
             }
-          } else {
+          } else { //We are sinking into another engine
             exportStage = downstream.getChosenStage();
             if (!downstreamStages.add(exportStage)) exportStage = null;
           }
@@ -162,10 +171,11 @@ public class DAGPlanner {
               errors.checkFatal(node.getTableAnalysis().getPrimaryKey().isDefined(), "Expected primary key: %s", node);
               node = (TableNode) Iterables.getOnlyElement(dag.getInputs(node));
             }
+            FlinkRelBuilder relBuilder = sqrlEnv.getTableScan(node.getIdentifier());
             FlinkTableBuilder tblBuilder = new FlinkTableBuilder();
             ObjectIdentifier fromTableId = node.getIdentifier();
             TableAnalysis nodeTable = node.getTableAnalysis();
-            tblBuilder.setName(exportStage.getName()+"_"+nodeTable.getName()+"_"+exportTableCounter.incrementAndGet());
+            tblBuilder.setName(externalNameFct.apply(nodeTable.getName()));
             //#1st: determine primary key and partition key (if present)
             PrimaryKeyMap pk = deterinePrimaryKey(nodeTable, relBuilder, exportStage);
             if (pk.isDefined()) {
@@ -188,9 +198,9 @@ public class DAGPlanner {
             exportPlans.get(exportStage).table(createdTable);
             targetTable = sqrlEnv.createSinkTable(tblBuilder);
             streamTableMapping.put(new InputTableKey(exportStage, fromTableId), targetTable);
+            //Finally: add insert statement to sink into table
+            sqrlEnv.insertInto(relBuilder.build(), targetTable);
           }
-          //Finally: add insert statement to sink into table
-          sqrlEnv.insertInto(relBuilder.build(), targetTable);
         }
       }
     });
@@ -227,7 +237,7 @@ public class DAGPlanner {
           RelNode plannedRelNode = function.getFunctionAnalysis().getRelNode().accept(
               new QueryExpansionRelShuttle(id -> streamTableMapping.get(new InputTableKey(dataStoreStage, id)),
                   sqrlEnv.getRelBuilder(null), sqrlEnv, dbEngine.getTypeMapping(), true));
-          dbPlan.query(new Query(function, plannedRelNode));
+          dbPlan.query(new Query(function, plannedRelNode, function.getFunctionAnalysis().getErrors()));
           if (function.getVisibility().isQueryable()) serverPlan.function(function);
         }
       });
@@ -290,6 +300,18 @@ public class DAGPlanner {
     }
   }
 
+  /**
+   * Maps the field types based on the provided data mapper so they can be written to the engine
+   * sink.
+   *
+   * TODO: Need to map all but the first rowtime to avoid Flink exception
+   *
+   * @param relBuilder
+   * @param sourceType
+   * @param sqrlEnv
+   * @param typeMapper
+   * @param mapDirection
+   */
   private void mapTypes(RelBuilder relBuilder, RelDataType sourceType, Sqrl2FlinkSQLTranslator sqrlEnv,
       DataTypeMapping typeMapper, DataTypeMapping.Direction mapDirection) {
 

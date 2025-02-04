@@ -2,6 +2,7 @@ package com.datasqrl.v2;
 
 import static com.datasqrl.function.FlinkUdfNsObject.getFunctionNameFromClass;
 
+import com.datasqrl.calcite.SqrlRexUtil;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.BuildPath;
@@ -11,10 +12,13 @@ import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.error.ErrorLocation.FileLocation;
+import com.datasqrl.util.CalciteUtil;
+import com.datasqrl.util.RelDataTypeBuilder;
 import com.datasqrl.v2.FlinkPhysicalPlan.Builder;
 import com.datasqrl.v2.analyzer.SQRLLogicalPlanAnalyzer;
 import com.datasqrl.v2.analyzer.SQRLLogicalPlanAnalyzer.ViewAnalysis;
 import com.datasqrl.v2.analyzer.TableAnalysis;
+import com.datasqrl.v2.dag.plan.MutationQuery.MutationQueryBuilder;
 import com.datasqrl.v2.hint.PlannerHints;
 import com.datasqrl.v2.parser.ParsedField;
 import com.datasqrl.v2.parser.SqrlTableFunctionStatement.ParsedArgument;
@@ -22,6 +26,8 @@ import com.datasqrl.v2.parser.StatementParserException;
 import com.datasqrl.v2.tables.FlinkConnectorConfig;
 import com.datasqrl.v2.tables.FlinkTableBuilder;
 import com.datasqrl.v2.dag.plan.MutationQuery;
+import com.datasqrl.v2.tables.MutationComputedColumn;
+import com.datasqrl.v2.tables.MutationComputedColumn.Type;
 import com.datasqrl.v2.tables.SourceTableAnalysis;
 import com.datasqrl.v2.tables.SqrlFunctionParameter;
 import com.datasqrl.v2.tables.SqrlTableFunction;
@@ -46,6 +52,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -54,11 +61,16 @@ import java.util.stream.IntStream;
 import javax.annotation.Nullable;
 import lombok.SneakyThrows;
 import lombok.Value;
+import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
 import org.apache.calcite.rel.core.Sort;
+import org.apache.calcite.rel.hint.Hintable;
+import org.apache.calcite.rel.logical.LogicalTableScan;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
 import org.apache.calcite.rex.RexDynamicParam;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
@@ -172,6 +184,10 @@ public class Sqrl2FlinkSQLTranslator implements TableAnalysisLookup {
 
   }
 
+  public SqrlRexUtil getRexUtil() {
+    return new SqrlRexUtil(typeFactory);
+  }
+
   private void registerTable(TableAnalysis tableAnalysis) {
     if (tableAnalysis.isSource()) {
       sourceTableMap.put(tableAnalysis.getIdentifier(), tableAnalysis);
@@ -268,10 +284,24 @@ public class Sqrl2FlinkSQLTranslator implements TableAnalysisLookup {
   public FlinkRelBuilder getRelBuilder(@Nullable FlinkPlannerImpl flinkPlanner) {
     if (flinkPlanner == null) flinkPlanner = this.validatorSupplier.get();
     SqlToRelConverter.Config config = flinkPlanner.config().getSqlToRelConverterConfig().withAddJsonTypeOperatorEnabled(false);
+    //We are using a null schema because using the scan method on FlinkRelBuilder tries to expand views.
+    //Need to construct LogicalTableScan manually.
     return
         (FlinkRelBuilder) config.getRelBuilderFactory()
             .create(flinkPlanner.cluster(), null)
             .transform(config.getRelBuilderConfigTransform());
+  }
+
+  private CalciteCatalogReader getCalciteCatalog(@Nullable FlinkPlannerImpl flinkPlanner) {
+    return flinkPlanner.getOrCreateSqlValidator().getCatalogReader().unwrap(CalciteCatalogReader.class);
+  }
+
+  public FlinkRelBuilder getTableScan(ObjectIdentifier identifier) {
+    FlinkPlannerImpl flinkPlanner = this.validatorSupplier.get();
+    FlinkRelBuilder relBuilder = getRelBuilder(flinkPlanner);
+    CalciteCatalogReader catalog = getCalciteCatalog(flinkPlanner);
+    relBuilder.push(LogicalTableScan.create(flinkPlanner.cluster(), catalog.getTableForMember(identifier.toList()), List.of()));
+    return relBuilder;
   }
 
   private SqlNode removeSort(SqlNode sqlNode) {
@@ -376,11 +406,11 @@ public class Sqrl2FlinkSQLTranslator implements TableAnalysisLookup {
     //Process argument types
     List<ParsedField> requiresTypeParsing = arguments.stream()
         .filter(Predicate.not(ParsedArgument::hasResolvedType)).collect(Collectors.toList());
-    List<RelDataType> parsedTypes = parse2RelDataType(requiresTypeParsing);
+    List<RelDataTypeField> parsedTypes = parse2RelDataType(requiresTypeParsing);
     List<FunctionParameter> parameters=new ArrayList<>();
     for (int i = 0; i < arguments.size(); i++) {
       ParsedArgument parsedArg = arguments.get(i);
-      RelDataType type = (i<parsedTypes.size()?parsedTypes.get(i):parsedArg.getResolvedRelDataType());
+      RelDataType type = (i<parsedTypes.size()?parsedTypes.get(i).getType():parsedArg.getResolvedRelDataType());
       parameters.add(new SqrlFunctionParameter(parsedArg.getName().get(),
           parsedArg.getOrdinal(), type, parsedArg.isParentField()));
     }
@@ -416,25 +446,26 @@ public class Sqrl2FlinkSQLTranslator implements TableAnalysisLookup {
     sqrlFunctionCatalog.addFunction(function);
   }
 
+  @FunctionalInterface
+  public interface MutationBuilder {
+    MutationQueryBuilder createMutation(FlinkTableBuilder flinkTableBuilder, RelDataType relDataType);
+  }
+
   public TableAnalysis addImport(String tableName, String tableDefinition,
       Optional<RelDataType> schema,
-      Function<FlinkTableBuilder, MutationQuery> logEngineBuilder) {
+      MutationBuilder logEngineBuilder) {
     return addSourceTable(addTable(Optional.of(tableName), tableDefinition, schema, logEngineBuilder));
   }
 
-  public void addGeneratedExport(NamePath exportedTable, ExecutionStage stage, Name sinkName) {
-    //TODO: add to dag
-  }
-
   public ObjectIdentifier addExternalExport(String tableName, String tableDefinition, Optional<RelDataType> schema) {
-    AddTableResult result = addTable(Optional.of(tableName), tableDefinition, schema, (x) -> {
+    AddTableResult result = addTable(Optional.of(tableName), tableDefinition, schema, (x,y) -> {
       throw new UnsupportedOperationException("Export tables require connector configuration");
     });
     return result.baseTableIdentifier;
   }
 
   public TableAnalysis createTable(String tableDefinition,
-      Function<FlinkTableBuilder, MutationQuery> logEngineBuilder) {
+      MutationBuilder logEngineBuilder) {
     AddTableResult result = addTable(Optional.empty(), tableDefinition, Optional.empty(), logEngineBuilder);
     return addSourceTable(result);
   }
@@ -456,7 +487,7 @@ public class Sqrl2FlinkSQLTranslator implements TableAnalysisLookup {
   }
 
   private AddTableResult addTable(Optional<String> tableName, String createTableSql,
-      Optional<RelDataType> schema, Function<FlinkTableBuilder, MutationQuery> logEngineBuilder) {
+      Optional<RelDataType> schema, MutationBuilder mutationBuilder) {
     SqlNode tableSqlNode = parseSQL(createTableSql);
     Preconditions.checkArgument(tableSqlNode instanceof SqlCreateTable, "Expected CREATE TABLE statement");
     SqlCreateTable tableDefinition = (SqlCreateTable) tableSqlNode;
@@ -497,13 +528,18 @@ public class Sqrl2FlinkSQLTranslator implements TableAnalysisLookup {
           tableDefinition.isTemporary(),
           tableDefinition.ifNotExists);
     }
-    MutationQuery mutationDefinition = null;
+    MutationQueryBuilder mutationBld = null;
     if (fullTable.getPropertyList().isEmpty()) { //it's an internal CREATE TABLE for a mutation
       FlinkTableBuilder tableBuilder = FlinkTableBuilder.toBuilder(fullTable);
       tableBuilder.setName(baseTableName);
-      mutationDefinition = logEngineBuilder.apply(tableBuilder);
-      //TODO: plan operation but don't execute it so we can get the schema, then pull out computed columns and make those "fixed"
-      //since they will be computed on the server
+      /* TODO: We want to create the table with a datagen connector so we can fully plan it
+      and get the relnode for a tablescan. That allows us to pull out any computed columns (and the RexCalls)
+      from the projection. This will also give us the relDataType which we currently set to null as
+      we make some strong simplifying assumptions here.
+      Note, that this requires we replace the table with the actual table (and the correct connector)
+      in the schema with an ALTER TABLE statement.
+       */
+      mutationBld = mutationBuilder.createMutation(tableBuilder, null);
       fullTable = tableBuilder.buildSql(false);
     }
     CreateTableOperation tableOp = (CreateTableOperation)executeSqlNode(fullTable);
@@ -518,9 +554,30 @@ public class Sqrl2FlinkSQLTranslator implements TableAnalysisLookup {
             ).collect(Collectors.toList())
         ))
         .orElse(PrimaryKeyMap.UNDEFINED);
+    //Finish mutation query
+    if (mutationBld!=null) {
+      List<RelDataTypeField> fields = convertSchema2RelDataType(flinkSchema);
+      RelDataTypeBuilder inputType = CalciteUtil.getRelTypeBuilder(typeFactory);
+      RelDataTypeBuilder outputType = CalciteUtil.getRelTypeBuilder(typeFactory);
+      for (int i=0; i<flinkSchema.getColumns().size(); i++) {
+        RelDataTypeField field = fields.get(i);
+        UnresolvedColumn column = flinkSchema.getColumns().get(i);
+        outputType.add(field);
+        if (MutationComputedColumn.UUID_COLUMN.equalsIgnoreCase(column.getName())) {
+          mutationBld.computedColumn(new MutationComputedColumn(column.getName(), Type.UUID));
+        } else if ((column instanceof UnresolvedMetadataColumn) &&
+            MutationComputedColumn.TIMESTAMP_METADATA.equalsIgnoreCase(((UnresolvedMetadataColumn) column).getMetadataKey())) {
+          mutationBld.computedColumn(new MutationComputedColumn(column.getName(), Type.TIMESTAMP));
+        } else {
+          inputType.add(field);
+        }
+      }
+      mutationBld.inputDataType(inputType.build());
+      mutationBld.outputDataType(outputType.build());
+    }
     FlinkConnectorConfig connector = new FlinkConnectorConfig(tableOp.getCatalogTable().getOptions());
     TableAnalysis tableAnalysis = TableAnalysis.of(tableOp.getTableIdentifier(),
-        new SourceTableAnalysis(connector, flinkSchema, mutationDefinition),
+        new SourceTableAnalysis(connector, flinkSchema, mutationBld!=null?mutationBld.build():null),
         connector.getTableType(), pk);
     registerTable(tableAnalysis);
 
@@ -556,8 +613,8 @@ public class Sqrl2FlinkSQLTranslator implements TableAnalysisLookup {
     Preconditions.checkArgument(result == TableResultInternal.TABLE_RESULT_OK, "Result is not OK: %s", result);
   }
 
-  private List<RelDataType> convertSchema2RelDataType(Schema schema) {
-    List<RelDataType> fields = new ArrayList<>();
+  private List<RelDataTypeField> convertSchema2RelDataType(Schema schema) {
+    List<RelDataTypeField> fields = new ArrayList<>();
     for (int i = 0; i < schema.getColumns().size(); i++) {
       UnresolvedColumn column = schema.getColumns().get(i);
       AbstractDataType type = null;
@@ -567,35 +624,14 @@ public class Sqrl2FlinkSQLTranslator implements TableAnalysisLookup {
         type = ((UnresolvedMetadataColumn) column).getDataType();
       }
       if (type instanceof DataType) {
-        fields.add(typeFactory.createFieldTypeFromLogicalType(((DataType)type).getLogicalType()));
+        fields.add(new RelDataTypeFieldImpl(column.getName(),i,
+            typeFactory.createFieldTypeFromLogicalType(((DataType)type).getLogicalType())));
       } else {
         throw new StatementParserException(ErrorLabel.GENERIC, new FileLocation(i, 1),
             "Invalid type: " + column);
       }
     }
     return fields;
-  }
-
-  private DataType extractDataTypeFromSchema(Schema schema) {
-    List<DataTypes.Field> fields = new ArrayList<>();
-    for (int i = 0; i < schema.getColumns().size(); i++) {
-      UnresolvedColumn column = schema.getColumns().get(i);
-      DataType resultType = null;
-      if (column instanceof UnresolvedPhysicalColumn) {
-        AbstractDataType type = ((UnresolvedPhysicalColumn) column).getDataType();
-        if (type instanceof DataType) {
-          resultType = (DataType) type;
-        }
-      }
-      if (resultType == null) {
-        throw new StatementParserException(ErrorLabel.GENERIC, new FileLocation(i, 1),
-            "Invalid type: " + column);
-      } else {
-        RelDataType relDataType = typeFactory.createFieldTypeFromLogicalType(resultType.getLogicalType());
-        fields.add(DataTypes.FIELD(column.getName(), resultType));
-      }
-    }
-    return DataTypes.ROW(fields);
   }
 
   @Value
@@ -606,7 +642,7 @@ public class Sqrl2FlinkSQLTranslator implements TableAnalysisLookup {
 
   public static final String DUMMY_TABLE_NAME = "__sqrlinternal_types";
 
-  public List<RelDataType> parse2RelDataType(List<ParsedField> fieldList) {
+  public List<RelDataTypeField> parse2RelDataType(List<ParsedField> fieldList) {
     if (fieldList.isEmpty()) return List.of();
     String createTableStatement = "CREATE TEMPORARY TABLE " + DUMMY_TABLE_NAME + "("
         + fieldList.stream().map(arg -> arg.getName().get() + " " + arg.getType().get())

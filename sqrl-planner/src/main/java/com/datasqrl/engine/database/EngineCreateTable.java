@@ -6,6 +6,5 @@ package com.datasqrl.engine.database;
 public interface EngineCreateTable {
 
   EngineCreateTable NONE = new EngineCreateTable() {};
-  String TABLE_NAME_KEY = "table-name";
 
 }

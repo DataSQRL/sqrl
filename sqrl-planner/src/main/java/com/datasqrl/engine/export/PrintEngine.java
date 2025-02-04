@@ -31,13 +31,17 @@ public class PrintEngine implements ExportEngine {
   }
 
   @Override
-  public EngineCreateTable createTable(ExecutionStage stage, String tableName,
+  public EngineCreateTable createTable(ExecutionStage stage, String originalTableName,
       FlinkTableBuilder tableBuilder, RelDataType relDataType) {
     if (connectorConf.isPresent()) {
       tableBuilder.setConnectorOptions(connectorConf.get().toMapWithSubstitution(
-          Context.builder().tableName(tableName).build()));
+          Context.builder()
+              .tableName(tableBuilder.getTableName())
+              .origTableName(originalTableName)
+              .build()));
     } else {
       tableBuilder.setConnectorOptions(Map.of("connector", "print"));
+      tableBuilder.setConnectorOptions(Map.of("print-identifier", originalTableName));
     }
     return EngineCreateTable.NONE;
   }

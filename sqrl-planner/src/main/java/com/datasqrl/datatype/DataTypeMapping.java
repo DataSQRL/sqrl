@@ -3,12 +3,14 @@ package com.datasqrl.datatype;
 import com.datasqrl.engine.stream.flink.connector.CastFunction;
 import com.datasqrl.function.SqrlCastFunction;
 import java.util.Optional;
+import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
 
 /**
  * For mapping Flink types to and from database engine types
  */
+@FunctionalInterface
 public interface DataTypeMapping {
 
   enum Direction { TO_ENGINE, FROM_ENGINE }
@@ -46,10 +48,15 @@ public interface DataTypeMapping {
   }
 
   @Value
+  @AllArgsConstructor
   class SimpleMapper implements Mapper {
 
     SqrlCastFunction toEngineMapping;
     Optional<SqrlCastFunction> fromEngineMapping;
+
+    public SimpleMapper(SqrlCastFunction toEngineMapping, SqrlCastFunction fromEngineMapping) {
+      this(toEngineMapping, Optional.of(fromEngineMapping));
+    }
 
     @Override
     public SqrlCastFunction toEngineMapping() {

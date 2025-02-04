@@ -11,6 +11,7 @@ public interface LogEngine extends ExportEngine, DatabaseEngine {
   LogFactory getLogFactory();
 
   @Override
+  @Deprecated
   default IndexSelectorConfig getIndexSelectorConfig() {
     throw new UnsupportedOperationException("Deprecated - should not be called");
   }

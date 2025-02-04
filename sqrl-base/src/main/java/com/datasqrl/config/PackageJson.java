@@ -46,6 +46,8 @@ public interface PackageJson {
 
     ExplainConfig getExplain();
 
+    OutputConfig getOutput();
+
     Optional<String> getSnapshotPath();
 
     void setSnapshotPath(String string);
@@ -53,6 +55,14 @@ public interface PackageJson {
     boolean isAddArguments();
 
     String getLogger();
+  }
+
+  interface OutputConfig {
+
+    boolean isAddUid();
+
+    String getTableSuffix();
+
   }
 
   interface ExplainConfig {

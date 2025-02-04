@@ -6,6 +6,7 @@ import com.datasqrl.actions.InferGraphqlSchema;
 import com.datasqrl.actions.WriteDag;
 import com.datasqrl.config.BuildPath;
 import com.datasqrl.config.GraphqlSourceFactory;
+import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlanner;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
@@ -21,6 +22,7 @@ import com.datasqrl.plan.MainScript;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.google.inject.Inject;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.tuple.Pair;
@@ -52,8 +54,9 @@ public class CompilationProcessV2 {
     planner.planMain(mainScript, environment);
     DAGBuilder dagBuilder = planner.getDagBuilder();
     PipelineDAG dag = dagPlanner.optimize(dagBuilder.getDag());
-    System.out.println(dag);
-;
+//    System.out.println(dag);
+    List<EnginePhysicalPlan> plans = dagPlanner.assemble(dag, environment);
+
 
     return null;
 //    postcompileHooks();

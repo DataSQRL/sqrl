@@ -17,6 +17,7 @@ import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.error.ErrorLocation.FileLocation;
+import com.datasqrl.v2.Sqrl2FlinkSQLTranslator.MutationBuilder;
 import com.datasqrl.v2.analyzer.TableAnalysis;
 import com.datasqrl.v2.analyzer.cost.SimpleCostAnalysisModel;
 import com.datasqrl.v2.dag.DAGBuilder;
@@ -70,6 +71,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.Getter;
@@ -428,16 +430,16 @@ public class SqlScriptPlanner {
     }
   }
 
-  private Function<FlinkTableBuilder, MutationQuery> getLogEngineBuilder() {
+  private MutationBuilder getLogEngineBuilder() {
     Optional<ExecutionStage> logStage = pipeline.getStageByType(EngineType.LOG);
     Preconditions.checkArgument(logStage.isPresent());
     LogEngine engine = (LogEngine) logStage.get().getEngine();
-    return tableBuilder -> {
-      //TODO: get connector config from log engine, check for event-key and event-time
-      tableBuilder.setConnectorOptions(Map.of("connector","datagen"));
-      //TODO: if primary key is enforced make it an upsert stream
-      //engine.createTable(tableBuilder)
-      return null;
+    return (tableBuilder, datatype) -> {
+      MutationQuery.MutationQueryBuilder mutationBuilder = MutationQuery.builder();
+      mutationBuilder.stage(logStage.get());
+      mutationBuilder.createTopic(engine.createTable(logStage.get(), tableBuilder.getTableName(), tableBuilder, datatype));
+      mutationBuilder.name(Name.system(tableBuilder.getTableName()));
+      return mutationBuilder;
     };
   }
 
@@ -476,7 +478,6 @@ public class SqlScriptPlanner {
         errorCollector.checkFatal(optStage.isPresent(), "The configured logger `%s` under 'compiler.logger' is not a configured engine.", engineName);
         exportStage = optStage.get();
       }
-      sqrlEnv.addGeneratedExport(tablePath, exportStage, sinkName);
       exportNode = new ExportNode(stageAnalysis, exportTableName, Optional.of(exportStage), Optional.empty());
     } else {
       SqrlModule module = moduleLoader.getModule(sinkPath.popLast()).orElse(null);
