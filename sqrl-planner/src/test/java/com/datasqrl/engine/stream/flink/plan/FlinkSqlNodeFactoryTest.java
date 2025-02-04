@@ -79,10 +79,10 @@ public class FlinkSqlNodeFactoryTest {
   void testCreateFunction() {
     String functionName = "my_udf";
     String className = "com.example.MyUDF";
-    SqlCreateFunction createFunction = FlinkSqlNodeFactory.createFunction(functionName, className);
+    SqlCreateFunction createFunction = FlinkSqlNodeFactory.createFunction(functionName, className, false);
 
     String sql = unparse(createFunction);
-    String expectedSql = "CREATE TEMPORARY FUNCTION IF NOT EXISTS `my_udf` AS 'com.example.MyUDF' LANGUAGE JAVA";
+    String expectedSql = "CREATE FUNCTION IF NOT EXISTS `my_udf` AS 'com.example.MyUDF' LANGUAGE JAVA";
     assertEquals(expectedSql, sql.trim());
   }
 

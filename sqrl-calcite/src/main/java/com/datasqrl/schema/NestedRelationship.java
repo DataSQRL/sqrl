@@ -10,6 +10,9 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.schema.FunctionParameter;
 
+/**
+ * This can go entirely, we don't have nested relationships anymore
+ */
 @Getter
 public class NestedRelationship extends Relationship {
 

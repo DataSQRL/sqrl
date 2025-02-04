@@ -60,6 +60,8 @@ import org.apache.flink.table.types.logical.RowType.RowField;
 public class FlexibleJsonFormat implements DeserializationFormatFactory,
     SerializationFormatFactory {
 
+  public static final String FORMAT_NAME = "flexible-json";
+
   @Override
   public DecodingFormat<DeserializationSchema<RowData>> createDecodingFormat(
       Context context, ReadableConfig formatOptions) {
@@ -243,7 +245,7 @@ public class FlexibleJsonFormat implements DeserializationFormatFactory,
 
   @Override
   public String factoryIdentifier() {
-    return "flexible-json";
+    return FORMAT_NAME;
   }
 
   @Override

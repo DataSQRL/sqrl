@@ -1,5 +1,6 @@
 package com.datasqrl.config;
 
+import com.datasqrl.config.PackageJson.OutputConfig;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 
@@ -32,6 +33,11 @@ public class CompilerConfigImpl implements PackageJson.CompilerConfig {
 
   public ExplainConfigImpl getExplain() {
     return new ExplainConfigImpl(sqrlConfig.getSubConfig("explain"));
+  }
+
+  @Override
+  public OutputConfig getOutput() {
+    return OutputConfigImpl.from(sqrlConfig.getSubConfig("output"));
   }
 
 }

@@ -9,13 +9,13 @@ import com.datasqrl.module.NamespaceObject;
 import com.google.auto.service.AutoService;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.apache.flink.table.functions.FunctionDefinition;
 
 @AutoService(StdLibrary.class)
 public class StdJsonLibraryImpl extends AbstractFunctionModule implements StdLibrary {
 
-
-  public static final List<FunctionDefinition> json = List.of(
+  public static final List<FunctionDefinition> JSON_FUNCTIONS = List.of(
       JsonFunctions.TO_JSON,
       JsonFunctions.JSON_TO_STRING,
       JsonFunctions.JSON_OBJECT,
@@ -30,17 +30,7 @@ public class StdJsonLibraryImpl extends AbstractFunctionModule implements StdLib
   private static final NamePath LIB_NAME = NamePath.of("json");
 
   public StdJsonLibraryImpl() {
-    super(createLibrary());
-  }
-
-  private static List<NamespaceObject> createLibrary() {
-    List<NamespaceObject> objs = new ArrayList<>();
-    for (FunctionDefinition f : json) {
-      NamespaceObject nsObject = NamespaceObjectUtil.createNsObject(f);
-      objs.add(nsObject);
-    }
-
-    return objs;
+    super(JSON_FUNCTIONS.stream().map(NamespaceObjectUtil::createNsObject).collect(Collectors.toList()));
   }
 
   public NamePath getPath() {

@@ -11,15 +11,9 @@ import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.parser.SqlParserPos;
 
 @AutoService(SqlTranslation.class)
-public class CosineDistanceSqlTranslation extends PostgresSqlTranslation {
+public class CosineDistanceSqlTranslation extends PostgresSqlTranslation.Simple {
 
   public CosineDistanceSqlTranslation() {
-    super(CalciteFunctionUtil.lightweightOp(VectorFunctions.COSINE_DISTANCE));
-  }
-
-  @Override
-  public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    PgSpecificOperatorTable.CosineDistance.createCall(SqlParserPos.ZERO, call.getOperandList())
-        .unparse(writer, leftPrec, rightPrec);
+    super(VectorFunctions.COSINE_DISTANCE, PgSpecificOperatorTable.CosineDistance);
   }
 }

@@ -12,7 +12,11 @@ import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.table.functions.UserDefinedFunction;
 import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
+/**
+ * We should only map at the table format engine level, the rest should be function translations
+ */
 @AutoService(DataTypeMapper.class)
+@Deprecated
 public class SnowflakeIcebergDataTypeMapper implements DataTypeMapper {
 
   @Override

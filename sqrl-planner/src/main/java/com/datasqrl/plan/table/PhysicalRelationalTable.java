@@ -43,14 +43,14 @@ public abstract class PhysicalRelationalTable extends ScriptRelationalTable impl
   protected final PrimaryKey primaryKey;
   @NonNull
   protected Timestamps timestamp;
-
-  protected PullupOperator.Container pullups;
-
-  protected RelNode plannedRelNode;
-  @Setter
-  protected Optional<ExecutionStage> assignedStage = Optional.empty();
   @NonNull
   protected final TableStatistic tableStatistic;
+
+  protected PullupOperator.Container pullups;
+  protected RelNode plannedRelNode;
+
+  @Setter
+  protected Optional<ExecutionStage> assignedStage = Optional.empty();
 
   public PhysicalRelationalTable(Name rootTableId, @NonNull NamePath tablePath, @NonNull TableType type,
                                   RelDataType rowType, int numSelects, @NonNull Timestamps timestamp,

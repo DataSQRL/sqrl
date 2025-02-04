@@ -40,33 +40,13 @@ public class StdTimeLibraryImpl extends AbstractFunctionModule implements StdLib
       TIMESTAMP_TO_EPOCH_MILLI,
       STRING_TO_TIMESTAMP,
       TIMESTAMP_TO_STRING,
-      AT_ZONE,
-      END_OF_SECOND,
-      END_OF_MINUTE,
-      END_OF_HOUR,
-      END_OF_DAY,
-      END_OF_WEEK,
-      END_OF_MONTH,
-      END_OF_YEAR
-  );
-
-  private static List<NamespaceObject> SQL_FUNCTIONS = List.of(
-      createFunctionFromStdOpTable("second"),
-      createFunctionFromStdOpTable("minute"),
-      createFunctionFromStdOpTable("hour"),
-      createFunctionFromStdOpTable("dayOfWeek"),
-      createFunctionFromStdOpTable("dayOfMonth"),
-      createFunctionFromStdOpTable("dayOfYear"),
-      createFunctionFromStdOpTable("month"),
-      createFunctionFromStdOpTable("week"),
-      createFunctionFromStdOpTable("quarter"),
-      createFunctionFromStdOpTable("year")
+      AT_ZONE
   );
 
   public static final StdTimeLibraryImpl stdTimeLibrary = new StdTimeLibraryImpl();
 
   public StdTimeLibraryImpl() {
-    super(ListUtils.union(SQRL_FUNCTIONS.stream().map(NamespaceObjectUtil::createNsObject).collect(Collectors.toList()),SQL_FUNCTIONS));
+    super(SQRL_FUNCTIONS.stream().map(NamespaceObjectUtil::createNsObject).collect(Collectors.toList()));
   }
 
   public NamePath getPath() {

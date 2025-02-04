@@ -1,5 +1,6 @@
 package com.datasqrl.engine.log.kafka;
 
+import com.datasqrl.engine.database.EngineCreateTable;
 import java.util.List;
 import java.util.Map;
 import lombok.AllArgsConstructor;
@@ -9,7 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
-public class NewTopic {
+public class NewTopic implements EngineCreateTable {
     private String name;
     private int numPartitions;
     private short replicationFactor;

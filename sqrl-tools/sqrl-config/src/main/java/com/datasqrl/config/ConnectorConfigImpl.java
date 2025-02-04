@@ -30,18 +30,9 @@ public class ConnectorConfigImpl implements TableConfig.ConnectorConfig {
       "postgres-cdc", TableType.VERSIONED_STATE
   );
 
-  public Optional<TableConfig.Format> getFormat() {
-    Optional<String> format = config.asString(FORMAT_KEY).getOptional()
+  public Optional<String> getFormat() {
+    return config.asString(FORMAT_KEY).getOptional()
       .or(() -> config.asString(VALUE_FORMAT_KEY).getOptional());
-//    config.getErrorCollector()
-//        .checkFatal(format.isPresent(), "Need to configure a format via [%s] or [%s]", FORMAT_KEY,
-//            VALUE_FORMAT_KEY);
-    Optional<FormatFactory> formatFactory = format.flatMap(f->ServiceLoaderDiscovery.findFirst(FormatFactory.class,
-        FormatFactory::getName, f));
-    Optional<TableConfig.Format> format1 = formatFactory.map(fac -> fac.fromConfig(new EngineConfigImpl(config)));
-    Optional<TableConfig.Format> defaultFormat = format.map(f -> new TableConfig.Format.DefaultFormat(f));
-
-    return format1.isPresent() ? format1 : defaultFormat;
   }
 
   @Override

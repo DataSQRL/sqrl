@@ -17,11 +17,16 @@ import org.apache.flink.sql.parser.dml.RichSqlInsert;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import org.apache.flink.table.catalog.ObjectIdentifier;
 
 public class FlinkSqlNodeFactory {
 
   public static SqlIdentifier identifier(String str) {
     return new SqlIdentifier(str, SqlParserPos.ZERO);
+  }
+
+  public static SqlIdentifier identifier(ObjectIdentifier identifier) {
+    return new SqlIdentifier(identifier.toList(), SqlParserPos.ZERO);
   }
 
   public static SqlCreateView createView(String tableName, SqlNode query) {
@@ -50,15 +55,31 @@ public class FlinkSqlNodeFactory {
     );
   }
 
-  public static SqlCreateFunction createFunction(String name, String clazz) {
+  public static RichSqlInsert createInsert(SqlNode source, ObjectIdentifier targetTable) {
+    return new RichSqlInsert(
+        SqlParserPos.ZERO,
+        SqlNodeList.EMPTY,
+        SqlNodeList.EMPTY,
+        identifier(targetTable),
+        source,
+        null,
+        null
+    );
+  }
+
+  public static SqlCreateFunction createFunction(String name, String clazz, boolean isSystem) {
+    return createFunction(identifier(name), clazz, isSystem);
+  }
+
+  public static SqlCreateFunction createFunction(SqlIdentifier identifier, String clazz, boolean isSystem) {
     return new SqlCreateFunction(
         SqlParserPos.ZERO,
-        identifier(name),
+        identifier,
         SqlLiteral.createCharString(clazz, SqlParserPos.ZERO),
         "JAVA",
         true,
-        true,
         false,
+        isSystem,
         new SqlNodeList(SqlParserPos.ZERO)
     );
   }
@@ -112,12 +133,23 @@ public class FlinkSqlNodeFactory {
     List<SqlNode> props = options.entrySet().stream()
         .map(option -> new SqlTableOption(
             SqlLiteral.createCharString(option.getKey(), SqlParserPos.ZERO),
-            SqlLiteral.createCharString(option.getValue().toString(), SqlParserPos.ZERO),
+            SqlLiteral.createCharString(Objects.toString(option.getValue()), SqlParserPos.ZERO),
             SqlParserPos.ZERO
         ))
         .collect(Collectors.toList());
 
     return new SqlNodeList(props, SqlParserPos.ZERO);
+  }
+
+  public static Map<String, String> propertiesToMap(SqlNodeList nodeList) {
+    Map<String, String> result = new HashMap<>();
+    for (SqlNode node : nodeList) {
+      SqlTableOption option = (SqlTableOption) node;
+      SqlLiteral keyLiteral = (SqlLiteral) option.getKey();
+      SqlLiteral valueLiteral = (SqlLiteral) option.getValue();
+      result.put(keyLiteral.toValue(), valueLiteral.toValue());
+    }
+    return result;
   }
 
   public static SqlNodeList createPartitionKeys(List<String> partitionKeys) {
@@ -162,12 +194,31 @@ public class FlinkSqlNodeFactory {
     );
   }
 
-  private static SqlWatermark createWatermark(String ts, long watermarkMillis) {
+  public static SqlCreateTable createTable(String tableName, RelDataType relDataType, boolean isTemporary) {
+    return new SqlCreateTable(
+        SqlParserPos.ZERO,
+        FlinkSqlNodeFactory.identifier(tableName),
+        createColumns(relDataType),
+        Collections.emptyList(),
+        FlinkSqlNodeFactory.createProperties(Map.of("connector","datagen")),
+        SqlNodeList.EMPTY,
+        null,
+        null,
+        isTemporary,
+        false
+    );
+  }
+
+  public static SqlWatermark createWatermark(String ts, long watermarkMillis) {
     SqlIdentifier eventTimeColumn = FlinkSqlNodeFactory.identifier(ts);
     return FlinkSqlNodeFactory.createWatermark(
         eventTimeColumn,
         FlinkSqlNodeFactory.boundedStrategy(eventTimeColumn, Double.toString(watermarkMillis / 1000d))
     );
+  }
+
+  public static SqlNodeList createColumns(RelDataType relDataType) {
+    return createColumns(relDataType, Collections.emptyMap(), null);
   }
 
   private static SqlNodeList createColumns(RelDataType relDataType, Map<String, MetadataEntry> metadataConfig,
@@ -248,6 +299,11 @@ public class FlinkSqlNodeFactory {
       return SqlNodeList.EMPTY;
     }
     return FlinkSqlNodeFactory.createProperties(options);
+  }
+
+  public static SqlSelect selectAllFromTable(SqlIdentifier tableName) {
+    return new SqlSelect(SqlParserPos.ZERO, null, SqlNodeList.of(SqlIdentifier.STAR), tableName,
+        null, null, null, null, null, null, null, null);
   }
 
   // Interface for parsing expressions

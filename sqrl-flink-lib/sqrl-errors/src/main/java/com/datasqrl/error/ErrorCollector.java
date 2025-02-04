@@ -11,6 +11,7 @@ import java.io.Serializable;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.Iterator;
+import java.util.Optional;
 import lombok.Getter;
 import lombok.NonNull;
 
@@ -100,7 +101,11 @@ public class ErrorCollector implements Iterable<ErrorMessage>, Serializable {
   }
 
   public ErrorCollector withScript(Path file, String scriptContent) {
-    return withScript(file.getFileName().toString(),scriptContent);
+    return withScript(Optional.of(file),scriptContent);
+  }
+
+  public ErrorCollector withScript(Optional<Path> file, String scriptContent) {
+    return withScript(file.map(p -> p.getFileName().toString()).orElse("undefined"),scriptContent);
   }
 
   public ErrorCollector withScript(String filename, String scriptContent) {

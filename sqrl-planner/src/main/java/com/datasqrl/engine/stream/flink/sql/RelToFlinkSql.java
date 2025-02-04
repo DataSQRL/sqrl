@@ -22,6 +22,7 @@ public class RelToFlinkSql {
     return () -> sqlNode.getSqlNode().toSqlString(transform)
         .getSql();
   }
+
   public static String convertToString(SqlNode sqlNode) {
     return sqlNode.toSqlString(transform)
         .getSql();

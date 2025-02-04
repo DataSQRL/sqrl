@@ -1,7 +1,6 @@
 package com.datasqrl.config;
 
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.engine.log.Log;
 import com.datasqrl.engine.log.LogEngine;
 import com.datasqrl.engine.log.LogFactory;
@@ -26,8 +25,8 @@ public class LogManagerImpl implements LogManager {
 
   @Inject
   public LogManagerImpl(ExecutionPipeline pipeline) {
-    proxiedFactory = pipeline.getStage(Type.LOG)
-        .map(stage -> (LogEngine) stage.get(0).getEngine())
+    proxiedFactory = pipeline.getStageByType(EngineType.LOG)
+        .map(stage -> (LogEngine) stage.getEngine())
         .map(LogEngine::getLogFactory);
   }
 

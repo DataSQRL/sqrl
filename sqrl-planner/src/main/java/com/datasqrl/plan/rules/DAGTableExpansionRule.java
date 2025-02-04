@@ -3,7 +3,7 @@
  */
 package com.datasqrl.plan.rules;
 
-import com.datasqrl.config.EngineFactory;
+import com.datasqrl.config.EngineType;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.plan.table.ScriptRelationalTable;
@@ -32,9 +32,9 @@ public abstract class DAGTableExpansionRule extends RelOptRule {
 
   public static class Read extends DAGTableExpansionRule {
 
-    private final EngineFactory.Type engineType;
+    private final EngineType engineType;
 
-    public Read(EngineFactory.Type engineType) {
+    public Read(EngineType engineType) {
       this.engineType = engineType;
     }
 

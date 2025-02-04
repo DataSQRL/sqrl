@@ -1,6 +1,5 @@
 package com.datasqrl.config;
 
-import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.config.PackageJson.EngineConfig;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
@@ -39,12 +38,16 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
   }
 
   @Override
-  public Optional<ConnectorFactory> create(Type engineType, String connectorName) {
+  public Optional<ConnectorFactory> create(EngineType engineType, String connectorName) {
 
     // from conflict, include into the new logic
     Optional<EngineConfig> engineConfig = packageJson.getEngines().getEngineConfig("flink");
     Preconditions.checkArgument(engineConfig.isPresent(), "Missing engine configuration for Flink");
     ConnectorsConfig connectors = engineConfig.get().getConnectors();
+
+
+    //TODO: Move the rest of this method into the respective engines
+
     if (connectorName.equalsIgnoreCase("iceberg")) { //work around until we get the correct engine in
       return connectors.getConnectorConfig("iceberg").map(this::createIceberg);
     }
@@ -56,9 +59,9 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
     }
 
     if (engineType != null) {
-      if (engineType.equals(Type.LOG)) {
+      if (engineType.equals(EngineType.LOG)) {
         return connectorConfig.map(this::createKafkaConnectorFactory);
-      } else if (engineType.equals(Type.DATABASE)) {
+      } else if (engineType.equals(EngineType.DATABASE)) {
         return connectorConfig.map(this::createJdbcConnectorFactory);
       } else if (connectorName.equalsIgnoreCase("iceberg")) {
         return connectorConfig.map(this::createIceberg);
@@ -72,11 +75,19 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
 
   @Override
   public ConnectorConf getConfig(String name) {
-    ConnectorsConfig connectors = packageJson.getEngines().getEngineConfig("flink")
-        .get().getConnectors();
-    Optional<ConnectorConf> connectorConfig = connectors.getConnectorConfig(name);
-    return connectorConfig.get();
+    ConnectorsConfig connectors = packageJson.getEngines().getEngineConfigOrErr("flink")
+        .getConnectors();
+    return connectors.getConnectorConfigOrErr(name);
   }
+
+  @Override
+  public Optional<ConnectorConf> getOptionalConfig(String name) {
+    ConnectorsConfig connectors = packageJson.getEngines().getEngineConfigOrErr("flink")
+        .getConnectors();
+    return connectors.getConnectorConfig(name);
+  }
+
+  //## TODO: move the rest of this class into the respective engines
 
   private ConnectorFactory createIceberg(ConnectorConf connectorConf) {
     // todo template this

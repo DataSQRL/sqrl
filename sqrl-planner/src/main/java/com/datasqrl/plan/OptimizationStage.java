@@ -3,8 +3,7 @@
  */
 package com.datasqrl.plan;
 
-import com.datasqrl.config.EngineFactory.Type;
-import com.datasqrl.engine.stream.flink.sql.rules.ToStubAggRule;
+import com.datasqrl.config.EngineType;
 import com.datasqrl.engine.stream.flink.sql.rules.ToStubAggRule.ToStubAggRuleConfig;
 import com.datasqrl.plan.rules.DAGFunctionExpansionRule;
 import com.datasqrl.plan.rules.DAGTableExpansionRule.Read;
@@ -64,13 +63,13 @@ public class OptimizationStage {
 
   public static final OptimizationStage DATABASE_DAG_STITCHING = new OptimizationStage(
       "DatabaseDAGExpansion",
-      Programs.hep(List.of(new Read(Type.DATABASE), new DAGFunctionExpansionRule(Type.DATABASE)),
+      Programs.hep(List.of(new Read(EngineType.DATABASE), new DAGFunctionExpansionRule(EngineType.DATABASE)),
           false, SqrlRelMetadataProvider.INSTANCE), Optional.empty());
 
 
   public static final OptimizationStage SERVER_DAG_STITCHING = new OptimizationStage(
       "ServerDAGExpansion",
-      Programs.hep(List.of(new Read(Type.SERVER), new DAGFunctionExpansionRule(Type.SERVER)),
+      Programs.hep(List.of(new Read(EngineType.SERVER), new DAGFunctionExpansionRule(EngineType.SERVER)),
           false, SqrlRelMetadataProvider.INSTANCE), Optional.empty());
 
   public static final OptimizationStage STREAM_DAG_STITCHING = new OptimizationStage(

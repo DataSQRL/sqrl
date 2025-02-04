@@ -1,8 +1,8 @@
 package com.datasqrl.engine;
 
-import com.datasqrl.config.EngineFactory.Type;
+import com.datasqrl.config.EngineType;
 
 public interface IExecutionEngine {
   String getName();
-  Type getType();
+  EngineType getType();
 }

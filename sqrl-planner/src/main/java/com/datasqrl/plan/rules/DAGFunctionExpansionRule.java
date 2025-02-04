@@ -3,7 +3,7 @@
  */
 package com.datasqrl.plan.rules;
 
-import com.datasqrl.config.EngineFactory.Type;
+import com.datasqrl.config.EngineType;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.local.generate.QueryTableFunction;
 import com.datasqrl.plan.table.QueryRelationalTable;
@@ -25,9 +25,9 @@ import java.util.List;
  */
 public class DAGFunctionExpansionRule extends RelOptRule {
 
-  private final Type engineType;
+  private final EngineType engineType;
 
-  public DAGFunctionExpansionRule(Type engineType) {
+  public DAGFunctionExpansionRule(EngineType engineType) {
     super(operand(TableFunctionScan.class, any()));
     Preconditions.checkArgument(engineType.isRead());
     this.engineType = engineType;

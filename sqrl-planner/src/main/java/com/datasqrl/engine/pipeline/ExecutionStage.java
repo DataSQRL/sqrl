@@ -3,6 +3,7 @@
  */
 package com.datasqrl.engine.pipeline;
 
+import com.datasqrl.config.EngineType;
 import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.ExecutionEngine;
 
@@ -17,6 +18,10 @@ public interface ExecutionStage {
 
   default boolean supportsAllFeatures(Collection<EngineFeature> capabilities) {
     return capabilities.stream().allMatch(this::supportsFeature);
+  }
+
+  default EngineType getType() {
+    return getEngine().getType();
   }
 
   boolean supportsFeature(EngineFeature capability);

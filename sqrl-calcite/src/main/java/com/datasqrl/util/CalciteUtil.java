@@ -3,7 +3,10 @@
  */
 package com.datasqrl.util;
 
+import com.datasqrl.calcite.schema.sql.SqlDataTypeSpecBuilder;
 import com.datasqrl.function.InputPreservingFunction;
+import com.datasqrl.function.SqrlFunctionParameter;
+import com.datasqrl.function.SqrlFunctionParameter.CasedParameter;
 import com.google.common.base.Preconditions;
 
 import java.math.BigDecimal;
@@ -14,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -36,7 +40,9 @@ import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.StructKind;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexCall;
+import org.apache.calcite.rex.RexCorrelVariable;
 import org.apache.calcite.rex.RexDynamicParam;
+import org.apache.calcite.rex.RexFieldAccess;
 import org.apache.calcite.rex.RexFieldCollation;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexLiteral;
@@ -57,11 +63,24 @@ import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableSet;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
+import org.apache.flink.table.planner.plan.schema.TimeIndicatorRelDataType;
 
 public class CalciteUtil {
 
   public static boolean isNestedTable(RelDataType type) {
     return getNestedTableType(type).isPresent();
+  }
+
+  public static boolean isRowTime(RelDataType type) {
+    if (!(type instanceof TimeIndicatorRelDataType)) return false;
+    return true;
+  }
+
+  public static Optional<Integer> findBestRowTimeIndex(RelDataType type) {
+    return type.getFieldList().stream()
+        .filter(field -> isRowTime(field.getType()))
+        .map(RelDataTypeField::getIndex)
+        .findFirst();
   }
 
   public static Optional<RelDataType> getNestedTableType(RelDataType type) {
@@ -145,6 +164,13 @@ public class CalciteUtil {
       }
     }
     return fieldNames;
+  }
+
+  public static Optional<Integer> getInputRef(RexNode rexNode) {
+    if (rexNode instanceof RexInputRef) { //Direct mapping
+      return Optional.of(((RexInputRef) rexNode).getIndex());
+    }
+    return Optional.empty();
   }
 
   /**
@@ -256,8 +282,18 @@ public class CalciteUtil {
     return Optional.empty();
   }
 
+  public static int indexOf(String columnName, RelDataType type) {
+    RelDataTypeField field = type.getField(columnName, false, false);
+    if (field == null) return -1;
+    else return field.getIndex();
+  }
+
   public static boolean isConstant(RexNode rexNode) {
-    return rexNode instanceof RexLiteral || rexNode instanceof RexDynamicParam;
+    if (rexNode instanceof RexLiteral || rexNode instanceof RexDynamicParam) return true;
+    if (rexNode instanceof RexFieldAccess) {
+      if (((RexFieldAccess) rexNode).getReferenceExpr() instanceof RexCorrelVariable) return true;
+    }
+    return false;
   }
 
   public static void addProjection(@NonNull RelBuilder relBuilder, @NonNull List<Integer> selectIdx,
@@ -275,6 +311,16 @@ public class CalciteUtil {
     RelDataType inputType = relBuilder.peek().getRowType();
     selectIdx.forEach(idx -> rexList.add(RexInputRef.of(idx, inputType)));
     return rexList;
+  }
+
+  public static void addColumn(@NonNull RelBuilder relBuilder, @NonNull RexNode rexNode, @NonNull String columnName) {
+    int cols = relBuilder.peek().getRowType().getFieldCount();
+    List<RexNode> selects = CalciteUtil.getIdentityRex(relBuilder, cols);
+    selects.add(rexNode);
+    List<String> fieldNames = IntStream.range(0,cols+1).mapToObj(i -> i<cols?null:columnName).collect(
+        Collectors.toList());
+    assert selects.size() == fieldNames.size();
+    relBuilder.project(selects, fieldNames);
   }
 
   public static void addProjection(@NonNull RelBuilder relBuilder, @NonNull List<Integer> selectIdx,
@@ -413,6 +459,35 @@ public class CalciteUtil {
       return RexLiteral.intValue(literal) == 0;
     }
     return false;
+  }
+
+
+  public static List<SqrlFunctionParameter> addFilterByColumn(RelBuilder relB, List<Integer> columnIndexes) {
+    return addFilterByColumn(relB, columnIndexes, 0);
+  }
+
+  public static List<SqrlFunctionParameter> addFilterByColumn(RelBuilder relB, List<Integer> columnIndexes, int paramOffset) {
+    Preconditions.checkArgument(!columnIndexes.isEmpty());
+    List<RelDataTypeField> fields = relB.peek().getRowType().getFieldList();
+    Preconditions.checkArgument(columnIndexes.stream().allMatch(i -> i < fields.size()),"Invalid column indexes: %s", columnIndexes);
+    AtomicInteger paramCounter = new AtomicInteger(paramOffset);
+    List<RexNode> conditions = new ArrayList<>();
+    List<SqrlFunctionParameter> parameters = new ArrayList<>();
+    for (Integer colIndex : columnIndexes) {
+      RelDataTypeField field = fields.get(colIndex);
+      int ordinal = paramCounter.incrementAndGet();
+      RexDynamicParam param = new RexDynamicParam(field.getType(), ordinal);
+      RexNode condition = relB.equals(relB.field(colIndex), param);
+      if (field.getType().isNullable()) {
+        condition = relB.or(condition, relB.and(relB.isNull(param),relB.isNull(relB.field(colIndex))));
+      }
+      conditions.add(condition);
+      parameters.add(new SqrlFunctionParameter(field.getName(), Optional.empty(),
+          SqlDataTypeSpecBuilder.create(field.getType()), ordinal, field.getType(),
+          false, new CasedParameter(field.getName())));
+    }
+    relB.filter(relB.and(conditions));
+    return parameters;
   }
 
   public static void addFilteredDeduplication(RelBuilder relB, int timestampIdx, List<Integer> partition, int orderColIdx) {

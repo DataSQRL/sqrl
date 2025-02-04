@@ -19,10 +19,10 @@ import org.apache.calcite.schema.FunctionParameter;
 @AllArgsConstructor
 public class Relationship implements SqrlTableMacro {
   private final Name name;
-  private final NamePath fullPath;
-  private final NamePath absolutePath;
-  private final JoinType joinType;
-  private final Multiplicity multiplicity;
+  private final NamePath fullPath; //todo: remove, we just have the absolutepath now
+  private final NamePath absolutePath; //todo: simplify the path to just type.field since we no longer do path walking
+  private final JoinType joinType;  //todo: remove
+  private final Multiplicity multiplicity; //derived from limit
 
   private final List<FunctionParameter> parameters;
   private final Supplier<RelNode> viewTransform;

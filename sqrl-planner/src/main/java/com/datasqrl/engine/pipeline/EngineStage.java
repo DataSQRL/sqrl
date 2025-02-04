@@ -3,11 +3,9 @@
  */
 package com.datasqrl.engine.pipeline;
 
-import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.ExecutionEngine;
 import lombok.Value;
-import org.apache.flink.table.functions.FunctionDefinition;
 
 @Value
 public class EngineStage implements ExecutionStage {

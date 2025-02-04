@@ -82,9 +82,11 @@ public class SqrlRexUtil {
   public static Optional<Integer> getLimit(RexNode limit) {
     if (limit == null) {
       return Optional.empty();
+    } else if (limit instanceof RexLiteral) {
+      return Optional.of(((RexLiteral) limit).getValueAs(Integer.class));
+    } else {
+      return Optional.empty();
     }
-    Preconditions.checkArgument(limit instanceof RexLiteral);
-    return Optional.of(((RexLiteral) limit).getValueAs(Integer.class));
   }
 
   public RexBuilder getBuilder() {
@@ -215,6 +217,18 @@ public class SqrlRexUtil {
           throw Util.FoundOne.NULL;
         }
         return super.visitCall(call);
+      }
+    };
+  }
+
+  public static RexFinder findInputRef(Predicate<RexInputRef> matcher) {
+    return new RexFinder<Void>() {
+      @Override
+      public Void visitInputRef(RexInputRef ref) {
+        if (matcher.test(ref)) {
+          throw Util.FoundOne.NULL;
+        }
+        return super.visitInputRef(ref);
       }
     };
   }

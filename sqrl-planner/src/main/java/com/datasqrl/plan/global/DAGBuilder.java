@@ -118,7 +118,7 @@ public class DAGBuilder {
       try {
         TablePlan plan = planner.apply(stage);
         ComputeCost cost = SimpleCostModel.of(stage, plan.getRelNode());
-        result = new Cost(stage, cost, true, plan.getRelNode());
+        result = new Cost(stage, cost, true);
       } catch (ExecutionAnalysis.CapabilityException ex) {
         result = StageAnalysis.of(ex);
       }

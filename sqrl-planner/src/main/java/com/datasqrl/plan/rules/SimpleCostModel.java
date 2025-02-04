@@ -3,7 +3,6 @@
  */
 package com.datasqrl.plan.rules;
 
-import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.engine.database.AnalyticDatabaseEngine;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.hints.JoinCostHint;

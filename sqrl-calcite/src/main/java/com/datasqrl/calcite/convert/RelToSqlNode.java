@@ -4,7 +4,9 @@ import com.datasqrl.calcite.Dialect;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.SqlNode;
 
-//Service loader interface
+/**
+ * Converts a RelNode to a SqlNode for a given dialect
+ */
 public interface RelToSqlNode {
   SqlNodes convert(RelNode relNode);
 
