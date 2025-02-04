@@ -126,11 +126,13 @@
     "reconnectAttempts": 0,
     "reconnectInterval": 1000,
     "hostnameVerificationAlgorithm": "",
+<#noparse>
     "host": "${PGHOST}",
     "port": 5432,
     "user": "${PGUSER}",
     "password": "${PGPASSWORD}",
     "database": "${PGDATABASE}",
+</#noparse>
     "cachePreparedStatements": false,
     "preparedStatementCacheMaxSize": 256,
     "preparedStatementCacheSqlFilter": {},
