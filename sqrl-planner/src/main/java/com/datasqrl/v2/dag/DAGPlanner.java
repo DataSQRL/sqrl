@@ -64,6 +64,7 @@ import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.planner.calcite.FlinkRelBuilder;
+import org.apache.flink.table.planner.catalog.SqlCatalogViewTable;
 import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
 import org.apache.flink.table.planner.plan.schema.TableSourceTable;
 
@@ -236,7 +237,7 @@ public class DAGPlanner {
         if (function != null) {
           RelNode plannedRelNode = function.getFunctionAnalysis().getRelNode().accept(
               new QueryExpansionRelShuttle(id -> streamTableMapping.get(new InputTableKey(dataStoreStage, id)),
-                  sqrlEnv.getRelBuilder(null), sqrlEnv, dbEngine.getTypeMapping(), true));
+                  sqrlEnv, dbEngine.getTypeMapping(), true));
           dbPlan.query(new Query(function, plannedRelNode, function.getFunctionAnalysis().getErrors()));
           if (function.getVisibility().isQueryable()) serverPlan.function(function);
         }
@@ -350,7 +351,6 @@ public class DAGPlanner {
   private class QueryExpansionRelShuttle extends RelShuttleImpl {
 
     Function<ObjectIdentifier, ObjectIdentifier> inputTableMapping;
-    FlinkRelBuilder relBuilder;
     Sqrl2FlinkSQLTranslator sqrlEnv;
     DataTypeMapping typeMapping;
     boolean addSort;
@@ -358,15 +358,20 @@ public class DAGPlanner {
     @Override
     public RelNode visit(TableScan scan) {
       RelOptTable table = scan.getTable();
-      Preconditions.checkArgument(table instanceof TableSourceTable);
-      ObjectIdentifier tablePath = ((TableSourceTable)table).contextResolvedTable().getIdentifier();
-      TableAnalysis tableAnalysis = sqrlEnv.lookupSourceTable(tablePath);
+      ObjectIdentifier tablePath;
+      if (table instanceof TableSourceTable) {
+        tablePath = ((TableSourceTable) table).contextResolvedTable().getIdentifier();
+      } else if (table instanceof SqlCatalogViewTable) {
+        List<String> names = ((SqlCatalogViewTable) table).getNames();
+        tablePath = ObjectIdentifier.of(names.get(0),names.get(1),names.get(2));
+      } else throw new UnsupportedOperationException("Unexpected table: "+ table.getClass());
+      TableAnalysis tableAnalysis = sqrlEnv.getTableLookup().lookupTable(tablePath);
       errors.checkFatal(tableAnalysis!=null, "Could not find table: %s", tablePath);
 
       ObjectIdentifier inputTableId = inputTableMapping.apply(tablePath);
       RelNode result;
       if (inputTableId != null) {
-        relBuilder.scan(inputTableId, Map.of());
+        FlinkRelBuilder relBuilder = sqrlEnv.getTableScan(inputTableId);
         mapTypes(relBuilder, scan.getRowType(), sqrlEnv, typeMapping, Direction.FROM_ENGINE);
         result = relBuilder.build();
       } else {

@@ -20,7 +20,8 @@ public class TableNode extends PlannedNode {
   }
 
   public boolean isSource() {
-    return tableAnalysis.isSource();
+    //Table nodes cannot be sinks
+    return tableAnalysis.isSourceOrSink();
   }
 
   public boolean isMutation() {
@@ -29,7 +30,7 @@ public class TableNode extends PlannedNode {
 
   public Optional<MutationQuery> getMutation() {
     if (!isSource()) return Optional.empty();
-    return Optional.ofNullable(tableAnalysis.getSourceTable().get().getMutationDefinition());
+    return Optional.ofNullable(tableAnalysis.getSourceSinkTable().get().getMutationDefinition());
   }
 
   @Override

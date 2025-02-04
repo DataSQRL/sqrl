@@ -43,7 +43,6 @@ import com.datasqrl.v2.parser.SqrlTableFunctionStatement.ParsedArgument;
 import com.datasqrl.v2.parser.StackableStatement;
 import com.datasqrl.v2.parser.StatementParserException;
 import com.datasqrl.v2.tables.AccessVisibility;
-import com.datasqrl.v2.tables.FlinkTableBuilder;
 import com.datasqrl.v2.dag.plan.MutationQuery;
 import com.datasqrl.v2.tables.SqrlTableFunction;
 import com.datasqrl.function.FlinkUdfNsObject;
@@ -71,8 +70,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Value;
@@ -316,7 +313,7 @@ public class SqlScriptPlanner {
   private void addSourceToDag(TableAnalysis tableAnalysis, Sqrl2FlinkSQLTranslator sqrlEnv) {
     Preconditions.checkArgument(tableAnalysis.getFromTables().size()==1);
     TableAnalysis source = (TableAnalysis) tableAnalysis.getFromTables().get(0);
-    Preconditions.checkArgument(source.isSource());
+    Preconditions.checkArgument(source.isSourceOrSink());
     TableNode sourceNode = new TableNode(source, getSourceSinkStageAnalysis());
     dagBuilder.add(sourceNode);
     AccessVisibility visibility = new AccessVisibility(AccessModifier.QUERY, false, true,

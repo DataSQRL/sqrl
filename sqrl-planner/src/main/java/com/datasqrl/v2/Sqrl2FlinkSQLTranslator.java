@@ -3,10 +3,7 @@ package com.datasqrl.v2;
 import static com.datasqrl.function.FlinkUdfNsObject.getFunctionNameFromClass;
 
 import com.datasqrl.calcite.SqrlRexUtil;
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.BuildPath;
-import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.engine.stream.flink.plan.FlinkSqlNodeFactory;
 import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
 import com.datasqrl.error.ErrorCollector;
@@ -25,10 +22,9 @@ import com.datasqrl.v2.parser.SqrlTableFunctionStatement.ParsedArgument;
 import com.datasqrl.v2.parser.StatementParserException;
 import com.datasqrl.v2.tables.FlinkConnectorConfig;
 import com.datasqrl.v2.tables.FlinkTableBuilder;
-import com.datasqrl.v2.dag.plan.MutationQuery;
 import com.datasqrl.v2.tables.MutationComputedColumn;
 import com.datasqrl.v2.tables.MutationComputedColumn.Type;
-import com.datasqrl.v2.tables.SourceTableAnalysis;
+import com.datasqrl.v2.tables.SourceSinkTableAnalysis;
 import com.datasqrl.v2.tables.SqrlFunctionParameter;
 import com.datasqrl.v2.tables.SqrlTableFunction;
 import com.datasqrl.function.AbstractFunctionModule;
@@ -52,21 +48,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import javax.annotation.Nullable;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.Value;
-import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
 import org.apache.calcite.rel.core.Sort;
-import org.apache.calcite.rel.hint.Hintable;
 import org.apache.calcite.rel.logical.LogicalTableScan;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
@@ -95,7 +88,6 @@ import org.apache.flink.sql.parser.ddl.SqlTableLike;
 import org.apache.flink.sql.parser.dml.SqlExecute;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.CompiledPlan;
-import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.Schema.UnresolvedColumn;
@@ -105,7 +97,6 @@ import org.apache.flink.table.api.SqlParserException;
 import org.apache.flink.table.api.TableException;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.api.bridge.java.internal.StreamTableEnvironmentImpl;
-import org.apache.flink.table.api.internal.TableEnvironmentImpl;
 import org.apache.flink.table.api.internal.TableResultInternal;
 import org.apache.flink.table.catalog.CatalogManager;
 import org.apache.flink.table.catalog.ObjectIdentifier;
@@ -128,7 +119,7 @@ import org.apache.flink.table.planner.utils.RowLevelModificationContextUtils;
 import org.apache.flink.table.types.AbstractDataType;
 import org.apache.flink.table.types.DataType;
 
-public class Sqrl2FlinkSQLTranslator implements TableAnalysisLookup {
+public class Sqrl2FlinkSQLTranslator {
 
   public static final String SCHEMA_SUFFIX = "__schema";
   public static final String TABLE_DEFINITION_SUFFIX = "__def";
@@ -140,9 +131,8 @@ public class Sqrl2FlinkSQLTranslator implements TableAnalysisLookup {
   private final CatalogManager catalogManager;
   private final FlinkTypeFactory typeFactory;
 
-  private final Map<ObjectIdentifier, TableAnalysis> sourceTableMap = new HashMap<>();
-  private final HashMultimap<Integer, TableAnalysis> tableMap = HashMultimap.create();
-
+  @Getter
+  private final TableAnalysisLookup tableLookup = new TableAnalysisLookup();
   private final FlinkPhysicalPlan.Builder planBuilder = new Builder();
 
   public Sqrl2FlinkSQLTranslator(BuildPath buildPath) {
@@ -187,25 +177,6 @@ public class Sqrl2FlinkSQLTranslator implements TableAnalysisLookup {
 
   public SqrlRexUtil getRexUtil() {
     return new SqrlRexUtil(typeFactory);
-  }
-
-  private void registerTable(TableAnalysis tableAnalysis) {
-    if (tableAnalysis.isSource()) {
-      sourceTableMap.put(tableAnalysis.getIdentifier(), tableAnalysis);
-    } else {
-      tableMap.put(tableAnalysis.getOriginalRelnode().deepHashCode(), tableAnalysis);
-    }
-  }
-
-  @Override
-  public TableAnalysis lookupSourceTable(ObjectIdentifier objectId) {
-    return sourceTableMap.get(objectId);
-  }
-
-  @Override
-  public Optional<TableAnalysis> lookupTable(RelNode originalRelnode) {
-    int hashCode = originalRelnode.deepHashCode();
-    return tableMap.get(hashCode).stream().filter(tbl -> tbl.matches(originalRelnode)).findFirst();
   }
 
 
@@ -271,7 +242,7 @@ public class Sqrl2FlinkSQLTranslator implements TableAnalysisLookup {
         errors.warn("Expected top-level sort on relnode: %s",relNode.explain());
       }
     }
-    SQRLLogicalPlanAnalyzer analyzer = new SQRLLogicalPlanAnalyzer(relNode, this,
+    SQRLLogicalPlanAnalyzer analyzer = new SQRLLogicalPlanAnalyzer(relNode, tableLookup,
         flinkPlanner.getOrCreateSqlValidator().getCatalogReader().unwrap(CalciteCatalogReader.class),
         relBuilder,
         errors);
@@ -377,7 +348,7 @@ public class Sqrl2FlinkSQLTranslator implements TableAnalysisLookup {
         .identifier(identifier)
         .originalSql(originalSql)
         .build();
-    registerTable(tableAnalysis);
+    tableLookup.registerTable(tableAnalysis);
 //    System.out.println(tableAnalysis);
 //    System.out.println(identifier.getObjectName() + " PRIMARY KEY: " + (tableAnalysis.getPrimaryKey().isDefined()?tableAnalysis.getPrimaryKey().asSimpleList():""));
 //    System.out.println(identifier.getObjectName() + " INPUTS: " + (tableAnalysis.getFromTables().stream().map(
@@ -571,6 +542,7 @@ public class Sqrl2FlinkSQLTranslator implements TableAnalysisLookup {
         outputType.add(field);
         if (MutationComputedColumn.UUID_COLUMN.equalsIgnoreCase(column.getName())) {
           mutationBld.computedColumn(new MutationComputedColumn(column.getName(), Type.UUID));
+          if (pk.isUndefined()) pk = PrimaryKeyMap.of(List.of(i));
         } else if ((column instanceof UnresolvedMetadataColumn) &&
             MutationComputedColumn.TIMESTAMP_METADATA.equalsIgnoreCase(((UnresolvedMetadataColumn) column).getMetadataKey())) {
           mutationBld.computedColumn(new MutationComputedColumn(column.getName(), Type.TIMESTAMP));
@@ -583,9 +555,9 @@ public class Sqrl2FlinkSQLTranslator implements TableAnalysisLookup {
     }
     FlinkConnectorConfig connector = new FlinkConnectorConfig(tableOp.getCatalogTable().getOptions());
     TableAnalysis tableAnalysis = TableAnalysis.of(tableOp.getTableIdentifier(),
-        new SourceTableAnalysis(connector, flinkSchema, mutationBld!=null?mutationBld.build():null),
+        new SourceSinkTableAnalysis(connector, flinkSchema, mutationBld!=null?mutationBld.build():null),
         connector.getTableType(), pk);
-    registerTable(tableAnalysis);
+    tableLookup.registerTable(tableAnalysis);
 
     return new AddTableResult(finalTableName, tableOp.getTableIdentifier());
   }

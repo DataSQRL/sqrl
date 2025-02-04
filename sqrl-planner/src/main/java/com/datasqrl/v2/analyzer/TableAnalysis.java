@@ -4,7 +4,7 @@ package com.datasqrl.v2.analyzer;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.v2.analyzer.cost.CostAnalysis;
 import com.datasqrl.v2.hint.PlannerHints;
-import com.datasqrl.v2.tables.SourceTableAnalysis;
+import com.datasqrl.v2.tables.SourceSinkTableAnalysis;
 import com.datasqrl.io.tables.TableType;
 import com.datasqrl.plan.rules.EngineCapability;
 import com.datasqrl.plan.util.PrimaryKeyMap;
@@ -88,11 +88,11 @@ public class TableAnalysis implements TableOrFunctionAnalysis {
   @Builder.Default @Exclude
   List<TableOrFunctionAnalysis> fromTables = List.of(); //Present for derived tables/views
   /**
-   * If this table/function represents a source table (i.e. a CREATE TABLE) and not a view,
-   * it is captured here.
+   * If this table/function represents a source or sink table (i.e. an explicit CREATE TABLE with connector definition)
+   * and not a view, it is captured here.
    */
   @Builder.Default @Exclude
-  Optional<SourceTableAnalysis> sourceTable = Optional.empty(); //Present for created source tables
+  Optional<SourceSinkTableAnalysis> sourceSinkTable = Optional.empty(); //Present for created source tables
   /**
    * The required {@link EngineCapability} needed to execute this query
    */
@@ -130,8 +130,8 @@ public class TableAnalysis implements TableOrFunctionAnalysis {
     return primaryKey.makeSimple(getRowType());
   }
 
-  public boolean isSource() {
-    return sourceTable.isPresent();
+  public boolean isSourceOrSink() {
+    return sourceSinkTable.isPresent();
   }
 
   public RelNode getRelNode() {
@@ -140,7 +140,7 @@ public class TableAnalysis implements TableOrFunctionAnalysis {
 
   public static TableAnalysis of(
       @NonNull ObjectIdentifier identifier,
-      @NonNull SourceTableAnalysis sourceTable,
+      @NonNull SourceSinkTableAnalysis sourceTable,
       @NonNull TableType type,
       @NonNull PrimaryKeyMap primaryKey) {
     return TableAnalysis.builder()
@@ -149,7 +149,7 @@ public class TableAnalysis implements TableOrFunctionAnalysis {
         .originalRelnode(null)
         .type(type)
         .primaryKey(primaryKey)
-        .sourceTable(Optional.of(sourceTable))
+        .sourceSinkTable(Optional.of(sourceTable))
         .streamRoot(null)
         .build();
   }

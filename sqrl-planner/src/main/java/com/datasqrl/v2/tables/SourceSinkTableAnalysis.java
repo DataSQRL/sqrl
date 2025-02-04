@@ -7,10 +7,10 @@ import lombok.Value;
 import org.apache.flink.table.api.Schema;
 
 /**
- * Metadata we keep track off for imported tables
+ * Metadata we keep track off for imported/exported tables and their definition
  */
 @Value
-public class SourceTableAnalysis {
+public class SourceSinkTableAnalysis {
 
   /**
    * The connector configuration for the source table
