@@ -30,11 +30,13 @@ import com.google.inject.Inject;
 import freemarker.template.Configuration;
 import freemarker.template.DefaultMapAdapter;
 import freemarker.template.Template;
+import freemarker.template.TemplateException;
 import freemarker.template.TemplateExceptionHandler;
 import freemarker.template.TemplateMethodModelEx;
 import freemarker.template.TemplateModelException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -43,8 +45,11 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -323,7 +328,7 @@ public class Packager {
           ? rootDir.resolve(profile)
           : namepath2Path(buildDir.getBuildDir(), NamePath.parse(profile));
 
-      copyToDeploy(targetDir, profilePath, plan, testPlan, sqrlConfig, plans);
+//      copyToDeploy(targetDir, profilePath, plan, testPlan, sqrlConfig, plans);
     }
 
     copyDataFiles(buildDir.getBuildDir());
@@ -331,9 +336,56 @@ public class Packager {
     copyJarFiles(buildDir.getBuildDir());
     moveFolder(targetDir, LIB_DIR);
     copyCompiledPlan(buildDir.getBuildDir(), targetDir);
+    
+    // copy deployment files
+    Map<String, Object> config = collectConfiguration(sqrlConfig, plans);
+    writePostgresSchema(targetDir, config);
+  }
+
+  private void writePostgresSchema(Path targetDir, Map<String, Object> config) {
+	  if(config.containsKey("postgres") || config.containsKey("postgres_log")) {
+    //postgres
+    copyTemplate(targetDir, config, "templates/database-schema.sql.ftl", "postgres/database-schema.sql");
+    copyTemplate(targetDir, config, "templates/database-schema.sql.ftl", "files/postgres-schema.sql");
+	  }
+
+    if(config.containsKey("flink")) {
+    //flink
+    copyTemplate(targetDir, config, "templates/flink.sql.ftl", "flink/src/main/resources/flink.sql");
+    copyTemplate(targetDir, config, "templates/flink.sql.ftl", "files/flink.sql");
+    }
+    
+    if(config.containsKey("vertx")) {
+    //vertx server-config
+    copyTemplate(targetDir, config, "templates/server-config.json.ftl", "vertx/server-config.json");
+    copyTemplate(targetDir, config, "templates/server-config.json.ftl", "files/vertx-config.json");
+
+    //vertx server-config
+    copyTemplate(targetDir, config, "templates/server-model.json.ftl", "vertx/server-model.json");
+    copyTemplate(targetDir, config, "templates/server-model.json.ftl", "files/vertx-model.json");
+    }
   }
 
   @SneakyThrows
+  private void copyTemplate(Path targetDir, Map<String, Object> config, String source, String destination) {
+    // Set up the FreeMarker configuration to load templates from the classpath.
+	    Configuration cfg = new Configuration(Configuration.VERSION_2_3_32);
+	    cfg.setDefaultEncoding("UTF-8");
+	    cfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
+	    cfg.setNumberFormat("computer");
+	    cfg.setSharedVariable("jsonEncode", new JsonEncoderMethod());    // Set the base directory for templates to the root of the classpath.
+	    cfg.setClassLoaderForTemplateLoading(getClass().getClassLoader(), "/");
+
+    Template template = cfg.getTemplate(source);
+
+    Path postgresSchemaFile = targetDir.resolve(destination);
+    Files.createDirectories(postgresSchemaFile.getParent());  
+    try (Writer writer = new OutputStreamWriter(Files.newOutputStream(postgresSchemaFile), StandardCharsets.UTF_8)) {
+        template.process(config, writer);
+    }
+  }
+
+@SneakyThrows
   private void copyCompiledPlan(Path buildDir, Path targetDir) {
     if (Files.exists(buildDir.resolve(COMPILED_PLAN_JSON))) {
       Path destFolder = targetDir.resolve("flink");
@@ -422,10 +474,7 @@ public class Packager {
       Files.createDirectories(targetDir);
     }
 
-    Map<String, Object> templateConfig = new HashMap<>();
-    templateConfig.put("config", sqrlConfig.toMap()); //Add SQRL config
-    templateConfig.put("environment", System.getenv()); //Add environmental variables
-    templateConfig.putAll(plans);
+    Map<String, Object> templateConfig = collectConfiguration(sqrlConfig, plans);
     // Copy each file and directory from the profile path to the target directory
     if (!Files.isDirectory(profile)) {
       throw new RuntimeException("Could not find profile: " + profile);
@@ -454,6 +503,14 @@ public class Packager {
       }
     }
   }
+
+private Map<String, Object> collectConfiguration(PackageJson sqrlConfig, Map<String, Object> plans) {
+	Map<String, Object> templateConfig = new HashMap<>();
+    templateConfig.put("config", sqrlConfig.toMap()); //Add SQRL config
+    templateConfig.put("environment", System.getenv()); //Add environmental variables
+    templateConfig.putAll(plans);
+	return templateConfig;
+}
 
   private Path trimFtl(Path destinationPath) {
     return destinationPath.getFileName().toString().endsWith(".ftl") ?
@@ -490,17 +547,16 @@ public class Packager {
       return;
     }
 
+    // extract the template filename
+    String templateName = path.getFileName().toString();
+
     // configure Freemarker
     Configuration cfg = new Configuration(Configuration.VERSION_2_3_32);
     cfg.setDirectoryForTemplateLoading(path.getParent().toFile());
     cfg.setDefaultEncoding("UTF-8");
     cfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
     cfg.setNumberFormat("computer");
-
     cfg.setSharedVariable("jsonEncode", new JsonEncoderMethod());
-
-    // extract the template filename
-    String templateName = path.getFileName().toString();
 
     // load and process the template
     Template template = cfg.getTemplate(templateName);
