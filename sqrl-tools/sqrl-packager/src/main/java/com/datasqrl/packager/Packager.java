@@ -302,7 +302,7 @@ public class Packager {
 
   @SneakyThrows
   public void postprocess(PackageJson sqrlConfig, Path rootDir, Path targetDir, PhysicalPlan plan,
-      TestPlan testPlan, List<String> profiles) {
+      TestPlan testPlan) {
     Path planDir = buildDir.getBuildDir().resolve("plan");
 
     Map<String, Object> plans = new HashMap<>();
@@ -319,16 +319,6 @@ public class Packager {
       SqrlObjectMapper.INSTANCE.writerWithDefaultPrettyPrinter().writeValue(path.toFile(), testPlan);
       Map map = SqrlObjectMapper.INSTANCE.readValue(path.toFile(), Map.class);
       plans.put("test", map);
-    }
-
-    // Copy profiles
-    Collections.reverse(profiles); //Reversing profiles so last one wins
-    for (String profile : profiles) {
-      Path profilePath = PackageBootstrap.isLocalProfile(rootDir, profile)
-          ? rootDir.resolve(profile)
-          : namepath2Path(buildDir.getBuildDir(), NamePath.parse(profile));
-
-//      copyToDeploy(targetDir, profilePath, plan, testPlan, sqrlConfig, plans);
     }
 
     copyDataFiles(buildDir.getBuildDir());
@@ -467,43 +457,6 @@ public class Packager {
     return SqrlObjectMapper.INSTANCE.readValue(path.toFile(), Map.class);
   }
 
-  @SneakyThrows
-  private void copyToDeploy(Path targetDir, Path profile, PhysicalPlan plan, TestPlan testPlan,
-      PackageJson sqrlConfig, Map<String, Object> plans) {
-    if (!Files.exists(targetDir)) {
-      Files.createDirectories(targetDir);
-    }
-
-    Map<String, Object> templateConfig = collectConfiguration(sqrlConfig, plans);
-    // Copy each file and directory from the profile path to the target directory
-    if (!Files.isDirectory(profile)) {
-      throw new RuntimeException("Could not find profile: " + profile);
-    }
-    Set<String> enabledEngines = new HashSet<>(sqrlConfig.getEnabledEngines());
-
-    Set<String> possibleEngines = ServiceLoaderDiscovery.getAll(
-        EngineFactory.class).stream()
-        .map(e->e.getEngineName())
-        .collect(Collectors.toSet());
-    possibleEngines.add("test");
-
-    try (Stream<Path> stream = Files.list(profile)) {
-      List<Path> baseProfilePaths = stream.collect(Collectors.toList());
-      for (Path sourcePath : baseProfilePaths) {
-        //filter for engines
-        String profileEngineName = sourcePath.getFileName().toString().split("\\.")[0];
-        if (possibleEngines.contains(profileEngineName) && //Exclude any engines not selected
-            !enabledEngines.contains(profileEngineName)) continue;
-        if (sourcePath.getFileName().toString().equalsIgnoreCase("package.json")) continue;
-
-        Path destinationPath = targetDir.resolve(profile.relativize(sourcePath)).toAbsolutePath();
-        if (Files.isDirectory(destinationPath) || Files.isRegularFile(trimFtl(destinationPath))) continue; //skip existing to allow overloads
-
-        copy(profile, targetDir, sourcePath, templateConfig);
-      }
-    }
-  }
-
 private Map<String, Object> collectConfiguration(PackageJson sqrlConfig, Map<String, Object> plans) {
 	Map<String, Object> templateConfig = new HashMap<>();
     templateConfig.put("config", sqrlConfig.toMap()); //Add SQRL config
@@ -511,12 +464,6 @@ private Map<String, Object> collectConfiguration(PackageJson sqrlConfig, Map<Str
     templateConfig.putAll(plans);
 	return templateConfig;
 }
-
-  private Path trimFtl(Path destinationPath) {
-    return destinationPath.getFileName().toString().endsWith(".ftl") ?
-        destinationPath.getParent().resolve(destinationPath.getFileName().toString().substring(0,destinationPath.getFileName().toString().length()-4 ))
-        : destinationPath;
-  }
 
   @SneakyThrows
   private void copy(Path profile, Path targetDir, Path sourcePath,

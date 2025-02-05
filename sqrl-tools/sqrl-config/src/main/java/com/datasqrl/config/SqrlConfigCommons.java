@@ -419,6 +419,12 @@ public class SqrlConfigCommons implements SqrlConfig {
         throw localErrors.handle(e);
       }
     }
+
+    try {
+		combinedConfiguration.addConfiguration(configs.fileBased(JSONConfiguration.class,   SqrlConfigCommons.class.getResource("/default-package.json")));
+	} catch (ConfigurationException e) {
+		throw errors.withConfig("Error loading default configuration").handle(e);
+	}
     String configFilename = files.get(0).toString();
     if (!isValid) {
       throw errors.exception("Configuration file invalid: %s", files);
