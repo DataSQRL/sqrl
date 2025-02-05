@@ -20,12 +20,6 @@ public interface PackageJson {
 
   DependenciesConfig getDependencies();
 
-  boolean hasProfileKey();
-
-  List<String> getProfiles();
-
-  void setProfiles(String[] profiles);
-
   void toFile(Path path, boolean pretty);
 
   ScriptConfig getScriptConfig();

@@ -1,7 +1,6 @@
 package com.datasqrl.vector;
 
 import com.datasqrl.type.JdbcTypeSerializer;
-//import com.google.auto.service.AutoService;
 import java.util.Arrays;
 import org.apache.flink.connector.jdbc.converter.AbstractJdbcRowConverter.JdbcDeserializationConverter;
 import org.apache.flink.connector.jdbc.converter.AbstractJdbcRowConverter.JdbcSerializationConverter;

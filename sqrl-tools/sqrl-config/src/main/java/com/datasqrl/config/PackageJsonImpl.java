@@ -6,11 +6,9 @@ import java.util.Map;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 
-@AllArgsConstructor
 public class PackageJsonImpl implements PackageJson {
   public static final String ENGINES_PROPERTY = "engines";
   public static final String DISCOVERY_KEY = "discovery";
-  public static final String PROFILES_KEY = "profiles";
   public static final String DEPENDENCIES_KEY = "dependencies";
   public static final String SCRIPT_KEY = "script";
   public static final String COMPILER_KEY = "compiler";
@@ -23,6 +21,10 @@ public class PackageJsonImpl implements PackageJson {
 
   public PackageJsonImpl() {
     this(SqrlConfig.createCurrentVersion());
+  }
+
+  public PackageJsonImpl(SqrlConfig sqrlConfig) {
+	this.sqrlConfig = sqrlConfig;
   }
 
   @Override
@@ -46,24 +48,8 @@ public class PackageJsonImpl implements PackageJson {
   }
 
   @Override
-  public void setProfiles(String[] profiles) {
-    sqrlConfig.setProperty(PROFILES_KEY, profiles);
-  }
-
-  @Override
   public DependenciesConfigImpl getDependencies() {
     return new DependenciesConfigImpl(sqrlConfig, sqrlConfig.getSubConfig(DEPENDENCIES_KEY));
-  }
-
-  @Override
-  public boolean hasProfileKey() {
-    return sqrlConfig.hasKey(PROFILES_KEY);
-  }
-
-  @Override
-  public List<String> getProfiles() {
-    return sqrlConfig.asList(PROFILES_KEY, String.class)
-        .get();
   }
 
   @Override
