@@ -1,13 +1,12 @@
 package com.datasqrl.packager.preprocess;
 
-import static com.datasqrl.actions.WriteDag.DATA_DIR;
+import static com.datasqrl.actions.WriteDagOld.DATA_DIR;
 
 import com.datasqrl.discovery.file.FilenameAnalyzer;
 import com.datasqrl.discovery.file.FilenameAnalyzer.Components;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.discovery.file.FileCompression;
 import com.datasqrl.discovery.file.FileCompression.CompressionIO;
-import com.google.auto.service.AutoService;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -18,7 +17,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;

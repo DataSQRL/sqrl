@@ -48,6 +48,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.Filter;
+import org.apache.calcite.rel.core.Project;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rex.RexCall;
@@ -131,6 +132,10 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       ErrorCollector errors = query.getErrors();
       RelNode relNode = query.getRelNode();
       Map<String,Integer> filterColumns = new HashMap<>();
+      if (relNode instanceof Project && relNode.getRowType().equals(((Project) relNode).getInput().getRowType())) {
+        Project project = (Project) relNode;
+        relNode = project.getInput();
+      }
       if (relNode instanceof Filter) {
         Filter filter = (Filter) relNode;
         Consumer<Boolean> checkErrors = b -> errors.checkFatal(b, "Expected simple equality condition for Kafka filter: %s", filter.getCondition());
@@ -141,7 +146,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         List<RexNode> conditions = stagePlan.getUtils().getRexUtil().getConjunctions(filter.getCondition());
         List<String> fieldNames = filter.getRowType().getFieldNames();
         for (RexNode condition : conditions) {
-          checkErrors.accept(conditions instanceof RexCall);
+          checkErrors.accept(condition instanceof RexCall);
           RexCall call = (RexCall) condition;
           checkErrors.accept(call.getOperator().getKind()==SqlKind.EQUALS);
           for (int i = 0; i < 2; i++) {
@@ -158,7 +163,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       errors.checkFatal(relNode instanceof TableScan, "The Kafka engine currently only supports"
           + "simple filter queries without any transformations, but got: %s", relNode.explain());
       RelOptTable table = relNode.getTable();
-      String topicName = ((TableSourceTable)table).contextResolvedTable().getIdentifier().getObjectName();
+      String topicName = table.getQualifiedName().get(2);
       query.getFunction().setExecutableQuery(new KafkaQuery(stagePlan.getStage(), topicName, filterColumns));
     }
     //Plan topic creation

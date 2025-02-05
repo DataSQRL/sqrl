@@ -8,6 +8,8 @@ import com.datasqrl.datatype.DataTypeMapping;
 import com.datasqrl.datatype.DataTypeMapping.Direction;
 import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.EnginePhysicalPlan;
+import com.datasqrl.engine.PhysicalPlan;
+import com.datasqrl.engine.PhysicalPlan.PhysicalStagePlan;
 import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.database.EngineCreateTable;
 import com.datasqrl.engine.export.ExportEngine;
@@ -15,6 +17,7 @@ import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.engine.server.ServerEngine;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.util.RelDataTypeBuilder;
 import com.datasqrl.v2.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.v2.analyzer.TableAnalysis;
 import com.datasqrl.v2.dag.nodes.ExportNode;
@@ -50,23 +53,33 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.AllArgsConstructor;
 import lombok.Value;
+import org.apache.calcite.linq4j.Ord;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.TableFunctionScan;
 import org.apache.calcite.rel.core.TableScan;
+import org.apache.calcite.rel.logical.LogicalAggregate;
+import org.apache.calcite.rel.logical.LogicalFilter;
+import org.apache.calcite.rel.logical.LogicalJoin;
+import org.apache.calcite.rel.logical.LogicalProject;
+import org.apache.calcite.rel.logical.LogicalTableFunctionScan;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexCall;
+import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.calcite.tools.RelBuilder;
+import org.apache.calcite.util.Pair;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.planner.calcite.FlinkRelBuilder;
 import org.apache.flink.table.planner.catalog.SqlCatalogViewTable;
 import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
 import org.apache.flink.table.planner.plan.schema.TableSourceTable;
+import org.apache.flink.table.planner.plan.schema.TimeIndicatorRelDataType;
 
 @AllArgsConstructor(onConstructor_=@Inject)
 public class DAGPlanner {
@@ -108,7 +121,7 @@ public class DAGPlanner {
     return dag;
   }
 
-  public List<EnginePhysicalPlan> assemble(PipelineDAG dag, Sqrl2FlinkSQLTranslator sqrlEnv) {
+  public PhysicalPlan assemble(PipelineDAG dag, Sqrl2FlinkSQLTranslator sqrlEnv) {
     ExecutionStage streamStage = pipeline.getStageByType(EngineType.STREAMS).orElseThrow();
     Optional<ServerEngine> serverEngine = pipeline.getServerEngine();
     ServerStagePlan.ServerStagePlanBuilder serverPlan = ServerStagePlan.builder();
@@ -139,7 +152,7 @@ public class DAGPlanner {
       if (outputConfig.isAddUid()) result +="_"+exportTableCounter.incrementAndGet();
       return result;
     };
-    List<EnginePhysicalPlan> plans = new ArrayList<>();
+    PhysicalPlan.PhysicalPlanBuilder planBuilder = PhysicalPlan.builder();
     //move assembler logic here
     //##1st: find all the cuts between flink and materialization (db+log) stages or sinks
     //generate a sink for each in the respective engine and insert into
@@ -153,7 +166,7 @@ public class DAGPlanner {
           String originalTableName = null;
           if (downstream instanceof ExportNode) {
             ExportNode exportNode = (ExportNode) downstream;
-            originalTableName = exportNode.getSinkName();
+            originalTableName = exportNode.getSinkPath().getLast().getDisplay();
             if (exportNode.getSinkTo().isPresent()) {
               exportStage = exportNode.getSinkTo().get();
             } else {
@@ -208,7 +221,7 @@ public class DAGPlanner {
         }
       }
     });
-    plans.add(sqrlEnv.compilePlan());
+    planBuilder.stagePlan(new PhysicalStagePlan(streamStage, sqrlEnv.compilePlan()));
 
     //2nd: for each materialization stage, find all cuts to server or sinks generate queries for those
     //This map keeps track of tables that are accessed by the server and hence mapped to SqrlTableFunction
@@ -238,14 +251,16 @@ public class DAGPlanner {
           }
         }
         if (function != null) {
-          RelNode plannedRelNode = function.getFunctionAnalysis().getRelNode().accept(
+          RelNode originalRelnode = function.getFunctionAnalysis().getRelNode();
+          RelNode plannedRelNode = originalRelnode.accept(
               new QueryExpansionRelShuttle(id -> streamTableMapping.get(new InputTableKey(dataStoreStage, id)),
                   sqrlEnv, dbEngine.getTypeMapping(), true));
           dbPlan.query(new Query(function, plannedRelNode, function.getFunctionAnalysis().getErrors()));
           if (function.getVisibility().isQueryable()) serverPlan.function(function);
         }
       });
-      plans.add(dbEngine.plan(dbPlan.build()));
+      EnginePhysicalPlan dbPhysicalPlan = dbEngine.plan(dbPlan.build());
+      planBuilder.stagePlan(new PhysicalStagePlan(dataStoreStage, dbPhysicalPlan));
     }
 
 
@@ -258,10 +273,12 @@ public class DAGPlanner {
       server-side execution. Those may directly follow the stream stage, so we have to create a SqrlTableFunction as indicated by the comment above.
       Need to update SqlScriptPlanner availableStages for server to be included.
        */
-      plans.add(serverEngine.get().plan(serverPlan.build()));
+      serverPlan.serverEngine(serverEngine.get());
+      EnginePhysicalPlan serverPhysicalPlan = serverEngine.get().plan(serverPlan.build());
+      planBuilder.stagePlan(new PhysicalStagePlan(pipeline.getStagesByType(EngineType.SERVER).stream().findFirst().get(), serverPhysicalPlan));
     }
 
-    return plans;
+    return planBuilder.build();
   }
 
   public static final String HASHED_PK_NAME = "__pk_hash";
@@ -344,6 +361,28 @@ public class DAGPlanner {
     ObjectIdentifier tableId;
   }
 
+  @AllArgsConstructor
+  private static class ReplaceRowtimeRexShuttle extends RexShuttle {
+
+    private final RelDataType newRowType;
+
+    @Override
+    public RexNode visitInputRef(RexInputRef inputRef) {
+      RelDataType type = inputRef.getType();
+      if (type instanceof TimeIndicatorRelDataType) {
+        TimeIndicatorRelDataType timeIndicator = (TimeIndicatorRelDataType) type;
+        return new RexInputRef(inputRef.getIndex(), timeIndicator.originalType());
+      } else if (newRowType!=null) {
+        int index = inputRef.getIndex();
+        RelDataType newType = newRowType.getFieldList().get(index).getType();
+        if (!inputRef.getType().equals(newType)) {
+          return new RexInputRef(index, newType);
+        }
+      }
+      return super.visitInputRef(inputRef);
+    }
+  }
+
   @Value
   private class QueryExpansionRelShuttle extends RelShuttleImpl {
 
@@ -393,6 +432,51 @@ public class DAGPlanner {
         }
       }
       return super.visit(scan);
+    }
+
+    @Override
+    public RelNode visit(RelNode other) {
+      if (other instanceof LogicalTableFunctionScan) {
+        return visit((LogicalTableFunctionScan) other);
+      }
+      return super.visit(other);
+    }
+
+    @Override
+    public RelNode visit(LogicalProject project) {
+      RelNode input = project.getInput().accept(this);
+      RexShuttle typeAdjustingShuttle = new ReplaceRowtimeRexShuttle(input.getRowType());
+
+      List<Pair<RexNode,String>> newProjects = project.getNamedProjects().stream()
+          .map(pair -> Pair.of(pair.left.accept(typeAdjustingShuttle), pair.right))
+          .collect(Collectors.toList());
+      RelDataTypeBuilder typeBuilder = CalciteUtil.getRelTypeBuilder(sqrlEnv.getTypeFactory());
+      newProjects.forEach(pair -> typeBuilder.add(pair.right, pair.left.getType()));
+
+      return project.copy(project.getTraitSet(), input, newProjects.stream().map(Pair::getKey).collect(
+          Collectors.toList()), typeBuilder.build());
+    }
+
+    @Override
+    public RelNode visit(LogicalFilter filter) {
+      RelNode input = filter.getInput().accept(this);
+      RexShuttle typeAdjustingShuttle = new ReplaceRowtimeRexShuttle(input.getRowType());
+      return filter.copy(filter.getTraitSet(), input, filter.getCondition().accept(typeAdjustingShuttle));
+    }
+
+    @Override
+    public RelNode visit(LogicalJoin join) {
+      RelNode left = join.getLeft().accept(this), right = join.getRight().accept(this);
+      RexShuttle typeAdjustingShuttle = new ReplaceRowtimeRexShuttle(null);
+      return join.copy(join.getTraitSet(), join.getCondition().accept(typeAdjustingShuttle), left, right, join.getJoinType(), join.isSemiJoinDone());
+    }
+
+    @Override
+    public RelNode visit(LogicalAggregate aggregate) {
+      RelNode input = aggregate.getInput().accept(this);
+      return aggregate.copy(aggregate.getTraitSet(), input, aggregate.getGroupSet(), aggregate.groupSets,
+          aggregate.getAggCallList().stream().map(agg -> agg.adaptTo(input, agg.getArgList(), agg.filterArg, aggregate.getGroupCount(),
+              aggregate.getGroupCount())).collect(Collectors.toList()));
     }
   }
 }

@@ -58,6 +58,7 @@ public abstract class AbstractAssetSnapshotTest {
     return path -> false;
   }
 
+  @Deprecated
   public Predicate<Path> getDeployDirFilter() {
     return path -> false;
   }

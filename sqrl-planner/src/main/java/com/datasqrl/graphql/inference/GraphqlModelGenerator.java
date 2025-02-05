@@ -10,7 +10,7 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.config.TableConfig;
-import com.datasqrl.engine.PhysicalPlan.StagePlan;
+import com.datasqrl.engine.PhysicalPlan.PhysicalStagePlan;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.engine.database.relational.ddl.statements.InsertStatement;
 import com.datasqrl.engine.database.relational.ddl.statements.notify.ListenNotifyAssets;
@@ -40,7 +40,6 @@ import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.plan.queries.IdentifiedQuery;
-import com.datasqrl.util.CalciteHacks;
 import com.google.common.base.Preconditions;
 import graphql.language.FieldDefinition;
 import graphql.language.InputValueDefinition;
@@ -202,7 +201,7 @@ public class GraphqlModelGenerator extends SchemaWalker {
   private Optional<EnginePhysicalPlan> getLogPlan() {
     //Todo: Bad instance checking, Fix to bring multiple log engines (?)
     Optional<EnginePhysicalPlan> logPlan = physicalPlan.getStagePlans().stream()
-        .map(StagePlan::getPlan)
+        .map(PhysicalStagePlan::getPlan)
         .filter(plan -> plan instanceof KafkaPhysicalPlan || plan instanceof PostgresLogPhysicalPlan)
         .findFirst();
     return logPlan;

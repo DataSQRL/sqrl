@@ -196,7 +196,7 @@ public class InferGraphqlSchema {
   }
 
   // Validates the schema and generates queries and subscriptions
-  private void validateAndGenerateQueries(APISource apiSchema, ErrorCollector apiErrors) {
+  public void validateAndGenerateQueries(APISource apiSchema, ErrorCollector apiErrors) {
     GraphqlSchemaValidator schemaValidator = new GraphqlSchemaValidator(framework, apiManager);
     schemaValidator.validate(apiSchema, apiErrors);
 

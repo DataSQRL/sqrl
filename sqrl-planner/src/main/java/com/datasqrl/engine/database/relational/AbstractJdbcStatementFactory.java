@@ -44,7 +44,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
 
   @Override
   public QueryResult createQuery(Query query, boolean withView) {
-    return createQuery(query.getFunction().getFunctionCatalogName(), query.getRelNode(), withView);
+    return createQuery(query.getFunction().getFullPath().getLast().getDisplay(), query.getRelNode(), withView);
   }
 
   public QueryResult createQuery(String viewName, RelNode relNode, boolean withView) {
@@ -107,7 +107,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
     SqlCreatePostgresView createView = new SqlCreatePostgresView(SqlParserPos.ZERO, true,
         viewNameIdentifier, columnList,
         viewSqlNode);
-    return sqlNodeToString.convert(() -> createView).getSql() + ";";
+    return sqlNodeToString.convert(() -> createView).getSql();
   }
 
   public static List<String> quoteIdentifier(List<String> columns) {

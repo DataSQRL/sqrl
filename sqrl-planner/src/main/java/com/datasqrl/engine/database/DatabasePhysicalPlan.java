@@ -6,9 +6,4 @@ public interface DatabasePhysicalPlan extends EnginePhysicalPlan {
 
   void generateIndexes();
 
-  String getSchema();
-
-  String getViews();
-
-
 }

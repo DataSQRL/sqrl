@@ -4,10 +4,9 @@
 package com.datasqrl.engine;
 
 import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.engine.PhysicalPlan.PhysicalStagePlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
-import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
-import com.datasqrl.plan.global.PhysicalDAGPlan.ExternalSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.WriteQuery;
 import com.datasqrl.util.StreamUtil;
 import com.google.inject.Inject;
@@ -23,7 +22,7 @@ public class PhysicalPlanner {
   ErrorCollector errorCollector;
 
   public PhysicalPlan plan(PhysicalDAGPlan plan) {
-    List<PhysicalPlan.StagePlan> physicalStages = new ArrayList<>();
+    List<PhysicalStagePlan> physicalStages = new ArrayList<>();
 
     for (int i = 0; i < plan.getStagePlans().size(); i++) {
       PhysicalDAGPlan.StagePlan stagePlan = plan.getStagePlans().get(i);
@@ -36,7 +35,7 @@ public class PhysicalPlanner {
       EnginePhysicalPlan physicalPlan = stagePlan.getStage().getEngine().plan(stagePlan, inputs,
           plan.getPipeline(), plan.getStagePlans(), framework, errorCollector);
 
-      physicalStages.add(new PhysicalPlan.StagePlan(stagePlan.getStage(), physicalPlan));
+      physicalStages.add(new PhysicalStagePlan(stagePlan.getStage(), physicalPlan));
     }
 
     return new PhysicalPlan(physicalStages);

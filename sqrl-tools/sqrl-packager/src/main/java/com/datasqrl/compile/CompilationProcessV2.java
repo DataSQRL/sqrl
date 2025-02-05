@@ -4,12 +4,17 @@ import com.datasqrl.actions.CreateDatabaseQueries;
 import com.datasqrl.actions.GraphqlPostplanHook;
 import com.datasqrl.actions.InferGraphqlSchema;
 import com.datasqrl.actions.WriteDag;
+import com.datasqrl.actions.WriteDagOld;
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.config.BuildPath;
 import com.datasqrl.config.GraphqlSourceFactory;
-import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlanner;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
+import com.datasqrl.engine.server.ServerPhysicalPlan;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.plan.queries.APISource;
+import com.datasqrl.plan.queries.APISourceImpl;
 import com.datasqrl.v2.dag.DAGBuilder;
 import com.datasqrl.v2.dag.DAGPlanner;
 import com.datasqrl.v2.dag.PipelineDAG;
@@ -22,7 +27,6 @@ import com.datasqrl.plan.MainScript;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.google.inject.Inject;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.tuple.Pair;
@@ -47,6 +51,7 @@ public class CompilationProcessV2 {
   private final GraphQLMutationExtraction graphQLMutationExtraction;
   private final ExecutionPipeline pipeline;
   private final TestPlanner testPlanner;
+  private final ErrorCollector errors;
 
   public Pair<PhysicalPlan, TestPlan> executeCompilation(Optional<Path> testsPath) {
 
@@ -54,32 +59,43 @@ public class CompilationProcessV2 {
     planner.planMain(mainScript, environment);
     DAGBuilder dagBuilder = planner.getDagBuilder();
     PipelineDAG dag = dagPlanner.optimize(dagBuilder.getDag());
-//    System.out.println(dag);
-    List<EnginePhysicalPlan> plans = dagPlanner.assemble(dag, environment);
+    System.out.println(dag);
+    PhysicalPlan physicalPlan = dagPlanner.assemble(dag, environment);
 
+    //TODO: generate indexes
 
-    return null;
-//    postcompileHooks();
-//    Optional<APISource> source = inferencePostcompileHook.run(testsPath);
-//    SqrlDAG dag = dagPlanner.planLogical();
-//    PhysicalDAGPlan dagPlan = dagPlanner.planPhysical(dag);
-//
-//    PhysicalPlan physicalPlan = physicalPlanner.plan(dagPlan);
-//    graphqlPostplanHook.updatePlan(source, physicalPlan);
-//
-//    //create test artifact
-//    TestPlan testPlan;
-//    if (source.isPresent() && executionGoal == ExecutionGoal.TEST) {
-//      testPlan = testPlanner.generateTestPlan(source.get(), testsPath);
-//    } else {
-//      testPlan = null;
-//    }
-//    writeDeploymentArtifactsHook.run(dag);
-//    return Pair.of(physicalPlan, testPlan);
-  }
+    writeDeploymentArtifactsHook.run(dag);
 
-  private void postcompileHooks() {
-    createDatabaseQueries.run();
+    TestPlan testPlan = null;
+    //There can only be a single server plan
+    Optional<ServerPhysicalPlan> serverPlan = physicalPlan.getPlans(ServerPhysicalPlan.class).findFirst();
+    /*
+    TODO: The following needs updating. Remove the && false condition and:
+    - infer GraphQL schema from serverPlan
+    - walk the GraphQL schema to validate and generate queries/coordinates
+    - create the RootGraphQL model and attach to serverPlan
+     */
+    if (serverPlan.isPresent() && false) {
+      Optional<APISource> apiSource = graphqlSourceFactory.get();
+      if (apiSource.isEmpty() || executionGoal == ExecutionGoal.TEST) { //Infer schema from functions
+        //TODO: rewrite the following to use the functions from the serverPlan
+        apiSource = inferencePostcompileHook.inferGraphQLSchema()
+            .map(schemaString -> new APISourceImpl(Name.system("<generated-schema>"), schemaString));
+      }
+      assert apiSource.isPresent();
+
+      //TODO: Validates and generates queries
+      inferencePostcompileHook.validateAndGenerateQueries(apiSource.get(), null);
+      //TODO: Generates RootGraphQLModel, use serverplan as argument only
+      graphqlPostplanHook.updatePlan(apiSource, null);
+
+      //create test artifact
+
+      if (executionGoal == ExecutionGoal.TEST) {
+        testPlan = testPlanner.generateTestPlan(apiSource.get(), testsPath);
+      }
+    }
+    return Pair.of(physicalPlan, testPlan);
   }
 }
 

@@ -4,7 +4,6 @@
 package com.datasqrl.packager;
 
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.cmd.PackageBootstrap;
 import com.datasqrl.compile.TestPlan;
 import com.datasqrl.config.BuildPath;
 import com.datasqrl.config.DependenciesConfigImpl;
@@ -14,8 +13,9 @@ import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.ScriptConfig;
 import com.datasqrl.config.RootPath;
 import com.datasqrl.engine.EnginePhysicalPlan;
+import com.datasqrl.engine.EnginePhysicalPlan.DeploymentArtifact;
 import com.datasqrl.engine.PhysicalPlan;
-import com.datasqrl.engine.PhysicalPlan.StagePlan;
+import com.datasqrl.engine.PhysicalPlan.PhysicalStagePlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.Preprocessors.PreprocessorsContext;
 import com.datasqrl.packager.repository.Repository;
@@ -25,6 +25,7 @@ import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.datasqrl.util.SqrlObjectMapper;
 import com.fasterxml.jackson.core.util.DefaultIndenter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
@@ -38,10 +39,12 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.nio.file.FileVisitResult;
 import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
@@ -55,8 +58,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.datasqrl.actions.FlinkSqlGenerator.COMPILED_PLAN_JSON;
-import static com.datasqrl.actions.WriteDag.DATA_DIR;
-import static com.datasqrl.actions.WriteDag.LIB_DIR;
+import static com.datasqrl.actions.WriteDagOld.DATA_DIR;
+import static com.datasqrl.actions.WriteDagOld.LIB_DIR;
 import static com.datasqrl.config.ScriptConfigImpl.GRAPHQL_KEY;
 import static com.datasqrl.config.ScriptConfigImpl.MAIN_KEY;
 import static com.datasqrl.util.NameUtil.namepath2Path;
@@ -303,11 +306,9 @@ public class Packager {
       TestPlan testPlan, List<String> profiles) {
     Path planDir = buildDir.getBuildDir().resolve("plan");
 
-    Map<String, Object> plans = new HashMap<>();
-    // We'll write a single asset for each folder in the physical plan stage
-    for (StagePlan stagePlan : plan.getStagePlans()) {
-      Object planObj = writePlan(stagePlan.getStage().getName(), stagePlan.getPlan(), targetDir, planDir);
-      plans.put(stagePlan.getStage().getName(), planObj);
+    // We'll write a single asset for each folder in the physical plan stage, plus any deployment artifacts that the plan has
+    for (PhysicalStagePlan stagePlan : plan.getStagePlans()) {
+      writePlan(stagePlan.getStage().getName(), stagePlan.getPlan(), planDir);
     }
 
     if (testPlan != null) {
@@ -315,25 +316,24 @@ public class Packager {
       Path path = planDir.resolve("test.json");
 
       SqrlObjectMapper.INSTANCE.writerWithDefaultPrettyPrinter().writeValue(path.toFile(), testPlan);
-      Map map = SqrlObjectMapper.INSTANCE.readValue(path.toFile(), Map.class);
-      plans.put("test", map);
     }
 
+    //TODO: remove, we don't need profiles anymore
     // Copy profiles
-    Collections.reverse(profiles); //Reversing profiles so last one wins
-    for (String profile : profiles) {
-      Path profilePath = PackageBootstrap.isLocalProfile(rootDir, profile)
-          ? rootDir.resolve(profile)
-          : namepath2Path(buildDir.getBuildDir(), NamePath.parse(profile));
-
-      copyToDeploy(targetDir, profilePath, plan, testPlan, sqrlConfig, plans);
-    }
+//    Collections.reverse(profiles); //Reversing profiles so last one wins
+//    for (String profile : profiles) {
+//      Path profilePath = PackageBootstrap.isLocalProfile(rootDir, profile)
+//          ? rootDir.resolve(profile)
+//          : namepath2Path(buildDir.getBuildDir(), NamePath.parse(profile));
+//
+//      copyToDeploy(targetDir, profilePath, plan, testPlan, sqrlConfig, plans);
+//    }
 
     copyDataFiles(buildDir.getBuildDir());
     moveFolder(targetDir, DATA_DIR);
     copyJarFiles(buildDir.getBuildDir());
     moveFolder(targetDir, LIB_DIR);
-    copyCompiledPlan(buildDir.getBuildDir(), targetDir);
+//    copyCompiledPlan(buildDir.getBuildDir(), targetDir); -- we do that as part of the physical plan now
   }
 
   @SneakyThrows
@@ -405,17 +405,22 @@ public class Packager {
   }
 
   @SneakyThrows
-  private Object writePlan(String name, EnginePhysicalPlan plan, Path targetDir, Path planDir) {
+  private void writePlan(String name, EnginePhysicalPlan plan, Path planDir) {
     Files.createDirectories(planDir);
-    Path path = planDir.resolve(name + ".json");
-
-    SqrlObjectMapper.INSTANCE.enable(SerializationFeature.INDENT_OUTPUT);
 
     DefaultPrettyPrinter prettyPrinter = new DefaultPrettyPrinter();
     prettyPrinter.indentArraysWith(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE);
+    ObjectWriter jsonWriter = SqrlObjectMapper.INSTANCE.enable(SerializationFeature.INDENT_OUTPUT).writer(prettyPrinter);
 
-    SqrlObjectMapper.INSTANCE.writer(prettyPrinter).writeValue(path.toFile(), plan);
-    return SqrlObjectMapper.INSTANCE.readValue(path.toFile(), Map.class);
+    DeploymentArtifact physicalPlanArtifcat = new DeploymentArtifact(".json", plan);
+    for (DeploymentArtifact artifact : ListUtils.union(plan.getDeploymentArtifacts(), List.of(physicalPlanArtifcat))) {
+      Path filePath = planDir.resolve(name + artifact.getFileSuffix());
+      if (artifact.getContent() instanceof String) {
+        Files.writeString(filePath, (String)artifact.getContent(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
+      } else { //serialize as json
+        jsonWriter.writeValue(filePath.toFile(), plan);
+      }
+    }
   }
 
   @SneakyThrows

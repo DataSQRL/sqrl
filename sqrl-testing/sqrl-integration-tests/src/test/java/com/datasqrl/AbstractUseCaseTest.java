@@ -73,11 +73,6 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
         || (!hasGraphQL && file.getFileName().toString().endsWith(".graphqls"));
   }
 
-  @Override
-  public Predicate<Path> getDeployDirFilter() {
-    return file -> false;
-  }
-
   @AllArgsConstructor
   public abstract static class SqrlScriptsAndLocalPackages implements ArgumentsProvider {
 

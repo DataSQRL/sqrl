@@ -63,7 +63,7 @@ public abstract class AbstractJDBCTableFormatEngine extends AbstractJDBCEngine i
   @Override
   public EnginePhysicalPlan plan(MaterializationStagePlan stagePlan) {
     CombinedEnginePlan.CombinedEnginePlanBuilder planBuilder = CombinedEnginePlan.builder();
-    planBuilder.plan(this.getName(), super.plan(stagePlan));
+    planBuilder.plan("", super.plan(stagePlan));
 
     queryEngines.forEach((name, engine) -> {
       planBuilder.plan(name, engine.plan(stagePlan));

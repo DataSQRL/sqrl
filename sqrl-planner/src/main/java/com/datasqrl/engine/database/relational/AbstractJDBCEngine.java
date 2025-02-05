@@ -123,7 +123,7 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
       stagePlan.getQueries().forEach(query -> {
         planBuilder.query(query.getRelNode());
         SqrlTableFunction function = query.getFunction();
-        QueryResult result = stmtFactory.createQuery(query, function.hasParameters());
+        QueryResult result = stmtFactory.createQuery(query, !function.hasParameters());
         if (result.getExecQueryBuilder()!=null && function.getExecutableQuery()==null) {
           function.setExecutableQuery(result.getExecQueryBuilder().stage(stagePlan.getStage()).build());
         }

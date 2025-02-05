@@ -67,7 +67,7 @@ public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
             rexBuilder.makeFlag(Params.ALLOW_MOVED_PATHS),
             rexBuilder.makeLiteral(true));
         RexNode rexNode = rexBuilder.makeCall(lightweightOp("iceberg_scan"),
-            rexBuilder.makeLiteral(warehouse+"/"+databaseName+"/" + scan.getTable().getQualifiedName().get(0)),
+            rexBuilder.makeLiteral(warehouse+"/"+databaseName+"/" + scan.getTable().getQualifiedName().get(2)),
             allowMovedPaths);
         return new LogicalTableFunctionScan(scan.getCluster(), scan.getTraitSet(), List.of(), rexNode,
             Object.class, scan.getRowType(), Set.of());

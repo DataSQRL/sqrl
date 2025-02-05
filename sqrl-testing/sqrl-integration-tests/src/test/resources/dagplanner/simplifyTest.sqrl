@@ -13,6 +13,7 @@ CustomerByMultipleTime := DISTINCT Customer ON customerid, email ORDER BY `times
 
 ExplicitDistinct := SELECT customerid, `timestamp`, name FROM (SELECT *, (ROW_NUMBER() OVER (PARTITION BY customerid ORDER BY `timestamp` DESC)) AS _rownum FROM Customer) WHERE (_rownum = 1);
 
+--maps to explicit distinct (check rowtype)
 InvalidDistinct := SELECT customerid, `timestamp`, name AS namee FROM (SELECT *, (ROW_NUMBER() OVER (PARTITION BY customerid ORDER BY `timestamp` DESC)) AS _rownum FROM Customer) WHERE (_rownum = 1);
 
 MissedTemporalJoin := SELECT * FROM ExternalOrders o JOIN ExplicitDistinct c ON o.customerid = c.customerid;
@@ -36,7 +37,7 @@ CustomerById($minId : INT) := SELECT * FROM Customer WHERE customerid > $minId;
 
 TableFunctionCallsTblFct($arg1 : INT, $arg2: INT) := SELECT * FROM Table(CustomerById($arg2)) WHERE customerid > $arg1;
 
-CustomerSubscriptionById($minId : INT) := SUBSCRIBE SELECT * FROM Customer WHERE customerid > $minId;
+CustomerSubscriptionById($minId : INT) := SUBSCRIBE SELECT * FROM Customer WHERE customerid = $minId;
 
 
 UnnestOrders := SELECT o.id, o.customerid, o.`time`, e.productid, e.quantity, e.discount FROM ExternalOrders o CROSS JOIN UNNEST(entries) e;

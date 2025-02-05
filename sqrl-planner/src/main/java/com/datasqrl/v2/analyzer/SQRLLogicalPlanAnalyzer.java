@@ -135,8 +135,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
 
     if (analysis.type.isStream() && CalciteUtil.findBestRowTimeIndex(analysis.relNode.getRowType()).isEmpty()) {
       //If we don't have a rowtime, let's check if we lost it when all inputs had a rowtime
-      if (sourceTables.stream().filter(TableOrFunctionAnalysis::hasRowType).map(TableOrFunctionAnalysis::getRowType)
-          .map(CalciteUtil::findBestRowTimeIndex).allMatch(Optional::isPresent)) {
+      if (sourceTables.stream().map(TableOrFunctionAnalysis::getRowTime).allMatch(Optional::isPresent)) {
         errors.notice("This table does not propagate the source row time columns: %s",
             sourceTables.stream().map(tbl -> tbl.getRowTime().map(tbl::getFieldName)).collect(
                 Collectors.toList()));

@@ -3,7 +3,7 @@ package com.datasqrl.compile;
 import com.datasqrl.actions.CreateDatabaseQueries;
 import com.datasqrl.actions.GraphqlPostplanHook;
 import com.datasqrl.actions.InferGraphqlSchema;
-import com.datasqrl.actions.WriteDag;
+import com.datasqrl.actions.WriteDagOld;
 import com.datasqrl.config.EngineType;
 import com.datasqrl.config.GraphqlSourceFactory;
 import com.datasqrl.engine.PhysicalPlan;
@@ -38,7 +38,7 @@ public class CompilationProcess {
   private final GraphqlPostplanHook graphqlPostplanHook;
   private final CreateDatabaseQueries createDatabaseQueries;
   private final InferGraphqlSchema inferencePostcompileHook;
-  private final WriteDag writeDeploymentArtifactsHook;
+  private final WriteDagOld writeDeploymentArtifactsHook;
 //  private final FlinkSqlGenerator flinkSqlGenerator;
   private final GraphqlSourceFactory graphqlSourceFactory;
   private final ExecutionGoal executionGoal;

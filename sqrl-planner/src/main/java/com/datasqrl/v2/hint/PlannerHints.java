@@ -21,10 +21,6 @@ public class PlannerHints {
     return hints.stream().anyMatch(WorkloadHint.class::isInstance);
   }
 
-  public boolean isQuerySink() {
-    return isTest() || isWorkload();
-  }
-
   public<H> Optional<H> getHint(Class<H> hintClass) {
     return hints.stream().filter(hintClass::isInstance).map(hintClass::cast).findFirst();
   }

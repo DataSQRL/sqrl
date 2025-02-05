@@ -12,12 +12,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import lombok.Builder;
+import lombok.Singular;
 import lombok.Value;
 
 @Value
+@Builder
 public class PhysicalPlan {
 
-  List<StagePlan> stagePlans;
+  @Singular
+  List<PhysicalStagePlan> stagePlans;
 
   public Map<IdentifiedQuery, QueryTemplate> getDatabaseQueries() {
     return getPlans(DatabasePhysicalPlanOld.class).flatMap(
@@ -26,11 +30,11 @@ public class PhysicalPlan {
   }
 
   public <T extends EnginePhysicalPlan> Stream<T> getPlans(Class<T> clazz) {
-    return StreamUtil.filterByClass(stagePlans.stream().map(StagePlan::getPlan), clazz);
+    return StreamUtil.filterByClass(stagePlans.stream().map(PhysicalStagePlan::getPlan), clazz);
   }
 
   @Value
-  public static class StagePlan {
+  public static class PhysicalStagePlan {
 
     ExecutionStage stage;
     EnginePhysicalPlan plan;

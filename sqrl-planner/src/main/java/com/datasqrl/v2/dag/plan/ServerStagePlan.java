@@ -1,6 +1,8 @@
 package com.datasqrl.v2.dag.plan;
 
 import com.datasqrl.engine.EnginePhysicalPlan;
+import com.datasqrl.engine.ExecutionEngine;
+import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.v2.tables.SqrlTableFunction;
 import java.util.List;
 import lombok.Builder;
@@ -9,8 +11,9 @@ import lombok.Value;
 
 @Value
 @Builder
-public class ServerStagePlan implements EnginePhysicalPlan {
+public class ServerStagePlan {
 
+  ExecutionEngine serverEngine;
   /**
    * All accessible functions
    */

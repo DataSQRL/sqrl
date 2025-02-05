@@ -27,6 +27,7 @@ import com.datasqrl.v2.dag.nodes.TableFunctionNode;
 import com.datasqrl.v2.dag.nodes.TableNode;
 import com.datasqrl.v2.hint.ExecHint;
 import com.datasqrl.v2.hint.PlannerHints;
+import com.datasqrl.v2.hint.TestHint;
 import com.datasqrl.v2.parser.AccessModifier;
 import com.datasqrl.v2.parser.FlinkSQLStatement;
 import com.datasqrl.v2.parser.ParsedObject;
@@ -206,7 +207,7 @@ public class SqlScriptPlanner {
       //Ignore test tables (that are not queries) when we are not running tests
       AccessModifier access = sqrlDef.getAccess();
       boolean nameIsHidden = sqrlDef.getPath().getLast().isHidden();
-      if (( (executionGoal!=ExecutionGoal.TEST && hints.isTest()) || nameIsHidden) && !hints.isWorkload()) {
+      if (nameIsHidden && (executionGoal!=ExecutionGoal.TEST || !hints.isTest()) && !hints.isWorkload()) {
         //Test tables should not have access unless we are running tests or they are also workloads
         access = AccessModifier.NONE;
       }
@@ -259,7 +260,7 @@ public class SqlScriptPlanner {
       SqlNode node = sqrlEnv.parseSQL(flinkStmt.getSql().get());
       if (node instanceof SqlCreateView || node instanceof SqlAlterViewAs) {
         //plan like other definitions from above
-        AccessVisibility visibility = new AccessVisibility(AccessModifier.QUERY, hints.isTest(), true, false);
+        AccessVisibility visibility = new AccessVisibility(AccessModifier.QUERY, false, true, false);
         addTableToDag(sqrlEnv.addView(flinkStmt.getSql().get(), hints, errors), hints, visibility, sqrlEnv);
       } else if (node instanceof SqlCreateTable) {
         addSourceToDag(sqrlEnv.createTable(flinkStmt.getSql().get(), getLogEngineBuilder()), sqrlEnv);
@@ -316,8 +317,9 @@ public class SqlScriptPlanner {
     Preconditions.checkArgument(source.isSourceOrSink());
     TableNode sourceNode = new TableNode(source, getSourceSinkStageAnalysis());
     dagBuilder.add(sourceNode);
-    AccessVisibility visibility = new AccessVisibility(AccessModifier.QUERY, false, true,
-        Name.system(tableAnalysis.getIdentifier().getObjectName()).isHidden());
+    boolean isHidden = Name.system(tableAnalysis.getIdentifier().getObjectName()).isHidden();
+    AccessVisibility visibility = new AccessVisibility(isHidden?AccessModifier.NONE:AccessModifier.QUERY, false, true,
+        isHidden);
     addTableToDag(tableAnalysis, PlannerHints.EMPTY, visibility, sqrlEnv);
   }
 
@@ -354,6 +356,16 @@ public class SqlScriptPlanner {
 
   private List<ExecutionStage> determineStages(List<ExecutionStage> availableStages, PlannerHints hints) {
     Optional<ExecHint> executionHint = hints.getHint(ExecHint.class);
+    if (hints.isTest()) {
+      //Tests always get executed in the first listed database
+      Optional<ExecutionStage> dbStage = availableStages.stream().filter(stage -> stage.getType()==EngineType.DATABASE).findFirst();
+      if (dbStage.isEmpty()) {
+        throw new StatementParserException(ErrorLabel.GENERIC,
+            hints.getHint(TestHint.class).get().getSource().getFileLocation(),
+            "Could not find suitable database stage to execute tests: %s", availableStages);
+      }
+      availableStages = List.of(dbStage.get());
+    }
     if (executionHint.isPresent()) {
       var execHint = executionHint.get();
       availableStages = availableStages.stream().filter(stage ->
@@ -381,7 +393,6 @@ public class SqlScriptPlanner {
 
     TableNode tableNode = new TableNode(tableAnalysis, getStageAnalysis(tableAnalysis, availableStages));
     dagBuilder.add(tableNode);
-
     if (visibility.isEndpoint()) { //Add function to scan table as endpoint
       String scanViewSql = sqrlEnv.toSqlString(sqrlEnv.createScanView("scanView", tableAnalysis.getIdentifier()));
       //TODO: should we add a default sort if the user didn't specify one to have predictable result sets for testing?
@@ -450,8 +461,7 @@ public class SqlScriptPlanner {
         exportStmt.getTableIdentifier().getFileLocation(), "Could not find table: %s",
         tablePath.toString())).unwrap(TableNode.class);
 
-    String exportTableName = sinkName.getDisplay();
-    String exportTableId = exportTableName + EXPORT_SUFFIX + exportTableCounter.incrementAndGet();
+    String exportTableId = sinkName.getDisplay() + EXPORT_SUFFIX + exportTableCounter.incrementAndGet();
     Map<ExecutionStage, StageAnalysis> stageAnalysis = getSourceSinkStageAnalysis();
     ExportNode exportNode;
 
@@ -476,7 +486,7 @@ public class SqlScriptPlanner {
         errorCollector.checkFatal(optStage.isPresent(), "The configured logger `%s` under 'compiler.logger' is not a configured engine.", engineName);
         exportStage = optStage.get();
       }
-      exportNode = new ExportNode(stageAnalysis, exportTableName, Optional.of(exportStage), Optional.empty());
+      exportNode = new ExportNode(stageAnalysis, sinkPath, Optional.of(exportStage), Optional.empty());
     } else {
       SqrlModule module = moduleLoader.getModule(sinkPath.popLast()).orElse(null);
       checkFatal(module!=null, exportStmt.getPackageIdentifier().getFileLocation(), ErrorLabel.GENERIC,
@@ -494,7 +504,7 @@ public class SqlScriptPlanner {
       Optional<RelDataType> schema = flinkTable.schema.or(() -> Optional.of(inputNode.getTableAnalysis().getRowType()));
       try {
         ObjectIdentifier tableId = sqrlEnv.addExternalExport(exportTableId, flinkTable.sqlCreateTable, schema);
-        exportNode = new ExportNode(stageAnalysis, exportTableName, Optional.empty(), Optional.of(tableId));
+        exportNode = new ExportNode(stageAnalysis, sinkPath, Optional.empty(), Optional.of(tableId));
       } catch (Throwable e) {
         throw flinkTable.errorCollector.handle(e);
       }

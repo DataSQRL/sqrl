@@ -33,7 +33,6 @@ import com.datasqrl.plan.util.PrimaryKeyMap;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -106,7 +105,6 @@ import org.apache.flink.table.operations.Operation;
 import org.apache.flink.table.operations.StatementSetOperation;
 import org.apache.flink.table.operations.ddl.AlterViewAsOperation;
 import org.apache.flink.table.operations.ddl.CreateCatalogFunctionOperation;
-import org.apache.flink.table.operations.ddl.CreateOperation;
 import org.apache.flink.table.operations.ddl.CreateTableOperation;
 import org.apache.flink.table.operations.ddl.CreateViewOperation;
 import org.apache.flink.table.planner.calcite.CalciteConfigBuilder;
@@ -132,6 +130,7 @@ public class Sqrl2FlinkSQLTranslator {
   private final Supplier<CalciteParser> calciteSupplier;
   private final SqrlFunctionCatalog sqrlFunctionCatalog;
   private final CatalogManager catalogManager;
+  @Getter
   private final FlinkTypeFactory typeFactory;
 
   @Getter
@@ -595,7 +594,7 @@ public class Sqrl2FlinkSQLTranslator {
       functionSql = FlinkSqlNodeFactory.createFunction(FlinkSqlNodeFactory.identifier(
           ((CreateCatalogFunctionOperation) addFctOp).getFunctionIdentifier()), clazz, isSystem);
     }
-    planBuilder.addFunction(toSqlString(functionSql));
+    planBuilder.addFullyResolvedFunction(toSqlString(functionSql));
   }
 
   private static void checkResultOk(TableResultInternal result) {
