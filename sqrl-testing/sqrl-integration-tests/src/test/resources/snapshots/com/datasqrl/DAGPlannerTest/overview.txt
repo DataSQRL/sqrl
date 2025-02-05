@@ -344,7 +344,7 @@ CREATE TABLE `Orders_5` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `$f3` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),
+  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
   'password' = '${JDBC_PASSWORD}',
@@ -377,8 +377,8 @@ CREATE TABLE `Unnestorders_7` (
   `quantity` BIGINT NOT NULL,
   `discount` DOUBLE
 ) WITH (
-  'print-identifier' = 'Unnestorders',
-  'connector' = 'print'
+  'connector' = 'print',
+  'print-identifier' = 'Unnestorders'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`
@@ -402,7 +402,7 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2__def`
      FROM `default_catalog`.`default_database`.`LargeOrders`)
     ;
     INSERT INTO `default_catalog`.`default_database`.`Orders_5`
-     (SELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `$f3`
+     (SELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`
       FROM `default_catalog`.`default_database`.`Orders`)
      ;
      INSERT INTO `default_catalog`.`default_database`.`SimpleOrders_6`
@@ -535,7 +535,7 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2__def`
     {
       "name" : "Orders_5",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_5\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"$f3\" JSONB  , PRIMARY KEY (\"id\",\"time\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_5\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB  , PRIMARY KEY (\"id\",\"time\"))",
       "fields" : [
         {
           "name" : "id",
@@ -553,7 +553,7 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2__def`
           "nullable" : false
         },
         {
-          "name" : "$f3",
+          "name" : "entries",
           "type" : "JSONB",
           "nullable" : true
         }
@@ -690,7 +690,7 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2__def`
     {
       "name" : "Orders",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT \"id\", \"customerid\", \"time\", \"$f3\" AS \"entries\"\nFROM \"Orders_5\"",
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"Orders_5\"",
       "fields" : [
         {
           "name" : "id",
@@ -749,7 +749,7 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2__def`
     {
       "name" : "UnnestOrders",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"UnnestOrders\"(\"id\", \"customerid\", \"time\", \"productid\", \"quantity\", \"discount\") AS SELECT \"$cor2\".\"id\", \"$cor2\".\"customerid\", \"$cor2\".\"time\", \"t40\".\"productid\", \"t40\".\"quantity\", \"t40\".\"discount\"\nFROM \"Orders_5\" AS \"$cor2\"\n INNER JOIN LATERAL UNNEST (SELECT \"$cor2\".\"$f3\" AS \"entries\"\n  FROM (VALUES (0)) AS \"t\" (\"ZERO\")) AS \"t4\" (\"productid\", \"quantity\", \"unit_price\", \"discount\") AS \"t40\"",
+      "sql" : "CREATE OR REPLACE VIEW \"UnnestOrders\"(\"id\", \"customerid\", \"time\", \"productid\", \"quantity\", \"discount\") AS SELECT \"$cor2\".\"id\", \"$cor2\".\"customerid\", \"$cor2\".\"time\", \"t40\".\"productid\", \"t40\".\"quantity\", \"t40\".\"discount\"\nFROM \"Orders_5\" AS \"$cor2\"\n INNER JOIN LATERAL UNNEST (SELECT \"$cor2\".\"entries\"\n  FROM (VALUES (0)) AS \"t\" (\"ZERO\")) AS \"t4\" (\"productid\", \"quantity\", \"unit_price\", \"discount\") AS \"t40\"",
       "fields" : [
         {
           "name" : "id",

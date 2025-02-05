@@ -335,9 +335,11 @@ public class DAGPlanner {
     boolean hasChanged = false;
     List<RelDataTypeField> sourceFields = sourceType.getFieldList();
     List<RexNode> fields = new ArrayList<>();
+    List<String> fieldNames = new ArrayList<>();
     for (int i = 0; i < sourceFields.size(); i++) {
       if (i < sourceType.getFieldCount()) {
         RelDataTypeField field = sourceFields.get(i);
+        fieldNames.add(field.getName());
         Optional<SqrlCastFunction> castFct = typeMapper.getMapper(field.getType()).flatMap(mapper -> mapper.getEngineMapping(mapDirection));
         if (castFct.isPresent()) {
           SqrlCastFunction castFunction = castFct.get();
@@ -352,7 +354,7 @@ public class DAGPlanner {
     }
 
     if (hasChanged) {
-      relBuilder.project(fields);
+      relBuilder.project(fields, fieldNames);
     }
   }
 
