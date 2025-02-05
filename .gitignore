@@ -71,6 +71,7 @@ tmp/
 sqrl-core/src/test/resources/local.properties
 .loadpath
 .factorypath
+m2e-target/
 
 ##############################
 ## NetBeans
