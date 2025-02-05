@@ -356,15 +356,15 @@ public class SqlScriptPlanner {
 
   private List<ExecutionStage> determineStages(List<ExecutionStage> availableStages, PlannerHints hints) {
     Optional<ExecHint> executionHint = hints.getHint(ExecHint.class);
-    if (hints.isTest()) {
-      //Tests always get executed in the first listed database
-      Optional<ExecutionStage> dbStage = availableStages.stream().filter(stage -> stage.getType()==EngineType.DATABASE).findFirst();
-      if (dbStage.isEmpty()) {
+    if (hints.isTest() || hints.isWorkload()) {
+      //Tests and hints always get executed in the database
+      availableStages = availableStages.stream().filter(stage -> stage.getType()==EngineType.DATABASE || stage.getType()==EngineType.SERVER)
+          .collect(Collectors.toList());
+      if (availableStages.isEmpty()) {
         throw new StatementParserException(ErrorLabel.GENERIC,
             hints.getHint(TestHint.class).get().getSource().getFileLocation(),
-            "Could not find suitable database stage to execute tests: %s", availableStages);
+            "Could not find suitable database stage to execute tests or workloads: %s", availableStages);
       }
-      availableStages = List.of(dbStage.get());
     }
     if (executionHint.isPresent()) {
       var execHint = executionHint.get();

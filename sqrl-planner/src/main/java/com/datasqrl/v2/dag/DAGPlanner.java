@@ -290,7 +290,7 @@ public class DAGPlanner {
     if (pk.isUndefined()) {
       //Databases requires a primary key, see if we can create one
       if (stage.getType()==EngineType.DATABASE) {
-        table.getErrors().checkFatal(table.getType().isStream(),
+        table.getErrors().checkFatal(false, //Todo: replace with table.getType().isStream(),
             "Could not determine primary key for table [%s]. Please add a primary key with the /*+primary_key(...) */ hint.",
             table.getIdentifier().asSummaryString());
         //Hash all columns as primary key
@@ -306,13 +306,15 @@ public class DAGPlanner {
         addHashColumn = pk.asSimpleList();
       }
     }
-    if (addHashColumn != null) {
-      CalciteUtil.addColumn(relBuilder, relBuilder.getRexBuilder()
-          .makeCall(FlinkSqlOperatorTable.SHA256, CalciteUtil.getIdentityRex(relBuilder, numCols)), HASHED_PK_NAME);
-      return PrimaryKeyMap.of(List.of(numCols));
-    } else {
-      return pk;
-    }
+    return pk;
+    //TODO: add custom pk hash function that accepts arbitrary arguments and also null
+//    if (addHashColumn != null) {
+//      CalciteUtil.addColumn(relBuilder, relBuilder.getRexBuilder()
+//          .makeCall(FlinkSqlOperatorTable.SHA256, rexInputRef for addHashColumn indexes), HASHED_PK_NAME);
+//      return PrimaryKeyMap.of(List.of(numCols));
+//    } else {
+//      return pk;
+//    }
   }
 
   /**

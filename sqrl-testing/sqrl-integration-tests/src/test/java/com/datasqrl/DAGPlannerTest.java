@@ -51,7 +51,6 @@ public class DAGPlannerTest extends AbstractAssetSnapshotTest {
       if (path.getFileName().toString().equals("flink-sql-no-functions.sql")) return true;
       if (path.getFileName().toString().contains("flink")) return false;
       if (path.getFileName().toString().contains("schema") || path.getFileName().toString().contains("views")) return false;
-      if (path.getFileName().toString().contains("vertx")) return false;
       return true;
     };
   }
