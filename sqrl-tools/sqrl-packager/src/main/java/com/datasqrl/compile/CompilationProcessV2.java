@@ -70,9 +70,10 @@ public class CompilationProcessV2 {
     //There can only be a single server plan
     Optional<ServerPhysicalPlan> serverPlan = physicalPlan.getPlans(ServerPhysicalPlan.class).findFirst();
     /*
-    TODO: The following needs updating. Remove the && false condition and:
+    TODO (Etienne): The following needs updating. Remove the && false condition and:
     - infer GraphQL schema from serverPlan
     - walk the GraphQL schema to validate and generate queries/coordinates
+    - make sure we generate the right testplan
     - create the RootGraphQL model and attach to serverPlan
      */
     if (serverPlan.isPresent() && false) {
