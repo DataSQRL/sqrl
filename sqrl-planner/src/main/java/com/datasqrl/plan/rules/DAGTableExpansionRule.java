@@ -57,7 +57,7 @@ public abstract class DAGTableExpansionRule extends RelOptRule {
 
     @Override
     public void onMatch(RelOptRuleCall call) {
-      final var table = call.rel(0);
+      final LogicalTableScan table = call.rel(0);
       PhysicalRelationalTable queryTable = table.getTable().unwrap(PhysicalRelationalTable.class);
       SourceRelationalTableImpl sourceTable = table.getTable()
           .unwrap(SourceRelationalTableImpl.class);

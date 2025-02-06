@@ -30,7 +30,7 @@ public class DAGFunctionExpansionRule extends RelOptRule {
 
   @Override
   public void onMatch(RelOptRuleCall call) {
-    var scan = call.rel(0);
+    TableFunctionScan scan = call.rel(0);
     var tblFct = SqrlRexUtil.getCustomTableFunction(scan)
         .filter(fct -> (fct instanceof QueryTableFunction)) //We want to preserve NestedRelationships and other types of table functions
         .map(QueryTableFunction.class::cast).orElse(null);

@@ -10,6 +10,7 @@ import java.util.function.Function;
 import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.google.common.base.Preconditions;
@@ -34,7 +35,7 @@ public class JacksonDeserializer<T> extends StdDeserializer<T> {
   public T deserialize(JsonParser jsonParser, DeserializationContext deserializationContext)
       throws IOException, JacksonException {
     final var mapper = (ObjectMapper) jsonParser.getCodec();
-    final var node = mapper.readTree(jsonParser);
+    final JsonNode node = mapper.readTree(jsonParser);
 
     Preconditions.checkArgument(node.get(typeKey) != null, "Object has no type [%s]: %s", typeKey,
         node);

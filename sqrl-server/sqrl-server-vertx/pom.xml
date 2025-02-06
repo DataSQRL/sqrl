@@ -9,9 +9,6 @@
   <artifactId>sqrl-server-vertx</artifactId>
 
   <properties>
-    <maven.compiler.source>11</maven.compiler.source>
-    <maven.compiler.target>11</maven.compiler.target>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <vertx.verticle>com.datasqrl.graphql.GraphQLServer</vertx.verticle>
   </properties>
 

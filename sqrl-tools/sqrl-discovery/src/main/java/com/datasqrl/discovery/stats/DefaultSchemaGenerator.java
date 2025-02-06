@@ -15,6 +15,7 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.SpecialName;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.schema.constraint.Cardinality;
+import com.datasqrl.schema.constraint.Constraint;
 import com.datasqrl.schema.constraint.NotNull;
 import com.datasqrl.schema.input.FlexibleFieldSchema;
 import com.datasqrl.schema.input.FlexibleTableSchema;
@@ -113,7 +114,7 @@ public FlexibleTableSchema mergeSchema(@NonNull SourceTableStatistics tableStats
        */
       errors.checkFatal(!isComplete, "Schema marked as complete but found additional field: %s", fieldName);
       FlexibleFieldSchema.FieldType result = null;
-      var constraints =
+      List<Constraint> constraints =
           statsNotNull ? List.of(NotNull.INSTANCE) : Collections.EMPTY_LIST;
       var maxArrayDepth = 0;
       if (statTypes.isEmpty()) { //All field values where null, use String as default type

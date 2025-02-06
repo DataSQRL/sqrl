@@ -11,6 +11,7 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.SpecialName;
 import com.datasqrl.io.schema.flexible.FlexibleTableSchemaHolder;
+import com.datasqrl.schema.constraint.Constraint;
 import com.datasqrl.schema.constraint.NotNull;
 import com.datasqrl.schema.input.FlexibleFieldSchema.Field;
 import com.datasqrl.schema.input.FlexibleFieldSchema.FieldType;
@@ -18,6 +19,8 @@ import com.datasqrl.schema.input.FlexibleTableSchema;
 import com.datasqrl.schema.input.RelationType;
 import com.datasqrl.schema.input.SchemaElementDescription;
 import com.datasqrl.util.CalciteUtil;
+
+import lombok.NonNull;
 
 public class RelDataTypeToFlexibleSchema {
 
@@ -34,7 +37,7 @@ public class RelDataTypeToFlexibleSchema {
   private static RelationType<Field> createFields(List<RelDataTypeField> relFields) {
     List<Field> fields = new ArrayList<>();
     for (RelDataTypeField field: relFields) {
-      var constraints = field.getType().isNullable()?List.of():List.of(NotNull.INSTANCE);
+      List<Constraint> constraints = field.getType().isNullable()?List.of():List.of(NotNull.INSTANCE);
       var nestedType = CalciteUtil.getNestedTableType(field.getType());
       var fieldName = canonicalizer.name(field.getName());
       if (nestedType.isPresent()) {

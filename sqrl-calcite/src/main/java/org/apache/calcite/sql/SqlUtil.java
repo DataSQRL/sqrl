@@ -808,7 +808,7 @@ public abstract class SqlUtil {
         var call = (SqlCall) query;
         assert call.operandCount() > 0
             : "VALUES must have at least one operand";
-        final var row = call.operand(0);
+        final SqlCall row = call.operand(0);
         assert row.operandCount() > i : "VALUES has too few columns";
         return row.operand(i);
 

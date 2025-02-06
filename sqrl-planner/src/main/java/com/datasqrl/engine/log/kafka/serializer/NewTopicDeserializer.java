@@ -12,6 +12,7 @@ import org.apache.kafka.clients.admin.NewTopic;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.google.auto.service.AutoService;
 
@@ -25,7 +26,7 @@ public class NewTopicDeserializer<T extends Serializable> extends StdDeserialize
   @Override
   public NewTopic deserialize(JsonParser jsonParser, DeserializationContext ctxt)
       throws IOException {
-    var node = jsonParser.getCodec().readTree(jsonParser);
+    JsonNode node = jsonParser.getCodec().readTree(jsonParser);
     var name = node.get("name").asText();
     Optional<Integer> numPartitions = Optional.ofNullable(node.get("numPartitions").asInt());
     Optional<Short> replicationFactor = Optional.ofNullable(

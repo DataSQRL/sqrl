@@ -7,15 +7,11 @@
   </parent>
 
   <artifactId>sqrl-jdbc-1.18</artifactId>
-  <version>0.5.11-SNAPSHOT</version>
+  <description>Jdbc sink for flink 1.18</description>
 
   <properties>
-    <maven.compiler.source>11</maven.compiler.source>
-    <maven.compiler.target>11</maven.compiler.target>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <flink.version>1.18.1</flink.version>
   </properties>
-  <description>Jdbc sink for flink 1.18</description>
 
   <url>https://www.datasqrl.com/</url>
   <licenses>

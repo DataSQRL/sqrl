@@ -444,9 +444,9 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
       planner.getSchema().addRelationship(rel);
     } else {
       List<String> path = assignment.getIdentifier().names;
-      var rel = expanded;
+      RelNode rel = expanded;
 
-      var nodeSupplier = result.getParams().isEmpty()
+      Optional<Supplier<RelNode>> nodeSupplier = result.getParams().isEmpty()
           ? Optional.empty()
           : Optional.of(()->rel);
 
@@ -596,10 +596,10 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
   private Pair<List<FunctionParameter>, SqlNode> transformArgs(Optional<SqrlTableMacro> parentTable,
       SqlNode query,
       boolean materializeSelf, SqrlTableFunctionDef sqrlTableFunctionDef) {
-    var parameterList = toParams(sqrlTableFunctionDef.getParameters(),
+    List<FunctionParameter> parameterList = toParams(sqrlTableFunctionDef.getParameters(),
         framework.getQueryPlanner().createSqlValidator());
 
-    var node = SqlNodeVisitor.accept(new SqlRelationVisitor<>() {
+    SqlNode node = SqlNodeVisitor.accept(new SqlRelationVisitor<>() {
 
       @Override
       public SqlNode visitQuerySpecification(SqlSelect node, Object context) {

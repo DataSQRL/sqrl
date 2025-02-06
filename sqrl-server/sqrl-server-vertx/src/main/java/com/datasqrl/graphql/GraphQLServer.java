@@ -231,7 +231,7 @@ public class GraphQLServer extends AbstractVerticle {
     router.get("/health*").handler(healthCheckHandler);
 
     var handler = router.route(this.config.getServletConfig().getGraphQLEndpoint());
-    var authProvider = this.config.getAuthOptions() != null ?
+    Optional<JWTAuth> authProvider = this.config.getAuthOptions() != null ?
         Optional.of(JWTAuth.create(vertx, this.config.getAuthOptions())) : Optional.empty();
     authProvider.ifPresent(auth -> {
       //Required for adding auth on ws handler

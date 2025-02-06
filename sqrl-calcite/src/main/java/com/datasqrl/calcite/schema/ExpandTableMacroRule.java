@@ -31,7 +31,7 @@ public class ExpandTableMacroRule extends RelRule<ExpandTableMacroRule.Config>
 
   @Override
   public void onMatch(RelOptRuleCall relOptRuleCall) {
-    var node = relOptRuleCall.rel(0);
+    LogicalTableFunctionScan node = relOptRuleCall.rel(0);
     var call = (RexCall) node.getCall();
     if (call.getOperator() instanceof SqlUserDefinedTableFunction &&
         ((SqlUserDefinedTableFunction) call.getOperator()).getFunction() instanceof SqrlTableMacro) {

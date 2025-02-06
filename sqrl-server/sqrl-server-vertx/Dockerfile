@@ -1,4 +1,4 @@
-FROM eclipse-temurin:11
+FROM eclipse-temurin:21
 
 COPY target/vertx-server.jar /opt/sqrl/vertx-server.jar
 COPY entrypoint.sh /entrypoint.sh

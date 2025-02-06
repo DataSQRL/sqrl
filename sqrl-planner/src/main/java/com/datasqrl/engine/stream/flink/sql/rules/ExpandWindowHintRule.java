@@ -42,7 +42,7 @@ public class ExpandWindowHintRule extends RelRule<ExpandWindowHintRule.Config>
   @Override
   public void onMatch(RelOptRuleCall relOptRuleCall) {
     var relBuilder = relOptRuleCall.builder();
-    var aggregate = relOptRuleCall.rel(0);
+    LogicalAggregate aggregate = relOptRuleCall.rel(0);
     var input = relOptRuleCall.rel(1);
     Optional<TumbleAggregationHint> tumbleHintOpt = SqrlHint.fromRel(aggregate,
         TumbleAggregationHint.CONSTRUCTOR);

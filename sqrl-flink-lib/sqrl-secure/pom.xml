@@ -6,15 +6,7 @@
     <version>0.5.11-SNAPSHOT</version>
   </parent>
 
-  <groupId>com.datasqrl</groupId>
   <artifactId>sqrl-secure</artifactId>
-  <version>0.5.11-SNAPSHOT</version>
-
-  <properties>
-    <maven.compiler.source>11</maven.compiler.source>
-    <maven.compiler.target>11</maven.compiler.target>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
   <description>Secure functions for flink</description>
 
   <url>https://www.datasqrl.com/</url>

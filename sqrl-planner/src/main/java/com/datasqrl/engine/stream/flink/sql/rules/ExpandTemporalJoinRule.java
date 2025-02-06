@@ -40,7 +40,7 @@ public class ExpandTemporalJoinRule extends RelOptRule {
 
   @Override
   public void onMatch(RelOptRuleCall relOptRuleCall) {
-    var join = relOptRuleCall.rel(0);
+    LogicalJoin join = relOptRuleCall.rel(0);
 
     Optional<TemporalJoinHint> temporalHintOpt = SqrlHint.fromRel(join,
         TemporalJoinHint.CONSTRUCTOR);

@@ -1,5 +1,5 @@
 # Use Gradle 8.6 with JDK 11 as the base image
-FROM gradle:8.6-jdk11 AS build
+FROM gradle:8.6-jdk21 AS build
 
 # Update the package list and install the 'patch' utility
 RUN apt-get update && apt-get install -y maven patch

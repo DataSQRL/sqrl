@@ -137,7 +137,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
     } else if (call.isKeywordPresent(SqlSelectKeyword.DISTINCT) || (context.isNested() && call.getFetch() != null)) {
       //if is nested, get primary key nodes
       var tableFromPath = catalogReader.getTableFromPath(context.currentPath);
-      var pkColumns = context.isNested()?
+      Set<Integer> pkColumns = context.isNested()?
               getPrimaryKeyColumns(tableFromPath.get()):Set.of();
 
       var inner = new SqlSelectBuilder(call)
@@ -309,7 +309,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
     var pathToSql = new PathToSql();
     var sqlNode = pathToSql.build(result.getPathItems());
 
-    var pullupColumns = (context.isNested && result.getPathItems().get(0) instanceof SelfTablePathItem)
+    List<PullupColumn> pullupColumns = (context.isNested && result.getPathItems().get(0) instanceof SelfTablePathItem)
         ? buildPullupColumns((SelfTablePathItem)result.getPathItems().get(0))
         : List.of();
     // Wrap in a select to maintain sql semantics

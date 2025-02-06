@@ -29,7 +29,7 @@ public class ExpandNestedTableFunctionRule extends RelRule<Config>
    */
   @Override
   public void onMatch(RelOptRuleCall relOptRuleCall) {
-    var scan = relOptRuleCall.rel(0);
+    TableFunctionScan scan = relOptRuleCall.rel(0);
 
     var call = (RexCall)scan.getCall();
     if (!(call.getOperator() instanceof SqlUserDefinedTableFunction)) {
