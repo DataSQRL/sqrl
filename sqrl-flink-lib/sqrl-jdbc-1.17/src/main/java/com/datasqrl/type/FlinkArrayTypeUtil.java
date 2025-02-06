@@ -6,15 +6,15 @@ import org.apache.flink.table.types.logical.LogicalType;
 public class FlinkArrayTypeUtil {
 
   public static LogicalType getBaseFlinkArrayType(LogicalType type) {
-    if (type instanceof ArrayType) {
-      return getBaseFlinkArrayType(((ArrayType) type).getElementType());
+    if (type instanceof ArrayType arrayType) {
+      return getBaseFlinkArrayType(arrayType.getElementType());
     }
     return type;
   }
 
   public static boolean isScalarArray(LogicalType type) {
-    if (type instanceof ArrayType) {
-      LogicalType elementType = ((ArrayType) type).getElementType();
+    if (type instanceof ArrayType arrayType) {
+      LogicalType elementType = arrayType.getElementType();
       return isScalar(elementType) || isScalarArray(elementType);
     }
     return false;

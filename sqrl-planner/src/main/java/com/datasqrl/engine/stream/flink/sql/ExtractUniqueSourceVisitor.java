@@ -17,8 +17,7 @@ public class ExtractUniqueSourceVisitor extends RelVisitor {
 
   @Override
   public void visit(RelNode node, int ordinal, RelNode parent) {
-    if (node instanceof TableScan) {
-      TableScan tableScan = (TableScan) node;
+    if (node instanceof TableScan tableScan) {
       ImportedRelationalTable table = tableScan.getTable().unwrap(ImportedRelationalTable.class);
       tableMap.put(table.getNameId(), table);
     }

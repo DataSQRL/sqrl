@@ -21,7 +21,7 @@ public class ToJsonSqlTranslation extends PostgresSqlTranslation {
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    SqlStdOperatorTable.CAST.createCall(SqlParserPos.ZERO, call.getOperandList().get(0),
+    SqlStdOperatorTable.CAST.createCall(SqlParserPos.ZERO, call.getOperandList().getFirst(),
         SqlLiteral.createSymbol(CastToJsonb.JSONB, SqlParserPos.ZERO))
         .unparse(writer, leftPrec, rightPrec);
   }

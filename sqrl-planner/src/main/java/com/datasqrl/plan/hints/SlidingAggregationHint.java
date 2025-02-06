@@ -45,7 +45,7 @@ public class SlidingAggregationHint implements SqrlHint {
     public SlidingAggregationHint fromHint(RelHint hint) {
       List<String> options = hint.listOptions;
       Preconditions.checkArgument(hint.listOptions.size() == 3, "Invalid hint: %s", hint);
-      return new SlidingAggregationHint(Integer.valueOf(options.get(0)),
+      return new SlidingAggregationHint(Integer.valueOf(options.getFirst()),
           Long.valueOf(options.get(1)), Long.valueOf(options.get(2)));
     }
   }

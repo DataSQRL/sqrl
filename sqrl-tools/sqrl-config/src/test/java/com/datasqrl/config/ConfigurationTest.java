@@ -10,7 +10,6 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import java.util.List;
 import java.util.Map;
@@ -25,7 +24,7 @@ import org.junit.jupiter.api.Test;
 
 public class ConfigurationTest {
 
-  public static final Path CONFIG_DIR = Paths.get("src","test","resources","config");
+  public static final Path CONFIG_DIR = Path.of("src","test","resources","config");
   public static final Path CONFIG_FILE1 = CONFIG_DIR.resolve("config1.json");
 
   private ErrorCollector errors = ErrorCollector.root();

@@ -63,7 +63,7 @@ public class GraphqlQueryGenerator extends SchemaWalker {
       FieldDefinition field, NamePath path, Optional<RelDataType> parentRel,
       List<SqrlTableMacro> functions) {
 
-    SqrlTableMacro macro = schema.getTableFunctions(path).get(0);
+    SqrlTableMacro macro = schema.getTableFunctions(path).getFirst();
 
     List<List<ArgCombination>> argCombinations = generateCombinations(
         field.getInputValueDefinitions());

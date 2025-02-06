@@ -31,6 +31,7 @@ import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.JsonGenerator
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ObjectNode;
 
+import java.io.Serial;
 import java.util.Objects;
 
 /**
@@ -46,6 +47,7 @@ import java.util.Objects;
  */
 @Internal
 public class SqrlJsonRowDataSerializationSchema implements SerializationSchema<RowData> {
+  @Serial
   private static final long serialVersionUID = 1L;
 
   /** RowType to generate the runtime converter. */
@@ -107,7 +109,7 @@ public class SqrlJsonRowDataSerializationSchema implements SerializationSchema<R
       runtimeConverter.convert(mapper, node, row);
       return mapper.writeValueAsBytes(node);
     } catch (Throwable t) {
-      throw new RuntimeException(String.format("Could not serialize row '%s'.", row), t);
+      throw new RuntimeException("Could not serialize row '%s'.".formatted(row), t);
     }
   }
 

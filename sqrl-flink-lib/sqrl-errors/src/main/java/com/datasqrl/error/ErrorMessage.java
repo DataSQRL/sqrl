@@ -74,7 +74,7 @@ public interface ErrorMessage {
     if (args == null || args.length == 0) {
       return msgTemplate;
     }
-    return String.format(msgTemplate, args);
+    return msgTemplate.formatted(args);
   }
 
 }

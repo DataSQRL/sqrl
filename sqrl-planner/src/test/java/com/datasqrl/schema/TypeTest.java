@@ -30,8 +30,8 @@ public class TypeTest {
     for (Map.Entry<Pair<BasicType, BasicType>, Pair<BasicType, Integer>> entry : BasicTypeManager.TYPE_COMBINATION_MATRIX.entrySet()) {
       Pair<BasicType, BasicType> types = entry.getKey();
       Pair<BasicType, Integer> result = entry.getValue();
-      snapshot.addContent(String.format("%s [%d]", result.getKey(), result.getValue()),
-          String.format("%s + %s", types.getKey(), types.getValue()));
+      snapshot.addContent("%s [%d]".formatted(result.getKey(), result.getValue()),
+          "%s + %s".formatted(types.getKey(), types.getValue()));
     }
     snapshot.createOrValidate();
   }

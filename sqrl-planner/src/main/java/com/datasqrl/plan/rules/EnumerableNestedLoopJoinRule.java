@@ -55,7 +55,7 @@ public class EnumerableNestedLoopJoinRule extends ConverterRule {
       }
       newInputs.add(input);
     }
-    final RelNode left = newInputs.get(0);
+    final RelNode left = newInputs.getFirst();
     final RelNode right = newInputs.get(1);
 
     return EnumerableNestedLoopJoin.create(

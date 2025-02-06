@@ -36,7 +36,7 @@ public interface OptimizerHint {
           errors.checkFatal(options != null && options.size() == 1,
               "Expected a single option for [%s] hint but found: %s", PipelineStageHint.HINT_NAME,
               options);
-          optHints.add(new PipelineStageHint(options.get(0).trim()));
+          optHints.add(new PipelineStageHint(options.getFirst().trim()));
         } else if (hintname.equalsIgnoreCase(IndexHint.INDEX_HINT) || hintname.equalsIgnoreCase(
             IndexHint.PARTITION_KEY_HINT)) {
           optHints.add(IndexHint.of(hintname, hint.getOptionList(), errors));

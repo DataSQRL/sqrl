@@ -23,8 +23,8 @@ public class JsonSerializer implements Serializer<Map> {
       encodingValue = configs.get("serializer.encoding");
     }
 
-    if (encodingValue instanceof String) {
-      this.encoding = (String)encodingValue;
+    if (encodingValue instanceof String string) {
+      this.encoding = string;
     }
 
   }

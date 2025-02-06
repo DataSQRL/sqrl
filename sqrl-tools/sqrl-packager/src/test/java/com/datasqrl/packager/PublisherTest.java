@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -35,7 +34,7 @@ class PublisherTest {
   @SneakyThrows
   void testPublishSuccess_validPackageJson() {
     // Arrange
-    Path validPackagePath = Paths.get(getClass().getClassLoader().getResource("publisher/valid").toURI());
+    Path validPackagePath = Path.of(getClass().getClassLoader().getResource("publisher/valid").toURI());
 
     when(publishRepository.publish(any(Path.class), any())).thenReturn(true);
     when(errorCollector.withConfig(any(Path.class))).thenReturn(errorCollector);
@@ -53,7 +52,7 @@ class PublisherTest {
   @SneakyThrows
   void testPublishFailure_invalidPackageJson() {
     // Arrange
-    Path validPackagePath = Paths.get(getClass().getClassLoader().getResource("publisher/invalid").toURI());
+    Path validPackagePath = Path.of(getClass().getClassLoader().getResource("publisher/invalid").toURI());
 
     when(errorCollector.withConfig(any(Path.class))).thenReturn(errorCollector);
     when(errorCollector.abortOnFatal(any(Boolean.class))).thenReturn(errorCollector);

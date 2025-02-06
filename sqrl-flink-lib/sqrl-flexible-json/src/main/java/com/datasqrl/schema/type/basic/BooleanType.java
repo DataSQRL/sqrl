@@ -45,11 +45,11 @@ public class BooleanType extends AbstractBasicType<Boolean> {
 
     @Override
     public Boolean convert(Object o) {
-      if (o instanceof Boolean) {
-        return (Boolean) o;
+      if (o instanceof Boolean boolean1) {
+        return boolean1;
       }
-      if (o instanceof Number) {
-        return ((Number) o).longValue() > 0;
+      if (o instanceof Number number) {
+        return number.longValue() > 0;
       }
       throw new IllegalArgumentException("Invalid type to convert: " + o.getClass());
     }

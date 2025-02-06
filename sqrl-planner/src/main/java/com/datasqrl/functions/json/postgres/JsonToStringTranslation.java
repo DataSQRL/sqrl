@@ -23,7 +23,7 @@ public class JsonToStringTranslation extends PostgresSqlTranslation {
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
     lightweightBiOp("#>>").createCall(SqlParserPos.ZERO,
-            List.of(call.getOperandList().get(0), SqlLiteral.createCharString("{}", SqlParserPos.ZERO)))
+            List.of(call.getOperandList().getFirst(), SqlLiteral.createCharString("{}", SqlParserPos.ZERO)))
         .unparse(writer, leftPrec, rightPrec);
   }
 }

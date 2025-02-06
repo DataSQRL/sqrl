@@ -46,7 +46,7 @@ public class TimestampHint implements SqrlHint {
     public TimestampHint fromHint(RelHint hint) {
       List<String> options = hint.listOptions;
       Preconditions.checkArgument(options.size() == 1, "Invalid hint: %s", hint);
-      int timestampIdx = Integer.valueOf(options.get(0));
+      int timestampIdx = Integer.valueOf(options.getFirst());
       return new TimestampHint(timestampIdx);
     }
   }

@@ -55,9 +55,9 @@ public abstract class SimpleBasicType<J> extends AbstractBasicType<J> {
     }
 
     public Optional<J> parseDetected(Object original, ErrorCollector errors) {
-      if (original instanceof String) {
+      if (original instanceof String string) {
         try {
-          J result = stringParser.apply((String) original);
+          J result = stringParser.apply(string);
           return Optional.of(result);
         } catch (IllegalArgumentException e) {
           errors.fatal("Could not parse value [%s] to data type [%s]", original, clazz);

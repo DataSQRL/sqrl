@@ -167,8 +167,8 @@ public class DataTypeTest {
       assertEquals(SqlTypeName.ROW, type.getSqlTypeName());
 
       assertEquals(2, type.getFieldCount());
-      assertEquals("name", type.getFieldNames().get(0));
-      assertEquals(SqlTypeName.VARCHAR, type.getFieldList().get(0).getType().getSqlTypeName());
+      assertEquals("name", type.getFieldNames().getFirst());
+      assertEquals(SqlTypeName.VARCHAR, type.getFieldList().getFirst().getType().getSqlTypeName());
       assertEquals("age", type.getFieldNames().get(1));
       assertEquals(SqlTypeName.INTEGER, type.getFieldList().get(1).getType().getSqlTypeName());
       assertTrue(type.isNullable());
@@ -234,8 +234,8 @@ public class DataTypeTest {
       assertFalse(type.isNullable());
 
       assertEquals(2, type.getFieldCount());
-      assertEquals("name", type.getFieldNames().get(0));
-      assertEquals(SqlTypeName.VARCHAR, type.getFieldList().get(0).getType().getSqlTypeName());
+      assertEquals("name", type.getFieldNames().getFirst());
+      assertEquals(SqlTypeName.VARCHAR, type.getFieldList().getFirst().getType().getSqlTypeName());
       assertEquals("age", type.getFieldNames().get(1));
       assertEquals(SqlTypeName.INTEGER, type.getFieldList().get(1).getType().getSqlTypeName());
     }

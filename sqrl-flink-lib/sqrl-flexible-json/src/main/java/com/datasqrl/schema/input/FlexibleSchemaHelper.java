@@ -26,7 +26,7 @@ public class FlexibleSchemaHelper {
         name = Name.system(
             "_value"); //TODO: Need to check if this clashes with other names in RelationType
       } else {
-        throw new IllegalArgumentException(String.format("Unrecognized name: %s", name));
+        throw new IllegalArgumentException("Unrecognized name: %s".formatted(name));
       }
     }
 

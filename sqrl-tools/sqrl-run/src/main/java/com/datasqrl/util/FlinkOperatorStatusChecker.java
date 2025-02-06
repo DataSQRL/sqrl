@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
@@ -121,7 +122,7 @@ public class FlinkOperatorStatusChecker {
   }
 
   public String getResponseFromUrl(String urlString) throws Exception {
-    URL url = new URL(urlString);
+    URL url = URI.create(urlString).toURL();
     HttpURLConnection con = (HttpURLConnection) url.openConnection();
     con.setRequestMethod("GET");
     int status = con.getResponseCode();

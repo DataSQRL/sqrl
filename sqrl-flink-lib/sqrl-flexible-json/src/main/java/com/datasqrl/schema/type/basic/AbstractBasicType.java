@@ -17,7 +17,7 @@ public abstract class AbstractBasicType<J> implements BasicType<J> {
 
   @Override
   public String getName() {
-    return getNames().get(0);
+    return getNames().getFirst();
   }
 
   @Override

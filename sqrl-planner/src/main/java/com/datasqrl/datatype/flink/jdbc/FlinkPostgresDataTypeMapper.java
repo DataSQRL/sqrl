@@ -81,8 +81,7 @@ public class FlinkPostgresDataTypeMapper extends FlinkDataTypeMapper {
     }
 
     // Explicit downcast for json
-    if (type instanceof RawRelDataType) {
-      RawRelDataType rawRelDataType = (RawRelDataType) type;
+    if (type instanceof RawRelDataType rawRelDataType) {
       if (rawRelDataType.getRawType().getDefaultConversion() == FlinkJsonType.class) {
         return Optional.of(
             new CastFunction(JsonToString.class.getName(),

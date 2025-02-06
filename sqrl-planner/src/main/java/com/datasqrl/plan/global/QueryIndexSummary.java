@@ -62,8 +62,7 @@ public class QueryIndexSummary {
     Set<Integer> inequalityColumns = new HashSet<>();
     Set<IndexableFunctionCall> functionCalls = new HashSet<>();
     for (RexNode conj : conjunctions) {
-      if (conj instanceof RexCall) {
-        RexCall call = (RexCall) conj;
+      if (conj instanceof RexCall call) {
         IndexableFinder idxFinder = new IndexableFinder();
         call.accept(idxFinder);
         if (idxFinder.isIndexable && (idxFinder.idxCall!=null ^ idxFinder.columnRef!=null)) {
@@ -85,8 +84,7 @@ public class QueryIndexSummary {
   }
 
   public static Optional<QueryIndexSummary> ofSort(@NonNull PhysicalRelationalTable table, RexNode node) {
-    if (node instanceof RexCall) {
-      RexCall call = (RexCall) node;
+    if (node instanceof RexCall call) {
       IndexableFinder idxFinder = new IndexableFinder();
       call.accept(idxFinder);
       if (idxFinder.isIndexable && idxFinder.idxCall!=null) {
@@ -231,8 +229,8 @@ public class QueryIndexSummary {
       OperandSelector operandSelector = idxFunction.getOperandSelector();
       for (int i = 0; i < operands.size(); i++) {
         RexNode node = operands.get(i);
-        if (operandSelector.isSelectableColumn(i) && (node instanceof RexInputRef)) {
-          columnIndexes.add(((RexInputRef)node).getIndex());
+        if (operandSelector.isSelectableColumn(i) && (node instanceof RexInputRef ref)) {
+          columnIndexes.add(ref.getIndex());
         } else {
           remainingOperands.add(node);
         }

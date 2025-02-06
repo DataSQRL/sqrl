@@ -27,8 +27,8 @@ public class IndexHint implements OptimizerHint {
       columnNames = arguments;
     } else if (hintName.equalsIgnoreCase(INDEX_HINT)) {
       errors.checkFatal(arguments.size() > 1, "Index hint requires at least two arguments: the name of the index type and at least one column.");
-      Optional<IndexType> optIndex = IndexType.fromName(arguments.get(0));
-      errors.checkFatal(optIndex.isPresent(), "Unknown index type: %s", arguments.get(0));
+      Optional<IndexType> optIndex = IndexType.fromName(arguments.getFirst());
+      errors.checkFatal(optIndex.isPresent(), "Unknown index type: %s", arguments.getFirst());
       indexType = optIndex.get();
       columnNames = arguments.subList(1, arguments.size());
     } else {

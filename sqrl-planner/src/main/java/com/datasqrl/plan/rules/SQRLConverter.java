@@ -74,8 +74,8 @@ public class SQRLConverter {
       physicalTable = (PhysicalRelationalTable)table;
       builder = relBuilder.scan(((ProxyImportRelationalTable)table).getBaseTable().getNameId());
     } else { //either QueryRelationalTable or QueryTableFunction
-      QueryRelationalTable queryTable = (table instanceof QueryTableFunction)
-          ?((QueryTableFunction)table).getQueryTable():(QueryRelationalTable) table;
+      QueryRelationalTable queryTable = (table instanceof QueryTableFunction qtf)
+          ?qtf.getQueryTable():(QueryRelationalTable) table;
       AnnotatedLP alp = convert(queryTable.getOriginalRelnode(), config, errors);
       builder = relBuilder.push(alp.getRelNode());
       physicalTable = queryTable;

@@ -39,7 +39,7 @@ public class TimeTumbleFunctionCall {
     //Validate time bucketing function: First argument is timestamp, all others must be constants
     Preconditions.checkArgument(call.getOperands().size() > 0,
         "Time-bucketing function must have at least one argument");
-    RexNode timestamp = call.getOperands().get(0);
+    RexNode timestamp = call.getOperands().getFirst();
     Preconditions.checkArgument(CalciteUtil.isTimestamp(timestamp.getType()),
         "Expected timestamp argument");
     Preconditions.checkArgument(timestamp instanceof RexInputRef);

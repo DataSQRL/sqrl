@@ -51,9 +51,9 @@ public abstract class StageAnalysis {
     @Override
     public String getMessage() {
       if (supported) {
-        return String.format("Stage [%s] supported at cost: %s", getName(), cost);
+        return "Stage [%s] supported at cost: %s".formatted(getName(), cost);
       } else {
-        return String.format("Stage [%s] has been eliminated  due to high cost: %s",getName(), cost);
+        return "Stage [%s] has been eliminated  due to high cost: %s".formatted(getName(), cost);
       }
     }
 
@@ -83,7 +83,7 @@ public abstract class StageAnalysis {
 
     @Override
     public String getMessage() {
-      return String.format("Stage [%s] does not support capabilities: %s", getName(), capabilities);
+      return "Stage [%s] does not support capabilities: %s".formatted(getName(), capabilities);
     }
   }
 
@@ -102,10 +102,10 @@ public abstract class StageAnalysis {
 
     @Override
     public String getMessage() {
-      return String.format("%s [%s] does not support stage [%s] or any %s stages",
-          upstream?"Upstream input":"Downstream consumer",
+      return "%s [%s] does not support stage [%s] or any %s stages".formatted(
+          upstream ? "Upstream input" : "Downstream consumer",
           tableName, getName(),
-          upstream?"prior":"subsequent");
+          upstream ? "prior" : "subsequent");
     }
   }
 

@@ -41,7 +41,7 @@ public class PublishCommand extends AbstractCommand {
     Publisher publisher = new Publisher(errors);
 
     errors.checkFatal(packageconfigs.size() == 1 && Files.isSameFile(defaultPkgConfig,
-        packageconfigs.get(0)), "Expecting a single package.json file for the package to be published");
+        packageconfigs.getFirst()), "Expecting a single package.json file for the package to be published");
 
     PackageConfiguration pkgConfig = publisher.publish(packageRoot, localRepo);
     if (!toLocal) {

@@ -34,11 +34,11 @@ public class SqrlRelMdRowCount extends RelMdRowCount
   }
 
   public Double getRowCount(RelNode rel, RelMetadataQuery mq) {
-    if (rel instanceof Join) {
-      return getRowCount((Join) rel, mq);
+    if (rel instanceof Join join) {
+      return getRowCount(join, mq);
     }
-    if (rel instanceof Filter) {
-      return getRowCount((Filter) rel, mq);
+    if (rel instanceof Filter filter) {
+      return getRowCount(filter, mq);
     }
     return super.getRowCount(rel, mq);
   }

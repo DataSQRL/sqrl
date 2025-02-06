@@ -32,7 +32,7 @@ public class ErrorCatcher implements Serializable {
   }
 
   public CollectedException handle(Throwable e) {
-    if (e instanceof CollectedException) return (CollectedException) e; //has already been handled
+    if (e instanceof CollectedException exception) return exception; //has already been handled
     Optional<ErrorHandler> handler = Optional.ofNullable(handlers.get(e.getClass()));
     ErrorMessage msg;
     if (handler.isPresent()) {

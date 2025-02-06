@@ -150,7 +150,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
 
     Path path = rootDir.resolve(GRAPHQL_NORMALIZED_FILE_NAME);
     Files.deleteIfExists(path);
-    StringSchema stringSchema = (StringSchema)plans.get(0).getModel().getSchema();
+    StringSchema stringSchema = (StringSchema)plans.getFirst().getModel().getSchema();
     Files.writeString(path, stringSchema.getSchema(), StandardOpenOption.CREATE);
   }
 

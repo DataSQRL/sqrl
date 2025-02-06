@@ -44,7 +44,7 @@ public class TemporalJoinHint implements SqrlHint {
     public TemporalJoinHint fromHint(RelHint hint) {
       List<String> options = hint.listOptions;
       Preconditions.checkArgument(options.size() == 1, "Invalid hint: %s", hint);
-      int streamTimeIdx = Integer.valueOf(options.get(0));
+      int streamTimeIdx = Integer.valueOf(options.getFirst());
       return new TemporalJoinHint(streamTimeIdx);
     }
   }

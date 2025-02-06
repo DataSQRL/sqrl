@@ -65,8 +65,7 @@ public class FlexibleJsonFlinkFormatTypeMapper extends FlinkDataTypeMapper {
       case MAP:
         return true;
       case OTHER:
-        if (type instanceof RawRelDataType) {
-          RawRelDataType rawRelDataType = (RawRelDataType) type;
+        if (type instanceof RawRelDataType rawRelDataType) {
           Class clazz = rawRelDataType.getRawType().getDefaultConversion();
           if (clazz == FlinkJsonType.class) {
             return true;

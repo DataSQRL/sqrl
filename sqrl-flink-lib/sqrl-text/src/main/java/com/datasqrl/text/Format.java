@@ -16,7 +16,7 @@ public class Format extends ScalarFunction {
     if (text == null) {
       return null;
     }
-    return String.format(text, (Object[]) arguments);
+    return text.formatted((Object[]) arguments);
   }
 
   @Override

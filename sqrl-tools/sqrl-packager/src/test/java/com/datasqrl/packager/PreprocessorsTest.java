@@ -15,7 +15,6 @@ import com.datasqrl.packager.preprocess.Preprocessor;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -42,8 +41,8 @@ public class PreprocessorsTest {
   private Preprocessor secondPreprocessor;
 
   private Preprocessors.PreprocessorsContext context;
-  private Path rootDir = Paths.get("/test");
-  private Path buildDir = Paths.get("/build");
+  private Path rootDir = Path.of("/test");
+  private Path buildDir = Path.of("/build");
 
   @SneakyThrows
   @BeforeEach
@@ -64,7 +63,7 @@ public class PreprocessorsTest {
 
   @Test
   public void testMultiplePreprocessorsForSingleFile() {
-    Path fileToProcess = Paths.get("/test/src/File.java");
+    Path fileToProcess = Path.of("/test/src/File.java");
     when(firstPreprocessor.getPattern()).thenReturn(Pattern.compile(".*\\.java"));
     when(secondPreprocessor.getPattern()).thenReturn(Pattern.compile("File.*"));
 
@@ -77,9 +76,9 @@ public class PreprocessorsTest {
   @SneakyThrows
   @Test
   public void testExcludedDirectories() {
-    Path includedFile = Paths.get("/test/src/File.java");
-    Path excludedDirBuild = Paths.get("/test/build");
-    Path excludedDirFile = Paths.get("/test/build/File.java");
+    Path includedFile = Path.of("/test/src/File.java");
+    Path excludedDirBuild = Path.of("/test/build");
+    Path excludedDirFile = Path.of("/test/build/File.java");
 
     when(firstPreprocessor.getPattern()).thenReturn(Pattern.compile(".*\\.java"));
     when(secondPreprocessor.getPattern()).thenReturn(Pattern.compile("File.*"));

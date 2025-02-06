@@ -58,7 +58,7 @@ public class JoinCostHint implements SqrlHint {
     public JoinCostHint fromHint(RelHint hint) {
       List<String> opts = hint.listOptions;
       Preconditions.checkArgument(opts.size() == 4, "Invalid hint: %s", hint);
-      return new JoinCostHint(TableType.valueOf(opts.get(0)), TableType.valueOf(opts.get(1)),
+      return new JoinCostHint(TableType.valueOf(opts.getFirst()), TableType.valueOf(opts.get(1)),
           Integer.valueOf(hint.listOptions.get(2)), Side.valueOf(hint.listOptions.get(3)));
     }
   }

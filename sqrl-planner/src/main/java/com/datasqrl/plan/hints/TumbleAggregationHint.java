@@ -63,7 +63,7 @@ public class TumbleAggregationHint implements SqrlHint {
     public TumbleAggregationHint fromHint(RelHint hint) {
       List<String> options = hint.listOptions;
       Preconditions.checkArgument(options.size() == 5, "Invalid hint: %s", hint);
-      return new TumbleAggregationHint(Integer.valueOf(options.get(0)),
+      return new TumbleAggregationHint(Integer.valueOf(options.getFirst()),
           Type.valueOf(options.get(1)),
           Integer.valueOf(options.get(2)), Long.valueOf(options.get(3)), Long.valueOf(options.get(4)));
     }

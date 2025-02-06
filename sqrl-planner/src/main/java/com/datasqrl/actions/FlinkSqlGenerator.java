@@ -69,8 +69,7 @@ public class FlinkSqlGenerator {
     Map<String, String> config = new LinkedHashMap<>();
     List<String> plan = new ArrayList<>();
     for (SqlNode sqlNode : flinkSql) {
-      if (sqlNode instanceof SqlSet) {
-        SqlSet set = (SqlSet) sqlNode;
+      if (sqlNode instanceof SqlSet set) {
         config.put(set.getKeyString(), set.getValueString());
       } else {
         String sql = sqlNodeToString.convert(() -> sqlNode).getSql() + ";";
@@ -130,7 +129,7 @@ public class FlinkSqlGenerator {
 
     TableEnvironmentImpl tEnv1 = (TableEnvironmentImpl) tEnv;
 
-    StatementSetOperation parse = (StatementSetOperation)tEnv1.getParser().parse(insert).get(0);
+    StatementSetOperation parse = (StatementSetOperation)tEnv1.getParser().parse(insert).getFirst();
 
     return tEnv1.compilePlan(parse.getOperations());
   }

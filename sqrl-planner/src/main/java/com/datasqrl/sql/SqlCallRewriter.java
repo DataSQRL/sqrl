@@ -28,7 +28,7 @@ public class SqlCallRewriter extends SqlShuttle {
       fncModules.add(names);
 
       SqlIdentifier component = nameAsId.getComponent(nameAsId.names.size() - 1);
-      nameAsId.setNames(List.of(component.names.get(0)), List.of(component.getComponentParserPosition(0)));
+      nameAsId.setNames(List.of(component.names.getFirst()), List.of(component.getComponentParserPosition(0)));
     }
 
     return super.visit(call);

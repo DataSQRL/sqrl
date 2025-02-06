@@ -34,16 +34,15 @@ public class ToJson extends ScalarFunction {
     if (json == null) {
       return null;
     }
-    if (json instanceof FlinkJsonType) {
-      return (FlinkJsonType)json;
+    if (json instanceof FlinkJsonType type) {
+      return type;
     }
 
     return new FlinkJsonType(unboxFlinkToJsonNode(json));
   }
 
   JsonNode unboxFlinkToJsonNode(Object json) {
-    if (json instanceof Row) {
-      Row row = (Row) json;
+    if (json instanceof Row row) {
       ObjectNode objectNode = mapper.createObjectNode();
       String[] fieldNames = row.getFieldNames(true).toArray(new String[0]);  // Get field names in an array
       for (String fieldName : fieldNames) {
@@ -51,8 +50,7 @@ public class ToJson extends ScalarFunction {
         objectNode.set(fieldName, unboxFlinkToJsonNode(field));  // Recursively unbox each field
       }
       return objectNode;
-    } else if (json instanceof Row[]) {
-      Row[] rows = (Row[]) json;
+    } else if (json instanceof Row[] rows) {
       ArrayNode arrayNode = mapper.createArrayNode();
       for (Row row : rows) {
         if (row == null) {

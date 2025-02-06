@@ -62,7 +62,7 @@ public class AvroToRelDataTypeConverter {
               nonNullTypes.size(), path);
         }
 
-        Schema innerSchema = nonNullTypes.get(0);
+        Schema innerSchema = nonNullTypes.getFirst();
         validateSchema(innerSchema, path);
         break;
       case RECORD:

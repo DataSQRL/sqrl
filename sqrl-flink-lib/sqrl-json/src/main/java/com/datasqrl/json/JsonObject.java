@@ -36,8 +36,7 @@ public class JsonObject extends ScalarFunction {
       }
       String key = (String) objects[i];
       Object value = objects[i + 1];
-      if (value instanceof FlinkJsonType) {
-        FlinkJsonType type = (FlinkJsonType) value;
+      if (value instanceof FlinkJsonType type) {
         objectNode.put(key, type.json);
       } else {
         objectNode.putPOJO(key, value);

@@ -76,7 +76,7 @@ public class SqlNodeFactory implements AbstractSqlNodeFactory {
     if (original != null) {
       nodes.addAll(original.getList());
     }
-    return new SqlNodeList(nodes, toPrepend.get(0).getParserPosition());
+    return new SqlNodeList(nodes, toPrepend.getFirst().getParserPosition());
   }
 
   @Override

@@ -35,8 +35,8 @@ public class FlinkStreamPhysicalPlan implements StreamPhysicalPlan {
   private Set<String> extractConnectors(List<SqlNode> sqlNodes) {
     Set<String> connectors = new HashSet<>();
     for (SqlNode node : sqlNodes) {
-      if (node instanceof SqlCreateTable) {
-        for (SqlNode option : ((SqlCreateTable)node).getPropertyList().getList()){
+      if (node instanceof SqlCreateTable table) {
+        for (SqlNode option : table.getPropertyList().getList()){
           SqlTableOption sqlTableOption = (SqlTableOption)option;
           if (sqlTableOption.getKeyString().equalsIgnoreCase("connector")) {
             connectors.add( sqlTableOption.getValueString());
@@ -50,8 +50,8 @@ public class FlinkStreamPhysicalPlan implements StreamPhysicalPlan {
   private Set<String> extractFormats(List<SqlNode> sqlNodes) {
     Set<String> formats = new HashSet<>();
     for (SqlNode node : sqlNodes) {
-      if (node instanceof SqlCreateTable) {
-        for (SqlNode option : ((SqlCreateTable)node).getPropertyList().getList()){
+      if (node instanceof SqlCreateTable table) {
+        for (SqlNode option : table.getPropertyList().getList()){
           SqlTableOption sqlTableOption = (SqlTableOption)option;
           switch (sqlTableOption.getKeyString()) {
             case "format":

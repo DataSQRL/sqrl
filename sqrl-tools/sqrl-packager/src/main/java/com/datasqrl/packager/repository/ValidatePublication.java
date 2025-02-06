@@ -45,7 +45,7 @@ public class ValidatePublication implements PublishRepository {
     Preconditions.checkArgument(outputDir==null || Files.isDirectory(outputDir), "Output directory does not exist: " + outputDir);
     if (outputDir != null) {
       Path destFile = outputDir.resolve(file);
-      Path pkgFile = outputDir.resolve(String.format(PUBLICATION_FILENAME_FORMAT, pubTime.toEpochMilli(), uniqueId));
+      Path pkgFile = outputDir.resolve(PUBLICATION_FILENAME_FORMAT.formatted(pubTime.toEpochMilli(), uniqueId));
       try {
         Files.copy(zipFile, destFile);
         Deserializer.INSTANCE.writeJson(pkgFile, publication);

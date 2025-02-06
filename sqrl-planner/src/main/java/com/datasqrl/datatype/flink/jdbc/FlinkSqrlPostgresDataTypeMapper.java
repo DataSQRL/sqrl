@@ -67,8 +67,7 @@ public class FlinkSqrlPostgresDataTypeMapper extends FlinkDataTypeMapper {
       case VARBINARY:
         return true;
       case OTHER:
-        if (type instanceof RawRelDataType) {
-          RawRelDataType rawRelDataType = (RawRelDataType) type;
+        if (type instanceof RawRelDataType rawRelDataType) {
           Class clazz = rawRelDataType.getRawType().getDefaultConversion();
           if (clazz == FlinkJsonType.class || clazz == FlinkVectorType.class) {
             return true;
