@@ -42,7 +42,7 @@
         },
         "iceberg": {
           "connector": "iceberg",
-          "catalog-table": "${sqrl:table}"
+          "catalog-table": "${sqrl:table-name}"
         },
         "postgres_log-source": {
           "connector": "postgres-cdc",
@@ -52,7 +52,7 @@
           "password": "${JDBC_PASSWORD}",
           "database-name": "datasqrl",
           "schema-name": "public",
-          "table-name": "${sqrl:table}",
+          "table-name": "${sqrl:table-name}",
           "slot.name": "flink_slot",
           "decoding.plugin.name": "pgoutput",
           "debezium.slot.drop_on_stop": "false"
@@ -63,7 +63,11 @@
           "driver": "org.postgresql.Driver",
           "username": "${JDBC_USERNAME}",
           "url": "jdbc:postgresql://${JDBC_URL}",
-          "table-name": "${sqrl:table}"
+          "table-name": "${sqrl:table-name}"
+        },
+        "print": {
+          "connector": "print",
+          "print-identifier": "${sqrl:original-table-name}"
         }
       }
     },

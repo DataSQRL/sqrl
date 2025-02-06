@@ -25,26 +25,21 @@ import org.apache.calcite.rel.type.RelDataType;
 
 public class PrintEngine implements ExportEngine {
 
-  private final Optional<ConnectorConf> connectorConf;
+  private final ConnectorConf connectorConf;
 
   @Inject
   public PrintEngine(ConnectorFactoryFactory connectorFactory) {
-    this.connectorConf = connectorFactory.getOptionalConfig(PrintEngineFactory.NAME);
+    this.connectorConf = connectorFactory.getConfig(PrintEngineFactory.NAME);
   }
 
   @Override
   public EngineCreateTable createTable(ExecutionStage stage, String originalTableName,
       FlinkTableBuilder tableBuilder, RelDataType relDataType) {
-    if (connectorConf.isPresent()) {
-      tableBuilder.setConnectorOptions(connectorConf.get().toMapWithSubstitution(
-          Context.builder()
-              .tableName(tableBuilder.getTableName())
-              .origTableName(originalTableName)
-              .build()));
-    } else {
-      tableBuilder.setConnectorOptions(Map.of("connector", "print",
-          "print-identifier", originalTableName));
-    }
+    tableBuilder.setConnectorOptions(connectorConf.toMapWithSubstitution(
+        Context.builder()
+            .tableName(tableBuilder.getTableName())
+            .origTableName(originalTableName)
+            .build()));
     return EngineCreateTable.NONE;
   }
 

@@ -4,6 +4,7 @@ import com.datasqrl.config.SqrlConfig.Value;
 import com.datasqrl.error.ErrorCollector;
 import com.google.common.base.Preconditions;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -40,7 +41,7 @@ public class ConnectorConfImpl implements ConnectorConf {
         .collect(Collectors.toMap(e -> Pattern.compile(getVariableRegex(e.getKey()), Pattern.CASE_INSENSITIVE),
             Map.Entry::getValue));
 
-    Map<String, Object> resultMap = new HashMap<>();
+    Map<String, Object> resultMap = new LinkedHashMap<>();
     for (Map.Entry<String, Object> entry : configMap.entrySet()) {
       Object value = entry.getValue();
       if (value instanceof String) {
