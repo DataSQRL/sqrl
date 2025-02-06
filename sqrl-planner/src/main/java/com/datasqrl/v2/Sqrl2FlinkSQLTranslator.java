@@ -352,12 +352,6 @@ public class Sqrl2FlinkSQLTranslator {
         .originalSql(originalSql)
         .build();
     tableLookup.registerTable(tableAnalysis);
-//    System.out.println(tableAnalysis);
-//    System.out.println(identifier.getObjectName() + " PRIMARY KEY: " + (tableAnalysis.getPrimaryKey().isDefined()?tableAnalysis.getPrimaryKey().asSimpleList():""));
-//    System.out.println(identifier.getObjectName() + " INPUTS: " + (tableAnalysis.getFromTables().stream().map(
-//        TableOrFunctionAnalysis::getIdentifier).collect(
-//        Collectors.toList())));
-//    System.out.println(identifier.getObjectName() + " PLAN :" + tableAnalysis.getCollapsedRelnode().explain());
 
     return tableAnalysis;
   }

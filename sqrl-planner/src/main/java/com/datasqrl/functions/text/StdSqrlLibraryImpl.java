@@ -21,7 +21,9 @@ public class StdSqrlLibraryImpl extends AbstractFunctionModule implements StdLib
       TextFunctions.SPLIT, //TODO: remove for Flink 1.20, since it's part of the standard library
       TextFunctions.TEXT_SEARCH,
       TextFunctions.FORMAT,
-      CommonFunctions.SERIALIZE_TO_BYTES);
+      CommonFunctions.SERIALIZE_TO_BYTES,
+      CommonFunctions.NOOP,
+      CommonFunctions.HASH_COLUMNS);
 
   public StdSqrlLibraryImpl() {
     super(SQRL_FUNCTIONS.stream().map(NamespaceObjectUtil::createNsObject).collect(Collectors.toList()));

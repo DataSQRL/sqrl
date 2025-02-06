@@ -7,7 +7,7 @@ IMPORT ecommerceTs.Orders;
 -- We can also define table as data source, those become mutations. _uuid is a special column for the UUID generated
 -- on the server and the timestamp metadata is for the Kafka timestamp
 CREATE TABLE SimpleOrders (
-    _uuid VARCHAR,
+    _uuid VARCHAR NOT NULL,
     orderid INT,
     customerid BIGINT,
     amount FLOAT,

@@ -59,7 +59,6 @@ public class CompilationProcessV2 {
     planner.planMain(mainScript, environment);
     DAGBuilder dagBuilder = planner.getDagBuilder();
     PipelineDAG dag = dagPlanner.optimize(dagBuilder.getDag());
-    System.out.println(dag);
     PhysicalPlan physicalPlan = dagPlanner.assemble(dag, environment);
 
     //TODO: generate indexes

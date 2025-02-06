@@ -17,6 +17,7 @@ import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.engine.server.ServerEngine;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.function.CommonFunctions;
 import com.datasqrl.util.RelDataTypeBuilder;
 import com.datasqrl.v2.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.v2.analyzer.TableAnalysis;
@@ -158,7 +159,9 @@ public class DAGPlanner {
     //generate a sink for each in the respective engine and insert into
     dag.allNodesByClassAndStage(TableNode.class, streamStage).forEach(node -> {
       Set<ExecutionStage> downstreamStages = new HashSet<>(); //We want to only plan once for each stage
-      for (PipelineNode downstream : dag.getOutputs(node)) {
+      //We need stable iteration order for reproducibility
+      List<PipelineNode> downstreamNodes = dag.getOutputs(node).stream().sorted().collect(Collectors.toList());
+      for (PipelineNode downstream : downstreamNodes) {
         if (downstream instanceof ExportNode || !downstream.getChosenStage().equals(streamStage)) {
           //Create sink
           ExecutionStage exportStage = null;
@@ -195,7 +198,7 @@ public class DAGPlanner {
           TableAnalysis nodeTable = node.getTableAnalysis();
           tblBuilder.setName(externalNameFct.apply(originalTableName));
           //#1st: determine primary key and partition key (if present)
-          PrimaryKeyMap pk = deterinePrimaryKey(nodeTable, relBuilder, exportStage);
+          PrimaryKeyMap pk = deterinePrimaryKey(nodeTable, relBuilder, sqrlEnv, exportStage);
           if (pk.isDefined()) {
             List<RelDataTypeField> fields = relBuilder.peek().getRowType().getFieldList();
             List<String> pkColNames = pk.asSimpleList().stream().map(fields::get).map(RelDataTypeField::getName).collect(
@@ -283,14 +286,15 @@ public class DAGPlanner {
 
   public static final String HASHED_PK_NAME = "__pk_hash";
 
-  private PrimaryKeyMap deterinePrimaryKey(TableAnalysis table, FlinkRelBuilder relBuilder, ExecutionStage stage) {
+  private PrimaryKeyMap deterinePrimaryKey(TableAnalysis table, FlinkRelBuilder relBuilder,
+      Sqrl2FlinkSQLTranslator sqrlEnv, ExecutionStage stage) {
     PrimaryKeyMap pk = table.getSimplePrimaryKey();
     int numCols = table.getRowType().getFieldCount();
     List<Integer> addHashColumn = null;
     if (pk.isUndefined()) {
       //Databases requires a primary key, see if we can create one
       if (stage.getType()==EngineType.DATABASE) {
-        table.getErrors().checkFatal(false, //Todo: replace with table.getType().isStream(),
+        table.getErrors().checkFatal(table.getType().isStream(),
             "Could not determine primary key for table [%s]. Please add a primary key with the /*+primary_key(...) */ hint.",
             table.getIdentifier().asSummaryString());
         //Hash all columns as primary key
@@ -306,15 +310,14 @@ public class DAGPlanner {
         addHashColumn = pk.asSimpleList();
       }
     }
-    return pk;
-    //TODO: add custom pk hash function that accepts arbitrary arguments and also null
-//    if (addHashColumn != null) {
-//      CalciteUtil.addColumn(relBuilder, relBuilder.getRexBuilder()
-//          .makeCall(FlinkSqlOperatorTable.SHA256, rexInputRef for addHashColumn indexes), HASHED_PK_NAME);
-//      return PrimaryKeyMap.of(List.of(numCols));
-//    } else {
-//      return pk;
-//    }
+    if (addHashColumn != null && !addHashColumn.isEmpty()) {
+      CalciteUtil.addColumn(relBuilder, relBuilder.getRexBuilder()
+          .makeCall(sqrlEnv.lookupUserDefinedFunction(CommonFunctions.HASH_COLUMNS),
+              CalciteUtil.getSelectRex(relBuilder, addHashColumn)), HASHED_PK_NAME);
+      return PrimaryKeyMap.of(List.of(numCols));
+    } else {
+      return pk;
+    }
   }
 
   /**

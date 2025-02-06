@@ -42,7 +42,6 @@ public class SqrlDistinctStatement extends SqrlDefinition {
 
   public String toSql(Sqrl2FlinkSQLTranslator sqrlEnv, List<StackableStatement> stack) {
     String sql = super.toSql(sqrlEnv, stack);
-    System.out.println(sql);
     SqlNode view = sqrlEnv.parseSQL(sql);
     ViewAnalysis viewAnalysis = sqrlEnv.analyzeView(view, false, PlannerHints.EMPTY, ErrorCollector.root());
     RelBuilder relB = viewAnalysis.getRelBuilder();
@@ -70,7 +69,6 @@ public class SqrlDistinctStatement extends SqrlDefinition {
     //Filter out last field
     relB.project(CalciteUtil.getIdentityRex(relB, relB.peek().getRowType().getFieldCount()-1));
     String rewrittenSQL = sqrlEnv.toSqlString(sqrlEnv.updateViewQuery(sqrlEnv.toSqlNode(relB.build()), view));
-    System.out.println("REWRITTEN: " + rewrittenSQL);
     return rewrittenSQL;
   }
 
