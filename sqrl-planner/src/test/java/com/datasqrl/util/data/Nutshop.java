@@ -3,15 +3,17 @@
  */
 package com.datasqrl.util.data;
 
-import com.datasqrl.util.TestDataset;
-import com.datasqrl.util.TestGraphQLSchema;
-import com.datasqrl.util.TestScript;
-import lombok.AllArgsConstructor;
-import org.apache.flink.util.ArrayUtils;
-
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
+
+import org.apache.flink.util.ArrayUtils;
+
+import com.datasqrl.util.TestDataset;
+import com.datasqrl.util.TestGraphQLSchema;
+import com.datasqrl.util.TestScript;
+
+import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class Nutshop implements TestDataset {

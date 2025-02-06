@@ -3,18 +3,24 @@
  */
 package com.datasqrl.schema;
 
-import com.datasqrl.schema.type.basic.*;
-import com.datasqrl.util.SnapshotTest;
-import org.apache.commons.lang3.tuple.Pair;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInfo;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.apache.commons.lang3.tuple.Pair;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+
+import com.datasqrl.schema.type.basic.BasicType;
+import com.datasqrl.schema.type.basic.BasicTypeManager;
+import com.datasqrl.schema.type.basic.BigIntType;
+import com.datasqrl.schema.type.basic.DoubleType;
+import com.datasqrl.schema.type.basic.IntervalType;
+import com.datasqrl.schema.type.basic.StringType;
+import com.datasqrl.schema.type.basic.TimestampType;
+import com.datasqrl.util.SnapshotTest;
 
 public class TypeTest {
 
@@ -28,8 +34,8 @@ public class TypeTest {
   @Test
   public void printCombinationMatrix() {
     for (Map.Entry<Pair<BasicType, BasicType>, Pair<BasicType, Integer>> entry : BasicTypeManager.TYPE_COMBINATION_MATRIX.entrySet()) {
-      Pair<BasicType, BasicType> types = entry.getKey();
-      Pair<BasicType, Integer> result = entry.getValue();
+      var types = entry.getKey();
+      var result = entry.getValue();
       snapshot.addContent("%s [%d]".formatted(result.getKey(), result.getValue()),
           "%s + %s".formatted(types.getKey(), types.getValue()));
     }

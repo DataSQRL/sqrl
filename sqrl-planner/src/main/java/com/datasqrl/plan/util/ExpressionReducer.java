@@ -3,13 +3,13 @@
  */
 package com.datasqrl.plan.util;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
 import org.apache.flink.table.api.TableConfig;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Thin wrapper around Flink's {@org.apache.flink.table.planner.codegen.ExpressionReducer}
@@ -20,17 +20,17 @@ public class ExpressionReducer {
       new org.apache.flink.table.planner.codegen.ExpressionReducer(TableConfig.getDefault(), ClassLoader.getSystemClassLoader(), true);
 
   List<RexNode> reduce(RexBuilder rexBuilder, List<RexNode> original) {
-    ArrayList<RexNode> reduced = new ArrayList<>();
+    var reduced = new ArrayList<RexNode>();
     reducer.reduce(rexBuilder, original, reduced);
     assert reduced.size() == original.size();
     return reduced;
   }
 
   long[] reduce2Long(RexBuilder rexBuilder, List<RexNode> original) {
-    long[] longs = new long[original.size()];
-    List<RexNode> reduced = reduce(rexBuilder, original);
-    for (int i = 0; i < reduced.size(); i++) {
-      RexNode reduce = reduced.get(i);
+    var longs = new long[original.size()];
+    var reduced = reduce(rexBuilder, original);
+    for (var i = 0; i < reduced.size(); i++) {
+      var reduce = reduced.get(i);
       if (!(reduce instanceof RexLiteral)) {
         throw new IllegalArgumentException(
             "Expression [%s] could not be reduced to literal, got: %s".formatted(

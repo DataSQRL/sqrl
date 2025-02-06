@@ -3,14 +3,17 @@
  */
 package com.datasqrl.parse;
 
+import java.util.Optional;
+
+import org.apache.calcite.sql.parser.SqlParserPos;
+
 import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.error.ErrorLocation;
 import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.datasqrl.error.ErrorLocation.FileRange;
-import java.util.Optional;
+
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.calcite.sql.parser.SqlParserPos;
 
 @Getter
 @Slf4j

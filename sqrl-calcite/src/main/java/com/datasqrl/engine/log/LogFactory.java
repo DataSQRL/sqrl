@@ -1,9 +1,12 @@
 package com.datasqrl.engine.log;
 
-import com.datasqrl.canonicalizer.Name;
 import java.util.List;
-import lombok.Value;
+
 import org.apache.calcite.rel.type.RelDataType;
+
+import com.datasqrl.canonicalizer.Name;
+
+import lombok.Value;
 
 /**
  * Interface for creating logs during the parsing of SQRL scripts and APIs.

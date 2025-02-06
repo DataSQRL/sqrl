@@ -2,16 +2,17 @@ package com.datasqrl.function;
 
 import static com.datasqrl.canonicalizer.ReservedName.VARIABLE_PREFIX;
 
-import lombok.Getter;
-import lombok.Value;
+import java.util.Optional;
+
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.schema.FunctionParameter;
-import org.apache.calcite.sql.*;
-
-import java.util.Optional;
+import org.apache.calcite.sql.SqlDataTypeSpec;
+import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.validate.SqlNameMatcher;
+
+import lombok.Getter;
+import lombok.Value;
 
 @Getter
 public class SqrlFunctionParameter implements FunctionParameter {
@@ -74,12 +75,12 @@ public class SqrlFunctionParameter implements FunctionParameter {
 
     @Override
     public Optional<String> resolve(RelDataType parentType, SqlNameMatcher sqlNameMatcher) {
-      int index = sqlNameMatcher
+      var index = sqlNameMatcher
           .indexOf(parentType.getFieldNames(), name);
       if (index == -1) {
         return Optional.empty();
       }
-      RelDataTypeField field = parentType.getFieldList().get(index);
+      var field = parentType.getFieldList().get(index);
       return Optional.of(field.getName());
     }
   }

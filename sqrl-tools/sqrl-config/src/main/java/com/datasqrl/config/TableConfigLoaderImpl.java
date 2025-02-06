@@ -1,11 +1,11 @@
 package com.datasqrl.config;
 
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.module.resolver.ResourceResolver;
-import java.net.URI;
 import java.nio.file.Path;
 import java.util.List;
+
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.error.ErrorCollector;
+
 import lombok.NonNull;
 
 public class TableConfigLoaderImpl implements TableConfigLoader {

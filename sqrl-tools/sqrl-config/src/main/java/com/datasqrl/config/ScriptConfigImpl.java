@@ -1,12 +1,8 @@
 package com.datasqrl.config;
 
-import static com.datasqrl.config.PackageJsonImpl.SCRIPT_KEY;
-
-import com.google.common.collect.ImmutableMap;
-import java.util.Map;
 import java.util.Optional;
+
 import lombok.AllArgsConstructor;
-import lombok.NonNull;
 
 @AllArgsConstructor
 public class ScriptConfigImpl implements PackageJson.ScriptConfig {

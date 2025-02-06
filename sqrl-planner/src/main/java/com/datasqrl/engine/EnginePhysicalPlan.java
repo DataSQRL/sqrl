@@ -3,8 +3,6 @@
  */
 package com.datasqrl.engine;
 
-import com.datasqrl.config.EngineFactory.Type;
-
 /**
  * A jackson serializable object
  */

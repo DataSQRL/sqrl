@@ -3,12 +3,9 @@ package com.datasqrl.calcite.dialect;
 
 import static org.apache.calcite.sql.SqlKind.COLLECTION_TABLE;
 
-import com.datasqrl.calcite.Dialect;
-import com.datasqrl.function.translations.SqlTranslation;
-import com.datasqrl.type.JdbcTypeSerializer;
-import com.datasqrl.util.ServiceLoaderDiscovery;
 import java.util.Map;
 import java.util.stream.Collectors;
+
 import org.apache.calcite.avatica.util.Casing;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelRecordType;
@@ -18,12 +15,15 @@ import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.SqlDialect;
 import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
-import org.apache.calcite.sql.fun.SqlCollectionTableOperator;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.SqlConformance;
-import org.apache.calcite.sql.validate.SqlConformanceEnum;
 import org.apache.flink.table.planner.plan.schema.RawRelDataType;
+
+import com.datasqrl.calcite.Dialect;
+import com.datasqrl.function.translations.SqlTranslation;
+import com.datasqrl.type.JdbcTypeSerializer;
+import com.datasqrl.util.ServiceLoaderDiscovery;
 
 public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
 
@@ -62,12 +62,12 @@ public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
     return new PostgresConformance();
   }
 
-  public SqlDataTypeSpec getCastSpec(RelDataType type) {
+  @Override
+public SqlDataTypeSpec getCastSpec(RelDataType type) {
     String castSpec;
     if (type.getComponentType() instanceof RelRecordType) {
       castSpec = "jsonb";
-    } else if (type instanceof RawRelDataType) {
-      RawRelDataType rawRelDataType = (RawRelDataType) type;
+    } else if (type instanceof RawRelDataType rawRelDataType) {
       Class<?> originatingClass = rawRelDataType.getRawType().getOriginatingClass();
       if (foreignCastSpecMap.containsKey(originatingClass)) {
         castSpec = foreignCastSpecMap.get(originatingClass);

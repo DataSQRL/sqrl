@@ -3,8 +3,9 @@
  */
 package com.datasqrl.engine.database;
 
-import lombok.Value;
 import org.apache.calcite.rel.RelNode;
+
+import lombok.Value;
 
 @Value
 public class QueryTemplate {

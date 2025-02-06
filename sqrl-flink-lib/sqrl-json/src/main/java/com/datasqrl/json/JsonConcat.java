@@ -1,6 +1,5 @@
 package com.datasqrl.json;
 
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.flink.table.functions.ScalarFunction;
 
@@ -14,8 +13,8 @@ public class JsonConcat extends ScalarFunction {
       return null;
     }
     try {
-      ObjectNode node1 = (ObjectNode) json1.getJson();
-      ObjectNode node2 = (ObjectNode) json2.getJson();
+      var node1 = (ObjectNode) json1.getJson();
+      var node2 = (ObjectNode) json2.getJson();
 
       node1.setAll(node2);
       return new FlinkJsonType(node1);

@@ -3,15 +3,11 @@
  */
 package com.datasqrl.plan;
 
-import com.datasqrl.config.EngineFactory.Type;
-import com.datasqrl.engine.stream.flink.sql.rules.ToStubAggRule;
-import com.datasqrl.engine.stream.flink.sql.rules.ToStubAggRule.ToStubAggRuleConfig;
-import com.datasqrl.plan.rules.DAGFunctionExpansionRule;
-import com.datasqrl.plan.rules.DAGTableExpansionRule.Read;
-import com.datasqrl.plan.rules.DAGTableExpansionRule.Write;
-import com.datasqrl.plan.rules.SQRLPrograms;
-import com.datasqrl.plan.rules.SqrlRelMetadataProvider;
-import lombok.Value;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 import org.apache.calcite.adapter.enumerable.EnumerableConvention;
 import org.apache.calcite.plan.RelTrait;
 import org.apache.calcite.rel.metadata.DefaultRelMetadataProvider;
@@ -19,10 +15,15 @@ import org.apache.calcite.rel.rules.CoreRules;
 import org.apache.calcite.tools.Program;
 import org.apache.calcite.tools.Programs;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import com.datasqrl.config.EngineFactory.Type;
+import com.datasqrl.engine.stream.flink.sql.rules.ToStubAggRule.ToStubAggRuleConfig;
+import com.datasqrl.plan.rules.DAGFunctionExpansionRule;
+import com.datasqrl.plan.rules.DAGTableExpansionRule.Read;
+import com.datasqrl.plan.rules.DAGTableExpansionRule.Write;
+import com.datasqrl.plan.rules.SQRLPrograms;
+import com.datasqrl.plan.rules.SqrlRelMetadataProvider;
+
+import lombok.Value;
 
 /**
  * An {@link OptimizationStage}

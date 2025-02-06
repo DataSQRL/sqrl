@@ -1,10 +1,12 @@
 package com.datasqrl.config;
 
-import com.datasqrl.error.ErrorCollector;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import com.datasqrl.error.ErrorCollector;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 

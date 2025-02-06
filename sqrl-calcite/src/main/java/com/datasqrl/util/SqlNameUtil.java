@@ -1,20 +1,18 @@
 package com.datasqrl.util;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.apache.calcite.sql.SqrlAssignment;
+import org.apache.calcite.sql.SqrlExpressionQuery;
+
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.google.inject.Inject;
-import java.util.Arrays;
-import lombok.AllArgsConstructor;
-import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlKind;
-import org.apache.calcite.sql.SqlNode;
 
-import java.util.List;
-import java.util.stream.Collectors;
-import org.apache.calcite.sql.SqrlAssignment;
-import org.apache.calcite.sql.SqrlExpressionQuery;
+import lombok.AllArgsConstructor;
 
 @AllArgsConstructor(onConstructor_=@Inject)
 public class SqlNameUtil {
@@ -34,7 +32,7 @@ public class SqlNameUtil {
   }
 
   public NamePath getParentPath(SqrlAssignment statement) {
-    NamePath path = toNamePath(statement.getIdentifier().names);
+    var path = toNamePath(statement.getIdentifier().names);
     if (statement instanceof SqrlExpressionQuery) {
       if (statement.getIdentifier().names.size() > 2) {
         return path.popLast().popLast();

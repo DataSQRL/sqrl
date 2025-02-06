@@ -1,16 +1,10 @@
 package com.datasqrl.calcite.schema.sql;
 
-import com.datasqrl.calcite.SqrlToSql.PullupColumn;
-import com.datasqrl.plan.hints.TopNHint;
-import com.datasqrl.plan.hints.TopNHint.Type;
-import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import lombok.experimental.UtilityClass;
+
 import org.apache.calcite.sql.JoinConditionType;
 import org.apache.calcite.sql.JoinType;
 import org.apache.calcite.sql.SqlCall;
@@ -29,6 +23,13 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlShuttle;
 import org.apache.commons.collections.ListUtils;
 
+import com.datasqrl.calcite.SqrlToSql.PullupColumn;
+import com.datasqrl.plan.hints.TopNHint;
+import com.datasqrl.plan.hints.TopNHint.Type;
+import com.google.common.base.Preconditions;
+
+import lombok.experimental.UtilityClass;
+
 @UtilityClass
 public class SqlBuilders {
   public static class SqlAliasCallBuilder {
@@ -42,7 +43,7 @@ public class SqlBuilders {
     }
 
     public String getAlias() {
-      String alias = ((SqlIdentifier)node.getOperandList().get(1)).getSimple();
+      var alias = ((SqlIdentifier)node.getOperandList().get(1)).getSimple();
       return alias;
     }
 
@@ -152,7 +153,7 @@ public class SqlBuilders {
     }
 
     public SqlSelectBuilder setTopNHint(Type type, List<SqlNode> keyNodes) {
-      SqlHint hint = TopNHint.createSqlHint(type,
+      var hint = TopNHint.createSqlHint(type,
           new SqlNodeList(keyNodes, SqlParserPos.ZERO), SqlParserPos.ZERO);
 
       List<SqlNode> hints = new ArrayList<>(select.getHints().getList());
@@ -168,7 +169,7 @@ public class SqlBuilders {
     }
 
     public SqlSelectBuilder clearKeywords() {
-      SqlNodeList keywords = SqlNodeList.EMPTY;
+      var keywords = SqlNodeList.EMPTY;
       select.setOperand(0, keywords);
       return this;
     }
@@ -224,10 +225,18 @@ public class SqlBuilders {
 
     public SqlSelectBuilder rewriteExpressions(SqlShuttle shuttle) {
       select.setSelectList((SqlNodeList) select.getSelectList().accept(shuttle));
-      if (select.getWhere() != null) select.setWhere(select.getWhere().accept(shuttle));
-      if (select.getGroup() != null) select.setGroupBy((SqlNodeList) select.getGroup().accept(shuttle));
-      if (select.getHaving() != null) select.setHaving(select.getHaving().accept(shuttle));
-      if (select.getOrderList() != null) select.setOrderBy((SqlNodeList) select.getOrderList().accept(shuttle));
+      if (select.getWhere() != null) {
+		select.setWhere(select.getWhere().accept(shuttle));
+	}
+      if (select.getGroup() != null) {
+		select.setGroupBy((SqlNodeList) select.getGroup().accept(shuttle));
+	}
+      if (select.getHaving() != null) {
+		select.setHaving(select.getHaving().accept(shuttle));
+	}
+      if (select.getOrderList() != null) {
+		select.setOrderBy((SqlNodeList) select.getOrderList().accept(shuttle));
+	}
 
       return this;
     }
@@ -246,7 +255,7 @@ public class SqlBuilders {
       List<SqlNode> range = hintOps.stream()
           .map(i -> new SqlIdentifier(Integer.toString(i), SqlParserPos.ZERO))
           .collect(Collectors.toList());
-      SqlHint hint = new SqlHint(SqlParserPos.ZERO, new SqlIdentifier("DISTINCT_ON", SqlParserPos.ZERO),
+      var hint = new SqlHint(SqlParserPos.ZERO, new SqlIdentifier("DISTINCT_ON", SqlParserPos.ZERO),
           new SqlNodeList(range, SqlParserPos.ZERO), HintOptionFormat.ID_LIST);
       select.setHints(new SqlNodeList(List.of(hint), SqlParserPos.ZERO));
 
@@ -254,7 +263,7 @@ public class SqlBuilders {
     }
 
     public SqlSelectBuilder setWhere(List<SqlNode> conditions) {
-      SqlNode call = SqlUtil.createCall(SqlStdOperatorTable.AND, SqlParserPos.ZERO, conditions);
+      var call = SqlUtil.createCall(SqlStdOperatorTable.AND, SqlParserPos.ZERO, conditions);
       select.setWhere(call);
       return this;
     }
@@ -266,7 +275,9 @@ public class SqlBuilders {
 
     public void appendWhere(SqlNode sqlNode) {
       List<SqlNode> nodes = new ArrayList<>();
-      if (select.getWhere() != null) nodes.add(select.getWhere());
+      if (select.getWhere() != null) {
+		nodes.add(select.getWhere());
+	}
       nodes.add(sqlNode);
 
       this.setWhere(nodes);

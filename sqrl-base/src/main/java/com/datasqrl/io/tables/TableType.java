@@ -18,14 +18,10 @@ public enum TableType {
   //=use timestamp of other side in join, update generic aggregate logic, write to database without timestamp
 
   public boolean hasTimestamp() {
-    switch(this) {
-      case STREAM:
-      case VERSIONED_STATE:
-      case STATE:
-        return true;
-      default:
-        return false; //NESTED, LOOKUP, RELATION
-    }
+    return switch (this) {
+	case STREAM, VERSIONED_STATE, STATE -> true;
+	default -> false; //NESTED, LOOKUP, RELATION
+	};
   }
 
   public boolean isLocked() {
@@ -33,16 +29,10 @@ public enum TableType {
   }
 
   public boolean hasPrimaryKey() {
-    switch(this) {
-      case STREAM:
-      case VERSIONED_STATE:
-      case STATE:
-      case LOOKUP:
-      case STATIC:
-        return true;
-      default:
-        return false; //NESTED and RELATION
-    }
+    return switch (this) {
+	case STREAM, VERSIONED_STATE, STATE, LOOKUP, STATIC -> true;
+	default -> false; //NESTED and RELATION
+	};
   }
 
   public boolean isStream() {

@@ -3,10 +3,12 @@
  */
 package com.datasqrl.io.tables;
 
+import java.util.Optional;
+
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.TableConfig;
-import java.util.Optional;
+
 import lombok.Getter;
 import lombok.NonNull;
 
@@ -22,7 +24,7 @@ public class TableSinkImpl extends AbstractExternalTable implements TableSink {
 
   public static TableSink create(TableConfig tableConfig, NamePath basePath, Optional<TableSchema> schema) {
 //    getErrors().checkFatal(getBase().getType().isSink(), "Table is not a sink: %s", name);
-    Name tableName = tableConfig.getName();
+    var tableName = tableConfig.getName();
     return new TableSinkImpl(tableConfig, basePath.concat(tableName), tableName, schema);
   }
 }

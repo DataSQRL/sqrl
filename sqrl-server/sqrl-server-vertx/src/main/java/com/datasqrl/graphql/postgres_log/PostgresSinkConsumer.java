@@ -1,7 +1,9 @@
 package com.datasqrl.graphql.postgres_log;
 
-import com.datasqrl.graphql.io.SinkConsumer;
 import java.util.function.Consumer;
+
+import com.datasqrl.graphql.io.SinkConsumer;
+
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 

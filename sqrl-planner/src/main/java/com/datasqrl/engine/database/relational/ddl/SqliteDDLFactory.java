@@ -3,19 +3,21 @@
  */
 package com.datasqrl.engine.database.relational.ddl;
 
-import com.datasqrl.config.JdbcDialect;
-import com.datasqrl.engine.database.relational.ddl.statements.CreateTableDDL;
-import com.datasqrl.sql.SqlDDLStatement;
-import com.datasqrl.util.CalciteUtil;
-import com.datasqrl.plan.global.IndexDefinition;
-import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
-import com.google.auto.service.AutoService;
-import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
+
+import com.datasqrl.config.JdbcDialect;
+import com.datasqrl.engine.database.relational.ddl.statements.CreateTableDDL;
+import com.datasqrl.plan.global.IndexDefinition;
+import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
+import com.datasqrl.sql.SqlDDLStatement;
+import com.datasqrl.util.CalciteUtil;
+import com.google.auto.service.AutoService;
+import com.google.common.base.Preconditions;
 
 @AutoService(JdbcDDLFactory.class)
 public class SqliteDDLFactory implements JdbcDDLFactory {
@@ -30,14 +32,14 @@ public class SqliteDDLFactory implements JdbcDDLFactory {
     List<String> pk = new ArrayList<>();
     List<String> columns = new ArrayList<>();
 
-    List<RelDataTypeField> fields = table.getRowType().getFieldList();
-    for (int i = 0; i < fields.size(); i++) {
-      RelDataTypeField field = fields.get(i);
-      String column = toSql(field);
+    var fields = table.getRowType().getFieldList();
+    for (var i = 0; i < fields.size(); i++) {
+      var field = fields.get(i);
+      var column = toSql(field);
       columns.add(column);
     }
     for (int pkIdx : table.getPrimaryKeys()) {
-      RelDataTypeField field = fields.get(pkIdx);
+      var field = fields.get(pkIdx);
       pk.add("\"" + field.getName() + "\"");
     }
 
@@ -45,14 +47,14 @@ public class SqliteDDLFactory implements JdbcDDLFactory {
   }
 
   public static String toSql(RelDataTypeField field) {
-    RelDataType datatype = field.getType();
+    var datatype = field.getType();
     Preconditions.checkArgument(!CalciteUtil.isNestedTable(datatype),
         "Collection column encountered");
     return toSql("\"" + field.getName() + "\"", getSQLType(datatype), datatype.isNullable());
   }
 
   private static String toSql(String name, String sqlType, boolean nullable) {
-    StringBuilder sql = new StringBuilder();
+    var sql = new StringBuilder();
     sql.append(name).append(" ").append(sqlType).append(" ");
     if (!nullable) {
       sql.append("NOT NULL");
@@ -61,43 +63,19 @@ public class SqliteDDLFactory implements JdbcDDLFactory {
   }
 
   private static String getSQLType(RelDataType type) {
-    switch (type.getSqlTypeName()) {
-      case BOOLEAN:
-        return "BOOLEAN";
-      case TINYINT:
-      case SMALLINT:
-      case BIGINT:
-      case INTEGER:
-        return "BIGINT";
-      case CHAR:
-      case VARCHAR:
-        return "VARCHAR";
-      case DECIMAL:
-        return "NUMERIC";
-      case FLOAT:
-      case DOUBLE:
-        return "DOUBLE";
-      case DATE:
-        return "DATE";
-      case TIME:
-        return "TIME";
-      case TIMESTAMP:
-        return "INTEGER";
-      case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
-        return "INTEGER";
-      case BINARY:
-      case VARBINARY:
-      case INTERVAL_YEAR_MONTH:
-      case INTERVAL_DAY:
-      case NULL:
-      case SYMBOL:
-      case ARRAY:
-      case MAP:
-      case MULTISET:
-      case ROW:
-      default:
-        throw new UnsupportedOperationException("Unsupported type:" + type);
-    }
+    return switch (type.getSqlTypeName()) {
+	case BOOLEAN -> "BOOLEAN";
+	case TINYINT, SMALLINT, BIGINT, INTEGER -> "BIGINT";
+	case CHAR, VARCHAR -> "VARCHAR";
+	case DECIMAL -> "NUMERIC";
+	case FLOAT, DOUBLE -> "DOUBLE";
+	case DATE -> "DATE";
+	case TIME -> "TIME";
+	case TIMESTAMP -> "INTEGER";
+	case TIMESTAMP_WITH_LOCAL_TIME_ZONE -> "INTEGER";
+	case BINARY, VARBINARY, INTERVAL_YEAR_MONTH, INTERVAL_DAY, NULL, SYMBOL, ARRAY, MAP, MULTISET, ROW -> throw new UnsupportedOperationException("Unsupported type:" + type);
+	default -> throw new UnsupportedOperationException("Unsupported type:" + type);
+	};
   }
 
   @Override

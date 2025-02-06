@@ -3,6 +3,38 @@ package com.datasqrl.format;
 import static org.apache.flink.formats.json.JsonFormatOptions.ENCODE_DECIMAL_AS_PLAIN_NUMBER;
 import static org.apache.flink.formats.json.JsonFormatOptions.MAP_NULL_KEY_LITERAL;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.function.Function;
+
+import org.apache.flink.api.common.serialization.DeserializationSchema;
+import org.apache.flink.api.common.serialization.SerializationSchema;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.configuration.ConfigOption;
+import org.apache.flink.configuration.ReadableConfig;
+import org.apache.flink.formats.common.TimestampFormat;
+import org.apache.flink.formats.json.JsonFormatFactory;
+import org.apache.flink.formats.json.JsonFormatOptionsUtil;
+import org.apache.flink.formats.json.JsonRowDataDeserializationSchema;
+import org.apache.flink.table.connector.ChangelogMode;
+import org.apache.flink.table.connector.Projection;
+import org.apache.flink.table.connector.format.DecodingFormat;
+import org.apache.flink.table.connector.format.EncodingFormat;
+import org.apache.flink.table.connector.format.ProjectableDecodingFormat;
+import org.apache.flink.table.connector.sink.DynamicTableSink;
+import org.apache.flink.table.connector.source.DynamicTableSource;
+import org.apache.flink.table.data.RowData;
+import org.apache.flink.table.factories.DeserializationFormatFactory;
+import org.apache.flink.table.factories.DynamicTableFactory.Context;
+import org.apache.flink.table.factories.FactoryUtil;
+import org.apache.flink.table.factories.SerializationFormatFactory;
+import org.apache.flink.table.types.DataType;
+import org.apache.flink.table.types.logical.ArrayType;
+import org.apache.flink.table.types.logical.LogicalType;
+import org.apache.flink.table.types.logical.RowType;
+import org.apache.flink.table.types.logical.RowType.RowField;
+
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.io.tables.SchemaValidator;
@@ -24,38 +56,8 @@ import com.datasqrl.schema.type.basic.IntervalType;
 import com.datasqrl.schema.type.basic.ObjectType;
 import com.datasqrl.schema.type.basic.StringType;
 import com.datasqrl.schema.type.basic.TimestampType;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.function.Function;
+
 import lombok.SneakyThrows;
-import org.apache.flink.api.common.serialization.DeserializationSchema;
-import org.apache.flink.api.common.serialization.SerializationSchema;
-import org.apache.flink.api.common.typeinfo.TypeInformation;
-import org.apache.flink.configuration.ConfigOption;
-import org.apache.flink.configuration.ReadableConfig;
-import org.apache.flink.formats.common.TimestampFormat;
-import org.apache.flink.formats.json.JsonFormatFactory;
-import org.apache.flink.formats.json.JsonFormatOptions;
-import org.apache.flink.formats.json.JsonFormatOptionsUtil;
-import org.apache.flink.formats.json.JsonRowDataDeserializationSchema;
-import org.apache.flink.table.connector.ChangelogMode;
-import org.apache.flink.table.connector.Projection;
-import org.apache.flink.table.connector.format.DecodingFormat;
-import org.apache.flink.table.connector.format.EncodingFormat;
-import org.apache.flink.table.connector.format.ProjectableDecodingFormat;
-import org.apache.flink.table.connector.sink.DynamicTableSink;
-import org.apache.flink.table.connector.source.DynamicTableSource;
-import org.apache.flink.table.data.RowData;
-import org.apache.flink.table.factories.DeserializationFormatFactory;
-import org.apache.flink.table.factories.DynamicTableFactory.Context;
-import org.apache.flink.table.factories.FactoryUtil;
-import org.apache.flink.table.factories.SerializationFormatFactory;
-import org.apache.flink.table.types.DataType;
-import org.apache.flink.table.types.logical.ArrayType;
-import org.apache.flink.table.types.logical.LogicalType;
-import org.apache.flink.table.types.logical.RowType;
-import org.apache.flink.table.types.logical.RowType.RowField;
 
 public class FlexibleJsonFormat implements DeserializationFormatFactory,
     SerializationFormatFactory {
@@ -65,7 +67,7 @@ public class FlexibleJsonFormat implements DeserializationFormatFactory,
       Context context, ReadableConfig formatOptions) {
     FactoryUtil.validateFactoryOptions(this, formatOptions);
 
-    return new ProjectableDecodingFormat<DeserializationSchema<RowData>>() {
+    return new ProjectableDecodingFormat<>() {
       @SneakyThrows
       @Override
       public DeserializationSchema<RowData> createRuntimeDecoder(DynamicTableSource.Context context,
@@ -97,7 +99,7 @@ public class FlexibleJsonFormat implements DeserializationFormatFactory,
 
   private RelationType createFlexibleTableSchema(RowType rowType) {
     List<SchemaField> types = new ArrayList<>();
-    Builder builder = new Builder();
+    var builder = new Builder();
     for (RowField field : rowType.getFields()) {
       builder.setName(Name.system(field.getName()));
 
@@ -129,7 +131,7 @@ public class FlexibleJsonFormat implements DeserializationFormatFactory,
           break;
         case ARRAY:
           //todo: array depth
-          ArrayType arrayType = (ArrayType) field.getType();
+          var arrayType = (ArrayType) field.getType();
           builder.setTypes(List.of(new FieldType(Name.system(field.getName()),
               getType(arrayType.getElementType(), this::createFlexibleTableSchema), 1,
               field.getType().isNullable() ? List.of() : List.of(NotNull.INSTANCE))));
@@ -213,19 +215,19 @@ public class FlexibleJsonFormat implements DeserializationFormatFactory,
     FactoryUtil.validateFactoryOptions(this, formatOptions);
     JsonFormatOptionsUtil.validateEncodingFormatOptions(formatOptions);
 
-    TimestampFormat timestampOption = JsonFormatOptionsUtil.getTimestampFormat(formatOptions);
-    JsonFormatOptions.MapNullKeyMode mapNullKeyMode =
+    var timestampOption = JsonFormatOptionsUtil.getTimestampFormat(formatOptions);
+    var mapNullKeyMode =
         JsonFormatOptionsUtil.getMapNullKeyMode(formatOptions);
-    String mapNullKeyLiteral = formatOptions.get(MAP_NULL_KEY_LITERAL);
+    var mapNullKeyLiteral = formatOptions.get(MAP_NULL_KEY_LITERAL);
 
     final boolean encodeDecimalAsPlainNumber =
         formatOptions.get(ENCODE_DECIMAL_AS_PLAIN_NUMBER);
 
-    return new EncodingFormat<SerializationSchema<RowData>>() {
+    return new EncodingFormat<>() {
       @Override
       public SerializationSchema<RowData> createRuntimeEncoder(
           DynamicTableSink.Context context, DataType consumedDataType) {
-        final RowType rowType = (RowType) consumedDataType.getLogicalType();
+        final var rowType = (RowType) consumedDataType.getLogicalType();
         return new SqrlJsonRowDataSerializationSchema(
             rowType,
             timestampOption,

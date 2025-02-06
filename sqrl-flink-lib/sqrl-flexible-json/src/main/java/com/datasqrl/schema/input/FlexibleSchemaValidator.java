@@ -3,24 +3,33 @@
  */
 package com.datasqrl.schema.input;
 
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.BiPredicate;
+
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
+
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.SourceRecord;
 import com.datasqrl.io.tables.SchemaValidator;
 import com.datasqrl.schema.input.FlexibleFieldSchema.Field;
-import com.datasqrl.schema.input.TypeSignature.Simple;
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.schema.type.Type;
 import com.datasqrl.schema.type.basic.BasicType;
 import com.datasqrl.schema.type.basic.ObjectType;
 import com.datasqrl.schema.type.basic.StringType;
-import lombok.NonNull;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 
-import java.io.Serializable;
-import java.util.*;
-import java.util.function.BiPredicate;
+import lombok.NonNull;
 
 /**
  * Validates raw input data against the flexible table schema and converts it to named data
@@ -47,12 +56,13 @@ public class FlexibleSchemaValidator implements SchemaValidator, Serializable {
     this.typeMatcher = typeMatcher;
   }
 
-  public SourceRecord.Named verifyAndAdjust(SourceRecord.Raw record, ErrorCollector errors) {
+  @Override
+public SourceRecord.Named verifyAndAdjust(SourceRecord.Raw record, ErrorCollector errors) {
     //verify meta data
     errors.checkFatal(record.hasUUID(),"Input record does not have UUID: %s [table=%s]", record, tableSchema.getName());
     errors.checkFatal(record.getIngestTime()!=null, "Input record does not ingest timestamp: %s [table=%s]", record, tableSchema.getName());
     errors.checkFatal(!hasSourceTimestamp || record.getSourceTime()!=null, "Input record does not have source timestamp: %s [table=%s]", record, tableSchema.getName());
-    Map<Name, Object> result = verifyAndAdjust(record.getData(),
+    var result = verifyAndAdjust(record.getData(),
         tableSchema.getFields(), errors);
     return record.replaceData(result);
   }
@@ -63,9 +73,9 @@ public class FlexibleSchemaValidator implements SchemaValidator, Serializable {
     Map<Name, Object> result = new LinkedHashMap<>(relationData.size());
     Set<Name> visitedFields = new HashSet<>();
     for (Map.Entry<String, Object> entry : relationData.entrySet()) {
-      Name name = Name.of(entry.getKey(), canonicalizer);
-      Object data = entry.getValue();
-      Optional<FlexibleFieldSchema.Field> field = relationSchema.getFieldByName(name);
+      var name = Name.of(entry.getKey(), canonicalizer);
+      var data = entry.getValue();
+      var field = relationSchema.getFieldByName(name);
       if (field.isEmpty()) {
         if (!settings.dropFields()) {
           errors.fatal("Field is not defined in schema: %s [table=%s]", name, tableSchema.getName());
@@ -88,7 +98,7 @@ public class FlexibleSchemaValidator implements SchemaValidator, Serializable {
     //See if we missed any non-null fields
     for (FlexibleFieldSchema.Field field : relationSchema.getFields()) {
       if (!visitedFields.contains(field.getName()) && isNonNull(field)) {
-        Pair<Name, Object> fieldResult = handleNull(field, errors);
+        var fieldResult = handleNull(field, errors);
         if (fieldResult != null) {
           result.put(fieldResult.getKey(), fieldResult.getValue());
         }
@@ -139,13 +149,15 @@ public class FlexibleSchemaValidator implements SchemaValidator, Serializable {
     }
 
     List<FlexibleFieldSchema.FieldType> types = field.getTypes();
-    Optional<Simple> typeSignatureOpt = TypeSignatureUtil.detectSimpleTypeSignature(data, s -> detectType(s, types),
+    var typeSignatureOpt = TypeSignatureUtil.detectSimpleTypeSignature(data, s -> detectType(s, types),
         m -> detectType(m, types));
-    if (typeSignatureOpt.isEmpty()) return null;
-    Simple typeSignature = typeSignatureOpt.get();
-    FlexibleFieldSchema.FieldType match = typeMatcher.matchType(typeSignature, types);
+    if (typeSignatureOpt.isEmpty()) {
+		return null;
+	}
+    var typeSignature = typeSignatureOpt.get();
+    var match = typeMatcher.matchType(typeSignature, types);
     if (match != null) {
-      Object converted = verifyAndAdjust(data, match, field, typeSignature.getArrayDepth(), errors);
+      var converted = verifyAndAdjust(data, match, field, typeSignature.getArrayDepth(), errors);
       return ImmutablePair.of(FlexibleSchemaHelper.getCombinedName(field, match), converted);
     } else {
       errors.notice("Cannot match field data [%s] onto schema field [%s], hence field is ignored [table=%s]",
@@ -158,7 +170,7 @@ public class FlexibleSchemaValidator implements SchemaValidator, Serializable {
       FlexibleFieldSchema.Field field,
       ErrorCollector errors) {
     if (TypeSignatureUtil.isArray(data)) {
-      Collection<Object> col = TypeSignatureUtil.array2Collection(data);
+      var col = TypeSignatureUtil.array2Collection(data);
       List<Object> result = new ArrayList<>(col.size());
       for (Object o : col) {
         if (o == null) {
@@ -177,8 +189,8 @@ public class FlexibleSchemaValidator implements SchemaValidator, Serializable {
           return verifyAndAdjust((Map) data, (RelationType) type, errors);
         } else if ((singletonField=FlexibleTypeMatcher.getSingletonBasicField(
             (RelationType<Field>) type)).isPresent()) { //Singleton nested field
-          Field nestedField = singletonField.get();
-          FlexibleFieldSchema.FieldType nestedFieldType = nestedField.getTypes().get(0); //there's only one
+          var nestedField = singletonField.get();
+          var nestedFieldType = nestedField.getTypes().get(0); //there's only one
           Map<Name, Object> result = new HashMap<>(1);
           result.put(FlexibleSchemaHelper.getCombinedName(nestedField, nestedFieldType),
               verifyAndAdjust(data, nestedFieldType, nestedField, 0, errors));
@@ -230,7 +242,7 @@ public class FlexibleSchemaValidator implements SchemaValidator, Serializable {
   private Object deepenArray(Object data, int additionalDepth) {
 //    Preconditions.checkNotNull(data);
 //    Preconditions.checkNotNull(additionalDepth >= 0);
-    for (int i = 0; i < additionalDepth; i++) {
+    for (var i = 0; i < additionalDepth; i++) {
       data = Collections.singletonList(data);
     }
     return data;

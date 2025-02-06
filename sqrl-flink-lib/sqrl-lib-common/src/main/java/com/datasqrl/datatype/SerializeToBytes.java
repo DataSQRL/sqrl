@@ -1,11 +1,12 @@
 package com.datasqrl.datatype;
 
-import lombok.SneakyThrows;
 import org.apache.flink.api.common.typeutils.TypeSerializer;
 import org.apache.flink.core.memory.DataOutputSerializer;
 import org.apache.flink.table.annotation.DataTypeHint;
 import org.apache.flink.table.annotation.InputGroup;
 import org.apache.flink.table.functions.ScalarFunction;
+
+import lombok.SneakyThrows;
 
 /**
  * Converts an annotated data type to

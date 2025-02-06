@@ -3,12 +3,17 @@
  */
 package com.datasqrl.schema.type.basic;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import lombok.NonNull;
 import org.apache.commons.lang3.tuple.Pair;
+
+import lombok.NonNull;
 
 public class BasicTypeManager {
 
@@ -22,7 +27,7 @@ public class BasicTypeManager {
   };
 
   public static final Map<Class, BasicType<?>> JAVA_TO_TYPE = Arrays.stream(ALL_TYPES).flatMap(t -> {
-    Stream<Class> classes = t.conversion().getJavaTypes().stream();
+    var classes = t.conversion().getJavaTypes().stream();
     Stream<Pair<Class, BasicType>> s = classes.map(c -> Pair.of(c, t));
     return s;
   }).collect(Collectors.toUnmodifiableMap(Pair::getKey, Pair::getValue));
@@ -41,7 +46,7 @@ public class BasicTypeManager {
         if (smaller.compareTo(larger) < 0) {
           //See what the distances are from casting directly from one type to the other
           BasicType combinedType = null;
-          int combinedDistance = Integer.MAX_VALUE;
+          var combinedDistance = Integer.MAX_VALUE;
           Optional<Integer> smaller2Larger = larger.conversion().getTypeDistance(smaller);
           Optional<Integer> larger2Smaller = smaller.conversion().getTypeDistance(larger);
           if (smaller2Larger.isPresent() || larger2Smaller.isPresent()) {
@@ -78,7 +83,7 @@ public class BasicTypeManager {
   public static Optional<BasicType> combine(@NonNull BasicType t1, @NonNull BasicType t2,
       int maxTypeDistance) {
     Pair<BasicType, BasicType> key;
-    int comp = t1.compareTo(t2);
+    var comp = t1.compareTo(t2);
     if (comp == 0) {
       return Optional.of(t1);
     } else if (comp < 0) {
@@ -87,7 +92,7 @@ public class BasicTypeManager {
       key = Pair.of(t2, t1);
     }
 
-    Pair<BasicType, Integer> combination = TYPE_COMBINATION_MATRIX.get(key);
+    var combination = TYPE_COMBINATION_MATRIX.get(key);
     assert combination
         != null; //Otherwise the pre-computation is flawed since we can always cast to string
     if (combination.getValue() <= maxTypeDistance) {

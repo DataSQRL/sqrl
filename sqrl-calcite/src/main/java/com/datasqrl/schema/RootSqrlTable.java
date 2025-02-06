@@ -1,17 +1,20 @@
 package com.datasqrl.schema;
 
-import com.datasqrl.calcite.function.SqrlTableMacro;
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.schema.Relationship.JoinType;
 import java.util.List;
 import java.util.function.Supplier;
-import lombok.Getter;
+
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.schema.Table;
+
+import com.datasqrl.calcite.function.SqrlTableMacro;
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.schema.Relationship.JoinType;
+
+import lombok.Getter;
 
 @Getter
 public class RootSqrlTable implements SqrlTableMacro {

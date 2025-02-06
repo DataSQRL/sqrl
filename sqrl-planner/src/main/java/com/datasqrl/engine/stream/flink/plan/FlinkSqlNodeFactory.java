@@ -1,22 +1,39 @@
 package com.datasqrl.engine.stream.flink.plan;
 
-import com.datasqrl.calcite.schema.sql.SqlDataTypeSpecBuilder;
-import com.datasqrl.config.TableConfig.MetadataEntry;
-import com.datasqrl.sql.SqlCallRewriter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 import org.apache.calcite.avatica.util.TimeUnit;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.sql.*;
+import org.apache.calcite.sql.SqlBasicCall;
+import org.apache.calcite.sql.SqlCall;
+import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlIntervalQualifier;
+import org.apache.calcite.sql.SqlLiteral;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.flink.sql.parser.ddl.*;
+import org.apache.flink.sql.parser.ddl.SqlCreateFunction;
+import org.apache.flink.sql.parser.ddl.SqlCreateTable;
+import org.apache.flink.sql.parser.ddl.SqlCreateView;
+import org.apache.flink.sql.parser.ddl.SqlTableColumn;
+import org.apache.flink.sql.parser.ddl.SqlTableOption;
+import org.apache.flink.sql.parser.ddl.SqlWatermark;
 import org.apache.flink.sql.parser.ddl.constraint.SqlConstraintEnforcement;
 import org.apache.flink.sql.parser.ddl.constraint.SqlTableConstraint;
 import org.apache.flink.sql.parser.ddl.constraint.SqlUniqueSpec;
 import org.apache.flink.sql.parser.dml.RichSqlInsert;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import com.datasqrl.calcite.schema.sql.SqlDataTypeSpecBuilder;
+import com.datasqrl.config.TableConfig.MetadataEntry;
+import com.datasqrl.sql.SqlCallRewriter;
 
 public class FlinkSqlNodeFactory {
 
@@ -90,8 +107,8 @@ public class FlinkSqlNodeFactory {
   }
 
   public static SqlTableConstraint createPrimaryKeyConstraint(List<String> primaryKey) {
-    SqlLiteral pk = SqlUniqueSpec.PRIMARY_KEY.symbol(SqlParserPos.ZERO);
-    SqlNodeList pkColumns = new SqlNodeList(
+    var pk = SqlUniqueSpec.PRIMARY_KEY.symbol(SqlParserPos.ZERO);
+    var pkColumns = new SqlNodeList(
         primaryKey.stream()
             .map(FlinkSqlNodeFactory::identifier)
             .collect(Collectors.toList()),
@@ -140,10 +157,10 @@ public class FlinkSqlNodeFactory {
       Map<String, Object> connectorProperties,
       MetadataExpressionParser expressionParser) {
 
-    SqlNodeList partitionKeysNode = partitionKeys
+    var partitionKeysNode = partitionKeys
         .map(FlinkSqlNodeFactory::createPartitionKeys)
         .orElse(SqlNodeList.EMPTY);
-    SqlWatermark watermark = timestampColumn
+    var watermark = timestampColumn
         .filter(ts -> watermarkMillis >= 0)
         .map(ts -> createWatermark(ts, watermarkMillis))
         .orElse(null);
@@ -163,7 +180,7 @@ public class FlinkSqlNodeFactory {
   }
 
   private static SqlWatermark createWatermark(String ts, long watermarkMillis) {
-    SqlIdentifier eventTimeColumn = FlinkSqlNodeFactory.identifier(ts);
+    var eventTimeColumn = FlinkSqlNodeFactory.identifier(ts);
     return FlinkSqlNodeFactory.createWatermark(
         eventTimeColumn,
         FlinkSqlNodeFactory.boundedStrategy(eventTimeColumn, Double.toString(watermarkMillis / 1000d))
@@ -172,20 +189,20 @@ public class FlinkSqlNodeFactory {
 
   private static SqlNodeList createColumns(RelDataType relDataType, Map<String, MetadataEntry> metadataConfig,
       MetadataExpressionParser expressionParser) {
-    List<RelDataTypeField> fieldList = relDataType.getFieldList();
+    var fieldList = relDataType.getFieldList();
     if (fieldList.isEmpty()) {
       return SqlNodeList.EMPTY;
     }
     List<SqlNode> nodes = new ArrayList<>();
 
     for (RelDataTypeField column : fieldList) {
-      String columnName = column.getName();
+      var columnName = column.getName();
       SqlNode node;
 
       if (metadataConfig.containsKey(columnName)) {
-        MetadataEntry metadataEntry = metadataConfig.get(columnName);
-        Optional<String> attribute = metadataEntry.getAttribute();
-        Optional<Boolean> isVirtual = metadataEntry.getVirtual();
+        var metadataEntry = metadataConfig.get(columnName);
+        var attribute = metadataEntry.getAttribute();
+        var isVirtual = metadataEntry.getVirtual();
         SqlNode metadataFnc;
 
         if (attribute.isEmpty()) {
@@ -236,7 +253,7 @@ public class FlinkSqlNodeFactory {
     if (primaryKey.isEmpty()) {
       return Collections.emptyList();
     }
-    SqlTableConstraint pkConstraint = FlinkSqlNodeFactory.createPrimaryKeyConstraint(primaryKey);
+    var pkConstraint = FlinkSqlNodeFactory.createPrimaryKeyConstraint(primaryKey);
     return Collections.singletonList(pkConstraint);
   }
 

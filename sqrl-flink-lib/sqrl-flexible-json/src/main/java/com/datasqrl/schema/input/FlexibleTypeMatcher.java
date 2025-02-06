@@ -1,15 +1,17 @@
 package com.datasqrl.schema.input;
 
-import com.datasqrl.schema.input.FlexibleFieldSchema.FieldType;
-import com.datasqrl.schema.type.Type;
-import com.datasqrl.schema.type.basic.BasicType;
-import com.datasqrl.schema.type.basic.BasicTypeManager;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+
 import org.apache.commons.lang3.tuple.Pair;
+
+import com.datasqrl.schema.input.FlexibleFieldSchema.FieldType;
+import com.datasqrl.schema.type.Type;
+import com.datasqrl.schema.type.basic.BasicType;
+import com.datasqrl.schema.type.basic.BasicTypeManager;
 
 public class FlexibleTypeMatcher implements Serializable {
 
@@ -47,7 +49,7 @@ public class FlexibleTypeMatcher implements Serializable {
         //TODO: Should we consider coercing a relation to string (as json)?
       }
     } else {
-      BasicType btype = (BasicType) type;
+      var btype = (BasicType) type;
       List<Pair<Integer, FieldType>> potentialMatches = new ArrayList<>(
           fieldTypes.size());
       for (FlexibleFieldSchema.FieldType ft : fieldTypes) {
@@ -75,9 +77,9 @@ public class FlexibleTypeMatcher implements Serializable {
 
   static Optional<FlexibleTableSchema.Field> getSingletonBasicField(RelationType<FlexibleTableSchema.Field> relationType) {
     if (relationType.fields.size()==1) {
-      FlexibleTableSchema.Field field = relationType.fields.get(0);
+      var field = relationType.fields.get(0);
       if (field.getTypes().size()==1) {
-        FlexibleFieldSchema.FieldType fieldType = field.getTypes().get(0);
+        var fieldType = field.getTypes().get(0);
         if (fieldType.getArrayDepth()==0 && fieldType.getType() instanceof BasicType) {
           return Optional.of(field);
         }

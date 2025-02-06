@@ -6,6 +6,16 @@ package com.datasqrl.cmd;
 import static com.datasqrl.config.ScriptConfigImpl.GRAPHQL_NORMALIZED_FILE_NAME;
 import static com.datasqrl.packager.Packager.PACKAGE_JSON;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.apache.calcite.jdbc.SqrlSchema;
+
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.compile.CompilationProcess;
@@ -27,21 +37,9 @@ import com.datasqrl.packager.repository.RemoteRepositoryImplementation;
 import com.datasqrl.packager.repository.Repository;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.google.inject.Guice;
-import com.google.inject.Injector;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
+
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.calcite.jdbc.SqrlSchema;
-import org.apache.commons.lang3.tuple.Pair;
 import picocli.CommandLine;
 
 @Slf4j
@@ -64,7 +62,8 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
       description = "An alternative set of configuration values which override the default package.json")
   protected String[] profiles = new String[0];
 
-  @SneakyThrows
+  @Override
+@SneakyThrows
   public void execute(ErrorCollector errors) {
     execute(errors, profiles, targetDir.resolve("snapshots"),
         Optional.empty(), ExecutionGoal.COMPILE);
@@ -72,13 +71,13 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
 
   public void execute(ErrorCollector errors, String[] profiles, Path snapshotPath, Optional<Path> testsPath,
       ExecutionGoal goal) {
-    Repository repository = createRepository(errors);
+    var repository = createRepository(errors);
 
-    PackageBootstrap packageBootstrap = new PackageBootstrap(repository, errors);
-    PackageJson sqrlConfig = packageBootstrap.bootstrap(root.rootDir, this.root.packageFiles,
+    var packageBootstrap = new PackageBootstrap(repository, errors);
+    var sqrlConfig = packageBootstrap.bootstrap(root.rootDir, this.root.packageFiles,
         profiles, this.files);
 
-    Optional<String> snapshotPathConf = sqrlConfig.getCompilerConfig()
+    var snapshotPathConf = sqrlConfig.getCompilerConfig()
         .getSnapshotPath();
     if (snapshotPathConf.isEmpty()) {
       sqrlConfig.getCompilerConfig()
@@ -94,20 +93,20 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     DirectoryManager.prepareTargetDirectory(getTargetDir());
     errors.checkFatal(Files.isDirectory(root.rootDir), "Not a valid root directory: %s", root.rootDir);
 
-    Injector injector = Guice.createInjector(
+    var injector = Guice.createInjector(
         new SqrlInjector(errors, root.rootDir, getTargetDir(), sqrlConfig, getGoal(), repository),
         new StatefulModule(new SqrlSchema(new TypeFactory(), NameCanonicalizer.SYSTEM)));
 
-    Packager packager = injector.getInstance(Packager.class);
+    var packager = injector.getInstance(Packager.class);
     packager.preprocess(errors.withLocation(ErrorPrefix.CONFIG.resolve(PACKAGE_JSON)));
     if (errors.hasErrors()) {
       return;
     }
 
-    CompilationProcess compilationProcess = injector.getInstance(CompilationProcess.class);
+    var compilationProcess = injector.getInstance(CompilationProcess.class);
     testsPath.ifPresent(this::validateTestPath);
 
-    Pair<PhysicalPlan, TestPlan> plan = compilationProcess.executeCompilation(testsPath);
+    var plan = compilationProcess.executeCompilation(testsPath);
 
     if (errors.hasErrors()) {
       return;
@@ -162,10 +161,10 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   }
 
   protected Repository createRepository(ErrorCollector errors) {
-    LocalRepositoryImplementation localRepo = LocalRepositoryImplementation.of(errors,
+    var localRepo = LocalRepositoryImplementation.of(errors,
         root.rootDir);
     //TODO: read remote repository URLs from configuration?
-    RemoteRepositoryImplementation remoteRepo = new RemoteRepositoryImplementation();
+    var remoteRepo = new RemoteRepositoryImplementation();
     remoteRepo.setCacheRepository(localRepo);
     return new CompositeRepositoryImpl(List.of(localRepo, remoteRepo));
   }

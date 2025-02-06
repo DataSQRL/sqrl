@@ -1,7 +1,8 @@
 package com.datasqrl.config;
 
-import com.datasqrl.error.ErrorCollector;
 import java.util.Optional;
+
+import com.datasqrl.error.ErrorCollector;
 
 public interface Dependency {
 

@@ -19,16 +19,18 @@ import static com.datasqrl.time.TimeFunctions.TIMESTAMP_TO_EPOCH;
 import static com.datasqrl.time.TimeFunctions.TIMESTAMP_TO_EPOCH_MILLI;
 import static com.datasqrl.time.TimeFunctions.TIMESTAMP_TO_STRING;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.apache.commons.collections.ListUtils;
+import org.apache.flink.table.functions.FunctionDefinition;
+
 import com.datasqrl.NamespaceObjectUtil;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.function.AbstractFunctionModule;
 import com.datasqrl.function.StdLibrary;
 import com.datasqrl.module.NamespaceObject;
 import com.google.auto.service.AutoService;
-import java.util.List;
-import java.util.stream.Collectors;
-import org.apache.commons.collections.ListUtils;
-import org.apache.flink.table.functions.FunctionDefinition;
 
 @AutoService(StdLibrary.class)
 public class StdTimeLibraryImpl extends AbstractFunctionModule implements StdLibrary {
@@ -69,7 +71,8 @@ public class StdTimeLibraryImpl extends AbstractFunctionModule implements StdLib
     super(ListUtils.union(SQRL_FUNCTIONS.stream().map(NamespaceObjectUtil::createNsObject).collect(Collectors.toList()),SQL_FUNCTIONS));
   }
 
-  public NamePath getPath() {
+  @Override
+public NamePath getPath() {
     return LIB_NAME;
   }
 

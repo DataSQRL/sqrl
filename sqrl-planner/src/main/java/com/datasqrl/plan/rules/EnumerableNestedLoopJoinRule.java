@@ -3,6 +3,9 @@
  */
 package com.datasqrl.plan.rules;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.calcite.adapter.enumerable.EnumerableConvention;
 import org.apache.calcite.adapter.enumerable.EnumerableNestedLoopJoin;
 import org.apache.calcite.plan.Convention;
@@ -10,9 +13,6 @@ import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.convert.ConverterRule;
 import org.apache.calcite.rel.logical.LogicalJoin;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Additional join rule for Enumerable to make sure that NestedLoopJoin is scored in the cost model
@@ -43,7 +43,7 @@ public class EnumerableNestedLoopJoinRule extends ConverterRule {
 
   @Override
   public RelNode convert(RelNode rel) {
-    LogicalJoin join = (LogicalJoin) rel;
+    var join = (LogicalJoin) rel;
     List<RelNode> newInputs = new ArrayList<>();
     for (RelNode input : join.getInputs()) {
       if (!(input.getConvention() instanceof EnumerableConvention)) {
@@ -55,8 +55,8 @@ public class EnumerableNestedLoopJoinRule extends ConverterRule {
       }
       newInputs.add(input);
     }
-    final RelNode left = newInputs.getFirst();
-    final RelNode right = newInputs.get(1);
+    final var left = newInputs.getFirst();
+    final var right = newInputs.get(1);
 
     return EnumerableNestedLoopJoin.create(
         left,

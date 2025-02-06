@@ -1,15 +1,27 @@
 package com.datasqrl.loaders;
 
 
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import org.apache.flink.table.functions.UserDefinedFunction;
+
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.config.ExternalDataType;
 import com.datasqrl.config.PackageJson;
+import com.datasqrl.config.TableConfig;
 import com.datasqrl.config.TableConfigLoader;
 import com.datasqrl.engine.log.LogManager;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.function.FlinkUdfNsObject;
-import com.datasqrl.config.ExternalDataType;
-import com.datasqrl.config.TableConfig;
 import com.datasqrl.io.tables.TableSchema;
 import com.datasqrl.io.tables.TableSchemaFactory;
 import com.datasqrl.io.tables.TableSink;
@@ -25,20 +37,8 @@ import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.StringUtil;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Preconditions;
-import java.io.File;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.Optional;
-import java.util.function.Predicate;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
+
 import lombok.SneakyThrows;
-import org.apache.commons.io.IOUtils;
-import org.apache.flink.table.functions.UserDefinedFunction;
 
 public class ObjectLoaderImpl implements ObjectLoader {
 
@@ -74,12 +74,12 @@ public class ObjectLoaderImpl implements ObjectLoader {
   @Override
   public Optional<SqrlModule> load(NamePath directory) {
     //Folders take precedence
-    List<Path> allItems = resourceResolver.loadPath(directory);
+    var allItems = resourceResolver.loadPath(directory);
 
     //Check for sqrl scripts
     if (allItems.isEmpty()) {
-      Optional<Path> graphqlFile = getFile(directory, Name.system(directory.getLast().toString() + ".graphqls"));
-      Optional<Path> sqrlFile = getFile(directory, Name.system(directory.getLast().toString() + ".sqrl"));
+      var graphqlFile = getFile(directory, Name.system(directory.getLast().toString() + ".graphqls"));
+      var sqrlFile = getFile(directory, Name.system(directory.getLast().toString() + ".sqrl"));
 
       // Note: Graphql files are awkwardly loaded as an exceptional thing, so try to skip it if its there
       if (sqrlFile.isPresent() && graphqlFile.isEmpty()) {

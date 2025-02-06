@@ -1,9 +1,12 @@
 package com.datasqrl.format;
 
-import com.datasqrl.io.tables.SchemaValidator;
 import java.util.Map;
-import lombok.SneakyThrows;
+
 import org.apache.flink.api.common.serialization.DeserializationSchema;
+
+import com.datasqrl.io.tables.SchemaValidator;
+
+import lombok.SneakyThrows;
 
 public class JsonFlexibleSchemaDelegate extends FlexibleSchemaDelegate {
 

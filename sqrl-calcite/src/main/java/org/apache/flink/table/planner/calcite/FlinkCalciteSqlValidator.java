@@ -18,16 +18,14 @@
 
 package org.apache.flink.table.planner.calcite;
 
+import static org.apache.calcite.sql.type.SqlTypeName.DECIMAL;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Optional;
+
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptTable;
-import org.apache.calcite.sql.validate.SqlValidatorImpl;
-import org.apache.calcite.tools.FrameworkConfig;
-import org.apache.flink.annotation.Internal;
-import org.apache.flink.table.api.ValidationException;
-import org.apache.flink.table.api.config.TableConfigOptions;
-import org.apache.flink.table.planner.utils.ShortcutUtils;
-import org.apache.flink.table.types.logical.DecimalType;
-
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.sql.JoinType;
@@ -42,14 +40,13 @@ import org.apache.calcite.sql.SqlUtil;
 import org.apache.calcite.sql.SqlWindowTableFunction;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqlValidatorCatalogReader;
+import org.apache.calcite.sql.validate.SqlValidatorImpl;
 import org.apache.calcite.sql.validate.SqlValidatorScope;
+import org.apache.calcite.tools.FrameworkConfig;
 import org.apache.calcite.util.Static;
-
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Optional;
-
-import static org.apache.calcite.sql.type.SqlTypeName.DECIMAL;
+import org.apache.flink.annotation.Internal;
+import org.apache.flink.table.api.ValidationException;
+import org.apache.flink.table.types.logical.DecimalType;
 
 /** Extends Calcite's {@link SqlValidator} by Flink-specific behavior. */
 //Sqrl: remove final
@@ -100,7 +97,7 @@ public class FlinkCalciteSqlValidator extends SqlValidatorImpl {
     @Override
     public void validateLiteral(SqlLiteral literal) {
         if (literal.getTypeName() == DECIMAL) {
-            final BigDecimal decimal = literal.getValueAs(BigDecimal.class);
+            final var decimal = literal.getValueAs(BigDecimal.class);
             if (decimal.precision() > DecimalType.MAX_PRECISION) {
                 throw newValidationError(
                         literal, Static.RESOURCE.numberLiteralOutOfRange(decimal.toString()));
@@ -116,16 +113,15 @@ public class FlinkCalciteSqlValidator extends SqlValidatorImpl {
         if (join.getJoinType() == JoinType.LEFT
                 && SqlUtil.stripAs(join.getRight()).getKind() == SqlKind.COLLECTION_TABLE) {
             SqlNode right = SqlUtil.stripAs(join.getRight());
-            if (right instanceof SqlBasicCall) {
-                SqlBasicCall call = (SqlBasicCall) right;
-                SqlNode operand0 = call.operand(0);
+            if (right instanceof SqlBasicCall call) {
+                var operand0 = call.operand(0);
                 if (operand0 instanceof SqlBasicCall
                         && ((SqlBasicCall) operand0).getOperator()
                                 instanceof SqlWindowTableFunction) {
                     return;
                 }
             }
-            final SqlNode condition = join.getCondition();
+            final var condition = join.getCondition();
             if (condition != null
                     && (!SqlUtil.isLiteral(condition)
                             || ((SqlLiteral) condition).getValueAs(Boolean.class)

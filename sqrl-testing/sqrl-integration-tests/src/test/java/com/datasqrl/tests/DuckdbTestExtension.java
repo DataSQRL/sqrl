@@ -3,6 +3,7 @@ package com.datasqrl.tests;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+
 import lombok.SneakyThrows;
 
 public class DuckdbTestExtension implements TestExtension {

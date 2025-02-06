@@ -3,12 +3,14 @@
  */
 package com.datasqrl.schema.constraint;
 
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.schema.type.ArrayType;
-import com.datasqrl.schema.type.Type;
 import java.util.Map;
 import java.util.Optional;
+
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.schema.type.ArrayType;
+import com.datasqrl.schema.type.Type;
+
 import lombok.Getter;
 
 @Getter
@@ -77,10 +79,10 @@ public class Cardinality implements Constraint {
 
     @Override
     public Optional<Constraint> create(Map<String, Object> parameters, ErrorCollector errors) {
-      long[] minmax = new long[2];
-      for (int i = 0; i < minmax.length; i++) {
-        Object value = parameters.get(KEYS[i]);
-        Optional<Long> v = getInt(value);
+      var minmax = new long[2];
+      for (var i = 0; i < minmax.length; i++) {
+        var value = parameters.get(KEYS[i]);
+        var v = getInt(value);
         if (v.isEmpty()) {
           errors.fatal("Invalid integer value [%s] for key [%s]", value, KEYS[i]);
           return Optional.empty();

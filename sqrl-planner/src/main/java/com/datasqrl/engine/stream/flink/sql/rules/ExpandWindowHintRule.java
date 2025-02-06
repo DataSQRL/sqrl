@@ -1,13 +1,6 @@
 package com.datasqrl.engine.stream.flink.sql.rules;
 
 
-import com.datasqrl.plan.hints.SlidingAggregationHint;
-import com.datasqrl.plan.hints.SqrlHint;
-import com.datasqrl.plan.hints.TumbleAggregationHint;
-import com.datasqrl.util.CalciteUtil;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
-import com.google.common.primitives.Ints;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -19,7 +12,6 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.AggregateCall;
 import org.apache.calcite.rel.core.RelFactories;
 import org.apache.calcite.rel.logical.LogicalAggregate;
-import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.logical.LogicalTableFunctionScan;
 import org.apache.calcite.rel.rules.TransformationRule;
 import org.apache.calcite.rel.type.RelDataType;
@@ -32,6 +24,14 @@ import org.apache.commons.collections.ListUtils;
 import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
 import org.immutables.value.Value;
 
+import com.datasqrl.plan.hints.SlidingAggregationHint;
+import com.datasqrl.plan.hints.SqrlHint;
+import com.datasqrl.plan.hints.TumbleAggregationHint;
+import com.datasqrl.util.CalciteUtil;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
+import com.google.common.primitives.Ints;
+
 public class ExpandWindowHintRule extends RelRule<ExpandWindowHintRule.Config>
     implements TransformationRule {
 
@@ -41,9 +41,9 @@ public class ExpandWindowHintRule extends RelRule<ExpandWindowHintRule.Config>
 
   @Override
   public void onMatch(RelOptRuleCall relOptRuleCall) {
-    RelBuilder relBuilder = relOptRuleCall.builder();
-    LogicalAggregate aggregate = relOptRuleCall.rel(0);
-    RelNode input = relOptRuleCall.rel(1);
+    var relBuilder = relOptRuleCall.builder();
+    var aggregate = relOptRuleCall.rel(0);
+    var input = relOptRuleCall.rel(1);
     Optional<TumbleAggregationHint> tumbleHintOpt = SqrlHint.fromRel(aggregate,
         TumbleAggregationHint.CONSTRUCTOR);
     Optional<SlidingAggregationHint> slideHintOpt = SqrlHint.fromRel(aggregate,
@@ -52,8 +52,8 @@ public class ExpandWindowHintRule extends RelRule<ExpandWindowHintRule.Config>
       return;
     }
 
-    ImmutableBitSet groupBy = Iterables.getOnlyElement(aggregate.groupSets);
-    List<AggregateCall> aggCalls = aggregate.getAggCallList();
+    var groupBy = Iterables.getOnlyElement(aggregate.groupSets);
+    var aggCalls = aggregate.getAggCallList();
 
     if (tumbleHintOpt.isPresent() || slideHintOpt.isPresent()) {
       handleWindowedAggregation(relBuilder, tumbleHintOpt, slideHintOpt, groupBy, aggCalls, input);
@@ -65,12 +65,12 @@ public class ExpandWindowHintRule extends RelRule<ExpandWindowHintRule.Config>
       Optional<TumbleAggregationHint> tumbleHintOpt, Optional<SlidingAggregationHint> slideHintOpt,
       ImmutableBitSet groupBy, List<AggregateCall> aggCalls, RelNode input) {
     Preconditions.checkArgument(tumbleHintOpt.isPresent() ^ slideHintOpt.isPresent());
-    RexBuilder rexBuilder = getRexBuilder(relBuilder);
-    int inputFieldCount = input.getRowType().getFieldCount();
-    RelDataType inputType = input.getRowType();
+    var rexBuilder = getRexBuilder(relBuilder);
+    var inputFieldCount = input.getRowType().getFieldCount();
+    var inputType = input.getRowType();
 
     final int timestampIdx = tumbleHintOpt
-        .map(tumbleHint -> tumbleHint.getWindowFunctionIdx())
+        .map(TumbleAggregationHint::getWindowFunctionIdx)
         .orElseGet(() -> slideHintOpt.get().getTimestampIdx());
 
     tumbleHintOpt.ifPresentOrElse(
@@ -94,8 +94,8 @@ public class ExpandWindowHintRule extends RelRule<ExpandWindowHintRule.Config>
     List<Integer> groupByIdx = new ArrayList<>();
     List<Integer> projectIdx = new ArrayList<>();
     List<String> projectNames = new ArrayList<>();
-    int index = 0;
-    int window_time_idx =
+    var index = 0;
+    var window_time_idx =
         (groupBy.cardinality() - 1) + 3 - 1; //Points at window_time at the end of groupByIdx
     for (int idx : groupBy.asList()) {
       if (idx == timestampIdx) {
@@ -113,7 +113,7 @@ public class ExpandWindowHintRule extends RelRule<ExpandWindowHintRule.Config>
     index += 3;
     assert window_time_idx == index - 1;
 
-    for (int i = 0; i < aggCalls.size(); i++) {
+    for (var i = 0; i < aggCalls.size(); i++) {
       projectIdx.add(index++);
       projectNames.add(null);
     }
@@ -143,7 +143,7 @@ public class ExpandWindowHintRule extends RelRule<ExpandWindowHintRule.Config>
   private void handleSlidingWindow(int timestampIdx, SlidingAggregationHint slideHint,
       RelNode input, RelBuilder relBuilder) {
     relBuilder.push(input);
-    long[] intervalsMs = new long[]{slideHint.getSlideWidthMs(), slideHint.getIntervalWidthMs()};
+    var intervalsMs = new long[]{slideHint.getSlideWidthMs(), slideHint.getIntervalWidthMs()};
     SqlOperator windowFunction = FlinkSqlOperatorTable.HOP;
     makeWindow(relBuilder, windowFunction, timestampIdx, intervalsMs);
   }
@@ -157,15 +157,15 @@ public class ExpandWindowHintRule extends RelRule<ExpandWindowHintRule.Config>
   private RelBuilder makeWindow(RelBuilder relBuilder, SqlOperator operator,
       int timestampIdx, long[] intervalsMs) {
     Preconditions.checkArgument(intervalsMs != null && intervalsMs.length > 0);
-    RexBuilder rexBuilder = getRexBuilder(relBuilder);
-    RelNode input = relBuilder.peek();
+    var rexBuilder = getRexBuilder(relBuilder);
+    var input = relBuilder.peek();
 
-    List<RexNode> operandList = createOperandList(rexBuilder, input, timestampIdx, intervalsMs);
+    var operandList = createOperandList(rexBuilder, input, timestampIdx, intervalsMs);
 
     //this window functions adds 3 columns to end of relation: window_start/_end/_time
     //TODO: This should actually be a COLLECTION_TABLE + a call to tumble function
     relBuilder.functionScan(FlinkSqlOperatorTable.TUMBLE, 1, operandList);
-    LogicalTableFunctionScan tfs = (LogicalTableFunctionScan) relBuilder.build();
+    var tfs = (LogicalTableFunctionScan) relBuilder.build();
 
     //Flink expects an inputref for the last column of the original relation as the first operand
     operandList = ListUtils.union(

@@ -1,12 +1,13 @@
 package com.datasqrl.packager.repository;
 
-import com.datasqrl.config.Dependency;
-import lombok.AllArgsConstructor;
-
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+
+import com.datasqrl.config.Dependency;
+
+import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class CompositeRepositoryImpl implements Repository {
@@ -16,7 +17,9 @@ public class CompositeRepositoryImpl implements Repository {
     @Override
     public boolean retrieveDependency(Path targetPath, Dependency dependency) throws IOException {
         for (Repository rep: repositories) {
-            if (rep.retrieveDependency(targetPath, dependency)) return true;
+            if (rep.retrieveDependency(targetPath, dependency)) {
+				return true;
+			}
         }
         return false;
     }

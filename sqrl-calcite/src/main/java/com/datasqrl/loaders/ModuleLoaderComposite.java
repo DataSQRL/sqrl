@@ -1,9 +1,11 @@
 package com.datasqrl.loaders;
 
-import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.module.SqrlModule;
 import java.util.List;
 import java.util.Optional;
+
+import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.module.SqrlModule;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Singular;
@@ -20,7 +22,7 @@ public class ModuleLoaderComposite implements ModuleLoader {
   @Override
   public Optional<SqrlModule> getModule(NamePath namePath) {
     for (ModuleLoader loader : moduleLoaders) {
-      Optional<SqrlModule> module = loader.getModule(namePath);
+      var module = loader.getModule(namePath);
       if (module.isPresent()) {
         return module;
       }

@@ -3,10 +3,11 @@
  */
 package com.datasqrl.schema.type.basic;
 
-import com.datasqrl.error.ErrorCollector;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+
+import com.datasqrl.error.ErrorCollector;
 
 public interface TypeConversion<T> {
 

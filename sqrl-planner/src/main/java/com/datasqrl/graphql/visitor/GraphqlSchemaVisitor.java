@@ -3,7 +3,53 @@
  */
 package com.datasqrl.graphql.visitor;
 
-import graphql.language.*;
+import graphql.language.Argument;
+import graphql.language.ArrayValue;
+import graphql.language.BooleanValue;
+import graphql.language.Definition;
+import graphql.language.Directive;
+import graphql.language.DirectiveDefinition;
+import graphql.language.DirectiveLocation;
+import graphql.language.Document;
+import graphql.language.EnumTypeDefinition;
+import graphql.language.EnumTypeExtensionDefinition;
+import graphql.language.EnumValue;
+import graphql.language.EnumValueDefinition;
+import graphql.language.Field;
+import graphql.language.FieldDefinition;
+import graphql.language.FloatValue;
+import graphql.language.FragmentDefinition;
+import graphql.language.FragmentSpread;
+import graphql.language.InlineFragment;
+import graphql.language.InputObjectTypeDefinition;
+import graphql.language.InputObjectTypeExtensionDefinition;
+import graphql.language.InputValueDefinition;
+import graphql.language.IntValue;
+import graphql.language.InterfaceTypeDefinition;
+import graphql.language.InterfaceTypeExtensionDefinition;
+import graphql.language.ListType;
+import graphql.language.NonNullType;
+import graphql.language.NullValue;
+import graphql.language.ObjectField;
+import graphql.language.ObjectTypeDefinition;
+import graphql.language.ObjectTypeExtensionDefinition;
+import graphql.language.ObjectValue;
+import graphql.language.OperationDefinition;
+import graphql.language.OperationTypeDefinition;
+import graphql.language.ScalarTypeDefinition;
+import graphql.language.ScalarTypeExtensionDefinition;
+import graphql.language.SchemaDefinition;
+import graphql.language.SchemaExtensionDefinition;
+import graphql.language.Selection;
+import graphql.language.SelectionSet;
+import graphql.language.StringValue;
+import graphql.language.Type;
+import graphql.language.TypeName;
+import graphql.language.UnionTypeDefinition;
+import graphql.language.UnionTypeExtensionDefinition;
+import graphql.language.Value;
+import graphql.language.VariableDefinition;
+import graphql.language.VariableReference;
 
 //Todo break up into multiple per tree
 public abstract class GraphqlSchemaVisitor<R, C> implements
@@ -269,176 +315,219 @@ public abstract class GraphqlSchemaVisitor<R, C> implements
 //    throw new RuntimeException("Unknown graphql node");
 //  }
 
-  public R visitArgument(Argument node, C context) {
+  @Override
+public R visitArgument(Argument node, C context) {
     return null;
   }
 
-  public R visitArrayValue(ArrayValue node, C context) {
+  @Override
+public R visitArrayValue(ArrayValue node, C context) {
     return null;
   }
 
-  public R visitBooleanValue(BooleanValue node, C context) {
+  @Override
+public R visitBooleanValue(BooleanValue node, C context) {
     return null;
   }
 
-  public R visitDirective(Directive node, C context) {
+  @Override
+public R visitDirective(Directive node, C context) {
     return null;
   }
 
-  public R visitDirectiveDefinition(DirectiveDefinition node, C context) {
+  @Override
+public R visitDirectiveDefinition(DirectiveDefinition node, C context) {
     return null;
   }
 
-  public R visitDirectiveLocation(DirectiveLocation node, C context) {
+  @Override
+public R visitDirectiveLocation(DirectiveLocation node, C context) {
     return null;
   }
 
-  public R visitDocument(Document node, C context) {
+  @Override
+public R visitDocument(Document node, C context) {
     return null;
   }
 
-  public R visitEnumTypeDefinition(EnumTypeDefinition node, C context) {
+  @Override
+public R visitEnumTypeDefinition(EnumTypeDefinition node, C context) {
     return null;
   }
 
-  public R visitEnumTypeExtensionDefinition(EnumTypeExtensionDefinition node, C context) {
+  @Override
+public R visitEnumTypeExtensionDefinition(EnumTypeExtensionDefinition node, C context) {
     return null;
   }
 
-  public R visitEnumValue(EnumValue node, C context) {
+  @Override
+public R visitEnumValue(EnumValue node, C context) {
     return null;
   }
 
-  public R visitEnumValueDefinition(EnumValueDefinition node, C context) {
+  @Override
+public R visitEnumValueDefinition(EnumValueDefinition node, C context) {
     return null;
   }
 
-  public R visitField(Field node, C context) {
+  @Override
+public R visitField(Field node, C context) {
     return null;
   }
 
-  public R visitFieldDefinition(FieldDefinition node, C context) {
+  @Override
+public R visitFieldDefinition(FieldDefinition node, C context) {
     return null;
   }
 
-  public R visitFloatValue(FloatValue node, C context) {
+  @Override
+public R visitFloatValue(FloatValue node, C context) {
     return null;
   }
 
-  public R visitFragmentDefinition(FragmentDefinition node, C context) {
+  @Override
+public R visitFragmentDefinition(FragmentDefinition node, C context) {
     return null;
   }
 
-  public R visitFragmentSpread(FragmentSpread node, C context) {
+  @Override
+public R visitFragmentSpread(FragmentSpread node, C context) {
     return null;
   }
 
-  public R visitInlineFragment(InlineFragment node, C context) {
+  @Override
+public R visitInlineFragment(InlineFragment node, C context) {
     return null;
   }
 
-  public R visitInputObjectTypeDefinition(InputObjectTypeDefinition node, C context) {
+  @Override
+public R visitInputObjectTypeDefinition(InputObjectTypeDefinition node, C context) {
     return null;
   }
 
-  public R visitInputObjectTypeExtensionDefinition(InputObjectTypeExtensionDefinition node,
+  @Override
+public R visitInputObjectTypeExtensionDefinition(InputObjectTypeExtensionDefinition node,
       C context) {
     return null;
   }
 
-  public R visitInputValueDefinition(InputValueDefinition node, C context) {
+  @Override
+public R visitInputValueDefinition(InputValueDefinition node, C context) {
     return null;
   }
 
-  public R visitIntValue(IntValue node, C context) {
+  @Override
+public R visitIntValue(IntValue node, C context) {
     return null;
   }
 
-  public R visitInterfaceTypeDefinition(InterfaceTypeDefinition node, C context) {
+  @Override
+public R visitInterfaceTypeDefinition(InterfaceTypeDefinition node, C context) {
     return null;
   }
 
-  public R visitInterfaceTypeExtensionDefinition(InterfaceTypeExtensionDefinition node, C context) {
+  @Override
+public R visitInterfaceTypeExtensionDefinition(InterfaceTypeExtensionDefinition node, C context) {
     return null;
   }
 
-  public R visitListType(ListType node, C context) {
+  @Override
+public R visitListType(ListType node, C context) {
     return null;
   }
 
-  public R visitNonNullType(NonNullType node, C context) {
+  @Override
+public R visitNonNullType(NonNullType node, C context) {
     return null;
   }
 
-  public R visitNullValue(NullValue node, C context) {
+  @Override
+public R visitNullValue(NullValue node, C context) {
     return null;
   }
 
-  public R visitObjectField(ObjectField node, C context) {
+  @Override
+public R visitObjectField(ObjectField node, C context) {
     return null;
   }
 
-  public R visitObjectTypeDefinition(ObjectTypeDefinition node, C context) {
+  @Override
+public R visitObjectTypeDefinition(ObjectTypeDefinition node, C context) {
     return null;
   }
 
-  public R visitObjectTypeExtensionDefinition(ObjectTypeExtensionDefinition node, C context) {
+  @Override
+public R visitObjectTypeExtensionDefinition(ObjectTypeExtensionDefinition node, C context) {
     return null;
   }
 
-  public R visitObjectValue(ObjectValue node, C context) {
+  @Override
+public R visitObjectValue(ObjectValue node, C context) {
     return null;
   }
 
-  public R visitOperationDefinition(OperationDefinition node, C context) {
+  @Override
+public R visitOperationDefinition(OperationDefinition node, C context) {
     return null;
   }
 
-  public R visitOperationTypeDefinition(OperationTypeDefinition node, C context) {
+  @Override
+public R visitOperationTypeDefinition(OperationTypeDefinition node, C context) {
     return null;
   }
 
-  public R visitScalarTypeDefinition(ScalarTypeDefinition node, C context) {
+  @Override
+public R visitScalarTypeDefinition(ScalarTypeDefinition node, C context) {
     return null;
   }
 
-  public R visitScalarTypeExtensionDefinition(ScalarTypeExtensionDefinition node, C context) {
+  @Override
+public R visitScalarTypeExtensionDefinition(ScalarTypeExtensionDefinition node, C context) {
     return null;
   }
 
-  public R visitSchemaDefinition(SchemaDefinition node, C context) {
+  @Override
+public R visitSchemaDefinition(SchemaDefinition node, C context) {
     return null;
   }
 
-  public R visitSchemaExtensionDefinition(SchemaExtensionDefinition node, C context) {
+  @Override
+public R visitSchemaExtensionDefinition(SchemaExtensionDefinition node, C context) {
     return null;
   }
 
-  public R visitSelectionSet(SelectionSet node, C context) {
+  @Override
+public R visitSelectionSet(SelectionSet node, C context) {
     return null;
   }
 
-  public R visitStringValue(StringValue node, C context) {
+  @Override
+public R visitStringValue(StringValue node, C context) {
     return null;
   }
 
-  public R visitTypeName(TypeName node, C context) {
+  @Override
+public R visitTypeName(TypeName node, C context) {
     return null;
   }
 
-  public R visitUnionTypeDefinition(UnionTypeDefinition node, C context) {
+  @Override
+public R visitUnionTypeDefinition(UnionTypeDefinition node, C context) {
     return null;
   }
 
-  public R visitUnionTypeExtensionDefinition(UnionTypeExtensionDefinition node, C context) {
+  @Override
+public R visitUnionTypeExtensionDefinition(UnionTypeExtensionDefinition node, C context) {
     return null;
   }
 
-  public R visitVariableDefinition(VariableDefinition node, C context) {
+  @Override
+public R visitVariableDefinition(VariableDefinition node, C context) {
     return null;
   }
 
-  public R visitVariableReference(VariableReference node, C context) {
+  @Override
+public R visitVariableReference(VariableReference node, C context) {
     return null;
   }
 }

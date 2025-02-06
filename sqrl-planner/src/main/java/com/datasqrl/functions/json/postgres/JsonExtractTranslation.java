@@ -3,25 +3,20 @@ package com.datasqrl.functions.json.postgres;
 import static com.datasqrl.function.CalciteFunctionUtil.lightweightOp;
 import static com.datasqrl.function.PgSpecificOperatorTable.JsonToString;
 
-import com.datasqrl.calcite.Dialect;
-import com.datasqrl.calcite.convert.SimpleCallTransform;
-import com.datasqrl.calcite.convert.SimpleCallTransform.SimpleCallTransformConfig;
-import com.datasqrl.calcite.function.RuleTransform;
-import com.datasqrl.calcite.type.TypeFactory;
-import com.google.auto.service.AutoService;
 import java.util.ArrayList;
 import java.util.List;
+
 import org.apache.calcite.plan.RelRule;
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlFunction;
-import org.apache.calcite.sql.SqlJsonEmptyOrError;
-import org.apache.calcite.sql.SqlJsonValueEmptyOrErrorBehavior;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.type.SqlTypeName;
+
+import com.datasqrl.calcite.Dialect;
+import com.datasqrl.calcite.convert.SimpleCallTransform.SimpleCallTransformConfig;
+import com.datasqrl.calcite.function.RuleTransform;
+import com.google.auto.service.AutoService;
 
 /**
  * Extracts a scalar value based on a JSON path.
@@ -50,11 +45,11 @@ public class JsonExtractTranslation implements RuleTransform {
       List<RexNode> operands = new ArrayList<>(call.getOperands());
       if (call.getOperands().size() == 3 && call.getOperands().get(2).getType().getSqlTypeName() != SqlTypeName.NULL) {
 
-        RexNode query = rexBuilder.getRexBuilder().makeCall(
+        var query = rexBuilder.getRexBuilder().makeCall(
             rexBuilder.getRexBuilder().getTypeFactory().createSqlType(SqlTypeName.ANY),
             PG_JSONB_PATH_QUERY_FIRST, operands.subList(0, 2));
 
-        RelDataType type = call.getOperands().get(2).getType();
+        var type = call.getOperands().get(2).getType();
 
         // Strings would otherwise come back as quoted strings unless we cast to string with the jsonb function
         RexNode op1ToType;
@@ -65,13 +60,13 @@ public class JsonExtractTranslation implements RuleTransform {
           op1ToType = rexBuilder.getRexBuilder().makeCast(type, query, true);
         }
 
-        RexNode defaultValue = call.getOperands().get(2);
+        var defaultValue = call.getOperands().get(2);
 
         return rexBuilder.getRexBuilder().makeCall(rexBuilder.getRexBuilder().getTypeFactory().createSqlType(SqlTypeName.ANY),
             SqlStdOperatorTable.COALESCE, List.of(op1ToType, defaultValue));
       }
 
-      RexNode query = rexBuilder.getRexBuilder().makeCall(
+      var query = rexBuilder.getRexBuilder().makeCall(
           rexBuilder.getRexBuilder().getTypeFactory().createSqlType(SqlTypeName.ANY),
           PG_JSONB_PATH_QUERY_FIRST, operands.subList(0, 2));
       return rexBuilder.getRexBuilder().makeCall(JsonToString, query,

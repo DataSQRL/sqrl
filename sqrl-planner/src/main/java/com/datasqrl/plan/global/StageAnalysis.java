@@ -1,16 +1,18 @@
 package com.datasqrl.plan.global;
 
-import com.datasqrl.engine.EngineFeature;
+import java.util.Collection;
+
+import org.apache.calcite.rel.RelNode;
+
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.rules.ComputeCost;
 import com.datasqrl.plan.rules.EngineCapability;
 import com.datasqrl.plan.rules.ExecutionAnalysis.CapabilityException;
-import java.util.Collection;
+
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Value;
-import org.apache.calcite.rel.RelNode;
 
 @Getter
 @AllArgsConstructor
@@ -66,7 +68,7 @@ public abstract class StageAnalysis {
       return new Cost(super.getStage(), cost, false, relNode);
     }
 
-  };
+  }
 
 
 

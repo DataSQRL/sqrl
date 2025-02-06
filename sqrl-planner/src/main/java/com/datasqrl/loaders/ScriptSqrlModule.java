@@ -1,22 +1,25 @@
 package com.datasqrl.loaders;
 
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.apache.calcite.jdbc.SqrlSchema;
+
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.engine.log.LogManager;
-import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.module.SqrlModule;
 import com.datasqrl.plan.MainScript;
 import com.datasqrl.plan.validate.ScriptPlanner;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
+
 import lombok.AllArgsConstructor;
-import org.apache.calcite.jdbc.SqrlSchema;
 
 @AllArgsConstructor
 public class ScriptSqrlModule implements SqrlModule {
@@ -46,13 +49,13 @@ public class ScriptSqrlModule implements SqrlModule {
       ErrorCollector errors) {
     // Construct a new schema (et al) and plan script. store schema here. When importing a name, pull from schema
 
-    SqrlSchema schema = new SqrlSchema(framework.getTypeFactory(), framework.getNameCanonicalizer());
+    var schema = new SqrlSchema(framework.getTypeFactory(), framework.getNameCanonicalizer());
     this.schema = Optional.of(schema);
 
-    SqrlFramework newFramework = new SqrlFramework(framework.getRelMetadataProvider(),
+    var newFramework = new SqrlFramework(framework.getRelMetadataProvider(),
         framework.getHintStrategyTable(), framework.getNameCanonicalizer(), schema,
         Optional.of(framework.getQueryPlanner()));
-    ScriptPlanner newPlanner = new ScriptPlanner(newFramework, moduleLoader, errors,
+    var newPlanner = new ScriptPlanner(newFramework, moduleLoader, errors,
         planner.getExecutionGoal(), planner.getTableFactory(), sqrlConfig, planner.getNameUtil(),
         planner.getConnectorFactoryFactory(), logManager, planner.getCreateTableResolver());
 

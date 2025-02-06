@@ -1,5 +1,10 @@
 package com.datasqrl.actions;
 
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
@@ -19,6 +24,7 @@ import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.util.SqlNameUtil;
 import com.google.inject.Inject;
+
 import graphql.language.FieldDefinition;
 import graphql.language.ObjectTypeDefinition;
 import graphql.language.ScalarTypeDefinition;
@@ -30,9 +36,6 @@ import graphql.schema.idl.TypeDefinitionRegistry;
 import graphql.schema.idl.UnExecutableSchemaGenerator;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
-
-import java.nio.file.Path;
-import java.util.*;
 
 /**
  * Creates new table functions from the GraphQL schema.
@@ -65,20 +68,20 @@ public class InferGraphqlSchema {
       return Optional.empty();
     }
 
-    SchemaPrinter.Options opts = createSchemaPrinterOptions();
-    Optional<APISource> apiSource = getApiSource(opts);
+    var opts = createSchemaPrinterOptions();
+    var apiSource = getApiSource(opts);
 
     if (apiSource.isEmpty()) {
       return handleNoApiSource(opts);
     }
 
-    APISource apiSchema = apiSource.get();
+    var apiSchema = apiSource.get();
 
     if (goal == ExecutionGoal.TEST) {
       apiSchema = mergeTestSchema(apiSchema, opts, testsPath);
     }
 
-    ErrorCollector apiErrors = setErrorCollectorSchema(apiSchema, errorCollector);
+    var apiErrors = setErrorCollectorSchema(apiSchema, errorCollector);
 
     try {
       validateAndGenerateQueries(apiSchema, apiErrors);
@@ -121,7 +124,7 @@ public class InferGraphqlSchema {
           .map(schemaString -> new APISourceImpl(Name.system("<schema>"), schemaString));
 
       if (apiSource.isPresent()) {
-        ErrorCollector errors = setErrorCollectorSchema(apiSource.get(), errorCollector);
+        var errors = setErrorCollectorSchema(apiSource.get(), errorCollector);
         validateAndGenerateQueries(apiSource.get(), errors);
       }
     }
@@ -163,8 +166,8 @@ public class InferGraphqlSchema {
 
   // Merges the Query types from schemaDef and testDef
   private ObjectTypeDefinition mergeQueryType(TypeDefinitionRegistry schemaDef, TypeDefinitionRegistry testDef, Optional<Path> testsPath) {
-    ObjectTypeDefinition schemaQuery = (ObjectTypeDefinition) schemaDef.getType("Query").get();
-    ObjectTypeDefinition testQuery = (ObjectTypeDefinition) testDef.getType("Query").get();
+    var schemaQuery = (ObjectTypeDefinition) schemaDef.getType("Query").get();
+    var testQuery = (ObjectTypeDefinition) testDef.getType("Query").get();
 
     List<FieldDefinition> mergedFields = new ArrayList<>();
 
@@ -197,10 +200,10 @@ public class InferGraphqlSchema {
 
   // Validates the schema and generates queries and subscriptions
   private void validateAndGenerateQueries(APISource apiSchema, ErrorCollector apiErrors) {
-    GraphqlSchemaValidator schemaValidator = new GraphqlSchemaValidator(framework, apiManager);
+    var schemaValidator = new GraphqlSchemaValidator(framework, apiManager);
     schemaValidator.validate(apiSchema, apiErrors);
 
-    GraphqlQueryGenerator queryGenerator = new GraphqlQueryGenerator(
+    var queryGenerator = new GraphqlQueryGenerator(
         framework.getCatalogReader().nameMatcher(),
         framework.getSchema(),
         new GraphqlQueryBuilder(framework, apiManager, new SqlNameUtil(NameCanonicalizer.SYSTEM)),
@@ -213,7 +216,7 @@ public class InferGraphqlSchema {
     queryGenerator.getQueries().forEach(apiManager::addQuery);
 
     // Add subscriptions to apiManager
-    final APISource source = apiSchema;
+    final var source = apiSchema;
     queryGenerator.getSubscriptions().forEach(subscription ->
         apiManager.addSubscription(
             new APISubscription(subscription.getAbsolutePath().getFirst(), source), subscription)

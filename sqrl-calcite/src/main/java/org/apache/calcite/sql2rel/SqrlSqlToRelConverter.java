@@ -20,20 +20,20 @@ package org.apache.calcite.sql2rel;
 
 import static com.datasqrl.util.ReflectionUtil.invokeSuperPrivateMethod;
 
-import com.datasqrl.plan.hints.JoinModifierHint;
 import java.util.List;
+
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptTable.ViewExpander;
 import org.apache.calcite.plan.RelOptUtil;
 import org.apache.calcite.prepare.Prepare.CatalogReader;
-import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.hint.RelHint;
 import org.apache.calcite.rel.logical.LogicalValues;
 import org.apache.calcite.sql.JoinModifier;
 import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.tools.RelBuilder;
+
+import com.datasqrl.plan.hints.JoinModifierHint;
 
 @SuppressWarnings("UnstableApiUsage")
 public class SqrlSqlToRelConverter extends SqlToRelConverter {
@@ -50,7 +50,8 @@ public class SqrlSqlToRelConverter extends SqlToRelConverter {
             .transform(config.getRelBuilderConfigTransform());
   }
 
-  protected void convertFrom(Blackboard bb, SqlNode from, List<String> fieldNames) {
+  @Override
+protected void convertFrom(Blackboard bb, SqlNode from, List<String> fieldNames) {
     if (from == null) {
       bb.setRoot(LogicalValues.createOneRow(cluster), false);
       return;
@@ -58,15 +59,15 @@ public class SqrlSqlToRelConverter extends SqlToRelConverter {
 
     switch (from.getKind()) {
       case JOIN:
-        SqlJoin from1 = (SqlJoin) from;
+        var from1 = (SqlJoin) from;
         invokeSuperPrivateMethod(this, "convertJoin",
               List.of(Blackboard.class, SqlJoin.class), bb, from1);
 
         // Sqrl: Add hint
         if (from1.getModifier() != null) {
-          RelHint hint = new JoinModifierHint(JoinModifier.valueOf(from1.getModifier().toValue()))
+          var hint = new JoinModifierHint(JoinModifier.valueOf(from1.getModifier().toValue()))
               .getHint();
-          RelNode joinRel = relBuilder.push(bb.root)
+          var joinRel = relBuilder.push(bb.root)
               .hints(hint)
               .build();
           RelOptUtil.propagateRelHints(joinRel, false);

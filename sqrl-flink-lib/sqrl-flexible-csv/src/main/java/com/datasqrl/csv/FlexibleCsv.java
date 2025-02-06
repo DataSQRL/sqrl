@@ -2,7 +2,7 @@ package com.datasqrl.csv;
 
 import java.io.IOException;
 import java.util.Set;
-import lombok.SneakyThrows;
+
 import org.apache.flink.api.common.serialization.DeserializationSchema;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.configuration.ConfigOption;
@@ -18,7 +18,8 @@ import org.apache.flink.table.factories.DeserializationFormatFactory;
 import org.apache.flink.table.factories.DynamicTableFactory;
 import org.apache.flink.table.factories.FactoryUtil;
 import org.apache.flink.table.types.DataType;
-import org.apache.flink.util.Collector;
+
+import lombok.SneakyThrows;
 
 public class FlexibleCsv implements DeserializationFormatFactory {
   final CsvFormatFactory csvJson;
@@ -37,7 +38,7 @@ public class FlexibleCsv implements DeserializationFormatFactory {
         (ProjectableDecodingFormat)csvJson.createDecodingFormat(
         factoryContext, formatOptions);
 
-    return new ProjectableDecodingFormat<DeserializationSchema<RowData>>() {
+    return new ProjectableDecodingFormat<>() {
       @SneakyThrows
       @Override
       public DeserializationSchema<RowData> createRuntimeDecoder(DynamicTableSource.Context context,

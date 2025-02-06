@@ -4,6 +4,7 @@
 package com.datasqrl.canonicalizer;
 
 import java.util.Locale;
+
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 

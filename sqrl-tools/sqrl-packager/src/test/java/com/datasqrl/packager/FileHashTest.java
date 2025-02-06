@@ -3,15 +3,17 @@
  */
 package com.datasqrl.packager;
 
-import com.datasqrl.packager.util.FileHash;
-import lombok.SneakyThrows;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.InputStream;
 import java.nio.file.Path;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+
+import com.datasqrl.packager.util.FileHash;
+
+import lombok.SneakyThrows;
 
 @Disabled
 public class FileHashTest {

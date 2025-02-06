@@ -3,17 +3,17 @@
  */
 package com.datasqrl.config;
 
-import static com.datasqrl.config.DependenciesConfigImpl.PKG_NAME_KEY;
 import static com.datasqrl.config.DependenciesConfigImpl.VARIANT_KEY;
 import static com.datasqrl.config.SqrlConfig.VERSION_KEY;
 
+import java.util.Optional;
+
 import com.datasqrl.error.ErrorCollector;
 import com.google.common.base.Strings;
-import java.util.Optional;
+
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter

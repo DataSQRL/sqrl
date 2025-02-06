@@ -2,20 +2,15 @@ package com.datasqrl.cmd;
 
 import static com.datasqrl.packager.Packager.DEFAULT_PACKAGE;
 
-import com.datasqrl.config.PackageConfiguration;
-import com.datasqrl.config.PackageJsonImpl;
-import com.datasqrl.config.SqrlConfigCommons;
+import java.io.IOException;
+import java.nio.file.Files;
+
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.error.NotYetImplementedException;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.packager.Publisher;
 import com.datasqrl.packager.repository.LocalRepositoryImplementation;
 import com.datasqrl.packager.repository.RemoteRepositoryImplementation;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.Optional;
+
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
@@ -28,25 +23,25 @@ public class PublishCommand extends AbstractCommand {
 
   @Override
   protected void execute(ErrorCollector errors) throws IOException {
-    Path packageRoot = root.rootDir;
-    Optional<List<Path>> packageConfigsOpt = Packager.findPackageFile(root.rootDir,
+    var packageRoot = root.rootDir;
+    var packageConfigsOpt = Packager.findPackageFile(root.rootDir,
         root.packageFiles);
     errors.checkFatal(packageConfigsOpt.isPresent(),
         "Directory does not contain [%s] package configuration file", Packager.PACKAGE_JSON);
-    List<Path> packageconfigs = packageConfigsOpt.get();
-    Path defaultPkgConfig = packageRoot.resolve(DEFAULT_PACKAGE);
+    var packageconfigs = packageConfigsOpt.get();
+    var defaultPkgConfig = packageRoot.resolve(DEFAULT_PACKAGE);
 
-    LocalRepositoryImplementation localRepo = LocalRepositoryImplementation.of(errors,
+    var localRepo = LocalRepositoryImplementation.of(errors,
         root.rootDir);
-    Publisher publisher = new Publisher(errors);
+    var publisher = new Publisher(errors);
 
     errors.checkFatal(packageconfigs.size() == 1 && Files.isSameFile(defaultPkgConfig,
         packageconfigs.getFirst()), "Expecting a single package.json file for the package to be published");
 
-    PackageConfiguration pkgConfig = publisher.publish(packageRoot, localRepo);
+    var pkgConfig = publisher.publish(packageRoot, localRepo);
     if (!toLocal) {
-      Path cachedPath = localRepo.getZipFilePath(pkgConfig.asDependency());
-      RemoteRepositoryImplementation remoteRepo = new RemoteRepositoryImplementation();
+      var cachedPath = localRepo.getZipFilePath(pkgConfig.asDependency());
+      var remoteRepo = new RemoteRepositoryImplementation();
       if (remoteRepo.publish(cachedPath, pkgConfig)) {
         log.info("Successfully published package [{}] to remote repository",
             pkgConfig.asDependency());

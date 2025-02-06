@@ -3,10 +3,11 @@
  */
 package com.datasqrl.plan.util;
 
-import com.google.common.base.Preconditions;
-import lombok.AllArgsConstructor;
-import lombok.NonNull;
-import lombok.Value;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.apache.calcite.rel.RelCollation;
 import org.apache.calcite.rel.RelCollations;
 import org.apache.calcite.rel.type.RelDataType;
@@ -15,10 +16,11 @@ import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import com.google.common.base.Preconditions;
+
+import lombok.AllArgsConstructor;
+import lombok.NonNull;
+import lombok.Value;
 
 @FunctionalInterface
 public interface IndexMap {
@@ -35,7 +37,7 @@ public interface IndexMap {
   int mapUnsafe(int index);
 
   default int map(int index) {
-    int target = mapUnsafe(index);
+    var target = mapUnsafe(index);
     Preconditions.checkArgument(target>=0, "Invalid index: %s",  index);
     return target;
   }
@@ -61,7 +63,7 @@ public interface IndexMap {
 
     @Override
     public RexNode visitInputRef(RexInputRef input) {
-      int inputIdx = map.map(input.getIndex());
+      var inputIdx = map.map(input.getIndex());
       Preconditions.checkArgument(inputIdx>=0 && inputIdx < inputFields.size());
       return new RexInputRef(inputIdx, inputFields.get(inputIdx).getType());
     }
@@ -76,24 +78,24 @@ public interface IndexMap {
 
   static IndexMap of(final Map<Integer, Integer> mapping) {
     return idx -> {
-      Integer map = mapping.get(idx);
+      var map = mapping.get(idx);
       return map!=null?map:-1;
     };
   }
 
   static IndexMap of (final List<Integer> references) {
     final Map<Integer,Integer> mapping = new HashMap<>();
-    for (int target = 0; target < references.size(); target++) {
+    for (var target = 0; target < references.size(); target++) {
       int source = references.get(target);
-      if (source>=0) mapping.putIfAbsent(source,target);
+      if (source>=0) {
+		mapping.putIfAbsent(source,target);
+	}
     }
     return of(mapping);
   }
 
   static IndexMap singleton(final int source, final int target) {
-    return idx -> {
-      return idx==source?target:-1;
-    };
+    return idx -> (idx==source?target:-1);
   }
 
 }

@@ -1,5 +1,10 @@
 package com.datasqrl.engine.log.postgres;
 
+import java.util.List;
+import java.util.Optional;
+
+import org.apache.calcite.rel.type.RelDataType;
+
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.config.ConnectorFactory.IConnectorFactoryContext;
 import com.datasqrl.config.TableConfig;
@@ -9,11 +14,8 @@ import com.datasqrl.io.tables.TableSinkImpl;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.plan.table.RelDataTypeTableSchema;
 import com.google.common.base.Preconditions;
-import java.util.List;
-import java.util.Optional;
-import lombok.AllArgsConstructor;
+
 import lombok.Getter;
-import org.apache.calcite.rel.type.RelDataType;
 
 @Getter
 public class PostgresTable implements Log {

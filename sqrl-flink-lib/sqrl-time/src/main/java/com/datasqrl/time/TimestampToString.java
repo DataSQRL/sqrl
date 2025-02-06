@@ -1,11 +1,13 @@
 package com.datasqrl.time;
 
-import com.datasqrl.function.FlinkTypeUtil;
 import java.time.Instant;
+
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.table.types.inference.TypeInference;
+
+import com.datasqrl.function.FlinkTypeUtil;
 
 /**
  * Converts the timestamp to an ISO timestamp string

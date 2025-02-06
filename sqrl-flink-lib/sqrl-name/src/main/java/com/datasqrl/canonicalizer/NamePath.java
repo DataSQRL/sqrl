@@ -6,6 +6,7 @@ package com.datasqrl.canonicalizer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+
 import lombok.NonNull;
 
 public final class NamePath extends AbstractPath<Name, NamePath> {
@@ -28,7 +29,7 @@ public final class NamePath extends AbstractPath<Name, NamePath> {
 
   public String getDisplay() {
     return Arrays.stream(elements)
-        .map(e -> e.getDisplay())
+        .map(Name::getDisplay)
         .collect(Collectors.joining("."));
   }
 
@@ -38,7 +39,7 @@ public final class NamePath extends AbstractPath<Name, NamePath> {
 
   public List<String> toStringList() {
     return Arrays.stream(this.elements)
-        .map(n->n.getDisplay())
+        .map(Name::getDisplay)
         .collect(Collectors.toList());
   }
 

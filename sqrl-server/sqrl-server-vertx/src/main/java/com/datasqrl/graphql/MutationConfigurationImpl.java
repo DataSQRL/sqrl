@@ -5,6 +5,15 @@ import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
 import static org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG;
 import static org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG;
 
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.UUID;
+
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.io.SinkProducer;
@@ -17,23 +26,13 @@ import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoordsVisitor;
 import com.datasqrl.graphql.server.RootGraphqlModel.PostgresLogMutationCoords;
 import com.google.common.base.Preconditions;
+
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.handler.graphql.schema.VertxDataFetcher;
 import io.vertx.kafka.client.producer.KafkaProducer;
-import io.vertx.sqlclient.PreparedQuery;
-import io.vertx.sqlclient.Row;
-import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -56,29 +55,28 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
       public DataFetcher<?> visit(KafkaMutationCoords coords, Context context) {
         Map<String, SinkProducer> sinks = new HashMap<>();
         for (MutationCoords mut : root.getMutations()) {
-          KafkaMutationCoords kafkaMut = (KafkaMutationCoords) mut;
+          var kafkaMut = (KafkaMutationCoords) mut;
           KafkaProducer<String, String> producer = KafkaProducer.create(vertx, getSinkConfig());
           KafkaSinkProducer sinkProducer = new KafkaSinkProducer<>(kafkaMut.getTopic(), producer);
           sinks.put(mut.getFieldName(), sinkProducer);
         }
 
-        SinkProducer emitter = sinks.get(coords.getFieldName());
+        var emitter = sinks.get(coords.getFieldName());
 
         Preconditions.checkNotNull(emitter, "Could not find sink for field: %s", coords.getFieldName());
         return VertxDataFetcher.create((env, fut) -> {
 
-          Map entry = getEntry(env);
+          var entry = getEntry(env);
 
           emitter.send(entry)
               .onSuccess(sinkResult->{
                 //Add timestamp from sink to result
-                ZonedDateTime dateTime = ZonedDateTime.ofInstant(sinkResult.getSourceTime(), ZoneOffset.UTC);
+                var dateTime = ZonedDateTime.ofInstant(sinkResult.getSourceTime(), ZoneOffset.UTC);
                 entry.put(ReservedName.MUTATION_TIME.getCanonical(), dateTime.toOffsetDateTime());
 
                 fut.complete(entry);
               })
-              .onFailure((m)->
-                  fut.fail(m)
+              .onFailure(m -> fut.fail(m)
               );
         });
       }
@@ -86,13 +84,13 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
       @Override
       public DataFetcher<?> visit(PostgresLogMutationCoords coords, Context context) {
         return VertxDataFetcher.create((env, fut) -> {
-          Map entry = getEntry(env);
+          var entry = getEntry(env);
           entry.put("event_time", Timestamp.from(Instant.now())); // TODO: better to do it in the db
 
-          Object[] paramObj = new Object[coords.getParameters().size()];
-          for (int i = 0; i < coords.getParameters().size(); i++) {
-            String param = coords.getParameters().get(i);
-            Object o = entry.get(param);
+          var paramObj = new Object[coords.getParameters().size()];
+          for (var i = 0; i < coords.getParameters().size(); i++) {
+            var param = coords.getParameters().get(i);
+            var o = entry.get(param);
             if (o instanceof UUID) {
               o = ((UUID)o).toString();
             } else if (o instanceof Timestamp) {
@@ -101,9 +99,9 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
             paramObj[i] = o;
           }
 
-          String insertStatement = coords.getInsertStatement();
+          var insertStatement = coords.getInsertStatement();
 
-          PreparedQuery<RowSet<Row>> preparedQuery = ((VertxJdbcClient) context.getClient())
+          var preparedQuery = ((VertxJdbcClient) context.getClient())
               .getClients().get("postgres")
               .preparedQuery(insertStatement);
           preparedQuery.execute(Tuple.from(paramObj))
@@ -118,13 +116,13 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
     //Rules:
     //- Only one argument is allowed, it doesn't matter the name
     //- input argument cannot be null.
-    Map<String, Object> args = env.getArguments();
+    var args = env.getArguments();
 
-    Map entry = (Map)args.entrySet().stream()
+    var entry = (Map)args.entrySet().stream()
         .findFirst().map(Entry::getValue).get();
 
     //Add UUID for event
-    UUID uuid = UUID.randomUUID();
+    var uuid = UUID.randomUUID();
     entry.put(ReservedName.MUTATION_PRIMARY_KEY.getDisplay(), uuid);
     return entry;
   }

@@ -1,8 +1,10 @@
 package com.datasqrl.cmd;
 
+import java.io.IOException;
+
 import com.datasqrl.auth.AuthProvider;
 import com.datasqrl.error.ErrorCollector;
-import java.io.IOException;
+
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
@@ -12,7 +14,7 @@ public class LoginCommand extends AbstractCommand {
 
   @Override
   protected void execute(ErrorCollector errors) throws IOException {
-    AuthProvider authProvider = new AuthProvider();
+    var authProvider = new AuthProvider();
     authProvider.loginToRepository();
     log.info("Login successful.");
   }

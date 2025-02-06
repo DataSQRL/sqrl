@@ -3,11 +3,11 @@
  */
 package com.datasqrl.schema.type.basic;
 
-import com.datasqrl.schema.type.SqrlTypeVisitor;
-
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+
+import com.datasqrl.schema.type.SqrlTypeVisitor;
 
 public class IntervalType extends AbstractBasicType<Duration> {
 
@@ -29,7 +29,8 @@ public class IntervalType extends AbstractBasicType<Duration> {
       super(Duration.class, s -> Duration.ofMillis(Long.parseLong(s)));
     }
 
-    public Duration convert(Object o) {
+    @Override
+	public Duration convert(Object o) {
       if (o instanceof Duration) {
         return (Duration) o;
       }
@@ -52,7 +53,8 @@ public class IntervalType extends AbstractBasicType<Duration> {
     }
   }
 
-  public <R, C> R accept(SqrlTypeVisitor<R, C> visitor, C context) {
+  @Override
+public <R, C> R accept(SqrlTypeVisitor<R, C> visitor, C context) {
     return visitor.visitIntervalType(this, context);
   }
 }

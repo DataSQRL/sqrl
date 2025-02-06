@@ -3,10 +3,11 @@
  */
 package com.datasqrl.plan.global;
 
-import com.datasqrl.function.IndexType;
 import java.util.EnumSet;
 import java.util.Optional;
 import java.util.Set;
+
+import com.datasqrl.function.IndexType;
 
 public interface IndexSelectorConfig {
 
@@ -68,7 +69,9 @@ public interface IndexSelectorConfig {
 
   default IndexType getPreferredGenericIndexType() {
     for (IndexType type : PREFERRED_GENERIC_INDEX) {
-      if (supportedIndexTypes().contains(type)) return type;
+      if (supportedIndexTypes().contains(type)) {
+		return type;
+	}
     }
     throw new IllegalStateException("Does not support any preferred generic indexes");
   }

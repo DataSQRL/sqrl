@@ -1,13 +1,13 @@
 package com.datasqrl.format;
 
-import com.datasqrl.json.FlinkJsonType;
 import org.apache.flink.formats.common.TimestampFormat;
 import org.apache.flink.formats.json.JsonFormatOptions.MapNullKeyMode;
 import org.apache.flink.formats.json.RowDataToJsonConverters;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.flink.table.data.binary.BinaryRawValueData;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.RawType;
+
+import com.datasqrl.json.FlinkJsonType;
 
 public class SqrlRowDataToJsonConverters extends RowDataToJsonConverters {
 
@@ -23,7 +23,7 @@ public class SqrlRowDataToJsonConverters extends RowDataToJsonConverters {
     switch (type.getTypeRoot()) {
       case RAW:
         //sqrl add raw type
-        RawType rawType = (RawType) type;
+        var rawType = (RawType) type;
         if (rawType.getOriginatingClass() == FlinkJsonType.class) {
           return createJsonConverter((RawType) type);
         }
@@ -37,8 +37,8 @@ public class SqrlRowDataToJsonConverters extends RowDataToJsonConverters {
       if (value == null) {
         return null;
       }
-      BinaryRawValueData binaryRawValueData = (BinaryRawValueData) value;
-      FlinkJsonType o = (FlinkJsonType)binaryRawValueData.toObject(type.getTypeSerializer());
+      var binaryRawValueData = (BinaryRawValueData) value;
+      var o = (FlinkJsonType)binaryRawValueData.toObject(type.getTypeSerializer());
       if (o == null) {
         return null;
       }

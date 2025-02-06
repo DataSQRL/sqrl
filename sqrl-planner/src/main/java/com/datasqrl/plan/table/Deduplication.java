@@ -3,13 +3,14 @@
  */
 package com.datasqrl.plan.table;
 
-import com.datasqrl.plan.util.IndexMap;
-import lombok.Value;
-import org.apache.calcite.rex.RexBuilder;
-import org.apache.calcite.tools.RelBuilder;
-
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.apache.calcite.tools.RelBuilder;
+
+import com.datasqrl.plan.util.IndexMap;
+
+import lombok.Value;
 
 @Value
 public class Deduplication implements PullupOperator {
@@ -33,12 +34,12 @@ public class Deduplication implements PullupOperator {
     }
     List<Integer> newPartition = partitionByIndexes.stream().map(i -> map.map(i))
         .collect(Collectors.toList());
-    int newTimestampIndex = map.map(timestampIndex);
+    var newTimestampIndex = map.map(timestampIndex);
     return new Deduplication(newPartition, newTimestampIndex);
   }
 
   public RelBuilder addDedup(RelBuilder relBuilder) {
-    RexBuilder rexB = relBuilder.getRexBuilder();
+    var rexB = relBuilder.getRexBuilder();
     throw new UnsupportedOperationException("Not yet implemented");
   }
 

@@ -3,14 +3,16 @@
  */
 package com.datasqrl.error;
 
-import com.datasqrl.error.ErrorLocation.FileLocation;
-import com.datasqrl.error.ErrorLocation.FileRange;
-import com.datasqrl.error.ErrorMessage.Implementation;
-import com.datasqrl.error.ErrorMessage.Severity;
 import java.io.Serializable;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.Iterator;
+
+import com.datasqrl.error.ErrorLocation.FileLocation;
+import com.datasqrl.error.ErrorLocation.FileRange;
+import com.datasqrl.error.ErrorMessage.Implementation;
+import com.datasqrl.error.ErrorMessage.Severity;
+
 import lombok.Getter;
 import lombok.NonNull;
 
@@ -162,7 +164,9 @@ public class ErrorCollector implements Iterable<ErrorMessage>, Serializable {
    */
 
   protected void addInternal(@NonNull ErrorMessage error) {
-    if (reportErrorsOnly && !error.isFatal()) return;
+    if (reportErrorsOnly && !error.isFatal()) {
+		return;
+	}
     errors.addInternal(error);
   }
 
@@ -171,7 +175,7 @@ public class ErrorCollector implements Iterable<ErrorMessage>, Serializable {
   }
 
   public void fatal(ErrorLabel label, String msg, Object... args) {
-    RuntimeException exception = exception(label, msg, args);
+    var exception = exception(label, msg, args);
     if (abortOnFatal) {
       throw exception;
     }

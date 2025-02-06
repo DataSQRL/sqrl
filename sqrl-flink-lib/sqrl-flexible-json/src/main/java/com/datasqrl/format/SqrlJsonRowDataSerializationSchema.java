@@ -17,22 +17,21 @@ package com.datasqrl.format;/*
  */
 
 
+import java.io.Serial;
+import java.util.Objects;
+
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.api.common.serialization.SerializationSchema;
 import org.apache.flink.formats.common.TimestampFormat;
 import org.apache.flink.formats.json.JsonFormatOptions;
 import org.apache.flink.formats.json.JsonRowDataDeserializationSchema;
 import org.apache.flink.formats.json.RowDataToJsonConverters;
-import org.apache.flink.table.data.RowData;
-import org.apache.flink.table.types.logical.RowType;
-import org.apache.flink.util.jackson.JacksonMapperFactory;
-
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.JsonGenerator;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ObjectNode;
-
-import java.io.Serial;
-import java.util.Objects;
+import org.apache.flink.table.data.RowData;
+import org.apache.flink.table.types.logical.RowType;
+import org.apache.flink.util.jackson.JacksonMapperFactory;
 
 /**
  * Serialization schema that serializes an object of Flink internal data structure into a JSON
@@ -121,7 +120,7 @@ public class SqrlJsonRowDataSerializationSchema implements SerializationSchema<R
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    SqrlJsonRowDataSerializationSchema that = (SqrlJsonRowDataSerializationSchema) o;
+    var that = (SqrlJsonRowDataSerializationSchema) o;
     return rowType.equals(that.rowType)
         && timestampFormat.equals(that.timestampFormat)
         && mapNullKeyMode.equals(that.mapNullKeyMode)

@@ -1,45 +1,42 @@
 package com.datasqrl.discovery.preprocessor;
 
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
+
+import org.apache.calcite.rel.type.RelDataTypeField;
+
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.ConnectorFactory;
 import com.datasqrl.config.ConnectorFactoryContext;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.SystemBuiltInConnectors;
-import com.datasqrl.config.TableConfig;
 import com.datasqrl.discovery.TableWriter;
 import com.datasqrl.discovery.file.FileCompression;
-import com.datasqrl.discovery.file.FileCompression.CompressionIO;
 import com.datasqrl.discovery.file.FilenameAnalyzer;
-import com.datasqrl.discovery.file.FilenameAnalyzer.Components;
 import com.datasqrl.discovery.file.RecordReader;
+import com.datasqrl.discovery.stats.DefaultSchemaGenerator;
+import com.datasqrl.discovery.stats.SourceTableStatistics;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.schema.flexible.FlexibleTableSchemaHolder;
 import com.datasqrl.io.schema.flexible.converters.SchemaToRelDataTypeFactory;
 import com.datasqrl.io.tables.TableSource;
-import com.datasqrl.discovery.stats.DefaultSchemaGenerator;
-import com.datasqrl.discovery.stats.SourceTableStatistics;
 import com.datasqrl.schema.input.FlexibleTableSchema;
 import com.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.google.inject.Inject;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.regex.Pattern;
-import java.util.stream.Stream;
+
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeField;
 
 /*
  * Infers the schema for json and csv files and creates a flexible schema for them
@@ -71,16 +68,20 @@ public class FlexibleSchemaInferencePreprocessor implements DiscoveryPreprocesso
       errors.warn("No connector template defined for local filesystem. Cannot run schema inference.");
       return; //Profile is missing connector for local files
     }
-    Optional<Components> match = DATA_FILES.analyze(file);
+    var match = DATA_FILES.analyze(file);
     if (match.isPresent()) {
       //1. Setup file reading
-      Components fileComponents = match.get();
-      Path parentDir = file.getParent();
-      if (parentDir==null) return;
-      if (!Name.isValidNameStrict(fileComponents.getFilename())) return;
-      Name tableName = Name.system(fileComponents.getFilename());
-      if (hasSchemaOrConfig(parentDir, tableName)) return; //Don't infer schema if it's already present
-      Optional<CompressionIO> compressor = FileCompression.of(fileComponents.getCompression());
+      var fileComponents = match.get();
+      var parentDir = file.getParent();
+      if ((parentDir==null) || !Name.isValidNameStrict(fileComponents.getFilename())) {
+		return;
+	}
+      var tableName = Name.system(fileComponents.getFilename());
+      if (hasSchemaOrConfig(parentDir, tableName))
+	 {
+		return; //Don't infer schema if it's already present
+	}
+      var compressor = FileCompression.of(fileComponents.getCompression());
       Optional<RecordReader> reader = ServiceLoaderDiscovery.findFirst(RecordReader.class,
           r -> r.getExtensions().contains(fileComponents.getExtension()));
       if (reader.isEmpty()) {
@@ -93,11 +94,11 @@ public class FlexibleSchemaInferencePreprocessor implements DiscoveryPreprocesso
       }
       //2. Compute table statistics from file records
       Optional<SourceTableStatistics> statistics;
-      try (InputStream io = compressor.get().decompress(new FileInputStream(file.toFile()))) {
-        Stream<Map<String,Object>> dataflow = reader.get().read(io);
+      try (var io = compressor.get().decompress(new FileInputStream(file.toFile()))) {
+        var dataflow = reader.get().read(io);
         statistics = dataflow.flatMap(data -> {
-          SourceTableStatistics acc = new SourceTableStatistics();
-          ErrorCollector stepErrors = ErrorCollector.root();
+          var acc = new SourceTableStatistics();
+          var stepErrors = ErrorCollector.root();
           acc.validate(data, stepErrors);
           if (!errors.isFatal()) {
             acc.add(data, null);
@@ -119,33 +120,33 @@ public class FlexibleSchemaInferencePreprocessor implements DiscoveryPreprocesso
         return; //No data
       }
       //3. Infer schema from table statistics
-      DefaultSchemaGenerator generator = new DefaultSchemaGenerator(SchemaAdjustmentSettings.DEFAULT);
+      var generator = new DefaultSchemaGenerator(SchemaAdjustmentSettings.DEFAULT);
       FlexibleTableSchema schema;
-      ErrorCollector subErrors = errors.resolve(tableName.getDisplay());
+      var subErrors = errors.resolve(tableName.getDisplay());
       schema = generator.mergeSchema(statistics.get(), tableName, subErrors);
       if (subErrors.isFatal()) {
         errors.warn("Could not infer schema for file [%s]: %s", file, subErrors);
         return;
       }
-      FlexibleTableSchemaHolder schemaHolder = new FlexibleTableSchemaHolder(schema);
+      var schemaHolder = new FlexibleTableSchemaHolder(schema);
       //4. Infer primary key
-      RelDataType rowType = SchemaToRelDataTypeFactory.load(schemaHolder)
+      var rowType = SchemaToRelDataTypeFactory.load(schemaHolder)
           .map(schemaHolder, null, tableName, errors);
       //We use a conservative method where each simple column is a primary key column
-      String[] primaryKey = rowType.getFieldList().stream().filter(f -> !f.getType().isNullable() && CalciteUtil.isPotentialPrimaryKeyType(f.getType()))
+      var primaryKey = rowType.getFieldList().stream().filter(f -> !f.getType().isNullable() && CalciteUtil.isPotentialPrimaryKeyType(f.getType()))
           .map(RelDataTypeField::getName).toArray(String[]::new);
 
 
       //5. Create table configuration
-      TableConfig table = connectorFactory.get().createSourceAndSink(new ConnectorFactoryContext(tableName,
+      var table = connectorFactory.get().createSourceAndSink(new ConnectorFactoryContext(tableName,
           Map.of("format",reader.get().getFormat(),
               "filename", file.getFileName().toString(),
               "primary-key", primaryKey)));
-      TableSource tableSource = TableSource.create(table, processorContext.getName().orElse(
+      var tableSource = TableSource.create(table, processorContext.getName().orElse(
           NamePath.ROOT), schemaHolder);
       //6. Write files and add
       try {
-        Collection<Path> writtenFiles = writer.writeToFile(parentDir, tableSource);
+        var writtenFiles = writer.writeToFile(parentDir, tableSource);
         writtenFiles.forEach(processorContext::addDependency);
       } catch (IOException e) {
         errors.fatal("Could not write schema and configuration files: %s", e);

@@ -8,6 +8,7 @@ import java.util.EnumSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+
 import org.apache.flink.connector.jdbc.converter.JdbcRowConverter;
 import org.apache.flink.connector.jdbc.dialect.AbstractDialect;
 import org.apache.flink.table.types.logical.LogicalTypeRoot;
@@ -40,10 +41,10 @@ public class H2Dialect extends AbstractDialect {
   @Override
   public Optional<String> getUpsertStatement(
       String tableName, String[] fieldNames, String[] uniqueKeyFields) {
-    String uniqueColumns = Arrays.stream(uniqueKeyFields).map(this::quoteIdentifier).collect(Collectors.joining(", "));
+    var uniqueColumns = Arrays.stream(uniqueKeyFields).map(this::quoteIdentifier).collect(Collectors.joining(", "));
 
-    String columns = Arrays.stream(fieldNames).map(this::quoteIdentifier).collect(Collectors.joining(", "));
-    String placeholders = Arrays.stream(fieldNames).map((f) -> ":" + f).collect(Collectors.joining(", "));
+    var columns = Arrays.stream(fieldNames).map(this::quoteIdentifier).collect(Collectors.joining(", "));
+    var placeholders = Arrays.stream(fieldNames).map(f -> ":" + f).collect(Collectors.joining(", "));
 
     return Optional.of("MERGE INTO " + this.quoteIdentifier(tableName)
         + "(" + columns + ")"

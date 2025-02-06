@@ -5,16 +5,18 @@ package com.datasqrl.functions.flink;
 
 import static com.datasqrl.NamespaceObjectUtil.createFunctionFromFlink;
 
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.flink.table.functions.BuiltInFunctionDefinition;
+import org.apache.flink.table.functions.BuiltInFunctionDefinitions;
+
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.function.AbstractFunctionModule;
 import com.datasqrl.function.StdLibrary;
 import com.datasqrl.module.NamespaceObject;
 import com.google.auto.service.AutoService;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
-import org.apache.flink.table.functions.BuiltInFunctionDefinition;
-import org.apache.flink.table.functions.BuiltInFunctionDefinitions;
 
 @AutoService(StdLibrary.class)
 public class FlinkStdLibraryImpl extends AbstractFunctionModule implements StdLibrary {
@@ -73,7 +75,7 @@ public class FlinkStdLibraryImpl extends AbstractFunctionModule implements StdLi
     List<NamespaceObject> functions = new ArrayList<>();
 
     // Get all fields from FlinkSqlOperatorTable
-    Field[] fields = BuiltInFunctionDefinitions.class.getDeclaredFields();
+    var fields = BuiltInFunctionDefinitions.class.getDeclaredFields();
 
     for (Field field : fields) {
       // Check if field type is SqlFunction
@@ -88,7 +90,8 @@ public class FlinkStdLibraryImpl extends AbstractFunctionModule implements StdLi
     return functions;
   }
 
-  public NamePath getPath() {
+  @Override
+public NamePath getPath() {
     return LIB_NAME;
   }
 

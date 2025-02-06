@@ -4,27 +4,6 @@ import static com.datasqrl.plan.validate.ScriptPlanner.isSelfTable;
 import static com.datasqrl.plan.validate.ScriptPlanner.isVariable;
 import static org.apache.calcite.sql.SqlUtil.stripAs;
 
-import com.datasqrl.calcite.NormalizeTablePath.PathItem;
-import com.datasqrl.calcite.NormalizeTablePath.SelfTablePathItem;
-import com.datasqrl.calcite.NormalizeTablePath.TablePathResult;
-import com.datasqrl.calcite.SqrlToSql.Context;
-import com.datasqrl.calcite.SqrlToSql.Result;
-import com.datasqrl.calcite.function.SqrlTableMacro;
-import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlAliasCallBuilder;
-import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlCallBuilder;
-import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlJoinBuilder;
-import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
-import com.datasqrl.calcite.sqrl.PathToSql;
-import com.datasqrl.calcite.visitor.SqlNodeVisitor;
-import com.datasqrl.calcite.visitor.SqlRelationVisitor;
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.canonicalizer.ReservedName;
-import com.datasqrl.plan.hints.TopNHint.Type;
-import com.datasqrl.util.SqlNameUtil;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -37,11 +16,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Value;
+
 import org.apache.calcite.plan.RelOptTable;
-import org.apache.calcite.schema.Function;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.CalciteFixes;
@@ -63,6 +39,30 @@ import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlShuttle;
 import org.apache.calcite.sql.validate.SqlNameMatcher;
+
+import com.datasqrl.calcite.NormalizeTablePath.PathItem;
+import com.datasqrl.calcite.NormalizeTablePath.SelfTablePathItem;
+import com.datasqrl.calcite.SqrlToSql.Context;
+import com.datasqrl.calcite.SqrlToSql.Result;
+import com.datasqrl.calcite.function.SqrlTableMacro;
+import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlAliasCallBuilder;
+import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlCallBuilder;
+import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlJoinBuilder;
+import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
+import com.datasqrl.calcite.sqrl.PathToSql;
+import com.datasqrl.calcite.visitor.SqlNodeVisitor;
+import com.datasqrl.calcite.visitor.SqlRelationVisitor;
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.plan.hints.TopNHint.Type;
+import com.datasqrl.util.SqlNameUtil;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Value;
 
 public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
   final QueryPlanner planner;
@@ -88,20 +88,20 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
   }
 
   public Result rewrite(SqlNode query, boolean materializeSelf, NamePath currentPath) {
-    Context context = new Context.ContextBuilder(materializeSelf, currentPath, currentPath.size() > 0).build();
-    Result result = SqlNodeVisitor.accept(this, query, context);
+    var context = new Context.ContextBuilder(materializeSelf, currentPath, currentPath.size() > 0).build();
+    var result = SqlNodeVisitor.accept(this, query, context);
     CalciteFixes.appendSelectLists(result.getSqlNode());
     return result;
   }
 
   @Override
   public Result visitQuerySpecification(SqlSelect call, Context context) {
-    boolean isAggregating = hasAggs(call.getSelectList().getList());
+    var isAggregating = hasAggs(call.getSelectList().getList());
     // Update context for current select details
-    Context newContext = new Context.ContextBuilder(context)
+    var newContext = new Context.ContextBuilder(context)
         .setAliasPathMap(new HashMap<>()) //clear any alias mapping
         .build();
-    Result result = SqlNodeVisitor.accept(this, appendAliasIfRequired(call.getFrom()), newContext);
+    var result = SqlNodeVisitor.accept(this, appendAliasIfRequired(call.getFrom()), newContext);
 
     determineIsA(call, newContext, result);
 
@@ -109,7 +109,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
     if (isDistinctOnHintPresent(call)) {
       List<Integer> hintOps = IntStream.range(0, call.getSelectList().size()).boxed()
           .collect(Collectors.toList());
-      SqlSelectBuilder sqlSelectBuilder = new SqlSelectBuilder(call)
+      var sqlSelectBuilder = new SqlSelectBuilder(call)
           .setLimit(1)
           .clearKeywords()
           .setFrom(result.sqlNode);
@@ -117,9 +117,9 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
       List<SqlNode> selectList = new ArrayList<>(call.getSelectList().getList());
       Set<String> fieldNames = new HashSet<>(getFieldNames(selectList));
 
-      List<String> columns = catalogReader.getTableFromPath(result.getCurrentPath()).get()
+      var columns = catalogReader.getTableFromPath(result.getCurrentPath()).get()
           .unwrap(ModifiableTable.class).getRowType().getFieldNames();
-      SqlNameMatcher nameMatcher = catalogReader.nameMatcher();
+      var nameMatcher = catalogReader.nameMatcher();
 
       List<SqlNode> newNodes = new ArrayList<>();
       for (String column : columns) {
@@ -132,22 +132,22 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
       selectList.addAll(newNodes);
       sqlSelectBuilder.setSelectList(selectList).clearHints();
       result.condition.ifPresent(sqlSelectBuilder::appendWhere);
-      SqlSelect top = new SqlSelectBuilder().setFrom(sqlSelectBuilder.build()).setDistinctOnHint(hintOps).build();
+      var top = new SqlSelectBuilder().setFrom(sqlSelectBuilder.build()).setDistinctOnHint(hintOps).build();
       return new Result(top, result.getCurrentPath(), List.of(), List.of(), Optional.empty(), result.params);
     } else if (call.isKeywordPresent(SqlSelectKeyword.DISTINCT) || (context.isNested() && call.getFetch() != null)) {
       //if is nested, get primary key nodes
-      Optional<RelOptTable> tableFromPath = catalogReader.getTableFromPath(context.currentPath);
-      Set<Integer> pkColumns = context.isNested()?
+      var tableFromPath = catalogReader.getTableFromPath(context.currentPath);
+      var pkColumns = context.isNested()?
               getPrimaryKeyColumns(tableFromPath.get()):Set.of();
 
-      SqlSelectBuilder inner = new SqlSelectBuilder(call)
+      var inner = new SqlSelectBuilder(call)
           .clearKeywords()
           .setFrom(result.getSqlNode())
           .rewriteExpressions(new WalkExpressions(newContext));
       pullUpKeys(inner, result.pullupColumns, isAggregating);
       result.condition
           .ifPresent(inner::appendWhere);
-      SqlSelectBuilder topSelect = new SqlSelectBuilder()
+      var topSelect = new SqlSelectBuilder()
           .setFrom(inner.build())
           .setTopNHint(call.isKeywordPresent(SqlSelectKeyword.DISTINCT)
               ? Type.SELECT_DISTINCT : Type.TOP_N, SqlSelectBuilder.sqlIntRange(pkColumns));
@@ -157,7 +157,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
           Optional.empty(), result.params);
     }
 
-    SqlSelectBuilder select = new SqlSelectBuilder(call)
+    var select = new SqlSelectBuilder(call)
         .setFrom(result.getSqlNode())
         .rewriteExpressions(new WalkExpressions(newContext));
 
@@ -183,11 +183,10 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
 
     for (SqlNode node : call.getSelectList()) {
       node = stripAs(node);
-      if (node instanceof SqlIdentifier) {
-        SqlIdentifier ident = (SqlIdentifier) node;
+      if (node instanceof SqlIdentifier ident) {
         if (ident.isStar() && ident.names.size() == 1) {
           for (NamePath path : newContext.getAliasPathMap().values()) {
-            Collection<Function> sqrlTable = planner.getSchema().getFunctions(path.getDisplay(), false);
+            var sqrlTable = planner.getSchema().getFunctions(path.getDisplay(), false);
 
             if (!sqrlTable.isEmpty()) {
               new ArrayList<>(sqrlTable).stream()
@@ -196,9 +195,9 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
             }
           }
         } else if (ident.isStar() && ident.names.size() == 2) {
-          NamePath path = newContext.getAliasPath(nameUtil.toName(ident.names.get(0)))
+          var path = newContext.getAliasPath(nameUtil.toName(ident.names.get(0)))
               .orElseThrow(() -> new RuntimeException("Could not find alias: " + ident.names.get(0)));
-          Collection<Function> sqrlTable = planner.getSchema().getFunctions(path.getDisplay(), false);
+          var sqrlTable = planner.getSchema().getFunctions(path.getDisplay(), false);
 
           if (!sqrlTable.isEmpty()) {
             new ArrayList<>(sqrlTable).stream()
@@ -256,7 +255,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
   }
 
   private boolean hasAggs(List<SqlNode> list) {
-    AtomicBoolean b = new AtomicBoolean(false);
+    var b = new AtomicBoolean(false);
     for (SqlNode node : list) {
       node.accept(new SqlShuttle() {
         @Override
@@ -287,12 +286,12 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
 
   @Override
   public Result visitAliasedRelation(SqlCall node, Context context) {
-    Result result = SqlNodeVisitor.accept(this, node.getOperandList().get(0), context);
+    var result = SqlNodeVisitor.accept(this, node.getOperandList().get(0), context);
 
-    SqlAliasCallBuilder aliasBuilder = new SqlAliasCallBuilder(node);
+    var aliasBuilder = new SqlAliasCallBuilder(node);
     context.addAlias(nameUtil.toName(aliasBuilder.getAlias()), result.getCurrentPath());
 
-    SqlNode newNode = aliasBuilder.setTable(result.getSqlNode())
+    var newNode = aliasBuilder.setTable(result.getSqlNode())
         .build();
 
     return new Result(newNode, result.getCurrentPath(), result.pullupColumns, List.of(), result.getCondition(),
@@ -305,12 +304,12 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
         .map(name -> new SqlIdentifier(name, node.getComponentParserPosition(node.names.indexOf(name))))
         .collect(Collectors.toList());
 
-    TablePathResult result = normalizeTablePath.convert(items, context, parameters);
+    var result = normalizeTablePath.convert(items, context, parameters);
 
-    PathToSql pathToSql = new PathToSql();
-    SqlNode sqlNode = pathToSql.build(result.getPathItems());
+    var pathToSql = new PathToSql();
+    var sqlNode = pathToSql.build(result.getPathItems());
 
-    List<PullupColumn> pullupColumns = (context.isNested && result.getPathItems().get(0) instanceof SelfTablePathItem)
+    var pullupColumns = (context.isNested && result.getPathItems().get(0) instanceof SelfTablePathItem)
         ? buildPullupColumns((SelfTablePathItem)result.getPathItems().get(0))
         : List.of();
     // Wrap in a select to maintain sql semantics
@@ -328,7 +327,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
   public SqlNode buildAndProjectLast(List<PullupColumn> pullupCols, SqlNode sqlNode,
       PathItem first, PathItem last) {
 
-    SqlSelectBuilder select = new SqlSelectBuilder()
+    var select = new SqlSelectBuilder()
         .setFrom(sqlNode);
 
     List<SqlNode> selectList = new ArrayList<>();
@@ -350,13 +349,13 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
   }
 
   private List<PullupColumn> buildPullupColumns(SelfTablePathItem selfTablePathItem) {
-    RelOptTable table = selfTablePathItem.table;
+    var table = selfTablePathItem.table;
     return getPrimaryKeyColumns(table).stream()
         .map(i -> new PullupColumn(
             table.getRowType().getFieldList().get(i).getName(),
-            String.format("%spk%d_%s", ReservedName.SYSTEM_HIDDEN_PREFIX, uniquePkId.incrementAndGet(),
+            String.format("%spk%d_%s", Name.SYSTEM_HIDDEN_PREFIX, uniquePkId.incrementAndGet(),
                 table.getRowType().getFieldList().get(i).getName()),
-            String.format("%spk%d_%s", ReservedName.SYSTEM_HIDDEN_PREFIX, i + 1,
+            String.format("%spk%d_%s", Name.SYSTEM_HIDDEN_PREFIX, i + 1,
                 table.getRowType().getFieldList().get(i).getName())
         ))
         .collect(Collectors.toList());
@@ -368,20 +367,20 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
     if (isSelfTable(call.getLeft())
         && !context.isMaterializeSelf()) {
       Optional<SqlNode> condition = Optional.ofNullable(call.getCondition());
-      Result result = SqlNodeVisitor.accept(this, appendAliasIfRequired(call.getRight()), context);
+      var result = SqlNodeVisitor.accept(this, appendAliasIfRequired(call.getRight()), context);
       return new Result(result.sqlNode, result.currentPath, result.pullupColumns, result.tableReferences, condition,
           result.params);
     }
 
-    Result leftNode = SqlNodeVisitor.accept(this, appendAliasIfRequired(call.getLeft()), context);
+    var leftNode = SqlNodeVisitor.accept(this, appendAliasIfRequired(call.getLeft()), context);
 
-    Context rhsContext = new Context.ContextBuilder(context)
+    var rhsContext = new Context.ContextBuilder(context)
         .setCurrentPath(leftNode.currentPath)
         .setNested(false)
         .build();
-    Result rightNode = SqlNodeVisitor.accept(this, appendAliasIfRequired(call.getRight()), rhsContext);
+    var rightNode = SqlNodeVisitor.accept(this, appendAliasIfRequired(call.getRight()), rhsContext);
 
-    SqlNode join = new SqlJoinBuilder(call)
+    var join = new SqlJoinBuilder(call)
         .rewriteExpressions(new WalkExpressions(context))
         .setLeft(leftNode.getSqlNode())
         .setRight(rightNode.getSqlNode())
@@ -398,7 +397,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
         .map(o -> SqlNodeVisitor.accept(this, o, context))
         .collect(Collectors.toList());
 
-    Optional<SqlNode> condition = operandResults.stream()
+    var condition = operandResults.stream()
         .map(r -> r.condition)
         .flatMap(Optional::stream)
         .findAny();
@@ -406,7 +405,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
       throw new RuntimeException("Trailing condition abandoned in rewriting");
     }
 
-    Optional<PullupColumn> pullupColumn = operandResults.stream()
+    var pullupColumn = operandResults.stream()
         .map(Result::getPullupColumns)
         .flatMap(Collection::stream)
         .findAny();
@@ -423,7 +422,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
         .map(Result::getSqlNode)
         .collect(Collectors.toList());
 
-    SqlCall call = new SqlCallBuilder(node)
+    var call = new SqlCallBuilder(node)
         .setOperands(operands)
         .build();
 
@@ -451,8 +450,8 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
   }
 
   public Result visitAugmentedTable(SqlCall node, Context context) {
-    Result result = SqlNodeVisitor.accept(this, node.getOperandList().get(0), context);
-    SqlCall call = node.getOperator().createCall(node.getFunctionQuantifier(), node.getParserPosition(), result.sqlNode);
+    var result = SqlNodeVisitor.accept(this, node.getOperandList().get(0), context);
+    var call = node.getOperator().createCall(node.getFunctionQuantifier(), node.getParserPosition(), result.sqlNode);
     return new Result(call, result.currentPath, result.pullupColumns, result.tableReferences,
         result.condition, result.params);
   }
@@ -476,12 +475,12 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
 
   @Override
   public Result visitOrderedUnion(SqlOrderBy node, Context context) {
-    Result result = SqlNodeVisitor.accept(this, node.getOperandList().get(0), context);
-    SqlNode query = result.getSqlNode();
+    var result = SqlNodeVisitor.accept(this, node.getOperandList().get(0), context);
+    var query = result.getSqlNode();
 
-    WalkExpressions walkExpressions = new WalkExpressions(context);
+    var walkExpressions = new WalkExpressions(context);
     SqlNode expr = node.getOperandList().get(1).accept(walkExpressions);
-    SqlCall call = node.getOperator().createCall(node.getFunctionQuantifier(), node.getParserPosition(),
+    var call = node.getOperator().createCall(node.getFunctionQuantifier(), node.getParserPosition(),
         query, expr, node.getOperandList().get(2),
         node.getOperandList().get(3));
 
@@ -509,7 +508,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
     @Override
     public SqlNode visit(SqlCall call) {
       if (call.getKind() == SqlKind.SELECT) {
-        Result result = rewrite(call, false, context.currentPath);
+        var result = rewrite(call, false, context.currentPath);
 
         return result.getSqlNode();
       }

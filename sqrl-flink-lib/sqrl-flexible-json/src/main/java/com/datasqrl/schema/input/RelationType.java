@@ -3,13 +3,21 @@
  */
 package com.datasqrl.schema.input;
 
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.schema.type.Type;
-import lombok.NonNull;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.schema.type.Type;
+
+import lombok.NonNull;
 
 public class RelationType<F extends SchemaField> implements Type, Iterable<F> {
 
@@ -39,7 +47,7 @@ public class RelationType<F extends SchemaField> implements Type, Iterable<F> {
   public Optional<F> getFieldByName(Name name) {
     if (fieldsByName == null) {
       fieldsByName = fields.stream().collect(
-          Collectors.toUnmodifiableMap(t -> t.getName(), Function.identity(),
+          Collectors.toUnmodifiableMap(SchemaField::getName, Function.identity(),
               (v1, v2) -> v2));
     }
     return Optional.ofNullable(fieldsByName.get(name));
@@ -53,7 +61,7 @@ public class RelationType<F extends SchemaField> implements Type, Iterable<F> {
 
   @Override
   public String toString() {
-    return "{" + fields.stream().map(f -> f.toString()).collect(Collectors.joining("; ")) + "}";
+    return "{" + fields.stream().map(SchemaField::toString).collect(Collectors.joining("; ")) + "}";
   }
 
   @Override

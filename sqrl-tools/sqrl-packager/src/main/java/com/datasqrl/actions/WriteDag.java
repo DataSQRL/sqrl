@@ -1,5 +1,12 @@
 package com.datasqrl.actions;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import com.datasqrl.config.BuildPath;
 import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.config.PackageJson.ExplainConfig;
@@ -10,13 +17,7 @@ import com.datasqrl.serializer.Deserializer;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
+
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 

@@ -3,14 +3,17 @@
  */
 package com.datasqrl.plan.table;
 
+import java.util.function.Predicate;
+
+import org.apache.calcite.rel.type.RelDataType;
+
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.io.tables.TableSource;
-import com.datasqrl.canonicalizer.Name;
-import java.util.function.Predicate;
+
 import lombok.NonNull;
 import lombok.Value;
-import org.apache.calcite.rel.type.RelDataType;
 
 /**
  * An source table that represents the source of table data from an external system.
@@ -35,7 +38,8 @@ public class ImportedRelationalTableImpl extends SourceRelationalTableImpl imple
     this.tableSource = tableSource;
   }
 
-  public TableSource getTableSource() {
+  @Override
+public TableSource getTableSource() {
     return tableSource;
   }
 

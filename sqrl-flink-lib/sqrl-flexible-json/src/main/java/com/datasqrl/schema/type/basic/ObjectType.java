@@ -3,12 +3,13 @@
  */
 package com.datasqrl.schema.type.basic;
 
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.schema.type.SqrlTypeVisitor;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.schema.type.SqrlTypeVisitor;
 
 public class ObjectType extends AbstractBasicType<Object> {
 
@@ -34,7 +35,8 @@ public class ObjectType extends AbstractBasicType<Object> {
       return Collections.singleton(Object.class);
     }
 
-    public Object convert(Object o) {
+    @Override
+	public Object convert(Object o) {
       return o;
     }
 
@@ -43,13 +45,15 @@ public class ObjectType extends AbstractBasicType<Object> {
       return Optional.of(100);
     }
 
-    public Optional<Object> parseDetected(Object original, ErrorCollector errors) {
+    @Override
+	public Optional<Object> parseDetected(Object original, ErrorCollector errors) {
       return Optional.of(original);
     }
 
   }
 
-  public <R, C> R accept(SqrlTypeVisitor<R, C> visitor, C context) {
+  @Override
+public <R, C> R accept(SqrlTypeVisitor<R, C> visitor, C context) {
     return visitor.visitObjectType(this, context);
   }
 }

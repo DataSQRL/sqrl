@@ -18,20 +18,20 @@
 
 package com.datasqrl.jdbc;
 
-import com.datasqrl.type.JdbcTypeSerializer;
 import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.ServiceLoader;
+import java.util.ServiceLoader.Provider;
 import java.util.stream.Collectors;
-import lombok.SneakyThrows;
-import org.apache.flink.connector.jdbc.statement.FieldNamedPreparedStatement;
+
 import org.apache.flink.table.data.GenericArrayData;
-import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.types.logical.ArrayType;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.RowType;
 import org.apache.flink.table.types.logical.utils.LogicalTypeUtils;
 import org.postgresql.jdbc.PgArray;
+
+import com.datasqrl.type.JdbcTypeSerializer;
 
 /**
  * Runtime converter that responsible to convert between JDBC object and Flink internal object for
@@ -49,7 +49,7 @@ public class SqrlPostgresRowConverter extends SqrlBaseJdbcRowConverter {
     private static Map<Type, JdbcTypeSerializer<JdbcDeserializationConverter, JdbcSerializationConverter>> discoverSerializers() {
         return ServiceLoader.load(JdbcTypeSerializer.class)
             .stream()
-            .map(f->f.get())
+            .map(Provider::get)
             .filter(f->f.getDialectId().equalsIgnoreCase("postgres"))
             .collect(Collectors.toMap(JdbcTypeSerializer::getConversionClass, t->t));
     }
@@ -106,20 +106,20 @@ public class SqrlPostgresRowConverter extends SqrlBaseJdbcRowConverter {
         // primitive byte arrays
         final Class<?> elementClass =
                 LogicalTypeUtils.toInternalConversionClass(arrayType.getElementType());
-        final JdbcDeserializationConverter elementConverter =
+        final var elementConverter =
                 createNullableInternalConverter(arrayType.getElementType());
         return val -> {
             //sqrl: check if scalar array
 
             Object[] in;
             if (val instanceof PgArray) {
-                PgArray pgArray = (PgArray) val;
+                var pgArray = (PgArray) val;
                 in = (Object[]) pgArray.getArray();
             } else {
                 in = (Object[])val;
             }
-            final Object[] array = (Object[]) java.lang.reflect.Array.newInstance(elementClass, in.length);
-            for (int i = 0; i < in.length; i++) {
+            final var array = (Object[]) java.lang.reflect.Array.newInstance(elementClass, in.length);
+            for (var i = 0; i < in.length; i++) {
                 array[i] = elementConverter.deserialize(in[i]);
             }
             return new GenericArrayData(array);

@@ -1,15 +1,5 @@
 package com.datasqrl.graphql.inference;
 
-import com.datasqrl.calcite.ModifiableTable;
-import com.datasqrl.calcite.function.SqrlTableMacro;
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.canonicalizer.ReservedName;
-import com.datasqrl.plan.table.PhysicalRelationalTable;
-import com.datasqrl.schema.Multiplicity;
-import com.datasqrl.schema.Relationship.JoinType;
-import com.datasqrl.schema.TableVisitor;
-import com.datasqrl.util.StreamUtil;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,15 +7,26 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.sql.type.ArraySqlType;
 import org.apache.calcite.sql.type.ObjectSqlType;
+
+import com.datasqrl.calcite.ModifiableTable;
+import com.datasqrl.calcite.function.SqrlTableMacro;
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.plan.table.PhysicalRelationalTable;
+import com.datasqrl.schema.Multiplicity;
+import com.datasqrl.schema.Relationship.JoinType;
+import com.datasqrl.schema.TableVisitor;
+import com.datasqrl.util.StreamUtil;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 public class SqrlSchemaForInference {
 
@@ -34,12 +35,14 @@ public class SqrlSchemaForInference {
   public SqrlSchemaForInference(SqrlSchema schema) {
     //Create all tables, including shadowed
 
-    List<SqrlTableMacro> tableFunctions = schema.getTableFunctions();
+    var tableFunctions = schema.getTableFunctions();
     Map<NamePath, SQRLTable> tables = new HashMap<>();
     for (SqrlTableMacro macro : tableFunctions) {
       if (macro instanceof com.datasqrl.schema.Relationship &&
-          (((com.datasqrl.schema.Relationship)macro).getJoinType() != JoinType.CHILD)) continue;
-      SQRLTable table = tables.get(macro.getAbsolutePath());
+          (((com.datasqrl.schema.Relationship)macro).getJoinType() != JoinType.CHILD)) {
+		continue;
+	}
+      var table = tables.get(macro.getAbsolutePath());
       if (table == null) {
         table = createSqrlTable(macro, schema);
         tables.put(macro.getAbsolutePath(), table);
@@ -48,14 +51,13 @@ public class SqrlSchemaForInference {
 
     //Add relationships
     for (SqrlTableMacro macro : tableFunctions) {
-      if (macro instanceof com.datasqrl.schema.Relationship) {
-        com.datasqrl.schema.Relationship rel = (com.datasqrl.schema.Relationship) macro;
-        SQRLTable fromTable = tables.get(rel.getFullPath().popLast());
-        NamePath toNamePath = schema.getPathToAbsolutePathMap()
+      if (macro instanceof com.datasqrl.schema.Relationship rel) {
+        var fromTable = tables.get(rel.getFullPath().popLast());
+        var toNamePath = schema.getPathToAbsolutePathMap()
             .get(rel.getFullPath());
-        SQRLTable toTable = tables.get(toNamePath);
+        var toTable = tables.get(toNamePath);
 
-        Relationship relationship = new Relationship(fromTable, toTable, macro, rel.getName(),
+        var relationship = new Relationship(fromTable, toTable, macro, rel.getName(),
             rel.getFullPath().toStringList(),
             rel.getParameters(), rel.getMultiplicity(), rel.getJoinType());
         fromTable.fields.add(relationship);
@@ -66,13 +68,13 @@ public class SqrlSchemaForInference {
   }
 
   private SQRLTable createSqrlTable(SqrlTableMacro macro, SqrlSchema schema) {
-    String tableName = schema.getPathToSysTableMap().get(macro.getAbsolutePath());
-    Table table = schema.getTable(tableName, false).getTable();
+    var tableName = schema.getPathToSysTableMap().get(macro.getAbsolutePath());
+    var table = schema.getTable(tableName, false).getTable();
 
-    SQRLTable sqrlTable = new SQRLTable(macro.getAbsolutePath(), table, macro);
-    List<RelDataTypeField> fieldList = macro.getRowType().getFieldList();
-    for (int i = 0; i < fieldList.size(); i++) {
-      RelDataTypeField field = fieldList.get(i);
+    var sqrlTable = new SQRLTable(macro.getAbsolutePath(), table, macro);
+    var fieldList = macro.getRowType().getFieldList();
+    for (var i = 0; i < fieldList.size(); i++) {
+      var field = fieldList.get(i);
       if (field.getType() instanceof ArraySqlType || field.getType() instanceof ObjectSqlType) {
         continue;
       }
@@ -195,7 +197,7 @@ public class SqrlSchemaForInference {
       return StreamUtil.filterByClass(fields.stream()
                   .filter(f->
                       onlyVisible
-                          ? !f.getName().getDisplay().startsWith(ReservedName.HIDDEN_PREFIX)
+                          ? !f.getName().getDisplay().startsWith(Name.HIDDEN_PREFIX)
                           : true),
               clazz)
           .collect(Collectors.toList());

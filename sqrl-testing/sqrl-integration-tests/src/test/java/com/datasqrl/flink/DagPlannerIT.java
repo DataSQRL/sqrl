@@ -2,17 +2,13 @@ package com.datasqrl.flink;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
-import com.datasqrl.DatasqrlRun;
-import com.datasqrl.cmd.AssertStatusHook;
-import com.datasqrl.cmd.RootCommand;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.flink.table.api.CompiledPlan;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -22,6 +18,12 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.redpanda.RedpandaContainer;
 import org.testcontainers.utility.DockerImageName;
+
+import com.datasqrl.DatasqrlRun;
+import com.datasqrl.cmd.AssertStatusHook;
+import com.datasqrl.cmd.RootCommand;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @TestInstance(TestInstance.Lifecycle.PER_CLASS) // This is to allow the method source to not be static
@@ -42,8 +44,8 @@ public class DagPlannerIT {
 
   // Method to provide the directories as test arguments
   static Stream<Path> directoryProvider() {
-    Path firstDirPath = Path.of("../sqrl-integration-tests/src/test/resources/dagplanner");
-    Stream<Path> firstDirStream = getDirectoriesStream(firstDirPath);
+    var firstDirPath = Path.of("../sqrl-integration-tests/src/test/resources/dagplanner");
+    var firstDirStream = getDirectoriesStream(firstDirPath);
 
 //    Path secondDirPath = Path.of("../sqrl-integration-tests/src/test/resources/usecases/plan");
 //    Stream<Path> secondDirStream = getDirectoriesStream(secondDirPath);
@@ -52,9 +54,9 @@ public class DagPlannerIT {
   }
 
   private static Stream<Path> getDirectoriesStream(Path rootPath) {
-    File directory = rootPath.toFile();
+    var directory = rootPath.toFile();
     if (directory.exists() && directory.isDirectory()) {
-      File[] sqrlFiles = directory.listFiles(f->
+      var sqrlFiles = directory.listFiles(f->
           f.getName().endsWith(".sqrl") && !f.getName().contains("disabled") && !f.getName().contains("fail"));
       if (sqrlFiles != null) {
         return Stream.of(sqrlFiles).map(File::toPath);
@@ -84,20 +86,22 @@ public class DagPlannerIT {
     env.put("PGDATABASE", testDatabase.getDatabaseName());
     env.put("PROPERTIES_BOOTSTRAP_SERVERS", testKafka.getBootstrapServers());
 
-    DatasqrlRun datasqrlRun = new DatasqrlRun(directoryPath.getParent().resolve("build").resolve("plan"), env);
+    var datasqrlRun = new DatasqrlRun(directoryPath.getParent().resolve("build").resolve("plan"), env);
 
     if (disabled.contains(directoryPath.getFileName().toString())){
       log.warn("Skipping Disabled Test");
       return;
     }
 
-    AssertStatusHook statusHook = new AssertStatusHook();
-    int code = new RootCommand(directoryPath.getParent(),statusHook).getCmd().execute("compile",
+    var statusHook = new AssertStatusHook();
+    var code = new RootCommand(directoryPath.getParent(),statusHook).getCmd().execute("compile",
         directoryPath.getFileName().toString());
-    if (statusHook.isSuccess()) Assertions.assertEquals(0, code);
+    if (statusHook.isSuccess()) {
+		Assertions.assertEquals(0, code);
+	}
 
     try {
-      CompiledPlan plan = datasqrlRun.compileFlink();
+      var plan = datasqrlRun.compileFlink();
       plan.explain(); //invoke to make flink do extra validation
       // plan.execute().print(); Uncomment if execution is required
     } catch (Exception e) {

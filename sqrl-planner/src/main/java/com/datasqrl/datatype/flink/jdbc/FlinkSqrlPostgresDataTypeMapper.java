@@ -1,6 +1,10 @@
 package com.datasqrl.datatype.flink.jdbc;
 
-import static com.datasqrl.function.CalciteFunctionUtil.lightweightOp;
+import java.util.Optional;
+
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 import com.datasqrl.config.TableConfig;
 import com.datasqrl.datatype.DataTypeMapper;
@@ -11,15 +15,12 @@ import com.datasqrl.json.FlinkJsonType;
 import com.datasqrl.json.ToJson;
 import com.datasqrl.vector.FlinkVectorType;
 import com.google.auto.service.AutoService;
-import java.util.Optional;
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.sql.type.SqlTypeName;
-import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 @AutoService(DataTypeMapper.class)
 public class FlinkSqrlPostgresDataTypeMapper extends FlinkDataTypeMapper {
 
-  public boolean nativeTypeSupport(RelDataType type) {
+  @Override
+public boolean nativeTypeSupport(RelDataType type) {
     switch (type.getSqlTypeName()) {
       case TINYINT:
       case REAL:
@@ -99,17 +100,17 @@ public class FlinkSqrlPostgresDataTypeMapper extends FlinkDataTypeMapper {
 
   @Override
   public boolean isTypeOf(TableConfig tableConfig) {
-    Optional<String> connectorNameOpt = tableConfig.getConnectorConfig().getConnectorName();
+    var connectorNameOpt = tableConfig.getConnectorConfig().getConnectorName();
     if (connectorNameOpt.isEmpty()) {
       return false;
     }
 
-    String connectorName = connectorNameOpt.get();
+    var connectorName = connectorNameOpt.get();
     if (!connectorName.equalsIgnoreCase("jdbc-sqrl")) {
       return false;
     }
 
-    String driver = (String)tableConfig.getConnectorConfig().toMap().get("driver");
+    var driver = (String)tableConfig.getConnectorConfig().toMap().get("driver");
     if (driver == null) {
       return false;
     }

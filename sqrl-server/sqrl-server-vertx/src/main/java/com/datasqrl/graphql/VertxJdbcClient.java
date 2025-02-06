@@ -1,5 +1,7 @@
 package com.datasqrl.graphql;
 
+import java.util.Map;
+
 import com.datasqrl.graphql.server.Context;
 import com.datasqrl.graphql.server.JdbcClient;
 import com.datasqrl.graphql.server.RootGraphqlModel.DuckDbQuery;
@@ -12,15 +14,14 @@ import com.datasqrl.graphql.server.RootGraphqlModel.QueryBase;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedJdbcQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.SnowflakeDbQuery;
+
 import io.vertx.core.Future;
 import io.vertx.sqlclient.PreparedQuery;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.SqlClient;
 import io.vertx.sqlclient.Tuple;
-import java.util.Map;
 import lombok.Value;
-import net.snowflake.client.jdbc.internal.google.api.Page;
 
 /**
  * Purpose: Manages SQL clients and executes queries.
@@ -32,14 +33,14 @@ public class VertxJdbcClient implements JdbcClient {
 
   @Override
   public ResolvedQuery prepareQuery(JdbcQuery query, Context context) {
-    String database = getDatabaseName(query);
+    var database = getDatabaseName(query);
 
-    SqlClient sqlClient = clients.get(database);
+    var sqlClient = clients.get(database);
     if (sqlClient == null) {
       throw new RuntimeException("Could not find database engine: " + database);
     }
 
-    PreparedQuery<RowSet<Row>> preparedQuery = sqlClient
+    var preparedQuery = sqlClient
         .preparedQuery(query.getSql());
 
     return new ResolvedJdbcQuery(query,
@@ -67,7 +68,7 @@ public class VertxJdbcClient implements JdbcClient {
     if (database == null) {
       database = "postgres";
     }
-    SqlClient sqlClient = clients.get(database);
+    var sqlClient = clients.get(database);
 
     if (database.equalsIgnoreCase("duckdb")) {
       return sqlClient.query("INSTALL iceberg;").execute().compose(v ->
@@ -77,7 +78,7 @@ public class VertxJdbcClient implements JdbcClient {
   }
 
   public Future<RowSet<Row>> execute(String database, String query, Tuple tup) {
-    SqlClient sqlClient = clients.get(database);
+    var sqlClient = clients.get(database);
     return execute(database, sqlClient.preparedQuery(query), tup);
   }
 

@@ -1,8 +1,9 @@
 package com.datasqrl.packager.repository;
 
-import com.datasqrl.config.Dependency;
 import java.io.IOException;
 import java.nio.file.Path;
+
+import com.datasqrl.config.Dependency;
 
 public interface CacheRepository {
 

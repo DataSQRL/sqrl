@@ -2,14 +2,15 @@ package com.datasqrl.parse;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.error.ErrorPrinter;
+import java.util.Set;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.Set;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.ErrorPrinter;
 
 class ParseTest {
 

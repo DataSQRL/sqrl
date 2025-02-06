@@ -1,10 +1,11 @@
 package com.datasqrl.vector;
 
+import java.io.IOException;
+
 import org.apache.flink.api.common.typeutils.TypeSerializer;
 import org.apache.flink.api.common.typeutils.TypeSerializerSnapshot;
 import org.apache.flink.core.memory.DataInputView;
 import org.apache.flink.core.memory.DataOutputView;
-import java.io.IOException;
 
 public class FlinkVectorTypeSerializer extends TypeSerializer<FlinkVectorType> {
 
@@ -43,9 +44,9 @@ public class FlinkVectorTypeSerializer extends TypeSerializer<FlinkVectorType> {
 
   @Override
   public FlinkVectorType deserialize(DataInputView source) throws IOException {
-    int length = source.readInt();
-    double[] array = new double[length];
-    for (int i = 0; i < length; i++) {
+    var length = source.readInt();
+    var array = new double[length];
+    for (var i = 0; i < length; i++) {
       array[i] = source.readDouble();
     }
     return new FlinkVectorType(array);

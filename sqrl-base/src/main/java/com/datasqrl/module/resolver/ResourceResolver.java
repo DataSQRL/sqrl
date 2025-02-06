@@ -1,12 +1,12 @@
 package com.datasqrl.module.resolver;
 
-import com.datasqrl.canonicalizer.NamePath;
-
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+
+import com.datasqrl.canonicalizer.NamePath;
 
 public interface ResourceResolver {
 
@@ -23,7 +23,7 @@ public interface ResourceResolver {
   }
 
   static String getFileName(URI uri) {
-    String[] pathSegments = uri.getPath().split("/");
+    var pathSegments = uri.getPath().split("/");
     return pathSegments[pathSegments.length - 1];
   }
   static String getFileName(Path path) {

@@ -4,7 +4,14 @@
 package com.datasqrl.schema.type;
 
 
-import com.datasqrl.schema.type.basic.*;
+import com.datasqrl.schema.type.basic.AbstractBasicType;
+import com.datasqrl.schema.type.basic.BigIntType;
+import com.datasqrl.schema.type.basic.BooleanType;
+import com.datasqrl.schema.type.basic.DoubleType;
+import com.datasqrl.schema.type.basic.IntervalType;
+import com.datasqrl.schema.type.basic.ObjectType;
+import com.datasqrl.schema.type.basic.StringType;
+import com.datasqrl.schema.type.basic.TimestampType;
 
 public interface SqrlTypeVisitor<R, C> {
 

@@ -5,13 +5,14 @@ package com.datasqrl.engine.database.relational.ddl.statements;
 
 import static com.datasqrl.engine.database.relational.ddl.PostgresDDLFactory.quoteIdentifier;
 
-import com.datasqrl.sql.SqlDDLStatement;
-import com.datasqrl.function.IndexType;
-import com.google.common.base.Preconditions;
-import java.util.stream.Collectors;
-import lombok.Value;
-
 import java.util.List;
+import java.util.stream.Collectors;
+
+import com.datasqrl.function.IndexType;
+import com.datasqrl.sql.SqlDDLStatement;
+import com.google.common.base.Preconditions;
+
+import lombok.Value;
 
 @Value
 public class CreateIndexDDL implements SqlDDLStatement {
@@ -36,16 +37,11 @@ public class CreateIndexDDL implements SqlDDLStatement {
       case VEC_EUCLID:
         Preconditions.checkArgument(columns.size()==1);
         String indexModifier;
-        switch (type) {
-          case VEC_COSINE:
-            indexModifier = "vector_l2_ops";
-            break;
-          case VEC_EUCLID:
-            indexModifier = "vector_cosine_ops";
-            break;
-          default:
-            throw new UnsupportedOperationException(type.toString());
-        }
+        indexModifier = switch (type) {
+		case VEC_COSINE -> "vector_l2_ops";
+		case VEC_EUCLID -> "vector_cosine_ops";
+		default -> throw new UnsupportedOperationException(type.toString());
+		};
         columnExpression = quoteIdentifier(columns.get(0)) + " " + indexModifier;
         indexType = "HNSW";
         break;
@@ -54,8 +50,8 @@ public class CreateIndexDDL implements SqlDDLStatement {
         indexType = type.name().toLowerCase();
     }
 
-    String createTable = "CREATE INDEX IF NOT EXISTS %s ON %s USING %s (%s);";
-    String sql = String.format(createTable, indexName, tableName, indexType,
+    var createTable = "CREATE INDEX IF NOT EXISTS %s ON %s USING %s (%s);";
+    var sql = String.format(createTable, indexName, tableName, indexType,
         columnExpression);
     return sql;
   }

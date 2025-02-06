@@ -1,5 +1,10 @@
 package com.datasqrl.datatype.flink.jdbc;
 
+import java.util.Optional;
+
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.flink.table.planner.plan.schema.RawRelDataType;
+
 import com.datasqrl.config.TableConfig;
 import com.datasqrl.datatype.DataTypeMapper;
 import com.datasqrl.datatype.SerializeToBytes;
@@ -10,68 +15,25 @@ import com.datasqrl.json.JsonToString;
 import com.datasqrl.vector.FlinkVectorType;
 import com.datasqrl.vector.VectorToDouble;
 import com.google.auto.service.AutoService;
-import java.util.Optional;
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 @AutoService(DataTypeMapper.class)
 public class FlinkPostgresDataTypeMapper extends FlinkDataTypeMapper {
 
-  public boolean nativeTypeSupport(RelDataType type) {
-    switch (type.getSqlTypeName()) {
-      case TINYINT:
-      case REAL:
-      case INTERVAL_YEAR:
-      case INTERVAL_YEAR_MONTH:
-      case INTERVAL_MONTH:
-      case INTERVAL_DAY:
-      case INTERVAL_DAY_HOUR:
-      case INTERVAL_DAY_MINUTE:
-      case INTERVAL_DAY_SECOND:
-      case INTERVAL_HOUR:
-      case INTERVAL_HOUR_MINUTE:
-      case INTERVAL_HOUR_SECOND:
-      case INTERVAL_MINUTE:
-      case INTERVAL_MINUTE_SECOND:
-      case INTERVAL_SECOND:
-      case NULL:
-      case SYMBOL:
-      case MULTISET:
-      case DISTINCT:
-      case STRUCTURED:
-      case OTHER:
-      case CURSOR:
-      case COLUMN_LIST:
-      case DYNAMIC_STAR:
-      case GEOMETRY:
-      case SARG:
-      case ANY:
-      default:
-        return false;
-      case BOOLEAN:
-      case SMALLINT:
-      case INTEGER:
-      case BIGINT:
-      case DECIMAL:
-      case FLOAT:
-      case DOUBLE:
-      case DATE:
-      case TIME:
-      case TIME_WITH_LOCAL_TIME_ZONE:
-      case TIMESTAMP:
-      case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
-      case CHAR:
-      case VARCHAR:
-      case BINARY:
-      case VARBINARY:
-        return true;
-      case ARRAY:
-        return false;
-      case MAP:
-        return false;
-      case ROW:
-        return false;
-    }
+  @Override
+public boolean nativeTypeSupport(RelDataType type) {
+    return switch (type.getSqlTypeName()) {
+	case TINYINT, REAL, INTERVAL_YEAR, INTERVAL_YEAR_MONTH, INTERVAL_MONTH, INTERVAL_DAY, INTERVAL_DAY_HOUR, INTERVAL_DAY_MINUTE, INTERVAL_DAY_SECOND, INTERVAL_HOUR, INTERVAL_HOUR_MINUTE, INTERVAL_HOUR_SECOND,
+			INTERVAL_MINUTE, INTERVAL_MINUTE_SECOND, INTERVAL_SECOND, NULL, SYMBOL, MULTISET, DISTINCT, STRUCTURED, OTHER, CURSOR, COLUMN_LIST, DYNAMIC_STAR,
+			GEOMETRY, SARG, ANY ->
+		false;
+	default -> false;
+	case BOOLEAN, SMALLINT, INTEGER, BIGINT, DECIMAL, FLOAT, DOUBLE, DATE, TIME, TIME_WITH_LOCAL_TIME_ZONE, TIMESTAMP, TIMESTAMP_WITH_LOCAL_TIME_ZONE,
+			CHAR, VARCHAR, BINARY, VARBINARY ->
+		true;
+	case ARRAY -> false;
+	case MAP -> false;
+	case ROW -> false;
+	};
   }
 
   @Override
@@ -101,17 +63,17 @@ public class FlinkPostgresDataTypeMapper extends FlinkDataTypeMapper {
 
   @Override
   public boolean isTypeOf(TableConfig tableConfig) {
-    Optional<String> connectorNameOpt = tableConfig.getConnectorConfig().getConnectorName();
+    var connectorNameOpt = tableConfig.getConnectorConfig().getConnectorName();
     if (connectorNameOpt.isEmpty()) {
       return false;
     }
 
-    String connectorName = connectorNameOpt.get();
+    var connectorName = connectorNameOpt.get();
     if (!connectorName.equalsIgnoreCase("jdbc")) {
       return false;
     }
 
-    String url = (String)tableConfig.getConnectorConfig().toMap().get("url");
+    var url = (String)tableConfig.getConnectorConfig().toMap().get("url");
     return url.toLowerCase().startsWith("jdbc:postgresql:");
   }
 }

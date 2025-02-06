@@ -3,12 +3,13 @@ package com.datasqrl.functions.string;
 import static com.datasqrl.NamespaceObjectUtil.createFunctionFromFlink;
 import static com.datasqrl.NamespaceObjectUtil.createFunctionFromStdOpTable;
 
+import java.util.List;
+
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.function.AbstractFunctionModule;
 import com.datasqrl.function.StdLibrary;
 import com.datasqrl.module.NamespaceObject;
 import com.google.auto.service.AutoService;
-import java.util.List;
 
 @AutoService(StdLibrary.class)
 public class StdStringLibraryImpl extends AbstractFunctionModule implements StdLibrary {
@@ -55,7 +56,8 @@ public class StdStringLibraryImpl extends AbstractFunctionModule implements StdL
     super(stringFunctions);
   }
 
-  public NamePath getPath() {
+  @Override
+public NamePath getPath() {
     return LIB_NAME;
   }
 }

@@ -1,20 +1,9 @@
 package com.datasqrl.cmd;
 
-import static com.datasqrl.packager.Packager.*;
+import static com.datasqrl.packager.Packager.BUILD_DIR_NAME;
+import static com.datasqrl.packager.Packager.PACKAGE_JSON;
 import static com.datasqrl.util.NameUtil.namepath2Path;
 
-import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.config.DependencyImpl;
-import com.datasqrl.config.PackageJson.DependenciesConfig;
-import com.datasqrl.config.Dependency;
-import com.datasqrl.config.PackageJson;
-import com.datasqrl.config.PackageJson.ScriptConfig;
-import com.datasqrl.config.PackageJsonImpl;
-import com.datasqrl.config.SqrlConfigCommons;
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.error.ErrorPrefix;
-import com.datasqrl.packager.Packager;
-import com.datasqrl.packager.repository.Repository;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -22,8 +11,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
 import java.util.regex.Pattern;
+
+import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.config.Dependency;
+import com.datasqrl.config.DependencyImpl;
+import com.datasqrl.config.PackageJson;
+import com.datasqrl.config.PackageJson.DependenciesConfig;
+import com.datasqrl.config.PackageJson.ScriptConfig;
+import com.datasqrl.config.PackageJsonImpl;
+import com.datasqrl.config.SqrlConfigCommons;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.ErrorPrefix;
+import com.datasqrl.packager.Packager;
+import com.datasqrl.packager.repository.Repository;
+
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;

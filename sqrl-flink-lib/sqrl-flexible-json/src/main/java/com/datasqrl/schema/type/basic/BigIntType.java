@@ -3,13 +3,13 @@
  */
 package com.datasqrl.schema.type.basic;
 
-import com.datasqrl.schema.type.SqrlTypeVisitor;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+
+import com.datasqrl.schema.type.SqrlTypeVisitor;
 
 public class BigIntType extends AbstractBasicType<Long> {
 
@@ -31,7 +31,7 @@ public class BigIntType extends AbstractBasicType<Long> {
         Byte.class, Short.class);
 
     public Conversion() {
-      super(Long.class, s -> Long.parseLong(s));
+      super(Long.class, Long::parseLong);
     }
 
     @Override
@@ -39,7 +39,8 @@ public class BigIntType extends AbstractBasicType<Long> {
       return INT_CLASSES;
     }
 
-    public Long convert(Object o) {
+    @Override
+	public Long convert(Object o) {
       if (o instanceof Long) {
         return (Long) o;
       }
@@ -47,7 +48,7 @@ public class BigIntType extends AbstractBasicType<Long> {
         return ((Number) o).longValue();
       }
       if (o instanceof Boolean) {
-        return ((Boolean) o).booleanValue() ? 1L : 0L;
+        return ((Boolean) o) ? 1L : 0L;
       }
       if (o instanceof Duration) {
         return ((Duration) o).toMillis();
@@ -73,7 +74,8 @@ public class BigIntType extends AbstractBasicType<Long> {
     }
   }
 
-  public <R, C> R accept(SqrlTypeVisitor<R, C> visitor, C context) {
+  @Override
+public <R, C> R accept(SqrlTypeVisitor<R, C> visitor, C context) {
     return visitor.visitBigIntType(this, context);
   }
 }

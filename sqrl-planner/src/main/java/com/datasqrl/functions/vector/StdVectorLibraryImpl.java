@@ -8,15 +8,16 @@ import static com.datasqrl.vector.VectorFunctions.EUCLIDEAN_DISTANCE;
 import static com.datasqrl.vector.VectorFunctions.ONNX_EMBED;
 import static com.datasqrl.vector.VectorFunctions.VEC_TO_DOUBLE;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.apache.flink.table.functions.FunctionDefinition;
+
 import com.datasqrl.NamespaceObjectUtil;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.function.AbstractFunctionModule;
 import com.datasqrl.function.StdLibrary;
 import com.google.auto.service.AutoService;
-
-import java.util.List;
-import java.util.stream.Collectors;
-import org.apache.flink.table.functions.FunctionDefinition;
 
 @AutoService(StdLibrary.class)
 public class StdVectorLibraryImpl extends AbstractFunctionModule implements StdLibrary {

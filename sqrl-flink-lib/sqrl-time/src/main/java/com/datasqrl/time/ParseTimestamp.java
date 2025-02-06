@@ -1,17 +1,20 @@
 package com.datasqrl.time;
 
-import com.datasqrl.function.FlinkTypeUtil;
-import com.datasqrl.function.FlinkTypeUtil.VariableArguments;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
-import lombok.extern.slf4j.Slf4j;
+
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.table.types.inference.TypeInference;
+
+import com.datasqrl.function.FlinkTypeUtil;
+import com.datasqrl.function.FlinkTypeUtil.VariableArguments;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Parses a timestamp from an ISO timestamp string.
@@ -24,7 +27,7 @@ public class ParseTimestamp extends ScalarFunction {
   }
 
   public Instant eval(String s, String format) {
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format, Locale.US);
+    var formatter = DateTimeFormatter.ofPattern(format, Locale.US);
     try {
       return LocalDateTime.parse(s, formatter).atZone(ZoneId.systemDefault()).toInstant();
     } catch (Exception e) {

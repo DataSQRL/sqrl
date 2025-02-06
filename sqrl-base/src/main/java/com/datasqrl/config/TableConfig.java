@@ -1,14 +1,16 @@
 package com.datasqrl.config;
 
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.tables.TableType;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.io.tables.TableType;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
@@ -104,10 +106,9 @@ public interface TableConfig {
         if (this == o) {
           return true;
         }
-        if (!(o instanceof Format)) {
+        if (!(o instanceof Format that)) {
           return false;
         }
-        Format that = (Format) o;
         return name.equalsIgnoreCase(that.getName());
       }
 

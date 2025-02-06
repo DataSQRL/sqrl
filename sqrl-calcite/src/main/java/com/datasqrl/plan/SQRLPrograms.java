@@ -3,8 +3,6 @@
  */
 package com.datasqrl.plan;
 
-import org.apache.calcite.plan.RelOptPlanner;
-import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.tools.Program;
 
 public class SQRLPrograms {
@@ -15,11 +13,11 @@ public class SQRLPrograms {
           return rel;
         }
 
-        RelNode rel2 = planner.changeTraits(rel, requiredOutputTraits);
+        var rel2 = planner.changeTraits(rel, requiredOutputTraits);
         planner.setRoot(rel2);
 
-        final RelOptPlanner planner2 = planner.chooseDelegate();
-        final RelNode rootRel3 = planner2.findBestExp();
+        final var planner2 = planner.chooseDelegate();
+        final var rootRel3 = planner2.findBestExp();
         assert rootRel3 != null : "could not implement exp";
         return rootRel3;
       };

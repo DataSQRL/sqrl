@@ -1,7 +1,5 @@
 package com.datasqrl;
 
-import com.datasqrl.util.FlinkOperatorStatusChecker;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -16,16 +14,20 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.SneakyThrows;
+
 import org.apache.commons.collections.ListUtils;
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.JobStatus;
 import org.apache.flink.core.execution.JobClient;
-import org.apache.flink.runtime.client.JobExecutionException;
 import org.apache.flink.table.api.TableResult;
+
+import com.datasqrl.util.FlinkOperatorStatusChecker;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.SneakyThrows;
 
 public class DatasqrlTest {
 
@@ -35,8 +37,8 @@ public class DatasqrlTest {
   public String GRAPHQL_ENDPOINT = "http://localhost:8888/graphql";
 
   public static void main(String[] args) {
-    DatasqrlTest test = new DatasqrlTest();
-    int returnCode = test.run();
+    var test = new DatasqrlTest();
+    var returnCode = test.run();
     System.exit(returnCode);
   }
 
@@ -138,7 +140,7 @@ public class DatasqrlTest {
         } catch (Exception e) {
         }
       }
-      
+
       try {
         JobExecutionResult jobExecutionResult = result.getJobClient().get().getJobExecutionResult()
             .get(2, TimeUnit.SECONDS); //flink will hold if the minicluster is stopped

@@ -3,16 +3,17 @@
  */
 package com.datasqrl.plan.table;
 
-import com.datasqrl.plan.util.IndexMap;
-import com.datasqrl.plan.util.TimePredicate;
-import com.google.common.base.Preconditions;
-import lombok.Value;
-import org.apache.calcite.rex.RexBuilder;
-import org.apache.calcite.tools.RelBuilder;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+
+import org.apache.calcite.tools.RelBuilder;
+
+import com.datasqrl.plan.util.IndexMap;
+import com.datasqrl.plan.util.TimePredicate;
+import com.google.common.base.Preconditions;
+
+import lombok.Value;
 
 /**
  * A {@link NowFilter} represents a filter condition on a single timestamp column which requires the
@@ -70,7 +71,7 @@ public interface NowFilter extends PullupOperator {
       return Optional.of(EMPTY);
     }
     Optional<TimePredicate> combined = Optional.of(timePreds.get(0));
-    for (int i = 1; i < timePreds.size(); i++) {
+    for (var i = 1; i < timePreds.size(); i++) {
       combined = combined.flatMap(timePreds.get(i)::and);
     }
     return combined.map(NowFilterImpl::new);
@@ -119,7 +120,7 @@ public interface NowFilter extends PullupOperator {
 
     @Override
     public RelBuilder addFilterTo(RelBuilder relBuilder, boolean useCurrentTime) {
-      RexBuilder rexB = relBuilder.getRexBuilder();
+      var rexB = relBuilder.getRexBuilder();
       relBuilder.filter(
           getPredicate().createRexNode(rexB, i -> rexB.makeInputRef(relBuilder.peek(), i),
               useCurrentTime));

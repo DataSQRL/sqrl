@@ -3,7 +3,6 @@
  */
 package com.datasqrl.schema.type.basic;
 
-import com.datasqrl.schema.type.SqrlTypeVisitor;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -11,6 +10,8 @@ import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+
+import com.datasqrl.schema.type.SqrlTypeVisitor;
 
 public class TimestampType extends AbstractBasicType<Instant> {
 
@@ -21,7 +22,8 @@ public class TimestampType extends AbstractBasicType<Instant> {
     return List.of("TIMESTAMP", "DATETIME");
   }
 
-  public <R, C> R accept(SqrlTypeVisitor<R, C> visitor, C context) {
+  @Override
+public <R, C> R accept(SqrlTypeVisitor<R, C> visitor, C context) {
     return visitor.visitTimestampType(this, context);
   }
 

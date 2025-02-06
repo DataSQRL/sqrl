@@ -4,6 +4,20 @@
 package com.datasqrl.packager;
 
 
+import java.nio.file.Path;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.apache.calcite.sql.ScriptNode;
+import org.apache.calcite.sql.ScriptVisitor;
+import org.apache.calcite.sql.SqrlAssignment;
+import org.apache.calcite.sql.SqrlCreateDefinition;
+import org.apache.calcite.sql.SqrlExportDefinition;
+import org.apache.calcite.sql.SqrlImportDefinition;
+import org.apache.calcite.sql.SqrlStatement;
+import org.apache.calcite.sql.StatementVisitor;
+
 import com.datasqrl.MainScriptImpl;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.ConnectorFactoryFactory;
@@ -14,20 +28,9 @@ import com.datasqrl.parse.SqrlParser;
 import com.datasqrl.parse.SqrlParserImpl;
 import com.datasqrl.util.SqlNameUtil;
 import com.google.inject.Inject;
-import java.nio.file.Path;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
+
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
-import org.apache.calcite.sql.ScriptNode;
-import org.apache.calcite.sql.ScriptVisitor;
-import org.apache.calcite.sql.SqrlAssignment;
-import org.apache.calcite.sql.SqrlCreateDefinition;
-import org.apache.calcite.sql.SqrlExportDefinition;
-import org.apache.calcite.sql.SqrlImportDefinition;
-import org.apache.calcite.sql.SqrlStatement;
-import org.apache.calcite.sql.StatementVisitor;
 
 @AllArgsConstructor(onConstructor_=@Inject)
 public class ImportExportAnalyzer implements
@@ -61,7 +64,7 @@ public class ImportExportAnalyzer implements
 
   @Override
   public Optional<NamePath> visit(SqrlImportDefinition node, Void context) {
-    NamePath path = nameUtil.toNamePath(node.getImportPath().names);
+    var path = nameUtil.toNamePath(node.getImportPath().names);
     if (moduleLoader.getModule(path.popLast()).isPresent()) {
       return Optional.empty();
     }
@@ -70,12 +73,9 @@ public class ImportExportAnalyzer implements
 
   @Override
   public Optional<NamePath> visit(SqrlExportDefinition node, Void context) {
-    NamePath sinkPath = nameUtil.toNamePath(node.getSinkPath().names);
+    var sinkPath = nameUtil.toNamePath(node.getSinkPath().names);
 
-    if (SystemBuiltInConnectors.forExport(sinkPath.popLast()).isPresent()) {
-      return Optional.empty();
-    }
-    if (moduleLoader.getModule(sinkPath.popLast()).isPresent()) {
+    if (SystemBuiltInConnectors.forExport(sinkPath.popLast()).isPresent() || moduleLoader.getModule(sinkPath.popLast()).isPresent()) {
       return Optional.empty();
     }
     return Optional.of(sinkPath.popLast());

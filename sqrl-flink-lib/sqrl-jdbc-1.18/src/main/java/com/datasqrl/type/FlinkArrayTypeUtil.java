@@ -14,7 +14,7 @@ public class FlinkArrayTypeUtil {
 
   public static boolean isScalarArray(LogicalType type) {
     if (type instanceof ArrayType arrayType) {
-      LogicalType elementType = arrayType.getElementType();
+      var elementType = arrayType.getElementType();
       return isScalar(elementType) || isScalarArray(elementType);
     }
     return false;

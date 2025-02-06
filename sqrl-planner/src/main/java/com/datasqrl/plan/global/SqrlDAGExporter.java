@@ -1,33 +1,31 @@
 package com.datasqrl.plan.global;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.apache.calcite.rel.RelCollation;
+import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.commons.lang3.StringUtils;
+
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.QueryPlanner;
 import com.datasqrl.io.tables.TableType;
-import com.datasqrl.plan.local.generate.ResolvedExport;
-import com.datasqrl.plan.rules.SqrlRelMetadataProvider;
-import com.datasqrl.plan.table.*;
+import com.datasqrl.plan.table.PhysicalRelationalTable;
+import com.datasqrl.plan.table.ProxyImportRelationalTable;
+import com.datasqrl.plan.table.PullupOperator;
+import com.datasqrl.plan.table.Timestamps;
 import com.datasqrl.plan.util.RelWriterWithHints;
-import com.datasqrl.plan.util.TimePredicate;
 import com.datasqrl.util.CalciteHacks;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Value;
 import lombok.experimental.SuperBuilder;
-import org.apache.calcite.rel.RelCollation;
-import org.apache.calcite.rel.RelFieldCollation;
-import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.metadata.JaninoRelMetadataProvider;
-import org.apache.calcite.rel.metadata.RelMetadataQuery;
-import org.apache.calcite.rel.metadata.RelMetadataQueryBase;
-import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.commons.lang3.StringUtils;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Value
 @Builder
@@ -61,13 +59,11 @@ public class SqrlDAGExporter {
         List<Node> result = new ArrayList<>();
         for (SqrlDAG.SqrlNode node : dag) {
             List<String> inputs = dag.getInputs(node).stream().map(SqrlDAG.SqrlNode::getId).sorted().collect(Collectors.toUnmodifiableList());
-            String stage = node.getChosenStage().getEngine().getName().toLowerCase();
-            if (node instanceof SqrlDAG.TableNode) {
-                SqrlDAG.TableNode tableNode = (SqrlDAG.TableNode)node;
-                PhysicalRelationalTable table = (PhysicalRelationalTable) tableNode.getTable();
+            var stage = node.getChosenStage().getEngine().getName().toLowerCase();
+            if (node instanceof SqrlDAG.TableNode tableNode) {
+                var table = (PhysicalRelationalTable) tableNode.getTable();
                 String importInput = null;
-                if (table instanceof ProxyImportRelationalTable && includeImports) {
-                    ProxyImportRelationalTable importTable = (ProxyImportRelationalTable) table;
+                if (table instanceof ProxyImportRelationalTable importTable && includeImports) {
                     importInput = importTable.getBaseTable().getNameId();
                     result.add(Node.builder()
                             .id(importInput)
@@ -76,7 +72,7 @@ public class SqrlDAGExporter {
                             .stage(stage)
                             .build());
                 }
-                List<RelDataTypeField> fields = table.getRowType().getFieldList();
+                var fields = table.getRowType().getFieldList();
                 result.add(Table.builder()
                         .id(table.getNameId())
                         .name(table.getTableName().getDisplay())
@@ -91,7 +87,7 @@ public class SqrlDAGExporter {
                         .post_processors(convert(table.getPullups(),fields))
                         .build());
             } else if (node instanceof SqrlDAG.ExportNode) {
-                AnalyzedExport export = ((SqrlDAG.ExportNode) node).getExport();
+                var export = ((SqrlDAG.ExportNode) node).getExport();
                 result.add(Node.builder()
                         .id(node.getId())
                         .name(export.getSink().getPath().toString())
@@ -100,8 +96,10 @@ public class SqrlDAGExporter {
                         .inputs(inputs)
                         .build());
             } else if (node instanceof SqrlDAG.QueryNode) {
-                if (!includeQueries) continue;
-                AnalyzedAPIQuery query = ((SqrlDAG.QueryNode) node).getQuery();
+                if (!includeQueries) {
+					continue;
+				}
+                var query = ((SqrlDAG.QueryNode) node).getQuery();
                 result.add(Query.builder()
                         .id(node.getId())
                         .name(query.getName())
@@ -119,7 +117,9 @@ public class SqrlDAGExporter {
     }
 
     private String explain(RelNode relNode) {
-        if (!includeLogicalPlan) return null;
+        if (!includeLogicalPlan) {
+			return null;
+		}
         CalciteHacks.resetToSqrlMetadataProvider();
         if (withHints) {
             return RelWriterWithHints.explain(relNode);
@@ -129,20 +129,22 @@ public class SqrlDAGExporter {
     }
 
     private String toSql(RelNode relNode) {
-        if (!includeSQL) return null;
+        if (!includeSQL) {
+			return null;
+		}
         return QueryPlanner.relToString(Dialect.CALCITE, relNode).getSql();
     }
 
     private static List<PostProcessor> convert(PullupOperator.Container pullups, List<RelDataTypeField> fields) {
         List<PostProcessor> processors = new ArrayList<>();
         if (!pullups.getNowFilter().isEmpty()) {
-            TimePredicate predicate = pullups.getNowFilter().getPredicate();
+            var predicate = pullups.getNowFilter().getPredicate();
             Preconditions.checkArgument(predicate.isNowPredicate());
             processors.add(new PostProcessor("now-filter", fields.get(predicate.getLargerIndex()).getName() + " > now() - " + predicate.getIntervalLength() + " ms"));
         }
         if (!pullups.getTopN().isEmpty()) {
-            String description = "";
-            TopNConstraint topN = pullups.getTopN();
+            var description = "";
+            var topN = pullups.getTopN();
             if (topN.hasPartition()) {
                 description += "partition="+topN.getPartition().stream().map(i -> fields.get(i).getName()).collect(Collectors.joining(", ")) + " ";
             }
@@ -165,8 +167,10 @@ public class SqrlDAGExporter {
     }
 
     private static String collations2String(RelCollation collation, List<RelDataTypeField> fields) {
-        List<RelFieldCollation> collations = collation.getFieldCollations();
-        if (collations.isEmpty()) return "";
+        var collations = collation.getFieldCollations();
+        if (collations.isEmpty()) {
+			return "";
+		}
         return collations.stream().map(col -> fields.get(col.getFieldIndex()) + " " + col.shortString()).collect(Collectors.joining(", "));
     }
 
@@ -182,16 +186,12 @@ public class SqrlDAGExporter {
             return name;
         }
         public static NodeType from(TableType tableType) {
-            switch (tableType) {
-                case RELATION: return RELATION;
-                case STREAM: return STREAM;
-                case STATE:
-                case STATIC:
-                case LOOKUP:
-                case VERSIONED_STATE:
-                    return STATE;
-                default: throw new UnsupportedOperationException("Unexpected type: " + tableType);
-            }
+            return switch (tableType) {
+			case RELATION -> RELATION;
+			case STREAM -> STREAM;
+			case STATE, STATIC, LOOKUP, VERSIONED_STATE -> STATE;
+			default -> throw new UnsupportedOperationException("Unexpected type: " + tableType);
+			};
         }
     }
 
@@ -216,7 +216,7 @@ public class SqrlDAGExporter {
         }
 
         String baseToString() {
-            StringBuilder s = new StringBuilder();
+            var s = new StringBuilder();
             s.append("=== ").append(name).append(LINEBREAK);
             s.append("ID:     ").append(id).append(LINEBREAK);
             s.append("Type:   ").append(type).append(LINEBREAK);
@@ -241,7 +241,7 @@ public class SqrlDAGExporter {
         String sql;
 
         String planToString() {
-            StringBuilder s = new StringBuilder();
+            var s = new StringBuilder();
             if (!Strings.isNullOrEmpty(plan)) {
                 s.append("Plan:").append(LINEBREAK);
                 s.append(plan);
@@ -269,7 +269,7 @@ public class SqrlDAGExporter {
 
         @Override
         public String toString() {
-            StringBuilder s = new StringBuilder();
+            var s = new StringBuilder();
             s.append(baseToString());
             s.append("Primary Key: ").append(primary_key==null?"-":StringUtils.join(primary_key,", ")).append(LINEBREAK);
             s.append("Timestamp  : ").append(timestamp).append(LINEBREAK);

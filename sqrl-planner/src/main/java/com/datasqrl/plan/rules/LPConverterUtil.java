@@ -1,20 +1,23 @@
 package com.datasqrl.plan.rules;
 
-import com.datasqrl.plan.table.Timestamps;
 import java.util.Optional;
 
-import com.datasqrl.plan.table.TimestampInference;
 import org.apache.calcite.rel.RelCollation;
 import org.apache.calcite.rel.RelCollations;
 import org.apache.calcite.rel.RelFieldCollation;
-import org.apache.calcite.rel.RelFieldCollation.Direction;
+
+import com.datasqrl.plan.table.Timestamps;
 
 public class LPConverterUtil {
 
   public static Optional<Integer> getTimestampOrderIndex(RelCollation collation, Timestamps timestamp) {
-    if (collation.getFieldCollations().isEmpty()) return Optional.empty();
-    RelFieldCollation fieldCol = collation.getFieldCollations().getFirst();
-    if (timestamp.isCandidate(fieldCol.getFieldIndex())) return Optional.of(fieldCol.getFieldIndex());
+    if (collation.getFieldCollations().isEmpty()) {
+		return Optional.empty();
+	}
+    var fieldCol = collation.getFieldCollations().getFirst();
+    if (timestamp.isCandidate(fieldCol.getFieldIndex())) {
+		return Optional.of(fieldCol.getFieldIndex());
+	}
     return Optional.empty();
   }
 

@@ -9,6 +9,20 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.io.FileUtils;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.util.FileTestUtil;
@@ -17,19 +31,8 @@ import com.datasqrl.util.TestScript;
 import com.datasqrl.util.data.Nutshop;
 import com.datasqrl.util.data.Retail;
 import com.datasqrl.util.data.Sensors;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
+
 import lombok.SneakyThrows;
-import org.apache.commons.io.FileUtils;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInfo;
 
 @Disabled
 public class TestCmd {
@@ -76,7 +79,7 @@ public class TestCmd {
 
   @Test
   public void compileMutations() {
-    Path root = Paths.get("../../sqrl-examples/mutations");
+    var root = Paths.get("../../sqrl-examples/mutations");
     execute(root,
         "compile", "script.sqrl",
         "schema.graphqls");
@@ -121,10 +124,10 @@ public class TestCmd {
 
   @Test
   public void compileNutshop() {
-    Path rootDir = Nutshop.INSTANCE.getRootPackageDirectory();
+    var rootDir = Nutshop.INSTANCE.getRootPackageDirectory();
     buildDir = rootDir.resolve("build");
 
-    TestScript script = Nutshop.INSTANCE.getScripts().get(1);
+    var script = Nutshop.INSTANCE.getScripts().get(1);
     execute(rootDir, "compile",
         script.getRootPackageDirectory().relativize(script.getScriptPath()).toString(),
         script.getRootPackageDirectory().relativize(script.getGraphQLSchemas().get(0).getSchemaPath()).toString(),
@@ -239,10 +242,10 @@ public class TestCmd {
 
   @Test
   public void compileRetail() {
-    Path rootDir = Retail.INSTANCE.getRootPackageDirectory();
+    var rootDir = Retail.INSTANCE.getRootPackageDirectory();
     buildDir = rootDir.resolve("build");
 
-    TestScript script = Retail.INSTANCE.getScript(Retail.RetailScriptNames.FULL);
+    var script = Retail.INSTANCE.getScript(Retail.RetailScriptNames.FULL);
     execute(rootDir, "compile",
         script.getRootPackageDirectory().relativize(script.getScriptPath()).toString(),
         "-t", OUTPUT_DIR.toString());
@@ -259,7 +262,7 @@ public class TestCmd {
   // SQRL #479 - Infinite loop replication
   @Test
   public void testCreditCardInfiniteLoop() {
-    Path basePath = CC_PATH;
+    var basePath = CC_PATH;
     execute(basePath,
         "compile", "creditcard.sqrl",
         "creditcard.graphqls");
@@ -270,8 +273,8 @@ public class TestCmd {
   }
 
   public static int execute(Path rootDir, StatusHook hook, String... args) {
-    RootCommand rootCommand = new RootCommand(rootDir, hook);
-    int exitCode = rootCommand.getCmd().execute(args) + (hook.isSuccess() ? 0 : 1);
+    var rootCommand = new RootCommand(rootDir, hook);
+    var exitCode = rootCommand.getCmd().execute(args) + (hook.isSuccess() ? 0 : 1);
     if (exitCode != 0) {
       fail();
     }

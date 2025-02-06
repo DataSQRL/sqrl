@@ -1,6 +1,7 @@
 package com.datasqrl.cmd;
 
 import com.datasqrl.error.ErrorCollector;
+
 import lombok.Getter;
 
 public interface StatusHook {
@@ -56,7 +57,8 @@ public interface StatusHook {
       return false;
     }
 
-    public boolean isFailed() {
+    @Override
+	public boolean isFailed() {
       return failed;
     }
   }

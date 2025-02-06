@@ -17,8 +17,8 @@ public class CosineSimilarity extends ScalarFunction {
     RealVector vB = new ArrayRealVector(VEC_TO_DOUBLE.eval(vectorB), false);
 
     // Calculate the cosine similarity
-    double dotProduct = vA.dotProduct(vB);
-    double normalization = vA.getNorm() * vB.getNorm();
+    var dotProduct = vA.dotProduct(vB);
+    var normalization = vA.getNorm() * vB.getNorm();
 
     return dotProduct / normalization;
   }

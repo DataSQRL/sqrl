@@ -3,11 +3,13 @@
  */
 package com.datasqrl.schema.type.basic;
 
-import com.datasqrl.error.ErrorCollector;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+
+import com.datasqrl.error.ErrorCollector;
+
 import lombok.NonNull;
 
 public abstract class SimpleBasicType<J> extends AbstractBasicType<J> {
@@ -43,21 +45,21 @@ public abstract class SimpleBasicType<J> extends AbstractBasicType<J> {
       return Optional.empty();
     }
 
-    public boolean detectType(String original) {
+    @Override
+	public boolean detectType(String original) {
       try {
         stringParser.apply(original);
         return true;
-      } catch (IllegalArgumentException e) {
-        return false;
       } catch (Exception e) {
         return false;
       }
     }
 
-    public Optional<J> parseDetected(Object original, ErrorCollector errors) {
+    @Override
+	public Optional<J> parseDetected(Object original, ErrorCollector errors) {
       if (original instanceof String string) {
         try {
-          J result = stringParser.apply(string);
+          var result = stringParser.apply(string);
           return Optional.of(result);
         } catch (IllegalArgumentException e) {
           errors.fatal("Could not parse value [%s] to data type [%s]", original, clazz);

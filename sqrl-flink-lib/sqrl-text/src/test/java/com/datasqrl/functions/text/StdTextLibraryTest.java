@@ -3,15 +3,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.datasqrl.text.TextFunctions;
-import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
+
+import com.datasqrl.text.TextFunctions;
+
+import lombok.SneakyThrows;
 
 public class StdTextLibraryTest {
 
   @Test
   public void testFormat() {
-    String format = "Hello, %s";
+    var format = "Hello, %s";
     assertEquals("Hello, World", TextFunctions.FORMAT.eval(format, "World"));
     format = "Count: %s, %s, %s, %s";
     assertEquals("Count: 1, 2, 3, 4", TextFunctions.FORMAT.eval(format, "1", "2", "3", "4"));

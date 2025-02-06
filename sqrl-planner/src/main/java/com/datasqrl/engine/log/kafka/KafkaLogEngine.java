@@ -1,6 +1,10 @@
 package com.datasqrl.engine.log.kafka;
 
 
+import java.util.EnumSet;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.config.ConnectorFactory;
 import com.datasqrl.config.ConnectorFactoryFactory;
@@ -20,9 +24,7 @@ import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.stream.Collectors;
+
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 

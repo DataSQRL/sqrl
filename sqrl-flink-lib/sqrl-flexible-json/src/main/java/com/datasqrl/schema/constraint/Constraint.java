@@ -3,15 +3,16 @@
  */
 package com.datasqrl.schema.constraint;
 
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.schema.type.Type;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.schema.type.Type;
 
 public interface Constraint extends Serializable {
 
@@ -48,7 +49,7 @@ public interface Constraint extends Serializable {
   Lookup FACTORY_LOOKUP = new Lookup() {
 
     private final Map<Name, Constraint.Factory> factoriesByName = Arrays.stream(FACTORIES)
-        .collect(Collectors.toMap(f -> f.getName(), Function.identity()));
+        .collect(Collectors.toMap(Factory::getName, Function.identity()));
 
     @Override
     public Factory get(Name constraintName) {

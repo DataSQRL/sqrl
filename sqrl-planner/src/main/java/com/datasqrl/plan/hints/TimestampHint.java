@@ -3,14 +3,15 @@
  */
 package com.datasqrl.plan.hints;
 
-import com.google.common.base.Preconditions;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import org.apache.calcite.rel.hint.RelHint;
-
-import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import org.apache.calcite.rel.hint.RelHint;
+
+import com.google.common.base.Preconditions;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
@@ -44,7 +45,7 @@ public class TimestampHint implements SqrlHint {
 
     @Override
     public TimestampHint fromHint(RelHint hint) {
-      List<String> options = hint.listOptions;
+      var options = hint.listOptions;
       Preconditions.checkArgument(options.size() == 1, "Invalid hint: %s", hint);
       int timestampIdx = Integer.valueOf(options.getFirst());
       return new TimestampHint(timestampIdx);

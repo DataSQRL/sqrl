@@ -1,15 +1,12 @@
 package com.datasqrl.json;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.JsonProcessingException;
+
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.flink.table.annotation.DataTypeHint;
 import org.apache.flink.table.annotation.FunctionHint;
 import org.apache.flink.table.annotation.InputGroup;
 import org.apache.flink.table.functions.AggregateFunction;
-import org.apache.flink.table.functions.FunctionContext;
 import org.apache.flink.util.jackson.JacksonMapperFactory;
 
 /**
@@ -84,7 +81,7 @@ public class JsonObjectAgg extends AggregateFunction<Object, ObjectAgg> {
 
   @Override
   public FlinkJsonType getValue(ObjectAgg accumulator) {
-    ObjectNode objectNode = mapper.createObjectNode();
+    var objectNode = mapper.createObjectNode();
     accumulator.getObjects().forEach(objectNode::putPOJO);
     return new FlinkJsonType(objectNode);
   }

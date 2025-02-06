@@ -3,14 +3,16 @@
  */
 package com.datasqrl.io.tables;
 
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.canonicalizer.NameCanonicalizer;
-import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.config.TableConfig;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NameCanonicalizer;
+import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.config.TableConfig;
+
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -34,11 +36,13 @@ public abstract class AbstractExternalTable implements ExternalTable {
   @NonNull
   protected final Optional<TableSchema> tableSchema;
 
-  public String qualifiedName() {
+  @Override
+public String qualifiedName() {
     return path.toString();
   }
 
-  public Digest getDigest() {
+  @Override
+public Digest getDigest() {
     return new Digest(path, NameCanonicalizer.SYSTEM);
   }
 

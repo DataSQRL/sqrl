@@ -1,7 +1,8 @@
 package com.datasqrl.config;
 
-import com.datasqrl.config.EngineFactory.Type;
 import java.util.Optional;
+
+import com.datasqrl.config.EngineFactory.Type;
 
 public interface ConnectorFactoryFactory {
 

@@ -6,16 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.datasqrl.config.Dependency;
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.serializer.Deserializer;
-import com.datasqrl.packager.Publisher;
-import com.datasqrl.config.DependencyImpl;
-import com.datasqrl.packager.util.Zipper;
-import com.datasqrl.util.FileTestUtil;
-import com.datasqrl.util.FileUtil;
-import com.datasqrl.util.SnapshotTest;
-import com.datasqrl.util.StringUtil;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
@@ -23,12 +13,25 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-import lombok.SneakyThrows;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
+
+import com.datasqrl.config.Dependency;
+import com.datasqrl.config.DependencyImpl;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.packager.Publisher;
+import com.datasqrl.packager.util.Zipper;
+import com.datasqrl.serializer.Deserializer;
+import com.datasqrl.util.FileTestUtil;
+import com.datasqrl.util.FileUtil;
+import com.datasqrl.util.SnapshotTest;
+import com.datasqrl.util.StringUtil;
+
+import lombok.SneakyThrows;
 
 public class RepositoryTest {
 
@@ -58,7 +61,7 @@ public class RepositoryTest {
 
   @Test
   public void testRetailValidatePub() {
-    Publication pub = testValidatePublication(SAMPLE_SEEDSHOP_PACKAGE);
+    var pub = testValidatePublication(SAMPLE_SEEDSHOP_PACKAGE);
     assertEquals("datasqrl.examples.ecommerce", pub.getName());
     assertEquals("dev", pub.getVariant());
     assertEquals(true, pub.getLatest());
@@ -108,7 +111,7 @@ public class RepositoryTest {
   @Test
   @Disabled
   public void publishSeedshopLocally() {
-    LocalRepositoryImplementation repo = LocalRepositoryImplementation.of(errors, null);
+    var repo = LocalRepositoryImplementation.of(errors, null);
     publishLocally(SAMPLE_SEEDSHOP_PACKAGE, repo);
   }
 

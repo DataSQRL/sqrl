@@ -5,19 +5,6 @@ package com.datasqrl.packager.repository;
 
 import static com.datasqrl.auth.AuthUtils.REPO_URL;
 
-import com.datasqrl.auth.AuthProvider;
-import com.datasqrl.config.Dependency;
-import com.datasqrl.config.DependencyImpl;
-import com.datasqrl.config.PackageConfiguration;
-import com.datasqrl.packager.util.FileHash;
-import com.datasqrl.packager.util.Zipper;
-import com.datasqrl.util.SqrlObjectMapper;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Preconditions;
-import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URI;
@@ -34,10 +21,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import lombok.Setter;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
-import net.lingala.zip4j.ZipFile;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -47,6 +31,24 @@ import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+
+import com.datasqrl.auth.AuthProvider;
+import com.datasqrl.config.Dependency;
+import com.datasqrl.config.DependencyImpl;
+import com.datasqrl.config.PackageConfiguration;
+import com.datasqrl.packager.util.FileHash;
+import com.datasqrl.packager.util.Zipper;
+import com.datasqrl.util.SqrlObjectMapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Preconditions;
+
+import lombok.Setter;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import net.lingala.zip4j.ZipFile;
 
 @Slf4j
 public class RemoteRepositoryImplementation implements Repository, PublishRepository {
@@ -69,27 +71,27 @@ public class RemoteRepositoryImplementation implements Repository, PublishReposi
 
   @Override
   public boolean retrieveDependency(Path targetPath, Dependency dependency) {
-    JsonNode dependencyInfo = getDependencyInfo(dependency.getName(), dependency.getVersion().get(), dependency.getVariant());
+    var dependencyInfo = getDependencyInfo(dependency.getName(), dependency.getVersion().get(), dependency.getVariant());
     return downloadDependency(targetPath, dependencyInfo, dependency);
   }
 
   // Downloads the given Dependency to the specified Path
   private boolean downloadDependency(Path targetPath, JsonNode dependencyInfo, Dependency dependency) {
-    String hash = dependencyInfo.get("hash").asText();
-    String repoURL = dependencyInfo.get("repoURL").asText();
+    var hash = dependencyInfo.get("hash").asText();
+    var repoURL = dependencyInfo.get("repoURL").asText();
 
     try {
       // Create target directory
       Files.createDirectories(targetPath);
 
       // Create a temporary file for the zip file
-      Path zipFile = Files.createTempFile(targetPath, "package", Zipper.ZIP_EXTENSION);
+      var zipFile = Files.createTempFile(targetPath, "package", Zipper.ZIP_EXTENSION);
 
       // Copy the zip file from the repoURL to the temporary file
       FileUtils.copyURLToFile(new URL(repoURL), zipFile.toFile());
 
       // Get the hash for the downloaded file
-      String downloadHash = FileHash.getFor(zipFile);
+      var downloadHash = FileHash.getFor(zipFile);
 
       // Ensure the hashes match
       Preconditions.checkArgument(
@@ -102,7 +104,9 @@ public class RemoteRepositoryImplementation implements Repository, PublishReposi
       new ZipFile(zipFile.toFile()).extractAll(targetPath.toString());
 
       // Cache downloaded package
-      if (cacheRepository != null) cacheRepository.cacheDependency(zipFile, dependency);
+      if (cacheRepository != null) {
+		cacheRepository.cacheDependency(zipFile, dependency);
+	}
 
       // Delete the temporary file
       Files.deleteIfExists(zipFile);
@@ -117,7 +121,7 @@ public class RemoteRepositoryImplementation implements Repository, PublishReposi
 
   @Override
   public Optional<Dependency> resolveDependency(String packageName) {
-    JsonNode result = getLatestDependencyInfo(packageName);
+    var result = getLatestDependencyInfo(packageName);
     return Optional.of(map(result, DependencyImpl.class));
   }
 
@@ -164,7 +168,7 @@ public class RemoteRepositoryImplementation implements Repository, PublishReposi
       throw new IllegalArgumentException("name cannot be null");
     }
 
-    StringBuilder uriBuilder = new StringBuilder(repositoryServerURI.toString()).append("/api/packages/").append(name);
+    var uriBuilder = new StringBuilder(repositoryServerURI.toString()).append("/api/packages/").append(name);
 
     // Append version and variant if provided
     if (version != null && variant != null) {
@@ -210,14 +214,16 @@ public class RemoteRepositoryImplementation implements Repository, PublishReposi
   }
 
   private static HttpEntity createHttpEntity(Path zipFilePath, PackageConfiguration pkgConfig) {
-    Map<String, Object> map = pkgConfig.toMap();
+    var map = pkgConfig.toMap();
 
-    MultipartEntityBuilder entityBuilder = MultipartEntityBuilder.create();
+    var entityBuilder = MultipartEntityBuilder.create();
     for (Map.Entry<String, Object> entry : map.entrySet()) {
-      if (entry.getValue() == null) continue;
+      if (entry.getValue() == null) {
+		continue;
+	}
       if (entry.getValue() instanceof List) {
         List<?> list = (List<?>) entry.getValue();
-        for (int i = 0; i < list.size(); i++) {
+        for (var i = 0; i < list.size(); i++) {
           entityBuilder.addTextBody(String.format("%s[%d]", entry.getKey(), i), list.get(i).toString());
         }
       } else {
@@ -225,7 +231,7 @@ public class RemoteRepositoryImplementation implements Repository, PublishReposi
       }
     }
 
-    File zipFile = zipFilePath.toFile();
+    var zipFile = zipFilePath.toFile();
     entityBuilder.addBinaryBody("file", zipFile, ContentType.create("application/zip"), zipFile.getName());
 
     return entityBuilder.build();

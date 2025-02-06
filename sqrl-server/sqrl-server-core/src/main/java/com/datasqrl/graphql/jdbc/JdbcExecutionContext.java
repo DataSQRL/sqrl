@@ -3,21 +3,8 @@ package com.datasqrl.graphql.jdbc;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.LIMIT;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.OFFSET;
 
-import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
-import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentParameter;
-import com.datasqrl.graphql.server.RootGraphqlModel.ParameterHandlerVisitor;
-import com.datasqrl.graphql.server.RootGraphqlModel.JdbcParameterHandler;
-import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedPagedJdbcQuery;
-import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedJdbcQuery;
-import com.datasqrl.graphql.server.RootGraphqlModel.SourceParameter;
-import com.datasqrl.graphql.server.QueryExecutionContext;
-import com.datasqrl.graphql.server.GraphQLEngineBuilder;
-import graphql.schema.DataFetchingEnvironment;
-import graphql.schema.PropertyDataFetcher;
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -26,6 +13,19 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+
+import com.datasqrl.graphql.server.GraphQLEngineBuilder;
+import com.datasqrl.graphql.server.QueryExecutionContext;
+import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
+import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentParameter;
+import com.datasqrl.graphql.server.RootGraphqlModel.JdbcParameterHandler;
+import com.datasqrl.graphql.server.RootGraphqlModel.ParameterHandlerVisitor;
+import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedJdbcQuery;
+import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedPagedJdbcQuery;
+import com.datasqrl.graphql.server.RootGraphqlModel.SourceParameter;
+
+import graphql.schema.DataFetchingEnvironment;
+import graphql.schema.PropertyDataFetcher;
 import lombok.SneakyThrows;
 import lombok.Value;
 
@@ -77,28 +77,28 @@ public class JdbcExecutionContext implements QueryExecutionContext,
       boolean isList, QueryExecutionContext context) {
     Optional<Integer> limit = Optional.ofNullable(getEnvironment().getArgument(LIMIT));
     Optional<Integer> offset = Optional.ofNullable(getEnvironment().getArgument(OFFSET));
-    Object[] paramObj = new Object[pgQuery.getQuery().getParameters().size()];
-    for (int i = 0; i < pgQuery.getQuery().getParameters().size(); i++) {
-      JdbcParameterHandler param = pgQuery.getQuery().getParameters().get(i);
-      Object o = param.accept(this, this);
+    var paramObj = new Object[pgQuery.getQuery().getParameters().size()];
+    for (var i = 0; i < pgQuery.getQuery().getParameters().size(); i++) {
+      var param = pgQuery.getQuery().getParameters().get(i);
+      var o = param.accept(this, this);
       paramObj[i] = o;
     }
 
     //Add limit + offset
-    final String query = String.format("SELECT * FROM (%s) x LIMIT %s OFFSET %s",
+    final var query = String.format("SELECT * FROM (%s) x LIMIT %s OFFSET %s",
         pgQuery.getQuery().getSql(),
         limit.map(Object::toString).orElse("ALL"),
         offset.orElse(0)
     );
 
     return CompletableFuture.supplyAsync(()-> {
-      Connection connection = this.context.getClient().getConnection();
+      var connection = this.context.getClient().getConnection();
 
-      try (PreparedStatement statement = connection.prepareStatement(query)) {
-        for (int i = 0; i < paramObj.length; i++) {
+      try (var statement = connection.prepareStatement(query)) {
+        for (var i = 0; i < paramObj.length; i++) {
           statement.setObject(i + 1, paramObj[i]);
         }
-        ResultSet resultSet = statement.executeQuery();
+        var resultSet = statement.executeQuery();
 
         return unboxList(resultSetToList(resultSet), isList);
       } catch (SQLException e) {
@@ -109,12 +109,12 @@ public class JdbcExecutionContext implements QueryExecutionContext,
 
   private List<Map<String, Object>> resultSetToList(ResultSet resultSet) throws SQLException {
     List<Map<String, Object>> rows = new ArrayList<>();
-    ResultSetMetaData metaData = resultSet.getMetaData();
-    int columnCount = metaData.getColumnCount();
+    var metaData = resultSet.getMetaData();
+    var columnCount = metaData.getColumnCount();
 
     while (resultSet.next()) {
       Map<String, Object> row = new LinkedHashMap<>(columnCount);
-      for (int i = 1; i <= columnCount; i++) {
+      for (var i = 1; i <= columnCount; i++) {
         row.put(metaData.getColumnLabel(i), resultSet.getObject(i));
       }
       rows.add(row);
@@ -135,7 +135,7 @@ public class JdbcExecutionContext implements QueryExecutionContext,
     return context.getArguments().stream()
         .filter(arg -> arg.getPath().equalsIgnoreCase(argumentParameter.getPath()))
         .findFirst()
-        .map(f -> f.getValue())
+        .map(Argument::getValue)
         .orElse(null);
   }
 }

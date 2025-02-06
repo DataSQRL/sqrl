@@ -1,8 +1,10 @@
 package com.datasqrl.config;
 
+import java.util.Optional;
+
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-import java.util.Optional;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 

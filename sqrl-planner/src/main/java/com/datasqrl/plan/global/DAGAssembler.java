@@ -1,6 +1,32 @@
 package com.datasqrl.plan.global;
 
+import static com.datasqrl.error.ErrorCode.PRIMARY_KEY_NULLABLE;
+import static com.datasqrl.plan.OptimizationStage.DATABASE_DAG_STITCHING;
+import static com.datasqrl.plan.OptimizationStage.SERVER_DAG_STITCHING;
+import static com.datasqrl.plan.OptimizationStage.STREAM_DAG_STITCHING;
+
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalInt;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.RelShuttleImpl;
+import org.apache.calcite.rel.core.TableFunctionScan;
+import org.apache.calcite.rel.core.TableScan;
+import org.apache.calcite.rel.hint.Hintable;
+
 import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.calcite.SqrlRexUtil;
 import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.log.Log;
@@ -20,32 +46,16 @@ import com.datasqrl.plan.global.SqrlDAG.SqrlNode;
 import com.datasqrl.plan.global.SqrlDAG.TableNode;
 import com.datasqrl.plan.hints.TimestampHint;
 import com.datasqrl.plan.local.generate.QueryTableFunction;
-import com.datasqrl.plan.rules.AnnotatedLP;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.rules.SqrlConverterConfig;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
-import com.datasqrl.plan.table.PhysicalTable;
 import com.datasqrl.util.CalciteUtil;
-import com.datasqrl.calcite.SqrlRexUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
 import com.google.inject.Inject;
+
 import lombok.AllArgsConstructor;
-import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.RelShuttleImpl;
-import org.apache.calcite.rel.core.TableFunctionScan;
-import org.apache.calcite.rel.core.TableScan;
-import org.apache.calcite.rel.hint.Hintable;
-import org.apache.calcite.tools.RelBuilder;
-
-import java.net.URL;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static com.datasqrl.error.ErrorCode.PRIMARY_KEY_NULLABLE;
-import static com.datasqrl.plan.OptimizationStage.*;
 
 @AllArgsConstructor(onConstructor_=@Inject)
 public class DAGAssembler {
@@ -57,7 +67,7 @@ public class DAGAssembler {
 
   public PhysicalDAGPlan assemble(SqrlDAG dag, Set<URL> jars) {
     //We make the assumption that there is a single stream stage
-    ExecutionStage streamStage = pipeline.getStage(Type.STREAMS).get().get(0);
+    var streamStage = pipeline.getStage(Type.STREAMS).get().get(0);
     List<PhysicalDAGPlan.WriteQuery> streamQueries = new ArrayList<>();
     //We make the assumption that there is a single (optional) server stage
     Optional<ExecutionStage> serverStage = pipeline.getStage(Type.SERVER).map(e->e.get(0));
@@ -65,12 +75,12 @@ public class DAGAssembler {
 
     //Plan API queries and find all tables that need to be materialized
     HashMultimap<ExecutionStage, DatabaseQuery> queriesByStage = HashMultimap.create();
-    VisitTableScans serverScanVisitor = new VisitTableScans();
+    var serverScanVisitor = new VisitTableScans();
     dag.allNodesByClass(SqrlDAG.QueryNode.class).forEach( query -> {
-      ExecutionStage stage = query.getChosenStage();
-      AnalyzedAPIQuery apiQuery = query.getQuery();
+      var stage = query.getChosenStage();
+      var apiQuery = query.getQuery();
       if (stage.getEngine().getType()==Type.SERVER) { //this must be the serverStage by assumption
-        RelNode relNode = apiQuery.getRelNode(serverStage.get(), sqrlConverter, errors);
+        var relNode = apiQuery.getRelNode(serverStage.get(), sqrlConverter, errors);
         relNode = RelStageRunner.runStage(SERVER_DAG_STITCHING, relNode, framework.getQueryPlanner().getPlanner());
         serverScanVisitor.findScans(relNode);
         serverQueries.add(new PhysicalDAGPlan.ReadQuery(apiQuery.getBaseQuery(), relNode));
@@ -90,10 +100,10 @@ public class DAGAssembler {
       Preconditions.checkArgument(database.getEngine().getType() == Type.DATABASE);
       List<PhysicalDAGPlan.ReadQuery> databaseQueries = new ArrayList<>();
 
-      VisitTableScans tableScanVisitor = new VisitTableScans();
+      var tableScanVisitor = new VisitTableScans();
       queriesByStage.get(database).stream().sorted(Comparator.comparing(DatabaseQuery::getName))
           .forEach(query -> {
-            RelNode relNode = query.getRelNode(database, sqrlConverter, errors);
+            var relNode = query.getRelNode(database, sqrlConverter, errors);
             relNode = RelStageRunner.runStage(DATABASE_DAG_STITCHING, relNode, framework.getQueryPlanner().getPlanner());
             tableScanVisitor.findScans(relNode);
             databaseQueries.add(new PhysicalDAGPlan.ReadQuery(query.getQueryId(), relNode));
@@ -106,14 +116,14 @@ public class DAGAssembler {
 
       //Second, all tables that need to be written in denormalized form
       for (PhysicalRelationalTable materializedTable : materializedTables) {
-        List<String> nullablePks = CalciteUtil.identifyNullableFields(materializedTable.getRowType(), materializedTable.getPrimaryKey().asList());
+        var nullablePks = CalciteUtil.identifyNullableFields(materializedTable.getRowType(), materializedTable.getPrimaryKey().asList());
         errors.checkFatal(nullablePks.isEmpty(), PRIMARY_KEY_NULLABLE, "Cannot materialize table [%s] with nullable primary key: %s", materializedTable, nullablePks);
         errors.checkFatal(materializedTable.getPrimaryKey().isDefined(), ErrorCode.TABLE_NOT_MATERIALIZE,"Table [%s] does not have a primary key and can therefore not be materialized", materializedTable);
         Preconditions.checkArgument(materializedTable.getTimestamp().size()<=1, "Should not have multiple timestamps at this point");
         errors.checkFatal(materializedTable.getType()== TableType.STATIC || materializedTable.getTimestamp().size()==1, ErrorCode.TABLE_NOT_MATERIALIZE, "Table [%s] does not have a timestamp and can therefore not be materialized", materializedTable);
 
-        OptionalInt timestampIdx = materializedTable.getTimestamp().getOnlyCandidateOptional();
-        RelNode processedRelnode = produceWriteTree(materializedTable.getPlannedRelNode(), timestampIdx);
+        var timestampIdx = materializedTable.getTimestamp().getOnlyCandidateOptional();
+        var processedRelnode = produceWriteTree(materializedTable.getPlannedRelNode(), timestampIdx);
         streamQueries.add(new PhysicalDAGPlan.WriteQuery(
             new EngineSink(materializedTable.getNameId(), materializedTable.getPrimaryKey().getPkIndexes(),
                 materializedTable.getRowType(), timestampIdx, database),
@@ -123,7 +133,7 @@ public class DAGAssembler {
 
       //Third, pick index structures for materialized tables
       //Pick index structures for database tables based on the database queries
-      IndexSelector indexSelector = new IndexSelector(framework,
+      var indexSelector = new IndexSelector(framework,
           ((DatabaseEngine) database.getEngine()).getIndexSelectorConfig());
       Map<String, List<IndexDefinition>> indexHintsByTable = new LinkedHashMap<>();
 
@@ -144,18 +154,18 @@ public class DAGAssembler {
     //Add exported tables
     dag.allNodesByClass(ExportNode.class).forEach(exportNode -> {
       Preconditions.checkArgument(exportNode.getChosenStage().equals(streamStage));
-      AnalyzedExport export = exportNode.getExport();
-      RelNode processedRelnode = produceWriteTree(export.getRelNode(),
+      var export = exportNode.getExport();
+      var processedRelnode = produceWriteTree(export.getRelNode(),
           getExportBaseConfig().withStage(exportNode.getChosenStage()), errors);
       //Pick only the selected keys
-      RelBuilder relBuilder1 = sqrlConverter.getRelBuilder().push(processedRelnode);
+      var relBuilder1 = sqrlConverter.getRelBuilder().push(processedRelnode);
       if (export.getNumSelects().isPresent()) {
-        int numFields2Select = export.getNumSelects().getAsInt();
+        var numFields2Select = export.getNumSelects().getAsInt();
         Preconditions.checkArgument(relBuilder1.peek().getRowType().getFieldCount()>=numFields2Select);
         relBuilder1.project(CalciteUtil.getIdentityRex(relBuilder1, numFields2Select));
       }
       processedRelnode = relBuilder1.build();
-      ExternalSink externalSink = new ExternalSink(exportNode.getUniqueId(), export.getSink());
+      var externalSink = new ExternalSink(exportNode.getUniqueId(), export.getSink());
       streamQueries.add(new PhysicalDAGPlan.WriteQuery(externalSink,
           processedRelnode, export.getRelNode(), externalSink.getTableSink().getConfiguration().getConnectorConfig().getTableType()
       ));
@@ -179,7 +189,7 @@ public class DAGAssembler {
     List<StreamStagePlan.TableDefinition> streamTables = new ArrayList<>();
     for (SqrlNode node : dag) { //Make sure we traverse the DAG from source to sink
       if (node instanceof TableNode) {
-        PhysicalTable table = ((TableNode) node).getTable();
+        var table = ((TableNode) node).getTable();
         streamTables.add(new TableDefinition(table.getNameId(), table.getPlannedRelNode()));
       }
     }
@@ -197,7 +207,7 @@ public class DAGAssembler {
       allPlans.add(serverPlan);
     }
     Optional<ExecutionStage> logStage = pipeline.getStage(Type.LOG).map(e->e.get(0));
-    Map<String, Log> logs = logManager.getLogs();
+    var logs = logManager.getLogs();
     if (logStage.isPresent()) {
       List<Log> sortedLogs = logs.entrySet().stream()
           .sorted(Map.Entry.comparingByKey())
@@ -218,17 +228,17 @@ public class DAGAssembler {
   }
 
   private RelNode produceWriteTree(RelNode relNode, SqrlConverterConfig config, ErrorCollector errors) {
-    AnnotatedLP alp = sqrlConverter.convert(relNode, config, errors);
+    var alp = sqrlConverter.convert(relNode, config, errors);
     RelNode convertedRelNode = alp.getRelNode();
     //Expand to full tree
     return produceWriteTree(convertedRelNode, alp.getTimestamp().getOnlyCandidateOptional());
   }
 
   private RelNode produceWriteTree(RelNode convertedRelNode, OptionalInt timestampIndex) {
-    RelNode expandedRelNode = RelStageRunner.runStage(STREAM_DAG_STITCHING, convertedRelNode,
+    var expandedRelNode = RelStageRunner.runStage(STREAM_DAG_STITCHING, convertedRelNode,
         framework.getQueryPlanner().getPlanner());
     if (timestampIndex.isPresent()) {
-      TimestampHint timestampHint = new TimestampHint(timestampIndex.getAsInt());
+      var timestampHint = new TimestampHint(timestampIndex.getAsInt());
       expandedRelNode = timestampHint.addHint((Hintable) expandedRelNode);
     }
     return expandedRelNode;

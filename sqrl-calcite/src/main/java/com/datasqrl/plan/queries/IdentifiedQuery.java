@@ -1,7 +1,8 @@
 package com.datasqrl.plan.queries;
 
-import com.datasqrl.canonicalizer.Name;
 import java.util.Optional;
+
+import com.datasqrl.canonicalizer.Name;
 
 public interface IdentifiedQuery {
 

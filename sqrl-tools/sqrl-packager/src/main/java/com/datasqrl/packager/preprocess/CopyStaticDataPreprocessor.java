@@ -2,12 +2,6 @@ package com.datasqrl.packager.preprocess;
 
 import static com.datasqrl.actions.WriteDag.DATA_DIR;
 
-import com.datasqrl.discovery.file.FilenameAnalyzer;
-import com.datasqrl.discovery.file.FilenameAnalyzer.Components;
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.discovery.file.FileCompression;
-import com.datasqrl.discovery.file.FileCompression.CompressionIO;
-import com.google.auto.service.AutoService;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -18,8 +12,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import com.datasqrl.discovery.file.FileCompression;
+import com.datasqrl.discovery.file.FileCompression.CompressionIO;
+import com.datasqrl.discovery.file.FilenameAnalyzer;
+import com.datasqrl.discovery.file.FilenameAnalyzer.Components;
+import com.datasqrl.error.ErrorCollector;
+
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
@@ -62,8 +62,8 @@ public class CopyStaticDataPreprocessor implements Preprocessor {
   }
 
   private void copyFileSkipFirstLine(Path from, Path to, CompressionIO fileCompress) {
-    try (BufferedReader reader = new BufferedReader(new InputStreamReader(fileCompress.decompress(new FileInputStream(from.toFile()))));
-        PrintWriter writer = new PrintWriter(fileCompress.compress(new FileOutputStream(to.toFile())))) {
+    try (var reader = new BufferedReader(new InputStreamReader(fileCompress.decompress(new FileInputStream(from.toFile()))));
+        var writer = new PrintWriter(fileCompress.compress(new FileOutputStream(to.toFile())))) {
       // Skip the first line
       reader.readLine();
       // Read from the second line until file end

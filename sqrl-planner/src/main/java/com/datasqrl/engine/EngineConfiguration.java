@@ -3,14 +3,15 @@
  */
 package com.datasqrl.engine;
 
+import java.io.Serializable;
+
 import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.serializer.JacksonDeserializer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.NonNull;
 
-import java.io.Serializable;
+import lombok.NonNull;
 
 @JsonIgnoreProperties(value = "engineName", allowGetters = true)
 public interface EngineConfiguration extends Serializable {

@@ -2,14 +2,14 @@ package com.datasqrl.functions.vector;
 
 import static com.datasqrl.function.FlinkUdfNsObject.getFunctionNameFromClass;
 
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import com.datasqrl.sql.PgExtension;
 import com.datasqrl.sql.SqlDDLStatement;
 import com.datasqrl.vector.FlinkVectorType;
 import com.datasqrl.vector.VectorFunctions;
 import com.google.auto.service.AutoService;
-
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @AutoService(PgExtension.class)
 public class VectorPgExtension implements PgExtension {

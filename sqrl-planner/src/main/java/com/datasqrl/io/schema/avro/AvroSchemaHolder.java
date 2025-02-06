@@ -1,12 +1,14 @@
 package com.datasqrl.io.schema.avro;
 
-import com.datasqrl.io.tables.TableSchema;
-import java.net.URI;
 import java.nio.file.Path;
 import java.util.Optional;
+
+import org.apache.avro.Schema;
+
+import com.datasqrl.io.tables.TableSchema;
+
 import lombok.AllArgsConstructor;
 import lombok.Value;
-import org.apache.avro.Schema;
 
 @Value
 @AllArgsConstructor

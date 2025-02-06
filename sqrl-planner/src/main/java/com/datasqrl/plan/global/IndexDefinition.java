@@ -3,12 +3,13 @@
  */
 package com.datasqrl.plan.global;
 
-import com.datasqrl.function.IndexType;
-import com.google.common.base.Preconditions;
-import lombok.Value;
-
 import java.util.List;
 import java.util.stream.Collectors;
+
+import com.datasqrl.function.IndexType;
+import com.google.common.base.Preconditions;
+
+import lombok.Value;
 
 @Value
 public class IndexDefinition implements Comparable<IndexDefinition> {
@@ -45,8 +46,12 @@ public class IndexDefinition implements Comparable<IndexDefinition> {
   }
 
   public int numEqualityColumnsRequired() {
-    if (type.requiresAllColumns()) return columns.size();
-    if (type.isPartitioned()) return partitionOffset;
+    if (type.requiresAllColumns()) {
+		return columns.size();
+	}
+    if (type.isPartitioned()) {
+		return partitionOffset;
+	}
     return 0;
   }
 

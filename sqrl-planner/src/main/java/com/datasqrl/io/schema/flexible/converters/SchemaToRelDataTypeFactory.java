@@ -1,11 +1,12 @@
 package com.datasqrl.io.schema.flexible.converters;
 
+import org.apache.calcite.rel.type.RelDataType;
+
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.config.TableConfig;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSchema;
 import com.datasqrl.util.ServiceLoaderDiscovery;
-import org.apache.calcite.rel.type.RelDataType;
 
 public interface SchemaToRelDataTypeFactory {
 

@@ -1,11 +1,11 @@
 package com.datasqrl.module;
 
+import java.util.Optional;
+
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.error.ErrorCollector;
-
 import com.datasqrl.plan.validate.ScriptPlanner;
-import java.util.Optional;
 
 public interface NamespaceObject {
 

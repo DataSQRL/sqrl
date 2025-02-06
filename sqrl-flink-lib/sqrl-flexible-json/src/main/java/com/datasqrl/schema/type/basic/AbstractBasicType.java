@@ -37,11 +37,13 @@ public abstract class AbstractBasicType<J> implements BasicType<J> {
     return getName();
   }
 
-  public int compareTo(BasicType<?> o) {
+  @Override
+public int compareTo(BasicType<?> o) {
     return getName().compareTo(o.getName());
   }
 
-  public <R, C> R accept(SqrlTypeVisitor<R, C> visitor, C context) {
+  @Override
+public <R, C> R accept(SqrlTypeVisitor<R, C> visitor, C context) {
     return visitor.visitBasicType(this, context);
   }
 }

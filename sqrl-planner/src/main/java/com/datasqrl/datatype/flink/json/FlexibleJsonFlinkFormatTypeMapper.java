@@ -1,7 +1,12 @@
 package com.datasqrl.datatype.flink.json;
 
+import java.util.Optional;
+
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.flink.table.planner.plan.schema.RawRelDataType;
+
 import com.datasqrl.config.TableConfig;
-import com.datasqrl.config.TableConfig.Format;
 import com.datasqrl.datatype.DataTypeMapper;
 import com.datasqrl.datatype.SerializeToBytes;
 import com.datasqrl.datatype.flink.FlinkDataTypeMapper;
@@ -9,15 +14,12 @@ import com.datasqrl.engine.stream.flink.connector.CastFunction;
 import com.datasqrl.json.FlinkJsonType;
 import com.datasqrl.json.ToJson;
 import com.google.auto.service.AutoService;
-import java.util.Optional;
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.sql.type.SqlTypeName;
-import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 @AutoService(DataTypeMapper.class)
 public class FlexibleJsonFlinkFormatTypeMapper extends FlinkDataTypeMapper {
 
-  public boolean nativeTypeSupport(RelDataType type) {
+  @Override
+public boolean nativeTypeSupport(RelDataType type) {
     switch (type.getSqlTypeName()) {
       case REAL:
       case NULL:
@@ -96,12 +98,12 @@ public class FlexibleJsonFlinkFormatTypeMapper extends FlinkDataTypeMapper {
 
   @Override
   public boolean isTypeOf(TableConfig tableConfig) {
-    Optional<Format> formatOpt = tableConfig.getConnectorConfig().getFormat();
+    var formatOpt = tableConfig.getConnectorConfig().getFormat();
     if (formatOpt.isEmpty()) {
       return false;
     }
 
-    Format format = formatOpt.get();
+    var format = formatOpt.get();
 
     return format.getName().equalsIgnoreCase("flexible-json");
   }

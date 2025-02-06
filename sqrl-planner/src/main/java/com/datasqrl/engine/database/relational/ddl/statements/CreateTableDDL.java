@@ -3,10 +3,11 @@
  */
 package com.datasqrl.engine.database.relational.ddl.statements;
 
-import com.datasqrl.sql.SqlDDLStatement;
-import lombok.Value;
-
 import java.util.List;
+
+import com.datasqrl.sql.SqlDDLStatement;
+
+import lombok.Value;
 
 @Value
 public class CreateTableDDL implements SqlDDLStatement {
@@ -17,12 +18,12 @@ public class CreateTableDDL implements SqlDDLStatement {
 
   @Override
   public String getSql() {
-    String primaryKeyStr = "";
+    var primaryKeyStr = "";
     if (!primaryKeys.isEmpty()) {
       primaryKeyStr = " , PRIMARY KEY (%s)".formatted(String.join(",", primaryKeys));
     }
-    String createTable = "CREATE TABLE IF NOT EXISTS %s (%s%s);";
-    String sql = createTable.formatted(name,
+    var createTable = "CREATE TABLE IF NOT EXISTS %s (%s%s);";
+    var sql = createTable.formatted(name,
         String.join(",", columns), primaryKeyStr);
 
     return sql;

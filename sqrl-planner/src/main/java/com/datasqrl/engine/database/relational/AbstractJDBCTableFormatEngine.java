@@ -2,24 +2,23 @@ package com.datasqrl.engine.database.relational;
 
 import static com.datasqrl.engine.EngineFeature.STANDARD_TABLE_FORMAT;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import com.datasqrl.config.ConnectorFactoryContext;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.config.TableConfig;
 import com.datasqrl.engine.EngineFeature;
-import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.database.AnalyticDatabaseEngine;
 import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.database.QueryEngine;
 import com.datasqrl.plan.global.IndexSelectorConfig;
 import com.google.common.base.Preconditions;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+
 import lombok.Getter;
 import lombok.NonNull;
-import org.apache.flink.table.functions.FunctionDefinition;
 
 /**
  * Abstract implementation of a relational table format database engine.
@@ -51,7 +50,9 @@ public abstract class AbstractJDBCTableFormatEngine extends AbstractJDBCEngine i
 
   @Override
   public void addQueryEngine(QueryEngine queryEngine) {
-    if (!supportsQueryEngine(queryEngine)) throw new UnsupportedOperationException(getName() + " table format does not support query engine: " + queryEngine);
+    if (!supportsQueryEngine(queryEngine)) {
+		throw new UnsupportedOperationException(getName() + " table format does not support query engine: " + queryEngine);
+	}
     Preconditions.checkState(!queryEngines.containsKey(queryEngine.getName()), "Query engine already added: %s", queryEngine.getName());
     queryEngines.put(queryEngine.getName(), queryEngine);
   }

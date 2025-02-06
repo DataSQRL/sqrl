@@ -1,23 +1,22 @@
 package com.datasqrl.format;
 
+import java.io.IOException;
+import java.time.Instant;
+import java.util.Map;
+
+import org.apache.flink.api.common.serialization.DeserializationSchema;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.json.JsonReadFeature;
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.flink.table.data.RowData;
+import org.apache.flink.util.jackson.JacksonMapperFactory;
+
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.error.ErrorPrinter;
-import com.datasqrl.io.SourceRecord.Named;
 import com.datasqrl.io.SourceRecord.Raw;
 import com.datasqrl.io.tables.SchemaValidator;
-import java.io.IOException;
-import java.time.Instant;
-import java.util.Map;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.flink.api.common.serialization.DeserializationSchema;
-import org.apache.flink.api.common.typeinfo.TypeInformation;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.json.JsonReadFeature;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.flink.table.data.RowData;
-import org.apache.flink.util.jackson.JacksonMapperFactory;
 
 //@Slf4j
 public abstract class FlexibleSchemaDelegate implements DeserializationSchema<RowData> {
@@ -46,7 +45,7 @@ public abstract class FlexibleSchemaDelegate implements DeserializationSchema<Ro
       return null;
     }
 
-    Map<String, Object> data = parse(message);
+    var data = parse(message);
     if (data == null) {
       return null;
     }
@@ -59,13 +58,13 @@ public abstract class FlexibleSchemaDelegate implements DeserializationSchema<Ro
       }
     };
 
-    Named named = validator.verifyAndAdjust(new Raw(data, Instant.now()), errorCollector);
+    var named = validator.verifyAndAdjust(new Raw(data, Instant.now()), errorCollector);
     if (errorCollector.hasErrors()) {
       System.out.println(ErrorPrinter.prettyPrint(errorCollector));
       return null;
     }
 
-    JsonNode jsonNode = objectMapper.valueToTree(named.getData());
+    var jsonNode = objectMapper.valueToTree(named.getData());
     return (RowData) schema.deserialize(jsonNode.toString().getBytes());
   }
 

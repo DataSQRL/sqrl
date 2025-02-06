@@ -2,8 +2,9 @@ package com.datasqrl.functions.secure;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.datasqrl.secure.SecureFunctions;
 import org.junit.jupiter.api.Test;
+
+import com.datasqrl.secure.SecureFunctions;
 
 public class StdSecureLibraryTest {
 

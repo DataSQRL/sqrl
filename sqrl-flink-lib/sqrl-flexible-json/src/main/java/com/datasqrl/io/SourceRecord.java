@@ -3,18 +3,20 @@
  */
 package com.datasqrl.io;
 
-import com.datasqrl.canonicalizer.Name;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import lombok.Setter;
-
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+
 import org.apache.flink.table.sources.TableSource;
+
+import com.datasqrl.canonicalizer.Name;
+
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import lombok.Setter;
 
 /**
  * Raw records of a {@link TableSource} are represented as {@link SourceRecord}
@@ -63,7 +65,7 @@ public class SourceRecord<K> implements Serializable {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    SourceRecord that = (SourceRecord) o;
+    var that = (SourceRecord) o;
     return data.equals(that.data) && sourceTime.equals(that.sourceTime) && ingestTime.equals(
         that.ingestTime);
   }

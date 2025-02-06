@@ -4,7 +4,7 @@ package com.datasqrl.engine.stream.flink.sql.rules;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.SneakyThrows;
+
 import org.apache.calcite.adapter.enumerable.AggAddContext;
 import org.apache.calcite.adapter.enumerable.AggContext;
 import org.apache.calcite.adapter.enumerable.AggImplementor;
@@ -18,7 +18,6 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.AggregateCall;
 import org.apache.calcite.rel.core.RelFactories;
 import org.apache.calcite.rel.logical.LogicalAggregate;
-import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.rules.TransformationRule;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
@@ -29,6 +28,8 @@ import org.apache.calcite.sql.SqlAggFunction;
 import org.apache.calcite.sql.validate.SqlUserDefinedAggFunction;
 import org.apache.flink.table.planner.functions.bridging.BridgingSqlAggFunction;
 import org.immutables.value.Value;
+
+import lombok.SneakyThrows;
 
 /**
  * Rewrites flink's bridging functions to stub implementable rules for index selection

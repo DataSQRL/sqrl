@@ -3,6 +3,8 @@
  */
 package com.datasqrl.parse;
 
+import org.apache.calcite.runtime.CalciteContextException;
+
 import com.datasqrl.error.ErrorHandler;
 import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.error.ErrorLocation;
@@ -11,7 +13,6 @@ import com.datasqrl.error.ErrorMessage;
 import com.datasqrl.error.ErrorMessage.Implementation;
 import com.datasqrl.error.ErrorMessage.Severity;
 import com.google.auto.service.AutoService;
-import org.apache.calcite.runtime.CalciteContextException;
 
 @AutoService(ErrorHandler.class)
 public class CalciteContextExceptionHandler implements ErrorHandler<CalciteContextException> {

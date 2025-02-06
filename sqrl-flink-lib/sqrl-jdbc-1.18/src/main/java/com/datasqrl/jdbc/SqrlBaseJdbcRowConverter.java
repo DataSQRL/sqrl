@@ -12,7 +12,7 @@ import java.sql.PreparedStatement;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.LocalDateTime;
-import lombok.SneakyThrows;
+
 import org.apache.flink.connector.jdbc.converter.AbstractJdbcRowConverter;
 import org.apache.flink.connector.jdbc.statement.FieldNamedPreparedStatement;
 import org.apache.flink.table.data.ArrayData;
@@ -25,6 +25,8 @@ import org.apache.flink.table.types.logical.LocalZonedTimestampType;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.LogicalTypeRoot;
 import org.apache.flink.table.types.logical.RowType;
+
+import lombok.SneakyThrows;
 
 /**
  * A sqrl class to handle arrays and extra data types
@@ -40,7 +42,7 @@ public abstract class SqrlBaseJdbcRowConverter extends AbstractJdbcRowConverter 
   protected JdbcSerializationConverter wrapIntoNullableExternalConverter(
       JdbcSerializationConverter jdbcSerializationConverter, LogicalType type) {
     if (type.getTypeRoot() == TIMESTAMP_WITH_LOCAL_TIME_ZONE) {
-      int timestampWithTimezone = Types.TIMESTAMP_WITH_TIMEZONE;
+      var timestampWithTimezone = Types.TIMESTAMP_WITH_TIMEZONE;
       return (val, index, statement) -> {
         if (val == null
             || val.isNullAt(index)
@@ -60,7 +62,7 @@ public abstract class SqrlBaseJdbcRowConverter extends AbstractJdbcRowConverter 
 
   @Override
   public JdbcDeserializationConverter createInternalConverter(LogicalType type) {
-    LogicalTypeRoot root = type.getTypeRoot();
+    var root = type.getTypeRoot();
 
     if (root == LogicalTypeRoot.TIMESTAMP_WITH_LOCAL_TIME_ZONE) {
       return val ->
@@ -68,7 +70,7 @@ public abstract class SqrlBaseJdbcRowConverter extends AbstractJdbcRowConverter 
               ? TimestampData.fromLocalDateTime((LocalDateTime) val)
               : TimestampData.fromTimestamp((Timestamp) val);
     } else if (root == LogicalTypeRoot.ARRAY) {
-      ArrayType arrayType = (ArrayType) type;
+      var arrayType = (ArrayType) type;
       return createArrayConverter(arrayType);
     } else if (root == LogicalTypeRoot.ROW) {
       return val-> val;
@@ -83,7 +85,7 @@ public abstract class SqrlBaseJdbcRowConverter extends AbstractJdbcRowConverter 
   protected JdbcSerializationConverter createExternalConverter(LogicalType type) {
     switch (type.getTypeRoot()) {
       case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
-        final int tsPrecision = ((LocalZonedTimestampType) type).getPrecision();
+        final var tsPrecision = ((LocalZonedTimestampType) type).getPrecision();
         return (val, index, statement) ->
             statement.setTimestamp(
                 index, val.getTimestamp(index, tsPrecision).toTimestamp());

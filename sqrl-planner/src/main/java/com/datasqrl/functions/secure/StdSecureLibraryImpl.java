@@ -3,6 +3,12 @@
  */
 package com.datasqrl.functions.secure;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.apache.commons.collections.ListUtils;
+import org.apache.flink.table.functions.FunctionDefinition;
+
 import com.datasqrl.NamespaceObjectUtil;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.function.AbstractFunctionModule;
@@ -10,10 +16,6 @@ import com.datasqrl.function.StdLibrary;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.secure.SecureFunctions;
 import com.google.auto.service.AutoService;
-import java.util.List;
-import java.util.stream.Collectors;
-import org.apache.commons.collections.ListUtils;
-import org.apache.flink.table.functions.FunctionDefinition;
 
 @AutoService(StdLibrary.class)
 public class StdSecureLibraryImpl extends AbstractFunctionModule implements StdLibrary {
@@ -31,7 +33,8 @@ public class StdSecureLibraryImpl extends AbstractFunctionModule implements StdL
         .map(NamespaceObjectUtil::createNsObject).collect(Collectors.toList()),SQL_FUNCTIONS));
   }
 
-  public NamePath getPath() {
+  @Override
+public NamePath getPath() {
     return LIB_NAME;
   }
 

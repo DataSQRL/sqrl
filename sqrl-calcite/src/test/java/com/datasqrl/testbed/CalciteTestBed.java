@@ -1,10 +1,9 @@
 package com.datasqrl.testbed;
 
-import com.google.common.base.Preconditions;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import lombok.SneakyThrows;
+
 import org.apache.calcite.config.Lex;
 import org.apache.calcite.rel.RelRoot;
 import org.apache.calcite.rel.rel2sql.RelToSqlConverter;
@@ -22,6 +21,10 @@ import org.apache.calcite.tools.FrameworkConfig;
 import org.apache.calcite.tools.Frameworks;
 import org.apache.calcite.tools.Planner;
 import org.testng.annotations.Test;
+
+import com.google.common.base.Preconditions;
+
+import lombok.SneakyThrows;
 
 /**
  * A simple calcite test bed
@@ -47,10 +50,10 @@ public class CalciteTestBed {
       builder.add("id", typeFactory.createSqlType(SqlTypeName.INTEGER));
       builder.add("name", typeFactory.createSqlType(SqlTypeName.VARCHAR));
 
-      RelDataType entries = typeFactory.createStructType(
+      var entries = typeFactory.createStructType(
           List.of(typeFactory.createSqlType(SqlTypeName.VARCHAR)),
           List.of("col"));
-      RelDataType arrayType = typeFactory.createArrayType(entries, -1);
+      var arrayType = typeFactory.createArrayType(entries, -1);
       builder.add("entries", arrayType);
       return builder.build();
     }

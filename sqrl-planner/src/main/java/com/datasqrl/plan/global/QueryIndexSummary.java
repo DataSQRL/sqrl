@@ -3,16 +3,12 @@
  */
 package com.datasqrl.plan.global;
 
-import com.datasqrl.function.IndexType;
-import com.datasqrl.function.IndexableFunction;
-import com.datasqrl.function.IndexableFunction.OperandSelector;
-import com.datasqrl.plan.rules.SqrlRelMdRowCount;
-import com.datasqrl.plan.table.PhysicalRelationalTable;
-import com.datasqrl.util.FunctionUtil;
-import com.datasqrl.calcite.SqrlRexUtil;
-import com.google.common.collect.ImmutableSet;
-import lombok.*;
-import lombok.EqualsAndHashCode.Include;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
@@ -20,7 +16,19 @@ import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.flink.table.functions.FunctionDefinition;
 
-import java.util.*;
+import com.datasqrl.calcite.SqrlRexUtil;
+import com.datasqrl.function.IndexableFunction;
+import com.datasqrl.plan.rules.SqrlRelMdRowCount;
+import com.datasqrl.plan.table.PhysicalRelationalTable;
+import com.datasqrl.util.FunctionUtil;
+import com.google.common.collect.ImmutableSet;
+
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.EqualsAndHashCode.Include;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.Value;
 
 /**
  * This class represents the potentially indexable filters and sorts of a query.
@@ -57,13 +65,13 @@ public class QueryIndexSummary {
 
   public static Optional<QueryIndexSummary> ofFilter(@NonNull PhysicalRelationalTable table, RexNode filter,
       SqrlRexUtil rexUtil) {
-    List<RexNode> conjunctions = rexUtil.getConjunctions(filter);
+    var conjunctions = rexUtil.getConjunctions(filter);
     Set<Integer> equalityColumns = new HashSet<>();
     Set<Integer> inequalityColumns = new HashSet<>();
     Set<IndexableFunctionCall> functionCalls = new HashSet<>();
     for (RexNode conj : conjunctions) {
       if (conj instanceof RexCall call) {
-        IndexableFinder idxFinder = new IndexableFinder();
+        var idxFinder = new IndexableFinder();
         call.accept(idxFinder);
         if (idxFinder.isIndexable && (idxFinder.idxCall!=null ^ idxFinder.columnRef!=null)) {
           if (idxFinder.idxCall!=null) {
@@ -85,7 +93,7 @@ public class QueryIndexSummary {
 
   public static Optional<QueryIndexSummary> ofSort(@NonNull PhysicalRelationalTable table, RexNode node) {
     if (node instanceof RexCall call) {
-      IndexableFinder idxFinder = new IndexableFinder();
+      var idxFinder = new IndexableFinder();
       call.accept(idxFinder);
       if (idxFinder.isIndexable && idxFinder.idxCall!=null) {
         return Optional.of(new QueryIndexSummary(table, Set.of(),
@@ -100,18 +108,21 @@ public class QueryIndexSummary {
   }
 
   public double getCost(@NonNull IndexDefinition indexDef) {
-    IndexType indexType = indexDef.getType();
+    var indexType = indexDef.getType();
     QueryIndexSummary coveredConjunction;
     if (indexType.isGeneralIndex()) {
       Set<Integer> equalityCols = new HashSet<>();
       Set<Integer> inequalityCols = new HashSet<>();
 
-      int i = 0;
+      var i = 0;
       for (; i < indexDef.getColumns().size(); i++) {
         int colIndex = indexDef.getColumns().get(i);
-        if (this.equalityColumns.contains(colIndex)) equalityCols.add(colIndex);
-        else {
-          if (this.inequalityColumns.contains(colIndex)) inequalityCols.add(colIndex);
+        if (this.equalityColumns.contains(colIndex)) {
+			equalityCols.add(colIndex);
+		} else {
+          if (this.inequalityColumns.contains(colIndex)) {
+			inequalityCols.add(colIndex);
+		}
           break; //we have broken the equality chain of this index
         }
       }
@@ -126,7 +137,7 @@ public class QueryIndexSummary {
       List<IndexableFunctionCall> coveredCalls = new ArrayList<>();
       Set<Integer> indexCols = ImmutableSet.copyOf(indexDef.getColumns());
       for (IndexableFunctionCall fcall : this.functionCalls) {
-        IndexableFunction function = fcall.getFunction();
+        var function = fcall.getFunction();
         if (function.getSupportedIndexes().contains(indexType) &&
             indexCols.containsAll(fcall.getColumnIndexes())) {
           coveredCalls.add(fcall);
@@ -194,13 +205,13 @@ public class QueryIndexSummary {
 
     @Override
     public RexNode visitCall(RexCall call) {
-      boolean prior = parentIsArithmetic;
+      var prior = parentIsArithmetic;
       Optional<IndexableFunction> sqrlFunction = FunctionUtil.getBridgedFunction(call.getOperator())
           .flatMap(QueryIndexSummary.IndexableFinder::getIndexableFunction);
       if (sqrlFunction.isPresent() && parentIsArithmetic) {
         //This is either a top level predicate or a distance function inside a comparison
-        IndexableFunction idxFunction = (IndexableFunction) sqrlFunction.get();
-        Optional<IndexableFunctionCall> optCall = resolveIndexFunctionCall(call, idxFunction);
+        var idxFunction = sqrlFunction.get();
+        var optCall = resolveIndexFunctionCall(call, idxFunction);
         if (optCall.isPresent()) {
           if (columnRef!=null || idxCall!=null) {
             isIndexable = false;
@@ -213,7 +224,7 @@ public class QueryIndexSummary {
       if (!call.isA(SqlKind.BINARY_ARITHMETIC) && !call.isA(SqlKind.BINARY_COMPARISON)) {
         parentIsArithmetic = false;
       }
-      RexNode result = super.visitCall(call);
+      var result = super.visitCall(call);
       parentIsArithmetic = prior;
       return result;
     }
@@ -225,18 +236,17 @@ public class QueryIndexSummary {
     private static Optional<IndexableFunctionCall> resolveIndexFunctionCall(RexCall call, IndexableFunction idxFunction) {
       List<RexNode> remainingOperands = new ArrayList<>();
       List<Integer> columnIndexes = new ArrayList<>();
-      List<RexNode> operands = call.getOperands();
-      OperandSelector operandSelector = idxFunction.getOperandSelector();
-      for (int i = 0; i < operands.size(); i++) {
-        RexNode node = operands.get(i);
+      var operands = call.getOperands();
+      var operandSelector = idxFunction.getOperandSelector();
+      for (var i = 0; i < operands.size(); i++) {
+        var node = operands.get(i);
         if (operandSelector.isSelectableColumn(i) && (node instanceof RexInputRef ref)) {
           columnIndexes.add(ref.getIndex());
         } else {
           remainingOperands.add(node);
         }
       }
-      if (columnIndexes.isEmpty() || columnIndexes.size()>operandSelector.maxNumberOfColumns()) return Optional.empty();
-      if (!SqrlRexUtil.findAllInputRefs(remainingOperands).isEmpty()) {
+      if (columnIndexes.isEmpty() || columnIndexes.size()>operandSelector.maxNumberOfColumns() || !SqrlRexUtil.findAllInputRefs(remainingOperands).isEmpty()) {
         //If the remainingOperands contain RexInputRef this isn't an indexable call
         //TODO: issue warning since this is likely not desired
         return Optional.empty();

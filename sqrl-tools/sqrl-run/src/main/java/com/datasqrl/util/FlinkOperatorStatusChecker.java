@@ -1,14 +1,15 @@
 package com.datasqrl.util;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URI;
-import java.net.URL;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 
@@ -22,7 +23,7 @@ public class FlinkOperatorStatusChecker {
 
   public void run() {
     try {
-      boolean conditionsMet = checkIfOperatorsStoppedAndCheckpointsCompleted(JOB_ID);
+      var conditionsMet = checkIfOperatorsStoppedAndCheckpointsCompleted(JOB_ID);
       if (conditionsMet) {
         System.out.println("Operators have stopped propagating data and required checkpoints have been completed.");
       } else {
@@ -34,12 +35,12 @@ public class FlinkOperatorStatusChecker {
   }
 
   public boolean checkIfOperatorsStoppedAndCheckpointsCompleted(String jobId) throws Exception {
-    int threshold = 2; // Number of consecutive idle polls required
-    int consecutiveIdlePolls = 0;
+    var threshold = 2; // Number of consecutive idle polls required
+    var consecutiveIdlePolls = 0;
 
     while (true) {
-      boolean isIdle = checkIfAllOperatorsIdle(jobId);
-      boolean checkpointsCompleted = checkIfRequiredCheckpointsCompleted(jobId);
+      var isIdle = checkIfAllOperatorsIdle(jobId);
+      var checkpointsCompleted = checkIfRequiredCheckpointsCompleted(jobId);
 
       if (isIdle && checkpointsCompleted) {
         consecutiveIdlePolls++;
@@ -56,8 +57,8 @@ public class FlinkOperatorStatusChecker {
   }
 
   public boolean checkIfAllOperatorsIdle(String jobId) throws Exception {
-    String taskMetricsUrl = FLINK_REST_URL + "/jobs/" + jobId; // Get the job details
-    String jsonResponse = getResponseFromUrl(taskMetricsUrl);
+    var taskMetricsUrl = FLINK_REST_URL + "/jobs/" + jobId; // Get the job details
+    var jsonResponse = getResponseFromUrl(taskMetricsUrl);
     // Parse the vertex (operator) metrics
     return areAllVerticesIdle(jsonResponse);
   }
@@ -80,10 +81,10 @@ public class FlinkOperatorStatusChecker {
   }
 
   public static boolean isVertexIdle(ObjectNode vertex) {
-    ObjectNode metrics = (ObjectNode) vertex.get("metrics");
+    var metrics = (ObjectNode) vertex.get("metrics");
 
-    long readRecords = metrics.get("read-records").longValue();
-    long writeRecords = metrics.get("write-records").longValue();
+    var readRecords = metrics.get("read-records").longValue();
+    var writeRecords = metrics.get("write-records").longValue();
 //        long idleTime = metrics.get("accumulated-idle-time").longValue();
 //        long busyTime = metrics.get("accumulated-busy-time").longValue();
 
@@ -100,7 +101,7 @@ public class FlinkOperatorStatusChecker {
 
   public static boolean hasMetricsStopped(String vertexId, long currentReadRecords,
       long currentWriteRecords) {
-    OperatorMetrics previous = previousMetrics.getOrDefault(vertexId, new OperatorMetrics(-1, -1));
+    var previous = previousMetrics.getOrDefault(vertexId, new OperatorMetrics(-1, -1));
     previousMetrics.put(vertexId, new OperatorMetrics(currentReadRecords, currentWriteRecords));
 
     System.out.printf("%s %d %d %d %d%n", vertexId, currentReadRecords, previous.readRecords,
@@ -122,15 +123,15 @@ public class FlinkOperatorStatusChecker {
   }
 
   public String getResponseFromUrl(String urlString) throws Exception {
-    URL url = URI.create(urlString).toURL();
-    HttpURLConnection con = (HttpURLConnection) url.openConnection();
+    var url = URI.create(urlString).toURL();
+    var con = (HttpURLConnection) url.openConnection();
     con.setRequestMethod("GET");
-    int status = con.getResponseCode();
+    var status = con.getResponseCode();
 
     if (status == 200) {
-      BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+      var in = new BufferedReader(new InputStreamReader(con.getInputStream()));
       String inputLine;
-      StringBuilder content = new StringBuilder();
+      var content = new StringBuilder();
       while ((inputLine = in.readLine()) != null) {
         content.append(inputLine);
       }
@@ -143,18 +144,18 @@ public class FlinkOperatorStatusChecker {
   }
 
   public boolean checkIfRequiredCheckpointsCompleted(String jobId) throws Exception {
-    String checkpointsUrl = FLINK_REST_URL + "/jobs/" + jobId + "/checkpoints"; // Get the checkpoints info
-    String jsonResponse = getResponseFromUrl(checkpointsUrl);
-    int completedCheckpoints = getCompletedCheckpointsCount(jsonResponse);
+    var checkpointsUrl = FLINK_REST_URL + "/jobs/" + jobId + "/checkpoints"; // Get the checkpoints info
+    var jsonResponse = getResponseFromUrl(checkpointsUrl);
+    var completedCheckpoints = getCompletedCheckpointsCount(jsonResponse);
     System.out.println("Completed checkpoints: " + completedCheckpoints);
     return completedCheckpoints >= requiredSuccessfulCheckpoints;
   }
 
   public int getCompletedCheckpointsCount(String jsonResponse) throws Exception {
-    ObjectMapper mapper = new ObjectMapper();
-    JsonNode jsonObject = mapper.readTree(jsonResponse);
-    JsonNode countsNode = jsonObject.get("counts");
-    int completedCheckpoints = countsNode.get("completed").asInt();
+    var mapper = new ObjectMapper();
+    var jsonObject = mapper.readTree(jsonResponse);
+    var countsNode = jsonObject.get("counts");
+    var completedCheckpoints = countsNode.get("completed").asInt();
     return completedCheckpoints;
   }
 }

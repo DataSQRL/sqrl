@@ -18,37 +18,6 @@
 
 package com.datasqrl.jdbc;
 
-import org.apache.flink.annotation.Internal;
-import org.apache.flink.configuration.ConfigOption;
-import org.apache.flink.configuration.ConfigOptions;
-import org.apache.flink.configuration.ReadableConfig;
-import org.apache.flink.connector.jdbc.JdbcExecutionOptions;
-import org.apache.flink.connector.jdbc.dialect.JdbcDialect;
-import org.apache.flink.connector.jdbc.dialect.JdbcDialectLoader;
-import org.apache.flink.connector.jdbc.internal.options.InternalJdbcConnectionOptions;
-import org.apache.flink.connector.jdbc.internal.options.JdbcDmlOptions;
-import org.apache.flink.connector.jdbc.table.JdbcDynamicTableSink;
-import org.apache.flink.connector.jdbc.table.JdbcDynamicTableSource;
-import org.apache.flink.table.connector.sink.DynamicTableSink;
-import org.apache.flink.table.connector.source.lookup.LookupOptions;
-import org.apache.flink.table.connector.source.lookup.cache.DefaultLookupCache;
-import org.apache.flink.table.connector.source.lookup.cache.LookupCache;
-import org.apache.flink.table.factories.DynamicTableSinkFactory;
-import org.apache.flink.table.factories.FactoryUtil;
-import org.apache.flink.table.types.DataType;
-import org.apache.flink.table.types.logical.RowType;
-import org.apache.flink.util.Preconditions;
-
-import javax.annotation.Nullable;
-
-import java.time.Duration;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import static org.apache.flink.connector.jdbc.table.JdbcConnectorOptions.DRIVER;
 import static org.apache.flink.connector.jdbc.table.JdbcConnectorOptions.LOOKUP_CACHE_MAX_ROWS;
 import static org.apache.flink.connector.jdbc.table.JdbcConnectorOptions.LOOKUP_CACHE_MISSING_KEY;
@@ -70,6 +39,31 @@ import static org.apache.flink.connector.jdbc.table.JdbcConnectorOptions.TABLE_N
 import static org.apache.flink.connector.jdbc.table.JdbcConnectorOptions.URL;
 import static org.apache.flink.connector.jdbc.table.JdbcConnectorOptions.USERNAME;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.apache.flink.annotation.Internal;
+import org.apache.flink.configuration.ConfigOption;
+import org.apache.flink.configuration.ConfigOptions;
+import org.apache.flink.configuration.ReadableConfig;
+import org.apache.flink.connector.jdbc.JdbcExecutionOptions;
+import org.apache.flink.connector.jdbc.dialect.JdbcDialect;
+import org.apache.flink.connector.jdbc.dialect.JdbcDialectLoader;
+import org.apache.flink.connector.jdbc.internal.options.InternalJdbcConnectionOptions;
+import org.apache.flink.connector.jdbc.internal.options.JdbcDmlOptions;
+import org.apache.flink.connector.jdbc.table.JdbcDynamicTableSink;
+import org.apache.flink.connector.jdbc.table.JdbcDynamicTableSource;
+import org.apache.flink.table.connector.sink.DynamicTableSink;
+import org.apache.flink.table.connector.source.lookup.LookupOptions;
+import org.apache.flink.table.factories.DynamicTableSinkFactory;
+import org.apache.flink.table.factories.FactoryUtil;
+import org.apache.flink.table.types.DataType;
+import org.apache.flink.table.types.logical.RowType;
+import org.apache.flink.util.Preconditions;
+
 /**
  * Factory for creating configured instances of {@link JdbcDynamicTableSource} and {@link
  * JdbcDynamicTableSink}.
@@ -81,15 +75,15 @@ public class SqrlJdbcDynamicTableFactory implements DynamicTableSinkFactory {
 
     @Override
     public DynamicTableSink createDynamicTableSink(Context context) {
-        final FactoryUtil.TableFactoryHelper helper =
+        final var helper =
             FactoryUtil.createTableFactoryHelper(this, context);
-        final ReadableConfig config = helper.getOptions();
+        final var config = helper.getOptions();
 
         helper.validate();
         validateConfigOptions(config, context.getClassLoader());
         validateDataTypeWithJdbcDialect(
             context.getPhysicalRowDataType(), config.get(URL), context.getClassLoader());
-        InternalJdbcConnectionOptions jdbcOptions =
+        var jdbcOptions =
             getJdbcOptions(config, context.getClassLoader());
 
         return new JdbcDynamicTableSink(
@@ -104,15 +98,15 @@ public class SqrlJdbcDynamicTableFactory implements DynamicTableSinkFactory {
 
     private static void validateDataTypeWithJdbcDialect(
             DataType dataType, String url, ClassLoader classLoader) {
-        JdbcDialect dialect = loadDialect(url, classLoader);
+        var dialect = loadDialect(url, classLoader);
 
         dialect.validate((RowType) dataType.getLogicalType());
     }
 
     private InternalJdbcConnectionOptions getJdbcOptions(
         ReadableConfig readableConfig, ClassLoader classLoader) {
-        final String url = readableConfig.get(URL);
-        final InternalJdbcConnectionOptions.Builder builder =
+        final var url = readableConfig.get(URL);
+        final var builder =
             InternalJdbcConnectionOptions.builder()
                 .setClassLoader(classLoader)
                 .setDBUrl(url)
@@ -129,7 +123,7 @@ public class SqrlJdbcDynamicTableFactory implements DynamicTableSinkFactory {
     }
 
     private static JdbcDialect loadDialect(String url, ClassLoader classLoader) {
-        JdbcDialect dialect = JdbcDialectLoader.load(url, classLoader);
+        var dialect = JdbcDialectLoader.load(url, classLoader);
         //sqrl: standard postgres dialect with extended dialect
         if (dialect.dialectName().equalsIgnoreCase("PostgreSQL")) {
             return new SqrlPostgresDialect();
@@ -138,7 +132,7 @@ public class SqrlJdbcDynamicTableFactory implements DynamicTableSinkFactory {
     }
 
     private JdbcExecutionOptions getJdbcExecutionOptions(ReadableConfig config) {
-        final JdbcExecutionOptions.Builder builder = new JdbcExecutionOptions.Builder();
+        final var builder = new JdbcExecutionOptions.Builder();
         builder.withBatchSize(config.get(SINK_BUFFER_FLUSH_MAX_ROWS));
         builder.withBatchIntervalMs(config.get(SINK_BUFFER_FLUSH_INTERVAL).toMillis());
         builder.withMaxRetries(config.get(SINK_MAX_RETRIES));
@@ -148,7 +142,7 @@ public class SqrlJdbcDynamicTableFactory implements DynamicTableSinkFactory {
     private JdbcDmlOptions getJdbcDmlOptions(
         InternalJdbcConnectionOptions jdbcOptions, DataType dataType, int[] primaryKeyIndexes) {
 
-        String[] keyFields =
+        var keyFields =
             Arrays.stream(primaryKeyIndexes)
                 .mapToObj(i -> DataType.getFieldNames(dataType).get(i))
                 .toArray(String[]::new);
@@ -222,7 +216,7 @@ public class SqrlJdbcDynamicTableFactory implements DynamicTableSinkFactory {
     }
 
     private void validateConfigOptions(ReadableConfig config, ClassLoader classLoader) {
-        String jdbcUrl = config.get(URL);
+        var jdbcUrl = config.get(URL);
 //        JdbcDialectLoader.load(jdbcUrl, classLoader);
 
         checkAllOrNone(config, new ConfigOption[] {USERNAME, PASSWORD});
@@ -280,13 +274,13 @@ public class SqrlJdbcDynamicTableFactory implements DynamicTableSinkFactory {
     }
 
     private void checkAllOrNone(ReadableConfig config, ConfigOption<?>[] configOptions) {
-        int presentCount = 0;
+        var presentCount = 0;
         for (ConfigOption configOption : configOptions) {
             if (config.getOptional(configOption).isPresent()) {
                 presentCount++;
             }
         }
-        String[] propertyNames =
+        var propertyNames =
             Arrays.stream(configOptions).map(ConfigOption::key).toArray(String[]::new);
         Preconditions.checkArgument(
             configOptions.length == presentCount || presentCount == 0,

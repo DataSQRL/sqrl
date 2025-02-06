@@ -1,11 +1,13 @@
 package com.datasqrl.graphql.jdbc;
 
+import java.sql.Connection;
+
 import com.datasqrl.graphql.server.Context;
 import com.datasqrl.graphql.server.JdbcClient;
 import com.datasqrl.graphql.server.RootGraphqlModel.JdbcQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedJdbcQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
-import java.sql.Connection;
+
 import lombok.Value;
 
 @Value

@@ -3,9 +3,10 @@
  */
 package com.datasqrl.loaders;
 
-import com.datasqrl.module.SqrlModule;
-import com.datasqrl.canonicalizer.NamePath;
 import java.util.Optional;
+
+import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.module.SqrlModule;
 
 public interface ModuleLoader {
   Optional<SqrlModule> getModule(NamePath namePath);

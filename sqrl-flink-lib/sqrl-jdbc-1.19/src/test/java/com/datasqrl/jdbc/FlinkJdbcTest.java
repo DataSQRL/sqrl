@@ -2,20 +2,16 @@ package com.datasqrl.jdbc;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.Statement;
+
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.ResultKind;
-import org.apache.flink.table.api.TableResult;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.test.junit5.MiniClusterExtension;
-import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.junit.jupiter.api.Test;
 
 @ExtendWith(MiniClusterExtension.class)
 public class FlinkJdbcTest {
@@ -26,27 +22,27 @@ public class FlinkJdbcTest {
         try (PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:14")) {
             postgres.start();
             // Establish a connection and create the PostgreSQL table
-            try (Connection conn = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
-                Statement stmt = conn.createStatement()) {
-                String createTableSQL = "CREATE TABLE test_table (" +
+            try (var conn = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
+                var stmt = conn.createStatement()) {
+                var createTableSQL = "CREATE TABLE test_table (" +
                     "    \"arrayOfRows\" JSONB " +
                     ")";
                 stmt.executeUpdate(createTableSQL);
             }
 
             // Set up Flink environment
-            StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-            StreamTableEnvironment tableEnv = StreamTableEnvironment.create(env);
+            var env = StreamExecutionEnvironment.getExecutionEnvironment();
+            var tableEnv = StreamTableEnvironment.create(env);
 
             // Define the schema
-            String createSourceTable = "CREATE TABLE datagen_source (" +
+            var createSourceTable = "CREATE TABLE datagen_source (" +
                                        "    arrayOfRows ARRAY<ROW<field1 INT, field2 STRING>> " +
                                        ") WITH (" +
                                        "    'connector' = 'datagen'," +
                                        "    'number-of-rows' = '10'" +
                                        ")";
 
-            String createSinkTable = "CREATE TABLE jdbc_sink (" +
+            var createSinkTable = "CREATE TABLE jdbc_sink (" +
                                      "    arrayOfRows RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI=') " +
                                      ") WITH (" +
                                      "    'connector' = 'jdbc-sqrl', " +
@@ -62,7 +58,7 @@ public class FlinkJdbcTest {
             tableEnv.executeSql(createSinkTable);
 
             // Set up a simple Flink job
-            TableResult tableResult = tableEnv.executeSql(
+            var tableResult = tableEnv.executeSql(
                 "INSERT INTO jdbc_sink SELECT tojson(arrayOfRows) AS arrayOfRows FROM datagen_source");
             tableResult.print();
 
@@ -75,19 +71,19 @@ public class FlinkJdbcTest {
     public void testWriteAndReadToPostgres() throws Exception {
         try (PostgreSQLContainer<?> postgresContainer = new PostgreSQLContainer<>("postgres:14")) {
             postgresContainer.start();
-            try (Connection conn = DriverManager.getConnection(postgresContainer.getJdbcUrl(), postgresContainer.getUsername(), postgresContainer.getPassword());
-                Statement stmt = conn.createStatement()) {
-                String createTableSQL = "CREATE TABLE test_table (" +
+            try (var conn = DriverManager.getConnection(postgresContainer.getJdbcUrl(), postgresContainer.getUsername(), postgresContainer.getPassword());
+                var stmt = conn.createStatement()) {
+                var createTableSQL = "CREATE TABLE test_table (" +
                     "    id BIGINT, name VARCHAR " +
                     ")";
                 stmt.executeUpdate(createTableSQL);
             }
 
             // Set up Flink mini cluster environment
-            StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-            EnvironmentSettings settings = EnvironmentSettings.newInstance().inStreamingMode()
+            var env = StreamExecutionEnvironment.getExecutionEnvironment();
+            var settings = EnvironmentSettings.newInstance().inStreamingMode()
                 .build();
-            StreamTableEnvironment tEnv = StreamTableEnvironment.create(env, settings);
+            var tEnv = StreamTableEnvironment.create(env, settings);
 
             // Create a PostgreSQL table using the Table API
             tEnv.executeSql("CREATE TABLE test_table (" +
@@ -121,11 +117,11 @@ public class FlinkJdbcTest {
                 .await();
 
             // Verify the data has been inserted by querying the PostgreSQL database directly
-            Connection connection = postgresContainer.createConnection("");
-            Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery("SELECT COUNT(*) FROM test_table");
+            var connection = postgresContainer.createConnection("");
+            var statement = connection.createStatement();
+            var resultSet = statement.executeQuery("SELECT COUNT(*) FROM test_table");
 
-            int count = 0;
+            var count = 0;
             if (resultSet.next()) {
                 count = resultSet.getInt(1);
             }

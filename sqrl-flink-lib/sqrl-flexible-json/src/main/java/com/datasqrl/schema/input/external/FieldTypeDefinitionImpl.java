@@ -5,6 +5,7 @@ package com.datasqrl.schema.input.external;
 
 import java.util.List;
 import java.util.Map;
+
 import lombok.Getter;
 
 @Getter

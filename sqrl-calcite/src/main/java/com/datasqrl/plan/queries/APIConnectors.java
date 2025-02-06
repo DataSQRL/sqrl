@@ -1,9 +1,11 @@
 package com.datasqrl.plan.queries;
 
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.util.StreamUtil;
 import java.util.List;
 import java.util.Optional;
+
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.util.StreamUtil;
+
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Singular;

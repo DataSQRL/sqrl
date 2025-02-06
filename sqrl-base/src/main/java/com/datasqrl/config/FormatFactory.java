@@ -2,6 +2,7 @@ package com.datasqrl.config;
 
 import java.util.Objects;
 import java.util.Set;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -32,10 +33,9 @@ public interface FormatFactory {
       if (this == o) {
         return true;
       }
-      if (!(o instanceof FormatFactory)) {
+      if (!(o instanceof FormatFactory that)) {
         return false;
       }
-      FormatFactory that = (FormatFactory) o;
       return name.equalsIgnoreCase(that.getName());
     }
 

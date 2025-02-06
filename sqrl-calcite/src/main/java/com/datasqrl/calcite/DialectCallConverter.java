@@ -1,14 +1,12 @@
 package com.datasqrl.calcite;
 
-import com.datasqrl.calcite.function.RuleTransform;
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.util.ServiceLoaderDiscovery;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
+
 import org.apache.calcite.plan.RelOptPlanner;
 import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.rel.RelNode;
@@ -21,6 +19,10 @@ import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.tools.Programs;
 
+import com.datasqrl.calcite.function.RuleTransform;
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.util.ServiceLoaderDiscovery;
+
 public class DialectCallConverter {
   private final RelOptPlanner planner;
 
@@ -32,7 +34,7 @@ public class DialectCallConverter {
   }
 
   public RelNode convert(Dialect dialect, RelNode relNode) {
-    Map<SqlOperator, RuleTransform> transforms = extractFunctionTransforms(relNode);
+    var transforms = extractFunctionTransforms(relNode);
 
     List<RelRule> rules = new ArrayList<>();
     for (Entry<SqlOperator, RuleTransform> transform : transforms.entrySet()) {
@@ -53,7 +55,7 @@ public class DialectCallConverter {
       @Override
       public RelNode visit(LogicalAggregate aggregate) {
         for (AggregateCall call : aggregate.getAggCallList()) {
-          RuleTransform transform = transformMap.get(
+          var transform = transformMap.get(
               Name.system(call.getAggregation().getName()));
           if (transform != null) {
             transforms.put(call.getAggregation(), transform);
@@ -68,7 +70,7 @@ public class DialectCallConverter {
         parent.accept(new RexShuttle(){
           @Override
           public RexNode visitCall(RexCall call) {
-            RuleTransform transform = transformMap.get(
+            var transform = transformMap.get(
                 Name.system(call.getOperator().getName()));
             if (transform != null) {
               transforms.put(call.getOperator(), transform);

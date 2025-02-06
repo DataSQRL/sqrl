@@ -1,22 +1,23 @@
 package com.datasqrl.packager.repository;
 
-import com.datasqrl.config.Dependency;
-import com.datasqrl.config.PackageConfiguration;
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.error.ErrorPrefix;
-import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.packager.util.Zipper;
-import com.datasqrl.util.FileUtil;
-import com.datasqrl.util.NameUtil;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
-import net.lingala.zip4j.ZipFile;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
+
+import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.config.Dependency;
+import com.datasqrl.config.PackageConfiguration;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.ErrorPrefix;
+import com.datasqrl.packager.util.Zipper;
+import com.datasqrl.util.FileUtil;
+import com.datasqrl.util.NameUtil;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+import net.lingala.zip4j.ZipFile;
 
 @AllArgsConstructor
 @Slf4j
@@ -41,7 +42,7 @@ public class LocalRepositoryImplementation implements Repository, CacheRepositor
 
     @Override
     public boolean retrieveDependency(Path targetPath, Dependency dependency) throws IOException {
-        Path zipFile = getZipFilePath(dependency);
+        var zipFile = getZipFilePath(dependency);
         if (Files.isRegularFile(zipFile)) {
             new ZipFile(zipFile.toFile()).extractAll(targetPath.toString());
             return true;
@@ -51,10 +52,12 @@ public class LocalRepositoryImplementation implements Repository, CacheRepositor
 
     @Override
     public void cacheDependency(Path zipFile, Dependency dependency) throws IOException {
-        Path destFile = dependency2Path(dependency)
+        var destFile = dependency2Path(dependency)
             .resolve(FileUtil.addExtension(dependency.getVariant(), Zipper.ZIP_EXTENSION));
-        Path parentDir = destFile.getParent();
-        if (!Files.isDirectory(parentDir)) Files.createDirectories(parentDir);
+        var parentDir = destFile.getParent();
+        if (!Files.isDirectory(parentDir)) {
+			Files.createDirectories(parentDir);
+		}
         Files.deleteIfExists(destFile);
         Files.copy(zipFile, destFile);
     }
@@ -72,8 +75,8 @@ public class LocalRepositoryImplementation implements Repository, CacheRepositor
     }
 
     public Path getZipFilePath(Dependency dependency) {
-        Path path = dependency2Path(dependency);
-        Path zipFile = path.resolve(FileUtil.addExtension(dependency.getVariant(), Zipper.ZIP_EXTENSION));
+        var path = dependency2Path(dependency);
+        var zipFile = path.resolve(FileUtil.addExtension(dependency.getVariant(), Zipper.ZIP_EXTENSION));
         return zipFile;
     }
 
@@ -83,14 +86,14 @@ public class LocalRepositoryImplementation implements Repository, CacheRepositor
     }
 
     private Path package2Path(String packageName) {
-        NamePath pkg = NamePath.parse(packageName);
+        var pkg = NamePath.parse(packageName);
         return NameUtil.namepath2Path(repositoryPath,pkg);
     }
 
     @Override
     public boolean publish(Path zipFile, PackageConfiguration pkgConfig) {
         pkgConfig.checkInitialized();
-        Dependency dependency = pkgConfig.asDependency();
+        var dependency = pkgConfig.asDependency();
         try {
             cacheDependency(zipFile, dependency);
             return true;

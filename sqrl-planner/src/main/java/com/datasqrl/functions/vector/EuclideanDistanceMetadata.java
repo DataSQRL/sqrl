@@ -1,11 +1,12 @@
 package com.datasqrl.functions.vector;
 
+import java.util.EnumSet;
+
 import com.datasqrl.function.FunctionMetadata;
 import com.datasqrl.function.IndexType;
 import com.datasqrl.function.IndexableFunction;
 import com.datasqrl.vector.EuclideanDistance;
 import com.google.auto.service.AutoService;
-import java.util.EnumSet;
 
 @AutoService(FunctionMetadata.class)
 public class EuclideanDistanceMetadata implements IndexableFunction {

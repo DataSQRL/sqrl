@@ -1,10 +1,13 @@
 package com.datasqrl.config;
 
+import java.util.Map;
+import java.util.Optional;
+
+import com.datasqrl.config.TableConfig.Format.DefaultFormat;
 import com.datasqrl.io.tables.TableType;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.google.common.collect.ImmutableMap;
-import java.util.Map;
-import java.util.Optional;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -30,8 +33,9 @@ public class ConnectorConfigImpl implements TableConfig.ConnectorConfig {
       "postgres-cdc", TableType.VERSIONED_STATE
   );
 
-  public Optional<TableConfig.Format> getFormat() {
-    Optional<String> format = config.asString(FORMAT_KEY).getOptional()
+  @Override
+public Optional<TableConfig.Format> getFormat() {
+    var format = config.asString(FORMAT_KEY).getOptional()
       .or(() -> config.asString(VALUE_FORMAT_KEY).getOptional());
 //    config.getErrorCollector()
 //        .checkFatal(format.isPresent(), "Need to configure a format via [%s] or [%s]", FORMAT_KEY,
@@ -39,15 +43,15 @@ public class ConnectorConfigImpl implements TableConfig.ConnectorConfig {
     Optional<FormatFactory> formatFactory = format.flatMap(f->ServiceLoaderDiscovery.findFirst(FormatFactory.class,
         FormatFactory::getName, f));
     Optional<TableConfig.Format> format1 = formatFactory.map(fac -> fac.fromConfig(new EngineConfigImpl(config)));
-    Optional<TableConfig.Format> defaultFormat = format.map(f -> new TableConfig.Format.DefaultFormat(f));
+    Optional<TableConfig.Format> defaultFormat = format.map(DefaultFormat::new);
 
     return format1.isPresent() ? format1 : defaultFormat;
   }
 
   @Override
   public TableType getTableType() {
-    String connectorName = getConnectorName().get().toLowerCase();
-    TableType tableType = CONNECTOR_TYPE_MAP.get(connectorName);
+    var connectorName = getConnectorName().get().toLowerCase();
+    var tableType = CONNECTOR_TYPE_MAP.get(connectorName);
     if (tableType == null) {
       log.debug("Defaulting '{}' connector to STREAM table for import.", connectorName);
       tableType = TableType.STREAM;

@@ -1,15 +1,12 @@
 package com.datasqrl.json;
 
 import java.util.ArrayList;
-import lombok.SneakyThrows;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.JsonProcessingException;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
+
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ArrayNode;
-import org.apache.flink.table.annotation.DataTypeHint;
-import org.apache.flink.table.annotation.FunctionHint;
 import org.apache.flink.table.functions.AggregateFunction;
 import org.apache.flink.util.jackson.JacksonMapperFactory;
+
+import lombok.SneakyThrows;
 
 /**
  * Aggregation function that aggregates JSON objects into a JSON array.
@@ -79,7 +76,7 @@ public class JsonArrayAgg extends AggregateFunction<FlinkJsonType, ArrayAgg> {
 
   @Override
   public FlinkJsonType getValue(ArrayAgg accumulator) {
-    ArrayNode arrayNode = mapper.createArrayNode();
+    var arrayNode = mapper.createArrayNode();
     for (Object o : accumulator.getObjects()) {
       if (o instanceof FlinkJsonType) {
         arrayNode.add(((FlinkJsonType) o).json);

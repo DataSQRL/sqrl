@@ -1,5 +1,10 @@
 package com.datasqrl.compile;
 
+import java.nio.file.Path;
+import java.util.Optional;
+
+import org.apache.commons.lang3.tuple.Pair;
+
 import com.datasqrl.actions.CreateDatabaseQueries;
 import com.datasqrl.actions.GraphqlPostplanHook;
 import com.datasqrl.actions.InferGraphqlSchema;
@@ -15,18 +20,11 @@ import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.loaders.ModuleLoaderComposite;
 import com.datasqrl.plan.MainScript;
 import com.datasqrl.plan.global.DAGPlanner;
-import com.datasqrl.plan.global.LogicalDAGPlan;
-import com.datasqrl.plan.global.PhysicalDAGPlan;
-import com.datasqrl.plan.global.SqrlDAG;
-import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.plan.validate.ScriptPlanner;
 import com.google.inject.Inject;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Optional;
+
 import lombok.AllArgsConstructor;
-import org.apache.commons.lang3.tuple.Pair;
 
 @AllArgsConstructor(onConstructor_=@Inject)
 public class CompilationProcess {
@@ -75,11 +73,11 @@ public class CompilationProcess {
 
     planner.plan(mainScript, composite);
     postcompileHooks();
-    Optional<APISource> source = inferencePostcompileHook.run(testsPath);
-    SqrlDAG dag = dagPlanner.planLogical();
-    PhysicalDAGPlan dagPlan = dagPlanner.planPhysical(dag);
+    var source = inferencePostcompileHook.run(testsPath);
+    var dag = dagPlanner.planLogical();
+    var dagPlan = dagPlanner.planPhysical(dag);
 
-    PhysicalPlan physicalPlan = physicalPlanner.plan(dagPlan);
+    var physicalPlan = physicalPlanner.plan(dagPlan);
     graphqlPostplanHook.updatePlan(source, physicalPlan);
 
     //create test artifact

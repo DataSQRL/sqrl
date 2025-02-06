@@ -2,10 +2,23 @@ package com.datasqrl.engines;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+
 import com.datasqrl.DatasqrlTest;
-import com.datasqrl.DatasqrlTest.TestPlan;
 import com.datasqrl.FullUsecasesIT.UseCaseTestParameter;
-import com.datasqrl.MissingSnapshotException;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.engines.TestEngine.DuckdbTestEngine;
 import com.datasqrl.engines.TestEngine.FlinkTestEngine;
@@ -23,25 +36,11 @@ import com.datasqrl.util.ResultSetPrinter;
 import com.datasqrl.util.SnapshotTest.Snapshot;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import scala.annotation.meta.param;
 
 @AllArgsConstructor
 public class TestExecutionEnv implements TestEngineVisitor<Void, TestEnvContext> {
@@ -99,11 +98,7 @@ public class TestExecutionEnv implements TestEngineVisitor<Void, TestEnvContext>
 
   @Override
   public Void visit(DuckdbTestEngine engine, TestEnvContext context) {
-    if (hasTestEngine()) { //tested by Test goal
-      return null;
-    }
-
-    if (hasServerEngine()) { //Tested by graphql queries
+    if (hasTestEngine() || hasServerEngine()) { //Tested by graphql queries
       return null;
     }
 
@@ -211,11 +206,11 @@ public class TestExecutionEnv implements TestEngineVisitor<Void, TestEnvContext>
 
   @Override
   public Void visit(TestTestEngine engine, TestEnvContext context) {
-    DatasqrlTest test = new DatasqrlTest(null,
+    var test = new DatasqrlTest(null,
         context.rootDir.resolve("build/plan"),
         context.env);
     try {
-      int run = test.run();
+      var run = test.run();
       if (run != 0) {
         fail();
       }

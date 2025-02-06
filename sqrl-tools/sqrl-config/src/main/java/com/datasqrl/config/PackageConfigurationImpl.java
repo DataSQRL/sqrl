@@ -3,14 +3,15 @@
  */
 package com.datasqrl.config;
 
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 import com.datasqrl.config.Constraints.Default;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -49,13 +50,15 @@ public class PackageConfigurationImpl implements PackageConfiguration {
   @Default
   List<String> topics = List.of();
 
-  public void checkInitialized() {
+  @Override
+public void checkInitialized() {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(getName()) &&
         !Strings.isNullOrEmpty(getVersion()) && !Strings.isNullOrEmpty(getVariant()) &&
         getLatest() != null && this.getTopics() != null, "Package configuration has not been initialized.");
   }
 
-  @JsonIgnore
+  @Override
+@JsonIgnore
   public DependencyImpl asDependency() {
     checkInitialized();
     return new DependencyImpl(getName(), getVersion(), getVariant());

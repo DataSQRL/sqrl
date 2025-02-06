@@ -1,10 +1,9 @@
 package com.datasqrl.json;
 
+import org.apache.flink.table.functions.ScalarFunction;
+
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.ReadContext;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.flink.table.functions.ScalarFunction;
 
 /**
  * Extracts a value from the JSON object based on the provided JSON path. An optional third argument
@@ -18,9 +17,9 @@ public class JsonExtract extends ScalarFunction {
       return null;
     }
     try {
-      JsonNode jsonNode = input.getJson();
+      var jsonNode = input.getJson();
       ReadContext ctx = JsonPath.parse(jsonNode.toString());
-      Object value = ctx.read(pathSpec);
+      var value = ctx.read(pathSpec);
       if (value == null) {
         return null;
       }
@@ -36,7 +35,7 @@ public class JsonExtract extends ScalarFunction {
     }
     try {
       ReadContext ctx = JsonPath.parse(input.getJson().toString());
-      JsonPath parse = JsonPath.compile(pathSpec);
+      var parse = JsonPath.compile(pathSpec);
       return ctx.read(parse, String.class);
     } catch (Exception e) {
       return defaultValue;
@@ -49,7 +48,7 @@ public class JsonExtract extends ScalarFunction {
     }
     try {
       ReadContext ctx = JsonPath.parse(input.getJson().toString());
-      JsonPath parse = JsonPath.compile(pathSpec);
+      var parse = JsonPath.compile(pathSpec);
       return ctx.read(parse, Boolean.class);
     } catch (Exception e) {
       return defaultValue;
@@ -62,7 +61,7 @@ public class JsonExtract extends ScalarFunction {
     }
     try {
       ReadContext ctx = JsonPath.parse(input.getJson().toString());
-      JsonPath parse = JsonPath.compile(pathSpec);
+      var parse = JsonPath.compile(pathSpec);
       return ctx.read(parse, Double.class);
     } catch (Exception e) {
       return defaultValue;
@@ -75,7 +74,7 @@ public class JsonExtract extends ScalarFunction {
     }
     try {
       ReadContext ctx = JsonPath.parse(input.getJson().toString());
-      JsonPath parse = JsonPath.compile(pathSpec);
+      var parse = JsonPath.compile(pathSpec);
       return ctx.read(parse, Integer.class);
     } catch (Exception e) {
       return defaultValue;

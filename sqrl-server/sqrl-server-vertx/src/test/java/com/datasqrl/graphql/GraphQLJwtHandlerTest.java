@@ -4,6 +4,23 @@ import static org.apache.kafka.clients.admin.AdminClientConfig.BOOTSTRAP_SERVERS
 import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Properties;
+import java.util.UUID;
+
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.serialization.StringSerializer;
+import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.graphql.config.CorsHandlerOptions;
 import com.datasqrl.graphql.config.ServerConfig;
@@ -17,7 +34,6 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServerOptions;
-import io.vertx.core.http.WebSocket;
 import io.vertx.core.http.WebSocketConnectOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.JWTOptions;
@@ -32,22 +48,7 @@ import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.kafka.client.producer.RecordMetadata;
 import io.vertx.kafka.client.producer.impl.KafkaProducerRecordImpl;
 import io.vertx.pgclient.impl.PgPoolOptions;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Properties;
-import java.util.UUID;
 import lombok.SneakyThrows;
-import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.admin.NewTopic;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.common.serialization.StringSerializer;
-import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 @ExtendWith(VertxExtension.class)
 class GraphQLJwtHandlerTest {
@@ -112,10 +113,10 @@ class GraphQLJwtHandlerTest {
 
   @Test
   public void testJWTAuthentication(VertxTestContext testContext) {
-    JWTAuth provider = JWTAuth.create(vertx, this.serverConfig.getAuthOptions());
+    var provider = JWTAuth.create(vertx, this.serverConfig.getAuthOptions());
 
     // Generate token
-    String token = provider.generateToken(new JsonObject(), new JWTOptions().setExpiresInSeconds(60));
+    var token = provider.generateToken(new JsonObject(), new JWTOptions().setExpiresInSeconds(60));
 
     sendQuery(token, ar -> {
       if (ar.succeeded()) {
@@ -148,7 +149,7 @@ class GraphQLJwtHandlerTest {
 
   @Test
   public void testWebsocketBadAuth(VertxTestContext testContext) {
-    WebSocketConnectOptions options = new WebSocketConnectOptions()
+    var options = new WebSocketConnectOptions()
         .setPort(serverConfig.getHttpServerOptions().getPort())
         .setHost("localhost")
         .setURI("/graphql")
@@ -166,23 +167,23 @@ class GraphQLJwtHandlerTest {
   @Disabled
   @Test
   public void testWebsocket(VertxTestContext testContext) {
-    JWTAuth provider = JWTAuth.create(vertx, this.serverConfig.getAuthOptions());
-    String token = provider.generateToken(new JsonObject(),
+    var provider = JWTAuth.create(vertx, this.serverConfig.getAuthOptions());
+    var token = provider.generateToken(new JsonObject(),
         new JWTOptions().setExpiresInSeconds(60));
 
-    WebSocketConnectOptions options = new WebSocketConnectOptions()
+    var options = new WebSocketConnectOptions()
         .setPort(serverConfig.getHttpServerOptions().getPort())
         .setHost("localhost")
         .setURI("/graphql") // Your actual WebSocket endpoint URI
         .addHeader("Authorization", "Bearer " + token); // Send the JWT as part of the initial request headers
 
-    String initMessage = "{\"type\":\"connection_init\",\"payload\":{}}";  // connection initialization message
+    var initMessage = "{\"type\":\"connection_init\",\"payload\":{}}";  // connection initialization message
 
-    String graphqlSubscription = "{\"type\":\"subscribe\",\"id\":\"1\",\"payload\":{\"query\":\"subscription { mock { val } }\"}}";
+    var graphqlSubscription = "{\"type\":\"subscribe\",\"id\":\"1\",\"payload\":{\"query\":\"subscription { mock { val } }\"}}";
     // Connect using the WebSocket client
     vertx.createHttpClient().webSocket(options, wsResult -> {
       if (wsResult.succeeded()) {
-        WebSocket ws = wsResult.result();
+        var ws = wsResult.result();
         // Send a GraphQL query as a text message
         ws.writeTextMessage(initMessage);
         ws.handler(message -> {
@@ -195,7 +196,7 @@ class GraphQLJwtHandlerTest {
           } else if (message.toString().contains("connection_ack")) {
             ws.writeTextMessage(graphqlSubscription);
 
-            Properties props = new Properties();
+            var props = new Properties();
             props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
             props.put(GROUP_ID_CONFIG, UUID.randomUUID().toString());
             props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
@@ -207,8 +208,8 @@ class GraphQLJwtHandlerTest {
               throw new RuntimeException(e);
             }
             KafkaProducer producer =  KafkaProducer.create(Vertx.vertx(), props);
-            JsonObject jsonMessage = new JsonObject().put("val", "x");
-            producer.send(new KafkaProducerRecordImpl("mytopic", jsonMessage.toString()),(Handler<AsyncResult<RecordMetadata>>)(metadata)->{
+            var jsonMessage = new JsonObject().put("val", "x");
+            producer.send(new KafkaProducerRecordImpl("mytopic", jsonMessage.toString()),(Handler<AsyncResult<RecordMetadata>>)metadata -> {
               System.out.println(metadata.result().getTopic());
               System.out.println(metadata.result().getTimestamp());
             });
@@ -221,9 +222,9 @@ class GraphQLJwtHandlerTest {
   }
 
   private void sendQuery(String token, Handler<AsyncResult<HttpResponse<Buffer>>> callback) {
-    JsonObject query = new JsonObject()
+    var query = new JsonObject()
         .put("query", "query { mock }");
-    WebClient webClient = WebClient.create(vertx);
+    var webClient = WebClient.create(vertx);
     webClient.post(serverConfig.getHttpServerOptions().getPort(), "localhost", "/graphql")
         .putHeader("Authorization", "Bearer " + token)
         .putHeader("Content-Type", "application/json")

@@ -1,16 +1,17 @@
 package com.datasqrl.packager.preprocess;
 
-import com.datasqrl.io.schema.flexible.FlexibleSchemaPreprocessor;
-import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.junit.jupiter.api.Test;
+
+import com.datasqrl.io.schema.flexible.FlexibleSchemaPreprocessor;
 
 class FlexibleSchemaPreprocessorTest {
 
   @Test
   public void testRegex() {
-    FlexibleSchemaPreprocessor preprocessor = new FlexibleSchemaPreprocessor();
+    var preprocessor = new FlexibleSchemaPreprocessor();
     // Test the regex for the file extension .schema.yml
     assertTrue(preprocessor.getPattern().asMatchPredicate().test("some_table.schema.yml"));
     assertTrue(preprocessor.getPattern().asMatchPredicate().test("table.schema.yml"));

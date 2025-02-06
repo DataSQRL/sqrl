@@ -1,7 +1,5 @@
 package com.datasqrl.config;
 
-import com.datasqrl.config.SqrlConfig.Value;
-import com.datasqrl.error.NotYetImplementedException;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -11,7 +9,11 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.regex.Pattern;
+
 import org.apache.commons.lang3.StringUtils;
+
+import com.datasqrl.config.SqrlConfig.Value;
+import com.datasqrl.error.NotYetImplementedException;
 
 
 public interface Constraints {
@@ -47,12 +49,11 @@ public interface Constraints {
   }
 
   static Value addConstraints(Field field, SqrlConfig.Value value) {
-    Annotation[] annotations = field.getDeclaredAnnotations();
+    var annotations = field.getDeclaredAnnotations();
 
     for (Annotation annotation : annotations) {
-      if (annotation instanceof MinLength) {
-        MinLength lengthAnnotation = (MinLength) annotation;
-        final int minLength = lengthAnnotation.min();
+      if (annotation instanceof MinLength lengthAnnotation) {
+        final var minLength = lengthAnnotation.min();
         value = value.validate(x -> ((String)x).length()>= minLength,
             "String needs to be at least length " + minLength);
       } else if (annotation instanceof NotNull) {
@@ -60,15 +61,20 @@ public interface Constraints {
             "Value cannot be null");
       } else if (annotation instanceof NotEmpty) {
         value = value.validate(x -> {
-              if (x instanceof String) return StringUtils.isNotBlank((String)x);
-              if (x instanceof Collection) return ((Collection)x).size()>0;
-              if (x.getClass().isArray()) return Array.getLength(x)>0;
+              if (x instanceof String) {
+				return StringUtils.isNotBlank((String)x);
+			}
+              if (x instanceof Collection) {
+				return ((Collection)x).size()>0;
+			}
+              if (x.getClass().isArray()) {
+				return Array.getLength(x)>0;
+			}
               return true;
             },
             "Value cannot be empty");
-      } else if (annotation instanceof Regex) {
-        Regex regex = (Regex) annotation;
-        Pattern pattern = Pattern.compile(regex.match());
+      } else if (annotation instanceof Regex regex) {
+        var pattern = Pattern.compile(regex.match());
         value = value.validate(x -> pattern.matcher((String)x).matches(), "String does not match pattern " + regex.match());
       } else if (annotation instanceof Default) {
         //Ignore, handled in SqrlCommonsConfig

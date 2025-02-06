@@ -1,5 +1,19 @@
 package com.datasqrl.engines;
 
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.stream.Collectors;
+
+import org.apache.kafka.clients.admin.AdminClient;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.redpanda.RedpandaContainer;
+import org.testcontainers.utility.DockerImageName;
+
 import com.datasqrl.engines.TestContainersForTestGoal.TestContainerHook;
 import com.datasqrl.engines.TestEngine.DuckdbTestEngine;
 import com.datasqrl.engines.TestEngine.FlinkTestEngine;
@@ -11,21 +25,8 @@ import com.datasqrl.engines.TestEngine.SnowflakeTestEngine;
 import com.datasqrl.engines.TestEngine.TestEngineVisitor;
 import com.datasqrl.engines.TestEngine.TestTestEngine;
 import com.datasqrl.engines.TestEngine.VertxTestEngine;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.stream.Collectors;
+
 import lombok.AllArgsConstructor;
-import org.apache.kafka.clients.admin.AdminClient;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.redpanda.RedpandaContainer;
-import org.testcontainers.utility.DockerImageName;
 
 public class TestContainersForTestGoal implements TestEngineVisitor<TestContainerHook, Void> {
 
@@ -56,8 +57,8 @@ public class TestContainersForTestGoal implements TestEngineVisitor<TestContaine
 
       @Override
       public void clear() {
-        try (Connection conn = DriverManager.getConnection(testDatabase.getJdbcUrl(), testDatabase.getUsername(), testDatabase.getPassword());
-            Statement stmt = conn.createStatement()) {
+        try (var conn = DriverManager.getConnection(testDatabase.getJdbcUrl(), testDatabase.getUsername(), testDatabase.getPassword());
+            var stmt = conn.createStatement()) {
           stmt.execute("DO $$ DECLARE r RECORD; BEGIN FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') LOOP EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r.tablename) || ' CASCADE'; END LOOP; END $$;");
         } catch (SQLException e) {
           throw new RuntimeException("Failed to drop tables", e);
@@ -103,9 +104,9 @@ public class TestContainersForTestGoal implements TestEngineVisitor<TestContaine
 
       @Override
       public void clear() {
-        Properties props = new Properties();
+        var props = new Properties();
         props.put("bootstrap.servers", testKafka.getBootstrapServers());
-        try (AdminClient admin = AdminClient.create(props)) {
+        try (var admin = AdminClient.create(props)) {
           // List all topics
           List<String> topics = admin.listTopics().names().get().stream().collect(Collectors.toList());
           // Delete all topics

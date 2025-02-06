@@ -6,20 +6,22 @@ package com.datasqrl.util;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.apache.commons.lang3.ArrayUtils;
+import org.junit.jupiter.api.TestInfo;
+
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
-import org.junit.jupiter.api.TestInfo;
 
 @Slf4j
 public class SnapshotTest {
@@ -55,15 +57,15 @@ public class SnapshotTest {
 
     public static Snapshot of(@NonNull String name, @NonNull TestInfo testInfo,
         String content) {
-      String fileName = testInfo.getDisplayName();
-      Matcher matcher = PARAMETRIZED_TEST.matcher(fileName);
+      var fileName = testInfo.getDisplayName();
+      var matcher = PARAMETRIZED_TEST.matcher(fileName);
       if (matcher.find()) {
         fileName = matcher.group(1);
       }
       if (fileName.endsWith("()")) {
         fileName = StringUtil.removeFromEnd(fileName, "()");
       }
-      StringBuilder c = new StringBuilder();
+      var c = new StringBuilder();
       if (!Strings.isNullOrEmpty(content)) {
         c.append(content);
       }
@@ -72,7 +74,7 @@ public class SnapshotTest {
 
     public static Snapshot of(@NonNull Class testClass, @NonNull String... testParameters) {
       Preconditions.checkArgument(testParameters.length > 0);
-      String fileName = String.join(FILE_DELIMITER, testParameters);
+      var fileName = String.join(FILE_DELIMITER, testParameters);
       return new Snapshot(testClass.getName(), fileName, new StringBuilder());
     }
 
@@ -95,7 +97,7 @@ public class SnapshotTest {
     public Snapshot addContent(@NonNull String addedContent, String... caseNames) {
       if (caseNames != null && caseNames.length > 0) {
         //Add header
-        int j = 0;
+        var j = 0;
         for (String caseName : caseNames) {
           if (j++ == 0) {
             content.append(HEADER_PREFIX);

@@ -2,22 +2,17 @@ package com.datasqrl.packager.preprocess;
 
 import static com.datasqrl.packager.LambdaUtil.rethrowCall;
 
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.util.SqrlObjectMapper;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.auto.service.AutoService;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.List;
+import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.regex.Pattern;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.flink.table.functions.AggregateFunction;
 import org.apache.flink.table.functions.AsyncScalarFunction;
@@ -25,6 +20,14 @@ import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.table.functions.TableAggregateFunction;
 import org.apache.flink.table.functions.TableFunction;
 import org.apache.flink.table.functions.UserDefinedFunction;
+
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.util.SqrlObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
 /*
  * Reads a jar and creates sqrl manifest entries in the build directory
@@ -75,18 +78,18 @@ public class JarPreprocessor implements Preprocessor {
    */
   private Void processJarEntry(JarEntry entry, JarFile file,
       ProcessorContext processorContext, Path path) throws IOException {
-    java.io.InputStream input = file.getInputStream(entry);
-    List<String> classes = IOUtils.readLines(input, Charset.defaultCharset());
+    var input = file.getInputStream(entry);
+    var classes = IOUtils.readLines(input, Charset.defaultCharset());
 
     for (String clazz : classes) {
-      ObjectNode obj = mapper.createObjectNode();
+      var obj = mapper.createObjectNode();
       obj.put("language", "java");
       obj.put("functionClass", clazz);
       obj.put("jarPath", path.toFile().getName());
 
       // Create a file in a temporary directory
-      String functionName = clazz.substring(clazz.lastIndexOf('.') + 1);
-      File toFile = createTempFile(obj, functionName);
+      var functionName = clazz.substring(clazz.lastIndexOf('.') + 1);
+      var toFile = createTempFile(obj, functionName);
       processorContext.addDependency(path);
       processorContext.addDependency(toFile.toPath());
       processorContext.addLibrary(path);
@@ -105,7 +108,7 @@ public class JarPreprocessor implements Preprocessor {
    * Creates a temporary file and writes the given object to it
    */
   private File createTempFile(ObjectNode obj, String functionName) throws IOException {
-    Path functionPath = Files.createTempDirectory("fnc")
+    var functionPath = Files.createTempDirectory("fnc")
         .resolve(functionName + ".function.json");
 
     mapper.writeValue(functionPath.toFile(), obj);

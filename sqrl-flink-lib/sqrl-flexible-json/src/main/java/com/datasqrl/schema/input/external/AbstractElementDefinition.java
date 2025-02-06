@@ -4,6 +4,7 @@
 package com.datasqrl.schema.input.external;
 
 import java.io.Serializable;
+
 import lombok.NoArgsConstructor;
 
 @NoArgsConstructor

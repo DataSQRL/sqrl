@@ -3,18 +3,23 @@
  */
 package com.datasqrl.plan.rules;
 
-import com.datasqrl.plan.global.QueryIndexSummary;
-import com.datasqrl.plan.table.PhysicalRelationalTable;
-import com.datasqrl.plan.table.ScriptRelationalTable;
+import java.util.stream.IntStream;
+
 import org.apache.calcite.adapter.enumerable.EnumerableNestedLoopJoin;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.Filter;
 import org.apache.calcite.rel.core.Join;
-import org.apache.calcite.rel.metadata.*;
+import org.apache.calcite.rel.metadata.BuiltInMetadata;
+import org.apache.calcite.rel.metadata.ReflectiveRelMetadataProvider;
+import org.apache.calcite.rel.metadata.RelMdRowCount;
+import org.apache.calcite.rel.metadata.RelMdUtil;
+import org.apache.calcite.rel.metadata.RelMetadataProvider;
+import org.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.apache.calcite.util.BuiltInMethod;
 
-import java.util.Set;
-import java.util.stream.IntStream;
+import com.datasqrl.plan.global.QueryIndexSummary;
+import com.datasqrl.plan.table.PhysicalRelationalTable;
+import com.datasqrl.plan.table.ScriptRelationalTable;
 
 public class SqrlRelMdRowCount extends RelMdRowCount
     implements BuiltInMetadata.RowCount.Handler {
@@ -23,7 +28,8 @@ public class SqrlRelMdRowCount extends RelMdRowCount
       ReflectiveRelMetadataProvider.reflectiveSource(
           BuiltInMethod.ROW_COUNT.method, new SqrlRelMdRowCount());
 
-  public Double getRowCount(Join rel, RelMetadataQuery mq) {
+  @Override
+public Double getRowCount(Join rel, RelMetadataQuery mq) {
     double rowCount = super.getRowCount(rel, mq);
     if (rel instanceof EnumerableNestedLoopJoin) {
       rowCount = rowCount + 2 * mq.getRowCount(rel.getLeft());
@@ -33,7 +39,8 @@ public class SqrlRelMdRowCount extends RelMdRowCount
     return rowCount;
   }
 
-  public Double getRowCount(RelNode rel, RelMetadataQuery mq) {
+  @Override
+public Double getRowCount(RelNode rel, RelMetadataQuery mq) {
     if (rel instanceof Join join) {
       return getRowCount(join, mq);
     }
@@ -43,13 +50,14 @@ public class SqrlRelMdRowCount extends RelMdRowCount
     return super.getRowCount(rel, mq);
   }
 
-  public Double getRowCount(Filter rel, RelMetadataQuery mq) {
+  @Override
+public Double getRowCount(Filter rel, RelMetadataQuery mq) {
     return RelMdUtil.estimateFilteredRows(rel.getInput(), rel.getCondition(), mq);
   }
 
   public static Double getRowCount(PhysicalRelationalTable table,
                                    QueryIndexSummary constraints) {
-    Set<Integer> equalCols = constraints.getEqualityColumns();
+    var equalCols = constraints.getEqualityColumns();
     if (IntStream.of(table.getPrimaryKey().asArray()).allMatch(equalCols::contains)) {
       return 1.0;
     }

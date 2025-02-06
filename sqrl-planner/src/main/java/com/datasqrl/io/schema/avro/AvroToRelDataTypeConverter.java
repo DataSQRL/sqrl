@@ -1,22 +1,24 @@
 package com.datasqrl.io.schema.avro;
 
-import com.datasqrl.calcite.type.TypeFactory;
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.error.ErrorCode;
-import com.datasqrl.error.ErrorCollector;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
-import lombok.AllArgsConstructor;
+
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Field;
 import org.apache.avro.Schema.Type;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.flink.formats.avro.typeutils.AvroSchemaConverter;
-import org.apache.flink.table.types.DataType;
+
+import com.datasqrl.calcite.type.TypeFactory;
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.error.ErrorCode;
+import com.datasqrl.error.ErrorCollector;
+
+import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class AvroToRelDataTypeConverter {
@@ -32,10 +34,10 @@ public class AvroToRelDataTypeConverter {
   public RelDataType convert(Schema schema) {
     validateSchema(schema, NamePath.ROOT);
 
-    DataType dataType = AvroSchemaConverter.convertToDataType(schema.toString(false),
+    var dataType = AvroSchemaConverter.convertToDataType(schema.toString(false),
         legacyTimestampMapping);
 
-    TypeFactory typeFactory = TypeFactory.getTypeFactory();
+    var typeFactory = TypeFactory.getTypeFactory();
 
     return typeFactory.createFieldTypeFromLogicalType(
         dataType.getLogicalType());
@@ -62,7 +64,7 @@ public class AvroToRelDataTypeConverter {
               nonNullTypes.size(), path);
         }
 
-        Schema innerSchema = nonNullTypes.getFirst();
+        var innerSchema = nonNullTypes.getFirst();
         validateSchema(innerSchema, path);
         break;
       case RECORD:

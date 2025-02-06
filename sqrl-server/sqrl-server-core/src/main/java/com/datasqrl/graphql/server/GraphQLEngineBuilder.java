@@ -6,9 +6,17 @@ package com.datasqrl.graphql.server;
 import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.getMutationTypeName;
 import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.getSubscriptionTypeName;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
+
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentLookupCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.CoordVisitor;
+import com.datasqrl.graphql.server.RootGraphqlModel.Coords;
 import com.datasqrl.graphql.server.RootGraphqlModel.DuckDbQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.FieldLookupCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.JdbcQuery;
@@ -17,7 +25,6 @@ import com.datasqrl.graphql.server.RootGraphqlModel.PagedDuckDbQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.PagedJdbcQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.PagedSnowflakeDbQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.QueryBaseVisitor;
-import com.datasqrl.graphql.server.RootGraphqlModel.Coords;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedJdbcQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedPagedJdbcQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
@@ -27,6 +34,7 @@ import com.datasqrl.graphql.server.RootGraphqlModel.SchemaVisitor;
 import com.datasqrl.graphql.server.RootGraphqlModel.SnowflakeDbQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.StringSchema;
 import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoords;
+
 import graphql.GraphQL;
 import graphql.language.FieldDefinition;
 import graphql.language.InterfaceTypeDefinition;
@@ -40,17 +48,10 @@ import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLNonNull;
 import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLScalarType;
-import graphql.schema.GraphQLSchema;
 import graphql.schema.idl.RuntimeWiring;
 import graphql.schema.idl.SchemaGenerator;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 /**
  * Purpose: Builds the GraphQL engine by wiring together the schema, resolvers, and custom scalars.
@@ -116,7 +117,7 @@ public class GraphQLEngineBuilder
 
   @Override
   public TypeDefinitionRegistry visitStringDefinition(StringSchema stringSchema, Object context) {
-    TypeDefinitionRegistry registry = (new SchemaParser()).parse(stringSchema.getSchema());
+    var registry = (new SchemaParser()).parse(stringSchema.getSchema());
     if (!registry.hasType(new TypeName("Query"))) {
       registry.add(DUMMY_QUERY);
     }
@@ -125,10 +126,10 @@ public class GraphQLEngineBuilder
 
   @Override
   public GraphQL.Builder visitRoot(RootGraphqlModel root, Context context) {
-    TypeDefinitionRegistry registry = root.schema.accept(this, null);
+    var registry = root.schema.accept(this, null);
 
     // GraphQL registry holding the code that processes graphQL fields (graphQL DataFetchers) and types (graphQL TypeResolvers)
-    GraphQLCodeRegistry.Builder codeRegistry = GraphQLCodeRegistry.newCodeRegistry();
+    var codeRegistry = GraphQLCodeRegistry.newCodeRegistry();
     codeRegistry.defaultDataFetcher(env ->
         context.createPropertyFetcher(env.getFieldDefinition().getName()));
     for (Coords qc : root.coords) {
@@ -153,15 +154,15 @@ public class GraphQLEngineBuilder
       }
     }
 
-    RuntimeWiring wiring = createWiring(registry, codeRegistry);
-    GraphQLSchema graphQLSchema = new SchemaGenerator()
+    var wiring = createWiring(registry, codeRegistry);
+    var graphQLSchema = new SchemaGenerator()
         .makeExecutableSchema(registry, wiring);
 
     return GraphQL.newGraphQL(graphQLSchema);
   }
 
   private RuntimeWiring createWiring(TypeDefinitionRegistry registry, GraphQLCodeRegistry.Builder codeRegistry) {
-    RuntimeWiring.Builder wiring = RuntimeWiring.newRuntimeWiring()
+    var wiring = RuntimeWiring.newRuntimeWiring()
         .codeRegistry(codeRegistry)
         .scalar(CustomScalars.Double)
         .scalar(CustomScalars.DATETIME)
@@ -176,7 +177,7 @@ public class GraphQLEngineBuilder
       if (typeEntry.getValue() instanceof InterfaceTypeDefinition) {
         //create a superficial resolver
         //TODO: interfaces and unions as return types
-        wiring.type(typeEntry.getKey(), (builder)-> builder
+        wiring.type(typeEntry.getKey(), builder -> builder
             .typeResolver(env1 -> null));
       }
     }
@@ -240,7 +241,7 @@ public class GraphQLEngineBuilder
   @Override
   public CompletableFuture visitResolvedPagedJdbcQuery(ResolvedPagedJdbcQuery query,
       QueryExecutionContext context) {
-    CompletableFuture fut = context.runPagedJdbcQuery(query,
+    var fut = context.runPagedJdbcQuery(query,
         isList(context.getEnvironment().getFieldType()),
         context);
     return fut;

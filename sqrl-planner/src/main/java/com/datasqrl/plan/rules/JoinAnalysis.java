@@ -1,12 +1,14 @@
 package com.datasqrl.plan.rules;
 
+import org.apache.calcite.rel.core.JoinRelType;
+import org.apache.calcite.sql.JoinModifier;
+
 import com.datasqrl.error.NotYetImplementedException;
 import com.google.common.base.Preconditions;
+
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
-import org.apache.calcite.rel.core.JoinRelType;
-import org.apache.calcite.sql.JoinModifier;
 
 @Value
 @AllArgsConstructor
@@ -30,15 +32,22 @@ public class JoinAnalysis {
 
   public JoinAnalysis makeA(Type type) {
     Preconditions.checkArgument(this.type.isCompatible(type), "Join types not compatible: %s vs %s", this.type, type);
-    if (this.type==type) return this;
+    if (this.type==type) {
+		return this;
+	}
     return new JoinAnalysis(type,side,isFlipped);
   }
 
   public JoinAnalysis makeGeneric() {
     Preconditions.checkArgument(this.type==Type.DEFAULT || isGeneric(), "Join types not compatible: %s vs %s", this.type, type);
-    if (isGeneric()) return this;
-    if (side==Side.NONE) return new JoinAnalysis(Type.INNER, Side.NONE, isFlipped);
-    else return new JoinAnalysis(Type.OUTER, side, isFlipped);
+    if (isGeneric()) {
+		return this;
+	}
+    if (side==Side.NONE) {
+		return new JoinAnalysis(Type.INNER, Side.NONE, isFlipped);
+	} else {
+		return new JoinAnalysis(Type.OUTER, side, isFlipped);
+	}
   }
 
   public boolean canBe(Type type) {
@@ -55,7 +64,9 @@ public class JoinAnalysis {
 
   public Side getOriginalSide() {
     Side orgSide = this.side;
-    if (isFlipped) orgSide = orgSide.flip();
+    if (isFlipped) {
+		orgSide = orgSide.flip();
+	}
     return orgSide;
   }
 
@@ -65,9 +76,15 @@ public class JoinAnalysis {
 
   public JoinRelType export() {
     Preconditions.checkArgument(type!=Type.DEFAULT);
-    if (side==Side.LEFT) return JoinRelType.LEFT;
-    if (side==Side.RIGHT) return JoinRelType.RIGHT;
-    if (type==Type.OUTER) return JoinRelType.FULL;
+    if (side==Side.LEFT) {
+		return JoinRelType.LEFT;
+	}
+    if (side==Side.RIGHT) {
+		return JoinRelType.RIGHT;
+	}
+    if (type==Type.OUTER) {
+		return JoinRelType.FULL;
+	}
     return JoinRelType.INNER;
   }
 
@@ -76,8 +93,9 @@ public class JoinAnalysis {
     DEFAULT, INNER, OUTER, TEMPORAL, INTERVAL;
 
     public boolean isCompatible(@NonNull Type other) {
-      if (this==DEFAULT) return true;
-      if ((this==INNER || this==OUTER) && (other==INTERVAL)) return true;
+      if ((this==DEFAULT) || ((this==INNER || this==OUTER) && (other==INTERVAL))) {
+		return true;
+	}
       return this==other;
     }
 
@@ -87,19 +105,19 @@ public class JoinAnalysis {
     LEFT, RIGHT, NONE;
 
     public Side flip() {
-      switch (this) {
-        case LEFT: return RIGHT;
-        case RIGHT: return LEFT;
-        case NONE: return NONE;
-        default: throw new IllegalStateException("Not a side: " + this);
-      }
+      return switch (this) {
+	case LEFT -> RIGHT;
+	case RIGHT -> LEFT;
+	case NONE -> NONE;
+	default -> throw new IllegalStateException("Not a side: " + this);
+	};
     }
 
   }
 
   public static JoinAnalysis of(JoinRelType join, JoinModifier joinModifier) {
-    Side side = determineSide(join);
-    Type joinType = determineJoinType(join, joinModifier);
+    var side = determineSide(join);
+    var joinType = determineJoinType(join, joinModifier);
     return new JoinAnalysis(joinType, side);
   }
 
@@ -120,8 +138,11 @@ public class JoinAnalysis {
       case INTERVAL:
         return Type.INTERVAL;
       case DEFAULT:
-        if (join==JoinRelType.LEFT || join==JoinRelType.RIGHT) return Type.INNER;
-        else return Type.DEFAULT;
+        if (join==JoinRelType.LEFT || join==JoinRelType.RIGHT) {
+			return Type.INNER;
+		} else {
+			return Type.DEFAULT;
+		}
       case OUTER:
       case NONE:
         if (join == JoinRelType.INNER) {

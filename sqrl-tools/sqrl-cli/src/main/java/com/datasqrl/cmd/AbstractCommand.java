@@ -3,10 +3,12 @@
  */
 package com.datasqrl.cmd;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
-import java.util.concurrent.atomic.AtomicInteger;
+
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
@@ -19,7 +21,8 @@ public abstract class AbstractCommand implements Runnable, IExitCodeGenerator {
   protected RootCommand root;
   public AtomicInteger exitCode = new AtomicInteger(0);
 
-  @SneakyThrows
+  @Override
+@SneakyThrows
   public void run() {
     ErrorCollector collector = ErrorCollector.root();
     try {

@@ -1,19 +1,19 @@
 package com.datasqrl.packager;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+
 import com.datasqrl.config.PackageConfiguration;
 import com.datasqrl.config.PackageConfigurationImpl;
-import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.repository.PublishRepository;
 import com.datasqrl.packager.util.Zipper;
 import com.google.common.base.Preconditions;
-import java.util.List;
-import lombok.AllArgsConstructor;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 
 @AllArgsConstructor
@@ -25,15 +25,15 @@ public class Publisher {
 
     public PackageConfiguration publish(Path packageRoot, PublishRepository publishRepo) {
         Preconditions.checkArgument(Files.isDirectory(packageRoot));
-        Path packageInfo = packageRoot.resolve(Packager.PACKAGE_JSON);
+        var packageInfo = packageRoot.resolve(Packager.PACKAGE_JSON);
         errors.checkFatal(Files.isRegularFile(packageInfo),"Directory does not contain [%s] package configuration file", packageInfo);
-        PackageJson pkgConfig = SqrlConfigCommons.fromFilesPublishPackageJson(errors, List.of(packageInfo));
+        var pkgConfig = SqrlConfigCommons.fromFilesPublishPackageJson(errors, List.of(packageInfo));
 
         try {
-            PackageConfigurationImpl packageConfig = (PackageConfigurationImpl) pkgConfig.getPackageConfig();
+            var packageConfig = (PackageConfigurationImpl) pkgConfig.getPackageConfig();
             addReadme(packageRoot, packageConfig);
 
-            Path zipFile = Files.createTempFile(packageRoot, "package", Zipper.ZIP_EXTENSION);
+            var zipFile = Files.createTempFile(packageRoot, "package", Zipper.ZIP_EXTENSION);
             try {
                 Zipper.compress(zipFile, packageRoot);
                 if (publishRepo.publish(zipFile, packageConfig)) {

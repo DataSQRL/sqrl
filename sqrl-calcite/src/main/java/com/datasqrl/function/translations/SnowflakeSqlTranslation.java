@@ -1,8 +1,10 @@
 package com.datasqrl.function.translations;
 
-import com.datasqrl.calcite.Dialect;
-import lombok.Getter;
 import org.apache.calcite.sql.SqlOperator;
+
+import com.datasqrl.calcite.Dialect;
+
+import lombok.Getter;
 
 @Getter
 public abstract class SnowflakeSqlTranslation extends DialectSqlTranslation {

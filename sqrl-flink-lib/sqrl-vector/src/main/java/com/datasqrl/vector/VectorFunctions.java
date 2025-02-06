@@ -2,6 +2,7 @@ package com.datasqrl.vector;
 
 
 import java.util.Set;
+
 import org.apache.flink.table.functions.FunctionDefinition;
 
 public class VectorFunctions {

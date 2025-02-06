@@ -1,17 +1,19 @@
 package com.datasqrl.engine.database.relational.ddl.statements.notify;
 
-import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.Arrays;
 import java.util.Collections;
+
+import org.junit.jupiter.api.Test;
 
 public class CreateNotifyTriggerDDLTest {
 
   @Test
   public void testGetSql() {
-    CreateNotifyTriggerDDL ddl = new CreateNotifyTriggerDDL("test_table", Arrays.asList("id", "name"));
-    String expectedSql = """
+    var ddl = new CreateNotifyTriggerDDL("test_table", Arrays.asList("id", "name"));
+    var expectedSql = """
         CREATE OR REPLACE FUNCTION notify_on_test_table_insert()
         RETURNS TRIGGER AS $$
         BEGIN
@@ -19,7 +21,7 @@ public class CreateNotifyTriggerDDLTest {
            RETURN NEW;
         END;
         $$ LANGUAGE plpgsql;
-        
+
         CREATE TRIGGER insert_notify_trigger
         AFTER INSERT ON "test_table"
         FOR EACH ROW EXECUTE PROCEDURE notify_on_test_table_insert();\

@@ -2,14 +2,16 @@ package com.datasqrl.functions.vector;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.datasqrl.vector.CenterAccumulator;
-import com.datasqrl.vector.FlinkVectorType;
-import com.datasqrl.vector.VectorFunctions;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+
+import com.datasqrl.vector.CenterAccumulator;
+import com.datasqrl.vector.FlinkVectorType;
+import com.datasqrl.vector.VectorFunctions;
 
 public class StdVectorLibraryTest {
 
@@ -22,16 +24,16 @@ public class StdVectorLibraryTest {
   @Test
   @Disabled("requires local onnx model")
   public void testEmbeddingSimilarityCenter() {
-    String modelPath = "/Users/matthias/Data/jupyter/miniLMv2/model_quantized.onnx";
+    var modelPath = "/Users/matthias/Data/jupyter/miniLMv2/model_quantized.onnx";
     String[] sentences = {
         "I like iced coffee because its refreshing chill and robust flavor provide a delightful pick-me-up at any time of day",
         "I enjoy iced coffee because it offers a cool, refreshing twist to the traditional hot beverage, making it a perfect drink for warmer weather.",
         "Sloths are unique mammals known for their slow movement and spending most of their time hanging upside down in trees."
     };
-    FlinkVectorType[] results = new FlinkVectorType[sentences.length];
-    for (int i = 0; i < sentences.length; i++) {
+    var results = new FlinkVectorType[sentences.length];
+    for (var i = 0; i < sentences.length; i++) {
       results[i] = VectorFunctions.ONNX_EMBED.eval(sentences[i], modelPath);
-      FlinkVectorType compare = VectorFunctions.DOUBLE_TO_VECTOR.eval(VECTORS[i]);
+      var compare = VectorFunctions.DOUBLE_TO_VECTOR.eval(VECTORS[i]);
       assertEquals(VectorFunctions.COSINE_SIMILARITY.eval(results[i],compare),1.0, 0.0000001);
 //      System.out.println(Arrays.toString(VectorFunctions.VEC_TO_DOUBLE.eval(results[i])));
     }
@@ -39,16 +41,16 @@ public class StdVectorLibraryTest {
 
   @Test
   public void testSimilarityCenter() {
-    FlinkVectorType[] results = new FlinkVectorType[VECTORS.length];
-    for (int i = 0; i < results.length; i++) {
+    var results = new FlinkVectorType[VECTORS.length];
+    for (var i = 0; i < results.length; i++) {
       results[i] = VectorFunctions.DOUBLE_TO_VECTOR.eval(VECTORS[i]);
     }
-    double[][] similarities = new double[results.length][];
-    double[][] euclidDist = new double[results.length][];
-    for (int i = 0; i < results.length; i++) {
+    var similarities = new double[results.length][];
+    var euclidDist = new double[results.length][];
+    for (var i = 0; i < results.length; i++) {
       similarities[i] = new double[i];
       euclidDist[i] = new double[i];
-      for (int j = 0; j < i; j++) {
+      for (var j = 0; j < i; j++) {
         similarities[i][j] = VectorFunctions.COSINE_SIMILARITY.eval(results[i], results[j]);
         euclidDist[i][j] = VectorFunctions.EUCLIDEAN_DISTANCE.eval(results[i], results[j]);
 //        System.out.println(i + ":" + j + " = "  + euclidDist[i][j]);
@@ -64,19 +66,19 @@ public class StdVectorLibraryTest {
     assertEquals(VectorFunctions.EUCLIDEAN_DISTANCE.eval(results[0], results[1]),euclidDist[1][0], 0.0000001);
 
 
-    CenterAccumulator acc = VectorFunctions.CENTER.createAccumulator();
+    var acc = VectorFunctions.CENTER.createAccumulator();
     for (FlinkVectorType result : results) {
       VectorFunctions.CENTER.accumulate(acc, result);
     }
     VectorFunctions.CENTER.retract(acc, results[2]);
-    FlinkVectorType center = VectorFunctions.CENTER.getValue(acc);
+    var center = VectorFunctions.CENTER.getValue(acc);
     assertEquals(VectorFunctions.COSINE_SIMILARITY.eval(results[0],center),0.9772371038888683, 0.0000001);
     assertEquals(VectorFunctions.COSINE_SIMILARITY.eval(results[1],center),0.9733930025393428, 0.0000001);
 
-    CenterAccumulator combined = VectorFunctions.CENTER.createAccumulator();
+    var combined = VectorFunctions.CENTER.createAccumulator();
     List<CenterAccumulator> individuals = Stream.of(results[0], results[1])
         .map(vec -> {
-          CenterAccumulator individual = VectorFunctions.CENTER.createAccumulator();
+          var individual = VectorFunctions.CENTER.createAccumulator();
           VectorFunctions.CENTER.accumulate(individual,vec);
           return individual;
         }).collect(Collectors.toList());

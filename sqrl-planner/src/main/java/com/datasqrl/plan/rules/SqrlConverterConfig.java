@@ -1,9 +1,11 @@
 package com.datasqrl.plan.rules;
 
-import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.datasqrl.plan.table.PhysicalRelationalTable;
 import java.util.List;
 import java.util.function.Consumer;
+
+import com.datasqrl.engine.pipeline.ExecutionStage;
+import com.datasqrl.plan.table.PhysicalRelationalTable;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

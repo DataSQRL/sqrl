@@ -2,6 +2,7 @@ package com.datasqrl.config;
 
 import java.util.Map;
 import java.util.Optional;
+
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
@@ -15,21 +16,24 @@ public class DependenciesConfigImpl implements PackageJson.DependenciesConfig {
   SqrlConfig parentConfig;
   SqrlConfig sqrlConfig;
 
-  public void addDependency(String key, Dependency dep) {
+  @Override
+public void addDependency(String key, Dependency dep) {
     sqrlConfig.getSubConfig(key).setProperties(dep);
   }
 
-  public Optional<Dependency> getDependency(String dependency) {
+  @Override
+public Optional<Dependency> getDependency(String dependency) {
     if (!sqrlConfig.hasSubConfig(dependency)) {
       //todo Optional
       return Optional.empty();
     }
 
-    SqrlConfig subConfig = sqrlConfig.getSubConfig(dependency);
+    var subConfig = sqrlConfig.getSubConfig(dependency);
     return Optional.of(new DependencyImpl(subConfig));
   }
 
-  public Map<String, DependencyImpl> getDependencies() {
+  @Override
+public Map<String, DependencyImpl> getDependencies() {
     return parentConfig.asMap(DEPENDENCIES_KEY, DependencyImpl.class).get();
   }
 

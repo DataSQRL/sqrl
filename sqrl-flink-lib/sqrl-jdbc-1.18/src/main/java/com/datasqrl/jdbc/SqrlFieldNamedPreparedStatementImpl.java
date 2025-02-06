@@ -18,6 +18,12 @@
 
 package com.datasqrl.jdbc;
 
+import static org.apache.flink.util.Preconditions.checkArgument;
+import static org.apache.flink.util.Preconditions.checkNotNull;
+/**
+ * SQRL: added getStatement
+ */
+
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.Date;
@@ -30,13 +36,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.apache.flink.connector.jdbc.statement.FieldNamedPreparedStatement;
 
-import static org.apache.flink.util.Preconditions.checkArgument;
-import static org.apache.flink.util.Preconditions.checkNotNull;
-/**
- * SQRL: added getStatement
- */
+import org.apache.flink.connector.jdbc.statement.FieldNamedPreparedStatement;
 
 /** Simple implementation of {@link FieldNamedPreparedStatement}. */
 public class SqrlFieldNamedPreparedStatementImpl implements FieldNamedPreparedStatement {
@@ -199,13 +200,13 @@ public class SqrlFieldNamedPreparedStatementImpl implements FieldNamedPreparedSt
             throw new IllegalArgumentException("SQL statement must not contain ? character.");
         }
 
-        HashMap<String, List<Integer>> parameterMap = new HashMap<>();
-        String parsedSQL = parseNamedStatement(sql, parameterMap);
+        var parameterMap = new HashMap<String, List<Integer>>();
+        var parsedSQL = parseNamedStatement(sql, parameterMap);
         // currently, the statements must contain all the field parameters
         checkArgument(parameterMap.size() == fieldNames.length);
-        int[][] indexMapping = new int[fieldNames.length][];
-        for (int i = 0; i < fieldNames.length; i++) {
-            String fieldName = fieldNames[i];
+        var indexMapping = new int[fieldNames.length][];
+        for (var i = 0; i < fieldNames.length; i++) {
+            var fieldName = fieldNames[i];
             checkArgument(
                     parameterMap.containsKey(fieldName),
                     fieldName + " doesn't exist in the parameters of SQL statement: " + sql);
@@ -225,17 +226,17 @@ public class SqrlFieldNamedPreparedStatementImpl implements FieldNamedPreparedSt
      * @return the parsed sql
      */
     public static String parseNamedStatement(String sql, Map<String, List<Integer>> paramMap) {
-        StringBuilder parsedSql = new StringBuilder();
-        int fieldIndex = 1; // SQL statement parameter index starts from 1
-        int length = sql.length();
-        for (int i = 0; i < length; i++) {
-            char c = sql.charAt(i);
+        var parsedSql = new StringBuilder();
+        var fieldIndex = 1; // SQL statement parameter index starts from 1
+        var length = sql.length();
+        for (var i = 0; i < length; i++) {
+            var c = sql.charAt(i);
             if (':' == c) {
-                int j = i + 1;
+                var j = i + 1;
                 while (j < length && Character.isJavaIdentifierPart(sql.charAt(j))) {
                     j++;
                 }
-                String parameterName = sql.substring(i + 1, j);
+                var parameterName = sql.substring(i + 1, j);
                 checkArgument(
                         !parameterName.isEmpty(),
                         "Named parameters in SQL statement must not be empty.");

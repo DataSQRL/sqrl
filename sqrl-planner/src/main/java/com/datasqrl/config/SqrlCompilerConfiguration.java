@@ -1,6 +1,7 @@
 package com.datasqrl.config;
 
 import com.google.inject.Inject;
+
 import lombok.experimental.Delegate;
 
 public class SqrlCompilerConfiguration implements PackageJson.CompilerConfig {

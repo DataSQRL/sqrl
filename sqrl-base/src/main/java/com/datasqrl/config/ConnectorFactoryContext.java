@@ -1,8 +1,10 @@
 package com.datasqrl.config;
 
+import java.util.Map;
+
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.config.ConnectorFactory.IConnectorFactoryContext;
-import java.util.Map;
+
 import lombok.AllArgsConstructor;
 import lombok.Value;
 

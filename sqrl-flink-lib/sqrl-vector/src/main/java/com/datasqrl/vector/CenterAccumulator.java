@@ -14,7 +14,7 @@ public class CenterAccumulator {
       count = 1;
     } else {
 //      Preconditions.checkArgument(values.length == sum.length);
-      for (int i = 0; i < values.length; i++) {
+      for (var i = 0; i < values.length; i++) {
         sum[i] += values[i];
       }
       count++;
@@ -29,7 +29,7 @@ public class CenterAccumulator {
       this.sum = new double[other.sum.length];
     }
 //    Preconditions.checkArgument(this.sum.length == other.sum.length);
-    for (int i = 0; i < other.sum.length; i++) {
+    for (var i = 0; i < other.sum.length; i++) {
       this.sum[i] += other.sum[i];
     }
     this.count += other.count;
@@ -37,8 +37,8 @@ public class CenterAccumulator {
 
   public double[] get() {
 //    Preconditions.checkArgument(count > 0);
-    double[] result = new double[sum.length];
-    for (int i = 0; i < sum.length; i++) {
+    var result = new double[sum.length];
+    for (var i = 0; i < sum.length; i++) {
       result[i] = sum[i] / count;
     }
     return result;
@@ -46,7 +46,7 @@ public class CenterAccumulator {
 
   public synchronized void substract(double[] values) {
 //    Preconditions.checkArgument(values.length == sum.length);
-    for (int i = 0; i < values.length; i++) {
+    for (var i = 0; i < values.length; i++) {
       sum[i] -= values[i];
     }
     count--;

@@ -1,6 +1,7 @@
 package com.datasqrl.config;
 
 import java.util.Map;
+
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor

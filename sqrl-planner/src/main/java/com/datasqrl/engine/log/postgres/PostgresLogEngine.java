@@ -3,6 +3,10 @@ package com.datasqrl.engine.log.postgres;
 import static com.datasqrl.config.EngineFactory.Type.LOG;
 import static com.datasqrl.engine.log.postgres.PostgresLogEngineFactory.ENGINE_NAME;
 
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
+
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.config.ConnectorFactory;
 import com.datasqrl.config.ConnectorFactoryFactory;
@@ -13,7 +17,6 @@ import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
-import com.datasqrl.engine.database.relational.ddl.JdbcDDLFactory;
 import com.datasqrl.engine.database.relational.ddl.JdbcDDLServiceLoader;
 import com.datasqrl.engine.database.relational.ddl.PostgresDDLFactory;
 import com.datasqrl.engine.database.relational.ddl.statements.InsertStatement;
@@ -29,11 +32,8 @@ import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
 import com.datasqrl.sql.SqlDDLStatement;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.List;
+
 import lombok.Getter;
-import org.apache.calcite.rel.type.RelDataType;
 
 public class PostgresLogEngine extends ExecutionEngine.Base implements LogEngine {
 
@@ -66,27 +66,27 @@ public class PostgresLogEngine extends ExecutionEngine.Base implements LogEngine
 
     Preconditions.checkArgument(plan instanceof LogStagePlan);
 
-    JdbcDDLFactory factory = new JdbcDDLServiceLoader()
+    var factory = new JdbcDDLServiceLoader()
         .load(JdbcDialect.Postgres)
         .orElseThrow(() -> new RuntimeException("Could not find DDL factory"));
 
-    PostgresDDLFactory postgresDDLFactory = (PostgresDDLFactory) factory;
+    var postgresDDLFactory = (PostgresDDLFactory) factory;
 
     List<SqlDDLStatement> ddl = new ArrayList<>();
     List<ListenNotifyAssets> queries = new ArrayList<>();
     List<InsertStatement> inserts = new ArrayList<>();
-    LogStagePlan dbPlan = (LogStagePlan) plan;
+    var dbPlan = (LogStagePlan) plan;
     for (Log log : dbPlan.getLogs()) {
-      PostgresTable pgTable = (PostgresTable) log;
-      String tableName = pgTable.getTableName();
-      RelDataType dataType = pgTable.getTableSchema().getRelDataType();
+      var pgTable = (PostgresTable) log;
+      var tableName = pgTable.getTableName();
+      var dataType = pgTable.getTableSchema().getRelDataType();
       ddl.add(postgresDDLFactory.createTable(tableName, dataType.getFieldList(), pgTable.getPrimaryKeys()));
       ddl.add(postgresDDLFactory.createNotify(tableName, pgTable.getPrimaryKeys()));
 
-      ListenNotifyAssets listenNotifyAssets = postgresDDLFactory.createNotifyHelperDDLs(framework, tableName, dataType, pgTable.getPrimaryKeys());
+      var listenNotifyAssets = postgresDDLFactory.createNotifyHelperDDLs(framework, tableName, dataType, pgTable.getPrimaryKeys());
       queries.add(listenNotifyAssets);
 
-      InsertStatement insertStatement = postgresDDLFactory.createInsertHelperDMLs(tableName, dataType);
+      var insertStatement = postgresDDLFactory.createInsertHelperDMLs(tableName, dataType);
       inserts.add(insertStatement);
     }
 
