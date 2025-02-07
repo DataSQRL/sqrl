@@ -66,8 +66,6 @@ public class CompilationProcessV2 {
     List<PhysicalPlanRewriter> rewriters = ServiceLoaderDiscovery.getAll(PhysicalPlanRewriter.class);
 //    physicalPlan = physicalPlan.applyRewriting(rewriters, environment);
 
-    //TODO: generate indexes
-
     writeDeploymentArtifactsHook.run(dag);
 
     TestPlan testPlan = null;
