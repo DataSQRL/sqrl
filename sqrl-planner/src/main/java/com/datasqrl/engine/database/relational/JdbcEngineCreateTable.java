@@ -1,6 +1,7 @@
 package com.datasqrl.engine.database.relational;
 
 import com.datasqrl.engine.database.EngineCreateTable;
+import com.datasqrl.v2.analyzer.TableAnalysis;
 import com.datasqrl.v2.tables.FlinkTableBuilder;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
@@ -14,5 +15,6 @@ public class JdbcEngineCreateTable implements EngineCreateTable {
 
   FlinkTableBuilder table;
   RelDataType datatype;
+  TableAnalysis tableAnalysis;
 
 }

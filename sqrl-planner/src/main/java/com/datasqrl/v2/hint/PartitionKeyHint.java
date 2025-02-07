@@ -3,13 +3,14 @@ package com.datasqrl.v2.hint;
 import com.datasqrl.v2.parser.ParsedObject;
 import com.datasqrl.v2.parser.SqrlHint;
 import com.google.auto.service.AutoService;
+import java.util.List;
 
-public class PartitionKeyHint extends PlannerHint {
+public class PartitionKeyHint extends ColumnNamesHint {
 
   public static final String HINT_NAME = "partition_key";
 
   protected PartitionKeyHint(ParsedObject<SqrlHint> source) {
-    super(source, Type.DAG);
+    super(source, Type.DAG, source.get().getOptions());
   }
 
   @AutoService(Factory.class)

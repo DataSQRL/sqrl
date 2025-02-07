@@ -17,6 +17,7 @@ import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.engine.server.ServerEngine;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.function.CommonFunctions;
 import com.datasqrl.util.RelDataTypeBuilder;
 import com.datasqrl.v2.Sqrl2FlinkSQLTranslator;
@@ -30,6 +31,7 @@ import com.datasqrl.v2.dag.plan.MaterializationStagePlan;
 import com.datasqrl.v2.dag.plan.MaterializationStagePlan.MaterializationStagePlanBuilder;
 import com.datasqrl.v2.dag.plan.MaterializationStagePlan.Query;
 import com.datasqrl.v2.dag.plan.ServerStagePlan;
+import com.datasqrl.v2.hint.IndexHint;
 import com.datasqrl.v2.hint.PartitionKeyHint;
 import com.datasqrl.v2.parser.AccessModifier;
 import com.datasqrl.v2.tables.AccessVisibility;
@@ -49,7 +51,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.AllArgsConstructor;
@@ -206,7 +210,7 @@ public class DAGPlanner {
             tblBuilder.setPrimaryKey(pkColNames);
           }
           nodeTable.getHints().getHint(PartitionKeyHint.class).ifPresent(
-              partitionKeyHint -> tblBuilder.setPartition(partitionKeyHint.getOptions()));
+              partitionKeyHint -> tblBuilder.setPartition(partitionKeyHint.getColumnNames()));
 
           //#2nd: apply type casting
           mapTypes(relBuilder, nodeTable.getRowType(), sqrlEnv, exportEngine.getTypeMapping(), Direction.TO_ENGINE);
@@ -215,7 +219,7 @@ public class DAGPlanner {
           RelDataType datatype = relBuilder.peek().getRowType();
           tblBuilder.setRelDataType(datatype);
           EngineCreateTable createdTable = exportEngine.createTable(exportStage,
-              originalTableName, tblBuilder, datatype);
+              originalTableName, tblBuilder, datatype, Optional.of(nodeTable));
           exportPlans.get(exportStage).table(createdTable);
           targetTable = sqrlEnv.createSinkTable(tblBuilder);
           streamTableMapping.put(new InputTableKey(exportStage, fromTableId), targetTable);

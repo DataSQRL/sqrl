@@ -13,6 +13,7 @@ import com.datasqrl.engine.database.EngineCreateTable;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.v2.analyzer.TableAnalysis;
 import com.datasqrl.v2.dag.plan.MaterializationStagePlan;
 import com.datasqrl.v2.tables.FlinkTableBuilder;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
@@ -34,7 +35,7 @@ public class PrintEngine implements ExportEngine {
 
   @Override
   public EngineCreateTable createTable(ExecutionStage stage, String originalTableName,
-      FlinkTableBuilder tableBuilder, RelDataType relDataType) {
+      FlinkTableBuilder tableBuilder, RelDataType relDataType, Optional<TableAnalysis> tableAnalysis) {
     tableBuilder.setConnectorOptions(connectorConf.toMapWithSubstitution(
         Context.builder()
             .tableName(tableBuilder.getTableName())

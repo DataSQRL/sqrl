@@ -40,12 +40,14 @@ import com.datasqrl.sql.SqlDDLStatement;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.datasqrl.util.StreamUtil;
+import com.datasqrl.v2.analyzer.TableAnalysis;
 import com.datasqrl.v2.dag.plan.MaterializationStagePlan;
 import com.datasqrl.v2.tables.FlinkTableBuilder;
 import com.datasqrl.v2.tables.SqrlTableFunction;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -100,14 +102,14 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
   protected abstract JdbcDialect getDialect();
 
   public EngineCreateTable createTable(ExecutionStage stage, String originalTableName,
-      FlinkTableBuilder tableBuilder, RelDataType relDataType) {
+      FlinkTableBuilder tableBuilder, RelDataType relDataType, Optional<TableAnalysis> tableAnalysis) {
     String tableName = tableBuilder.getTableName();
     tableBuilder.setConnectorOptions(connector.toMapWithSubstitution(Context.builder()
         .tableName(tableName).origTableName(originalTableName).build()));
-    return new JdbcEngineCreateTable(tableBuilder, relDataType);
+    return new JdbcEngineCreateTable(tableBuilder, relDataType, tableAnalysis.get());
   }
 
-  protected abstract JdbcStatementFactory getStatementFactory();
+  public abstract JdbcStatementFactory getStatementFactory();
 
   public EnginePhysicalPlan plan(MaterializationStagePlan stagePlan) {
     JdbcStatementFactory stmtFactory = getStatementFactory();
@@ -118,6 +120,10 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
     //Create tables
     stagePlan.getTables().stream().map(JdbcEngineCreateTable.class::cast)
         .map(stmtFactory::createTable).forEach(planBuilder::statement);
+    Map<String, TableAnalysis> tableMap = new HashMap<>();
+    stagePlan.getTables().stream().map(JdbcEngineCreateTable.class::cast)
+        .collect(Collectors.toMap(createTable -> createTable.getTable().getTableName(),
+            createTable -> createTable));
     //Create executable queries & views
     if (stmtFactory.supportsQueries()) {
       stagePlan.getQueries().forEach(query -> {

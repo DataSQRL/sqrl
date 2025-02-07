@@ -56,15 +56,6 @@ public class PrimaryKeyMap implements Serializable {
     return of(IntStream.of(pks).boxed().collect(Collectors.toList()));
   }
 
-  public static PrimaryKeyMap of(List<String> names, RelDataType type) {
-    return PrimaryKeyMap.of(names.stream()
-        .map(name -> {
-          int idx = CalciteUtil.indexOf(name, type);
-          if (idx < 0) throw new IllegalArgumentException("Primary key column not found in table: " + name);
-          return idx;
-        }).collect(Collectors.toList()));
-  }
-
   public static Builder build() {
     return new Builder();
   }

@@ -31,6 +31,7 @@ import com.datasqrl.plan.global.PhysicalDAGPlan.LogStagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
 import com.datasqrl.sql.SqlDDLStatement;
+import com.datasqrl.v2.analyzer.TableAnalysis;
 import com.datasqrl.v2.dag.plan.MaterializationStagePlan;
 import com.datasqrl.v2.tables.FlinkTableBuilder;
 import com.google.common.base.Preconditions;
@@ -38,6 +39,7 @@ import com.google.inject.Inject;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
 import lombok.Getter;
 import org.apache.calcite.rel.type.RelDataType;
 
@@ -106,7 +108,7 @@ public class PostgresLogEngine extends ExecutionEngine.Base implements LogEngine
 
   @Override
   public EngineCreateTable createTable(ExecutionStage stage, String originalTableName,
-      FlinkTableBuilder tableBuilder, RelDataType relDataType) {
+      FlinkTableBuilder tableBuilder, RelDataType relDataType, Optional<TableAnalysis> tableAnalysis) {
     throw new UnsupportedOperationException("not yet supported");
   }
 

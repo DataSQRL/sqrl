@@ -6,8 +6,10 @@ import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.database.EngineCreateTable;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.io.tables.TableType;
+import com.datasqrl.v2.analyzer.TableAnalysis;
 import com.datasqrl.v2.dag.plan.MaterializationStagePlan;
 import com.datasqrl.v2.tables.FlinkTableBuilder;
+import java.util.Optional;
 import org.apache.calcite.rel.type.RelDataType;
 
 public interface ExportEngine extends ExecutionEngine {
@@ -21,10 +23,11 @@ public interface ExportEngine extends ExecutionEngine {
    * @param originalTableName The original name of the table. The actual table name might be different to make it unique.
    * @param tableBuilder The table builder
    * @param relDataType The datatype for the columns in the table.
+   * @param tableAnalysis The table analysis for the table if this is a planned table (not available for mutations)
    * @return
    */
   EngineCreateTable createTable(ExecutionStage stage, String originalTableName,
-      FlinkTableBuilder tableBuilder, RelDataType relDataType);
+      FlinkTableBuilder tableBuilder, RelDataType relDataType, Optional<TableAnalysis> tableAnalysis);
 
   DataTypeMapping getTypeMapping();
 

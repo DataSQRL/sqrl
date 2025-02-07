@@ -5,16 +5,12 @@ import com.datasqrl.v2.parser.SqrlHint;
 import com.google.auto.service.AutoService;
 import java.util.List;
 
-public class PrimaryKeyHint extends PlannerHint {
+public class PrimaryKeyHint extends ColumnNamesHint {
 
   public static final String HINT_NAME = "primary_key";
 
   protected PrimaryKeyHint(ParsedObject<SqrlHint> source) {
-    super(source, Type.ANALYZER);
-  }
-
-  public List<String> getPkColumns() {
-    return getOptions();
+    super(source, Type.ANALYZER, source.get().getOptions());
   }
 
   @AutoService(Factory.class)

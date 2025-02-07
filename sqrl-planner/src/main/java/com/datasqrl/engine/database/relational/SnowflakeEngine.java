@@ -55,7 +55,7 @@ public class SnowflakeEngine extends AbstractJDBCQueryEngine {
   }
 
   @Override
-  protected JdbcStatementFactory getStatementFactory() {
+  public JdbcStatementFactory getStatementFactory() {
     return new SnowflakeStatementFactory(engineConfig);
   }
 

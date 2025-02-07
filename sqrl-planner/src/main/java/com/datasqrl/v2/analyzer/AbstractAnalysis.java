@@ -26,6 +26,10 @@ public interface AbstractAnalysis {
     return getRowType().getFieldList().get(idx);
   }
 
+  default RelDataTypeField getField(String name) {
+    return getRowType().getField(name, false, false);
+  }
+
   default String getFieldName(int idx) {
     return getField(idx).getName();
   }
@@ -34,6 +38,10 @@ public interface AbstractAnalysis {
     RelDataTypeField field = getRowType().getField(fieldName, false, false);
     if (field == null) return -1;
     else return field.getIndex();
+  }
+
+  default boolean hasField(String fieldName) {
+    return getRowType().getField(fieldName, false, false)!=null;
   }
 
   default Optional<Integer> getRowTime() {

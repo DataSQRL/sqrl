@@ -20,6 +20,8 @@ public interface DatabaseEngine extends ExecutionEngine, ExportEngine {
   /**
    * @return The {@link IndexSelectorConfig} for the engine that is used to determine which indexes to use
    * by the optimizer.
+   *
+   * Deprecated, should only be on {@link com.datasqrl.engine.database.relational.AbstractJDBCDatabaseEngine}
    */
   @Deprecated
   IndexSelectorConfig getIndexSelectorConfig();

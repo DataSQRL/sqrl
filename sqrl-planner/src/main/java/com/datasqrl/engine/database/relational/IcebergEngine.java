@@ -46,7 +46,7 @@ public class IcebergEngine extends AbstractJDBCTableFormatEngine {
   }
 
   @Override
-  protected JdbcStatementFactory getStatementFactory() {
+  public JdbcStatementFactory getStatementFactory() {
     return new IcebergStatementFactory();
   }
 

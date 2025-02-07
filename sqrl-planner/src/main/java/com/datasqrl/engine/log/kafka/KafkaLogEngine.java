@@ -28,6 +28,7 @@ import com.datasqrl.plan.global.PhysicalDAGPlan.LogStagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
 import com.datasqrl.util.CalciteUtil;
+import com.datasqrl.v2.analyzer.TableAnalysis;
 import com.datasqrl.v2.dag.plan.MaterializationStagePlan;
 import com.datasqrl.v2.dag.plan.MaterializationStagePlan.Query;
 import com.datasqrl.v2.tables.FlinkConnectorConfig;
@@ -85,7 +86,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
 
   @Override
   public EngineCreateTable createTable(ExecutionStage stage, String originalTableName,
-      FlinkTableBuilder tableBuilder, RelDataType relDataType) {
+      FlinkTableBuilder tableBuilder, RelDataType relDataType, Optional<TableAnalysis> tableAnalysis) {
     String topicName = tableBuilder.getTableName();
     Context.ContextBuilder ctxBuilder = Context.builder()
         .tableName(topicName)

@@ -68,7 +68,6 @@ public abstract class AbstractJDBCDatabaseEngine extends AbstractJDBCEngine impl
   }
 
   @Override
-  @Deprecated
   public IndexSelectorConfig getIndexSelectorConfig() {
     return IndexSelectorConfigByDialect.of(getDialect());
   }

@@ -445,7 +445,7 @@ public class SqlScriptPlanner {
     return (tableBuilder, datatype) -> {
       MutationQuery.MutationQueryBuilder mutationBuilder = MutationQuery.builder();
       mutationBuilder.stage(logStage.get());
-      mutationBuilder.createTopic(engine.createTable(logStage.get(), tableBuilder.getTableName(), tableBuilder, datatype));
+      mutationBuilder.createTopic(engine.createTable(logStage.get(), tableBuilder.getTableName(), tableBuilder, datatype, Optional.empty()));
       mutationBuilder.name(Name.system(tableBuilder.getTableName()));
       return mutationBuilder;
     };

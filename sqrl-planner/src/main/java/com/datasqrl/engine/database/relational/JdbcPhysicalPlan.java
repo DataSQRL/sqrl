@@ -3,8 +3,10 @@ package com.datasqrl.engine.database.relational;
 import com.datasqrl.engine.database.DatabasePhysicalPlan;
 import com.datasqrl.engine.database.relational.JdbcStatement.Type;
 import com.datasqrl.engine.pipeline.ExecutionStage;
+import com.datasqrl.v2.analyzer.TableAnalysis;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.Builder;
@@ -13,7 +15,7 @@ import lombok.Value;
 import org.apache.calcite.rel.RelNode;
 
 @Value
-@Builder
+@Builder(toBuilder = true)
 public class JdbcPhysicalPlan implements DatabasePhysicalPlan {
 
   @JsonIgnore
@@ -29,6 +31,12 @@ public class JdbcPhysicalPlan implements DatabasePhysicalPlan {
   @JsonIgnore
   @Singular
   List<RelNode> queries;
+  /**
+   * A mapping of CREATE TABLE from their materialized
+   * name to the original TableAnalysis
+   */
+  @JsonIgnore
+  Map<String, TableAnalysis> tableMap;
 
   public List<JdbcStatement> getStatementsForType(JdbcStatement.Type type) {
     return statements.stream().filter(s -> s.getType()==type).collect(Collectors.toList());
@@ -36,12 +44,6 @@ public class JdbcPhysicalPlan implements DatabasePhysicalPlan {
 
   private static String toSql(List<JdbcStatement> statements) {
     return DeploymentArtifact.toSqlString(statements.stream().map(JdbcStatement::getSql));
-  }
-
-  @Override
-  public void generateIndexes() {
-//    if (indexSelectorConfig == null) return; //We don't generate indexes if no index selector is configured
-    throw new UnsupportedOperationException();
   }
 
   @Override

@@ -8,10 +8,12 @@ import static com.datasqrl.io.tables.TableType.STREAM;
 import static com.datasqrl.util.CalciteUtil.CAST_TRANSFORM;
 import static com.datasqrl.util.CalciteUtil.COALESCE_TRANSFORM;
 
+import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.v2.TableAnalysisLookup;
 import com.datasqrl.v2.analyzer.cost.CostAnalysis;
 import com.datasqrl.v2.analyzer.cost.JoinCostAnalysis;
 import com.datasqrl.plan.rules.SqrlRelShuttle;
+import com.datasqrl.v2.hint.ColumnNamesHint;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.prepare.CalciteCatalogReader;
@@ -142,15 +144,27 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
       }
     }
 
+
+    for (ColumnNamesHint hint : hints.getHints(ColumnNamesHint.class).collect(Collectors.toList())) {
+      //Validate column names and map to indexes
+      List<String> colNames = new ArrayList<>();
+      List<Integer> colIndexes = new ArrayList<>();
+      for (String colName : hint.getColumnNames()) {
+        RelDataTypeField field = analysis.getField(colName);
+        if (field == null) {
+          throw new StatementParserException(ErrorLabel.GENERIC, hint.getSource().getFileLocation(),
+              "%s hint reference column [%s] that does not exist in table", hint.getName(), colName);
+        }
+        colNames.add(field.getName());
+        colIndexes.add(field.getIndex());
+      }
+      hint.updateColumns(colNames, colIndexes);
+    }
     //See if the primary key is being explicitly set:
     Optional<PrimaryKeyHint> pkHint = hints.getHint(PrimaryKeyHint.class);
     if (pkHint.isPresent()) {
-      try {
-        analysis = analysis.toBuilder().primaryKey(
-            PrimaryKeyMap.of(pkHint.get().getPkColumns(),analysis.getRowType())).build();
-      } catch (IllegalArgumentException e) {
-        throw new StatementParserException(pkHint.get().getSource().getFileLocation(), e);
-      }
+      analysis = analysis.toBuilder().primaryKey(
+          PrimaryKeyMap.of(pkHint.get().getColumnIndexes())).build();
     }
     TableAnalysis.TableAnalysisBuilder tableAnalysis = TableAnalysis.builder()
         .collapsedRelnode(analysis.relNode)

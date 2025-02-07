@@ -3,41 +3,52 @@
  */
 package com.datasqrl.plan.global;
 
-import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.calcite.SqrlRexUtil;
 import com.datasqrl.function.IndexType;
-import com.datasqrl.plan.OptimizationStage;
-import com.datasqrl.plan.RelStageRunner;
 import com.datasqrl.plan.global.QueryIndexSummary.IndexableFunctionCall;
 import com.datasqrl.plan.hints.IndexHint;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
-import com.datasqrl.plan.table.PhysicalTable;
-import com.datasqrl.plan.table.QueryRelationalTable;
 import com.datasqrl.util.ArrayUtil;
-import com.datasqrl.calcite.SqrlRexUtil;
 import com.datasqrl.util.StreamUtil;
+import com.datasqrl.v2.Sqrl2FlinkSQLTranslator;
+import com.datasqrl.v2.analyzer.TableAnalysis;
+import com.datasqrl.v2.hint.PlannerHints;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.primitives.Ints;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
-import org.apache.calcite.adapter.enumerable.EnumerableFilter;
-import org.apache.calcite.adapter.enumerable.EnumerableNestedLoopJoin;
+import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.rel.RelFieldCollation;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelVisitor;
-import org.apache.calcite.rel.core.*;
+import org.apache.calcite.rel.core.Filter;
+import org.apache.calcite.rel.core.Join;
+import org.apache.calcite.rel.core.Project;
+import org.apache.calcite.rel.core.Sort;
+import org.apache.calcite.rel.core.TableScan;
+import org.apache.calcite.rel.logical.LogicalFilter;
+import org.apache.calcite.rel.rules.CoreRules;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexDynamicParam;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
+import org.apache.calcite.tools.Program;
+import org.apache.calcite.tools.Programs;
 import org.apache.commons.math3.util.Precision;
-
-import java.util.*;
-
-import static com.datasqrl.plan.OptimizationStage.READ_QUERY_OPTIMIZATION;
+import org.apache.flink.table.planner.plan.metadata.FlinkDefaultRelMetadataProvider;
 
 @AllArgsConstructor
 public class IndexSelector {
@@ -46,14 +57,30 @@ public class IndexSelector {
 
   private static final int MAX_LIMIT_INDEX_SCAN = 10000;
 
-  private final SqrlFramework framework;
+  private final Sqrl2FlinkSQLTranslator framework;
   private final IndexSelectorConfig config;
 
-  public List<QueryIndexSummary> getIndexSelection(PhysicalDAGPlan.ReadQuery query) {
-    RelNode optimized = RelStageRunner.runStage(READ_QUERY_OPTIMIZATION, query.getRelNode(), framework.getQueryPlanner()
-        .getPlanner());
+  public List<QueryIndexSummary> getIndexSelection(RelNode queryRelnode) {
+    RelNode pushedDownFilters = applyPushDownFilters(queryRelnode);
     IndexFinder indexFinder = new IndexFinder();
-    return indexFinder.find(optimized);
+    return indexFinder.find(pushedDownFilters);
+  }
+
+  public static final List<RelOptRule> PUSH_DOWN_FILTERS_RULES = List.of(
+          CoreRules.FILTER_INTO_JOIN,
+          CoreRules.FILTER_MERGE,
+          CoreRules.FILTER_AGGREGATE_TRANSPOSE,
+          CoreRules.FILTER_PROJECT_TRANSPOSE,
+          CoreRules.FILTER_TABLE_FUNCTION_TRANSPOSE,
+          CoreRules.FILTER_CORRELATE,
+          CoreRules.FILTER_SET_OP_TRANSPOSE
+      );
+
+  private RelNode applyPushDownFilters(RelNode queryRelnode) {
+    Program program = Programs.hep(PUSH_DOWN_FILTERS_RULES, false,
+        FlinkDefaultRelMetadataProvider.INSTANCE());
+
+    return program.run(null, queryRelnode, queryRelnode.getTraitSet(), List.of(), List.of());
   }
 
   public Map<IndexDefinition, Double> optimizeIndexes(Collection<QueryIndexSummary> queryIndexSummaries) {
@@ -82,6 +109,22 @@ public class IndexSelector {
         hint.getIndexType().isPartitioned()? colNames.size() : -1, hint.getIndexType());
   }
 
+  public Optional<List<IndexDefinition>> getIndexHints(String tableName, TableAnalysis tableAnalysis) {
+    PlannerHints hints = tableAnalysis.getHints();
+    List<com.datasqrl.v2.hint.IndexHint> indexHints = hints.getHints(com.datasqrl.v2.hint.IndexHint.class)
+        .collect(Collectors.toUnmodifiableList());
+    if (!indexHints.isEmpty()) {
+      return Optional.of(indexHints.stream()
+          .filter(idxHint -> config.supportedIndexTypes().contains(idxHint.getIndexType()))
+          .map(idxHint -> new IndexDefinition(tableName, idxHint.getColumnIndexes(), idxHint.getColumnNames(),
+              idxHint.getIndexType().isPartitioned()? idxHint.getColumnNames().size() : -1, idxHint.getIndexType()))
+          .collect(Collectors.toUnmodifiableList()));
+    } else {
+      return Optional.empty();
+    }
+  }
+
+  @Deprecated
   public Optional<List<IndexDefinition>> getIndexHints(PhysicalRelationalTable table) {
     List<IndexHint> indexHints = StreamUtil.filterByClass(table.getOptimizerHints(), IndexHint.class)
         .collect(Collectors.toUnmodifiableList());
@@ -309,15 +352,14 @@ public class IndexSelector {
 
     @Override
     public void visit(RelNode node, int ordinal, RelNode parent) {
-      if (node instanceof EnumerableNestedLoopJoin) {
-        EnumerableNestedLoopJoin join = (EnumerableNestedLoopJoin) node;
+      if (node instanceof Join) {
+        Join join = (Join) node;
         visit(join.getLeft(), 0, node);
         RelNode right = join.getRight();
         //Push join filter into right
         RexNode nestedCondition = pushJoinConditionIntoRight(join);
-        right = EnumerableFilter.create(right, nestedCondition);
-        right = RelStageRunner.runStage(OptimizationStage.PUSH_DOWN_FILTERS, right, framework.getQueryPlanner()
-            .getPlanner());
+        right = LogicalFilter.create(right, nestedCondition);
+        right = applyPushDownFilters(right);
         visit(right, 1, node);
       } else if (node instanceof TableScan && parent instanceof Filter) {
         PhysicalRelationalTable table = ((TableScan) node).getTable()

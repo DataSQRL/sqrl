@@ -13,8 +13,10 @@ import com.datasqrl.engine.PhysicalPlanner;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.plan.global.PhysicalPlanRewriter;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISourceImpl;
+import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.datasqrl.v2.dag.DAGBuilder;
 import com.datasqrl.v2.dag.DAGPlanner;
 import com.datasqrl.v2.dag.PipelineDAG;
@@ -27,6 +29,7 @@ import com.datasqrl.plan.MainScript;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.google.inject.Inject;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.tuple.Pair;
@@ -60,6 +63,8 @@ public class CompilationProcessV2 {
     DAGBuilder dagBuilder = planner.getDagBuilder();
     PipelineDAG dag = dagPlanner.optimize(dagBuilder.getDag());
     PhysicalPlan physicalPlan = dagPlanner.assemble(dag, environment);
+    List<PhysicalPlanRewriter> rewriters = ServiceLoaderDiscovery.getAll(PhysicalPlanRewriter.class);
+//    physicalPlan = physicalPlan.applyRewriting(rewriters, environment);
 
     //TODO: generate indexes
 

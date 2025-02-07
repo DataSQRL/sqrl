@@ -6,8 +6,12 @@ package com.datasqrl.engine;
 import com.datasqrl.engine.database.DatabasePhysicalPlanOld;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.engine.pipeline.ExecutionStage;
+import com.datasqrl.plan.global.PhysicalPlanRewriter;
 import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.datasqrl.util.StreamUtil;
+import com.datasqrl.v2.Sqrl2FlinkSQLTranslator;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -31,6 +35,21 @@ public class PhysicalPlan {
 
   public <T extends EnginePhysicalPlan> Stream<T> getPlans(Class<T> clazz) {
     return StreamUtil.filterByClass(stagePlans.stream().map(PhysicalStagePlan::getPlan), clazz);
+  }
+
+  public PhysicalPlan applyRewriting(Collection<PhysicalPlanRewriter> rewriters, Sqrl2FlinkSQLTranslator sqrlEnv) {
+    if (rewriters.isEmpty()) return this;
+    PhysicalPlan.PhysicalPlanBuilder builder = PhysicalPlan.builder();
+    for (PhysicalStagePlan stagePlan : stagePlans) {
+      EnginePhysicalPlan enginePlan = stagePlan.plan;
+      for (PhysicalPlanRewriter rewriter : rewriters) {
+        if (rewriter.appliesTo(enginePlan)) {
+          enginePlan = rewriter.rewrite(enginePlan, sqrlEnv);
+        }
+      }
+      builder.stagePlan(new PhysicalStagePlan(stagePlan.stage, enginePlan));
+    }
+    return builder.build();
   }
 
   @Value

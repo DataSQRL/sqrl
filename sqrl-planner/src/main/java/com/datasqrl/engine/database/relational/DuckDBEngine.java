@@ -53,7 +53,7 @@ public class DuckDBEngine extends AbstractJDBCQueryEngine {
   }
 
   @Override
-  protected JdbcStatementFactory getStatementFactory() {
+  public JdbcStatementFactory getStatementFactory() {
     return new DuckDbStatementFactory(engineConfig);
   }
 

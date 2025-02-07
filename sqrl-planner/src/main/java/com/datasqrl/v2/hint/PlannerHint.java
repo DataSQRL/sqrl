@@ -12,7 +12,7 @@ import java.util.List;
 import lombok.Getter;
 
 @Getter
-public abstract class PlannerHint {
+public abstract class PlannerHint implements Hint {
 
   protected final ParsedObject<SqrlHint> source;
   protected final Type type;
@@ -30,17 +30,6 @@ public abstract class PlannerHint {
 
   public String getName() {
     return source.get().getName().toLowerCase();
-  }
-
-  public void addToConfig(SqrlConverterConfigBuilder configBuilder) {
-    throw new UnsupportedOperationException();
-  }
-
-  protected void checkFatal(boolean expression, String msg, Object... args) {
-    if (!expression) {
-      //TODO: make hint error label
-      throw new StatementParserException(ErrorLabel.GENERIC, source.getFileLocation(), msg, args);
-    }
   }
 
 

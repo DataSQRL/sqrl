@@ -39,7 +39,7 @@ public class PostgresJdbcEngine extends AbstractJDBCDatabaseEngine {
   }
 
   @Override
-  protected JdbcStatementFactory getStatementFactory() {
+  public JdbcStatementFactory getStatementFactory() {
     return new PostgresDDLFactory();
   }
 
