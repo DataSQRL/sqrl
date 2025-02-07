@@ -6,6 +6,7 @@ package com.datasqrl.plan.rules;
 import com.datasqrl.plan.global.QueryIndexSummary;
 import com.datasqrl.plan.global.QueryIndexSummary.IndexableFunctionCall;
 import com.datasqrl.plan.table.ScriptRelationalTable;
+import com.datasqrl.v2.analyzer.TableAnalysis;
 import org.apache.calcite.rel.core.Join;
 import org.apache.calcite.rel.metadata.*;
 import org.apache.calcite.rex.RexNode;
@@ -24,7 +25,7 @@ public class SqrlRelMdSelectivity extends RelMdSelectivity
   }
 
 
-  public static Double getSelectivity(ScriptRelationalTable table,
+  public static Double getSelectivity(TableAnalysis table,
                                       QueryIndexSummary constraints) {
     //TODO: use actual selectivity statistics from table
     double selectivity = 1.0d;

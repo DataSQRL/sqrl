@@ -1,3 +1,3 @@
 IMPORT ecommerceTs.Customer;
 
-CustomerById($customerid : BIGINT) := SELECT * FROM Customer WHERE customerid = $customerid;
+CustomerByEmail($email : STRING) := SELECT * FROM Customer WHERE email = $email;

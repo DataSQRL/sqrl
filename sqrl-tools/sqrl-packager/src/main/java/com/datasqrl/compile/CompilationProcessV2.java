@@ -64,7 +64,7 @@ public class CompilationProcessV2 {
     PipelineDAG dag = dagPlanner.optimize(dagBuilder.getDag());
     PhysicalPlan physicalPlan = dagPlanner.assemble(dag, environment);
     List<PhysicalPlanRewriter> rewriters = ServiceLoaderDiscovery.getAll(PhysicalPlanRewriter.class);
-//    physicalPlan = physicalPlan.applyRewriting(rewriters, environment);
+    physicalPlan = physicalPlan.applyRewriting(rewriters, environment);
 
     writeDeploymentArtifactsHook.run(dag);
 

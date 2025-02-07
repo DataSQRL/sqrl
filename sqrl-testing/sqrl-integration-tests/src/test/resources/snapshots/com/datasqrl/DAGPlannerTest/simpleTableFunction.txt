@@ -1,17 +1,17 @@
 >>>pipeline_explain.txt
-=== CustomerById
-ID:     CustomerById
+=== CustomerByEmail
+ID:     CustomerByEmail
 Type:   query
 Stage:  postgres
 Inputs: default_catalog.default_database.Customer
 Annotations:
  - stream-root: Customer__def
- - parameters: customerid
+ - parameters: email
 Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
-  LogicalFilter(condition=[=($0, ?0)])
+  LogicalFilter(condition=[=($1, ?0)])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW CustomerById AS  SELECT * FROM Customer WHERE customerid = ?          ;
+SQL: CREATE VIEW CustomerByEmail AS  SELECT * FROM Customer WHERE email = ?     ;
 
 === Customer
 ID:     default_catalog.default_database.Customer
@@ -152,6 +152,11 @@ END
           "nullable" : true
         }
       ]
+    },
+    {
+      "name" : "Customer_1_hash_c1",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS Customer_1_hash_c1 ON Customer_1 USING hash (\"email\");"
     }
   ]
 }

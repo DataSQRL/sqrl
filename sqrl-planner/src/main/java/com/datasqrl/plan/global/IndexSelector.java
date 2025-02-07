@@ -7,7 +7,6 @@ import com.datasqrl.calcite.SqrlRexUtil;
 import com.datasqrl.function.IndexType;
 import com.datasqrl.plan.global.QueryIndexSummary.IndexableFunctionCall;
 import com.datasqrl.plan.hints.IndexHint;
-import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.util.ArrayUtil;
 import com.datasqrl.util.StreamUtil;
 import com.datasqrl.v2.Sqrl2FlinkSQLTranslator;
@@ -29,6 +28,9 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.EqualsAndHashCode.Include;
+import lombok.Value;
 import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.rel.RelFieldCollation;
 import org.apache.calcite.rel.RelNode;
@@ -59,6 +61,7 @@ public class IndexSelector {
 
   private final Sqrl2FlinkSQLTranslator framework;
   private final IndexSelectorConfig config;
+  private final Map<String, TableAnalysis> tableMap;
 
   public List<QueryIndexSummary> getIndexSelection(RelNode queryRelnode) {
     RelNode pushedDownFilters = applyPushDownFilters(queryRelnode);
@@ -86,28 +89,18 @@ public class IndexSelector {
   public Map<IndexDefinition, Double> optimizeIndexes(Collection<QueryIndexSummary> queryIndexSummaries) {
     //Prune down to database indexes and remove duplicates
     Map<IndexDefinition, Double> optIndexes = new HashMap<>();
-    LinkedHashMultimap<PhysicalRelationalTable, QueryIndexSummary> callsByTable = LinkedHashMultimap.create();
+    LinkedHashMultimap<NamedTable, QueryIndexSummary> callsByTable = LinkedHashMultimap.create();
     queryIndexSummaries.forEach(idx -> {
       //TODO: Add up counts so we preserve relative frequency
       callsByTable.put(idx.getTable(), idx);
     });
 
-    for (PhysicalRelationalTable table : callsByTable.keySet()) {
+    for (NamedTable table : callsByTable.keySet()) {
       optIndexes.putAll(optimizeIndexes(table, callsByTable.get(table)));
     }
     return optIndexes;
   }
 
-  private static IndexDefinition getIndexFromHint(PhysicalRelationalTable table, IndexHint hint) {
-    List<String> colNames = hint.getColumnNames();
-    List<Integer> colIdx = hint.getColumnNames().stream().map(colName -> {
-      RelDataTypeField field = table.getRowType().getField(colName, false, true);
-      Preconditions.checkArgument(field!=null, "Could not find indexed field %s for table %s in index hint %s", colName, table, hint);
-      return field.getIndex();
-    }).collect(Collectors.toUnmodifiableList());
-    return new IndexDefinition(table.getNameId(), colIdx, table.getRowType().getFieldNames(),
-        hint.getIndexType().isPartitioned()? colNames.size() : -1, hint.getIndexType());
-  }
 
   public Optional<List<IndexDefinition>> getIndexHints(String tableName, TableAnalysis tableAnalysis) {
     PlannerHints hints = tableAnalysis.getHints();
@@ -124,21 +117,7 @@ public class IndexSelector {
     }
   }
 
-  @Deprecated
-  public Optional<List<IndexDefinition>> getIndexHints(PhysicalRelationalTable table) {
-    List<IndexHint> indexHints = StreamUtil.filterByClass(table.getOptimizerHints(), IndexHint.class)
-        .collect(Collectors.toUnmodifiableList());
-    if (!indexHints.isEmpty()) {
-      return Optional.of(indexHints.stream().filter(IndexHint::isValid)
-          .filter(idxHint -> config.supportedIndexTypes().contains(idxHint.getIndexType()))
-          .map(idxHint -> getIndexFromHint(table, idxHint))
-          .collect(Collectors.toUnmodifiableList()));
-    } else {
-      return Optional.empty();
-    }
-  }
-
-  private Map<IndexDefinition, Double> optimizeIndexes(PhysicalRelationalTable table,
+  private Map<IndexDefinition, Double> optimizeIndexes(NamedTable table,
                                                        Set<QueryIndexSummary> queryIndexSummaries) {
     //Check how many unique QueryConjunctions we have on this table
     if (queryIndexSummaries.size()>config.maxIndexColumnSets()) {
@@ -158,7 +137,7 @@ public class IndexSelector {
       Map<IndexDefinition, Double> indexes = new HashMap<>();
       for (int colIndex : indexedColumns) {
         indexes.put(new IndexDefinition(table.getNameId(), List.of(colIndex),
-            table.getRowType().getFieldNames(), -1, genericType), 0.0);
+            table.getAnalysis().getRowType().getFieldNames(), -1, genericType), 0.0);
       }
       indexedFunctions.stream().map(fcall -> getIndexDefinition(fcall, table)).flatMap(Optional::stream)
           .forEach(idxDef -> indexes.put(idxDef, Double.NaN));
@@ -168,15 +147,15 @@ public class IndexSelector {
     }
   }
 
-  private Optional<IndexDefinition> getIndexDefinition(IndexableFunctionCall fcall, PhysicalRelationalTable table) {
+  private Optional<IndexDefinition> getIndexDefinition(IndexableFunctionCall fcall, NamedTable table) {
     Optional<IndexType> specialType = config.getPreferredSpecialIndexType(fcall.getFunction()
         .getSupportedIndexes());
     return specialType.map(idxType -> new IndexDefinition(table.getNameId(), fcall.getColumnIndexes(),
-        table.getRowType().getFieldNames(), -1, idxType));
+        table.getAnalysis().getRowType().getFieldNames(), -1, idxType));
   }
 
   private Map<IndexDefinition, Double> optimizeIndexesWithCostMinimization(
-      PhysicalRelationalTable table,
+      NamedTable table,
       Collection<QueryIndexSummary> indexes) {
     Map<IndexDefinition, Double> optIndexes = new HashMap<>();
     //Determine all index candidates
@@ -186,7 +165,7 @@ public class IndexSelector {
     if (config.hasPrimaryKeyIndex()) {
       //The baseline cost is the cost of doing the lookup with the primary key index
       IndexDefinition pkIdx = IndexDefinition.getPrimaryKeyIndex(table.getNameId(),
-          table.getPrimaryKey().asList(), table.getRowType().getFieldNames());
+          table.getAnalysis().getPrimaryKey().asSimpleList(), table.getAnalysis().getRowType().getFieldNames());
       initialCost = idx -> idx.getCost(pkIdx);
       candidates.remove(pkIdx);
     }
@@ -299,14 +278,14 @@ public class IndexSelector {
         colPermutations.forEach( cols -> {
           for (int i = 0; i <= cols.size(); i++) {
             result.add(new IndexDefinition(queryIndexSummary.getTable().getNameId(), cols,
-                queryIndexSummary.getTable().getRowType().getFieldNames(), i, indexType));
+                queryIndexSummary.getTable().getAnalysis().getRowType().getFieldNames(), i, indexType));
           }
 
             });
       } else {
         colPermutations.forEach(
             cols -> result.add(new IndexDefinition(queryIndexSummary.getTable().getNameId(), cols,
-                queryIndexSummary.getTable().getRowType().getFieldNames(), -1, indexType)));
+                queryIndexSummary.getTable().getAnalysis().getRowType().getFieldNames(), -1, indexType)));
       }
     }
     return result;
@@ -350,6 +329,11 @@ public class IndexSelector {
     int paramIndex = PARAM_OFFSET;
     SqrlRexUtil rexUtil = new SqrlRexUtil(framework.getTypeFactory());
 
+
+    private TableAnalysis getTable(String tableId) {
+      return tableMap.get(tableId);
+    }
+
     @Override
     public void visit(RelNode node, int ordinal, RelNode parent) {
       if (node instanceof Join) {
@@ -362,21 +346,18 @@ public class IndexSelector {
         right = applyPushDownFilters(right);
         visit(right, 1, node);
       } else if (node instanceof TableScan && parent instanceof Filter) {
-        PhysicalRelationalTable table = ((TableScan) node).getTable()
-            .unwrap(PhysicalRelationalTable.class);
+        NamedTable table = getNamedTable((TableScan) node);
         Filter filter = (Filter) parent;
         QueryIndexSummary.ofFilter(table, filter.getCondition(), rexUtil).map(queryIndexSummaries::add);
       } else if (node instanceof TableScan && parent instanceof Sort) {
-        PhysicalRelationalTable table = ((TableScan) node).getTable()
-            .unwrap(PhysicalRelationalTable.class);
+        NamedTable table = getNamedTable((TableScan) node);
         Sort sort = (Sort) parent;
         Optional<Integer> firstCollationIdx = getFirstCollation(sort);
         if (firstCollationIdx.isPresent() && hasLimit(sort)) {
           QueryIndexSummary.ofSort(table, firstCollationIdx.get()).map(queryIndexSummaries::add);
         }
       } else if (node instanceof Project && parent instanceof Sort && node.getInput(0) instanceof TableScan) {
-        PhysicalRelationalTable table = ((TableScan) node.getInput(0)).getTable()
-            .unwrap(PhysicalRelationalTable.class);
+        NamedTable table = getNamedTable((TableScan) node.getInput(0));
         Sort sort = (Sort) parent;
         Optional<Integer> firstCollationIdx = getFirstCollation(sort);
         if (firstCollationIdx.isPresent() && hasLimit(sort)) {
@@ -432,6 +413,27 @@ public class IndexSelector {
 
     }
 
+  }
+
+  /**
+   * We need to look the TableAnalysis up by the nameid that is the name of the created table
+   * for the engine sink.
+   * @param scan
+   * @return
+   */
+  private NamedTable getNamedTable(TableScan scan) {
+    List<String> names = scan.getTable().getQualifiedName();
+    String nameId = names.get(names.size()-1);
+    return new NamedTable(nameId, tableMap.get(nameId));
+  }
+
+
+  @Value
+  @EqualsAndHashCode(onlyExplicitlyIncluded = true)
+  public static class NamedTable {
+    @Include
+    String nameId;
+    TableAnalysis analysis;
   }
 
 }

@@ -2,6 +2,7 @@ package com.datasqrl.v2.analyzer;
 
 
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.plan.table.TableStatistic;
 import com.datasqrl.v2.analyzer.cost.CostAnalysis;
 import com.datasqrl.v2.hint.PlannerHints;
 import com.datasqrl.v2.tables.SourceSinkTableAnalysis;
@@ -133,6 +134,17 @@ public class TableAnalysis implements TableOrFunctionAnalysis {
   public boolean isSourceOrSink() {
     return sourceSinkTable.isPresent();
   }
+
+  /**
+   * Returns the statistics for this table.
+   * TODO: this is currently hardcoded and should be
+   * produced by analyzer and extracted from table definition (if available) on import
+   * @return
+   */
+  public TableStatistic getTableStatistic() {
+    return TableStatistic.of(10000);
+  }
+
 
   public RelNode getRelNode() {
     return collapsedRelnode;

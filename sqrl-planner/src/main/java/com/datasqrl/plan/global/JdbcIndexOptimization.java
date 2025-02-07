@@ -28,7 +28,7 @@ public class JdbcIndexOptimization implements PhysicalPlanRewriter {
     JdbcPhysicalPlan jdbcPlan = (JdbcPhysicalPlan) plan;
     AbstractJDBCDatabaseEngine engine = (AbstractJDBCDatabaseEngine) jdbcPlan.getStage().getEngine();
     IndexSelectorConfig indexSelectorConfig = engine.getIndexSelectorConfig();
-    IndexSelector indexSelector = new IndexSelector(sqrlEnv, indexSelectorConfig);
+    IndexSelector indexSelector = new IndexSelector(sqrlEnv, indexSelectorConfig, jdbcPlan.getTableMap());
 
     Collection<QueryIndexSummary> queryIndexSummaries = jdbcPlan.getQueries().stream().map(indexSelector::getIndexSelection)
         .flatMap(List::stream).collect(Collectors.toList());

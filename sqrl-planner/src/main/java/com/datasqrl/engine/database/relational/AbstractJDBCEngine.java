@@ -120,10 +120,11 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
     //Create tables
     stagePlan.getTables().stream().map(JdbcEngineCreateTable.class::cast)
         .map(stmtFactory::createTable).forEach(planBuilder::statement);
-    Map<String, TableAnalysis> tableMap = new HashMap<>();
+    Map<String, TableAnalysis> tableMap =
     stagePlan.getTables().stream().map(JdbcEngineCreateTable.class::cast)
         .collect(Collectors.toMap(createTable -> createTable.getTable().getTableName(),
-            createTable -> createTable));
+            JdbcEngineCreateTable::getTableAnalysis));
+    planBuilder.tableMap(tableMap);
     //Create executable queries & views
     if (stmtFactory.supportsQueries()) {
       stagePlan.getQueries().forEach(query -> {
