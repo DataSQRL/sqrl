@@ -168,7 +168,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     }
     TableAnalysis.TableAnalysisBuilder tableAnalysis = TableAnalysis.builder()
         .collapsedRelnode(analysis.relNode)
-        .originalRelnode(originalRelnode)
+        .originalRelnode(tableLookup.normalizeRelnode(originalRelnode))
         .type(analysis.getType())
         .primaryKey(analysis.primaryKey)
         .hasMostRecentDistinct(hasMostRecentDistinct)

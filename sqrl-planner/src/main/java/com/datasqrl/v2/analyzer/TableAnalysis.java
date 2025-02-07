@@ -170,9 +170,4 @@ public class TableAnalysis implements TableOrFunctionAnalysis {
     return new RelNodeAnalysis(relNode, type, primaryKey, getStreamRoot(), false);
   }
 
-  public boolean matches(RelNode otherRelNode) {
-    if (this.originalRelnode ==null) return false;
-    return this.originalRelnode.deepEquals(otherRelNode);
-  }
-
 }

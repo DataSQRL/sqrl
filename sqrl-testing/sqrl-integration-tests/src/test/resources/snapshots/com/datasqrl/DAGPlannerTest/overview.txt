@@ -380,6 +380,23 @@ CREATE TABLE `Unnestorders_7` (
   'connector' = 'print',
   'print-identifier' = 'Unnestorders'
 );
+CREATE TABLE `UnnestOrders_8` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `productid` BIGINT NOT NULL,
+  `quantity` BIGINT NOT NULL,
+  `discount` DOUBLE,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'table-name' = 'UnnestOrders_8'
+);
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`
 (SELECT *
@@ -413,7 +430,11 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2__def`
        (SELECT *
         FROM `default_catalog`.`default_database`.`UnnestOrders`)
        ;
-       END
+       INSERT INTO `default_catalog`.`default_database`.`UnnestOrders_8`
+        (SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `discount`, HASHCOLUMNS(`id`, `customerid`, `time`, `productid`, `quantity`, `discount`) AS `__pk_hash`
+         FROM `default_catalog`.`default_database`.`UnnestOrders`)
+        ;
+        END
 >>>kafka.json
 {
   "topics" : [
@@ -592,6 +613,48 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2__def`
       ]
     },
     {
+      "name" : "UnnestOrders_8",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"UnnestOrders_8\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"productid\" BIGINT NOT NULL, \"quantity\" BIGINT NOT NULL, \"discount\" DOUBLE PRECISION , \"__pk_hash\" TEXT  , PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "productid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "quantity",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "discount",
+          "type" : "DOUBLE PRECISION",
+          "nullable" : true
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ]
+    },
+    {
       "name" : "Customer",
       "type" : "VIEW",
       "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\"\nFROM (SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", ROW_NUMBER() OVER (PARTITION BY \"customerid\" ORDER BY \"timestamp\" DESC NULLS LAST) AS \"__sqrlinternal_rownum\"\n  FROM \"CustomerImport_2\") AS \"t3\"\nWHERE \"__sqrlinternal_rownum\" = 1",
@@ -749,7 +812,7 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2__def`
     {
       "name" : "UnnestOrders",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"UnnestOrders\"(\"id\", \"customerid\", \"time\", \"productid\", \"quantity\", \"discount\") AS SELECT \"$cor2\".\"id\", \"$cor2\".\"customerid\", \"$cor2\".\"time\", \"t40\".\"productid\", \"t40\".\"quantity\", \"t40\".\"discount\"\nFROM \"Orders_5\" AS \"$cor2\"\n INNER JOIN LATERAL UNNEST (SELECT \"$cor2\".\"entries\"\n  FROM (VALUES (0)) AS \"t\" (\"ZERO\")) AS \"t4\" (\"productid\", \"quantity\", \"unit_price\", \"discount\") AS \"t40\"",
+      "sql" : "CREATE OR REPLACE VIEW \"UnnestOrders\"(\"id\", \"customerid\", \"time\", \"productid\", \"quantity\", \"discount\") AS SELECT \"id\", \"customerid\", \"time\", \"productid\", \"quantity\", \"discount\"\nFROM \"UnnestOrders_8\"",
       "fields" : [
         {
           "name" : "id",
@@ -782,6 +845,11 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2__def`
           "nullable" : true
         }
       ]
+    },
+    {
+      "name" : "SimpleOrders_6_btree_c2c3",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS SimpleOrders_6_btree_c2c3 ON SimpleOrders_6 USING btree (\"customerid\",\"amount\");"
     }
   ]
 }
