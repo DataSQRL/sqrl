@@ -21,6 +21,10 @@ public class RootCommand implements Runnable {
       , scope = ScopeType.INHERIT)
   protected List<Path> packageFiles = Collections.EMPTY_LIST;
 
+  @CommandLine.Option(names = {"--wait-for-crac-event"},
+		  description = "Wait for a Coordinated Restore at Checkpoint event before terminating the JVM" , hidden = true)
+  protected boolean waitForCracEvent = false;
+
   @Override
   public void run() {
     CommandLine.usage(this, System.out);

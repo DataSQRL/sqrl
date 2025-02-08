@@ -7,7 +7,7 @@ export DATA_PATH=/build/build/deploy/flink/data
 export UDF_PATH=/build/build/deploy/flink/lib
 
 echo 'Compiling...this takes about 10 seconds'
-java -jar /opt/sqrl/sqrl-cli.jar ${@}
+java $JVM_OPTS -jar /opt/sqrl/sqrl-cli.jar ${@}
 
 if [ "$1" == "run" ] || [ "$1" == "test" ]; then
    # Determine the jar to run
@@ -52,5 +52,5 @@ if [ "$1" == "run" ] || [ "$1" == "test" ]; then
     echo "All services are up. Starting the main application..."
     echo "$@ $JAR_NAME"
 
-    exec java -jar "/opt/sqrl/$JAR_NAME" "$@"
+    exec java $JVM_OPTS -jar "/opt/sqrl/$JAR_NAME" "$@"
 fi

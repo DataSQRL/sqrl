@@ -193,8 +193,8 @@ public class DatasqrlRun {
 
     StreamExecutionEnvironment sEnv;
 
-    try {
-      sEnv = new StreamExecutionEnvironment(configuration, udfClassLoader);
+    try (StreamExecutionEnvironment env = new StreamExecutionEnvironment(configuration, udfClassLoader)){
+    	sEnv = env;
     } catch (Exception e) {
       throw e;
     }
