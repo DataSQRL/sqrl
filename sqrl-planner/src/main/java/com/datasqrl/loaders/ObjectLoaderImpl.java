@@ -8,12 +8,8 @@ import com.datasqrl.config.TableConfigLoader;
 import com.datasqrl.engine.log.LogManager;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.function.FlinkUdfNsObject;
-import com.datasqrl.config.ExternalDataType;
-import com.datasqrl.config.TableConfig;
 import com.datasqrl.io.tables.TableSchema;
 import com.datasqrl.io.tables.TableSchemaFactory;
-import com.datasqrl.io.tables.TableSink;
-import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.loaders.FlinkTableNamespaceObject.FlinkTable;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.module.SqrlModule;
@@ -26,10 +22,8 @@ import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.StringUtil;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Preconditions;
-import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -38,7 +32,6 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
-import org.apache.commons.io.IOUtils;
 import org.apache.flink.table.functions.UserDefinedFunction;
 
 public class ObjectLoaderImpl implements ObjectLoader {
@@ -79,11 +72,8 @@ public class ObjectLoaderImpl implements ObjectLoader {
 
     //Check for sqrl scripts
     if (allItems.isEmpty()) {
-      Optional<Path> graphqlFile = getFile(directory, Name.system(directory.getLast().toString() + ".graphqls"));
-      Optional<Path> sqrlFile = getFile(directory, Name.system(directory.getLast().toString() + ".sqrl"));
-
-      // Note: Graphql files are awkwardly loaded as an exceptional thing, so try to skip it if its there
-      if (sqrlFile.isPresent() && graphqlFile.isEmpty()) {
+      Optional<Path> sqrlFile = getFile(directory.popLast(), Name.system(directory.getLast().toString() + ".sqrl"));
+      if (sqrlFile.isPresent()) {
         return Optional.of(loadScript(directory, sqrlFile.get()));
       }
     }
@@ -98,7 +88,7 @@ public class ObjectLoaderImpl implements ObjectLoader {
   }
 
   private Optional<Path> getFile(NamePath directory, Name name) {
-    return resourceResolver.resolveFile(directory.popLast()
+    return resourceResolver.resolveFile(directory
         .concat(name));
   }
 
@@ -113,8 +103,7 @@ public class ObjectLoaderImpl implements ObjectLoader {
 
   @SneakyThrows
   private SqrlModule loadScript(NamePath namePath, Path path) {
-    return new ScriptSqrlModule(moduleLoader, Files.readString(path), Optional.empty(),
-        sqrlConfig, logManager, namePath);
+    return new ScriptSqrlModule(Files.readString(path), path, namePath);
   }
 
   @SneakyThrows

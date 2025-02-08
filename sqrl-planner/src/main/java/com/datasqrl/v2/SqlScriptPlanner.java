@@ -430,9 +430,9 @@ public class SqlScriptPlanner {
       String name = alias.orElseGet(() -> FlinkUdfNsObject.getFunctionNameFromClass(udfClass).getDisplay());
       sqrlEnv.addUserDefinedFunction(name, udfClass.getName(), false);
     } else if (nsObject instanceof ScriptNamespaceObject) {
-      //TODO: 1) if this is a * import, then import inline (throw exception if trying to import only a specific table)
-      // 2) if import ends in script, plan script into separate database (with name of script or alias) via CREATE/USE DATABASE
-      throw new UnsupportedOperationException("Script imports not yet implemented");
+      ScriptNamespaceObject scriptObject = (ScriptNamespaceObject) nsObject;
+      checkFatal(scriptObject.getTableName().isEmpty(), ErrorLabel.GENERIC, "Cannot import an individual table from SQRL script. Use * to import entire script: %s", scriptObject.getName());
+      planMain(scriptObject.getScript(), sqrlEnv);
     } else {
       throw new UnsupportedOperationException("Unexpected object imported: " + nsObject);
     }
