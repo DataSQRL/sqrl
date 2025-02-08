@@ -33,9 +33,11 @@ public class Publisher {
             PackageConfigurationImpl packageConfig = (PackageConfigurationImpl) pkgConfig.getPackageConfig();
             addReadme(packageRoot, packageConfig);
 
+            Path[] sources = packageConfig.getSources().stream().map(Path::of).toArray(Path[]::new);
+
             Path zipFile = Files.createTempFile(packageRoot, "package", Zipper.ZIP_EXTENSION);
             try {
-                Zipper.compress(zipFile, packageRoot);
+                Zipper.compress(zipFile, packageRoot, sources);
                 if (publishRepo.publish(zipFile, packageConfig)) {
                     return packageConfig;
                 } else {
