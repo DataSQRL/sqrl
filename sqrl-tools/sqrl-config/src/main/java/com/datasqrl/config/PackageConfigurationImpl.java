@@ -58,7 +58,7 @@ public class PackageConfigurationImpl implements PackageConfiguration {
   @JsonIgnore
   public DependencyImpl asDependency() {
     checkInitialized();
-    return new DependencyImpl(getName(), getVersion(), getVariant());
+    return new DependencyImpl(getName());
   }
 
   @Override

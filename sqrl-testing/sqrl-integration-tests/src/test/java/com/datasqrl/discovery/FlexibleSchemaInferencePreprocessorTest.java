@@ -6,6 +6,7 @@ import com.datasqrl.AbstractAssetSnapshotTest;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.config.PackageJson;
+import com.datasqrl.config.PackageJsonImpl;
 import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.discovery.preprocessor.FlexibleSchemaInferencePreprocessor;
 import com.datasqrl.error.ErrorCollector;
@@ -41,14 +42,13 @@ public class FlexibleSchemaInferencePreprocessorTest extends AbstractAssetSnapsh
   protected FlexibleSchemaInferencePreprocessorTest() {
     super(FILES_DIR.resolve("output"));
     try {
-      packageJson = SqrlConfigCommons.fromFilesPackageJson(errors,
-          List.of(Path.of("../../profiles/default/package.json")));
+      packageJson = new PackageJsonImpl(SqrlConfigCommons.fromURL(errors, getClass().getResource("/default-package.json")));
     } catch (Exception e) {
         System.out.println(ErrorPrinter.prettyPrint(errors));
         throw e;
       }
     Injector injector = Guice.createInjector(
-        new SqrlInjector(ErrorCollector.root(), FILES_DIR, super.deployDir, packageJson, ExecutionGoal.COMPILE, null),
+        new SqrlInjector(ErrorCollector.root(), FILES_DIR, super.deployDir, packageJson, ExecutionGoal.COMPILE),
         new StatefulModule(new SqrlSchema(new TypeFactory(), NameCanonicalizer.SYSTEM)));
     preprocessor = injector.getInstance(FlexibleSchemaInferencePreprocessor.class);
     super.buildDir = deployDir;
