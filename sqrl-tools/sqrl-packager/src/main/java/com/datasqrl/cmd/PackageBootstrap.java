@@ -1,10 +1,7 @@
 package com.datasqrl.cmd;
 
 import static com.datasqrl.packager.Packager.*;
-import static com.datasqrl.util.NameUtil.namepath2Path;
 
-import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.config.DependencyImpl;
 import com.datasqrl.config.PackageJson.DependenciesConfig;
 import com.datasqrl.config.Dependency;
 import com.datasqrl.config.PackageJson;
@@ -14,12 +11,9 @@ import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.packager.Packager;
-import com.datasqrl.packager.repository.Repository;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +27,6 @@ import lombok.extern.slf4j.Slf4j;
 @AllArgsConstructor
 @Slf4j
 public class PackageBootstrap {
-  Repository repository;
   ErrorCollector errors;
 
   @SneakyThrows

@@ -20,7 +20,7 @@ import java.util.Optional;
 
 @AllArgsConstructor
 @Slf4j
-public class LocalRepositoryImplementation implements Repository, CacheRepository, PublishRepository {
+public class LocalRepositoryImplementation implements CacheRepository, PublishRepository {
 
     public static final String LOCAL_REPO_NAME = "datasqrl/repository";
 
@@ -40,46 +40,23 @@ public class LocalRepositoryImplementation implements Repository, CacheRepositor
     }
 
     @Override
-    public boolean retrieveDependency(Path targetPath, Dependency dependency) throws IOException {
-        Path zipFile = getZipFilePath(dependency);
-        if (Files.isRegularFile(zipFile)) {
-            new ZipFile(zipFile.toFile()).extractAll(targetPath.toString());
-            return true;
-        }
-        return false;
-    }
-
-    @Override
     public void cacheDependency(Path zipFile, Dependency dependency) throws IOException {
         Path destFile = dependency2Path(dependency)
-            .resolve(FileUtil.addExtension(dependency.getVariant(), Zipper.ZIP_EXTENSION));
+            .resolve(FileUtil.addExtension(dependency.getName(), Zipper.ZIP_EXTENSION));
         Path parentDir = destFile.getParent();
         if (!Files.isDirectory(parentDir)) Files.createDirectories(parentDir);
         Files.deleteIfExists(destFile);
         Files.copy(zipFile, destFile);
     }
 
-    /**
-     * Local repository does not support resolving the "latest" version and variant for a package
-     * in order to avoid returning stale results compared to remote repositories.
-     *
-     * @param packageName
-     * @return
-     */
-    @Override
-    public Optional<Dependency> resolveDependency(String packageName) {
-        return Optional.empty();
-    }
-
     public Path getZipFilePath(Dependency dependency) {
         Path path = dependency2Path(dependency);
-        Path zipFile = path.resolve(FileUtil.addExtension(dependency.getVariant(), Zipper.ZIP_EXTENSION));
+        Path zipFile = path.resolve(FileUtil.addExtension(dependency.getName(), Zipper.ZIP_EXTENSION));
         return zipFile;
     }
 
     private Path dependency2Path(Dependency dependency) {
-        return package2Path(dependency.getName())
-                .resolve(dependency.getVersion().get());
+        return package2Path(dependency.getName());
     }
 
     private Path package2Path(String packageName) {

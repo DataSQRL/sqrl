@@ -48,7 +48,7 @@ public class FlexibleSchemaInferencePreprocessorTest extends AbstractAssetSnapsh
         throw e;
       }
     Injector injector = Guice.createInjector(
-        new SqrlInjector(ErrorCollector.root(), FILES_DIR, super.deployDir, packageJson, ExecutionGoal.COMPILE, null),
+        new SqrlInjector(ErrorCollector.root(), FILES_DIR, super.deployDir, packageJson, ExecutionGoal.COMPILE),
         new StatefulModule(new SqrlSchema(new TypeFactory(), NameCanonicalizer.SYSTEM)));
     preprocessor = injector.getInstance(FlexibleSchemaInferencePreprocessor.class);
     super.buildDir = deployDir;

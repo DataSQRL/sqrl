@@ -6,28 +6,19 @@ package com.datasqrl.packager.repository;
 import static com.datasqrl.auth.AuthUtils.REPO_URL;
 
 import com.datasqrl.auth.AuthProvider;
-import com.datasqrl.config.Dependency;
-import com.datasqrl.config.DependencyImpl;
 import com.datasqrl.config.PackageConfiguration;
-import com.datasqrl.packager.util.FileHash;
-import com.datasqrl.packager.util.Zipper;
 import com.datasqrl.util.SqrlObjectMapper;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Preconditions;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URI;
-import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpConnectTimeoutException;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -37,8 +28,6 @@ import java.util.Optional;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import net.lingala.zip4j.ZipFile;
-import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -49,7 +38,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
 @Slf4j
-public class RemoteRepositoryImplementation implements Repository, PublishRepository {
+public class RemoteRepositoryImplementation implements PublishRepository {
 
   private final ObjectMapper mapper = SqrlObjectMapper.INSTANCE;
 
@@ -65,60 +54,6 @@ public class RemoteRepositoryImplementation implements Repository, PublishReposi
 
   public RemoteRepositoryImplementation() {
     this(URI.create(REPO_URL));
-  }
-
-  @Override
-  public boolean retrieveDependency(Path targetPath, Dependency dependency) {
-    JsonNode dependencyInfo = getDependencyInfo(dependency.getName(), dependency.getVersion().get(), dependency.getVariant());
-    return downloadDependency(targetPath, dependencyInfo, dependency);
-  }
-
-  // Downloads the given Dependency to the specified Path
-  private boolean downloadDependency(Path targetPath, JsonNode dependencyInfo, Dependency dependency) {
-    String hash = dependencyInfo.get("hash").asText();
-    String repoURL = dependencyInfo.get("repoURL").asText();
-
-    try {
-      // Create target directory
-      Files.createDirectories(targetPath);
-
-      // Create a temporary file for the zip file
-      Path zipFile = Files.createTempFile(targetPath, "package", Zipper.ZIP_EXTENSION);
-
-      // Copy the zip file from the repoURL to the temporary file
-      FileUtils.copyURLToFile(new URL(repoURL), zipFile.toFile());
-
-      // Get the hash for the downloaded file
-      String downloadHash = FileHash.getFor(zipFile);
-
-      // Ensure the hashes match
-      Preconditions.checkArgument(
-          downloadHash.equals(hash),
-          "File hash [%s] does not match hash" + "of downloaded file [%s]",
-          hash,
-          downloadHash);
-
-      // Extract the zip file
-      new ZipFile(zipFile.toFile()).extractAll(targetPath.toString());
-
-      // Cache downloaded package
-      if (cacheRepository != null) cacheRepository.cacheDependency(zipFile, dependency);
-
-      // Delete the temporary file
-      Files.deleteIfExists(zipFile);
-
-      // Return true if the download was successful
-      return true;
-    } catch (Exception e) {
-      // Return false if the download fails
-      return false;
-    }
-  }
-
-  @Override
-  public Optional<Dependency> resolveDependency(String packageName) {
-    JsonNode result = getLatestDependencyInfo(packageName);
-    return Optional.of(map(result, DependencyImpl.class));
   }
 
   @SneakyThrows
@@ -172,15 +107,6 @@ public class RemoteRepositoryImplementation implements Repository, PublishReposi
     }
 
     return URI.create(uriBuilder.toString());
-  }
-
-  private <O> O map(JsonNode node, Class<O> clazz) {
-    try {
-      mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-      return mapper.treeToValue(node, clazz);
-    } catch (JsonProcessingException e) {
-      throw new RuntimeException("Unexpected response from repository server: " + node.toString(), e);
-    }
   }
 
   @Override
