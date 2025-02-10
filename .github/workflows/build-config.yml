@@ -1,7 +1,7 @@
 name: Build and test SQRL with Maven
 on:
   pull_request:
-    branches: [ "main", "v0.5.10-release"]
+    branches: [ "main", sqrl-0.5.x, "v0.5.10-release"]
 
 jobs:
   build:

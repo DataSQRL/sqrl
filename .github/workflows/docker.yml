@@ -2,7 +2,7 @@ name: Latest Docker Build and Push
 
 on:
   push:
-    branches: [main, v0.5.9-release]
+    branches: [main, sqrl-0.5.x, v0.5.9-release]
 
 jobs:
   build:
