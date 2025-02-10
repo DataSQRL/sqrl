@@ -35,6 +35,7 @@ COPY sqrl-run/target/sqrl-run.jar /opt/sqrl/sqrl-run.jar
 COPY sqrl-test/target/sqrl-test.jar /opt/sqrl/sqrl-test.jar
 
 COPY dockerrun.sh /opt/sqrl/dockerrun.sh
+COPY redpanda.yaml /etc/redpanda/redpanda.yaml
 
 ENV TZ=America/Los_Angeles
 
