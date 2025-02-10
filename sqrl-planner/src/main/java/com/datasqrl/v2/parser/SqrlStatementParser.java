@@ -77,7 +77,7 @@ public class SqrlStatementParser {
       List<ParsedObject<String>> statements = sqlSplitter.splitStatements(script);
       for (ParsedObject<String> statement : statements) {
         localErrors = scriptErrors.atFile(statement.getFileLocation());
-        sqlStatements.add(statement.map(this::parseStatement));
+        sqlStatements.add(new ParsedObject<>(parseStatement(statement.getObject()), statement.getFileLocation()));
      }
     } catch (StatementParserException e) {
       throw localErrors.handle(e);
@@ -134,10 +134,13 @@ public class SqrlStatementParser {
       ParsedObject<String> arguments = parse(sqrlDefinition, "arguments", statement);
       //Identify SQL keyword
       Pattern sqlKeywordPattern = Pattern.compile("^\\s*(\\w+)");
-      Matcher matcher = sqlKeywordPattern.matcher(definitionBody.get());
-      checkFatal(matcher.find(), ErrorCode.INVALID_SQRL_DEFINITION, "Could not parse SQRL statement");
-      String keyword = matcher.group(1).trim();
-      int keywordEnd = matcher.end(1);
+      Matcher keywordMatcher = sqlKeywordPattern.matcher(definitionBody.get());
+      String keyword = "";
+      int keywordEnd = 0;
+      if (keywordMatcher.find()) {
+        keyword = keywordMatcher.group(1).trim();
+        keywordEnd = keywordMatcher.end(1);
+      }
       SqrlDefinition definition = null;
       if (keyword.equalsIgnoreCase(SELECT_KEYWORD)
           || keyword.equalsIgnoreCase(SUBSCRIBE_KEYWORD)) {

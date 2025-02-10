@@ -33,12 +33,14 @@ import com.datasqrl.v2.parser.FlinkSQLStatement;
 import com.datasqrl.v2.parser.ParsedObject;
 import com.datasqrl.v2.parser.SQLStatement;
 import com.datasqrl.v2.parser.SqlScriptStatementSplitter;
+import com.datasqrl.v2.parser.SqrlAddColumnStatement;
 import com.datasqrl.v2.parser.SqrlCreateTableStatement;
 import com.datasqrl.v2.parser.SqrlDefinition;
 import com.datasqrl.v2.parser.SqrlExportStatement;
 import com.datasqrl.v2.parser.SqrlImportStatement;
 import com.datasqrl.v2.parser.SqrlStatement;
 import com.datasqrl.v2.parser.SqrlStatementParser;
+import com.datasqrl.v2.parser.SqrlTableDefinition;
 import com.datasqrl.v2.parser.SqrlTableFunctionStatement;
 import com.datasqrl.v2.parser.SqrlTableFunctionStatement.ParsedArgument;
 import com.datasqrl.v2.parser.StackableStatement;
@@ -204,9 +206,18 @@ public class SqlScriptPlanner {
       addSourceToDag(sqrlEnv.createTable(((SqrlCreateTableStatement) stmt).toSql(), getLogEngineBuilder()), sqrlEnv);
     } else if (stmt instanceof SqrlDefinition) {
       SqrlDefinition sqrlDef = (SqrlDefinition) stmt;
-      //Ignore test tables (that are not queries) when we are not running tests
       AccessModifier access = sqrlDef.getAccess();
-      boolean nameIsHidden = sqrlDef.getPath().getLast().isHidden();
+      NamePath tablePath = sqrlDef.getPath();
+      if (sqrlDef instanceof SqrlAddColumnStatement) {
+        tablePath = sqrlDef.getPath().popLast();
+        StatementParserException.checkFatal(!statementStack.isEmpty() &&
+                statementStack.get(0) instanceof SqrlTableDefinition && ((SqrlTableDefinition)statementStack.get(0)).getPath().equals(tablePath),
+            sqrlDef.getTableName().getFileLocation(), ErrorCode.INVALID_SQRL_ADD_COLUMN,
+            "Column expression must directly follow the definition of table [%s]", tablePath);
+        access = ((SqrlTableDefinition)statementStack.get(0)).getAccess();
+      }
+      boolean nameIsHidden = tablePath.getLast().isHidden();
+      //Ignore test tables (that are not queries) when we are not running tests
       if (nameIsHidden && (executionGoal!=ExecutionGoal.TEST || !hints.isTest()) && !hints.isWorkload()) {
         //Test tables should not have access unless we are running tests or they are also workloads
         access = AccessModifier.NONE;

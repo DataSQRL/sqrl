@@ -9,6 +9,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import java.util.Comparator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
@@ -66,6 +67,10 @@ public abstract class PipelineNode implements AbstractDAG.Node, Comparable<Pipel
 
   @Override
   public String toString() {
+    return getName() + " - " + stageAnalysisToString();
+  }
+
+  public String stageAnalysisToString() {
     if (stageAnalysis.isEmpty()) {
       return "no stages found";
     }
@@ -79,5 +84,20 @@ public abstract class PipelineNode implements AbstractDAG.Node, Comparable<Pipel
     return getName().compareTo(other.getName());
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    PipelineNode that = (PipelineNode) o;
+    return Objects.equals(getName(), that.getName());
+  }
 
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(getName());
+  }
 }

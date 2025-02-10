@@ -1,4 +1,4 @@
-Invalid SQRL definition. Expected one of SELECT, DISTINCT, JOIN.
+Invalid SQRL definition. Expected one of SELECT, DISTINCT, or column expression.
 
 To define a table use:
 ```
@@ -14,5 +14,9 @@ OlderCustomers($age: INT) := SELECT * FROM Customers WHERE age >= $age;
 ```
 To define a relationship use:
 ```
-Customers.orders := JOIN Orders o ON o.customerid = this.id ORDER BY o.orderTime DESC;
+Customers.orders := SELECT * FROM Orders o WHERE o.customerid = this.id ORDER BY o.orderTime DESC;
+```
+To add a column to an existing table that is defined immediately above, use:
+```
+Customers.full_name := CONCAT(first_name, last_name);
 ```

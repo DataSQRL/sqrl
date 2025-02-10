@@ -4,6 +4,7 @@ import static com.datasqrl.v2.parser.SqlScriptStatementSplitter.addStatementDeli
 import static com.datasqrl.v2.parser.SqlScriptStatementSplitter.removeStatementDelimiter;
 
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.datasqrl.v2.Sqrl2FlinkSQLTranslator;
@@ -27,10 +28,7 @@ public class SqrlAddColumnStatement extends SqrlDefinition implements StackableS
     StatementParserException.checkFatal(tableName.get().size()>1, tableName.getFileLocation(), ErrorLabel.GENERIC,
         "Column expression requires column name: %s", tableName.get());
     NamePath table = this.tableName.get().popLast();
-    StatementParserException.checkFatal(!stack.isEmpty() &&
-        stack.get(0) instanceof SqrlTableDefinition && ((SqrlTableDefinition)stack.get(0)).tableName.get().equals(table),
-        this.tableName.getFileLocation(), ErrorLabel.GENERIC,
-        "Column expression must directly follow the definition of table [%s]", table);
+
     //It's guaranteed that all other entries in the stack must be add-column statements on the same table
     String innerSql = removeStatementDelimiter(((SqrlTableDefinition)stack.get(0)).definitionBody.get());
     for (StackableStatement col : ListUtils.union(stack.subList(1, stack.size()), List.of(this))) {

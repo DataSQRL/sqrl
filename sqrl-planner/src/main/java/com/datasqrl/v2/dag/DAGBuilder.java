@@ -19,7 +19,9 @@ public class DAGBuilder {
 
 
   public void add(TableNode node) {
-    nodeLookup.put(node.getIdentifier(), node);
+    PipelineNode priorNode = nodeLookup.put(node.getIdentifier(), node);
+    //For AddColumn statements we need to replace the prior node in the DAG but we are guaranteed that no other node depends on it
+    if (priorNode!=null) dagInputs.removeAll(priorNode);
     node.getTableAnalysis().getFromTables().forEach(inputTable ->
         dagInputs.put(node, Objects.requireNonNull(nodeLookup.get(inputTable.getIdentifier()))));
   }
@@ -27,6 +29,9 @@ public class DAGBuilder {
   public void add(TableFunctionNode node) {
     if (!node.getFunction().getVisibility().isAccessOnly()) {
       nodeLookup.put(node.getIdentifier(), node);
+    } else {
+      //Remove prior function in case its an AddColumn statement
+      dagInputs.removeAll(node);
     }
     node.getFunction().getFunctionAnalysis().getFromTables().forEach(inputTable ->
         dagInputs.put(node, Objects.requireNonNull(nodeLookup.get(inputTable.getIdentifier()))));

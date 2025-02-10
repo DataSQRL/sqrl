@@ -5,7 +5,9 @@ import com.datasqrl.v2.analyzer.TableAnalysis;
 import com.datasqrl.v2.tables.SqrlTableFunction;
 import com.datasqrl.plan.global.StageAnalysis;
 import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.Getter;
+import org.apache.calcite.schema.FunctionParameter;
 
 @Getter
 public class TableFunctionNode extends PlannedNode {
@@ -19,7 +21,8 @@ public class TableFunctionNode extends PlannedNode {
 
   @Override
   public String getId() {
-    return function.getFullPath().toString();
+    return function.getFullPath().toString() + "(" + function.getParameters().stream().map(
+        FunctionParameter::getName).collect(Collectors.joining(",")) + ")";
   }
 
   @Override

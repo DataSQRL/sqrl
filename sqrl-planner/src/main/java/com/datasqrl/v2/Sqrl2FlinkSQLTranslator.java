@@ -334,6 +334,7 @@ public class Sqrl2FlinkSQLTranslator {
     if (op instanceof AlterViewAsOperation) {
       identifier = ((AlterViewAsOperation) op).getViewIdentifier();
       schema = ((AlterViewAsOperation) op).getNewView().getUnresolvedSchema();
+      tableLookup.removeTable(identifier); //remove previously planned view
     } else if (op instanceof CreateViewOperation) {
       identifier = ((CreateViewOperation) op).getViewIdentifier();
       schema = ((CreateViewOperation) op).getCatalogView().getUnresolvedSchema();

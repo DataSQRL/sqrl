@@ -19,6 +19,7 @@ import com.datasqrl.engine.server.ServerEngine;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.function.CommonFunctions;
+import com.datasqrl.plan.global.StageAnalysis;
 import com.datasqrl.util.RelDataTypeBuilder;
 import com.datasqrl.v2.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.v2.analyzer.TableAnalysis;
@@ -122,6 +123,9 @@ public class DAGPlanner {
         //table.assignStage(stage); //this stage on the config below
       }
     }
+    dag.allNodesByClass(PipelineNode.class).forEach(node -> errors.checkFatal(node.getStageAnalysis().values().stream().filter(
+        StageAnalysis::isSupported).count()==1, "Node has more than one supported stage - something"
+        + "went wrong during DAG optimization: %s", node));
 
     return dag;
   }

@@ -1,0 +1,2 @@
+IMPORT ecommerceTs.Orders;
+Orders.col1 := (id + customerid)/2;

@@ -51,6 +51,13 @@ public class TableAnalysisLookup {
     return id2Table.get(objectIdentifier);
   }
 
+  public void removeTable(ObjectIdentifier tableIdentifier) {
+    TableAnalysis priorTable = id2Table.remove(tableIdentifier);
+    if (priorTable != null && !priorTable.isSourceOrSink()) {
+      tableMap.remove(priorTable.getRowType().hashCode(), priorTable);
+    }
+  }
+
   public void registerTable(TableAnalysis tableAnalysis) {
     if (tableAnalysis.isSourceOrSink()) {
       sourceTableMap.put(tableAnalysis.getIdentifier(), tableAnalysis);
