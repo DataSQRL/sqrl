@@ -139,8 +139,8 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
       //If we don't have a rowtime, let's check if we lost it when all inputs had a rowtime
       if (sourceTables.stream().map(TableOrFunctionAnalysis::getRowTime).allMatch(Optional::isPresent)) {
         errors.notice("This table does not propagate the source row time columns: %s",
-            sourceTables.stream().map(tbl -> tbl.getRowTime().map(tbl::getFieldName)).collect(
-                Collectors.toList()));
+            sourceTables.stream().map(tbl -> tbl.getIdentifier() + "[" + tbl.getRowTime().map(tbl::getFieldName).get() + "]")
+                .collect(Collectors.joining(", ")));
       }
     }
 

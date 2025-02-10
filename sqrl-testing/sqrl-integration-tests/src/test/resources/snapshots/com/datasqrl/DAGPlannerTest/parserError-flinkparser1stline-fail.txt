@@ -1,18 +1,3 @@
-[WARN] No table file [product] for schema file [src/test/resources/dagplanner/ecommerce/product.schema.yml], hence schema is ignored
-in config:package.json:
-
-[WARN] No table file [orders] for schema file [src/test/resources/dagplanner/ecommerce/orders.schema.yml], hence schema is ignored
-in config:package.json:
-
-[WARN] No table file [customer] for schema file [src/test/resources/dagplanner/ecommerce/customer.schema.yml], hence schema is ignored
-in config:package.json:
-
-[WARN] No table file [product] for schema file [src/test/resources/dagplanner/ecommerceTs/product.schema.yml], hence schema is ignored
-in config:package.json:
-
-[WARN] No table file [orders] for schema file [src/test/resources/dagplanner/ecommerceTs/orders.schema.yml], hence schema is ignored
-in config:package.json:
-
 [FATAL] Encountered "]".
 Was expecting one of:
     <EOF> 

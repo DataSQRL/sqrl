@@ -1,18 +1,3 @@
-[WARN] No table file [product] for schema file [src/test/resources/dagplanner/ecommerce/product.schema.yml], hence schema is ignored
-in config:package.json:
-
-[WARN] No table file [orders] for schema file [src/test/resources/dagplanner/ecommerce/orders.schema.yml], hence schema is ignored
-in config:package.json:
-
-[WARN] No table file [customer] for schema file [src/test/resources/dagplanner/ecommerce/customer.schema.yml], hence schema is ignored
-in config:package.json:
-
-[WARN] No table file [product] for schema file [src/test/resources/dagplanner/ecommerceTs/product.schema.yml], hence schema is ignored
-in config:package.json:
-
-[WARN] No table file [orders] for schema file [src/test/resources/dagplanner/ecommerceTs/orders.schema.yml], hence schema is ignored
-in config:package.json:
-
 [FATAL] Argument list contains invalid arguments
 in script:parsererror-arguments-fail.sqrl [5:14]:
 CustomerQuery($id: BIGINT,
@@ -21,9 +6,9 @@ CustomerQuery($id: BIGINT,
 -------------^
 Invalid table function arguments provided.
 
-Table function arguments have the form
+Table function arguments start with `$` and have a type separated by `:`. Multiple function arguments are separated by `,`.
+For example:
 ```
-($argument: INT, $arg2: STRING)
+MyTableFunction($argument: INT, $arg2: STRING)
 ```
-and are separated by comma.
 

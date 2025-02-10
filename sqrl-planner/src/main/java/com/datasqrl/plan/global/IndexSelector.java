@@ -109,7 +109,8 @@ public class IndexSelector {
     if (!indexHints.isEmpty()) {
       return Optional.of(indexHints.stream()
           .filter(idxHint -> config.supportedIndexTypes().contains(idxHint.getIndexType()))
-          .map(idxHint -> new IndexDefinition(tableName, idxHint.getColumnIndexes(), idxHint.getColumnNames(),
+          .map(idxHint -> new IndexDefinition(tableName, idxHint.getColumnIndexes(), tableAnalysis.getRowType()
+              .getFieldNames(),
               idxHint.getIndexType().isPartitioned()? idxHint.getColumnNames().size() : -1, idxHint.getIndexType()))
           .collect(Collectors.toUnmodifiableList()));
     } else {

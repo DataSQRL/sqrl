@@ -28,7 +28,7 @@ Customer.related($length : INT) := SELECT * FROM Customer other WHERE this.custo
 /** This is for selected customers
     and their orders
   */ /* ignored comment */
-/*+ primary_key(customerid, name), index(name) */
+/*+ primary_key(customerid, name), index(hash, name) */
 SelectCustomers := SELECT * From Customer WHERE customerid > 0 ORDER BY `timestamp` DESC LIMIT 10;
 
 CustomerSubscription := SUBSCRIBE SELECT * FROM Customer;

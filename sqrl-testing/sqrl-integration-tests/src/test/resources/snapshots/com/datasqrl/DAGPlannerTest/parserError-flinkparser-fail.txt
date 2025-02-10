@@ -1,19 +1,4 @@
-[WARN] No table file [product] for schema file [src/test/resources/dagplanner/ecommerce/product.schema.yml], hence schema is ignored
-in config:package.json:
-
-[WARN] No table file [orders] for schema file [src/test/resources/dagplanner/ecommerce/orders.schema.yml], hence schema is ignored
-in config:package.json:
-
-[WARN] No table file [customer] for schema file [src/test/resources/dagplanner/ecommerce/customer.schema.yml], hence schema is ignored
-in config:package.json:
-
-[WARN] No table file [product] for schema file [src/test/resources/dagplanner/ecommerceTs/product.schema.yml], hence schema is ignored
-in config:package.json:
-
-[WARN] No table file [orders] for schema file [src/test/resources/dagplanner/ecommerceTs/orders.schema.yml], hence schema is ignored
-in config:package.json:
-
-[FATAL] SQL parse failed. Incorrect syntax near the keyword 'COUNT' at line 3, column 27.
+[FATAL] Incorrect syntax near the keyword 'COUNT'.
 Was expecting one of:
     <EOF> 
     "AS" ...
@@ -71,8 +56,9 @@ Was expecting one of:
     "[" ...
     "(" ...
     
-in script:parsererror-flinkparser-fail.sqrl [2:1]:
-IMPORT ecommerceTs.Customer;
-
-^
+in script:parsererror-flinkparser-fail.sqrl [5:27]:
+CustomerTimeWindow := SELECT
+                          window_start, window_end
+                          COUNT(DISTINCT email) AS unique_email_count
+--------------------------^
 

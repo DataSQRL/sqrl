@@ -1,6 +1,6 @@
 >>>pipeline_explain.txt
 === CustomerById
-ID:     CustomerById
+ID:     CustomerById(customerid)
 Type:   query
 Stage:  postgres
 Inputs: default_catalog.default_database.Customer
@@ -14,7 +14,7 @@ LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timesta
 SQL: CREATE VIEW CustomerById AS  SELECT * FROM Customer WHERE customerid = ?          ;
 
 === LargeOrderSubscription
-ID:     LargeOrderSubscription
+ID:     LargeOrderSubscription(customerid)
 Type:   query
 Stage:  kafka
 Inputs: default_catalog.default_database.LargeOrders
