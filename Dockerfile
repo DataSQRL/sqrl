@@ -10,5 +10,7 @@ WORKDIR /app
 # Copy the current directory contents into the container at /app
 COPY . /app/
 
+ENV TZ=America/Los_Angeles
+
 # Run Maven clean and install commands, skipping tests
 RUN mvn clean install -DskipTests
