@@ -2,6 +2,7 @@ package com.datasqrl.v2.dag.nodes;
 
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.v2.analyzer.TableAnalysis;
+import com.datasqrl.v2.analyzer.TableOrFunctionAnalysis.FullIdentifier;
 import com.datasqrl.v2.tables.SqrlTableFunction;
 import com.datasqrl.plan.global.StageAnalysis;
 import java.util.Map;
@@ -21,7 +22,7 @@ public class TableFunctionNode extends PlannedNode {
 
   @Override
   public String getId() {
-    return function.getFullPath().toString() + "(" + function.getParameters().stream().map(
+    return function.getIdentifier().asSummaryString() + "(" + function.getParameters().stream().map(
         FunctionParameter::getName).collect(Collectors.joining(",")) + ")";
   }
 
@@ -33,5 +34,10 @@ public class TableFunctionNode extends PlannedNode {
   @Override
   public TableAnalysis getAnalysis() {
     return function.getFunctionAnalysis();
+  }
+
+  @Override
+  public FullIdentifier getFullIdentifier() {
+    return function.getFullIdentifier();
   }
 }

@@ -3,6 +3,7 @@ package com.datasqrl.v2.dag.nodes;
 
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.v2.analyzer.TableAnalysis;
+import com.datasqrl.v2.analyzer.TableOrFunctionAnalysis.FullIdentifier;
 import com.datasqrl.v2.dag.plan.MutationQuery;
 import com.datasqrl.plan.global.StageAnalysis;
 import java.util.Map;
@@ -36,6 +37,11 @@ public class TableNode extends PlannedNode {
   @Override
   public TableAnalysis getAnalysis() {
     return tableAnalysis;
+  }
+
+  @Override
+  public FullIdentifier getFullIdentifier() {
+    return tableAnalysis.getFullIdentifier();
   }
 
   @Override

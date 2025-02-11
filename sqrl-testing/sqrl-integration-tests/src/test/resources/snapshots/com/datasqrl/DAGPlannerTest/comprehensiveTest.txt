@@ -1,61 +1,4 @@
 >>>pipeline_explain.txt
-=== CustomerById
-ID:     CustomerById(minId)
-Type:   query
-Stage:  postgres
-Inputs: default_catalog.default_database.Customer
-Annotations:
- - stream-root: Customer__def
- - parameters: minId
-Plan:
-LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
-  LogicalFilter(condition=[>($0, ?0)])
-    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW CustomerById AS  SELECT * FROM Customer WHERE customerid > ?     ;
-
-=== CustomerQuery
-ID:     CustomerQuery(id)
-Type:   query
-Stage:  postgres
-Inputs: default_catalog.default_database.AnotherCustomer
-Annotations:
- - stream-root: _customer__def
- - parameters: id
-Plan:
-LogicalProject(customerid=[$0], email=[$1], lastUpdated=[$2])
-  LogicalFilter(condition=[=($0, ?0)])
-    LogicalTableScan(table=[[default_catalog, default_database, AnotherCustomer]])
-SQL: CREATE VIEW CustomerQuery AS  SELECT * FROM AnotherCustomer WHERE customerid = ?  ;
-
-=== CustomerSubscriptionById
-ID:     CustomerSubscriptionById(minId)
-Type:   query
-Stage:  kafka
-Inputs: default_catalog.default_database.Customer
-Annotations:
- - stream-root: Customer__def
- - parameters: minId
-Plan:
-LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
-  LogicalFilter(condition=[=($0, ?0)])
-    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW CustomerSubscriptionById AS  SELECT * FROM Customer WHERE customerid = ?     ;
-
-=== TableFunctionCallsTblFct
-ID:     TableFunctionCallsTblFct(arg1,arg2)
-Type:   query
-Stage:  postgres
-Inputs: CustomerById(minId)
-Annotations:
- - features: TABLE_FUNCTION_SCAN (feature)
- - stream-root: Customer__def
- - parameters: arg1, arg2
-Plan:
-LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
-  LogicalFilter(condition=[>($0, ?1)])
-    LogicalTableFunctionScan(invocation=[CustomerById(?0)], rowType=[RecordType(BIGINT customerid, VARCHAR(2147483647) email, VARCHAR(2147483647) name, BIGINT lastUpdated, TIMESTAMP_LTZ(3) *ROWTIME* timestamp)], elementType=[class [Ljava.lang.Object;])
-SQL: CREATE VIEW TableFunctionCallsTblFct AS  SELECT * FROM Table(CustomerById(?    )) WHERE customerid > ?    ;
-
 === AnotherCustomer
 ID:     default_catalog.default_database.AnotherCustomer
 Type:   stream
@@ -99,6 +42,20 @@ SQL: CREATE VIEW `Customer`
 AS
 SELECT *
 FROM `default_catalog`.`default_database`.`Customer__def`
+=== CustomerById
+ID:     default_catalog.default_database.CustomerById(minId)
+Type:   query
+Stage:  postgres
+Inputs: default_catalog.default_database.Customer
+Annotations:
+ - stream-root: Customer__def
+ - parameters: minId
+Plan:
+LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
+  LogicalFilter(condition=[>($0, ?0)])
+    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW CustomerById AS  SELECT * FROM Customer WHERE customerid > ?     ;
+
 === CustomerByMultipleTime
 ID:     default_catalog.default_database.CustomerByMultipleTime
 Type:   state
@@ -189,6 +146,20 @@ FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMB
       WHERE `lastUpdated` >= `$f5`) AS `t1`
     WHERE `$f5` IS NULL AND `$f6` IS NULL OR `email` <> `$f5` OR `name` <> `$f6`) AS `t3`) AS `t4`
 WHERE `$f5` = 1
+=== CustomerQuery
+ID:     default_catalog.default_database.CustomerQuery(id)
+Type:   query
+Stage:  postgres
+Inputs: default_catalog.default_database.AnotherCustomer
+Annotations:
+ - stream-root: _customer__def
+ - parameters: id
+Plan:
+LogicalProject(customerid=[$0], email=[$1], lastUpdated=[$2])
+  LogicalFilter(condition=[=($0, ?0)])
+    LogicalTableScan(table=[[default_catalog, default_database, AnotherCustomer]])
+SQL: CREATE VIEW CustomerQuery AS  SELECT * FROM AnotherCustomer WHERE customerid = ?  ;
+
 === CustomerSubscription
 ID:     default_catalog.default_database.CustomerSubscription
 Type:   stream
@@ -208,6 +179,20 @@ Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL: CREATE VIEW CustomerSubscription AS  SELECT * FROM Customer;
+
+=== CustomerSubscriptionById
+ID:     default_catalog.default_database.CustomerSubscriptionById(minId)
+Type:   query
+Stage:  kafka
+Inputs: default_catalog.default_database.Customer
+Annotations:
+ - stream-root: Customer__def
+ - parameters: minId
+Plan:
+LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
+  LogicalFilter(condition=[=($0, ?0)])
+    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW CustomerSubscriptionById AS  SELECT * FROM Customer WHERE customerid = ?     ;
 
 === CustomerTimeWindow
 ID:     default_catalog.default_database.CustomerTimeWindow
@@ -406,6 +391,21 @@ LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timesta
   LogicalFilter(condition=[>($0, 0)])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL: CREATE VIEW SelectCustomers AS  SELECT * From Customer WHERE customerid > 0 ORDER BY `timestamp` DESC LIMIT 10;
+
+=== TableFunctionCallsTblFct
+ID:     default_catalog.default_database.TableFunctionCallsTblFct(arg1,arg2)
+Type:   query
+Stage:  postgres
+Inputs: default_catalog.default_database.CustomerById(minId)
+Annotations:
+ - features: TABLE_FUNCTION_SCAN (feature)
+ - stream-root: Customer__def
+ - parameters: arg1, arg2
+Plan:
+LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
+  LogicalFilter(condition=[>($0, ?1)])
+    LogicalTableFunctionScan(invocation=[CustomerById(?0)], rowType=[RecordType(BIGINT customerid, VARCHAR(2147483647) email, VARCHAR(2147483647) name, BIGINT lastUpdated, TIMESTAMP_LTZ(3) *ROWTIME* timestamp)], elementType=[class [Ljava.lang.Object;])
+SQL: CREATE VIEW TableFunctionCallsTblFct AS  SELECT * FROM Table(CustomerById(?    )) WHERE customerid > ?    ;
 
 === TemporalJoin
 ID:     default_catalog.default_database.TemporalJoin
@@ -1476,38 +1476,6 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
       ]
     },
     {
-      "name" : "Customer",
-      "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"InvalidDistinct_12\"",
-      "fields" : [
-        {
-          "name" : "customerid",
-          "type" : "BIGINT",
-          "nullable" : false
-        },
-        {
-          "name" : "email",
-          "type" : "TEXT",
-          "nullable" : false
-        },
-        {
-          "name" : "name",
-          "type" : "TEXT",
-          "nullable" : false
-        },
-        {
-          "name" : "lastUpdated",
-          "type" : "BIGINT",
-          "nullable" : false
-        },
-        {
-          "name" : "timestamp",
-          "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
-        }
-      ]
-    },
-    {
       "name" : "CustomerByMultipleTime",
       "type" : "VIEW",
       "sql" : "CREATE OR REPLACE VIEW \"CustomerByMultipleTime\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\"\nFROM (SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", ROW_NUMBER() OVER (PARTITION BY \"customerid\", \"email\" ORDER BY \"timestamp\" DESC NULLS LAST, \"lastUpdated\" NULLS FIRST) AS \"__sqrlinternal_rownum\"\n  FROM \"InvalidDistinct_12\") AS \"t3\"\nWHERE \"__sqrlinternal_rownum\" = 1",
@@ -1604,6 +1572,28 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
       ]
     },
     {
+      "name" : "CustomerTimeWindowTest",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerTimeWindowTest\"(\"window_start\", \"window_end\", \"unique_email_count\") AS SELECT *\nFROM (SELECT \"window_start\", \"window_end\", \"unique_email_count\"\n  FROM \"CustomerTimeWindow_9\"\n  ORDER BY \"window_end\" DESC NULLS LAST) AS \"t3\"",
+      "fields" : [
+        {
+          "name" : "window_start",
+          "type" : "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "window_end",
+          "type" : "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "unique_email_count",
+          "type" : "BIGINT",
+          "nullable" : false
+        }
+      ]
+    },
+    {
       "name" : "CustomerTimeWindow",
       "type" : "VIEW",
       "sql" : "CREATE OR REPLACE VIEW \"CustomerTimeWindow\"(\"window_start\", \"window_end\", \"unique_email_count\") AS SELECT *\nFROM \"CustomerTimeWindow_9\"",
@@ -1626,24 +1616,34 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
       ]
     },
     {
-      "name" : "CustomerTimeWindowTest",
+      "name" : "Customer",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerTimeWindowTest\"(\"window_start\", \"window_end\", \"unique_email_count\") AS SELECT *\nFROM (SELECT \"window_start\", \"window_end\", \"unique_email_count\"\n  FROM \"CustomerTimeWindow_9\"\n  ORDER BY \"window_end\" DESC NULLS LAST) AS \"t3\"",
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"InvalidDistinct_12\"",
       "fields" : [
         {
-          "name" : "window_start",
-          "type" : "TIMESTAMP WITHOUT TIME ZONE",
-          "nullable" : false
-        },
-        {
-          "name" : "window_end",
-          "type" : "TIMESTAMP WITHOUT TIME ZONE",
-          "nullable" : false
-        },
-        {
-          "name" : "unique_email_count",
+          "name" : "customerid",
           "type" : "BIGINT",
           "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "lastUpdated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : true
         }
       ]
     },

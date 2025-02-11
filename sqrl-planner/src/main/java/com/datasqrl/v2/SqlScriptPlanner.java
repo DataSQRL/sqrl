@@ -94,6 +94,7 @@ import org.apache.flink.table.functions.UserDefinedFunction;
 public class SqlScriptPlanner {
 
   public static final String EXPORT_SUFFIX = "_ex";
+  public static final String  ACCESS_FUNCTION_SUFFIX = "__access";
 
 
   private final ErrorCollector errorCollector;
@@ -405,11 +406,13 @@ public class SqlScriptPlanner {
     TableNode tableNode = new TableNode(tableAnalysis, getStageAnalysis(tableAnalysis, availableStages));
     dagBuilder.add(tableNode);
     if (visibility.isEndpoint()) { //Add function to scan table as endpoint
-      String scanViewSql = sqrlEnv.toSqlString(sqrlEnv.createScanView("scanView", tableAnalysis.getIdentifier()));
+      String tableName = tableAnalysis.getIdentifier().getObjectName();
+      String fctName = tableName + ACCESS_FUNCTION_SUFFIX;
+      String scanViewSql = sqrlEnv.toSqlString(sqrlEnv.createScanView(fctName, tableAnalysis.getIdentifier()));
       //TODO: should we add a default sort if the user didn't specify one to have predictable result sets for testing?
-      SqrlTableFunction.SqrlTableFunctionBuilder fctBuilder = sqrlEnv.resolveSqrlTableFunction(SqlNameUtil.toIdentifier(Name.system("scanView")),
+      SqrlTableFunction.SqrlTableFunctionBuilder fctBuilder = sqrlEnv.resolveSqrlTableFunction(SqlNameUtil.toIdentifier(Name.system(fctName)),
           scanViewSql, List.of(), Map.of(), PlannerHints.EMPTY, ErrorCollector.root());
-      fctBuilder.fullPath(NamePath.of(tableAnalysis.getIdentifier().getObjectName()));
+      fctBuilder.fullPath(NamePath.of(tableName));
       fctBuilder.visibility(visibility);
       addFunctionToDag(fctBuilder.build(), hints);
     }

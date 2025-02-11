@@ -1,32 +1,4 @@
 >>>pipeline_explain.txt
-=== CustomerById
-ID:     CustomerById(customerid)
-Type:   query
-Stage:  postgres
-Inputs: default_catalog.default_database.Customer
-Annotations:
- - stream-root: CustomerImport__def
- - parameters: customerid
-Plan:
-LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
-  LogicalFilter(condition=[=($0, ?0)])
-    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW CustomerById AS  SELECT * FROM Customer WHERE customerid = ?          ;
-
-=== LargeOrderSubscription
-ID:     LargeOrderSubscription(customerid)
-Type:   query
-Stage:  kafka
-Inputs: default_catalog.default_database.LargeOrders
-Annotations:
- - stream-root: SimpleOrders__def
- - parameters: customerid
-Plan:
-LogicalProject(_uuid=[$0], orderid=[$1], customerid=[$2], amount=[$3], orderTime=[$4])
-  LogicalFilter(condition=[=($2, ?0)])
-    LogicalTableScan(table=[[default_catalog, default_database, LargeOrders]])
-SQL: CREATE VIEW LargeOrderSubscription AS  SELECT * FROM LargeOrders WHERE customerid = ?          ;
-
 === Customer
 ID:     default_catalog.default_database.Customer
 Type:   state
@@ -54,6 +26,20 @@ SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`
 FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC NULLS LAST) AS `__sqrlinternal_rownum`
   FROM `default_catalog`.`default_database`.`CustomerImport`) AS `t`
 WHERE `__sqrlinternal_rownum` = 1
+=== CustomerById
+ID:     default_catalog.default_database.CustomerById(customerid)
+Type:   query
+Stage:  postgres
+Inputs: default_catalog.default_database.Customer
+Annotations:
+ - stream-root: CustomerImport__def
+ - parameters: customerid
+Plan:
+LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
+  LogicalFilter(condition=[=($0, ?0)])
+    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW CustomerById AS  SELECT * FROM Customer WHERE customerid = ?          ;
+
 === CustomerImport
 ID:     default_catalog.default_database.CustomerImport
 Type:   stream
@@ -78,6 +64,20 @@ SQL: CREATE VIEW `CustomerImport`
 AS
 SELECT *
 FROM `default_catalog`.`default_database`.`CustomerImport__def`
+=== LargeOrderSubscription
+ID:     default_catalog.default_database.LargeOrderSubscription(customerid)
+Type:   query
+Stage:  kafka
+Inputs: default_catalog.default_database.LargeOrders
+Annotations:
+ - stream-root: SimpleOrders__def
+ - parameters: customerid
+Plan:
+LogicalProject(_uuid=[$0], orderid=[$1], customerid=[$2], amount=[$3], orderTime=[$4])
+  LogicalFilter(condition=[=($2, ?0)])
+    LogicalTableScan(table=[[default_catalog, default_database, LargeOrders]])
+SQL: CREATE VIEW LargeOrderSubscription AS  SELECT * FROM LargeOrders WHERE customerid = ?          ;
+
 === LargeOrders
 ID:     default_catalog.default_database.LargeOrders
 Type:   stream
@@ -655,9 +655,9 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2__def`
       ]
     },
     {
-      "name" : "Customer",
+      "name" : "CustomerImport",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\"\nFROM (SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", ROW_NUMBER() OVER (PARTITION BY \"customerid\" ORDER BY \"timestamp\" DESC NULLS LAST) AS \"__sqrlinternal_rownum\"\n  FROM \"CustomerImport_2\") AS \"t3\"\nWHERE \"__sqrlinternal_rownum\" = 1",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerImport\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"CustomerImport_2\"",
       "fields" : [
         {
           "name" : "customerid",
@@ -687,9 +687,9 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2__def`
       ]
     },
     {
-      "name" : "CustomerImport",
+      "name" : "Customer",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerImport\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"CustomerImport_2\"",
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\"\nFROM (SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", ROW_NUMBER() OVER (PARTITION BY \"customerid\" ORDER BY \"timestamp\" DESC NULLS LAST) AS \"__sqrlinternal_rownum\"\n  FROM \"CustomerImport_2\") AS \"t3\"\nWHERE \"__sqrlinternal_rownum\" = 1",
       "fields" : [
         {
           "name" : "customerid",

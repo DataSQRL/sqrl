@@ -1,5 +1,6 @@
 package com.datasqrl.v2.dag;
 
+import com.datasqrl.v2.analyzer.TableOrFunctionAnalysis.FullIdentifier;
 import com.datasqrl.v2.dag.nodes.ExportNode;
 import com.datasqrl.v2.dag.nodes.PipelineNode;
 import com.datasqrl.v2.dag.nodes.TableFunctionNode;
@@ -15,26 +16,26 @@ import org.apache.flink.table.catalog.ObjectIdentifier;
 public class DAGBuilder {
 
   Multimap<PipelineNode, PipelineNode> dagInputs = HashMultimap.create();
-  Map<ObjectIdentifier, PipelineNode> nodeLookup = new HashMap<>();
+  Map<FullIdentifier, PipelineNode> nodeLookup = new HashMap<>();
 
 
   public void add(TableNode node) {
-    PipelineNode priorNode = nodeLookup.put(node.getIdentifier(), node);
+    PipelineNode priorNode = nodeLookup.put(node.getFullIdentifier(), node);
     //For AddColumn statements we need to replace the prior node in the DAG but we are guaranteed that no other node depends on it
     if (priorNode!=null) dagInputs.removeAll(priorNode);
     node.getTableAnalysis().getFromTables().forEach(inputTable ->
-        dagInputs.put(node, Objects.requireNonNull(nodeLookup.get(inputTable.getIdentifier()))));
+        dagInputs.put(node, Objects.requireNonNull(nodeLookup.get(inputTable.getFullIdentifier()))));
   }
 
   public void add(TableFunctionNode node) {
     if (!node.getFunction().getVisibility().isAccessOnly()) {
-      nodeLookup.put(node.getIdentifier(), node);
+      nodeLookup.put(node.getFullIdentifier(), node);
     } else {
       //Remove prior function in case its an AddColumn statement
       dagInputs.removeAll(node);
     }
     node.getFunction().getFunctionAnalysis().getFromTables().forEach(inputTable ->
-        dagInputs.put(node, Objects.requireNonNull(nodeLookup.get(inputTable.getIdentifier()))));
+        dagInputs.put(node, Objects.requireNonNull(nodeLookup.get(inputTable.getFullIdentifier()))));
   }
 
   public PipelineDAG getDag() {
@@ -42,7 +43,7 @@ public class DAGBuilder {
   }
 
   public Optional<PipelineNode> getNode(ObjectIdentifier identifier) {
-    return Optional.ofNullable(nodeLookup.get(identifier));
+    return Optional.ofNullable(nodeLookup.get(new FullIdentifier(identifier)));
   }
 
   public void addExport(ExportNode node, TableNode inputNode) {

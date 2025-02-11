@@ -200,9 +200,9 @@ public class DAGPlanner {
             errors.checkFatal(node.getTableAnalysis().getPrimaryKey().isDefined(), "Expected primary key: %s", node);
             node = (TableNode) Iterables.getOnlyElement(dag.getInputs(node));
           }
-          FlinkRelBuilder relBuilder = sqrlEnv.getTableScan(node.getIdentifier());
-          FlinkTableBuilder tblBuilder = new FlinkTableBuilder();
           ObjectIdentifier fromTableId = node.getIdentifier();
+          FlinkRelBuilder relBuilder = sqrlEnv.getTableScan(fromTableId);
+          FlinkTableBuilder tblBuilder = new FlinkTableBuilder();
           TableAnalysis nodeTable = node.getTableAnalysis();
           tblBuilder.setName(externalNameFct.apply(originalTableName));
           //#1st: determine primary key and partition key (if present)
