@@ -42,6 +42,7 @@ import com.datasqrl.function.SqrlCastFunction;
 import com.datasqrl.plan.util.PrimaryKeyMap;
 import com.datasqrl.util.CalciteUtil;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
 import com.google.inject.Inject;
 import java.util.ArrayList;
@@ -194,36 +195,36 @@ public class DAGPlanner {
           assert exportStage != null;
           Preconditions.checkArgument(exportStage.getEngine().getType().supportsExport(), "Execution stage [%s] does not support exporting [%s]", exportStage, node);
           ExportEngine exportEngine = (ExportEngine) exportStage.getEngine();
+          TableAnalysis originalNodeTable = node.getTableAnalysis(), sinkNodeTable = originalNodeTable;
           if (exportEngine.getType().isDataStore() && node.getTableAnalysis().isHasMostRecentDistinct()) {
             //If we are sinking to a datastore and the node is a most recent distinct, we can remove that node
             //since materializing into the table on primary key has the same effect and is more efficient
             errors.checkFatal(node.getTableAnalysis().getPrimaryKey().isDefined(), "Expected primary key: %s", node);
-            node = (TableNode) Iterables.getOnlyElement(dag.getInputs(node));
+            sinkNodeTable = ((TableNode) Iterables.getOnlyElement(dag.getInputs(node))).getTableAnalysis();
           }
-          ObjectIdentifier fromTableId = node.getIdentifier();
+          ObjectIdentifier fromTableId = originalNodeTable.getIdentifier();
           FlinkRelBuilder relBuilder = sqrlEnv.getTableScan(fromTableId);
           FlinkTableBuilder tblBuilder = new FlinkTableBuilder();
-          TableAnalysis nodeTable = node.getTableAnalysis();
           tblBuilder.setName(externalNameFct.apply(originalTableName));
           //#1st: determine primary key and partition key (if present)
-          PrimaryKeyMap pk = deterinePrimaryKey(nodeTable, relBuilder, sqrlEnv, exportStage);
+          PrimaryKeyMap pk = deterinePrimaryKey(originalNodeTable, relBuilder, sqrlEnv, exportStage);
           if (pk.isDefined()) {
             List<RelDataTypeField> fields = relBuilder.peek().getRowType().getFieldList();
             List<String> pkColNames = pk.asSimpleList().stream().map(fields::get).map(RelDataTypeField::getName).collect(
                 Collectors.toList());
             tblBuilder.setPrimaryKey(pkColNames);
           }
-          nodeTable.getHints().getHint(PartitionKeyHint.class).ifPresent(
+          originalNodeTable.getHints().getHint(PartitionKeyHint.class).ifPresent(
               partitionKeyHint -> tblBuilder.setPartition(partitionKeyHint.getColumnNames()));
 
           //#2nd: apply type casting
-          mapTypes(relBuilder, nodeTable.getRowType(), sqrlEnv, exportEngine.getTypeMapping(), Direction.TO_ENGINE);
+          mapTypes(relBuilder, sinkNodeTable.getRowType(), sqrlEnv, exportEngine.getTypeMapping(), Direction.TO_ENGINE);
 
           //#3rd: create table
           RelDataType datatype = relBuilder.peek().getRowType();
           tblBuilder.setRelDataType(datatype);
           EngineCreateTable createdTable = exportEngine.createTable(exportStage,
-              originalTableName, tblBuilder, datatype, Optional.of(nodeTable));
+              originalTableName, tblBuilder, datatype, Optional.of(originalNodeTable));
           exportPlans.get(exportStage).table(createdTable);
           targetTable = sqrlEnv.createSinkTable(tblBuilder);
           streamTableMapping.put(new InputTableKey(exportStage, fromTableId), targetTable);

@@ -75,7 +75,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
   @Inject
   public KafkaLogEngine(PackageJson json,
       ConnectorFactoryFactory connectorFactory) {
-    super(KafkaLogEngineFactory.ENGINE_NAME, EngineType.LOG, EnumSet.noneOf(EngineFeature.class));
+    super(KafkaLogEngineFactory.ENGINE_NAME, EngineType.LOG, EngineFeature.STANDARD_LOG);
     this.engineConfig = json.getEngines().getEngineConfig(KafkaLogEngineFactory.ENGINE_NAME)
         .orElseGet(() -> new EmptyEngineConfig(KafkaLogEngineFactory.ENGINE_NAME));
     this.connectorFactory = connectorFactory.create(EngineType.LOG, "kafka")
