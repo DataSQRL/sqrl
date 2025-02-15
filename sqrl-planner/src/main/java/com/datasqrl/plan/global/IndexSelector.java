@@ -6,13 +6,11 @@ package com.datasqrl.plan.global;
 import com.datasqrl.calcite.SqrlRexUtil;
 import com.datasqrl.function.IndexType;
 import com.datasqrl.plan.global.QueryIndexSummary.IndexableFunctionCall;
-import com.datasqrl.plan.hints.IndexHint;
 import com.datasqrl.util.ArrayUtil;
-import com.datasqrl.util.StreamUtil;
 import com.datasqrl.v2.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.v2.analyzer.TableAnalysis;
+import com.datasqrl.v2.hint.IndexHint;
 import com.datasqrl.v2.hint.PlannerHints;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.primitives.Ints;
@@ -42,7 +40,6 @@ import org.apache.calcite.rel.core.Sort;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.logical.LogicalFilter;
 import org.apache.calcite.rel.rules.CoreRules;
-import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexDynamicParam;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
@@ -104,10 +101,11 @@ public class IndexSelector {
 
   public Optional<List<IndexDefinition>> getIndexHints(String tableName, TableAnalysis tableAnalysis) {
     PlannerHints hints = tableAnalysis.getHints();
-    List<com.datasqrl.v2.hint.IndexHint> indexHints = hints.getHints(com.datasqrl.v2.hint.IndexHint.class)
+    List<IndexHint> indexHints = hints.getHints(IndexHint.class)
         .collect(Collectors.toUnmodifiableList());
     if (!indexHints.isEmpty()) {
       return Optional.of(indexHints.stream()
+          .filter(idxHint -> idxHint.getIndexType()!=null) //filter out no-index hints
           .filter(idxHint -> config.supportedIndexTypes().contains(idxHint.getIndexType()))
           .map(idxHint -> new IndexDefinition(tableName, idxHint.getColumnIndexes(), tableAnalysis.getRowType()
               .getFieldNames(),

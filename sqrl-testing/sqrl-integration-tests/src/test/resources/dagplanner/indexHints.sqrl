@@ -9,7 +9,8 @@ MyOrdersIndexHash := SELECT * FROM _Orders WHERE id > 10;
 /*+index */
 MyOrdersNoIndex := SELECT * FROM _Orders WHERE id > 10;
 
--- TODO: Two index hints causes a parsing error
+/*+index(btree, time, id), index(hash, customerid) */
+MyOrdersTwoIndex := SELECT * FROM _Orders WHERE id > 10;
 
 MyOrdersNoHint := SELECT * FROM _Orders WHERE id > 10;
 

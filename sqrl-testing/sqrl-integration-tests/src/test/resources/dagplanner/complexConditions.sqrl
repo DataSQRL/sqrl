@@ -1,7 +1,12 @@
 IMPORT ecommerceTs.Orders;
 IMPORT ecommerceTs.Customer;
+IMPORT ecommerceTs.Product;
 
-SelectOrders1 := SELECT o.id, o.time FROM Orders o WHERE o.customerid > (SELECT c.customerid FROM Customer c WHERE c.name = 'foo');
-SelectOrders2 := SELECT o.id, o.time FROM Orders o WHERE o.customerid NOT IN (SELECT c.customerid FROM Customer c WHERE c.name = 'foo');
-SelectOrders3 := SELECT o.id, o.time FROM Orders o WHERE o.customerid IN (SELECT c.customerid FROM Customer c WHERE c.name = 'foo');
-SelectOrders4 := SELECT o.id, o.time, (SELECT COUNT(*) FROM Customer c WHERE c.customerid > o.customerid) AS cc FROM Orders o WHERE o.customerid IN (SELECT c.customerid FROM Customer c WHERE c.name = 'foo');
+SelectOrders1 := SELECT o.id, o.`time` FROM Orders o WHERE o.customerid > (SELECT c.customerid FROM Customer c WHERE c.name = 'foo');
+SelectOrders2 := SELECT o.id, o.`time` FROM Orders o WHERE o.customerid NOT IN (SELECT c.customerid FROM Customer c WHERE c.name = 'foo');
+SelectOrders3 := SELECT o.id, o.`time` FROM Orders o WHERE o.customerid IN (SELECT c.customerid FROM Customer c WHERE c.name = 'foo');
+/* Looks like sub-queries are currently not supported by Flink parser since correlation ids get incremented */
+--SelectOrders4 := SELECT o.id, o.`time`, (SELECT COUNT(*) FROM Customer c WHERE c.customerid > o.customerid) AS cc FROM Orders o WHERE o.customerid IN (SELECT c.customerid FROM Customer c WHERE c.name = 'foo');
+
+ProductFilter1 := SELECT * FROM Product WHERE array_contains(ARRAY[CAST('one' AS String), CAST('two' AS String)], name);
+ProductFilter2 := SELECT * FROM Product WHERE array_contains(split('one, two', ','), name);

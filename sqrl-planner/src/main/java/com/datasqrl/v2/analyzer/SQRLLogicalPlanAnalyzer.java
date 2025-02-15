@@ -18,6 +18,7 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.rel.RelFieldCollation;
+import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.SingleRel;
 import org.apache.calcite.rel.core.Uncollect;
 import org.apache.calcite.rel.hint.Hintable;
@@ -77,6 +78,8 @@ import org.apache.calcite.rex.RexFieldCollation;
 import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexOver;
+import org.apache.calcite.rex.RexShuttle;
+import org.apache.calcite.rex.RexSubQuery;
 import org.apache.calcite.rex.RexWindow;
 import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.SqlKind;
@@ -192,10 +195,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
   protected RelNodeAnalysis analyzeRelNode(RelNode input) {
     Optional<TableAnalysis> tableAnalysis = tableLookup.lookupTable(input);
     if (tableAnalysis.isPresent()) {
-      sourceTables.add(tableAnalysis.get());
-      RelOptTable table = catalog.getTable(tableAnalysis.get().getIdentifier().toList());
-      LogicalTableScan scan = new LogicalTableScan(input.getCluster(), input.getTraitSet(), (input instanceof Hintable)?((Hintable)input).getHints():List.of(), table);
-      return tableAnalysis.get().toRelNode(scan);
+      return fromSource(tableAnalysis.get(), input);
     } else {
       input.accept(this);
       RelNodeAnalysis analysis = this.intermediateAnalysis;
@@ -203,6 +203,37 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
       return analysis;
     }
   }
+
+  private RelNodeAnalysis fromSource(TableAnalysis tableAnalysis, RelNode input) {
+    sourceTables.add(tableAnalysis);
+    RelOptTable table = catalog.getTable(tableAnalysis.getIdentifier().toList());
+    LogicalTableScan scan = new LogicalTableScan(input.getCluster(), input.getTraitSet(), (input instanceof Hintable)?((Hintable)input).getHints():List.of(), table);
+    return tableAnalysis.toRelNode(scan);
+  }
+
+  private RelShuttleImpl subQueryRelShuttle = new RelShuttleImpl() {
+    @Override
+    protected RelNode visitChild(RelNode parent, int i, RelNode child) {
+      if (i==0) {
+        Optional<TableAnalysis> tableAnalysis = tableLookup.lookupTable(parent);
+        if (tableAnalysis.isPresent()) {
+          parent = fromSource(tableAnalysis.get(), parent).relNode;
+        } else {
+          parent = parent.accept(subQueryRexShuttle);
+        }
+      }
+      return super.visitChild(parent, i, child);
+    }
+  };
+
+  private RexShuttle subQueryRexShuttle = new RexShuttle() {
+
+    @Override
+    public RexNode visitSubQuery(RexSubQuery subQuery) {
+      RelNode rewritten = subQuery.rel.accept(subQueryRelShuttle);
+      return subQuery.clone(rewritten);
+    }
+  };
 
   protected RelNodeAnalysis getInputAnalysis(SingleRel relNode) {
     return analyzeRelNode(relNode.getInput());
@@ -330,7 +361,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
   @Override
   public RelNode visit(LogicalFilter logicalFilter) {
     RelNodeAnalysis input = getInputAnalysis(logicalFilter);
-
+    logicalFilter = (LogicalFilter)logicalFilter.accept(subQueryRexShuttle);
     RexNode condition = logicalFilter.getCondition();
     List<RexNode> conjunctions = rexUtil.getConjunctions(condition);
     capabilityAnalysis.analyzeRexNode(conjunctions);
@@ -403,6 +434,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     RelNodeAnalysis input = getInputAnalysis(logicalProject);
     RelDataType inputType = input.relNode.getRowType();
     RelDataType resultType = logicalProject.getRowType();
+    logicalProject = (LogicalProject) logicalProject.accept(subQueryRexShuttle);
     //Keep track of mappings
     LinkedHashMultimap<Integer, Integer> mappedProjects = LinkedHashMultimap.create();
 

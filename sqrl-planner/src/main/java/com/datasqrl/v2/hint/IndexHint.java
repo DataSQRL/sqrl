@@ -28,6 +28,7 @@ public class IndexHint extends ColumnNamesHint {
     @Override
     public PlannerHint create(ParsedObject<SqrlHint> source) {
       List<String> arguments = source.get().getOptions();
+      if (arguments==null || arguments.isEmpty()) return new IndexHint(source, null, List.of()); //no hint
       if (arguments.size()<= 1) throw new StatementParserException(ErrorLabel.GENERIC, source.getFileLocation(),
           "Index hint requires at least two arguments: the name of the index type and at least one column.");
       Optional<IndexType> optIndex = IndexType.fromName(arguments.get(0));

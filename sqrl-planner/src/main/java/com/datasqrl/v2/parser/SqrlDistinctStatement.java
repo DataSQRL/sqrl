@@ -4,6 +4,7 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.v2.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.v2.analyzer.SQRLLogicalPlanAnalyzer.ViewAnalysis;
+import com.datasqrl.v2.analyzer.TableAnalysis;
 import com.datasqrl.v2.hint.PlannerHints;
 import com.datasqrl.util.CalciteUtil;
 import java.util.List;
@@ -16,6 +17,7 @@ import org.apache.calcite.rex.RexOver;
 import org.apache.calcite.rex.RexWindow;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.tools.RelBuilder;
+import org.apache.flink.table.catalog.ObjectIdentifier;
 
 public class SqrlDistinctStatement extends SqrlDefinition {
 
@@ -45,9 +47,10 @@ public class SqrlDistinctStatement extends SqrlDefinition {
     SqlNode view = sqrlEnv.parseSQL(sql);
     ViewAnalysis viewAnalysis = sqrlEnv.analyzeView(view, false, PlannerHints.EMPTY, ErrorCollector.root());
     RelBuilder relB = viewAnalysis.getRelBuilder();
+    TableAnalysis tblAnalysis = viewAnalysis.getTableAnalysis().identifier(ObjectIdentifier.of("","","")).build();
 
     //Rewrite statement
-    if (isFilteredDistinct) {
+    if (isFilteredDistinct && !tblAnalysis.isHasMostRecentDistinct()) {
       //Because we define the view above, we know this is a project->filter->project(rowNum)->logicalwatermark
       LogicalProject project = (LogicalProject)viewAnalysis.getRelNode();
       LogicalFilter filter = (LogicalFilter) project.getInput();

@@ -1,6 +1,0 @@
-IMPORT time.*;
-IMPORT ecommerceTs.Customer;
-IMPORT ecommerceTs.Orders;
-IMPORT ecommerceTs.Product;
-JoinStream := SELECT o.id, c.name FROM Orders o JOIN Customer c on c.customerid = o.customerid;
-EXPORT JoinStream TO print.CountStream;

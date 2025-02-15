@@ -4,11 +4,14 @@ import com.datasqrl.calcite.function.OperatorRuleTransform;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.v2.analyzer.TableAnalysis;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ListMultimap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
@@ -21,13 +24,14 @@ import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexCorrelVariable;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
+import org.apache.calcite.rex.RexSubQuery;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 
 @Value
 public class TableAnalysisLookup {
 
   Map<ObjectIdentifier, TableAnalysis> sourceTableMap = new HashMap<>();
-  HashMultimap<Integer, TableAnalysis> tableMap = HashMultimap.create();
+  ListMultimap<Integer, TableAnalysis> tableMap = ArrayListMultimap.create();
   Map<ObjectIdentifier, TableAnalysis> id2Table = new HashMap<>();
 
   public TableAnalysis lookupSourceTable(ObjectIdentifier objectId) {
@@ -38,7 +42,11 @@ public class TableAnalysisLookup {
     int hashCode = originalRelnode.getRowType().hashCode();
     if (tableMap.containsKey(hashCode)) {
       RelNode normalizeRelnode = normalizeRelnode(originalRelnode);
-      return tableMap.get(hashCode).stream().filter(tbl -> matches(tbl, normalizeRelnode)).findFirst();
+      List<TableAnalysis> allMatches = tableMap.get(hashCode).stream().filter(tbl -> matches(tbl, normalizeRelnode)).collect(
+          Collectors.toList());
+      //return last one in case there are multiple matches
+      if (allMatches.isEmpty()) return Optional.empty();
+      return Optional.of(allMatches.get(allMatches.size()-1));
     } else return Optional.empty();
   }
 
@@ -133,7 +141,9 @@ public class TableAnalysisLookup {
       return super.visitChild(parent, i, child);
     }
 
-    RexShuttle correlVariableNormalizer = new RexShuttle() {
+    RexShuttle correlVariableNormalizer = new RexCorrelNormalizer();
+
+    class RexCorrelNormalizer extends RexShuttle {
 
       @Override
       public RexNode visitCorrelVariable(RexCorrelVariable variable) {
@@ -144,7 +154,13 @@ public class TableAnalysisLookup {
           return super.visitCorrelVariable(variable);
         }
       }
-    };
+
+      @Override
+      public RexNode visitSubQuery(RexSubQuery subQuery) {
+        RelNode rewritten = subQuery.rel.accept(CorrelationIdNormalizer.this);
+        return subQuery.clone(rewritten);
+      }
+    }
 
   }
 
