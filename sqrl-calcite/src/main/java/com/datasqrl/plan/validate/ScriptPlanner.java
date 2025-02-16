@@ -454,7 +454,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
           ? Optional.empty()
           : Optional.of(()->rel);
 
-      tableFactory.createTable(moduleLoader, path, rel, null,
+      tableFactory.createTable(moduleLoader, path, rel, node,
           assignment.getHints(), result.getParams(), isA,
           materializeSelf, nodeSupplier, errorCollector, hasTestHint(assignment.getHints()));
     }
