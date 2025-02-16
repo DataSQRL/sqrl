@@ -48,6 +48,8 @@ public class PackageConfigurationImpl implements PackageConfiguration {
   String description = "";
   @Default
   List<String> topics = List.of();
+  @Default
+  List<String> sources = List.of();
 
   public void checkInitialized() {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(getName()) &&
