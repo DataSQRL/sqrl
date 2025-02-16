@@ -13,6 +13,8 @@ public interface TableOrFunctionAnalysis extends AbstractAnalysis {
 
   List<String> getParameterNames();
 
+
+
   default FullIdentifier getFullIdentifier() {
     return new FullIdentifier(getIdentifier(), getParameterNames());
   }

@@ -3,7 +3,6 @@ package com.datasqrl.plan.global;
 import com.datasqrl.io.tables.TableType;
 import com.datasqrl.plan.rules.EngineCapability;
 import com.datasqrl.plan.table.PullupOperator;
-import com.datasqrl.plan.table.Timestamps;
 import com.datasqrl.plan.table.TopNConstraint;
 import com.datasqrl.plan.util.RelWriterWithHints;
 import com.datasqrl.plan.util.TimePredicate;
@@ -163,7 +162,7 @@ public class PipelineDAGExporter {
             result.add(new Annotation("features", capabilities.stream()
                 .map(EngineCapability::getName).collect(Collectors.joining(", "))));
         }
-        if (tableAnalysis.isHasMostRecentDistinct()) {
+        if (tableAnalysis.isMostRecentDistinct()) {
             result.add(new Annotation("mostRecentDistinct", "true"));
         }
         if (tableAnalysis.getStreamRoot().isPresent()) {

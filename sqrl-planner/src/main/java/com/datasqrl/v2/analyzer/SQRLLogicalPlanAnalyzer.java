@@ -97,6 +97,7 @@ import org.apache.flink.table.planner.plan.schema.TableSourceTable;
  *
  * As the query is analyzed, the analyzer detects inefficiencies or optimization opportunities and
  * creates info messages through the {@link ErrorCollector} for the user.
+ * It also extracts information needed by the {@link com.datasqrl.v2.dag.DAGPlanner}.
  *
  */
 @Slf4j
@@ -109,9 +110,22 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
   final CalciteCatalogReader catalog;
   final ErrorCollector errors;
 
+  /**
+   * The sources for this relational tree
+   */
   private final List<TableOrFunctionAnalysis> sourceTables = new ArrayList<>();
+  /**
+   * The capabilities required to execute this query
+   */
   private final CapabilityAnalysis capabilityAnalysis = new CapabilityAnalysis();
-  private final List<CostAnalysis> costAnalyses = new ArrayList<>(); //TODO: Generalize to general cost hints
+  /**
+   * A cost analysis that is used to determine whether there are more efficient ways to write the query
+   * TODO: Generalize to general cost hints
+   */
+  private final List<CostAnalysis> costAnalyses = new ArrayList<>();
+  /**
+   * Whether this query contains a distinct/deduplication by rowtime (i.e. filter over rownum ordered by rowtime desc)
+   */
   private boolean hasMostRecentDistinct = false;
 
   protected RelNodeAnalysis intermediateAnalysis = null;
@@ -133,6 +147,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     RelNode relNode;
     RelBuilder relBuilder;
     TableAnalysis.TableAnalysisBuilder tableAnalysis;
+    boolean hasMostRecentDistinct;
   }
 
   public ViewAnalysis analyze(PlannerHints hints) {
@@ -169,19 +184,22 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
       analysis = analysis.toBuilder().primaryKey(
           PrimaryKeyMap.of(pkHint.get().getColumnIndexes())).build();
     }
+    //To "be" a most recent distinct is must have one and not change the selected columns on a stream.
+    boolean isMostRecentDistinct = hasMostRecentDistinct && sourceTables.size()==1
+        && analysis.streamRoot.isPresent() && sourceTables.get(0).getRowType().equals(originalRelnode.getRowType());
     TableAnalysis.TableAnalysisBuilder tableAnalysis = TableAnalysis.builder()
         .collapsedRelnode(analysis.relNode)
         .originalRelnode(tableLookup.normalizeRelnode(originalRelnode))
         .type(analysis.getType())
         .primaryKey(analysis.primaryKey)
-        .hasMostRecentDistinct(hasMostRecentDistinct)
+        .isMostRecentDistinct(isMostRecentDistinct)
         .streamRoot(analysis.streamRoot)
         .fromTables(sourceTables)
         .requiredCapabilities(capabilityAnalysis.getRequiredCapabilities())
         .costs(costAnalyses)
         .hints(hints)
         .errors(errors);
-    return new ViewAnalysis(analysis.relNode, relBuilder, tableAnalysis);
+    return new ViewAnalysis(analysis.relNode, relBuilder, tableAnalysis, hasMostRecentDistinct);
   }
 
   /**

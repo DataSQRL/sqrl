@@ -17,7 +17,6 @@ import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.engine.server.ServerEngine;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.function.CommonFunctions;
 import com.datasqrl.plan.global.StageAnalysis;
 import com.datasqrl.util.RelDataTypeBuilder;
@@ -32,7 +31,6 @@ import com.datasqrl.v2.dag.plan.MaterializationStagePlan;
 import com.datasqrl.v2.dag.plan.MaterializationStagePlan.MaterializationStagePlanBuilder;
 import com.datasqrl.v2.dag.plan.MaterializationStagePlan.Query;
 import com.datasqrl.v2.dag.plan.ServerStagePlan;
-import com.datasqrl.v2.hint.IndexHint;
 import com.datasqrl.v2.hint.PartitionKeyHint;
 import com.datasqrl.v2.parser.AccessModifier;
 import com.datasqrl.v2.tables.AccessVisibility;
@@ -42,7 +40,6 @@ import com.datasqrl.function.SqrlCastFunction;
 import com.datasqrl.plan.util.PrimaryKeyMap;
 import com.datasqrl.util.CalciteUtil;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
 import com.google.inject.Inject;
 import java.util.ArrayList;
@@ -53,14 +50,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.AllArgsConstructor;
 import lombok.Value;
-import org.apache.calcite.linq4j.Ord;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
@@ -84,7 +78,6 @@ import org.apache.calcite.util.Pair;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.planner.calcite.FlinkRelBuilder;
 import org.apache.flink.table.planner.catalog.SqlCatalogViewTable;
-import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
 import org.apache.flink.table.planner.plan.schema.TableSourceTable;
 import org.apache.flink.table.planner.plan.schema.TimeIndicatorRelDataType;
 
@@ -196,14 +189,13 @@ public class DAGPlanner {
           Preconditions.checkArgument(exportStage.getEngine().getType().supportsExport(), "Execution stage [%s] does not support exporting [%s]", exportStage, node);
           ExportEngine exportEngine = (ExportEngine) exportStage.getEngine();
           TableAnalysis originalNodeTable = node.getTableAnalysis(), sinkNodeTable = originalNodeTable;
-          if (exportEngine.getType().isDataStore() && node.getTableAnalysis().isHasMostRecentDistinct()) {
+          if (exportEngine.supports(EngineFeature.MATERIALIZE_ON_KEY) && node.getTableAnalysis().isMostRecentDistinct()) {
             //If we are sinking to a datastore and the node is a most recent distinct, we can remove that node
             //since materializing into the table on primary key has the same effect and is more efficient
             errors.checkFatal(node.getTableAnalysis().getPrimaryKey().isDefined(), "Expected primary key: %s", node);
             sinkNodeTable = ((TableNode) Iterables.getOnlyElement(dag.getInputs(node))).getTableAnalysis();
           }
-          ObjectIdentifier fromTableId = originalNodeTable.getIdentifier();
-          FlinkRelBuilder relBuilder = sqrlEnv.getTableScan(fromTableId);
+          FlinkRelBuilder relBuilder = sqrlEnv.getTableScan(sinkNodeTable.getIdentifier());
           FlinkTableBuilder tblBuilder = new FlinkTableBuilder();
           tblBuilder.setName(externalNameFct.apply(originalTableName));
           //#1st: determine primary key and partition key (if present)
@@ -227,7 +219,7 @@ public class DAGPlanner {
               originalTableName, tblBuilder, datatype, Optional.of(originalNodeTable));
           exportPlans.get(exportStage).table(createdTable);
           targetTable = sqrlEnv.createSinkTable(tblBuilder);
-          streamTableMapping.put(new InputTableKey(exportStage, fromTableId), targetTable);
+          streamTableMapping.put(new InputTableKey(exportStage, originalNodeTable.getIdentifier()), targetTable);
           //Finally: add insert statement to sink into table
           sqrlEnv.insertInto(relBuilder.build(), targetTable);
         }

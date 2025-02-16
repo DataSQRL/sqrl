@@ -263,7 +263,6 @@ Type:   state
 Stage:  flink
 Inputs: default_catalog.default_database.Customer
 Annotations:
- - mostRecentDistinct: true
  - stream-root: Customer__def
 Primary Key: customerid
 Timestamp  : timestamp
@@ -307,7 +306,6 @@ Type:   state
 Stage:  flink
 Inputs: default_catalog.default_database.Customer
 Annotations:
- - mostRecentDistinct: true
  - stream-root: Customer__def
 Primary Key: customerid
 Timestamp  : timestamp
@@ -771,7 +769,7 @@ CREATE TABLE `CustomerByMultipleTime_4` (
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` BIGINT NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,
-  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
+  PRIMARY KEY (`customerid`, `email`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
   'password' = '${JDBC_PASSWORD}',
@@ -786,7 +784,7 @@ CREATE TABLE `CustomerByTime2_5` (
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` BIGINT NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,
-  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
+  PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
   'password' = '${JDBC_PASSWORD}',
@@ -849,11 +847,9 @@ CREATE TABLE `CustomerTimeWindow_9` (
 );
 CREATE TABLE `ExplicitDistinct_10` (
   `customerid` BIGINT NOT NULL,
-  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `lastUpdated` BIGINT NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,
-  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
   'password' = '${JDBC_PASSWORD}',
@@ -878,11 +874,9 @@ CREATE TABLE `ExternalOrders_11` (
 );
 CREATE TABLE `InvalidDistinct_12` (
   `customerid` BIGINT NOT NULL,
-  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `lastUpdated` BIGINT NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,
-  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
+  `namee` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
   'password' = '${JDBC_PASSWORD}',
@@ -992,7 +986,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
         ;
         INSERT INTO `default_catalog`.`default_database`.`ExplicitDistinct_10`
          (SELECT *
-          FROM `default_catalog`.`default_database`.`Customer`)
+          FROM `default_catalog`.`default_database`.`ExplicitDistinct`)
          ;
          INSERT INTO `default_catalog`.`default_database`.`ExternalOrders_11`
           (SELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`
@@ -1000,7 +994,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
           ;
           INSERT INTO `default_catalog`.`default_database`.`InvalidDistinct_12`
            (SELECT *
-            FROM `default_catalog`.`default_database`.`Customer`)
+            FROM `default_catalog`.`default_database`.`InvalidDistinct`)
            ;
            INSERT INTO `default_catalog`.`default_database`.`Orders_13`
             (SELECT *
@@ -1109,7 +1103,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
     {
       "name" : "CustomerByMultipleTime_4",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerByMultipleTime_4\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerByMultipleTime_4\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY (\"customerid\",\"email\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -1141,7 +1135,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
     {
       "name" : "CustomerByTime2_5",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerByTime2_5\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerByTime2_5\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY (\"customerid\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -1227,7 +1221,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
     {
       "name" : "ExplicitDistinct_10",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"ExplicitDistinct_10\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"ExplicitDistinct_10\" (\"customerid\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE , \"name\" TEXT NOT NULL , PRIMARY KEY (\"customerid\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -1235,24 +1229,14 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
           "nullable" : false
         },
         {
-          "name" : "email",
-          "type" : "TEXT",
-          "nullable" : false
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : true
         },
         {
           "name" : "name",
           "type" : "TEXT",
           "nullable" : false
-        },
-        {
-          "name" : "lastUpdated",
-          "type" : "BIGINT",
-          "nullable" : false
-        },
-        {
-          "name" : "timestamp",
-          "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
         }
       ]
     },
@@ -1286,7 +1270,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
     {
       "name" : "InvalidDistinct_12",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"InvalidDistinct_12\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"InvalidDistinct_12\" (\"customerid\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE , \"namee\" TEXT NOT NULL , PRIMARY KEY (\"customerid\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -1294,24 +1278,14 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
           "nullable" : false
         },
         {
-          "name" : "email",
-          "type" : "TEXT",
-          "nullable" : false
-        },
-        {
-          "name" : "name",
-          "type" : "TEXT",
-          "nullable" : false
-        },
-        {
-          "name" : "lastUpdated",
-          "type" : "BIGINT",
-          "nullable" : false
-        },
-        {
           "name" : "timestamp",
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : true
+        },
+        {
+          "name" : "namee",
+          "type" : "TEXT",
+          "nullable" : false
         }
       ]
     },
@@ -1478,7 +1452,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
     {
       "name" : "CustomerByMultipleTime",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerByMultipleTime\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\"\nFROM (SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", ROW_NUMBER() OVER (PARTITION BY \"customerid\", \"email\" ORDER BY \"timestamp\" DESC NULLS LAST, \"lastUpdated\" NULLS FIRST) AS \"__sqrlinternal_rownum\"\n  FROM \"InvalidDistinct_12\") AS \"t3\"\nWHERE \"__sqrlinternal_rownum\" = 1",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerByMultipleTime\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"CustomerByMultipleTime_4\"",
       "fields" : [
         {
           "name" : "customerid",
@@ -1510,7 +1484,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
     {
       "name" : "CustomerByTime2",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerByTime2\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\"\nFROM (SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", ROW_NUMBER() OVER (PARTITION BY \"customerid\" ORDER BY \"timestamp\" DESC NULLS LAST) AS \"__sqrlinternal_rownum\"\n  FROM \"InvalidDistinct_12\") AS \"t3\"\nWHERE \"__sqrlinternal_rownum\" = 1",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerByTime2\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"CustomerByTime2_5\"",
       "fields" : [
         {
           "name" : "customerid",
@@ -1618,7 +1592,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
     {
       "name" : "Customer",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"InvalidDistinct_12\"",
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"Customer_2\"",
       "fields" : [
         {
           "name" : "customerid",
@@ -1650,7 +1624,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
     {
       "name" : "ExplicitDistinct",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"ExplicitDistinct\"(\"customerid\", \"timestamp\", \"name\") AS SELECT \"customerid\", \"timestamp\", \"name\"\nFROM (SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", ROW_NUMBER() OVER (PARTITION BY \"customerid\" ORDER BY \"timestamp\" DESC NULLS LAST) AS \"_rownum\"\n  FROM \"InvalidDistinct_12\") AS \"t3\"\nWHERE \"_rownum\" = 1",
+      "sql" : "CREATE OR REPLACE VIEW \"ExplicitDistinct\"(\"customerid\", \"timestamp\", \"name\") AS SELECT *\nFROM \"ExplicitDistinct_10\"",
       "fields" : [
         {
           "name" : "customerid",
@@ -1699,7 +1673,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
     {
       "name" : "InvalidDistinct",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"InvalidDistinct\"(\"customerid\", \"timestamp\", \"namee\") AS SELECT \"customerid\", \"timestamp\", \"name\" AS \"namee\"\nFROM (SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", ROW_NUMBER() OVER (PARTITION BY \"customerid\" ORDER BY \"timestamp\" DESC NULLS LAST) AS \"_rownum\"\n  FROM \"InvalidDistinct_12\") AS \"t3\"\nWHERE \"_rownum\" = 1",
+      "sql" : "CREATE OR REPLACE VIEW \"InvalidDistinct\"(\"customerid\", \"timestamp\", \"namee\") AS SELECT *\nFROM \"InvalidDistinct_12\"",
       "fields" : [
         {
           "name" : "customerid",
@@ -1721,7 +1695,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
     {
       "name" : "MissedTemporalJoin",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"MissedTemporalJoin\"(\"id\", \"customerid\", \"time\", \"entries\", \"customerid0\", \"timestamp\", \"name\") AS SELECT *\nFROM \"ExternalOrders_11\" AS \"ExternalOrders_112\"\n INNER JOIN (SELECT \"customerid\", \"timestamp\", \"name\"\n  FROM (SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", ROW_NUMBER() OVER (PARTITION BY \"customerid\" ORDER BY \"timestamp\" DESC NULLS LAST) AS \"_rownum\"\n    FROM \"InvalidDistinct_12\") AS \"t4\"\n  WHERE \"_rownum\" = 1) AS \"t6\" ON \"ExternalOrders_112\".\"customerid\" = \"t6\".\"customerid\"",
+      "sql" : "CREATE OR REPLACE VIEW \"MissedTemporalJoin\"(\"id\", \"customerid\", \"time\", \"entries\", \"customerid0\", \"timestamp\", \"name\") AS SELECT *\nFROM \"ExternalOrders_11\" AS \"ExternalOrders_112\"\n INNER JOIN \"ExplicitDistinct_10\" AS \"ExplicitDistinct_102\" ON \"ExternalOrders_112\".\"customerid\" = \"ExplicitDistinct_102\".\"customerid\"",
       "fields" : [
         {
           "name" : "id",

@@ -180,7 +180,7 @@ CREATE TABLE `DistinctStream_2` (
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` BIGINT NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,
-  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
+  PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'upsert-kafka',
   'value.format' = 'flexible-json',
@@ -189,20 +189,20 @@ CREATE TABLE `DistinctStream_2` (
   'key.format' = 'raw',
   'topic' = 'DistinctStream_2'
 );
-CREATE TABLE `Customer_3` (
+CREATE TABLE `DistinctCustomer_3` (
   `customerid` BIGINT NOT NULL,
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` BIGINT NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,
-  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
+  PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_URL}',
-  'table-name' = 'Customer_3'
+  'table-name' = 'DistinctCustomer_3'
 );
 CREATE TABLE `JoinStream_4` (
   `id` BIGINT NOT NULL,
@@ -250,9 +250,9 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_1`
 ;
 INSERT INTO `default_catalog`.`default_database`.`DistinctStream_2`
  (SELECT *
-  FROM `default_catalog`.`default_database`.`Customer`)
+  FROM `default_catalog`.`default_database`.`DistinctCustomer`)
  ;
- INSERT INTO `default_catalog`.`default_database`.`Customer_3`
+ INSERT INTO `default_catalog`.`default_database`.`DistinctCustomer_3`
   (SELECT *
    FROM `default_catalog`.`default_database`.`Customer`)
   ;
@@ -324,9 +324,9 @@ INSERT INTO `default_catalog`.`default_database`.`DistinctStream_2`
       ]
     },
     {
-      "name" : "Customer_3",
+      "name" : "DistinctCustomer_3",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer_3\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"DistinctCustomer_3\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY (\"customerid\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -407,7 +407,7 @@ INSERT INTO `default_catalog`.`default_database`.`DistinctStream_2`
     {
       "name" : "Customer",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"Customer_3\"",
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"Customer_1\"",
       "fields" : [
         {
           "name" : "customerid",
@@ -439,7 +439,7 @@ INSERT INTO `default_catalog`.`default_database`.`DistinctStream_2`
     {
       "name" : "DistinctCustomer",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"DistinctCustomer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\"\nFROM (SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", ROW_NUMBER() OVER (PARTITION BY \"customerid\" ORDER BY \"timestamp\" DESC NULLS LAST) AS \"__sqrlinternal_rownum\"\n  FROM \"Customer_3\") AS \"t3\"\nWHERE \"__sqrlinternal_rownum\" = 1",
+      "sql" : "CREATE OR REPLACE VIEW \"DistinctCustomer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"DistinctCustomer_3\"",
       "fields" : [
         {
           "name" : "customerid",

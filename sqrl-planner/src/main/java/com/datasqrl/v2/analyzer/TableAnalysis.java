@@ -66,10 +66,10 @@ public class TableAnalysis implements TableOrFunctionAnalysis {
   PrimaryKeyMap primaryKey = PrimaryKeyMap.UNDEFINED;
   /**
    * Whether this table is a distinct/deduplication table that only deduplicates
-   * a CDC stream into the original state table. This is flagged so it can be optimized out.
+   * a CDC stream into the original state table. This is flagged so it can be optimized out in the DAG
    */
   @Builder.Default
-  boolean hasMostRecentDistinct = false;
+  boolean isMostRecentDistinct = false;
   /**
    * For stream tables that are unnested, we keep track of the root table in order
    * to detect when a join on the same root happens for optimization purposes

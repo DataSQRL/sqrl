@@ -50,7 +50,7 @@ public class SqrlDistinctStatement extends SqrlDefinition {
     TableAnalysis tblAnalysis = viewAnalysis.getTableAnalysis().identifier(ObjectIdentifier.of("","","")).build();
 
     //Rewrite statement
-    if (isFilteredDistinct && !tblAnalysis.isHasMostRecentDistinct()) {
+    if (isFilteredDistinct && !viewAnalysis.isHasMostRecentDistinct()) {
       //Because we define the view above, we know this is a project->filter->project(rowNum)->logicalwatermark
       LogicalProject project = (LogicalProject)viewAnalysis.getRelNode();
       LogicalFilter filter = (LogicalFilter) project.getInput();

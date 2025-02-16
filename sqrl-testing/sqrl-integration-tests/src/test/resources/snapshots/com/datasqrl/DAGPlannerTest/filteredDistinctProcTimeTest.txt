@@ -290,7 +290,7 @@ CREATE TABLE `DistinctOrderWithTs_4` (
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),
   `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  PRIMARY KEY (`id`, `time`) NOT ENFORCED
+  PRIMARY KEY (`id`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
   'password' = '${JDBC_PASSWORD}',
@@ -455,7 +455,7 @@ INSERT INTO `default_catalog`.`default_database`.`DistinctCustomerWoutTs_2`
     {
       "name" : "DistinctOrderWithTs_4",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"DistinctOrderWithTs_4\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB , \"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\",\"time\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"DistinctOrderWithTs_4\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB , \"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\"))",
       "fields" : [
         {
           "name" : "id",
@@ -637,7 +637,7 @@ INSERT INTO `default_catalog`.`default_database`.`DistinctCustomerWoutTs_2`
     {
       "name" : "DistinctOrderWithTs",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"DistinctOrderWithTs\"(\"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\") AS SELECT \"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\"\nFROM (SELECT \"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\", ROW_NUMBER() OVER (PARTITION BY \"id\" ORDER BY \"_ingest_time\" DESC NULLS LAST) AS \"__sqrlinternal_rownum\"\n  FROM \"Orders_6\") AS \"t3\"\nWHERE \"__sqrlinternal_rownum\" = 1",
+      "sql" : "CREATE OR REPLACE VIEW \"DistinctOrderWithTs\"(\"id\", \"customerid\", \"time\", \"entries\", \"_ingest_time\") AS SELECT *\nFROM \"DistinctOrderWithTs_4\"",
       "fields" : [
         {
           "name" : "id",

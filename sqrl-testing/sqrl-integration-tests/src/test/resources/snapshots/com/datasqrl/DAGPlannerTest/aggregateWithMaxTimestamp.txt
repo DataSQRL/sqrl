@@ -232,7 +232,7 @@ CREATE TABLE `OrdersState_6` (
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),
-  PRIMARY KEY (`id`, `time`) NOT ENFORCED
+  PRIMARY KEY (`id`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
   'password' = '${JDBC_PASSWORD}',
@@ -382,7 +382,7 @@ INSERT INTO `default_catalog`.`default_database`.`OrderAgg2_2`
     {
       "name" : "OrdersState_6",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"OrdersState_6\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB  , PRIMARY KEY (\"id\",\"time\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"OrdersState_6\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB  , PRIMARY KEY (\"id\"))",
       "fields" : [
         {
           "name" : "id",
@@ -487,7 +487,7 @@ INSERT INTO `default_catalog`.`default_database`.`OrderAgg2_2`
     {
       "name" : "OrdersState",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"OrdersState\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT \"id\", \"customerid\", \"time\", \"entries\"\nFROM (SELECT \"id\", \"customerid\", \"time\", \"entries\", ROW_NUMBER() OVER (PARTITION BY \"id\" ORDER BY \"time\" DESC NULLS LAST) AS \"__sqrlinternal_rownum\"\n  FROM \"OrdersState_6\") AS \"t3\"\nWHERE \"__sqrlinternal_rownum\" = 1",
+      "sql" : "CREATE OR REPLACE VIEW \"OrdersState\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"OrdersState_6\"",
       "fields" : [
         {
           "name" : "id",
@@ -514,7 +514,7 @@ INSERT INTO `default_catalog`.`default_database`.`OrderAgg2_2`
     {
       "name" : "Orders",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"OrdersState_6\"",
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"Orders_5\"",
       "fields" : [
         {
           "name" : "id",
