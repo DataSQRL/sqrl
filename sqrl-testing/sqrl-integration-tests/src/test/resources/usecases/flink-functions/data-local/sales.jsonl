@@ -1,0 +1,8 @@
+{"id": "S001", "region": "EMEA", "country": "Germany", "product": "Laptop", "amount": 1000.00, "timestamp": "2024-03-01T00:00:00Z"}
+{"id": "S002", "region": "EMEA", "country": "Germany", "product": "Phone", "amount": 500.00, "timestamp": "2024-03-01T00:00:00Z"}
+{"id": "S003", "region": "EMEA", "country": "France", "product": "Laptop", "amount": 1100.00, "timestamp": "2024-03-02T00:00:00Z"}
+{"id": "S004", "region": "EMEA", "country": "France", "product": "Phone", "amount": 550.00, "timestamp": "2024-03-02T00:00:00Z"}
+{"id": "S005", "region": "APAC", "country": "Japan", "product": "Laptop", "amount": 1200.00, "timestamp": "2024-03-03T00:00:00Z"}
+{"id": "S006", "region": "APAC", "country": "Japan", "product": "Phone", "amount": 600.00, "timestamp": "2024-03-03T00:00:00Z"}
+{"id": "S007", "region": "APAC", "country": "China", "product": "Laptop", "amount": 900.00, "timestamp": "2024-03-04T00:00:00Z"}
+{"id": "S008", "region": "APAC", "country": "China", "product": "Phone", "amount": 450.00, "timestamp": "2024-03-04T00:00:00Z"}
