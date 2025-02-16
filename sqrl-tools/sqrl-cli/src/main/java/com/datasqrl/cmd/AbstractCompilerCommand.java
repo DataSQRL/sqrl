@@ -25,6 +25,7 @@ import com.datasqrl.packager.repository.CompositeRepositoryImpl;
 import com.datasqrl.packager.repository.LocalRepositoryImplementation;
 import com.datasqrl.packager.repository.RemoteRepositoryImplementation;
 import com.datasqrl.packager.repository.Repository;
+import com.datasqrl.packager.repository.StaticRepository;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -41,6 +42,7 @@ import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.jdbc.SqrlSchema;
+import org.apache.calcite.util.Static;
 import org.apache.commons.lang3.tuple.Pair;
 import picocli.CommandLine;
 
@@ -162,12 +164,13 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   }
 
   protected Repository createRepository(ErrorCollector errors) {
+    StaticRepository staticRepo = new StaticRepository();
     LocalRepositoryImplementation localRepo = LocalRepositoryImplementation.of(errors,
         root.rootDir);
     //TODO: read remote repository URLs from configuration?
     RemoteRepositoryImplementation remoteRepo = new RemoteRepositoryImplementation();
     remoteRepo.setCacheRepository(localRepo);
-    return new CompositeRepositoryImpl(List.of(localRepo, remoteRepo));
+    return new CompositeRepositoryImpl(List.of(staticRepo, localRepo, remoteRepo));
   }
 
   public abstract ExecutionGoal getGoal();

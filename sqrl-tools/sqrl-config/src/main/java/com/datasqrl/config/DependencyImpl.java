@@ -21,15 +21,16 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 public class DependencyImpl implements Dependency {
-//
+
   @Constraints.Default
   String name = null;
   String version;
   @Constraints.Default
-  String variant = "default";
+  String variant = PackageConfigurationImpl.DEFAULT_VARIANT;
 
   public DependencyImpl() {
   }
+
   public DependencyImpl(SqrlConfig sqrlConfig) {
     name = sqrlConfig.asString("name").getOptional()
         .orElse(null);
