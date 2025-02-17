@@ -170,7 +170,7 @@ public class PipelineDAGExporter {
         }
         if (tableAnalysis.getTopLevelSort().isPresent()) {
             Sort sort = tableAnalysis.getTopLevelSort().get();
-            result.add(new Annotation("sort", sort.explain()));
+            result.add(new Annotation("sort", sort.getCollation().toString()));
         }
         return result;
     }

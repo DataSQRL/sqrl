@@ -228,19 +228,7 @@ Type:   stream
 Stage:  postgres
 Inputs: default_catalog.default_database.CustomerTimeWindow
 Annotations:
- - sort: LogicalSort(sort0=[$1], dir0=[DESC-nulls-last])
-  LogicalProject(window_start=[$0], window_end=[$1], unique_email_count=[$2])
-    LogicalAggregate(group=[{0, 1}], unique_email_count=[COUNT(DISTINCT $2)])
-      LogicalProject(window_start=[$5], window_end=[$6], email=[$1])
-        LogicalTableFunctionScan(invocation=[TUMBLE(DESCRIPTOR($4), 60000:INTERVAL MINUTE)], rowType=[RecordType(BIGINT customerid, VARCHAR(2147483647) email, VARCHAR(2147483647) name, BIGINT lastUpdated, TIMESTAMP_LTZ(3) *ROWTIME* timestamp, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
-          LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
-            LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
-              LogicalFilter(condition=[>($0, 0)])
-                LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
-                  LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
-                    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[TO_TIMESTAMP_LTZ($3, 0)])
-                      LogicalTableScan(table=[[default_catalog, default_database, Customer__def]])
-
+ - sort: [1 DESC-nulls-last]
 Primary Key: window_start, window_end
 Timestamp  : -
 Schema:
@@ -361,14 +349,7 @@ Stage:  flink
 Inputs: default_catalog.default_database.Customer
 Annotations:
  - stream-root: Customer__def
- - sort: LogicalSort(sort0=[$4], dir0=[DESC-nulls-last], fetch=[10])
-  LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
-    LogicalFilter(condition=[>($0, 0)])
-      LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
-        LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
-          LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[TO_TIMESTAMP_LTZ($3, 0)])
-            LogicalTableScan(table=[[default_catalog, default_database, Customer__def]])
-
+ - sort: [4 DESC-nulls-last]
 Primary Key: customerid, name
 Timestamp  : timestamp
 Schema:
