@@ -22,14 +22,7 @@ Type:   state
 Stage:  flink
 Inputs: default_catalog.default_database.SensorReading
 Annotations:
- - sort: LogicalSort(sort0=[$0], dir0=[DESC-nulls-last])
-  LogicalAggregate(group=[{0}], avg_temperatures=[AVG($1)], max_temperature=[MAX($1)])
-    LogicalProject(sensorid=[$0], temperature=[$1])
-      LogicalProject(sensorid=[$0], temperature=[$1], event_time=[$2])
-        LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($2, 0:INTERVAL SECOND)])
-          LogicalProject(sensorid=[$0], temperature=[$1], event_time=[CAST($2):TIMESTAMP_LTZ(3) *ROWTIME*])
-            LogicalTableScan(table=[[default_catalog, default_database, SensorReading__def, metadata=[timestamp]]])
-
+ - sort: [0 DESC-nulls-last]
 Primary Key: sensorid
 Timestamp  : -
 Schema:
@@ -62,6 +55,8 @@ ID:     default_catalog.default_database.SensorMaxTempLastMin
 Type:   state
 Stage:  flink
 Inputs: default_catalog.default_database._SensorMaxTempLastMinWindow
+Annotations:
+ - mostRecentDistinct: true
 Primary Key: sensorid
 Timestamp  : endOfMin
 Schema:
@@ -755,14 +750,6 @@ SQL: CREATE VIEW _SensorMaxTempLastMinWindow AS  SELECT sensorid, window_time as
       "type" : "INT NOT NULL"
     }, {
       "kind" : "INPUT_REF",
-      "inputIndex" : 2,
-      "type" : "TIMESTAMP(3) NOT NULL"
-    }, {
-      "kind" : "INPUT_REF",
-      "inputIndex" : 3,
-      "type" : "TIMESTAMP(3) NOT NULL"
-    }, {
-      "kind" : "INPUT_REF",
       "inputIndex" : 4,
       "type" : {
         "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE",
@@ -789,12 +776,6 @@ SQL: CREATE VIEW _SensorMaxTempLastMinWindow AS  SELECT sensorid, window_time as
         "name" : "sensorid",
         "fieldType" : "INT NOT NULL"
       }, {
-        "name" : "window_start",
-        "fieldType" : "TIMESTAMP(3) NOT NULL"
-      }, {
-        "name" : "window_end",
-        "fieldType" : "TIMESTAMP(3) NOT NULL"
-      }, {
         "name" : "endOfMin",
         "fieldType" : {
           "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE",
@@ -807,143 +788,9 @@ SQL: CREATE VIEW _SensorMaxTempLastMinWindow AS  SELECT sensorid, window_time as
         "fieldType" : "FLOAT NOT NULL"
       } ]
     },
-    "description" : "Calc(select=[sensorid, window_start, window_end, window_time AS endOfMin, avg_temperature])"
+    "description" : "Calc(select=[sensorid, window_time AS endOfMin, avg_temperature])"
   }, {
     "id" : 13,
-    "type" : "stream-exec-exchange_1",
-    "inputProperties" : [ {
-      "requiredDistribution" : {
-        "type" : "HASH",
-        "keys" : [ 0 ]
-      },
-      "damBehavior" : "PIPELINED",
-      "priority" : 0
-    } ],
-    "outputType" : {
-      "type" : "ROW",
-      "fields" : [ {
-        "name" : "sensorid",
-        "fieldType" : "INT NOT NULL"
-      }, {
-        "name" : "window_start",
-        "fieldType" : "TIMESTAMP(3) NOT NULL"
-      }, {
-        "name" : "window_end",
-        "fieldType" : "TIMESTAMP(3) NOT NULL"
-      }, {
-        "name" : "endOfMin",
-        "fieldType" : {
-          "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE",
-          "nullable" : false,
-          "precision" : 3,
-          "kind" : "ROWTIME"
-        }
-      }, {
-        "name" : "avg_temperature",
-        "fieldType" : "FLOAT NOT NULL"
-      } ]
-    },
-    "description" : "Exchange(distribution=[hash[sensorid]])"
-  }, {
-    "id" : 14,
-    "type" : "stream-exec-deduplicate_1",
-    "configuration" : {
-      "table.exec.deduplicate.insert-update-after-sensitive-enabled" : "true",
-      "table.exec.deduplicate.mini-batch.compact-changes-enabled" : "false",
-      "table.exec.mini-batch.enabled" : "false",
-      "table.exec.mini-batch.size" : "-1"
-    },
-    "uniqueKeys" : [ 0 ],
-    "isRowtime" : true,
-    "keepLastRow" : true,
-    "generateUpdateBefore" : false,
-    "state" : [ {
-      "index" : 0,
-      "ttl" : "0 ms",
-      "name" : "deduplicateState"
-    } ],
-    "inputProperties" : [ {
-      "requiredDistribution" : {
-        "type" : "UNKNOWN"
-      },
-      "damBehavior" : "PIPELINED",
-      "priority" : 0
-    } ],
-    "outputType" : {
-      "type" : "ROW",
-      "fields" : [ {
-        "name" : "sensorid",
-        "fieldType" : "INT NOT NULL"
-      }, {
-        "name" : "window_start",
-        "fieldType" : "TIMESTAMP(3) NOT NULL"
-      }, {
-        "name" : "window_end",
-        "fieldType" : "TIMESTAMP(3) NOT NULL"
-      }, {
-        "name" : "endOfMin",
-        "fieldType" : {
-          "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE",
-          "nullable" : false,
-          "precision" : 3,
-          "kind" : "ROWTIME"
-        }
-      }, {
-        "name" : "avg_temperature",
-        "fieldType" : "FLOAT NOT NULL"
-      } ]
-    },
-    "description" : "Deduplicate(keep=[LastRow], key=[sensorid], order=[ROWTIME])"
-  }, {
-    "id" : 15,
-    "type" : "stream-exec-calc_1",
-    "projection" : [ {
-      "kind" : "INPUT_REF",
-      "inputIndex" : 0,
-      "type" : "INT NOT NULL"
-    }, {
-      "kind" : "INPUT_REF",
-      "inputIndex" : 3,
-      "type" : {
-        "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE",
-        "nullable" : false,
-        "precision" : 3,
-        "kind" : "ROWTIME"
-      }
-    }, {
-      "kind" : "INPUT_REF",
-      "inputIndex" : 4,
-      "type" : "FLOAT NOT NULL"
-    } ],
-    "condition" : null,
-    "inputProperties" : [ {
-      "requiredDistribution" : {
-        "type" : "UNKNOWN"
-      },
-      "damBehavior" : "PIPELINED",
-      "priority" : 0
-    } ],
-    "outputType" : {
-      "type" : "ROW",
-      "fields" : [ {
-        "name" : "sensorid",
-        "fieldType" : "INT NOT NULL"
-      }, {
-        "name" : "endOfMin",
-        "fieldType" : {
-          "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE",
-          "nullable" : false,
-          "precision" : 3,
-          "kind" : "ROWTIME"
-        }
-      }, {
-        "name" : "avg_temperature",
-        "fieldType" : "FLOAT NOT NULL"
-      } ]
-    },
-    "description" : "Calc(select=[sensorid, endOfMin, avg_temperature])"
-  }, {
-    "id" : 16,
     "type" : "stream-exec-sink_1",
     "configuration" : {
       "table.exec.sink.keyed-shuffle" : "AUTO",
@@ -986,8 +833,7 @@ SQL: CREATE VIEW _SensorMaxTempLastMinWindow AS  SELECT sensorid, window_time as
         }
       }
     },
-    "inputChangelogMode" : [ "INSERT", "UPDATE_AFTER", "DELETE" ],
-    "inputUpsertKey" : [ 0 ],
+    "inputChangelogMode" : [ "INSERT" ],
     "inputProperties" : [ {
       "requiredDistribution" : {
         "type" : "UNKNOWN"
@@ -1015,7 +861,7 @@ SQL: CREATE VIEW _SensorMaxTempLastMinWindow AS  SELECT sensorid, window_time as
     },
     "description" : "Sink(table=[default_catalog.default_database.SensorMaxTempLastMin_3], fields=[sensorid, endOfMin, avg_temperature])"
   }, {
-    "id" : 17,
+    "id" : 14,
     "type" : "stream-exec-calc_1",
     "projection" : [ {
       "kind" : "INPUT_REF",
@@ -1123,7 +969,7 @@ SQL: CREATE VIEW _SensorMaxTempLastMinWindow AS  SELECT sensorid, window_time as
     },
     "description" : "Calc(select=[sensorid, temperature, Reinterpret(CAST(event_time AS TIMESTAMP_LTZ(3) *ROWTIME*)) AS event_time, HASHCOLUMNS(sensorid, temperature, CAST(Reinterpret(CAST(event_time AS TIMESTAMP_LTZ(3) *ROWTIME*)) AS TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))) AS __pk_hash])"
   }, {
-    "id" : 18,
+    "id" : 15,
     "type" : "stream-exec-sink_1",
     "configuration" : {
       "table.exec.sink.keyed-shuffle" : "AUTO",
@@ -1284,7 +1130,7 @@ SQL: CREATE VIEW _SensorMaxTempLastMinWindow AS  SELECT sensorid, window_time as
     },
     "shuffleMode" : "PIPELINED"
   }, {
-    "source" : 13,
+    "source" : 1,
     "target" : 14,
     "shuffle" : {
       "type" : "FORWARD"
@@ -1293,27 +1139,6 @@ SQL: CREATE VIEW _SensorMaxTempLastMinWindow AS  SELECT sensorid, window_time as
   }, {
     "source" : 14,
     "target" : 15,
-    "shuffle" : {
-      "type" : "FORWARD"
-    },
-    "shuffleMode" : "PIPELINED"
-  }, {
-    "source" : 15,
-    "target" : 16,
-    "shuffle" : {
-      "type" : "FORWARD"
-    },
-    "shuffleMode" : "PIPELINED"
-  }, {
-    "source" : 1,
-    "target" : 17,
-    "shuffle" : {
-      "type" : "FORWARD"
-    },
-    "shuffleMode" : "PIPELINED"
-  }, {
-    "source" : 17,
-    "target" : 18,
     "shuffle" : {
       "type" : "FORWARD"
     },
@@ -1454,7 +1279,7 @@ INSERT INTO `default_catalog`.`default_database`.`SensorAnalysis_2`
  ;
  INSERT INTO `default_catalog`.`default_database`.`SensorMaxTempLastMin_3`
   (SELECT *
-   FROM `default_catalog`.`default_database`.`SensorMaxTempLastMin`)
+   FROM `default_catalog`.`default_database`.`_SensorMaxTempLastMinWindow`)
   ;
   INSERT INTO `default_catalog`.`default_database`.`SensorReading_4`
    (SELECT `sensorid`, `temperature`, `event_time`, HASHCOLUMNS(`sensorid`, `temperature`, `event_time`) AS `__pk_hash`
@@ -1594,7 +1419,7 @@ INSERT INTO `default_catalog`.`default_database`.`SensorAnalysis_2`
  ;
  INSERT INTO `default_catalog`.`default_database`.`SensorMaxTempLastMin_3`
   (SELECT *
-   FROM `default_catalog`.`default_database`.`SensorMaxTempLastMin`)
+   FROM `default_catalog`.`default_database`.`_SensorMaxTempLastMinWindow`)
   ;
   INSERT INTO `default_catalog`.`default_database`.`SensorReading_4`
    (SELECT `sensorid`, `temperature`, `event_time`, HASHCOLUMNS(`sensorid`, `temperature`, `event_time`) AS `__pk_hash`
@@ -1643,7 +1468,7 @@ INSERT INTO `default_catalog`.`default_database`.`SensorAnalysis_2`
     "CREATE TABLE `SensorAnalysis_2` (\n  `sensorid` INTEGER NOT NULL,\n  `avg_temperatures` FLOAT NOT NULL,\n  `max_temperature` FLOAT NOT NULL,\n  PRIMARY KEY (`sensorid`) NOT ENFORCED\n) WITH (\n  'connector' = 'jdbc-sqrl',\n  'password' = '${JDBC_PASSWORD}',\n  'driver' = 'org.postgresql.Driver',\n  'username' = '${JDBC_USERNAME}',\n  'url' = 'jdbc:postgresql://${JDBC_URL}',\n  'table-name' = 'SensorAnalysis_2'\n)",
     "CREATE TABLE `SensorMaxTempLastMin_3` (\n  `sensorid` INTEGER NOT NULL,\n  `endOfMin` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `avg_temperature` FLOAT NOT NULL,\n  PRIMARY KEY (`sensorid`) NOT ENFORCED\n) WITH (\n  'connector' = 'jdbc-sqrl',\n  'password' = '${JDBC_PASSWORD}',\n  'driver' = 'org.postgresql.Driver',\n  'username' = '${JDBC_USERNAME}',\n  'url' = 'jdbc:postgresql://${JDBC_URL}',\n  'table-name' = 'SensorMaxTempLastMin_3'\n)",
     "CREATE TABLE `SensorReading_4` (\n  `sensorid` INTEGER NOT NULL,\n  `temperature` FLOAT NOT NULL,\n  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE,\n  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,\n  PRIMARY KEY (`__pk_hash`) NOT ENFORCED\n) WITH (\n  'connector' = 'jdbc-sqrl',\n  'password' = '${JDBC_PASSWORD}',\n  'driver' = 'org.postgresql.Driver',\n  'username' = '${JDBC_USERNAME}',\n  'url' = 'jdbc:postgresql://${JDBC_URL}',\n  'table-name' = 'SensorReading_4'\n)",
-    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `default_catalog`.`default_database`.`HighTempAlert_1`\n(SELECT *\n FROM `default_catalog`.`default_database`.`HighTempAlert`)\n;\nINSERT INTO `default_catalog`.`default_database`.`SensorAnalysis_2`\n (SELECT *\n  FROM `default_catalog`.`default_database`.`SensorAnalysis`)\n ;\n INSERT INTO `default_catalog`.`default_database`.`SensorMaxTempLastMin_3`\n  (SELECT *\n   FROM `default_catalog`.`default_database`.`SensorMaxTempLastMin`)\n  ;\n  INSERT INTO `default_catalog`.`default_database`.`SensorReading_4`\n   (SELECT `sensorid`, `temperature`, `event_time`, HASHCOLUMNS(`sensorid`, `temperature`, `event_time`) AS `__pk_hash`\n    FROM `default_catalog`.`default_database`.`SensorReading`)\n   ;\n   END"
+    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `default_catalog`.`default_database`.`HighTempAlert_1`\n(SELECT *\n FROM `default_catalog`.`default_database`.`HighTempAlert`)\n;\nINSERT INTO `default_catalog`.`default_database`.`SensorAnalysis_2`\n (SELECT *\n  FROM `default_catalog`.`default_database`.`SensorAnalysis`)\n ;\n INSERT INTO `default_catalog`.`default_database`.`SensorMaxTempLastMin_3`\n  (SELECT *\n   FROM `default_catalog`.`default_database`.`_SensorMaxTempLastMinWindow`)\n  ;\n  INSERT INTO `default_catalog`.`default_database`.`SensorReading_4`\n   (SELECT `sensorid`, `temperature`, `event_time`, HASHCOLUMNS(`sensorid`, `temperature`, `event_time`) AS `__pk_hash`\n    FROM `default_catalog`.`default_database`.`SensorReading`)\n   ;\n   END"
   ],
   "connectors" : [
     "jdbc-sqrl",

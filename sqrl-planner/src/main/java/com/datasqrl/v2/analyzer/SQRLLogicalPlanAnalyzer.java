@@ -186,7 +186,8 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     }
     //To "be" a most recent distinct is must have one and not change the selected columns on a stream.
     boolean isMostRecentDistinct = hasMostRecentDistinct && sourceTables.size()==1
-        && analysis.streamRoot.isPresent() && sourceTables.get(0).getRowType().equals(originalRelnode.getRowType());
+        && sourceTables.get(0).getRowType().equals(originalRelnode.getRowType())
+        && sourceTables.get(0).getType().isStream();
     TableAnalysis.TableAnalysisBuilder tableAnalysis = TableAnalysis.builder()
         .collapsedRelnode(analysis.relNode)
         .originalRelnode(tableLookup.normalizeRelnode(originalRelnode))

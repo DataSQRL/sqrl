@@ -3,6 +3,7 @@ package com.datasqrl.v2.tables;
 import com.datasqrl.calcite.SqrlRexUtil;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.engine.ExecutableQuery;
+import com.datasqrl.io.tables.TableType;
 import com.datasqrl.v2.analyzer.TableAnalysis;
 import com.datasqrl.v2.analyzer.TableOrFunctionAnalysis;
 import com.datasqrl.schema.Multiplicity;
@@ -19,6 +20,7 @@ import lombok.Builder.Default;
 import lombok.EqualsAndHashCode;
 import lombok.EqualsAndHashCode.Include;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 import lombok.ToString;
 import org.apache.calcite.rel.RelNode;
@@ -40,7 +42,7 @@ public class SqrlTableFunction implements TableFunction, TableOrFunctionAnalysis
    * The full path for this function. If it is a root-level
    * function, the path has size 1. If it is a relationship, the path has size 2.
    */
-  @Include @ToString.Include
+  @Include @ToString.Include @NonNull
   private final NamePath fullPath;
   /**
    * The (ordered) list of {@link SqrlFunctionParameter} parameters for this function (empty if no parameters)
@@ -50,6 +52,7 @@ public class SqrlTableFunction implements TableFunction, TableOrFunctionAnalysis
   /**
    * The analysis of the function logic, including rowtype (i.e. the result type of this function), source tables, etc
    */
+  @NonNull
   private final TableAnalysis functionAnalysis;
   /**
    * The base table on which this function is defined.
@@ -127,5 +130,10 @@ public class SqrlTableFunction implements TableFunction, TableOrFunctionAnalysis
   @Override
   public List<String> getParameterNames() {
     return parameters.stream().map(FunctionParameter::getName).collect(Collectors.toList());
+  }
+
+  @Override
+  public TableType getType() {
+    return functionAnalysis.getType();
   }
 }

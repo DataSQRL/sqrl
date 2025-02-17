@@ -1,5 +1,6 @@
 package com.datasqrl.v2.analyzer;
 
+import com.datasqrl.io.tables.TableType;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -13,7 +14,7 @@ public interface TableOrFunctionAnalysis extends AbstractAnalysis {
 
   List<String> getParameterNames();
 
-
+  public TableType getType();
 
   default FullIdentifier getFullIdentifier() {
     return new FullIdentifier(getIdentifier(), getParameterNames());
