@@ -120,7 +120,13 @@ public class TableAnalysis implements TableOrFunctionAnalysis {
   ErrorCollector errors = ErrorCollector.root();
 
   public Optional<TableAnalysis> getStreamRoot() {
-    if (streamRoot == null && primaryKey.isDefined()) return Optional.of(this);
+    if (streamRoot == null) {
+      if (primaryKey.isDefined() && type==TableType.STREAM) {
+        return Optional.of(this);
+      } else {
+        return Optional.empty();
+      }
+    }
     return streamRoot;
   }
 

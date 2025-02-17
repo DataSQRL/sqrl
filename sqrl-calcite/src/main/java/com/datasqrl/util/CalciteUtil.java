@@ -72,8 +72,7 @@ public class CalciteUtil {
   }
 
   public static boolean isRowTime(RelDataType type) {
-    if (!(type instanceof TimeIndicatorRelDataType)) return false;
-    return true;
+    return type instanceof TimeIndicatorRelDataType;
   }
 
   public static Optional<Integer> findBestRowTimeIndex(RelDataType type) {
@@ -373,7 +372,8 @@ public class CalciteUtil {
 
     @Override
     protected RelNode visitChild(RelNode parent, int i, RelNode child) {
-      return super.visitChild(parent.accept(rexShuttle), i, child);
+      if (i==0) parent = parent.accept(rexShuttle);
+      return super.visitChild(parent, i, child);
     }
   }
 

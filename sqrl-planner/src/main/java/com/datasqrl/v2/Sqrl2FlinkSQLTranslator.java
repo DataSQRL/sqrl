@@ -52,21 +52,27 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import javax.annotation.Nullable;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.Value;
 import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
+import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.Sort;
+import org.apache.calcite.rel.core.TableFunctionScan;
+import org.apache.calcite.rel.logical.LogicalTableFunctionScan;
 import org.apache.calcite.rel.logical.LogicalTableScan;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
+import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexDynamicParam;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.schema.FunctionParameter;
+import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.SqlFunctionCategory;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
@@ -77,6 +83,7 @@ import org.apache.calcite.sql.SqlSyntax;
 import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.SqlNameMatchers;
+import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.calcite.sql2rel.SqlToRelConverter;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.sql.parser.ddl.SqlAlterViewAs;
@@ -387,19 +394,13 @@ public class Sqrl2FlinkSQLTranslator {
       ParsedArgument parsedArg = arguments.get(i);
       RelDataType type = (i<parsedTypes.size()?parsedTypes.get(i).getType():parsedArg.getResolvedRelDataType());
       parameters.add(new SqrlFunctionParameter(parsedArg.getName().get(),
-          parsedArg.getOrdinal(), type, parsedArg.isParentField()));
+          parsedArg.getIndex(), type, parsedArg.isParentField()));
     }
     //Analyze Query
     SqlNode sqlNode = parseSQL(originalSql);
     ViewAnalysis viewAnalysis = analyzeView(sqlNode, false, hints, errors);
     //Remap parameters in query so the RexDynamicParam point directly at the function parameter by index
-    RelNode updateParameters = viewAnalysis.getRelNode().accept(new RexShuttle() {
-      @Override
-      public RexNode visitDynamicParam(RexDynamicParam dynamicParam) {
-        int newIndex = argumentIndexMap.get(dynamicParam.getIndex());
-        return new RexDynamicParam(dynamicParam.getType(), newIndex);
-      }
-    });
+    RelNode updateParameters = viewAnalysis.getRelNode().accept(new DynamicParameterReplacer(argumentIndexMap));
     TableAnalysis.TableAnalysisBuilder tblBuilder = viewAnalysis.getTableAnalysis();
     tblBuilder.collapsedRelnode(updateParameters);
     tblBuilder.identifier(identifier);
@@ -415,6 +416,42 @@ public class Sqrl2FlinkSQLTranslator {
         .parameters(parameters)
         .multiplicity(SqrlTableFunction.getMultiplicity(updateParameters));
     return fctBuilder;
+  }
+
+  @AllArgsConstructor
+  private static class DynamicParameterReplacer extends RelShuttleImpl {
+
+    final Map<Integer, Integer> argumentIndexMap;
+    final RexShuttle rexShuttle = new RexShuttle() {
+      @Override
+      public RexNode visitDynamicParam(RexDynamicParam dynamicParam) {
+        int newIndex = argumentIndexMap.get(dynamicParam.getIndex());
+        if (newIndex!=dynamicParam.getIndex()) {
+          return new RexDynamicParam(dynamicParam.getType(), newIndex);
+        } else return dynamicParam;
+      }
+    };
+
+    @Override
+    public RelNode visit(RelNode other) {
+      if (other instanceof LogicalTableFunctionScan) {
+        return visit((LogicalTableFunctionScan) other);
+      }
+      return super.visit(other);
+    }
+
+    @Override
+    public RelNode visit(TableFunctionScan scan) {
+      RexCall call = (RexCall) scan.getCall().accept(rexShuttle);
+      return scan.copy(scan.getTraitSet(), scan.getInputs(), call, scan.getElementType(),
+          scan.getRowType(), scan.getColumnMappings());
+    }
+
+    @Override
+    protected RelNode visitChild(RelNode parent, int i, RelNode child) {
+      if (i==0) parent = parent.accept(rexShuttle);
+      return super.visitChild(parent, i, child);
+    }
   }
 
   public void registerSqrlTableFunction(SqrlTableFunction function) {

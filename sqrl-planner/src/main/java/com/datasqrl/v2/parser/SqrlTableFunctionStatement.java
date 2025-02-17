@@ -31,7 +31,7 @@ public class SqrlTableFunctionStatement extends SqrlDefinition {
 
   public Map<Integer, Integer> getArgIndexMap() {
     return IntStream.range(0, argumentsByIndex.size()).boxed().collect(Collectors.toMap(
-        i -> i+1, i -> argumentsByIndex.get(i).ordinal));
+        i -> i, i -> argumentsByIndex.get(i).index));
   }
 
   @Value
@@ -41,23 +41,23 @@ public class SqrlTableFunctionStatement extends SqrlDefinition {
     ParsedObject<String> type;
     RelDataType resolvedRelDataType;
     boolean isParentField;
-    int ordinal;
+    int index;
 
-    public ParsedArgument(ParsedObject<String> name, ParsedObject<String> type, int ordinal) {
-      this(name, type, null, false, ordinal);
+    public ParsedArgument(ParsedObject<String> name, ParsedObject<String> type, int index) {
+      this(name, type, null, false, index);
     }
 
-    public ParsedArgument(ParsedObject<String> name, int ordinal) {
-      this(name, null, null, true, ordinal);
+    public ParsedArgument(ParsedObject<String> name, int index) {
+      this(name, null, null, true, index);
     }
 
     public ParsedArgument withName(ParsedObject<String> name) {
-      return new ParsedArgument(name, type, resolvedRelDataType, isParentField, ordinal);
+      return new ParsedArgument(name, type, resolvedRelDataType, isParentField, index);
     }
 
     public ParsedArgument withResolvedType(RelDataType resolvedRelDataType) {
       Preconditions.checkArgument(!hasResolvedType());
-      return new ParsedArgument(name, type, resolvedRelDataType, isParentField, ordinal);
+      return new ParsedArgument(name, type, resolvedRelDataType, isParentField, index);
     }
 
     public boolean hasResolvedType() {

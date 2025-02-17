@@ -8,8 +8,6 @@ import com.datasqrl.util.SnapshotTest.Snapshot;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.Predicate;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
@@ -25,12 +23,14 @@ public class DAGPlannerTest extends AbstractAssetSnapshotTest {
   @ArgumentsSource(DagPlannerSQRLFiles.class)
   void testScripts(Path script) {
     assertTrue(Files.exists(script));
-    boolean expectFailure = TestNameModifier.of(script)==TestNameModifier.fail;
+    TestNameModifier testModifier = TestNameModifier.of(script);
+    boolean expectFailure = testModifier==TestNameModifier.fail;
+    boolean printMessages = testModifier==TestNameModifier.fail || testModifier==TestNameModifier.warn;
     this.snapshot = Snapshot.of(getDisplayName(script), getClass());
     AssertStatusHook hook = execute(SCRIPT_DIR, "compile", script.getFileName().toString(), "-t", deployDir.toString());
-    assertEquals(expectFailure, hook.isFailed(), hook.getFailMessage());
-    if (expectFailure) {
-      createFailSnapshot(hook.getFailMessage());
+    assertEquals(expectFailure, hook.isFailed(), hook.getMessages());
+    if (printMessages) {
+      createMessageSnapshot(hook.getMessages());
     } else {
       createSnapshot();
     }

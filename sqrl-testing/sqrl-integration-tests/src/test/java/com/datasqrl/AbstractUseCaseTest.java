@@ -6,12 +6,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.datasqrl.cmd.AssertStatusHook;
 import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.SnapshotTest.Snapshot;
-import com.google.common.base.Strings;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -61,7 +59,7 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
   public void snapshot(String testname, AssertStatusHook hook) {
     this.snapshot = Snapshot.of(testname, getClass());
     if (hook.isFailed()) {
-      createFailSnapshot(hook.getFailMessage());
+      createMessageSnapshot(hook.getMessages());
     } else {
       createSnapshot();
     }

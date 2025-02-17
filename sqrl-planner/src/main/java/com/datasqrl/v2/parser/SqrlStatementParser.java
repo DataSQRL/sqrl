@@ -175,7 +175,7 @@ public class SqrlStatementParser {
               checkFatal(typeName.isPresent(), typeName.getFileLocation(),
                   ErrorCode.INVALID_TABLE_FUNCTION_ARGUMENTS, "Invalid argument type");
               argumentMap.put(argName.get(), new ParsedArgument(argName.map(Name::getDisplay),
-                  typeName, argumentMap.size()+1));
+                  typeName, argumentMap.size()));
               lastMatchEnd = argMatcher.end();
             }
             checkFatal(lastMatchEnd == arguments.get().length(),
@@ -243,7 +243,7 @@ public class SqrlStatementParser {
         int length = body.length();
         int startPosition = i+SELF_REFERENCE_KEYWORD.length();
         int endPosition = startPosition;
-        while (endPosition < length && !Character.isWhitespace(body.charAt(endPosition))) {
+        while (endPosition < length && !nonIdentifierCharacter(body.charAt(endPosition))) {
           endPosition++;
         }
         //TODO: need to parse this as a SQLIdentifier using the CalciteParser#parseIdentifier from Sqrl2FlinkSQLTranslator to handle escaped fields
@@ -254,10 +254,10 @@ public class SqrlStatementParser {
           checkFatal(existing.isParentField(), existing.getName().getFileLocation(), ErrorCode.INVALID_TABLE_FUNCTION_ARGUMENTS,
               "Function argument clashes with name on parent table [%s]. Please rename.", existing.getName().get());
 
-          argumentIndexes.add(new ParsedArgument(argumentName, existing.getOrdinal())
+          argumentIndexes.add(new ParsedArgument(argumentName, existing.getIndex())
           );
         } else { //new argument
-          ParsedArgument arg = new ParsedArgument(argumentName, functionArguments.size()+1);
+          ParsedArgument arg = new ParsedArgument(argumentName, functionArguments.size());
           functionArguments.put(argName, arg);
           argumentIndexes.add(arg);
         }
@@ -278,6 +278,9 @@ public class SqrlStatementParser {
     return Pair.of(resultBuilder.toString(), argumentIndexes);
   }
 
+  static boolean nonIdentifierCharacter(char c) {
+    return Character.isWhitespace(c) || SqlScriptStatementSplitter.STATEMENT_DELIMITER.charAt(0)==c;
+  }
 
   static FileLocation relativeLocation(ParsedObject<String> base, int charOffset) {
     return base.getFileLocation().add(computeFileLocation(base.get(), charOffset));

@@ -9,7 +9,7 @@ import lombok.Getter;
 public class AssertStatusHook implements StatusHook {
   private boolean failed;
   @Getter
-  private String failMessage = null;
+  private String messages = null;
 
   @Override
   public void onSuccess() {
@@ -17,7 +17,7 @@ public class AssertStatusHook implements StatusHook {
 
   @Override
   public void onFailure(Throwable e, ErrorCollector errors) {
-    failMessage = ErrorPrinter.prettyPrint(errors);
+    messages = ErrorPrinter.prettyPrint(errors);
     failed = true;
   }
 

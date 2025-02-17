@@ -212,12 +212,7 @@ LogicalAggregate(group=[{0, 1}], unique_email_count=[COUNT(DISTINCT $2)])
   LogicalProject(window_start=[$5], window_end=[$6], email=[$1])
     LogicalTableFunctionScan(invocation=[TUMBLE(DESCRIPTOR($4), 60000:INTERVAL MINUTE)], rowType=[RecordType(BIGINT customerid, VARCHAR(2147483647) email, VARCHAR(2147483647) name, BIGINT lastUpdated, TIMESTAMP_LTZ(3) *ROWTIME* timestamp, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
       LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
-        LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
-          LogicalFilter(condition=[>($0, 0)])
-            LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
-              LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
-                LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[TO_TIMESTAMP_LTZ($3, 0)])
-                  LogicalTableScan(table=[[default_catalog, default_database, Customer__def]])
+        LogicalTableScan(table=[[default_catalog, default_database, SelectCustomers]])
 SQL: CREATE VIEW CustomerTimeWindow AS  SELECT
                           window_start, window_end,
                           COUNT(DISTINCT email) AS unique_email_count
@@ -347,8 +342,6 @@ ID:     default_catalog.default_database.Orders
 Type:   state
 Stage:  flink
 Inputs: default_catalog.default_database.Orders__def
-Annotations:
- - stream-root: Orders__def
 Primary Key: orderid
 Timestamp  : -
 Schema:
@@ -401,8 +394,8 @@ Annotations:
  - parameters: arg1, arg2
 Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
-  LogicalFilter(condition=[>($0, ?1)])
-    LogicalTableFunctionScan(invocation=[CustomerById(?0)], rowType=[RecordType(BIGINT customerid, VARCHAR(2147483647) email, VARCHAR(2147483647) name, BIGINT lastUpdated, TIMESTAMP_LTZ(3) *ROWTIME* timestamp)], elementType=[class [Ljava.lang.Object;])
+  LogicalFilter(condition=[>($0, ?0)])
+    LogicalTableFunctionScan(invocation=[CustomerById(?1)], rowType=[RecordType(BIGINT customerid, VARCHAR(2147483647) email, VARCHAR(2147483647) name, BIGINT lastUpdated, TIMESTAMP_LTZ(3) *ROWTIME* timestamp)], elementType=[class [Ljava.lang.Object;])
 SQL: CREATE VIEW TableFunctionCallsTblFct AS  SELECT * FROM Table(CustomerById(?    )) WHERE customerid > ?    ;
 
 === TemporalJoin

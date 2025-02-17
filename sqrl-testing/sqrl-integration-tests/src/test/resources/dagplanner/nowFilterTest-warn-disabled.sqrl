@@ -1,4 +1,3 @@
-IMPORT time.*;
 IMPORT ecommerceTs.Customer;
 IMPORT ecommerceTs.Orders;
 IMPORT ecommerceTs.Product;

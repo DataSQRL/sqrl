@@ -1,5 +1,6 @@
 package com.datasqrl.v2.dag;
 
+import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.EngineType;
 import com.datasqrl.config.PackageJson;
@@ -67,6 +68,7 @@ import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.logical.LogicalTableFunctionScan;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
@@ -292,7 +294,10 @@ public class DAGPlanner {
     PrimaryKeyMap pk = table.getSimplePrimaryKey();
     int numCols = table.getRowType().getFieldCount();
     List<Integer> addHashColumn = null;
-    if (pk.isUndefined()) {
+    if (pk.isDefined() && pk.getLength()==0) {
+      //need to add a constant at the end so we have a pk
+      addHashColumn = List.of();
+    } else if (pk.isUndefined()) {
       //Databases requires a primary key, see if we can create one
       if (stage.getType()==EngineType.DATABASE) {
         table.getErrors().checkFatal(table.getType().isStream(),
@@ -311,10 +316,15 @@ public class DAGPlanner {
         addHashColumn = pk.asSimpleList();
       }
     }
-    if (addHashColumn != null && !addHashColumn.isEmpty()) {
-      CalciteUtil.addColumn(relBuilder, relBuilder.getRexBuilder()
-          .makeCall(sqrlEnv.lookupUserDefinedFunction(CommonFunctions.HASH_COLUMNS),
-              CalciteUtil.getSelectRex(relBuilder, addHashColumn)), HASHED_PK_NAME);
+    if (addHashColumn != null) {
+      if (!addHashColumn.isEmpty()) {
+        CalciteUtil.addColumn(relBuilder, relBuilder.getRexBuilder()
+            .makeCall(sqrlEnv.lookupUserDefinedFunction(CommonFunctions.HASH_COLUMNS),
+                CalciteUtil.getSelectRex(relBuilder, addHashColumn)), HASHED_PK_NAME);
+      } else {
+        //add constant as pk
+        CalciteUtil.addColumn(relBuilder, relBuilder.literal(1), HASHED_PK_NAME);
+      }
       return PrimaryKeyMap.of(List.of(numCols));
     } else {
       return pk;
@@ -370,28 +380,6 @@ public class DAGPlanner {
   }
 
   @AllArgsConstructor
-  private static class ReplaceRowtimeRexShuttle extends RexShuttle {
-
-    private final RelDataType newRowType;
-
-    @Override
-    public RexNode visitInputRef(RexInputRef inputRef) {
-      RelDataType type = inputRef.getType();
-      if (type instanceof TimeIndicatorRelDataType) {
-        TimeIndicatorRelDataType timeIndicator = (TimeIndicatorRelDataType) type;
-        return new RexInputRef(inputRef.getIndex(), timeIndicator.originalType());
-      } else if (newRowType!=null) {
-        int index = inputRef.getIndex();
-        RelDataType newType = newRowType.getFieldList().get(index).getType();
-        if (!inputRef.getType().equals(newType)) {
-          return new RexInputRef(index, newType);
-        }
-      }
-      return super.visitInputRef(inputRef);
-    }
-  }
-
-  @Value
   private class QueryExpansionRelShuttle extends RelShuttleImpl {
 
     Function<ObjectIdentifier, ObjectIdentifier> inputTableMapping;
@@ -485,6 +473,41 @@ public class DAGPlanner {
       return aggregate.copy(aggregate.getTraitSet(), input, aggregate.getGroupSet(), aggregate.groupSets,
           aggregate.getAggCallList().stream().map(agg -> agg.adaptTo(input, agg.getArgList(), agg.filterArg, aggregate.getGroupCount(),
               aggregate.getGroupCount())).collect(Collectors.toList()));
+    }
+
+    @AllArgsConstructor
+    private class ReplaceRowtimeRexShuttle extends RexShuttle {
+
+      private final RelDataType newRowType;
+
+      private RelDataType getNormalTimestampType(RelDataType type) {
+        TimeIndicatorRelDataType timeIndicator = (TimeIndicatorRelDataType) type;
+        return sqrlEnv.getTypeFactory().createTypeWithNullability(timeIndicator.originalType(), type.isNullable());
+      }
+
+      @Override
+      public RexNode visitInputRef(RexInputRef inputRef) {
+        RelDataType type = inputRef.getType();
+        if (CalciteUtil.isRowTime(type)) {
+          return new RexInputRef(inputRef.getIndex(), getNormalTimestampType(type));
+        } else if (newRowType!=null) {
+          int index = inputRef.getIndex();
+          RelDataType newType = newRowType.getFieldList().get(index).getType();
+          if (!inputRef.getType().equals(newType)) {
+            return new RexInputRef(index, newType);
+          }
+        }
+        return super.visitInputRef(inputRef);
+      }
+
+      @Override
+      public RexNode visitCall(RexCall call) {
+        if (CalciteUtil.isRowTime(call.getType())) {
+          boolean[] update = new boolean[]{false};
+          List<RexNode> clonedOperands = this.visitList(call.operands, update);
+          return call.clone(getNormalTimestampType(call.getType()), clonedOperands);
+        } else return super.visitCall(call);
+      }
     }
   }
 }

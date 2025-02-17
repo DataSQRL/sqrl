@@ -1,6 +1,3 @@
-IMPORT time.*;
 IMPORT ecommerceTs.Customer;
 IMPORT ecommerceTs.Orders;
-IMPORT ecommerceTs.Product;
-CombinedStream := SELECT o.customerid, o.time AS rowtime FROM Orders o UNION ALL SELECT c.customerid, c.timestamp AS rowtime FROM Customer c;
-StreamCount := SELECT endOfDay(rowtime) as day, COUNT(1) as num FROM CombinedStream GROUP BY day;
+CombinedStream := SELECT o.customerid, o.`time` AS rowtime FROM Orders o UNION ALL SELECT c.customerid, c.`timestamp` AS rowtime FROM Customer c;

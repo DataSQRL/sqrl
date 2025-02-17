@@ -80,8 +80,8 @@ public abstract class AbstractAssetSnapshotTest {
     snapshot.createOrValidate();
   }
 
-  protected void createFailSnapshot(String failMessage) {
-    snapshot.addContent(failMessage);
+  protected void createMessageSnapshot(String messages) {
+    snapshot.addContent(messages);
     snapshot.createOrValidate();
   }
 
@@ -180,7 +180,7 @@ public abstract class AbstractAssetSnapshotTest {
   }
 
   public enum TestNameModifier {
-    none, disabled, fail;
+    none, disabled, warn, fail;
 
     public static TestNameModifier of(String filename) {
       if (Strings.isNullOrEmpty(filename)) return none;

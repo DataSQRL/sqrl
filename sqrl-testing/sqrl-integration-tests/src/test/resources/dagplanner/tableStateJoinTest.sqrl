@@ -1,12 +1,9 @@
-IMPORT time.*;
-IMPORT ecommerceTs.Customer;
-IMPORT ecommerceTs.Orders;
-IMPORT ecommerceTs.Product;
-Customer := DISTINCT Customer ON customerid ORDER BY timestamp DESC;
-Orders := DISTINCT Orders ON id ORDER BY time DESC;
+IMPORT ecommerceTs.* AS _;
+Customer := DISTINCT _customer ON customerid ORDER BY `timestamp` DESC;
+Orders := DISTINCT _orders ON id ORDER BY `time` DESC;
 OrderCustomerLeft := SELECT c.lastUpdated, o.id, c.name, o.customerid  FROM Orders o LEFT JOIN Customer c on o.customerid = c.customerid;
-OrderCustomer := SELECT o.time, o.id, c.name, o.customerid FROM Orders o INNER JOIN Customer c on o.customerid = c.customerid;
-OrderCustomerLeftExcluded := SELECT o.time, o.id, o.customerid  FROM Orders o LEFT JOIN Customer c on o.customerid = c.customerid WHERE c.customerid IS NULL;
+OrderCustomer := SELECT o.`time`, o.id, c.name, o.customerid FROM Orders o INNER JOIN Customer c on o.customerid = c.customerid;
+OrderCustomerLeftExcluded := SELECT o.`time`, o.id, o.customerid  FROM Orders o LEFT JOIN Customer c on o.customerid = c.customerid WHERE c.customerid IS NULL;
 OrderCustomerRight := SELECT coalesce(o.id, 0) as ouuid, o.id, c.name, o.customerid  FROM Orders o RIGHT JOIN Customer c on o.customerid = c.customerid;
 OrderCustomerRightExcluded := SELECT c.lastUpdated, c.customerid, c.name  FROM Orders o RIGHT JOIN Customer c on o.customerid = c.customerid WHERE o.id IS NULL;
-OrderCustomerConstant := SELECT o.time, o.id, c.name, o.customerid FROM Orders o INNER JOIN Customer c ON o.customerid = c.customerid AND c.name = 'Robert' AND o.id > 5;
+OrderCustomerConstant := SELECT o.`time`, o.id, c.name, o.customerid FROM Orders o INNER JOIN Customer c ON o.customerid = c.customerid AND c.name = 'Robert' AND o.id > 5;

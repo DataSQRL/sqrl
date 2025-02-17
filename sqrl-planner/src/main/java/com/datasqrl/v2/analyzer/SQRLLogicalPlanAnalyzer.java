@@ -336,7 +336,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
       if (functionScan.getInputs().size()==1) {
         RelNodeAnalysis input = getInputAnalyses(functionScan).get(0);
         if (input.hasNowFilter) errors.notice("Rewrite now-filter followed by a window aggregation to a sliding time window");
-        return setProcessResult(input.toBuilder().relNode(functionScan).hasNowFilter(false).build());
+        return setProcessResult(input.toBuilder().relNode(updateRelnode(functionScan, List.of(input.relNode))).hasNowFilter(false).build());
       }
     }
     //Generic table function call

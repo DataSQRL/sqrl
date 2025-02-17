@@ -1,6 +1,0 @@
-IMPORT time.*;
-IMPORT ecommerceTs.Customer;
-IMPORT ecommerceTs.Orders;
-IMPORT ecommerceTs.Product;
-OrdersIDRange(@idLower: Int) := SELECT * FROM Orders WHERE id > @idLower;
-Orders2(@idLower: Int) := SELECT id, id - @idLower AS delta, time FROM Orders WHERE id > @idLower;

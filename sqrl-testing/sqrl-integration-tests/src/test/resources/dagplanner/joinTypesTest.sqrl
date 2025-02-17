@@ -1,8 +1,0 @@
-IMPORT time.*;
-IMPORT ecommerceTs.Customer;
-IMPORT ecommerceTs.Orders;
-Customer := DISTINCT Customer ON customerid ORDER BY timestamp DESC;
-OrderCustomer := SELECT o.id, c.name FROM Orders o LEFT JOIN Customer c ON o.customerid = c.customerid;
-OrderCustomer2 := SELECT o.id, c.name FROM Orders o LEFT TEMPORAL JOIN Customer c ON o.customerid = c.customerid;
-OrderCustomer3 := SELECT o.id, c.name FROM Customer c RIGHT JOIN Orders o ON o.customerid = c.customerid;
-OrderCustomer4 := SELECT o.id, c.name FROM Orders o LEFT OUTER JOIN Customer c ON o.customerid = c.customerid;

@@ -245,7 +245,7 @@ public class SqlScriptPlanner {
             if (arg.isParentField()) {
               RelDataTypeField field = parentTbl.getRowType().getField(arg.getName().get(), false, false);
               checkFatal(field!=null, arg.getName().getFileLocation(), ErrorLabel.GENERIC,
-                  "Could not find field on parent table: %s", arg.getName());
+                  "Could not find field on parent table: %s", arg.getName().get());
               return arg.withResolvedType(field.getType()).withName(
                   new ParsedObject<String>(field.getName(), arg.getName().getFileLocation()));
             } else {
@@ -414,7 +414,7 @@ public class SqlScriptPlanner {
           scanViewSql, List.of(), Map.of(), PlannerHints.EMPTY, ErrorCollector.root());
       fctBuilder.fullPath(NamePath.of(tableName));
       fctBuilder.visibility(visibility);
-      addFunctionToDag(fctBuilder.build(), hints);
+      addFunctionToDag(fctBuilder.build(), PlannerHints.EMPTY); //hints don't apply to the function access
     }
   }
 
