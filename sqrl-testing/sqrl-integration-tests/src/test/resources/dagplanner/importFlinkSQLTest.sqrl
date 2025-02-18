@@ -1,0 +1,3 @@
+IMPORT ecommerceSql.Category;
+
+CategoryDistinct := DISTINCT Category ON categoryid ORDER BY updateTime DESC;
