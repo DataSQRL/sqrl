@@ -161,7 +161,7 @@ public class IndexSelector {
     Set<IndexDefinition> candidates = new LinkedHashSet<>();
     indexes.forEach(idx -> candidates.addAll(generateIndexCandidates(idx)));
     Function<QueryIndexSummary, Double> initialCost = idx -> idx.getBaseCost();
-    if (config.hasPrimaryKeyIndex()) {
+    if (config.hasPrimaryKeyIndex() && table.getAnalysis().getPrimaryKey().isDefined()) {
       //The baseline cost is the cost of doing the lookup with the primary key index
       IndexDefinition pkIdx = IndexDefinition.getPrimaryKeyIndex(table.getNameId(),
           table.getAnalysis().getPrimaryKey().asSimpleList(), table.getAnalysis().getRowType().getFieldNames());

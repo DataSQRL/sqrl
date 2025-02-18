@@ -51,7 +51,7 @@ public class SqrlRelMdRowCount extends RelMdRowCount
   public static Double getRowCount(TableAnalysis table,
                                    QueryIndexSummary constraints) {
     Set<Integer> equalCols = constraints.getEqualityColumns();
-    if (equalCols.containsAll(table.getPrimaryKey().asSimpleList())) {
+    if (table.getPrimaryKey().isDefined() && equalCols.containsAll(table.getPrimaryKey().asSimpleList())) {
       return 1.0;
     }
     return getRowCount(table) * SqrlRelMdSelectivity.getSelectivity(table, constraints);

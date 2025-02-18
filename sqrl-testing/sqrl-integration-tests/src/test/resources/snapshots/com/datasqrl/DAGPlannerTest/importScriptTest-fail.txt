@@ -1,0 +1,5 @@
+[FATAL] Object [Order] not found in module: ecommerceTs.Order
+in script:imports-fail.sqrl [1:1]:
+IMPORT ecommerceTs.Order;
+^
+

@@ -64,7 +64,7 @@ public class SqrlStatementParser {
   public static final String SELF_REFERENCE_KEYWORD = "this.";
 
   public static final char ARGUMENT_PREFIX = '$';
-  public static final String ARGUMENT_REGEX = "\\s*\\$(?<name>\\w+)\\s*:\\s*(?<type>[\\w()]+?)\\s*(,\\s*|$)";
+  public static final String ARGUMENT_REGEX = "\\s*\\$(?<name>\\w+)\\s*:\\s*(?<type>[\\w\\s()]+?)(,\\s*|$)";
   public static final Pattern ARGUMENT_PARSER = Pattern.compile(ARGUMENT_REGEX,
       Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
