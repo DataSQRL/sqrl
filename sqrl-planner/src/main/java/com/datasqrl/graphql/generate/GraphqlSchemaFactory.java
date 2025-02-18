@@ -9,7 +9,7 @@ import static com.datasqrl.graphql.generate.GraphqlSchemaUtil.createOutputTypeFo
 import static com.datasqrl.graphql.generate.GraphqlSchemaUtil.getInputType;
 import static com.datasqrl.graphql.generate.GraphqlSchemaUtil.getOutputType;
 import static com.datasqrl.graphql.generate.GraphqlSchemaUtil.isValidGraphQLName;
-import static com.datasqrl.graphql.generate.GraphqlSchemaUtil.wrap;
+import static com.datasqrl.graphql.generate.GraphqlSchemaUtil.wrapNullable;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.LIMIT;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.OFFSET;
 import static graphql.schema.GraphQLNonNull.nonNull;
@@ -19,17 +19,14 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 
 import com.datasqrl.config.PackageJson.CompilerConfig;
-import com.datasqrl.config.SystemBuiltInConnectors;
 import com.datasqrl.engine.log.LogManager;
 import com.datasqrl.function.SqrlFunctionParameter;
 import com.datasqrl.graphql.server.CustomScalars;
 import com.datasqrl.io.tables.TableType;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.plan.table.ProxyImportRelationalTable;
-import com.datasqrl.plan.table.QueryRelationalTable;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.plan.validate.ResolvedImport;
-import com.datasqrl.plan.validate.ScriptPlanner.Mutation;
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.NestedRelationship;
 import com.datasqrl.schema.Relationship.JoinType;
@@ -67,7 +64,6 @@ import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.util.ImmutableBitSet;
 import org.apache.commons.collections.ListUtils;
-import scala.annotation.meta.field;
 
 /**
  * Creates a default graphql schema based on the SQRL schema
@@ -258,7 +254,7 @@ public class GraphqlSchemaFactory {
 
       GraphQLFieldDefinition field = GraphQLFieldDefinition.newFieldDefinition()
           .name(rel.getAbsolutePath().getDisplay())
-          .type(wrap(createTypeName(rel), rel.getMultiplicity()))
+          .type(GraphqlSchemaUtil.wrapMultiplicity(createTypeName(rel), rel.getMultiplicity()))
           .arguments(createArguments(rel))
           .build();
       fields.add(field);
@@ -338,7 +334,7 @@ public class GraphqlSchemaFactory {
 
     GraphQLFieldDefinition field = GraphQLFieldDefinition.newFieldDefinition()
         .name(name)
-        .type(wrap(createTypeName(sqrlTableMacro), sqrlTableMacro.getMultiplicity()))
+        .type(GraphqlSchemaUtil.wrapMultiplicity(createTypeName(sqrlTableMacro), sqrlTableMacro.getMultiplicity()))
         .arguments(createArguments(sqrlTableMacro))
         .build();
 
@@ -443,7 +439,7 @@ public class GraphqlSchemaFactory {
         .filter(f->isVisible(field))
         .map(t -> GraphQLFieldDefinition.newFieldDefinition()
             .name(field.getName())
-            .type(wrap(t, field.getType())).build());
+            .type(wrapNullable(t, field.getType())).build());
   }
 
   public void postProcess() {
