@@ -2,7 +2,6 @@ package com.datasqrl.compile;
 
 import com.datasqrl.actions.CreateDatabaseQueries;
 import com.datasqrl.actions.GraphqlPostplanHook;
-import com.datasqrl.actions.InferGraphqlSchema;
 import com.datasqrl.actions.DagWriter;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.config.BuildPath;
@@ -16,6 +15,7 @@ import com.datasqrl.plan.global.PhysicalPlanRewriter;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISourceImpl;
 import com.datasqrl.util.ServiceLoaderDiscovery;
+import com.datasqrl.v2.InferGraphqlSchema2;
 import com.datasqrl.v2.dag.DAGBuilder;
 import com.datasqrl.v2.dag.DAGPlanner;
 import com.datasqrl.v2.dag.PipelineDAG;
@@ -45,7 +45,7 @@ public class CompilationProcessV2 {
   private final PhysicalPlanner physicalPlanner;
   private final GraphqlPostplanHook graphqlPostplanHook;
   private final CreateDatabaseQueries createDatabaseQueries;
-  private final InferGraphqlSchema inferencePostcompileHook;
+  private final InferGraphqlSchema2 inferencePostcompileHook;
   private final DagWriter writeDeploymentArtifactsHook;
   //  private final FlinkSqlGenerator flinkSqlGenerator;
   private final GraphqlSourceFactory graphqlSourceFactory;
@@ -77,7 +77,7 @@ public class CompilationProcessV2 {
     - make sure we generate the right testplan
     - create the RootGraphQL model and attach to serverPlan
      */
-    if (serverPlan.isPresent() && false) {
+    if (serverPlan.isPresent()) {
       Optional<APISource> apiSource = graphqlSourceFactory.get();
       if (apiSource.isEmpty() || executionGoal == ExecutionGoal.TEST) { //Infer schema from functions
         //TODO: rewrite the following to use the functions from the serverPlan

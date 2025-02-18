@@ -35,14 +35,14 @@ import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 @Slf4j
 public class GraphqlSchemaUtil {
 
-  public static GraphQLOutputType wrap(GraphQLOutputType gqlType, RelDataType type) {
+  public static GraphQLOutputType wrapNullable(GraphQLOutputType gqlType, RelDataType type) {
     if (!type.isNullable()) {
       return GraphQLNonNull.nonNull(gqlType);
     }
     return gqlType;
   }
 
-  public static GraphQLOutputType wrap(GraphQLOutputType type, Multiplicity multiplicity) {
+  public static GraphQLOutputType wrapMultiplicity(GraphQLOutputType type, Multiplicity multiplicity) {
     switch (multiplicity) {
       case ZERO_ONE:
         return type;
@@ -140,7 +140,7 @@ public class GraphqlSchemaUtil {
           getOutputType(field.getType(), namePath.concat(Name.system(field.getName())), seen)
               .ifPresent(fieldType -> builder.field(GraphQLFieldDefinition.newFieldDefinition()
                   .name(field.getName())
-                  .type(wrap(fieldType, field.getType()))
+                  .type(wrapNullable(fieldType, field.getType()))
                   .build()));
         }
         return Optional.of(builder.build());
