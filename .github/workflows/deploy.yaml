@@ -1,4 +1,4 @@
-name: Deploy with Maven
+name: Build and deploy with Maven
 
 on:
   push:
@@ -22,6 +22,11 @@ jobs:
         java-version: '11'
         distribution: 'adopt'
         cache: maven
+
+    - name: Print versions
+      run: |
+        set -x
+        mvn --version
 
     - name: Download dependencies
       run: |
