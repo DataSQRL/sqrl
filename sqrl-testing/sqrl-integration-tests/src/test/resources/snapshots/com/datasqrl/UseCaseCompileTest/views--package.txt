@@ -13,7 +13,7 @@ LogicalValues(tuples=[[{ 1 }, { 2 }]])
 >>>flink.json
 {
   "flinkSql" : [
-    "CREATE TEMPORARY TABLE `myview_1` (\n  `val` INTEGER NOT NULL,\n  PRIMARY KEY (`val`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'myview_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
+    "CREATE TABLE `myview_1` (\n  `val` INTEGER NOT NULL,\n  PRIMARY KEY (`val`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'myview_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
     "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM (VALUES (1),\n    (2)) AS `t` (`val`);",
     "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `myview_1`\n(SELECT *\n FROM `table$1`)\n;\nEND;"
   ],

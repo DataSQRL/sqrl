@@ -29,7 +29,6 @@
     <log4j.version>2.23.1</log4j.version>
     <scala.version>2.12</scala.version>
     <guava.version>31.1-jre</guava.version>
-    <lombok.version>1.18.24</lombok.version>
     <commonsio.version>2.11.0</commonsio.version>
     <commons-lang3.version>3.12.0</commons-lang3.version>
     <commons-config.version>2.9.0</commons-config.version>
@@ -51,7 +50,7 @@
     <autoservice.version>1.0.1</autoservice.version>
     <antlr.version>4.9.2</antlr.version>
     <guava.version>31.1-jre</guava.version>
-    <lombok.version>1.18.24</lombok.version>
+    <lombok.version>1.18.34</lombok.version>
     <junit.jupiter.version>5.8.2</junit.jupiter.version>
     <calcite.version>1.27.0</calcite.version>
     <graphql-java.version>19.2</graphql-java.version>
@@ -984,6 +983,9 @@
           <includes>
             <include>**/*IT.java</include>
           </includes>
+          <environmentVariables>
+             <TZ>America/Los_Angeles</TZ>
+          </environmentVariables>
         </configuration>
       </plugin>
     </plugins>
