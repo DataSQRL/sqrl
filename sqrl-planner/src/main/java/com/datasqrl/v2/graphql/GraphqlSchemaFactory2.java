@@ -1,14 +1,10 @@
-package com.datasqrl.v2;
+package com.datasqrl.v2.graphql;
 
 import static com.datasqrl.canonicalizer.Name.HIDDEN_PREFIX;
 import static com.datasqrl.canonicalizer.Name.isHiddenString;
-import static com.datasqrl.graphql.generate.GraphqlSchemaUtil.createOutputTypeForRelDataType;
-import static com.datasqrl.graphql.generate.GraphqlSchemaUtil.getInputType;
-import static com.datasqrl.graphql.generate.GraphqlSchemaUtil.getOutputType;
-import static com.datasqrl.graphql.generate.GraphqlSchemaUtil.isValidGraphQLName;
-import static com.datasqrl.graphql.generate.GraphqlSchemaUtil.wrapMultiplicity;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.LIMIT;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.OFFSET;
+import static com.datasqrl.v2.graphql.GraphqlSchemaUtil2.*;
 import static graphql.schema.GraphQLNonNull.nonNull;
 
 import com.datasqrl.calcite.function.SqrlTableMacro;
@@ -16,8 +12,9 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.engine.log.LogManager;
+import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.function.SqrlFunctionParameter;
-import com.datasqrl.graphql.generate.GraphqlSchemaUtil;
+import com.datasqrl.v2.graphql.GraphqlSchemaUtil2;
 import com.datasqrl.graphql.server.CustomScalars;
 import com.datasqrl.io.tables.TableType;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
@@ -62,7 +59,7 @@ import org.apache.calcite.schema.Table;
 import org.apache.calcite.util.ImmutableBitSet;
 import org.apache.commons.collections.ListUtils;
 
- /**
+/**
   * Creates a default graphql schema based on the SQRL schema
   */
 
@@ -78,24 +75,21 @@ public class GraphqlSchemaFactory2 {
   private final boolean extendedScalarTypes;
   private final LogManager logManager;
   private final ExecutionGoal goal;
-  private final ServerStagePlan serverStagePlan;
-    private Map<NamePath, List<SqrlTableFunction>> absolutePathToTableFunctions;
   public final Set<String> seen = new HashSet<>();
 
   @Inject
-  public GraphqlSchemaFactory2(CompilerConfig config, LogManager logManager, ExecutionGoal goal, ServerStagePlan serverStagePlan) {
-    this(config.isAddArguments(), config.isExtendedScalarTypes(), logManager, goal, serverStagePlan);
+  public GraphqlSchemaFactory2(CompilerConfig config, LogManager logManager, ExecutionGoal goal) {
+    this(config.isAddArguments(), config.isExtendedScalarTypes(), logManager, goal);
   }
 
-  public GraphqlSchemaFactory2(boolean addArguments, boolean extendedScalarTypes, LogManager logManager, ExecutionGoal goal, ServerStagePlan serverStagePlan) {
+  public GraphqlSchemaFactory2(boolean addArguments, boolean extendedScalarTypes, LogManager logManager, ExecutionGoal goal) {
     this.addArguments = addArguments;
     this.logManager = logManager;
     this.extendedScalarTypes = extendedScalarTypes;
     this.goal = goal;
-    this.serverStagePlan = serverStagePlan;
   }
 
-  public Optional<GraphQLSchema> generate() {
+  public Optional<GraphQLSchema> generate(ServerPhysicalPlan serverPlan) {
     //configure the schema builder
     GraphQLSchema.Builder graphQLSchemaBuilder = GraphQLSchema.newSchema();
     if (extendedScalarTypes) { // use the plural parameter name in place of only bigInteger to avoid having a conf parameter of each special type mapping feature in the future
@@ -104,7 +98,7 @@ public class GraphqlSchemaFactory2 {
 
     // process query table functions
     final List<SqrlTableFunction> queriesTableFunctions =
-        serverStagePlan.getFunctions().stream()
+        serverPlan.getFunctions().stream()
             .filter(
                 function ->
                     function.getVisibility().getAccess() == AccessModifier.QUERY)
@@ -120,7 +114,7 @@ public class GraphqlSchemaFactory2 {
       if (logManager.hasLogEngine() && System.getenv().get("ENABLE_SUBSCRIPTIONS") != null) {
         // process subscriptions table functions
         final List<SqrlTableFunction> subscriptionsTableFunctions =
-            serverStagePlan.getFunctions().stream()
+            serverPlan.getFunctions().stream()
                 .filter(
                     function -> function.getVisibility().getAccess() == AccessModifier.SUBSCRIPTION)
                 .collect(Collectors.toList());
@@ -148,23 +142,26 @@ public class GraphqlSchemaFactory2 {
   }
 
     public Optional<GraphQLObjectType> createQueriesOrSubscriptionsObjectType(List<SqrlTableFunction> tableFunctions, AccessModifier tableFunctionsType) {
-    // group table functions by their parent path
+      //TODO remove no more needed
+
+      // group table functions by their parent path
         Map<NamePath, List<SqrlTableFunction>> parentToTableFunctions = tableFunctions.stream()
                 .collect(Collectors.groupingBy(function -> function.getFullPath().popLast(),
                         LinkedHashMap::new, Collectors.toList()));
 
-    // group table functions by their absolute path
-    this.absolutePathToTableFunctions = tableFunctions.stream()
-        .collect(Collectors.groupingBy(SqrlTableFunction::getFullPath,
-            LinkedHashMap::new, Collectors.toList()));
 
-    for (Map.Entry<NamePath, List<SqrlTableFunction>> path : absolutePathToTableFunctions.entrySet()) { // TODO do not use a field because it will be used for both queries and subscriptions.
-      // TODO, in this loop we have only the path to identify a given function, can we remove the hidden functions at absolutePathToTableFunctions creation time using AccessVisibility?
-      if (path.getKey().getLast().isHidden()) continue; // filter out the hidden table functions
+        // group table functions by their absolute path
+        Map<NamePath, List<SqrlTableFunction>> absolutePathToTableFunctions = tableFunctions.stream()
+                .collect(Collectors.groupingBy(SqrlTableFunction::getFullPath,
+                        LinkedHashMap::new, Collectors.toList()));
 
+    for (Map.Entry<NamePath, List<SqrlTableFunction>> path : absolutePathToTableFunctions.entrySet()) {
       // walk resulType of the function at path and add it to the GraphQl object types
-      Optional<GraphQLObjectType> graphQLObjectType = createFunctionResultType(path.getValue(), // list of table functions with the same path
-          parentToTableFunctions.getOrDefault(path.getKey(), List.of())); // List of table functions nested under path
+      Optional<GraphQLObjectType> graphQLObjectType =
+              createFunctionResultType(
+                      path.getValue(), // list of table functions with the same path (overloaded table functions)
+                      parentToTableFunctions.getOrDefault(path.getKey(), List.of()) // List of table functions nested under path
+              );
       graphQLObjectType.map(objectTypes::add);
     }
 
@@ -189,6 +186,7 @@ public class GraphqlSchemaFactory2 {
 
 
 
+/*
   public Optional<Builder> createSubscriptionTypes() {
     Builder subscriptionBuilder = GraphQLObjectType.newObject().name("Subscription");
 
@@ -236,6 +234,7 @@ public class GraphqlSchemaFactory2 {
 
     return Optional.of(subscriptionBuilder);
   }
+*/
 
 
   private GraphQLObjectType createRootQueryType(List<SqrlTableFunction> rootTables) {
@@ -272,37 +271,44 @@ public class GraphqlSchemaFactory2 {
     return rootQueryObjectType;
   }
 
-  private Optional<GraphQLObjectType> createFunctionResultType(List<SqrlTableFunction> tableFunctionsAtPath, List<SqrlTableFunction> nestedTableFunctionsUnderPath) {
-    //TODO check overloaded functions have the same basetable
-    //TODO check that overloaded functions' signatures don't overlap (2 functions with same signatures)
-    //TODO maybe in the future go deeper that level one of nested fields
+  private Optional<GraphQLObjectType> createFunctionResultType(List<SqrlTableFunction> overloadedTableFunctions, List<SqrlTableFunction> tableFunctionsUnderPath) {
+    checkOverloadedFunctionsHaveSameBaseTable(overloadedTableFunctions);
+    checkOverloadedSignaturesDontOverlap(overloadedTableFunctions);
 
+    // overloaded table functions all have the same base table, hence the same return type. So we take the first one
+    final SqrlTableFunction firstTableFunction = overloadedTableFunctions.get(0);
+    RelDataType rowType = firstTableFunction.getRowType();
 
-    // table functions can be overloaded (hence the list in value) but they all have the same return type (hence taking the first one)
-    SqrlTableFunction first = tableFunctionsAtPath.get(0);
-    RelDataType rowType = first.getRowType();
-
-    Map<Name, List<SqrlTableFunction>> nestedTableFunctionsUnderPathByField = nestedTableFunctionsUnderPath.stream()
+    Map<Name, List<SqrlTableFunction>> nestedTableFunctionsUnderPathByLeaf = tableFunctionsUnderPath.stream()
             .collect(Collectors.groupingBy(g -> g.getFullPath().getLast(),
                     LinkedHashMap::new, Collectors.toList()));
 
-    // create the graphQL fields for non-relationship fields
+    /* browse the fields: they are either
+     - a non-relationship field :
+        - a scalar type
+        - a nested relDataType (which is no more planed as a table function). For that case we stop at depth=1 for now
+     - a relationship field (a table function with path size = 2)
+     */
+
+    // non-relationship fields
     List<GraphQLFieldDefinition> fields = new ArrayList<>();
     for (RelDataTypeField field : rowType.getFieldList()) {
-      if (!nestedTableFunctionsUnderPathByField.containsKey(Name.system(field.getName()))) {
-          createSimpleGraphQlField(field).map(fields::add);
+      if (!nestedTableFunctionsUnderPathByLeaf.containsKey(Name.system(field.getName()))) {
+          createNonRelationshipField(field).map(fields::add);
       }
     }
+
+
     // create the graphQL fields for relationship fields
-    for (Map.Entry<Name, List<SqrlTableFunction>> name : nestedTableFunctionsUnderPathByField.entrySet()) {
-      createNestedGraphQlField(name.getValue()).map(fields::add);
+    for (Map.Entry<Name, List<SqrlTableFunction>> name : nestedTableFunctionsUnderPathByLeaf.entrySet()) {
+      createRelationshipField(name.getValue()).map(fields::add);
     }
 
     if (fields.isEmpty()) {
       return Optional.empty();
     }
 
-    String name = generateObjectName(first.getFullPath());
+    String name = generateObjectName(firstTableFunction);
     GraphQLObjectType objectType = GraphQLObjectType.newObject()
         .name(name)
         .fields(fields)
@@ -312,32 +318,61 @@ public class GraphqlSchemaFactory2 {
     return Optional.of(objectType);
   }
 
-  private String uniquifyName(String name) {
+  private static void checkOverloadedFunctionsHaveSameBaseTable(List<SqrlTableFunction> tableFunctionsAtPath) {
+    SqrlTableFunction first = tableFunctionsAtPath.get(0);
+    final boolean check = tableFunctionsAtPath.stream().allMatch(function -> function.getBaseTable().equals(first.getBaseTable()));
+      first.getFunctionAnalysis().getErrors().checkFatal(
+            check,
+            "Overloaded table functions do not have the same base table: %s",
+            first.getBaseTable().isEmpty()
+                ? "no base table"
+                : first.getBaseTable().get().getName());
+  }
+
+  private static void checkOverloadedSignaturesDontOverlap(List<SqrlTableFunction> tableFunctionsAtPath) {
+    SqrlTableFunction first = tableFunctionsAtPath.get(0);
+    final boolean check = true;
+    //TODO compare all the signatures pairs parameters lists 2 by 2. if they have the same list of parameters (name and type) regardless of their order, they overlap
+    first.getFunctionAnalysis().getErrors().checkFatal(check, "Overloaded table functions have overlapping parameters");
+  }
+
+   private String uniquifyName(String name) {
     while (usedNames.contains(name)) {
       name = name + "_"; //add suffix
     }
     return name;
   }
 
-  private String generateObjectName(NamePath path) {
+  private String generateObjectName(SqrlTableFunction tableFunction) {
+    NamePath path = tableFunction.getFullPath();
     if (path.isEmpty()) {
       return "Query";
     }
-
+    if (tableFunction.getBaseTable().isPresent()) {
+      return tableFunction.getBaseTable().get().getName();
+    }
     return uniquifyName(path.getLast().getDisplay());
   }
 
+  /**
+   *   Create a non-relationship field :
+   *     - a scalar type
+   *     - a nested relDataType (which is no more planed as a table function)
+   *
+   */
   //TODO create a  method that takes either a relDataType or a table function. before everything was "casted" to a table function, now nested types are nested relDataTypes.
-  private Optional<GraphQLFieldDefinition> createSimpleGraphQlField(RelDataTypeField field) {
+  private Optional<GraphQLFieldDefinition> createNonRelationshipField(RelDataTypeField field) {
     return getOutputType(field.getType(), NamePath.of(field.getName()), seen, extendedScalarTypes)
-            .filter(type ->isValidGraphQLName(field.getName()))
-            .filter(type ->isVisible(field))
+            .filter(type -> isValidGraphQLName(field.getName()))
+            .filter(type -> isVisible(field))
             .map(type -> GraphQLFieldDefinition.newFieldDefinition()
                                             .name(field.getName())
-                                            .type(GraphqlSchemaUtil.wrapNullable(type, field.getType().isNullable())).build());
+                                            .type(wrapNullable(type, field.getType()))
+                                            .build()
+            );
   }
 
-  private Optional<GraphQLFieldDefinition> createNestedGraphQlField(List<SqrlTableFunction> tableFunctionsWithSameParent) {
+  private Optional<GraphQLFieldDefinition> createRelationshipField(List<SqrlTableFunction> tableFunctionsWithSameParent) {
     SqrlTableFunction tableFunction = tableFunctionsWithSameParent.get(0); // all the overloaded functions have the same return type
     String fieldName = tableFunction.getFullPath().getLast().getDisplay();
     if (!isValidGraphQLName(fieldName) || isHiddenString(fieldName)) {
@@ -376,6 +411,7 @@ public class GraphqlSchemaFactory2 {
     return ListUtils.union(arguments, limitOffset);
   }
 
+/*
   private List<GraphQLArgument> generatePermuted(SqrlTableMacro macro) {
     if (macro instanceof NestedRelationship) return List.of();
     String tableName = schema.getPathToSysTableMap().get(macro.getAbsolutePath());
@@ -404,12 +440,15 @@ public class GraphqlSchemaFactory2 {
                     .build())
             .collect(Collectors.toList());
   }
+*/
 
+/*
   private boolean allowedArguments(SqrlTableFunction tableFunction) {
     //No arguments for to-one rels or parent fields
     return tableFunction.getMultiplicity().equals(Multiplicity.MANY) &&
         !tableFunction.getJoinType().equals(JoinType.PARENT);
   }
+*/
 
 
 
