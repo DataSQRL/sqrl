@@ -12,8 +12,10 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNodeList;
+import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.flink.sql.parser.ddl.SqlCreateTable;
 import org.apache.flink.sql.parser.ddl.SqlWatermark;
@@ -56,6 +58,13 @@ public class FlinkTableBuilder {
 
   public FlinkTableBuilder setRelDataType(RelDataType relDataType) {
     setColumnList(FlinkSqlNodeFactory.createColumns(relDataType));
+    return this;
+  }
+
+  public FlinkTableBuilder addComputedColumn(String columnName, SqlOperator operator) {
+    Preconditions.checkArgument(columnList!=null, "Need to initialize columns first");
+    columnList.add(FlinkSqlNodeFactory.getComputedColumn(columnName,
+        FlinkSqlNodeFactory.getCallWithNoArgs(operator)));
     return this;
   }
 

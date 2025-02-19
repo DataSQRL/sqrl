@@ -37,8 +37,8 @@
         "localfile": {
           "connector" : "filesystem",
           "format" : "${sqrl:format}",
-          "path" : "${sqrl:filepath}",
-          "source.monitor-interval" : 10000
+          "path" : "${DATA_PATH}/${sqrl:filename}",
+          "source.monitor-interval" : "10 sec"
         },
         "iceberg": {
           "connector": "iceberg",

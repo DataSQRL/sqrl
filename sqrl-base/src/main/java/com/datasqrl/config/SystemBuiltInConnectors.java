@@ -18,6 +18,11 @@ public enum SystemBuiltInConnectors {
   final Name name;
   final ExternalDataType type;
 
+  @Override
+  public String toString() {
+    return name.getCanonical();
+  }
+
   public static Optional<SystemBuiltInConnectors> forExport(Name name) {
     for (SystemBuiltInConnectors connector : values()) {
       if (connector.type.isSink() && connector.name.equals(name)) {

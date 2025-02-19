@@ -218,8 +218,8 @@ public class SqlScriptPlanner {
         access = ((SqrlTableDefinition)statementStack.get(0)).getAccess();
       }
       boolean nameIsHidden = tablePath.getLast().isHidden();
-      //Ignore test tables (that are not queries) when we are not running tests
-      if (nameIsHidden && (executionGoal!=ExecutionGoal.TEST || !hints.isTest()) && !hints.isWorkload()) {
+      //Ignore hidden tables and test tables (that are not queries) when we are not running tests
+      if ((nameIsHidden || (executionGoal!=ExecutionGoal.TEST && hints.isTest())) && !hints.isWorkload()) {
         //Test tables should not have access unless we are running tests or they are also workloads
         access = AccessModifier.NONE;
       }
@@ -454,7 +454,12 @@ public class SqlScriptPlanner {
 
   private MutationBuilder getLogEngineBuilder() {
     Optional<ExecutionStage> logStage = pipeline.getStageByType(EngineType.LOG);
-    Preconditions.checkArgument(logStage.isPresent());
+    if (logStage.isEmpty()) {
+      return (t, d) -> {
+        throw new StatementParserException(ErrorLabel.GENERIC, FileLocation.START,
+          "CREATE TABLE requires that a log engine is configured");
+      };
+    }
     LogEngine engine = (LogEngine) logStage.get().getEngine();
     return (tableBuilder, datatype) -> {
       MutationQuery.MutationQueryBuilder mutationBuilder = MutationQuery.builder();

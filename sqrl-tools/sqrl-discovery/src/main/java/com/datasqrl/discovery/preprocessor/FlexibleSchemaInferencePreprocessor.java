@@ -3,6 +3,8 @@ package com.datasqrl.discovery.preprocessor;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.config.ConnectorConf;
+import com.datasqrl.config.ConnectorConf.Context;
 import com.datasqrl.config.ConnectorFactory;
 import com.datasqrl.config.ConnectorFactoryContext;
 import com.datasqrl.config.ConnectorFactoryFactory;
@@ -24,6 +26,7 @@ import com.datasqrl.schema.input.FlexibleTableSchema;
 import com.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.ServiceLoaderDiscovery;
+import com.datasqrl.v2.tables.FlinkTableBuilder;
 import com.google.inject.Inject;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -40,6 +43,8 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.sql.SqlFunction;
+import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
 
 /*
  * Infers the schema for json and csv files and creates a flexible schema for them
@@ -50,14 +55,16 @@ public class FlexibleSchemaInferencePreprocessor implements DiscoveryPreprocesso
 
   public static final Set<String> DATA_FILE_EXTENSIONS = Set.of("jsonl","csv");
 
+  public static final String EVENT_TIME_COLUMN = "event_time";
+
   private static final FilenameAnalyzer DATA_FILES = FilenameAnalyzer.of(DATA_FILE_EXTENSIONS);
 
   private final TableWriter writer = new TableWriter();
-  private final Optional<ConnectorFactory> connectorFactory;
+  private final Optional<ConnectorConf> connectorFactory;
 
   @Inject
   public FlexibleSchemaInferencePreprocessor(ConnectorFactoryFactory connectorFactoryFactory) {
-    this.connectorFactory = connectorFactoryFactory.create(SystemBuiltInConnectors.LOCAL_FILE_SOURCE);
+    this.connectorFactory = connectorFactoryFactory.getOptionalConfig(SystemBuiltInConnectors.LOCAL_FILE_SOURCE.toString());
   }
 
   @Override
@@ -135,17 +142,33 @@ public class FlexibleSchemaInferencePreprocessor implements DiscoveryPreprocesso
       String[] primaryKey = rowType.getFieldList().stream().filter(f -> !f.getType().isNullable() && CalciteUtil.isPotentialPrimaryKeyType(f.getType()))
           .map(RelDataTypeField::getName).toArray(String[]::new);
 
+      //5. Create table
+      FlinkTableBuilder tblBuilder = new FlinkTableBuilder();
+      tblBuilder.setName(tableName);
+      tblBuilder.setRelDataType(rowType);
+      //Add event time field if not already present
+      String eventTimeField = EVENT_TIME_COLUMN;
+      RelDataTypeField eventField = rowType.getField(eventTimeField, false, false);
+      if (eventField != null) {
+        eventTimeField = eventField.getName();
+      } else {
+        SqlFunction nowFunction = FlinkSqlOperatorTable.dynamicFunctions(false)
+                .stream().filter(fct -> fct.isName("now", false)).findFirst()
+            .orElseThrow(() -> new IllegalStateException("Could not find now function"));
+        tblBuilder.addComputedColumn(eventTimeField, nowFunction);
+      }
+      //Add watermark
+      tblBuilder.setWatermarkMillis(eventTimeField, 1);
+      tblBuilder.setConnectorOptions(connectorFactory.get().toMapWithSubstitution(
+          Context.builder().tableName(tableName.getDisplay()).origTableName(tableName.getDisplay())
+              .filename(file.getFileName().toString())
+              .format(reader.get().getFormat())
+              .build()
+      ));
 
-      //5. Create table configuration
-      TableConfig table = connectorFactory.get().createSourceAndSink(new ConnectorFactoryContext(tableName,
-          Map.of("format",reader.get().getFormat(),
-              "filename", file.getFileName().toString(),
-              "primary-key", primaryKey)));
-      TableSource tableSource = TableSource.create(table, processorContext.getName().orElse(
-          NamePath.ROOT), schemaHolder);
-      //6. Write files and add
+      //6. Write files and add to observed files
       try {
-        Collection<Path> writtenFiles = writer.writeToFile(parentDir, tableSource);
+        Collection<Path> writtenFiles = writer.writeToFile(parentDir, tblBuilder);
         writtenFiles.forEach(processorContext::addDependency);
       } catch (IOException e) {
         errors.fatal("Could not write schema and configuration files: %s", e);

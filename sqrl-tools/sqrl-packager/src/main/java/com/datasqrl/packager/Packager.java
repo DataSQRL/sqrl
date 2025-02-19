@@ -58,8 +58,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.datasqrl.actions.FlinkSqlGenerator.COMPILED_PLAN_JSON;
-import static com.datasqrl.actions.WriteDagOld.DATA_DIR;
-import static com.datasqrl.actions.WriteDagOld.LIB_DIR;
 import static com.datasqrl.config.ScriptConfigImpl.GRAPHQL_KEY;
 import static com.datasqrl.config.ScriptConfigImpl.MAIN_KEY;
 import static com.datasqrl.util.NameUtil.namepath2Path;
@@ -70,6 +68,8 @@ public class Packager {
   public static final String BUILD_DIR_NAME = "build";
   public static final String PACKAGE_JSON = "package.json";
   public static final Path DEFAULT_PACKAGE = Path.of(Packager.PACKAGE_JSON);
+  public static final String LIB_DIR = "lib";
+  public static final String DATA_DIR = "data";
 
   private final Repository repository;
   private final RootPath rootDir;

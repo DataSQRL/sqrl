@@ -1,6 +1,6 @@
 package com.datasqrl.packager.preprocess;
 
-import static com.datasqrl.actions.WriteDagOld.DATA_DIR;
+import static com.datasqrl.packager.Packager.DATA_DIR;
 
 import com.datasqrl.discovery.file.FilenameAnalyzer;
 import com.datasqrl.discovery.file.FilenameAnalyzer.Components;

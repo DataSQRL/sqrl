@@ -28,6 +28,8 @@ public interface ConnectorConf {
   class Context {
     String tableName;
     String origTableName;
+    String filename;
+    String format;
     @Singular
     Map<String,String> variables;
 
@@ -35,6 +37,8 @@ public interface ConnectorConf {
       Map<String,String> vars = new HashMap<>(variables);
       if (tableName!=null) vars.put("table-name", tableName);
       if (origTableName!=null) vars.put("original-table-name", origTableName);
+      if (filename!=null) vars.put("filename", filename);
+      if (format!=null) vars.put("format", format);
       return vars;
     }
   }

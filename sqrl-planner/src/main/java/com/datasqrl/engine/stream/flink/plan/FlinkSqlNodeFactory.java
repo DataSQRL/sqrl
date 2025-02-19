@@ -251,12 +251,7 @@ public class FlinkSqlNodeFactory {
         }
 
         if (metadataFnc instanceof SqlCall) {
-          node = new SqlTableColumn.SqlComputedColumn(
-              SqlParserPos.ZERO,
-              FlinkSqlNodeFactory.identifier(columnName),
-              null,
-              metadataFnc
-          );
+          node = getComputedColumn(columnName, (SqlCall) metadataFnc);
         } else {
           node = new SqlTableColumn.SqlMetadataColumn(
               SqlParserPos.ZERO,
@@ -280,6 +275,19 @@ public class FlinkSqlNodeFactory {
     }
 
     return new SqlNodeList(nodes, SqlParserPos.ZERO);
+  }
+
+  public static SqlNode getComputedColumn(String columnName, SqlCall call) {
+    return new SqlTableColumn.SqlComputedColumn(
+        SqlParserPos.ZERO,
+        FlinkSqlNodeFactory.identifier(columnName),
+        null,
+        call
+    );
+  }
+
+  public static SqlCall getCallWithNoArgs(SqlOperator operator) {
+    return new SqlBasicCall(operator, List.of(), SqlParserPos.ZERO);
   }
 
 

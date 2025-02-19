@@ -3,7 +3,6 @@ package com.datasqrl.actions;
 import com.datasqrl.config.BuildPath;
 import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.config.PackageJson.ExplainConfig;
-import com.datasqrl.plan.global.PipelineDAGExporter;
 import com.datasqrl.plan.global.SqrlDAG;
 import com.datasqrl.plan.global.SqrlDAGExporter;
 import com.datasqrl.plan.global.SqrlDAGExporter.Node;
@@ -27,8 +26,6 @@ import lombok.SneakyThrows;
 @AllArgsConstructor(onConstructor_=@Inject)
 public class WriteDagOld {
 
-  public static final String LIB_DIR = "lib";
-  public static final String DATA_DIR = "data";
   public static final String EXPLAIN_TEXT_FILENAME = "pipeline_explain.txt";
   public static final String EXPLAIN_VISUAL_FILENAME = "pipeline_visual.html";
   public static final String EXPLAIN_JSON_FILENAME = "pipeline_explain.json";

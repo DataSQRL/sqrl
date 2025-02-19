@@ -72,8 +72,7 @@ public class FlexibleSchemaInferencePreprocessorTest extends AbstractAssetSnapsh
 
   @Override
   public Predicate<Path> getDeployDirFilter() {
-    return p -> p.getFileName().toString().endsWith("table.json")
-        || p.getFileName().toString().endsWith("schema.yml");
+    return p -> p.getFileName().toString().endsWith("table.sql");
   }
 
   static class DataFiles implements ArgumentsProvider {

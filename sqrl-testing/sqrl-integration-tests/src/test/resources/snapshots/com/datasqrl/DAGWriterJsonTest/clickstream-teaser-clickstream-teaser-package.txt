@@ -1,34 +1,12 @@
 >>>pipeline_explain.json
 [ {
-  "id" : "Query.Recommendation-1",
-  "name" : "Query.Recommendation-1",
-  "type" : "query",
-  "stage" : "postgres",
-  "inputs" : [ "recommendation_1" ],
-  "plan" : "LogicalFilter(condition=[=($0, ?0)])\n  LogicalTableScan(table=[[recommendation_1]])\n",
-  "sql" : "SELECT *\nFROM `recommendation_1`\nWHERE (`url` = ?)"
-}, {
-  "id" : "Query.Trending-2",
-  "name" : "Query.Trending-2",
-  "type" : "query",
-  "stage" : "postgres",
-  "inputs" : [ "trending_1" ],
-  "plan" : "LogicalTableScan(table=[[trending_1]])\n",
-  "sql" : "SELECT *\nFROM `trending_1`"
-}, {
-  "id" : "click_1",
-  "name" : "clickstream-local.click",
-  "type" : "import",
-  "stage" : "flink",
-  "inputs" : [ ]
-}, {
-  "id" : "click_2",
+  "id" : "default_catalog.default_database.Click",
   "name" : "Click",
   "type" : "stream",
   "stage" : "flink",
-  "inputs" : [ "click_1" ],
-  "plan" : "LogicalTableScan(table=[[click_1]])\n",
-  "sql" : "SELECT *\nFROM `click_1`",
+  "inputs" : [ "default_catalog.default_database.Click__def" ],
+  "plan" : "LogicalProject(url=[$0], timestamp=[$1], userid=[$2])\n  LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($1, 1000:INTERVAL SECOND)])\n    LogicalTableScan(table=[[default_catalog, default_database, Click__def]])\n",
+  "sql" : "CREATE VIEW `Click`\nAS\nSELECT *\nFROM `default_catalog`.`default_database`.`Click__def`",
   "primary_key" : [ "url", "userid", "timestamp" ],
   "timestamp" : "timestamp",
   "schema" : [ {
@@ -36,22 +14,56 @@
     "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
   }, {
     "name" : "timestamp",
-    "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL"
+    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
   }, {
     "name" : "userid",
     "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
   } ],
-  "post_processors" : [ ]
+  "post_processors" : [ {
+    "name" : "stream-root",
+    "description" : "Click__def"
+  } ]
 }, {
-  "id" : "recommendation_1",
+  "id" : "default_catalog.default_database.Click__access()",
+  "name" : "Click",
+  "type" : "query",
+  "stage" : "postgres",
+  "inputs" : [ "default_catalog.default_database.Click" ],
+  "plan" : "LogicalProject(url=[$0], timestamp=[$1], userid=[$2])\n  LogicalTableScan(table=[[default_catalog, default_database, Click]])\n",
+  "sql" : "CREATE VIEW `Click__access`\nAS\nSELECT *\nFROM `default_catalog`.`default_database`.`Click`",
+  "post_processors" : [ {
+    "name" : "stream-root",
+    "description" : "Click__def"
+  } ]
+}, {
+  "id" : "default_catalog.default_database.Click__def",
+  "name" : "Click__def",
+  "type" : "import",
+  "stage" : "flink",
+  "inputs" : [ ],
+  "post_processors" : [ {
+    "name" : "format",
+    "description" : "flexible-json"
+  }, {
+    "name" : "path",
+    "description" : "${DATA_PATH}/click.jsonl"
+  }, {
+    "name" : "source.monitor-interval",
+    "description" : "10 sec"
+  }, {
+    "name" : "connector",
+    "description" : "filesystem"
+  } ]
+}, {
+  "id" : "default_catalog.default_database.Recommendation",
   "name" : "Recommendation",
   "type" : "state",
-  "stage" : "flink",
-  "inputs" : [ "visitafter_1" ],
-  "plan" : "LogicalProject(url=[$0], rec=[$1], frequency=[$2], __timestamp=[$3])\n  LogicalAggregate(group=[{0, 1}], frequency=[COUNT()], __timestamp=[MAX($2)])\n    LogicalTableScan(table=[[visitafter_1]])\n",
-  "sql" : "SELECT `beforeURL` AS `url`, `afterURL` AS `rec`, COUNT(*) AS `frequency`, MAX(`timestamp`) AS `__timestamp`\nFROM `visitafter_1`\nGROUP BY `beforeURL`, `afterURL`",
+  "stage" : "postgres",
+  "inputs" : [ "default_catalog.default_database.VisitAfter" ],
+  "plan" : "LogicalAggregate(group=[{0, 1}], frequency=[COUNT()])\n  LogicalProject(url=[$0], rec=[$1])\n    LogicalTableScan(table=[[default_catalog, default_database, VisitAfter]])\n",
+  "sql" : "CREATE VIEW Recommendation AS  SELECT beforeURL AS url, afterURL AS rec,\n    count(1) AS frequency FROM VisitAfter\n    GROUP BY beforeURL, afterURL ORDER BY url ASC, frequency DESC;\n",
   "primary_key" : [ "url", "rec" ],
-  "timestamp" : "__timestamp",
+  "timestamp" : "-",
   "schema" : [ {
     "name" : "url",
     "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
@@ -61,50 +73,58 @@
   }, {
     "name" : "frequency",
     "type" : "BIGINT NOT NULL"
-  }, {
-    "name" : "__timestamp",
-    "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL"
   } ],
   "post_processors" : [ {
     "name" : "sort",
-    "description" : "#0: url VARCHAR(2147483647) ASC, #2: frequency BIGINT DESC"
+    "description" : "[0 ASC-nulls-first, 2 DESC-nulls-last]"
   } ]
 }, {
-  "id" : "trending_1",
+  "id" : "default_catalog.default_database.Recommendation__access()",
+  "name" : "Recommendation",
+  "type" : "query",
+  "stage" : "postgres",
+  "inputs" : [ "default_catalog.default_database.Recommendation" ],
+  "plan" : "LogicalProject(url=[$0], rec=[$1], frequency=[$2])\n  LogicalTableScan(table=[[default_catalog, default_database, Recommendation]])\n",
+  "sql" : "CREATE VIEW `Recommendation__access`\nAS\nSELECT *\nFROM `default_catalog`.`default_database`.`Recommendation`",
+  "post_processors" : [ ]
+}, {
+  "id" : "default_catalog.default_database.Trending",
   "name" : "Trending",
   "type" : "state",
   "stage" : "flink",
-  "inputs" : [ "click_2" ],
-  "plan" : "LogicalProject(url=[$0], total=[$2], _timestamp=[$1])\n  LogicalAggregate(group=[{0, 1}], total=[COUNT()]) hints[SlidingAggregationHint options:[1, 86400000, 1728000]]\n    LogicalTableScan(table=[[click_2]])\n",
-  "sql" : "SELECT `url`, COUNT(*) AS `total`, `timestamp` AS `_timestamp`\nFROM `click_2`\nGROUP BY `url`, `timestamp`",
+  "inputs" : [ "default_catalog.default_database.Click" ],
+  "plan" : "LogicalAggregate(group=[{0}], total=[COUNT()])\n  LogicalProject(url=[$0])\n    LogicalTableScan(table=[[default_catalog, default_database, Click]])\n",
+  "sql" : "CREATE VIEW Trending AS  SELECT url, count(1) AS total\n    FROM Click\n    GROUP BY url ORDER BY total DESC;\n",
   "primary_key" : [ "url" ],
-  "timestamp" : "_timestamp",
+  "timestamp" : "-",
   "schema" : [ {
     "name" : "url",
     "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
   }, {
     "name" : "total",
     "type" : "BIGINT NOT NULL"
-  }, {
-    "name" : "_timestamp",
-    "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL"
   } ],
   "post_processors" : [ {
-    "name" : "topN",
-    "description" : "partition=url limit=1 sort=#2: _timestamp TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last "
-  }, {
     "name" : "sort",
-    "description" : "#1: total BIGINT DESC"
+    "description" : "[1 DESC-nulls-last]"
   } ]
 }, {
-  "id" : "visitafter_1",
+  "id" : "default_catalog.default_database.Trending__access()",
+  "name" : "Trending",
+  "type" : "query",
+  "stage" : "postgres",
+  "inputs" : [ "default_catalog.default_database.Trending" ],
+  "plan" : "LogicalProject(url=[$0], total=[$1])\n  LogicalTableScan(table=[[default_catalog, default_database, Trending]])\n",
+  "sql" : "CREATE VIEW `Trending__access`\nAS\nSELECT *\nFROM `default_catalog`.`default_database`.`Trending`",
+  "post_processors" : [ ]
+}, {
+  "id" : "default_catalog.default_database.VisitAfter",
   "name" : "VisitAfter",
   "type" : "stream",
-  "stage" : "flink",
-  "inputs" : [ "click_2" ],
-  "plan" : "LogicalProject(beforeURL=[$0], afterURL=[$3], timestamp=[$4], _userid=[$2], _timestamp0=[$1])\n  LogicalJoin(condition=[AND(=($2, $5), <($1, $4), >=($1, -($4, *(60000:INTERVAL MINUTE, 10))))], joinType=[inner]) hints[IntervalJoin]\n    LogicalTableScan(table=[[click_2]])\n    LogicalTableScan(table=[[click_2]])\n",
-  "sql" : "SELECT `click_2`.`url` AS `beforeURL`, `click_20`.`url` AS `afterURL`, `click_20`.`timestamp`, `click_2`.`userid` AS `_userid`, `click_2`.`timestamp` AS `_timestamp0`\nFROM `click_2`\nINNER JOIN `click_2` AS `click_20` ON (((`click_2`.`userid` = `click_20`.`userid`) AND (`click_2`.`timestamp` < `click_20`.`timestamp`)) AND (`click_2`.`timestamp` >= (`click_20`.`timestamp` - (INTERVAL '1' MINUTE * 10))))",
-  "primary_key" : [ "beforeURL", "_userid", "_timestamp0", "afterURL", "timestamp" ],
+  "stage" : "postgres",
+  "inputs" : [ "default_catalog.default_database.Click" ],
+  "plan" : "LogicalProject(beforeURL=[$0], afterURL=[$3], timestamp=[$4])\n  LogicalJoin(condition=[AND(=($2, $5), <($1, $4), >=($1, -($4, *(10, 60000:INTERVAL MINUTE))))], joinType=[inner])\n    LogicalTableScan(table=[[default_catalog, default_database, Click]])\n    LogicalTableScan(table=[[default_catalog, default_database, Click]])\n",
+  "sql" : "CREATE VIEW VisitAfter AS  SELECT b.url AS beforeURL, a.url AS afterURL,\n    a.`timestamp` AS `timestamp`\n    FROM Click b JOIN Click a ON b.userid=a.userid AND\n        b.`timestamp` < a.`timestamp` AND\n        b.`timestamp` >= a.`timestamp` - INTERVAL 10 MINUTE;\n",
   "timestamp" : "timestamp",
   "schema" : [ {
     "name" : "beforeURL",
@@ -114,13 +134,16 @@
     "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
   }, {
     "name" : "timestamp",
-    "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL"
-  }, {
-    "name" : "_userid",
-    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
-  }, {
-    "name" : "_timestamp0",
-    "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL"
+    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
   } ],
+  "post_processors" : [ ]
+}, {
+  "id" : "default_catalog.default_database.VisitAfter__access()",
+  "name" : "VisitAfter",
+  "type" : "query",
+  "stage" : "postgres",
+  "inputs" : [ "default_catalog.default_database.VisitAfter" ],
+  "plan" : "LogicalProject(beforeURL=[$0], afterURL=[$1], timestamp=[$2])\n  LogicalTableScan(table=[[default_catalog, default_database, VisitAfter]])\n",
+  "sql" : "CREATE VIEW `VisitAfter__access`\nAS\nSELECT *\nFROM `default_catalog`.`default_database`.`VisitAfter`",
   "post_processors" : [ ]
 } ]

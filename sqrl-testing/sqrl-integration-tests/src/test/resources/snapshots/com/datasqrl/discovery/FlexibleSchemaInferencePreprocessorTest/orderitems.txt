@@ -1,57 +1,14 @@
->>>orderitems.schema.yml
----
-name: "orderitems"
-schema_version: "1"
-partial_schema: false
-columns:
-- name: "id"
-  type: "BIGINT"
-  tests:
-  - "not_null"
-- name: "customerid"
-  type: "BIGINT"
-  tests:
-  - "not_null"
-- name: "time"
-  type: "TIMESTAMP"
-  tests:
-  - "not_null"
-- name: "items"
-  columns:
-  - name: "productid"
-    type: "BIGINT"
-    tests:
-    - "not_null"
-  - name: "quantity"
-    type: "BIGINT"
-    tests:
-    - "not_null"
-  - name: "unit_price"
-    type: "DOUBLE"
-    tests:
-    - "not_null"
-  - name: "discount"
-    type: "DOUBLE"
-  tests:
-  - "not_null"
-
->>>orderitems.table.json
-{
-  "flink" : {
-    "format" : "flexible-json",
-    "path" : "${DATA_PATH}/orderitems.jsonl",
-    "source.monitor-interval" : 10000,
-    "connector" : "filesystem"
-  },
-  "metadata" : {
-    "_ingest_time" : {
-      "attribute" : "proctime()"
-    }
-  },
-  "version" : 1,
-  "table" : {
-    "type" : "source",
-    "primary-key" : [ "id", "customerid", "time" ],
-    "timestamp" : "_ingest_time"
-  }
-}
+>>>orderitems.table.sql
+CREATE TABLE `orderitems` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `items` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
+  `event_time` AS NOW(),
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.001' SECOND
+) WITH (
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/orderitems.jsonl',
+  'source.monitor-interval' = '10 sec'
+);
