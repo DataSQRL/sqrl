@@ -1,8 +1,9 @@
-package com.datasqrl.v2;
+package com.datasqrl.v2.graphql;
 
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
+import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.GraphqlSchemaParser;
@@ -35,8 +36,8 @@ public class InferGraphqlSchema2 {
   private final GraphqlSchemaParser parser;
 
   @SneakyThrows
-  public Optional<String> inferGraphQLSchema() {
-    Optional<GraphQLSchema> gqlSchema = graphqlSchemaFactory.generate();
+  public Optional<String> inferGraphQLSchema(ServerPhysicalPlan serverPlan) {
+    Optional<GraphQLSchema> gqlSchema = graphqlSchemaFactory.generate(serverPlan);
 
     SchemaPrinter.Options opts = SchemaPrinter.Options.defaultOptions()
         .setComparators(GraphqlTypeComparatorRegistry.AS_IS_REGISTRY)
@@ -47,9 +48,9 @@ public class InferGraphqlSchema2 {
 
 
   //TODO wire the error collector up
-  private ErrorCollector setErrorCollectorSchema(APISource apiSchema, ErrorCollector errorCollector) {
+  private ErrorCollector setErrorCollectorSchema(APISource apiSource, ErrorCollector errorCollector) {
     return errorCollector.withSchema(
-        apiSchema.getName().getDisplay(), apiSchema.getSchemaDefinition());
+        apiSource.getName().getDisplay(), apiSource.getSchemaDefinition());
   }
 
   // Validates the schema and generates queries and subscriptions
