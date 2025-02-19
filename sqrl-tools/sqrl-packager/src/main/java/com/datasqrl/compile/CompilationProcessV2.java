@@ -2,9 +2,7 @@ package com.datasqrl.compile;
 
 import com.datasqrl.actions.CreateDatabaseQueries;
 import com.datasqrl.actions.GraphqlPostplanHook;
-import com.datasqrl.actions.InferGraphqlSchema;
 import com.datasqrl.actions.WriteDag;
-import com.datasqrl.actions.WriteDagOld;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.config.BuildPath;
 import com.datasqrl.config.GraphqlSourceFactory;
@@ -17,7 +15,7 @@ import com.datasqrl.plan.global.PhysicalPlanRewriter;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISourceImpl;
 import com.datasqrl.util.ServiceLoaderDiscovery;
-import com.datasqrl.v2.InferGraphqlSchema2;
+import com.datasqrl.v2.graphql.InferGraphqlSchema2;
 import com.datasqrl.v2.dag.DAGBuilder;
 import com.datasqrl.v2.dag.DAGPlanner;
 import com.datasqrl.v2.dag.PipelineDAG;
@@ -83,7 +81,7 @@ public class CompilationProcessV2 {
       Optional<APISource> apiSource = graphqlSourceFactory.get();
       if (apiSource.isEmpty() || executionGoal == ExecutionGoal.TEST) { //Infer schema from functions
         //TODO: rewrite the following to use the functions from the serverPlan
-        apiSource = inferencePostcompileHook.inferGraphQLSchema()
+        apiSource = inferencePostcompileHook.inferGraphQLSchema(serverPlan.get())
             .map(schemaString -> new APISourceImpl(Name.system("<generated-schema>"), schemaString));
       }
       assert apiSource.isPresent();
