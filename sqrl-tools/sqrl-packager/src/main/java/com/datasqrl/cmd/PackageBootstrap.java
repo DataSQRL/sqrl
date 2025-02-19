@@ -57,13 +57,7 @@ public class PackageBootstrap {
     existingPackage.ifPresent(configFiles::addAll);
 
     // Could not find any package json
-    PackageJson packageJson;
-    if (configFiles.isEmpty()) {
-        packageJson = createDefaultConfig(errors);
-    } else {
-        // Merge all configurations
-        packageJson =  SqrlConfigCommons.fromFilesPackageJson(errors, configFiles);
-    }
+    PackageJson packageJson =  SqrlConfigCommons.fromFilesPackageJson(errors, configFiles);
 
     //Add dependencies of discovered profiles
     dependencies.forEach((key, dep) -> {

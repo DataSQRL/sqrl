@@ -402,12 +402,12 @@ public class SqrlConfigCommons implements SqrlConfig {
   }
 
   public static SqrlConfig fromFiles(ErrorCollector errors, String jsonSchemaResource, @NonNull List<Path> files) {
-    Preconditions.checkArgument(files!=null && !files.isEmpty(),"Need to provide at least one configuration file");
     Configurations configs = new Configurations();
     boolean isValid = true;
 
     NodeCombiner combiner = new OverrideCombiner();
     CombinedConfiguration combinedConfiguration = new CombinedConfiguration(combiner);
+
     for (int i = files.size()-1; i >= 0; i--) { //iterate backwards so last file takes precedence
       Path file = files.get(i);
       ErrorCollector localErrors = errors.withConfig(file);
@@ -421,11 +421,20 @@ public class SqrlConfigCommons implements SqrlConfig {
     }
 
     try {
-		combinedConfiguration.addConfiguration(configs.fileBased(JSONConfiguration.class,   SqrlConfigCommons.class.getResource("/default-package.json")));
-	} catch (ConfigurationException e) {
-		throw errors.withConfig("Error loading default configuration").handle(e);
-	}
-    String configFilename = files.get(0).toString();
+        URL url = SqrlConfigCommons.class.getResource("/default-package.json");
+		JSONConfiguration config = configs.fileBased(JSONConfiguration.class,   url);
+		combinedConfiguration.addConfiguration(config);
+    } catch (ConfigurationException e) {
+        throw errors.withConfig("Error loading default configuration").handle(e);
+    }
+
+    String configFilename;
+    if (files.isEmpty()){
+        configFilename = "default-package.json";
+    } else {
+        configFilename = files.get(0).toString();
+    }
+
     if (!isValid) {
       throw errors.exception("Configuration file invalid: %s", files);
     }

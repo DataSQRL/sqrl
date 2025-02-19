@@ -60,10 +60,6 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
       description = "Target directory for deployment artifacts")
   protected Path targetDir = DEFAULT_DEPLOY_DIR;
 
-  @CommandLine.Option(names = {"--profile"},
-      description = "An alternative set of configuration values which override the default package.json")
-  protected String[] _profiles = new String[0];
-
   @SneakyThrows
   public void execute(ErrorCollector errors) {
     execute(errors, targetDir.resolve("snapshots"),
