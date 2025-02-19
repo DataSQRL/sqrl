@@ -1,5 +1,0 @@
-IMPORT mock.Data;
-
-EXPORT Data TO log.Event;
-
-EXPORT Event TO print.LogEvent;

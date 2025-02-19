@@ -1,4 +1,0 @@
-IMPORT create-topic.AddEvent;
-
--- Load into postgres (as database) table
-PgTable := SELECT * FROM AddEvent;

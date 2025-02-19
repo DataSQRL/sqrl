@@ -1,12 +1,5 @@
 type Query {
-  SecReading(sensorid: Int!): [SecReading!]
   SensorMaxTemp(sensorid: Int): [SensorMaxTemp!]
-}
-
-type SecReading {
-  sensorid: Int!
-  timeSec: String!
-  temperature: Float!
 }
 
 type SensorMaxTemp {

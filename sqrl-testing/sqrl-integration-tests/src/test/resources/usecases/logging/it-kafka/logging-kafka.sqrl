@@ -1,7 +1,0 @@
-IMPORT mock.Data;
-IMPORT circlesource.ReusedData;
-
-EXPORT Data TO logger.LogData;
-
-/*+test */
-TestTable := SELECT id FROM ReusedData ORDER BY id DESC;

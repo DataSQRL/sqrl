@@ -1,4 +1,3 @@
-IMPORT json.*; -- Import json functions
 IMPORT data-local.json; -- Import JSON data source
 
 

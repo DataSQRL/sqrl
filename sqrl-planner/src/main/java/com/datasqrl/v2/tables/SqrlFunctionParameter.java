@@ -17,7 +17,7 @@ public class SqrlFunctionParameter implements FunctionParameter {
 
   @EqualsAndHashCode.Include @ToString.Include
   String name; //the properly resolved name of the argument
-  int ordinal; //the ordinal within the query
+  int ordinal; //the index within the list of query arguments
   @EqualsAndHashCode.Include @ToString.Include
   RelDataType relDataType;  //this is the type of the argument
   boolean isParentField; //if true, this is a column on the "this" table, else a user provided argument
