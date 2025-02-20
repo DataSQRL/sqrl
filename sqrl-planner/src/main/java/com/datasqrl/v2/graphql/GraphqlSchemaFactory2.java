@@ -12,7 +12,7 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.engine.log.LogManager;
 import com.datasqrl.engine.server.ServerPhysicalPlan;
-import com.datasqrl.function.SqrlFunctionParameter;
+import com.datasqrl.v2.tables.SqrlFunctionParameter;
 import com.datasqrl.graphql.server.CustomScalars;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.v2.parser.AccessModifier;
@@ -169,6 +169,7 @@ public class GraphqlSchemaFactory2 {
     cleanInvalidTypes();
     return Optional.of(objectType);
   }
+
 
   private Optional<GraphQLObjectType> createRootTableFunctionResultType(SqrlTableFunction tableFunction, List<SqrlTableFunction> itsOverloadedTableFunctions, List<SqrlTableFunction> itsRelationships) {
     checkOverloadedFunctionsHaveSameBaseTable(itsOverloadedTableFunctions);
@@ -410,7 +411,7 @@ public class GraphqlSchemaFactory2 {
     // reference the type that will defined when the table function relationship is processed
     GraphQLFieldDefinition field = GraphQLFieldDefinition.newFieldDefinition()
         .name(fieldName)
-        .type(wrapMultiplicity(createTypeReference(generateObjectName(tableFunction)), tableFunction.getMultiplicity()))
+        .type(wrapMultiplicity(createTypeReference(fieldName), tableFunction.getMultiplicity()))
         .arguments(createArguments(tableFunction))
         .build();
 
@@ -418,17 +419,18 @@ public class GraphqlSchemaFactory2 {
   }
 
   private List<GraphQLArgument> createArguments(SqrlTableFunction tableFunction) {
-    // TODO allowed only if multiplicity == many and joinType != parent. We no more have joinType
+    // TODO before there was a test of allowed only if multiplicity == many and joinType != parent. We no more have joinType
 
     List<FunctionParameter> parameters = tableFunction.getParameters().stream()
-        .filter(parameter->!((SqrlFunctionParameter)parameter).isInternal())
+        .filter(parameter->!((SqrlFunctionParameter)parameter).isParentField())
         .collect(Collectors.toList());
+    // TODO where to deal with internal parameters for relationships ?
 
       // TODO what is the addArguments config parameter (in the current code, the processing below is done even if addArguments is false)
       final List<GraphQLArgument> arguments = parameters.stream()
               .filter(p -> getInputType(p.getType(null), NamePath.of(p.getName()), seen, extendedScalarTypes).isPresent())
               .map(parameter -> GraphQLArgument.newArgument()
-                      .name(((SqrlFunctionParameter) parameter).getVariableName())
+                      .name(((SqrlFunctionParameter) parameter).getName())
                       .type(nonNull(getInputType(parameter.getType(null), NamePath.of(parameter.getName()), seen, extendedScalarTypes).get()))
                       .build()).collect(Collectors.toList());
       List<GraphQLArgument> limitOffset = generateLimitOffset();
@@ -439,47 +441,6 @@ public class GraphqlSchemaFactory2 {
 
     return ListUtils.union(arguments, limitOffset);
   }
-
-/*
-  private List<GraphQLArgument> generatePermuted(SqrlTableMacro macro) {
-    if (macro instanceof NestedRelationship) return List.of();
-    String tableName = schema.getPathToSysTableMap().get(macro.getAbsolutePath());
-    if (tableName == null) {
-      log.info("Table name null, to debug");
-      return List.of();
-    }
-    Table table = schema.getTable(tableName, false).getTable();
-    List<ImmutableBitSet> keys = table.getStatistic().getKeys();
-    if (keys.isEmpty()) return List.of(); //no pks
-    ImmutableBitSet pks = keys.get(0);
-    RelDataType rowType = macro.getRowType();
-    List<RelDataTypeField> primaryKeys = new ArrayList<>();
-    for (Integer key : pks.asList()) {
-      primaryKeys.add(rowType.getFieldList().get(key));
-    }
-
-    return primaryKeys
-            .stream()
-            .filter(f -> getInputType(f.getType(), NamePath.of(tableName), seen, extendedScalarTypes).isPresent())
-            .filter(f -> isValidGraphQLName(f.getName()))
-            .filter(this::isVisible)
-            .map(f -> GraphQLArgument.newArgument()
-                    .name(f.getName())
-                    .type(getInputType(f.getType(), NamePath.of(f.getName()), seen, extendedScalarTypes).get())
-                    .build())
-            .collect(Collectors.toList());
-  }
-*/
-
-/*
-  private boolean allowedArguments(SqrlTableFunction tableFunction) {
-    //No arguments for to-one rels or parent fields
-    return tableFunction.getMultiplicity().equals(Multiplicity.MANY) &&
-        !tableFunction.getJoinType().equals(JoinType.PARENT);
-  }
-*/
-
-
 
   private List<GraphQLArgument> generateLimitOffset() {
 
@@ -503,10 +464,10 @@ public class GraphqlSchemaFactory2 {
     return !f.getName().startsWith(HIDDEN_PREFIX);
   }
 
-  private GraphQLOutputType createTypeReference(String tableFunctionName) {
-    seen.add(tableFunctionName);
+  private GraphQLOutputType createTypeReference(String typeName) {
+    seen.add(typeName);
 
-    return new GraphQLTypeReference(tableFunctionName);
+    return new GraphQLTypeReference(typeName);
     //TODO if it is a table function: the type reference is the name of base table if exists because when the table function has a base table, its return type is the one of the base table. To avoid creating as many graphQl types as functions return types, we create a type for the base table when the base table exists otherwise we create a type with the name of the table function.
     // if it is a reldatatype: the type name is the name of the field
   }
