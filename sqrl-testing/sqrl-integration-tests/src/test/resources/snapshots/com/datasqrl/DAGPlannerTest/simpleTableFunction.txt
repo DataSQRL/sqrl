@@ -24,7 +24,7 @@ AS
 SELECT *
 FROM `default_catalog`.`default_database`.`Customer__def`
 === CustomerByEmail
-ID:     default_catalog.default_database.CustomerByEmail(email)
+ID:     default_catalog.default_database.CustomerByEmail
 Type:   query
 Stage:  postgres
 Inputs: default_catalog.default_database.Customer
@@ -61,7 +61,7 @@ AS
 SELECT *
 FROM `default_catalog`.`default_database`.`Orders__def`
 === Orders2
-ID:     default_catalog.default_database.Orders2(idLower)
+ID:     default_catalog.default_database.Orders2
 Type:   query
 Stage:  postgres
 Inputs: default_catalog.default_database.Orders
@@ -75,7 +75,7 @@ LogicalProject(id=[$0], delta=[-($0, ?0)], time=[$2])
 SQL: CREATE VIEW Orders2 AS  SELECT id, id - ?        AS delta, `time` FROM Orders WHERE id > ?       ;
 
 === OrdersIDRange
-ID:     default_catalog.default_database.OrdersIDRange(idLower)
+ID:     default_catalog.default_database.OrdersIDRange
 Type:   query
 Stage:  postgres
 Inputs: default_catalog.default_database.Orders

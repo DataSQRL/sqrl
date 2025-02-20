@@ -234,6 +234,38 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
       ]
     },
     {
+      "name" : "Customer",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"_ingest_time\") AS SELECT *\nFROM \"Customer_1\"",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : true
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "lastUpdated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "_ingest_time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
+    },
+    {
       "name" : "CustomerOrdersJoin",
       "type" : "VIEW",
       "sql" : "CREATE OR REPLACE VIEW \"CustomerOrdersJoin\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"_ingest_time\", \"id\", \"customerid0\", \"time\", \"entries\", \"_ingest_time0\") AS SELECT *\nFROM \"Customer_1\" AS \"Customer_12\"\n INNER JOIN \"Orders_2\" AS \"Orders_22\" ON \"Customer_12\".\"customerid\" = \"Orders_22\".\"customerid\" AND \"Customer_12\".\"_ingest_time\" < \"Orders_22\".\"_ingest_time\"",
@@ -285,38 +317,6 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
         },
         {
           "name" : "_ingest_time0",
-          "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : false
-        }
-      ]
-    },
-    {
-      "name" : "Customer",
-      "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"_ingest_time\") AS SELECT *\nFROM \"Customer_1\"",
-      "fields" : [
-        {
-          "name" : "customerid",
-          "type" : "BIGINT",
-          "nullable" : false
-        },
-        {
-          "name" : "email",
-          "type" : "TEXT",
-          "nullable" : true
-        },
-        {
-          "name" : "name",
-          "type" : "TEXT",
-          "nullable" : false
-        },
-        {
-          "name" : "lastUpdated",
-          "type" : "BIGINT",
-          "nullable" : false
-        },
-        {
-          "name" : "_ingest_time",
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }

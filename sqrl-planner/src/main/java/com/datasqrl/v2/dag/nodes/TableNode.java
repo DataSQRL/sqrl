@@ -40,11 +40,6 @@ public class TableNode extends PlannedNode {
   }
 
   @Override
-  public FullIdentifier getFullIdentifier() {
-    return tableAnalysis.getFullIdentifier();
-  }
-
-  @Override
   public String getId() {
     return getIdentifier().asSummaryString();
   }

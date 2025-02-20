@@ -174,9 +174,9 @@ INSERT INTO `default_catalog`.`default_database`.`CategoryDistinct_2`
       ]
     },
     {
-      "name" : "CategoryDistinct",
+      "name" : "Category",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"CategoryDistinct\"(\"categoryid\", \"name\", \"description\", \"updateTime\") AS SELECT *\nFROM \"CategoryDistinct_2\"",
+      "sql" : "CREATE OR REPLACE VIEW \"Category\"(\"categoryid\", \"name\", \"description\", \"updateTime\") AS SELECT \"categoryid\", \"name\", \"description\", \"updateTime\"\nFROM \"Category_1\"",
       "fields" : [
         {
           "name" : "categoryid",
@@ -201,9 +201,9 @@ INSERT INTO `default_catalog`.`default_database`.`CategoryDistinct_2`
       ]
     },
     {
-      "name" : "Category",
+      "name" : "CategoryDistinct",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"Category\"(\"categoryid\", \"name\", \"description\", \"updateTime\") AS SELECT \"categoryid\", \"name\", \"description\", \"updateTime\"\nFROM \"Category_1\"",
+      "sql" : "CREATE OR REPLACE VIEW \"CategoryDistinct\"(\"categoryid\", \"name\", \"description\", \"updateTime\") AS SELECT *\nFROM \"CategoryDistinct_2\"",
       "fields" : [
         {
           "name" : "categoryid",

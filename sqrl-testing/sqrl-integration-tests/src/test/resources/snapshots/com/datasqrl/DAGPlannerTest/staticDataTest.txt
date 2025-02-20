@@ -1354,6 +1354,18 @@ INSERT INTO `default_catalog`.`default_database`.`Numbers2_2`
       ]
     },
     {
+      "name" : "Numbers",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"Numbers\"(\"id\") AS SELECT *\nFROM \"Numbers_1\"",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "INTEGER",
+          "nullable" : false
+        }
+      ]
+    },
+    {
       "name" : "Numbers2",
       "type" : "VIEW",
       "sql" : "CREATE OR REPLACE VIEW \"Numbers2\"(\"id\") AS SELECT *\nFROM \"Numbers2_2\"",
@@ -1378,13 +1390,18 @@ INSERT INTO `default_catalog`.`default_database`.`Numbers2_2`
       ]
     },
     {
-      "name" : "Numbers",
+      "name" : "OrderNumbers",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"Numbers\"(\"id\") AS SELECT *\nFROM \"Numbers_1\"",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderNumbers\"(\"id\", \"time\") AS SELECT \"Orders_42\".\"id\", \"Orders_42\".\"time\"\nFROM \"Orders_4\" AS \"Orders_42\"\n INNER JOIN (SELECT \"id\", CAST(\"id\" AS BIGINT) AS \"id0\"\n  FROM \"Numbers_1\") AS \"t3\" ON \"Orders_42\".\"customerid\" = \"t3\".\"id0\"",
       "fields" : [
         {
           "name" : "id",
-          "type" : "INTEGER",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
       ]
@@ -1407,9 +1424,9 @@ INSERT INTO `default_catalog`.`default_database`.`Numbers2_2`
       ]
     },
     {
-      "name" : "OrderNumbers",
+      "name" : "OrderPairs",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderNumbers\"(\"id\", \"time\") AS SELECT \"Orders_42\".\"id\", \"Orders_42\".\"time\"\nFROM \"Orders_4\" AS \"Orders_42\"\n INNER JOIN (SELECT \"id\", CAST(\"id\" AS BIGINT) AS \"id0\"\n  FROM \"Numbers_1\") AS \"t3\" ON \"Orders_42\".\"customerid\" = \"t3\".\"id0\"",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderPairs\"(\"id\", \"time\", \"otherid\") AS SELECT \"Orders_42\".\"id\", \"Orders_42\".\"time\", \"t2\".\"id\" AS \"otherid\"\nFROM \"Orders_4\" AS \"Orders_42\",\n  (VALUES (1, 1),\n    (2, 2),\n    (3, 3),\n    (4, 4),\n    (4, 4)) AS \"t2\" (\"id\", \"pk\")",
       "fields" : [
         {
           "name" : "id",
@@ -1419,6 +1436,11 @@ INSERT INTO `default_catalog`.`default_database`.`Numbers2_2`
         {
           "name" : "time",
           "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "otherid",
+          "type" : "INTEGER",
           "nullable" : false
         }
       ]
@@ -1440,28 +1462,6 @@ INSERT INTO `default_catalog`.`default_database`.`Numbers2_2`
         },
         {
           "name" : "pk",
-          "type" : "INTEGER",
-          "nullable" : false
-        }
-      ]
-    },
-    {
-      "name" : "OrderPairs",
-      "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderPairs\"(\"id\", \"time\", \"otherid\") AS SELECT \"Orders_42\".\"id\", \"Orders_42\".\"time\", \"t2\".\"id\" AS \"otherid\"\nFROM \"Orders_4\" AS \"Orders_42\",\n  (VALUES (1, 1),\n    (2, 2),\n    (3, 3),\n    (4, 4),\n    (4, 4)) AS \"t2\" (\"id\", \"pk\")",
-      "fields" : [
-        {
-          "name" : "id",
-          "type" : "BIGINT",
-          "nullable" : false
-        },
-        {
-          "name" : "time",
-          "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : false
-        },
-        {
-          "name" : "otherid",
           "type" : "INTEGER",
           "nullable" : false
         }

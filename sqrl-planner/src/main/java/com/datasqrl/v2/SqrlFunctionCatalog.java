@@ -1,6 +1,7 @@
 package com.datasqrl.v2;
 
 import com.datasqrl.v2.tables.SqrlTableFunction;
+import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.Properties;
 import org.apache.calcite.config.CalciteConnectionConfigImpl;
@@ -27,6 +28,8 @@ public class SqrlFunctionCatalog {
   }
 
   public void addFunction(SqrlTableFunction function) {
+    Preconditions.checkArgument(schemaPlus.getFunctions(function.getFunctionCatalogName()).isEmpty(),
+        "Function [%s] already exists", function.getFunctionCatalogName());
     schemaPlus.add(function.getFunctionCatalogName(), function);
   }
 

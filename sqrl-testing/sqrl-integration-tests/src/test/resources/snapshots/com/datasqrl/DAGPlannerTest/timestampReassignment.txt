@@ -281,6 +281,38 @@ INSERT INTO `default_catalog`.`default_database`.`Customer2_2`
       ]
     },
     {
+      "name" : "Customer",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"Customer_1\"",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "lastUpdated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : true
+        }
+      ]
+    },
+    {
       "name" : "Customer2",
       "type" : "VIEW",
       "sql" : "CREATE OR REPLACE VIEW \"Customer2\"(\"updatedTime\", \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"Customer2_2\"",
@@ -327,38 +359,6 @@ INSERT INTO `default_catalog`.`default_database`.`Customer2_2`
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : true
         },
-        {
-          "name" : "customerid",
-          "type" : "BIGINT",
-          "nullable" : false
-        },
-        {
-          "name" : "email",
-          "type" : "TEXT",
-          "nullable" : false
-        },
-        {
-          "name" : "name",
-          "type" : "TEXT",
-          "nullable" : false
-        },
-        {
-          "name" : "lastUpdated",
-          "type" : "BIGINT",
-          "nullable" : false
-        },
-        {
-          "name" : "timestamp",
-          "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
-        }
-      ]
-    },
-    {
-      "name" : "Customer",
-      "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"Customer_1\"",
-      "fields" : [
         {
           "name" : "customerid",
           "type" : "BIGINT",

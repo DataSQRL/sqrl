@@ -22,7 +22,8 @@ public class AccessVisibility {
   boolean isTest;
   /**
    * Access only table functions are only queryable and not added
-   * to the planner, i.e. they cannot be referenced in subsequent definitions
+   * to the planner/catalog, i.e. they cannot be referenced in subsequent definitions in a SQRL script
+   * Access only functions represent relationships or functions generated for queryable tables.
    */
   boolean isAccessOnly;
   /**

@@ -485,9 +485,9 @@ INSERT INTO `default_catalog`.`default_database`.`OrderAgg2_2`
       ]
     },
     {
-      "name" : "OrdersState",
+      "name" : "Orders",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"OrdersState\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"OrdersState_6\"",
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"Orders_5\"",
       "fields" : [
         {
           "name" : "id",
@@ -512,9 +512,9 @@ INSERT INTO `default_catalog`.`default_database`.`OrderAgg2_2`
       ]
     },
     {
-      "name" : "Orders",
+      "name" : "OrdersState",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"Orders_5\"",
+      "sql" : "CREATE OR REPLACE VIEW \"OrdersState\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"OrdersState_6\"",
       "fields" : [
         {
           "name" : "id",

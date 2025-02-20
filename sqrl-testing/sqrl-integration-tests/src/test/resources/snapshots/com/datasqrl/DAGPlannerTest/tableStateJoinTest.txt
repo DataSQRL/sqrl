@@ -664,9 +664,9 @@ INSERT INTO `default_catalog`.`default_database`.`OrderCustomer_2`
       ]
     },
     {
-      "name" : "OrderCustomerConstant",
+      "name" : "OrderCustomer",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerConstant\"(\"time\", \"id\", \"name\", \"customerid\") AS SELECT *\nFROM \"OrderCustomerConstant_3\"",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomer\"(\"time\", \"id\", \"name\", \"customerid\") AS SELECT *\nFROM \"OrderCustomer_2\"",
       "fields" : [
         {
           "name" : "time",
@@ -691,9 +691,9 @@ INSERT INTO `default_catalog`.`default_database`.`OrderCustomer_2`
       ]
     },
     {
-      "name" : "OrderCustomerLeftExcluded",
+      "name" : "OrderCustomerConstant",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerLeftExcluded\"(\"time\", \"id\", \"customerid\") AS SELECT *\nFROM \"OrderCustomerLeftExcluded_5\"",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerConstant\"(\"time\", \"id\", \"name\", \"customerid\") AS SELECT *\nFROM \"OrderCustomerConstant_3\"",
       "fields" : [
         {
           "name" : "time",
@@ -703,6 +703,11 @@ INSERT INTO `default_catalog`.`default_database`.`OrderCustomer_2`
         {
           "name" : "id",
           "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
           "nullable" : false
         },
         {
@@ -740,23 +745,23 @@ INSERT INTO `default_catalog`.`default_database`.`OrderCustomer_2`
       ]
     },
     {
-      "name" : "OrderCustomerRightExcluded",
+      "name" : "OrderCustomerLeftExcluded",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerRightExcluded\"(\"lastUpdated\", \"customerid\", \"name\") AS SELECT \"lastUpdated\", \"customerid\", \"name\"\nFROM \"OrderCustomerRightExcluded_6\"",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerLeftExcluded\"(\"time\", \"id\", \"customerid\") AS SELECT *\nFROM \"OrderCustomerLeftExcluded_5\"",
       "fields" : [
         {
-          "name" : "lastUpdated",
+          "name" : "time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "id",
           "type" : "BIGINT",
           "nullable" : false
         },
         {
           "name" : "customerid",
           "type" : "BIGINT",
-          "nullable" : false
-        },
-        {
-          "name" : "name",
-          "type" : "TEXT",
           "nullable" : false
         }
       ]
@@ -789,28 +794,23 @@ INSERT INTO `default_catalog`.`default_database`.`OrderCustomer_2`
       ]
     },
     {
-      "name" : "OrderCustomer",
+      "name" : "OrderCustomerRightExcluded",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomer\"(\"time\", \"id\", \"name\", \"customerid\") AS SELECT *\nFROM \"OrderCustomer_2\"",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerRightExcluded\"(\"lastUpdated\", \"customerid\", \"name\") AS SELECT \"lastUpdated\", \"customerid\", \"name\"\nFROM \"OrderCustomerRightExcluded_6\"",
       "fields" : [
         {
-          "name" : "time",
-          "type" : "TIMESTAMP WITH TIME ZONE",
+          "name" : "lastUpdated",
+          "type" : "BIGINT",
           "nullable" : false
         },
         {
-          "name" : "id",
+          "name" : "customerid",
           "type" : "BIGINT",
           "nullable" : false
         },
         {
           "name" : "name",
           "type" : "TEXT",
-          "nullable" : false
-        },
-        {
-          "name" : "customerid",
-          "type" : "BIGINT",
           "nullable" : false
         }
       ]

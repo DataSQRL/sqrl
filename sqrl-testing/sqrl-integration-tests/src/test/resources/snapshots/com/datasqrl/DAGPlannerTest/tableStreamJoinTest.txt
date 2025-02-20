@@ -337,15 +337,10 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
       ]
     },
     {
-      "name" : "OrderCustomerConstant",
+      "name" : "OrderCustomer",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerConstant\"(\"time\", \"id\", \"name\", \"customerid\") AS SELECT \"Orders_22\".\"time\", \"Orders_22\".\"id\", \"Customer_12\".\"name\", \"Orders_22\".\"customerid\"\nFROM \"Orders_2\" AS \"Orders_22\"\n INNER JOIN \"Customer_1\" AS \"Customer_12\" ON \"Orders_22\".\"customerid\" = \"Customer_12\".\"customerid\" AND \"Customer_12\".\"name\" = 'Robert' AND \"Orders_22\".\"id\" > 5",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomer\"(\"id\", \"name\", \"customerid\") AS SELECT \"Orders_22\".\"id\", \"Customer_12\".\"name\", \"Orders_22\".\"customerid\"\nFROM \"Orders_2\" AS \"Orders_22\"\n INNER JOIN \"Customer_1\" AS \"Customer_12\" ON \"Orders_22\".\"customerid\" = \"Customer_12\".\"customerid\"",
       "fields" : [
-        {
-          "name" : "time",
-          "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : false
-        },
         {
           "name" : "id",
           "type" : "BIGINT",
@@ -364,9 +359,9 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
       ]
     },
     {
-      "name" : "OrderCustomerLeftExcluded",
+      "name" : "OrderCustomerConstant",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerLeftExcluded\"(\"time\", \"id\", \"customerid\") AS SELECT \"Orders_22\".\"time\", \"Orders_22\".\"id\", \"Orders_22\".\"customerid\"\nFROM \"Orders_2\" AS \"Orders_22\"\n LEFT JOIN \"Customer_1\" AS \"Customer_12\" ON \"Orders_22\".\"customerid\" = \"Customer_12\".\"customerid\"\nWHERE \"Customer_12\".\"customerid\" IS NULL AND \"Customer_12\".\"lastUpdated\" IS NULL",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerConstant\"(\"time\", \"id\", \"name\", \"customerid\") AS SELECT \"Orders_22\".\"time\", \"Orders_22\".\"id\", \"Customer_12\".\"name\", \"Orders_22\".\"customerid\"\nFROM \"Orders_2\" AS \"Orders_22\"\n INNER JOIN \"Customer_1\" AS \"Customer_12\" ON \"Orders_22\".\"customerid\" = \"Customer_12\".\"customerid\" AND \"Customer_12\".\"name\" = 'Robert' AND \"Orders_22\".\"id\" > 5",
       "fields" : [
         {
           "name" : "time",
@@ -376,6 +371,11 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
         {
           "name" : "id",
           "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
           "nullable" : false
         },
         {
@@ -418,23 +418,23 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
       ]
     },
     {
-      "name" : "OrderCustomerRightExcluded",
+      "name" : "OrderCustomerLeftExcluded",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerRightExcluded\"(\"lastUpdated\", \"customerid\", \"name\") AS SELECT \"Customer_12\".\"lastUpdated\", \"Customer_12\".\"customerid\", \"Customer_12\".\"name\"\nFROM \"Orders_2\" AS \"Orders_22\"\n RIGHT JOIN \"Customer_1\" AS \"Customer_12\" ON \"Orders_22\".\"customerid\" = \"Customer_12\".\"customerid\"\nWHERE \"Orders_22\".\"id\" IS NULL AND \"Orders_22\".\"time\" IS NULL",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerLeftExcluded\"(\"time\", \"id\", \"customerid\") AS SELECT \"Orders_22\".\"time\", \"Orders_22\".\"id\", \"Orders_22\".\"customerid\"\nFROM \"Orders_2\" AS \"Orders_22\"\n LEFT JOIN \"Customer_1\" AS \"Customer_12\" ON \"Orders_22\".\"customerid\" = \"Customer_12\".\"customerid\"\nWHERE \"Customer_12\".\"customerid\" IS NULL AND \"Customer_12\".\"lastUpdated\" IS NULL",
       "fields" : [
         {
-          "name" : "lastUpdated",
+          "name" : "time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "id",
           "type" : "BIGINT",
           "nullable" : false
         },
         {
           "name" : "customerid",
           "type" : "BIGINT",
-          "nullable" : false
-        },
-        {
-          "name" : "name",
-          "type" : "TEXT",
           "nullable" : false
         }
       ]
@@ -472,23 +472,23 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
       ]
     },
     {
-      "name" : "OrderCustomer",
+      "name" : "OrderCustomerRightExcluded",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomer\"(\"id\", \"name\", \"customerid\") AS SELECT \"Orders_22\".\"id\", \"Customer_12\".\"name\", \"Orders_22\".\"customerid\"\nFROM \"Orders_2\" AS \"Orders_22\"\n INNER JOIN \"Customer_1\" AS \"Customer_12\" ON \"Orders_22\".\"customerid\" = \"Customer_12\".\"customerid\"",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerRightExcluded\"(\"lastUpdated\", \"customerid\", \"name\") AS SELECT \"Customer_12\".\"lastUpdated\", \"Customer_12\".\"customerid\", \"Customer_12\".\"name\"\nFROM \"Orders_2\" AS \"Orders_22\"\n RIGHT JOIN \"Customer_1\" AS \"Customer_12\" ON \"Orders_22\".\"customerid\" = \"Customer_12\".\"customerid\"\nWHERE \"Orders_22\".\"id\" IS NULL AND \"Orders_22\".\"time\" IS NULL",
       "fields" : [
         {
-          "name" : "id",
+          "name" : "lastUpdated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customerid",
           "type" : "BIGINT",
           "nullable" : false
         },
         {
           "name" : "name",
           "type" : "TEXT",
-          "nullable" : false
-        },
-        {
-          "name" : "customerid",
-          "type" : "BIGINT",
           "nullable" : false
         }
       ]

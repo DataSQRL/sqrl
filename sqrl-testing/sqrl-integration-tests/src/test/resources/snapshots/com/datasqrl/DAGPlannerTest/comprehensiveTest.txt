@@ -43,7 +43,7 @@ AS
 SELECT *
 FROM `default_catalog`.`default_database`.`Customer__def`
 === CustomerById
-ID:     default_catalog.default_database.CustomerById(minId)
+ID:     default_catalog.default_database.CustomerById
 Type:   query
 Stage:  postgres
 Inputs: default_catalog.default_database.Customer
@@ -147,7 +147,7 @@ FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMB
     WHERE `$f5` IS NULL AND `$f6` IS NULL OR `email` <> `$f5` OR `name` <> `$f6`) AS `t3`) AS `t4`
 WHERE `$f5` = 1
 === CustomerQuery
-ID:     default_catalog.default_database.CustomerQuery(id)
+ID:     default_catalog.default_database.CustomerQuery
 Type:   query
 Stage:  postgres
 Inputs: default_catalog.default_database.AnotherCustomer
@@ -181,7 +181,7 @@ LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timesta
 SQL: CREATE VIEW CustomerSubscription AS  SELECT * FROM Customer;
 
 === CustomerSubscriptionById
-ID:     default_catalog.default_database.CustomerSubscriptionById(minId)
+ID:     default_catalog.default_database.CustomerSubscriptionById
 Type:   query
 Stage:  kafka
 Inputs: default_catalog.default_database.Customer
@@ -365,10 +365,10 @@ LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timesta
 SQL: CREATE VIEW SelectCustomers AS  SELECT * From Customer WHERE customerid > 0 ORDER BY `timestamp` DESC LIMIT 10;
 
 === TableFunctionCallsTblFct
-ID:     default_catalog.default_database.TableFunctionCallsTblFct(arg1,arg2)
+ID:     default_catalog.default_database.TableFunctionCallsTblFct
 Type:   query
 Stage:  postgres
-Inputs: default_catalog.default_database.CustomerById(minId)
+Inputs: default_catalog.default_database.CustomerById
 Annotations:
  - features: TABLE_FUNCTION_SCAN (feature)
  - stream-root: Customer__def
@@ -1424,6 +1424,38 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
       ]
     },
     {
+      "name" : "Customer",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"Customer_2\"",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "lastUpdated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : true
+        }
+      ]
+    },
+    {
       "name" : "CustomerByMultipleTime",
       "type" : "VIEW",
       "sql" : "CREATE OR REPLACE VIEW \"CustomerByMultipleTime\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"CustomerByMultipleTime_4\"",
@@ -1520,28 +1552,6 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
       ]
     },
     {
-      "name" : "CustomerTimeWindowTest",
-      "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerTimeWindowTest\"(\"window_start\", \"window_end\", \"unique_email_count\") AS SELECT *\nFROM (SELECT \"window_start\", \"window_end\", \"unique_email_count\"\n  FROM \"CustomerTimeWindow_9\"\n  ORDER BY \"window_end\" DESC NULLS LAST) AS \"t3\"",
-      "fields" : [
-        {
-          "name" : "window_start",
-          "type" : "TIMESTAMP WITHOUT TIME ZONE",
-          "nullable" : false
-        },
-        {
-          "name" : "window_end",
-          "type" : "TIMESTAMP WITHOUT TIME ZONE",
-          "nullable" : false
-        },
-        {
-          "name" : "unique_email_count",
-          "type" : "BIGINT",
-          "nullable" : false
-        }
-      ]
-    },
-    {
       "name" : "CustomerTimeWindow",
       "type" : "VIEW",
       "sql" : "CREATE OR REPLACE VIEW \"CustomerTimeWindow\"(\"window_start\", \"window_end\", \"unique_email_count\") AS SELECT *\nFROM \"CustomerTimeWindow_9\"",
@@ -1564,34 +1574,24 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
       ]
     },
     {
-      "name" : "Customer",
+      "name" : "CustomerTimeWindowTest",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"Customer_2\"",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerTimeWindowTest\"(\"window_start\", \"window_end\", \"unique_email_count\") AS SELECT *\nFROM (SELECT \"window_start\", \"window_end\", \"unique_email_count\"\n  FROM \"CustomerTimeWindow_9\"\n  ORDER BY \"window_end\" DESC NULLS LAST) AS \"t3\"",
       "fields" : [
         {
-          "name" : "customerid",
+          "name" : "window_start",
+          "type" : "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "window_end",
+          "type" : "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "unique_email_count",
           "type" : "BIGINT",
           "nullable" : false
-        },
-        {
-          "name" : "email",
-          "type" : "TEXT",
-          "nullable" : false
-        },
-        {
-          "name" : "name",
-          "type" : "TEXT",
-          "nullable" : false
-        },
-        {
-          "name" : "lastUpdated",
-          "type" : "BIGINT",
-          "nullable" : false
-        },
-        {
-          "name" : "timestamp",
-          "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
         }
       ]
     },

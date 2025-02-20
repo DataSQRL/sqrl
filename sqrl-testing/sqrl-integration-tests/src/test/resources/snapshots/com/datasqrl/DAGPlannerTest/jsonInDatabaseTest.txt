@@ -234,9 +234,9 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
       ]
     },
     {
-      "name" : "CustomerStream",
+      "name" : "Customer",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerStream\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"CustomerStream_2\"",
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"Customer_1\"",
       "fields" : [
         {
           "name" : "customerid",
@@ -266,9 +266,9 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
       ]
     },
     {
-      "name" : "Customer",
+      "name" : "CustomerStream",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"Customer_1\"",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerStream\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"CustomerStream_2\"",
       "fields" : [
         {
           "name" : "customerid",

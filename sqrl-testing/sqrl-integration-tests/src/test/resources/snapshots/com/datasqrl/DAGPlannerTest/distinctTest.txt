@@ -750,9 +750,9 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByMultiple_2`
       ]
     },
     {
-      "name" : "CustomerByMultipleTime",
+      "name" : "Customer",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerByMultipleTime\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"CustomerByMultipleTime_3\"",
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"Customer_1\"",
       "fields" : [
         {
           "name" : "customerid",
@@ -785,6 +785,70 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByMultiple_2`
       "name" : "CustomerByMultiple",
       "type" : "VIEW",
       "sql" : "CREATE OR REPLACE VIEW \"CustomerByMultiple\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"CustomerByMultiple_2\"",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "lastUpdated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "CustomerByMultipleTime",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerByMultipleTime\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"CustomerByMultipleTime_3\"",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "lastUpdated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "CustomerByTime",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerByTime\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"CustomerByTime_4\"",
       "fields" : [
         {
           "name" : "customerid",
@@ -878,70 +942,6 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByMultiple_2`
       ]
     },
     {
-      "name" : "CustomerByTime",
-      "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerByTime\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"CustomerByTime_4\"",
-      "fields" : [
-        {
-          "name" : "customerid",
-          "type" : "BIGINT",
-          "nullable" : false
-        },
-        {
-          "name" : "email",
-          "type" : "TEXT",
-          "nullable" : false
-        },
-        {
-          "name" : "name",
-          "type" : "TEXT",
-          "nullable" : false
-        },
-        {
-          "name" : "lastUpdated",
-          "type" : "BIGINT",
-          "nullable" : false
-        },
-        {
-          "name" : "timestamp",
-          "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
-        }
-      ]
-    },
-    {
-      "name" : "CustomerByUpdatedAsc",
-      "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerByUpdatedAsc\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"CustomerByUpdatedAsc_8\"",
-      "fields" : [
-        {
-          "name" : "customerid",
-          "type" : "BIGINT",
-          "nullable" : false
-        },
-        {
-          "name" : "email",
-          "type" : "TEXT",
-          "nullable" : false
-        },
-        {
-          "name" : "name",
-          "type" : "TEXT",
-          "nullable" : false
-        },
-        {
-          "name" : "lastUpdated",
-          "type" : "BIGINT",
-          "nullable" : false
-        },
-        {
-          "name" : "timestamp",
-          "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
-        }
-      ]
-    },
-    {
       "name" : "CustomerByUpdated",
       "type" : "VIEW",
       "sql" : "CREATE OR REPLACE VIEW \"CustomerByUpdated\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"CustomerByUpdated_7\"",
@@ -974,9 +974,9 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByMultiple_2`
       ]
     },
     {
-      "name" : "Customer",
+      "name" : "CustomerByUpdatedAsc",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"Customer_1\"",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerByUpdatedAsc\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"CustomerByUpdatedAsc_8\"",
       "fields" : [
         {
           "name" : "customerid",

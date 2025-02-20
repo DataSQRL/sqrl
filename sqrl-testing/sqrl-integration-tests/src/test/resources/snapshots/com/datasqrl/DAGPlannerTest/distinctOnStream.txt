@@ -257,28 +257,6 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerUpdates_2`
       ]
     },
     {
-      "name" : "CustomerUpdates",
-      "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerUpdates\"(\"customerid\", \"endOfMin\", \"total\") AS SELECT \"customerid\", \"endOfMin\", \"total\"\nFROM \"CustomerUpdates_2\"",
-      "fields" : [
-        {
-          "name" : "customerid",
-          "type" : "BIGINT",
-          "nullable" : false
-        },
-        {
-          "name" : "endOfMin",
-          "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : false
-        },
-        {
-          "name" : "total",
-          "type" : "BIGINT",
-          "nullable" : false
-        }
-      ]
-    },
-    {
       "name" : "Customer",
       "type" : "VIEW",
       "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"Customer_1\"",
@@ -307,6 +285,28 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerUpdates_2`
           "name" : "timestamp",
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "CustomerUpdates",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerUpdates\"(\"customerid\", \"endOfMin\", \"total\") AS SELECT \"customerid\", \"endOfMin\", \"total\"\nFROM \"CustomerUpdates_2\"",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "endOfMin",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "total",
+          "type" : "BIGINT",
+          "nullable" : false
         }
       ]
     },

@@ -46,7 +46,7 @@ SQL: CREATE VIEW MachineTempByHour AS  SELECT machineid, window_time as time_hou
                      GROUP BY machineid, window_start, window_end, window_time;
 
 === MachineTempHourlyById
-ID:     default_catalog.default_database.MachineTempHourlyById(machineid)
+ID:     default_catalog.default_database.MachineTempHourlyById
 Type:   query
 Stage:  postgres
 Inputs: default_catalog.default_database.MachineTempByHour

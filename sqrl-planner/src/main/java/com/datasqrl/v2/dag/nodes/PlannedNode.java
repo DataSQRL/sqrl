@@ -21,6 +21,4 @@ public abstract class PlannedNode extends PipelineNode {
     return getAnalysis().getIdentifier();
   }
 
-  public abstract FullIdentifier getFullIdentifier();
-
 }

@@ -155,6 +155,10 @@ public class SqlScriptPlanner {
         //Map errors from the Flink parser/planner by adjusting the line numbers
         if (e instanceof org.apache.flink.table.api.SqlParserException) {
           e = (Exception)e.getCause();
+        } else if (e instanceof org.apache.flink.table.api.ValidationException) {
+          if (e.getCause() instanceof Exception && e!=e.getCause()) {
+            e = (Exception)e.getCause();
+          }
         }
         FileLocation location = null;
         String message = null;
@@ -231,7 +235,7 @@ public class SqlScriptPlanner {
       //Relationships and Table functions require special handling
       if (sqrlDef instanceof SqrlTableFunctionStatement) {
         SqrlTableFunctionStatement tblFctStmt = (SqrlTableFunctionStatement) sqrlDef;
-        ObjectIdentifier identifier = SqlNameUtil.toIdentifier(tblFctStmt.getPath().getFirst());
+        ObjectIdentifier identifier = SqlNameUtil.toIdentifier(tblFctStmt.getPath().getFirst()); //TODO: this should be resolved against the current catalog and database
         List<ParsedArgument> arguments = tblFctStmt.getArguments();
         if (tblFctStmt.isRelationship()) { // Resolve arguments against parent table
           Optional<PipelineNode> parentNode = dagBuilder.getNode(identifier);

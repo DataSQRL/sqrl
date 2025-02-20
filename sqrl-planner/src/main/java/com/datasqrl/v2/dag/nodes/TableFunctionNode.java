@@ -22,8 +22,15 @@ public class TableFunctionNode extends PlannedNode {
 
   @Override
   public String getId() {
-    return function.getIdentifier().asSummaryString() + "(" + function.getParameters().stream().map(
-        FunctionParameter::getName).collect(Collectors.joining(",")) + ")";
+    /*
+    Access only functions are not planned and therefore do not have a unique object identifier,
+    instead they are identified by their full path
+     */
+    return function.getVisibility().isAccessOnly()?
+        "access:"+function.getFullPath():
+        function.getIdentifier().asSummaryString();
+//        + "(" + function.getParameters().stream().map(
+//        FunctionParameter::getName).collect(Collectors.joining(",")) + ")";
   }
 
   @Override
@@ -36,8 +43,4 @@ public class TableFunctionNode extends PlannedNode {
     return function.getFunctionAnalysis();
   }
 
-  @Override
-  public FullIdentifier getFullIdentifier() {
-    return function.getFullIdentifier();
-  }
 }
