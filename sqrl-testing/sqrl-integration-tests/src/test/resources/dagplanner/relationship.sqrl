@@ -5,4 +5,5 @@ IMPORT ecommerceTs.Orders;
 -- A relationship, `this.customerid` gets replaced with an internal parameter that gets substituted with customerid on the parent table Customer
 Customer.orders := SELECT * FROM Orders o WHERE this.customerid = o.customerid;
 
+-- cannot have a relationship in the FROM clause.
 -- CustomerEntries($customerid : BIGINT) := SELECT entries e FROM Customer.orders customerOrders WHERE customerOrders.customerid = $customerid;
