@@ -469,7 +469,8 @@ public class GraphqlSchemaFactory2 {
 
     return new GraphQLTypeReference(typeName);
     //TODO if it is a table function: the type reference is the name of base table if exists because when the table function has a base table, its return type is the one of the base table. To avoid creating as many graphQl types as functions return types, we create a type for the base table when the base table exists otherwise we create a type with the name of the table function.
-    // if it is a reldatatype: the type name is the name of the field
+    // need a set to check which tables were already defined
+
   }
 
 
