@@ -142,20 +142,20 @@ public class GraphqlSchemaFactory2 {
 
     // process all the table functions
     for (Map.Entry<NamePath, List<SqrlTableFunction>> path : tableFunctionsByTheirPath.entrySet()) {
-      // walk resultType of the function at path and add it to the GraphQl object types
+      // create resultType of the function at path and add it to the GraphQl object types
       final SqrlTableFunction tableFunction = path.getValue().get(0); // overloaded table functions all have the same base table, hence the same return type
       if (!tableFunction.isRelationship()) { // root table function
-        Optional<GraphQLObjectType> graphQLObjectType =
+        Optional<GraphQLObjectType> resultType =
             createRootTableFunctionResultType(
                 tableFunction, path.getValue(), // list of table functions with the same path (its overloaded table functions)
                 tableFunctionsByTheirParentPath.getOrDefault(path.getKey(), List.of()) // List of table functions nested under path (its relationships).
                 );
-        graphQLObjectType.map(objectTypes::add);
+        resultType.map(objectTypes::add);
       } else { // relationship table function
-        Optional<GraphQLObjectType> graphQLObjectType =
+        Optional<GraphQLObjectType> resultType =
             createRelationshipTableFunctionResultType(tableFunction, path.getValue() // list of table functions with the same path (its overloaded table functions)
             );
-        graphQLObjectType.map(objectTypes::add);
+        resultType.map(objectTypes::add);
       }
     }
 
@@ -165,7 +165,7 @@ public class GraphqlSchemaFactory2 {
     } else { // subscriptions
       objectType = null; // TODO implement
     }
-    // TODO there might be a pb in the original program flow: invalid fields pruning is done after
+    // TODO there might be a pb in the original program flow: invalid fields pruning is done after ?
     cleanInvalidTypes();
     return Optional.of(objectType);
   }
@@ -208,7 +208,18 @@ public class GraphqlSchemaFactory2 {
       return Optional.empty();
     }
 
-    String name = generateObjectName(tableFunction);
+    String name;
+    if (tableFunction.getBaseTable().isPresent()) {
+      final String baseTableName = tableFunction.getBaseTable().get().getName();
+      if (usedNames.contains(baseTableName)) {// result type was already defined
+          return Optional.empty();
+      }
+      else { // new result type using base name
+        name = baseTableName;
+      }
+    } else { // no base table, use function name
+      name = tableFunction.getFunctionCatalogName();
+    }
     GraphQLObjectType objectType = GraphQLObjectType.newObject()
             .name(name)
             .fields(fields)
@@ -237,8 +248,11 @@ public class GraphqlSchemaFactory2 {
     if (fields.isEmpty()) {
       return Optional.empty();
     }
+    if (tableFunction.getBaseTable().isPresent()) { // the type was created in the root table function
+      return Optional.empty();
+    }
 
-    String name = generateObjectName(tableFunction);
+    String name = uniquifyName(tableFunction.getFullPath().getLast().getDisplay());
     GraphQLObjectType objectType = GraphQLObjectType.newObject()
             .name(name)
             .fields(fields)
@@ -358,7 +372,7 @@ public class GraphqlSchemaFactory2 {
   private static void checkOverloadedSignaturesDontOverlap(List<SqrlTableFunction> tableFunctionsAtPath) {
     SqrlTableFunction first = tableFunctionsAtPath.get(0);
     final boolean check = true;
-    //TODO compare all the signatures pairs parameters lists 2 by 2. if they have the same list of parameters (name and type) regardless of their order, they overlap
+    //TODO compare all the signatures pairs parameters lists 2 by 2. if they have the same list of parameters (name and type) in same order they overlap
     first.getFunctionAnalysis().getErrors().checkFatal(check, "Overloaded table functions have overlapping parameters");
   }
 
@@ -369,20 +383,9 @@ public class GraphqlSchemaFactory2 {
     return name;
   }
 
-  /**
-   *
-   * generates "Query" name for root tables, base table name if available, uniq name otherwise
-   * se
-   */
-  private String generateObjectName(SqrlTableFunction tableFunction) {
+  private String generateFieldTypeName(SqrlTableFunction tableFunction) {
     NamePath path = tableFunction.getFullPath();
-    if (path.isEmpty()) {
-      return "Query";
-    }
-    if (tableFunction.getBaseTable().isPresent()) {
-      return tableFunction.getBaseTable().get().getName();
-    }
-    return uniquifyName(path.getLast().getDisplay());
+    return tableFunction.getBaseTable().isPresent() ? tableFunction.getBaseTable().get().getName() : uniquifyName(path.getLast().getDisplay());
   }
 
   /**
@@ -404,14 +407,15 @@ public class GraphqlSchemaFactory2 {
 
   private Optional<GraphQLFieldDefinition> createRelationshipField(SqrlTableFunction tableFunction) {
     String fieldName = tableFunction.getFullPath().getLast().getDisplay();
+    String typeName = generateFieldTypeName(tableFunction);
     if (!isValidGraphQLName(fieldName) || isHiddenString(fieldName)) {
       return Optional.empty();
     }
 
-    // reference the type that will defined when the table function relationship is processed
+    // reference the type that will be defined when the table function relationship is processed
     GraphQLFieldDefinition field = GraphQLFieldDefinition.newFieldDefinition()
         .name(fieldName)
-        .type(wrapMultiplicity(createTypeReference(fieldName), tableFunction.getMultiplicity()))
+        .type(wrapMultiplicity(createTypeReference(typeName), tableFunction.getMultiplicity()))
         .arguments(createArguments(tableFunction))
         .build();
 
@@ -435,7 +439,7 @@ public class GraphqlSchemaFactory2 {
                       .build()).collect(Collectors.toList());
       List<GraphQLArgument> limitOffset = generateLimitOffset();
 
-    // TODO Merge signatures when there are multiple overloaded functions: a) combining all
+      //TODO Merge signatures when there are multiple overloaded functions: a) combining all
     // parameters by name and relaxing their argument type by nullability b) check that argument
     // types are compatible, otherwise produce error. Also check compatibility of result type.
 
@@ -466,11 +470,7 @@ public class GraphqlSchemaFactory2 {
 
   private GraphQLOutputType createTypeReference(String typeName) {
     seen.add(typeName);
-
     return new GraphQLTypeReference(typeName);
-    //TODO if it is a table function: the type reference is the name of base table if exists because when the table function has a base table, its return type is the one of the base table. To avoid creating as many graphQl types as functions return types, we create a type for the base table when the base table exists otherwise we create a type with the name of the table function.
-    // need a set to check which tables were already defined
-
   }
 
 
