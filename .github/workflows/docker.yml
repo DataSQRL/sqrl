@@ -5,7 +5,7 @@ on:
     branches: [main, sqrl-0.5.x, v0.5.9-release]
 
 jobs:
-  build:
+  docker:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     if: "!contains(github.event.head_commit.message, 'maven-release-plugin')"

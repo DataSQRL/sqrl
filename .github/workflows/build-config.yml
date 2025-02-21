@@ -4,7 +4,7 @@ on:
     branches: [ "main", sqrl-0.5.x, "v0.5.10-release"]
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
