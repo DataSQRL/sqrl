@@ -437,15 +437,15 @@ INSERT INTO `default_catalog`.`default_database`.`Machine_2`
   "topics" : [ ]
 }
 >>>postgres-schema.sql
-
 CREATE TABLE IF NOT EXISTS "HighTemp_1" ("machineId" BIGINT NOT NULL, "sensorid" BIGINT NOT NULL, "temp" DOUBLE PRECISION NOT NULL, "timeSec" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("sensorid","timeSec"));
 CREATE TABLE IF NOT EXISTS "Machine_2" ("machineId" BIGINT NOT NULL, "maxTemp" DOUBLE PRECISION NOT NULL, "avgTemp" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("machineId"));
 CREATE TABLE IF NOT EXISTS "SecReading_3" ("sensorid" BIGINT NOT NULL, "timeSec" TIMESTAMP WITH TIME ZONE NOT NULL, "temp" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("sensorid","timeSec"));
 CREATE TABLE IF NOT EXISTS "SensorLastHour_4" ("sensorid" BIGINT NOT NULL, "window_time" TIMESTAMP WITH TIME ZONE NOT NULL, "avgTemp" DOUBLE PRECISION NOT NULL, "maxTemp" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("sensorid"));
 CREATE TABLE IF NOT EXISTS "SensorReading_5" ("sensorid" BIGINT NOT NULL, "time" BIGINT NOT NULL, "temperature" DOUBLE PRECISION NOT NULL, "humidity" DOUBLE PRECISION NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("sensorid","time"));
 CREATE TABLE IF NOT EXISTS "SensorUpdates_6" ("id" BIGINT NOT NULL, "machineId" BIGINT NOT NULL, "placed" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id","placed"));
-CREATE TABLE IF NOT EXISTS "Sensors_7" ("id" BIGINT NOT NULL, "machineId" BIGINT NOT NULL, "placed" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"))
-CREATE INDEX IF NOT EXISTS Sensors_7_hash_c1 ON Sensors_7 USING hash ("machineId");
+CREATE TABLE IF NOT EXISTS "Sensors_7" ("id" BIGINT NOT NULL, "machineId" BIGINT NOT NULL, "placed" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
+
+CREATE INDEX IF NOT EXISTS "Sensors_7_hash_c1" ON "Sensors_7" USING hash ("machineId")
 >>>postgres-views.sql
 CREATE OR REPLACE VIEW "HighTemp"("machineId", "sensorid", "temp", "timeSec") AS SELECT *
 FROM "HighTemp_1";

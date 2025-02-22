@@ -94,10 +94,8 @@ INSERT INTO `default_catalog`.`default_database`.`MyTableAnother_2`
   "topics" : [ ]
 }
 >>>postgres-schema.sql
-
 CREATE TABLE IF NOT EXISTS "MyTable_1" ("val" INTEGER NOT NULL, "myFnc" BIGINT  , PRIMARY KEY ("val"));
 CREATE TABLE IF NOT EXISTS "MyTableAnother_2" ("val" INTEGER NOT NULL, "myFnc" BIGINT  , PRIMARY KEY ("val"))
-
 >>>postgres-views.sql
 CREATE OR REPLACE VIEW "MyTable"("val", "myFnc") AS SELECT *
 FROM "MyTable_1";

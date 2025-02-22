@@ -1848,7 +1848,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
     {
       "name" : "SelectCustomers_14_hash_c2",
       "type" : "INDEX",
-      "sql" : "CREATE INDEX IF NOT EXISTS SelectCustomers_14_hash_c2 ON SelectCustomers_14 USING hash (\"name\");"
+      "sql" : "CREATE INDEX IF NOT EXISTS \"SelectCustomers_14_hash_c2\" ON \"SelectCustomers_14\" USING hash (\"name\")"
     }
   ]
 }

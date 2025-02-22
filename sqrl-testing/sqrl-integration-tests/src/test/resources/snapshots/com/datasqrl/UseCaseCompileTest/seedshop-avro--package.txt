@@ -121,10 +121,8 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
   "topics" : [ ]
 }
 >>>postgres-schema.sql
-
 CREATE TABLE IF NOT EXISTS "OrderCount_1" ("id" BIGINT NOT NULL, "number" BIGINT NOT NULL, "volume" INTEGER NOT NULL , PRIMARY KEY ("id"));
 CREATE TABLE IF NOT EXISTS "Orders_2" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TEXT NOT NULL, "items" JSONB , "_source_time" TIMESTAMP WITH TIME ZONE , "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"))
-
 >>>postgres-views.sql
 CREATE OR REPLACE VIEW "OrderCount"("id", "number", "volume") AS SELECT *
 FROM "OrderCount_1";

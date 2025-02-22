@@ -7,6 +7,7 @@ import com.datasqrl.v2.analyzer.TableAnalysis;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.Builder;
@@ -51,8 +52,10 @@ public class JdbcPhysicalPlan implements DatabasePhysicalPlan {
     return List.of(
         new DeploymentArtifact("-schema.sql",
             Stream.of(Type.EXTENSION, Type.TABLE, Type.INDEX)
-            .map(this::getStatementsForType).map(JdbcPhysicalPlan::toSql)
-            .collect(Collectors.joining("\n"))),
+                .map(this::getStatementsForType)
+                .filter(Predicate.not(List::isEmpty))
+                .map(JdbcPhysicalPlan::toSql)
+            .collect(Collectors.joining(";\n\n"))),
         new DeploymentArtifact("-views.sql", toSql(getStatementsForType(Type.VIEW)))
     );
   }

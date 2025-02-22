@@ -851,7 +851,7 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2__def`
     {
       "name" : "SimpleOrders_6_btree_c2c3",
       "type" : "INDEX",
-      "sql" : "CREATE INDEX IF NOT EXISTS SimpleOrders_6_btree_c2c3 ON SimpleOrders_6 USING btree (\"customerid\",\"amount\");"
+      "sql" : "CREATE INDEX IF NOT EXISTS \"SimpleOrders_6_btree_c2c3\" ON \"SimpleOrders_6\" USING btree (\"customerid\",\"amount\")"
     }
   ]
 }

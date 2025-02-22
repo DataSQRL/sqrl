@@ -312,13 +312,13 @@ INSERT INTO `default_catalog`.`default_database`.`Submission_2`
     ;
     END
 >>>postgres-schema.sql
-
 CREATE TABLE IF NOT EXISTS "Package_1" ("name" TEXT NOT NULL , PRIMARY KEY ("name"));
 CREATE TABLE IF NOT EXISTS "Submission_2" ("name" TEXT NOT NULL, "version" TEXT NOT NULL, "variant" TEXT , "latest" BOOLEAN NOT NULL, "type" TEXT , "license" TEXT , "repository" TEXT , "homepage" TEXT , "documentation" TEXT , "readme" TEXT , "description" TEXT , "uniqueId" TEXT NOT NULL, "file" TEXT NOT NULL, "hash" TEXT NOT NULL, "authorid" TEXT NOT NULL, "submissionTime" TIMESTAMP WITH TIME ZONE NOT NULL, "keywords" JSONB , "variant0" TEXT NOT NULL, "repoURL" TEXT NOT NULL , PRIMARY KEY ("name","submissionTime"));
 CREATE TABLE IF NOT EXISTS "SubmissionTopics_3" ("pkgName" TEXT NOT NULL, "topicName" TEXT NOT NULL, "submissionTime" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
 CREATE TABLE IF NOT EXISTS "TopicPackages_4" ("pkgName" TEXT NOT NULL, "topicName" TEXT NOT NULL, "numSubmissions" BIGINT NOT NULL, "lastSubmission" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("pkgName","topicName"));
-CREATE TABLE IF NOT EXISTS "TopicSearch_5" ("topicName" TEXT NOT NULL, "numPackages" BIGINT NOT NULL , PRIMARY KEY ("topicName"))
-CREATE INDEX IF NOT EXISTS Submission_2_btree_c0c3 ON Submission_2 USING btree ("name","latest");
+CREATE TABLE IF NOT EXISTS "TopicSearch_5" ("topicName" TEXT NOT NULL, "numPackages" BIGINT NOT NULL , PRIMARY KEY ("topicName"));
+
+CREATE INDEX IF NOT EXISTS "Submission_2_btree_c0c3" ON "Submission_2" USING btree ("name","latest")
 >>>postgres-views.sql
 CREATE OR REPLACE VIEW "Package"("name") AS SELECT *
 FROM "Package_1";

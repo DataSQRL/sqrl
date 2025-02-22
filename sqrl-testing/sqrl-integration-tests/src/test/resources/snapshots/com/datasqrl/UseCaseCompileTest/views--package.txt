@@ -36,9 +36,7 @@ INSERT INTO `default_catalog`.`default_database`.`MyView_1`
 ;
 END
 >>>postgres-schema.sql
-
 CREATE TABLE IF NOT EXISTS "MyView_1" ("val" INTEGER NOT NULL , PRIMARY KEY ("val"))
-
 >>>postgres-views.sql
 CREATE OR REPLACE VIEW "MyView"("val") AS SELECT *
 FROM "MyView_1"

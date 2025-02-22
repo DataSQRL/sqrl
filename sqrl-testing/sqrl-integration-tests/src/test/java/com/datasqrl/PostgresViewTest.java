@@ -7,10 +7,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.nio.file.Path;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -21,6 +25,7 @@ import org.testcontainers.utility.DockerImageName;
  * Compiles the use cases in the test/resources/usecases folder and snapshots the
  * deployment assets
  */
+@Slf4j
 public class PostgresViewTest extends AbstractUseCaseTest {
   @Container
   private PostgreSQLContainer testDatabase =
@@ -45,6 +50,7 @@ public class PostgresViewTest extends AbstractUseCaseTest {
     try {
       verifyPostgresSchema(script);
     } catch (Exception e) {
+      e.printStackTrace();
       fail(e);
     }
   }
@@ -59,21 +65,28 @@ public class PostgresViewTest extends AbstractUseCaseTest {
     if (file.exists()) {
       testDatabase.start();
       Map plan = new ObjectMapper().readValue(file, Map.class);
-      for (Map statement : (List<Map>) plan.get("ddl")) {
-        Connection connection = testDatabase.createConnection("");
-        try (Statement stmt = connection.createStatement()) {
-          stmt.executeUpdate((String) statement.get("sql"));
-        }
-      }
-      if (plan.get("views") != null) {
-        for (Map statement : (List<Map>) plan.get("views")) {
-          Connection connection = testDatabase.createConnection("");
+      for (Map statement : (List<Map>) plan.get("statements")) {
+        log.info("Executing statement {} of type {}", statement.get("name"), statement.get("type"));
+        try (Connection connection = testDatabase.createConnection("")) {
           try (Statement stmt = connection.createStatement()) {
             stmt.executeUpdate((String) statement.get("sql"));
           }
         }
       }
     }
+  }
+
+  private static List<String> getTables(PostgreSQLContainer testDatabase) throws Exception {
+    List<String> result = new ArrayList<>();
+    try (Connection connection = testDatabase.createConnection("")) {
+      DatabaseMetaData metaData = connection.getMetaData();
+      ResultSet tables = metaData.getTables(null, null, "%", new String[] {"TABLE"});
+
+      while (tables.next()) {
+        result.add(tables.getString("TABLE_NAME"));
+      }
+    }
+    return result;
   }
 
   static class UseCaseFiles extends SqrlScriptsAndLocalPackages {

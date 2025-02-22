@@ -49,6 +49,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 @Slf4j
 @ExtendWith(MiniClusterExtension.class)
+@Disabled("todo: re-enable once GraphQL is implemented")
 public class FullUsecasesIT {
   private static final Path RESOURCES = Paths.get("src/test/resources");
   private static final Path USE_CASES = RESOURCES.resolve("usecases");

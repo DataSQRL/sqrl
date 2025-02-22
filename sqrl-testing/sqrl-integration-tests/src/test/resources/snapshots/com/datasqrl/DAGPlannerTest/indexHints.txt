@@ -542,22 +542,22 @@ INSERT INTO `default_catalog`.`default_database`.`MyOrdersIndexHash_2`
     {
       "name" : "MyOrdersIndexBtree_1_btree_c0",
       "type" : "INDEX",
-      "sql" : "CREATE INDEX IF NOT EXISTS MyOrdersIndexBtree_1_btree_c0 ON MyOrdersIndexBtree_1 USING btree (\"id\");"
+      "sql" : "CREATE INDEX IF NOT EXISTS \"MyOrdersIndexBtree_1_btree_c0\" ON \"MyOrdersIndexBtree_1\" USING btree (\"id\")"
     },
     {
       "name" : "MyOrdersIndexHash_2_hash_c1",
       "type" : "INDEX",
-      "sql" : "CREATE INDEX IF NOT EXISTS MyOrdersIndexHash_2_hash_c1 ON MyOrdersIndexHash_2 USING hash (\"customerid\");"
+      "sql" : "CREATE INDEX IF NOT EXISTS \"MyOrdersIndexHash_2_hash_c1\" ON \"MyOrdersIndexHash_2\" USING hash (\"customerid\")"
     },
     {
       "name" : "MyOrdersTwoIndex_5_btree_c2c0",
       "type" : "INDEX",
-      "sql" : "CREATE INDEX IF NOT EXISTS MyOrdersTwoIndex_5_btree_c2c0 ON MyOrdersTwoIndex_5 USING btree (\"time\",\"id\");"
+      "sql" : "CREATE INDEX IF NOT EXISTS \"MyOrdersTwoIndex_5_btree_c2c0\" ON \"MyOrdersTwoIndex_5\" USING btree (\"time\",\"id\")"
     },
     {
       "name" : "MyOrdersTwoIndex_5_hash_c1",
       "type" : "INDEX",
-      "sql" : "CREATE INDEX IF NOT EXISTS MyOrdersTwoIndex_5_hash_c1 ON MyOrdersTwoIndex_5 USING hash (\"customerid\");"
+      "sql" : "CREATE INDEX IF NOT EXISTS \"MyOrdersTwoIndex_5_hash_c1\" ON \"MyOrdersTwoIndex_5\" USING hash (\"customerid\")"
     }
   ]
 }

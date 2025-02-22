@@ -251,11 +251,9 @@ INSERT INTO `default_catalog`.`default_database`.`SensorAnalysis_2`
   ]
 }
 >>>postgres-schema.sql
-
 CREATE TABLE IF NOT EXISTS "SensorAnalysis_2" ("sensorid" INTEGER NOT NULL, "avg_temperatures" FLOAT NOT NULL, "max_temperature" FLOAT NOT NULL , PRIMARY KEY ("sensorid"));
 CREATE TABLE IF NOT EXISTS "SensorMaxTempLastMin_3" ("sensorid" INTEGER NOT NULL, "endOfMin" TIMESTAMP WITH TIME ZONE NOT NULL, "avg_temperature" FLOAT NOT NULL , PRIMARY KEY ("sensorid"));
 CREATE TABLE IF NOT EXISTS "SensorReading_4" ("sensorid" INTEGER NOT NULL, "temperature" FLOAT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE , "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"))
-
 >>>postgres-views.sql
 CREATE OR REPLACE VIEW "SensorAnalysis"("sensorid", "avg_temperatures", "max_temperature") AS SELECT *
 FROM (SELECT "sensorid", "avg_temperatures", "max_temperature"

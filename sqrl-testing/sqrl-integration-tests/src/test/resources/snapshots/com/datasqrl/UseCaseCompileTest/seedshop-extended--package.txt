@@ -786,7 +786,6 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerPromotion_1`
   "topics" : [ ]
 }
 >>>postgres-schema.sql
-
 CREATE TABLE IF NOT EXISTS "CustomerPromotion_1" ("customerid" BIGINT NOT NULL, "first_name" TEXT NOT NULL, "last_name" TEXT NOT NULL, "email" TEXT NOT NULL, "spend" DOUBLE PRECISION NOT NULL, "saved" DOUBLE PRECISION NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
 CREATE TABLE IF NOT EXISTS "Customers_2" ("id" BIGINT NOT NULL, "first_name" TEXT NOT NULL, "last_name" TEXT NOT NULL, "email" TEXT NOT NULL, "ip_address" TEXT , "country" TEXT , "changed_on" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
 CREATE TABLE IF NOT EXISTS "CustomersOrderStats_3" ("customerid" BIGINT NOT NULL, "first_order" TIMESTAMP WITH TIME ZONE NOT NULL, "total_spend" DOUBLE PRECISION NOT NULL, "total_saved" DOUBLE PRECISION NOT NULL, "num_orders" BIGINT NOT NULL , PRIMARY KEY ("customerid"));
@@ -798,10 +797,11 @@ CREATE TABLE IF NOT EXISTS "Orders_8" ("id" BIGINT NOT NULL, "customerid" BIGINT
 CREATE TABLE IF NOT EXISTS "OrdersTotals_9" ("id" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "customerid" BIGINT NOT NULL, "price" DOUBLE PRECISION NOT NULL, "saving" DOUBLE PRECISION NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
 CREATE TABLE IF NOT EXISTS "Products_10" ("id" BIGINT NOT NULL, "name" TEXT NOT NULL, "sizing" TEXT NOT NULL, "weight_in_gram" BIGINT NOT NULL, "type" TEXT NOT NULL, "category" TEXT NOT NULL, "usda_id" BIGINT NOT NULL, "updated" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
 CREATE TABLE IF NOT EXISTS "ProductsByCountry_11" ("productid" BIGINT NOT NULL, "country" TEXT , "quantity" BIGINT NOT NULL, "spend" DOUBLE PRECISION NOT NULL, "weight" BIGINT NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "ProductsStream_12" ("id" BIGINT NOT NULL, "name" TEXT NOT NULL, "sizing" TEXT NOT NULL, "weight_in_gram" BIGINT NOT NULL, "type" TEXT NOT NULL, "category" TEXT NOT NULL, "usda_id" BIGINT NOT NULL, "updated" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id","updated"))
-CREATE INDEX IF NOT EXISTS OrdersTotals_9_hash_c0 ON OrdersTotals_9 USING hash ("id");;
-CREATE INDEX IF NOT EXISTS Orders_8_hash_c1 ON Orders_8 USING hash ("customerid");;
-CREATE INDEX IF NOT EXISTS Products_10_text_c1c5 ON Products_10 USING GIN (to_tsvector('english', coalesce("name", '') || ' ' || coalesce("category", '') ));
+CREATE TABLE IF NOT EXISTS "ProductsStream_12" ("id" BIGINT NOT NULL, "name" TEXT NOT NULL, "sizing" TEXT NOT NULL, "weight_in_gram" BIGINT NOT NULL, "type" TEXT NOT NULL, "category" TEXT NOT NULL, "usda_id" BIGINT NOT NULL, "updated" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id","updated"));
+
+CREATE INDEX IF NOT EXISTS "OrdersTotals_9_hash_c0" ON "OrdersTotals_9" USING hash ("id");
+CREATE INDEX IF NOT EXISTS "Orders_8_hash_c1" ON "Orders_8" USING hash ("customerid");
+CREATE INDEX IF NOT EXISTS "Products_10_text_c1c5" ON "Products_10" USING GIN (to_tsvector('english', coalesce("name", '') || ' ' || coalesce("category", '') ))
 >>>postgres-views.sql
 CREATE OR REPLACE VIEW "CustomerPromotion"("customerid", "first_name", "last_name", "email", "spend", "saved") AS SELECT "customerid", "first_name", "last_name", "email", "spend", "saved"
 FROM "CustomerPromotion_1";

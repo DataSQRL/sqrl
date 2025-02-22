@@ -725,7 +725,6 @@ INSERT INTO `default_catalog`.`default_database`.`ApplicationAlert_2`
   ]
 }
 >>>postgres-schema.sql
-
 CREATE TABLE IF NOT EXISTS "AddChatMessage_1" ("_uuid" TEXT NOT NULL, "role" TEXT NOT NULL, "content" TEXT NOT NULL, "name" TEXT , "context" JSONB , "event_time" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY ("_uuid"));
 CREATE TABLE IF NOT EXISTS "ApplicationAlert_2" ("_uuid" TEXT NOT NULL, "id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "amount" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("_uuid"));
 CREATE TABLE IF NOT EXISTS "ApplicationStatus_3" ("_uuid" TEXT NOT NULL, "status" TEXT NOT NULL, "message" TEXT , "event_time" TIMESTAMP WITH TIME ZONE , "id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("_uuid"));
@@ -736,9 +735,10 @@ CREATE TABLE IF NOT EXISTS "CustomerChatMessage_7" ("role" TEXT NOT NULL, "conte
 CREATE TABLE IF NOT EXISTS "Customers_8" ("id" BIGINT NOT NULL, "first_name" TEXT NOT NULL, "last_name" TEXT NOT NULL, "email" TEXT NOT NULL, "phone" TEXT NOT NULL, "address" TEXT NOT NULL, "date_of_birth" TEXT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
 CREATE TABLE IF NOT EXISTS "CustomersStream_9" ("id" BIGINT NOT NULL, "first_name" TEXT NOT NULL, "last_name" TEXT NOT NULL, "email" TEXT NOT NULL, "phone" TEXT NOT NULL, "address" TEXT NOT NULL, "date_of_birth" TEXT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id","updated_at"));
 CREATE TABLE IF NOT EXISTS "LoanTypes_10" ("id" BIGINT NOT NULL, "name" TEXT NOT NULL, "description" TEXT NOT NULL, "interest_rate" DOUBLE PRECISION NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "max_duration" BIGINT NOT NULL, "min_duration" BIGINT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
-CREATE TABLE IF NOT EXISTS "LoanTypesStream_11" ("id" BIGINT NOT NULL, "name" TEXT NOT NULL, "description" TEXT NOT NULL, "interest_rate" DOUBLE PRECISION NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "max_duration" BIGINT NOT NULL, "min_duration" BIGINT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id","updated_at"))
-CREATE INDEX IF NOT EXISTS ApplicationUpdates_4_hash_c1 ON ApplicationUpdates_4 USING hash ("loan_application_id");;
-CREATE INDEX IF NOT EXISTS Applications_5_hash_c1 ON Applications_5 USING hash ("customer_id");
+CREATE TABLE IF NOT EXISTS "LoanTypesStream_11" ("id" BIGINT NOT NULL, "name" TEXT NOT NULL, "description" TEXT NOT NULL, "interest_rate" DOUBLE PRECISION NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "max_duration" BIGINT NOT NULL, "min_duration" BIGINT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id","updated_at"));
+
+CREATE INDEX IF NOT EXISTS "ApplicationUpdates_4_hash_c1" ON "ApplicationUpdates_4" USING hash ("loan_application_id");
+CREATE INDEX IF NOT EXISTS "Applications_5_hash_c1" ON "Applications_5" USING hash ("customer_id")
 >>>postgres-views.sql
 CREATE OR REPLACE VIEW "AddChatMessage"("_uuid", "role", "content", "name", "context", "event_time") AS SELECT *
 FROM "AddChatMessage_1";

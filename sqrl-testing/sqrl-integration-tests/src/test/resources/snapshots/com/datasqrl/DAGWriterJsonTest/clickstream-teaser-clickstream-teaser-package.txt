@@ -1,5 +1,56 @@
 >>>pipeline_explain.json
 [ {
+  "id" : "access:Click",
+  "name" : "Click",
+  "type" : "query",
+  "stage" : "postgres",
+  "inputs" : [ "default_catalog.default_database.Click" ],
+  "plan" : "LogicalProject(url=[$0], timestamp=[$1], userid=[$2])\n  LogicalTableScan(table=[[default_catalog, default_database, Click]])\n",
+  "sql" : "CREATE VIEW `Click__access`\nAS\nSELECT *\nFROM `default_catalog`.`default_database`.`Click`",
+  "post_processors" : [ {
+    "name" : "stream-root",
+    "description" : "Click__def"
+  }, {
+    "name" : "base-table",
+    "description" : "Click"
+  } ]
+}, {
+  "id" : "access:Recommendation",
+  "name" : "Recommendation",
+  "type" : "query",
+  "stage" : "postgres",
+  "inputs" : [ "default_catalog.default_database.Recommendation" ],
+  "plan" : "LogicalProject(url=[$0], rec=[$1], frequency=[$2])\n  LogicalTableScan(table=[[default_catalog, default_database, Recommendation]])\n",
+  "sql" : "CREATE VIEW `Recommendation__access`\nAS\nSELECT *\nFROM `default_catalog`.`default_database`.`Recommendation`",
+  "post_processors" : [ {
+    "name" : "base-table",
+    "description" : "Recommendation"
+  } ]
+}, {
+  "id" : "access:Trending",
+  "name" : "Trending",
+  "type" : "query",
+  "stage" : "postgres",
+  "inputs" : [ "default_catalog.default_database.Trending" ],
+  "plan" : "LogicalProject(url=[$0], total=[$1])\n  LogicalTableScan(table=[[default_catalog, default_database, Trending]])\n",
+  "sql" : "CREATE VIEW `Trending__access`\nAS\nSELECT *\nFROM `default_catalog`.`default_database`.`Trending`",
+  "post_processors" : [ {
+    "name" : "base-table",
+    "description" : "Trending"
+  } ]
+}, {
+  "id" : "access:VisitAfter",
+  "name" : "VisitAfter",
+  "type" : "query",
+  "stage" : "postgres",
+  "inputs" : [ "default_catalog.default_database.VisitAfter" ],
+  "plan" : "LogicalProject(beforeURL=[$0], afterURL=[$1], timestamp=[$2])\n  LogicalTableScan(table=[[default_catalog, default_database, VisitAfter]])\n",
+  "sql" : "CREATE VIEW `VisitAfter__access`\nAS\nSELECT *\nFROM `default_catalog`.`default_database`.`VisitAfter`",
+  "post_processors" : [ {
+    "name" : "base-table",
+    "description" : "VisitAfter"
+  } ]
+}, {
   "id" : "default_catalog.default_database.Click",
   "name" : "Click",
   "type" : "stream",
@@ -19,18 +70,6 @@
     "name" : "userid",
     "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
   } ],
-  "post_processors" : [ {
-    "name" : "stream-root",
-    "description" : "Click__def"
-  } ]
-}, {
-  "id" : "default_catalog.default_database.Click__access()",
-  "name" : "Click",
-  "type" : "query",
-  "stage" : "postgres",
-  "inputs" : [ "default_catalog.default_database.Click" ],
-  "plan" : "LogicalProject(url=[$0], timestamp=[$1], userid=[$2])\n  LogicalTableScan(table=[[default_catalog, default_database, Click]])\n",
-  "sql" : "CREATE VIEW `Click__access`\nAS\nSELECT *\nFROM `default_catalog`.`default_database`.`Click`",
   "post_processors" : [ {
     "name" : "stream-root",
     "description" : "Click__def"
@@ -58,7 +97,7 @@
   "id" : "default_catalog.default_database.Recommendation",
   "name" : "Recommendation",
   "type" : "state",
-  "stage" : "postgres",
+  "stage" : "flink",
   "inputs" : [ "default_catalog.default_database.VisitAfter" ],
   "plan" : "LogicalAggregate(group=[{0, 1}], frequency=[COUNT()])\n  LogicalProject(url=[$0], rec=[$1])\n    LogicalTableScan(table=[[default_catalog, default_database, VisitAfter]])\n",
   "sql" : "CREATE VIEW Recommendation AS  SELECT beforeURL AS url, afterURL AS rec,\n    count(1) AS frequency FROM VisitAfter\n    GROUP BY beforeURL, afterURL ORDER BY url ASC, frequency DESC;\n",
@@ -78,15 +117,6 @@
     "name" : "sort",
     "description" : "[0 ASC-nulls-first, 2 DESC-nulls-last]"
   } ]
-}, {
-  "id" : "default_catalog.default_database.Recommendation__access()",
-  "name" : "Recommendation",
-  "type" : "query",
-  "stage" : "postgres",
-  "inputs" : [ "default_catalog.default_database.Recommendation" ],
-  "plan" : "LogicalProject(url=[$0], rec=[$1], frequency=[$2])\n  LogicalTableScan(table=[[default_catalog, default_database, Recommendation]])\n",
-  "sql" : "CREATE VIEW `Recommendation__access`\nAS\nSELECT *\nFROM `default_catalog`.`default_database`.`Recommendation`",
-  "post_processors" : [ ]
 }, {
   "id" : "default_catalog.default_database.Trending",
   "name" : "Trending",
@@ -109,19 +139,10 @@
     "description" : "[1 DESC-nulls-last]"
   } ]
 }, {
-  "id" : "default_catalog.default_database.Trending__access()",
-  "name" : "Trending",
-  "type" : "query",
-  "stage" : "postgres",
-  "inputs" : [ "default_catalog.default_database.Trending" ],
-  "plan" : "LogicalProject(url=[$0], total=[$1])\n  LogicalTableScan(table=[[default_catalog, default_database, Trending]])\n",
-  "sql" : "CREATE VIEW `Trending__access`\nAS\nSELECT *\nFROM `default_catalog`.`default_database`.`Trending`",
-  "post_processors" : [ ]
-}, {
   "id" : "default_catalog.default_database.VisitAfter",
   "name" : "VisitAfter",
   "type" : "stream",
-  "stage" : "postgres",
+  "stage" : "flink",
   "inputs" : [ "default_catalog.default_database.Click" ],
   "plan" : "LogicalProject(beforeURL=[$0], afterURL=[$3], timestamp=[$4])\n  LogicalJoin(condition=[AND(=($2, $5), <($1, $4), >=($1, -($4, *(10, 60000:INTERVAL MINUTE))))], joinType=[inner])\n    LogicalTableScan(table=[[default_catalog, default_database, Click]])\n    LogicalTableScan(table=[[default_catalog, default_database, Click]])\n",
   "sql" : "CREATE VIEW VisitAfter AS  SELECT b.url AS beforeURL, a.url AS afterURL,\n    a.`timestamp` AS `timestamp`\n    FROM Click b JOIN Click a ON b.userid=a.userid AND\n        b.`timestamp` < a.`timestamp` AND\n        b.`timestamp` >= a.`timestamp` - INTERVAL 10 MINUTE;\n",
@@ -136,14 +157,5 @@
     "name" : "timestamp",
     "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
   } ],
-  "post_processors" : [ ]
-}, {
-  "id" : "default_catalog.default_database.VisitAfter__access()",
-  "name" : "VisitAfter",
-  "type" : "query",
-  "stage" : "postgres",
-  "inputs" : [ "default_catalog.default_database.VisitAfter" ],
-  "plan" : "LogicalProject(beforeURL=[$0], afterURL=[$1], timestamp=[$2])\n  LogicalTableScan(table=[[default_catalog, default_database, VisitAfter]])\n",
-  "sql" : "CREATE VIEW `VisitAfter__access`\nAS\nSELECT *\nFROM `default_catalog`.`default_database`.`VisitAfter`",
   "post_processors" : [ ]
 } ]

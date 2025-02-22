@@ -54,8 +54,8 @@ public class CreateIndexDDL implements SqlDDLStatement {
         indexType = type.name().toLowerCase();
     }
 
-    String createTable = "CREATE INDEX IF NOT EXISTS %s ON %s USING %s (%s);";
-    String sql = String.format(createTable, indexName, tableName, indexType,
+    String createTable = "CREATE INDEX IF NOT EXISTS %s ON %s USING %s (%s)";
+    String sql = String.format(createTable, quoteIdentifier(indexName), quoteIdentifier(tableName), indexType,
         columnExpression);
     return sql;
   }

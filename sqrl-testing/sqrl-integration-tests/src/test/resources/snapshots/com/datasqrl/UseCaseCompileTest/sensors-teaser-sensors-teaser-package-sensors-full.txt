@@ -210,11 +210,9 @@ INSERT INTO `default_catalog`.`default_database`.`SensorMaxTemp_2`
   "topics" : [ ]
 }
 >>>postgres-schema.sql
-
 CREATE TABLE IF NOT EXISTS "SecReading_1" ("sensorid" BIGINT NOT NULL, "timeSec" TIMESTAMP WITH TIME ZONE NOT NULL, "temp" DOUBLE PRECISION NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
 CREATE TABLE IF NOT EXISTS "SensorMaxTemp_2" ("sensorid" BIGINT NOT NULL, "window_time" TIMESTAMP WITH TIME ZONE NOT NULL, "maxTemp" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("sensorid"));
 CREATE TABLE IF NOT EXISTS "SensorReading_3" ("sensorid" BIGINT NOT NULL, "time" BIGINT NOT NULL, "temperature" DOUBLE PRECISION NOT NULL, "humidity" DOUBLE PRECISION NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("sensorid","time"))
-
 >>>postgres-views.sql
 CREATE OR REPLACE VIEW "SecReading"("sensorid", "timeSec", "temp") AS SELECT "sensorid", "timeSec", "temp"
 FROM (SELECT "sensorid", "timeSec", "temp", "__pk_hash"

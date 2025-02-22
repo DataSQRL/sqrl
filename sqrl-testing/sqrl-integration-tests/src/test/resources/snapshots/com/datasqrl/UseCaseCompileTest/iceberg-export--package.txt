@@ -85,7 +85,5 @@ INSERT INTO `default_catalog`.`default_database`.`iceberg-sink_ex1__def`
 END
 >>>iceberg-schema.sql
 
-
-
 >>>iceberg-views.sql
 

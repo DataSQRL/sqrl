@@ -563,7 +563,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
     {
       "name" : "Customer_1_btree_c0c2",
       "type" : "INDEX",
-      "sql" : "CREATE INDEX IF NOT EXISTS Customer_1_btree_c0c2 ON Customer_1 USING btree (\"customerid\",\"name\");"
+      "sql" : "CREATE INDEX IF NOT EXISTS \"Customer_1_btree_c0c2\" ON \"Customer_1\" USING btree (\"customerid\",\"name\")"
     }
   ]
 }

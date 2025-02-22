@@ -383,17 +383,13 @@ INSERT INTO `default_catalog`.`default_database`.`_Applications_2`
   ;
   END
 >>>iceberg-schema.sql
-
 CREATE TABLE IF NOT EXISTS "ApplicationStatus_1" ("status" TEXT NOT NULL, "message" TEXT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
 CREATE TABLE IF NOT EXISTS "_Applications_2" ("id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "application_date" TIMESTAMP WITH TIME ZONE NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
 CREATE TABLE IF NOT EXISTS "_LoanTypes_3" ("id" BIGINT NOT NULL, "name" TEXT NOT NULL, "description" TEXT NOT NULL, "interest_rate" DOUBLE PRECISION NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "max_duration" BIGINT NOT NULL, "min_duration" BIGINT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"))
-
 >>>iceberg-snowflake-schema.sql
-
 CREATE OR REPLACE ICEBERG TABLE ApplicationStatus_1 EXTERNAL_VOLUME = '${SNOWFLAKE_EXTERNAL_VOLUME}' CATALOG = '${SNOWFLAKE_CATALOG_NAME}' CATALOG_TABLE_NAME = 'ApplicationStatus_1';
 CREATE OR REPLACE ICEBERG TABLE _Applications_2 EXTERNAL_VOLUME = '${SNOWFLAKE_EXTERNAL_VOLUME}' CATALOG = '${SNOWFLAKE_CATALOG_NAME}' CATALOG_TABLE_NAME = '_Applications_2';
 CREATE OR REPLACE ICEBERG TABLE _LoanTypes_3 EXTERNAL_VOLUME = '${SNOWFLAKE_EXTERNAL_VOLUME}' CATALOG = '${SNOWFLAKE_CATALOG_NAME}' CATALOG_TABLE_NAME = '_LoanTypes_3'
-
 >>>iceberg-snowflake-views.sql
 CREATE OR REPLACE VIEW ApplicationInfo(id, customer_id, loan_type_id, amount, duration, application_date, updated_at, id0, name, description, interest_rate, max_amount, min_amount, max_duration, min_duration, updated_at0, id2) AS SELECT _Applications_20.id, _Applications_20.customer_id, _Applications_20.loan_type_id, _Applications_20.amount, _Applications_20.duration, _Applications_20.application_date, _Applications_20.updated_at, _LoanTypes_30.id AS id0, _LoanTypes_30.name, _LoanTypes_30.description, _LoanTypes_30.interest_rate, _LoanTypes_30.max_amount, _LoanTypes_30.min_amount, _LoanTypes_30.max_duration, _LoanTypes_30.min_duration, _LoanTypes_30.updated_at AS updated_at0, _LoanTypes_32.id AS id2
 FROM _Applications_2 AS _Applications_20
