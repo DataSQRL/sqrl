@@ -23,11 +23,24 @@ import org.apache.calcite.rex.RexCorrelVariable;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.rex.RexSubQuery;
+import org.apache.calcite.sql.SqlAggFunction;
 import org.apache.flink.table.catalog.ContextResolvedFunction;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.functions.FunctionIdentifier;
+import org.apache.flink.table.planner.functions.bridging.BridgingSqlAggFunction;
 import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction;
 
+/**
+ * This class primarily exists to collapse views that were expanded by Flink
+ * during planning so we can create the DAG between the views.
+ * To collapse the views, we check if a relnode tree has been seen before (i.e. is identical)
+ * and substitute the corresponding table in {@link com.datasqrl.v2.analyzer.SQRLLogicalPlanAnalyzer#analyzeRelNode(RelNode)}
+ * In order to be able to check for equality, we need to normalize the relnodes since planning
+ * introduces some subtle differences.
+ *
+ * Ideally, we would find a way to NOT expand the views in Flink so we can get rid of this
+ * brittle "uncollapsing" code.
+ */
 @Value
 public class TableAnalysisLookup {
 
@@ -117,11 +130,49 @@ public class TableAnalysisLookup {
       } else return Optional.empty();
     }
 
+    private Optional<ContextResolvedFunction> normalizeFunction(ContextResolvedFunction resolvedFunc) {
+      if (resolvedFunc.getIdentifier().isPresent()) {
+        FunctionIdentifier funcId = resolvedFunc.getIdentifier().get();
+        if (!funcId.getFunctionName().equals(funcId.getFunctionName().toUpperCase())) {
+          FunctionIdentifier normalizedFuncId;
+          if (funcId.getSimpleName().isPresent()) {
+            normalizedFuncId = FunctionIdentifier.of(
+                funcId.getSimpleName().get().toUpperCase());
+          } else {
+            ObjectIdentifier identifier = funcId.getIdentifier().get();
+            ObjectIdentifier normalizedIdentifier = ObjectIdentifier.of(
+                identifier.getCatalogName(), identifier.getDatabaseName(),
+                identifier.getObjectName().toUpperCase());
+            normalizedFuncId = FunctionIdentifier.of(normalizedIdentifier);
+          }
+          ContextResolvedFunction normalizedResolvedFunc = ContextResolvedFunction.temporary(
+              normalizedFuncId,
+              resolvedFunc.getDefinition());
+          return Optional.of(normalizedResolvedFunc);
+        }
+      }
+      return Optional.empty();
+    }
+
     @Override
     public RelNode visit(LogicalAggregate aggregate) {
-      List<AggregateCall> aggCalls = aggregate.getAggCallList();
-      for (AggregateCall aggCall : aggCalls) {
-      }
+      List<AggregateCall> updatedCalls = aggregate.getAggCallList().stream().map(aggCall -> {
+        SqlAggFunction aggFct = aggCall.getAggregation();
+        if (aggFct instanceof BridgingSqlAggFunction) {
+          BridgingSqlAggFunction func = (BridgingSqlAggFunction) aggFct;
+          Optional<ContextResolvedFunction> normalizedFct = normalizeFunction(func.getResolvedFunction());
+          if (normalizedFct.isPresent()) {
+            BridgingSqlAggFunction normalizedFunc = BridgingSqlAggFunction.of(func.getDataTypeFactory(),
+                func.getTypeFactory(), func.getKind(), normalizedFct.get(), func.getTypeInference());
+            return AggregateCall.create(normalizedFunc, aggCall.isDistinct(), aggCall.isApproximate(),
+                aggCall.ignoreNulls(), aggCall.getArgList(), aggCall.filterArg, aggCall.distinctKeys,
+                aggCall.getCollation(), aggCall.getType(), aggCall.getName());
+          }
+        }
+        return aggCall;
+      }).collect(Collectors.toList());
+      aggregate = aggregate.copy(aggregate.getTraitSet(), aggregate.getInput(),
+          aggregate.getGroupSet(),aggregate.getGroupSets(), updatedCalls);
       return super.visit(aggregate);
     }
 
@@ -180,29 +231,12 @@ public class TableAnalysisLookup {
         call = (RexCall) super.visitCall(call);
         if (call.getOperator() instanceof BridgingSqlFunction) {
           BridgingSqlFunction func = (BridgingSqlFunction) call.getOperator();
-          ContextResolvedFunction resolvedFunc = func.getResolvedFunction();
-          if (resolvedFunc.getIdentifier().isPresent()) {
-            FunctionIdentifier funcId = resolvedFunc.getIdentifier().get();
-            if (!funcId.getFunctionName().equals(funcId.getFunctionName().toUpperCase())) {
-              FunctionIdentifier normalizedFuncId;
-              if (funcId.getSimpleName().isPresent()) {
-                normalizedFuncId = FunctionIdentifier.of(
-                    funcId.getSimpleName().get().toUpperCase());
-              } else {
-                ObjectIdentifier identifier = funcId.getIdentifier().get();
-                ObjectIdentifier normalizedIdentifier = ObjectIdentifier.of(
-                    identifier.getCatalogName(), identifier.getDatabaseName(),
-                    identifier.getObjectName().toUpperCase());
-                normalizedFuncId = FunctionIdentifier.of(normalizedIdentifier);
-              }
-              ContextResolvedFunction normalizedResolvedFunc = ContextResolvedFunction.temporary(
-                  normalizedFuncId,
-                  resolvedFunc.getDefinition());
-              BridgingSqlFunction normalizedFunc = BridgingSqlFunction.of(func.getDataTypeFactory(),
-                  func.getTypeFactory(),
-                  func.getRexFactory(), func.kind, normalizedResolvedFunc, func.getTypeInference());
-              return rexBuilder.makeCall(normalizedFunc, call.getOperands());
-            }
+          Optional<ContextResolvedFunction> normalizedFct = normalizeFunction(func.getResolvedFunction());
+          if (normalizedFct.isPresent()) {
+            BridgingSqlFunction normalizedFunc = BridgingSqlFunction.of(func.getDataTypeFactory(),
+                func.getTypeFactory(),
+                func.getRexFactory(), func.kind, normalizedFct.get(), func.getTypeInference());
+            return rexBuilder.makeCall(normalizedFunc, call.getOperands());
           }
         }
         return call;

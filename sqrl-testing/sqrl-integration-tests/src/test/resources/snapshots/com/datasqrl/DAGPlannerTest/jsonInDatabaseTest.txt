@@ -66,6 +66,22 @@ LogicalProject(obj=[jsonObject(CONCAT('application#', $2), $0)])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL: CREATE VIEW ObjComplex AS  SELECT jsonObject(concat('application#',CAST(name AS VARCHAR)), customerid) AS obj FROM Customer;
 
+=== jsonArrayAggTable
+ID:     default_catalog.default_database.jsonArrayAggTable
+Type:   state
+Stage:  postgres
+Inputs: default_catalog.default_database.Customer
+Primary Key: -
+Timestamp  : -
+Schema:
+ - agg: RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI=')
+Plan:
+LogicalProject(agg=[$1])
+  LogicalAggregate(group=[{0}], agg=[jsonArrayAgg($0)])
+    LogicalProject(name=[$2])
+      LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW jsonArrayAggTable AS  SELECT jsonArrayAgg(name) AS agg FROM Customer GROUP BY name;
+
 === jsonArrayTable
 ID:     default_catalog.default_database.jsonArrayTable
 Type:   state
@@ -129,6 +145,22 @@ Plan:
 LogicalProject(obj=[jsonExtract(toJson('{"a": "hello"}'), '$.a':VARCHAR(2147483647) CHARACTER SET "UTF-16LE", 'default':VARCHAR(2147483647) CHARACTER SET "UTF-16LE")])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL: CREATE VIEW jsonExtractTable AS  SELECT jsonExtract(toJson('{"a": "hello"}'), CAST('$.a' AS varchar), CAST('default' AS varchar)) AS obj FROM Customer;
+
+=== jsonObjectAggTable
+ID:     default_catalog.default_database.jsonObjectAggTable
+Type:   state
+Stage:  postgres
+Inputs: default_catalog.default_database.Customer
+Primary Key: -
+Timestamp  : -
+Schema:
+ - agg: RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI=')
+Plan:
+LogicalProject(agg=[$1])
+  LogicalAggregate(group=[{0}], agg=[jsonObjectAgg($1, $0)])
+    LogicalProject(name=[$2], $f1=['key'])
+      LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW jsonObjectAggTable AS  SELECT jsonObjectAgg('key', name) AS agg FROM Customer GROUP BY name;
 
 === jsonQueryTable
 ID:     default_catalog.default_database.jsonQueryTable
