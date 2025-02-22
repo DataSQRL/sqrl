@@ -48,8 +48,8 @@ jobs:
       - name: Determine Docker Tags
         id: set-tags
         run: |
-          CMD_TAGS="datasqrl/cmd:${VERSION_TAG}"
-          SERVER_TAGS="datasqrl/sqrl-server:${VERSION_TAG}"
+          CMD_TAGS="datasqrl/cmd:${VERSION}"
+          SERVER_TAGS="datasqrl/sqrl-server:${VERSION}"
 
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             CMD_TAGS="$CMD_TAGS,datasqrl/cmd:dev"
