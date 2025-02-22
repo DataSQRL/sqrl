@@ -7,7 +7,7 @@ on:
     branches: [ "*" ]
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
