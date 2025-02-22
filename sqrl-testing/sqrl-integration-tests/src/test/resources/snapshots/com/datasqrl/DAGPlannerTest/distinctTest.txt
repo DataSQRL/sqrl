@@ -107,8 +107,9 @@ WHERE `__sqrlinternal_rownum` = 1
 ID:     default_catalog.default_database.CustomerByTime2
 Type:   state
 Stage:  flink
-Inputs: default_catalog.default_database.CustomerByTime
+Inputs: default_catalog.default_database.Customer
 Annotations:
+ - mostRecentDistinct: true
  - stream-root: Customer__def
 Primary Key: customerid
 Timestamp  : timestamp
@@ -119,7 +120,10 @@ Schema:
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME*
 Plan:
-LogicalTableScan(table=[[default_catalog, default_database, CustomerByTime]])
+LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
+  LogicalFilter(condition=[=($5, 1)])
+    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], __sqrlinternal_rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
+      LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL: CREATE VIEW `CustomerByTime2`
 AS
 SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`
@@ -182,7 +186,7 @@ WHERE `__sqrlinternal_rownum` = 1
 ID:     default_catalog.default_database.CustomerByUpdatedAsc
 Type:   state
 Stage:  flink
-Inputs: default_catalog.default_database.CustomerByUpdated
+Inputs: default_catalog.default_database.Customer
 Annotations:
  - stream-root: Customer__def
 Primary Key: customerid
@@ -194,11 +198,14 @@ Schema:
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME*
 Plan:
-LogicalTableScan(table=[[default_catalog, default_database, CustomerByUpdated]])
+LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
+  LogicalFilter(condition=[=($5, 1)])
+    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], __sqrlinternal_rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $3 NULLS FIRST)])
+      LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL: CREATE VIEW `CustomerByUpdatedAsc`
 AS
 SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`
-FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `lastUpdated` DESC NULLS LAST) AS `__sqrlinternal_rownum`
+FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `lastUpdated` NULLS FIRST) AS `__sqrlinternal_rownum`
   FROM `default_catalog`.`default_database`.`Customer`) AS `t`
 WHERE `__sqrlinternal_rownum` = 1
 === ExplicitDistinct
@@ -272,7 +279,7 @@ WHERE `__sqrlinternal_rownum` = 1;
 CREATE VIEW `CustomerByUpdatedAsc`
 AS
 SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`
-FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `lastUpdated` DESC NULLS LAST) AS `__sqrlinternal_rownum`
+FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `lastUpdated` NULLS FIRST) AS `__sqrlinternal_rownum`
   FROM `default_catalog`.`default_database`.`Customer`) AS `t`
 WHERE `__sqrlinternal_rownum` = 1;
 CREATE VIEW `CustomerByMultipleTime`
@@ -445,7 +452,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByMultiple_2`
    ;
    INSERT INTO `default_catalog`.`default_database`.`CustomerByTime2_5`
     (SELECT *
-     FROM `default_catalog`.`default_database`.`CustomerByTime2`)
+     FROM `default_catalog`.`default_database`.`Customer`)
     ;
     INSERT INTO `default_catalog`.`default_database`.`CustomerByTimeAsc_6`
      (SELECT *

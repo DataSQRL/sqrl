@@ -156,7 +156,8 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
   }
 
   public ViewAnalysis analyze(PlannerHints hints) {
-    RelNodeAnalysis analysis = analyzeRelNode(originalRelnode);
+    originalRelnode.accept(this);
+    RelNodeAnalysis analysis = this.intermediateAnalysis;
 
     if (analysis.type.isStream() && CalciteUtil.findBestRowTimeIndex(analysis.relNode.getRowType()).isEmpty()) {
       //If we don't have a rowtime, let's check if we lost it when all inputs had a rowtime

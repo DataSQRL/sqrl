@@ -5,7 +5,7 @@ CustomerByTime2 := DISTINCT Customer ON customerid ORDER BY `timestamp` DESC NUL
 CustomerByTimeAsc := DISTINCT Customer ON customerid ORDER BY `timestamp` ASC;
 
 CustomerByUpdated := DISTINCT Customer ON customerid ORDER BY lastUpdated DESC;
-CustomerByUpdatedAsc := DISTINCT Customer ON customerid ORDER BY lastUpdated DESC;
+CustomerByUpdatedAsc := DISTINCT Customer ON customerid ORDER BY lastUpdated ASC;
 
 CustomerByMultipleTime := DISTINCT Customer ON customerid, email ORDER BY `timestamp` DESC, lastUpdated ASC;
 CustomerByMultiple := DISTINCT Customer ON customerid, email ORDER BY lastUpdated DESC, `timestamp` ASC;

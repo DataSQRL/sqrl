@@ -23,7 +23,7 @@ SQL: CREATE VIEW MyOrdersIndexBtree AS  SELECT * FROM _Orders WHERE id > 10;
 ID:     default_catalog.default_database.MyOrdersIndexHash
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.MyOrdersIndexBtree
+Inputs: default_catalog.default_database._Orders
 Annotations:
  - stream-root: _Orders__def
 Primary Key: id, time
@@ -34,14 +34,16 @@ Schema:
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
 Plan:
-LogicalTableScan(table=[[default_catalog, default_database, MyOrdersIndexBtree]])
+LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3])
+  LogicalFilter(condition=[>($0, 10)])
+    LogicalTableScan(table=[[default_catalog, default_database, _Orders]])
 SQL: CREATE VIEW MyOrdersIndexHash AS  SELECT * FROM _Orders WHERE id > 10;
 
 === MyOrdersNoHint
 ID:     default_catalog.default_database.MyOrdersNoHint
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.MyOrdersTwoIndex
+Inputs: default_catalog.default_database._Orders
 Annotations:
  - stream-root: _Orders__def
 Primary Key: id, time
@@ -52,14 +54,16 @@ Schema:
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
 Plan:
-LogicalTableScan(table=[[default_catalog, default_database, MyOrdersTwoIndex]])
+LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3])
+  LogicalFilter(condition=[>($0, 10)])
+    LogicalTableScan(table=[[default_catalog, default_database, _Orders]])
 SQL: CREATE VIEW MyOrdersNoHint AS  SELECT * FROM _Orders WHERE id > 10;
 
 === MyOrdersNoIndex
 ID:     default_catalog.default_database.MyOrdersNoIndex
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.MyOrdersIndexHash
+Inputs: default_catalog.default_database._Orders
 Annotations:
  - stream-root: _Orders__def
 Primary Key: id, time
@@ -70,14 +74,16 @@ Schema:
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
 Plan:
-LogicalTableScan(table=[[default_catalog, default_database, MyOrdersIndexHash]])
+LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3])
+  LogicalFilter(condition=[>($0, 10)])
+    LogicalTableScan(table=[[default_catalog, default_database, _Orders]])
 SQL: CREATE VIEW MyOrdersNoIndex AS  SELECT * FROM _Orders WHERE id > 10;
 
 === MyOrdersTwoIndex
 ID:     default_catalog.default_database.MyOrdersTwoIndex
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.MyOrdersNoIndex
+Inputs: default_catalog.default_database._Orders
 Annotations:
  - stream-root: _Orders__def
 Primary Key: id, time
@@ -88,7 +94,9 @@ Schema:
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
 Plan:
-LogicalTableScan(table=[[default_catalog, default_database, MyOrdersNoIndex]])
+LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3])
+  LogicalFilter(condition=[>($0, 10)])
+    LogicalTableScan(table=[[default_catalog, default_database, _Orders]])
 SQL: CREATE VIEW MyOrdersTwoIndex AS  SELECT * FROM _Orders WHERE id > 10;
 
 === _Orders

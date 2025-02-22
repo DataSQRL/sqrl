@@ -1,0 +1,12 @@
+IMPORT ecommerceTs.Customer;
+
+CustomerTimeWindow := SELECT
+                          window_start, window_end,
+                          COUNT(DISTINCT email) AS unique_email_count
+                      FROM TABLE(
+                              TUMBLE(TABLE Customer, DESCRIPTOR(`timestamp`), INTERVAL '1' MINUTE)
+                           )
+                      GROUP BY
+                          window_start, window_end;
+
+CustomerHighCount := SELECT * FROM CustomerTimeWindow WHERE unique_email_count > 1;
