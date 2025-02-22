@@ -50,6 +50,142 @@ SQL: CREATE VIEW `CustomerStream`
 AS
 SELECT *
 FROM `default_catalog`.`default_database`.`CustomerStream__def`
+=== ObjComplex
+ID:     default_catalog.default_database.ObjComplex
+Type:   state
+Stage:  flink
+Inputs: default_catalog.default_database.Customer
+Annotations:
+ - stream-root: CustomerStream__def
+Primary Key: customerid
+Timestamp  : -
+Schema:
+ - customerid: BIGINT NOT NULL
+ - obj: RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI=')
+Plan:
+LogicalProject(customerid=[$0], obj=[jsonObject(CONCAT('application#', $2), $0)])
+  LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW ObjComplex AS  SELECT customerid, jsonObject(concat('application#',CAST(name AS VARCHAR)), customerid) AS obj FROM Customer;
+
+=== jsonArrayTable
+ID:     default_catalog.default_database.jsonArrayTable
+Type:   state
+Stage:  flink
+Inputs: default_catalog.default_database.Customer
+Annotations:
+ - stream-root: CustomerStream__def
+Primary Key: customerid
+Timestamp  : -
+Schema:
+ - customerid: BIGINT NOT NULL
+ - obj: RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI=')
+Plan:
+LogicalProject(customerid=[$0], obj=[jsonArray($0)])
+  LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW jsonArrayTable AS  SELECT customerid, jsonArray(customerid) AS obj FROM Customer;
+
+=== jsonConcatTable
+ID:     default_catalog.default_database.jsonConcatTable
+Type:   state
+Stage:  flink
+Inputs: default_catalog.default_database.Customer
+Annotations:
+ - stream-root: CustomerStream__def
+Primary Key: customerid
+Timestamp  : -
+Schema:
+ - customerid: BIGINT NOT NULL
+ - obj: RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI=')
+Plan:
+LogicalProject(customerid=[$0], obj=[jsonConcat(toJson('{"a": true}'), toJson('{"a": false}'))])
+  LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW jsonConcatTable AS  SELECT customerid, jsonConcat(toJson('{"a": true}'), toJson('{"a": false}')) AS obj FROM Customer;
+
+=== jsonExistsTable
+ID:     default_catalog.default_database.jsonExistsTable
+Type:   state
+Stage:  flink
+Inputs: default_catalog.default_database.Customer
+Annotations:
+ - stream-root: CustomerStream__def
+Primary Key: customerid
+Timestamp  : -
+Schema:
+ - customerid: BIGINT NOT NULL
+ - obj: BOOLEAN
+Plan:
+LogicalProject(customerid=[$0], obj=[jsonExists(toJson('{"a": true}'), '$.a')])
+  LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW jsonExistsTable AS  SELECT customerid, jsonExists(toJson('{"a": true}'), '$.a') AS obj FROM Customer;
+
+=== jsonExtractTable
+ID:     default_catalog.default_database.jsonExtractTable
+Type:   state
+Stage:  flink
+Inputs: default_catalog.default_database.Customer
+Annotations:
+ - stream-root: CustomerStream__def
+Primary Key: customerid
+Timestamp  : -
+Schema:
+ - customerid: BIGINT NOT NULL
+ - obj: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+Plan:
+LogicalProject(customerid=[$0], obj=[jsonExtract(toJson('{"a": "hello"}'), '$.a':VARCHAR(2147483647) CHARACTER SET "UTF-16LE", 'default':VARCHAR(2147483647) CHARACTER SET "UTF-16LE")])
+  LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW jsonExtractTable AS  SELECT customerid, jsonExtract(toJson('{"a": "hello"}'), CAST('$.a' AS varchar), CAST('default' AS varchar)) AS obj FROM Customer;
+
+=== jsonQueryTable
+ID:     default_catalog.default_database.jsonQueryTable
+Type:   state
+Stage:  flink
+Inputs: default_catalog.default_database.Customer
+Annotations:
+ - stream-root: CustomerStream__def
+Primary Key: customerid
+Timestamp  : -
+Schema:
+ - customerid: BIGINT NOT NULL
+ - obj: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+Plan:
+LogicalProject(customerid=[$0], obj=[jsonQuery(toJson('{"a": {"b": 1}}'), '$.a')])
+  LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW jsonQueryTable AS  SELECT customerid, jsonQuery(toJson('{"a": {"b": 1}}'), '$.a') AS obj FROM Customer;
+
+=== jsonToStringTable
+ID:     default_catalog.default_database.jsonToStringTable
+Type:   state
+Stage:  flink
+Inputs: default_catalog.default_database.Customer
+Annotations:
+ - stream-root: CustomerStream__def
+Primary Key: customerid
+Timestamp  : -
+Schema:
+ - customerid: BIGINT NOT NULL
+ - obj: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+Plan:
+LogicalProject(customerid=[$0], obj=[jsonToString(toJson('{"a": 1}'))])
+  LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW jsonToStringTable AS  SELECT customerid, jsonToString(toJson('{"a": 1}')) AS obj FROM Customer;
+
+=== toJsonTable
+ID:     default_catalog.default_database.toJsonTable
+Type:   state
+Stage:  flink
+Inputs: default_catalog.default_database.Customer
+Annotations:
+ - stream-root: CustomerStream__def
+Primary Key: customerid
+Timestamp  : -
+Schema:
+ - customerid: BIGINT NOT NULL
+ - obj: RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI=')
+Plan:
+LogicalProject(customerid=[$0], obj=[toJson('{"a": 1}')])
+  LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW toJsonTable AS  SELECT customerid, toJson('{"a": 1}') AS obj FROM Customer;
+
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `CustomerStream__schema` (
   `customerid` BIGINT NOT NULL,
@@ -82,11 +218,11 @@ FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMB
 WHERE `__sqrlinternal_rownum` = 1;
 CREATE VIEW `toJsonTable`
 AS
-SELECT TOJSON('{"a": 1}') AS `obj`
+SELECT `customerid`, TOJSON('{"a": 1}') AS `obj`
 FROM `Customer`;
 CREATE VIEW `jsonArrayTable`
 AS
-SELECT JSONARRAY(`customerid`) AS `obj`
+SELECT `customerid`, JSONARRAY(`customerid`) AS `obj`
 FROM `Customer`;
 CREATE VIEW `jsonObjectAggTable`
 AS
@@ -95,23 +231,23 @@ FROM `Customer`
 GROUP BY `name`;
 CREATE VIEW `jsonToStringTable`
 AS
-SELECT JSONTOSTRING(TOJSON('{"a": 1}')) AS `obj`
+SELECT `customerid`, JSONTOSTRING(TOJSON('{"a": 1}')) AS `obj`
 FROM `Customer`;
 CREATE VIEW `jsonExtractTable`
 AS
-SELECT JSONEXTRACT(TOJSON('{"a": "hello"}'), CAST('$.a' AS VARCHAR), CAST('default' AS VARCHAR)) AS `obj`
+SELECT `customerid`, JSONEXTRACT(TOJSON('{"a": "hello"}'), CAST('$.a' AS VARCHAR), CAST('default' AS VARCHAR)) AS `obj`
 FROM `Customer`;
 CREATE VIEW `jsonQueryTable`
 AS
-SELECT JSONQUERY(TOJSON('{"a": {"b": 1}}'), '$.a') AS `obj`
+SELECT `customerid`, JSONQUERY(TOJSON('{"a": {"b": 1}}'), '$.a') AS `obj`
 FROM `Customer`;
 CREATE VIEW `jsonExistsTable`
 AS
-SELECT JSONEXISTS(TOJSON('{"a": true}'), '$.a') AS `obj`
+SELECT `customerid`, JSONEXISTS(TOJSON('{"a": true}'), '$.a') AS `obj`
 FROM `Customer`;
 CREATE VIEW `jsonConcatTable`
 AS
-SELECT JSONCONCAT(TOJSON('{"a": true}'), TOJSON('{"a": false}')) AS `obj`
+SELECT `customerid`, JSONCONCAT(TOJSON('{"a": true}'), TOJSON('{"a": false}')) AS `obj`
 FROM `Customer`;
 CREATE VIEW `jsonArrayAggTable`
 AS
@@ -120,7 +256,7 @@ FROM `Customer`
 GROUP BY `name`;
 CREATE VIEW `ObjComplex`
 AS
-SELECT JSONOBJECT(CONCAT('application#', CAST(`name` AS VARCHAR)), `customerid`) AS `obj`
+SELECT `customerid`, JSONOBJECT(CONCAT('application#', CAST(`name` AS VARCHAR)), `customerid`) AS `obj`
 FROM `Customer`;
 CREATE TABLE `Customer_1` (
   `customerid` BIGINT NOT NULL,
@@ -152,6 +288,102 @@ CREATE TABLE `CustomerStream_2` (
   'url' = 'jdbc:postgresql://${JDBC_URL}',
   'table-name' = 'CustomerStream_2'
 );
+CREATE TABLE `ObjComplex_3` (
+  `customerid` BIGINT NOT NULL,
+  `obj` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),
+  PRIMARY KEY (`customerid`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'table-name' = 'ObjComplex_3'
+);
+CREATE TABLE `jsonArrayTable_4` (
+  `customerid` BIGINT NOT NULL,
+  `obj` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),
+  PRIMARY KEY (`customerid`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'table-name' = 'jsonArrayTable_4'
+);
+CREATE TABLE `jsonConcatTable_5` (
+  `customerid` BIGINT NOT NULL,
+  `obj` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),
+  PRIMARY KEY (`customerid`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'table-name' = 'jsonConcatTable_5'
+);
+CREATE TABLE `jsonExistsTable_6` (
+  `customerid` BIGINT NOT NULL,
+  `obj` BOOLEAN,
+  PRIMARY KEY (`customerid`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'table-name' = 'jsonExistsTable_6'
+);
+CREATE TABLE `jsonExtractTable_7` (
+  `customerid` BIGINT NOT NULL,
+  `obj` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`customerid`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'table-name' = 'jsonExtractTable_7'
+);
+CREATE TABLE `jsonQueryTable_8` (
+  `customerid` BIGINT NOT NULL,
+  `obj` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`customerid`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'table-name' = 'jsonQueryTable_8'
+);
+CREATE TABLE `jsonToStringTable_9` (
+  `customerid` BIGINT NOT NULL,
+  `obj` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`customerid`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'table-name' = 'jsonToStringTable_9'
+);
+CREATE TABLE `toJsonTable_10` (
+  `customerid` BIGINT NOT NULL,
+  `obj` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),
+  PRIMARY KEY (`customerid`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'table-name' = 'toJsonTable_10'
+);
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`
 (SELECT *
@@ -161,7 +393,39 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
  (SELECT *
   FROM `default_catalog`.`default_database`.`CustomerStream`)
  ;
- END
+ INSERT INTO `default_catalog`.`default_database`.`ObjComplex_3`
+  (SELECT *
+   FROM `default_catalog`.`default_database`.`ObjComplex`)
+  ;
+  INSERT INTO `default_catalog`.`default_database`.`jsonArrayTable_4`
+   (SELECT *
+    FROM `default_catalog`.`default_database`.`jsonArrayTable`)
+   ;
+   INSERT INTO `default_catalog`.`default_database`.`jsonConcatTable_5`
+    (SELECT *
+     FROM `default_catalog`.`default_database`.`jsonConcatTable`)
+    ;
+    INSERT INTO `default_catalog`.`default_database`.`jsonExistsTable_6`
+     (SELECT *
+      FROM `default_catalog`.`default_database`.`jsonExistsTable`)
+     ;
+     INSERT INTO `default_catalog`.`default_database`.`jsonExtractTable_7`
+      (SELECT *
+       FROM `default_catalog`.`default_database`.`jsonExtractTable`)
+      ;
+      INSERT INTO `default_catalog`.`default_database`.`jsonQueryTable_8`
+       (SELECT *
+        FROM `default_catalog`.`default_database`.`jsonQueryTable`)
+       ;
+       INSERT INTO `default_catalog`.`default_database`.`jsonToStringTable_9`
+        (SELECT *
+         FROM `default_catalog`.`default_database`.`jsonToStringTable`)
+        ;
+        INSERT INTO `default_catalog`.`default_database`.`toJsonTable_10`
+         (SELECT *
+          FROM `default_catalog`.`default_database`.`toJsonTable`)
+         ;
+         END
 >>>kafka.json
 {
   "topics" : [ ]
@@ -234,6 +498,142 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
       ]
     },
     {
+      "name" : "ObjComplex_3",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"ObjComplex_3\" (\"customerid\" BIGINT NOT NULL, \"obj\" JSONB  , PRIMARY KEY (\"customerid\"))",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "obj",
+          "type" : "JSONB",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "jsonArrayTable_4",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"jsonArrayTable_4\" (\"customerid\" BIGINT NOT NULL, \"obj\" JSONB  , PRIMARY KEY (\"customerid\"))",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "obj",
+          "type" : "JSONB",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "jsonConcatTable_5",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"jsonConcatTable_5\" (\"customerid\" BIGINT NOT NULL, \"obj\" JSONB  , PRIMARY KEY (\"customerid\"))",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "obj",
+          "type" : "JSONB",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "jsonExistsTable_6",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"jsonExistsTable_6\" (\"customerid\" BIGINT NOT NULL, \"obj\" BOOLEAN  , PRIMARY KEY (\"customerid\"))",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "obj",
+          "type" : "BOOLEAN",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "jsonExtractTable_7",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"jsonExtractTable_7\" (\"customerid\" BIGINT NOT NULL, \"obj\" TEXT  , PRIMARY KEY (\"customerid\"))",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "obj",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "jsonQueryTable_8",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"jsonQueryTable_8\" (\"customerid\" BIGINT NOT NULL, \"obj\" TEXT  , PRIMARY KEY (\"customerid\"))",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "obj",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "jsonToStringTable_9",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"jsonToStringTable_9\" (\"customerid\" BIGINT NOT NULL, \"obj\" TEXT  , PRIMARY KEY (\"customerid\"))",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "obj",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "toJsonTable_10",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"toJsonTable_10\" (\"customerid\" BIGINT NOT NULL, \"obj\" JSONB  , PRIMARY KEY (\"customerid\"))",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "obj",
+          "type" : "JSONB",
+          "nullable" : true
+        }
+      ]
+    },
+    {
       "name" : "Customer",
       "type" : "VIEW",
       "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"Customer_1\"",
@@ -300,8 +700,13 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
     {
       "name" : "ObjComplex",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"ObjComplex\"(\"obj\") AS SELECT JSONB_BUILD_OBJECT(CONCAT('application#', \"name\"), \"customerid\") AS \"obj\"\nFROM \"Customer_1\"",
+      "sql" : "CREATE OR REPLACE VIEW \"ObjComplex\"(\"customerid\", \"obj\") AS SELECT *\nFROM \"ObjComplex_3\"",
       "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
         {
           "name" : "obj",
           "type" : "JSONB",
@@ -324,8 +729,13 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
     {
       "name" : "jsonArrayTable",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"jsonArrayTable\"(\"obj\") AS SELECT JSONB_BUILD_ARRAY(\"customerid\") AS \"obj\"\nFROM \"Customer_1\"",
+      "sql" : "CREATE OR REPLACE VIEW \"jsonArrayTable\"(\"customerid\", \"obj\") AS SELECT *\nFROM \"jsonArrayTable_4\"",
       "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
         {
           "name" : "obj",
           "type" : "JSONB",
@@ -336,8 +746,13 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
     {
       "name" : "jsonConcatTable",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"jsonConcatTable\"(\"obj\") AS SELECT CAST('{\"a\": true}' AS JSONB) || CAST('{\"a\": false}' AS JSONB) AS \"obj\"\nFROM \"Customer_1\"",
+      "sql" : "CREATE OR REPLACE VIEW \"jsonConcatTable\"(\"customerid\", \"obj\") AS SELECT *\nFROM \"jsonConcatTable_5\"",
       "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
         {
           "name" : "obj",
           "type" : "JSONB",
@@ -348,8 +763,13 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
     {
       "name" : "jsonExistsTable",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"jsonExistsTable\"(\"obj\") AS SELECT JSONB_PATH_EXISTS(CAST('{\"a\": true}' AS JSONB), '$.a') AS \"obj\"\nFROM \"Customer_1\"",
+      "sql" : "CREATE OR REPLACE VIEW \"jsonExistsTable\"(\"customerid\", \"obj\") AS SELECT *\nFROM \"jsonExistsTable_6\"",
       "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
         {
           "name" : "obj",
           "type" : "BOOLEAN",
@@ -360,8 +780,13 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
     {
       "name" : "jsonExtractTable",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"jsonExtractTable\"(\"obj\") AS SELECT JSONEXTRACT(CAST('{\"a\": \"hello\"}' AS JSONB), '$.a', 'default') AS \"obj\"\nFROM \"Customer_1\"",
+      "sql" : "CREATE OR REPLACE VIEW \"jsonExtractTable\"(\"customerid\", \"obj\") AS SELECT *\nFROM \"jsonExtractTable_7\"",
       "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
         {
           "name" : "obj",
           "type" : "TEXT",
@@ -384,8 +809,13 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
     {
       "name" : "jsonQueryTable",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"jsonQueryTable\"(\"obj\") AS SELECT JSONB_PATH_QUERY(CAST('{\"a\": {\"b\": 1}}' AS JSONB), '$.a') AS \"obj\"\nFROM \"Customer_1\"",
+      "sql" : "CREATE OR REPLACE VIEW \"jsonQueryTable\"(\"customerid\", \"obj\") AS SELECT *\nFROM \"jsonQueryTable_8\"",
       "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
         {
           "name" : "obj",
           "type" : "TEXT",
@@ -396,8 +826,13 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
     {
       "name" : "jsonToStringTable",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"jsonToStringTable\"(\"obj\") AS SELECT CAST('{\"a\": 1}' AS JSONB) #>> '{}' AS \"obj\"\nFROM \"Customer_1\"",
+      "sql" : "CREATE OR REPLACE VIEW \"jsonToStringTable\"(\"customerid\", \"obj\") AS SELECT *\nFROM \"jsonToStringTable_9\"",
       "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
         {
           "name" : "obj",
           "type" : "TEXT",
@@ -408,8 +843,13 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
     {
       "name" : "toJsonTable",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"toJsonTable\"(\"obj\") AS SELECT CAST('{\"a\": 1}' AS JSONB) AS \"obj\"\nFROM \"Customer_1\"",
+      "sql" : "CREATE OR REPLACE VIEW \"toJsonTable\"(\"customerid\", \"obj\") AS SELECT *\nFROM \"toJsonTable_10\"",
       "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
         {
           "name" : "obj",
           "type" : "JSONB",

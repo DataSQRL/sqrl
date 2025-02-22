@@ -88,6 +88,7 @@ import org.apache.flink.sql.parser.ddl.SqlCreateTable;
 import org.apache.flink.sql.parser.ddl.SqlCreateView;
 import org.apache.flink.sql.parser.ddl.SqlDropTable;
 import org.apache.flink.sql.parser.ddl.SqlDropView;
+import org.apache.flink.sql.parser.error.SqlValidateException;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.functions.UserDefinedFunction;
 
@@ -113,6 +114,9 @@ public class SqlScriptPlanner {
   private final List<ExecutionStage> subscriptionStages;
   private final AtomicInteger exportTableCounter = new AtomicInteger(0);
 
+  //TODO: set this to false when processing a script import to another database
+  private boolean generateAccessFunctions = true;
+
 
   @Inject
   public SqlScriptPlanner(ErrorCollector errorCollector, ModuleLoader moduleLoader,
@@ -129,7 +133,7 @@ public class SqlScriptPlanner {
     Optional<ExecutionStage> streamStage = pipeline.getStageByType(EngineType.STREAMS);
     errorCollector.checkFatal(streamStage.isPresent(), "Need to configure a stream execution engine");
     this.streamStage = streamStage.get();
-    /* to support server execution, we add server_query to tables and query Stages
+    /* to support server execution in the future, we add server_query to tables and query Stages
     and server_subscribe to tables and subscription stages.
      */
     this.tableStages = pipeline.getStages().stream().filter(stage -> stage.getType().isDataStore() || stage.getType()==EngineType.STREAMS).collect(
@@ -162,8 +166,9 @@ public class SqlScriptPlanner {
         }
         FileLocation location = null;
         String message = null;
-        if (e instanceof SqlParseException) {
-          location = convertPosition(((SqlParseException) e).getPos());
+        if (e instanceof SqlParseException || e instanceof SqlValidateException) {
+          location = convertPosition((e instanceof SqlParseException)?((SqlParseException) e).getPos():
+              ((SqlValidateException)e).getErrorPosition());
           message = e.getMessage();
           message = message.replaceAll(" at line \\d*, column \\d*", ""); //remove line number from message
         }
@@ -229,6 +234,7 @@ public class SqlScriptPlanner {
       }
       boolean isHidden = (nameIsHidden || hints.isWorkload()) &&
           !(hints.isTest() && executionGoal==ExecutionGoal.TEST);
+      access = adjustAccess(access);
 
 
       String originalSql = sqrlDef.toSql(sqrlEnv, statementStack);
@@ -243,7 +249,7 @@ public class SqlScriptPlanner {
               "Could not find parent table for relationship: %s", tblFctStmt.getPath().getFirst());
           checkFatal(parentNode.get() instanceof TableNode, sqrlDef.getTableName().getFileLocation(), ErrorCode.INVALID_TABLE_FUNCTION_ARGUMENTS,
               "Relationships can only be added to tables (not functions): %s [%s]", tblFctStmt.getPath().getFirst(), parentNode.get().getClass());
-          identifier = SqlNameUtil.toIdentifier(Name.system("relationship"));
+          identifier = SqlNameUtil.toIdentifier(Name.system(tablePath.getLast().getDisplay()));
           TableAnalysis parentTbl = ((TableNode) parentNode.get()).getTableAnalysis();
           arguments = arguments.stream().map(arg -> {
             if (arg.isParentField()) {
@@ -276,7 +282,7 @@ public class SqlScriptPlanner {
       SqlNode node = sqrlEnv.parseSQL(flinkStmt.getSql().get());
       if (node instanceof SqlCreateView || node instanceof SqlAlterViewAs) {
         //plan like other definitions from above
-        AccessVisibility visibility = new AccessVisibility(AccessModifier.QUERY, false, true, false);
+        AccessVisibility visibility = new AccessVisibility(adjustAccess(AccessModifier.QUERY), false, true, false);
         addTableToDag(sqrlEnv.addView(flinkStmt.getSql().get(), hints, errors), hints, visibility, sqrlEnv);
       } else if (node instanceof SqlCreateTable) {
         addSourceToDag(sqrlEnv.createTable(flinkStmt.getSql().get(), getLogEngineBuilder()), sqrlEnv);
@@ -289,6 +295,22 @@ public class SqlScriptPlanner {
         sqrlEnv.executeSQL(flinkStmt.getSql().get());
       }
     }
+  }
+
+  /**
+   * Adjusts the access for functions and tables based on the available stages and configuration
+   * We might consider throwing an exception for SUBSCRIPTION access when no subscription stages
+   * are present since the user explicitly defined the SUBSCRIBE.
+   *
+   * @param access
+   * @return
+   */
+  private AccessModifier adjustAccess(AccessModifier access) {
+    Preconditions.checkArgument(access!=AccessModifier.INHERIT);
+    if (!generateAccessFunctions) return AccessModifier.NONE;
+    if (access==AccessModifier.QUERY && queryStages.isEmpty()) return AccessModifier.NONE;
+    if (access==AccessModifier.SUBSCRIPTION && subscriptionStages.isEmpty()) return AccessModifier.NONE;
+    return access;
   }
 
   public static final Name STAR = Name.system("*");
@@ -334,7 +356,7 @@ public class SqlScriptPlanner {
     TableNode sourceNode = new TableNode(source, getSourceSinkStageAnalysis());
     dagBuilder.add(sourceNode);
     boolean isHidden = Name.system(tableAnalysis.getIdentifier().getObjectName()).isHidden();
-    AccessVisibility visibility = new AccessVisibility(isHidden?AccessModifier.NONE:AccessModifier.QUERY, false, true,
+    AccessVisibility visibility = new AccessVisibility(isHidden?AccessModifier.NONE:adjustAccess(AccessModifier.QUERY), false, true,
         isHidden);
     addTableToDag(tableAnalysis, PlannerHints.EMPTY, visibility, sqrlEnv);
   }

@@ -24,7 +24,7 @@
           "properties.group.id": "${PROPERTIES_GROUP_ID}",
           "scan.startup.mode" : "group-offsets",
           "properties.auto.offset.reset" : "earliest",
-          "topic" : "${sqrl:table-name}"
+          "topic" : "${sqrl:original-table-name}"
         },
         "kafka-upsert": {
           "connector" : "upsert-kafka",
@@ -32,7 +32,7 @@
           "properties.bootstrap.servers": "${PROPERTIES_BOOTSTRAP_SERVERS}",
           "properties.group.id": "${PROPERTIES_GROUP_ID}",
           "key.format": "raw",
-          "topic" : "${sqrl:table-name}"
+          "topic" : "${sqrl:original-table-name}"
         },
         "localfile": {
           "connector" : "filesystem",

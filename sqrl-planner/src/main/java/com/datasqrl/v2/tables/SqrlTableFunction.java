@@ -55,12 +55,6 @@ public class SqrlTableFunction implements TableFunction, TableOrFunctionAnalysis
   @NonNull
   private final TableAnalysis functionAnalysis;
   /**
-   * The base table on which this function is defined.
-   * This means, that this function returns the same type as the base table.
-   */
-  @Default
-  private final Optional<TableAnalysis> baseTable = Optional.empty();
-  /**
    * The multiplicity of the function result set
    */
   @Default
@@ -108,6 +102,11 @@ public class SqrlTableFunction implements TableFunction, TableOrFunctionAnalysis
 
   public RelDataType getRowType() {
     return getRowType(null, null);
+  }
+
+  @Override
+  public TableAnalysis getBaseTable() {
+    return functionAnalysis.getBaseTable();
   }
 
   public Supplier<RelNode> getViewTransform() {

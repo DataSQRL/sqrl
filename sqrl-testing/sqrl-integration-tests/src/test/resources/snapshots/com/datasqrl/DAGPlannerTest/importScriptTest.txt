@@ -52,6 +52,7 @@ Stage:  postgres
 Inputs: default_catalog.default_database.MachineTempByHour
 Annotations:
  - parameters: machineid
+ - base-table: MachineTempByHour
 Plan:
 LogicalProject(machineid=[$0], time_hour=[$1], avg_temperature=[$2])
   LogicalFilter(condition=[=($0, ?0)])

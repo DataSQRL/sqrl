@@ -1,101 +1,9 @@
 >>>pipeline_explain.txt
-=== _Applications
-ID:     _applications_2
-Type:   stream
-Stage:  flink
-Primary Key: id, updated_at
-Timestamp  : updated_at
-Schema:
- - id: BIGINT NOT NULL
- - customer_id: BIGINT NOT NULL
- - loan_type_id: BIGINT NOT NULL
- - amount: DOUBLE NOT NULL
- - duration: BIGINT NOT NULL
- - application_date: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
- - updated_at: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
-Plan:
-LogicalTableScan(table=[[_applications_1]])
-
-=== _Applications
-ID:     _applications_3
-Type:   state
-Stage:  flink
-Inputs: _applications_2
-Primary Key: id
-Timestamp  : updated_at
-Schema:
- - id: BIGINT NOT NULL
- - customer_id: BIGINT NOT NULL
- - loan_type_id: BIGINT NOT NULL
- - amount: DOUBLE NOT NULL
- - duration: BIGINT NOT NULL
- - application_date: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
- - updated_at: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
-Post Processors:
- - topN: partition=id limit=1 sort=#6: updated_at TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC 
-Plan:
-LogicalTableScan(table=[[_applications_2]])
-
-=== _ApplicationUpdates
-ID:     _applicationupdates_2
-Type:   stream
-Stage:  flink
-Primary Key: loan_application_id, event_time
-Timestamp  : event_time
-Schema:
- - loan_application_id: BIGINT NOT NULL
- - status: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - message: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - event_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
-Plan:
-LogicalTableScan(table=[[_applicationupdates_1]])
-
-=== _LoanTypes
-ID:     _loantypes_2
-Type:   stream
-Stage:  flink
-Primary Key: id, updated_at
-Timestamp  : updated_at
-Schema:
- - id: BIGINT NOT NULL
- - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - description: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - interest_rate: DOUBLE NOT NULL
- - max_amount: DOUBLE NOT NULL
- - min_amount: DOUBLE NOT NULL
- - max_duration: BIGINT NOT NULL
- - min_duration: BIGINT NOT NULL
- - updated_at: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
-Plan:
-LogicalTableScan(table=[[_loantypes_1]])
-
-=== _LoanTypes
-ID:     _loantypes_3
-Type:   state
-Stage:  flink
-Inputs: _loantypes_2
-Primary Key: id
-Timestamp  : updated_at
-Schema:
- - id: BIGINT NOT NULL
- - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - description: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - interest_rate: DOUBLE NOT NULL
- - max_amount: DOUBLE NOT NULL
- - min_amount: DOUBLE NOT NULL
- - max_duration: BIGINT NOT NULL
- - min_duration: BIGINT NOT NULL
- - updated_at: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
-Post Processors:
- - topN: partition=id limit=1 sort=#8: updated_at TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC 
-Plan:
-LogicalTableScan(table=[[_loantypes_2]])
-
 === ApplicationInfo
-ID:     applicationinfo_1
+ID:     default_catalog.default_database.ApplicationInfo
 Type:   state
 Stage:  iceberg
-Inputs: _applications_3, _loantypes_3
+Inputs: default_catalog.default_database._Applications, default_catalog.default_database._LoanTypes
 Primary Key: id
 Timestamp  : updated_at
 Schema:
@@ -105,7 +13,7 @@ Schema:
  - amount: DOUBLE NOT NULL
  - duration: BIGINT NOT NULL
  - application_date: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
- - updated_at: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - updated_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - id0: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - description: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -114,27 +22,32 @@ Schema:
  - min_amount: DOUBLE NOT NULL
  - max_duration: BIGINT NOT NULL
  - min_duration: BIGINT NOT NULL
- - updated_at0: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
- - id1: BIGINT
+ - updated_at0: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - id2: BIGINT
 Plan:
-LogicalProject(id=[$0], customer_id=[$1], loan_type_id=[$2], amount=[$3], duration=[$4], application_date=[$5], updated_at=[$6], id0=[$7], name=[$8], description=[$9], interest_rate=[$10], max_amount=[$11], min_amount=[$12], max_duration=[$13], min_duration=[$14], updated_at0=[$15], id1=[$16])
-  LogicalJoin(condition=[=($16, $1)], joinType=[left]) hints[JoinCostHint options:[STATE, VERSIONED_STATE, 1, RIGHT]]
-    LogicalJoin(condition=[=($7, $2)], joinType=[inner]) hints[JoinCostHint options:[VERSIONED_STATE, VERSIONED_STATE, 1, RIGHT]]
-      LogicalTableScan(table=[[_applications_3]])
-      LogicalTableScan(table=[[_loantypes_3]])
-    LogicalTableScan(table=[[_loantypes_3]])
+LogicalProject(id=[$0], customer_id=[$1], loan_type_id=[$2], amount=[$3], duration=[$4], application_date=[$5], updated_at=[$6], id0=[$7], name=[$8], description=[$9], interest_rate=[$10], max_amount=[$11], min_amount=[$12], max_duration=[$13], min_duration=[$14], updated_at0=[$15], id2=[$16])
+  LogicalJoin(condition=[=($16, $1)], joinType=[left])
+    LogicalJoin(condition=[=($7, $2)], joinType=[inner])
+      LogicalTableScan(table=[[default_catalog, default_database, _Applications]])
+      LogicalTableScan(table=[[default_catalog, default_database, _LoanTypes]])
+    LogicalTableScan(table=[[default_catalog, default_database, _LoanTypes]])
+SQL: CREATE VIEW ApplicationInfo AS  SELECT a.*, t.*, t2.id AS id2 FROM _Applications a
+    JOIN _LoanTypes t ON t.id = a.loan_type_id
+    LEFT JOIN _LoanTypes t2 ON t2.id = a.customer_id;
 
 === ApplicationStatus
-ID:     applicationstatus_1
+ID:     default_catalog.default_database.ApplicationStatus
 Type:   stream
 Stage:  flink
-Inputs: _applications_3, _applicationupdates_2, _loantypes_3
-Primary Key: _loan_application_id, event_time
+Inputs: default_catalog.default_database._ApplicationUpdates, default_catalog.default_database._Applications, default_catalog.default_database._LoanTypes
+Annotations:
+ - stream-root: _ApplicationUpdates__def
+Primary Key: -
 Timestamp  : event_time
 Schema:
  - status: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - message: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - event_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - id: BIGINT NOT NULL
  - customer_id: BIGINT NOT NULL
  - loan_type_id: BIGINT NOT NULL
@@ -142,292 +55,348 @@ Schema:
  - duration: BIGINT NOT NULL
  - max_amount: DOUBLE NOT NULL
  - min_amount: DOUBLE NOT NULL
- - _loan_application_id: BIGINT NOT NULL
 Plan:
-LogicalProject(status=[$1], message=[$2], event_time=[$3], id=[$4], customer_id=[$5], loan_type_id=[$6], amount=[$7], duration=[$8], max_amount=[$16], min_amount=[$17], _loan_application_id=[$0])
-  LogicalJoin(condition=[=($12, $6)], joinType=[inner]) hints[TemporalJoinHint options:[3]]
-    LogicalJoin(condition=[=($4, $0)], joinType=[inner]) hints[TemporalJoinHint options:[3]]
-      LogicalTableScan(table=[[_applicationupdates_2]])
-      LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
-        LogicalProject(id=[$0], customer_id=[$1], loan_type_id=[$2], amount=[$3], duration=[$4], application_date=[$5], updated_at=[$6], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS FIRST)])
-          LogicalTableScan(table=[[_applications_3]])
-    LogicalFilter(condition=[=($9, 1)]) hints[DedupHint]
-      LogicalProject(id=[$0], name=[$1], description=[$2], interest_rate=[$3], max_amount=[$4], min_amount=[$5], max_duration=[$6], min_duration=[$7], updated_at=[$8], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $8 DESC NULLS FIRST)])
-        LogicalTableScan(table=[[_loantypes_3]])
+LogicalProject(status=[$1], message=[$2], event_time=[$3], id=[$4], customer_id=[$5], loan_type_id=[$6], amount=[$7], duration=[$8], max_amount=[$15], min_amount=[$16])
+  LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{3, 6}])
+    LogicalCorrelate(correlation=[$cor2], joinType=[inner], requiredColumns=[{0, 3}])
+      LogicalTableScan(table=[[default_catalog, default_database, _ApplicationUpdates]])
+      LogicalFilter(condition=[=($0, $cor2.loan_application_id)])
+        LogicalSnapshot(period=[$cor2.event_time])
+          LogicalTableScan(table=[[default_catalog, default_database, _Applications]])
+    LogicalFilter(condition=[=($0, $cor3.loan_type_id)])
+      LogicalSnapshot(period=[$cor3.event_time])
+        LogicalTableScan(table=[[default_catalog, default_database, _LoanTypes]])
+SQL: CREATE VIEW ApplicationStatus AS  SELECT u.status, u.message, u.event_time, a.id, a.customer_id, a.loan_type_id,
+                            a.amount, a.duration, t.max_amount, t.min_amount
+                     FROM _ApplicationUpdates u JOIN _Applications FOR SYSTEM_TIME AS OF u.`event_time` a ON a.id = u.loan_application_id
+                                               JOIN _LoanTypes FOR SYSTEM_TIME AS OF u.`event_time` t ON t.id = a.loan_type_id;
 
->>>flink.json
-{
-  "flinkSql" : [
-    "CREATE TEMPORARY TABLE `_applications_1` (\n  `id` BIGINT NOT NULL,\n  `customer_id` BIGINT NOT NULL,\n  `loan_type_id` BIGINT NOT NULL,\n  `amount` DOUBLE NOT NULL,\n  `duration` BIGINT NOT NULL,\n  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,\n  WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND\n) WITH (\n  'format' = 'flexible-json',\n  'path' = '${DATA_PATH}/applications.jsonl',\n  'source.monitor-interval' = '1',\n  'connector' = 'filesystem'\n);",
-    "CREATE TEMPORARY TABLE `_applicationupdates_1` (\n  `loan_application_id` BIGINT NOT NULL,\n  `status` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `message` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`loan_application_id`, `event_time`) NOT ENFORCED,\n  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND\n) WITH (\n  'format' = 'flexible-json',\n  'path' = '${DATA_PATH}/application_updates.jsonl',\n  'connector' = 'filesystem'\n);",
-    "CREATE TEMPORARY TABLE `_loantypes_1` (\n  `id` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `interest_rate` DOUBLE NOT NULL,\n  `max_amount` DOUBLE NOT NULL,\n  `min_amount` DOUBLE NOT NULL,\n  `max_duration` BIGINT NOT NULL,\n  `min_duration` BIGINT NOT NULL,\n  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,\n  WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND\n) WITH (\n  'format' = 'flexible-json',\n  'path' = '${DATA_PATH}/loan_types.jsonl',\n  'source.monitor-interval' = '1',\n  'connector' = 'filesystem'\n);",
-    "CREATE TEMPORARY TABLE `_applications_3` (\n  `id` BIGINT NOT NULL,\n  `customer_id` BIGINT NOT NULL,\n  `loan_type_id` BIGINT NOT NULL,\n  `amount` DOUBLE NOT NULL,\n  `duration` BIGINT NOT NULL,\n  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`) NOT ENFORCED\n)\nPARTITIONED BY (`loan_type_id`)\nWITH (\n  'write.parquet.page-size-bytes' = '1000',\n  'connector' = 'iceberg',\n  'catalog-table' = '_applications_3',\n  'catalog-type' = 'hadoop',\n  'warehouse' = '/tmp/duckdb',\n  'catalog-name' = 'mydatabase'\n);",
-    "CREATE TEMPORARY TABLE `_loantypes_3` (\n  `id` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `interest_rate` DOUBLE NOT NULL,\n  `max_amount` DOUBLE NOT NULL,\n  `min_amount` DOUBLE NOT NULL,\n  `max_duration` BIGINT NOT NULL,\n  `min_duration` BIGINT NOT NULL,\n  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`) NOT ENFORCED\n) WITH (\n  'write.parquet.page-size-bytes' = '1000',\n  'connector' = 'iceberg',\n  'catalog-table' = '_loantypes_3',\n  'catalog-type' = 'hadoop',\n  'warehouse' = '/tmp/duckdb',\n  'catalog-name' = 'mydatabase'\n);",
-    "CREATE TEMPORARY TABLE `applicationstatus_1` (\n  `status` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `message` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `id` BIGINT NOT NULL,\n  `customer_id` BIGINT NOT NULL,\n  `loan_type_id` BIGINT NOT NULL,\n  `amount` DOUBLE NOT NULL,\n  `duration` BIGINT NOT NULL,\n  `max_amount` DOUBLE NOT NULL,\n  `min_amount` DOUBLE NOT NULL,\n  `_loan_application_id` BIGINT NOT NULL,\n  PRIMARY KEY (`_loan_application_id`, `event_time`) NOT ENFORCED\n)\nPARTITIONED BY (`customer_id`)\nWITH (\n  'write.parquet.page-size-bytes' = '1000',\n  'connector' = 'iceberg',\n  'catalog-table' = 'applicationstatus_1',\n  'catalog-type' = 'hadoop',\n  'warehouse' = '/tmp/duckdb',\n  'catalog-name' = 'mydatabase'\n);",
-    "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `_applications_1`;",
-    "CREATE VIEW `table$2`\nAS\nSELECT *\nFROM `_loantypes_1`;",
-    "CREATE VIEW `table$3`\nAS\nSELECT *\nFROM (SELECT `id`, `name`, `description`, `interest_rate`, `max_amount`, `min_amount`, `max_duration`, `min_duration`, `updated_at`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated_at` DESC) AS `_rownum`\n  FROM `_loantypes_1`) AS `t`\nWHERE `_rownum` = 1;",
-    "CREATE VIEW `table$4`\nAS\nSELECT *\nFROM (SELECT `id`, `customer_id`, `loan_type_id`, `amount`, `duration`, `application_date`, `updated_at`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated_at` DESC) AS `_rownum`\n  FROM `_applications_1`) AS `t1`\nWHERE `_rownum` = 1;",
-    "CREATE VIEW `table$5`\nAS\nSELECT `$cor0`.`status`, `$cor0`.`message`, `$cor0`.`event_time`, `$cor0`.`id`, `$cor0`.`customer_id`, `$cor0`.`loan_type_id`, `$cor0`.`amount`, `$cor0`.`duration`, `t0`.`max_amount`, `t0`.`min_amount`, `$cor0`.`loan_application_id` AS `_loan_application_id`\nFROM (SELECT *\n  FROM `_applicationupdates_1` AS `$cor1`\n   INNER JOIN `table$4` FOR SYSTEM_TIME AS OF `$cor1`.`event_time` AS `t2` ON `t2`.`id` = `$cor1`.`loan_application_id`) AS `$cor0`\n INNER JOIN `table$3` FOR SYSTEM_TIME AS OF `$cor0`.`event_time` AS `t0` ON `t0`.`id` = `$cor0`.`loan_type_id`;",
-    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `_applications_3`\n(SELECT *\n FROM `table$1`)\n;\nINSERT INTO `_loantypes_3`\n (SELECT *\n  FROM `table$2`)\n ;\n INSERT INTO `applicationstatus_1`\n  (SELECT *\n   FROM `table$5`)\n  ;\n  END;"
-  ],
-  "connectors" : [
-    "iceberg",
-    "filesystem"
-  ],
-  "formats" : [
-    "flexible-json"
-  ]
-}
->>>iceberg.json
-{
-  "ddl" : [
-    {
-      "name" : "_applications_3",
-      "columns" : [
-        "\"id\" BIGINT NOT NULL",
-        "\"customer_id\" BIGINT NOT NULL",
-        "\"loan_type_id\" BIGINT NOT NULL",
-        "\"amount\" DOUBLE PRECISION NOT NULL",
-        "\"duration\" BIGINT NOT NULL",
-        "\"application_date\" TIMESTAMP WITH TIME ZONE NOT NULL",
-        "\"updated_at\" TIMESTAMP WITH TIME ZONE NOT NULL"
-      ],
-      "primaryKeys" : [
-        "\"id\""
-      ],
-      "sql" : "CREATE TABLE IF NOT EXISTS _applications_3 (\"id\" BIGINT NOT NULL,\"customer_id\" BIGINT NOT NULL,\"loan_type_id\" BIGINT NOT NULL,\"amount\" DOUBLE PRECISION NOT NULL,\"duration\" BIGINT NOT NULL,\"application_date\" TIMESTAMP WITH TIME ZONE NOT NULL,\"updated_at\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\"));"
-    },
-    {
-      "name" : "_loantypes_3",
-      "columns" : [
-        "\"id\" BIGINT NOT NULL",
-        "\"name\" TEXT NOT NULL",
-        "\"description\" TEXT NOT NULL",
-        "\"interest_rate\" DOUBLE PRECISION NOT NULL",
-        "\"max_amount\" DOUBLE PRECISION NOT NULL",
-        "\"min_amount\" DOUBLE PRECISION NOT NULL",
-        "\"max_duration\" BIGINT NOT NULL",
-        "\"min_duration\" BIGINT NOT NULL",
-        "\"updated_at\" TIMESTAMP WITH TIME ZONE NOT NULL"
-      ],
-      "primaryKeys" : [
-        "\"id\""
-      ],
-      "sql" : "CREATE TABLE IF NOT EXISTS _loantypes_3 (\"id\" BIGINT NOT NULL,\"name\" TEXT NOT NULL,\"description\" TEXT NOT NULL,\"interest_rate\" DOUBLE PRECISION NOT NULL,\"max_amount\" DOUBLE PRECISION NOT NULL,\"min_amount\" DOUBLE PRECISION NOT NULL,\"max_duration\" BIGINT NOT NULL,\"min_duration\" BIGINT NOT NULL,\"updated_at\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\"));"
-    },
-    {
-      "name" : "applicationstatus_1",
-      "columns" : [
-        "\"status\" TEXT NOT NULL",
-        "\"message\" TEXT NOT NULL",
-        "\"event_time\" TIMESTAMP WITH TIME ZONE NOT NULL",
-        "\"id\" BIGINT NOT NULL",
-        "\"customer_id\" BIGINT NOT NULL",
-        "\"loan_type_id\" BIGINT NOT NULL",
-        "\"amount\" DOUBLE PRECISION NOT NULL",
-        "\"duration\" BIGINT NOT NULL",
-        "\"max_amount\" DOUBLE PRECISION NOT NULL",
-        "\"min_amount\" DOUBLE PRECISION NOT NULL",
-        "\"_loan_application_id\" BIGINT NOT NULL"
-      ],
-      "primaryKeys" : [
-        "\"_loan_application_id\"",
-        "\"event_time\""
-      ],
-      "sql" : "CREATE TABLE IF NOT EXISTS applicationstatus_1 (\"status\" TEXT NOT NULL,\"message\" TEXT NOT NULL,\"event_time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"id\" BIGINT NOT NULL,\"customer_id\" BIGINT NOT NULL,\"loan_type_id\" BIGINT NOT NULL,\"amount\" DOUBLE PRECISION NOT NULL,\"duration\" BIGINT NOT NULL,\"max_amount\" DOUBLE PRECISION NOT NULL,\"min_amount\" DOUBLE PRECISION NOT NULL,\"_loan_application_id\" BIGINT NOT NULL , PRIMARY KEY (\"_loan_application_id\",\"event_time\"));"
-    }
-  ],
-  "engines" : {
-    "duckdb" : {
-      "ddl" : [
-        {
-          "name" : "_applications_3",
-          "columns" : [
-            "\"id\" BIGINT NOT NULL",
-            "\"customer_id\" BIGINT NOT NULL",
-            "\"loan_type_id\" BIGINT NOT NULL",
-            "\"amount\" DOUBLE PRECISION NOT NULL",
-            "\"duration\" BIGINT NOT NULL",
-            "\"application_date\" TIMESTAMP WITH TIME ZONE NOT NULL",
-            "\"updated_at\" TIMESTAMP WITH TIME ZONE NOT NULL"
-          ],
-          "primaryKeys" : [
-            "\"id\""
-          ],
-          "sql" : "CREATE TABLE IF NOT EXISTS _applications_3 (\"id\" BIGINT NOT NULL,\"customer_id\" BIGINT NOT NULL,\"loan_type_id\" BIGINT NOT NULL,\"amount\" DOUBLE PRECISION NOT NULL,\"duration\" BIGINT NOT NULL,\"application_date\" TIMESTAMP WITH TIME ZONE NOT NULL,\"updated_at\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\"));"
-        },
-        {
-          "name" : "_loantypes_3",
-          "columns" : [
-            "\"id\" BIGINT NOT NULL",
-            "\"name\" TEXT NOT NULL",
-            "\"description\" TEXT NOT NULL",
-            "\"interest_rate\" DOUBLE PRECISION NOT NULL",
-            "\"max_amount\" DOUBLE PRECISION NOT NULL",
-            "\"min_amount\" DOUBLE PRECISION NOT NULL",
-            "\"max_duration\" BIGINT NOT NULL",
-            "\"min_duration\" BIGINT NOT NULL",
-            "\"updated_at\" TIMESTAMP WITH TIME ZONE NOT NULL"
-          ],
-          "primaryKeys" : [
-            "\"id\""
-          ],
-          "sql" : "CREATE TABLE IF NOT EXISTS _loantypes_3 (\"id\" BIGINT NOT NULL,\"name\" TEXT NOT NULL,\"description\" TEXT NOT NULL,\"interest_rate\" DOUBLE PRECISION NOT NULL,\"max_amount\" DOUBLE PRECISION NOT NULL,\"min_amount\" DOUBLE PRECISION NOT NULL,\"max_duration\" BIGINT NOT NULL,\"min_duration\" BIGINT NOT NULL,\"updated_at\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\"));"
-        },
-        {
-          "name" : "applicationstatus_1",
-          "columns" : [
-            "\"status\" TEXT NOT NULL",
-            "\"message\" TEXT NOT NULL",
-            "\"event_time\" TIMESTAMP WITH TIME ZONE NOT NULL",
-            "\"id\" BIGINT NOT NULL",
-            "\"customer_id\" BIGINT NOT NULL",
-            "\"loan_type_id\" BIGINT NOT NULL",
-            "\"amount\" DOUBLE PRECISION NOT NULL",
-            "\"duration\" BIGINT NOT NULL",
-            "\"max_amount\" DOUBLE PRECISION NOT NULL",
-            "\"min_amount\" DOUBLE PRECISION NOT NULL",
-            "\"_loan_application_id\" BIGINT NOT NULL"
-          ],
-          "primaryKeys" : [
-            "\"_loan_application_id\"",
-            "\"event_time\""
-          ],
-          "sql" : "CREATE TABLE IF NOT EXISTS applicationstatus_1 (\"status\" TEXT NOT NULL,\"message\" TEXT NOT NULL,\"event_time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"id\" BIGINT NOT NULL,\"customer_id\" BIGINT NOT NULL,\"loan_type_id\" BIGINT NOT NULL,\"amount\" DOUBLE PRECISION NOT NULL,\"duration\" BIGINT NOT NULL,\"max_amount\" DOUBLE PRECISION NOT NULL,\"min_amount\" DOUBLE PRECISION NOT NULL,\"_loan_application_id\" BIGINT NOT NULL , PRIMARY KEY (\"_loan_application_id\",\"event_time\"));"
-        }
-      ],
-      "views" : [ ]
-    }
-  }
-}
+=== _ApplicationUpdates
+ID:     default_catalog.default_database._ApplicationUpdates
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database._ApplicationUpdates__def
+Annotations:
+ - stream-root: _ApplicationUpdates__def
+Primary Key: loan_application_id, event_time
+Timestamp  : event_time
+Schema:
+ - loan_application_id: BIGINT NOT NULL
+ - status: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - message: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Plan:
+LogicalProject(loan_application_id=[$0], status=[$1], message=[$2], event_time=[$3])
+  LogicalWatermarkAssigner(rowtime=[event_time], watermark=[$3])
+    LogicalTableScan(table=[[default_catalog, default_database, _ApplicationUpdates__def]])
+SQL: CREATE VIEW `_ApplicationUpdates`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`_ApplicationUpdates__def`
+=== _Applications
+ID:     default_catalog.default_database._Applications
+Type:   state
+Stage:  flink
+Inputs: default_catalog.default_database._ApplicationsStream
+Annotations:
+ - mostRecentDistinct: true
+ - stream-root: _ApplicationsStream__def
+Primary Key: id
+Timestamp  : updated_at
+Schema:
+ - id: BIGINT NOT NULL
+ - customer_id: BIGINT NOT NULL
+ - loan_type_id: BIGINT NOT NULL
+ - amount: DOUBLE NOT NULL
+ - duration: BIGINT NOT NULL
+ - application_date: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - updated_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Plan:
+LogicalProject(id=[$0], customer_id=[$1], loan_type_id=[$2], amount=[$3], duration=[$4], application_date=[$5], updated_at=[$6])
+  LogicalFilter(condition=[=($7, 1)])
+    LogicalProject(id=[$0], customer_id=[$1], loan_type_id=[$2], amount=[$3], duration=[$4], application_date=[$5], updated_at=[$6], __sqrlinternal_rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
+      LogicalTableScan(table=[[default_catalog, default_database, _ApplicationsStream]])
+SQL: CREATE VIEW `_Applications`
+AS
+SELECT `id`, `customer_id`, `loan_type_id`, `amount`, `duration`, `application_date`, `updated_at`
+FROM (SELECT `id`, `customer_id`, `loan_type_id`, `amount`, `duration`, `application_date`, `updated_at`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated_at` DESC NULLS LAST) AS `__sqrlinternal_rownum`
+  FROM `default_catalog`.`default_database`.`_ApplicationsStream`) AS `t`
+WHERE `__sqrlinternal_rownum` = 1
+=== _ApplicationsStream
+ID:     default_catalog.default_database._ApplicationsStream
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database._ApplicationsStream__def
+Annotations:
+ - stream-root: _ApplicationsStream__def
+Primary Key: id, updated_at
+Timestamp  : updated_at
+Schema:
+ - id: BIGINT NOT NULL
+ - customer_id: BIGINT NOT NULL
+ - loan_type_id: BIGINT NOT NULL
+ - amount: DOUBLE NOT NULL
+ - duration: BIGINT NOT NULL
+ - application_date: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - updated_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Plan:
+LogicalProject(id=[$0], customer_id=[$1], loan_type_id=[$2], amount=[$3], duration=[$4], application_date=[$5], updated_at=[$6])
+  LogicalWatermarkAssigner(rowtime=[updated_at], watermark=[-($6, 1:INTERVAL SECOND)])
+    LogicalTableScan(table=[[default_catalog, default_database, _ApplicationsStream__def]])
+SQL: CREATE VIEW `_ApplicationsStream`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`_ApplicationsStream__def`
+=== _LoanTypes
+ID:     default_catalog.default_database._LoanTypes
+Type:   state
+Stage:  flink
+Inputs: default_catalog.default_database._LoanTypesStream
+Annotations:
+ - mostRecentDistinct: true
+ - stream-root: _LoanTypesStream__def
+Primary Key: id
+Timestamp  : updated_at
+Schema:
+ - id: BIGINT NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - description: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - interest_rate: DOUBLE NOT NULL
+ - max_amount: DOUBLE NOT NULL
+ - min_amount: DOUBLE NOT NULL
+ - max_duration: BIGINT NOT NULL
+ - min_duration: BIGINT NOT NULL
+ - updated_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Plan:
+LogicalProject(id=[$0], name=[$1], description=[$2], interest_rate=[$3], max_amount=[$4], min_amount=[$5], max_duration=[$6], min_duration=[$7], updated_at=[$8])
+  LogicalFilter(condition=[=($9, 1)])
+    LogicalProject(id=[$0], name=[$1], description=[$2], interest_rate=[$3], max_amount=[$4], min_amount=[$5], max_duration=[$6], min_duration=[$7], updated_at=[$8], __sqrlinternal_rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $8 DESC NULLS LAST)])
+      LogicalTableScan(table=[[default_catalog, default_database, _LoanTypesStream]])
+SQL: CREATE VIEW `_LoanTypes`
+AS
+SELECT `id`, `name`, `description`, `interest_rate`, `max_amount`, `min_amount`, `max_duration`, `min_duration`, `updated_at`
+FROM (SELECT `id`, `name`, `description`, `interest_rate`, `max_amount`, `min_amount`, `max_duration`, `min_duration`, `updated_at`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated_at` DESC NULLS LAST) AS `__sqrlinternal_rownum`
+  FROM `default_catalog`.`default_database`.`_LoanTypesStream`) AS `t`
+WHERE `__sqrlinternal_rownum` = 1
+=== _LoanTypesStream
+ID:     default_catalog.default_database._LoanTypesStream
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database._LoanTypesStream__def
+Annotations:
+ - stream-root: _LoanTypesStream__def
+Primary Key: id, updated_at
+Timestamp  : updated_at
+Schema:
+ - id: BIGINT NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - description: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - interest_rate: DOUBLE NOT NULL
+ - max_amount: DOUBLE NOT NULL
+ - min_amount: DOUBLE NOT NULL
+ - max_duration: BIGINT NOT NULL
+ - min_duration: BIGINT NOT NULL
+ - updated_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Plan:
+LogicalProject(id=[$0], name=[$1], description=[$2], interest_rate=[$3], max_amount=[$4], min_amount=[$5], max_duration=[$6], min_duration=[$7], updated_at=[$8])
+  LogicalWatermarkAssigner(rowtime=[updated_at], watermark=[-($8, 1:INTERVAL SECOND)])
+    LogicalTableScan(table=[[default_catalog, default_database, _LoanTypesStream__def]])
+SQL: CREATE VIEW `_LoanTypesStream`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`_LoanTypesStream__def`
+>>>flink-sql-no-functions.sql
+CREATE TEMPORARY TABLE `_ApplicationsStream__schema` (
+  `id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `loan_type_id` BIGINT NOT NULL,
+  `amount` DOUBLE NOT NULL,
+  `duration` BIGINT NOT NULL,
+  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `_ApplicationsStream__def` (
+  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,
+  WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND
+) WITH (
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/applications.jsonl',
+  'source.monitor-interval' = '10 sec',
+  'connector' = 'filesystem'
+)
+LIKE `_ApplicationsStream__schema`;
+CREATE VIEW `_ApplicationsStream`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`_ApplicationsStream__def`;
+CREATE TEMPORARY TABLE `_LoanTypesStream__schema` (
+  `id` BIGINT NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `interest_rate` DOUBLE NOT NULL,
+  `max_amount` DOUBLE NOT NULL,
+  `min_amount` DOUBLE NOT NULL,
+  `max_duration` BIGINT NOT NULL,
+  `min_duration` BIGINT NOT NULL,
+  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `_LoanTypesStream__def` (
+  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,
+  WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND
+) WITH (
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/loan_types.jsonl',
+  'source.monitor-interval' = '10 sec',
+  'connector' = 'filesystem'
+)
+LIKE `_LoanTypesStream__schema`;
+CREATE VIEW `_LoanTypesStream`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`_LoanTypesStream__def`;
+CREATE TEMPORARY TABLE `_ApplicationUpdates__schema` (
+  `loan_application_id` BIGINT NOT NULL,
+  `status` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `message` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `_ApplicationUpdates__def` (
+  PRIMARY KEY (`loan_application_id`, `event_time`) NOT ENFORCED,
+  WATERMARK FOR `event_time` AS `event_time`
+) WITH (
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/application_updates.jsonl',
+  'connector' = 'filesystem'
+)
+LIKE `_ApplicationUpdates__schema`;
+CREATE VIEW `_ApplicationUpdates`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`_ApplicationUpdates__def`;
+CREATE VIEW `_Applications`
+AS
+SELECT `id`, `customer_id`, `loan_type_id`, `amount`, `duration`, `application_date`, `updated_at`
+FROM (SELECT `id`, `customer_id`, `loan_type_id`, `amount`, `duration`, `application_date`, `updated_at`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated_at` DESC NULLS LAST) AS `__sqrlinternal_rownum`
+  FROM `default_catalog`.`default_database`.`_ApplicationsStream`) AS `t`
+WHERE `__sqrlinternal_rownum` = 1;
+CREATE VIEW `_LoanTypes`
+AS
+SELECT `id`, `name`, `description`, `interest_rate`, `max_amount`, `min_amount`, `max_duration`, `min_duration`, `updated_at`
+FROM (SELECT `id`, `name`, `description`, `interest_rate`, `max_amount`, `min_amount`, `max_duration`, `min_duration`, `updated_at`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated_at` DESC NULLS LAST) AS `__sqrlinternal_rownum`
+  FROM `default_catalog`.`default_database`.`_LoanTypesStream`) AS `t`
+WHERE `__sqrlinternal_rownum` = 1;
+CREATE VIEW `ApplicationStatus`
+AS
+SELECT `u`.`status`, `u`.`message`, `u`.`event_time`, `a`.`id`, `a`.`customer_id`, `a`.`loan_type_id`, `a`.`amount`, `a`.`duration`, `t`.`max_amount`, `t`.`min_amount`
+FROM `_ApplicationUpdates` AS `u`
+ INNER JOIN `_Applications` FOR SYSTEM_TIME AS OF `u`.`event_time` AS `a` ON `a`.`id` = `u`.`loan_application_id`
+ INNER JOIN `_LoanTypes` FOR SYSTEM_TIME AS OF `u`.`event_time` AS `t` ON `t`.`id` = `a`.`loan_type_id`;
+CREATE VIEW `ApplicationInfo`
+AS
+SELECT `a`.*, `t`.*, `t2`.`id` AS `id2`
+FROM `_Applications` AS `a`
+ INNER JOIN `_LoanTypes` AS `t` ON `t`.`id` = `a`.`loan_type_id`
+ LEFT JOIN `_LoanTypes` AS `t2` ON `t2`.`id` = `a`.`customer_id`;
+CREATE VIEW `ApplicationInfoTest`
+AS
+SELECT COUNT(1) AS `num`
+FROM `ApplicationInfo`;
+CREATE TABLE `ApplicationStatus_1` (
+  `status` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `message` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `loan_type_id` BIGINT NOT NULL,
+  `amount` DOUBLE NOT NULL,
+  `duration` BIGINT NOT NULL,
+  `max_amount` DOUBLE NOT NULL,
+  `min_amount` DOUBLE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+PARTITIONED BY (`customer_id`)
+WITH (
+  'write.parquet.page-size-bytes' = '1000',
+  'warehouse' = '/tmp/duckdb',
+  'catalog-type' = 'hadoop',
+  'catalog-name' = 'mydatabase',
+  'connector' = 'iceberg',
+  'catalog-table' = 'ApplicationStatus_1'
+);
+CREATE TABLE `_Applications_2` (
+  `id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `loan_type_id` BIGINT NOT NULL,
+  `amount` DOUBLE NOT NULL,
+  `duration` BIGINT NOT NULL,
+  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`id`) NOT ENFORCED
+)
+PARTITIONED BY (`loan_type_id`)
+WITH (
+  'write.parquet.page-size-bytes' = '1000',
+  'warehouse' = '/tmp/duckdb',
+  'catalog-type' = 'hadoop',
+  'catalog-name' = 'mydatabase',
+  'connector' = 'iceberg',
+  'catalog-table' = '_Applications_2'
+);
+CREATE TABLE `_LoanTypes_3` (
+  `id` BIGINT NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `interest_rate` DOUBLE NOT NULL,
+  `max_amount` DOUBLE NOT NULL,
+  `min_amount` DOUBLE NOT NULL,
+  `max_duration` BIGINT NOT NULL,
+  `min_duration` BIGINT NOT NULL,
+  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`id`) NOT ENFORCED
+) WITH (
+  'write.parquet.page-size-bytes' = '1000',
+  'warehouse' = '/tmp/duckdb',
+  'catalog-type' = 'hadoop',
+  'catalog-name' = 'mydatabase',
+  'connector' = 'iceberg',
+  'catalog-table' = '_LoanTypes_3'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`ApplicationStatus_1`
+(SELECT `status`, `message`, `event_time`, `id`, `customer_id`, `loan_type_id`, `amount`, `duration`, `max_amount`, `min_amount`, HASHCOLUMNS(`status`, `message`, `event_time`, `id`, `customer_id`, `loan_type_id`, `amount`, `duration`, `max_amount`, `min_amount`) AS `__pk_hash`
+ FROM `default_catalog`.`default_database`.`ApplicationStatus`)
+;
+INSERT INTO `default_catalog`.`default_database`.`_Applications_2`
+ (SELECT *
+  FROM `default_catalog`.`default_database`.`_ApplicationsStream`)
+ ;
+ INSERT INTO `default_catalog`.`default_database`.`_LoanTypes_3`
+  (SELECT *
+   FROM `default_catalog`.`default_database`.`_LoanTypesStream`)
+  ;
+  END
+>>>iceberg-duckdb-schema.sql
+
+CREATE TABLE IF NOT EXISTS "ApplicationStatus_1" ("status" TEXT NOT NULL, "message" TEXT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "_Applications_2" ("id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "application_date" TIMESTAMP WITH TIME ZONE NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "_LoanTypes_3" ("id" BIGINT NOT NULL, "name" TEXT NOT NULL, "description" TEXT NOT NULL, "interest_rate" DOUBLE PRECISION NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "max_duration" BIGINT NOT NULL, "min_duration" BIGINT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"))
+
+>>>iceberg-duckdb-views.sql
+
+>>>iceberg-schema.sql
+
+CREATE TABLE IF NOT EXISTS "ApplicationStatus_1" ("status" TEXT NOT NULL, "message" TEXT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "_Applications_2" ("id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "application_date" TIMESTAMP WITH TIME ZONE NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "_LoanTypes_3" ("id" BIGINT NOT NULL, "name" TEXT NOT NULL, "description" TEXT NOT NULL, "interest_rate" DOUBLE PRECISION NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "max_duration" BIGINT NOT NULL, "min_duration" BIGINT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"))
+
+>>>iceberg-views.sql
+
 >>>vertx.json
-{
-  "model" : {
-    "coords" : [
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "ApplicationInfo",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "id"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedDuckDbQuery",
-              "type" : "PagedDuckDbQuery",
-              "sql" : "SELECT *\nFROM (SELECT \"t\".\"id\", \"t\".\"customer_id\", \"t\".\"loan_type_id\", \"t\".\"amount\", \"t\".\"duration\", \"t\".\"application_date\", \"t\".\"updated_at\", \"t0\".\"id\" AS \"id0\", \"t0\".\"name\", \"t0\".\"description\", \"t0\".\"interest_rate\", \"t0\".\"max_amount\", \"t0\".\"min_amount\", \"t0\".\"max_duration\", \"t0\".\"min_duration\", \"t0\".\"updated_at\" AS \"updated_at0\", \"t1\".\"id\" AS \"id1\"\n  FROM (SELECT *\n    FROM ICEBERG_SCAN('/tmp/duckdb/default_database/_applications_3', ALLOW_MOVED_PATHS = TRUE)) AS \"t\"\n   INNER JOIN (SELECT *\n    FROM ICEBERG_SCAN('/tmp/duckdb/default_database/_loantypes_3', ALLOW_MOVED_PATHS = TRUE)) AS \"t0\" ON \"t\".\"loan_type_id\" = \"t0\".\"id\"\n   LEFT JOIN (SELECT *\n    FROM ICEBERG_SCAN('/tmp/duckdb/default_database/_loantypes_3', ALLOW_MOVED_PATHS = TRUE)) AS \"t1\" ON \"t\".\"customer_id\" = \"t1\".\"id\") AS \"t2\"\nWHERE \"t2\".\"id\" = $1",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "id"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedDuckDbQuery",
-              "type" : "PagedDuckDbQuery",
-              "sql" : "SELECT \"t\".\"id\", \"t\".\"customer_id\", \"t\".\"loan_type_id\", \"t\".\"amount\", \"t\".\"duration\", \"t\".\"application_date\", \"t\".\"updated_at\", \"t0\".\"id\" AS \"id0\", \"t0\".\"name\", \"t0\".\"description\", \"t0\".\"interest_rate\", \"t0\".\"max_amount\", \"t0\".\"min_amount\", \"t0\".\"max_duration\", \"t0\".\"min_duration\", \"t0\".\"updated_at\" AS \"updated_at0\", \"t1\".\"id\" AS \"id1\"\nFROM (SELECT *\n  FROM ICEBERG_SCAN('/tmp/duckdb/default_database/_applications_3', ALLOW_MOVED_PATHS = TRUE)) AS \"t\"\n INNER JOIN (SELECT *\n  FROM ICEBERG_SCAN('/tmp/duckdb/default_database/_loantypes_3', ALLOW_MOVED_PATHS = TRUE)) AS \"t0\" ON \"t\".\"loan_type_id\" = \"t0\".\"id\"\n LEFT JOIN (SELECT *\n  FROM ICEBERG_SCAN('/tmp/duckdb/default_database/_loantypes_3', ALLOW_MOVED_PATHS = TRUE)) AS \"t1\" ON \"t\".\"customer_id\" = \"t1\".\"id\"\nORDER BY \"t\".\"id\"",
-              "parameters" : [ ]
-            }
-          }
-        ]
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "ApplicationStatus",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "event_time"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedDuckDbQuery",
-              "type" : "PagedDuckDbQuery",
-              "sql" : "SELECT *\nFROM (SELECT *\n  FROM ICEBERG_SCAN('/tmp/duckdb/default_database/applicationstatus_1', ALLOW_MOVED_PATHS = TRUE)) AS \"t\"\nWHERE \"event_time\" = $1\nORDER BY \"event_time\" DESC NULLS LAST, \"_loan_application_id\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "event_time"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedDuckDbQuery",
-              "type" : "PagedDuckDbQuery",
-              "sql" : "SELECT *\nFROM ICEBERG_SCAN('/tmp/duckdb/default_database/applicationstatus_1', ALLOW_MOVED_PATHS = TRUE)\nORDER BY \"event_time\" DESC NULLS LAST, \"_loan_application_id\"",
-              "parameters" : [ ]
-            }
-          }
-        ]
-      }
-    ],
-    "mutations" : [ ],
-    "subscriptions" : [ ],
-    "schema" : {
-      "type" : "string",
-      "type" : "string",
-      "schema" : "type ApplicationInfo {\n  id: Float!\n  customer_id: Float!\n  loan_type_id: Float!\n  amount: Float!\n  duration: Float!\n  application_date: DateTime!\n  updated_at: DateTime!\n  id0: Float!\n  name: String!\n  description: String!\n  interest_rate: Float!\n  max_amount: Float!\n  min_amount: Float!\n  max_duration: Float!\n  min_duration: Float!\n  updated_at0: DateTime!\n  id1: Float\n}\n\ntype ApplicationStatus {\n  status: String!\n  message: String!\n  event_time: DateTime!\n  id: Float!\n  customer_id: Float!\n  loan_type_id: Float!\n  amount: Float!\n  duration: Float!\n  max_amount: Float!\n  min_amount: Float!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\ntype Query {\n  ApplicationInfo(id: Float, limit: Int = 10, offset: Int = 0): [ApplicationInfo!]\n  ApplicationStatus(event_time: DateTime, limit: Int = 10, offset: Int = 0): [ApplicationStatus!]\n}\n"
-    }
-  }
-}
+{ }

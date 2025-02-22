@@ -1,13 +1,17 @@
 >>>pipeline_explain.txt
 === Schema
-ID:     schema_2
+ID:     default_catalog.default_database.Schema
 Type:   stream
 Stage:  flink
+Inputs: default_catalog.default_database.Schema__def
+Annotations:
+ - features: DENORMALIZE (feature)
+ - stream-root: Schema__def
 Primary Key: uuidField, timestampMillisField
 Timestamp  : timestampMillisField
 Schema:
  - uuidField: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - timestampMillisField: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - timestampMillisField: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - nullableTimestampMillisField: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
  - timestampMicrosField: TIMESTAMP_WITH_LOCAL_TIME_ZONE(6) NOT NULL
  - nullableTimestampMicrosField: TIMESTAMP_WITH_LOCAL_TIME_ZONE(6)
@@ -18,7 +22,7 @@ Schema:
  - timeMicrosField: TIME(0) NOT NULL
  - nullableTimeMicrosField: TIME(0)
  - complexArrayField: RecordType:peek_no_expand(INTEGER NOT NULL itemFieldOne, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL itemFieldTwo) NOT NULL ARRAY NOT NULL
- - nullableComplexArrayField: RecordType:peek_no_expand(DOUBLE nullableItemFieldOne, BOOLEAN nullableItemFieldTwo) NOT NULL ARRAY
+ - nullableComplexArrayField: RecordType:peek_no_expand(DOUBLE nullableItemFieldOne, BOOLEAN nullableItemFieldTwo) ARRAY
  - multiNestedRecord: RecordType:peek_no_expand(RecordType:peek_no_expand(VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL levelOneField, RecordType:peek_no_expand(INTEGER NOT NULL levelTwoField) NOT NULL nestedLevelTwo) NOT NULL nestedLevelOne) NOT NULL
  - stringField: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - nullableStringField: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
@@ -35,242 +39,138 @@ Schema:
  - enumField: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - nullableEnumField: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - arrayField: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL ARRAY NOT NULL
- - nullableArrayField: INTEGER NOT NULL ARRAY
+ - nullableArrayField: INTEGER ARRAY
  - nestedRecord: RecordType:peek_no_expand(VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL nestedStringField, INTEGER NOT NULL nestedIntField, FLOAT NOT NULL ARRAY NOT NULL nestedArrayField, (VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL) MAP NOT NULL nestedMapField) NOT NULL
  - nullableNestedRecord: RecordType:peek_no_expand(VARCHAR(2147483647) CHARACTER SET "UTF-16LE" nullableNestedStringField, BIGINT nullableNestedLongField)
  - decimalField: DECIMAL(10, 2) NOT NULL
  - mapField: (VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL) MAP NOT NULL
  - nullableMapField: (VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL) MAP
 Plan:
-LogicalTableScan(table=[[schema_1]])
-
->>>flink.json
-{
-  "flinkSql" : [
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `ToJson` AS 'com.datasqrl.json.ToJson' LANGUAGE JAVA;",
-    "CREATE TEMPORARY TABLE `schema_1` (\n  `uuidField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `timestampMillisField` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `nullableTimestampMillisField` TIMESTAMP(3) WITH LOCAL TIME ZONE,\n  `timestampMicrosField` TIMESTAMP(6) WITH LOCAL TIME ZONE NOT NULL,\n  `nullableTimestampMicrosField` TIMESTAMP(6) WITH LOCAL TIME ZONE,\n  `dateField` DATE NOT NULL,\n  `nullableDateField` DATE,\n  `timeMillisField` TIME(0) NOT NULL,\n  `nullableTimeMillisField` TIME(0),\n  `timeMicrosField` TIME(0) NOT NULL,\n  `nullableTimeMicrosField` TIME(0),\n  `complexArrayField` ROW(`itemFieldOne` INTEGER NOT NULL, `itemFieldTwo` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL) NOT NULL ARRAY NOT NULL,\n  `nullableComplexArrayField` ROW(`nullableItemFieldOne` DOUBLE, `nullableItemFieldTwo` BOOLEAN) ARRAY,\n  `multiNestedRecord` ROW(`nestedLevelOne` ROW(`levelOneField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL, `nestedLevelTwo` ROW(`levelTwoField` INTEGER NOT NULL) NOT NULL) NOT NULL) NOT NULL,\n  `stringField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `nullableStringField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `intField` INTEGER NOT NULL,\n  `nullableIntField` INTEGER,\n  `longField` BIGINT NOT NULL,\n  `nullableLongField` BIGINT,\n  `floatField` FLOAT NOT NULL,\n  `nullableFloatField` FLOAT,\n  `doubleField` DOUBLE NOT NULL,\n  `nullableDoubleField` DOUBLE,\n  `booleanField` BOOLEAN NOT NULL,\n  `nullableBooleanField` BOOLEAN,\n  `enumField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `nullableEnumField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `arrayField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL ARRAY NOT NULL,\n  `nullableArrayField` INTEGER ARRAY,\n  `nestedRecord` ROW(`nestedStringField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL, `nestedIntField` INTEGER NOT NULL, `nestedArrayField` FLOAT NOT NULL ARRAY NOT NULL, `nestedMapField` MAP< VARCHAR(2147483647) CHARACTER SET `UTF-16LE`, VARCHAR(2147483647) CHARACTER SET `UTF-16LE` > NOT NULL) NOT NULL,\n  `nullableNestedRecord` ROW(`nullableNestedStringField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`, `nullableNestedLongField` BIGINT),\n  `decimalField` DECIMAL(10, 2) NOT NULL,\n  `mapField` MAP< VARCHAR(2147483647) CHARACTER SET `UTF-16LE`, VARCHAR(2147483647) CHARACTER SET `UTF-16LE` > NOT NULL,\n  `nullableMapField` MAP< VARCHAR(2147483647) CHARACTER SET `UTF-16LE`, VARCHAR(2147483647) CHARACTER SET `UTF-16LE` >,\n  PRIMARY KEY (`uuidField`, `timestampMillisField`) NOT ENFORCED,\n  WATERMARK FOR `timestampMillisField` AS `timestampMillisField` - INTERVAL '0.0' SECOND\n) WITH (\n  'format' = 'flexible-json',\n  'path' = '${DATA_PATH}/schema.jsonl',\n  'connector' = 'filesystem'\n);",
-    "CREATE TEMPORARY TABLE `schema_2` (\n  `uuidField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `timestampMillisField` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `nullableTimestampMillisField` TIMESTAMP(3) WITH LOCAL TIME ZONE,\n  `timestampMicrosField` TIMESTAMP(6) WITH LOCAL TIME ZONE NOT NULL,\n  `nullableTimestampMicrosField` TIMESTAMP(6) WITH LOCAL TIME ZONE,\n  `dateField` DATE NOT NULL,\n  `nullableDateField` DATE,\n  `timeMillisField` TIME(0) NOT NULL,\n  `nullableTimeMillisField` TIME(0),\n  `timeMicrosField` TIME(0) NOT NULL,\n  `nullableTimeMicrosField` TIME(0),\n  `complexArrayField` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  `nullableComplexArrayField` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  `multiNestedRecord` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  `stringField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `nullableStringField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `intField` INTEGER NOT NULL,\n  `nullableIntField` INTEGER,\n  `longField` BIGINT NOT NULL,\n  `nullableLongField` BIGINT,\n  `floatField` FLOAT NOT NULL,\n  `nullableFloatField` FLOAT,\n  `doubleField` DOUBLE NOT NULL,\n  `nullableDoubleField` DOUBLE,\n  `booleanField` BOOLEAN NOT NULL,\n  `nullableBooleanField` BOOLEAN,\n  `enumField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `nullableEnumField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,\n  `arrayField` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  `nullableArrayField` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  `nestedRecord` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  `nullableNestedRecord` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  `decimalField` DECIMAL(10, 2) NOT NULL,\n  `mapField` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  `nullableMapField` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  PRIMARY KEY (`uuidField`, `timestampMillisField`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'schema_2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE VIEW `table$1`\nAS\nSELECT `uuidField`, `timestampMillisField`, `nullableTimestampMillisField`, `timestampMicrosField`, `nullableTimestampMicrosField`, `dateField`, `nullableDateField`, `timeMillisField`, `nullableTimeMillisField`, `timeMicrosField`, `nullableTimeMicrosField`, `default_catalog`.`default_database`.`ToJson`(`complexArrayField`) AS `complexArrayField`, `default_catalog`.`default_database`.`ToJson`(`nullableComplexArrayField`) AS `nullableComplexArrayField`, `default_catalog`.`default_database`.`ToJson`(`multiNestedRecord`) AS `multiNestedRecord`, `stringField`, `nullableStringField`, `intField`, `nullableIntField`, `longField`, `nullableLongField`, `floatField`, `nullableFloatField`, `doubleField`, `nullableDoubleField`, `booleanField`, `nullableBooleanField`, `enumField`, `nullableEnumField`, `default_catalog`.`default_database`.`ToJson`(`arrayField`) AS `arrayField`, `default_catalog`.`default_database`.`ToJson`(`nullableArrayField`) AS `nullableArrayField`, `default_catalog`.`default_database`.`ToJson`(`nestedRecord`) AS `nestedRecord`, `default_catalog`.`default_database`.`ToJson`(`nullableNestedRecord`) AS `nullableNestedRecord`, `decimalField`, `default_catalog`.`default_database`.`ToJson`(`mapField`) AS `mapField`, `default_catalog`.`default_database`.`ToJson`(`nullableMapField`) AS `nullableMapField`\nFROM `schema_1`;",
-    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `schema_2`\n(SELECT *\n FROM `table$1`)\n;\nEND;"
-  ],
-  "connectors" : [
-    "jdbc-sqrl",
-    "filesystem"
-  ],
-  "formats" : [
-    "flexible-json"
-  ]
-}
+LogicalProject(uuidField=[$0], timestampMillisField=[$1], nullableTimestampMillisField=[$2], timestampMicrosField=[$3], nullableTimestampMicrosField=[$4], dateField=[$5], nullableDateField=[$6], timeMillisField=[$7], nullableTimeMillisField=[$8], timeMicrosField=[$9], nullableTimeMicrosField=[$10], complexArrayField=[$11], nullableComplexArrayField=[$12], multiNestedRecord=[$13], stringField=[$14], nullableStringField=[$15], intField=[$16], nullableIntField=[$17], longField=[$18], nullableLongField=[$19], floatField=[$20], nullableFloatField=[$21], doubleField=[$22], nullableDoubleField=[$23], booleanField=[$24], nullableBooleanField=[$25], enumField=[$26], nullableEnumField=[$27], arrayField=[$28], nullableArrayField=[$29], nestedRecord=[$30], nullableNestedRecord=[$31], decimalField=[$32], mapField=[$33], nullableMapField=[$34])
+  LogicalWatermarkAssigner(rowtime=[timestampMillisField], watermark=[$1])
+    LogicalTableScan(table=[[default_catalog, default_database, Schema__def]])
+SQL: CREATE VIEW `Schema`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`Schema__def`
+>>>flink-sql-no-functions.sql
+CREATE TEMPORARY TABLE `Schema__schema` (
+  `uuidField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `timestampMillisField` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `nullableTimestampMillisField` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  `timestampMicrosField` TIMESTAMP(6) WITH LOCAL TIME ZONE NOT NULL,
+  `nullableTimestampMicrosField` TIMESTAMP(6) WITH LOCAL TIME ZONE,
+  `dateField` DATE NOT NULL,
+  `nullableDateField` DATE,
+  `timeMillisField` TIME(0) NOT NULL,
+  `nullableTimeMillisField` TIME(0),
+  `timeMicrosField` TIME(0) NOT NULL,
+  `nullableTimeMicrosField` TIME(0),
+  `complexArrayField` ROW(`itemFieldOne` INTEGER NOT NULL, `itemFieldTwo` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL) NOT NULL ARRAY NOT NULL,
+  `nullableComplexArrayField` ROW(`nullableItemFieldOne` DOUBLE, `nullableItemFieldTwo` BOOLEAN) ARRAY,
+  `multiNestedRecord` ROW(`nestedLevelOne` ROW(`levelOneField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL, `nestedLevelTwo` ROW(`levelTwoField` INTEGER NOT NULL) NOT NULL) NOT NULL) NOT NULL,
+  `stringField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `nullableStringField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `intField` INTEGER NOT NULL,
+  `nullableIntField` INTEGER,
+  `longField` BIGINT NOT NULL,
+  `nullableLongField` BIGINT,
+  `floatField` FLOAT NOT NULL,
+  `nullableFloatField` FLOAT,
+  `doubleField` DOUBLE NOT NULL,
+  `nullableDoubleField` DOUBLE,
+  `booleanField` BOOLEAN NOT NULL,
+  `nullableBooleanField` BOOLEAN,
+  `enumField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `nullableEnumField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `arrayField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL ARRAY NOT NULL,
+  `nullableArrayField` INTEGER ARRAY,
+  `nestedRecord` ROW(`nestedStringField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL, `nestedIntField` INTEGER NOT NULL, `nestedArrayField` FLOAT NOT NULL ARRAY NOT NULL, `nestedMapField` MAP< VARCHAR(2147483647) CHARACTER SET `UTF-16LE`, VARCHAR(2147483647) CHARACTER SET `UTF-16LE` > NOT NULL) NOT NULL,
+  `nullableNestedRecord` ROW(`nullableNestedStringField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`, `nullableNestedLongField` BIGINT),
+  `decimalField` DECIMAL(10, 2) NOT NULL,
+  `mapField` MAP< VARCHAR(2147483647) CHARACTER SET `UTF-16LE`, VARCHAR(2147483647) CHARACTER SET `UTF-16LE` > NOT NULL,
+  `nullableMapField` MAP< VARCHAR(2147483647) CHARACTER SET `UTF-16LE`, VARCHAR(2147483647) CHARACTER SET `UTF-16LE` >
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `Schema__def` (
+  PRIMARY KEY (`uuidField`, `timestampMillisField`) NOT ENFORCED,
+  WATERMARK FOR `timestampMillisField` AS `timestampMillisField`
+) WITH (
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/schema.jsonl',
+  'connector' = 'filesystem'
+)
+LIKE `Schema__schema`;
+CREATE VIEW `Schema`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`Schema__def`;
+CREATE VIEW `MySchema`
+AS
+SELECT *
+FROM `Schema`;
+CREATE TABLE `Schema_1` (
+  `uuidField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `timestampMillisField` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `nullableTimestampMillisField` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  `timestampMicrosField` TIMESTAMP(6) WITH LOCAL TIME ZONE NOT NULL,
+  `nullableTimestampMicrosField` TIMESTAMP(6) WITH LOCAL TIME ZONE,
+  `dateField` DATE NOT NULL,
+  `nullableDateField` DATE,
+  `timeMillisField` TIME(0) NOT NULL,
+  `nullableTimeMillisField` TIME(0),
+  `timeMicrosField` TIME(0) NOT NULL,
+  `nullableTimeMicrosField` TIME(0),
+  `complexArrayField` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),
+  `nullableComplexArrayField` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),
+  `multiNestedRecord` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),
+  `stringField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `nullableStringField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `intField` INTEGER NOT NULL,
+  `nullableIntField` INTEGER,
+  `longField` BIGINT NOT NULL,
+  `nullableLongField` BIGINT,
+  `floatField` FLOAT NOT NULL,
+  `nullableFloatField` FLOAT,
+  `doubleField` DOUBLE NOT NULL,
+  `nullableDoubleField` DOUBLE,
+  `booleanField` BOOLEAN NOT NULL,
+  `nullableBooleanField` BOOLEAN,
+  `enumField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `nullableEnumField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `arrayField` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),
+  `nullableArrayField` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),
+  `nestedRecord` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),
+  `nullableNestedRecord` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),
+  `decimalField` DECIMAL(10, 2) NOT NULL,
+  `mapField` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),
+  `nullableMapField` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),
+  PRIMARY KEY (`uuidField`, `timestampMillisField`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'table-name' = 'Schema_1'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`Schema_1`
+(SELECT `uuidField`, `timestampMillisField`, `nullableTimestampMillisField`, `timestampMicrosField`, `nullableTimestampMicrosField`, `dateField`, `nullableDateField`, `timeMillisField`, `nullableTimeMillisField`, `timeMicrosField`, `nullableTimeMicrosField`, TOJSON(`complexArrayField`) AS `complexArrayField`, TOJSON(`nullableComplexArrayField`) AS `nullableComplexArrayField`, TOJSON(`multiNestedRecord`) AS `multiNestedRecord`, `stringField`, `nullableStringField`, `intField`, `nullableIntField`, `longField`, `nullableLongField`, `floatField`, `nullableFloatField`, `doubleField`, `nullableDoubleField`, `booleanField`, `nullableBooleanField`, `enumField`, `nullableEnumField`, TOJSON(`arrayField`) AS `arrayField`, TOJSON(`nullableArrayField`) AS `nullableArrayField`, TOJSON(`nestedRecord`) AS `nestedRecord`, TOJSON(`nullableNestedRecord`) AS `nullableNestedRecord`, `decimalField`, TOJSON(`mapField`) AS `mapField`, TOJSON(`nullableMapField`) AS `nullableMapField`
+ FROM `default_catalog`.`default_database`.`Schema`)
+;
+END
 >>>kafka.json
 {
   "topics" : [ ]
 }
->>>postgres.json
-{
-  "ddl" : [
-    {
-      "name" : "schema_2",
-      "columns" : [
-        "\"uuidField\" TEXT NOT NULL",
-        "\"timestampMillisField\" TIMESTAMP WITH TIME ZONE NOT NULL",
-        "\"nullableTimestampMillisField\" TIMESTAMP WITH TIME ZONE ",
-        "\"timestampMicrosField\" TIMESTAMP WITH TIME ZONE NOT NULL",
-        "\"nullableTimestampMicrosField\" TIMESTAMP WITH TIME ZONE ",
-        "\"dateField\" DATE NOT NULL",
-        "\"nullableDateField\" DATE ",
-        "\"timeMillisField\" TIME WITHOUT TIME ZONE NOT NULL",
-        "\"nullableTimeMillisField\" TIME WITHOUT TIME ZONE ",
-        "\"timeMicrosField\" TIME WITHOUT TIME ZONE NOT NULL",
-        "\"nullableTimeMicrosField\" TIME WITHOUT TIME ZONE ",
-        "\"complexArrayField\" JSONB NOT NULL",
-        "\"nullableComplexArrayField\" JSONB ",
-        "\"multiNestedRecord\" JSONB NOT NULL",
-        "\"stringField\" TEXT NOT NULL",
-        "\"nullableStringField\" TEXT ",
-        "\"intField\" INTEGER NOT NULL",
-        "\"nullableIntField\" INTEGER ",
-        "\"longField\" BIGINT NOT NULL",
-        "\"nullableLongField\" BIGINT ",
-        "\"floatField\" FLOAT NOT NULL",
-        "\"nullableFloatField\" FLOAT ",
-        "\"doubleField\" DOUBLE PRECISION NOT NULL",
-        "\"nullableDoubleField\" DOUBLE PRECISION ",
-        "\"booleanField\" BOOLEAN NOT NULL",
-        "\"nullableBooleanField\" BOOLEAN ",
-        "\"enumField\" TEXT NOT NULL",
-        "\"nullableEnumField\" TEXT ",
-        "\"arrayField\" JSONB NOT NULL",
-        "\"nullableArrayField\" JSONB ",
-        "\"nestedRecord\" JSONB NOT NULL",
-        "\"nullableNestedRecord\" JSONB ",
-        "\"decimalField\" NUMERIC NOT NULL",
-        "\"mapField\" JSONB NOT NULL",
-        "\"nullableMapField\" JSONB "
-      ],
-      "primaryKeys" : [
-        "\"uuidField\"",
-        "\"timestampMillisField\""
-      ],
-      "sql" : "CREATE TABLE IF NOT EXISTS schema_2 (\"uuidField\" TEXT NOT NULL,\"timestampMillisField\" TIMESTAMP WITH TIME ZONE NOT NULL,\"nullableTimestampMillisField\" TIMESTAMP WITH TIME ZONE ,\"timestampMicrosField\" TIMESTAMP WITH TIME ZONE NOT NULL,\"nullableTimestampMicrosField\" TIMESTAMP WITH TIME ZONE ,\"dateField\" DATE NOT NULL,\"nullableDateField\" DATE ,\"timeMillisField\" TIME WITHOUT TIME ZONE NOT NULL,\"nullableTimeMillisField\" TIME WITHOUT TIME ZONE ,\"timeMicrosField\" TIME WITHOUT TIME ZONE NOT NULL,\"nullableTimeMicrosField\" TIME WITHOUT TIME ZONE ,\"complexArrayField\" JSONB NOT NULL,\"nullableComplexArrayField\" JSONB ,\"multiNestedRecord\" JSONB NOT NULL,\"stringField\" TEXT NOT NULL,\"nullableStringField\" TEXT ,\"intField\" INTEGER NOT NULL,\"nullableIntField\" INTEGER ,\"longField\" BIGINT NOT NULL,\"nullableLongField\" BIGINT ,\"floatField\" FLOAT NOT NULL,\"nullableFloatField\" FLOAT ,\"doubleField\" DOUBLE PRECISION NOT NULL,\"nullableDoubleField\" DOUBLE PRECISION ,\"booleanField\" BOOLEAN NOT NULL,\"nullableBooleanField\" BOOLEAN ,\"enumField\" TEXT NOT NULL,\"nullableEnumField\" TEXT ,\"arrayField\" JSONB NOT NULL,\"nullableArrayField\" JSONB ,\"nestedRecord\" JSONB NOT NULL,\"nullableNestedRecord\" JSONB ,\"decimalField\" NUMERIC NOT NULL,\"mapField\" JSONB NOT NULL,\"nullableMapField\" JSONB  , PRIMARY KEY (\"uuidField\",\"timestampMillisField\"));"
-    },
-    {
-      "indexName" : "schema_2_hash_c1",
-      "tableName" : "schema_2",
-      "columns" : [
-        "timestampMillisField"
-      ],
-      "type" : "HASH",
-      "sql" : "CREATE INDEX IF NOT EXISTS schema_2_hash_c1 ON schema_2 USING hash (\"timestampMillisField\");"
-    }
-  ],
-  "views" : [
-    {
-      "name" : "Schema",
-      "sql" : "CREATE OR REPLACE VIEW \"Schema\"(\"uuidField\", \"timestampMillisField\", \"nullableTimestampMillisField\", \"timestampMicrosField\", \"nullableTimestampMicrosField\", \"dateField\", \"nullableDateField\", \"timeMillisField\", \"nullableTimeMillisField\", \"timeMicrosField\", \"nullableTimeMicrosField\", \"complexArrayField\", \"nullableComplexArrayField\", \"multiNestedRecord\", \"stringField\", \"nullableStringField\", \"intField\", \"nullableIntField\", \"longField\", \"nullableLongField\", \"floatField\", \"nullableFloatField\", \"doubleField\", \"nullableDoubleField\", \"booleanField\", \"nullableBooleanField\", \"enumField\", \"nullableEnumField\", \"arrayField\", \"nullableArrayField\", \"nestedRecord\", \"nullableNestedRecord\", \"decimalField\", \"mapField\", \"nullableMapField\") AS SELECT *\nFROM \"schema_2\"\nORDER BY \"timestampMillisField\" DESC NULLS LAST, \"uuidField\";"
-    }
-  ]
-}
+>>>postgres-schema.sql
+
+CREATE TABLE IF NOT EXISTS "Schema_1" ("uuidField" TEXT NOT NULL, "timestampMillisField" TIMESTAMP WITH TIME ZONE NOT NULL, "nullableTimestampMillisField" TIMESTAMP WITH TIME ZONE , "timestampMicrosField" TIMESTAMP WITH TIME ZONE NOT NULL, "nullableTimestampMicrosField" TIMESTAMP WITH TIME ZONE , "dateField" DATE NOT NULL, "nullableDateField" DATE , "timeMillisField" TIME WITHOUT TIME ZONE NOT NULL, "nullableTimeMillisField" TIME WITHOUT TIME ZONE , "timeMicrosField" TIME WITHOUT TIME ZONE NOT NULL, "nullableTimeMicrosField" TIME WITHOUT TIME ZONE , "complexArrayField" JSONB , "nullableComplexArrayField" JSONB , "multiNestedRecord" JSONB , "stringField" TEXT NOT NULL, "nullableStringField" TEXT , "intField" INTEGER NOT NULL, "nullableIntField" INTEGER , "longField" BIGINT NOT NULL, "nullableLongField" BIGINT , "floatField" FLOAT NOT NULL, "nullableFloatField" FLOAT , "doubleField" DOUBLE PRECISION NOT NULL, "nullableDoubleField" DOUBLE PRECISION , "booleanField" BOOLEAN NOT NULL, "nullableBooleanField" BOOLEAN , "enumField" TEXT NOT NULL, "nullableEnumField" TEXT , "arrayField" JSONB , "nullableArrayField" JSONB , "nestedRecord" JSONB , "nullableNestedRecord" JSONB , "decimalField" NUMERIC NOT NULL, "mapField" JSONB , "nullableMapField" JSONB  , PRIMARY KEY ("uuidField","timestampMillisField"))
+
+>>>postgres-views.sql
+CREATE OR REPLACE VIEW "Schema"("uuidField", "timestampMillisField", "nullableTimestampMillisField", "timestampMicrosField", "nullableTimestampMicrosField", "dateField", "nullableDateField", "timeMillisField", "nullableTimeMillisField", "timeMicrosField", "nullableTimeMicrosField", "complexArrayField", "nullableComplexArrayField", "multiNestedRecord", "stringField", "nullableStringField", "intField", "nullableIntField", "longField", "nullableLongField", "floatField", "nullableFloatField", "doubleField", "nullableDoubleField", "booleanField", "nullableBooleanField", "enumField", "nullableEnumField", "arrayField", "nullableArrayField", "nestedRecord", "nullableNestedRecord", "decimalField", "mapField", "nullableMapField") AS SELECT *
+FROM "Schema_1"
 >>>vertx.json
-{
-  "model" : {
-    "coords" : [
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "Schema",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "timestampMillisField"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"schema_2\"\nWHERE \"timestampMillisField\" = $1\nORDER BY \"timestampMillisField\" DESC NULLS LAST, \"uuidField\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "timestampMillisField"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"schema_2\"\nORDER BY \"timestampMillisField\" DESC NULLS LAST, \"uuidField\"",
-              "parameters" : [ ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "uuidField"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "timestampMillisField"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"schema_2\"\nWHERE \"uuidField\" = $1 AND \"timestampMillisField\" = $2\nORDER BY \"timestampMillisField\" DESC NULLS LAST",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "uuidField"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "timestampMillisField"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "uuidField"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"schema_2\"\nWHERE \"uuidField\" = $1\nORDER BY \"timestampMillisField\" DESC NULLS LAST",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "uuidField"
-                }
-              ]
-            }
-          }
-        ]
-      }
-    ],
-    "mutations" : [ ],
-    "subscriptions" : [ ],
-    "schema" : {
-      "type" : "string",
-      "type" : "string",
-      "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\ntype Query {\n  Schema(uuidField: String, timestampMillisField: DateTime, limit: Int = 10, offset: Int = 0): [Schema!]\n}\n\ntype Schema {\n  uuidField: String!\n  timestampMillisField: DateTime!\n  nullableTimestampMillisField: DateTime\n  timestampMicrosField: DateTime!\n  nullableTimestampMicrosField: DateTime\n  dateField: Date!\n  nullableDateField: Date\n  timeMillisField: LocalTime!\n  nullableTimeMillisField: LocalTime\n  timeMicrosField: LocalTime!\n  nullableTimeMicrosField: LocalTime\n  stringField: String!\n  nullableStringField: String\n  intField: Int!\n  nullableIntField: Int\n  longField: Float!\n  nullableLongField: Float\n  floatField: Float!\n  nullableFloatField: Float\n  doubleField: Float!\n  nullableDoubleField: Float\n  booleanField: Boolean!\n  nullableBooleanField: Boolean\n  enumField: String!\n  nullableEnumField: String\n  arrayField: [String]!\n  nullableArrayField: [Int]\n  decimalField: Float!\n  mapField: JSON!\n  nullableMapField: JSON\n  complexArrayField(limit: Int = 10, offset: Int = 0): [complexArrayField!]\n  multiNestedRecord: multiNestedRecord!\n  nestedRecord: nestedRecord!\n  nullableComplexArrayField(limit: Int = 10, offset: Int = 0): [nullableComplexArrayField!]\n  nullableNestedRecord: nullableNestedRecord\n}\n\ntype complexArrayField {\n  itemFieldOne: Int!\n  itemFieldTwo: String!\n}\n\ntype multiNestedRecord {\n  nestedLevelOne: nestedLevelOne!\n}\n\ntype nestedLevelOne {\n  levelOneField: String!\n  nestedLevelTwo: nestedLevelTwo!\n}\n\ntype nestedLevelTwo {\n  levelTwoField: Int!\n}\n\ntype nestedRecord {\n  nestedStringField: String!\n  nestedIntField: Int!\n  nestedArrayField: [Float]!\n  nestedMapField: JSON!\n}\n\ntype nullableComplexArrayField {\n  nullableItemFieldOne: Float\n  nullableItemFieldTwo: Boolean\n}\n\ntype nullableNestedRecord {\n  nullableNestedStringField: String\n  nullableNestedLongField: Float\n}\n"
-    }
-  }
-}
+{ }

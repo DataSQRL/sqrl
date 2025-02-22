@@ -48,7 +48,8 @@ public class SnowflakeStatementFactory extends AbstractJdbcStatementFactory {
 
   @Override
   protected SqlDataTypeSpec getSqlType(RelDataType type) {
-    throw new UnsupportedOperationException();
+    //TODO: Need to create a snowflake spec or reuse Iceberg?
+    return ExtendedPostgresSqlDialect.DEFAULT.getCastSpec(type);
   }
 
   @Override

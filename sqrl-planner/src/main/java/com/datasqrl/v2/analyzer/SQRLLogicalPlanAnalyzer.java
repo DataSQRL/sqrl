@@ -14,6 +14,7 @@ import com.datasqrl.v2.analyzer.cost.CostAnalysis;
 import com.datasqrl.v2.analyzer.cost.JoinCostAnalysis;
 import com.datasqrl.plan.rules.SqrlRelShuttle;
 import com.datasqrl.v2.hint.ColumnNamesHint;
+import com.google.common.collect.Iterables;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.prepare.CalciteCatalogReader;
@@ -127,6 +128,10 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
    * Whether this query contains a distinct/deduplication by rowtime (i.e. filter over rownum ordered by rowtime desc)
    */
   private boolean hasMostRecentDistinct = false;
+  /**
+   * Whether this query preserves a base table from the input (FROM)
+   */
+  private boolean preservesBaseTable = true;
 
   protected RelNodeAnalysis intermediateAnalysis = null;
 
@@ -188,12 +193,22 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     boolean isMostRecentDistinct = hasMostRecentDistinct && sourceTables.size()==1
         && sourceTables.get(0).getRowType().equals(originalRelnode.getRowType())
         && sourceTables.get(0).getType().isStream();
+    //The base table is the right-most table in the relational tree that has the same type as the result
+    Optional<TableAnalysis> baseTable = Optional.empty();
+    if (preservesBaseTable && !sourceTables.isEmpty()) {
+      baseTable = Optional.ofNullable(Iterables.getLast(sourceTables))
+          .filter(AbstractAnalysis::hasRowType)
+          .filter(tbl -> tbl.getRowType().equals(originalRelnode.getRowType()))
+          .map(TableOrFunctionAnalysis::getBaseTable);
+    }
+
     TableAnalysis.TableAnalysisBuilder tableAnalysis = TableAnalysis.builder()
         .collapsedRelnode(analysis.relNode)
         .originalRelnode(tableLookup.normalizeRelnode(originalRelnode))
         .type(analysis.getType())
         .primaryKey(analysis.primaryKey)
         .isMostRecentDistinct(isMostRecentDistinct)
+        .optionalBaseTable(baseTable)
         .streamRoot(analysis.streamRoot)
         .fromTables(sourceTables)
         .requiredCapabilities(capabilityAnalysis.getRequiredCapabilities())
@@ -478,13 +493,16 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
         if (mappedTo.isEmpty()) {
           lostPrimaryKeyMapping = true;
           int pkIdx = colSet.pickBest(inputType);
-          errors.notice("Primary key column [%s] is not selected",
-              inputType.getFieldList().get(pkIdx).getName());
+//          errors.notice("Primary key column [%s] is not selected",
+//              inputType.getFieldList().get(pkIdx).getName());
         } else {
           pkBuilder.add(mappedTo);
         }
       }
       if (!lostPrimaryKeyMapping) pk = pkBuilder.build();
+    }
+    if (logicalProject.getProjects().stream().anyMatch(RexOver.class::isInstance)) {
+      preservesBaseTable = false;
     }
     return setProcessResult(input.toBuilder()
         .relNode(updateRelnode(logicalProject, List.of(input.relNode)))
@@ -574,6 +592,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     }
 
     //Detect interval join
+    boolean isIntervalJoin = false;
     if (leftIn.type.isStream() && rightIn.type.isStream()) {
       //Check if the join condition contains time bounds - we use an approximation and see if
       //the condition references any rowtime columns
@@ -623,6 +642,8 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
           //TODO: add notice for inefficiency?
         }
 
+      } else {
+        isIntervalJoin = true;
       }
     }
 
@@ -643,7 +664,11 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     }
 
     //Default joins without primary key constraints or interval bounds can be expensive, so we create a hint for the cost model
-    costAnalyses.add(new JoinCostAnalysis(leftIn.type, rightIn.type, eqDecomp.getEqualities().size(), singletonSide));
+    if (!isIntervalJoin && !isTemporalJoin) {
+      costAnalyses.add(
+          new JoinCostAnalysis(leftIn.type, rightIn.type, eqDecomp.getEqualities().size(),
+              singletonSide));
+    }
 
     return setProcessResult(new RelNodeAnalysis(
         updateRelnode(logicalJoin, List.of(leftIn.relNode, rightIn.relNode)),
@@ -743,6 +768,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     RelNodeAnalysis input = getInputAnalysis(aggregate);
     capabilityAnalysis.analyzeAggregates(aggregate.getAggCallList());
     final List<Integer> groupByIdx = aggregate.getGroupSet().asList();
+    preservesBaseTable = false;
 
     /*
       Produces the pk and select mappings by taking into consideration that the group-by indexes of
@@ -793,6 +819,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     } else {
       errors.notice("For efficient pattern matching, make sure the input data is a stream");
     }
+    preservesBaseTable = false;
     return setProcessResult(RelNodeAnalysis.builder().type(STATE)
         .relNode(updateRelnode(logicalMatch, List.of(input.relNode)))
         .build());

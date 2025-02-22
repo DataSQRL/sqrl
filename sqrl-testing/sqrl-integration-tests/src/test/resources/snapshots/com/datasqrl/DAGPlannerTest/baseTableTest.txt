@@ -23,6 +23,41 @@ SQL: CREATE VIEW `Customer`
 AS
 SELECT *
 FROM `default_catalog`.`default_database`.`Customer__def`
+=== CustomerById
+ID:     default_catalog.default_database.CustomerById
+Type:   query
+Stage:  postgres
+Inputs: default_catalog.default_database.CustomerWithEmail
+Annotations:
+ - stream-root: Customer__def
+ - parameters: id
+ - base-table: Customer
+Plan:
+LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
+  LogicalFilter(condition=[=($0, ?0)])
+    LogicalTableScan(table=[[default_catalog, default_database, CustomerWithEmail]])
+SQL: CREATE VIEW CustomerById AS  SELECT * FROM CustomerWithEmail WHERE customerid = ?  ;
+
+=== CustomerWithEmail
+ID:     default_catalog.default_database.CustomerWithEmail
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.Customer
+Annotations:
+ - stream-root: Customer__def
+Primary Key: customerid, lastUpdated
+Timestamp  : timestamp
+Schema:
+ - customerid: BIGINT NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - lastUpdated: BIGINT NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME*
+Plan:
+LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
+  LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW CustomerWithEmail AS  SELECT * FROM Customer WHERE email IS NOT NULL;
+
 === DistinctCustomer
 ID:     default_catalog.default_database.DistinctCustomer
 Type:   state
@@ -50,57 +85,20 @@ SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`
 FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC NULLS LAST) AS `__sqrlinternal_rownum`
   FROM `default_catalog`.`default_database`.`Customer`) AS `t`
 WHERE `__sqrlinternal_rownum` = 1
-=== JoinStream
-ID:     default_catalog.default_database.JoinStream
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Customer, default_catalog.default_database.Orders
-Primary Key: -
-Timestamp  : -
-Schema:
- - id: BIGINT NOT NULL
- - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
-Plan:
-LogicalProject(id=[$0], name=[$6])
-  LogicalJoin(condition=[=($4, $1)], joinType=[inner])
-    LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW JoinStream AS  SELECT o.id, c.name FROM Orders o JOIN Customer c on c.customerid = o.customerid;
-
-=== Orders
-ID:     default_catalog.default_database.Orders
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Orders__def
-Annotations:
- - features: DENORMALIZE (feature)
- - stream-root: Orders__def
-Primary Key: id, time
-Timestamp  : time
-Schema:
- - id: BIGINT NOT NULL
- - customerid: BIGINT NOT NULL
- - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
- - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
-Plan:
-LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3])
-  LogicalWatermarkAssigner(rowtime=[time], watermark=[-($2, 1:INTERVAL SECOND)])
-    LogicalTableScan(table=[[default_catalog, default_database, Orders__def]])
-SQL: CREATE VIEW `Orders`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`Orders__def`
-=== DistinctStream
-ID:     log.DistinctStream
-Type:   export
-Stage:  flink
+=== DistinctCustomerById
+ID:     default_catalog.default_database.DistinctCustomerById
+Type:   query
+Stage:  postgres
 Inputs: default_catalog.default_database.DistinctCustomer
-
-=== JoinStream
-ID:     log.JoinStream
-Type:   export
-Stage:  flink
-Inputs: default_catalog.default_database.JoinStream
+Annotations:
+ - stream-root: Customer__def
+ - parameters: id
+ - base-table: DistinctCustomer
+Plan:
+LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
+  LogicalFilter(condition=[=($0, ?0)])
+    LogicalTableScan(table=[[default_catalog, default_database, DistinctCustomer]])
+SQL: CREATE VIEW DistinctCustomerById AS  SELECT * FROM DistinctCustomer WHERE customerid = ?  ;
 
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `Customer__schema` (
@@ -126,33 +124,11 @@ CREATE VIEW `Customer`
 AS
 SELECT *
 FROM `default_catalog`.`default_database`.`Customer__def`;
-CREATE TEMPORARY TABLE `Orders__schema` (
-  `id` BIGINT NOT NULL,
-  `customerid` BIGINT NOT NULL,
-  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
-) WITH (
-  'connector' = 'datagen'
-);
-CREATE TABLE `Orders__def` (
-  PRIMARY KEY (`id`, `time`) NOT ENFORCED,
-  WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
-) WITH (
-  'format' = 'flexible-json',
-  'path' = 'file:/mock',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
-)
-LIKE `Orders__schema`;
-CREATE VIEW `Orders`
+CREATE VIEW `CustomerWithEmail`
 AS
 SELECT *
-FROM `default_catalog`.`default_database`.`Orders__def`;
-CREATE VIEW `JoinStream`
-AS
-SELECT `o`.`id`, `c`.`name`
-FROM `Orders` AS `o`
- INNER JOIN `Customer` AS `c` ON `c`.`customerid` = `o`.`customerid`;
+FROM `Customer`
+WHERE `email` IS NOT NULL;
 CREATE VIEW `DistinctCustomer`
 AS
 SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`
@@ -174,20 +150,20 @@ CREATE TABLE `Customer_1` (
   'url' = 'jdbc:postgresql://${JDBC_URL}',
   'table-name' = 'Customer_1'
 );
-CREATE TABLE `DistinctStream_2` (
+CREATE TABLE `CustomerWithEmail_2` (
   `customerid` BIGINT NOT NULL,
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` BIGINT NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,
-  PRIMARY KEY (`customerid`) NOT ENFORCED
+  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
 ) WITH (
-  'connector' = 'upsert-kafka',
-  'value.format' = 'flexible-json',
-  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
-  'properties.group.id' = '${PROPERTIES_GROUP_ID}',
-  'key.format' = 'raw',
-  'topic' = 'DistinctStream'
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'table-name' = 'CustomerWithEmail_2'
 );
 CREATE TABLE `DistinctCustomer_3` (
   `customerid` BIGINT NOT NULL,
@@ -204,89 +180,23 @@ CREATE TABLE `DistinctCustomer_3` (
   'url' = 'jdbc:postgresql://${JDBC_URL}',
   'table-name' = 'DistinctCustomer_3'
 );
-CREATE TABLE `JoinStream_4` (
-  `id` BIGINT NOT NULL,
-  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL
-) WITH (
-  'connector' = 'kafka',
-  'format' = 'flexible-json',
-  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
-  'properties.group.id' = '${PROPERTIES_GROUP_ID}',
-  'scan.startup.mode' = 'group-offsets',
-  'properties.auto.offset.reset' = 'earliest',
-  'topic' = 'JoinStream'
-);
-CREATE TABLE `JoinStream_5` (
-  `id` BIGINT NOT NULL,
-  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
-  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
-) WITH (
-  'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
-  'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
-  'table-name' = 'JoinStream_5'
-);
-CREATE TABLE `Orders_6` (
-  `id` BIGINT NOT NULL,
-  `customerid` BIGINT NOT NULL,
-  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),
-  PRIMARY KEY (`id`, `time`) NOT ENFORCED
-) WITH (
-  'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
-  'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
-  'table-name' = 'Orders_6'
-);
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`
 (SELECT *
  FROM `default_catalog`.`default_database`.`Customer`)
 ;
-INSERT INTO `default_catalog`.`default_database`.`DistinctStream_2`
+INSERT INTO `default_catalog`.`default_database`.`CustomerWithEmail_2`
  (SELECT *
-  FROM `default_catalog`.`default_database`.`DistinctCustomer`)
+  FROM `default_catalog`.`default_database`.`CustomerWithEmail`)
  ;
  INSERT INTO `default_catalog`.`default_database`.`DistinctCustomer_3`
   (SELECT *
    FROM `default_catalog`.`default_database`.`Customer`)
   ;
-  INSERT INTO `default_catalog`.`default_database`.`JoinStream_4`
-   (SELECT *
-    FROM `default_catalog`.`default_database`.`JoinStream`)
-   ;
-   INSERT INTO `default_catalog`.`default_database`.`JoinStream_5`
-    (SELECT `id`, `name`, HASHCOLUMNS(`id`, `name`) AS `__pk_hash`
-     FROM `default_catalog`.`default_database`.`JoinStream`)
-    ;
-    INSERT INTO `default_catalog`.`default_database`.`Orders_6`
-     (SELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`
-      FROM `default_catalog`.`default_database`.`Orders`)
-     ;
-     END
+  END
 >>>kafka.json
 {
-  "topics" : [
-    {
-      "name" : "DistinctStream_2",
-      "numPartitions" : 1,
-      "replicationFactor" : 1,
-      "replicasAssignments" : { },
-      "config" : { }
-    },
-    {
-      "name" : "JoinStream_4",
-      "numPartitions" : 1,
-      "replicationFactor" : 1,
-      "replicasAssignments" : { },
-      "config" : { }
-    }
-  ]
+  "topics" : [ ]
 }
 >>>postgres.json
 {
@@ -295,6 +205,38 @@ INSERT INTO `default_catalog`.`default_database`.`DistinctStream_2`
       "name" : "Customer_1",
       "type" : "TABLE",
       "sql" : "CREATE TABLE IF NOT EXISTS \"Customer_1\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "lastUpdated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "CustomerWithEmail_2",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerWithEmail_2\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -356,13 +298,18 @@ INSERT INTO `default_catalog`.`default_database`.`DistinctStream_2`
       ]
     },
     {
-      "name" : "JoinStream_5",
-      "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"JoinStream_5\" (\"id\" BIGINT NOT NULL, \"name\" TEXT NOT NULL, \"__pk_hash\" TEXT  , PRIMARY KEY (\"__pk_hash\"))",
+      "name" : "Customer",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"Customer_1\"",
       "fields" : [
         {
-          "name" : "id",
+          "name" : "customerid",
           "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
           "nullable" : false
         },
         {
@@ -371,43 +318,21 @@ INSERT INTO `default_catalog`.`default_database`.`DistinctStream_2`
           "nullable" : false
         },
         {
-          "name" : "__pk_hash",
-          "type" : "TEXT",
-          "nullable" : true
-        }
-      ]
-    },
-    {
-      "name" : "Orders_6",
-      "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_6\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB  , PRIMARY KEY (\"id\",\"time\"))",
-      "fields" : [
-        {
-          "name" : "id",
+          "name" : "lastUpdated",
           "type" : "BIGINT",
           "nullable" : false
         },
         {
-          "name" : "customerid",
-          "type" : "BIGINT",
-          "nullable" : false
-        },
-        {
-          "name" : "time",
+          "name" : "timestamp",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : false
-        },
-        {
-          "name" : "entries",
-          "type" : "JSONB",
           "nullable" : true
         }
       ]
     },
     {
-      "name" : "Customer",
+      "name" : "CustomerWithEmail",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"Customer_1\"",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerWithEmail\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"CustomerWithEmail_2\"",
       "fields" : [
         {
           "name" : "customerid",
@@ -464,50 +389,6 @@ INSERT INTO `default_catalog`.`default_database`.`DistinctStream_2`
         {
           "name" : "timestamp",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
-        }
-      ]
-    },
-    {
-      "name" : "JoinStream",
-      "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"JoinStream\"(\"id\", \"name\") AS SELECT \"id\", \"name\"\nFROM \"JoinStream_5\"",
-      "fields" : [
-        {
-          "name" : "id",
-          "type" : "BIGINT",
-          "nullable" : false
-        },
-        {
-          "name" : "name",
-          "type" : "TEXT",
-          "nullable" : false
-        }
-      ]
-    },
-    {
-      "name" : "Orders",
-      "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"Orders_6\"",
-      "fields" : [
-        {
-          "name" : "id",
-          "type" : "BIGINT",
-          "nullable" : false
-        },
-        {
-          "name" : "customerid",
-          "type" : "BIGINT",
-          "nullable" : false
-        },
-        {
-          "name" : "time",
-          "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : false
-        },
-        {
-          "name" : "entries",
-          "type" : "JSONB",
           "nullable" : true
         }
       ]

@@ -65,6 +65,13 @@ public class TableAnalysis implements TableOrFunctionAnalysis {
   @NonNull @Builder.Default
   PrimaryKeyMap primaryKey = PrimaryKeyMap.UNDEFINED;
   /**
+   * If this table selects from and has the identical rowtype to
+   * one of it's input tables we consider that table to be the base table.
+   * We keep track of this so we don't generate a bunch of identical types in the API.
+   */
+  @NonNull @Builder.Default
+  Optional<TableAnalysis> optionalBaseTable = Optional.empty();
+  /**
    * Whether this table is a distinct/deduplication table that only deduplicates
    * a CDC stream into the original state table. This is flagged so it can be optimized out in the DAG
    */
@@ -128,6 +135,11 @@ public class TableAnalysis implements TableOrFunctionAnalysis {
       }
     }
     return streamRoot;
+  }
+
+  @Override
+  public TableAnalysis getBaseTable() {
+    return optionalBaseTable.orElse(this);
   }
 
   public String getName() {

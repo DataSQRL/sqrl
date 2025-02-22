@@ -208,11 +208,13 @@ public class DAGPlanner {
                 Collectors.toList());
             tblBuilder.setPrimaryKey(pkColNames);
           }
-          originalNodeTable.getHints().getHint(PartitionKeyHint.class).ifPresent(
-              partitionKeyHint -> tblBuilder.setPartition(partitionKeyHint.getColumnNames()));
+          if (exportEngine.supports(EngineFeature.PARTITIONING)) {
+            originalNodeTable.getHints().getHint(PartitionKeyHint.class).ifPresent(
+                partitionKeyHint -> tblBuilder.setPartition(partitionKeyHint.getColumnNames()));
+          }
 
           //#2nd: apply type casting
-          mapTypes(relBuilder, sinkNodeTable.getRowType(), sqrlEnv, exportEngine.getTypeMapping(), Direction.TO_ENGINE);
+          mapTypes(relBuilder, sqrlEnv, exportEngine.getTypeMapping(), Direction.TO_ENGINE);
 
           //#3rd: create table
           RelDataType datatype = relBuilder.peek().getRowType();
@@ -343,9 +345,9 @@ public class DAGPlanner {
    * @param typeMapper
    * @param mapDirection
    */
-  private void mapTypes(RelBuilder relBuilder, RelDataType sourceType, Sqrl2FlinkSQLTranslator sqrlEnv,
+  private void mapTypes(RelBuilder relBuilder, Sqrl2FlinkSQLTranslator sqrlEnv,
       DataTypeMapping typeMapper, DataTypeMapping.Direction mapDirection) {
-
+    RelDataType sourceType = relBuilder.peek().getRowType();
     boolean hasChanged = false;
     List<RelDataTypeField> sourceFields = sourceType.getFieldList();
     List<RexNode> fields = new ArrayList<>();
@@ -404,7 +406,7 @@ public class DAGPlanner {
       RelNode result;
       if (inputTableId != null) {
         FlinkRelBuilder relBuilder = sqrlEnv.getTableScan(inputTableId);
-        mapTypes(relBuilder, scan.getRowType(), sqrlEnv, typeMapping, Direction.FROM_ENGINE);
+        mapTypes(relBuilder, sqrlEnv, typeMapping, Direction.FROM_ENGINE);
         result = relBuilder.build();
       } else {
         result = tableAnalysis.getCollapsedRelnode().accept(this);

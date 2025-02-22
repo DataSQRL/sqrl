@@ -89,14 +89,14 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
 
   @Getter
   protected final EngineConfig engineConfig;
-  protected final ConnectorConf connector;
+  protected final Optional<ConnectorConf> connector;
 
   public AbstractJDBCEngine(@NonNull String name, @NonNull EngineType type,
       @NonNull EnumSet<EngineFeature> capabilities,
       @NonNull EngineConfig engineConfig, @NonNull ConnectorFactoryFactory connectorFactory) {
     super(name, type, capabilities);
     this.engineConfig = engineConfig;
-    this.connector = connectorFactory.getConfig(getName());
+    this.connector = connectorFactory.getOptionalConfig(getName());
   }
 
   protected abstract JdbcDialect getDialect();
@@ -104,7 +104,8 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
   public EngineCreateTable createTable(ExecutionStage stage, String originalTableName,
       FlinkTableBuilder tableBuilder, RelDataType relDataType, Optional<TableAnalysis> tableAnalysis) {
     String tableName = tableBuilder.getTableName();
-    tableBuilder.setConnectorOptions(connector.toMapWithSubstitution(Context.builder()
+    ConnectorConf connect = connector.orElseThrow(() -> new IllegalArgumentException("Missing Flink connector configuration for engine: " + getName()));
+    tableBuilder.setConnectorOptions(connect.toMapWithSubstitution(Context.builder()
         .tableName(tableName).origTableName(originalTableName).build()));
     return new JdbcEngineCreateTable(tableBuilder, relDataType, tableAnalysis.get());
   }

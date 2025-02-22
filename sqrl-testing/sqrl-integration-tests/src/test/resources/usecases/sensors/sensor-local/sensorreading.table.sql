@@ -1,5 +1,5 @@
 CREATE TABLE SensorReading (
-     `timestamp` AS EpochMilliToTimestamp(time),
+     `timestamp` AS EpochMilliToTimestamp(`time`),
      PRIMARY KEY (sensorid, `time`) NOT ENFORCED,
      WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 ) WITH (

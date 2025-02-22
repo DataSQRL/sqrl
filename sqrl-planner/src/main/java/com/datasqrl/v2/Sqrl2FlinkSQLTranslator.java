@@ -134,7 +134,6 @@ public class Sqrl2FlinkSQLTranslator {
 
   private final StreamTableEnvironmentImpl tEnv;
   private final Supplier<FlinkPlannerImpl> validatorSupplier;
-  private final Supplier<CalciteParser> calciteSupplier;
   private final SqrlFunctionCatalog sqrlFunctionCatalog;
   private final CatalogManager catalogManager;
   @Getter
@@ -168,15 +167,6 @@ public class Sqrl2FlinkSQLTranslator {
     this.tEnv.getConfig().setPlannerConfig(calciteConfigBuilder.build());
     this.catalogManager = tEnv.getCatalogManager();
 
-    try {
-      //TODO: This is a hack - is there a better way to get the calcite parser?
-      Field calciteSupplierField = ParserImpl.class.getDeclaredField("calciteParserSupplier");
-      calciteSupplierField.setAccessible(true);
-      this.calciteSupplier = (Supplier<CalciteParser>) calciteSupplierField.get(tEnv.getParser());
-    } catch (NoSuchFieldException | IllegalAccessException e) {
-      throw new RuntimeException(e);
-    }
-
     //Register SQRL standard functions
     StreamUtil.filterByClass(ServiceLoaderDiscovery.getAll(StdLibrary.class), AbstractFunctionModule.class)
         .flatMap(fctModule -> fctModule.getFunctions().stream())
@@ -194,14 +184,19 @@ public class Sqrl2FlinkSQLTranslator {
   }
 
   public SqlNode parseSQL(String sqlStatement) {
-    SqlNodeList sqlNodeList = calciteSupplier.get().parseSqlList(sqlStatement);
+    CalciteParser parser;
+    try {
+      //TODO: This is a hack - is there a better way to get the calcite parser?
+      Field calciteSupplierField = ParserImpl.class.getDeclaredField("calciteParserSupplier");
+      calciteSupplierField.setAccessible(true);
+      parser = ((Supplier<CalciteParser>) calciteSupplierField.get(tEnv.getParser())).get();
+    } catch (NoSuchFieldException | IllegalAccessException e) {
+      throw new RuntimeException(e);
+    }
+    SqlNodeList sqlNodeList = parser.parseSqlList(sqlStatement);
     List<SqlNode> parsed = sqlNodeList.getList();
     Preconditions.checkArgument(parsed.size() == 1);
     return parsed.get(0);
-  }
-
-  public Operation parseOperation(String sqlStatement) {
-    return tEnv.getParser().parse(sqlStatement).get(0);
   }
 
   public SqlNode toSqlNode(RelNode relNode) {
@@ -348,13 +343,12 @@ public class Sqrl2FlinkSQLTranslator {
     }
     else throw new UnsupportedOperationException(op.getClass().toString());
 
-
     /* Stage 2: Analyze the RelNode/RelRoot
         - pull out top-level sort
       NOTE: Flink modifies the SqlSelect node during validation, so we have to re-create it from the original SQL
      */
-    //
-    ViewAnalysis viewAnalysis = analyzeView(parseSQL(originalSql), removedSort, hints, errors);
+    SqlNode viewDef2 = parseSQL(originalSql);
+    ViewAnalysis viewAnalysis = analyzeView(viewDef2, removedSort, hints, errors);
     TableAnalysis tableAnalysis = viewAnalysis.getTableAnalysis()
         .identifier(identifier)
         .originalSql(originalSql)
@@ -397,8 +391,8 @@ public class Sqrl2FlinkSQLTranslator {
           parsedArg.getIndex(), type, parsedArg.isParentField()));
     }
     //Analyze Query
-    SqlNode sqlNode = parseSQL(originalSql);
-    ViewAnalysis viewAnalysis = analyzeView(sqlNode, false, hints, errors);
+    SqlNode funcDef2 = parseSQL(originalSql);
+    ViewAnalysis viewAnalysis = analyzeView(funcDef2, false, hints, errors);
     //Remap parameters in query so the RexDynamicParam point directly at the function parameter by index
     RelNode updateParameters = viewAnalysis.getRelNode().accept(new DynamicParameterReplacer(argumentIndexMap));
     TableAnalysis.TableAnalysisBuilder tblBuilder = viewAnalysis.getTableAnalysis();
@@ -406,13 +400,8 @@ public class Sqrl2FlinkSQLTranslator {
     tblBuilder.identifier(identifier);
     tblBuilder.originalSql(originalSql);
     TableAnalysis tableAnalysis = tblBuilder.build();
-    //The base table is the right-most table in the relational tree that has the same type as the result
-    Optional<TableAnalysis> baseTable = Optional.ofNullable(Iterables.getLast(tableAnalysis.getFromTables(),null))
-        .filter(tbl -> tbl.getRowType().equals(tableAnalysis.getRowType()))
-        .filter(TableAnalysis.class::isInstance).map(TableAnalysis.class::cast);
     SqrlTableFunction.SqrlTableFunctionBuilder fctBuilder = SqrlTableFunction.builder()
         .functionAnalysis(tableAnalysis)
-        .baseTable(baseTable)
         .parameters(parameters)
         .multiplicity(SqrlTableFunction.getMultiplicity(updateParameters));
     return fctBuilder;

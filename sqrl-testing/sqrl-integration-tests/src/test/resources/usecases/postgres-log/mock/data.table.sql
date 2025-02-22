@@ -3,8 +3,8 @@ CREATE TABLE Data (
     `EPOCH_TIMESTAMP` BIGINT NOT NULL,
     `SOME_VALUE` STRING NOT NULL,
     `_uuid` STRING NOT NULL,
-    `TIMESTAMP` AS time.epochMilliToTimestamp(`EPOCH_TIMESTAMP`),
-    `event_time` AS time.epochMilliToTimestamp(`EPOCH_TIMESTAMP`),
+    `TIMESTAMP` AS epochMilliToTimestamp(`EPOCH_TIMESTAMP`),
+    `event_time` AS epochMilliToTimestamp(`EPOCH_TIMESTAMP`),
     PRIMARY KEY (`ID`) NOT ENFORCED,
     WATERMARK FOR `TIMESTAMP` AS `TIMESTAMP` - INTERVAL '0.001' SECOND
 ) WITH (

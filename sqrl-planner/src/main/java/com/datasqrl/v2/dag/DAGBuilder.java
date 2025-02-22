@@ -22,7 +22,6 @@ public class DAGBuilder {
 
   Multimap<PipelineNode, PipelineNode> dagInputs = HashMultimap.create();
   Map<ObjectIdentifier, PipelineNode> nodeLookup = new HashMap<>();
-  Set<NamePath> functionPaths = new HashSet<>();
 
   public void add(TableNode node) {
     PipelineNode priorNode = nodeLookup.put(node.getIdentifier(), node);

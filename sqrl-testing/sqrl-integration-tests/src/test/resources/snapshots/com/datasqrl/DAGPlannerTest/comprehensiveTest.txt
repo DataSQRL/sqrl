@@ -50,6 +50,7 @@ Inputs: default_catalog.default_database.Customer
 Annotations:
  - stream-root: Customer__def
  - parameters: minId
+ - base-table: Customer
 Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalFilter(condition=[>($0, ?0)])
@@ -154,6 +155,7 @@ Inputs: default_catalog.default_database.AnotherCustomer
 Annotations:
  - stream-root: _customer__def
  - parameters: id
+ - base-table: AnotherCustomer
 Plan:
 LogicalProject(customerid=[$0], email=[$1], lastUpdated=[$2])
   LogicalFilter(condition=[=($0, ?0)])
@@ -188,6 +190,7 @@ Inputs: default_catalog.default_database.Customer
 Annotations:
  - stream-root: Customer__def
  - parameters: minId
+ - base-table: Customer
 Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalFilter(condition=[=($0, ?0)])
@@ -373,6 +376,7 @@ Annotations:
  - features: TABLE_FUNCTION_SCAN (feature)
  - stream-root: Customer__def
  - parameters: arg1, arg2
+ - base-table: Customer
 Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalFilter(condition=[>($0, ?0)])
@@ -735,7 +739,7 @@ CREATE TABLE `Customer_3` (
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
   'key.format' = 'raw',
-  'topic' = 'Customer_3'
+  'topic' = 'Customer'
 );
 CREATE TABLE `CustomerByMultipleTime_4` (
   `customerid` BIGINT NOT NULL,
@@ -795,7 +799,7 @@ CREATE TABLE `CustomerSubscription_7` (
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
   'key.format' = 'raw',
-  'topic' = 'CustomerSubscription_7'
+  'topic' = 'CustomerSubscription'
 );
 CREATE TABLE `TimeWindow_8` (
   `window_start` TIMESTAMP(3) NOT NULL,

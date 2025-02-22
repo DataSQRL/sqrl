@@ -26,7 +26,7 @@ FROM `default_catalog`.`default_database`.`Customer__def`
 === OrderCustomer1
 ID:     default_catalog.default_database.OrderCustomer1
 Type:   stream
-Stage:  postgres
+Stage:  flink
 Inputs: default_catalog.default_database.Customer, default_catalog.default_database.Orders
 Primary Key: -
 Timestamp  : -
@@ -44,7 +44,7 @@ SQL: CREATE VIEW OrderCustomer1 AS  SELECT o.id, c.name, o.customerid FROM Order
 === OrderCustomer2
 ID:     default_catalog.default_database.OrderCustomer2
 Type:   stream
-Stage:  postgres
+Stage:  flink
 Inputs: default_catalog.default_database.Customer, default_catalog.default_database.Orders
 Primary Key: -
 Timestamp  : -
@@ -62,7 +62,7 @@ SQL: CREATE VIEW OrderCustomer2 AS  SELECT o.id, c.name, o.customerid FROM Order
 === OrderCustomer3
 ID:     default_catalog.default_database.OrderCustomer3
 Type:   stream
-Stage:  postgres
+Stage:  flink
 Inputs: default_catalog.default_database.Customer, default_catalog.default_database.Orders
 Primary Key: -
 Timestamp  : -
@@ -176,7 +176,49 @@ CREATE TABLE `Customer_1` (
   'url' = 'jdbc:postgresql://${JDBC_URL}',
   'table-name' = 'Customer_1'
 );
-CREATE TABLE `Orders_2` (
+CREATE TABLE `OrderCustomer1_2` (
+  `id` BIGINT NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'table-name' = 'OrderCustomer1_2'
+);
+CREATE TABLE `OrderCustomer2_3` (
+  `id` BIGINT NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'table-name' = 'OrderCustomer2_3'
+);
+CREATE TABLE `OrderCustomer3_4` (
+  `id` BIGINT NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'table-name' = 'OrderCustomer3_4'
+);
+CREATE TABLE `Orders_5` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
@@ -188,18 +230,30 @@ CREATE TABLE `Orders_2` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_URL}',
-  'table-name' = 'Orders_2'
+  'table-name' = 'Orders_5'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`
 (SELECT *
  FROM `default_catalog`.`default_database`.`Customer`)
 ;
-INSERT INTO `default_catalog`.`default_database`.`Orders_2`
- (SELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`
-  FROM `default_catalog`.`default_database`.`Orders`)
+INSERT INTO `default_catalog`.`default_database`.`OrderCustomer1_2`
+ (SELECT `id`, `name`, `customerid`, HASHCOLUMNS(`id`, `name`, `customerid`) AS `__pk_hash`
+  FROM `default_catalog`.`default_database`.`OrderCustomer1`)
  ;
- END
+ INSERT INTO `default_catalog`.`default_database`.`OrderCustomer2_3`
+  (SELECT `id`, `name`, `customerid`, HASHCOLUMNS(`id`, `name`, `customerid`) AS `__pk_hash`
+   FROM `default_catalog`.`default_database`.`OrderCustomer2`)
+  ;
+  INSERT INTO `default_catalog`.`default_database`.`OrderCustomer3_4`
+   (SELECT `id`, `name`, `customerid`, HASHCOLUMNS(`id`, `name`, `customerid`) AS `__pk_hash`
+    FROM `default_catalog`.`default_database`.`OrderCustomer3`)
+   ;
+   INSERT INTO `default_catalog`.`default_database`.`Orders_5`
+    (SELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`
+     FROM `default_catalog`.`default_database`.`Orders`)
+    ;
+    END
 >>>kafka.json
 {
   "topics" : [ ]
@@ -240,9 +294,90 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
       ]
     },
     {
-      "name" : "Orders_2",
+      "name" : "OrderCustomer1_2",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_2\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB  , PRIMARY KEY (\"id\",\"time\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"OrderCustomer1_2\" (\"id\" BIGINT NOT NULL, \"name\" TEXT NOT NULL, \"customerid\" BIGINT NOT NULL, \"__pk_hash\" TEXT  , PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "OrderCustomer2_3",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"OrderCustomer2_3\" (\"id\" BIGINT NOT NULL, \"name\" TEXT NOT NULL, \"customerid\" BIGINT NOT NULL, \"__pk_hash\" TEXT  , PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "OrderCustomer3_4",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"OrderCustomer3_4\" (\"id\" BIGINT NOT NULL, \"name\" TEXT NOT NULL, \"customerid\" BIGINT NOT NULL, \"__pk_hash\" TEXT  , PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "Orders_5",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_5\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB  , PRIMARY KEY (\"id\",\"time\"))",
       "fields" : [
         {
           "name" : "id",
@@ -301,7 +436,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
     {
       "name" : "OrderCustomer1",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomer1\"(\"id\", \"name\", \"customerid\") AS SELECT \"Orders_22\".\"id\", \"Customer_12\".\"name\", \"Orders_22\".\"customerid\"\nFROM \"Orders_2\" AS \"Orders_22\"\n INNER JOIN \"Customer_1\" AS \"Customer_12\" ON \"Orders_22\".\"customerid\" = \"Customer_12\".\"customerid\" AND \"Orders_22\".\"time\" > \"Customer_12\".\"timestamp\" AND \"Orders_22\".\"time\" <= \"Customer_12\".\"timestamp\" + 31 * INTERVAL '1' DAY",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomer1\"(\"id\", \"name\", \"customerid\") AS SELECT \"id\", \"name\", \"customerid\"\nFROM \"OrderCustomer1_2\"",
       "fields" : [
         {
           "name" : "id",
@@ -323,7 +458,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
     {
       "name" : "OrderCustomer2",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomer2\"(\"id\", \"name\", \"customerid\") AS SELECT \"Orders_22\".\"id\", \"Customer_12\".\"name\", \"Orders_22\".\"customerid\"\nFROM \"Orders_2\" AS \"Orders_22\"\n INNER JOIN \"Customer_1\" AS \"Customer_12\" ON \"Orders_22\".\"customerid\" = \"Customer_12\".\"customerid\" AND \"Orders_22\".\"time\" >= \"Customer_12\".\"timestamp\" + 2 * INTERVAL '1' DAY AND \"Orders_22\".\"time\" <= \"Customer_12\".\"timestamp\" + 31 * INTERVAL '1' DAY",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomer2\"(\"id\", \"name\", \"customerid\") AS SELECT \"id\", \"name\", \"customerid\"\nFROM \"OrderCustomer2_3\"",
       "fields" : [
         {
           "name" : "id",
@@ -345,7 +480,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
     {
       "name" : "OrderCustomer3",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomer3\"(\"id\", \"name\", \"customerid\") AS SELECT \"Orders_22\".\"id\", \"Customer_12\".\"name\", \"Orders_22\".\"customerid\"\nFROM \"Orders_2\" AS \"Orders_22\"\n INNER JOIN \"Customer_1\" AS \"Customer_12\" ON \"Orders_22\".\"customerid\" = \"Customer_12\".\"customerid\" AND \"Orders_22\".\"time\" >= \"Customer_12\".\"timestamp\" - INTERVAL '4' HOUR AND \"Orders_22\".\"time\" <= \"Customer_12\".\"timestamp\"",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomer3\"(\"id\", \"name\", \"customerid\") AS SELECT \"id\", \"name\", \"customerid\"\nFROM \"OrderCustomer3_4\"",
       "fields" : [
         {
           "name" : "id",
@@ -367,7 +502,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
     {
       "name" : "Orders",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"Orders_2\"",
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"Orders_5\"",
       "fields" : [
         {
           "name" : "id",
@@ -390,11 +525,6 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
           "nullable" : true
         }
       ]
-    },
-    {
-      "name" : "Customer_1_btree_c0c4",
-      "type" : "INDEX",
-      "sql" : "CREATE INDEX IF NOT EXISTS Customer_1_btree_c0c4 ON Customer_1 USING btree (\"customerid\",\"timestamp\");"
     }
   ]
 }

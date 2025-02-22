@@ -60,6 +60,26 @@ LogicalProject(time=[$2], id=[$0], name=[$6], customerid=[$1])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL: CREATE VIEW OrderCustomerConstant AS  SELECT o.`time`,o.id, c.name, o.customerid FROM Orders o INNER JOIN Customer c ON o.customerid = c.customerid AND c.name = 'Robert' AND o.id > 5;
 
+=== OrderCustomerLeft
+ID:     default_catalog.default_database.OrderCustomerLeft
+Type:   state
+Stage:  postgres
+Inputs: default_catalog.default_database.Customer, default_catalog.default_database.Orders
+Primary Key: -
+Timestamp  : -
+Schema:
+ - cid: BIGINT NOT NULL
+ - ctime: BIGINT NOT NULL
+ - id: BIGINT NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - customerid: BIGINT NOT NULL
+Plan:
+LogicalProject(cid=[coalesce($4, 0:BIGINT)], ctime=[coalesce($7, 0:BIGINT)], id=[$0], name=[$6], customerid=[$1])
+  LogicalJoin(condition=[=($1, $4)], joinType=[left])
+    LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW OrderCustomerLeft AS  SELECT coalesce(c.customerid, 0) as cid, coalesce(c.lastUpdated, 0) as ctime, o.id, c.name, o.customerid  FROM Orders o LEFT JOIN Customer c on o.customerid = c.customerid;
+
 === OrderCustomerLeftExcluded
 ID:     default_catalog.default_database.OrderCustomerLeftExcluded
 Type:   state
@@ -78,6 +98,26 @@ LogicalProject(time=[$2], id=[$0], customerid=[$1])
       LogicalTableScan(table=[[default_catalog, default_database, Orders]])
       LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL: CREATE VIEW OrderCustomerLeftExcluded AS  SELECT o.`time`, o.id, o.customerid  FROM Orders o LEFT JOIN Customer c on o.customerid = c.customerid WHERE c.customerid IS NULL AND c.lastUpdated IS NULL;
+
+=== OrderCustomerRight
+ID:     default_catalog.default_database.OrderCustomerRight
+Type:   state
+Stage:  postgres
+Inputs: default_catalog.default_database.Customer, default_catalog.default_database.Orders
+Primary Key: -
+Timestamp  : otime
+Schema:
+ - ouuid: BIGINT NOT NULL
+ - otime: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - id: BIGINT
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - customerid: BIGINT
+Plan:
+LogicalProject(ouuid=[coalesce($0, 0:BIGINT)], otime=[coalesce($2, PROCTIME())], id=[$0], name=[$6], customerid=[$1])
+  LogicalJoin(condition=[=($1, $4)], joinType=[right])
+    LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW OrderCustomerRight AS  SELECT coalesce(o.id, 0) as ouuid, coalesce(o.`time`, proctime()) as otime,o.id, c.name, o.customerid  FROM Orders o RIGHT JOIN Customer c on o.customerid = c.customerid;
 
 === OrderCustomerRightExcluded
 ID:     default_catalog.default_database.OrderCustomerRightExcluded

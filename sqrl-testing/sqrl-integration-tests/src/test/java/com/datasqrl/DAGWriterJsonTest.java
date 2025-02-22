@@ -1,7 +1,6 @@
 package com.datasqrl;
 
-import com.datasqrl.actions.WriteDag;
-import com.datasqrl.actions.WriteDagOld;
+import com.datasqrl.actions.DagWriter;
 import java.nio.file.Path;
 import java.util.function.Predicate;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -31,7 +30,7 @@ public class DAGWriterJsonTest extends AbstractUseCaseTest {
   }
 
   public Predicate<Path> getBuildDirFilter() {
-    return path -> path.getFileName().toString().endsWith(WriteDag.EXPLAIN_JSON_FILENAME);
+    return path -> path.getFileName().toString().endsWith(DagWriter.EXPLAIN_JSON_FILENAME);
   }
 
   public Predicate<Path> getPlanDirFilter() {

@@ -1,0 +1,7 @@
+IMPORT ecommerceTs.Customer;
+
+CustomerWithEmail := SELECT * FROM Customer WHERE email IS NOT NULL;
+DistinctCustomer := DISTINCT Customer ON customerid ORDER BY `timestamp` DESC;
+CustomerById($id: BIGINT) := SELECT * FROM CustomerWithEmail WHERE customerid = $id;
+DistinctCustomerById($id: BIGINT) := SELECT * FROM DistinctCustomer WHERE customerid = $id;
+

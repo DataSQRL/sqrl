@@ -1,6 +1,0 @@
-IMPORT ecommerceTs.Customer;
-IMPORT ecommerceTs.Orders;
-
-CustomerByEmail($email : STRING) := SELECT * FROM Customer WHERE email = $email;
-OrdersIDRange($idLower: Int) := SELECT * FROM Orders WHERE id > $idLower;
-Orders2($idLower: Int) := SELECT id, id - $idLower AS delta, `time` FROM Orders WHERE id > $idLower;

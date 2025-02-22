@@ -21,6 +21,12 @@ public interface TableOrFunctionAnalysis extends AbstractAnalysis {
   }
 
   /**
+   * The base table on which this function is defined.
+   * This means, that this table or function returns the same type as the base table.
+   */
+  TableAnalysis getBaseTable();
+
+  /**
    * A full identifier combines the object identifier
    * with the parameter list to unqiuely quality a table or function
    * within the catalog.

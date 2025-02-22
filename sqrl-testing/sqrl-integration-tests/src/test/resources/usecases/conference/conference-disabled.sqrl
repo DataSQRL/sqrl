@@ -1,3 +1,6 @@
+/*
+ Needs vector embeddings support from sqrl-functions
+ */
 IMPORT events-data.Events;
 
 IMPORT conference.Likes;

@@ -50,6 +50,134 @@ SQL: CREATE VIEW `CustomerStream`
 AS
 SELECT *
 FROM `default_catalog`.`default_database`.`CustomerStream__def`
+=== ObjComplex
+ID:     default_catalog.default_database.ObjComplex
+Type:   state
+Stage:  postgres
+Inputs: default_catalog.default_database.Customer
+Annotations:
+ - stream-root: CustomerStream__def
+Primary Key: -
+Timestamp  : -
+Schema:
+ - obj: RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI=')
+Plan:
+LogicalProject(obj=[jsonObject(CONCAT('application#', $2), $0)])
+  LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW ObjComplex AS  SELECT jsonObject(concat('application#',CAST(name AS VARCHAR)), customerid) AS obj FROM Customer;
+
+=== jsonArrayTable
+ID:     default_catalog.default_database.jsonArrayTable
+Type:   state
+Stage:  postgres
+Inputs: default_catalog.default_database.Customer
+Annotations:
+ - stream-root: CustomerStream__def
+Primary Key: -
+Timestamp  : -
+Schema:
+ - obj: RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI=')
+Plan:
+LogicalProject(obj=[jsonArray($0)])
+  LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW jsonArrayTable AS  SELECT jsonArray(customerid) AS obj FROM Customer;
+
+=== jsonConcatTable
+ID:     default_catalog.default_database.jsonConcatTable
+Type:   state
+Stage:  postgres
+Inputs: default_catalog.default_database.Customer
+Annotations:
+ - stream-root: CustomerStream__def
+Primary Key: -
+Timestamp  : -
+Schema:
+ - obj: RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI=')
+Plan:
+LogicalProject(obj=[jsonConcat(toJson('{"a": true}'), toJson('{"a": false}'))])
+  LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW jsonConcatTable AS  SELECT jsonConcat(toJson('{"a": true}'), toJson('{"a": false}')) AS obj FROM Customer;
+
+=== jsonExistsTable
+ID:     default_catalog.default_database.jsonExistsTable
+Type:   state
+Stage:  postgres
+Inputs: default_catalog.default_database.Customer
+Annotations:
+ - stream-root: CustomerStream__def
+Primary Key: -
+Timestamp  : -
+Schema:
+ - obj: BOOLEAN
+Plan:
+LogicalProject(obj=[jsonExists(toJson('{"a": true}'), '$.a')])
+  LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW jsonExistsTable AS  SELECT jsonExists(toJson('{"a": true}'), '$.a') AS obj FROM Customer;
+
+=== jsonExtractTable
+ID:     default_catalog.default_database.jsonExtractTable
+Type:   state
+Stage:  postgres
+Inputs: default_catalog.default_database.Customer
+Annotations:
+ - stream-root: CustomerStream__def
+Primary Key: -
+Timestamp  : -
+Schema:
+ - obj: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+Plan:
+LogicalProject(obj=[jsonExtract(toJson('{"a": "hello"}'), '$.a':VARCHAR(2147483647) CHARACTER SET "UTF-16LE", 'default':VARCHAR(2147483647) CHARACTER SET "UTF-16LE")])
+  LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW jsonExtractTable AS  SELECT jsonExtract(toJson('{"a": "hello"}'), CAST('$.a' AS varchar), CAST('default' AS varchar)) AS obj FROM Customer;
+
+=== jsonQueryTable
+ID:     default_catalog.default_database.jsonQueryTable
+Type:   state
+Stage:  postgres
+Inputs: default_catalog.default_database.Customer
+Annotations:
+ - stream-root: CustomerStream__def
+Primary Key: -
+Timestamp  : -
+Schema:
+ - obj: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+Plan:
+LogicalProject(obj=[jsonQuery(toJson('{"a": {"b": 1}}'), '$.a')])
+  LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW jsonQueryTable AS  SELECT jsonQuery(toJson('{"a": {"b": 1}}'), '$.a') AS obj FROM Customer;
+
+=== jsonToStringTable
+ID:     default_catalog.default_database.jsonToStringTable
+Type:   state
+Stage:  postgres
+Inputs: default_catalog.default_database.Customer
+Annotations:
+ - stream-root: CustomerStream__def
+Primary Key: -
+Timestamp  : -
+Schema:
+ - obj: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+Plan:
+LogicalProject(obj=[jsonToString(toJson('{"a": 1}'))])
+  LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW jsonToStringTable AS  SELECT jsonToString(toJson('{"a": 1}')) AS obj FROM Customer;
+
+=== toJsonTable
+ID:     default_catalog.default_database.toJsonTable
+Type:   state
+Stage:  postgres
+Inputs: default_catalog.default_database.Customer
+Annotations:
+ - stream-root: CustomerStream__def
+Primary Key: -
+Timestamp  : -
+Schema:
+ - obj: RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI=')
+Plan:
+LogicalProject(obj=[toJson('{"a": 1}')])
+  LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW toJsonTable AS  SELECT toJson('{"a": 1}') AS obj FROM Customer;
+
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `CustomerStream__schema` (
   `customerid` BIGINT NOT NULL,

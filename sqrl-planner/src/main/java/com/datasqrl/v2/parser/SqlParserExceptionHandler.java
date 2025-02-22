@@ -22,8 +22,9 @@ public class SqlParserExceptionHandler implements ErrorHandler<SqlParserExceptio
     } else {
       location = new FileLocation(1,1);
     }
+    ErrorLocation loc = baseLocation.hasFile()?baseLocation.atFile(location):baseLocation;
     return new ErrorMessage.Implementation(ErrorLabel.GENERIC, e.getMessage(),
-        baseLocation.atFile(location),ErrorMessage.Severity.FATAL);
+        loc,ErrorMessage.Severity.FATAL);
   }
 
   @Override

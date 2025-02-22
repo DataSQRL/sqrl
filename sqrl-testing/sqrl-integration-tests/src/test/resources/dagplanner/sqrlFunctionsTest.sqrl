@@ -1,0 +1,6 @@
+MyTable := SELECT val, EpochToTimestamp(val) AS myTimestamp
+           FROM (VALUES ((1)), ((2))) AS t(val);
+
+MyTable2 := SELECT val, EPOCHTOTIMESTAMP(val) AS myTimestamp
+           FROM (VALUES ((3)), ((4))) AS t(val);
+

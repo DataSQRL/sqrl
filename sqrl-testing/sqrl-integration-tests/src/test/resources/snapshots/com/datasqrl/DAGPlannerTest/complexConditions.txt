@@ -69,6 +69,48 @@ SQL: CREATE VIEW `Product`
 AS
 SELECT *
 FROM `default_catalog`.`default_database`.`Product__def`
+=== ProductFilter1
+ID:     default_catalog.default_database.ProductFilter1
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.Product
+Annotations:
+ - stream-root: Product__def
+Primary Key: productid, name, description, category
+Timestamp  : _ingest_time
+Schema:
+ - productid: BIGINT NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - description: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - category: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - _ingest_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Plan:
+LogicalProject(productid=[$0], name=[$1], description=[$2], category=[$3], _ingest_time=[$4])
+  LogicalFilter(condition=[array_contains(ARRAY('one':VARCHAR(2147483647) CHARACTER SET "UTF-16LE", 'two':VARCHAR(2147483647) CHARACTER SET "UTF-16LE"), $1)])
+    LogicalTableScan(table=[[default_catalog, default_database, Product]])
+SQL: CREATE VIEW ProductFilter1 AS  SELECT * FROM Product WHERE array_contains(ARRAY[CAST('one' AS String), CAST('two' AS String)], name);
+
+=== ProductFilter2
+ID:     default_catalog.default_database.ProductFilter2
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.Product
+Annotations:
+ - stream-root: Product__def
+Primary Key: productid, name, description, category
+Timestamp  : _ingest_time
+Schema:
+ - productid: BIGINT NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - description: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - category: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - _ingest_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Plan:
+LogicalProject(productid=[$0], name=[$1], description=[$2], category=[$3], _ingest_time=[$4])
+  LogicalFilter(condition=[array_contains(split('one, two', ','), $1)])
+    LogicalTableScan(table=[[default_catalog, default_database, Product]])
+SQL: CREATE VIEW ProductFilter2 AS  SELECT * FROM Product WHERE array_contains(split('one, two', ','), name);
+
 === SelectOrders1
 ID:     default_catalog.default_database.SelectOrders1
 Type:   stream
@@ -279,31 +321,37 @@ CREATE TABLE `Product_3` (
   'url' = 'jdbc:postgresql://${JDBC_URL}',
   'table-name' = 'Product_3'
 );
-CREATE TABLE `SelectOrders1_4` (
-  `id` BIGINT NOT NULL,
-  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  PRIMARY KEY (`id`, `time`) NOT ENFORCED
+CREATE TABLE `ProductFilter1_4` (
+  `productid` BIGINT NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`productid`, `name`, `description`, `category`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_URL}',
-  'table-name' = 'SelectOrders1_4'
+  'table-name' = 'ProductFilter1_4'
 );
-CREATE TABLE `SelectOrders2_5` (
-  `id` BIGINT NOT NULL,
-  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  PRIMARY KEY (`id`, `time`) NOT ENFORCED
+CREATE TABLE `ProductFilter2_5` (
+  `productid` BIGINT NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`productid`, `name`, `description`, `category`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_URL}',
-  'table-name' = 'SelectOrders2_5'
+  'table-name' = 'ProductFilter2_5'
 );
-CREATE TABLE `SelectOrders3_6` (
+CREATE TABLE `SelectOrders1_6` (
   `id` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
@@ -313,7 +361,31 @@ CREATE TABLE `SelectOrders3_6` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_URL}',
-  'table-name' = 'SelectOrders3_6'
+  'table-name' = 'SelectOrders1_6'
+);
+CREATE TABLE `SelectOrders2_7` (
+  `id` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'table-name' = 'SelectOrders2_7'
+);
+CREATE TABLE `SelectOrders3_8` (
+  `id` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'table-name' = 'SelectOrders3_8'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`
@@ -328,19 +400,27 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
   (SELECT *
    FROM `default_catalog`.`default_database`.`Product`)
   ;
-  INSERT INTO `default_catalog`.`default_database`.`SelectOrders1_4`
+  INSERT INTO `default_catalog`.`default_database`.`ProductFilter1_4`
    (SELECT *
-    FROM `default_catalog`.`default_database`.`SelectOrders1`)
+    FROM `default_catalog`.`default_database`.`ProductFilter1`)
    ;
-   INSERT INTO `default_catalog`.`default_database`.`SelectOrders2_5`
+   INSERT INTO `default_catalog`.`default_database`.`ProductFilter2_5`
     (SELECT *
-     FROM `default_catalog`.`default_database`.`SelectOrders2`)
+     FROM `default_catalog`.`default_database`.`ProductFilter2`)
     ;
-    INSERT INTO `default_catalog`.`default_database`.`SelectOrders3_6`
+    INSERT INTO `default_catalog`.`default_database`.`SelectOrders1_6`
      (SELECT *
-      FROM `default_catalog`.`default_database`.`SelectOrders3`)
+      FROM `default_catalog`.`default_database`.`SelectOrders1`)
      ;
-     END
+     INSERT INTO `default_catalog`.`default_database`.`SelectOrders2_7`
+      (SELECT *
+       FROM `default_catalog`.`default_database`.`SelectOrders2`)
+      ;
+      INSERT INTO `default_catalog`.`default_database`.`SelectOrders3_8`
+       (SELECT *
+        FROM `default_catalog`.`default_database`.`SelectOrders3`)
+       ;
+       END
 >>>kafka.json
 {
   "topics" : [ ]
@@ -440,9 +520,73 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
       ]
     },
     {
-      "name" : "SelectOrders1_4",
+      "name" : "ProductFilter1_4",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"SelectOrders1_4\" (\"id\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\",\"time\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"ProductFilter1_4\" (\"productid\" BIGINT NOT NULL, \"name\" TEXT NOT NULL, \"description\" TEXT NOT NULL, \"category\" TEXT NOT NULL, \"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"productid\",\"name\",\"description\",\"category\"))",
+      "fields" : [
+        {
+          "name" : "productid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "description",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "category",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "_ingest_time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
+    },
+    {
+      "name" : "ProductFilter2_5",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"ProductFilter2_5\" (\"productid\" BIGINT NOT NULL, \"name\" TEXT NOT NULL, \"description\" TEXT NOT NULL, \"category\" TEXT NOT NULL, \"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"productid\",\"name\",\"description\",\"category\"))",
+      "fields" : [
+        {
+          "name" : "productid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "description",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "category",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "_ingest_time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
+    },
+    {
+      "name" : "SelectOrders1_6",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"SelectOrders1_6\" (\"id\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\",\"time\"))",
       "fields" : [
         {
           "name" : "id",
@@ -457,9 +601,9 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
       ]
     },
     {
-      "name" : "SelectOrders2_5",
+      "name" : "SelectOrders2_7",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"SelectOrders2_5\" (\"id\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\",\"time\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"SelectOrders2_7\" (\"id\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\",\"time\"))",
       "fields" : [
         {
           "name" : "id",
@@ -474,9 +618,9 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
       ]
     },
     {
-      "name" : "SelectOrders3_6",
+      "name" : "SelectOrders3_8",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"SelectOrders3_6\" (\"id\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\",\"time\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"SelectOrders3_8\" (\"id\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\",\"time\"))",
       "fields" : [
         {
           "name" : "id",
@@ -584,7 +728,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
     {
       "name" : "ProductFilter1",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"ProductFilter1\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"Product_3\"\nWHERE ARRAY_CONTAINS(ARRAY['one', 'two'], \"name\")",
+      "sql" : "CREATE OR REPLACE VIEW \"ProductFilter1\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"ProductFilter1_4\"",
       "fields" : [
         {
           "name" : "productid",
@@ -616,7 +760,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
     {
       "name" : "ProductFilter2",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"ProductFilter2\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"Product_3\"\nWHERE ARRAY_CONTAINS(SPLIT('one, two', ','), \"name\")",
+      "sql" : "CREATE OR REPLACE VIEW \"ProductFilter2\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"ProductFilter2_5\"",
       "fields" : [
         {
           "name" : "productid",
@@ -648,7 +792,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
     {
       "name" : "SelectOrders1",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"SelectOrders1\"(\"id\", \"time\") AS SELECT *\nFROM \"SelectOrders1_4\"",
+      "sql" : "CREATE OR REPLACE VIEW \"SelectOrders1\"(\"id\", \"time\") AS SELECT *\nFROM \"SelectOrders1_6\"",
       "fields" : [
         {
           "name" : "id",
@@ -665,7 +809,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
     {
       "name" : "SelectOrders2",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"SelectOrders2\"(\"id\", \"time\") AS SELECT *\nFROM \"SelectOrders2_5\"",
+      "sql" : "CREATE OR REPLACE VIEW \"SelectOrders2\"(\"id\", \"time\") AS SELECT *\nFROM \"SelectOrders2_7\"",
       "fields" : [
         {
           "name" : "id",
@@ -682,7 +826,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
     {
       "name" : "SelectOrders3",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"SelectOrders3\"(\"id\", \"time\") AS SELECT *\nFROM \"SelectOrders3_6\"",
+      "sql" : "CREATE OR REPLACE VIEW \"SelectOrders3\"(\"id\", \"time\") AS SELECT *\nFROM \"SelectOrders3_8\"",
       "fields" : [
         {
           "name" : "id",

@@ -2,6 +2,7 @@ package com.datasqrl.v2;
 
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -88,6 +89,7 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
     }
 
     public SqlExecute getExecuteStatement() {
+      Preconditions.checkArgument(!statementSet.isEmpty(),"SQRL script does not contain any sink definitions");
       SqlStatementSet sqlStatementSet = new SqlStatementSet(statementSet, SqlParserPos.ZERO);
       return new SqlExecute(sqlStatementSet, SqlParserPos.ZERO);
     }

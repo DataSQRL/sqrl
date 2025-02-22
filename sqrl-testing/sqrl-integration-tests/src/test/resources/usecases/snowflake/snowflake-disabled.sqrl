@@ -1,3 +1,6 @@
+/*
+ Needs to connect to AWS Glue by setting a bunch of AWS credentials as ENV vars or system properties
+ */
 IMPORT data.applications as _applications;
 IMPORT data.applications as _applications2;
 

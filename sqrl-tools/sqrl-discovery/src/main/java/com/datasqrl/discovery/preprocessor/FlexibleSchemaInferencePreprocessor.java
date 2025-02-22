@@ -198,7 +198,7 @@ public class FlexibleSchemaInferencePreprocessor implements DiscoveryPreprocesso
     }
   }
 
-  public static final Set<String> filterExtensions = Set.of(".table.json", "schema.yml");
+  public static final Set<String> filterExtensions = Set.of(".table.sql", ".schema.yml", ".avsc");
 
 
 }

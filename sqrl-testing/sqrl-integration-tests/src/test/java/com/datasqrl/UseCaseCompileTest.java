@@ -2,6 +2,8 @@ package com.datasqrl;
 
 import java.nio.file.Path;
 import lombok.SneakyThrows;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
@@ -15,6 +17,14 @@ public class UseCaseCompileTest extends AbstractUseCaseTest {
 
   protected UseCaseCompileTest() {
     super(USECASE_DIR);
+  }
+
+  @BeforeAll
+  public static void setupEnvVars() {
+  }
+
+  @AfterAll
+  public static void tearDownEnvVars() {
   }
 
   @SneakyThrows

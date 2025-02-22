@@ -102,6 +102,25 @@ LogicalProject(time=[$2], id=[$0], customerid=[$1])
       LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL: CREATE VIEW OrderCustomerLeftExcluded AS  SELECT o.`time`, o.id, o.customerid  FROM Orders o LEFT JOIN Customer c on o.customerid = c.customerid WHERE c.customerid IS NULL;
 
+=== OrderCustomerRight
+ID:     default_catalog.default_database.OrderCustomerRight
+Type:   state
+Stage:  flink
+Inputs: default_catalog.default_database.Customer, default_catalog.default_database.Orders
+Primary Key: ouuid, id
+Timestamp  : -
+Schema:
+ - ouuid: BIGINT NOT NULL
+ - id: BIGINT
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - customerid: BIGINT
+Plan:
+LogicalProject(ouuid=[coalesce($0, 0:BIGINT)], id=[$0], name=[$6], customerid=[$1])
+  LogicalJoin(condition=[=($1, $4)], joinType=[right])
+    LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW OrderCustomerRight AS  SELECT coalesce(o.id, 0) as ouuid, o.id, c.name, o.customerid  FROM Orders o RIGHT JOIN Customer c on o.customerid = c.customerid;
+
 === OrderCustomerRightExcluded
 ID:     default_catalog.default_database.OrderCustomerRightExcluded
 Type:   state
@@ -377,7 +396,21 @@ CREATE TABLE `OrderCustomerLeftExcluded_5` (
   'url' = 'jdbc:postgresql://${JDBC_URL}',
   'table-name' = 'OrderCustomerLeftExcluded_5'
 );
-CREATE TABLE `OrderCustomerRightExcluded_6` (
+CREATE TABLE `OrderCustomerRight_6` (
+  `ouuid` BIGINT NOT NULL,
+  `id` BIGINT,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `customerid` BIGINT,
+  PRIMARY KEY (`ouuid`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'table-name' = 'OrderCustomerRight_6'
+);
+CREATE TABLE `OrderCustomerRightExcluded_7` (
   `lastUpdated` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -389,9 +422,9 @@ CREATE TABLE `OrderCustomerRightExcluded_6` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_URL}',
-  'table-name' = 'OrderCustomerRightExcluded_6'
+  'table-name' = 'OrderCustomerRightExcluded_7'
 );
-CREATE TABLE `Orders_7` (
+CREATE TABLE `Orders_8` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
@@ -403,7 +436,7 @@ CREATE TABLE `Orders_7` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_URL}',
-  'table-name' = 'Orders_7'
+  'table-name' = 'Orders_8'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`
@@ -426,15 +459,19 @@ INSERT INTO `default_catalog`.`default_database`.`OrderCustomer_2`
     (SELECT *
      FROM `default_catalog`.`default_database`.`OrderCustomerLeftExcluded`)
     ;
-    INSERT INTO `default_catalog`.`default_database`.`OrderCustomerRightExcluded_6`
-     (SELECT `lastUpdated`, `customerid`, `name`, 1 AS `__pk_hash`
-      FROM `default_catalog`.`default_database`.`OrderCustomerRightExcluded`)
+    INSERT INTO `default_catalog`.`default_database`.`OrderCustomerRight_6`
+     (SELECT *
+      FROM `default_catalog`.`default_database`.`OrderCustomerRight`)
      ;
-     INSERT INTO `default_catalog`.`default_database`.`Orders_7`
-      (SELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`
-       FROM `default_catalog`.`default_database`.`_orders`)
+     INSERT INTO `default_catalog`.`default_database`.`OrderCustomerRightExcluded_7`
+      (SELECT `lastUpdated`, `customerid`, `name`, 1 AS `__pk_hash`
+       FROM `default_catalog`.`default_database`.`OrderCustomerRightExcluded`)
       ;
-      END
+      INSERT INTO `default_catalog`.`default_database`.`Orders_8`
+       (SELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`
+        FROM `default_catalog`.`default_database`.`_orders`)
+       ;
+       END
 >>>kafka.json
 {
   "topics" : [ ]
@@ -578,9 +615,36 @@ INSERT INTO `default_catalog`.`default_database`.`OrderCustomer_2`
       ]
     },
     {
-      "name" : "OrderCustomerRightExcluded_6",
+      "name" : "OrderCustomerRight_6",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"OrderCustomerRightExcluded_6\" (\"lastUpdated\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"name\" TEXT NOT NULL, \"__pk_hash\" INTEGER NOT NULL , PRIMARY KEY (\"__pk_hash\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"OrderCustomerRight_6\" (\"ouuid\" BIGINT NOT NULL, \"id\" BIGINT , \"name\" TEXT NOT NULL, \"customerid\" BIGINT  , PRIMARY KEY (\"ouuid\"))",
+      "fields" : [
+        {
+          "name" : "ouuid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : true
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "OrderCustomerRightExcluded_7",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"OrderCustomerRightExcluded_7\" (\"lastUpdated\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"name\" TEXT NOT NULL, \"__pk_hash\" INTEGER NOT NULL , PRIMARY KEY (\"__pk_hash\"))",
       "fields" : [
         {
           "name" : "lastUpdated",
@@ -605,9 +669,9 @@ INSERT INTO `default_catalog`.`default_database`.`OrderCustomer_2`
       ]
     },
     {
-      "name" : "Orders_7",
+      "name" : "Orders_8",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_7\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB  , PRIMARY KEY (\"id\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_8\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB  , PRIMARY KEY (\"id\"))",
       "fields" : [
         {
           "name" : "id",
@@ -769,7 +833,7 @@ INSERT INTO `default_catalog`.`default_database`.`OrderCustomer_2`
     {
       "name" : "OrderCustomerRight",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerRight\"(\"ouuid\", \"id\", \"name\", \"customerid\") AS SELECT COALESCE(\"Orders_72\".\"id\", 0) AS \"ouuid\", \"Orders_72\".\"id\", \"Customer_12\".\"name\", \"Orders_72\".\"customerid\"\nFROM \"Orders_7\" AS \"Orders_72\"\n RIGHT JOIN \"Customer_1\" AS \"Customer_12\" ON \"Orders_72\".\"customerid\" = \"Customer_12\".\"customerid\"",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerRight\"(\"ouuid\", \"id\", \"name\", \"customerid\") AS SELECT *\nFROM \"OrderCustomerRight_6\"",
       "fields" : [
         {
           "name" : "ouuid",
@@ -796,7 +860,7 @@ INSERT INTO `default_catalog`.`default_database`.`OrderCustomer_2`
     {
       "name" : "OrderCustomerRightExcluded",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerRightExcluded\"(\"lastUpdated\", \"customerid\", \"name\") AS SELECT \"lastUpdated\", \"customerid\", \"name\"\nFROM \"OrderCustomerRightExcluded_6\"",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerRightExcluded\"(\"lastUpdated\", \"customerid\", \"name\") AS SELECT \"lastUpdated\", \"customerid\", \"name\"\nFROM \"OrderCustomerRightExcluded_7\"",
       "fields" : [
         {
           "name" : "lastUpdated",
@@ -818,7 +882,7 @@ INSERT INTO `default_catalog`.`default_database`.`OrderCustomer_2`
     {
       "name" : "Orders",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"Orders_7\"",
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"Orders_8\"",
       "fields" : [
         {
           "name" : "id",

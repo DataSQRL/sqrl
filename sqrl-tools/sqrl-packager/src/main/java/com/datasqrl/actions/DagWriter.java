@@ -19,7 +19,7 @@ import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 
 @AllArgsConstructor(onConstructor_=@Inject)
-public class WriteDag {
+public class DagWriter {
 
   public static final String EXPLAIN_TEXT_FILENAME = "pipeline_explain.txt";
   public static final String EXPLAIN_VISUAL_FILENAME = "pipeline_visual.html";

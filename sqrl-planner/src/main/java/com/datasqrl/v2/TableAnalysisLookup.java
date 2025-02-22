@@ -1,23 +1,21 @@
 package com.datasqrl.v2;
 
-import com.datasqrl.calcite.function.OperatorRuleTransform;
-import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.v2.analyzer.TableAnalysis;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ListMultimap;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
+import org.apache.calcite.rel.core.AggregateCall;
 import org.apache.calcite.rel.core.CorrelationId;
+import org.apache.calcite.rel.logical.LogicalAggregate;
 import org.apache.calcite.rel.logical.LogicalCorrelate;
-import org.apache.calcite.rel.logical.LogicalJoin;
 import org.apache.calcite.rel.logical.LogicalTableFunctionScan;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexCall;
@@ -25,7 +23,10 @@ import org.apache.calcite.rex.RexCorrelVariable;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.rex.RexSubQuery;
+import org.apache.flink.table.catalog.ContextResolvedFunction;
 import org.apache.flink.table.catalog.ObjectIdentifier;
+import org.apache.flink.table.functions.FunctionIdentifier;
+import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction;
 
 @Value
 public class TableAnalysisLookup {
@@ -83,22 +84,27 @@ public class TableAnalysisLookup {
    * @return
    */
   public RelNode normalizeRelnode(RelNode relNode) {
-    CorrelationIdNormalizer correlIdNormalizer = new CorrelationIdNormalizer(relNode.getCluster().getRexBuilder());
+    RelnodeNormalizer correlIdNormalizer = new RelnodeNormalizer(relNode.getCluster().getRexBuilder());
     relNode = relNode.accept(correlIdNormalizer);
     return relNode;
   }
 
-  private class CorrelationIdNormalizer extends RelShuttleImpl {
+  /**
+   * This class normalizes relnodes, so we can accurately compare them to determine
+   * when a table has been expanded (and therefore should be collapsed in the DAG)
+   * The following causes differences in Relnodes for identical (sub-)queries:
+   * - correlation ids: For correlation variables, the ids are generated in Calcite using a global counter
+   *    => we subtract the id of the first correlation variable we encounter in the relnode tree from all ids we find
+   * - function names: during the execution of an operation, Flink normalizes the function names but that doesn't happen during planning
+   *    => we upper case all names for BridgingSqlFunctions
+   */
+  private class RelnodeNormalizer extends RelShuttleImpl {
 
     RexBuilder rexBuilder;
     int correlationIdAdjustment = Integer.MIN_VALUE;
 
-    public CorrelationIdNormalizer(RexBuilder rexBuilder) {
+    public RelnodeNormalizer(RexBuilder rexBuilder) {
       this.rexBuilder = rexBuilder;
-    }
-
-    public boolean hasAdjusted() {
-      return correlationIdAdjustment >= 0;
     }
 
     private Optional<CorrelationId> adjustCorrelationId(CorrelationId correlationId) {
@@ -109,6 +115,14 @@ public class TableAnalysisLookup {
         if (correlationIdAdjustment == 0) return Optional.empty();
         return Optional.of(new CorrelationId(correlationId.getId()-correlationIdAdjustment));
       } else return Optional.empty();
+    }
+
+    @Override
+    public RelNode visit(LogicalAggregate aggregate) {
+      List<AggregateCall> aggCalls = aggregate.getAggCallList();
+      for (AggregateCall aggCall : aggCalls) {
+      }
+      return super.visit(aggregate);
     }
 
     @Override
@@ -129,7 +143,7 @@ public class TableAnalysisLookup {
         //Since we only visit the children with the rexshuttle below,
         //we have to explicitly visit the table function scan since it is a sink (i.e. no children)
         //but can have RexNodes (a TableScan cannot)
-        return relNode.accept(correlVariableNormalizer);
+        return relNode.accept(rexNormalizer);
       } else {
         return super.visit(relNode);
       }
@@ -137,13 +151,13 @@ public class TableAnalysisLookup {
 
     @Override
     protected RelNode visitChild(RelNode parent, int i, RelNode child) {
-      if (i==0 && hasAdjusted()) parent = parent.accept(correlVariableNormalizer);
+      if (i==0) parent = parent.accept(rexNormalizer);
       return super.visitChild(parent, i, child);
     }
 
-    RexShuttle correlVariableNormalizer = new RexCorrelNormalizer();
+    RexShuttle rexNormalizer = new RexNormalizer();
 
-    class RexCorrelNormalizer extends RexShuttle {
+    class RexNormalizer extends RexShuttle {
 
       @Override
       public RexNode visitCorrelVariable(RexCorrelVariable variable) {
@@ -157,8 +171,41 @@ public class TableAnalysisLookup {
 
       @Override
       public RexNode visitSubQuery(RexSubQuery subQuery) {
-        RelNode rewritten = subQuery.rel.accept(CorrelationIdNormalizer.this);
+        RelNode rewritten = subQuery.rel.accept(RelnodeNormalizer.this);
         return subQuery.clone(rewritten);
+      }
+
+      @Override
+      public RexNode visitCall(RexCall call) {
+        call = (RexCall) super.visitCall(call);
+        if (call.getOperator() instanceof BridgingSqlFunction) {
+          BridgingSqlFunction func = (BridgingSqlFunction) call.getOperator();
+          ContextResolvedFunction resolvedFunc = func.getResolvedFunction();
+          if (resolvedFunc.getIdentifier().isPresent()) {
+            FunctionIdentifier funcId = resolvedFunc.getIdentifier().get();
+            if (!funcId.getFunctionName().equals(funcId.getFunctionName().toUpperCase())) {
+              FunctionIdentifier normalizedFuncId;
+              if (funcId.getSimpleName().isPresent()) {
+                normalizedFuncId = FunctionIdentifier.of(
+                    funcId.getSimpleName().get().toUpperCase());
+              } else {
+                ObjectIdentifier identifier = funcId.getIdentifier().get();
+                ObjectIdentifier normalizedIdentifier = ObjectIdentifier.of(
+                    identifier.getCatalogName(), identifier.getDatabaseName(),
+                    identifier.getObjectName().toUpperCase());
+                normalizedFuncId = FunctionIdentifier.of(normalizedIdentifier);
+              }
+              ContextResolvedFunction normalizedResolvedFunc = ContextResolvedFunction.temporary(
+                  normalizedFuncId,
+                  resolvedFunc.getDefinition());
+              BridgingSqlFunction normalizedFunc = BridgingSqlFunction.of(func.getDataTypeFactory(),
+                  func.getTypeFactory(),
+                  func.getRexFactory(), func.kind, normalizedResolvedFunc, func.getTypeInference());
+              return rexBuilder.makeCall(normalizedFunc, call.getOperands());
+            }
+          }
+        }
+        return call;
       }
     }
 

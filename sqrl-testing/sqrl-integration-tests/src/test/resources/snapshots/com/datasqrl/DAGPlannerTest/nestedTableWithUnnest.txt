@@ -22,6 +22,29 @@ SQL: CREATE VIEW `Orders`
 AS
 SELECT *
 FROM `default_catalog`.`default_database`.`Orders__def`
+=== _OrdersTotals
+ID:     default_catalog.default_database._OrdersTotals
+Type:   state
+Stage:  flink
+Inputs: default_catalog.default_database.Orders
+Primary Key: id
+Timestamp  : -
+Schema:
+ - id: BIGINT NOT NULL
+ - price: DOUBLE NOT NULL
+ - saving: DOUBLE NOT NULL
+Plan:
+LogicalAggregate(group=[{0}], price=[SUM($1)], saving=[SUM($2)])
+  LogicalProject(id=[$0], $f1=[*($5, $6)], $f2=[coalesce($7, 0.0:DOUBLE)])
+    LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{3}])
+      LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+      Uncollect
+        LogicalProject(entries=[$cor1.entries])
+          LogicalValues(tuples=[[{ 0 }]])
+SQL: CREATE VIEW _OrdersTotals AS  SELECT id, sum(quantity * unit_price) as price,
+                        sum(coalesce(discount, 0.0)) as saving FROM Orders CROSS JOIN UNNEST(entries)
+                        GROUP BY id;
+
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `Orders__schema` (
   `id` BIGINT NOT NULL,
@@ -65,12 +88,29 @@ CREATE TABLE `Orders_1` (
   'url' = 'jdbc:postgresql://${JDBC_URL}',
   'table-name' = 'Orders_1'
 );
+CREATE TABLE `_OrdersTotals_2` (
+  `id` BIGINT NOT NULL,
+  `price` DOUBLE NOT NULL,
+  `saving` DOUBLE NOT NULL,
+  PRIMARY KEY (`id`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'table-name' = '_OrdersTotals_2'
+);
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Orders_1`
 (SELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`
  FROM `default_catalog`.`default_database`.`Orders`)
 ;
-END
+INSERT INTO `default_catalog`.`default_database`.`_OrdersTotals_2`
+ (SELECT *
+  FROM `default_catalog`.`default_database`.`_OrdersTotals`)
+ ;
+ END
 >>>kafka.json
 {
   "topics" : [ ]
@@ -102,6 +142,28 @@ END
           "name" : "entries",
           "type" : "JSONB",
           "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "_OrdersTotals_2",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"_OrdersTotals_2\" (\"id\" BIGINT NOT NULL, \"price\" DOUBLE PRECISION NOT NULL, \"saving\" DOUBLE PRECISION NOT NULL , PRIMARY KEY (\"id\"))",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "price",
+          "type" : "DOUBLE PRECISION",
+          "nullable" : false
+        },
+        {
+          "name" : "saving",
+          "type" : "DOUBLE PRECISION",
+          "nullable" : false
         }
       ]
     },

@@ -71,6 +71,16 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
         || (!hasGraphQL && file.getFileName().toString().endsWith(".graphqls"));
   }
 
+  public Predicate<Path> getPlanDirFilter() {
+    return path -> {
+      if (path.getFileName().toString().equals("flink-sql-no-functions.sql")) return true;
+      if (path.getFileName().toString().contains("flink")) return false;
+      if (path.getFileName().toString().contains("schema") || path.getFileName().toString().contains("views")) return true;
+      if (List.of("kafka.json", "vertx.json").contains(path.getFileName().toString())) return true;
+      return false;
+    };
+  }
+
   @AllArgsConstructor
   public abstract static class SqrlScriptsAndLocalPackages implements ArgumentsProvider {
 

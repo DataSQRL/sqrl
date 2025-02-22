@@ -96,7 +96,8 @@ public class PipelineDAGExporter {
                         .plan(explain(table.getCollapsedRelnode()))
                         .sql(table.getOriginalSql())
                         .primary_key(table.getPrimaryKey().isUndefined() ? null
-                            : table.getPrimaryKey().asSimpleList().stream().map(fields::get)
+                            : table.getPrimaryKey().asList().stream().flatMap(set -> set.getIndexes().stream().sorted())
+                                .map(fields::get)
                                 .map(RelDataTypeField::getName)
                                 .collect(Collectors.toUnmodifiableList()))
                         .timestamp(timestampIdx.map(fields::get).map(RelDataTypeField::getName).orElse("-"))
@@ -151,6 +152,7 @@ public class PipelineDAGExporter {
             result.add(new Annotation("parameters", function.getParameters().stream().map(
                 FunctionParameter::getName).collect(Collectors.joining(", "))));
         }
+        result.add(new Annotation("base-table",function.getBaseTable().getName()));
         return result;
     }
 
