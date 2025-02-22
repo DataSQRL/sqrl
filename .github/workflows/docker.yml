@@ -48,13 +48,16 @@ jobs:
       - name: Determine Docker Tags
         id: set-tags
         run: |
-          TAGS="datasqrl/cmd:${VERSION_TAG} datasqrl/sqrl-server:${VERSION}"
+          CMD_TAGS="datasqrl/cmd:${VERSION_TAG}"
+          SERVER_TAGS="datasqrl/sqrl-server:${VERSION_TAG}"
 
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            TAGS="$TAGS,datasqrl/cmd:dev datasqrl/sqrl-server:dev"
+            CMD_TAGS="$CMD_TAGS,datasqrl/cmd:dev"
+            SERVER_TAGS="$SERVER_TAGS,datasqrl/sqrl-server:dev"
           fi
 
-          echo "DOCKER_TAGS=$TAGS" >> $GITHUB_ENV
+          echo "CMD_TAGS=$CMD_TAGS" >> $GITHUB_ENV
+          echo "SERVER_TAGS=$SERVER_TAGS" >> $GITHUB_ENV
 
       - name: Build and Push sqrl-cli Dev
         uses: docker/build-push-action@v3
@@ -62,7 +65,7 @@ jobs:
           context: sqrl-tools
           file: sqrl-tools/Dockerfile
           push: true
-          tags: ${{ env.DOCKER_TAGS }}
+          tags: ${{ env.CMD_TAGS }}
           platforms: linux/amd64,linux/arm64
 
       - name: Build and Push sqrl-vertx Docker
@@ -71,5 +74,5 @@ jobs:
           context: sqrl-server/sqrl-server-vertx
           file: sqrl-server/sqrl-server-vertx/Dockerfile
           push: true
-          tags: ${{ env.DOCKER_TAGS }}
+          tags: ${{ env.SERVER_TAGS }}
           platforms: linux/amd64,linux/arm64
