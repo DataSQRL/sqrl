@@ -51,7 +51,7 @@ jobs:
           TAGS="datasqrl/cmd:${VERSION_TAG} datasqrl/sqrl-server:${VERSION}"
 
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            TAGS="$TAGS datasqrl/cmd:dev datasqrl/sqrl-server:dev"
+            TAGS="$TAGS,datasqrl/cmd:dev datasqrl/sqrl-server:dev"
           fi
 
           echo "DOCKER_TAGS=$TAGS" >> $GITHUB_ENV
