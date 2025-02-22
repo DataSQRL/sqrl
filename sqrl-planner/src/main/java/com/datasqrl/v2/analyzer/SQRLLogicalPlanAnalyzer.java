@@ -8,6 +8,7 @@ import static com.datasqrl.io.tables.TableType.STREAM;
 import static com.datasqrl.util.CalciteUtil.CAST_TRANSFORM;
 import static com.datasqrl.util.CalciteUtil.COALESCE_TRANSFORM;
 
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.v2.TableAnalysisLookup;
 import com.datasqrl.v2.analyzer.cost.CostAnalysis;
@@ -200,7 +201,8 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
       baseTable = Optional.ofNullable(Iterables.getLast(sourceTables))
           .filter(AbstractAnalysis::hasRowType)
           .filter(tbl -> tbl.getRowType().equals(originalRelnode.getRowType()))
-          .map(TableOrFunctionAnalysis::getBaseTable);
+          .map(TableOrFunctionAnalysis::getBaseTable)
+          .filter(tbl -> !Name.isHiddenString(tbl.getName()));
     }
 
     TableAnalysis.TableAnalysisBuilder tableAnalysis = TableAnalysis.builder()

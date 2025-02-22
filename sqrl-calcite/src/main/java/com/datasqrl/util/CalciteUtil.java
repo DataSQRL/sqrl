@@ -462,11 +462,11 @@ public class CalciteUtil {
   }
 
 
-  public static List<SqrlFunctionParameter> addFilterByColumn(RelBuilder relB, List<Integer> columnIndexes) {
-    return addFilterByColumn(relB, columnIndexes, 0);
+  public static List<SqrlFunctionParameter> addFilterByColumn(RelBuilder relB, List<Integer> columnIndexes, boolean optional) {
+    return addFilterByColumn(relB, columnIndexes, optional, 0);
   }
 
-  public static List<SqrlFunctionParameter> addFilterByColumn(RelBuilder relB, List<Integer> columnIndexes, int paramOffset) {
+  public static List<SqrlFunctionParameter> addFilterByColumn(RelBuilder relB, List<Integer> columnIndexes, boolean optional, int paramOffset) {
     Preconditions.checkArgument(!columnIndexes.isEmpty());
     List<RelDataTypeField> fields = relB.peek().getRowType().getFieldList();
     Preconditions.checkArgument(columnIndexes.stream().allMatch(i -> i < fields.size()),"Invalid column indexes: %s", columnIndexes);
@@ -475,10 +475,12 @@ public class CalciteUtil {
     List<SqrlFunctionParameter> parameters = new ArrayList<>();
     for (Integer colIndex : columnIndexes) {
       RelDataTypeField field = fields.get(colIndex);
-      int ordinal = paramCounter.incrementAndGet();
+      int ordinal = paramCounter.getAndIncrement();
       RexDynamicParam param = new RexDynamicParam(field.getType(), ordinal);
       RexNode condition = relB.equals(relB.field(colIndex), param);
-      if (field.getType().isNullable()) {
+      if (optional) {
+        condition = relB.or(condition, relB.isNull(param));
+      } else if (field.getType().isNullable()) {
         condition = relB.or(condition, relB.and(relB.isNull(param),relB.isNull(relB.field(colIndex))));
       }
       conditions.add(condition);
