@@ -1,13 +1,17 @@
 IMPORT seedshop.OrderItems AS Orders;
-IMPORT seedshop.Products;
-IMPORT seedshop.Customers;
+IMPORT seedshop.Products AS ProductsStream;
+IMPORT seedshop.Customers AS CustomersStream;
 
-OrdersTotals := SELECT id, `time`, customerid, sum(quantity * unit_price - coalesce(discount, 0.0)) as price,
-                  sum(coalesce(discount, 0.0)) as saving FROM Orders CROSS JOIN UNNEST(items);
+_OrderItems := SELECT o.id, o.`time`, o.customerid, i.* FROM Orders o CROSS JOIN UNNEST(o.items) i;
+
+OrdersTotals := SELECT id, window_time AS `time`, customerid, sum(quantity * unit_price - coalesce(discount, 0.0)) as price,
+                  sum(coalesce(discount, 0.0)) as saving
+                FROM TABLE(TUMBLE(TABLE _OrderItems, DESCRIPTOR(`time`), INTERVAL '0.001' SECONDS))
+                GROUP BY id, customerid, window_start, window_end, window_time;
+
 Orders.totals := SELECT * FROM OrdersTotals t WHERE this.id = t.id;
 
-Customers := DISTINCT Customers ON id ORDER BY `timestamp` DESC;
-Customers.country0 := coalesce(country, 'none');
+Customers := DISTINCT CustomersStream ON id ORDER BY `timestamp` DESC;
 
 Orders.customer := SELECT * FROM Customers WHERE this.customerid = id;
 Customers.purchases := SELECT * FROM Orders WHERE customerid = this.id;
@@ -15,7 +19,7 @@ Customers.purchases := SELECT * FROM Orders WHERE customerid = this.id;
 CustomersSpending := SELECT customerid, window_time AS week,
          sum(price) AS spend, sum(saving) AS saved
       FROM TABLE(TUMBLE(TABLE OrdersTotals, DESCRIPTOR(`time`), INTERVAL '7' DAYS))
-      GROUP BY customerid, window_start, window_end, window_time;
+      GROUP BY customerid, window_start, window_end, window_time
       ORDER BY week DESC;
 Customers.spending := SELECT * FROM CustomersSpending WHERE customerid = this.id;
 
@@ -29,17 +33,17 @@ CustomersPastPurchases := SELECT o.customerid, i.productid, count(1) as num_orde
          sum(i.quantity) as total_quantity
       FROM Orders o CROSS JOIN UNNEST(o.items) i
       GROUP BY o.customerid, i.productid;
-Customers.past_purchases:= SELECT * CustomersPastPurchases p WHERE p.customerid = this.id ORDER BY num_orders DESC, total_quantity DESC;
+Customers.past_purchases:= SELECT * FROM CustomersPastPurchases p WHERE p.customerid = this.id ORDER BY num_orders DESC, total_quantity DESC;
 
 /*+test */
-CustomerPurchaseTest := SELECT customerid, p.productid, count(*) as num
+CustomerPurchaseTest := SELECT customerid, productid, count(*) as num
                         FROM CustomersPastPurchases
                         GROUP BY customerid, productid
                         ORDER BY customerid ASC, productid ASC;
 
 --compute customer promotions and export for email
-CustomerPromotion := SELECT c.first_name, c.last_name, c.email, s.spend, s.saved
-        FROM Customers c JOIN CustomersSpending s ON s.customerid = c.id
+CustomerPromotion := SELECT s.customerid, c.first_name, c.last_name, c.email, s.spend, s.saved
+        FROM CustomersSpending s JOIN Customers FOR SYSTEM_TIME AS OF `week` c ON s.customerid = c.id
         WHERE s.spend > 250;
 
 EXPORT CustomerPromotion TO mySinkPackage.promotion;
@@ -47,19 +51,18 @@ EXPORT CustomerPromotion TO mySinkPackage.promotion;
 /*+test */
 CustomerPromotionTest := SELECT COUNT(*) AS numPromotions FROM CustomerPromotion;
 
-NumOrders := SELECT COUNT(*) AS count FROM Orders;
+NumOrders := SELECT COUNT(*) AS `count` FROM Orders;
 
-Products := DISTINCT Products ON id ORDER BY updated DESC;
+Products := DISTINCT ProductsStream ON id ORDER BY updated DESC;
 
-_OrderItems := SELECT o.id, o.`time`, o.customerid, i.* FROM Orders o CROSS JOIN UNNEST(o.items) i;
 
 -- aggregating by country
-ProductsByCountry := SELECT p.id AS productid, c.country0 AS country, sum(o.quantity) as quantity,
+ProductsByCountry := SELECT p.id AS productid, c.country AS country, sum(o.quantity) as quantity,
          sum(o.quantity * o.unit_price) as spend, sum(o.quantity * p.weight_in_gram) as weight
       FROM _OrderItems o
           JOIN Products FOR SYSTEM_TIME AS OF o.`time` p ON o.productid = p.id
           JOIN Customers FOR SYSTEM_TIME AS OF o.`time`  c ON o.customerid =c.id
-      GROUP BY p.id, c.country0;
+      GROUP BY p.id, c.country;
 
 ProductSearch($query: String) := SELECT p.*, textSearch($query, name) as score
                                  FROM Products p

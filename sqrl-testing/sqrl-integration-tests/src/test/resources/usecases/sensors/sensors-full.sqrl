@@ -1,17 +1,18 @@
 IMPORT sensor-local.SensorReading; -- Import sensor data
-IMPORT sensor-local.Sensors;
+IMPORT sensor-local.Sensors AS SensorUpdates;
 
 /* Aggregate sensor readings to second */
+/*+primary_key(sensorid, timeSec) */
 SecReading := SELECT sensorid, window_time as timeSec,
-                     avg(temperature) as temp FROM SensorReading
-                                       FROM TABLE(TUMBLE(TABLE SensorReading, DESCRIPTOR(`timestamp`), INTERVAL '1' SECONDS))
+                     avg(temperature) as temp
+              FROM TABLE(TUMBLE(TABLE SensorReading, DESCRIPTOR(`timestamp`), INTERVAL '1' SECONDS))
               GROUP BY sensorid, window_start, window_end, window_time
               ORDER BY timeSec DESC;
 
 SecReadingByTemp($temp: Int) := SELECT * FROM SecReading WHERE temp > $temp ORDER BY timeSec ASC LIMIT 10;
 
 /* Create table of sensors and relate to readings */
-Sensors := DISTINCT Sensors ON id ORDER BY `timestamp` DESC;
+Sensors := DISTINCT SensorUpdates ON id ORDER BY `timestamp` DESC;
 Sensors.readings := SELECT * FROM SecReading r WHERE r.sensorid = this.id;
 
 /* Get max temperature in last hour */
@@ -23,17 +24,17 @@ SensorLastHour := DISTINCT _SensorMaxTempWindow ON sensorid ORDER BY window_time
 Sensors.lastHour := SELECT * FROM SensorLastHour WHERE this.id = sensorid;
 
 /* Create table of machines with recent temperature */
-Machine := SELECT machineid, max(temp) as maxTemp,
+Machine := SELECT machineId, max(temp) as maxTemp,
     avg(temp) as avgTemp
     FROM SecReading r JOIN Sensors FOR SYSTEM_TIME AS OF r.`timeSec` s ON r.sensorid = s.id
-    GROUP BY machineid;
+    GROUP BY machineId;
 
 /*+test */
 MachineCountTest := SELECT COUNT(*) num FROM Machine;
 
-Machine.sensors := SELECT * FROM Sensors s ON s.machineid = this.machineid;
+Machine.sensors := SELECT * FROM Sensors s WHERE s.machineId = this.machineId;
 
-HighTemp := SELECT machineid, sensorid, temp, timeSec
+HighTemp := SELECT machineId, sensorid, temp, timeSec
             FROM SecReading r JOIN Sensors FOR SYSTEM_TIME AS OF r.`timeSec` s ON r.sensorid = s.id
             WHERE temp > 35;
 

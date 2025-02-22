@@ -394,7 +394,7 @@ public class SqlScriptPlanner {
 
   private List<ExecutionStage> determineStages(List<ExecutionStage> availableStages, PlannerHints hints) {
     Optional<ExecHint> executionHint = hints.getHint(ExecHint.class);
-    if (hints.isTest() || hints.isWorkload()) {
+    if ((hints.isTest() && executionGoal==ExecutionGoal.TEST) || hints.isWorkload()) {
       //Tests and hints always get executed in the database
       availableStages = availableStages.stream().filter(stage -> stage.getType()==EngineType.DATABASE || stage.getType()==EngineType.SERVER)
           .collect(Collectors.toList());

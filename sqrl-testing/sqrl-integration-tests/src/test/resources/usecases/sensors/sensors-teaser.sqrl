@@ -2,7 +2,7 @@ IMPORT sensor-local.SensorReading; -- Import sensor data
 
 /* Aggregate sensor readings to second */
 SecReading := SELECT sensorid, window_time as timeSec,
-        avg(temperature) as temp FROM SensorReading
+        avg(temperature) as temp
     FROM TABLE(TUMBLE(TABLE SensorReading, DESCRIPTOR(`timestamp`), INTERVAL '1' SECONDS))
     GROUP BY sensorid, window_start, window_end, window_time
     ORDER BY timeSec DESC;
