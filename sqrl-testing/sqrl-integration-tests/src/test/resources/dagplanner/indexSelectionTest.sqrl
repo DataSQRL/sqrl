@@ -1,0 +1,12 @@
+IMPORT ecommerceTs.Orders AS _Orders;
+IMPORT ecommerceTs.Product AS _Product;
+IMPORT ecommerceTs.Customer;
+
+/*+query_by_all(time, customerid) */
+Orders := SELECT * FROM _Orders;
+Customer.orders := SELECT * FROM Orders WHERE customerid = this.customerid;
+OrdersById($id: BIGINT) := SELECT * FROM Orders WHERE $id = id;
+OrdersByTime($time: TIMESTAMP_LTZ) := SELECT * FROM Orders WHERE `time` > $time;
+
+/*+query_by_any(name, description, category, _ingest_time) */
+Product := SELECT * FROM _Product;

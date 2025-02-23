@@ -488,7 +488,7 @@ public class CalciteUtil {
       }
       conditions.add(condition);
       parameters.add(new SqrlFunctionParameter(field.getName(), Optional.empty(),
-          SqlDataTypeSpecBuilder.create(field.getType()), ordinal, field.getType(),
+          SqlDataTypeSpecBuilder.create(paramType), ordinal, paramType,
           false, new CasedParameter(field.getName())));
     }
     relB.filter(relB.and(conditions));

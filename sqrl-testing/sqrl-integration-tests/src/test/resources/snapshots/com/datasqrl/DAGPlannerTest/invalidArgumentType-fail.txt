@@ -1,0 +1,6 @@
+[FATAL] Unknown identifier 'BIGIT'
+in script:invalidargumenttype-fail.sqrl [2:17]:
+IMPORT ecommerceTs.Orders;
+OrdersById($id: BIGIT, $otherid: BIGINT) := SELECT * FROM Orders WHERE $id = id AND id = $otherid;
+----------------^
+

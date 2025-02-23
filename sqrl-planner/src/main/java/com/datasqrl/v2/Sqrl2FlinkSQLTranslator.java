@@ -17,6 +17,8 @@ import com.datasqrl.v2.analyzer.SQRLLogicalPlanAnalyzer.ViewAnalysis;
 import com.datasqrl.v2.analyzer.TableAnalysis;
 import com.datasqrl.v2.dag.plan.MutationQuery.MutationQueryBuilder;
 import com.datasqrl.v2.hint.PlannerHints;
+import com.datasqrl.v2.parser.ParsePosUtil;
+import com.datasqrl.v2.parser.ParsePosUtil.MessageLocation;
 import com.datasqrl.v2.parser.ParsedField;
 import com.datasqrl.v2.parser.SqrlTableFunctionStatement.ParsedArgument;
 import com.datasqrl.v2.parser.StatementParserException;
@@ -71,6 +73,7 @@ import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexDynamicParam;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
+import org.apache.calcite.runtime.CalciteContextException;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.SqlFunctionCategory;
@@ -675,19 +678,20 @@ public class Sqrl2FlinkSQLTranslator {
   public List<RelDataTypeField> parse2RelDataType(List<ParsedField> fieldList) {
     if (fieldList.isEmpty()) return List.of();
     String createTableStatement = "CREATE TEMPORARY TABLE " + DUMMY_TABLE_NAME + "("
-        + fieldList.stream().map(arg -> arg.getName().get() + " " + arg.getType().get())
+        + fieldList.stream().map(arg -> "`"+arg.getName().get() + "` " + arg.getType().get())
         .collect(Collectors.joining(",\n")) + ");";
     try {
       CreateTableOperation op = (CreateTableOperation) getOperation(parseSQL(createTableStatement));
       Schema schema = op.getCatalogTable().getUnresolvedSchema();
       return convertSchema2RelDataType(schema);
-    } catch (SqlParserException e) {
-      FileLocation location = fieldList.get(0).getType().getFileLocation();
-      if (e.getCause() instanceof SqlParseException) {
-        int fieldPosition = ((SqlParseException) e.getCause()).getPos().getLineNum();
-        location = fieldList.get(fieldPosition).getType().getFileLocation();
+    } catch (Exception e) {
+      int lineNo = 0;
+      Optional<ParsePosUtil.MessageLocation> converted = ParsePosUtil.convertFlinkParserException(e);
+      if (converted.isPresent()) {
+        lineNo = converted.get().getLocation().getLine();
       }
-      throw new StatementParserException(location, e);
+      FileLocation location = fieldList.get(Math.min(fieldList.size(),lineNo)-1).getType().getFileLocation();
+      throw new StatementParserException(location, e, converted.map(MessageLocation::getMessage).orElse(e.getMessage()));
     }
   }
 

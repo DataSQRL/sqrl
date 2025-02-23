@@ -34,6 +34,8 @@ import com.datasqrl.v2.hint.QueryByAnyHint;
 import com.datasqrl.v2.hint.TestHint;
 import com.datasqrl.v2.parser.AccessModifier;
 import com.datasqrl.v2.parser.FlinkSQLStatement;
+import com.datasqrl.v2.parser.ParsePosUtil;
+import com.datasqrl.v2.parser.ParsePosUtil.MessageLocation;
 import com.datasqrl.v2.parser.ParsedObject;
 import com.datasqrl.v2.parser.SQLStatement;
 import com.datasqrl.v2.parser.SqlScriptStatementSplitter;
@@ -95,6 +97,7 @@ import org.apache.flink.sql.parser.ddl.SqlCreateView;
 import org.apache.flink.sql.parser.ddl.SqlDropTable;
 import org.apache.flink.sql.parser.ddl.SqlDropView;
 import org.apache.flink.sql.parser.error.SqlValidateException;
+import org.apache.flink.table.api.ValidationException;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.functions.UserDefinedFunction;
 import org.apache.flink.table.planner.calcite.FlinkRelBuilder;
@@ -164,31 +167,16 @@ public class SqlScriptPlanner {
         throw e;
       } catch (Exception e) {
         //Map errors from the Flink parser/planner by adjusting the line numbers
-        if (e instanceof org.apache.flink.table.api.SqlParserException) {
-          e = (Exception)e.getCause();
-        } else if (e instanceof org.apache.flink.table.api.ValidationException) {
-          if (e.getCause() instanceof Exception && e!=e.getCause()) {
-            e = (Exception)e.getCause();
-          }
+        Optional<ParsePosUtil.MessageLocation> converted = ParsePosUtil.convertFlinkParserException(e);
+        if (converted.isPresent()) {
+          ParsePosUtil.MessageLocation msgLocation = converted.get();
+//          e.printStackTrace();
+          scriptErrors.atFile(statement.getFileLocation()
+                  .add(sqlStatement.mapSqlLocation(msgLocation.getLocation())))
+              .fatal(msgLocation.getMessage());
         }
-        FileLocation location = null;
-        String message = null;
-        if (e instanceof SqlParseException || e instanceof SqlValidateException) {
-          location = convertPosition((e instanceof SqlParseException)?((SqlParseException) e).getPos():
-              ((SqlValidateException)e).getErrorPosition());
-          message = e.getMessage();
-          message = message.replaceAll(" at line \\d*, column \\d*", ""); //remove line number from message
-        }
-        if (e instanceof CalciteContextException) {
-          CalciteContextException calciteException = (CalciteContextException) e;
-          location = new FileLocation(calciteException.getPosLine(), calciteException.getPosColumn());
-          message = calciteException.getMessage();
-          message = message.replaceAll("From line \\d*, column \\d* to line \\d*, column \\d*: ", ""); //remove line number from message
-        }
-        if (location != null) {
-          location = sqlStatement.mapSqlLocation(location);
-          e.printStackTrace();
-          scriptErrors.atFile(statement.getFileLocation().add(location)).fatal(message);
+        if (e instanceof ValidationException) {
+          if (e.getCause()!=e) e = (Exception)e.getCause();
         }
 
         //Print stack trace for unknown exceptions

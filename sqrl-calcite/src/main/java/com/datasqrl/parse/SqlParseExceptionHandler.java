@@ -11,7 +11,9 @@ import com.datasqrl.error.ErrorMessage;
 import com.datasqrl.error.ErrorMessage.Implementation;
 import com.datasqrl.error.ErrorMessage.Severity;
 import com.google.auto.service.AutoService;
+import java.util.Optional;
 import org.apache.calcite.sql.parser.SqlParseException;
+import org.apache.flink.sql.parser.error.SqlValidateException;
 
 @AutoService(ErrorHandler.class)
 public class SqlParseExceptionHandler implements ErrorHandler<SqlParseException> {
@@ -28,4 +30,5 @@ public class SqlParseExceptionHandler implements ErrorHandler<SqlParseException>
   public Class getHandleClass() {
     return SqlParseException.class;
   }
+
 }
