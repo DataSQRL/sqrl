@@ -16,10 +16,10 @@ Schema:
 Plan:
 LogicalProject(machineId=[$4], sensorid=[$0], temp=[$2], timeSec=[$1])
   LogicalFilter(condition=[>($2, 35)])
-    LogicalCorrelate(correlation=[$cor6], joinType=[inner], requiredColumns=[{0, 1}])
+    LogicalCorrelate(correlation=[$cor5], joinType=[inner], requiredColumns=[{0, 1}])
       LogicalTableScan(table=[[default_catalog, default_database, SecReading]])
-      LogicalFilter(condition=[=($cor6.sensorid, $0)])
-        LogicalSnapshot(period=[$cor6.timeSec])
+      LogicalFilter(condition=[=($cor5.sensorid, $0)])
+        LogicalSnapshot(period=[$cor5.timeSec])
           LogicalTableScan(table=[[default_catalog, default_database, Sensors]])
 SQL: CREATE VIEW HighTemp AS  SELECT machineId, sensorid, temp, timeSec
             FROM SecReading r JOIN Sensors FOR SYSTEM_TIME AS OF r.`timeSec` s ON r.sensorid = s.id

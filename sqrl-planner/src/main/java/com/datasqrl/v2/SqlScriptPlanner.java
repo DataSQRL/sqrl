@@ -12,11 +12,13 @@ import com.datasqrl.config.SystemBuiltInConnectors;
 import com.datasqrl.engine.log.LogEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
+import com.datasqrl.engine.stream.flink.plan.FlinkSqlNodeFactory;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.error.ErrorLocation.FileLocation;
+import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.v2.Sqrl2FlinkSQLTranslator.MutationBuilder;
 import com.datasqrl.v2.analyzer.TableAnalysis;
 import com.datasqrl.v2.analyzer.cost.SimpleCostAnalysisModel;
@@ -25,8 +27,10 @@ import com.datasqrl.v2.dag.nodes.ExportNode;
 import com.datasqrl.v2.dag.nodes.PipelineNode;
 import com.datasqrl.v2.dag.nodes.TableFunctionNode;
 import com.datasqrl.v2.dag.nodes.TableNode;
+import com.datasqrl.v2.hint.ColumnNamesHint;
 import com.datasqrl.v2.hint.ExecHint;
 import com.datasqrl.v2.hint.PlannerHints;
+import com.datasqrl.v2.hint.QueryByAnyHint;
 import com.datasqrl.v2.hint.TestHint;
 import com.datasqrl.v2.parser.AccessModifier;
 import com.datasqrl.v2.parser.FlinkSQLStatement;
@@ -74,11 +78,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import lombok.Getter;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.runtime.CalciteContextException;
+import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.flink.sql.parser.ddl.SqlAlterTable;
@@ -91,6 +97,7 @@ import org.apache.flink.sql.parser.ddl.SqlDropView;
 import org.apache.flink.sql.parser.error.SqlValidateException;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.functions.UserDefinedFunction;
+import org.apache.flink.table.planner.calcite.FlinkRelBuilder;
 
 public class SqlScriptPlanner {
 
@@ -431,16 +438,27 @@ public class SqlScriptPlanner {
 
     TableNode tableNode = new TableNode(tableAnalysis, getStageAnalysis(tableAnalysis, availableStages));
     dagBuilder.add(tableNode);
+    Optional<ColumnNamesHint> queryByHint = hints.getQueryByHint();
     if (visibility.isEndpoint()) { //Add function to scan table as endpoint
       String tableName = tableAnalysis.getIdentifier().getObjectName();
       String fctName = tableName + ACCESS_FUNCTION_SUFFIX;
-      String scanViewSql = sqrlEnv.toSqlString(sqrlEnv.createScanView(fctName, tableAnalysis.getIdentifier()));
+      FlinkRelBuilder relBuilder = sqrlEnv.getTableScan(tableAnalysis.getIdentifier());
+      List<FunctionParameter> parameters = List.of();
+      if (queryByHint.isPresent()) {
+        ColumnNamesHint hint = queryByHint.get();
+        parameters = CalciteUtil.addFilterByColumn(relBuilder, hint.getColumnIndexes(), hint instanceof QueryByAnyHint);
+      }
+      relBuilder.project(IntStream.range(0, tableAnalysis.getFieldLength()).mapToObj(relBuilder::field).collect(
+          Collectors.toList()), tableAnalysis.getRowType().getFieldNames(), true); //Identity projection
       //TODO: should we add a default sort if the user didn't specify one to have predictable result sets for testing?
-      SqrlTableFunction.SqrlTableFunctionBuilder fctBuilder = sqrlEnv.resolveSqrlTableFunction(SqlNameUtil.toIdentifier(Name.system(fctName)),
-          scanViewSql, List.of(), Map.of(), PlannerHints.EMPTY, ErrorCollector.root());
+      SqrlTableFunction.SqrlTableFunctionBuilder fctBuilder = sqrlEnv.addSqrlTableFunction(SqlNameUtil.toIdentifier(Name.system(fctName)),
+          relBuilder.build(), parameters, tableAnalysis);
       fctBuilder.fullPath(NamePath.of(tableName));
       fctBuilder.visibility(visibility);
       addFunctionToDag(fctBuilder.build(), PlannerHints.EMPTY); //hints don't apply to the function access
+    } else if (queryByHint.isPresent()) {
+      throw new StatementParserException(ErrorLabel.GENERIC, queryByHint.get().getSource().getFileLocation(),
+          "query_by hints are only supported on tables that are queryable");
     }
   }
 

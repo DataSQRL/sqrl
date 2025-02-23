@@ -49,6 +49,7 @@ import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.rex.RexWindowBounds;
+import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.sql.SqlIntervalQualifier;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
@@ -462,17 +463,17 @@ public class CalciteUtil {
   }
 
 
-  public static List<SqrlFunctionParameter> addFilterByColumn(RelBuilder relB, List<Integer> columnIndexes, boolean optional) {
+  public static List<FunctionParameter> addFilterByColumn(RelBuilder relB, List<Integer> columnIndexes, boolean optional) {
     return addFilterByColumn(relB, columnIndexes, optional, 0);
   }
 
-  public static List<SqrlFunctionParameter> addFilterByColumn(RelBuilder relB, List<Integer> columnIndexes, boolean optional, int paramOffset) {
+  public static List<FunctionParameter> addFilterByColumn(RelBuilder relB, List<Integer> columnIndexes, boolean optional, int paramOffset) {
     Preconditions.checkArgument(!columnIndexes.isEmpty());
     List<RelDataTypeField> fields = relB.peek().getRowType().getFieldList();
     Preconditions.checkArgument(columnIndexes.stream().allMatch(i -> i < fields.size()),"Invalid column indexes: %s", columnIndexes);
     AtomicInteger paramCounter = new AtomicInteger(paramOffset);
     List<RexNode> conditions = new ArrayList<>();
-    List<SqrlFunctionParameter> parameters = new ArrayList<>();
+    List<FunctionParameter> parameters = new ArrayList<>();
     for (Integer colIndex : columnIndexes) {
       RelDataTypeField field = fields.get(colIndex);
       int ordinal = paramCounter.getAndIncrement();

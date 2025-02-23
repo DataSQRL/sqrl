@@ -18,10 +18,10 @@ Schema:
 Plan:
 LogicalProject(customerid=[$0], first_name=[$5], last_name=[$6], email=[$7], spend=[$2], saved=[$3])
   LogicalFilter(condition=[>($2, 250)])
-    LogicalCorrelate(correlation=[$cor23], joinType=[inner], requiredColumns=[{0, 1}])
+    LogicalCorrelate(correlation=[$cor19], joinType=[inner], requiredColumns=[{0, 1}])
       LogicalTableScan(table=[[default_catalog, default_database, CustomersSpending]])
-      LogicalFilter(condition=[=($cor23.customerid, $0)])
-        LogicalSnapshot(period=[$cor23.week])
+      LogicalFilter(condition=[=($cor19.customerid, $0)])
+        LogicalSnapshot(period=[$cor19.week])
           LogicalTableScan(table=[[default_catalog, default_database, Customers]])
 SQL: CREATE VIEW CustomerPromotion AS  SELECT s.customerid, c.first_name, c.last_name, c.email, s.spend, s.saved
         FROM CustomersSpending s JOIN Customers FOR SYSTEM_TIME AS OF `week` c ON s.customerid = c.id
@@ -94,10 +94,10 @@ Schema:
 Plan:
 LogicalAggregate(group=[{0, 1}], num_orders=[COUNT()], total_quantity=[SUM($2)])
   LogicalProject(customerid=[$1], productid=[$4], quantity=[$5])
-    LogicalCorrelate(correlation=[$cor15], joinType=[inner], requiredColumns=[{3}])
+    LogicalCorrelate(correlation=[$cor12], joinType=[inner], requiredColumns=[{3}])
       LogicalTableScan(table=[[default_catalog, default_database, Orders]])
       Uncollect
-        LogicalProject(items=[$cor15.items])
+        LogicalProject(items=[$cor12.items])
           LogicalValues(tuples=[[{ 0 }]])
 SQL: CREATE VIEW CustomersPastPurchases AS  SELECT o.customerid, i.productid, count(1) as num_orders,
          sum(i.quantity) as total_quantity
@@ -308,14 +308,14 @@ Schema:
 Plan:
 LogicalAggregate(group=[{0, 1}], quantity=[SUM($2)], spend=[SUM($3)], weight=[SUM($4)])
   LogicalProject(productid=[$7], country=[$20], quantity=[$4], $f3=[*($4, $5)], $f4=[*($4, $10)])
-    LogicalCorrelate(correlation=[$cor35], joinType=[inner], requiredColumns=[{1, 2}])
-      LogicalCorrelate(correlation=[$cor34], joinType=[inner], requiredColumns=[{1, 3}])
+    LogicalCorrelate(correlation=[$cor29], joinType=[inner], requiredColumns=[{1, 2}])
+      LogicalCorrelate(correlation=[$cor28], joinType=[inner], requiredColumns=[{1, 3}])
         LogicalTableScan(table=[[default_catalog, default_database, _OrderItems]])
-        LogicalFilter(condition=[=($cor34.productid, $0)])
-          LogicalSnapshot(period=[$cor34.time])
+        LogicalFilter(condition=[=($cor28.productid, $0)])
+          LogicalSnapshot(period=[$cor28.time])
             LogicalTableScan(table=[[default_catalog, default_database, Products]])
-      LogicalFilter(condition=[=($cor35.customerid, $0)])
-        LogicalSnapshot(period=[$cor35.time])
+      LogicalFilter(condition=[=($cor29.customerid, $0)])
+        LogicalSnapshot(period=[$cor29.time])
           LogicalTableScan(table=[[default_catalog, default_database, Customers]])
 SQL: CREATE VIEW ProductsByCountry AS  SELECT p.id AS productid, c.country AS country, sum(o.quantity) as quantity,
          sum(o.quantity * o.unit_price) as spend, sum(o.quantity * p.weight_in_gram) as weight

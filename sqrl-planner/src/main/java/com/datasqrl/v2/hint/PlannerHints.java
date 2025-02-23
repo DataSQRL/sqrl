@@ -1,6 +1,9 @@
 package com.datasqrl.v2.hint;
 
+import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.v2.parser.SqrlComments;
+import com.datasqrl.v2.parser.StatementParserException;
+import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -13,6 +16,17 @@ public class PlannerHints {
   public static final PlannerHints EMPTY = new PlannerHints(List.of());
 
   List<PlannerHint> hints;
+
+  public Optional<ColumnNamesHint> getQueryByHint() {
+    List<PlannerHint> queryby = hints.stream().filter(QueryByHint.class::isInstance).collect(
+        Collectors.toList());
+    if (queryby.size()>1) {
+      throw new StatementParserException(ErrorLabel.GENERIC,
+          queryby.get(1).getSource().getFileLocation(),
+          "Cannot have more than one `query_by_*` hint per table");
+    }
+    return queryby.stream().map(ColumnNamesHint.class::cast).findFirst();
+  }
 
   public boolean isTest() {
     return hints.stream().anyMatch(TestHint.class::isInstance);

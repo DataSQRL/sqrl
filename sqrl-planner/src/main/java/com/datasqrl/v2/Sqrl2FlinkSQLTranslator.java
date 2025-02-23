@@ -407,6 +407,27 @@ public class Sqrl2FlinkSQLTranslator {
     return fctBuilder;
   }
 
+  public SqrlTableFunction.SqrlTableFunctionBuilder addSqrlTableFunction(ObjectIdentifier identifier,
+      RelNode relNode, List<FunctionParameter> parameters, TableAnalysis baseTable) {
+    TableAnalysis tableAnalysis = TableAnalysis.builder()
+        .originalRelnode(relNode)
+        .type(baseTable.getType())
+        .primaryKey(baseTable.getPrimaryKey())
+        .optionalBaseTable(baseTable.getOptionalBaseTable())
+        .streamRoot(baseTable.getStreamRoot())
+        .fromTables(List.of(baseTable))
+        .hints(baseTable.getHints())
+        .errors(baseTable.getErrors())
+        .collapsedRelnode(relNode)
+        .identifier(identifier)
+        .originalSql("").build();
+    SqrlTableFunction.SqrlTableFunctionBuilder fctBuilder = SqrlTableFunction.builder()
+        .functionAnalysis(tableAnalysis)
+        .parameters(parameters)
+        .multiplicity(SqrlTableFunction.getMultiplicity(relNode));
+    return fctBuilder;
+  }
+
   @AllArgsConstructor
   private static class DynamicParameterReplacer extends RelShuttleImpl {
 
