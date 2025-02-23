@@ -347,7 +347,7 @@ public class IndexSelector {
       } else if (node instanceof TableScan && parent instanceof Filter) {
         NamedTable table = getNamedTable((TableScan) node);
         Filter filter = (Filter) parent;
-        QueryIndexSummary.ofFilter(table, filter.getCondition(), rexUtil).map(queryIndexSummaries::add);
+        queryIndexSummaries.addAll(QueryIndexSummary.ofFilter(table, filter.getCondition(), rexUtil));
       } else if (node instanceof TableScan && parent instanceof Sort) {
         NamedTable table = getNamedTable((TableScan) node);
         Sort sort = (Sort) parent;

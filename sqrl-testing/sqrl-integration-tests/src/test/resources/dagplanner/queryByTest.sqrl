@@ -1,7 +1,0 @@
-IMPORT ecommerceTs.Orders;
-
-/*+query_by_any(id, time, customerid) */
-Orders1 := SELECT * FROM Orders;
-
-/*+query_by_all(id, time, customerid) */
-Orders2 := SELECT * FROM Orders;

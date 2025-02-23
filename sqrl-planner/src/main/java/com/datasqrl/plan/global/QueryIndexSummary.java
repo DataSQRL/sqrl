@@ -7,6 +7,7 @@ import com.datasqrl.function.IndexType;
 import com.datasqrl.function.IndexableFunction;
 import com.datasqrl.function.IndexableFunction.OperandSelector;
 import com.datasqrl.plan.global.IndexSelector.NamedTable;
+import com.datasqrl.plan.global.PhysicalDAGPlan.Query;
 import com.datasqrl.plan.rules.SqrlRelMdRowCount;
 import com.datasqrl.util.FunctionUtil;
 import com.datasqrl.calcite.SqrlRexUtil;
@@ -55,33 +56,37 @@ public class QueryIndexSummary {
    */
   double count = 1.0;
 
-  public static Optional<QueryIndexSummary> ofFilter(@NonNull NamedTable table, RexNode filter,
+  public static List<QueryIndexSummary> ofFilter(@NonNull NamedTable table, RexNode filter,
       SqrlRexUtil rexUtil) {
-    List<RexNode> conjunctions = rexUtil.getConjunctions(filter);
-    Set<Integer> equalityColumns = new HashSet<>();
-    Set<Integer> inequalityColumns = new HashSet<>();
-    Set<IndexableFunctionCall> functionCalls = new HashSet<>();
-    for (RexNode conj : conjunctions) {
-      if (conj instanceof RexCall) {
-        RexCall call = (RexCall) conj;
-        IndexableFinder idxFinder = new IndexableFinder();
-        call.accept(idxFinder);
-        if (idxFinder.isIndexable && (idxFinder.idxCall!=null ^ idxFinder.columnRef!=null)) {
-          if (idxFinder.idxCall!=null) {
-            functionCalls.add(idxFinder.idxCall);
-          } else {
-            (call.isA(SqlKind.EQUALS)?equalityColumns:inequalityColumns).add(idxFinder.columnRef);
+    List<QueryIndexSummary> indexSummaries = new ArrayList<>();
+    RexNode dnf = rexUtil.toDnf(filter);
+    for (RexNode conjunction : rexUtil.getDisjunctions(dnf)) {
+      List<RexNode> conjunctions = rexUtil.getConjunctions(conjunction);
+      Set<Integer> equalityColumns = new HashSet<>();
+      Set<Integer> inequalityColumns = new HashSet<>();
+      Set<IndexableFunctionCall> functionCalls = new HashSet<>();
+      for (RexNode conj : conjunctions) {
+        if (conj instanceof RexCall) {
+          RexCall call = (RexCall) conj;
+          IndexableFinder idxFinder = new IndexableFinder();
+          call.accept(idxFinder);
+          if (idxFinder.isIndexable && (idxFinder.idxCall != null ^ idxFinder.columnRef != null)) {
+            if (idxFinder.idxCall != null) {
+              functionCalls.add(idxFinder.idxCall);
+            } else {
+              (call.isA(SqlKind.EQUALS) ? equalityColumns : inequalityColumns).add(
+                  idxFinder.columnRef);
+            }
           }
         }
       }
+      if (!equalityColumns.isEmpty() || !inequalityColumns.isEmpty() || !functionCalls.isEmpty()) {
+        inequalityColumns.removeAll(equalityColumns); //only keep distinct inequalities
+        indexSummaries.add(new QueryIndexSummary(table, ImmutableSet.copyOf(equalityColumns),
+            ImmutableSet.copyOf(inequalityColumns), ImmutableSet.copyOf(functionCalls), 1.0));
+      }
     }
-    if (equalityColumns.isEmpty() && inequalityColumns.isEmpty() && functionCalls.isEmpty()) {
-      return Optional.empty();
-    } else {
-      inequalityColumns.removeAll(equalityColumns); //only keep distinct inequalities
-      return Optional.of(new QueryIndexSummary(table, ImmutableSet.copyOf(equalityColumns),
-          ImmutableSet.copyOf(inequalityColumns), ImmutableSet.copyOf(functionCalls), 1.0));
-    }
+    return indexSummaries;
   }
 
   public static Optional<QueryIndexSummary> ofSort(@NonNull NamedTable table, RexNode node) {

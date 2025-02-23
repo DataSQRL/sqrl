@@ -477,7 +477,9 @@ public class CalciteUtil {
     for (Integer colIndex : columnIndexes) {
       RelDataTypeField field = fields.get(colIndex);
       int ordinal = paramCounter.getAndIncrement();
-      RexDynamicParam param = new RexDynamicParam(field.getType(), ordinal);
+      RelDataType paramType = field.getType();
+      if (optional) paramType = relB.getTypeFactory().createTypeWithNullability(field.getType(), true);
+      RexDynamicParam param = new RexDynamicParam(paramType, ordinal);
       RexNode condition = relB.equals(relB.field(colIndex), param);
       if (optional) {
         condition = relB.or(condition, relB.isNull(param));

@@ -45,6 +45,7 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexOver;
 import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.rex.RexSubQuery;
+import org.apache.calcite.rex.RexUtil;
 import org.apache.calcite.rex.RexVisitorImpl;
 import org.apache.calcite.rex.RexWindowBounds;
 import org.apache.calcite.schema.TableFunction;
@@ -93,16 +94,24 @@ public class SqrlRexUtil {
     return rexBuilder;
   }
 
+  public RexNode toDnf(RexNode condition) {
+    return RexUtil.toDnf(rexBuilder, condition);
+  }
+
   public List<RexNode> getConjunctions(RexNode condition) {
-    RexNode cnfCondition = FlinkRexUtil.toCnf(rexBuilder, Short.MAX_VALUE,
-        condition); //TODO: make configurable
-    List<RexNode> conditions = new ArrayList<>();
-    if (cnfCondition instanceof RexCall && cnfCondition.isA(SqlKind.AND)) {
-      conditions.addAll(((RexCall) cnfCondition).getOperands());
-    } else { //Single condition
-      conditions.add(cnfCondition);
-    }
+//    RexNode cnfCondition = FlinkRexUtil.toCnf(rexBuilder, Short.MAX_VALUE,
+//        condition); //TODO: make configurable
+//    List<RexNode> conditions = new ArrayList<>();
+//    if (cnfCondition instanceof RexCall && cnfCondition.isA(SqlKind.AND)) {
+//      conditions.addAll(((RexCall) cnfCondition).getOperands());
+//    } else { //Single condition
+//      conditions.add(cnfCondition);
+//    }
     return RelOptUtil.conjunctions(condition);
+  }
+
+  public List<RexNode> getDisjunctions(RexNode condition) {
+    return RelOptUtil.disjunctions(condition);
   }
 
   public JoinConditionDecomposition decomposeJoinCondition(RexNode condition, int leftSideMaxIdx) {
