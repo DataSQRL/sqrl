@@ -263,9 +263,14 @@ INSERT INTO `default_catalog`.`default_database`.`Orders1_2`
       ]
     },
     {
-      "name" : "Orders2_3_btree_c1c2",
+      "name" : "Orders1_2_btree_c1c0",
       "type" : "INDEX",
-      "sql" : "CREATE INDEX IF NOT EXISTS \"Orders2_3_btree_c1c2\" ON \"Orders2_3\" USING btree (\"customerid\",\"time\")"
+      "sql" : "CREATE INDEX IF NOT EXISTS \"Orders1_2_btree_c1c0\" ON \"Orders1_2\" USING btree (\"customerid\",\"id\")"
+    },
+    {
+      "name" : "Orders1_2_btree_c2c1",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"Orders1_2_btree_c2c1\" ON \"Orders1_2\" USING btree (\"time\",\"customerid\")"
     }
   ]
 }
