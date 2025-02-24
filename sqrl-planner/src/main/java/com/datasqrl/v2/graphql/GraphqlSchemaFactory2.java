@@ -188,7 +188,7 @@ public class GraphqlSchemaFactory2 {
         typeName = baseTableName;
       }
     } else { // no base table, use function name
-      typeName = uniquifyName(tableFunction.getFullPath().getLast().getDisplay());
+      typeName = tableFunction.getFullPath().getLast().getDisplay();
     }
     /* BROWSE THE FIELDS
     They are either
@@ -254,7 +254,7 @@ public class GraphqlSchemaFactory2 {
       return Optional.empty();
     }
 
-    String typeName = uniquifyName(tableFunction.getFullPath().getLast().getDisplay());
+    String typeName = tableFunction.getFullPath().getLast().getDisplay();
     GraphQLObjectType objectType = GraphQLObjectType.newObject()
             .name(typeName)
             .fields(fields)
@@ -468,7 +468,7 @@ public class GraphqlSchemaFactory2 {
     String typeName =
         tableFunction.getBaseTable().isPresent()
             ? tableFunction.getBaseTable().get().getName()
-            : uniquifyName(tableFunction.getFullPath().getLast().getDisplay());
+            : tableFunction.getFullPath().getLast().getDisplay();
     seen.add(typeName);
     return new GraphQLTypeReference(typeName);
   }
