@@ -1,10 +1,10 @@
 name: Build and test SQRL with Maven
 on:
   pull_request:
-    branches: ["main", "v0.5.10-release"]
+    branches: [ "main", sqrl-0.5.x, "v0.5.10-release"]
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     timeout-minutes: 50
     env:
@@ -69,3 +69,4 @@ jobs:
           push: true
           tags: datasqrl/cmd:sqrltest
           platforms: linux/amd64,linux/arm64
+
