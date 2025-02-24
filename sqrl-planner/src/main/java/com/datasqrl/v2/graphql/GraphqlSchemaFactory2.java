@@ -127,7 +127,7 @@ public class GraphqlSchemaFactory2 {
    */
   public Optional<GraphQLObjectType> createQueriesOrSubscriptionsObjectType(
       List<SqrlTableFunction> tableFunctions, AccessModifier tableFunctionsType) {
-
+    //TODO see if the 2 maps can we simplified a bit
     // group table functions by their parent path (NamePath.ROOT  for root tables)
     Map<NamePath, List<SqrlTableFunction>> tableFunctionsByTheirParentPath =
         tableFunctions.stream()
