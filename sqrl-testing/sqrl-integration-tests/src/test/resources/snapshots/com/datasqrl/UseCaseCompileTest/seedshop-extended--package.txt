@@ -31,10 +31,10 @@ SQL: CREATE VIEW CustomerPromotion AS  SELECT s.customerid, c.first_name, c.last
 ID:     default_catalog.default_database.Customers
 Type:   state
 Stage:  flink
-Inputs: default_catalog.default_database.CustomersStream
+Inputs: default_catalog.default_database._CustomersStream
 Annotations:
  - mostRecentDistinct: true
- - stream-root: CustomersStream__def
+ - stream-root: _CustomersStream__def
 Primary Key: id
 Timestamp  : timestamp
 Schema:
@@ -50,12 +50,12 @@ Plan:
 LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], ip_address=[$4], country=[$5], changed_on=[$6], timestamp=[$7])
   LogicalFilter(condition=[=($8, 1)])
     LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], ip_address=[$4], country=[$5], changed_on=[$6], timestamp=[$7], __sqrlinternal_rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $7 DESC NULLS LAST)])
-      LogicalTableScan(table=[[default_catalog, default_database, CustomersStream]])
+      LogicalTableScan(table=[[default_catalog, default_database, _CustomersStream]])
 SQL: CREATE VIEW `Customers`
 AS
 SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`
 FROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC NULLS LAST) AS `__sqrlinternal_rownum`
-  FROM `default_catalog`.`default_database`.`CustomersStream`) AS `t`
+  FROM `default_catalog`.`default_database`.`_CustomersStream`) AS `t`
 WHERE `__sqrlinternal_rownum` = 1
 === CustomersOrderStats
 ID:     default_catalog.default_database.CustomersOrderStats
@@ -133,48 +133,6 @@ SQL: CREATE VIEW CustomersSpending AS  SELECT customerid, window_time AS week,
       GROUP BY customerid, window_start, window_end, window_time
       ORDER BY week DESC;
 
-=== CustomersStream
-ID:     default_catalog.default_database.CustomersStream
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.CustomersStream__def
-Annotations:
- - stream-root: CustomersStream__def
-Primary Key: id, changed_on
-Timestamp  : timestamp
-Schema:
- - id: BIGINT NOT NULL
- - first_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - last_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - ip_address: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
- - country: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
- - changed_on: BIGINT NOT NULL
- - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Plan:
-LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], ip_address=[$4], country=[$5], changed_on=[$6], timestamp=[$7])
-  LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($7, 1:INTERVAL SECOND)])
-    LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], ip_address=[$4], country=[$5], changed_on=[$6], timestamp=[EPOCHMILLITOTIMESTAMP($6)])
-      LogicalTableScan(table=[[default_catalog, default_database, CustomersStream__def]])
-SQL: CREATE VIEW `CustomersStream`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`CustomersStream__def`
-=== NumOrders
-ID:     default_catalog.default_database.NumOrders
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database.Orders
-Primary Key: 
-Timestamp  : -
-Schema:
- - count: BIGINT NOT NULL
-Plan:
-LogicalAggregate(group=[{}], count=[COUNT()])
-  LogicalProject($f0=[0])
-    LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-SQL: CREATE VIEW NumOrders AS  SELECT COUNT(*) AS `count` FROM Orders;
-
 === Orders
 ID:     default_catalog.default_database.Orders
 Type:   stream
@@ -232,7 +190,7 @@ Type:   query
 Stage:  postgres
 Inputs: default_catalog.default_database.Products
 Annotations:
- - stream-root: ProductsStream__def
+ - stream-root: _ProductsStream__def
  - parameters: query
  - base-table: ProductSearch
 Plan:
@@ -251,7 +209,7 @@ Type:   query
 Stage:  postgres
 Inputs: default_catalog.default_database.Products
 Annotations:
- - stream-root: ProductsStream__def
+ - stream-root: _ProductsStream__def
  - parameters: query, id
  - base-table: Products
 Plan:
@@ -266,10 +224,10 @@ SQL: CREATE VIEW ProductSearchWithId AS  SELECT * FROM Products WHERE textSearch
 ID:     default_catalog.default_database.Products
 Type:   state
 Stage:  flink
-Inputs: default_catalog.default_database.ProductsStream
+Inputs: default_catalog.default_database._ProductsStream
 Annotations:
  - mostRecentDistinct: true
- - stream-root: ProductsStream__def
+ - stream-root: _ProductsStream__def
 Primary Key: id
 Timestamp  : updated
 Schema:
@@ -285,12 +243,12 @@ Plan:
 LogicalProject(id=[$0], name=[$1], sizing=[$2], weight_in_gram=[$3], type=[$4], category=[$5], usda_id=[$6], updated=[$7])
   LogicalFilter(condition=[=($8, 1)])
     LogicalProject(id=[$0], name=[$1], sizing=[$2], weight_in_gram=[$3], type=[$4], category=[$5], usda_id=[$6], updated=[$7], __sqrlinternal_rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $7 DESC NULLS LAST)])
-      LogicalTableScan(table=[[default_catalog, default_database, ProductsStream]])
+      LogicalTableScan(table=[[default_catalog, default_database, _ProductsStream]])
 SQL: CREATE VIEW `Products`
 AS
 SELECT `id`, `name`, `sizing`, `weight_in_gram`, `type`, `category`, `usda_id`, `updated`
 FROM (SELECT `id`, `name`, `sizing`, `weight_in_gram`, `type`, `category`, `usda_id`, `updated`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated` DESC NULLS LAST) AS `__sqrlinternal_rownum`
-  FROM `default_catalog`.`default_database`.`ProductsStream`) AS `t`
+  FROM `default_catalog`.`default_database`.`_ProductsStream`) AS `t`
 WHERE `__sqrlinternal_rownum` = 1
 === ProductsByCountry
 ID:     default_catalog.default_database.ProductsByCountry
@@ -324,32 +282,33 @@ SQL: CREATE VIEW ProductsByCountry AS  SELECT p.id AS productid, c.country AS co
           JOIN Customers FOR SYSTEM_TIME AS OF o.`time`  c ON o.customerid =c.id
       GROUP BY p.id, c.country;
 
-=== ProductsStream
-ID:     default_catalog.default_database.ProductsStream
+=== _CustomersStream
+ID:     default_catalog.default_database._CustomersStream
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.ProductsStream__def
+Inputs: default_catalog.default_database._CustomersStream__def
 Annotations:
- - stream-root: ProductsStream__def
-Primary Key: id, updated
-Timestamp  : updated
+ - stream-root: _CustomersStream__def
+Primary Key: id, changed_on
+Timestamp  : timestamp
 Schema:
  - id: BIGINT NOT NULL
- - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - sizing: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - weight_in_gram: BIGINT NOT NULL
- - type: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - category: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - usda_id: BIGINT NOT NULL
- - updated: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - first_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - last_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - ip_address: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - country: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - changed_on: BIGINT NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
-LogicalProject(id=[$0], name=[$1], sizing=[$2], weight_in_gram=[$3], type=[$4], category=[$5], usda_id=[$6], updated=[$7])
-  LogicalWatermarkAssigner(rowtime=[updated], watermark=[-($7, 1:INTERVAL SECOND)])
-    LogicalTableScan(table=[[default_catalog, default_database, ProductsStream__def]])
-SQL: CREATE VIEW `ProductsStream`
+LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], ip_address=[$4], country=[$5], changed_on=[$6], timestamp=[$7])
+  LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($7, 1:INTERVAL SECOND)])
+    LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], ip_address=[$4], country=[$5], changed_on=[$6], timestamp=[EPOCHMILLITOTIMESTAMP($6)])
+      LogicalTableScan(table=[[default_catalog, default_database, _CustomersStream__def]])
+SQL: CREATE VIEW `_CustomersStream`
 AS
 SELECT *
-FROM `default_catalog`.`default_database`.`ProductsStream__def`
+FROM `default_catalog`.`default_database`.`_CustomersStream__def`
 === _OrderItems
 ID:     default_catalog.default_database._OrderItems
 Type:   stream
@@ -376,6 +335,32 @@ LogicalProject(id=[$0], time=[$2], customerid=[$1], productid=[$4], quantity=[$5
         LogicalValues(tuples=[[{ 0 }]])
 SQL: CREATE VIEW _OrderItems AS  SELECT o.id, o.`time`, o.customerid, i.* FROM Orders o CROSS JOIN UNNEST(o.items) i;
 
+=== _ProductsStream
+ID:     default_catalog.default_database._ProductsStream
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database._ProductsStream__def
+Annotations:
+ - stream-root: _ProductsStream__def
+Primary Key: id, updated
+Timestamp  : updated
+Schema:
+ - id: BIGINT NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - sizing: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - weight_in_gram: BIGINT NOT NULL
+ - type: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - category: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - usda_id: BIGINT NOT NULL
+ - updated: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Plan:
+LogicalProject(id=[$0], name=[$1], sizing=[$2], weight_in_gram=[$3], type=[$4], category=[$5], usda_id=[$6], updated=[$7])
+  LogicalWatermarkAssigner(rowtime=[updated], watermark=[-($7, 1:INTERVAL SECOND)])
+    LogicalTableScan(table=[[default_catalog, default_database, _ProductsStream__def]])
+SQL: CREATE VIEW `_ProductsStream`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`_ProductsStream__def`
 === promotion
 ID:     mySinkPackage.promotion
 Type:   export
@@ -404,7 +389,7 @@ CREATE VIEW `Orders`
 AS
 SELECT *
 FROM `default_catalog`.`default_database`.`Orders__def`;
-CREATE TEMPORARY TABLE `ProductsStream__schema` (
+CREATE TEMPORARY TABLE `_ProductsStream__schema` (
   `id` BIGINT NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `sizing` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -416,7 +401,7 @@ CREATE TEMPORARY TABLE `ProductsStream__schema` (
 ) WITH (
   'connector' = 'datagen'
 );
-CREATE TABLE `ProductsStream__def` (
+CREATE TABLE `_ProductsStream__def` (
   PRIMARY KEY (`id`, `updated`) NOT ENFORCED,
   WATERMARK FOR `updated` AS `updated` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -424,12 +409,12 @@ CREATE TABLE `ProductsStream__def` (
   'path' = '${DATA_PATH}/products.jsonl',
   'connector' = 'filesystem'
 )
-LIKE `ProductsStream__schema`;
-CREATE VIEW `ProductsStream`
+LIKE `_ProductsStream__schema`;
+CREATE VIEW `_ProductsStream`
 AS
 SELECT *
-FROM `default_catalog`.`default_database`.`ProductsStream__def`;
-CREATE TEMPORARY TABLE `CustomersStream__schema` (
+FROM `default_catalog`.`default_database`.`_ProductsStream__def`;
+CREATE TEMPORARY TABLE `_CustomersStream__schema` (
   `id` BIGINT NOT NULL,
   `first_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `last_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -440,7 +425,7 @@ CREATE TEMPORARY TABLE `CustomersStream__schema` (
 ) WITH (
   'connector' = 'datagen'
 );
-CREATE TABLE `CustomersStream__def` (
+CREATE TABLE `_CustomersStream__def` (
   `timestamp` AS EPOCHMILLITOTIMESTAMP(`changed_on`),
   PRIMARY KEY (`id`, `changed_on`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
@@ -449,11 +434,11 @@ CREATE TABLE `CustomersStream__def` (
   'path' = '${DATA_PATH}/customers.jsonl',
   'connector' = 'filesystem'
 )
-LIKE `CustomersStream__schema`;
-CREATE VIEW `CustomersStream`
+LIKE `_CustomersStream__schema`;
+CREATE VIEW `_CustomersStream`
 AS
 SELECT *
-FROM `default_catalog`.`default_database`.`CustomersStream__def`;
+FROM `default_catalog`.`default_database`.`_CustomersStream__def`;
 CREATE VIEW `_OrderItems`
 AS
 SELECT `o`.`id`, `o`.`time`, `o`.`customerid`, `i`.*
@@ -468,7 +453,7 @@ CREATE VIEW `Customers`
 AS
 SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`
 FROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC NULLS LAST) AS `__sqrlinternal_rownum`
-  FROM `default_catalog`.`default_database`.`CustomersStream`) AS `t`
+  FROM `default_catalog`.`default_database`.`_CustomersStream`) AS `t`
 WHERE `__sqrlinternal_rownum` = 1;
 CREATE VIEW `CustomersSpending`
 AS
@@ -519,15 +504,11 @@ CREATE VIEW `CustomerPromotionTest`
 AS
 SELECT COUNT(*) AS `numPromotions`
 FROM `CustomerPromotion`;
-CREATE VIEW `NumOrders`
-AS
-SELECT COUNT(*) AS `count`
-FROM `Orders`;
 CREATE VIEW `Products`
 AS
 SELECT `id`, `name`, `sizing`, `weight_in_gram`, `type`, `category`, `usda_id`, `updated`
 FROM (SELECT `id`, `name`, `sizing`, `weight_in_gram`, `type`, `category`, `usda_id`, `updated`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated` DESC NULLS LAST) AS `__sqrlinternal_rownum`
-  FROM `default_catalog`.`default_database`.`ProductsStream`) AS `t`
+  FROM `default_catalog`.`default_database`.`_ProductsStream`) AS `t`
 WHERE `__sqrlinternal_rownum` = 1;
 CREATE VIEW `ProductsByCountry`
 AS
@@ -542,16 +523,15 @@ CREATE TABLE `CustomerPromotion_1` (
   `last_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `spend` DOUBLE NOT NULL,
-  `saved` DOUBLE NOT NULL,
-  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
-  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+  `saved` DOUBLE NOT NULL
 ) WITH (
-  'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
-  'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
-  'table-name' = 'CustomerPromotion_1'
+  'connector' = 'kafka',
+  'format' = 'flexible-json',
+  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
+  'properties.group.id' = '${PROPERTIES_GROUP_ID}',
+  'scan.startup.mode' = 'group-offsets',
+  'properties.auto.offset.reset' = 'earliest',
+  'topic' = 'CustomerPromotion'
 );
 CREATE TABLE `Customers_2` (
   `id` BIGINT NOT NULL,
@@ -615,37 +595,7 @@ CREATE TABLE `CustomersSpending_5` (
   'url' = 'jdbc:postgresql://${JDBC_URL}',
   'table-name' = 'CustomersSpending_5'
 );
-CREATE TABLE `CustomersStream_6` (
-  `id` BIGINT NOT NULL,
-  `first_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `last_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `ip_address` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `country` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `changed_on` BIGINT NOT NULL,
-  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  PRIMARY KEY (`id`, `changed_on`) NOT ENFORCED
-) WITH (
-  'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
-  'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
-  'table-name' = 'CustomersStream_6'
-);
-CREATE TABLE `NumOrders_7` (
-  `count` BIGINT NOT NULL,
-  `__pk_hash` INTEGER NOT NULL,
-  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
-) WITH (
-  'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
-  'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
-  'table-name' = 'NumOrders_7'
-);
-CREATE TABLE `Orders_8` (
+CREATE TABLE `Orders_6` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
@@ -657,9 +607,9 @@ CREATE TABLE `Orders_8` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_URL}',
-  'table-name' = 'Orders_8'
+  'table-name' = 'Orders_6'
 );
-CREATE TABLE `OrdersTotals_9` (
+CREATE TABLE `OrdersTotals_7` (
   `id` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `customerid` BIGINT NOT NULL,
@@ -673,9 +623,9 @@ CREATE TABLE `OrdersTotals_9` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_URL}',
-  'table-name' = 'OrdersTotals_9'
+  'table-name' = 'OrdersTotals_7'
 );
-CREATE TABLE `Products_10` (
+CREATE TABLE `Products_8` (
   `id` BIGINT NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `sizing` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -691,9 +641,9 @@ CREATE TABLE `Products_10` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_URL}',
-  'table-name' = 'Products_10'
+  'table-name' = 'Products_8'
 );
-CREATE TABLE `ProductsByCountry_11` (
+CREATE TABLE `ProductsByCountry_9` (
   `productid` BIGINT NOT NULL,
   `country` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
   `quantity` BIGINT NOT NULL,
@@ -707,25 +657,7 @@ CREATE TABLE `ProductsByCountry_11` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_URL}',
-  'table-name' = 'ProductsByCountry_11'
-);
-CREATE TABLE `ProductsStream_12` (
-  `id` BIGINT NOT NULL,
-  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `sizing` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `weight_in_gram` BIGINT NOT NULL,
-  `type` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `usda_id` BIGINT NOT NULL,
-  `updated` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  PRIMARY KEY (`id`, `updated`) NOT ENFORCED
-) WITH (
-  'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
-  'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
-  'table-name' = 'ProductsStream_12'
+  'table-name' = 'ProductsByCountry_9'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`promotion_ex1__def`
@@ -733,12 +665,12 @@ INSERT INTO `default_catalog`.`default_database`.`promotion_ex1__def`
  FROM `default_catalog`.`default_database`.`CustomerPromotion`)
 ;
 INSERT INTO `default_catalog`.`default_database`.`CustomerPromotion_1`
- (SELECT `customerid`, `first_name`, `last_name`, `email`, `spend`, `saved`, HASHCOLUMNS(`customerid`, `first_name`, `last_name`, `email`, `spend`, `saved`) AS `__pk_hash`
+ (SELECT *
   FROM `default_catalog`.`default_database`.`CustomerPromotion`)
  ;
  INSERT INTO `default_catalog`.`default_database`.`Customers_2`
   (SELECT *
-   FROM `default_catalog`.`default_database`.`CustomersStream`)
+   FROM `default_catalog`.`default_database`.`_CustomersStream`)
   ;
   INSERT INTO `default_catalog`.`default_database`.`CustomersOrderStats_3`
    (SELECT *
@@ -752,82 +684,51 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerPromotion_1`
      (SELECT `customerid`, `week`, `spend`, `saved`, HASHCOLUMNS(`customerid`, `week`, `spend`, `saved`) AS `__pk_hash`
       FROM `default_catalog`.`default_database`.`CustomersSpending`)
      ;
-     INSERT INTO `default_catalog`.`default_database`.`CustomersStream_6`
-      (SELECT *
-       FROM `default_catalog`.`default_database`.`CustomersStream`)
+     INSERT INTO `default_catalog`.`default_database`.`Orders_6`
+      (SELECT `id`, `customerid`, `time`, TOJSON(`items`) AS `items`
+       FROM `default_catalog`.`default_database`.`Orders`)
       ;
-      INSERT INTO `default_catalog`.`default_database`.`NumOrders_7`
-       (SELECT `count`, 1 AS `__pk_hash`
-        FROM `default_catalog`.`default_database`.`NumOrders`)
+      INSERT INTO `default_catalog`.`default_database`.`OrdersTotals_7`
+       (SELECT `id`, `time`, `customerid`, `price`, `saving`, HASHCOLUMNS(`id`, `time`, `customerid`, `price`, `saving`) AS `__pk_hash`
+        FROM `default_catalog`.`default_database`.`OrdersTotals`)
        ;
-       INSERT INTO `default_catalog`.`default_database`.`Orders_8`
-        (SELECT `id`, `customerid`, `time`, TOJSON(`items`) AS `items`
-         FROM `default_catalog`.`default_database`.`Orders`)
+       INSERT INTO `default_catalog`.`default_database`.`Products_8`
+        (SELECT *
+         FROM `default_catalog`.`default_database`.`_ProductsStream`)
         ;
-        INSERT INTO `default_catalog`.`default_database`.`OrdersTotals_9`
-         (SELECT `id`, `time`, `customerid`, `price`, `saving`, HASHCOLUMNS(`id`, `time`, `customerid`, `price`, `saving`) AS `__pk_hash`
-          FROM `default_catalog`.`default_database`.`OrdersTotals`)
+        INSERT INTO `default_catalog`.`default_database`.`ProductsByCountry_9`
+         (SELECT `productid`, `country`, `quantity`, `spend`, `weight`, HASHCOLUMNS(`productid`, `country`) AS `__pk_hash`
+          FROM `default_catalog`.`default_database`.`ProductsByCountry`)
          ;
-         INSERT INTO `default_catalog`.`default_database`.`Products_10`
-          (SELECT *
-           FROM `default_catalog`.`default_database`.`ProductsStream`)
-          ;
-          INSERT INTO `default_catalog`.`default_database`.`ProductsByCountry_11`
-           (SELECT `productid`, `country`, `quantity`, `spend`, `weight`, HASHCOLUMNS(`productid`, `country`) AS `__pk_hash`
-            FROM `default_catalog`.`default_database`.`ProductsByCountry`)
-           ;
-           INSERT INTO `default_catalog`.`default_database`.`ProductsStream_12`
-            (SELECT *
-             FROM `default_catalog`.`default_database`.`ProductsStream`)
-            ;
-            END
+         END
 >>>kafka.json
 {
-  "topics" : [ ]
+  "topics" : [
+    {
+      "name" : "CustomerPromotion_1",
+      "numPartitions" : 1,
+      "replicationFactor" : 1,
+      "replicasAssignments" : { },
+      "config" : { }
+    }
+  ]
 }
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "CustomerPromotion_1" ("customerid" BIGINT NOT NULL, "first_name" TEXT NOT NULL, "last_name" TEXT NOT NULL, "email" TEXT NOT NULL, "spend" DOUBLE PRECISION NOT NULL, "saved" DOUBLE PRECISION NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
 CREATE TABLE IF NOT EXISTS "Customers_2" ("id" BIGINT NOT NULL, "first_name" TEXT NOT NULL, "last_name" TEXT NOT NULL, "email" TEXT NOT NULL, "ip_address" TEXT , "country" TEXT , "changed_on" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
 CREATE TABLE IF NOT EXISTS "CustomersOrderStats_3" ("customerid" BIGINT NOT NULL, "first_order" TIMESTAMP WITH TIME ZONE NOT NULL, "total_spend" DOUBLE PRECISION NOT NULL, "total_saved" DOUBLE PRECISION NOT NULL, "num_orders" BIGINT NOT NULL , PRIMARY KEY ("customerid"));
 CREATE TABLE IF NOT EXISTS "CustomersPastPurchases_4" ("customerid" BIGINT NOT NULL, "productid" BIGINT NOT NULL, "num_orders" BIGINT NOT NULL, "total_quantity" BIGINT NOT NULL , PRIMARY KEY ("customerid","productid"));
 CREATE TABLE IF NOT EXISTS "CustomersSpending_5" ("customerid" BIGINT NOT NULL, "week" TIMESTAMP WITH TIME ZONE NOT NULL, "spend" DOUBLE PRECISION NOT NULL, "saved" DOUBLE PRECISION NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "CustomersStream_6" ("id" BIGINT NOT NULL, "first_name" TEXT NOT NULL, "last_name" TEXT NOT NULL, "email" TEXT NOT NULL, "ip_address" TEXT , "country" TEXT , "changed_on" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id","changed_on"));
-CREATE TABLE IF NOT EXISTS "NumOrders_7" ("count" BIGINT NOT NULL, "__pk_hash" INTEGER NOT NULL , PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "Orders_8" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "items" JSONB  , PRIMARY KEY ("id","time"));
-CREATE TABLE IF NOT EXISTS "OrdersTotals_9" ("id" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "customerid" BIGINT NOT NULL, "price" DOUBLE PRECISION NOT NULL, "saving" DOUBLE PRECISION NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "Products_10" ("id" BIGINT NOT NULL, "name" TEXT NOT NULL, "sizing" TEXT NOT NULL, "weight_in_gram" BIGINT NOT NULL, "type" TEXT NOT NULL, "category" TEXT NOT NULL, "usda_id" BIGINT NOT NULL, "updated" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
-CREATE TABLE IF NOT EXISTS "ProductsByCountry_11" ("productid" BIGINT NOT NULL, "country" TEXT , "quantity" BIGINT NOT NULL, "spend" DOUBLE PRECISION NOT NULL, "weight" BIGINT NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "ProductsStream_12" ("id" BIGINT NOT NULL, "name" TEXT NOT NULL, "sizing" TEXT NOT NULL, "weight_in_gram" BIGINT NOT NULL, "type" TEXT NOT NULL, "category" TEXT NOT NULL, "usda_id" BIGINT NOT NULL, "updated" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id","updated"));
+CREATE TABLE IF NOT EXISTS "Orders_6" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "items" JSONB  , PRIMARY KEY ("id","time"));
+CREATE TABLE IF NOT EXISTS "OrdersTotals_7" ("id" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "customerid" BIGINT NOT NULL, "price" DOUBLE PRECISION NOT NULL, "saving" DOUBLE PRECISION NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "Products_8" ("id" BIGINT NOT NULL, "name" TEXT NOT NULL, "sizing" TEXT NOT NULL, "weight_in_gram" BIGINT NOT NULL, "type" TEXT NOT NULL, "category" TEXT NOT NULL, "usda_id" BIGINT NOT NULL, "updated" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "ProductsByCountry_9" ("productid" BIGINT NOT NULL, "country" TEXT , "quantity" BIGINT NOT NULL, "spend" DOUBLE PRECISION NOT NULL, "weight" BIGINT NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
 
-CREATE INDEX IF NOT EXISTS "OrdersTotals_9_hash_c0" ON "OrdersTotals_9" USING hash ("id");
-CREATE INDEX IF NOT EXISTS "Orders_8_hash_c1" ON "Orders_8" USING hash ("customerid");
-CREATE INDEX IF NOT EXISTS "Products_10_text_c1c5" ON "Products_10" USING GIN (to_tsvector('english', coalesce("name", '') || ' ' || coalesce("category", '') ))
+CREATE INDEX IF NOT EXISTS "Customers_2_hash_c3" ON "Customers_2" USING hash ("email");
+CREATE INDEX IF NOT EXISTS "OrdersTotals_7_hash_c0" ON "OrdersTotals_7" USING hash ("id");
+CREATE INDEX IF NOT EXISTS "Orders_6_hash_c1" ON "Orders_6" USING hash ("customerid");
+CREATE INDEX IF NOT EXISTS "Products_8_text_c1c5" ON "Products_8" USING GIN (to_tsvector('english', coalesce("name", '') || ' ' || coalesce("category", '') ))
 >>>postgres-views.sql
-CREATE OR REPLACE VIEW "CustomerPromotion"("customerid", "first_name", "last_name", "email", "spend", "saved") AS SELECT "customerid", "first_name", "last_name", "email", "spend", "saved"
-FROM "CustomerPromotion_1";
-CREATE OR REPLACE VIEW "Customers"("id", "first_name", "last_name", "email", "ip_address", "country", "changed_on", "timestamp") AS SELECT *
-FROM "Customers_2";
-CREATE OR REPLACE VIEW "CustomersOrderStats"("customerid", "first_order", "total_spend", "total_saved", "num_orders") AS SELECT *
-FROM "CustomersOrderStats_3";
-CREATE OR REPLACE VIEW "CustomersPastPurchases"("customerid", "productid", "num_orders", "total_quantity") AS SELECT *
-FROM "CustomersPastPurchases_4";
-CREATE OR REPLACE VIEW "CustomersSpending"("customerid", "week", "spend", "saved") AS SELECT "customerid", "week", "spend", "saved"
-FROM (SELECT "customerid", "week", "spend", "saved", "__pk_hash"
-  FROM "CustomersSpending_5"
-  ORDER BY "week" DESC NULLS LAST) AS "t1";
-CREATE OR REPLACE VIEW "CustomersStream"("id", "first_name", "last_name", "email", "ip_address", "country", "changed_on", "timestamp") AS SELECT *
-FROM "CustomersStream_6";
-CREATE OR REPLACE VIEW "NumOrders"("count") AS SELECT "count"
-FROM "NumOrders_7";
 CREATE OR REPLACE VIEW "Orders"("id", "customerid", "time", "items") AS SELECT *
-FROM "Orders_8";
-CREATE OR REPLACE VIEW "OrdersTotals"("id", "time", "customerid", "price", "saving") AS SELECT "id", "time", "customerid", "price", "saving"
-FROM "OrdersTotals_9";
-CREATE OR REPLACE VIEW "Products"("id", "name", "sizing", "weight_in_gram", "type", "category", "usda_id", "updated") AS SELECT *
-FROM "Products_10";
-CREATE OR REPLACE VIEW "ProductsByCountry"("productid", "country", "quantity", "spend", "weight") AS SELECT "productid", "country", "quantity", "spend", "weight"
-FROM "ProductsByCountry_11";
-CREATE OR REPLACE VIEW "ProductsStream"("id", "name", "sizing", "weight_in_gram", "type", "category", "usda_id", "updated") AS SELECT *
-FROM "ProductsStream_12"
+FROM "Orders_6"
 >>>vertx.json
 { }

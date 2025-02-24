@@ -91,6 +91,10 @@ CREATE VIEW `Orders2`
 AS
 SELECT *
 FROM `Orders`;
+CREATE VIEW `Orders3`
+AS
+SELECT *
+FROM `Orders`;
 CREATE TABLE `Orders_1` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,

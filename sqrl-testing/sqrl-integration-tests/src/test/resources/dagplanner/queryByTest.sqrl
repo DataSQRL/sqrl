@@ -5,3 +5,6 @@ Orders1 := SELECT * FROM Orders;
 
 /*+query_by_all(id, time, customerid) */
 Orders2 := SELECT * FROM Orders;
+
+/*+no_query */
+Orders3 := SELECT * FROM Orders;

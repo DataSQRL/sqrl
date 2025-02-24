@@ -29,6 +29,7 @@ import com.datasqrl.v2.dag.nodes.TableFunctionNode;
 import com.datasqrl.v2.dag.nodes.TableNode;
 import com.datasqrl.v2.hint.ColumnNamesHint;
 import com.datasqrl.v2.hint.ExecHint;
+import com.datasqrl.v2.hint.NoQueryHint;
 import com.datasqrl.v2.hint.PlannerHints;
 import com.datasqrl.v2.hint.QueryByAnyHint;
 import com.datasqrl.v2.hint.TestHint;
@@ -428,17 +429,20 @@ public class SqlScriptPlanner {
     dagBuilder.add(tableNode);
     Optional<ColumnNamesHint> queryByHint = hints.getQueryByHint();
     if (visibility.isEndpoint()) { //Add function to scan table as endpoint
-      String tableName = tableAnalysis.getIdentifier().getObjectName();
-      String fctName = tableName + ACCESS_FUNCTION_SUFFIX;
       FlinkRelBuilder relBuilder = sqrlEnv.getTableScan(tableAnalysis.getIdentifier());
       List<FunctionParameter> parameters = List.of();
       if (queryByHint.isPresent()) {
         ColumnNamesHint hint = queryByHint.get();
+        if (hint instanceof NoQueryHint) { //Don't add an access function
+          return;
+        }
         parameters = CalciteUtil.addFilterByColumn(relBuilder, hint.getColumnIndexes(), hint instanceof QueryByAnyHint);
       }
       relBuilder.project(IntStream.range(0, tableAnalysis.getFieldLength()).mapToObj(relBuilder::field).collect(
           Collectors.toList()), tableAnalysis.getRowType().getFieldNames(), true); //Identity projection
       //TODO: should we add a default sort if the user didn't specify one to have predictable result sets for testing?
+      String tableName = tableAnalysis.getIdentifier().getObjectName();
+      String fctName = tableName + ACCESS_FUNCTION_SUFFIX;
       SqrlTableFunction.SqrlTableFunctionBuilder fctBuilder = sqrlEnv.addSqrlTableFunction(SqlNameUtil.toIdentifier(Name.system(fctName)),
           relBuilder.build(), parameters, tableAnalysis);
       fctBuilder.fullPath(NamePath.of(tableName));

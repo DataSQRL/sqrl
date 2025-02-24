@@ -23,7 +23,7 @@ public class PlannerHints {
     if (queryby.size()>1) {
       throw new StatementParserException(ErrorLabel.GENERIC,
           queryby.get(1).getSource().getFileLocation(),
-          "Cannot have more than one `query_by_*` hint per table");
+          "Cannot have more than one `query_by_*` or `no_query` hint per table");
     }
     return queryby.stream().map(ColumnNamesHint.class::cast).findFirst();
   }

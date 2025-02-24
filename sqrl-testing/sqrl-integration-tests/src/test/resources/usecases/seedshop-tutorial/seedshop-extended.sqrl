@@ -1,9 +1,10 @@
 IMPORT seedshop.OrderItems AS Orders;
-IMPORT seedshop.Products AS ProductsStream;
-IMPORT seedshop.Customers AS CustomersStream;
+IMPORT seedshop.Products AS _ProductsStream;
+IMPORT seedshop.Customers AS _CustomersStream;
 
 _OrderItems := SELECT o.id, o.`time`, o.customerid, i.* FROM Orders o CROSS JOIN UNNEST(o.items) i;
 
+/*+no_query */
 OrdersTotals := SELECT id, window_time AS `time`, customerid, sum(quantity * unit_price - coalesce(discount, 0.0)) as price,
                   sum(coalesce(discount, 0.0)) as saving
                 FROM TABLE(TUMBLE(TABLE _OrderItems, DESCRIPTOR(`time`), INTERVAL '0.001' SECONDS))
@@ -11,11 +12,13 @@ OrdersTotals := SELECT id, window_time AS `time`, customerid, sum(quantity * uni
 
 Orders.totals := SELECT * FROM OrdersTotals t WHERE this.id = t.id;
 
-Customers := DISTINCT CustomersStream ON id ORDER BY `timestamp` DESC;
+/*+query_by_any(id, email) */
+Customers := DISTINCT _CustomersStream ON id ORDER BY `timestamp` DESC;
 
 Orders.customer := SELECT * FROM Customers WHERE this.customerid = id;
 Customers.purchases := SELECT * FROM Orders WHERE customerid = this.id;
 
+/*+no_query */
 CustomersSpending := SELECT customerid, window_time AS week,
          sum(price) AS spend, sum(saving) AS saved
       FROM TABLE(TUMBLE(TABLE OrdersTotals, DESCRIPTOR(`time`), INTERVAL '7' DAYS))
@@ -23,12 +26,14 @@ CustomersSpending := SELECT customerid, window_time AS week,
       ORDER BY week DESC;
 Customers.spending := SELECT * FROM CustomersSpending WHERE customerid = this.id;
 
+/*+no_query */
 CustomersOrderStats := SELECT customerid, min(`time`) as first_order,
                               sum(price) as total_spend, sum(saving) as total_saved,
                               count(1) as num_orders
                        FROM OrdersTotals GROUP BY customerid;
 Customers.order_stats := SELECT * FROM CustomersOrderStats WHERE customerid = this.id;
 
+/*+no_query */
 CustomersPastPurchases := SELECT o.customerid, i.productid, count(1) as num_orders,
          sum(i.quantity) as total_quantity
       FROM Orders o CROSS JOIN UNNEST(o.items) i
@@ -42,7 +47,7 @@ CustomerPurchaseTest := SELECT customerid, productid, count(*) as num
                         ORDER BY customerid ASC, productid ASC;
 
 --compute customer promotions and export for email
-CustomerPromotion := SELECT s.customerid, c.first_name, c.last_name, c.email, s.spend, s.saved
+CustomerPromotion := SUBSCRIBE SELECT s.customerid, c.first_name, c.last_name, c.email, s.spend, s.saved
         FROM CustomersSpending s JOIN Customers FOR SYSTEM_TIME AS OF `week` c ON s.customerid = c.id
         WHERE s.spend > 250;
 
@@ -51,12 +56,11 @@ EXPORT CustomerPromotion TO mySinkPackage.promotion;
 /*+test */
 CustomerPromotionTest := SELECT COUNT(*) AS numPromotions FROM CustomerPromotion;
 
-NumOrders := SELECT COUNT(*) AS `count` FROM Orders;
-
-Products := DISTINCT ProductsStream ON id ORDER BY updated DESC;
-
+/*+query_by_all(id) */
+Products := DISTINCT _ProductsStream ON id ORDER BY updated DESC;
 
 -- aggregating by country
+/*+query_by_all(productid) */
 ProductsByCountry := SELECT p.id AS productid, c.country AS country, sum(o.quantity) as quantity,
          sum(o.quantity * o.unit_price) as spend, sum(o.quantity * p.weight_in_gram) as weight
       FROM _OrderItems o

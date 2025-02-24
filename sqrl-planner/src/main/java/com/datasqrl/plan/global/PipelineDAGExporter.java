@@ -253,7 +253,6 @@ public class PipelineDAGExporter {
         String stage;
         @Builder.Default
         List<String> inputs = List.of();
-        @JsonProperty("post_processors") //TODO: For backwards compatibility, rename
         List<Annotation> annotations;
 
 
