@@ -80,7 +80,6 @@ public class CompilationProcessV2 {
     if (serverPlan.isPresent()) {
       Optional<APISource> apiSource = graphqlSourceFactory.get();
       if (apiSource.isEmpty() || executionGoal == ExecutionGoal.TEST) { //Infer schema from functions
-        //TODO: rewrite the following to use the functions from the serverPlan
         apiSource = inferencePostcompileHook.inferGraphQLSchema(serverPlan.get())
             .map(schemaString -> new APISourceImpl(Name.system("<generated-schema>"), schemaString));
       }
