@@ -166,7 +166,8 @@ public class GraphqlSchemaFactory2 {
     } else { // subscriptions
       rootObjectType = null; // TODO implement
     }
-    cleanInvalidTypes();
+    //TODO fix cleanInvalidTypes: it removes nestedTypes.
+//    cleanInvalidTypes();
     return Optional.of(rootObjectType);
   }
 
