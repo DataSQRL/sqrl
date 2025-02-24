@@ -184,7 +184,6 @@ public class SqrlStatementParser {
                 "Argument list contains invalid arguments");
           }
           Pair<String, List<ParsedArgument>> processedBody = replaceTableFunctionVariables(definitionBody.get(), argumentMap, statement);
-          //TODO: check that parent fields and arguments don't clash
           definitionBody = definitionBody.map(x -> processedBody.getKey());
           definition = new SqrlTableFunctionStatement(tableName, definitionBody, access, comment,
               List.copyOf(argumentMap.values()), processedBody.getRight());

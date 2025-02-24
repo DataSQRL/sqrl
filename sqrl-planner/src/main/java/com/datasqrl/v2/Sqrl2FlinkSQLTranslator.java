@@ -412,8 +412,10 @@ public class Sqrl2FlinkSQLTranslator {
 
   public SqrlTableFunction.SqrlTableFunctionBuilder addSqrlTableFunction(ObjectIdentifier identifier,
       RelNode relNode, List<FunctionParameter> parameters, TableAnalysis baseTable) {
+    String sql = toSqlString(toSqlNode(relNode));
     TableAnalysis tableAnalysis = TableAnalysis.builder()
         .originalRelnode(relNode)
+        .originalSql(sql)
         .type(baseTable.getType())
         .primaryKey(baseTable.getPrimaryKey())
         .optionalBaseTable(baseTable.getOptionalBaseTable())
@@ -423,7 +425,7 @@ public class Sqrl2FlinkSQLTranslator {
         .errors(baseTable.getErrors())
         .collapsedRelnode(relNode)
         .identifier(identifier)
-        .originalSql("").build();
+        .build();
     SqrlTableFunction.SqrlTableFunctionBuilder fctBuilder = SqrlTableFunction.builder()
         .functionAnalysis(tableAnalysis)
         .parameters(parameters)
