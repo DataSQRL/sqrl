@@ -94,12 +94,6 @@ public class PackageBootstrap {
     return packageJson;
   }
 
-  public PackageJson createDefaultConfig(ErrorCollector errors) {
-    PackageJson packageJson = new PackageJsonImpl(SqrlConfigCommons.fromURL(errors, getClass().getResource("/default-package.json")));
-
-    return packageJson;
-  }
-
   /**
    * We want to guard against confusion with remote repo names and filesystem paths so we can throw sensible error messages
    */

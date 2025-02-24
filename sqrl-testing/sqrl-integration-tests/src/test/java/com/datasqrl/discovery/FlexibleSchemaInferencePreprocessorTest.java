@@ -42,7 +42,7 @@ public class FlexibleSchemaInferencePreprocessorTest extends AbstractAssetSnapsh
   protected FlexibleSchemaInferencePreprocessorTest() {
     super(FILES_DIR.resolve("output"));
     try {
-      packageJson = new PackageJsonImpl(SqrlConfigCommons.fromURL(errors, getClass().getResource("/default-package.json")));
+      packageJson =  SqrlConfigCommons.getDefaultPackageJson(errors);
     } catch (Exception e) {
         System.out.println(ErrorPrinter.prettyPrint(errors));
         throw e;

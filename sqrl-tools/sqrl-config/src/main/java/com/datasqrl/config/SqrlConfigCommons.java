@@ -349,15 +349,19 @@ public class SqrlConfigCommons implements SqrlConfig {
 
   public static TableConfigImpl fromFilesTableConfig(@NonNull Name name, ErrorCollector errors,
       @NonNull List<Path> files) {
-    return new TableConfigImpl(name, fromFiles(errors, "/jsonSchema/tableConfig.json", files));
+    return new TableConfigImpl(name, getPackageConfig(errors, "/jsonSchema/tableConfig.json", files));
+  }
+
+  public static PackageJson getDefaultPackageJson(ErrorCollector errors) {
+    return fromFilesPackageJson(errors, List.of());
   }
 
   public static PackageJson fromFilesPackageJson(ErrorCollector errors, @NonNull List<Path> files) {
-    return new PackageJsonImpl(fromFiles(errors, "/jsonSchema/packageSchema.json", files));
+    return new PackageJsonImpl(getPackageConfig(errors, "/jsonSchema/packageSchema.json", files));
   }
 
   public static PackageJson fromFilesPublishPackageJson(ErrorCollector errors, @NonNull List<Path> files) {
-    return new PackageJsonImpl(fromFiles(errors, "/jsonSchema/publishPackageSchema.json", files));
+    return new PackageJsonImpl(getPackageConfig(errors, "/jsonSchema/publishPackageSchema.json", files));
   }
 
   public static boolean validateJsonFile(Path jsonFilePath, String schemaResourcePath,
@@ -398,10 +402,10 @@ public class SqrlConfigCommons implements SqrlConfig {
   }
 
   public static SqrlConfig fromFiles(ErrorCollector errors, @NonNull Path firstFile) {
-    return fromFiles(errors, null, List.of(firstFile));
+    return getPackageConfig(errors, null, List.of(firstFile));
   }
 
-  public static SqrlConfig fromFiles(ErrorCollector errors, String jsonSchemaResource, @NonNull List<Path> files) {
+  public static SqrlConfig getPackageConfig(ErrorCollector errors, String jsonSchemaResource, @NonNull List<Path> files) {
     Configurations configs = new Configurations();
     boolean isValid = true;
 
@@ -421,11 +425,11 @@ public class SqrlConfigCommons implements SqrlConfig {
     }
 
     try {
-        URL url = SqrlConfigCommons.class.getResource("/default-package.json");
-		JSONConfiguration config = configs.fileBased(JSONConfiguration.class,   url);
-		combinedConfiguration.addConfiguration(config);
+      URL url = SqrlConfigCommons.class.getResource("/default-package.json");
+      JSONConfiguration config = configs.fileBased(JSONConfiguration.class,   url);
+      combinedConfiguration.addConfiguration(config);
     } catch (ConfigurationException e) {
-        throw errors.withConfig("Error loading default configuration").handle(e);
+      throw errors.withConfig("Error loading default configuration").handle(e);
     }
 
     String configFilename;
