@@ -7,7 +7,7 @@ rootFunctionWithBaseTable($i : INT) := SELECT * FROM Orders WHERE id = $i; -- ba
 
 -- A relationship, `this.customerid` gets replaced with an internal parameter that gets substituted with customerid on the parent table Customer
 Customer.orders := SELECT * FROM Orders o WHERE this.customerid = o.customerid; --base table
-Customer.orders2 := SELECT id FROM Orders o WHERE this.customerid = o.customerid; --no base table
+Customer.orders2($i : INT) := SELECT id FROM Orders o WHERE this.customerid = o.customerid AND id = $i; --no base table
 
 -- cannot have a relationship in the FROM clause.
 -- CustomerEntries($customerid : BIGINT) := SELECT entries e FROM Customer.orders customerOrders WHERE customerOrders.customerid = $customerid;

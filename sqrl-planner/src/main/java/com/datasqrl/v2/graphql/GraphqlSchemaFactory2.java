@@ -12,6 +12,7 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.engine.log.LogManager;
 import com.datasqrl.engine.server.ServerPhysicalPlan;
+import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.v2.tables.SqrlFunctionParameter;
 import com.datasqrl.graphql.server.CustomScalars;
 import com.datasqrl.plan.validate.ExecutionGoal;
@@ -86,9 +87,7 @@ public class GraphqlSchemaFactory2 {
     // process query table functions
     final List<SqrlTableFunction> queriesTableFunctions =
         serverPlan.getFunctions().stream()
-            .filter(
-                function ->
-                    function.getVisibility().getAccess() == AccessModifier.QUERY)
+            .filter(function -> function.getVisibility().getAccess() == AccessModifier.QUERY)
             .collect(Collectors.toList());
     final Optional<GraphQLObjectType> queriesObjectType = createQueriesOrSubscriptionsObjectType(queriesTableFunctions, AccessModifier.QUERY);
     if (queryFields.isEmpty()) {
@@ -116,17 +115,16 @@ public class GraphqlSchemaFactory2 {
 
     graphQLSchemaBuilder.additionalTypes(new LinkedHashSet<>(objectTypes)); // the cleaned types
 
-    //TODO there might be a pb in the original program flow: why fields (before pruning) at the end while this.queryFields empty is tested just after invalid fields pruning
     if (queriesObjectType.get().getFields().isEmpty()) {
-      if (goal == ExecutionGoal.TEST) {
-        return Optional.empty(); //may have test folder
-      } else {
-        throw new RuntimeException("No queryable tables found for server");
-      }
+      throw new RuntimeException("No queryable tables found for server");
     }
     return Optional.of(graphQLSchemaBuilder.build());
   }
 
+  /**
+   * GraphQL queries and subscriptions are generated the same way. So we have a single method having
+   * {@link AccessModifier#QUERY} or {@link AccessModifier#SUBSCRIPTION} as parameter.
+   */
   public Optional<GraphQLObjectType> createQueriesOrSubscriptionsObjectType(
       List<SqrlTableFunction> tableFunctions, AccessModifier tableFunctionsType) {
 
@@ -159,24 +157,39 @@ public class GraphqlSchemaFactory2 {
       }
     }
 
-    GraphQLObjectType objectType;
+    GraphQLObjectType rootObjectType;
     if (tableFunctionsType == AccessModifier.QUERY) {
-      objectType = createRootQueryType(tableFunctionsByTheirParentPath.get(NamePath.ROOT));
+      final List<SqrlTableFunction> rootTableFunctions = tableFunctions.stream()
+              .filter(tableFunction -> !tableFunction.isRelationship())
+              .collect(Collectors.toList());
+      rootObjectType = createRootQueryType(rootTableFunctions);
     } else { // subscriptions
-      objectType = null; // TODO implement
+      rootObjectType = null; // TODO implement
     }
-    // TODO there might be a pb in the original program flow: invalid fields pruning is done after ?
     cleanInvalidTypes();
-    return Optional.of(objectType);
+    return Optional.of(rootObjectType);
   }
 
 
+  /**
+   * Create the graphQL result type for root table functions (non-relationships)
+   */
   private Optional<GraphQLObjectType> createRootTableFunctionResultType(SqrlTableFunction tableFunction, List<SqrlTableFunction> itsOverloadedTableFunctions, List<SqrlTableFunction> itsRelationships) {
     checkOverloadedFunctionsHaveSameBaseTable(itsOverloadedTableFunctions);
     checkOverloadedSignaturesDontOverlap(itsOverloadedTableFunctions);
 
-    RelDataType rowType = tableFunction.getRowType();
-
+    String typeName;
+    if (tableFunction.getBaseTable().isPresent()) {
+      final String baseTableName = tableFunction.getBaseTable().get().getName();
+      if (usedNames.contains(baseTableName)) {// result type was already defined
+          return Optional.empty();
+      }
+      else { // new result type using base name
+        typeName = baseTableName;
+      }
+    } else { // no base table, use function name
+      typeName = uniquifyName(tableFunction.getFullPath().getLast().getDisplay());
+    }
     /* BROWSE THE FIELDS
     They are either
       - a non-relationship field :
@@ -187,13 +200,13 @@ public class GraphqlSchemaFactory2 {
 
     // non-relationship fields
     // now all relationships are functions that are separate from the datatype. So there can no more have relationship fields inside the relDataType
+    RelDataType rowType = tableFunction.getRowType();
     List<GraphQLFieldDefinition> fields = new ArrayList<>();
     for (RelDataTypeField field : rowType.getFieldList()) {
       createRelDataTypeField(field).map(fields::add);
     }
 
     // relationship fields (reference to types defined when processing the relationship) need to be wired into the root table.
-    // But when processing the root table we don't know these fields. Hence the need to have all the relationships belonging to this rootTable.
     Map<Name, List<SqrlTableFunction>> itsRelationshipsByTheirField = itsRelationships.stream()
             .collect(Collectors.groupingBy(g -> g.getFullPath().getLast(),
                     LinkedHashMap::new, Collectors.toList()));
@@ -208,38 +221,30 @@ public class GraphqlSchemaFactory2 {
       return Optional.empty();
     }
 
-    String name;
-    if (tableFunction.getBaseTable().isPresent()) {
-      final String baseTableName = tableFunction.getBaseTable().get().getName();
-      if (usedNames.contains(baseTableName)) {// result type was already defined
-          return Optional.empty();
-      }
-      else { // new result type using base name
-        name = baseTableName;
-      }
-    } else { // no base table, use function name
-      name = tableFunction.getFunctionCatalogName();
-    }
     GraphQLObjectType objectType = GraphQLObjectType.newObject()
-            .name(name)
+            .name(typeName)
             .fields(fields)
             .build();
-    usedNames.add(name);
+    usedNames.add(typeName);
     queryFields.addAll(fields);
     return Optional.of(objectType);
   }
-
+  /**
+   * Generate the result type for relationship table functions
+   */
   private Optional<GraphQLObjectType> createRelationshipTableFunctionResultType(SqrlTableFunction tableFunction, List<SqrlTableFunction> itsOverloadedTableFunctions) {
     checkOverloadedFunctionsHaveSameBaseTable(itsOverloadedTableFunctions);
     checkOverloadedSignaturesDontOverlap(itsOverloadedTableFunctions);
 
-    RelDataType rowType = tableFunction.getRowType();
+    if (tableFunction.getBaseTable().isPresent()) { // the type was created in the root table function
+      return Optional.empty();
+    }
     /* BROWSE THE FIELDS
     There is No more nested relationships, so when we browse the fields, they are either
       - a scalar type
       - a nested relDataType (which is no more planed as a table function). For that case we stop at depth=1 for now
      */
-
+    RelDataType rowType = tableFunction.getRowType();
     List<GraphQLFieldDefinition> fields = new ArrayList<>();
     for (RelDataTypeField field : rowType.getFieldList()) {
       createRelDataTypeField(field).map(fields::add);
@@ -248,16 +253,13 @@ public class GraphqlSchemaFactory2 {
     if (fields.isEmpty()) {
       return Optional.empty();
     }
-    if (tableFunction.getBaseTable().isPresent()) { // the type was created in the root table function
-      return Optional.empty();
-    }
 
-    String name = uniquifyName(tableFunction.getFullPath().getLast().getDisplay());
+    String typeName = uniquifyName(tableFunction.getFullPath().getLast().getDisplay());
     GraphQLObjectType objectType = GraphQLObjectType.newObject()
-            .name(name)
+            .name(typeName)
             .fields(fields)
             .build();
-    usedNames.add(name);
+    usedNames.add(typeName);
     queryFields.addAll(fields);
     return Optional.of(objectType);
   }
@@ -321,25 +323,23 @@ public class GraphqlSchemaFactory2 {
   }
 */
 
-
-  private GraphQLObjectType createRootQueryType(List<SqrlTableFunction> rootTables) {
+  /**
+   * Create the root Query graphQL object encapsulating the type references to all the root table functions.
+   */
+  private GraphQLObjectType createRootQueryType(List<SqrlTableFunction> rootTableFunctions) {
 
     List<GraphQLFieldDefinition> fields = new ArrayList<>();
 
-    for (SqrlTableFunction rootTable : rootTables) {
-      String name = rootTable.getFullPath().getDisplay();
-      if (name.startsWith(HIDDEN_PREFIX) || !isValidGraphQLName(name)) continue;
-
-      if (goal == ExecutionGoal.TEST) {
-        if (!rootTable.getVisibility().isTest()) continue;
-      } else {
-        if (rootTable.getVisibility().isTest()) continue;
+    for (SqrlTableFunction tableFunction : rootTableFunctions) {
+      String tableFunctionName = tableFunction.getFullPath().getDisplay();
+      if (!isValidGraphQLName(tableFunctionName)) {
+        continue;
       }
 
       GraphQLFieldDefinition field = GraphQLFieldDefinition.newFieldDefinition()
-          .name(rootTable.getFullPath().getDisplay())
-          .type(wrapMultiplicity(createTypeReference(rootTable.getFullPath().getLast().getDisplay()), rootTable.getMultiplicity()))
-          .arguments(createArguments(rootTable))
+          .name(tableFunctionName)
+          .type(wrapMultiplicity(createTypeReference(tableFunction), tableFunction.getMultiplicity()))
+          .arguments(createArguments(tableFunction))
           .build();
       fields.add(field);
     }
@@ -383,11 +383,6 @@ public class GraphqlSchemaFactory2 {
     return name;
   }
 
-  private String generateFieldTypeName(SqrlTableFunction tableFunction) {
-    NamePath path = tableFunction.getFullPath();
-    return tableFunction.getBaseTable().isPresent() ? tableFunction.getBaseTable().get().getName() : uniquifyName(path.getLast().getDisplay());
-  }
-
   /**
    *   Create a non-relationship field :
    *     - a scalar type
@@ -405,9 +400,12 @@ public class GraphqlSchemaFactory2 {
             );
   }
 
+  /**
+   * For a relationship table function sur as this: <pre>{@code Customer.orders := SELECT * FROM Orders o WHERE
+   * this.customerid = o.customerid; }</pre> Create a type reference for the orders field in the Customer table.
+   */
   private Optional<GraphQLFieldDefinition> createRelationshipField(SqrlTableFunction tableFunction) {
     String fieldName = tableFunction.getFullPath().getLast().getDisplay();
-    String typeName = generateFieldTypeName(tableFunction);
     if (!isValidGraphQLName(fieldName) || isHiddenString(fieldName)) {
       return Optional.empty();
     }
@@ -415,7 +413,7 @@ public class GraphqlSchemaFactory2 {
     // reference the type that will be defined when the table function relationship is processed
     GraphQLFieldDefinition field = GraphQLFieldDefinition.newFieldDefinition()
         .name(fieldName)
-        .type(wrapMultiplicity(createTypeReference(typeName), tableFunction.getMultiplicity()))
+        .type(wrapMultiplicity(createTypeReference(tableFunction), tableFunction.getMultiplicity()))
         .arguments(createArguments(tableFunction))
         .build();
 
@@ -423,32 +421,30 @@ public class GraphqlSchemaFactory2 {
   }
 
   private List<GraphQLArgument> createArguments(SqrlTableFunction tableFunction) {
-    // TODO before there was a test of allowed only if multiplicity == many and joinType != parent. We no more have joinType
+    if (tableFunction.getMultiplicity() != Multiplicity.MANY) {
+      return List.of();
+    }
 
     List<FunctionParameter> parameters = tableFunction.getParameters().stream()
         .filter(parameter->!((SqrlFunctionParameter)parameter).isParentField())
         .collect(Collectors.toList());
-    // TODO where to deal with internal parameters for relationships ?
 
-      // TODO what is the addArguments config parameter (in the current code, the processing below is done even if addArguments is false)
-      final List<GraphQLArgument> arguments = parameters.stream()
+      final List<GraphQLArgument> parametersArguments = parameters.stream()
               .filter(p -> getInputType(p.getType(null), NamePath.of(p.getName()), seen, extendedScalarTypes).isPresent())
               .map(parameter -> GraphQLArgument.newArgument()
-                      .name(((SqrlFunctionParameter) parameter).getName())
+                      .name(parameter.getName())
                       .type(nonNull(getInputType(parameter.getType(null), NamePath.of(parameter.getName()), seen, extendedScalarTypes).get()))
                       .build()).collect(Collectors.toList());
-      List<GraphQLArgument> limitOffset = generateLimitOffset();
+      List<GraphQLArgument> limitAndOffsetArguments = generateLimitAndOffsetArguments();
 
       //TODO Merge signatures when there are multiple overloaded functions: a) combining all
     // parameters by name and relaxing their argument type by nullability b) check that argument
     // types are compatible, otherwise produce error. Also check compatibility of result type.
 
-    return ListUtils.union(arguments, limitOffset);
+    return ListUtils.union(parametersArguments, limitAndOffsetArguments);
   }
 
-  private List<GraphQLArgument> generateLimitOffset() {
-
-    //add limit / offset
+  private List<GraphQLArgument> generateLimitAndOffsetArguments() {
     GraphQLArgument limit = GraphQLArgument.newArgument()
         .name(LIMIT)
         .type(Scalars.GraphQLInt)
@@ -468,7 +464,11 @@ public class GraphqlSchemaFactory2 {
     return !f.getName().startsWith(HIDDEN_PREFIX);
   }
 
-  private GraphQLOutputType createTypeReference(String typeName) {
+  private GraphQLOutputType createTypeReference(SqrlTableFunction tableFunction) {
+    String typeName =
+        tableFunction.getBaseTable().isPresent()
+            ? tableFunction.getBaseTable().get().getName()
+            : uniquifyName(tableFunction.getFullPath().getLast().getDisplay());
     seen.add(typeName);
     return new GraphQLTypeReference(typeName);
   }
