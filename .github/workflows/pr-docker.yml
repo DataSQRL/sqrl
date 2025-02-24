@@ -44,10 +44,9 @@ jobs:
         id: set-tags
         run: |
           PR_NUMBER=${{ github.event.pull_request.number }}
-          REPO_OWNER=${{ github.repository_owner }}
 
-          CMD_TAG="ghcr.io/${REPO_OWNER}/datasqrl/cmd:pr-${PR_NUMBER}"
-          SERVER_TAG="ghcr.io/${REPO_OWNER}/datasqrl/sqrl-server:pr-${PR_NUMBER}"
+          CMD_TAG="ghcr.io/datasqrl/cmd:pr-${PR_NUMBER}"
+          SERVER_TAG="ghcr.io/datasqrl/sqrl-server:pr-${PR_NUMBER}"
 
           echo "CMD_TAG=$CMD_TAG" >> $GITHUB_ENV
           echo "SERVER_TAG=$SERVER_TAG" >> $GITHUB_ENV
