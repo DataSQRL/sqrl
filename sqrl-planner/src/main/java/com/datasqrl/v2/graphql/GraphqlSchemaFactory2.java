@@ -10,7 +10,6 @@ import static graphql.schema.GraphQLNonNull.nonNull;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.PackageJson.CompilerConfig;
-import com.datasqrl.engine.log.LogManager;
 import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.v2.tables.SqrlFunctionParameter;
@@ -59,21 +58,17 @@ public class GraphqlSchemaFactory2 {
 
   private final List<GraphQLFieldDefinition> queryFields = new ArrayList<>();
   private final List<GraphQLObjectType> objectTypes = new ArrayList<>();
-  private final Set<String> usedNames = new HashSet<>();
-  private final boolean addArguments;
+  private final Set<String> definedTypeNames = new HashSet<>();
   private final boolean extendedScalarTypes;
-  private final LogManager logManager;
   private final ExecutionGoal goal;
   public final Set<String> seen = new HashSet<>();
 
   @Inject
-  public GraphqlSchemaFactory2(CompilerConfig config, LogManager logManager, ExecutionGoal goal) {
-    this(config.isAddArguments(), config.isExtendedScalarTypes(), logManager, goal);
+  public GraphqlSchemaFactory2(CompilerConfig config, ExecutionGoal goal) {
+    this(config.isExtendedScalarTypes(), goal);
   }
 
-  public GraphqlSchemaFactory2(boolean addArguments, boolean extendedScalarTypes, LogManager logManager, ExecutionGoal goal) {
-    this.addArguments = addArguments;
-    this.logManager = logManager;
+  public GraphqlSchemaFactory2(boolean extendedScalarTypes, ExecutionGoal goal) {
     this.extendedScalarTypes = extendedScalarTypes;
     this.goal = goal;
   }
@@ -180,7 +175,7 @@ public class GraphqlSchemaFactory2 {
     String typeName;
     if (tableFunction.getBaseTable().isPresent()) {
       final String baseTableName = tableFunction.getBaseTable().get().getName();
-      if (usedNames.contains(baseTableName)) {// result type was already defined
+      if (definedTypeNames.contains(baseTableName)) {// result type was already defined
           return Optional.empty();
       }
       else { // new result type using base name
@@ -224,7 +219,7 @@ public class GraphqlSchemaFactory2 {
             .name(typeName)
             .fields(fields)
             .build();
-    usedNames.add(typeName);
+    definedTypeNames.add(typeName);
     queryFields.addAll(fields);
     return Optional.of(objectType);
   }
@@ -258,7 +253,7 @@ public class GraphqlSchemaFactory2 {
             .name(typeName)
             .fields(fields)
             .build();
-    usedNames.add(typeName);
+    definedTypeNames.add(typeName);
     queryFields.addAll(fields);
     return Optional.of(objectType);
   }
@@ -348,8 +343,7 @@ public class GraphqlSchemaFactory2 {
         .fields(fields)
         .build();
 
-    usedNames.add("Query");
-
+    definedTypeNames.add("Query");
     this.queryFields.addAll(fields);
 
     return rootQueryObjectType;
@@ -396,8 +390,8 @@ public class GraphqlSchemaFactory2 {
    * For a relationship table function sur as this: <pre>{@code Customer.orders := SELECT * FROM Orders o WHERE
    * this.customerid = o.customerid; }</pre> Create a type reference for the orders field in the Customer table.
    */
-  private Optional<GraphQLFieldDefinition> createRelationshipField(SqrlTableFunction tableFunction) {
-    String fieldName = tableFunction.getFullPath().getLast().getDisplay();
+  private Optional<GraphQLFieldDefinition> createRelationshipField(SqrlTableFunction relationship) {
+    String fieldName = relationship.getFullPath().getLast().getDisplay();
     if (!isValidGraphQLName(fieldName) || isHiddenString(fieldName)) {
       return Optional.empty();
     }
@@ -405,8 +399,8 @@ public class GraphqlSchemaFactory2 {
     // reference the type that will be defined when the table function relationship is processed
     GraphQLFieldDefinition field = GraphQLFieldDefinition.newFieldDefinition()
         .name(fieldName)
-        .type(wrapMultiplicity(createTypeReference(tableFunction), tableFunction.getMultiplicity()))
-        .arguments(createArguments(tableFunction))
+        .type(wrapMultiplicity(createTypeReference(relationship), relationship.getMultiplicity()))
+        .arguments(createArguments(relationship))
         .build();
 
     return Optional.of(field);

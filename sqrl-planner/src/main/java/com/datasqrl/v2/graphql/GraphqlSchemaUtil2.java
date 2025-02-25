@@ -13,7 +13,6 @@ import com.datasqrl.json.FlinkJsonType;
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.v2.tables.SqrlTableFunction;
 import graphql.Scalars;
-import graphql.language.FieldDefinition;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLInputObjectField;
 import graphql.schema.GraphQLInputObjectType;
@@ -25,7 +24,6 @@ import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLType;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -164,9 +162,6 @@ public class GraphqlSchemaUtil2 {
     }
   }
 
-  // Todo move to dialect?
-  public static final AtomicInteger i = new AtomicInteger(0);
-
   private static String generateUniqueNameForType(NamePath namePath, Set<String> seen, String postfix) {
     String name = toName(namePath, postfix);
     String uniqueName = uniquify(name, seen);
@@ -188,7 +183,7 @@ public class GraphqlSchemaUtil2 {
   }
 
   public static Optional<GraphQLOutputType> createOutputTypeForRelDataType(RelDataType type,
-      NamePath namePath, Set<String> seen, boolean extendedScalarTypes) {
+                                                                           NamePath namePath, Set<String> seen, boolean extendedScalarTypes) {
     if (!type.isNullable()) {
       return getOutputType(type, namePath, seen, extendedScalarTypes).map(GraphQLNonNull::nonNull);
     }
@@ -203,7 +198,6 @@ public class GraphqlSchemaUtil2 {
     return getGraphQLInputType(type, namePath, seen, extendedScalarTypes);
   }
 
-  // TODO should not we use getInOutTypeHelper instead, the code seems duplicated ?
   private static Optional<GraphQLInputType> getGraphQLInputType(RelDataType type, NamePath namePath, Set<String> seen, boolean extendedScalarTypes) {
     switch (type.getSqlTypeName()) {
       case BOOLEAN:
@@ -234,7 +228,7 @@ public class GraphqlSchemaUtil2 {
       case VARBINARY:
         return Optional.of(Scalars.GraphQLString); // Typically handled as Base64 encoded strings
       case ARRAY:
-        return type.getComponentType() != null
+        return type.getComponentType() != null // traverse innner type
             ? getGraphQLInputType(type.getComponentType(), namePath, seen, extendedScalarTypes).map(GraphQLList::list)
             : Optional.empty();
       case ROW:
@@ -262,31 +256,6 @@ public class GraphqlSchemaUtil2 {
               .build()));
     }
     return Optional.of(builder.build());
-  }
-
-  /**
-   * Helper to handle map types, transforming them into a list of key-value pairs.
-   */
-  private static Optional<GraphQLInputType> createGraphQLInputMapType(RelDataType keyType, RelDataType valueType, NamePath namePath, Set<String> seen, boolean extendedScalarTypes) {
-    GraphQLInputObjectType mapEntryType = GraphQLInputObjectType.newInputObject()
-        .name("MapEntry")
-        .field(GraphQLInputObjectField.newInputObjectField()
-            .name("key")
-            .type(getGraphQLInputType(keyType, namePath, seen, extendedScalarTypes).orElse(Scalars.GraphQLString))
-            .build())
-        .field(GraphQLInputObjectField.newInputObjectField()
-            .name("value")
-            .type(getGraphQLInputType(valueType, namePath, seen, extendedScalarTypes).orElse(Scalars.GraphQLString))
-            .build())
-        .build();
-    return Optional.of(GraphQLList.list(mapEntryType));
-  }
-
-  /**
-   * Checks if the graphql schema has a different case than the graphql schema
-   */
-  public static boolean hasVaryingCase(FieldDefinition field, RelDataTypeField relDataTypeField) {
-    return !field.getName().equals(relDataTypeField.getName());
   }
 
   public static String uniquifyTableFunctionName(SqrlTableFunction tableFunction) {
