@@ -87,9 +87,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
   @Override
   public EngineCreateTable createTable(ExecutionStage stage, String originalTableName,
       FlinkTableBuilder tableBuilder, RelDataType relDataType, Optional<TableAnalysis> tableAnalysis) {
-    String topicName = tableBuilder.getTableName();
     Context.ContextBuilder ctxBuilder = Context.builder()
-        .tableName(topicName)
+        .tableName(tableBuilder.getTableName())
         .origTableName(originalTableName);
     ConnectorConf conf = streamConnectorConf;
     if (tableBuilder.hasPrimaryKey()) {
@@ -110,7 +109,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       }
     }
     tableBuilder.setConnectorOptions(conf.toMapWithSubstitution(ctxBuilder.build()));
-    return new NewTopic(topicName);
+    return new NewTopic(originalTableName);
   }
 
   @Override

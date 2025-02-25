@@ -1,0 +1,9 @@
+IMPORT ecommerceTs.Customer; --base table = Customer
+IMPORT ecommerceTs.Orders; --base table = Orders
+
+rootFunction($i : INT) := SELECT id FROM Orders WHERE id = $i; -- no base table
+rootFunctionWithBaseTable($i : INT) := SELECT * FROM Orders WHERE id = $i; -- base table = Orders
+
+-- A relationship, `this.customerid` gets replaced with an internal parameter that gets substituted with customerid on the parent table Customer
+Customer.orders := SELECT * FROM Orders o WHERE this.customerid = o.customerid; --base table
+Customer.orders2 := SELECT id FROM Orders o WHERE this.customerid = o.customerid; --no base table

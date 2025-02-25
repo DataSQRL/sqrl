@@ -19,6 +19,7 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.datasqrl.util.CalciteUtil;
+import com.datasqrl.util.StringUtil;
 import com.datasqrl.v2.Sqrl2FlinkSQLTranslator.MutationBuilder;
 import com.datasqrl.v2.analyzer.TableAnalysis;
 import com.datasqrl.v2.analyzer.cost.SimpleCostAnalysisModel;
@@ -500,7 +501,9 @@ public class SqlScriptPlanner {
     return (tableBuilder, datatype) -> {
       MutationQuery.MutationQueryBuilder mutationBuilder = MutationQuery.builder();
       mutationBuilder.stage(logStage.get());
-      mutationBuilder.createTopic(engine.createTable(logStage.get(), tableBuilder.getTableName(), tableBuilder, datatype, Optional.empty()));
+      mutationBuilder.createTopic(engine.createTable(logStage.get(),
+          StringUtil.removeFromEnd(tableBuilder.getTableName(), Sqrl2FlinkSQLTranslator.TABLE_DEFINITION_SUFFIX),
+          tableBuilder, datatype, Optional.empty()));
       mutationBuilder.name(Name.system(tableBuilder.getTableName()));
       return mutationBuilder;
     };

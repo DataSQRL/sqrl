@@ -542,7 +542,7 @@ public class Sqrl2FlinkSQLTranslator {
           likeClause,
           tableDefinition.isTemporary(),
           tableDefinition.ifNotExists);
-    } else if (tableName.isPresent()) {
+    } else {
       //Replace name but leave everything else
       fullTable = new SqlCreateTable(tableDefinition.getParserPosition(),
           FlinkSqlNodeFactory.identifier(baseTableName),

@@ -396,7 +396,7 @@ CREATE TABLE `ApplicationUpdates__def` (
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
   'scan.startup.mode' = 'group-offsets',
   'properties.auto.offset.reset' = 'earliest',
-  'topic' = 'ApplicationUpdates__def'
+  'topic' = 'ApplicationUpdates'
 );
 CREATE VIEW `ApplicationUpdates`
 AS
@@ -446,7 +446,7 @@ CREATE TABLE `AddChatMessage__def` (
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
   'scan.startup.mode' = 'group-offsets',
   'properties.auto.offset.reset' = 'earliest',
-  'topic' = 'AddChatMessage__def'
+  'topic' = 'AddChatMessage'
 );
 CREATE VIEW `AddChatMessage`
 AS
@@ -709,14 +709,14 @@ INSERT INTO `default_catalog`.`default_database`.`ApplicationAlert_2`
 {
   "topics" : [
     {
-      "name" : "AddChatMessage__def",
+      "name" : "AddChatMessage",
       "numPartitions" : 1,
       "replicationFactor" : 1,
       "replicasAssignments" : { },
       "config" : { }
     },
     {
-      "name" : "ApplicationUpdates__def",
+      "name" : "ApplicationUpdates",
       "numPartitions" : 1,
       "replicationFactor" : 1,
       "replicasAssignments" : { },

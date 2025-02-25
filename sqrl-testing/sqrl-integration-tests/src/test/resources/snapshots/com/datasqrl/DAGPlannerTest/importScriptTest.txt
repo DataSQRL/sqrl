@@ -112,7 +112,7 @@ CREATE TABLE `_Sensors__def` (
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
   'key.format' = 'raw',
-  'topic' = '_Sensors__def'
+  'topic' = '_Sensors'
 );
 CREATE VIEW `_Sensors`
 AS
@@ -130,7 +130,7 @@ CREATE TABLE `_SensorReading__def` (
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
   'scan.startup.mode' = 'group-offsets',
   'properties.auto.offset.reset' = 'earliest',
-  'topic' = '_SensorReading__def'
+  'topic' = '_SensorReading'
 );
 CREATE VIEW `_SensorReading`
 AS
@@ -189,14 +189,14 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
 {
   "topics" : [
     {
-      "name" : "_SensorReading__def",
+      "name" : "_SensorReading",
       "numPartitions" : 1,
       "replicationFactor" : 1,
       "replicasAssignments" : { },
       "config" : { }
     },
     {
-      "name" : "_Sensors__def",
+      "name" : "_Sensors",
       "numPartitions" : 1,
       "replicationFactor" : 1,
       "replicasAssignments" : { },

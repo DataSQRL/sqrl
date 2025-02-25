@@ -1,0 +1,24 @@
+CREATE TABLE SensorReading (
+  uuid STRING NOT NULL,
+  `sensorid` BIGINT NOT NULL,
+  `epoch_timestamp` BIGINT NOT NULL,
+  temperature DOUBLE NOT NULL,
+  `timestamp` AS epochMilliToTimestamp(`epoch_timestamp`),
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
+) WITH (
+      'connector' = 'datagen',
+      'number-of-rows' = '1000',
+      'fields.sensorid.kind' = 'sequence',
+      'fields.sensorid.start' = '0',
+      'fields.sensorid.end' = '9',
+      'fields.epoch_timestamp.kind' = 'sequence',
+      'fields.epoch_timestamp.start' = '1719318565000',
+      'fields.epoch_timestamp.end' =   '1719319565000',
+      'fields.uuid.kind' = 'random',
+      'fields.temperature.kind' = 'random'
+      );
+
+/*+primary_key(sensorid, time_hour) */
+SensorTempByHour := SELECT sensorid, window_time as time_hour, AVG(temperature) AS avg_temperature
+                     FROM TABLE(TUMBLE(TABLE SensorReading, DESCRIPTOR(`timestamp`), INTERVAL '60' MINUTES))
+                     GROUP BY sensorid, window_start, window_end, window_time;
