@@ -21,12 +21,23 @@ import lombok.Setter;
 import lombok.Singular;
 import lombok.ToString;
 
+/**
+ * Purpose: Encapsulates the GraphQL schema and entry points (queries, mutations, subscriptions). Defines the visitor interfaces to visit the model.
+ * This class is deserialized from vertx.json
+ * <br/>
+ * Collaboration:
+ * <ul>
+ * <li> the root of the model, the schema, coords, the jdbc queries, the arguments and parameters are visited by {@link GraphQLEngineBuilder}
+ * <li> the mutations (kafka and prostgreSQL) are visited by {@link com.datasqrl.graphql.MutationConfigurationImpl}
+ * <li> the subscriptions (kafka and prostgreSQL) are visited by {@link com.datasqrl.graphql.SubscriptionConfigurationImpl}
+ * </ul>
+ */
 @Getter
 @Builder
 public class RootGraphqlModel {
 
   @Singular
-  List<Coords> coords;
+  List<Coords> coords; // coordinates of the graphQL queries
   @Singular
   List<MutationCoords> mutations;
   @Singular
@@ -219,6 +230,11 @@ public class RootGraphqlModel {
     R visitFieldLookup(FieldLookupCoords coords, C context);
   }
 
+  /**
+   *  Binds graphql queries with corresponding sql queries and the combinations of their arguments:
+   *  out of graphQL schema we generate all possible SQL queries for the possible arguments. (nullable, not nullable, same table called with different sets of args).
+   *  These combinations are matchs which contain arguments, sql query and parameters.
+   */
   @Getter
   @AllArgsConstructor
   @NoArgsConstructor

@@ -16,6 +16,8 @@ SQRL recognizes several distinct table types, each with unique characteristics a
 - **STATIC**: Consists of data that does not change over time, such as constants, table functions, or nested data structures. This type is treated as universally valid across all time points.
 
 These table types will be used throughout this specification to further describe the semantics of sql queries.
+DataSQRL executes a pipeline divided into stages (stream, log, database, server) executed on different engines (Kafka, Flink, PostGreSQL, Vert.x, ...).
+It is important to notice that the almost all the table types can be executed on all the stages provided that the engine is compatible with the table types semantics described above.  
 
 ## Functions
 Functions in SQRL are designed to be engine-agnostic, ensuring that their implementation is consistent across different platforms and execution environments. This uniformity is crucial for maintaining the semantic integrity of functions when executed under various systems.
@@ -144,6 +146,8 @@ In this example, _tempData is used for an internal operation and is not exposed.
 
 ## Nested Query
 Nested tables represent parent-child relationships and simplify aggregations by parent rows.
+Internally, a nested table is a two things: A table that is grouped by the parent table primary key with a relationship (see [relationships](#relationships)) 
+that is automatically created on the parent table to relate the two.
 ```
 MyTable.query := SELECT * FROM x;
 ```
@@ -339,7 +343,7 @@ Users.spending := SELECT endOfWeek(p.time) AS week,
       GROUP BY week ORDER BY week DESC;
 ```
 This statement defines a nested table `spending` underneath `Users` which aggregates over the nested order `totals` for all purchases of each user. Relationships used in `FROM` and `JOIN` are expanded to their original definition. That means, `FROM @.purchases` gets expanded to `FROM @ JOIN Orders p ON p.customerid = @.id`.
-
+Internally, _@.purchases_ will join Users to Orders by id and then purchases.totals will join on the parent (Orders) primary key.
 
 ## Comments
 SQRL supports the use of comments within the code to provide hints, enhance readability, provide documentation, and explain the logic of complex queries or operations.

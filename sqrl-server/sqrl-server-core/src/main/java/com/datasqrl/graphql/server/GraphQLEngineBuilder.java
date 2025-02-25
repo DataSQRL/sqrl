@@ -52,14 +52,26 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-public class GraphQLEngineBuilder implements
-    RootVisitor<GraphQL.Builder, Context>,
-    CoordVisitor<DataFetcher<?>, Context>,
-    SchemaVisitor<TypeDefinitionRegistry, Object>,
-    QueryBaseVisitor<ResolvedQuery, Context>,
-    ResolvedQueryVisitor<CompletableFuture, QueryExecutionContext> {
+/**
+ * Purpose: Builds the GraphQL engine by wiring together the schema, resolvers, and custom scalars.
+ * Visits the GraphQL model to prepare the GraphQL engine for executing the requests: visits the
+ * queries, the arguments, the parameters, the mutations and the subscriptions to create corresponding
+ * GraphQL {@link DataFetcher}s that embed the requests execution code.  {@link GraphQLEngineBuilder} then registers them in the
+ * {@link GraphQLCodeRegistry}. Vert.x routes HTTP requests to the GraphQLEngine.  {@link GraphQLEngineBuilder}
+ * and validates the query, then executes it by invoking the appropriate {@link DataFetcher}s for
+ * each field in the query.
+ *
+ * <p>Collaboration: Uses {@link RootGraphqlModel} to get the schema and coordinates and Context to
+ * create the requests.
+ */
+public class GraphQLEngineBuilder
+    implements RootVisitor<GraphQL.Builder, Context>,
+        CoordVisitor<DataFetcher<?>, Context>,
+        SchemaVisitor<TypeDefinitionRegistry, Object>,
+        QueryBaseVisitor<ResolvedQuery, Context>,
+        ResolvedQueryVisitor<CompletableFuture, QueryExecutionContext> {
 
-  private final List<GraphQLScalarType> addlTypes;
+  private final List<GraphQLScalarType> extendedScalarTypes;
   private final SubscriptionConfiguration<DataFetcher<?>> subscriptionConfiguration;
   private final MutationConfiguration<DataFetcher<?>> mutationConfiguration;
 
@@ -72,18 +84,18 @@ public class GraphQLEngineBuilder implements
       .build();
 
   private GraphQLEngineBuilder(Builder builder) {
-    this.addlTypes = builder.addlTypes;
+    this.extendedScalarTypes = builder.extendedScalarTypes;
     this.subscriptionConfiguration = builder.subscriptionConfiguration;
     this.mutationConfiguration = builder.mutationConfiguration;
   }
 
   public static class Builder {
-    private List<GraphQLScalarType> addlTypes = new ArrayList<>();
+    private List<GraphQLScalarType> extendedScalarTypes = new ArrayList<>();
     private SubscriptionConfiguration<DataFetcher<?>> subscriptionConfiguration;
     private MutationConfiguration<DataFetcher<?>> mutationConfiguration;
 
-    public Builder withAdditionalTypes(List<GraphQLScalarType> types) {
-      this.addlTypes = types;
+    public Builder withExtendedScalarTypes(List<GraphQLScalarType> types) {
+      this.extendedScalarTypes = types;
       return this;
     }
 
@@ -115,13 +127,14 @@ public class GraphQLEngineBuilder implements
   public GraphQL.Builder visitRoot(RootGraphqlModel root, Context context) {
     TypeDefinitionRegistry registry = root.schema.accept(this, null);
 
+    // GraphQL registry holding the code that processes graphQL fields (graphQL DataFetchers) and types (graphQL TypeResolvers)
     GraphQLCodeRegistry.Builder codeRegistry = GraphQLCodeRegistry.newCodeRegistry();
     codeRegistry.defaultDataFetcher(env ->
         context.createPropertyFetcher(env.getFieldDefinition().getName()));
     for (Coords qc : root.coords) {
       codeRegistry.dataFetcher(
           FieldCoordinates.coordinates(qc.getParentType(), qc.getFieldName()),
-          qc.accept(this, context));
+          qc.accept(this, context)); // creates the DataFetcher
     }
 
     if (root.mutations != null) {
@@ -157,7 +170,7 @@ public class GraphQLEngineBuilder implements
         .scalar(CustomScalars.JSON)
         ;
 
-    addlTypes.forEach(t->wiring.scalar(t));
+    extendedScalarTypes.forEach(t->wiring.scalar(t));
 
     for (Map.Entry<String, TypeDefinition> typeEntry : registry.types().entrySet()) {
       if (typeEntry.getValue() instanceof InterfaceTypeDefinition) {

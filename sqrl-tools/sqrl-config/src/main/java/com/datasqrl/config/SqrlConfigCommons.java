@@ -354,15 +354,19 @@ public class SqrlConfigCommons implements SqrlConfig {
 
   public static TableConfigImpl fromFilesTableConfig(@NonNull Name name, ErrorCollector errors,
       @NonNull List<Path> files) {
-    return new TableConfigImpl(name, fromFiles(errors, "/jsonSchema/tableConfig.json", files));
+    return new TableConfigImpl(name, getPackageConfig(errors, "/jsonSchema/tableConfig.json", files));
+  }
+
+  public static PackageJson getDefaultPackageJson(ErrorCollector errors) {
+    return fromFilesPackageJson(errors, List.of());
   }
 
   public static PackageJson fromFilesPackageJson(ErrorCollector errors, @NonNull List<Path> files) {
-    return new PackageJsonImpl(fromFiles(errors, "/jsonSchema/packageSchema.json", files));
+    return new PackageJsonImpl(getPackageConfig(errors, "/jsonSchema/packageSchema.json", files));
   }
 
   public static PackageJson fromFilesPublishPackageJson(ErrorCollector errors, @NonNull List<Path> files) {
-    return new PackageJsonImpl(fromFiles(errors, "/jsonSchema/publishPackageSchema.json", files));
+    return new PackageJsonImpl(getPackageConfig(errors, "/jsonSchema/publishPackageSchema.json", files));
   }
 
   public static boolean validateJsonFile(Path jsonFilePath, String schemaResourcePath,
@@ -403,16 +407,16 @@ public class SqrlConfigCommons implements SqrlConfig {
   }
 
   public static SqrlConfig fromFiles(ErrorCollector errors, @NonNull Path firstFile) {
-    return fromFiles(errors, null, List.of(firstFile));
+    return getPackageConfig(errors, null, List.of(firstFile));
   }
 
-  public static SqrlConfig fromFiles(ErrorCollector errors, String jsonSchemaResource, @NonNull List<Path> files) {
-    Preconditions.checkArgument(files!=null && !files.isEmpty(),"Need to provide at least one configuration file");
+  public static SqrlConfig getPackageConfig(ErrorCollector errors, String jsonSchemaResource, @NonNull List<Path> files) {
     Configurations configs = new Configurations();
     boolean isValid = true;
 
     NodeCombiner combiner = new OverrideCombiner();
     CombinedConfiguration combinedConfiguration = new CombinedConfiguration(combiner);
+
     for (int i = files.size()-1; i >= 0; i--) { //iterate backwards so last file takes precedence
       Path file = files.get(i);
       ErrorCollector localErrors = errors.withConfig(file);
@@ -424,7 +428,22 @@ public class SqrlConfigCommons implements SqrlConfig {
         throw localErrors.handle(e);
       }
     }
-    String configFilename = files.get(0).toString();
+
+    try {
+      URL url = SqrlConfigCommons.class.getResource("/default-package.json");
+      JSONConfiguration config = configs.fileBased(JSONConfiguration.class,   url);
+      combinedConfiguration.addConfiguration(config);
+    } catch (ConfigurationException e) {
+      throw errors.withConfig("Error loading default configuration").handle(e);
+    }
+
+    String configFilename;
+    if (files.isEmpty()){
+        configFilename = "default-package.json";
+    } else {
+        configFilename = files.get(0).toString();
+    }
+
     if (!isValid) {
       throw errors.exception("Configuration file invalid: %s", files);
     }

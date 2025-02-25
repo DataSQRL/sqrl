@@ -119,11 +119,9 @@ public abstract class AbstractAssetSnapshotTest {
 
   protected AssertStatusHook execute(Path rootDir, List<String> argsList) {
     this.buildDir = rootDir.resolve("build");
-    argsList.add("--profile");
-    argsList.add(getProjectRoot().resolve("profiles/default").toString());
     AssertStatusHook statusHook = new AssertStatusHook();
     int code = new RootCommand(rootDir,statusHook).getCmd().execute(argsList.toArray(String[]::new));
-    if (statusHook.isSuccess()) Assertions.assertEquals(0, code);
+    if (statusHook.isSuccess() && code != 0) Assertions.assertEquals(0, code);
     return statusHook;
   }
 

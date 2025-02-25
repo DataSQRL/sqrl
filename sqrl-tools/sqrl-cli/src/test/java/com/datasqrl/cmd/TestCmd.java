@@ -133,24 +133,6 @@ public class TestCmd {
     createSnapshot();
   }
 
-  @SneakyThrows
-  @Test
-  public void compileProfiles() {
-    execute(PROFILES_PATH, "compile",
-        "myscript.sqrl", "schema.graphqls",
-        "--profile", "profile1",
-        "--profile", "profile2",
-        "--mnt", "/example/dir"
-    );
-
-    snapshot.addContent(
-        Files.readString(PROFILES_PATH.resolve("build").resolve("package.json")));
-
-    snapshot.addContent(
-        Files.readString(PROFILES_PATH.resolve("build").resolve("deploy").resolve("docker-compose.yml")));
-    createSnapshot();
-  }
-
   @Test
   @SneakyThrows
   public void compileError() {

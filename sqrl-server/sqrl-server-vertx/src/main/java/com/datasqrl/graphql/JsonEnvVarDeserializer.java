@@ -8,6 +8,9 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Custom deserializer to replace environment variables in JSON strings.
+ */
 public class JsonEnvVarDeserializer extends JsonDeserializer<String> {
 
   private Map<String, String> env;

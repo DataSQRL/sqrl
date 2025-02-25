@@ -22,6 +22,10 @@ import java.util.Map;
 import lombok.Value;
 import net.snowflake.client.jdbc.internal.google.api.Page;
 
+/**
+ * Purpose: Manages SQL clients and executes queries.
+ * Collaboration: Used by {@link VertxContext} to prepare and execute SQL queries.
+ */
 @Value
 public class VertxJdbcClient implements JdbcClient {
   Map<String, SqlClient> clients;

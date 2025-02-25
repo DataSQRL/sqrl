@@ -12,7 +12,7 @@ ext {
     flinkVersion = "1.19.1"
     jdbcVersion = "3.2.0-1.19"
     kafkaVersion = "3.2.0-1.19"
-    sqrlVersion = "0.5.9"
+    sqrlVersion = "0.5.10"
     icebergVersion = "1.6.0"
     postgresCdcVersion = "3.1.0"
 }

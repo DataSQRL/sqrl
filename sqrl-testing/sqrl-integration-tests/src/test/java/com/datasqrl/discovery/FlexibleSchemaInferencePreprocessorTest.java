@@ -6,6 +6,7 @@ import com.datasqrl.AbstractAssetSnapshotTest;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.config.PackageJson;
+import com.datasqrl.config.PackageJsonImpl;
 import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.discovery.preprocessor.FlexibleSchemaInferencePreprocessor;
 import com.datasqrl.error.ErrorCollector;
@@ -41,8 +42,7 @@ public class FlexibleSchemaInferencePreprocessorTest extends AbstractAssetSnapsh
   protected FlexibleSchemaInferencePreprocessorTest() {
     super(FILES_DIR.resolve("output"));
     try {
-      packageJson = SqrlConfigCommons.fromFilesPackageJson(errors,
-          List.of(Path.of("../../profiles/default/package.json")));
+      packageJson =  SqrlConfigCommons.getDefaultPackageJson(errors);
     } catch (Exception e) {
         System.out.println(ErrorPrinter.prettyPrint(errors));
         throw e;

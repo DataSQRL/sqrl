@@ -9,6 +9,10 @@ import java.util.Map;
 import java.util.Set;
 
 //  @Value
+
+/**
+ * Interface for context objects that provide database clients and data fetchers.
+ */
 public interface Context {
 
   JdbcClient getClient();

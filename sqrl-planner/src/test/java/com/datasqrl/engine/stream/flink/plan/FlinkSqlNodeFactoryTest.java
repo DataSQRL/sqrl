@@ -197,7 +197,7 @@ public class FlinkSqlNodeFactoryTest {
     );
     // Unparse and compare SQL strings
     String sql = unparse(createTable);
-    String expectedSql = "CREATE TEMPORARY TABLE `my_table` (\n"
+    String expectedSql = "CREATE TABLE `my_table` (\n"
         + "  `id` INTEGER NOT NULL,\n"
         + "  `name` VARCHAR(255) CHARACTER SET `UTF-16LE` NOT NULL,\n"
         + "  `timestamp_col` TIMESTAMP(0) NOT NULL,\n"

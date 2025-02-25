@@ -34,8 +34,6 @@ public class UseCasesIT {
       argsList.add("-s"); argsList.add("snapshots-"+testSuffix);
       argsList.add("--tests"); argsList.add("tests-"+testSuffix);
     }
-    argsList.add("--profile");
-    argsList.add(getProjectRoot(rootDir).resolve("profiles/default").toString());
     argsList.addAll(Arrays.asList(args));
 
     execute(rootDir, new AssertStatusHook(), argsList.toArray(String[]::new));
@@ -47,8 +45,6 @@ public class UseCasesIT {
     argsList.add("compile");
     argsList.add(script);
     if (!Strings.isNullOrEmpty(graphql)) argsList.add(graphql);
-    argsList.add("--profile");
-    argsList.add(getProjectRoot(rootDir).resolve("profiles/default").toString());
     execute(RESOURCES.resolve(path),
         new AssertStatusHook(), argsList.toArray(a->new String[a]));
   }

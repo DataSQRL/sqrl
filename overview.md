@@ -2,7 +2,7 @@
 
 The DataSQRL project consists of two parts:
 
-* The DataSQRL build tool: Compiles SQRL script and (optional) API schema to an
+* The DataSQRL build tool: Compiles SQRL script and (optional user provided) API schema to an
   integrated data pipeline or event-driven microservice by producing the deployment
   assets for all components of the pipeline or microservice.
 * The DataSQRL runtime components: libraries and components that are executed
@@ -14,7 +14,7 @@ between the build tool and runtime is in the [sqrl-base](sqrl-base) module.
 ## DataSQRL Build Tool
 
 The goal of the DataSQRL build tool is simplifying the development of data pipelines
-and event-driven microservices. Developers can ipmlement the logic of their
+and event-driven microservices. Developers can implement the logic of their
 data product in SQL and define how they want to serve the data product through an
 API specification. The build tool compiles those two artifacts into an integrated
 data pipeline that ingests, processes, stores, and serves the data as defined.
@@ -80,10 +80,13 @@ vanilla SQL with hints to annotate context.
 
 The transpiler resolves imports against the build directory using module loaders
 that retrieve dependencies. It maintains a schema of all defined tables
-in a SQRL script. It also parses the API specification and maps the API schema
-the table schemas.
+in the SQRL script. It also parses the API specification (GraphQL schema) and maps the API schema
+the table schemas: for that, based on the Logical Plan produced during the first step
+- it generates database queries
+- it generates the GraphQL schema if the user has not provided one 
+- it generates GraphQL queries (for query, mutation and subscription types) based on the GraphQL schema (either provided or generated in previous step). 
 
-The transpiler is build on top of Apache Calcite for all SQL handling and
+The transpiler is build on top of Apache Calcite (the logical plan is stored inside a Calcite schema) for all SQL handling and
 java-graphql for all GraphQL handling.
 
 [Link to transpiler module](sqrl-calcite)
@@ -93,12 +96,12 @@ java-graphql for all GraphQL handling.
 The logical plan rewriter is the second stage of the compiler. It takes the
 logical plan (i.e. Relnode) produced by the transpiler for each table
 defined in the SQRL script and rewrites the logical plan into a normalized
-represenation (called the AnnotatedLP) which serves these purposes:
+representation (called the AnnotatedLP) which serves these purposes:
 
 1. It keeps track of important metadata like timestamps, primary keys, sort orders, etc
 2. It translates SQRL specific SQL annotations into standard SQL depending on the
-   context in which they are used. The goal is to translate SQL developers are
-   likely to write to SQL that is optimized for the context in which they wrote that SQL.
+   context in which they are used. The goal is to translate the SQL that developers are
+   likely to write to a SQL that is optimized for the context in which they wrote that SQL.
    For example, rewriting an unspecified JOIN into a temporal join if the join is between
    a stream and a state on the state's primary key.
 3. It extracts certain "expensive" logical operators with the goal of trying
@@ -106,19 +109,32 @@ represenation (called the AnnotatedLP) which serves these purposes:
    execute while guaranteeing the same semantics.
 
 In other words, the LP Rewriter attempts to rewrite SQL query for a table
-definition to make it more efficient while preserving user intent and it
-extract metadata needed for contextual processing.
+definition to make it more efficient while preserving user intent. It also
+extracts metadata needed for contextual processing.
+
+The Logical Plan Rewriter is called in various places:
+- at table creation time by the Transpiler
+- when dealing with exported stream tables in DAG Planner physical plan step
+- when determining the materialized tables in the DAG Planner physical plan step
+- when determining the table scans in the DAG Planner physical plan step
+- in the stage analysis by the DAG Planner (determine viable stages)
 
 [The LP Rewriter is part of the planner](sqrl-planner)
 
 ### DAG Planner
 
-The DAG planner takes all the individual table defintions and assembles them into
+The DAG planner takes all the individual table definitions and assembles them into
 a processing DAG. It prunes the DAG and rewrites the DAG before optimizing the
 DAG to assign each node (i.e. table) to a stage in the pipeline.
 
 The optimizer uses a cost model and is constrained to produce only viable
-pipelines.
+pipelines. For now, the cost model consists of applying factors based on table types. 
+The tables are assigned to stages based on the cheapest cost.
+
+Then the DAG planner generates a preliminary physical plan (_DAGPlaner.planPhysical()_) to account for different table types:
+- detect scanned tables that need to be materialized and generate the corresponding queries and indexes
+- detect written tables (output tables) and generate corresponding write queries and put the tables to stream stage
+- detect computed tables and put them to stream stage
 
 At the end of the DAG planning process, each table defined in the SQRL script
 is assigned to a stage in the pipeline.
@@ -133,6 +149,10 @@ configured to execute that stage.
 
 For example, the tables assigned to the "stream" stage are passed to
 Flink's physical planner to produce FlinkSQL.
+
+The physical plan bookkeeps everything needed for the engine environment (topics for kafka, tablespace for postGre, flinkSQL compiled plan, ...).
+Then in the post physical plan step it creates a graphQL model (based on the database queries and the physical plan) 
+and walk it to bookkeep the requests to be made for each type of graphQL query (query, mutation subscription) for each type of engine
 
 The physical plans are then written out as deployment assets to the `build/deploy`
 directory.
@@ -163,6 +183,17 @@ usability features to help the user and produce useful error messages.
 Integration tests for the DataSQRL build tool can be found in
 `sqrl-testing/sqrl-integration-tests`
 
+[How to run the integration tests](playbook.md#to-run-int-test)
+
+Especially 
+- _com.datasqrl.DAGPlannerTest_ is a parametrized test that runs the compilation of various input sqrl scripts available in _src/test/resources/dagplanner_
+- _com.datasqrl.UseCaseCompileTest_ is a parametrized test that runs the compilation of various use cases (complete projects - sqrl scripts, configuration, synthetic sources, sinks -)
+available in _src/test/resources/usecases_ and creates compile plan snapshots. These snapshots are compared to reference ones in the test assertions
+- _com.datasqrl.FullUsecasesIT_ is a parametrized test that runs the actual pipelines generated from various use cases (complete projects - sqrl scripts, configuration, synthetic sources, sinks -) 
+available in _src/test/resources/usecases_ and creates snapshots. These snapshots are compared to reference ones in the test assertions (when test goal is called)
+This test uses [testContainers](https://testcontainers.com/) and requires a valid local docker installation.  
+
+To run these parametrized tests for a single test parameter in the IDE, first run the whole test case and then you could run the test for a single parameter.
 ## DataSQRL Runtime
 
 The DataSQRL project also contains some runtime components that get executed
@@ -186,7 +217,7 @@ deployment asset produced by the DataSQRL build tool for the "server" stage.
 
 DataSQRL extends the standard SQL function library with many additional function
 modules. Those are executed at runtime in Flink or on the server.
-The functions are iplemented in the `sqrl-flink-lib` module.
+The functions are implemented in the `sqrl-flink-lib` module.
 
 It also contains custom formats and connectors for Flink that extend
 existing formats and connectors to support functionality needed by DataSQRL.

@@ -1,14 +1,12 @@
 name: Build and test SQRL with Maven
 on:
   pull_request:
-    branches: [ "main", "v0.5.9-release"]
+    branches: [ "main", sqrl-0.5.x, "v0.5.10-release"]
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    env:
-      TZ: 'America/Los_Angeles'
     steps:
     - name: Setup Timezone
       uses: szenius/set-timezone@v1.1

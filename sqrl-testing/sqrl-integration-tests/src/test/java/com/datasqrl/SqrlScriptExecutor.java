@@ -46,8 +46,6 @@ public class SqrlScriptExecutor {
     if (getPackageJsonPath() != null) {
       argsList.addAll(Arrays.asList("-c", getPackageJsonPath()));
     }
-    argsList.add("--profile");
-    argsList.add(getProjectRoot().resolve("profiles/default").toString());
     // Execute the command
     RootCommand rootCommand = new RootCommand(rootDir, hook);
     int exitCode =
