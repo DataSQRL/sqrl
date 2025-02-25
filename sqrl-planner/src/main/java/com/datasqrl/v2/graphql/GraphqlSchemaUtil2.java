@@ -11,6 +11,7 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.graphql.server.CustomScalars;
 import com.datasqrl.json.FlinkJsonType;
 import com.datasqrl.schema.Multiplicity;
+import com.datasqrl.v2.tables.SqrlTableFunction;
 import graphql.Scalars;
 import graphql.language.FieldDefinition;
 import graphql.schema.GraphQLFieldDefinition;
@@ -286,5 +287,9 @@ public class GraphqlSchemaUtil2 {
    */
   public static boolean hasVaryingCase(FieldDefinition field, RelDataTypeField relDataTypeField) {
     return !field.getName().equals(relDataTypeField.getName());
+  }
+
+  public static String uniquifyTableFunctionName(SqrlTableFunction tableFunction) {
+    return tableFunction.getFullPath().toString("_");
   }
 }

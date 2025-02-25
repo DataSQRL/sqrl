@@ -103,9 +103,9 @@ public class GraphqlSchemaFactory2 {
             serverPlan.getFunctions().stream()
                 .filter(function -> function.getVisibility().getAccess() == AccessModifier.SUBSCRIPTION)
                 .collect(Collectors.toList());
-        final Optional<GraphQLObjectType> subscriptionsObjectType =
-            createQueriesOrSubscriptionsObjectType(subscriptionsTableFunctions, AccessModifier.SUBSCRIPTION);
-        subscriptionsObjectType.ifPresent(graphQLSchemaBuilder::subscription);
+//        final Optional<GraphQLObjectType> subscriptionsObjectType =
+//            createQueriesOrSubscriptionsObjectType(subscriptionsTableFunctions, AccessModifier.SUBSCRIPTION);
+//        subscriptionsObjectType.ifPresent(graphQLSchemaBuilder::subscription);
 
       // process mutations table functions
       final Optional<GraphQLObjectType> mutationsObjectType = createMutationsObjectType();
@@ -186,7 +186,7 @@ public class GraphqlSchemaFactory2 {
       else { // new result type using base name
         typeName = baseTableName;
       }
-    } else { // no base table, use function name
+    } else { // no base table, use function name (guaranteed to be uniq by the compiler)
       typeName = tableFunction.getFullPath().getLast().getDisplay();
     }
     /* BROWSE THE FIELDS
@@ -253,7 +253,7 @@ public class GraphqlSchemaFactory2 {
       return Optional.empty();
     }
 
-    String typeName = tableFunction.getFullPath().getLast().getDisplay();
+    String typeName = uniquifyTableFunctionName(tableFunction);
     GraphQLObjectType objectType = GraphQLObjectType.newObject()
             .name(typeName)
             .fields(fields)
@@ -375,13 +375,6 @@ public class GraphqlSchemaFactory2 {
     first.getFunctionAnalysis().getErrors().checkFatal(check, "Overloaded table functions have overlapping parameters");
   }
 
-   private String uniquifyName(String name) {
-    while (usedNames.contains(name)) {
-      name = name + "_"; //add suffix
-    }
-    return name;
-  }
-
   /**
    *   Create a non-relationship field :
    *     - a scalar type
@@ -467,7 +460,7 @@ public class GraphqlSchemaFactory2 {
     String typeName =
         tableFunction.getBaseTable().isPresent()
             ? tableFunction.getBaseTable().get().getName()
-            : tableFunction.getFullPath().getLast().getDisplay();
+            : uniquifyTableFunctionName(tableFunction);
     seen.add(typeName);
     return new GraphQLTypeReference(typeName);
   }
