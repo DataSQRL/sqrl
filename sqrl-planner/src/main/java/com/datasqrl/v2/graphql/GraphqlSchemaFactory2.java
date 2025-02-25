@@ -97,7 +97,6 @@ public class GraphqlSchemaFactory2 {
 
     // process subscriptions and mutations
     if (goal != ExecutionGoal.TEST) {
-      if (logManager.hasLogEngine() && System.getenv().get("ENABLE_SUBSCRIPTIONS") != null) {
         // process subscriptions table functions
         final List<SqrlTableFunction> subscriptionsTableFunctions =
             serverPlan.getFunctions().stream()
@@ -106,9 +105,8 @@ public class GraphqlSchemaFactory2 {
         final Optional<GraphQLObjectType> subscriptionsObjectType =
             createQueriesOrSubscriptionsObjectType(subscriptionsTableFunctions, AccessModifier.SUBSCRIPTION);
         subscriptionsObjectType.ifPresent(graphQLSchemaBuilder::subscription);
-      }
 
-      // process mutations
+      // process mutations table functions
       final Optional<GraphQLObjectType> mutationsObjectType = createMutationsObjectType();
       mutationsObjectType.ifPresent(graphQLSchemaBuilder::mutation);
     }
