@@ -2,6 +2,7 @@ package com.datasqrl.v2.graphql;
 
 import static com.datasqrl.canonicalizer.Name.HIDDEN_PREFIX;
 import static com.datasqrl.canonicalizer.Name.isHiddenString;
+import static com.datasqrl.graphql.generate.GraphqlSchemaUtil.createOutputTypeForRelDataType;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.LIMIT;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.OFFSET;
 import static com.datasqrl.v2.graphql.GraphqlSchemaUtil2.*;
@@ -93,14 +94,13 @@ public class GraphqlSchemaFactory2 {
 
     // process subscriptions and mutations
     if (goal != ExecutionGoal.TEST) {
-        // process subscriptions table functions
-        final List<SqrlTableFunction> subscriptionsTableFunctions =
-            serverPlan.getFunctions().stream()
-                .filter(function -> function.getVisibility().getAccess() == AccessModifier.SUBSCRIPTION)
-                .collect(Collectors.toList());
-//        final Optional<GraphQLObjectType> subscriptionsObjectType =
-//            createQueriesOrSubscriptionsObjectType(subscriptionsTableFunctions, AccessModifier.SUBSCRIPTION);
-//        subscriptionsObjectType.ifPresent(graphQLSchemaBuilder::subscription);
+      // process subscriptions table functions
+      final List<SqrlTableFunction> subscriptionsTableFunctions =
+          serverPlan.getFunctions().stream()
+              .filter(function -> function.getVisibility().getAccess() == AccessModifier.SUBSCRIPTION)
+              .collect(Collectors.toList());
+      final Optional<GraphQLObjectType> subscriptionsObjectType = createQueriesOrSubscriptionsObjectType(subscriptionsTableFunctions, AccessModifier.SUBSCRIPTION);
+      subscriptionsObjectType.ifPresent(graphQLSchemaBuilder::subscription);
 
       // process mutations table functions
       final Optional<GraphQLObjectType> mutationsObjectType = createMutationsObjectType();
@@ -157,7 +157,10 @@ public class GraphqlSchemaFactory2 {
               .collect(Collectors.toList());
       rootObjectType = createRootQueryType(rootTableFunctions);
     } else { // subscriptions
-      rootObjectType = null; // TODO implement
+      final List<SqrlTableFunction> rootTableFunctions = tableFunctions.stream()
+              .filter(tableFunction -> !tableFunction.isRelationship())
+              .collect(Collectors.toList());
+      rootObjectType = createRootSubscriptionType(rootTableFunctions);
     }
     //TODO fix cleanInvalidTypes: it removes nestedTypes.
 //    cleanInvalidTypes();
@@ -350,6 +353,37 @@ public class GraphqlSchemaFactory2 {
   }
 
 
+  /**
+   * Create the root Subscription graphQL object encapsulating the type references to all the root table functions.
+   */
+  private GraphQLObjectType createRootSubscriptionType(List<SqrlTableFunction> rootTableFunctions) {
+
+    List<GraphQLFieldDefinition> fields = new ArrayList<>();
+
+    for (SqrlTableFunction tableFunction : rootTableFunctions) {
+      String tableFunctionName = tableFunction.getFullPath().getDisplay();
+      if (!isValidGraphQLName(tableFunctionName)) {
+        continue;
+      }
+
+      GraphQLFieldDefinition field = GraphQLFieldDefinition.newFieldDefinition()
+              .name(tableFunctionName)
+              .type(createTypeReference(tableFunction)) // type is nullable because there can be no update in the subscription
+              .arguments(createArguments(tableFunction))
+              .build();
+      fields.add(field);
+    }
+
+    GraphQLObjectType rootQueryObjectType = GraphQLObjectType.newObject()
+            .name("Subscription")
+            .fields(fields)
+            .build();
+
+    definedTypeNames.add("Subscription");
+    this.queryFields.addAll(fields);
+
+    return rootQueryObjectType;
+  }
 
   private static void checkOverloadedFunctionsHaveSameBaseTable(List<SqrlTableFunction> tableFunctionsAtPath) {
     SqrlTableFunction first = tableFunctionsAtPath.get(0);
@@ -421,7 +455,10 @@ public class GraphqlSchemaFactory2 {
                       .name(parameter.getName())
                       .type(nonNull(getInputType(parameter.getType(null), NamePath.of(parameter.getName()), seen, extendedScalarTypes).get()))
                       .build()).collect(Collectors.toList());
-      List<GraphQLArgument> limitAndOffsetArguments = generateLimitAndOffsetArguments();
+    List<GraphQLArgument> limitAndOffsetArguments = List.of();
+    if(tableFunction.getVisibility().getAccess() != AccessModifier.SUBSCRIPTION) {
+      limitAndOffsetArguments = generateLimitAndOffsetArguments();
+    }
 
       //TODO Merge signatures when there are multiple overloaded functions: a) combining all
     // parameters by name and relaxing their argument type by nullability b) check that argument
