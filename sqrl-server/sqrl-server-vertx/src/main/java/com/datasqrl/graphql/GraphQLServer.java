@@ -6,9 +6,9 @@ package com.datasqrl.graphql;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.graphql.config.CorsHandlerOptions;
 import com.datasqrl.graphql.config.ServerConfig;
+import com.datasqrl.graphql.server.CustomScalars;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import com.datasqrl.graphql.server.RootGraphqlModel;
-import com.datasqrl.graphql.type.SqrlVertxScalars;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.common.base.Strings;
@@ -53,6 +53,9 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.duckdb.DuckDBDriver;
 
+/**
+ * This Verticle is responsible for configuring the GraphQL server, setting up routes, metrics etc that will be deployed inside vert.x.
+ */
 @Slf4j
 public class GraphQLServer extends AbstractVerticle {
 
@@ -331,8 +334,8 @@ public class GraphQLServer extends AbstractVerticle {
               .withMutationConfiguration(
                   new MutationConfigurationImpl(model, vertx, config))
               .withSubscriptionConfiguration(
-                  new SubscriptionConfigurationImpl(model, vertx, config, startPromise, vertxJdbcClient)
-              )
+                  new SubscriptionConfigurationImpl(model, vertx, config, startPromise, vertxJdbcClient))
+              .withExtendedScalarTypes(List.of(CustomScalars.GRAPHQL_BIGINTEGER))
               .build(),
           new VertxContext(vertxJdbcClient, canonicalizer));
       MeterRegistry meterRegistry = BackendRegistries.getDefaultNow();

@@ -24,18 +24,19 @@ import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import lombok.AllArgsConstructor;
 import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.validate.SqrlSqlValidator;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+@Slf4j
 @AllArgsConstructor(onConstructor_=@Inject)
 public class TableConverter {
 
@@ -79,13 +80,12 @@ public class TableConverter {
               "Not a valid SQRL data type. Please check the documentation for supported SQRL types.");
         }
         String datatype = type.get();
-        typeBuilder.add(nameAdjuster.uniquifyName(columnName),
-            planner.getRelBuilder().getTypeFactory()
-                .createTypeWithNullability(planner.parseDatatype(datatype), false));
+        RelDataType metadataType = planner.getRelBuilder().getTypeFactory()
+            .createTypeWithNullability(planner.parseDatatype(datatype), false);
+        typeBuilder.add(nameAdjuster.uniquifyName(columnName), metadataType);
       } else if (colConfig.getAttribute().isPresent()){
         String attribute = colConfig.getAttribute().get();
         SqlNode sqlNode = framework.getQueryPlanner().parseCall(attribute);
-        SqrlSqlValidator sqlValidator = (SqrlSqlValidator)framework.getQueryPlanner().createSqlValidator();
 
         //Is a function call
         if (sqlNode instanceof SqlCall) {
@@ -171,6 +171,7 @@ public class TableConverter {
       framework.getQueryPlanner().parseDatatype(datatype);
       return true;
     } catch (Exception e) {
+      log.info("Could not parse type: " + datatype + ".", e);
       return false;
     }
   }

@@ -61,23 +61,19 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
       description = "Target directory for deployment artifacts")
   protected Path targetDir = DEFAULT_DEPLOY_DIR;
 
-  @CommandLine.Option(names = {"--profile"},
-      description = "An alternative set of configuration values which override the default package.json")
-  protected String[] profiles = new String[0];
-
   @SneakyThrows
   public void execute(ErrorCollector errors) {
-    execute(errors, profiles, targetDir.resolve("snapshots"),
+    execute(errors, targetDir.resolve("snapshots"),
         Optional.empty(), ExecutionGoal.COMPILE);
   }
 
-  public void execute(ErrorCollector errors, String[] profiles, Path snapshotPath, Optional<Path> testsPath,
+  public void execute(ErrorCollector errors, Path snapshotPath, Optional<Path> testsPath,
       ExecutionGoal goal) {
     Repository repository = createRepository(errors);
 
     PackageBootstrap packageBootstrap = new PackageBootstrap(repository, errors);
     PackageJson sqrlConfig = packageBootstrap.bootstrap(root.rootDir, this.root.packageFiles,
-        profiles, this.files);
+        this.files);
 
     Optional<String> snapshotPathConf = sqrlConfig.getCompilerConfig()
         .getSnapshotPath();
@@ -130,8 +126,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   protected void postprocess(PackageJson sqrlConfig, Packager packager, Path targetDir,
       PhysicalPlan plan, TestPlan testPlan, Path snapshotPath, ErrorCollector errors) {
 
-    packager.postprocess(sqrlConfig, root.rootDir, getTargetDir(), plan, testPlan,
-        sqrlConfig.getProfiles());
+    packager.postprocess(sqrlConfig, root.rootDir, getTargetDir(), plan, testPlan);
   }
 
   protected boolean isGenerateGraphql() {

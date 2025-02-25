@@ -1,5 +1,6 @@
 package com.datasqrl.flink;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import com.datasqrl.DatasqrlRun;
@@ -71,7 +72,7 @@ public class DagPlannerIT {
 
   @ParameterizedTest
   @MethodSource("directoryProvider")
-  void testCompilePlanOnDirectory(Path directoryPath) {
+  void testCompilePlanOnDirectory(Path directoryPath) throws Throwable {
     Map<String, String> env = new HashMap<>();
     env.put("EXECUTION_MODE", "local");
     env.put("JDBC_URL", testDatabase.getJdbcUrl());
@@ -94,7 +95,10 @@ public class DagPlannerIT {
     AssertStatusHook statusHook = new AssertStatusHook();
     int code = new RootCommand(directoryPath.getParent(),statusHook).getCmd().execute("compile",
         directoryPath.getFileName().toString());
-    if (statusHook.isSuccess()) Assertions.assertEquals(0, code);
+    if(statusHook.isFailed()) {
+    	throw statusHook.failure();
+    }
+    assertThat(code).isZero();
 
     try {
       CompiledPlan plan = datasqrlRun.compileFlink();

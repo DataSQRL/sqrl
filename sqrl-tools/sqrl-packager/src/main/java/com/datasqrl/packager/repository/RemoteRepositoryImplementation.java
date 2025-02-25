@@ -127,9 +127,10 @@ public class RemoteRepositoryImplementation implements Repository, PublishReposi
 
     Optional<String> authToken = authProvider.getAccessToken();
 
-    HttpRequest.Builder requestBuilder =
+    URI uri = buildPackageInfoUri(name, version, variant);
+	HttpRequest.Builder requestBuilder =
         HttpRequest.newBuilder()
-            .uri(buildPackageInfoUri(name, version, variant));
+            .uri(uri);
     authToken.ifPresent((t) -> requestBuilder.header("Authorization", "Bearer " + t));
     requestBuilder.GET()
             .timeout(Duration.of(10, ChronoUnit.SECONDS))
@@ -147,8 +148,8 @@ public class RemoteRepositoryImplementation implements Repository, PublishReposi
     if (statusCode != 200) {
       String message =
           String.format(
-              "Package [%s] is not available. Check if it exists and you have permission to access it.",
-              name);
+              "Package [%s] is not available. Check if it exists and you have permission to access uri %s",
+              name, uri);
       throw new RuntimeException(message);
     }
     return mapper.readValue(response.body(), JsonNode.class);

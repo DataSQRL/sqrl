@@ -13,6 +13,7 @@ import com.datasqrl.json.FlinkJsonType;
 import com.datasqrl.schema.Multiplicity;
 import graphql.Scalars;
 import graphql.language.FieldDefinition;
+import graphql.scalars.ExtendedScalars;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLInputObjectField;
 import graphql.schema.GraphQLInputObjectType;
@@ -58,24 +59,24 @@ public class GraphqlSchemaUtil {
     return !isSystemHidden(name) && Pattern.matches("[_A-Za-z][_0-9A-Za-z]*", name);
   }
 
-  public static Optional<GraphQLInputType> getInputType(RelDataType type, NamePath namePath, Set<String> seen) {
-    return getInOutType(type, namePath, seen)
+  public static Optional<GraphQLInputType> getInputType(RelDataType type, NamePath namePath, Set<String> seen, boolean extendedScalarTypes) {
+    return getInOutType(type, namePath, seen, extendedScalarTypes)
         .map(f->(GraphQLInputType)f);
   }
 
-  public static Optional<GraphQLOutputType> getOutputType(RelDataType type, NamePath namePath, Set<String> seen) {
-    return getInOutType(type, namePath, seen)
+  public static Optional<GraphQLOutputType> getOutputType(RelDataType type, NamePath namePath, Set<String> seen, boolean extendedScalarTypes) {
+    return getInOutType(type, namePath, seen, extendedScalarTypes)
         .map(f->(GraphQLOutputType)f);
   }
 
   public static Optional<GraphQLType> getInOutType(RelDataType type, NamePath namePath,
-      Set<String> seen) {
-    return getInOutTypeHelper(type, namePath, seen);
+      Set<String> seen, boolean extendedScalarTypes) {
+    return getInOutTypeHelper(type, namePath, seen, extendedScalarTypes);
   }
 
   // Todo move to dialect?
   public static Optional<GraphQLType> getInOutTypeHelper(RelDataType type, NamePath namePath, 
-      Set<String> seen) {
+      Set<String> seen, boolean extendedScalarTypes) {
     if (type.getSqlTypeName() == null) {
       return Optional.empty();
     }
@@ -97,7 +98,10 @@ public class GraphqlSchemaUtil {
       case SMALLINT:
       case INTEGER:
         return Optional.of(Scalars.GraphQLInt);
-      case BIGINT: //treat bigint as float to prevent overflow
+      case BIGINT:
+        if (extendedScalarTypes) {
+          return Optional.of(CustomScalars.GRAPHQL_BIGINTEGER);
+        }
       case DECIMAL:
       case FLOAT:
       case REAL:
@@ -129,7 +133,7 @@ public class GraphqlSchemaUtil {
         return Optional.of(Scalars.GraphQLString);
       case ARRAY:
       case MULTISET:
-        return getOutputType(type.getComponentType(), namePath, seen).map(GraphQLList::list);
+        return getOutputType(type.getComponentType(), namePath, seen, extendedScalarTypes).map(GraphQLList::list);
       case STRUCTURED:
       case ROW:
         GraphQLObjectType.Builder builder = GraphQLObjectType.newObject();
@@ -137,7 +141,7 @@ public class GraphqlSchemaUtil {
         builder.name(typeName);
         for (RelDataTypeField field : type.getFieldList()) {
           if (field.getName().startsWith(HIDDEN_PREFIX)) continue;
-          getOutputType(field.getType(), namePath.concat(Name.system(field.getName())), seen)
+          getOutputType(field.getType(), namePath.concat(Name.system(field.getName())), seen, extendedScalarTypes)
               .ifPresent(fieldType -> builder.field(GraphQLFieldDefinition.newFieldDefinition()
                   .name(field.getName())
                   .type(wrap(fieldType, field.getType()))
@@ -184,22 +188,23 @@ public class GraphqlSchemaUtil {
   }
 
   public static Optional<GraphQLOutputType> createOutputTypeForRelDataType(RelDataType type,
-      NamePath namePath, Set<String> seen) {
+      NamePath namePath, Set<String> seen, boolean extendedScalarTypes) {
     if (!type.isNullable()) {
-      return getOutputType(type, namePath, seen).map(GraphQLNonNull::nonNull);
+      return getOutputType(type, namePath, seen, extendedScalarTypes).map(GraphQLNonNull::nonNull);
     }
-    return getOutputType(type, namePath, seen);
+    return getOutputType(type, namePath, seen, extendedScalarTypes);
   }
 
-  public static Optional<GraphQLInputType> createInputTypeForRelDataType(RelDataType type, NamePath namePath, Set<String> seen) {
+  public static Optional<GraphQLInputType> createInputTypeForRelDataType(RelDataType type, NamePath namePath, Set<String> seen, boolean extendedScalarTypes) {
     if (namePath.getLast().isHidden()) return Optional.empty();
     if (!type.isNullable()) {
-      return getGraphQLInputType(type, namePath, seen).map(GraphQLNonNull::nonNull);
+      return getGraphQLInputType(type, namePath, seen, extendedScalarTypes).map(GraphQLNonNull::nonNull);
     }
-    return getGraphQLInputType(type, namePath, seen);
+    return getGraphQLInputType(type, namePath, seen, extendedScalarTypes);
   }
 
-  private static Optional<GraphQLInputType> getGraphQLInputType(RelDataType type, NamePath namePath, Set<String> seen) {
+  // TODO should not we use getInOutTypeHelper instead, the code seems duplicated ?
+  private static Optional<GraphQLInputType> getGraphQLInputType(RelDataType type, NamePath namePath, Set<String> seen, boolean extendedScalarTypes) {
     switch (type.getSqlTypeName()) {
       case BOOLEAN:
         return Optional.of(Scalars.GraphQLBoolean);
@@ -208,6 +213,9 @@ public class GraphqlSchemaUtil {
       case TINYINT:
         return Optional.of(Scalars.GraphQLInt);
       case BIGINT:
+        if (extendedScalarTypes) {
+          return Optional.of(CustomScalars.GRAPHQL_BIGINTEGER);
+        }
       case FLOAT:
       case REAL:
       case DOUBLE:
@@ -227,10 +235,10 @@ public class GraphqlSchemaUtil {
         return Optional.of(Scalars.GraphQLString); // Typically handled as Base64 encoded strings
       case ARRAY:
         return type.getComponentType() != null
-            ? getGraphQLInputType(type.getComponentType(), namePath, seen).map(GraphQLList::list)
+            ? getGraphQLInputType(type.getComponentType(), namePath, seen, extendedScalarTypes).map(GraphQLList::list)
             : Optional.empty();
       case ROW:
-        return createGraphQLInputObjectType(type, namePath, seen);
+        return createGraphQLInputObjectType(type, namePath, seen, extendedScalarTypes);
       case MAP:
         return Optional.of(CustomScalars.JSON);
       default:
@@ -241,13 +249,13 @@ public class GraphqlSchemaUtil {
   /**
    * Creates a GraphQL input object type for a ROW type.
    */
-  private static Optional<GraphQLInputType> createGraphQLInputObjectType(RelDataType rowType, NamePath namePath, Set<String> seen) {
+  private static Optional<GraphQLInputType> createGraphQLInputObjectType(RelDataType rowType, NamePath namePath, Set<String> seen, boolean extendedScalarTypes) {
     GraphQLInputObjectType.Builder builder = GraphQLInputObjectType.newInputObject();
     String typeName = generateUniqueNameForType(namePath, seen, "Input");
     builder.name(typeName);
 
     for (RelDataTypeField field : rowType.getFieldList()) {
-      createInputTypeForRelDataType(field.getType(), namePath.concat(Name.system(field.getName())), seen)
+      createInputTypeForRelDataType(field.getType(), namePath.concat(Name.system(field.getName())), seen, extendedScalarTypes)
           .ifPresent(fieldType -> builder.field(GraphQLInputObjectField.newInputObjectField()
               .name(field.getName())
               .type(fieldType)
@@ -259,16 +267,16 @@ public class GraphqlSchemaUtil {
   /**
    * Helper to handle map types, transforming them into a list of key-value pairs.
    */
-  private static Optional<GraphQLInputType> createGraphQLInputMapType(RelDataType keyType, RelDataType valueType, NamePath namePath, Set<String> seen) {
+  private static Optional<GraphQLInputType> createGraphQLInputMapType(RelDataType keyType, RelDataType valueType, NamePath namePath, Set<String> seen, boolean extendedScalarTypes) {
     GraphQLInputObjectType mapEntryType = GraphQLInputObjectType.newInputObject()
         .name("MapEntry")
         .field(GraphQLInputObjectField.newInputObjectField()
             .name("key")
-            .type(getGraphQLInputType(keyType, namePath, seen).orElse(Scalars.GraphQLString))
+            .type(getGraphQLInputType(keyType, namePath, seen, extendedScalarTypes).orElse(Scalars.GraphQLString))
             .build())
         .field(GraphQLInputObjectField.newInputObjectField()
             .name("value")
-            .type(getGraphQLInputType(valueType, namePath, seen).orElse(Scalars.GraphQLString))
+            .type(getGraphQLInputType(valueType, namePath, seen, extendedScalarTypes).orElse(Scalars.GraphQLString))
             .build())
         .build();
     return Optional.of(GraphQLList.list(mapEntryType));
