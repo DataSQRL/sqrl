@@ -18,6 +18,7 @@ import com.datasqrl.graphql.server.CustomScalars;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.v2.parser.AccessModifier;
 import com.datasqrl.v2.tables.SqrlTableFunction;
+import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import graphql.Scalars;
 import graphql.language.IntValue;
@@ -113,9 +114,7 @@ public class GraphqlSchemaFactory2 {
 
     graphQLSchemaBuilder.additionalTypes(new LinkedHashSet<>(objectTypes)); // the cleaned types
 
-    if (queriesObjectType.get().getFields().isEmpty()) {
-      throw new RuntimeException("No queryable tables found for server");
-    }
+    Preconditions.checkArgument(!queriesObjectType.get().getFields().isEmpty(),"No queryable tables found for server");
     return Optional.of(graphQLSchemaBuilder.build());
   }
 
@@ -126,6 +125,7 @@ public class GraphqlSchemaFactory2 {
   public Optional<GraphQLObjectType> createQueriesOrSubscriptionsObjectType(
       List<SqrlTableFunction> tableFunctions, AccessModifier tableFunctionsType) {
     //TODO see if the 2 maps can we simplified a bit
+
     // group table functions by their parent path (NamePath.ROOT  for root tables)
     Map<NamePath, List<SqrlTableFunction>> tableFunctionsByTheirParentPath =
         tableFunctions.stream()
