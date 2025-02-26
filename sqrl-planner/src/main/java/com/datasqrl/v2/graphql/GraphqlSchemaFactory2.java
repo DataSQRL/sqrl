@@ -2,7 +2,6 @@ package com.datasqrl.v2.graphql;
 
 import static com.datasqrl.canonicalizer.Name.HIDDEN_PREFIX;
 import static com.datasqrl.canonicalizer.Name.isHiddenString;
-import static com.datasqrl.graphql.generate.GraphqlSchemaUtil.createOutputTypeForRelDataType;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.LIMIT;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.OFFSET;
 import static com.datasqrl.v2.graphql.GraphqlSchemaUtil2.*;
@@ -15,7 +14,6 @@ import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.v2.tables.SqrlFunctionParameter;
 import com.datasqrl.graphql.server.CustomScalars;
-import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.v2.parser.AccessModifier;
 import com.datasqrl.v2.tables.SqrlTableFunction;
 import com.google.common.base.Preconditions;
@@ -61,7 +59,6 @@ public class GraphqlSchemaFactory2 {
   private final List<GraphQLObjectType> objectTypes = new ArrayList<>();
   private final Set<String> definedTypeNames = new HashSet<>();
   private final boolean extendedScalarTypes;
-  public final Set<String> seen = new HashSet<>();
 
   @Inject
   public GraphqlSchemaFactory2(CompilerConfig config) {
@@ -236,7 +233,7 @@ public class GraphqlSchemaFactory2 {
       return Optional.empty();
     }
 
-    String typeName = uniquifyTableFunctionName(tableFunction);
+    String typeName = uniquifyNameForPath(tableFunction.getFullPath());
     GraphQLObjectType objectType = GraphQLObjectType.newObject()
             .name(typeName)
             .fields(fields)
@@ -395,7 +392,7 @@ public class GraphqlSchemaFactory2 {
    *
    */
   private Optional<GraphQLFieldDefinition> createRelDataTypeField(RelDataTypeField field) {
-    return getOutputType(field.getType(), NamePath.of(field.getName()), seen, extendedScalarTypes)
+    return getOutputType(field.getType(), NamePath.of(field.getName()), extendedScalarTypes)
             .filter(type -> isValidGraphQLName(field.getName()))
             .filter(type -> isVisible(field))
             .map(type -> GraphQLFieldDefinition.newFieldDefinition()
@@ -435,10 +432,10 @@ public class GraphqlSchemaFactory2 {
         .collect(Collectors.toList());
 
       final List<GraphQLArgument> parametersArguments = parameters.stream()
-              .filter(p -> getInputType(p.getType(null), NamePath.of(p.getName()), seen, extendedScalarTypes).isPresent())
+              .filter(p -> getInputType(p.getType(null), NamePath.of(p.getName()), extendedScalarTypes).isPresent())
               .map(parameter -> GraphQLArgument.newArgument()
                       .name(parameter.getName())
-                      .type(nonNull(getInputType(parameter.getType(null), NamePath.of(parameter.getName()), seen, extendedScalarTypes).get()))
+                      .type(nonNull(getInputType(parameter.getType(null), NamePath.of(parameter.getName()), extendedScalarTypes).get()))
                       .build()).collect(Collectors.toList());
     List<GraphQLArgument> limitAndOffsetArguments = List.of();
     if(tableFunction.getVisibility().getAccess() != AccessModifier.SUBSCRIPTION) {
@@ -476,8 +473,7 @@ public class GraphqlSchemaFactory2 {
     String typeName =
         tableFunction.getBaseTable().isPresent()
             ? tableFunction.getBaseTable().get().getName()
-            : uniquifyTableFunctionName(tableFunction);
-    seen.add(typeName);
+            : uniquifyNameForPath(tableFunction.getFullPath());
     return new GraphQLTypeReference(typeName);
   }
 

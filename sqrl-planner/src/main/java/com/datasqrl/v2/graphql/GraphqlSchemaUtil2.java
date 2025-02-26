@@ -11,7 +11,6 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.graphql.server.CustomScalars;
 import com.datasqrl.json.FlinkJsonType;
 import com.datasqrl.schema.Multiplicity;
-import com.datasqrl.v2.tables.SqrlTableFunction;
 import graphql.Scalars;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLInputObjectField;
@@ -23,9 +22,8 @@ import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLType;
 import java.util.Optional;
-import java.util.Set;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
@@ -57,18 +55,17 @@ public class GraphqlSchemaUtil2 {
     return !isSystemHidden(name) && Pattern.matches("[_A-Za-z][_0-9A-Za-z]*", name);
   }
 
-  public static Optional<GraphQLInputType> getInputType(RelDataType type, NamePath namePath, Set<String> seen, boolean extendedScalarTypes) {
-    return getInOutType(type, namePath, seen, extendedScalarTypes)
+  public static Optional<GraphQLInputType> getInputType(RelDataType type, NamePath namePath, boolean extendedScalarTypes) {
+    return getInOutType(type, namePath, extendedScalarTypes)
         .map(f->(GraphQLInputType)f);
   }
 
-  public static Optional<GraphQLOutputType> getOutputType(RelDataType type, NamePath namePath, Set<String> seen, boolean extendedScalarTypes) {
-    return getInOutType(type, namePath, seen, extendedScalarTypes)
+  public static Optional<GraphQLOutputType> getOutputType(RelDataType type, NamePath namePath, boolean extendedScalarTypes) {
+    return getInOutType(type, namePath, extendedScalarTypes)
         .map(f->(GraphQLOutputType)f);
   }
 
-  public static Optional<GraphQLType> getInOutType(RelDataType type, NamePath namePath,
-      Set<String> seen, boolean extendedScalarTypes) {
+  public static Optional<GraphQLType> getInOutType(RelDataType type, NamePath namePath, boolean extendedScalarTypes) {
     if (type.getSqlTypeName() == null) {
       return Optional.empty();
     }
@@ -126,11 +123,11 @@ public class GraphqlSchemaUtil2 {
       // arity many, create a GraphQLList of the component type
       case ARRAY:
       case MULTISET:
-        return getOutputType(type.getComponentType(), namePath, seen, extendedScalarTypes).map(GraphQLList::list);
+        return getOutputType(type.getComponentType(), namePath, extendedScalarTypes).map(GraphQLList::list);
      // nested type, arity 1
       case STRUCTURED:
       case ROW:
-        return createGraphQLOutputStructuredType(type, namePath, seen, extendedScalarTypes);
+        return createGraphQLOutputStructuredType(type, namePath, extendedScalarTypes);
       case MAP:
         return Optional.of(CustomScalars.JSON);
       case BINARY:
@@ -149,53 +146,13 @@ public class GraphqlSchemaUtil2 {
     }
   }
 
-  /**
-   * Creates a GraphQL output object type for a ROW type.
-   */
-  private static Optional<GraphQLType> createGraphQLOutputStructuredType(RelDataType type, NamePath namePath, Set<String> seen, boolean extendedScalarTypes) {
-    GraphQLObjectType.Builder builder = GraphQLObjectType.newObject();
-    String typeName = generateUniqueNameForType(namePath, seen, "Result"); // Ensure unique names for each ROW type
-    builder.name(typeName);
-    for (RelDataTypeField field : type.getFieldList()) {
-      if (field.getName().startsWith(HIDDEN_PREFIX)) continue;
-      getOutputType(field.getType(), namePath.concat(Name.system(field.getName())), seen, extendedScalarTypes) // recursively traverse
-          .ifPresent(fieldType -> builder.field(GraphQLFieldDefinition.newFieldDefinition()
-                                                              .name(field.getName())
-                                                              .type((GraphQLOutputType) wrapNullable(fieldType, field.getType()))
-                                                              .build()
-                                                              )
-          );
-    }
-    return Optional.of(builder.build());
-  }
-
-  private static String generateUniqueNameForType(NamePath namePath, Set<String> seen, String postfix) {
-    String name = toName(namePath, postfix);
-    String uniqueName = uniquifyName(name, seen);
-    seen.add(uniqueName);
-
-    return uniqueName;
-  }
-
-  private static String uniquifyName(String name, Set<String> seen) {
-    int i = 0;
-    while (seen.contains(name + (i == 0 ? "" : i))) i++;
-    return name + (i == 0 ? "" : i);
-  }
-
-  private static String toName(NamePath namePath, String postfix) {
-    return namePath.stream()
-        .map(Name::getDisplay)
-        .collect(Collectors.joining("_")) + postfix;
-  }
 
   //TODO will be used for mutations. Do not remove, inline when coding mutations
-  public static Optional<GraphQLOutputType> createOutputTypeForRelDataType(RelDataType type,
-                                                                           NamePath namePath, Set<String> seen, boolean extendedScalarTypes) {
-    return getOutputType(type, namePath, seen, extendedScalarTypes).map(t -> (GraphQLOutputType) wrapNullable(t, type));
+  public static Optional<GraphQLOutputType> createOutputTypeForRelDataType(RelDataType type, NamePath namePath, boolean extendedScalarTypes) {
+    return getOutputType(type, namePath, extendedScalarTypes).map(t -> (GraphQLOutputType) wrapNullable(t, type));
   }
 
-  private static Optional<GraphQLInputType> getGraphQLInputType(RelDataType type, NamePath namePath, Set<String> seen, boolean extendedScalarTypes) {
+  private static Optional<GraphQLInputType> getGraphQLInputType(RelDataType type, NamePath namePath, boolean extendedScalarTypes) {
     switch (type.getSqlTypeName()) {
       case BOOLEAN:
         return Optional.of(Scalars.GraphQLBoolean);
@@ -226,10 +183,10 @@ public class GraphqlSchemaUtil2 {
         return Optional.of(Scalars.GraphQLString); // Typically handled as Base64 encoded strings
       case ARRAY:
         return type.getComponentType() != null // traverse inner type
-            ? getGraphQLInputType(type.getComponentType(), namePath, seen, extendedScalarTypes).map(GraphQLList::list)
+            ? getGraphQLInputType(type.getComponentType(), namePath, extendedScalarTypes).map(GraphQLList::list)
             : Optional.empty();
       case ROW:
-        return createGraphQLInputStructuredType(type, namePath, seen, extendedScalarTypes);
+        return createGraphQLInputStructuredType(type, namePath, extendedScalarTypes);
       case MAP:
         return Optional.of(CustomScalars.JSON);
       default:
@@ -240,16 +197,16 @@ public class GraphqlSchemaUtil2 {
   /**
    * Creates a GraphQL input object type for a ROW type.
    */
-  private static Optional<GraphQLInputType> createGraphQLInputStructuredType(RelDataType rowType, NamePath namePath, Set<String> seen, boolean extendedScalarTypes) {
+  private static Optional<GraphQLInputType> createGraphQLInputStructuredType(RelDataType rowType, NamePath namePath, boolean extendedScalarTypes) {
     GraphQLInputObjectType.Builder builder = GraphQLInputObjectType.newInputObject();
-    String typeName = generateUniqueNameForType(namePath, seen, "Input");
+    String typeName = uniquifyNameForPath(namePath, "Input");
     builder.name(typeName);
 
     for (RelDataTypeField field : rowType.getFieldList()) {
       final NamePath fieldPath = namePath.concat(Name.system(field.getName()));
       if (namePath.getLast().isHidden()) continue;
       RelDataType type = field.getType();
-      getGraphQLInputType(type, fieldPath, seen, extendedScalarTypes).map(t -> (GraphQLInputType) wrapNullable(t, type))
+      getGraphQLInputType(type, fieldPath, extendedScalarTypes).map(t -> (GraphQLInputType) wrapNullable(t, type))
           .ifPresent(fieldType -> builder.field(GraphQLInputObjectField.newInputObjectField()
               .name(field.getName())
               .type(fieldType)
@@ -258,7 +215,31 @@ public class GraphqlSchemaUtil2 {
     return Optional.of(builder.build());
   }
 
-  public static String uniquifyTableFunctionName(SqrlTableFunction tableFunction) {
-    return tableFunction.getFullPath().toString("_");
+  /**
+   * Creates a GraphQL output object type for a ROW type.
+   */
+  private static Optional<GraphQLType> createGraphQLOutputStructuredType(RelDataType type, NamePath namePath, boolean extendedScalarTypes) {
+    GraphQLObjectType.Builder builder = GraphQLObjectType.newObject();
+    String typeName = uniquifyNameForPath(namePath, "Output");
+    builder.name(typeName);
+    for (RelDataTypeField field : type.getFieldList()) {
+      if (field.getName().startsWith(HIDDEN_PREFIX)) continue;
+      getOutputType(field.getType(), namePath.concat(Name.system(field.getName())), extendedScalarTypes) // recursively traverse
+              .ifPresent(fieldType -> builder.field(GraphQLFieldDefinition.newFieldDefinition()
+                              .name(field.getName())
+                              .type((GraphQLOutputType) wrapNullable(fieldType, field.getType()))
+                              .build()
+                      )
+              );
+    }
+    return Optional.of(builder.build());
+  }
+
+  public static String uniquifyNameForPath(NamePath fullPath) {
+    return fullPath.toString("_");
+  }
+
+  public static String uniquifyNameForPath(NamePath fullPath, String postfix) {
+    return fullPath.toString("_").concat(postfix);
   }
 }
