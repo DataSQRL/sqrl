@@ -320,7 +320,7 @@ public class GraphqlSchemaFactory2 {
 
       GraphQLFieldDefinition field = GraphQLFieldDefinition.newFieldDefinition()
           .name(tableFunctionName)
-          .type(wrapMultiplicity(createTypeReference(tableFunction), tableFunction.getMultiplicity()))
+          .type((GraphQLOutputType) wrapMultiplicity(createTypeReference(tableFunction), tableFunction.getMultiplicity()))
           .arguments(createArguments(tableFunction))
           .build();
       fields.add(field);
@@ -400,7 +400,7 @@ public class GraphqlSchemaFactory2 {
             .filter(type -> isVisible(field))
             .map(type -> GraphQLFieldDefinition.newFieldDefinition()
                                             .name(field.getName())
-                                            .type(wrapNullable(type, field.getType()))
+                                            .type((GraphQLOutputType) wrapNullable(type, field.getType()))
                                             .build()
             );
   }
@@ -418,7 +418,7 @@ public class GraphqlSchemaFactory2 {
     // reference the type that will be defined when the table function relationship is processed
     GraphQLFieldDefinition field = GraphQLFieldDefinition.newFieldDefinition()
         .name(fieldName)
-        .type(wrapMultiplicity(createTypeReference(relationship), relationship.getMultiplicity()))
+        .type((GraphQLOutputType) wrapMultiplicity(createTypeReference(relationship), relationship.getMultiplicity()))
         .arguments(createArguments(relationship))
         .build();
 
