@@ -82,11 +82,7 @@ public class GraphqlSchemaFactory2 {
     }
 
     // process query table functions
-    final List<SqrlTableFunction> queriesTableFunctions =
-        serverPlan.getFunctions().stream()
-            .filter(function -> function.getVisibility().getAccess() == AccessModifier.QUERY)
-            .collect(Collectors.toList());
-    final Optional<GraphQLObjectType> queriesObjectType = createQueriesOrSubscriptionsObjectType(queriesTableFunctions, AccessModifier.QUERY);
+    final Optional<GraphQLObjectType> queriesObjectType = createQueriesOrSubscriptionsObjectType(serverPlan, AccessModifier.QUERY);
     if (queryFields.isEmpty()) {
       return Optional.empty();
     }
@@ -95,11 +91,7 @@ public class GraphqlSchemaFactory2 {
     // process subscriptions and mutations
     if (goal != ExecutionGoal.TEST) {
       // process subscriptions table functions
-      final List<SqrlTableFunction> subscriptionsTableFunctions =
-          serverPlan.getFunctions().stream()
-              .filter(function -> function.getVisibility().getAccess() == AccessModifier.SUBSCRIPTION)
-              .collect(Collectors.toList());
-      final Optional<GraphQLObjectType> subscriptionsObjectType = createQueriesOrSubscriptionsObjectType(subscriptionsTableFunctions, AccessModifier.SUBSCRIPTION);
+      final Optional<GraphQLObjectType> subscriptionsObjectType = createQueriesOrSubscriptionsObjectType(serverPlan, AccessModifier.SUBSCRIPTION);
       subscriptionsObjectType.ifPresent(graphQLSchemaBuilder::subscription);
 
       // process mutations table functions
@@ -117,8 +109,13 @@ public class GraphqlSchemaFactory2 {
    * GraphQL queries and subscriptions are generated the same way. So we have a single method having
    * {@link AccessModifier#QUERY} or {@link AccessModifier#SUBSCRIPTION} as parameter.
    */
-  public Optional<GraphQLObjectType> createQueriesOrSubscriptionsObjectType(
-      List<SqrlTableFunction> tableFunctions, AccessModifier tableFunctionsType) {
+  public Optional<GraphQLObjectType> createQueriesOrSubscriptionsObjectType(ServerPhysicalPlan serverPlan, AccessModifier tableFunctionsType) {
+
+    final List<SqrlTableFunction> tableFunctions =
+            serverPlan.getFunctions().stream()
+                    .filter(function -> function.getVisibility().getAccess() == tableFunctionsType)
+                    .collect(Collectors.toList());
+
     //TODO see if the 2 maps can we simplified a bit
 
     // group table functions by their parent path (NamePath.ROOT  for root tables)
@@ -149,17 +146,14 @@ public class GraphqlSchemaFactory2 {
         resultType.map(objectTypes::add);
       }
     }
-
+    // create root type ("Query" or "Subscription")
+    final List<SqrlTableFunction> rootTableFunctions = tableFunctions.stream()
+            .filter(tableFunction -> !tableFunction.isRelationship())
+            .collect(Collectors.toList());
     GraphQLObjectType rootObjectType;
     if (tableFunctionsType == AccessModifier.QUERY) {
-      final List<SqrlTableFunction> rootTableFunctions = tableFunctions.stream()
-              .filter(tableFunction -> !tableFunction.isRelationship())
-              .collect(Collectors.toList());
       rootObjectType = createRootQueryType(rootTableFunctions);
     } else { // subscriptions
-      final List<SqrlTableFunction> rootTableFunctions = tableFunctions.stream()
-              .filter(tableFunction -> !tableFunction.isRelationship())
-              .collect(Collectors.toList());
       rootObjectType = createRootSubscriptionType(rootTableFunctions);
     }
     //TODO fix cleanInvalidTypes: it removes nestedTypes.
