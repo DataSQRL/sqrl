@@ -1,0 +1,7 @@
+[FATAL]  Column '$emails' not found in any table
+in script:parsererror-argincomplete-fail.sqrl [3:74]:
+IMPORT ecommerceTs.Customer;
+
+CustomerByEmail($email: STRING NOT NULL) := SELECT * FROM Customer WHERE $emails = email;
+-------------------------------------------------------------------------^
+

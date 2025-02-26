@@ -1,3 +1,6 @@
 IMPORT ecommerceTs.Orders;
 FilteredOrders := SELECT * FROM Orders WHERE id>0;
 FilteredOrders.col2 := customerid * 2;
+
+-- making sure identical columns can be selected and primary key is propagated and selected correctly
+OrderIds := SELECT id AS id1, id AS id2, `time` FROM Orders;

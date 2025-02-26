@@ -90,6 +90,13 @@ public class DAGPlanner {
   private final ErrorCollector errors;
   private final PackageJson packageJson;
 
+  /**
+   * Eliminates unreachable nodes from the DAG and determines all viable
+   * execution stages for each node in the DAG. It then picks the most
+   * cost-efficient stage assignment using a greedy heuristic.
+   * @param dag
+   * @return
+   */
   public PipelineDAG optimize(PipelineDAG dag) {
     dag = dag.trimToSinks();
     for (PipelineNode node : dag) {
@@ -126,6 +133,12 @@ public class DAGPlanner {
     return dag;
   }
 
+  /**
+   * Produces the physical plans for all stages in the DAG
+   * @param dag
+   * @param sqrlEnv
+   * @return
+   */
   public PhysicalPlan assemble(PipelineDAG dag, Sqrl2FlinkSQLTranslator sqrlEnv) {
     ExecutionStage streamStage = pipeline.getStageByType(EngineType.STREAMS).orElseThrow();
     Optional<ServerEngine> serverEngine = pipeline.getServerEngine();
@@ -337,10 +350,9 @@ public class DAGPlanner {
    * Maps the field types based on the provided data mapper so they can be written to the engine
    * sink.
    *
-   * TODO: Need to map all but the first rowtime to avoid Flink exception
+   * TODO: Need to cast all but the first rowtime to avoid Flink exception
    *
    * @param relBuilder
-   * @param sourceType
    * @param sqrlEnv
    * @param typeMapper
    * @param mapDirection
@@ -381,6 +393,10 @@ public class DAGPlanner {
     ObjectIdentifier tableId;
   }
 
+  /**
+   * Expands the views in a query that are executed in the same execution stage.
+   * TODO: handle sub-queries
+   */
   @AllArgsConstructor
   private class QueryExpansionRelShuttle extends RelShuttleImpl {
 
@@ -477,6 +493,11 @@ public class DAGPlanner {
               aggregate.getGroupCount())).collect(Collectors.toList()));
     }
 
+    /**
+     * When producing the query RelNodes for database and server stages, we need to
+     * replace the special ROWTIME datatype that is unique to Flink with a normal timestamp.
+     * This is implemented in this RexShuttle.
+     */
     @AllArgsConstructor
     private class ReplaceRowtimeRexShuttle extends RexShuttle {
 

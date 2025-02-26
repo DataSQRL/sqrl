@@ -8,7 +8,8 @@ import org.apache.calcite.tools.Planner;
 
 /**
  * A hint that has column names
- * Those get evaluated on the planner and the indexes added
+ * Those get validated by {@link com.datasqrl.v2.analyzer.SQRLLogicalPlanAnalyzer} and indexes
+ * are added. Hence, it can be assumed that the hints have resolved indexes after planning.
  */
 public abstract class ColumnNamesHint extends PlannerHint {
 

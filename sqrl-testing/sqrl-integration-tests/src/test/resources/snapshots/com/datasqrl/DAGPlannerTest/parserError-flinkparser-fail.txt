@@ -1,4 +1,4 @@
-[FATAL] Incorrect syntax near the keyword 'COUNT'.
+[FATAL] Incorrect syntax near the keyword 'COUNT' .
 Was expecting one of:
     <EOF> 
     "AS" ...

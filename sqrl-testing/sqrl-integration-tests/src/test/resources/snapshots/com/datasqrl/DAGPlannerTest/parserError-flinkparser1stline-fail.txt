@@ -1,4 +1,4 @@
-[FATAL] Encountered "]".
+[FATAL] Encountered "]" .
 Was expecting one of:
     <EOF> 
     "AS" ...

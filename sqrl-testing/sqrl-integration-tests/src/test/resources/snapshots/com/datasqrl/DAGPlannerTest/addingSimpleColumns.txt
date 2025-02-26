@@ -21,6 +21,24 @@ LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], col2=[*($1, 2)
       LogicalTableScan(table=[[default_catalog, default_database, Orders]])
 SQL: ALTER VIEW FilteredOrders AS SELECT *,  customerid * 2 AS col2 FROM 
 (  SELECT * FROM Orders WHERE id>0 );
+=== OrderIds
+ID:     default_catalog.default_database.OrderIds
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.Orders
+Annotations:
+ - stream-root: Orders__def
+Primary Key: id1, id2, time
+Timestamp  : time
+Schema:
+ - id1: BIGINT NOT NULL
+ - id2: BIGINT NOT NULL
+ - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Plan:
+LogicalProject(id1=[$0], id2=[$0], time=[$2])
+  LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+SQL: CREATE VIEW OrderIds AS  SELECT id AS id1, id AS id2, `time` FROM Orders;
+
 === Orders
 ID:     default_catalog.default_database.Orders
 Type:   stream
@@ -78,6 +96,10 @@ SELECT *, `customerid` * 2 AS `col2`
 FROM (SELECT *
   FROM `Orders`
   WHERE `id` > 0);
+CREATE VIEW `OrderIds`
+AS
+SELECT `id` AS `id1`, `id` AS `id2`, `time`
+FROM `Orders`;
 CREATE TABLE `FilteredOrders_1` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
@@ -93,7 +115,20 @@ CREATE TABLE `FilteredOrders_1` (
   'url' = 'jdbc:postgresql://${JDBC_URL}',
   'table-name' = 'FilteredOrders_1'
 );
-CREATE TABLE `Orders_2` (
+CREATE TABLE `OrderIds_2` (
+  `id1` BIGINT NOT NULL,
+  `id2` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`id1`, `time`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'table-name' = 'OrderIds_2'
+);
+CREATE TABLE `Orders_3` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
@@ -105,18 +140,22 @@ CREATE TABLE `Orders_2` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_URL}',
-  'table-name' = 'Orders_2'
+  'table-name' = 'Orders_3'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`FilteredOrders_1`
 (SELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`, `col2`
  FROM `default_catalog`.`default_database`.`FilteredOrders`)
 ;
-INSERT INTO `default_catalog`.`default_database`.`Orders_2`
- (SELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`
-  FROM `default_catalog`.`default_database`.`Orders`)
+INSERT INTO `default_catalog`.`default_database`.`OrderIds_2`
+ (SELECT *
+  FROM `default_catalog`.`default_database`.`OrderIds`)
  ;
- END
+ INSERT INTO `default_catalog`.`default_database`.`Orders_3`
+  (SELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`
+   FROM `default_catalog`.`default_database`.`Orders`)
+  ;
+  END
 >>>kafka.json
 {
   "topics" : [ ]
@@ -157,9 +196,31 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
       ]
     },
     {
-      "name" : "Orders_2",
+      "name" : "OrderIds_2",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_2\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB  , PRIMARY KEY (\"id\",\"time\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"OrderIds_2\" (\"id1\" BIGINT NOT NULL, \"id2\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id1\",\"time\"))",
+      "fields" : [
+        {
+          "name" : "id1",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "id2",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
+    },
+    {
+      "name" : "Orders_3",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_3\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB  , PRIMARY KEY (\"id\",\"time\"))",
       "fields" : [
         {
           "name" : "id",
@@ -216,9 +277,31 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
       ]
     },
     {
+      "name" : "OrderIds",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderIds\"(\"id1\", \"id2\", \"time\") AS SELECT *\nFROM \"OrderIds_2\"",
+      "fields" : [
+        {
+          "name" : "id1",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "id2",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
+    },
+    {
       "name" : "Orders",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"Orders_2\"",
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"Orders_3\"",
       "fields" : [
         {
           "name" : "id",

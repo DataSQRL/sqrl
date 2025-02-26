@@ -99,7 +99,11 @@ import org.apache.flink.table.planner.plan.schema.TableSourceTable;
  *
  * As the query is analyzed, the analyzer detects inefficiencies or optimization opportunities and
  * creates info messages through the {@link ErrorCollector} for the user.
- * It also extracts information needed by the {@link com.datasqrl.v2.dag.DAGPlanner}.
+ * It extracts information needed by the {@link com.datasqrl.v2.dag.DAGPlanner} such as
+ * {@link CostAnalysis} which is used to find the optimal stage for executing a table.
+ *
+ * The analysis is implemented as a SqrlRelShuttle which traverses the RelNode tree from the root.
+ *
  *
  */
 @Slf4j
@@ -169,9 +173,8 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
       }
     }
 
-
     for (ColumnNamesHint hint : hints.getHints(ColumnNamesHint.class).collect(Collectors.toList())) {
-      //Validate column names and map to indexes
+      //Validate column names in hints and map to indexes
       List<String> colNames = new ArrayList<>();
       List<Integer> colIndexes = new ArrayList<>();
       for (String colName : hint.getColumnNames()) {
@@ -225,6 +228,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
    * Because Flink automatically expands views we are trying to "undo" this here
    * by detecting whether a particular RelNode tree is associated with a previously defined table
    * through the tableLookup interface.
+   * See {@link TableAnalysisLookup} for more information.
    *
    * @param input
    * @return
@@ -263,6 +267,9 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     }
   };
 
+  /**
+   * To process sub-queries inside RexNodes
+   */
   private RexShuttle subQueryRexShuttle = new RexShuttle() {
 
     @Override
@@ -291,7 +298,6 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     errors.checkFatal(analysis.type!=TableType.LOOKUP || result instanceof LogicalTableScan, "Lookup tables can only be used in temporal joins");
     return result;
   }
-
 
   @Override
   public RelNode visit(RelNode relNode) {

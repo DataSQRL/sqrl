@@ -2,6 +2,8 @@ package com.datasqrl.v2.parser;
 
 import com.datasqrl.error.ErrorLocation.FileLocation;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import lombok.Value;
 import org.apache.calcite.runtime.CalciteContextException;
 import org.apache.calcite.sql.parser.SqlParseException;
@@ -24,18 +26,31 @@ public class ParsePosUtil {
     if (e instanceof SqlParseException || e instanceof SqlValidateException) {
       FileLocation location = ParsePosUtil.convertPosition((e instanceof SqlParseException)?((SqlParseException) e).getPos():
           ((SqlValidateException)e).getErrorPosition());
-      String message = e.getMessage();
-      message = message.replaceAll(" at line \\d*, column \\d*", ""); //remove line number from message
+      String message = removeLineNumbersFromMessage(e.getMessage());
       return Optional.of(new MessageLocation(location, message));
     } else if (e instanceof CalciteContextException) {
       CalciteContextException calciteException = (CalciteContextException) e;
       FileLocation location = new FileLocation(calciteException.getPosLine(), calciteException.getPosColumn());
-      String message = calciteException.getMessage();
-      message = message.replaceAll("From line \\d*, column \\d* to line \\d*, column \\d*: ", ""); //remove line number from message
+      String message = removeLineNumbersFromMessage(calciteException.getMessage());
       return Optional.of(new MessageLocation(location, message));
     }
     return Optional.empty();
   }
+
+  private static final Pattern LINE_NUM_AT = Pattern.compile("at line \\d*, column \\d*[:\\s]?",
+      Pattern.CASE_INSENSITIVE);
+
+  private static final Pattern LINE_NUM_FROMTO = Pattern.compile("from line \\d*, column \\d* to line \\d*, column \\d*[:\\s]?",
+      Pattern.CASE_INSENSITIVE);
+
+  public static String removeLineNumbersFromMessage(String message) {
+    Matcher matcher = LINE_NUM_AT.matcher(message);
+    message = matcher.replaceAll("");
+    matcher = LINE_NUM_FROMTO.matcher(message);
+    message = matcher.replaceAll("");
+    return message;
+  }
+
 
   @Value
   public static class MessageLocation {

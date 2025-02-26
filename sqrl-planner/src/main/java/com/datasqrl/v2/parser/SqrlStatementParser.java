@@ -230,7 +230,8 @@ public class SqrlStatementParser {
       int matchedLength = 0;
       if (body.charAt(i) == ARGUMENT_PREFIX) {
         for (Map.Entry<Name,ParsedArgument> fctArgument : functionArguments.entrySet()) {
-          if (bodyLower.startsWith(fctArgument.getKey().getCanonical(), i+1)) {
+          String funcArgNameCanonical = fctArgument.getKey().getCanonical();
+          if (bodyLower.startsWith(funcArgNameCanonical, i+1) && !identifierCharacter(body.charAt(i+1+funcArgNameCanonical.length()))) {
             matchedLength = fctArgument.getKey().length()+1; //add length of argument prefix
             argumentIndexes.add(fctArgument.getValue().withName(
                 parse(body.substring(i+1, i+1+fctArgument.getKey().getCanonical().length()),fullStatement,i+1)));
@@ -279,6 +280,10 @@ public class SqrlStatementParser {
 
   static boolean nonIdentifierCharacter(char c) {
     return Character.isWhitespace(c) || SqlScriptStatementSplitter.STATEMENT_DELIMITER.charAt(0)==c;
+  }
+
+  static boolean identifierCharacter(char c) {
+    return Character.isAlphabetic(c) || Character.isDigit(c) || c=='_';
   }
 
   static FileLocation relativeLocation(ParsedObject<String> base, int charOffset) {

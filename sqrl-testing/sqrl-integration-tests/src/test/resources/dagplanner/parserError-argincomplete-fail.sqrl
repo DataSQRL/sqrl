@@ -1,0 +1,3 @@
+IMPORT ecommerceTs.Customer;
+
+CustomerByEmail($email: STRING NOT NULL) := SELECT * FROM Customer WHERE $emails = email;

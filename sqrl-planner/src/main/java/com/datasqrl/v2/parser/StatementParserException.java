@@ -1,6 +1,7 @@
 package com.datasqrl.v2.parser;
 
 import com.datasqrl.error.ErrorLabel;
+import com.datasqrl.error.ErrorLocation;
 import com.datasqrl.error.ErrorLocation.FileLocation;
 
 public class StatementParserException extends RuntimeException {
@@ -10,6 +11,10 @@ public class StatementParserException extends RuntimeException {
 
   public StatementParserException(FileLocation fileLocation, Exception e) {
     this(fileLocation, e, e.getMessage());
+  }
+
+  public StatementParserException(String message, Object... args) {
+    this(ErrorLabel.GENERIC, FileLocation.START, message, args);
   }
 
   public StatementParserException(FileLocation fileLocation, Exception e, String message) {

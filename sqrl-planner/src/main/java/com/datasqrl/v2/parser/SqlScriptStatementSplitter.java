@@ -38,6 +38,7 @@ public class SqlScriptStatementSplitter {
    * @return A list of individual SQL statements.
    */
   public List<ParsedObject<String>> splitStatements(String script) {
+    if (script.isBlank()) throw new StatementParserException("Script is empty");
     String formatted =
         formatEndOfSqlFile(script)
             .replaceAll(LINE_COMMENT_PATTERN, "");

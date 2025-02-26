@@ -1,7 +1,5 @@
 package com.datasqrl.v2.dag;
 
-import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.v2.analyzer.TableOrFunctionAnalysis.FullIdentifier;
 import com.datasqrl.v2.dag.nodes.ExportNode;
 import com.datasqrl.v2.dag.nodes.PipelineNode;
 import com.datasqrl.v2.dag.nodes.TableFunctionNode;
@@ -10,11 +8,9 @@ import com.datasqrl.v2.tables.SqrlTableFunction;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 
 public class DAGBuilder {
