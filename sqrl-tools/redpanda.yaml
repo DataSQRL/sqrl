@@ -1,0 +1,2 @@
+redpanda:
+  data_directory: /data/redpanda
