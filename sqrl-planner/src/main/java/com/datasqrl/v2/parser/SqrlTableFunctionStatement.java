@@ -11,6 +11,11 @@ import lombok.Getter;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
 
+/**
+ * Represents a table function definition with arguments
+ * A table function that's nested within another table is a relationship
+ */
+
 @Getter
 public class SqrlTableFunctionStatement extends SqrlDefinition {
 

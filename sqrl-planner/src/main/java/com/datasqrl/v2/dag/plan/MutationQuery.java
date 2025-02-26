@@ -4,13 +4,16 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.engine.ExecutableQuery;
 import com.datasqrl.engine.database.EngineCreateTable;
 import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.datasqrl.v2.tables.MutationComputedColumn;
 import java.util.List;
 import lombok.Builder;
 import lombok.Singular;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
 
+/**
+ * Represents a CREATE TABLE statement without a connector that is managed by DataSQRL
+ * and exposed as a mutation in GraphQL.
+ */
 @Value
 @Builder
 public class MutationQuery implements ExecutableQuery {

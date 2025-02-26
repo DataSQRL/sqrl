@@ -10,6 +10,10 @@ import java.util.Map;
 import java.util.Optional;
 import lombok.Getter;
 
+/**
+ * Represents a table in the DAG
+ */
+
 @Getter
 public class TableNode extends PlannedNode {
 

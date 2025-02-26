@@ -3,6 +3,9 @@ package com.datasqrl.v2.parser;
 import com.datasqrl.error.ErrorLocation.FileLocation;
 import lombok.Value;
 
+/**
+ * Reprensets a CREATE TABLE statement
+ */
 @Value
 public class SqrlCreateTableStatement implements SqrlDdlStatement {
 

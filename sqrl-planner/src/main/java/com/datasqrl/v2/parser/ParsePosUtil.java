@@ -11,6 +11,10 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.flink.sql.parser.error.SqlValidateException;
 import org.apache.flink.table.api.ValidationException;
 
+/**
+ * Utility for mapping Flink/Calcite parser and planner errors to DataSQRL errors.
+ * This means mapping line & column numbers as well as messages.
+ */
 public class ParsePosUtil {
 
   public static FileLocation convertPosition(SqlParserPos parsePos) {

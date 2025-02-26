@@ -19,6 +19,13 @@ import org.apache.flink.sql.parser.dml.SqlExecute;
 import org.apache.flink.sql.parser.dml.SqlStatementSet;
 import org.apache.flink.table.api.CompiledPlan;
 
+/**
+ * Represents the physical plan for Flink as both FlinkSQL and as a compiled plan.
+ * For the FlinkSQL representation we also keep track of a version without functions.
+ *
+ * In addition, we extract all the functions, connectors, and formats for additional post-compilation
+ * analysis (e.g. to determine what dependencies are needed).
+ */
 @Value
 @Builder
 public class FlinkPhysicalPlan implements EnginePhysicalPlan {

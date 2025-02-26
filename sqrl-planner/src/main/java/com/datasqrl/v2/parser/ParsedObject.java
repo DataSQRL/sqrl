@@ -6,6 +6,11 @@ import lombok.EqualsAndHashCode;
 import lombok.EqualsAndHashCode.Include;
 import lombok.Value;
 
+/**
+ * Represents a parsed object and keeps track of the position in the script so that we can produce
+ * errors that point back to the source.
+ * @param <O>
+ */
 @Value
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class ParsedObject<O> {

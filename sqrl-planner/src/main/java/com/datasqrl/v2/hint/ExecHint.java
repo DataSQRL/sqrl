@@ -5,6 +5,10 @@ import com.datasqrl.v2.parser.SqrlHint;
 import com.google.auto.service.AutoService;
 import java.util.List;
 
+/**
+ * Execution hints allow the user to assign a stage to a table/function definition and the
+ * corresponding node in the DAG.
+ */
 public class ExecHint extends PlannerHint {
 
   public static final String HINT_NAME = "exec";

@@ -1,5 +1,8 @@
 package com.datasqrl.v2.parser;
 
+/**
+ * The defined (or implied) access for a definition
+ */
 public enum AccessModifier {
 
   NONE, //no access

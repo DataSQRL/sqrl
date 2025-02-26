@@ -23,7 +23,8 @@ import org.apache.flink.sql.parser.ddl.constraint.SqlTableConstraint;
 
 /**
  * A builder for tables in Flink that is used as the central table builder in
- * DataSQRL.
+ * DataSQRL. It's a light wrapper around the SqlNode relying heavily on {@link FlinkSqlNodeFactory}
+ * for translation.
  */
 @Data
 @AllArgsConstructor

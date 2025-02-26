@@ -23,6 +23,12 @@ public abstract class SqrlDefinition implements SqrlStatement {
   final AccessModifier access;
   final SqrlComments comments;
 
+  /**
+   * Generates the SQL string that gets passed to the Flink parser for this statement
+   * @param sqrlEnv
+   * @param stack
+   * @return
+   */
   public String toSql(Sqrl2FlinkSQLTranslator sqrlEnv, List<StackableStatement> stack) {
     String prefix = getPrefix();
     return prefix + definitionBody.get();
@@ -44,6 +50,11 @@ public abstract class SqrlDefinition implements SqrlStatement {
     return !isTable();
   }
 
+  /**
+   * Maps the FileLocation for errors
+   * @param location
+   * @return
+   */
   @Override
   public FileLocation mapSqlLocation(FileLocation location) {
     return definitionBody.getFileLocation().add(

@@ -13,6 +13,9 @@ import java.util.Set;
 import java.util.stream.Stream;
 import lombok.Value;
 
+/**
+ * A DAG that consists of {@link PipelineNode}s.
+ */
 public class PipelineDAG extends AbstractDAG<PipelineNode, PipelineDAG> {
 
 
@@ -34,6 +37,16 @@ public class PipelineDAG extends AbstractDAG<PipelineNode, PipelineDAG> {
     return super.allNodesByClass(clazz).filter(node -> node.getChosenStage().equals(stage)).sorted();
   }
 
+  /**
+   * Iterates through the DAG from source to sink and eliminates inviable stages.
+   * A stage s is not viable if an upstream node in the DAG does not support an upstream stage of s.
+   * A stage s is not viable if a downstream node in the DAG does not support a downstream stage of s.
+   *
+   * In less formal terms, a stage is not viable if the inputs and outputs cannot be inputs or outputs
+   * for that particular stage.
+   *
+   * @param pipeline
+   */
   public void eliminateInviableStages(ExecutionPipeline pipeline) {
     messagePassing(node -> {
       final LinkedHashMap<ExecutionStage, StageAnalysis> updatedStages = new LinkedHashMap<>();

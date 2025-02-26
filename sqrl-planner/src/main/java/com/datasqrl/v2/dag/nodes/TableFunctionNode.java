@@ -10,6 +10,9 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import org.apache.calcite.schema.FunctionParameter;
 
+/**
+ * Represents a table function in the DAG
+ */
 @Getter
 public class TableFunctionNode extends PlannedNode {
 

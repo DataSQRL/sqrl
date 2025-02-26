@@ -9,6 +9,9 @@ import lombok.Value;
 
 /**
  * Takes a script and splits it into individual statements delimited by `;`.
+ * Also filters out `--` comments
+ *
+ * Contains some additional utility methods for statement delimiter handling.
  *
  * TODO: Should we re-use this in the Flink runner?
  *

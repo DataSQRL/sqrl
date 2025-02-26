@@ -2,6 +2,9 @@ package com.datasqrl.v2.parser;
 
 import com.datasqrl.error.ErrorLocation.FileLocation;
 
+/**
+ * Most generic interface for parsed statements
+ */
 public interface SQLStatement {
 
   default FileLocation mapSqlLocation(FileLocation location) {

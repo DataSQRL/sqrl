@@ -19,6 +19,13 @@ import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 
+/**
+ * SQRL supports a special syntax for converting change streams to state tables which is
+ * represented by this class.
+ *
+ * Most of the complexity is due to a special "filtered distinct" hint that optimizes
+ * deduplication for cases where we cannot order on the rowtime. Those have to be planned explicitly.
+ */
 public class SqrlDistinctStatement extends SqrlDefinition {
 
   final boolean isFilteredDistinct;
@@ -47,11 +54,13 @@ public class SqrlDistinctStatement extends SqrlDefinition {
     SqlNode view = sqrlEnv.parseSQL(sql);
     ViewAnalysis viewAnalysis = sqrlEnv.analyzeView(view, false, PlannerHints.EMPTY, ErrorCollector.root());
     RelBuilder relB = viewAnalysis.getRelBuilder();
-    TableAnalysis tblAnalysis = viewAnalysis.getTableAnalysis().identifier(ObjectIdentifier.of("","","")).build();
 
-    //Rewrite statement
+    //if this is a filtered distinct, we need to add the corresponding processing
     if (isFilteredDistinct && !viewAnalysis.isHasMostRecentDistinct()) {
-      //Because we define the view above, we know this is a project->filter->project(rowNum)->logicalwatermark
+      /*
+      Because we define the view above, we know this is a project->filter->project(rowNum)->logicalwatermark
+      The following code extracts those components and the information we need for the filtered distinct
+       */
       LogicalProject project = (LogicalProject)viewAnalysis.getRelNode();
       LogicalFilter filter = (LogicalFilter) project.getInput();
       LogicalProject rowNum = (LogicalProject) filter.getInput();
@@ -69,7 +78,7 @@ public class SqrlDistinctStatement extends SqrlDefinition {
     } else {
       relB.push(viewAnalysis.getRelNode());
     }
-    //Filter out last field
+    //Filter out last field for the row number
     relB.project(CalciteUtil.getIdentityRex(relB, relB.peek().getRowType().getFieldCount()-1));
     String rewrittenSQL = sqrlEnv.toSqlString(sqrlEnv.updateViewQuery(sqrlEnv.toSqlNode(relB.build()), view));
     return rewrittenSQL;

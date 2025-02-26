@@ -12,6 +12,9 @@ import com.google.common.base.Preconditions;
 import java.util.List;
 import org.apache.commons.collections4.ListUtils;
 
+/**
+ * Represents a column definition that extends a previous table definition
+ */
 public class SqrlAddColumnStatement extends SqrlDefinition implements StackableStatement {
 
   public static final String ALTER_VIEW_PREFIX = "ALTER VIEW %s AS ";

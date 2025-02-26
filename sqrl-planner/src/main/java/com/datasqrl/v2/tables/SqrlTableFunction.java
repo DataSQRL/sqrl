@@ -31,6 +31,11 @@ import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.schema.TableFunction;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 
+/**
+ * Represents a function in DataSQRL.
+ * A function is either defined by the user and generated as a table access function for a
+ * defined table.
+ */
 @AllArgsConstructor
 @Getter
 @Builder

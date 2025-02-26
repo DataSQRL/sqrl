@@ -14,6 +14,11 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.Value;
 
+/**
+ * Represents a hint in SQRL.
+ * SQRL hints give the user control over many aspects of the planning process.
+ */
+
 @Value
 public class SqrlHint {
 

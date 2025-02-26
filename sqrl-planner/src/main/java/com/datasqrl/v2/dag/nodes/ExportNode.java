@@ -8,6 +8,9 @@ import java.util.Optional;
 import lombok.Getter;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 
+/**
+ * Represents an EXPORT statement in the DAG
+ */
 @Getter
 public class ExportNode extends PipelineNode {
 

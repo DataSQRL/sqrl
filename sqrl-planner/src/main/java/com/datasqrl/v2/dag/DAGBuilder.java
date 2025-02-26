@@ -13,8 +13,11 @@ import java.util.Objects;
 import java.util.Optional;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 
+/**
+ * {@link com.datasqrl.v2.SqlScriptPlanner} uses this builder to construct the DAG of table
+ * and function definitions to build a {@link PipelineDAG}.
+ */
 public class DAGBuilder {
-
 
   Multimap<PipelineNode, PipelineNode> dagInputs = HashMultimap.create();
   Map<ObjectIdentifier, PipelineNode> nodeLookup = new HashMap<>();

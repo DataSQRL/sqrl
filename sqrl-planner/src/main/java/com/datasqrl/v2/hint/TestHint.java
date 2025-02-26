@@ -4,6 +4,10 @@ import com.datasqrl.v2.parser.ParsedObject;
 import com.datasqrl.v2.parser.SqrlHint;
 import com.google.auto.service.AutoService;
 
+/**
+ * Defines a table to be a test case which means it will only be planned when the user runs
+ * test cases
+ */
 public class TestHint extends PlannerHint {
 
   public static final String HINT_NAME = "test";

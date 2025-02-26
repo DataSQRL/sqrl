@@ -4,6 +4,9 @@ import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.error.ErrorLocation;
 import com.datasqrl.error.ErrorLocation.FileLocation;
 
+/**
+ * The main exception for parser errors
+ */
 public class StatementParserException extends RuntimeException {
 
   ErrorLabel errorLabel;

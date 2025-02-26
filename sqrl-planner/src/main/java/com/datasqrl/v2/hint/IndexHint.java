@@ -10,6 +10,10 @@ import java.util.List;
 import java.util.Optional;
 import lombok.Getter;
 
+/**
+ * Explicitly assign an index to a table that's persisted to a database engine.
+ * Overwrites the automatically determined index structures.
+ */
 @Getter
 public class IndexHint extends ColumnNamesHint {
 

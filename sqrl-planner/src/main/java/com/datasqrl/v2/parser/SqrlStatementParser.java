@@ -24,8 +24,11 @@ import org.apache.commons.lang3.tuple.Pair;
  * The goal is to pass most of the actual parsing into the Flink parser to remain compatible with Flink and
  * make it easier to maintain that compatibility. That's why we are using a REGEX based approach to wrap around
  * the Calcite parser that Flink uses.
+ * We tried building our own parser in the past, but that created too much work trying to maintain compatibility.
+ * We might consider extending Flink's parser in the future, but since Flink evovles quickly this is the safer bet for now.
  *
- * A particular challenge is maintaining the AST offsets to correctly pinpoint the source of errors.
+ * A particular challenge is maintaining the AST offsets to correctly pinpoint the source of errors. A lot of the
+ * code and complexity in this implementation is due to that. We use {@link ParsedObject} to keep file locations.
  * This is handled through {@link ParsedObject}.
  */
 @AllArgsConstructor(onConstructor_=@Inject)

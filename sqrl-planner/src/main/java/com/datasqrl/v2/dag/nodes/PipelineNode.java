@@ -16,6 +16,10 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
 
+/**
+ * Abstract Node in the {@link com.datasqrl.v2.dag.PipelineDAG} which represents a table or function
+ * in the computational graph of a SQRL script.
+ */
 @AllArgsConstructor
 public abstract class PipelineNode implements AbstractDAG.Node, Comparable<PipelineNode> {
 

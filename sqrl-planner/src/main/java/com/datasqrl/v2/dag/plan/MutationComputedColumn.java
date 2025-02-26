@@ -1,4 +1,4 @@
-package com.datasqrl.v2.tables;
+package com.datasqrl.v2.dag.plan;
 
 import lombok.Value;
 

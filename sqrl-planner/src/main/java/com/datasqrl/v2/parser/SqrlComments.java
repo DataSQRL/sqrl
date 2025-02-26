@@ -9,6 +9,12 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.Value;
 
+/**
+ * Represents the comments on a SQRL statement which are either hints or doc-strings.
+ * Other columns are ignored.
+ *
+ * Note that `--` comments are filtered out by {@link SqlScriptStatementSplitter}
+ */
 @Value
 public class SqrlComments {
 

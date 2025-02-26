@@ -11,6 +11,9 @@ import com.google.common.base.Preconditions;
 import java.util.List;
 import lombok.Getter;
 
+/**
+ * Abstract hint class that provides basic methods for interacting with hints
+ */
 @Getter
 public abstract class PlannerHint implements Hint {
 

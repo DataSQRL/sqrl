@@ -4,6 +4,10 @@ import com.datasqrl.v2.parser.ParsedObject;
 import com.datasqrl.v2.parser.SqrlHint;
 import com.google.auto.service.AutoService;
 
+/**
+ * Defines a table access function for the table that queries by all of the given columns
+ * (i.e. an AND condition) unless the column argument is null in which case that filter is ignored.
+ */
 public class QueryByAnyHint extends ColumnNamesHint implements QueryByHint {
 
   public static final String HINT_NAME = "query_by_any";

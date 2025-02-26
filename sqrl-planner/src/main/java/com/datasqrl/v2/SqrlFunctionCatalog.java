@@ -9,9 +9,12 @@ import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.schema.SchemaPlus;
-import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.SqlOperatorTable;
 
+/**
+ * A simple wrapper for Apache Calcite's schema/catalog so we can register SqrlTableFunctions
+ * as table functions and have them be accessible to the Flink parser.
+ */
 public class SqrlFunctionCatalog {
 
   CalciteSchema schema;
@@ -31,10 +34,6 @@ public class SqrlFunctionCatalog {
     Preconditions.checkArgument(schemaPlus.getFunctions(function.getFunctionCatalogName()).isEmpty(),
         "Function [%s] already exists", function.getFunctionCatalogName());
     schemaPlus.add(function.getFunctionCatalogName(), function);
-  }
-
-  public void addFunction(String name, TableFunction function) {
-    schemaPlus.add(name, function);
   }
 
   public SqlOperatorTable getOperatorTable() {

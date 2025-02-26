@@ -104,11 +104,18 @@ import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.functions.UserDefinedFunction;
 import org.apache.flink.table.planner.calcite.FlinkRelBuilder;
 
+/**
+ * This is the main class for planning SQRL scripts.
+ * It relies on the {@link SqrlStatementParser} for parsing and uses the {@link Sqrl2FlinkSQLTranslator}
+ * to access Flink's parser and planner for the actual SQL parsing and planning.
+ *
+ * In planning the SQRL statements, it uses produces a {@link TableAnalysis} that has the information
+ * needed to build the computation DAG via {@link DAGBuilder}.
+ */
 public class SqlScriptPlanner {
 
   public static final String EXPORT_SUFFIX = "_ex";
   public static final String  ACCESS_FUNCTION_SUFFIX = "__access";
-
 
   private final ErrorCollector errorCollector;
 
@@ -142,6 +149,7 @@ public class SqlScriptPlanner {
     this.executionGoal = executionGoal;
 
     this.dagBuilder = new DAGBuilder();
+    //Extract the various types of stages supported by the configured pipeline
     Optional<ExecutionStage> streamStage = pipeline.getStageByType(EngineType.STREAMS);
     errorCollector.checkFatal(streamStage.isPresent(), "Need to configure a stream execution engine");
     this.streamStage = streamStage.get();
@@ -156,6 +164,14 @@ public class SqlScriptPlanner {
         Collectors.toList());
   }
 
+  /**
+   * Main entry method for parsing a SQRL script.
+   * The bulk of this method ensure that exceptions and errors are correctly mapped to the source
+   * so that users can easily understand what the issue is and what's causing it.
+   *
+   * @param mainScript
+   * @param sqrlEnv
+   */
   public void planMain(MainScript mainScript, Sqrl2FlinkSQLTranslator sqrlEnv) {
     ErrorCollector scriptErrors = errorCollector.withScript(mainScript.getPath(), mainScript.getContent());
     List<ParsedObject<SQLStatement>> statements = sqrlParser.parseScript(mainScript.getContent(), scriptErrors);
@@ -189,6 +205,9 @@ public class SqlScriptPlanner {
         //Use registered error handlers
         throw lineErrors.handle(e);
       }
+      /*Some SQRL statements extend previous statements, so we stack them to keep
+      of the lineage as needed for planning
+       */
       if (sqlStatement instanceof StackableStatement) {
         StackableStatement stackableStatement = (StackableStatement) sqlStatement;
         if (stackableStatement.isRoot()) statementStack = new ArrayList<>();
@@ -199,6 +218,14 @@ public class SqlScriptPlanner {
     }
   }
 
+  /**
+   * Plans an individual statement.
+   * @param stmt
+   * @param statementStack
+   * @param sqrlEnv
+   * @param errors
+   * @throws SqlParseException
+   */
   private void planStatement(SQLStatement stmt, List<StackableStatement> statementStack, Sqrl2FlinkSQLTranslator sqrlEnv, ErrorCollector errors) throws SqlParseException {
     //Process hints
     PlannerHints hints = PlannerHints.EMPTY;
@@ -216,6 +243,7 @@ public class SqlScriptPlanner {
       AccessModifier access = sqrlDef.getAccess();
       NamePath tablePath = sqrlDef.getPath();
       if (sqrlDef instanceof SqrlAddColumnStatement) {
+        //These require special treatment because they extend a previous table definition
         tablePath = sqrlDef.getPath().popLast();
         StatementParserException.checkFatal(!statementStack.isEmpty() &&
                 statementStack.get(0) instanceof SqrlTableDefinition && ((SqrlTableDefinition)statementStack.get(0)).getPath().equals(tablePath),
@@ -240,7 +268,9 @@ public class SqlScriptPlanner {
         SqrlTableFunctionStatement tblFctStmt = (SqrlTableFunctionStatement) sqrlDef;
         ObjectIdentifier identifier = SqlNameUtil.toIdentifier(tblFctStmt.getPath().getFirst()); //TODO: this should be resolved against the current catalog and database
         List<ParsedArgument> arguments = tblFctStmt.getArguments();
-        if (tblFctStmt.isRelationship()) { // Resolve arguments against parent table
+        if (tblFctStmt.isRelationship()) {
+          /* Resolve arguments against parent table. Most of this code ensures that the referenced column exist and retrieves it with type
+           */
           Optional<PipelineNode> parentNode = dagBuilder.getNode(identifier);
           checkFatal(parentNode.isPresent(), sqrlDef.getTableName().getFileLocation(), ErrorCode.INVALID_TABLE_FUNCTION_ARGUMENTS,
               "Could not find parent table for relationship: %s", tblFctStmt.getPath().getFirst());
@@ -312,11 +342,166 @@ public class SqlScriptPlanner {
 
   public static final Name STAR = Name.system("*");
 
+  private Map<ExecutionStage, StageAnalysis> getSourceSinkStageAnalysis() {
+    return Map.of(streamStage,
+        new Cost(streamStage, SimpleCostAnalysisModel.ofSourceSink(), true));
+  }
+
+  /**
+   * Computes the stage analysis for each of the given stages by analyzing whether a stage
+   * supports the feature and functions of a table/function definitions.
+   * @param tableAnalysis
+   * @param availableStages
+   * @return
+   */
+  private Map<ExecutionStage, StageAnalysis> getStageAnalysis(
+      TableAnalysis tableAnalysis, List<ExecutionStage> availableStages) {
+    Map<ExecutionStage, StageAnalysis> stageAnalysis = new HashMap<>();
+    for (ExecutionStage executionStage : availableStages) {
+      List<EngineCapability> unsupported = tableAnalysis.getRequiredCapabilities().stream().filter(capability -> {
+        if (capability instanceof EngineCapability.Feature) {
+          return !executionStage.supportsFeature(((Feature) capability).getFeature());
+        } else if (capability instanceof EngineCapability.Function) {
+          return !executionStage.supportsFunction(
+              ((EngineCapability.Function) capability).getFunction());
+        } else {
+          throw new UnsupportedOperationException(capability.getName());
+        }
+      }).collect(Collectors.toList());
+      if (unsupported.isEmpty()) {
+        stageAnalysis.put(executionStage,
+            new Cost(executionStage,
+                SimpleCostAnalysisModel.of(executionStage, tableAnalysis),
+                true));
+      } else {
+        stageAnalysis.put(executionStage, new MissingCapability(executionStage, unsupported));
+      }
+    }
+    return stageAnalysis;
+  }
+
+  /**
+   * Determine which stages are applicable based on the configured stages for the type of table/function
+   * and user-provided hints.
+   *
+   * @param availableStages
+   * @param hints
+   * @return
+   */
+  private List<ExecutionStage> determineStages(List<ExecutionStage> availableStages, PlannerHints hints) {
+    Optional<ExecHint> executionHint = hints.getHint(ExecHint.class);
+    if ((hints.isTest() && executionGoal==ExecutionGoal.TEST) || hints.isWorkload()) {
+      //Tests and hints always get executed in the database
+      availableStages = availableStages.stream().filter(stage -> stage.getType()==EngineType.DATABASE || stage.getType()==EngineType.SERVER)
+          .collect(Collectors.toList());
+      if (availableStages.isEmpty()) {
+        throw new StatementParserException(ErrorLabel.GENERIC,
+            hints.getHint(TestHint.class).get().getSource().getFileLocation(),
+            "Could not find suitable database stage to execute tests or workloads: %s", availableStages);
+      }
+    }
+    if (executionHint.isPresent()) { //User provided a hint which takes precedence
+      var execHint = executionHint.get();
+      availableStages = availableStages.stream().filter(stage ->
+          execHint.getStageNames().stream().anyMatch(name -> stage.getName().equalsIgnoreCase(name)
+              || stage.getEngine().getType().name().equalsIgnoreCase(name))
+      ).collect(Collectors.toList());
+      if (availableStages.isEmpty()) {
+        throw new StatementParserException(ErrorLabel.GENERIC, execHint.getSource().getFileLocation(),
+            "Provided execution stages could not be found or are not configured: %s", execHint.getStageNames());
+      }
+    }
+    assert !availableStages.isEmpty();
+    return availableStages;
+  }
+
+  private List<ExecutionStage> determineViableStages(AccessModifier access) {
+    if (access == AccessModifier.QUERY) return queryStages;
+    else if (access == AccessModifier.SUBSCRIPTION) return subscriptionStages;
+    else return tableStages;
+  }
+
+  /**
+   * Adds a source table (i.e. IMPORTed or CREATEd) to the DAG. This requires some special
+   * handling because source table are planned as two tables: the original definition of the table
+   * and a view that we create on top for subsequent planning.
+   *
+   * @param tableAnalysis
+   * @param sqrlEnv
+   */
+  private void addSourceToDag(TableAnalysis tableAnalysis, Sqrl2FlinkSQLTranslator sqrlEnv) {
+    Preconditions.checkArgument(tableAnalysis.getFromTables().size()==1);
+    TableAnalysis source = (TableAnalysis) tableAnalysis.getFromTables().get(0);
+    Preconditions.checkArgument(source.isSourceOrSink());
+    TableNode sourceNode = new TableNode(source, getSourceSinkStageAnalysis());
+    dagBuilder.add(sourceNode);
+    boolean isHidden = Name.system(tableAnalysis.getIdentifier().getObjectName()).isHidden();
+    AccessVisibility visibility = new AccessVisibility(isHidden?AccessModifier.NONE:adjustAccess(AccessModifier.QUERY), false, true,
+        isHidden);
+    addTableToDag(tableAnalysis, PlannerHints.EMPTY, visibility, sqrlEnv);
+  }
+
+  /**
+   * Adds a table to the DAG and plans the table access function based on the determined visibility
+   * and provided hints.
+   * @param tableAnalysis
+   * @param hints
+   * @param visibility
+   * @param sqrlEnv
+   */
+  private void addTableToDag(TableAnalysis tableAnalysis, PlannerHints hints, AccessVisibility visibility,
+      Sqrl2FlinkSQLTranslator sqrlEnv) {
+    List<ExecutionStage> availableStages = determineStages(tableStages,hints);
+    TableNode tableNode = new TableNode(tableAnalysis, getStageAnalysis(tableAnalysis, availableStages));
+    dagBuilder.add(tableNode);
+
+    //Figure out if and what type of access function we should add for this table
+    Optional<ColumnNamesHint> queryByHint = hints.getQueryByHint();
+    if (visibility.isEndpoint()) { //only add function if this table is an endpoint
+      FlinkRelBuilder relBuilder = sqrlEnv.getTableScan(tableAnalysis.getIdentifier());
+      List<FunctionParameter> parameters = List.of();
+      if (queryByHint.isPresent()) { //hint takes precendence for defining the access function
+        ColumnNamesHint hint = queryByHint.get();
+        if (hint instanceof NoQueryHint) { //Don't add an access function
+          return;
+        }
+        parameters = CalciteUtil.addFilterByColumn(relBuilder, hint.getColumnIndexes(), hint instanceof QueryByAnyHint);
+      }
+      relBuilder.project(IntStream.range(0, tableAnalysis.getFieldLength()).mapToObj(relBuilder::field).collect(
+          Collectors.toList()), tableAnalysis.getRowType().getFieldNames(), true); //Identity projection
+      //TODO: should we add a default sort if the user didn't specify one to have predictable result sets for testing?
+      String tableName = tableAnalysis.getIdentifier().getObjectName();
+      String fctName = tableName + ACCESS_FUNCTION_SUFFIX;
+      SqrlTableFunction.SqrlTableFunctionBuilder fctBuilder = sqrlEnv.addSqrlTableFunction(SqlNameUtil.toIdentifier(Name.system(fctName)),
+          relBuilder.build(), parameters, tableAnalysis);
+      fctBuilder.fullPath(NamePath.of(tableName));
+      fctBuilder.visibility(visibility);
+      addFunctionToDag(fctBuilder.build(), PlannerHints.EMPTY); //hints don't apply to the function access
+    } else if (queryByHint.isPresent()) {
+      throw new StatementParserException(ErrorLabel.GENERIC, queryByHint.get().getSource().getFileLocation(),
+          "query_by hints are only supported on tables that are queryable");
+    }
+  }
+
+  private void addFunctionToDag(SqrlTableFunction function, PlannerHints hints) {
+    List<ExecutionStage> availableStages = determineStages(determineViableStages(function.getVisibility().getAccess()),hints);
+    dagBuilder.add(new TableFunctionNode(function, getStageAnalysis(function.getFunctionAnalysis(), availableStages)));
+  }
+
+
+  /**
+   * Handles IMPORT statements which require loading via the {@link ModuleLoader} and planning
+   * the loaded objects.
+   *
+   * @param importStmt
+   * @param sqrlEnv
+   * @param errors
+   */
   private void addImport(SqrlImportStatement importStmt, Sqrl2FlinkSQLTranslator sqrlEnv, ErrorCollector errors) {
     NamePath path = importStmt.getPackageIdentifier().get();
     boolean isStar = path.getLast().equals(STAR);
 
-    //Alias
+    //Handling of the name alias if set
     Optional<Name> alias = Optional.empty();
     if (importStmt.getAlias().isPresent()) {
       NamePath aliasPath = importStmt.getAlias().get();
@@ -346,123 +531,15 @@ public class SqlScriptPlanner {
     }
   }
 
-  private void addSourceToDag(TableAnalysis tableAnalysis, Sqrl2FlinkSQLTranslator sqrlEnv) {
-    Preconditions.checkArgument(tableAnalysis.getFromTables().size()==1);
-    TableAnalysis source = (TableAnalysis) tableAnalysis.getFromTables().get(0);
-    Preconditions.checkArgument(source.isSourceOrSink());
-    TableNode sourceNode = new TableNode(source, getSourceSinkStageAnalysis());
-    dagBuilder.add(sourceNode);
-    boolean isHidden = Name.system(tableAnalysis.getIdentifier().getObjectName()).isHidden();
-    AccessVisibility visibility = new AccessVisibility(isHidden?AccessModifier.NONE:adjustAccess(AccessModifier.QUERY), false, true,
-        isHidden);
-    addTableToDag(tableAnalysis, PlannerHints.EMPTY, visibility, sqrlEnv);
-  }
-
-  private Map<ExecutionStage, StageAnalysis> getSourceSinkStageAnalysis() {
-    return Map.of(streamStage,
-        new Cost(streamStage, SimpleCostAnalysisModel.ofSourceSink(), true));
-  }
-
-  private Map<ExecutionStage, StageAnalysis> getStageAnalysis(
-      TableAnalysis tableAnalysis, List<ExecutionStage> availableStages) {
-    Map<ExecutionStage, StageAnalysis> stageAnalysis = new HashMap<>();
-    for (ExecutionStage executionStage : availableStages) {
-      List<EngineCapability> unsupported = tableAnalysis.getRequiredCapabilities().stream().filter(capability -> {
-        if (capability instanceof EngineCapability.Feature) {
-          return !executionStage.supportsFeature(((Feature) capability).getFeature());
-        } else if (capability instanceof EngineCapability.Function) {
-          return !executionStage.supportsFunction(
-              ((EngineCapability.Function) capability).getFunction());
-        } else {
-          throw new UnsupportedOperationException(capability.getName());
-        }
-      }).collect(Collectors.toList());
-      if (unsupported.isEmpty()) {
-        stageAnalysis.put(executionStage,
-            new Cost(executionStage,
-                SimpleCostAnalysisModel.of(executionStage, tableAnalysis),
-                true));
-      } else {
-        stageAnalysis.put(executionStage, new MissingCapability(executionStage, unsupported));
-      }
-    }
-    return stageAnalysis;
-  }
-
-  private List<ExecutionStage> determineStages(List<ExecutionStage> availableStages, PlannerHints hints) {
-    Optional<ExecHint> executionHint = hints.getHint(ExecHint.class);
-    if ((hints.isTest() && executionGoal==ExecutionGoal.TEST) || hints.isWorkload()) {
-      //Tests and hints always get executed in the database
-      availableStages = availableStages.stream().filter(stage -> stage.getType()==EngineType.DATABASE || stage.getType()==EngineType.SERVER)
-          .collect(Collectors.toList());
-      if (availableStages.isEmpty()) {
-        throw new StatementParserException(ErrorLabel.GENERIC,
-            hints.getHint(TestHint.class).get().getSource().getFileLocation(),
-            "Could not find suitable database stage to execute tests or workloads: %s", availableStages);
-      }
-    }
-    if (executionHint.isPresent()) {
-      var execHint = executionHint.get();
-      availableStages = availableStages.stream().filter(stage ->
-          execHint.getStageNames().stream().anyMatch(name -> stage.getName().equalsIgnoreCase(name)
-              || stage.getEngine().getType().name().equalsIgnoreCase(name))
-      ).collect(Collectors.toList());
-      if (availableStages.isEmpty()) {
-        throw new StatementParserException(ErrorLabel.GENERIC, execHint.getSource().getFileLocation(),
-            "Provided execution stages could not be found or are not configured: %s", execHint.getStageNames());
-      }
-    }
-    assert !availableStages.isEmpty();
-    return availableStages;
-  }
-
-  private List<ExecutionStage> determineViableStages(AccessModifier access) {
-    if (access == AccessModifier.QUERY) return queryStages;
-    else if (access == AccessModifier.SUBSCRIPTION) return subscriptionStages;
-    else return tableStages;
-  }
-
-  private void addTableToDag(TableAnalysis tableAnalysis, PlannerHints hints, AccessVisibility visibility,
-      Sqrl2FlinkSQLTranslator sqrlEnv) {
-    List<ExecutionStage> availableStages = determineStages(tableStages,hints);
-
-    TableNode tableNode = new TableNode(tableAnalysis, getStageAnalysis(tableAnalysis, availableStages));
-    dagBuilder.add(tableNode);
-    Optional<ColumnNamesHint> queryByHint = hints.getQueryByHint();
-    if (visibility.isEndpoint()) { //Add function to scan table as endpoint
-      FlinkRelBuilder relBuilder = sqrlEnv.getTableScan(tableAnalysis.getIdentifier());
-      List<FunctionParameter> parameters = List.of();
-      if (queryByHint.isPresent()) {
-        ColumnNamesHint hint = queryByHint.get();
-        if (hint instanceof NoQueryHint) { //Don't add an access function
-          return;
-        }
-        parameters = CalciteUtil.addFilterByColumn(relBuilder, hint.getColumnIndexes(), hint instanceof QueryByAnyHint);
-      }
-      relBuilder.project(IntStream.range(0, tableAnalysis.getFieldLength()).mapToObj(relBuilder::field).collect(
-          Collectors.toList()), tableAnalysis.getRowType().getFieldNames(), true); //Identity projection
-      //TODO: should we add a default sort if the user didn't specify one to have predictable result sets for testing?
-      String tableName = tableAnalysis.getIdentifier().getObjectName();
-      String fctName = tableName + ACCESS_FUNCTION_SUFFIX;
-      SqrlTableFunction.SqrlTableFunctionBuilder fctBuilder = sqrlEnv.addSqrlTableFunction(SqlNameUtil.toIdentifier(Name.system(fctName)),
-          relBuilder.build(), parameters, tableAnalysis);
-      fctBuilder.fullPath(NamePath.of(tableName));
-      fctBuilder.visibility(visibility);
-      addFunctionToDag(fctBuilder.build(), PlannerHints.EMPTY); //hints don't apply to the function access
-    } else if (queryByHint.isPresent()) {
-      throw new StatementParserException(ErrorLabel.GENERIC, queryByHint.get().getSource().getFileLocation(),
-          "query_by hints are only supported on tables that are queryable");
-    }
-  }
-
-  private void addFunctionToDag(SqrlTableFunction function, PlannerHints hints) {
-    List<ExecutionStage> availableStages = determineStages(determineViableStages(function.getVisibility().getAccess()),hints);
-    dagBuilder.add(new TableFunctionNode(function, getStageAnalysis(function.getFunctionAnalysis(), availableStages)));
-  }
-
-
+  /**
+   * Imports an individual {@link NamespaceObject}
+   *
+   * @param nsObject
+   * @param alias
+   * @param sqrlEnv
+   */
   private void addImport(NamespaceObject nsObject, Optional<String> alias, Sqrl2FlinkSQLTranslator sqrlEnv) {
-    if (nsObject instanceof FlinkTableNamespaceObject) {
+    if (nsObject instanceof FlinkTableNamespaceObject) { //import a table
       //TODO: for a create table statement without options (connector), we manage it internally
       // add pass it to Log engine for augmentation after validating/adding event-id and event-time metadata columns & checking no watermark/partition/constraint is present
       ExternalFlinkTable flinkTable = ExternalFlinkTable.fromNamespaceObject((FlinkTableNamespaceObject) nsObject,
@@ -474,13 +551,13 @@ public class SqlScriptPlanner {
       } catch (Throwable e) {
         throw flinkTable.errorCollector.handle(e);
       }
-    } else if (nsObject instanceof FlinkUdfNsObject) {
+    } else if (nsObject instanceof FlinkUdfNsObject) { //import a user-defined function
       FlinkUdfNsObject fnsObject = (FlinkUdfNsObject) nsObject;
       Preconditions.checkArgument(fnsObject.getFunction() instanceof UserDefinedFunction, "Expected UDF: " + fnsObject.getFunction());
       Class<?> udfClass = fnsObject.getFunction().getClass();
       String name = alias.orElseGet(() -> FlinkUdfNsObject.getFunctionNameFromClass(udfClass).getDisplay());
       sqrlEnv.addUserDefinedFunction(name, udfClass.getName(), false);
-    } else if (nsObject instanceof ScriptNamespaceObject) {
+    } else if (nsObject instanceof ScriptNamespaceObject) { //import a script
       ScriptNamespaceObject scriptObject = (ScriptNamespaceObject) nsObject;
       checkFatal(scriptObject.getTableName().isEmpty(), ErrorLabel.GENERIC, "Cannot import an individual table from SQRL script. Use * to import entire script: %s", scriptObject.getName());
       planMain(scriptObject.getScript(), sqrlEnv);
@@ -489,6 +566,11 @@ public class SqlScriptPlanner {
     }
   }
 
+  /**
+   * For CREATE TABLE statements without connectors which are mutations, we provide
+   * this MutationBuilder to fill in the connector settings based on the configured log engine.
+   * @return
+   */
   private MutationBuilder getLogEngineBuilder() {
     Optional<ExecutionStage> logStage = pipeline.getStageByType(EngineType.LOG);
     if (logStage.isEmpty()) {
@@ -509,20 +591,28 @@ public class SqlScriptPlanner {
     };
   }
 
+  /**
+   * Plans EXPORT statements
+   * @param exportStmt
+   * @param sqrlEnv
+   */
   private void addExport(SqrlExportStatement exportStmt, Sqrl2FlinkSQLTranslator sqrlEnv) {
     NamePath sinkPath = exportStmt.getPackageIdentifier().get();
     Name sinkName = sinkPath.getLast();
     NamePath tablePath = exportStmt.getTableIdentifier().get();
-    Optional<PipelineNode> tableNode = dagBuilder.getNode(SqlNameUtil.toIdentifier(tablePath.getLast()));
 
+    //Lookup the table taht is being exported
+    Optional<PipelineNode> tableNode = dagBuilder.getNode(SqlNameUtil.toIdentifier(tablePath.getLast()));
     TableNode inputNode = tableNode.orElseThrow(() -> new StatementParserException(ErrorLabel.GENERIC,
         exportStmt.getTableIdentifier().getFileLocation(), "Could not find table: %s",
         tablePath.toString())).unwrap(TableNode.class);
 
+    //Set a unique id for the exported table
     String exportTableId = sinkName.getDisplay() + EXPORT_SUFFIX + exportTableCounter.incrementAndGet();
     Map<ExecutionStage, StageAnalysis> stageAnalysis = getSourceSinkStageAnalysis();
     ExportNode exportNode;
 
+    //First, we check if the export is to a built-in sink, if so, resolve it
     Optional<SystemBuiltInConnectors> builtInSink = SystemBuiltInConnectors.forExport(sinkPath.getFirst())
         .filter(x -> sinkPath.size()==2);
     if (builtInSink.isPresent()) {
@@ -545,7 +635,7 @@ public class SqlScriptPlanner {
         exportStage = optStage.get();
       }
       exportNode = new ExportNode(stageAnalysis, sinkPath, Optional.of(exportStage), Optional.empty());
-    } else {
+    } else { //the export is to a user-defined sink: load it
       SqrlModule module = moduleLoader.getModule(sinkPath.popLast()).orElse(null);
       checkFatal(module!=null, exportStmt.getPackageIdentifier().getFileLocation(), ErrorLabel.GENERIC,
           "Could not find module [%s] at path: [%s]", sinkPath, String.join("/", sinkPath.toStringList()));
@@ -570,6 +660,12 @@ public class SqlScriptPlanner {
     dagBuilder.addExport(exportNode, inputNode);
   }
 
+  /**
+   * Represents an externally defined table in FlinkSQL with an optional schema definition
+   * in a separate file.
+   *
+   * This is used for both imports and exports.
+   */
   @Value
   public static class ExternalFlinkTable {
 

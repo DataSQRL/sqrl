@@ -83,6 +83,9 @@ import org.apache.flink.table.planner.catalog.SqlCatalogViewTable;
 import org.apache.flink.table.planner.plan.schema.TableSourceTable;
 import org.apache.flink.table.planner.plan.schema.TimeIndicatorRelDataType;
 
+/**
+ * Optimizes the DAG and produces the physical plan after DAG cutting
+ */
 @AllArgsConstructor(onConstructor_=@Inject)
 public class DAGPlanner {
 
@@ -134,7 +137,12 @@ public class DAGPlanner {
   }
 
   /**
-   * Produces the physical plans for all stages in the DAG
+   * Produces the physical plans for all stages in the DAG. During the optimization stage, we assigned
+   * stages to each node in the dag. This effectively "cuts" the DAG by stage and this method
+   * produces the physical plan for each stage so that the data flows from one stage to the next across
+   * those "cuts".
+   *
+   *
    * @param dag
    * @param sqrlEnv
    * @return
@@ -304,13 +312,25 @@ public class DAGPlanner {
 
   public static final String HASHED_PK_NAME = "__pk_hash";
 
+  /**
+   * Determines the primary key for a table that is written to a data system.
+   * The primary key is important because it determines when two records are considered identical.
+   *
+   * Some data systems, like databases, require a primary key for data to be accessed and managed.
+   *
+   * @param table
+   * @param relBuilder
+   * @param sqrlEnv
+   * @param stage
+   * @return
+   */
   private PrimaryKeyMap deterinePrimaryKey(TableAnalysis table, FlinkRelBuilder relBuilder,
       Sqrl2FlinkSQLTranslator sqrlEnv, ExecutionStage stage) {
     PrimaryKeyMap pk = table.getSimplePrimaryKey();
     int numCols = table.getRowType().getFieldCount();
     List<Integer> addHashColumn = null;
     if (pk.isDefined() && pk.getLength()==0) {
-      //need to add a constant at the end so we have a pk
+      //need to add a constant at the end so we have an actual pk column which is required by most databases
       addHashColumn = List.of();
     } else if (pk.isUndefined()) {
       //Databases requires a primary key, see if we can create one
@@ -318,7 +338,7 @@ public class DAGPlanner {
         table.getErrors().checkFatal(table.getType().isStream(),
             "Could not determine primary key for table [%s]. Please add a primary key with the /*+primary_key(...) */ hint.",
             table.getIdentifier().asSummaryString());
-        //Hash all columns as primary key
+        //For stream tables, we hash all columns as primary key if none is explicitly defined or inferred
         addHashColumn = IntStream.range(0, numCols).boxed().collect(
             Collectors.toList());
       } else {
@@ -327,11 +347,13 @@ public class DAGPlanner {
     } else {
       boolean hasNullPk = pk.asSimpleList().stream().map(table::getField)
           .map(RelDataTypeField::getType).anyMatch(RelDataType::isNullable);
+      //we hash all the pk columns if it is required that they are not null
       if (hasNullPk && stage.supportsFeature(EngineFeature.REQUIRES_NOT_NULL_PRIMARY_KEY)) {
         addHashColumn = pk.asSimpleList();
       }
     }
     if (addHashColumn != null) {
+      //add hash column
       if (!addHashColumn.isEmpty()) {
         CalciteUtil.addColumn(relBuilder, relBuilder.getRexBuilder()
             .makeCall(sqrlEnv.lookupUserDefinedFunction(CommonFunctions.HASH_COLUMNS),
@@ -395,6 +417,7 @@ public class DAGPlanner {
 
   /**
    * Expands the views in a query that are executed in the same execution stage.
+   *
    * TODO: handle sub-queries
    */
   @AllArgsConstructor
