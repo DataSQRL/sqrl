@@ -6,10 +6,8 @@ package com.datasqrl.engine.server;
 import com.datasqrl.engine.ExecutionEngine;
 
 /**
- * The server engine is a combination of the server core (the graphql engine) and the
- * servlet that is running it. Some servlets may not support things like Java, reflection,
- * code generation executors, etc.
+ * The server engine is a combination of the server core (the graphql engine) and the servlet that
+ * is running it. Some servlets may not support things like Java, reflection, code generation
+ * executors, etc.
  */
-public interface ServerEngine extends ExecutionEngine {
-
-}
+public interface ServerEngine extends ExecutionEngine {}

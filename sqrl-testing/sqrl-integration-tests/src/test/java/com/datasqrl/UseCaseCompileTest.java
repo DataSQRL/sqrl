@@ -6,8 +6,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
 /**
- * Compiles the use cases in the test/resources/usecases folder and snapshots the
- * deployment assets
+ * Compiles the use cases in the test/resources/usecases folder and snapshots the deployment assets
  */
 public class UseCaseCompileTest extends AbstractUseCaseTest {
 

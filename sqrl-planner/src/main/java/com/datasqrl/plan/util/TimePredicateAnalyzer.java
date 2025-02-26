@@ -22,8 +22,8 @@ public class TimePredicateAnalyzer {
 
   public static final TimePredicateAnalyzer INSTANCE = new TimePredicateAnalyzer();
 
-  public Optional<TimePredicate> extractTimePredicate(RexNode rexNode, RexBuilder rexBuilder,
-      Predicate<Integer> isTimestampColumn) {
+  public Optional<TimePredicate> extractTimePredicate(
+      RexNode rexNode, RexBuilder rexBuilder, Predicate<Integer> isTimestampColumn) {
     if (!(rexNode instanceof RexCall)) {
       return Optional.empty();
     }
@@ -43,19 +43,19 @@ public class TimePredicateAnalyzer {
     boolean flip = opKind == SqlKind.GREATER_THAN || opKind == SqlKind.GREATER_THAN_OR_EQUAL;
     boolean smaller = opKind != SqlKind.EQUALS;
 
-    Pair<Set<Integer>, RexNode> processLeft = extractReferencesAndReplaceWithZero(
-        call.getOperands().get(0), rexBuilder);
-    Pair<Set<Integer>, RexNode> processRight = extractReferencesAndReplaceWithZero(
-        call.getOperands().get(1), rexBuilder);
+    Pair<Set<Integer>, RexNode> processLeft =
+        extractReferencesAndReplaceWithZero(call.getOperands().get(0), rexBuilder);
+    Pair<Set<Integer>, RexNode> processRight =
+        extractReferencesAndReplaceWithZero(call.getOperands().get(1), rexBuilder);
 
-    //Can only reference a single column or timestamp function on each side
+    // Can only reference a single column or timestamp function on each side
     if (processLeft.getKey().size() != 1 || processRight.getKey().size() != 1) {
       return Optional.empty();
     }
-    //Check that the references are timestamp candidates or timestamp function
+    // Check that the references are timestamp candidates or timestamp function
     int leftRef = Iterables.getOnlyElement(processLeft.getKey()),
         rightRef = Iterables.getOnlyElement(processRight.getKey());
-    for (int ref : new int[]{leftRef, rightRef}) {
+    for (int ref : new int[] {leftRef, rightRef}) {
       if (ref > 0 && !isTimestampColumn.test(ref)) {
         return Optional.empty();
       }
@@ -63,8 +63,8 @@ public class TimePredicateAnalyzer {
     ExpressionReducer reducer = new ExpressionReducer();
     long[] reduced;
     try {
-      reduced = reducer.reduce2Long(rexBuilder,
-          List.of(processLeft.getValue(), processRight.getValue()));
+      reduced =
+          reducer.reduce2Long(rexBuilder, List.of(processLeft.getValue(), processRight.getValue()));
     } catch (IllegalArgumentException exception) {
       return Optional.empty();
     }
@@ -77,38 +77,46 @@ public class TimePredicateAnalyzer {
       interval_ms *= -1;
     }
 
-    TimePredicate tp = new TimePredicate(smallerIndex, largerIndex,
-        smaller ? (strictlySmaller ? SqlKind.LESS_THAN : SqlKind.LESS_THAN_OR_EQUAL)
-            : SqlKind.EQUALS,
-        interval_ms);
+    TimePredicate tp =
+        new TimePredicate(
+            smallerIndex,
+            largerIndex,
+            smaller
+                ? (strictlySmaller ? SqlKind.LESS_THAN : SqlKind.LESS_THAN_OR_EQUAL)
+                : SqlKind.EQUALS,
+            interval_ms);
     return Optional.of(tp);
   }
 
-  private Pair<Set<Integer>, RexNode> extractReferencesAndReplaceWithZero(RexNode rexNode,
-      RexBuilder rexBuilder) {
+  private Pair<Set<Integer>, RexNode> extractReferencesAndReplaceWithZero(
+      RexNode rexNode, RexBuilder rexBuilder) {
     if (rexNode instanceof RexInputRef) {
-      return Pair.of(Set.of(((RexInputRef) rexNode).getIndex()),
+      return Pair.of(
+          Set.of(((RexInputRef) rexNode).getIndex()),
           rexBuilder.makeZeroLiteral(rexNode.getType()));
     }
     if (rexNode instanceof RexCall) {
       RexCall call = (RexCall) rexNode;
       if (SqrlRexUtil.isNOW(call.getOperator())) {
-        return Pair.of(Set.of(TimePredicate.NOW_INDEX),
-            rexBuilder.makeZeroLiteral(rexNode.getType()));
+        return Pair.of(
+            Set.of(TimePredicate.NOW_INDEX), rexBuilder.makeZeroLiteral(rexNode.getType()));
       } else {
-        //Map recursively
+        // Map recursively
         final Set<Integer> allRefs = new HashSet<>();
-        List<RexNode> newOps = call.getOperands().stream().map(op -> {
-          Pair<Set<Integer>, RexNode> result = extractReferencesAndReplaceWithZero(op, rexBuilder);
-          allRefs.addAll(result.getKey());
-          return result.getValue();
-        }).collect(Collectors.toList());
+        List<RexNode> newOps =
+            call.getOperands().stream()
+                .map(
+                    op -> {
+                      Pair<Set<Integer>, RexNode> result =
+                          extractReferencesAndReplaceWithZero(op, rexBuilder);
+                      allRefs.addAll(result.getKey());
+                      return result.getValue();
+                    })
+                .collect(Collectors.toList());
         return Pair.of(allRefs, rexBuilder.makeCall(call.getType(), call.getOperator(), newOps));
       }
     } else {
       return Pair.of(Set.of(), rexNode);
     }
   }
-
-
 }

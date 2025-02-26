@@ -11,5 +11,4 @@ public interface GraphqlTypeVisitor<R, C> {
   public R visitNonNullType(NonNullType node, C context);
 
   public R visitTypeName(TypeName node, C context);
-
 }

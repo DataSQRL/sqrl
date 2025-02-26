@@ -17,7 +17,7 @@ public interface FormatFactory {
 
   @AllArgsConstructor
   @Getter
-  public static abstract class BaseFormatFactory implements FormatFactory {
+  public abstract static class BaseFormatFactory implements FormatFactory {
 
     private final String name;
     private final Set<String> extensions;
@@ -48,7 +48,5 @@ public interface FormatFactory {
     public String toString() {
       return name;
     }
-
   }
-
 }

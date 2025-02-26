@@ -30,20 +30,20 @@ import org.apache.flink.core.fs.Path;
 
 /**
  * Represents a file that is identified by a URI.
- * <p>
- * Depending on the URI scheme, this abstracts across multiple file systems including cloud object
- * storage.
- * <p>
- * This is implemented as a wrapper around Flink's {@link org.apache.flink.core.fs.FileSystem}.
+ *
+ * <p>Depending on the URI scheme, this abstracts across multiple file systems including cloud
+ * object storage.
+ *
+ * <p>This is implemented as a wrapper around Flink's {@link org.apache.flink.core.fs.FileSystem}.
  */
-public class FilePath implements Serializable { //todo: move to io-core
+public class FilePath implements Serializable { // todo: move to io-core
 
-  public static final Set<String> COMPRESSION_EXTENSIONS = StandardDeCompressors.getCommonSuffixes()
-      .stream()
-      .map(String::toLowerCase).collect(Collectors.toSet());
+  public static final Set<String> COMPRESSION_EXTENSIONS =
+      StandardDeCompressors.getCommonSuffixes().stream()
+          .map(String::toLowerCase)
+          .collect(Collectors.toSet());
 
   private static final Set<String> URL_SCHEMES = Set.of("http", "https");
-
 
   private final Path flinkPath;
 
@@ -118,14 +118,14 @@ public class FilePath implements Serializable { //todo: move to io-core
       format = extension;
       fullName = extPair.getLeft();
     }
-    //Match pattern
+    // Match pattern
     String identifier = fullName;
     if (filenamePattern != null) {
       Matcher matcher = filenamePattern.matcher(fullName);
       if (matcher.find()) {
         if (matcher.groupCount() > 0) {
           identifier = matcher.group(1);
-          //If we expect an identifier, it cannot be empty
+          // If we expect an identifier, it cannot be empty
           if (Strings.isNullOrEmpty(identifier)) {
             return Optional.empty();
           }
@@ -150,8 +150,8 @@ public class FilePath implements Serializable { //todo: move to io-core
     }
     NameComponents components = getComponents(null).get();
     if (components.hasCompression()) {
-      is = StandardDeCompressors.getDecompressorForExtension(components.getCompression())
-          .create(is);
+      is =
+          StandardDeCompressors.getDecompressorForExtension(components.getCompression()).create(is);
     }
     return is;
   }
@@ -202,7 +202,6 @@ public class FilePath implements Serializable { //todo: move to io-core
     return java.nio.file.Path.of(path.flinkPath.toString());
   }
 
-
   @Value
   public static class NameComponents {
 
@@ -225,10 +224,7 @@ public class FilePath implements Serializable { //todo: move to io-core
       if (hasCompression()) suffix += "." + compression;
       return suffix;
     }
-
-
   }
-
 
   @Value
   @AllArgsConstructor
@@ -242,7 +238,9 @@ public class FilePath implements Serializable { //todo: move to io-core
     private final FilePath path;
 
     Status(FileStatus status) {
-      this(status.isDir(), status.getLen(),
+      this(
+          status.isDir(),
+          status.getLen(),
           Instant.ofEpochMilli(status.getModificationTime()),
           new FilePath(status.getPath()));
     }
@@ -250,7 +248,5 @@ public class FilePath implements Serializable { //todo: move to io-core
     public boolean exists() {
       return path != null;
     }
-
   }
-
 }

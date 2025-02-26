@@ -4,7 +4,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import lombok.AllArgsConstructor;
 
 public class PackageJsonImpl implements PackageJson {
   public static final String ENGINES_PROPERTY = "engines";
@@ -24,7 +23,7 @@ public class PackageJsonImpl implements PackageJson {
   }
 
   public PackageJsonImpl(SqrlConfig sqrlConfig) {
-	this.sqrlConfig = sqrlConfig;
+    this.sqrlConfig = sqrlConfig;
   }
 
   @Override
@@ -84,7 +83,7 @@ public class PackageJsonImpl implements PackageJson {
 
   @Override
   public boolean hasScriptKey() {
-    //ScriptConfiguration.SCRIPT_KEY
+    // ScriptConfiguration.SCRIPT_KEY
     return false;
   }
 
@@ -98,8 +97,6 @@ public class PackageJsonImpl implements PackageJson {
 
   @Override
   public String toString() {
-    return "PackageJsonImpl{" +
-        "sqrlConfig=" + sqrlConfig.toMap() +
-        '}';
+    return "PackageJsonImpl{" + "sqrlConfig=" + sqrlConfig.toMap() + '}';
   }
 }

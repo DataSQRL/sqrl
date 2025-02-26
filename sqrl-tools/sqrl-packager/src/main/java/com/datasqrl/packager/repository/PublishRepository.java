@@ -5,6 +5,5 @@ import java.nio.file.Path;
 
 public interface PublishRepository {
 
-    boolean publish(Path zipFile, PackageConfiguration pkgConfig);
-
+  boolean publish(Path zipFile, PackageConfiguration pkgConfig);
 }

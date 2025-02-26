@@ -12,8 +12,8 @@ public abstract class SqrlStatement extends SqrlSqlNode {
   protected final SqlIdentifier identifier;
   protected final Optional<SqlNodeList> hints;
 
-  protected SqrlStatement(SqlParserPos location, SqlIdentifier identifier,
-      Optional<SqlNodeList> hints) {
+  protected SqrlStatement(
+      SqlParserPos location, SqlIdentifier identifier, Optional<SqlNodeList> hints) {
     super(location);
     this.identifier = identifier;
     this.hints = hints;

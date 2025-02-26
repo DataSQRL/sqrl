@@ -8,7 +8,8 @@ import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.util.jackson.JacksonMapperFactory;
 
 /**
- * For a given JSON object, executes a JSON path query against the object and returns the result as string.
+ * For a given JSON object, executes a JSON path query against the object and returns the result as
+ * string.
  */
 public class JsonQuery extends ScalarFunction {
   static final ObjectMapper mapper = JacksonMapperFactory.createObjectMapper();
@@ -26,5 +27,4 @@ public class JsonQuery extends ScalarFunction {
       return null;
     }
   }
-
 }

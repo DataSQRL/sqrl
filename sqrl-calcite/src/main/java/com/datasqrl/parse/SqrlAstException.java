@@ -17,7 +17,7 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 public class SqrlAstException extends RuntimeException {
 
   private final ErrorLabel errorLabel;
-  //todo: migrate to sqrl parser pos
+  // todo: migrate to sqrl parser pos
   private final SqlParserPos pos;
   private final String message;
 
@@ -25,11 +25,16 @@ public class SqrlAstException extends RuntimeException {
     this(Optional.empty(), errorLabel, pos, message, args);
   }
 
-  public SqrlAstException(Optional<Throwable> cause, ErrorLabel errorLabel, SqlParserPos pos, String message, Object... args) {
+  public SqrlAstException(
+      Optional<Throwable> cause,
+      ErrorLabel errorLabel,
+      SqlParserPos pos,
+      String message,
+      Object... args) {
     super(message, cause.orElse(null), true, true);
     this.errorLabel = errorLabel;
     this.pos = pos;
-    this.message = message == null ? null :String.format(message, args);
+    this.message = message == null ? null : String.format(message, args);
   }
 
   public ErrorLocation.FileLocation getLocation() {
@@ -39,7 +44,9 @@ public class SqrlAstException extends RuntimeException {
   public static ErrorLocation.FileLocation toLocation(SqlParserPos pos) {
     return new FileLocation(pos.getLineNum(), pos.getColumnNum());
   }
+
   public static ErrorLocation.FileRange toRange(SqlParserPos pos) {
-    return new FileRange(pos.getLineNum(), pos.getColumnNum(), pos.getEndLineNum(), pos.getEndColumnNum());
+    return new FileRange(
+        pos.getLineNum(), pos.getColumnNum(), pos.getEndLineNum(), pos.getEndColumnNum());
   }
 }

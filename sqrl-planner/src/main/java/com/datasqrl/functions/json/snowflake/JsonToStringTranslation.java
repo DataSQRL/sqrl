@@ -1,20 +1,15 @@
 package com.datasqrl.functions.json.snowflake;
 
-import static com.datasqrl.function.CalciteFunctionUtil.lightweightBiOp;
 import static com.datasqrl.function.CalciteFunctionUtil.lightweightOp;
 
-import com.datasqrl.function.translations.PostgresSqlTranslation;
 import com.datasqrl.function.translations.SnowflakeSqlTranslation;
-import com.datasqrl.function.translations.SqlTranslation;
 import com.datasqrl.json.JsonFunctions;
-import com.google.auto.service.AutoService;
-import java.util.List;
 import org.apache.calcite.sql.SqlCall;
-import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.parser.SqlParserPos;
-//Disabled for now
-//@AutoService(SqlTranslation.class)
+
+// Disabled for now
+// @AutoService(SqlTranslation.class)
 public class JsonToStringTranslation extends SnowflakeSqlTranslation {
 
   public JsonToStringTranslation() {
@@ -23,7 +18,8 @@ public class JsonToStringTranslation extends SnowflakeSqlTranslation {
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    lightweightOp("TO_JSON").createCall(SqlParserPos.ZERO, call.getOperandList())
+    lightweightOp("TO_JSON")
+        .createCall(SqlParserPos.ZERO, call.getOperandList())
         .unparse(writer, leftPrec, rightPrec);
   }
 }

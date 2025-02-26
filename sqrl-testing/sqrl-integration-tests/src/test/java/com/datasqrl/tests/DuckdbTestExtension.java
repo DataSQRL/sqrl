@@ -10,27 +10,30 @@ public class DuckdbTestExtension implements TestExtension {
 
   private void deleteDirectory(Path directory) throws IOException {
     Files.walk(directory)
-        .sorted((path1, path2) -> path2.compareTo(path1)) // Sort in reverse order to delete files first
-        .forEach(path -> {
-          try {
-            Files.delete(path);
-          } catch (IOException e) {
-            throw new RuntimeException("Failed to delete " + path, e);
-          }
-        });
+        .sorted(
+            (path1, path2) -> path2.compareTo(path1)) // Sort in reverse order to delete files first
+        .forEach(
+            path -> {
+              try {
+                Files.delete(path);
+              } catch (IOException e) {
+                throw new RuntimeException("Failed to delete " + path, e);
+              }
+            });
   }
 
   @SneakyThrows
   public void createDir() {
 
     Files.createDirectories(path);
-
   }
+
   @Override
   public void setup() {
     try {
       deleteDirectory(path);
-    } catch (Exception e) {}
+    } catch (Exception e) {
+    }
 
     createDir();
   }
@@ -39,7 +42,7 @@ public class DuckdbTestExtension implements TestExtension {
   public void teardown() {
     try {
       deleteDirectory(path);
-    } catch (Exception e) {}
-
+    } catch (Exception e) {
+    }
   }
 }

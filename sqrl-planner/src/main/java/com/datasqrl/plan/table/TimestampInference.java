@@ -6,38 +6,35 @@ package com.datasqrl.plan.table;
 import com.datasqrl.plan.util.IndexMap;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
-import lombok.*;
-
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import lombok.*;
 
 /**
- * {@link TimestampInference} contains all the candidate timestamp columns for a relation, i.e. either an
- * imported table or one defined by a query (i.e. {@link org.apache.calcite.rel.RelNode}).
+ * {@link TimestampInference} contains all the candidate timestamp columns for a relation, i.e.
+ * either an imported table or one defined by a query (i.e. {@link org.apache.calcite.rel.RelNode}).
  *
- * We create a graph of timestamp column dependencies so that we can defer timestamp column determination
- * and pick timestamp columns based on table definitions in the script. The {@link TimestampInference.Candidate}
- * objects keep track of what candidates they depend on and what candidates depend on them (i.e. parents and children,
- * respectively).
+ * <p>We create a graph of timestamp column dependencies so that we can defer timestamp column
+ * determination and pick timestamp columns based on table definitions in the script. The {@link
+ * TimestampInference.Candidate} objects keep track of what candidates they depend on and what
+ * candidates depend on them (i.e. parents and children, respectively).
  *
- * When a timestamp column is fixed, we fix the parent timestamp columns all the way to the source table and
- * eliminate any other candidates that are no longer viable as a result (since source tables can only have one
- * timestamp column).
+ * <p>When a timestamp column is fixed, we fix the parent timestamp columns all the way to the
+ * source table and eliminate any other candidates that are no longer viable as a result (since
+ * source tables can only have one timestamp column).
  *
- * We distinguish between "derived" {@link TimestampInference} and "base". The former is used during the logical plan
- * rewriting process in {@link com.datasqrl.plan.rules.SQRLLogicalPlanRewriter} for the intermediate RelNodes in the
- * query tree whereas the latter is used on the resulting tables.
- *
- *
+ * <p>We distinguish between "derived" {@link TimestampInference} and "base". The former is used
+ * during the logical plan rewriting process in {@link
+ * com.datasqrl.plan.rules.SQRLLogicalPlanRewriter} for the intermediate RelNodes in the query tree
+ * whereas the latter is used on the resulting tables.
  */
 @EqualsAndHashCode
 @AllArgsConstructor
 public class TimestampInference {
 
   private final Map<Integer, Candidate> candidates = new HashMap<>();
-  @Getter
-  private final boolean isDerived;
+  @Getter private final boolean isDerived;
 
   public Optional<Candidate> getOptCandidateByIndex(int index) {
     return Optional.ofNullable(candidates.get(index));
@@ -61,8 +58,7 @@ public class TimestampInference {
   }
 
   public Candidate getBestCandidate() {
-    Preconditions.checkArgument(!candidates.isEmpty(),
-        "Could not find timestamp candidate.");
+    Preconditions.checkArgument(!candidates.isEmpty(), "Could not find timestamp candidate.");
     return candidates.values().stream().max(Comparator.comparingInt(Candidate::getScore)).get();
   }
 
@@ -93,12 +89,12 @@ public class TimestampInference {
   }
 
   public void selectTimestamp() {
-    if (candidates.size()>1) {
+    if (candidates.size() > 1) {
       Candidate best = getBestCandidate();
       if (best.parents.isEmpty()) {
         best.fixAsTimestamp();
       } else {
-        //Just delete the siblings
+        // Just delete the siblings
         candidates.clear();
         candidates.put(best.index, best);
       }
@@ -106,9 +102,9 @@ public class TimestampInference {
   }
 
   private void addCandidateInternal(Candidate candidate) {
-    Preconditions.checkArgument(candidate.getTimestamps()==this);
+    Preconditions.checkArgument(candidate.getTimestamps() == this);
     Preconditions.checkArgument(!candidates.containsKey(candidate.index));
-    candidates.put(candidate.index,candidate);
+    candidates.put(candidate.index, candidate);
   }
 
   private Candidate addCandidate(int index, int score) {
@@ -118,14 +114,18 @@ public class TimestampInference {
   }
 
   private Candidate addCandidate(int index, Candidate... basedOn) {
-    Preconditions.checkArgument(basedOn.length>0);
+    Preconditions.checkArgument(basedOn.length > 0);
     boolean isDerived = Arrays.stream(basedOn).allMatch(Candidate::isDerived);
     boolean isBase = Arrays.stream(basedOn).noneMatch(Candidate::isDerived);
     Preconditions.checkArgument(isDerived ^ isBase, "Invalid input timestamps");
-    //Reference parents if derived, else base becomes parent
+    // Reference parents if derived, else base becomes parent
 
-    List<Candidate> parents = isDerived?Arrays.stream(basedOn).flatMap(c -> c.children.stream()).collect(Collectors.toUnmodifiableList()):
-            Arrays.stream(basedOn).collect(Collectors.toUnmodifiableList());
+    List<Candidate> parents =
+        isDerived
+            ? Arrays.stream(basedOn)
+                .flatMap(c -> c.children.stream())
+                .collect(Collectors.toUnmodifiableList())
+            : Arrays.stream(basedOn).collect(Collectors.toUnmodifiableList());
     int maxScore = Arrays.stream(basedOn).map(Candidate::getScore).max(Integer::compareTo).get();
     Candidate candidate = new Candidate(index, maxScore, parents, new ArrayList<>());
     addCandidateInternal(candidate);
@@ -151,7 +151,7 @@ public class TimestampInference {
     TimestampInference timestamp = new TimestampInference(false);
     this.candidates.values().forEach(c -> timestamp.addCandidate(c.index, c));
     timestamp.candidates.values().forEach(Candidate::registerOnParents);
-    if (timestamp.hasFixedTimestamp()) { //Fix the timestamp
+    if (timestamp.hasFixedTimestamp()) { // Fix the timestamp
       Iterables.getOnlyElement(timestamp.candidates.values()).fixAsTimestamp();
     }
     return timestamp;
@@ -164,7 +164,6 @@ public class TimestampInference {
     private Builder(boolean isDerived) {
       timestamps = new TimestampInference(isDerived);
     }
-
   }
 
   public static DerivedBuilder buildDerived() {
@@ -176,9 +175,9 @@ public class TimestampInference {
   }
 
   public static TimestampInference ofDerived(int index, Candidate... basedOn) {
-    Preconditions.checkArgument(basedOn.length>0);
+    Preconditions.checkArgument(basedOn.length > 0);
     Arrays.stream(basedOn).forEach(Candidate::fixAsTimestamp);
-    return buildDerived().add(index,basedOn).build();
+    return buildDerived().add(index, basedOn).build();
   }
 
   public static ImportBuilder buildImport() {
@@ -203,7 +202,6 @@ public class TimestampInference {
     public TimestampInference build() {
       return timestamps;
     }
-
   }
 
   public static class ImportBuilder extends Builder {
@@ -220,7 +218,6 @@ public class TimestampInference {
     public TimestampInference build() {
       return timestamps;
     }
-
   }
 
   @AllArgsConstructor
@@ -232,15 +229,14 @@ public class TimestampInference {
     List<Candidate> parents;
     List<Candidate> children;
 
-
     public void fixAsTimestamp() {
       if (parents.isEmpty()) {
         for (Candidate c : new ArrayList<>(candidates.values())) {
           if (this != c) {
-              //We can only have one timestamp column on source/imported tables
-              c.eliminate();
-            }
+            // We can only have one timestamp column on source/imported tables
+            c.eliminate();
           }
+        }
       } else {
         parents.forEach(Candidate::fixAsTimestamp);
       }
@@ -252,7 +248,7 @@ public class TimestampInference {
 
     private void eliminate() {
       children.forEach(Candidate::eliminate);
-      boolean removed = candidates.remove(this.index)!=null;
+      boolean removed = candidates.remove(this.index) != null;
       Preconditions.checkArgument(removed);
     }
 
@@ -281,6 +277,4 @@ public class TimestampInference {
       return Objects.hash(getTimestamps(), index);
     }
   }
-
-
 }

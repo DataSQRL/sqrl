@@ -7,7 +7,8 @@ public class PostgresConformance implements SqlConformance {
 
   @Override
   public boolean isLiberal() {
-    return false; // PostgreSQL adheres to standard SQL rules and is not considered 'liberal' in SQL conformance.
+    return false; // PostgreSQL adheres to standard SQL rules and is not considered 'liberal' in SQL
+                  // conformance.
   }
 
   @Override
@@ -32,7 +33,8 @@ public class PostgresConformance implements SqlConformance {
 
   @Override
   public boolean isSortByOrdinal() {
-    return false; // SQRL: issue when converting order by ordinals, SqlImplementor will convert it to a char string.
+    return false; // SQRL: issue when converting order by ordinals, SqlImplementor will convert it
+                  // to a char string.
     // PostgreSQL allows using ordinals in ORDER BY clauses.
   }
 
@@ -88,7 +90,8 @@ public class PostgresConformance implements SqlConformance {
 
   @Override
   public boolean allowAliasUnnestItems() {
-    return true; // PostgreSQL allows aliasing items in UNNEST (e.g., SELECT * FROM UNNEST(...) AS alias).
+    return true; // PostgreSQL allows aliasing items in UNNEST (e.g., SELECT * FROM UNNEST(...) AS
+                 // alias).
   }
 
   @Override
@@ -118,7 +121,8 @@ public class PostgresConformance implements SqlConformance {
 
   @Override
   public boolean allowGeometry() {
-    return false; // PostgreSQL does not support geometry types by default (requires PostGIS extension).
+    return false; // PostgreSQL does not support geometry types by default (requires PostGIS
+                  // extension).
   }
 
   @Override

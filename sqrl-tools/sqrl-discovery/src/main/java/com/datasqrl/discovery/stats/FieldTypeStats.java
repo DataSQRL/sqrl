@@ -18,13 +18,12 @@ public class FieldTypeStats implements Serializable, Cloneable, TypeSignature {
   int arrayDepth;
 
   long count;
-  //Only not-null if detected is an array
+  // Only not-null if detected is an array
   LogarithmicHistogram.Accumulator arrayCardinality;
-  //Only not-null if detected is a NestedRelation
+  // Only not-null if detected is a NestedRelation
   RelationStats nestedRelationStats;
 
-  public FieldTypeStats() {
-  } //For Kryo;
+  public FieldTypeStats() {} // For Kryo;
 
   public FieldTypeStats(@NonNull Type raw, int arrayDepth) {
     this(raw, raw, arrayDepth);
@@ -42,8 +41,8 @@ public class FieldTypeStats implements Serializable, Cloneable, TypeSignature {
   }
 
   public static FieldTypeStats of(@NonNull TypeSignature.Simple signature) {
-    return new FieldTypeStats(signature.getRaw(), signature.getDetected(),
-        signature.getArrayDepth());
+    return new FieldTypeStats(
+        signature.getRaw(), signature.getDetected(), signature.getArrayDepth());
   }
 
   @Override
@@ -65,8 +64,8 @@ public class FieldTypeStats implements Serializable, Cloneable, TypeSignature {
     count++;
   }
 
-  public void addNested(@NonNull Map<String, Object> nested,
-      @NonNull NameCanonicalizer canonicalizer) {
+  public void addNested(
+      @NonNull Map<String, Object> nested, @NonNull NameCanonicalizer canonicalizer) {
     if (nestedRelationStats == null) {
       nestedRelationStats = new RelationStats();
     }
@@ -83,8 +82,8 @@ public class FieldTypeStats implements Serializable, Cloneable, TypeSignature {
 
   private void addArrayCardinality(int numElements) {
     if (arrayCardinality == null) {
-      arrayCardinality = new LogarithmicHistogram.Accumulator(ARRAY_CARDINALITY_BASE,
-          ARRAY_CARDINALITY_BUCKETS);
+      arrayCardinality =
+          new LogarithmicHistogram.Accumulator(ARRAY_CARDINALITY_BASE, ARRAY_CARDINALITY_BUCKETS);
     }
     arrayCardinality.add(numElements);
   }
@@ -94,8 +93,8 @@ public class FieldTypeStats implements Serializable, Cloneable, TypeSignature {
     count += other.count;
     if (other.arrayCardinality != null) {
       if (arrayCardinality == null) {
-        arrayCardinality = new LogarithmicHistogram.Accumulator(ARRAY_CARDINALITY_BASE,
-            ARRAY_CARDINALITY_BUCKETS);
+        arrayCardinality =
+            new LogarithmicHistogram.Accumulator(ARRAY_CARDINALITY_BASE, ARRAY_CARDINALITY_BUCKETS);
       }
       arrayCardinality.merge(other.arrayCardinality);
     }
@@ -106,7 +105,6 @@ public class FieldTypeStats implements Serializable, Cloneable, TypeSignature {
       nestedRelationStats.merge(other.nestedRelationStats);
     }
   }
-
 
   @Override
   public boolean equals(Object o) {
@@ -134,8 +132,4 @@ public class FieldTypeStats implements Serializable, Cloneable, TypeSignature {
     result += "}^" + arrayDepth;
     return result;
   }
-
-
 }
-
-

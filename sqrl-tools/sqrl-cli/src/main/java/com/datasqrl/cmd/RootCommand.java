@@ -11,14 +11,24 @@ import lombok.NonNull;
 import picocli.CommandLine;
 import picocli.CommandLine.ScopeType;
 
-@CommandLine.Command(name = "datasqrl", mixinStandardHelpOptions = true, version = "v0.5.10",
-    subcommands = {CompilerCommand.class,
-         PublishCommand.class, TestCommand.class, LoginCommand.class, RunCommand.class})
+@CommandLine.Command(
+    name = "datasqrl",
+    mixinStandardHelpOptions = true,
+    version = "v0.5.10",
+    subcommands = {
+      CompilerCommand.class,
+      PublishCommand.class,
+      TestCommand.class,
+      LoginCommand.class,
+      RunCommand.class
+    })
 @Getter
 public class RootCommand implements Runnable {
 
-  @CommandLine.Option(names = {"-c", "--config"}, description = "Package configuration file(s)"
-      , scope = ScopeType.INHERIT)
+  @CommandLine.Option(
+      names = {"-c", "--config"},
+      description = "Package configuration file(s)",
+      scope = ScopeType.INHERIT)
   protected List<Path> packageFiles = Collections.EMPTY_LIST;
 
   @Override
@@ -45,5 +55,4 @@ public class RootCommand implements Runnable {
   public CommandLine getCmd() {
     return new CommandLine(this).setCaseInsensitiveEnumValuesAllowed(true);
   }
-
 }

@@ -5,10 +5,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -18,9 +14,7 @@ import org.apache.flink.table.functions.FunctionContext;
 import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.table.types.inference.TypeInference;
 
-/**
- * Returns false if the given text contains a banned word, else true
- */
+/** Returns false if the given text contains a banned word, else true */
 public class BannedWordsFilter extends ScalarFunction {
 
   private static final String BANNED_WORDS_FILENAME = "banned_words_list.txt";
@@ -58,5 +52,4 @@ public class BannedWordsFilter extends ScalarFunction {
   public TypeInference getTypeInference(DataTypeFactory typeFactory) {
     return FlinkTypeUtil.basicNullInference(DataTypes.BOOLEAN(), DataTypes.STRING());
   }
-
 }

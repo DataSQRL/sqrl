@@ -8,5 +8,4 @@ import org.apache.calcite.rel.RelNode;
 public interface RelHolder {
 
   RelNode getRelNode();
-
 }

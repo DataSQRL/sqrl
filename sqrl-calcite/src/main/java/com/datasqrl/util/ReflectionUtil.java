@@ -8,7 +8,8 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class ReflectionUtil {
   @SneakyThrows
-  public static Object invokeSuperPrivateMethod(Object instance, String methodName, List<Class> clazz, Object... params)  {
+  public static Object invokeSuperPrivateMethod(
+      Object instance, String methodName, List<Class> clazz, Object... params) {
     // Determine the parameter types
     Class<?>[] paramTypes = new Class<?>[clazz.size()];
     for (int i = 0; i < clazz.size(); i++) {

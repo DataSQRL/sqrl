@@ -14,7 +14,6 @@ import com.datasqrl.schema.input.external.FieldTypeDefinitionImpl;
 import com.datasqrl.schema.input.external.TableDefinition;
 import com.datasqrl.schema.type.Type;
 import com.datasqrl.schema.type.basic.BasicType;
-
 import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.Optional;
@@ -32,8 +31,7 @@ public class SchemaExport {
     return td;
   }
 
-  private void exportElement(AbstractElementDefinition element,
-                             FlexibleFieldSchema field) {
+  private void exportElement(AbstractElementDefinition element, FlexibleFieldSchema field) {
     element.name = field.getName().getDisplay();
     if (!field.getDescription().isEmpty()) {
       element.description = field.getDescription().getDescription();
@@ -45,13 +43,13 @@ public class SchemaExport {
     if (constraints.isEmpty()) {
       return null;
     }
-    //TODO: export parameters
+    // TODO: export parameters
     return constraints.stream().map(c -> c.getName().getDisplay()).collect(Collectors.toList());
   }
 
-  private List<FieldDefinition> exportColumns(
-      RelationType<FlexibleFieldSchema.Field> relation) {
-    return relation.getFields().stream().map(this::export)
+  private List<FieldDefinition> exportColumns(RelationType<FlexibleFieldSchema.Field> relation) {
+    return relation.getFields().stream()
+        .map(this::export)
         .filter(Optional::isPresent)
         .map(Optional::get)
         .collect(Collectors.toList());
@@ -69,8 +67,9 @@ public class SchemaExport {
       fd.columns = ftd.columns;
       fd.tests = ftd.tests;
     } else {
-      fd.mixed = types.stream()
-          .collect(Collectors.toMap(ft -> ft.getVariantName().getDisplay(), ft -> export(ft)));
+      fd.mixed =
+          types.stream()
+              .collect(Collectors.toMap(ft -> ft.getVariantName().getDisplay(), ft -> export(ft)));
     }
     return Optional.of(fd);
   }
@@ -87,5 +86,4 @@ public class SchemaExport {
     ftd.tests = exportConstraints(fieldType.getConstraints());
     return ftd;
   }
-
 }

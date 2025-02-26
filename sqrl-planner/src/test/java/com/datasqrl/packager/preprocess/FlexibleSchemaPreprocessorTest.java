@@ -1,10 +1,10 @@
 package com.datasqrl.packager.preprocess;
 
-import com.datasqrl.io.schema.flexible.FlexibleSchemaPreprocessor;
-import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import com.datasqrl.io.schema.flexible.FlexibleSchemaPreprocessor;
+import org.junit.jupiter.api.Test;
 
 class FlexibleSchemaPreprocessorTest {
 
@@ -17,5 +17,4 @@ class FlexibleSchemaPreprocessorTest {
     assertFalse(preprocessor.getPattern().asMatchPredicate().test("schema.yml"));
     assertFalse(preprocessor.getPattern().asMatchPredicate().test("my_schema.yml"));
   }
-
 }

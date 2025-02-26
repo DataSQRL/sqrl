@@ -12,10 +12,15 @@ public class GraphqlSourceFactory {
   Optional<APISource> apiSchemaOpt;
 
   @Inject
-  public GraphqlSourceFactory(ScriptFiles scriptFiles, NameCanonicalizer nameCanonicalizer,
+  public GraphqlSourceFactory(
+      ScriptFiles scriptFiles,
+      NameCanonicalizer nameCanonicalizer,
       ResourceResolver resourceResolver) {
-    apiSchemaOpt = scriptFiles.getConfig().getGraphql()
-        .map(file -> APISourceImpl.of(file, nameCanonicalizer, resourceResolver));
+    apiSchemaOpt =
+        scriptFiles
+            .getConfig()
+            .getGraphql()
+            .map(file -> APISourceImpl.of(file, nameCanonicalizer, resourceResolver));
   }
 
   public Optional<APISource> get() {

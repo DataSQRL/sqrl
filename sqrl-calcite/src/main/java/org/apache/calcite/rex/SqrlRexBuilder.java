@@ -1,21 +1,15 @@
 package org.apache.calcite.rex;
 
-import com.google.common.collect.ImmutableList;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import org.apache.calcite.avatica.util.ByteString;
-import org.apache.calcite.avatica.util.TimeUnit;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.type.SqlTypeFamily;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.type.SqlTypeUtil;
 import org.apache.calcite.util.NlsString;
 
-/**
- * Implementation copied/modified from calcite
- */
+/** Implementation copied/modified from calcite */
 public class SqrlRexBuilder extends RexBuilder {
 
   public SqrlRexBuilder(RelDataTypeFactory typeFactory) {
@@ -23,8 +17,7 @@ public class SqrlRexBuilder extends RexBuilder {
   }
 
   @Override
-  boolean canRemoveCastFromLiteral(RelDataType toType, Comparable value,
-      SqlTypeName fromTypeName) {
+  boolean canRemoveCastFromLiteral(RelDataType toType, Comparable value, SqlTypeName fromTypeName) {
     if (value == null) {
       return true;
     }
@@ -37,17 +30,17 @@ public class SqrlRexBuilder extends RexBuilder {
       return false;
     }
     if (value instanceof NlsString) {
-      //do not remove cast e.g. char -> String
+      // do not remove cast e.g. char -> String
       return false;
-//      final int length = ((NlsString) value).getValue().length();
-//      switch (toType.getSqlTypeName()) {
-//        case CHAR:
-//          return SqlTypeUtil.comparePrecision(toType.getPrecision(), length) == 0;
-//        case VARCHAR:
-//          return SqlTypeUtil.comparePrecision(toType.getPrecision(), length) >= 0;
-//        default:
-//          throw new AssertionError(toType);
-//      }
+      //      final int length = ((NlsString) value).getValue().length();
+      //      switch (toType.getSqlTypeName()) {
+      //        case CHAR:
+      //          return SqlTypeUtil.comparePrecision(toType.getPrecision(), length) == 0;
+      //        case VARCHAR:
+      //          return SqlTypeUtil.comparePrecision(toType.getPrecision(), length) >= 0;
+      //        default:
+      //          throw new AssertionError(toType);
+      //      }
     }
     if (value instanceof ByteString) {
       final int length = ((ByteString) value).length();

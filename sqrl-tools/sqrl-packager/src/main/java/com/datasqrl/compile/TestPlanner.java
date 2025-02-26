@@ -1,6 +1,5 @@
 package com.datasqrl.compile;
 
-import static com.datasqrl.canonicalizer.Name.HIDDEN_PREFIX;
 
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.function.SqrlTableMacro;
@@ -35,7 +34,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -53,38 +51,46 @@ public class TestPlanner {
     List<GraphqlQuery> queries = new ArrayList<>();
     List<GraphqlQuery> mutations = new ArrayList<>();
 
-    testsPath.ifPresent((p) -> {
-      try (Stream<Path> paths = Files.walk(p)) {
-        paths.filter(Files::isRegularFile)
-            .filter(path -> path.toString().endsWith(".graphql"))
-            .forEach(file -> {
-              String content = null;
-              try {
-                content = new String(Files.readAllBytes(file));
-              } catch (IOException e) {
-                throw new RuntimeException(e);
-              }
-              Document document = parser.parseDocument(content);
-              extractQueriesAndMutations(document, queries, mutations, file.getFileName().toString().replace(".graphql", ""));
-            });
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-    });
+    testsPath.ifPresent(
+        (p) -> {
+          try (Stream<Path> paths = Files.walk(p)) {
+            paths
+                .filter(Files::isRegularFile)
+                .filter(path -> path.toString().endsWith(".graphql"))
+                .forEach(
+                    file -> {
+                      String content = null;
+                      try {
+                        content = new String(Files.readAllBytes(file));
+                      } catch (IOException e) {
+                        throw new RuntimeException(e);
+                      }
+                      Document document = parser.parseDocument(content);
+                      extractQueriesAndMutations(
+                          document,
+                          queries,
+                          mutations,
+                          file.getFileName().toString().replace(".graphql", ""));
+                    });
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
+        });
 
     Document document = parser.parseDocument(source.getSchemaDefinition());
 
-    List<Node> queryNodes =(List<Node>)GraphqlSchemaVisitor.accept(new GqlGenerator(), document, null);
+    List<Node> queryNodes =
+        (List<Node>) GraphqlSchemaVisitor.accept(new GqlGenerator(), document, null);
 
     for (Node definition : queryNodes) {
       OperationDefinition definition1 = (OperationDefinition) definition;
-      queries.add(new GraphqlQuery(definition1.getName(),
-          AstPrinter.printAst(definition1)));
+      queries.add(new GraphqlQuery(definition1.getName(), AstPrinter.printAst(definition1)));
     }
     return new TestPlan(queries, mutations);
   }
 
-  private void extractQueriesAndMutations(Document document, List<GraphqlQuery> queries, List<GraphqlQuery> mutations, String prefix) {
+  private void extractQueriesAndMutations(
+      Document document, List<GraphqlQuery> queries, List<GraphqlQuery> mutations, String prefix) {
     for (Definition definition : document.getDefinitions()) {
       if (definition instanceof OperationDefinition) {
         OperationDefinition operationDefinition = (OperationDefinition) definition;
@@ -102,17 +108,18 @@ public class TestPlanner {
 
     @Override
     public List<Node> visitDocument(Document node, Object context) {
-      //todo: Visit the query definition
+      // todo: Visit the query definition
       // for each query that ends in 'Test', construct an ast node of a query of all scalar fields
       // print out the result using the code below
       List<Definition> definitions = node.getDefinitions();
 
-      List<Node> queries = definitions.stream()
-          .filter(definition -> definition instanceof ObjectTypeDefinition)
-          .map(definition -> (ObjectTypeDefinition) definition)
-          .filter(definition -> definition.getName().equals("Query"))
-          .flatMap(q->processQueryDefinition(q, node).stream())
-          .collect(Collectors.toList());
+      List<Node> queries =
+          definitions.stream()
+              .filter(definition -> definition instanceof ObjectTypeDefinition)
+              .map(definition -> (ObjectTypeDefinition) definition)
+              .filter(definition -> definition.getName().equals("Query"))
+              .flatMap(q -> processQueryDefinition(q, node).stream())
+              .collect(Collectors.toList());
 
       return queries;
     }
@@ -120,44 +127,50 @@ public class TestPlanner {
     private List<Node> processQueryDefinition(ObjectTypeDefinition definition, Document document) {
       List<Node> queries = new ArrayList<>();
       for (FieldDefinition def : definition.getFieldDefinitions()) {
-        //Lookup function and see if it is a sqrl test macro
+        // Lookup function and see if it is a sqrl test macro
         // Todo: use overloaded lookup
-        SqrlTableMacro macro = framework.getSchema().getTableFunctions(NamePath.of(def.getName())).get(0);
+        SqrlTableMacro macro =
+            framework.getSchema().getTableFunctions(NamePath.of(def.getName())).get(0);
         if (macro.isTest()) {
-          OperationDefinition operation = processOperation(def.getName(),
-              (ObjectTypeDefinition) unbox(def.getType(), document).get(),
-              def.getInputValueDefinitions(),
-              macro.getRowType(),
-              document);
+          OperationDefinition operation =
+              processOperation(
+                  def.getName(),
+                  (ObjectTypeDefinition) unbox(def.getType(), document).get(),
+                  def.getInputValueDefinitions(),
+                  macro.getRowType(),
+                  document);
           queries.add(operation);
         }
       }
       return queries;
     }
 
-    private OperationDefinition processOperation(String name, ObjectTypeDefinition type, List<InputValueDefinition> inputValueDefinitions,
-        RelDataType rowType, Document document) {
-      OperationDefinition.Builder operationBuilder = OperationDefinition.newOperationDefinition()
-          .name(name)
-          .operation(Operation.QUERY);
+    private OperationDefinition processOperation(
+        String name,
+        ObjectTypeDefinition type,
+        List<InputValueDefinition> inputValueDefinitions,
+        RelDataType rowType,
+        Document document) {
+      OperationDefinition.Builder operationBuilder =
+          OperationDefinition.newOperationDefinition().name(name).operation(Operation.QUERY);
 
       // Add input value definitions as arguments
-      List<VariableDefinition> variableDefinitions = inputValueDefinitions.stream()
-          .map(input -> new VariableDefinition(input.getName(), input.getType(), null))
-          .collect(Collectors.toList());
+      List<VariableDefinition> variableDefinitions =
+          inputValueDefinitions.stream()
+              .map(input -> new VariableDefinition(input.getName(), input.getType(), null))
+              .collect(Collectors.toList());
 
       operationBuilder.variableDefinitions(variableDefinitions);
       // Build the selection set recursively for nested fields
       SelectionSet selectionSet = buildSelectionSet(type, rowType, document);
       // Create the field for the operation
-      Field.Builder fieldBuilder = Field.newField()
-          .name(name)
-          .selectionSet(selectionSet);
+      Field.Builder fieldBuilder = Field.newField().name(name).selectionSet(selectionSet);
 
       // Connect arguments to the field
-      List<Argument> arguments = inputValueDefinitions.stream()
-          .map(input -> new Argument(input.getName(), new VariableReference(input.getName())))
-          .collect(Collectors.toList());
+      List<Argument> arguments =
+          inputValueDefinitions.stream()
+              .map(input -> new Argument(input.getName(), new VariableReference(input.getName())))
+              .collect(Collectors.toList());
 
       fieldBuilder.arguments(arguments);
 
@@ -174,12 +187,16 @@ public class TestPlanner {
     }
   }
 
-  private SelectionSet buildSelectionSet(ObjectTypeDefinition type, RelDataType rowType, Document document) {
-    List<Selection> selections = type.getFieldDefinitions().stream()
-        .filter(f->rowType.getField(f.getName(), false, false) != null) //must be a field on table
-//        .filter(f->!f.getName().startsWith(HIDDEN_PREFIX))
-        .map(fieldDef -> createSelection(fieldDef, rowType, document))
-        .collect(Collectors.toList());
+  private SelectionSet buildSelectionSet(
+      ObjectTypeDefinition type, RelDataType rowType, Document document) {
+    List<Selection> selections =
+        type.getFieldDefinitions().stream()
+            .filter(
+                f ->
+                    rowType.getField(f.getName(), false, false) != null) // must be a field on table
+            //        .filter(f->!f.getName().startsWith(HIDDEN_PREFIX))
+            .map(fieldDef -> createSelection(fieldDef, rowType, document))
+            .collect(Collectors.toList());
 
     return new SelectionSet(selections);
   }
@@ -197,8 +214,9 @@ public class TestPlanner {
       if (fieldType.getSqlTypeName() == SqlTypeName.ARRAY
           && fieldType.getComponentType().getSqlTypeName() == SqlTypeName.ROW) {
         if (gqlComponentType instanceof ObjectTypeDefinition) {
-          fieldBuilder.selectionSet(buildSelectionSet((ObjectTypeDefinition) gqlComponentType,
-              fieldType.getComponentType(), document));
+          fieldBuilder.selectionSet(
+              buildSelectionSet(
+                  (ObjectTypeDefinition) gqlComponentType, fieldType.getComponentType(), document));
         }
       } else if (fieldType.getSqlTypeName() == SqlTypeName.ROW
           && gqlComponentType instanceof ObjectTypeDefinition) {
@@ -220,7 +238,8 @@ public class TestPlanner {
     if (type instanceof TypeName) {
       String typeName = ((TypeName) type).getName();
       for (Definition definition : document.getDefinitions()) {
-        if (definition instanceof TypeDefinition && ((TypeDefinition<?>) definition).getName().equals(typeName)) {
+        if (definition instanceof TypeDefinition
+            && ((TypeDefinition<?>) definition).getName().equals(typeName)) {
           return Optional.of((TypeDefinition<?>) definition);
         }
       }

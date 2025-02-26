@@ -33,21 +33,31 @@ public class H2Dialect extends AbstractDialect {
   }
 
   /**
-   * MERGE INTO tableName [ ( columnName [,...] ) ]
-   * [ KEY ( columnName [,...] ) ]
-   * { VALUES { ( { DEFAULT | expression } [,...] ) } [,...] | select }
+   * MERGE INTO tableName [ ( columnName [,...] ) ] [ KEY ( columnName [,...] ) ] { VALUES { ( {
+   * DEFAULT | expression } [,...] ) } [,...] | select }
    */
   @Override
   public Optional<String> getUpsertStatement(
       String tableName, String[] fieldNames, String[] uniqueKeyFields) {
-    String uniqueColumns = Arrays.stream(uniqueKeyFields).map(this::quoteIdentifier).collect(Collectors.joining(", "));
+    String uniqueColumns =
+        Arrays.stream(uniqueKeyFields).map(this::quoteIdentifier).collect(Collectors.joining(", "));
 
-    String columns = Arrays.stream(fieldNames).map(this::quoteIdentifier).collect(Collectors.joining(", "));
-    String placeholders = Arrays.stream(fieldNames).map((f) -> ":" + f).collect(Collectors.joining(", "));
+    String columns =
+        Arrays.stream(fieldNames).map(this::quoteIdentifier).collect(Collectors.joining(", "));
+    String placeholders =
+        Arrays.stream(fieldNames).map((f) -> ":" + f).collect(Collectors.joining(", "));
 
-    return Optional.of("MERGE INTO " + this.quoteIdentifier(tableName)
-        + "(" + columns + ")"
-        + " KEY (" + uniqueColumns + ") VALUES (" + placeholders + ")");
+    return Optional.of(
+        "MERGE INTO "
+            + this.quoteIdentifier(tableName)
+            + "("
+            + columns
+            + ")"
+            + " KEY ("
+            + uniqueColumns
+            + ") VALUES ("
+            + placeholders
+            + ")");
   }
 
   @Override

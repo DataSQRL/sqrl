@@ -14,13 +14,15 @@ import org.apache.calcite.sql2rel.StandardConvertletTable;
 
 public class ConvertletTable implements SqlRexConvertletTable {
 
-  //workaround for FLINK-31279
+  // workaround for FLINK-31279
   private static RexNode convertCall(SqlRexContext cx, SqlCall call) {
     SqlNode n = call.operand(0);
-    SqlIntervalQualifier intervalQualifier = (SqlIntervalQualifier)call.operand(1);
-    SqlIntervalLiteral literal = SqlLiteral.createInterval(1, "1", intervalQualifier, call.getParserPosition());
-    SqlCall multiply = SqlStdOperatorTable.MULTIPLY
-        .createCall(call.getParserPosition(), new SqlNode[]{literal, n});
+    SqlIntervalQualifier intervalQualifier = (SqlIntervalQualifier) call.operand(1);
+    SqlIntervalLiteral literal =
+        SqlLiteral.createInterval(1, "1", intervalQualifier, call.getParserPosition());
+    SqlCall multiply =
+        SqlStdOperatorTable.MULTIPLY.createCall(
+            call.getParserPosition(), new SqlNode[] {literal, n});
     RexNode rexNode = cx.convertExpression(multiply);
     return rexNode;
   }

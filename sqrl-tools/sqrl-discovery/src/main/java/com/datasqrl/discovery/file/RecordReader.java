@@ -8,8 +8,8 @@ import java.util.stream.Stream;
 
 public interface RecordReader {
   String getFormat();
+
   Stream<Map<String, Object>> read(InputStream input) throws IOException;
 
   Set<String> getExtensions();
-
 }

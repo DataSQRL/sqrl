@@ -5,10 +5,10 @@ package com.datasqrl.engine.database.relational.ddl;
 
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.engine.database.relational.ddl.statements.CreateTableDDL;
-import com.datasqrl.sql.SqlDDLStatement;
-import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
+import com.datasqrl.sql.SqlDDLStatement;
+import com.datasqrl.util.CalciteUtil;
 import com.google.auto.service.AutoService;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
@@ -46,8 +46,8 @@ public class SqliteDDLFactory implements JdbcDDLFactory {
 
   public static String toSql(RelDataTypeField field) {
     RelDataType datatype = field.getType();
-    Preconditions.checkArgument(!CalciteUtil.isNestedTable(datatype),
-        "Collection column encountered");
+    Preconditions.checkArgument(
+        !CalciteUtil.isNestedTable(datatype), "Collection column encountered");
     return toSql("\"" + field.getName() + "\"", getSQLType(datatype), datatype.isNullable());
   }
 
@@ -102,12 +102,11 @@ public class SqliteDDLFactory implements JdbcDDLFactory {
 
   @Override
   public SqlDDLStatement createIndex(IndexDefinition index) {
-    List<String> columns = index.getColumnNames()
-        .stream()
-        .map(c->"\"" + c + "\"")
-        .collect(Collectors.toList());
-    return () -> String.format("CREATE INDEX IF NOT EXISTS %s ON %s (%s)",
-        index.getName(), index.getTableId(),
-        String.join(",", columns));
+    List<String> columns =
+        index.getColumnNames().stream().map(c -> "\"" + c + "\"").collect(Collectors.toList());
+    return () ->
+        String.format(
+            "CREATE INDEX IF NOT EXISTS %s ON %s (%s)",
+            index.getName(), index.getTableId(), String.join(",", columns));
   }
 }

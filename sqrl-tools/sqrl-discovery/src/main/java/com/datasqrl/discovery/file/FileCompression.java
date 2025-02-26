@@ -3,12 +3,10 @@ package com.datasqrl.discovery.file;
 import com.datasqrl.io.file.FilePath;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.google.auto.service.AutoService;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -19,15 +17,17 @@ import lombok.Value;
 @Value
 public class FileCompression {
 
-  public static final Set<String> SUPPORTED_COMPRESSION_EXTENSIONS = FilePath.COMPRESSION_EXTENSIONS.stream()
-      .map(String::toLowerCase).collect(Collectors.toUnmodifiableSet());
+  public static final Set<String> SUPPORTED_COMPRESSION_EXTENSIONS =
+      FilePath.COMPRESSION_EXTENSIONS.stream()
+          .map(String::toLowerCase)
+          .collect(Collectors.toUnmodifiableSet());
 
   public static Optional<CompressionIO> of(String compression) {
     if (Strings.isNullOrEmpty(compression)) return Optional.of(new NoCompressionIO());
     final String compressionLower = compression.toLowerCase();
     if (!SUPPORTED_COMPRESSION_EXTENSIONS.contains(compressionLower)) return Optional.empty();
-    return ServiceLoaderDiscovery.findFirst(CompressionIO.class,
-        cio -> cio.getExtensions().contains(compressionLower));
+    return ServiceLoaderDiscovery.findFirst(
+        CompressionIO.class, cio -> cio.getExtensions().contains(compressionLower));
   }
 
   public interface CompressionIO {
@@ -37,7 +37,6 @@ public class FileCompression {
     OutputStream compress(OutputStream out) throws IOException;
 
     Set<String> getExtensions();
-
   }
 
   private static class NoCompressionIO implements CompressionIO {
@@ -76,6 +75,4 @@ public class FileCompression {
       return Set.of("gzip", "gz");
     }
   }
-
-
 }

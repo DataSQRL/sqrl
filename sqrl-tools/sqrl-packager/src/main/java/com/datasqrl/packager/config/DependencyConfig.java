@@ -1,11 +1,11 @@
-//package com.datasqrl.packager.config;
+// package com.datasqrl.packager.config;
 //
-//import java.util.LinkedHashMap;
-//import lombok.AllArgsConstructor;
-//import lombok.NonNull;
+// import java.util.LinkedHashMap;
+// import lombok.AllArgsConstructor;
+// import lombok.NonNull;
 //
-//@AllArgsConstructor
-//public class DependencyConfig {
+// @AllArgsConstructor
+// public class DependencyConfig {
 //
 //  public static final String DEPENDENCIES_KEY = "dependencies";
 //  public static final String PKG_NAME_KEY = "pkgName";
@@ -18,4 +18,4 @@
 //    return config.asMap(DEPENDENCIES_KEY,Dependency.class).get();
 //  }
 //
-//}
+// }

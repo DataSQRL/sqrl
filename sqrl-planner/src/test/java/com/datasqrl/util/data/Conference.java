@@ -10,9 +10,10 @@ public class Conference extends UseCaseExample {
   public static final Conference INSTANCE = new Conference();
 
   protected Conference() {
-    super("", Set.of("authtokens","events","emailtemplates"), scripts()
-        .add("conference-rec", "events")
-        .build(), "recAPI.graphqls");
+    super(
+        "",
+        Set.of("authtokens", "events", "emailtemplates"),
+        scripts().add("conference-rec", "events").build(),
+        "recAPI.graphqls");
   }
-
 }

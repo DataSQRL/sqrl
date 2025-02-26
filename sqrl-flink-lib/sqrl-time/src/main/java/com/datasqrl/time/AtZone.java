@@ -11,9 +11,7 @@ import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.inference.TypeInference;
 
-/**
- * Returns the timestamp at the given timezone.
- */
+/** Returns the timestamp at the given timezone. */
 public class AtZone extends ScalarFunction {
 
   public ZonedDateTime eval(Instant instant, String zoneId) {
@@ -24,13 +22,15 @@ public class AtZone extends ScalarFunction {
   public TypeInference getTypeInference(DataTypeFactory typeFactory) {
     return TypeInference.newBuilder()
         .typedArguments(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3), DataTypes.STRING())
-        .outputTypeStrategy(callContext -> {
-          DataType type = FlinkTypeUtil.getFirstArgumentType(callContext);
-          if (type.getLogicalType().isNullable()) {
-            return Optional.of(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
-          }
+        .outputTypeStrategy(
+            callContext -> {
+              DataType type = FlinkTypeUtil.getFirstArgumentType(callContext);
+              if (type.getLogicalType().isNullable()) {
+                return Optional.of(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
+              }
 
-          return Optional.of(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
-        }).build();
+              return Optional.of(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
+            })
+        .build();
   }
 }

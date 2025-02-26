@@ -7,6 +7,4 @@ public interface APIConnector {
   Name getName();
 
   APISource getSource();
-
-
 }

@@ -55,8 +55,12 @@ public class GraphqlQueryBuilder {
   APIConnectorManager apiManager;
   SqlNameUtil nameUtil;
 
-  public APIQuery create(List<ArgCombination> arg, SqrlTableMacro macro,
-      String parentName, FieldDefinition fieldDefinition, RelDataType parentType) {
+  public APIQuery create(
+      List<ArgCombination> arg,
+      SqrlTableMacro macro,
+      String parentName,
+      FieldDefinition fieldDefinition,
+      RelDataType parentType) {
 
     Pair<SqlUserDefinedTableFunction, Boolean> operatorPair = resolveOperator(macro, arg);
     SqlUserDefinedTableFunction operator = operatorPair.getLeft();
@@ -64,14 +68,17 @@ public class GraphqlQueryBuilder {
 
     String nameId = generateQueryNameId(parentName, fieldDefinition);
 
-    QueryBuilderHelper queryBuilderHelper = new QueryBuilderHelper(framework.getQueryPlanner(),
-        framework.getQueryPlanner().getRelBuilder(),
-        nameId);
+    QueryBuilderHelper queryBuilderHelper =
+        new QueryBuilderHelper(
+            framework.getQueryPlanner(), framework.getQueryPlanner().getRelBuilder(), nameId);
 
     if (allowPermutation) {
-      for (SqrlFunctionParameter parameter : getInternalParams(operator.getFunction().getParameters())) {
-        Optional<String> parentFieldName = parameter.getParentName()
-            .resolve(parentType, framework.getCatalogReader().nameMatcher());
+      for (SqrlFunctionParameter parameter :
+          getInternalParams(operator.getFunction().getParameters())) {
+        Optional<String> parentFieldName =
+            parameter
+                .getParentName()
+                .resolve(parentType, framework.getCatalogReader().nameMatcher());
         if (parentFieldName.isEmpty()) {
           throw new RuntimeException("Could not find parameter: " + parameter.getVariableName());
         }
@@ -85,30 +92,36 @@ public class GraphqlQueryBuilder {
         }
 
         String columnToFilter = c.getDefinition().getName();
-        RelDataType columnType = graphqlToRelDataType(c.getDefinition().getType(), framework.getTypeFactory());
+        RelDataType columnType =
+            graphqlToRelDataType(c.getDefinition().getType(), framework.getTypeFactory());
         queryBuilderHelper.filter(columnToFilter, columnType);
       }
     } else {
-      ImmutableMap<Name, ArgCombination> nameToArg = Maps.uniqueIndex(arg,
-          a -> nameUtil.toName(a.getDefinition().getName().toLowerCase()));
+      ImmutableMap<Name, ArgCombination> nameToArg =
+          Maps.uniqueIndex(arg, a -> nameUtil.toName(a.getDefinition().getName().toLowerCase()));
 
       // Iterate over the table function to resolve all parameters it needs
       for (FunctionParameter functionParameter : operator.getFunction().getParameters()) {
         SqrlFunctionParameter parameter = (SqrlFunctionParameter) functionParameter;
         if (parameter.isInternal()) {
-          Optional<String> parentFieldName = parameter.getParentName()
-              .resolve(parentType, framework.getCatalogReader().nameMatcher());
+          Optional<String> parentFieldName =
+              parameter
+                  .getParentName()
+                  .resolve(parentType, framework.getCatalogReader().nameMatcher());
           if (parentFieldName.isEmpty()) {
             throw new RuntimeException("Could not find parameter: " + parameter.getVariableName());
           }
           queryBuilderHelper.addInternalOperand(parentFieldName.get(), parameter.getRelDataType());
         } else {
-          ArgCombination tableArgument = nameToArg.get(nameUtil.toName(parameter.getVariableName()));
+          ArgCombination tableArgument =
+              nameToArg.get(nameUtil.toName(parameter.getVariableName()));
           if (tableArgument == null) {
             throw new RuntimeException("Could not find argument: " + parameter.getVariableName());
           }
           String operand = tableArgument.getDefinition().getName();
-          RelDataType operandType = graphqlToRelDataType(tableArgument.getDefinition().getType(), framework.getTypeFactory());
+          RelDataType operandType =
+              graphqlToRelDataType(
+                  tableArgument.getDefinition().getType(), framework.getTypeFactory());
 
           queryBuilderHelper.addVariableOperand(operand, operandType);
         }
@@ -126,11 +139,12 @@ public class GraphqlQueryBuilder {
 
     APIQuery query = queryBuilderHelper.build(macro.getFullPath());
 
-    //Validate all source args are resolvable
-    List<SourceParameter> sourceParams = queryBuilderHelper.graphqlArguments.stream()
-        .filter(f -> f instanceof SourceParameter)
-        .map(f -> (SourceParameter) f)
-        .collect(Collectors.toList());
+    // Validate all source args are resolvable
+    List<SourceParameter> sourceParams =
+        queryBuilderHelper.graphqlArguments.stream()
+            .filter(f -> f instanceof SourceParameter)
+            .map(f -> (SourceParameter) f)
+            .collect(Collectors.toList());
 
     if (parentType != null) {
       Set<String> parentRowType = new HashSet<>(parentType.getFieldNames());
@@ -147,35 +161,41 @@ public class GraphqlQueryBuilder {
   }
 
   private String generateQueryNameId(String parentName, FieldDefinition fieldDefinition) {
-    return parentName + "." + fieldDefinition.getName() + "-"
-        + queryCounter.incrementAndGet();
+    return parentName + "." + fieldDefinition.getName() + "-" + queryCounter.incrementAndGet();
   }
 
   private boolean isLimitOrOffset(ArgCombination c) {
-    return c.getDefinition().getName().equalsIgnoreCase(LIMIT) ||
-        c.getDefinition().getName().equalsIgnoreCase(OFFSET);
+    return c.getDefinition().getName().equalsIgnoreCase(LIMIT)
+        || c.getDefinition().getName().equalsIgnoreCase(OFFSET);
   }
 
-  private Pair<SqlUserDefinedTableFunction, Boolean> resolveOperator(SqrlTableMacro macro, List<ArgCombination> arg) {
+  private Pair<SqlUserDefinedTableFunction, Boolean> resolveOperator(
+      SqrlTableMacro macro, List<ArgCombination> arg) {
     // Check for permutation case and bail early. It's costly to check the operands for all cases.
-    List<Function> functions = new ArrayList<>(framework.getSchema()
-        .getFunctions(macro.getDisplayName(), false));
+    List<Function> functions =
+        new ArrayList<>(framework.getSchema().getFunctions(macro.getDisplayName(), false));
     if (functions.size() == 1 && getExternalParams(functions.get(0).getParameters()).size() == 0) {
-      List<SqlOperator> operators = getOperators(macro.getDisplayName(), List.of(),
-          getInternalParams(functions.get(0).getParameters()));
+      List<SqlOperator> operators =
+          getOperators(
+              macro.getDisplayName(),
+              List.of(),
+              getInternalParams(functions.get(0).getParameters()));
       if (operators.isEmpty()) {
-        throw new RuntimeException(String.format(
-            "Could not find operator: %s(%s)", macro.getDisplayName(), getInternalParams(functions.get(0).getParameters()).stream()
-                .map(SqrlFunctionParameter::getName)
-                .collect(Collectors.joining(","))));
+        throw new RuntimeException(
+            String.format(
+                "Could not find operator: %s(%s)",
+                macro.getDisplayName(),
+                getInternalParams(functions.get(0).getParameters()).stream()
+                    .map(SqrlFunctionParameter::getName)
+                    .collect(Collectors.joining(","))));
       } else if (operators.size() > 1) {
-        throw new RuntimeException(String.format(
-            "Ambiguous operator: %s", macro.getDisplayName()));
+        throw new RuntimeException(String.format("Ambiguous operator: %s", macro.getDisplayName()));
       }
       return Pair.of((SqlUserDefinedTableFunction) Iterables.getOnlyElement(operators), true);
     }
 
-    // Lookup operator with full arguments. If not found, look for table fnc with no args and allow permutation
+    // Lookup operator with full arguments. If not found, look for table fnc with no args and allow
+    // permutation
     List<ArgCombination> pagingRemoved = removePaging(arg);
     List<SqrlFunctionParameter> internalParams = getInternalParams(macro.getParameters());
     String tableFunctionName = macro.getFullPath().getDisplay();
@@ -183,20 +203,28 @@ public class GraphqlQueryBuilder {
     // Look for function with all args
     List<SqlOperator> operators = getOperators(tableFunctionName, pagingRemoved, internalParams);
     if (operators.size() == 1) {
-      return Pair.of((SqlUserDefinedTableFunction)operators.get(0), false);
+      return Pair.of((SqlUserDefinedTableFunction) operators.get(0), false);
     }
     if (operators.size() > 1) {
-      throw new RuntimeException("Expected exactly one matching table function for '"+tableFunctionName+"', found: " + operators.size());
+      throw new RuntimeException(
+          "Expected exactly one matching table function for '"
+              + tableFunctionName
+              + "', found: "
+              + operators.size());
     }
 
     // Look for function with no args
     operators = getOperators(tableFunctionName, List.of(), internalParams);
     if (operators.size() == 0) {
-      throw new RuntimeException("Could not find function for '"+tableFunctionName+"'");
+      throw new RuntimeException("Could not find function for '" + tableFunctionName + "'");
     } else if (operators.size() > 1) {
-      throw new RuntimeException("Expected exactly one matching table function for '"+tableFunctionName+"', found: " + operators.size());
+      throw new RuntimeException(
+          "Expected exactly one matching table function for '"
+              + tableFunctionName
+              + "', found: "
+              + operators.size());
     } else {
-      return Pair.of((SqlUserDefinedTableFunction)operators.get(0), true);
+      return Pair.of((SqlUserDefinedTableFunction) operators.get(0), true);
     }
   }
 
@@ -228,13 +256,15 @@ public class GraphqlQueryBuilder {
 
   private List<ArgCombination> removePaging(List<ArgCombination> arg) {
     return arg.stream()
-        .filter(f -> !f.getDefinition().getName().equalsIgnoreCase(LIMIT)
-            && !f.getDefinition().getName().equalsIgnoreCase(OFFSET))
+        .filter(
+            f ->
+                !f.getDefinition().getName().equalsIgnoreCase(LIMIT)
+                    && !f.getDefinition().getName().equalsIgnoreCase(OFFSET))
         .collect(Collectors.toList());
   }
 
-  private List<SqlOperator> getOperators(String name, List<ArgCombination> arg,
-      List<SqrlFunctionParameter> internal) {
+  private List<SqlOperator> getOperators(
+      String name, List<ArgCombination> arg, List<SqrlFunctionParameter> internal) {
     List<RelDataType> argsTypes = constructArgTypes(arg, framework.getTypeFactory());
     internal.forEach(p -> argsTypes.add(p.getRelDataType()));
 
@@ -242,11 +272,18 @@ public class GraphqlQueryBuilder {
     internal.forEach(p -> argNames.add(p.getName()));
 
     SqlIdentifier nameIdentifier = new SqlIdentifier(name, SqlParserPos.ZERO);
-    Iterator<SqlOperator> sqlOperatorIterator = SqlUtil.lookupSubjectRoutines(
-        framework.getSqrlOperatorTable(), framework.getTypeFactory(),
-        nameIdentifier, argsTypes, argNames, SqlSyntax.FUNCTION, SqlKind.OTHER_FUNCTION,
-        SqlFunctionCategory.USER_DEFINED_TABLE_FUNCTION,
-        framework.getCatalogReader().nameMatcher(), true);
+    Iterator<SqlOperator> sqlOperatorIterator =
+        SqlUtil.lookupSubjectRoutines(
+            framework.getSqrlOperatorTable(),
+            framework.getTypeFactory(),
+            nameIdentifier,
+            argsTypes,
+            argNames,
+            SqlSyntax.FUNCTION,
+            SqlKind.OTHER_FUNCTION,
+            SqlFunctionCategory.USER_DEFINED_TABLE_FUNCTION,
+            framework.getCatalogReader().nameMatcher(),
+            true);
     List<SqlOperator> operators = new ArrayList<>();
     sqlOperatorIterator.forEachRemaining(operators::add);
     return operators;
@@ -254,7 +291,7 @@ public class GraphqlQueryBuilder {
 
   private List<String> constructArgNames(List<ArgCombination> args) {
     return args.stream()
-        .map(f -> VARIABLE_PREFIX.getCanonical() + f.getDefinition().getName()) //to variable name
+        .map(f -> VARIABLE_PREFIX.getCanonical() + f.getDefinition().getName()) // to variable name
         .collect(Collectors.toList());
   }
 
@@ -271,8 +308,7 @@ public class GraphqlQueryBuilder {
           graphqlToRelDataType(nonNullType.getType(), typeFactory), false);
     } else if (type instanceof ListType) {
       ListType listType = (ListType) type;
-      return typeFactory.createArrayType(
-          graphqlToRelDataType(listType.getType(), typeFactory), -1);
+      return typeFactory.createArrayType(graphqlToRelDataType(listType.getType(), typeFactory), -1);
     }
     TypeName typeName = (TypeName) type;
     return framework.getQueryPlanner().parseDatatype(typeName.getName());

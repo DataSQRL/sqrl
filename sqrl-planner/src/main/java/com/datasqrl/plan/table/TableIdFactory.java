@@ -1,6 +1,5 @@
 package com.datasqrl.plan.table;
 
-import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.Name;
 import com.google.inject.Inject;
 import java.util.Map;

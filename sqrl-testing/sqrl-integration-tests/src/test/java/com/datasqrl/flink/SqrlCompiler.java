@@ -1,18 +1,20 @@
-//package com.datasqrl.flink;
+// package com.datasqrl.flink;
 //
-//import java.io.IOException;
-//import java.lang.reflect.Constructor;
-//import java.lang.reflect.Method;
-//import java.net.URL;
-//import java.net.URLClassLoader;
-//import java.nio.file.Files;
-//import java.nio.file.Path;
+// import java.io.IOException;
+// import java.lang.reflect.Constructor;
+// import java.lang.reflect.Method;
+// import java.net.URL;
+// import java.net.URLClassLoader;
+// import java.nio.file.Files;
+// import java.nio.file.Path;
 //
-//public class SqrlCompiler {
+// public class SqrlCompiler {
 //
 //
 //  public void execute(Path path, String... args) {
-//    String jarPath = Path.of("../../sqrl-tools/sqrl-cli/target/sqrl-cli.jar").toAbsolutePath().toString(); // Set the path to your JAR file
+//    String jarPath =
+// Path.of("../../sqrl-tools/sqrl-cli/target/sqrl-cli.jar").toAbsolutePath().toString(); // Set the
+// path to your JAR file
 //
 //    // Convert the args array to a single command string for the process
 //    String[] command = new String[args.length + 3];
@@ -38,4 +40,4 @@
 //      e.printStackTrace();
 //    }
 //  }
-//}
+// }

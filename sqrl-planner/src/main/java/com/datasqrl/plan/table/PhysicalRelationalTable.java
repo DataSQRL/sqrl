@@ -3,16 +3,15 @@
  */
 package com.datasqrl.plan.table;
 
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.io.tables.TableType;
 import com.datasqrl.plan.hints.OptimizerHint;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.rules.SqrlConverterConfig;
-import com.datasqrl.plan.table.PullupOperator.Container;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,37 +24,38 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.schema.Statistic;
 import org.apache.calcite.schema.Statistics;
 import org.apache.calcite.util.ImmutableBitSet;
-import org.apache.commons.lang3.tuple.Pair;
 
 /**
  * A relational table that is defined by the user query in the SQRL script.
- * <p>
- * This is a physical relation that gets materialized in the write DAG or computed in the read DAG.
+ *
+ * <p>This is a physical relation that gets materialized in the write DAG or computed in the read
+ * DAG.
  */
 @Getter
-public abstract class PhysicalRelationalTable extends ScriptRelationalTable implements PhysicalTable {
+public abstract class PhysicalRelationalTable extends ScriptRelationalTable
+    implements PhysicalTable {
 
-  @NonNull
-  protected final NamePath tablePath;
-  @NonNull
-  protected final TableType type;
-  @NonNull
-  protected final PrimaryKey primaryKey;
-  @NonNull
-  protected Timestamps timestamp;
+  @NonNull protected final NamePath tablePath;
+  @NonNull protected final TableType type;
+  @NonNull protected final PrimaryKey primaryKey;
+  @NonNull protected Timestamps timestamp;
 
   protected PullupOperator.Container pullups;
 
   protected RelNode plannedRelNode;
-  @Setter
-  protected Optional<ExecutionStage> assignedStage = Optional.empty();
-  @NonNull
-  protected final TableStatistic tableStatistic;
+  @Setter protected Optional<ExecutionStage> assignedStage = Optional.empty();
+  @NonNull protected final TableStatistic tableStatistic;
 
-  public PhysicalRelationalTable(Name rootTableId, @NonNull NamePath tablePath, @NonNull TableType type,
-                                  RelDataType rowType, int numSelects, @NonNull Timestamps timestamp,
-                                 @NonNull PrimaryKey primaryKey, @NonNull PullupOperator.Container pullups,
-                                 @NonNull TableStatistic tableStatistic) {
+  public PhysicalRelationalTable(
+      Name rootTableId,
+      @NonNull NamePath tablePath,
+      @NonNull TableType type,
+      RelDataType rowType,
+      int numSelects,
+      @NonNull Timestamps timestamp,
+      @NonNull PrimaryKey primaryKey,
+      @NonNull PullupOperator.Container pullups,
+      @NonNull TableStatistic tableStatistic) {
     super(rootTableId, rowType, numSelects);
     this.tablePath = tablePath;
     this.type = type;
@@ -79,7 +79,6 @@ public abstract class PhysicalRelationalTable extends ScriptRelationalTable impl
   public abstract Optional<PhysicalRelationalTable> getStreamRoot();
 
   /**
-   *
    * @return the assigned execution stage or empty if no stage has been assigned yet
    */
   @Override
@@ -87,7 +86,8 @@ public abstract class PhysicalRelationalTable extends ScriptRelationalTable impl
     return assignedStage;
   }
 
-  public abstract List<ExecutionStage> getSupportedStages(ExecutionPipeline pipeline, ErrorCollector errors);
+  public abstract List<ExecutionStage> getSupportedStages(
+      ExecutionPipeline pipeline, ErrorCollector errors);
 
   public abstract SqrlConverterConfig.SqrlConverterConfigBuilder getBaseConfig();
 
@@ -109,8 +109,18 @@ public abstract class PhysicalRelationalTable extends ScriptRelationalTable impl
   public void setPlannedRelNode(@NonNull SQRLConverter.TablePlan planned) {
     Preconditions.checkArgument(plannedRelNode == null, "Table has already been planned");
     RelNode relNode = planned.getRelNode();
-    Preconditions.checkArgument(relNode.getRowType().equalsSansFieldNames(getRowType()), "Row types do not match: %s vs %s", getRowType(), relNode.getRowType());
-    Preconditions.checkArgument(relNode.getRowType().getFieldNames().subList(0,getNumSelects()).equals(getRowType().getFieldNames().subList(0,getNumSelects())), "Names do not match");
+    Preconditions.checkArgument(
+        relNode.getRowType().equalsSansFieldNames(getRowType()),
+        "Row types do not match: %s vs %s",
+        getRowType(),
+        relNode.getRowType());
+    Preconditions.checkArgument(
+        relNode
+            .getRowType()
+            .getFieldNames()
+            .subList(0, getNumSelects())
+            .equals(getRowType().getFieldNames().subList(0, getNumSelects())),
+        "Names do not match");
     this.plannedRelNode = relNode;
     this.pullups = planned.getPullups();
   }

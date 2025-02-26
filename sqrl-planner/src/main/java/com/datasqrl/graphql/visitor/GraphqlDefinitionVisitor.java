@@ -21,24 +21,81 @@ import graphql.language.UnionTypeDefinition;
 import graphql.language.UnionTypeExtensionDefinition;
 
 public interface GraphqlDefinitionVisitor<R, C> {
-  default R visitDirectiveDefinition(DirectiveDefinition node, C context){ throw new RuntimeException("Unknown node" + node); }
-  default R visitEnumTypeDefinition(EnumTypeDefinition node, C context){ throw new RuntimeException("Unknown node" + node); }
-  default R visitEnumTypeExtensionDefinition(EnumTypeExtensionDefinition node, C context){ throw new RuntimeException("Unknown node" + node); }
-  default R visitEnumValueDefinition(EnumValueDefinition node, C context){ throw new RuntimeException("Unknown node" + node); }
-  default R visitFragmentDefinition(FragmentDefinition node, C context){ throw new RuntimeException("Unknown node" + node); }
-  default R visitInputObjectTypeDefinition(InputObjectTypeDefinition node, C context){ throw new RuntimeException("Unknown node" + node); }
-  default R visitInputObjectTypeExtensionDefinition(InputObjectTypeExtensionDefinition node,
-      C context){ throw new RuntimeException("Unknown node" + node); }
-  default R visitInterfaceTypeDefinition(InterfaceTypeDefinition node, C context){ throw new RuntimeException("Unknown node" + node); }
-  default R visitInterfaceTypeExtensionDefinition(InterfaceTypeExtensionDefinition node, C context){ throw new RuntimeException("Unknown node" + node); }
-  default R visitObjectTypeDefinition(ObjectTypeDefinition node, C context){ throw new RuntimeException("Unknown node" + node); }
-  default R visitObjectTypeExtensionDefinition(ObjectTypeExtensionDefinition node, C context){ throw new RuntimeException("Unknown node" + node); }
-  default R visitOperationDefinition(OperationDefinition node, C context){ throw new RuntimeException("Unknown node" + node); }
-  default R visitOperationTypeDefinition(OperationTypeDefinition node, C context){ throw new RuntimeException("Unknown node" + node); }
-  default R visitScalarTypeDefinition(ScalarTypeDefinition node, C context){ throw new RuntimeException("Unknown node" + node); }
-  default R visitScalarTypeExtensionDefinition(ScalarTypeExtensionDefinition node, C context){ throw new RuntimeException("Unknown node" + node); }
-  default R visitSchemaDefinition(SchemaDefinition node, C context){ throw new RuntimeException("Unknown node" + node); }
-  default R visitSchemaExtensionDefinition(SchemaExtensionDefinition node, C context){ throw new RuntimeException("Unknown node" + node); }
-  default R visitUnionTypeDefinition(UnionTypeDefinition node, C context){ throw new RuntimeException("Unknown node" + node); }
-  default R visitUnionTypeExtensionDefinition(UnionTypeExtensionDefinition node, C context){ throw new RuntimeException("Unknown node" + node); }
+  default R visitDirectiveDefinition(DirectiveDefinition node, C context) {
+    throw new RuntimeException("Unknown node" + node);
+  }
+
+  default R visitEnumTypeDefinition(EnumTypeDefinition node, C context) {
+    throw new RuntimeException("Unknown node" + node);
+  }
+
+  default R visitEnumTypeExtensionDefinition(EnumTypeExtensionDefinition node, C context) {
+    throw new RuntimeException("Unknown node" + node);
+  }
+
+  default R visitEnumValueDefinition(EnumValueDefinition node, C context) {
+    throw new RuntimeException("Unknown node" + node);
+  }
+
+  default R visitFragmentDefinition(FragmentDefinition node, C context) {
+    throw new RuntimeException("Unknown node" + node);
+  }
+
+  default R visitInputObjectTypeDefinition(InputObjectTypeDefinition node, C context) {
+    throw new RuntimeException("Unknown node" + node);
+  }
+
+  default R visitInputObjectTypeExtensionDefinition(
+      InputObjectTypeExtensionDefinition node, C context) {
+    throw new RuntimeException("Unknown node" + node);
+  }
+
+  default R visitInterfaceTypeDefinition(InterfaceTypeDefinition node, C context) {
+    throw new RuntimeException("Unknown node" + node);
+  }
+
+  default R visitInterfaceTypeExtensionDefinition(
+      InterfaceTypeExtensionDefinition node, C context) {
+    throw new RuntimeException("Unknown node" + node);
+  }
+
+  default R visitObjectTypeDefinition(ObjectTypeDefinition node, C context) {
+    throw new RuntimeException("Unknown node" + node);
+  }
+
+  default R visitObjectTypeExtensionDefinition(ObjectTypeExtensionDefinition node, C context) {
+    throw new RuntimeException("Unknown node" + node);
+  }
+
+  default R visitOperationDefinition(OperationDefinition node, C context) {
+    throw new RuntimeException("Unknown node" + node);
+  }
+
+  default R visitOperationTypeDefinition(OperationTypeDefinition node, C context) {
+    throw new RuntimeException("Unknown node" + node);
+  }
+
+  default R visitScalarTypeDefinition(ScalarTypeDefinition node, C context) {
+    throw new RuntimeException("Unknown node" + node);
+  }
+
+  default R visitScalarTypeExtensionDefinition(ScalarTypeExtensionDefinition node, C context) {
+    throw new RuntimeException("Unknown node" + node);
+  }
+
+  default R visitSchemaDefinition(SchemaDefinition node, C context) {
+    throw new RuntimeException("Unknown node" + node);
+  }
+
+  default R visitSchemaExtensionDefinition(SchemaExtensionDefinition node, C context) {
+    throw new RuntimeException("Unknown node" + node);
+  }
+
+  default R visitUnionTypeDefinition(UnionTypeDefinition node, C context) {
+    throw new RuntimeException("Unknown node" + node);
+  }
+
+  default R visitUnionTypeExtensionDefinition(UnionTypeExtensionDefinition node, C context) {
+    throw new RuntimeException("Unknown node" + node);
+  }
 }

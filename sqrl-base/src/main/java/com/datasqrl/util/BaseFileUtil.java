@@ -3,7 +3,6 @@
  */
 package com.datasqrl.util;
 
-
 import com.google.common.base.Strings;
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -19,7 +18,6 @@ import org.apache.commons.lang3.tuple.Pair;
 public class BaseFileUtil {
 
   private static final int DELIMITER_CHAR = 46;
-
 
   public static Pair<String, String> separateExtension(String fileName) {
     if (Strings.isNullOrEmpty(fileName)) {
@@ -39,7 +37,8 @@ public class BaseFileUtil {
     StringBuilder content = new StringBuilder();
 
     try (InputStream inputStream = url.openStream();
-        InputStreamReader inputStreamReader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
+        InputStreamReader inputStreamReader =
+            new InputStreamReader(inputStream, StandardCharsets.UTF_8);
         BufferedReader bufferedReader = new BufferedReader(inputStreamReader)) {
 
       String line;
@@ -50,6 +49,7 @@ public class BaseFileUtil {
 
     return content.toString();
   }
+
   @SneakyThrows
   public static String readFile(Path path) {
     return Files.readString(path);

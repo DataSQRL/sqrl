@@ -13,7 +13,6 @@ import com.datasqrl.util.StreamUtil;
 import java.net.URL;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.OptionalInt;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -22,15 +21,13 @@ import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.flink.table.functions.UserDefinedFunction;
 
 @Value
 public class PhysicalDAGPlan {
 
-  /**
-   * Must be in the order of the pipeline stages
-   */
+  /** Must be in the order of the pipeline stages */
   List<StagePlan> stagePlans;
+
   ExecutionPipeline pipeline;
 
   public List<ReadQuery> getReadQueries() {
@@ -54,25 +51,21 @@ public class PhysicalDAGPlan {
     default List<? extends Query> getQueries() {
       return List.of();
     }
-
   }
 
   @Value
   public static class StreamStagePlan implements StagePlan {
 
-    @NonNull
-    ExecutionStage stage;
+    @NonNull ExecutionStage stage;
+
+    /** A list of all query sinks for this stage (in no particular order) */
+    @NonNull List<? extends Query> queries;
+
     /**
-     * A list of all query sinks for this stage (in no particular order)
+     * A list of all the tables that are defined in the stream stage in DAG order (i.e. from source
+     * to sink)
      */
-    @NonNull
-    List<? extends Query> queries;
-    /**
-     * A list of all the tables that are defined in the stream stage
-     * in DAG order (i.e. from source to sink)
-     */
-    @NonNull
-    List<TableDefinition> tableDefinitions;
+    @NonNull List<TableDefinition> tableDefinitions;
 
     Set<URL> jars;
 
@@ -81,28 +74,21 @@ public class PhysicalDAGPlan {
 
       String tableId;
       RelNode relNode;
-
     }
-
   }
 
   @Value
   public static class DatabaseStagePlan implements StagePlan {
 
-    @NonNull
-    ExecutionStage stage;
-    @NonNull
-    List<ReadQuery> queries;
-    @NonNull
-    Collection<IndexDefinition> indexDefinitions;
-
+    @NonNull ExecutionStage stage;
+    @NonNull List<ReadQuery> queries;
+    @NonNull Collection<IndexDefinition> indexDefinitions;
   }
 
   @Value
   public static class ServerStagePlan implements StagePlan {
 
-    @NonNull
-    ExecutionStage stage;
+    @NonNull ExecutionStage stage;
 
     List<ReadQuery> queries;
   }
@@ -110,11 +96,8 @@ public class PhysicalDAGPlan {
   @Value
   public static class LogStagePlan implements StagePlan {
 
-    @NonNull
-    ExecutionStage stage;
-    @NonNull
-    List<Log> logs;
-
+    @NonNull ExecutionStage stage;
+    @NonNull List<Log> logs;
   }
 
   public interface Query {
@@ -124,32 +107,30 @@ public class PhysicalDAGPlan {
   public interface StageSink {
 
     ExecutionStage getStage();
-
   }
 
   @Value
   public static class WriteQuery implements Query {
 
     final WriteSink sink;
-    /**
-     * This is the expanded Relnode for the query all the way to the sources.
-     */
+
+    /** This is the expanded Relnode for the query all the way to the sources. */
     final RelNode expandedRelNode;
-    /**
-     * This is the Relnode for this query only.
-     */
+
+    /** This is the Relnode for this query only. */
     final RelNode relNode;
 
     final TableType type;
+
     public <R, C> R accept(QueryVisitor<R, C> visitor, C context) {
       return visitor.accept(this, context);
     }
-
   }
 
   public interface WriteSink {
 
     public String getName();
+
     <R, C> R accept(SinkVisitor<R, C> visitor, C context);
   }
 
@@ -194,6 +175,7 @@ public class PhysicalDAGPlan {
 
     IdentifiedQuery query;
     RelNode relNode;
+
     public <R, C> R accept(QueryVisitor<R, C> visitor, C context) {
       return visitor.accept(this, context);
     }
@@ -202,12 +184,14 @@ public class PhysicalDAGPlan {
   public interface QueryVisitor<R, C> {
 
     R accept(ReadQuery query, C context);
+
     R accept(WriteQuery writeQuery, C context);
   }
 
   public interface SinkVisitor<R, C> {
 
     R accept(ExternalSink externalSink, C context);
+
     R accept(EngineSink engineSink, C context);
   }
 }

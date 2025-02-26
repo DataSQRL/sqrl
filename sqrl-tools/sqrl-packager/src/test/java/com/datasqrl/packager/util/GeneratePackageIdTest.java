@@ -28,5 +28,4 @@ public class GeneratePackageIdTest {
   public void generateSingleId() {
     System.out.println(GeneratePackageId.generate());
   }
-
 }

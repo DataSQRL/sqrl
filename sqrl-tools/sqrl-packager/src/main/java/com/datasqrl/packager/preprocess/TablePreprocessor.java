@@ -7,7 +7,8 @@ import java.nio.file.Path;
 import java.util.regex.Pattern;
 
 public class TablePreprocessor implements Preprocessor {
-  protected static final Pattern TABLE_FILE_REGEX = Pattern.compile(".*"+ FileUtil.toRegex(DataSource.TABLE_FILE_SUFFIX));
+  protected static final Pattern TABLE_FILE_REGEX =
+      Pattern.compile(".*" + FileUtil.toRegex(DataSource.TABLE_FILE_SUFFIX));
 
   @Override
   public Pattern getPattern() {

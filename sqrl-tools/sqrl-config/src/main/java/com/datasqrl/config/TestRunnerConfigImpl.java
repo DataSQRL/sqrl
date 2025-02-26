@@ -11,13 +11,13 @@ public class TestRunnerConfigImpl implements TestRunnerConfiguration {
   SqrlConfig sqrlConfig;
 
   public Optional<Duration> getDelaySec() {
-    return sqrlConfig.asLong("delay-sec")
+    return sqrlConfig
+        .asLong("delay-sec")
         .getOptional()
-        .map(sec->Duration.of(sec, ChronoUnit.SECONDS));
+        .map(sec -> Duration.of(sec, ChronoUnit.SECONDS));
   }
 
   public Optional<Integer> getRequiredCheckpoints() {
-    return sqrlConfig.asInt("required-checkpoints")
-        .getOptional();
+    return sqrlConfig.asInt("required-checkpoints").getOptional();
   }
 }

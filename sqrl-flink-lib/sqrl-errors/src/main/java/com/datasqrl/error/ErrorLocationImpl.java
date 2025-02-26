@@ -11,13 +11,13 @@ import lombok.Value;
 class ErrorLocationImpl implements ErrorLocation {
 
   private final String prefix;
-  @NonNull
-  private final String[] names;
+  @NonNull private final String[] names;
   private final SourceMap sourceMap;
   private final FileRange file;
 
-  private ErrorLocationImpl(String prefix, SourceMap sourceMap, FileRange file, @NonNull String... names) {
-//    Preconditions.checkArgument(file==null || sourceMap!=null);
+  private ErrorLocationImpl(
+      String prefix, SourceMap sourceMap, FileRange file, @NonNull String... names) {
+    //    Preconditions.checkArgument(file==null || sourceMap!=null);
     this.prefix = prefix;
     this.names = names;
     this.sourceMap = sourceMap;
@@ -25,17 +25,18 @@ class ErrorLocationImpl implements ErrorLocation {
   }
 
   /*
-   -- These methods are used by ErrorPrefix --
-   */
+  -- These methods are used by ErrorPrefix --
+  */
 
   public static ErrorLocation of(String prefix, @NonNull String loc) {
-//    Preconditions.checkArgument(!Strings.isNullOrEmpty(loc), "Invalid location provided");
+    //    Preconditions.checkArgument(!Strings.isNullOrEmpty(loc), "Invalid location provided");
     return new ErrorLocationImpl(prefix, null, null, loc);
   }
 
   public static ErrorLocation of(String prefix, @NonNull ErrorLocation other) {
-//    Preconditions.checkArgument(!other.hasPrefix());
-    return new ErrorLocationImpl(prefix, other.getSourceMap(), other.getFile(), other.getPathArray());
+    //    Preconditions.checkArgument(!other.hasPrefix());
+    return new ErrorLocationImpl(
+        prefix, other.getSourceMap(), other.getFile(), other.getPathArray());
   }
 
   public static ErrorLocation of(String prefix, @NonNull SourceMap sourceMap) {
@@ -44,7 +45,7 @@ class ErrorLocationImpl implements ErrorLocation {
 
   @Override
   public ErrorLocation append(@NonNull ErrorLocation other) {
-//    Preconditions.checkArgument(!other.hasPrefix() && !this.hasFile());
+    //    Preconditions.checkArgument(!other.hasPrefix() && !this.hasFile());
     String[] othNames = other.getPathArray();
     String[] newnames = Arrays.copyOf(names, names.length + othNames.length);
     System.arraycopy(othNames, 0, newnames, names.length, othNames.length);
@@ -56,9 +57,8 @@ class ErrorLocationImpl implements ErrorLocation {
     return names;
   }
 
-
   public ErrorLocation resolve(@NonNull String loc) {
-//    Preconditions.checkArgument(!Strings.isNullOrEmpty(loc), "Invalid location provided");
+    //    Preconditions.checkArgument(!Strings.isNullOrEmpty(loc), "Invalid location provided");
     String[] newnames = Arrays.copyOf(names, names.length + 1);
     newnames[names.length] = loc;
     return new ErrorLocationImpl(prefix, sourceMap, file, newnames);
@@ -66,7 +66,7 @@ class ErrorLocationImpl implements ErrorLocation {
 
   @Override
   public ErrorLocation atFile(@NonNull ErrorLocation.FileRange file) {
-//    Preconditions.checkArgument(sourceMap!=null);
+    //    Preconditions.checkArgument(sourceMap!=null);
     return new ErrorLocationImpl(prefix, sourceMap, file, names);
   }
 
@@ -80,7 +80,7 @@ class ErrorLocationImpl implements ErrorLocation {
 
   @Override
   public ErrorLocation withSourceMap(SourceMap map) {
-//    Preconditions.checkArgument(!hasFile());
+    //    Preconditions.checkArgument(!hasFile());
     return new ErrorLocationImpl(prefix, map, null, names);
   }
 
@@ -99,5 +99,4 @@ class ErrorLocationImpl implements ErrorLocation {
     }
     return result;
   }
-
 }

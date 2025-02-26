@@ -10,7 +10,6 @@ import com.datasqrl.io.tables.SchemaValidator;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Map;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.api.common.serialization.DeserializationSchema;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.json.JsonReadFeature;
@@ -19,7 +18,7 @@ import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMap
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.util.jackson.JacksonMapperFactory;
 
-//@Slf4j
+// @Slf4j
 public abstract class FlexibleSchemaDelegate implements DeserializationSchema<RowData> {
   protected DeserializationSchema schema;
   protected final SchemaValidator validator;
@@ -35,9 +34,7 @@ public abstract class FlexibleSchemaDelegate implements DeserializationSchema<Ro
     schema.open(context);
     objectMapper =
         JacksonMapperFactory.createObjectMapper()
-            .configure(
-                JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS.mappedFeature(),
-                true);
+            .configure(JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS.mappedFeature(), true);
   }
 
   @Override
@@ -51,13 +48,14 @@ public abstract class FlexibleSchemaDelegate implements DeserializationSchema<Ro
       return null;
     }
 
-    ErrorCollector errorCollector = new ErrorCollector(ErrorPrefix.ROOT) {
-      @Override
-      public RuntimeException exception(ErrorLabel label, String msg, Object... args) {
-        System.out.println(message);
-        return super.exception(label, msg, args);
-      }
-    };
+    ErrorCollector errorCollector =
+        new ErrorCollector(ErrorPrefix.ROOT) {
+          @Override
+          public RuntimeException exception(ErrorLabel label, String msg, Object... args) {
+            System.out.println(message);
+            return super.exception(label, msg, args);
+          }
+        };
 
     Named named = validator.verifyAndAdjust(new Raw(data, Instant.now()), errorCollector);
     if (errorCollector.hasErrors()) {

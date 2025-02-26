@@ -7,8 +7,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
 /**
- * Compiles the use cases in the test/resources/usecases folder and snapshots the
- * deployment assets
+ * Compiles the use cases in the test/resources/usecases folder and snapshots the deployment assets
  */
 public class DAGWriterJsonTest extends AbstractUseCaseTest {
 
@@ -37,5 +36,4 @@ public class DAGWriterJsonTest extends AbstractUseCaseTest {
   public Predicate<Path> getPlanDirFilter() {
     return path -> false;
   }
-
 }

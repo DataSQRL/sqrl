@@ -10,13 +10,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Getter
 public class NewTopic {
-    private String name;
-    private int numPartitions;
-    private short replicationFactor;
-    private Map<Integer, List<Integer>> replicasAssignments;
-    private Map<String, String> config;
+  private String name;
+  private int numPartitions;
+  private short replicationFactor;
+  private Map<Integer, List<Integer>> replicasAssignments;
+  private Map<String, String> config;
 
-    public NewTopic(String name) {
-        this(name, 1, Short.parseShort("1"), Map.of(), Map.of());
-    }
+  public NewTopic(String name) {
+    this(name, 1, Short.parseShort("1"), Map.of(), Map.of());
+  }
 }

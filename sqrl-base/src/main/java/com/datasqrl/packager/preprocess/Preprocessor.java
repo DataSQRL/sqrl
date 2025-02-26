@@ -12,7 +12,6 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.Value;
 
 public interface Preprocessor {
 
@@ -47,12 +46,9 @@ public interface Preprocessor {
       dependencies.addAll(context.getDependencies());
     }
 
-    /**
-     * Adds to the 'lib' folder
-     */
+    /** Adds to the 'lib' folder */
     public void addLibrary(Path jarPath) {
       libraries.add(jarPath);
     }
   }
-
 }

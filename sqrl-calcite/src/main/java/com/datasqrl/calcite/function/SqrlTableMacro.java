@@ -22,6 +22,7 @@ public interface SqrlTableMacro extends TableFunction {
   RelDataType getRowType();
 
   NamePath getFullPath();
+
   NamePath getAbsolutePath();
 
   String getDisplayName();

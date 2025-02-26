@@ -16,6 +16,4 @@ public class GeneratePackageId {
     random.nextBytes(buffer);
     return encoder.encodeToString(buffer);
   }
-
-
 }

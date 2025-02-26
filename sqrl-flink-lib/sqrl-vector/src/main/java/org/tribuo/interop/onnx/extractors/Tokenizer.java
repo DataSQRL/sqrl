@@ -27,8 +27,15 @@ public class Tokenizer {
 
   public Tokenizer(Path tokenizerPath) throws Exception {
     TokenizerConfig config = loadTokenizer(tokenizerPath);
-    Wordpiece wordpiece = new Wordpiece(config.tokenIDs.keySet(), config.unknownToken, config.maxInputCharsPerWord);
-    this.tokenizer = new WordpieceTokenizer(wordpiece, new WordpieceBasicTokenizer(), config.lowercase, config.stripAccents, Collections.emptySet());
+    Wordpiece wordpiece =
+        new Wordpiece(config.tokenIDs.keySet(), config.unknownToken, config.maxInputCharsPerWord);
+    this.tokenizer =
+        new WordpieceTokenizer(
+            wordpiece,
+            new WordpieceBasicTokenizer(),
+            config.lowercase,
+            config.stripAccents,
+            Collections.emptySet());
     this.tokenIDs = config.tokenIDs;
     this.unknownToken = config.unknownToken;
     this.classificationToken = config.classificationToken;
@@ -42,7 +49,6 @@ public class Tokenizer {
     }
     return tokens;
   }
-
 
   public OnnxTensor convertTokens(OrtEnvironment env, List<String> tokens) throws OrtException {
     int size = tokens.size() + 2; // for [CLS] in beginning and [SEP] in the end
@@ -60,8 +66,6 @@ public class Tokenizer {
       i++;
     }
     curTokenIds[i] = tokenIDs.get(separatorToken);
-    return OnnxTensor.createTensor(env,new long[][]{curTokenIds});
+    return OnnxTensor.createTensor(env, new long[][] {curTokenIds});
   }
-
-
 }

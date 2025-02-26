@@ -40,16 +40,14 @@ public class AuthProvider {
   private final TokenManager tokenManager;
 
   public AuthProvider() {
-    this.client = HttpClient.newBuilder()
-        .followRedirects(HttpClient.Redirect.ALWAYS)
-        .build();
+    this.client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS).build();
     this.tokenManager = new TokenManager();
   }
 
   public Optional<String> getAccessToken() {
-    return tokenManager.getAccessToken()
-        .or(()->tokenManager.getRefreshToken()
-            .flatMap(this::refreshAccessToken));
+    return tokenManager
+        .getAccessToken()
+        .or(() -> tokenManager.getRefreshToken().flatMap(this::refreshAccessToken));
   }
 
   public String loginToRepository() {
@@ -62,12 +60,13 @@ public class AuthProvider {
     payload.put("refresh_token", refreshToken);
     payload.put("client_id", CLIENT_ID);
 
-    HttpRequest request = HttpRequest.newBuilder()
-        .uri(URI.create(TOKEN_ENDPOINT))
-        .header("Content-Type", "application/json")
-        .header("Accept", "application/json")
-        .POST(HttpRequest.BodyPublishers.ofString(payload.toString()))
-        .build();
+    HttpRequest request =
+        HttpRequest.newBuilder()
+            .uri(URI.create(TOKEN_ENDPOINT))
+            .header("Content-Type", "application/json")
+            .header("Accept", "application/json")
+            .POST(HttpRequest.BodyPublishers.ofString(payload.toString()))
+            .build();
 
     try {
       HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -79,13 +78,15 @@ public class AuthProvider {
         String newAccessToken = jsonResponse.getString("access_token");
         tokenManager.setAccessToken(newAccessToken);
 
-        //Support rotating refresh tokens if enabled
-        String newRefreshToken = jsonResponse.containsKey("refresh_token") ?
-            jsonResponse.getString("refresh_token") : refreshToken;
+        // Support rotating refresh tokens if enabled
+        String newRefreshToken =
+            jsonResponse.containsKey("refresh_token")
+                ? jsonResponse.getString("refresh_token")
+                : refreshToken;
         tokenManager.setRefreshToken(newRefreshToken);
 
         return Optional.of(newAccessToken);
-      } else if (statusCode == 403 ) {
+      } else if (statusCode == 403) {
         log.warn(new JsonObject(response.body()).getString("error_description"));
       } else {
         log.error("Error during token refresh: {}", response.body());
@@ -104,8 +105,7 @@ public class AuthProvider {
       CompletableFuture<JsonObject> tokenFuture = new CompletableFuture<>();
 
       vertx.deployVerticle(
-          new OAuthCallbackVerticle(
-              code -> exchangeCodeForToken(code, tokenFuture)));
+          new OAuthCallbackVerticle(code -> exchangeCodeForToken(code, tokenFuture)));
 
       openAuthWindow();
 
@@ -123,39 +123,51 @@ public class AuthProvider {
   }
 
   private void exchangeCodeForToken(String code, CompletableFuture<JsonObject> tokenFuture) {
-    JsonObject payload = new JsonObject()
-        .put("grant_type", "authorization_code")
-        .put("client_id", CLIENT_ID)
-        .put("code_verifier", codeVerifier)
-        .put("code", code)
-        .put("redirect_uri", REDIRECT_URI);
+    JsonObject payload =
+        new JsonObject()
+            .put("grant_type", "authorization_code")
+            .put("client_id", CLIENT_ID)
+            .put("code_verifier", codeVerifier)
+            .put("code", code)
+            .put("redirect_uri", REDIRECT_URI);
 
-    HttpRequest request = HttpRequest.newBuilder().uri(URI.create(TOKEN_ENDPOINT))
-        .header("Content-Type", "application/json")
-        .POST(HttpRequest.BodyPublishers.ofString(payload.toString())).build();
+    HttpRequest request =
+        HttpRequest.newBuilder()
+            .uri(URI.create(TOKEN_ENDPOINT))
+            .header("Content-Type", "application/json")
+            .POST(HttpRequest.BodyPublishers.ofString(payload.toString()))
+            .build();
 
-    client.sendAsync(request, BodyHandlers.ofString())
+    client
+        .sendAsync(request, BodyHandlers.ofString())
         .thenAccept(response -> tokenFuture.complete(new JsonObject(response.body())))
-        .exceptionally(throwable -> {
-          tokenFuture.completeExceptionally(throwable);
-          return null;
-        });
+        .exceptionally(
+            throwable -> {
+              tokenFuture.completeExceptionally(throwable);
+              return null;
+            });
   }
 
   private void openAuthWindow() throws IOException {
-    Map<String, String> parameters = Map.of(
-      "response_type", "code",
-      "client_id", CLIENT_ID,
-      "redirect_uri", REDIRECT_URI,
-      "scope", "offline_access",
-      "state", state,
-      "audience", AUDIENCE,
-      "code_challenge", codeChallenge,
-      "code_challenge_method", "S256");
+    Map<String, String> parameters =
+        Map.of(
+            "response_type", "code",
+            "client_id", CLIENT_ID,
+            "redirect_uri", REDIRECT_URI,
+            "scope", "offline_access",
+            "state", state,
+            "audience", AUDIENCE,
+            "code_challenge", codeChallenge,
+            "code_challenge_method", "S256");
 
-    String paramString = parameters.entrySet().stream()
-        .map(entry -> entry.getKey() + "=" + URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8))
-        .collect(Collectors.joining("&"));
+    String paramString =
+        parameters.entrySet().stream()
+            .map(
+                entry ->
+                    entry.getKey()
+                        + "="
+                        + URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8))
+            .collect(Collectors.joining("&"));
 
     String authUrl = AUTHORIZE_ENDPOINT + "?" + paramString;
 

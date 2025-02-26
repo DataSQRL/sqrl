@@ -22,12 +22,14 @@ public class BaseTableConfigImpl {
   public static final String IDENTIFIER_KEY = "identifier";
 
   String type;
+  @Default String canonicalizer = DEFAULT_CANONICALIZER;
+
   @Default
-  String canonicalizer = DEFAULT_CANONICALIZER;
-  @Default @Getter @MinLength(min = 1)
+  @Getter
+  @MinLength(min = 1)
   String identifier = null;
-  @Default @Getter
-  String schema = null;
+
+  @Default @Getter String schema = null;
 
   public NameCanonicalizer getCanonicalizer() {
     return CanonicalizerConfiguration.valueOf(canonicalizer).getCanonicalizer();
@@ -40,6 +42,4 @@ public class BaseTableConfigImpl {
   public ExternalDataType getType() {
     return ExternalDataType.valueOf(type);
   }
-
-
 }

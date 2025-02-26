@@ -15,13 +15,15 @@ public class TableSinkImpl extends AbstractExternalTable implements TableSink {
 
   public TableSinkImpl(
       @NonNull TableConfig configuration,
-      @NonNull NamePath path, @NonNull Name name,
+      @NonNull NamePath path,
+      @NonNull Name name,
       Optional<TableSchema> schema) {
     super(configuration, path, name, schema);
   }
 
-  public static TableSink create(TableConfig tableConfig, NamePath basePath, Optional<TableSchema> schema) {
-//    getErrors().checkFatal(getBase().getType().isSink(), "Table is not a sink: %s", name);
+  public static TableSink create(
+      TableConfig tableConfig, NamePath basePath, Optional<TableSchema> schema) {
+    //    getErrors().checkFatal(getBase().getType().isSink(), "Table is not a sink: %s", name);
     Name tableName = tableConfig.getName();
     return new TableSinkImpl(tableConfig, basePath.concat(tableName), tableName, schema);
   }

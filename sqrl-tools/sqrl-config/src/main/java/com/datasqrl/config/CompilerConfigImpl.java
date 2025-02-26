@@ -17,12 +17,16 @@ public class CompilerConfigImpl implements PackageJson.CompilerConfig {
   }
 
   public boolean isAddArguments() {
-    return sqrlConfig.asBool("addArguments")
-        .getOptional().orElse(true);
+    return sqrlConfig.asBool("addArguments").getOptional().orElse(true);
   }
+
   public boolean isExtendedScalarTypes() {
-    return sqrlConfig.asBool("extendedScalarTypes")
-            .getOptional().orElse(false); // by default don't use the extended scalar types (map PK as float) for backward compatibility
+    return sqrlConfig
+        .asBool("extendedScalarTypes")
+        .getOptional()
+        .orElse(
+            false); // by default don't use the extended scalar types (map PK as float) for backward
+                    // compatibility
   }
 
   @Override
@@ -33,5 +37,4 @@ public class CompilerConfigImpl implements PackageJson.CompilerConfig {
   public ExplainConfigImpl getExplain() {
     return new ExplainConfigImpl(sqrlConfig.getSubConfig("explain"));
   }
-
 }

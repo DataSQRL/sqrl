@@ -16,38 +16,40 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
 
-/**
- * Describes a physical execution engine and it's capabilities.
- */
+/** Describes a physical execution engine and it's capabilities. */
 public interface ExecutionEngine extends IExecutionEngine {
 
   /**
-   *
    * @param capability
    * @return whether the engine supports the given {@link EngineFeature}
    */
   boolean supports(EngineFeature capability);
 
   /**
-   *
    * @param function
    * @return whether the engine can execute the given function
    */
-//  boolean supports(FunctionDefinition function);
+  //  boolean supports(FunctionDefinition function);
 
   /**
-   * Returns the {@link TableConfig} for this engine so it can
-   * be used as a sink by a previous stage in the pipeline.
+   * Returns the {@link TableConfig} for this engine so it can be used as a sink by a previous stage
+   * in the pipeline.
+   *
    * @return
    */
   TableConfig getSinkConfig(String sinkName);
 
   /**
-   * Create the physical plan from the {@link StagePlan} produced by the {@link com.datasqrl.plan.global.DAGPlanner}
-   * for this engine.
+   * Create the physical plan from the {@link StagePlan} produced by the {@link
+   * com.datasqrl.plan.global.DAGPlanner} for this engine.
    */
-  EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs,
-      ExecutionPipeline pipeline, List<StagePlan> stagePlans, SqrlFramework framework, ErrorCollector errorCollector);
+  EnginePhysicalPlan plan(
+      StagePlan plan,
+      List<StageSink> inputs,
+      ExecutionPipeline pipeline,
+      List<StagePlan> stagePlans,
+      SqrlFramework framework,
+      ErrorCollector errorCollector);
 
   @AllArgsConstructor
   @Getter
@@ -67,6 +69,4 @@ public interface ExecutionEngine extends IExecutionEngine {
       throw new UnsupportedOperationException("Not a sink");
     }
   }
-
-
 }

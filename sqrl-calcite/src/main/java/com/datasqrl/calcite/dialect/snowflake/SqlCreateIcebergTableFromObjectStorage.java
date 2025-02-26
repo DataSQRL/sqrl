@@ -1,27 +1,24 @@
 package com.datasqrl.calcite.dialect.snowflake;
 
 import java.util.List;
+import java.util.Objects;
 import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.util.ImmutableNullableList;
 
-import java.util.Objects;
-
 /**
  * Iceberg files in object storage
  *
- * CREATE [ OR REPLACE ] ICEBERG TABLE [ IF NOT EXISTS ] <table_name>
- *   [ EXTERNAL_VOLUME = '<external_volume_name>' ]
- *   [ CATALOG = '<catalog_integration_name>' ]
- *   [ METADATA_FILE_PATH = '<metadata_file_path>' ]
- *   [ REPLACE_INVALID_CHARACTERS = { TRUE | FALSE } ]
- *   [ COMMENT = '<string_literal>' ]
- *   [ [ WITH ] TAG ( <tag_name> = '<tag_value>' [ , <tag_name> = '<tag_value>' , ... ] ) ]
+ * <p>CREATE [ OR REPLACE ] ICEBERG TABLE [ IF NOT EXISTS ] <table_name> [ EXTERNAL_VOLUME =
+ * '<external_volume_name>' ] [ CATALOG = '<catalog_integration_name>' ] [ METADATA_FILE_PATH =
+ * '<metadata_file_path>' ] [ REPLACE_INVALID_CHARACTERS = { TRUE | FALSE } ] [ COMMENT =
+ * '<string_literal>' ] [ [ WITH ] TAG ( <tag_name> = '<tag_value>' [ , <tag_name> = '<tag_value>' ,
+ * ... ] ) ]
  */
 public class SqlCreateIcebergTableFromObjectStorage extends SqlCall {
 
-  private static final SqlSpecialOperator OPERATOR = new SqlSpecialOperator("CREATE ICEBERG TABLE",
-      SqlKind.OTHER_DDL);
+  private static final SqlSpecialOperator OPERATOR =
+      new SqlSpecialOperator("CREATE ICEBERG TABLE", SqlKind.OTHER_DDL);
 
   private final SqlIdentifier tableName;
   private final SqlLiteral externalVolume;
@@ -34,10 +31,18 @@ public class SqlCreateIcebergTableFromObjectStorage extends SqlCall {
   private final boolean replace;
   private final boolean ifNotExists;
 
-  public SqlCreateIcebergTableFromObjectStorage(SqlParserPos pos, boolean replace, boolean ifNotExists,
+  public SqlCreateIcebergTableFromObjectStorage(
+      SqlParserPos pos,
+      boolean replace,
+      boolean ifNotExists,
       SqlIdentifier tableName,
-      SqlLiteral externalVolume, SqlLiteral catalog, SqlLiteral catalogTableName, SqlLiteral metadataFilePath,
-      SqlLiteral replaceInvalidCharacters, SqlLiteral comment, SqlNodeList tags) {
+      SqlLiteral externalVolume,
+      SqlLiteral catalog,
+      SqlLiteral catalogTableName,
+      SqlLiteral metadataFilePath,
+      SqlLiteral replaceInvalidCharacters,
+      SqlLiteral comment,
+      SqlNodeList tags) {
     super(pos);
     this.replace = replace;
     this.ifNotExists = ifNotExists;
@@ -58,8 +63,14 @@ public class SqlCreateIcebergTableFromObjectStorage extends SqlCall {
 
   @Override
   public List<SqlNode> getOperandList() {
-    return ImmutableNullableList.of(tableName, externalVolume, catalog, metadataFilePath,
-        replaceInvalidCharacters, comment, tags);
+    return ImmutableNullableList.of(
+        tableName,
+        externalVolume,
+        catalog,
+        metadataFilePath,
+        replaceInvalidCharacters,
+        comment,
+        tags);
   }
 
   @Override

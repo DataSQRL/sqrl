@@ -4,9 +4,8 @@
 package com.datasqrl.engine.database.relational.ddl.statements;
 
 import com.datasqrl.sql.SqlDDLStatement;
-import lombok.Value;
-
 import java.util.List;
+import lombok.Value;
 
 @Value
 public class CreateTableDDL implements SqlDDLStatement {
@@ -22,8 +21,7 @@ public class CreateTableDDL implements SqlDDLStatement {
       primaryKeyStr = String.format(" , PRIMARY KEY (%s)", String.join(",", primaryKeys));
     }
     String createTable = "CREATE TABLE IF NOT EXISTS %s (%s%s);";
-    String sql = String.format(createTable, name,
-        String.join(",", columns), primaryKeyStr);
+    String sql = String.format(createTable, name, String.join(",", columns), primaryKeyStr);
 
     return sql;
   }

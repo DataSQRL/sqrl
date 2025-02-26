@@ -1,7 +1,6 @@
 package com.datasqrl.plan.table;
 
 import com.datasqrl.io.tables.TableSchema;
-import java.net.URI;
 import java.nio.file.Path;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
@@ -12,6 +11,7 @@ import org.apache.calcite.rel.type.RelDataType;
 @Getter
 public class RelDataTypeTableSchema implements TableSchema {
   RelDataType relDataType;
+
   @Override
   public String getSchemaType() {
     return null;

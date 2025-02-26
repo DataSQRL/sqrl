@@ -32,17 +32,31 @@ public class SqlNodeFactory implements AbstractSqlNodeFactory {
 
   @Override
   public SqlNodeList createDistinctOnHintList(List<SqlNode> partitionKeys) {
-    return new SqlNodeList(List.of(new SqlHint(baseParserPos,
-        new SqlIdentifier("DISTINCT_ON", baseParserPos),
-        new SqlNodeList(partitionKeys, baseParserPos),
-        HintOptionFormat.ID_LIST
-    )), baseParserPos);
+    return new SqlNodeList(
+        List.of(
+            new SqlHint(
+                baseParserPos,
+                new SqlIdentifier("DISTINCT_ON", baseParserPos),
+                new SqlNodeList(partitionKeys, baseParserPos),
+                HintOptionFormat.ID_LIST)),
+        baseParserPos);
   }
 
   @Override
   public SqlSelect createSqlSelect() {
-    return new SqlSelect(baseParserPos,
-        SqlNodeList.EMPTY, null, null, null, null, null, SqlNodeList.EMPTY, null,null,null,null);
+    return new SqlSelect(
+        baseParserPos,
+        SqlNodeList.EMPTY,
+        null,
+        null,
+        null,
+        null,
+        null,
+        SqlNodeList.EMPTY,
+        null,
+        null,
+        null,
+        null);
   }
 
   @Override
@@ -60,10 +74,7 @@ public class SqlNodeFactory implements AbstractSqlNodeFactory {
     Objects.requireNonNull(alias, "alias must not be null");
 
     return SqlStdOperatorTable.AS.createCall(
-        SqlParserPos.ZERO,
-        node,
-        new SqlIdentifier(List.of(alias), SqlParserPos.ZERO)
-    );
+        SqlParserPos.ZERO, node, new SqlIdentifier(List.of(alias), SqlParserPos.ZERO));
   }
 
   @Override
@@ -81,7 +92,8 @@ public class SqlNodeFactory implements AbstractSqlNodeFactory {
 
   @Override
   public SqlNode createSelf() {
-    return callAs(toIdentifier(ReservedName.SELF_IDENTIFIER.getCanonical()),
+    return callAs(
+        toIdentifier(ReservedName.SELF_IDENTIFIER.getCanonical()),
         ReservedName.SELF_IDENTIFIER.getCanonical());
   }
 
@@ -104,8 +116,7 @@ public class SqlNodeFactory implements AbstractSqlNodeFactory {
         joinType.symbol(baseParserPos),
         rhs,
         JoinConditionType.NONE.symbol(baseParserPos),
-        null
-    );
+        null);
   }
 
   @Override

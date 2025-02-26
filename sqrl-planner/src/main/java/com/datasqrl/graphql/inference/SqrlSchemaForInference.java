@@ -32,13 +32,13 @@ public class SqrlSchemaForInference {
   private final Map<NamePath, SQRLTable> tableMap;
 
   public SqrlSchemaForInference(SqrlSchema schema) {
-    //Create all tables, including shadowed
+    // Create all tables, including shadowed
 
     List<SqrlTableMacro> tableFunctions = schema.getTableFunctions();
     Map<NamePath, SQRLTable> tables = new HashMap<>();
     for (SqrlTableMacro macro : tableFunctions) {
-      if (macro instanceof com.datasqrl.schema.Relationship &&
-          (((com.datasqrl.schema.Relationship)macro).getJoinType() != JoinType.CHILD)) continue;
+      if (macro instanceof com.datasqrl.schema.Relationship
+          && (((com.datasqrl.schema.Relationship) macro).getJoinType() != JoinType.CHILD)) continue;
       SQRLTable table = tables.get(macro.getAbsolutePath());
       if (table == null) {
         table = createSqrlTable(macro, schema);
@@ -46,18 +46,24 @@ public class SqrlSchemaForInference {
       }
     }
 
-    //Add relationships
+    // Add relationships
     for (SqrlTableMacro macro : tableFunctions) {
       if (macro instanceof com.datasqrl.schema.Relationship) {
         com.datasqrl.schema.Relationship rel = (com.datasqrl.schema.Relationship) macro;
         SQRLTable fromTable = tables.get(rel.getFullPath().popLast());
-        NamePath toNamePath = schema.getPathToAbsolutePathMap()
-            .get(rel.getFullPath());
+        NamePath toNamePath = schema.getPathToAbsolutePathMap().get(rel.getFullPath());
         SQRLTable toTable = tables.get(toNamePath);
 
-        Relationship relationship = new Relationship(fromTable, toTable, macro, rel.getName(),
-            rel.getFullPath().toStringList(),
-            rel.getParameters(), rel.getMultiplicity(), rel.getJoinType());
+        Relationship relationship =
+            new Relationship(
+                fromTable,
+                toTable,
+                macro,
+                rel.getName(),
+                rel.getFullPath().toStringList(),
+                rel.getParameters(),
+                rel.getMultiplicity(),
+                rel.getJoinType());
         fromTable.fields.add(relationship);
       }
     }
@@ -77,32 +83,34 @@ public class SqrlSchemaForInference {
         continue;
       }
 
-      sqrlTable.fields.add(new Column(field.getType(),
-          Name.system(field.getName()),
-          field.getName(),
-          isLocalPrimaryKey(table, i)));
+      sqrlTable.fields.add(
+          new Column(
+              field.getType(),
+              Name.system(field.getName()),
+              field.getName(),
+              isLocalPrimaryKey(table, i)));
     }
     return sqrlTable;
   }
 
   private boolean isLocalPrimaryKey(Table table, int i) {
     if (table instanceof PhysicalRelationalTable) {
-      return ((PhysicalRelationalTable)table).getPrimaryKey().contains(i);
+      return ((PhysicalRelationalTable) table).getPrimaryKey().contains(i);
     }
     return false;
   }
 
   public List<SQRLTable> getRootTables() {
     return tableMap.entrySet().stream()
-        .filter(f->f.getKey().size() == 1)
+        .filter(f -> f.getKey().size() == 1)
         .map(Entry::getValue)
         .collect(Collectors.toList());
   }
 
   public SQRLTable getRootSqrlTable(String fieldName) {
-    return  tableMap.entrySet().stream()
-        .filter(f->f.getKey().size() == 1)
-        .filter(f->f.getKey().get(0).equals(Name.system(fieldName)))
+    return tableMap.entrySet().stream()
+        .filter(f -> f.getKey().size() == 1)
+        .filter(f -> f.getKey().get(0).equals(Name.system(fieldName)))
         .map(Entry::getValue)
         .findFirst()
         .orElse(null);
@@ -111,11 +119,13 @@ public class SqrlSchemaForInference {
   public List<SQRLTable> getAllTables() {
     return new ArrayList<>(tableMap.values());
   }
-  public static abstract class Field {
+
+  public abstract static class Field {
     public abstract Name getName();
 
     public abstract <R, C> R accept(FieldVisitor<R, C> visitor, C context);
   }
+
   @AllArgsConstructor
   @Getter
   public static class Column extends Field {
@@ -141,11 +151,13 @@ public class SqrlSchemaForInference {
     List<FunctionParameter> parameters;
     Multiplicity multiplicity;
     JoinType joinType;
+
     @Override
     public <R, C> R accept(FieldVisitor<R, C> visitor, C context) {
       return visitor.visit(this, context);
     }
   }
+
   @AllArgsConstructor
   @Getter
   public static class SQRLTable {
@@ -167,9 +179,7 @@ public class SqrlSchemaForInference {
     }
 
     public Optional<Field> getField(Name name) {
-      return fields.stream()
-          .filter(f->f.getName().equals(name))
-          .findAny();
+      return fields.stream().filter(f -> f.getName().equals(name)).findAny();
     }
 
     public List<Column> getVisibleColumns() {
@@ -177,8 +187,7 @@ public class SqrlSchemaForInference {
     }
 
     public List<Column> getPrimaryKeys() {
-      return getFieldsByClass(Column.class, true)
-          .stream()
+      return getFieldsByClass(Column.class, true).stream()
           .filter(Column::isPrimaryKey)
           .collect(Collectors.toList());
     }
@@ -192,17 +201,18 @@ public class SqrlSchemaForInference {
     }
 
     public <T extends Field> List<T> getFieldsByClass(Class<T> clazz, boolean onlyVisible) {
-      return StreamUtil.filterByClass(fields.stream()
-                  .filter(f->
-                      onlyVisible
-                          ? !f.getName().getDisplay().startsWith(ReservedName.HIDDEN_PREFIX)
-                          : true),
+      return StreamUtil.filterByClass(
+              fields.stream()
+                  .filter(
+                      f ->
+                          onlyVisible
+                              ? !f.getName().getDisplay().startsWith(ReservedName.HIDDEN_PREFIX)
+                              : true),
               clazz)
           .collect(Collectors.toList());
     }
 
-    public <R, C> R accept(SQRLTable.SqrlTableVisitor<R, C> visitor,
-        C context) {
+    public <R, C> R accept(SQRLTable.SqrlTableVisitor<R, C> visitor, C context) {
       return visitor.visit(this, context);
     }
 
@@ -222,12 +232,14 @@ public class SqrlSchemaForInference {
 
   public static interface FieldVisitor<R, C> {
     R visit(Column column, C context);
+
     R visit(Relationship column, C context);
   }
 
   public <R, C> R accept(CalciteSchemaVisitor<R, C> visitor, C context) {
     return visitor.visit(this, context);
   }
+
   public interface CalciteSchemaVisitor<R, C> {
 
     R visit(SqrlSchemaForInference schema, C context);

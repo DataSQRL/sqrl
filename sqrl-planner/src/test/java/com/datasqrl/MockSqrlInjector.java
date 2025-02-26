@@ -6,12 +6,12 @@ import com.datasqrl.calcite.SqrlTableFactory;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.config.PackageJson;
-import com.datasqrl.config.TableConfigLoader;
+import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.config.SqrlCompilerConfiguration;
 import com.datasqrl.config.SqrlConfigPipeline;
 import com.datasqrl.config.SqrlRelBuilder;
+import com.datasqrl.config.TableConfigLoader;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIConnectorManager;
@@ -41,8 +41,13 @@ public class MockSqrlInjector extends AbstractModule {
   private final TableConfigLoader tableConfigFactory;
   private final Optional<Path> errorDir;
 
-  public MockSqrlInjector(ErrorCollector errors, PackageJson config, Optional<Path> errorDir,
-      Path rootDir, Map<NamePath, SqrlModule> addlModules, TableConfigLoader tableConfigFactory) {
+  public MockSqrlInjector(
+      ErrorCollector errors,
+      PackageJson config,
+      Optional<Path> errorDir,
+      Path rootDir,
+      Map<NamePath, SqrlModule> addlModules,
+      TableConfigLoader tableConfigFactory) {
     this.errors = errors;
     this.config = config;
     this.rootDir = rootDir;
@@ -112,15 +117,14 @@ public class MockSqrlInjector extends AbstractModule {
   @Provides
   public ResourceResolver provideResourceResolver() {
     if (rootDir == null) {
-      return new FileResourceResolver(Path.of("../sqrl-testing/sqrl-integration-tests/src/test/resources/dagplanner"));
+      return new FileResourceResolver(
+          Path.of("../sqrl-testing/sqrl-integration-tests/src/test/resources/dagplanner"));
     }
     return new FileResourceResolver(rootDir);
   }
-
 
   @Provides
   public PackageJson provideSqrlConfig() {
     return config;
   }
-
 }

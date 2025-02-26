@@ -56,8 +56,7 @@ public class RemoteRepositoryImplementation implements Repository, PublishReposi
   private final AuthProvider authProvider = new AuthProvider();
 
   private final URI repositoryServerURI;
-  @Setter
-  private CacheRepository cacheRepository = null;
+  @Setter private CacheRepository cacheRepository = null;
 
   public RemoteRepositoryImplementation(URI repositoryServerURI) {
     this.repositoryServerURI = repositoryServerURI;
@@ -69,12 +68,15 @@ public class RemoteRepositoryImplementation implements Repository, PublishReposi
 
   @Override
   public boolean retrieveDependency(Path targetPath, Dependency dependency) {
-    JsonNode dependencyInfo = getDependencyInfo(dependency.getName(), dependency.getVersion().get(), dependency.getVariant());
+    JsonNode dependencyInfo =
+        getDependencyInfo(
+            dependency.getName(), dependency.getVersion().get(), dependency.getVariant());
     return downloadDependency(targetPath, dependencyInfo, dependency);
   }
 
   // Downloads the given Dependency to the specified Path
-  private boolean downloadDependency(Path targetPath, JsonNode dependencyInfo, Dependency dependency) {
+  private boolean downloadDependency(
+      Path targetPath, JsonNode dependencyInfo, Dependency dependency) {
     String hash = dependencyInfo.get("hash").asText();
     String repoURL = dependencyInfo.get("repoURL").asText();
 
@@ -128,27 +130,26 @@ public class RemoteRepositoryImplementation implements Repository, PublishReposi
     Optional<String> authToken = authProvider.getAccessToken();
 
     URI uri = buildPackageInfoUri(name, version, variant);
-	HttpRequest.Builder requestBuilder =
-        HttpRequest.newBuilder()
-            .uri(uri);
+    HttpRequest.Builder requestBuilder = HttpRequest.newBuilder().uri(uri);
     authToken.ifPresent((t) -> requestBuilder.header("Authorization", "Bearer " + t));
-    requestBuilder.GET()
-            .timeout(Duration.of(10, ChronoUnit.SECONDS))
-            .build();
+    requestBuilder.GET().timeout(Duration.of(10, ChronoUnit.SECONDS)).build();
 
     HttpResponse<String> response;
-	try {
-		response = client.send(requestBuilder.build(), BodyHandlers.ofString());
-	} catch (HttpConnectTimeoutException e) {
-		HttpConnectTimeoutException error = new HttpConnectTimeoutException(String.format("HTTP connect timed out. uri: %s", repositoryServerURI));
-		error.initCause(e);
-		throw error;
-	}
+    try {
+      response = client.send(requestBuilder.build(), BodyHandlers.ofString());
+    } catch (HttpConnectTimeoutException e) {
+      HttpConnectTimeoutException error =
+          new HttpConnectTimeoutException(
+              String.format("HTTP connect timed out. uri: %s", repositoryServerURI));
+      error.initCause(e);
+      throw error;
+    }
     int statusCode = response.statusCode();
     if (statusCode != 200) {
       String message =
           String.format(
-              "Package [%s] is not available. Check if it exists and you have permission to access uri %s",
+              "Package [%s] is not available. Check if it exists and you have permission to access"
+                  + " uri %s",
               name, uri);
       throw new RuntimeException(message);
     }
@@ -164,7 +165,8 @@ public class RemoteRepositoryImplementation implements Repository, PublishReposi
       throw new IllegalArgumentException("name cannot be null");
     }
 
-    StringBuilder uriBuilder = new StringBuilder(repositoryServerURI.toString()).append("/api/packages/").append(name);
+    StringBuilder uriBuilder =
+        new StringBuilder(repositoryServerURI.toString()).append("/api/packages/").append(name);
 
     // Append version and variant if provided
     if (version != null && variant != null) {
@@ -179,7 +181,8 @@ public class RemoteRepositoryImplementation implements Repository, PublishReposi
       mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
       return mapper.treeToValue(node, clazz);
     } catch (JsonProcessingException e) {
-      throw new RuntimeException("Unexpected response from repository server: " + node.toString(), e);
+      throw new RuntimeException(
+          "Unexpected response from repository server: " + node.toString(), e);
     }
   }
 
@@ -187,8 +190,11 @@ public class RemoteRepositoryImplementation implements Repository, PublishReposi
   @SneakyThrows
   public boolean publish(Path zipFile, PackageConfiguration pkgConfig) {
     try (CloseableHttpClient client = HttpClients.createDefault()) {
-      String authToken = authProvider.getAccessToken()
-          .orElseThrow(() -> new RuntimeException("Must be logged in to publish. Run `sqrl login`"));
+      String authToken =
+          authProvider
+              .getAccessToken()
+              .orElseThrow(
+                  () -> new RuntimeException("Must be logged in to publish. Run `sqrl login`"));
 
       HttpEntity httpEntity = createHttpEntity(zipFile, pkgConfig);
       HttpPost request = new HttpPost(repositoryServerURI.resolve("/api/packages").toString());
@@ -199,8 +205,10 @@ public class RemoteRepositoryImplementation implements Repository, PublishReposi
         if (response.getStatusLine().getStatusCode() == 200) {
           return true;
         } else {
-          log.error("An error happened while uploading dependency: status code: {} response: {}",
-              response.getStatusLine().getStatusCode(), EntityUtils.toString(response.getEntity()));
+          log.error(
+              "An error happened while uploading dependency: status code: {} response: {}",
+              response.getStatusLine().getStatusCode(),
+              EntityUtils.toString(response.getEntity()));
           return false;
         }
       }
@@ -218,7 +226,8 @@ public class RemoteRepositoryImplementation implements Repository, PublishReposi
       if (entry.getValue() instanceof List) {
         List<?> list = (List<?>) entry.getValue();
         for (int i = 0; i < list.size(); i++) {
-          entityBuilder.addTextBody(String.format("%s[%d]", entry.getKey(), i), list.get(i).toString());
+          entityBuilder.addTextBody(
+              String.format("%s[%d]", entry.getKey(), i), list.get(i).toString());
         }
       } else {
         entityBuilder.addTextBody(entry.getKey(), entry.getValue().toString());
@@ -226,7 +235,8 @@ public class RemoteRepositoryImplementation implements Repository, PublishReposi
     }
 
     File zipFile = zipFilePath.toFile();
-    entityBuilder.addBinaryBody("file", zipFile, ContentType.create("application/zip"), zipFile.getName());
+    entityBuilder.addBinaryBody(
+        "file", zipFile, ContentType.create("application/zip"), zipFile.getName());
 
     return entityBuilder.build();
   }

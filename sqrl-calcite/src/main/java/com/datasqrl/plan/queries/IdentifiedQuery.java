@@ -8,9 +8,8 @@ public interface IdentifiedQuery {
   String getNameId();
 
   /**
-   * @return If this query defines a view, it returns the name of the underlying table that defined it,
-   *    * else it returns empty
+   * @return If this query defines a view, it returns the name of the underlying table that defined
+   *     it, * else it returns empty
    */
   public Optional<Name> getViewName();
-
 }

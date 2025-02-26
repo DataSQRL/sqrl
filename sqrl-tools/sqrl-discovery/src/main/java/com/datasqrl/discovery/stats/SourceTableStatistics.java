@@ -3,18 +3,18 @@
  */
 package com.datasqrl.discovery.stats;
 
-import com.datasqrl.canonicalizer.NameCanonicalizer;
-import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.error.ErrorCollector;
 import com.google.common.base.Preconditions;
 import java.util.Map;
 import lombok.ToString;
 
 @ToString
-public class SourceTableStatistics implements
-    Accumulator<Map<String,Object>, SourceTableStatistics, Void>,
-    Metric<SourceTableStatistics> {
+public class SourceTableStatistics
+    implements Accumulator<Map<String, Object>, SourceTableStatistics, Void>,
+        Metric<SourceTableStatistics> {
 
   final RelationStats relation;
 
@@ -22,16 +22,14 @@ public class SourceTableStatistics implements
     this.relation = new RelationStats();
   }
 
-
-  public ErrorCollector validate(Map<String, Object> data,
-      ErrorCollector errors) {
+  public ErrorCollector validate(Map<String, Object> data, ErrorCollector errors) {
     RelationStats.validate(data, errors, NameCanonicalizer.SYSTEM);
     return errors;
   }
 
   @Override
   public void add(Map<String, Object> data, Void context) {
-    //TODO: Analyze timestamps on record
+    // TODO: Analyze timestamps on record
     relation.add(data, NameCanonicalizer.SYSTEM);
   }
 
@@ -53,13 +51,15 @@ public class SourceTableStatistics implements
         return RelationStats.EMPTY;
       }
       Preconditions.checkNotNull(field, "Could not find nested table: %s", n);
-      current = field.types.values().stream()
-          .filter(fts -> fts.nestedRelationStats != null)
-          .map(fts -> fts.nestedRelationStats)
-          .reduce((a, b) -> {
-            throw new IllegalStateException("Expected single RelationStats for nested");
-          })
-          .orElse(RelationStats.EMPTY);
+      current =
+          field.types.values().stream()
+              .filter(fts -> fts.nestedRelationStats != null)
+              .map(fts -> fts.nestedRelationStats)
+              .reduce(
+                  (a, b) -> {
+                    throw new IllegalStateException("Expected single RelationStats for nested");
+                  })
+              .orElse(RelationStats.EMPTY);
     }
     return current;
   }

@@ -30,14 +30,13 @@ public class TimestampType extends AbstractBasicType<Instant> {
     return Conversion.INSTANCE;
   }
 
-  private static class StringParser implements Function<String,Instant> {
+  private static class StringParser implements Function<String, Instant> {
 
     DateTimeFormatter[] formatters = {
-        DateTimeFormatter.ISO_INSTANT,
-        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSX"),
-        DateTimeFormatter.ISO_DATE_TIME.withZone(ZoneId.systemDefault()),
-        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.SSS]")
-            .withZone(ZoneId.systemDefault())
+      DateTimeFormatter.ISO_INSTANT,
+      DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSX"),
+      DateTimeFormatter.ISO_DATE_TIME.withZone(ZoneId.systemDefault()),
+      DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.SSS]").withZone(ZoneId.systemDefault())
     };
 
     @Override
@@ -46,7 +45,7 @@ public class TimestampType extends AbstractBasicType<Instant> {
         try {
           return formatter.parse(s, Instant::from);
         } catch (DateTimeParseException e) {
-          //try next formatter
+          // try next formatter
         }
       }
       throw new IllegalArgumentException();
@@ -79,6 +78,5 @@ public class TimestampType extends AbstractBasicType<Instant> {
       }
       return Optional.empty();
     }
-
   }
 }

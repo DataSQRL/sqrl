@@ -14,19 +14,19 @@ public class SqrlHintStrategyTable {
   public static final SqrlHint INTERVAL_JOIN = SqrlHint.of("IntervalJoin");
 
   @Getter
-  static HintStrategyTable hintStrategyTable = HintStrategyTable.builder()
-      .hintStrategy(JoinModifierHint.HINT_NAME, HintPredicates.JOIN)
-      .hintStrategy(TopNHint.Type.DISTINCT_ON.name(), HintPredicates.PROJECT)
-      .hintStrategy(TopNHint.Type.SELECT_DISTINCT.name(), HintPredicates.PROJECT)
-      .hintStrategy(TopNHint.Type.TOP_N.name(), HintPredicates.PROJECT)
-      .hintStrategy(NOOP, HintPredicates.PROJECT)
-      .hintStrategy(JoinCostHint.HINT_NAME, HintPredicates.JOIN)
-      .hintStrategy(SlidingAggregationHint.HINT_NAME, HintPredicates.AGGREGATE)
-      .hintStrategy(TumbleAggregationHint.HINT_NAME, HintPredicates.AGGREGATE)
-      .hintStrategy(TemporalJoinHint.HINT_NAME, HintPredicates.JOIN)
-      .hintStrategy(INTERVAL_JOIN.getHintName(), HintPredicates.JOIN)
-      .hintStrategy(DedupHint.HINT_NAME, HintPredicates.PROJECT)
-      .hintStrategy(TimestampHint.HINT_NAME, HintPredicates.PROJECT)
-      .build();
-
+  static HintStrategyTable hintStrategyTable =
+      HintStrategyTable.builder()
+          .hintStrategy(JoinModifierHint.HINT_NAME, HintPredicates.JOIN)
+          .hintStrategy(TopNHint.Type.DISTINCT_ON.name(), HintPredicates.PROJECT)
+          .hintStrategy(TopNHint.Type.SELECT_DISTINCT.name(), HintPredicates.PROJECT)
+          .hintStrategy(TopNHint.Type.TOP_N.name(), HintPredicates.PROJECT)
+          .hintStrategy(NOOP, HintPredicates.PROJECT)
+          .hintStrategy(JoinCostHint.HINT_NAME, HintPredicates.JOIN)
+          .hintStrategy(SlidingAggregationHint.HINT_NAME, HintPredicates.AGGREGATE)
+          .hintStrategy(TumbleAggregationHint.HINT_NAME, HintPredicates.AGGREGATE)
+          .hintStrategy(TemporalJoinHint.HINT_NAME, HintPredicates.JOIN)
+          .hintStrategy(INTERVAL_JOIN.getHintName(), HintPredicates.JOIN)
+          .hintStrategy(DedupHint.HINT_NAME, HintPredicates.PROJECT)
+          .hintStrategy(TimestampHint.HINT_NAME, HintPredicates.PROJECT)
+          .build();
 }

@@ -26,18 +26,14 @@ import org.apache.calcite.util.Litmus;
 import org.checkerframework.checker.units.qual.C;
 
 @Getter
-public final class ScriptNode
-    extends SqlNode {
+public final class ScriptNode extends SqlNode {
 
   private final List<SqlNode> statements;
-  @Setter
-  private String originalScript;
+  @Setter private String originalScript;
 
-  @Setter
-  private Optional<Path> scriptPath;
+  @Setter private Optional<Path> scriptPath;
 
-  public ScriptNode(SqlParserPos location,
-      List<SqlNode> statements) {
+  public ScriptNode(SqlParserPos location, List<SqlNode> statements) {
     super(location);
     this.statements = statements;
   }
@@ -58,14 +54,10 @@ public final class ScriptNode
   }
 
   @Override
-  public void unparse(SqlWriter sqlWriter, int i, int i1) {
-
-  }
+  public void unparse(SqlWriter sqlWriter, int i, int i1) {}
 
   @Override
-  public void validate(SqlValidator sqlValidator, SqlValidatorScope sqlValidatorScope) {
-
-  }
+  public void validate(SqlValidator sqlValidator, SqlValidatorScope sqlValidatorScope) {}
 
   @Override
   public <R> R accept(SqlVisitor<R> sqlVisitor) {

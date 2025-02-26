@@ -20,8 +20,8 @@ public class PhysicalPlan {
   List<StagePlan> stagePlans;
 
   public Map<IdentifiedQuery, QueryTemplate> getDatabaseQueries() {
-    return getPlans(DatabasePhysicalPlan.class).flatMap(
-            dbPlan -> dbPlan.getQueryPlans().entrySet().stream())
+    return getPlans(DatabasePhysicalPlan.class)
+        .flatMap(dbPlan -> dbPlan.getQueryPlans().entrySet().stream())
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
 
@@ -34,8 +34,5 @@ public class PhysicalPlan {
 
     ExecutionStage stage;
     EnginePhysicalPlan plan;
-
   }
-
-
 }

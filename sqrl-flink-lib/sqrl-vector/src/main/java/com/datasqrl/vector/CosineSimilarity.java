@@ -6,9 +6,7 @@ import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.flink.table.functions.ScalarFunction;
 
-/**
- * Computes the cosine similarity between two vectors
- */
+/** Computes the cosine similarity between two vectors */
 public class CosineSimilarity extends ScalarFunction {
 
   public double eval(FlinkVectorType vectorA, FlinkVectorType vectorB) {

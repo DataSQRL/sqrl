@@ -2,7 +2,10 @@ package com.datasqrl.vector;
 
 import org.apache.flink.table.annotation.DataTypeHint;
 
-@DataTypeHint(value = "RAW", bridgedTo = FlinkVectorType.class, rawSerializer = FlinkVectorTypeSerializer.class)
+@DataTypeHint(
+    value = "RAW",
+    bridgedTo = FlinkVectorType.class,
+    rawSerializer = FlinkVectorTypeSerializer.class)
 public class FlinkVectorType {
   public double[] value;
 

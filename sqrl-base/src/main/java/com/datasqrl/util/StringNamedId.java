@@ -25,6 +25,4 @@ public class StringNamedId implements NamedIdentifier {
   public String toString() {
     return id;
   }
-
-
 }

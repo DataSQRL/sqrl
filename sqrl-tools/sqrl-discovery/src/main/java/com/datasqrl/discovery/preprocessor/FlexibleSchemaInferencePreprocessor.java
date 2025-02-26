@@ -1,6 +1,5 @@
 package com.datasqrl.discovery.preprocessor;
 
-
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.ConnectorFactory;
@@ -14,12 +13,12 @@ import com.datasqrl.discovery.file.FileCompression.CompressionIO;
 import com.datasqrl.discovery.file.FilenameAnalyzer;
 import com.datasqrl.discovery.file.FilenameAnalyzer.Components;
 import com.datasqrl.discovery.file.RecordReader;
+import com.datasqrl.discovery.stats.DefaultSchemaGenerator;
+import com.datasqrl.discovery.stats.SourceTableStatistics;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.schema.flexible.FlexibleTableSchemaHolder;
 import com.datasqrl.io.schema.flexible.converters.SchemaToRelDataTypeFactory;
 import com.datasqrl.io.tables.TableSource;
-import com.datasqrl.discovery.stats.DefaultSchemaGenerator;
-import com.datasqrl.discovery.stats.SourceTableStatistics;
 import com.datasqrl.schema.input.FlexibleTableSchema;
 import com.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.datasqrl.util.CalciteUtil;
@@ -48,7 +47,7 @@ import org.apache.calcite.rel.type.RelDataTypeField;
 @Slf4j
 public class FlexibleSchemaInferencePreprocessor implements DiscoveryPreprocessor {
 
-  public static final Set<String> DATA_FILE_EXTENSIONS = Set.of("jsonl","csv");
+  public static final Set<String> DATA_FILE_EXTENSIONS = Set.of("jsonl", "csv");
 
   private static final FilenameAnalyzer DATA_FILES = FilenameAnalyzer.of(DATA_FILE_EXTENSIONS);
 
@@ -57,7 +56,8 @@ public class FlexibleSchemaInferencePreprocessor implements DiscoveryPreprocesso
 
   @Inject
   public FlexibleSchemaInferencePreprocessor(ConnectorFactoryFactory connectorFactoryFactory) {
-    this.connectorFactory = connectorFactoryFactory.create(SystemBuiltInConnectors.LOCAL_FILE_SOURCE);
+    this.connectorFactory =
+        connectorFactoryFactory.create(SystemBuiltInConnectors.LOCAL_FILE_SOURCE);
   }
 
   @Override
@@ -68,58 +68,78 @@ public class FlexibleSchemaInferencePreprocessor implements DiscoveryPreprocesso
   @Override
   public void discoverFile(Path file, ProcessorContext processorContext, ErrorCollector errors) {
     if (connectorFactory.isEmpty()) {
-      errors.warn("No connector template defined for local filesystem. Cannot run schema inference.");
-      return; //Profile is missing connector for local files
+      errors.warn(
+          "No connector template defined for local filesystem. Cannot run schema inference.");
+      return; // Profile is missing connector for local files
     }
     Optional<Components> match = DATA_FILES.analyze(file);
     if (match.isPresent()) {
-      //1. Setup file reading
+      // 1. Setup file reading
       Components fileComponents = match.get();
       Path parentDir = file.getParent();
-      if (parentDir==null) return;
+      if (parentDir == null) return;
       if (!Name.isValidNameStrict(fileComponents.getFilename())) return;
       Name tableName = Name.system(fileComponents.getFilename());
-      if (hasSchemaOrConfig(parentDir, tableName)) return; //Don't infer schema if it's already present
+      if (hasSchemaOrConfig(parentDir, tableName))
+        return; // Don't infer schema if it's already present
       Optional<CompressionIO> compressor = FileCompression.of(fileComponents.getCompression());
-      Optional<RecordReader> reader = ServiceLoaderDiscovery.findFirst(RecordReader.class,
-          r -> r.getExtensions().contains(fileComponents.getExtension()));
+      Optional<RecordReader> reader =
+          ServiceLoaderDiscovery.findFirst(
+              RecordReader.class, r -> r.getExtensions().contains(fileComponents.getExtension()));
       if (reader.isEmpty()) {
-        errors.warn("Could not infer schema for data file [%s] because file reader for extension could not be found: %s", file, fileComponents.getExtension());
-        return; //Unsupported file type
+        errors.warn(
+            "Could not infer schema for data file [%s] because file reader for extension could not"
+                + " be found: %s",
+            file, fileComponents.getExtension());
+        return; // Unsupported file type
       }
       if (compressor.isEmpty()) {
-        errors.warn("Could not infer schema for data file [%s] because compression codec is not supported: %s", file, fileComponents.getCompression());
-        return; //Compression not supported
+        errors.warn(
+            "Could not infer schema for data file [%s] because compression codec is not supported:"
+                + " %s",
+            file, fileComponents.getCompression());
+        return; // Compression not supported
       }
-      //2. Compute table statistics from file records
+      // 2. Compute table statistics from file records
       Optional<SourceTableStatistics> statistics;
       try (InputStream io = compressor.get().decompress(new FileInputStream(file.toFile()))) {
-        Stream<Map<String,Object>> dataflow = reader.get().read(io);
-        statistics = dataflow.flatMap(data -> {
-          SourceTableStatistics acc = new SourceTableStatistics();
-          ErrorCollector stepErrors = ErrorCollector.root();
-          acc.validate(data, stepErrors);
-          if (!errors.isFatal()) {
-            acc.add(data, null);
-            return Stream.of(acc);
-          } else {
-            log.warn("Encountered error reading data record: {}\nError: {}", data, stepErrors);
-            return Stream.empty();
-          }
-        }).reduce((base, add) -> {
-          base.merge(add);
-          return base;
-        });
+        Stream<Map<String, Object>> dataflow = reader.get().read(io);
+        statistics =
+            dataflow
+                .flatMap(
+                    data -> {
+                      SourceTableStatistics acc = new SourceTableStatistics();
+                      ErrorCollector stepErrors = ErrorCollector.root();
+                      acc.validate(data, stepErrors);
+                      if (!errors.isFatal()) {
+                        acc.add(data, null);
+                        return Stream.of(acc);
+                      } else {
+                        log.warn(
+                            "Encountered error reading data record: {}\nError: {}",
+                            data,
+                            stepErrors);
+                        return Stream.empty();
+                      }
+                    })
+                .reduce(
+                    (base, add) -> {
+                      base.merge(add);
+                      return base;
+                    });
       } catch (IOException e) {
         errors.warn("Could not infer schema of file [%s] due to IO error: %s", file, e);
         return;
       }
-      if (statistics.isEmpty() || statistics.get().getCount()==0) {
-        errors.warn("Could not infer schema for data file [%s] because it contained no valid records", file);
-        return; //No data
+      if (statistics.isEmpty() || statistics.get().getCount() == 0) {
+        errors.warn(
+            "Could not infer schema for data file [%s] because it contained no valid records",
+            file);
+        return; // No data
       }
-      //3. Infer schema from table statistics
-      DefaultSchemaGenerator generator = new DefaultSchemaGenerator(SchemaAdjustmentSettings.DEFAULT);
+      // 3. Infer schema from table statistics
+      DefaultSchemaGenerator generator =
+          new DefaultSchemaGenerator(SchemaAdjustmentSettings.DEFAULT);
       FlexibleTableSchema schema;
       ErrorCollector subErrors = errors.resolve(tableName.getDisplay());
       schema = generator.mergeSchema(statistics.get(), tableName, subErrors);
@@ -128,22 +148,36 @@ public class FlexibleSchemaInferencePreprocessor implements DiscoveryPreprocesso
         return;
       }
       FlexibleTableSchemaHolder schemaHolder = new FlexibleTableSchemaHolder(schema);
-      //4. Infer primary key
-      RelDataType rowType = SchemaToRelDataTypeFactory.load(schemaHolder)
-          .map(schemaHolder, null, tableName, errors);
-      //We use a conservative method where each simple column is a primary key column
-      String[] primaryKey = rowType.getFieldList().stream().filter(f -> !f.getType().isNullable() && CalciteUtil.isPotentialPrimaryKeyType(f.getType()))
-          .map(RelDataTypeField::getName).toArray(String[]::new);
+      // 4. Infer primary key
+      RelDataType rowType =
+          SchemaToRelDataTypeFactory.load(schemaHolder).map(schemaHolder, null, tableName, errors);
+      // We use a conservative method where each simple column is a primary key column
+      String[] primaryKey =
+          rowType.getFieldList().stream()
+              .filter(
+                  f ->
+                      !f.getType().isNullable()
+                          && CalciteUtil.isPotentialPrimaryKeyType(f.getType()))
+              .map(RelDataTypeField::getName)
+              .toArray(String[]::new);
 
-
-      //5. Create table configuration
-      TableConfig table = connectorFactory.get().createSourceAndSink(new ConnectorFactoryContext(tableName,
-          Map.of("format",reader.get().getFormat(),
-              "filename", file.getFileName().toString(),
-              "primary-key", primaryKey)));
-      TableSource tableSource = TableSource.create(table, processorContext.getName().orElse(
-          NamePath.ROOT), schemaHolder);
-      //6. Write files and add
+      // 5. Create table configuration
+      TableConfig table =
+          connectorFactory
+              .get()
+              .createSourceAndSink(
+                  new ConnectorFactoryContext(
+                      tableName,
+                      Map.of(
+                          "format",
+                          reader.get().getFormat(),
+                          "filename",
+                          file.getFileName().toString(),
+                          "primary-key",
+                          primaryKey)));
+      TableSource tableSource =
+          TableSource.create(table, processorContext.getName().orElse(NamePath.ROOT), schemaHolder);
+      // 6. Write files and add
       try {
         Collection<Path> writtenFiles = writer.writeToFile(parentDir, tableSource);
         writtenFiles.forEach(processorContext::addDependency);
@@ -157,8 +191,8 @@ public class FlexibleSchemaInferencePreprocessor implements DiscoveryPreprocesso
    * This is a conservative way of checking if a given table already has a schema or configuration
    * in the given directory.
    *
-   * We check if there is any file that starts with the tablename followed by an extension separator
-   * (i.e. '.').
+   * <p>We check if there is any file that starts with the tablename followed by an extension
+   * separator (i.e. '.').
    *
    * @param dir
    * @param tableName
@@ -168,14 +202,15 @@ public class FlexibleSchemaInferencePreprocessor implements DiscoveryPreprocesso
   private boolean hasSchemaOrConfig(Path dir, Name tableName) {
     int length = tableName.length();
     try (Stream<Path> paths = Files.list(dir)) {
-      return paths.map(p -> p.getFileName().toString())
-          .anyMatch(f -> f.length()>length &&
-              Name.system(f.substring(0, length)).equals(tableName) &&
-              filterExtensions.contains(f.substring(length).toLowerCase()));
+      return paths
+          .map(p -> p.getFileName().toString())
+          .anyMatch(
+              f ->
+                  f.length() > length
+                      && Name.system(f.substring(0, length)).equals(tableName)
+                      && filterExtensions.contains(f.substring(length).toLowerCase()));
     }
   }
 
   public static final Set<String> filterExtensions = Set.of(".table.json", "schema.yml");
-
-
 }

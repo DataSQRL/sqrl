@@ -15,7 +15,6 @@ import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedJdbcQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedPagedJdbcQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.SourceParameter;
 import graphql.schema.DataFetchingEnvironment;
-import io.micrometer.core.instrument.Counter;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
@@ -48,61 +47,65 @@ public class VertxQueryExecutionContext
   Promise<Object> future; // basically Vert.x completableFuture
 
   @Override
-  public CompletableFuture runQuery(GraphQLEngineBuilder server, ResolvedJdbcQuery pgQuery,
-      boolean isList) {
+  public CompletableFuture runQuery(
+      GraphQLEngineBuilder server, ResolvedJdbcQuery pgQuery, boolean isList) {
     final Object[] paramObj = getParamArguments(pgQuery.getQuery().getParameters());
 
     String database = getDatabaseName(pgQuery.getQuery());
 
     // execute the preparedQuery with the arguments extracted above
-    PreparedSqrlQueryImpl preparedQueryContainer = (PreparedSqrlQueryImpl) pgQuery.getPreparedQueryContainer();
+    PreparedSqrlQueryImpl preparedQueryContainer =
+        (PreparedSqrlQueryImpl) pgQuery.getPreparedQueryContainer();
     Future<RowSet<Row>> future;
     if (preparedQueryContainer == null) {
-      future = this.context.getSqlClient().execute(database,
-          pgQuery.getQuery().getSql(), Tuple.from(paramObj));
+      future =
+          this.context
+              .getSqlClient()
+              .execute(database, pgQuery.getQuery().getSql(), Tuple.from(paramObj));
     } else {
-      PreparedQuery<RowSet<Row>> preparedQuery = preparedQueryContainer
-          .getPreparedQuery();
-      future = this.context.getSqlClient().execute(database,
-          preparedQuery, Tuple.from(paramObj));
+      PreparedQuery<RowSet<Row>> preparedQuery = preparedQueryContainer.getPreparedQuery();
+      future = this.context.getSqlClient().execute(database, preparedQuery, Tuple.from(paramObj));
     }
     // map the resultSet to json for GraphQL response
     future
         .map(r -> resultMapper(r, isList))
         .onSuccess(result -> this.future.complete(result))
-        .onFailure(f -> {
-          f.printStackTrace();
-          this.future.fail(f);
-        });
+        .onFailure(
+            f -> {
+              f.printStackTrace();
+              this.future.fail(f);
+            });
     return new CompletableFuture();
   }
 
   @Override
-  public CompletableFuture runPagedJdbcQuery(ResolvedPagedJdbcQuery databaseQuery,
-      boolean isList, QueryExecutionContext context) {
+  public CompletableFuture runPagedJdbcQuery(
+      ResolvedPagedJdbcQuery databaseQuery, boolean isList, QueryExecutionContext context) {
     Optional<Integer> limit = Optional.ofNullable(getEnvironment().getArgument(LIMIT));
     Optional<Integer> offset = Optional.ofNullable(getEnvironment().getArgument(OFFSET));
     final Object[] paramArguments = getParamArguments(databaseQuery.getQuery().getParameters());
 
-    //Add limit + offset
-    final String query = String.format("SELECT * FROM (%s) x LIMIT %s OFFSET %s",
-        databaseQuery.getQuery().getSql(),
-        limit.map(Object::toString).orElse("ALL"),
-        offset.orElse(0)
-    );
+    // Add limit + offset
+    final String query =
+        String.format(
+            "SELECT * FROM (%s) x LIMIT %s OFFSET %s",
+            databaseQuery.getQuery().getSql(),
+            limit.map(Object::toString).orElse("ALL"),
+            offset.orElse(0));
 
     String database = getDatabaseName(databaseQuery.getQuery());
 
-    Future<RowSet<Row>> future = this.context.getSqlClient().execute(database,
-        query,Tuple.from(paramArguments));
+    Future<RowSet<Row>> future =
+        this.context.getSqlClient().execute(database, query, Tuple.from(paramArguments));
 
     future
-      .map(r -> resultMapper(r, isList))
-      .onSuccess(result -> this.future.complete(result))
-      .onFailure(f -> {
-        f.printStackTrace();
-        this.future.fail(f);
-      });
+        .map(r -> resultMapper(r, isList))
+        .onSuccess(result -> this.future.complete(result))
+        .onFailure(
+            f -> {
+              f.printStackTrace();
+              this.future.fail(f);
+            });
 
     return new CompletableFuture();
   }
@@ -118,26 +121,25 @@ public class VertxQueryExecutionContext
   }
 
   private Object resultMapper(RowSet<Row> r, boolean isList) {
-    List<JsonObject> o = StreamSupport.stream(r.spliterator(), false)
-        .map(Row::toJson)
-        .collect(Collectors.toList());
+    List<JsonObject> o =
+        StreamSupport.stream(r.spliterator(), false).map(Row::toJson).collect(Collectors.toList());
 
-    return isList
-        ? o
-        : (!o.isEmpty() ? o.get(0) : null);
+    return isList ? o : (!o.isEmpty() ? o.get(0) : null);
   }
 
   @SneakyThrows
   @Override
-  public Object visitSourceParameter(SourceParameter sourceParameter,
-      QueryExecutionContext context) {
-    return context.getContext().createPropertyFetcher(sourceParameter.getKey())
+  public Object visitSourceParameter(
+      SourceParameter sourceParameter, QueryExecutionContext context) {
+    return context
+        .getContext()
+        .createPropertyFetcher(sourceParameter.getKey())
         .get(context.getEnvironment());
   }
 
   @Override
-  public Object visitArgumentParameter(ArgumentParameter argumentParameter,
-      QueryExecutionContext context) {
+  public Object visitArgumentParameter(
+      ArgumentParameter argumentParameter, QueryExecutionContext context) {
     return context.getArguments().stream()
         .filter(arg -> arg.getPath().equalsIgnoreCase(argumentParameter.getPath()))
         .findFirst()

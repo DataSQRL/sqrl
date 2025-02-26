@@ -57,10 +57,20 @@ class PostgresRowConverterTest {
   @Test
   public void testArraySerializationAndDeserialization() throws Exception {
     try (Connection connection = postgres.createConnection("")) {
-      executeUpdate(connection, "CREATE TABLE test (id int, int_data int[], double_data double precision[], ts_data timestamptz[], double_data_2d double precision[][], row_data bytea)");
+      executeUpdate(
+          connection,
+          "CREATE TABLE test (id int, int_data int[], double_data double precision[], ts_data"
+              + " timestamptz[], double_data_2d double precision[][], row_data bytea)");
 
       // Set up the converter
-      RowType rowType = RowType.of(new IntType(), new ArrayType(new IntType()), doubleArrayType, timestampArrayType, doubleArray2DType, sampleRowType);
+      RowType rowType =
+          RowType.of(
+              new IntType(),
+              new ArrayType(new IntType()),
+              doubleArrayType,
+              timestampArrayType,
+              doubleArray2DType,
+              sampleRowType);
       SqrlPostgresRowConverter converter = new SqrlPostgresRowConverter(rowType);
 
       // Sample data
@@ -68,11 +78,11 @@ class PostgresRowConverterTest {
       rowData.setField(0, 1);
 
       // Integer Array - GenericArrayData
-      GenericArrayData intArray = new GenericArrayData(new int[]{1, 2, 3});
+      GenericArrayData intArray = new GenericArrayData(new int[] {1, 2, 3});
       rowData.setField(1, intArray);
 
       // Double Array - GenericArrayData
-      GenericArrayData doubleArray = new GenericArrayData(new double[]{1.1, 2.2, 3.3});
+      GenericArrayData doubleArray = new GenericArrayData(new double[] {1.1, 2.2, 3.3});
       rowData.setField(2, doubleArray);
 
       // Timestamp Array - GenericArrayData
@@ -86,7 +96,8 @@ class PostgresRowConverterTest {
       rowData.setField(3, array);
 
       // 2D Double Array - GenericArrayData
-      GenericArrayData doubleArray2d = new GenericArrayData(new double[][]{{1.1, 2.2}, {3.3, 4.4}});
+      GenericArrayData doubleArray2d =
+          new GenericArrayData(new double[][] {{1.1, 2.2}, {3.3, 4.4}});
       rowData.setField(4, doubleArray2d);
 
       // RowType not being an array
@@ -96,9 +107,12 @@ class PostgresRowConverterTest {
       rowData.setField(5, sampleRow);
 
       FieldNamedPreparedStatement statement =
-          SqrlFieldNamedPreparedStatementImpl.prepareStatement(connection,
-              "INSERT INTO test (id, int_data, double_data, ts_data, double_data_2d, row_data) VALUES (:id, :int_data, :double_data, :ts_data, :double_data_2d, :row_data)",
-              List.of("id", "int_data", "double_data", "ts_data", "double_data_2d", "row_data").toArray(String[]::new));
+          SqrlFieldNamedPreparedStatementImpl.prepareStatement(
+              connection,
+              "INSERT INTO test (id, int_data, double_data, ts_data, double_data_2d, row_data)"
+                  + " VALUES (:id, :int_data, :double_data, :ts_data, :double_data_2d, :row_data)",
+              List.of("id", "int_data", "double_data", "ts_data", "double_data_2d", "row_data")
+                  .toArray(String[]::new));
 
       for (int i = 0; i < rowType.getFieldCount(); i++) {
         JdbcSerializationConverter externalConverter =
@@ -112,39 +126,47 @@ class PostgresRowConverterTest {
 
       Statement stmt = connection.createStatement();
       // Deserialize
-      ResultSet rs = stmt.executeQuery("SELECT int_data, double_data, ts_data, double_data_2d, row_data FROM test WHERE id=1");
+      ResultSet rs =
+          stmt.executeQuery(
+              "SELECT int_data, double_data, ts_data, double_data_2d, row_data FROM test WHERE"
+                  + " id=1");
       assertTrue(rs.next());
 
       // Assert Integer Array
       Array intArrayRetrieved = rs.getArray("int_data");
-      Object intDataDeserialized = converter.createArrayConverter(new ArrayType(new IntType()))
-          .deserialize(intArrayRetrieved);
-      assertArrayEquals(((GenericArrayData)rowData.getField(1)).toIntArray(),
-          ((GenericArrayData)intDataDeserialized).toIntArray());
+      Object intDataDeserialized =
+          converter
+              .createArrayConverter(new ArrayType(new IntType()))
+              .deserialize(intArrayRetrieved);
+      assertArrayEquals(
+          ((GenericArrayData) rowData.getField(1)).toIntArray(),
+          ((GenericArrayData) intDataDeserialized).toIntArray());
 
       // Assert Double Array
       Array doubleArrayRetrieved = rs.getArray("double_data");
-      Object doubleDataDeserialized = converter.createArrayConverter(doubleArrayType)
-          .deserialize(doubleArrayRetrieved);
-      assertArrayEquals(((GenericArrayData)rowData.getField(2)).toDoubleArray(),
-          ((GenericArrayData)doubleDataDeserialized).toDoubleArray());
+      Object doubleDataDeserialized =
+          converter.createArrayConverter(doubleArrayType).deserialize(doubleArrayRetrieved);
+      assertArrayEquals(
+          ((GenericArrayData) rowData.getField(2)).toDoubleArray(),
+          ((GenericArrayData) doubleDataDeserialized).toDoubleArray());
 
       // Assert Timestamp Array
       Array timestampArrayRetrieved = rs.getArray("ts_data");
-      Object timestampDataDeserialized = converter.createArrayConverter(timestampArrayType)
-          .deserialize(timestampArrayRetrieved);
-      assertArrayEquals(((GenericArrayData) timestampDataDeserialized).toObjectArray(),
-          Arrays.stream(((BinaryArrayData) rowData.getField(3)).toObjectArray(new TimestampType())).toArray()
-          );
+      Object timestampDataDeserialized =
+          converter.createArrayConverter(timestampArrayType).deserialize(timestampArrayRetrieved);
+      assertArrayEquals(
+          ((GenericArrayData) timestampDataDeserialized).toObjectArray(),
+          Arrays.stream(((BinaryArrayData) rowData.getField(3)).toObjectArray(new TimestampType()))
+              .toArray());
       // Assert 2D Double Array (it's a bit tricky given the 2D nature)
       Array double2DArrayRetrieved = rs.getArray("double_data_2d");
-      Object double2DDataDeserialized = converter.createArrayConverter(doubleArray2DType)
-          .deserialize(double2DArrayRetrieved);
-      //todo: 2d arrays are not well supported
+      Object double2DDataDeserialized =
+          converter.createArrayConverter(doubleArray2DType).deserialize(double2DArrayRetrieved);
+      // todo: 2d arrays are not well supported
       GenericArrayData field = (GenericArrayData) rowData.getField(4);
       assertNotNull(field);
 
-      //todo: Row type not well supported
+      // todo: Row type not well supported
       Object rowRetrieved = rs.getObject("row_data");
       assertNotNull(rowRetrieved);
     }

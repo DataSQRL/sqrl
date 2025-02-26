@@ -35,7 +35,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-
 import lombok.SneakyThrows;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -59,8 +58,8 @@ class WriteTest {
   // will be started before and stopped after each test method
   @Container
   private PostgreSQLContainer testDatabase =
-      new PostgreSQLContainer(DockerImageName.parse("ankane/pgvector:v0.5.0")
-          .asCompatibleSubstituteFor("postgres"))
+      new PostgreSQLContainer(
+              DockerImageName.parse("ankane/pgvector:v0.5.0").asCompatibleSubstituteFor("postgres"))
           .withDatabaseName("foo")
           .withUsername("foo")
           .withPassword("secret")
@@ -68,7 +67,7 @@ class WriteTest {
 
   EmbeddedKafkaCluster CLUSTER = new EmbeddedKafkaCluster(1);
 
-  //Todo Add Kafka
+  // Todo Add Kafka
 
   private PgPool client;
 
@@ -82,7 +81,6 @@ class WriteTest {
   @BeforeEach
   public void init(Vertx vertx) {
     CLUSTER.start();
-
 
     PgConnectOptions options = new PgConnectOptions();
     options.setDatabase(testDatabase.getDatabaseName());
@@ -108,8 +106,12 @@ class WriteTest {
     Properties props = new Properties();
     props.put("bootstrap.servers", CLUSTER.bootstrapServers());
     props.put(ConsumerConfig.GROUP_ID_CONFIG, "kafka-test-listener");
-    props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
-    props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
+    props.put(
+        ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
+        "org.apache.kafka.common.serialization.StringDeserializer");
+    props.put(
+        ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
+        "org.apache.kafka.common.serialization.StringDeserializer");
     props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
     props.put(KEY_SERIALIZER_CLASS_CONFIG, "com.datasqrl.graphql.kafka.JsonSerializer");
     props.put(VALUE_SERIALIZER_CLASS_CONFIG, "com.datasqrl.graphql.kafka.JsonSerializer");
@@ -119,32 +121,37 @@ class WriteTest {
 
   private RootGraphqlModel getCustomerModel() {
     return RootGraphqlModel.builder()
-            .schema(StringSchema.builder().schema(""
-                    + "scalar DateTime\n"
-                + "type Query { "
-                    + "  customer: Customer "
-                    + "} "
-                    + "type Mutation {"
-                    + "  addCustomer(event: CreateCustomerEvent): Customer"
-                    + "} "
-                    + "input CreateCustomerEvent {"
-                    + "  customerid: Int"
-                    + "  ts: DateTime"
-                    + "} "
-                    + "type Customer {"
-                    + "  customerid: Int "
-                    + "  ts: DateTime"
-                    + "}").build())
-            .coord(ArgumentLookupCoords.builder()
-                    .parentType("Query")
-                    .fieldName("customer")
-                    .match(ArgumentSet.builder()
-                            .query(new JdbcQuery("SELECT customerid FROM Customer", List.of()))
-                            .build())
-                    .build())
-            .mutation(new KafkaMutationCoords("addCustomer", topicName,
-                Map.of()))
-            .build();
+        .schema(
+            StringSchema.builder()
+                .schema(
+                    ""
+                        + "scalar DateTime\n"
+                        + "type Query { "
+                        + "  customer: Customer "
+                        + "} "
+                        + "type Mutation {"
+                        + "  addCustomer(event: CreateCustomerEvent): Customer"
+                        + "} "
+                        + "input CreateCustomerEvent {"
+                        + "  customerid: Int"
+                        + "  ts: DateTime"
+                        + "} "
+                        + "type Customer {"
+                        + "  customerid: Int "
+                        + "  ts: DateTime"
+                        + "}")
+                .build())
+        .coord(
+            ArgumentLookupCoords.builder()
+                .parentType("Query")
+                .fieldName("customer")
+                .match(
+                    ArgumentSet.builder()
+                        .query(new JdbcQuery("SELECT customerid FROM Customer", List.of()))
+                        .build())
+                .build())
+        .mutation(new KafkaMutationCoords("addCustomer", topicName, Map.of()))
+        .build();
   }
 
   @AfterEach
@@ -162,24 +169,34 @@ class WriteTest {
 
     consumer.subscribe(Collections.singletonList(topicName));
 
-    GraphQL graphQL = model.accept(
-        new GraphQLEngineBuilder.Builder()
-            .withMutationConfiguration(new MutationConfigurationImpl(model, vertx, config))
-            .withSubscriptionConfiguration(new SubscriptionConfigurationImpl(model, vertx, config, Promise.promise(), null))
-            .build(),
-        new VertxContext(new VertxJdbcClient(Map.of("postgres",client)), NameCanonicalizer.SYSTEM))
-        .build();
+    GraphQL graphQL =
+        model
+            .accept(
+                new GraphQLEngineBuilder.Builder()
+                    .withMutationConfiguration(new MutationConfigurationImpl(model, vertx, config))
+                    .withSubscriptionConfiguration(
+                        new SubscriptionConfigurationImpl(
+                            model, vertx, config, Promise.promise(), null))
+                    .build(),
+                new VertxContext(
+                    new VertxJdbcClient(Map.of("postgres", client)), NameCanonicalizer.SYSTEM))
+            .build();
 
-    ExecutionInput executionInput = ExecutionInput.newExecutionInput()
-        .query("mutation ($event: CreateCustomerEvent!) { addCustomer(event: $event) { customerid, ts } }")
-        .variables(Map.of("event", Map.of("customerid", 123, "ts", "2001-01-01T10:00:00-05:00")))
-        .build();
+    ExecutionInput executionInput =
+        ExecutionInput.newExecutionInput()
+            .query(
+                "mutation ($event: CreateCustomerEvent!) { addCustomer(event: $event) { customerid,"
+                    + " ts } }")
+            .variables(
+                Map.of("event", Map.of("customerid", 123, "ts", "2001-01-01T10:00:00-05:00")))
+            .build();
 
     ExecutionResult executionResult = graphQL.execute(executionInput);
 
     Map<String, Object> data = executionResult.getData();
     assertEquals(1, data.size());
-    assertEquals("{customerid=123, ts=2001-01-01T10:00:00.000-05:00}", data.get("addCustomer").toString());
+    assertEquals(
+        "{customerid=123, ts=2001-01-01T10:00:00.000-05:00}", data.get("addCustomer").toString());
 
     try {
       ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(1000));

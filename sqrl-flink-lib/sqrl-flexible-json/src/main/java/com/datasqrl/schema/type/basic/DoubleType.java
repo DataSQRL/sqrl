@@ -4,7 +4,6 @@
 package com.datasqrl.schema.type.basic;
 
 import com.datasqrl.schema.type.SqrlTypeVisitor;
-
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
@@ -39,7 +38,7 @@ public class DoubleType extends AbstractBasicType<Double> {
 
     public Double convert(Object o) {
       if (o instanceof Double) {
-        return Double.valueOf((Double)o);
+        return Double.valueOf((Double) o);
       }
       if (o instanceof Number) {
         return Double.valueOf(((Number) o).doubleValue());
@@ -65,7 +64,6 @@ public class DoubleType extends AbstractBasicType<Double> {
       return Optional.empty();
     }
   }
-
 
   public <R, C> R accept(SqrlTypeVisitor<R, C> visitor, C context) {
     return visitor.visitDoubleType(this, context);

@@ -3,15 +3,14 @@
  */
 package com.datasqrl.plan.hints;
 
+import com.datasqrl.io.tables.TableType;
 import com.datasqrl.plan.rules.JoinAnalysis;
 import com.datasqrl.plan.rules.JoinAnalysis.Side;
-import com.datasqrl.io.tables.TableType;
 import com.google.common.base.Preconditions;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.apache.calcite.rel.hint.RelHint;
-
-import java.util.List;
 
 @AllArgsConstructor
 @Getter
@@ -19,22 +18,28 @@ public class JoinCostHint implements SqrlHint {
 
   final TableType leftType;
   final TableType rightType;
+
   /**
-   * The number of equality constraints between the two sides of the join
-   * to estimate cardinality of the result
+   * The number of equality constraints between the two sides of the join to estimate cardinality of
+   * the result
    */
   final int numEqualities;
+
   /**
-   * The side which has (at most) a single row matching any given row on the
-   * other side because of a pk constraint.
+   * The side which has (at most) a single row matching any given row on the other side because of a
+   * pk constraint.
    */
   final JoinAnalysis.Side singletonSide;
 
   @Override
   public RelHint getHint() {
     return RelHint.builder(getHintName())
-        .hintOptions(List.of(leftType.name(), rightType.name(), String.valueOf(numEqualities), String.valueOf(
-            singletonSide)))
+        .hintOptions(
+            List.of(
+                leftType.name(),
+                rightType.name(),
+                String.valueOf(numEqualities),
+                String.valueOf(singletonSide)))
         .build();
   }
 
@@ -58,9 +63,11 @@ public class JoinCostHint implements SqrlHint {
     public JoinCostHint fromHint(RelHint hint) {
       List<String> opts = hint.listOptions;
       Preconditions.checkArgument(opts.size() == 4, "Invalid hint: %s", hint);
-      return new JoinCostHint(TableType.valueOf(opts.get(0)), TableType.valueOf(opts.get(1)),
-          Integer.valueOf(hint.listOptions.get(2)), Side.valueOf(hint.listOptions.get(3)));
+      return new JoinCostHint(
+          TableType.valueOf(opts.get(0)),
+          TableType.valueOf(opts.get(1)),
+          Integer.valueOf(hint.listOptions.get(2)),
+          Side.valueOf(hint.listOptions.get(3)));
     }
   }
-
 }

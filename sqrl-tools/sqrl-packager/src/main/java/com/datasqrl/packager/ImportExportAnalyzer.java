@@ -3,7 +3,6 @@
  */
 package com.datasqrl.packager;
 
-
 import com.datasqrl.MainScriptImpl;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.ConnectorFactoryFactory;
@@ -29,15 +28,15 @@ import org.apache.calcite.sql.SqrlImportDefinition;
 import org.apache.calcite.sql.SqrlStatement;
 import org.apache.calcite.sql.StatementVisitor;
 
-@AllArgsConstructor(onConstructor_=@Inject)
-public class ImportExportAnalyzer implements
-    StatementVisitor<Optional<NamePath>, Void>,
-    ScriptVisitor<Set<NamePath>, Void> {
+@AllArgsConstructor(onConstructor_ = @Inject)
+public class ImportExportAnalyzer
+    implements StatementVisitor<Optional<NamePath>, Void>, ScriptVisitor<Set<NamePath>, Void> {
   private final ModuleLoader moduleLoader;
   private final SqlNameUtil nameUtil;
   private final ConnectorFactoryFactory connectorFactoryFactory;
   private final SqrlParser parser = new SqrlParserImpl();
   private final MainScriptImpl mainScript;
+
   @SneakyThrows
   public Set<NamePath> analyze(Path sqrlScript, ErrorCollector errors) {
     ScriptNode node;
@@ -89,7 +88,7 @@ public class ImportExportAnalyzer implements
   @Override
   public Set<NamePath> visit(ScriptNode statement, Void context) {
     return statement.getStatements().stream()
-        .map(s -> ((SqrlStatement)s).accept(this, null))
+        .map(s -> ((SqrlStatement) s).accept(this, null))
         .flatMap(Optional::stream)
         .collect(Collectors.toSet());
   }

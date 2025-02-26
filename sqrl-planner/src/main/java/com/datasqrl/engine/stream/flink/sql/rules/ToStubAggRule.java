@@ -1,6 +1,5 @@
 package com.datasqrl.engine.stream.flink.sql.rules;
 
-
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +17,6 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.AggregateCall;
 import org.apache.calcite.rel.core.RelFactories;
 import org.apache.calcite.rel.logical.LogicalAggregate;
-import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.rules.TransformationRule;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
@@ -30,16 +28,12 @@ import org.apache.calcite.sql.validate.SqlUserDefinedAggFunction;
 import org.apache.flink.table.planner.functions.bridging.BridgingSqlAggFunction;
 import org.immutables.value.Value;
 
-/**
- * Rewrites flink's bridging functions to stub implementable rules for index selection
- */
-public class ToStubAggRule extends RelRule<ToStubAggRule.Config>
-    implements TransformationRule {
+/** Rewrites flink's bridging functions to stub implementable rules for index selection */
+public class ToStubAggRule extends RelRule<ToStubAggRule.Config> implements TransformationRule {
 
   protected ToStubAggRule(Config config) {
     super(config);
   }
-
 
   @SneakyThrows
   @Override
@@ -50,10 +44,17 @@ public class ToStubAggRule extends RelRule<ToStubAggRule.Config>
     List<AggregateCall> newAggCalls = new ArrayList<>();
     for (AggregateCall aggCall : agg.getAggCallList()) {
       if (aggCall.getAggregation() instanceof BridgingSqlAggFunction) {
-        AggregateCall newCall = AggregateCall.create(wrapInImplementable(aggCall.getAggregation()),
-            aggCall.isDistinct(), aggCall.isApproximate(),
-            aggCall.ignoreNulls(), aggCall.getArgList(),
-            aggCall.filterArg, aggCall.collation, aggCall.getType(), aggCall.getName());
+        AggregateCall newCall =
+            AggregateCall.create(
+                wrapInImplementable(aggCall.getAggregation()),
+                aggCall.isDistinct(),
+                aggCall.isApproximate(),
+                aggCall.ignoreNulls(),
+                aggCall.getArgList(),
+                aggCall.filterArg,
+                aggCall.collation,
+                aggCall.getType(),
+                aggCall.getName());
         newAggCalls.add(newCall);
         transformed = true;
       } else {
@@ -61,14 +62,15 @@ public class ToStubAggRule extends RelRule<ToStubAggRule.Config>
       }
     }
 
-    LogicalAggregate newAgg = new LogicalAggregate(
-        agg.getCluster(),
-        agg.getTraitSet(),
-        agg.getInput(),
-        agg.indicator,
-        agg.getGroupSet(),
-        agg.getGroupSets(),
-        newAggCalls);
+    LogicalAggregate newAgg =
+        new LogicalAggregate(
+            agg.getCluster(),
+            agg.getTraitSet(),
+            agg.getInput(),
+            agg.indicator,
+            agg.getGroupSet(),
+            agg.getGroupSets(),
+            newAggCalls);
 
     if (transformed) {
       call.transformTo(newAgg);
@@ -86,18 +88,14 @@ public class ToStubAggRule extends RelRule<ToStubAggRule.Config>
         }
 
         @Override
-        public void implementReset(AggContext aggContext, AggResetContext aggResetContext) {
-
-        }
+        public void implementReset(AggContext aggContext, AggResetContext aggResetContext) {}
 
         @Override
-        public void implementAdd(AggContext aggContext, AggAddContext aggAddContext) {
-
-        }
+        public void implementAdd(AggContext aggContext, AggAddContext aggAddContext) {}
 
         @Override
-        public Expression implementResult(AggContext aggContext,
-            AggResultContext aggResultContext) {
+        public Expression implementResult(
+            AggContext aggContext, AggResultContext aggResultContext) {
           return null;
         }
       };
@@ -115,25 +113,32 @@ public class ToStubAggRule extends RelRule<ToStubAggRule.Config>
   }
 
   private SqlAggFunction wrapInImplementable(SqlAggFunction fn) {
-    return new SqlUserDefinedAggFunction(fn.getNameAsId(), fn.getKind(),
-        fn.getReturnTypeInference(), fn.getOperandTypeInference(),
+    return new SqlUserDefinedAggFunction(
+        fn.getNameAsId(),
+        fn.getKind(),
+        fn.getReturnTypeInference(),
+        fn.getOperandTypeInference(),
         null,
         new StubImplementableAggFnc(),
-        fn.requiresOver(), fn.requiresOver(),
+        fn.requiresOver(),
+        fn.requiresOver(),
         fn.requiresGroupOrder());
   }
 
   @Value.Immutable
   public interface ToStubAggRuleConfig extends RelRule.Config {
-    ToStubAggRule.Config DEFAULT = ImmutableToStubAggRuleConfig.builder()
-        .relBuilderFactory(RelFactories.LOGICAL_BUILDER)
-        .description("ToStubAggRuleConfig")
-        .operandSupplier(b0 ->
-            b0.operand(LogicalAggregate.class).oneInput(
-                b1 -> b1.operand(RelNode.class).anyInputs()))
-        .build();
+    ToStubAggRule.Config DEFAULT =
+        ImmutableToStubAggRuleConfig.builder()
+            .relBuilderFactory(RelFactories.LOGICAL_BUILDER)
+            .description("ToStubAggRuleConfig")
+            .operandSupplier(
+                b0 ->
+                    b0.operand(LogicalAggregate.class)
+                        .oneInput(b1 -> b1.operand(RelNode.class).anyInputs()))
+            .build();
 
-    @Override default RelOptRule toRule() {
+    @Override
+    default RelOptRule toRule() {
       return new ToStubAggRule(this);
     }
   }

@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class MetadataEntryImpl implements TableConfig.MetadataEntry {
   SqrlConfig sqrlConfig;
+
   @Override
   public Optional<String> getType() {
     SqrlConfig.Value<String> type = sqrlConfig.asString(TableConfigImpl.METADATA_COLUMN_TYPE_KEY);

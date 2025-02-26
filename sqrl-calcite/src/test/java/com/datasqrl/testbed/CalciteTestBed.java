@@ -23,9 +23,7 @@ import org.apache.calcite.tools.Frameworks;
 import org.apache.calcite.tools.Planner;
 import org.testng.annotations.Test;
 
-/**
- * A simple calcite test bed
- */
+/** A simple calcite test bed */
 public class CalciteTestBed {
 
   public class CustomSchema extends AbstractSchema {
@@ -38,7 +36,6 @@ public class CalciteTestBed {
     }
   }
 
-
   public class CustomTable extends AbstractTable {
     @Override
     public RelDataType getRowType(RelDataTypeFactory typeFactory) {
@@ -47,15 +44,14 @@ public class CalciteTestBed {
       builder.add("id", typeFactory.createSqlType(SqlTypeName.INTEGER));
       builder.add("name", typeFactory.createSqlType(SqlTypeName.VARCHAR));
 
-      RelDataType entries = typeFactory.createStructType(
-          List.of(typeFactory.createSqlType(SqlTypeName.VARCHAR)),
-          List.of("col"));
+      RelDataType entries =
+          typeFactory.createStructType(
+              List.of(typeFactory.createSqlType(SqlTypeName.VARCHAR)), List.of("col"));
       RelDataType arrayType = typeFactory.createArrayType(entries, -1);
       builder.add("entries", arrayType);
       return builder.build();
     }
   }
-
 
   @SneakyThrows
   @Test
@@ -63,31 +59,32 @@ public class CalciteTestBed {
     SchemaPlus rootSchema = Frameworks.createRootSchema(true);
     rootSchema.add("CUSTOM_SCHEMA", new CustomSchema());
 
-    FrameworkConfig config = Frameworks.newConfigBuilder()
-        .defaultSchema(rootSchema.getSubSchema("CUSTOM_SCHEMA"))
-        .parserConfig(SqlParser.config().withLex(Lex.JAVA))
-        .build();
+    FrameworkConfig config =
+        Frameworks.newConfigBuilder()
+            .defaultSchema(rootSchema.getSubSchema("CUSTOM_SCHEMA"))
+            .parserConfig(SqlParser.config().withLex(Lex.JAVA))
+            .build();
 
     Planner planner = Frameworks.getPlanner(config);
 
     try {
-      SqlNode sqlNode = planner.parse(
-          "SELECT *\n"
-          + "FROM orders o CROSS JOIN UNNEST(o.entries)"
-      );
+      SqlNode sqlNode = planner.parse("SELECT *\n" + "FROM orders o CROSS JOIN UNNEST(o.entries)");
       SqlNode validate = planner.validate(sqlNode);
       RelRoot relRoot = planner.rel(validate);
 
       // Unparse
       RelToSqlConverter converter = new RelToSqlConverter(DatabaseProduct.CALCITE.getDialect());
       final SqlNode sqlNodeUnparsed = converter.visitRoot(relRoot.rel).asStatement();
-      String sql = sqlNodeUnparsed.toSqlString(c ->
-              c.withAlwaysUseParentheses(false)
-                  .withSelectListItemsOnSeparateLines(false)
-                  .withUpdateSetListNewline(false)
-                  .withIndentation(0)
-                  .withDialect(DatabaseProduct.CALCITE.getDialect()))
-          .getSql();
+      String sql =
+          sqlNodeUnparsed
+              .toSqlString(
+                  c ->
+                      c.withAlwaysUseParentheses(false)
+                          .withSelectListItemsOnSeparateLines(false)
+                          .withUpdateSetListNewline(false)
+                          .withIndentation(0)
+                          .withDialect(DatabaseProduct.CALCITE.getDialect()))
+              .getSql();
 
       Preconditions.checkState(!sql.isEmpty());
 

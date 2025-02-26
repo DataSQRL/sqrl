@@ -5,5 +5,4 @@ import com.datasqrl.engine.ExecutionEngine;
 public interface LogEngine extends ExecutionEngine {
 
   LogFactory getLogFactory();
-
 }

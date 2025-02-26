@@ -8,8 +8,6 @@ import com.datasqrl.util.SnapshotTest.Snapshot;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.Predicate;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
@@ -25,9 +23,10 @@ public class DAGPlannerTest extends AbstractAssetSnapshotTest {
   @ArgumentsSource(DagPlannerSQRLFiles.class)
   void testScripts(Path script) {
     assertTrue(Files.exists(script));
-    boolean expectFailure = TestNameModifier.of(script)==TestNameModifier.fail;
+    boolean expectFailure = TestNameModifier.of(script) == TestNameModifier.fail;
     this.snapshot = Snapshot.of(getDisplayName(script), getClass());
-    AssertStatusHook hook = execute(SCRIPT_DIR, "compile", script.getFileName().toString(), "-t", deployDir.toString());
+    AssertStatusHook hook =
+        execute(SCRIPT_DIR, "compile", script.getFileName().toString(), "-t", deployDir.toString());
     assertEquals(expectFailure, hook.isFailed(), hook.getFailMessage());
     if (expectFailure) {
       createFailSnapshot(hook.getFailMessage());
@@ -40,7 +39,8 @@ public class DAGPlannerTest extends AbstractAssetSnapshotTest {
   public Predicate<Path> getBuildDirFilter() {
     return file -> {
       switch (file.getFileName().toString()) {
-        case "pipeline_explain.txt": return true;
+        case "pipeline_explain.txt":
+          return true;
       }
       return false;
     };
@@ -48,7 +48,7 @@ public class DAGPlannerTest extends AbstractAssetSnapshotTest {
 
   @Override
   public Predicate<Path> getDeployDirFilter() {
-    return (p)->false;
+    return (p) -> false;
   }
 
   static class DagPlannerSQRLFiles extends SqrlScriptArgumentsProvider {
@@ -56,5 +56,4 @@ public class DAGPlannerTest extends AbstractAssetSnapshotTest {
       super(SCRIPT_DIR, false);
     }
   }
-
 }

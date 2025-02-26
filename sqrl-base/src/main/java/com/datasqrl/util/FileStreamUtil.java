@@ -8,7 +8,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -22,13 +21,14 @@ public class FileStreamUtil {
 
   public static Stream<String> filesByline(Stream<Path> paths) {
     Preconditions.checkArgument(paths != null);
-    return paths.flatMap(p -> {
-      try {
-        return Files.lines(p);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    });
+    return paths.flatMap(
+        p -> {
+          try {
+            return Files.lines(p);
+          } catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+        });
   }
 
   public static Stream<String> readByLine(InputStream is, String charset) throws IOException {

@@ -1,12 +1,11 @@
 package com.datasqrl.plan.table;
 
+import com.datasqrl.calcite.SqrlRexUtil;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.function.SqrlTimeTumbleFunction;
-import com.datasqrl.calcite.SqrlRexUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -26,33 +25,35 @@ import org.apache.calcite.tools.RelBuilder;
 public class Timestamps {
 
   public enum Type {
-    AND, OR, UNDEFINED;
+    AND,
+    OR,
+    UNDEFINED;
   }
 
-  @Singular
-  Set<Integer> candidates;
+  @Singular Set<Integer> candidates;
   Type type;
-  @Singular
-  Set<TimeWindow> windows;
-
+  @Singular Set<TimeWindow> windows;
 
   public static Timestamps UNDEFINED = new Timestamps(ImmutableSet.of(), Type.UNDEFINED);
 
   public Timestamps(Set<Integer> candidates, Type type) {
-    this(candidates,type, Set.of());
+    this(candidates, type, Set.of());
   }
 
   public Timestamps(Set<Integer> candidates, Type type, Set<TimeWindow> windows) {
-    Preconditions.checkArgument(type!=Type.UNDEFINED || (candidates.isEmpty() && windows.isEmpty()), "Invalid timestamp definition");
-    Preconditions.checkArgument(windows.stream().map(TimeWindow::getTimestampIndex).allMatch(candidates::contains));
-    if (type==Type.AND && candidates.size()<2) type = Type.OR;
+    Preconditions.checkArgument(
+        type != Type.UNDEFINED || (candidates.isEmpty() && windows.isEmpty()),
+        "Invalid timestamp definition");
+    Preconditions.checkArgument(
+        windows.stream().map(TimeWindow::getTimestampIndex).allMatch(candidates::contains));
+    if (type == Type.AND && candidates.size() < 2) type = Type.OR;
     this.candidates = candidates;
     this.type = type;
     this.windows = windows;
   }
 
   public boolean is(Type type) {
-    return this.type==type;
+    return this.type == type;
   }
 
   public static Timestamps ofFixed(int index) {
@@ -70,9 +71,9 @@ public class Timestamps {
   public Integer getBestCandidate(RelBuilder relB) {
     if (candidates.isEmpty()) {
       throw new UnsupportedOperationException("Undefined timestamp does not have candidates");
-    } else if (is(Type.OR) || size()==1) { //Pick first
+    } else if (is(Type.OR) || size() == 1) { // Pick first
       return candidates.stream().sorted().findFirst().get();
-    } else {  // is(Type.AND)
+    } else { // is(Type.AND)
       SqrlRexUtil rexUtil = new SqrlRexUtil(relB);
       RelNode input = relB.peek();
       RexNode greatestTimestamp = rexUtil.greatestNotNull(asList(), input);
@@ -87,7 +88,7 @@ public class Timestamps {
   }
 
   public boolean requiresInlining() {
-    return is(Type.AND) && size()>1;
+    return is(Type.AND) && size() > 1;
   }
 
   public Timestamps asBest(RelBuilder relB) {
@@ -95,13 +96,15 @@ public class Timestamps {
   }
 
   public Integer getOnlyCandidate() {
-    Preconditions.checkArgument(candidates.size()==1);
+    Preconditions.checkArgument(candidates.size() == 1);
     return Iterables.getOnlyElement(candidates);
   }
 
   public OptionalInt getOnlyCandidateOptional() {
-    Preconditions.checkArgument(candidates.size()<=1, "Expected at most one timestamp candidate");
-    return candidates.isEmpty() ? OptionalInt.empty() : OptionalInt.of(Iterables.getOnlyElement(candidates));
+    Preconditions.checkArgument(candidates.size() <= 1, "Expected at most one timestamp candidate");
+    return candidates.isEmpty()
+        ? OptionalInt.empty()
+        : OptionalInt.of(Iterables.getOnlyElement(candidates));
   }
 
   public boolean isCandidate(int index) {
@@ -146,12 +149,9 @@ public class Timestamps {
     TimeWindow withTimestampIndex(int newIndex);
 
     boolean qualifiesWindow(List<Integer> indexes);
-
   }
 
-  /**
-   * A time window created by a {@link SqrlTimeTumbleFunction}.
-   */
+  /** A time window created by a {@link SqrlTimeTumbleFunction}. */
   @Value
   public static class SimpleTumbleWindow implements TimeWindow {
 
@@ -162,7 +162,8 @@ public class Timestamps {
 
     @Override
     public TimeWindow withTimestampIndex(int newIndex) {
-      return new SimpleTumbleWindow(this.windowIndex, newIndex, this.windowWidthMillis, this.windowOffsetMillis);
+      return new SimpleTumbleWindow(
+          this.windowIndex, newIndex, this.windowWidthMillis, this.windowOffsetMillis);
     }
 
     @Override
@@ -171,9 +172,7 @@ public class Timestamps {
     }
   }
 
-  /**
-   * A time-window created by one of Flink's TVF window functions
-   */
+  /** A time-window created by one of Flink's TVF window functions */
   @Value
   public static class FlinkTVFWindow implements TimeWindow {
 
@@ -196,6 +195,4 @@ public class Timestamps {
       return indexes.contains(windowStartIndex) && indexes.contains(windowEndIndex);
     }
   }
-
-
 }

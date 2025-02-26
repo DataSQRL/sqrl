@@ -75,9 +75,7 @@ import org.apache.flink.sql.parser.validate.FlinkSqlConformance;
 import org.apache.flink.table.planner.delegation.FlinkSqlParserFactories;
 import org.apache.flink.table.planner.parse.CalciteParser;
 
-/**
- * A facade to the calcite planner
- */
+/** A facade to the calcite planner */
 @Getter
 public class QueryPlanner {
 
@@ -93,6 +91,7 @@ public class QueryPlanner {
   private final SqrlFramework framework;
 
   private final CalciteParser flinkParser;
+
   public QueryPlanner(SqrlFramework framework) {
     this.framework = framework;
     this.catalogReader = framework.getCatalogReader();
@@ -116,11 +115,12 @@ public class QueryPlanner {
     cluster.setMetadataProvider(this.metadataProvider);
     cluster.setHintStrategies(hintStrategyTable);
 
-    SqlParser.Config config = SqlParser.config()
-        .withParserFactory(FlinkSqlParserFactories.create(FlinkSqlConformance.DEFAULT))
-        .withConformance(FlinkSqlConformance.DEFAULT)
-        .withLex(Lex.JAVA)
-        .withIdentifierMaxLength(256);
+    SqlParser.Config config =
+        SqlParser.config()
+            .withParserFactory(FlinkSqlParserFactories.create(FlinkSqlConformance.DEFAULT))
+            .withConformance(FlinkSqlConformance.DEFAULT)
+            .withLex(Lex.JAVA)
+            .withIdentifierMaxLength(256);
     this.flinkParser = new CalciteParser(config);
   }
 
@@ -131,12 +131,11 @@ public class QueryPlanner {
     switch (dialect) {
       case POSTGRES:
       case CALCITE:
-        return org.apache.calcite.sql.parser.SqlParser.create(sql,
-                SqrlConfigurations.calciteParserConfig)
+        return org.apache.calcite.sql.parser.SqlParser.create(
+                sql, SqrlConfigurations.calciteParserConfig)
             .parseQuery();
       case SQRL:
-        return new SqrlParserImpl()
-            .parse(sql);
+        return new SqrlParserImpl().parse(sql);
       case FLINK:
         return flinkParser.parse(sql);
       default:
@@ -181,21 +180,18 @@ public class QueryPlanner {
     RelRoot root;
     root = sqlToRelConverter.convertQuery(sqlNode, false, true);
     final RelBuilder relBuilder = getRelBuilder();
-    root = root.withRel(
-        SqrlRelDecorrelator.decorrelateQuery(root.rel, relBuilder));
+    root = root.withRel(SqrlRelDecorrelator.decorrelateQuery(root.rel, relBuilder));
 
     return root;
   }
 
   /**
-   * Helper function to parse a data type from a string using calcite's full
-   * type definition syntax.
+   * Helper function to parse a data type from a string using calcite's full type definition syntax.
    */
   @SneakyThrows
   public RelDataType parseDatatype(String datatype) {
     // Must be flink types
-    datatype = datatype.replaceAll("TIMESTAMP_WITH_LOCAL_TIME_ZONE",
-        "TIMESTAMP_LTZ");
+    datatype = datatype.replaceAll("TIMESTAMP_WITH_LOCAL_TIME_ZONE", "TIMESTAMP_LTZ");
 
     // Addl type aliases for graphql
     if (datatype.equalsIgnoreCase("datetime")) {
@@ -208,15 +204,13 @@ public class QueryPlanner {
 
     // For other types, delegate to Flink planner to create Calcite types
     String create = String.format("CREATE TABLE x (col %s)", datatype);
-    SqlCreateTable parse = (SqlCreateTable)parse(Dialect.FLINK, create);
+    SqlCreateTable parse = (SqlCreateTable) parse(Dialect.FLINK, create);
     SqlDataTypeSpec typeSpec = ((SqlRegularColumn) parse.getColumnList().get(0)).getType();
 
     return typeSpec.deriveType(createSqlValidator());
   }
 
-  /**
-   * Plans a sql statement against a relnode
-   */
+  /** Plans a sql statement against a relnode */
   public RexNode planExpression(SqlNode node, RelDataType type) {
     return planExpression(node, type, ReservedName.SELF_IDENTIFIER.getCanonical());
   }
@@ -230,10 +224,11 @@ public class QueryPlanner {
       schema.add(name, table);
       SqlValidator sqlValidator = createSqlValidator();
 
-      SqlSelect select = new SqlSelectBuilder(node.getParserPosition())
-          .setSelectList(List.of(node))
-          .setFrom(new SqlIdentifier(name, SqlParserPos.ZERO))
-          .build();
+      SqlSelect select =
+          new SqlSelectBuilder(node.getParserPosition())
+              .setSelectList(List.of(node))
+              .setFrom(new SqlIdentifier(name, SqlParserPos.ZERO))
+              .build();
       SqlNode validated = sqlValidator.validate(select);
 
       SqlToRelConverter sqlToRelConverter = createSqlToRelConverter(sqlValidator);
@@ -243,7 +238,8 @@ public class QueryPlanner {
         throw new RuntimeException("Could not plan expression");
       }
 
-      if (!(root.rel.getInput(0) instanceof TableScan || root.rel.getInput(0) instanceof TableFunctionScan)) {
+      if (!(root.rel.getInput(0) instanceof TableScan
+          || root.rel.getInput(0) instanceof TableFunctionScan)) {
         throw new RuntimeException("Expression is not simple");
       }
 
@@ -253,7 +249,8 @@ public class QueryPlanner {
     }
   }
 
-  public RelNode planQueryOnTempTable(RelDataType tempSchema, String name, Consumer<RelBuilder> buildQuery) {
+  public RelNode planQueryOnTempTable(
+      RelDataType tempSchema, String name, Consumer<RelBuilder> buildQuery) {
     try {
       schema.add(name, new TemporaryViewTable(tempSchema));
 
@@ -276,8 +273,7 @@ public class QueryPlanner {
   /* Convert */
 
   public RelNode convertRelToDialect(Dialect dialect, RelNode relNode) {
-    return new DialectCallConverter(planner)
-        .convert(dialect, relNode);
+    return new DialectCallConverter(planner).convert(dialect, relNode);
   }
 
   public static SqlNodes relToSql(Dialect dialect, RelNode relNode) {
@@ -292,28 +288,34 @@ public class QueryPlanner {
   }
 
   @SneakyThrows
-  protected String generateSource(String className, EnumerableRel enumerableRel,
-      Map<String, Object> contextVariables) {
-    EnumerableRelImplementor implementor = new EnumerableRelImplementor(getRexBuilder(),
-        contextVariables/*note: must be mutable*/);
-    ClassDeclaration classDeclaration = implementor.implementRoot(enumerableRel,
-        EnumerableRel.Prefer.ARRAY);
+  protected String generateSource(
+      String className, EnumerableRel enumerableRel, Map<String, Object> contextVariables) {
+    EnumerableRelImplementor implementor =
+        new EnumerableRelImplementor(getRexBuilder(), contextVariables /*note: must be mutable*/);
+    ClassDeclaration classDeclaration =
+        implementor.implementRoot(enumerableRel, EnumerableRel.Prefer.ARRAY);
 
     String s = Expressions.toString(classDeclaration.memberDeclarations, "\n", false);
 
-    String source = "public class " + className + "\n"
-        + "    implements " + ArrayBindable.class.getName()
-        + ", " + Serializable.class.getName()
-        + " {\n"
-        + s + "\n"
-        + "}\n";
+    String source =
+        "public class "
+            + className
+            + "\n"
+            + "    implements "
+            + ArrayBindable.class.getName()
+            + ", "
+            + Serializable.class.getName()
+            + " {\n"
+            + s
+            + "\n"
+            + "}\n";
     return source;
   }
 
-  public ClassLoader compile(String className, EnumerableRel enumerableRel,
-      Map<String, Object> carryover) {
-    return compile(className, generateSource(className, enumerableRel, carryover),
-        defaultClassDir.toPath());
+  public ClassLoader compile(
+      String className, EnumerableRel enumerableRel, Map<String, Object> carryover) {
+    return compile(
+        className, generateSource(className, enumerableRel, carryover), defaultClassDir.toPath());
   }
 
   @SneakyThrows
@@ -334,13 +336,15 @@ public class QueryPlanner {
 
   public ArrayBindable bindable(ClassLoader classLoader, String className) {
     try {
-      @SuppressWarnings("unchecked") final Class<ArrayBindable> clazz =
-          (Class<ArrayBindable>) classLoader.loadClass(className);
+      @SuppressWarnings("unchecked")
+      final Class<ArrayBindable> clazz = (Class<ArrayBindable>) classLoader.loadClass(className);
       final Constructor<ArrayBindable> constructor = clazz.getConstructor();
       return constructor.newInstance();
-    } catch (ClassNotFoundException | InstantiationException
-             | IllegalAccessException | NoSuchMethodException
-             | InvocationTargetException e) {
+    } catch (ClassNotFoundException
+        | InstantiationException
+        | IllegalAccessException
+        | NoSuchMethodException
+        | InvocationTargetException e) {
       throw new RuntimeException(e);
     }
   }
@@ -351,20 +355,20 @@ public class QueryPlanner {
     Map<String, Object> variables = new HashMap<>();
     ClassLoader classLoader = compile(defaultName, enumerableRel, variables);
     context.setContextVariables(variables);
-    return bindable(classLoader, defaultName)
-        .bind(context).enumerator();
+    return bindable(classLoader, defaultName).bind(context).enumerator();
   }
 
-  /**
-   * Alternative to compiling
-   */
-  public Enumerator<Object[]> interpertable(EnumerableRel enumerableRel,
-      DataContextImpl dataContext) {
+  /** Alternative to compiling */
+  public Enumerator<Object[]> interpertable(
+      EnumerableRel enumerableRel, DataContextImpl dataContext) {
     Map<String, Object> map = new HashMap<>();
-    Bindable bindable = EnumerableInterpretable.toBindable(map,
-        CalcitePrepare.Dummy.getSparkHandler(false), enumerableRel, EnumerableRel.Prefer.ARRAY);
-    Enumerator<Object[]> enumerator = bindable.bind(dataContext)
-        .enumerator();
+    Bindable bindable =
+        EnumerableInterpretable.toBindable(
+            map,
+            CalcitePrepare.Dummy.getSparkHandler(false),
+            enumerableRel,
+            EnumerableRel.Prefer.ARRAY);
+    Enumerator<Object[]> enumerator = bindable.bind(dataContext).enumerator();
     return enumerator;
   }
 
@@ -379,22 +383,25 @@ public class QueryPlanner {
 
   public SqlToRelConverter createSqlToRelConverter(SqlValidator validator) {
 
-    return new SqrlSqlToRelConverter((relDataType, sql, c, d) -> {
-      SqlValidator validator1 = createSqlValidator();
-      SqlNode node = parse(Dialect.CALCITE, sql);
-      validator1.validate(node);
+    return new SqrlSqlToRelConverter(
+        (relDataType, sql, c, d) -> {
+          SqlValidator validator1 = createSqlValidator();
+          SqlNode node = parse(Dialect.CALCITE, sql);
+          validator1.validate(node);
 
-      return planRoot(validator1, node);
-    },
+          return planRoot(validator1, node);
+        },
         validator,
-        catalogReader, getCluster(),
+        catalogReader,
+        getCluster(),
         convertletTable,
         SqrlConfigurations.sqlToRelConverterConfig
-            .withHintStrategyTable(this.hintStrategyTable).withTrimUnusedFields(false));
+            .withHintStrategyTable(this.hintStrategyTable)
+            .withTrimUnusedFields(false));
   }
 
   public RelBuilder getRelBuilder() {
-    return new RelBuilder(null, this.cluster, this.catalogReader){};
+    return new RelBuilder(null, this.cluster, this.catalogReader) {};
   }
 
   public RexBuilder getRexBuilder() {
@@ -407,9 +414,8 @@ public class QueryPlanner {
   }
 
   public RelNode run(RelNode relNode, RelRule... rules) {
-    return Programs.hep(Arrays.asList(rules),false, getMetadataProvider())
-        .run(getPlanner(), relNode, relNode.getTraitSet(),
-            List.of(), List.of());
+    return Programs.hep(Arrays.asList(rules), false, getMetadataProvider())
+        .run(getPlanner(), relNode, relNode.getTraitSet(), List.of(), List.of());
   }
 
   public static SqlStrings relToString(Dialect dialect, RelNode relNode) {
@@ -417,15 +423,17 @@ public class QueryPlanner {
   }
 
   public RelNode expandMacros(RelNode relNode) {
-    //Before macro expansion, clean up the rel
+    // Before macro expansion, clean up the rel
     Config expandTableMacroConfig = ExpandTableMacroConfig.DEFAULT;
-    relNode = run(relNode,
-        SubQueryRemoveRule.Config.PROJECT.toRule(),
-        SubQueryRemoveRule.Config.FILTER.toRule(),
-        SubQueryRemoveRule.Config.JOIN.toRule(),
-        (RelRule) expandTableMacroConfig.toRule());
+    relNode =
+        run(
+            relNode,
+            SubQueryRemoveRule.Config.PROJECT.toRule(),
+            SubQueryRemoveRule.Config.FILTER.toRule(),
+            SubQueryRemoveRule.Config.JOIN.toRule(),
+            (RelRule) expandTableMacroConfig.toRule());
 
-    //Convert lateral joins
+    // Convert lateral joins
     relNode = SqrlRelDecorrelator.decorrelateQuery(relNode, getRelBuilder());
     relNode = run(relNode, CoreRules.FILTER_INTO_JOIN);
     return relNode;
@@ -433,8 +441,7 @@ public class QueryPlanner {
 
   @SneakyThrows
   public SqlNode parseCall(String expression) {
-    SqlNode sqlNode = SqlParser.create(expression, createParserConfig())
-        .parseExpression();
+    SqlNode sqlNode = SqlParser.create(expression, createParserConfig()).parseExpression();
     return sqlNode;
   }
 }

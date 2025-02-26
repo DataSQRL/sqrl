@@ -39,7 +39,8 @@ public class FlinkTypeUtil {
         .build();
   }
 
-  public static TypeInference.Builder basicNullInferenceBuilder(DataType outputType, DataType inputType) {
+  public static TypeInference.Builder basicNullInferenceBuilder(
+      DataType outputType, DataType inputType) {
     return TypeInference.newBuilder()
         .typedArguments(inputType)
         .outputTypeStrategy(nullPreservingOutputStrategy(outputType));
@@ -52,9 +53,7 @@ public class FlinkTypeUtil {
       privateField.setAccessible(true);
       CallContext originalContext = (CallContext) privateField.get(callContext);
 
-      return originalContext
-          .getArgumentDataTypes()
-          .get(0);
+      return originalContext.getArgumentDataTypes().get(0);
     } else {
       return callContext.getArgumentDataTypes().get(0);
     }
@@ -64,8 +63,7 @@ public class FlinkTypeUtil {
   @Builder
   public static class VariableArguments implements InputTypeStrategy {
 
-    @Singular
-    List<DataType> staticTypes;
+    @Singular List<DataType> staticTypes;
     DataType variableType;
     int minVariableArguments;
     int maxVariableArguments;
@@ -81,19 +79,19 @@ public class FlinkTypeUtil {
 
         @Override
         public Optional<Integer> getMinCount() {
-          return Optional.of(staticTypes.size()+minVariableArguments);
+          return Optional.of(staticTypes.size() + minVariableArguments);
         }
 
         @Override
         public Optional<Integer> getMaxCount() {
-          return Optional.of(staticTypes.size()+maxVariableArguments);
+          return Optional.of(staticTypes.size() + maxVariableArguments);
         }
       };
     }
 
     @Override
-    public Optional<List<DataType>> inferInputTypes(CallContext callContext,
-        boolean throwOnFailure) {
+    public Optional<List<DataType>> inferInputTypes(
+        CallContext callContext, boolean throwOnFailure) {
       int argCount = callContext.getArgumentDataTypes().size();
       int varArgs = argCount - staticTypes.size();
       if (varArgs < 0 || varArgs < minVariableArguments || varArgs > maxVariableArguments)
@@ -108,8 +106,11 @@ public class FlinkTypeUtil {
 
     @Override
     public List<Signature> getExpectedSignatures(FunctionDefinition definition) {
-      List<Signature.Argument> arguments = new ArrayList<>(staticTypes.size()+1);
-      staticTypes.stream().map(DataType::toString).map(Signature.Argument::of).forEach(arguments::add);
+      List<Signature.Argument> arguments = new ArrayList<>(staticTypes.size() + 1);
+      staticTypes.stream()
+          .map(DataType::toString)
+          .map(Signature.Argument::of)
+          .forEach(arguments::add);
       arguments.add(Signature.Argument.of(variableType.toString() + "..."));
       return List.of(Signature.of(arguments));
     }

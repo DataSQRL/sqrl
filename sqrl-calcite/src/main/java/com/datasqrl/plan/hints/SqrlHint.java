@@ -3,14 +3,13 @@
  */
 package com.datasqrl.plan.hints;
 
+import java.util.List;
+import java.util.Optional;
 import lombok.NonNull;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.hint.Hintable;
 import org.apache.calcite.rel.hint.RelHint;
 import org.apache.calcite.tools.RelBuilder;
-
-import java.util.List;
-import java.util.Optional;
 
 public interface SqrlHint {
 
@@ -26,14 +25,19 @@ public interface SqrlHint {
     return relBuilder.hints(getHint());
   }
 
-  static <H extends SqrlHint> Optional<H> fromRel(RelNode node,
-      SqrlHint.Constructor<H> hintConstructor) {
+  static <H extends SqrlHint> Optional<H> fromRel(
+      RelNode node, SqrlHint.Constructor<H> hintConstructor) {
     if (node instanceof Hintable) {
-      return ((Hintable) node).getHints().stream()
-          .filter(h -> hintConstructor.validName(h.hintName))
-          .filter(
-              h -> h.inheritPath.isEmpty()) //we only want the hint on that particular node, not inherited ones
-          .findFirst().map(hintConstructor::fromHint);
+      return ((Hintable) node)
+          .getHints().stream()
+              .filter(h -> hintConstructor.validName(h.hintName))
+              .filter(
+                  h ->
+                      h.inheritPath
+                          .isEmpty()) // we only want the hint on that particular node, not
+                                      // inherited ones
+              .findFirst()
+              .map(hintConstructor::fromHint);
     }
     return Optional.empty();
   }
@@ -57,7 +61,5 @@ public interface SqrlHint {
     boolean validName(String name);
 
     H fromHint(RelHint hint);
-
   }
-
 }

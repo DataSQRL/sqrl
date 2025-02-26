@@ -18,25 +18,39 @@ import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
 import lombok.Getter;
 import lombok.NonNull;
 import org.apache.calcite.rel.type.RelDataType;
 
 /**
  * A relational table that is defined by the imported data from a {@link TableSource}.
- * <p>
- * This is a phyiscal relation with a schema that captures the input data.
+ *
+ * <p>This is a phyiscal relation with a schema that captures the input data.
  */
-public class ProxyImportRelationalTable extends PhysicalRelationalTable implements TimestampAssignableTable {
+public class ProxyImportRelationalTable extends PhysicalRelationalTable
+    implements TimestampAssignableTable {
 
-  @Getter
-  private final ImportedRelationalTableImpl baseTable;
+  @Getter private final ImportedRelationalTableImpl baseTable;
 
-  public ProxyImportRelationalTable(@NonNull Name rootTableId, @NonNull NamePath tablePath,
-      @NonNull Timestamps timestamp, @NonNull RelDataType rowType, @NonNull TableType tableType, @NonNull PrimaryKey primaryKey,
-      ImportedRelationalTableImpl baseTable, TableStatistic tableStatistic) {
-    super(rootTableId, tablePath, tableType, rowType, rowType.getFieldCount(), timestamp,  primaryKey, Container.EMPTY, tableStatistic);
+  public ProxyImportRelationalTable(
+      @NonNull Name rootTableId,
+      @NonNull NamePath tablePath,
+      @NonNull Timestamps timestamp,
+      @NonNull RelDataType rowType,
+      @NonNull TableType tableType,
+      @NonNull PrimaryKey primaryKey,
+      ImportedRelationalTableImpl baseTable,
+      TableStatistic tableStatistic) {
+    super(
+        rootTableId,
+        tablePath,
+        tableType,
+        rowType,
+        rowType.getFieldCount(),
+        timestamp,
+        primaryKey,
+        Container.EMPTY,
+        tableStatistic);
     this.baseTable = baseTable;
     if (tableType.isLocked()) lock();
   }
@@ -48,12 +62,17 @@ public class ProxyImportRelationalTable extends PhysicalRelationalTable implemen
   }
 
   @Override
-  public List<ExecutionStage> getSupportedStages(ExecutionPipeline pipeline, ErrorCollector errors) {
-    List<ExecutionStage> stages = pipeline.getStages().stream().filter(stage ->
-            baseTable.getSupportsStage().test(stage))
-        .collect(Collectors.toList());
-    errors.checkFatal(!stages.isEmpty(),"Could not supported execution stage for "
-        + "table [%s] in pipeline [%s]", this, pipeline);
+  public List<ExecutionStage> getSupportedStages(
+      ExecutionPipeline pipeline, ErrorCollector errors) {
+    List<ExecutionStage> stages =
+        pipeline.getStages().stream()
+            .filter(stage -> baseTable.getSupportsStage().test(stage))
+            .collect(Collectors.toList());
+    errors.checkFatal(
+        !stages.isEmpty(),
+        "Could not supported execution stage for " + "table [%s] in pipeline [%s]",
+        this,
+        pipeline);
     return stages;
   }
 
@@ -66,8 +85,7 @@ public class ProxyImportRelationalTable extends PhysicalRelationalTable implemen
 
   @Override
   public void assignTimestamp(int index) {
-    Preconditions.checkArgument(timestamp.is(Type.UNDEFINED),"Timestamp is already set");
+    Preconditions.checkArgument(timestamp.is(Type.UNDEFINED), "Timestamp is already set");
     this.timestamp = Timestamps.ofFixed(index);
   }
-
 }

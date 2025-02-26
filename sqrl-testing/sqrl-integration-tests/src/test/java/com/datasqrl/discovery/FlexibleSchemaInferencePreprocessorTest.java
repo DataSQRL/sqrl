@@ -6,7 +6,6 @@ import com.datasqrl.AbstractAssetSnapshotTest;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.config.PackageJson;
-import com.datasqrl.config.PackageJsonImpl;
 import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.discovery.preprocessor.FlexibleSchemaInferencePreprocessor;
 import com.datasqrl.error.ErrorCollector;
@@ -20,7 +19,6 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 import lombok.SneakyThrows;
@@ -42,18 +40,24 @@ public class FlexibleSchemaInferencePreprocessorTest extends AbstractAssetSnapsh
   protected FlexibleSchemaInferencePreprocessorTest() {
     super(FILES_DIR.resolve("output"));
     try {
-      packageJson =  SqrlConfigCommons.getDefaultPackageJson(errors);
+      packageJson = SqrlConfigCommons.getDefaultPackageJson(errors);
     } catch (Exception e) {
-        System.out.println(ErrorPrinter.prettyPrint(errors));
-        throw e;
-      }
-    Injector injector = Guice.createInjector(
-        new SqrlInjector(ErrorCollector.root(), FILES_DIR, super.deployDir, packageJson, ExecutionGoal.COMPILE, null),
-        new StatefulModule(new SqrlSchema(new TypeFactory(), NameCanonicalizer.SYSTEM)));
+      System.out.println(ErrorPrinter.prettyPrint(errors));
+      throw e;
+    }
+    Injector injector =
+        Guice.createInjector(
+            new SqrlInjector(
+                ErrorCollector.root(),
+                FILES_DIR,
+                super.deployDir,
+                packageJson,
+                ExecutionGoal.COMPILE,
+                null),
+            new StatefulModule(new SqrlSchema(new TypeFactory(), NameCanonicalizer.SYSTEM)));
     preprocessor = injector.getInstance(FlexibleSchemaInferencePreprocessor.class);
     super.buildDir = deployDir;
   }
-
 
   @ParameterizedTest
   @ArgumentsSource(DataFiles.class)
@@ -64,16 +68,16 @@ public class FlexibleSchemaInferencePreprocessorTest extends AbstractAssetSnapsh
     String filename = file.getFileName().toString();
     assertTrue(preprocessor.getPattern().matcher(filename).matches());
     this.snapshot = Snapshot.of(getDisplayName(file), getClass());
-    preprocessor.processFile(targetFile, new ProcessorContext(deployDir, buildDir, packageJson),
-          errors);
+    preprocessor.processFile(
+        targetFile, new ProcessorContext(deployDir, buildDir, packageJson), errors);
     createSnapshot();
   }
 
-
   @Override
   public Predicate<Path> getDeployDirFilter() {
-    return p -> p.getFileName().toString().endsWith("table.json")
-        || p.getFileName().toString().endsWith("schema.yml");
+    return p ->
+        p.getFileName().toString().endsWith("table.json")
+            || p.getFileName().toString().endsWith("schema.yml");
   }
 
   static class DataFiles implements ArgumentsProvider {
@@ -84,5 +88,4 @@ public class FlexibleSchemaInferencePreprocessorTest extends AbstractAssetSnapsh
       return Files.list(FILES_DIR).map(Arguments::of);
     }
   }
-
 }

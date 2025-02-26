@@ -5,9 +5,7 @@ import org.apache.flink.table.types.logical.LogicalType;
 
 public class PostgresArrayTypeConverter {
 
-  /**
-   * Return the base array type for flink type
-   */
+  /** Return the base array type for flink type */
   public static String getArrayScalarName(LogicalType type) {
     switch (type.getTypeRoot()) {
       case CHAR:

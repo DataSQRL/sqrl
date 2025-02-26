@@ -5,7 +5,6 @@ package com.datasqrl.parse;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
-import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.util.SnapshotTest;
@@ -54,8 +53,7 @@ public class ParserErrorTest {
   }
 
   public void handle(String str) {
-    ErrorCollector errorCollector = ErrorCollector.root()
-        .withSource(str);
+    ErrorCollector errorCollector = ErrorCollector.root().withSource(str);
 
     SqrlParser parser = new SqrlParserImpl();
 

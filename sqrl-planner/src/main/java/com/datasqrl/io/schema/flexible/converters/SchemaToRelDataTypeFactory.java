@@ -11,12 +11,13 @@ public interface SchemaToRelDataTypeFactory {
 
   String getSchemaType();
 
-  RelDataType map(TableSchema schema, TableConfig tableConfig, Name tableName, ErrorCollector errors);
+  RelDataType map(
+      TableSchema schema, TableConfig tableConfig, Name tableName, ErrorCollector errors);
 
   static SchemaToRelDataTypeFactory load(TableSchema schema) {
-    return ServiceLoaderDiscovery.get(SchemaToRelDataTypeFactory.class,
-        SchemaToRelDataTypeFactory::getSchemaType, schema.getSchemaType());
+    return ServiceLoaderDiscovery.get(
+        SchemaToRelDataTypeFactory.class,
+        SchemaToRelDataTypeFactory::getSchemaType,
+        schema.getSchemaType());
   }
-
-
 }

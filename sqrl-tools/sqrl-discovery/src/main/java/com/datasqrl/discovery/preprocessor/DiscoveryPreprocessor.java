@@ -17,10 +17,10 @@ public interface DiscoveryPreprocessor extends Preprocessor {
 
   void discoverFile(Path file, ProcessorContext processorContext, ErrorCollector errors);
 
-
   /**
    * Checks whether the directory contains a file that indicates discovery is not enabled in this
    * directory.
+   *
    * @return
    */
   private static boolean runDiscovery(Path directory) {
@@ -33,5 +33,4 @@ public interface DiscoveryPreprocessor extends Preprocessor {
     Path noDiscoveryFilePath = directory.resolve(DISABLE_DISCOVERY_FILENAME);
     return !Files.exists(noDiscoveryFilePath) || Files.isDirectory(noDiscoveryFilePath);
   }
-
 }

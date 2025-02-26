@@ -1,6 +1,5 @@
 package com.datasqrl.plan.global;
 
-
 import com.datasqrl.calcite.ModifiableTable;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.PackageJson;
@@ -23,7 +22,7 @@ import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.tools.RelBuilder;
 
-@AllArgsConstructor(onConstructor_=@Inject)
+@AllArgsConstructor(onConstructor_ = @Inject)
 public class DAGPreparation {
 
   private final RelBuilder relBuilder;
@@ -32,31 +31,37 @@ public class DAGPreparation {
   private final ConnectorFactoryFactory connectorFactoryFactory;
   PackageJson packageJson;
 
+  public Result prepareInputs(SqrlSchema sqrlSchema, Collection<ResolvedExport> exports) {
 
-  public Result prepareInputs(SqrlSchema sqrlSchema,
-      Collection<ResolvedExport> exports) {
-
-    //Analyze exports
+    // Analyze exports
     List<AnalyzedExport> analyzedExports = new ArrayList<>();
     exports.stream().map(AnalyzedExport::from).forEach(analyzedExports::add);
 
-    //Add subscriptions as exports
-    apiManager.getExports().forEach((sqrlTable, log) -> {
-      ModifiableTable modTable = (ModifiableTable) ((RootSqrlTable) sqrlTable).getInternalTable();
-      RelNode relNode = relBuilder.scan(modTable.getNameId()).build();
-      analyzedExports.add(new AnalyzedExport(modTable.getNameId(), relNode, OptionalInt.empty(), log.getSink()));
-    });
+    // Add subscriptions as exports
+    apiManager
+        .getExports()
+        .forEach(
+            (sqrlTable, log) -> {
+              ModifiableTable modTable =
+                  (ModifiableTable) ((RootSqrlTable) sqrlTable).getInternalTable();
+              RelNode relNode = relBuilder.scan(modTable.getNameId()).build();
+              analyzedExports.add(
+                  new AnalyzedExport(
+                      modTable.getNameId(), relNode, OptionalInt.empty(), log.getSink()));
+            });
 
-    //Replace default joins with inner joins for API queries
-    return new Result(apiManager.getQueries().stream()
-        .map(AnalyzedAPIQuery::new).collect(Collectors.toList()),
+    // Replace default joins with inner joins for API queries
+    return new Result(
+        apiManager.getQueries().stream().map(AnalyzedAPIQuery::new).collect(Collectors.toList()),
         analyzedExports);
   }
 
   private Stream<PhysicalRelationalTable> getAllPhysicalTables(SqrlSchema sqrlSchema) {
-    return Stream.concat(sqrlSchema.getTableStream(PhysicalRelationalTable.class),
-            sqrlSchema.getFunctionStream(QueryTableFunction.class).map(
-                    QueryTableFunction::getQueryTable));
+    return Stream.concat(
+        sqrlSchema.getTableStream(PhysicalRelationalTable.class),
+        sqrlSchema
+            .getFunctionStream(QueryTableFunction.class)
+            .map(QueryTableFunction::getQueryTable));
   }
 
   @Value
@@ -64,8 +69,5 @@ public class DAGPreparation {
 
     Collection<AnalyzedAPIQuery> queries;
     Collection<AnalyzedExport> exports;
-
-
   }
-
 }

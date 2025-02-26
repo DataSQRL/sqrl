@@ -14,12 +14,10 @@ public class SchemaDefinition implements Serializable {
   public String version;
   public List<DatasetDefinition> datasets;
 
-
   public static SchemaDefinition empty() {
     SchemaDefinition def = new SchemaDefinition();
     def.datasets = Collections.EMPTY_LIST;
     def.version = StringNamedId.of("1").getId();
     return def;
   }
-
 }

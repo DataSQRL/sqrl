@@ -10,12 +10,12 @@ import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.schema.constraint.Constraint;
-import com.datasqrl.io.schema.flexible.converters.SchemaToRelDataTypeFactory;
-import com.datasqrl.schema.input.FlexibleTableSchema;
 import com.datasqrl.io.schema.flexible.FlexibleTableSchemaFactory;
 import com.datasqrl.io.schema.flexible.FlexibleTableSchemaHolder;
+import com.datasqrl.io.schema.flexible.converters.SchemaToRelDataTypeFactory;
 import com.datasqrl.io.schema.flexible.external.SchemaImport;
+import com.datasqrl.schema.constraint.Constraint;
+import com.datasqrl.schema.input.FlexibleTableSchema;
 import com.datasqrl.schema.input.external.TableDefinition;
 import com.datasqrl.serializer.Deserializer;
 import com.datasqrl.util.SnapshotTest;
@@ -40,8 +40,8 @@ import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
 /**
- * Tests the generation of schemas for various consumers based on the central
- * {@link FlexibleTableSchema}.
+ * Tests the generation of schemas for various consumers based on the central {@link
+ * FlexibleTableSchema}.
  */
 @Disabled
 public class FlexibleSchemaHandlingTest {
@@ -49,18 +49,22 @@ public class FlexibleSchemaHandlingTest {
   @ParameterizedTest
   @ArgumentsSource(SchemaConverterProvider.class)
   public <S> void conversionTest(InputSchema inputSchema, SchemaConverterTestCase<S> visitorTest) {
-    SnapshotTest.Snapshot snapshot = SnapshotTest.Snapshot.of(getClass(), inputSchema.getName(),
-        stripLambdaName(visitorTest.schemaConverter.getClass().getSimpleName()));
+    SnapshotTest.Snapshot snapshot =
+        SnapshotTest.Snapshot.of(
+            getClass(),
+            inputSchema.getName(),
+            stripLambdaName(visitorTest.schemaConverter.getClass().getSimpleName()));
     Name tableAlias = Name.system("TestTable");
     List<FlexibleTableSchema> schemas = getSchemas(inputSchema);
     for (FlexibleTableSchema table : schemas) {
-      for (boolean hasSourceTimestamp : new boolean[]{true, false}) {
-        for (Optional<Name> alias : new Optional[]{Optional.empty(), Optional.of(tableAlias)}) {
+      for (boolean hasSourceTimestamp : new boolean[] {true, false}) {
+        for (Optional<Name> alias : new Optional[] {Optional.empty(), Optional.of(tableAlias)}) {
           Name tableName = alias.orElse(table.getName());
           ErrorCollector errors = ErrorCollector.root();
           FlexibleTableSchemaHolder tableSchema = new FlexibleTableSchemaHolder(table);
-          RelDataType dataType = SchemaToRelDataTypeFactory.load(tableSchema)
-              .map(tableSchema, null, tableName, errors);
+          RelDataType dataType =
+              SchemaToRelDataTypeFactory.load(tableSchema)
+                  .map(tableSchema, null, tableName, errors);
           assertFalse(errors.hasErrors(), errors.toString());
           if (alias.isPresent()) {
             continue;
@@ -94,9 +98,14 @@ public class FlexibleSchemaHandlingTest {
     SchemaImport importer = new SchemaImport(Constraint.FACTORY_LOOKUP, NameCanonicalizer.SYSTEM);
     ErrorCollector errors = ErrorCollector.root();
     Deserializer deserializer = Deserializer.INSTANCE;
-    List<FlexibleTableSchema> schemas = Files.list(inputSchema.packageDir)
+    List<FlexibleTableSchema> schemas =
+        Files.list(inputSchema.packageDir)
             .sorted()
-            .filter(f -> f.getFileName().toString().endsWith(FlexibleTableSchemaFactory.SCHEMA_EXTENSION))
+            .filter(
+                f ->
+                    f.getFileName()
+                        .toString()
+                        .endsWith(FlexibleTableSchemaFactory.SCHEMA_EXTENSION))
             .map(f -> deserializer.mapYAMLFile(f, TableDefinition.class))
             .map(td -> importer.convert(td, errors).get())
             .collect(Collectors.toList());
@@ -105,7 +114,6 @@ public class FlexibleSchemaHandlingTest {
     assertFalse(schemas.isEmpty());
     return schemas;
   }
-
 
   @Value
   public static class InputSchema {
@@ -122,16 +130,16 @@ public class FlexibleSchemaHandlingTest {
         throws Exception {
       List<SchemaConverterTestCase> converters = new ArrayList<>();
 
-      //Calcite
+      // Calcite
       SchemaConverter<RelDataType> converter = d -> d;
       converters.add(new SchemaConverterTestCase(converter));
-      //Flink
-//      converters.add(new SchemaConverterTestCase(new UniversalTable2FlinkSchema()));
+      // Flink
+      //      converters.add(new SchemaConverterTestCase(new UniversalTable2FlinkSchema()));
 
-      List<InputSchema> schemas = TestDataset.getAll().stream()
-          .map(td -> new InputSchema(td.getDataPackageDirectory(),
-              td.getName()))
-          .collect(Collectors.toList());
+      List<InputSchema> schemas =
+          TestDataset.getAll().stream()
+              .map(td -> new InputSchema(td.getDataPackageDirectory(), td.getName()))
+              .collect(Collectors.toList());
 
       return ArgumentProvider.crossProduct(schemas, converters);
     }
@@ -147,15 +155,11 @@ public class FlexibleSchemaHandlingTest {
     public SchemaConverterTestCase(SchemaConverter<S> schemaConverter) {
       this(schemaConverter, null);
     }
-
   }
 
   @FunctionalInterface
   static interface SchemaConverterValidator<S> {
 
     void validate(S result, Name tableName);
-
   }
-
-
 }

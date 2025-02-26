@@ -22,5 +22,4 @@ public class LPAnalysis {
   @NonNull List<OptimizerHint> sqrlHints;
 
   @NonNull List<SqlHint> sqlHints;
-
 }

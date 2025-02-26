@@ -52,13 +52,17 @@ public class InsertStatement implements SqlDDLStatement {
     for (int i = 0; i < tableSchema.getFieldList().size(); i++) {
       valueNodes.add(new SqlDynamicParam(i, SqlParserPos.ZERO));
     }
-    SqlNodeList values = new SqlNodeList(Collections.singletonList(new SqlNodeList(valueNodes, SqlParserPos.ZERO)), SqlParserPos.ZERO);
+    SqlNodeList values =
+        new SqlNodeList(
+            Collections.singletonList(new SqlNodeList(valueNodes, SqlParserPos.ZERO)),
+            SqlParserPos.ZERO);
 
     // Create the INSERT statement
-    SqlInsert sqlInsert = new SqlInsert(SqlParserPos.ZERO, SqlNodeList.EMPTY, targetTable, values, columns);
+    SqlInsert sqlInsert =
+        new SqlInsert(SqlParserPos.ZERO, SqlNodeList.EMPTY, targetTable, values, columns);
 
     // Convert the INSERT statement to a SQL string
-    String sql = addValuesKeyword(new PostgresSqlNodeToString().convert(()->sqlInsert).getSql());
+    String sql = addValuesKeyword(new PostgresSqlNodeToString().convert(() -> sqlInsert).getSql());
     return sql;
   }
 

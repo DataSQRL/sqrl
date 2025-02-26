@@ -14,11 +14,12 @@ public class PostgresSqlNodeToString implements SqlNodeToString {
 
   @Override
   public SqlStrings convert(SqlNodes sqlNode) {
-    SqlWriterConfig config = SqrlConfigurations.sqlToString.apply(SqlPrettyWriter.config()
-        .withDialect(ExtendedPostgresSqlDialect.DEFAULT));
+    SqlWriterConfig config =
+        SqrlConfigurations.sqlToString.apply(
+            SqlPrettyWriter.config().withDialect(ExtendedPostgresSqlDialect.DEFAULT));
     DynamicParamSqlPrettyWriter writer = new DynamicParamSqlPrettyWriter(config);
     sqlNode.getSqlNode().unparse(writer, 0, 0);
-    return ()->writer.toSqlString().getSql();
+    return () -> writer.toSqlString().getSql();
   }
 
   @Override

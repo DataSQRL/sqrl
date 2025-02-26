@@ -1,37 +1,34 @@
-package com.datasqrl.format;/*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+package com.datasqrl.format; /*
+                              * Licensed to the Apache Software Foundation (ASF) under one
+                              * or more contributor license agreements.  See the NOTICE file
+                              * distributed with this work for additional information
+                              * regarding copyright ownership.  The ASF licenses this file
+                              * to you under the Apache License, Version 2.0 (the
+                              * "License"); you may not use this file except in compliance
+                              * with the License.  You may obtain a copy of the License at
+                              *
+                              *     http://www.apache.org/licenses/LICENSE-2.0
+                              *
+                              * Unless required by applicable law or agreed to in writing, software
+                              * distributed under the License is distributed on an "AS IS" BASIS,
+                              * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+                              * See the License for the specific language governing permissions and
+                              * limitations under the License.
+                              */
 
-
+import java.util.Objects;
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.api.common.serialization.SerializationSchema;
 import org.apache.flink.formats.common.TimestampFormat;
 import org.apache.flink.formats.json.JsonFormatOptions;
 import org.apache.flink.formats.json.JsonRowDataDeserializationSchema;
 import org.apache.flink.formats.json.RowDataToJsonConverters;
-import org.apache.flink.table.data.RowData;
-import org.apache.flink.table.types.logical.RowType;
-import org.apache.flink.util.jackson.JacksonMapperFactory;
-
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.JsonGenerator;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ObjectNode;
-
-import java.util.Objects;
+import org.apache.flink.table.data.RowData;
+import org.apache.flink.table.types.logical.RowType;
+import org.apache.flink.util.jackson.JacksonMapperFactory;
 
 /**
  * Serialization schema that serializes an object of Flink internal data structure into a JSON
@@ -42,7 +39,7 @@ import java.util.Objects;
  * <p>Result <code>byte[]</code> messages can be deserialized using {@link
  * JsonRowDataDeserializationSchema}.
  *
- * SQRL: Copied from flink to override the runtimeConverter
+ * <p>SQRL: Copied from flink to override the runtimeConverter
  */
 @Internal
 public class SqrlJsonRowDataSerializationSchema implements SerializationSchema<RowData> {
@@ -92,9 +89,7 @@ public class SqrlJsonRowDataSerializationSchema implements SerializationSchema<R
   public void open(InitializationContext context) throws Exception {
     mapper =
         JacksonMapperFactory.createObjectMapper()
-            .configure(
-                JsonGenerator.Feature.WRITE_BIGDECIMAL_AS_PLAIN,
-                encodeDecimalAsPlainNumber);
+            .configure(JsonGenerator.Feature.WRITE_BIGDECIMAL_AS_PLAIN, encodeDecimalAsPlainNumber);
   }
 
   @Override
@@ -130,10 +125,6 @@ public class SqrlJsonRowDataSerializationSchema implements SerializationSchema<R
   @Override
   public int hashCode() {
     return Objects.hash(
-        rowType,
-        timestampFormat,
-        mapNullKeyMode,
-        mapNullKeyLiteral,
-        encodeDecimalAsPlainNumber);
+        rowType, timestampFormat, mapNullKeyMode, mapNullKeyLiteral, encodeDecimalAsPlainNumber);
   }
 }

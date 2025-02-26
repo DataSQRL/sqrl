@@ -13,15 +13,11 @@ public class Books extends UseCaseExample {
   public static final Path DATA_DIRECTORY = Path.of("/Users/matthias/Data/books/sample");
 
   protected Books() {
-    super(Set.of("books","authors","reviews"), scripts()
-        .add("recommendation", "")
-        .build());
+    super(Set.of("books", "authors", "reviews"), scripts().add("recommendation", "").build());
   }
-
 
   @Override
   public Path getDataDirectory() {
     return DATA_DIRECTORY;
   }
-
 }

@@ -1,21 +1,21 @@
-//package com.datasqrl.flink;
+// package com.datasqrl.flink;
 //
-//import static org.junit.jupiter.api.Assertions.assertEquals;
+// import static org.junit.jupiter.api.Assertions.assertEquals;
 //
-//import com.datasqrl.DatasqrlRun;
-//import java.io.IOException;
-//import java.net.URI;
-//import java.net.http.HttpClient;
-//import java.net.http.HttpRequest;
-//import java.net.http.HttpResponse;
-//import java.nio.file.Path;
-//import java.nio.file.Paths;
-//import lombok.SneakyThrows;
-//import org.junit.jupiter.api.BeforeAll;
-//import org.junit.jupiter.api.Disabled;
-//import org.junit.jupiter.api.Test;
+// import com.datasqrl.DatasqrlRun;
+// import java.io.IOException;
+// import java.net.URI;
+// import java.net.http.HttpClient;
+// import java.net.http.HttpRequest;
+// import java.net.http.HttpResponse;
+// import java.nio.file.Path;
+// import java.nio.file.Paths;
+// import lombok.SneakyThrows;
+// import org.junit.jupiter.api.BeforeAll;
+// import org.junit.jupiter.api.Disabled;
+// import org.junit.jupiter.api.Test;
 //
-//public class LogEngineIT {
+// public class LogEngineIT {
 //  static DatasqrlRun datasqrlRun;
 //
 //  @BeforeAll
@@ -29,7 +29,8 @@
 //  //Must have SNOWFLAKE_PASSWORD in env when running test
 //  public void test() {
 //    Path projectRoot = getProjectRootPath();
-//    Path testRoot = projectRoot.resolve("sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/postgres-log");
+//    Path testRoot =
+// projectRoot.resolve("sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/postgres-log");
 //    Path profilePath = projectRoot.resolve("profiles/default");
 //    SqrlCompiler compiler = new SqrlCompiler();
 //    compiler.execute(testRoot, "compile", "--profile", profilePath.toString());
@@ -95,4 +96,4 @@
 //    }
 //    return rootPath;
 //  }
-//}
+// }

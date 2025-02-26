@@ -6,7 +6,7 @@ import java.nio.file.Path;
 import java.util.regex.Pattern;
 
 public class ScriptPreprocessor implements Preprocessor {
-  protected static final Pattern SCRIPT_REGEX = Pattern.compile(".*"+ FileUtil.toRegex(".sqrl"));
+  protected static final Pattern SCRIPT_REGEX = Pattern.compile(".*" + FileUtil.toRegex(".sqrl"));
 
   @Override
   public Pattern getPattern() {

@@ -6,5 +6,4 @@ package com.datasqrl.plan.table;
 public interface SourceRelationalTable {
 
   String getNameId();
-
 }

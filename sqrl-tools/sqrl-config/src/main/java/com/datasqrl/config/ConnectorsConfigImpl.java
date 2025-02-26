@@ -1,6 +1,5 @@
 package com.datasqrl.config;
 
-import com.datasqrl.config.PackageJson.EngineConfig;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 
@@ -14,7 +13,6 @@ public class ConnectorsConfigImpl implements ConnectorsConfig {
     if (!sqrlConfig.hasSubConfig(name)) {
       return Optional.empty();
     }
-    return Optional.of(
-        new ConnectorConfImpl(sqrlConfig.getSubConfig(name)));
+    return Optional.of(new ConnectorConfImpl(sqrlConfig.getSubConfig(name)));
   }
 }

@@ -4,7 +4,6 @@
 package com.datasqrl.schema.type.basic;
 
 import com.datasqrl.schema.type.SqrlTypeVisitor;
-
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;

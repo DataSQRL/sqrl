@@ -16,8 +16,8 @@ public class ConstraintHelper {
         .orElse(Cardinality.UNCONSTRAINED);
   }
 
-  public static <C extends Constraint> Optional<C> getConstraint(Iterable<Constraint> contraints,
-      Class<C> constraintClass) {
+  public static <C extends Constraint> Optional<C> getConstraint(
+      Iterable<Constraint> contraints, Class<C> constraintClass) {
     for (Constraint c : contraints) {
       if (constraintClass.isInstance(c)) {
         return Optional.of((C) c);
@@ -25,5 +25,4 @@ public class ConstraintHelper {
     }
     return Optional.empty();
   }
-
 }

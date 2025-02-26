@@ -16,5 +16,4 @@ public interface ModifiableTable {
   String getNameId();
 
   boolean isLocked();
-
 }

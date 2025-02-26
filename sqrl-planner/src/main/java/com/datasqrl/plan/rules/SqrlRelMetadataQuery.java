@@ -10,7 +10,6 @@ import org.apache.calcite.rel.metadata.RelMdUtil;
 import org.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.apache.calcite.rex.RexNode;
 
-
 public class SqrlRelMetadataQuery extends RelMetadataQuery {
 
   BuiltInMetadata.RowCount.Handler rowCountHandler;
@@ -41,10 +40,8 @@ public class SqrlRelMetadataQuery extends RelMetadataQuery {
         Double result = selectivityHandler.getSelectivity(rel, this, predicate);
         return RelMdUtil.validatePercentage(result);
       } catch (JaninoRelMetadataProvider.NoHandler e) {
-        selectivityHandler =
-            revise(e.relClass, BuiltInMetadata.Selectivity.DEF);
+        selectivityHandler = revise(e.relClass, BuiltInMetadata.Selectivity.DEF);
       }
     }
   }
-
 }

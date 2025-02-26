@@ -4,10 +4,9 @@
 package com.datasqrl.util;
 
 import com.datasqrl.canonicalizer.NamePath;
-import lombok.Value;
-
 import java.util.ArrayList;
 import java.util.List;
+import lombok.Value;
 
 @Value
 public class ScriptBuilder {
@@ -42,9 +41,6 @@ public class ScriptBuilder {
     }
     return this;
   }
-
-
-
 
   public ScriptBuilder append(String statement) {
     return add(statement);

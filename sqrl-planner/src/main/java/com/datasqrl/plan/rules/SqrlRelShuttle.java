@@ -18,19 +18,18 @@ import org.apache.calcite.rel.logical.LogicalTableModify;
  */
 public interface SqrlRelShuttle extends RelShuttle {
 
-
   /*
   ====== Rel Nodes with default treatment =====
    */
 
   @Override
   default RelNode visit(LogicalIntersect logicalIntersect) {
-    return visit((RelNode)logicalIntersect);
+    return visit((RelNode) logicalIntersect);
   }
 
   @Override
   default RelNode visit(LogicalMinus logicalMinus) {
-    return visit((RelNode)logicalMinus);
+    return visit((RelNode) logicalMinus);
   }
 
   @Override
@@ -47,7 +46,6 @@ public interface SqrlRelShuttle extends RelShuttle {
     return visit((RelNode) logicalMatch);
   }
 
-
   /*
   ====== Rel Nodes that do not occur in SQRL =====
   */
@@ -56,6 +54,4 @@ public interface SqrlRelShuttle extends RelShuttle {
   default RelNode visit(LogicalTableModify logicalTableModify) {
     throw new UnsupportedOperationException("Not yet supported.");
   }
-
-
 }

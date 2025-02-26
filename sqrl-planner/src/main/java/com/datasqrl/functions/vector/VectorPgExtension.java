@@ -7,7 +7,6 @@ import com.datasqrl.sql.SqlDDLStatement;
 import com.datasqrl.vector.FlinkVectorType;
 import com.datasqrl.vector.VectorFunctions;
 import com.google.auto.service.AutoService;
-
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -23,7 +22,7 @@ public class VectorPgExtension implements PgExtension {
   @Override
   public Set<String> operators() {
     return VectorFunctions.functions.stream()
-        .map(f->getFunctionNameFromClass(f.getClass()).getDisplay())
+        .map(f -> getFunctionNameFromClass(f.getClass()).getDisplay())
         .collect(Collectors.toSet());
   }
 

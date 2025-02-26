@@ -13,8 +13,7 @@ public class ErrorCatcher implements Serializable {
 
   protected static final Map<Class, ErrorHandler> handlers = loadHandlers();
 
-  @Getter
-  private final ErrorLocation baseLocation;
+  @Getter private final ErrorLocation baseLocation;
   private final ErrorCollection errors;
 
   public ErrorCatcher(ErrorLocation baseLocation, ErrorCollection errors) {
@@ -32,17 +31,15 @@ public class ErrorCatcher implements Serializable {
   }
 
   public CollectedException handle(Throwable e) {
-    if (e instanceof CollectedException) return (CollectedException) e; //has already been handled
+    if (e instanceof CollectedException) return (CollectedException) e; // has already been handled
     Optional<ErrorHandler> handler = Optional.ofNullable(handlers.get(e.getClass()));
     ErrorMessage msg;
     if (handler.isPresent()) {
-      msg = handler.get().handle((Exception)e, baseLocation);
+      msg = handler.get().handle((Exception) e, baseLocation);
     } else {
       msg = new Implementation(ErrorLabel.GENERIC, e.getMessage(), baseLocation, Severity.FATAL);
     }
     errors.addInternal(msg);
     return new CollectedException(e);
   }
-
-
 }

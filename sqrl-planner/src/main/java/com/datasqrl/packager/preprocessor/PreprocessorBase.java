@@ -10,7 +10,8 @@ import java.nio.file.Path;
 public abstract class PreprocessorBase implements Preprocessor {
 
   protected static boolean tableExists(Path basePath, String tableName) {
-    Path tableFile = NameUtil.namepath2Path(basePath, NamePath.of(tableName + DataSource.TABLE_FILE_SUFFIX));
+    Path tableFile =
+        NameUtil.namepath2Path(basePath, NamePath.of(tableName + DataSource.TABLE_FILE_SUFFIX));
     return Files.isRegularFile(tableFile);
   }
 }

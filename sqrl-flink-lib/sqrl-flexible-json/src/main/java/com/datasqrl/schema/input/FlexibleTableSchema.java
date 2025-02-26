@@ -21,19 +21,21 @@ import lombok.ToString;
 public class FlexibleTableSchema extends FlexibleFieldSchema {
 
   private boolean isPartialSchema;
-  @NonNull
-  private RelationType<Field> fields;
-  @NonNull
-  private List<Constraint> constraints;
+  @NonNull private RelationType<Field> fields;
+  @NonNull private List<Constraint> constraints;
 
-  public FlexibleTableSchema(Name name, SchemaElementDescription description, Object default_value,
-                             boolean isPartialSchema, RelationType<Field> fields, List<Constraint> constraints) {
+  public FlexibleTableSchema(
+      Name name,
+      SchemaElementDescription description,
+      Object default_value,
+      boolean isPartialSchema,
+      RelationType<Field> fields,
+      List<Constraint> constraints) {
     super(name, description, default_value);
     this.isPartialSchema = isPartialSchema;
     this.fields = fields;
     this.constraints = constraints;
   }
-
 
   @Setter
   public static class Builder extends FlexibleFieldSchema.Builder {
@@ -50,8 +52,8 @@ public class FlexibleTableSchema extends FlexibleFieldSchema {
     }
 
     public FlexibleTableSchema build() {
-      return new FlexibleTableSchema(name, description, default_value, isPartialSchema, fields,
-              constraints);
+      return new FlexibleTableSchema(
+          name, description, default_value, isPartialSchema, fields, constraints);
     }
   }
 

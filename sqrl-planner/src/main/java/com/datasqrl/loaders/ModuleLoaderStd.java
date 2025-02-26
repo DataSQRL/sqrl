@@ -2,7 +2,6 @@ package com.datasqrl.loaders;
 
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.module.SqrlModule;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
@@ -14,7 +13,7 @@ public class ModuleLoaderStd implements ModuleLoader {
   @Override
   public Optional<SqrlModule> getModule(NamePath namePath) {
     SqrlModule module;
-    if ((module = modules.get(namePath))!=null) {
+    if ((module = modules.get(namePath)) != null) {
       return Optional.of(module);
     }
     return Optional.empty();

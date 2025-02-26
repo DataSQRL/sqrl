@@ -11,8 +11,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public class EngineConfigImpl implements PackageJson.EngineConfig {
 
-  @Getter
-  SqrlConfig sqrlConfig;
+  @Getter SqrlConfig sqrlConfig;
 
   final String ENGINE_NAME_KEY = "type";
 
@@ -23,11 +22,10 @@ public class EngineConfigImpl implements PackageJson.EngineConfig {
 
   @Override
   public Map<String, Object> toMap() {
-    return SqrlConfigUtil.toMap(sqrlConfig,
-        Function.identity(), List.of());
+    return SqrlConfigUtil.toMap(sqrlConfig, Function.identity(), List.of());
   }
 
-  //Todo move out to engine specific config
+  // Todo move out to engine specific config
   @Override
   public ConnectorsConfig getConnectors() {
     return new ConnectorsConfigImpl(sqrlConfig.getSubConfig(CONNECTORS_KEY));

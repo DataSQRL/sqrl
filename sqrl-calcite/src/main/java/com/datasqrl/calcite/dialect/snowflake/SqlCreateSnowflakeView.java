@@ -1,33 +1,27 @@
 package com.datasqrl.calcite.dialect.snowflake;
 
+import java.util.List;
+import java.util.Objects;
+import javax.annotation.Nonnull;
 import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.util.ImmutableNullableList;
 
-import javax.annotation.Nonnull;
-import java.util.List;
-import java.util.Objects;
-
 /**
- * CREATE [ OR REPLACE ] [ SECURE ] [ { [ { LOCAL | GLOBAL } ] TEMP | TEMPORARY | VOLATILE } ] [ RECURSIVE ] VIEW [ IF NOT EXISTS ] <name>
- *   [ ( <column_list> ) ]
- *   [ <col1> [ WITH ] MASKING POLICY <policy_name> [ USING ( <col1> , <cond_col1> , ... ) ]
- *            [ WITH ] PROJECTION POLICY <policy_name>
- *            [ WITH ] TAG ( <tag_name> = '<tag_value>' [ , <tag_name> = '<tag_value>' , ... ] ) ]
- *   [ , <col2> [ ... ] ]
- *   [ [ WITH ] ROW ACCESS POLICY <policy_name> ON ( <col_name> [ , <col_name> ... ] ) ]
- *   [ [ WITH ] TAG ( <tag_name> = '<tag_value>' [ , <tag_name> = '<tag_value>' , ... ] ) ]
- *   [ COPY GRANTS ]
- *   [ COMMENT = '<string_literal>' ]
- *   [ [ WITH ] ROW ACCESS POLICY <policy_name> ON ( <col_name> [ , <col_name> ... ] ) ]
- *   [ [ WITH ] AGGREGATION POLICY <policy_name> ]
- *   [ [ WITH ] TAG ( <tag_name> = '<tag_value>' [ , <tag_name> = '<tag_value>' , ... ] ) ]
- *   AS <select_statement>
+ * CREATE [ OR REPLACE ] [ SECURE ] [ { [ { LOCAL | GLOBAL } ] TEMP | TEMPORARY | VOLATILE } ] [
+ * RECURSIVE ] VIEW [ IF NOT EXISTS ] <name> [ ( <column_list> ) ] [ <col1> [ WITH ] MASKING POLICY
+ * <policy_name> [ USING ( <col1> , <cond_col1> , ... ) ] [ WITH ] PROJECTION POLICY <policy_name> [
+ * WITH ] TAG ( <tag_name> = '<tag_value>' [ , <tag_name> = '<tag_value>' , ... ] ) ] [ , <col2> [
+ * ... ] ] [ [ WITH ] ROW ACCESS POLICY <policy_name> ON ( <col_name> [ , <col_name> ... ] ) ] [ [
+ * WITH ] TAG ( <tag_name> = '<tag_value>' [ , <tag_name> = '<tag_value>' , ... ] ) ] [ COPY GRANTS
+ * ] [ COMMENT = '<string_literal>' ] [ [ WITH ] ROW ACCESS POLICY <policy_name> ON ( <col_name> [ ,
+ * <col_name> ... ] ) ] [ [ WITH ] AGGREGATION POLICY <policy_name> ] [ [ WITH ] TAG ( <tag_name> =
+ * '<tag_value>' [ , <tag_name> = '<tag_value>' , ... ] ) ] AS <select_statement>
  */
 public class SqlCreateSnowflakeView extends SqlCall {
 
-  private static final SqlSpecialOperator OPERATOR = new SqlSpecialOperator("CREATE VIEW",
-      SqlKind.CREATE_VIEW);
+  private static final SqlSpecialOperator OPERATOR =
+      new SqlSpecialOperator("CREATE VIEW", SqlKind.CREATE_VIEW);
 
   private final SqlIdentifier viewName;
   private final SqlNodeList columnList;
@@ -40,9 +34,18 @@ public class SqlCreateSnowflakeView extends SqlCall {
   private final SqlCharStringLiteral comment;
   private final boolean copyGrants;
 
-  public SqlCreateSnowflakeView(SqlParserPos pos, boolean replace, boolean ifNotExists, boolean secure,
-      boolean recursive, SqlIdentifier tempOption, SqlIdentifier viewName, SqlNodeList columnList,
-      SqlNode select, SqlCharStringLiteral comment, boolean copyGrants) {
+  public SqlCreateSnowflakeView(
+      SqlParserPos pos,
+      boolean replace,
+      boolean ifNotExists,
+      boolean secure,
+      boolean recursive,
+      SqlIdentifier tempOption,
+      SqlIdentifier viewName,
+      SqlNodeList columnList,
+      SqlNode select,
+      SqlCharStringLiteral comment,
+      boolean copyGrants) {
     super(pos);
     this.replace = replace;
     this.ifNotExists = ifNotExists;
@@ -95,11 +98,11 @@ public class SqlCreateSnowflakeView extends SqlCall {
       writer.endList(frame);
     }
 
-//    if (comment != null) {
-//      writer.newlineAndIndent();
-//      writer.keyword("COMMENT");
-//      comment.unparse(writer, leftPrec, rightPrec);
-//    }
+    //    if (comment != null) {
+    //      writer.newlineAndIndent();
+    //      writer.keyword("COMMENT");
+    //      comment.unparse(writer, leftPrec, rightPrec);
+    //    }
 
     if (copyGrants) {
       writer.newlineAndIndent();

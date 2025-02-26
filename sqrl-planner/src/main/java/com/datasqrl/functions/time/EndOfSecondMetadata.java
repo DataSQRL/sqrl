@@ -9,8 +9,7 @@ import com.google.auto.service.AutoService;
 public class EndOfSecondMetadata extends AbstractEndOfMetadata {
 
   public EndOfSecondMetadata() {
-    super(TimeFunctions.END_OF_SECOND.getTimeUnit(),
-        TimeFunctions.END_OF_SECOND.getOffsetUnit());
+    super(TimeFunctions.END_OF_SECOND.getTimeUnit(), TimeFunctions.END_OF_SECOND.getOffsetUnit());
   }
 
   @Override

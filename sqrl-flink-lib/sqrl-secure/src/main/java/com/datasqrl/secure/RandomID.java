@@ -31,6 +31,7 @@ public class RandomID extends ScalarFunction {
   @Override
   public TypeInference getTypeInference(DataTypeFactory typeFactory) {
     return FlinkTypeUtil.basicNullInferenceBuilder(DataTypes.STRING(), DataTypes.BIGINT())
-        .typedArguments(List.of(DataTypes.BIGINT())).build();
+        .typedArguments(List.of(DataTypes.BIGINT()))
+        .build();
   }
 }

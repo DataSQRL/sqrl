@@ -15,5 +15,4 @@ public class ConnectorFactoryContext implements IConnectorFactoryContext {
   public ConnectorFactoryContext(String name, Map<String, Object> map) {
     this(Name.system(name), map);
   }
-
 }

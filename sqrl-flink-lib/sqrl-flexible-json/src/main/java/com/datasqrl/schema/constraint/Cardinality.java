@@ -3,8 +3,8 @@
  */
 package com.datasqrl.schema.constraint;
 
-import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.schema.type.ArrayType;
 import com.datasqrl.schema.type.Type;
 import java.util.Map;
@@ -21,12 +21,11 @@ public class Cardinality implements Constraint {
   private long min;
   private long max;
 
-  private Cardinality() {
-  } //For Kryo
+  private Cardinality() {} // For Kryo
 
   public Cardinality(long min, long max) {
-//    Preconditions.checkArgument(min >= 0);
-//    Preconditions.checkArgument(max >= min && max > 0);
+    //    Preconditions.checkArgument(min >= 0);
+    //    Preconditions.checkArgument(max >= min && max > 0);
     this.min = min;
     this.max = max;
   }
@@ -41,7 +40,7 @@ public class Cardinality implements Constraint {
 
   @Override
   public boolean satisfies(Object value) {
-//    Preconditions.checkArgument(value.getClass().isArray());
+    //    Preconditions.checkArgument(value.getClass().isArray());
     long length = ((Object[]) value).length;
     return length >= min && length <= max;
   }
@@ -101,6 +100,5 @@ public class Cardinality implements Constraint {
       }
       return Optional.of(((Number) value).longValue());
     }
-
   }
 }

@@ -39,23 +39,34 @@ public class FlinkSqlNodeFactoryTest {
   }
 
   private String unparse(SqlNode node) {
-    return QueryPlanner.sqlToString(Dialect.FLINK, ()->node).getSql();
-
+    return QueryPlanner.sqlToString(Dialect.FLINK, () -> node).getSql();
   }
+
   @Test
   void testCreateView() {
     String tableName = "my_view";
     SqlNode fromTable = FlinkSqlNodeFactory.identifier("source_table");
     SqlNodeList selectList = new SqlNodeList(SqlParserPos.ZERO);
     selectList.add(new SqlIdentifier("*", SqlParserPos.ZERO));
-    SqlSelect select = new SqlSelect(SqlParserPos.ZERO, null, selectList, fromTable, null, null, null, null, null, null, null, null);
+    SqlSelect select =
+        new SqlSelect(
+            SqlParserPos.ZERO,
+            null,
+            selectList,
+            fromTable,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null);
 
     SqlCreateView createView = FlinkSqlNodeFactory.createView(tableName, select);
     String sql = unparse(createView);
-    String expectedSql = "CREATE VIEW `my_view`\n"
-        + "AS\n"
-        + "SELECT `*`\n"
-        + "FROM `source_table`";
+    String expectedSql =
+        "CREATE VIEW `my_view`\n" + "AS\n" + "SELECT `*`\n" + "FROM `source_table`";
     assertEquals(expectedSql, sql.trim());
   }
 
@@ -65,13 +76,24 @@ public class FlinkSqlNodeFactoryTest {
     SqlNode fromTable = FlinkSqlNodeFactory.identifier("source_table");
     SqlNodeList selectList = new SqlNodeList(SqlParserPos.ZERO);
     selectList.add(new SqlIdentifier("*", SqlParserPos.ZERO));
-    SqlSelect select = new SqlSelect(SqlParserPos.ZERO, null, selectList, fromTable, null, null, null, null, null, null, null, null);
+    SqlSelect select =
+        new SqlSelect(
+            SqlParserPos.ZERO,
+            null,
+            selectList,
+            fromTable,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null);
 
     RichSqlInsert insert = FlinkSqlNodeFactory.createInsert(select, targetTable);
     String sql = unparse(insert);
-    String expectedSql = "INSERT INTO `target_table`\n"
-        + "(SELECT `*`\n"
-        + " FROM `source_table`)";
+    String expectedSql = "INSERT INTO `target_table`\n" + "(SELECT `*`\n" + " FROM `source_table`)";
     assertEquals(expectedSql, sql.trim());
   }
 
@@ -82,7 +104,8 @@ public class FlinkSqlNodeFactoryTest {
     SqlCreateFunction createFunction = FlinkSqlNodeFactory.createFunction(functionName, className);
 
     String sql = unparse(createFunction);
-    String expectedSql = "CREATE TEMPORARY FUNCTION IF NOT EXISTS `my_udf` AS 'com.example.MyUDF' LANGUAGE JAVA";
+    String expectedSql =
+        "CREATE TEMPORARY FUNCTION IF NOT EXISTS `my_udf` AS 'com.example.MyUDF' LANGUAGE JAVA";
     assertEquals(expectedSql, sql.trim());
   }
 
@@ -93,7 +116,8 @@ public class FlinkSqlNodeFactoryTest {
     String delay = "5";
     SqlNode watermarkStrategy = FlinkSqlNodeFactory.boundedStrategy(eventTimeIdentifier, delay);
 
-    SqlWatermark watermark = FlinkSqlNodeFactory.createWatermark(eventTimeIdentifier, watermarkStrategy);
+    SqlWatermark watermark =
+        FlinkSqlNodeFactory.createWatermark(eventTimeIdentifier, watermarkStrategy);
     String sql = unparse(watermark);
     String expectedSql = "WATERMARK FOR `timestamp_col` AS `timestamp_col` - INTERVAL '5' SECOND";
     assertEquals(expectedSql, sql.trim());
@@ -113,7 +137,8 @@ public class FlinkSqlNodeFactoryTest {
   @Test
   void testCreatePrimaryKeyConstraint() {
     List<String> primaryKeyColumns = Arrays.asList("id", "timestamp_col");
-    SqlTableConstraint pkConstraint = FlinkSqlNodeFactory.createPrimaryKeyConstraint(primaryKeyColumns);
+    SqlTableConstraint pkConstraint =
+        FlinkSqlNodeFactory.createPrimaryKeyConstraint(primaryKeyColumns);
     String sql = unparse(pkConstraint);
     String expectedSql = "PRIMARY KEY (`id`, `timestamp_col`) NOT ENFORCED";
     assertEquals(expectedSql, sql.trim());
@@ -151,13 +176,15 @@ public class FlinkSqlNodeFactoryTest {
     RelDataType varcharType = typeFactory.createSqlType(SqlTypeName.VARCHAR, 255);
     RelDataType timestampType = typeFactory.createSqlType(SqlTypeName.TIMESTAMP);
 
-    RelDataType rowType = typeFactory.builder()
-        .add("id", intType)
-        .add("name", varcharType)
-        .add("timestamp_col", timestampType)
-        .add("metadata_col1", varcharType)
-        .add("metadata_col2", varcharType)
-        .build();
+    RelDataType rowType =
+        typeFactory
+            .builder()
+            .add("id", intType)
+            .add("name", varcharType)
+            .add("timestamp_col", timestampType)
+            .add("metadata_col1", varcharType)
+            .add("metadata_col2", varcharType)
+            .build();
 
     Optional<List<String>> partitionKeys = Optional.of(Arrays.asList("name"));
     long watermarkMillis = 5000;
@@ -165,11 +192,14 @@ public class FlinkSqlNodeFactoryTest {
     Map<String, MetadataEntry> metadataConfig = new HashMap<>();
 
     // MetadataEntry with type only
-    MetadataEntry metadataEntry1 = new MockMetadataEntry(Optional.of("timestamp_col"), Optional.empty(), Optional.empty());
+    MetadataEntry metadataEntry1 =
+        new MockMetadataEntry(Optional.of("timestamp_col"), Optional.empty(), Optional.empty());
     metadataConfig.put("metadata_col1", metadataEntry1);
 
     // MetadataEntry with attribute
-    MetadataEntry metadataEntry2 = new MockMetadataEntry(Optional.of("timestamp_col"), Optional.of("timestamp"), Optional.of(true));
+    MetadataEntry metadataEntry2 =
+        new MockMetadataEntry(
+            Optional.of("timestamp_col"), Optional.of("timestamp"), Optional.of(true));
     metadataConfig.put("metadata_col2", metadataEntry2);
 
     List<String> primaryKeyConstraint = Arrays.asList("id");
@@ -179,39 +209,43 @@ public class FlinkSqlNodeFactoryTest {
     connectorProperties.put("format", "csv");
 
     // Simple MetadataExpressionParser implementation
-    FlinkSqlNodeFactory.MetadataExpressionParser expressionParser = expression -> {
-      // Return an identifier for simplicity
-      return FlinkSqlNodeFactory.identifier(expression);
-    };
+    FlinkSqlNodeFactory.MetadataExpressionParser expressionParser =
+        expression -> {
+          // Return an identifier for simplicity
+          return FlinkSqlNodeFactory.identifier(expression);
+        };
 
-    SqlCreateTable createTable = FlinkSqlNodeFactory.createTable(
-        tableName,
-        rowType,
-        partitionKeys,
-        watermarkMillis,
-        timestampColumn,
-        metadataConfig,
-        primaryKeyConstraint,
-        connectorProperties,
-        expressionParser
-    );
+    SqlCreateTable createTable =
+        FlinkSqlNodeFactory.createTable(
+            tableName,
+            rowType,
+            partitionKeys,
+            watermarkMillis,
+            timestampColumn,
+            metadataConfig,
+            primaryKeyConstraint,
+            connectorProperties,
+            expressionParser);
     // Unparse and compare SQL strings
     String sql = unparse(createTable);
-    String expectedSql = "CREATE TABLE `my_table` (\n"
-        + "  `id` INTEGER NOT NULL,\n"
-        + "  `name` VARCHAR(255) CHARACTER SET `UTF-16LE` NOT NULL,\n"
-        + "  `timestamp_col` TIMESTAMP(0) NOT NULL,\n"
-        + "  `metadata_col1` VARCHAR(255) CHARACTER SET `UTF-16LE` NOT NULL METADATA FROM 'timestamp_col',\n"
-        + "  `metadata_col2` VARCHAR(255) CHARACTER SET `UTF-16LE` NOT NULL METADATA FROM 'timestamp' VIRTUAL,\n"
-        + "  PRIMARY KEY (`id`) NOT ENFORCED,\n"
-        + "  WATERMARK FOR `timestamp_col` AS `timestamp_col` - INTERVAL '5.0' SECOND\n"
-        + ")\n"
-        + "PARTITIONED BY (`name`)\n"
-        + "WITH (\n"
-        + "  'format' = 'csv',\n"
-        + "  'path' = '/tmp/data',\n"
-        + "  'connector' = 'filesystem'\n"
-        + ")";
+    String expectedSql =
+        "CREATE TABLE `my_table` (\n"
+            + "  `id` INTEGER NOT NULL,\n"
+            + "  `name` VARCHAR(255) CHARACTER SET `UTF-16LE` NOT NULL,\n"
+            + "  `timestamp_col` TIMESTAMP(0) NOT NULL,\n"
+            + "  `metadata_col1` VARCHAR(255) CHARACTER SET `UTF-16LE` NOT NULL METADATA FROM"
+            + " 'timestamp_col',\n"
+            + "  `metadata_col2` VARCHAR(255) CHARACTER SET `UTF-16LE` NOT NULL METADATA FROM"
+            + " 'timestamp' VIRTUAL,\n"
+            + "  PRIMARY KEY (`id`) NOT ENFORCED,\n"
+            + "  WATERMARK FOR `timestamp_col` AS `timestamp_col` - INTERVAL '5.0' SECOND\n"
+            + ")\n"
+            + "PARTITIONED BY (`name`)\n"
+            + "WITH (\n"
+            + "  'format' = 'csv',\n"
+            + "  'path' = '/tmp/data',\n"
+            + "  'connector' = 'filesystem'\n"
+            + ")";
     assertEquals(expectedSql.trim(), sql.trim());
   }
 }

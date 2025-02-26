@@ -6,7 +6,9 @@ package com.datasqrl.cmd;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import picocli.CommandLine;
 
-@CommandLine.Command(name = "compile", description = "Compiles an SQRL script and produces all build artifacts")
+@CommandLine.Command(
+    name = "compile",
+    description = "Compiles an SQRL script and produces all build artifacts")
 public class CompilerCommand extends AbstractCompilerCommand {
 
   @Override

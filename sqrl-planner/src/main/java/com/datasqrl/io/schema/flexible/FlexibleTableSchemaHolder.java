@@ -6,7 +6,6 @@ import com.datasqrl.schema.input.FlexibleTableSchema;
 import com.datasqrl.schema.input.external.TableDefinition;
 import com.datasqrl.serializer.Deserializer;
 import com.google.common.base.Strings;
-import java.net.URI;
 import java.nio.file.Path;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
@@ -41,5 +40,4 @@ public class FlexibleTableSchemaHolder implements TableSchema {
     }
     return definition;
   }
-
 }

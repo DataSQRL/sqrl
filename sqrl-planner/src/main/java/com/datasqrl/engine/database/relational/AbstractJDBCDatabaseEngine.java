@@ -18,18 +18,18 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * Abstract implementation of a JDBC-compatible database engine.
- */
+/** Abstract implementation of a JDBC-compatible database engine. */
 @Slf4j
-public abstract class AbstractJDBCDatabaseEngine extends AbstractJDBCEngine implements DatabaseEngine {
+public abstract class AbstractJDBCDatabaseEngine extends AbstractJDBCEngine
+    implements DatabaseEngine {
 
-
-  @Getter
-  final EngineConfig connectorConfig;
+  @Getter final EngineConfig connectorConfig;
   private final ConnectorFactoryFactory connectorFactory;
 
-  public AbstractJDBCDatabaseEngine(String name, @NonNull EngineConfig connectorConfig, ConnectorFactoryFactory connectorFactory) {
+  public AbstractJDBCDatabaseEngine(
+      String name,
+      @NonNull EngineConfig connectorConfig,
+      ConnectorFactoryFactory connectorFactory) {
     super(name, Type.DATABASE, STANDARD_DATABASE);
     this.connectorConfig = connectorConfig;
     this.connectorFactory = connectorFactory;
@@ -45,18 +45,20 @@ public abstract class AbstractJDBCDatabaseEngine extends AbstractJDBCEngine impl
     throw new UnsupportedOperationException("JDBC database engines do not support query engines");
   }
 
-//  @Override
-//  public boolean supports(FunctionDefinition function) {
-//    //TODO: @Daniel: change to determining which functions are supported by dialect & database type
-//    //This is a hack - we just check that it's not a tumble window function
-//    return FunctionUtil.getSqrlTimeTumbleFunction(function).isEmpty();
-//  }
+  //  @Override
+  //  public boolean supports(FunctionDefinition function) {
+  //    //TODO: @Daniel: change to determining which functions are supported by dialect & database
+  // type
+  //    //This is a hack - we just check that it's not a tumble window function
+  //    return FunctionUtil.getSqrlTimeTumbleFunction(function).isEmpty();
+  //  }
 
   @Override
   public TableConfig getSinkConfig(String tableName) {
     return connectorFactory
         .create(Type.DATABASE, getDialect().getId())
-        .orElseThrow(()-> new RuntimeException("Could not obtain sink for dialect: " + getDialect()))
+        .orElseThrow(
+            () -> new RuntimeException("Could not obtain sink for dialect: " + getDialect()))
         .createSourceAndSink(
             new ConnectorFactoryContext(tableName, Map.of("table-name", tableName)));
   }
@@ -65,5 +67,4 @@ public abstract class AbstractJDBCDatabaseEngine extends AbstractJDBCEngine impl
   public IndexSelectorConfig getIndexSelectorConfig() {
     return IndexSelectorConfigByDialect.of(getDialect());
   }
-
 }

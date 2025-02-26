@@ -4,13 +4,12 @@
 package com.datasqrl.plan.hints;
 
 import com.google.common.base.Preconditions;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import org.apache.calcite.rel.hint.RelHint;
-
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import org.apache.calcite.rel.hint.RelHint;
 
 @Getter
 @AllArgsConstructor
@@ -20,10 +19,10 @@ public class TimestampHint implements SqrlHint {
 
   @Override
   public RelHint getHint() {
-    return RelHint.builder(getHintName()).hintOptions(
-        IntStream.of(timestampIdx)
-            .mapToObj(String::valueOf).collect(Collectors.toList())
-    ).build();
+    return RelHint.builder(getHintName())
+        .hintOptions(
+            IntStream.of(timestampIdx).mapToObj(String::valueOf).collect(Collectors.toList()))
+        .build();
   }
 
   public static final String HINT_NAME = TimestampHint.class.getSimpleName();
@@ -50,5 +49,4 @@ public class TimestampHint implements SqrlHint {
       return new TimestampHint(timestampIdx);
     }
   }
-
 }

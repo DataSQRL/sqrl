@@ -4,7 +4,6 @@
 package com.datasqrl.error;
 
 public enum ErrorCode implements ErrorLabel {
-
   IMPORT_NAMESPACE_CONFLICT,
   IMPORT_CANNOT_BE_ALIASED,
   IMPORT_STAR_CANNOT_HAVE_TIMESTAMP,

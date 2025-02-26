@@ -14,5 +14,4 @@ public class IdentityCanonicalizer implements NameCanonicalizer {
   public String getCanonical(String name) {
     return name.trim();
   }
-
 }

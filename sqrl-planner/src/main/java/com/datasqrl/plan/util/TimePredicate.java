@@ -32,8 +32,8 @@ public class TimePredicate {
 
   final int smallerIndex;
   final int largerIndex;
-  final SqlKind comparison; //equals, less_than, or less_than_equals
-  final long intervalLength; //in milliseconds
+  final SqlKind comparison; // equals, less_than, or less_than_equals
+  final long intervalLength; // in milliseconds
 
   public List<Integer> getIndexes() {
     return List.of(smallerIndex, largerIndex);
@@ -56,36 +56,38 @@ public class TimePredicate {
   }
 
   public long normalizedIntervalLength() {
-      if (comparison == SqlKind.LESS_THAN) {
-          return intervalLength - 1;
-      } else {
-          return intervalLength;
-      }
+    if (comparison == SqlKind.LESS_THAN) {
+      return intervalLength - 1;
+    } else {
+      return intervalLength;
+    }
   }
 
   public Optional<TimePredicate> and(TimePredicate other) {
     Preconditions.checkArgument(
         smallerIndex == other.smallerIndex && largerIndex == other.largerIndex,
-        "Incompatible indexes: [%s] vs [%s]", this, other);
+        "Incompatible indexes: [%s] vs [%s]",
+        this,
+        other);
     if (isEquality() && other.isEquality()) {
-        if (intervalLength == other.intervalLength) {
-            return Optional.of(this);
-        } else {
-            return Optional.empty();
-        }
+      if (intervalLength == other.intervalLength) {
+        return Optional.of(this);
+      } else {
+        return Optional.empty();
+      }
     } else if (isEquality()) {
-        if (intervalLength <= other.normalizedIntervalLength()) {
-            return Optional.of(this);
-        } else {
-            return Optional.empty();
-        }
+      if (intervalLength <= other.normalizedIntervalLength()) {
+        return Optional.of(this);
+      } else {
+        return Optional.empty();
+      }
     } else if (other.isEquality()) {
-        if (other.intervalLength <= normalizedIntervalLength()) {
-            return Optional.of(other);
-        } else {
-            return Optional.empty();
-        }
-    } else { //both are inequalities
+      if (other.intervalLength <= normalizedIntervalLength()) {
+        return Optional.of(other);
+      } else {
+        return Optional.empty();
+      }
+    } else { // both are inequalities
       SqlKind comp;
       long intLength;
       if (comparison == other.comparison) {
@@ -104,11 +106,16 @@ public class TimePredicate {
   }
 
   public TimePredicate remap(IndexMap map) {
-    return new TimePredicate(smallerIndex < 0 ? smallerIndex : map.map(smallerIndex),
-        largerIndex < 0 ? largerIndex : map.map(largerIndex), comparison, intervalLength);
+    return new TimePredicate(
+        smallerIndex < 0 ? smallerIndex : map.map(smallerIndex),
+        largerIndex < 0 ? largerIndex : map.map(largerIndex),
+        comparison,
+        intervalLength);
   }
 
-  public RexNode createRexNode(RexBuilder rexBuilder, Function<Integer, RexInputRef> createInputRef,
+  public RexNode createRexNode(
+      RexBuilder rexBuilder,
+      Function<Integer, RexInputRef> createInputRef,
       boolean useCurrentTime) {
     RexNode smallerRef = createRef(smallerIndex, rexBuilder, createInputRef, useCurrentTime);
     RexNode largerRef = createRef(largerIndex, rexBuilder, createInputRef, useCurrentTime);
@@ -128,28 +135,37 @@ public class TimePredicate {
     }
 
     if (intervalLength < 0) {
-      smallerRef = rexBuilder.makeCall(SqlStdOperatorTable.DATETIME_PLUS, smallerRef,
-          CalciteUtil.makeTimeInterval(intervalLength, rexBuilder));
+      smallerRef =
+          rexBuilder.makeCall(
+              SqlStdOperatorTable.DATETIME_PLUS,
+              smallerRef,
+              CalciteUtil.makeTimeInterval(intervalLength, rexBuilder));
     } else if (intervalLength > 0) {
-      largerRef = rexBuilder.makeCall(SqlStdOperatorTable.DATETIME_PLUS, largerRef,
-          CalciteUtil.makeTimeInterval(intervalLength, rexBuilder));
+      largerRef =
+          rexBuilder.makeCall(
+              SqlStdOperatorTable.DATETIME_PLUS,
+              largerRef,
+              CalciteUtil.makeTimeInterval(intervalLength, rexBuilder));
     }
     return rexBuilder.makeCall(op, smallerRef, largerRef);
   }
 
-  private static RexNode createRef(int index, RexBuilder rexBuilder,
-      Function<Integer, RexInputRef> createInputRef, boolean useCurrentTime) {
-      if (index >= 0) {
-          return createInputRef.apply(index);
-      } else if (index == NOW_INDEX) {
-          if (useCurrentTime) {
-              return rexBuilder.makeCall(SqlStdOperatorTable.CURRENT_TIMESTAMP);
-          } else {
-              return rexBuilder.makeCall(lightweightOp("now", ReturnTypes.explicit(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3)));
-          }
+  private static RexNode createRef(
+      int index,
+      RexBuilder rexBuilder,
+      Function<Integer, RexInputRef> createInputRef,
+      boolean useCurrentTime) {
+    if (index >= 0) {
+      return createInputRef.apply(index);
+    } else if (index == NOW_INDEX) {
+      if (useCurrentTime) {
+        return rexBuilder.makeCall(SqlStdOperatorTable.CURRENT_TIMESTAMP);
+      } else {
+        return rexBuilder.makeCall(
+            lightweightOp(
+                "now", ReturnTypes.explicit(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3)));
       }
+    }
     throw new UnsupportedOperationException("Invalid index: " + index);
   }
-
-
 }

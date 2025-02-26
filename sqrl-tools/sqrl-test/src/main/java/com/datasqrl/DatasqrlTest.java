@@ -24,7 +24,6 @@ import org.apache.commons.collections.ListUtils;
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.JobStatus;
 import org.apache.flink.core.execution.JobClient;
-import org.apache.flink.runtime.client.JobExecutionException;
 import org.apache.flink.table.api.TableResult;
 
 public class DatasqrlTest {
@@ -41,7 +40,8 @@ public class DatasqrlTest {
   }
 
   public DatasqrlTest() {
-    this(Path.of(System.getProperty("user.dir")).resolve("build"),
+    this(
+        Path.of(System.getProperty("user.dir")).resolve("build"),
         Path.of(System.getProperty("user.dir")).resolve("build").resolve("plan"),
         System.getenv());
   }
@@ -61,7 +61,7 @@ public class DatasqrlTest {
       TableResult result = run.run(false);
 
       ObjectMapper objectMapper = new ObjectMapper();
-      //todo add file check
+      // todo add file check
 
       Thread.sleep(1000);
 
@@ -74,18 +74,17 @@ public class DatasqrlTest {
         Files.createDirectories(snapshotDir);
       }
 
-
-      //It is possible that no test plan exists, such as no test queries.
+      // It is possible that no test plan exists, such as no test queries.
       // We will still let exports run, though we may want to replace them with blackhole sinks
       if (Files.exists(planPath.resolve("test.json"))) {
 
-        TestPlan testPlan = objectMapper.readValue(planPath.resolve("test.json").toFile(),
-            TestPlan.class);
+        TestPlan testPlan =
+            objectMapper.readValue(planPath.resolve("test.json").toFile(), TestPlan.class);
         for (GraphqlQuery query : testPlan.getMutations()) {
-          //Execute queries
+          // Execute queries
           String data = executeQuery(query.getQuery());
 
-          //Snapshot result
+          // Snapshot result
           Path snapshotPath = snapshotDir.resolve(query.getName() + ".snapshot");
           snapshot(snapshotPath, query.getName(), data, exceptions);
         }
@@ -93,7 +92,7 @@ public class DatasqrlTest {
 
       long delaySec = 30;
       int requiredCheckpoints = 0;
-      //todo: fix get package json
+      // todo: fix get package json
       Object testRunner = run.getPackageJson().get("test-runner");
       if (testRunner instanceof Map) {
         Map testRunnerMap = (Map) testRunner;
@@ -108,16 +107,17 @@ public class DatasqrlTest {
       }
 
       if (delaySec == -1) {
-        FlinkOperatorStatusChecker flinkOperatorStatusChecker = new FlinkOperatorStatusChecker(
-            result.getJobClient().get().getJobID().toString(), requiredCheckpoints);
+        FlinkOperatorStatusChecker flinkOperatorStatusChecker =
+            new FlinkOperatorStatusChecker(
+                result.getJobClient().get().getJobID().toString(), requiredCheckpoints);
         flinkOperatorStatusChecker.run();
       } else {
         try {
           for (int i = 0; i < delaySec; i++) {
-            //break early if job is done
+            // break early if job is done
             try {
-              CompletableFuture<JobStatus> jobStatusCompletableFuture = result.getJobClient()
-                  .map(JobClient::getJobStatus).get();
+              CompletableFuture<JobStatus> jobStatusCompletableFuture =
+                  result.getJobClient().map(JobClient::getJobStatus).get();
               JobStatus status = jobStatusCompletableFuture.get(1, TimeUnit.SECONDS);
               if (status == JobStatus.FAILED) {
                 exceptions.add(new JobFailureException());
@@ -138,40 +138,46 @@ public class DatasqrlTest {
         } catch (Exception e) {
         }
       }
-      
+
       try {
-        JobExecutionResult jobExecutionResult = result.getJobClient().get().getJobExecutionResult()
-            .get(2, TimeUnit.SECONDS); //flink will hold if the minicluster is stopped
+        JobExecutionResult jobExecutionResult =
+            result
+                .getJobClient()
+                .get()
+                .getJobExecutionResult()
+                .get(2, TimeUnit.SECONDS); // flink will hold if the minicluster is stopped
       } catch (ExecutionException e) {
-        //try to catch the job failure if we can
+        // try to catch the job failure if we can
         exceptions.add(new JobFailureException(e));
       } catch (Exception e) {
       }
 
       if (Files.exists(planPath.resolve("test.json"))) {
 
-        TestPlan testPlan = objectMapper.readValue(planPath.resolve("test.json").toFile(),
-            TestPlan.class);
+        TestPlan testPlan =
+            objectMapper.readValue(planPath.resolve("test.json").toFile(), TestPlan.class);
         for (GraphqlQuery query : testPlan.getQueries()) {
-          //Execute queries
+          // Execute queries
           String data = executeQuery(query.getQuery());
 
-          //Snapshot result
+          // Snapshot result
           Path snapshotPath = snapshotDir.resolve(query.getName() + ".snapshot");
           snapshot(snapshotPath, query.getName(), data, exceptions);
         }
 
-        List<String> expectedSnapshotsQueries = testPlan.getQueries().stream()
-            .map(f -> f.getName() + ".snapshot")
-            .collect(Collectors.toList());
-        List<String> expectedSnapshotsMutations = testPlan.getMutations().stream()
-            .map(f -> f.getName() + ".snapshot")
-            .collect(Collectors.toList());
-        List<String> expectedSnapshots = ListUtils.union(expectedSnapshotsQueries,
-            expectedSnapshotsMutations);
+        List<String> expectedSnapshotsQueries =
+            testPlan.getQueries().stream()
+                .map(f -> f.getName() + ".snapshot")
+                .collect(Collectors.toList());
+        List<String> expectedSnapshotsMutations =
+            testPlan.getMutations().stream()
+                .map(f -> f.getName() + ".snapshot")
+                .collect(Collectors.toList());
+        List<String> expectedSnapshots =
+            ListUtils.union(expectedSnapshotsQueries, expectedSnapshotsMutations);
         // Check all snapshots in the directory
-        try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(snapshotDir,
-            "*.snapshot")) {
+        try (DirectoryStream<Path> directoryStream =
+            Files.newDirectoryStream(snapshotDir, "*.snapshot")) {
           for (Path path : directoryStream) {
             String snapshotFileName = path.getFileName().toString();
             if (!expectedSnapshots.contains(snapshotFileName)) {
@@ -183,7 +189,7 @@ public class DatasqrlTest {
       }
     } finally {
       run.stop();
-      Thread.sleep(1000); //wait for log lines to clear out
+      Thread.sleep(1000); // wait for log lines to clear out
     }
 
     int exitCode = 0;
@@ -222,16 +228,16 @@ public class DatasqrlTest {
     return exitCode;
   }
 
-
   @SneakyThrows
   private String executeQuery(String query) {
     HttpClient client = HttpClient.newHttpClient();
 
-    HttpRequest request = HttpRequest.newBuilder()
-        .uri(URI.create(GRAPHQL_ENDPOINT))
-        .header("Content-Type", "application/graphql")
-        .POST(HttpRequest.BodyPublishers.ofString(query))
-        .build();
+    HttpRequest request =
+        HttpRequest.newBuilder()
+            .uri(URI.create(GRAPHQL_ENDPOINT))
+            .header("Content-Type", "application/graphql")
+            .POST(HttpRequest.BodyPublishers.ofString(query))
+            .build();
 
     HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
@@ -243,9 +249,8 @@ public class DatasqrlTest {
   }
 
   @SneakyThrows
-  private void snapshot(Path snapshotPath, String name, String currentResponse,
-      List<Exception> exceptions) {
-
+  private void snapshot(
+      Path snapshotPath, String name, String currentResponse, List<Exception> exceptions) {
 
     // Existing snapshot logic
     if (Files.exists(snapshotPath)) {
@@ -269,7 +274,7 @@ public class DatasqrlTest {
     System.out.println("\u001B[31m" + line + "\u001B[0m");
   }
 
-  //Todo: Unify with other testplan
+  // Todo: Unify with other testplan
   @AllArgsConstructor
   @NoArgsConstructor
   @Getter

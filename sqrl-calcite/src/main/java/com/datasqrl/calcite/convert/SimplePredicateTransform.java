@@ -21,7 +21,8 @@ public class SimplePredicateTransform extends RelRule<SimplePredicateTransform.C
   private final Transform transform;
   private final SqlOperator operator;
 
-  public SimplePredicateTransform(SqlOperator operator, Transform transform, RelRule.Config config) {
+  public SimplePredicateTransform(
+      SqlOperator operator, Transform transform, RelRule.Config config) {
     super(config);
     this.transform = transform;
     this.operator = operator;
@@ -38,35 +39,37 @@ public class SimplePredicateTransform extends RelRule<SimplePredicateTransform.C
     RexBuilder rexBuilder = relOptRuleCall.builder().getRexBuilder();
     AtomicBoolean hasTransformed = new AtomicBoolean(false);
 
-    RelNode newFilter = filter.accept(new RexShuttle() {
-      @Override
-      public RexNode visitCall(RexCall call) {
-        /**
-         * Predicate transforms checks if current operator is a boolean and one of the operands is said function
-         */
-        if (isPredicateContainingOp(call)) {
-          hasTransformed.set(true);
-          return transform.transform(rexBuilder, call);
-        }
+    RelNode newFilter =
+        filter.accept(
+            new RexShuttle() {
+              @Override
+              public RexNode visitCall(RexCall call) {
+                /**
+                 * Predicate transforms checks if current operator is a boolean and one of the
+                 * operands is said function
+                 */
+                if (isPredicateContainingOp(call)) {
+                  hasTransformed.set(true);
+                  return transform.transform(rexBuilder, call);
+                }
 
-        return super.visitCall(call);
-      }
-
-      private boolean isPredicateContainingOp(RexCall call) {
-        if (call.getType().getSqlTypeName() == SqlTypeName.BOOLEAN) {
-          for (RexNode op : call.getOperands()) {
-            if (op instanceof RexCall) {
-              RexCall call1 = (RexCall) op;
-              if (call1.getOperator().equals(operator)) {
-                return true;
+                return super.visitCall(call);
               }
-            }
 
-          }
-        }
-        return false;
-      }
-    });
+              private boolean isPredicateContainingOp(RexCall call) {
+                if (call.getType().getSqlTypeName() == SqlTypeName.BOOLEAN) {
+                  for (RexNode op : call.getOperands()) {
+                    if (op instanceof RexCall) {
+                      RexCall call1 = (RexCall) op;
+                      if (call1.getOperator().equals(operator)) {
+                        return true;
+                      }
+                    }
+                  }
+                }
+                return false;
+              }
+            });
 
     if (hasTransformed.get()) {
       relOptRuleCall.transformTo(newFilter);
@@ -77,22 +80,24 @@ public class SimplePredicateTransform extends RelRule<SimplePredicateTransform.C
   @Value.Immutable
   public interface SimplePredicateTransformConfig extends RelRule.Config {
 
-    public static SimplePredicateTransform.Config createConfig(SqlOperator sqlOperator, Transform transform) {
+    public static SimplePredicateTransform.Config createConfig(
+        SqlOperator sqlOperator, Transform transform) {
       return ImmutableSimplePredicateTransformConfig.builder()
           .operator(sqlOperator)
           .transform(transform)
           .relBuilderFactory(RelFactories.LOGICAL_BUILDER)
           .description("SimplePredicateTransform")
-          .operandSupplier(b0 ->
-              b0.operand(LogicalFilter.class).anyInputs())
+          .operandSupplier(b0 -> b0.operand(LogicalFilter.class).anyInputs())
           .build();
     }
 
     abstract SqlOperator getOperator();
+
     abstract Transform getTransform();
 
-    @Override default SimplePredicateTransform toRule() {
-      return new SimplePredicateTransform(getOperator(), getTransform() ,this);
+    @Override
+    default SimplePredicateTransform toRule() {
+      return new SimplePredicateTransform(getOperator(), getTransform(), this);
     }
   }
 }

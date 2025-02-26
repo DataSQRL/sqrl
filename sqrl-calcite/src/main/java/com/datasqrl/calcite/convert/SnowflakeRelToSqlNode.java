@@ -7,18 +7,18 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.rel2sql.RelToSqlConverterWithHints;
 import org.apache.calcite.sql.CalciteFixes;
 import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.dialect.CalciteSqlDialect;
 
 @AutoService(RelToSqlNode.class)
 public class SnowflakeRelToSqlNode implements RelToSqlNode {
 
   @Override
   public SqlNodes convert(RelNode relNode) {
-    SqlNode node = new RelToSqlConverterWithHints(ExtendedSnowflakeSqlDialect.DEFAULT)
-        .visitRoot(relNode)
-        .asStatement();
+    SqlNode node =
+        new RelToSqlConverterWithHints(ExtendedSnowflakeSqlDialect.DEFAULT)
+            .visitRoot(relNode)
+            .asStatement();
     CalciteFixes.appendSelectLists(node);
-    return ()->node;
+    return () -> node;
   }
 
   @Override

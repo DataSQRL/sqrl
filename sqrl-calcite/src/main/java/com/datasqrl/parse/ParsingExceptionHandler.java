@@ -17,9 +17,11 @@ public class ParsingExceptionHandler implements ErrorHandler<ParsingException> {
 
   @Override
   public ErrorMessage handle(ParsingException e, ErrorLocation baseLocation) {
-    return new Implementation(ErrorLabel.GENERIC, e.getErrorMessage(),
-        baseLocation.atFile(new FileLocation(e.getLineNumber(), e.getColumnNumber()))
-        , Severity.FATAL);
+    return new Implementation(
+        ErrorLabel.GENERIC,
+        e.getErrorMessage(),
+        baseLocation.atFile(new FileLocation(e.getLineNumber(), e.getColumnNumber())),
+        Severity.FATAL);
   }
 
   @Override

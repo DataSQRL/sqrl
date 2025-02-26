@@ -12,12 +12,13 @@ public class CalciteSqlNodeToString implements SqlNodeToString {
 
   @Override
   public SqlStrings convert(SqlNodes sqlNode) {
-    SqlWriterConfig config = SqlPrettyWriter.config()
-        .withDialect(AnsiSqlDialect.DEFAULT)
-        .withAlwaysUseParentheses(true)
-        .withQuoteAllIdentifiers(true)
-        .withSelectListItemsOnSeparateLines(false)
-        .withIndentation(0);
+    SqlWriterConfig config =
+        SqlPrettyWriter.config()
+            .withDialect(AnsiSqlDialect.DEFAULT)
+            .withAlwaysUseParentheses(true)
+            .withQuoteAllIdentifiers(true)
+            .withSelectListItemsOnSeparateLines(false)
+            .withIndentation(0);
     SqlPrettyWriter prettyWriter = new SqlPrettyWriter(config);
     sqlNode.getSqlNode().unparse(prettyWriter, 0, 0);
     return () -> prettyWriter.toSqlString().getSql();

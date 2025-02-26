@@ -15,20 +15,19 @@ import java.util.Optional;
 import lombok.Getter;
 import org.apache.calcite.rel.type.RelDataType;
 
-/**
- * Central manager for log creation.
- */
+/** Central manager for log creation. */
 public class LogManagerImpl implements LogManager {
 
   Optional<LogFactory> proxiedFactory;
-  @Getter
-  Map<String, Log> logs = new HashMap<>();
+  @Getter Map<String, Log> logs = new HashMap<>();
 
   @Inject
   public LogManagerImpl(ExecutionPipeline pipeline) {
-    proxiedFactory = pipeline.getStage(Type.LOG)
-        .map(stage -> (LogEngine) stage.get(0).getEngine())
-        .map(LogEngine::getLogFactory);
+    proxiedFactory =
+        pipeline
+            .getStage(Type.LOG)
+            .map(stage -> (LogEngine) stage.get(0).getEngine())
+            .map(LogEngine::getLogFactory);
   }
 
   @Override
@@ -37,10 +36,16 @@ public class LogManagerImpl implements LogManager {
   }
 
   @Override
-  public Log create(String logId, Name logName, RelDataType schema, List<String> primaryKey,
+  public Log create(
+      String logId,
+      Name logName,
+      RelDataType schema,
+      List<String> primaryKey,
       Timestamp timestamp) {
-    Log log = proxiedFactory.orElseThrow(() -> new IllegalStateException("No log engine configured"))
-        .create(logId, logName, schema, primaryKey, timestamp);
+    Log log =
+        proxiedFactory
+            .orElseThrow(() -> new IllegalStateException("No log engine configured"))
+            .create(logId, logName, schema, primaryKey, timestamp);
     logs.put(logId, log);
     return log;
   }

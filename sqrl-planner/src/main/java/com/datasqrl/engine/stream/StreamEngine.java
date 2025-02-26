@@ -6,6 +6,4 @@ package com.datasqrl.engine.stream;
 import com.datasqrl.engine.ExecutionEngine;
 import java.io.Closeable;
 
-public interface StreamEngine extends Closeable, ExecutionEngine {
-
-}
+public interface StreamEngine extends Closeable, ExecutionEngine {}

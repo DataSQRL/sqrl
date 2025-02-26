@@ -1,18 +1,13 @@
 package com.datasqrl.config;
 
-import static com.datasqrl.config.PackageJsonImpl.SCRIPT_KEY;
 
-import com.google.common.collect.ImmutableMap;
-import java.util.Map;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
-import lombok.NonNull;
 
 @AllArgsConstructor
 public class ScriptConfigImpl implements PackageJson.ScriptConfig {
 
   SqrlConfig sqrlConfig;
-
 
   public static final String MAIN_KEY = "main";
   public static final String GRAPHQL_KEY = "graphql";
@@ -24,7 +19,7 @@ public class ScriptConfigImpl implements PackageJson.ScriptConfig {
   }
 
   @Override
-  public Optional<String>  getGraphql() {
+  public Optional<String> getGraphql() {
     return sqrlConfig.asString(GRAPHQL_KEY).getOptional();
   }
 

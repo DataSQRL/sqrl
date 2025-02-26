@@ -16,19 +16,27 @@ public class ConfigurationSchemaTest {
   @Test
   public void readTableConfigsNormal() {
     ErrorCollector errors = ErrorCollector.root();
-    SqrlConfigCommons.fromFilesTableConfig(Name.system("MyTable"), errors, List.of(TEST_CASES.resolve("tableConfigFull.json")));
+    SqrlConfigCommons.fromFilesTableConfig(
+        Name.system("MyTable"), errors, List.of(TEST_CASES.resolve("tableConfigFull.json")));
   }
 
   @Test
   public void readTableConfigsMissing() {
-    testForErrors(errors -> SqrlConfigCommons.fromFilesTableConfig(Name.system("MyTable"), errors,
-        List.of(TEST_CASES.resolve("tableConfigMissing.json"))));
+    testForErrors(
+        errors ->
+            SqrlConfigCommons.fromFilesTableConfig(
+                Name.system("MyTable"),
+                errors,
+                List.of(TEST_CASES.resolve("tableConfigMissing.json"))));
   }
 
   @Test
   public void readTableExtraKeys() {
-    testForErrors(errors -> SqrlConfigCommons.fromFilesTableConfig(Name.system("MyTable"), errors,
-        List.of(TEST_CASES.resolve("tableConfigExtraField.json"))));
+    testForErrors(
+        errors ->
+            SqrlConfigCommons.fromFilesTableConfig(
+                Name.system("MyTable"),
+                errors,
+                List.of(TEST_CASES.resolve("tableConfigExtraField.json"))));
   }
-
 }

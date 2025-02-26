@@ -1,25 +1,26 @@
-//package com.datasqrl;
+// package com.datasqrl;
 //
-//import static org.junit.jupiter.api.Assertions.fail;
+// import static org.junit.jupiter.api.Assertions.fail;
 //
-//import java.io.File;
-//import java.nio.file.Path;
-//import java.util.List;
-//import java.util.stream.Stream;
-//import lombok.extern.slf4j.Slf4j;
-//import org.apache.flink.table.api.CompiledPlan;
-//import org.junit.jupiter.api.BeforeAll;
-//import org.junit.jupiter.api.Disabled;
-//import org.junit.jupiter.api.TestInstance;
-//import org.junit.jupiter.params.ParameterizedTest;
-//import org.junit.jupiter.params.provider.MethodSource;
+// import java.io.File;
+// import java.nio.file.Path;
+// import java.util.List;
+// import java.util.stream.Stream;
+// import lombok.extern.slf4j.Slf4j;
+// import org.apache.flink.table.api.CompiledPlan;
+// import org.junit.jupiter.api.BeforeAll;
+// import org.junit.jupiter.api.Disabled;
+// import org.junit.jupiter.api.TestInstance;
+// import org.junit.jupiter.params.ParameterizedTest;
+// import org.junit.jupiter.params.provider.MethodSource;
 //
-///**
+/// **
 // * !! This test uses built jars. Remember to build the jars if you're making changes and testing
 // */
-//@Slf4j
-//@TestInstance(TestInstance.Lifecycle.PER_CLASS) // This is to allow the method source to not be static
-//public class DagPlannerIT {
+// @Slf4j
+// @TestInstance(TestInstance.Lifecycle.PER_CLASS) // This is to allow the method source to not be
+// static
+// public class DagPlannerIT {
 //
 //  // Method to provide the directories as test arguments
 //  static Stream<Path> directoryProvider() {
@@ -36,7 +37,8 @@
 //    File directory = rootPath.toFile();
 //    if (directory.exists() && directory.isDirectory()) {
 //      File[] sqrlFiles = directory.listFiles(f->
-//          f.getName().endsWith(".sqrl") && !f.getName().contains("disabled") && !f.getName().contains("fail"));
+//          f.getName().endsWith(".sqrl") && !f.getName().contains("disabled") &&
+// !f.getName().contains("fail"));
 //      if (sqrlFiles != null) {
 //        return Stream.of(sqrlFiles).map(File::toPath);
 //      }
@@ -89,4 +91,4 @@
 //    }
 //    return null;
 //  }
-//}
+// }

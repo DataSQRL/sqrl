@@ -14,9 +14,11 @@ public class SqrlAstExceptionHandler implements ErrorHandler<SqrlAstException> {
   @Override
   public ErrorMessage handle(SqrlAstException e, ErrorLocation baseLocation) {
 
-    return new Implementation(e.getErrorLabel(), e.getMessage(),
-        e.getPos() != null ? baseLocation.atFile(e.getLocation()) :
-        baseLocation, Severity.FATAL);
+    return new Implementation(
+        e.getErrorLabel(),
+        e.getMessage(),
+        e.getPos() != null ? baseLocation.atFile(e.getLocation()) : baseLocation,
+        Severity.FATAL);
   }
 
   @Override

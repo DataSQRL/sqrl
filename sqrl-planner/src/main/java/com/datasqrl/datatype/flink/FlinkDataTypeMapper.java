@@ -1,6 +1,5 @@
 package com.datasqrl.datatype.flink;
 
-import static com.datasqrl.function.CalciteFunctionUtil.lightweightOp;
 
 import com.datasqrl.config.TableConfig;
 import com.datasqrl.datatype.DataTypeMapper;
@@ -20,5 +19,4 @@ public abstract class FlinkDataTypeMapper implements DataTypeMapper {
   protected UserDefinedFunction convert(UserDefinedFunction functionDefinition) {
     return functionDefinition;
   }
-
 }

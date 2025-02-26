@@ -21,6 +21,4 @@ public abstract class AbstractSqrlRelShuttle<V extends RelHolder> implements Sqr
     this.relHolder = null;
     return relHolder;
   }
-
-
 }

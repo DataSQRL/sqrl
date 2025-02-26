@@ -2,9 +2,7 @@ package com.datasqrl.vector;
 
 import org.apache.flink.table.functions.ScalarFunction;
 
-/**
- * A unuseful embedding function counts each character (modulo 256). Used for testing only.
- */
+/** A unuseful embedding function counts each character (modulo 256). Used for testing only. */
 public class AsciiTextTestEmbed extends ScalarFunction {
 
   private static final int VECTOR_LENGTH = 256;
@@ -16,5 +14,4 @@ public class AsciiTextTestEmbed extends ScalarFunction {
     }
     return new FlinkVectorType(vector);
   }
-
 }

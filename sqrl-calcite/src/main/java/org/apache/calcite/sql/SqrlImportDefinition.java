@@ -23,8 +23,8 @@ public class SqrlImportDefinition extends SqrlStatement {
   private final Optional<SqlIdentifier> alias;
   private final SqlIdentifier importPath;
 
-  public SqrlImportDefinition(SqlParserPos location, SqlIdentifier importPath,
-      Optional<SqlIdentifier> alias) {
+  public SqrlImportDefinition(
+      SqlParserPos location, SqlIdentifier importPath, Optional<SqlIdentifier> alias) {
     super(location, importPath, Optional.empty());
     this.alias = alias;
     this.importPath = importPath;

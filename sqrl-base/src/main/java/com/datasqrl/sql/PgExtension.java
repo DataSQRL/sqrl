@@ -4,9 +4,9 @@ import java.util.Set;
 
 // Service loader interface
 public interface PgExtension {
-    Class typeClass();
+  Class typeClass();
 
-    Set<String> operators();
+  Set<String> operators();
 
-    SqlDDLStatement getExtensionDdl();
+  SqlDDLStatement getExtensionDdl();
 }

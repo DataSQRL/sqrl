@@ -44,5 +44,4 @@ public class FlinkArrayTypeUtil {
         return false;
     }
   }
-
 }

@@ -33,7 +33,4 @@ public class ExternalUseCaseTest extends AbstractUseCaseTest {
       super(USECASE_DIR, false);
     }
   }
-
-
-
 }

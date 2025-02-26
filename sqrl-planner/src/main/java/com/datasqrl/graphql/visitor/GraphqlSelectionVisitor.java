@@ -10,5 +10,4 @@ public interface GraphqlSelectionVisitor<R, C> {
   public R visitFragmentSpread(FragmentSpread node, C context);
 
   public R visitInlineFragment(InlineFragment node, C context);
-
 }

@@ -26,8 +26,7 @@ public class ObjectType extends AbstractBasicType<Object> {
 
   public static class Conversion implements TypeConversion<Object> {
 
-    public Conversion() {
-    }
+    public Conversion() {}
 
     @Override
     public Set<Class> getJavaTypes() {
@@ -46,7 +45,6 @@ public class ObjectType extends AbstractBasicType<Object> {
     public Optional<Object> parseDetected(Object original, ErrorCollector errors) {
       return Optional.of(original);
     }
-
   }
 
   public <R, C> R accept(SqrlTypeVisitor<R, C> visitor, C context) {

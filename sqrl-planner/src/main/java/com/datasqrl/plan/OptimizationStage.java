@@ -4,13 +4,16 @@
 package com.datasqrl.plan;
 
 import com.datasqrl.config.EngineFactory.Type;
-import com.datasqrl.engine.stream.flink.sql.rules.ToStubAggRule;
 import com.datasqrl.engine.stream.flink.sql.rules.ToStubAggRule.ToStubAggRuleConfig;
 import com.datasqrl.plan.rules.DAGFunctionExpansionRule;
 import com.datasqrl.plan.rules.DAGTableExpansionRule.Read;
 import com.datasqrl.plan.rules.DAGTableExpansionRule.Write;
 import com.datasqrl.plan.rules.SQRLPrograms;
 import com.datasqrl.plan.rules.SqrlRelMetadataProvider;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.Value;
 import org.apache.calcite.adapter.enumerable.EnumerableConvention;
 import org.apache.calcite.plan.RelTrait;
@@ -19,14 +22,7 @@ import org.apache.calcite.rel.rules.CoreRules;
 import org.apache.calcite.tools.Program;
 import org.apache.calcite.tools.Programs;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-/**
- * An {@link OptimizationStage}
- */
+/** An {@link OptimizationStage} */
 @Value
 public class OptimizationStage {
 
@@ -51,57 +47,69 @@ public class OptimizationStage {
     return ALL_STAGES.stream().map(OptimizationStage::getProgram).collect(Collectors.toList());
   }
 
-    /*
-    ====== DEFINITION OF ACTUAL STAGES
-     */
+  /*
+  ====== DEFINITION OF ACTUAL STAGES
+   */
 
-  public static final OptimizationStage PUSH_FILTER_INTO_JOIN = new OptimizationStage(
-      "PushFilterIntoJoin",
-      Programs.hep(List.of(
-          CoreRules.FILTER_INTO_JOIN
-      ), false, DefaultRelMetadataProvider.INSTANCE),
-      Optional.empty());
+  public static final OptimizationStage PUSH_FILTER_INTO_JOIN =
+      new OptimizationStage(
+          "PushFilterIntoJoin",
+          Programs.hep(
+              List.of(CoreRules.FILTER_INTO_JOIN), false, DefaultRelMetadataProvider.INSTANCE),
+          Optional.empty());
 
-  public static final OptimizationStage DATABASE_DAG_STITCHING = new OptimizationStage(
-      "DatabaseDAGExpansion",
-      Programs.hep(List.of(new Read(Type.DATABASE), new DAGFunctionExpansionRule(Type.DATABASE)),
-          false, SqrlRelMetadataProvider.INSTANCE), Optional.empty());
+  public static final OptimizationStage DATABASE_DAG_STITCHING =
+      new OptimizationStage(
+          "DatabaseDAGExpansion",
+          Programs.hep(
+              List.of(new Read(Type.DATABASE), new DAGFunctionExpansionRule(Type.DATABASE)),
+              false,
+              SqrlRelMetadataProvider.INSTANCE),
+          Optional.empty());
 
+  public static final OptimizationStage SERVER_DAG_STITCHING =
+      new OptimizationStage(
+          "ServerDAGExpansion",
+          Programs.hep(
+              List.of(new Read(Type.SERVER), new DAGFunctionExpansionRule(Type.SERVER)),
+              false,
+              SqrlRelMetadataProvider.INSTANCE),
+          Optional.empty());
 
-  public static final OptimizationStage SERVER_DAG_STITCHING = new OptimizationStage(
-      "ServerDAGExpansion",
-      Programs.hep(List.of(new Read(Type.SERVER), new DAGFunctionExpansionRule(Type.SERVER)),
-          false, SqrlRelMetadataProvider.INSTANCE), Optional.empty());
+  public static final OptimizationStage STREAM_DAG_STITCHING =
+      new OptimizationStage(
+          "StreamDAGExpansion",
+          Programs.hep(List.of(new Write()), false, SqrlRelMetadataProvider.INSTANCE),
+          Optional.empty());
 
-  public static final OptimizationStage STREAM_DAG_STITCHING = new OptimizationStage(
-      "StreamDAGExpansion",
-      Programs.hep(List.of(new Write()), false,
-          SqrlRelMetadataProvider.INSTANCE),
-      Optional.empty());
+  public static final OptimizationStage VOLCANO =
+      new OptimizationStage(
+          "Volcano", SQRLPrograms.ENUMERABLE_VOLCANO, Optional.of(EnumerableConvention.INSTANCE));
 
+  public static final OptimizationStage READ_QUERY_OPTIMIZATION =
+      new OptimizationStage(
+          "ReadQueryOptimization",
+          Programs.sequence(
+              Programs.hep(
+                  List.of(ToStubAggRuleConfig.DEFAULT.toRule()),
+                  true,
+                  SqrlRelMetadataProvider.INSTANCE),
+              SQRLPrograms.ENUMERABLE_VOLCANO),
+          Optional.of(EnumerableConvention.INSTANCE));
 
-  public static final OptimizationStage VOLCANO = new OptimizationStage("Volcano",
-      SQRLPrograms.ENUMERABLE_VOLCANO, Optional.of(EnumerableConvention.INSTANCE)
-  );
-
-  public static final OptimizationStage READ_QUERY_OPTIMIZATION = new OptimizationStage(
-      "ReadQueryOptimization",
-      Programs.sequence(
-          Programs.hep(List.of(ToStubAggRuleConfig.DEFAULT.toRule()),
-              true, SqrlRelMetadataProvider.INSTANCE),
-          SQRLPrograms.ENUMERABLE_VOLCANO), Optional.of(EnumerableConvention.INSTANCE)
-  );
-
-  public static final OptimizationStage PUSH_DOWN_FILTERS = new OptimizationStage("PushDownFilters",
-      Programs.hep(List.of(
-          CoreRules.FILTER_INTO_JOIN,
-          CoreRules.FILTER_MERGE,
-          CoreRules.FILTER_AGGREGATE_TRANSPOSE,
-          CoreRules.FILTER_PROJECT_TRANSPOSE,
-          CoreRules.FILTER_TABLE_FUNCTION_TRANSPOSE,
-          CoreRules.FILTER_CORRELATE,
-          CoreRules.FILTER_SET_OP_TRANSPOSE
-      ), false, SqrlRelMetadataProvider.INSTANCE),
-      Optional.empty());
-
+  public static final OptimizationStage PUSH_DOWN_FILTERS =
+      new OptimizationStage(
+          "PushDownFilters",
+          Programs.hep(
+              List.of(
+                  CoreRules.FILTER_INTO_JOIN,
+                  CoreRules.FILTER_MERGE,
+                  CoreRules.FILTER_AGGREGATE_TRANSPOSE,
+                  CoreRules.FILTER_PROJECT_TRANSPOSE,
+                  CoreRules.FILTER_TABLE_FUNCTION_TRANSPOSE,
+                  CoreRules.FILTER_CORRELATE,
+                  CoreRules.FILTER_SET_OP_TRANSPOSE),
+              false,
+              SqrlRelMetadataProvider.INSTANCE),
+          Optional.empty());
 }

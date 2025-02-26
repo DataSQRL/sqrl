@@ -16,18 +16,23 @@ public class NestedRelationship extends Relationship {
   private final RelDataType rowType;
   private final int[] localPKs;
 
-  public NestedRelationship(Name name,
-      NamePath fullPath, NamePath absolutePath,
+  public NestedRelationship(
+      Name name,
+      NamePath fullPath,
+      NamePath absolutePath,
       Multiplicity multiplicity,
-      List<FunctionParameter> parameters, RelDataType rowType, int[] localPKs, boolean isTest) {
-    super(name, fullPath, absolutePath, JoinType.CHILD, multiplicity, parameters, null,
-        isTest);
+      List<FunctionParameter> parameters,
+      RelDataType rowType,
+      int[] localPKs,
+      boolean isTest) {
+    super(name, fullPath, absolutePath, JoinType.CHILD, multiplicity, parameters, null, isTest);
     this.rowType = rowType;
     this.localPKs = localPKs;
   }
 
   @Override
-  public RelDataType getRowType(RelDataTypeFactory relDataTypeFactory, List<? extends Object> list) {
+  public RelDataType getRowType(
+      RelDataTypeFactory relDataTypeFactory, List<? extends Object> list) {
     return getRowType();
   }
 

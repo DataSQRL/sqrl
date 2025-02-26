@@ -1,6 +1,5 @@
 package com.datasqrl.graphql.config;
 
-import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;

@@ -1,6 +1,5 @@
 package com.datasqrl.plan.global;
 
-import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.rules.ComputeCost;
 import com.datasqrl.plan.rules.EngineCapability;
@@ -32,7 +31,6 @@ public abstract class StageAnalysis {
     return new MissingCapability(exception.getStage(), exception.getCapabilities());
   }
 
-
   @Value
   @EqualsAndHashCode(callSuper = true)
   public static class Cost extends StageAnalysis {
@@ -53,7 +51,8 @@ public abstract class StageAnalysis {
       if (supported) {
         return String.format("Stage [%s] supported at cost: %s", getName(), cost);
       } else {
-        return String.format("Stage [%s] has been eliminated  due to high cost: %s",getName(), cost);
+        return String.format(
+            "Stage [%s] has been eliminated  due to high cost: %s", getName(), cost);
       }
     }
 
@@ -65,10 +64,8 @@ public abstract class StageAnalysis {
     public Cost tooExpensive() {
       return new Cost(super.getStage(), cost, false, relNode);
     }
-
-  };
-
-
+  }
+  ;
 
   @Value
   @EqualsAndHashCode(callSuper = true)
@@ -91,7 +88,7 @@ public abstract class StageAnalysis {
   @EqualsAndHashCode(callSuper = true)
   public static class MissingDependent extends StageAnalysis {
 
-    boolean upstream; //else it's downstream
+    boolean upstream; // else it's downstream
     String tableName;
 
     public MissingDependent(ExecutionStage stage, boolean upstream, String tableName) {
@@ -102,11 +99,12 @@ public abstract class StageAnalysis {
 
     @Override
     public String getMessage() {
-      return String.format("%s [%s] does not support stage [%s] or any %s stages",
-          upstream?"Upstream input":"Downstream consumer",
-          tableName, getName(),
-          upstream?"prior":"subsequent");
+      return String.format(
+          "%s [%s] does not support stage [%s] or any %s stages",
+          upstream ? "Upstream input" : "Downstream consumer",
+          tableName,
+          getName(),
+          upstream ? "prior" : "subsequent");
     }
   }
-
 }

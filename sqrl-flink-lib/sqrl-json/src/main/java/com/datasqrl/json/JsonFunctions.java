@@ -20,9 +20,9 @@ public class JsonFunctions {
   public static final JsonObjectAgg JSON_OBJECTAGG = new JsonObjectAgg();
   public static final JsonConcat JSON_CONCAT = new JsonConcat();
 
-
   public static ArgumentTypeStrategy createJsonArgumentTypeStrategy(DataTypeFactory typeFactory) {
-    return InputTypeStrategies.or(SpecificInputTypeStrategies.JSON_ARGUMENT,
+    return InputTypeStrategies.or(
+        SpecificInputTypeStrategies.JSON_ARGUMENT,
         InputTypeStrategies.explicit(createJsonType(typeFactory)));
   }
 
@@ -30,5 +30,4 @@ public class JsonFunctions {
     DataType dataType = DataTypes.of(FlinkJsonType.class).toDataType(typeFactory);
     return dataType;
   }
-
 }

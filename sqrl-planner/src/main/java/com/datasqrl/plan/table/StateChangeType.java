@@ -4,7 +4,7 @@
 package com.datasqrl.plan.table;
 
 public enum StateChangeType {
-
-  ADD, DELETE, UPDATE;
-
+  ADD,
+  DELETE,
+  UPDATE;
 }

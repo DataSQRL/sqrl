@@ -42,23 +42,26 @@ public class PostgresRowTypeSerializer
   public GenericSerializationConverter<JdbcSerializationConverter> getSerializerConverter(
       LogicalType type) {
     ObjectMapper mapper = new ObjectMapper();
-    return ()-> (val, index, statement) -> {
-      if (val != null && !val.isNullAt(index)) {
-        SqrlRowDataToJsonConverters rowDataToJsonConverter = new SqrlRowDataToJsonConverters(
-            TimestampFormat.SQL, MapNullKeyMode.DROP, "null");
+    return () ->
+        (val, index, statement) -> {
+          if (val != null && !val.isNullAt(index)) {
+            SqrlRowDataToJsonConverters rowDataToJsonConverter =
+                new SqrlRowDataToJsonConverters(TimestampFormat.SQL, MapNullKeyMode.DROP, "null");
 
-        ArrayType arrayType = (ArrayType) type;
-        ObjectNode objectNode = mapper.createObjectNode();
-        JsonNode convert = rowDataToJsonConverter.createConverter(arrayType.getElementType())
-            .convert(mapper, objectNode, val);
+            ArrayType arrayType = (ArrayType) type;
+            ObjectNode objectNode = mapper.createObjectNode();
+            JsonNode convert =
+                rowDataToJsonConverter
+                    .createConverter(arrayType.getElementType())
+                    .convert(mapper, objectNode, val);
 
-        PGobject pgObject = new PGobject();
-        pgObject.setType("json");
-        pgObject.setValue(convert.toString());
-        statement.setObject(index, pgObject);
-      } else {
-        statement.setObject(index, null);
-      }
-    };
+            PGobject pgObject = new PGobject();
+            pgObject.setType("json");
+            pgObject.setValue(convert.toString());
+            statement.setObject(index, pgObject);
+          } else {
+            statement.setObject(index, null);
+          }
+        };
   }
 }

@@ -3,13 +3,11 @@
  */
 package com.datasqrl.schema.input;
 
-
 import java.io.Serializable;
 
 public interface SchemaAdjustmentSettings extends Serializable {
 
-  SchemaAdjustmentSettings DEFAULT = new SchemaAdjustmentSettings() {
-  };
+  SchemaAdjustmentSettings DEFAULT = new SchemaAdjustmentSettings() {};
 
   default boolean deepenArrays() {
     return true;
@@ -48,6 +46,4 @@ public interface SchemaAdjustmentSettings extends Serializable {
   default boolean dropFields() {
     return true;
   }
-
-
 }

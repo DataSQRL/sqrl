@@ -1,10 +1,10 @@
 package com.datasqrl.vector;
 
+import java.io.IOException;
 import org.apache.flink.api.common.typeutils.TypeSerializer;
 import org.apache.flink.api.common.typeutils.TypeSerializerSnapshot;
 import org.apache.flink.core.memory.DataInputView;
 import org.apache.flink.core.memory.DataOutputView;
-import java.io.IOException;
 
 public class FlinkVectorTypeSerializer extends TypeSerializer<FlinkVectorType> {
 
@@ -81,5 +81,4 @@ public class FlinkVectorTypeSerializer extends TypeSerializer<FlinkVectorType> {
   public TypeSerializerSnapshot<FlinkVectorType> snapshotConfiguration() {
     return new FlinkVectorTypeSerializerSnapshot();
   }
-
 }

@@ -40,12 +40,17 @@ public class SqrlSqlToRelConverter extends SqlToRelConverter {
 
   private final RelBuilder relBuilder;
 
-  public SqrlSqlToRelConverter(ViewExpander viewExpander, SqlValidator validator,
-      CatalogReader catalogReader, RelOptCluster cluster,
-      SqlRexConvertletTable convertletTable, Config config) {
+  public SqrlSqlToRelConverter(
+      ViewExpander viewExpander,
+      SqlValidator validator,
+      CatalogReader catalogReader,
+      RelOptCluster cluster,
+      SqlRexConvertletTable convertletTable,
+      Config config) {
     super(viewExpander, validator, catalogReader, cluster, convertletTable, config);
     this.relBuilder =
-        config.getRelBuilderFactory()
+        config
+            .getRelBuilderFactory()
             .create(cluster, null)
             .transform(config.getRelBuilderConfigTransform());
   }
@@ -59,16 +64,14 @@ public class SqrlSqlToRelConverter extends SqlToRelConverter {
     switch (from.getKind()) {
       case JOIN:
         SqlJoin from1 = (SqlJoin) from;
-        invokeSuperPrivateMethod(this, "convertJoin",
-              List.of(Blackboard.class, SqlJoin.class), bb, from1);
+        invokeSuperPrivateMethod(
+            this, "convertJoin", List.of(Blackboard.class, SqlJoin.class), bb, from1);
 
         // Sqrl: Add hint
         if (from1.getModifier() != null) {
-          RelHint hint = new JoinModifierHint(JoinModifier.valueOf(from1.getModifier().toValue()))
-              .getHint();
-          RelNode joinRel = relBuilder.push(bb.root)
-              .hints(hint)
-              .build();
+          RelHint hint =
+              new JoinModifierHint(JoinModifier.valueOf(from1.getModifier().toValue())).getHint();
+          RelNode joinRel = relBuilder.push(bb.root).hints(hint).build();
           RelOptUtil.propagateRelHints(joinRel, false);
           bb.setRoot(joinRel, false);
         }

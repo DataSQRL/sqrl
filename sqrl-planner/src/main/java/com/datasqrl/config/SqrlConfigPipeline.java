@@ -9,12 +9,12 @@ import lombok.experimental.Delegate;
 @Singleton
 public class SqrlConfigPipeline implements ExecutionPipeline {
 
-  @Delegate
-  ExecutionPipeline pipeline;
+  @Delegate ExecutionPipeline pipeline;
 
   @Inject
   public SqrlConfigPipeline(Injector injector, PackageJson config) {
-    this.pipeline = new PipelineFactory(injector, config.getEnabledEngines(), config.getEngines())
-        .createPipeline();
+    this.pipeline =
+        new PipelineFactory(injector, config.getEnabledEngines(), config.getEngines())
+            .createPipeline();
   }
 }

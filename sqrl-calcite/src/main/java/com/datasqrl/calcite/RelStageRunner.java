@@ -1,12 +1,12 @@
 package com.datasqrl.calcite;
 
+import static java.util.Objects.requireNonNull;
+
 import org.apache.calcite.plan.RelOptPlanner;
 import org.apache.calcite.plan.RelTraitSet;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.tools.Program;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
-
-import static java.util.Objects.requireNonNull;
 
 public class RelStageRunner {
 
@@ -16,11 +16,14 @@ public class RelStageRunner {
     return runStage(stage.getIndex(), outputTraits, relNode, planner);
   }
 
-  protected static RelNode runStage(int ruleSetIndex, RelTraitSet requiredOutputTraits, RelNode rel,
-      RelOptPlanner planner) {
+  protected static RelNode runStage(
+      int ruleSetIndex, RelTraitSet requiredOutputTraits, RelNode rel, RelOptPlanner planner) {
     Program program = OptimizationStage.getAllPrograms().get(ruleSetIndex);
-    return program.run(requireNonNull(planner, "planner"),
-        rel, requiredOutputTraits, ImmutableList.of(),
+    return program.run(
+        requireNonNull(planner, "planner"),
+        rel,
+        requiredOutputTraits,
+        ImmutableList.of(),
         ImmutableList.of());
   }
 }

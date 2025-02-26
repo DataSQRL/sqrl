@@ -26,42 +26,55 @@ public class ShapeBushyCorrelateJoinRule extends RelRule<ShapeBushyCorrelateJoin
     LogicalCorrelate left = relOptRuleCall.rel(1);
     RelNode right = relOptRuleCall.rel(2);
 
-    RelBuilder builder = relOptRuleCall.builder()
-        .transform(config -> config.withSimplify(false).withPruneInputOfAggregate(false)
-            .withBloat(-10000).withSimplifyLimit(false).withPushJoinCondition(false)
-        );
+    RelBuilder builder =
+        relOptRuleCall
+            .builder()
+            .transform(
+                config ->
+                    config
+                        .withSimplify(false)
+                        .withPruneInputOfAggregate(false)
+                        .withBloat(-10000)
+                        .withSimplifyLimit(false)
+                        .withPushJoinCondition(false));
 
-    RelNode relNode = builder
-        .push(left)
-        .project(allNodes(builder, builder.peek()),
-            builder.peek().getRowType().getFieldNames(), true)
-        .push(right)
-        .correlate(top.getJoinType(), top.getCorrelationId())
-        .build();
+    RelNode relNode =
+        builder
+            .push(left)
+            .project(
+                allNodes(builder, builder.peek()),
+                builder.peek().getRowType().getFieldNames(),
+                true)
+            .push(right)
+            .correlate(top.getJoinType(), top.getCorrelationId())
+            .build();
 
     relOptRuleCall.transformTo(relNode);
   }
 
   private List<RexNode> allNodes(RelBuilder builder, RelNode node) {
     return IntStream.range(0, node.getRowType().getFieldCount())
-        .mapToObj(i->builder.getRexBuilder().makeInputRef(node, i))
+        .mapToObj(i -> builder.getRexBuilder().makeInputRef(node, i))
         .collect(Collectors.toList());
   }
-
 
   /** Rule configuration. */
   @Value.Immutable
   public interface ShapeBushyCorrelateJoinRuleConfig extends RelRule.Config {
-    public ShapeBushyCorrelateJoinRule.Config DEFAULT = ImmutableShapeBushyCorrelateJoinRuleConfig.builder()
-        .relBuilderFactory(RelFactories.LOGICAL_BUILDER)
-        .operandSupplier(b0 ->
-            b0.operand(LogicalCorrelate.class).inputs(
-                b1 -> b1.operand(LogicalCorrelate.class).anyInputs(),
-                b2 -> b2.operand(RelNode.class).anyInputs()))
-        .description("ShapeBushyCorrelateJoinRule")
-        .build();
+    public ShapeBushyCorrelateJoinRule.Config DEFAULT =
+        ImmutableShapeBushyCorrelateJoinRuleConfig.builder()
+            .relBuilderFactory(RelFactories.LOGICAL_BUILDER)
+            .operandSupplier(
+                b0 ->
+                    b0.operand(LogicalCorrelate.class)
+                        .inputs(
+                            b1 -> b1.operand(LogicalCorrelate.class).anyInputs(),
+                            b2 -> b2.operand(RelNode.class).anyInputs()))
+            .description("ShapeBushyCorrelateJoinRule")
+            .build();
 
-    @Override default ShapeBushyCorrelateJoinRule toRule() {
+    @Override
+    default ShapeBushyCorrelateJoinRule toRule() {
       return new ShapeBushyCorrelateJoinRule(this);
     }
   }

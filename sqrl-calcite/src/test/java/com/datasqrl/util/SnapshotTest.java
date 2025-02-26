@@ -24,16 +24,14 @@ import org.junit.jupiter.api.TestInfo;
 @Slf4j
 public class SnapshotTest {
 
-  public static final String[] BASE_SNAPSHOT_DIR = new String[]{"src", "test", "resources",
-      "snapshots"};
+  public static final String[] BASE_SNAPSHOT_DIR =
+      new String[] {"src", "test", "resources", "snapshots"};
   public static final String SNAPSHOT_EXTENSION = ".txt";
 
-
-  public static void createOrValidateSnapshot(@NonNull String className, @NonNull String fileName,
-      @NonNull String content) {
+  public static void createOrValidateSnapshot(
+      @NonNull String className, @NonNull String fileName, @NonNull String content) {
     new Snapshot(className, fileName, new StringBuilder(content)).createOrValidate();
   }
-
 
   private static Path getPath(String[] components) {
     return Paths.get(components[0], Arrays.copyOfRange(components, 1, components.length));
@@ -53,8 +51,7 @@ public class SnapshotTest {
     String fileName;
     StringBuilder content;
 
-    public static Snapshot of(@NonNull String name, @NonNull TestInfo testInfo,
-        String content) {
+    public static Snapshot of(@NonNull String name, @NonNull TestInfo testInfo, String content) {
       String fileName = testInfo.getDisplayName();
       Matcher matcher = PARAMETRIZED_TEST.matcher(fileName);
       if (matcher.find()) {
@@ -94,7 +91,7 @@ public class SnapshotTest {
 
     public Snapshot addContent(@NonNull String addedContent, String... caseNames) {
       if (caseNames != null && caseNames.length > 0) {
-        //Add header
+        // Add header
         int j = 0;
         for (String caseName : caseNames) {
           if (j++ == 0) {
@@ -113,8 +110,8 @@ public class SnapshotTest {
     @SneakyThrows
     public void createOrValidate() {
       String content = getContent();
-      Preconditions.checkArgument(fileName.matches("^[a-zA-Z0-9_-]+$"), "Invalid display name: %s",
-          fileName);
+      Preconditions.checkArgument(
+          fileName.matches("^[a-zA-Z0-9_-]+$"), "Invalid display name: %s", fileName);
       Preconditions.checkArgument(!Strings.isNullOrEmpty(className), "No snapshot class name");
       Preconditions.checkArgument(!Strings.isNullOrEmpty(content), "No snapshot content");
 
@@ -125,7 +122,7 @@ public class SnapshotTest {
         Files.createDirectories(path.getParent());
         log.info("Test not running, creating snapshot");
         Files.write(path, content.getBytes());
-        fail("Creating snapshots: " + "file://"+path.toFile().getAbsolutePath());
+        fail("Creating snapshots: " + "file://" + path.toFile().getAbsolutePath());
       } else {
         byte[] data = Files.readAllBytes(path);
         String expected = new String(data);
@@ -134,15 +131,27 @@ public class SnapshotTest {
           String[] contentLines = content.split("\n");
           for (int i = 0; i < Math.min(expectedLines.length, contentLines.length); i++) {
             if (!expectedLines[i].equals(contentLines[i])) {
-              log.error("Error at line: {}\n"
-                  + "expected: {}\n"
-                  + "found   : {}\n"
-                  + "------------------\n"
-                  + "entire plan output:\n{}", i, expectedLines[i], contentLines[i], content);
+              log.error(
+                  "Error at line: {}\n"
+                      + "expected: {}\n"
+                      + "found   : {}\n"
+                      + "------------------\n"
+                      + "entire plan output:\n{}",
+                  i,
+                  expectedLines[i],
+                  contentLines[i],
+                  content);
               break;
             }
           }
-          assertEquals(expected, content, "Mismatched snapshots: " + fileName + " " + "file://"+path.toFile().getAbsolutePath());
+          assertEquals(
+              expected,
+              content,
+              "Mismatched snapshots: "
+                  + fileName
+                  + " "
+                  + "file://"
+                  + path.toFile().getAbsolutePath());
         }
       }
     }

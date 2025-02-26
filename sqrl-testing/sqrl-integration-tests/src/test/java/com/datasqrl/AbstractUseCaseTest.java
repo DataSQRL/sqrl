@@ -16,7 +16,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
-
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
@@ -29,29 +28,30 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
     super(usecaseDirectory.resolve("deploy-assets"));
   }
 
-
   void testUsecase(Path script, Path graphQlFile, Path packageFile) {
     assertTrue(Files.exists(script));
     Path baseDir = script.getParent();
-    //Check if GraphQL exists
+    // Check if GraphQL exists
     Path graphQLFile = baseDir.resolve(FileUtil.separateExtension(script).getKey() + ".graphqls");
 
     List<String> arguments = new ArrayList<>();
     arguments.add("compile");
     arguments.add(script.getFileName().toString());
-    hasGraphQL = graphQlFile!=null;
+    hasGraphQL = graphQlFile != null;
     if (hasGraphQL) {
       assert Files.exists(graphQLFile);
       arguments.add(graphQLFile.getFileName().toString());
     }
-    if (packageFile!=null) {
+    if (packageFile != null) {
       assert Files.exists(packageFile);
-      arguments.add("-c"); arguments.add(packageFile.getFileName().toString());
+      arguments.add("-c");
+      arguments.add(packageFile.getFileName().toString());
     }
-//    arguments.add("-t"); arguments.add(deployDir.toString());
-    String testname = Stream.of(script, graphQlFile, packageFile)
-        .map(AbstractAssetSnapshotTest::getDisplayName)
-        .collect(Collectors.joining("-"));
+    //    arguments.add("-t"); arguments.add(deployDir.toString());
+    String testname =
+        Stream.of(script, graphQlFile, packageFile)
+            .map(AbstractAssetSnapshotTest::getDisplayName)
+            .collect(Collectors.joining("-"));
     AssertStatusHook hook = execute(baseDir, arguments);
     snapshot(testname, hook);
   }
@@ -67,8 +67,9 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
 
   @Override
   public Predicate<Path> getBuildDirFilter() {
-    return file -> file.getFileName().toString().equalsIgnoreCase("pipeline_explain.txt")
-        || (!hasGraphQL && file.getFileName().toString().endsWith(".graphqls"));
+    return file ->
+        file.getFileName().toString().equalsIgnoreCase("pipeline_explain.txt")
+            || (!hasGraphQL && file.getFileName().toString().endsWith(".graphqls"));
   }
 
   @Override
@@ -84,18 +85,20 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
 
     @Override
     public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
-      //Look for all package jsons
+      // Look for all package jsons
       return getSQRLScripts(directory, includeFails)
           .sorted(Comparator.comparing(p -> p.toFile().getName()))
-          .flatMap(path -> {
-        List<Path> pkgFiles = getPackageFiles(path.getParent());
-        Collections.sort(pkgFiles, Comparator.comparing(p -> p.toFile().getName()));
-        if (pkgFiles.isEmpty()) pkgFiles.add(null);
-        List<Path> graphQLFiles = getScriptGraphQLFiles(path);
-        Collections.sort(graphQLFiles, Comparator.comparing(p -> p.toFile().getName()));
-        if (graphQLFiles.isEmpty()) graphQLFiles.add(null);
-        return graphQLFiles.stream().flatMap(gql -> pkgFiles.stream().map(pkg -> Arguments.of(path, gql, pkg)));
-      });
+          .flatMap(
+              path -> {
+                List<Path> pkgFiles = getPackageFiles(path.getParent());
+                Collections.sort(pkgFiles, Comparator.comparing(p -> p.toFile().getName()));
+                if (pkgFiles.isEmpty()) pkgFiles.add(null);
+                List<Path> graphQLFiles = getScriptGraphQLFiles(path);
+                Collections.sort(graphQLFiles, Comparator.comparing(p -> p.toFile().getName()));
+                if (graphQLFiles.isEmpty()) graphQLFiles.add(null);
+                return graphQLFiles.stream()
+                    .flatMap(gql -> pkgFiles.stream().map(pkg -> Arguments.of(path, gql, pkg)));
+              });
     }
   }
 

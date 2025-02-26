@@ -24,17 +24,19 @@ public class ErrorCollection implements Iterable<ErrorMessage>, Serializable {
   }
 
   protected void addInternal(@NonNull ErrorMessage error) {
-    //Preconditions.checkArgument(error.getLocation().hasPrefix(), "Error is not grounded: %s", error);
+    // Preconditions.checkArgument(error.getLocation().hasPrefix(), "Error is not grounded: %s",
+    // error);
     errors.add(error);
   }
 
   protected void add(@NonNull ErrorMessage err, ErrorLocation baseLocation) {
     ErrorLocation errLoc = err.getLocation();
     if (!errLoc.hasPrefix()) {
-      //Adjust relative location
+      // Adjust relative location
       ErrorLocation newloc = baseLocation.append(errLoc);
-      err = new ErrorMessage.Implementation(err.getErrorLabel(), err.getMessage(), newloc,
-          err.getSeverity());
+      err =
+          new ErrorMessage.Implementation(
+              err.getErrorLabel(), err.getMessage(), newloc, err.getSeverity());
     }
     addInternal(err);
   }
@@ -52,13 +54,15 @@ public class ErrorCollection implements Iterable<ErrorMessage>, Serializable {
     return errors.stream().anyMatch(ErrorMessage::isFatal);
   }
 
-  public String combineMessages(ErrorMessage.Severity minSeverity, String prefix,
-      String delimiter) {
+  public String combineMessages(
+      ErrorMessage.Severity minSeverity, String prefix, String delimiter) {
     String suffix = "";
     if (errors != null) {
-      suffix = errors.stream().filter(m -> m.getSeverity().compareTo(minSeverity) >= 0)
-          .map(ErrorMessage::toString)
-          .collect(Collectors.joining(delimiter));
+      suffix =
+          errors.stream()
+              .filter(m -> m.getSeverity().compareTo(minSeverity) >= 0)
+              .map(ErrorMessage::toString)
+              .collect(Collectors.joining(delimiter));
     }
     return prefix + suffix;
   }
@@ -85,18 +89,19 @@ public class ErrorCollection implements Iterable<ErrorMessage>, Serializable {
     return new ErrorCollector(location, this);
   }
 
-//  public void log() {
-//    for (ErrorMessage message : errors) {
-//      if (message.isNotice()) {
-//        log.info(message.toStringNoSeverity());
-//      } else if (message.isWarning()) {
-//        log.warn(message.toStringNoSeverity());
-//      } else if (message.isFatal()) {
-//        log.error(message.toStringNoSeverity());
-//      } else {
-//        throw new UnsupportedOperationException("Unexpected severity: " + message.getSeverity());
-//      }
-//    }
-//  }
+  //  public void log() {
+  //    for (ErrorMessage message : errors) {
+  //      if (message.isNotice()) {
+  //        log.info(message.toStringNoSeverity());
+  //      } else if (message.isWarning()) {
+  //        log.warn(message.toStringNoSeverity());
+  //      } else if (message.isFatal()) {
+  //        log.error(message.toStringNoSeverity());
+  //      } else {
+  //        throw new UnsupportedOperationException("Unexpected severity: " +
+  // message.getSeverity());
+  //      }
+  //    }
+  //  }
 
 }

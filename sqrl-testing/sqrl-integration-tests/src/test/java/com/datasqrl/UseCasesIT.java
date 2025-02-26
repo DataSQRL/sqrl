@@ -11,12 +11,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.apache.flink.calcite.shaded.com.google.common.base.Strings;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
 
-/**
- * Tests some use cases in the test/resources/usecases folder using the `test` command.
- */
+/** Tests some use cases in the test/resources/usecases folder using the `test` command. */
 public class UseCasesIT {
   private static final Path RESOURCES = Paths.get("src/test/resources/usecases");
 
@@ -24,15 +20,18 @@ public class UseCasesIT {
     execute("test", path, script, graphql, null);
   }
 
-  public void execute(String goal, String path, String script, String graphql, String testSuffix, String... args) {
+  public void execute(
+      String goal, String path, String script, String graphql, String testSuffix, String... args) {
     Path rootDir = RESOURCES.resolve(path);
     List<String> argsList = new ArrayList<>();
     argsList.add(goal);
     argsList.add(script);
     if (!Strings.isNullOrEmpty(graphql)) argsList.add(graphql);
-    if (testSuffix!=null) {
-      argsList.add("-s"); argsList.add("snapshots-"+testSuffix);
-      argsList.add("--tests"); argsList.add("tests-"+testSuffix);
+    if (testSuffix != null) {
+      argsList.add("-s");
+      argsList.add("snapshots-" + testSuffix);
+      argsList.add("--tests");
+      argsList.add("tests-" + testSuffix);
     }
     argsList.addAll(Arrays.asList(args));
 
@@ -45,8 +44,7 @@ public class UseCasesIT {
     argsList.add("compile");
     argsList.add(script);
     if (!Strings.isNullOrEmpty(graphql)) argsList.add(graphql);
-    execute(RESOURCES.resolve(path),
-        new AssertStatusHook(), argsList.toArray(a->new String[a]));
+    execute(RESOURCES.resolve(path), new AssertStatusHook(), argsList.toArray(a -> new String[a]));
   }
 
   public static int execute(Path rootDir, StatusHook hook, String... args) {

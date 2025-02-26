@@ -21,14 +21,13 @@ import static java.lang.String.format;
 import org.antlr.v4.runtime.RecognitionException;
 import org.apache.calcite.sql.parser.SqlParserPos;
 
-public class ParsingException
-    extends RuntimeException {
+public class ParsingException extends RuntimeException {
 
   private final int line;
   private final int charPositionInLine;
 
-  public ParsingException(String message, RecognitionException cause, int line,
-      int charPositionInLine) {
+  public ParsingException(
+      String message, RecognitionException cause, int line, int charPositionInLine) {
     super(message, cause);
 
     this.line = line;

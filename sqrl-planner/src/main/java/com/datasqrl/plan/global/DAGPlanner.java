@@ -3,37 +3,28 @@
  */
 package com.datasqrl.plan.global;
 
-import com.datasqrl.calcite.OperatorTable;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.plan.local.generate.ResolvedExport;
+import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.rules.SqrlConverterConfig;
-import com.datasqrl.util.FunctionUtil;
+import com.datasqrl.plan.table.PhysicalTable;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
-import com.datasqrl.plan.rules.SQRLConverter;
-import com.datasqrl.plan.table.PhysicalTable;
-import org.apache.flink.table.functions.UserDefinedFunction;
-
 import java.net.URL;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import lombok.AllArgsConstructor;
-import org.apache.calcite.sql.SqlOperator;
-import org.apache.flink.table.functions.FunctionDefinition;
 
 /**
  * The DAGPlanner currently makes the simplifying assumption that the execution pipeline consists of
  * two stages: stream and database.
  */
-@AllArgsConstructor(onConstructor_=@Inject)
+@AllArgsConstructor(onConstructor_ = @Inject)
 public class DAGPlanner {
 
   private final SqrlFramework framework;
@@ -46,52 +37,59 @@ public class DAGPlanner {
   private final SQRLConverter sqrlConverter;
 
   public SqrlDAG build(Collection<ResolvedExport> exports) {
-    //Prepare the inputs
+    // Prepare the inputs
     DAGPreparation.Result prepResult = dagPreparation.prepareInputs(framework.getSchema(), exports);
 
-    //Assemble DAG
-    SqrlDAG dag = new DAGBuilder(sqrlConverter, pipeline, errors).build(prepResult.getQueries(), prepResult.getExports());
+    // Assemble DAG
+    SqrlDAG dag =
+        new DAGBuilder(sqrlConverter, pipeline, errors)
+            .build(prepResult.getQueries(), prepResult.getExports());
     for (SqrlDAG.SqrlNode node : dag) {
       if (!node.hasViableStage()) {
-        errors.fatal("Could not find execution stage for [%s]. Stage analysis below.\n%s",node.getName(), node.toString());
+        errors.fatal(
+            "Could not find execution stage for [%s]. Stage analysis below.\n%s",
+            node.getName(), node.toString());
       }
     }
     try {
       dag.eliminateInviableStages(pipeline);
     } catch (SqrlDAG.NoPlanException ex) {
-      //Print error message that is easy to read
-      errors.fatal("Could not find execution stage for [%s]. Full DAG below.\n%s", ex.getNode().getName(), dag);
+      // Print error message that is easy to read
+      errors.fatal(
+          "Could not find execution stage for [%s]. Full DAG below.\n%s",
+          ex.getNode().getName(), dag);
     }
     dag.forEach(node -> Preconditions.checkArgument(node.hasViableStage()));
     return dag;
   }
 
   public void optimize(SqrlDAG dag) {
-    //Pick most cost-effective stage for each node and assign
+    // Pick most cost-effective stage for each node and assign
     for (SqrlDAG.SqrlNode node : dag) {
       if (node.setCheapestStage()) {
-        //If we eliminated stages, we make sure to eliminate all inviable stages
+        // If we eliminated stages, we make sure to eliminate all inviable stages
         dag.eliminateInviableStages(pipeline);
       }
-      //Assign stage to table
+      // Assign stage to table
       if (node instanceof SqrlDAG.TableNode) {
         PhysicalTable table = ((SqrlDAG.TableNode) node).getTable();
         ExecutionStage stage = node.getChosenStage();
         Preconditions.checkNotNull(stage);
-        table.assignStage(stage); //this stage on the config below
+        table.assignStage(stage); // this stage on the config below
       }
     }
-    //Plan final version of all tables
-    dag.allNodesByClass(SqrlDAG.TableNode.class).forEach( tableNode -> {
-      PhysicalTable table = tableNode.getTable();
-      SqrlConverterConfig config = table.getBaseConfig().build();
-      table.setPlannedRelNode(sqrlConverter.convert(table, config, errors.onlyErrors()));
-    });
+    // Plan final version of all tables
+    dag.allNodesByClass(SqrlDAG.TableNode.class)
+        .forEach(
+            tableNode -> {
+              PhysicalTable table = tableNode.getTable();
+              SqrlConverterConfig config = table.getBaseConfig().build();
+              table.setPlannedRelNode(sqrlConverter.convert(table, config, errors.onlyErrors()));
+            });
   }
 
-  public PhysicalDAGPlan assemble(SqrlDAG logicalDag,
-      Set<URL> jars) {
-    //Stitch DAG together
+  public PhysicalDAGPlan assemble(SqrlDAG logicalDag, Set<URL> jars) {
+    // Stitch DAG together
     return assembler.assemble(logicalDag, jars);
   }
 
@@ -107,7 +105,6 @@ public class DAGPlanner {
   }
 
   public PhysicalDAGPlan plan() {
-    return assemble(planLogical(), framework.getSchema().getJars()
-    );
+    return assemble(planLogical(), framework.getSchema().getJars());
   }
 }

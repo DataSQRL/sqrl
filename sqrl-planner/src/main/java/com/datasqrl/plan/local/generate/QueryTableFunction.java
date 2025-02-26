@@ -5,6 +5,5 @@ import org.apache.calcite.schema.TableFunction;
 
 public interface QueryTableFunction extends TableFunction {
 
-    QueryRelationalTable getQueryTable();
-
+  QueryRelationalTable getQueryTable();
 }

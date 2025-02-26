@@ -1,6 +1,5 @@
 package com.datasqrl.vector;
 
-
 import java.util.Set;
 import org.apache.flink.table.functions.FunctionDefinition;
 
@@ -21,20 +20,18 @@ public class VectorFunctions {
 
   public static final Center CENTER = new Center();
 
-  public static final Set<FunctionDefinition> functions = Set.of(
-    COSINE_SIMILARITY,
-    COSINE_DISTANCE,
-    EUCLIDEAN_DISTANCE,
-    VEC_TO_DOUBLE,
-    DOUBLE_TO_VECTOR,
-    ONNX_EMBED,
-    ASCII_TEXT_TEST_EMBED,
-    CENTER
-  );
-
+  public static final Set<FunctionDefinition> functions =
+      Set.of(
+          COSINE_SIMILARITY,
+          COSINE_DISTANCE,
+          EUCLIDEAN_DISTANCE,
+          VEC_TO_DOUBLE,
+          DOUBLE_TO_VECTOR,
+          ONNX_EMBED,
+          ASCII_TEXT_TEST_EMBED,
+          CENTER);
 
   public static FlinkVectorType convert(double[] vector) {
     return new FlinkVectorType(vector);
   }
-
 }

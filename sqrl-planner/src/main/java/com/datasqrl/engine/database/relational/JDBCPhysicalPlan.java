@@ -5,8 +5,8 @@ package com.datasqrl.engine.database.relational;
 
 import com.datasqrl.engine.database.DatabaseViewPhysicalPlan;
 import com.datasqrl.engine.database.QueryTemplate;
-import com.datasqrl.sql.SqlDDLStatement;
 import com.datasqrl.plan.queries.IdentifiedQuery;
+import com.datasqrl.sql.SqlDDLStatement;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
 import java.util.Map;
@@ -18,7 +18,6 @@ public class JDBCPhysicalPlan implements DatabaseViewPhysicalPlan {
   List<SqlDDLStatement> ddl;
   List<DatabaseView> views;
 
-  //todo remove
-  @JsonIgnore
-  Map<IdentifiedQuery, QueryTemplate> queryPlans;
+  // todo remove
+  @JsonIgnore Map<IdentifiedQuery, QueryTemplate> queryPlans;
 }

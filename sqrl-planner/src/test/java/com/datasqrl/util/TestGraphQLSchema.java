@@ -30,7 +30,7 @@ public interface TestGraphQLSchema {
   Map<String, String> getQueries();
 
   @Value
-  class TestGraphQLSchemaImpl implements TestGraphQLSchema{
+  class TestGraphQLSchemaImpl implements TestGraphQLSchema {
     String name;
     Path schemaPath;
     Map<String, String> queries;
@@ -46,7 +46,6 @@ public interface TestGraphQLSchema {
 
     Path schemaDir;
 
-
     @Override
     public String getName() {
       return schemaDir.getFileName().toString();
@@ -55,8 +54,8 @@ public interface TestGraphQLSchema {
     @Override
     @SneakyThrows
     public Path getSchemaPath() {
-      try (DirectoryStream<Path> stream = Files.newDirectoryStream(schemaDir,
-          "*.{"+SCHEMA_FILE_EXTENSION+"}")) {
+      try (DirectoryStream<Path> stream =
+          Files.newDirectoryStream(schemaDir, "*.{" + SCHEMA_FILE_EXTENSION + "}")) {
         for (Path entry : stream) {
           if (!Files.isDirectory(entry)) {
             return entry;
@@ -74,23 +73,25 @@ public interface TestGraphQLSchema {
     @SneakyThrows
     public Map<String, String> getQueries() {
       Map<String, String> result = new LinkedHashMap<>();
-      try (Stream<Path> files = Files.list(schemaDir).filter(Files::isRegularFile)
-          .sorted((f1, f2) -> f1.getFileName().toString().compareTo(f2.getFileName().toString()))
-      ) {
-        files.forEach(f -> {
-          String filename = f.getFileName().toString();
-          if (filename.endsWith(QUERY_FILE_SUFFIX)) {
-            try {
-              result.put(StringUtil.removeFromEnd(filename, QUERY_FILE_SUFFIX),
-                  Files.readString(f));
-            } catch (IOException e) {
-              throw new RuntimeException(e);
-            }
-          }
-        });
+      try (Stream<Path> files =
+          Files.list(schemaDir)
+              .filter(Files::isRegularFile)
+              .sorted(
+                  (f1, f2) -> f1.getFileName().toString().compareTo(f2.getFileName().toString()))) {
+        files.forEach(
+            f -> {
+              String filename = f.getFileName().toString();
+              if (filename.endsWith(QUERY_FILE_SUFFIX)) {
+                try {
+                  result.put(
+                      StringUtil.removeFromEnd(filename, QUERY_FILE_SUFFIX), Files.readString(f));
+                } catch (IOException e) {
+                  throw new RuntimeException(e);
+                }
+              }
+            });
       }
       return result;
     }
   }
-
 }

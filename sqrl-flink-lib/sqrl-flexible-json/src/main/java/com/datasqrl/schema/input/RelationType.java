@@ -5,11 +5,10 @@ package com.datasqrl.schema.input;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.schema.type.Type;
-import lombok.NonNull;
-
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import lombok.NonNull;
 
 public class RelationType<F extends SchemaField> implements Type, Iterable<F> {
 
@@ -22,11 +21,11 @@ public class RelationType<F extends SchemaField> implements Type, Iterable<F> {
   }
 
   public RelationType(@NonNull List<F> fields) {
-    //Preconditions.checkArgument(!fields.isEmpty()); TODO: should this be checked?
+    // Preconditions.checkArgument(!fields.isEmpty()); TODO: should this be checked?
     this.fields = fields;
   }
 
-  //Lazily initialized when requested because this only works for fields with names
+  // Lazily initialized when requested because this only works for fields with names
   protected transient Map<Name, F> fieldsByName = null;
 
   /**
@@ -38,16 +37,18 @@ public class RelationType<F extends SchemaField> implements Type, Iterable<F> {
    */
   public Optional<F> getFieldByName(Name name) {
     if (fieldsByName == null) {
-      fieldsByName = fields.stream().collect(
-          Collectors.toUnmodifiableMap(t -> t.getName(), Function.identity(),
-              (v1, v2) -> v2));
+      fieldsByName =
+          fields.stream()
+              .collect(
+                  Collectors.toUnmodifiableMap(
+                      t -> t.getName(), Function.identity(), (v1, v2) -> v2));
     }
     return Optional.ofNullable(fieldsByName.get(name));
   }
 
   public void add(F field) {
     fields.add(field);
-    //Need to reset fieldsByName so this new field can be found
+    // Need to reset fieldsByName so this new field can be found
     fieldsByName = null;
   }
 
@@ -92,7 +93,8 @@ public class RelationType<F extends SchemaField> implements Type, Iterable<F> {
     return fields.iterator();
   }
 
-  public static class Builder<F extends FlexibleFieldSchema> extends AbstractBuilder<F, Builder<F>> {
+  public static class Builder<F extends FlexibleFieldSchema>
+      extends AbstractBuilder<F, Builder<F>> {
 
     public Builder() {
       super(true);
@@ -103,7 +105,8 @@ public class RelationType<F extends SchemaField> implements Type, Iterable<F> {
     }
   }
 
-  protected static class AbstractBuilder<F extends FlexibleFieldSchema, B extends AbstractBuilder<F, B>> {
+  protected static class AbstractBuilder<
+      F extends FlexibleFieldSchema, B extends AbstractBuilder<F, B>> {
 
     protected final List<F> fields = new ArrayList<>();
     protected final Set<Name> fieldNames;
@@ -117,12 +120,13 @@ public class RelationType<F extends SchemaField> implements Type, Iterable<F> {
     }
 
     public boolean hasFieldWithName(@NonNull Name name) {
-//      Preconditions.checkArgument(fieldNames != null);
+      //      Preconditions.checkArgument(fieldNames != null);
       return fieldNames.contains(name);
     }
 
     public B add(@NonNull F field) {
-//      Preconditions.checkArgument(fieldNames == null || !fieldNames.contains(field.getName()));
+      //      Preconditions.checkArgument(fieldNames == null ||
+      // !fieldNames.contains(field.getName()));
       fields.add(field);
       if (fieldNames != null) {
         fieldNames.add(field.getName());
@@ -136,6 +140,5 @@ public class RelationType<F extends SchemaField> implements Type, Iterable<F> {
       }
       return (B) this;
     }
-
   }
 }

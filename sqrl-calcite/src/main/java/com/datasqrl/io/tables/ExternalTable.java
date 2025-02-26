@@ -9,9 +9,14 @@ import java.util.Optional;
 public interface ExternalTable {
 
   TableConfig getConfiguration();
+
   NamePath getPath();
+
   Name getName();
+
   Optional<TableSchema> getTableSchema();
+
   String qualifiedName();
+
   Digest getDigest();
 }

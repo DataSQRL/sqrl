@@ -1,7 +1,6 @@
 package com.datasqrl.io.schema.avro;
 
 import com.datasqrl.io.tables.TableSchema;
-import java.net.URI;
 import java.nio.file.Path;
 import java.util.Optional;
 import lombok.AllArgsConstructor;

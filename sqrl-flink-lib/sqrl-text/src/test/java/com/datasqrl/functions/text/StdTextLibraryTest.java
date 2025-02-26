@@ -1,4 +1,5 @@
 package com.datasqrl.functions.text;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -19,12 +20,24 @@ public class StdTextLibraryTest {
 
   @Test
   public void testSearch() {
-    assertEquals(1.0/2, TextFunctions.TEXT_SEARCH.eval("Hello World", "hello john"));
-    assertEquals(1.0/2, TextFunctions.TEXT_SEARCH.eval("Hello World", "what a world we live in, john"));
-    assertEquals(1.0, TextFunctions.TEXT_SEARCH.eval("Hello World", "what a world we live in, john! Hello john"));
-    assertEquals(2.0/3, TextFunctions.TEXT_SEARCH.eval("one two THREE", "we are counting", "one two four five six"));
-    assertEquals(1.0, TextFunctions.TEXT_SEARCH.eval("one two THREE", "we are counting", "one two four five six", "three forty fiv"));
-    assertEquals(0, TextFunctions.TEXT_SEARCH.eval("one two THREE", "what a world we live in, john!"," Hello john"));
+    assertEquals(1.0 / 2, TextFunctions.TEXT_SEARCH.eval("Hello World", "hello john"));
+    assertEquals(
+        1.0 / 2, TextFunctions.TEXT_SEARCH.eval("Hello World", "what a world we live in, john"));
+    assertEquals(
+        1.0,
+        TextFunctions.TEXT_SEARCH.eval("Hello World", "what a world we live in, john! Hello john"));
+    assertEquals(
+        2.0 / 3,
+        TextFunctions.TEXT_SEARCH.eval(
+            "one two THREE", "we are counting", "one two four five six"));
+    assertEquals(
+        1.0,
+        TextFunctions.TEXT_SEARCH.eval(
+            "one two THREE", "we are counting", "one two four five six", "three forty fiv"));
+    assertEquals(
+        0,
+        TextFunctions.TEXT_SEARCH.eval(
+            "one two THREE", "what a world we live in, john!", " Hello john"));
   }
 
   @SneakyThrows
@@ -34,6 +47,4 @@ public class StdTextLibraryTest {
     assertTrue(TextFunctions.BANNED_WORDS_FILTER.eval("Hello World"));
     assertFalse(TextFunctions.BANNED_WORDS_FILTER.eval("Can you tell me WTF is going on?"));
   }
-
-
 }

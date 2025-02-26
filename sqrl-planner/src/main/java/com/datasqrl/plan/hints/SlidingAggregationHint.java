@@ -4,11 +4,10 @@
 package com.datasqrl.plan.hints;
 
 import com.google.common.base.Preconditions;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.apache.calcite.rel.hint.RelHint;
-
-import java.util.List;
 
 @AllArgsConstructor
 @Getter
@@ -21,8 +20,13 @@ public class SlidingAggregationHint implements SqrlHint {
 
   @Override
   public RelHint getHint() {
-    return RelHint.builder(HINT_NAME).hintOptions(List.of(String.valueOf(timestampIdx),
-        String.valueOf(intervalWidthMs), String.valueOf(slideWidthMs))).build();
+    return RelHint.builder(HINT_NAME)
+        .hintOptions(
+            List.of(
+                String.valueOf(timestampIdx),
+                String.valueOf(intervalWidthMs),
+                String.valueOf(slideWidthMs)))
+        .build();
   }
 
   public static final String HINT_NAME = SlidingAggregationHint.class.getSimpleName();
@@ -45,9 +49,10 @@ public class SlidingAggregationHint implements SqrlHint {
     public SlidingAggregationHint fromHint(RelHint hint) {
       List<String> options = hint.listOptions;
       Preconditions.checkArgument(hint.listOptions.size() == 3, "Invalid hint: %s", hint);
-      return new SlidingAggregationHint(Integer.valueOf(options.get(0)),
-          Long.valueOf(options.get(1)), Long.valueOf(options.get(2)));
+      return new SlidingAggregationHint(
+          Integer.valueOf(options.get(0)),
+          Long.valueOf(options.get(1)),
+          Long.valueOf(options.get(2)));
     }
   }
-
 }

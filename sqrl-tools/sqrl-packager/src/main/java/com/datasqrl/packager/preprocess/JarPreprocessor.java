@@ -6,7 +6,6 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.util.SqrlObjectMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.auto.service.AutoService;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -35,14 +34,14 @@ public class JarPreprocessor implements Preprocessor {
   public static final ObjectMapper mapper = SqrlObjectMapper.INSTANCE;
 
   public static final String SERVICES_PATH = "META-INF/services/";
-  public static final Set<String> flinkUdfs = Set.of(
-      ScalarFunction.class.getCanonicalName(),
-      AggregateFunction.class.getCanonicalName(),
-      UserDefinedFunction.class.getCanonicalName(),
-      TableFunction.class.getCanonicalName(),
-      TableAggregateFunction.class.getCanonicalName(),
-      AsyncScalarFunction.class.getCanonicalName()
-    );
+  public static final Set<String> flinkUdfs =
+      Set.of(
+          ScalarFunction.class.getCanonicalName(),
+          AggregateFunction.class.getCanonicalName(),
+          UserDefinedFunction.class.getCanonicalName(),
+          TableFunction.class.getCanonicalName(),
+          TableAggregateFunction.class.getCanonicalName(),
+          AsyncScalarFunction.class.getCanonicalName());
 
   @Override
   public Pattern getPattern() {
@@ -56,25 +55,22 @@ public class JarPreprocessor implements Preprocessor {
       file.stream()
           .filter(this::isValidEntry)
           .filter(entry -> flinkUdfs.contains(getClassName(entry)))
-          .forEach(entry ->
-              rethrowCall(() -> processJarEntry(entry, file, processorContext, path)));
+          .forEach(
+              entry -> rethrowCall(() -> processJarEntry(entry, file, processorContext, path)));
     } catch (Exception e) {
       log.warn("Could not jar in path:" + path, e);
     }
   }
 
-  /**
-   * Gets the class name for the jar entry
-   */
+  /** Gets the class name for the jar entry */
   private String getClassName(java.util.jar.JarEntry entry) {
     return entry.getName().substring(entry.getName().lastIndexOf("/") + 1);
   }
 
-  /**
-   * Processes a single jar entry
-   */
-  private Void processJarEntry(JarEntry entry, JarFile file,
-      ProcessorContext processorContext, Path path) throws IOException {
+  /** Processes a single jar entry */
+  private Void processJarEntry(
+      JarEntry entry, JarFile file, ProcessorContext processorContext, Path path)
+      throws IOException {
     java.io.InputStream input = file.getInputStream(entry);
     List<String> classes = IOUtils.readLines(input, Charset.defaultCharset());
 
@@ -94,19 +90,15 @@ public class JarPreprocessor implements Preprocessor {
 
     return null;
   }
-  /**
-   * Checks if the jar entry is valid
-   */
+
+  /** Checks if the jar entry is valid */
   private boolean isValidEntry(java.util.jar.JarEntry entry) {
     return entry.getName().startsWith(SERVICES_PATH) && !entry.getName().endsWith("/");
   }
 
-  /**
-   * Creates a temporary file and writes the given object to it
-   */
+  /** Creates a temporary file and writes the given object to it */
   private File createTempFile(ObjectNode obj, String functionName) throws IOException {
-    Path functionPath = Files.createTempDirectory("fnc")
-        .resolve(functionName + ".function.json");
+    Path functionPath = Files.createTempDirectory("fnc").resolve(functionName + ".function.json");
 
     mapper.writeValue(functionPath.toFile(), obj);
     return functionPath.toFile();

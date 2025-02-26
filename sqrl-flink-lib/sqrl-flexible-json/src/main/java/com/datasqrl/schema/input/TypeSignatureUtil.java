@@ -19,7 +19,8 @@ import org.apache.commons.lang3.tuple.Pair;
 
 public class TypeSignatureUtil {
 
-  public static Optional<Simple> detectSimpleTypeSignature(Object o,
+  public static Optional<Simple> detectSimpleTypeSignature(
+      Object o,
       Function<String, BasicType> detectFromString,
       Function<Map<String, Object>, BasicType> detectFromComposite) {
     if (o == null) return Optional.empty();
@@ -40,7 +41,7 @@ public class TypeSignatureUtil {
           Map map = (Map) next;
           if (numElements == 0) {
             rawType = RelationType.EMPTY;
-            //Try to detect type
+            // Try to detect type
             detectedType = detectFromComposite.apply(map);
           } else if (detectedType != null) {
             BasicType detect2 = detectFromComposite.apply(map);
@@ -49,10 +50,11 @@ public class TypeSignatureUtil {
             }
           }
         } else {
-          //not an array or map => must be scalar, let's find the common scalar type for all elements
+          // not an array or map => must be scalar, let's find the common scalar type for all
+          // elements
           if (numElements == 0) {
             rawType = getBasicType(next);
-            //Try to detect type
+            // Try to detect type
             if (next instanceof String) {
               detectedType = detectFromString.apply((String) next);
             }
@@ -66,26 +68,27 @@ public class TypeSignatureUtil {
         }
         numElements++;
       }
-      if (numElements==0) {
-        //empty array/list
+      if (numElements == 0) {
+        // empty array/list
         return Optional.empty();
       }
     } else {
-      //Single element
+      // Single element
       if (o instanceof Map) {
         rawType = RelationType.EMPTY;
         detectedType = detectFromComposite.apply((Map) o);
       } else {
-        //not an array or map => must be scalar
+        // not an array or map => must be scalar
         rawType = getBasicType(o);
-        //Try to detect type
+        // Try to detect type
         if (o instanceof String) {
           detectedType = detectFromString.apply((String) o);
         }
       }
     }
-    return Optional.of(new TypeSignature.Simple(rawType, detectedType == null ? rawType : detectedType,
-        arrayDepth));
+    return Optional.of(
+        new TypeSignature.Simple(
+            rawType, detectedType == null ? rawType : detectedType, arrayDepth));
   }
 
   public static boolean isArray(Object arr) {
@@ -93,7 +96,7 @@ public class TypeSignatureUtil {
   }
 
   public static Collection<Object> array2Collection(Object arr) {
-//    Preconditions.checkArgument(isArray(arr));
+    //    Preconditions.checkArgument(isArray(arr));
     final Collection col;
     if (arr instanceof Collection) {
       col = (Collection) arr;
@@ -126,12 +129,14 @@ public class TypeSignatureUtil {
         return new ImmutablePair<>(col.stream(), 1);
       } else {
         AtomicInteger depth = new AtomicInteger(0);
-        Stream<Pair<Stream<Object>, Integer>> sub = col.stream()
-            .map(TypeSignatureUtil::flatMapArray);
-        Stream<Object> res = sub.flatMap(p -> {
-          depth.getAndAccumulate(p.getRight(), Math::max);
-          return p.getLeft();
-        });
+        Stream<Pair<Stream<Object>, Integer>> sub =
+            col.stream().map(TypeSignatureUtil::flatMapArray);
+        Stream<Object> res =
+            sub.flatMap(
+                p -> {
+                  depth.getAndAccumulate(p.getRight(), Math::max);
+                  return p.getLeft();
+                });
         return new ImmutablePair<>(res, depth.get() + 1);
       }
     } else {

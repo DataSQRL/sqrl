@@ -6,18 +6,17 @@ import com.datasqrl.calcite.SqrlFrameworkImpl;
 import com.datasqrl.calcite.SqrlTableFactory;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
+import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.ConnectorFactoryFactoryImpl;
 import com.datasqrl.config.LogManagerImpl;
-import com.datasqrl.config.PackageJson.CompilerConfig;
-import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.PackageJson;
-import com.datasqrl.config.TableConfigLoader;
+import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.config.SqrlCompilerConfiguration;
 import com.datasqrl.config.SqrlConfigPipeline;
 import com.datasqrl.config.SqrlRelBuilder;
+import com.datasqrl.config.TableConfigLoader;
 import com.datasqrl.config.TableConfigLoaderImpl;
 import com.datasqrl.discovery.preprocessor.FlexibleSchemaInferencePreprocessor;
-import com.datasqrl.engine.log.LogFactory;
 import com.datasqrl.engine.log.LogManager;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
@@ -61,8 +60,13 @@ public class SqrlInjector extends AbstractModule {
   private final ExecutionGoal goal;
   private final Repository repository;
 
-  public SqrlInjector(ErrorCollector errors, Path rootDir, Path targetDir,
-      PackageJson sqrlConfig, ExecutionGoal goal, Repository repository) {
+  public SqrlInjector(
+      ErrorCollector errors,
+      Path rootDir,
+      Path targetDir,
+      PackageJson sqrlConfig,
+      ExecutionGoal goal,
+      Repository repository) {
     this.errors = errors;
     this.rootDir = rootDir;
     this.buildDir = rootDir.resolve("build");
@@ -118,7 +122,6 @@ public class SqrlInjector extends AbstractModule {
     return targetDir;
   }
 
-
   @Provides
   public ResourceResolver provideResourceResolver() {
     return new FileResourceResolver(buildDir);
@@ -148,5 +151,4 @@ public class SqrlInjector extends AbstractModule {
   public ErrorCollector provideErrorCollector() {
     return errors;
   }
-
 }

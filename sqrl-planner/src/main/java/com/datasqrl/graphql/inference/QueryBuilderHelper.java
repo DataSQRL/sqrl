@@ -31,7 +31,6 @@ import org.apache.commons.lang3.tuple.Pair;
 
 public class QueryBuilderHelper {
 
-
   private final QueryPlanner queryPlanner;
   private final RelBuilder relBuilder;
   private final RexBuilder rexBuilder;
@@ -41,8 +40,7 @@ public class QueryBuilderHelper {
   List<RexNode> extraFilters = new ArrayList<>();
   private boolean limitOffsetFlag = false;
 
-  public QueryBuilderHelper(QueryPlanner queryPlanner, RelBuilder relBuilder,
-      String nameId) {
+  public QueryBuilderHelper(QueryPlanner queryPlanner, RelBuilder relBuilder, String nameId) {
     this.queryPlanner = queryPlanner;
     this.relBuilder = relBuilder;
     this.rexBuilder = relBuilder.getRexBuilder();
@@ -61,8 +59,8 @@ public class QueryBuilderHelper {
 
   private RexInputRef getColumnRef(String name, RelDataType type) {
     RelDataType rowType = relBuilder.peek().getRowType();
-    int index = queryPlanner.getCatalogReader().nameMatcher()
-        .indexOf(rowType.getFieldNames(), name);
+    int index =
+        queryPlanner.getCatalogReader().nameMatcher().indexOf(rowType.getFieldNames(), name);
     if (index == -1) {
       throw new RuntimeException("Could not find filter for graphql column: " + name);
     }
@@ -70,10 +68,7 @@ public class QueryBuilderHelper {
     RelDataTypeField field = rowType.getFieldList().get(index);
 
     // Todo: check for casting between type and field.getType
-    return relBuilder.getRexBuilder()
-        .makeInputRef(
-            field.getType(),
-            field.getIndex());
+    return relBuilder.getRexBuilder().makeInputRef(field.getType(), field.getIndex());
   }
 
   private RexDynamicParam makeArgumentDynamicParam(String name, RelDataType type) {
@@ -85,22 +80,22 @@ public class QueryBuilderHelper {
   }
 
   public void scan(SqlUserDefinedTableFunction operator) {
-    Preconditions.checkState(parameterHandler.size() == operator.getFunction().getParameters().size());
-    List<RexNode> operands = parameterHandler.stream()
-        .map(Pair::getLeft)
-        .collect(Collectors.toList());
+    Preconditions.checkState(
+        parameterHandler.size() == operator.getFunction().getParameters().size());
+    List<RexNode> operands =
+        parameterHandler.stream().map(Pair::getLeft).collect(Collectors.toList());
 
     relBuilder.functionScan(operator, 0, operands);
   }
 
   public void addInternalOperand(String name, RelDataType type) {
-    //Add an operand and a parameter handler
+    // Add an operand and a parameter handler
     makeSourceDynamicParam(name, type);
   }
 
   private RexDynamicParam makeSourceDynamicParam(String name, RelDataType type) {
-    RexDynamicParam rexDynamicParam = rexBuilder.makeDynamicParam(type,
-        parameterHandler.size());//todo check casting rules
+    RexDynamicParam rexDynamicParam =
+        rexBuilder.makeDynamicParam(type, parameterHandler.size()); // todo check casting rules
     parameterHandler.add(Pair.of(rexDynamicParam, new SourceParameter(name)));
     return rexDynamicParam;
   }
@@ -139,6 +134,7 @@ public class QueryBuilderHelper {
     VariableArgument argument = new VariableArgument(name, null);
     graphqlArguments.add(argument);
   }
+
   private void createLiteralForLimitOffset(String name) {
     FixedArgument argument = new FixedArgument(name, null);
     graphqlArguments.add(argument);
@@ -155,9 +151,8 @@ public class QueryBuilderHelper {
     RelNode rel = relBuilder.build();
 
     RelNode expanded = queryPlanner.expandMacros(rel);
-    List<JdbcParameterHandler> parameters = this.parameterHandler.stream()
-        .map(Pair::getRight)
-        .collect(Collectors.toList());
+    List<JdbcParameterHandler> parameters =
+        this.parameterHandler.stream().map(Pair::getRight).collect(Collectors.toList());
     return new APIQuery(nameId, path, expanded, parameters, this.graphqlArguments, limitOffsetFlag);
   }
 }

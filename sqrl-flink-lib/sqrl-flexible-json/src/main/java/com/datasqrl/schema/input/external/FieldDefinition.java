@@ -5,7 +5,6 @@ package com.datasqrl.schema.input.external;
 
 import java.util.List;
 import java.util.Map;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -19,5 +18,4 @@ public class FieldDefinition extends AbstractElementDefinition implements FieldT
   public Map<String, Object> cardinality;
 
   public Map<String, FieldTypeDefinitionImpl> mixed;
-
 }

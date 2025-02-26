@@ -11,8 +11,8 @@ public class SqrlCreateDefinition extends SqrlStatement {
   protected final SqlIdentifier name;
   protected final List<SqrlColumnDefinition> columns;
 
-  public SqrlCreateDefinition(SqlParserPos location, SqlIdentifier name,
-      List<SqrlColumnDefinition> columns) {
+  public SqrlCreateDefinition(
+      SqlParserPos location, SqlIdentifier name, List<SqrlColumnDefinition> columns) {
     super(location, name, Optional.empty());
     this.name = name;
     this.columns = columns;

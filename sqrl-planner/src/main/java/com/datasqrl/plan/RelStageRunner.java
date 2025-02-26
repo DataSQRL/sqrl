@@ -16,11 +16,14 @@ public class RelStageRunner {
     return runStage(stage.getIndex(), outputTraits, relNode, planner);
   }
 
-  protected static RelNode runStage(int ruleSetIndex, RelTraitSet requiredOutputTraits, RelNode rel,
-      RelOptPlanner planner) {
+  protected static RelNode runStage(
+      int ruleSetIndex, RelTraitSet requiredOutputTraits, RelNode rel, RelOptPlanner planner) {
     Program program = OptimizationStage.getAllPrograms().get(ruleSetIndex);
-    return program.run(requireNonNull(planner, "planner"),
-        rel, requiredOutputTraits, ImmutableList.of(),
+    return program.run(
+        requireNonNull(planner, "planner"),
+        rel,
+        requiredOutputTraits,
+        ImmutableList.of(),
         ImmutableList.of());
   }
 }

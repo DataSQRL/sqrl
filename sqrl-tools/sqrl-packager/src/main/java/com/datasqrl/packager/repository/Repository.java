@@ -13,5 +13,4 @@ public interface Repository {
   public boolean retrieveDependency(Path targetPath, Dependency dependency) throws IOException;
 
   public Optional<Dependency> resolveDependency(String packageName);
-
 }

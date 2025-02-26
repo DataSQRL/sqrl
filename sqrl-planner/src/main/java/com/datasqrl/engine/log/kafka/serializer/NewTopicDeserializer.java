@@ -5,9 +5,7 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.google.auto.service.AutoService;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,8 +13,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.kafka.clients.admin.NewTopic;
 
 @AutoService(StdDeserializer.class)
@@ -32,8 +28,8 @@ public class NewTopicDeserializer<T extends Serializable> extends StdDeserialize
     JsonNode node = jsonParser.getCodec().readTree(jsonParser);
     String name = node.get("name").asText();
     Optional<Integer> numPartitions = Optional.ofNullable(node.get("numPartitions").asInt());
-    Optional<Short> replicationFactor = Optional.ofNullable(
-        (short) node.get("replicationFactor").asInt());
+    Optional<Short> replicationFactor =
+        Optional.ofNullable((short) node.get("replicationFactor").asInt());
 
     // Creating Map<Integer, List<Integer>> for replicasAssignments
     Map<Integer, List<Integer>> replicasAssignments = null;

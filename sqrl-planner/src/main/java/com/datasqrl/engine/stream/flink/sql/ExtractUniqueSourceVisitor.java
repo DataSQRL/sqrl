@@ -12,8 +12,7 @@ import org.apache.calcite.rel.core.TableScan;
 
 public class ExtractUniqueSourceVisitor extends RelVisitor {
 
-  @Getter
-  Map<String, ImportedRelationalTable> tableMap = new HashMap<>();
+  @Getter Map<String, ImportedRelationalTable> tableMap = new HashMap<>();
 
   @Override
   public void visit(RelNode node, int ordinal, RelNode parent) {

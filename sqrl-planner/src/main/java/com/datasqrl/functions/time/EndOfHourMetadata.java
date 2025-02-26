@@ -9,8 +9,7 @@ import com.google.auto.service.AutoService;
 public class EndOfHourMetadata extends AbstractEndOfMetadata {
 
   public EndOfHourMetadata() {
-    super(TimeFunctions.END_OF_HOUR.getTimeUnit(),
-        TimeFunctions.END_OF_HOUR.getOffsetUnit());
+    super(TimeFunctions.END_OF_HOUR.getTimeUnit(), TimeFunctions.END_OF_HOUR.getOffsetUnit());
   }
 
   @Override

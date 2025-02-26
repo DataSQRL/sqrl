@@ -1,17 +1,11 @@
 package com.datasqrl.graphql.jdbc;
 
-import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import com.datasqrl.graphql.server.Context;
-import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
-import com.datasqrl.graphql.server.RootGraphqlModel.KafkaMutationCoords;
-import com.datasqrl.graphql.server.RootGraphqlModel.KafkaSubscriptionCoords;
-import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoordsVisitor;
-import com.datasqrl.graphql.server.RootGraphqlModel.PostgresLogMutationCoords;
-import com.datasqrl.graphql.server.RootGraphqlModel.PostgresSubscriptionCoords;
-import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
-import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoordsVisitor;
-import com.datasqrl.graphql.server.RootGraphqlModel.VariableArgument;
+import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import com.datasqrl.graphql.server.QueryExecutionContext;
+import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
+import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
+import com.datasqrl.graphql.server.RootGraphqlModel.VariableArgument;
 import graphql.schema.DataFetcher;
 import graphql.schema.GraphQLArgument;
 import graphql.schema.PropertyDataFetcher;
@@ -32,32 +26,30 @@ public class JdbcContext implements Context {
   }
 
   @Override
-  public DataFetcher<?> createArgumentLookupFetcher(GraphQLEngineBuilder server,
-      Map<Set<Argument>, ResolvedQuery> lookupMap) {
+  public DataFetcher<?> createArgumentLookupFetcher(
+      GraphQLEngineBuilder server, Map<Set<Argument>, ResolvedQuery> lookupMap) {
 
-    //Runtime execution, keep this as light as possible
+    // Runtime execution, keep this as light as possible
     return (env) -> {
 
-      //Map args
+      // Map args
       Set<Argument> argumentSet = new HashSet<>();
       for (GraphQLArgument argument : env.getFieldDefinition().getArguments()) {
-        VariableArgument arg = new VariableArgument(argument.getName(),
-            env.getArguments().get(argument.getName()));
+        VariableArgument arg =
+            new VariableArgument(argument.getName(), env.getArguments().get(argument.getName()));
         argumentSet.add(arg);
       }
 
-      //Find query
+      // Find query
       ResolvedQuery resolvedQuery = lookupMap.get(argumentSet);
       if (resolvedQuery == null) {
         throw new RuntimeException("Could not find query");
       }
 
-      //Execute
-      QueryExecutionContext context = new JdbcExecutionContext(this,
-          env, argumentSet);
+      // Execute
+      QueryExecutionContext context = new JdbcExecutionContext(this, env, argumentSet);
       CompletableFuture future = resolvedQuery.accept(server, context);
       return future;
     };
   }
-
 }

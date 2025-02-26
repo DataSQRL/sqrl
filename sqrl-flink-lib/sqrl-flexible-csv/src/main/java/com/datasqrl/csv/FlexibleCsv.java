@@ -18,7 +18,6 @@ import org.apache.flink.table.factories.DeserializationFormatFactory;
 import org.apache.flink.table.factories.DynamicTableFactory;
 import org.apache.flink.table.factories.FactoryUtil;
 import org.apache.flink.table.types.DataType;
-import org.apache.flink.util.Collector;
 
 public class FlexibleCsv implements DeserializationFormatFactory {
   final CsvFormatFactory csvJson;
@@ -27,26 +26,26 @@ public class FlexibleCsv implements DeserializationFormatFactory {
     csvJson = new CsvFormatFactory();
   }
 
-  ConfigOption<Boolean> skipHeader = ConfigOptions.key("skip-header").booleanType().defaultValue(true);
+  ConfigOption<Boolean> skipHeader =
+      ConfigOptions.key("skip-header").booleanType().defaultValue(true);
 
   @Override
   public DecodingFormat<DeserializationSchema<RowData>> createDecodingFormat(
       DynamicTableFactory.Context factoryContext, ReadableConfig formatOptions) {
     FactoryUtil.validateFactoryOptions(this, formatOptions);
     ProjectableDecodingFormat<DeserializationSchema<RowData>> decodingFormat =
-        (ProjectableDecodingFormat)csvJson.createDecodingFormat(
-        factoryContext, formatOptions);
+        (ProjectableDecodingFormat) csvJson.createDecodingFormat(factoryContext, formatOptions);
 
     return new ProjectableDecodingFormat<DeserializationSchema<RowData>>() {
       @SneakyThrows
       @Override
-      public DeserializationSchema<RowData> createRuntimeDecoder(DynamicTableSource.Context context,
-          DataType physicalDataType, int[][] projections) {
-        DeserializationSchema<RowData> runtimeDecoder = decodingFormat.createRuntimeDecoder(context,
-            physicalDataType, projections);
+      public DeserializationSchema<RowData> createRuntimeDecoder(
+          DynamicTableSource.Context context, DataType physicalDataType, int[][] projections) {
+        DeserializationSchema<RowData> runtimeDecoder =
+            decodingFormat.createRuntimeDecoder(context, physicalDataType, projections);
         boolean skipHeaderBool = formatOptions.get(skipHeader);
-        RuntimeDecoderDelegate decoderDelegate = new RuntimeDecoderDelegate(runtimeDecoder,
-            skipHeaderBool);
+        RuntimeDecoderDelegate decoderDelegate =
+            new RuntimeDecoderDelegate(runtimeDecoder, skipHeaderBool);
         return decoderDelegate;
       }
 
@@ -63,8 +62,8 @@ public class FlexibleCsv implements DeserializationFormatFactory {
     private final boolean skipHeader;
     private boolean hasSkipped = false;
 
-    public RuntimeDecoderDelegate(DeserializationSchema<RowData> runtimeDecoder,
-        boolean skipHeader) {
+    public RuntimeDecoderDelegate(
+        DeserializationSchema<RowData> runtimeDecoder, boolean skipHeader) {
       this.runtimeDecoder = runtimeDecoder;
       this.skipHeader = skipHeader;
     }

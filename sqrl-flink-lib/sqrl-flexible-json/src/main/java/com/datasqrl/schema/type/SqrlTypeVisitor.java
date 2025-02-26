@@ -3,7 +3,6 @@
  */
 package com.datasqrl.schema.type;
 
-
 import com.datasqrl.schema.type.basic.*;
 
 public interface SqrlTypeVisitor<R, C> {

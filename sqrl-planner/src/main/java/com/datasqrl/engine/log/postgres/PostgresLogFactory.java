@@ -24,23 +24,29 @@ public class PostgresLogFactory implements LogFactory {
   ConnectorFactory sinkConnectorFactory;
 
   @Override
-  public Log create(String logId, Name logName, RelDataType schema, List<String> primaryKey,
+  public Log create(
+      String logId,
+      Name logName,
+      RelDataType schema,
+      List<String> primaryKey,
       Timestamp timestamp) {
 
     String tableName = sanitize(logId);
-    IConnectorFactoryContext connectorContext = createSinkContext(logName, tableName, timestamp.getName(),
-        timestamp.getType().name(), primaryKey);
+    IConnectorFactoryContext connectorContext =
+        createSinkContext(
+            logName, tableName, timestamp.getName(), timestamp.getType().name(), primaryKey);
 
     TypeFactory typeFactory = TypeFactory.getTypeFactory();
 
     RelDataType patchedSchema;
     if (timestamp != Timestamp.NONE && schema.getField(timestamp.getName(), false, false) == null) {
-      patchedSchema = CalciteUtil.addField(
-          schema,
-          schema.getFieldCount(),
-          timestamp.getName(),
-          typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3),
-          typeFactory);
+      patchedSchema =
+          CalciteUtil.addField(
+              schema,
+              schema.getFieldCount(),
+              timestamp.getName(),
+              typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3),
+              typeFactory);
     } else {
       patchedSchema = schema;
     }
@@ -48,7 +54,8 @@ public class PostgresLogFactory implements LogFactory {
     TableConfig sourceConfig = sourceConnectorFactory.createSourceAndSink(connectorContext);
     TableConfig sinkConfig = sinkConnectorFactory.createSourceAndSink(connectorContext);
     RelDataTypeTableSchema tblSchema = new RelDataTypeTableSchema(patchedSchema);
-    return new PostgresTable(tableName, logName, sourceConfig, sinkConfig, tblSchema, primaryKey, connectorContext);
+    return new PostgresTable(
+        tableName, logName, sourceConfig, sinkConfig, tblSchema, primaryKey, connectorContext);
   }
 
   @Override
@@ -56,8 +63,12 @@ public class PostgresLogFactory implements LogFactory {
     return PostgresLogEngineFactory.ENGINE_NAME;
   }
 
-  private IConnectorFactoryContext createSinkContext(Name name, String tableName,
-      String timestampName, String timestampType, List<String> primaryKey) {
+  private IConnectorFactoryContext createSinkContext(
+      Name name,
+      String tableName,
+      String timestampName,
+      String timestampType,
+      List<String> primaryKey) {
     Map<String, Object> context = new HashMap<>();
     context.put("table-name", tableName);
     context.put("timestamp-name", timestampName);
@@ -76,5 +87,4 @@ public class PostgresLogFactory implements LogFactory {
 
     return sanitized.toString();
   }
-
 }

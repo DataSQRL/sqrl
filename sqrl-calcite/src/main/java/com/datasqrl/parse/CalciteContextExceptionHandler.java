@@ -18,9 +18,10 @@ public class CalciteContextExceptionHandler implements ErrorHandler<CalciteConte
 
   @Override
   public ErrorMessage handle(CalciteContextException e, ErrorLocation baseLocation) {
-    return new Implementation(ErrorLabel.GENERIC, e.getMessage(),
-        baseLocation.atFile(
-            new FileLocation(e.getPosLine(), e.getPosColumn())),
+    return new Implementation(
+        ErrorLabel.GENERIC,
+        e.getMessage(),
+        baseLocation.atFile(new FileLocation(e.getPosLine(), e.getPosColumn())),
         Severity.FATAL);
   }
 

@@ -10,26 +10,25 @@ import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlWriterConfig;
 
 public class RelToFlinkSql {
-  public static final UnaryOperator<SqlWriterConfig> transform = c ->
-      c.withAlwaysUseParentheses(false)
-          .withSelectListItemsOnSeparateLines(false)
-          .withUpdateSetListNewline(false)
-          .withIndentation(1)
-          .withDialect(FlinkDialect.DEFAULT)
-          .withSelectFolding(null);
+  public static final UnaryOperator<SqlWriterConfig> transform =
+      c ->
+          c.withAlwaysUseParentheses(false)
+              .withSelectListItemsOnSeparateLines(false)
+              .withUpdateSetListNewline(false)
+              .withIndentation(1)
+              .withDialect(FlinkDialect.DEFAULT)
+              .withSelectFolding(null);
 
   public static SqlStrings convertToString(SqlNodes sqlNode) {
-    return () -> sqlNode.getSqlNode().toSqlString(transform)
-        .getSql();
+    return () -> sqlNode.getSqlNode().toSqlString(transform).getSql();
   }
+
   public static String convertToString(SqlNode sqlNode) {
-    return sqlNode.toSqlString(transform)
-        .getSql();
+    return sqlNode.toSqlString(transform).getSql();
   }
 
   public static SqlNode convertToSqlNode(RelNode relNode) {
     RelToSqlConverter converter = new RelToSqlConverter(FlinkDialect.DEFAULT);
     return converter.visitRoot(relNode).asStatement();
   }
-
 }

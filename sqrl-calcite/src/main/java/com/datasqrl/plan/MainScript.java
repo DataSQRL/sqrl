@@ -5,5 +5,6 @@ import java.util.Optional;
 
 public interface MainScript {
   Optional<Path> getPath();
+
   String getContent();
 }

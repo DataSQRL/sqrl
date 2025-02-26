@@ -6,9 +6,9 @@ package com.datasqrl.engine.database.relational.ddl;
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.engine.database.relational.ddl.statements.CreateIndexDDL;
 import com.datasqrl.engine.database.relational.ddl.statements.CreateTableDDL;
-import com.datasqrl.sql.SqlDDLStatement;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
+import com.datasqrl.sql.SqlDDLStatement;
 import com.google.auto.service.AutoService;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,7 +45,8 @@ public class H2DDLFactory implements JdbcDDLFactory {
 
   public static String toSql(RelDataTypeField field) {
     RelDataType datatype = field.getType();
-    return toSql("\"" + field.getName() + "\"", getSQLType(datatype).getName(), datatype.isNullable());
+    return toSql(
+        "\"" + field.getName() + "\"", getSQLType(datatype).getName(), datatype.isNullable());
   }
 
   private static String toSql(String name, String sqlType, boolean nullable) {
@@ -104,11 +105,9 @@ public class H2DDLFactory implements JdbcDDLFactory {
   }
 
   public CreateIndexDDL createIndex(IndexDefinition index) {
-    List<String> columns = index.getColumnNames()
-        .stream()
-        .map(c->"\"" + c + "\"")
-        .collect(Collectors.toList());
-    return new CreateIndexDDL("\"" + index.getName() + "\"",
-        "\"" + index.getTableId() + "\"", columns, index.getType());
+    List<String> columns =
+        index.getColumnNames().stream().map(c -> "\"" + c + "\"").collect(Collectors.toList());
+    return new CreateIndexDDL(
+        "\"" + index.getName() + "\"", "\"" + index.getTableId() + "\"", columns, index.getType());
   }
 }

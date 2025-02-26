@@ -10,9 +10,7 @@ import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.plan.queries.APIMutation;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISubscription;
-import com.datasqrl.plan.util.PrimaryKeyMap.Builder;
 import com.datasqrl.plan.validate.ResolvedImport;
-import com.datasqrl.plan.validate.ScriptPlanner.Mutation;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.RootSqrlTable;
 import com.datasqrl.util.StreamUtil;
@@ -22,7 +20,6 @@ import com.google.inject.Singleton;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -35,9 +32,7 @@ import lombok.Getter;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.util.NameMultimap;
-import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.functions.UserDefinedFunction;
 
 @Getter
@@ -49,9 +44,9 @@ public class SqrlSchema extends SimpleCalciteSchema {
   private final List<ResolvedImport> imports = new ArrayList<>();
   private final Set<URL> jars = new LinkedHashSet<>();
 
-  //Current table mapping
+  // Current table mapping
   private final Map<NamePath, NamePath> pathToAbsolutePathMap = new LinkedHashMap<>();
-  //Required for looking up tables
+  // Required for looking up tables
   private final Map<NamePath, String> pathToSysTableMap = new LinkedHashMap<>();
 
   private final Map<String, UserDefinedFunction> udf = new LinkedHashMap<>();
@@ -63,7 +58,7 @@ public class SqrlSchema extends SimpleCalciteSchema {
 
   private final Map<String, String> fncAlias = new HashMap<>();
 
-  //API
+  // API
 
   private final Map<APIMutation, Object> mutations = new LinkedHashMap<>();
   private final Map<NamePath, SqrlModule> modules = new LinkedHashMap<>();
@@ -77,14 +72,14 @@ public class SqrlSchema extends SimpleCalciteSchema {
     this.nameCanonicalizer = nameCanonicalizer;
   }
 
-  public<T extends TableFunction> Stream<T> getFunctionStream(Class<T> clazz) {
-    return StreamUtil.filterByClass(getFunctionNames().stream()
-        .flatMap(name -> getFunctions(name, false).stream()), clazz);
+  public <T extends TableFunction> Stream<T> getFunctionStream(Class<T> clazz) {
+    return StreamUtil.filterByClass(
+        getFunctionNames().stream().flatMap(name -> getFunctions(name, false).stream()), clazz);
   }
 
-  public<T extends Table> Stream<T> getTableStream(Class<T> clazz) {
-    return StreamUtil.filterByClass(getTableNames().stream()
-        .map(t->getTable(t,false).getTable()), clazz);
+  public <T extends Table> Stream<T> getTableStream(Class<T> clazz) {
+    return StreamUtil.filterByClass(
+        getTableNames().stream().map(t -> getTable(t, false).getTable()), clazz);
   }
 
   public List<ResolvedExport> getExports() {
@@ -94,6 +89,7 @@ public class SqrlSchema extends SimpleCalciteSchema {
   public void add(ResolvedExport export) {
     this.exports.add(export);
   }
+
   public void add(ResolvedImport imp) {
     this.imports.add(imp);
   }
@@ -118,7 +114,6 @@ public class SqrlSchema extends SimpleCalciteSchema {
       }
       removePrefix(pathToAbsolutePathMap.keySet(), prefix);
     }
-
   }
 
   private void removePrefix(Set<NamePath> set, NamePath prefix) {
@@ -146,22 +141,22 @@ public class SqrlSchema extends SimpleCalciteSchema {
 
   public List<SqrlTableMacro> getTableFunctions() {
     return getFunctionNames().stream()
-        .flatMap(f->getFunctions(f, false).stream())
-        .filter(f->f instanceof SqrlTableMacro)
-        .map(f->(SqrlTableMacro)f)
+        .flatMap(f -> getFunctions(f, false).stream())
+        .filter(f -> f instanceof SqrlTableMacro)
+        .map(f -> (SqrlTableMacro) f)
         .collect(Collectors.toList());
   }
 
   public List<SqrlTableMacro> getTableFunctions(NamePath path) {
-    return getFunctions(path.getDisplay(), false)
-        .stream().filter(f->f instanceof SqrlTableMacro)
-        .map(f->(SqrlTableMacro)f)
+    return getFunctions(path.getDisplay(), false).stream()
+        .filter(f -> f instanceof SqrlTableMacro)
+        .map(f -> (SqrlTableMacro) f)
         .collect(Collectors.toList());
   }
 
   @VisibleForTesting
   public SqrlTableMacro getTableFunction(String name) {
-    return (SqrlTableMacro)Iterables.getOnlyElement(getFunctions(name, false));
+    return (SqrlTableMacro) Iterables.getOnlyElement(getFunctions(name, false));
   }
 
   public void addAdditionalSql(Set<SqlNode> addlSql) {

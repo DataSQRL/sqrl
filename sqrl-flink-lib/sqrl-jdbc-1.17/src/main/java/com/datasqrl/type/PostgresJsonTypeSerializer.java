@@ -28,10 +28,11 @@ public class PostgresJsonTypeSerializer
 
   @Override
   public GenericDeserializationConverter<JdbcDeserializationConverter> getDeserializerConverter() {
-    return () -> (val) -> {
-      FlinkJsonType t = (FlinkJsonType) val;
-      return t.getJson();
-    };
+    return () ->
+        (val) -> {
+          FlinkJsonType t = (FlinkJsonType) val;
+          return t.getJson();
+        };
   }
 
   @Override
@@ -39,21 +40,22 @@ public class PostgresJsonTypeSerializer
       LogicalType type) {
     FlinkJsonTypeSerializer typeSerializer = new FlinkJsonTypeSerializer();
 
-    return ()-> (val, index, statement) -> {
-      if (val != null && !val.isNullAt(index)) {
-        PGobject pgObject = new PGobject();
-        pgObject.setType("json");
-        RawValueData<FlinkJsonType> object = val.getRawValue(index);
-        FlinkJsonType vec = object.toObject(typeSerializer);
-        if (vec == null) {
-          statement.setObject(index, null);
-        } else {
-          pgObject.setValue(vec.getJson().toString());
-          statement.setObject(index, pgObject);
-        }
-      } else {
-        statement.setObject(index, null);
-      }
-    };
+    return () ->
+        (val, index, statement) -> {
+          if (val != null && !val.isNullAt(index)) {
+            PGobject pgObject = new PGobject();
+            pgObject.setType("json");
+            RawValueData<FlinkJsonType> object = val.getRawValue(index);
+            FlinkJsonType vec = object.toObject(typeSerializer);
+            if (vec == null) {
+              statement.setObject(index, null);
+            } else {
+              pgObject.setValue(vec.getJson().toString());
+              statement.setObject(index, pgObject);
+            }
+          } else {
+            statement.setObject(index, null);
+          }
+        };
   }
 }

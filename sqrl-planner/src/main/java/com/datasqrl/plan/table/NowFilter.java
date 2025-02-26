@@ -6,32 +6,28 @@ package com.datasqrl.plan.table;
 import com.datasqrl.plan.util.IndexMap;
 import com.datasqrl.plan.util.TimePredicate;
 import com.google.common.base.Preconditions;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
 import lombok.Value;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.tools.RelBuilder;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.function.Function;
-
 /**
  * A {@link NowFilter} represents a filter condition on a single timestamp column which requires the
  * timestamp to be within a certain interval relative to time point at which a query is issued.
- * <p>
- * Because this filter is relative to the query time, it is only possible to execute this filter in
- * the database at query time and hence we try to pull up this filter as much as possible. The only
- * exception are aggregations on relations with a {@link NowFilter} which can be converted to
+ *
+ * <p>Because this filter is relative to the query time, it is only possible to execute this filter
+ * in the database at query time and hence we try to pull up this filter as much as possible. The
+ * only exception are aggregations on relations with a {@link NowFilter} which can be converted to
  * sliding time-window aggregations with some loss of precision (namely the width of the time
  * window).
- * <p>
- * {@link NowFilter} is logically applied before {@link TopNConstraint}.
+ *
+ * <p>{@link NowFilter} is logically applied before {@link TopNConstraint}.
  */
-
-
 public interface NowFilter extends PullupOperator {
 
-  public static final NowFilter EMPTY = new NowFilter() {
-  };
+  public static final NowFilter EMPTY = new NowFilter() {};
 
   default TimePredicate getPredicate() {
     throw new IllegalStateException();
@@ -86,7 +82,6 @@ public interface NowFilter extends PullupOperator {
     return of(List.of(getPredicate(), other.getPredicate()));
   }
 
-
   @Value
   public static class NowFilterImpl implements NowFilter {
 
@@ -121,10 +116,9 @@ public interface NowFilter extends PullupOperator {
     public RelBuilder addFilterTo(RelBuilder relBuilder, boolean useCurrentTime) {
       RexBuilder rexB = relBuilder.getRexBuilder();
       relBuilder.filter(
-          getPredicate().createRexNode(rexB, i -> rexB.makeInputRef(relBuilder.peek(), i),
-              useCurrentTime));
+          getPredicate()
+              .createRexNode(rexB, i -> rexB.makeInputRef(relBuilder.peek(), i), useCurrentTime));
       return relBuilder;
     }
   }
-
 }

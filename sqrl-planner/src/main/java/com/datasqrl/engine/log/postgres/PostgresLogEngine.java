@@ -37,8 +37,7 @@ import org.apache.calcite.rel.type.RelDataType;
 
 public class PostgresLogEngine extends ExecutionEngine.Base implements LogEngine {
 
-  @Getter
-  private final EngineConfig engineConfig;
+  @Getter private final EngineConfig engineConfig;
 
   private final ConnectorFactory sourceConnectorFactory;
   private final ConnectorFactory sinkConnectorFactory;
@@ -47,12 +46,19 @@ public class PostgresLogEngine extends ExecutionEngine.Base implements LogEngine
   public PostgresLogEngine(PackageJson json, ConnectorFactoryFactory connectorFactory) {
     super(ENGINE_NAME, LOG, EnumSet.noneOf(EngineFeature.class));
 
-    this.engineConfig = json.getEngines().getEngineConfig(ENGINE_NAME)
-        .orElseGet(() -> new EmptyEngineConfig(ENGINE_NAME));
-    this.sourceConnectorFactory = connectorFactory.create(LOG, "postgres_log-source")
-        .orElseThrow(()->new RuntimeException("Could not find postgres_log source connector"));
-    this.sinkConnectorFactory = connectorFactory.create(LOG, "postgres_log-sink")
-        .orElseThrow(()->new RuntimeException("Could not find postgres_log sink connector"));
+    this.engineConfig =
+        json.getEngines()
+            .getEngineConfig(ENGINE_NAME)
+            .orElseGet(() -> new EmptyEngineConfig(ENGINE_NAME));
+    this.sourceConnectorFactory =
+        connectorFactory
+            .create(LOG, "postgres_log-source")
+            .orElseThrow(
+                () -> new RuntimeException("Could not find postgres_log source connector"));
+    this.sinkConnectorFactory =
+        connectorFactory
+            .create(LOG, "postgres_log-sink")
+            .orElseThrow(() -> new RuntimeException("Could not find postgres_log sink connector"));
   }
 
   @Override
@@ -61,14 +67,20 @@ public class PostgresLogEngine extends ExecutionEngine.Base implements LogEngine
   }
 
   @Override
-  public EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs, ExecutionPipeline pipeline,
-      List<StagePlan> stagePlans, SqrlFramework framework, ErrorCollector errorCollector) {
+  public EnginePhysicalPlan plan(
+      StagePlan plan,
+      List<StageSink> inputs,
+      ExecutionPipeline pipeline,
+      List<StagePlan> stagePlans,
+      SqrlFramework framework,
+      ErrorCollector errorCollector) {
 
     Preconditions.checkArgument(plan instanceof LogStagePlan);
 
-    JdbcDDLFactory factory = new JdbcDDLServiceLoader()
-        .load(JdbcDialect.Postgres)
-        .orElseThrow(() -> new RuntimeException("Could not find DDL factory"));
+    JdbcDDLFactory factory =
+        new JdbcDDLServiceLoader()
+            .load(JdbcDialect.Postgres)
+            .orElseThrow(() -> new RuntimeException("Could not find DDL factory"));
 
     PostgresDDLFactory postgresDDLFactory = (PostgresDDLFactory) factory;
 
@@ -80,17 +92,21 @@ public class PostgresLogEngine extends ExecutionEngine.Base implements LogEngine
       PostgresTable pgTable = (PostgresTable) log;
       String tableName = pgTable.getTableName();
       RelDataType dataType = pgTable.getTableSchema().getRelDataType();
-      ddl.add(postgresDDLFactory.createTable(tableName, dataType.getFieldList(), pgTable.getPrimaryKeys()));
+      ddl.add(
+          postgresDDLFactory.createTable(
+              tableName, dataType.getFieldList(), pgTable.getPrimaryKeys()));
       ddl.add(postgresDDLFactory.createNotify(tableName, pgTable.getPrimaryKeys()));
 
-      ListenNotifyAssets listenNotifyAssets = postgresDDLFactory.createNotifyHelperDDLs(framework, tableName, dataType, pgTable.getPrimaryKeys());
+      ListenNotifyAssets listenNotifyAssets =
+          postgresDDLFactory.createNotifyHelperDDLs(
+              framework, tableName, dataType, pgTable.getPrimaryKeys());
       queries.add(listenNotifyAssets);
 
-      InsertStatement insertStatement = postgresDDLFactory.createInsertHelperDMLs(tableName, dataType);
+      InsertStatement insertStatement =
+          postgresDDLFactory.createInsertHelperDMLs(tableName, dataType);
       inserts.add(insertStatement);
     }
 
     return new PostgresLogPhysicalPlan(ddl, queries, inserts);
   }
-
 }

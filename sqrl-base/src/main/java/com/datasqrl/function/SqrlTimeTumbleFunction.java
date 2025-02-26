@@ -12,7 +12,5 @@ public interface SqrlTimeTumbleFunction extends FunctionMetadata {
     long getWindowWidthMillis();
 
     long getWindowOffsetMillis();
-
   }
-
 }

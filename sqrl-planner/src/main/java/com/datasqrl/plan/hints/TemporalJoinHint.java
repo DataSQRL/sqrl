@@ -4,18 +4,14 @@
 package com.datasqrl.plan.hints;
 
 import com.google.common.base.Preconditions;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.apache.calcite.rel.hint.RelHint;
 
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
 @Getter
 @AllArgsConstructor
 public class TemporalJoinHint implements SqrlHint {
-
 
   final int streamTimestampIdx;
 
@@ -48,5 +44,4 @@ public class TemporalJoinHint implements SqrlHint {
       return new TemporalJoinHint(streamTimeIdx);
     }
   }
-
 }

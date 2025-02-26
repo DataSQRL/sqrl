@@ -3,7 +3,6 @@
  */
 package com.datasqrl.discovery.stats;
 
-
 import java.util.Arrays;
 
 public class DocumentPath {
@@ -21,5 +20,4 @@ public class DocumentPath {
     newnames[names.length] = sub;
     return new DocumentPath(newnames);
   }
-
 }

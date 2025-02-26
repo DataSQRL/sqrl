@@ -32,11 +32,11 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Purpose: Configures {@link DataFetcher}s for GraphQL subscriptions the subscriptions (kafka
- * messages subscription and postgreSQL listen/notify mechanism) that embed the code for executing the subscriptions.
+ * messages subscription and postgreSQL listen/notify mechanism) that embed the code for executing
+ * the subscriptions.
  *
- * Collaboration:
- * Uses {@link RootGraphqlModel} to get subscription coordinates and create data fetchers for Kafka and
- * PostgreSQL.
+ * <p>Collaboration: Uses {@link RootGraphqlModel} to get subscription coordinates and create data
+ * fetchers for Kafka and PostgreSQL.
  */
 @Slf4j
 @AllArgsConstructor
@@ -54,15 +54,17 @@ public class SubscriptionConfigurationImpl implements SubscriptionConfiguration<
       @Override
       public DataFetcher<?> visit(KafkaSubscriptionCoords coords, Context context) {
         Map<String, SinkConsumer> subscriptions = new HashMap<>();
-        for (SubscriptionCoords sub: root.getSubscriptions()) {
+        for (SubscriptionCoords sub : root.getSubscriptions()) {
           KafkaSubscriptionCoords kafkaSub = (KafkaSubscriptionCoords) sub;
           KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, getSourceConfig());
-          consumer.subscribe(kafkaSub.getTopic())
+          consumer
+              .subscribe(kafkaSub.getTopic())
               .onSuccess(v -> log.info("Subscribed to topic: {}", kafkaSub.getTopic()))
-              .onFailure(err -> {
-                log.error("Failed to subscribe to topic: {}", kafkaSub.getTopic(), err);
-                startPromise.fail(err);
-              });
+              .onFailure(
+                  err -> {
+                    log.error("Failed to subscribe to topic: {}", kafkaSub.getTopic(), err);
+                    startPromise.fail(err);
+                  });
           subscriptions.put(sub.getFieldName(), new KafkaSinkConsumer<>(consumer));
         }
         return KafkaDataFetcherFactory.create(subscriptions, coords);
@@ -71,11 +73,16 @@ public class SubscriptionConfigurationImpl implements SubscriptionConfiguration<
       @Override
       public DataFetcher<?> visit(PostgresSubscriptionCoords coords, Context context) {
         Map<String, SinkConsumer> subscriptions = new HashMap<>();
-        for (SubscriptionCoords sub: root.getSubscriptions()) {
+        for (SubscriptionCoords sub : root.getSubscriptions()) {
           PostgresSubscriptionCoords pgSub = (PostgresSubscriptionCoords) sub;
-          PostgresListenNotifyConsumer pgConsumer = new PostgresListenNotifyConsumer(client,
-              pgSub.getListenQuery(), pgSub.getOnNotifyQuery(), pgSub.getParameters(), vertx,
-              config.getPgConnectOptions());
+          PostgresListenNotifyConsumer pgConsumer =
+              new PostgresListenNotifyConsumer(
+                  client,
+                  pgSub.getListenQuery(),
+                  pgSub.getOnNotifyQuery(),
+                  pgSub.getParameters(),
+                  vertx,
+                  config.getPgConnectOptions());
 
           PostgresSinkConsumer pgSinkConsumer = new PostgresSinkConsumer(pgConsumer);
 
@@ -89,7 +96,8 @@ public class SubscriptionConfigurationImpl implements SubscriptionConfiguration<
   // TODO: shouldn't it come from ServerConfig all together?
   public Map<String, String> getSourceConfig() {
     Map<String, String> conf = new HashMap<>();
-    conf.put(BOOTSTRAP_SERVERS_CONFIG, config.getEnvironmentVariable("PROPERTIES_BOOTSTRAP_SERVERS"));
+    conf.put(
+        BOOTSTRAP_SERVERS_CONFIG, config.getEnvironmentVariable("PROPERTIES_BOOTSTRAP_SERVERS"));
     conf.put(GROUP_ID_CONFIG, UUID.randomUUID().toString());
     conf.put(KEY_DESERIALIZER_CLASS_CONFIG, "com.datasqrl.graphql.kafka.JsonDeserializer");
     conf.put(VALUE_DESERIALIZER_CLASS_CONFIG, "com.datasqrl.graphql.kafka.JsonDeserializer");

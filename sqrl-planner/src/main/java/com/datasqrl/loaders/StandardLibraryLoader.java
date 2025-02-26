@@ -27,6 +27,7 @@ public class StandardLibraryLoader {
   public Set<NamePath> loadedLibraries() {
     return standardLibrary.keySet();
   }
+
   public List<NamespaceObject> load(NamePath namePath) {
     if (standardLibrary.containsKey(namePath)) {
       return standardLibrary.get(namePath).getNamespaceObjects();

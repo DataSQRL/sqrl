@@ -1,8 +1,8 @@
 package com.datasqrl.function;
 
-import com.datasqrl.module.SqrlModule;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.module.NamespaceObject;
+import com.datasqrl.module.SqrlModule;
 import com.google.common.collect.Maps;
 import java.util.List;
 import java.util.Map;

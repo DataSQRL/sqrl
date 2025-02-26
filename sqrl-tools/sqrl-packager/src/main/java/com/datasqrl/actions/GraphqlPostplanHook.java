@@ -21,23 +21,32 @@ public class GraphqlPostplanHook {
   private final SqrlFramework framework;
   private final APIConnectorManager apiManager;
 
-  public Optional<RootGraphqlModel> updatePlan(Optional<APISource> source, PhysicalPlan physicalPlan) {
+  public Optional<RootGraphqlModel> updatePlan(
+      Optional<APISource> source, PhysicalPlan physicalPlan) {
     if (pipeline.getStage(Type.SERVER).isEmpty()) {
       return Optional.empty();
     }
 
     Optional<RootGraphqlModel> root;
     if (source.isPresent()) {
-      GraphqlModelGenerator modelGen = new GraphqlModelGenerator(
-          framework.getCatalogReader().nameMatcher(), framework.getSchema(),
-          physicalPlan.getDatabaseQueries(), framework.getQueryPlanner(), apiManager, physicalPlan);
+      GraphqlModelGenerator modelGen =
+          new GraphqlModelGenerator(
+              framework.getCatalogReader().nameMatcher(),
+              framework.getSchema(),
+              physicalPlan.getDatabaseQueries(),
+              framework.getQueryPlanner(),
+              apiManager,
+              physicalPlan);
       modelGen.walk(source.get());
-      RootGraphqlModel model = RootGraphqlModel.builder().coords(modelGen.getCoords())
-          .mutations(modelGen.getMutations()).subscriptions(modelGen.getSubscriptions())
-          .schema(StringSchema.builder().schema(source.get().getSchemaDefinition()).build())
-          .build();
+      RootGraphqlModel model =
+          RootGraphqlModel.builder()
+              .coords(modelGen.getCoords())
+              .mutations(modelGen.getMutations())
+              .subscriptions(modelGen.getSubscriptions())
+              .schema(StringSchema.builder().schema(source.get().getSchemaDefinition()).build())
+              .build();
       root = Optional.of(model);
-      //todo remove
+      // todo remove
       physicalPlan.getPlans(ServerPhysicalPlan.class).findFirst().get().setModel(model);
     } else {
       root = Optional.empty();

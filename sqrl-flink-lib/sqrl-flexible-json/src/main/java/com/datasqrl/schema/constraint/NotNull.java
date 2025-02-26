@@ -3,8 +3,8 @@
  */
 package com.datasqrl.schema.constraint;
 
-import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.schema.type.Type;
 import java.util.Map;
 import java.util.Optional;
@@ -15,8 +15,7 @@ public class NotNull implements Constraint {
 
   public static final NotNull INSTANCE = new NotNull();
 
-  private NotNull() {
-  }
+  private NotNull() {}
 
   @Override
   public boolean satisfies(Object value) {
@@ -53,7 +52,6 @@ public class NotNull implements Constraint {
     return null;
   }
 
-
   public static class Factory implements Constraint.Factory {
 
     @Override
@@ -65,7 +63,5 @@ public class NotNull implements Constraint {
     public Optional<Constraint> create(Map<String, Object> parameters, ErrorCollector errors) {
       return Optional.of(INSTANCE);
     }
-
   }
-
 }
