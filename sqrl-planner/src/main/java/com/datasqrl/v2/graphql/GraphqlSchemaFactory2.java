@@ -74,7 +74,7 @@ public class GraphqlSchemaFactory2 {
 
     // process query table functions
     final Optional<GraphQLObjectType> queriesObjectType = createQueriesOrSubscriptionsObjectType(serverPlan, AccessModifier.QUERY);
-    if (queryFields.isEmpty()) {
+    if (queryFields.isEmpty()) { // there must be at least 1 query
       return Optional.empty();
     }
     queriesObjectType.ifPresent(graphQLSchemaBuilder::query);
@@ -94,8 +94,8 @@ public class GraphqlSchemaFactory2 {
   }
 
   /**
-   * GraphQL queries and subscriptions are generated the same way. So we have a single method having
-   * {@link AccessModifier#QUERY} or {@link AccessModifier#SUBSCRIPTION} as parameter.
+   * GraphQL queries and subscriptions are generated the same way. So we call this method with
+   * {@link AccessModifier#QUERY} for generating queries and with {@link AccessModifier#SUBSCRIPTION} for generating subscriptions.
    */
   public Optional<GraphQLObjectType> createQueriesOrSubscriptionsObjectType(ServerPhysicalPlan serverPlan, AccessModifier tableFunctionsType) {
 
@@ -104,33 +104,27 @@ public class GraphqlSchemaFactory2 {
                     .filter(function -> function.getVisibility().getAccess() == tableFunctionsType)
                     .collect(Collectors.toList());
 
-    //TODO see if the 2 maps can we simplified a bit
-
-    // group table functions by their parent path (NamePath.ROOT  for root tables)
+    // group table functions by their parent path
     Map<NamePath, List<SqrlTableFunction>> tableFunctionsByTheirParentPath =
         tableFunctions.stream()
-            .collect(Collectors.groupingBy(function -> function.getFullPath().popLast(), LinkedHashMap::new, Collectors.toList()));
+            .collect(Collectors.groupingBy(
+                      function -> function.getFullPath().popLast(),
+                      LinkedHashMap::new,
+                      Collectors.toList()
+                    )
+            );
 
-    // group table functions by their absolute path
-    Map<NamePath, List<SqrlTableFunction>> tableFunctionsByTheirPath =
-        tableFunctions.stream()
-            .collect(Collectors.groupingBy(SqrlTableFunction::getFullPath, LinkedHashMap::new, Collectors.toList()));
-
-    // process all the table functions
-    for (Map.Entry<NamePath, List<SqrlTableFunction>> path : tableFunctionsByTheirPath.entrySet()) {
-      // create resultType of the function at path and add it to the GraphQl object types
-      final SqrlTableFunction tableFunction = path.getValue().get(0); // overloaded table functions all have the same base table, hence the same return type
+    for (SqrlTableFunction tableFunction : tableFunctions) {
+      // create resultType of the table function and add it to the GraphQl object types
       if (!tableFunction.isRelationship()) { // root table function
         Optional<GraphQLObjectType> resultType =
             createRootTableFunctionResultType(
-                tableFunction, path.getValue(), // list of table functions with the same path (its overloaded table functions)
-                tableFunctionsByTheirParentPath.getOrDefault(path.getKey(), List.of()) // List of table functions nested under path (its relationships).
-                );
+                tableFunction,
+                tableFunctionsByTheirParentPath.getOrDefault(tableFunction.getFullPath(), List.of()) // List of table functions which parent is tableFunction (its relationships).
+            );
         resultType.map(objectTypes::add);
       } else { // relationship table function
-        Optional<GraphQLObjectType> resultType =
-            createRelationshipTableFunctionResultType(tableFunction, path.getValue() // list of table functions with the same path (its overloaded table functions)
-            );
+        Optional<GraphQLObjectType> resultType = createRelationshipTableFunctionResultType(tableFunction);
         resultType.map(objectTypes::add);
       }
     }
@@ -139,9 +133,9 @@ public class GraphqlSchemaFactory2 {
             .filter(tableFunction -> !tableFunction.isRelationship())
             .collect(Collectors.toList());
     GraphQLObjectType rootObjectType;
-    if (tableFunctionsType == AccessModifier.QUERY) {
+    if (tableFunctionsType == AccessModifier.QUERY) { //this method was called for queries
       rootObjectType = createRootQueryType(rootTableFunctions);
-    } else { // subscriptions
+    } else { //this method was called for subscriptions
       rootObjectType = createRootSubscriptionType(rootTableFunctions);
     }
     //TODO fix cleanInvalidTypes: it removes nestedTypes.
@@ -151,11 +145,9 @@ public class GraphqlSchemaFactory2 {
 
 
   /**
-   * Create the graphQL result type for root table functions (non-relationships)
+   * Create the graphQL result type for a root table function (non-relationship)
    */
-  private Optional<GraphQLObjectType> createRootTableFunctionResultType(SqrlTableFunction tableFunction, List<SqrlTableFunction> itsOverloadedTableFunctions, List<SqrlTableFunction> itsRelationships) {
-    checkOverloadedFunctionsHaveSameBaseTable(itsOverloadedTableFunctions);
-    checkOverloadedSignaturesDontOverlap(itsOverloadedTableFunctions);
+  private Optional<GraphQLObjectType> createRootTableFunctionResultType(SqrlTableFunction tableFunction, List<SqrlTableFunction> itsRelationships) {
 
     String typeName;
     if (tableFunction.getBaseTable().isPresent()) {
@@ -163,10 +155,10 @@ public class GraphqlSchemaFactory2 {
       if (definedTypeNames.contains(baseTableName)) {// result type was already defined
           return Optional.empty();
       }
-      else { // new result type using base name
+      else { // it is a new result type. Using base table name
         typeName = baseTableName;
       }
-    } else { // no base table, use function name (guaranteed to be uniq by the compiler)
+    } else { // there is no base table. Use the function name (guaranteed to be uniq by the compiler)
       typeName = tableFunction.getFullPath().getLast().getDisplay();
     }
     /* BROWSE THE FIELDS
@@ -178,7 +170,7 @@ public class GraphqlSchemaFactory2 {
     */
 
     // non-relationship fields
-    // now all relationships are functions that are separate from the datatype. So there can no more have relationship fields inside the relDataType
+    // now all relationships are functions that are separate from the rowType. So there can no more have relationship fields inside it
     RelDataType rowType = tableFunction.getRowType();
     List<GraphQLFieldDefinition> fields = new ArrayList<>();
     for (RelDataTypeField field : rowType.getFieldList()) {
@@ -186,13 +178,7 @@ public class GraphqlSchemaFactory2 {
     }
 
     // relationship fields (reference to types defined when processing the relationship) need to be wired into the root table.
-    Map<Name, List<SqrlTableFunction>> itsRelationshipsByTheirField = itsRelationships.stream()
-            .collect(Collectors.groupingBy(g -> g.getFullPath().getLast(),
-                    LinkedHashMap::new, Collectors.toList()));
-
-    for (Map.Entry<Name, List<SqrlTableFunction>> field : itsRelationshipsByTheirField.entrySet()) {
-      // all the overloaded relationship functions have the same return type
-      SqrlTableFunction relationship = field.getValue().get(0);
+    for (SqrlTableFunction relationship :  itsRelationships) {
       createRelationshipField(relationship).map(fields::add);
     }
 
@@ -211,9 +197,7 @@ public class GraphqlSchemaFactory2 {
   /**
    * Generate the result type for relationship table functions
    */
-  private Optional<GraphQLObjectType> createRelationshipTableFunctionResultType(SqrlTableFunction tableFunction, List<SqrlTableFunction> itsOverloadedTableFunctions) {
-    checkOverloadedFunctionsHaveSameBaseTable(itsOverloadedTableFunctions);
-    checkOverloadedSignaturesDontOverlap(itsOverloadedTableFunctions);
+  private Optional<GraphQLObjectType> createRelationshipTableFunctionResultType(SqrlTableFunction tableFunction) {
 
     if (tableFunction.getBaseTable().isPresent()) { // the type was created in the root table function
       return Optional.empty();
@@ -367,24 +351,6 @@ public class GraphqlSchemaFactory2 {
     return rootQueryObjectType;
   }
 
-  private static void checkOverloadedFunctionsHaveSameBaseTable(List<SqrlTableFunction> tableFunctionsAtPath) {
-    SqrlTableFunction first = tableFunctionsAtPath.get(0);
-    final boolean check = tableFunctionsAtPath.stream().allMatch(function -> function.getBaseTable().equals(first.getBaseTable()));
-      first.getFunctionAnalysis().getErrors().checkFatal(
-            check,
-            "Overloaded table functions do not have the same base table: %s",
-            first.getBaseTable().isEmpty()
-                ? "no base table"
-                : first.getBaseTable().get().getName());
-  }
-
-  private static void checkOverloadedSignaturesDontOverlap(List<SqrlTableFunction> tableFunctionsAtPath) {
-    SqrlTableFunction first = tableFunctionsAtPath.get(0);
-    final boolean check = true;
-    //TODO compare all the signatures pairs parameters lists 2 by 2. if they have the same list of parameters (name and type) in same order they overlap
-    first.getFunctionAnalysis().getErrors().checkFatal(check, "Overloaded table functions have overlapping parameters");
-  }
-
   /**
    *   Create a non-relationship field :
    *     - a scalar type
@@ -441,11 +407,6 @@ public class GraphqlSchemaFactory2 {
     if(tableFunction.getVisibility().getAccess() != AccessModifier.SUBSCRIPTION) {
       limitAndOffsetArguments = generateLimitAndOffsetArguments();
     }
-
-      //TODO Merge signatures when there are multiple overloaded functions: a) combining all
-    // parameters by name and relaxing their argument type by nullability b) check that argument
-    // types are compatible, otherwise produce error. Also check compatibility of result type.
-
     return ListUtils.union(parametersArguments, limitAndOffsetArguments);
   }
 
