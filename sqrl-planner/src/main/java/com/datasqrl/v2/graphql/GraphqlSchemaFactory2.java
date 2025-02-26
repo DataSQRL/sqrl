@@ -61,17 +61,11 @@ public class GraphqlSchemaFactory2 {
   private final List<GraphQLObjectType> objectTypes = new ArrayList<>();
   private final Set<String> definedTypeNames = new HashSet<>();
   private final boolean extendedScalarTypes;
-  private final ExecutionGoal goal;
   public final Set<String> seen = new HashSet<>();
 
   @Inject
-  public GraphqlSchemaFactory2(CompilerConfig config, ExecutionGoal goal) {
-    this(config.isExtendedScalarTypes(), goal);
-  }
-
-  public GraphqlSchemaFactory2(boolean extendedScalarTypes, ExecutionGoal goal) {
-    this.extendedScalarTypes = extendedScalarTypes;
-    this.goal = goal;
+  public GraphqlSchemaFactory2(CompilerConfig config) {
+    this.extendedScalarTypes = config.isExtendedScalarTypes();
   }
 
   public Optional<GraphQLSchema> generate(ServerPhysicalPlan serverPlan) {
@@ -88,16 +82,13 @@ public class GraphqlSchemaFactory2 {
     }
     queriesObjectType.ifPresent(graphQLSchemaBuilder::query);
 
-    // process subscriptions and mutations
-    if (goal != ExecutionGoal.TEST) {
-      // process subscriptions table functions
-      final Optional<GraphQLObjectType> subscriptionsObjectType = createQueriesOrSubscriptionsObjectType(serverPlan, AccessModifier.SUBSCRIPTION);
-      subscriptionsObjectType.ifPresent(graphQLSchemaBuilder::subscription);
+    // process subscriptions table functions
+    final Optional<GraphQLObjectType> subscriptionsObjectType = createQueriesOrSubscriptionsObjectType(serverPlan, AccessModifier.SUBSCRIPTION);
+    subscriptionsObjectType.ifPresent(graphQLSchemaBuilder::subscription);
 
-      // process mutations table functions
-      final Optional<GraphQLObjectType> mutationsObjectType = createMutationsObjectType();
-      mutationsObjectType.ifPresent(graphQLSchemaBuilder::mutation);
-    }
+    // process mutations table functions
+    final Optional<GraphQLObjectType> mutationsObjectType = createMutationsObjectType();
+    mutationsObjectType.ifPresent(graphQLSchemaBuilder::mutation);
 
     graphQLSchemaBuilder.additionalTypes(new LinkedHashSet<>(objectTypes)); // the cleaned types
 
