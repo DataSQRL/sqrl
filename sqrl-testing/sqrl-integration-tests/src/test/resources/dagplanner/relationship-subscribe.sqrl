@@ -2,6 +2,7 @@ IMPORT ecommerceTs.Customer; --base table = Customer
 -- Orders has nested data `entries` (see orders.schema.yml)
 IMPORT ecommerceTs.Orders; --base table = Orders
 
+-- projections are not supported on kafka engine
 -- rootFunction($i : INT) :=  SUBSCRIBE SELECT id FROM Orders  WHERE id = $i; -- no base table
 rootFunctionWithBaseTable($i : INT) := SUBSCRIBE SELECT * FROM Orders WHERE id = $i; -- base table = Orders
 rootFunctionWithBaseTable2($i : INT) := SELECT * FROM Orders WHERE id = $i; -- base table = Orders
