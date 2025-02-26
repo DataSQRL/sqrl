@@ -210,7 +210,7 @@ public class DatasqrlRun {
 
     Path flinkPath = path.resolve("flink.json");
     if (!flinkPath.toFile().exists()) {
-      throw new RuntimeException("Could not find flink plan.");
+      throw new RuntimeException("Could not find flink plan: " + flinkPath);
     }
 
     Map map = objectMapper.readValue(path.resolve("flink.json").toFile(), Map.class);
