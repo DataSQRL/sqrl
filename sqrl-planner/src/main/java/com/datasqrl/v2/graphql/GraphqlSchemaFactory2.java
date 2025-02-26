@@ -7,7 +7,6 @@ import static com.datasqrl.graphql.jdbc.SchemaConstants.OFFSET;
 import static com.datasqrl.v2.graphql.GraphqlSchemaUtil2.*;
 import static graphql.schema.GraphQLNonNull.nonNull;
 
-import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.engine.server.ServerPhysicalPlan;
@@ -231,60 +230,6 @@ public class GraphqlSchemaFactory2 {
     // TODO implement
     return Optional.empty();
   }
-
-
-
-
-
-/*
-  public Optional<Builder> createSubscriptionTypes() {
-    Builder subscriptionBuilder = GraphQLObjectType.newObject().name("Subscription");
-
-    // Retrieve streamable tables from the schema
-    List<PhysicalRelationalTable> streamTables = schema.getTableFunctions().stream()
-        .filter(t-> t instanceof RootSqrlTable)
-        .filter(t->t.getParameters().isEmpty())
-        .filter(t->!((RootSqrlTable)t).isImportedTable() && !((RootSqrlTable)t).getHasExecHint())
-        .map(t->((PhysicalRelationalTable)((RootSqrlTable) t).getInternalTable()))
-        .filter(t->!(t instanceof ProxyImportRelationalTable)) //do not create subscriptions for imported tables
-        .filter(t-> t.getType() == TableType.STREAM)
-        .collect(Collectors.toList());
-    if (streamTables.isEmpty()) {
-      return Optional.empty();
-    }
-
-    List<GraphQLFieldDefinition> subscriptionFields = new ArrayList<>();
-    // Define subscription fields for each streamable table
-    outer: for (PhysicalRelationalTable table : streamTables) {
-      String tableName = table.getTablePath().getDisplay();
-      if (tableName.startsWith(HIDDEN_PREFIX)) continue;
-
-      //check if primary keys are nullable:
-      for (int i : table.getPrimaryKey().getPkIndexes()) {
-        if (table.getRowType().getFieldList().get(i).getType().isNullable()) {
-          log.warn("Nullable primary key {} on table {}", table.getRowType().getFieldList().get(i).getName(),
-              table.getTableName().getDisplay());
-          continue outer;
-        }
-      }
-
-      GraphQLFieldDefinition subscriptionField = GraphQLFieldDefinition.newFieldDefinition()
-          .name(tableName)
-          .type(createOutputTypeForRelDataType(table.getRowType(), NamePath.of(tableName), seen, extendedScalarTypes).get())
-          .build();
-
-      subscriptionFields.add(subscriptionField);
-    }
-
-    if (subscriptionFields.isEmpty()) {
-      return Optional.empty();
-    }
-
-    subscriptionBuilder.fields(subscriptionFields);
-
-    return Optional.of(subscriptionBuilder);
-  }
-*/
 
   /**
    * Create the root Query graphQL object encapsulating the type references to all the root table functions.
