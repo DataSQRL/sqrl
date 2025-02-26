@@ -5,19 +5,15 @@ package com.datasqrl.io.tables;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-
 import com.datasqrl.config.TableConfig;
-import lombok.Getter;
-
 import java.util.Optional;
+import lombok.Getter;
 
 @Getter
 public class TableInput extends AbstractExternalTable {
 
-
-  public TableInput(TableConfig configuration, NamePath path,
-                    Name name, Optional<TableSchema> tableSchema) {
+  public TableInput(
+      TableConfig configuration, NamePath path, Name name, Optional<TableSchema> tableSchema) {
     super(configuration, path, name, tableSchema);
   }
-
 }

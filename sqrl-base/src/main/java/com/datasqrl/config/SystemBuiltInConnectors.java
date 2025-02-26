@@ -9,7 +9,6 @@ import lombok.Getter;
 @AllArgsConstructor
 @Getter
 public enum SystemBuiltInConnectors {
-
   PRINT_SINK(Name.system("print"), ExternalDataType.sink),
   LOCAL_FILE_SOURCE(Name.system("localfile"), ExternalDataType.source),
   LOGGER(Name.system("logger"), ExternalDataType.sink),
@@ -33,5 +32,4 @@ public enum SystemBuiltInConnectors {
     }
     return Optional.empty();
   }
-
 }

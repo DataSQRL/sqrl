@@ -4,19 +4,18 @@
 package com.datasqrl.io;
 
 import com.datasqrl.canonicalizer.Name;
-import lombok.*;
-
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import lombok.*;
 import org.apache.flink.table.sources.TableSource;
 
 /**
  * Raw records of a {@link TableSource} are represented as {@link SourceRecord}
- * <p>
- * The generic parameter K is one of {@link java.lang.String} or {@link Name}.
+ *
+ * <p>The generic parameter K is one of {@link java.lang.String} or {@link Name}.
  */
 @NoArgsConstructor
 @Getter
@@ -28,8 +27,8 @@ public class SourceRecord<K> implements Serializable {
   private Instant ingestTime;
   private UUID uuid;
 
-  public SourceRecord(@NonNull Map<K, Object> data, Instant sourceTime, @NonNull Instant ingestTime,
-      UUID uuid) {
+  public SourceRecord(
+      @NonNull Map<K, Object> data, Instant sourceTime, @NonNull Instant ingestTime, UUID uuid) {
     this.data = data;
     this.sourceTime = sourceTime;
     this.ingestTime = ingestTime;
@@ -61,8 +60,9 @@ public class SourceRecord<K> implements Serializable {
       return false;
     }
     SourceRecord that = (SourceRecord) o;
-    return data.equals(that.data) && sourceTime.equals(that.sourceTime) && ingestTime.equals(
-        that.ingestTime);
+    return data.equals(that.data)
+        && sourceTime.equals(that.sourceTime)
+        && ingestTime.equals(that.ingestTime);
   }
 
   @Override
@@ -72,17 +72,23 @@ public class SourceRecord<K> implements Serializable {
 
   @Override
   public String toString() {
-    return "SourceRecord{" +
-        "data=" + data +
-        ", sourceTime=" + sourceTime +
-        ", ingestTime=" + ingestTime +
-        '}';
+    return "SourceRecord{"
+        + "data="
+        + data
+        + ", sourceTime="
+        + sourceTime
+        + ", ingestTime="
+        + ingestTime
+        + '}';
   }
 
   @NoArgsConstructor
   public static class Raw extends SourceRecord<String> {
 
-    public Raw(@NonNull Map<String, Object> data, Instant sourceTime, @NonNull Instant ingestTime,
+    public Raw(
+        @NonNull Map<String, Object> data,
+        Instant sourceTime,
+        @NonNull Instant ingestTime,
         UUID uuid) {
       super(data, sourceTime, ingestTime, uuid);
     }
@@ -100,7 +106,10 @@ public class SourceRecord<K> implements Serializable {
   @NoArgsConstructor
   public static class Named extends SourceRecord<Name> {
 
-    public Named(@NonNull Map<Name, Object> data, Instant sourceTime, @NonNull Instant ingestTime,
+    public Named(
+        @NonNull Map<Name, Object> data,
+        Instant sourceTime,
+        @NonNull Instant ingestTime,
         UUID uuid) {
       super(data, sourceTime, ingestTime, uuid);
     }

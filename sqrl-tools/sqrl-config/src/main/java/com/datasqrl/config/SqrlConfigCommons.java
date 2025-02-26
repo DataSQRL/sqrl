@@ -8,7 +8,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-
 import com.networknt.schema.JsonSchema;
 import com.networknt.schema.JsonSchemaFactory;
 import com.networknt.schema.SpecVersion.VersionFlag;
@@ -51,9 +50,7 @@ import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.NodeCombiner;
 import org.apache.commons.configuration2.tree.OverrideCombiner;
 
-/**
- * Implementions of {@link SqrlConfig} based on Apache commons configuration (v2)
- */
+/** Implementions of {@link SqrlConfig} based on Apache commons configuration (v2) */
 @AllArgsConstructor
 public class SqrlConfigCommons implements SqrlConfig {
 
@@ -61,17 +58,15 @@ public class SqrlConfigCommons implements SqrlConfig {
   private static final String DELIMITER_STR = DELIMITER + "";
   private static final String DOUBLE_DELIMITER = DELIMITER_STR + DELIMITER_STR;
 
-  @NonNull
-  ErrorCollector errors;
+  @NonNull ErrorCollector errors;
   String configFilename;
-  @NonNull
-  Configuration config;
+  @NonNull Configuration config;
   String prefix;
 
   @Override
   public int getVersion() {
-    errors.checkFatal(config.containsKey(VERSION_KEY),
-        "Configuration file does not have a `version`.");
+    errors.checkFatal(
+        config.containsKey(VERSION_KEY), "Configuration file does not have a `version`.");
     int version = config.getInt(VERSION_KEY, 0);
     errors.checkFatal(version > 0, "Invalid version: %s", version);
     return version;
@@ -86,8 +81,7 @@ public class SqrlConfigCommons implements SqrlConfig {
   public boolean hasSubConfig(String name) {
     String subConfigPrefix = getFullKey(name) + DELIMITER;
 
-    return config.getKeys(subConfigPrefix)
-        .hasNext(); // If there is at least one key, return true
+    return config.getKeys(subConfigPrefix).hasNext(); // If there is at least one key, return true
   }
 
   private String getPrefix(String name) {
@@ -108,7 +102,7 @@ public class SqrlConfigCommons implements SqrlConfig {
   }
 
   private static String getLocalKey(String key) {
-    //find the first delimiter that isn't a double delimiter
+    // find the first delimiter that isn't a double delimiter
     int index = 0;
     while ((index = key.indexOf(DELIMITER, index)) >= 0) {
       if (key.length() > index + 2 && key.charAt(index + 1) == DELIMITER) {
@@ -124,21 +118,24 @@ public class SqrlConfigCommons implements SqrlConfig {
   @Override
   public Iterable<String> getKeys() {
     LinkedHashSet<String> localKeys = new LinkedHashSet<>();
-    getAllKeys().forEach(relativeKey -> {
-      String localKey = getLocalKey(relativeKey);
-      if (!Strings.isNullOrEmpty(localKey))
-        localKeys.add(localKey);
-    });
+    getAllKeys()
+        .forEach(
+            relativeKey -> {
+              String localKey = getLocalKey(relativeKey);
+              if (!Strings.isNullOrEmpty(localKey)) localKeys.add(localKey);
+            });
     return localKeys;
   }
 
   private Iterable<String> getAllKeys() {
     List<String> allKeys = new ArrayList<>();
-    config.getKeys(prefix).forEachRemaining(subKey -> {
-      String suffix = relativeKey(subKey);
-      if (!Strings.isNullOrEmpty(suffix))
-        allKeys.add(suffix);
-    });
+    config
+        .getKeys(prefix)
+        .forEachRemaining(
+            subKey -> {
+              String suffix = relativeKey(subKey);
+              if (!Strings.isNullOrEmpty(suffix)) allKeys.add(suffix);
+            });
     return allKeys;
   }
 
@@ -151,44 +148,48 @@ public class SqrlConfigCommons implements SqrlConfig {
   public <T> Value<T> as(String key, Class<T> clazz) {
     String fullKey = getFullKey(key);
     String expandKey = expandKey(key);
-    if (isBasicClass(clazz)) { //Direct mapping
-      if (!config.containsKey(fullKey))
-        return new ValueImpl<>(expandKey, errors, Optional.empty());
+    if (isBasicClass(clazz)) { // Direct mapping
+      if (!config.containsKey(fullKey)) return new ValueImpl<>(expandKey, errors, Optional.empty());
       return new ValueImpl<>(expandKey, errors, Optional.of(config.get(clazz, fullKey)));
     } else {
-      //Try to map class by field
+      // Try to map class by field
       return getSubConfig(key).allAs(clazz);
     }
-
   }
 
   private boolean isBasicClass(Class<?> clazz) {
-    return clazz.isArray() || clazz.isPrimitive() || String.class.isAssignableFrom(clazz)
-        || Number.class.isAssignableFrom(clazz) || Boolean.class.isAssignableFrom(clazz)
+    return clazz.isArray()
+        || clazz.isPrimitive()
+        || String.class.isAssignableFrom(clazz)
+        || Number.class.isAssignableFrom(clazz)
+        || Boolean.class.isAssignableFrom(clazz)
         || Duration.class.isAssignableFrom(clazz);
   }
 
   public <T> Value<T> allAs(Class<T> clazz) {
-    errors.checkFatal(!isBasicClass(clazz), "Cannot map configuration onto a basic class: %s",
-        clazz.getName());
+    errors.checkFatal(
+        !isBasicClass(clazz), "Cannot map configuration onto a basic class: %s", clazz.getName());
     try {
       T value = clazz.newInstance();
       for (Field field : clazz.getDeclaredFields()) {
-        if (Modifier.isStatic(field.getModifiers()))
-          continue;
+        if (Modifier.isStatic(field.getModifiers())) continue;
         field.setAccessible(true);
         Class<?> fieldClass = field.getType();
         Value configValue;
         if (fieldClass.isAssignableFrom(ArrayList.class)) {
           Type genericType = field.getGenericType();
-          errors.checkFatal(genericType instanceof ParameterizedType,
+          errors.checkFatal(
+              genericType instanceof ParameterizedType,
               "Field [%s] on class [%s] does not have a valid generic type",
-              field.getName(), clazz.getName());
+              field.getName(),
+              clazz.getName());
           ParameterizedType parameterizedType = (ParameterizedType) genericType;
           Type[] typeArguments = parameterizedType.getActualTypeArguments();
-          errors.checkFatal(typeArguments.length == 1 && typeArguments[0] instanceof Class,
+          errors.checkFatal(
+              typeArguments.length == 1 && typeArguments[0] instanceof Class,
               "Field [%s] on class [%s] does not have a valid generic type",
-              field.getName(), clazz.getName());
+              field.getName(),
+              clazz.getName());
           Class<?> listClass = (Class<?>) typeArguments[0];
           configValue = asList(field.getName(), listClass);
         } else {
@@ -202,10 +203,10 @@ public class SqrlConfigCommons implements SqrlConfig {
       }
       return new ValueImpl<>(prefix, errors, Optional.of(value));
     } catch (Exception e) {
-      if (e instanceof CollectedException)
-        throw (CollectedException) e;
-      throw errors.exception("Could not map configuration values on "
-          + "object of clazz [%s]: %s", clazz.getName(), e.toString());
+      if (e instanceof CollectedException) throw (CollectedException) e;
+      throw errors.exception(
+          "Could not map configuration values on " + "object of clazz [%s]: %s",
+          clazz.getName(), e.toString());
     }
   }
 
@@ -242,22 +243,21 @@ public class SqrlConfigCommons implements SqrlConfig {
   @Override
   public void setProperties(Object value) {
     Class<?> clazz = value.getClass();
-    errors.checkFatal(!isBasicClass(clazz), "Cannot set multiple properties from basic class: %s",
+    errors.checkFatal(
+        !isBasicClass(clazz),
+        "Cannot set multiple properties from basic class: %s",
         clazz.getName());
     try {
       for (Field field : clazz.getDeclaredFields()) {
-        if (Modifier.isStatic(field.getModifiers()))
-          continue;
+        if (Modifier.isStatic(field.getModifiers())) continue;
         field.setAccessible(true);
         Object fieldValue = field.get(value);
-        if (fieldValue != null)
-          setProperty(field.getName(), fieldValue);
+        if (fieldValue != null) setProperty(field.getName(), fieldValue);
       }
     } catch (Exception e) {
-      if (e instanceof CollectedException)
-        throw (CollectedException) e;
-      throw errors.exception("Could not access fields "
-          + "of clazz [%s]: %s", clazz.getName(), e.getMessage());
+      if (e instanceof CollectedException) throw (CollectedException) e;
+      throw errors.exception(
+          "Could not access fields " + "of clazz [%s]: %s", clazz.getName(), e.getMessage());
     }
   }
 
@@ -274,18 +274,22 @@ public class SqrlConfigCommons implements SqrlConfig {
   public void toFile(Path file, boolean pretty) {
     try {
       if (!Files.exists(file) || Files.readString(file).isBlank()) {
-        Files.writeString(file, "{}", StandardCharsets.UTF_8, StandardOpenOption.CREATE,
+        Files.writeString(
+            file,
+            "{}",
+            StandardCharsets.UTF_8,
+            StandardOpenOption.CREATE,
             StandardOpenOption.WRITE);
       }
       Parameters params = new Parameters();
-      FileBasedConfigurationBuilder<JSONConfiguration> builder = new FileBasedConfigurationBuilder<>(
-          JSONConfiguration.class)
-          .configure(params.fileBased().setFile(file.toFile()));
+      FileBasedConfigurationBuilder<JSONConfiguration> builder =
+          new FileBasedConfigurationBuilder<>(JSONConfiguration.class)
+              .configure(params.fileBased().setFile(file.toFile()));
       JSONConfiguration outputConfig = builder.getConfiguration();
       outputConfig.append(config.subset(prefix));
       builder.save();
 
-      //Pretty print
+      // Pretty print
       ObjectMapper objectMapper = new ObjectMapper();
       JsonNode jsonNode = objectMapper.readTree(file.toFile());
       objectMapper.writerWithDefaultPrettyPrinter().writeValue(file.toFile(), jsonNode);
@@ -297,23 +301,26 @@ public class SqrlConfigCommons implements SqrlConfig {
   @Override
   public Map<String, Object> toMap() {
     LinkedHashMap<String, Object> map = new LinkedHashMap<>();
-    getKeys().forEach(localKey -> {
-      String fullKey = getFullKey(localKey);
-      if (config.containsKey(fullKey)) {
-        Object value;
-        //TODO: Generalize instead of hard-coding
-        if (localKey.equalsIgnoreCase("enabled-engines")) {
-          value = config.getList(fullKey);
-        } else {
-          value = config.getProperty(fullKey);
-        }
-        //TODO: this does not interpolate secrets. need to check type and then use type specific access method
-        map.put(localKey, value);
-      } else {
-        SqrlConfigCommons subConfig = getSubConfig(localKey);
-        map.put(localKey, subConfig.toMap());
-      }
-    });
+    getKeys()
+        .forEach(
+            localKey -> {
+              String fullKey = getFullKey(localKey);
+              if (config.containsKey(fullKey)) {
+                Object value;
+                // TODO: Generalize instead of hard-coding
+                if (localKey.equalsIgnoreCase("enabled-engines")) {
+                  value = config.getList(fullKey);
+                } else {
+                  value = config.getProperty(fullKey);
+                }
+                // TODO: this does not interpolate secrets. need to check type and then use type
+                // specific access method
+                map.put(localKey, value);
+              } else {
+                SqrlConfigCommons subConfig = getSubConfig(localKey);
+                map.put(localKey, subConfig.toMap());
+              }
+            });
     return map;
   }
 
@@ -324,13 +331,15 @@ public class SqrlConfigCommons implements SqrlConfig {
     return map;
   }
 
-
   @Override
   public SerializedSqrlConfig serialize() {
     Map<String, Object> map = new HashMap<>();
-    config.getKeys(prefix).forEachRemaining(key -> {
-      map.put(key, config.getProperty(key));
-    });
+    config
+        .getKeys(prefix)
+        .forEachRemaining(
+            key -> {
+              map.put(key, config.getProperty(key));
+            });
     return new Serialized(configFilename, map, prefix);
   }
 
@@ -347,9 +356,10 @@ public class SqrlConfigCommons implements SqrlConfig {
     return newconfig;
   }
 
-  public static TableConfigImpl fromFilesTableConfig(@NonNull Name name, ErrorCollector errors,
-      @NonNull List<Path> files) {
-    return new TableConfigImpl(name, getPackageConfig(errors, "/jsonSchema/tableConfig.json", files));
+  public static TableConfigImpl fromFilesTableConfig(
+      @NonNull Name name, ErrorCollector errors, @NonNull List<Path> files) {
+    return new TableConfigImpl(
+        name, getPackageConfig(errors, "/jsonSchema/tableConfig.json", files));
   }
 
   public static PackageJson getDefaultPackageJson(ErrorCollector errors) {
@@ -360,15 +370,16 @@ public class SqrlConfigCommons implements SqrlConfig {
     return new PackageJsonImpl(getPackageConfig(errors, "/jsonSchema/packageSchema.json", files));
   }
 
-  public static PackageJson fromFilesPublishPackageJson(ErrorCollector errors, @NonNull List<Path> files) {
-    return new PackageJsonImpl(getPackageConfig(errors, "/jsonSchema/publishPackageSchema.json", files));
+  public static PackageJson fromFilesPublishPackageJson(
+      ErrorCollector errors, @NonNull List<Path> files) {
+    return new PackageJsonImpl(
+        getPackageConfig(errors, "/jsonSchema/publishPackageSchema.json", files));
   }
 
-  public static boolean validateJsonFile(Path jsonFilePath, String schemaResourcePath,
-      ErrorCollector errors) {
-    if (schemaResourcePath == null)
-      return true;
-    ErrorCollector allErrors = errors.abortOnFatal(false); //so we can collect all errors
+  public static boolean validateJsonFile(
+      Path jsonFilePath, String schemaResourcePath, ErrorCollector errors) {
+    if (schemaResourcePath == null) return true;
+    ErrorCollector allErrors = errors.abortOnFatal(false); // so we can collect all errors
     ObjectMapper mapper = new ObjectMapper();
     JsonNode json, schemaNode;
     try {
@@ -381,23 +392,26 @@ public class SqrlConfigCommons implements SqrlConfig {
     try {
       schemaNode = mapper.readTree(jsonSchema);
     } catch (IOException e) {
-      allErrors.fatal("Could not parse json schema file [%s]: %s", schemaResourcePath,
-          e);
+      allErrors.fatal("Could not parse json schema file [%s]: %s", schemaResourcePath, e);
       return false;
     }
 
     JsonSchemaFactory jsonSchemaFactory = JsonSchemaFactory.getInstance(VersionFlag.V202012);
     JsonSchema schema = jsonSchemaFactory.getSchema(schemaNode);
 
-    Set<ValidationMessage> validationMessages = schema.validate(json, executionContext -> {
-      // By default since Draft 2019-09 the format keyword only generates annotations and not assertions
-      executionContext.getExecutionConfig().setFormatAssertionsEnabled(true);
-    });
-    if (validationMessages.isEmpty())
-      return true;
-    validationMessages.forEach(vm -> {
-      allErrors.fatal("%s at location [%s]", vm.getMessage(), vm.getInstanceLocation());
-    });
+    Set<ValidationMessage> validationMessages =
+        schema.validate(
+            json,
+            executionContext -> {
+              // By default since Draft 2019-09 the format keyword only generates annotations and
+              // not assertions
+              executionContext.getExecutionConfig().setFormatAssertionsEnabled(true);
+            });
+    if (validationMessages.isEmpty()) return true;
+    validationMessages.forEach(
+        vm -> {
+          allErrors.fatal("%s at location [%s]", vm.getMessage(), vm.getInstanceLocation());
+        });
     return false;
   }
 
@@ -405,14 +419,15 @@ public class SqrlConfigCommons implements SqrlConfig {
     return getPackageConfig(errors, null, List.of(firstFile));
   }
 
-  public static SqrlConfig getPackageConfig(ErrorCollector errors, String jsonSchemaResource, @NonNull List<Path> files) {
+  public static SqrlConfig getPackageConfig(
+      ErrorCollector errors, String jsonSchemaResource, @NonNull List<Path> files) {
     Configurations configs = new Configurations();
     boolean isValid = true;
 
     NodeCombiner combiner = new OverrideCombiner();
     CombinedConfiguration combinedConfiguration = new CombinedConfiguration(combiner);
 
-    for (int i = files.size()-1; i >= 0; i--) { //iterate backwards so last file takes precedence
+    for (int i = files.size() - 1; i >= 0; i--) { // iterate backwards so last file takes precedence
       Path file = files.get(i);
       ErrorCollector localErrors = errors.withConfig(file);
       isValid &= validateJsonFile(file, jsonSchemaResource, localErrors);
@@ -426,24 +441,24 @@ public class SqrlConfigCommons implements SqrlConfig {
 
     try {
       URL url = SqrlConfigCommons.class.getResource("/default-package.json");
-      JSONConfiguration config = configs.fileBased(JSONConfiguration.class,   url);
+      JSONConfiguration config = configs.fileBased(JSONConfiguration.class, url);
       combinedConfiguration.addConfiguration(config);
     } catch (ConfigurationException e) {
       throw errors.withConfig("Error loading default configuration").handle(e);
     }
 
     String configFilename;
-    if (files.isEmpty()){
-        configFilename = "default-package.json";
+    if (files.isEmpty()) {
+      configFilename = "default-package.json";
     } else {
-        configFilename = files.get(0).toString();
+      configFilename = files.get(0).toString();
     }
 
     if (!isValid) {
       throw errors.exception("Configuration file invalid: %s", files);
     }
-    return
-        new SqrlConfigCommons(errors.withConfig(configFilename), configFilename, combinedConfiguration, "");
+    return new SqrlConfigCommons(
+        errors.withConfig(configFilename), configFilename, combinedConfiguration, "");
   }
 
   public static SqrlConfig fromURL(ErrorCollector errors, @NonNull URL url) {
@@ -486,11 +501,21 @@ public class SqrlConfigCommons implements SqrlConfig {
 
     @Override
     public T get() {
-      errors.checkFatal(property.isPresent() || defaultValue!=null, "Could not find key [%s] in configuration", fullKey);
+      errors.checkFatal(
+          property.isPresent() || defaultValue != null,
+          "Could not find key [%s] in configuration",
+          fullKey);
       T value;
       if (property.isPresent()) {
         value = property.get();
-        validators.forEach((pred, msg) -> errors.checkFatal(pred.test(value),"Value [%s] for key [%s] is not valid. %s",value, fullKey, msg));
+        validators.forEach(
+            (pred, msg) ->
+                errors.checkFatal(
+                    pred.test(value),
+                    "Value [%s] for key [%s] is not valid. %s",
+                    value,
+                    fullKey,
+                    msg));
       } else {
         value = defaultValue.orElse(null);
       }
@@ -522,7 +547,7 @@ public class SqrlConfigCommons implements SqrlConfig {
   public static class Serialized implements SerializedSqrlConfig {
 
     String configFilename;
-    Map<String,Object> configs;
+    Map<String, Object> configs;
     String prefix;
 
     @Override
@@ -530,9 +555,9 @@ public class SqrlConfigCommons implements SqrlConfig {
       Configuration config = new BaseHierarchicalConfiguration();
       configs.forEach(config::setProperty);
       ErrorCollector configErrors = errors;
-      if (!Strings.isNullOrEmpty(configFilename)) configErrors = configErrors.withConfig(configFilename);
+      if (!Strings.isNullOrEmpty(configFilename))
+        configErrors = configErrors.withConfig(configFilename);
       return new SqrlConfigCommons(configErrors, configFilename, config, prefix);
     }
   }
-
 }

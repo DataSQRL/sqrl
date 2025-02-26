@@ -37,7 +37,7 @@ import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.lang3.tuple.Pair;
 
-@AllArgsConstructor(onConstructor_=@Inject)
+@AllArgsConstructor(onConstructor_ = @Inject)
 public class SqrlPlanningTableFactory implements SqrlTableFactory {
 
   private final SqrlFramework framework;
@@ -46,34 +46,53 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
   private final SQRLConverter sqrlConverter;
 
   @Override
-  public void createTable(ModuleLoader moduleLoader, List<String> path, RelNode input, List<RelHint> hints,
+  public void createTable(
+      ModuleLoader moduleLoader,
+      List<String> path,
+      RelNode input,
+      List<RelHint> hints,
       Optional<SqlNodeList> opHints,
-      List<FunctionParameter> parameters, List<Function> isA, boolean materializeSelf,
-      Optional<Supplier<RelNode>> relNodeSupplier, ErrorCollector errors, boolean isTest) {
-    LPAnalysis analyzedLP = convertToVanillaSQL(
-        input, framework.getQueryPlanner().getRelBuilder(),
-        opHints, errors);
+      List<FunctionParameter> parameters,
+      List<Function> isA,
+      boolean materializeSelf,
+      Optional<Supplier<RelNode>> relNodeSupplier,
+      ErrorCollector errors,
+      boolean isTest) {
+    LPAnalysis analyzedLP =
+        convertToVanillaSQL(input, framework.getQueryPlanner().getRelBuilder(), opHints, errors);
 
     NamePath names = nameUtil.toNamePath(path);
 
     AnnotatedLP processedRel = analyzedLP.getConvertedRelnode();
     List<String> relFieldNames = processedRel.getRelNode().getRowType().getFieldNames();
-    List<Name> fieldNames = processedRel.getSelect().targetsAsList().stream()
-        .map(idx -> relFieldNames.get(idx))
-        .map(n -> nameUtil.toName(n)).collect(Collectors.toList());
+    List<Name> fieldNames =
+        processedRel.getSelect().targetsAsList().stream()
+            .map(idx -> relFieldNames.get(idx))
+            .map(n -> nameUtil.toName(n))
+            .collect(Collectors.toList());
 
     PhysicalRelationalTable table = defineTable(names, analyzedLP, fieldNames);
 
-    SqrlTableNamespaceObject nsObj = new SqrlTableNamespaceObject(names.getLast(),
-        table,
-        tableFactory, null, parameters, isA, materializeSelf, parameters, relNodeSupplier,
-        moduleLoader, isTest, opHints);
+    SqrlTableNamespaceObject nsObj =
+        new SqrlTableNamespaceObject(
+            names.getLast(),
+            table,
+            tableFactory,
+            null,
+            parameters,
+            isA,
+            materializeSelf,
+            parameters,
+            relNodeSupplier,
+            moduleLoader,
+            isTest,
+            opHints);
 
     nsObj.apply(null, Optional.empty(), framework, errors);
   }
 
-
-  private LinkedHashMap<Integer, Name> mapFieldNamesToIndices(LPAnalysis analyzedLP, List<Name> fieldNames) {
+  private LinkedHashMap<Integer, Name> mapFieldNamesToIndices(
+      LPAnalysis analyzedLP, List<Name> fieldNames) {
     LinkedHashMap<Integer, Name> index2Name = new LinkedHashMap<>();
     SelectIndexMap selectMap = analyzedLP.getConvertedRelnode().getSelect();
 
@@ -84,16 +103,19 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
     return index2Name;
   }
 
-  public PhysicalRelationalTable defineTable(NamePath tablePath, LPAnalysis analyzedLP, List<Name> fieldNames) {
+  public PhysicalRelationalTable defineTable(
+      NamePath tablePath, LPAnalysis analyzedLP, List<Name> fieldNames) {
     // Validate the field names with the select map from the analyzed relational node
     validateFieldNames(analyzedLP, fieldNames);
 
     // Create base table from the analyzed LP
     PhysicalRelationalTable baseTable = tableFactory.createPhysicalRelTable(tablePath, analyzedLP);
 
-    //Currently, we do NOT preserve the order of the fields as originally defined by the user in the script.
-    //This may not be an issue, but if we need to preserve the order, it is probably easiest to re-order the fields
-    //of tblDef.getTable() based on the provided list of fieldNames
+    // Currently, we do NOT preserve the order of the fields as originally defined by the user in
+    // the script.
+    // This may not be an issue, but if we need to preserve the order, it is probably easiest to
+    // re-order the fields
+    // of tblDef.getTable() based on the provided list of fieldNames
     return baseTable;
   }
 
@@ -102,30 +124,36 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
     Preconditions.checkArgument(fieldNames.size() == selectMap.getSourceLength());
   }
 
-
-  //Converts SQRL statements into vanilla SQL
-  private LPAnalysis convertToVanillaSQL(RelNode relNode,
-      RelBuilder relBuilder, Optional<SqlNodeList> hints, ErrorCollector errors) {
-    //Parse all optimizer hints
-    Pair<List<OptimizerHint>,List<SqlHint>> analyzedHints = OptimizerHint.fromSqlHints(hints, errors);
-    //TODO: put other SQLHints back on the relnode after we are done, i.e. pass them through
+  // Converts SQRL statements into vanilla SQL
+  private LPAnalysis convertToVanillaSQL(
+      RelNode relNode, RelBuilder relBuilder, Optional<SqlNodeList> hints, ErrorCollector errors) {
+    // Parse all optimizer hints
+    Pair<List<OptimizerHint>, List<SqlHint>> analyzedHints =
+        OptimizerHint.fromSqlHints(hints, errors);
+    // TODO: put other SQLHints back on the relnode after we are done, i.e. pass them through
     SqrlConverterConfig.SqrlConverterConfigBuilder configBuilder = SqrlConverterConfig.builder();
-    //Add default primary key if it has none
+    // Add default primary key if it has none
     configBuilder.addDefaultPrimaryKey(true);
-    //Apply only generic optimizer hints (pipeline optimization happens in the DAGPlanner)
+    // Apply only generic optimizer hints (pipeline optimization happens in the DAGPlanner)
     StreamUtil.filterByClass(analyzedHints.getKey(), ConverterHint.class)
         .forEach(h -> h.add2Config(configBuilder, errors));
-    //Capture stages
-    List<PipelineStageHint> configuredStages = StreamUtil.filterByClass(analyzedHints.getKey(),
-        PipelineStageHint.class).collect(Collectors.toList());
+    // Capture stages
+    List<PipelineStageHint> configuredStages =
+        StreamUtil.filterByClass(analyzedHints.getKey(), PipelineStageHint.class)
+            .collect(Collectors.toList());
     SqrlConverterConfig baseConfig = configBuilder.build();
 
-    //Config for original construction without a specific stage
+    // Config for original construction without a specific stage
     configBuilder.stage(IdealExecutionStage.INSTANCE);
     SqrlConverterConfig config = configBuilder.build();
 
     AnnotatedLP alp = sqrlConverter.convert(relNode, config, errors);
-    return new LPAnalysis(relNode, alp, configuredStages, baseConfig, analyzedHints.getKey(),
+    return new LPAnalysis(
+        relNode,
+        alp,
+        configuredStages,
+        baseConfig,
+        analyzedHints.getKey(),
         analyzedHints.getValue());
   }
 }

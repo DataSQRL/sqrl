@@ -77,14 +77,18 @@ public interface TableConfig {
 
   interface TableConfigBuilder {
     TableConfigBuilder setType(ExternalDataType externalDataType);
+
     TableConfigBuilder setTimestampColumn(@NonNull String columnName);
+
     TableConfigBuilder setWatermark(long milliseconds);
-    TableConfigBuilder setMetadata(@NonNull String columnName, String type, String attribute) ;
+
+    TableConfigBuilder setMetadata(@NonNull String columnName, String type, String attribute);
+
     TableConfigBuilder setPrimaryKey(String[] pks);
+
     void setPartitionKey(List<String> partitionKeys);
 
     TableConfig build();
-
   }
 
   interface Format {
@@ -132,7 +136,6 @@ public interface TableConfig {
       public DefaultFormat(@NonNull String name) {
         super(name);
       }
-
     }
   }
 }

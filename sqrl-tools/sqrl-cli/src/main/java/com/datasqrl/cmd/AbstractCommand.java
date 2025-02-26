@@ -15,8 +15,7 @@ import picocli.CommandLine.IExitCodeGenerator;
 @Slf4j
 public abstract class AbstractCommand implements Runnable, IExitCodeGenerator {
 
-  @CommandLine.ParentCommand
-  protected RootCommand root;
+  @CommandLine.ParentCommand protected RootCommand root;
   public AtomicInteger exitCode = new AtomicInteger(0);
 
   @SneakyThrows
@@ -29,7 +28,7 @@ public abstract class AbstractCommand implements Runnable, IExitCodeGenerator {
       if (e.isInternalError()) e.printStackTrace();
       e.printStackTrace();
       root.statusHook.onFailure(e, collector);
-    } catch (Throwable e) { //unknown exception
+    } catch (Throwable e) { // unknown exception
       collector.getCatcher().handle(e);
       e.printStackTrace();
       root.statusHook.onFailure(e, collector);

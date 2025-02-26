@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 
-@AllArgsConstructor(onConstructor_=@Inject)
+@AllArgsConstructor(onConstructor_ = @Inject)
 public class ModuleLoaderImpl implements ModuleLoader {
 
   final StandardLibraryLoader standardLibraryLoader = new StandardLibraryLoader();
@@ -29,6 +29,7 @@ public class ModuleLoaderImpl implements ModuleLoader {
 
   // Required to reduce the cost of script imports
   private final Map<NamePath, SqrlModule> cache = new HashMap<>();
+
   @Override
   public Optional<SqrlModule> getModule(NamePath namePath) {
     if (cache.containsKey(namePath)) {
@@ -61,13 +62,27 @@ public class ModuleLoaderImpl implements ModuleLoader {
   }
 
   private Optional<SqrlModule> loadFromFileSystem(NamePath namePath) {
-    return new ObjectLoaderImpl(resourceResolver, errors, tableFactory, this, tableConfigFactory, sqrlConfig, logManager)
+    return new ObjectLoaderImpl(
+            resourceResolver,
+            errors,
+            tableFactory,
+            this,
+            tableConfigFactory,
+            sqrlConfig,
+            logManager)
         .load(namePath);
   }
 
   @Override
   public String toString() {
-    return new ObjectLoaderImpl(resourceResolver, errors, tableFactory, this, tableConfigFactory, sqrlConfig, logManager).toString();
+    return new ObjectLoaderImpl(
+            resourceResolver,
+            errors,
+            tableFactory,
+            this,
+            tableConfigFactory,
+            sqrlConfig,
+            logManager)
+        .toString();
   }
-
 }

@@ -16,6 +16,9 @@
  */
 package org.apache.calcite.sql;
 
+import com.google.common.base.Preconditions;
+import java.util.List;
+import java.util.Objects;
 import java.util.function.UnaryOperator;
 import lombok.Getter;
 import org.apache.calcite.sql.parser.SqlParserPos;
@@ -23,52 +26,51 @@ import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.util.SqlString;
 import org.apache.calcite.util.ImmutableNullableList;
 import org.apache.calcite.util.Util;
-
-import com.google.common.base.Preconditions;
-
-import java.util.List;
-import java.util.Objects;
 import org.apache.flink.calcite.shaded.org.checkerframework.checker.nullness.qual.Nullable;
 
-/**
- * Parse tree node representing a {@code JOIN} clause.
- */
+/** Parse tree node representing a {@code JOIN} clause. */
 // Sqrl: Add modifier
 public class SqlJoin extends SqlCall {
 
-  static final SqlJoinOperator COMMA_OPERATOR =
-      new SqlJoinOperator("COMMA-JOIN", 16);
-  public static final SqlJoinOperator OPERATOR =
-      new SqlJoinOperator("JOIN", 18);
+  static final SqlJoinOperator COMMA_OPERATOR = new SqlJoinOperator("COMMA-JOIN", 16);
+  public static final SqlJoinOperator OPERATOR = new SqlJoinOperator("JOIN", 18);
 
   SqlNode left;
 
-  /**
-   * Operand says whether this is a natural join. Must be constant TRUE or FALSE.
-   */
+  /** Operand says whether this is a natural join. Must be constant TRUE or FALSE. */
   SqlLiteral natural;
 
-  /**
-   * Value must be a {@link SqlLiteral}, one of the integer codes for {@link JoinType}.
-   */
+  /** Value must be a {@link SqlLiteral}, one of the integer codes for {@link JoinType}. */
   SqlLiteral joinType;
+
   SqlNode right;
 
-  /**
-   * Value must be a {@link SqlLiteral}, one of the integer codes for {@link JoinConditionType}.
-   */
+  /** Value must be a {@link SqlLiteral}, one of the integer codes for {@link JoinConditionType}. */
   SqlLiteral conditionType;
+
   SqlNode condition;
-  //Sqrl: add modifier
-  @Getter
-  SqlLiteral modifier;
+  // Sqrl: add modifier
+  @Getter SqlLiteral modifier;
 
-  //~ Constructors -----------------------------------------------------------
+  // ~ Constructors -----------------------------------------------------------
 
-  public SqlJoin(SqlParserPos pos, SqlNode left, SqlLiteral natural,
-      SqlLiteral joinType, SqlNode right, SqlLiteral conditionType,
+  public SqlJoin(
+      SqlParserPos pos,
+      SqlNode left,
+      SqlLiteral natural,
+      SqlLiteral joinType,
+      SqlNode right,
+      SqlLiteral conditionType,
       SqlNode condition) {
-    this(pos, left, natural, convertType(joinType), right, conditionType, condition, convertModifier(joinType));
+    this(
+        pos,
+        left,
+        natural,
+        convertType(joinType),
+        right,
+        conditionType,
+        condition,
+        convertModifier(joinType));
   }
 
   private static SqlLiteral convertModifier(SqlLiteral joinType) {
@@ -116,9 +118,15 @@ public class SqlJoin extends SqlCall {
     }
   }
 
-  public SqlJoin(SqlParserPos pos, SqlNode left, SqlLiteral natural,
-      SqlLiteral joinType, SqlNode right, SqlLiteral conditionType,
-      SqlNode condition, SqlLiteral modifier) {
+  public SqlJoin(
+      SqlParserPos pos,
+      SqlNode left,
+      SqlLiteral natural,
+      SqlLiteral joinType,
+      SqlNode right,
+      SqlLiteral conditionType,
+      SqlNode condition,
+      SqlLiteral modifier) {
     super(pos);
     this.left = left;
     this.natural = Objects.requireNonNull(natural);
@@ -133,7 +141,7 @@ public class SqlJoin extends SqlCall {
     Objects.requireNonNull(joinType.symbolValue(JoinType.class));
   }
 
-  //~ Methods ----------------------------------------------------------------
+  // ~ Methods ----------------------------------------------------------------
 
   public SqlOperator getOperator() {
     return OPERATOR;
@@ -145,8 +153,8 @@ public class SqlJoin extends SqlCall {
   }
 
   public List<SqlNode> getOperandList() {
-    return ImmutableNullableList.of(left, natural, joinType, right,
-        conditionType, condition, modifier);
+    return ImmutableNullableList.of(
+        left, natural, joinType, right, conditionType, condition, modifier);
   }
 
   @Override
@@ -171,7 +179,7 @@ public class SqlJoin extends SqlCall {
         condition = operand;
         break;
       case 6:
-        modifier =  (SqlLiteral) operand;
+        modifier = (SqlLiteral) operand;
         break;
       default:
         throw new AssertionError(i);
@@ -182,9 +190,7 @@ public class SqlJoin extends SqlCall {
     return condition;
   }
 
-  /**
-   * Returns a {@link JoinConditionType}, never null.
-   */
+  /** Returns a {@link JoinConditionType}, never null. */
   public final JoinConditionType getConditionType() {
     return conditionType.symbolValue(JoinConditionType.class);
   }
@@ -193,9 +199,7 @@ public class SqlJoin extends SqlCall {
     return conditionType;
   }
 
-  /**
-   * Returns a {@link JoinType}, never null.
-   */
+  /** Returns a {@link JoinType}, never null. */
   public final JoinType getJoinType() {
     return joinType.symbolValue(JoinType.class);
   }
@@ -228,48 +232,48 @@ public class SqlJoin extends SqlCall {
     this.right = right;
   }
 
-  /** Describes the syntax of the SQL {@code JOIN} operator.
+  /**
+   * Describes the syntax of the SQL {@code JOIN} operator.
    *
    * <p>A variant describes the comma operator, which has lower precedence.
    */
   public static class SqlJoinOperator extends SqlOperator {
-    private static final SqlWriter.FrameType FRAME_TYPE =
-        SqlWriter.FrameTypeEnum.create("USING");
+    private static final SqlWriter.FrameType FRAME_TYPE = SqlWriter.FrameTypeEnum.create("USING");
 
-    //~ Constructors -----------------------------------------------------------
+    // ~ Constructors -----------------------------------------------------------
 
     private SqlJoinOperator(String name, int prec) {
       super(name, SqlKind.JOIN, prec, true, null, null, null);
     }
 
-    //~ Methods ----------------------------------------------------------------
+    // ~ Methods ----------------------------------------------------------------
 
-    @Override public SqlSyntax getSyntax() {
+    @Override
+    public SqlSyntax getSyntax() {
       return SqlSyntax.SPECIAL;
     }
 
     @SuppressWarnings("argument.type.incompatible")
-    @Override public SqlCall createCall(
-        @Nullable SqlLiteral functionQualifier,
-        SqlParserPos pos,
-        @Nullable SqlNode... operands) {
+    @Override
+    public SqlCall createCall(
+        @Nullable SqlLiteral functionQualifier, SqlParserPos pos, @Nullable SqlNode... operands) {
       assert functionQualifier == null;
-      return new SqlJoin(pos, operands[0], (SqlLiteral) operands[1],
-          (SqlLiteral) operands[2], operands[3], (SqlLiteral) operands[4],
-          operands[5],  (SqlLiteral) operands[6]);
+      return new SqlJoin(
+          pos,
+          operands[0],
+          (SqlLiteral) operands[1],
+          (SqlLiteral) operands[2],
+          operands[3],
+          (SqlLiteral) operands[4],
+          operands[5],
+          (SqlLiteral) operands[6]);
     }
 
-    @Override public void unparse(
-        SqlWriter writer,
-        SqlCall call,
-        int leftPrec,
-        int rightPrec) {
+    @Override
+    public void unparse(SqlWriter writer, SqlCall call, int leftPrec, int rightPrec) {
       final SqlJoin join = (SqlJoin) call;
 
-      join.left.unparse(
-          writer,
-          leftPrec,
-          getLeftPrec());
+      join.left.unparse(writer, leftPrec, getLeftPrec());
       switch (join.getJoinType()) {
         case COMMA:
           writer.sep(",", true);
@@ -287,8 +291,7 @@ public class SqlJoin extends SqlCall {
           writer.sep(join.isNatural() ? "NATURAL LEFT JOIN" : "LEFT JOIN");
           break;
         case LEFT_SEMI_JOIN:
-          writer.sep(join.isNatural() ? "NATURAL LEFT SEMI JOIN"
-              : "LEFT SEMI JOIN");
+          writer.sep(join.isNatural() ? "NATURAL LEFT SEMI JOIN" : "LEFT SEMI JOIN");
           break;
         case RIGHT:
           writer.sep(join.isNatural() ? "NATURAL RIGHT JOIN" : "RIGHT JOIN");
@@ -306,8 +309,7 @@ public class SqlJoin extends SqlCall {
             writer.keyword("USING");
             assert joinCondition instanceof SqlNodeList
                 : "joinCondition should be SqlNodeList, got " + joinCondition;
-            final SqlWriter.Frame frame =
-                writer.startList(FRAME_TYPE, "(", ")");
+            final SqlWriter.Frame frame = writer.startList(FRAME_TYPE, "(", ")");
             joinCondition.unparse(writer, 0, 0);
             writer.endList(frame);
             break;
@@ -324,11 +326,22 @@ public class SqlJoin extends SqlCall {
     }
   }
 
-  @Override public SqlString toSqlString(UnaryOperator<SqlWriterConfig> transform) {
+  @Override
+  public SqlString toSqlString(UnaryOperator<SqlWriterConfig> transform) {
     SqlNode selectWrapper =
-        new SqlSelect(SqlParserPos.ZERO, SqlNodeList.EMPTY,
-            SqlNodeList.SINGLETON_STAR, this, null, null, null,
-            SqlNodeList.EMPTY, null, null, null, SqlNodeList.EMPTY);
+        new SqlSelect(
+            SqlParserPos.ZERO,
+            SqlNodeList.EMPTY,
+            SqlNodeList.SINGLETON_STAR,
+            this,
+            null,
+            null,
+            null,
+            SqlNodeList.EMPTY,
+            null,
+            null,
+            null,
+            SqlNodeList.EMPTY);
     return selectWrapper.toSqlString(transform);
   }
 }

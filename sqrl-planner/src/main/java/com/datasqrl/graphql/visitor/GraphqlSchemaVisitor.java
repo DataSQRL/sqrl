@@ -5,21 +5,21 @@ package com.datasqrl.graphql.visitor;
 
 import graphql.language.*;
 
-//Todo break up into multiple per tree
-public abstract class GraphqlSchemaVisitor<R, C> implements
-    GraphqlArgumentVisitor<R, C>,
-    GraphqlDefinitionVisitor<R, C>,
-    GraphqlDirectiveLocationVisitor<R, C>,
-    GraphqlDirectiveVisitor<R, C>,
-    GraphqlDocumentVisitor<R, C>,
-    GraphqlFieldDefinitionVisitor<R, C>,
-    GraphqlInputValueDefinitionVisitor<R, C>,
-    GraphqlObjectFieldVisitor<R, C>,
-    GraphqlSelectionSetVisitor<R, C>,
-    GraphqlSelectionVisitor<R, C>,
-    GraphqlTypeVisitor<R, C>,
-    GraphqlValueVisitor<R, C>,
-    GraphqlVariableDefinitionVisitor<R, C> {
+// Todo break up into multiple per tree
+public abstract class GraphqlSchemaVisitor<R, C>
+    implements GraphqlArgumentVisitor<R, C>,
+        GraphqlDefinitionVisitor<R, C>,
+        GraphqlDirectiveLocationVisitor<R, C>,
+        GraphqlDirectiveVisitor<R, C>,
+        GraphqlDocumentVisitor<R, C>,
+        GraphqlFieldDefinitionVisitor<R, C>,
+        GraphqlInputValueDefinitionVisitor<R, C>,
+        GraphqlObjectFieldVisitor<R, C>,
+        GraphqlSelectionSetVisitor<R, C>,
+        GraphqlSelectionVisitor<R, C>,
+        GraphqlTypeVisitor<R, C>,
+        GraphqlValueVisitor<R, C>,
+        GraphqlVariableDefinitionVisitor<R, C> {
 
   public static <R, C> R accept(GraphqlDirectiveVisitor<R, C> visitor, Directive node, C context) {
     if (node instanceof Directive) {
@@ -35,7 +35,8 @@ public abstract class GraphqlSchemaVisitor<R, C> implements
     throw new RuntimeException("Unknown graphql node");
   }
 
-  public static <R, C> R accept(GraphqlDefinitionVisitor<R, C> visitor, Definition node, C context) {
+  public static <R, C> R accept(
+      GraphqlDefinitionVisitor<R, C> visitor, Definition node, C context) {
     if (node instanceof DirectiveDefinition) {
       return visitor.visitDirectiveDefinition((DirectiveDefinition) node, context);
     } else if (node instanceof EnumTypeExtensionDefinition) {
@@ -52,13 +53,13 @@ public abstract class GraphqlSchemaVisitor<R, C> implements
     } else if (node instanceof InputObjectTypeDefinition) {
       return visitor.visitInputObjectTypeDefinition((InputObjectTypeDefinition) node, context);
     } else if (node instanceof InterfaceTypeExtensionDefinition) {
-      return visitor.visitInterfaceTypeExtensionDefinition((InterfaceTypeExtensionDefinition) node,
-          context);
+      return visitor.visitInterfaceTypeExtensionDefinition(
+          (InterfaceTypeExtensionDefinition) node, context);
     } else if (node instanceof InterfaceTypeDefinition) {
       return visitor.visitInterfaceTypeDefinition((InterfaceTypeDefinition) node, context);
     } else if (node instanceof ObjectTypeExtensionDefinition) {
-      return visitor.visitObjectTypeExtensionDefinition((ObjectTypeExtensionDefinition) node,
-          context);
+      return visitor.visitObjectTypeExtensionDefinition(
+          (ObjectTypeExtensionDefinition) node, context);
     } else if (node instanceof ObjectTypeDefinition) {
       return visitor.visitObjectTypeDefinition((ObjectTypeDefinition) node, context);
     } else if (node instanceof OperationDefinition) {
@@ -66,8 +67,8 @@ public abstract class GraphqlSchemaVisitor<R, C> implements
     } else if (node instanceof OperationTypeDefinition) {
       return visitor.visitOperationTypeDefinition((OperationTypeDefinition) node, context);
     } else if (node instanceof ScalarTypeExtensionDefinition) {
-      return visitor.visitScalarTypeExtensionDefinition((ScalarTypeExtensionDefinition) node,
-          context);
+      return visitor.visitScalarTypeExtensionDefinition(
+          (ScalarTypeExtensionDefinition) node, context);
     } else if (node instanceof ScalarTypeDefinition) {
       return visitor.visitScalarTypeDefinition((ScalarTypeDefinition) node, context);
     } else if (node instanceof SchemaExtensionDefinition) {
@@ -75,8 +76,8 @@ public abstract class GraphqlSchemaVisitor<R, C> implements
     } else if (node instanceof SchemaDefinition) {
       return visitor.visitSchemaDefinition((SchemaDefinition) node, context);
     } else if (node instanceof UnionTypeExtensionDefinition) {
-      return visitor.visitUnionTypeExtensionDefinition((UnionTypeExtensionDefinition) node,
-          context);
+      return visitor.visitUnionTypeExtensionDefinition(
+          (UnionTypeExtensionDefinition) node, context);
     } else if (node instanceof UnionTypeDefinition) {
       return visitor.visitUnionTypeDefinition((UnionTypeDefinition) node, context);
     }
@@ -91,29 +92,32 @@ public abstract class GraphqlSchemaVisitor<R, C> implements
     throw new RuntimeException("Unknown graphql node");
   }
 
-  public static <R, C> R accept(GraphqlFieldDefinitionVisitor<R, C> visitor, FieldDefinition node, C context) {
+  public static <R, C> R accept(
+      GraphqlFieldDefinitionVisitor<R, C> visitor, FieldDefinition node, C context) {
     if (node instanceof FieldDefinition) {
       return visitor.visitFieldDefinition((FieldDefinition) node, context);
     }
     throw new RuntimeException("Unknown graphql node");
   }
 
-  public static <R, C> R accept(GraphqlInputValueDefinitionVisitor<R, C> visitor, InputValueDefinition node,
-      C context) {
+  public static <R, C> R accept(
+      GraphqlInputValueDefinitionVisitor<R, C> visitor, InputValueDefinition node, C context) {
     if (node instanceof InputValueDefinition) {
       return visitor.visitInputValueDefinition((InputValueDefinition) node, context);
     }
     throw new RuntimeException("Unknown graphql node");
   }
 
-  public static <R, C> R accept(GraphqlObjectFieldVisitor<R, C> visitor, ObjectField node, C context) {
+  public static <R, C> R accept(
+      GraphqlObjectFieldVisitor<R, C> visitor, ObjectField node, C context) {
     if (node instanceof ObjectField) {
       return visitor.visitObjectField((ObjectField) node, context);
     }
     throw new RuntimeException("Unknown graphql node");
   }
 
-  public static <R, C> R accept(GraphqlSelectionSetVisitor<R, C> visitor, SelectionSet node, C context) {
+  public static <R, C> R accept(
+      GraphqlSelectionSetVisitor<R, C> visitor, SelectionSet node, C context) {
     if (node instanceof SelectionSet) {
       return visitor.visitSelectionSet((SelectionSet) node, context);
     }
@@ -165,109 +169,112 @@ public abstract class GraphqlSchemaVisitor<R, C> implements
     throw new RuntimeException("Unknown graphql node");
   }
 
-  public static <R, C> R accept(GraphqlVariableDefinitionVisitor<R, C> visitor, VariableDefinition node,
-      C context) {
+  public static <R, C> R accept(
+      GraphqlVariableDefinitionVisitor<R, C> visitor, VariableDefinition node, C context) {
     if (node instanceof VariableDefinition) {
       return visitor.visitVariableDefinition((VariableDefinition) node, context);
     }
     throw new RuntimeException("Unknown graphql node");
   }
-//
-//  public static <R, C> R accept(GraphqlSchemaVisitor<R, C> visitor, Node node, C context) {
-//    if (node instanceof Argument) {
-//      return visitor.visitArgument((Argument) node, context);
-//    } else if (node instanceof ArrayValue) {
-//      return visitor.visitArrayValue((ArrayValue) node, context);
-//    } else if (node instanceof BooleanValue) {
-//      return visitor.visitBooleanValue((BooleanValue) node, context);
-//    } else if (node instanceof Directive) {
-//      return visitor.visitDirective((Directive) node, context);
-//    } else if (node instanceof DirectiveDefinition) {
-//      return visitor.visitDirectiveDefinition((DirectiveDefinition) node, context);
-//    } else if (node instanceof DirectiveLocation) {
-//      return visitor.visitDirectiveLocation((DirectiveLocation) node, context);
-//    } else if (node instanceof Document) {
-//      return visitor.visitDocument((Document) node, context);
-//    } else if (node instanceof EnumTypeExtensionDefinition) {
-//      return visitor.visitEnumTypeExtensionDefinition((EnumTypeExtensionDefinition) node, context);
-//    } else if (node instanceof EnumTypeDefinition) {
-//      return visitor.visitEnumTypeDefinition((EnumTypeDefinition) node, context);
-//    } else if (node instanceof EnumValue) {
-//      return visitor.visitEnumValue((EnumValue) node, context);
-//    } else if (node instanceof EnumValueDefinition) {
-//      return visitor.visitEnumValueDefinition((EnumValueDefinition) node, context);
-//    } else if (node instanceof Field) {
-//      return visitor.visitField((Field) node, context);
-//    } else if (node instanceof FieldDefinition) {
-//      return visitor.visitFieldDefinition((FieldDefinition) node, context);
-//    } else if (node instanceof FloatValue) {
-//      return visitor.visitFloatValue((FloatValue) node, context);
-//    } else if (node instanceof FragmentDefinition) {
-//      return visitor.visitFragmentDefinition((FragmentDefinition) node, context);
-//    } else if (node instanceof FragmentSpread) {
-//      return visitor.visitFragmentSpread((FragmentSpread) node, context);
-//    } else if (node instanceof InlineFragment) {
-//      return visitor.visitInlineFragment((InlineFragment) node, context);
-//    } else if (node instanceof InputObjectTypeExtensionDefinition) {
-//      return visitor.visitInputObjectTypeExtensionDefinition(
-//          (InputObjectTypeExtensionDefinition) node, context);
-//    } else if (node instanceof InputObjectTypeDefinition) {
-//      return visitor.visitInputObjectTypeDefinition((InputObjectTypeDefinition) node, context);
-//    } else if (node instanceof InputValueDefinition) {
-//      return visitor.visitInputValueDefinition((InputValueDefinition) node, context);
-//    } else if (node instanceof IntValue) {
-//      return visitor.visitIntValue((IntValue) node, context);
-//    } else if (node instanceof InterfaceTypeExtensionDefinition) {
-//      return visitor.visitInterfaceTypeExtensionDefinition((InterfaceTypeExtensionDefinition) node,
-//          context);
-//    } else if (node instanceof InterfaceTypeDefinition) {
-//      return visitor.visitInterfaceTypeDefinition((InterfaceTypeDefinition) node, context);
-//    } else if (node instanceof ListType) {
-//      return visitor.visitListType((ListType) node, context);
-//    } else if (node instanceof NonNullType) {
-//      return visitor.visitNonNullType((NonNullType) node, context);
-//    } else if (node instanceof NullValue) {
-//      return visitor.visitNullValue((NullValue) node, context);
-//    } else if (node instanceof ObjectField) {
-//      return visitor.visitObjectField((ObjectField) node, context);
-//    } else if (node instanceof ObjectTypeExtensionDefinition) {
-//      return visitor.visitObjectTypeExtensionDefinition((ObjectTypeExtensionDefinition) node,
-//          context);
-//    } else if (node instanceof ObjectTypeDefinition) {
-//      return visitor.visitObjectTypeDefinition((ObjectTypeDefinition) node, context);
-//    } else if (node instanceof ObjectValue) {
-//      return visitor.visitObjectValue((ObjectValue) node, context);
-//    } else if (node instanceof OperationDefinition) {
-//      return visitor.visitOperationDefinition((OperationDefinition) node, context);
-//    } else if (node instanceof OperationTypeDefinition) {
-//      return visitor.visitOperationTypeDefinition((OperationTypeDefinition) node, context);
-//    } else if (node instanceof ScalarTypeExtensionDefinition) {
-//      return visitor.visitScalarTypeExtensionDefinition((ScalarTypeExtensionDefinition) node,
-//          context);
-//    } else if (node instanceof ScalarTypeDefinition) {
-//      return visitor.visitScalarTypeDefinition((ScalarTypeDefinition) node, context);
-//    } else if (node instanceof SchemaExtensionDefinition) {
-//      return visitor.visitSchemaExtensionDefinition((SchemaExtensionDefinition) node, context);
-//    } else if (node instanceof SchemaDefinition) {
-//      return visitor.visitSchemaDefinition((SchemaDefinition) node, context);
-//    } else if (node instanceof SelectionSet) {
-//      return visitor.visitSelectionSet((SelectionSet) node, context);
-//    } else if (node instanceof StringValue) {
-//      return visitor.visitStringValue((StringValue) node, context);
-//    } else if (node instanceof TypeName) {
-//      return visitor.visitTypeName((TypeName) node, context);
-//    } else if (node instanceof UnionTypeExtensionDefinition) {
-//      return visitor.visitUnionTypeExtensionDefinition((UnionTypeExtensionDefinition) node,
-//          context);
-//    } else if (node instanceof UnionTypeDefinition) {
-//      return visitor.visitUnionTypeDefinition((UnionTypeDefinition) node, context);
-//    } else if (node instanceof VariableDefinition) {
-//      return visitor.visitVariableDefinition((VariableDefinition) node, context);
-//    } else if (node instanceof VariableReference) {
-//      return visitor.visitVariableReference((VariableReference) node, context);
-//    }
-//    throw new RuntimeException("Unknown graphql node");
-//  }
+
+  //
+  //  public static <R, C> R accept(GraphqlSchemaVisitor<R, C> visitor, Node node, C context) {
+  //    if (node instanceof Argument) {
+  //      return visitor.visitArgument((Argument) node, context);
+  //    } else if (node instanceof ArrayValue) {
+  //      return visitor.visitArrayValue((ArrayValue) node, context);
+  //    } else if (node instanceof BooleanValue) {
+  //      return visitor.visitBooleanValue((BooleanValue) node, context);
+  //    } else if (node instanceof Directive) {
+  //      return visitor.visitDirective((Directive) node, context);
+  //    } else if (node instanceof DirectiveDefinition) {
+  //      return visitor.visitDirectiveDefinition((DirectiveDefinition) node, context);
+  //    } else if (node instanceof DirectiveLocation) {
+  //      return visitor.visitDirectiveLocation((DirectiveLocation) node, context);
+  //    } else if (node instanceof Document) {
+  //      return visitor.visitDocument((Document) node, context);
+  //    } else if (node instanceof EnumTypeExtensionDefinition) {
+  //      return visitor.visitEnumTypeExtensionDefinition((EnumTypeExtensionDefinition) node,
+  // context);
+  //    } else if (node instanceof EnumTypeDefinition) {
+  //      return visitor.visitEnumTypeDefinition((EnumTypeDefinition) node, context);
+  //    } else if (node instanceof EnumValue) {
+  //      return visitor.visitEnumValue((EnumValue) node, context);
+  //    } else if (node instanceof EnumValueDefinition) {
+  //      return visitor.visitEnumValueDefinition((EnumValueDefinition) node, context);
+  //    } else if (node instanceof Field) {
+  //      return visitor.visitField((Field) node, context);
+  //    } else if (node instanceof FieldDefinition) {
+  //      return visitor.visitFieldDefinition((FieldDefinition) node, context);
+  //    } else if (node instanceof FloatValue) {
+  //      return visitor.visitFloatValue((FloatValue) node, context);
+  //    } else if (node instanceof FragmentDefinition) {
+  //      return visitor.visitFragmentDefinition((FragmentDefinition) node, context);
+  //    } else if (node instanceof FragmentSpread) {
+  //      return visitor.visitFragmentSpread((FragmentSpread) node, context);
+  //    } else if (node instanceof InlineFragment) {
+  //      return visitor.visitInlineFragment((InlineFragment) node, context);
+  //    } else if (node instanceof InputObjectTypeExtensionDefinition) {
+  //      return visitor.visitInputObjectTypeExtensionDefinition(
+  //          (InputObjectTypeExtensionDefinition) node, context);
+  //    } else if (node instanceof InputObjectTypeDefinition) {
+  //      return visitor.visitInputObjectTypeDefinition((InputObjectTypeDefinition) node, context);
+  //    } else if (node instanceof InputValueDefinition) {
+  //      return visitor.visitInputValueDefinition((InputValueDefinition) node, context);
+  //    } else if (node instanceof IntValue) {
+  //      return visitor.visitIntValue((IntValue) node, context);
+  //    } else if (node instanceof InterfaceTypeExtensionDefinition) {
+  //      return visitor.visitInterfaceTypeExtensionDefinition((InterfaceTypeExtensionDefinition)
+  // node,
+  //          context);
+  //    } else if (node instanceof InterfaceTypeDefinition) {
+  //      return visitor.visitInterfaceTypeDefinition((InterfaceTypeDefinition) node, context);
+  //    } else if (node instanceof ListType) {
+  //      return visitor.visitListType((ListType) node, context);
+  //    } else if (node instanceof NonNullType) {
+  //      return visitor.visitNonNullType((NonNullType) node, context);
+  //    } else if (node instanceof NullValue) {
+  //      return visitor.visitNullValue((NullValue) node, context);
+  //    } else if (node instanceof ObjectField) {
+  //      return visitor.visitObjectField((ObjectField) node, context);
+  //    } else if (node instanceof ObjectTypeExtensionDefinition) {
+  //      return visitor.visitObjectTypeExtensionDefinition((ObjectTypeExtensionDefinition) node,
+  //          context);
+  //    } else if (node instanceof ObjectTypeDefinition) {
+  //      return visitor.visitObjectTypeDefinition((ObjectTypeDefinition) node, context);
+  //    } else if (node instanceof ObjectValue) {
+  //      return visitor.visitObjectValue((ObjectValue) node, context);
+  //    } else if (node instanceof OperationDefinition) {
+  //      return visitor.visitOperationDefinition((OperationDefinition) node, context);
+  //    } else if (node instanceof OperationTypeDefinition) {
+  //      return visitor.visitOperationTypeDefinition((OperationTypeDefinition) node, context);
+  //    } else if (node instanceof ScalarTypeExtensionDefinition) {
+  //      return visitor.visitScalarTypeExtensionDefinition((ScalarTypeExtensionDefinition) node,
+  //          context);
+  //    } else if (node instanceof ScalarTypeDefinition) {
+  //      return visitor.visitScalarTypeDefinition((ScalarTypeDefinition) node, context);
+  //    } else if (node instanceof SchemaExtensionDefinition) {
+  //      return visitor.visitSchemaExtensionDefinition((SchemaExtensionDefinition) node, context);
+  //    } else if (node instanceof SchemaDefinition) {
+  //      return visitor.visitSchemaDefinition((SchemaDefinition) node, context);
+  //    } else if (node instanceof SelectionSet) {
+  //      return visitor.visitSelectionSet((SelectionSet) node, context);
+  //    } else if (node instanceof StringValue) {
+  //      return visitor.visitStringValue((StringValue) node, context);
+  //    } else if (node instanceof TypeName) {
+  //      return visitor.visitTypeName((TypeName) node, context);
+  //    } else if (node instanceof UnionTypeExtensionDefinition) {
+  //      return visitor.visitUnionTypeExtensionDefinition((UnionTypeExtensionDefinition) node,
+  //          context);
+  //    } else if (node instanceof UnionTypeDefinition) {
+  //      return visitor.visitUnionTypeDefinition((UnionTypeDefinition) node, context);
+  //    } else if (node instanceof VariableDefinition) {
+  //      return visitor.visitVariableDefinition((VariableDefinition) node, context);
+  //    } else if (node instanceof VariableReference) {
+  //      return visitor.visitVariableReference((VariableReference) node, context);
+  //    }
+  //    throw new RuntimeException("Unknown graphql node");
+  //  }
 
   public R visitArgument(Argument node, C context) {
     return null;
@@ -341,8 +348,8 @@ public abstract class GraphqlSchemaVisitor<R, C> implements
     return null;
   }
 
-  public R visitInputObjectTypeExtensionDefinition(InputObjectTypeExtensionDefinition node,
-      C context) {
+  public R visitInputObjectTypeExtensionDefinition(
+      InputObjectTypeExtensionDefinition node, C context) {
     return null;
   }
 

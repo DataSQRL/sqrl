@@ -11,7 +11,6 @@ import com.datasqrl.plan.table.RelDataTypeTableSchema;
 import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.Optional;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.apache.calcite.rel.type.RelDataType;
 
@@ -26,8 +25,13 @@ public class PostgresTable implements Log {
   List<String> primaryKeys;
   IConnectorFactoryContext connectorContext;
 
-  public PostgresTable(String tableName, Name logName, TableConfig sourceConfig,
-      TableConfig sinkConfig, RelDataTypeTableSchema tableSchema, List<String> primaryKeys,
+  public PostgresTable(
+      String tableName,
+      Name logName,
+      TableConfig sourceConfig,
+      TableConfig sinkConfig,
+      RelDataTypeTableSchema tableSchema,
+      List<String> primaryKeys,
       IConnectorFactoryContext connectorContext) {
     this.tableName = tableName;
     this.logName = logName;
@@ -53,5 +57,4 @@ public class PostgresTable implements Log {
   public RelDataType getSchema() {
     return tableSchema.getRelDataType();
   }
-
 }

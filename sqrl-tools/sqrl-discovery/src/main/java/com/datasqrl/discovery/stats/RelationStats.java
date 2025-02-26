@@ -3,16 +3,15 @@
  */
 package com.datasqrl.discovery.stats;
 
-import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
+import com.datasqrl.error.ErrorCollector;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-
 import java.util.*;
 
-public class RelationStats implements
-    Accumulator<Map<String, Object>, RelationStats, NameCanonicalizer> {
+public class RelationStats
+    implements Accumulator<Map<String, Object>, RelationStats, NameCanonicalizer> {
 
   public static final RelationStats EMPTY = new RelationStats(0, Collections.EMPTY_MAP);
   private static final int INITIAL_CAPACITY = 8;
@@ -40,8 +39,8 @@ public class RelationStats implements
     return count;
   }
 
-  public static void validate(Map<String, Object> value, ErrorCollector errors,
-      NameCanonicalizer canonicalizer) {
+  public static void validate(
+      Map<String, Object> value, ErrorCollector errors, NameCanonicalizer canonicalizer) {
     if (value == null || value.isEmpty()) {
       errors.fatal("Invalid value: %s", value);
     }
@@ -80,14 +79,14 @@ public class RelationStats implements
   @Override
   public void merge(RelationStats acc) {
     count += acc.count;
-    acc.fieldStats.forEach((k, v) -> {
-      FieldStats fieldaccum = fieldStats.get(k);
-      if (fieldaccum == null) {
-        fieldaccum = new FieldStats();
-        fieldStats.put(k, fieldaccum);
-      }
-      fieldaccum.merge(v);
-    });
+    acc.fieldStats.forEach(
+        (k, v) -> {
+          FieldStats fieldaccum = fieldStats.get(k);
+          if (fieldaccum == null) {
+            fieldaccum = new FieldStats();
+            fieldStats.put(k, fieldaccum);
+          }
+          fieldaccum.merge(v);
+        });
   }
-
 }

@@ -4,7 +4,6 @@ import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.global.SqrlDAG.SqrlNode;
 import com.datasqrl.plan.global.StageAnalysis.MissingDependent;
-import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.plan.table.PhysicalTable;
 import com.datasqrl.util.AbstractDAG;
 import com.datasqrl.util.StreamUtil;
@@ -24,7 +23,6 @@ import lombok.Value;
 
 public class SqrlDAG extends AbstractDAG<SqrlNode, SqrlDAG> {
 
-
   protected SqrlDAG(Multimap<SqrlNode, SqrlNode> inputs) {
     super(inputs);
   }
@@ -35,46 +33,65 @@ public class SqrlDAG extends AbstractDAG<SqrlNode, SqrlDAG> {
   }
 
   @Override
-  public<T extends SqrlNode> Stream<T> allNodesByClass(Class<T> clazz) {
+  public <T extends SqrlNode> Stream<T> allNodesByClass(Class<T> clazz) {
     return super.allNodesByClass(clazz).sorted();
   }
 
   public void eliminateInviableStages(ExecutionPipeline pipeline) {
-    messagePassing(node -> {
-      final LinkedHashMap<ExecutionStage, StageAnalysis> updatedStages = new LinkedHashMap<>();
-      boolean hasChange = node.stageAnalysis.values().stream().filter(s -> s.isSupported())
-          .map( stageAnalysis -> {
-            ExecutionStage stage = stageAnalysis.getStage();
-            //Each input/output node must have a viable upstream/downstream stage, otherwise this stage isn't viable
-            for (boolean upstream : new boolean[]{true, false}) {
-              Set<ExecutionStage> compatibleStages = upstream?pipeline.getUpStreamFrom(stage):
-                  pipeline.getDownStreamFrom(stage);
-              Optional<SqrlNode> noCompatibleStage = (upstream?getInputs(node):getOutputs(node)).
-                  stream().filter(ngh -> !ngh.stageAnalysis.values().stream().anyMatch(
-                      sa -> sa.isSupported() && compatibleStages.contains(sa.getStage()))
-                  ).findAny();
-              if (noCompatibleStage.isPresent()) {
-                updatedStages.put(stage, new MissingDependent(stage, upstream, noCompatibleStage.get().getName()));
-                return true;
-              }
-            }
-            return false;
-          }).anyMatch(Boolean::booleanValue);
-      updatedStages.entrySet().stream()
-              .forEach(e-> node.stageAnalysis.put(e.getKey(), e.getValue()));
+    messagePassing(
+        node -> {
+          final LinkedHashMap<ExecutionStage, StageAnalysis> updatedStages = new LinkedHashMap<>();
+          boolean hasChange =
+              node.stageAnalysis.values().stream()
+                  .filter(s -> s.isSupported())
+                  .map(
+                      stageAnalysis -> {
+                        ExecutionStage stage = stageAnalysis.getStage();
+                        // Each input/output node must have a viable upstream/downstream stage,
+                        // otherwise this stage isn't viable
+                        for (boolean upstream : new boolean[] {true, false}) {
+                          Set<ExecutionStage> compatibleStages =
+                              upstream
+                                  ? pipeline.getUpStreamFrom(stage)
+                                  : pipeline.getDownStreamFrom(stage);
+                          Optional<SqrlNode> noCompatibleStage =
+                              (upstream ? getInputs(node) : getOutputs(node))
+                                  .stream()
+                                      .filter(
+                                          ngh ->
+                                              !ngh.stageAnalysis.values().stream()
+                                                  .anyMatch(
+                                                      sa ->
+                                                          sa.isSupported()
+                                                              && compatibleStages.contains(
+                                                                  sa.getStage())))
+                                      .findAny();
+                          if (noCompatibleStage.isPresent()) {
+                            updatedStages.put(
+                                stage,
+                                new MissingDependent(
+                                    stage, upstream, noCompatibleStage.get().getName()));
+                            return true;
+                          }
+                        }
+                        return false;
+                      })
+                  .anyMatch(Boolean::booleanValue);
+          updatedStages.entrySet().stream()
+              .forEach(e -> node.stageAnalysis.put(e.getKey(), e.getValue()));
 
-      if (!node.hasViableStage()) {
-        throw new NoPlanException(node);
-      }
-      return hasChange;
-    },100);
+          if (!node.hasViableStage()) {
+            throw new NoPlanException(node);
+          }
+          return hasChange;
+        },
+        100);
   }
 
   @Value
   public static class NoPlanException extends RuntimeException {
 
     SqrlNode node;
-
   }
 
   @AllArgsConstructor
@@ -97,23 +114,27 @@ public class SqrlDAG extends AbstractDAG<SqrlNode, SqrlDAG> {
      */
     public boolean setCheapestStage() {
       StageAnalysis.Cost cheapest = findCheapestStage(stageAnalysis);
-      return StreamUtil.filterByClass(stageAnalysis.values(),
-          StageAnalysis.Cost.class).filter(other -> !cheapest.equals(other))
-          .map(other ->
-              stageAnalysis.put(other.getStage(), other.tooExpensive())).count()>0;
+      return StreamUtil.filterByClass(stageAnalysis.values(), StageAnalysis.Cost.class)
+              .filter(other -> !cheapest.equals(other))
+              .map(other -> stageAnalysis.put(other.getStage(), other.tooExpensive()))
+              .count()
+          > 0;
     }
 
-    public static StageAnalysis.Cost findCheapestStage(Map<ExecutionStage, StageAnalysis> stageAnalysis) {
-      Optional<StageAnalysis.Cost> stage = StreamUtil.filterByClass(stageAnalysis.values(),
-              StageAnalysis.Cost.class)
-          .sorted(Comparator.comparing(StageAnalysis.Cost::getCost)).findFirst();
+    public static StageAnalysis.Cost findCheapestStage(
+        Map<ExecutionStage, StageAnalysis> stageAnalysis) {
+      Optional<StageAnalysis.Cost> stage =
+          StreamUtil.filterByClass(stageAnalysis.values(), StageAnalysis.Cost.class)
+              .sorted(Comparator.comparing(StageAnalysis.Cost::getCost))
+              .findFirst();
       Preconditions.checkArgument(stage.isPresent());
       return stage.get();
     }
 
     public ExecutionStage getChosenStage() {
-      return Iterables.getOnlyElement(Iterables.filter(stageAnalysis.values(),
-          StageAnalysis::isSupported)).getStage();
+      return Iterables.getOnlyElement(
+              Iterables.filter(stageAnalysis.values(), StageAnalysis::isSupported))
+          .getStage();
     }
 
     @Override
@@ -121,9 +142,9 @@ public class SqrlDAG extends AbstractDAG<SqrlNode, SqrlDAG> {
       if (stageAnalysis.isEmpty()) {
         return "no stages found";
       }
-      return stageAnalysis.values().stream().map( stage ->
-          stage.getStage().getName() + ": " + stage.getMessage()
-      ).collect(Collectors.joining("\n"));
+      return stageAnalysis.values().stream()
+          .map(stage -> stage.getStage().getName() + ": " + stage.getMessage())
+          .collect(Collectors.joining("\n"));
     }
 
     @Override
@@ -137,8 +158,7 @@ public class SqrlDAG extends AbstractDAG<SqrlNode, SqrlDAG> {
 
     private final PhysicalTable table;
 
-    public TableNode(Map<ExecutionStage, StageAnalysis> stageAnalysis,
-        PhysicalTable table) {
+    public TableNode(Map<ExecutionStage, StageAnalysis> stageAnalysis, PhysicalTable table) {
       super(stageAnalysis);
       this.table = table;
     }
@@ -152,7 +172,6 @@ public class SqrlDAG extends AbstractDAG<SqrlNode, SqrlDAG> {
     public String getId() {
       return table.getNameId();
     }
-
   }
 
   @Getter
@@ -187,8 +206,8 @@ public class SqrlDAG extends AbstractDAG<SqrlNode, SqrlDAG> {
     private final AnalyzedExport export;
     private final String uniqueId;
 
-    public ExportNode(Map<ExecutionStage, StageAnalysis> stageAnalysis, AnalyzedExport export,
-        String uniqueId) {
+    public ExportNode(
+        Map<ExecutionStage, StageAnalysis> stageAnalysis, AnalyzedExport export, String uniqueId) {
       super(stageAnalysis);
       this.export = export;
       this.uniqueId = uniqueId;
@@ -208,9 +227,5 @@ public class SqrlDAG extends AbstractDAG<SqrlNode, SqrlDAG> {
     public boolean isSink() {
       return true;
     }
-
   }
-
-
-
 }

@@ -25,19 +25,29 @@ public class FilenameAnalyzer {
   public Optional<Components> analyze(String file) {
     Matcher matcher = filePattern.matcher(file);
     if (matcher.matches()) {
-      return Optional.of(new FilenameAnalyzer.Components(
-          matcher.group(1),
-          matcher.group(2).toLowerCase(),
-          matcher.group(4)==null?"":matcher.group(4).toLowerCase()));
+      return Optional.of(
+          new FilenameAnalyzer.Components(
+              matcher.group(1),
+              matcher.group(2).toLowerCase(),
+              matcher.group(4) == null ? "" : matcher.group(4).toLowerCase()));
     }
     return Optional.empty();
   }
 
   public static FilenameAnalyzer of(Set<String> fileExtensions) {
-    Preconditions.checkArgument(fileExtensions.stream().allMatch(StringUtils::isAllLowerCase),
-        "File extensions must be lowercase: %", fileExtensions);
-    Pattern pattern = Pattern.compile("(.*)\\.(" +String.join("|", fileExtensions)+ ")"
-        + "(\\.("+ String.join("|", SUPPORTED_COMPRESSION_EXTENSIONS) +"))?$", Pattern.CASE_INSENSITIVE);
+    Preconditions.checkArgument(
+        fileExtensions.stream().allMatch(StringUtils::isAllLowerCase),
+        "File extensions must be lowercase: %",
+        fileExtensions);
+    Pattern pattern =
+        Pattern.compile(
+            "(.*)\\.("
+                + String.join("|", fileExtensions)
+                + ")"
+                + "(\\.("
+                + String.join("|", SUPPORTED_COMPRESSION_EXTENSIONS)
+                + "))?$",
+            Pattern.CASE_INSENSITIVE);
     return new FilenameAnalyzer(pattern);
   }
 
@@ -47,6 +57,4 @@ public class FilenameAnalyzer {
     String extension;
     String compression;
   }
-
-
 }

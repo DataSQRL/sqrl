@@ -31,13 +31,13 @@ public class OnnxRunner {
     NodeInfo outInfo = outputs.values().iterator().next();
     TensorInfo outputZeroTensor = (TensorInfo) outInfo.getInfo();
     long[] shape = outputZeroTensor.getShape();
-    this.dimension = (int)shape[2];
+    this.dimension = (int) shape[2];
   }
 
   public OnnxTensor createTensor(int size, long value) throws OrtException {
     long[] array = new long[size];
     Arrays.fill(array, value);
-    return OnnxTensor.createTensor(this.env, new long[][]{array});
+    return OnnxTensor.createTensor(this.env, new long[][] {array});
   }
 
   public double[] run(OnnxTensor tokenIds, List<String> tokens) throws Exception {
@@ -47,7 +47,7 @@ public class OnnxRunner {
     Map<String, OnnxTensor> inputMap = new HashMap(3);
     inputMap.put("input_ids", tokenIds);
     inputMap.put("attention_mask", mask);
-    if (inputSize>2) {
+    if (inputSize > 2) {
       inputMap.put("token_type_ids", tokenTypes);
     }
     OrtSession.Result bertOutput = this.session.run(inputMap);
@@ -67,7 +67,8 @@ public class OnnxRunner {
     return extractFeatures(buffer, dimension);
   }
 
-  private double[] extractMeanTokenVector(OrtSession.Result bertOutput, int numTokens, boolean average) {
+  private double[] extractMeanTokenVector(
+      OrtSession.Result bertOutput, int numTokens, boolean average) {
     OnnxTensor tensor = (OnnxTensor) bertOutput.get(0);
     FloatBuffer buffer = tensor.getFloatBuffer();
     double[] featureValues = new double[dimension];
@@ -101,7 +102,4 @@ public class OnnxRunner {
     }
     return features;
   }
-
-
-
 }

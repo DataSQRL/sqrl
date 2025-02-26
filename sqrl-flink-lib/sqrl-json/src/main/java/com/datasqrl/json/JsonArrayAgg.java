@@ -2,18 +2,12 @@ package com.datasqrl.json;
 
 import java.util.ArrayList;
 import lombok.SneakyThrows;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.JsonProcessingException;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ArrayNode;
-import org.apache.flink.table.annotation.DataTypeHint;
-import org.apache.flink.table.annotation.FunctionHint;
 import org.apache.flink.table.functions.AggregateFunction;
 import org.apache.flink.util.jackson.JacksonMapperFactory;
 
-/**
- * Aggregation function that aggregates JSON objects into a JSON array.
- */
+/** Aggregation function that aggregates JSON objects into a JSON array. */
 public class JsonArrayAgg extends AggregateFunction<FlinkJsonType, ArrayAgg> {
 
   private static final ObjectMapper mapper = JacksonMapperFactory.createObjectMapper();
@@ -74,7 +68,7 @@ public class JsonArrayAgg extends AggregateFunction<FlinkJsonType, ArrayAgg> {
   }
 
   public void merge(ArrayAgg accumulator, java.lang.Iterable<ArrayAgg> iterable) {
-    iterable.forEach(o->accumulator.getObjects().addAll(o.getObjects()));
+    iterable.forEach(o -> accumulator.getObjects().addAll(o.getObjects()));
   }
 
   @Override

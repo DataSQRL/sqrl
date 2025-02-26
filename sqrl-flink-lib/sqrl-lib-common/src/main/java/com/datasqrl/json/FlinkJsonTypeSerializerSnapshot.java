@@ -30,8 +30,8 @@ public class FlinkJsonTypeSerializerSnapshot implements TypeSerializerSnapshot<F
       throws IOException {
     String className = in.readUTF();
     try {
-      this.serializerClass = (Class<FlinkJsonTypeSerializer>) Class.forName(className, true,
-          userCodeClassLoader);
+      this.serializerClass =
+          (Class<FlinkJsonTypeSerializer>) Class.forName(className, true, userCodeClassLoader);
     } catch (ClassNotFoundException e) {
       throw new IOException("Failed to find serializer class: " + className, e);
     }

@@ -4,6 +4,4 @@ import com.fasterxml.jackson.annotation.*;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY)
-public interface ExecutionPipelineItem {
-
-}
+public interface ExecutionPipelineItem {}

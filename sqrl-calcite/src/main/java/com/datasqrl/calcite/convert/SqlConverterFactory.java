@@ -6,7 +6,7 @@ import com.datasqrl.util.ServiceLoaderDiscovery;
 public class SqlConverterFactory {
 
   public static RelToSqlNode get(Dialect dialect) {
-    return ServiceLoaderDiscovery.get(RelToSqlNode.class, e->e.getDialect().name(),
-        dialect.name());
+    return ServiceLoaderDiscovery.get(
+        RelToSqlNode.class, e -> e.getDialect().name(), dialect.name());
   }
 }

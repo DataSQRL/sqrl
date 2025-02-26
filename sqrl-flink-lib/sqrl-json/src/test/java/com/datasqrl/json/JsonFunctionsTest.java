@@ -6,19 +6,17 @@ import lombok.SneakyThrows;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.flink.types.Row;
-import org.apache.flink.types.RowKind;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-
 class JsonFunctionsTest {
   ObjectMapper mapper = new ObjectMapper();
-  
+
   @SneakyThrows
   JsonNode readTree(String val) {
     return mapper.readTree(val);
   }
-  
+
   @Nested
   class ToJsonTest {
 
@@ -26,7 +24,7 @@ class JsonFunctionsTest {
     void testUnicodeJson() {
       Row row = Row.withNames();
       row.setField("key", "”value”");
-      Row[] rows = new Row[]{row};
+      Row[] rows = new Row[] {row};
       FlinkJsonType result = JsonFunctions.TO_JSON.eval(rows);
       assertNotNull(result);
       assertEquals("[{\"key\":\"”value”\"}]", result.getJson().toString());
@@ -82,7 +80,8 @@ class JsonFunctionsTest {
 
     @Test
     void testInvalidNumberOfArguments() {
-      assertThrows(IllegalArgumentException.class,
+      assertThrows(
+          IllegalArgumentException.class,
           () -> JsonFunctions.JSON_OBJECT.eval("key1", "value1", "key2"));
     }
 
@@ -93,6 +92,7 @@ class JsonFunctionsTest {
       assertEquals("{\"key1\":null}", resultWithNullValue.getJson().toString());
     }
   }
+
   @Nested
   class JsonArrayTest {
 
@@ -249,6 +249,7 @@ class JsonFunctionsTest {
       Boolean result = JsonFunctions.JSON_EXISTS.eval(json, "$.key1.nonexistentKey");
       assertFalse(result);
     }
+
     @Test
     void testPathDoesNotExist() {
       FlinkJsonType json = new FlinkJsonType(readTree("{\"key\": \"value\"}"));
@@ -296,14 +297,17 @@ class JsonFunctionsTest {
       assertNull(result);
     }
   }
+
   @Nested
   class JsonArrayAggTest {
 
     @Test
     void testAggregateJsonTypes() {
       ArrayAgg accumulator = JsonFunctions.JSON_ARRAYAGG.createAccumulator();
-      JsonFunctions.JSON_ARRAYAGG.accumulate(accumulator, new FlinkJsonType(readTree("{\"key1\": \"value1\"}")));
-      JsonFunctions.JSON_ARRAYAGG.accumulate(accumulator, new FlinkJsonType(readTree("{\"key2\": \"value2\"}")));
+      JsonFunctions.JSON_ARRAYAGG.accumulate(
+          accumulator, new FlinkJsonType(readTree("{\"key1\": \"value1\"}")));
+      JsonFunctions.JSON_ARRAYAGG.accumulate(
+          accumulator, new FlinkJsonType(readTree("{\"key2\": \"value2\"}")));
 
       FlinkJsonType result = JsonFunctions.JSON_ARRAYAGG.getValue(accumulator);
       assertNotNull(result);
@@ -338,6 +342,7 @@ class JsonFunctionsTest {
       // Depending on implementation, the result might include the null or ignore it
       assertEquals("[{\"key1\":\"value1\"},null]", result.getJson().toString());
     }
+
     @Test
     void testRetractJsonTypes() {
       ArrayAgg accumulator = JsonFunctions.JSON_ARRAYAGG.createAccumulator();
@@ -359,7 +364,7 @@ class JsonFunctionsTest {
       ArrayAgg accumulator = JsonFunctions.JSON_ARRAYAGG.createAccumulator();
       FlinkJsonType json1 = new FlinkJsonType(readTree("{\"key\": \"value1\"}"));
       JsonFunctions.JSON_ARRAYAGG.accumulate(accumulator, json1);
-      JsonFunctions.JSON_ARRAYAGG.accumulate(accumulator,(FlinkJsonType) null);
+      JsonFunctions.JSON_ARRAYAGG.accumulate(accumulator, (FlinkJsonType) null);
 
       // Now retract a null JSON object
       JsonFunctions.JSON_ARRAYAGG.retract(accumulator, (FlinkJsonType) null);
@@ -376,7 +381,7 @@ class JsonFunctionsTest {
       JsonFunctions.JSON_ARRAYAGG.accumulate(accumulator, json1);
 
       // Attempt to retract a null value that was never accumulated
-      JsonFunctions.JSON_ARRAYAGG.retract(accumulator,(FlinkJsonType) null);
+      JsonFunctions.JSON_ARRAYAGG.retract(accumulator, (FlinkJsonType) null);
 
       FlinkJsonType result = JsonFunctions.JSON_ARRAYAGG.getValue(accumulator);
       assertNotNull(result);
@@ -390,12 +395,16 @@ class JsonFunctionsTest {
     @Test
     void testAggregateJsonTypes() {
       ObjectAgg accumulator = JsonFunctions.JSON_OBJECTAGG.createAccumulator();
-      JsonFunctions.JSON_OBJECTAGG.accumulate(accumulator, "key1", new FlinkJsonType(readTree("{\"nestedKey1\": \"nestedValue1\"}")));
-      JsonFunctions.JSON_OBJECTAGG.accumulate(accumulator, "key2", new FlinkJsonType(readTree("{\"nestedKey2\": \"nestedValue2\"}")));
+      JsonFunctions.JSON_OBJECTAGG.accumulate(
+          accumulator, "key1", new FlinkJsonType(readTree("{\"nestedKey1\": \"nestedValue1\"}")));
+      JsonFunctions.JSON_OBJECTAGG.accumulate(
+          accumulator, "key2", new FlinkJsonType(readTree("{\"nestedKey2\": \"nestedValue2\"}")));
 
       FlinkJsonType result = JsonFunctions.JSON_OBJECTAGG.getValue(accumulator);
       assertNotNull(result);
-      assertEquals("{\"key1\":{\"nestedKey1\":\"nestedValue1\"},\"key2\":{\"nestedKey2\":\"nestedValue2\"}}", result.getJson().toString());
+      assertEquals(
+          "{\"key1\":{\"nestedKey1\":\"nestedValue1\"},\"key2\":{\"nestedKey2\":\"nestedValue2\"}}",
+          result.getJson().toString());
     }
 
     @Test
@@ -406,12 +415,15 @@ class JsonFunctionsTest {
 
       FlinkJsonType result = JsonFunctions.JSON_OBJECTAGG.getValue(accumulator);
       assertNotNull(result);
-      assertEquals("{\"key\":\"value2\"}", result.getJson().toString()); // The last value for the same key should be retained
+      assertEquals(
+          "{\"key\":\"value2\"}",
+          result.getJson().toString()); // The last value for the same key should be retained
     }
 
     @Test
     void testNullKey() {
-      assertThrows(IllegalArgumentException.class, () -> JsonFunctions.JSON_OBJECT.eval(null, "value1"));
+      assertThrows(
+          IllegalArgumentException.class, () -> JsonFunctions.JSON_OBJECT.eval(null, "value1"));
     }
 
     @Test
@@ -423,12 +435,14 @@ class JsonFunctionsTest {
 
     @Test
     void testNullKeyValue() {
-      assertThrows(IllegalArgumentException.class, () -> JsonFunctions.JSON_OBJECT.eval(null, null));
+      assertThrows(
+          IllegalArgumentException.class, () -> JsonFunctions.JSON_OBJECT.eval(null, null));
     }
 
     @Test
     void testArrayOfNullValues() {
-      FlinkJsonType result = JsonFunctions.JSON_OBJECT.eval("key1", new Object[]{null, null, null});
+      FlinkJsonType result =
+          JsonFunctions.JSON_OBJECT.eval("key1", new Object[] {null, null, null});
       assertNotNull(result);
       // The expected output might vary based on how the function is designed to handle this case
       assertEquals("{\"key1\":[null,null,null]}", result.getJson().toString());
@@ -437,11 +451,14 @@ class JsonFunctionsTest {
     @Test
     void testRetractJsonTypes() {
       ObjectAgg accumulator = JsonFunctions.JSON_OBJECTAGG.createAccumulator();
-      JsonFunctions.JSON_OBJECTAGG.accumulate(accumulator, "key1", new FlinkJsonType(readTree("{\"nestedKey1\": \"nestedValue1\"}")));
-      JsonFunctions.JSON_OBJECTAGG.accumulate(accumulator, "key2", new FlinkJsonType(readTree("{\"nestedKey2\": \"nestedValue2\"}")));
+      JsonFunctions.JSON_OBJECTAGG.accumulate(
+          accumulator, "key1", new FlinkJsonType(readTree("{\"nestedKey1\": \"nestedValue1\"}")));
+      JsonFunctions.JSON_OBJECTAGG.accumulate(
+          accumulator, "key2", new FlinkJsonType(readTree("{\"nestedKey2\": \"nestedValue2\"}")));
 
       // Now retract a key-value pair
-      JsonFunctions.JSON_OBJECTAGG.retract(accumulator, "key1", new FlinkJsonType(readTree("{\"nestedKey1\": \"nestedValue1\"}")));
+      JsonFunctions.JSON_OBJECTAGG.retract(
+          accumulator, "key1", new FlinkJsonType(readTree("{\"nestedKey1\": \"nestedValue1\"}")));
 
       FlinkJsonType result = JsonFunctions.JSON_OBJECTAGG.getValue(accumulator);
       assertNotNull(result);
@@ -451,7 +468,8 @@ class JsonFunctionsTest {
     @Test
     void testRetractNullJsonValue() {
       ObjectAgg accumulator = JsonFunctions.JSON_OBJECTAGG.createAccumulator();
-      JsonFunctions.JSON_OBJECTAGG.accumulate(accumulator, "key1", new FlinkJsonType(readTree("{\"nestedKey1\": \"nestedValue1\"}")));
+      JsonFunctions.JSON_OBJECTAGG.accumulate(
+          accumulator, "key1", new FlinkJsonType(readTree("{\"nestedKey1\": \"nestedValue1\"}")));
       JsonFunctions.JSON_OBJECTAGG.accumulate(accumulator, "key2", (FlinkJsonType) null);
 
       // Now retract a null value
@@ -465,7 +483,8 @@ class JsonFunctionsTest {
     @Test
     void testRetractNullKey() {
       ObjectAgg accumulator = JsonFunctions.JSON_OBJECTAGG.createAccumulator();
-      JsonFunctions.JSON_OBJECTAGG.accumulate(accumulator, "key1", new FlinkJsonType(readTree("{\"nestedKey1\": \"nestedValue1\"}")));
+      JsonFunctions.JSON_OBJECTAGG.accumulate(
+          accumulator, "key1", new FlinkJsonType(readTree("{\"nestedKey1\": \"nestedValue1\"}")));
       JsonFunctions.JSON_OBJECTAGG.accumulate(accumulator, null, "someValue");
 
       // Attempt to retract a key-value pair where the key is null

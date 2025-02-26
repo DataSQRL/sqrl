@@ -18,9 +18,10 @@ public class SqlParseExceptionHandler implements ErrorHandler<SqlParseException>
 
   @Override
   public ErrorMessage handle(SqlParseException e, ErrorLocation baseLocation) {
-    return new Implementation(ErrorLabel.GENERIC, e.getMessage(),
-        baseLocation.atFile(
-            new FileLocation(e.getPos().getLineNum(), e.getPos().getColumnNum())),
+    return new Implementation(
+        ErrorLabel.GENERIC,
+        e.getMessage(),
+        baseLocation.atFile(new FileLocation(e.getPos().getLineNum(), e.getPos().getColumnNum())),
         Severity.FATAL);
   }
 

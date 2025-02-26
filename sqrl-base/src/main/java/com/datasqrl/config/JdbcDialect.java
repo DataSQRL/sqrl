@@ -4,8 +4,15 @@ import java.util.Arrays;
 import java.util.Optional;
 
 public enum JdbcDialect {
-
-  Postgres("PostgreSQL"), Oracle, MySQL, SQLServer, H2, SQLite, Iceberg, Snowflake, DuckDB;
+  Postgres("PostgreSQL"),
+  Oracle,
+  MySQL,
+  SQLServer,
+  H2,
+  SQLite,
+  Iceberg,
+  Snowflake,
+  DuckDB;
 
   private final String[] synonyms;
 
@@ -28,5 +35,4 @@ public enum JdbcDialect {
   public static Optional<JdbcDialect> find(String dialect) {
     return Arrays.stream(values()).filter(d -> d.matches(dialect)).findFirst();
   }
-
 }

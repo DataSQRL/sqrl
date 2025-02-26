@@ -1,6 +1,5 @@
 package com.datasqrl.parse;
 
-import com.datasqrl.error.ErrorCollector;
 import org.apache.calcite.sql.ScriptNode;
 import org.apache.calcite.sql.SqrlStatement;
 

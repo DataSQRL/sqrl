@@ -18,11 +18,8 @@ public interface TypeSignature {
   @Value
   class Simple implements TypeSignature {
 
-    @NonNull
-    private final Type raw;
-    @NonNull
-    private final Type detected;
+    @NonNull private final Type raw;
+    @NonNull private final Type detected;
     private final int arrayDepth;
-
   }
 }

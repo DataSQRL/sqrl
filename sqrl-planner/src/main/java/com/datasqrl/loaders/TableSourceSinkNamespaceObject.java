@@ -9,17 +9,20 @@ import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.plan.local.generate.AbstractTableNamespaceObject;
 import com.datasqrl.plan.table.CalciteTableFactory;
 import com.datasqrl.plan.validate.ScriptPlanner;
+import java.util.Optional;
 import lombok.Getter;
 
-import java.util.Optional;
-
 @Getter
-public class TableSourceSinkNamespaceObject extends AbstractTableNamespaceObject<TableSource> implements TableSinkObject, TableSourceObject {
+public class TableSourceSinkNamespaceObject extends AbstractTableNamespaceObject<TableSource>
+    implements TableSinkObject, TableSourceObject {
 
   private final TableSource table;
   private final TableSink sink;
 
-  public TableSourceSinkNamespaceObject(TableSource source, TableSink sink, CalciteTableFactory tableFactory,
+  public TableSourceSinkNamespaceObject(
+      TableSource source,
+      TableSink sink,
+      CalciteTableFactory tableFactory,
       ModuleLoader moduleLoader) {
     super(tableFactory, NameCanonicalizer.SYSTEM, moduleLoader);
     this.table = source;
@@ -32,7 +35,11 @@ public class TableSourceSinkNamespaceObject extends AbstractTableNamespaceObject
   }
 
   @Override
-  public boolean apply(ScriptPlanner planner, Optional<String> objectName, SqrlFramework framework, ErrorCollector errors) {
+  public boolean apply(
+      ScriptPlanner planner,
+      Optional<String> objectName,
+      SqrlFramework framework,
+      ErrorCollector errors) {
     return importSourceTable(objectName, table, framework, errors);
   }
 

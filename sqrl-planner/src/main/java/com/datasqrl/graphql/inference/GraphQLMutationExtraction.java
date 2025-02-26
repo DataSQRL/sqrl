@@ -17,7 +17,6 @@ import graphql.language.ObjectTypeDefinition;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +27,7 @@ import org.apache.calcite.rel.type.RelRecordType;
 import org.apache.calcite.sql.type.SqlTypeName;
 
 @Slf4j
-@AllArgsConstructor(onConstructor_=@Inject)
+@AllArgsConstructor(onConstructor_ = @Inject)
 @Getter
 public class GraphQLMutationExtraction {
   private final GraphqlSchemaParser schemaParser;
@@ -40,22 +39,28 @@ public class GraphQLMutationExtraction {
 
   public void analyze(APISource apiSource) {
     TypeDefinitionRegistry registry = schemaParser.parse(apiSource.getSchemaDefinition());
-    ObjectTypeDefinition mutationType = (ObjectTypeDefinition) registry
-        .getType(getMutationTypeName(registry))
-        .orElse(null);
+    ObjectTypeDefinition mutationType =
+        (ObjectTypeDefinition) registry.getType(getMutationTypeName(registry)).orElse(null);
 
     if (mutationType == null) {
       log.trace("No mutations in {}", apiSource);
     } else {
-      List<RelDataTypeField> types = GraphqlSchemaVisitor.accept(
-          new InputFieldToRelDataType(registry, typeFactory, canonicalizer),
-          mutationType, registry);
+      List<RelDataTypeField> types =
+          GraphqlSchemaVisitor.accept(
+              new InputFieldToRelDataType(registry, typeFactory, canonicalizer),
+              mutationType,
+              registry);
 
       List<RelDataTypeField> addedFields = appendFields(types);
 
       for (RelDataTypeField namedType : addedFields) {
-        APIMutation apiMutation = new APIMutation(Name.system(namedType.getName()), apiSource,
-            namedType.getType(), ReservedName.MUTATION_TIME.getDisplay(), ReservedName.MUTATION_PRIMARY_KEY.getDisplay());
+        APIMutation apiMutation =
+            new APIMutation(
+                Name.system(namedType.getName()),
+                apiSource,
+                namedType.getType(),
+                ReservedName.MUTATION_TIME.getDisplay(),
+                ReservedName.MUTATION_PRIMARY_KEY.getDisplay());
         connectorManager.addMutation(apiMutation);
       }
     }
@@ -66,13 +71,21 @@ public class GraphQLMutationExtraction {
     for (RelDataTypeField field : types) {
       RelRecordType relRecordType = (RelRecordType) field.getType();
       List<RelDataTypeField> fields = new ArrayList<>(relRecordType.getFieldList());
-//      fields.add(new RelDataTypeFieldImpl(DEFAULT_EVENT_TIME_NAME, relRecordType.getFieldList().size(),
-//          typeFactory.createSqlType(SqlTypeName.TIMESTAMP, 3)));
-      fields.add(new RelDataTypeFieldImpl("_uuid", relRecordType.getFieldList().size(),
-          typeFactory.createSqlType(SqlTypeName.VARCHAR)));
+      //      fields.add(new RelDataTypeFieldImpl(DEFAULT_EVENT_TIME_NAME,
+      // relRecordType.getFieldList().size(),
+      //          typeFactory.createSqlType(SqlTypeName.TIMESTAMP, 3)));
+      fields.add(
+          new RelDataTypeFieldImpl(
+              "_uuid",
+              relRecordType.getFieldList().size(),
+              typeFactory.createSqlType(SqlTypeName.VARCHAR)));
 
-      newFields.add(new RelDataTypeFieldImpl(field.getName(), field.getIndex(),
-          new RelRecordType(relRecordType.getStructKind(), fields, relRecordType.isNullable())));
+      newFields.add(
+          new RelDataTypeFieldImpl(
+              field.getName(),
+              field.getIndex(),
+              new RelRecordType(
+                  relRecordType.getStructKind(), fields, relRecordType.isNullable())));
     }
     return newFields;
   }

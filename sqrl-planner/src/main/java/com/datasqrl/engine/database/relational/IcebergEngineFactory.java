@@ -18,5 +18,4 @@ public class IcebergEngineFactory implements DatabaseEngineFactory {
   public Class getFactoryClass() {
     return IcebergEngine.class;
   }
-
 }

@@ -5,20 +5,19 @@ package com.datasqrl.util;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
-import java.util.Objects;
-import java.util.stream.Collectors;
-import lombok.NonNull;
-
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import lombok.NonNull;
 
-public abstract class AbstractPath<E extends Comparable, P extends AbstractPath<E, P>> implements
-    Iterable<E>, Serializable, Comparable<P> {
+public abstract class AbstractPath<E extends Comparable, P extends AbstractPath<E, P>>
+    implements Iterable<E>, Serializable, Comparable<P> {
 
   protected final E[] elements;
 
@@ -103,7 +102,6 @@ public abstract class AbstractPath<E extends Comparable, P extends AbstractPath<
     return Arrays.equals(elements, o.elements);
   }
 
-
   @Override
   public Iterator<E> iterator() {
     return Iterators.forArray(elements);
@@ -161,7 +159,7 @@ public abstract class AbstractPath<E extends Comparable, P extends AbstractPath<
     return Arrays.stream(elements);
   }
 
-  protected static abstract class Constructor<E extends Comparable, P extends AbstractPath<E, P>> {
+  protected abstract static class Constructor<E extends Comparable, P extends AbstractPath<E, P>> {
 
     protected abstract P create(@NonNull E... elements);
 
@@ -184,12 +182,8 @@ public abstract class AbstractPath<E extends Comparable, P extends AbstractPath<
     }
 
     public <E2> P of(Function<E2, E> converter, @NonNull E2[] elements) {
-      E[] arr = Arrays.stream(elements)
-          .map(converter)
-          .toArray(this::createArray);
+      E[] arr = Arrays.stream(elements).map(converter).toArray(this::createArray);
       return create(arr);
     }
-
   }
-
 }

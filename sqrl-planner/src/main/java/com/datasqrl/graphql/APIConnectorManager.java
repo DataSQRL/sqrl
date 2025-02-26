@@ -15,8 +15,8 @@ import java.util.Map;
 public interface APIConnectorManager extends APIConnectorLookup {
 
   /**
-   * Adds mutation by connecting it to a table source and sink.
-   * Those are either loaded if the module for the api source exists or created by the log engine.
+   * Adds mutation by connecting it to a table source and sink. Those are either loaded if the
+   * module for the api source exists or created by the log engine.
    *
    * @param mutation
    */

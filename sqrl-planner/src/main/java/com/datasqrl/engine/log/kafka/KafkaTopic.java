@@ -11,10 +11,9 @@ import com.datasqrl.io.tables.TableSchema;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.io.tables.TableSinkImpl;
 import com.datasqrl.io.tables.TableSource;
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-
-import java.util.Optional;
 import org.apache.calcite.rel.type.RelDataType;
 
 @AllArgsConstructor
@@ -37,5 +36,4 @@ class KafkaTopic implements Log {
   public TableSink getSink() {
     return TableSinkImpl.create(logConfig, NamePath.of(ENGINE_NAME), tableSchema);
   }
-
 }

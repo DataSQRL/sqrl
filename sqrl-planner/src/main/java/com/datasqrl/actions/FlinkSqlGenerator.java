@@ -37,9 +37,7 @@ import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.api.internal.TableEnvironmentImpl;
 import org.apache.flink.table.operations.StatementSetOperation;
 
-/**
- *
- */
+/** */
 @AllArgsConstructor(onConstructor_ = @Inject)
 @Slf4j
 public class FlinkSqlGenerator {
@@ -48,8 +46,7 @@ public class FlinkSqlGenerator {
   private final SqrlFramework framework;
   private final BuildPath buildPath;
 
-  public FlinkSqlGeneratorResult run(StreamStagePlan physicalPlan,
-      List<StagePlan> stagePlans) {
+  public FlinkSqlGeneratorResult run(StreamStagePlan physicalPlan, List<StagePlan> stagePlans) {
     SqrlToFlinkSqlGenerator sqlPlanner = new SqrlToFlinkSqlGenerator(framework);
     SqlResult result = sqlPlanner.plan(physicalPlan.getQueries(), stagePlans);
 
@@ -58,7 +55,7 @@ public class FlinkSqlGenerator {
     flinkSql.addAll(result.getFunctions());
     flinkSql.addAll(result.getSinksSources());
     flinkSql.addAll(result.getQueries());
-    if (result.getInserts().isEmpty()){
+    if (result.getInserts().isEmpty()) {
       throw new RuntimeException("Flink stage empty. No queries or exports were found.");
     }
     SqlStatementSet sqlStatementSet = new SqlStatementSet(result.getInserts(), SqlParserPos.ZERO);
@@ -83,8 +80,7 @@ public class FlinkSqlGenerator {
       compiledPlan = createCompiledPlan(result, physicalPlan);
       Path path = buildPath.getBuildDir().resolve(COMPILED_PLAN_JSON);
 
-      compiledPlan.writeToFile(path.toAbsolutePath().toString(),
-          true);
+      compiledPlan.writeToFile(path.toAbsolutePath().toString(), true);
     } catch (Exception e) {
       log.warn("Could not prepare compiled plan: " + e.getMessage());
     }
@@ -96,17 +92,20 @@ public class FlinkSqlGenerator {
     List<SqlNode> stubSchema = result.getStubSchema();
     stubSchema = ListUtils.union(stubSchema, result.getQueries());
 
-    URL[] urlArray =  physicalPlan.getJars().toArray(new URL[0]);
+    URL[] urlArray = physicalPlan.getJars().toArray(new URL[0]);
     ClassLoader udfClassLoader = new URLClassLoader(urlArray, getClass().getClassLoader());
     Map<String, String> config = new HashMap<>();
-    config.put("pipeline.classpaths", physicalPlan.getJars().stream().map(URL::toString)
-        .collect(Collectors.joining(",")));
-    StreamExecutionEnvironment sEnv = StreamExecutionEnvironment.createLocalEnvironment(Configuration.fromMap(config));
+    config.put(
+        "pipeline.classpaths",
+        physicalPlan.getJars().stream().map(URL::toString).collect(Collectors.joining(",")));
+    StreamExecutionEnvironment sEnv =
+        StreamExecutionEnvironment.createLocalEnvironment(Configuration.fromMap(config));
 
-    EnvironmentSettings tEnvConfig = EnvironmentSettings.newInstance()
-        .withConfiguration(Configuration.fromMap(config))
-        .withClassLoader(udfClassLoader)
-        .build();
+    EnvironmentSettings tEnvConfig =
+        EnvironmentSettings.newInstance()
+            .withConfiguration(Configuration.fromMap(config))
+            .withClassLoader(udfClassLoader)
+            .build();
 
     StreamTableEnvironment tEnv = StreamTableEnvironment.create(sEnv, tEnvConfig);
     TableResult tableResult = null;
@@ -130,7 +129,7 @@ public class FlinkSqlGenerator {
 
     TableEnvironmentImpl tEnv1 = (TableEnvironmentImpl) tEnv;
 
-    StatementSetOperation parse = (StatementSetOperation)tEnv1.getParser().parse(insert).get(0);
+    StatementSetOperation parse = (StatementSetOperation) tEnv1.getParser().parse(insert).get(0);
 
     return tEnv1.compilePlan(parse.getOperations());
   }

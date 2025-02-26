@@ -7,8 +7,10 @@ import com.datasqrl.schema.type.Type;
 import java.util.List;
 
 public interface BasicType<JavaType> extends Type, Comparable<BasicType<?>> {
-  //First entry is the preferred name, the remaining are for backwards compatibility
+  // First entry is the preferred name, the remaining are for backwards compatibility
   String getName();
+
   List<String> getNames();
+
   TypeConversion<JavaType> conversion();
 }

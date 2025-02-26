@@ -25,7 +25,6 @@ public final class FieldIndexPath extends AbstractPath<Integer, FieldIndexPath> 
     return new FieldIndexPath(ArrayUtils.toObject(indexes));
   }
 
-
   private static final class Constructor extends AbstractPath.Constructor<Integer, FieldIndexPath> {
 
     @Override
@@ -42,6 +41,5 @@ public final class FieldIndexPath extends AbstractPath<Integer, FieldIndexPath> 
     protected FieldIndexPath root() {
       return ROOT;
     }
-
   }
 }

@@ -51,9 +51,15 @@ public class TextSearch extends ScalarFunction {
 
   @Override
   public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-    return TypeInference.newBuilder().inputTypeStrategy(
-            VariableArguments.builder().staticType(DataTypes.STRING()).variableType(DataTypes.STRING())
-                .minVariableArguments(1).maxVariableArguments(256).build())
-        .outputTypeStrategy(FlinkTypeUtil.nullPreservingOutputStrategy(DataTypes.DOUBLE())).build();
+    return TypeInference.newBuilder()
+        .inputTypeStrategy(
+            VariableArguments.builder()
+                .staticType(DataTypes.STRING())
+                .variableType(DataTypes.STRING())
+                .minVariableArguments(1)
+                .maxVariableArguments(256)
+                .build())
+        .outputTypeStrategy(FlinkTypeUtil.nullPreservingOutputStrategy(DataTypes.DOUBLE()))
+        .build();
   }
 }

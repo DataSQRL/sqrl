@@ -20,38 +20,32 @@ package org.apache.calcite.sql.validate;
 
 import static org.apache.calcite.util.Static.RESOURCE;
 
-import com.datasqrl.calcite.CatalogReader;
 import com.datasqrl.util.ReflectionUtil;
 import com.google.common.base.Preconditions;
 import java.util.List;
-import org.apache.calcite.plan.RelOptTable.ToRelContext;
-import org.apache.calcite.prepare.RelOptTableImpl;
-import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.sql.JoinConditionType;
 import org.apache.calcite.sql.JoinType;
-import org.apache.calcite.sql.SqlCall;
-import org.apache.calcite.sql.SqlCallBinding;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
-import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlOperatorTable;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.type.SqlTypeUtil;
 import org.apache.calcite.util.Util;
 import org.apache.flink.table.planner.calcite.FlinkCalciteSqlValidator;
-import org.apache.flink.table.planner.plan.schema.ExpandingPreparingTable;
-import org.apache.flink.table.planner.plan.stats.FlinkStatistic;
 
 public class SqrlSqlValidator extends FlinkCalciteSqlValidator {
 
   private final SqlValidatorCatalogReader catalogReader;
 
-  public SqrlSqlValidator(SqlOperatorTable opTab, SqlValidatorCatalogReader catalogReader,
-      RelDataTypeFactory typeFactory, Config config) {
+  public SqrlSqlValidator(
+      SqlOperatorTable opTab,
+      SqlValidatorCatalogReader catalogReader,
+      RelDataTypeFactory typeFactory,
+      Config config) {
     super(opTab, catalogReader, typeFactory, config);
     this.catalogReader = catalogReader;
   }
@@ -78,33 +72,51 @@ public class SqrlSqlValidator extends FlinkCalciteSqlValidator {
         join.setOperand(5, expandedCondition);
         condition = join.getCondition();
         validateWhereOrOn(joinScope, condition, "ON");
-//        checkRollUp(null, join, condition, joinScope, "ON");
+        //        checkRollUp(null, join, condition, joinScope, "ON");
         break;
       case USING:
         SqlNodeList list = (SqlNodeList) condition;
 
-         //Parser ensures that using clause is not empty.
+        // Parser ensures that using clause is not empty.
         Preconditions.checkArgument(list.size() > 0, "Empty USING clause");
         for (SqlNode node : list) {
           SqlIdentifier id = (SqlIdentifier) node;
-          final RelDataType leftColType = (RelDataType)ReflectionUtil.invokeSuperPrivateMethod(this,
-              "validateUsingCol", List.of(SqlIdentifier.class, SqlNode.class), id, left);
-          final RelDataType rightColType = (RelDataType)ReflectionUtil.invokeSuperPrivateMethod(this,
-              "validateUsingCol", List.of(SqlIdentifier.class, SqlNode.class), id, right);
+          final RelDataType leftColType =
+              (RelDataType)
+                  ReflectionUtil.invokeSuperPrivateMethod(
+                      this,
+                      "validateUsingCol",
+                      List.of(SqlIdentifier.class, SqlNode.class),
+                      id,
+                      left);
+          final RelDataType rightColType =
+              (RelDataType)
+                  ReflectionUtil.invokeSuperPrivateMethod(
+                      this,
+                      "validateUsingCol",
+                      List.of(SqlIdentifier.class, SqlNode.class),
+                      id,
+                      right);
           if (!SqlTypeUtil.isComparable(leftColType, rightColType)) {
             throw newValidationError(
                 id,
                 RESOURCE.naturalOrUsingColumnNotCompatible(
-                    id.getSimple(),
-                    leftColType.toString(),
-                    rightColType.toString()));
+                    id.getSimple(), leftColType.toString(), rightColType.toString()));
           }
-          ReflectionUtil.invokeSuperPrivateMethod(this,
-              "checkRollUpInUsing", List.of(SqlIdentifier.class, SqlNode.class, SqlValidatorScope.class),
-              id, left, scope);
-          ReflectionUtil.invokeSuperPrivateMethod(this,
-              "checkRollUpInUsing", List.of(SqlIdentifier.class, SqlNode.class, SqlValidatorScope.class),
-              id, right, scope);
+          ReflectionUtil.invokeSuperPrivateMethod(
+              this,
+              "checkRollUpInUsing",
+              List.of(SqlIdentifier.class, SqlNode.class, SqlValidatorScope.class),
+              id,
+              left,
+              scope);
+          ReflectionUtil.invokeSuperPrivateMethod(
+              this,
+              "checkRollUpInUsing",
+              List.of(SqlIdentifier.class, SqlNode.class, SqlValidatorScope.class),
+              id,
+              right,
+              scope);
         }
         break;
       default:
@@ -123,8 +135,7 @@ public class SqrlSqlValidator extends FlinkCalciteSqlValidator {
       final RelDataType rightRowType = getNamespace(right).getRowType();
       final SqlNameMatcher nameMatcher = catalogReader.nameMatcher();
       List<String> naturalColumnNames =
-          SqlValidatorUtil.deriveNaturalJoinColumnList(
-              nameMatcher, leftRowType, rightRowType);
+          SqlValidatorUtil.deriveNaturalJoinColumnList(nameMatcher, leftRowType, rightRowType);
 
       // Check compatibility of the chosen columns.
       for (String name : naturalColumnNames) {
@@ -147,7 +158,6 @@ public class SqrlSqlValidator extends FlinkCalciteSqlValidator {
       case LEFT:
       case RIGHT:
       case FULL:
-
         if ((condition == null) && !natural) {
           throw newValidationError(join, RESOURCE.joinRequiresCondition());
         }

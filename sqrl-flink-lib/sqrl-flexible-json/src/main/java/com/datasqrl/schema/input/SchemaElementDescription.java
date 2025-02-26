@@ -3,9 +3,8 @@
  */
 package com.datasqrl.schema.input;
 
-import lombok.*;
-
 import java.io.Serializable;
+import lombok.*;
 
 @Getter
 @NoArgsConstructor
@@ -29,5 +28,4 @@ public class SchemaElementDescription implements Serializable {
       return new SchemaElementDescription(description);
     }
   }
-
 }

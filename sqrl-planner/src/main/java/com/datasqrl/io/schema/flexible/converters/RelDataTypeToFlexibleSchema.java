@@ -3,12 +3,12 @@ package com.datasqrl.io.schema.flexible.converters;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.SpecialName;
+import com.datasqrl.io.schema.flexible.FlexibleTableSchemaHolder;
 import com.datasqrl.schema.constraint.Constraint;
 import com.datasqrl.schema.constraint.NotNull;
 import com.datasqrl.schema.input.FlexibleFieldSchema.Field;
 import com.datasqrl.schema.input.FlexibleFieldSchema.FieldType;
 import com.datasqrl.schema.input.FlexibleTableSchema;
-import com.datasqrl.io.schema.flexible.FlexibleTableSchemaHolder;
 import com.datasqrl.schema.input.RelationType;
 import com.datasqrl.schema.input.SchemaElementDescription;
 import com.datasqrl.util.CalciteUtil;
@@ -23,32 +23,37 @@ public class RelDataTypeToFlexibleSchema {
   private static final NameCanonicalizer canonicalizer = NameCanonicalizer.SYSTEM;
 
   public static FlexibleTableSchemaHolder createFlexibleSchema(RelDataTypeField tableType) {
-    FlexibleTableSchema schema = new FlexibleTableSchema(
-        Name.system(tableType.getName()), new SchemaElementDescription(""), null, false,
-        createFields(tableType.getType().getFieldList()),
-        List.of());
+    FlexibleTableSchema schema =
+        new FlexibleTableSchema(
+            Name.system(tableType.getName()),
+            new SchemaElementDescription(""),
+            null,
+            false,
+            createFields(tableType.getType().getFieldList()),
+            List.of());
     return new FlexibleTableSchemaHolder(schema);
   }
 
   private static RelationType<Field> createFields(List<RelDataTypeField> relFields) {
     List<Field> fields = new ArrayList<>();
-    for (RelDataTypeField field: relFields) {
-      List<Constraint> constraints = field.getType().isNullable()?List.of():List.of(NotNull.INSTANCE);
+    for (RelDataTypeField field : relFields) {
+      List<Constraint> constraints =
+          field.getType().isNullable() ? List.of() : List.of(NotNull.INSTANCE);
       Optional<RelDataType> nestedType = CalciteUtil.getNestedTableType(field.getType());
       Name fieldName = canonicalizer.name(field.getName());
       if (nestedType.isPresent()) {
         RelationType<?> relType = createFields(nestedType.get().getFieldList());
-        fields.add(new Field(
-            fieldName,
-            new SchemaElementDescription(""),
-            null,
-            List.of(new FieldType(
-                SpecialName.SINGLETON,
-                relType,
-                CalciteUtil.isArray(field.getType()) ? 1 : 0,
-                constraints
-            ))
-        ));
+        fields.add(
+            new Field(
+                fieldName,
+                new SchemaElementDescription(""),
+                null,
+                List.of(
+                    new FieldType(
+                        SpecialName.SINGLETON,
+                        relType,
+                        CalciteUtil.isArray(field.getType()) ? 1 : 0,
+                        constraints))));
       } else {
         RelDataType fieldType = field.getType();
         int arrayDepth = 0;
@@ -57,22 +62,19 @@ public class RelDataTypeToFlexibleSchema {
           fieldType = elementType.get();
           arrayDepth++;
         }
-        fields.add(new Field(
-            fieldName,
-            new SchemaElementDescription(""),
-            null,
-            List.of(new FieldType(
-                SpecialName.SINGLETON,
-                RelDataTypePrimitiveToFlexibleType.toType(fieldType), //other types
-                arrayDepth,
-                constraints
-            ))
-        ));
+        fields.add(
+            new Field(
+                fieldName,
+                new SchemaElementDescription(""),
+                null,
+                List.of(
+                    new FieldType(
+                        SpecialName.SINGLETON,
+                        RelDataTypePrimitiveToFlexibleType.toType(fieldType), // other types
+                        arrayDepth,
+                        constraints))));
       }
     }
     return new RelationType<>(fields);
   }
-
-
-
 }

@@ -11,6 +11,6 @@ public class QueryTemplate {
   String database;
 
   RelNode relNode;
-  //TODO: add parameters
+  // TODO: add parameters
 
 }

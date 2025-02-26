@@ -1,14 +1,10 @@
 package com.datasqrl.graphql.io;
 
-import lombok.Value;
-
 import java.time.Instant;
-import java.util.Optional;
-import java.util.UUID;
+import lombok.Value;
 
 @Value
 public class SinkResult {
 
-    Instant sourceTime;
-
+  Instant sourceTime;
 }

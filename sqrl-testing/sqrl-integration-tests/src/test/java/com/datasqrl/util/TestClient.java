@@ -1,20 +1,20 @@
-//package com.datasqrl.util;
+// package com.datasqrl.util;
 //
-//import io.vertx.core.Vertx;
-//import io.vertx.core.http.WebSocket;
-//import io.vertx.core.impl.future.PromiseImpl;
-//import io.vertx.core.json.JsonObject;
-//import io.vertx.ext.web.client.HttpResponse;
-//import io.vertx.ext.web.client.WebClient;
-//import io.vertx.ext.web.codec.BodyCodec;
-//import lombok.extern.slf4j.Slf4j;
+// import io.vertx.core.Vertx;
+// import io.vertx.core.http.WebSocket;
+// import io.vertx.core.impl.future.PromiseImpl;
+// import io.vertx.core.json.JsonObject;
+// import io.vertx.ext.web.client.HttpResponse;
+// import io.vertx.ext.web.client.WebClient;
+// import io.vertx.ext.web.codec.BodyCodec;
+// import lombok.extern.slf4j.Slf4j;
 //
-//import java.util.function.Consumer;
+// import java.util.function.Consumer;
 //
-//import static org.junit.jupiter.api.Assertions.fail;
+// import static org.junit.jupiter.api.Assertions.fail;
 //
-//@Slf4j
-//public class TestClient {
+// @Slf4j
+// public class TestClient {
 //
 //  public static final Consumer<HttpResponse<JsonObject>> NO_HANDLER = (h)->{};
 //  public static final Consumer<HttpResponse<JsonObject>> FAIL_HANDLER = (h)->{
@@ -39,7 +39,8 @@
 //          if (ar.succeeded()) {
 //            log.info("Received response with status code" + ar.result().statusCode());
 //            log.info("Response Body: " + ar.result().body());
-//            if (ar.result().statusCode() != 200 || ar.result().body().toString().contains("errors")) {
+//            if (ar.result().statusCode() != 200 ||
+// ar.result().body().toString().contains("errors")) {
 //              fail(ar.result().body().toString());
 //            }
 //            callback.accept(ar.result());
@@ -102,4 +103,4 @@
 //    });
 //    return p;
 //  }
-//}
+// }

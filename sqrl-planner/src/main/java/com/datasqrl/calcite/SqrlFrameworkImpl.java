@@ -12,8 +12,10 @@ public class SqrlFrameworkImpl extends SqrlFramework {
 
   @Inject
   public SqrlFrameworkImpl(SqrlSchema schema) {
-    super(SqrlRelMetadataProvider.INSTANCE,
-        SqrlHintStrategyTable.getHintStrategyTable(), NameCanonicalizer.SYSTEM,
+    super(
+        SqrlRelMetadataProvider.INSTANCE,
+        SqrlHintStrategyTable.getHintStrategyTable(),
+        NameCanonicalizer.SYSTEM,
         schema);
   }
 }

@@ -20,7 +20,8 @@ import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqrlTableFunctionDef;
 
 @Getter
-public class SqrlTableNamespaceObject extends AbstractTableNamespaceObject<PhysicalRelationalTable> {
+public class SqrlTableNamespaceObject
+    extends AbstractTableNamespaceObject<PhysicalRelationalTable> {
   private final Name name;
   private final PhysicalRelationalTable table;
   private final SqrlTableFunctionDef args;
@@ -32,11 +33,19 @@ public class SqrlTableNamespaceObject extends AbstractTableNamespaceObject<Physi
   private final boolean isTest;
   private final Optional<SqlNodeList> opHints;
 
-  public SqrlTableNamespaceObject(Name name, PhysicalRelationalTable table, CalciteTableFactory tableFactory,
+  public SqrlTableNamespaceObject(
+      Name name,
+      PhysicalRelationalTable table,
+      CalciteTableFactory tableFactory,
       SqrlTableFunctionDef args,
-      List<FunctionParameter> parameters, List<Function> isA, boolean materializeSelf,
-      List<FunctionParameter> functionParameters, Optional<Supplier<RelNode>> relNodeSupplier,
-      ModuleLoader moduleLoader, boolean isTest, Optional<SqlNodeList> opHints) {
+      List<FunctionParameter> parameters,
+      List<Function> isA,
+      boolean materializeSelf,
+      List<FunctionParameter> functionParameters,
+      Optional<Supplier<RelNode>> relNodeSupplier,
+      ModuleLoader moduleLoader,
+      boolean isTest,
+      Optional<SqlNodeList> opHints) {
     super(tableFactory, NameCanonicalizer.SYSTEM, moduleLoader);
     this.name = name;
     this.table = table;
@@ -51,18 +60,28 @@ public class SqrlTableNamespaceObject extends AbstractTableNamespaceObject<Physi
   }
 
   @Override
-  public boolean apply(ScriptPlanner planner, Optional<String> objectName, SqrlFramework framework, ErrorCollector errors) {
-    registerScriptTable(table, framework, Optional.of(functionParameters),
-        relNodeSupplier, isTest, false, opHints.flatMap(this::execHint));
+  public boolean apply(
+      ScriptPlanner planner,
+      Optional<String> objectName,
+      SqrlFramework framework,
+      ErrorCollector errors) {
+    registerScriptTable(
+        table,
+        framework,
+        Optional.of(functionParameters),
+        relNodeSupplier,
+        isTest,
+        false,
+        opHints.flatMap(this::execHint));
 
     return true;
   }
 
   private Optional<Boolean> execHint(SqlNodeList hintList) {
-    return hintList.getList()
-        .stream().map(e->(SqlHint)e)
-        .filter(e->e.getName().equalsIgnoreCase("exec"))
-        .map(e->Boolean.TRUE)
+    return hintList.getList().stream()
+        .map(e -> (SqlHint) e)
+        .filter(e -> e.getName().equalsIgnoreCase("exec"))
+        .map(e -> Boolean.TRUE)
         .findAny();
   }
 }

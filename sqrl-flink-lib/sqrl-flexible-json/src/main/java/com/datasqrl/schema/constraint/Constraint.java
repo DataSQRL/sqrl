@@ -3,8 +3,8 @@
  */
 package com.datasqrl.schema.constraint;
 
-import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.schema.type.Type;
 import java.io.Serializable;
 import java.util.Arrays;
@@ -28,7 +28,6 @@ public interface Constraint extends Serializable {
     Name getName();
 
     Optional<Constraint> create(Map<String, Object> parameters, ErrorCollector errors);
-
   }
 
   interface Lookup {
@@ -38,22 +37,23 @@ public interface Constraint extends Serializable {
     default Factory get(String constraintName) {
       return get(Name.system(constraintName));
     }
-
   }
 
-  //TODO: Discover Factories
-  Constraint.Factory[] FACTORIES = {new NotNull.Factory(),
-      new Cardinality.Factory(), new Unique.Factory()};
-
-  Lookup FACTORY_LOOKUP = new Lookup() {
-
-    private final Map<Name, Constraint.Factory> factoriesByName = Arrays.stream(FACTORIES)
-        .collect(Collectors.toMap(f -> f.getName(), Function.identity()));
-
-    @Override
-    public Factory get(Name constraintName) {
-      return factoriesByName.get(constraintName);
-    }
+  // TODO: Discover Factories
+  Constraint.Factory[] FACTORIES = {
+    new NotNull.Factory(), new Cardinality.Factory(), new Unique.Factory()
   };
 
+  Lookup FACTORY_LOOKUP =
+      new Lookup() {
+
+        private final Map<Name, Constraint.Factory> factoriesByName =
+            Arrays.stream(FACTORIES)
+                .collect(Collectors.toMap(f -> f.getName(), Function.identity()));
+
+        @Override
+        public Factory get(Name constraintName) {
+          return factoriesByName.get(constraintName);
+        }
+      };
 }

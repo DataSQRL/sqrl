@@ -7,9 +7,7 @@ import org.apache.flink.api.common.serialization.DeserializationSchema;
 
 public class JsonFlexibleSchemaDelegate extends FlexibleSchemaDelegate {
 
-  public JsonFlexibleSchemaDelegate(
-      DeserializationSchema schema,
-      SchemaValidator validator) {
+  public JsonFlexibleSchemaDelegate(DeserializationSchema schema, SchemaValidator validator) {
     super(schema, validator);
   }
 

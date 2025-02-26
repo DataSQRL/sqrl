@@ -24,15 +24,10 @@ import lombok.Value;
 @Getter
 public abstract class AbstractExternalTable implements ExternalTable {
 
-  @NonNull
-  protected final TableConfig configuration;
-  @EqualsAndHashCode.Include
-  @NonNull
-  protected final NamePath path;
-  @NonNull
-  protected final Name name;
-  @NonNull
-  protected final Optional<TableSchema> tableSchema;
+  @NonNull protected final TableConfig configuration;
+  @EqualsAndHashCode.Include @NonNull protected final NamePath path;
+  @NonNull protected final Name name;
+  @NonNull protected final Optional<TableSchema> tableSchema;
 
   public String qualifiedName() {
     return path.toString();
@@ -56,7 +51,5 @@ public abstract class AbstractExternalTable implements ExternalTable {
       }
       return String.join(String.valueOf(delimiter), components);
     }
-
   }
-
 }

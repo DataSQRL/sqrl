@@ -7,7 +7,6 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.JdbcParameterHandler;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import lombok.EqualsAndHashCode;
@@ -21,8 +20,7 @@ import org.apache.calcite.rel.RelNode;
 @ToString
 public class APIQuery implements IdentifiedQuery {
 
-  @Include
-  String nameId;
+  @Include String nameId;
   // Path from root
   NamePath namePath;
   // Query
@@ -34,11 +32,9 @@ public class APIQuery implements IdentifiedQuery {
   // Has a limit/offset
   boolean isLimitOffset;
 
-
   @Override
   public Optional<Name> getViewName() {
     if (!getParameters().isEmpty()) return Optional.empty();
     return Optional.of(namePath.getLast());
   }
-
 }

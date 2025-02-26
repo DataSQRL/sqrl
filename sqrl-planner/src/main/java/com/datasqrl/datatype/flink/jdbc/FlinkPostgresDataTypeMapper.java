@@ -77,7 +77,7 @@ public class FlinkPostgresDataTypeMapper extends FlinkDataTypeMapper {
   @Override
   public Optional<CastFunction> convertType(RelDataType type) {
     if (nativeTypeSupport(type)) {
-      return Optional.empty(); //no cast needed
+      return Optional.empty(); // no cast needed
     }
 
     // Explicit downcast for json
@@ -85,19 +85,16 @@ public class FlinkPostgresDataTypeMapper extends FlinkDataTypeMapper {
       RawRelDataType rawRelDataType = (RawRelDataType) type;
       if (rawRelDataType.getRawType().getDefaultConversion() == FlinkJsonType.class) {
         return Optional.of(
-            new CastFunction(JsonToString.class.getName(),
-                convert(new JsonToString())));
+            new CastFunction(JsonToString.class.getName(), convert(new JsonToString())));
       } else if (rawRelDataType.getRawType().getDefaultConversion() == FlinkVectorType.class) {
         return Optional.of(
-            new CastFunction(VectorToDouble.class.getName(),
-                convert(new VectorToDouble())));
+            new CastFunction(VectorToDouble.class.getName(), convert(new VectorToDouble())));
       }
     }
 
     // Cast needed, convert to bytes
     return Optional.of(
-        new CastFunction(SerializeToBytes.class.getName(),
-            convert(new SerializeToBytes())));
+        new CastFunction(SerializeToBytes.class.getName(), convert(new SerializeToBytes())));
   }
 
   @Override
@@ -112,7 +109,7 @@ public class FlinkPostgresDataTypeMapper extends FlinkDataTypeMapper {
       return false;
     }
 
-    String url = (String)tableConfig.getConnectorConfig().toMap().get("url");
+    String url = (String) tableConfig.getConnectorConfig().toMap().get("url");
     return url.toLowerCase().startsWith("jdbc:postgresql:");
   }
 }

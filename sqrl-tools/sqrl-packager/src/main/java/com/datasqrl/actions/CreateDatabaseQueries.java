@@ -9,7 +9,7 @@ import com.google.inject.Inject;
 import java.util.List;
 import lombok.AllArgsConstructor;
 
-@AllArgsConstructor(onConstructor_=@Inject)
+@AllArgsConstructor(onConstructor_ = @Inject)
 public class CreateDatabaseQueries {
 
   private final ExecutionPipeline pipeline;
@@ -17,10 +17,9 @@ public class CreateDatabaseQueries {
   private final DatabaseQueryFactory databaseQueryFactory;
 
   public void run() {
-    if (pipeline.getStage(Type.DATABASE).isPresent() &&
-        pipeline.getStage(Type.SERVER).isEmpty()) {
+    if (pipeline.getStage(Type.DATABASE).isPresent() && pipeline.getStage(Type.SERVER).isEmpty()) {
       List<APIQuery> apiQueries = databaseQueryFactory.generateQueries(framework.getSchema());
-      apiQueries.forEach(q->framework.getSchema().getQueries().add(q));
+      apiQueries.forEach(q -> framework.getSchema().getQueries().add(q));
     }
   }
 }

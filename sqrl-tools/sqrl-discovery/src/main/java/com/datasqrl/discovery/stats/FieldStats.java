@@ -3,8 +3,8 @@
  */
 package com.datasqrl.discovery.stats;
 
-import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.schema.input.RelationType;
 import com.datasqrl.schema.input.TypeSignature.Simple;
 import com.datasqrl.schema.input.TypeSignatureUtil;
@@ -29,11 +29,9 @@ public class FieldStats implements Serializable {
   Map<FieldTypeStats, FieldTypeStats> types = new HashMap<>(4);
   Map<String, AtomicLong> nameCounts = new HashMap<>(2);
 
-  public FieldStats() {
-  }
+  public FieldStats() {}
 
-  public static void validate(Object o, ErrorCollector errors,
-      NameCanonicalizer canonicalizer) {
+  public static void validate(Object o, ErrorCollector errors, NameCanonicalizer canonicalizer) {
     if (TypeSignatureUtil.isArray(o)) {
       Type type = null;
       Pair<Stream<Object>, Integer> array = TypeSignatureUtil.flatMapArray(o);
@@ -51,7 +49,7 @@ public class FieldStats implements Serializable {
           }
           RelationStats.validate((Map) next, errors, canonicalizer);
         } else {
-          //since we flatmapped, this must be a scalar
+          // since we flatmapped, this must be a scalar
           elementType = TypeSignatureUtil.getBasicType(next, errors);
           if (elementType == null) {
             return;
@@ -65,17 +63,16 @@ public class FieldStats implements Serializable {
           } else {
             errors.fatal(
                 "Array contains elements with incompatible types: [%s]. Found [%s] and [%s]",
-                o,
-                type, elementType);
+                o, type, elementType);
           }
         }
       }
     } else if (o != null) {
-      //Single element
+      // Single element
       if (o instanceof Map) {
         RelationStats.validate((Map) o, errors, canonicalizer);
       } else {
-        //not an array or map => must be scalar
+        // not an array or map => must be scalar
         TypeSignatureUtil.getBasicType(o, errors);
       }
     }
@@ -84,14 +81,15 @@ public class FieldStats implements Serializable {
   public void add(Object o, @NonNull String displayName, NameCanonicalizer canonicalizer) {
     count++;
     addNameCount(displayName, 1);
-    Optional<Simple> typeSignatureOpt = TypeSignatureUtil.detectSimpleTypeSignature(o, BasicTypeManager::detectType,
-        BasicTypeManager::detectType);
+    Optional<Simple> typeSignatureOpt =
+        TypeSignatureUtil.detectSimpleTypeSignature(
+            o, BasicTypeManager::detectType, BasicTypeManager::detectType);
     if (typeSignatureOpt.isEmpty()) {
       numNulls++;
     } else {
       Simple typeSignature = typeSignatureOpt.get();
       FieldTypeStats fieldStats = setOrGet(FieldTypeStats.of(typeSignature));
-      if (TypeSignatureUtil.isArray(o)) { //Processes nested maps if any
+      if (TypeSignatureUtil.isArray(o)) { // Processes nested maps if any
         Iterator<Object> arrIter = TypeSignatureUtil.flatMapArray(o).getLeft().iterator();
         int numElements = 0;
         while (arrIter.hasNext()) {
@@ -148,12 +146,16 @@ public class FieldStats implements Serializable {
   }
 
   String getDisplayName() {
-    return nameCounts.entrySet().stream().max(new Comparator<Map.Entry<String, AtomicLong>>() {
-      @Override
-      public int compare(Map.Entry<String, AtomicLong> o1, Map.Entry<String, AtomicLong> o2) {
-        return Long.compare(o1.getValue().get(), o2.getValue().get());
-      }
-    }).get().getKey();
+    return nameCounts.entrySet().stream()
+        .max(
+            new Comparator<Map.Entry<String, AtomicLong>>() {
+              @Override
+              public int compare(
+                  Map.Entry<String, AtomicLong> o1, Map.Entry<String, AtomicLong> o2) {
+                return Long.compare(o1.getValue().get(), o2.getValue().get());
+              }
+            })
+        .get()
+        .getKey();
   }
-
 }

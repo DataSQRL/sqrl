@@ -9,8 +9,7 @@ import com.google.auto.service.AutoService;
 public class EndOfWeekMetadata extends AbstractEndOfMetadata {
 
   public EndOfWeekMetadata() {
-    super(TimeFunctions.END_OF_WEEK.getTimeUnit(),
-        TimeFunctions.END_OF_WEEK.getOffsetUnit());
+    super(TimeFunctions.END_OF_WEEK.getTimeUnit(), TimeFunctions.END_OF_WEEK.getOffsetUnit());
   }
 
   @Override

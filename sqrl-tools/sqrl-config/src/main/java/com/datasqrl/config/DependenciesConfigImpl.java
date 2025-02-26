@@ -21,7 +21,7 @@ public class DependenciesConfigImpl implements PackageJson.DependenciesConfig {
 
   public Optional<Dependency> getDependency(String dependency) {
     if (!sqrlConfig.hasSubConfig(dependency)) {
-      //todo Optional
+      // todo Optional
       return Optional.empty();
     }
 
@@ -33,8 +33,8 @@ public class DependenciesConfigImpl implements PackageJson.DependenciesConfig {
     return parentConfig.asMap(DEPENDENCIES_KEY, DependencyImpl.class).get();
   }
 
-//  public static LinkedHashMap<String, Dependency> fromRootConfig(@NonNull SqrlConfig config) {
-//    return config.asMap(DEPENDENCIES_KEY,Dependency.class).get();
-//  }
+  //  public static LinkedHashMap<String, Dependency> fromRootConfig(@NonNull SqrlConfig config) {
+  //    return config.asMap(DEPENDENCIES_KEY,Dependency.class).get();
+  //  }
 
 }

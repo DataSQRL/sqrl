@@ -27,30 +27,32 @@ public class PostgresVectorTypeSerializer implements JdbcTypeSerializer {
 
   @Override
   public GenericDeserializationConverter<JdbcDeserializationConverter> getDeserializerConverter() {
-    return () -> (val)->{
-      FlinkVectorType t = (FlinkVectorType)val;
-      return t.getValue();
-    };
+    return () ->
+        (val) -> {
+          FlinkVectorType t = (FlinkVectorType) val;
+          return t.getValue();
+        };
   }
 
   @Override
   public GenericSerializationConverter<JdbcSerializationConverter> getSerializerConverter(
       LogicalType type) {
     FlinkVectorTypeSerializer flinkVectorTypeSerializer = new FlinkVectorTypeSerializer();
-    return () -> (val, index, statement) -> {
-      if (val != null && !val.isNullAt(index)) {
-        RawValueData<FlinkVectorType> object = val.getRawValue(index);
-        FlinkVectorType vec = object.toObject(flinkVectorTypeSerializer);
+    return () ->
+        (val, index, statement) -> {
+          if (val != null && !val.isNullAt(index)) {
+            RawValueData<FlinkVectorType> object = val.getRawValue(index);
+            FlinkVectorType vec = object.toObject(flinkVectorTypeSerializer);
 
-        if (vec != null) {
-          PGobject pgObject = new PGobject();
-          pgObject.setType("vector");
-          pgObject.setValue(Arrays.toString(vec.getValue()));
-          statement.setObject(index, pgObject);
-          return;
-        }
-      }
-      statement.setObject(index, null);
-    };
+            if (vec != null) {
+              PGobject pgObject = new PGobject();
+              pgObject.setType("vector");
+              pgObject.setValue(Arrays.toString(vec.getValue()));
+              statement.setObject(index, pgObject);
+              return;
+            }
+          }
+          statement.setObject(index, null);
+        };
   }
 }

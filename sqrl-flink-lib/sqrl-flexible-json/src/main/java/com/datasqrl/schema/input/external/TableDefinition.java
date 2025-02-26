@@ -15,5 +15,4 @@ public class TableDefinition extends AbstractElementDefinition {
 
   public List<FieldDefinition> columns;
   public List<String> tests;
-
 }

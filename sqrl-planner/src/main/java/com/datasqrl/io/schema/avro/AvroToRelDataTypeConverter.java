@@ -32,19 +32,19 @@ public class AvroToRelDataTypeConverter {
   public RelDataType convert(Schema schema) {
     validateSchema(schema, NamePath.ROOT);
 
-    DataType dataType = AvroSchemaConverter.convertToDataType(schema.toString(false),
-        legacyTimestampMapping);
+    DataType dataType =
+        AvroSchemaConverter.convertToDataType(schema.toString(false), legacyTimestampMapping);
 
     TypeFactory typeFactory = TypeFactory.getTypeFactory();
 
-    return typeFactory.createFieldTypeFromLogicalType(
-        dataType.getLogicalType());
+    return typeFactory.createFieldTypeFromLogicalType(dataType.getLogicalType());
   }
 
   private void validateSchema(Schema schema, NamePath path) {
     // Check if the schema has already been processed
     if (!processedSchemas.add(schema)) {
-      throw errors.exception(ErrorCode.SCHEMA_ERROR, "Recursive schemas are not supported: %s", path);
+      throw errors.exception(
+          ErrorCode.SCHEMA_ERROR, "Recursive schemas are not supported: %s", path);
     }
 
     switch (schema.getType()) {
@@ -57,9 +57,12 @@ public class AvroToRelDataTypeConverter {
         }
 
         if (nonNullTypes.size() != 1) {
-          throw errors.exception(ErrorCode.SCHEMA_ERROR,
-              "Only AVRO unions with a single non-null type are supported, but found %d non-null types at: %s",
-              nonNullTypes.size(), path);
+          throw errors.exception(
+              ErrorCode.SCHEMA_ERROR,
+              "Only AVRO unions with a single non-null type are supported, but found %d non-null"
+                  + " types at: %s",
+              nonNullTypes.size(),
+              path);
         }
 
         Schema innerSchema = nonNullTypes.get(0);
@@ -67,8 +70,7 @@ public class AvroToRelDataTypeConverter {
         break;
       case RECORD:
         for (Field field : schema.getFields()) {
-          validateSchema(field.schema(),
-              path.concat(Name.system(field.name())));
+          validateSchema(field.schema(), path.concat(Name.system(field.name())));
         }
         break;
       case ARRAY:
@@ -97,8 +99,8 @@ public class AvroToRelDataTypeConverter {
       case NULL:
         return;
       default:
-        throw errors.exception(ErrorCode.SCHEMA_ERROR, "Unrecognized AVRO Type [%s] at: %s",
-            schema.getType(), path);
+        throw errors.exception(
+            ErrorCode.SCHEMA_ERROR, "Unrecognized AVRO Type [%s] at: %s", schema.getType(), path);
     }
   }
 }

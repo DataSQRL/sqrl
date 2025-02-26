@@ -18,9 +18,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * A generic java server engine.
- */
+/** A generic java server engine. */
 @Slf4j
 public abstract class GenericJavaServerEngine extends ExecutionEngine.Base implements ServerEngine {
 
@@ -29,15 +27,24 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
   }
 
   @Override
-  public EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs,
-      ExecutionPipeline pipeline, List<StagePlan> stagePlans, SqrlFramework framework, ErrorCollector errorCollector) {
+  public EnginePhysicalPlan plan(
+      StagePlan plan,
+      List<StageSink> inputs,
+      ExecutionPipeline pipeline,
+      List<StagePlan> stagePlans,
+      SqrlFramework framework,
+      ErrorCollector errorCollector) {
 
     Preconditions.checkArgument(plan instanceof ServerStagePlan);
-    Set<ExecutionStage> dbStages = pipeline.getStages().stream().filter(s -> s.getEngine().getType()== Type.DATABASE).collect(
-        Collectors.toSet());
-//    Preconditions.checkArgument(dbStages.size()==1, "Currently only support a single database stage in server");
-//    ExecutionEngine engine = Iterables.getOnlyElement(dbStages).getEngine();
-//    Preconditions.checkArgument(engine instanceof AbstractJDBCEngine, "Currently the server only supports JDBC databases");
-    return new ServerPhysicalPlan(/*Will set later after queries are generated*/null);
+    Set<ExecutionStage> dbStages =
+        pipeline.getStages().stream()
+            .filter(s -> s.getEngine().getType() == Type.DATABASE)
+            .collect(Collectors.toSet());
+    //    Preconditions.checkArgument(dbStages.size()==1, "Currently only support a single database
+    // stage in server");
+    //    ExecutionEngine engine = Iterables.getOnlyElement(dbStages).getEngine();
+    //    Preconditions.checkArgument(engine instanceof AbstractJDBCEngine, "Currently the server
+    // only supports JDBC databases");
+    return new ServerPhysicalPlan(/*Will set later after queries are generated*/ null);
   }
 }

@@ -2,34 +2,30 @@ package com.datasqrl.plan.util;
 
 import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
 import java.io.Serializable;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-
-import com.google.common.collect.Iterables;
 import lombok.*;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 
-/**
- * This class keeps track of the column indexes that are part of the primary key.
- */
+/** This class keeps track of the column indexes that are part of the primary key. */
 @ToString
 @AllArgsConstructor
 public class PrimaryKeyMap implements Serializable {
 
   public static final PrimaryKeyMap UNDEFINED = new PrimaryKeyMap();
-  @Singular
-  final List<ColumnSet> columns;
+  @Singular final List<ColumnSet> columns;
   final boolean undefined;
 
   public PrimaryKeyMap(List<ColumnSet> columns) {
-    List<Integer> allIndexes = columns.stream().flatMap(ColumnSet::stream)
-        .collect(Collectors.toUnmodifiableList());
-    Preconditions.checkArgument(allIndexes.size() == Set.copyOf(allIndexes).size(),
-        "Duplicate column indexes");
+    List<Integer> allIndexes =
+        columns.stream().flatMap(ColumnSet::stream).collect(Collectors.toUnmodifiableList());
+    Preconditions.checkArgument(
+        allIndexes.size() == Set.copyOf(allIndexes).size(), "Duplicate column indexes");
     this.columns = columns;
     this.undefined = false;
   }
@@ -78,8 +74,10 @@ public class PrimaryKeyMap implements Serializable {
   }
 
   public ColumnSet get(int position) {
-    Preconditions.checkArgument(position >= 0 && position < columns.size(),
-        "Primary key index out of bounds: %s", position);
+    Preconditions.checkArgument(
+        position >= 0 && position < columns.size(),
+        "Primary key index out of bounds: %s",
+        position);
     return columns.get(position);
   }
 
@@ -168,22 +166,26 @@ public class PrimaryKeyMap implements Serializable {
 
     public int pickBest(RelDataType rowType) {
       List<RelDataTypeField> fields = rowType.getFieldList();
-      //Try to pick the first not-null
-      Optional<Integer> nonNullPk = indexes.stream()
-          .filter(idx -> !fields.get(idx).getType().isNullable()).sorted().findFirst();
-      //Otherwise, pick the first
+      // Try to pick the first not-null
+      Optional<Integer> nonNullPk =
+          indexes.stream()
+              .filter(idx -> !fields.get(idx).getType().isNullable())
+              .sorted()
+              .findFirst();
+      // Otherwise, pick the first
       return nonNullPk.orElseGet(() -> indexes.stream().sorted().findFirst().get());
-
     }
 
     public ColumnSet remap(IndexMap remap) {
-      Set<Integer> result = indexes.stream().map(remap::mapUnsafe).filter(i -> i >= 0)
-          .collect(Collectors.toUnmodifiableSet());
-      Preconditions.checkArgument(!result.isEmpty(),
-          "Mapping does not preserve any columns [%s]: %s", indexes, remap);
+      Set<Integer> result =
+          indexes.stream()
+              .map(remap::mapUnsafe)
+              .filter(i -> i >= 0)
+              .collect(Collectors.toUnmodifiableSet());
+      Preconditions.checkArgument(
+          !result.isEmpty(), "Mapping does not preserve any columns [%s]: %s", indexes, remap);
       return new ColumnSet(result);
     }
-
   }
 
   public static class Builder {
@@ -229,6 +231,5 @@ public class PrimaryKeyMap implements Serializable {
       Preconditions.checkArgument(columns.stream().noneMatch(Objects::isNull));
       return new PrimaryKeyMap(columns);
     }
-
   }
 }

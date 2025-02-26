@@ -31,12 +31,9 @@ import com.google.inject.Injector;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -49,50 +46,61 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
 
   public static final Path DEFAULT_DEPLOY_DIR = Path.of("build", "deploy");
 
-  @CommandLine.Parameters(arity = "0..2", description = "Main script and (optional) API specification")
+  @CommandLine.Parameters(
+      arity = "0..2",
+      description = "Main script and (optional) API specification")
   protected Path[] files = new Path[0];
 
-  @CommandLine.Option(names = {"-a", "--api"},
+  @CommandLine.Option(
+      names = {"-a", "--api"},
       description = "Generates the API specification for the given type")
   protected APIType[] generateAPI = new APIType[0];
 
-  @CommandLine.Option(names = {"-t", "--target"},
+  @CommandLine.Option(
+      names = {"-t", "--target"},
       description = "Target directory for deployment artifacts")
   protected Path targetDir = DEFAULT_DEPLOY_DIR;
 
   @SneakyThrows
   public void execute(ErrorCollector errors) {
-    execute(errors, targetDir.resolve("snapshots"),
-        Optional.empty(), ExecutionGoal.COMPILE);
+    execute(errors, targetDir.resolve("snapshots"), Optional.empty(), ExecutionGoal.COMPILE);
   }
 
-  public void execute(ErrorCollector errors, Path snapshotPath, Optional<Path> testsPath,
-      ExecutionGoal goal) {
+  public void execute(
+      ErrorCollector errors, Path snapshotPath, Optional<Path> testsPath, ExecutionGoal goal) {
     Repository repository = createRepository(errors);
 
     PackageBootstrap packageBootstrap = new PackageBootstrap(repository, errors);
-    PackageJson sqrlConfig = packageBootstrap.bootstrap(root.rootDir, this.root.packageFiles,
-        this.files);
+    PackageJson sqrlConfig =
+        packageBootstrap.bootstrap(root.rootDir, this.root.packageFiles, this.files);
 
-    Optional<String> snapshotPathConf = sqrlConfig.getCompilerConfig()
-        .getSnapshotPath();
+    Optional<String> snapshotPathConf = sqrlConfig.getCompilerConfig().getSnapshotPath();
     if (snapshotPathConf.isEmpty()) {
-      sqrlConfig.getCompilerConfig()
-          .setSnapshotPath(snapshotPath.toAbsolutePath().toString());
+      sqrlConfig.getCompilerConfig().setSnapshotPath(snapshotPath.toAbsolutePath().toString());
     }
 
     if (goal == ExecutionGoal.TEST) {
-      List<String> defaultKeys = List.of(EngineKeys.TEST, EngineKeys.DATABASE, EngineKeys.LOG,
-          EngineKeys.ICEBERG, EngineKeys.DUCKDB, EngineKeys.SERVER, EngineKeys.STREAMS);
+      List<String> defaultKeys =
+          List.of(
+              EngineKeys.TEST,
+              EngineKeys.DATABASE,
+              EngineKeys.LOG,
+              EngineKeys.ICEBERG,
+              EngineKeys.DUCKDB,
+              EngineKeys.SERVER,
+              EngineKeys.STREAMS);
       sqrlConfig.setPipeline(defaultKeys);
     }
 
     DirectoryManager.prepareTargetDirectory(getTargetDir());
-    errors.checkFatal(Files.isDirectory(root.rootDir), "Not a valid root directory: %s", root.rootDir);
+    errors.checkFatal(
+        Files.isDirectory(root.rootDir), "Not a valid root directory: %s", root.rootDir);
 
-    Injector injector = Guice.createInjector(
-        new SqrlInjector(errors, root.rootDir, getTargetDir(), sqrlConfig, getGoal(), repository),
-        new StatefulModule(new SqrlSchema(new TypeFactory(), NameCanonicalizer.SYSTEM)));
+    Injector injector =
+        Guice.createInjector(
+            new SqrlInjector(
+                errors, root.rootDir, getTargetDir(), sqrlConfig, getGoal(), repository),
+            new StatefulModule(new SqrlSchema(new TypeFactory(), NameCanonicalizer.SYSTEM)));
 
     Packager packager = injector.getInstance(Packager.class);
     packager.preprocess(errors.withLocation(ErrorPrefix.CONFIG.resolve(PACKAGE_JSON)));
@@ -113,17 +121,30 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
       addGraphql(plan.getLeft(), root.rootDir);
     }
 
-    postprocess(sqrlConfig, packager, getTargetDir(), plan.getLeft(), plan.getRight(), snapshotPath, errors);
+    postprocess(
+        sqrlConfig,
+        packager,
+        getTargetDir(),
+        plan.getLeft(),
+        plan.getRight(),
+        snapshotPath,
+        errors);
   }
 
   private void validateTestPath(Path path) {
     if (!Files.isDirectory(path)) {
-      throw new RuntimeException("Could not find test path: "+ path.toAbsolutePath());
+      throw new RuntimeException("Could not find test path: " + path.toAbsolutePath());
     }
   }
 
-  protected void postprocess(PackageJson sqrlConfig, Packager packager, Path targetDir,
-      PhysicalPlan plan, TestPlan testPlan, Path snapshotPath, ErrorCollector errors) {
+  protected void postprocess(
+      PackageJson sqrlConfig,
+      Packager packager,
+      Path targetDir,
+      PhysicalPlan plan,
+      TestPlan testPlan,
+      Path snapshotPath,
+      ErrorCollector errors) {
 
     packager.postprocess(sqrlConfig, root.rootDir, getTargetDir(), plan, testPlan);
   }
@@ -137,15 +158,15 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
 
   @SneakyThrows
   protected void addGraphql(PhysicalPlan plan, Path rootDir) {
-    List<ServerPhysicalPlan> plans = plan.getPlans(ServerPhysicalPlan.class)
-        .collect(Collectors.toList());
+    List<ServerPhysicalPlan> plans =
+        plan.getPlans(ServerPhysicalPlan.class).collect(Collectors.toList());
     if (plans.isEmpty()) {
       return;
     }
 
     Path path = rootDir.resolve(GRAPHQL_NORMALIZED_FILE_NAME);
     Files.deleteIfExists(path);
-    StringSchema stringSchema = (StringSchema)plans.get(0).getModel().getSchema();
+    StringSchema stringSchema = (StringSchema) plans.get(0).getModel().getSchema();
     Files.writeString(path, stringSchema.getSchema(), StandardOpenOption.CREATE);
   }
 
@@ -157,9 +178,9 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   }
 
   protected Repository createRepository(ErrorCollector errors) {
-    LocalRepositoryImplementation localRepo = LocalRepositoryImplementation.of(errors,
-        root.rootDir);
-    //TODO: read remote repository URLs from configuration?
+    LocalRepositoryImplementation localRepo =
+        LocalRepositoryImplementation.of(errors, root.rootDir);
+    // TODO: read remote repository URLs from configuration?
     RemoteRepositoryImplementation remoteRepo = new RemoteRepositoryImplementation();
     remoteRepo.setCacheRepository(localRepo);
     return new CompositeRepositoryImpl(List.of(localRepo, remoteRepo));

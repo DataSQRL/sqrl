@@ -14,12 +14,14 @@ import org.apache.calcite.sql.type.SqlTypeName;
 public class NowSqlTranslation extends PostgresSqlTranslation {
 
   public NowSqlTranslation() {
-    super(lightweightOp("now", ReturnTypes.explicit(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3)));
+    super(
+        lightweightOp("now", ReturnTypes.explicit(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3)));
   }
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    SqlStdOperatorTable.CURRENT_TIMESTAMP.createCall(SqlParserPos.ZERO)
+    SqlStdOperatorTable.CURRENT_TIMESTAMP
+        .createCall(SqlParserPos.ZERO)
         .unparse(writer, leftPrec, rightPrec);
   }
 }

@@ -11,8 +11,12 @@ import lombok.SneakyThrows;
 
 public class DataSystemPreprocessor implements Preprocessor {
 
-  public static final Pattern DATASYSTEM_REGEX =  Pattern.compile(".*"+FileUtil.toRegex(DataSource.DATASYSTEM_FILE_PREFIX)
-      + ".*" + FileUtil.toRegex(DataSource.TABLE_FILE_SUFFIX));
+  public static final Pattern DATASYSTEM_REGEX =
+      Pattern.compile(
+          ".*"
+              + FileUtil.toRegex(DataSource.DATASYSTEM_FILE_PREFIX)
+              + ".*"
+              + FileUtil.toRegex(DataSource.TABLE_FILE_SUFFIX));
 
   @Override
   public Pattern getPattern() {

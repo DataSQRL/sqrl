@@ -20,11 +20,10 @@ import io.vertx.sqlclient.SqlClient;
 import io.vertx.sqlclient.Tuple;
 import java.util.Map;
 import lombok.Value;
-import net.snowflake.client.jdbc.internal.google.api.Page;
 
 /**
- * Purpose: Manages SQL clients and executes queries.
- * Collaboration: Used by {@link VertxContext} to prepare and execute SQL queries.
+ * Purpose: Manages SQL clients and executes queries. Collaboration: Used by {@link VertxContext} to
+ * prepare and execute SQL queries.
  */
 @Value
 public class VertxJdbcClient implements JdbcClient {
@@ -39,14 +38,12 @@ public class VertxJdbcClient implements JdbcClient {
       throw new RuntimeException("Could not find database engine: " + database);
     }
 
-    PreparedQuery<RowSet<Row>> preparedQuery = sqlClient
-        .preparedQuery(query.getSql());
+    PreparedQuery<RowSet<Row>> preparedQuery = sqlClient.preparedQuery(query.getSql());
 
-    return new ResolvedJdbcQuery(query,
-        new PreparedSqrlQueryImpl(preparedQuery));
+    return new ResolvedJdbcQuery(query, new PreparedSqrlQueryImpl(preparedQuery));
   }
 
-  //Todo Fix me
+  // Todo Fix me
   public static String getDatabaseName(QueryBase query) {
     if (query instanceof DuckDbQuery || query instanceof PagedDuckDbQuery) {
       return "duckdb";
@@ -70,8 +67,11 @@ public class VertxJdbcClient implements JdbcClient {
     SqlClient sqlClient = clients.get(database);
 
     if (database.equalsIgnoreCase("duckdb")) {
-      return sqlClient.query("INSTALL iceberg;").execute().compose(v ->
-          sqlClient.query("LOAD iceberg;").execute()).compose(t->query.execute(tup));
+      return sqlClient
+          .query("INSTALL iceberg;")
+          .execute()
+          .compose(v -> sqlClient.query("LOAD iceberg;").execute())
+          .compose(t -> query.execute(tup));
     }
     return query.execute(tup);
   }

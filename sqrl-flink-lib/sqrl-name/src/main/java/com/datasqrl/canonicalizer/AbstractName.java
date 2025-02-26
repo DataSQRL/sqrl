@@ -3,13 +3,13 @@
  */
 package com.datasqrl.canonicalizer;
 
-//import com.google.common.base.Preconditions;
-//import com.google.common.base.Strings;
+// import com.google.common.base.Preconditions;
+// import com.google.common.base.Strings;
 
 public abstract class AbstractName implements Name {
 
   public static String validateName(String name) {
-//    Preconditions.checkArgument(!Strings.isNullOrEmpty(name), "Not a valid name: %s", name);
+    //    Preconditions.checkArgument(!Strings.isNullOrEmpty(name), "Not a valid name: %s", name);
     return name;
   }
 

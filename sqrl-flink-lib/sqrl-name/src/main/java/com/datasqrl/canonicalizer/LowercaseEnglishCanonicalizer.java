@@ -15,5 +15,4 @@ public class LowercaseEnglishCanonicalizer implements NameCanonicalizer {
   public String getCanonical(String name) {
     return name.trim().toLowerCase(Locale.ENGLISH);
   }
-
 }

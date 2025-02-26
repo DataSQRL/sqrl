@@ -13,7 +13,6 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.function.AbstractFunctionModule;
 import com.datasqrl.function.StdLibrary;
 import com.google.auto.service.AutoService;
-
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.flink.table.functions.FunctionDefinition;
@@ -23,25 +22,25 @@ public class StdVectorLibraryImpl extends AbstractFunctionModule implements StdL
 
   public static final NamePath LIB_NAME = NamePath.of("vector");
 
-  public static final List<FunctionDefinition> SQRL_FUNCTIONS = List.of(
-      COSINE_SIMILARITY,
-      COSINE_DISTANCE,
-      EUCLIDEAN_DISTANCE,
-      VEC_TO_DOUBLE,
-      ONNX_EMBED,
-      ASCII_TEXT_TEST_EMBED,
-      CENTER
-  );
+  public static final List<FunctionDefinition> SQRL_FUNCTIONS =
+      List.of(
+          COSINE_SIMILARITY,
+          COSINE_DISTANCE,
+          EUCLIDEAN_DISTANCE,
+          VEC_TO_DOUBLE,
+          ONNX_EMBED,
+          ASCII_TEXT_TEST_EMBED,
+          CENTER);
 
   public StdVectorLibraryImpl() {
-    super(SQRL_FUNCTIONS.stream()
-        .map(NamespaceObjectUtil::createNsObject)
-        .collect(Collectors.toList()));
+    super(
+        SQRL_FUNCTIONS.stream()
+            .map(NamespaceObjectUtil::createNsObject)
+            .collect(Collectors.toList()));
   }
 
   @Override
   public NamePath getPath() {
     return LIB_NAME;
   }
-
 }

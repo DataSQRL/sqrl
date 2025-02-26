@@ -4,7 +4,9 @@
 package com.datasqrl.config;
 
 public enum ExternalDataType {
-  source, sink, source_and_sink;
+  source,
+  sink,
+  source_and_sink;
 
   public boolean isSource() {
     return this == source || this == source_and_sink;

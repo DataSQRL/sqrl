@@ -4,6 +4,9 @@
 package com.datasqrl.plan.util;
 
 import com.datasqrl.util.CalciteHacks;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.List;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.externalize.RelWriterImpl;
 import org.apache.calcite.rel.hint.Hintable;
@@ -12,13 +15,7 @@ import org.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.apache.calcite.sql.SqlExplainLevel;
 import org.apache.calcite.util.Pair;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.List;
-
-/**
- * Methods copied from Calcite's {@link RelWriterImpl} to add hints to the output
- */
+/** Methods copied from Calcite's {@link RelWriterImpl} to add hints to the output */
 public class RelWriterWithHints extends RelWriterImpl {
 
   public boolean withHints = true;
@@ -41,18 +38,17 @@ public class RelWriterWithHints extends RelWriterImpl {
    * @param values
    */
   @Override
-  protected void explain_(RelNode rel,
-      List<Pair<String, Object>> values) {
+  protected void explain_(RelNode rel, List<Pair<String, Object>> values) {
     List<RelNode> inputs = rel.getInputs();
     final RelMetadataQuery mq = rel.getCluster().getMetadataQuery();
     CalciteHacks.resetToSqrlMetadataProvider();
 
-    //removed b/c of
-//    if (!mq.isVisibleInExplain(rel, detailLevel)) {
-      // render children in place of this, at same level
-//      explainInputs(inputs);
-//      return;
-//    }
+    // removed b/c of
+    //    if (!mq.isVisibleInExplain(rel, detailLevel)) {
+    // render children in place of this, at same level
+    //      explainInputs(inputs);
+    //      return;
+    //    }
 
     StringBuilder s = new StringBuilder();
     spacer.spaces(s);
@@ -71,16 +67,13 @@ public class RelWriterWithHints extends RelWriterImpl {
         } else {
           s.append(", ");
         }
-        s.append(value.left)
-            .append("=[")
-            .append(value.right)
-            .append("]");
+        s.append(value.left).append("=[").append(value.right).append("]");
       }
       if (j > 0) {
         s.append(")");
       }
     }
-    //===== Added this code to print hints ========
+    // ===== Added this code to print hints ========
     if (withHints && rel instanceof Hintable) {
       int j = 0;
       for (RelHint hint : ((Hintable) rel).getHints()) {
@@ -98,7 +91,7 @@ public class RelWriterWithHints extends RelWriterImpl {
         s.append("]");
       }
     }
-    //===== end of added code =====
+    // ===== end of added code =====
 
     switch (detailLevel) {
       case ALL_ATTRIBUTES:
@@ -111,7 +104,6 @@ public class RelWriterWithHints extends RelWriterImpl {
     spacer.add(2);
     explainInputs(inputs);
     spacer.subtract(2);
-
   }
 
   /**

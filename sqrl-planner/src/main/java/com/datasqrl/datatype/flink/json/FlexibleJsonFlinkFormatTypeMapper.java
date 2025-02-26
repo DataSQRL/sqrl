@@ -84,15 +84,15 @@ public class FlexibleJsonFlinkFormatTypeMapper extends FlinkDataTypeMapper {
 
   @Override
   public Optional<CastFunction> convertType(RelDataType type) {
-    if (type.getSqlTypeName() == SqlTypeName.ROW ||
-        (type.getSqlTypeName() == SqlTypeName.ARRAY && type.getComponentType().getSqlTypeName() == SqlTypeName.ROW)) {
+    if (type.getSqlTypeName() == SqlTypeName.ROW
+        || (type.getSqlTypeName() == SqlTypeName.ARRAY
+            && type.getComponentType().getSqlTypeName() == SqlTypeName.ROW)) {
       return Optional.of(new CastFunction(ToJson.class.getName(), convert(new ToJson())));
     }
 
     // Cast needed, convert to bytes
     return Optional.of(
-        new CastFunction(SerializeToBytes.class.getName(),
-            convert(new SerializeToBytes())));
+        new CastFunction(SerializeToBytes.class.getName(), convert(new SerializeToBytes())));
   }
 
   @Override

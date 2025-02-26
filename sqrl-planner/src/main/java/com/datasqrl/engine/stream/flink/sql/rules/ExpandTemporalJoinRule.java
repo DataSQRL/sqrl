@@ -42,17 +42,16 @@ public class ExpandTemporalJoinRule extends RelOptRule {
   public void onMatch(RelOptRuleCall relOptRuleCall) {
     LogicalJoin join = relOptRuleCall.rel(0);
 
-    Optional<TemporalJoinHint> temporalHintOpt = SqrlHint.fromRel(join,
-        TemporalJoinHint.CONSTRUCTOR);
+    Optional<TemporalJoinHint> temporalHintOpt =
+        SqrlHint.fromRel(join, TemporalJoinHint.CONSTRUCTOR);
 
     temporalHintOpt
-        .map(hint->handleTemporalJoin(relOptRuleCall, join, hint))
+        .map(hint -> handleTemporalJoin(relOptRuleCall, join, hint))
         .ifPresent(relOptRuleCall::transformTo);
   }
 
-
-  private RelNode handleTemporalJoin(RelOptRuleCall relOptRuleCall, LogicalJoin join,
-      TemporalJoinHint temporalHint) {
+  private RelNode handleTemporalJoin(
+      RelOptRuleCall relOptRuleCall, LogicalJoin join, TemporalJoinHint temporalHint) {
     RelBuilder relBuilder = relOptRuleCall.builder();
     RexBuilder rexBuilder = relBuilder.getRexBuilder();
     Holder<RexCorrelVariable> correlVar = Holder.of(null);
@@ -60,17 +59,23 @@ public class ExpandTemporalJoinRule extends RelOptRule {
     relBuilder.push(join.getRight());
     relBuilder.snapshot(
         rexBuilder.makeFieldAccess(correlVar.get(), temporalHint.getStreamTimestampIdx()));
-    CorrelateRexRewriter correlRewriter = new CorrelateRexRewriter(rexBuilder,
-        join.getLeft().getRowType().getFieldList(),
-        correlVar, join.getRight().getRowType().getFieldList());
+    CorrelateRexRewriter correlRewriter =
+        new CorrelateRexRewriter(
+            rexBuilder,
+            join.getLeft().getRowType().getFieldList(),
+            correlVar,
+            join.getRight().getRowType().getFieldList());
     relBuilder.filter(correlRewriter.rewrite(join.getCondition()));
     Set<Integer> usedLeftFieldIdx = correlRewriter.usedLeftFieldIdx;
     usedLeftFieldIdx.add(temporalHint.getStreamTimestampIdx());
-    relBuilder.correlate(join.getJoinType(), correlVar.get().id, usedLeftFieldIdx.stream()
-        .map(idx -> rexBuilder.makeInputRef(join.getLeft(), idx)).collect(Collectors.toList()));
+    relBuilder.correlate(
+        join.getJoinType(),
+        correlVar.get().id,
+        usedLeftFieldIdx.stream()
+            .map(idx -> rexBuilder.makeInputRef(join.getLeft(), idx))
+            .collect(Collectors.toList()));
     return relBuilder.build();
   }
-
 
   private class CorrelateRexRewriter extends RexRewriter {
 
@@ -79,8 +84,10 @@ public class ExpandTemporalJoinRule extends RelOptRule {
     final List<RelDataTypeField> rightFields;
     final Set<Integer> usedLeftFieldIdx = new HashSet<>();
 
-    public CorrelateRexRewriter(RexBuilder rexBuilder,
-        List<RelDataTypeField> leftFields, Holder<RexCorrelVariable> leftCorrelVar,
+    public CorrelateRexRewriter(
+        RexBuilder rexBuilder,
+        List<RelDataTypeField> leftFields,
+        Holder<RexCorrelVariable> leftCorrelVar,
         List<RelDataTypeField> rightFields) {
       super(List.of(), rexBuilder);
       this.leftFields = leftFields;
@@ -104,8 +111,8 @@ public class ExpandTemporalJoinRule extends RelOptRule {
     public RexNode rewrite(RexNode node) {
       return node.accept(this);
     }
-
   }
+
   @AllArgsConstructor
   private class RexRewriter extends RexShuttle {
 
@@ -119,14 +126,15 @@ public class ExpandTemporalJoinRule extends RelOptRule {
 
     @Override
     public RexNode visitCall(RexCall call) {
-      boolean[] update = new boolean[]{false};
+      boolean[] update = new boolean[] {false};
       List<RexNode> clonedOperands = this.visitList(call.operands, update);
       SqlOperator operator = call.getOperator();
       RelDataType datatype = call.getType();
       if (operator.equals(SqlStdOperatorTable.CURRENT_TIMESTAMP)) {
         update[0] = true;
         operator = FlinkSqlOperatorTable.PROCTIME;
-        //TODO: remove this condition for now from the pipeline since Flink cannot handle the interval
+        // TODO: remove this condition for now from the pipeline since Flink cannot handle the
+        // interval
         return rexBuilder.makeZeroLiteral(call.getType());
       }
       return update[0] ? rexBuilder.makeCall(datatype, operator, clonedOperands) : call;
@@ -136,7 +144,7 @@ public class ExpandTemporalJoinRule extends RelOptRule {
     public RexNode visitLiteral(RexLiteral literal) {
       if (literal.getTypeName() == SqlTypeName.INTERVAL_SECOND) {
         BigDecimal intervalMs = literal.getValueAs(BigDecimal.class);
-        //This does not seem to work in Flink
+        // This does not seem to work in Flink
         SqlIntervalQualifier sqlIntervalQualifier =
             new SqlIntervalQualifier(TimeUnit.YEAR, 3, TimeUnit.YEAR, 3, SqlParserPos.ZERO);
         return rexBuilder.makeIntervalLiteral(intervalMs, sqlIntervalQualifier);

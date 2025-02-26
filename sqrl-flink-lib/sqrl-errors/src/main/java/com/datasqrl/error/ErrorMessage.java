@@ -40,7 +40,9 @@ public interface ErrorMessage {
   }
 
   enum Severity {
-    NOTICE, WARN, FATAL
+    NOTICE,
+    WARN,
+    FATAL
   }
 
   @Getter
@@ -55,8 +57,8 @@ public interface ErrorMessage {
       this(ErrorLabel.GENERIC, message, location, severity);
     }
 
-    public Implementation(ErrorLabel errorLabel, String message, ErrorLocation location,
-        Severity severity) {
+    public Implementation(
+        ErrorLabel errorLabel, String message, ErrorLocation location, Severity severity) {
       this.errorLabel = errorLabel;
       this.message = message == null ? "" : message;
       this.location = location;
@@ -67,7 +69,6 @@ public interface ErrorMessage {
     public String toString() {
       return "[" + severity + "] " + toStringNoSeverity();
     }
-
   }
 
   static String getMessage(String msgTemplate, Object... args) {
@@ -76,5 +77,4 @@ public interface ErrorMessage {
     }
     return String.format(msgTemplate, args);
   }
-
 }

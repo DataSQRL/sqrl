@@ -33,13 +33,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class PreprocessorsTest {
 
-  @InjectMocks
-  private Preprocessors preprocessors;
+  @InjectMocks private Preprocessors preprocessors;
 
-  @Mock
-  private Preprocessor firstPreprocessor;
-  @Mock
-  private Preprocessor secondPreprocessor;
+  @Mock private Preprocessor firstPreprocessor;
+  @Mock private Preprocessor secondPreprocessor;
 
   private Preprocessors.PreprocessorsContext context;
   private Path rootDir = Paths.get("/test");
@@ -53,13 +50,14 @@ public class PreprocessorsTest {
     preprocessorSet.add(secondPreprocessor);
     preprocessors = new Preprocessors(preprocessorSet);
 
-    context = Preprocessors.PreprocessorsContext.builder()
-        .rootDir(rootDir)
-        .buildDir(buildDir)
-        .config(new PackageJsonImpl())
-        .profiles(new String[]{})
-        .errors(ErrorCollector.root())
-        .build();
+    context =
+        Preprocessors.PreprocessorsContext.builder()
+            .rootDir(rootDir)
+            .buildDir(buildDir)
+            .config(new PackageJsonImpl())
+            .profiles(new String[] {})
+            .errors(ErrorCollector.root())
+            .build();
   }
 
   @Test
@@ -86,7 +84,8 @@ public class PreprocessorsTest {
 
     try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
       // Mock the behavior of Files.walk
-      mockedFiles.when(() -> Files.walk(rootDir, FileVisitOption.FOLLOW_LINKS))
+      mockedFiles
+          .when(() -> Files.walk(rootDir, FileVisitOption.FOLLOW_LINKS))
           .thenReturn(Stream.of(excludedDirBuild, excludedDirFile, includedFile));
 
       // Mock Files.isRegularFile to return true for includedFile and false for directories

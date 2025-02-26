@@ -13,6 +13,6 @@ public class AbstractElementDefinition implements Serializable {
   public String description;
 
   public Object default_value;
-  //TODO: add hints
+  // TODO: add hints
 
 }

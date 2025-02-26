@@ -249,9 +249,12 @@ public class DataTypeTest {
     @DisplayName("Parse Unsupported Data Type")
     void testParseUnsupportedType() {
       String datatype = "UNSUPPORTED_TYPE";
-      Exception exception = assertThrows(RuntimeException.class, () -> {
-        queryPlanner.parseDatatype(datatype);
-      });
+      Exception exception =
+          assertThrows(
+              RuntimeException.class,
+              () -> {
+                queryPlanner.parseDatatype(datatype);
+              });
 
       String expectedMessage = "Unknown identifier";
       String actualMessage = exception.getMessage();
@@ -263,9 +266,12 @@ public class DataTypeTest {
     @DisplayName("Parse Malformed MAP Type")
     void testParseMalformedMapType() {
       String datatype = "MAP<STRING INTEGER>"; // Missing comma
-      Exception exception = assertThrows(RuntimeException.class, () -> {
-        queryPlanner.parseDatatype(datatype);
-      });
+      Exception exception =
+          assertThrows(
+              RuntimeException.class,
+              () -> {
+                queryPlanner.parseDatatype(datatype);
+              });
 
       // The exact error message may vary based on parser implementation
       assertTrue(exception.getMessage().contains("SQL parse failed"));

@@ -9,5 +9,6 @@ import org.apache.calcite.rel.type.RelDataType;
 public interface ImportedRelationalTable extends SourceRelationalTable {
 
   TableSource getTableSource();
+
   RelDataType getRowType();
 }

@@ -18,11 +18,12 @@ public class PostgresJdbcEngine extends AbstractJDBCDatabaseEngine {
   PostgresSqlNodeToString sqlToString = new PostgresSqlNodeToString();
 
   @Inject
-  public PostgresJdbcEngine(
-      @NonNull PackageJson json,
-      ConnectorFactoryFactory connectorFactory) {
-    super(PostgresEngineFactory.ENGINE_NAME, json.getEngines().getEngineConfig(PostgresEngineFactory.ENGINE_NAME)
-            .orElseGet(()-> new EmptyEngineConfig(PostgresEngineFactory.ENGINE_NAME)),
+  public PostgresJdbcEngine(@NonNull PackageJson json, ConnectorFactoryFactory connectorFactory) {
+    super(
+        PostgresEngineFactory.ENGINE_NAME,
+        json.getEngines()
+            .getEngineConfig(PostgresEngineFactory.ENGINE_NAME)
+            .orElseGet(() -> new EmptyEngineConfig(PostgresEngineFactory.ENGINE_NAME)),
         connectorFactory);
   }
 
@@ -32,11 +33,13 @@ public class PostgresJdbcEngine extends AbstractJDBCDatabaseEngine {
   }
 
   @Override
-  protected String createView(SqlIdentifier viewNameIdentifier, SqlParserPos pos,
-      SqlNodeList columnList, SqlNode viewSqlNode) {
-    SqlCreatePostgresView createView = new SqlCreatePostgresView(pos, true,
-        viewNameIdentifier, columnList,
-        viewSqlNode);
+  protected String createView(
+      SqlIdentifier viewNameIdentifier,
+      SqlParserPos pos,
+      SqlNodeList columnList,
+      SqlNode viewSqlNode) {
+    SqlCreatePostgresView createView =
+        new SqlCreatePostgresView(pos, true, viewNameIdentifier, columnList, viewSqlNode);
     return sqlToString.convert(() -> createView).getSql() + ";";
   }
 }

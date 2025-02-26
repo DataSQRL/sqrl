@@ -8,13 +8,11 @@ import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.util.SqlShuttle;
-import org.apache.calcite.sql.util.SqlVisitor;
 
-/**
- * Extracts modules and rewrites calls
- */
+/** Extracts modules and rewrites calls */
 public class SqlCallRewriter extends SqlShuttle {
   Set<NamePath> fncModules = new LinkedHashSet<>();
+
   public void performCallRewrite(SqlCall sqlNode) {
     sqlNode.accept(this);
   }
@@ -28,7 +26,8 @@ public class SqlCallRewriter extends SqlShuttle {
       fncModules.add(names);
 
       SqlIdentifier component = nameAsId.getComponent(nameAsId.names.size() - 1);
-      nameAsId.setNames(List.of(component.names.get(0)), List.of(component.getComponentParserPosition(0)));
+      nameAsId.setNames(
+          List.of(component.names.get(0)), List.of(component.getComponentParserPosition(0)));
     }
 
     return super.visit(call);

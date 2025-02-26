@@ -6,6 +6,8 @@ package com.datasqrl.plan.rules;
 import com.datasqrl.plan.global.QueryIndexSummary;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.plan.table.ScriptRelationalTable;
+import java.util.Set;
+import java.util.stream.IntStream;
 import org.apache.calcite.adapter.enumerable.EnumerableNestedLoopJoin;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.Filter;
@@ -13,11 +15,7 @@ import org.apache.calcite.rel.core.Join;
 import org.apache.calcite.rel.metadata.*;
 import org.apache.calcite.util.BuiltInMethod;
 
-import java.util.Set;
-import java.util.stream.IntStream;
-
-public class SqrlRelMdRowCount extends RelMdRowCount
-    implements BuiltInMetadata.RowCount.Handler {
+public class SqrlRelMdRowCount extends RelMdRowCount implements BuiltInMetadata.RowCount.Handler {
 
   public static final RelMetadataProvider SOURCE =
       ReflectiveRelMetadataProvider.reflectiveSource(
@@ -27,7 +25,7 @@ public class SqrlRelMdRowCount extends RelMdRowCount
     double rowCount = super.getRowCount(rel, mq);
     if (rel instanceof EnumerableNestedLoopJoin) {
       rowCount = rowCount + 2 * mq.getRowCount(rel.getLeft());
-      //Undo the factor 10 penalty from EnumerableNestedLoopJoin
+      // Undo the factor 10 penalty from EnumerableNestedLoopJoin
       rowCount = rowCount / 100;
     }
     return rowCount;
@@ -47,8 +45,7 @@ public class SqrlRelMdRowCount extends RelMdRowCount
     return RelMdUtil.estimateFilteredRows(rel.getInput(), rel.getCondition(), mq);
   }
 
-  public static Double getRowCount(PhysicalRelationalTable table,
-                                   QueryIndexSummary constraints) {
+  public static Double getRowCount(PhysicalRelationalTable table, QueryIndexSummary constraints) {
     Set<Integer> equalCols = constraints.getEqualityColumns();
     if (IntStream.of(table.getPrimaryKey().asArray()).allMatch(equalCols::contains)) {
       return 1.0;
@@ -59,5 +56,4 @@ public class SqrlRelMdRowCount extends RelMdRowCount
   public static Double getRowCount(ScriptRelationalTable table) {
     return table.getTableStatistic().getRowCount();
   }
-
 }

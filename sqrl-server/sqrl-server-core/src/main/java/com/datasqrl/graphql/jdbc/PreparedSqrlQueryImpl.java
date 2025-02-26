@@ -5,8 +5,7 @@ import java.sql.Connection;
 import lombok.Value;
 
 @Value
-public class PreparedSqrlQueryImpl
-    implements PreparedSqrlQuery<String> {
+public class PreparedSqrlQueryImpl implements PreparedSqrlQuery<String> {
 
   Connection connection;
   String preparedQuery;

@@ -4,11 +4,10 @@
 package com.datasqrl.util.junit;
 
 import com.google.common.base.Preconditions;
-import org.junit.jupiter.params.provider.Arguments;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
+import org.junit.jupiter.params.provider.Arguments;
 
 public class ArgumentProvider {
 
@@ -22,12 +21,17 @@ public class ArgumentProvider {
     Stream<? extends Arguments> base = argumentLists.get(0).stream().map(Arguments::of);
     for (int i = 1; i < argumentLists.size(); i++) {
       List<? extends Object> join = argumentLists.get(i);
-      base = base.flatMap(args -> join.stream().map(x -> {
-        Object[] argArr = args.get();
-        Object[] newArgArr = Arrays.copyOf(argArr, argArr.length + 1);
-        newArgArr[argArr.length] = x;
-        return Arguments.of(newArgArr);
-      }));
+      base =
+          base.flatMap(
+              args ->
+                  join.stream()
+                      .map(
+                          x -> {
+                            Object[] argArr = args.get();
+                            Object[] newArgArr = Arrays.copyOf(argArr, argArr.length + 1);
+                            newArgArr[argArr.length] = x;
+                            return Arguments.of(newArgArr);
+                          }));
     }
     return base;
   }
@@ -35,5 +39,4 @@ public class ArgumentProvider {
   public static Stream<? extends Arguments> of(List<? extends Object> arguments) {
     return arguments.stream().map(Arguments::of);
   }
-
 }

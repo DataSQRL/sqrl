@@ -11,11 +11,9 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
-
 import lombok.Getter;
 
 @Getter
@@ -27,12 +25,12 @@ public class Deserializer {
 
   protected Deserializer() {
     SimpleModule module = new SqrlSerializerModule();
-    jsonMapper = new ObjectMapper()
-        .registerModule(new Jdk8Module())
-        .registerModule(new JavaTimeModule())
-        .registerModule(module)
-        .setSerializationInclusion(JsonInclude.Include.NON_NULL);
-
+    jsonMapper =
+        new ObjectMapper()
+            .registerModule(new Jdk8Module())
+            .registerModule(new JavaTimeModule())
+            .registerModule(module)
+            .setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
     yamlMapper = new YAMLMapper();
     yamlMapper
@@ -40,7 +38,6 @@ public class Deserializer {
         .registerModule(new JavaTimeModule())
         .registerModule(module)
         .setSerializationInclusion(JsonInclude.Include.NON_NULL);
-
   }
 
   public <T> T mapJsonFile(URI path, Class<T> clazz) {
@@ -78,6 +75,7 @@ public class Deserializer {
       throw new RuntimeException(e);
     }
   }
+
   public static <T> T mapFile(ObjectMapper mapper, Path path, Class<T> clazz) {
     try {
       return mapper.readValue(path.toFile(), clazz);
@@ -93,19 +91,19 @@ public class Deserializer {
   public <O> void writeJson(Path file, O object, boolean pretty) throws IOException {
     ObjectWriter writer = jsonMapper.writer();
     if (pretty) writer = writer.withDefaultPrettyPrinter();
-    writer.writeValue(file.toFile(),object);
+    writer.writeValue(file.toFile(), object);
   }
 
   public <O> String toJson(O object) throws IOException {
     return jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(object);
   }
 
-  public<O> String writeYML(O object) throws IOException {
+  public <O> String writeYML(O object) throws IOException {
     return yamlMapper.writeValueAsString(object);
   }
 
-  public<O> void writeYML(Path file, O object) throws IOException {
+  public <O> void writeYML(Path file, O object) throws IOException {
     ObjectWriter writer = yamlMapper.writer().withDefaultPrettyPrinter();
-    writer.writeValue(file.toFile(),object);
+    writer.writeValue(file.toFile(), object);
   }
 }

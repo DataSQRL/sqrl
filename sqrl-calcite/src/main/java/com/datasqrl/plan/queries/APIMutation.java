@@ -12,10 +12,8 @@ import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class APIMutation implements APIConnector {
 
-  @EqualsAndHashCode.Include
-  Name name;
-  @EqualsAndHashCode.Include
-  APISource source;
+  @EqualsAndHashCode.Include Name name;
+  @EqualsAndHashCode.Include APISource source;
 
   RelDataType schema;
   String timestampName;

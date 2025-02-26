@@ -38,8 +38,9 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Purpose: Configures data fetchers for GraphQL mutations and executes the mutations (kafka messages sending and SQL inserting)
- * Collaboration: Uses {@link RootGraphqlModel} to get mutation coordinates and creates data fetchers for Kafka and PostgreSQL.
+ * Purpose: Configures data fetchers for GraphQL mutations and executes the mutations (kafka
+ * messages sending and SQL inserting) Collaboration: Uses {@link RootGraphqlModel} to get mutation
+ * coordinates and creates data fetchers for Kafka and PostgreSQL.
  */
 @Slf4j
 @AllArgsConstructor
@@ -64,66 +65,77 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
 
         SinkProducer emitter = sinks.get(coords.getFieldName());
 
-        Preconditions.checkNotNull(emitter, "Could not find sink for field: %s", coords.getFieldName());
-        return VertxDataFetcher.create((env, fut) -> {
+        Preconditions.checkNotNull(
+            emitter, "Could not find sink for field: %s", coords.getFieldName());
+        return VertxDataFetcher.create(
+            (env, fut) -> {
+              Map entry = getEntry(env);
 
-          Map entry = getEntry(env);
+              emitter
+                  .send(entry)
+                  .onSuccess(
+                      sinkResult -> {
+                        // Add timestamp from sink to result
+                        ZonedDateTime dateTime =
+                            ZonedDateTime.ofInstant(sinkResult.getSourceTime(), ZoneOffset.UTC);
+                        entry.put(
+                            ReservedName.MUTATION_TIME.getCanonical(), dateTime.toOffsetDateTime());
 
-          emitter.send(entry)
-              .onSuccess(sinkResult->{
-                //Add timestamp from sink to result
-                ZonedDateTime dateTime = ZonedDateTime.ofInstant(sinkResult.getSourceTime(), ZoneOffset.UTC);
-                entry.put(ReservedName.MUTATION_TIME.getCanonical(), dateTime.toOffsetDateTime());
-
-                fut.complete(entry);
-              })
-              .onFailure((m)->
-                  fut.fail(m)
-              );
-        });
+                        fut.complete(entry);
+                      })
+                  .onFailure((m) -> fut.fail(m));
+            });
       }
 
       @Override
       public DataFetcher<?> visit(PostgresLogMutationCoords coords, Context context) {
-        return VertxDataFetcher.create((env, fut) -> {
-          Map entry = getEntry(env);
-          entry.put("event_time", Timestamp.from(Instant.now())); // TODO: better to do it in the db
+        return VertxDataFetcher.create(
+            (env, fut) -> {
+              Map entry = getEntry(env);
+              entry.put(
+                  "event_time", Timestamp.from(Instant.now())); // TODO: better to do it in the db
 
-          Object[] paramObj = new Object[coords.getParameters().size()];
-          for (int i = 0; i < coords.getParameters().size(); i++) {
-            String param = coords.getParameters().get(i);
-            Object o = entry.get(param);
-            if (o instanceof UUID) {
-              o = ((UUID)o).toString();
-            } else if (o instanceof Timestamp) {
-              o = ((Timestamp) o).toLocalDateTime().atOffset(ZoneOffset.UTC);
-            }
-            paramObj[i] = o;
-          }
+              Object[] paramObj = new Object[coords.getParameters().size()];
+              for (int i = 0; i < coords.getParameters().size(); i++) {
+                String param = coords.getParameters().get(i);
+                Object o = entry.get(param);
+                if (o instanceof UUID) {
+                  o = ((UUID) o).toString();
+                } else if (o instanceof Timestamp) {
+                  o = ((Timestamp) o).toLocalDateTime().atOffset(ZoneOffset.UTC);
+                }
+                paramObj[i] = o;
+              }
 
-          String insertStatement = coords.getInsertStatement();
+              String insertStatement = coords.getInsertStatement();
 
-          PreparedQuery<RowSet<Row>> preparedQuery = ((VertxJdbcClient) context.getClient())
-              .getClients().get("postgres")
-              .preparedQuery(insertStatement);
-          preparedQuery.execute(Tuple.from(paramObj))
-              .onComplete(e -> fut.complete(entry))
-              .onFailure(e -> log.error("An error happened while executing the query: " + insertStatement, e));
-        });
+              PreparedQuery<RowSet<Row>> preparedQuery =
+                  ((VertxJdbcClient) context.getClient())
+                      .getClients()
+                      .get("postgres")
+                      .preparedQuery(insertStatement);
+              preparedQuery
+                  .execute(Tuple.from(paramObj))
+                  .onComplete(e -> fut.complete(entry))
+                  .onFailure(
+                      e ->
+                          log.error(
+                              "An error happened while executing the query: " + insertStatement,
+                              e));
+            });
       }
     };
   }
 
   private Map getEntry(DataFetchingEnvironment env) {
-    //Rules:
-    //- Only one argument is allowed, it doesn't matter the name
-    //- input argument cannot be null.
+    // Rules:
+    // - Only one argument is allowed, it doesn't matter the name
+    // - input argument cannot be null.
     Map<String, Object> args = env.getArguments();
 
-    Map entry = (Map)args.entrySet().stream()
-        .findFirst().map(Entry::getValue).get();
+    Map entry = (Map) args.entrySet().stream().findFirst().map(Entry::getValue).get();
 
-    //Add UUID for event
+    // Add UUID for event
     UUID uuid = UUID.randomUUID();
     entry.put(ReservedName.MUTATION_PRIMARY_KEY.getDisplay(), uuid);
     return entry;
@@ -132,12 +144,12 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
   // TODO: shouldn't it come from ServerConfig?
   Map<String, String> getSinkConfig() {
     Map<String, String> conf = new HashMap<>();
-    conf.put(BOOTSTRAP_SERVERS_CONFIG, config.getEnvironmentVariable("PROPERTIES_BOOTSTRAP_SERVERS"));
+    conf.put(
+        BOOTSTRAP_SERVERS_CONFIG, config.getEnvironmentVariable("PROPERTIES_BOOTSTRAP_SERVERS"));
     conf.put(GROUP_ID_CONFIG, UUID.randomUUID().toString());
     conf.put(KEY_SERIALIZER_CLASS_CONFIG, "com.datasqrl.graphql.kafka.JsonSerializer");
     conf.put(VALUE_SERIALIZER_CLASS_CONFIG, "com.datasqrl.graphql.kafka.JsonSerializer");
 
     return conf;
   }
-
 }

@@ -1,40 +1,41 @@
-//package com.datasqrl.util;
+// package com.datasqrl.util;
 //
-//import com.datasqrl.function.SqrlFunction;
-//import com.datasqrl.functions.flink.FlinkStdLibraryImpl;
-//import com.datasqrl.functions.json.StdJsonLibraryImpl;
-//import com.datasqrl.functions.secure.StdSecureLibraryImpl;
-//import com.datasqrl.functions.string.StdStringLibraryImpl;
-//import com.datasqrl.functions.text.StdTextLibraryImpl;
-//import com.datasqrl.functions.time.StdTimeLibraryImpl;
-//import com.datasqrl.serializer.Deserializer;
-//import com.datasqrl.module.SqrlModule;
-//import com.datasqrl.function.CalciteFunctionNsObject;
-//import com.datasqrl.module.FunctionNamespaceObject;
-//import com.datasqrl.module.NamespaceObject;
-//import com.datasqrl.functions.vector.StdVectorLibraryImpl;
-//import com.datasqrl.time.TimeTumbleWindowFunction;
-//import com.google.common.base.Preconditions;
-//import com.theokanning.openai.completion.CompletionChoice;
-//import com.theokanning.openai.completion.CompletionRequest;
-//import com.theokanning.openai.service.OpenAiService;
-//import java.io.IOException;
-//import java.nio.file.Files;
-//import java.nio.file.Path;
-//import java.nio.file.Paths;
-//import java.util.ArrayList;
-//import java.util.Collections;
-//import java.util.HashMap;
-//import java.util.List;
-//import java.util.Map;
-//import java.util.function.Consumer;
-//import lombok.SneakyThrows;
-//import lombok.Value;
-//import org.apache.calcite.sql.SqlFunction;
+// import com.datasqrl.function.SqrlFunction;
+// import com.datasqrl.functions.flink.FlinkStdLibraryImpl;
+// import com.datasqrl.functions.json.StdJsonLibraryImpl;
+// import com.datasqrl.functions.secure.StdSecureLibraryImpl;
+// import com.datasqrl.functions.string.StdStringLibraryImpl;
+// import com.datasqrl.functions.text.StdTextLibraryImpl;
+// import com.datasqrl.functions.time.StdTimeLibraryImpl;
+// import com.datasqrl.serializer.Deserializer;
+// import com.datasqrl.module.SqrlModule;
+// import com.datasqrl.function.CalciteFunctionNsObject;
+// import com.datasqrl.module.FunctionNamespaceObject;
+// import com.datasqrl.module.NamespaceObject;
+// import com.datasqrl.functions.vector.StdVectorLibraryImpl;
+// import com.datasqrl.time.TimeTumbleWindowFunction;
+// import com.google.common.base.Preconditions;
+// import com.theokanning.openai.completion.CompletionChoice;
+// import com.theokanning.openai.completion.CompletionRequest;
+// import com.theokanning.openai.service.OpenAiService;
+// import java.io.IOException;
+// import java.nio.file.Files;
+// import java.nio.file.Path;
+// import java.nio.file.Paths;
+// import java.util.ArrayList;
+// import java.util.Collections;
+// import java.util.HashMap;
+// import java.util.List;
+// import java.util.Map;
+// import java.util.function.Consumer;
+// import lombok.SneakyThrows;
+// import lombok.Value;
+// import org.apache.calcite.sql.SqlFunction;
 //
-//public class GenerateFunctionDocumentation {
+// public class GenerateFunctionDocumentation {
 //
-//  public static final Path SQL_FUNCTION_DOCS_FILE = Paths.get("docs", "automated", "sql", "sqlFunctionDocs.json");
+//  public static final Path SQL_FUNCTION_DOCS_FILE = Paths.get("docs", "automated", "sql",
+// "sqlFunctionDocs.json");
 //  public static final String START_FIRST_SENTENCE = "This SQL function returns";
 //  public static final String START_SECOND_SENTENCE = "For example";
 //
@@ -94,7 +95,8 @@
 //        .prompt(
 //            "Write one sentence of documentation explaining the SQL function \"" + functionName
 //                + "\". Add one sentence starting with \"" + START_SECOND_SENTENCE
-//                + "\" showing an example invocation and result of the function with specific data. "
+//                + "\" showing an example invocation and result of the function with specific data.
+// "
 //                + START_FIRST_SENTENCE)
 //        .build();
 //    List<CompletionChoice> completion = service.createCompletion(request).getChoices();
@@ -176,4 +178,4 @@
 //      new LibrarySpec(new StdVectorLibraryImpl(), false, false)
 //  );
 //
-//}
+// }

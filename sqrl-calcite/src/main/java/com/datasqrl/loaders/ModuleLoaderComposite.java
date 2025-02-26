@@ -14,8 +14,7 @@ import lombok.Value;
 @AllArgsConstructor
 public class ModuleLoaderComposite implements ModuleLoader {
 
-  @Singular
-  List<ModuleLoader> moduleLoaders;
+  @Singular List<ModuleLoader> moduleLoaders;
 
   @Override
   public Optional<SqrlModule> getModule(NamePath namePath) {

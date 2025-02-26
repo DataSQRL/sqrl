@@ -10,13 +10,10 @@ public interface IndexableFunction extends FunctionMetadata {
 
   EnumSet<IndexType> getSupportedIndexes();
 
-
   interface OperandSelector {
 
     boolean isSelectableColumn(int columnIndex);
 
     int maxNumberOfColumns();
-
   }
-
 }

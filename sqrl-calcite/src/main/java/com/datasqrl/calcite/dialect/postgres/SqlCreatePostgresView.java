@@ -9,30 +9,31 @@ import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlOperator;
-import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqlSpecialOperator;
 import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.util.ImmutableNullableList;
 
 /**
- * CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] [ RECURSIVE ] VIEW name
- * [ ( column_name [, ...] ) ]
- * [ WITH ( view_option_name [= view_option_value] [, ... ] ) ]
- * AS query
- * [ WITH [ CASCADED | LOCAL ] CHECK OPTION ]
+ * CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] [ RECURSIVE ] VIEW name [ ( column_name [, ...] ) ] [
+ * WITH ( view_option_name [= view_option_value] [, ... ] ) ] AS query [ WITH [ CASCADED | LOCAL ]
+ * CHECK OPTION ]
  */
 public class SqlCreatePostgresView extends SqlCall {
 
-  private static final SqlSpecialOperator OPERATOR = new SqlSpecialOperator("CREATE VIEW", SqlKind.CREATE_VIEW);
+  private static final SqlSpecialOperator OPERATOR =
+      new SqlSpecialOperator("CREATE VIEW", SqlKind.CREATE_VIEW);
 
   private final boolean replace;
   private final SqlIdentifier viewName;
   private final SqlNodeList columnList;
   private final SqlNode select;
 
-  public SqlCreatePostgresView(SqlParserPos pos, boolean replace,
-      SqlIdentifier viewName, SqlNodeList columnList,
+  public SqlCreatePostgresView(
+      SqlParserPos pos,
+      boolean replace,
+      SqlIdentifier viewName,
+      SqlNodeList columnList,
       SqlNode select) {
     super(pos);
     this.replace = replace;

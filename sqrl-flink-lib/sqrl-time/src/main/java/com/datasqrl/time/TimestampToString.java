@@ -7,9 +7,7 @@ import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.table.types.inference.TypeInference;
 
-/**
- * Converts the timestamp to an ISO timestamp string
- */
+/** Converts the timestamp to an ISO timestamp string */
 public class TimestampToString extends ScalarFunction {
 
   public String eval(Instant instant) {
@@ -18,7 +16,7 @@ public class TimestampToString extends ScalarFunction {
 
   @Override
   public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-    return FlinkTypeUtil.basicNullInference(DataTypes.STRING(),
-        DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
+    return FlinkTypeUtil.basicNullInference(
+        DataTypes.STRING(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
   }
 }

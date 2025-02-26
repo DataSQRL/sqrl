@@ -10,6 +10,8 @@ public class Quickstart extends UseCaseExample {
   public static final Quickstart INSTANCE = new Quickstart();
 
   protected Quickstart() {
-    super(Set.of("products", "orders", "customers"), script("quickstart-teaser-local", "users", "orders", "totals", "spending"));
+    super(
+        Set.of("products", "orders", "customers"),
+        script("quickstart-teaser-local", "users", "orders", "totals", "spending"));
   }
 }

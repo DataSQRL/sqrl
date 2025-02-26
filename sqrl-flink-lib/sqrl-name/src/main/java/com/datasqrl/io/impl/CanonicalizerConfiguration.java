@@ -10,7 +10,6 @@ import lombok.Getter;
 
 @Getter
 public enum CanonicalizerConfiguration implements Serializable {
-
   lowercase(NameCanonicalizer.LOWERCASE_ENGLISH),
   case_sensitive(NameCanonicalizer.AS_IS),
   system(NameCanonicalizer.SYSTEM);
@@ -21,10 +20,8 @@ public enum CanonicalizerConfiguration implements Serializable {
     this.canonicalizer = canonicalizer;
   }
 
-
   @Override
   public String toString() {
     return name().toLowerCase(Locale.ENGLISH);
   }
-
 }

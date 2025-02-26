@@ -7,8 +7,7 @@ import com.datasqrl.schema.type.SqrlTypeVisitor;
 
 public abstract class AbstractBasicType<J> implements BasicType<J> {
 
-  AbstractBasicType() {
-  }
+  AbstractBasicType() {}
 
   @Override
   public int hashCode() {

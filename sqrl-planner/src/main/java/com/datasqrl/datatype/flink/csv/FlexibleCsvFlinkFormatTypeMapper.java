@@ -72,13 +72,12 @@ public class FlexibleCsvFlinkFormatTypeMapper extends FlinkDataTypeMapper {
   @Override
   public Optional<CastFunction> convertType(RelDataType type) {
     if (nativeTypeSupport(type)) {
-      return Optional.empty(); //no cast needed
+      return Optional.empty(); // no cast needed
     }
 
     // Cast needed, convert to bytes
     return Optional.of(
-        new CastFunction(SerializeToBytes.class.getName(),
-            convert(new SerializeToBytes())));
+        new CastFunction(SerializeToBytes.class.getName(), convert(new SerializeToBytes())));
   }
 
   @Override

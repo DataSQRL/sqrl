@@ -5,11 +5,8 @@ package com.datasqrl.calcite;
 
 import org.apache.calcite.sql.fun.SqlLibrary;
 import org.apache.calcite.sql.validate.SqlConformance;
-import org.apache.calcite.sql.validate.SqlConformanceEnum;
 
-/**
- * Defines the SQL standard conformance of the SqlParser and validator
- */
+/** Defines the SQL standard conformance of the SqlParser and validator */
 public class SqrlConformance implements SqlConformance {
 
   public static final SqlConformance INSTANCE = new SqrlConformance();
@@ -54,14 +51,14 @@ public class SqrlConformance implements SqlConformance {
    * by either an expression or an alias. If isSortByAliasObscures is set to true, then when an
    * alias is used to sort the result set, the sort order will be determined by the expression that
    * the alias is based on, not the alias itself.
-   * <p>
-   * For example, given the following query:
-   * <p>
-   * SELECT col1 AS a, col2 AS b FROM table ORDER BY b;
-   * <p>
-   * If isSortByAliasObscures is set to true, the sort order will be determined by col2, not b.
-   * <p>
-   * If isSortByAliasObscures is set to false, the sort order will be determined by b.
+   *
+   * <p>For example, given the following query:
+   *
+   * <p>SELECT col1 AS a, col2 AS b FROM table ORDER BY b;
+   *
+   * <p>If isSortByAliasObscures is set to true, the sort order will be determined by col2, not b.
+   *
+   * <p>If isSortByAliasObscures is set to false, the sort order will be determined by b.
    */
   @Override
   public boolean isSortByAliasObscures() {
@@ -115,7 +112,7 @@ public class SqrlConformance implements SqlConformance {
 
   @Override
   public boolean allowNiladicParentheses() {
-    return true; //todo: we probably want this to be false
+    return true; // todo: we probably want this to be false
   }
 
   @Override
@@ -168,8 +165,8 @@ public class SqrlConformance implements SqlConformance {
     return null;
   }
 
-//  @Override
-//  public SqlLibrary semantics() {
-//    return SqlConformanceEnum.DEFAULT.semantics();
-//  }
+  //  @Override
+  //  public SqlLibrary semantics() {
+  //    return SqlConformanceEnum.DEFAULT.semantics();
+  //  }
 }

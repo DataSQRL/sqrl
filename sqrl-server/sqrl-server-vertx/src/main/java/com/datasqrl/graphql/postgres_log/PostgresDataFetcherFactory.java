@@ -11,12 +11,15 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 
 public class PostgresDataFetcherFactory {
-  public static DataFetcher<?> create(Map<String, SinkConsumer> subscriptions, PostgresSubscriptionCoords coords) {
+  public static DataFetcher<?> create(
+      Map<String, SinkConsumer> subscriptions, PostgresSubscriptionCoords coords) {
     SinkConsumer consumer = subscriptions.get(coords.getFieldName());
-    Preconditions.checkNotNull(consumer, "Could not find subscription consumer: {}", coords.getFieldName());
+    Preconditions.checkNotNull(
+        consumer, "Could not find subscription consumer: {}", coords.getFieldName());
 
-    Flux<Object> deferredFlux = Flux.create(sink ->
-        consumer.listen(sink::next, sink::error, (x) -> sink.complete())).share();
+    Flux<Object> deferredFlux =
+        Flux.create(sink -> consumer.listen(sink::next, sink::error, (x) -> sink.complete()))
+            .share();
 
     return new DataFetcher<>() {
       @Override
@@ -36,7 +39,7 @@ public class PostgresDataFetcherFactory {
           if (data instanceof Map) {
             objectMap = (Map) data;
           } else if (data instanceof JsonObject) {
-            objectMap = ((JsonObject)data).getMap();
+            objectMap = ((JsonObject) data).getMap();
           } else {
             objectMap = Map.of();
           }

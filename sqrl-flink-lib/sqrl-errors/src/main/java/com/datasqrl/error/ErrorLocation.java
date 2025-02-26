@@ -7,12 +7,13 @@ import java.io.Serializable;
 import lombok.NonNull;
 import lombok.Value;
 
-//@JsonSerialize(as = ErrorLocation.class)
+// @JsonSerialize(as = ErrorLocation.class)
 public interface ErrorLocation extends Serializable {
 
   String getPrefix();
 
-  @NonNull String[] getPathArray();
+  @NonNull
+  String[] getPathArray();
 
   FileRange getFile();
 
@@ -46,10 +47,10 @@ public interface ErrorLocation extends Serializable {
 
   ErrorLocation resolve(@NonNull String location);
 
-//  default ErrorLocation resolve(@NonNull Name location) {
-//    return resolve(location.getDisplay());
-//  }
-  
+  //  default ErrorLocation resolve(@NonNull Name location) {
+  //    return resolve(location.getDisplay());
+  //  }
+
   default ErrorLocation atFile(@NonNull ErrorLocation.FileLocation file) {
     return atFile(new FileRange(file));
   }
@@ -61,7 +62,6 @@ public interface ErrorLocation extends Serializable {
 
     private final int line;
     private final int offset;
-
   }
 
   @Value
@@ -80,28 +80,28 @@ public interface ErrorLocation extends Serializable {
       this.toLine = toLine;
       this.fromOffset = fromOffset;
       this.toOffset = toOffset;
-//      Preconditions.checkArgument(fromLine>0 && toLine>0 && fromOffset>0 && toOffset>0, "Invalid file: %s",this);
-//      Preconditions.checkArgument(fromLine<=toLine && (fromLine!=toLine || fromOffset<=toOffset), "Invalid file: %s",this);
+      //      Preconditions.checkArgument(fromLine>0 && toLine>0 && fromOffset>0 && toOffset>0,
+      // "Invalid file: %s",this);
+      //      Preconditions.checkArgument(fromLine<=toLine && (fromLine!=toLine ||
+      // fromOffset<=toOffset), "Invalid file: %s",this);
     }
 
     public boolean isLocation() {
-      return toLine==fromLine && fromOffset==toOffset;
+      return toLine == fromLine && fromOffset == toOffset;
     }
 
     public FileLocation asLocation() {
-//      Preconditions.checkArgument(isLocation());
+      //      Preconditions.checkArgument(isLocation());
       return new FileLocation(fromLine, fromOffset);
     }
 
     @Override
     public String toString() {
-      String result = fromLine+":"+fromOffset;
+      String result = fromLine + ":" + fromOffset;
       if (!isLocation()) {
-        result += "-" + toLine+":"+toOffset;
+        result += "-" + toLine + ":" + toOffset;
       }
       return result;
     }
-
   }
-
 }

@@ -1,6 +1,5 @@
 package com.datasqrl.tests;
 
-
 public class UseCaseTestExtensions {
 
   public TestExtension create(String scriptName) {
@@ -15,5 +14,4 @@ public class UseCaseTestExtensions {
     }
     return TestExtension.NOOP;
   }
-
 }

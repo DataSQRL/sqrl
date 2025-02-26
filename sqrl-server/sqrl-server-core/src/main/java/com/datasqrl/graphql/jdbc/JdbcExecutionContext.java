@@ -3,15 +3,15 @@ package com.datasqrl.graphql.jdbc;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.LIMIT;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.OFFSET;
 
+import com.datasqrl.graphql.server.GraphQLEngineBuilder;
+import com.datasqrl.graphql.server.QueryExecutionContext;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentParameter;
-import com.datasqrl.graphql.server.RootGraphqlModel.ParameterHandlerVisitor;
 import com.datasqrl.graphql.server.RootGraphqlModel.JdbcParameterHandler;
-import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedPagedJdbcQuery;
+import com.datasqrl.graphql.server.RootGraphqlModel.ParameterHandlerVisitor;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedJdbcQuery;
+import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedPagedJdbcQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.SourceParameter;
-import com.datasqrl.graphql.server.QueryExecutionContext;
-import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import graphql.schema.DataFetchingEnvironment;
 import graphql.schema.PropertyDataFetcher;
 import java.sql.Connection;
@@ -30,8 +30,8 @@ import lombok.SneakyThrows;
 import lombok.Value;
 
 @Value
-public class JdbcExecutionContext implements QueryExecutionContext,
-    ParameterHandlerVisitor<Object, QueryExecutionContext> {
+public class JdbcExecutionContext
+    implements QueryExecutionContext, ParameterHandlerVisitor<Object, QueryExecutionContext> {
 
   JdbcContext context;
   DataFetchingEnvironment environment;
@@ -39,8 +39,8 @@ public class JdbcExecutionContext implements QueryExecutionContext,
 
   @SneakyThrows
   @Override
-  public CompletableFuture runQuery(GraphQLEngineBuilder graphQLEngineBuilder, ResolvedJdbcQuery query,
-      boolean isList) {
+  public CompletableFuture runQuery(
+      GraphQLEngineBuilder graphQLEngineBuilder, ResolvedJdbcQuery query, boolean isList) {
 
     Object[] paramObj = new Object[query.getQuery().getParameters().size()];
     for (int i = 0; i < query.getQuery().getParameters().size(); i++) {
@@ -48,33 +48,32 @@ public class JdbcExecutionContext implements QueryExecutionContext,
       Object o = param.accept(this, this);
       paramObj[i] = o;
     }
-    //Look at graphql response for list type here
+    // Look at graphql response for list type here
     PreparedSqrlQueryImpl p = ((PreparedSqrlQueryImpl) query.getPreparedQueryContainer());
 
-    return CompletableFuture.supplyAsync(()-> {
-      try (PreparedStatement statement = p.getConnection()
-          .prepareStatement(p.getPreparedQuery())) {
-        for (int i = 0; i < paramObj.length; i++) {
-          statement.setObject(i + 1, paramObj[i]);
-        }
-        ResultSet resultSet = statement.executeQuery();
+    return CompletableFuture.supplyAsync(
+        () -> {
+          try (PreparedStatement statement =
+              p.getConnection().prepareStatement(p.getPreparedQuery())) {
+            for (int i = 0; i < paramObj.length; i++) {
+              statement.setObject(i + 1, paramObj[i]);
+            }
+            ResultSet resultSet = statement.executeQuery();
 
-        return unboxList(resultSetToList(resultSet), isList);
-      } catch (SQLException e) {
-        throw new RuntimeException(e);
-      }
-    });
+            return unboxList(resultSetToList(resultSet), isList);
+          } catch (SQLException e) {
+            throw new RuntimeException(e);
+          }
+        });
   }
 
   public static Object unboxList(List<Map<String, Object>> o, boolean isList) {
-    return isList
-        ? o
-        : (o.size() > 0 ? o.get(0) : null);
+    return isList ? o : (o.size() > 0 ? o.get(0) : null);
   }
 
   @Override
-  public CompletableFuture runPagedJdbcQuery(ResolvedPagedJdbcQuery pgQuery,
-      boolean isList, QueryExecutionContext context) {
+  public CompletableFuture runPagedJdbcQuery(
+      ResolvedPagedJdbcQuery pgQuery, boolean isList, QueryExecutionContext context) {
     Optional<Integer> limit = Optional.ofNullable(getEnvironment().getArgument(LIMIT));
     Optional<Integer> offset = Optional.ofNullable(getEnvironment().getArgument(OFFSET));
     Object[] paramObj = new Object[pgQuery.getQuery().getParameters().size()];
@@ -84,27 +83,29 @@ public class JdbcExecutionContext implements QueryExecutionContext,
       paramObj[i] = o;
     }
 
-    //Add limit + offset
-    final String query = String.format("SELECT * FROM (%s) x LIMIT %s OFFSET %s",
-        pgQuery.getQuery().getSql(),
-        limit.map(Object::toString).orElse("ALL"),
-        offset.orElse(0)
-    );
+    // Add limit + offset
+    final String query =
+        String.format(
+            "SELECT * FROM (%s) x LIMIT %s OFFSET %s",
+            pgQuery.getQuery().getSql(),
+            limit.map(Object::toString).orElse("ALL"),
+            offset.orElse(0));
 
-    return CompletableFuture.supplyAsync(()-> {
-      Connection connection = this.context.getClient().getConnection();
+    return CompletableFuture.supplyAsync(
+        () -> {
+          Connection connection = this.context.getClient().getConnection();
 
-      try (PreparedStatement statement = connection.prepareStatement(query)) {
-        for (int i = 0; i < paramObj.length; i++) {
-          statement.setObject(i + 1, paramObj[i]);
-        }
-        ResultSet resultSet = statement.executeQuery();
+          try (PreparedStatement statement = connection.prepareStatement(query)) {
+            for (int i = 0; i < paramObj.length; i++) {
+              statement.setObject(i + 1, paramObj[i]);
+            }
+            ResultSet resultSet = statement.executeQuery();
 
-        return unboxList(resultSetToList(resultSet), isList);
-      } catch (SQLException e) {
-        throw new RuntimeException(e);
-      }
-    });
+            return unboxList(resultSetToList(resultSet), isList);
+          } catch (SQLException e) {
+            throw new RuntimeException(e);
+          }
+        });
   }
 
   private List<Map<String, Object>> resultSetToList(ResultSet resultSet) throws SQLException {
@@ -123,15 +124,14 @@ public class JdbcExecutionContext implements QueryExecutionContext,
   }
 
   @Override
-  public Object visitSourceParameter(SourceParameter sourceParameter,
-      QueryExecutionContext context) {
-    return PropertyDataFetcher.fetching(sourceParameter.getKey())
-        .get(context.getEnvironment());
+  public Object visitSourceParameter(
+      SourceParameter sourceParameter, QueryExecutionContext context) {
+    return PropertyDataFetcher.fetching(sourceParameter.getKey()).get(context.getEnvironment());
   }
 
   @Override
-  public Object visitArgumentParameter(ArgumentParameter argumentParameter,
-      QueryExecutionContext context) {
+  public Object visitArgumentParameter(
+      ArgumentParameter argumentParameter, QueryExecutionContext context) {
     return context.getArguments().stream()
         .filter(arg -> arg.getPath().equalsIgnoreCase(argumentParameter.getPath()))
         .findFirst()

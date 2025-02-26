@@ -9,6 +9,7 @@ import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.getSubscrip
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentLookupCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.CoordVisitor;
+import com.datasqrl.graphql.server.RootGraphqlModel.Coords;
 import com.datasqrl.graphql.server.RootGraphqlModel.DuckDbQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.FieldLookupCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.JdbcQuery;
@@ -17,7 +18,6 @@ import com.datasqrl.graphql.server.RootGraphqlModel.PagedDuckDbQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.PagedJdbcQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.PagedSnowflakeDbQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.QueryBaseVisitor;
-import com.datasqrl.graphql.server.RootGraphqlModel.Coords;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedJdbcQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedPagedJdbcQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
@@ -55,11 +55,11 @@ import java.util.stream.Collectors;
 /**
  * Purpose: Builds the GraphQL engine by wiring together the schema, resolvers, and custom scalars.
  * Visits the GraphQL model to prepare the GraphQL engine for executing the requests: visits the
- * queries, the arguments, the parameters, the mutations and the subscriptions to create corresponding
- * GraphQL {@link DataFetcher}s that embed the requests execution code.  {@link GraphQLEngineBuilder} then registers them in the
- * {@link GraphQLCodeRegistry}. Vert.x routes HTTP requests to the GraphQLEngine.  {@link GraphQLEngineBuilder}
- * and validates the query, then executes it by invoking the appropriate {@link DataFetcher}s for
- * each field in the query.
+ * queries, the arguments, the parameters, the mutations and the subscriptions to create
+ * corresponding GraphQL {@link DataFetcher}s that embed the requests execution code. {@link
+ * GraphQLEngineBuilder} then registers them in the {@link GraphQLCodeRegistry}. Vert.x routes HTTP
+ * requests to the GraphQLEngine. {@link GraphQLEngineBuilder} and validates the query, then
+ * executes it by invoking the appropriate {@link DataFetcher}s for each field in the query.
  *
  * <p>Collaboration: Uses {@link RootGraphqlModel} to get the schema and coordinates and Context to
  * create the requests.
@@ -75,13 +75,15 @@ public class GraphQLEngineBuilder
   private final SubscriptionConfiguration<DataFetcher<?>> subscriptionConfiguration;
   private final MutationConfiguration<DataFetcher<?>> mutationConfiguration;
 
-  public static final ObjectTypeDefinition DUMMY_QUERY = ObjectTypeDefinition.newObjectTypeDefinition()
-      .name("Query")
-      .fieldDefinition(FieldDefinition.newFieldDefinition()
-          .name("_dummy")
-          .type(TypeName.newTypeName("String").build())
-          .build())
-      .build();
+  public static final ObjectTypeDefinition DUMMY_QUERY =
+      ObjectTypeDefinition.newObjectTypeDefinition()
+          .name("Query")
+          .fieldDefinition(
+              FieldDefinition.newFieldDefinition()
+                  .name("_dummy")
+                  .type(TypeName.newTypeName("String").build())
+                  .build())
+          .build();
 
   private GraphQLEngineBuilder(Builder builder) {
     this.extendedScalarTypes = builder.extendedScalarTypes;
@@ -99,7 +101,8 @@ public class GraphQLEngineBuilder
       return this;
     }
 
-    public Builder withSubscriptionConfiguration(SubscriptionConfiguration<DataFetcher<?>> configurer) {
+    public Builder withSubscriptionConfiguration(
+        SubscriptionConfiguration<DataFetcher<?>> configurer) {
       this.subscriptionConfiguration = configurer;
       return this;
     }
@@ -127,10 +130,11 @@ public class GraphQLEngineBuilder
   public GraphQL.Builder visitRoot(RootGraphqlModel root, Context context) {
     TypeDefinitionRegistry registry = root.schema.accept(this, null);
 
-    // GraphQL registry holding the code that processes graphQL fields (graphQL DataFetchers) and types (graphQL TypeResolvers)
+    // GraphQL registry holding the code that processes graphQL fields (graphQL DataFetchers) and
+    // types (graphQL TypeResolvers)
     GraphQLCodeRegistry.Builder codeRegistry = GraphQLCodeRegistry.newCodeRegistry();
-    codeRegistry.defaultDataFetcher(env ->
-        context.createPropertyFetcher(env.getFieldDefinition().getName()));
+    codeRegistry.defaultDataFetcher(
+        env -> context.createPropertyFetcher(env.getFieldDefinition().getName()));
     for (Coords qc : root.coords) {
       codeRegistry.dataFetcher(
           FieldCoordinates.coordinates(qc.getParentType(), qc.getFieldName()),
@@ -139,45 +143,48 @@ public class GraphQLEngineBuilder
 
     if (root.mutations != null) {
       for (MutationCoords mc : root.mutations) {
-        DataFetcher<?> fetcher = mc.accept(mutationConfiguration.createSinkFetcherVisitor(), context);
+        DataFetcher<?> fetcher =
+            mc.accept(mutationConfiguration.createSinkFetcherVisitor(), context);
         codeRegistry.dataFetcher(
-            FieldCoordinates.coordinates(getMutationTypeName(registry), mc.getFieldName()), fetcher);
+            FieldCoordinates.coordinates(getMutationTypeName(registry), mc.getFieldName()),
+            fetcher);
       }
     }
 
     if (root.subscriptions != null) {
       for (SubscriptionCoords sc : root.subscriptions) {
-        DataFetcher<?> subscriptionFetcher = sc.accept(subscriptionConfiguration.createSubscriptionFetcherVisitor(), context);
+        DataFetcher<?> subscriptionFetcher =
+            sc.accept(subscriptionConfiguration.createSubscriptionFetcherVisitor(), context);
         codeRegistry.dataFetcher(
-            FieldCoordinates.coordinates(getSubscriptionTypeName(registry), sc.getFieldName()), subscriptionFetcher);
+            FieldCoordinates.coordinates(getSubscriptionTypeName(registry), sc.getFieldName()),
+            subscriptionFetcher);
       }
     }
 
     RuntimeWiring wiring = createWiring(registry, codeRegistry);
-    GraphQLSchema graphQLSchema = new SchemaGenerator()
-        .makeExecutableSchema(registry, wiring);
+    GraphQLSchema graphQLSchema = new SchemaGenerator().makeExecutableSchema(registry, wiring);
 
     return GraphQL.newGraphQL(graphQLSchema);
   }
 
-  private RuntimeWiring createWiring(TypeDefinitionRegistry registry, GraphQLCodeRegistry.Builder codeRegistry) {
-    RuntimeWiring.Builder wiring = RuntimeWiring.newRuntimeWiring()
-        .codeRegistry(codeRegistry)
-        .scalar(CustomScalars.Double)
-        .scalar(CustomScalars.DATETIME)
-        .scalar(CustomScalars.DATE)
-        .scalar(CustomScalars.TIME)
-        .scalar(CustomScalars.JSON)
-        ;
+  private RuntimeWiring createWiring(
+      TypeDefinitionRegistry registry, GraphQLCodeRegistry.Builder codeRegistry) {
+    RuntimeWiring.Builder wiring =
+        RuntimeWiring.newRuntimeWiring()
+            .codeRegistry(codeRegistry)
+            .scalar(CustomScalars.Double)
+            .scalar(CustomScalars.DATETIME)
+            .scalar(CustomScalars.DATE)
+            .scalar(CustomScalars.TIME)
+            .scalar(CustomScalars.JSON);
 
-    extendedScalarTypes.forEach(t->wiring.scalar(t));
+    extendedScalarTypes.forEach(t -> wiring.scalar(t));
 
     for (Map.Entry<String, TypeDefinition> typeEntry : registry.types().entrySet()) {
       if (typeEntry.getValue() instanceof InterfaceTypeDefinition) {
-        //create a superficial resolver
-        //TODO: interfaces and unions as return types
-        wiring.type(typeEntry.getKey(), (builder)-> builder
-            .typeResolver(env1 -> null));
+        // create a superficial resolver
+        // TODO: interfaces and unions as return types
+        wiring.type(typeEntry.getKey(), (builder) -> builder.typeResolver(env1 -> null));
       }
     }
     return wiring.build();
@@ -185,8 +192,7 @@ public class GraphQLEngineBuilder
 
   @Override
   public ResolvedQuery visitJdbcQuery(JdbcQuery jdbcQuery, Context context) {
-    return context.getClient()
-        .prepareQuery(jdbcQuery, context);
+    return context.getClient().prepareQuery(jdbcQuery, context);
   }
 
   @Override
@@ -198,30 +204,31 @@ public class GraphQLEngineBuilder
   public ResolvedQuery visitPagedDuckDbQuery(PagedDuckDbQuery jdbcQuery, Context context) {
     return new ResolvedPagedJdbcQuery(jdbcQuery);
   }
+
   @Override
-  public ResolvedQuery visitPagedSnowflakeDbQuery(PagedSnowflakeDbQuery jdbcQuery, Context context) {
+  public ResolvedQuery visitPagedSnowflakeDbQuery(
+      PagedSnowflakeDbQuery jdbcQuery, Context context) {
     return new ResolvedPagedJdbcQuery(jdbcQuery);
   }
 
   @Override
   public ResolvedQuery visitDuckDbQuery(DuckDbQuery jdbcQuery, Context context) {
-    return context.getClient()
-        .prepareQuery(jdbcQuery, context);
+    return context.getClient().prepareQuery(jdbcQuery, context);
   }
 
   @Override
   public ResolvedQuery visitSnowflakeDbQuery(SnowflakeDbQuery jdbcQuery, Context context) {
-    return context.getClient()
-        .noPrepareQuery(jdbcQuery, context);
+    return context.getClient().noPrepareQuery(jdbcQuery, context);
   }
 
   @Override
   public DataFetcher<?> visitArgumentLookup(ArgumentLookupCoords coords, Context ctx) {
-    //Map ResolvedQuery to precompute as much as possible
-    Map<Set<Argument>, ResolvedQuery> lookupMap = coords.getMatchs().stream()
-        .collect(Collectors.toMap(c -> c.arguments, c -> c.query.accept(this, ctx)));
+    // Map ResolvedQuery to precompute as much as possible
+    Map<Set<Argument>, ResolvedQuery> lookupMap =
+        coords.getMatchs().stream()
+            .collect(Collectors.toMap(c -> c.arguments, c -> c.query.accept(this, ctx)));
 
-    //Runtime execution, keep this as light as possible
+    // Runtime execution, keep this as light as possible
     DataFetcher fetcher = ctx.createArgumentLookupFetcher(this, lookupMap);
     return fetcher;
   }
@@ -232,25 +239,23 @@ public class GraphQLEngineBuilder
   }
 
   @Override
-  public CompletableFuture visitResolvedJdbcQuery(ResolvedJdbcQuery query,
-      QueryExecutionContext context) {
+  public CompletableFuture visitResolvedJdbcQuery(
+      ResolvedJdbcQuery query, QueryExecutionContext context) {
     return context.runQuery(this, query, isList(context.getEnvironment().getFieldType()));
   }
 
   @Override
-  public CompletableFuture visitResolvedPagedJdbcQuery(ResolvedPagedJdbcQuery query,
-      QueryExecutionContext context) {
-    CompletableFuture fut = context.runPagedJdbcQuery(query,
-        isList(context.getEnvironment().getFieldType()),
-        context);
+  public CompletableFuture visitResolvedPagedJdbcQuery(
+      ResolvedPagedJdbcQuery query, QueryExecutionContext context) {
+    CompletableFuture fut =
+        context.runPagedJdbcQuery(query, isList(context.getEnvironment().getFieldType()), context);
     return fut;
   }
 
   private boolean isList(GraphQLOutputType fieldType) {
     if (fieldType instanceof GraphQLNonNull) {
-      fieldType = (GraphQLOutputType)((GraphQLNonNull) fieldType).getWrappedType();
+      fieldType = (GraphQLOutputType) ((GraphQLNonNull) fieldType).getWrappedType();
     }
     return fieldType.getClass().equals(GraphQLList.class);
   }
-
 }

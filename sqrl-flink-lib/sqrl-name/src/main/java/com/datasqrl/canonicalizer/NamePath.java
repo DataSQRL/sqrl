@@ -27,9 +27,7 @@ public final class NamePath extends AbstractPath<Name, NamePath> {
   }
 
   public String getDisplay() {
-    return Arrays.stream(elements)
-        .map(e -> e.getDisplay())
-        .collect(Collectors.joining("."));
+    return Arrays.stream(elements).map(e -> e.getDisplay()).collect(Collectors.joining("."));
   }
 
   public Name[] getNames() {
@@ -37,9 +35,7 @@ public final class NamePath extends AbstractPath<Name, NamePath> {
   }
 
   public List<String> toStringList() {
-    return Arrays.stream(this.elements)
-        .map(n->n.getDisplay())
-        .collect(Collectors.toList());
+    return Arrays.stream(this.elements).map(n -> n.getDisplay()).collect(Collectors.toList());
   }
 
   private static final class Constructor extends AbstractPath.Constructor<Name, NamePath> {
@@ -58,7 +54,6 @@ public final class NamePath extends AbstractPath<Name, NamePath> {
     protected NamePath root() {
       return ROOT;
     }
-
   }
 
   public static NamePath of(@NonNull Name... names) {
@@ -76,5 +71,4 @@ public final class NamePath extends AbstractPath<Name, NamePath> {
   public static NamePath parse(String path) {
     return CONSTRUCTOR.parse(path, s -> Name.of(s, NameCanonicalizer.SYSTEM));
   }
-
 }

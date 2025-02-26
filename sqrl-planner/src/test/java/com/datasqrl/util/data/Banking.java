@@ -5,14 +5,15 @@ package com.datasqrl.util.data;
 
 import java.util.Set;
 
-
 public class Banking extends UseCaseExample {
 
   public static final Banking INSTANCE = new Banking();
 
   protected Banking() {
-    super("", Set.of("customers","applications", "application_updates", "loan_types"),
-        script("loan","overview","applicationupdates"),
+    super(
+        "",
+        Set.of("customers", "applications", "application_updates", "loan_types"),
+        script("loan", "overview", "applicationupdates"),
         "schema.graphqls");
   }
 }

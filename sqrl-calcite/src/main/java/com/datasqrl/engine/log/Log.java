@@ -21,7 +21,5 @@ public interface Log {
 
     TableSource source;
     TableSink sink;
-
   }
-
 }

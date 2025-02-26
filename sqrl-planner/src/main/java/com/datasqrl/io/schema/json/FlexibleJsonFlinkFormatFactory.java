@@ -1,15 +1,14 @@
 package com.datasqrl.io.schema.json;
 
+import com.datasqrl.config.FormatFactory;
 import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.config.TableConfig.Format;
-import com.datasqrl.config.FormatFactory;
 import com.datasqrl.json.FlinkJsonType;
 import com.google.auto.service.AutoService;
 import java.util.List;
-import lombok.Getter;
-
 import java.util.Optional;
 import java.util.Set;
+import lombok.Getter;
 
 @AutoService(FormatFactory.class)
 @Getter
@@ -47,6 +46,5 @@ public class FlexibleJsonFlinkFormatFactory extends FormatFactory.BaseFormatFact
     public Optional<String> getSchemaType() {
       return Optional.of("flexible");
     }
-
   }
 }

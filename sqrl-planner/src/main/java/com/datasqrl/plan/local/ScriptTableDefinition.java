@@ -21,7 +21,8 @@ public class ScriptTableDefinition {
   }
 
   public PhysicalRelationalTable getBaseTable() {
-    return StreamUtil.getOnlyElement(StreamUtil.filterByClass(shredTableMap.values(), PhysicalRelationalTable.class)).get();
+    return StreamUtil.getOnlyElement(
+            StreamUtil.filterByClass(shredTableMap.values(), PhysicalRelationalTable.class))
+        .get();
   }
-
 }

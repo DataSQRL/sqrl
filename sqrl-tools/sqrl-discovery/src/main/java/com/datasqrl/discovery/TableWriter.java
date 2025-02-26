@@ -17,9 +17,7 @@ import lombok.NonNull;
 public class TableWriter {
   public static final String TABLE_FILE_SUFFIX = ".table.json";
 
-  public TableWriter() {
-
-  }
+  public TableWriter() {}
 
   public void writeToFile(@NonNull Path destinationDir, @NonNull List<TableSource> tables)
       throws IOException {
@@ -31,9 +29,10 @@ public class TableWriter {
     }
   }
 
-  public Collection<Path> writeToFile(@NonNull Path destinationDir, @NonNull TableSource table) throws IOException  {
-    Path tableConfigFile = destinationDir.resolve(
-            table.getName().getCanonical() + TABLE_FILE_SUFFIX);
+  public Collection<Path> writeToFile(@NonNull Path destinationDir, @NonNull TableSource table)
+      throws IOException {
+    Path tableConfigFile =
+        destinationDir.resolve(table.getName().getCanonical() + TABLE_FILE_SUFFIX);
     TableSchema ts = table.getTableSchema().get();
     TableConfig config = table.getConfiguration().toBuilder().build();
     config.toFile(tableConfigFile, true);
@@ -42,5 +41,4 @@ public class TableWriter {
     Files.writeString(schemaFile, ts.getDefinition());
     return List.of(tableConfigFile, schemaFile);
   }
-
 }

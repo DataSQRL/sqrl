@@ -35,8 +35,8 @@ public class LogarithmicHistogram implements Serializable {
   }
 
   @ToString
-  public static class Accumulator implements
-      com.datasqrl.discovery.stats.Accumulator<Long, Accumulator, Void> {
+  public static class Accumulator
+      implements com.datasqrl.discovery.stats.Accumulator<Long, Accumulator, Void> {
 
     private float base;
     private double baseConversion;
@@ -44,13 +44,13 @@ public class LogarithmicHistogram implements Serializable {
     private long count;
 
     private Accumulator() {
-      //For Kryo
+      // For Kryo
     }
 
     public Accumulator(float base, int maxBuckets) {
       Preconditions.checkArgument(base > 1 && base < 100, "Invalid base provided: %s", base);
-      Preconditions.checkArgument(maxBuckets > 0 && maxBuckets < 1000,
-          "Invalid number of buckets: %s", maxBuckets);
+      Preconditions.checkArgument(
+          maxBuckets > 0 && maxBuckets < 1000, "Invalid number of buckets: %s", maxBuckets);
       this.buckets = new long[maxBuckets];
       this.count = 0;
       this.base = (byte) base;
@@ -90,8 +90,8 @@ public class LogarithmicHistogram implements Serializable {
     public void merge(LogarithmicHistogram.Accumulator accumulator) {
       Accumulator acc = accumulator;
       Preconditions.checkArgument(base == acc.base, "Incompatible bases: %s vs %s", base, acc.base);
-      Preconditions.checkArgument(buckets.length == acc.buckets.length,
-          "Incompatible histogram widths");
+      Preconditions.checkArgument(
+          buckets.length == acc.buckets.length, "Incompatible histogram widths");
       count += acc.count;
       for (int i = 0; i < buckets.length; i++) {
         buckets[i] += acc.buckets[i];
@@ -108,5 +108,4 @@ public class LogarithmicHistogram implements Serializable {
       return newAcc;
     }
   }
-
 }

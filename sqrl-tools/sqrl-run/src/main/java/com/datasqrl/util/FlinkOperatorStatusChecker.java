@@ -14,7 +14,8 @@ import lombok.SneakyThrows;
 @AllArgsConstructor
 public class FlinkOperatorStatusChecker {
 
-  private static final String FLINK_REST_URL = "http://localhost:8081"; // Adjust to your Flink REST URL
+  private static final String FLINK_REST_URL =
+      "http://localhost:8081"; // Adjust to your Flink REST URL
   private String JOB_ID; // Set your Flink job ID
   private static final long POLLING_INTERVAL_MS = 1000; // Poll every 1 second
   private int requiredSuccessfulCheckpoints;
@@ -23,9 +24,12 @@ public class FlinkOperatorStatusChecker {
     try {
       boolean conditionsMet = checkIfOperatorsStoppedAndCheckpointsCompleted(JOB_ID);
       if (conditionsMet) {
-        System.out.println("Operators have stopped propagating data and required checkpoints have been completed.");
+        System.out.println(
+            "Operators have stopped propagating data and required checkpoints have been"
+                + " completed.");
       } else {
-        System.out.println("Operators are still processing data or required checkpoints not completed yet.");
+        System.out.println(
+            "Operators are still processing data or required checkpoints not completed yet.");
       }
     } catch (Exception e) {
       // Can throw if job finishes early (bounded jobs)
@@ -83,11 +87,15 @@ public class FlinkOperatorStatusChecker {
 
     long readRecords = metrics.get("read-records").longValue();
     long writeRecords = metrics.get("write-records").longValue();
-//        long idleTime = metrics.get("accumulated-idle-time").longValue();
-//        long busyTime = metrics.get("accumulated-busy-time").longValue();
+    //        long idleTime = metrics.get("accumulated-idle-time").longValue();
+    //        long busyTime = metrics.get("accumulated-busy-time").longValue();
 
     System.out.println(
-        "Vertex: " + vertex.get("name").asText() + ", Read: " + readRecords + ", Write: "
+        "Vertex: "
+            + vertex.get("name").asText()
+            + ", Read: "
+            + readRecords
+            + ", Write: "
             + writeRecords);
 
     // Check if both read and write records have stopped increasing
@@ -95,17 +103,24 @@ public class FlinkOperatorStatusChecker {
   }
 
   // Keeps track of the previous values of the operator metrics
-  private static final java.util.Map<String, OperatorMetrics> previousMetrics = new java.util.HashMap<>();
+  private static final java.util.Map<String, OperatorMetrics> previousMetrics =
+      new java.util.HashMap<>();
 
-  public static boolean hasMetricsStopped(String vertexId, long currentReadRecords,
-      long currentWriteRecords) {
+  public static boolean hasMetricsStopped(
+      String vertexId, long currentReadRecords, long currentWriteRecords) {
     OperatorMetrics previous = previousMetrics.getOrDefault(vertexId, new OperatorMetrics(-1, -1));
     previousMetrics.put(vertexId, new OperatorMetrics(currentReadRecords, currentWriteRecords));
 
-    System.out.printf("%s %d %d %d %d%n", vertexId, currentReadRecords, previous.readRecords,
-        currentWriteRecords, previous.writeRecords);
+    System.out.printf(
+        "%s %d %d %d %d%n",
+        vertexId,
+        currentReadRecords,
+        previous.readRecords,
+        currentWriteRecords,
+        previous.writeRecords);
     // If the read or write records haven't changed, we consider the operator idle
-    return currentReadRecords == previous.readRecords && currentWriteRecords == previous.writeRecords;
+    return currentReadRecords == previous.readRecords
+        && currentWriteRecords == previous.writeRecords;
   }
 
   // Data class to store previous operator metrics
@@ -142,7 +157,8 @@ public class FlinkOperatorStatusChecker {
   }
 
   public boolean checkIfRequiredCheckpointsCompleted(String jobId) throws Exception {
-    String checkpointsUrl = FLINK_REST_URL + "/jobs/" + jobId + "/checkpoints"; // Get the checkpoints info
+    String checkpointsUrl =
+        FLINK_REST_URL + "/jobs/" + jobId + "/checkpoints"; // Get the checkpoints info
     String jsonResponse = getResponseFromUrl(checkpointsUrl);
     int completedCheckpoints = getCompletedCheckpointsCount(jsonResponse);
     System.out.println("Completed checkpoints: " + completedCheckpoints);

@@ -13,9 +13,7 @@ import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.table.types.inference.TypeInference;
 
-/**
- * Parses a timestamp from an ISO timestamp string.
- */
+/** Parses a timestamp from an ISO timestamp string. */
 @Slf4j
 public class ParseTimestamp extends ScalarFunction {
 
@@ -35,11 +33,16 @@ public class ParseTimestamp extends ScalarFunction {
 
   @Override
   public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-    return TypeInference.newBuilder().inputTypeStrategy(
-            VariableArguments.builder().staticType(DataTypes.STRING()).variableType(DataTypes.STRING())
-                .minVariableArguments(0).maxVariableArguments(1).build()).outputTypeStrategy(
+    return TypeInference.newBuilder()
+        .inputTypeStrategy(
+            VariableArguments.builder()
+                .staticType(DataTypes.STRING())
+                .variableType(DataTypes.STRING())
+                .minVariableArguments(0)
+                .maxVariableArguments(1)
+                .build())
+        .outputTypeStrategy(
             FlinkTypeUtil.nullPreservingOutputStrategy(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)))
         .build();
   }
 }
-

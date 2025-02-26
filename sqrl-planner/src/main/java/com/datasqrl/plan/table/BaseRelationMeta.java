@@ -17,5 +17,4 @@ public class BaseRelationMeta {
   public boolean hasTimestamp() {
     return timestampIdx >= 0;
   }
-
 }

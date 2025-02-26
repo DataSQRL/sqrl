@@ -3,13 +3,9 @@
  */
 package com.datasqrl.util;
 
-
 import com.google.common.base.Strings;
 import com.google.common.io.Resources;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -25,7 +21,7 @@ import org.apache.commons.lang3.tuple.Pair;
 /**
  * Contains a set of static methods for handling with files and folders.
  *
- * A lot of the methods are proxies around 3rd party libraries and don't have dedicated tests
+ * <p>A lot of the methods are proxies around 3rd party libraries and don't have dedicated tests
  */
 public class FileUtil {
 
@@ -117,6 +113,6 @@ public class FileUtil {
   }
 
   public static String toRegex(String filename) {
-    return filename.replace(".","\\.");
+    return filename.replace(".", "\\.");
   }
 }

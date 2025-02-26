@@ -3,6 +3,9 @@
  */
 package com.datasqrl.plan.hints;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.apache.calcite.rel.hint.RelHint;
@@ -10,10 +13,6 @@ import org.apache.calcite.sql.SqlHint;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.parser.SqlParserPos;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @AllArgsConstructor
 @Getter
@@ -35,12 +34,13 @@ public class TopNHint implements SqrlHint {
   @Override
   public RelHint getHint() {
     return RelHint.builder(getHintName())
-        .hintOptions(partition.stream().map(String::valueOf).collect(Collectors.toList())).build();
+        .hintOptions(partition.stream().map(String::valueOf).collect(Collectors.toList()))
+        .build();
   }
 
   public static SqlHint createSqlHint(Type type, SqlNodeList columns, SqlParserPos pos) {
-    return new SqlHint(pos, new SqlIdentifier(type.toString(), pos), columns,
-        SqlHint.HintOptionFormat.ID_LIST);
+    return new SqlHint(
+        pos, new SqlIdentifier(type.toString(), pos), columns, SqlHint.HintOptionFormat.ID_LIST);
   }
 
   @Override
@@ -60,10 +60,9 @@ public class TopNHint implements SqrlHint {
     @Override
     public TopNHint fromHint(RelHint hint) {
       Type type = Type.valueOf(hint.hintName);
-      List<Integer> partition = hint.listOptions.stream().map(Integer::parseInt)
-          .collect(Collectors.toList());
+      List<Integer> partition =
+          hint.listOptions.stream().map(Integer::parseInt).collect(Collectors.toList());
       return new TopNHint(type, partition);
     }
   }
-
 }

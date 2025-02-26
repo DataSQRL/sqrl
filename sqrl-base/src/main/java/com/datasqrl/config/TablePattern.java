@@ -5,7 +5,6 @@ import com.google.common.base.Preconditions;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
-
 public class TablePattern {
 
   private final String pattern;
@@ -23,7 +22,8 @@ public class TablePattern {
 
   public String substitute(String name, Optional<String> prefix, Optional<String> suffix) {
     int[] nameOffsets = getNameMatchOffsets(pattern);
-    String updatedPattern = StringUtil.replaceSubstring(pattern, nameOffsets[0], nameOffsets[1], Pattern.quote(name));
+    String updatedPattern =
+        StringUtil.replaceSubstring(pattern, nameOffsets[0], nameOffsets[1], Pattern.quote(name));
     if (prefix.isPresent()) updatedPattern = Pattern.quote(prefix.get()) + updatedPattern;
     if (suffix.isPresent()) updatedPattern = updatedPattern + Pattern.quote(suffix.get());
     return updatedPattern;
@@ -36,7 +36,7 @@ public class TablePattern {
   public static boolean isValid(String pattern) {
     try {
       Pattern.compile(pattern);
-      return getNameMatchOffsets(pattern)!=null;
+      return getNameMatchOffsets(pattern) != null;
     } catch (Exception e) {
       return false;
     }
@@ -65,10 +65,7 @@ public class TablePattern {
       }
     }
 
-    if (startPos<0 || endPos<0) return null;
-    return new int[]{startPos,endPos};
+    if (startPos < 0 || endPos < 0) return null;
+    return new int[] {startPos, endPos};
   }
-
-
-
 }

@@ -30,5 +30,4 @@ public interface RelDataTypeBuilder {
   public int getFieldCount();
 
   public RelDataType build();
-
 }

@@ -20,7 +20,8 @@ public class MetadataConfigImpl implements TableConfig.MetadataConfig {
 
   @Override
   public Optional<TableConfig.MetadataEntry> getMetadataEntry(String columnName) {
-//    if (!sqrlConfig.hasKey(columnName)) return Optional.empty();//todo: hasKey and containsKey does not work with subconfigs :(
+    //    if (!sqrlConfig.hasKey(columnName)) return Optional.empty();//todo: hasKey and containsKey
+    // does not work with subconfigs :(
 
     return Optional.of(new MetadataEntryImpl(sqrlConfig.getSubConfig(columnName)));
   }
@@ -28,6 +29,6 @@ public class MetadataConfigImpl implements TableConfig.MetadataConfig {
   @Override
   public Map<String, MetadataEntry> toMap() {
     return StreamSupport.stream(sqrlConfig.getKeys().spliterator(), false)
-        .collect(Collectors.toMap(c->c, c->new MetadataEntryImpl(sqrlConfig.getSubConfig(c))));
+        .collect(Collectors.toMap(c -> c, c -> new MetadataEntryImpl(sqrlConfig.getSubConfig(c))));
   }
 }

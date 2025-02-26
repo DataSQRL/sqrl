@@ -7,9 +7,7 @@ import com.datasqrl.config.JdbcDialect;
 import java.util.Optional;
 import java.util.ServiceLoader;
 
-/**
- * Loads via ServiceLoader
- */
+/** Loads via ServiceLoader */
 public class JdbcDDLServiceLoader {
 
   public Optional<JdbcDDLFactory> load(JdbcDialect dialect) {
@@ -22,5 +20,4 @@ public class JdbcDDLServiceLoader {
 
     return Optional.empty();
   }
-
 }

@@ -4,7 +4,7 @@
 /**
  * An abstraction layer around Apache Commons configuration to read and write configuration files.
  *
- * {@link com.datasqrl.config.SqrlConfig} is the main interface for interacting with configuration files
- * in DataSQRL. All access to configuration should go through this interface.
+ * <p>{@link com.datasqrl.config.SqrlConfig} is the main interface for interacting with
+ * configuration files in DataSQRL. All access to configuration should go through this interface.
  */
 package com.datasqrl.config;

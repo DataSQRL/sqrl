@@ -20,7 +20,8 @@ public class SimpleCallTransform extends RelRule<SimpleCallTransform.Config>
   private final Transform transform;
   private final SqlOperator operator;
 
-  public SimpleCallTransform(SqlOperator operator, Transform transform, SimpleCallTransform.Config config) {
+  public SimpleCallTransform(
+      SqlOperator operator, Transform transform, SimpleCallTransform.Config config) {
     super(config);
     this.transform = transform;
     this.operator = operator;
@@ -36,17 +37,19 @@ public class SimpleCallTransform extends RelRule<SimpleCallTransform.Config>
 
     AtomicBoolean hasTransformed = new AtomicBoolean(false);
 
-    RelNode newCall = filter.accept(new RexShuttle() {
-      @Override
-      public RexNode visitCall(RexCall call) {
-        if (call.getOperator().equals(operator)) {
-          hasTransformed.set(true);
-          return transform.transform(relOptRuleCall.builder(), call);
-        }
+    RelNode newCall =
+        filter.accept(
+            new RexShuttle() {
+              @Override
+              public RexNode visitCall(RexCall call) {
+                if (call.getOperator().equals(operator)) {
+                  hasTransformed.set(true);
+                  return transform.transform(relOptRuleCall.builder(), call);
+                }
 
-        return super.visitCall(call);
-      }
-    });
+                return super.visitCall(call);
+              }
+            });
 
     if (hasTransformed.get()) {
       relOptRuleCall.transformTo(newCall);
@@ -55,21 +58,23 @@ public class SimpleCallTransform extends RelRule<SimpleCallTransform.Config>
 
   @Value.Immutable
   public interface SimpleCallTransformConfig extends RelRule.Config {
-    public static SimpleCallTransform.Config createConfig(SqlOperator sqlOperator, Transform transform) {
+    public static SimpleCallTransform.Config createConfig(
+        SqlOperator sqlOperator, Transform transform) {
       return ImmutableSimpleCallTransformConfig.builder()
           .operator(sqlOperator)
           .transform(transform)
           .relBuilderFactory(RelFactories.LOGICAL_BUILDER)
-          .operandSupplier(b0 ->
-              b0.operand(LogicalProject.class).anyInputs())
+          .operandSupplier(b0 -> b0.operand(LogicalProject.class).anyInputs())
           .description("SimpleCallTransform")
           .build();
     }
 
     abstract SqlOperator getOperator();
+
     abstract Transform getTransform();
 
-    @Override default SimpleCallTransform toRule() {
+    @Override
+    default SimpleCallTransform toRule() {
       return new SimpleCallTransform(getOperator(), getTransform(), this);
     }
   }

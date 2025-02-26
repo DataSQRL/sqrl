@@ -3,18 +3,16 @@
  */
 package com.datasqrl.schema;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import com.datasqrl.schema.type.basic.*;
 import com.datasqrl.util.SnapshotTest;
-import org.apache.commons.lang3.tuple.Pair;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInfo;
-
 import java.io.IOException;
 import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.apache.commons.lang3.tuple.Pair;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 public class TypeTest {
 
@@ -27,10 +25,12 @@ public class TypeTest {
 
   @Test
   public void printCombinationMatrix() {
-    for (Map.Entry<Pair<BasicType, BasicType>, Pair<BasicType, Integer>> entry : BasicTypeManager.TYPE_COMBINATION_MATRIX.entrySet()) {
+    for (Map.Entry<Pair<BasicType, BasicType>, Pair<BasicType, Integer>> entry :
+        BasicTypeManager.TYPE_COMBINATION_MATRIX.entrySet()) {
       Pair<BasicType, BasicType> types = entry.getKey();
       Pair<BasicType, Integer> result = entry.getValue();
-      snapshot.addContent(String.format("%s [%d]", result.getKey(), result.getValue()),
+      snapshot.addContent(
+          String.format("%s [%d]", result.getKey(), result.getValue()),
           String.format("%s + %s", types.getKey(), types.getValue()));
     }
     snapshot.createOrValidate();
@@ -39,12 +39,14 @@ public class TypeTest {
   @Test
   public void testBasicTypes() {
     assertEquals(6, BasicTypeManager.ALL_TYPES.length);
-    assertEquals(DoubleType.INSTANCE,
+    assertEquals(
+        DoubleType.INSTANCE,
         BasicTypeManager.combine(BigIntType.INSTANCE, DoubleType.INSTANCE, 10).get());
-    assertEquals(StringType.INSTANCE,
+    assertEquals(
+        StringType.INSTANCE,
         BasicTypeManager.combine(BigIntType.INSTANCE, TimestampType.INSTANCE, 50).get());
-    assertEquals(IntervalType.INSTANCE,
+    assertEquals(
+        IntervalType.INSTANCE,
         BasicTypeManager.combine(BigIntType.INSTANCE, IntervalType.INSTANCE, 40).get());
   }
-
 }

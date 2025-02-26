@@ -1,6 +1,5 @@
 package com.datasqrl.time;
 
-
 import java.time.Instant;
 
 public interface TimeTumbleWindowFunctionEval {

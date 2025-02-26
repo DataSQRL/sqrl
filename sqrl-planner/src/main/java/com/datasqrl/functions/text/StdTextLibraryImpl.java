@@ -18,22 +18,25 @@ import org.apache.flink.table.functions.FunctionDefinition;
 @AutoService(StdLibrary.class)
 public class StdTextLibraryImpl extends AbstractFunctionModule implements StdLibrary {
   public static final NamePath LIB_NAME = NamePath.of("text");
-  public static final List<FunctionDefinition> SQRL_FUNCTIONS = List.of(
-      TextFunctions.SPLIT,
-      TextFunctions.TEXT_SEARCH,
-      TextFunctions.FORMAT,
-      TextFunctions.BANNED_WORDS_FILTER
-  );
+  public static final List<FunctionDefinition> SQRL_FUNCTIONS =
+      List.of(
+          TextFunctions.SPLIT,
+          TextFunctions.TEXT_SEARCH,
+          TextFunctions.FORMAT,
+          TextFunctions.BANNED_WORDS_FILTER);
 
-  private static List<NamespaceObject> SQL_FUNCTIONS = List.of(
-  );
+  private static List<NamespaceObject> SQL_FUNCTIONS = List.of();
 
   public StdTextLibraryImpl() {
-    super(ListUtils.union(SQRL_FUNCTIONS.stream().map(NamespaceObjectUtil::createNsObject).collect(Collectors.toList()),SQL_FUNCTIONS));
+    super(
+        ListUtils.union(
+            SQRL_FUNCTIONS.stream()
+                .map(NamespaceObjectUtil::createNsObject)
+                .collect(Collectors.toList()),
+            SQL_FUNCTIONS));
   }
 
   public NamePath getPath() {
     return LIB_NAME;
   }
-
 }

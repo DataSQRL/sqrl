@@ -18,5 +18,4 @@ public class DuckDBEngineFactory implements DatabaseEngineFactory {
   public Class getFactoryClass() {
     return DuckDBEngine.class;
   }
-
 }

@@ -19,5 +19,4 @@ public class FileHash {
   public static String getFor(InputStream is) throws IOException {
     return org.apache.commons.codec.digest.DigestUtils.md5Hex(is);
   }
-
 }

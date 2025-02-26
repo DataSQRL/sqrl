@@ -19,14 +19,17 @@ public class IndexHint implements OptimizerHint {
   List<String> columnNames;
 
   public static IndexHint of(String hintName, List<String> arguments, ErrorCollector errors) {
-    if (arguments==null || arguments.isEmpty()) return NONE;
+    if (arguments == null || arguments.isEmpty()) return NONE;
     List<String> columnNames;
     IndexType indexType;
     if (hintName.equalsIgnoreCase(PARTITION_KEY_HINT)) {
       indexType = IndexType.PBTREE;
       columnNames = arguments;
     } else if (hintName.equalsIgnoreCase(INDEX_HINT)) {
-      errors.checkFatal(arguments.size() > 1, "Index hint requires at least two arguments: the name of the index type and at least one column.");
+      errors.checkFatal(
+          arguments.size() > 1,
+          "Index hint requires at least two arguments: the name of the index type and at least one"
+              + " column.");
       Optional<IndexType> optIndex = IndexType.fromName(arguments.get(0));
       errors.checkFatal(optIndex.isPresent(), "Unknown index type: %s", arguments.get(0));
       indexType = optIndex.get();
@@ -39,13 +42,11 @@ public class IndexHint implements OptimizerHint {
   }
 
   public IndexType getIndexType() {
-    Preconditions.checkArgument(indexType!=null, "Not an index");
+    Preconditions.checkArgument(indexType != null, "Not an index");
     return indexType;
   }
 
   public boolean isValid() {
-    return indexType!=null;
+    return indexType != null;
   }
-
-
 }

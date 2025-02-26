@@ -13,5 +13,4 @@ public class CalciteWriter {
     s.append("-idx:").append(stats.getKeys());
     return s.toString();
   }
-
 }

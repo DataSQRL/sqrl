@@ -24,8 +24,14 @@ public class RootSqrlTable implements SqrlTableMacro {
   private final boolean isImportedTable;
   private final Boolean hasExecHint;
 
-  public RootSqrlTable(Name name, Table internalTable, List<FunctionParameter> parameters,
-      Supplier<RelNode> viewTransform, boolean isTest, boolean isImportedTable, Boolean hasExecHint) {
+  public RootSqrlTable(
+      Name name,
+      Table internalTable,
+      List<FunctionParameter> parameters,
+      Supplier<RelNode> viewTransform,
+      boolean isTest,
+      boolean isImportedTable,
+      Boolean hasExecHint) {
     this.name = name;
     this.internalTable = internalTable;
     this.parameters = parameters;
@@ -37,7 +43,8 @@ public class RootSqrlTable implements SqrlTableMacro {
   }
 
   @Override
-  public RelDataType getRowType(RelDataTypeFactory relDataTypeFactory, List<? extends Object> list) {
+  public RelDataType getRowType(
+      RelDataTypeFactory relDataTypeFactory, List<? extends Object> list) {
     return viewTransform.get().getRowType();
   }
 
@@ -71,9 +78,7 @@ public class RootSqrlTable implements SqrlTableMacro {
     return JoinType.NONE;
   }
 
-  /**
-   * If the table was created as part of an IMPORT statement rather than a sqrl derived table
-   */
+  /** If the table was created as part of an IMPORT statement rather than a sqrl derived table */
   public boolean isImportedTable() {
     return isImportedTable;
   }

@@ -9,7 +9,6 @@ import com.datasqrl.module.NamespaceObject;
 import com.google.common.base.Preconditions;
 import java.util.Locale;
 import java.util.Optional;
-
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.flink.table.functions.BuiltInFunctionDefinition;
@@ -23,25 +22,31 @@ public class NamespaceObjectUtil {
   }
 
   public static NamespaceObject createFunctionFromFlink(String name, String originalName) {
-    Optional<BuiltInFunctionDefinition> function = getFunctionByNameFromClass(BuiltInFunctionDefinitions.class,
-        BuiltInFunctionDefinition.class,
-        originalName.toUpperCase(Locale.ROOT));
+    Optional<BuiltInFunctionDefinition> function =
+        getFunctionByNameFromClass(
+            BuiltInFunctionDefinitions.class,
+            BuiltInFunctionDefinition.class,
+            originalName.toUpperCase(Locale.ROOT));
     Preconditions.checkArgument(function.isPresent(), "Could not find function %s", name);
     BuiltInFunctionDefinition fnc = function.get();
     return new FlinkUdfNsObject(name, fnc, originalName, Optional.empty());
   }
 
   public static NamespaceObject createFunctionFromStdOpTable(String name) {
-    return new CalciteFunctionNsObject(Name.system(name),
-        getFunctionByNameFromClass(SqlStdOperatorTable.class,
-            SqlOperator.class, name).get(), name);
+    return new CalciteFunctionNsObject(
+        Name.system(name),
+        getFunctionByNameFromClass(SqlStdOperatorTable.class, SqlOperator.class, name).get(),
+        name);
   }
 
   public static NamespaceObject createNsObject(FunctionDefinition function) {
-    Preconditions.checkArgument(function instanceof FunctionDefinition,
-        "All SQRL function implementations must extend FunctionDefinition: %s", function.getClass());
+    Preconditions.checkArgument(
+        function instanceof FunctionDefinition,
+        "All SQRL function implementations must extend FunctionDefinition: %s",
+        function.getClass());
     String functionNameFromClass = getFunctionNameFromClass(function.getClass());
-    return new FlinkUdfNsObject(functionNameFromClass, function, functionNameFromClass, Optional.empty());
+    return new FlinkUdfNsObject(
+        functionNameFromClass, function, functionNameFromClass, Optional.empty());
   }
 
   static String getFunctionNameFromClass(Class clazz) {

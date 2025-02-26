@@ -1,27 +1,22 @@
 package com.datasqrl.calcite.dialect.snowflake;
 
 import java.util.List;
+import java.util.Objects;
 import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.util.ImmutableNullableList;
 
-import java.util.Objects;
-
 /**
- * For AWS Glue
- * CREATE [ OR REPLACE ] ICEBERG TABLE [ IF NOT EXISTS ] <table_name>
- *   [ EXTERNAL_VOLUME = '<external_volume_name>' ]
- *   [ CATALOG = '<catalog_integration_name>' ]
- *   CATALOG_TABLE_NAME = '<catalog_table_name>'
- *   [ CATALOG_NAMESPACE = '<catalog_namespace>' ]
- *   [ REPLACE_INVALID_CHARACTERS = { TRUE | FALSE } ]
- *   [ COMMENT = '<string_literal>' ]
- *   [ [ WITH ] TAG ( <tag_name> = '<tag_value>' [ , <tag_name> = '<tag_value>' , ... ] ) ]
+ * For AWS Glue CREATE [ OR REPLACE ] ICEBERG TABLE [ IF NOT EXISTS ] <table_name> [ EXTERNAL_VOLUME
+ * = '<external_volume_name>' ] [ CATALOG = '<catalog_integration_name>' ] CATALOG_TABLE_NAME =
+ * '<catalog_table_name>' [ CATALOG_NAMESPACE = '<catalog_namespace>' ] [ REPLACE_INVALID_CHARACTERS
+ * = { TRUE | FALSE } ] [ COMMENT = '<string_literal>' ] [ [ WITH ] TAG ( <tag_name> = '<tag_value>'
+ * [ , <tag_name> = '<tag_value>' , ... ] ) ]
  */
 public class SqlCreateIcebergTableFromAwsGlue extends SqlCall {
 
-  public static final SqlSpecialOperator OPERATOR = new SqlSpecialOperator("CREATE ICEBERG TABLE",
-      SqlKind.OTHER_DDL);
+  public static final SqlSpecialOperator OPERATOR =
+      new SqlSpecialOperator("CREATE ICEBERG TABLE", SqlKind.OTHER_DDL);
 
   private final SqlIdentifier tableName;
   private final SqlLiteral externalVolume;
@@ -33,10 +28,17 @@ public class SqlCreateIcebergTableFromAwsGlue extends SqlCall {
   private final boolean replace;
   private final boolean ifNotExists;
 
-  public SqlCreateIcebergTableFromAwsGlue(SqlParserPos pos, boolean replace, boolean ifNotExists,
+  public SqlCreateIcebergTableFromAwsGlue(
+      SqlParserPos pos,
+      boolean replace,
+      boolean ifNotExists,
       SqlIdentifier tableName,
-      SqlLiteral externalVolume, SqlLiteral catalog, SqlLiteral catalogTableName,
-      SqlLiteral catalogNamespace, SqlLiteral replaceInvalidCharacters, SqlLiteral comment) {
+      SqlLiteral externalVolume,
+      SqlLiteral catalog,
+      SqlLiteral catalogTableName,
+      SqlLiteral catalogNamespace,
+      SqlLiteral replaceInvalidCharacters,
+      SqlLiteral comment) {
     super(pos);
     this.replace = replace;
     this.ifNotExists = ifNotExists;
@@ -56,9 +58,14 @@ public class SqlCreateIcebergTableFromAwsGlue extends SqlCall {
 
   @Override
   public List<SqlNode> getOperandList() {
-    return ImmutableNullableList.of(tableName, externalVolume, catalog, catalogTableName,
+    return ImmutableNullableList.of(
+        tableName,
+        externalVolume,
+        catalog,
+        catalogTableName,
         catalogNamespace,
-        replaceInvalidCharacters, comment);
+        replaceInvalidCharacters,
+        comment);
   }
 
   @Override

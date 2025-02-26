@@ -6,6 +6,5 @@ import java.nio.file.Path;
 
 public interface CacheRepository {
 
-    void cacheDependency(Path zipFile, Dependency dependency) throws IOException;
-
+  void cacheDependency(Path zipFile, Dependency dependency) throws IOException;
 }

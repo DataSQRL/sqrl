@@ -18,14 +18,11 @@ package com.datasqrl.parse;
 
 import com.datasqrl.parse.SqlBaseParser.BackQuotedIdentifierContext;
 import com.datasqrl.parse.SqlBaseParser.QuotedIdentifierContext;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.regex.Pattern;
-import lombok.SneakyThrows;
 import lombok.Value;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonToken;
@@ -46,12 +43,13 @@ import org.apache.calcite.sql.SqrlStatement;
 public class SqrlParserImpl implements SqrlParser {
 
   private final LexerErrorHandler lexerErrorHandler = new LexerErrorHandler();
-  private final ParsingErrorHandler parsingErrorHandler = ParsingErrorHandler.builder()
-      .specialRule(SqlBaseParser.RULE_expression, "<expression>")
-      .specialRule(SqlBaseParser.RULE_identifier, "<identifier>")
-      .specialRule(SqlBaseParser.RULE_type, "<type>")
-      .specialToken(SqlBaseLexer.INTEGER_VALUE, "<integer>")
-      .build();
+  private final ParsingErrorHandler parsingErrorHandler =
+      ParsingErrorHandler.builder()
+          .specialRule(SqlBaseParser.RULE_expression, "<expression>")
+          .specialRule(SqlBaseParser.RULE_identifier, "<identifier>")
+          .specialRule(SqlBaseParser.RULE_type, "<type>")
+          .specialToken(SqlBaseLexer.INTEGER_VALUE, "<integer>")
+          .build();
 
   public ScriptNode parse(String sql) {
     ScriptNode scriptNode = (ScriptNode) invokeParser("script", sql, SqlBaseParser::script);
@@ -64,8 +62,8 @@ public class SqrlParserImpl implements SqrlParser {
     return (SqrlStatement) invokeParser("statement", sql, SqlBaseParser::singleStatement);
   }
 
-  private SqlNode invokeParser(String name, String sql,
-      Function<SqlBaseParser, ParserRuleContext> parseFunction) {
+  private SqlNode invokeParser(
+      String name, String sql, Function<SqlBaseParser, ParserRuleContext> parseFunction) {
     try {
       SqlBaseLexer lexer = new SqlBaseLexer(new CaseInsensitiveStream(CharStreams.fromString(sql)));
       CommonTokenStream tokenStream = new CommonTokenStream(lexer);
@@ -73,17 +71,17 @@ public class SqrlParserImpl implements SqrlParser {
 
       // Override the default error strategy to not attempt inserting or deleting a token.
       // Otherwise, it messes up error reporting
-      parser.setErrorHandler(new DefaultErrorStrategy() {
-        @Override
-        public Token recoverInline(Parser recognizer)
-            throws RecognitionException {
-          if (nextTokensContext == null) {
-            throw new InputMismatchException(recognizer);
-          } else {
-            throw new InputMismatchException(recognizer, nextTokensState, nextTokensContext);
-          }
-        }
-      });
+      parser.setErrorHandler(
+          new DefaultErrorStrategy() {
+            @Override
+            public Token recoverInline(Parser recognizer) throws RecognitionException {
+              if (nextTokensContext == null) {
+                throw new InputMismatchException(recognizer);
+              } else {
+                throw new InputMismatchException(recognizer, nextTokensState, nextTokensContext);
+              }
+            }
+          });
 
       parser.addParseListener(new PostProcessor(Arrays.asList(parser.getRuleNames())));
 
@@ -106,37 +104,32 @@ public class SqrlParserImpl implements SqrlParser {
   }
 
   @Value
-  private class PostProcessor
-      extends SqlBaseBaseListener {
+  private class PostProcessor extends SqlBaseBaseListener {
 
     private final List<String> ruleNames;
     Pattern pattern = Pattern.compile("[_A-Za-z][_0-9A-Za-z]");
 
     @Override
     public void exitUnquotedIdentifier(SqlBaseParser.UnquotedIdentifierContext context) {
-      noSymbols(
-          context.IDENTIFIER().getText(),
-          context.IDENTIFIER().getSymbol());
+      noSymbols(context.IDENTIFIER().getText(), context.IDENTIFIER().getSymbol());
     }
 
     @Override
     public void exitBackQuotedIdentifier(BackQuotedIdentifierContext context) {
       noSymbols(
-          context.BACKQUOTED_IDENTIFIER().getText(),
-          context.BACKQUOTED_IDENTIFIER().getSymbol());
+          context.BACKQUOTED_IDENTIFIER().getText(), context.BACKQUOTED_IDENTIFIER().getSymbol());
     }
 
     @Override
     public void exitQuotedIdentifier(QuotedIdentifierContext context) {
-      noSymbols(
-          context.QUOTED_IDENTIFIER().getText(),
-          context.QUOTED_IDENTIFIER().getSymbol());
+      noSymbols(context.QUOTED_IDENTIFIER().getText(), context.QUOTED_IDENTIFIER().getSymbol());
     }
 
     public void noSymbols(String identifier, Token token) {
       if (identifier.indexOf("$") > 0) {
         throw new ParsingException(
-            "identifiers '" + identifier + "' must not contain special token ($).", null,
+            "identifiers '" + identifier + "' must not contain special token ($).",
+            null,
             token.getLine(),
             token.getCharPositionInLine());
       }
@@ -144,7 +137,8 @@ public class SqrlParserImpl implements SqrlParser {
 
     @Override
     public void exitNonReserved(SqlBaseParser.NonReservedContext context) {
-      // we can't modify the tree during rule enter/exit event handling unless we're dealing with a terminal.
+      // we can't modify the tree during rule enter/exit event handling unless we're dealing with a
+      // terminal.
       // Otherwise, ANTLR gets confused an fires spurious notifications.
       if (!(context.getChild(0) instanceof TerminalNode)) {
         int rule = ((ParserRuleContext) context.getChild(0)).getRuleIndex();
@@ -157,12 +151,15 @@ public class SqrlParserImpl implements SqrlParser {
 
       Token token = (Token) context.getChild(0).getPayload();
 
-      context.getParent().addChild(new CommonToken(
-          new Pair<>(token.getTokenSource(), token.getInputStream()),
-          SqlBaseLexer.IDENTIFIER,
-          token.getChannel(),
-          token.getStartIndex(),
-          token.getStopIndex()));
+      context
+          .getParent()
+          .addChild(
+              new CommonToken(
+                  new Pair<>(token.getTokenSource(), token.getInputStream()),
+                  SqlBaseLexer.IDENTIFIER,
+                  token.getChannel(),
+                  token.getStartIndex(),
+                  token.getStopIndex()));
     }
   }
 }

@@ -4,7 +4,6 @@
 package com.datasqrl.schema.type.basic;
 
 import com.datasqrl.schema.type.SqrlTypeVisitor;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -27,8 +26,8 @@ public class BigIntType extends AbstractBasicType<Long> {
 
   public static class Conversion extends SimpleBasicType.Conversion<Long> {
 
-    private static final Set<Class> INT_CLASSES = Set.of(Integer.class, Long.class,
-        Byte.class, Short.class);
+    private static final Set<Class> INT_CLASSES =
+        Set.of(Integer.class, Long.class, Byte.class, Short.class);
 
     public Conversion() {
       super(Long.class, s -> Long.parseLong(s));

@@ -4,7 +4,6 @@ import static com.datasqrl.util.NameUtil.namepath2Path;
 
 import com.datasqrl.canonicalizer.NamePath;
 import com.google.common.base.Preconditions;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -35,8 +34,7 @@ public class FileResourceResolver implements ResourceResolver {
       return List.of();
     }
 
-    return Files.list(path)
-        .collect(Collectors.toList());
+    return Files.list(path).collect(Collectors.toList());
   }
 
   @Override

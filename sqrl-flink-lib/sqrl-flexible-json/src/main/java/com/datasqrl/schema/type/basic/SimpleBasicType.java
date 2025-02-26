@@ -67,7 +67,5 @@ public abstract class SimpleBasicType<J> extends AbstractBasicType<J> {
       errors.fatal("Cannot convert [%s]", original);
       return Optional.empty();
     }
-
   }
-
 }

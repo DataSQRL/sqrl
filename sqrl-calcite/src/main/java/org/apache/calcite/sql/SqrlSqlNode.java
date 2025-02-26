@@ -17,14 +17,10 @@ public abstract class SqrlSqlNode extends SqlNode {
   }
 
   @Override
-  public void unparse(SqlWriter sqlWriter, int i, int i1) {
-
-  }
+  public void unparse(SqlWriter sqlWriter, int i, int i1) {}
 
   @Override
-  public void validate(SqlValidator sqlValidator, SqlValidatorScope sqlValidatorScope) {
-
-  }
+  public void validate(SqlValidator sqlValidator, SqlValidatorScope sqlValidatorScope) {}
 
   @Override
   public <R> R accept(SqlVisitor<R> sqlVisitor) {

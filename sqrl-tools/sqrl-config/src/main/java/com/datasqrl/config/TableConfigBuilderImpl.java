@@ -29,8 +29,8 @@ public class TableConfigBuilderImpl implements TableConfig.TableConfigBuilder {
   }
 
   public TableConfigBuilderImpl setWatermark(long milliseconds) {
-    Preconditions.checkArgument(milliseconds >= 0, "Invalid watermark milliseconds: %s",
-        milliseconds);
+    Preconditions.checkArgument(
+        milliseconds >= 0, "Invalid watermark milliseconds: %s", milliseconds);
     getBaseConfig().setProperty(TableTableConfigImpl.WATERMARK_KEY, milliseconds);
     SqrlConfig config = getBaseConfig();
     return this;
@@ -51,15 +51,18 @@ public class TableConfigBuilderImpl implements TableConfig.TableConfigBuilder {
     getBaseConfig().setProperty(TableTableConfigImpl.PARTITIONKEY_KEY, partitionKeys);
   }
 
-  public TableConfig.TableConfigBuilder setMetadata(@NonNull String columnName, String type, String attribute) {
-    SqrlConfig colConfig = config.getSubConfig(TableConfigImpl.METADATA_KEY).getSubConfig(columnName);
+  public TableConfig.TableConfigBuilder setMetadata(
+      @NonNull String columnName, String type, String attribute) {
+    SqrlConfig colConfig =
+        config.getSubConfig(TableConfigImpl.METADATA_KEY).getSubConfig(columnName);
     colConfig.setProperty(TableConfigImpl.METADATA_COLUMN_TYPE_KEY, type);
     colConfig.setProperty(TableConfigImpl.METADATA_COLUMN_ATTRIBUTE_KEY, attribute);
     return this;
   }
 
   public TableConfigBuilderImpl setMetadataFunction(@NonNull String columnName, String function) {
-    SqrlConfig colConfig = config.getSubConfig(TableConfigImpl.METADATA_KEY).getSubConfig(columnName);
+    SqrlConfig colConfig =
+        config.getSubConfig(TableConfigImpl.METADATA_KEY).getSubConfig(columnName);
     colConfig.setProperty(TableConfigImpl.METADATA_COLUMN_ATTRIBUTE_KEY, function);
     return this;
   }
@@ -69,13 +72,12 @@ public class TableConfigBuilderImpl implements TableConfig.TableConfigBuilder {
   }
 
   public TableConfig.TableConfigBuilder copyConnectorConfig(EngineConfigImpl connectorConfig) {
-    config.getSubConfig(TableConfigImpl.FLINK_CONNECTOR_KEY)
-        .copy(connectorConfig.getSqrlConfig());
+    config.getSubConfig(TableConfigImpl.FLINK_CONNECTOR_KEY).copy(connectorConfig.getSqrlConfig());
     return this;
   }
+
   public TableConfig.TableConfigBuilder copyConnectorConfig(ConnectorConfImpl connectorConfig) {
-    config.getSubConfig(TableConfigImpl.FLINK_CONNECTOR_KEY)
-        .copy(connectorConfig.sqrlConfig);
+    config.getSubConfig(TableConfigImpl.FLINK_CONNECTOR_KEY).copy(connectorConfig.sqrlConfig);
     return this;
   }
 
@@ -86,5 +88,4 @@ public class TableConfigBuilderImpl implements TableConfig.TableConfigBuilder {
   public TableConfigImpl build() {
     return new TableConfigImpl(name, config);
   }
-
 }

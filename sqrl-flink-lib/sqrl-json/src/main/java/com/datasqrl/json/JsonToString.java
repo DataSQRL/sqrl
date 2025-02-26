@@ -10,5 +10,4 @@ public class JsonToString extends ScalarFunction {
     }
     return json.getJson().toString();
   }
-
 }

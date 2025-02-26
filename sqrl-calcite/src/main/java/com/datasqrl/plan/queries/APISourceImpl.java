@@ -15,13 +15,11 @@ import lombok.Getter;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class APISourceImpl implements APISource {
 
-  @Include
-  Name name;
+  @Include Name name;
   String schemaDefinition;
 
   public static APISource of(String schemaDefinition) {
-    return new APISourceImpl(Name.system("schema"),schemaDefinition
-        .replaceAll("\t", "  "));
+    return new APISourceImpl(Name.system("schema"), schemaDefinition.replaceAll("\t", "  "));
   }
 
   @Override
@@ -29,11 +27,11 @@ public class APISourceImpl implements APISource {
     return name.toString();
   }
 
-  public static APISource of(String filePath, NameCanonicalizer canonicalizer, ResourceResolver resolver) {
+  public static APISource of(
+      String filePath, NameCanonicalizer canonicalizer, ResourceResolver resolver) {
     return new APISourceImpl(
         canonicalizer.name(FileUtil.separateExtension(FileUtil.getFileName(filePath)).getKey()),
-        FileUtil.readFile(resolver.resolveFile(NamePath.of(filePath)).get())
-    );
+        FileUtil.readFile(resolver.resolveFile(NamePath.of(filePath)).get()));
   }
 
   @Override

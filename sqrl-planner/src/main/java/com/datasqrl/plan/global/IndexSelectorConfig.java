@@ -18,8 +18,9 @@ public interface IndexSelectorConfig {
   boolean hasPrimaryKeyIndex();
 
   /**
-   * The threshold in cost improvement. Once we cannot find an index that improves
-   * cost by this threshold amount, we stop searching.
+   * The threshold in cost improvement. Once we cannot find an index that improves cost by this
+   * threshold amount, we stop searching.
+   *
    * @return
    */
   double getCostImprovementThreshold();
@@ -32,11 +33,11 @@ public interface IndexSelectorConfig {
   int maxIndexes();
 
   /**
-   * The maximum number of distinct indexing patterns to consider before creating
-   * an individual index for each of the columns in those indexing patterns.
+   * The maximum number of distinct indexing patterns to consider before creating an individual
+   * index for each of the columns in those indexing patterns.
    *
-   * Creating too many indexes is very expensive and the database will likely perform
-   * better by combining multiple column indexes.
+   * <p>Creating too many indexes is very expensive and the database will likely perform better by
+   * combining multiple column indexes.
    *
    * @return
    */
@@ -44,6 +45,7 @@ public interface IndexSelectorConfig {
 
   /**
    * A set of all supported indexes for this database.
+   *
    * @return
    */
   EnumSet<IndexType> supportedIndexTypes();
@@ -76,5 +78,4 @@ public interface IndexSelectorConfig {
   default Optional<IndexType> getPreferredSpecialIndexType(Set<IndexType> options) {
     return options.stream().filter(supportedIndexTypes()::contains).findFirst();
   }
-
 }

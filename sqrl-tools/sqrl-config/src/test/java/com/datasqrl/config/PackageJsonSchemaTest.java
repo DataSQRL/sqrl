@@ -15,15 +15,16 @@ public class PackageJsonSchemaTest {
   private static final Path TEST_CASES = Path.of(CONFIG_DIR.toString(), "package");
 
   @ParameterizedTest
-  @ValueSource(strings = {
-      "missingVersionField.json",
-      "validIcebergConfig.json",
-      "missingCompileSection.json",
-      "validDependencies.json",
-      "missingProfilesField.json",
-      "validPackageWithUrls.json",
-      "onlyVersionFieldExists.json"
-  })
+  @ValueSource(
+      strings = {
+        "missingVersionField.json",
+        "validIcebergConfig.json",
+        "missingCompileSection.json",
+        "validDependencies.json",
+        "missingProfilesField.json",
+        "validPackageWithUrls.json",
+        "onlyVersionFieldExists.json"
+      })
   public void testValidConfigFile(String configFileName) {
     ErrorCollector errors = ErrorCollector.root();
     try {
@@ -34,20 +35,23 @@ public class PackageJsonSchemaTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {
-      "emptyEnabledEngines.json",
-      "invalidVersionFormat.json",
-      "additionalPropertyInIceberg.json",
-      "invalidConnectorInIceberg.json",
-      "emptyEnginesFlinkConnectors.json",
-      "missingRequiredDependencyFields.json",
-      "invalidDurationInFlinkConfig.json",
-      "emptyTestRunner.json",
-      "invalidUrlInPackage.json",
-      "emptyPropertiesInPackage.json"
-  })
+  @ValueSource(
+      strings = {
+        "emptyEnabledEngines.json",
+        "invalidVersionFormat.json",
+        "additionalPropertyInIceberg.json",
+        "invalidConnectorInIceberg.json",
+        "emptyEnginesFlinkConnectors.json",
+        "missingRequiredDependencyFields.json",
+        "invalidDurationInFlinkConfig.json",
+        "emptyTestRunner.json",
+        "invalidUrlInPackage.json",
+        "emptyPropertiesInPackage.json"
+      })
   public void testInvalidConfigFile(String configFileName) {
-    testForErrors(errors -> SqrlConfigCommons.fromFilesPackageJson(errors,
-        List.of(CONFIG_DIR.resolve(configFileName))));
+    testForErrors(
+        errors ->
+            SqrlConfigCommons.fromFilesPackageJson(
+                errors, List.of(CONFIG_DIR.resolve(configFileName))));
   }
 }

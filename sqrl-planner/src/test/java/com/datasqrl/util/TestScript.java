@@ -54,23 +54,15 @@ public interface TestScript {
   @Builder
   static class Impl implements TestScript {
 
-    @NonNull
-    final String name;
-    @NonNull
-    final Path rootPackageDirectory;
-    @NonNull
-    final Path scriptPath;
-    @NonNull
-    @Singular
-    final List<String> resultTables;
-    @Builder.Default
-    final boolean dataSnapshot = true;
-    @Builder.Default
-    @NonNull
-    final List<TestGraphQLSchema> graphQLSchemas = List.of();
+    @NonNull final String name;
+    @NonNull final Path rootPackageDirectory;
+    @NonNull final Path scriptPath;
+    @NonNull @Singular final List<String> resultTables;
+    @Builder.Default final boolean dataSnapshot = true;
+    @Builder.Default @NonNull final List<TestGraphQLSchema> graphQLSchemas = List.of();
 
-    @Singular
-    final List<Path> dataDirs;
+    @Singular final List<Path> dataDirs;
+
     @Override
     public String toString() {
       return name;
@@ -80,7 +72,6 @@ public interface TestScript {
     public boolean dataSnapshot() {
       return dataSnapshot;
     }
-
   }
 
   static TestScript.Impl.ImplBuilder of(TestDataset dataset, Path script, String... resultTables) {
@@ -92,28 +83,30 @@ public interface TestScript {
     if (name.endsWith(".sqrl")) {
       name = StringUtil.removeFromEnd(name, ".sqrl");
     }
-    return Impl.builder().name(name).rootPackageDirectory(rootPackage).scriptPath(script)
+    return Impl.builder()
+        .name(name)
+        .rootPackageDirectory(rootPackage)
+        .scriptPath(script)
         .resultTables(Arrays.asList(resultTables));
   }
 
-        /*
-    === STATIC METHODS ===
-     */
-
-
+  /*
+  === STATIC METHODS ===
+   */
 
   class PhysicalUseCaseProvider implements ArgumentsProvider {
 
-    private static List<TestScript> SCRIPTS = ImmutableList.<TestScript>builder()
-        .add(Retail.INSTANCE.getTestScripts().get(RetailScriptNames.ORDER_STATS))
-        .add(Retail.INSTANCE.getTestScripts().get(RetailScriptNames.FULL))
-        .add(Retail.INSTANCE.getTestScripts().get(RetailScriptNames.RECOMMEND))
-        .addAll(Nutshop.INSTANCE.getScripts().subList(0, 2))
-        .addAll(Quickstart.INSTANCE.getScripts())
-        .addAll(Clickstream.INSTANCE.getScripts())
-        .addAll(Sensors.INSTANCE.getScripts())
-        .addAll(Repository.INSTANCE.getScripts())
-        .build();
+    private static List<TestScript> SCRIPTS =
+        ImmutableList.<TestScript>builder()
+            .add(Retail.INSTANCE.getTestScripts().get(RetailScriptNames.ORDER_STATS))
+            .add(Retail.INSTANCE.getTestScripts().get(RetailScriptNames.FULL))
+            .add(Retail.INSTANCE.getTestScripts().get(RetailScriptNames.RECOMMEND))
+            .addAll(Nutshop.INSTANCE.getScripts().subList(0, 2))
+            .addAll(Quickstart.INSTANCE.getScripts())
+            .addAll(Clickstream.INSTANCE.getScripts())
+            .addAll(Sensors.INSTANCE.getScripts())
+            .addAll(Repository.INSTANCE.getScripts())
+            .build();
 
     @Override
     public Stream<? extends Arguments> provideArguments(ExtensionContext extensionContext)
@@ -124,51 +117,52 @@ public interface TestScript {
 
   public class QueryUseCaseProvider implements ArgumentsProvider {
 
-    private static List<TestScript> SCRIPTS = ImmutableList.<TestScript>builder()
-        .add(Retail.INSTANCE.getTestScripts().get(RetailScriptNames.ORDER_STATS))
-        .add(Retail.INSTANCE.getTestScripts().get(RetailScriptNames.FULL))
-        .add(Retail.INSTANCE.getTestScripts().get(RetailScriptNames.RECOMMEND))
-        .add(Retail.INSTANCE.getTestScripts().get(RetailScriptNames.SEARCH))
-        .addAll(Nutshop.INSTANCE.getScripts().subList(0, 2))
-        .addAll(Quickstart.INSTANCE.getScripts())
-        .addAll(Clickstream.INSTANCE.getScripts())
-        .add(Sensors.INSTANCE.getScripts().get(0))
-        .addAll(Repository.INSTANCE.getScripts())
-        .build();
+    private static List<TestScript> SCRIPTS =
+        ImmutableList.<TestScript>builder()
+            .add(Retail.INSTANCE.getTestScripts().get(RetailScriptNames.ORDER_STATS))
+            .add(Retail.INSTANCE.getTestScripts().get(RetailScriptNames.FULL))
+            .add(Retail.INSTANCE.getTestScripts().get(RetailScriptNames.RECOMMEND))
+            .add(Retail.INSTANCE.getTestScripts().get(RetailScriptNames.SEARCH))
+            .addAll(Nutshop.INSTANCE.getScripts().subList(0, 2))
+            .addAll(Quickstart.INSTANCE.getScripts())
+            .addAll(Clickstream.INSTANCE.getScripts())
+            .add(Sensors.INSTANCE.getScripts().get(0))
+            .addAll(Repository.INSTANCE.getScripts())
+            .build();
 
     @Override
     public Stream<? extends Arguments> provideArguments(ExtensionContext extensionContext)
         throws Exception {
-      return SCRIPTS.stream().flatMap(script ->
-          script.getGraphQLSchemas().stream().map(gql -> Arguments.of(script, gql)));
+      return SCRIPTS.stream()
+          .flatMap(
+              script -> script.getGraphQLSchemas().stream().map(gql -> Arguments.of(script, gql)));
     }
   }
 
   class AllScriptsWithAllEnginesProvider implements ArgumentsProvider {
 
-    private static List<TestScript> SCRIPTS = ImmutableList.<TestScript>builder()
-        .add(Retail.INSTANCE.getTestScripts().get(RetailScriptNames.ORDER_STATS))
-        .add(Retail.INSTANCE.getTestScripts().get(RetailScriptNames.FULL))
-        .add(Retail.INSTANCE.getTestScripts().get(RetailScriptNames.RECOMMEND))
-        .add(Nutshop.INSTANCE.getScripts().get(1))
-        .addAll(Quickstart.INSTANCE.getScripts())
-        .addAll(Clickstream.INSTANCE.getScripts())
-        .add(Sensors.INSTANCE.getScripts().get(0))
-        .build();
+    private static List<TestScript> SCRIPTS =
+        ImmutableList.<TestScript>builder()
+            .add(Retail.INSTANCE.getTestScripts().get(RetailScriptNames.ORDER_STATS))
+            .add(Retail.INSTANCE.getTestScripts().get(RetailScriptNames.FULL))
+            .add(Retail.INSTANCE.getTestScripts().get(RetailScriptNames.RECOMMEND))
+            .add(Nutshop.INSTANCE.getScripts().get(1))
+            .addAll(Quickstart.INSTANCE.getScripts())
+            .addAll(Clickstream.INSTANCE.getScripts())
+            .add(Sensors.INSTANCE.getScripts().get(0))
+            .build();
 
     @Override
     public Stream<? extends Arguments> provideArguments(ExtensionContext extensionContext)
         throws Exception {
 
       return SCRIPTS.stream()
-          .flatMap(script ->
-              script.getGraphQLSchemas().stream()
-                  .flatMap(gql ->
-                          jdbcEngines.stream()
-                                  .map(e -> Arguments.of(script, gql, e))));
+          .flatMap(
+              script ->
+                  script.getGraphQLSchemas().stream()
+                      .flatMap(gql -> jdbcEngines.stream().map(e -> Arguments.of(script, gql, e))));
     }
   }
 
   List<DatabaseEngine> jdbcEngines = List.of(DatabaseEngine.POSTGRES);
-
 }

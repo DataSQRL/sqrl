@@ -13,8 +13,16 @@ import org.apache.calcite.sql.SqlNodeList;
 
 public interface SqrlTableFactory {
 
-  void createTable(ModuleLoader moduleLoader, List<String> path, RelNode input, List<RelHint> hints,
+  void createTable(
+      ModuleLoader moduleLoader,
+      List<String> path,
+      RelNode input,
+      List<RelHint> hints,
       Optional<SqlNodeList> opHints,
-      List<FunctionParameter> parameters, List<Function> isA, boolean materializeSelf,
-      Optional<Supplier<RelNode>> nodeSupplier, ErrorCollector errors, boolean isTest);
+      List<FunctionParameter> parameters,
+      List<Function> isA,
+      boolean materializeSelf,
+      Optional<Supplier<RelNode>> nodeSupplier,
+      ErrorCollector errors,
+      boolean isTest);
 }

@@ -1,48 +1,48 @@
-///*
+/// *
 // * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
 // */
-//package com.datasqrl.graphql;
+// package com.datasqrl.graphql;
 //
-//import static org.junit.jupiter.api.Assertions.assertEquals;
-//import static org.junit.jupiter.api.Assertions.fail;
+// import static org.junit.jupiter.api.Assertions.assertEquals;
+// import static org.junit.jupiter.api.Assertions.fail;
 //
-//import com.datasqrl.canonicalizer.NameCanonicalizer;
-//import com.datasqrl.graphql.server.RootGraphqlModel;
-//import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentLookupCoords;
-//import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentParameter;
-//import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentSet;
-//import com.datasqrl.graphql.server.RootGraphqlModel.FixedArgument;
-//import com.datasqrl.graphql.server.RootGraphqlModel.JdbcQuery;
-//import com.datasqrl.graphql.server.RootGraphqlModel.SourceParameter;
-//import com.datasqrl.graphql.server.RootGraphqlModel.StringSchema;
-//import com.datasqrl.graphql.server.RootGraphqlModel.VariableArgument;
-//import com.datasqrl.graphql.server.GraphQLEngineBuilder;
-//import com.fasterxml.jackson.databind.ObjectMapper;
-//import graphql.ExecutionResult;
-//import graphql.GraphQL;
-//import graphql.GraphQLError;
-//import io.vertx.core.Vertx;
-//import io.vertx.junit5.VertxExtension;
-//import io.vertx.pgclient.PgConnectOptions;
-//import io.vertx.pgclient.PgPool;
-//import io.vertx.sqlclient.PoolOptions;
-//import io.vertx.sqlclient.SqlConnection;
-//import java.util.List;
-//import java.util.Map;
-//import java.util.stream.Collectors;
-//import lombok.SneakyThrows;
-//import org.junit.jupiter.api.AfterEach;
-//import org.junit.jupiter.api.BeforeEach;
-//import org.junit.jupiter.api.Test;
-//import org.junit.jupiter.api.extension.ExtendWith;
-//import org.testcontainers.containers.PostgreSQLContainer;
-//import org.testcontainers.junit.jupiter.Container;
-//import org.testcontainers.junit.jupiter.Testcontainers;
-//import org.testcontainers.utility.DockerImageName;
+// import com.datasqrl.canonicalizer.NameCanonicalizer;
+// import com.datasqrl.graphql.server.RootGraphqlModel;
+// import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentLookupCoords;
+// import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentParameter;
+// import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentSet;
+// import com.datasqrl.graphql.server.RootGraphqlModel.FixedArgument;
+// import com.datasqrl.graphql.server.RootGraphqlModel.JdbcQuery;
+// import com.datasqrl.graphql.server.RootGraphqlModel.SourceParameter;
+// import com.datasqrl.graphql.server.RootGraphqlModel.StringSchema;
+// import com.datasqrl.graphql.server.RootGraphqlModel.VariableArgument;
+// import com.datasqrl.graphql.server.GraphQLEngineBuilder;
+// import com.fasterxml.jackson.databind.ObjectMapper;
+// import graphql.ExecutionResult;
+// import graphql.GraphQL;
+// import graphql.GraphQLError;
+// import io.vertx.core.Vertx;
+// import io.vertx.junit5.VertxExtension;
+// import io.vertx.pgclient.PgConnectOptions;
+// import io.vertx.pgclient.PgPool;
+// import io.vertx.sqlclient.PoolOptions;
+// import io.vertx.sqlclient.SqlConnection;
+// import java.util.List;
+// import java.util.Map;
+// import java.util.stream.Collectors;
+// import lombok.SneakyThrows;
+// import org.junit.jupiter.api.AfterEach;
+// import org.junit.jupiter.api.BeforeEach;
+// import org.junit.jupiter.api.Test;
+// import org.junit.jupiter.api.extension.ExtendWith;
+// import org.testcontainers.containers.PostgreSQLContainer;
+// import org.testcontainers.junit.jupiter.Container;
+// import org.testcontainers.junit.jupiter.Testcontainers;
+// import org.testcontainers.utility.DockerImageName;
 //
-//@ExtendWith(VertxExtension.class)
-//@Testcontainers
-//class VertxGraphQLBuilderTest {
+// @ExtendWith(VertxExtension.class)
+// @Testcontainers
+// class VertxGraphQLBuilderTest {
 //
 //  // will be started before and stopped after each test method
 //  @Container
@@ -71,14 +71,16 @@
 //                  .path("sort.customerid")
 //                  .value("DESC")
 //                  .build())
-//              .query(new JdbcQuery("SELECT customerid FROM Customer ORDER BY customerid DESC", List.of()))
+//              .query(new JdbcQuery("SELECT customerid FROM Customer ORDER BY customerid DESC",
+// List.of()))
 //              .build())
 //          .match(ArgumentSet.builder()
 //              .argument(FixedArgument.builder()
 //                  .path("sort.customerid")
 //                  .value("ASC")
 //                  .build())
-//              .query(new JdbcQuery("SELECT customerid FROM Customer ORDER BY customerid ASC", List.of()))
+//              .query(new JdbcQuery("SELECT customerid FROM Customer ORDER BY customerid ASC",
+// List.of()))
 //              .build())
 //          .build())
 //
@@ -89,7 +91,8 @@
 //              .argument(VariableArgument.builder()
 //                  .path("customerid")
 //                  .build())
-//              .query(new JdbcQuery("SELECT customerid FROM Customer WHERE customerid = $1", List.of(ArgumentParameter.builder()
+//              .query(new JdbcQuery("SELECT customerid FROM Customer WHERE customerid = $1",
+// List.of(ArgumentParameter.builder()
 //                      .path("customerid")
 //                      .build())))
 //              .build())
@@ -98,7 +101,8 @@
 //          .parentType("Customer")
 //          .fieldName("sameCustomer")
 //          .match(ArgumentSet.builder()
-//              .query(new JdbcQuery("SELECT customerid FROM Customer WHERE customerid = $1", List.of(SourceParameter.builder()
+//              .query(new JdbcQuery("SELECT customerid FROM Customer WHERE customerid = $1",
+// List.of(SourceParameter.builder()
 //                      .key("customerid")
 //                      .build())))
 //              .build())
@@ -143,7 +147,8 @@
 //  public void test() {
 //    GraphQL graphQL = root.accept(
 //        new GraphQLEngineBuilder(),
-//        new VertxContext(new VertxJdbcClient(client), Map.of(), Map.of(), NameCanonicalizer.SYSTEM));
+//        new VertxContext(new VertxJdbcClient(client), Map.of(), Map.of(),
+// NameCanonicalizer.SYSTEM));
 //    ExecutionResult result = graphQL.execute("{\n"
 //        + "  customer2(customerid: 2) {\n"
 //        + "    customerid\n"
@@ -161,4 +166,4 @@
 //        "{\"customer2\":{\"customerid\":2}}",
 //        value);
 //  }
-//}
+// }

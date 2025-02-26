@@ -1,6 +1,5 @@
 package com.datasqrl.type;
 
-
 import org.apache.flink.table.types.logical.LogicalType;
 
 public interface JdbcTypeSerializer<D, S> {

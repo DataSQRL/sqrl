@@ -5,11 +5,9 @@ package com.datasqrl.io.tables;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.SourceRecord;
-
 import java.io.Serializable;
 
 public interface SchemaValidator extends Serializable {
 
-    SourceRecord.Named verifyAndAdjust(SourceRecord.Raw record, ErrorCollector errors);
-
+  SourceRecord.Named verifyAndAdjust(SourceRecord.Raw record, ErrorCollector errors);
 }

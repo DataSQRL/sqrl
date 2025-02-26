@@ -3,10 +3,6 @@
  */
 package com.datasqrl.engine;
 
-import com.datasqrl.config.EngineFactory.Type;
 
-/**
- * A jackson serializable object
- */
-public interface EnginePhysicalPlan {
-}
+/** A jackson serializable object */
+public interface EnginePhysicalPlan {}

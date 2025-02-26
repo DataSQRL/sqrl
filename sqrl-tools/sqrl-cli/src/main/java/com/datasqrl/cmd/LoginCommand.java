@@ -16,5 +16,4 @@ public class LoginCommand extends AbstractCommand {
     authProvider.loginToRepository();
     log.info("Login successful.");
   }
-
 }

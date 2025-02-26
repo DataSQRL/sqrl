@@ -14,8 +14,10 @@ public class LocalFlinkStreamEngineImpl extends AbstractFlinkStreamEngine {
 
   @Inject
   public LocalFlinkStreamEngineImpl(PackageJson json, FlinkSqlGenerator generator) {
-    super(json.getEngines().getEngineConfig(FlinkEngineFactory.ENGINE_NAME)
-        .orElseGet(()->new EmptyEngineConfig(FlinkEngineFactory.ENGINE_NAME)),
+    super(
+        json.getEngines()
+            .getEngineConfig(FlinkEngineFactory.ENGINE_NAME)
+            .orElseGet(() -> new EmptyEngineConfig(FlinkEngineFactory.ENGINE_NAME)),
         generator);
   }
 }

@@ -9,8 +9,7 @@ import com.google.auto.service.AutoService;
 public class EndOfYearMetadata extends AbstractEndOfMetadata {
 
   public EndOfYearMetadata() {
-    super(TimeFunctions.END_OF_YEAR.getTimeUnit(),
-        TimeFunctions.END_OF_YEAR.getOffsetUnit());
+    super(TimeFunctions.END_OF_YEAR.getTimeUnit(), TimeFunctions.END_OF_YEAR.getOffsetUnit());
   }
 
   @Override

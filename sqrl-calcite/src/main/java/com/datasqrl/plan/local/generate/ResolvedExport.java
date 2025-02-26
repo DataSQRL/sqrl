@@ -1,8 +1,6 @@
 package com.datasqrl.plan.local.generate;
 
 import com.datasqrl.io.tables.TableSink;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;
 
@@ -12,5 +10,4 @@ public class ResolvedExport {
   RelNode relNode;
   int numFieldSelects;
   TableSink sink;
-
 }

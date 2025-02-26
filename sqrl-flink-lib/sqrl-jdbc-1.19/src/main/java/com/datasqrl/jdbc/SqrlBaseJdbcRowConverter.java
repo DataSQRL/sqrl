@@ -3,8 +3,6 @@ package com.datasqrl.jdbc;
 import static com.datasqrl.type.FlinkArrayTypeUtil.getBaseFlinkArrayType;
 import static com.datasqrl.type.FlinkArrayTypeUtil.isScalarArray;
 import static com.datasqrl.type.PostgresArrayTypeConverter.getArrayScalarName;
-import static org.apache.flink.table.types.logical.LogicalTypeRoot.MAP;
-import static org.apache.flink.table.types.logical.LogicalTypeRoot.ROW;
 import static org.apache.flink.table.types.logical.LogicalTypeRoot.TIMESTAMP_WITH_LOCAL_TIME_ZONE;
 
 import java.sql.Array;
@@ -14,10 +12,8 @@ import java.sql.Types;
 import java.time.LocalDateTime;
 import lombok.SneakyThrows;
 import org.apache.flink.connector.jdbc.converter.AbstractJdbcRowConverter;
-import org.apache.flink.connector.jdbc.statement.FieldNamedPreparedStatement;
 import org.apache.flink.table.data.ArrayData;
 import org.apache.flink.table.data.GenericArrayData;
-import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.data.TimestampData;
 import org.apache.flink.table.data.binary.BinaryArrayData;
 import org.apache.flink.table.types.logical.ArrayType;
@@ -26,15 +22,12 @@ import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.LogicalTypeRoot;
 import org.apache.flink.table.types.logical.RowType;
 
-/**
- * A sqrl class to handle arrays and extra data types
- */
+/** A sqrl class to handle arrays and extra data types */
 public abstract class SqrlBaseJdbcRowConverter extends AbstractJdbcRowConverter {
 
   public SqrlBaseJdbcRowConverter(RowType rowType) {
     super(rowType);
   }
-
 
   @Override
   protected JdbcSerializationConverter wrapIntoNullableExternalConverter(
@@ -42,9 +35,7 @@ public abstract class SqrlBaseJdbcRowConverter extends AbstractJdbcRowConverter 
     if (type.getTypeRoot() == TIMESTAMP_WITH_LOCAL_TIME_ZONE) {
       int timestampWithTimezone = Types.TIMESTAMP_WITH_TIMEZONE;
       return (val, index, statement) -> {
-        if (val == null
-            || val.isNullAt(index)
-            || LogicalTypeRoot.NULL.equals(type.getTypeRoot())) {
+        if (val == null || val.isNullAt(index) || LogicalTypeRoot.NULL.equals(type.getTypeRoot())) {
           statement.setNull(index, timestampWithTimezone);
         } else {
           jdbcSerializationConverter.serialize(val, index, statement);
@@ -67,9 +58,9 @@ public abstract class SqrlBaseJdbcRowConverter extends AbstractJdbcRowConverter 
       ArrayType arrayType = (ArrayType) type;
       return createArrayConverter(arrayType);
     } else if (root == LogicalTypeRoot.ROW) {
-      return val-> val;
+      return val -> val;
     } else if (root == LogicalTypeRoot.MAP) {
-      return val-> val;
+      return val -> val;
     } else {
       return super.createInternalConverter(type);
     }
@@ -81,8 +72,7 @@ public abstract class SqrlBaseJdbcRowConverter extends AbstractJdbcRowConverter 
       case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
         final int tsPrecision = ((LocalZonedTimestampType) type).getPrecision();
         return (val, index, statement) ->
-            statement.setTimestamp(
-                index, val.getTimestamp(index, tsPrecision).toTimestamp());
+            statement.setTimestamp(index, val.getTimestamp(index, tsPrecision).toTimestamp());
       case MULTISET:
       case RAW:
       default:
@@ -91,25 +81,23 @@ public abstract class SqrlBaseJdbcRowConverter extends AbstractJdbcRowConverter 
   }
 
   @SneakyThrows
-  private void createSqlArrayObject(LogicalType type, ArrayData data, int idx,
-      PreparedStatement statement) {
-    //Scalar arrays of any dimension are one array call
+  private void createSqlArrayObject(
+      LogicalType type, ArrayData data, int idx, PreparedStatement statement) {
+    // Scalar arrays of any dimension are one array call
     if (isScalarArray(type)) {
       Object[] boxed;
       if (data instanceof GenericArrayData) {
-        boxed = ((GenericArrayData)data).toObjectArray();
+        boxed = ((GenericArrayData) data).toObjectArray();
       } else if (data instanceof BinaryArrayData) {
-        boxed = ((BinaryArrayData)data).toObjectArray(getBaseFlinkArrayType(type));
+        boxed = ((BinaryArrayData) data).toObjectArray(getBaseFlinkArrayType(type));
       } else {
         throw new RuntimeException("Unsupported ArrayData type: " + data.getClass());
       }
-      Array array = statement.getConnection()
-          .createArrayOf(getArrayScalarName(type), boxed);
+      Array array = statement.getConnection().createArrayOf(getArrayScalarName(type), boxed);
       statement.setArray(idx, array);
     } else {
       // If it is not a scalar array (e.g. row type), use an empty byte array.
-      Array array = statement.getConnection()
-          .createArrayOf(getArrayType(), new Byte[0]);
+      Array array = statement.getConnection().createArrayOf(getArrayType(), new Byte[0]);
       statement.setArray(idx, array);
     }
   }

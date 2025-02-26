@@ -12,5 +12,4 @@ public class Repository extends UseCaseExample {
   protected Repository() {
     super(Set.of("package"), script("repo", "package", "submission"));
   }
-
 }

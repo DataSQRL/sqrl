@@ -5,16 +5,13 @@ package com.datasqrl.util;
 
 import com.datasqrl.graphql.server.CustomScalars;
 import com.google.common.base.Predicates;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import lombok.SneakyThrows;
-
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.util.function.Predicate;
+import lombok.SneakyThrows;
 
 public class ResultSetPrinter {
 
@@ -23,7 +20,9 @@ public class ResultSetPrinter {
   }
 
   @SneakyThrows
-  public static int print(ResultSet resultSet, PrintStream out,
+  public static int print(
+      ResultSet resultSet,
+      PrintStream out,
       Predicate<String> filterColumnsByName,
       Predicate<Integer> filterColumnsByType) {
     final ResultSetMetaData metaData = resultSet.getMetaData();
@@ -47,9 +46,8 @@ public class ResultSetPrinter {
         }
         Object o = resultSet.getObject(i);
         if (o instanceof Double) {
-          //We convert to string to strip some irrelevant double digits during the conversion
-          o = CustomScalars.Double.getCoercing()
-                .serialize(o);
+          // We convert to string to strip some irrelevant double digits during the conversion
+          o = CustomScalars.Double.getCoercing().serialize(o);
         }
         out.print(o);
       }
@@ -61,7 +59,9 @@ public class ResultSetPrinter {
     return toString(resultSet, Predicates.alwaysTrue(), Predicates.alwaysTrue());
   }
 
-  public static String toString(ResultSet resultSet, Predicate<String> filterColumnsByName,
+  public static String toString(
+      ResultSet resultSet,
+      Predicate<String> filterColumnsByName,
       Predicate<Integer> filterColumnsByType) {
     ByteArrayOutputStream os = new ByteArrayOutputStream();
     PrintStream ps = new PrintStream(os);
@@ -69,9 +69,10 @@ public class ResultSetPrinter {
     return os.toString(StandardCharsets.UTF_8);
   }
 
-  public static String[] toLines(ResultSet resultSet, Predicate<String> filterColumnsByName,
+  public static String[] toLines(
+      ResultSet resultSet,
+      Predicate<String> filterColumnsByName,
       Predicate<Integer> filterColumnsByType) {
-    return toString(resultSet, filterColumnsByName, filterColumnsByType)
-        .split("\\R");
+    return toString(resultSet, filterColumnsByName, filterColumnsByType).split("\\R");
   }
 }

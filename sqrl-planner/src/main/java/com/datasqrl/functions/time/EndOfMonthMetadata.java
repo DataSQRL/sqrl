@@ -9,8 +9,7 @@ import com.google.auto.service.AutoService;
 public class EndOfMonthMetadata extends AbstractEndOfMetadata {
 
   public EndOfMonthMetadata() {
-    super(TimeFunctions.END_OF_MONTH.getTimeUnit(),
-        TimeFunctions.END_OF_MONTH.getOffsetUnit());
+    super(TimeFunctions.END_OF_MONTH.getTimeUnit(), TimeFunctions.END_OF_MONTH.getOffsetUnit());
   }
 
   @Override

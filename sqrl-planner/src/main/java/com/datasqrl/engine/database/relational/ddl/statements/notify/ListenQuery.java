@@ -4,7 +4,6 @@ import com.datasqrl.sql.SqlDDLStatement;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-
 @Getter
 @AllArgsConstructor
 public class ListenQuery implements SqlDDLStatement {

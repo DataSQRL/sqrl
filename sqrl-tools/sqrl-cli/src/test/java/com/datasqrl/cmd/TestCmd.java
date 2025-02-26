@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
  */
@@ -77,46 +76,54 @@ public class TestCmd {
   @Test
   public void compileMutations() {
     Path root = Paths.get("../../sqrl-examples/mutations");
-    execute(root,
-        "compile", "script.sqrl",
-        "schema.graphqls");
+    execute(root, "compile", "script.sqrl", "schema.graphqls");
   }
 
   @Test
   public void compileSubscriptions() {
-    execute(SUBSCRIPTION_PATH,
-        "compile", "script.sqrl",
-       "schema.graphqls");
+    execute(SUBSCRIPTION_PATH, "compile", "script.sqrl", "schema.graphqls");
   }
 
   @Test
   public void validateTest() {
-    execute(SUBSCRIPTION_PATH,
-        "validate", "script.sqrl",
-       "schema.graphqls");
+    execute(SUBSCRIPTION_PATH, "validate", "script.sqrl", "schema.graphqls");
   }
 
   @Test
   public void compileSubscriptionsInvalidGraphql() {
-    execute(SUBSCRIPTION_PATH, ERROR_STATUS_HOOK,
-        "compile","invalidscript.sqrl",
-       "invalidschema.graphqls");
+    execute(
+        SUBSCRIPTION_PATH,
+        ERROR_STATUS_HOOK,
+        "compile",
+        "invalidscript.sqrl",
+        "invalidschema.graphqls");
     snapshot.createOrValidate();
   }
 
   @Test
   public void discoverNutshop() {
-    execute(Nutshop.INSTANCE.getRootPackageDirectory(),
-        "discover", Nutshop.INSTANCE.getDataDirectory().toString(), "-o", OUTPUT_DIR.toString(), "-l", "3600");
+    execute(
+        Nutshop.INSTANCE.getRootPackageDirectory(),
+        "discover",
+        Nutshop.INSTANCE.getDataDirectory().toString(),
+        "-o",
+        OUTPUT_DIR.toString(),
+        "-l",
+        "3600");
     createSnapshot();
   }
 
   @Test
   @Disabled
   public void discoverExternal() {
-    execute(Sensors.INSTANCE.getRootPackageDirectory(),
-        "discover", "patientdata",
-        "-o", "patientpackage", "-l", "3600");
+    execute(
+        Sensors.INSTANCE.getRootPackageDirectory(),
+        "discover",
+        "patientdata",
+        "-o",
+        "patientpackage",
+        "-l",
+        "3600");
   }
 
   @Test
@@ -125,11 +132,18 @@ public class TestCmd {
     buildDir = rootDir.resolve("build");
 
     TestScript script = Nutshop.INSTANCE.getScripts().get(1);
-    execute(rootDir, "compile",
+    execute(
+        rootDir,
+        "compile",
         script.getRootPackageDirectory().relativize(script.getScriptPath()).toString(),
-        script.getRootPackageDirectory().relativize(script.getGraphQLSchemas().get(0).getSchemaPath()).toString(),
-        "-t", OUTPUT_DIR.toString(),
-        "--mnt", rootDir.toString());
+        script
+            .getRootPackageDirectory()
+            .relativize(script.getGraphQLSchemas().get(0).getSchemaPath())
+            .toString(),
+        "-t",
+        OUTPUT_DIR.toString(),
+        "--mnt",
+        rootDir.toString());
     createSnapshot();
   }
 
@@ -141,9 +155,13 @@ public class TestCmd {
 
     TestScript script = Nutshop.INSTANCE.getScripts().get(1);
 
-    int statusCode = execute(rootDir, StatusHook.NONE,"compile",
-        script.getRootPackageDirectory().relativize(script.getScriptPath()).toString(),
-        "doesNotExist.graphql");
+    int statusCode =
+        execute(
+            rootDir,
+            StatusHook.NONE,
+            "compile",
+            script.getRootPackageDirectory().relativize(script.getScriptPath()).toString(),
+            "doesNotExist.graphql");
     assertEquals(1, statusCode, "Non-zero status code expected");
   }
 
@@ -154,12 +172,21 @@ public class TestCmd {
     buildDir = rootDir.resolve("build");
 
     TestScript script = Nutshop.INSTANCE.getScripts().get(1);
-    execute(rootDir, "compile",
+    execute(
+        rootDir,
+        "compile",
         script.getRootPackageDirectory().relativize(script.getScriptPath()).toString(),
-        script.getRootPackageDirectory().relativize(script.getGraphQLSchemas().get(0).getSchemaPath()).toString(),
-            "-t", OUTPUT_DIR.toString(), "-a", "GraphQL");
+        script
+            .getRootPackageDirectory()
+            .relativize(script.getGraphQLSchemas().get(0).getSchemaPath())
+            .toString(),
+        "-t",
+        OUTPUT_DIR.toString(),
+        "-a",
+        "GraphQL");
     Path schemaFile = rootDir.resolve(GRAPHQL_NORMALIZED_FILE_NAME);
-    assertTrue(Files.isRegularFile(schemaFile),
+    assertTrue(
+        Files.isRegularFile(schemaFile),
         () -> String.format("Schema file could not be found: %s", schemaFile));
     Files.deleteIfExists(schemaFile);
     createSnapshot();
@@ -208,14 +235,13 @@ public class TestCmd {
       args.add(graphql);
     }
 
-    execute(path, args.toArray(a->new String[a]));
+    execute(path, args.toArray(a -> new String[a]));
     snapshotSql();
   }
 
   @SneakyThrows
   private void snapshotSql() {
-    snapshot.addContent(Files.readString(OUTPUT_DIR.resolve(PLAN_SQL)),
-        "sql");
+    snapshot.addContent(Files.readString(OUTPUT_DIR.resolve(PLAN_SQL)), "sql");
     snapshot.createOrValidate();
   }
 
@@ -225,16 +251,23 @@ public class TestCmd {
     buildDir = rootDir.resolve("build");
 
     TestScript script = Retail.INSTANCE.getScript(Retail.RetailScriptNames.FULL);
-    execute(rootDir, "compile",
+    execute(
+        rootDir,
+        "compile",
         script.getRootPackageDirectory().relativize(script.getScriptPath()).toString(),
-        "-t", OUTPUT_DIR.toString());
+        "-t",
+        OUTPUT_DIR.toString());
     createSnapshot();
   }
 
   @Test
   public void discoverRetail() {
-    execute(Retail.INSTANCE.getRootPackageDirectory(),
-        "discover", Retail.INSTANCE.getDataDirectory().toString(), "-o", OUTPUT_DIR.toString());
+    execute(
+        Retail.INSTANCE.getRootPackageDirectory(),
+        "discover",
+        Retail.INSTANCE.getDataDirectory().toString(),
+        "-o",
+        OUTPUT_DIR.toString());
     createSnapshot();
   }
 
@@ -242,9 +275,7 @@ public class TestCmd {
   @Test
   public void testCreditCardInfiniteLoop() {
     Path basePath = CC_PATH;
-    execute(basePath,
-        "compile", "creditcard.sqrl",
-        "creditcard.graphqls");
+    execute(basePath, "compile", "creditcard.sqrl", "creditcard.graphqls");
   }
 
   public static int execute(Path rootDir, String... args) {
@@ -265,9 +296,7 @@ public class TestCmd {
     private boolean failed;
 
     @Override
-    public void onSuccess() {
-
-    }
+    public void onSuccess() {}
 
     @Override
     public void onFailure(Throwable e, ErrorCollector errors) {

@@ -5,11 +5,8 @@ package com.datasqrl.engine.pipeline;
 
 import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.ExecutionEngine;
-
 import java.util.Collection;
-
 import org.apache.calcite.sql.SqlOperator;
-import org.apache.flink.table.functions.FunctionDefinition;
 
 public interface ExecutionStage {
 
@@ -21,7 +18,7 @@ public interface ExecutionStage {
 
   boolean supportsFeature(EngineFeature capability);
 
-//  boolean supportsFunction(FunctionDefinition function);
+  //  boolean supportsFunction(FunctionDefinition function);
 
   default boolean isRead() {
     return getEngine().getType().isRead();
@@ -31,7 +28,9 @@ public interface ExecutionStage {
     return getEngine().getType().isWrite();
   }
 
-  default boolean isCompute() { return getEngine().getType().isCompute(); }
+  default boolean isCompute() {
+    return getEngine().getType().isCompute();
+  }
 
   ExecutionEngine getEngine();
 

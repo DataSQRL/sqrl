@@ -2,7 +2,6 @@ package com.datasqrl.json;
 
 import static com.datasqrl.json.JsonFunctions.createJsonArgumentTypeStrategy;
 
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.flink.table.api.DataTypes;
@@ -47,16 +46,18 @@ public class JsonObject extends ScalarFunction {
     return new FlinkJsonType(objectNode);
   }
 
-
   @Override
   public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-    InputTypeStrategy anyJsonCompatibleArg = InputTypeStrategies.repeatingSequence(
-        createJsonArgumentTypeStrategy(typeFactory));
+    InputTypeStrategy anyJsonCompatibleArg =
+        InputTypeStrategies.repeatingSequence(createJsonArgumentTypeStrategy(typeFactory));
 
-    InputTypeStrategy inputTypeStrategy = InputTypeStrategies.compositeSequence()
-        .finishWithVarying(anyJsonCompatibleArg);
+    InputTypeStrategy inputTypeStrategy =
+        InputTypeStrategies.compositeSequence().finishWithVarying(anyJsonCompatibleArg);
 
-    return TypeInference.newBuilder().inputTypeStrategy(inputTypeStrategy).outputTypeStrategy(
-        TypeStrategies.explicit(DataTypes.of(FlinkJsonType.class).toDataType(typeFactory))).build();
+    return TypeInference.newBuilder()
+        .inputTypeStrategy(inputTypeStrategy)
+        .outputTypeStrategy(
+            TypeStrategies.explicit(DataTypes.of(FlinkJsonType.class).toDataType(typeFactory)))
+        .build();
   }
 }

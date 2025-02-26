@@ -7,14 +7,13 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
-import lombok.SneakyThrows;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import lombok.SneakyThrows;
 
 public class UseCaseExample implements TestDataset {
 
@@ -26,7 +25,7 @@ public class UseCaseExample implements TestDataset {
   protected final String name;
   protected final Path basePath;
   protected final Set<String> tableNames;
-  protected final ListMultimap<String,String> scriptsWithTables;
+  protected final ListMultimap<String, String> scriptsWithTables;
 
   protected final String variant;
   protected final String graphqlSchema;
@@ -35,28 +34,29 @@ public class UseCaseExample implements TestDataset {
     this(tableNames, ArrayListMultimap.create());
   }
 
-  protected UseCaseExample(Set<String> tableNames,
-      ListMultimap<String,String> scriptsWithTables) {
-    this("",tableNames, scriptsWithTables);
+  protected UseCaseExample(Set<String> tableNames, ListMultimap<String, String> scriptsWithTables) {
+    this("", tableNames, scriptsWithTables);
   }
 
-  protected UseCaseExample(String variant, Set<String> tableNames,
-      ListMultimap<String,String> scriptsWithTables) {
+  protected UseCaseExample(
+      String variant, Set<String> tableNames, ListMultimap<String, String> scriptsWithTables) {
     this(variant, tableNames, scriptsWithTables, null);
   }
 
-  protected UseCaseExample(String variant, Set<String> tableNames,
-                           ListMultimap<String,String> scriptsWithTables,
-                           String graphqlSchema) {
+  protected UseCaseExample(
+      String variant,
+      Set<String> tableNames,
+      ListMultimap<String, String> scriptsWithTables,
+      String graphqlSchema) {
     this.name = getClass().getSimpleName().toLowerCase();
     this.basePath = BASE_PATH.resolve(name);
     this.tableNames = tableNames;
     this.scriptsWithTables = scriptsWithTables;
     this.variant = variant;
     this.graphqlSchema = graphqlSchema;
-    Preconditions.checkArgument(scriptsWithTables.keySet().stream()
-        .noneMatch(s -> s.endsWith("sqrl")),"Scripts should"
-        + "be listed without .sqrl extension");
+    Preconditions.checkArgument(
+        scriptsWithTables.keySet().stream().noneMatch(s -> s.endsWith("sqrl")),
+        "Scripts should" + "be listed without .sqrl extension");
   }
 
   @Override
@@ -65,12 +65,12 @@ public class UseCaseExample implements TestDataset {
   }
 
   private String getVariant() {
-    return Strings.isNullOrEmpty(variant)?"":"-"+ variant;
+    return Strings.isNullOrEmpty(variant) ? "" : "-" + variant;
   }
 
   @Override
   public Path getDataDirectory() {
-    return basePath.resolve(DATA_DIR+ getVariant());
+    return basePath.resolve(DATA_DIR + getVariant());
   }
 
   @Override
@@ -94,24 +94,34 @@ public class UseCaseExample implements TestDataset {
   }
 
   public List<TestScript> getScripts() {
-    return scriptsWithTables.keySet().stream().map(scriptName -> {
-        scriptName = scriptName + getVariant();
-        return TestScript.Impl.builder().rootPackageDirectory(getRootPackageDirectory())
-            .name(scriptName).scriptPath(getRootPackageDirectory().resolve(scriptName+".sqrl"))
-            .resultTables(scriptsWithTables.get(scriptName))
-            .dataSnapshot(false)
-            .graphQLSchemas(getGraphQLSchema(scriptName))
-            .build();
-        }).collect(Collectors.toList());
+    return scriptsWithTables.keySet().stream()
+        .map(
+            scriptName -> {
+              scriptName = scriptName + getVariant();
+              return TestScript.Impl.builder()
+                  .rootPackageDirectory(getRootPackageDirectory())
+                  .name(scriptName)
+                  .scriptPath(getRootPackageDirectory().resolve(scriptName + ".sqrl"))
+                  .resultTables(scriptsWithTables.get(scriptName))
+                  .dataSnapshot(false)
+                  .graphQLSchemas(getGraphQLSchema(scriptName))
+                  .build();
+            })
+        .collect(Collectors.toList());
   }
 
   @SneakyThrows
   private List<TestGraphQLSchema> getGraphQLSchema(String scriptName) {
     try (Stream<Path> fileStream = Files.list(getRootPackageDirectory())) {
-      return fileStream.filter(Files::isDirectory).filter(dir -> {
-        String dirName = dir.getFileName().toString();
-        return dirName.toLowerCase().startsWith(scriptName.toLowerCase()+"-graphql");
-      }).map(TestGraphQLSchema.Directory::new).collect(Collectors.toList());
+      return fileStream
+          .filter(Files::isDirectory)
+          .filter(
+              dir -> {
+                String dirName = dir.getFileName().toString();
+                return dirName.toLowerCase().startsWith(scriptName.toLowerCase() + "-graphql");
+              })
+          .map(TestGraphQLSchema.Directory::new)
+          .collect(Collectors.toList());
     }
   }
 
@@ -125,12 +135,12 @@ public class UseCaseExample implements TestDataset {
 
   public static class ScriptBuilder {
 
-    ListMultimap<String,String> result = ArrayListMultimap.create();
+    ListMultimap<String, String> result = ArrayListMultimap.create();
 
     public ScriptBuilder add(String scriptName, String... resultTables) {
-      Preconditions.checkArgument(resultTables.length>0, "Need to specify result tables");
+      Preconditions.checkArgument(resultTables.length > 0, "Need to specify result tables");
       for (String resultTable : resultTables) {
-        result.put(scriptName,resultTable);
+        result.put(scriptName, resultTable);
       }
       return this;
     }
@@ -138,12 +148,10 @@ public class UseCaseExample implements TestDataset {
     public ListMultimap build() {
       return result;
     }
-
   }
 
   public Path getGraphqlSchemaPath() {
     Preconditions.checkNotNull(graphqlSchema, "Expected graphql schema, found none.");
-    return getRootPackageDirectory()
-        .resolve(graphqlSchema);
+    return getRootPackageDirectory().resolve(graphqlSchema);
   }
 }

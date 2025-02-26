@@ -1,6 +1,3 @@
 package com.datasqrl.io.tables;
 
-
-public interface TableSink extends ExternalTable {
-
-}
+public interface TableSink extends ExternalTable {}

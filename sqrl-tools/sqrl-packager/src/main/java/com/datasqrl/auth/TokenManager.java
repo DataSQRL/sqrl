@@ -21,9 +21,9 @@ public class TokenManager {
       return Optional.of(refreshTokenFromEnv);
     }
 
-    return Files.isRegularFile(REFRESH_TOKEN_PATH) ?
-        Optional.of(Files.readString(REFRESH_TOKEN_PATH)) :
-        Optional.empty();
+    return Files.isRegularFile(REFRESH_TOKEN_PATH)
+        ? Optional.of(Files.readString(REFRESH_TOKEN_PATH))
+        : Optional.empty();
   }
 
   @SneakyThrows

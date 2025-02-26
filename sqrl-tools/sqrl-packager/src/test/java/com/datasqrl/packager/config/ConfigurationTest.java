@@ -1,29 +1,29 @@
-///*
+/// *
 // * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
 // */
-//package com.datasqrl.packager.config;
+// package com.datasqrl.packager.config;
 //
-//import static com.datasqrl.discovery.DataDiscoveryFactory.getMetaDataStoreProvider;
-//import static org.junit.jupiter.api.Assertions.assertEquals;
-//import static org.junit.jupiter.api.Assertions.assertFalse;
-//import static org.junit.jupiter.api.Assertions.assertNotNull;
-//import static org.junit.jupiter.api.Assertions.assertTrue;
+// import static com.datasqrl.discovery.DataDiscoveryFactory.getMetaDataStoreProvider;
+// import static org.junit.jupiter.api.Assertions.assertEquals;
+// import static org.junit.jupiter.api.Assertions.assertFalse;
+// import static org.junit.jupiter.api.Assertions.assertNotNull;
+// import static org.junit.jupiter.api.Assertions.assertTrue;
 //
-//import com.datasqrl.config.PackageJson.CompilerConfig;
-//import com.datasqrl.config.Dependency;
-//import com.datasqrl.config.PackageJson.EnginesConfig;
-//import com.datasqrl.config.PackageJson.ExplainConfig;
-//import com.datasqrl.config.IPackageJson;
-//import com.datasqrl.config.PackageConfiguration;
-//import com.datasqrl.config.SqrlConfigCommons;
-//import com.datasqrl.error.ErrorCollector;
-//import java.nio.file.Path;
-//import java.nio.file.Paths;
-//import java.util.Map;
-//import lombok.SneakyThrows;
-//import org.junit.jupiter.api.Test;
+// import com.datasqrl.config.PackageJson.CompilerConfig;
+// import com.datasqrl.config.Dependency;
+// import com.datasqrl.config.PackageJson.EnginesConfig;
+// import com.datasqrl.config.PackageJson.ExplainConfig;
+// import com.datasqrl.config.IPackageJson;
+// import com.datasqrl.config.PackageConfiguration;
+// import com.datasqrl.config.SqrlConfigCommons;
+// import com.datasqrl.error.ErrorCollector;
+// import java.nio.file.Path;
+// import java.nio.file.Paths;
+// import java.util.Map;
+// import lombok.SneakyThrows;
+// import org.junit.jupiter.api.Test;
 //
-//public class ConfigurationTest {
+// public class ConfigurationTest {
 //
 //  public static final Path RESOURCE_DIR = Paths.get("src", "test", "resources");
 //
@@ -32,7 +32,8 @@
 //  public void testConfiguration() {
 //    //System.out.println(RESOURCE_DIR.toAbsolutePath());
 //    ErrorCollector errors = ErrorCollector.root();
-//    IPackageJson config = SqrlConfigCommons.fromFilesPackageJson(errors, RESOURCE_DIR.resolve("package-configtest.json"));
+//    IPackageJson config = SqrlConfigCommons.fromFilesPackageJson(errors,
+// RESOURCE_DIR.resolve("package-configtest.json"));
 //    assertNotNull(config);
 //    CompilerConfig compilerConfig = config.getCompilerConfig();
 //
@@ -66,4 +67,4 @@
 //    assertFalse(errors.hasErrorsWarningsOrNotices());
 //  }
 //
-//}
+// }

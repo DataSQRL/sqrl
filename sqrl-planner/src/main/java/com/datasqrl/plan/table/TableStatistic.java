@@ -46,5 +46,4 @@ public class TableStatistic {
       return rowCount;
     }
   }
-
 }

@@ -23,5 +23,4 @@ public class SQRLPrograms {
         assert rootRel3 != null : "could not implement exp";
         return rootRel3;
       };
-
 }

@@ -1,11 +1,10 @@
 package com.datasqrl.io.schema.flexible.converters;
 
-import com.datasqrl.schema.TableSchemaExporterFactory;
 import com.datasqrl.io.schema.flexible.FlexibleTableSchemaFactory;
 import com.datasqrl.io.schema.flexible.FlexibleTableSchemaHolder;
+import com.datasqrl.schema.TableSchemaExporterFactory;
 import com.google.auto.service.AutoService;
 import org.apache.calcite.rel.type.RelDataTypeField;
-
 
 @AutoService(TableSchemaExporterFactory.class)
 public class FlexibleSchemaExporter implements TableSchemaExporterFactory {

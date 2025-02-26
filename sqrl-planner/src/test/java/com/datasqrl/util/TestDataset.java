@@ -6,21 +6,19 @@ package com.datasqrl.util;
 import com.datasqrl.util.data.Nutshop;
 import com.datasqrl.util.data.Retail;
 import com.datasqrl.util.junit.ArgumentProvider;
-import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.ArgumentsProvider;
-
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.ArgumentsProvider;
 
 public interface TestDataset {
 
   String getName();
 
   Path getDataDirectory();
-
 
   Set<String> getTables();
 
@@ -36,9 +34,9 @@ public interface TestDataset {
     return getRootPackageDirectory().resolve(getName());
   }
 
-    /*
-    === STATIC METHODS ===
-     */
+  /*
+  === STATIC METHODS ===
+   */
 
   static List<TestDataset> getAll() {
     return List.of(Retail.INSTANCE, Nutshop.INSTANCE);
@@ -52,6 +50,4 @@ public interface TestDataset {
       return ArgumentProvider.of(getAll());
     }
   }
-
-
 }

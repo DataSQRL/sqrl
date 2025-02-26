@@ -10,7 +10,6 @@ import java.util.EnumSet;
 @AutoService(FunctionMetadata.class)
 public class EuclideanDistanceMetadata implements IndexableFunction {
 
-
   @Override
   public OperandSelector getOperandSelector() {
     return new OperandSelector() {

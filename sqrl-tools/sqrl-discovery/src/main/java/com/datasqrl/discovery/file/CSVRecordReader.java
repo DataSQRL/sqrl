@@ -16,7 +16,6 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
-import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -44,17 +43,19 @@ public class CSVRecordReader implements RecordReader {
     String[] header = configOpt.get().getHeader();
 
     CSVParser parser = CSVParser.parse(reader, format);
-    return parser.stream().flatMap(record -> {
-      if (record.size() > header.length) {
-        log.info("Skipped record because it does not match header: {}", record);
-        return Stream.of();
-      }
-      LinkedHashMap<String, Object> map = new LinkedHashMap<>(record.size());
-      for (int i = 0; i < record.size(); i++) {
-        map.put(header[i], record.get(i));
-      }
-      return Stream.of(map);
-    });
+    return parser.stream()
+        .flatMap(
+            record -> {
+              if (record.size() > header.length) {
+                log.info("Skipped record because it does not match header: {}", record);
+                return Stream.of();
+              }
+              LinkedHashMap<String, Object> map = new LinkedHashMap<>(record.size());
+              for (int i = 0; i < record.size(); i++) {
+                map.put(header[i], record.get(i));
+              }
+              return Stream.of(map);
+            });
   }
 
   private static boolean isComment(String line, String commentPrefix) {
@@ -80,31 +81,40 @@ public class CSVRecordReader implements RecordReader {
         .build();
   }
 
-  private static final String[] DELIMITER_CANDIDATES = new String[]{",", ";", "\t"};
+  private static final String[] DELIMITER_CANDIDATES = new String[] {",", ";", "\t"};
 
   private static Optional<Config> inferConfig(String headerLine) throws IOException {
     String delimiter = DEFAULT_DELIMITER;
-    Pair<String, Integer> topScoringDelimiter = Arrays.stream(DELIMITER_CANDIDATES)
-        .map(del -> Pair.of(del, StringUtils.countMatches(headerLine, del)))
-        .sorted((p1, p2) -> -Integer.compare(p1.getValue(), p2.getValue())).findFirst().get();
+    Pair<String, Integer> topScoringDelimiter =
+        Arrays.stream(DELIMITER_CANDIDATES)
+            .map(del -> Pair.of(del, StringUtils.countMatches(headerLine, del)))
+            .sorted((p1, p2) -> -Integer.compare(p1.getValue(), p2.getValue()))
+            .findFirst()
+            .get();
     if (topScoringDelimiter.getValue() > 0) {
       delimiter = topScoringDelimiter.getKey();
     }
     CSVFormat format = getDefaultFormat(delimiter);
 
     try (CSVParser parser = CSVParser.parse(headerLine, format)) {
-      Optional<String[]> header = parser.stream().findFirst().flatMap(r -> {
-        if (r.size()==0) return Optional.empty();
-        //Make sure all column names are valid
-        if (!r.stream().allMatch(col -> !Strings.isNullOrEmpty(col) && Character.isLetter(col.charAt(0)))) {
-          log.error("CSV header column names are invalid: {}", r);
-          return Optional.empty();
-        }
-        return Optional.of(r.stream().toArray(String[]::new));
-      });
+      Optional<String[]> header =
+          parser.stream()
+              .findFirst()
+              .flatMap(
+                  r -> {
+                    if (r.size() == 0) return Optional.empty();
+                    // Make sure all column names are valid
+                    if (!r.stream()
+                        .allMatch(
+                            col ->
+                                !Strings.isNullOrEmpty(col) && Character.isLetter(col.charAt(0)))) {
+                      log.error("CSV header column names are invalid: {}", r);
+                      return Optional.empty();
+                    }
+                    return Optional.of(r.stream().toArray(String[]::new));
+                  });
       if (header.isPresent()) return Optional.of(new Config(format, header.get()));
     }
     return Optional.empty();
   }
-
 }

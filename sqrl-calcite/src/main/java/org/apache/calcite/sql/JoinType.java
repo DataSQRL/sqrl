@@ -21,39 +21,29 @@ import java.util.Locale;
 /**
  * Enumerates the types of join.
  *
- * SQRL override of join types. To be handled during processing
+ * <p>SQRL override of join types. To be handled during processing
  */
 public enum JoinType implements Symbolizable {
-  /**
-   * Inner join.
-   */
+  /** Inner join. */
   INNER,
   INNER_TEMPORAL,
   INNER_INTERVAL,
   INNER_DEFAULT,
 
-  /**
-   * Full outer join.
-   */
+  /** Full outer join. */
   FULL,
 
-  /**
-   * Cross join (also known as Cartesian product).
-   */
+  /** Cross join (also known as Cartesian product). */
   CROSS,
 
-  /**
-   * Left outer join.
-   */
+  /** Left outer join. */
   LEFT,
   LEFT_OUTER,
   LEFT_TEMPORAL,
   LEFT_INTERVAL,
   LEFT_DEFAULT,
 
-  /**
-   * Right outer join.
-   */
+  /** Right outer join. */
   RIGHT,
   RIGHT_OUTER,
   RIGHT_TEMPORAL,
@@ -68,27 +58,21 @@ public enum JoinType implements Symbolizable {
   LEFT_SEMI_JOIN,
 
   /**
-   * Comma join: the good old-fashioned SQL <code>FROM</code> clause,
-   * where table expressions are specified with commas between them, and
-   * join conditions are specified in the <code>WHERE</code> clause.
+   * Comma join: the good old-fashioned SQL <code>FROM</code> clause, where table expressions are
+   * specified with commas between them, and join conditions are specified in the <code>WHERE</code>
+   * clause.
    */
   COMMA;
 
   /** Lower-case name. */
   public final String lowerName = name().toLowerCase(Locale.ROOT);
 
-  /**
-   * Returns whether a join of this type may generate NULL values on the
-   * left-hand side.
-   */
+  /** Returns whether a join of this type may generate NULL values on the left-hand side. */
   public boolean generatesNullsOnLeft() {
     return this == RIGHT || this == FULL;
   }
 
-  /**
-   * Returns whether a join of this type may generate NULL values on the
-   * right-hand side.
-   */
+  /** Returns whether a join of this type may generate NULL values on the right-hand side. */
   public boolean generatesNullsOnRight() {
     return this == LEFT || this == FULL;
   }

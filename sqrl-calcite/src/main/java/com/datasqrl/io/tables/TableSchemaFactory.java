@@ -4,7 +4,6 @@ import com.datasqrl.config.TableConfig;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.google.common.base.Preconditions;
-import java.net.URI;
 import java.nio.file.Path;
 import java.util.Optional;
 
@@ -18,14 +17,17 @@ public interface TableSchemaFactory {
    * @param errors
    * @return
    * @deprecated Should not be used anymore and will be removed once factored out of Flink
-   * executable plan
+   *     executable plan
    */
   default TableSchema create(String schemaDefinition, ErrorCollector errors) {
     TableSchema schema = create(schemaDefinition, Optional.empty(), errors);
-    Preconditions.checkArgument(!errors.hasErrors(), "Encountered errors processing internal schema: %s", errors);
+    Preconditions.checkArgument(
+        !errors.hasErrors(), "Encountered errors processing internal schema: %s", errors);
     return schema;
   }
+
   TableSchema create(String schemaDefinition, Optional<Path> location, ErrorCollector errors);
+
   String getSchemaFilename(TableConfig tableConfig);
 
   String getType();
@@ -33,11 +35,12 @@ public interface TableSchemaFactory {
   String getExtension();
 
   static TableSchemaFactory loadByType(String schemaType) {
-    return ServiceLoaderDiscovery.get(TableSchemaFactory.class, TableSchemaFactory::getType, schemaType);
+    return ServiceLoaderDiscovery.get(
+        TableSchemaFactory.class, TableSchemaFactory::getType, schemaType);
   }
 
   static Optional<TableSchemaFactory> loadByExtension(String extension) {
-    return ServiceLoaderDiscovery.findFirst(TableSchemaFactory.class, TableSchemaFactory::getExtension, extension);
+    return ServiceLoaderDiscovery.findFirst(
+        TableSchemaFactory.class, TableSchemaFactory::getExtension, extension);
   }
-
 }

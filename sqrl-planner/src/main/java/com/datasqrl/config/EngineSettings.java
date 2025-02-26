@@ -9,14 +9,10 @@ import lombok.NonNull;
 import lombok.Value;
 
 @Value
-/**
- * TODO: need to add proper error handling
- */
+/** TODO: need to add proper error handling */
 public class EngineSettings {
 
-  @NonNull
-  ExecutionPipeline pipeline;
+  @NonNull ExecutionPipeline pipeline;
 
-  @NonNull
-  StreamEngine stream;
+  @NonNull StreamEngine stream;
 }

@@ -24,15 +24,12 @@ public class APIConnectors {
     return getAPIConnector(subscriptions, source, name);
   }
 
-
-  private<T extends APIConnector> Optional<T> getAPIConnector(List<T> list,
-      @NonNull APISource source, @NonNull Name name) {
-    return StreamUtil.getOnlyElement(list.stream().filter(
-        c -> equals(c, source, name)));
+  private <T extends APIConnector> Optional<T> getAPIConnector(
+      List<T> list, @NonNull APISource source, @NonNull Name name) {
+    return StreamUtil.getOnlyElement(list.stream().filter(c -> equals(c, source, name)));
   }
 
   public static boolean equals(APIConnector c, APISource source, Name name) {
     return c.getName().equals(name) && c.getSource().equals(source);
   }
-
 }

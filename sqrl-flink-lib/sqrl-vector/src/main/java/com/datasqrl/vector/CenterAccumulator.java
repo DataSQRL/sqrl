@@ -1,6 +1,6 @@
 package com.datasqrl.vector;
 
-//import com.google.common.base.Preconditions;
+// import com.google.common.base.Preconditions;
 
 // mutable accumulator of structured type for the aggregate function
 public class CenterAccumulator {
@@ -13,7 +13,7 @@ public class CenterAccumulator {
       sum = values.clone();
       count = 1;
     } else {
-//      Preconditions.checkArgument(values.length == sum.length);
+      //      Preconditions.checkArgument(values.length == sum.length);
       for (int i = 0; i < values.length; i++) {
         sum[i] += values[i];
       }
@@ -28,7 +28,7 @@ public class CenterAccumulator {
     if (this.count == 0) {
       this.sum = new double[other.sum.length];
     }
-//    Preconditions.checkArgument(this.sum.length == other.sum.length);
+    //    Preconditions.checkArgument(this.sum.length == other.sum.length);
     for (int i = 0; i < other.sum.length; i++) {
       this.sum[i] += other.sum[i];
     }
@@ -36,7 +36,7 @@ public class CenterAccumulator {
   }
 
   public double[] get() {
-//    Preconditions.checkArgument(count > 0);
+    //    Preconditions.checkArgument(count > 0);
     double[] result = new double[sum.length];
     for (int i = 0; i < sum.length; i++) {
       result[i] = sum[i] / count;
@@ -45,7 +45,7 @@ public class CenterAccumulator {
   }
 
   public synchronized void substract(double[] values) {
-//    Preconditions.checkArgument(values.length == sum.length);
+    //    Preconditions.checkArgument(values.length == sum.length);
     for (int i = 0; i < values.length; i++) {
       sum[i] -= values[i];
     }

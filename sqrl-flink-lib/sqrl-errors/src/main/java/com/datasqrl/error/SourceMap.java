@@ -23,7 +23,5 @@ public interface SourceMap extends Serializable {
     public String getRange(FileRange range) {
       return "";
     }
-
-
   }
 }

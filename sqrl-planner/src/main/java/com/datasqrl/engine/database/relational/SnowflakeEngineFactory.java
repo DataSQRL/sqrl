@@ -18,5 +18,4 @@ public class SnowflakeEngineFactory implements DatabaseEngineFactory {
   public Class getFactoryClass() {
     return SnowflakeEngine.class;
   }
-
 }

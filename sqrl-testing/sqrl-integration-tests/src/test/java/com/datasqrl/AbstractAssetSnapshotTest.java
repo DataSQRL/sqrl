@@ -1,6 +1,5 @@
 package com.datasqrl;
 
-import static com.datasqrl.UseCasesIT.getProjectRoot;
 
 import com.datasqrl.cmd.AssertStatusHook;
 import com.datasqrl.cmd.RootCommand;
@@ -86,23 +85,26 @@ public abstract class AbstractAssetSnapshotTest {
 
   @SneakyThrows
   private void snapshotFiles(Path path, Predicate<Path> predicate) {
-    if (path==null || !Files.isDirectory(path)) return;
+    if (path == null || !Files.isDirectory(path)) return;
     List<Path> paths = new ArrayList<>();
-    Files.walkFileTree(path, new SimpleFileVisitor<>() {
-      @Override
-      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-        if (predicate.test(file)) {
-          paths.add(file);
-        }
-        return FileVisitResult.CONTINUE;
-      }
+    Files.walkFileTree(
+        path,
+        new SimpleFileVisitor<>() {
+          @Override
+          public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+              throws IOException {
+            if (predicate.test(file)) {
+              paths.add(file);
+            }
+            return FileVisitResult.CONTINUE;
+          }
 
-      @Override
-      public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
-        return FileVisitResult.CONTINUE;
-      }
-    });
-    Collections.sort(paths); //Create deterministic order
+          @Override
+          public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+            return FileVisitResult.CONTINUE;
+          }
+        });
+    Collections.sort(paths); // Create deterministic order
     for (Path file : paths) {
       try {
         snapshot.addContent(Files.readString(file), file.getFileName().toString());
@@ -119,18 +121,18 @@ public abstract class AbstractAssetSnapshotTest {
   protected AssertStatusHook execute(Path rootDir, List<String> argsList) {
     this.buildDir = rootDir.resolve("build");
     AssertStatusHook statusHook = new AssertStatusHook();
-    int code = new RootCommand(rootDir,statusHook).getCmd().execute(argsList.toArray(String[]::new));
+    int code =
+        new RootCommand(rootDir, statusHook).getCmd().execute(argsList.toArray(String[]::new));
     if (statusHook.isSuccess() && code != 0) Assertions.assertEquals(0, code);
     return statusHook;
   }
 
-
   public static String getDisplayName(Path path) {
-    if (path==null) return "";
+    if (path == null) return "";
     String filename = path.getFileName().toString();
     int length = filename.indexOf('.');
-    if (length<0) length = filename.length();
-    return filename.substring(0,length);
+    if (length < 0) length = filename.length();
+    return filename.substring(0, length);
   }
 
   public static Path getResourcesDirectory(String subdir) {
@@ -168,30 +170,33 @@ public abstract class AbstractAssetSnapshotTest {
     return Files.walk(directory)
         .filter(path -> !Files.isDirectory(path))
         .filter(path -> path.toString().endsWith(SQRL_EXTENSION))
-        .filter(path-> !path.toString().contains("/build/"))
-        .filter(path -> {
-          TestNameModifier mod = TestNameModifier.of(path);
-          return mod==TestNameModifier.none || (includeFail && mod==TestNameModifier.fail);
-        })
+        .filter(path -> !path.toString().contains("/build/"))
+        .filter(
+            path -> {
+              TestNameModifier mod = TestNameModifier.of(path);
+              return mod == TestNameModifier.none || (includeFail && mod == TestNameModifier.fail);
+            })
         .sorted();
   }
 
   public enum TestNameModifier {
-    none, disabled, fail;
+    none,
+    disabled,
+    fail;
 
     public static TestNameModifier of(String filename) {
       if (Strings.isNullOrEmpty(filename)) return none;
       String name = FileUtil.separateExtension(filename).getLeft().toLowerCase();
       return Arrays.stream(TestNameModifier.values())
           .filter(mod -> name.endsWith(mod.name()))
-          .findFirst().orElse(none);
+          .findFirst()
+          .orElse(none);
     }
 
     public static TestNameModifier of(Path file) {
-      if (file==null) return none;
+      if (file == null) return none;
       return TestNameModifier.of(file.getFileName().toString());
     }
-
   }
 
   @AllArgsConstructor
@@ -201,9 +206,11 @@ public abstract class AbstractAssetSnapshotTest {
     boolean includeFail;
 
     @Override
-    public Stream<? extends Arguments> provideArguments(ExtensionContext context) throws IOException {
+    public Stream<? extends Arguments> provideArguments(ExtensionContext context)
+        throws IOException {
       return getSQRLScripts(directory, includeFail)
-          .sorted(Comparator.comparing(c -> c.toFile().getName().toLowerCase())).map(Arguments::of);
+          .sorted(Comparator.comparing(c -> c.toFile().getName().toLowerCase()))
+          .map(Arguments::of);
     }
   }
 }

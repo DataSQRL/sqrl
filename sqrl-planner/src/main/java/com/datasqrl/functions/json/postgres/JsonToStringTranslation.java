@@ -3,9 +3,9 @@ package com.datasqrl.functions.json.postgres;
 import static com.datasqrl.function.CalciteFunctionUtil.lightweightBiOp;
 import static com.datasqrl.function.CalciteFunctionUtil.lightweightOp;
 
-import com.datasqrl.json.JsonFunctions;
 import com.datasqrl.function.translations.PostgresSqlTranslation;
 import com.datasqrl.function.translations.SqlTranslation;
+import com.datasqrl.json.JsonFunctions;
 import com.google.auto.service.AutoService;
 import java.util.List;
 import org.apache.calcite.sql.SqlCall;
@@ -22,8 +22,11 @@ public class JsonToStringTranslation extends PostgresSqlTranslation {
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    lightweightBiOp("#>>").createCall(SqlParserPos.ZERO,
-            List.of(call.getOperandList().get(0), SqlLiteral.createCharString("{}", SqlParserPos.ZERO)))
+    lightweightBiOp("#>>")
+        .createCall(
+            SqlParserPos.ZERO,
+            List.of(
+                call.getOperandList().get(0), SqlLiteral.createCharString("{}", SqlParserPos.ZERO)))
         .unparse(writer, leftPrec, rightPrec);
   }
 }

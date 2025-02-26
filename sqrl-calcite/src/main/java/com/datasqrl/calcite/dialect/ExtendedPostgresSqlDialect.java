@@ -1,6 +1,5 @@
 package com.datasqrl.calcite.dialect;
 
-
 import static org.apache.calcite.sql.SqlKind.COLLECTION_TABLE;
 
 import com.datasqrl.calcite.Dialect;
@@ -18,27 +17,29 @@ import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.SqlDialect;
 import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
-import org.apache.calcite.sql.fun.SqlCollectionTableOperator;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.SqlConformance;
-import org.apache.calcite.sql.validate.SqlConformanceEnum;
 import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
 
-  public static final Map<String, SqlTranslation> translationMap = ServiceLoaderDiscovery.getAll(SqlTranslation.class)
-      .stream().filter(f->f.getDialect() == Dialect.POSTGRES)
-      .collect(Collectors.toMap(f->f.getOperator().getName().toLowerCase(), f->f));
+  public static final Map<String, SqlTranslation> translationMap =
+      ServiceLoaderDiscovery.getAll(SqlTranslation.class).stream()
+          .filter(f -> f.getDialect() == Dialect.POSTGRES)
+          .collect(Collectors.toMap(f -> f.getOperator().getName().toLowerCase(), f -> f));
 
   public static final ExtendedPostgresSqlDialect.Context DEFAULT_CONTEXT;
   public static final ExtendedPostgresSqlDialect DEFAULT;
 
   static {
-    DEFAULT_CONTEXT = SqlDialect.EMPTY_CONTEXT.withDatabaseProduct(DatabaseProduct.POSTGRESQL)
-        .withIdentifierQuoteString("\"").withUnquotedCasing(Casing.TO_LOWER)
-        .withDataTypeSystem(POSTGRESQL_TYPE_SYSTEM)
-        .withConformance(new PostgresConformance());
+    DEFAULT_CONTEXT =
+        SqlDialect.EMPTY_CONTEXT
+            .withDatabaseProduct(DatabaseProduct.POSTGRESQL)
+            .withIdentifierQuoteString("\"")
+            .withUnquotedCasing(Casing.TO_LOWER)
+            .withDataTypeSystem(POSTGRESQL_TYPE_SYSTEM)
+            .withConformance(new PostgresConformance());
     DEFAULT = new ExtendedPostgresSqlDialect(DEFAULT_CONTEXT);
   }
 
@@ -49,11 +50,12 @@ public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
   }
 
   private static Map<Class, String> getForeignCastSpecs() {
-    Map<Class, String> jdbcTypeSerializer = ServiceLoaderDiscovery.getAll(JdbcTypeSerializer.class)
-        .stream()
-        .filter(f->f.getDialectId().equalsIgnoreCase(Dialect.POSTGRES.name()))
-        .collect(Collectors.toMap(JdbcTypeSerializer::getConversionClass,
-            JdbcTypeSerializer::dialectTypeName));
+    Map<Class, String> jdbcTypeSerializer =
+        ServiceLoaderDiscovery.getAll(JdbcTypeSerializer.class).stream()
+            .filter(f -> f.getDialectId().equalsIgnoreCase(Dialect.POSTGRES.name()))
+            .collect(
+                Collectors.toMap(
+                    JdbcTypeSerializer::getConversionClass, JdbcTypeSerializer::dialectTypeName));
     return jdbcTypeSerializer;
   }
 
@@ -84,7 +86,7 @@ public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
           break;
         case CHAR:
         case VARCHAR:
-          castSpec = "TEXT";// Using TEXT type as it has similar flexibility and avoids size issues
+          castSpec = "TEXT"; // Using TEXT type as it has similar flexibility and avoids size issues
           break;
         case DECIMAL:
           castSpec = "NUMERIC"; // DECIMAL or NUMERIC in PostgreSQL
@@ -114,7 +116,7 @@ public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
         case NULL:
           castSpec = "NULL"; // Postgres supports the NULL type, though it's rarely used explicitly
           break;
-        // May need to create user-defined types in PostgreSQL or use JSON/JSONB types
+          // May need to create user-defined types in PostgreSQL or use JSON/JSONB types
         case ROW:
         case MAP:
           castSpec = "jsonb";
@@ -126,20 +128,23 @@ public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
     }
 
     return new SqlDataTypeSpec(
-        new SqlAlienSystemTypeNameSpec(castSpec, type.getSqlTypeName() == null ? SqlTypeName.OTHER : type.getSqlTypeName(),
+        new SqlAlienSystemTypeNameSpec(
+            castSpec,
+            type.getSqlTypeName() == null ? SqlTypeName.OTHER : type.getSqlTypeName(),
             SqlParserPos.ZERO),
         SqlParserPos.ZERO);
   }
 
   @Override
   public void unparseCall(SqlWriter writer, SqlCall call, int leftPrec, int rightPrec) {
-    if (call.getOperator().getKind() == COLLECTION_TABLE) { //skip FROM TABLE(..) call
-      unparseCall(writer, (SqlCall)call.getOperandList().get(0), leftPrec, rightPrec);
+    if (call.getOperator().getKind() == COLLECTION_TABLE) { // skip FROM TABLE(..) call
+      unparseCall(writer, (SqlCall) call.getOperandList().get(0), leftPrec, rightPrec);
       return;
     }
 
     if (translationMap.containsKey(call.getOperator().getName().toLowerCase())) {
-      translationMap.get(call.getOperator().getName().toLowerCase())
+      translationMap
+          .get(call.getOperator().getName().toLowerCase())
           .unparse(call, writer, leftPrec, rightPrec);
       return;
     }

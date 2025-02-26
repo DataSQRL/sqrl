@@ -16,8 +16,8 @@ public interface PullupOperator {
   @Value
   final class Container {
 
-    public static final Container EMPTY = new Container(NowFilter.EMPTY, TopNConstraint.EMPTY,
-        SortOrder.EMPTY);
+    public static final Container EMPTY =
+        new Container(NowFilter.EMPTY, TopNConstraint.EMPTY, SortOrder.EMPTY);
 
     final NowFilter nowFilter;
     final TopNConstraint topN;
@@ -26,8 +26,5 @@ public interface PullupOperator {
     public boolean isEmpty() {
       return nowFilter.isEmpty() && topN.isEmpty() && sort.isEmpty();
     }
-
   }
-
-
 }

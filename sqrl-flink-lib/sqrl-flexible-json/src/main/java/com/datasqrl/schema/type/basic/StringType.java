@@ -25,8 +25,7 @@ public class StringType extends AbstractBasicType<String> {
 
   public static class Conversion implements TypeConversion<String> {
 
-    public Conversion() {
-    }
+    public Conversion() {}
 
     @Override
     public Set<Class> getJavaTypes() {

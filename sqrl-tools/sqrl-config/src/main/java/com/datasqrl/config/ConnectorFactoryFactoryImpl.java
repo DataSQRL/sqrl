@@ -9,10 +9,8 @@ import java.util.Map;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 
-/**
- * Placeholder for future templated connector handling
- */
-@AllArgsConstructor(onConstructor_=@Inject)
+/** Placeholder for future templated connector handling */
+@AllArgsConstructor(onConstructor_ = @Inject)
 public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
 
   PackageJson packageJson;
@@ -24,7 +22,6 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
     return connectors.getConnectorConfig(connectorName);
   }
 
-
   @Override
   public Optional<ConnectorFactory> create(SystemBuiltInConnectors builtInConnector) {
 
@@ -32,7 +29,8 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
       case PRINT_SINK:
         return Optional.of(createPrintConnectorFactory(null));
       case LOCAL_FILE_SOURCE:
-        return getConnectorConfig(builtInConnector.getName().getCanonical()).map(this::createLocalFile);
+        return getConnectorConfig(builtInConnector.getName().getCanonical())
+            .map(this::createLocalFile);
       default:
         throw new IllegalArgumentException("Unknown connector: " + builtInConnector);
     }
@@ -45,7 +43,8 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
     Optional<EngineConfig> engineConfig = packageJson.getEngines().getEngineConfig("flink");
     Preconditions.checkArgument(engineConfig.isPresent(), "Missing engine configuration for Flink");
     ConnectorsConfig connectors = engineConfig.get().getConnectors();
-    if (connectorName.equalsIgnoreCase("iceberg")) { //work around until we get the correct engine in
+    if (connectorName.equalsIgnoreCase(
+        "iceberg")) { // work around until we get the correct engine in
       return connectors.getConnectorConfig("iceberg").map(this::createIceberg);
     }
     // end
@@ -63,7 +62,8 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
       } else if (connectorName.equalsIgnoreCase("iceberg")) {
         return connectorConfig.map(this::createIceberg);
       } else {
-        throw new IllegalArgumentException("Unable to create connectorConfig for engineType=" + engineType.name());
+        throw new IllegalArgumentException(
+            "Unable to create connectorConfig for engineType=" + engineType.name());
       }
     }
 
@@ -72,8 +72,8 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
 
   @Override
   public ConnectorConf getConfig(String name) {
-    ConnectorsConfig connectors = packageJson.getEngines().getEngineConfig("flink")
-        .get().getConnectors();
+    ConnectorsConfig connectors =
+        packageJson.getEngines().getEngineConfig("flink").get().getConnectors();
     Optional<ConnectorConf> connectorConfig = connectors.getConnectorConfig(name);
     return connectorConfig.get();
   }
@@ -83,8 +83,8 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
     return context -> {
       Map<String, Object> map = connectorConf.toMap();
       TableConfigBuilderImpl builder = TableConfigImpl.builder(context.getName());
-      map.entrySet().forEach(e->
-          builder.getConnectorConfig().setProperty(e.getKey(), e.getValue()));
+      map.entrySet()
+          .forEach(e -> builder.getConnectorConfig().setProperty(e.getKey(), e.getValue()));
       builder.getConnectorConfig().setProperty("catalog-table", context.getName());
 
       builder.setType(ExternalDataType.source_and_sink);
@@ -109,9 +109,9 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
     return context -> {
       Map<String, Object> contextData = context.getMap();
 
-      String filename = (String)contextData.get("filename");
-      String format = (String)contextData.get("format");
-      String[] primaryKey = (String[])contextData.get("primary-key");
+      String filename = (String) contextData.get("filename");
+      String format = (String) contextData.get("format");
+      String[] primaryKey = (String[]) contextData.get("primary-key");
       TableConfigBuilderImpl builder = TableConfigImpl.builder(context.getName());
       builder.setType(ExternalDataType.source);
       builder.setPrimaryKey(primaryKey);
@@ -125,8 +125,6 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
 
       return builder.build();
     };
-
-
   }
 
   private ConnectorFactory createKafkaConnectorFactory(ConnectorConf connectorConf) {
@@ -136,19 +134,21 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
       ConnectorConfImpl connectorConf1 = (ConnectorConfImpl) connectorConf;
 
       TableConfigBuilderImpl builder = TableConfigImpl.builder(context.getName());
-      List<String> primaryKey = (List<String>)map.get("primary-key");
-      String timestampType = (String)map.get("timestamp-type");
-      String timestampName = (String)map.get("timestamp-name");
+      List<String> primaryKey = (List<String>) map.get("primary-key");
+      String timestampType = (String) map.get("timestamp-type");
+      String timestampName = (String) map.get("timestamp-name");
 
-      if (primaryKey != null && !primaryKey.isEmpty()) builder.setPrimaryKey(primaryKey.toArray(new String[0]));
-      if (timestampType != null && !timestampType.equalsIgnoreCase("NONE")) {//!=TimestampType.NONE
+      if (primaryKey != null && !primaryKey.isEmpty())
+        builder.setPrimaryKey(primaryKey.toArray(new String[0]));
+      if (timestampType != null
+          && !timestampType.equalsIgnoreCase("NONE")) { // !=TimestampType.NONE
         builder.setType(ExternalDataType.source_and_sink);
         builder.setTimestampColumn(timestampName);
         builder.setWatermark(0);
         if (timestampType.equalsIgnoreCase("LOG_TIME")) {
-          builder.setMetadata(timestampName, "TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)",
-              "timestamp"); //todo fix?
-//                  connectorFactory.getEventTime());
+          builder.setMetadata(
+              timestampName, "TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)", "timestamp"); // todo fix?
+          //                  connectorFactory.getEventTime());
         } else {
           throw new UnsupportedOperationException("Not yet supported: " + timestampType);
         }
@@ -170,7 +170,7 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
       ConnectorConfImpl engineConfig = (ConnectorConfImpl) connectorConf;
       Map<String, Object> map = context.getMap();
       builder.copyConnectorConfig(engineConfig);
-      builder.getConnectorConfig().setProperty("table-name", (String)map.get("table-name"));
+      builder.getConnectorConfig().setProperty("table-name", (String) map.get("table-name"));
       builder.getConnectorConfig().setProperty("connector", "jdbc-sqrl");
 
       return builder.build();
@@ -185,7 +185,7 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
 
       TableConfigBuilderImpl builder = TableConfigImpl.builder(context.getName());
 
-      List<String> primaryKey = (List<String>)map.get("primary-key");
+      List<String> primaryKey = (List<String>) map.get("primary-key");
       Optional.ofNullable(primaryKey)
           .filter(pk -> !pk.isEmpty())
           .ifPresent(pk -> builder.setPrimaryKey(pk.toArray(new String[0])));
@@ -194,7 +194,6 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
       if (timestampName == null) timestampName = "event_time";
       builder.setTimestampColumn(timestampName);
       builder.setWatermark(0);
-
 
       if (connectorConf.toMap().get("connector").equals("postgres-cdc")) {
         builder.setType(ExternalDataType.source);
@@ -207,5 +206,4 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
       return builder.build();
     };
   }
-
 }

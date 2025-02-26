@@ -3,7 +3,4 @@
  */
 package com.datasqrl.plan.rules;
 
-
-public interface ComputeCost extends Comparable<ComputeCost> {
-
-}
+public interface ComputeCost extends Comparable<ComputeCost> {}

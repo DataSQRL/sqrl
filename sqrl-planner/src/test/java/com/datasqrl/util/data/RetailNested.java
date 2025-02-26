@@ -11,16 +11,15 @@ import lombok.Getter;
 
 public class RetailNested implements TestDataset {
 
-  public static final Path BASE_PATH = Path.of("..","..", "sqrl-examples", "retail-nested");
+  public static final Path BASE_PATH = Path.of("..", "..", "sqrl-examples", "retail-nested");
 
   public static final RetailNested INSTANCE = new RetailNested();
 
-  @Getter
-  public final TestScript testScript;
+  @Getter public final TestScript testScript;
 
   public RetailNested() {
-    testScript = TestScript.of(this, BASE_PATH.resolve("nested.sqrl"),
-        "orders","productcount").build();
+    testScript =
+        TestScript.of(this, BASE_PATH.resolve("nested.sqrl"), "orders", "productcount").build();
   }
 
   @Override
@@ -47,6 +46,4 @@ public class RetailNested implements TestDataset {
   public String toString() {
     return getName();
   }
-
-
 }

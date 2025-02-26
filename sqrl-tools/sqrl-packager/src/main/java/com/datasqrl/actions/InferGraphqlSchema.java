@@ -28,15 +28,12 @@ import graphql.schema.GraphqlTypeComparatorRegistry;
 import graphql.schema.idl.SchemaPrinter;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import graphql.schema.idl.UnExecutableSchemaGenerator;
+import java.nio.file.Path;
+import java.util.*;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 
-import java.nio.file.Path;
-import java.util.*;
-
-/**
- * Creates new table functions from the GraphQL schema.
- */
+/** Creates new table functions from the GraphQL schema. */
 @AllArgsConstructor(onConstructor_ = @Inject)
 public class InferGraphqlSchema {
 
@@ -53,9 +50,10 @@ public class InferGraphqlSchema {
   public Optional<String> inferGraphQLSchema() {
     Optional<GraphQLSchema> gqlSchema = schemaFactory.generate(ExecutionGoal.COMPILE);
 
-    SchemaPrinter.Options opts = SchemaPrinter.Options.defaultOptions()
-        .setComparators(GraphqlTypeComparatorRegistry.AS_IS_REGISTRY)
-        .includeDirectives(false);
+    SchemaPrinter.Options opts =
+        SchemaPrinter.Options.defaultOptions()
+            .setComparators(GraphqlTypeComparatorRegistry.AS_IS_REGISTRY)
+            .includeDirectives(false);
 
     return gqlSchema.map(schema -> new SchemaPrinter(opts).print(schema));
   }
@@ -89,7 +87,8 @@ public class InferGraphqlSchema {
     return Optional.of(apiSchema);
   }
 
-  private ErrorCollector setErrorCollectorSchema(APISource apiSchema, ErrorCollector errorCollector) {
+  private ErrorCollector setErrorCollectorSchema(
+      APISource apiSchema, ErrorCollector errorCollector) {
     return errorCollector.withSchema(
         apiSchema.getName().getDisplay(), apiSchema.getSchemaDefinition());
   }
@@ -108,17 +107,22 @@ public class InferGraphqlSchema {
 
   // Retrieves the API source, either from the factory or by inferring the schema
   private Optional<APISource> getApiSource(SchemaPrinter.Options opts) {
-    return graphqlSourceFactory.get()
-        .or(() -> inferGraphQLSchema()
-            .map(schemaString -> new APISourceImpl(Name.system("<schema>"), schemaString)));
+    return graphqlSourceFactory
+        .get()
+        .or(
+            () ->
+                inferGraphQLSchema()
+                    .map(schemaString -> new APISourceImpl(Name.system("<schema>"), schemaString)));
   }
 
   // Handles the case when no API source is found
   private Optional<APISource> handleNoApiSource(SchemaPrinter.Options opts) {
     if (goal == ExecutionGoal.TEST) {
-      Optional<APISource> apiSource = schemaFactory.generate(ExecutionGoal.TEST)
-          .map(gqlSchema -> new SchemaPrinter(opts).print(gqlSchema))
-          .map(schemaString -> new APISourceImpl(Name.system("<schema>"), schemaString));
+      Optional<APISource> apiSource =
+          schemaFactory
+              .generate(ExecutionGoal.TEST)
+              .map(gqlSchema -> new SchemaPrinter(opts).print(gqlSchema))
+              .map(schemaString -> new APISourceImpl(Name.system("<schema>"), schemaString));
 
       if (apiSource.isPresent()) {
         ErrorCollector errors = setErrorCollectorSchema(apiSource.get(), errorCollector);
@@ -130,7 +134,8 @@ public class InferGraphqlSchema {
 
   // Merges the test schema into the API schema if the goal is TEST
   @SneakyThrows
-  private APISource mergeTestSchema(APISource apiSchema, SchemaPrinter.Options opts, Optional<Path> testsPath) {
+  private APISource mergeTestSchema(
+      APISource apiSchema, SchemaPrinter.Options opts, Optional<Path> testsPath) {
     Optional<GraphQLSchema> gqlSchema = schemaFactory.generate(ExecutionGoal.TEST);
     if (gqlSchema.isPresent()) {
       String testSchemaString = new SchemaPrinter(opts).print(gqlSchema.get());
@@ -152,8 +157,9 @@ public class InferGraphqlSchema {
       TypeDefinitionRegistry mergedDef = schemaDef.merge(testDef);
 
       // Generate combined schema string
-      String combinedSchema = new SchemaPrinter(opts)
-          .print(UnExecutableSchemaGenerator.makeUnExecutableSchema(mergedDef));
+      String combinedSchema =
+          new SchemaPrinter(opts)
+              .print(UnExecutableSchemaGenerator.makeUnExecutableSchema(mergedDef));
 
       // Return new APISource with combined schema
       return apiSchema.clone(combinedSchema);
@@ -162,7 +168,8 @@ public class InferGraphqlSchema {
   }
 
   // Merges the Query types from schemaDef and testDef
-  private ObjectTypeDefinition mergeQueryType(TypeDefinitionRegistry schemaDef, TypeDefinitionRegistry testDef, Optional<Path> testsPath) {
+  private ObjectTypeDefinition mergeQueryType(
+      TypeDefinitionRegistry schemaDef, TypeDefinitionRegistry testDef, Optional<Path> testsPath) {
     ObjectTypeDefinition schemaQuery = (ObjectTypeDefinition) schemaDef.getType("Query").get();
     ObjectTypeDefinition testQuery = (ObjectTypeDefinition) testDef.getType("Query").get();
 
@@ -180,7 +187,8 @@ public class InferGraphqlSchema {
   }
 
   // Removes overlapping types from testDef that are already in schemaDef
-  private void removeOverlappingTypes(TypeDefinitionRegistry schemaDef, TypeDefinitionRegistry testDef) {
+  private void removeOverlappingTypes(
+      TypeDefinitionRegistry schemaDef, TypeDefinitionRegistry testDef) {
     // Remove Query type from testDef
     testDef.remove(testDef.getType("Query").get());
 
@@ -200,12 +208,13 @@ public class InferGraphqlSchema {
     GraphqlSchemaValidator schemaValidator = new GraphqlSchemaValidator(framework, apiManager);
     schemaValidator.validate(apiSchema, apiErrors);
 
-    GraphqlQueryGenerator queryGenerator = new GraphqlQueryGenerator(
-        framework.getCatalogReader().nameMatcher(),
-        framework.getSchema(),
-        new GraphqlQueryBuilder(framework, apiManager, new SqlNameUtil(NameCanonicalizer.SYSTEM)),
-        apiManager
-    );
+    GraphqlQueryGenerator queryGenerator =
+        new GraphqlQueryGenerator(
+            framework.getCatalogReader().nameMatcher(),
+            framework.getSchema(),
+            new GraphqlQueryBuilder(
+                framework, apiManager, new SqlNameUtil(NameCanonicalizer.SYSTEM)),
+            apiManager);
 
     queryGenerator.walk(apiSchema);
 
@@ -214,9 +223,12 @@ public class InferGraphqlSchema {
 
     // Add subscriptions to apiManager
     final APISource source = apiSchema;
-    queryGenerator.getSubscriptions().forEach(subscription ->
-        apiManager.addSubscription(
-            new APISubscription(subscription.getAbsolutePath().getFirst(), source), subscription)
-    );
+    queryGenerator
+        .getSubscriptions()
+        .forEach(
+            subscription ->
+                apiManager.addSubscription(
+                    new APISubscription(subscription.getAbsolutePath().getFirst(), source),
+                    subscription));
   }
 }

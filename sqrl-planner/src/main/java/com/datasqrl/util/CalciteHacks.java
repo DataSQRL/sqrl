@@ -11,6 +11,7 @@ public class CalciteHacks {
    */
   public static void resetToSqrlMetadataProvider() {
     // Reset sqrl metadata provider defaults
-    RelMetadataQueryBase.THREAD_PROVIDERS.set(JaninoRelMetadataProvider.of(SqrlRelMetadataProvider.INSTANCE));
+    RelMetadataQueryBase.THREAD_PROVIDERS.set(
+        JaninoRelMetadataProvider.of(SqrlRelMetadataProvider.INSTANCE));
   }
 }

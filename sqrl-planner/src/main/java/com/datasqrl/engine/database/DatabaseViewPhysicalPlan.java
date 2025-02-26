@@ -7,22 +7,17 @@ public interface DatabaseViewPhysicalPlan extends DatabasePhysicalPlan {
 
   List<DatabaseView> getViews();
 
-
   interface DatabaseView {
 
     String getName();
 
     String getSql();
-
   }
-
 
   @Value
   class DatabaseViewImpl implements DatabaseView {
 
     String name;
     String sql;
-
   }
-
 }

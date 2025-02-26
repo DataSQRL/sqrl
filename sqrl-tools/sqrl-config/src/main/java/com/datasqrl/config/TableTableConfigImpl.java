@@ -16,7 +16,9 @@ public class TableTableConfigImpl implements TableConfig.TableTableConfig {
   public static String PARTITIONKEY_KEY = "partition-key";
 
   public ExternalDataType getType() {
-    return SqrlConfig.getEnum(sqrlConfig.asString(TYPE_KEY), ExternalDataType.class,
+    return SqrlConfig.getEnum(
+        sqrlConfig.asString(TYPE_KEY),
+        ExternalDataType.class,
         Optional.of(ExternalDataType.source_and_sink));
   }
 

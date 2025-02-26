@@ -7,5 +7,4 @@ package com.datasqrl.util;
 public interface DatabaseHandle {
 
   void cleanUp();
-
 }

@@ -43,5 +43,4 @@ public class ExecutionStageHint implements SqrlHint {
       return new ExecutionStageHint(options.get(0));
     }
   }
-
 }

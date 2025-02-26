@@ -1,12 +1,12 @@
 package com.datasqrl.packager.repository;
 
+import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.PackageConfiguration;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.serializer.Deserializer;
-import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.packager.util.FileHash;
 import com.datasqrl.packager.util.GeneratePackageId;
 import com.datasqrl.packager.util.Zipper;
+import com.datasqrl.serializer.Deserializer;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -27,8 +27,9 @@ public class ValidatePublication implements PublishRepository {
 
   @Override
   public boolean publish(Path zipFile, PackageConfiguration packageConfig) {
-    Preconditions.checkArgument(Files.isRegularFile(zipFile), "Cannot find package zip file: %s", zipFile);
-//        Path packageInfo = directory.resolve(Packager.PACKAGE_FILE_NAME);
+    Preconditions.checkArgument(
+        Files.isRegularFile(zipFile), "Cannot find package zip file: %s", zipFile);
+    //        Path packageInfo = directory.resolve(Packager.PACKAGE_FILE_NAME);
     validatePackageConfig(packageConfig);
     String uniqueId = GeneratePackageId.generate();
     String file = uniqueId + Zipper.ZIP_EXTENSION;
@@ -39,13 +40,18 @@ public class ValidatePublication implements PublishRepository {
       throw errors.handle(ex);
     }
     Instant pubTime = Instant.now();
-    Publication publication = new Publication(packageConfig, uniqueId, file, hash, authorId, pubTime.toString());
+    Publication publication =
+        new Publication(packageConfig, uniqueId, file, hash, authorId, pubTime.toString());
 
-    //Write results if outputdir is configured
-    Preconditions.checkArgument(outputDir==null || Files.isDirectory(outputDir), "Output directory does not exist: " + outputDir);
+    // Write results if outputdir is configured
+    Preconditions.checkArgument(
+        outputDir == null || Files.isDirectory(outputDir),
+        "Output directory does not exist: " + outputDir);
     if (outputDir != null) {
       Path destFile = outputDir.resolve(file);
-      Path pkgFile = outputDir.resolve(String.format(PUBLICATION_FILENAME_FORMAT, pubTime.toEpochMilli(), uniqueId));
+      Path pkgFile =
+          outputDir.resolve(
+              String.format(PUBLICATION_FILENAME_FORMAT, pubTime.toEpochMilli(), uniqueId));
       try {
         Files.copy(zipFile, destFile);
         Deserializer.INSTANCE.writeJson(pkgFile, publication);
@@ -59,10 +65,14 @@ public class ValidatePublication implements PublishRepository {
   public static void validatePackageConfig(PackageConfiguration pkgConfig) {
     pkgConfig.checkInitialized();
     NamePath namePath = NamePath.parse(pkgConfig.getName());
-    Preconditions.checkArgument(namePath.size()>=2, "Invalid package name: %s. "
-        + "Should have at least two components: name-of-organization.package-name", pkgConfig.getName());
-    Preconditions.checkArgument(pkgConfig.getType()!=null && PackageTypes.valueOf(pkgConfig.getType())!=null,
-        "Invalid package type: %s", pkgConfig.getType());
+    Preconditions.checkArgument(
+        namePath.size() >= 2,
+        "Invalid package name: %s. "
+            + "Should have at least two components: name-of-organization.package-name",
+        pkgConfig.getName());
+    Preconditions.checkArgument(
+        pkgConfig.getType() != null && PackageTypes.valueOf(pkgConfig.getType()) != null,
+        "Invalid package type: %s",
+        pkgConfig.getType());
   }
-
 }

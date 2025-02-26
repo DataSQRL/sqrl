@@ -13,7 +13,6 @@ import java.util.Collection;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 
-
 public interface Constraints {
 
   @Target(ElementType.FIELD)
@@ -30,21 +29,15 @@ public interface Constraints {
 
   @Target(ElementType.FIELD)
   @Retention(RetentionPolicy.RUNTIME)
-  public @interface Default {
-
-  }
+  public @interface Default {}
 
   @Target(ElementType.FIELD)
   @Retention(RetentionPolicy.RUNTIME)
-  public @interface NotNull {
-
-  }
+  public @interface NotNull {}
 
   @Target(ElementType.FIELD)
   @Retention(RetentionPolicy.RUNTIME)
-  public @interface NotEmpty {
-
-  }
+  public @interface NotEmpty {}
 
   static Value addConstraints(Field field, SqrlConfig.Value value) {
     Annotation[] annotations = field.getDeclaredAnnotations();
@@ -53,31 +46,36 @@ public interface Constraints {
       if (annotation instanceof MinLength) {
         MinLength lengthAnnotation = (MinLength) annotation;
         final int minLength = lengthAnnotation.min();
-        value = value.validate(x -> ((String)x).length()>= minLength,
-            "String needs to be at least length " + minLength);
+        value =
+            value.validate(
+                x -> ((String) x).length() >= minLength,
+                "String needs to be at least length " + minLength);
       } else if (annotation instanceof NotNull) {
-        value = value.validate(x -> x != null,
-            "Value cannot be null");
+        value = value.validate(x -> x != null, "Value cannot be null");
       } else if (annotation instanceof NotEmpty) {
-        value = value.validate(x -> {
-              if (x instanceof String) return StringUtils.isNotBlank((String)x);
-              if (x instanceof Collection) return ((Collection)x).size()>0;
-              if (x.getClass().isArray()) return Array.getLength(x)>0;
-              return true;
-            },
-            "Value cannot be empty");
+        value =
+            value.validate(
+                x -> {
+                  if (x instanceof String) return StringUtils.isNotBlank((String) x);
+                  if (x instanceof Collection) return ((Collection) x).size() > 0;
+                  if (x.getClass().isArray()) return Array.getLength(x) > 0;
+                  return true;
+                },
+                "Value cannot be empty");
       } else if (annotation instanceof Regex) {
         Regex regex = (Regex) annotation;
         Pattern pattern = Pattern.compile(regex.match());
-        value = value.validate(x -> pattern.matcher((String)x).matches(), "String does not match pattern " + regex.match());
+        value =
+            value.validate(
+                x -> pattern.matcher((String) x).matches(),
+                "String does not match pattern " + regex.match());
       } else if (annotation instanceof Default) {
-        //Ignore, handled in SqrlCommonsConfig
+        // Ignore, handled in SqrlCommonsConfig
       } else if (annotation.getClass().getName().startsWith(Constraints.class.getName())) {
-        throw new NotYetImplementedException("Annotation not yet supported: " + annotation.getClass().getName());
+        throw new NotYetImplementedException(
+            "Annotation not yet supported: " + annotation.getClass().getName());
       }
     }
     return value;
   }
-
-
 }

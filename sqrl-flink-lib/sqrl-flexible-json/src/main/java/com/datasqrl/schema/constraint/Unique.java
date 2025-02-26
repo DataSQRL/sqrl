@@ -3,8 +3,8 @@
  */
 package com.datasqrl.schema.constraint;
 
-import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.schema.type.Type;
 import java.util.Map;
 import java.util.Optional;
@@ -17,8 +17,7 @@ public class Unique implements Constraint {
 
   public static final Unique UNCONSTRAINED = new Unique();
 
-  private Unique() {
-  } //For Kryo
+  private Unique() {} // For Kryo
 
   @Override
   public boolean satisfies(Object value) {

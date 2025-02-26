@@ -1,6 +1,5 @@
 package com.datasqrl.engine.database.relational;
 
-import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.database.DatabasePhysicalPlan;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.plan.queries.IdentifiedQuery;
@@ -21,9 +20,11 @@ public class IcebergPlan implements DatabasePhysicalPlan {
   @JsonIgnore
   @Override
   public Map<IdentifiedQuery, QueryTemplate> getQueryPlans() {
-    //Return first non-empty query plan from all query engines
-    return engines.values().stream().map(DatabasePhysicalPlan::getQueryPlans).filter(Predicate.not(Map::isEmpty))
-        .findFirst().orElse(Map.of());
+    // Return first non-empty query plan from all query engines
+    return engines.values().stream()
+        .map(DatabasePhysicalPlan::getQueryPlans)
+        .filter(Predicate.not(Map::isEmpty))
+        .findFirst()
+        .orElse(Map.of());
   }
-
 }

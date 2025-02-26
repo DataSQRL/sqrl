@@ -2,7 +2,6 @@ package com.datasqrl.config;
 
 import com.datasqrl.engine.IExecutionEngine;
 import java.util.Set;
-import lombok.NonNull;
 
 public interface EngineFactory {
   String ENGINE_NAME_KEY = "type";
@@ -19,7 +18,11 @@ public interface EngineFactory {
   Class<? extends IExecutionEngine> getFactoryClass();
 
   enum Type {
-    STREAMS, DATABASE, SERVER, LOG, QUERY;
+    STREAMS,
+    DATABASE,
+    SERVER,
+    LOG,
+    QUERY;
 
     public boolean isWrite() {
       return this == STREAMS;
@@ -29,6 +32,8 @@ public interface EngineFactory {
       return this == DATABASE || this == SERVER;
     }
 
-    public boolean isCompute() { return isWrite() || isRead(); }
+    public boolean isCompute() {
+      return isWrite() || isRead();
+    }
   }
 }

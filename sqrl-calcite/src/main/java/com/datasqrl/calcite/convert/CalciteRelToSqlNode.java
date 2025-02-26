@@ -13,11 +13,10 @@ public class CalciteRelToSqlNode implements RelToSqlNode {
 
   @Override
   public SqlNodes convert(RelNode relNode) {
-    SqlNode node = new RelToSqlConverterWithHints(CalciteSqlDialect.DEFAULT)
-        .visitRoot(relNode)
-        .asStatement();
+    SqlNode node =
+        new RelToSqlConverterWithHints(CalciteSqlDialect.DEFAULT).visitRoot(relNode).asStatement();
     CalciteFixes.appendSelectLists(node);
-    return ()->node;
+    return () -> node;
   }
 
   @Override

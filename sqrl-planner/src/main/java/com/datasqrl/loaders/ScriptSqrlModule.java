@@ -3,9 +3,9 @@ package com.datasqrl.loaders;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.engine.log.LogManager;
-import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.module.SqrlModule;
@@ -30,31 +30,49 @@ public class ScriptSqrlModule implements SqrlModule {
 
   private final AtomicBoolean planned = new AtomicBoolean(false);
 
-  //Planning a single table. Return a planning ns object and then only add that table
+  // Planning a single table. Return a planning ns object and then only add that table
   @Override
   public Optional<NamespaceObject> getNamespaceObject(Name name) {
     return Optional.of(new ScriptNamespaceObject(Optional.of(name)));
   }
 
-  //Planning all tables. Return a single planning ns object and add all tables
+  // Planning all tables. Return a single planning ns object and add all tables
   @Override
   public List<NamespaceObject> getNamespaceObjects() {
     return List.of(new ScriptNamespaceObject(Optional.empty()));
   }
 
-  protected void plan(ScriptPlanner planner, Optional<String> objectName, SqrlFramework framework,
+  protected void plan(
+      ScriptPlanner planner,
+      Optional<String> objectName,
+      SqrlFramework framework,
       ErrorCollector errors) {
-    // Construct a new schema (et al) and plan script. store schema here. When importing a name, pull from schema
+    // Construct a new schema (et al) and plan script. store schema here. When importing a name,
+    // pull from schema
 
-    SqrlSchema schema = new SqrlSchema(framework.getTypeFactory(), framework.getNameCanonicalizer());
+    SqrlSchema schema =
+        new SqrlSchema(framework.getTypeFactory(), framework.getNameCanonicalizer());
     this.schema = Optional.of(schema);
 
-    SqrlFramework newFramework = new SqrlFramework(framework.getRelMetadataProvider(),
-        framework.getHintStrategyTable(), framework.getNameCanonicalizer(), schema,
-        Optional.of(framework.getQueryPlanner()));
-    ScriptPlanner newPlanner = new ScriptPlanner(newFramework, moduleLoader, errors,
-        planner.getExecutionGoal(), planner.getTableFactory(), sqrlConfig, planner.getNameUtil(),
-        planner.getConnectorFactoryFactory(), logManager, planner.getCreateTableResolver());
+    SqrlFramework newFramework =
+        new SqrlFramework(
+            framework.getRelMetadataProvider(),
+            framework.getHintStrategyTable(),
+            framework.getNameCanonicalizer(),
+            schema,
+            Optional.of(framework.getQueryPlanner()));
+    ScriptPlanner newPlanner =
+        new ScriptPlanner(
+            newFramework,
+            moduleLoader,
+            errors,
+            planner.getExecutionGoal(),
+            planner.getTableFactory(),
+            sqrlConfig,
+            planner.getNameUtil(),
+            planner.getConnectorFactoryFactory(),
+            logManager,
+            planner.getCreateTableResolver());
 
     newPlanner.plan(
         new MainScript() {
@@ -67,18 +85,19 @@ public class ScriptSqrlModule implements SqrlModule {
           public String getContent() {
             return script;
           }
-        }, moduleLoader);
+        },
+        moduleLoader);
 
     schema.getTableNames().stream()
-        .map(t->schema.getTable(t, false))
-        .filter(t-> !(t.getTable() instanceof SqrlTableMacro))
-        .forEach(t->framework.getSchema().add(t.name, t.getTable()));
+        .map(t -> schema.getTable(t, false))
+        .filter(t -> !(t.getTable() instanceof SqrlTableMacro))
+        .forEach(t -> framework.getSchema().add(t.name, t.getTable()));
   }
 
   @AllArgsConstructor
   public class ScriptNamespaceObject implements NamespaceObject {
 
-    Optional<Name> tableName;//specific table name to import, empty for all
+    Optional<Name> tableName; // specific table name to import, empty for all
 
     @Override
     public Name getName() {
@@ -86,11 +105,14 @@ public class ScriptSqrlModule implements SqrlModule {
     }
 
     @Override
-    public boolean apply(ScriptPlanner planner, Optional<String> objectName,
-        SqrlFramework framework, ErrorCollector errors) {
-        //Add all non-sqrl tables to current schema (e.g. no table mappings)
+    public boolean apply(
+        ScriptPlanner planner,
+        Optional<String> objectName,
+        SqrlFramework framework,
+        ErrorCollector errors) {
+      // Add all non-sqrl tables to current schema (e.g. no table mappings)
       if (tableName.isEmpty()) {
-        //Plan over current schema
+        // Plan over current schema
         if (!planned.get()) {
           planned.set(true);
           planner.plan(
@@ -104,11 +126,14 @@ public class ScriptSqrlModule implements SqrlModule {
                 public String getContent() {
                   return script;
                 }
-              }, moduleLoader);
+              },
+              moduleLoader);
         }
       } else {
         throw new RuntimeException(
-            String.format("Importing specific tables are not currently supported, please import all: IMPORT %s.*;",
+            String.format(
+                "Importing specific tables are not currently supported, please import all: IMPORT"
+                    + " %s.*;",
                 namePath.popLast().toString()));
       }
 

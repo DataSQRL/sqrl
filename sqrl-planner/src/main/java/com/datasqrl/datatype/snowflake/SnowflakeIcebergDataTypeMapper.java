@@ -1,6 +1,5 @@
 package com.datasqrl.datatype.snowflake;
 
-import static com.datasqrl.function.CalciteFunctionUtil.lightweightOp;
 
 import com.datasqrl.datatype.DataTypeMapper;
 import com.datasqrl.engine.stream.flink.connector.CastFunction;
@@ -8,8 +7,6 @@ import com.datasqrl.json.FlinkJsonType;
 import com.google.auto.service.AutoService;
 import java.util.Optional;
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.flink.table.functions.ScalarFunction;
-import org.apache.flink.table.functions.UserDefinedFunction;
 import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 @AutoService(DataTypeMapper.class)
@@ -69,7 +66,7 @@ public class SnowflakeIcebergDataTypeMapper implements DataTypeMapper {
       case VARBINARY:
       case MULTISET:
       case MAP:
-      case ROW: //todo iterate over the row
+      case ROW: // todo iterate over the row
         return true;
       case ARRAY:
         return nativeTypeSupport(type.getComponentType());
@@ -86,6 +83,6 @@ public class SnowflakeIcebergDataTypeMapper implements DataTypeMapper {
       }
     }
 
-    return Optional.empty(); //Could not create type
+    return Optional.empty(); // Could not create type
   }
 }

@@ -1,4 +1,5 @@
 package com.datasqrl.functions.time;
+
 import static com.datasqrl.time.TimeFunctions.END_OF_DAY;
 import static com.datasqrl.time.TimeFunctions.END_OF_HOUR;
 import static com.datasqrl.time.TimeFunctions.END_OF_MINUTE;
@@ -34,11 +35,14 @@ public class StdTimeLibraryTest {
   public void testTimeBucket() {
     Assertions.assertEquals(t("2023-03-08T18:23:34.999999999Z"), END_OF_SECOND.eval(TIME1));
     Assertions.assertEquals(t("2023-03-08T18:23:39.999999999Z"), END_OF_SECOND.eval(TIME1, 10L));
-    Assertions.assertEquals(t("2023-03-08T18:23:40.199999999Z"), END_OF_SECOND.eval(TIME1, 10L, 200L));
-    Assertions.assertEquals(t("2023-03-08T18:23:34.199999999Z"), END_OF_SECOND.eval(TIME1, 1L, 200L));
+    Assertions.assertEquals(
+        t("2023-03-08T18:23:40.199999999Z"), END_OF_SECOND.eval(TIME1, 10L, 200L));
+    Assertions.assertEquals(
+        t("2023-03-08T18:23:34.199999999Z"), END_OF_SECOND.eval(TIME1, 1L, 200L));
     Assertions.assertEquals(t("2023-03-08T18:23:59.999999999Z"), END_OF_MINUTE.eval(TIME1));
     Assertions.assertEquals(t("2023-03-08T18:24:59.999999999Z"), END_OF_MINUTE.eval(TIME1, 5L));
-    Assertions.assertEquals(t("2023-03-08T18:25:19.999999999Z"), END_OF_MINUTE.eval(TIME1, 5L, 20L));
+    Assertions.assertEquals(
+        t("2023-03-08T18:25:19.999999999Z"), END_OF_MINUTE.eval(TIME1, 5L, 20L));
     Assertions.assertEquals(t("2023-03-08T18:59:59.999999999Z"), END_OF_HOUR.eval(TIME1));
     Assertions.assertEquals(t("2023-03-08T19:59:59.999999999Z"), END_OF_HOUR.eval(TIME1, 4L));
     Assertions.assertEquals(t("2023-03-08T20:59:59.999999999Z"), END_OF_HOUR.eval(TIME1, 5L));
@@ -62,36 +66,60 @@ public class StdTimeLibraryTest {
 
   @Test
   public void testTimeWindowSpec() {
-    assertTimeWindowSpec(new EndOfSecondMetadata().getSpecification(new long[]{3, 200}), 3000, 200);
-    assertTimeWindowSpec(new EndOfMinuteMetadata().getSpecification(new long[]{3, 20}), 3*60*1000, 20*1000);
-    assertTimeWindowSpec(new EndOfHourMetadata().getSpecification(new long[]{3, 10}), 3*3600*1000, 10*60*1000);
-    assertTimeWindowSpec(new EndOfDayMetadata().getSpecification(new long[]{3, 2}), 3*24*3600*1000, 2*3600*1000);
-    assertTimeWindowSpec(new EndOfWeekMetadata().getSpecification(new long[]{1, 2}), 7*24*3600*1000, 2*24*3600*1000);
-    assertTimeWindowSpec(new EndOfMonthMetadata().getSpecification(new long[]{1, 7}), 2629746000L, 7*24*3600*1000);
-    assertTimeWindowSpec(new EndOfYearMetadata().getSpecification(new long[]{2, 20}), 2*31556952000L, 20L*24*3600*1000);
+    assertTimeWindowSpec(
+        new EndOfSecondMetadata().getSpecification(new long[] {3, 200}), 3000, 200);
+    assertTimeWindowSpec(
+        new EndOfMinuteMetadata().getSpecification(new long[] {3, 20}), 3 * 60 * 1000, 20 * 1000);
+    assertTimeWindowSpec(
+        new EndOfHourMetadata().getSpecification(new long[] {3, 10}),
+        3 * 3600 * 1000,
+        10 * 60 * 1000);
+    assertTimeWindowSpec(
+        new EndOfDayMetadata().getSpecification(new long[] {3, 2}),
+        3 * 24 * 3600 * 1000,
+        2 * 3600 * 1000);
+    assertTimeWindowSpec(
+        new EndOfWeekMetadata().getSpecification(new long[] {1, 2}),
+        7 * 24 * 3600 * 1000,
+        2 * 24 * 3600 * 1000);
+    assertTimeWindowSpec(
+        new EndOfMonthMetadata().getSpecification(new long[] {1, 7}),
+        2629746000L,
+        7 * 24 * 3600 * 1000);
+    assertTimeWindowSpec(
+        new EndOfYearMetadata().getSpecification(new long[] {2, 20}),
+        2 * 31556952000L,
+        20L * 24 * 3600 * 1000);
   }
 
-  public static void assertTimeWindowSpec(SqrlTimeTumbleFunction.Specification spec, long width, long offset) {
+  public static void assertTimeWindowSpec(
+      SqrlTimeTumbleFunction.Specification spec, long width, long offset) {
     assertEquals(width, spec.getWindowWidthMillis());
     assertEquals(offset, spec.getWindowOffsetMillis());
   }
 
   @Test
-  @Disabled//utc issue in build runner
+  @Disabled // utc issue in build runner
   public void testTimeConversion() {
     Assertions.assertEquals(TIME2, EPOCH_MILLI_TO_TIMESTAMP.eval(TIME2.toEpochMilli()));
-    Assertions.assertEquals(TIME1.truncatedTo(ChronoUnit.SECONDS), EPOCH_TO_TIMESTAMP.eval(TIME1.toEpochMilli()/1000));
-    Assertions.assertEquals(TIME3.truncatedTo(ChronoUnit.SECONDS), EPOCH_TO_TIMESTAMP.eval(TIME3.toEpochMilli()/1000));
-    Assertions.assertEquals(TIME1.toEpochMilli()/1000, TIMESTAMP_TO_EPOCH.eval(TIME1));
+    Assertions.assertEquals(
+        TIME1.truncatedTo(ChronoUnit.SECONDS),
+        EPOCH_TO_TIMESTAMP.eval(TIME1.toEpochMilli() / 1000));
+    Assertions.assertEquals(
+        TIME3.truncatedTo(ChronoUnit.SECONDS),
+        EPOCH_TO_TIMESTAMP.eval(TIME3.toEpochMilli() / 1000));
+    Assertions.assertEquals(TIME1.toEpochMilli() / 1000, TIMESTAMP_TO_EPOCH.eval(TIME1));
     Assertions.assertEquals(TIME1.toEpochMilli(), TIMESTAMP_TO_EPOCH_MILLI.eval(TIME1));
     Assertions.assertEquals(TIME1, STRING_TO_TIMESTAMP.eval(TIME1_STR));
     Assertions.assertEquals(TIME1_STR, TIMESTAMP_TO_STRING.eval(TIME1));
-    Assertions.assertEquals(t("2023-09-27T06:45:00Z"), STRING_TO_TIMESTAMP.eval("September 26, 2023 11:45 PM PDT", "MMMM dd, yyyy hh:mm a z"));
-    Assertions.assertEquals(t("2023-09-27T21:30:00Z"), STRING_TO_TIMESTAMP.eval("September 27, 2023 2:30 PM PDT", "MMMM d, yyyy h:mm a z"));
-//    assertEquals(t("2023-03-08T13:23:34.083704-05:00"), AT_ZONE.eval(TIME1, "GMT-8"));
+    Assertions.assertEquals(
+        t("2023-09-27T06:45:00Z"),
+        STRING_TO_TIMESTAMP.eval("September 26, 2023 11:45 PM PDT", "MMMM dd, yyyy hh:mm a z"));
+    Assertions.assertEquals(
+        t("2023-09-27T21:30:00Z"),
+        STRING_TO_TIMESTAMP.eval("September 27, 2023 2:30 PM PDT", "MMMM d, yyyy h:mm a z"));
+    //    assertEquals(t("2023-03-08T13:23:34.083704-05:00"), AT_ZONE.eval(TIME1, "GMT-8"));
   }
-
-
 
   @Test
   public void convert() {
@@ -101,10 +129,7 @@ public class StdTimeLibraryTest {
     System.out.println(Instant.parse("2023-04-06T03:50:51.034470Z").toEpochMilli());
   }
 
-
-
   public static Instant t(String timestamp) {
     return Instant.parse(timestamp);
   }
-
 }

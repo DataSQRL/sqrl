@@ -6,7 +6,6 @@ package com.datasqrl.util;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.File;
@@ -47,8 +46,9 @@ public class FileTestUtil {
 
   @SneakyThrows
   public static void applyAllPartFileLines(Path path, Consumer<Stream<String>> consumer) {
-    for (File file : FileUtils.listFiles(path.toFile(), new RegexFileFilter("^part(.*?)"),
-        DirectoryFileFilter.DIRECTORY)) {
+    for (File file :
+        FileUtils.listFiles(
+            path.toFile(), new RegexFileFilter("^part(.*?)"), DirectoryFileFilter.DIRECTORY)) {
       try (Stream<String> stream = Files.lines(file.toPath(), StandardCharsets.UTF_8)) {
         consumer.accept(stream);
       }
@@ -61,17 +61,22 @@ public class FileTestUtil {
     Map<String, String> fileContentMap = new HashMap<>();
 
     try (var filesStream = Files.list(path)) {
-      filesStream.filter(Files::isRegularFile).filter(f -> {
-        if (Strings.isNullOrEmpty(extension)) return true;
-        return f.getFileName().toString().endsWith(extension);
-      }).forEach(file -> {
-        try {
-          String content = Files.readString(file, StandardCharsets.UTF_8);
-          fileContentMap.put(file.getFileName().toString(), content);
-        } catch (IOException e) {
-          e.printStackTrace();
-        }
-      });
+      filesStream
+          .filter(Files::isRegularFile)
+          .filter(
+              f -> {
+                if (Strings.isNullOrEmpty(extension)) return true;
+                return f.getFileName().toString().endsWith(extension);
+              })
+          .forEach(
+              file -> {
+                try {
+                  String content = Files.readString(file, StandardCharsets.UTF_8);
+                  fileContentMap.put(file.getFileName().toString(), content);
+                } catch (IOException e) {
+                  e.printStackTrace();
+                }
+              });
     }
 
     return fileContentMap;
@@ -85,9 +90,12 @@ public class FileTestUtil {
   }
 
   public static String getAllFilesAsString(Path dir) {
-    Collection<String> files = getAllFiles(dir).stream().map(p -> p.toString())
-        .filter(Predicate.not(Strings::isNullOrEmpty))
-        .sorted().collect(Collectors.toList());
+    Collection<String> files =
+        getAllFiles(dir).stream()
+            .map(p -> p.toString())
+            .filter(Predicate.not(Strings::isNullOrEmpty))
+            .sorted()
+            .collect(Collectors.toList());
     return String.join("\n", files);
   }
 
@@ -118,5 +126,4 @@ public class FileTestUtil {
   public static <T> String writeYaml(T object) {
     return yamlMapper.writeValueAsString(object);
   }
-
 }

@@ -16,5 +16,4 @@ public class StdSecureLibraryTest {
   public void testUuid() {
     assertEquals(36, SecureFunctions.UUID.eval().length());
   }
-
 }

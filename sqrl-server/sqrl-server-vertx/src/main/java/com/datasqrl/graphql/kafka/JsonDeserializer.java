@@ -3,7 +3,6 @@ package com.datasqrl.graphql.kafka;
 import com.datasqrl.graphql.SqrlObjectMapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import io.vertx.core.json.JsonObject;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
@@ -25,16 +24,18 @@ public class JsonDeserializer implements Deserializer<Map> {
     }
 
     if (encodingValue instanceof String) {
-      this.encoding = (String)encodingValue;
+      this.encoding = (String) encodingValue;
     }
-
   }
 
   public Map deserialize(String topic, byte[] data) {
     try {
-      return data == null ? null : SqrlObjectMapper.mapper.readValue(new String(data, this.encoding), Map.class);
+      return data == null
+          ? null
+          : SqrlObjectMapper.mapper.readValue(new String(data, this.encoding), Map.class);
     } catch (UnsupportedEncodingException var4) {
-      throw new SerializationException("Error when deserializing byte[] to string due to unsupported encoding " + this.encoding);
+      throw new SerializationException(
+          "Error when deserializing byte[] to string due to unsupported encoding " + this.encoding);
     } catch (JsonMappingException e) {
       throw new RuntimeException(e);
     } catch (JsonProcessingException e) {

@@ -4,8 +4,8 @@ public class NotImplementedYetHandler implements ErrorHandler<NotYetImplementedE
 
   @Override
   public ErrorMessage handle(NotYetImplementedException e, ErrorLocation baseLocation) {
-    return new ErrorMessage.Implementation(ErrorCode.NOT_YET_IMPLEMENTED, e.getMessage(),
-        baseLocation, ErrorMessage.Severity.FATAL);
+    return new ErrorMessage.Implementation(
+        ErrorCode.NOT_YET_IMPLEMENTED, e.getMessage(), baseLocation, ErrorMessage.Severity.FATAL);
   }
 
   @Override

@@ -37,58 +37,80 @@ import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
 import org.apache.calcite.sql.type.SqlTypeName;
 
 @AllArgsConstructor
-public class InputFieldToRelDataType implements
-    GraphqlDefinitionVisitor<List<RelDataTypeField>, TypeDefinitionRegistry>,
-    GraphqlFieldDefinitionVisitor<RelDataTypeField, TypeDefinitionRegistry> {
+public class InputFieldToRelDataType
+    implements GraphqlDefinitionVisitor<List<RelDataTypeField>, TypeDefinitionRegistry>,
+        GraphqlFieldDefinitionVisitor<RelDataTypeField, TypeDefinitionRegistry> {
 
   private final TypeDefinitionRegistry typeDefinitionRegistry;
   private final RelDataTypeFactory typeFactory;
   private final NameCanonicalizer canonicalizer;
 
   @Override
-  public List<RelDataTypeField> visitObjectTypeDefinition(ObjectTypeDefinition node,
-      TypeDefinitionRegistry context) {
-    checkState(node.getName().equals(getMutationTypeName(context)), node.getSourceLocation(),
+  public List<RelDataTypeField> visitObjectTypeDefinition(
+      ObjectTypeDefinition node, TypeDefinitionRegistry context) {
+    checkState(
+        node.getName().equals(getMutationTypeName(context)),
+        node.getSourceLocation(),
         "Mutation is required");
-    List<RelDataTypeField> schemas = node.getFieldDefinitions().stream()
-        .map(f->GraphqlSchemaVisitor.accept(this, f, context))
-        .collect(Collectors.toList());
+    List<RelDataTypeField> schemas =
+        node.getFieldDefinitions().stream()
+            .map(f -> GraphqlSchemaVisitor.accept(this, f, context))
+            .collect(Collectors.toList());
 
     return schemas;
   }
 
   @Override
-  public RelDataTypeField visitFieldDefinition(FieldDefinition node, TypeDefinitionRegistry context) {
-//    validateReturnType(fieldType); todo
+  public RelDataTypeField visitFieldDefinition(
+      FieldDefinition node, TypeDefinitionRegistry context) {
+    //    validateReturnType(fieldType); todo
 
-    checkState(node.getInputValueDefinitions().size() == 1, node.getSourceLocation(),"Too many arguments for mutation '%s'. Must have exactly one.", node.getName());
+    checkState(
+        node.getInputValueDefinitions().size() == 1,
+        node.getSourceLocation(),
+        "Too many arguments for mutation '%s'. Must have exactly one.",
+        node.getName());
     InputValueDefinition def = node.getInputValueDefinitions().get(0);
-    checkState(def.getType() instanceof NonNullType, node.getSourceLocation(), "Mutation '%s' input argument must be non-array and non-null", node.getName());
-    checkState(((NonNullType) def.getType()).getType() instanceof TypeName,  node.getSourceLocation(),"Mutation '%s' input argument must be non-array and non-null", node.getName());
+    checkState(
+        def.getType() instanceof NonNullType,
+        node.getSourceLocation(),
+        "Mutation '%s' input argument must be non-array and non-null",
+        node.getName());
+    checkState(
+        ((NonNullType) def.getType()).getType() instanceof TypeName,
+        node.getSourceLocation(),
+        "Mutation '%s' input argument must be non-array and non-null",
+        node.getName());
 
     TypeDefinition typeDef =
-        GraphqlSchemaVisitor.accept(new TypeResolver(), ((NonNullType) def.getType()).getType(), typeDefinitionRegistry)
-            .orElseThrow(()->createThrowable( node.getSourceLocation(),"Could not find type:" + def.getName()));
+        GraphqlSchemaVisitor.accept(
+                new TypeResolver(), ((NonNullType) def.getType()).getType(), typeDefinitionRegistry)
+            .orElseThrow(
+                () ->
+                    createThrowable(
+                        node.getSourceLocation(), "Could not find type:" + def.getName()));
 
-    RelDataType relDataType = GraphqlSchemaVisitor.accept(new InputObjectToRelDataType(),
-        typeDef, new FieldContext());
+    RelDataType relDataType =
+        GraphqlSchemaVisitor.accept(new InputObjectToRelDataType(), typeDef, new FieldContext());
 
     return new RelDataTypeFieldImpl(node.getName(), -1, relDataType);
   }
 
-  private class InputObjectToRelDataType implements
-      GraphqlDefinitionVisitor<RelDataType, FieldContext>,
-      GraphqlInputValueDefinitionVisitor<RelDataType, FieldContext>,
-      GraphqlTypeVisitor<RelDataType, FieldContext>
-  {
+  private class InputObjectToRelDataType
+      implements GraphqlDefinitionVisitor<RelDataType, FieldContext>,
+          GraphqlInputValueDefinitionVisitor<RelDataType, FieldContext>,
+          GraphqlTypeVisitor<RelDataType, FieldContext> {
 
     @Override
-    public RelDataType visitInputObjectTypeDefinition(InputObjectTypeDefinition node,
-        FieldContext context) {
+    public RelDataType visitInputObjectTypeDefinition(
+        InputObjectTypeDefinition node, FieldContext context) {
       RelDataTypeBuilder typeBuilder = CalciteUtil.getRelTypeBuilder(typeFactory);
-      node.getInputValueDefinitions().forEach(field ->
-          typeBuilder.add(field.getName(), GraphqlSchemaVisitor.accept(this, field,
-              new FieldContext())));
+      node.getInputValueDefinitions()
+          .forEach(
+              field ->
+                  typeBuilder.add(
+                      field.getName(),
+                      GraphqlSchemaVisitor.accept(this, field, new FieldContext())));
       return typeBuilder.build();
     }
 
@@ -99,35 +121,40 @@ public class InputFieldToRelDataType implements
 
     @Override
     public RelDataType visitListType(ListType node, FieldContext context) {
-      RelDataType type = typeFactory.createTypeWithNullability(
-          TypeFactory.wrapInArray(typeFactory, GraphqlSchemaVisitor.accept(this, node.getType(), context)),
-          true);
+      RelDataType type =
+          typeFactory.createTypeWithNullability(
+              TypeFactory.wrapInArray(
+                  typeFactory, GraphqlSchemaVisitor.accept(this, node.getType(), context)),
+              true);
       return type;
     }
 
     @Override
     public RelDataType visitNonNullType(NonNullType node, FieldContext context) {
-      return TypeFactory.withNullable(typeFactory,
-          GraphqlSchemaVisitor.accept(this, node.getType(), context),
-          false);
+      return TypeFactory.withNullable(
+          typeFactory, GraphqlSchemaVisitor.accept(this, node.getType(), context), false);
     }
 
     @Override
     public RelDataType visitTypeName(TypeName node, FieldContext context) {
-      TypeDefinition typeDef = typeDefinitionRegistry.getType(node.getName())
-          .orElseThrow(()-> new RuntimeException("Could not find node:" + node.getName()));
+      TypeDefinition typeDef =
+          typeDefinitionRegistry
+              .getType(node.getName())
+              .orElseThrow(() -> new RuntimeException("Could not find node:" + node.getName()));
 
       return GraphqlSchemaVisitor.accept(this, typeDef, context);
     }
 
     @Override
     public RelDataType visitEnumTypeDefinition(EnumTypeDefinition node, FieldContext context) {
-      return typeFactory.createTypeWithNullability(typeFactory.createSqlType(SqlTypeName.VARCHAR, Short.MAX_VALUE),true);
+      return typeFactory.createTypeWithNullability(
+          typeFactory.createSqlType(SqlTypeName.VARCHAR, Short.MAX_VALUE), true);
     }
 
     @Override
     public RelDataType visitEnumValueDefinition(EnumValueDefinition node, FieldContext context) {
-      return typeFactory.createTypeWithNullability(typeFactory.createSqlType(SqlTypeName.VARCHAR, Short.MAX_VALUE),true);
+      return typeFactory.createTypeWithNullability(
+          typeFactory.createSqlType(SqlTypeName.VARCHAR, Short.MAX_VALUE), true);
     }
 
     @Override
@@ -159,11 +186,9 @@ public class InputFieldToRelDataType implements
 
   @Setter
   @AllArgsConstructor
-  private class FieldContext {
-  }
+  private class FieldContext {}
 
-  private class TypeResolver implements
-    GraphqlTypeVisitor<Optional<TypeDefinition>, Object> {
+  private class TypeResolver implements GraphqlTypeVisitor<Optional<TypeDefinition>, Object> {
 
     @Override
     public Optional<TypeDefinition> visitListType(ListType node, Object context) {

@@ -12,7 +12,8 @@ public class PostgresSinkConsumer implements SinkConsumer {
 
   @SneakyThrows
   @Override
-  public void listen(Consumer<Object> listener, Consumer<Throwable> errorHandler, Consumer<Void> endOfStream) {
+  public void listen(
+      Consumer<Object> listener, Consumer<Throwable> errorHandler, Consumer<Void> endOfStream) {
     consumer.subscribe(listener::accept);
   }
 }

@@ -18,14 +18,13 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.utility.DockerImageName;
 
 /**
- * Compiles the use cases in the test/resources/usecases folder and snapshots the
- * deployment assets
+ * Compiles the use cases in the test/resources/usecases folder and snapshots the deployment assets
  */
 public class PostgresViewTest extends AbstractUseCaseTest {
   @Container
   private PostgreSQLContainer testDatabase =
-      new PostgreSQLContainer(DockerImageName.parse("ankane/pgvector:v0.5.0")
-          .asCompatibleSubstituteFor("postgres"))
+      new PostgreSQLContainer(
+              DockerImageName.parse("ankane/pgvector:v0.5.0").asCompatibleSubstituteFor("postgres"))
           .withDatabaseName("foo")
           .withUsername("foo")
           .withPassword("secret")
@@ -51,7 +50,7 @@ public class PostgresViewTest extends AbstractUseCaseTest {
 
   @Override
   public void snapshot(String testname, AssertStatusHook hook) {
-    //nothing to snapshot
+    // nothing to snapshot
   }
 
   private void verifyPostgresSchema(Path script) throws Exception {

@@ -7,11 +7,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.datasqrl.config.Dependency;
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.serializer.Deserializer;
-import com.datasqrl.packager.Publisher;
 import com.datasqrl.config.DependencyImpl;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.packager.Publisher;
 import com.datasqrl.packager.util.Zipper;
+import com.datasqrl.serializer.Deserializer;
 import com.datasqrl.util.FileTestUtil;
 import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.SnapshotTest;
@@ -38,8 +38,8 @@ public class RepositoryTest {
   ErrorCollector errors;
   LocalRepositoryImplementation localRepo;
 
-  public static final Path SAMPLE_SEEDSHOP_PACKAGE = Path.of("src", "test", "resources").resolve(
-      "samplePackages").resolve("seedshop");
+  public static final Path SAMPLE_SEEDSHOP_PACKAGE =
+      Path.of("src", "test", "resources").resolve("samplePackages").resolve("seedshop");
 
   @BeforeEach
   public void setup(TestInfo testInfo) throws IOException {
@@ -66,23 +66,26 @@ public class RepositoryTest {
     assertEquals("datasqrl", pub.getAuthorId());
   }
 
-
   @SneakyThrows
   public Publication testValidatePublication(Path packagePath) {
     ValidatePublication validate = new ValidatePublication("datasqrl", outputPath, errors);
     Publisher publisher = new Publisher(errors);
     assertNotNull(publisher.publish(packagePath, validate));
-    String uid = Files.find(outputPath, 1, (p, a) -> p.getFileName().toString().endsWith("zip"))
-        .map(p -> p.getFileName().toString())
-        .map(s -> StringUtil.removeFromEnd(s, Zipper.ZIP_EXTENSION)).findAny().get();
-    Path pubFile = Files.find(outputPath, 1, (p, a) -> p.getFileName().toString().endsWith("json"))
-        .findFirst().get();
+    String uid =
+        Files.find(outputPath, 1, (p, a) -> p.getFileName().toString().endsWith("zip"))
+            .map(p -> p.getFileName().toString())
+            .map(s -> StringUtil.removeFromEnd(s, Zipper.ZIP_EXTENSION))
+            .findAny()
+            .get();
+    Path pubFile =
+        Files.find(outputPath, 1, (p, a) -> p.getFileName().toString().endsWith("json"))
+            .findFirst()
+            .get();
     Publication pub = Deserializer.INSTANCE.mapJsonFile(pubFile, Publication.class);
     assertEquals(pub.getUniqueId(), uid);
     assertTrue(Instant.now().compareTo(Instant.parse(pub.getSubmissionTime())) > 0);
     return pub;
   }
-
 
   @Test
   @SneakyThrows
@@ -96,8 +99,10 @@ public class RepositoryTest {
     publisher.publish(SAMPLE_SEEDSHOP_PACKAGE, localRepo);
     assertFalse(errors.isFatal(), errors.toString());
 
-    assertTrue(localRepo.resolveDependency(dependency.getName())
-        .isEmpty()); //local repos should not resolve
+    assertTrue(
+        localRepo
+            .resolveDependency(dependency.getName())
+            .isEmpty()); // local repos should not resolve
     assertTrue(localRepo.retrieveDependency(outputPath, dependency));
 
     snapshot.addContent(FileTestUtil.getAllFilesAsString(localRepoPath), "localRepo");
@@ -125,11 +130,12 @@ public class RepositoryTest {
   @Disabled
   @SneakyThrows
   public void remoteRepoTest() {
-    // TODO: package here once we have real public packages in the repo, because for now datasqrl.example.speedshop is a mocked one
+    // TODO: package here once we have real public packages in the repo, because for now
+    // datasqrl.example.speedshop is a mocked one
     DependencyImpl dependency = new DependencyImpl("datasqrl.seedshop", "0.1.1", "dev");
 
-    RemoteRepositoryImplementation remoteRepo = new RemoteRepositoryImplementation(
-        URI.create(REPO_URL));
+    RemoteRepositoryImplementation remoteRepo =
+        new RemoteRepositoryImplementation(URI.create(REPO_URL));
     remoteRepo.setCacheRepository(localRepo);
 
     Optional<Dependency> optDep = remoteRepo.resolveDependency(dependency.getName());
@@ -142,7 +148,7 @@ public class RepositoryTest {
 
     assertFalse(localRepo.retrieveDependency(oL, optDep.get()));
     assertTrue(remoteRepo.retrieveDependency(rL, optDep.get()));
-    //above caches in local, should be able to retrieve now
+    // above caches in local, should be able to retrieve now
     assertTrue(localRepo.retrieveDependency(oL, optDep.get()));
 
     CompositeRepositoryImpl compRepo = new CompositeRepositoryImpl(List.of(localRepo, remoteRepo));
@@ -157,6 +163,4 @@ public class RepositoryTest {
     snapshot.addContent(FileTestUtil.getAllFilesAsString(cL), "output-composite");
     snapshot.createOrValidate();
   }
-
-
 }

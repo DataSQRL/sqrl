@@ -15,8 +15,7 @@ public class DedupHint implements SqrlHint {
 
   @Override
   public RelHint getHint() {
-    return RelHint.builder(getHintName())
-        .build();
+    return RelHint.builder(getHintName()).build();
   }
 
   public static DedupHint of() {
@@ -46,5 +45,4 @@ public class DedupHint implements SqrlHint {
       return new DedupHint();
     }
   }
-
 }

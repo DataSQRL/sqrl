@@ -11,5 +11,4 @@ public class ErrorCodeTest {
       Assertions.assertTrue(!code.getErrorDescription().isEmpty(), code.getLabel());
     }
   }
-
 }

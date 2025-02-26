@@ -30,7 +30,8 @@ public class Relationship implements SqrlTableMacro {
   private final boolean isTest;
 
   @Override
-  public RelDataType getRowType(RelDataTypeFactory relDataTypeFactory, List<? extends Object> list) {
+  public RelDataType getRowType(
+      RelDataTypeFactory relDataTypeFactory, List<? extends Object> list) {
     return getRowType();
   }
 
@@ -44,6 +45,9 @@ public class Relationship implements SqrlTableMacro {
   }
 
   public enum JoinType {
-    NONE, PARENT, CHILD, JOIN
+    NONE,
+    PARENT,
+    CHILD,
+    JOIN
   }
 }

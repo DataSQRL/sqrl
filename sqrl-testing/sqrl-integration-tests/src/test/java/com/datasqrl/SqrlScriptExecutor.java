@@ -1,6 +1,5 @@
 package com.datasqrl;
 
-import static com.datasqrl.UseCasesIT.getProjectRoot;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import com.datasqrl.cmd.RootCommand;

@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.Value;
-import org.apache.calcite.adapter.java.Array;
 
 @Value
 public class PrimaryKey {
@@ -15,7 +14,7 @@ public class PrimaryKey {
   int[] pkIndexes;
 
   public boolean isDefined() {
-    return pkIndexes!=null;
+    return pkIndexes != null;
   }
 
   public boolean isUndefined() {
@@ -24,7 +23,7 @@ public class PrimaryKey {
 
   public int get(int index) {
     Preconditions.checkArgument(isDefined());
-    Preconditions.checkArgument(index>=0 && index<pkIndexes.length);
+    Preconditions.checkArgument(index >= 0 && index < pkIndexes.length);
     return pkIndexes[index];
   }
 
@@ -49,7 +48,7 @@ public class PrimaryKey {
 
   public static PrimaryKey of(PrimaryKeyMap pkMap) {
     if (pkMap.isUndefined()) return new PrimaryKey(null);
-    //Post-processing ensures the pk is simple
+    // Post-processing ensures the pk is simple
     int[] pkCols = ArrayUtil.toArray(pkMap.asSimpleList());
     return new PrimaryKey(pkCols);
   }
@@ -58,5 +57,4 @@ public class PrimaryKey {
     if (isUndefined()) return PrimaryKeyMap.UNDEFINED;
     else return PrimaryKeyMap.of(asList());
   }
-
 }

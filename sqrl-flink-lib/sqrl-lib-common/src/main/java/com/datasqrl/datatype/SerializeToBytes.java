@@ -7,9 +7,7 @@ import org.apache.flink.table.annotation.DataTypeHint;
 import org.apache.flink.table.annotation.InputGroup;
 import org.apache.flink.table.functions.ScalarFunction;
 
-/**
- * Converts an annotated data type to
- */
+/** Converts an annotated data type to */
 public class SerializeToBytes extends ScalarFunction {
 
   @SneakyThrows

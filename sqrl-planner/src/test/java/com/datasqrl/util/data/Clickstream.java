@@ -5,13 +5,13 @@ package com.datasqrl.util.data;
 
 import java.util.Set;
 
-
 public class Clickstream extends UseCaseExample {
 
   public static final Clickstream INSTANCE = new Clickstream();
 
   protected Clickstream() {
-    super(Set.of("click","content"),
-        script("clickstream-teaser","trending","visitafter","recommendation"));
+    super(
+        Set.of("click", "content"),
+        script("clickstream-teaser", "trending", "visitafter", "recommendation"));
   }
 }

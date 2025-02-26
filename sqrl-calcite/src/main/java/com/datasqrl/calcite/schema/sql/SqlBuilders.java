@@ -7,9 +7,7 @@ import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import lombok.experimental.UtilityClass;
 import org.apache.calcite.sql.JoinConditionType;
 import org.apache.calcite.sql.JoinType;
@@ -37,12 +35,17 @@ public class SqlBuilders {
 
     public SqlAliasCallBuilder(SqlCall node) {
       Preconditions.checkState(node.getKind() == SqlKind.AS);
-      this.node = node.getOperator().createCall(SqlParserPos.ZERO,
-          node.getOperandList().subList(0, node.getOperandList().size()).toArray(SqlNode[]::new));
+      this.node =
+          node.getOperator()
+              .createCall(
+                  SqlParserPos.ZERO,
+                  node.getOperandList()
+                      .subList(0, node.getOperandList().size())
+                      .toArray(SqlNode[]::new));
     }
 
     public String getAlias() {
-      String alias = ((SqlIdentifier)node.getOperandList().get(1)).getSimple();
+      String alias = ((SqlIdentifier) node.getOperandList().get(1)).getSimple();
       return alias;
     }
 
@@ -65,24 +68,26 @@ public class SqlBuilders {
     private final SqlJoin join;
 
     public SqlJoinBuilder(SqlJoin call) {
-      this.join = new SqlJoin(SqlParserPos.ZERO,
-          call.operand(0),
-          call.operand(1),
-          call.operand(2),
-          call.operand(3),
-          shouldAddOnCondition(call)
-              ? JoinConditionType.ON.symbol(SqlParserPos.ZERO)
-              : call.operand(4),
-          shouldAddOnCondition(call)
-              ? SqlLiteral.createBoolean(true, SqlParserPos.ZERO)
-              : call.operand(5),
-          call.operand(6)
-          );
+      this.join =
+          new SqlJoin(
+              SqlParserPos.ZERO,
+              call.operand(0),
+              call.operand(1),
+              call.operand(2),
+              call.operand(3),
+              shouldAddOnCondition(call)
+                  ? JoinConditionType.ON.symbol(SqlParserPos.ZERO)
+                  : call.operand(4),
+              shouldAddOnCondition(call)
+                  ? SqlLiteral.createBoolean(true, SqlParserPos.ZERO)
+                  : call.operand(5),
+              call.operand(6));
     }
 
     public boolean shouldAddOnCondition(SqlJoin call) {
       return call.operand(4).equals(JoinConditionType.NONE.symbol(SqlParserPos.ZERO))
-          && !call.isNatural() && call.getJoinType() != JoinType.COMMA
+          && !call.isNatural()
+          && call.getJoinType() != JoinType.COMMA
           && call.getJoinType() != JoinType.CROSS;
     }
 
@@ -122,38 +127,43 @@ public class SqlBuilders {
     }
 
     public SqlSelectBuilder(SqlParserPos pos) {
-      this.select = new SqlSelect(pos,
-          SqlNodeList.EMPTY,
-          new SqlNodeList(List.of(SqlIdentifier.star(SqlParserPos.ZERO)), SqlParserPos.ZERO),
-          null,
-          null,
-          null,
-          null,
-          SqlNodeList.EMPTY,
-          null,
-          null,
-          null,
-          SqlNodeList.EMPTY
-      );
+      this.select =
+          new SqlSelect(
+              pos,
+              SqlNodeList.EMPTY,
+              new SqlNodeList(List.of(SqlIdentifier.star(SqlParserPos.ZERO)), SqlParserPos.ZERO),
+              null,
+              null,
+              null,
+              null,
+              SqlNodeList.EMPTY,
+              null,
+              null,
+              null,
+              SqlNodeList.EMPTY);
     }
+
     public SqlSelectBuilder(SqlSelect select) {
-      this.select = new SqlSelect(select.getParserPosition(),
-          select.operand(0),
-          select.operand(1),
-          select.operand(2),
-          select.operand(3),
-          select.operand(4),
-          select.operand(5),
-          select.operand(6),
-          select.operand(7),
-          select.operand(8),
-          select.operand(9),
-          select.operand(10));
+      this.select =
+          new SqlSelect(
+              select.getParserPosition(),
+              select.operand(0),
+              select.operand(1),
+              select.operand(2),
+              select.operand(3),
+              select.operand(4),
+              select.operand(5),
+              select.operand(6),
+              select.operand(7),
+              select.operand(8),
+              select.operand(9),
+              select.operand(10));
     }
 
     public SqlSelectBuilder setTopNHint(Type type, List<SqlNode> keyNodes) {
-      SqlHint hint = TopNHint.createSqlHint(type,
-          new SqlNodeList(keyNodes, SqlParserPos.ZERO), SqlParserPos.ZERO);
+      SqlHint hint =
+          TopNHint.createSqlHint(
+              type, new SqlNodeList(keyNodes, SqlParserPos.ZERO), SqlParserPos.ZERO);
 
       List<SqlNode> hints = new ArrayList<>(select.getHints().getList());
       hints.add(hint);
@@ -188,30 +198,38 @@ public class SqlBuilders {
 
     private List<SqlNode> mapToIdentifier(List<PullupColumn> keysToPullUp) {
       return keysToPullUp.stream()
-          .map(n->new SqlIdentifier(n.getDisplayName(), SqlParserPos.ZERO))
+          .map(n -> new SqlIdentifier(n.getDisplayName(), SqlParserPos.ZERO))
           .collect(Collectors.toList());
     }
 
     private List<SqlNode> mapToSelectIdentifier(List<PullupColumn> keysToPullUp) {
       return keysToPullUp.stream()
-          .map(n->
-          SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO,
-                  new SqlIdentifier(n.getDisplayName(), SqlParserPos.ZERO),
-                  new SqlIdentifier(n.getFinalName(), SqlParserPos.ZERO)))
+          .map(
+              n ->
+                  SqlStdOperatorTable.AS.createCall(
+                      SqlParserPos.ZERO,
+                      new SqlIdentifier(n.getDisplayName(), SqlParserPos.ZERO),
+                      new SqlIdentifier(n.getFinalName(), SqlParserPos.ZERO)))
           .collect(Collectors.toList());
     }
 
     private SqlNodeList prepend(SqlNodeList selectList, List<SqlNode> keysToPullUp) {
-      return new SqlNodeList(ListUtils.union(keysToPullUp, selectList.getList()), selectList.getParserPosition());
+      return new SqlNodeList(
+          ListUtils.union(keysToPullUp, selectList.getList()), selectList.getParserPosition());
     }
 
     public void prependGroup(List<PullupColumn> keysToPullUp) {
-      select.setGroupBy(prepend(select.getGroup() == null ? SqlNodeList.EMPTY:select.getGroup(),
-          mapToIdentifier(keysToPullUp)));
+      select.setGroupBy(
+          prepend(
+              select.getGroup() == null ? SqlNodeList.EMPTY : select.getGroup(),
+              mapToIdentifier(keysToPullUp)));
     }
+
     public void prependOrder(List<PullupColumn> keysToPullUp) {
-      select.setOrderBy(prepend(select.getOrderList() == null? SqlNodeList.EMPTY:select.getOrderList(),
-          mapToIdentifier(keysToPullUp)));
+      select.setOrderBy(
+          prepend(
+              select.getOrderList() == null ? SqlNodeList.EMPTY : select.getOrderList(),
+              mapToIdentifier(keysToPullUp)));
     }
 
     public boolean hasGroup() {
@@ -225,9 +243,11 @@ public class SqlBuilders {
     public SqlSelectBuilder rewriteExpressions(SqlShuttle shuttle) {
       select.setSelectList((SqlNodeList) select.getSelectList().accept(shuttle));
       if (select.getWhere() != null) select.setWhere(select.getWhere().accept(shuttle));
-      if (select.getGroup() != null) select.setGroupBy((SqlNodeList) select.getGroup().accept(shuttle));
+      if (select.getGroup() != null)
+        select.setGroupBy((SqlNodeList) select.getGroup().accept(shuttle));
       if (select.getHaving() != null) select.setHaving(select.getHaving().accept(shuttle));
-      if (select.getOrderList() != null) select.setOrderBy((SqlNodeList) select.getOrderList().accept(shuttle));
+      if (select.getOrderList() != null)
+        select.setOrderBy((SqlNodeList) select.getOrderList().accept(shuttle));
 
       return this;
     }
@@ -243,11 +263,16 @@ public class SqlBuilders {
     }
 
     public SqlSelectBuilder setDistinctOnHint(List<Integer> hintOps) {
-      List<SqlNode> range = hintOps.stream()
-          .map(i -> new SqlIdentifier(Integer.toString(i), SqlParserPos.ZERO))
-          .collect(Collectors.toList());
-      SqlHint hint = new SqlHint(SqlParserPos.ZERO, new SqlIdentifier("DISTINCT_ON", SqlParserPos.ZERO),
-          new SqlNodeList(range, SqlParserPos.ZERO), HintOptionFormat.ID_LIST);
+      List<SqlNode> range =
+          hintOps.stream()
+              .map(i -> new SqlIdentifier(Integer.toString(i), SqlParserPos.ZERO))
+              .collect(Collectors.toList());
+      SqlHint hint =
+          new SqlHint(
+              SqlParserPos.ZERO,
+              new SqlIdentifier("DISTINCT_ON", SqlParserPos.ZERO),
+              new SqlNodeList(range, SqlParserPos.ZERO),
+              HintOptionFormat.ID_LIST);
       select.setHints(new SqlNodeList(List.of(hint), SqlParserPos.ZERO));
 
       return this;

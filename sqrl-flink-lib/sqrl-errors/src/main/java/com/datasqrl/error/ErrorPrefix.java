@@ -6,8 +6,11 @@ package com.datasqrl.error;
 import lombok.NonNull;
 
 public enum ErrorPrefix implements ErrorLocation {
-
-  ROOT, SCRIPT, SCHEMA, CONFIG, INPUT_DATA;
+  ROOT,
+  SCRIPT,
+  SCHEMA,
+  CONFIG,
+  INPUT_DATA;
 
   @Override
   public String getPrefix() {
@@ -68,5 +71,4 @@ public enum ErrorPrefix implements ErrorLocation {
       return res;
     }
   }
-
 }

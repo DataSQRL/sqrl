@@ -6,7 +6,7 @@ import java.io.PrintWriter;
 public class CollectedException extends RuntimeException {
 
   public CollectedException(Throwable cause) {
-    super("Collected exception",cause);
+    super("Collected exception", cause);
   }
 
   public boolean isInternalError() {

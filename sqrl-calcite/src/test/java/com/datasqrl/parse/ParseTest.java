@@ -4,15 +4,13 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
+import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.Set;
-
 class ParseTest {
-
 
   private static SqrlParserImpl parser;
   private ErrorCollector error;
@@ -31,18 +29,26 @@ class ParseTest {
 
   @AfterEach
   public void verify() {
-    assertFalse(this.error.hasErrors(), ()-> "Test has errors: " + ErrorPrinter.prettyPrint(this.error));
+    assertFalse(
+        this.error.hasErrors(), () -> "Test has errors: " + ErrorPrinter.prettyPrint(this.error));
   }
 
   @Test
   public void testJoinTypes() {
-    Set<String> types = Set.of(
-        "LEFT", "LEFT OUTER", "LEFT TEMPORAL", "LEFT INTERVAL",
-        "RIGHT", "RIGHT OUTER", "RIGHT TEMPORAL", "RIGHT INTERVAL",
-        "TEMPORAL",
-        "INTERVAL",
-        "INNER",
-        "");
+    Set<String> types =
+        Set.of(
+            "LEFT",
+            "LEFT OUTER",
+            "LEFT TEMPORAL",
+            "LEFT INTERVAL",
+            "RIGHT",
+            "RIGHT OUTER",
+            "RIGHT TEMPORAL",
+            "RIGHT INTERVAL",
+            "TEMPORAL",
+            "INTERVAL",
+            "INNER",
+            "");
 
     for (String type : types) {
       parser.parse(String.format(JOIN_TYPE_TEMPLATE, type));

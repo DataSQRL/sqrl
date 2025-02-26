@@ -5,8 +5,6 @@ package com.datasqrl.plan.hints;
 
 import com.google.common.base.Preconditions;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.apache.calcite.rel.hint.RelHint;

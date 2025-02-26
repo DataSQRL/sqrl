@@ -5,11 +5,10 @@ package com.datasqrl.plan.rules;
 
 import com.datasqrl.plan.global.MaterializationPreference;
 import com.google.common.base.Preconditions;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.apache.commons.collections.ListUtils;
-
-import java.util.List;
 
 @Value
 @AllArgsConstructor
@@ -29,25 +28,28 @@ public class MaterializationInference {
   }
 
   MaterializationInference update(MaterializationPreference preference, String reason) {
-    MaterializationInference other = new MaterializationInference(preference,
-        ListUtils.union(this.reasons, List.of(reason)));
-    Preconditions.checkArgument(this.preference.isCompatible(preference),
+    MaterializationInference other =
+        new MaterializationInference(preference, ListUtils.union(this.reasons, List.of(reason)));
+    Preconditions.checkArgument(
+        this.preference.isCompatible(preference),
         "Incompatible materialization preferences: [%s] vs [%s]",
-        this, other);
+        this,
+        other);
     return other;
   }
 
   MaterializationInference combine(MaterializationInference other) {
-    Preconditions.checkArgument(this.preference.isCompatible(other.preference),
+    Preconditions.checkArgument(
+        this.preference.isCompatible(other.preference),
         "Incompatible materialization preferences: [%s] vs [%s]",
-        this, other);
-    return new MaterializationInference(this.preference.combine(other.preference),
-        ListUtils.union(this.reasons, other.reasons));
+        this,
+        other);
+    return new MaterializationInference(
+        this.preference.combine(other.preference), ListUtils.union(this.reasons, other.reasons));
   }
 
   @Override
   public String toString() {
     return preference + " because " + reasons;
   }
-
 }

@@ -13,7 +13,6 @@ import lombok.SneakyThrows;
 @NoArgsConstructor
 public class AvroSchemaPreprocessor extends PreprocessorBase {
 
-
   public static final String AVRO_SCHEMA_REGEX = "(.*)\\.avsc$";
 
   @Override
@@ -27,15 +26,17 @@ public class AvroSchemaPreprocessor extends PreprocessorBase {
   public void processFile(Path file, ProcessorContext processorContext, ErrorCollector errors) {
     Preconditions.checkArgument(Files.isRegularFile(file), "Not a regular file: %s", file);
 
-    //Check if the directory contains a table json file
-    String tablename = StringUtil.removeFromEnd(file.getFileName().toString(), AvroTableSchemaFactory.SCHEMA_EXTENSION);
+    // Check if the directory contains a table json file
+    String tablename =
+        StringUtil.removeFromEnd(
+            file.getFileName().toString(), AvroTableSchemaFactory.SCHEMA_EXTENSION);
     Path parent = file.getParent() == null ? file.toAbsolutePath().getParent() : file.getParent();
     if (!tableExists(parent, tablename)) {
-      errors.warn("No table file [%s] for schema file [%s], hence schema is ignored", tablename, file);
+      errors.warn(
+          "No table file [%s] for schema file [%s], hence schema is ignored", tablename, file);
       return;
     }
 
     processorContext.addDependency(file);
   }
-
 }

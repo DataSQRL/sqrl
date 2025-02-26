@@ -10,6 +10,4 @@ public interface ConnectorFactoryFactory {
   Optional<ConnectorFactory> create(SystemBuiltInConnectors builtInConnector);
 
   ConnectorConf getConfig(String name);
-
-
 }

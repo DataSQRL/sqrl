@@ -3,6 +3,7 @@ package com.datasqrl.util;
 import com.datasqrl.calcite.SqrlFramework;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Supplier;
 import lombok.SneakyThrows;
 import org.apache.calcite.DataContext;
@@ -13,10 +14,6 @@ import org.apache.calcite.linq4j.QueryProvider;
 import org.apache.calcite.linq4j.QueryProviderImpl;
 import org.apache.calcite.linq4j.Queryable;
 import org.apache.calcite.schema.SchemaPlus;
-
-import java.util.HashMap;
-import java.util.Optional;
-
 
 public class DataContextImpl implements DataContext {
 
@@ -46,23 +43,17 @@ public class DataContextImpl implements DataContext {
       @Override
       @SneakyThrows
       public <T> Enumerator<T> executeQuery(Queryable<T> queryable) {
-        return (Enumerator<T>) Linq4j.asEnumerable(dataSuppler.get())
-                    .enumerator();
+        return (Enumerator<T>) Linq4j.asEnumerable(dataSuppler.get()).enumerator();
       }
     };
   }
 
   @Override
   public synchronized Object get(String name) {
-    return Optional.ofNullable(contextVariables.get(name))
-        .orElse(name);
+    return Optional.ofNullable(contextVariables.get(name)).orElse(name);
   }
 
-
-  /**
-   *
-   * Supported variables: {@link org.apache.calcite.DataContext.Variable}
-   */
+  /** Supported variables: {@link org.apache.calcite.DataContext.Variable} */
   public void setContextVariables(Map<String, Object> contextVariables) {
     this.contextVariables = contextVariables;
   }

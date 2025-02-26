@@ -48,8 +48,8 @@ class VertxContextTest {
 
     when(env.getSource()).thenReturn(jsonObject);
 
-    DataFetcher<Object> fetcher = VertxContext.VertxCreateCaseInsensitivePropertyDataFetcher.createCaseInsensitive(
-        "testkey");
+    DataFetcher<Object> fetcher =
+        VertxContext.VertxCreateCaseInsensitivePropertyDataFetcher.createCaseInsensitive("testkey");
 
     return fetcher.get(env);
   }

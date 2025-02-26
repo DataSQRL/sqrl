@@ -54,7 +54,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.duckdb.DuckDBDriver;
 
 /**
- * This Verticle is responsible for configuring the GraphQL server, setting up routes, metrics etc that will be deployed inside vert.x.
+ * This Verticle is responsible for configuring the GraphQL server, setting up routes, metrics etc
+ * that will be deployed inside vert.x.
  */
 @Slf4j
 public class GraphQLServer extends AbstractVerticle {
@@ -65,20 +66,23 @@ public class GraphQLServer extends AbstractVerticle {
   private ServerConfig config;
 
   public static void main(String[] args) {
-    PrometheusMeterRegistry prometheusMeterRegistry = new PrometheusMeterRegistry(
-        PrometheusConfig.DEFAULT);
-    MicrometerMetricsOptions metricsOptions = new MicrometerMetricsOptions()
-        .setMicrometerRegistry(prometheusMeterRegistry)
-        .setEnabled(true);
+    PrometheusMeterRegistry prometheusMeterRegistry =
+        new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+    MicrometerMetricsOptions metricsOptions =
+        new MicrometerMetricsOptions()
+            .setMicrometerRegistry(prometheusMeterRegistry)
+            .setEnabled(true);
     Vertx vertx = Vertx.vertx(new VertxOptions().setMetricsOptions(metricsOptions));
 
-    vertx.deployVerticle(new GraphQLServer(), res -> {
-      if (res.succeeded()) {
-        System.out.println("Deployment id is: " + res.result());
-      } else {
-        System.out.println("Deployment failed!");
-      }
-    });
+    vertx.deployVerticle(
+        new GraphQLServer(),
+        res -> {
+          if (res.succeeded()) {
+            System.out.println("Deployment id is: " + res.result());
+          } else {
+            System.out.println("Deployment failed!");
+          }
+        });
   }
 
   public GraphQLServer() {
@@ -87,7 +91,7 @@ public class GraphQLServer extends AbstractVerticle {
 
   @SneakyThrows
   private static Optional<String> readSnowflakeUrl() {
-    //How to check for snowflake ?
+    // How to check for snowflake ?
     File snowflakeConfig = new File("snowflake-config.json");
     Map map = null;
     if (snowflakeConfig.exists()) {
@@ -97,7 +101,7 @@ public class GraphQLServer extends AbstractVerticle {
       return Optional.empty();
     }
 
-    String url = (String)map.get("url");
+    String url = (String) map.get("url");
     if (Strings.isNullOrEmpty(url)) {
       log.warn("Url must be specified in the snowflake engine");
       return Optional.empty();
@@ -105,7 +109,10 @@ public class GraphQLServer extends AbstractVerticle {
     return Optional.of(url);
   }
 
-  public GraphQLServer(RootGraphqlModel model, ServerConfig config, NameCanonicalizer canonicalizer,
+  public GraphQLServer(
+      RootGraphqlModel model,
+      ServerConfig config,
+      NameCanonicalizer canonicalizer,
       Optional<String> snowflakeUrl) {
     this.model = model;
     this.config = config;
@@ -115,9 +122,7 @@ public class GraphQLServer extends AbstractVerticle {
 
   @SneakyThrows
   private static RootGraphqlModel readModel() {
-    return getObjectMapper().readValue(
-        new File("server-model.json"),
-        RootGraphqlModel.class);
+    return getObjectMapper().readValue(new File("server-model.json"), RootGraphqlModel.class);
   }
 
   public static ObjectMapper getObjectMapper() {
@@ -132,24 +137,28 @@ public class GraphQLServer extends AbstractVerticle {
 
   private Future<JsonObject> loadConfig() {
     Promise<JsonObject> promise = Promise.promise();
-    vertx.fileSystem().readFile("server-config.json", result -> {
-      if (result.succeeded()) {
-        try {
-          ObjectMapper objectMapper = new ObjectMapper();
-          SimpleModule module = new SimpleModule();
-          module.addDeserializer(String.class, new JsonEnvVarDeserializer());
-          objectMapper.registerModule(module);
-          Map configMap = objectMapper.readValue(result.result().toString(), Map.class);
-          JsonObject config = new JsonObject(configMap);
-          promise.complete(config);
-        } catch (Exception e) {
-          e.printStackTrace();
-          promise.fail(e);
-        }
-      } else {
-        promise.fail(result.cause());
-      }
-    });
+    vertx
+        .fileSystem()
+        .readFile(
+            "server-config.json",
+            result -> {
+              if (result.succeeded()) {
+                try {
+                  ObjectMapper objectMapper = new ObjectMapper();
+                  SimpleModule module = new SimpleModule();
+                  module.addDeserializer(String.class, new JsonEnvVarDeserializer());
+                  objectMapper.registerModule(module);
+                  Map configMap = objectMapper.readValue(result.result().toString(), Map.class);
+                  JsonObject config = new JsonObject(configMap);
+                  promise.complete(config);
+                } catch (Exception e) {
+                  e.printStackTrace();
+                  promise.fail(e);
+                }
+              } else {
+                promise.fail(result.cause());
+              }
+            });
     return promise.future();
   }
 
@@ -157,14 +166,16 @@ public class GraphQLServer extends AbstractVerticle {
   public void start(Promise<Void> startPromise) {
     if (this.config == null) {
       // Config not provided, load from file
-      loadConfig().onComplete(ar -> {
-        if (ar.succeeded()) {
-          this.config = new ServerConfig(ar.result());
-          trySetupServer(startPromise);
-        } else {
-          startPromise.fail(ar.cause());
-        }
-      });
+      loadConfig()
+          .onComplete(
+              ar -> {
+                if (ar.succeeded()) {
+                  this.config = new ServerConfig(ar.result());
+                  trySetupServer(startPromise);
+                } else {
+                  startPromise.fail(ar.cause());
+                }
+              });
     } else {
       // Config already provided, proceed with setup
       trySetupServer(startPromise);
@@ -189,37 +200,44 @@ public class GraphQLServer extends AbstractVerticle {
 
     MeterRegistry registry = BackendRegistries.getDefaultNow();
     if (registry instanceof PrometheusMeterRegistry) {
-      router.route("/metrics").handler(ctx -> {
-        ctx.response().putHeader("content-type", "text/plain");
-        ctx.response().end(((PrometheusMeterRegistry)registry).scrape());
-      });
+      router
+          .route("/metrics")
+          .handler(
+              ctx -> {
+                ctx.response().putHeader("content-type", "text/plain");
+                ctx.response().end(((PrometheusMeterRegistry) registry).scrape());
+              });
     }
 
     if (this.config.getGraphiQLHandlerOptions() != null) {
-      GraphiQLHandlerBuilder handlerBuilder = GraphiQLHandler.builder(vertx)
-          .with(this.config.getGraphiQLHandlerOptions());
+      GraphiQLHandlerBuilder handlerBuilder =
+          GraphiQLHandler.builder(vertx).with(this.config.getGraphiQLHandlerOptions());
       if (this.config.getAuthOptions() != null) {
-        handlerBuilder.addingHeaders(rc -> {
-          String token = rc.get("token");
-          return MultiMap.caseInsensitiveMultiMap().add("Authorization", "Bearer " + token);
-        });
+        handlerBuilder.addingHeaders(
+            rc -> {
+              String token = rc.get("token");
+              return MultiMap.caseInsensitiveMultiMap().add("Authorization", "Bearer " + token);
+            });
       }
 
       GraphiQLHandler handler = handlerBuilder.build();
-      router.route(this.config.getServletConfig().getGraphiQLEndpoint())
+      router
+          .route(this.config.getServletConfig().getGraphiQLEndpoint())
           .subRouter(handler.router());
     }
 
-    router.errorHandler(500, ctx -> {
-      ctx.failure().printStackTrace();
-      ctx.response().setStatusCode(500).end();
-    });
+    router.errorHandler(
+        500,
+        ctx -> {
+          ctx.failure().printStackTrace();
+          ctx.response().setStatusCode(500).end();
+        });
 
     SqlClient client = getPostgresSqlClient();
     Map<String, SqlClient> clients = new HashMap<>();
     clients.put("postgres", client);
     clients.put("duckdb", getDuckdbSqlClient());
-    snowflakeUrl.map(s-> clients.put("snowflake", getSnowflakeClient(s)));
+    snowflakeUrl.map(s -> clients.put("snowflake", getSnowflakeClient(s)));
 
     GraphQL graphQL = createGraphQL(clients, startPromise);
 
@@ -231,30 +249,39 @@ public class GraphQLServer extends AbstractVerticle {
     router.get("/health*").handler(healthCheckHandler);
 
     Route handler = router.route(this.config.getServletConfig().getGraphQLEndpoint());
-    Optional<JWTAuth> authProvider = this.config.getAuthOptions() != null ?
-        Optional.of(JWTAuth.create(vertx, this.config.getAuthOptions())) : Optional.empty();
-    authProvider.ifPresent((auth)-> {
-      //Required for adding auth on ws handler
-      System.setProperty("io.vertx.web.router.setup.lenient", "true");
-      handler.handler(JWTAuthHandler.create(auth));
-    });
-    handler.handler(GraphQLWSHandler.create(graphQL))
-        .handler(GraphQLHandler.create(graphQL,this.config.getGraphQLHandlerOptions()));
-
-    vertx.createHttpServer(this.config.getHttpServerOptions()).requestHandler(router)
-        .listen(this.config.getHttpServerOptions().getPort())
-        .onFailure((e)-> {
-          log.error("Could not start graphql server", e);
-          if (!startPromise.future().isComplete()) {
-            startPromise.fail(e);
-          }
-        })
-        .onSuccess((s)-> {
-          log.info("HTTP server started on port {}", this.config.getHttpServerOptions().getPort());
-          if (!startPromise.future().isComplete()) {
-            startPromise.complete();
-          }
+    Optional<JWTAuth> authProvider =
+        this.config.getAuthOptions() != null
+            ? Optional.of(JWTAuth.create(vertx, this.config.getAuthOptions()))
+            : Optional.empty();
+    authProvider.ifPresent(
+        (auth) -> {
+          // Required for adding auth on ws handler
+          System.setProperty("io.vertx.web.router.setup.lenient", "true");
+          handler.handler(JWTAuthHandler.create(auth));
         });
+    handler
+        .handler(GraphQLWSHandler.create(graphQL))
+        .handler(GraphQLHandler.create(graphQL, this.config.getGraphQLHandlerOptions()));
+
+    vertx
+        .createHttpServer(this.config.getHttpServerOptions())
+        .requestHandler(router)
+        .listen(this.config.getHttpServerOptions().getPort())
+        .onFailure(
+            (e) -> {
+              log.error("Could not start graphql server", e);
+              if (!startPromise.future().isComplete()) {
+                startPromise.fail(e);
+              }
+            })
+        .onSuccess(
+            (s) -> {
+              log.info(
+                  "HTTP server started on port {}", this.config.getHttpServerOptions().getPort());
+              if (!startPromise.future().isComplete()) {
+                startPromise.complete();
+              }
+            });
   }
 
   @SneakyThrows
@@ -265,10 +292,11 @@ public class GraphQLServer extends AbstractVerticle {
       e.printStackTrace();
     }
 
-    final JsonObject config = new JsonObject()
-        .put("driver_class", "net.snowflake.client.jdbc.SnowflakeDriver")
-        .put("url", url)
-        .put("CLIENT_SESSION_KEEP_ALIVE", "true");
+    final JsonObject config =
+        new JsonObject()
+            .put("driver_class", "net.snowflake.client.jdbc.SnowflakeDriver")
+            .put("url", url)
+            .put("CLIENT_SESSION_KEEP_ALIVE", "true");
 
     JDBCPool pool = JDBCPool.pool(vertx, config);
     return pool;
@@ -276,7 +304,8 @@ public class GraphQLServer extends AbstractVerticle {
 
   @SneakyThrows
   private SqlClient getDuckdbSqlClient() {
-    String url = "jdbc:duckdb:"; // In-memory DuckDB instance or you can specify a file path for persistence
+    String url =
+        "jdbc:duckdb:"; // In-memory DuckDB instance or you can specify a file path for persistence
 
     try {
       Class.forName("org.duckdb.DuckDBDriver");
@@ -284,13 +313,13 @@ public class GraphQLServer extends AbstractVerticle {
       e.printStackTrace();
     }
 
-    final JsonObject config = new JsonObject()
-        .put("driver_class", "org.duckdb.DuckDBDriver")
-        .put("datasourceName", "pool-name")
-        .put("url", url)
-//        .put("max_pool_size", 1)
-        .put(DuckDBDriver.JDBC_STREAM_RESULTS, String.valueOf(true))
-    ;
+    final JsonObject config =
+        new JsonObject()
+            .put("driver_class", "org.duckdb.DuckDBDriver")
+            .put("datasourceName", "pool-name")
+            .put("url", url)
+            //        .put("max_pool_size", 1)
+            .put(DuckDBDriver.JDBC_STREAM_RESULTS, String.valueOf(true));
 
     JDBCPool pool = JDBCPool.pool(vertx, config);
 
@@ -298,21 +327,21 @@ public class GraphQLServer extends AbstractVerticle {
   }
 
   private CorsHandler toCorsHandler(CorsHandlerOptions corsHandlerOptions) {
-    CorsHandler corsHandler = corsHandlerOptions.getAllowedOrigin() != null
-        ? CorsHandler.create(corsHandlerOptions.getAllowedOrigin())
-        : CorsHandler.create();
+    CorsHandler corsHandler =
+        corsHandlerOptions.getAllowedOrigin() != null
+            ? CorsHandler.create(corsHandlerOptions.getAllowedOrigin())
+            : CorsHandler.create();
 
     // Empty allowed origin list means nothing is allowed vs null which is permissive
     if (corsHandlerOptions.getAllowedOrigins() != null) {
-      corsHandler
-          .addOrigins(corsHandlerOptions.getAllowedOrigins());
+      corsHandler.addOrigins(corsHandlerOptions.getAllowedOrigins());
     }
 
     return corsHandler
-        .allowedMethods(corsHandlerOptions.getAllowedMethods()
-            .stream()
-            .map(HttpMethod::valueOf)
-            .collect(Collectors.toSet()))
+        .allowedMethods(
+            corsHandlerOptions.getAllowedMethods().stream()
+                .map(HttpMethod::valueOf)
+                .collect(Collectors.toSet()))
         .allowedHeaders(corsHandlerOptions.getAllowedHeaders())
         .exposedHeaders(corsHandlerOptions.getExposedHeaders())
         .allowCredentials(corsHandlerOptions.isAllowCredentials())
@@ -321,23 +350,25 @@ public class GraphQLServer extends AbstractVerticle {
   }
 
   private SqlClient getPostgresSqlClient() {
-    return PgPool.client(vertx, this.config.getPgConnectOptions(),
-        new PgPoolOptions(this.config.getPoolOptions())
-            .setPipelined(true));
+    return PgPool.client(
+        vertx,
+        this.config.getPgConnectOptions(),
+        new PgPoolOptions(this.config.getPoolOptions()).setPipelined(true));
   }
 
   public GraphQL createGraphQL(Map<String, SqlClient> client, Promise<Void> startPromise) {
     try {
       VertxJdbcClient vertxJdbcClient = new VertxJdbcClient(client);
-      GraphQL.Builder graphQL = model.accept(
-          new GraphQLEngineBuilder.Builder()
-              .withMutationConfiguration(
-                  new MutationConfigurationImpl(model, vertx, config))
-              .withSubscriptionConfiguration(
-                  new SubscriptionConfigurationImpl(model, vertx, config, startPromise, vertxJdbcClient))
-              .withExtendedScalarTypes(List.of(CustomScalars.GRAPHQL_BIGINTEGER))
-              .build(),
-          new VertxContext(vertxJdbcClient, canonicalizer));
+      GraphQL.Builder graphQL =
+          model.accept(
+              new GraphQLEngineBuilder.Builder()
+                  .withMutationConfiguration(new MutationConfigurationImpl(model, vertx, config))
+                  .withSubscriptionConfiguration(
+                      new SubscriptionConfigurationImpl(
+                          model, vertx, config, startPromise, vertxJdbcClient))
+                  .withExtendedScalarTypes(List.of(CustomScalars.GRAPHQL_BIGINTEGER))
+                  .build(),
+              new VertxContext(vertxJdbcClient, canonicalizer));
       MeterRegistry meterRegistry = BackendRegistries.getDefaultNow();
       if (meterRegistry != null) {
         graphQL.instrumentation(new MicrometerInstrumentation(meterRegistry));
@@ -349,5 +380,4 @@ public class GraphQLServer extends AbstractVerticle {
       throw e;
     }
   }
-
 }

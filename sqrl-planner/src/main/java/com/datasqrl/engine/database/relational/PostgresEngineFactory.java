@@ -18,5 +18,4 @@ public class PostgresEngineFactory implements DatabaseEngineFactory {
   public Class getFactoryClass() {
     return PostgresJdbcEngine.class;
   }
-
 }

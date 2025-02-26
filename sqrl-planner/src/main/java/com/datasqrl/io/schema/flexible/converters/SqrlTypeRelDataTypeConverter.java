@@ -4,16 +4,16 @@
 package com.datasqrl.io.schema.flexible.converters;
 
 import com.datasqrl.calcite.type.TypeFactory;
-import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.schema.type.ArrayType;
 import com.datasqrl.schema.type.Type;
 import com.datasqrl.schema.type.basic.AbstractBasicType;
-import com.datasqrl.schema.type.basic.BooleanType;
-import com.datasqrl.schema.type.basic.TimestampType;
-import com.datasqrl.schema.type.basic.DoubleType;
 import com.datasqrl.schema.type.basic.BigIntType;
+import com.datasqrl.schema.type.basic.BooleanType;
+import com.datasqrl.schema.type.basic.DoubleType;
 import com.datasqrl.schema.type.basic.IntervalType;
 import com.datasqrl.schema.type.basic.StringType;
+import com.datasqrl.schema.type.basic.TimestampType;
+import com.datasqrl.util.CalciteUtil;
 import java.util.Optional;
 import lombok.Value;
 import org.apache.calcite.avatica.util.TimeUnit;
@@ -53,7 +53,7 @@ public class SqrlTypeRelDataTypeConverter implements SqrlTypeConverter<RelDataTy
   @Override
   public RelDataType visitDoubleType(DoubleType type, Void context) {
     return typeFactory.createSqlType(SqlTypeName.DOUBLE);
-//    return typeFactory.createSqlType(SqlTypeName.DECIMAL, 30, 9);
+    //    return typeFactory.createSqlType(SqlTypeName.DECIMAL, 30, 9);
   }
 
   @Override
@@ -112,7 +112,7 @@ public class SqrlTypeRelDataTypeConverter implements SqrlTypeConverter<RelDataTy
         case INTERVAL_YEAR_MONTH:
         case INTERVAL_MONTH:
           return IntervalType.INSTANCE;
-        //TODO: support those 3
+          // TODO: support those 3
         case DATE:
         case TIME:
         case TIME_WITH_LOCAL_TIME_ZONE:
@@ -133,6 +133,4 @@ public class SqrlTypeRelDataTypeConverter implements SqrlTypeConverter<RelDataTy
     throw new UnsupportedOperationException(
         "Not a supported data type: " + datatype.getSqlTypeName());
   }
-
-
 }

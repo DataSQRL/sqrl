@@ -86,7 +86,7 @@ public interface PackageJson {
 
     String getEngineName();
 
-    @Deprecated(since="Migrate to templates or static objects")
+    @Deprecated(since = "Migrate to templates or static objects")
     Map<String, Object> toMap();
 
     ConnectorsConfig getConnectors();
@@ -120,7 +120,6 @@ public interface PackageJson {
   interface DiscoveryConfig {
 
     DataDiscoveryConfig getDataDiscoveryConfig();
-
   }
 
   interface DataDiscoveryConfig {
@@ -129,5 +128,4 @@ public interface PackageJson {
 
     ErrorCollector getErrors();
   }
-
 }

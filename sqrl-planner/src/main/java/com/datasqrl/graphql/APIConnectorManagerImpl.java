@@ -5,8 +5,8 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.engine.log.Log;
-import com.datasqrl.engine.log.LogFactory.Timestamp;
 import com.datasqrl.engine.log.LogFactory;
+import com.datasqrl.engine.log.LogFactory.Timestamp;
 import com.datasqrl.engine.log.LogManager;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSource;
@@ -72,26 +72,37 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
       Optional<NamespaceObject> log = module.get().getNamespaceObject(mutation.getName());
       errors.checkFatal(log.isPresent(), "Could not load mutation endpoint for %s", mutation);
       if (log.get() instanceof TableSourceSinkNamespaceObject) {
-        errors.checkFatal(log.get() instanceof TableSourceSinkNamespaceObject,
-            "Loaded mutation endpoint for %s from module %s is not a source and sink", mutation,
+        errors.checkFatal(
+            log.get() instanceof TableSourceSinkNamespaceObject,
+            "Loaded mutation endpoint for %s from module %s is not a source and sink",
+            mutation,
             module.get());
         TableSourceSinkNamespaceObject sourceSink = (TableSourceSinkNamespaceObject) log.get();
         sqrlSchema.getMutations().put(mutation, sourceSink.getSource());
       }
       throw new RuntimeException("Could not find mutation in module " + apiNamePath.getDisplay());
     } else {
-      //Create module if log engine is set
-      errors.checkFatal(logEngine.hasLogEngine(), "Cannot create mutation %s: Could not load "
-          + "module for %s and no log engine configured", mutation, apiNamePath);
+      // Create module if log engine is set
+      errors.checkFatal(
+          logEngine.hasLogEngine(),
+          "Cannot create mutation %s: Could not load "
+              + "module for %s and no log engine configured",
+          mutation,
+          apiNamePath);
       SqrlModule logModule = sqrlSchema.getModules().get(apiNamePath);
       if (logModule == null) {
         logModule = new LogModule();
         sqrlSchema.getModules().put(apiNamePath, logModule);
       }
       String logId = getLogId(mutation);
-      //TODO: add _event_id to mutation schema and provide as primary key
-      Log log = createLog(logId, mutation.getName(), mutation.getSchema(), List.of(mutation.getPkName()),
-          new Timestamp(mutation.getTimestampName(), LogFactory.TimestampType.LOG_TIME));
+      // TODO: add _event_id to mutation schema and provide as primary key
+      Log log =
+          createLog(
+              logId,
+              mutation.getName(),
+              mutation.getSchema(),
+              List.of(mutation.getPkName()),
+              new Timestamp(mutation.getTimestampName(), LogFactory.TimestampType.LOG_TIME));
       ((LogModule) logModule).addEntry(mutation.getName(), log);
       sqrlSchema.getMutations().put(mutation, log.getSource());
     }
@@ -99,31 +110,34 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
 
   @Override
   public TableSource getMutationSource(APISource source, Name mutationName) {
-    return (TableSource) sqrlSchema.getMutations()
-        .get(new APIMutation(mutationName, source, null, null, null));
+    return (TableSource)
+        sqrlSchema.getMutations().get(new APIMutation(mutationName, source, null, null, null));
   }
 
   @Override
   public Log addSubscription(APISubscription subscription, SqrlTableMacro sqrlTable) {
-    errors.checkFatal(logEngine.hasLogEngine(),
+    errors.checkFatal(
+        logEngine.hasLogEngine(),
         "Cannot create subscriptions because no log engine is configured");
     RootSqrlTable rootSqrlTable = (RootSqrlTable) sqrlTable;
     PhysicalRelationalTable table = ((PhysicalRelationalTable) rootSqrlTable.getInternalTable());
-    //kafka upsert
-//    errors.checkFatal(table.getRoot().getType() == TableType.STREAM,
-//        "Table %s for subscription %s is not a stream table", table.getTableName(), subscription.getName());
-    //Check if we already exported it
+    // kafka upsert
+    //    errors.checkFatal(table.getRoot().getType() == TableType.STREAM,
+    //        "Table %s for subscription %s is not a stream table", table.getTableName(),
+    // subscription.getName());
+    // Check if we already exported it
     Log log;
     if (sqrlSchema.getApiExports().containsKey(sqrlTable)) {
       log = ((Log) sqrlSchema.getApiExports().get(sqrlTable));
     } else {
-      //otherwise create new log for it
+      // otherwise create new log for it
       String logId = table.getNameId();
-      RelDataTypeField tableSchema = new RelDataTypeFieldImpl(table.getTableName().getDisplay(), -1,
-          table.getRowType());
-      List<String> pks = IntStream.of(table.getPrimaryKey().getPkIndexes())
-          .mapToObj(i -> table.getRowType().getFieldList().get(i).getName())
-          .collect(Collectors.toList());
+      RelDataTypeField tableSchema =
+          new RelDataTypeFieldImpl(table.getTableName().getDisplay(), -1, table.getRowType());
+      List<String> pks =
+          IntStream.of(table.getPrimaryKey().getPkIndexes())
+              .mapToObj(i -> table.getRowType().getFieldList().get(i).getName())
+              .collect(Collectors.toList());
       log = createLog(logId, table.getTableName(), tableSchema, pks, LogFactory.Timestamp.NONE);
       sqrlSchema.getApiExports().put(sqrlTable, log);
     }
@@ -131,10 +145,13 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
     return log;
   }
 
-  public Log createLog(String logId, Name logName, RelDataTypeField schema, List<String> primaryKey,
+  public Log createLog(
+      String logId,
+      Name logName,
+      RelDataTypeField schema,
+      List<String> primaryKey,
       Timestamp timestamp) {
-    return logEngine
-        .create(logId, logName, schema.getType(), primaryKey, timestamp);
+    return logEngine.create(logId, logName, schema.getType(), primaryKey, timestamp);
   }
 
   @Override
@@ -153,7 +170,8 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
     List<Log> logs = new ArrayList<>();
     logs.addAll((Collection) sqrlSchema.getApiExports().values());
     sqrlSchema.getModules().values().stream()
-        .flatMap(logModule -> ((LogModule) logModule).entries.values().stream()).forEach(logs::add);
+        .flatMap(logModule -> ((LogModule) logModule).entries.values().stream())
+        .forEach(logs::add);
     return logs;
   }
 
@@ -182,17 +200,21 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
 
     @Override
     public Optional<NamespaceObject> getNamespaceObject(Name name) {
-      return Optional.ofNullable(entries.get(name)).map(
-          log -> new TableSourceSinkNamespaceObject(log.getSource(), log.getSink(), tableFactory,
-              moduleLoader));
+      return Optional.ofNullable(entries.get(name))
+          .map(
+              log ->
+                  new TableSourceSinkNamespaceObject(
+                      log.getSource(), log.getSink(), tableFactory, moduleLoader));
     }
 
     @Override
     public List<NamespaceObject> getNamespaceObjects() {
-      return entries.values().stream().map(
-          log -> new TableSourceSinkNamespaceObject(log.getSource(), log.getSink(), tableFactory,
-              moduleLoader)).collect(Collectors.toList());
+      return entries.values().stream()
+          .map(
+              log ->
+                  new TableSourceSinkNamespaceObject(
+                      log.getSource(), log.getSink(), tableFactory, moduleLoader))
+          .collect(Collectors.toList());
     }
   }
-
 }
