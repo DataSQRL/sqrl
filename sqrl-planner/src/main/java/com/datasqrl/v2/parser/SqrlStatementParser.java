@@ -7,6 +7,7 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLocation.FileLocation;
+import com.datasqrl.v2.hint.PlannerHints;
 import com.datasqrl.v2.parser.SqrlTableFunctionStatement.ParsedArgument;
 import com.google.inject.Inject;
 import java.util.ArrayList;
@@ -17,6 +18,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.flink.table.catalog.ObjectIdentifier;
 
 /**
  * A lightweight REGEX based parser to identify and parse SQRL specific SQL statements.
@@ -27,7 +29,9 @@ import org.apache.commons.lang3.tuple.Pair;
  * We tried building our own parser in the past, but that created too much work trying to maintain compatibility.
  * We might consider extending Flink's parser in the future, but since Flink evovles quickly this is the safer bet for now.
  *
- * A particular challenge is maintaining the AST offsets to correctly pinpoint the source of errors. A lot of the
+ *
+ * Most of this code is defining and matching REGEX patterns.
+ * A particular challenge is maintaining the line+column offsets to correctly pinpoint the source of parser errors. A lot of the
  * code and complexity in this implementation is due to that. We use {@link ParsedObject} to keep file locations.
  * This is handled through {@link ParsedObject}.
  */
@@ -73,6 +77,12 @@ public class SqrlStatementParser {
 
   private SqlScriptStatementSplitter sqlSplitter;
 
+  /**
+   * Main entry point for parsing a script
+   * @param script
+   * @param scriptErrors
+   * @return
+   */
   public List<ParsedObject<SQLStatement>> parseScript(String script, ErrorCollector scriptErrors) {
     List<ParsedObject<SQLStatement>> sqlStatements = new ArrayList<>();
     ErrorCollector localErrors = scriptErrors;
@@ -88,15 +98,22 @@ public class SqrlStatementParser {
     return sqlStatements;
   }
 
+  /**
+   * Parses an individual statement
+   *
+   * @param statement
+   * @return
+   */
   public SQLStatement parseStatement(String statement) {
     Matcher importExportMatcher = IMPORT_EXPORT.matcher(statement);
+
+    //#1: Imports and Exports
     if (importExportMatcher.find()) { //it's an import or export statement
       String directive = importExportMatcher.group("fullmatch");
       int commentEnd = importExportMatcher.end()-directive.length();
       String comment = statement.substring(0,commentEnd); //For now, hints on import/export are ignored
       String body = statement.substring(importExportMatcher.end()).trim();
 
-      //#1: Imports and Exports
       if (directive.equalsIgnoreCase("import")) {
         Matcher subMatcher = IMPORT_PARSER.matcher(body);
         checkFatal(subMatcher.find(), ErrorCode.INVALID_IMPORT, "Could not parse IMPORT statement");
@@ -191,7 +208,7 @@ public class SqrlStatementParser {
           definition = new SqrlTableFunctionStatement(tableName, definitionBody, access, comment,
               List.copyOf(argumentMap.values()), processedBody.getRight());
         }
-      } else if (keyword.equalsIgnoreCase(DISTINCT_KEYWORD)) {
+      } else if (keyword.equalsIgnoreCase(DISTINCT_KEYWORD)) { //SQRL's special DISTINCT statement
         checkFatal(arguments.isEmpty(), ErrorCode.INVALID_SQRL_DEFINITION, "Table function not supported for operation");
         Matcher distinctMatcher = DISTINCT_PARSER.matcher(definitionBody.get());
         checkFatal(distinctMatcher.find(), ErrorCode.INVALID_SQRL_DEFINITION, "Could not parse [DISTINCT] statement.");
@@ -199,8 +216,7 @@ public class SqrlStatementParser {
         ParsedObject<String> columns = definitionBody.fromOffset(parse(distinctMatcher, "columns", definitionBody.get()));
         ParsedObject<String> remaining = definitionBody.fromOffset(parse(distinctMatcher, "remaining", definitionBody.get()));
         definition = new SqrlDistinctStatement(tableName, comment, access, from, columns, remaining);
-      } else {
-        //We assume it's a column expression
+      } else { //otherwise, we assume it's a column expression
         checkFatal(arguments.isEmpty(), ErrorCode.INVALID_SQRL_DEFINITION, "Column definitions do not support arguments");
         definition = new SqrlAddColumnStatement(tableName, definitionBody, comment);
         new StatementParserException(ErrorCode.INVALID_SQRL_DEFINITION, definitionBody.getFileLocation(), "Not a valid SQRL operation: %s", keyword);
@@ -223,6 +239,20 @@ public class SqrlStatementParser {
     return new FlinkSQLStatement(new ParsedObject<>(statement, FileLocation.START));
   }
 
+  /**
+   * For the body of function definitions, we need to replace the argument names (which start with '$')
+   * with just a '?' so Calcite can parse them as dynamic parameters. We also keep track of the index of the match
+   * so we can later (in {@link com.datasqrl.v2.Sqrl2FlinkSQLTranslator#resolveSqrlTableFunction(ObjectIdentifier, String, List, Map, PlannerHints, ErrorCollector)}
+   * map the dynamic parameters back to the arguments by index. This additional complexity is necessary
+   * because Calcite does not support indexes or names for dynamic parameters so we have to do this manually and
+   * keep track of the mapping between the parser and the planner.
+   *
+   *
+   * @param body
+   * @param functionArguments
+   * @param fullStatement
+   * @return
+   */
   public static Pair<String, List<ParsedArgument>> replaceTableFunctionVariables(String body, LinkedHashMap<Name,
       ParsedArgument> functionArguments, String fullStatement) {
     List<ParsedArgument> argumentIndexes = new ArrayList<>();
