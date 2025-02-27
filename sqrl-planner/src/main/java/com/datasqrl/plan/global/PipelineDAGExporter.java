@@ -2,10 +2,7 @@ package com.datasqrl.plan.global;
 
 import com.datasqrl.io.tables.TableType;
 import com.datasqrl.plan.rules.EngineCapability;
-import com.datasqrl.plan.table.PullupOperator;
-import com.datasqrl.plan.table.TopNConstraint;
 import com.datasqrl.plan.util.RelWriterWithHints;
-import com.datasqrl.plan.util.TimePredicate;
 import com.datasqrl.util.CalciteHacks;
 import com.datasqrl.util.StreamUtil;
 import com.datasqrl.v2.analyzer.TableAnalysis;
@@ -16,11 +13,10 @@ import com.datasqrl.v2.dag.nodes.TableFunctionNode;
 import com.datasqrl.v2.dag.nodes.TableNode;
 import com.datasqrl.v2.tables.SourceSinkTableAnalysis;
 import com.datasqrl.v2.tables.SqrlTableFunction;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
@@ -75,14 +71,12 @@ public class PipelineDAGExporter {
                 if (table.getSourceSinkTable().isPresent()) {
                     if (!includeImports) continue;
                     SourceSinkTableAnalysis source = table.getSourceSinkTable().get();
-                    result.add(Node.builder()
+                    result.add(Source.builder()
                             .id(table.getIdentifier().asSummaryString())
                             .name(table.getName())
                             .type(NodeType.IMPORTS.getName())
+                            .connector(source.getConnector().getOptions())
                             .stage(stage)
-                            .annotations(source.getConnector().toMap().entrySet().stream()
-                                .map(entry -> new Annotation(entry.getKey(), String.valueOf(entry.getValue()))).collect(
-                                    Collectors.toList()))
                             .build());
                 } else {
                     List<RelDataTypeField> fields = table.getRowType().getFieldList();
@@ -177,43 +171,6 @@ public class PipelineDAGExporter {
         return result;
     }
 
-    private static List<Annotation> convert(PullupOperator.Container pullups, List<RelDataTypeField> fields) {
-        List<Annotation> processors = new ArrayList<>();
-        if (!pullups.getNowFilter().isEmpty()) {
-            TimePredicate predicate = pullups.getNowFilter().getPredicate();
-            Preconditions.checkArgument(predicate.isNowPredicate());
-            processors.add(new Annotation("now-filter", fields.get(predicate.getLargerIndex()).getName() + " > now() - " + predicate.getIntervalLength() + " ms"));
-        }
-        if (!pullups.getTopN().isEmpty()) {
-            String description = "";
-            TopNConstraint topN = pullups.getTopN();
-            if (topN.hasPartition()) {
-                description += "partition="+topN.getPartition().stream().map(i -> fields.get(i).getName()).collect(Collectors.joining(", ")) + " ";
-            }
-            if (topN.hasLimit()) {
-                description += "limit="+topN.getLimit() + " ";
-            }
-            if (topN.hasCollation()) {
-                description += "sort="+collations2String(topN.getCollation(), fields) + " ";
-            }
-            if (topN.isDistinct()) {
-                description += "distinct";
-            }
-            processors.add(new Annotation("topN", description));
-
-        }
-        if (!pullups.getSort().isEmpty()) {
-            processors.add(new Annotation("sort", collations2String(pullups.getSort().getCollation(), fields)));
-        }
-        return processors;
-    }
-
-    private static String collations2String(RelCollation collation, List<RelDataTypeField> fields) {
-        List<RelFieldCollation> collations = collation.getFieldCollations();
-        if (collations.isEmpty()) return "";
-        return collations.stream().map(col -> fields.get(col.getFieldIndex()) + " " + col.shortString()).collect(Collectors.joining(", "));
-    }
-
     @AllArgsConstructor
     @Getter
     public enum NodeType {
@@ -282,6 +239,25 @@ public class PipelineDAGExporter {
             return this.getId().compareTo(other.getId());
         }
     }
+
+    @Getter
+    @SuperBuilder
+    public static class Source extends Node {
+
+        Map<String,String> connector;
+
+        String connectorString() {
+            if (connector != null && connector.get("connector")!=null) {
+                return "Connector: " + connector.get("connector");
+            }
+            return "";
+        }
+        @Override
+        public String toString() {
+            return super.toString() + connectorString();
+        }
+    }
+
 
     @Getter
     @SuperBuilder
