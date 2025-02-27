@@ -149,8 +149,8 @@ public class GraphqlSchemaFactory2 {
   private Optional<GraphQLObjectType> createRootTableFunctionResultType(SqrlTableFunction tableFunction, List<SqrlTableFunction> itsRelationships) {
 
     String typeName;
-    if (tableFunction.getBaseTable().isPresent()) {
-      final String baseTableName = tableFunction.getBaseTable().get().getName();
+    if (tableFunction.getFunctionAnalysis().getOptionalBaseTable().isPresent()) {
+      final String baseTableName = tableFunction.getBaseTable().getName();
       if (definedTypeNames.contains(baseTableName)) {// result type was already defined
           return Optional.empty();
       }
@@ -198,7 +198,7 @@ public class GraphqlSchemaFactory2 {
    */
   private Optional<GraphQLObjectType> createRelationshipTableFunctionResultType(SqrlTableFunction tableFunction) {
 
-    if (tableFunction.getBaseTable().isPresent()) { // the type was created in the root table function
+    if (tableFunction.getFunctionAnalysis().getOptionalBaseTable().isPresent()) { // the type was created in the root table function
       return Optional.empty();
     }
     /* BROWSE THE FIELDS
@@ -377,8 +377,8 @@ public class GraphqlSchemaFactory2 {
 
   private GraphQLOutputType createTypeReference(SqrlTableFunction tableFunction) {
     String typeName =
-        tableFunction.getBaseTable().isPresent()
-            ? tableFunction.getBaseTable().get().getName()
+        tableFunction.getFunctionAnalysis().getOptionalBaseTable().isPresent()
+            ? tableFunction.getBaseTable().getName()
             : uniquifyNameForPath(tableFunction.getFullPath());
     return new GraphQLTypeReference(typeName);
   }
