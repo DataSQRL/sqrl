@@ -464,7 +464,7 @@ public class Sqrl2FlinkSQLTranslator {
         .originalSql(sql)
         .type(baseTable.getType())
         .primaryKey(baseTable.getPrimaryKey())
-        .optionalBaseTable(baseTable.getOptionalBaseTable())
+        .optionalBaseTable(Optional.of(baseTable.getBaseTable()))
         .streamRoot(baseTable.getStreamRoot())
         .fromTables(List.of(baseTable))
         .hints(baseTable.getHints())
