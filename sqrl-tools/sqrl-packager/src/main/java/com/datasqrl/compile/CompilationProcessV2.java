@@ -45,7 +45,7 @@ public class CompilationProcessV2 {
   private final PhysicalPlanner physicalPlanner;
   private final GraphqlPostplanHook graphqlPostplanHook;
   private final CreateDatabaseQueries createDatabaseQueries;
-  private final InferGraphqlSchema2 inferencePostcompileHook;
+  private final InferGraphqlSchema2 inferGraphqlSchema;
   private final DagWriter writeDeploymentArtifactsHook;
   //  private final FlinkSqlGenerator flinkSqlGenerator;
   private final GraphqlSourceFactory graphqlSourceFactory;
@@ -80,13 +80,11 @@ public class CompilationProcessV2 {
     if (serverPlan.isPresent()) {
       Optional<APISource> apiSource = graphqlSourceFactory.get();
       if (apiSource.isEmpty() || executionGoal == ExecutionGoal.TEST) { //Infer schema from functions
-        apiSource = inferencePostcompileHook.inferGraphQLSchema(serverPlan.get())
+        apiSource = inferGraphqlSchema.inferGraphQLSchema(serverPlan.get())
             .map(schemaString -> new APISourceImpl(Name.system("<generated-schema>"), schemaString));
       }
       assert apiSource.isPresent();
-
-      //TODO: Validates and generates queries
-      inferencePostcompileHook.validateAndGenerateQueries(apiSource.get(), null);
+      inferGraphqlSchema.validateAndGenerateQueries(apiSource.get());
       //TODO: Generates RootGraphQLModel, use serverplan as argument only
       graphqlPostplanHook.updatePlan(apiSource, null);
 

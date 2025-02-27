@@ -9,7 +9,6 @@ import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.GraphqlSchemaParser;
 import com.datasqrl.graphql.inference.GraphqlQueryBuilder;
 import com.datasqrl.graphql.inference.GraphqlQueryGenerator;
-import com.datasqrl.graphql.inference.GraphqlSchemaValidator;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.util.SqlNameUtil;
@@ -47,16 +46,14 @@ public class InferGraphqlSchema2 {
   }
 
 
-  //TODO wire the error collector up
-  private ErrorCollector setErrorCollectorSchema(APISource apiSource, ErrorCollector errorCollector) {
-    return errorCollector.withSchema(
-        apiSource.getName().getDisplay(), apiSource.getSchemaDefinition());
+  private ErrorCollector createErrorCollectorWithSchema(APISource apiSource) {
+    return errorCollector.withSchema(apiSource.getName().getDisplay(), apiSource.getSchemaDefinition());
   }
 
   // Validates the schema and generates queries and subscriptions
-  public void validateAndGenerateQueries(APISource apiSchema, ErrorCollector apiErrors) {
-    GraphqlSchemaValidator schemaValidator = new GraphqlSchemaValidator(framework, apiManager);
-    schemaValidator.validate(apiSchema, apiErrors);
+  public void validateAndGenerateQueries(APISource apiSource) {
+    GraphqlSchemaValidator2 schemaValidator = new GraphqlSchemaValidator2(framework, apiManager, createErrorCollectorWithSchema(apiSource));
+    schemaValidator.validate(apiSource);
 
     GraphqlQueryGenerator queryGenerator = new GraphqlQueryGenerator(
         framework.getCatalogReader().nameMatcher(),
@@ -65,13 +62,13 @@ public class InferGraphqlSchema2 {
         apiManager
     );
 
-    queryGenerator.walk(apiSchema);
+    queryGenerator.walk(apiSource);
 
     // Add queries to apiManager
     queryGenerator.getQueries().forEach(apiManager::addQuery);
 
     // Add subscriptions to apiManager
-    final APISource source = apiSchema;
+    final APISource source = apiSource;
     queryGenerator.getSubscriptions().forEach(subscription ->
         apiManager.addSubscription(
             new APISubscription(subscription.getAbsolutePath().getFirst(), source), subscription)
