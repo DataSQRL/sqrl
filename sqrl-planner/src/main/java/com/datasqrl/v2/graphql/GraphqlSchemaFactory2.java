@@ -73,10 +73,17 @@ public class GraphqlSchemaFactory2 {
 
     // process query table functions
     final Optional<GraphQLObjectType> queriesObjectType = createQueriesOrSubscriptionsObjectType(serverPlan, AccessModifier.QUERY);
+    //TODO when there is no query fields createQueriesOrSubscriptionsObjectType return an empty optional, so this test is no more neeeded.
+    // and if we remove cleanInvalidTypes, the whole queryFields is no more needed.
+    /*
     if (queryFields.isEmpty()) { // there must be at least 1 query
       return Optional.empty();
     }
-    queriesObjectType.ifPresent(graphQLSchemaBuilder::query);
+*/
+    queriesObjectType.ifPresentOrElse(
+        graphQLSchemaBuilder::query,
+        () -> {throw new IllegalArgumentException("No queryable tables found for server");} // there is no query
+    );
 
     // process subscriptions table functions
     final Optional<GraphQLObjectType> subscriptionsObjectType = createQueriesOrSubscriptionsObjectType(serverPlan, AccessModifier.SUBSCRIPTION);
@@ -88,7 +95,6 @@ public class GraphqlSchemaFactory2 {
 
     graphQLSchemaBuilder.additionalTypes(new LinkedHashSet<>(objectTypes)); // the cleaned types
 
-    Preconditions.checkArgument(!queriesObjectType.get().getFields().isEmpty(),"No queryable tables found for server");
     return Optional.of(graphQLSchemaBuilder.build());
   }
 
@@ -131,15 +137,11 @@ public class GraphqlSchemaFactory2 {
     final List<SqrlTableFunction> rootTableFunctions = tableFunctions.stream()
             .filter(tableFunction -> !tableFunction.isRelationship())
             .collect(Collectors.toList());
-    GraphQLObjectType rootObjectType;
-    if (tableFunctionsType == AccessModifier.QUERY) { //this method was called for queries
-      rootObjectType = createRootQueryType(rootTableFunctions);
-    } else { //this method was called for subscriptions
-      rootObjectType = createRootSubscriptionType(rootTableFunctions);
-    }
+    Optional<GraphQLObjectType> rootObjectType = createRootType(rootTableFunctions, tableFunctionsType);
+    //TODO no more needed?
     //TODO fix cleanInvalidTypes: it removes nestedTypes.
 //    cleanInvalidTypes();
-    return Optional.of(rootObjectType);
+    return rootObjectType;
   }
 
 
@@ -232,9 +234,10 @@ public class GraphqlSchemaFactory2 {
   }
 
   /**
-   * Create the root Query graphQL object encapsulating the type references to all the root table functions.
+   * GraphQL queries and subscriptions are generated the same way. So we call this method with
+   * {@link AccessModifier#QUERY} for generating root Query type and with {@link AccessModifier#SUBSCRIPTION} for generating root subscription type.
    */
-  private GraphQLObjectType createRootQueryType(List<SqrlTableFunction> rootTableFunctions) {
+  private Optional<GraphQLObjectType> createRootType(List<SqrlTableFunction> rootTableFunctions, AccessModifier tableFunctionsType) {
 
     List<GraphQLFieldDefinition> fields = new ArrayList<>();
 
@@ -244,57 +247,38 @@ public class GraphqlSchemaFactory2 {
         continue;
       }
 
+      final GraphQLOutputType type =
+          tableFunctionsType == AccessModifier.QUERY
+            ? (GraphQLOutputType) wrapMultiplicity(createTypeReference(tableFunction), tableFunction.getMultiplicity())
+            : createTypeReference(tableFunction); // type is nullable because there can be no update in the subscription
       GraphQLFieldDefinition field = GraphQLFieldDefinition.newFieldDefinition()
           .name(tableFunctionName)
-          .type((GraphQLOutputType) wrapMultiplicity(createTypeReference(tableFunction), tableFunction.getMultiplicity()))
+          .type(type)
           .arguments(createArguments(tableFunction))
           .build();
       fields.add(field);
     }
-
+    if (fields.isEmpty()) {
+      return Optional.empty();
+    }
+    String rootTypeName = tableFunctionsType.name().toLowerCase();
+    rootTypeName = Character.toUpperCase(rootTypeName.charAt(0)) + rootTypeName.substring(1);
+    // rootTypeName == "Query" or "Subscription"
     GraphQLObjectType rootQueryObjectType = GraphQLObjectType.newObject()
-        .name("Query")
+        .name(rootTypeName)
         .fields(fields)
         .build();
 
-    definedTypeNames.add("Query");
-    this.queryFields.addAll(fields);
-
-    return rootQueryObjectType;
-  }
-
-
-  /**
-   * Create the root Subscription graphQL object encapsulating the type references to all the root table functions.
-   */
-  private GraphQLObjectType createRootSubscriptionType(List<SqrlTableFunction> rootTableFunctions) {
-
-    List<GraphQLFieldDefinition> fields = new ArrayList<>();
-
-    for (SqrlTableFunction tableFunction : rootTableFunctions) {
-      String tableFunctionName = tableFunction.getFullPath().getDisplay();
-      if (!isValidGraphQLName(tableFunctionName)) {
-        continue;
-      }
-
-      GraphQLFieldDefinition field = GraphQLFieldDefinition.newFieldDefinition()
-              .name(tableFunctionName)
-              .type(createTypeReference(tableFunction)) // type is nullable because there can be no update in the subscription
-              .arguments(createArguments(tableFunction))
-              .build();
-      fields.add(field);
+    definedTypeNames.add(rootTypeName);
+    // TODO no more needed ?
+    // for downstream cleaning invalid types
+    if (tableFunctionsType == AccessModifier.QUERY) {
+      this.queryFields.addAll(fields);
     }
 
-    GraphQLObjectType rootQueryObjectType = GraphQLObjectType.newObject()
-            .name("Subscription")
-            .fields(fields)
-            .build();
-
-    definedTypeNames.add("Subscription");
-    this.queryFields.addAll(fields);
-
-    return rootQueryObjectType;
+    return Optional.of(rootQueryObjectType);
   }
+
 
   /**
    *   Create a non-relationship field :
@@ -384,6 +368,7 @@ public class GraphqlSchemaFactory2 {
   }
 
 
+  // TODO no more needed ?
   public void cleanInvalidTypes() {
     // Ensure every field points to a valid type
     boolean found;
