@@ -359,7 +359,7 @@ public class GraphqlSchemaValidator2 extends SchemaWalker {
       TypeDefinitionRegistry registry = (new SchemaParser()).parse(source.getSchemaDefinition());
       Optional<ObjectTypeDefinition> queryType = getType(registry, () -> getQueryTypeName(registry));
       if (queryType.isEmpty()) {
-        throw createThrowable(null, "Cannot find graphql Query type");
+        throw createThrowable(null, "Cannot find graphql root Query type");
       }
 
       walk(source);
