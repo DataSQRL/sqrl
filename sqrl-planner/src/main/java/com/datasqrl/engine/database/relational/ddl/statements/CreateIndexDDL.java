@@ -32,15 +32,15 @@ public class CreateIndexDDL implements SqlDDLStatement {
                 Collectors.joining(" || ' ' || ")));
         indexType = "GIN";
         break;
-      case VEC_COSINE:
-      case VEC_EUCLID:
+      case VECTOR_COSINE:
+      case VECTOR_EUCLID:
         Preconditions.checkArgument(columns.size()==1);
         String indexModifier;
         switch (type) {
-          case VEC_COSINE:
+          case VECTOR_COSINE:
             indexModifier = "vector_l2_ops";
             break;
-          case VEC_EUCLID:
+          case VECTOR_EUCLID:
             indexModifier = "vector_cosine_ops";
             break;
           default:

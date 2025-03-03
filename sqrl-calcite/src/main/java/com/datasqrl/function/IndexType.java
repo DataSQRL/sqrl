@@ -3,7 +3,7 @@ package com.datasqrl.function;
 import java.util.Optional;
 
 public enum IndexType {
-  HASH, BTREE, PBTREE, TEXT, VEC_COSINE, VEC_EUCLID /*, VEC_PRODUCT */;
+  HASH, BTREE, PBTREE, TEXT, VECTOR_COSINE, VECTOR_EUCLID;
 
   public boolean requiresAllColumns() {
     return this == HASH;

@@ -237,7 +237,7 @@ EXPORT UserPromotion TO mysink.promotion;
 SQRL supports a few generic sinks that do not have to be defined explicitly:
 
 * **print**: Prints table records to stdout with the identifier as a prefix.
-* **logger**: Sends the table records to the [configured](configuration.md#logger) logger.
+* **logger**: Sends the table records to the [configured](configuration.md#compiler) logger.
 * **log**: Publishes the table records to a topic in the [configured log engine](configuration.md#engines). Creates a topic with the identifier as the name.
 
 ```sql
@@ -285,20 +285,65 @@ SQRL supports the following hints.
 
 ### Primary Key Hint
 
+*+primary_key(column-names...)*
 
+Assigns a primary key to the table defined below. The primary key uniquely identifies records in the table. This is needed when SQRL cannot automatically determine the primary key and the table is persisted to a database that requires one.
 
-### Query Hint
+```sql
+/*+primary_key(id, productid) */
+OrderEntries := SELECT o.id, o.time, e.productid, e.quantity FROM Orders o CROSS JOIN UNNEST(o.entries) e;
+```
 
-query-any,all,no
+This hint only applies to table definitions.
 
+### Query Hints
+
+*+query_by_all(column-names...)*
+
+*+query_by_any(column-names...)*
+
+*+no_query*
+
+By default, the query or subscription interface for a table returns all records in that table without filters. Query hints modify the interface:
+
+* **query_by_all**: The interface for the table filters by the columns listed in the hint. That means, the interface has an argument for each column and filters for the records where the provided values match the column values (i.e. an AND condition of `column = column-value`). Values must be provided for all columns (i.e. none are optional).
+* **query_by_any**: The interface for the table filters by the columns listed in the hint like `query_by_all` but values for the columns are optional. If a value is not provided for a column the filter does not apply for that column (i.e. an AND condition of `column-value IS NULL OR column = column-value`).
+* **no_query**: Sets the access type for the table to "None" so that no interface is generated.
+
+```sql
+/*+query_by_any(email, name) */
+Customers := SELECT id, email, name, last_updated FROM CustomerStream WHERE id IS NOT NULL; 
+```
+
+This hint only applies to table definitions.
 
 ### Test Hint
 
+*+test*
 
+Marks a table as a test case. Test tables are only exposed when executing tests, otherwise their access type is "None". See [the test runner documentation](cli.md#test-command) for more details on testing SQRL scripts.
+
+```sql
+/*+test */
+CustomerTest := SELECT * FROM Customer WHERE email IS NULL ORDER BY id ASC; 
+```
+
+This hint only applies to table definitions.
 
 ### Workload Hint
 
+*+workload*
 
+Marks a table as a workload which means that the access type is "None" but the table is included as a sink in the data processing DAG and therefore included in the planning and optimization.
+
+Tables that simulate user workloads are annotated with this hint. This hint is often combined with `+test` to include test cases in the planning without exposing them in the interface.
+
+```sql
+/*+test, workload */
+CustomerByIdTest := SELECT * FROM Customer WHERE id = 5;
+```
+
+This hint only applies to table definitions.
 
 ### Execution Hint
 
@@ -306,6 +351,37 @@ query-any,all,no
 
 ### Index Hint
 
+*+index(index-type, column-names...)*
 
+For tables that are persisted into a database, the SQRL optimizer automatically determines index structures based on the exposed interface and workload queries. With the index hint, index structures can be defined manually and overwrite the optimized indexes.
+
+An index hint takes the type as the first argument and a list of columns to index in the given order.
+The following index types are supported:
+
+* **HASH**: A hash index
+* **BTREE**: A b-tree index
+* **TEXT**: A text search index
+* **VECTOR_COSINE**: A vector index using cosine distance
+* **VECTOR_EUCLID**: A vector index using euclid or L2 distance
+
+If an index hint with no argument is provided, no index structures will be created for that table.
+
+```sql
+/*+index(btree, customerid, last_updated) */
+Customers := SELECT id, email, name, last_updated FROM CustomerStream; 
+```
+
+This hint only applies to table definitions.
 
 ### Partition Key Hint
+
+*+partition_key(column-names...)*
+
+For tables that are persisted into an external data system that supports data partitioning, the `partition_key` hint defines the list of columns by which the data is partitioned.
+
+```sql
+/*+partition_key(partition_id) */
+Customers := SELECT id % 8 AS partition_id, id, email, name, last_updated FROM CustomerStream; 
+```
+
+This hint only applies to table definitions.

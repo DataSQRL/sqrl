@@ -19,8 +19,8 @@ import static com.datasqrl.function.IndexType.BTREE;
 import static com.datasqrl.function.IndexType.HASH;
 import static com.datasqrl.function.IndexType.PBTREE;
 import static com.datasqrl.function.IndexType.TEXT;
-import static com.datasqrl.function.IndexType.VEC_COSINE;
-import static com.datasqrl.function.IndexType.VEC_EUCLID;
+import static com.datasqrl.function.IndexType.VECTOR_COSINE;
+import static com.datasqrl.function.IndexType.VECTOR_EUCLID;
 
 @Value
 @Builder
@@ -79,7 +79,7 @@ public class IndexSelectorConfigByDialect implements IndexSelectorConfig {
       case Postgres:
       case MySQL:
       case Oracle:
-        return EnumSet.of(HASH, BTREE, TEXT, VEC_COSINE, VEC_EUCLID);
+        return EnumSet.of(HASH, BTREE, TEXT, VECTOR_COSINE, VECTOR_EUCLID);
       case H2:
       case SQLite:
         return EnumSet.of(HASH, BTREE);

@@ -32,7 +32,7 @@ public class CosineSimilarityMetadata implements IndexableFunction {
 
   @Override
   public EnumSet<IndexType> getSupportedIndexes() {
-    return EnumSet.of(IndexType.VEC_COSINE);
+    return EnumSet.of(IndexType.VECTOR_COSINE);
   }
 
   @Override

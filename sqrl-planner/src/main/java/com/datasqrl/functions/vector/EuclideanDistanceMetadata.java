@@ -33,7 +33,7 @@ public class EuclideanDistanceMetadata implements IndexableFunction {
 
   @Override
   public EnumSet<IndexType> getSupportedIndexes() {
-    return EnumSet.of(IndexType.VEC_EUCLID);
+    return EnumSet.of(IndexType.VECTOR_EUCLID);
   }
 
   @Override

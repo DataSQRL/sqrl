@@ -8,20 +8,21 @@ The DataSQRL project consists of two parts:
 * The DataSQRL runtime components: libraries and components that are executed
   as part of a compiled data pipeline when the deployment assets are deployed.
 
-This repository contains the code for both parts as well. Code that is shared
-between the build tool and runtime is in the [sqrl-base](sqrl-base) module.
+This repository contains the code for both parts split across multiple modules.
+Refer to the README.md file in each module for information on what this module contains
+and what its purpose is.
 
 ## DataSQRL Build Tool
 
 The goal of the DataSQRL build tool is simplifying the development of data pipelines
-and event-driven microservices. Developers can ipmlement the logic of their
-data product in SQL and define how they want to serve the data product through an
-API specification. The build tool compiles those two artifacts into an integrated
+and event-driven microservices. Developers implement the logic of their
+data product in SQL. The build tool compiles the SQL into an integrated
 data pipeline that ingests, processes, stores, and serves the data as defined.
 
-DataSQRL has it's own variant of SQL called SQRL. SQRL extends SQL to allow
+DataSQRL has its own variant of SQL called SQRL. SQRL extends SQL to allow
 explicit imports and nested tables to represent hierarchical data natively. It
 also provides some syntactic sugar to make it more convenient to develop with SQL.
+Read the [SQRL specification](sqrl-spec.md) for more details.
 
 DataSQRL supports a pluggable engine architecture. A data pipeline or microservice
 consists of multiple stages and each stage is executed by an engine.
@@ -43,6 +44,7 @@ executed by the Flink engine.
 
 The pipeline topology as well as other compiler configuration options are
 specified in a json configuration file typically called `package.json`.
+The [configuration documentation](configuration.md) lists all the configuration options.
 
 In addition to the compiler, the DataSQRL build tool contains a package manager
 for resolving external data and
@@ -62,68 +64,62 @@ have all the files it needs prepared in a standard way.
 
 The packager
 resolves external data and function dependencies that are imported in a script.
-It downloads such dependencies from a central repository if necessary and places
-them in the build directory.
+Those are either resolved against the local filesystem or downloaded from a repository
+and placed into the build directory.
 
 The packager also runs all registered pre-processors on the local directory
 to pre-process input files and place them into the build directory for the
 compiler. DataSQRL has a generic pre-processor framework.
 
-
 [Link to packager module](sqrl-tools/sqrl-packager)
 
-### Transpiler
+### Planner
+
+The planner parses a SQRL script, i.e. a sequence of SQL(ish) statements, analyzes
+the statements, constructs a data processing DAG, optimizes the DAG, and finally
+produces deployment assets for the engines executing the data processing steps.
+
+[Link to planner module](sqrl-planner)
+
+The planner consists of the following components.
+
+#### Transpiler
 
 The transpiler is the first stage of the compiler. The transpiler parses the
-SQRL script into a logical plan by "translating" the SQRL SQL variant into
-vanilla SQL with hints to annotate context.
+SQRL script into a logical plan by "translating" the SQRL specific SQL syntax
+into FlinkSQL.
 
 The transpiler resolves imports against the build directory using module loaders
 that retrieve dependencies. It maintains a schema of all defined tables
 in a SQRL script. It also parses the API specification and maps the API schema
 the table schemas.
 
-The transpiler is build on top of Apache Calcite for all SQL handling and
-java-graphql for all GraphQL handling.
+The transpiler is build on top of Apache Calcite by way of FlinkSQL for all SQL handling.
+It prepares the statements that are analyzed and planned by the planner
 
-[Link to transpiler module](sqrl-calcite)
+### Logical Plan Analyzer
 
-### Logical Plan Rewriter
-
-The logical plan rewriter is the second stage of the compiler. It takes the
-logical plan (i.e. Relnode) produced by the transpiler for each table
-defined in the SQRL script and rewrites the logical plan into a normalized
-represenation (called the AnnotatedLP) which serves these purposes:
+The logical plan analyzer is the second stage of the compiler. It takes the
+logical plan (i.e. Relnode) produced by the transpiler for each table or function
+defined in the SQRL script and analyzes the logical plan to extract a TableAnalysis
+that contains information needed by the planner.
 
 1. It keeps track of important metadata like timestamps, primary keys, sort orders, etc
-2. It translates SQRL specific SQL annotations into standard SQL depending on the
-   context in which they are used. The goal is to translate SQL developers are
-   likely to write to SQL that is optimized for the context in which they wrote that SQL.
-   For example, rewriting an unspecified JOIN into a temporal join if the join is between
-   a stream and a state on the state's primary key.
-3. It extracts certain "expensive" logical operators with the goal of trying
-   to move them to another stage in the pipeline where they are cheaper to
-   execute while guaranteeing the same semantics.
+2. It analyzes the SQL to identify potential issues, semantic inconsistencies, or optimization potential and produces warnings or notices.
+3. It extracts cost information for the optimizer.
 
-In other words, the LP Rewriter attempts to rewrite SQL query for a table
-definition to make it more efficient while preserving user intent and it
-extract metadata needed for contextual processing.
-
-[The LP Rewriter is part of the planner](sqrl-planner)
 
 ### DAG Planner
 
-The DAG planner takes all the individual table defintions and assembles them into
-a processing DAG. It prunes the DAG and rewrites the DAG before optimizing the
-DAG to assign each node (i.e. table) to a stage in the pipeline.
+The DAG planner takes all the individual table and function definitions and assembles them into
+a data processing DAG (directed acyclic graph). It prunes the DAG and rewrites the DAG before optimizing the
+DAG to assign each node (i.e. table or function) to a stage in the pipeline.
 
 The optimizer uses a cost model and is constrained to produce only viable
 pipelines.
 
-At the end of the DAG planning process, each table defined in the SQRL script
+At the end of the DAG planning process, each table or function defined in the SQRL script
 is assigned to a stage in the pipeline.
-
-[The DAG Planner is part of the planner](sqrl-planner)
 
 ### Physical Planner
 
@@ -131,22 +127,26 @@ All the tables in a given stage are then passed to the stage engine's physical
 planner which produces the physical plan for the engine that has been
 configured to execute that stage.
 
-For example, the tables assigned to the "stream" stage are passed to
-Flink's physical planner to produce FlinkSQL.
+Physical planning can contain additional optimization such as selecting optimal index
+structures for database tables.
 
-The physical plans are then written out as deployment assets to the `build/deploy`
+The physical planner is also responsible for generating the API schemas (e.g. GraphQL schema)
+for the exposed API if the pipeline contains a server engine. Optionally, the user may
+provide the API schema in which case the physical planner validates the schema and maps it
+to the SQRL script.
+
+The physical plans are then written out as deployment artifacts to the `build/plan`
 directory.
 
 ### Discovery
 
 The build tool contains a separate piece of functionality for data discovery.
 The goal for data discovery is to make it easy for new users to get started
-with DataSQRL by automatically generating package definitions for users' data.
+with DataSQRL by automatically generating table definitions for users' data.
 
-The user can run discovery against local data files, object storage, or a Kafka
-cluster. Data discovery analyzes the data and ingests it to determine the schema
-automatically. It then produces a package for the data that the user can
-import into their scripts.
+This is implemented as a pre-processor that automatically extracts a schema
+ from `jsonl` and `csv` files and generates a table definition with connector
+information for such files.
 
 [Link to discovery module](sqrl-tools/sqrl-discovery)
 
@@ -155,6 +155,7 @@ import into their scripts.
 The DataSQRL build tool is accessed through a command line interface.
 It defines all of the commands that DataSQRL supports and provides
 usability features to help the user and produce useful error messages.
+See the [CLI documentation](cli.md) for more information.
 
 [Link to cli module](sqrl-tools/sqrl-cli)
 
@@ -192,5 +193,3 @@ It also contains custom formats and connectors for Flink that extend
 existing formats and connectors to support functionality needed by DataSQRL.
 It may be reasonable to contribute those improvements and extensions back to
 the Apache Flink project.
-
-=======
