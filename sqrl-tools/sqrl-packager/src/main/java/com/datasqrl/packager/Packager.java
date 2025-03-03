@@ -4,11 +4,9 @@
 package com.datasqrl.packager;
 
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.cmd.PackageBootstrap;
 import com.datasqrl.compile.TestPlan;
 import com.datasqrl.config.BuildPath;
 import com.datasqrl.config.DependenciesConfigImpl;
-import com.datasqrl.config.EngineFactory;
 import com.datasqrl.config.Dependency;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.ScriptConfig;
@@ -18,9 +16,7 @@ import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlan.StagePlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.Preprocessors.PreprocessorsContext;
-import com.datasqrl.packager.repository.Repository;
 import com.datasqrl.util.FileUtil;
-import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.datasqrl.util.SqrlObjectMapper;
 import com.fasterxml.jackson.core.util.DefaultIndenter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
@@ -30,7 +26,6 @@ import com.google.inject.Inject;
 import freemarker.template.Configuration;
 import freemarker.template.DefaultMapAdapter;
 import freemarker.template.Template;
-import freemarker.template.TemplateException;
 import freemarker.template.TemplateExceptionHandler;
 import freemarker.template.TemplateMethodModelEx;
 import freemarker.template.TemplateModelException;
@@ -72,7 +67,6 @@ public class Packager {
   public static final String PACKAGE_JSON = "package.json";
   public static final Path DEFAULT_PACKAGE = Path.of(Packager.PACKAGE_JSON);
 
-  private final Repository repository;
   private final RootPath rootDir;
   private final PackageJson config;
   private final BuildPath buildDir;
@@ -89,46 +83,10 @@ public class Packager {
       retrieveDependencies(errors);
       copyFilesToBuildDir(errors);
       preProcessFiles(config, errors);
-      inferDependencies(errors);
       writePackageConfig();
     } catch (IOException e) {
       throw errors.handle(e);
     }
-  }
-
-  @SneakyThrows
-  private void inferDependencies(ErrorCollector errors) {
-    //Analyze all local SQRL files to discovery transitive or undeclared dependencies
-    //At the end, we'll add the new dependencies to the package config.
-
-    //Only infer on main script
-    String mainScriptPath = config.getScriptConfig().getMainScript()
-        .orElseThrow(() -> new RuntimeException("No main script specified"));
-
-    Set<NamePath> unresolvedDeps = analyzer.analyze(rootDir.getRootDir().resolve(mainScriptPath), errors);
-
-    List<Dependency> dependencies = unresolvedDeps.stream()
-        .flatMap(dep -> {
-          try {
-            return repository.resolveDependency(dep.toString())
-                .stream();
-          } catch (Exception e) {
-            //suppress any exception
-            return Optional.<Dependency>empty()
-                .stream();
-          }
-        })
-        .collect(Collectors.toList());
-
-    // Add inferred dependencies to package config
-    dependencies.forEach((dep) -> {
-      config.getDependencies().addDependency(dep.getName(), dep);
-    });
-
-    Map<String, Dependency> deps = dependencies.stream()
-        .collect(Collectors.toMap(Dependency::getName, d -> d));
-
-    retrieveDependencies(deps, errors);
   }
 
   @SneakyThrows
@@ -276,12 +234,9 @@ public class Packager {
         }
       });
       return true;
-//    } else if (Files.isRegularFile(sourcePath)) { //check if graphqls file
-//      Files.copy(sourcePath, targetPath.resolve(sourcePath.relativize(sourcePath)), StandardCopyOption.REPLACE_EXISTING);
-//      return true;
     } else {
-      // If the directory does not exist or is not a directory, proceed with the original retrieval logic
-      return repository.retrieveDependency(targetPath, dependency);
+      // If the directory does not exist or is not a directory, then dependency is not available
+      return false;
     }
   }
 

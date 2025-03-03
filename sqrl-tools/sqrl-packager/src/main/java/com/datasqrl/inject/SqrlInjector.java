@@ -36,7 +36,6 @@ import com.datasqrl.packager.preprocess.JarPreprocessor;
 import com.datasqrl.packager.preprocess.Preprocessor;
 import com.datasqrl.packager.preprocess.ScriptPreprocessor;
 import com.datasqrl.packager.preprocess.TablePreprocessor;
-import com.datasqrl.packager.repository.Repository;
 import com.datasqrl.plan.CreateTableResolver;
 import com.datasqrl.plan.CreateTableResolverImpl;
 import com.datasqrl.plan.MainScript;
@@ -59,17 +58,15 @@ public class SqrlInjector extends AbstractModule {
   private final Path targetDir;
   private final PackageJson sqrlConfig;
   private final ExecutionGoal goal;
-  private final Repository repository;
 
   public SqrlInjector(ErrorCollector errors, Path rootDir, Path targetDir,
-      PackageJson sqrlConfig, ExecutionGoal goal, Repository repository) {
+      PackageJson sqrlConfig, ExecutionGoal goal) {
     this.errors = errors;
     this.rootDir = rootDir;
     this.buildDir = rootDir.resolve("build");
     this.targetDir = targetDir;
     this.sqrlConfig = sqrlConfig;
     this.goal = goal;
-    this.repository = repository;
   }
 
   @Override
@@ -132,11 +129,6 @@ public class SqrlInjector extends AbstractModule {
   @Provides
   public PackageJson provideSqrlConfig() {
     return sqrlConfig;
-  }
-
-  @Provides
-  public Repository provideRepository() {
-    return repository;
   }
 
   @Provides
