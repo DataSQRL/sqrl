@@ -1,3 +1,4 @@
+<!--- deprecated: fold into advanced -->
 # Connectors (Source & Sink)
 
 To resolve `IMPORT` and `EXPORT` statements that ingest data from and write data to external systems, DataSQRL reads connector configuration files from a package. Packages are either local directories or downloaded from the repository, with the former taking precedence. Packages contain connector configurations.

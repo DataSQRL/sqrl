@@ -81,6 +81,7 @@ import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlOrderBy;
 import org.apache.calcite.sql.SqlSyntax;
 import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.SqlNameMatchers;
 import org.apache.calcite.sql2rel.SqlToRelConverter;
 import org.apache.flink.configuration.Configuration;
@@ -654,6 +655,8 @@ public class Sqrl2FlinkSQLTranslator {
         UnresolvedColumn column = flinkSchema.getColumns().get(i);
         outputType.add(field);
         if (MutationComputedColumn.UUID_COLUMN.equalsIgnoreCase(column.getName())) {
+          Preconditions.checkArgument(field.getType().getSqlTypeName() == SqlTypeName.VARCHAR,
+              "As a current limitation, %s columns must be of type STRING or VARCHAR", MutationComputedColumn.UUID_COLUMN);
           mutationBld.computedColumn(new MutationComputedColumn(column.getName(), Type.UUID));
           if (pk.isUndefined()) pk = PrimaryKeyMap.of(List.of(i));
         } else if ((column instanceof UnresolvedMetadataColumn) &&

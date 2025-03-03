@@ -10,7 +10,6 @@ CustomerFilteredDistinct := DISTINCT Customer ON customerid ORDER BY lastUpdated
 AnotherCustomer := SELECT customerid, email, lastUpdated FROM _customer WHERE customerid > 100;
 
 CustomerByMultipleTime := DISTINCT Customer ON customerid, email ORDER BY `timestamp` DESC, lastUpdated ASC;
-
 ExplicitDistinct := SELECT customerid, `timestamp`, name FROM (SELECT *, (ROW_NUMBER() OVER (PARTITION BY customerid ORDER BY `timestamp` DESC)) AS _rownum FROM Customer) WHERE (_rownum = 1);
 
 --maps to explicit distinct (check rowtype)

@@ -1,3 +1,5 @@
+<!--- deprecated: fold into configuration or advanced -->
+
 # DataSQRL Configuration
 
 You control the topology, execution characteristics, and API of the DataSQRL generated data pipeline/microservice through configuration files.

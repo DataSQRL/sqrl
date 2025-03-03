@@ -1,3 +1,4 @@
+<!-- deprecated: fold into cli -->
 # Deployment
 
 DataSQRL can target any deployment infrastructure through the concept of "deployment profiles". A deployment profile is a collection of deployment assets for each engine in the data pipeline/microservice that can be templated using [Freemarker templates](https://freemarker.apache.org/). The templates are instantiated with the output from the DataSQRL compiler to produce the deployment assets. Those deployment assets can then be deployed manually or through CI/CD pipelines and other automation tools.
