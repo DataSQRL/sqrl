@@ -26,7 +26,7 @@ import lombok.ToString;
 public class RootGraphqlModel {
 
   @Singular
-  List<Coords> coords;
+  List<Coords> coords; //TODO should be renamed queries but it is a breaking change for vertx server.
   @Singular
   List<MutationCoords> mutations;
   @Singular
@@ -229,7 +229,7 @@ public class RootGraphqlModel {
       @Type(value = ArgumentLookupCoords.class, name = "args"),
       @Type(value = FieldLookupCoords.class, name = "field")
   })
-  public static abstract class Coords {
+  public static abstract class Coords { //TODO should be renamed QueryCoords
 
     String parentType;
     String fieldName;
@@ -263,6 +263,9 @@ public class RootGraphqlModel {
 
     @JsonIgnore
     final String type = "args";
+    /**
+     * A match is an executable query + its SQL parameters + its graphQl arguments (including the SQL parameters)
+     */
     Set<ArgumentSet> matchs;
 
     @Builder
