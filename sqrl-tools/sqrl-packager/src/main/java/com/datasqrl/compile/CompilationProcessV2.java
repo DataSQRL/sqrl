@@ -1,7 +1,6 @@
 package com.datasqrl.compile;
 
 import com.datasqrl.actions.CreateDatabaseQueries;
-import com.datasqrl.actions.GraphqlPostplanHook;
 import com.datasqrl.actions.DagWriter;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.config.BuildPath;
@@ -15,6 +14,7 @@ import com.datasqrl.plan.global.PhysicalPlanRewriter;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISourceImpl;
 import com.datasqrl.util.ServiceLoaderDiscovery;
+import com.datasqrl.v2.graphql.GenerateCoords;
 import com.datasqrl.v2.graphql.InferGraphqlSchema2;
 import com.datasqrl.v2.dag.DAGBuilder;
 import com.datasqrl.v2.dag.DAGPlanner;
@@ -43,7 +43,7 @@ public class CompilationProcessV2 {
   private final BuildPath buildPath;
   private final MainScript mainScript;
   private final PhysicalPlanner physicalPlanner;
-  private final GraphqlPostplanHook graphqlPostplanHook;
+  private final GenerateCoords generateCoords;
   private final CreateDatabaseQueries createDatabaseQueries;
   private final InferGraphqlSchema2 inferGraphqlSchema;
   private final DagWriter writeDeploymentArtifactsHook;
@@ -84,12 +84,10 @@ public class CompilationProcessV2 {
             .map(schemaString -> new APISourceImpl(Name.system("<generated-schema>"), schemaString));
       }
       assert apiSource.isPresent();
-      inferGraphqlSchema.validateAndGenerateQueries(apiSource.get());
-      //TODO: Generates RootGraphQLModel, use serverplan as argument only
-      graphqlPostplanHook.updatePlan(apiSource, null);
+      inferGraphqlSchema.validateSchema(apiSource.get(), serverPlan.get());
+      generateCoords.updateServerPlan(apiSource, serverPlan.get());
 
       //create test artifact
-
       if (executionGoal == ExecutionGoal.TEST) {
         testPlan = testPlanner.generateTestPlan(apiSource.get(), testsPath);
       }

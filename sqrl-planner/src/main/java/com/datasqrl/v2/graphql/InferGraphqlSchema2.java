@@ -1,17 +1,12 @@
 package com.datasqrl.v2.graphql;
 
 import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.GraphqlSchemaParser;
-import com.datasqrl.graphql.inference.GraphqlQueryBuilder;
-import com.datasqrl.graphql.inference.GraphqlQueryGenerator;
 import com.datasqrl.plan.queries.APISource;
-import com.datasqrl.plan.queries.APISubscription;
-import com.datasqrl.util.SqlNameUtil;
 import com.google.inject.Inject;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphqlTypeComparatorRegistry;
@@ -50,28 +45,9 @@ public class InferGraphqlSchema2 {
     return errorCollector.withSchema(apiSource.getName().getDisplay(), apiSource.getSchemaDefinition());
   }
 
-  // Validates the schema and generates queries and subscriptions
-  public void validateAndGenerateQueries(APISource apiSource) {
-    GraphqlSchemaValidator2 schemaValidator = new GraphqlSchemaValidator2(framework, apiManager, createErrorCollectorWithSchema(apiSource));
+  // Validates the schema
+  public void validateSchema(APISource apiSource, ServerPhysicalPlan serverPlan) {
+    GraphqlSchemaValidator2 schemaValidator = new GraphqlSchemaValidator2(serverPlan.getFunctions(), apiManager, createErrorCollectorWithSchema(apiSource));
     schemaValidator.validate(apiSource);
-
-    GraphqlQueryGenerator queryGenerator = new GraphqlQueryGenerator(
-        framework.getCatalogReader().nameMatcher(),
-        framework.getSchema(),
-        new GraphqlQueryBuilder(framework, apiManager, new SqlNameUtil(NameCanonicalizer.SYSTEM)),
-        apiManager
-    );
-
-    queryGenerator.walk(apiSource);
-
-    // Add queries to apiManager
-    queryGenerator.getQueries().forEach(apiManager::addQuery);
-
-    // Add subscriptions to apiManager
-    final APISource source = apiSource;
-    queryGenerator.getSubscriptions().forEach(subscription ->
-        apiManager.addSubscription(
-            new APISubscription(subscription.getAbsolutePath().getFirst(), source), subscription)
-    );
   }
 }

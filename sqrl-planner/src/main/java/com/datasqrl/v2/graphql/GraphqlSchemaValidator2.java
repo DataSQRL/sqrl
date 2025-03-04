@@ -13,9 +13,9 @@ import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.generate.GraphqlSchemaUtil;
-import com.datasqrl.graphql.inference.SchemaWalker;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.plan.queries.APISource;
+import com.datasqrl.v2.tables.SqrlTableFunction;
 import com.google.common.collect.Iterables;
 import com.google.inject.Inject;
 import graphql.language.EnumTypeDefinition;
@@ -43,49 +43,36 @@ import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.schema.Function;
 import org.apache.calcite.sql.validate.SqlNameMatcher;
 
-public class GraphqlSchemaValidator2 extends SchemaWalker {
+/**
+ * Validate a graphQL schema against the plan (useful when the user provides a graphQl schema)
+ */
+public class GraphqlSchemaValidator2 extends GraphqlSchemaWalker2 {
 
-  private final Map<ObjectTypeDefinition, SqrlTableMacro> visitedObj = new HashMap<>();
   private final ErrorCollector errorCollector;
 
   @Inject
-  public GraphqlSchemaValidator2(SqrlFramework framework, APIConnectorManager apiConnectorManager, ErrorCollector errorCollector) {
-    this(framework.getCatalogReader().nameMatcher(), framework.getSchema(), apiConnectorManager, errorCollector);
-  }
-
-  public GraphqlSchemaValidator2(SqlNameMatcher nameMatcher, SqrlSchema schema, APIConnectorManager apiManager, ErrorCollector errorCollector) {
-    super(nameMatcher, schema, apiManager);
+  public GraphqlSchemaValidator2(List<SqrlTableFunction> tableFunctions, APIConnectorManager apiConnectorManager, ErrorCollector errorCollector) {
+    super(tableFunctions, apiConnectorManager);
     this.errorCollector = errorCollector;
   }
 
   @Override
-  protected void walkSubscription(ObjectTypeDefinition m, FieldDefinition fieldDefinition,
-      TypeDefinitionRegistry registry, APISource source) {
-    //Assure they are root tables
-    Collection<Function> functions = schema.getFunctions(fieldDefinition.getName(), false);
-    checkState(functions.size() == 1, fieldDefinition.getSourceLocation(),
-        "Cannot overload subscription");
-    Function function = Iterables.getOnlyElement(functions);
-    checkState(function instanceof SqrlTableMacro, fieldDefinition.getSourceLocation(),
-        "Subscription not a sqrl table");
-
-    //todo: validate that it is a valid table
-
+  protected void visitSubscription(ObjectTypeDefinition objectType, FieldDefinition field,
+                                   TypeDefinitionRegistry registry, APISource source) {
   }
 
   @Override
-  protected void walkMutation(APISource source, TypeDefinitionRegistry registry,
-      ObjectTypeDefinition m, FieldDefinition fieldDefinition) {
+  protected void visitMutation(ObjectTypeDefinition objectType, FieldDefinition field, TypeDefinitionRegistry registry, APISource source) {
     // Check we've found the mutation
     TableSource mutationSink = apiManager.getMutationSource(source,
-        Name.system(fieldDefinition.getName()));
+        Name.system(field.getName()));
     if (mutationSink == null) {
 //      throw createThrowable(fieldDefinition.getSourceLocation(),
 //          "Could not find mutation source: %s.", fieldDefinition.getName());
     }
 
-    validateStructurallyEqualMutation(fieldDefinition, getValidMutationReturnType(fieldDefinition, registry),
-            getValidMutationInput(fieldDefinition, registry),
+    validateStructurallyEqualMutation(field, getValidMutationReturnType(field, registry),
+            getValidMutationInput(field, registry),
             List.of(ReservedName.MUTATION_TIME.getCanonical(), ReservedName.MUTATION_PRIMARY_KEY.getDisplay()), registry);
 
   }
@@ -254,53 +241,22 @@ public class GraphqlSchemaValidator2 extends SchemaWalker {
   }
 
   @Override
-  protected void visitUnknownObject(ObjectTypeDefinition type, FieldDefinition field, NamePath path,
-      Optional<RelDataType> rel) {
-    throw createThrowable(field.getSourceLocation(), "Unknown field at location %s", rel.map(
+  protected void visitUnknownObject(ObjectTypeDefinition objectType, FieldDefinition field, NamePath path,
+                                    Optional<RelDataType> relDataType) {
+    throw createThrowable(field.getSourceLocation(), "Unknown field at location %s", relDataType.map(
             r -> field.getName() + ". Possible scalars are [" + r.getFieldNames().stream()
                 .filter(GraphqlSchemaUtil::isValidGraphQLName).collect(Collectors.joining(", ")) + "]")
         .orElse(field.getName()));
   }
 
   @Override
-  protected void visitScalar(ObjectTypeDefinition type, FieldDefinition field, NamePath path,
-      RelDataType relDataType, RelDataTypeField relDataTypeField) {
+  protected void visitScalar(ObjectTypeDefinition objectType, FieldDefinition field, NamePath path,
+                             RelDataType relDataType, RelDataTypeField relDataTypeField) {
   }
 
   @Override
-  protected void visitQuery(ObjectTypeDefinition parentType, ObjectTypeDefinition type,
-      FieldDefinition field, NamePath path, Optional<RelDataType> rel,
-      List<SqrlTableMacro> functions) {
-    checkState(!functions.isEmpty(), field.getSourceLocation(), "Could not find functions");
+  protected void visitQuery(ObjectTypeDefinition resultType, FieldDefinition field, SqrlTableFunction tableFunction) {
     checkValidArrayNonNullType(field.getType());
-
-//    if (visitedObj.get(type) != null && !visitedObj.get(type).getIsTypeOf()
-//        .isEmpty()) {
-    //todo readd the check to see if we can share a type
-//      if (!sqrlTable.getIsTypeOf()
-//          .contains(visitedObj.get(objectDefinition).getIsTypeOf().get(0))) {
-//    checkState(visitedObj.get(parentType) == null,
-//              || visitedObj.get(objectDefinition) == sqrlTable,
-//          field.getSourceLocation(),
-//          "Cannot redefine a type to point to a different SQRL table. Use an interface instead.\n"
-//              + "The graphql field [%s] points to Sqrl table [%s] but already had [%s].",
-//          parentType.getName() + ":" + field.getName(),
-//          functions.get(0).getFullPath().getDisplay(),
-//        visitedObj.get(parentType) == null ? null : visitedObj.get(parentType).getFullPath().getDisplay());
-//      }
-//    }
-    visitedObj.put(parentType, functions.get(0));
-
-    //todo: better structural checking
-//    walkChildren((ObjectTypeDefinition) type, functions.get(0), field);
-//    List<FieldDefinition> invalidFields = getInvalidFields(typeDef, table);
-//    boolean structurallyEqual = structurallyEqual(typeDef, table);
-//    //todo clean up, add lazy evaluation
-//    checkState(structurallyEqual, invalidFields.isEmpty() ? typeDef.getSourceLocation()
-//            : invalidFields.get(invalidFields.size() - 1).getSourceLocation(),
-//        "Field(s) [%s] could not be found on type [%s]. Possible fields are: [%s]", String.join(",",
-//            invalidFields.stream().map(FieldDefinition::getName).collect(Collectors.toList())),
-//        typeDef.getName(), String.join(", ", table.tableMacro.getRowType().getFieldNames()));
   }
 
 
@@ -355,16 +311,17 @@ public class GraphqlSchemaValidator2 extends SchemaWalker {
   }
 
   public void validate(APISource source) {
-    try {
+//TODO re-anble
+      /*    try {
       TypeDefinitionRegistry registry = (new SchemaParser()).parse(source.getSchemaDefinition());
       Optional<ObjectTypeDefinition> queryType = getType(registry, () -> getQueryTypeName(registry));
       if (queryType.isEmpty()) {
         throw createThrowable(null, "Cannot find graphql root Query type");
       }
 
-      walk(source);
+      walkAPISource(source);
     } catch (Exception e) {
       throw errorCollector.handle(e);
-    }
+    }*/
   }
 }
