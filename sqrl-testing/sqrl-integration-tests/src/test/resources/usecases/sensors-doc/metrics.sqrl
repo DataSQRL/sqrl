@@ -17,4 +17,4 @@ SensorAnalysis := SELECT sensorid, AVG(temperature) AS avg_temperatures,
                            MAX(temperature) AS max_temperature
                     FROM SensorReading GROUP BY sensorid ORDER BY sensorid DESC;
 
-SensorAnalysisById($sensorid: INT) := SELECT * FROM SensorAnalysis WHERE sensorid = $sensorid;
+SensorAnalysisById(sensorid INT) := SELECT * FROM SensorAnalysis WHERE sensorid = :sensorid;

@@ -68,10 +68,10 @@ ProductsByCountry := SELECT p.id AS productid, c.country AS country, sum(o.quant
           JOIN Customers FOR SYSTEM_TIME AS OF o.`time`  c ON o.customerid =c.id
       GROUP BY p.id, c.country;
 
-ProductSearch($query: String) := SELECT p.*, textSearch($query, name) as score
+ProductSearch(query String) := SELECT p.*, textSearch(:query, name) as score
                                  FROM Products p
-                                 WHERE textSearch($query, name) > 0
+                                 WHERE textSearch(:query, name) > 0
                                  ORDER BY score DESC, id ASC;
 
-ProductSearchWithId($query: String, $id: Int) := SELECT * FROM Products WHERE textSearch($query, name, category) > 0
-                                                                          AND id > $id ORDER BY id ASC;
+ProductSearchWithId(query String, id Int) := SELECT * FROM Products WHERE textSearch(:query, name, category) > 0
+                                                                          AND id > :id ORDER BY id ASC;
