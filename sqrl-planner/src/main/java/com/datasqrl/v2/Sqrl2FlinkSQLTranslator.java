@@ -20,6 +20,8 @@ import com.datasqrl.v2.hint.PlannerHints;
 import com.datasqrl.v2.parser.ParsePosUtil;
 import com.datasqrl.v2.parser.ParsePosUtil.MessageLocation;
 import com.datasqrl.v2.parser.ParsedField;
+import com.datasqrl.v2.parser.ParsedObject;
+import com.datasqrl.v2.parser.SQLStatement;
 import com.datasqrl.v2.parser.SqrlTableFunctionStatement.ParsedArgument;
 import com.datasqrl.v2.parser.StatementParserException;
 import com.datasqrl.v2.tables.FlinkConnectorConfig;
@@ -420,13 +422,13 @@ public class Sqrl2FlinkSQLTranslator {
       String originalSql, List<ParsedArgument> arguments,
       Map<Integer, Integer> argumentIndexMap, PlannerHints hints, ErrorCollector errors) {
     //Process argument types
-    List<ParsedField> requiresTypeParsing = arguments.stream()
-        .filter(Predicate.not(ParsedArgument::hasResolvedType)).collect(Collectors.toList());
-    List<RelDataTypeField> parsedTypes = parse2RelDataType(requiresTypeParsing);
+//    List<ParsedField> requiresTypeParsing = arguments.stream()
+//        .filter(Predicate.not(ParsedArgument::hasResolvedType)).collect(Collectors.toList());
+//    List<RelDataTypeField> parsedTypes = parse2RelDataType(requiresTypeParsing);
     List<FunctionParameter> parameters=new ArrayList<>();
     for (int i = 0; i < arguments.size(); i++) {
       ParsedArgument parsedArg = arguments.get(i);
-      RelDataType type = (i<parsedTypes.size()?parsedTypes.get(i).getType():parsedArg.getResolvedRelDataType());
+      RelDataType type = parsedArg.getResolvedRelDataType();
       parameters.add(new SqrlFunctionParameter(parsedArg.getName().get(),
           parsedArg.getIndex(), type, parsedArg.isParentField()));
     }
@@ -741,30 +743,28 @@ public class Sqrl2FlinkSQLTranslator {
     DataType dataType;
   }
 
-  public static final String DUMMY_TABLE_NAME = "__sqrlinternal_types";
+  private static final String DATATYPE_PARSING_PREFIX = "CREATE TEMPORARY TABLE __sqrlinternal_types(";
 
   /**
-   * Uses a CREATE TABLE statement to parse the data types from function signature defintions
-   * in {@link #resolveSqrlTableFunction(ObjectIdentifier, String, List, Map, PlannerHints, ErrorCollector)}.
-   * @param fieldList
+   * Uses a CREATE TABLE statement to parse the data types from a string
+   *
+   * @param dataTypeDefinition
    * @return
    */
-  public List<RelDataTypeField> parse2RelDataType(List<ParsedField> fieldList) {
-    if (fieldList.isEmpty()) return List.of();
-    String createTableStatement = "CREATE TEMPORARY TABLE " + DUMMY_TABLE_NAME + "("
-        + fieldList.stream().map(arg -> "`"+arg.getName().get() + "` " + arg.getType().get())
-        .collect(Collectors.joining(",\n")) + ");";
+  public List<RelDataTypeField> parse2RelDataType(ParsedObject<String> dataTypeDefinition) {
+    if (dataTypeDefinition.isEmpty()) return List.of();
+    String createTableStatement = DATATYPE_PARSING_PREFIX + dataTypeDefinition.get() + ");";
     try {
       CreateTableOperation op = (CreateTableOperation) getOperation(parseSQL(createTableStatement));
       Schema schema = op.getCatalogTable().getUnresolvedSchema();
       return convertSchema2RelDataType(schema);
     } catch (Exception e) {
-      int lineNo = 0;
+      FileLocation location = dataTypeDefinition.getFileLocation();
       Optional<ParsePosUtil.MessageLocation> converted = ParsePosUtil.convertFlinkParserException(e);
       if (converted.isPresent()) {
-        lineNo = converted.get().getLocation().getLine();
+        location = location.add(
+            SQLStatement.removeFirstRowOffset(converted.get().getLocation(), DATATYPE_PARSING_PREFIX.length()));
       }
-      FileLocation location = fieldList.get(Math.min(fieldList.size(),lineNo)-1).getType().getFileLocation();
       throw new StatementParserException(location, e, converted.map(MessageLocation::getMessage).orElse(e.getMessage()));
     }
   }

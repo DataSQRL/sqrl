@@ -1,14 +1,7 @@
-[FATAL] Argument list contains invalid arguments
-in script:parsererror-arguments-fail.sqrl [5:14]:
-CustomerQuery($id: BIGINT,
-             $arg2: STRING,
-             arg3: INT) := SELECT * FROM Customer WHERE customerid = $id;
--------------^
-Invalid table function arguments provided.
-
-Table function arguments start with `$` and have a type separated by `:`. Multiple function arguments are separated by `,`.
-For example:
-```
-MyTableFunction($argument: INT, $arg2: STRING)
-```
+[FATAL]  Unknown identifier 'INTT'
+in script:parsererror-arguments-fail.sqrl [5:19]:
+CustomerQuery(id BIGINT,
+             arg2 STRING,
+             arg3 INTT) := SELECT * FROM Customer WHERE customerid = :id;
+------------------^
 

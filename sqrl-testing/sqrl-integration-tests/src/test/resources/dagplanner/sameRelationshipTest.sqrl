@@ -2,4 +2,4 @@ IMPORT ecommerceTs.Customer;
 
 Customer.other := SELECT * FROM Customer c WHERE c.customerid = this.customerid;
 Customer.another := SELECT * FROM Customer c WHERE c.customerid = this.customerid;
-Customer.other($id : INT) := SELECT * FROM Customer c WHERE c.customerid = this.customerid AND c.customerid = $id;
+Customer.other(id INT) := SELECT * FROM Customer c WHERE c.customerid = this.customerid AND c.customerid = :id;

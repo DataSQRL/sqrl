@@ -23,9 +23,4 @@ public class SqrlTableDefinition extends SqrlDefinition implements StackableStat
     return true;
   }
 
-  public SqrlTableFunctionStatement toFunction() {
-    return new SqrlTableFunctionStatement(tableName, definitionBody, access, comments,
-        List.of(), List.of());
-  }
-
 }

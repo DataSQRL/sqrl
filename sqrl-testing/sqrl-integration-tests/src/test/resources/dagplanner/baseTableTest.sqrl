@@ -3,8 +3,8 @@ IMPORT ecommerceTs.Product AS _Product;
 
 CustomerWithEmail := SELECT * FROM Customer WHERE email IS NOT NULL;
 DistinctCustomer := DISTINCT Customer ON customerid ORDER BY `timestamp` DESC;
-CustomerById($id: BIGINT) := SELECT * FROM CustomerWithEmail WHERE customerid = $id;
-DistinctCustomerById($id: BIGINT) := SELECT * FROM DistinctCustomer WHERE customerid = $id;
+CustomerById(id BIGINT) := SELECT * FROM CustomerWithEmail WHERE customerid = :id;
+DistinctCustomerById(id BIGINT) := SELECT * FROM DistinctCustomer WHERE customerid = :id;
 
 Product := SELECT * FROM _Product WHERE name is NOT NULL;
-ProductByCategory($category: STRING) := SELECT * FROM Product WHERE category = $category;
+ProductByCategory(category STRING) := SELECT * FROM Product WHERE category = :category;

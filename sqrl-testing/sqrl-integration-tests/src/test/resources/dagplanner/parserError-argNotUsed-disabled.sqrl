@@ -1,3 +1,3 @@
 IMPORT ecommerceTs.Customer;
 
-CustomerQuery($id: BIGINT) := SELECT * FROM Customer WHERE customerid > 0;
+CustomerQuery(id BIGINT) := SELECT * FROM Customer WHERE customerid > 0;

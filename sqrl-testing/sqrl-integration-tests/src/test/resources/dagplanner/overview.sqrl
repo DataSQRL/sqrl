@@ -23,15 +23,15 @@ Customer := DISTINCT CustomerImport ON customerid ORDER BY `timestamp` DESC;
 -- A relationship, `this.customerid` gets replaced with an internal parameter that gets substituted with customerid on the parent table Customer
 Customer.orders := SELECT * FROM SimpleOrders o WHERE this.customerid = o.customerid ORDER BY o.orderTime DESC;
 
--- This is a function, $customerid is an explicit (i.e. not internal) parameter
-CustomerById($customerid : BIGINT) := SELECT * FROM Customer WHERE customerid = $customerid;
+-- This is a function, customerid is an explicit (i.e. not internal) parameter
+CustomerById(customerid BIGINT) := SELECT * FROM Customer WHERE customerid = :customerid;
 
 -- We can then get fancy and combine the two: relationship with explicit parameters
--- this.customerid is an internal parameter and $minAmount is an explicit/external parameter
-Customer.largeOrders($minAmount: FLOAT) := SELECT * FROM SimpleOrders o WHERE this.customerid = o.customerid AND o.amount >= $minAmount ORDER BY o.amount DESC;
+-- this.customerid is an internal parameter and minAmount is an explicit/external parameter
+Customer.largeOrders(minAmount FLOAT) := SELECT * FROM SimpleOrders o WHERE this.customerid = o.customerid AND o.amount >= :minAmount ORDER BY o.amount DESC;
 
 -- This is a subscription with a filter based on the parameter
-LargeOrderSubscription($customerid : BIGINT) := SUBSCRIBE SELECT * FROM LargeOrders WHERE customerid = $customerid;
+LargeOrderSubscription(customerid BIGINT) := SUBSCRIBE SELECT * FROM LargeOrders WHERE customerid = :customerid;
 
 -- To access nested data, we have to use the unnest function in a cross join
 UnnestOrders := SELECT o.id, o.customerid, o.`time`, e.productid, e.quantity, e.discount FROM Orders o CROSS JOIN UNNEST(entries) e;

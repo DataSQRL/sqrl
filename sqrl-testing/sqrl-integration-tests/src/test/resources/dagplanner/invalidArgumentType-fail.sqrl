@@ -1,2 +1,2 @@
 IMPORT ecommerceTs.Orders;
-OrdersById($id: BIGIT, $otherid: BIGINT) := SELECT * FROM Orders WHERE $id = id AND id = $otherid;
+OrdersById(id BIGIT, otherid BIGINT) := SELECT * FROM Orders WHERE :id = id AND id = :otherid;

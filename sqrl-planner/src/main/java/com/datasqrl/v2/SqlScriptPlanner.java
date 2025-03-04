@@ -77,6 +77,7 @@ import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -261,15 +262,21 @@ public class SqlScriptPlanner {
           !(hints.isTest() && executionGoal==ExecutionGoal.TEST);
       access = adjustAccess(access);
 
-
       String originalSql = sqrlDef.toSql(sqrlEnv, statementStack);
       //Relationships and Table functions require special handling
       if (sqrlDef instanceof SqrlTableFunctionStatement) {
         SqrlTableFunctionStatement tblFctStmt = (SqrlTableFunctionStatement) sqrlDef;
         ObjectIdentifier identifier = SqlNameUtil.toIdentifier(tblFctStmt.getPath().getFirst()); //TODO: this should be resolved against the current catalog and database
-        List<ParsedArgument> arguments = tblFctStmt.getArguments();
+        final LinkedHashMap<Name, ParsedArgument> arguments = new LinkedHashMap<>();
+        if (!tblFctStmt.getSignature().isEmpty()) {
+          List<RelDataTypeField> parsedArgs = sqrlEnv.parse2RelDataType(tblFctStmt.getSignature());
+          parsedArgs.forEach(field -> arguments.put(Name.system(field.getName()),
+              new ParsedArgument(new ParsedObject(field.getName(),FileLocation.START), field.getType(), false,
+                  arguments.size())));
+        }
+        TableAnalysis parentTbl = null;
         if (tblFctStmt.isRelationship()) {
-          /* Resolve arguments against parent table. Most of this code ensures that the referenced column exist and retrieves it with type
+          /* To resolve the arguments and get their type, we first need to look up the parent table
            */
           Optional<PipelineNode> parentNode = dagBuilder.getNode(identifier);
           checkFatal(parentNode.isPresent(), sqrlDef.getTableName().getFileLocation(), ErrorCode.INVALID_TABLE_FUNCTION_ARGUMENTS,
@@ -277,21 +284,29 @@ public class SqlScriptPlanner {
           checkFatal(parentNode.get() instanceof TableNode, sqrlDef.getTableName().getFileLocation(), ErrorCode.INVALID_TABLE_FUNCTION_ARGUMENTS,
               "Relationships can only be added to tables (not functions): %s [%s]", tblFctStmt.getPath().getFirst(), parentNode.get().getClass());
           identifier = SqlNameUtil.toIdentifier(Name.system(tablePath.getLast().getDisplay()));
-          TableAnalysis parentTbl = ((TableNode) parentNode.get()).getTableAnalysis();
-          arguments = arguments.stream().map(arg -> {
-            if (arg.isParentField()) {
-              RelDataTypeField field = parentTbl.getRowType().getField(arg.getName().get(), false, false);
-              checkFatal(field!=null, arg.getName().getFileLocation(), ErrorLabel.GENERIC,
-                  "Could not find field on parent table: %s", arg.getName().get());
-              return arg.withResolvedType(field.getType()).withName(
-                  new ParsedObject<String>(field.getName(), arg.getName().getFileLocation()));
-            } else {
-              return arg;
+          parentTbl = ((TableNode) parentNode.get()).getTableAnalysis();
+        }
+        //Resolve arguments, map indexes, and check for errors
+        Map<Integer, Integer> argumentIndexMap = new HashMap<>();
+        for (ParsedArgument argIndex : tblFctStmt.getArgumentsByIndex()) {
+          if (argIndex.isParentField()) {
+            //Check if we need to add this argument when encountered for the first time
+            RelDataTypeField field = parentTbl.getRowType().getField(argIndex.getName().get(), false, false);
+            checkFatal(field!=null, argIndex.getName().getFileLocation(), ErrorLabel.GENERIC,
+                "Could not find field on parent table: %s", argIndex.getName().get());
+            Name fieldName = Name.system(field.getName());
+            if (!arguments.containsKey(fieldName)) {
+              arguments.put(fieldName, argIndex.withResolvedType(field.getType(), arguments.size()));
             }
-          }).collect(Collectors.toList());
+          }
+          ParsedArgument signatureArg = arguments.get(Name.system(argIndex.getName().get()));
+          checkFatal(signatureArg!=null, argIndex.getName().getFileLocation(), ErrorCode.INVALID_TABLE_FUNCTION_ARGUMENTS,
+              "Argument [%s] is not defined in the signature of the function", argIndex.getName().get());
+          argumentIndexMap.put(argIndex.getIndex(), signatureArg.getIndex());
         }
 
-        var fctBuilder = sqrlEnv.resolveSqrlTableFunction(identifier, originalSql, arguments, tblFctStmt.getArgIndexMap(), hints, errors);
+        var fctBuilder = sqrlEnv.resolveSqrlTableFunction(identifier, originalSql,
+            new ArrayList<>(arguments.values()), argumentIndexMap, hints, errors);
         fctBuilder.fullPath(tblFctStmt.getPath());
         AccessVisibility visibility = new AccessVisibility(access, hints.isTest(), tblFctStmt.isRelationship(), isHidden);
         fctBuilder.visibility(visibility);

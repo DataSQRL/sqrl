@@ -46,5 +46,12 @@ in yml format in the `orders.schema.yml` file. Those are then imported.
 
 To disable automatic discovery of data for a directory, place a file called `.nodiscovery` into that directory.
 
+## Manual Subgraph Elimination with Noop Function
+
+Sometimes the Flink optimizer is too smart for its own good and will push down predicates that make common subgraph identification impossible. That can result in much larger job graphs and poor performance or high state maintenance.
+
+To inhibit predicate pushdown, SQRL uses the `noop` function that takes an arbitrary list of argument and always returns true.
+As such, the function serves no purpose other than making it impossible for the optimizer to push down predicates.
+
 
 

@@ -20,8 +20,8 @@ TemporalJoin := SELECT * FROM ExternalOrders o JOIN ExplicitDistinct FOR SYSTEM_
 
 Customer.related := SELECT * FROM Customer other WHERE this.customerid = other.customerid ORDER BY other.`timestamp`;
 
-Customer.related($length : INT) := SELECT * FROM Customer other WHERE this.customerid = other.customerid
-                AND CHAR_LENGTH(other.email) >= $length ORDER BY other.`timestamp`;
+Customer.related(length INT) := SELECT * FROM Customer other WHERE this.customerid = other.customerid
+                AND CHAR_LENGTH(other.email) >= :length ORDER BY other.`timestamp`;
 
 
 /** This is for selected customers
@@ -32,11 +32,11 @@ SelectCustomers := SELECT * From Customer WHERE customerid > 0 ORDER BY `timesta
 
 CustomerSubscription := SUBSCRIBE SELECT * FROM Customer;
 
-CustomerById($minId : INT) := SELECT * FROM Customer WHERE customerid > $minId;
+CustomerById(minId INT) := SELECT * FROM Customer WHERE customerid > :minId;
 
-TableFunctionCallsTblFct($arg1 : INT, $arg2: INT) := SELECT * FROM Table(CustomerById($arg2)) WHERE customerid > $arg1;
+TableFunctionCallsTblFct(arg1 INT, arg2 INT) := SELECT * FROM Table(CustomerById(:arg2)) WHERE customerid > :arg1;
 
-CustomerSubscriptionById($minId : INT) := SUBSCRIBE SELECT * FROM Customer WHERE customerid = $minId;
+CustomerSubscriptionById(minId INT) := SUBSCRIBE SELECT * FROM Customer WHERE customerid = :minId;
 
 
 UnnestOrders := SELECT o.id, o.customerid, o.`time`, e.productid, e.quantity, e.discount FROM ExternalOrders o CROSS JOIN UNNEST(entries) e;
@@ -60,7 +60,7 @@ CustomerTimeWindow := SELECT
 /*+ test, workload */
 CustomerTimeWindowTest := SELECT * FROM CustomerTimeWindow ORDER BY window_end DESC;
 
-CustomerQuery($id: BIGINT) := SELECT * FROM AnotherCustomer WHERE customerid = $id;
+CustomerQuery(id BIGINT) := SELECT * FROM AnotherCustomer WHERE customerid = :id;
 
 EXPORT CustomerTimeWindow TO print.TimeWindow;
 EXPORT TemporalJoin TO mysink.customersink;

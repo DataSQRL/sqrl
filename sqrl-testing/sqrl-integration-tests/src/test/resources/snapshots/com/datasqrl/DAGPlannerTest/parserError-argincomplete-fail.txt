@@ -1,7 +1,16 @@
-[FATAL]  Column '$emails' not found in any table
-in script:parsererror-argincomplete-fail.sqrl [3:74]:
+[FATAL] Argument [emails] is not defined in the signature of the function
+in script:parsererror-argincomplete-fail.sqrl [3:73]:
 IMPORT ecommerceTs.Customer;
 
-CustomerByEmail($email: STRING NOT NULL) := SELECT * FROM Customer WHERE $emails = email;
--------------------------------------------------------------------------^
+CustomerByEmail(email STRING NOT NULL) := SELECT * FROM Customer WHERE :emails = email;
+------------------------------------------------------------------------^
+Invalid table function arguments provided.
+
+Table function arguments are defined like columns in a CREATE TABLE statement: the argument name followed by the argument type with multiple arguments separated by a comma `,`.
+Inside the query body, arguments are referenced by name prefixed with a colon `:`.
+
+For example:
+```
+MyTableFunction(argument INT, arg2 STRING NOT NULL) := SELECT * FROM MyTable WHERE col1 = :arg2 AND col2 > :argument
+```
 

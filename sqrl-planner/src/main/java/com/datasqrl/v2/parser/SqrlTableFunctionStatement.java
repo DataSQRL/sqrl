@@ -19,14 +19,14 @@ import org.apache.calcite.rel.type.RelDataType;
 @Getter
 public class SqrlTableFunctionStatement extends SqrlDefinition {
 
-  private final List<ParsedArgument> arguments;
+  private final ParsedObject<String> signature;
   private final List<ParsedArgument> argumentsByIndex;
 
   public SqrlTableFunctionStatement(ParsedObject<NamePath> tableName,
       ParsedObject<String> definitionBody, AccessModifier access,
-      SqrlComments comments, List<ParsedArgument> arguments, List<ParsedArgument> argumentsByIndex) {
+      SqrlComments comments, ParsedObject<String> signature, List<ParsedArgument> argumentsByIndex) {
     super(tableName, definitionBody, access, comments);
-    this.arguments = arguments;
+    this.signature = signature;
     this.argumentsByIndex = argumentsByIndex;
   }
 
@@ -34,35 +34,22 @@ public class SqrlTableFunctionStatement extends SqrlDefinition {
     return getPath().size()==2;
   }
 
-  public Map<Integer, Integer> getArgIndexMap() {
-    return IntStream.range(0, argumentsByIndex.size()).boxed().collect(Collectors.toMap(
-        i -> i, i -> argumentsByIndex.get(i).index));
-  }
 
   @Value
   @AllArgsConstructor
-  public static class ParsedArgument implements ParsedField {
+  public static class ParsedArgument {
     ParsedObject<String> name;
-    ParsedObject<String> type;
     RelDataType resolvedRelDataType;
     boolean isParentField;
     int index;
 
-    public ParsedArgument(ParsedObject<String> name, ParsedObject<String> type, int index) {
-      this(name, type, null, false, index);
+    public ParsedArgument(ParsedObject<String> name, boolean isParentField, int index) {
+      this(name,  null, isParentField, index);
     }
 
-    public ParsedArgument(ParsedObject<String> name, int index) {
-      this(name, null, null, true, index);
-    }
-
-    public ParsedArgument withName(ParsedObject<String> name) {
-      return new ParsedArgument(name, type, resolvedRelDataType, isParentField, index);
-    }
-
-    public ParsedArgument withResolvedType(RelDataType resolvedRelDataType) {
+    public ParsedArgument withResolvedType(RelDataType resolvedRelDataType, int index) {
       Preconditions.checkArgument(!hasResolvedType());
-      return new ParsedArgument(name, type, resolvedRelDataType, isParentField, index);
+      return new ParsedArgument(name, resolvedRelDataType, isParentField, index);
     }
 
     public boolean hasResolvedType() {

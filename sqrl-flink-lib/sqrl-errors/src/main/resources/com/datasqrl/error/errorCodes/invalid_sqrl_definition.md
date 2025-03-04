@@ -10,7 +10,7 @@ DistinctCustomers := DISTINCT Customers ON customerId ORDER BY lastUpdated DESC;
 ```
 To define a table function use:
 ```
-OlderCustomers($age: INT) := SELECT * FROM Customers WHERE age >= $age;
+OlderCustomers(age INT) := SELECT * FROM Customers WHERE age >= :age;
 ```
 To define a relationship use:
 ```
