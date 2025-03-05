@@ -11,6 +11,7 @@ import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutableQuery;
 import com.datasqrl.engine.PhysicalPlan.PhysicalStagePlan;
 import com.datasqrl.engine.database.QueryTemplate;
+import com.datasqrl.engine.database.relational.ExecutableJdbcReadQuery;
 import com.datasqrl.engine.database.relational.ddl.statements.InsertStatement;
 import com.datasqrl.engine.database.relational.ddl.statements.notify.ListenNotifyAssets;
 import com.datasqrl.engine.log.Log;
@@ -18,6 +19,8 @@ import com.datasqrl.engine.log.kafka.KafkaPhysicalPlan;
 import com.datasqrl.engine.log.postgres.PostgresLogPhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIConnectorManager;
+import com.datasqrl.graphql.jdbc.SchemaConstants;
+import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentLookupCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentSet;
@@ -226,15 +229,46 @@ public class GraphqlModelGenerator2 extends GraphqlSchemaWalker2 {
     ArgumentLookupCoords.ArgumentLookupCoordsBuilder coordsBuilder = ArgumentLookupCoords.builder()
         .parentType(resultType.getName()).fieldName(field.getName());
     ArgumentSet set = ArgumentSet.builder().arguments(createArguments(field))
-            .query(executableQuery).build();
+            .query(new ExecutableQueryToQueryBaseWrapper(executableQuery)).build();
 
     coordsBuilder.match(set);
 
     queryCoords.add(coordsBuilder.build());
   }
 
+  //TODO temporary ths is just for model generation, need to wire up all types of queries (paginated or not, snowflake, jdbc, duckdb)
+  private static class ExecutableQueryToQueryBaseWrapper implements RootGraphqlModel.QueryBase {
+    String sql = "";
+    public ExecutableQueryToQueryBaseWrapper(ExecutableQuery executableQuery) {
+      //TODO very bad temporary code
+      if (executableQuery instanceof ExecutableJdbcReadQuery) {
+        final ExecutableJdbcReadQuery executableJdbcReadQuery = (ExecutableJdbcReadQuery) executableQuery;
+        this.sql = executableJdbcReadQuery.getSql();
+      }
+    }
+
+    @Override
+    public <R, C> R accept(RootGraphqlModel.QueryBaseVisitor<R, C> visitor, C context) {
+      return null;
+    }
+  }
+
   private static Set<Argument> createArguments(FieldDefinition field) {
-    // TODO create rootmodel args based on field definition with just a name
-    return Set.of();
+    // create the arguements as they used to be created in QueryBuilderHelper
+    Set<Argument> argumentSet = field.getInputValueDefinitions().stream()
+            .filter(input -> !input.getName().equals(SchemaConstants.LIMIT) && !input.getName().equals(SchemaConstants.OFFSET))
+            .map(input -> RootGraphqlModel.VariableArgument.builder()
+                    .path(input.getName())
+                    .value(null)
+                    .build())
+            .collect(Collectors.toSet());
+    argumentSet.addAll(field.getInputValueDefinitions().stream()
+            .filter(input -> input.getName().equals(SchemaConstants.LIMIT) || input.getName().equals(SchemaConstants.OFFSET))
+            .map(input -> RootGraphqlModel.FixedArgument.builder()
+                    .path(input.getName())
+                    .value(null)
+                    .build())
+            .collect(Collectors.toSet()));
+    return argumentSet;
   }
 }
