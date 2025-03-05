@@ -85,7 +85,7 @@ public class CompilationProcessV2 {
       }
       assert apiSource.isPresent();
       inferGraphqlSchema.validateSchema(apiSource.get(), serverPlan.get());
-      generateCoords.updateServerPlan(apiSource, serverPlan.get());
+      generateCoords.generateCoordsAndUpdateServerPlan(apiSource, serverPlan.get());
 
       //create test artifact
       if (executionGoal == ExecutionGoal.TEST) {

@@ -7,6 +7,7 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.GraphqlSchemaParser;
 import com.datasqrl.plan.queries.APISource;
+import com.datasqrl.v2.APIConnectorManager2;
 import com.google.inject.Inject;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphqlTypeComparatorRegistry;
@@ -25,7 +26,7 @@ public class InferGraphqlSchema2 {
   private final ExecutionPipeline pipeline;
   private final SqrlFramework framework;
   private final ErrorCollector errorCollector;
-  private final APIConnectorManager apiManager;
+  private final APIConnectorManager2 apiManager;
   private final GraphqlSchemaFactory2 graphqlSchemaFactory;
   private final GraphqlSchemaParser parser;
 
