@@ -43,7 +43,6 @@ import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.plan.queries.IdentifiedQuery;
-import com.datasqrl.v2.APIConnectorManager2;
 import com.datasqrl.v2.tables.SqrlTableFunction;
 import com.google.common.base.Preconditions;
 import graphql.language.FieldDefinition;
@@ -74,33 +73,61 @@ public class GraphqlModelGenerator2 extends GraphqlSchemaWalker2 {
   private final ErrorCollector errorCollector;
 
 
-  public GraphqlModelGenerator2(List<SqrlTableFunction> tableFunctions, APIConnectorManager2 apiConnectorManager, ErrorCollector errorCollector) {
+  public GraphqlModelGenerator2(List<SqrlTableFunction> tableFunctions, APIConnectorManager apiConnectorManager, ErrorCollector errorCollector) {
     super(tableFunctions, apiConnectorManager);
     this.errorCollector = errorCollector;
   }
 
   @Override
-  protected void visitSubscription(ObjectTypeDefinition objectType, FieldDefinition graphqlField, SqrlTableFunction tableFunction,
+  protected void visitSubscription(ObjectTypeDefinition objectType, FieldDefinition fieldDefinition,
                                    TypeDefinitionRegistry registry, APISource source) {
-    APISubscription apiSubscription = new APISubscription(Name.system(graphqlField.getName()), source);
-
+    APISubscription apiSubscription = new APISubscription(Name.system(fieldDefinition.getName()),
+        source);
+    SqrlTableMacro tableFunction = schema.getTableFunction(fieldDefinition.getName());
+    if (tableFunction == null) {
+      throw new RuntimeException("Table '" + fieldDefinition.getName() + "' does not exist in the schema.");
+    }
     Log log = apiManager.addSubscription(apiSubscription, tableFunction);
 
     Map<String, String> filters = new HashMap<>();
-    for (InputValueDefinition input : graphqlField.getInputValueDefinitions()) {
-      RelDataTypeField calciteField = tableFunction.getRowType().getField(input.getName(), true, false);
-
-      if (calciteField == null) {
-        throw new RuntimeException("Field '" + input.getName() + "' does not exist in subscription '" + graphqlField.getName() + "'.");
+    for (InputValueDefinition input : fieldDefinition.getInputValueDefinitions()) {
+      RelDataTypeField field = nameMatcher.field(tableFunction.getRowType(), input.getName());
+      if (field == null) {
+        throw new RuntimeException("Field '" + input.getName() + "' does not exist in subscription '" + fieldDefinition.getName() + "'.");
       }
-      filters.put(input.getName(), calciteField.getName());
+      filters.put(input.getName(), field.getName());
     }
 
-    String fieldName = graphqlField.getName();
+    Optional<EnginePhysicalPlan> logPlan = getLogPlan();
+
+    String fieldName = fieldDefinition.getName();
+
     SubscriptionCoords subscriptionCoords;
 
-    String topic = (String) log.getConnectorContext().getMap().get("topic");
-    subscriptionCoords = new KafkaSubscriptionCoords(fieldName, topic, Map.of(), filters);
+    if (logPlan.isPresent() && logPlan.get() instanceof KafkaPhysicalPlan) {
+      String topic = (String) log.getConnectorContext().getMap().get("topic");
+      subscriptionCoords = new KafkaSubscriptionCoords(fieldName, topic, Map.of(), filters);
+    } else if (logPlan.isPresent() && logPlan.get() instanceof PostgresLogPhysicalPlan) {
+      String tableName = (String) log.getConnectorContext().getMap().get("table-name");
+
+      ListenNotifyAssets listenNotifyAssets = ((PostgresLogPhysicalPlan) logPlan.get())
+          .getQueries().stream()
+          .filter(query -> query.getListen().getTableName().equals(tableName))
+          .findFirst()
+          .orElseThrow(
+              () -> new RuntimeException("Could not find query statement for table: " + tableName)
+          );
+
+      subscriptionCoords = new PostgresSubscriptionCoords(
+          fieldName, tableName, filters,
+          listenNotifyAssets.getListen().getSql(),
+          listenNotifyAssets.getOnNotify().getSql(),
+          listenNotifyAssets.getParameters());
+    } else if (logPlan.isEmpty()) {
+      throw new RuntimeException("No log plan found. Ensure that a log plan is configured and available.");
+    } else {
+      throw new RuntimeException("Unknown log plan type: " + logPlan.get().getClass().getName());
+    }
 
     subscriptions.add(subscriptionCoords);
   }
@@ -167,6 +194,14 @@ public class GraphqlModelGenerator2 extends GraphqlSchemaWalker2 {
     */
   }
 
+  private Optional<EnginePhysicalPlan> getLogPlan() {
+    //Todo: Bad instance checking, Fix to bring multiple log engines (?)
+    Optional<EnginePhysicalPlan> logPlan = physicalPlan.getStagePlans().stream()
+        .map(PhysicalStagePlan::getPlan)
+        .filter(plan -> plan instanceof KafkaPhysicalPlan || plan instanceof PostgresLogPhysicalPlan)
+        .findFirst();
+    return logPlan;
+  }
 
   @Override
   protected void visitUnknownObject(ObjectTypeDefinition objectType, FieldDefinition field, NamePath path,

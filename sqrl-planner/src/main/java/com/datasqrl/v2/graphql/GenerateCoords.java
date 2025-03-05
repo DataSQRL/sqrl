@@ -2,10 +2,10 @@ package com.datasqrl.v2.graphql;
 
 import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.RootGraphqlModel.StringSchema;
 import com.datasqrl.plan.queries.APISource;
-import com.datasqrl.v2.APIConnectorManager2;
 import com.google.inject.Inject;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
@@ -13,10 +13,10 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor(onConstructor_ = @Inject)
 public class GenerateCoords {
 
-  private final APIConnectorManager2 apiManager;
+  private final APIConnectorManager apiManager;
   private final ErrorCollector errorCollector;
 
-  public void generateCoordsAndUpdateServerPlan(Optional<APISource> source, ServerPhysicalPlan serverPlan) {
+  public void updateServerPlan(Optional<APISource> source, ServerPhysicalPlan serverPlan) {
     GraphqlModelGenerator2 graphqlModelGenerator =
         new GraphqlModelGenerator2(serverPlan.getFunctions(), apiManager, errorCollector);
     graphqlModelGenerator.walkAPISource(source.get());
