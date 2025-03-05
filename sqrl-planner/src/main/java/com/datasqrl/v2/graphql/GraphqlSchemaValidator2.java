@@ -15,6 +15,7 @@ import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.generate.GraphqlSchemaUtil;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.plan.queries.APISource;
+import com.datasqrl.v2.APIConnectorManager2;
 import com.datasqrl.v2.tables.SqrlTableFunction;
 import com.google.common.collect.Iterables;
 import com.google.inject.Inject;
@@ -51,13 +52,13 @@ public class GraphqlSchemaValidator2 extends GraphqlSchemaWalker2 {
   private final ErrorCollector errorCollector;
 
   @Inject
-  public GraphqlSchemaValidator2(List<SqrlTableFunction> tableFunctions, APIConnectorManager apiConnectorManager, ErrorCollector errorCollector) {
+  public GraphqlSchemaValidator2(List<SqrlTableFunction> tableFunctions, APIConnectorManager2 apiConnectorManager, ErrorCollector errorCollector) {
     super(tableFunctions, apiConnectorManager);
     this.errorCollector = errorCollector;
   }
 
   @Override
-  protected void visitSubscription(ObjectTypeDefinition objectType, FieldDefinition field,
+  protected void visitSubscription(ObjectTypeDefinition objectType, FieldDefinition field, SqrlTableFunction tableFunction,
                                    TypeDefinitionRegistry registry, APISource source) {
   }
 
@@ -67,8 +68,8 @@ public class GraphqlSchemaValidator2 extends GraphqlSchemaWalker2 {
     TableSource mutationSink = apiManager.getMutationSource(source,
         Name.system(field.getName()));
     if (mutationSink == null) {
-//      throw createThrowable(fieldDefinition.getSourceLocation(),
-//          "Could not find mutation source: %s.", fieldDefinition.getName());
+      throw createThrowable(field.getSourceLocation(),
+          "Could not find mutation source: %s.", field.getName());
     }
 
     validateStructurallyEqualMutation(field, getValidMutationReturnType(field, registry),
