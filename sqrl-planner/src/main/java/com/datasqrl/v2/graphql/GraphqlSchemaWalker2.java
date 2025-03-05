@@ -8,7 +8,6 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.plan.queries.APISource;
-import com.datasqrl.v2.APIConnectorManager2;
 import com.datasqrl.v2.parser.AccessModifier;
 import com.datasqrl.v2.tables.SqrlTableFunction;
 import graphql.language.FieldDefinition;
@@ -38,9 +37,9 @@ public abstract class GraphqlSchemaWalker2 {
 
 //  protected final SqlNameMatcher nameMatcher;
   protected final List<SqrlTableFunction> tableFunctions;
-  protected final APIConnectorManager2 apiManager;
+  protected final APIConnectorManager apiManager;
 
-  public GraphqlSchemaWalker2(List<SqrlTableFunction> tableFunctions, APIConnectorManager2 apiManager) {
+  public GraphqlSchemaWalker2(List<SqrlTableFunction> tableFunctions, APIConnectorManager apiManager) {
     this.tableFunctions = tableFunctions;
     this.apiManager = apiManager;
   }
@@ -92,7 +91,7 @@ public abstract class GraphqlSchemaWalker2 {
       if (tableFunction.getVisibility().getAccess() == AccessModifier.QUERY) { // walking a query table function
         visitQuery(objectType, atField, tableFunction);
       } else { // walking a subscription table function
-        visitSubscription(objectType, atField, tableFunction, registry, apiSource);
+        visitSubscription(objectType, atField, registry, apiSource);
       }
       RelDataType functionRowType = tableFunction.getRowType();
       walkObjectType(true, objectType, functionPath, Optional.of(functionRowType), registry, apiSource);
@@ -173,7 +172,7 @@ public abstract class GraphqlSchemaWalker2 {
    */
   protected abstract void visitQuery(ObjectTypeDefinition resultType, FieldDefinition field, SqrlTableFunction tableFunction);
 
-  protected abstract void visitSubscription(ObjectTypeDefinition objectType, FieldDefinition field, SqrlTableFunction tableFunction,
+  protected abstract void visitSubscription(ObjectTypeDefinition objectType, FieldDefinition field,
                                             TypeDefinitionRegistry registry, APISource source);
 
   protected abstract void visitMutation(ObjectTypeDefinition objectType, FieldDefinition field, TypeDefinitionRegistry registry,
