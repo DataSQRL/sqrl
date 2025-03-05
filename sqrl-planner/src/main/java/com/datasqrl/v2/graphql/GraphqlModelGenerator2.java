@@ -81,6 +81,7 @@ public class GraphqlModelGenerator2 extends GraphqlSchemaWalker2 {
   @Override
   protected void visitSubscription(ObjectTypeDefinition objectType, FieldDefinition fieldDefinition,
                                    TypeDefinitionRegistry registry, APISource source) {
+    /*
     APISubscription apiSubscription = new APISubscription(Name.system(fieldDefinition.getName()),
         source);
     SqrlTableMacro tableFunction = schema.getTableFunction(fieldDefinition.getName());
@@ -130,6 +131,7 @@ public class GraphqlModelGenerator2 extends GraphqlSchemaWalker2 {
     }
 
     subscriptions.add(subscriptionCoords);
+     */
   }
 
 
@@ -194,7 +196,8 @@ public class GraphqlModelGenerator2 extends GraphqlSchemaWalker2 {
     */
   }
 
-  private Optional<EnginePhysicalPlan> getLogPlan() {
+/*
+private Optional<EnginePhysicalPlan> getLogPlan() {
     //Todo: Bad instance checking, Fix to bring multiple log engines (?)
     Optional<EnginePhysicalPlan> logPlan = physicalPlan.getStagePlans().stream()
         .map(PhysicalStagePlan::getPlan)
@@ -202,6 +205,7 @@ public class GraphqlModelGenerator2 extends GraphqlSchemaWalker2 {
         .findFirst();
     return logPlan;
   }
+  */
 
   @Override
   protected void visitUnknownObject(ObjectTypeDefinition objectType, FieldDefinition field, NamePath path,
