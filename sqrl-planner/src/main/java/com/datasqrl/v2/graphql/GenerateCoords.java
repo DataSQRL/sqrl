@@ -16,7 +16,7 @@ public class GenerateCoords {
   private final APIConnectorManager apiManager;
   private final ErrorCollector errorCollector;
 
-  public void updateServerPlan(Optional<APISource> source, ServerPhysicalPlan serverPlan) {
+  public void generateCoordsAndUpdateServerPlan(Optional<APISource> source, ServerPhysicalPlan serverPlan) {
     GraphqlModelGenerator2 graphqlModelGenerator =
         new GraphqlModelGenerator2(serverPlan.getFunctions(), apiManager, errorCollector);
     graphqlModelGenerator.walkAPISource(source.get());

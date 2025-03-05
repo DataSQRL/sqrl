@@ -311,8 +311,7 @@ public class GraphqlSchemaValidator2 extends GraphqlSchemaWalker2 {
   }
 
   public void validate(APISource source) {
-//TODO re-anble
-      /*    try {
+    try {
       TypeDefinitionRegistry registry = (new SchemaParser()).parse(source.getSchemaDefinition());
       Optional<ObjectTypeDefinition> queryType = getType(registry, () -> getQueryTypeName(registry));
       if (queryType.isEmpty()) {
@@ -322,6 +321,6 @@ public class GraphqlSchemaValidator2 extends GraphqlSchemaWalker2 {
       walkAPISource(source);
     } catch (Exception e) {
       throw errorCollector.handle(e);
-    }*/
+    }
   }
 }

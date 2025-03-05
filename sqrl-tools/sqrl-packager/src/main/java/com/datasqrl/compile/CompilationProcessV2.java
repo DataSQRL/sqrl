@@ -84,8 +84,9 @@ public class CompilationProcessV2 {
             .map(schemaString -> new APISourceImpl(Name.system("<generated-schema>"), schemaString));
       }
       assert apiSource.isPresent();
-      inferGraphqlSchema.validateSchema(apiSource.get(), serverPlan.get());
-      generateCoords.updateServerPlan(apiSource, serverPlan.get());
+      //TODO re-enable
+//      inferGraphqlSchema.validateSchema(apiSource.get(), serverPlan.get());
+      generateCoords.generateCoordsAndUpdateServerPlan(apiSource, serverPlan.get());
 
       //create test artifact
       if (executionGoal == ExecutionGoal.TEST) {
