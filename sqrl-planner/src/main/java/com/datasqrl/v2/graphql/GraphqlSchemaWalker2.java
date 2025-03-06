@@ -87,18 +87,14 @@ public abstract class GraphqlSchemaWalker2 {
      checkState(typeDefOpt.isPresent(), atField.getType().getSourceLocation(), "Could not find object in graphql type registry");
     final TypeDefinition typeDefinition = typeDefOpt.get();
     checkState(typeDefinition instanceof ObjectTypeDefinition, typeDefinition.getSourceLocation(), "Could not infer non-object type on graphql schema: %s", typeDefinition.getName());
-    ObjectTypeDefinition objectType = (ObjectTypeDefinition) typeDefinition;
-    if (seen.contains(objectType)) {
-      return;
-    }
-    seen.add(objectType);
-    if (tableFunction.getVisibility().getAccess() == AccessModifier.QUERY) { // walking a query table function
-      visitQuery(objectType, atField, tableFunction);
-    } else { // walking a subscription table function
-      visitSubscription(objectType, atField, registry, apiSource);
-    }
-    RelDataType functionRowType = tableFunction.getRowType();
-    walkObjectType(true, objectType, functionPath, Optional.of(functionRowType), registry, apiSource);
+      ObjectTypeDefinition objectType = (ObjectTypeDefinition) typeDefinition;
+      if (tableFunction.getVisibility().getAccess() == AccessModifier.QUERY) { // walking a query table function
+        visitQuery(objectType, atField, tableFunction);
+      } else { // walking a subscription table function
+        visitSubscription(objectType, atField, registry, apiSource);
+      }
+      RelDataType functionRowType = tableFunction.getRowType();
+      walkObjectType(true, objectType, functionPath, Optional.of(functionRowType), registry, apiSource);
   }
 
   private void walkObjectType(boolean isFunctionResultType, ObjectTypeDefinition objectType, NamePath functionPath, Optional<RelDataType> relDataType, TypeDefinitionRegistry registry, APISource apiSource) {
