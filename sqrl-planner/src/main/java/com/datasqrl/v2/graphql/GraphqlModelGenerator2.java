@@ -218,11 +218,12 @@ private Optional<EnginePhysicalPlan> getLogPlan() {
                              RelDataType relDataType, RelDataTypeField relDataTypeField) {
     //todo: walk into structured type to check all prop fetchers
 
-    if (hasVaryingCase(field, relDataTypeField)) { //TODO hasVaryingCase still needed ?
+    //TODO hasVaryingCase still needed ?
+//    if (hasVaryingCase(field, relDataTypeField)) {
       FieldLookupCoords fieldLookupCoords = FieldLookupCoords.builder().parentType(objectType.getName())
           .fieldName(field.getName()).columnName(relDataTypeField.getName()).build();
       queryCoords.add(fieldLookupCoords);
-    }
+//    }
 
   }
 
