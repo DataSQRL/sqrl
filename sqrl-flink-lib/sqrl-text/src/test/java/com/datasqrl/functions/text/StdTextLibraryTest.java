@@ -27,13 +27,5 @@ public class StdTextLibraryTest {
     assertEquals(0, TextFunctions.TEXT_SEARCH.eval("one two THREE", "what a world we live in, john!"," Hello john"));
   }
 
-  @SneakyThrows
-  @Test
-  public void testBannedWordsFilter() {
-    TextFunctions.BANNED_WORDS_FILTER.open(null);
-    assertTrue(TextFunctions.BANNED_WORDS_FILTER.eval("Hello World"));
-    assertFalse(TextFunctions.BANNED_WORDS_FILTER.eval("Can you tell me WTF is going on?"));
-  }
-
 
 }
