@@ -44,6 +44,8 @@ import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.plan.queries.IdentifiedQuery;
+import com.datasqrl.schema.Multiplicity;
+import com.datasqrl.v2.tables.SqrlFunctionParameter;
 import com.datasqrl.v2.tables.SqrlTableFunction;
 import com.google.common.base.Preconditions;
 import graphql.language.FieldDefinition;
@@ -61,6 +63,7 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.schema.FunctionParameter;
 
 /**
  * Returns a set of table functions that satisfy a graphql schema
@@ -234,38 +237,53 @@ private Optional<EnginePhysicalPlan> getLogPlan() {
     final ExecutableQuery executableQuery = tableFunction.getExecutableQuery();
     checkState(executableQuery instanceof ExecutableJdbcReadQuery, field.getType().getSourceLocation(), "This table function should be planned as an ExecutableJdbcReadQuery");
     final ExecutableJdbcReadQuery executableJdbcReadQuery = (ExecutableJdbcReadQuery) executableQuery;
+
+
+    List<RootGraphqlModel.JdbcParameterHandler> parameters = new ArrayList<>();
+    for (FunctionParameter functionParameter : tableFunction.getParameters()) {
+      final SqrlFunctionParameter parameter = (SqrlFunctionParameter) functionParameter;
+      parameters.add(
+          parameter.isParentField()
+              ? new RootGraphqlModel.ArgumentParameter(parameter.getName())
+              : new RootGraphqlModel.SourceParameter(parameter.getName()));
+    }
+    RootGraphqlModel.QueryBase queryBase;
+    if (tableFunction.getMultiplicity() == Multiplicity.MANY) { // all queries that can return more than 1 element are paginated
+      switch (executableJdbcReadQuery.getStage().getEngine().getName()) {
+        case "postgres":
+        default:
+          queryBase = new PagedJdbcQuery(executableJdbcReadQuery.getSql(), parameters);
+          break;
+        case "duckdb":
+          queryBase = new PagedDuckDbQuery(executableJdbcReadQuery.getSql(), parameters);
+          break;
+        case "snowflake":
+          queryBase = new PagedSnowflakeDbQuery(executableJdbcReadQuery.getSql(), parameters);
+          break;
+      }
+    } else { // query returns a single element, it does not require pagination
+      switch (executableJdbcReadQuery.getStage().getEngine().getName()) {
+        case "postgres":
+        default:
+          queryBase = new JdbcQuery(executableJdbcReadQuery.getSql(), parameters);
+          break;
+        case "duckdb":
+          queryBase = new DuckDbQuery(executableJdbcReadQuery.getSql(), parameters);
+          break;
+        case "snowflake":
+          queryBase = new SnowflakeDbQuery(executableJdbcReadQuery.getSql(), parameters);
+          break;
+      }
+    }
+
     ArgumentLookupCoords.ArgumentLookupCoordsBuilder coordsBuilder = ArgumentLookupCoords.builder()
         .parentType(resultType.getName()).fieldName(field.getName());
     ArgumentSet set = ArgumentSet.builder().arguments(createArguments(field))
-            .query(new ExecutableQueryToQueryBaseWrapper(executableJdbcReadQuery)).build();
+            .query(queryBase).build();
 
     coordsBuilder.match(set);
 
     queryCoords.add(coordsBuilder.build());
-  }
-
-  //TODO temporary: ths is just for model generation and serialization, need to adapt when implementing the vertx query runtime
-  // Need to have access to ExecutableJdbcReadQuery from RootGraphQLModel but ExecutableJdbcReadQuery belongs to sqrl-planner module
-  // and RootGraphQLModel belongs to sqrl-server-core module. Adding a dep to sqrl-planner in sqrl-server-core would create circular dependencies
-  // hence ExecutableQueryToQueryBaseWrapper is not added to the subtypes in json serialization of QueryBase. So, toString not called.
-  public static class ExecutableQueryToQueryBaseWrapper implements RootGraphqlModel.QueryBase {
-    private final ExecutableJdbcReadQuery executableJdbcReadQuery;
-    public ExecutableQueryToQueryBaseWrapper(ExecutableJdbcReadQuery executableJdbcReadQuery) {
-      this.executableJdbcReadQuery = executableJdbcReadQuery;
-    }
-
-    @Override
-    public String toString() {
-      return String.format("{\n" +
-              "              \"type\" : \"ExecutableJdbcReadQuery\",\n" +
-              "              \"sql\" : \"%s\"\n}", executableJdbcReadQuery.getSql()
-      );
-    }
-
-    @Override
-    public <R, C> R accept(RootGraphqlModel.QueryBaseVisitor<R, C> visitor, C context) {
-      return null;
-    }
   }
 
   private static Set<Argument> createArguments(FieldDefinition field) {
