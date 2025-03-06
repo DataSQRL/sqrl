@@ -1,6 +1,7 @@
 package com.datasqrl.v2.graphql;
 
 import static com.datasqrl.graphql.generate.GraphqlSchemaUtil.hasVaryingCase;
+import static com.datasqrl.graphql.util.GraphqlCheckUtil.checkState;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.function.SqrlTableMacro;
@@ -217,10 +218,10 @@ private Optional<EnginePhysicalPlan> getLogPlan() {
                              RelDataType relDataType, RelDataTypeField relDataTypeField) {
     //todo: walk into structured type to check all prop fetchers
 
-    if (hasVaryingCase(field, relDataTypeField)) {
-      FieldLookupCoords build = FieldLookupCoords.builder().parentType(objectType.getName())
+    if (hasVaryingCase(field, relDataTypeField)) { //TODO hasVaryingCase still needed ?
+      FieldLookupCoords fieldLookupCoords = FieldLookupCoords.builder().parentType(objectType.getName())
           .fieldName(field.getName()).columnName(relDataTypeField.getName()).build();
-      queryCoords.add(build);
+      queryCoords.add(fieldLookupCoords);
     }
 
   }
@@ -230,25 +231,34 @@ private Optional<EnginePhysicalPlan> getLogPlan() {
     // As we no more merge user provided graphQL schema with the inferred schema, we no more need to generate as many queries as the permutations of its arguments.
     // We now have a single executable query linked to the table function and already fully defined
     final ExecutableQuery executableQuery = tableFunction.getExecutableQuery();
+    checkState(executableQuery instanceof ExecutableJdbcReadQuery, field.getType().getSourceLocation(), "This table function should be planned as an ExecutableJdbcReadQuery");
+    final ExecutableJdbcReadQuery executableJdbcReadQuery = (ExecutableJdbcReadQuery) executableQuery;
     ArgumentLookupCoords.ArgumentLookupCoordsBuilder coordsBuilder = ArgumentLookupCoords.builder()
         .parentType(resultType.getName()).fieldName(field.getName());
     ArgumentSet set = ArgumentSet.builder().arguments(createArguments(field))
-            .query(new ExecutableQueryToQueryBaseWrapper(executableQuery)).build();
+            .query(new ExecutableQueryToQueryBaseWrapper(executableJdbcReadQuery)).build();
 
     coordsBuilder.match(set);
 
     queryCoords.add(coordsBuilder.build());
   }
 
-  //TODO temporary ths is just for model generation, need to wire up all types of queries (paginated or not, snowflake, jdbc, duckdb)
-  private static class ExecutableQueryToQueryBaseWrapper implements RootGraphqlModel.QueryBase {
-    String sql = "";
-    public ExecutableQueryToQueryBaseWrapper(ExecutableQuery executableQuery) {
-      //TODO very bad temporary code
-      if (executableQuery instanceof ExecutableJdbcReadQuery) {
-        final ExecutableJdbcReadQuery executableJdbcReadQuery = (ExecutableJdbcReadQuery) executableQuery;
-        this.sql = executableJdbcReadQuery.getSql();
-      }
+  //TODO temporary: ths is just for model generation and serialization, need to adapt when implementing the vertx query runtime
+  // Need to have access to ExecutableJdbcReadQuery from RootGraphQLModel but ExecutableJdbcReadQuery belongs to sqrl-planner module
+  // and RootGraphQLModel belongs to sqrl-server-core module. Adding a dep to sqrl-planner in sqrl-server-core would create circular dependencies
+  // hence ExecutableQueryToQueryBaseWrapper is not added to the subtypes in json serialization of QueryBase. So, toString not called.
+  public static class ExecutableQueryToQueryBaseWrapper implements RootGraphqlModel.QueryBase {
+    private final ExecutableJdbcReadQuery executableJdbcReadQuery;
+    public ExecutableQueryToQueryBaseWrapper(ExecutableJdbcReadQuery executableJdbcReadQuery) {
+      this.executableJdbcReadQuery = executableJdbcReadQuery;
+    }
+
+    @Override
+    public String toString() {
+      return String.format("{\n" +
+              "              \"type\" : \"ExecutableJdbcReadQuery\",\n" +
+              "              \"sql\" : \"%s\"\n}", executableJdbcReadQuery.getSql()
+      );
     }
 
     @Override
