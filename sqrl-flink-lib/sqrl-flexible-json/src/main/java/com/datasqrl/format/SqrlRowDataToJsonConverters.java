@@ -9,6 +9,10 @@ import org.apache.flink.table.data.binary.BinaryRawValueData;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.RawType;
 
+/**
+ * Extends the {@link RowDataToJsonConverters} to add support for FlinkJsonType
+ * by serializing it as json and not string
+ */
 public class SqrlRowDataToJsonConverters extends RowDataToJsonConverters {
 
   public SqrlRowDataToJsonConverters(TimestampFormat timestampFormat,

@@ -4,16 +4,16 @@
 package com.datasqrl.io.schema.flexible.external;
 
 import com.datasqrl.canonicalizer.SpecialName;
-import com.datasqrl.schema.constraint.Constraint;
-import com.datasqrl.schema.input.FlexibleFieldSchema;
-import com.datasqrl.schema.input.FlexibleTableSchema;
-import com.datasqrl.schema.input.RelationType;
-import com.datasqrl.schema.input.external.AbstractElementDefinition;
-import com.datasqrl.schema.input.external.FieldDefinition;
-import com.datasqrl.schema.input.external.FieldTypeDefinitionImpl;
-import com.datasqrl.schema.input.external.TableDefinition;
-import com.datasqrl.schema.type.Type;
-import com.datasqrl.schema.type.basic.BasicType;
+import com.datasqrl.io.schema.flexible.constraint.Constraint;
+import com.datasqrl.io.schema.flexible.input.FlexibleFieldSchema;
+import com.datasqrl.io.schema.flexible.input.FlexibleTableSchema;
+import com.datasqrl.io.schema.flexible.input.RelationType;
+import com.datasqrl.io.schema.flexible.input.external.AbstractElementDefinition;
+import com.datasqrl.io.schema.flexible.input.external.FieldDefinition;
+import com.datasqrl.io.schema.flexible.input.external.FieldTypeDefinitionImpl;
+import com.datasqrl.io.schema.flexible.input.external.TableDefinition;
+import com.datasqrl.io.schema.flexible.type.Type;
+import com.datasqrl.io.schema.flexible.type.basic.BasicType;
 
 import com.google.common.base.Preconditions;
 import java.util.List;

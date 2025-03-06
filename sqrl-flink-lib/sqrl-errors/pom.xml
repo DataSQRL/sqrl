@@ -37,12 +37,6 @@
     <developerConnection>scm:git:https://github.com/DataSQRL/sqrl.git</developerConnection>
     <tag>HEAD</tag>
   </scm>
-  <dependencies>
-    <!--    <dependency>-->
-    <!--      <groupId>com.datasqrl</groupId>-->
-    <!--      <artifactId>sqrl-name</artifactId>-->
-    <!--    </dependency>-->
-  </dependencies>
   <build>
     <plugins>
       <plugin>

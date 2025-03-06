@@ -4,7 +4,7 @@ import static org.apache.kafka.clients.admin.AdminClientConfig.BOOTSTRAP_SERVERS
 import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
 import static org.junit.jupiter.api.Assertions.fail;
 
-import com.datasqrl.canonicalizer.NameCanonicalizer;
+
 import com.datasqrl.graphql.config.CorsHandlerOptions;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.config.ServletConfig;
@@ -97,7 +97,7 @@ class GraphQLJwtHandlerTest {
     serverConfig.setCorsHandlerOptions(new CorsHandlerOptions());
     HttpServerOptions httpServerOptions = new HttpServerOptions().setPort(8888).setHost("localhost");
     serverConfig.setHttpServerOptions(httpServerOptions);
-    server = new GraphQLServer(root, serverConfig, NameCanonicalizer.SYSTEM, Optional.empty());
+    server = new GraphQLServer(root, serverConfig, Optional.empty());
     vertx.deployVerticle(server)
         .onSuccess((c)->testContext.completeNow())
         .onFailure((c)->fail("Could not start")).toCompletionStage().toCompletableFuture().get();

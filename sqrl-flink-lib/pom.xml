@@ -67,12 +67,6 @@
 
       <dependency>
         <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-errors</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-flexible-csv</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -110,18 +104,6 @@
       <dependency>
         <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-json</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-name</artifactId>
         <version>${project.version}</version>
       </dependency>
 

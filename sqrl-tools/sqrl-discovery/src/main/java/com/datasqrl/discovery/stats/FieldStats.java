@@ -5,12 +5,12 @@ package com.datasqrl.discovery.stats;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
-import com.datasqrl.schema.input.RelationType;
-import com.datasqrl.schema.input.TypeSignature.Simple;
-import com.datasqrl.schema.input.TypeSignatureUtil;
-import com.datasqrl.schema.type.Type;
-import com.datasqrl.schema.type.basic.BasicType;
-import com.datasqrl.schema.type.basic.BasicTypeManager;
+import com.datasqrl.io.schema.flexible.input.RelationType;
+import com.datasqrl.io.schema.flexible.input.TypeSignature.Simple;
+import com.datasqrl.io.schema.flexible.input.TypeSignatureUtil;
+import com.datasqrl.io.schema.flexible.type.Type;
+import com.datasqrl.io.schema.flexible.type.basic.BasicType;
+import com.datasqrl.io.schema.flexible.type.basic.BasicTypeManager;
 import java.io.Serializable;
 import java.util.Comparator;
 import java.util.HashMap;

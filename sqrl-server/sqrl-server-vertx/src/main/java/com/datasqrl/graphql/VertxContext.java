@@ -1,7 +1,5 @@
 package com.datasqrl.graphql;
 
-import com.datasqrl.canonicalizer.NameCanonicalizer;
-import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.graphql.io.SinkProducer;
 import com.datasqrl.graphql.kafka.KafkaDataFetcherFactory;
 import com.datasqrl.graphql.postgres_log.PostgresDataFetcherFactory;
@@ -44,7 +42,6 @@ public class VertxContext implements Context {
 
   private static final Logger log = LoggerFactory.getLogger(VertxContext.class);
   VertxJdbcClient sqlClient;
-  NameCanonicalizer canonicalizer;
 
   @Override
   public JdbcClient getClient() {

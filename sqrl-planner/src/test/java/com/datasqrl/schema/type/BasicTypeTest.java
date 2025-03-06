@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.schema.type.basic.TimestampType;
+import com.datasqrl.io.schema.flexible.type.basic.TimestampType;
 import java.time.Instant;
 import java.util.Optional;
 

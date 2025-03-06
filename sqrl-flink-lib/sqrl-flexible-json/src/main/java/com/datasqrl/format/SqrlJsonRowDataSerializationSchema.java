@@ -42,7 +42,8 @@ import java.util.Objects;
  * <p>Result <code>byte[]</code> messages can be deserialized using {@link
  * JsonRowDataDeserializationSchema}.
  *
- * SQRL: Copied from flink to override the runtimeConverter
+ * == CHANGES MADE BY SQRL ==
+ * - overwrites runtimeConverter with {@link SqrlRowDataToJsonConverters} to add support for SQRL types
  */
 @Internal
 public class SqrlJsonRowDataSerializationSchema implements SerializationSchema<RowData> {

@@ -3,7 +3,7 @@
  */
 package com.datasqrl.io.schema.flexible.external;
 
-import com.datasqrl.schema.input.external.DatasetDefinition;
+import com.datasqrl.io.schema.flexible.input.external.DatasetDefinition;
 import com.datasqrl.util.StringNamedId;
 import java.io.Serializable;
 import java.util.Collections;

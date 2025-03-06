@@ -4,7 +4,6 @@
 package com.datasqrl;
 
 
-import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.graphql.GraphQLServer;
 import com.datasqrl.graphql.JsonEnvVarDeserializer;
 import com.datasqrl.graphql.config.ServerConfig;
@@ -373,8 +372,7 @@ public class DatasqrlRun {
           .setDatabase(getenv("PGDATABASE"));
     }
 
-    GraphQLServer server = new GraphQLServer(rootGraphqlModel, serverConfig,
-        NameCanonicalizer.SYSTEM, getSnowflakeUrl());
+    GraphQLServer server = new GraphQLServer(rootGraphqlModel, serverConfig, getSnowflakeUrl());
 
     PrometheusMeterRegistry prometheusMeterRegistry = new PrometheusMeterRegistry(
         PrometheusConfig.DEFAULT);

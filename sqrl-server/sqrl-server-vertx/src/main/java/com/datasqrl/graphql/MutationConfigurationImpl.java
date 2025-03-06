@@ -5,7 +5,6 @@ import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
 import static org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG;
 import static org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG;
 
-import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.io.SinkProducer;
 import com.datasqrl.graphql.kafka.KafkaSinkProducer;
@@ -69,7 +68,7 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
               .onSuccess(sinkResult->{
                 //Add timestamp from sink to result
                 ZonedDateTime dateTime = ZonedDateTime.ofInstant(sinkResult.getSourceTime(), ZoneOffset.UTC);
-                entry.put(ReservedName.MUTATION_TIME.getCanonical(), dateTime.toOffsetDateTime());
+                entry.put("event_time", dateTime.toOffsetDateTime());
 
                 fut.complete(entry);
               })
@@ -121,7 +120,7 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
 
     //Add UUID for event
     UUID uuid = UUID.randomUUID();
-    entry.put(ReservedName.MUTATION_PRIMARY_KEY.getDisplay(), uuid);
+    entry.put("_uuid", uuid);
     return entry;
   }
 

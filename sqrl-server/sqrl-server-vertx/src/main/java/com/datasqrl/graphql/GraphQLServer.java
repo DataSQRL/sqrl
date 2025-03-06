@@ -3,7 +3,6 @@
  */
 package com.datasqrl.graphql;
 
-import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.graphql.config.CorsHandlerOptions;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
@@ -57,7 +56,6 @@ import org.duckdb.DuckDBDriver;
 public class GraphQLServer extends AbstractVerticle {
 
   private final RootGraphqlModel model;
-  private final NameCanonicalizer canonicalizer;
   private final Optional<String> snowflakeUrl;
   private ServerConfig config;
 
@@ -79,7 +77,7 @@ public class GraphQLServer extends AbstractVerticle {
   }
 
   public GraphQLServer() {
-    this(readModel(), null, NameCanonicalizer.SYSTEM, readSnowflakeUrl());
+    this(readModel(), null, readSnowflakeUrl());
   }
 
   @SneakyThrows
@@ -102,11 +100,9 @@ public class GraphQLServer extends AbstractVerticle {
     return Optional.of(url);
   }
 
-  public GraphQLServer(RootGraphqlModel model, ServerConfig config, NameCanonicalizer canonicalizer,
-      Optional<String> snowflakeUrl) {
+  public GraphQLServer(RootGraphqlModel model, ServerConfig config, Optional<String> snowflakeUrl) {
     this.model = model;
     this.config = config;
-    this.canonicalizer = canonicalizer;
     this.snowflakeUrl = snowflakeUrl;
   }
 
@@ -334,7 +330,7 @@ public class GraphQLServer extends AbstractVerticle {
                   new SubscriptionConfigurationImpl(model, vertx, config, startPromise, vertxJdbcClient)
               )
               .build(),
-          new VertxContext(vertxJdbcClient, canonicalizer));
+          new VertxContext(vertxJdbcClient));
       MeterRegistry meterRegistry = BackendRegistries.getDefaultNow();
       if (meterRegistry != null) {
         graphQL.instrumentation(new MicrometerInstrumentation(meterRegistry));

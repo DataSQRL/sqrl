@@ -3,14 +3,13 @@ package com.datasqrl.io.schema.flexible;
 import com.datasqrl.config.TableConfig;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSchemaFactory;
-import com.datasqrl.schema.input.FlexibleTableSchema;
+import com.datasqrl.io.schema.flexible.input.FlexibleTableSchema;
 import com.datasqrl.serializer.Deserializer;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
-import com.datasqrl.schema.constraint.Constraint;
+import com.datasqrl.io.schema.flexible.constraint.Constraint;
 import com.datasqrl.io.schema.flexible.external.SchemaImport;
-import com.datasqrl.schema.input.external.TableDefinition;
+import com.datasqrl.io.schema.flexible.input.external.TableDefinition;
 import com.google.auto.service.AutoService;
-import java.net.URI;
 import java.nio.file.Path;
 import java.util.Optional;
 

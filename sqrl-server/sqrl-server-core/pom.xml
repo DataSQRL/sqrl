@@ -17,10 +17,6 @@
   <!-- Minimal dependency pom for lightweight jars-->
   <dependencies>
     <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-name</artifactId>
-    </dependency>
-    <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
     </dependency>

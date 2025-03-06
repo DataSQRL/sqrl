@@ -3,20 +3,17 @@
  */
 package com.datasqrl.io.schema.flexible;
 
-import com.datasqrl.io.tables.TableSchema;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.schema.constraint.Cardinality;
-import com.datasqrl.schema.constraint.ConstraintHelper;
-import com.datasqrl.schema.input.FlexibleFieldSchema;
-import com.datasqrl.schema.input.FlexibleSchemaHelper;
-import com.datasqrl.schema.input.FlexibleTableSchema;
-import com.datasqrl.schema.input.RelationType;
-import com.datasqrl.schema.type.Type;
+import com.datasqrl.io.schema.flexible.constraint.Cardinality;
+import com.datasqrl.io.schema.flexible.constraint.ConstraintHelper;
+import com.datasqrl.io.schema.flexible.input.FlexibleFieldSchema;
+import com.datasqrl.io.schema.flexible.input.FlexibleSchemaHelper;
+import com.datasqrl.io.schema.flexible.input.FlexibleTableSchema;
+import com.datasqrl.io.schema.flexible.input.RelationType;
+import com.datasqrl.io.schema.flexible.type.Type;
 import lombok.AllArgsConstructor;
 import lombok.Value;
-
-import java.util.Optional;
 
 @Value
 @AllArgsConstructor

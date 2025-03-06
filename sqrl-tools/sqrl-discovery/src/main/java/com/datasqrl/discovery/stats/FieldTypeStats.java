@@ -4,8 +4,8 @@
 package com.datasqrl.discovery.stats;
 
 import com.datasqrl.canonicalizer.NameCanonicalizer;
-import com.datasqrl.schema.input.TypeSignature;
-import com.datasqrl.schema.type.Type;
+import com.datasqrl.io.schema.flexible.input.TypeSignature;
+import com.datasqrl.io.schema.flexible.type.Type;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.Objects;

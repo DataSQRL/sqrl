@@ -3,11 +3,16 @@
  */
 package com.datasqrl.schema;
 
-import com.datasqrl.schema.type.basic.*;
+import com.datasqrl.io.schema.flexible.type.basic.BasicType;
+import com.datasqrl.io.schema.flexible.type.basic.BasicTypeManager;
+import com.datasqrl.io.schema.flexible.type.basic.BigIntType;
+import com.datasqrl.io.schema.flexible.type.basic.DoubleType;
+import com.datasqrl.io.schema.flexible.type.basic.IntervalType;
+import com.datasqrl.io.schema.flexible.type.basic.StringType;
+import com.datasqrl.io.schema.flexible.type.basic.TimestampType;
 import com.datasqrl.util.SnapshotTest;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 

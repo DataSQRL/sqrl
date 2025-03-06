@@ -2,14 +2,10 @@ package com.datasqrl.discovery.preprocessor;
 
 
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.ConnectorConf;
 import com.datasqrl.config.ConnectorConf.Context;
-import com.datasqrl.config.ConnectorFactory;
-import com.datasqrl.config.ConnectorFactoryContext;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.SystemBuiltInConnectors;
-import com.datasqrl.config.TableConfig;
 import com.datasqrl.discovery.TableWriter;
 import com.datasqrl.discovery.file.FileCompression;
 import com.datasqrl.discovery.file.FileCompression.CompressionIO;
@@ -19,11 +15,10 @@ import com.datasqrl.discovery.file.RecordReader;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.schema.flexible.FlexibleTableSchemaHolder;
 import com.datasqrl.io.schema.flexible.converters.SchemaToRelDataTypeFactory;
-import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.discovery.stats.DefaultSchemaGenerator;
 import com.datasqrl.discovery.stats.SourceTableStatistics;
-import com.datasqrl.schema.input.FlexibleTableSchema;
-import com.datasqrl.schema.input.SchemaAdjustmentSettings;
+import com.datasqrl.io.schema.flexible.input.FlexibleTableSchema;
+import com.datasqrl.io.schema.flexible.input.SchemaAdjustmentSettings;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.datasqrl.v2.tables.FlinkTableBuilder;

@@ -2,7 +2,7 @@ package datasqrl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.datasqrl.schema.input.external.TableDefinition;
+import com.datasqrl.io.schema.flexible.input.external.TableDefinition;
 import com.datasqrl.serializer.Deserializer;
 import java.nio.file.Path;
 import java.util.ArrayList;

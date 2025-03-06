@@ -12,7 +12,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import com.datasqrl.graphql.server.RootGraphqlModel;
@@ -167,7 +166,7 @@ class WriteTest {
             .withMutationConfiguration(new MutationConfigurationImpl(model, vertx, config))
             .withSubscriptionConfiguration(new SubscriptionConfigurationImpl(model, vertx, config, Promise.promise(), null))
             .build(),
-        new VertxContext(new VertxJdbcClient(Map.of("postgres",client)), NameCanonicalizer.SYSTEM))
+        new VertxContext(new VertxJdbcClient(Map.of("postgres",client))))
         .build();
 
     ExecutionInput executionInput = ExecutionInput.newExecutionInput()

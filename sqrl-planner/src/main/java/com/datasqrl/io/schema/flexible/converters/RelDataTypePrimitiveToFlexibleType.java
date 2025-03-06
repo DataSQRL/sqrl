@@ -1,12 +1,12 @@
 package com.datasqrl.io.schema.flexible.converters;
 
-import com.datasqrl.schema.type.ArrayType;
-import com.datasqrl.schema.type.Type;
-import com.datasqrl.schema.type.basic.BooleanType;
-import com.datasqrl.schema.type.basic.TimestampType;
-import com.datasqrl.schema.type.basic.DoubleType;
-import com.datasqrl.schema.type.basic.BigIntType;
-import com.datasqrl.schema.type.basic.StringType;
+import com.datasqrl.io.schema.flexible.type.ArrayType;
+import com.datasqrl.io.schema.flexible.type.Type;
+import com.datasqrl.io.schema.flexible.type.basic.BooleanType;
+import com.datasqrl.io.schema.flexible.type.basic.TimestampType;
+import com.datasqrl.io.schema.flexible.type.basic.DoubleType;
+import com.datasqrl.io.schema.flexible.type.basic.BigIntType;
+import com.datasqrl.io.schema.flexible.type.basic.StringType;
 import org.apache.calcite.rel.type.RelDataType;
 
 public class RelDataTypePrimitiveToFlexibleType {
