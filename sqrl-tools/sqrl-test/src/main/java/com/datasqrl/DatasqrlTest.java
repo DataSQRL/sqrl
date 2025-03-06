@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -27,7 +28,23 @@ import org.apache.flink.core.execution.JobClient;
 import org.apache.flink.runtime.client.JobExecutionException;
 import org.apache.flink.table.api.TableResult;
 
+/**
+ * The test runner executes the test against the running DataSQRL pipeline and snapshots the results.
+ * Snapshotting means that the results of queries are written to files on the first run and subsequently
+ * compared to prior snapshots. A test fails if a snapshot does not yet exist or is not identical to the
+ * existing snapshot.
+ *
+ * The test runner executes as follows:
+ * 1. Run the DataSQRL pipeline via {@link DatasqrlRun}
+ * 2. Execute mutation queries against the API and snapshot results
+ * 3. Wait for the Flink job to finish or the configured delay
+ * 4. Run the queries against the API and snapshot the results
+ * 5. Print the test results on the command line
+ */
 public class DatasqrlTest {
+
+  //Number of seconds we wait for Flink job to process all the data
+  public static final int DEFAULT_DELAY_SEC = 30;
 
   private final Path basePath;
   private final Path planPath;
@@ -54,46 +71,50 @@ public class DatasqrlTest {
 
   @SneakyThrows
   public int run() {
+    ObjectMapper objectMapper = new ObjectMapper();
+
+    //1. Run the DataSQRL pipeline via {@link DatasqrlRun}
     DatasqrlRun run = new DatasqrlRun(planPath, env);
+    Map compilerMap = (Map) run.getPackageJson().get("compiler");
+    //Initialize snapshot directory
+    String snapshotPathString = (String) compilerMap.get("snapshotPath");
+    Path snapshotDir = Path.of(snapshotPathString);
+    // Check if the directory exists, create it if it doesn’t
+    if (!Files.exists(snapshotDir)) {
+      Files.createDirectories(snapshotDir);
+    }
+    //Collects all exceptions during the testing
     List<Exception> exceptions = new ArrayList<>();
+    //Retrieve test plan
+    Optional<TestPlan> testPlanOpt = Optional.empty();
+
+    //It is possible that no test plan exists, such as no test queries.
+    // We still run it for exports or other explicit tests the user created outside the test framework
+    if (Files.exists(planPath.resolve("test.json"))) {
+      testPlanOpt = Optional.of(objectMapper.readValue(planPath.resolve("test.json").toFile(),
+          TestPlan.class));
+    }
 
     try {
       TableResult result = run.run(false);
-
-      ObjectMapper objectMapper = new ObjectMapper();
-      //todo add file check
-
+      //todo add file check instead of sleeping to make sure pipeline has started
       Thread.sleep(1000);
 
-      Map compilerMap = (Map) run.getPackageJson().get("compiler");
-      String snapshotPathString = (String) compilerMap.get("snapshotPath");
-      Path snapshotDir = Path.of(snapshotPathString);
-
-      // Check if the directory exists, create it if it doesn’t
-      if (!Files.exists(snapshotDir)) {
-        Files.createDirectories(snapshotDir);
-      }
-
-
-      //It is possible that no test plan exists, such as no test queries.
-      // We will still let exports run, though we may want to replace them with blackhole sinks
-      if (Files.exists(planPath.resolve("test.json"))) {
-
-        TestPlan testPlan = objectMapper.readValue(planPath.resolve("test.json").toFile(),
-            TestPlan.class);
-        for (GraphqlQuery query : testPlan.getMutations()) {
-          //Execute queries
+      //2. Execute mutation queries against the API and snapshot results
+      if (testPlanOpt.isPresent()) {
+        for (GraphqlQuery query : testPlanOpt.get().getMutations()) {
+          //Execute mutation queries
           String data = executeQuery(query.getQuery());
-
           //Snapshot result
           Path snapshotPath = snapshotDir.resolve(query.getName() + ".snapshot");
           snapshot(snapshotPath, query.getName(), data, exceptions);
         }
       }
 
-      long delaySec = 30;
+      //3. Wait for the Flink job to finish or the configured delay
+      long delaySec = DEFAULT_DELAY_SEC;
       int requiredCheckpoints = 0;
-      //todo: fix get package json
+      //todo: fix inject PackageJson and retrieve through interface
       Object testRunner = run.getPackageJson().get("test-runner");
       if (testRunner instanceof Map) {
         Map testRunnerMap = (Map) testRunner;
@@ -148,10 +169,9 @@ public class DatasqrlTest {
       } catch (Exception e) {
       }
 
-      if (Files.exists(planPath.resolve("test.json"))) {
-
-        TestPlan testPlan = objectMapper.readValue(planPath.resolve("test.json").toFile(),
-            TestPlan.class);
+      //4. Run the queries against the API and snapshot the results
+      if (testPlanOpt.isPresent()) {
+        TestPlan testPlan = testPlanOpt.get();
         for (GraphqlQuery query : testPlan.getQueries()) {
           //Execute queries
           String data = executeQuery(query.getQuery());
@@ -186,6 +206,7 @@ public class DatasqrlTest {
       Thread.sleep(1000); //wait for log lines to clear out
     }
 
+    //5. Print the test results on the command line
     int exitCode = 0;
     if (!exceptions.isEmpty()) {
       for (Exception e : exceptions) {
@@ -218,7 +239,6 @@ public class DatasqrlTest {
         }
       }
     }
-
     return exitCode;
   }
 

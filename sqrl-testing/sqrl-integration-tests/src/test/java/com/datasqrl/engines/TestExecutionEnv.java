@@ -3,9 +3,7 @@ package com.datasqrl.engines;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import com.datasqrl.DatasqrlTest;
-import com.datasqrl.DatasqrlTest.TestPlan;
 import com.datasqrl.FullUsecasesIT.UseCaseTestParameter;
-import com.datasqrl.MissingSnapshotException;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.engines.TestEngine.DuckdbTestEngine;
 import com.datasqrl.engines.TestEngine.FlinkTestEngine;
@@ -41,7 +39,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import scala.annotation.meta.param;
 
 @AllArgsConstructor
 public class TestExecutionEnv implements TestEngineVisitor<Void, TestEnvContext> {

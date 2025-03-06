@@ -120,10 +120,10 @@ To preserve inserted data between runs, mount a directory for RedPanda to persis
 <TabItem value="Docker" default>
 
 ```bash
-docker run -it -p 8888:8888 -p 8081:8081 -p 9092:9092 --rm -v $PWD:/build datasqrl/cmd run myscript.sqrl
+docker run -it -p 8888:8888 -p 8081:8081 -p 9092:9092 --rm -v /mydata/project:/data/redpanda -v $PWD:/build datasqrl/cmd run myscript.sqrl
 ```
 
-The volume mount contains the data written to the log engine.
+The volume mount contains the data written to the log engine and persists it to the local `/mydata/project` directory where you want to store the data (adjust as needed and make sure the directory exists).
 
 </TabItem>
 </Tabs>
