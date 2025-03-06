@@ -73,21 +73,20 @@ public abstract class GraphqlSchemaWalker2 {
 
 
 
-  private void walkRootType(ObjectTypeDefinition graphQlType, TypeDefinitionRegistry registry, APISource apiSource) {
-    for (FieldDefinition field : graphQlType.getFieldDefinitions()) { // fields are root table functions
+  private void walkRootType(ObjectTypeDefinition rootType, TypeDefinitionRegistry registry, APISource apiSource) {
+    for (FieldDefinition field : rootType.getFieldDefinitions()) { // fields are root table functions
       final NamePath fieldPath = NamePath.of(field.getName());
-      walkTableFunction(field, fieldPath, getTableFunctionFromPath(fieldPath).get(), registry, apiSource);
+      walkTableFunction(rootType, field, fieldPath, getTableFunctionFromPath(fieldPath).get(), registry, apiSource);
     }
   }
 
 
-  private void walkTableFunction (FieldDefinition atField, NamePath functionPath,
+  private void walkTableFunction (ObjectTypeDefinition objectType, FieldDefinition atField, NamePath functionPath,
                                  SqrlTableFunction tableFunction, TypeDefinitionRegistry registry, APISource apiSource) {
      Optional<TypeDefinition> typeDefOpt = registry.getType(atField.getType());
      checkState(typeDefOpt.isPresent(), atField.getType().getSourceLocation(), "Could not find object in graphql type registry");
     final TypeDefinition typeDefinition = typeDefOpt.get();
     checkState(typeDefinition instanceof ObjectTypeDefinition, typeDefinition.getSourceLocation(), "Could not infer non-object type on graphql schema: %s", typeDefinition.getName());
-      ObjectTypeDefinition objectType = (ObjectTypeDefinition) typeDefinition;
       if (tableFunction.getVisibility().getAccess() == AccessModifier.QUERY) { // walking a query table function
         visitQuery(objectType, atField, tableFunction);
       } else { // walking a subscription table function
@@ -112,7 +111,7 @@ public abstract class GraphqlSchemaWalker2 {
       if (isFunctionResultType) {
         final Optional<SqrlTableFunction> relationship = getTableFunctionFromPath(fieldPath);
         if (relationship.isPresent()) { // the field is a relationship field, walk the related table relationship
-          walkTableFunction(field, fieldPath, relationship.get(), registry, apiSource); // there is no more nested relationships, so this method will not be recursively called
+          walkTableFunction(objectType, field, fieldPath, relationship.get(), registry, apiSource); // there is no more nested relationships, so this method will not be recursively called
           continue;
         }
       }
