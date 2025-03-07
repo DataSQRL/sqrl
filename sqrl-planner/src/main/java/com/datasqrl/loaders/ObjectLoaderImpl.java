@@ -25,10 +25,8 @@ import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.StringUtil;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Preconditions;
-import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -37,7 +35,6 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
-import org.apache.commons.io.IOUtils;
 import org.apache.flink.table.functions.UserDefinedFunction;
 
 public class ObjectLoaderImpl implements ObjectLoader {
@@ -85,6 +82,12 @@ public class ObjectLoaderImpl implements ObjectLoader {
       if (sqrlFile.isPresent() && graphqlFile.isEmpty()) {
         return Optional.of(loadScript(directory, sqrlFile.get()));
       }
+      Optional<Path> pyFile =
+          getFile(directory, Name.system(directory.getLast().toString() + ".py"));
+
+      if (pyFile.isPresent()) {
+        return Optional.of(loadPythonFile(pyFile.get(), directory));
+      }
     }
 
     List<NamespaceObject> items = allItems.stream()
@@ -102,12 +105,17 @@ public class ObjectLoaderImpl implements ObjectLoader {
   }
 
   private List<? extends NamespaceObject> load(Path path, NamePath directory, List<Path> allItems) {
-   if (path.toString().endsWith(DataSource.TABLE_FILE_SUFFIX)) {
+    String pathStr = path.toString().toLowerCase();
+    if (pathStr.endsWith(DataSource.TABLE_FILE_SUFFIX)) {
       return loadTable(path, directory, allItems);
-    } else if (path.toString().endsWith(FUNCTION_JSON)) {
+    } else if (pathStr.endsWith(FUNCTION_JSON)) {
       return loadFunction(path, directory);
     }
     return List.of();
+  }
+
+  private PythonSqrlModule loadPythonFile(Path path, NamePath directory) {
+    return new PythonSqrlModule(path, directory, sqrlConfig);
   }
 
   @SneakyThrows

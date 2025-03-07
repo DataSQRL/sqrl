@@ -47,6 +47,7 @@ import org.apache.flink.sql.parser.ddl.*;
 import org.apache.flink.sql.parser.dml.RichSqlInsert;
 import org.apache.flink.table.catalog.UnresolvedIdentifier;
 import org.apache.flink.table.functions.UserDefinedFunction;
+import org.apache.flink.table.functions.python.PythonScalarFunction;
 import org.apache.flink.table.planner.plan.metadata.FlinkDefaultRelMetadataProvider;
 
 import java.util.*;
@@ -181,10 +182,15 @@ public class SqrlToFlinkSqlGenerator {
 
     mutableUdfs.putAll(downcastClassNames);
     mutableUdfs.remove("NOW".toLowerCase());
-
-    return mutableUdfs.entrySet().stream()
+    List<SqlCreateFunction> collect = mutableUdfs.entrySet().stream()
         .map(entry -> FlinkSqlNodeFactory.createFunction(entry.getKey(), entry.getValue()))
         .collect(Collectors.toList());
+    ;
+    List<SqlCreateFunction> pythonUdfs = framework.getSchema().getPythonUdfs().stream()
+        .map(e->FlinkSqlNodeFactory.createPythonFunction(e))
+        .collect(Collectors.toList());
+
+    return ListUtils.union(collect, pythonUdfs);
   }
 
   private Class<?> extractFunctionClass(UserDefinedFunction o) {
