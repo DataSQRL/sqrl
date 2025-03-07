@@ -9,21 +9,10 @@
 
   <artifactId>sqrl-config</artifactId>
 
-  <properties>
-    <maven.compiler.source>11</maven.compiler.source>
-    <maven.compiler.target>11</maven.compiler.target>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
-
   <dependencies>
-
     <dependency>
-      <groupId>com.datasqrl.flink</groupId>
-      <artifactId>sqrl-name</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl.flink</groupId>
-      <artifactId>sqrl-errors</artifactId>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-base</artifactId>
     </dependency>
     <!-- Configuration -->
     <dependency>
