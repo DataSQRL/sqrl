@@ -85,19 +85,20 @@ public abstract class GraphqlSchemaWalker2 {
   }
 
 
-  private void walkTableFunction (ObjectTypeDefinition objectType, FieldDefinition atField, NamePath functionPath,
+  private void walkTableFunction (ObjectTypeDefinition parentType, FieldDefinition atField, NamePath functionPath,
                                  SqrlTableFunction tableFunction, TypeDefinitionRegistry registry, APISource apiSource) {
      Optional<TypeDefinition> typeDefOpt = registry.getType(atField.getType());
      checkState(typeDefOpt.isPresent(), atField.getType().getSourceLocation(), "Could not find object in graphql type registry");
     final TypeDefinition typeDefinition = typeDefOpt.get();
     checkState(typeDefinition instanceof ObjectTypeDefinition, typeDefinition.getSourceLocation(), "Could not infer non-object type on graphql schema: %s", typeDefinition.getName());
       if (tableFunction.getVisibility().getAccess() == AccessModifier.QUERY) { // walking a query table function
-        visitQuery(objectType, atField, tableFunction);
+        visitQuery(parentType, atField, tableFunction);
       } else { // walking a subscription table function
-        visitSubscription(objectType, atField, registry, apiSource);
+        visitSubscription(parentType, atField, registry, apiSource);
       }
       RelDataType functionRowType = tableFunction.getRowType();
-      walkObjectType(true, objectType, functionPath, Optional.of(functionRowType), registry, apiSource);
+      ObjectTypeDefinition resultType = (ObjectTypeDefinition) typeDefinition;
+      walkObjectType(true, resultType, functionPath, Optional.of(functionRowType), registry, apiSource);
   }
 
   private void walkObjectType(boolean isFunctionResultType, ObjectTypeDefinition objectType, NamePath functionPath, Optional<RelDataType> relDataType, TypeDefinitionRegistry registry, APISource apiSource) {
@@ -173,7 +174,7 @@ public abstract class GraphqlSchemaWalker2 {
   /*
   * Abstract visit methods for concrete graphQL schema walkers to implement (for validation and graphQL model generation)
    */
-  protected abstract void visitQuery(ObjectTypeDefinition resultType, FieldDefinition field, SqrlTableFunction tableFunction);
+  protected abstract void visitQuery(ObjectTypeDefinition parentType, FieldDefinition atField, SqrlTableFunction tableFunction);
 
   protected abstract void visitSubscription(ObjectTypeDefinition objectType, FieldDefinition field,
                                             TypeDefinitionRegistry registry, APISource source);

@@ -231,11 +231,11 @@ private Optional<EnginePhysicalPlan> getLogPlan() {
   }
 
   @Override
-  protected void visitQuery(ObjectTypeDefinition resultType, FieldDefinition field, SqrlTableFunction tableFunction) {
+  protected void visitQuery(ObjectTypeDefinition parentType, FieldDefinition atField, SqrlTableFunction tableFunction) {
     // As we no more merge user provided graphQL schema with the inferred schema, we no more need to generate as many queries as the permutations of its arguments.
     // We now have a single executable query linked to the table function and already fully defined
     final ExecutableQuery executableQuery = tableFunction.getExecutableQuery();
-    checkState(executableQuery instanceof ExecutableJdbcReadQuery, field.getType().getSourceLocation(), "This table function should be planned as an ExecutableJdbcReadQuery");
+    checkState(executableQuery instanceof ExecutableJdbcReadQuery, atField.getType().getSourceLocation(), "This table function should be planned as an ExecutableJdbcReadQuery");
     final ExecutableJdbcReadQuery executableJdbcReadQuery = (ExecutableJdbcReadQuery) executableQuery;
 
 
@@ -277,8 +277,8 @@ private Optional<EnginePhysicalPlan> getLogPlan() {
     }
 
     ArgumentLookupCoords.ArgumentLookupCoordsBuilder coordsBuilder = ArgumentLookupCoords.builder()
-        .parentType(resultType.getName()).fieldName(field.getName());
-    ArgumentSet set = ArgumentSet.builder().arguments(createArguments(field))
+        .parentType(parentType.getName()).fieldName(atField.getName());
+    ArgumentSet set = ArgumentSet.builder().arguments(createArguments(atField))
             .query(queryBase).build();
 
     coordsBuilder.match(set);
