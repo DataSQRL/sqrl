@@ -64,7 +64,7 @@ CREATE TABLE `MyTable_1` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'MyTable_1'
 );
 CREATE TABLE `MyTableAnother_2` (
@@ -76,7 +76,7 @@ CREATE TABLE `MyTableAnother_2` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'MyTableAnother_2'
 );
 EXECUTE STATEMENT SET BEGIN

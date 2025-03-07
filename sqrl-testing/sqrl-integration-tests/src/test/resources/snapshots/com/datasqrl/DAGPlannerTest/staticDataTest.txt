@@ -1226,7 +1226,7 @@ CREATE TABLE `Numbers_1` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'Numbers_1'
 );
 CREATE TABLE `Numbers2_2` (
@@ -1237,7 +1237,7 @@ CREATE TABLE `Numbers2_2` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'Numbers2_2'
 );
 CREATE TABLE `NumbersLarge_3` (
@@ -1248,7 +1248,7 @@ CREATE TABLE `NumbersLarge_3` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'NumbersLarge_3'
 );
 CREATE TABLE `Orders_4` (
@@ -1262,7 +1262,7 @@ CREATE TABLE `Orders_4` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'Orders_4'
 );
 EXECUTE STATEMENT SET BEGIN

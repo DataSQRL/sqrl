@@ -160,7 +160,7 @@ CREATE TABLE `SecReading_1` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'SecReading_1'
 );
 CREATE TABLE `SensorMaxTemp_2` (
@@ -173,7 +173,7 @@ CREATE TABLE `SensorMaxTemp_2` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'SensorMaxTemp_2'
 );
 CREATE TABLE `SensorReading_3` (
@@ -188,7 +188,7 @@ CREATE TABLE `SensorReading_3` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'SensorReading_3'
 );
 EXECUTE STATEMENT SET BEGIN

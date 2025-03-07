@@ -217,7 +217,7 @@ CREATE TABLE `Package_1` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'Package_1'
 );
 CREATE TABLE `Submission_2` (
@@ -246,7 +246,7 @@ CREATE TABLE `Submission_2` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'Submission_2'
 );
 CREATE TABLE `SubmissionTopics_3` (
@@ -260,7 +260,7 @@ CREATE TABLE `SubmissionTopics_3` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'SubmissionTopics_3'
 );
 CREATE TABLE `TopicPackages_4` (
@@ -274,7 +274,7 @@ CREATE TABLE `TopicPackages_4` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'TopicPackages_4'
 );
 CREATE TABLE `TopicSearch_5` (
@@ -286,7 +286,7 @@ CREATE TABLE `TopicSearch_5` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'TopicSearch_5'
 );
 EXECUTE STATEMENT SET BEGIN

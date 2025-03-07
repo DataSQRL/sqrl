@@ -85,7 +85,7 @@ CREATE TABLE `Orders_1` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'Orders_1'
 );
 CREATE TABLE `_OrdersTotals_2` (
@@ -98,7 +98,7 @@ CREATE TABLE `_OrdersTotals_2` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = '_OrdersTotals_2'
 );
 EXECUTE STATEMENT SET BEGIN

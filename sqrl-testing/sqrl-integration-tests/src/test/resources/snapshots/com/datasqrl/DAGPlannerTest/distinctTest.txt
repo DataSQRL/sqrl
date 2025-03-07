@@ -312,7 +312,7 @@ CREATE TABLE `Customer_1` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'Customer_1'
 );
 CREATE TABLE `CustomerByMultiple_2` (
@@ -327,7 +327,7 @@ CREATE TABLE `CustomerByMultiple_2` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'CustomerByMultiple_2'
 );
 CREATE TABLE `CustomerByMultipleTime_3` (
@@ -342,7 +342,7 @@ CREATE TABLE `CustomerByMultipleTime_3` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'CustomerByMultipleTime_3'
 );
 CREATE TABLE `CustomerByTime_4` (
@@ -357,7 +357,7 @@ CREATE TABLE `CustomerByTime_4` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'CustomerByTime_4'
 );
 CREATE TABLE `CustomerByTime2_5` (
@@ -372,7 +372,7 @@ CREATE TABLE `CustomerByTime2_5` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'CustomerByTime2_5'
 );
 CREATE TABLE `CustomerByTimeAsc_6` (
@@ -387,7 +387,7 @@ CREATE TABLE `CustomerByTimeAsc_6` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'CustomerByTimeAsc_6'
 );
 CREATE TABLE `CustomerByUpdated_7` (
@@ -402,7 +402,7 @@ CREATE TABLE `CustomerByUpdated_7` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'CustomerByUpdated_7'
 );
 CREATE TABLE `CustomerByUpdatedAsc_8` (
@@ -417,7 +417,7 @@ CREATE TABLE `CustomerByUpdatedAsc_8` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'CustomerByUpdatedAsc_8'
 );
 CREATE TABLE `ExplicitDistinct_9` (
@@ -430,7 +430,7 @@ CREATE TABLE `ExplicitDistinct_9` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'ExplicitDistinct_9'
 );
 EXECUTE STATEMENT SET BEGIN

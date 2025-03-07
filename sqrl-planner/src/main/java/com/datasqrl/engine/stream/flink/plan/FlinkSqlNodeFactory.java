@@ -78,7 +78,7 @@ public class FlinkSqlNodeFactory {
         SqlLiteral.createCharString(clazz, SqlParserPos.ZERO),
         "JAVA",
         true,
-        false,
+        isSystem,
         isSystem,
         new SqlNodeList(SqlParserPos.ZERO)
     );

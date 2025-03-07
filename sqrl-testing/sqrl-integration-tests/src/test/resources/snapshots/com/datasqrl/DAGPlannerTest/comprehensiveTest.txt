@@ -708,7 +708,7 @@ CREATE TABLE `AnotherCustomer_1` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'AnotherCustomer_1'
 );
 CREATE TABLE `Customer_2` (
@@ -723,7 +723,7 @@ CREATE TABLE `Customer_2` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'Customer_2'
 );
 CREATE TABLE `Customer_3` (
@@ -753,7 +753,7 @@ CREATE TABLE `CustomerByMultipleTime_4` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'CustomerByMultipleTime_4'
 );
 CREATE TABLE `CustomerByTime2_5` (
@@ -768,7 +768,7 @@ CREATE TABLE `CustomerByTime2_5` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'CustomerByTime2_5'
 );
 CREATE TABLE `CustomerFilteredDistinct_6` (
@@ -783,7 +783,7 @@ CREATE TABLE `CustomerFilteredDistinct_6` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'CustomerFilteredDistinct_6'
 );
 CREATE TABLE `CustomerSubscription_7` (
@@ -820,7 +820,7 @@ CREATE TABLE `CustomerTimeWindow_9` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'CustomerTimeWindow_9'
 );
 CREATE TABLE `ExplicitDistinct_10` (
@@ -833,7 +833,7 @@ CREATE TABLE `ExplicitDistinct_10` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'ExplicitDistinct_10'
 );
 CREATE TABLE `ExternalOrders_11` (
@@ -847,7 +847,7 @@ CREATE TABLE `ExternalOrders_11` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'ExternalOrders_11'
 );
 CREATE TABLE `InvalidDistinct_12` (
@@ -860,7 +860,7 @@ CREATE TABLE `InvalidDistinct_12` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'InvalidDistinct_12'
 );
 CREATE TABLE `Orders_13` (
@@ -872,7 +872,7 @@ CREATE TABLE `Orders_13` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'Orders_13'
 );
 CREATE TABLE `SelectCustomers_14` (
@@ -887,7 +887,7 @@ CREATE TABLE `SelectCustomers_14` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'SelectCustomers_14'
 );
 CREATE TABLE `TemporalJoin_15` (
@@ -904,7 +904,7 @@ CREATE TABLE `TemporalJoin_15` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'TemporalJoin_15'
 );
 CREATE TABLE `UnnestOrders_16` (
@@ -922,7 +922,7 @@ CREATE TABLE `UnnestOrders_16` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'UnnestOrders_16'
 );
 EXECUTE STATEMENT SET BEGIN

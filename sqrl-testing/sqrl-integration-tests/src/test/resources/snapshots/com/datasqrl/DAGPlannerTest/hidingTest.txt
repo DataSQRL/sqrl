@@ -247,7 +247,7 @@ CREATE TABLE `AnotherCustomer_1` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'AnotherCustomer_1'
 );
 CREATE TABLE `Customer_2` (
@@ -262,7 +262,7 @@ CREATE TABLE `Customer_2` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'Customer_2'
 );
 CREATE TABLE `FinalCustomer_3` (
@@ -274,7 +274,7 @@ CREATE TABLE `FinalCustomer_3` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'FinalCustomer_3'
 );
 EXECUTE STATEMENT SET BEGIN

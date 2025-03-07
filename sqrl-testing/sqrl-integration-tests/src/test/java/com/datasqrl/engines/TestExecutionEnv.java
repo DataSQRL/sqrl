@@ -60,18 +60,21 @@ public class TestExecutionEnv implements TestEngineVisitor<Void, TestEnvContext>
     }
 
     //Snapshot views
-    Map map = new ObjectMapper().readValue(rootDir.resolve("build/plan/postgres.json").toFile(),
+    Map postgresPlan = new ObjectMapper().readValue(rootDir.resolve("build/plan/postgres.json").toFile(),
         Map.class);
-    List<Map<String, Object>> view = (List<Map<String, Object>>)map.get("views");
+    List<Map<String, Object>> view = (List<Map<String, Object>>)postgresPlan.get("views");
     String url = context.env.get("JDBC_URL");
     String username = context.env.get("PGUSER");
     String password = context.env.get("PGPASSWORD");
     try (Connection conn = DriverManager.getConnection(url, username, password)) {
-      for (Map<String, Object> v : view) {
-        ResultSet resultSet = conn.createStatement()
-            .executeQuery(String.format("SELECT * FROM \"%s\"", v.get("name")));
-        String string = ResultSetPrinter.toString(resultSet, (c) -> true, (c) -> true);
-        snapshot.addContent(string, (String)v.get("name"));
+      for (Map statement : (List<Map>) postgresPlan.get("statements")) {
+        if (statement.get("type").toString().equalsIgnoreCase("view")) {
+          String viewName = (String)statement.get("name");
+          ResultSet resultSet = conn.createStatement()
+              .executeQuery(String.format("SELECT * FROM \"%s\"", viewName));
+          String string = ResultSetPrinter.toString(resultSet, (c) -> true, (c) -> true);
+          snapshot.addContent(string, viewName);
+        }
       }
     }
 

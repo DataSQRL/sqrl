@@ -18,11 +18,13 @@ import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.micrometer.MicrometerMetricsOptions;
+import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -301,37 +303,24 @@ public class DatasqrlRun {
 
   @SneakyThrows
   public void initPostgres() {
-    if (!path.resolve("postgres.json").toFile().exists()) {
+    File file = path.resolve("postgres.json").toFile();
+    if (!file.exists()) {
       return;
     }
-    Map<String, Object> map = objectMapper.readValue(path.resolve("postgres.json").toFile(), Map.class);
-    List<Map<String, Object>> ddl = (List<Map<String, Object>>) map.get("ddl");
+    Map plan = objectMapper.readValue(file, Map.class);
 
-    //todo env + default
-    String format = String.format("jdbc:postgresql://%s:%s/%s",
+    String fullPostgresJDBCUrl = String.format("jdbc:postgresql://%s:%s/%s",
         getenv("PGHOST"), getenv("PGPORT"), getenv("PGDATABASE"));
-    try (Connection connection = DriverManager.getConnection(format, getenv("PGUSER"), getenv("PGPASSWORD"))) {
-      for (Map<String, Object> statement : ddl) {
-        String sql = (String) statement.get("sql");
-        connection.createStatement().execute(sql);
+    try (Connection connection = DriverManager.getConnection(fullPostgresJDBCUrl, getenv("PGUSER"), getenv("PGPASSWORD"))) {
+      for (Map statement : (List<Map>) plan.get("statements")) {
+        log.info("Executing statement {} of type {}", statement.get("name"), statement.get("type"));
+        try (Statement stmt = connection.createStatement()) {
+          stmt.execute((String) statement.get("sql"));
+        }
       }
     } catch (Exception e) {
       e.printStackTrace();
     }
-
-    if (!path.resolve("vertx.json").toFile().exists()) {
-      List<Map<String, Object>> views = (List<Map<String, Object>>) map.get("views");
-
-      try (Connection connection = DriverManager.getConnection(format, getenv("PGUSER"), getenv("PGPASSWORD"))) {
-        for (Map<String, Object> statement : views) {
-          String sql = (String) statement.get("sql");
-          connection.createStatement().execute(sql);
-        }
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-    }
-
   }
 
   private String getenv(String key) {

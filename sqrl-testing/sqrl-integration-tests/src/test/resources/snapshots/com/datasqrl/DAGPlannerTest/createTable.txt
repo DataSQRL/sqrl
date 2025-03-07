@@ -144,7 +144,7 @@ CREATE TABLE `MachineReading_1` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'MachineReading_1'
 );
 CREATE TABLE `MachineTempByHour_2` (
@@ -158,7 +158,7 @@ CREATE TABLE `MachineTempByHour_2` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'MachineTempByHour_2'
 );
 EXECUTE STATEMENT SET BEGIN

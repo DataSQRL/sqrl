@@ -338,7 +338,7 @@ CREATE TABLE `Customer_1` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'Customer_1'
 );
 CREATE TABLE `OrderCustomer_2` (
@@ -352,7 +352,7 @@ CREATE TABLE `OrderCustomer_2` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'OrderCustomer_2'
 );
 CREATE TABLE `OrderCustomerConstant_3` (
@@ -366,7 +366,7 @@ CREATE TABLE `OrderCustomerConstant_3` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'OrderCustomerConstant_3'
 );
 CREATE TABLE `OrderCustomerLeft_4` (
@@ -380,7 +380,7 @@ CREATE TABLE `OrderCustomerLeft_4` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'OrderCustomerLeft_4'
 );
 CREATE TABLE `OrderCustomerLeftExcluded_5` (
@@ -393,7 +393,7 @@ CREATE TABLE `OrderCustomerLeftExcluded_5` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'OrderCustomerLeftExcluded_5'
 );
 CREATE TABLE `OrderCustomerRight_6` (
@@ -407,7 +407,7 @@ CREATE TABLE `OrderCustomerRight_6` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'OrderCustomerRight_6'
 );
 CREATE TABLE `OrderCustomerRightExcluded_7` (
@@ -421,7 +421,7 @@ CREATE TABLE `OrderCustomerRightExcluded_7` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'OrderCustomerRightExcluded_7'
 );
 CREATE TABLE `Orders_8` (
@@ -435,7 +435,7 @@ CREATE TABLE `Orders_8` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'Orders_8'
 );
 EXECUTE STATEMENT SET BEGIN

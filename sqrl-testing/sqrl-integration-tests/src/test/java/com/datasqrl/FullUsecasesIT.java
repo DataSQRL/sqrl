@@ -49,7 +49,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 @Slf4j
 @ExtendWith(MiniClusterExtension.class)
-@Disabled("todo: re-enable once GraphQL is implemented")
 public class FullUsecasesIT {
   private static final Path RESOURCES = Paths.get("src/test/resources");
   private static final Path USE_CASES = RESOURCES.resolve("usecases");
@@ -63,10 +62,14 @@ public class FullUsecasesIT {
   }
 
   List<ScriptCriteria> disabledScripts = List.of(
+      new ScriptCriteria("conference-disabled.sqrl", "test"), //fails in build server
+      new ScriptCriteria("conference-disabled.sqrl", "run"), //fails in build server
+      new ScriptCriteria("iceberg-export.sqrl", "test"), //fails in build server
+      new ScriptCriteria("iceberg-export.sqrl", "run"), //fails in build server
       new ScriptCriteria("duckdb.sqrl", "test"), //fails in build server
       new ScriptCriteria("duckdb.sqrl", "run"), //fails in build server
-      new ScriptCriteria("snowflake.sqrl", "test"), //fails in build server
-      new ScriptCriteria("snowflake.sqrl", "run"), //fails in build server
+      new ScriptCriteria("snowflake-disabled.sqrl", "test"), //fails in build server
+      new ScriptCriteria("snowflake-disabled.sqrl", "run"), //fails in build server
       new ScriptCriteria("sensors-mutation.sqrl", "test"), //flaky see sqrl script
       new ScriptCriteria("sensors-mutation.sqrl", "run"), //flaky see sqrl script
       new ScriptCriteria("sensors-full.sqrl", "test"), //flaky (too much data)
@@ -77,8 +80,8 @@ public class FullUsecasesIT {
 //      new ScriptCriteria("comparison-functions.sqrl", "run"),
       new ScriptCriteria("analytics-only.sqrl", "test"),
       new ScriptCriteria("analytics-only.sqrl", "run"),
-      new ScriptCriteria("postgres-log.sqrl", "test"),
-      new ScriptCriteria("postgres-log.sqrl", "run"),
+      new ScriptCriteria("postgres-log-disabled.sqrl", "test"),
+      new ScriptCriteria("postgres-log-disabled.sqrl", "run"),
       new ScriptCriteria("seedshop-extended.sqrl", "test"), // CustomerPromotionTest issue
       new ScriptCriteria("seedshop-extended.sqrl", "run") // CustomerPromotionTest issue
   );

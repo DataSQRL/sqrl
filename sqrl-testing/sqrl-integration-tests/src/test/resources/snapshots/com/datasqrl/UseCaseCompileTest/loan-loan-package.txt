@@ -479,7 +479,7 @@ CREATE TABLE `AddChatMessage_1` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'AddChatMessage_1'
 );
 CREATE TABLE `ApplicationAlert_2` (
@@ -496,7 +496,7 @@ CREATE TABLE `ApplicationAlert_2` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'ApplicationAlert_2'
 );
 CREATE TABLE `ApplicationStatus_3` (
@@ -517,7 +517,7 @@ CREATE TABLE `ApplicationStatus_3` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'ApplicationStatus_3'
 );
 CREATE TABLE `ApplicationUpdates_4` (
@@ -532,7 +532,7 @@ CREATE TABLE `ApplicationUpdates_4` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'ApplicationUpdates_4'
 );
 CREATE TABLE `Applications_5` (
@@ -549,7 +549,7 @@ CREATE TABLE `Applications_5` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'Applications_5'
 );
 CREATE TABLE `ApplicationsStream_6` (
@@ -566,7 +566,7 @@ CREATE TABLE `ApplicationsStream_6` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'ApplicationsStream_6'
 );
 CREATE TABLE `CustomerChatMessage_7` (
@@ -582,7 +582,7 @@ CREATE TABLE `CustomerChatMessage_7` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'CustomerChatMessage_7'
 );
 CREATE TABLE `Customers_8` (
@@ -600,7 +600,7 @@ CREATE TABLE `Customers_8` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'Customers_8'
 );
 CREATE TABLE `CustomersStream_9` (
@@ -618,7 +618,7 @@ CREATE TABLE `CustomersStream_9` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'CustomersStream_9'
 );
 CREATE TABLE `LoanTypes_10` (
@@ -637,7 +637,7 @@ CREATE TABLE `LoanTypes_10` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'LoanTypes_10'
 );
 CREATE TABLE `LoanTypesStream_11` (
@@ -656,7 +656,7 @@ CREATE TABLE `LoanTypesStream_11` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'LoanTypesStream_11'
 );
 EXECUTE STATEMENT SET BEGIN

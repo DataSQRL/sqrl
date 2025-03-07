@@ -316,7 +316,7 @@ CREATE TABLE `HighTemp_1` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'HighTemp_1'
 );
 CREATE TABLE `Machine_2` (
@@ -329,7 +329,7 @@ CREATE TABLE `Machine_2` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'Machine_2'
 );
 CREATE TABLE `SecReading_3` (
@@ -342,7 +342,7 @@ CREATE TABLE `SecReading_3` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'SecReading_3'
 );
 CREATE TABLE `SensorLastHour_4` (
@@ -356,7 +356,7 @@ CREATE TABLE `SensorLastHour_4` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'SensorLastHour_4'
 );
 CREATE TABLE `SensorReading_5` (
@@ -371,7 +371,7 @@ CREATE TABLE `SensorReading_5` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'SensorReading_5'
 );
 CREATE TABLE `SensorUpdates_6` (
@@ -385,7 +385,7 @@ CREATE TABLE `SensorUpdates_6` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'SensorUpdates_6'
 );
 CREATE TABLE `Sensors_7` (
@@ -399,7 +399,7 @@ CREATE TABLE `Sensors_7` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'Sensors_7'
 );
 EXECUTE STATEMENT SET BEGIN

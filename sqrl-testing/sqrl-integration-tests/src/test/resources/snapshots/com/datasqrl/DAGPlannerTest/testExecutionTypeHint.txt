@@ -120,7 +120,7 @@ CREATE TABLE `CustomerAgg1_1` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'CustomerAgg1_1'
 );
 CREATE TABLE `CustomerAgg3_2` (
@@ -132,7 +132,7 @@ CREATE TABLE `CustomerAgg3_2` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'CustomerAgg3_2'
 );
 CREATE TABLE `Orders_3` (
@@ -147,7 +147,7 @@ CREATE TABLE `Orders_3` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'Orders_3'
 );
 EXECUTE STATEMENT SET BEGIN

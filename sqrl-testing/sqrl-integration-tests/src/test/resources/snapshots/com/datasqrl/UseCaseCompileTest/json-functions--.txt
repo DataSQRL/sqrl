@@ -114,7 +114,7 @@ CREATE TABLE `Json_1` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'Json_1'
 );
 CREATE TABLE `UnmodifiedJsonData_2` (
@@ -130,7 +130,7 @@ CREATE TABLE `UnmodifiedJsonData_2` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'UnmodifiedJsonData_2'
 );
 EXECUTE STATEMENT SET BEGIN

@@ -132,7 +132,7 @@ CREATE TABLE `Orders_1` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'Orders_1'
 );
 CREATE TABLE `SelectOrders1_2` (
@@ -146,7 +146,7 @@ CREATE TABLE `SelectOrders1_2` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'SelectOrders1_2'
 );
 CREATE TABLE `SelectOrders2_3` (
@@ -160,7 +160,7 @@ CREATE TABLE `SelectOrders2_3` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'SelectOrders2_3'
 );
 EXECUTE STATEMENT SET BEGIN

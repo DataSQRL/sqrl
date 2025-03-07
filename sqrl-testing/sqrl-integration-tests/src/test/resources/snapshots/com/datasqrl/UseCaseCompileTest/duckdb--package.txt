@@ -217,7 +217,7 @@ CREATE TABLE `_MyApplications2_3` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = '_MyApplications2_3'
 );
 EXECUTE STATEMENT SET BEGIN

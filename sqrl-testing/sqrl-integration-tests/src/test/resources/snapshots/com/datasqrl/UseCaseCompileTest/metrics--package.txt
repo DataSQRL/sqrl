@@ -183,7 +183,7 @@ CREATE TABLE `SensorAnalysis_2` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'SensorAnalysis_2'
 );
 CREATE TABLE `SensorMaxTempLastMin_3` (
@@ -196,7 +196,7 @@ CREATE TABLE `SensorMaxTempLastMin_3` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'SensorMaxTempLastMin_3'
 );
 CREATE TABLE `SensorReading_4` (
@@ -210,7 +210,7 @@ CREATE TABLE `SensorReading_4` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'SensorReading_4'
 );
 EXECUTE STATEMENT SET BEGIN

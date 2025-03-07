@@ -302,7 +302,7 @@ CREATE TABLE `Customer_1` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'Customer_1'
 );
 CREATE TABLE `CustomerStream_2` (
@@ -317,7 +317,7 @@ CREATE TABLE `CustomerStream_2` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'CustomerStream_2'
 );
 CREATE TABLE `ObjComplex_3` (
@@ -329,7 +329,7 @@ CREATE TABLE `ObjComplex_3` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'ObjComplex_3'
 );
 CREATE TABLE `jsonArrayAggTable_4` (
@@ -341,7 +341,7 @@ CREATE TABLE `jsonArrayAggTable_4` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'jsonArrayAggTable_4'
 );
 CREATE TABLE `jsonArrayTable_5` (
@@ -353,7 +353,7 @@ CREATE TABLE `jsonArrayTable_5` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'jsonArrayTable_5'
 );
 CREATE TABLE `jsonConcatTable_6` (
@@ -365,7 +365,7 @@ CREATE TABLE `jsonConcatTable_6` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'jsonConcatTable_6'
 );
 CREATE TABLE `jsonExistsTable_7` (
@@ -377,7 +377,7 @@ CREATE TABLE `jsonExistsTable_7` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'jsonExistsTable_7'
 );
 CREATE TABLE `jsonExtractTable_8` (
@@ -389,7 +389,7 @@ CREATE TABLE `jsonExtractTable_8` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'jsonExtractTable_8'
 );
 CREATE TABLE `jsonObjectAggTable_9` (
@@ -401,7 +401,7 @@ CREATE TABLE `jsonObjectAggTable_9` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'jsonObjectAggTable_9'
 );
 CREATE TABLE `jsonQueryTable_10` (
@@ -413,7 +413,7 @@ CREATE TABLE `jsonQueryTable_10` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'jsonQueryTable_10'
 );
 CREATE TABLE `jsonToStringTable_11` (
@@ -425,7 +425,7 @@ CREATE TABLE `jsonToStringTable_11` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'jsonToStringTable_11'
 );
 CREATE TABLE `toJsonTable_12` (
@@ -437,7 +437,7 @@ CREATE TABLE `toJsonTable_12` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'toJsonTable_12'
 );
 EXECUTE STATEMENT SET BEGIN

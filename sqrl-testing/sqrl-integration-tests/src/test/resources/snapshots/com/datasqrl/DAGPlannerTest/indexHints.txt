@@ -181,7 +181,7 @@ CREATE TABLE `MyOrdersIndexBtree_1` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'MyOrdersIndexBtree_1'
 );
 CREATE TABLE `MyOrdersIndexHash_2` (
@@ -195,7 +195,7 @@ CREATE TABLE `MyOrdersIndexHash_2` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'MyOrdersIndexHash_2'
 );
 CREATE TABLE `MyOrdersNoHint_3` (
@@ -209,7 +209,7 @@ CREATE TABLE `MyOrdersNoHint_3` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'MyOrdersNoHint_3'
 );
 CREATE TABLE `MyOrdersNoIndex_4` (
@@ -223,7 +223,7 @@ CREATE TABLE `MyOrdersNoIndex_4` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'MyOrdersNoIndex_4'
 );
 CREATE TABLE `MyOrdersTwoIndex_5` (
@@ -237,7 +237,7 @@ CREATE TABLE `MyOrdersTwoIndex_5` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'MyOrdersTwoIndex_5'
 );
 EXECUTE STATEMENT SET BEGIN

@@ -135,7 +135,7 @@ CREATE TABLE `Click_1` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'Click_1'
 );
 CREATE TABLE `Recommendation_2` (
@@ -148,7 +148,7 @@ CREATE TABLE `Recommendation_2` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'Recommendation_2'
 );
 CREATE TABLE `Trending_3` (
@@ -160,7 +160,7 @@ CREATE TABLE `Trending_3` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'Trending_3'
 );
 CREATE TABLE `VisitAfter_4` (
@@ -174,7 +174,7 @@ CREATE TABLE `VisitAfter_4` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'VisitAfter_4'
 );
 EXECUTE STATEMENT SET BEGIN

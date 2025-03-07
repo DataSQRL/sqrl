@@ -73,6 +73,7 @@ public class TestContainersForTestGoal implements TestEngineVisitor<TestContaine
       public Map<String, String> getEnv() {
         Map<String, String> env = new HashMap<>(8);
         env.put("JDBC_URL", testDatabase.getJdbcUrl());
+        env.put("JDBC_AUTHORITY", testDatabase.getJdbcUrl().split("://")[1]);
         env.put("PGHOST", testDatabase.getHost());
         env.put("PGUSER", testDatabase.getUsername());
         env.put("JDBC_USERNAME", testDatabase.getUsername());

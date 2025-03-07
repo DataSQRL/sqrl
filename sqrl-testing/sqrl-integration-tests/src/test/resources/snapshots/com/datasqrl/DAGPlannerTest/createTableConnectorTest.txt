@@ -87,7 +87,7 @@ CREATE TABLE `SensorReading_1` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'SensorReading_1'
 );
 CREATE TABLE `SensorTempByHour_2` (
@@ -100,7 +100,7 @@ CREATE TABLE `SensorTempByHour_2` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'SensorTempByHour_2'
 );
 EXECUTE STATEMENT SET BEGIN
