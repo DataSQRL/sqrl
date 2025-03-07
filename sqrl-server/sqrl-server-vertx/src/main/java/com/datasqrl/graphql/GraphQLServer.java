@@ -5,9 +5,9 @@ package com.datasqrl.graphql;
 
 import com.datasqrl.graphql.config.CorsHandlerOptions;
 import com.datasqrl.graphql.config.ServerConfig;
+import com.datasqrl.graphql.server.CustomScalars;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import com.datasqrl.graphql.server.RootGraphqlModel;
-import com.datasqrl.graphql.type.SqrlVertxScalars;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.common.base.Strings;
@@ -327,8 +327,8 @@ public class GraphQLServer extends AbstractVerticle {
               .withMutationConfiguration(
                   new MutationConfigurationImpl(model, vertx, config))
               .withSubscriptionConfiguration(
-                  new SubscriptionConfigurationImpl(model, vertx, config, startPromise, vertxJdbcClient)
-              )
+                  new SubscriptionConfigurationImpl(model, vertx, config, startPromise, vertxJdbcClient))
+              .withExtendedScalarTypes(List.of(CustomScalars.GRAPHQL_BIGINTEGER))
               .build(),
           new VertxContext(vertxJdbcClient));
       MeterRegistry meterRegistry = BackendRegistries.getDefaultNow();

@@ -1,0 +1,4 @@
+IMPORT ecommerce.Orders;
+
+/*+test */
+BigIntOrdersTest := SELECT * FROM Orders ORDER BY id ASC;

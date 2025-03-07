@@ -223,4 +223,60 @@ FROM "SensorMaxTemp_2";
 CREATE OR REPLACE VIEW "SensorReading"("sensorid", "time", "temperature", "humidity", "timestamp") AS SELECT *
 FROM "SensorReading_3"
 >>>vertx.json
-{ }
+{
+  "model" : {
+    "coords" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "SecReading",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "sensorid"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"sensorid\", \"timeSec\", \"temp\"\nFROM (SELECT \"sensorid\", \"timeSec\", \"temp\", \"__pk_hash\"\n  FROM \"SecReading_1\"\n  ORDER BY \"timeSec\" DESC NULLS LAST) AS \"t\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "SensorMaxTemp",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "sensorid"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"SensorMaxTemp_2\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      }
+    ],
+    "mutations" : [ ],
+    "subscriptions" : [ ],
+    "schema" : {
+      "type" : "string",
+      "type" : "string",
+      "schema" : "type Query {\n  SecReading(sensorid: Int!): [SecReading!]\n  SensorMaxTemp(sensorid: Int): [SensorMaxTemp!]\n}\n\ntype SecReading {\n  sensorid: Int!\n  timeSec: String!\n  temp: Float!\n}\n\ntype SensorMaxTemp {\n  sensorid: Int!\n  maxTemp: Float!\n}"
+    }
+  }
+}
