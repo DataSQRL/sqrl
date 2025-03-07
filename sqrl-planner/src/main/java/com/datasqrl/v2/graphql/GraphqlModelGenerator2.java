@@ -221,13 +221,12 @@ private Optional<EnginePhysicalPlan> getLogPlan() {
                              RelDataType relDataType, RelDataTypeField relDataTypeField) {
     //todo: walk into structured type to check all prop fetchers
 
-    //TODO hasVaryingCase still needed as the impl is: name of graphQL field is different from name of calcite field ?
-//    if (hasVaryingCase(field, relDataTypeField)) {
+    // we create PropertyDataFetchers for fields only when graphql field name is different from calcite field name
+    if (hasVaryingCase(field, relDataTypeField)) {
       FieldLookupCoords fieldLookupCoords = FieldLookupCoords.builder().parentType(objectType.getName())
           .fieldName(field.getName()).columnName(relDataTypeField.getName()).build();
       queryCoords.add(fieldLookupCoords);
-//    }
-
+    }
   }
 
   @Override
@@ -235,9 +234,11 @@ private Optional<EnginePhysicalPlan> getLogPlan() {
     // As we no more merge user provided graphQL schema with the inferred schema, we no more need to generate as many queries as the permutations of its arguments.
     // We now have a single executable query linked to the table function and already fully defined
     final ExecutableQuery executableQuery = tableFunction.getExecutableQuery();
-    checkState(executableQuery instanceof ExecutableJdbcReadQuery, atField.getType().getSourceLocation(), "This table function should be planned as an ExecutableJdbcReadQuery");
+    checkState(
+        executableQuery instanceof ExecutableJdbcReadQuery,
+        atField.getType().getSourceLocation(),
+        "This table function should be planned as an ExecutableJdbcReadQuery");
     final ExecutableJdbcReadQuery executableJdbcReadQuery = (ExecutableJdbcReadQuery) executableQuery;
-
 
     List<RootGraphqlModel.JdbcParameterHandler> parameters = new ArrayList<>();
     for (FunctionParameter functionParameter : tableFunction.getParameters()) {
