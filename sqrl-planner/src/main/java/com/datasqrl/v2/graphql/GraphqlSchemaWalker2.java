@@ -74,9 +74,13 @@ public abstract class GraphqlSchemaWalker2 {
 
 
   private void walkRootType(ObjectTypeDefinition rootType, TypeDefinitionRegistry registry, APISource apiSource) {
+    final NamePath rootPath = NamePath.ROOT;
     for (FieldDefinition field : rootType.getFieldDefinitions()) { // fields are root table functions
-      final NamePath fieldPath = NamePath.of(field.getName());
-      walkTableFunction(rootType, field, fieldPath, getTableFunctionFromPath(fieldPath).get(), registry, apiSource);
+      final NamePath fieldPath = rootPath.concat(NamePath.of(field.getName()));
+      final Optional<SqrlTableFunction> tableFunction = getTableFunctionFromPath(fieldPath);
+      if (tableFunction.isPresent()) {
+        walkTableFunction(rootType, field, fieldPath, tableFunction.get(), registry, apiSource);
+      }
     }
   }
 
