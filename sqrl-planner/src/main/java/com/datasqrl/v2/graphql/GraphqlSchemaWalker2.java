@@ -71,19 +71,13 @@ public abstract class GraphqlSchemaWalker2 {
     }
   }
 
-
-
   private void walkRootType(ObjectTypeDefinition rootType, TypeDefinitionRegistry registry, APISource apiSource) {
-    final NamePath rootPath = NamePath.ROOT;
     for (FieldDefinition field : rootType.getFieldDefinitions()) { // fields are root table functions
-      final NamePath fieldPath = rootPath.concat(NamePath.of(field.getName()));
-      final Optional<SqrlTableFunction> tableFunction = getTableFunctionFromPath(fieldPath);
-      if (tableFunction.isPresent()) {
-        walkTableFunction(rootType, field, fieldPath, tableFunction.get(), registry, apiSource);
-      }
+      final NamePath fieldPath = NamePath.ROOT.concat(NamePath.of(field.getName()));
+      final Optional<SqrlTableFunction> tableFunction = getTableFunctionFromPath(fieldPath); // root table functions are always present
+      walkTableFunction(rootType, field, fieldPath, tableFunction.get(), registry, apiSource);
     }
   }
-
 
   private void walkTableFunction (ObjectTypeDefinition parentType, FieldDefinition atField, NamePath functionPath,
                                  SqrlTableFunction tableFunction, TypeDefinitionRegistry registry, APISource apiSource) {
@@ -113,6 +107,7 @@ public abstract class GraphqlSchemaWalker2 {
 
       // Functions can have relationships, so if we are walking a function resultType, process relationship fields
       // When this method is recursively called for a nested relDataType, there can not be any relationship field
+      // so in that case we call this method with isFunctionResultType == false to avoid checking for relationships
       if (isFunctionResultType) {
         final Optional<SqrlTableFunction> relationship = getTableFunctionFromPath(fieldPath);
         if (relationship.isPresent()) { // the field is a relationship field, walk the related table relationship
