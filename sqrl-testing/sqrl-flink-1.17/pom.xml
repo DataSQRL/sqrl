@@ -85,7 +85,7 @@
       <version>1.17.2</version>
     </dependency>
     <dependency>
-      <groupId>com.datasqrl</groupId>
+      <groupId>com.datasqrl.flink</groupId>
       <artifactId>sqrl-flexible-json</artifactId>
     </dependency>
     <dependency>

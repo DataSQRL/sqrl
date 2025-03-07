@@ -11,7 +11,6 @@
     <module>sqrl-planner</module>
     <module>sqrl-testing</module>
     <module>sqrl-tools</module>
-    <module>sqrl-flink-lib</module>
     <module>sqrl-server</module>
   </modules>
 
@@ -59,6 +58,7 @@
     <avro.version>1.11.3</avro.version>
     <freemarker.version>2.3.32</freemarker.version>
     <jsonschema.version>1.5.2</jsonschema.version>
+    <sqrl-flink-support.version>0.1-SNAPSHOT</sqrl-flink-support.version>
 
     <!-- params -->
     <snapshots.update>false</snapshots.update>
@@ -179,21 +179,15 @@
         <artifactId>sqrl-base</artifactId>
         <version>${project.version}</version>
       </dependency>
+
       <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-lib-common</artifactId>
-        <version>${project.version}</version>
+        <groupId>com.datasqrl.flink</groupId>
+        <artifactId>sqrl-flink-bom</artifactId>
+        <version>${sqrl-flink-support.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
       </dependency>
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-name</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-errors</artifactId>
-        <version>${project.version}</version>
-      </dependency>
+
       <dependency>
         <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-server-core</artifactId>
@@ -204,33 +198,12 @@
         <artifactId>sqrl-server-vertx</artifactId>
         <version>${project.version}</version>
       </dependency>
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-jdbc-1.16</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-jdbc-1.17</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-jdbc-1.18</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-jdbc-1.19</artifactId>
-        <version>${project.version}</version>
-      </dependency>
       <!-- examples-->
       <dependency>
         <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-examples</artifactId>
         <version>${project.version}</version>
       </dependency>
-
 
       <!-- planner -->
       <dependency>

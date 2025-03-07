@@ -18,11 +18,11 @@
   <dependencies>
 
     <dependency>
-      <groupId>com.datasqrl</groupId>
+      <groupId>com.datasqrl.flink</groupId>
       <artifactId>sqrl-name</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.datasqrl</groupId>
+      <groupId>com.datasqrl.flink</groupId>
       <artifactId>sqrl-errors</artifactId>
     </dependency>
     <!-- Configuration -->

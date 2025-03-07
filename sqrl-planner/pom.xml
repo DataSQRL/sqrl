@@ -113,11 +113,11 @@
 
 
     <dependency>
-      <groupId>com.datasqrl</groupId>
+      <groupId>com.datasqrl.flink</groupId>
       <artifactId>sqrl-text</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.datasqrl</groupId>
+      <groupId>com.datasqrl.flink</groupId>
       <artifactId>sqrl-time</artifactId>
     </dependency>
     <dependency>
@@ -126,11 +126,11 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>com.datasqrl</groupId>
+      <groupId>com.datasqrl.flink</groupId>
       <artifactId>sqrl-secure</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.datasqrl</groupId>
+      <groupId>com.datasqrl.flink</groupId>
       <artifactId>sqrl-vector</artifactId>
     </dependency>
     <dependency>
@@ -155,6 +155,5 @@
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-avro</artifactId>
     </dependency>
-
   </dependencies>
 </project>
