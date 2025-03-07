@@ -256,4 +256,97 @@ CREATE INDEX IF NOT EXISTS "_MyApplications2_3_hash_c0" ON "_MyApplications2_3" 
 CREATE OR REPLACE VIEW "MyTable3"("id", "hello") AS SELECT "id", 'hello world3' AS "hello"
 FROM "_MyApplications2_3"
 >>>vertx.json
-{ }
+{
+  "model" : {
+    "coords" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "MyTable1",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"id\", 'hello world1' AS \"hello\"\nFROM ICEBERG_SCAN('/tmp/duckdb/default_database/_MyApplications1_1', ALLOW_MOVED_PATHS = TRUE)",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "MyTable2",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"id\", 'hello world2' AS \"hello\"\nFROM ICEBERG_SCAN('/tmp/duckdb/default_database/_MyApplications2_2', ALLOW_MOVED_PATHS = TRUE)",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "MyTable3",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"id\", 'hello world3' AS \"hello\"\nFROM \"_MyApplications2_3\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      }
+    ],
+    "mutations" : [ ],
+    "subscriptions" : [ ],
+    "schema" : {
+      "type" : "string",
+      "type" : "string",
+      "schema" : "type MyTable1 {\n  id: Float!\n  hello: String!\n}\n\ntype MyTable2 {\n  id: Float!\n  hello: String!\n}\n\ntype MyTable3 {\n  id: Float!\n  hello: String!\n}\n\ntype Query {\n  MyTable1(limit: Int = 10, offset: Int = 0): [MyTable1!]\n  MyTable2(limit: Int = 10, offset: Int = 0): [MyTable2!]\n  MyTable3(limit: Int = 10, offset: Int = 0): [MyTable3!]\n}\n"
+    }
+  }
+}

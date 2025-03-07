@@ -214,4 +214,60 @@ FROM (SELECT "url", "total"
 CREATE OR REPLACE VIEW "VisitAfter"("beforeURL", "afterURL", "timestamp") AS SELECT "beforeURL", "afterURL", "timestamp"
 FROM "VisitAfter_4"
 >>>vertx.json
-{ }
+{
+  "model" : {
+    "coords" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Recommendation",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "url"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"url\", \"rec\", \"frequency\"\n  FROM \"Recommendation_2\"\n  ORDER BY \"url\" NULLS FIRST, \"frequency\" DESC NULLS LAST) AS \"t\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Trending",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"url\", \"total\"\n  FROM \"Trending_3\"\n  ORDER BY \"total\" DESC NULLS LAST) AS \"t\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      }
+    ],
+    "mutations" : [ ],
+    "subscriptions" : [ ],
+    "schema" : {
+      "type" : "string",
+      "type" : "string",
+      "schema" : "type Query {\n  Recommendation(url: String!): [Recommendation!]\n  Trending(limit: Int!): [Trending!]\n}\n\ntype Recommendation {\n  url: String!\n  rec: String!\n  frequency: Int!\n}\n\ntype Trending {\n  url: String!\n  total: Int!\n}\n"
+    }
+  }
+}
