@@ -255,8 +255,8 @@ public class GraphqlSchemaValidator2 extends GraphqlSchemaWalker2 {
   }
 
   @Override
-  protected void visitQuery(ObjectTypeDefinition resultType, FieldDefinition field, SqrlTableFunction tableFunction) {
-    checkValidArrayNonNullType(field.getType());
+  protected void visitQuery(ObjectTypeDefinition parentType, FieldDefinition atField, SqrlTableFunction tableFunction) {
+    checkValidArrayNonNullType(atField.getType());
   }
 
 
