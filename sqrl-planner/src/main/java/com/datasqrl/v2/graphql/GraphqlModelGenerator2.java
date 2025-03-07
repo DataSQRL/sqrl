@@ -290,19 +290,11 @@ private Optional<EnginePhysicalPlan> getLogPlan() {
   private static Set<Argument> createArguments(FieldDefinition field) {
     // create the arguements as they used to be created in QueryBuilderHelper
     Set<Argument> argumentSet = field.getInputValueDefinitions().stream()
-            .filter(input -> !input.getName().equals(SchemaConstants.LIMIT) && !input.getName().equals(SchemaConstants.OFFSET))
             .map(input -> RootGraphqlModel.VariableArgument.builder()
                     .path(input.getName())
                     .value(null)
                     .build())
             .collect(Collectors.toSet());
-    argumentSet.addAll(field.getInputValueDefinitions().stream()
-            .filter(input -> input.getName().equals(SchemaConstants.LIMIT) || input.getName().equals(SchemaConstants.OFFSET))
-            .map(input -> RootGraphqlModel.FixedArgument.builder()
-                    .path(input.getName())
-                    .value(null)
-                    .build())
-            .collect(Collectors.toSet()));
     return argumentSet;
   }
 }
