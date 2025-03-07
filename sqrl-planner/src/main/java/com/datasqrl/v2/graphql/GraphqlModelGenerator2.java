@@ -221,7 +221,7 @@ private Optional<EnginePhysicalPlan> getLogPlan() {
                              RelDataType relDataType, RelDataTypeField relDataTypeField) {
     //todo: walk into structured type to check all prop fetchers
 
-    //TODO hasVaryingCase still needed ?
+    //TODO hasVaryingCase still needed as the impl is: name of graphQL field is different from name of calcite field ?
 //    if (hasVaryingCase(field, relDataTypeField)) {
       FieldLookupCoords fieldLookupCoords = FieldLookupCoords.builder().parentType(objectType.getName())
           .fieldName(field.getName()).columnName(relDataTypeField.getName()).build();
@@ -244,8 +244,8 @@ private Optional<EnginePhysicalPlan> getLogPlan() {
       final SqrlFunctionParameter parameter = (SqrlFunctionParameter) functionParameter;
       parameters.add(
           parameter.isParentField()
-              ? new RootGraphqlModel.ArgumentParameter(parameter.getName())
-              : new RootGraphqlModel.SourceParameter(parameter.getName()));
+              ? new RootGraphqlModel.SourceParameter(parameter.getName())
+              : new RootGraphqlModel.ArgumentParameter(parameter.getName()));
     }
     RootGraphqlModel.QueryBase queryBase;
     if (tableFunction.getMultiplicity() == Multiplicity.MANY) { // all queries that can return more than 1 element are paginated
