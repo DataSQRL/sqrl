@@ -73,9 +73,9 @@ public class CompilationProcessV2 {
     /*
     TODO (Etienne): The following needs updating. Remove the && false condition and:
     - infer GraphQL schema from serverPlan
-    - walk the GraphQL schema to validate and generate queries/coordinates
+    - walk the GraphQL schema to validate it
     - make sure we generate the right testplan
-    - create the RootGraphQL model and attach to serverPlan
+    - create the RootGraphQL model (generate queries/coordinates) and attach to serverPlan
      */
     if (serverPlan.isPresent()) {
       Optional<APISource> apiSource = graphqlSourceFactory.get();
