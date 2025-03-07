@@ -395,4 +395,70 @@ CREATE TABLE IF NOT EXISTS "_LoanTypes_3" ("id" BIGINT NOT NULL, "name" TEXT NOT
 >>>iceberg-views.sql
 
 >>>vertx.json
-{ }
+{
+  "model" : {
+    "coords" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "ApplicationInfo",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"t\".\"id\", \"t\".\"customer_id\", \"t\".\"loan_type_id\", \"t\".\"amount\", \"t\".\"duration\", \"t\".\"application_date\", \"t\".\"updated_at\", \"t0\".\"id\" AS \"id0\", \"t0\".\"name\", \"t0\".\"description\", \"t0\".\"interest_rate\", \"t0\".\"max_amount\", \"t0\".\"min_amount\", \"t0\".\"max_duration\", \"t0\".\"min_duration\", \"t0\".\"updated_at\" AS \"updated_at0\", \"t1\".\"id\" AS \"id2\"\nFROM (SELECT *\n  FROM ICEBERG_SCAN('/tmp/duckdb/default_database/_Applications_2', ALLOW_MOVED_PATHS = TRUE)) AS \"t\"\n INNER JOIN (SELECT *\n  FROM ICEBERG_SCAN('/tmp/duckdb/default_database/_LoanTypes_3', ALLOW_MOVED_PATHS = TRUE)) AS \"t0\" ON \"t\".\"loan_type_id\" = \"t0\".\"id\"\n LEFT JOIN (SELECT *\n  FROM ICEBERG_SCAN('/tmp/duckdb/default_database/_LoanTypes_3', ALLOW_MOVED_PATHS = TRUE)) AS \"t1\" ON \"t\".\"customer_id\" = \"t1\".\"id\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "ApplicationStatus",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"status\", \"message\", \"event_time\", \"id\", \"customer_id\", \"loan_type_id\", \"amount\", \"duration\", \"max_amount\", \"min_amount\"\nFROM ICEBERG_SCAN('/tmp/duckdb/default_database/ApplicationStatus_1', ALLOW_MOVED_PATHS = TRUE)",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      }
+    ],
+    "mutations" : [ ],
+    "subscriptions" : [ ],
+    "schema" : {
+      "type" : "string",
+      "type" : "string",
+      "schema" : "type ApplicationInfo {\n  id: Float!\n  customer_id: Float!\n  loan_type_id: Float!\n  amount: Float!\n  duration: Float!\n  application_date: DateTime!\n  updated_at: DateTime!\n  id0: Float!\n  name: String!\n  description: String!\n  interest_rate: Float!\n  max_amount: Float!\n  min_amount: Float!\n  max_duration: Float!\n  min_duration: Float!\n  updated_at0: DateTime!\n  id2: Float\n}\n\ntype ApplicationStatus {\n  status: String!\n  message: String!\n  event_time: DateTime!\n  id: Float!\n  customer_id: Float!\n  loan_type_id: Float!\n  amount: Float!\n  duration: Float!\n  max_amount: Float!\n  min_amount: Float!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype Query {\n  ApplicationInfo(limit: Int = 10, offset: Int = 0): [ApplicationInfo!]\n  ApplicationStatus(limit: Int = 10, offset: Int = 0): [ApplicationStatus!]\n}\n"
+    }
+  }
+}

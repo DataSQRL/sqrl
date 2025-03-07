@@ -171,4 +171,43 @@ CREATE TABLE IF NOT EXISTS "Schema_1" ("uuidField" TEXT NOT NULL, "timestampMill
 CREATE OR REPLACE VIEW "Schema"("uuidField", "timestampMillisField", "nullableTimestampMillisField", "timestampMicrosField", "nullableTimestampMicrosField", "dateField", "nullableDateField", "timeMillisField", "nullableTimeMillisField", "timeMicrosField", "nullableTimeMicrosField", "complexArrayField", "nullableComplexArrayField", "multiNestedRecord", "stringField", "nullableStringField", "intField", "nullableIntField", "longField", "nullableLongField", "floatField", "nullableFloatField", "doubleField", "nullableDoubleField", "booleanField", "nullableBooleanField", "enumField", "nullableEnumField", "arrayField", "nullableArrayField", "nestedRecord", "nullableNestedRecord", "decimalField", "mapField", "nullableMapField") AS SELECT *
 FROM "Schema_1"
 >>>vertx.json
-{ }
+{
+  "model" : {
+    "coords" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Schema",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"Schema_1\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      }
+    ],
+    "mutations" : [ ],
+    "subscriptions" : [ ],
+    "schema" : {
+      "type" : "string",
+      "type" : "string",
+      "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\ntype Query {\n  Schema(limit: Int = 10, offset: Int = 0): [Schema!]\n}\n\ntype Schema {\n  uuidField: String!\n  timestampMillisField: DateTime!\n  nullableTimestampMillisField: DateTime\n  timestampMicrosField: DateTime!\n  nullableTimestampMicrosField: DateTime\n  dateField: Date!\n  nullableDateField: Date\n  timeMillisField: LocalTime!\n  nullableTimeMillisField: LocalTime\n  timeMicrosField: LocalTime!\n  nullableTimeMicrosField: LocalTime\n  complexArrayField: [complexArrayFieldOutput]!\n  nullableComplexArrayField: [nullableComplexArrayFieldOutput]\n  multiNestedRecord: multiNestedRecordOutput!\n  stringField: String!\n  nullableStringField: String\n  intField: Int!\n  nullableIntField: Int\n  longField: Float!\n  nullableLongField: Float\n  floatField: Float!\n  nullableFloatField: Float\n  doubleField: Float!\n  nullableDoubleField: Float\n  booleanField: Boolean!\n  nullableBooleanField: Boolean\n  enumField: String!\n  nullableEnumField: String\n  arrayField: [String]!\n  nullableArrayField: [Int]\n  nestedRecord: nestedRecordOutput!\n  nullableNestedRecord: nullableNestedRecordOutput\n  decimalField: Float!\n  mapField: JSON!\n  nullableMapField: JSON\n}\n\ntype complexArrayFieldOutput {\n  itemFieldOne: Int!\n  itemFieldTwo: String!\n}\n\ntype multiNestedRecordOutput {\n  nestedLevelOne: multiNestedRecord_nestedLevelOneOutput!\n}\n\ntype multiNestedRecord_nestedLevelOneOutput {\n  levelOneField: String!\n  nestedLevelTwo: multiNestedRecord_nestedLevelOne_nestedLevelTwoOutput!\n}\n\ntype multiNestedRecord_nestedLevelOne_nestedLevelTwoOutput {\n  levelTwoField: Int!\n}\n\ntype nestedRecordOutput {\n  nestedStringField: String!\n  nestedIntField: Int!\n  nestedArrayField: [Float]!\n  nestedMapField: JSON!\n}\n\ntype nullableComplexArrayFieldOutput {\n  nullableItemFieldOne: Float\n  nullableItemFieldTwo: Boolean\n}\n\ntype nullableNestedRecordOutput {\n  nullableNestedStringField: String\n  nullableNestedLongField: Float\n}\n"
+    }
+  }
+}

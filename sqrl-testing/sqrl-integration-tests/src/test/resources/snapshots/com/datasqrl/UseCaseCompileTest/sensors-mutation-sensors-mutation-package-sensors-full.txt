@@ -169,4 +169,60 @@ FROM "SensorMaxTemp_2";
 CREATE OR REPLACE VIEW "SensorReading"("sensorid", "temperature", "event_time") AS SELECT "sensorid", "temperature", "event_time"
 FROM "SensorReading_3"
 >>>vertx.json
-{ }
+{
+  "model" : {
+    "coords" : [
+      {
+        "type" : "args",
+        "parentType" : "Subscription",
+        "fieldName" : "HighTempAlert",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "sensorid"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"sensorid\", \"temperature\", \"event_time\"\nFROM \"HighTempAlert_1\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "SensorMaxTemp",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "sensorid"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"SensorMaxTemp_2\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      }
+    ],
+    "mutations" : [ ],
+    "subscriptions" : [ ],
+    "schema" : {
+      "type" : "string",
+      "type" : "string",
+      "schema" : "type Query {\n  SensorMaxTemp(sensorid: Int): [SensorMaxTemp!]\n}\n\ntype SensorMaxTemp {\n  sensorid: Int!\n  maxTemp: Float!\n}\n\ntype Mutation {\n  AddReading(metric: ReadingInput!): CreatedReading\n}\n\ninput ReadingInput {\n  sensorid: Int!\n  temperature: Float!\n}\n\ntype CreatedReading {\n  event_time: String!\n  sensorid: Int!\n}\n\ntype Subscription {\n  HighTempAlert(sensorid: Int): HighTempAlert\n}\n\ntype HighTempAlert {\n  sensorid: Int!\n  timeSec: String!\n  temperature: Float!\n}"
+    }
+  }
+}

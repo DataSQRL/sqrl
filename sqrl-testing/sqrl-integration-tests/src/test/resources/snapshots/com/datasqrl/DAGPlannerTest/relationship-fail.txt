@@ -1,0 +1,18 @@
+[NOTICE] This table does not propagate the source row time columns: `default_catalog`.`default_database`.`Orders`[time]
+in script:relationship-fail.sqrl [5:1]:
+IMPORT ecommerceTs.Orders; --base table = Orders
+
+rootFunction($i : INT) := SELECT id FROM Orders WHERE id = $i; -- no base table
+^
+
+[NOTICE] This table does not propagate the source row time columns: `default_catalog`.`default_database`.`Orders`[time]
+in script:relationship-fail.sqrl [10:1]:
+-- A relationship, `this.customerid` gets replaced with an internal parameter that gets substituted with customerid on the parent table Customer
+Customer.orders := SELECT * FROM Orders o WHERE this.customerid = o.customerid; --base table
+Customer.orders2 := SELECT id FROM Orders o WHERE this.customerid = o.customerid; --no base table
+^
+
+[FATAL] All types within a GraphQL schema must have unique names. No two provided types may have the same name.
+No provided type may have a name which conflicts with any built in types (including Scalar and Introspection types).
+You have redefined the type 'entriesOutput' from being a 'GraphQLObjectType' to a 'GraphQLObjectType'
+
