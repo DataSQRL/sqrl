@@ -90,7 +90,7 @@ public class CompilationProcessV2 {
       //create test artifact
       if (executionGoal == ExecutionGoal.TEST) {
         TestPlanner2 testPlanner = new TestPlanner2(serverPlan.get().getFunctions());
-        testPlanner.generateTestPlan(apiSource.get(), testsPath);
+        testPlan = testPlanner.generateTestPlan(apiSource.get(), testsPath);
       }
     }
     return Pair.of(physicalPlan, testPlan);

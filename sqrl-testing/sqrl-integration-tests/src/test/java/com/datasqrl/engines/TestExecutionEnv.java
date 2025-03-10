@@ -217,7 +217,7 @@ public class TestExecutionEnv implements TestEngineVisitor<Void, TestEnvContext>
     try {
       int run = test.run();
       if (run != 0) {
-        fail();
+        fail("Test runner returned error code. Check above for failed snapshot tests (in red) or exceptions");
       }
     } catch (Exception e) {
       fail(e);
