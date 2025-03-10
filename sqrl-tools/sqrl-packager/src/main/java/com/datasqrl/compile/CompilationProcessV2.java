@@ -52,7 +52,6 @@ public class CompilationProcessV2 {
   private final ExecutionGoal executionGoal;
   private final GraphQLMutationExtraction graphQLMutationExtraction;
   private final ExecutionPipeline pipeline;
-  private final TestPlanner testPlanner;
   private final ErrorCollector errors;
 
   public Pair<PhysicalPlan, TestPlan> executeCompilation(Optional<Path> testsPath) {
@@ -90,7 +89,8 @@ public class CompilationProcessV2 {
 
       //create test artifact
       if (executionGoal == ExecutionGoal.TEST) {
-        testPlan = testPlanner.generateTestPlan(apiSource.get(), testsPath);
+        TestPlanner2 testPlanner = new TestPlanner2(serverPlan.get().getFunctions());
+        testPlanner.generateTestPlan(apiSource.get(), testsPath);
       }
     }
     return Pair.of(physicalPlan, testPlan);

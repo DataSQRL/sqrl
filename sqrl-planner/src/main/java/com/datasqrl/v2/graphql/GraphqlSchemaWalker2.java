@@ -3,6 +3,7 @@ package com.datasqrl.v2.graphql;
 import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.getQueryType;
 import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.getSubscriptionType;
 import static com.datasqrl.graphql.util.GraphqlCheckUtil.checkState;
+import static com.datasqrl.v2.util.SqrTableFunctionUtil.getTableFunctionFromPath;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
@@ -74,7 +75,7 @@ public abstract class GraphqlSchemaWalker2 {
   private void walkRootType(ObjectTypeDefinition rootType, TypeDefinitionRegistry registry, APISource apiSource) {
     for (FieldDefinition field : rootType.getFieldDefinitions()) { // fields are root table functions
       final NamePath fieldPath = NamePath.ROOT.concat(NamePath.of(field.getName()));
-      final Optional<SqrlTableFunction> tableFunction = getTableFunctionFromPath(fieldPath); // root table functions are always present
+      final Optional<SqrlTableFunction> tableFunction = getTableFunctionFromPath(tableFunctions, fieldPath); // root table functions are always present
       walkTableFunction(rootType, field, fieldPath, tableFunction.get(), registry, apiSource);
     }
   }
@@ -109,7 +110,7 @@ public abstract class GraphqlSchemaWalker2 {
       // When this method is recursively called for a nested relDataType, there can not be any relationship field
       // so in that case we call this method with isFunctionResultType == false to avoid checking for relationships
       if (isFunctionResultType) {
-        final Optional<SqrlTableFunction> relationship = getTableFunctionFromPath(fieldPath);
+        final Optional<SqrlTableFunction> relationship = getTableFunctionFromPath(tableFunctions, fieldPath);
         if (relationship.isPresent()) { // the field is a relationship field, walk the related table relationship
           walkTableFunction(objectType, field, fieldPath, relationship.get(), registry, apiSource); // there is no more nested relationships, so this method will not be recursively called
           continue;
@@ -186,11 +187,6 @@ public abstract class GraphqlSchemaWalker2 {
 /*
 * Utility methods
  */
-private Optional<SqrlTableFunction> getTableFunctionFromPath(NamePath path) {
-  final List<SqrlTableFunction> tableFunctionsAtPath = tableFunctions.stream().filter(tableFunction -> tableFunction.getFullPath().equals(path)).collect(Collectors.toList());
-  assert (tableFunctionsAtPath.size() <= 1); // no overloading
-  return tableFunctionsAtPath.isEmpty() ? Optional.empty() : Optional.of(tableFunctionsAtPath.get(0));
-}
 
   private Type<?> unwrapNonNullType(Type<?> type) {
     if (type instanceof NonNullType) {
