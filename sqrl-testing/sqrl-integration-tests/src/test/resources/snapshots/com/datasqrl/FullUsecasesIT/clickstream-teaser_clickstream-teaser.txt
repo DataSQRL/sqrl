@@ -1,2 +1,0 @@
->>>recommendation-query.graphql
-{"data":{"Recommendation":[{"rec":"george_newnes/behold_the_man","frequency":1}]}}
