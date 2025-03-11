@@ -1,0 +1,430 @@
+>>>pipeline_explain.txt
+=== MachineReading
+ID:     default_catalog.default_database.MachineReading
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database._SensorReading, default_catalog.default_database._Sensors
+Primary Key: -
+Timestamp  : event_time
+Schema:
+ - sensorid: INTEGER
+ - temperature: FLOAT
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME*
+ - machineid: INTEGER
+Plan:
+LogicalProject(sensorid=[$0], temperature=[$1], event_time=[$2], machineid=[$4])
+  LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{0, 2}])
+    LogicalTableScan(table=[[default_catalog, default_database, _SensorReading]])
+    LogicalFilter(condition=[=($cor1.sensorid, $0)])
+      LogicalSnapshot(period=[$cor1.event_time])
+        LogicalTableScan(table=[[default_catalog, default_database, _Sensors]])
+SQL: CREATE VIEW MachineReading AS  SELECT r.sensorid, r.temperature, r.event_time, s.machineid
+                  FROM _SensorReading r JOIN _Sensors FOR SYSTEM_TIME AS OF r.event_time s ON r.sensorid = s.sensorid;
+
+=== MachineTempByHour
+ID:     default_catalog.default_database.MachineTempByHour
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.MachineReading
+Annotations:
+ - features: STREAM_WINDOW_AGGREGATION (feature)
+Primary Key: -
+Timestamp  : time_hour
+Schema:
+ - machineid: INTEGER
+ - time_hour: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - avg_temperature: FLOAT
+Plan:
+LogicalProject(machineid=[$0], time_hour=[$3], avg_temperature=[$4])
+  LogicalAggregate(group=[{0, 1, 2, 3}], avg_temperature=[AVG($4)])
+    LogicalProject(machineid=[$3], window_start=[$4], window_end=[$5], time_hour=[$6], temperature=[$1])
+      LogicalTableFunctionScan(invocation=[TUMBLE(DESCRIPTOR($2), 3600000:INTERVAL MINUTE)], rowType=[RecordType(INTEGER sensorid, FLOAT temperature, TIMESTAMP_LTZ(3) *ROWTIME* event_time, INTEGER machineid, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
+        LogicalProject(sensorid=[$0], temperature=[$1], event_time=[$2], machineid=[$3])
+          LogicalTableScan(table=[[default_catalog, default_database, MachineReading]])
+SQL: CREATE VIEW MachineTempByHour AS  SELECT machineid, window_time as time_hour, AVG(temperature) AS avg_temperature
+                     FROM TABLE(TUMBLE(TABLE MachineReading, DESCRIPTOR(event_time), INTERVAL '60' MINUTES))
+                     GROUP BY machineid, window_start, window_end, window_time;
+
+=== MachineTempHourlyById
+ID:     default_catalog.default_database.MachineTempHourlyById
+Type:   query
+Stage:  postgres
+Inputs: default_catalog.default_database.MachineTempByHour
+Annotations:
+ - parameters: machineid
+ - base-table: MachineTempByHour
+Plan:
+LogicalProject(machineid=[$0], time_hour=[$1], avg_temperature=[$2])
+  LogicalFilter(condition=[=($0, ?0)])
+    LogicalTableScan(table=[[default_catalog, default_database, MachineTempByHour]])
+SQL: CREATE VIEW MachineTempHourlyById AS  SELECT * FROM MachineTempByHour WHERE machineid = ?         ;
+
+=== _SensorReading
+ID:     default_catalog.default_database._SensorReading
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database._SensorReading__def
+Primary Key: -
+Timestamp  : event_time
+Schema:
+ - sensorid: INTEGER
+ - temperature: FLOAT
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME*
+Plan:
+LogicalProject(sensorid=[$0], temperature=[$1], event_time=[$2])
+  LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($2, 0:INTERVAL SECOND)])
+    LogicalProject(sensorid=[$0], temperature=[$1], event_time=[CAST($2):TIMESTAMP_LTZ(3) *ROWTIME*])
+      LogicalTableScan(table=[[default_catalog, default_database, _SensorReading__def, metadata=[timestamp]]])
+SQL: CREATE VIEW `_SensorReading`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`_SensorReading__def`
+=== _Sensors
+ID:     default_catalog.default_database._Sensors
+Type:   state
+Stage:  flink
+Inputs: default_catalog.default_database._Sensors__def
+Primary Key: sensorid
+Timestamp  : event_time
+Schema:
+ - sensorid: INTEGER NOT NULL
+ - machineid: INTEGER
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME*
+Plan:
+LogicalProject(sensorid=[$0], machineid=[$1], event_time=[$2])
+  LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($2, 0:INTERVAL SECOND)])
+    LogicalProject(sensorid=[$0], machineid=[$1], event_time=[CAST($2):TIMESTAMP_LTZ(3) *ROWTIME*])
+      LogicalTableScan(table=[[default_catalog, default_database, _Sensors__def, metadata=[timestamp]]])
+SQL: CREATE VIEW `_Sensors`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`_Sensors__def`
+>>>flink-sql-no-functions.sql
+CREATE TABLE `_Sensors__def` (
+  `sensorid` INTEGER,
+  `machineid` INTEGER,
+  `event_time` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
+  PRIMARY KEY (`sensorid`) NOT ENFORCED,
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
+) WITH (
+  'connector' = 'upsert-kafka',
+  'value.format' = 'flexible-json',
+  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
+  'properties.group.id' = '${PROPERTIES_GROUP_ID}',
+  'key.format' = 'raw',
+  'topic' = '_Sensors'
+);
+CREATE VIEW `_Sensors`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`_Sensors__def`;
+CREATE TABLE `_SensorReading__def` (
+  `sensorid` INTEGER,
+  `temperature` FLOAT,
+  `event_time` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
+) WITH (
+  'connector' = 'kafka',
+  'format' = 'flexible-json',
+  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
+  'properties.group.id' = '${PROPERTIES_GROUP_ID}',
+  'scan.startup.mode' = 'group-offsets',
+  'properties.auto.offset.reset' = 'earliest',
+  'topic' = '_SensorReading'
+);
+CREATE VIEW `_SensorReading`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`_SensorReading__def`;
+CREATE VIEW `MachineReading`
+AS
+SELECT `r`.`sensorid`, `r`.`temperature`, `r`.`event_time`, `s`.`machineid`
+FROM `_SensorReading` AS `r`
+ INNER JOIN `_Sensors` FOR SYSTEM_TIME AS OF `r`.`event_time` AS `s` ON `r`.`sensorid` = `s`.`sensorid`;
+CREATE VIEW `MachineTempByHour`
+AS
+SELECT `machineid`, `window_time` AS `time_hour`, AVG(`temperature`) AS `avg_temperature`
+FROM TABLE(TUMBLE(TABLE `MachineReading`, DESCRIPTOR(`event_time`), INTERVAL '60' MINUTE))
+GROUP BY `machineid`, `window_start`, `window_end`, `window_time`;
+CREATE TABLE `MachineReading_1` (
+  `sensorid` INTEGER,
+  `temperature` FLOAT,
+  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  `machineid` INTEGER,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'MachineReading_1'
+);
+CREATE TABLE `MachineTempByHour_2` (
+  `machineid` INTEGER,
+  `time_hour` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `avg_temperature` FLOAT,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'MachineTempByHour_2'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`MachineReading_1`
+(SELECT `sensorid`, `temperature`, `event_time`, `machineid`, HASHCOLUMNS(`sensorid`, `temperature`, `event_time`, `machineid`) AS `__pk_hash`
+ FROM `default_catalog`.`default_database`.`MachineReading`)
+;
+INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
+ (SELECT `machineid`, `time_hour`, `avg_temperature`, HASHCOLUMNS(`machineid`, `time_hour`, `avg_temperature`) AS `__pk_hash`
+  FROM `default_catalog`.`default_database`.`MachineTempByHour`)
+ ;
+ END
+>>>kafka.json
+{
+  "topics" : [
+    {
+      "name" : "_SensorReading",
+      "numPartitions" : 1,
+      "replicationFactor" : 1,
+      "replicasAssignments" : { },
+      "config" : { }
+    },
+    {
+      "name" : "_Sensors",
+      "numPartitions" : 1,
+      "replicationFactor" : 1,
+      "replicasAssignments" : { },
+      "config" : { }
+    }
+  ]
+}
+>>>postgres.json
+{
+  "statements" : [
+    {
+      "name" : "MachineReading_1",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"MachineReading_1\" (\"sensorid\" INTEGER , \"temperature\" FLOAT , \"event_time\" TIMESTAMP WITH TIME ZONE , \"machineid\" INTEGER , \"__pk_hash\" TEXT  , PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "sensorid",
+          "type" : "INTEGER",
+          "nullable" : true
+        },
+        {
+          "name" : "temperature",
+          "type" : "FLOAT",
+          "nullable" : true
+        },
+        {
+          "name" : "event_time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : true
+        },
+        {
+          "name" : "machineid",
+          "type" : "INTEGER",
+          "nullable" : true
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "MachineTempByHour_2",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"MachineTempByHour_2\" (\"machineid\" INTEGER , \"time_hour\" TIMESTAMP WITH TIME ZONE NOT NULL, \"avg_temperature\" FLOAT , \"__pk_hash\" TEXT  , PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "machineid",
+          "type" : "INTEGER",
+          "nullable" : true
+        },
+        {
+          "name" : "time_hour",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "avg_temperature",
+          "type" : "FLOAT",
+          "nullable" : true
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "MachineReading",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"MachineReading\"(\"sensorid\", \"temperature\", \"event_time\", \"machineid\") AS SELECT \"sensorid\", \"temperature\", \"event_time\", \"machineid\"\nFROM \"MachineReading_1\"",
+      "fields" : [
+        {
+          "name" : "sensorid",
+          "type" : "INTEGER",
+          "nullable" : true
+        },
+        {
+          "name" : "temperature",
+          "type" : "FLOAT",
+          "nullable" : true
+        },
+        {
+          "name" : "event_time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : true
+        },
+        {
+          "name" : "machineid",
+          "type" : "INTEGER",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "MachineTempByHour",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"MachineTempByHour\"(\"machineid\", \"time_hour\", \"avg_temperature\") AS SELECT \"machineid\", \"time_hour\", \"avg_temperature\"\nFROM \"MachineTempByHour_2\"",
+      "fields" : [
+        {
+          "name" : "machineid",
+          "type" : "INTEGER",
+          "nullable" : true
+        },
+        {
+          "name" : "time_hour",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "avg_temperature",
+          "type" : "FLOAT",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "MachineTempByHour_2_hash_c0",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"MachineTempByHour_2_hash_c0\" ON \"MachineTempByHour_2\" USING hash (\"machineid\")"
+    }
+  ]
+}
+>>>vertx.json
+{
+  "model" : {
+    "coords" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "MachineReading",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"sensorid\", \"temperature\", \"event_time\", \"machineid\"\nFROM \"MachineReading_1\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "MachineTempByHour",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"machineid\", \"time_hour\", \"avg_temperature\"\nFROM \"MachineTempByHour_2\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "MachineTempHourlyById",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "machineid"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"machineid\", \"time_hour\", \"avg_temperature\"\nFROM \"MachineTempByHour_2\"\nWHERE \"machineid\" = $1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "machineid"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "mutations" : [ ],
+    "subscriptions" : [ ],
+    "schema" : {
+      "type" : "string",
+      "type" : "string",
+      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype MachineReading {\n  sensorid: Int\n  temperature: Float\n  event_time: DateTime\n  machineid: Int\n}\n\ntype MachineTempByHour {\n  machineid: Int\n  time_hour: DateTime!\n  avg_temperature: Float\n}\n\ntype Query {\n  MachineReading(limit: Int = 10, offset: Int = 0): [MachineReading!]\n  MachineTempByHour(limit: Int = 10, offset: Int = 0): [MachineTempByHour!]\n  MachineTempHourlyById(machineid: Int!, limit: Int = 10, offset: Int = 0): [MachineTempByHour!]\n}\n"
+    }
+  }
+}

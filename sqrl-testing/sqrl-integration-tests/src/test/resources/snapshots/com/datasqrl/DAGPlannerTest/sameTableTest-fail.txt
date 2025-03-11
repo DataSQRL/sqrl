@@ -1,0 +1,7 @@
+[FATAL] Table (or view) default_database.Customer already exists in Catalog default_catalog.
+in script:sametabletest-fail.sqrl [3:1]:
+IMPORT ecommerceTs.Customer;
+
+Customer := DISTINCT Customer ON customerid ORDER BY `timestamp` DESC;
+^
+
