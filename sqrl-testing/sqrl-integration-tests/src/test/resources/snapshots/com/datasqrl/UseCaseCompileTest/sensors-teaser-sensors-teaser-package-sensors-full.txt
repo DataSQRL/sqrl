@@ -147,7 +147,7 @@ SELECT *
 FROM `SecReading`;
 CREATE VIEW `SensorMaxTempTest`
 AS
-SELECT *
+SELECT `sensorid`, `maxTemp`
 FROM `SensorMaxTemp`;
 CREATE TABLE `SecReading_1` (
   `sensorid` BIGINT NOT NULL,

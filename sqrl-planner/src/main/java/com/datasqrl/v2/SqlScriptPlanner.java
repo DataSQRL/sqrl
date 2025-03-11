@@ -480,7 +480,7 @@ public class SqlScriptPlanner {
         if (hint instanceof NoQueryHint) { //Don't add an access function
           return;
         }
-        parameters = CalciteUtil.addFilterByColumn(relBuilder, hint.getColumnIndexes(), hint instanceof QueryByAnyHint);
+        parameters = SqlScriptPlannerUtil.addFilterByColumn(relBuilder, hint.getColumnIndexes(), hint instanceof QueryByAnyHint);
       }
       relBuilder.project(IntStream.range(0, tableAnalysis.getFieldLength()).mapToObj(relBuilder::field).collect(
           Collectors.toList()), tableAnalysis.getRowType().getFieldNames(), true); //Identity projection
