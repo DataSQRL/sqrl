@@ -175,7 +175,8 @@ public class GraphqlSchemaFactory2 {
     RelDataType rowType = tableFunction.getRowType();
     List<GraphQLFieldDefinition> fields = new ArrayList<>();
     for (RelDataTypeField field : rowType.getFieldList()) {
-      createRelDataTypeField(field).map(fields::add);
+      final NamePath fieldPath = tableFunction.getFullPath().concat(NamePath.of(field.getName()));
+      createRelDataTypeField(field, fieldPath).map(fields::add);
     }
 
     // relationship fields (reference to types defined when processing the relationship) need to be wired into the root table.
@@ -211,7 +212,8 @@ public class GraphqlSchemaFactory2 {
     RelDataType rowType = tableFunction.getRowType();
     List<GraphQLFieldDefinition> fields = new ArrayList<>();
     for (RelDataTypeField field : rowType.getFieldList()) {
-      createRelDataTypeField(field).map(fields::add);
+      final NamePath fieldPath = tableFunction.getFullPath().concat(NamePath.of(field.getName()));
+      createRelDataTypeField(field, fieldPath).map(fields::add);
     }
 
     if (fields.isEmpty()) {
@@ -286,8 +288,8 @@ public class GraphqlSchemaFactory2 {
    *     - a nested relDataType (= structured type) (which is no more planed as a table function) and which we recursively process
    *
    */
-  private Optional<GraphQLFieldDefinition> createRelDataTypeField(RelDataTypeField field) {
-    return getOutputType(field.getType(), NamePath.of(field.getName()), extendedScalarTypes)
+  private Optional<GraphQLFieldDefinition> createRelDataTypeField(RelDataTypeField field, NamePath fieldPath) {
+    return getOutputType(field.getType(), fieldPath, extendedScalarTypes)
             .filter(type -> isValidGraphQLName(field.getName()))
             .filter(type -> isVisible(field))
             .map(type -> GraphQLFieldDefinition.newFieldDefinition()
