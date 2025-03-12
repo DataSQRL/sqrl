@@ -11,11 +11,11 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.schema.Multiplicity;
+import com.datasqrl.v2.analyzer.TableAnalysis;
 import com.datasqrl.v2.tables.SqrlFunctionParameter;
 import com.datasqrl.graphql.server.CustomScalars;
 import com.datasqrl.v2.parser.AccessModifier;
 import com.datasqrl.v2.tables.SqrlTableFunction;
-import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import graphql.Scalars;
 import graphql.language.IntValue;
@@ -70,6 +70,10 @@ public class GraphqlSchemaFactory2 {
     if (extendedScalarTypes) { // use the plural parameter name in place of only bigInteger to avoid having a conf parameter of each special type mapping feature in the future
       graphQLSchemaBuilder.additionalTypes(Set.of(CustomScalars.GRAPHQL_BIGINTEGER));
     }
+    /*process table functions that are not accessible but their type might be referenced by queries or subscriptions,
+      so we want to create the types but not an endpoint (i.e. we ignore the returned GraphQLObjectType)
+     */
+    createQueriesOrSubscriptionsObjectType(serverPlan, AccessModifier.NONE);
 
     // process query table functions
     final Optional<GraphQLObjectType> queriesObjectType = createQueriesOrSubscriptionsObjectType(serverPlan, AccessModifier.QUERY);
@@ -120,18 +124,21 @@ public class GraphqlSchemaFactory2 {
             );
 
     for (SqrlTableFunction tableFunction : tableFunctions) {
-      // create resultType of the table function and add it to the GraphQl object types
-      if (!tableFunction.isRelationship()) { // root table function
-        Optional<GraphQLObjectType> resultType =
-            createRootTableFunctionResultType(
-                tableFunction,
-                tableFunctionsByTheirParentPath.getOrDefault(tableFunction.getFullPath(), List.of()) // List of table functions which parent is tableFunction (its relationships).
-            );
-        resultType.map(objectTypes::add);
-      } else { // relationship table function
-        Optional<GraphQLObjectType> resultType = createRelationshipTableFunctionResultType(tableFunction);
-        resultType.map(objectTypes::add);
+      NamePath typeNamePath;
+      TableAnalysis tableAnalysis;
+      //If the function has a base table, we need to create the type for that table instead of this function
+      if (tableFunction.getFunctionAnalysis().getOptionalBaseTable().isPresent()) {
+         tableAnalysis = tableFunction.getBaseTable();
+         typeNamePath = NamePath.of(tableAnalysis.getName());
+      } else {
+        tableAnalysis = tableFunction.getFunctionAnalysis();
+        typeNamePath = tableFunction.getFullPath();
       }
+      Optional<GraphQLObjectType> resultType = createTableResultType(
+          typeNamePath, tableAnalysis,
+          tableFunctionsByTheirParentPath.getOrDefault(typeNamePath, List.of()) // List of table functions which parent is tableFunction (its relationships).
+      );
+      resultType.ifPresent(objectTypes::add);
     }
     // create root type ("Query" or "Subscription")
     final List<SqrlTableFunction> rootTableFunctions = tableFunctions.stream()
@@ -144,23 +151,10 @@ public class GraphqlSchemaFactory2 {
     return rootObjectType;
   }
 
-
-  /**
-   * Create the graphQL result type for a root table function (non-relationship)
-   */
-  private Optional<GraphQLObjectType> createRootTableFunctionResultType(SqrlTableFunction tableFunction, List<SqrlTableFunction> itsRelationships) {
-
-    String typeName;
-    if (tableFunction.getFunctionAnalysis().getOptionalBaseTable().isPresent()) {
-      final String baseTableName = tableFunction.getBaseTable().getName();
-      if (definedTypeNames.contains(baseTableName)) {// result type was already defined
-          return Optional.empty();
-      }
-      else { // it is a new result type. Using base table name
-        typeName = baseTableName;
-      }
-    } else { // there is no base table. Use the function name (guaranteed to be uniq by the compiler)
-      typeName = tableFunction.getFullPath().getLast().getDisplay();
+  private Optional<GraphQLObjectType> createTableResultType(NamePath typePath, TableAnalysis table, List<SqrlTableFunction> itsRelationships) {
+    String typeName = uniquifyNameForPath(typePath);
+    if (definedTypeNames.contains(typeName)) { //If we already defined this type, move on
+      return Optional.empty();
     }
     /* BROWSE THE FIELDS
     They are either
@@ -172,55 +166,20 @@ public class GraphqlSchemaFactory2 {
 
     // non-relationship fields
     // now all relationships are functions that are separate from the rowType. So there can no more have relationship fields inside it
-    RelDataType rowType = tableFunction.getRowType();
+    RelDataType rowType = table.getRowType();
     List<GraphQLFieldDefinition> fields = new ArrayList<>();
     for (RelDataTypeField field : rowType.getFieldList()) {
-      final NamePath fieldPath = tableFunction.getFullPath().concat(NamePath.of(field.getName()));
+      final NamePath fieldPath = typePath.concat(NamePath.of(field.getName()));
       createRelDataTypeField(field, fieldPath).map(fields::add);
     }
 
-    // relationship fields (reference to types defined when processing the relationship) need to be wired into the root table.
+    // relationship fields if any (reference to types defined when processing the relationship) need to be wired into the root table.
     for (SqrlTableFunction relationship :  itsRelationships) {
       createRelationshipField(relationship).map(fields::add);
     }
 
-    if (fields.isEmpty()) {
-      return Optional.empty();
-    }
+    assert !fields.isEmpty(): "Invalid table: " + table;
 
-    GraphQLObjectType objectType = GraphQLObjectType.newObject()
-            .name(typeName)
-            .fields(fields)
-            .build();
-    definedTypeNames.add(typeName);
-    queryFields.addAll(fields);
-    return Optional.of(objectType);
-  }
-  /**
-   * Generate the result type for relationship table functions
-   */
-  private Optional<GraphQLObjectType> createRelationshipTableFunctionResultType(SqrlTableFunction tableFunction) {
-
-    if (tableFunction.getFunctionAnalysis().getOptionalBaseTable().isPresent()) { // the type was created in the root table function
-      return Optional.empty();
-    }
-    /* BROWSE THE FIELDS
-    There is No more nested relationships, so when we browse the fields, they are either
-      - a scalar type
-      - a nested relDataType (which is no more planed as a table function). For that case we stop at depth=1 for now
-     */
-    RelDataType rowType = tableFunction.getRowType();
-    List<GraphQLFieldDefinition> fields = new ArrayList<>();
-    for (RelDataTypeField field : rowType.getFieldList()) {
-      final NamePath fieldPath = tableFunction.getFullPath().concat(NamePath.of(field.getName()));
-      createRelDataTypeField(field, fieldPath).map(fields::add);
-    }
-
-    if (fields.isEmpty()) {
-      return Optional.empty();
-    }
-
-    String typeName = uniquifyNameForPath(tableFunction.getFullPath());
     GraphQLObjectType objectType = GraphQLObjectType.newObject()
             .name(typeName)
             .fields(fields)
@@ -300,7 +259,7 @@ public class GraphqlSchemaFactory2 {
   }
 
   /**
-   * For a relationship table function sur as this: <pre>{@code Customer.orders := SELECT * FROM Orders o WHERE
+   * For a relationship table function such as this: <pre>{@code Customer.orders := SELECT * FROM Orders o WHERE
    * this.customerid = o.customerid; }</pre> Create a type reference for the orders field in the Customer table.
    */
   private Optional<GraphQLFieldDefinition> createRelationshipField(SqrlTableFunction relationship) {
