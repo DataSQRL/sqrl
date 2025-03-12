@@ -1,0 +1,289 @@
+>>>pipeline_explain.txt
+=== FunctionCalls
+ID:     default_catalog.default_database.FunctionCalls
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.Product
+Annotations:
+ - stream-root: Product__def
+Primary Key: -
+Timestamp  : -
+Schema:
+ - searchResult: DOUBLE NOT NULL
+ - format: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+Plan:
+LogicalProject(searchResult=[textsearch('garden gnome', $3, $1)], format=[format('Go buy: %s in %s with id=%s', $1, $3, CAST($0):VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL)])
+  LogicalTableScan(table=[[default_catalog, default_database, Product]])
+SQL: CREATE VIEW FunctionCalls AS  SELECT textsearch('garden gnome', category, name) AS searchResult,
+                        format('Go buy: %s in %s with id=%s', name, category, CAST(productid AS STRING)) AS format
+    FROM Product;
+
+=== Product
+ID:     default_catalog.default_database.Product
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.Product__def
+Annotations:
+ - stream-root: Product__def
+Primary Key: productid, name, description, category
+Timestamp  : _ingest_time
+Schema:
+ - productid: BIGINT NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - description: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - category: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - _ingest_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Plan:
+LogicalProject(productid=[$0], name=[$1], description=[$2], category=[$3], _ingest_time=[$4])
+  LogicalWatermarkAssigner(rowtime=[_ingest_time], watermark=[-($4, 1:INTERVAL SECOND)])
+    LogicalTableScan(table=[[default_catalog, default_database, Product__def]])
+SQL: CREATE VIEW `Product`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`Product__def`
+>>>flink-sql-no-functions.sql
+CREATE TEMPORARY TABLE `Product__schema` (
+  `productid` BIGINT NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `Product__def` (
+  PRIMARY KEY (`productid`, `name`, `description`, `category`) NOT ENFORCED,
+  WATERMARK FOR `_ingest_time` AS `_ingest_time` - INTERVAL '0.001' SECOND
+) WITH (
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec',
+  'connector' = 'filesystem'
+)
+LIKE `Product__schema`;
+CREATE VIEW `Product`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`Product__def`;
+CREATE VIEW `FunctionCalls`
+AS
+SELECT TEXTSEARCH('garden gnome', `category`, `name`) AS `searchResult`, FORMAT('Go buy: %s in %s with id=%s', `name`, `category`, CAST(`productid` AS STRING)) AS `format`
+FROM `Product`;
+CREATE TABLE `FunctionCalls_1` (
+  `searchResult` DOUBLE NOT NULL,
+  `format` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'FunctionCalls_1'
+);
+CREATE TABLE `Product_2` (
+  `productid` BIGINT NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`productid`, `name`, `description`, `category`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'Product_2'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`FunctionCalls_1`
+(SELECT `searchResult`, `format`, HASHCOLUMNS(`searchResult`, `format`) AS `__pk_hash`
+ FROM `default_catalog`.`default_database`.`FunctionCalls`)
+;
+INSERT INTO `default_catalog`.`default_database`.`Product_2`
+ (SELECT *
+  FROM `default_catalog`.`default_database`.`Product`)
+ ;
+ END
+>>>kafka.json
+{
+  "topics" : [ ]
+}
+>>>postgres.json
+{
+  "statements" : [
+    {
+      "name" : "FunctionCalls_1",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"FunctionCalls_1\" (\"searchResult\" DOUBLE PRECISION NOT NULL, \"format\" TEXT NOT NULL, \"__pk_hash\" TEXT  , PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "searchResult",
+          "type" : "DOUBLE PRECISION",
+          "nullable" : false
+        },
+        {
+          "name" : "format",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "Product_2",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Product_2\" (\"productid\" BIGINT NOT NULL, \"name\" TEXT NOT NULL, \"description\" TEXT NOT NULL, \"category\" TEXT NOT NULL, \"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"productid\",\"name\",\"description\",\"category\"))",
+      "fields" : [
+        {
+          "name" : "productid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "description",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "category",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "_ingest_time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
+    },
+    {
+      "name" : "FunctionCalls",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"FunctionCalls\"(\"searchResult\", \"format\") AS SELECT \"searchResult\", \"format\"\nFROM \"FunctionCalls_1\"",
+      "fields" : [
+        {
+          "name" : "searchResult",
+          "type" : "DOUBLE PRECISION",
+          "nullable" : false
+        },
+        {
+          "name" : "format",
+          "type" : "TEXT",
+          "nullable" : false
+        }
+      ]
+    },
+    {
+      "name" : "Product",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"Product_2\"",
+      "fields" : [
+        {
+          "name" : "productid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "description",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "category",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "_ingest_time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
+    }
+  ]
+}
+>>>vertx.json
+{
+  "model" : {
+    "coords" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "FunctionCalls",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"searchResult\", \"format\"\nFROM \"FunctionCalls_1\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Product",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"Product_2\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      }
+    ],
+    "mutations" : [ ],
+    "subscriptions" : [ ],
+    "schema" : {
+      "type" : "string",
+      "type" : "string",
+      "schema" : "type FunctionCalls {\n  searchResult: Float!\n  format: String!\n}\n\ntype Product {\n  productid: Float!\n  name: String!\n  description: String!\n  category: String!\n}\n\ntype Query {\n  FunctionCalls(limit: Int = 10, offset: Int = 0): [FunctionCalls!]\n  Product(limit: Int = 10, offset: Int = 0): [Product!]\n}\n"
+    }
+  }
+}

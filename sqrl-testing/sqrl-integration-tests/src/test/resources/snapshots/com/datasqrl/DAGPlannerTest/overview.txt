@@ -1,0 +1,1147 @@
+>>>pipeline_explain.txt
+=== Customer
+ID:     default_catalog.default_database.Customer
+Type:   state
+Stage:  flink
+Inputs: default_catalog.default_database.CustomerImport
+Annotations:
+ - mostRecentDistinct: true
+ - stream-root: CustomerImport__def
+Primary Key: customerid
+Timestamp  : timestamp
+Schema:
+ - customerid: BIGINT NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - lastUpdated: BIGINT NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME*
+Plan:
+LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
+  LogicalFilter(condition=[=($5, 1)])
+    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], __sqrlinternal_rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
+      LogicalTableScan(table=[[default_catalog, default_database, CustomerImport]])
+SQL: CREATE VIEW `Customer`
+AS
+SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`
+FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC NULLS LAST) AS `__sqrlinternal_rownum`
+  FROM `default_catalog`.`default_database`.`CustomerImport`) AS `t`
+WHERE `__sqrlinternal_rownum` = 1
+=== CustomerById
+ID:     default_catalog.default_database.CustomerById
+Type:   query
+Stage:  postgres
+Inputs: default_catalog.default_database.Customer
+Annotations:
+ - stream-root: CustomerImport__def
+ - parameters: customerid
+ - base-table: Customer
+Plan:
+LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
+  LogicalFilter(condition=[=($0, ?0)])
+    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW CustomerById AS  SELECT * FROM Customer WHERE customerid = ?          ;
+
+=== CustomerImport
+ID:     default_catalog.default_database.CustomerImport
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.CustomerImport__def
+Annotations:
+ - stream-root: CustomerImport__def
+Primary Key: customerid, lastUpdated
+Timestamp  : timestamp
+Schema:
+ - customerid: BIGINT NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - lastUpdated: BIGINT NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME*
+Plan:
+LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
+  LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
+    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[TO_TIMESTAMP_LTZ($3, 0)])
+      LogicalTableScan(table=[[default_catalog, default_database, CustomerImport__def]])
+SQL: CREATE VIEW `CustomerImport`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`CustomerImport__def`
+=== LargeOrderSubscription
+ID:     default_catalog.default_database.LargeOrderSubscription
+Type:   query
+Stage:  kafka
+Inputs: default_catalog.default_database.LargeOrders
+Annotations:
+ - stream-root: SimpleOrders__def
+ - parameters: customerid
+ - base-table: SimpleOrders
+Plan:
+LogicalProject(_uuid=[$0], orderid=[$1], customerid=[$2], amount=[$3], orderTime=[$4])
+  LogicalFilter(condition=[=($2, ?0)])
+    LogicalTableScan(table=[[default_catalog, default_database, LargeOrders]])
+SQL: CREATE VIEW LargeOrderSubscription AS  SELECT * FROM LargeOrders WHERE customerid = ?          ;
+
+=== LargeOrders
+ID:     default_catalog.default_database.LargeOrders
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.SimpleOrders
+Annotations:
+ - stream-root: SimpleOrders__def
+Primary Key: _uuid
+Timestamp  : orderTime
+Schema:
+ - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - orderid: INTEGER
+ - customerid: BIGINT
+ - amount: FLOAT
+ - orderTime: TIMESTAMP_LTZ(3) *ROWTIME*
+Plan:
+LogicalProject(_uuid=[$0], orderid=[$1], customerid=[$2], amount=[$3], orderTime=[$4])
+  LogicalFilter(condition=[>($3, 100)])
+    LogicalTableScan(table=[[default_catalog, default_database, SimpleOrders]])
+SQL: CREATE VIEW LargeOrders AS  SELECT * FROM SimpleOrders WHERE amount > 100;
+
+=== Orders
+ID:     default_catalog.default_database.Orders
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.Orders__def
+Annotations:
+ - features: DENORMALIZE (feature)
+ - stream-root: Orders__def
+Primary Key: id, time
+Timestamp  : time
+Schema:
+ - id: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+Plan:
+LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3])
+  LogicalWatermarkAssigner(rowtime=[time], watermark=[-($2, 1:INTERVAL SECOND)])
+    LogicalTableScan(table=[[default_catalog, default_database, Orders__def]])
+SQL: CREATE VIEW `Orders`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`Orders__def`
+=== SimpleOrders
+ID:     default_catalog.default_database.SimpleOrders
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.SimpleOrders__def
+Annotations:
+ - stream-root: SimpleOrders__def
+Primary Key: _uuid
+Timestamp  : orderTime
+Schema:
+ - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - orderid: INTEGER
+ - customerid: BIGINT
+ - amount: FLOAT
+ - orderTime: TIMESTAMP_LTZ(3) *ROWTIME*
+Plan:
+LogicalProject(_uuid=[$0], orderid=[$1], customerid=[$2], amount=[$3], orderTime=[$4])
+  LogicalWatermarkAssigner(rowtime=[orderTime], watermark=[-($4, 0:INTERVAL SECOND)])
+    LogicalProject(_uuid=[$0], orderid=[$1], customerid=[$2], amount=[$3], orderTime=[CAST($4):TIMESTAMP_LTZ(3) *ROWTIME*])
+      LogicalTableScan(table=[[default_catalog, default_database, SimpleOrders__def, metadata=[timestamp]]])
+SQL: CREATE VIEW `SimpleOrders`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`SimpleOrders__def`
+=== UnnestOrders
+ID:     default_catalog.default_database.UnnestOrders
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.Orders
+Annotations:
+ - stream-root: Orders__def
+Primary Key: -
+Timestamp  : time
+Schema:
+ - id: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - productid: BIGINT NOT NULL
+ - quantity: BIGINT NOT NULL
+ - discount: DOUBLE
+Plan:
+LogicalProject(id=[$0], customerid=[$1], time=[$2], productid=[$4], quantity=[$5], discount=[$7])
+  LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{3}])
+    LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+    Uncollect
+      LogicalProject(entries=[$cor1.entries])
+        LogicalValues(tuples=[[{ 0 }]])
+SQL: CREATE VIEW UnnestOrders AS  SELECT o.id, o.customerid, o.`time`, e.productid, e.quantity, e.discount FROM Orders o CROSS JOIN UNNEST(entries) e;
+
+=== customersink
+ID:     mysink.customersink
+Type:   export
+Stage:  flink
+Inputs: default_catalog.default_database.CustomerImport
+
+=== Unnestorders
+ID:     print.Unnestorders
+Type:   export
+Stage:  flink
+Inputs: default_catalog.default_database.UnnestOrders
+
+>>>flink-sql-no-functions.sql
+CREATE TEMPORARY TABLE `CustomerImport__schema` (
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `CustomerImport__def` (
+  `timestamp` AS TO_TIMESTAMP_LTZ(`lastUpdated`, 0),
+  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
+) WITH (
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec',
+  'connector' = 'filesystem'
+)
+LIKE `CustomerImport__schema`;
+CREATE VIEW `CustomerImport`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`CustomerImport__def`;
+CREATE TEMPORARY TABLE `Orders__schema` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `Orders__def` (
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED,
+  WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
+) WITH (
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec',
+  'connector' = 'filesystem'
+)
+LIKE `Orders__schema`;
+CREATE VIEW `Orders`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`Orders__def`;
+CREATE TABLE `SimpleOrders__def` (
+  `_uuid` VARCHAR NOT NULL,
+  `orderid` INTEGER,
+  `customerid` BIGINT,
+  `amount` FLOAT,
+  `orderTime` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
+  WATERMARK FOR `orderTime` AS `orderTime` - INTERVAL '0.0' SECOND
+) WITH (
+  'connector' = 'kafka',
+  'format' = 'flexible-json',
+  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
+  'properties.group.id' = '${PROPERTIES_GROUP_ID}',
+  'scan.startup.mode' = 'group-offsets',
+  'properties.auto.offset.reset' = 'earliest',
+  'topic' = 'SimpleOrders'
+);
+CREATE VIEW `SimpleOrders`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`SimpleOrders__def`;
+CREATE VIEW `LargeOrders`
+AS
+SELECT *
+FROM `SimpleOrders`
+WHERE `amount` > 100;
+CREATE VIEW `Customer`
+AS
+SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`
+FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC NULLS LAST) AS `__sqrlinternal_rownum`
+  FROM `default_catalog`.`default_database`.`CustomerImport`) AS `t`
+WHERE `__sqrlinternal_rownum` = 1;
+CREATE VIEW `UnnestOrders`
+AS
+SELECT `o`.`id`, `o`.`customerid`, `o`.`time`, `e`.`productid`, `e`.`quantity`, `e`.`discount`
+FROM `Orders` AS `o`
+ CROSS JOIN UNNEST(`entries`) AS `e`;
+CREATE TEMPORARY TABLE `customersink_ex2__schema` (
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `customersink_ex2__def` (
+  PRIMARY KEY (`customerid`) NOT ENFORCED
+) WITH (
+  'connector' = 'print'
+)
+LIKE `customersink_ex2__schema`;
+CREATE TABLE `Customer_1` (
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  PRIMARY KEY (`customerid`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'Customer_1'
+);
+CREATE TABLE `CustomerImport_2` (
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'CustomerImport_2'
+);
+CREATE TABLE `LargeOrders_3` (
+  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `orderid` INTEGER,
+  `customerid` BIGINT,
+  `amount` FLOAT,
+  `orderTime` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  PRIMARY KEY (`_uuid`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'LargeOrders_3'
+);
+CREATE TABLE `LargeOrders_4` (
+  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `orderid` INTEGER,
+  `customerid` BIGINT,
+  `amount` FLOAT,
+  `orderTime` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  PRIMARY KEY (`_uuid`) NOT ENFORCED
+) WITH (
+  'connector' = 'upsert-kafka',
+  'value.format' = 'flexible-json',
+  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
+  'properties.group.id' = '${PROPERTIES_GROUP_ID}',
+  'key.format' = 'raw',
+  'topic' = 'LargeOrders'
+);
+CREATE TABLE `Orders_5` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'Orders_5'
+);
+CREATE TABLE `SimpleOrders_6` (
+  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `orderid` INTEGER,
+  `customerid` BIGINT,
+  `amount` FLOAT,
+  `orderTime` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  PRIMARY KEY (`_uuid`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'SimpleOrders_6'
+);
+CREATE TABLE `Unnestorders_7` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `productid` BIGINT NOT NULL,
+  `quantity` BIGINT NOT NULL,
+  `discount` DOUBLE
+) WITH (
+  'connector' = 'print',
+  'print-identifier' = 'Unnestorders'
+);
+CREATE TABLE `UnnestOrders_8` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `productid` BIGINT NOT NULL,
+  `quantity` BIGINT NOT NULL,
+  `discount` DOUBLE,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'UnnestOrders_8'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`Customer_1`
+(SELECT *
+ FROM `default_catalog`.`default_database`.`CustomerImport`)
+;
+INSERT INTO `default_catalog`.`default_database`.`customersink_ex2__def`
+ (SELECT *
+  FROM `default_catalog`.`default_database`.`CustomerImport`)
+ ;
+ INSERT INTO `default_catalog`.`default_database`.`CustomerImport_2`
+  (SELECT *
+   FROM `default_catalog`.`default_database`.`CustomerImport`)
+  ;
+  INSERT INTO `default_catalog`.`default_database`.`LargeOrders_3`
+   (SELECT *
+    FROM `default_catalog`.`default_database`.`LargeOrders`)
+   ;
+   INSERT INTO `default_catalog`.`default_database`.`LargeOrders_4`
+    (SELECT *
+     FROM `default_catalog`.`default_database`.`LargeOrders`)
+    ;
+    INSERT INTO `default_catalog`.`default_database`.`Orders_5`
+     (SELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`
+      FROM `default_catalog`.`default_database`.`Orders`)
+     ;
+     INSERT INTO `default_catalog`.`default_database`.`SimpleOrders_6`
+      (SELECT *
+       FROM `default_catalog`.`default_database`.`SimpleOrders`)
+      ;
+      INSERT INTO `default_catalog`.`default_database`.`Unnestorders_7`
+       (SELECT *
+        FROM `default_catalog`.`default_database`.`UnnestOrders`)
+       ;
+       INSERT INTO `default_catalog`.`default_database`.`UnnestOrders_8`
+        (SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `discount`, HASHCOLUMNS(`id`, `customerid`, `time`, `productid`, `quantity`, `discount`) AS `__pk_hash`
+         FROM `default_catalog`.`default_database`.`UnnestOrders`)
+        ;
+        END
+>>>kafka.json
+{
+  "topics" : [
+    {
+      "name" : "LargeOrders",
+      "numPartitions" : 1,
+      "replicationFactor" : 1,
+      "replicasAssignments" : { },
+      "config" : { }
+    },
+    {
+      "name" : "SimpleOrders",
+      "numPartitions" : 1,
+      "replicationFactor" : 1,
+      "replicasAssignments" : { },
+      "config" : { }
+    }
+  ]
+}
+>>>postgres.json
+{
+  "statements" : [
+    {
+      "name" : "Customer_1",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer_1\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY (\"customerid\"))",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "lastUpdated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "CustomerImport_2",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerImport_2\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "lastUpdated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "LargeOrders_3",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"LargeOrders_3\" (\"_uuid\" TEXT NOT NULL, \"orderid\" INTEGER , \"customerid\" BIGINT , \"amount\" FLOAT , \"orderTime\" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY (\"_uuid\"))",
+      "fields" : [
+        {
+          "name" : "_uuid",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "orderid",
+          "type" : "INTEGER",
+          "nullable" : true
+        },
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : true
+        },
+        {
+          "name" : "amount",
+          "type" : "FLOAT",
+          "nullable" : true
+        },
+        {
+          "name" : "orderTime",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "Orders_5",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_5\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB  , PRIMARY KEY (\"id\",\"time\"))",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "entries",
+          "type" : "JSONB",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "SimpleOrders_6",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"SimpleOrders_6\" (\"_uuid\" TEXT NOT NULL, \"orderid\" INTEGER , \"customerid\" BIGINT , \"amount\" FLOAT , \"orderTime\" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY (\"_uuid\"))",
+      "fields" : [
+        {
+          "name" : "_uuid",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "orderid",
+          "type" : "INTEGER",
+          "nullable" : true
+        },
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : true
+        },
+        {
+          "name" : "amount",
+          "type" : "FLOAT",
+          "nullable" : true
+        },
+        {
+          "name" : "orderTime",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "UnnestOrders_8",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"UnnestOrders_8\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"productid\" BIGINT NOT NULL, \"quantity\" BIGINT NOT NULL, \"discount\" DOUBLE PRECISION , \"__pk_hash\" TEXT  , PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "productid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "quantity",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "discount",
+          "type" : "DOUBLE PRECISION",
+          "nullable" : true
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "Customer",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"Customer_1\"",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "lastUpdated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "CustomerImport",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerImport\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"CustomerImport_2\"",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "lastUpdated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "LargeOrders",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"LargeOrders\"(\"_uuid\", \"orderid\", \"customerid\", \"amount\", \"orderTime\") AS SELECT *\nFROM \"LargeOrders_3\"",
+      "fields" : [
+        {
+          "name" : "_uuid",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "orderid",
+          "type" : "INTEGER",
+          "nullable" : true
+        },
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : true
+        },
+        {
+          "name" : "amount",
+          "type" : "FLOAT",
+          "nullable" : true
+        },
+        {
+          "name" : "orderTime",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "Orders",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"Orders_5\"",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "entries",
+          "type" : "JSONB",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "SimpleOrders",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"SimpleOrders\"(\"_uuid\", \"orderid\", \"customerid\", \"amount\", \"orderTime\") AS SELECT *\nFROM \"SimpleOrders_6\"",
+      "fields" : [
+        {
+          "name" : "_uuid",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "orderid",
+          "type" : "INTEGER",
+          "nullable" : true
+        },
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : true
+        },
+        {
+          "name" : "amount",
+          "type" : "FLOAT",
+          "nullable" : true
+        },
+        {
+          "name" : "orderTime",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "UnnestOrders",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"UnnestOrders\"(\"id\", \"customerid\", \"time\", \"productid\", \"quantity\", \"discount\") AS SELECT \"id\", \"customerid\", \"time\", \"productid\", \"quantity\", \"discount\"\nFROM \"UnnestOrders_8\"",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "productid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "quantity",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "discount",
+          "type" : "DOUBLE PRECISION",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "SimpleOrders_6_btree_c2c3",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"SimpleOrders_6_btree_c2c3\" ON \"SimpleOrders_6\" USING btree (\"customerid\",\"amount\")"
+    }
+  ]
+}
+>>>vertx.json
+{
+  "model" : {
+    "coords" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Customer",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"Customer_1\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Customer",
+        "fieldName" : "largeOrders",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "minAmount"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"SimpleOrders_6\"\nWHERE $2 = \"customerid\" AND \"amount\" >= $1\nORDER BY \"amount\" DESC NULLS LAST",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "minAmount"
+                },
+                {
+                  "type" : "source",
+                  "type" : "source",
+                  "key" : "customerid"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Customer",
+        "fieldName" : "orders",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"SimpleOrders_6\"\nWHERE $1 = \"customerid\"\nORDER BY \"orderTime\" DESC NULLS LAST",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "type" : "source",
+                  "key" : "customerid"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "CustomerImport",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"CustomerImport_2\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "LargeOrders",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"LargeOrders_3\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Orders",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"Orders_5\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "SimpleOrders",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"SimpleOrders_6\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "UnnestOrders",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"productid\", \"quantity\", \"discount\"\nFROM \"UnnestOrders_8\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "CustomerById",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "customerid"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"Customer_1\"\nWHERE \"customerid\" = $1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "customerid"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "mutations" : [ ],
+    "subscriptions" : [ ],
+    "schema" : {
+      "type" : "string",
+      "type" : "string",
+      "schema" : "type Customer {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime\n  largeOrders(minAmount: Float!, limit: Int = 10, offset: Int = 0): [SimpleOrders!]\n  orders(limit: Int = 10, offset: Int = 0): [SimpleOrders!]\n}\n\ntype CustomerImport {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerImport(limit: Int = 10, offset: Int = 0): [CustomerImport!]\n  LargeOrders(limit: Int = 10, offset: Int = 0): [SimpleOrders!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  SimpleOrders(limit: Int = 10, offset: Int = 0): [SimpleOrders!]\n  UnnestOrders(limit: Int = 10, offset: Int = 0): [UnnestOrders!]\n  CustomerById(customerid: Float!, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n\ntype SimpleOrders {\n  orderid: Int\n  customerid: Float\n  amount: Float\n  orderTime: DateTime\n}\n\ntype Subscription {\n  LargeOrderSubscription(customerid: Float!): SimpleOrders\n}\n\ntype UnnestOrders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  productid: Float!\n  quantity: Float!\n  discount: Float\n}\n"
+    }
+  }
+}

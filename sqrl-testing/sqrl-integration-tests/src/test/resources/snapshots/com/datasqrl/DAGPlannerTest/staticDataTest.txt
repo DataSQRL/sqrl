@@ -1,0 +1,1728 @@
+>>>pipeline_explain.txt
+=== Numbers
+ID:     default_catalog.default_database.Numbers
+Type:   state
+Stage:  flink
+Primary Key: id
+Timestamp  : -
+Schema:
+ - id: INTEGER NOT NULL
+Plan:
+LogicalProject(id=[$0])
+  LogicalValues(tuples=[[{ 1 }, { 2 }, { 3 }, { 4 }, { 5 }]])
+SQL: CREATE VIEW Numbers AS  SELECT * FROM (VALUES (1), (2), (3), (4), (5)) AS T(id);
+
+=== Numbers2
+ID:     default_catalog.default_database.Numbers2
+Type:   state
+Stage:  flink
+Primary Key: id
+Timestamp  : -
+Schema:
+ - id: INTEGER NOT NULL
+Plan:
+LogicalProject(id=[$0])
+  LogicalValues(tuples=[[{ 1 }, { 2 }, { 3 }, { 4 }, { 4 }]])
+SQL: CREATE VIEW Numbers2 AS  SELECT * FROM (VALUES (1), (2), (3), (4), (4)) AS T(id);
+
+=== NumbersLarge
+ID:     default_catalog.default_database.NumbersLarge
+Type:   state
+Stage:  flink
+Primary Key: id
+Timestamp  : -
+Schema:
+ - id: INTEGER NOT NULL
+Plan:
+LogicalProject(id=[$0])
+  LogicalValues(tuples=[[{ 0 }, { 1 }, { 2 }, { 3 }, { 4 }, { 5 }, { 6 }, { 7 }, { 8 }, { 9 }, { 10 }, { 11 }, { 12 }, { 13 }, { 14 }, { 15 }, { 16 }, { 17 }, { 18 }, { 19 }, { 20 }, { 21 }, { 22 }, { 23 }, { 24 }, { 25 }, { 26 }, { 27 }, { 28 }, { 29 }, { 30 }, { 31 }, { 32 }, { 33 }, { 34 }, { 35 }, { 36 }, { 37 }, { 38 }, { 39 }, { 40 }, { 41 }, { 42 }, { 43 }, { 44 }, { 45 }, { 46 }, { 47 }, { 48 }, { 49 }, { 50 }, { 51 }, { 52 }, { 53 }, { 54 }, { 55 }, { 56 }, { 57 }, { 58 }, { 59 }, { 60 }, { 61 }, { 62 }, { 63 }, { 64 }, { 65 }, { 66 }, { 67 }, { 68 }, { 69 }, { 70 }, { 71 }, { 72 }, { 73 }, { 74 }, { 75 }, { 76 }, { 77 }, { 78 }, { 79 }, { 80 }, { 81 }, { 82 }, { 83 }, { 84 }, { 85 }, { 86 }, { 87 }, { 88 }, { 89 }, { 90 }, { 91 }, { 92 }, { 93 }, { 94 }, { 95 }, { 96 }, { 97 }, { 98 }, { 99 }, { 100 }, { 101 }, { 102 }, { 103 }, { 104 }, { 105 }, { 106 }, { 107 }, { 108 }, { 109 }, { 110 }, { 111 }, { 112 }, { 113 }, { 114 }, { 115 }, { 116 }, { 117 }, { 118 }, { 119 }, { 120 }, { 121 }, { 122 }, { 123 }, { 124 }, { 125 }, { 126 }, { 127 }, { 128 }, { 129 }, { 130 }, { 131 }, { 132 }, { 133 }, { 134 }, { 135 }, { 136 }, { 137 }, { 138 }, { 139 }, { 140 }, { 141 }, { 142 }, { 143 }, { 144 }, { 145 }, { 146 }, { 147 }, { 148 }, { 149 }, { 150 }, { 151 }, { 152 }, { 153 }, { 154 }, { 155 }, { 156 }, { 157 }, { 158 }, { 159 }, { 160 }, { 161 }, { 162 }, { 163 }, { 164 }, { 165 }, { 166 }, { 167 }, { 168 }, { 169 }, { 170 }, { 171 }, { 172 }, { 173 }, { 174 }, { 175 }, { 176 }, { 177 }, { 178 }, { 179 }, { 180 }, { 181 }, { 182 }, { 183 }, { 184 }, { 185 }, { 186 }, { 187 }, { 188 }, { 189 }, { 190 }, { 191 }, { 192 }, { 193 }, { 194 }, { 195 }, { 196 }, { 197 }, { 198 }, { 199 }, { 200 }, { 201 }, { 202 }, { 203 }, { 204 }, { 205 }, { 206 }, { 207 }, { 208 }, { 209 }, { 210 }, { 211 }, { 212 }, { 213 }, { 214 }, { 215 }, { 216 }, { 217 }, { 218 }, { 219 }, { 220 }, { 221 }, { 222 }, { 223 }, { 224 }, { 225 }, { 226 }, { 227 }, { 228 }, { 229 }, { 230 }, { 231 }, { 232 }, { 233 }, { 234 }, { 235 }, { 236 }, { 237 }, { 238 }, { 239 }, { 240 }, { 241 }, { 242 }, { 243 }, { 244 }, { 245 }, { 246 }, { 247 }, { 248 }, { 249 }, { 250 }, { 251 }, { 252 }, { 253 }, { 254 }, { 255 }, { 256 }, { 257 }, { 258 }, { 259 }, { 260 }, { 261 }, { 262 }, { 263 }, { 264 }, { 265 }, { 266 }, { 267 }, { 268 }, { 269 }, { 270 }, { 271 }, { 272 }, { 273 }, { 274 }, { 275 }, { 276 }, { 277 }, { 278 }, { 279 }, { 280 }, { 281 }, { 282 }, { 283 }, { 284 }, { 285 }, { 286 }, { 287 }, { 288 }, { 289 }, { 290 }, { 291 }, { 292 }, { 293 }, { 294 }, { 295 }, { 296 }, { 297 }, { 298 }, { 299 }, { 300 }, { 301 }, { 302 }, { 303 }, { 304 }, { 305 }, { 306 }, { 307 }, { 308 }, { 309 }, { 310 }, { 311 }, { 312 }, { 313 }, { 314 }, { 315 }, { 316 }, { 317 }, { 318 }, { 319 }, { 320 }, { 321 }, { 322 }, { 323 }, { 324 }, { 325 }, { 326 }, { 327 }, { 328 }, { 329 }, { 330 }, { 331 }, { 332 }, { 333 }, { 334 }, { 335 }, { 336 }, { 337 }, { 338 }, { 339 }, { 340 }, { 341 }, { 342 }, { 343 }, { 344 }, { 345 }, { 346 }, { 347 }, { 348 }, { 349 }, { 350 }, { 351 }, { 352 }, { 353 }, { 354 }, { 355 }, { 356 }, { 357 }, { 358 }, { 359 }, { 360 }, { 361 }, { 362 }, { 363 }, { 364 }, { 365 }, { 366 }, { 367 }, { 368 }, { 369 }, { 370 }, { 371 }, { 372 }, { 373 }, { 374 }, { 375 }, { 376 }, { 377 }, { 378 }, { 379 }, { 380 }, { 381 }, { 382 }, { 383 }, { 384 }, { 385 }, { 386 }, { 387 }, { 388 }, { 389 }, { 390 }, { 391 }, { 392 }, { 393 }, { 394 }, { 395 }, { 396 }, { 397 }, { 398 }, { 399 }, { 400 }, { 401 }, { 402 }, { 403 }, { 404 }, { 405 }, { 406 }, { 407 }, { 408 }, { 409 }, { 410 }, { 411 }, { 412 }, { 413 }, { 414 }, { 415 }, { 416 }, { 417 }, { 418 }, { 419 }, { 420 }, { 421 }, { 422 }, { 423 }, { 424 }, { 425 }, { 426 }, { 427 }, { 428 }, { 429 }, { 430 }, { 431 }, { 432 }, { 433 }, { 434 }, { 435 }, { 436 }, { 437 }, { 438 }, { 439 }, { 440 }, { 441 }, { 442 }, { 443 }, { 444 }, { 445 }, { 446 }, { 447 }, { 448 }, { 449 }, { 450 }, { 451 }, { 452 }, { 453 }, { 454 }, { 455 }, { 456 }, { 457 }, { 458 }, { 459 }, { 460 }, { 461 }, { 462 }, { 463 }, { 464 }, { 465 }, { 466 }, { 467 }, { 468 }, { 469 }, { 470 }, { 471 }, { 472 }, { 473 }, { 474 }, { 475 }, { 476 }, { 477 }, { 478 }, { 479 }, { 480 }, { 481 }, { 482 }, { 483 }, { 484 }, { 485 }, { 486 }, { 487 }, { 488 }, { 489 }, { 490 }, { 491 }, { 492 }, { 493 }, { 494 }, { 495 }, { 496 }, { 497 }, { 498 }, { 499 }, { 500 }, { 501 }, { 502 }, { 503 }, { 504 }, { 505 }, { 506 }, { 507 }, { 508 }, { 509 }, { 510 }, { 511 }, { 512 }, { 513 }, { 514 }, { 515 }, { 516 }, { 517 }, { 518 }, { 519 }, { 520 }, { 521 }, { 522 }, { 523 }, { 524 }, { 525 }, { 526 }, { 527 }, { 528 }, { 529 }, { 530 }, { 531 }, { 532 }, { 533 }, { 534 }, { 535 }, { 536 }, { 537 }, { 538 }, { 539 }, { 540 }, { 541 }, { 542 }, { 543 }, { 544 }, { 545 }, { 546 }, { 547 }, { 548 }, { 549 }, { 550 }, { 551 }, { 552 }, { 553 }, { 554 }, { 555 }, { 556 }, { 557 }, { 558 }, { 559 }, { 560 }, { 561 }, { 562 }, { 563 }, { 564 }, { 565 }, { 566 }, { 567 }, { 568 }, { 569 }, { 570 }, { 571 }, { 572 }, { 573 }, { 574 }, { 575 }, { 576 }, { 577 }, { 578 }, { 579 }, { 580 }, { 581 }, { 582 }, { 583 }, { 584 }, { 585 }, { 586 }, { 587 }, { 588 }, { 589 }, { 590 }, { 591 }, { 592 }, { 593 }, { 594 }, { 595 }, { 596 }, { 597 }, { 598 }, { 599 }, { 600 }, { 601 }, { 602 }, { 603 }, { 604 }, { 605 }, { 606 }, { 607 }, { 608 }, { 609 }, { 610 }, { 611 }, { 612 }, { 613 }, { 614 }, { 615 }, { 616 }, { 617 }, { 618 }, { 619 }, { 620 }, { 621 }, { 622 }, { 623 }, { 624 }, { 625 }, { 626 }, { 627 }, { 628 }, { 629 }, { 630 }, { 631 }, { 632 }, { 633 }, { 634 }, { 635 }, { 636 }, { 637 }, { 638 }, { 639 }, { 640 }, { 641 }, { 642 }, { 643 }, { 644 }, { 645 }, { 646 }, { 647 }, { 648 }, { 649 }, { 650 }, { 651 }, { 652 }, { 653 }, { 654 }, { 655 }, { 656 }, { 657 }, { 658 }, { 659 }, { 660 }, { 661 }, { 662 }, { 663 }, { 664 }, { 665 }, { 666 }, { 667 }, { 668 }, { 669 }, { 670 }, { 671 }, { 672 }, { 673 }, { 674 }, { 675 }, { 676 }, { 677 }, { 678 }, { 679 }, { 680 }, { 681 }, { 682 }, { 683 }, { 684 }, { 685 }, { 686 }, { 687 }, { 688 }, { 689 }, { 690 }, { 691 }, { 692 }, { 693 }, { 694 }, { 695 }, { 696 }, { 697 }, { 698 }, { 699 }, { 700 }, { 701 }, { 702 }, { 703 }, { 704 }, { 705 }, { 706 }, { 707 }, { 708 }, { 709 }, { 710 }, { 711 }, { 712 }, { 713 }, { 714 }, { 715 }, { 716 }, { 717 }, { 718 }, { 719 }, { 720 }, { 721 }, { 722 }, { 723 }, { 724 }, { 725 }, { 726 }, { 727 }, { 728 }, { 729 }, { 730 }, { 731 }, { 732 }, { 733 }, { 734 }, { 735 }, { 736 }, { 737 }, { 738 }, { 739 }, { 740 }, { 741 }, { 742 }, { 743 }, { 744 }, { 745 }, { 746 }, { 747 }, { 748 }, { 749 }, { 750 }, { 751 }, { 752 }, { 753 }, { 754 }, { 755 }, { 756 }, { 757 }, { 758 }, { 759 }, { 760 }, { 761 }, { 762 }, { 763 }, { 764 }, { 765 }, { 766 }, { 767 }, { 768 }, { 769 }, { 770 }, { 771 }, { 772 }, { 773 }, { 774 }, { 775 }, { 776 }, { 777 }, { 778 }, { 779 }, { 780 }, { 781 }, { 782 }, { 783 }, { 784 }, { 785 }, { 786 }, { 787 }, { 788 }, { 789 }, { 790 }, { 791 }, { 792 }, { 793 }, { 794 }, { 795 }, { 796 }, { 797 }, { 798 }, { 799 }, { 800 }, { 801 }, { 802 }, { 803 }, { 804 }, { 805 }, { 806 }, { 807 }, { 808 }, { 809 }, { 810 }, { 811 }, { 812 }, { 813 }, { 814 }, { 815 }, { 816 }, { 817 }, { 818 }, { 819 }, { 820 }, { 821 }, { 822 }, { 823 }, { 824 }, { 825 }, { 826 }, { 827 }, { 828 }, { 829 }, { 830 }, { 831 }, { 832 }, { 833 }, { 834 }, { 835 }, { 836 }, { 837 }, { 838 }, { 839 }, { 840 }, { 841 }, { 842 }, { 843 }, { 844 }, { 845 }, { 846 }, { 847 }, { 848 }, { 849 }, { 850 }, { 851 }, { 852 }, { 853 }, { 854 }, { 855 }, { 856 }, { 857 }, { 858 }, { 859 }, { 860 }, { 861 }, { 862 }, { 863 }, { 864 }, { 865 }, { 866 }, { 867 }, { 868 }, { 869 }, { 870 }, { 871 }, { 872 }, { 873 }, { 874 }, { 875 }, { 876 }, { 877 }, { 878 }, { 879 }, { 880 }, { 881 }, { 882 }, { 883 }, { 884 }, { 885 }, { 886 }, { 887 }, { 888 }, { 889 }, { 890 }, { 891 }, { 892 }, { 893 }, { 894 }, { 895 }, { 896 }, { 897 }, { 898 }, { 899 }, { 900 }, { 901 }, { 902 }, { 903 }, { 904 }, { 905 }, { 906 }, { 907 }, { 908 }, { 909 }, { 910 }, { 911 }, { 912 }, { 913 }, { 914 }, { 915 }, { 916 }, { 917 }, { 918 }, { 919 }, { 920 }, { 921 }, { 922 }, { 923 }, { 924 }, { 925 }, { 926 }, { 927 }, { 928 }, { 929 }, { 930 }, { 931 }, { 932 }, { 933 }, { 934 }, { 935 }, { 936 }, { 937 }, { 938 }, { 939 }, { 940 }, { 941 }, { 942 }, { 943 }, { 944 }, { 945 }, { 946 }, { 947 }, { 948 }, { 949 }, { 950 }, { 951 }, { 952 }, { 953 }, { 954 }, { 955 }, { 956 }, { 957 }, { 958 }, { 959 }, { 960 }, { 961 }, { 962 }, { 963 }, { 964 }, { 965 }, { 966 }, { 967 }, { 968 }, { 969 }, { 970 }, { 971 }, { 972 }, { 973 }, { 974 }, { 975 }, { 976 }, { 977 }, { 978 }, { 979 }, { 980 }, { 981 }, { 982 }, { 983 }, { 984 }, { 985 }, { 986 }, { 987 }, { 988 }, { 989 }, { 990 }, { 991 }, { 992 }, { 993 }, { 994 }, { 995 }, { 996 }, { 997 }, { 998 }, { 999 }]])
+SQL: CREATE VIEW NumbersLarge AS  SELECT * FROM (VALUES (0), (1), (2), (3), (4), (5), (6), (7), (8), (9), (10), (11), (12), (13), (14), (15), (16), (17), (18), (19), (20), (21), (22), (23), (24), (25), (26), (27), (28), (29), (30), (31), (32), (33), (34), (35), (36), (37), (38), (39), (40), (41), (42), (43), (44), (45), (46), (47), (48), (49), (50), (51), (52), (53), (54), (55), (56), (57), (58), (59), (60), (61), (62), (63), (64), (65), (66), (67), (68), (69), (70), (71), (72), (73), (74), (75), (76), (77), (78), (79), (80), (81), (82), (83), (84), (85), (86), (87), (88), (89), (90), (91), (92), (93), (94), (95), (96), (97), (98), (99), (100), (101), (102), (103), (104), (105), (106), (107), (108), (109), (110), (111), (112), (113), (114), (115), (116), (117), (118), (119), (120), (121), (122), (123), (124), (125), (126), (127), (128), (129), (130), (131), (132), (133), (134), (135), (136), (137), (138), (139), (140), (141), (142), (143), (144), (145), (146), (147), (148), (149), (150), (151), (152), (153), (154), (155), (156), (157), (158), (159), (160), (161), (162), (163), (164), (165), (166), (167), (168), (169), (170), (171), (172), (173), (174), (175), (176), (177), (178), (179), (180), (181), (182), (183), (184), (185), (186), (187), (188), (189), (190), (191), (192), (193), (194), (195), (196), (197), (198), (199), (200), (201), (202), (203), (204), (205), (206), (207), (208), (209), (210), (211), (212), (213), (214), (215), (216), (217), (218), (219), (220), (221), (222), (223), (224), (225), (226), (227), (228), (229), (230), (231), (232), (233), (234), (235), (236), (237), (238), (239), (240), (241), (242), (243), (244), (245), (246), (247), (248), (249), (250), (251), (252), (253), (254), (255), (256), (257), (258), (259), (260), (261), (262), (263), (264), (265), (266), (267), (268), (269), (270), (271), (272), (273), (274), (275), (276), (277), (278), (279), (280), (281), (282), (283), (284), (285), (286), (287), (288), (289), (290), (291), (292), (293), (294), (295), (296), (297), (298), (299), (300), (301), (302), (303), (304), (305), (306), (307), (308), (309), (310), (311), (312), (313), (314), (315), (316), (317), (318), (319), (320), (321), (322), (323), (324), (325), (326), (327), (328), (329), (330), (331), (332), (333), (334), (335), (336), (337), (338), (339), (340), (341), (342), (343), (344), (345), (346), (347), (348), (349), (350), (351), (352), (353), (354), (355), (356), (357), (358), (359), (360), (361), (362), (363), (364), (365), (366), (367), (368), (369), (370), (371), (372), (373), (374), (375), (376), (377), (378), (379), (380), (381), (382), (383), (384), (385), (386), (387), (388), (389), (390), (391), (392), (393), (394), (395), (396), (397), (398), (399), (400), (401), (402), (403), (404), (405), (406), (407), (408), (409), (410), (411), (412), (413), (414), (415), (416), (417), (418), (419), (420), (421), (422), (423), (424), (425), (426), (427), (428), (429), (430), (431), (432), (433), (434), (435), (436), (437), (438), (439), (440), (441), (442), (443), (444), (445), (446), (447), (448), (449), (450), (451), (452), (453), (454), (455), (456), (457), (458), (459), (460), (461), (462), (463), (464), (465), (466), (467), (468), (469), (470), (471), (472), (473), (474), (475), (476), (477), (478), (479), (480), (481), (482), (483), (484), (485), (486), (487), (488), (489), (490), (491), (492), (493), (494), (495), (496), (497), (498), (499), (500), (501), (502), (503), (504), (505), (506), (507), (508), (509), (510), (511), (512), (513), (514), (515), (516), (517), (518), (519), (520), (521), (522), (523), (524), (525), (526), (527), (528), (529), (530), (531), (532), (533), (534), (535), (536), (537), (538), (539), (540), (541), (542), (543), (544), (545), (546), (547), (548), (549), (550), (551), (552), (553), (554), (555), (556), (557), (558), (559), (560), (561), (562), (563), (564), (565), (566), (567), (568), (569), (570), (571), (572), (573), (574), (575), (576), (577), (578), (579), (580), (581), (582), (583), (584), (585), (586), (587), (588), (589), (590), (591), (592), (593), (594), (595), (596), (597), (598), (599), (600), (601), (602), (603), (604), (605), (606), (607), (608), (609), (610), (611), (612), (613), (614), (615), (616), (617), (618), (619), (620), (621), (622), (623), (624), (625), (626), (627), (628), (629), (630), (631), (632), (633), (634), (635), (636), (637), (638), (639), (640), (641), (642), (643), (644), (645), (646), (647), (648), (649), (650), (651), (652), (653), (654), (655), (656), (657), (658), (659), (660), (661), (662), (663), (664), (665), (666), (667), (668), (669), (670), (671), (672), (673), (674), (675), (676), (677), (678), (679), (680), (681), (682), (683), (684), (685), (686), (687), (688), (689), (690), (691), (692), (693), (694), (695), (696), (697), (698), (699), (700), (701), (702), (703), (704), (705), (706), (707), (708), (709), (710), (711), (712), (713), (714), (715), (716), (717), (718), (719), (720), (721), (722), (723), (724), (725), (726), (727), (728), (729), (730), (731), (732), (733), (734), (735), (736), (737), (738), (739), (740), (741), (742), (743), (744), (745), (746), (747), (748), (749), (750), (751), (752), (753), (754), (755), (756), (757), (758), (759), (760), (761), (762), (763), (764), (765), (766), (767), (768), (769), (770), (771), (772), (773), (774), (775), (776), (777), (778), (779), (780), (781), (782), (783), (784), (785), (786), (787), (788), (789), (790), (791), (792), (793), (794), (795), (796), (797), (798), (799), (800), (801), (802), (803), (804), (805), (806), (807), (808), (809), (810), (811), (812), (813), (814), (815), (816), (817), (818), (819), (820), (821), (822), (823), (824), (825), (826), (827), (828), (829), (830), (831), (832), (833), (834), (835), (836), (837), (838), (839), (840), (841), (842), (843), (844), (845), (846), (847), (848), (849), (850), (851), (852), (853), (854), (855), (856), (857), (858), (859), (860), (861), (862), (863), (864), (865), (866), (867), (868), (869), (870), (871), (872), (873), (874), (875), (876), (877), (878), (879), (880), (881), (882), (883), (884), (885), (886), (887), (888), (889), (890), (891), (892), (893), (894), (895), (896), (897), (898), (899), (900), (901), (902), (903), (904), (905), (906), (907), (908), (909), (910), (911), (912), (913), (914), (915), (916), (917), (918), (919), (920), (921), (922), (923), (924), (925), (926), (927), (928), (929), (930), (931), (932), (933), (934), (935), (936), (937), (938), (939), (940), (941), (942), (943), (944), (945), (946), (947), (948), (949), (950), (951), (952), (953), (954), (955), (956), (957), (958), (959), (960), (961), (962), (963), (964), (965), (966), (967), (968), (969), (970), (971), (972), (973), (974), (975), (976), (977), (978), (979), (980), (981), (982), (983), (984), (985), (986), (987), (988), (989), (990), (991), (992), (993), (994), (995), (996), (997), (998), (999))
+    AS T(id);
+
+=== OrderNumbers
+ID:     default_catalog.default_database.OrderNumbers
+Type:   stream
+Stage:  postgres
+Inputs: default_catalog.default_database.Numbers, default_catalog.default_database.Orders
+Annotations:
+ - stream-root: Orders__def
+Primary Key: id, time
+Timestamp  : time
+Schema:
+ - id: BIGINT NOT NULL
+ - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Plan:
+LogicalProject(id=[$0], time=[$2])
+  LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], id0=[$4])
+    LogicalJoin(condition=[=($1, $5)], joinType=[inner])
+      LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+      LogicalProject(id=[$0], id0=[CAST($0):BIGINT NOT NULL])
+        LogicalTableScan(table=[[default_catalog, default_database, Numbers]])
+SQL: CREATE VIEW OrderNumbers AS  SELECT o.id, o.`time` FROM Orders o JOIN Numbers n ON o.customerid = n.id;
+
+=== OrderNumbers2
+ID:     default_catalog.default_database.OrderNumbers2
+Type:   stream
+Stage:  postgres
+Inputs: default_catalog.default_database.Orders
+Annotations:
+ - stream-root: Orders__def
+Primary Key: id, time
+Timestamp  : time
+Schema:
+ - id: BIGINT NOT NULL
+ - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Plan:
+LogicalProject(id=[$0], time=[$2])
+  LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], id0=[$4])
+    LogicalJoin(condition=[=($1, $5)], joinType=[inner])
+      LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+      LogicalProject(id=[$0], id0=[CAST($0):BIGINT NOT NULL])
+        LogicalValues(tuples=[[{ 1 }, { 2 }, { 3 }, { 4 }, { 4 }]])
+SQL: CREATE VIEW OrderNumbers2 AS  SELECT o.id, o.`time` FROM Orders o JOIN (VALUES (1), (2), (3), (4), (4)) AS t(id) ON o.customerid = t.id;
+
+=== OrderPairs
+ID:     default_catalog.default_database.OrderPairs
+Type:   stream
+Stage:  postgres
+Inputs: default_catalog.default_database.Orders
+Annotations:
+ - stream-root: Orders__def
+Primary Key: id, time, otherid
+Timestamp  : time
+Schema:
+ - id: BIGINT NOT NULL
+ - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - otherid: INTEGER NOT NULL
+Plan:
+LogicalProject(id=[$0], time=[$2], otherid=[$4])
+  LogicalJoin(condition=[true], joinType=[inner])
+    LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+    LogicalValues(tuples=[[{ 1, 1 }, { 2, 2 }, { 3, 3 }, { 4, 4 }, { 4, 4 }]])
+SQL: CREATE VIEW OrderPairs AS  SELECT o.id, o.`time`, u.id AS otherid FROM Orders o CROSS JOIN (VALUES (1,1), (2,2), (3,3), (4,4), (4,4)) AS u(id, pk);
+
+=== OrderPairs2
+ID:     default_catalog.default_database.OrderPairs2
+Type:   stream
+Stage:  postgres
+Inputs: default_catalog.default_database.Orders
+Annotations:
+ - stream-root: Orders__def
+Primary Key: id, time, pk
+Timestamp  : time
+Schema:
+ - id: BIGINT NOT NULL
+ - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - pk: INTEGER NOT NULL
+Plan:
+LogicalProject(id=[$0], time=[$2], pk=[$5])
+  LogicalJoin(condition=[true], joinType=[inner])
+    LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+    LogicalValues(tuples=[[{ 1, 1 }, { 2, 2 }, { 3, 3 }, { 4, 4 }, { 4, 4 }]])
+SQL: CREATE VIEW OrderPairs2 AS  SELECT o.id, o.`time`, t.pk FROM Orders o CROSS JOIN (VALUES (1,1), (2,2), (3,3), (4,4), (4,4)) AS t(id, pk);
+
+=== Orders
+ID:     default_catalog.default_database.Orders
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.Orders__def
+Annotations:
+ - features: DENORMALIZE (feature)
+ - stream-root: Orders__def
+Primary Key: id, time
+Timestamp  : time
+Schema:
+ - id: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+Plan:
+LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3])
+  LogicalWatermarkAssigner(rowtime=[time], watermark=[-($2, 1:INTERVAL SECOND)])
+    LogicalTableScan(table=[[default_catalog, default_database, Orders__def]])
+SQL: CREATE VIEW `Orders`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`Orders__def`
+>>>flink-sql-no-functions.sql
+CREATE TEMPORARY TABLE `Orders__schema` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `Orders__def` (
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED,
+  WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
+) WITH (
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec',
+  'connector' = 'filesystem'
+)
+LIKE `Orders__schema`;
+CREATE VIEW `Orders`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`Orders__def`;
+CREATE VIEW `Numbers`
+AS
+SELECT *
+FROM (VALUES ROW(1),
+   ROW(2),
+   ROW(3),
+   ROW(4),
+   ROW(5)) AS `T` (`id`);
+CREATE VIEW `OrderNumbers`
+AS
+SELECT `o`.`id`, `o`.`time`
+FROM `Orders` AS `o`
+ INNER JOIN `Numbers` AS `n` ON `o`.`customerid` = `n`.`id`;
+CREATE VIEW `Numbers2`
+AS
+SELECT *
+FROM (VALUES ROW(1),
+   ROW(2),
+   ROW(3),
+   ROW(4),
+   ROW(4)) AS `T` (`id`);
+CREATE VIEW `OrderNumbers2`
+AS
+SELECT `o`.`id`, `o`.`time`
+FROM `Orders` AS `o`
+ INNER JOIN (VALUES ROW(1),
+   ROW(2),
+   ROW(3),
+   ROW(4),
+   ROW(4)) AS `t` (`id`) ON `o`.`customerid` = `t`.`id`;
+CREATE VIEW `NumbersLarge`
+AS
+SELECT *
+FROM (VALUES ROW(0),
+   ROW(1),
+   ROW(2),
+   ROW(3),
+   ROW(4),
+   ROW(5),
+   ROW(6),
+   ROW(7),
+   ROW(8),
+   ROW(9),
+   ROW(10),
+   ROW(11),
+   ROW(12),
+   ROW(13),
+   ROW(14),
+   ROW(15),
+   ROW(16),
+   ROW(17),
+   ROW(18),
+   ROW(19),
+   ROW(20),
+   ROW(21),
+   ROW(22),
+   ROW(23),
+   ROW(24),
+   ROW(25),
+   ROW(26),
+   ROW(27),
+   ROW(28),
+   ROW(29),
+   ROW(30),
+   ROW(31),
+   ROW(32),
+   ROW(33),
+   ROW(34),
+   ROW(35),
+   ROW(36),
+   ROW(37),
+   ROW(38),
+   ROW(39),
+   ROW(40),
+   ROW(41),
+   ROW(42),
+   ROW(43),
+   ROW(44),
+   ROW(45),
+   ROW(46),
+   ROW(47),
+   ROW(48),
+   ROW(49),
+   ROW(50),
+   ROW(51),
+   ROW(52),
+   ROW(53),
+   ROW(54),
+   ROW(55),
+   ROW(56),
+   ROW(57),
+   ROW(58),
+   ROW(59),
+   ROW(60),
+   ROW(61),
+   ROW(62),
+   ROW(63),
+   ROW(64),
+   ROW(65),
+   ROW(66),
+   ROW(67),
+   ROW(68),
+   ROW(69),
+   ROW(70),
+   ROW(71),
+   ROW(72),
+   ROW(73),
+   ROW(74),
+   ROW(75),
+   ROW(76),
+   ROW(77),
+   ROW(78),
+   ROW(79),
+   ROW(80),
+   ROW(81),
+   ROW(82),
+   ROW(83),
+   ROW(84),
+   ROW(85),
+   ROW(86),
+   ROW(87),
+   ROW(88),
+   ROW(89),
+   ROW(90),
+   ROW(91),
+   ROW(92),
+   ROW(93),
+   ROW(94),
+   ROW(95),
+   ROW(96),
+   ROW(97),
+   ROW(98),
+   ROW(99),
+   ROW(100),
+   ROW(101),
+   ROW(102),
+   ROW(103),
+   ROW(104),
+   ROW(105),
+   ROW(106),
+   ROW(107),
+   ROW(108),
+   ROW(109),
+   ROW(110),
+   ROW(111),
+   ROW(112),
+   ROW(113),
+   ROW(114),
+   ROW(115),
+   ROW(116),
+   ROW(117),
+   ROW(118),
+   ROW(119),
+   ROW(120),
+   ROW(121),
+   ROW(122),
+   ROW(123),
+   ROW(124),
+   ROW(125),
+   ROW(126),
+   ROW(127),
+   ROW(128),
+   ROW(129),
+   ROW(130),
+   ROW(131),
+   ROW(132),
+   ROW(133),
+   ROW(134),
+   ROW(135),
+   ROW(136),
+   ROW(137),
+   ROW(138),
+   ROW(139),
+   ROW(140),
+   ROW(141),
+   ROW(142),
+   ROW(143),
+   ROW(144),
+   ROW(145),
+   ROW(146),
+   ROW(147),
+   ROW(148),
+   ROW(149),
+   ROW(150),
+   ROW(151),
+   ROW(152),
+   ROW(153),
+   ROW(154),
+   ROW(155),
+   ROW(156),
+   ROW(157),
+   ROW(158),
+   ROW(159),
+   ROW(160),
+   ROW(161),
+   ROW(162),
+   ROW(163),
+   ROW(164),
+   ROW(165),
+   ROW(166),
+   ROW(167),
+   ROW(168),
+   ROW(169),
+   ROW(170),
+   ROW(171),
+   ROW(172),
+   ROW(173),
+   ROW(174),
+   ROW(175),
+   ROW(176),
+   ROW(177),
+   ROW(178),
+   ROW(179),
+   ROW(180),
+   ROW(181),
+   ROW(182),
+   ROW(183),
+   ROW(184),
+   ROW(185),
+   ROW(186),
+   ROW(187),
+   ROW(188),
+   ROW(189),
+   ROW(190),
+   ROW(191),
+   ROW(192),
+   ROW(193),
+   ROW(194),
+   ROW(195),
+   ROW(196),
+   ROW(197),
+   ROW(198),
+   ROW(199),
+   ROW(200),
+   ROW(201),
+   ROW(202),
+   ROW(203),
+   ROW(204),
+   ROW(205),
+   ROW(206),
+   ROW(207),
+   ROW(208),
+   ROW(209),
+   ROW(210),
+   ROW(211),
+   ROW(212),
+   ROW(213),
+   ROW(214),
+   ROW(215),
+   ROW(216),
+   ROW(217),
+   ROW(218),
+   ROW(219),
+   ROW(220),
+   ROW(221),
+   ROW(222),
+   ROW(223),
+   ROW(224),
+   ROW(225),
+   ROW(226),
+   ROW(227),
+   ROW(228),
+   ROW(229),
+   ROW(230),
+   ROW(231),
+   ROW(232),
+   ROW(233),
+   ROW(234),
+   ROW(235),
+   ROW(236),
+   ROW(237),
+   ROW(238),
+   ROW(239),
+   ROW(240),
+   ROW(241),
+   ROW(242),
+   ROW(243),
+   ROW(244),
+   ROW(245),
+   ROW(246),
+   ROW(247),
+   ROW(248),
+   ROW(249),
+   ROW(250),
+   ROW(251),
+   ROW(252),
+   ROW(253),
+   ROW(254),
+   ROW(255),
+   ROW(256),
+   ROW(257),
+   ROW(258),
+   ROW(259),
+   ROW(260),
+   ROW(261),
+   ROW(262),
+   ROW(263),
+   ROW(264),
+   ROW(265),
+   ROW(266),
+   ROW(267),
+   ROW(268),
+   ROW(269),
+   ROW(270),
+   ROW(271),
+   ROW(272),
+   ROW(273),
+   ROW(274),
+   ROW(275),
+   ROW(276),
+   ROW(277),
+   ROW(278),
+   ROW(279),
+   ROW(280),
+   ROW(281),
+   ROW(282),
+   ROW(283),
+   ROW(284),
+   ROW(285),
+   ROW(286),
+   ROW(287),
+   ROW(288),
+   ROW(289),
+   ROW(290),
+   ROW(291),
+   ROW(292),
+   ROW(293),
+   ROW(294),
+   ROW(295),
+   ROW(296),
+   ROW(297),
+   ROW(298),
+   ROW(299),
+   ROW(300),
+   ROW(301),
+   ROW(302),
+   ROW(303),
+   ROW(304),
+   ROW(305),
+   ROW(306),
+   ROW(307),
+   ROW(308),
+   ROW(309),
+   ROW(310),
+   ROW(311),
+   ROW(312),
+   ROW(313),
+   ROW(314),
+   ROW(315),
+   ROW(316),
+   ROW(317),
+   ROW(318),
+   ROW(319),
+   ROW(320),
+   ROW(321),
+   ROW(322),
+   ROW(323),
+   ROW(324),
+   ROW(325),
+   ROW(326),
+   ROW(327),
+   ROW(328),
+   ROW(329),
+   ROW(330),
+   ROW(331),
+   ROW(332),
+   ROW(333),
+   ROW(334),
+   ROW(335),
+   ROW(336),
+   ROW(337),
+   ROW(338),
+   ROW(339),
+   ROW(340),
+   ROW(341),
+   ROW(342),
+   ROW(343),
+   ROW(344),
+   ROW(345),
+   ROW(346),
+   ROW(347),
+   ROW(348),
+   ROW(349),
+   ROW(350),
+   ROW(351),
+   ROW(352),
+   ROW(353),
+   ROW(354),
+   ROW(355),
+   ROW(356),
+   ROW(357),
+   ROW(358),
+   ROW(359),
+   ROW(360),
+   ROW(361),
+   ROW(362),
+   ROW(363),
+   ROW(364),
+   ROW(365),
+   ROW(366),
+   ROW(367),
+   ROW(368),
+   ROW(369),
+   ROW(370),
+   ROW(371),
+   ROW(372),
+   ROW(373),
+   ROW(374),
+   ROW(375),
+   ROW(376),
+   ROW(377),
+   ROW(378),
+   ROW(379),
+   ROW(380),
+   ROW(381),
+   ROW(382),
+   ROW(383),
+   ROW(384),
+   ROW(385),
+   ROW(386),
+   ROW(387),
+   ROW(388),
+   ROW(389),
+   ROW(390),
+   ROW(391),
+   ROW(392),
+   ROW(393),
+   ROW(394),
+   ROW(395),
+   ROW(396),
+   ROW(397),
+   ROW(398),
+   ROW(399),
+   ROW(400),
+   ROW(401),
+   ROW(402),
+   ROW(403),
+   ROW(404),
+   ROW(405),
+   ROW(406),
+   ROW(407),
+   ROW(408),
+   ROW(409),
+   ROW(410),
+   ROW(411),
+   ROW(412),
+   ROW(413),
+   ROW(414),
+   ROW(415),
+   ROW(416),
+   ROW(417),
+   ROW(418),
+   ROW(419),
+   ROW(420),
+   ROW(421),
+   ROW(422),
+   ROW(423),
+   ROW(424),
+   ROW(425),
+   ROW(426),
+   ROW(427),
+   ROW(428),
+   ROW(429),
+   ROW(430),
+   ROW(431),
+   ROW(432),
+   ROW(433),
+   ROW(434),
+   ROW(435),
+   ROW(436),
+   ROW(437),
+   ROW(438),
+   ROW(439),
+   ROW(440),
+   ROW(441),
+   ROW(442),
+   ROW(443),
+   ROW(444),
+   ROW(445),
+   ROW(446),
+   ROW(447),
+   ROW(448),
+   ROW(449),
+   ROW(450),
+   ROW(451),
+   ROW(452),
+   ROW(453),
+   ROW(454),
+   ROW(455),
+   ROW(456),
+   ROW(457),
+   ROW(458),
+   ROW(459),
+   ROW(460),
+   ROW(461),
+   ROW(462),
+   ROW(463),
+   ROW(464),
+   ROW(465),
+   ROW(466),
+   ROW(467),
+   ROW(468),
+   ROW(469),
+   ROW(470),
+   ROW(471),
+   ROW(472),
+   ROW(473),
+   ROW(474),
+   ROW(475),
+   ROW(476),
+   ROW(477),
+   ROW(478),
+   ROW(479),
+   ROW(480),
+   ROW(481),
+   ROW(482),
+   ROW(483),
+   ROW(484),
+   ROW(485),
+   ROW(486),
+   ROW(487),
+   ROW(488),
+   ROW(489),
+   ROW(490),
+   ROW(491),
+   ROW(492),
+   ROW(493),
+   ROW(494),
+   ROW(495),
+   ROW(496),
+   ROW(497),
+   ROW(498),
+   ROW(499),
+   ROW(500),
+   ROW(501),
+   ROW(502),
+   ROW(503),
+   ROW(504),
+   ROW(505),
+   ROW(506),
+   ROW(507),
+   ROW(508),
+   ROW(509),
+   ROW(510),
+   ROW(511),
+   ROW(512),
+   ROW(513),
+   ROW(514),
+   ROW(515),
+   ROW(516),
+   ROW(517),
+   ROW(518),
+   ROW(519),
+   ROW(520),
+   ROW(521),
+   ROW(522),
+   ROW(523),
+   ROW(524),
+   ROW(525),
+   ROW(526),
+   ROW(527),
+   ROW(528),
+   ROW(529),
+   ROW(530),
+   ROW(531),
+   ROW(532),
+   ROW(533),
+   ROW(534),
+   ROW(535),
+   ROW(536),
+   ROW(537),
+   ROW(538),
+   ROW(539),
+   ROW(540),
+   ROW(541),
+   ROW(542),
+   ROW(543),
+   ROW(544),
+   ROW(545),
+   ROW(546),
+   ROW(547),
+   ROW(548),
+   ROW(549),
+   ROW(550),
+   ROW(551),
+   ROW(552),
+   ROW(553),
+   ROW(554),
+   ROW(555),
+   ROW(556),
+   ROW(557),
+   ROW(558),
+   ROW(559),
+   ROW(560),
+   ROW(561),
+   ROW(562),
+   ROW(563),
+   ROW(564),
+   ROW(565),
+   ROW(566),
+   ROW(567),
+   ROW(568),
+   ROW(569),
+   ROW(570),
+   ROW(571),
+   ROW(572),
+   ROW(573),
+   ROW(574),
+   ROW(575),
+   ROW(576),
+   ROW(577),
+   ROW(578),
+   ROW(579),
+   ROW(580),
+   ROW(581),
+   ROW(582),
+   ROW(583),
+   ROW(584),
+   ROW(585),
+   ROW(586),
+   ROW(587),
+   ROW(588),
+   ROW(589),
+   ROW(590),
+   ROW(591),
+   ROW(592),
+   ROW(593),
+   ROW(594),
+   ROW(595),
+   ROW(596),
+   ROW(597),
+   ROW(598),
+   ROW(599),
+   ROW(600),
+   ROW(601),
+   ROW(602),
+   ROW(603),
+   ROW(604),
+   ROW(605),
+   ROW(606),
+   ROW(607),
+   ROW(608),
+   ROW(609),
+   ROW(610),
+   ROW(611),
+   ROW(612),
+   ROW(613),
+   ROW(614),
+   ROW(615),
+   ROW(616),
+   ROW(617),
+   ROW(618),
+   ROW(619),
+   ROW(620),
+   ROW(621),
+   ROW(622),
+   ROW(623),
+   ROW(624),
+   ROW(625),
+   ROW(626),
+   ROW(627),
+   ROW(628),
+   ROW(629),
+   ROW(630),
+   ROW(631),
+   ROW(632),
+   ROW(633),
+   ROW(634),
+   ROW(635),
+   ROW(636),
+   ROW(637),
+   ROW(638),
+   ROW(639),
+   ROW(640),
+   ROW(641),
+   ROW(642),
+   ROW(643),
+   ROW(644),
+   ROW(645),
+   ROW(646),
+   ROW(647),
+   ROW(648),
+   ROW(649),
+   ROW(650),
+   ROW(651),
+   ROW(652),
+   ROW(653),
+   ROW(654),
+   ROW(655),
+   ROW(656),
+   ROW(657),
+   ROW(658),
+   ROW(659),
+   ROW(660),
+   ROW(661),
+   ROW(662),
+   ROW(663),
+   ROW(664),
+   ROW(665),
+   ROW(666),
+   ROW(667),
+   ROW(668),
+   ROW(669),
+   ROW(670),
+   ROW(671),
+   ROW(672),
+   ROW(673),
+   ROW(674),
+   ROW(675),
+   ROW(676),
+   ROW(677),
+   ROW(678),
+   ROW(679),
+   ROW(680),
+   ROW(681),
+   ROW(682),
+   ROW(683),
+   ROW(684),
+   ROW(685),
+   ROW(686),
+   ROW(687),
+   ROW(688),
+   ROW(689),
+   ROW(690),
+   ROW(691),
+   ROW(692),
+   ROW(693),
+   ROW(694),
+   ROW(695),
+   ROW(696),
+   ROW(697),
+   ROW(698),
+   ROW(699),
+   ROW(700),
+   ROW(701),
+   ROW(702),
+   ROW(703),
+   ROW(704),
+   ROW(705),
+   ROW(706),
+   ROW(707),
+   ROW(708),
+   ROW(709),
+   ROW(710),
+   ROW(711),
+   ROW(712),
+   ROW(713),
+   ROW(714),
+   ROW(715),
+   ROW(716),
+   ROW(717),
+   ROW(718),
+   ROW(719),
+   ROW(720),
+   ROW(721),
+   ROW(722),
+   ROW(723),
+   ROW(724),
+   ROW(725),
+   ROW(726),
+   ROW(727),
+   ROW(728),
+   ROW(729),
+   ROW(730),
+   ROW(731),
+   ROW(732),
+   ROW(733),
+   ROW(734),
+   ROW(735),
+   ROW(736),
+   ROW(737),
+   ROW(738),
+   ROW(739),
+   ROW(740),
+   ROW(741),
+   ROW(742),
+   ROW(743),
+   ROW(744),
+   ROW(745),
+   ROW(746),
+   ROW(747),
+   ROW(748),
+   ROW(749),
+   ROW(750),
+   ROW(751),
+   ROW(752),
+   ROW(753),
+   ROW(754),
+   ROW(755),
+   ROW(756),
+   ROW(757),
+   ROW(758),
+   ROW(759),
+   ROW(760),
+   ROW(761),
+   ROW(762),
+   ROW(763),
+   ROW(764),
+   ROW(765),
+   ROW(766),
+   ROW(767),
+   ROW(768),
+   ROW(769),
+   ROW(770),
+   ROW(771),
+   ROW(772),
+   ROW(773),
+   ROW(774),
+   ROW(775),
+   ROW(776),
+   ROW(777),
+   ROW(778),
+   ROW(779),
+   ROW(780),
+   ROW(781),
+   ROW(782),
+   ROW(783),
+   ROW(784),
+   ROW(785),
+   ROW(786),
+   ROW(787),
+   ROW(788),
+   ROW(789),
+   ROW(790),
+   ROW(791),
+   ROW(792),
+   ROW(793),
+   ROW(794),
+   ROW(795),
+   ROW(796),
+   ROW(797),
+   ROW(798),
+   ROW(799),
+   ROW(800),
+   ROW(801),
+   ROW(802),
+   ROW(803),
+   ROW(804),
+   ROW(805),
+   ROW(806),
+   ROW(807),
+   ROW(808),
+   ROW(809),
+   ROW(810),
+   ROW(811),
+   ROW(812),
+   ROW(813),
+   ROW(814),
+   ROW(815),
+   ROW(816),
+   ROW(817),
+   ROW(818),
+   ROW(819),
+   ROW(820),
+   ROW(821),
+   ROW(822),
+   ROW(823),
+   ROW(824),
+   ROW(825),
+   ROW(826),
+   ROW(827),
+   ROW(828),
+   ROW(829),
+   ROW(830),
+   ROW(831),
+   ROW(832),
+   ROW(833),
+   ROW(834),
+   ROW(835),
+   ROW(836),
+   ROW(837),
+   ROW(838),
+   ROW(839),
+   ROW(840),
+   ROW(841),
+   ROW(842),
+   ROW(843),
+   ROW(844),
+   ROW(845),
+   ROW(846),
+   ROW(847),
+   ROW(848),
+   ROW(849),
+   ROW(850),
+   ROW(851),
+   ROW(852),
+   ROW(853),
+   ROW(854),
+   ROW(855),
+   ROW(856),
+   ROW(857),
+   ROW(858),
+   ROW(859),
+   ROW(860),
+   ROW(861),
+   ROW(862),
+   ROW(863),
+   ROW(864),
+   ROW(865),
+   ROW(866),
+   ROW(867),
+   ROW(868),
+   ROW(869),
+   ROW(870),
+   ROW(871),
+   ROW(872),
+   ROW(873),
+   ROW(874),
+   ROW(875),
+   ROW(876),
+   ROW(877),
+   ROW(878),
+   ROW(879),
+   ROW(880),
+   ROW(881),
+   ROW(882),
+   ROW(883),
+   ROW(884),
+   ROW(885),
+   ROW(886),
+   ROW(887),
+   ROW(888),
+   ROW(889),
+   ROW(890),
+   ROW(891),
+   ROW(892),
+   ROW(893),
+   ROW(894),
+   ROW(895),
+   ROW(896),
+   ROW(897),
+   ROW(898),
+   ROW(899),
+   ROW(900),
+   ROW(901),
+   ROW(902),
+   ROW(903),
+   ROW(904),
+   ROW(905),
+   ROW(906),
+   ROW(907),
+   ROW(908),
+   ROW(909),
+   ROW(910),
+   ROW(911),
+   ROW(912),
+   ROW(913),
+   ROW(914),
+   ROW(915),
+   ROW(916),
+   ROW(917),
+   ROW(918),
+   ROW(919),
+   ROW(920),
+   ROW(921),
+   ROW(922),
+   ROW(923),
+   ROW(924),
+   ROW(925),
+   ROW(926),
+   ROW(927),
+   ROW(928),
+   ROW(929),
+   ROW(930),
+   ROW(931),
+   ROW(932),
+   ROW(933),
+   ROW(934),
+   ROW(935),
+   ROW(936),
+   ROW(937),
+   ROW(938),
+   ROW(939),
+   ROW(940),
+   ROW(941),
+   ROW(942),
+   ROW(943),
+   ROW(944),
+   ROW(945),
+   ROW(946),
+   ROW(947),
+   ROW(948),
+   ROW(949),
+   ROW(950),
+   ROW(951),
+   ROW(952),
+   ROW(953),
+   ROW(954),
+   ROW(955),
+   ROW(956),
+   ROW(957),
+   ROW(958),
+   ROW(959),
+   ROW(960),
+   ROW(961),
+   ROW(962),
+   ROW(963),
+   ROW(964),
+   ROW(965),
+   ROW(966),
+   ROW(967),
+   ROW(968),
+   ROW(969),
+   ROW(970),
+   ROW(971),
+   ROW(972),
+   ROW(973),
+   ROW(974),
+   ROW(975),
+   ROW(976),
+   ROW(977),
+   ROW(978),
+   ROW(979),
+   ROW(980),
+   ROW(981),
+   ROW(982),
+   ROW(983),
+   ROW(984),
+   ROW(985),
+   ROW(986),
+   ROW(987),
+   ROW(988),
+   ROW(989),
+   ROW(990),
+   ROW(991),
+   ROW(992),
+   ROW(993),
+   ROW(994),
+   ROW(995),
+   ROW(996),
+   ROW(997),
+   ROW(998),
+   ROW(999)) AS `T` (`id`);
+CREATE VIEW `OrderPairs`
+AS
+SELECT `o`.`id`, `o`.`time`, `u`.`id` AS `otherid`
+FROM `Orders` AS `o`
+ CROSS JOIN (VALUES ROW(1, 1),
+   ROW(2, 2),
+   ROW(3, 3),
+   ROW(4, 4),
+   ROW(4, 4)) AS `u` (`id`, `pk`);
+CREATE VIEW `OrderPairs2`
+AS
+SELECT `o`.`id`, `o`.`time`, `t`.`pk`
+FROM `Orders` AS `o`
+ CROSS JOIN (VALUES ROW(1, 1),
+   ROW(2, 2),
+   ROW(3, 3),
+   ROW(4, 4),
+   ROW(4, 4)) AS `t` (`id`, `pk`);
+CREATE TABLE `Numbers_1` (
+  `id` INTEGER NOT NULL,
+  PRIMARY KEY (`id`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'Numbers_1'
+);
+CREATE TABLE `Numbers2_2` (
+  `id` INTEGER NOT NULL,
+  PRIMARY KEY (`id`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'Numbers2_2'
+);
+CREATE TABLE `NumbersLarge_3` (
+  `id` INTEGER NOT NULL,
+  PRIMARY KEY (`id`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'NumbersLarge_3'
+);
+CREATE TABLE `Orders_4` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'Orders_4'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`Numbers_1`
+(SELECT *
+ FROM `default_catalog`.`default_database`.`Numbers`)
+;
+INSERT INTO `default_catalog`.`default_database`.`Numbers2_2`
+ (SELECT *
+  FROM `default_catalog`.`default_database`.`Numbers2`)
+ ;
+ INSERT INTO `default_catalog`.`default_database`.`NumbersLarge_3`
+  (SELECT *
+   FROM `default_catalog`.`default_database`.`NumbersLarge`)
+  ;
+  INSERT INTO `default_catalog`.`default_database`.`Orders_4`
+   (SELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`
+    FROM `default_catalog`.`default_database`.`Orders`)
+   ;
+   END
+>>>kafka.json
+{
+  "topics" : [ ]
+}
+>>>postgres.json
+{
+  "statements" : [
+    {
+      "name" : "Numbers_1",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Numbers_1\" (\"id\" INTEGER NOT NULL , PRIMARY KEY (\"id\"))",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "INTEGER",
+          "nullable" : false
+        }
+      ]
+    },
+    {
+      "name" : "Numbers2_2",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Numbers2_2\" (\"id\" INTEGER NOT NULL , PRIMARY KEY (\"id\"))",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "INTEGER",
+          "nullable" : false
+        }
+      ]
+    },
+    {
+      "name" : "NumbersLarge_3",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"NumbersLarge_3\" (\"id\" INTEGER NOT NULL , PRIMARY KEY (\"id\"))",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "INTEGER",
+          "nullable" : false
+        }
+      ]
+    },
+    {
+      "name" : "Orders_4",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_4\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB  , PRIMARY KEY (\"id\",\"time\"))",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "entries",
+          "type" : "JSONB",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "Numbers",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"Numbers\"(\"id\") AS SELECT *\nFROM \"Numbers_1\"",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "INTEGER",
+          "nullable" : false
+        }
+      ]
+    },
+    {
+      "name" : "Numbers2",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"Numbers2\"(\"id\") AS SELECT *\nFROM \"Numbers2_2\"",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "INTEGER",
+          "nullable" : false
+        }
+      ]
+    },
+    {
+      "name" : "NumbersLarge",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"NumbersLarge\"(\"id\") AS SELECT *\nFROM \"NumbersLarge_3\"",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "INTEGER",
+          "nullable" : false
+        }
+      ]
+    },
+    {
+      "name" : "OrderNumbers",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderNumbers\"(\"id\", \"time\") AS SELECT \"Orders_42\".\"id\", \"Orders_42\".\"time\"\nFROM \"Orders_4\" AS \"Orders_42\"\n INNER JOIN (SELECT \"id\", CAST(\"id\" AS BIGINT) AS \"id0\"\n  FROM \"Numbers_1\") AS \"t3\" ON \"Orders_42\".\"customerid\" = \"t3\".\"id0\"",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
+    },
+    {
+      "name" : "OrderNumbers2",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderNumbers2\"(\"id\", \"time\") AS SELECT \"Orders_42\".\"id\", \"Orders_42\".\"time\"\nFROM \"Orders_4\" AS \"Orders_42\"\n INNER JOIN (SELECT \"id\", CAST(\"id\" AS BIGINT) AS \"id0\"\n  FROM (VALUES (1),\n      (2),\n      (3),\n      (4),\n      (4)) AS \"t\" (\"id\")) AS \"t5\" ON \"Orders_42\".\"customerid\" = \"t5\".\"id0\"",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
+    },
+    {
+      "name" : "OrderPairs",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderPairs\"(\"id\", \"time\", \"otherid\") AS SELECT \"Orders_42\".\"id\", \"Orders_42\".\"time\", \"t2\".\"id\" AS \"otherid\"\nFROM \"Orders_4\" AS \"Orders_42\",\n  (VALUES (1, 1),\n    (2, 2),\n    (3, 3),\n    (4, 4),\n    (4, 4)) AS \"t2\" (\"id\", \"pk\")",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "otherid",
+          "type" : "INTEGER",
+          "nullable" : false
+        }
+      ]
+    },
+    {
+      "name" : "OrderPairs2",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderPairs2\"(\"id\", \"time\", \"pk\") AS SELECT \"Orders_42\".\"id\", \"Orders_42\".\"time\", \"t2\".\"pk\"\nFROM \"Orders_4\" AS \"Orders_42\",\n  (VALUES (1, 1),\n    (2, 2),\n    (3, 3),\n    (4, 4),\n    (4, 4)) AS \"t2\" (\"id\", \"pk\")",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "pk",
+          "type" : "INTEGER",
+          "nullable" : false
+        }
+      ]
+    },
+    {
+      "name" : "Orders",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"Orders_4\"",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "entries",
+          "type" : "JSONB",
+          "nullable" : true
+        }
+      ]
+    }
+  ]
+}
+>>>vertx.json
+{
+  "model" : {
+    "coords" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Numbers",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"Numbers_1\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Numbers2",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"Numbers2_2\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "NumbersLarge",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"NumbersLarge_3\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "OrderNumbers",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"Orders_40\".\"id\", \"Orders_40\".\"time\"\nFROM \"Orders_4\" AS \"Orders_40\"\n INNER JOIN (SELECT \"id\", CAST(\"id\" AS BIGINT) AS \"id0\"\n  FROM \"Numbers_1\") AS \"t\" ON \"Orders_40\".\"customerid\" = \"t\".\"id0\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "OrderNumbers2",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"Orders_40\".\"id\", \"Orders_40\".\"time\"\nFROM \"Orders_4\" AS \"Orders_40\"\n INNER JOIN (SELECT \"id\", CAST(\"id\" AS BIGINT) AS \"id0\"\n  FROM (VALUES (1),\n      (2),\n      (3),\n      (4),\n      (4)) AS \"t\" (\"id\")) AS \"t0\" ON \"Orders_40\".\"customerid\" = \"t0\".\"id0\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "OrderPairs",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"Orders_40\".\"id\", \"Orders_40\".\"time\", \"t\".\"id\" AS \"otherid\"\nFROM \"Orders_4\" AS \"Orders_40\",\n  (VALUES (1, 1),\n    (2, 2),\n    (3, 3),\n    (4, 4),\n    (4, 4)) AS \"t\" (\"id\", \"pk\")",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "OrderPairs2",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"Orders_40\".\"id\", \"Orders_40\".\"time\", \"t\".\"pk\"\nFROM \"Orders_4\" AS \"Orders_40\",\n  (VALUES (1, 1),\n    (2, 2),\n    (3, 3),\n    (4, 4),\n    (4, 4)) AS \"t\" (\"id\", \"pk\")",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Orders",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"Orders_4\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      }
+    ],
+    "mutations" : [ ],
+    "subscriptions" : [ ],
+    "schema" : {
+      "type" : "string",
+      "type" : "string",
+      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype Numbers {\n  id: Int!\n}\n\ntype Numbers2 {\n  id: Int!\n}\n\ntype NumbersLarge {\n  id: Int!\n}\n\ntype OrderNumbers {\n  id: Float!\n  time: DateTime!\n}\n\ntype OrderNumbers2 {\n  id: Float!\n  time: DateTime!\n}\n\ntype OrderPairs {\n  id: Float!\n  time: DateTime!\n  otherid: Int!\n}\n\ntype OrderPairs2 {\n  id: Float!\n  time: DateTime!\n  pk: Int!\n}\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  Numbers(limit: Int = 10, offset: Int = 0): [Numbers!]\n  Numbers2(limit: Int = 10, offset: Int = 0): [Numbers2!]\n  NumbersLarge(limit: Int = 10, offset: Int = 0): [NumbersLarge!]\n  OrderNumbers(limit: Int = 10, offset: Int = 0): [OrderNumbers!]\n  OrderNumbers2(limit: Int = 10, offset: Int = 0): [OrderNumbers2!]\n  OrderPairs(limit: Int = 10, offset: Int = 0): [OrderPairs!]\n  OrderPairs2(limit: Int = 10, offset: Int = 0): [OrderPairs2!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n}\n"
+    }
+  }
+}
