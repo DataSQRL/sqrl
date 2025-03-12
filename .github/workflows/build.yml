@@ -8,6 +8,11 @@ jobs:
     timeout-minutes: 30
     env:
       TZ: 'America/Los_Angeles'
+
+    permissions:
+      contents: read
+      packages: read
+
     steps:
     - name: Setup Timezone
       uses: szenius/set-timezone@v1.1
@@ -23,7 +28,6 @@ jobs:
         cache: maven
 
     - name: Generate settings.xml
-      if: github.ref == 'refs/heads/main'
       run: |
           mkdir -p ~/.m2
           echo "<settings>
