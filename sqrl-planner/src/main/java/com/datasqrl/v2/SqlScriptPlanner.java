@@ -285,6 +285,8 @@ public class SqlScriptPlanner {
               "Relationships can only be added to tables (not functions): %s [%s]", tblFctStmt.getPath().getFirst(), parentNode.get().getClass());
           identifier = SqlNameUtil.toIdentifier(Name.system(tablePath.getLast().getDisplay()));
           parentTbl = ((TableNode) parentNode.get()).getTableAnalysis();
+          checkFatal(parentTbl.getOptionalBaseTable().isEmpty(), ErrorCode.BASETABLE_ONLY_ERROR,
+              "Relationships can only be added to the base table [%s]", parentTbl.getBaseTable().getIdentifier());
         }
         //Resolve arguments, map indexes, and check for errors
         Map<Integer, Integer> argumentIndexMap = new HashMap<>();
