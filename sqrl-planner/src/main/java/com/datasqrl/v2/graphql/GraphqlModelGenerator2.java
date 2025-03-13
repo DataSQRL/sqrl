@@ -17,6 +17,7 @@ import com.datasqrl.engine.database.relational.ddl.statements.InsertStatement;
 import com.datasqrl.engine.database.relational.ddl.statements.notify.ListenNotifyAssets;
 import com.datasqrl.engine.log.Log;
 import com.datasqrl.engine.log.kafka.KafkaPhysicalPlan;
+import com.datasqrl.engine.log.kafka.KafkaQuery;
 import com.datasqrl.engine.log.postgres.PostgresLogPhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIConnectorManager;
@@ -45,6 +46,7 @@ import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.datasqrl.schema.Multiplicity;
+import com.datasqrl.v2.parser.AccessModifier;
 import com.datasqrl.v2.tables.SqrlFunctionParameter;
 import com.datasqrl.v2.tables.SqrlTableFunction;
 import com.google.common.base.Preconditions;
@@ -84,58 +86,36 @@ public class GraphqlModelGenerator2 extends GraphqlSchemaWalker2 {
 
   @Override
   protected void visitSubscription(ObjectTypeDefinition objectType, FieldDefinition fieldDefinition,
-                                   TypeDefinitionRegistry registry, APISource source) {
-    /*
-    APISubscription apiSubscription = new APISubscription(Name.system(fieldDefinition.getName()),
-        source);
-    SqrlTableMacro tableFunction = schema.getTableFunction(fieldDefinition.getName());
-    if (tableFunction == null) {
-      throw new RuntimeException("Table '" + fieldDefinition.getName() + "' does not exist in the schema.");
-    }
-    Log log = apiManager.addSubscription(apiSubscription, tableFunction);
-
-    Map<String, String> filters = new HashMap<>();
-    for (InputValueDefinition input : fieldDefinition.getInputValueDefinitions()) {
-      RelDataTypeField field = nameMatcher.field(tableFunction.getRowType(), input.getName());
-      if (field == null) {
-        throw new RuntimeException("Field '" + input.getName() + "' does not exist in subscription '" + fieldDefinition.getName() + "'.");
-      }
-      filters.put(input.getName(), field.getName());
-    }
-
-    Optional<EnginePhysicalPlan> logPlan = getLogPlan();
+      SqrlTableFunction tableFunction) {
+    Preconditions.checkArgument(tableFunction.getVisibility().getAccess()== AccessModifier.SUBSCRIPTION);
+    final ExecutableQuery executableQuery = tableFunction.getExecutableQuery();
 
     String fieldName = fieldDefinition.getName();
-
+    List<InputValueDefinition> inputArguments = fieldDefinition.getInputValueDefinitions();
     SubscriptionCoords subscriptionCoords;
-
-    if (logPlan.isPresent() && logPlan.get() instanceof KafkaPhysicalPlan) {
-      String topic = (String) log.getConnectorContext().getMap().get("topic");
-      subscriptionCoords = new KafkaSubscriptionCoords(fieldName, topic, Map.of(), filters);
-    } else if (logPlan.isPresent() && logPlan.get() instanceof PostgresLogPhysicalPlan) {
-      String tableName = (String) log.getConnectorContext().getMap().get("table-name");
-
-      ListenNotifyAssets listenNotifyAssets = ((PostgresLogPhysicalPlan) logPlan.get())
-          .getQueries().stream()
-          .filter(query -> query.getListen().getTableName().equals(tableName))
-          .findFirst()
-          .orElseThrow(
-              () -> new RuntimeException("Could not find query statement for table: " + tableName)
-          );
-
-      subscriptionCoords = new PostgresSubscriptionCoords(
-          fieldName, tableName, filters,
-          listenNotifyAssets.getListen().getSql(),
-          listenNotifyAssets.getOnNotify().getSql(),
-          listenNotifyAssets.getParameters());
-    } else if (logPlan.isEmpty()) {
-      throw new RuntimeException("No log plan found. Ensure that a log plan is configured and available.");
+    if (executableQuery instanceof KafkaQuery) {
+      KafkaQuery kafkaQuery = (KafkaQuery) executableQuery;
+      Map<String, String> filters = kafkaQuery.getFilterColumnNames().entrySet().stream().collect(
+          Collectors.toMap(e -> inputArguments.get(e.getValue()).getName(), Entry::getKey));
+      subscriptionCoords = new KafkaSubscriptionCoords(fieldName, kafkaQuery.getTopicName(), Map.of(), filters);
+//    } else if (executableQuery instanceof PostgresSubscriptionQuery) {
+//      ListenNotifyAssets listenNotifyAssets = ((PostgresLogPhysicalPlan) logPlan.get())
+//          .getQueries().stream()
+//          .filter(query -> query.getListen().getTableName().equals(tableName))
+//          .findFirst()
+//          .orElseThrow(
+//              () -> new RuntimeException("Could not find query statement for table: " + tableName)
+//          );
+//
+//      subscriptionCoords = new PostgresSubscriptionCoords(
+//          fieldName, tableName, filters,
+//          listenNotifyAssets.getListen().getSql(),
+//          listenNotifyAssets.getOnNotify().getSql(),
+//          listenNotifyAssets.getParameters());
     } else {
-      throw new RuntimeException("Unknown log plan type: " + logPlan.get().getClass().getName());
+      throw new UnsupportedOperationException("Unsupported subscription query: " + executableQuery);
     }
-
     subscriptions.add(subscriptionCoords);
-     */
   }
 
 

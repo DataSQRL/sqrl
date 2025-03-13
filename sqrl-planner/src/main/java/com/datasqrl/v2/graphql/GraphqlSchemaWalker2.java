@@ -59,10 +59,10 @@ public abstract class GraphqlSchemaWalker2 {
 */
 
     Optional<ObjectTypeDefinition> rootSubscriptionTypeOpt = getSubscriptionType(registry);
-    rootSubscriptionTypeOpt.ifPresent(rootSubscriptionType-> walkRootType(rootSubscriptionType, registry, apiSource));
+    rootSubscriptionTypeOpt.ifPresent(rootSubscriptionType-> walkRootType(rootSubscriptionType, registry));
 
     ObjectTypeDefinition rootQueryType = getQueryType(registry);
-    walkRootType(rootQueryType, registry, apiSource); // there is always a root query type
+    walkRootType(rootQueryType, registry); // there is always a root query type
   }
 
 
@@ -72,31 +72,32 @@ public abstract class GraphqlSchemaWalker2 {
     }
   }
 
-  private void walkRootType(ObjectTypeDefinition rootType, TypeDefinitionRegistry registry, APISource apiSource) {
+  private void walkRootType(ObjectTypeDefinition rootType, TypeDefinitionRegistry registry) {
     for (FieldDefinition field : rootType.getFieldDefinitions()) { // fields are root table functions
       final NamePath fieldPath = NamePath.ROOT.concat(NamePath.of(field.getName()));
       final Optional<SqrlTableFunction> tableFunction = getTableFunctionFromPath(tableFunctions, fieldPath); // root table functions are always present
-      walkTableFunction(rootType, field, fieldPath, tableFunction.get(), registry, apiSource);
+      checkState(tableFunction.isPresent(), field.getSourceLocation(), "Could not find table or function for field: %s", field.getName());
+      walkTableFunction(rootType, field, fieldPath, tableFunction.get(), registry);
     }
   }
 
-  private void walkTableFunction (ObjectTypeDefinition parentType, FieldDefinition atField, NamePath functionPath,
-                                 SqrlTableFunction tableFunction, TypeDefinitionRegistry registry, APISource apiSource) {
-     Optional<TypeDefinition> typeDefOpt = registry.getType(atField.getType());
-     checkState(typeDefOpt.isPresent(), atField.getType().getSourceLocation(), "Could not find object in graphql type registry");
+  private void walkTableFunction(ObjectTypeDefinition parentType, FieldDefinition atField, NamePath functionPath,
+                                 SqrlTableFunction tableFunction, TypeDefinitionRegistry registry) {
+    Optional<TypeDefinition> typeDefOpt = registry.getType(atField.getType());
+    checkState(typeDefOpt.isPresent(), atField.getType().getSourceLocation(), "Could not find object type in graphql type registry: %s", atField.getType());
     final TypeDefinition typeDefinition = typeDefOpt.get();
     checkState(typeDefinition instanceof ObjectTypeDefinition, typeDefinition.getSourceLocation(), "Could not infer non-object type on graphql schema: %s", typeDefinition.getName());
-      if (tableFunction.getVisibility().getAccess() == AccessModifier.QUERY) { // walking a query table function
-        visitQuery(parentType, atField, tableFunction);
-      } else { // walking a subscription table function
-        visitSubscription(parentType, atField, registry, apiSource);
-      }
-      RelDataType functionRowType = tableFunction.getRowType();
-      ObjectTypeDefinition resultType = (ObjectTypeDefinition) typeDefinition;
-      walkObjectType(true, resultType, functionPath, Optional.of(functionRowType), registry, apiSource);
+    if (tableFunction.getVisibility().getAccess() == AccessModifier.QUERY) { // walking a query table function
+      visitQuery(parentType, atField, tableFunction);
+    } else { // walking a subscription table function
+      visitSubscription(parentType, atField, tableFunction);
+    }
+    RelDataType functionRowType = tableFunction.getRowType();
+    ObjectTypeDefinition resultType = (ObjectTypeDefinition) typeDefinition;
+    walkObjectType(true, resultType, functionPath, Optional.of(functionRowType), registry);
   }
 
-  private void walkObjectType(boolean isFunctionResultType, ObjectTypeDefinition objectType, NamePath functionPath, Optional<RelDataType> relDataType, TypeDefinitionRegistry registry, APISource apiSource) {
+  private void walkObjectType(boolean isFunctionResultType, ObjectTypeDefinition objectType, NamePath functionPath, Optional<RelDataType> relDataType, TypeDefinitionRegistry registry) {
     if (seen.contains(objectType)) {
       return;
     }
@@ -112,7 +113,7 @@ public abstract class GraphqlSchemaWalker2 {
       if (isFunctionResultType) {
         final Optional<SqrlTableFunction> relationship = getTableFunctionFromPath(tableFunctions, fieldPath);
         if (relationship.isPresent()) { // the field is a relationship field, walk the related table relationship
-          walkTableFunction(objectType, field, fieldPath, relationship.get(), registry, apiSource); // there is no more nested relationships, so this method will not be recursively called
+          walkTableFunction(objectType, field, fieldPath, relationship.get(), registry); // there is no more nested relationships, so this method will not be recursively called
           continue;
         }
       }
@@ -125,7 +126,7 @@ public abstract class GraphqlSchemaWalker2 {
                 .orElseThrow();//assure it is an object type
 
             RelRecordType relRecordType = (RelRecordType) relDataTypeField.getType();
-            walkObjectType(false, fieldType, fieldPath, Optional.of(relRecordType), registry, apiSource);
+            walkObjectType(false, fieldType, fieldPath, Optional.of(relRecordType), registry);
             continue;
           }
           if (relDataTypeField.getType().getComponentType() != null) { // the field is an array
@@ -146,7 +147,7 @@ public abstract class GraphqlSchemaWalker2 {
                     .orElseThrow(); // Ensure it is an object type
 
                 RelRecordType relRecordType = (RelRecordType) componentType;
-                walkObjectType(false, elementObjectType, fieldPath, Optional.of(relRecordType), registry, apiSource);
+                walkObjectType(false, elementObjectType, fieldPath, Optional.of(relRecordType), registry);
               } else {
                 // The array contains scalar types
                 visitScalar(objectType, field, fieldPath, relDataType.get(), relDataTypeField);
@@ -173,7 +174,7 @@ public abstract class GraphqlSchemaWalker2 {
   protected abstract void visitQuery(ObjectTypeDefinition parentType, FieldDefinition atField, SqrlTableFunction tableFunction);
 
   protected abstract void visitSubscription(ObjectTypeDefinition objectType, FieldDefinition field,
-                                            TypeDefinitionRegistry registry, APISource source);
+                                          SqrlTableFunction tableFunction);
 
   protected abstract void visitMutation(ObjectTypeDefinition objectType, FieldDefinition field, TypeDefinitionRegistry registry,
                                         APISource source);

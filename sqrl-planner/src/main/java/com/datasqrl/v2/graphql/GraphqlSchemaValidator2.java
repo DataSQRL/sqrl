@@ -58,7 +58,7 @@ public class GraphqlSchemaValidator2 extends GraphqlSchemaWalker2 {
 
   @Override
   protected void visitSubscription(ObjectTypeDefinition objectType, FieldDefinition field,
-                                   TypeDefinitionRegistry registry, APISource source) {
+                                   SqrlTableFunction tableFunction) {
   }
 
   @Override
