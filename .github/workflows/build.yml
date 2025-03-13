@@ -8,6 +8,11 @@ jobs:
     timeout-minutes: 30
     env:
       TZ: 'America/Los_Angeles'
+
+    permissions:
+      contents: read
+      packages: read
+
     steps:
     - name: Setup Timezone
       uses: szenius/set-timezone@v1.1
@@ -21,6 +26,20 @@ jobs:
         java-version: '11'
         distribution: 'adopt'
         cache: maven
+
+    - name: Generate settings.xml
+      run: |
+          mkdir -p ~/.m2
+          echo "<settings>
+                <servers>
+                  <server>
+                    <id>github</id>
+                    <username>${{ github.actor }}</username>
+                    <password>${{ secrets.GITHUB_TOKEN }}</password>
+                  </server>
+                </servers>
+              </settings>" > ~/.m2/settings.xml
+
     - name: Build SQRL
       env:
         DATASQRL_TOKEN: ${{ secrets.DATASQRL_TOKEN }}

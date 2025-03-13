@@ -112,3 +112,21 @@ We aim to enable data engineers to build data products quickly, removing the bar
 
 We welcome code contributions. For more details, check out [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
+### Accessing sqrl-flink-* snapshots
+
+Need to create a server auth entry on `~/.m2/settings.xml`
+
+```
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+                          http://maven.apache.org/xsd/settings-1.0.0.xsd">
+  <servers>
+    <server>
+      <id>github</id>
+      <username>mbroecheler</username>
+      <password>classic pessonal access token from https://github.com/settings/tokens</password>
+    </server>
+  </servers>
+
+</settings>
+```

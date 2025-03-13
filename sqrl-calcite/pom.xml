@@ -61,7 +61,7 @@
       <artifactId>sqrl-server-core</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.datasqrl</groupId>
+      <groupId>com.datasqrl.flink</groupId>
       <artifactId>sqrl-jdbc-1.19</artifactId>
     </dependency>
   </dependencies>

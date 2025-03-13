@@ -8,11 +8,7 @@
 
   <artifactId>sqrl-flink-1.18</artifactId>
 
-  <properties>
-    <maven.compiler.source>11</maven.compiler.source>
-    <maven.compiler.target>11</maven.compiler.target>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
+
 
   <dependencies>
     <dependency>
@@ -21,13 +17,13 @@
       <scope>test</scope>
     </dependency>
    <dependency>
-      <groupId>com.datasqrl</groupId>
+      <groupId>com.datasqrl.flink</groupId>
       <artifactId>sqrl-jdbc-1.18</artifactId>
       <scope>test</scope>
     </dependency>
 
    <dependency>
-      <groupId>com.datasqrl</groupId>
+      <groupId>com.datasqrl.flink</groupId>
       <artifactId>sqrl-json</artifactId>
       <scope>test</scope>
     </dependency>
@@ -143,7 +139,7 @@
 <!--      </exclusions>-->
 <!--    </dependency>-->
     <dependency>
-      <groupId>com.datasqrl</groupId>
+      <groupId>com.datasqrl.flink</groupId>
       <artifactId>sqrl-flexible-json</artifactId>
     </dependency>
 
@@ -166,7 +162,7 @@
       <artifactId>sqrl-discovery</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.datasqrl</groupId>
+      <groupId>com.datasqrl.flink</groupId>
       <artifactId>sqrl-secure</artifactId>
     </dependency>
 <!--    -->
