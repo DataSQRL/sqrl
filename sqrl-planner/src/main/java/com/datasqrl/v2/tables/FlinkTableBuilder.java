@@ -2,12 +2,14 @@ package com.datasqrl.v2.tables;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.engine.stream.flink.plan.FlinkSqlNodeFactory;
+import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -93,12 +95,26 @@ public class FlinkTableBuilder {
     return this;
   }
 
+  public boolean hasPartition() {
+    return !getPartitionKeyList().isEmpty();
+  }
+
+  public List<String> getPartition() {
+    return StreamUtil.filterByClass(getPartitionKeyList().getList(), SqlIdentifier.class).map(SqlIdentifier::getSimple)
+            .collect(Collectors.toList());
+  }
+
   public FlinkTableBuilder setPrimaryKey(List<String> pkColumns) {
     if (pkColumns.isEmpty()) {
       setTableConstraints(List.of());
     }
     SqlTableConstraint pkConstraint = FlinkSqlNodeFactory.createPrimaryKeyConstraint(pkColumns);
     setTableConstraints(Collections.singletonList(pkConstraint));
+    return this;
+  }
+
+  public FlinkTableBuilder removePrimaryKey() {
+    setTableConstraints(Collections.emptyList());
     return this;
   }
 

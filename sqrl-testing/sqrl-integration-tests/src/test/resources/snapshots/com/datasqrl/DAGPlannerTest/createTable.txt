@@ -95,9 +95,9 @@ CREATE TABLE `_Sensors__def` (
 ) WITH (
   'connector' = 'upsert-kafka',
   'value.format' = 'flexible-json',
+  'key.format' = 'raw',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
-  'key.format' = 'raw',
   'topic' = '_Sensors'
 );
 CREATE VIEW `_Sensors`

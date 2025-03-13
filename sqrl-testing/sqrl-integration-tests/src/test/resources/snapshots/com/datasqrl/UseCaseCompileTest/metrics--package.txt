@@ -388,7 +388,15 @@ FROM "SensorReading_4"
       }
     ],
     "mutations" : [ ],
-    "subscriptions" : [ ],
+    "subscriptions" : [
+      {
+        "type" : "kafka",
+        "fieldName" : "HighTempAlert",
+        "topic" : "HighTempAlert_1",
+        "sinkConfig" : { },
+        "filters" : { }
+      }
+    ],
     "schema" : {
       "type" : "string",
       "type" : "string",

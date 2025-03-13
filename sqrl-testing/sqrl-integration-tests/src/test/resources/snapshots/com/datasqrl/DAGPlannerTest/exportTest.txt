@@ -184,9 +184,9 @@ CREATE TABLE `DistinctStream_2` (
 ) WITH (
   'connector' = 'upsert-kafka',
   'value.format' = 'flexible-json',
+  'key.format' = 'raw',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
-  'key.format' = 'raw',
   'topic' = 'DistinctStream'
 );
 CREATE TABLE `DistinctCustomer_3` (

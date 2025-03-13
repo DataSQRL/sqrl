@@ -1105,7 +1105,15 @@ FROM "Orders_6"
       }
     ],
     "mutations" : [ ],
-    "subscriptions" : [ ],
+    "subscriptions" : [
+      {
+        "type" : "kafka",
+        "fieldName" : "CustomerPromotion",
+        "topic" : "CustomerPromotion_1",
+        "sinkConfig" : { },
+        "filters" : { }
+      }
+    ],
     "schema" : {
       "type" : "string",
       "type" : "string",
