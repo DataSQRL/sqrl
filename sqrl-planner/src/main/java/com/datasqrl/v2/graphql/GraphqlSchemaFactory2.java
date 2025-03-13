@@ -248,7 +248,7 @@ public class GraphqlSchemaFactory2 {
    *
    */
   private Optional<GraphQLFieldDefinition> createRelDataTypeField(RelDataTypeField field, NamePath fieldPath) {
-    return getOutputType(field.getType(), fieldPath, extendedScalarTypes)
+    return getGraphQLOutputType(field.getType(), fieldPath, extendedScalarTypes)
             .filter(type -> isValidGraphQLName(field.getName()))
             .filter(type -> isVisible(field))
             .map(type -> GraphQLFieldDefinition.newFieldDefinition()
@@ -288,10 +288,11 @@ public class GraphqlSchemaFactory2 {
         .collect(Collectors.toList());
 
       final List<GraphQLArgument> parametersArguments = parameters.stream()
-              .filter(p -> getInputType(p.getType(null), NamePath.of(p.getName()), extendedScalarTypes).isPresent())
+              .filter(p -> GraphqlSchemaUtil2.getGraphQLInputType(p.getType(null), NamePath.of(p.getName()), extendedScalarTypes).isPresent())
               .map(parameter -> GraphQLArgument.newArgument()
                       .name(parameter.getName())
-                      .type(nonNull(getInputType(parameter.getType(null), NamePath.of(parameter.getName()), extendedScalarTypes).get()))
+                      .type(nonNull(
+                          GraphqlSchemaUtil2.getGraphQLInputType(parameter.getType(null), NamePath.of(parameter.getName()), extendedScalarTypes).get()))
                       .build()).collect(Collectors.toList());
     List<GraphQLArgument> limitAndOffsetArguments = List.of();
     if(tableFunction.getVisibility().getAccess() != AccessModifier.SUBSCRIPTION) {
