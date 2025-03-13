@@ -47,7 +47,8 @@ public class InferGraphqlSchema2 {
 
   // Validates the schema
   public void validateSchema(APISource apiSource, ServerPhysicalPlan serverPlan) {
-    GraphqlSchemaValidator2 schemaValidator = new GraphqlSchemaValidator2(serverPlan.getFunctions(), apiManager, createErrorCollectorWithSchema(apiSource));
+    GraphqlSchemaValidator2 schemaValidator = new GraphqlSchemaValidator2(serverPlan.getFunctions(), serverPlan.getMutations(),
+        apiManager, createErrorCollectorWithSchema(apiSource));
     schemaValidator.validate(apiSource);
   }
 }

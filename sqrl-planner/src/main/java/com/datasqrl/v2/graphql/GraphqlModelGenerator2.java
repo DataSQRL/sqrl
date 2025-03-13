@@ -18,6 +18,7 @@ import com.datasqrl.engine.database.relational.ddl.statements.notify.ListenNotif
 import com.datasqrl.engine.log.Log;
 import com.datasqrl.engine.log.kafka.KafkaPhysicalPlan;
 import com.datasqrl.engine.log.kafka.KafkaQuery;
+import com.datasqrl.engine.log.kafka.NewTopic;
 import com.datasqrl.engine.log.postgres.PostgresLogPhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIConnectorManager;
@@ -46,6 +47,7 @@ import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.datasqrl.schema.Multiplicity;
+import com.datasqrl.v2.dag.plan.MutationQuery;
 import com.datasqrl.v2.parser.AccessModifier;
 import com.datasqrl.v2.tables.SqrlFunctionParameter;
 import com.datasqrl.v2.tables.SqrlTableFunction;
@@ -79,8 +81,8 @@ public class GraphqlModelGenerator2 extends GraphqlSchemaWalker2 {
   private final ErrorCollector errorCollector;
 
 
-  public GraphqlModelGenerator2(List<SqrlTableFunction> tableFunctions, APIConnectorManager apiConnectorManager, ErrorCollector errorCollector) {
-    super(tableFunctions, apiConnectorManager);
+  public GraphqlModelGenerator2(List<SqrlTableFunction> tableFunctions, List<MutationQuery> mutations, APIConnectorManager apiConnectorManager, ErrorCollector errorCollector) {
+    super(tableFunctions, mutations, apiConnectorManager);
     this.errorCollector = errorCollector;
   }
 
@@ -120,64 +122,40 @@ public class GraphqlModelGenerator2 extends GraphqlSchemaWalker2 {
 
 
   @Override
-  protected void visitMutation(ObjectTypeDefinition objectType, FieldDefinition field, TypeDefinitionRegistry registry, APISource source) {
-    /*TableSource tableSource = apiManager.getMutationSource(source,
-        Name.system(field.getName()));
-
-    Optional<TableConfig> src = schema.getImports().stream()
-        .filter(t -> t.getName().equalsIgnoreCase(field.getName()))
-        .map(t -> t.getTableConfig())
-        .findFirst();
-
-    Optional<EnginePhysicalPlan> logPlan = getLogPlan();
-
+  protected void visitMutation(ObjectTypeDefinition objectType, FieldDefinition field, TypeDefinitionRegistry registry, MutationQuery mutation) {
     MutationCoords mutationCoords;
-
-    if (logPlan.isPresent() && logPlan.get() instanceof KafkaPhysicalPlan) {
-      String topicName;
-      if (tableSource != null) {
-        Map<String, Object> map = tableSource.getConfiguration().getConnectorConfig().toMap();
-        topicName = (String) map.get("topic");
-      } else if (src.isPresent()) {
-        Map<String, Object> map = src.get().getConnectorConfig().toMap();
-        topicName = (String) map.get("topic");
-      } else {
-        throw new RuntimeException("Could not find mutation: " + field.getName());
-      }
-      if (topicName == null) {
-        throw new RuntimeException("Missing 'topic' configuration for mutation '" + field.getName() + "'.");
-      }
-
-      mutationCoords = new KafkaMutationCoords(field.getName(), topicName, Map.of());
-    } else if (logPlan.isPresent() && logPlan.get() instanceof PostgresLogPhysicalPlan) {
-      String tableName;
-      if (tableSource != null) {
-        Map<String, Object> map = tableSource.getConfiguration().getConnectorConfig().toMap();
-        tableName = (String) map.get("table-name");
-      } else if (src.isPresent()) {
-        // TODO: not sure if this is correct and needed
-        Map<String, Object> map = src.get().getConnectorConfig().toMap();
-        tableName = (String) map.get("table-name");
-      } else {
-        throw new RuntimeException("Could not find mutation: " + field.getName());
-      }
-
-      InsertStatement insertStatement = ((PostgresLogPhysicalPlan) logPlan.get())
-          .getInserts().stream()
-          .filter(insert -> insert.getTableName().equals(tableName))
-          .findFirst()
-          .orElseThrow(
-              () -> new RuntimeException("Could not find insert statement for table: " + tableName)
-          );
-
-      mutationCoords = new PostgresLogMutationCoords(field.getName(), tableName,
-          insertStatement.getSql(), insertStatement.getParams());
+    if (mutation.getCreateTopic() instanceof NewTopic) {
+      NewTopic newTopic = (NewTopic) mutation.getCreateTopic();
+      mutationCoords = new KafkaMutationCoords(field.getName(), newTopic.getName(), Map.of());
+//    } else if (logPlan.isPresent() && logPlan.get() instanceof PostgresLogPhysicalPlan) {
+//      String tableName;
+//      if (tableSource != null) {
+//        Map<String, Object> map = tableSource.getConfiguration().getConnectorConfig().toMap();
+//        tableName = (String) map.get("table-name");
+//      } else if (src.isPresent()) {
+//        // TODO: not sure if this is correct and needed
+//        Map<String, Object> map = src.get().getConnectorConfig().toMap();
+//        tableName = (String) map.get("table-name");
+//      } else {
+//        throw new RuntimeException("Could not find mutation: " + field.getName());
+//      }
+//
+//      InsertStatement insertStatement = ((PostgresLogPhysicalPlan) logPlan.get())
+//          .getInserts().stream()
+//          .filter(insert -> insert.getTableName().equals(tableName))
+//          .findFirst()
+//          .orElseThrow(
+//              () -> new RuntimeException("Could not find insert statement for table: " + tableName)
+//          );
+//
+//      mutationCoords = new PostgresLogMutationCoords(field.getName(), tableName,
+//          insertStatement.getSql(), insertStatement.getParams());
     } else {
-      throw new RuntimeException("Unknown log plan: " + logPlan.getClass().getName());
+      throw new RuntimeException("Unknown mutation implementation: " + mutation.getCreateTopic());
     }
 
     mutations.add(mutationCoords);
-    */
+
   }
 
 /*

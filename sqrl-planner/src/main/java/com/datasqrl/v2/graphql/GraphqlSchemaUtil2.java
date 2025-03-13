@@ -182,7 +182,7 @@ public class GraphqlSchemaUtil2 {
     }
     for (RelDataTypeField field : rowType.getFieldList()) {
       final NamePath fieldPath = namePath.concat(Name.system(field.getName()));
-      if (namePath.getLast().isHidden()) continue;
+      if (fieldPath.getLast().isHidden()) continue;
       RelDataType columnType = field.getType();
       getGraphQLType(metaType, columnType, fieldPath, extendedScalarTypes)
           .map(fieldType -> (GraphQLInputType) wrapNullable(fieldType, columnType))// recursively traverse

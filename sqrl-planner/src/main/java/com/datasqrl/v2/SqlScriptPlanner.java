@@ -598,12 +598,13 @@ public class SqlScriptPlanner {
     }
     LogEngine engine = (LogEngine) logStage.get().getEngine();
     return (tableBuilder, datatype) -> {
+      String originalTableName = StringUtil.removeFromEnd(tableBuilder.getTableName(), Sqrl2FlinkSQLTranslator.TABLE_DEFINITION_SUFFIX);
       MutationQuery.MutationQueryBuilder mutationBuilder = MutationQuery.builder();
       mutationBuilder.stage(logStage.get());
       mutationBuilder.createTopic(engine.createTable(logStage.get(),
-          StringUtil.removeFromEnd(tableBuilder.getTableName(), Sqrl2FlinkSQLTranslator.TABLE_DEFINITION_SUFFIX),
+          originalTableName,
           tableBuilder, datatype, Optional.empty()));
-      mutationBuilder.name(Name.system(tableBuilder.getTableName()));
+      mutationBuilder.name(Name.system(originalTableName));
       return mutationBuilder;
     };
   }

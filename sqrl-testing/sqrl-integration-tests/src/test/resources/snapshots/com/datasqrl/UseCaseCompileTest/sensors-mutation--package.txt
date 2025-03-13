@@ -174,7 +174,7 @@ FROM "SensorReading_3"
     "coords" : [
       {
         "type" : "args",
-        "parentType" : "Subscription",
+        "parentType" : "Query",
         "fieldName" : "HighTempAlert",
         "matchs" : [
           {
@@ -182,7 +182,12 @@ FROM "SensorReading_3"
               {
                 "type" : "variable",
                 "type" : "variable",
-                "path" : "sensorid"
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
             "query" : {
@@ -204,7 +209,12 @@ FROM "SensorReading_3"
               {
                 "type" : "variable",
                 "type" : "variable",
-                "path" : "sensorid"
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
             "query" : {
@@ -215,14 +225,48 @@ FROM "SensorReading_3"
             }
           }
         ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "SensorReading",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"sensorid\", \"temperature\", \"event_time\"\nFROM \"SensorReading_3\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
       }
     ],
-    "mutations" : [ ],
+    "mutations" : [
+      {
+        "type" : "kafka",
+        "fieldName" : "SensorReading",
+        "topic" : "SensorReading",
+        "sinkConfig" : { }
+      }
+    ],
     "subscriptions" : [ ],
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "type Query {\n  SensorMaxTemp(sensorid: Int): [SensorMaxTemp!]\n}\n\ntype SensorMaxTemp {\n  sensorid: Int!\n  maxTemp: Float!\n}\n\ntype Mutation {\n  AddReading(metric: ReadingInput!): CreatedReading\n}\n\ninput ReadingInput {\n  sensorid: Int!\n  temperature: Float!\n}\n\ntype CreatedReading {\n  event_time: String!\n  sensorid: Int!\n}\n\ntype Subscription {\n  HighTempAlert(sensorid: Int): HighTempAlert\n}\n\ntype HighTempAlert {\n  sensorid: Int!\n  timeSec: String!\n  temperature: Float!\n}"
+      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype Mutation {\n  SensorReading(event: SensorReadingInput!): SensorReadingResultOutput!\n}\n\ntype Query {\n  HighTempAlert(limit: Int = 10, offset: Int = 0): [SensorReading!]\n  SensorMaxTemp(limit: Int = 10, offset: Int = 0): [SensorMaxTemp!]\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n}\n\ntype SensorMaxTemp {\n  sensorid: Int!\n  maxTemp: Float!\n}\n\ntype SensorReading {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime\n}\n\ninput SensorReadingInput {\n  sensorid: Int!\n  temperature: Float!\n}\n\ntype SensorReadingResultOutput {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime\n}\n"
     }
   }
 }

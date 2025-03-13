@@ -1136,7 +1136,14 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2__def`
         ]
       }
     ],
-    "mutations" : [ ],
+    "mutations" : [
+      {
+        "type" : "kafka",
+        "fieldName" : "SimpleOrders",
+        "topic" : "SimpleOrders",
+        "sinkConfig" : { }
+      }
+    ],
     "subscriptions" : [
       {
         "type" : "kafka",
@@ -1151,7 +1158,7 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2__def`
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "type Customer {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime\n  largeOrders(minAmount: Float!, limit: Int = 10, offset: Int = 0): [SimpleOrders!]\n  orders(limit: Int = 10, offset: Int = 0): [SimpleOrders!]\n}\n\ntype CustomerImport {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerImport(limit: Int = 10, offset: Int = 0): [CustomerImport!]\n  LargeOrders(limit: Int = 10, offset: Int = 0): [SimpleOrders!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  SimpleOrders(limit: Int = 10, offset: Int = 0): [SimpleOrders!]\n  UnnestOrders(limit: Int = 10, offset: Int = 0): [UnnestOrders!]\n  CustomerById(customerid: Float!, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n\ntype SimpleOrders {\n  orderid: Int\n  customerid: Float\n  amount: Float\n  orderTime: DateTime\n}\n\ntype Subscription {\n  LargeOrderSubscription(customerid: Float!): SimpleOrders\n}\n\ntype UnnestOrders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  productid: Float!\n  quantity: Float!\n  discount: Float\n}\n"
+      "schema" : "type Customer {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime\n  largeOrders(minAmount: Float!, limit: Int = 10, offset: Int = 0): [SimpleOrders!]\n  orders(limit: Int = 10, offset: Int = 0): [SimpleOrders!]\n}\n\ntype CustomerImport {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype Mutation {\n  SimpleOrders(event: SimpleOrdersInput!): SimpleOrdersResultOutput!\n}\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerImport(limit: Int = 10, offset: Int = 0): [CustomerImport!]\n  LargeOrders(limit: Int = 10, offset: Int = 0): [SimpleOrders!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  SimpleOrders(limit: Int = 10, offset: Int = 0): [SimpleOrders!]\n  UnnestOrders(limit: Int = 10, offset: Int = 0): [UnnestOrders!]\n  CustomerById(customerid: Float!, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n\ntype SimpleOrders {\n  orderid: Int\n  customerid: Float\n  amount: Float\n  orderTime: DateTime\n}\n\ninput SimpleOrdersInput {\n  orderid: Int\n  customerid: Float\n  amount: Float\n}\n\ntype SimpleOrdersResultOutput {\n  orderid: Int\n  customerid: Float\n  amount: Float\n  orderTime: DateTime\n}\n\ntype Subscription {\n  LargeOrderSubscription(customerid: Float!): SimpleOrders\n}\n\ntype UnnestOrders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  productid: Float!\n  quantity: Float!\n  discount: Float\n}\n"
     }
   }
 }

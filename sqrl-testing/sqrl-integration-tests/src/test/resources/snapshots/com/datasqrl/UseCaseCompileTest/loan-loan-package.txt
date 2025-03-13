@@ -1030,7 +1030,20 @@ FROM "LoanTypesStream_11"
         ]
       }
     ],
-    "mutations" : [ ],
+    "mutations" : [
+      {
+        "type" : "kafka",
+        "fieldName" : "ApplicationUpdates",
+        "topic" : "ApplicationUpdates",
+        "sinkConfig" : { }
+      },
+      {
+        "type" : "kafka",
+        "fieldName" : "AddChatMessage",
+        "topic" : "AddChatMessage",
+        "sinkConfig" : { }
+      }
+    ],
     "subscriptions" : [ ],
     "schema" : {
       "type" : "string",

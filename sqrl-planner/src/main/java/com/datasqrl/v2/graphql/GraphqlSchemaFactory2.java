@@ -2,6 +2,7 @@ package com.datasqrl.v2.graphql;
 
 import static com.datasqrl.canonicalizer.Name.HIDDEN_PREFIX;
 import static com.datasqrl.canonicalizer.Name.isHiddenString;
+import static com.datasqrl.graphql.generate.GraphqlSchemaUtil.createOutputTypeForRelDataType;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.LIMIT;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.OFFSET;
 import static com.datasqrl.v2.graphql.GraphqlSchemaUtil2.*;
@@ -10,8 +11,11 @@ import static graphql.schema.GraphQLNonNull.nonNull;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.engine.server.ServerPhysicalPlan;
+import com.datasqrl.graphql.generate.GraphqlSchemaUtil;
+import com.datasqrl.plan.validate.ResolvedImport;
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.v2.analyzer.TableAnalysis;
+import com.datasqrl.v2.dag.plan.MutationQuery;
 import com.datasqrl.v2.tables.SqrlFunctionParameter;
 import com.datasqrl.graphql.server.CustomScalars;
 import com.datasqrl.v2.parser.AccessModifier;
@@ -21,9 +25,11 @@ import graphql.Scalars;
 import graphql.language.IntValue;
 import graphql.schema.GraphQLArgument;
 import graphql.schema.GraphQLFieldDefinition;
+import graphql.schema.GraphQLInputType;
 import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLNonNull;
 import graphql.schema.GraphQLObjectType;
+import graphql.schema.GraphQLObjectType.Builder;
 import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLScalarType;
 import graphql.schema.GraphQLSchema;
@@ -86,7 +92,7 @@ public class GraphqlSchemaFactory2 {
 */
     queriesObjectType.ifPresentOrElse(
         graphQLSchemaBuilder::query,
-        () -> {throw new IllegalArgumentException("No queryable tables found for server");} // there is no query
+        () -> {throw new IllegalArgumentException("No queryable tables found in script");} // there is no query
     );
 
     // process subscriptions table functions
@@ -94,7 +100,7 @@ public class GraphqlSchemaFactory2 {
     subscriptionsObjectType.ifPresent(graphQLSchemaBuilder::subscription);
 
     // process mutations table functions
-    final Optional<GraphQLObjectType> mutationsObjectType = createMutationsObjectType();
+    final Optional<GraphQLObjectType> mutationsObjectType = createMutationsObjectType(serverPlan.getMutations());
     mutationsObjectType.ifPresent(graphQLSchemaBuilder::mutation);
 
     graphQLSchemaBuilder.additionalTypes(new LinkedHashSet<>(objectTypes)); // the cleaned types
@@ -189,9 +195,29 @@ public class GraphqlSchemaFactory2 {
     return Optional.of(objectType);
   }
 
-  public Optional<GraphQLObjectType> createMutationsObjectType() {
-    // TODO implement
-    return Optional.empty();
+  public Optional<GraphQLObjectType> createMutationsObjectType(List<MutationQuery> mutations) {
+    if (mutations.isEmpty()) {
+      return Optional.empty();
+    }
+    Builder builder = GraphQLObjectType.newObject().name("Mutation");
+    for (MutationQuery mutation : mutations) {
+      String name = mutation.getName().getDisplay();
+      GraphQLInputType inputType = GraphqlSchemaUtil2.getGraphQLInputType(mutation.getInputDataType(), NamePath.of(name), extendedScalarTypes)
+          .map(GraphQLNonNull::nonNull).orElseThrow(
+          () -> new IllegalArgumentException("Could not create input type for mutation: " + mutation.getName()));
+      // Create the 'event' argument which should mirror the structure of the type
+      GraphQLArgument inputArgument = GraphQLArgument.newArgument()
+          .name("event")
+          .type(inputType)
+          .build();
+      GraphQLFieldDefinition mutationField = GraphQLFieldDefinition.newFieldDefinition()
+          .name(name)
+          .argument(inputArgument)
+          .type(GraphqlSchemaUtil2.createOutputTypeForRelDataType(mutation.getOutputDataType(), NamePath.of(name.concat("Result")), extendedScalarTypes).get())
+          .build();
+      builder.field(mutationField);
+    }
+    return Optional.of(builder.build());
   }
 
   /**

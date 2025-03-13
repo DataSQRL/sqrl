@@ -6,6 +6,7 @@ CREATE TABLE _Sensors (
 );
 
 CREATE TABLE _SensorReading (
+     _uuid STRING,
      sensorid INT,
      temperature FLOAT,
      event_time TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'

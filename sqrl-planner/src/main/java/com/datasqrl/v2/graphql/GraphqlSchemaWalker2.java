@@ -8,7 +8,9 @@ import static com.datasqrl.v2.util.SqrTableFunctionUtil.getTableFunctionFromPath
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.graphql.APIConnectorManager;
+import com.datasqrl.graphql.server.TypeDefinitionRegistryUtil;
 import com.datasqrl.plan.queries.APISource;
+import com.datasqrl.v2.dag.plan.MutationQuery;
 import com.datasqrl.v2.parser.AccessModifier;
 import com.datasqrl.v2.tables.SqrlTableFunction;
 import graphql.language.FieldDefinition;
@@ -25,6 +27,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
@@ -34,16 +37,13 @@ import org.apache.calcite.rel.type.RelRecordType;
  * Multipurpose schema walker. It defines the actual walking methods and abstract visit methods meant to be implemented by concrete walkers.
  */
 @Slf4j
+@AllArgsConstructor
 public abstract class GraphqlSchemaWalker2 {
 
 //  protected final SqlNameMatcher nameMatcher;
   protected final List<SqrlTableFunction> tableFunctions;
+  protected final List<MutationQuery> mutations;
   protected final APIConnectorManager apiManager;
-
-  public GraphqlSchemaWalker2(List<SqrlTableFunction> tableFunctions, APIConnectorManager apiManager) {
-    this.tableFunctions = tableFunctions;
-    this.apiManager = apiManager;
-  }
 
   protected final Set<ObjectTypeDefinition> seen = new HashSet<>();
 
@@ -52,11 +52,10 @@ public abstract class GraphqlSchemaWalker2 {
    */
   public void walkAPISource(APISource apiSource) {
     TypeDefinitionRegistry registry = (new SchemaParser()).parse(apiSource.getSchemaDefinition());
-//TODO implement
-/*
-    Optional<ObjectTypeDefinition> rootMutationType = getMutationType(registry);
-    rootMutationType.ifPresent(m-> walkRootMutationType(m, registry, apiSource));
-*/
+
+    Optional<ObjectTypeDefinition> rootMutationType = TypeDefinitionRegistryUtil.getMutationType(registry);
+    rootMutationType.ifPresent(m-> walkRootMutationType(m, registry));
+
 
     Optional<ObjectTypeDefinition> rootSubscriptionTypeOpt = getSubscriptionType(registry);
     rootSubscriptionTypeOpt.ifPresent(rootSubscriptionType-> walkRootType(rootSubscriptionType, registry));
@@ -66,9 +65,11 @@ public abstract class GraphqlSchemaWalker2 {
   }
 
 
-  private void walkRootMutationType(ObjectTypeDefinition type, TypeDefinitionRegistry registry, APISource source) {
+  private void walkRootMutationType(ObjectTypeDefinition type, TypeDefinitionRegistry registry) {
     for(FieldDefinition fieldDefinition : type.getFieldDefinitions()) {
-      visitMutation(type, fieldDefinition, registry, source);
+      MutationQuery mutationQuery = mutations.stream().filter(mut -> mut.getName().getDisplay().equalsIgnoreCase(
+          fieldDefinition.getName())).findFirst().orElseThrow(() -> new RuntimeException("No mutation found for " + fieldDefinition.getName()));
+      visitMutation(type, fieldDefinition, registry, mutationQuery);
     }
   }
 
@@ -176,8 +177,7 @@ public abstract class GraphqlSchemaWalker2 {
   protected abstract void visitSubscription(ObjectTypeDefinition objectType, FieldDefinition field,
                                           SqrlTableFunction tableFunction);
 
-  protected abstract void visitMutation(ObjectTypeDefinition objectType, FieldDefinition field, TypeDefinitionRegistry registry,
-                                        APISource source);
+  protected abstract void visitMutation(ObjectTypeDefinition objectType, FieldDefinition field, TypeDefinitionRegistry registry, MutationQuery mutation);
 
   protected abstract void visitUnknownObject(ObjectTypeDefinition objectType, FieldDefinition field,
                                              NamePath path, Optional<RelDataType> relDataType);
