@@ -1,0 +1,4 @@
+IMPORT ecommerceTs.Customer;
+
+FilteredCustomer := SELECT * FROM Customer;
+FilteredCustomer.relationship := SELECT * FROM Customer other WHERE this.customerid = other.customerid;

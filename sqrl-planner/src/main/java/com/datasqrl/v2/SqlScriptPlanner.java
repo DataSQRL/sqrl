@@ -285,6 +285,8 @@ public class SqlScriptPlanner {
               "Relationships can only be added to tables (not functions): %s [%s]", tblFctStmt.getPath().getFirst(), parentNode.get().getClass());
           identifier = SqlNameUtil.toIdentifier(Name.system(tablePath.getLast().getDisplay()));
           parentTbl = ((TableNode) parentNode.get()).getTableAnalysis();
+          checkFatal(parentTbl.getOptionalBaseTable().isEmpty(), ErrorCode.BASETABLE_ONLY_ERROR,
+              "Relationships can only be added to the base table [%s]", parentTbl.getBaseTable().getIdentifier());
         }
         //Resolve arguments, map indexes, and check for errors
         Map<Integer, Integer> argumentIndexMap = new HashMap<>();
@@ -480,7 +482,7 @@ public class SqlScriptPlanner {
         if (hint instanceof NoQueryHint) { //Don't add an access function
           return;
         }
-        parameters = CalciteUtil.addFilterByColumn(relBuilder, hint.getColumnIndexes(), hint instanceof QueryByAnyHint);
+        parameters = SqlScriptPlannerUtil.addFilterByColumn(relBuilder, hint.getColumnIndexes(), hint instanceof QueryByAnyHint);
       }
       relBuilder.project(IntStream.range(0, tableAnalysis.getFieldLength()).mapToObj(relBuilder::field).collect(
           Collectors.toList()), tableAnalysis.getRowType().getFieldNames(), true); //Identity projection

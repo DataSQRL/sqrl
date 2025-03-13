@@ -144,7 +144,7 @@ CREATE TABLE `MachineReading_1` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'MachineReading_1'
 );
 CREATE TABLE `MachineTempByHour_2` (
@@ -158,7 +158,7 @@ CREATE TABLE `MachineTempByHour_2` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'MachineTempByHour_2'
 );
 EXECUTE STATEMENT SET BEGIN
@@ -304,4 +304,70 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
   ]
 }
 >>>vertx.json
-{ }
+{
+  "model" : {
+    "coords" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "MachineReading",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"sensorid\", \"temperature\", \"event_time\", \"machineid\"\nFROM \"MachineReading_1\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "MachineTempByHour",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"machineid\", \"time_hour\", \"avg_temperature\"\nFROM \"MachineTempByHour_2\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      }
+    ],
+    "mutations" : [ ],
+    "subscriptions" : [ ],
+    "schema" : {
+      "type" : "string",
+      "type" : "string",
+      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype MachineReading {\n  sensorid: Int\n  temperature: Float\n  event_time: DateTime\n  machineid: Int\n}\n\ntype MachineTempByHour {\n  machineid: Int\n  time_hour: DateTime!\n  avg_temperature: Float\n}\n\ntype Query {\n  MachineReading(limit: Int = 10, offset: Int = 0): [MachineReading!]\n  MachineTempByHour(limit: Int = 10, offset: Int = 0): [MachineTempByHour!]\n}\n"
+    }
+  }
+}

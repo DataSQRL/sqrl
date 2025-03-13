@@ -1,0 +1,11 @@
+[FATAL] Relationships can only be added to the base table [`default_catalog`.`default_database`.`Customer`]
+in script:parsererror-basetable-relationship-fail.sqrl [4:1]:
+
+FilteredCustomer := SELECT * FROM Customer;
+FilteredCustomer.relationship := SELECT * FROM Customer other WHERE this.customerid = other.customerid;
+^
+When a table A has the same schema as the table B that it selects from, table B is called the
+base table for table A.
+
+Relationships can only be added to base tables.
+

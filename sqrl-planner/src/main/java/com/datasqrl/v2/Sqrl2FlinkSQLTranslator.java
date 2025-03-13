@@ -175,7 +175,7 @@ public class Sqrl2FlinkSQLTranslator {
     Map<String, String> config = new HashMap<>();
     config.put("pipeline.classpaths", jarUrls.stream().map(URL::toString)
         .collect(Collectors.joining(",")));
-    StreamExecutionEnvironment sEnv = StreamExecutionEnvironment.createLocalEnvironment(
+    StreamExecutionEnvironment sEnv = StreamExecutionEnvironment.getExecutionEnvironment(
         Configuration.fromMap(config));
     EnvironmentSettings tEnvConfig = EnvironmentSettings.newInstance()
         .withConfiguration(Configuration.fromMap(config))

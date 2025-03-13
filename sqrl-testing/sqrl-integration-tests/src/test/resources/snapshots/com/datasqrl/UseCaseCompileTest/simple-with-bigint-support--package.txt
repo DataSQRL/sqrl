@@ -1,0 +1,8 @@
+[WARN] No table file [orders] for schema file [src/test/resources/usecases/simple-with-bigint-support/ecommerce/orders.schema.yml], hence schema is ignored
+in config:package.json:
+
+[FATAL] Could not find module [ecommerce.Orders] at path: [ecommerce/Orders]
+in script:simple-with-bigint-support.sqrl [1:1]:
+IMPORT ecommerce.Orders;
+^
+

@@ -251,7 +251,7 @@ CREATE TABLE `Customer_1` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'Customer_1'
 );
 CREATE TABLE `Orders_2` (
@@ -265,7 +265,7 @@ CREATE TABLE `Orders_2` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'Orders_2'
 );
 EXECUTE STATEMENT SET BEGIN
@@ -568,4 +568,232 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
   ]
 }
 >>>vertx.json
-{ }
+{
+  "model" : {
+    "coords" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Customer",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"Customer_1\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "OrderCustomer",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"Orders_20\".\"id\", \"Customer_10\".\"name\", \"Orders_20\".\"customerid\"\nFROM \"Orders_2\" AS \"Orders_20\"\n INNER JOIN \"Customer_1\" AS \"Customer_10\" ON \"Orders_20\".\"customerid\" = \"Customer_10\".\"customerid\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "OrderCustomerConstant",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"Orders_20\".\"time\", \"Orders_20\".\"id\", \"Customer_10\".\"name\", \"Orders_20\".\"customerid\"\nFROM \"Orders_2\" AS \"Orders_20\"\n INNER JOIN \"Customer_1\" AS \"Customer_10\" ON \"Orders_20\".\"customerid\" = \"Customer_10\".\"customerid\" AND \"Customer_10\".\"name\" = 'Robert' AND \"Orders_20\".\"id\" > 5",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "OrderCustomerLeft",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT COALESCE(\"Customer_10\".\"customerid\", 0) AS \"cid\", COALESCE(\"Customer_10\".\"lastUpdated\", 0) AS \"ctime\", \"Orders_20\".\"id\", \"Customer_10\".\"name\", \"Orders_20\".\"customerid\"\nFROM \"Orders_2\" AS \"Orders_20\"\n LEFT JOIN \"Customer_1\" AS \"Customer_10\" ON \"Orders_20\".\"customerid\" = \"Customer_10\".\"customerid\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "OrderCustomerLeftExcluded",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"Orders_20\".\"time\", \"Orders_20\".\"id\", \"Orders_20\".\"customerid\"\nFROM \"Orders_2\" AS \"Orders_20\"\n LEFT JOIN \"Customer_1\" AS \"Customer_10\" ON \"Orders_20\".\"customerid\" = \"Customer_10\".\"customerid\"\nWHERE \"Customer_10\".\"customerid\" IS NULL AND \"Customer_10\".\"lastUpdated\" IS NULL",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "OrderCustomerRight",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT COALESCE(\"Orders_20\".\"id\", 0) AS \"ouuid\", COALESCE(\"Orders_20\".\"time\", PROCTIME()) AS \"otime\", \"Orders_20\".\"id\", \"Customer_10\".\"name\", \"Orders_20\".\"customerid\"\nFROM \"Orders_2\" AS \"Orders_20\"\n RIGHT JOIN \"Customer_1\" AS \"Customer_10\" ON \"Orders_20\".\"customerid\" = \"Customer_10\".\"customerid\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "OrderCustomerRightExcluded",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"Customer_10\".\"lastUpdated\", \"Customer_10\".\"customerid\", \"Customer_10\".\"name\"\nFROM \"Orders_2\" AS \"Orders_20\"\n RIGHT JOIN \"Customer_1\" AS \"Customer_10\" ON \"Orders_20\".\"customerid\" = \"Customer_10\".\"customerid\"\nWHERE \"Orders_20\".\"id\" IS NULL AND \"Orders_20\".\"time\" IS NULL",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Orders",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"Orders_2\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      }
+    ],
+    "mutations" : [ ],
+    "subscriptions" : [ ],
+    "schema" : {
+      "type" : "string",
+      "type" : "string",
+      "schema" : "type Customer {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype OrderCustomer {\n  id: Float!\n  name: String!\n  customerid: Float!\n}\n\ntype OrderCustomerConstant {\n  time: DateTime!\n  id: Float!\n  name: String!\n  customerid: Float!\n}\n\ntype OrderCustomerLeft {\n  cid: Float!\n  ctime: Float!\n  id: Float!\n  name: String\n  customerid: Float!\n}\n\ntype OrderCustomerLeftExcluded {\n  time: DateTime!\n  id: Float!\n  customerid: Float!\n}\n\ntype OrderCustomerRight {\n  ouuid: Float!\n  otime: DateTime!\n  id: Float\n  name: String!\n  customerid: Float\n}\n\ntype OrderCustomerRightExcluded {\n  lastUpdated: Float!\n  customerid: Float!\n  name: String!\n}\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  OrderCustomer(limit: Int = 10, offset: Int = 0): [OrderCustomer!]\n  OrderCustomerConstant(limit: Int = 10, offset: Int = 0): [OrderCustomerConstant!]\n  OrderCustomerLeft(limit: Int = 10, offset: Int = 0): [OrderCustomerLeft!]\n  OrderCustomerLeftExcluded(limit: Int = 10, offset: Int = 0): [OrderCustomerLeftExcluded!]\n  OrderCustomerRight(limit: Int = 10, offset: Int = 0): [OrderCustomerRight!]\n  OrderCustomerRightExcluded(limit: Int = 10, offset: Int = 0): [OrderCustomerRightExcluded!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n}\n"
+    }
+  }
+}

@@ -87,7 +87,7 @@ CREATE TABLE `SensorReading_1` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'SensorReading_1'
 );
 CREATE TABLE `SensorTempByHour_2` (
@@ -100,7 +100,7 @@ CREATE TABLE `SensorTempByHour_2` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'SensorTempByHour_2'
 );
 EXECUTE STATEMENT SET BEGIN
@@ -236,4 +236,70 @@ INSERT INTO `default_catalog`.`default_database`.`SensorTempByHour_2`
   ]
 }
 >>>vertx.json
-{ }
+{
+  "model" : {
+    "coords" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "SensorReading",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"uuid\", \"sensorid\", \"epoch_timestamp\", \"temperature\", \"timestamp\"\nFROM \"SensorReading_1\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "SensorTempByHour",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"SensorTempByHour_2\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      }
+    ],
+    "mutations" : [ ],
+    "subscriptions" : [ ],
+    "schema" : {
+      "type" : "string",
+      "type" : "string",
+      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype Query {\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n  SensorTempByHour(limit: Int = 10, offset: Int = 0): [SensorTempByHour!]\n}\n\ntype SensorReading {\n  uuid: String!\n  sensorid: Float!\n  epoch_timestamp: Float!\n  temperature: Float!\n  timestamp: DateTime!\n}\n\ntype SensorTempByHour {\n  sensorid: Float!\n  time_hour: DateTime!\n  avg_temperature: Float!\n}\n"
+    }
+  }
+}
