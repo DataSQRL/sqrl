@@ -11,6 +11,7 @@ import com.datasqrl.config.LogManagerImpl;
 import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.PackageJson;
+import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.config.TableConfigLoader;
 import com.datasqrl.config.SqrlCompilerConfiguration;
 import com.datasqrl.config.SqrlConfigPipeline;
@@ -65,7 +66,7 @@ public class SqrlInjector extends AbstractModule {
       PackageJson sqrlConfig, ExecutionGoal goal, Repository repository) {
     this.errors = errors;
     this.rootDir = rootDir;
-    this.buildDir = rootDir.resolve("build");
+    this.buildDir = rootDir.resolve(SqrlConstants.BUILD_DIR_NAME);
     this.targetDir = targetDir;
     this.sqrlConfig = sqrlConfig;
     this.goal = goal;

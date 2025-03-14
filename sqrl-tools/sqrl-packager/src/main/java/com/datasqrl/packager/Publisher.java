@@ -4,6 +4,7 @@ import com.datasqrl.config.PackageConfiguration;
 import com.datasqrl.config.PackageConfigurationImpl;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SqrlConfigCommons;
+import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.repository.PublishRepository;
 import com.datasqrl.packager.util.Zipper;
@@ -25,7 +26,7 @@ public class Publisher {
 
     public PackageConfiguration publish(Path packageRoot, PublishRepository publishRepo) {
         Preconditions.checkArgument(Files.isDirectory(packageRoot));
-        Path packageInfo = packageRoot.resolve(Packager.PACKAGE_JSON);
+        Path packageInfo = packageRoot.resolve(SqrlConstants.PACKAGE_JSON);
         errors.checkFatal(Files.isRegularFile(packageInfo),"Directory does not contain [%s] package configuration file", packageInfo);
         PackageJson pkgConfig = SqrlConfigCommons.fromFilesPublishPackageJson(errors, List.of(packageInfo));
 

@@ -311,6 +311,11 @@
         <artifactId>sqrl-run</artifactId>
         <version>${project.version}</version>
       </dependency>
+      <dependency>
+        <groupId>com.datasqrl</groupId>
+        <artifactId>sqrl-test</artifactId>
+        <version>${project.version}</version>
+      </dependency>
       <!-- sqrl test jars-->
       <dependency>
         <groupId>com.datasqrl</groupId>

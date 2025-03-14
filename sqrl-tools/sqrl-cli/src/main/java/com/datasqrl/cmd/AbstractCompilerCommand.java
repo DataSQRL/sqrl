@@ -4,15 +4,15 @@
 package com.datasqrl.cmd;
 
 import static com.datasqrl.config.ScriptConfigImpl.GRAPHQL_NORMALIZED_FILE_NAME;
-import static com.datasqrl.packager.Packager.PACKAGE_JSON;
+import static com.datasqrl.config.SqrlConstants.PACKAGE_JSON;
 
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
-import com.datasqrl.compile.CompilationProcess;
 import com.datasqrl.compile.CompilationProcessV2;
 import com.datasqrl.compile.DirectoryManager;
 import com.datasqrl.compile.TestPlan;
 import com.datasqrl.config.PackageJson;
+import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
@@ -32,12 +32,9 @@ import com.google.inject.Injector;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -48,7 +45,7 @@ import picocli.CommandLine;
 @Slf4j
 public abstract class AbstractCompilerCommand extends AbstractCommand {
 
-  public static final Path DEFAULT_DEPLOY_DIR = Path.of("build", "deploy");
+  public static final Path DEFAULT_TARGET_DIR = Path.of(SqrlConstants.BUILD_DIR_NAME,SqrlConstants.DEPLOY_DIR_NAME);
 
   @CommandLine.Parameters(arity = "0..2", description = "Main script and (optional) API specification")
   protected Path[] files = new Path[0];
@@ -58,8 +55,8 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   protected APIType[] generateAPI = new APIType[0];
 
   @CommandLine.Option(names = {"-t", "--target"},
-      description = "Target directory for deployment artifacts")
-  protected Path targetDir = DEFAULT_DEPLOY_DIR;
+      description = "Target directory for deployment artifacts and plans")
+  protected Path targetDir = DEFAULT_TARGET_DIR;
 
   @CommandLine.Option(names = {"--profile"},
       description = "An alternative set of configuration values which override the default package.json")
@@ -67,7 +64,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
 
   @SneakyThrows
   public void execute(ErrorCollector errors) {
-    execute(errors, profiles, targetDir.resolve("snapshots"),
+    execute(errors, profiles, root.rootDir.resolve("snapshots"),
         Optional.empty(), ExecutionGoal.COMPILE);
   }
 
@@ -156,10 +153,11 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   }
 
   private Path getTargetDir() {
-    if (DEFAULT_DEPLOY_DIR.equals(targetDir)) {
+    if (targetDir.isAbsolute()) {
+      return targetDir;
+    } else {
       return root.rootDir.resolve(targetDir);
     }
-    return targetDir;
   }
 
   protected Repository createRepository(ErrorCollector errors) {

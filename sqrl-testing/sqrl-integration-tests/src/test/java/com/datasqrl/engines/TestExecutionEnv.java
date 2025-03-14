@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import com.datasqrl.DatasqrlTest;
 import com.datasqrl.FullUsecasesIT.UseCaseTestParameter;
 import com.datasqrl.config.PackageJson;
+import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.engines.TestEngine.DuckdbTestEngine;
 import com.datasqrl.engines.TestEngine.FlinkTestEngine;
 import com.datasqrl.engines.TestEngine.IcebergTestEngine;
@@ -212,7 +213,7 @@ public class TestExecutionEnv implements TestEngineVisitor<Void, TestEnvContext>
   @Override
   public Void visit(TestTestEngine engine, TestEnvContext context) {
     DatasqrlTest test = new DatasqrlTest(null,
-        context.rootDir.resolve("build/plan"),
+        context.rootDir.resolve(SqrlConstants.BUILD_DIR_NAME).resolve(SqrlConstants.DEPLOY_DIR_NAME).resolve(SqrlConstants.PLAN_DIR),
         context.env);
     try {
       int run = test.run();

@@ -4,6 +4,7 @@ import static com.datasqrl.UseCasesIT.getProjectRoot;
 
 import com.datasqrl.cmd.AssertStatusHook;
 import com.datasqrl.cmd.RootCommand;
+import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.SnapshotTest.Snapshot;
 import com.google.common.base.Strings;
@@ -32,37 +33,59 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 
+/**
+ * Abstract base class for snapshot testing, i.e. comparing the produced results
+ * against previously snapshotted results. If they are equal, the test succeeds.
+ * If the snapshot is new or they mismatch, it fails.
+ *
+ * This test class provides the basic infrastructure for snapshot testing.
+ * Sub-classes implement the actual invocation of the test and filters for which
+ * files produced by the compiler are added to the snapshot.
+ */
 public abstract class AbstractAssetSnapshotTest {
 
-  public Path buildDir = null;
-  public final Path deployDir;
+  public final Path outputDir; //Additional output directory for test assets
+
+  public Path buildDir = null; //Build directory for the compiler
+  public Path planDir = null; //Plan directory for the compiler, within the build directory
   protected Snapshot snapshot;
 
-  protected AbstractAssetSnapshotTest(Path deployDir) {
-    this.deployDir = deployDir;
+  protected AbstractAssetSnapshotTest(Path outputDir) {
+    this.outputDir = outputDir;
   }
 
   @BeforeEach
   public void setup(TestInfo testInfo) throws IOException {
-    clearDir(deployDir);
-    Files.createDirectories(deployDir);
+    clearDir(outputDir);
+    if (outputDir!=null) Files.createDirectories(outputDir);
   }
 
   @AfterEach
   public void clearDirs() throws IOException {
-    clearDir(deployDir);
+    clearDir(outputDir);
     clearDir(buildDir);
   }
 
+  /**
+   * Selects the files from the build directory that are added to the snapshot
+   * @return
+   */
   public Predicate<Path> getBuildDirFilter() {
     return path -> false;
   }
 
-  @Deprecated
-  public Predicate<Path> getDeployDirFilter() {
+  /**
+   * Selects the files from the configured output directory that are added to the snapshot
+   * @return
+   */
+  public Predicate<Path> getOutputDirFilter() {
     return path -> false;
   }
 
+  /**
+   * Selects the files from the plan directory that are added to the snapshot
+   * @return
+   */
   public Predicate<Path> getPlanDirFilter() {
     return path -> true;
   }
@@ -73,10 +96,13 @@ public abstract class AbstractAssetSnapshotTest {
     }
   }
 
+  /**
+   * Creates the snapshot from the selected files
+   */
   protected void createSnapshot() {
-    snapshotFiles(deployDir, getDeployDirFilter());
     snapshotFiles(buildDir, getBuildDirFilter());
-    snapshotFiles(buildDir.resolve("plan"), getPlanDirFilter());
+    snapshotFiles(outputDir, getOutputDirFilter());
+    snapshotFiles(planDir, getPlanDirFilter());
     snapshot.createOrValidate();
   }
 
@@ -117,8 +143,15 @@ public abstract class AbstractAssetSnapshotTest {
     return execute(rootDir, new ArrayList<>(List.of(args)));
   }
 
+  /**
+   * Executes the compiler command specified by the provided argument list
+   * @param rootDir
+   * @param argsList
+   * @return
+   */
   protected AssertStatusHook execute(Path rootDir, List<String> argsList) {
-    this.buildDir = rootDir.resolve("build");
+    this.buildDir = rootDir.resolve(SqrlConstants.BUILD_DIR_NAME);
+    this.planDir = buildDir.resolve(SqrlConstants.DEPLOY_DIR_NAME).resolve(SqrlConstants.PLAN_DIR);
     argsList.add("--profile");
     argsList.add(getProjectRoot().resolve("profiles/default").toString());
     AssertStatusHook statusHook = new AssertStatusHook();
@@ -179,8 +212,15 @@ public abstract class AbstractAssetSnapshotTest {
         .sorted();
   }
 
+  /**
+   * We extract the TestNameModifier from the end of the filename and use it
+   * to set expectations for the test.
+   */
   public enum TestNameModifier {
-    none, disabled, warn, fail;
+    none, //Normal test that we expect to succeed
+    disabled, //Disabled test that is not executed
+    warn, //This test should succeed but issue warnings that we are testing
+    fail; //This test is expected to fail and we are testing the error message
 
     public static TestNameModifier of(String filename) {
       if (Strings.isNullOrEmpty(filename)) return none;

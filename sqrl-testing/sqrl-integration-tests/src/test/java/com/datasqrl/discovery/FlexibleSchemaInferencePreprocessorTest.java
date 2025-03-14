@@ -48,10 +48,10 @@ public class FlexibleSchemaInferencePreprocessorTest extends AbstractAssetSnapsh
         throw e;
       }
     Injector injector = Guice.createInjector(
-        new SqrlInjector(ErrorCollector.root(), FILES_DIR, super.deployDir, packageJson, ExecutionGoal.COMPILE, null),
+        new SqrlInjector(ErrorCollector.root(), FILES_DIR, super.outputDir, packageJson, ExecutionGoal.COMPILE, null),
         new StatefulModule(new SqrlSchema(new TypeFactory(), NameCanonicalizer.SYSTEM)));
     preprocessor = injector.getInstance(FlexibleSchemaInferencePreprocessor.class);
-    super.buildDir = deployDir;
+    super.buildDir = outputDir;
   }
 
 
@@ -60,18 +60,18 @@ public class FlexibleSchemaInferencePreprocessorTest extends AbstractAssetSnapsh
   @SneakyThrows
   void testScripts(Path file) {
     assertTrue(Files.exists(file));
-    Path targetFile = Files.copy(file, deployDir.resolve(file.getFileName()));
+    Path targetFile = Files.copy(file, outputDir.resolve(file.getFileName()));
     String filename = file.getFileName().toString();
     assertTrue(preprocessor.getPattern().matcher(filename).matches());
     this.snapshot = Snapshot.of(getDisplayName(file), getClass());
-    preprocessor.processFile(targetFile, new ProcessorContext(deployDir, buildDir, packageJson),
+    preprocessor.processFile(targetFile, new ProcessorContext(outputDir, buildDir, packageJson),
           errors);
     createSnapshot();
   }
 
 
   @Override
-  public Predicate<Path> getDeployDirFilter() {
+  public Predicate<Path> getOutputDirFilter() {
     return p -> p.getFileName().toString().endsWith("table.sql");
   }
 

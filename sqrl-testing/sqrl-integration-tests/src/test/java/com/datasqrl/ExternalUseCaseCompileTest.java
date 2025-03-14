@@ -7,13 +7,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
 @Disabled
-public class ExternalUseCaseTest extends AbstractUseCaseTest {
+public class ExternalUseCaseCompileTest extends AbstractUseCaseTest {
 
   public static Path USECASE_DIR;
-
-  protected ExternalUseCaseTest() {
-    super(USECASE_DIR);
-  }
 
   @BeforeAll
   public static void readEnvironment() {

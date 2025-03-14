@@ -1,10 +1,12 @@
 package com.datasqrl;
 
+import static com.datasqrl.config.SqrlConstants.PLAN_PATH;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import com.datasqrl.cmd.AssertStatusHook;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SqrlConfigCommons;
+import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.config.TestRunnerConfiguration;
 import com.datasqrl.engines.TestContainersForTestGoal;
 import com.datasqrl.engines.TestContainersForTestGoal.TestContainerHook;
@@ -163,7 +165,7 @@ public class FullUsecasesIT {
     executor.execute(new AssertStatusHook());
 
     PackageJson packageJson = SqrlConfigCommons.fromFilesPackageJson(ErrorCollector.root(),
-        List.of(rootDir.resolve("build").resolve("package.json")));
+        List.of(rootDir.resolve(SqrlConstants.BUILD_DIR_NAME).resolve(SqrlConstants.PACKAGE_JSON)));
 
 
     try {
@@ -194,7 +196,7 @@ public class FullUsecasesIT {
       DatasqrlRun run = null;
       if (param.getGoal().equals("run")) {
         try {
-          run = new DatasqrlRun(context.getRootDir().resolve("build/plan"),
+          run = new DatasqrlRun(context.getRootDir().resolve(SqrlConstants.PLAN_PATH),
               context.getEnv());
           TableResult result = run.run(false);
          long delaySec = packageJson.getTestConfig().flatMap(TestRunnerConfiguration::getDelaySec)
