@@ -167,7 +167,7 @@ public class GraphqlModelGenerator extends SchemaWalker {
         throw new RuntimeException("Missing 'topic' configuration for mutation '" + fieldDefinition.getName() + "'.");
       }
 
-      mutationCoords = new KafkaMutationCoords(fieldDefinition.getName(), topicName, Map.of());
+      mutationCoords = new KafkaMutationCoords(fieldDefinition.getName(), topicName, Map.of(), Map.of());
     } else if (logPlan.isPresent() && logPlan.get() instanceof PostgresLogPhysicalPlan) {
       String tableName;
       if (tableSource != null) {

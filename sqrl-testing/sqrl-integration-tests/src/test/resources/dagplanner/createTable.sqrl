@@ -1,12 +1,12 @@
 CREATE TABLE _Sensors (
     sensorid INT,
     machineid INT,
-    event_time TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
+    updatedTime TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
     PRIMARY KEY (sensorid) NOT ENFORCED
 );
 
 CREATE TABLE _SensorReading (
-     _uuid STRING,
+     event_id STRING NOT NULL METADATA FROM 'uuid',
      sensorid INT,
      temperature FLOAT,
      event_time TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'

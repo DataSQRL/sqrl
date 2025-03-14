@@ -392,6 +392,9 @@ FROM "SensorReading_4"
         "type" : "kafka",
         "fieldName" : "SensorReading",
         "topic" : "SensorReading",
+        "computedColumns" : {
+          "event_time" : "TIMESTAMP"
+        },
         "sinkConfig" : { }
       }
     ],

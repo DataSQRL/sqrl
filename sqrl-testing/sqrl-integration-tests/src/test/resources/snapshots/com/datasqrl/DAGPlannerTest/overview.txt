@@ -1141,6 +1141,10 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2__def`
         "type" : "kafka",
         "fieldName" : "SimpleOrders",
         "topic" : "SimpleOrders",
+        "computedColumns" : {
+          "orderTime" : "TIMESTAMP",
+          "_uuid" : "UUID"
+        },
         "sinkConfig" : { }
       }
     ],

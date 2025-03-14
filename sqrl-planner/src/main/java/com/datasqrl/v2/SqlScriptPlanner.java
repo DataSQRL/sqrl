@@ -1,7 +1,6 @@
 package com.datasqrl.v2;
 
 
-import static com.datasqrl.v2.parser.ParsePosUtil.convertPosition;
 import static com.datasqrl.v2.parser.StatementParserException.checkFatal;
 
 import com.datasqrl.canonicalizer.Name;
@@ -12,13 +11,11 @@ import com.datasqrl.config.SystemBuiltInConnectors;
 import com.datasqrl.engine.log.LogEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.datasqrl.engine.stream.flink.plan.FlinkSqlNodeFactory;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.error.ErrorLocation.FileLocation;
-import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.StringUtil;
 import com.datasqrl.v2.Sqrl2FlinkSQLTranslator.MutationBuilder;
 import com.datasqrl.v2.analyzer.TableAnalysis;
@@ -28,6 +25,8 @@ import com.datasqrl.v2.dag.nodes.ExportNode;
 import com.datasqrl.v2.dag.nodes.PipelineNode;
 import com.datasqrl.v2.dag.nodes.TableFunctionNode;
 import com.datasqrl.v2.dag.nodes.TableNode;
+import com.datasqrl.v2.dag.plan.MutationComputedColumn;
+import com.datasqrl.graphql.server.MutationComputedColumnType;
 import com.datasqrl.v2.hint.ColumnNamesHint;
 import com.datasqrl.v2.hint.ExecHint;
 import com.datasqrl.v2.hint.NoQueryHint;
@@ -37,7 +36,6 @@ import com.datasqrl.v2.hint.TestHint;
 import com.datasqrl.v2.parser.AccessModifier;
 import com.datasqrl.v2.parser.FlinkSQLStatement;
 import com.datasqrl.v2.parser.ParsePosUtil;
-import com.datasqrl.v2.parser.ParsePosUtil.MessageLocation;
 import com.datasqrl.v2.parser.ParsedObject;
 import com.datasqrl.v2.parser.SQLStatement;
 import com.datasqrl.v2.parser.SqlScriptStatementSplitter;
@@ -88,7 +86,6 @@ import lombok.Getter;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.runtime.CalciteContextException;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.parser.SqlParseException;
@@ -99,7 +96,6 @@ import org.apache.flink.sql.parser.ddl.SqlCreateTable;
 import org.apache.flink.sql.parser.ddl.SqlCreateView;
 import org.apache.flink.sql.parser.ddl.SqlDropTable;
 import org.apache.flink.sql.parser.ddl.SqlDropView;
-import org.apache.flink.sql.parser.error.SqlValidateException;
 import org.apache.flink.table.api.ValidationException;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.functions.UserDefinedFunction;
@@ -605,6 +601,10 @@ public class SqlScriptPlanner {
           originalTableName,
           tableBuilder, datatype, Optional.empty()));
       mutationBuilder.name(Name.system(originalTableName));
+      tableBuilder.extractMetadataColumns(MutationComputedColumn.UUID_METADATA, true).
+          forEach(colName -> mutationBuilder.computedColumn(new MutationComputedColumn(colName, MutationComputedColumnType.UUID)));
+      tableBuilder.extractMetadataColumns(MutationComputedColumn.TIMESTAMP_METADATA, false).
+          forEach(colName -> mutationBuilder.computedColumn(new MutationComputedColumn(colName, MutationComputedColumnType.TIMESTAMP)));
       return mutationBuilder;
     };
   }

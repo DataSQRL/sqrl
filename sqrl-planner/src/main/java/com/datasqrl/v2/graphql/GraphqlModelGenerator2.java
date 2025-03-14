@@ -23,6 +23,7 @@ import com.datasqrl.engine.log.postgres.PostgresLogPhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.jdbc.SchemaConstants;
+import com.datasqrl.graphql.server.MutationComputedColumnType;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentLookupCoords;
@@ -47,6 +48,7 @@ import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.datasqrl.schema.Multiplicity;
+import com.datasqrl.v2.dag.plan.MutationComputedColumn;
 import com.datasqrl.v2.dag.plan.MutationQuery;
 import com.datasqrl.v2.parser.AccessModifier;
 import com.datasqrl.v2.tables.SqrlFunctionParameter;
@@ -124,9 +126,11 @@ public class GraphqlModelGenerator2 extends GraphqlSchemaWalker2 {
   @Override
   protected void visitMutation(ObjectTypeDefinition objectType, FieldDefinition field, TypeDefinitionRegistry registry, MutationQuery mutation) {
     MutationCoords mutationCoords;
+    Map<String, MutationComputedColumnType> computedColumns = mutation.getComputedColumns().stream()
+        .collect(Collectors.toMap(MutationComputedColumn::getColumnName, MutationComputedColumn::getType));
     if (mutation.getCreateTopic() instanceof NewTopic) {
       NewTopic newTopic = (NewTopic) mutation.getCreateTopic();
-      mutationCoords = new KafkaMutationCoords(field.getName(), newTopic.getName(), Map.of());
+      mutationCoords = new KafkaMutationCoords(field.getName(), newTopic.getName(), computedColumns, Map.of());
 //    } else if (logPlan.isPresent() && logPlan.get() instanceof PostgresLogPhysicalPlan) {
 //      String tableName;
 //      if (tableSource != null) {

@@ -1,5 +1,6 @@
 package com.datasqrl.v2.dag.plan;
 
+import com.datasqrl.graphql.server.MutationComputedColumnType;
 import lombok.Value;
 
 /**
@@ -11,13 +12,11 @@ import lombok.Value;
 @Value
 public class MutationComputedColumn {
 
-  public static final String UUID_COLUMN = "_uuid";
+  public static final String UUID_METADATA = "uuid";
   public static final String TIMESTAMP_METADATA = "timestamp";
 
-  public enum Type { UUID, TIMESTAMP }
-
   String columnName;
-  Type type;
+  MutationComputedColumnType type;
 
 
 }

@@ -1035,12 +1035,20 @@ FROM "LoanTypesStream_11"
         "type" : "kafka",
         "fieldName" : "ApplicationUpdates",
         "topic" : "ApplicationUpdates",
+        "computedColumns" : {
+          "_uuid" : "UUID",
+          "event_time" : "TIMESTAMP"
+        },
         "sinkConfig" : { }
       },
       {
         "type" : "kafka",
         "fieldName" : "AddChatMessage",
         "topic" : "AddChatMessage",
+        "computedColumns" : {
+          "_uuid" : "UUID",
+          "event_time" : "TIMESTAMP"
+        },
         "sinkConfig" : { }
       }
     ],
