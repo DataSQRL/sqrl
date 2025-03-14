@@ -54,9 +54,6 @@ import org.apache.commons.collections.ListUtils;
 /**
   * Creates a default graphql schema based on the SQRL schema
   */
-
-
-
 @Slf4j
 public class GraphqlSchemaFactory2 {
 

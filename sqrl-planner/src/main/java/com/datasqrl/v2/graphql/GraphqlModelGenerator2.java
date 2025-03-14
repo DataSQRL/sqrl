@@ -81,8 +81,8 @@ public class GraphqlModelGenerator2 extends GraphqlSchemaWalker2 {
   private final ErrorCollector errorCollector;
 
 
-  public GraphqlModelGenerator2(List<SqrlTableFunction> tableFunctions, List<MutationQuery> mutations, APIConnectorManager apiConnectorManager, ErrorCollector errorCollector) {
-    super(tableFunctions, mutations, apiConnectorManager);
+  public GraphqlModelGenerator2(List<SqrlTableFunction> tableFunctions, List<MutationQuery> mutations, ErrorCollector errorCollector) {
+    super(tableFunctions, mutations);
     this.errorCollector = errorCollector;
   }
 
@@ -157,17 +157,6 @@ public class GraphqlModelGenerator2 extends GraphqlSchemaWalker2 {
     mutations.add(mutationCoords);
 
   }
-
-/*
-private Optional<EnginePhysicalPlan> getLogPlan() {
-    //Todo: Bad instance checking, Fix to bring multiple log engines (?)
-    Optional<EnginePhysicalPlan> logPlan = physicalPlan.getStagePlans().stream()
-        .map(PhysicalStagePlan::getPlan)
-        .filter(plan -> plan instanceof KafkaPhysicalPlan || plan instanceof PostgresLogPhysicalPlan)
-        .findFirst();
-    return logPlan;
-  }
-  */
 
   @Override
   protected void visitUnknownObject(ObjectTypeDefinition objectType, FieldDefinition field, NamePath path,

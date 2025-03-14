@@ -22,12 +22,8 @@ import lombok.SneakyThrows;
 @AllArgsConstructor(onConstructor_ = @Inject)
 public class InferGraphqlSchema2 {
 
-  private final ExecutionPipeline pipeline;
-  private final SqrlFramework framework;
   private final ErrorCollector errorCollector;
-  private final APIConnectorManager apiManager;
   private final GraphqlSchemaFactory2 graphqlSchemaFactory;
-  private final GraphqlSchemaParser parser;
 
   @SneakyThrows
   public Optional<String> inferGraphQLSchema(ServerPhysicalPlan serverPlan) {
@@ -48,7 +44,7 @@ public class InferGraphqlSchema2 {
   // Validates the schema
   public void validateSchema(APISource apiSource, ServerPhysicalPlan serverPlan) {
     GraphqlSchemaValidator2 schemaValidator = new GraphqlSchemaValidator2(serverPlan.getFunctions(), serverPlan.getMutations(),
-        apiManager, createErrorCollectorWithSchema(apiSource));
+        createErrorCollectorWithSchema(apiSource));
     schemaValidator.validate(apiSource);
   }
 }

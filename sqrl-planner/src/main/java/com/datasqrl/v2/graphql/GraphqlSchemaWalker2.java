@@ -7,7 +7,6 @@ import static com.datasqrl.v2.util.SqrTableFunctionUtil.getTableFunctionFromPath
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.server.TypeDefinitionRegistryUtil;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.v2.dag.plan.MutationQuery;
@@ -25,7 +24,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,7 +41,6 @@ public abstract class GraphqlSchemaWalker2 {
 //  protected final SqlNameMatcher nameMatcher;
   protected final List<SqrlTableFunction> tableFunctions;
   protected final List<MutationQuery> mutations;
-  protected final APIConnectorManager apiManager;
 
   protected final Set<ObjectTypeDefinition> seen = new HashSet<>();
 

@@ -13,12 +13,11 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor(onConstructor_ = @Inject)
 public class GenerateCoords {
 
-  private final APIConnectorManager apiManager;
   private final ErrorCollector errorCollector;
 
   public void generateCoordsAndUpdateServerPlan(Optional<APISource> source, ServerPhysicalPlan serverPlan) {
     GraphqlModelGenerator2 graphqlModelGenerator =
-        new GraphqlModelGenerator2(serverPlan.getFunctions(), serverPlan.getMutations(), apiManager, errorCollector);
+        new GraphqlModelGenerator2(serverPlan.getFunctions(), serverPlan.getMutations(), errorCollector);
     graphqlModelGenerator.walkAPISource(source.get());
     RootGraphqlModel model =
         RootGraphqlModel.builder()

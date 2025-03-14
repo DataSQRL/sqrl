@@ -52,8 +52,8 @@ public class GraphqlSchemaValidator2 extends GraphqlSchemaWalker2 {
   private final ErrorCollector errorCollector;
 
   @Inject
-  public GraphqlSchemaValidator2(List<SqrlTableFunction> tableFunctions, List<MutationQuery> mutations, APIConnectorManager apiConnectorManager, ErrorCollector errorCollector) {
-    super(tableFunctions, mutations, apiConnectorManager);
+  public GraphqlSchemaValidator2(List<SqrlTableFunction> tableFunctions, List<MutationQuery> mutations, ErrorCollector errorCollector) {
+    super(tableFunctions, mutations);
     this.errorCollector = errorCollector;
   }
 
