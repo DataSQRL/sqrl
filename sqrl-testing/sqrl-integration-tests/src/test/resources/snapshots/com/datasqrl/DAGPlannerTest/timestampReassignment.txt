@@ -159,11 +159,11 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_1`
  FROM `default_catalog`.`default_database`.`Customer`)
 ;
 INSERT INTO `default_catalog`.`default_database`.`Customer2_2`
- (SELECT *
+ (SELECT `updatedTime`, `customerid`, `email`, `name`, `lastUpdated`, CAST(`timestamp` AS TIMESTAMP(3) WITH LOCAL TIME ZONE) AS `timestamp`
   FROM `default_catalog`.`default_database`.`Customer2`)
  ;
  INSERT INTO `default_catalog`.`default_database`.`CustomerByTime2_3`
-  (SELECT *
+  (SELECT `updatedTime`, `customerid`, `email`, `name`, `lastUpdated`, CAST(`timestamp` AS TIMESTAMP(3) WITH LOCAL TIME ZONE) AS `timestamp`
    FROM `default_catalog`.`default_database`.`Customer2`)
   ;
   END

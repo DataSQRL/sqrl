@@ -987,7 +987,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
                FROM `default_catalog`.`default_database`.`TemporalJoin`)
               ;
               INSERT INTO `default_catalog`.`default_database`.`TemporalJoin_15`
-               (SELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`, `customerid0`, `timestamp`, `name`
+               (SELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`, `customerid0`, CAST(`timestamp` AS TIMESTAMP(3) WITH LOCAL TIME ZONE) AS `timestamp`, `name`
                 FROM `default_catalog`.`default_database`.`TemporalJoin`)
                ;
                INSERT INTO `default_catalog`.`default_database`.`UnnestOrders_16`

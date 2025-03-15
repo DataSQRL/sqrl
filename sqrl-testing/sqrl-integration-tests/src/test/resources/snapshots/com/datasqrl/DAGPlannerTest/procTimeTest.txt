@@ -178,7 +178,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_1`
  FROM `default_catalog`.`default_database`.`Customer`)
 ;
 INSERT INTO `default_catalog`.`default_database`.`CustomerOrdersJoin_2`
- (SELECT `customerid`, `email`, `name`, `lastUpdated`, `_ingest_time`, `id`, `customerid0`, `time`, TOJSON(`entries`) AS `entries`, `_ingest_time0`
+ (SELECT `customerid`, `email`, `name`, `lastUpdated`, `_ingest_time`, `id`, `customerid0`, `time`, TOJSON(`entries`) AS `entries`, CAST(`_ingest_time0` AS TIMESTAMP(3) WITH LOCAL TIME ZONE) AS `_ingest_time0`
   FROM `default_catalog`.`default_database`.`CustomerOrdersJoin`)
  ;
  INSERT INTO `default_catalog`.`default_database`.`Orders_3`

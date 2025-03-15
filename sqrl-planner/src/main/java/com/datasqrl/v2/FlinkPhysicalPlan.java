@@ -18,6 +18,8 @@ import org.apache.flink.sql.parser.dml.RichSqlInsert;
 import org.apache.flink.sql.parser.dml.SqlExecute;
 import org.apache.flink.sql.parser.dml.SqlStatementSet;
 import org.apache.flink.table.api.CompiledPlan;
+import org.apache.flink.table.api.ExplainDetail;
+import org.apache.flink.table.api.ExplainFormat;
 
 /**
  * Represents the physical plan for Flink as both FlinkSQL and as a compiled plan.
@@ -37,6 +39,8 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
   @JsonIgnore
   String compiledPlan;
   @JsonIgnore
+  String explainedPlan;
+  @JsonIgnore
   List<String> flinkSqlNoFunctions;
 
   @Override
@@ -45,7 +49,8 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
       new DeploymentArtifact("-sql.sql", DeploymentArtifact.toSqlString(flinkSql)),
         new DeploymentArtifact("-sql-no-functions.sql", DeploymentArtifact.toSqlString(flinkSqlNoFunctions)),
         new DeploymentArtifact("-functions.sql", DeploymentArtifact.toSqlString(functions)),
-        new DeploymentArtifact("-compiled-plan.json", compiledPlan)
+        new DeploymentArtifact("-compiled-plan.json", compiledPlan),
+        new DeploymentArtifact("-explained-plan.txt", explainedPlan)
         );
   }
 
@@ -102,8 +107,9 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
     }
 
     public FlinkPhysicalPlan build(CompiledPlan compiledPlan) {
+      String explainedPlan = compiledPlan.explain(ExplainFormat.TEXT, ExplainDetail.CHANGELOG_MODE, ExplainDetail.PLAN_ADVICE);
       return new FlinkPhysicalPlan(flinkSql, connectors, formats, fullyResolvedFunctions,
-          compiledPlan.asJsonString(), flinkSqlNoFunctions);
+          compiledPlan.asJsonString(), explainedPlan, flinkSqlNoFunctions);
     }
 
 
