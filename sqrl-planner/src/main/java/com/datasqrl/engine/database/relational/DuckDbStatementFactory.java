@@ -2,6 +2,7 @@ package com.datasqrl.engine.database.relational;
 
 import static com.datasqrl.function.CalciteFunctionUtil.lightweightOp;
 
+import com.datasqrl.calcite.DialectCallConverter;
 import com.datasqrl.calcite.convert.PostgresRelToSqlNode;
 import com.datasqrl.calcite.convert.PostgresSqlNodeToString;
 import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
@@ -28,7 +29,7 @@ public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
   private Map<String,String> connectorOptions;
 
   public DuckDbStatementFactory(EngineConfig engineConfig) {
-    super(new PostgresRelToSqlNode(), new PostgresSqlNodeToString()); //Iceberg does not support queries
+    super(new DialectCallConverter(null), new PostgresRelToSqlNode(), new PostgresSqlNodeToString()); //Iceberg does not support queries
     this.engineConfig = engineConfig;
   }
 

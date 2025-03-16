@@ -1,5 +1,6 @@
 package com.datasqrl.engine.database.relational;
 
+import com.datasqrl.calcite.DialectCallConverter;
 import com.datasqrl.calcite.convert.RelToSqlNode;
 import com.datasqrl.calcite.convert.RelToSqlNode.SqlNodes;
 import com.datasqrl.calcite.convert.SqlNodeToString;
@@ -39,6 +40,7 @@ import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 @AllArgsConstructor
 public abstract class AbstractJdbcStatementFactory implements JdbcStatementFactory {
 
+  protected final DialectCallConverter dialectCallConverter;
   protected final RelToSqlNode relToSqlConverter;
   protected final SqlNodeToString sqlNodeToString;
 
@@ -48,7 +50,8 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
   }
 
   public QueryResult createQuery(String viewName, RelNode relNode, boolean withView) {
-    SqlNodes sqlNode = relToSqlConverter.convert(relNode);
+    RelNode rewrittenRelNode = dialectCallConverter.convert(this.sqlNodeToString.getDialect(), relNode);
+    SqlNodes sqlNode = relToSqlConverter.convert(rewrittenRelNode);
     String sql = sqlNodeToString.convert(sqlNode).getSql();
     ExecutableJdbcReadQuery.ExecutableJdbcReadQueryBuilder qBuilder = ExecutableJdbcReadQuery.builder();
     qBuilder.sql(sql);

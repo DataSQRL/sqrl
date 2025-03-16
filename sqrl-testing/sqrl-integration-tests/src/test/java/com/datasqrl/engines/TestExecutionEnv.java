@@ -61,7 +61,7 @@ public class TestExecutionEnv implements TestEngineVisitor<Void, TestEnvContext>
     }
 
     //Snapshot views
-    Map postgresPlan = new ObjectMapper().readValue(rootDir.resolve("build/plan/postgres.json").toFile(),
+    Map postgresPlan = new ObjectMapper().readValue(rootDir.resolve("build/deploy/plan/postgres.json").toFile(),
         Map.class);
     List<Map<String, Object>> view = (List<Map<String, Object>>)postgresPlan.get("views");
     String url = context.env.get("JDBC_URL");
