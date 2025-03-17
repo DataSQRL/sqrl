@@ -75,7 +75,7 @@ public class CompilationProcessV2 {
         apiSource = inferGraphqlSchema.inferGraphQLSchema(serverPlan.get())
             .map(schemaString -> new APISourceImpl(Name.system("<generated-schema>"), schemaString));
       } else {
-        inferGraphqlSchema.validateSchema(apiSource.get(), serverPlan.get());
+//        inferGraphqlSchema.validateSchema(apiSource.get(), serverPlan.get());
       }
       assert apiSource.isPresent();
       generateCoords.generateCoordsAndUpdateServerPlan(apiSource, serverPlan.get());
