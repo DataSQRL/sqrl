@@ -1,6 +1,8 @@
 package com.datasqrl.engine.database.relational;
 
+import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.DialectCallConverter;
+import com.datasqrl.calcite.OperatorRuleTransformer;
 import com.datasqrl.calcite.convert.RelToSqlNode;
 import com.datasqrl.calcite.convert.SqlNodeToString;
 import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
@@ -13,7 +15,7 @@ import org.apache.calcite.sql.SqlDataTypeSpec;
 public class IcebergStatementFactory extends AbstractJdbcStatementFactory {
 
   public IcebergStatementFactory() {
-    super(new DialectCallConverter(null), null, null); //Iceberg does not support queries
+    super(new OperatorRuleTransformer(Dialect.POSTGRES), null, null); //Iceberg does not support queries
   }
 
   @Override

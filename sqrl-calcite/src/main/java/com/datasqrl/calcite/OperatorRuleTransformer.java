@@ -22,32 +22,37 @@ import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.tools.Programs;
 
 /**
- * Use {@link OperatorRuleTransformer} instead
+ * Converts functions to the given dialect via rule transformations.
+ * Rule transformations are implemented as {@link OperatorRuleTransform} for "structural" transformations
+ * that have to happen at the {@link RelNode} level.
+ *
+ * Simpler transformations that only require switching out the function name or parameter order
+ * should be implemented via {@link com.datasqrl.function.translations.SqlTranslation} which happen
+ * during unparsing.
  */
-@Deprecated
-public class DialectCallConverter {
+public class OperatorRuleTransformer {
 
-  private final RelOptPlanner planner;
+  private final Dialect dialect;
+  private final Map<Name, OperatorRuleTransform> transformMap;
 
-  public static final Map<Name, OperatorRuleTransform> transformMap = Map.of();
-//  = ServiceLoaderDiscovery.getAll(
-//          OperatorRuleTransform.class)
-//      .stream().collect(Collectors.toMap(t->Name.system(t.getRuleOperatorName()), t->t));
-
-  public DialectCallConverter(RelOptPlanner planner) {
-    this.planner = planner;
+  public OperatorRuleTransformer(Dialect dialect) {
+    this.dialect = dialect;
+    //Lookup all transformations for this dialect by service discovery
+    this.transformMap = ServiceLoaderDiscovery.getAll(
+            OperatorRuleTransform.class)
+        .stream().filter(transform -> transform.getDialect()==dialect)
+        .collect(Collectors.toMap(t->Name.system(t.getRuleOperatorName()), t->t));
   }
 
-  public RelNode convert(Dialect dialect, RelNode relNode) {
+  public RelNode convert(RelNode relNode) {
+    //Identify all functions that require transformations and add them to the rule set
     Map<SqlOperator, OperatorRuleTransform> transforms = extractFunctionTransforms(relNode);
-
-    List<RelRule> rules = new ArrayList<>();
-    for (Entry<SqlOperator, OperatorRuleTransform> transform : transforms.entrySet()) {
-      rules.addAll(transform.getValue().transform(transform.getKey()));
-    }
-
+    List<RelRule> rules = transforms.entrySet().stream()
+        .flatMap(transform -> transform.getValue().transform(transform.getKey()).stream())
+        .collect(Collectors.toList());
+    //Apply the rules to relnode
     relNode = Programs.hep(rules, false, null)
-        .run(planner, relNode, relNode.getTraitSet(),
+        .run(null, relNode, relNode.getTraitSet(),
             List.of(), List.of());
 
     return relNode;

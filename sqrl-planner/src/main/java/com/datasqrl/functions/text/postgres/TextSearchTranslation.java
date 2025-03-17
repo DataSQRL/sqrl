@@ -1,4 +1,4 @@
-package com.datasqrl.function.translations;
+package com.datasqrl.functions.text.postgres;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.convert.SimpleCallTransform.SimpleCallTransformConfig;
@@ -22,10 +22,7 @@ import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 public class TextSearchTranslation implements OperatorRuleTransform {
 
   @Override
-  public List<RelRule> transform(Dialect dialect, SqlOperator operator) {
-    if (dialect != Dialect.POSTGRES) {
-      return List.of();
-    }
+  public List<RelRule> transform(SqlOperator operator) {
     return List.of(
         (RelRule)SimplePredicateTransformConfig.createConfig(operator, (rexBuilder, predicate) -> {
           Preconditions.checkArgument(
@@ -78,6 +75,11 @@ public class TextSearchTranslation implements OperatorRuleTransform {
               makeTsQuery(rexBuilder.getRexBuilder(), language, operands.get(0)));
         }).toRule()
     );
+  }
+
+  @Override
+  public Dialect getDialect() {
+    return Dialect.POSTGRES;
   }
 
   @Override

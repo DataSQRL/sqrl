@@ -27,11 +27,13 @@ public class JsonExtractTranslation implements OperatorRuleTransform {
       "jsonb_path_query_first");
 
   @Override
-  public List<RelRule> transform(Dialect dialect, SqlOperator operator) {
-    if (dialect == Dialect.POSTGRES) {
-      return postgresTransform(operator);
-    }
-    return List.of();
+  public List<RelRule> transform(SqlOperator operator) {
+    return postgresTransform(operator);
+  }
+
+  @Override
+  public Dialect getDialect() {
+    return Dialect.POSTGRES;
   }
 
   @Override
