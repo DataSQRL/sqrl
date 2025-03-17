@@ -5,19 +5,12 @@ import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.getType;
 import static com.datasqrl.graphql.util.GraphqlCheckUtil.checkState;
 import static com.datasqrl.graphql.util.GraphqlCheckUtil.createThrowable;
 
-import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.calcite.function.SqrlTableMacro;
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.generate.GraphqlSchemaUtil;
-import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.v2.dag.plan.MutationQuery;
 import com.datasqrl.v2.tables.SqrlTableFunction;
-import com.google.common.collect.Iterables;
 import com.google.inject.Inject;
 import graphql.language.EnumTypeDefinition;
 import graphql.language.FieldDefinition;
@@ -32,17 +25,13 @@ import graphql.language.TypeDefinition;
 import graphql.language.TypeName;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
-import java.util.Collection;
-import java.util.HashMap;
+
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import org.apache.calcite.jdbc.SqrlSchema;
+
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.schema.Function;
-import org.apache.calcite.sql.validate.SqlNameMatcher;
 
 /**
  * Validate a graphQL schema against the plan (useful when the user provides a graphQl schema)
@@ -58,156 +47,142 @@ public class GraphqlSchemaValidator2 extends GraphqlSchemaWalker2 {
   }
 
   @Override
-  protected void visitSubscription(ObjectTypeDefinition objectType, FieldDefinition field,
-                                   SqrlTableFunction tableFunction) {
+  protected void visitSubscription(FieldDefinition field, SqrlTableFunction tableFunction) {
   }
 
   @Override
-  protected void visitMutation(ObjectTypeDefinition objectType, FieldDefinition field, TypeDefinitionRegistry registry, MutationQuery mutation) {
-
-    validateStructurallyEqualMutation(field, getValidMutationReturnType(field, registry),
-            getValidMutationInput(field, registry),
-            List.of(ReservedName.MUTATION_TIME.getCanonical(), ReservedName.MUTATION_PRIMARY_KEY.getDisplay()), registry);
-
+  protected void visitMutation(FieldDefinition field, TypeDefinitionRegistry registry, MutationQuery mutation) {
+    validateStructurallyEqualMutation(
+        field,
+        getValidMutationOutputType(field, registry),
+        getValidMutationInputType(field, registry),
+        List.of(ReservedName.MUTATION_TIME.getCanonical(), ReservedName.MUTATION_PRIMARY_KEY.getDisplay()),
+        registry);
   }
 
-  private Object validateStructurallyEqualMutation(FieldDefinition fieldDefinition,
-      ObjectTypeDefinition returnTypeDefinition, InputObjectTypeDefinition inputType,
+  private Object validateStructurallyEqualMutation(FieldDefinition field,
+      ObjectTypeDefinition outputType, InputObjectTypeDefinition inputType,
       List<String> allowedFieldNames, TypeDefinitionRegistry registry) {
 
-    //The return type can have event_time
-    for (FieldDefinition returnTypeFieldDefinition : returnTypeDefinition.getFieldDefinitions()) {
-      if (allowedFieldNames.contains(returnTypeFieldDefinition.getName())) {
+    for (FieldDefinition outputField : outputType.getFieldDefinitions()) {
+      if (allowedFieldNames.contains(outputField.getName())) {
         continue;
       }
 
-      String name = returnTypeFieldDefinition.getName();
-      InputValueDefinition inputDefinition = findExactlyOneInputValue(fieldDefinition, name,
-          inputType.getInputValueDefinitions());
+      String outputFieldName = outputField.getName();
+      InputValueDefinition inputField = findExactlyOneInputValue(field, outputFieldName, inputType.getInputValueDefinitions());
 
-      //validate type structurally equal
-      validateStructurallyEqualMutation(returnTypeFieldDefinition, inputDefinition, registry);
+      validateStructurallyEqualFields(outputField, inputField, registry);
     }
 
     return null;
   }
 
-  private void validateStructurallyEqualMutation(FieldDefinition fieldDefinition,
-      InputValueDefinition inputDefinition, TypeDefinitionRegistry registry) {
-    checkState(fieldDefinition.getName().equals(inputDefinition.getName()),
-        fieldDefinition.getSourceLocation(), "Name must be equal to the input name {} {}",
-        fieldDefinition.getName(), inputDefinition.getName());
-    Type definitionType = fieldDefinition.getType();
-    Type inputType = inputDefinition.getType();
+  private void validateStructurallyEqualFields(FieldDefinition outputField, InputValueDefinition inputField, TypeDefinitionRegistry registry) {
+    checkState(outputField.getName().equals(inputField.getName()),
+        outputField.getSourceLocation(), "Name must be equal to the input name {} {}",
+        outputField.getName(), inputField.getName());
+    Type outputType = outputField.getType();
+    Type inputType = inputField.getType();
 
-    validateStructurallyType(fieldDefinition, definitionType, inputType, registry);
+    validateStructurallyEqualTypes(outputField, outputType, inputType, registry);
   }
 
-  private Object validateStructurallyType(FieldDefinition field, Type definitionType,
-      Type inputType, TypeDefinitionRegistry registry) {
+  private Object validateStructurallyEqualTypes(FieldDefinition outputField, Type outputType, Type inputType, TypeDefinitionRegistry registry) {
     if (inputType instanceof NonNullType) {
       //subType may be nullable if type is non-null
-      NonNullType nonNullType = (NonNullType) inputType;
-      if (definitionType instanceof NonNullType) {
-        NonNullType nonNullDefinitionType = (NonNullType) definitionType;
-        return validateStructurallyType(field, nonNullDefinitionType.getType(),
-            nonNullType.getType(), registry);
+      NonNullType nonNullInputType = (NonNullType) inputType;
+      if (outputType instanceof NonNullType) {
+        NonNullType nonNullOutputType = (NonNullType) outputType;
+        return validateStructurallyEqualTypes(outputField, nonNullOutputType.getType(), nonNullInputType.getType(), registry);
       } else {
-        return validateStructurallyType(field, definitionType, nonNullType.getType(), registry);
+        return validateStructurallyEqualTypes(outputField, outputType, nonNullInputType.getType(), registry);
       }
     } else if (inputType instanceof ListType) {
       //subType must be a list
-      checkState(definitionType instanceof ListType, definitionType.getSourceLocation(),
-          "List type mismatch for field. Must match the input type. " + field.getName());
+      checkState(outputType instanceof ListType, outputType.getSourceLocation(),
+          "List type mismatch for field. Must match the input type. " + outputField.getName());
       ListType inputListType = (ListType) inputType;
-      ListType definitionListType = (ListType) definitionType;
-      return validateStructurallyType(field, definitionListType.getType(), inputListType.getType(), registry);
+      ListType outputListType = (ListType) outputType;
+      return validateStructurallyEqualTypes(outputField, outputListType.getType(), inputListType.getType(), registry);
     } else if (inputType instanceof TypeName) {
       //If subtype nonnull then it could return errors
-      checkState(!(definitionType instanceof NonNullType), definitionType.getSourceLocation(),
+      checkState(!(outputType instanceof NonNullType), outputType.getSourceLocation(),
           "Non-null found on field %s, could result in errors if input type is null",
-          field.getName());
-      checkState(!(definitionType instanceof ListType), definitionType.getSourceLocation(),
-          "List type found on field %s when the input is a scalar type", field.getName());
+          outputField.getName());
+      checkState(!(outputType instanceof ListType), outputType.getSourceLocation(),
+          "List type found on field %s when the input is a scalar type", outputField.getName());
 
       //If typeName, resolve then
       TypeName inputTypeName = (TypeName) inputType;
-      TypeName defTypeName = (TypeName) unboxNonNull(definitionType);
+      TypeName outputTypeName = (TypeName) unboxNonNull(outputType);
       TypeDefinition inputTypeDef = registry.getType(inputTypeName).orElseThrow(
-          () -> createThrowable(inputTypeName.getSourceLocation(), "Could not find type: %s",
-              inputTypeName.getName()));
-      TypeDefinition defTypeDef = registry.getType(defTypeName).orElseThrow(
-          () -> createThrowable(defTypeName.getSourceLocation(), "Could not find type: %s",
-              defTypeName.getName()));
+          () -> createThrowable(inputTypeName.getSourceLocation(), "Could not find type: %s", inputTypeName.getName()));
+      TypeDefinition outputTypeDef = registry.getType(outputTypeName).orElseThrow(
+          () -> createThrowable(outputTypeName.getSourceLocation(), "Could not find type: %s", outputTypeName.getName()));
 
-      //If input or scalar
       if (inputTypeDef instanceof ScalarTypeDefinition) {
-        checkState(defTypeDef instanceof ScalarTypeDefinition && inputTypeDef.getName()
-                .equals(defTypeDef.getName()), field.getSourceLocation(),
-            "Scalar types not matching for field [%s]: found %s but wanted %s", field.getName(),
-            inputTypeDef.getName(), defTypeDef.getName());
+        checkState(outputTypeDef instanceof ScalarTypeDefinition && inputTypeDef.getName()
+                .equals(outputTypeDef.getName()), outputField.getSourceLocation(),
+            "Scalar types not matching for field [%s]: found %s but wanted %s", outputField.getName(),
+            inputTypeDef.getName(), outputTypeDef.getName());
         return null;
       } else if (inputTypeDef instanceof EnumTypeDefinition) {
-        checkState(defTypeDef instanceof EnumTypeDefinition
-                || defTypeDef instanceof ScalarTypeDefinition && inputTypeDef.getName()
-                .equals(defTypeDef.getName()), field.getSourceLocation(),
-            "Enum types not matching for field [%s]: found %s but wanted %s", field.getName(),
-            inputTypeDef.getName(), defTypeDef.getName());
+        checkState(outputTypeDef instanceof EnumTypeDefinition
+                || outputTypeDef instanceof ScalarTypeDefinition && inputTypeDef.getName()
+                .equals(outputTypeDef.getName()), outputField.getSourceLocation(),
+            "Enum types not matching for field [%s]: found %s but wanted %s", outputField.getName(),
+            inputTypeDef.getName(), outputTypeDef.getName());
         return null;
       } else if (inputTypeDef instanceof InputObjectTypeDefinition) {
-        checkState(defTypeDef instanceof ObjectTypeDefinition, field.getSourceLocation(),
+        checkState(outputTypeDef instanceof ObjectTypeDefinition, outputField.getSourceLocation(),
             "Return object type must match with an input object type not matching for field [%s]: found %s but wanted %s",
-            field.getName(), inputTypeDef.getName(), defTypeDef.getName());
-        ObjectTypeDefinition objectDefinition = (ObjectTypeDefinition) defTypeDef;
-        InputObjectTypeDefinition inputDefinition = (InputObjectTypeDefinition) inputTypeDef;
-        return validateStructurallyEqualMutation(field, objectDefinition, inputDefinition,
-            List.of(), registry);
+            outputField.getName(), inputTypeDef.getName(), outputTypeDef.getName());
+        ObjectTypeDefinition outputObjectTypeDef = (ObjectTypeDefinition) outputTypeDef;
+        InputObjectTypeDefinition inputObjectTypeDef = (InputObjectTypeDefinition) inputTypeDef;
+        // walk object types
+        return validateStructurallyEqualMutation(outputField, outputObjectTypeDef, inputObjectTypeDef, List.of(), registry);
       } else {
-        throw createThrowable(inputTypeDef.getSourceLocation(), "Unknown type encountered: %s",
-            inputTypeDef.getName());
+        throw createThrowable(inputTypeDef.getSourceLocation(), "Unknown type encountered: %s", inputTypeDef.getName());
       }
     }
-
-    throw createThrowable(field.getSourceLocation(), "Unknown type encountered for field: %s",
-        field.getName());
+    throw createThrowable(outputField.getSourceLocation(), "Unknown type encountered for field: %s", outputField.getName());
   }
 
-  private InputValueDefinition findExactlyOneInputValue(FieldDefinition fieldDefinition,
-      String name, List<InputValueDefinition> inputValueDefinitions) {
+  private InputValueDefinition findExactlyOneInputValue(FieldDefinition field, String forName, List<InputValueDefinition> inputValueDefinitions) {
     InputValueDefinition found = null;
     for (InputValueDefinition inputDefinition : inputValueDefinitions) {
-      if (inputDefinition.getName().equals(name)) {
+      if (inputDefinition.getName().equals(forName)) {
         checkState(found == null, inputDefinition.getSourceLocation(), "Duplicate fields found");
         found = inputDefinition;
       }
     }
 
-    checkState(found != null, fieldDefinition.getSourceLocation(),
-        "Could not find field %s in type %s", name, fieldDefinition.getName());
+    checkState(found != null, field.getSourceLocation(),
+        "Could not find field %s in type %s", forName, field.getName());
 
     return found;
   }
 
-  private InputObjectTypeDefinition getValidMutationInput(FieldDefinition fieldDefinition, TypeDefinitionRegistry registry) {
+  private InputObjectTypeDefinition getValidMutationInputType(FieldDefinition fieldDefinition, TypeDefinitionRegistry registry) {
     checkState(!(fieldDefinition.getInputValueDefinitions().isEmpty()),
         fieldDefinition.getSourceLocation(), fieldDefinition.getName()
             + " has too few arguments. Must have one non-null input type argument.");
     checkState(fieldDefinition.getInputValueDefinitions().size() == 1,
         fieldDefinition.getSourceLocation(), fieldDefinition.getName()
             + " has too many arguments. Must have one non-null input type argument.");
-    checkState(fieldDefinition.getInputValueDefinitions().get(0).getType() instanceof NonNullType,
+    final InputValueDefinition inputValueDefinition = fieldDefinition.getInputValueDefinitions().get(0);
+    checkState(inputValueDefinition.getType() instanceof NonNullType,
         fieldDefinition.getSourceLocation(),
-        "[" + fieldDefinition.getName() + "] " + fieldDefinition.getInputValueDefinitions().get(0)
-            .getName() + "Must be non-null.");
-    NonNullType nonNullType = (NonNullType) fieldDefinition.getInputValueDefinitions().get(0)
-        .getType();
+        "[" + fieldDefinition.getName() + "] " + inputValueDefinition.getName() + "Must be non-null.");
+    NonNullType nonNullType = (NonNullType) inputValueDefinition.getType();
     checkState(nonNullType.getType() instanceof TypeName, fieldDefinition.getSourceLocation(),
         "Must be a singular value");
-    TypeName name = (TypeName) nonNullType.getType();
+    TypeName typeName = (TypeName) nonNullType.getType();
 
-    Optional<TypeDefinition> typeDef = registry.getType(name);
+    Optional<TypeDefinition> typeDef = registry.getType(typeName);
     checkState(typeDef.isPresent(), fieldDefinition.getSourceLocation(),
-        "Could not find input type:" + name.getName());
+        "Could not find input type:" + typeName.getName());
     checkState(typeDef.get() instanceof InputObjectTypeDefinition,
         fieldDefinition.getSourceLocation(),
         "Input must be an input object type:" + fieldDefinition.getName());
@@ -216,43 +191,50 @@ public class GraphqlSchemaValidator2 extends GraphqlSchemaWalker2 {
   }
 
 
-  private ObjectTypeDefinition getValidMutationReturnType(FieldDefinition fieldDefinition, TypeDefinitionRegistry registry) {
+  private ObjectTypeDefinition getValidMutationOutputType(FieldDefinition fieldDefinition, TypeDefinitionRegistry registry) {
     Type type = fieldDefinition.getType();
+
     if (type instanceof NonNullType) {
       type = ((NonNullType) type).getType();
     }
-
     checkState(type instanceof TypeName, type.getSourceLocation(),
-        "[%s] must be a singular return value", fieldDefinition.getName());
-    TypeName name = (TypeName) type;
+        "[%s] must be a singular output value", fieldDefinition.getName());
 
-    TypeDefinition typeDef = registry.getType(name).orElseThrow(
-        () -> createThrowable(name.getSourceLocation(), "Could not find return type: %s", name.getName()));
+    TypeName typeName = (TypeName) type;
+    TypeDefinition typeDef =
+        registry.getType(typeName)
+            .orElseThrow(
+                () -> createThrowable(
+                        typeName.getSourceLocation(),
+                        "Could not find mutation output type: %s",
+                        typeName.getName())
+            );
     checkState(typeDef instanceof ObjectTypeDefinition, typeDef.getSourceLocation(),
-        "Return must be an object type: %s", fieldDefinition.getName());
+        "Mutation output must be an object type: %s", fieldDefinition.getName());
 
     return (ObjectTypeDefinition) typeDef;
   }
 
   @Override
-  protected void visitUnknownObject(ObjectTypeDefinition objectType, FieldDefinition field, NamePath path,
-                                    Optional<RelDataType> relDataType) {
-    throw createThrowable(field.getSourceLocation(), "Unknown field at location %s", relDataType.map(
-            r -> field.getName() + ". Possible scalars are [" + r.getFieldNames().stream()
-                .filter(GraphqlSchemaUtil::isValidGraphQLName).collect(Collectors.joining(", ")) + "]")
-        .orElse(field.getName()));
+  protected void visitUnknownObject(FieldDefinition field, Optional<RelDataType> relDataType) {
+    throw createThrowable(
+        field.getSourceLocation(), "Unknown field at location %s",
+        relDataType.map(r ->
+                    field.getName() + ". Possible scalars are [" + r.getFieldNames().stream()
+                                                                  .filter(GraphqlSchemaUtil::isValidGraphQLName)
+                                                                  .collect(Collectors.joining(", "))
+                                                            + "]")
+            .orElse(field.getName()));
   }
 
   @Override
-  protected void visitScalar(ObjectTypeDefinition objectType, FieldDefinition field, NamePath path,
-                             RelDataType relDataType, RelDataTypeField relDataTypeField) {
+  protected void visitScalar(ObjectTypeDefinition objectType, FieldDefinition field, RelDataTypeField relDataTypeField) {
   }
 
   @Override
   protected void visitQuery(ObjectTypeDefinition parentType, FieldDefinition atField, SqrlTableFunction tableFunction) {
     checkValidArrayNonNullType(atField.getType());
   }
-
 
   private void checkValidArrayNonNullType(Type type) {
     Type root = type;
@@ -269,36 +251,8 @@ public class GraphqlSchemaValidator2 extends GraphqlSchemaWalker2 {
         "Type must be a non-null array, array, or non-null");
   }
 
-//  private boolean structurallyEqual(ImplementingTypeDefinition typeDef, SQRLTable table) {
-//    return typeDef.getFieldDefinitions().stream()
-//        .allMatch(f -> table.getField(Name.system(((NamedNode) f).getName())).isPresent());
-//  }
-//
-//  private List<FieldDefinition> getInvalidFields(ObjectTypeDefinition typeDef, SQRLTable table) {
-//    return typeDef.getFieldDefinitions().stream()
-//        .filter(f -> table.getField(Name.system(f.getName())).isEmpty())
-//        .collect(Collectors.toList());
-//  }
-
-
-  private TypeDefinition unwrapObjectType(Type type, TypeDefinitionRegistry registry) {
-    //type can be in a single array with any non-nulls, e.g. [customer!]!
-    type = unboxNonNull(type);
-    if (type instanceof ListType) {
-      type = ((ListType) type).getType();
-    }
-    type = unboxNonNull(type);
-
-    Optional<TypeDefinition> typeDef = registry.getType(type);
-
-    checkState(typeDef.isPresent(), type.getSourceLocation(), "Could not find Object type [%s]",
-        type instanceof TypeName ? ((TypeName) type).getName() : type.toString());
-
-    return typeDef.get();
-  }
-
   private Type unboxNonNull(Type type) {
-    if (type instanceof NonNullType) {
+    if (type instanceof NonNullType) { //TODO this should be always be false in the first call due to checkState(!(outputType instanceof NonNullType), ...)
       return unboxNonNull(((NonNullType) type).getType());
     }
     return type;
@@ -311,7 +265,6 @@ public class GraphqlSchemaValidator2 extends GraphqlSchemaWalker2 {
       if (queryType.isEmpty()) {
         throw createThrowable(null, "Cannot find graphql root Query type");
       }
-
       walkAPISource(source);
     } catch (Exception e) {
       throw errorCollector.handle(e);

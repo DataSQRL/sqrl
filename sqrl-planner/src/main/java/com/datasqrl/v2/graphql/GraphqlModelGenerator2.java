@@ -89,8 +89,7 @@ public class GraphqlModelGenerator2 extends GraphqlSchemaWalker2 {
   }
 
   @Override
-  protected void visitSubscription(ObjectTypeDefinition objectType, FieldDefinition fieldDefinition,
-      SqrlTableFunction tableFunction) {
+  protected void visitSubscription(FieldDefinition fieldDefinition, SqrlTableFunction tableFunction) {
     Preconditions.checkArgument(tableFunction.getVisibility().getAccess()== AccessModifier.SUBSCRIPTION);
     final ExecutableQuery executableQuery = tableFunction.getExecutableQuery();
 
@@ -124,7 +123,7 @@ public class GraphqlModelGenerator2 extends GraphqlSchemaWalker2 {
 
 
   @Override
-  protected void visitMutation(ObjectTypeDefinition objectType, FieldDefinition field, TypeDefinitionRegistry registry, MutationQuery mutation) {
+  protected void visitMutation(FieldDefinition field, TypeDefinitionRegistry registry, MutationQuery mutation) {
     MutationCoords mutationCoords;
     Map<String, MutationComputedColumnType> computedColumns = mutation.getComputedColumns().stream()
         .collect(Collectors.toMap(MutationComputedColumn::getColumnName, MutationComputedColumn::getType));
@@ -163,13 +162,11 @@ public class GraphqlModelGenerator2 extends GraphqlSchemaWalker2 {
   }
 
   @Override
-  protected void visitUnknownObject(ObjectTypeDefinition objectType, FieldDefinition field, NamePath path,
-                                    Optional<RelDataType> relDataType) {
+  protected void visitUnknownObject(FieldDefinition field, Optional<RelDataType> relDataType) {
   }
 
   @Override
-  protected void visitScalar(ObjectTypeDefinition objectType, FieldDefinition field, NamePath path,
-                             RelDataType relDataType, RelDataTypeField relDataTypeField) {
+  protected void visitScalar(ObjectTypeDefinition objectType, FieldDefinition field, RelDataTypeField relDataTypeField) {
     //todo: walk into structured type to check all prop fetchers
 
     // we create PropertyDataFetchers for fields only when graphql field name is different from calcite field name

@@ -50,8 +50,8 @@ public abstract class GraphqlSchemaWalker2 {
   public void walkAPISource(APISource apiSource) {
     TypeDefinitionRegistry registry = (new SchemaParser()).parse(apiSource.getSchemaDefinition());
 
-    Optional<ObjectTypeDefinition> rootMutationType = TypeDefinitionRegistryUtil.getMutationType(registry);
-    rootMutationType.ifPresent(m-> walkRootMutationType(m, registry));
+    Optional<ObjectTypeDefinition> rootMutationTypeOpt = TypeDefinitionRegistryUtil.getMutationType(registry);
+    rootMutationTypeOpt.ifPresent(rootMutationType-> walkRootMutationType(rootMutationType, registry));
 
 
     Optional<ObjectTypeDefinition> rootSubscriptionTypeOpt = getSubscriptionType(registry);
@@ -64,9 +64,12 @@ public abstract class GraphqlSchemaWalker2 {
 
   private void walkRootMutationType(ObjectTypeDefinition type, TypeDefinitionRegistry registry) {
     for(FieldDefinition fieldDefinition : type.getFieldDefinitions()) {
-      MutationQuery mutationQuery = mutations.stream().filter(mut -> mut.getName().getDisplay().equalsIgnoreCase(
-          fieldDefinition.getName())).findFirst().orElseThrow(() -> new RuntimeException("No mutation found for " + fieldDefinition.getName()));
-      visitMutation(type, fieldDefinition, registry, mutationQuery);
+      MutationQuery mutationQuery =
+          mutations.stream()
+              .filter(mutation -> mutation.getName().getDisplay().equalsIgnoreCase(fieldDefinition.getName()))
+              .findFirst()
+              .orElseThrow(() -> new RuntimeException("No mutation found for " + fieldDefinition.getName()));
+      visitMutation(fieldDefinition, registry, mutationQuery);
     }
   }
 
@@ -88,7 +91,7 @@ public abstract class GraphqlSchemaWalker2 {
     if (tableFunction.getVisibility().getAccess() == AccessModifier.QUERY) { // walking a query table function
       visitQuery(parentType, atField, tableFunction);
     } else { // walking a subscription table function
-      visitSubscription(parentType, atField, tableFunction);
+      visitSubscription(atField, tableFunction);
     }
     RelDataType functionRowType = tableFunction.getRowType();
     ObjectTypeDefinition resultType = (ObjectTypeDefinition) typeDefinition;
@@ -148,7 +151,7 @@ public abstract class GraphqlSchemaWalker2 {
                 walkObjectType(false, elementObjectType, fieldPath, Optional.of(relRecordType), registry);
               } else {
                 // The array contains scalar types
-                visitScalar(objectType, field, fieldPath, relDataType.get(), relDataTypeField);
+                visitScalar(objectType, field, relDataTypeField);
               }
             } else {
               throw new RuntimeException("Expected ListType for array field");
@@ -156,11 +159,11 @@ public abstract class GraphqlSchemaWalker2 {
             continue;
           }
 
-          visitScalar(objectType, field, fieldPath, relDataType.get(), relDataTypeField);
+          visitScalar(objectType, field, relDataTypeField);
           continue;
         }
 
-      visitUnknownObject(objectType, field, fieldPath, relDataType);
+      visitUnknownObject(field, relDataType);
 
       //Is not a scalar or a table function, do nothing
     }
@@ -171,16 +174,13 @@ public abstract class GraphqlSchemaWalker2 {
    */
   protected abstract void visitQuery(ObjectTypeDefinition parentType, FieldDefinition atField, SqrlTableFunction tableFunction);
 
-  protected abstract void visitSubscription(ObjectTypeDefinition objectType, FieldDefinition field,
-                                          SqrlTableFunction tableFunction);
+  protected abstract void visitSubscription(FieldDefinition field, SqrlTableFunction tableFunction);
 
-  protected abstract void visitMutation(ObjectTypeDefinition objectType, FieldDefinition field, TypeDefinitionRegistry registry, MutationQuery mutation);
+  protected abstract void visitMutation(FieldDefinition field, TypeDefinitionRegistry registry, MutationQuery mutation);
 
-  protected abstract void visitUnknownObject(ObjectTypeDefinition objectType, FieldDefinition field,
-                                             NamePath path, Optional<RelDataType> relDataType);
+  protected abstract void visitUnknownObject(FieldDefinition field, Optional<RelDataType> relDataType);
 
-  protected abstract void visitScalar(ObjectTypeDefinition objectType, FieldDefinition field,
-                                      NamePath path, RelDataType relDataType, RelDataTypeField relDataTypeField);
+  protected abstract void visitScalar(ObjectTypeDefinition objectType, FieldDefinition field, RelDataTypeField relDataTypeField);
 
 /*
 * Utility methods
