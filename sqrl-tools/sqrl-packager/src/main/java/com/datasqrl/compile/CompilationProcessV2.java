@@ -69,22 +69,15 @@ public class CompilationProcessV2 {
     TestPlan testPlan = null;
     //There can only be a single server plan
     Optional<ServerPhysicalPlan> serverPlan = physicalPlan.getPlans(ServerPhysicalPlan.class).findFirst();
-    /*
-    TODO (Etienne): The following needs updating. Remove the && false condition and:
-    - infer GraphQL schema from serverPlan
-    - walk the GraphQL schema to validate it
-    - make sure we generate the right testplan
-    - create the RootGraphQL model (generate queries/coordinates) and attach to serverPlan
-     */
     if (serverPlan.isPresent()) {
       Optional<APISource> apiSource = graphqlSourceFactory.get();
       if (apiSource.isEmpty() || executionGoal == ExecutionGoal.TEST) { //Infer schema from functions
         apiSource = inferGraphqlSchema.inferGraphQLSchema(serverPlan.get())
             .map(schemaString -> new APISourceImpl(Name.system("<generated-schema>"), schemaString));
+      } else {
+        inferGraphqlSchema.validateSchema(apiSource.get(), serverPlan.get());
       }
       assert apiSource.isPresent();
-      //TODO re-enable
-//      inferGraphqlSchema.validateSchema(apiSource.get(), serverPlan.get());
       generateCoords.generateCoordsAndUpdateServerPlan(apiSource, serverPlan.get());
 
       //create test artifact
