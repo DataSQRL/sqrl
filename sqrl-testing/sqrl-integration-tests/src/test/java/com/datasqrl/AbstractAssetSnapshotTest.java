@@ -181,7 +181,7 @@ public abstract class AbstractAssetSnapshotTest {
   @SneakyThrows
   public static List<Path> getScriptGraphQLFiles(Path script) {
     String scriptName = FileUtil.separateExtension(script).getKey();
-    return getFilesByPattern(script.getParent(), scriptName + ".*graphqls");
+    return getFilesByPattern(script.getParent(), scriptName + "*.graphqls");
   }
 
   @SneakyThrows
