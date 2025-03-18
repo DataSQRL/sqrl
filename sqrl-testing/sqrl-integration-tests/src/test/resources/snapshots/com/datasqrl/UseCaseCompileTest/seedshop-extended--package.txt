@@ -883,6 +883,72 @@ FROM "Orders_6"
       },
       {
         "type" : "args",
+        "parentType" : "Orders",
+        "fieldName" : "customer",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"Customers_2\"\nWHERE $1 = \"id\"",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "type" : "source",
+                  "key" : "customerid"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Orders",
+        "fieldName" : "totals",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"id\", \"time\", \"customerid\", \"price\", \"saving\"\nFROM \"OrdersTotals_7\"\nWHERE $1 = \"id\"",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "type" : "source",
+                  "key" : "id"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
         "parentType" : "Customers",
         "fieldName" : "spending",
         "matchs" : [

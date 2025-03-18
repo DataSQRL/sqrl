@@ -846,6 +846,28 @@ FROM "LoanTypesStream_11"
       },
       {
         "type" : "args",
+        "parentType" : "ApplicationUpdates",
+        "fieldName" : "application",
+        "matchs" : [
+          {
+            "arguments" : [ ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"Applications_5\"\nWHERE $1 = \"id\"",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "type" : "source",
+                  "key" : "loan_application_id"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
         "parentType" : "Applications",
         "fieldName" : "loanType",
         "matchs" : [
