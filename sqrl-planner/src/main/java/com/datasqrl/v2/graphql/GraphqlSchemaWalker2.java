@@ -78,11 +78,11 @@ public abstract class GraphqlSchemaWalker2 {
       final NamePath fieldPath = NamePath.ROOT.concat(NamePath.of(field.getName()));
       final Optional<SqrlTableFunction> tableFunction = getTableFunctionFromPath(tableFunctions, fieldPath); // root table functions are always present
       checkState(tableFunction.isPresent(), field.getSourceLocation(), "Could not find table or function for field: %s", field.getName());
-      walkTableFunction(rootType, field, fieldPath, tableFunction.get(), registry);
+      walkTableFunction(rootType, field, tableFunction.get(), registry);
     }
   }
 
-  private void walkTableFunction(ObjectTypeDefinition parentType, FieldDefinition atField, NamePath functionPath,
+  private void walkTableFunction(ObjectTypeDefinition parentType, FieldDefinition atField,
                                  SqrlTableFunction tableFunction, TypeDefinitionRegistry registry) {
     Optional<TypeDefinition> typeDefOpt = registry.getType(atField.getType());
     checkState(typeDefOpt.isPresent(), atField.getType().getSourceLocation(), "Could not find object type in graphql type registry: %s", atField.getType());
@@ -95,10 +95,10 @@ public abstract class GraphqlSchemaWalker2 {
     }
     RelDataType functionRowType = tableFunction.getRowType();
     ObjectTypeDefinition resultType = (ObjectTypeDefinition) typeDefinition;
-    walkObjectType(true, resultType, functionPath, Optional.of(functionRowType), registry);
+    walkObjectType(true, resultType, Optional.of(functionRowType), registry);
   }
 
-  private void walkObjectType(boolean isFunctionResultType, ObjectTypeDefinition objectType, NamePath functionPath, Optional<RelDataType> relDataType, TypeDefinitionRegistry registry) {
+  private void walkObjectType(boolean isFunctionResultType, ObjectTypeDefinition objectType, Optional<RelDataType> relDataType, TypeDefinitionRegistry registry) {
     if (seen.contains(objectType)) {
       return;
     }
@@ -106,7 +106,7 @@ public abstract class GraphqlSchemaWalker2 {
 
     for (FieldDefinition field : objectType.getFieldDefinitions()) {
 
-      NamePath fieldPath = functionPath.concat(Name.system(field.getName()));
+      NamePath fieldPath = NamePath.of(objectType.getName()).concat(Name.system(field.getName()));
 
       // Functions can have relationships, so if we are walking a function resultType, process relationship fields
       // When this method is recursively called for a nested relDataType, there can not be any relationship field
@@ -114,7 +114,7 @@ public abstract class GraphqlSchemaWalker2 {
       if (isFunctionResultType) {
         final Optional<SqrlTableFunction> relationship = getTableFunctionFromPath(tableFunctions, fieldPath);
         if (relationship.isPresent()) { // the field is a relationship field, walk the related table relationship
-          walkTableFunction(objectType, field, fieldPath, relationship.get(), registry); // there is no more nested relationships, so this method will not be recursively called
+          walkTableFunction(objectType, field, relationship.get(), registry); // there is no more nested relationships, so this method will not be recursively called
           continue;
         }
       }
@@ -127,7 +127,7 @@ public abstract class GraphqlSchemaWalker2 {
                 .orElseThrow();//assure it is an object type
 
             RelRecordType relRecordType = (RelRecordType) relDataTypeField.getType();
-            walkObjectType(false, fieldType, fieldPath, Optional.of(relRecordType), registry);
+            walkObjectType(false, fieldType, Optional.of(relRecordType), registry);
             continue;
           }
           if (relDataTypeField.getType().getComponentType() != null) { // the field is an array
@@ -148,7 +148,7 @@ public abstract class GraphqlSchemaWalker2 {
                     .orElseThrow(); // Ensure it is an object type
 
                 RelRecordType relRecordType = (RelRecordType) componentType;
-                walkObjectType(false, elementObjectType, fieldPath, Optional.of(relRecordType), registry);
+                walkObjectType(false, elementObjectType, Optional.of(relRecordType), registry);
               } else {
                 // The array contains scalar types
                 visitScalar(objectType, field, relDataTypeField);
