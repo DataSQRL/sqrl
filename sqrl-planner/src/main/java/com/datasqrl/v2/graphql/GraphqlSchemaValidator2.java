@@ -34,7 +34,7 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 
 /**
- * Validate a graphQL schema against the plan (useful when the user provides a graphQl schema)
+ * Validate that a graphQL schema is valid (used only to validate the user provided a graphQl schema)
  */
 public class GraphqlSchemaValidator2 extends GraphqlSchemaWalker2 {
 
