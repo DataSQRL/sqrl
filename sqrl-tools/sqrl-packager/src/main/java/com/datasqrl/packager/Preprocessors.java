@@ -6,6 +6,7 @@ import static com.datasqrl.util.NameUtil.namepath2Path;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.BuildPath;
 import com.datasqrl.config.PackageJson;
+import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.preprocess.Preprocessor;
 import com.datasqrl.packager.preprocess.Preprocessor.ProcessorContext;
@@ -26,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @AllArgsConstructor(onConstructor_=@Inject)
 public class Preprocessors {
-  public static final Set<String> EXCLUDED_DIRS = Set.of("build", "deploy");
+  public static final Set<String> EXCLUDED_DIRS = Set.of(SqrlConstants.BUILD_DIR_NAME, SqrlConstants.DEPLOY_DIR_NAME);
 
   Set<Preprocessor> preprocessors;
 

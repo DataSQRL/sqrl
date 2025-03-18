@@ -12,6 +12,7 @@ import com.datasqrl.config.Dependency;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.ScriptConfig;
 import com.datasqrl.config.RootPath;
+import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.EnginePhysicalPlan.DeploymentArtifact;
 import com.datasqrl.engine.PhysicalPlan;
@@ -65,11 +66,6 @@ import static com.datasqrl.util.NameUtil.namepath2Path;
 @Getter
 @AllArgsConstructor(onConstructor_=@Inject)
 public class Packager {
-  public static final String BUILD_DIR_NAME = "build";
-  public static final String PACKAGE_JSON = "package.json";
-  public static final Path DEFAULT_PACKAGE = Path.of(Packager.PACKAGE_JSON);
-  public static final String LIB_DIR = "lib";
-  public static final String DATA_DIR = "data";
 
   private final Repository repository;
   private final RootPath rootDir;
@@ -233,7 +229,7 @@ public class Packager {
   }
 
   private void writePackageConfig() throws IOException {
-    config.toFile(buildDir.getBuildDir().resolve(PACKAGE_JSON), true);
+    config.toFile(buildDir.getBuildDir().resolve(SqrlConstants.PACKAGE_JSON), true);
   }
 
   public static void cleanBuildDir(Path buildDir) throws IOException {
@@ -304,17 +300,15 @@ public class Packager {
   @SneakyThrows
   public void postprocess(PackageJson sqrlConfig, Path rootDir, Path targetDir, PhysicalPlan plan,
       TestPlan testPlan, List<String> profiles) {
-    Path planDir = buildDir.getBuildDir().resolve("plan");
-
+    Path planDir = targetDir.resolve(SqrlConstants.PLAN_DIR);
+    Files.createDirectories(planDir);
     // We'll write a single asset for each folder in the physical plan stage, plus any deployment artifacts that the plan has
     for (PhysicalStagePlan stagePlan : plan.getStagePlans()) {
       writePlan(stagePlan.getStage().getName(), stagePlan.getPlan(), planDir);
     }
 
     if (testPlan != null) {
-      Files.createDirectories(planDir);
       Path path = planDir.resolve("test.json");
-
       SqrlObjectMapper.INSTANCE.writerWithDefaultPrettyPrinter().writeValue(path.toFile(), testPlan);
     }
 
@@ -330,10 +324,9 @@ public class Packager {
 //    }
 
     copyDataFiles(buildDir.getBuildDir());
-    moveFolder(targetDir, DATA_DIR);
+    moveFolder(targetDir, SqrlConstants.DATA_DIR);
     copyJarFiles(buildDir.getBuildDir());
-    moveFolder(targetDir, LIB_DIR);
-//    copyCompiledPlan(buildDir.getBuildDir(), targetDir); -- we do that as part of the physical plan now
+    moveFolder(targetDir, SqrlConstants.LIB_DIR);
   }
 
   @SneakyThrows
@@ -349,10 +342,10 @@ public class Packager {
   private void copyDataFiles(Path buildDir) throws IOException {
     Files.walk(buildDir)
         .filter(path -> (path.toString().endsWith(".jsonl") || path.toString().endsWith(".csv") ) && !Files.isDirectory(path))
-        .filter(path -> !path.startsWith(buildDir.resolve(DATA_DIR)))
+        .filter(path -> !path.startsWith(buildDir.resolve(SqrlConstants.DATA_DIR)))
         .forEach(path -> {
           try {
-            Path destination = buildDir.resolve(DATA_DIR).resolve(path.getFileName());
+            Path destination = buildDir.resolve(SqrlConstants.DATA_DIR).resolve(path.getFileName());
             destination.toFile().mkdirs();
             Files.copy(path, destination, StandardCopyOption.REPLACE_EXISTING);
           } catch (IOException e) {
@@ -364,10 +357,10 @@ public class Packager {
   private void copyJarFiles(Path buildDir) throws IOException {
     Files.walk(buildDir)
         .filter(path -> path.toString().endsWith(".jar") && !Files.isDirectory(path))
-        .filter(path -> !path.startsWith(buildDir.resolve(LIB_DIR)))
+        .filter(path -> !path.startsWith(buildDir.resolve(SqrlConstants.LIB_DIR)))
         .forEach(path -> {
           try {
-            Path destination = buildDir.resolve(LIB_DIR).resolve(path.getFileName());
+            Path destination = buildDir.resolve(SqrlConstants.LIB_DIR).resolve(path.getFileName());
             // Ensure the parent directories exist
             Files.createDirectories(destination.getParent());
             Files.copy(path, destination, StandardCopyOption.REPLACE_EXISTING);
@@ -542,7 +535,7 @@ public class Packager {
 
   public static Optional<List<Path>> findPackageFile(Path rootDir, List<Path> packageFiles) {
     if (packageFiles.isEmpty()) {
-      Path defaultPkg = rootDir.resolve(DEFAULT_PACKAGE);
+      Path defaultPkg = rootDir.resolve(SqrlConstants.DEFAULT_PACKAGE);
       if (Files.isRegularFile(defaultPkg)) {
         return Optional.of(List.of(defaultPkg));
       } else {

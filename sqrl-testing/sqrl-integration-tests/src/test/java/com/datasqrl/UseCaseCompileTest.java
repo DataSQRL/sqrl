@@ -15,18 +15,6 @@ public class UseCaseCompileTest extends AbstractUseCaseTest {
 
   public static final Path USECASE_DIR = getResourcesDirectory("usecases");
 
-  protected UseCaseCompileTest() {
-    super(USECASE_DIR);
-  }
-
-  @BeforeAll
-  public static void setupEnvVars() {
-  }
-
-  @AfterAll
-  public static void tearDownEnvVars() {
-  }
-
   @SneakyThrows
   @ParameterizedTest
   @ArgumentsSource(UseCaseFiles.class)

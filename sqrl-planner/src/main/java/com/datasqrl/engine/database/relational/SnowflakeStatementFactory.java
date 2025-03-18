@@ -1,5 +1,8 @@
 package com.datasqrl.engine.database.relational;
 
+import com.datasqrl.calcite.Dialect;
+import com.datasqrl.calcite.DialectCallConverter;
+import com.datasqrl.calcite.OperatorRuleTransformer;
 import com.datasqrl.calcite.convert.SnowflakeRelToSqlNode;
 import com.datasqrl.calcite.convert.SnowflakeSqlNodeToString;
 import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
@@ -19,7 +22,7 @@ public class SnowflakeStatementFactory extends AbstractJdbcStatementFactory {
   private final EngineConfig engineConfig;
 
   public SnowflakeStatementFactory(EngineConfig engineConfig) {
-    super(new SnowflakeRelToSqlNode(), new SnowflakeSqlNodeToString()); //Iceberg does not support queries
+    super(new OperatorRuleTransformer(Dialect.SNOWFLAKE), new SnowflakeRelToSqlNode(), new SnowflakeSqlNodeToString()); //Iceberg does not support queries
     this.engineConfig = engineConfig;
   }
 

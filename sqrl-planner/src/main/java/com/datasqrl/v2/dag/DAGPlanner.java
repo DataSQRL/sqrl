@@ -1,6 +1,5 @@
 package com.datasqrl.v2.dag;
 
-import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.EngineType;
 import com.datasqrl.config.PackageJson;
@@ -68,12 +67,12 @@ import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.logical.LogicalTableFunctionScan;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.schema.TableFunction;
+import org.apache.calcite.sql.type.BasicSqlType;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.Pair;
@@ -235,7 +234,8 @@ public class DAGPlanner {
           }
 
           //#2nd: apply type casting
-          mapTypes(relBuilder, sqrlEnv, exportEngine.getTypeMapping(), Direction.TO_ENGINE);
+          mapTypes(relBuilder, sqrlEnv, originalNodeTable.getRowTime().orElse(-1),
+              exportEngine.getTypeMapping(), Direction.TO_DATABASE);
 
           //#3rd: create table
           RelDataType datatype = relBuilder.peek().getRowType();
@@ -376,10 +376,11 @@ public class DAGPlanner {
    *
    * @param relBuilder
    * @param sqrlEnv
+   * @param timestampIndex Index of the rowtime or -1 if none
    * @param typeMapper
    * @param mapDirection
    */
-  private void mapTypes(RelBuilder relBuilder, Sqrl2FlinkSQLTranslator sqrlEnv,
+  private void mapTypes(RelBuilder relBuilder, Sqrl2FlinkSQLTranslator sqrlEnv, int timestampIndex,
       DataTypeMapping typeMapper, DataTypeMapping.Direction mapDirection) {
     RelDataType sourceType = relBuilder.peek().getRowType();
     boolean hasChanged = false;
@@ -396,6 +397,14 @@ public class DAGPlanner {
           hasChanged = true;
           fields.add(relBuilder.getRexBuilder()
               .makeCall(sqrlEnv.lookupUserDefinedFunction(castFunction), List.of(relBuilder.field(field.getIndex()))));
+          continue;
+        } else if (mapDirection==Direction.TO_DATABASE &&
+            CalciteUtil.isRowTime(field.getType()) && i!=timestampIndex) {
+          //We need to cast all other rowtime fields to their underlying type or Flink will complain
+          TimeIndicatorRelDataType rowtimeType = (TimeIndicatorRelDataType) field.getType();
+          BasicSqlType timestampType = rowtimeType.originalType();
+          hasChanged = true;
+          fields.add(relBuilder.getRexBuilder().makeCast(timestampType, relBuilder.field(field.getIndex())));
           continue;
         }
       }
@@ -445,7 +454,7 @@ public class DAGPlanner {
       RelNode result;
       if (inputTableId != null) {
         FlinkRelBuilder relBuilder = sqrlEnv.getTableScan(inputTableId);
-        mapTypes(relBuilder, sqrlEnv, typeMapping, Direction.FROM_ENGINE);
+        mapTypes(relBuilder, sqrlEnv, -1, typeMapping, Direction.FROM_DATABASE);
         result = relBuilder.build();
       } else {
         result = tableAnalysis.getCollapsedRelnode().accept(this);

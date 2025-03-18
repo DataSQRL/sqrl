@@ -134,7 +134,7 @@ CREATE TABLE `Customer_1` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'Customer_1'
 );
 CREATE TABLE `CustomerOrdersJoin_2` (
@@ -154,7 +154,7 @@ CREATE TABLE `CustomerOrdersJoin_2` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'CustomerOrdersJoin_2'
 );
 CREATE TABLE `Orders_3` (
@@ -169,7 +169,7 @@ CREATE TABLE `Orders_3` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'Orders_3'
 );
 EXECUTE STATEMENT SET BEGIN
@@ -178,7 +178,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_1`
  FROM `default_catalog`.`default_database`.`Customer`)
 ;
 INSERT INTO `default_catalog`.`default_database`.`CustomerOrdersJoin_2`
- (SELECT `customerid`, `email`, `name`, `lastUpdated`, `_ingest_time`, `id`, `customerid0`, `time`, TOJSON(`entries`) AS `entries`, `_ingest_time0`
+ (SELECT `customerid`, `email`, `name`, `lastUpdated`, `_ingest_time`, `id`, `customerid0`, `time`, TOJSON(`entries`) AS `entries`, CAST(`_ingest_time0` AS TIMESTAMP(3) WITH LOCAL TIME ZONE) AS `_ingest_time0`
   FROM `default_catalog`.`default_database`.`CustomerOrdersJoin`)
  ;
  INSERT INTO `default_catalog`.`default_database`.`Orders_3`
@@ -438,4 +438,97 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerOrdersJoin_2`
   ]
 }
 >>>vertx.json
-{ }
+{
+  "model" : {
+    "coords" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Customer",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"Customer_1\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "CustomerOrdersJoin",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"CustomerOrdersJoin_2\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Orders",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"Orders_3\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      }
+    ],
+    "mutations" : [ ],
+    "subscriptions" : [ ],
+    "schema" : {
+      "type" : "string",
+      "type" : "string",
+      "schema" : "type Customer {\n  customerid: Float!\n  email: String\n  name: String!\n  lastUpdated: Float!\n}\n\ntype CustomerOrdersJoin {\n  customerid: Float!\n  email: String\n  name: String!\n  lastUpdated: Float!\n  id: Float!\n  customerid0: Float!\n  time: DateTime!\n  entries: [CustomerOrdersJoin_entriesOutput]!\n}\n\ntype CustomerOrdersJoin_entriesOutput {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerOrdersJoin(limit: Int = 10, offset: Int = 0): [CustomerOrdersJoin!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n}\n"
+    }
+  }
+}

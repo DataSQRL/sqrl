@@ -141,7 +141,7 @@ class WriteTest {
                             .query(new JdbcQuery("SELECT customerid FROM Customer", List.of()))
                             .build())
                     .build())
-            .mutation(new KafkaMutationCoords("addCustomer", topicName,
+            .mutation(new KafkaMutationCoords("addCustomer", topicName, Map.of(),
                 Map.of()))
             .build();
   }

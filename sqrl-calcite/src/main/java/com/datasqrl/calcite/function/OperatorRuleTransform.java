@@ -21,7 +21,9 @@ public interface OperatorRuleTransform {
    * may not be the same operator your 'this' since it may undergo delegation so it is passed
    * as a parameter.
    */
-  List<RelRule> transform(Dialect dialect, SqlOperator operator /* todo engine capabilities*/);
+  List<RelRule> transform(SqlOperator operator /* todo engine capabilities*/);
+
+  Dialect getDialect();
 
   /**
    *

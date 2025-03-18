@@ -118,7 +118,7 @@ CREATE TABLE `Customer_1` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'Customer_1'
 );
 CREATE TABLE `Customer2_2` (
@@ -134,7 +134,7 @@ CREATE TABLE `Customer2_2` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'Customer2_2'
 );
 CREATE TABLE `CustomerByTime2_3` (
@@ -150,7 +150,7 @@ CREATE TABLE `CustomerByTime2_3` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'CustomerByTime2_3'
 );
 EXECUTE STATEMENT SET BEGIN
@@ -159,11 +159,11 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_1`
  FROM `default_catalog`.`default_database`.`Customer`)
 ;
 INSERT INTO `default_catalog`.`default_database`.`Customer2_2`
- (SELECT *
+ (SELECT `updatedTime`, `customerid`, `email`, `name`, `lastUpdated`, CAST(`timestamp` AS TIMESTAMP(3) WITH LOCAL TIME ZONE) AS `timestamp`
   FROM `default_catalog`.`default_database`.`Customer2`)
  ;
  INSERT INTO `default_catalog`.`default_database`.`CustomerByTime2_3`
-  (SELECT *
+  (SELECT `updatedTime`, `customerid`, `email`, `name`, `lastUpdated`, CAST(`timestamp` AS TIMESTAMP(3) WITH LOCAL TIME ZONE) AS `timestamp`
    FROM `default_catalog`.`default_database`.`Customer2`)
   ;
   END
@@ -389,4 +389,97 @@ INSERT INTO `default_catalog`.`default_database`.`Customer2_2`
   ]
 }
 >>>vertx.json
-{ }
+{
+  "model" : {
+    "coords" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Customer",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"Customer_1\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Customer2",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"Customer2_2\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "CustomerByTime2",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"CustomerByTime2_3\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      }
+    ],
+    "mutations" : [ ],
+    "subscriptions" : [ ],
+    "schema" : {
+      "type" : "string",
+      "type" : "string",
+      "schema" : "type Customer {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime\n}\n\ntype Customer2 {\n  updatedTime: DateTime\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime\n}\n\ntype CustomerByTime2 {\n  updatedTime: DateTime\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  Customer2(limit: Int = 10, offset: Int = 0): [Customer2!]\n  CustomerByTime2(limit: Int = 10, offset: Int = 0): [CustomerByTime2!]\n}\n"
+    }
+  }
+}

@@ -13,7 +13,7 @@ import org.apache.calcite.rel.type.RelDataType;
 @FunctionalInterface
 public interface DataTypeMapping {
 
-  enum Direction { TO_ENGINE, FROM_ENGINE }
+  enum Direction {TO_DATABASE, FROM_DATABASE}
 
   DataTypeMapping NONE = (type) -> Optional.empty();
 
@@ -28,8 +28,8 @@ public interface DataTypeMapping {
 
     default Optional<SqrlCastFunction> getEngineMapping(Direction direction) {
       switch (direction) {
-        case TO_ENGINE: return Optional.of(toEngineMapping());
-        case FROM_ENGINE: return fromEngineMapping();
+        case TO_DATABASE: return Optional.of(toEngineMapping());
+        case FROM_DATABASE: return fromEngineMapping();
         default: throw new UnsupportedOperationException("Unrecognized direction: " + direction);
       }
     }

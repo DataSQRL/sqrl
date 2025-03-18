@@ -102,7 +102,7 @@ CREATE TABLE `HighTempAlert_1` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'HighTempAlert_1'
 );
 CREATE TABLE `SensorMaxTemp_2` (
@@ -114,7 +114,7 @@ CREATE TABLE `SensorMaxTemp_2` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'SensorMaxTemp_2'
 );
 CREATE TABLE `SensorReading_3` (
@@ -128,7 +128,7 @@ CREATE TABLE `SensorReading_3` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'SensorReading_3'
 );
 EXECUTE STATEMENT SET BEGIN
@@ -169,4 +169,107 @@ FROM "SensorMaxTemp_2";
 CREATE OR REPLACE VIEW "SensorReading"("sensorid", "temperature", "event_time") AS SELECT "sensorid", "temperature", "event_time"
 FROM "SensorReading_3"
 >>>vertx.json
-{ }
+{
+  "model" : {
+    "coords" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "HighTempAlert",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"sensorid\", \"temperature\", \"event_time\"\nFROM \"HighTempAlert_1\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "SensorMaxTemp",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"SensorMaxTemp_2\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "SensorReading",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"sensorid\", \"temperature\", \"event_time\"\nFROM \"SensorReading_3\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      }
+    ],
+    "mutations" : [
+      {
+        "type" : "kafka",
+        "fieldName" : "SensorReading",
+        "topic" : "SensorReading",
+        "computedColumns" : {
+          "event_time" : "TIMESTAMP"
+        },
+        "sinkConfig" : { }
+      }
+    ],
+    "subscriptions" : [ ],
+    "schema" : {
+      "type" : "string",
+      "type" : "string",
+      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype Mutation {\n  SensorReading(event: SensorReadingInput!): SensorReadingResultOutput!\n}\n\ntype Query {\n  HighTempAlert(limit: Int = 10, offset: Int = 0): [SensorReading!]\n  SensorMaxTemp(limit: Int = 10, offset: Int = 0): [SensorMaxTemp!]\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n}\n\ntype SensorMaxTemp {\n  sensorid: Int!\n  maxTemp: Float!\n}\n\ntype SensorReading {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime\n}\n\ninput SensorReadingInput {\n  sensorid: Int!\n  temperature: Float!\n}\n\ntype SensorReadingResultOutput {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime\n}\n"
+    }
+  }
+}

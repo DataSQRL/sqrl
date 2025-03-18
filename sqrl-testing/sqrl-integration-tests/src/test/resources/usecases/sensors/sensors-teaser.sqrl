@@ -21,4 +21,4 @@ SensorMaxTemp := DISTINCT _SensorMaxTempWindow ON sensorid ORDER BY window_time 
 SecReadingTest := SELECT * FROM SecReading ORDER BY timeSec DESC, temp DESC LIMIT 5;
 
 /*+test */
-SensorMaxTempTest := SELECT * FROM SensorMaxTemp ORDER BY maxTemp DESC LIMIT 5;
+SensorMaxTempTest := SELECT sensorid, maxTemp FROM SensorMaxTemp ORDER BY maxTemp DESC LIMIT 5;

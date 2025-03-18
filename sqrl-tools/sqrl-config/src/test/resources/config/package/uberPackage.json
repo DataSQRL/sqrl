@@ -38,7 +38,7 @@
           "password": "${JDBC_PASSWORD}", // when specified the value should be a string
           "driver": "org.postgresql.Driver", // when specified the value should be a string
           "username": "${JDBC_USERNAME}", // when specified the value should be a string
-          "url": "${JDBC_URL}", // when specified the value should be a string
+          "url": "jdbc:postgresql://${JDBC_AUTHORITY}",, // when specified the value should be a string
           "table-name": "${sqrl:table}" // when specified the value should be a string
         },
         "kafka": { // when specified this map(dictionary) should contain at least one element
@@ -85,7 +85,7 @@
           "password": "${JDBC_PASSWORD}", // when specified the value should be a string
           "driver": "org.postgresql.Driver", // when specified the value should be a string
           "username": "${JDBC_USERNAME}", // when specified the value should be a string
-          "url": "${JDBC_URL}", // when specified the value should be a string
+          "url": "jdbc:postgresql://${JDBC_AUTHORITY}", // when specified the value should be a string
           "table-name": "${sqrl:table}" // when specified the value should be a string
         }
       }

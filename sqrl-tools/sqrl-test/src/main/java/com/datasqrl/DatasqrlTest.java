@@ -59,7 +59,7 @@ public class DatasqrlTest {
 
   public DatasqrlTest() {
     this(Path.of(System.getProperty("user.dir")).resolve("build"),
-        Path.of(System.getProperty("user.dir")).resolve("build").resolve("plan"),
+        Path.of(System.getProperty("user.dir")).resolve("build").resolve("deploy").resolve("plan"),
         System.getenv());
   }
 

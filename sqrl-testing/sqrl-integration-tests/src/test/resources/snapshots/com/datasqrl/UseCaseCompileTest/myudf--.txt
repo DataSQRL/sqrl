@@ -1,8 +1,27 @@
 >>>pipeline_explain.txt
+=== MyAsyncTable
+ID:     default_catalog.default_database.MyAsyncTable
+Type:   state
+Stage:  flink
+Annotations:
+ - sort: [0 ASC-nulls-first]
+Primary Key: val
+Timestamp  : -
+Schema:
+ - val: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL
+ - myFnc: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+Plan:
+LogicalProject(val=[$0], myFnc=[MyAsyncScalarFunction($0, $1)])
+  LogicalValues(tuples=[[{ '1', 1 }, { '2', 2 }, { '3', 3 }]])
+SQL: CREATE VIEW MyAsyncTable AS  SELECT val, MyAsyncScalarFunction(val, ival) AS myFnc
+           FROM (VALUES (('1'), (1)), (('2'), (2)), (('3'), (3))) AS t(val, ival) ORDER BY val;
+
 === MyTable
 ID:     default_catalog.default_database.MyTable
 Type:   state
 Stage:  flink
+Annotations:
+ - sort: [0 ASC-nulls-first]
 Primary Key: val
 Timestamp  : -
 Schema:
@@ -13,12 +32,14 @@ LogicalProject(val=[$0], myFnc=[MyScalarFunction(CAST($0):BIGINT, CAST($0):BIGIN
   LogicalValues(tuples=[[{ 1 }, { 2 }, { 3 }, { 4 }, { 5 }, { 6 }, { 7 }, { 8 }, { 9 }, { 10 }]])
 SQL: CREATE VIEW MyTable AS  SELECT val, MyScalarFunction(val, val) AS myFnc
            FROM (VALUES ((1)), ((2)), ((3)), ((4)), ((5)),
-            ((6)), ((7)), ((8)), ((9)), ((10))) AS t(val);
+            ((6)), ((7)), ((8)), ((9)), ((10))) AS t(val) ORDER BY val;
 
 === MyTableAnother
 ID:     default_catalog.default_database.MyTableAnother
 Type:   state
 Stage:  flink
+Annotations:
+ - sort: [0 ASC-nulls-first]
 Primary Key: val
 Timestamp  : -
 Schema:
@@ -28,7 +49,7 @@ Plan:
 LogicalProject(val=[$0], myFnc=[AnotherFunction(CAST($0):BIGINT, CAST($0):BIGINT)])
   LogicalValues(tuples=[[{ 1 }, { 2 }]])
 SQL: CREATE VIEW MyTableAnother AS  SELECT val, AnotherFunction(val, val) AS myFnc
-           FROM (VALUES ((1)), ((2))) AS t(val);
+           FROM (VALUES ((1)), ((2))) AS t(val) ORDER BY val;
 
 >>>flink-sql-no-functions.sql
 CREATE VIEW `MyTable`
@@ -55,19 +76,23 @@ SELECT `val`, MYASYNCSCALARFUNCTION(`val`, `ival`) AS `myFnc`
 FROM (VALUES ROW('1', 1),
    ROW('2', 2),
    ROW('3', 3)) AS `t` (`val`, `ival`);
-CREATE TABLE `MyTable_1` (
-  `val` INTEGER NOT NULL,
-  `myFnc` BIGINT,
+CREATE VIEW `MyAsyncTableTest`
+AS
+SELECT *
+FROM `MyAsyncTable`;
+CREATE TABLE `MyAsyncTable_1` (
+  `val` CHAR(1) CHARACTER SET `UTF-16LE` NOT NULL,
+  `myFnc` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
   PRIMARY KEY (`val`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
-  'table-name' = 'MyTable_1'
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'MyAsyncTable_1'
 );
-CREATE TABLE `MyTableAnother_2` (
+CREATE TABLE `MyTable_2` (
   `val` INTEGER NOT NULL,
   `myFnc` BIGINT,
   PRIMARY KEY (`val`) NOT ENFORCED
@@ -76,30 +101,148 @@ CREATE TABLE `MyTableAnother_2` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
-  'table-name' = 'MyTableAnother_2'
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'MyTable_2'
+);
+CREATE TABLE `MyTableAnother_3` (
+  `val` INTEGER NOT NULL,
+  `myFnc` BIGINT,
+  PRIMARY KEY (`val`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'MyTableAnother_3'
 );
 EXECUTE STATEMENT SET BEGIN
-INSERT INTO `default_catalog`.`default_database`.`MyTable_1`
+INSERT INTO `default_catalog`.`default_database`.`MyAsyncTable_1`
 (SELECT *
- FROM `default_catalog`.`default_database`.`MyTable`)
+ FROM `default_catalog`.`default_database`.`MyAsyncTable`)
 ;
-INSERT INTO `default_catalog`.`default_database`.`MyTableAnother_2`
+INSERT INTO `default_catalog`.`default_database`.`MyTable_2`
  (SELECT *
-  FROM `default_catalog`.`default_database`.`MyTableAnother`)
+  FROM `default_catalog`.`default_database`.`MyTable`)
  ;
- END
+ INSERT INTO `default_catalog`.`default_database`.`MyTableAnother_3`
+  (SELECT *
+   FROM `default_catalog`.`default_database`.`MyTableAnother`)
+  ;
+  END
 >>>kafka.json
 {
   "topics" : [ ]
 }
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "MyTable_1" ("val" INTEGER NOT NULL, "myFnc" BIGINT  , PRIMARY KEY ("val"));
-CREATE TABLE IF NOT EXISTS "MyTableAnother_2" ("val" INTEGER NOT NULL, "myFnc" BIGINT  , PRIMARY KEY ("val"))
+CREATE TABLE IF NOT EXISTS "MyAsyncTable_1" ("val" TEXT NOT NULL, "myFnc" TEXT  , PRIMARY KEY ("val"));
+CREATE TABLE IF NOT EXISTS "MyTable_2" ("val" INTEGER NOT NULL, "myFnc" BIGINT  , PRIMARY KEY ("val"));
+CREATE TABLE IF NOT EXISTS "MyTableAnother_3" ("val" INTEGER NOT NULL, "myFnc" BIGINT  , PRIMARY KEY ("val"))
 >>>postgres-views.sql
+CREATE OR REPLACE VIEW "MyAsyncTable"("val", "myFnc") AS SELECT *
+FROM (SELECT "val", "myFnc"
+  FROM "MyAsyncTable_1"
+  ORDER BY "val" NULLS FIRST) AS "t1";
 CREATE OR REPLACE VIEW "MyTable"("val", "myFnc") AS SELECT *
-FROM "MyTable_1";
+FROM (SELECT "val", "myFnc"
+  FROM "MyTable_2"
+  ORDER BY "val" NULLS FIRST) AS "t1";
 CREATE OR REPLACE VIEW "MyTableAnother"("val", "myFnc") AS SELECT *
-FROM "MyTableAnother_2"
+FROM (SELECT "val", "myFnc"
+  FROM "MyTableAnother_3"
+  ORDER BY "val" NULLS FIRST) AS "t1"
 >>>vertx.json
-{ }
+{
+  "model" : {
+    "coords" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "MyAsyncTable",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"val\", \"myFnc\"\n  FROM \"MyAsyncTable_1\"\n  ORDER BY \"val\" NULLS FIRST) AS \"t\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "MyTable",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"val\", \"myFnc\"\n  FROM \"MyTable_2\"\n  ORDER BY \"val\" NULLS FIRST) AS \"t\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "MyTableAnother",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"val\", \"myFnc\"\n  FROM \"MyTableAnother_3\"\n  ORDER BY \"val\" NULLS FIRST) AS \"t\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      }
+    ],
+    "mutations" : [ ],
+    "subscriptions" : [ ],
+    "schema" : {
+      "type" : "string",
+      "type" : "string",
+      "schema" : "type MyAsyncTable {\n  val: String!\n  myFnc: String\n}\n\ntype MyTable {\n  val: Int!\n  myFnc: Float\n}\n\ntype MyTableAnother {\n  val: Int!\n  myFnc: Float\n}\n\ntype Query {\n  MyAsyncTable(limit: Int = 10, offset: Int = 0): [MyAsyncTable!]\n  MyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  MyTableAnother(limit: Int = 10, offset: Int = 0): [MyTableAnother!]\n}\n"
+    }
+  }
+}

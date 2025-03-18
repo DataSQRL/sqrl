@@ -5,8 +5,6 @@ package com.datasqrl.util;
 
 import com.datasqrl.calcite.schema.sql.SqlDataTypeSpecBuilder;
 import com.datasqrl.function.InputPreservingFunction;
-import com.datasqrl.function.SqrlFunctionParameter;
-import com.datasqrl.function.SqrlFunctionParameter.CasedParameter;
 import com.google.common.base.Preconditions;
 
 import java.math.BigDecimal;
@@ -460,39 +458,6 @@ public class CalciteUtil {
       return RexLiteral.intValue(literal) == 0;
     }
     return false;
-  }
-
-
-  public static List<FunctionParameter> addFilterByColumn(RelBuilder relB, List<Integer> columnIndexes, boolean optional) {
-    return addFilterByColumn(relB, columnIndexes, optional, 0);
-  }
-
-  public static List<FunctionParameter> addFilterByColumn(RelBuilder relB, List<Integer> columnIndexes, boolean optional, int paramOffset) {
-    Preconditions.checkArgument(!columnIndexes.isEmpty());
-    List<RelDataTypeField> fields = relB.peek().getRowType().getFieldList();
-    Preconditions.checkArgument(columnIndexes.stream().allMatch(i -> i < fields.size()),"Invalid column indexes: %s", columnIndexes);
-    AtomicInteger paramCounter = new AtomicInteger(paramOffset);
-    List<RexNode> conditions = new ArrayList<>();
-    List<FunctionParameter> parameters = new ArrayList<>();
-    for (Integer colIndex : columnIndexes) {
-      RelDataTypeField field = fields.get(colIndex);
-      int ordinal = paramCounter.getAndIncrement();
-      RelDataType paramType = field.getType();
-      if (optional) paramType = relB.getTypeFactory().createTypeWithNullability(field.getType(), true);
-      RexDynamicParam param = new RexDynamicParam(paramType, ordinal);
-      RexNode condition = relB.equals(relB.field(colIndex), param);
-      if (optional) {
-        condition = relB.or(condition, relB.isNull(param));
-      } else if (field.getType().isNullable()) {
-        condition = relB.or(condition, relB.and(relB.isNull(param),relB.isNull(relB.field(colIndex))));
-      }
-      conditions.add(condition);
-      parameters.add(new SqrlFunctionParameter(field.getName(), Optional.empty(),
-          SqlDataTypeSpecBuilder.create(paramType), ordinal, paramType,
-          false, new CasedParameter(field.getName())));
-    }
-    relB.filter(relB.and(conditions));
-    return parameters;
   }
 
   public static void addFilteredDeduplication(RelBuilder relB, int timestampIdx, List<Integer> partition, int orderColIdx) {

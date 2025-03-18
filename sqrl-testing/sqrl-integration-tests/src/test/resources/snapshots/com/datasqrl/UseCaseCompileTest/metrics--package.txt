@@ -183,7 +183,7 @@ CREATE TABLE `SensorAnalysis_2` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'SensorAnalysis_2'
 );
 CREATE TABLE `SensorMaxTempLastMin_3` (
@@ -196,7 +196,7 @@ CREATE TABLE `SensorMaxTempLastMin_3` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'SensorMaxTempLastMin_3'
 );
 CREATE TABLE `SensorReading_4` (
@@ -210,7 +210,7 @@ CREATE TABLE `SensorReading_4` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'SensorReading_4'
 );
 EXECUTE STATEMENT SET BEGIN
@@ -264,4 +264,153 @@ FROM "SensorMaxTempLastMin_3";
 CREATE OR REPLACE VIEW "SensorReading"("sensorid", "temperature", "event_time") AS SELECT "sensorid", "temperature", "event_time"
 FROM "SensorReading_4"
 >>>vertx.json
-{ }
+{
+  "model" : {
+    "coords" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "SensorAnalysis",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"sensorid\", \"avg_temperatures\", \"max_temperature\"\n  FROM \"SensorAnalysis_2\"\n  ORDER BY \"sensorid\" DESC NULLS LAST) AS \"t\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "SensorMaxTempLastMin",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"SensorMaxTempLastMin_3\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "SensorReading",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"sensorid\", \"temperature\", \"event_time\"\nFROM \"SensorReading_4\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "SensorAnalysisById",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "sensorid"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"sensorid\", \"avg_temperatures\", \"max_temperature\"\n  FROM \"SensorAnalysis_2\"\n  ORDER BY \"sensorid\" DESC NULLS LAST) AS \"t\"\nWHERE \"sensorid\" = $1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "sensorid"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "mutations" : [
+      {
+        "type" : "kafka",
+        "fieldName" : "SensorReading",
+        "topic" : "SensorReading",
+        "computedColumns" : {
+          "event_time" : "TIMESTAMP"
+        },
+        "sinkConfig" : { }
+      }
+    ],
+    "subscriptions" : [
+      {
+        "type" : "kafka",
+        "fieldName" : "HighTempAlert",
+        "topic" : "HighTempAlert_1",
+        "sinkConfig" : { },
+        "filters" : { }
+      }
+    ],
+    "schema" : {
+      "type" : "string",
+      "type" : "string",
+      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype Mutation {\n  SensorReading(event: SensorReadingInput!): SensorReadingResultOutput!\n}\n\ntype Query {\n  SensorAnalysis(limit: Int = 10, offset: Int = 0): [SensorAnalysis!]\n  SensorMaxTempLastMin(limit: Int = 10, offset: Int = 0): [SensorMaxTempLastMin!]\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n  SensorAnalysisById(sensorid: Int!, limit: Int = 10, offset: Int = 0): [SensorAnalysis!]\n}\n\ntype SensorAnalysis {\n  sensorid: Int!\n  avg_temperatures: Float!\n  max_temperature: Float!\n}\n\ntype SensorMaxTempLastMin {\n  sensorid: Int!\n  endOfMin: DateTime!\n  avg_temperature: Float!\n}\n\ntype SensorReading {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime\n}\n\ninput SensorReadingInput {\n  sensorid: Int!\n  temperature: Float!\n}\n\ntype SensorReadingResultOutput {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime\n}\n\ntype Subscription {\n  HighTempAlert: SensorReading\n}\n"
+    }
+  }
+}

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import com.datasqrl.DatasqrlTest;
 import com.datasqrl.FullUsecasesIT.UseCaseTestParameter;
 import com.datasqrl.config.PackageJson;
+import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.engines.TestEngine.DuckdbTestEngine;
 import com.datasqrl.engines.TestEngine.FlinkTestEngine;
 import com.datasqrl.engines.TestEngine.IcebergTestEngine;
@@ -60,18 +61,21 @@ public class TestExecutionEnv implements TestEngineVisitor<Void, TestEnvContext>
     }
 
     //Snapshot views
-    Map map = new ObjectMapper().readValue(rootDir.resolve("build/plan/postgres.json").toFile(),
+    Map postgresPlan = new ObjectMapper().readValue(rootDir.resolve("build/deploy/plan/postgres.json").toFile(),
         Map.class);
-    List<Map<String, Object>> view = (List<Map<String, Object>>)map.get("views");
+    List<Map<String, Object>> view = (List<Map<String, Object>>)postgresPlan.get("views");
     String url = context.env.get("JDBC_URL");
     String username = context.env.get("PGUSER");
     String password = context.env.get("PGPASSWORD");
     try (Connection conn = DriverManager.getConnection(url, username, password)) {
-      for (Map<String, Object> v : view) {
-        ResultSet resultSet = conn.createStatement()
-            .executeQuery(String.format("SELECT * FROM \"%s\"", v.get("name")));
-        String string = ResultSetPrinter.toString(resultSet, (c) -> true, (c) -> true);
-        snapshot.addContent(string, (String)v.get("name"));
+      for (Map statement : (List<Map>) postgresPlan.get("statements")) {
+        if (statement.get("type").toString().equalsIgnoreCase("view")) {
+          String viewName = (String)statement.get("name");
+          ResultSet resultSet = conn.createStatement()
+              .executeQuery(String.format("SELECT * FROM \"%s\"", viewName));
+          String string = ResultSetPrinter.toString(resultSet, (c) -> true, (c) -> true);
+          snapshot.addContent(string, viewName);
+        }
       }
     }
 
@@ -209,12 +213,12 @@ public class TestExecutionEnv implements TestEngineVisitor<Void, TestEnvContext>
   @Override
   public Void visit(TestTestEngine engine, TestEnvContext context) {
     DatasqrlTest test = new DatasqrlTest(null,
-        context.rootDir.resolve("build/plan"),
+        context.rootDir.resolve(SqrlConstants.BUILD_DIR_NAME).resolve(SqrlConstants.DEPLOY_DIR_NAME).resolve(SqrlConstants.PLAN_DIR),
         context.env);
     try {
       int run = test.run();
       if (run != 0) {
-        fail();
+        fail("Test runner returned error code. Check above for failed snapshot tests (in red) or exceptions");
       }
     } catch (Exception e) {
       fail(e);

@@ -173,7 +173,7 @@ CREATE TABLE `Customer_1` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'Customer_1'
 );
 CREATE TABLE `OrderCustomer1_2` (
@@ -187,7 +187,7 @@ CREATE TABLE `OrderCustomer1_2` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'OrderCustomer1_2'
 );
 CREATE TABLE `OrderCustomer2_3` (
@@ -201,7 +201,7 @@ CREATE TABLE `OrderCustomer2_3` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'OrderCustomer2_3'
 );
 CREATE TABLE `OrderCustomer3_4` (
@@ -215,7 +215,7 @@ CREATE TABLE `OrderCustomer3_4` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'OrderCustomer3_4'
 );
 CREATE TABLE `Orders_5` (
@@ -229,7 +229,7 @@ CREATE TABLE `Orders_5` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'Orders_5'
 );
 EXECUTE STATEMENT SET BEGIN
@@ -529,4 +529,151 @@ INSERT INTO `default_catalog`.`default_database`.`OrderCustomer1_2`
   ]
 }
 >>>vertx.json
-{ }
+{
+  "model" : {
+    "coords" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Customer",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"Customer_1\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "OrderCustomer1",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"id\", \"name\", \"customerid\"\nFROM \"OrderCustomer1_2\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "OrderCustomer2",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"id\", \"name\", \"customerid\"\nFROM \"OrderCustomer2_3\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "OrderCustomer3",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"id\", \"name\", \"customerid\"\nFROM \"OrderCustomer3_4\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Orders",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"Orders_5\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      }
+    ],
+    "mutations" : [ ],
+    "subscriptions" : [ ],
+    "schema" : {
+      "type" : "string",
+      "type" : "string",
+      "schema" : "type Customer {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype OrderCustomer1 {\n  id: Float!\n  name: String!\n  customerid: Float!\n}\n\ntype OrderCustomer2 {\n  id: Float!\n  name: String!\n  customerid: Float!\n}\n\ntype OrderCustomer3 {\n  id: Float!\n  name: String!\n  customerid: Float!\n}\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  OrderCustomer1(limit: Int = 10, offset: Int = 0): [OrderCustomer1!]\n  OrderCustomer2(limit: Int = 10, offset: Int = 0): [OrderCustomer2!]\n  OrderCustomer3(limit: Int = 10, offset: Int = 0): [OrderCustomer3!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n}\n"
+    }
+  }
+}

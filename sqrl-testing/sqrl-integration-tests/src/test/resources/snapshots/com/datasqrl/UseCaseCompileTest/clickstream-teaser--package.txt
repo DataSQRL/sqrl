@@ -1,0 +1,344 @@
+>>>pipeline_explain.txt
+=== Click
+ID:     default_catalog.default_database.Click
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.Click__def
+Annotations:
+ - stream-root: Click__def
+Primary Key: url, userid, timestamp
+Timestamp  : timestamp
+Schema:
+ - url: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - userid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+Plan:
+LogicalProject(url=[$0], timestamp=[$1], userid=[$2])
+  LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($1, 1000:INTERVAL SECOND)])
+    LogicalTableScan(table=[[default_catalog, default_database, Click__def]])
+SQL: CREATE VIEW `Click`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`Click__def`
+=== Recommendation
+ID:     default_catalog.default_database.Recommendation
+Type:   state
+Stage:  flink
+Inputs: default_catalog.default_database.VisitAfter
+Annotations:
+ - sort: [0 ASC-nulls-first, 2 DESC-nulls-last]
+Primary Key: url, rec
+Timestamp  : -
+Schema:
+ - url: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - rec: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - frequency: BIGINT NOT NULL
+Plan:
+LogicalAggregate(group=[{0, 1}], frequency=[COUNT()])
+  LogicalProject(url=[$0], rec=[$1])
+    LogicalTableScan(table=[[default_catalog, default_database, VisitAfter]])
+SQL: CREATE VIEW Recommendation AS  SELECT beforeURL AS url, afterURL AS rec,
+    count(1) AS frequency FROM VisitAfter
+    GROUP BY beforeURL, afterURL ORDER BY url ASC, frequency DESC;
+
+=== Trending
+ID:     default_catalog.default_database.Trending
+Type:   state
+Stage:  flink
+Inputs: default_catalog.default_database.Click
+Annotations:
+ - sort: [1 DESC-nulls-last, 0 ASC-nulls-first]
+Primary Key: url
+Timestamp  : -
+Schema:
+ - url: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - total: BIGINT NOT NULL
+Plan:
+LogicalAggregate(group=[{0}], total=[COUNT()])
+  LogicalProject(url=[$0])
+    LogicalTableScan(table=[[default_catalog, default_database, Click]])
+SQL: CREATE VIEW Trending AS  SELECT url, count(1) AS total
+    FROM Click
+    GROUP BY url ORDER BY total DESC, url ASC;
+
+=== VisitAfter
+ID:     default_catalog.default_database.VisitAfter
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.Click
+Primary Key: -
+Timestamp  : timestamp
+Schema:
+ - beforeURL: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - afterURL: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Plan:
+LogicalProject(beforeURL=[$0], afterURL=[$3], timestamp=[$4])
+  LogicalJoin(condition=[AND(=($2, $5), <($1, $4), >=($1, -($4, *(10, 60000:INTERVAL MINUTE))))], joinType=[inner])
+    LogicalTableScan(table=[[default_catalog, default_database, Click]])
+    LogicalTableScan(table=[[default_catalog, default_database, Click]])
+SQL: CREATE VIEW VisitAfter AS  SELECT b.url AS beforeURL, a.url AS afterURL,
+    a.`timestamp` AS `timestamp`
+    FROM Click b JOIN Click a ON b.userid=a.userid AND
+        b.`timestamp` < a.`timestamp` AND
+        b.`timestamp` >= a.`timestamp` - INTERVAL 10 MINUTE;
+
+>>>flink-sql-no-functions.sql
+CREATE TEMPORARY TABLE `Click__schema` (
+  `url` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `userid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `Click__def` (
+  PRIMARY KEY (`url`, `userid`, `timestamp`) NOT ENFORCED,
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '1' SECOND
+) WITH (
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/click.jsonl',
+  'source.monitor-interval' = '10 sec',
+  'connector' = 'filesystem'
+)
+LIKE `Click__schema`;
+CREATE VIEW `Click`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`Click__def`;
+CREATE VIEW `Trending`
+AS
+SELECT `url`, COUNT(1) AS `total`
+FROM `Click`
+GROUP BY `url`;
+CREATE VIEW `VisitAfter`
+AS
+SELECT `b`.`url` AS `beforeURL`, `a`.`url` AS `afterURL`, `a`.`timestamp` AS `timestamp`
+FROM `Click` AS `b`
+ INNER JOIN `Click` AS `a` ON `b`.`userid` = `a`.`userid` AND `b`.`timestamp` < `a`.`timestamp` AND `b`.`timestamp` >= `a`.`timestamp` - (INTERVAL 10 MINUTE);
+CREATE VIEW `Recommendation`
+AS
+SELECT `beforeURL` AS `url`, `afterURL` AS `rec`, COUNT(1) AS `frequency`
+FROM `VisitAfter`
+GROUP BY `beforeURL`, `afterURL`;
+CREATE VIEW `RankTest`
+AS
+SELECT `url`, COUNT(1) AS `total`
+FROM `Click`
+GROUP BY `url`;
+CREATE TABLE `Click_1` (
+  `url` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `userid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  PRIMARY KEY (`url`, `userid`, `timestamp`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'Click_1'
+);
+CREATE TABLE `Recommendation_2` (
+  `url` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `rec` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `frequency` BIGINT NOT NULL,
+  PRIMARY KEY (`url`, `rec`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'Recommendation_2'
+);
+CREATE TABLE `Trending_3` (
+  `url` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `total` BIGINT NOT NULL,
+  PRIMARY KEY (`url`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'Trending_3'
+);
+CREATE TABLE `VisitAfter_4` (
+  `beforeURL` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `afterURL` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'VisitAfter_4'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`Click_1`
+(SELECT *
+ FROM `default_catalog`.`default_database`.`Click`)
+;
+INSERT INTO `default_catalog`.`default_database`.`Recommendation_2`
+ (SELECT *
+  FROM `default_catalog`.`default_database`.`Recommendation`)
+ ;
+ INSERT INTO `default_catalog`.`default_database`.`Trending_3`
+  (SELECT *
+   FROM `default_catalog`.`default_database`.`Trending`)
+  ;
+  INSERT INTO `default_catalog`.`default_database`.`VisitAfter_4`
+   (SELECT `beforeURL`, `afterURL`, `timestamp`, HASHCOLUMNS(`beforeURL`, `afterURL`, `timestamp`) AS `__pk_hash`
+    FROM `default_catalog`.`default_database`.`VisitAfter`)
+   ;
+   END
+>>>postgres-schema.sql
+CREATE TABLE IF NOT EXISTS "Click_1" ("url" TEXT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "userid" TEXT NOT NULL , PRIMARY KEY ("url","userid","timestamp"));
+CREATE TABLE IF NOT EXISTS "Recommendation_2" ("url" TEXT NOT NULL, "rec" TEXT NOT NULL, "frequency" BIGINT NOT NULL , PRIMARY KEY ("url","rec"));
+CREATE TABLE IF NOT EXISTS "Trending_3" ("url" TEXT NOT NULL, "total" BIGINT NOT NULL , PRIMARY KEY ("url"));
+CREATE TABLE IF NOT EXISTS "VisitAfter_4" ("beforeURL" TEXT NOT NULL, "afterURL" TEXT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"))
+>>>postgres-views.sql
+CREATE OR REPLACE VIEW "Click"("url", "timestamp", "userid") AS SELECT *
+FROM "Click_1";
+CREATE OR REPLACE VIEW "Trending"("url", "total") AS SELECT *
+FROM (SELECT "url", "total"
+  FROM "Trending_3"
+  ORDER BY "total" DESC NULLS LAST, "url" NULLS FIRST) AS "t1";
+CREATE OR REPLACE VIEW "VisitAfter"("beforeURL", "afterURL", "timestamp") AS SELECT "beforeURL", "afterURL", "timestamp"
+FROM "VisitAfter_4"
+>>>vertx.json
+{
+  "model" : {
+    "coords" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Click",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"Click_1\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Recommendation",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "url"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"url\", \"rec\", \"frequency\"\n  FROM \"Recommendation_2\"\n  ORDER BY \"url\" NULLS FIRST, \"frequency\" DESC NULLS LAST) AS \"t\"\nWHERE \"url\" = $1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "url"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Trending",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"url\", \"total\"\n  FROM \"Trending_3\"\n  ORDER BY \"total\" DESC NULLS LAST, \"url\" NULLS FIRST) AS \"t\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "VisitAfter",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"beforeURL\", \"afterURL\", \"timestamp\"\nFROM \"VisitAfter_4\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      }
+    ],
+    "mutations" : [ ],
+    "subscriptions" : [ ],
+    "schema" : {
+      "type" : "string",
+      "type" : "string",
+      "schema" : "type Click {\n  url: String!\n  timestamp: DateTime!\n  userid: String!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype Query {\n  Click(limit: Int = 10, offset: Int = 0): [Click!]\n  Recommendation(url: String!, limit: Int = 10, offset: Int = 0): [Recommendation!]\n  Trending(limit: Int = 10, offset: Int = 0): [Trending!]\n  VisitAfter(limit: Int = 10, offset: Int = 0): [VisitAfter!]\n}\n\ntype Recommendation {\n  url: String!\n  rec: String!\n  frequency: Float!\n}\n\ntype Trending {\n  url: String!\n  total: Float!\n}\n\ntype VisitAfter {\n  beforeURL: String!\n  afterURL: String!\n  timestamp: DateTime!\n}\n"
+    }
+  }
+}
