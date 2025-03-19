@@ -193,3 +193,51 @@ It also contains custom formats and connectors for Flink that extend
 existing formats and connectors to support functionality needed by DataSQRL.
 It may be reasonable to contribute those improvements and extensions back to
 the Apache Flink project.
+
+
+```mermaid
+graph TD;
+    %% Repository Annotations
+    subgraph Repositories
+        B["➕ = sqrl"]
+        A["⬛︎ = sql-runner"]
+        C["▲ = sqrl-functions"]
+        D["⚫︎ = sqrl-k8s"]
+    end
+
+    subgraph Server
+        server-core["server-core ➕"]
+        server-vertx["server-vertx ➕"]
+    end
+
+    %% Main Components
+    sqrl-k8s["sqrl-k8s ⚫︎"]
+    flink-sql-run["sql-run (light) ⬛︎ "]
+    sqrl-exec["sqrl-exec ➕"]
+    sqrl-cli["sqrl-cli ➕"]
+    sqrl-planner["sqrl-planner ➕"]
+    sqrl-integration-test["sqrl-integration-test➕"]
+    sqrl-lib-common["sqrl-lib-common (light) ⬛︎"]
+    sqrl-common["sqrl-common (light) ➕"]
+    std-library-functions["Std library functions ➕"]
+    formats-connectors["Formats & Connectors ⬛︎"]
+    sqrl-functions["sqrl-functions ▲"]
+
+    %% Relationships
+    sqrl-lib-common -->flink-sql-run
+    sqrl-lib-common -->sqrl-common
+    sqrl-lib-common --> std-library-functions
+    sqrl-lib-common --> formats-connectors
+    sqrl-lib-common --> sqrl-functions
+
+    flink-sql-run --> sqrl-k8s
+    flink-sql-run --> sqrl-exec
+
+    sqrl-common --> sqrl-planner
+    sqrl-common --> server-core
+
+    server-core --> server-vertx
+    sqrl-exec --> sqrl-integration-test
+    sqrl-planner --> sqrl-cli
+    sqrl-cli --> sqrl-integration-test
+```
