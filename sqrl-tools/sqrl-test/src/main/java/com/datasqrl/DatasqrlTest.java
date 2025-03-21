@@ -100,8 +100,9 @@ public class DatasqrlTest {
       //todo add file check instead of sleeping to make sure pipeline has started
       Thread.sleep(1000);
 
-      //2. Execute mutation queries against the API and snapshot results
+      //2. Execute subscription & mutation queries against the API and snapshot results
       if (testPlanOpt.isPresent()) {
+        //TODO: Etienne run all subscription queries async and collect the results.
         for (GraphqlQuery query : testPlanOpt.get().getMutations()) {
           //Execute mutation queries
           String data = executeQuery(query.getQuery());
@@ -169,7 +170,7 @@ public class DatasqrlTest {
       } catch (Exception e) {
       }
 
-      //4. Run the queries against the API and snapshot the results
+      //4. Run the queries against the API, finish subscriptions and snapshot the results
       if (testPlanOpt.isPresent()) {
         TestPlan testPlan = testPlanOpt.get();
         for (GraphqlQuery query : testPlan.getQueries()) {
@@ -180,6 +181,8 @@ public class DatasqrlTest {
           Path snapshotPath = snapshotDir.resolve(query.getName() + ".snapshot");
           snapshot(snapshotPath, query.getName(), data, exceptions);
         }
+        //TODO: Etienne terminate subscriptions, sort all records retrieved, and snapshot the result like we do the queries above
+        //add snapshot comparison below for subscriptions
 
         List<String> expectedSnapshotsQueries = testPlan.getQueries().stream()
             .map(f -> f.getName() + ".snapshot")
