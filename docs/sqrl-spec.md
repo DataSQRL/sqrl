@@ -104,6 +104,8 @@ In addition to the CREATE VIEW statement that FlinkSQL supports, SQRL recognizes
 
 SQRL native definitions use the assignment operator `:=` to define the element on the left-hand side with the definition body on the right-hand side.
 
+Definitions are uniquely identified by name and trying to reuse a name will produce an error. This also applies to functions with different signatures as SQRL does not support overloading.
+
 ### Table Definition Statement
 
 *identifier := select-query;*
@@ -168,8 +170,6 @@ Adding columns is useful for expressions that reference other columns in the tab
 OrderEntries := SELECT o.id, o.time, e.productid, e.q AS quantity, e.p AS unit_price, coalesce(e.d,0.0) AS discount FROM Orders o CROSS JOIN UNNEST(o.entries) e;
 OrderEntries.total = quantity * unit_price - discount;
 ```
-
-
 
 ## Interface
 
@@ -347,7 +347,10 @@ This hint only applies to table definitions.
 
 ### Execution Hint
 
+*+exec(engine_name)*
 
+An execution hint specifically defines the engine that executes this table. Usually, the DataSQRL optimizer will determine which engine executes a particular table based on a cost model. This hint gives the user control over that assignment.
+The optimizer will optimize the other assignments based on the user provided ones. Beware that tables which are downstream from other tables must be assigned engines that sit downstream in the infrastructure topology. Otherwise DataSQRL cannot find a feasible computation DAG.
 
 ### Index Hint
 
