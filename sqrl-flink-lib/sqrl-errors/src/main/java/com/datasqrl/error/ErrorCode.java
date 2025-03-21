@@ -37,6 +37,7 @@ public enum ErrorCode implements ErrorLabel {
   TABLE_LOCKED,
   SCHEMA_ERROR,
   TABLE_NOT_MATERIALIZE,
+  FUNCTION_EXISTS,
   NOT_YET_IMPLEMENTED;
 
   @Override

@@ -35,9 +35,8 @@ public class DAGBuilder {
     if (function.getVisibility().isAccessOnly()) {
       //Remove prior function in case its an AddColumn statement or replacement of an access function/relationship
       dagInputs.removeAll(node);
-    } else {
-      nodeLookup.put(node.getIdentifier(), node);
     }
+    nodeLookup.put(node.getIdentifier(), node);
     function.getFunctionAnalysis().getFromTables().forEach(inputTable ->
         dagInputs.put(node, Objects.requireNonNull(nodeLookup.get(inputTable.getIdentifier()))));
   }

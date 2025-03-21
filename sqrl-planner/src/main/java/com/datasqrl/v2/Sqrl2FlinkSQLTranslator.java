@@ -458,10 +458,6 @@ public class Sqrl2FlinkSQLTranslator {
   public SqrlTableFunction.SqrlTableFunctionBuilder resolveSqrlTableFunction(ObjectIdentifier identifier,
       String originalSql, List<ParsedArgument> arguments,
       Map<Integer, Integer> argumentIndexMap, PlannerHints hints, ErrorCollector errors) {
-    //Process argument types
-//    List<ParsedField> requiresTypeParsing = arguments.stream()
-//        .filter(Predicate.not(ParsedArgument::hasResolvedType)).collect(Collectors.toList());
-//    List<RelDataTypeField> parsedTypes = parse2RelDataType(requiresTypeParsing);
     List<FunctionParameter> parameters=new ArrayList<>();
     for (int i = 0; i < arguments.size(); i++) {
       ParsedArgument parsedArg = arguments.get(i);

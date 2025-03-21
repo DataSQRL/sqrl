@@ -279,7 +279,7 @@ public class SqlScriptPlanner {
               "Could not find parent table for relationship: %s", tblFctStmt.getPath().getFirst());
           checkFatal(parentNode.get() instanceof TableNode, sqrlDef.getTableName().getFileLocation(), ErrorCode.INVALID_TABLE_FUNCTION_ARGUMENTS,
               "Relationships can only be added to tables (not functions): %s [%s]", tblFctStmt.getPath().getFirst(), parentNode.get().getClass());
-          identifier = SqlNameUtil.toIdentifier(Name.system(tablePath.getLast().getDisplay()));
+          identifier = SqlNameUtil.toIdentifier(tablePath.toString());
           parentTbl = ((TableNode) parentNode.get()).getTableAnalysis();
           checkFatal(parentTbl.getOptionalBaseTable().isEmpty(), ErrorCode.BASETABLE_ONLY_ERROR,
               "Relationships can only be added to the base table [%s]", parentTbl.getBaseTable().getIdentifier());
@@ -309,6 +309,8 @@ public class SqlScriptPlanner {
         AccessVisibility visibility = new AccessVisibility(access, hints.isTest(), tblFctStmt.isRelationship(), isHidden);
         fctBuilder.visibility(visibility);
         SqrlTableFunction fct = fctBuilder.build();
+        errors.checkFatal(dagBuilder.getNode(fct.getIdentifier()).isEmpty(),
+            ErrorCode.FUNCTION_EXISTS, "Function or relationship [%s] already exists in catalog", tablePath);
         addFunctionToDag(fct, hints);
         if (!fct.getVisibility().isAccessOnly()) {
           sqrlEnv.registerSqrlTableFunction(fct);
@@ -485,7 +487,7 @@ public class SqlScriptPlanner {
       //TODO: should we add a default sort if the user didn't specify one to have predictable result sets for testing?
       String tableName = tableAnalysis.getIdentifier().getObjectName();
       String fctName = tableName + ACCESS_FUNCTION_SUFFIX;
-      SqrlTableFunction.SqrlTableFunctionBuilder fctBuilder = sqrlEnv.addSqrlTableFunction(SqlNameUtil.toIdentifier(Name.system(fctName)),
+      SqrlTableFunction.SqrlTableFunctionBuilder fctBuilder = sqrlEnv.addSqrlTableFunction(SqlNameUtil.toIdentifier(fctName),
           relBuilder.build(), parameters, tableAnalysis);
       fctBuilder.fullPath(NamePath.of(tableName));
       fctBuilder.visibility(visibility);
@@ -619,7 +621,7 @@ public class SqlScriptPlanner {
     Name sinkName = sinkPath.getLast();
     NamePath tablePath = exportStmt.getTableIdentifier().get();
 
-    //Lookup the table taht is being exported
+    //Lookup the table that is being exported
     Optional<PipelineNode> tableNode = dagBuilder.getNode(SqlNameUtil.toIdentifier(tablePath.getLast()));
     TableNode inputNode = tableNode.orElseThrow(() -> new StatementParserException(ErrorLabel.GENERIC,
         exportStmt.getTableIdentifier().getFileLocation(), "Could not find table: %s",

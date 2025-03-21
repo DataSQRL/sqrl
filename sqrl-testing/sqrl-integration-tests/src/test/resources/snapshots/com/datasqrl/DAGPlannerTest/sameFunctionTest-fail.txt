@@ -1,7 +1,0 @@
-[FATAL] Function [CustomerById] already exists
-in script:samefunctiontest-fail.sqrl [4:1]:
-
-CustomerById(id INT) := SELECT * FROM Customer WHERE customerid = :id;
-CustomerById(name STRING) := SELECT * FROM Customer WHERE customerid = :name;
-^
-

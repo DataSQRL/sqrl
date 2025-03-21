@@ -1,3 +1,0 @@
-IMPORT ecommerceTs.Customer;
-
-Customer := DISTINCT Customer ON customerid ORDER BY `timestamp` DESC;

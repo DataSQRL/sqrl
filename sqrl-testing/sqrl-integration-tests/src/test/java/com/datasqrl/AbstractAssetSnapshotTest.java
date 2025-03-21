@@ -207,7 +207,7 @@ public abstract class AbstractAssetSnapshotTest {
         .filter(path-> !path.toString().contains("/build/"))
         .filter(path -> {
           TestNameModifier mod = TestNameModifier.of(path);
-          return mod==TestNameModifier.none || (includeFail && mod==TestNameModifier.fail);
+          return mod==TestNameModifier.none || (includeFail && (mod==TestNameModifier.fail || mod==TestNameModifier.warn));
         })
         .sorted();
   }

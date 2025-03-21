@@ -283,7 +283,7 @@ public class TestCmd {
     private boolean failed;
 
     @Override
-    public void onSuccess() {
+    public void onSuccess(ErrorCollector errors) {
 
     }
 

@@ -52,7 +52,7 @@ public class SqrlTableFunction implements TableFunction, TableOrFunctionAnalysis
   /**
    * The (ordered) list of {@link SqrlFunctionParameter} parameters for this function (empty if no parameters)
    */
-  @Include @ToString.Include @Default
+  @ToString.Include @Default
   private final List<FunctionParameter> parameters = List.of();
   /**
    * The analysis of the function logic, including rowtype (i.e. the result type of this function), source tables, etc

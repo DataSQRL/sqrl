@@ -1,6 +1,6 @@
 IMPORT ecommerceTs.Customer;
 Customer.related := SELECT * FROM Customer other WHERE this.customerid = other.customerid ORDER BY other.`timestamp`;
--- overloads are no more permitted
+-- overloads are not permitted
 Customer.related(length INT) := SELECT * FROM Customer other WHERE this.customerid = other.customerid
                                                                        AND CHAR_LENGTH(other.email) >= :length ORDER BY other.`timestamp`;
 

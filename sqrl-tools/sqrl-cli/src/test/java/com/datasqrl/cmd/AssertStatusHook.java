@@ -12,7 +12,8 @@ public class AssertStatusHook implements StatusHook {
   private String messages = null;
 
   @Override
-  public void onSuccess() {
+  public void onSuccess(ErrorCollector errors) {
+    messages = ErrorPrinter.prettyPrint(errors);
   }
 
   @Override
