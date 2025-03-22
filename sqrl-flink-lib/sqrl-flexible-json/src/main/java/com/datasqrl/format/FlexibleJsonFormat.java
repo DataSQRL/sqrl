@@ -67,6 +67,12 @@ public class FlexibleJsonFormat implements DeserializationFormatFactory,
     };
   }
 
+  /**
+   * This uses a SQRL specific encoding format so that we can add support for SQRL types
+   * @param context
+   * @param formatOptions
+   * @return
+   */
   @Override
   public EncodingFormat<SerializationSchema<RowData>> createEncodingFormat(
       Context context, ReadableConfig formatOptions) {

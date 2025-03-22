@@ -23,15 +23,11 @@ type Submission {
   readme: String
   description: String
   uniqueId: String!
-  keywords: [keywords!]
+  keywords: [String!]
   repoURL: String!
   file: String!
   hash: String!
   submissionTime: String!
-}
-
-type keywords {
-  name: String!
 }
 
 type TopicSearch {

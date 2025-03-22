@@ -79,6 +79,7 @@ import org.apache.calcite.util.Pair;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.planner.calcite.FlinkRelBuilder;
 import org.apache.flink.table.planner.catalog.SqlCatalogViewTable;
+import org.apache.flink.table.planner.plan.schema.ExpandingPreparingTable;
 import org.apache.flink.table.planner.plan.schema.TableSourceTable;
 import org.apache.flink.table.planner.plan.schema.TimeIndicatorRelDataType;
 
@@ -443,10 +444,12 @@ public class DAGPlanner {
       ObjectIdentifier tablePath;
       if (table instanceof TableSourceTable) {
         tablePath = ((TableSourceTable) table).contextResolvedTable().getIdentifier();
-      } else if (table instanceof SqlCatalogViewTable) {
-        List<String> names = ((SqlCatalogViewTable) table).getNames();
+      } else if (table instanceof ExpandingPreparingTable) {
+        List<String> names = ((ExpandingPreparingTable) table).getNames();
         tablePath = ObjectIdentifier.of(names.get(0),names.get(1),names.get(2));
-      } else throw new UnsupportedOperationException("Unexpected table: "+ table.getClass());
+      } else {
+        throw new UnsupportedOperationException("Unexpected table: "+ table.getClass());
+      }
       TableAnalysis tableAnalysis = sqrlEnv.getTableLookup().lookupTable(tablePath);
       errors.checkFatal(tableAnalysis!=null, "Could not find table: %s", tablePath);
 

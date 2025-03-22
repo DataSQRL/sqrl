@@ -186,6 +186,7 @@ public class FlinkSqlNodeFactory {
         createColumns(relDataType, metadataConfig, expressionParser),
         createConstraints(primaryKeyConstraint),
         createPropertiesAndRemoveDefaults(connectorProperties),
+//        NO_DISTRIBUTION,
         partitionKeysNode,
         watermark,
         null,
@@ -194,6 +195,8 @@ public class FlinkSqlNodeFactory {
     );
   }
 
+//  public static final SqlDistribution NO_DISTRIBUTION = null;
+
   public static SqlCreateTable createTable(String tableName, RelDataType relDataType, boolean isTemporary) {
     return new SqlCreateTable(
         SqlParserPos.ZERO,
@@ -201,6 +204,7 @@ public class FlinkSqlNodeFactory {
         createColumns(relDataType),
         Collections.emptyList(),
         FlinkSqlNodeFactory.createProperties(Map.of("connector","datagen")),
+//        NO_DISTRIBUTION,
         SqlNodeList.EMPTY,
         null,
         null,

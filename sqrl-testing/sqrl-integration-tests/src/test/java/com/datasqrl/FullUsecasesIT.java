@@ -80,8 +80,8 @@ public class FullUsecasesIT {
       new ScriptCriteria("analytics-only.sqrl", "run"),
       new ScriptCriteria("postgres-log-disabled.sqrl", "test"),
       new ScriptCriteria("postgres-log-disabled.sqrl", "run"),
-      new ScriptCriteria("seedshop-extended.sqrl", "test"), // CustomerPromotionTest issue
-      new ScriptCriteria("seedshop-extended.sqrl", "run") // CustomerPromotionTest issue
+      new ScriptCriteria("seedshop-extended.sqrl", "test"), // CustomerPromotionTest issue TODO
+      new ScriptCriteria("seedshop-extended.sqrl", "run") // CustomerPromotionTest issue TODO
   );
 
   static final Path PROJECT_ROOT = Paths.get(System.getProperty("user.dir"));

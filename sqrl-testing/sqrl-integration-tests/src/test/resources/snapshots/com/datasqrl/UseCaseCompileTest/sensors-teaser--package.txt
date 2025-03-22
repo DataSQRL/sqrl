@@ -214,12 +214,6 @@ CREATE TABLE IF NOT EXISTS "SecReading_1" ("sensorid" BIGINT NOT NULL, "timeSec"
 CREATE TABLE IF NOT EXISTS "SensorMaxTemp_2" ("sensorid" BIGINT NOT NULL, "window_time" TIMESTAMP WITH TIME ZONE NOT NULL, "maxTemp" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("sensorid"));
 CREATE TABLE IF NOT EXISTS "SensorReading_3" ("sensorid" BIGINT NOT NULL, "time" BIGINT NOT NULL, "temperature" DOUBLE PRECISION NOT NULL, "humidity" DOUBLE PRECISION NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("sensorid","time"))
 >>>postgres-views.sql
-CREATE OR REPLACE VIEW "SecReading"("sensorid", "timeSec", "temp") AS SELECT "sensorid", "timeSec", "temp"
-FROM (SELECT "sensorid", "timeSec", "temp", "__pk_hash"
-  FROM "SecReading_1"
-  ORDER BY "timeSec" DESC NULLS LAST) AS "t1";
-CREATE OR REPLACE VIEW "SensorMaxTemp"("sensorid", "window_time", "maxTemp") AS SELECT *
-FROM "SensorMaxTemp_2";
 CREATE OR REPLACE VIEW "SensorReading"("sensorid", "time", "temperature", "humidity", "timestamp") AS SELECT *
 FROM "SensorReading_3"
 >>>vertx.json
@@ -236,14 +230,30 @@ FROM "SensorReading_3"
               {
                 "type" : "variable",
                 "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
                 "path" : "sensorid"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"sensorid\", \"timeSec\", \"temp\"\nFROM (SELECT \"sensorid\", \"timeSec\", \"temp\", \"__pk_hash\"\n  FROM \"SecReading_1\"\n  ORDER BY \"timeSec\" DESC NULLS LAST) AS \"t\"",
-              "parameters" : [ ]
+              "sql" : "SELECT \"sensorid\", \"timeSec\", \"temp\"\nFROM (SELECT \"sensorid\", \"timeSec\", \"temp\", \"__pk_hash\"\n  FROM \"SecReading_1\"\n  ORDER BY \"timeSec\" DESC NULLS LAST) AS \"t\"\nWHERE \"sensorid\" = $1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "sensorid"
+                }
+              ]
             }
           }
         ]
@@ -258,13 +268,56 @@ FROM "SensorReading_3"
               {
                 "type" : "variable",
                 "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
                 "path" : "sensorid"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"SensorMaxTemp_2\"",
+              "sql" : "SELECT *\nFROM \"SensorMaxTemp_2\"\nWHERE \"sensorid\" = $1 OR $1 IS NULL",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "sensorid"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "SensorReading",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"SensorReading_3\"",
               "parameters" : [ ]
             }
           }
@@ -276,7 +329,7 @@ FROM "SensorReading_3"
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "type Query {\n  SecReading(sensorid: Int!): [SecReading!]\n  SensorMaxTemp(sensorid: Int): [SensorMaxTemp!]\n}\n\ntype SecReading {\n  sensorid: Int!\n  timeSec: String!\n  temp: Float!\n}\n\ntype SensorMaxTemp {\n  sensorid: Int!\n  maxTemp: Float!\n}"
+      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype Query {\n  SecReading(sensorid: Float!, limit: Int = 10, offset: Int = 0): [SecReading!]\n  SensorMaxTemp(sensorid: Float!, limit: Int = 10, offset: Int = 0): [SensorMaxTemp!]\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n}\n\ntype SecReading {\n  sensorid: Float!\n  timeSec: DateTime!\n  temp: Float!\n}\n\ntype SensorMaxTemp {\n  sensorid: Float!\n  window_time: DateTime!\n  maxTemp: Float!\n}\n\ntype SensorReading {\n  sensorid: Float!\n  time: Float!\n  temperature: Float!\n  humidity: Float!\n  timestamp: DateTime!\n}\n"
     }
   }
 }

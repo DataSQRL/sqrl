@@ -11,6 +11,7 @@ import com.datasqrl.io.schema.flexible.input.FlexibleFieldSchema;
 import com.datasqrl.io.schema.flexible.input.FlexibleSchemaHelper;
 import com.datasqrl.io.schema.flexible.input.FlexibleTableSchema;
 import com.datasqrl.io.schema.flexible.input.RelationType;
+import com.datasqrl.io.schema.flexible.type.ArrayType;
 import com.datasqrl.io.schema.flexible.type.Type;
 import lombok.AllArgsConstructor;
 import lombok.Value;
@@ -64,7 +65,12 @@ public class FlexibleTableConverter {
       }
       visitor.addField(fieldName, nestedTable, nullable, isSingleton);
     } else {
-      visitor.addField(fieldName, ftype.getType(), nullable);
+      //Make array if it has arrayDepth
+      Type type = ftype.getType();
+      for (int i = 0; i < ftype.getArrayDepth(); i++) {
+        type = new ArrayType(type);
+      }
+      visitor.addField(fieldName, type, nullable);
     }
   }
 

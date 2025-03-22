@@ -1,4 +1,4 @@
-IMPORT avro-schema.Schema;
+IMPORT avro-json.Schema;
 
 /*+test*/
-MySchema := SELECT * FROM Schema;
+MySchema := SELECT * FROM Schema ORDER BY uuidField DESC;
