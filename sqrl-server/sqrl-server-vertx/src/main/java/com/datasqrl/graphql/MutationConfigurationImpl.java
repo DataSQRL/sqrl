@@ -9,6 +9,7 @@ import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.io.SinkProducer;
 import com.datasqrl.graphql.kafka.KafkaSinkProducer;
 import com.datasqrl.graphql.server.Context;
+import com.datasqrl.graphql.server.MutationComputedColumnType;
 import com.datasqrl.graphql.server.MutationConfiguration;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.RootGraphqlModel.KafkaMutationCoords;
@@ -30,9 +31,11 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -58,17 +61,21 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
         }
 
         SinkProducer emitter = sinks.get(coords.getFieldName());
+        final List<String> uuidColumns = coords.getComputedColumns().entrySet().stream()
+            .filter(e -> e.getValue() == MutationComputedColumnType.UUID).map(Map.Entry::getKey).collect(Collectors.toList());
+        final List<String> timestampColumns = coords.getComputedColumns().entrySet().stream()
+            .filter(e -> e.getValue() == MutationComputedColumnType.TIMESTAMP).map(Map.Entry::getKey).collect(Collectors.toList());
 
         Preconditions.checkNotNull(emitter, "Could not find sink for field: %s", coords.getFieldName());
         return VertxDataFetcher.create((env, fut) -> {
 
-          Map entry = getEntry(env);
+          Map entry = getEntry(env, uuidColumns);
 
           emitter.send(entry)
               .onSuccess(sinkResult->{
                 //Add timestamp from sink to result
                 ZonedDateTime dateTime = ZonedDateTime.ofInstant(sinkResult.getSourceTime(), ZoneOffset.UTC);
-                entry.put("event_time", dateTime.toOffsetDateTime());
+                timestampColumns.forEach(colName -> entry.put(colName, dateTime.toOffsetDateTime()));
 
                 fut.complete(entry);
               })
@@ -81,7 +88,7 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
       @Override
       public DataFetcher<?> visit(PostgresLogMutationCoords coords, Context context) {
         return VertxDataFetcher.create((env, fut) -> {
-          Map entry = getEntry(env);
+          Map entry = getEntry(env, List.of());
           entry.put("event_time", Timestamp.from(Instant.now())); // TODO: better to do it in the db
 
           Object[] paramObj = new Object[coords.getParameters().size()];
@@ -109,7 +116,7 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
     };
   }
 
-  private Map getEntry(DataFetchingEnvironment env) {
+  private Map getEntry(DataFetchingEnvironment env, List<String> uuidColumns) {
     //Rules:
     //- Only one argument is allowed, it doesn't matter the name
     //- input argument cannot be null.
@@ -118,9 +125,11 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
     Map entry = (Map)args.entrySet().stream()
         .findFirst().map(Entry::getValue).get();
 
-    //Add UUID for event
-    UUID uuid = UUID.randomUUID();
-    entry.put("_uuid", uuid);
+    if (!uuidColumns.isEmpty()) {
+      //Add UUID for event for the computed uuid columns
+      UUID uuid = UUID.randomUUID();
+      uuidColumns.forEach(colName -> entry.put(colName, uuid));
+    }
     return entry;
   }
 

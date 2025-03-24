@@ -4,20 +4,24 @@ Submission := SELECT *,  COALESCE(variant, 'default') AS variant0,
                      concat('https://repository.datasqrl.com/',file) AS repoURL
               FROM _SubmissionRaw;
 
+/*+query_by_any(name) */
 Package := SELECT DISTINCT name FROM Submission;
 
-Package.latest := SELECT * FROM Submission s WHERE this.name = s.name AND s.latest = TRUE ORDER BY s.submissionTime DESC;
-Package.versions := SELECT * FROM  Submission s WHERE this.name = s.name ORDER BY s.submissionTime DESC;
+Package.latest := SELECT * FROM Submission s WHERE this.name = s.name AND s.latest = TRUE ORDER BY s.submissionTime DESC LIMIT 1;
+Package.versions(version String, variant String) := SELECT * FROM  Submission s WHERE this.name = s.name AND (:version IS NULL OR :version=s.version) AND (:variant IS NULL OR :variant=s.variant)
+                                                                                      ORDER BY s.submissionTime DESC;
 
 SubmissionTopics := SELECT s.name AS pkgName, k.name AS topicName, s.submissionTime
                     FROM Submission s CROSS JOIN UNNEST(keywords) k(name);
 
+/*+query_by_all(topicName) */
 TopicPackages := SELECT pkgName, topicName, COUNT(1) AS numSubmissions, MAX(submissionTime) AS lastSubmission
                  FROM SubmissionTopics
-                 GROUP BY pkgName, topicName ORDER BY numSubmissions DESC;
+                 GROUP BY pkgName, topicName ORDER BY numSubmissions DESC, pkgName ASC;
 
-TopicPackages.latest := SELECT * FROM  Submission s WHERE this.pkgName = s.name AND s.latest = TRUE ORDER BY s.submissionTime DESC;
+TopicPackages.latest := SELECT * FROM  Submission s WHERE this.pkgName = s.name AND s.latest = TRUE ORDER BY s.submissionTime DESC LIMIT 1;
 
+/*+query_by_any(topicName) */
 TopicSearch := SELECT topicName, COUNT(DISTINCT pkgName) AS numPackages
                FROM SubmissionTopics
                GROUP BY topicName ORDER BY numPackages DESC;

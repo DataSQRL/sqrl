@@ -18,11 +18,13 @@ import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.micrometer.MicrometerMetricsOptions;
+import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -54,7 +56,7 @@ public class DatasqrlRun {
   private final Map<String, String> env;
   // Fix override
   Path build = Path.of(System.getProperty("user.dir")).resolve("build");
-  Path path = build.resolve("plan");
+  Path planPath = build.resolve("deploy").resolve("plan");
 
   ObjectMapper objectMapper = new ObjectMapper();
 
@@ -70,18 +72,18 @@ public class DatasqrlRun {
     this.env = System.getenv();
   }
 
-  public DatasqrlRun(Path path, Map<String, String> env) {
+  public DatasqrlRun(Path planPath, Map<String, String> env) {
     Map<String, String> newEnv = new HashMap<>();
     newEnv.putAll(System.getenv());
     newEnv.putAll(env);
     this.env = newEnv;
-    setPath(path);
+    setPlanPath(planPath);
   }
 
   @VisibleForTesting
-  public void setPath(Path path) {
-    this.path = path;
-    this.build = path.getParent();
+  public void setPlanPath(Path planPath) {
+    this.planPath = planPath;
+    this.build = planPath.getParent().getParent();
   }
 
   public TableResult run(boolean hold) {
@@ -206,12 +208,12 @@ public class DatasqrlRun {
     StreamTableEnvironment tEnv = StreamTableEnvironment.create(sEnv, tEnvConfig);
     TableResult tableResult = null;
 
-    Path flinkPath = path.resolve("flink.json");
+    Path flinkPath = planPath.resolve("flink.json");
     if (!flinkPath.toFile().exists()) {
       throw new RuntimeException("Could not find flink plan.");
     }
 
-    Map map = objectMapper.readValue(path.resolve("flink.json").toFile(), Map.class);
+    Map map = objectMapper.readValue(planPath.resolve("flink.json").toFile(), Map.class);
     List<String> statements = (List<String>) map.get("flinkSql");
 
     for (int i = 0; i < statements.size()-1; i++) {
@@ -260,10 +262,10 @@ public class DatasqrlRun {
 
   @SneakyThrows
   public void initKafka() {
-    if (!path.resolve("kafka.json").toFile().exists()) {
+    if (!planPath.resolve("kafka.json").toFile().exists()) {
       return;
     }
-    Map<String, Object> map = objectMapper.readValue(path.resolve("kafka.json").toFile(), Map.class);
+    Map<String, Object> map = objectMapper.readValue(planPath.resolve("kafka.json").toFile(), Map.class);
     List<Map<String, Object>> topics = (List<Map<String, Object>>) map.get("topics");
 
     if (topics == null) {
@@ -301,37 +303,24 @@ public class DatasqrlRun {
 
   @SneakyThrows
   public void initPostgres() {
-    if (!path.resolve("postgres.json").toFile().exists()) {
+    File file = planPath.resolve("postgres.json").toFile();
+    if (!file.exists()) {
       return;
     }
-    Map<String, Object> map = objectMapper.readValue(path.resolve("postgres.json").toFile(), Map.class);
-    List<Map<String, Object>> ddl = (List<Map<String, Object>>) map.get("ddl");
+    Map plan = objectMapper.readValue(file, Map.class);
 
-    //todo env + default
-    String format = String.format("jdbc:postgresql://%s:%s/%s",
+    String fullPostgresJDBCUrl = String.format("jdbc:postgresql://%s:%s/%s",
         getenv("PGHOST"), getenv("PGPORT"), getenv("PGDATABASE"));
-    try (Connection connection = DriverManager.getConnection(format, getenv("PGUSER"), getenv("PGPASSWORD"))) {
-      for (Map<String, Object> statement : ddl) {
-        String sql = (String) statement.get("sql");
-        connection.createStatement().execute(sql);
+    try (Connection connection = DriverManager.getConnection(fullPostgresJDBCUrl, getenv("PGUSER"), getenv("PGPASSWORD"))) {
+      for (Map statement : (List<Map>) plan.get("statements")) {
+        log.info("Executing statement {} of type {}", statement.get("name"), statement.get("type"));
+        try (Statement stmt = connection.createStatement()) {
+          stmt.execute((String) statement.get("sql"));
+        }
       }
     } catch (Exception e) {
       e.printStackTrace();
     }
-
-    if (!path.resolve("vertx.json").toFile().exists()) {
-      List<Map<String, Object>> views = (List<Map<String, Object>>) map.get("views");
-
-      try (Connection connection = DriverManager.getConnection(format, getenv("PGUSER"), getenv("PGPASSWORD"))) {
-        for (Map<String, Object> statement : views) {
-          String sql = (String) statement.get("sql");
-          connection.createStatement().execute(sql);
-        }
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-    }
-
   }
 
   private String getenv(String key) {
@@ -340,11 +329,11 @@ public class DatasqrlRun {
 
   @SneakyThrows
   public void startVertx() {
-    if (!path.resolve("vertx.json").toFile().exists()) {
+    if (!planPath.resolve("vertx.json").toFile().exists()) {
       return;
     }
     RootGraphqlModel rootGraphqlModel = objectMapper.readValue(
-        path.resolve("vertx.json").toFile(),
+        planPath.resolve("vertx.json").toFile(),
         ModelContainer.class).model;
     if (rootGraphqlModel == null) {
       return; //no graphql server queries
@@ -363,7 +352,7 @@ public class DatasqrlRun {
     };
 
     // Set Postgres connection options from environment variables
-    if (path.resolve("postgres.json").toFile().exists()) {
+    if (planPath.resolve("postgres.json").toFile().exists()) {
       serverConfig.getPgConnectOptions()
           .setHost(getenv("PGHOST"))
           .setPort(Integer.parseInt(getenv("PGPORT")))

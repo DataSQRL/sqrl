@@ -3,7 +3,7 @@ IMPORT loan-local.Applications AS ApplicationsStream;
 IMPORT loan-local.Loan_types AS LoanTypesStream;
 
 CREATE TABLE ApplicationUpdates (
-  _uuid STRING NOT NULL,
+  _uuid STRING NOT NULL METADATA FROM 'uuid',
   loan_application_id BIGINT NOT NULL,
   status STRING NOT NULL,
   message STRING,
@@ -37,7 +37,7 @@ ApplicationAlert := SELECT _uuid, id, customer_id, loan_type_id, max_amount, min
                     WHERE status = 'underwriting' AND (amount > max_amount OR amount < min_amount);
 
 CREATE TABLE AddChatMessage (
-    _uuid STRING NOT NULL,
+    _uuid STRING NOT NULL METADATA FROM 'uuid',
     role STRING NOT NULL,
     content STRING NOT NULL,
     name STRING,

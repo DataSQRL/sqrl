@@ -27,9 +27,9 @@ public class APIQuery implements IdentifiedQuery {
   NamePath namePath;
   // Query
   RelNode relNode;
-  // Where parameters come from
+  // Where parameters come from (where parameters come from at runtime)
   List<JdbcParameterHandler> parameters;
-  // How arguments are matched
+  // How arguments are matched (matching the arguments in the signature of the functions)
   List<Argument> graphqlArguments;
   // Has a limit/offset
   boolean isLimitOffset;

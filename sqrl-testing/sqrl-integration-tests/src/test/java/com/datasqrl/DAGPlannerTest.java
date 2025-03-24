@@ -16,7 +16,7 @@ public class DAGPlannerTest extends AbstractAssetSnapshotTest {
   public static final Path SCRIPT_DIR = getResourcesDirectory("dagplanner");
 
   protected DAGPlannerTest() {
-    super(SCRIPT_DIR.resolve("deploy-assets"));
+    super(SCRIPT_DIR.resolve("plan-output"));
   }
 
   @ParameterizedTest
@@ -27,7 +27,7 @@ public class DAGPlannerTest extends AbstractAssetSnapshotTest {
     boolean expectFailure = testModifier==TestNameModifier.fail;
     boolean printMessages = testModifier==TestNameModifier.fail || testModifier==TestNameModifier.warn;
     this.snapshot = Snapshot.of(getDisplayName(script), getClass());
-    AssertStatusHook hook = execute(SCRIPT_DIR, "compile", script.getFileName().toString(), "-t", deployDir.toString());
+    AssertStatusHook hook = execute(SCRIPT_DIR, "compile", script.getFileName().toString(), "-t", outputDir.getFileName().toString());
     assertEquals(expectFailure, hook.isFailed(), hook.getMessages());
     if (printMessages) {
       createMessageSnapshot(hook.getMessages());
@@ -46,7 +46,7 @@ public class DAGPlannerTest extends AbstractAssetSnapshotTest {
     };
   }
 
-  public Predicate<Path> getPlanDirFilter() {
+  public Predicate<Path> getOutputDirFilter() {
     return path -> {
       if (path.getFileName().toString().equals("flink-sql-no-functions.sql")) return true;
       if (path.getFileName().toString().contains("flink")) return false;

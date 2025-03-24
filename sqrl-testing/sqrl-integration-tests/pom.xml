@@ -197,7 +197,7 @@
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-test</artifactId>
-      <version>0.5.10-SNAPSHOT</version>
+<!--      <version>0.5.10-SNAPSHOT</version>-->
       <scope>test</scope>
     </dependency>
   </dependencies>

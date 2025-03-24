@@ -38,10 +38,6 @@ public class PostgresViewTest extends AbstractUseCaseTest {
 
   public static final Path USECASE_DIR = getResourcesDirectory("usecases");
 
-  protected PostgresViewTest() {
-    super(USECASE_DIR);
-  }
-
   @SneakyThrows
   @ParameterizedTest
   @ArgumentsSource(UseCaseFiles.class)

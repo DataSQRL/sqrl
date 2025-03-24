@@ -55,14 +55,14 @@ CREATE TABLE `LogData_1` (
   `ID` BIGINT NOT NULL,
   `EPOCH_TIMESTAMP` BIGINT NOT NULL,
   `SOME_VALUE` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `TIMESTAMP` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  PRIMARY KEY (`ID`) NOT ENFORCED
+  `TIMESTAMP` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
 ) WITH (
-  'connector' = 'upsert-kafka',
-  'value.format' = 'flexible-json',
+  'connector' = 'kafka',
+  'format' = 'flexible-json',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
-  'key.format' = 'raw',
+  'scan.startup.mode' = 'group-offsets',
+  'properties.auto.offset.reset' = 'earliest',
   'topic' = 'LogData'
 );
 EXECUTE STATEMENT SET BEGIN

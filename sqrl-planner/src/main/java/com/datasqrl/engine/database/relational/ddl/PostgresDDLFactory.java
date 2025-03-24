@@ -3,6 +3,9 @@
  */
 package com.datasqrl.engine.database.relational.ddl;
 
+import com.datasqrl.calcite.Dialect;
+import com.datasqrl.calcite.DialectCallConverter;
+import com.datasqrl.calcite.OperatorRuleTransformer;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.convert.PostgresRelToSqlNode;
 import com.datasqrl.calcite.convert.PostgresSqlNodeToString;
@@ -46,7 +49,7 @@ public class PostgresDDLFactory extends AbstractJdbcStatementFactory implements 
 
 
   public PostgresDDLFactory() {
-    super(new PostgresRelToSqlNode(), new PostgresSqlNodeToString());
+    super(new OperatorRuleTransformer(Dialect.POSTGRES), new PostgresRelToSqlNode(), new PostgresSqlNodeToString());
   }
 
   @Override

@@ -48,6 +48,11 @@ public class SqlNameUtil {
   }
 
   public static ObjectIdentifier toIdentifier(Name name) {
-    return ObjectIdentifier.of("default_catalog", "default_database", name.getDisplay());
+    return toIdentifier(name.getDisplay());
+  }
+
+
+  public static ObjectIdentifier toIdentifier(String name) {
+    return ObjectIdentifier.of("default_catalog", "default_database", name);
   }
 }

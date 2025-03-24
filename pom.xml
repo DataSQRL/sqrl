@@ -30,7 +30,7 @@
     <vertx.version>4.5.8</vertx.version>
     <agroal.version>1.11</agroal.version>
     <kafka.version>3.4.0</kafka.version>
-    <flink.version>1.19.1</flink.version>
+    <flink.version>1.19.2</flink.version>
     <slf4j.version>1.7.36</slf4j.version>
     <postgres.version>42.5.0</postgres.version>
     <log4j.version>2.23.1</log4j.version>
@@ -62,6 +62,7 @@
     <junit.jupiter.version>5.8.2</junit.jupiter.version>
     <calcite.version>1.27.0</calcite.version>
     <graphql-java.version>19.2</graphql-java.version>
+    <graphql-java-extended-scalars.version>19.1</graphql-java-extended-scalars.version>
     <projectreactor.version>3.5.6</projectreactor.version>
     <avro.version>1.11.3</avro.version>
     <freemarker.version>2.3.32</freemarker.version>
@@ -290,6 +291,11 @@
         <artifactId>sqrl-run</artifactId>
         <version>${project.version}</version>
       </dependency>
+      <dependency>
+        <groupId>com.datasqrl</groupId>
+        <artifactId>sqrl-test</artifactId>
+        <version>${project.version}</version>
+      </dependency>
       <!-- sqrl test jars-->
       <dependency>
         <groupId>com.datasqrl</groupId>
@@ -405,6 +411,13 @@
         <artifactId>graphql-java</artifactId>
         <version>${graphql-java.version}</version>
       </dependency>
+
+      <dependency>
+        <groupId>com.graphql-java</groupId>
+        <artifactId>graphql-java-extended-scalars</artifactId>
+        <version>${graphql-java-extended-scalars.version}</version>
+      </dependency>
+
 
       <!-- Vertx -->
       <dependency>

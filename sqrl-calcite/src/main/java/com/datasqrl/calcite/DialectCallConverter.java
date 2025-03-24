@@ -22,20 +22,17 @@ import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.tools.Programs;
 
 /**
- * Converts functions to the given dialect via rule transformations.
- * Rule transformations are implemented as {@link OperatorRuleTransform} for "structural" transformations
- * that have to happen at the {@link RelNode} level.
- *
- * Simpler transformations that only require switching out the function name or parameter order
- * should be implemented via {@link com.datasqrl.function.translations.SqlTranslation} which happen
- * during unparsing.
+ * Use {@link OperatorRuleTransformer} instead
  */
+@Deprecated
 public class DialectCallConverter {
+
   private final RelOptPlanner planner;
 
-  public static final Map<Name, OperatorRuleTransform> transformMap = ServiceLoaderDiscovery.getAll(
-          OperatorRuleTransform.class)
-      .stream().collect(Collectors.toMap(t->Name.system(t.getRuleOperatorName()), t->t));
+  public static final Map<Name, OperatorRuleTransform> transformMap = Map.of();
+//  = ServiceLoaderDiscovery.getAll(
+//          OperatorRuleTransform.class)
+//      .stream().collect(Collectors.toMap(t->Name.system(t.getRuleOperatorName()), t->t));
 
   public DialectCallConverter(RelOptPlanner planner) {
     this.planner = planner;
@@ -46,7 +43,7 @@ public class DialectCallConverter {
 
     List<RelRule> rules = new ArrayList<>();
     for (Entry<SqlOperator, OperatorRuleTransform> transform : transforms.entrySet()) {
-      rules.addAll(transform.getValue().transform(dialect, transform.getKey()));
+      rules.addAll(transform.getValue().transform(transform.getKey()));
     }
 
     relNode = Programs.hep(rules, false, null)

@@ -1,6 +1,5 @@
 package com.datasqrl.cmd;
 
-import static com.datasqrl.packager.Packager.*;
 import static com.datasqrl.util.NameUtil.namepath2Path;
 
 import com.datasqrl.canonicalizer.NamePath;
@@ -11,6 +10,7 @@ import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.ScriptConfig;
 import com.datasqrl.config.PackageJsonImpl;
 import com.datasqrl.config.SqrlConfigCommons;
+import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.packager.Packager;
@@ -40,7 +40,7 @@ public class PackageBootstrap {
     ErrorCollector errors = this.errors.withLocation(ErrorPrefix.CONFIG).resolve("package");
 
     //Create build dir to unpack resolved dependencies
-    Path buildDir = rootDir.resolve(Packager.BUILD_DIR_NAME);
+    Path buildDir = rootDir.resolve(SqrlConstants.BUILD_DIR_NAME);
     Packager.cleanBuildDir(buildDir);
     Packager.createBuildDir(buildDir);
 
@@ -62,7 +62,7 @@ public class PackageBootstrap {
 
     if (existingConfig.isEmpty() && profiles.length == 0) { //No profiles found, use default (remotely downloaded)
       PackageJson defaultConfig = createDefaultConfig(errors);
-      Path path = buildDir.resolve(PACKAGE_JSON);
+      Path path = buildDir.resolve(SqrlConstants.PACKAGE_JSON);
       profiles = defaultConfig.getProfiles().toArray(String[]::new);
       existingConfig = Optional.of(defaultConfig);
       defaultConfig.toFile(path, true);
@@ -76,7 +76,7 @@ public class PackageBootstrap {
     //Download any profiles
     for (String profile : profiles) {
       if (isLocalProfile(rootDir, profile)) {
-        Path localProfile = rootDir.resolve(profile).resolve(PACKAGE_JSON);
+        Path localProfile = rootDir.resolve(profile).resolve(SqrlConstants.PACKAGE_JSON);
         configFiles.add(localProfile);
       } else {
         //check to see if it's already in the package json, download the correct dep
@@ -86,7 +86,7 @@ public class PackageBootstrap {
         } else {
           dependency = repository.resolveDependency(profile);
         }
-        Path profilePath = namepath2Path(rootDir.resolve(BUILD_DIR_NAME), NamePath.parse(profile));
+        Path profilePath = namepath2Path(rootDir.resolve(SqrlConstants.BUILD_DIR_NAME), NamePath.parse(profile));
 
         if (dependency.isPresent()) {
           boolean success = repository.retrieveDependency(profilePath,
@@ -100,7 +100,7 @@ public class PackageBootstrap {
           throw new RuntimeException("Could not find profile in repository: " + profile);
         }
 
-        Path remoteProfile = profilePath.resolve(PACKAGE_JSON);
+        Path remoteProfile = profilePath.resolve(SqrlConstants.PACKAGE_JSON);
         if (Files.isRegularFile(remoteProfile)) {
           configFiles.add(remoteProfile);
         } else {
@@ -177,7 +177,7 @@ public class PackageBootstrap {
     //1. Check if it's on the local file system
     if (Files.isDirectory(rootDir.resolve(profile))) {
       //1. Profile must contain a package json
-      if (!Files.isRegularFile(rootDir.resolve(profile).resolve(PACKAGE_JSON))) {
+      if (!Files.isRegularFile(rootDir.resolve(profile).resolve(SqrlConstants.PACKAGE_JSON))) {
         log.info("Profile [" + profile + "] is a directory but missing a package.json. Attempting to resolve as a remote profile.");
         return false;
       }

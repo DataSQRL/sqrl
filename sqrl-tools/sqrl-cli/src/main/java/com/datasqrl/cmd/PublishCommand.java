@@ -1,12 +1,10 @@
 package com.datasqrl.cmd;
 
-import static com.datasqrl.packager.Packager.DEFAULT_PACKAGE;
+import static com.datasqrl.config.SqrlConstants.DEFAULT_PACKAGE;
 
 import com.datasqrl.config.PackageConfiguration;
-import com.datasqrl.config.PackageJsonImpl;
-import com.datasqrl.config.SqrlConfigCommons;
+import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.error.NotYetImplementedException;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.packager.Publisher;
 import com.datasqrl.packager.repository.LocalRepositoryImplementation;
@@ -32,7 +30,7 @@ public class PublishCommand extends AbstractCommand {
     Optional<List<Path>> packageConfigsOpt = Packager.findPackageFile(root.rootDir,
         root.packageFiles);
     errors.checkFatal(packageConfigsOpt.isPresent(),
-        "Directory does not contain [%s] package configuration file", Packager.PACKAGE_JSON);
+        "Directory does not contain [%s] package configuration file", SqrlConstants.PACKAGE_JSON);
     List<Path> packageconfigs = packageConfigsOpt.get();
     Path defaultPkgConfig = packageRoot.resolve(DEFAULT_PACKAGE);
 

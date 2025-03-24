@@ -13,10 +13,6 @@ public class DAGWriterJsonTest extends AbstractUseCaseTest {
 
   public static final Path USECASE_DIR = getResourcesDirectory("usecases/clickstream");
 
-  protected DAGWriterJsonTest() {
-    super(USECASE_DIR);
-  }
-
   @ParameterizedTest
   @ArgumentsSource(UseCaseFiles.class)
   void testUsecase(Path script, Path graphQlFile, Path packageFile) {

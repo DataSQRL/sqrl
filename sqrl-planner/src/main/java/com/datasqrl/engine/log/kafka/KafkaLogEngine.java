@@ -24,6 +24,7 @@ import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.format.FlexibleJsonFormat;
 import com.datasqrl.io.schema.avro.AvroTableSchemaFactory;
+import com.datasqrl.io.tables.TableType;
 import com.datasqrl.plan.global.PhysicalDAGPlan.LogStagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
@@ -71,6 +72,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
 
   private final ConnectorConf streamConnectorConf;
   private final ConnectorConf upsertConnectorConf;
+  private final ConnectorConf keyedStreamConnectorConf;
 
   @Inject
   public KafkaLogEngine(PackageJson json,
@@ -82,6 +84,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         .orElseThrow(()->new RuntimeException("Could not find kafka connector"));
     this.streamConnectorConf = connectorFactory.getConfig(KafkaLogEngineFactory.ENGINE_NAME);
     this.upsertConnectorConf = connectorFactory.getConfig(KafkaLogEngineFactory.ENGINE_NAME+"-upsert");
+    this.keyedStreamConnectorConf = connectorFactory.getConfig(KafkaLogEngineFactory.ENGINE_NAME+"-keyed");
   }
 
   @Override
@@ -91,9 +94,22 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         .tableName(tableBuilder.getTableName())
         .origTableName(originalTableName);
     ConnectorConf conf = streamConnectorConf;
+    List<String> messageKey = List.of();
+    if (tableBuilder.hasPartition()) {
+      messageKey = tableBuilder.getPartition();
+    }
     if (tableBuilder.hasPrimaryKey()) {
-      conf = upsertConnectorConf;
-      ctxBuilder.variable("kafka-key", String.join(";", tableBuilder.getPrimaryKey().get()));
+      if (tableAnalysis.map(TableAnalysis::getType).orElse(TableType.STATE).isState()) {
+        conf = upsertConnectorConf;
+        //The primary key must be the partition key
+        messageKey = List.of();
+      } else {
+        tableBuilder.removePrimaryKey();
+      }
+    }
+    if (!messageKey.isEmpty()) {
+      conf = keyedStreamConnectorConf;
+      ctxBuilder.variable("kafka-key", String.join(";", messageKey));
     }
     /* TODO: add engine configuration option that makes rowtime (if present in relDataType) the kafka timestamp by default by
         annotating the column in the table with 'timestamp' metadata in the column list of the table builder

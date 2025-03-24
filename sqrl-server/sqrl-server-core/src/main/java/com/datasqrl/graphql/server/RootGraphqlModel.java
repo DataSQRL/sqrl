@@ -26,7 +26,7 @@ import lombok.ToString;
 public class RootGraphqlModel {
 
   @Singular
-  List<Coords> coords;
+  List<Coords> coords; //TODO should be renamed queries but it is a breaking change for vertx server.
   @Singular
   List<MutationCoords> mutations;
   @Singular
@@ -90,8 +90,8 @@ public class RootGraphqlModel {
       property = "type"
   )
   @JsonSubTypes({
-      @Type(value = KafkaMutationCoords.class, name = "kafka"),
-      @Type(value = PostgresLogMutationCoords.class, name = "postgres_log")
+      @Type(value = KafkaMutationCoords.class, name = KafkaMutationCoords.type),
+      @Type(value = PostgresLogMutationCoords.class, name = PostgresLogMutationCoords.type)
   })
   public static abstract class MutationCoords {
     protected String type;
@@ -113,11 +113,14 @@ public class RootGraphqlModel {
 
     protected String fieldName;
     protected String topic;
+    protected Map<String,MutationComputedColumnType> computedColumns;
     protected Map<String, String> sinkConfig;
 
-    public KafkaMutationCoords(String fieldName, String topic, Map<String, String> sinkConfig) {
+    public KafkaMutationCoords(String fieldName, String topic,
+        Map<String,MutationComputedColumnType> computedColumns, Map<String, String> sinkConfig) {
       this.fieldName = fieldName;
       this.topic = topic;
+      this.computedColumns = computedColumns;
       this.sinkConfig = sinkConfig;
     }
 
@@ -229,7 +232,7 @@ public class RootGraphqlModel {
       @Type(value = ArgumentLookupCoords.class, name = "args"),
       @Type(value = FieldLookupCoords.class, name = "field")
   })
-  public static abstract class Coords {
+  public static abstract class Coords { //TODO should be renamed QueryCoords
 
     String parentType;
     String fieldName;
@@ -263,6 +266,9 @@ public class RootGraphqlModel {
 
     @JsonIgnore
     final String type = "args";
+    /**
+     * A match is an executable query + its SQL parameters + its graphQl arguments (including the SQL parameters)
+     */
     Set<ArgumentSet> matchs;
 
     @Builder

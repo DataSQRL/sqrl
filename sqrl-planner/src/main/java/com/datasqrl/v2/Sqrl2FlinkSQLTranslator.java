@@ -1,6 +1,7 @@
 package com.datasqrl.v2;
 
 import static com.datasqrl.function.FlinkUdfNsObject.getFunctionNameFromClass;
+import static org.apache.flink.table.planner.utils.ShortcutUtils.unwrapContext;
 
 import com.datasqrl.calcite.SqrlRexUtil;
 import com.datasqrl.config.BuildPath;
@@ -19,7 +20,6 @@ import com.datasqrl.v2.dag.plan.MutationQuery.MutationQueryBuilder;
 import com.datasqrl.v2.hint.PlannerHints;
 import com.datasqrl.v2.parser.ParsePosUtil;
 import com.datasqrl.v2.parser.ParsePosUtil.MessageLocation;
-import com.datasqrl.v2.parser.ParsedField;
 import com.datasqrl.v2.parser.ParsedObject;
 import com.datasqrl.v2.parser.SQLStatement;
 import com.datasqrl.v2.parser.SqrlTableFunctionStatement.ParsedArgument;
@@ -27,7 +27,7 @@ import com.datasqrl.v2.parser.StatementParserException;
 import com.datasqrl.v2.tables.FlinkConnectorConfig;
 import com.datasqrl.v2.tables.FlinkTableBuilder;
 import com.datasqrl.v2.dag.plan.MutationComputedColumn;
-import com.datasqrl.v2.dag.plan.MutationComputedColumn.Type;
+import com.datasqrl.graphql.server.MutationComputedColumnType;
 import com.datasqrl.v2.tables.SourceSinkTableAnalysis;
 import com.datasqrl.v2.tables.SqrlFunctionParameter;
 import com.datasqrl.v2.tables.SqrlTableFunction;
@@ -46,11 +46,12 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Predicate;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -59,6 +60,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.Value;
+import org.apache.calcite.plan.hep.HepMatchOrder;
 import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
@@ -83,9 +85,9 @@ import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlOrderBy;
 import org.apache.calcite.sql.SqlSyntax;
 import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.SqlNameMatchers;
 import org.apache.calcite.sql2rel.SqlToRelConverter;
+import org.apache.calcite.tools.RuleSets;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.sql.parser.ddl.SqlAlterViewAs;
 import org.apache.flink.sql.parser.ddl.SqlCreateFunction;
@@ -99,14 +101,20 @@ import org.apache.flink.table.api.CompiledPlan;
 import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.Schema.UnresolvedColumn;
+import org.apache.flink.table.api.Schema.UnresolvedComputedColumn;
 import org.apache.flink.table.api.Schema.UnresolvedMetadataColumn;
 import org.apache.flink.table.api.Schema.UnresolvedPhysicalColumn;
+import org.apache.flink.table.api.TableConfig;
 import org.apache.flink.table.api.TableException;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.api.bridge.java.internal.StreamTableEnvironmentImpl;
 import org.apache.flink.table.api.internal.TableResultInternal;
 import org.apache.flink.table.catalog.CatalogManager;
 import org.apache.flink.table.catalog.ObjectIdentifier;
+import org.apache.flink.table.delegation.Parser;
+import org.apache.flink.table.expressions.Expression;
+import org.apache.flink.table.expressions.ResolvedExpression;
+import org.apache.flink.table.expressions.resolver.ExpressionResolver;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.operations.Operation;
 import org.apache.flink.table.operations.StatementSetOperation;
@@ -115,6 +123,7 @@ import org.apache.flink.table.operations.ddl.CreateCatalogFunctionOperation;
 import org.apache.flink.table.operations.ddl.CreateTableOperation;
 import org.apache.flink.table.operations.ddl.CreateViewOperation;
 import org.apache.flink.table.planner.calcite.CalciteConfigBuilder;
+import org.apache.flink.table.planner.calcite.FlinkContext;
 import org.apache.flink.table.planner.calcite.FlinkPlannerImpl;
 import org.apache.flink.table.planner.calcite.FlinkRelBuilder;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
@@ -123,6 +132,11 @@ import org.apache.flink.table.planner.delegation.PlannerBase;
 import org.apache.flink.table.planner.operations.SqlNodeConvertContext;
 import org.apache.flink.table.planner.operations.SqlNodeToOperationConversion;
 import org.apache.flink.table.planner.parse.CalciteParser;
+import org.apache.flink.table.planner.plan.optimize.program.FlinkChainedProgram;
+import org.apache.flink.table.planner.plan.optimize.program.FlinkHepRuleSetProgram;
+import org.apache.flink.table.planner.plan.optimize.program.FlinkOptimizeProgram;
+import org.apache.flink.table.planner.plan.optimize.program.FlinkStreamProgram;
+import org.apache.flink.table.planner.plan.optimize.program.StreamOptimizeContext;
 import org.apache.flink.table.planner.utils.RowLevelModificationContextUtils;
 import org.apache.flink.table.types.AbstractDataType;
 import org.apache.flink.table.types.DataType;
@@ -171,12 +185,15 @@ public class Sqrl2FlinkSQLTranslator {
   public Sqrl2FlinkSQLTranslator(BuildPath buildPath) {
     //Set up a StreamExecution Environment in Flink with configuration and access to jars
     List<URL> jarUrls = getUdfUrls(buildPath);
+    // Create a UDF class loader and configure
     ClassLoader udfClassLoader = new URLClassLoader(jarUrls.toArray(new URL[0]), getClass().getClassLoader());
     Map<String, String> config = new HashMap<>();
     config.put("pipeline.classpaths", jarUrls.stream().map(URL::toString)
         .collect(Collectors.joining(",")));
-    StreamExecutionEnvironment sEnv = StreamExecutionEnvironment.createLocalEnvironment(
+    // Set up execution environment
+    StreamExecutionEnvironment sEnv = StreamExecutionEnvironment.getExecutionEnvironment(
         Configuration.fromMap(config));
+    // Create environment settings with class loader
     EnvironmentSettings tEnvConfig = EnvironmentSettings.newInstance()
         .withConfiguration(Configuration.fromMap(config))
         .withClassLoader(udfClassLoader)
@@ -187,9 +204,12 @@ public class Sqrl2FlinkSQLTranslator {
     this.validatorSupplier = ((PlannerBase)tEnv.getPlanner())::createFlinkPlanner;
     FlinkPlannerImpl planner = this.validatorSupplier.get();
     typeFactory = (FlinkTypeFactory) planner.getOrCreateSqlValidator().getTypeFactory();
+    // Initialize function catalog (custom)
     sqrlFunctionCatalog = new SqrlFunctionCatalog(typeFactory);
     CalciteConfigBuilder calciteConfigBuilder = new CalciteConfigBuilder();
     calciteConfigBuilder.addSqlOperatorTable(sqrlFunctionCatalog.getOperatorTable());
+//    setOptimizerRules(calciteConfigBuilder,tEnv.getConfig()); TODO: fix, so we have more effective subgraph identification
+
     this.tEnv.getConfig().setPlannerConfig(calciteConfigBuilder.build());
     this.catalogManager = tEnv.getCatalogManager();
 
@@ -304,6 +324,23 @@ public class Sqrl2FlinkSQLTranslator {
         (FlinkRelBuilder) config.getRelBuilderFactory()
             .create(flinkPlanner.cluster(), null)
             .transform(config.getRelBuilderConfigTransform());
+  }
+
+  public Function<Expression, ResolvedExpression> getExpressionResolver() {
+    FlinkPlannerImpl flinkPlanner = this.validatorSupplier.get();
+    final FlinkRelBuilder relBuilder = getRelBuilder(flinkPlanner);
+    final FlinkContext context = unwrapContext(relBuilder);
+    final Parser parser = tEnv.getParser();
+    final ExpressionResolver expressionResolver = ExpressionResolver.resolverFor(
+        context.getTableConfig(),
+        context.getClassLoader(),
+        name -> Optional.empty(),
+        context.getFunctionCatalog().asLookup(parser::parseIdentifier),
+        context.getCatalogManager().getDataTypeFactory(),
+        parser::parseSqlExpression).build();
+    return exp -> {
+      return expressionResolver.resolve(Collections.singletonList(exp)).get(0);
+    };
   }
 
   private CalciteCatalogReader getCalciteCatalog(@Nullable FlinkPlannerImpl flinkPlanner) {
@@ -421,10 +458,6 @@ public class Sqrl2FlinkSQLTranslator {
   public SqrlTableFunction.SqrlTableFunctionBuilder resolveSqrlTableFunction(ObjectIdentifier identifier,
       String originalSql, List<ParsedArgument> arguments,
       Map<Integer, Integer> argumentIndexMap, PlannerHints hints, ErrorCollector errors) {
-    //Process argument types
-//    List<ParsedField> requiresTypeParsing = arguments.stream()
-//        .filter(Predicate.not(ParsedArgument::hasResolvedType)).collect(Collectors.toList());
-//    List<RelDataTypeField> parsedTypes = parse2RelDataType(requiresTypeParsing);
     List<FunctionParameter> parameters=new ArrayList<>();
     for (int i = 0; i < arguments.size(); i++) {
       ParsedArgument parsedArg = arguments.get(i);
@@ -602,6 +635,7 @@ public class Sqrl2FlinkSQLTranslator {
           tableDefinition.getColumnList(),
           tableDefinition.getTableConstraints(),
           tableDefinition.getPropertyList(),
+//          tableDefinition.getDistribution(),
           tableDefinition.getPartitionKeyList(),
           tableDefinition.getWatermark().orElse(null),
           tableDefinition.getComment().orElse(null),
@@ -615,6 +649,7 @@ public class Sqrl2FlinkSQLTranslator {
           tableDefinition.getColumnList(),
           tableDefinition.getTableConstraints(),
           tableDefinition.getPropertyList(),
+//          tableDefinition.getDistribution(),
           tableDefinition.getPartitionKeyList(),
           tableDefinition.getWatermark().orElse(null),
           tableDefinition.getComment().orElse(null),
@@ -647,23 +682,24 @@ public class Sqrl2FlinkSQLTranslator {
             ).collect(Collectors.toList())
         ))
         .orElse(PrimaryKeyMap.UNDEFINED);
-    //Finish mutation query
+    //Finish building mutation query by building input and output types from table schema
     if (mutationBld!=null) {
       List<RelDataTypeField> fields = convertSchema2RelDataType(flinkSchema);
       RelDataTypeBuilder inputType = CalciteUtil.getRelTypeBuilder(typeFactory);
       RelDataTypeBuilder outputType = CalciteUtil.getRelTypeBuilder(typeFactory);
+      List<MutationComputedColumn> computedColumns = mutationBld.build().getComputedColumns();
       for (int i=0; i<flinkSchema.getColumns().size(); i++) {
         RelDataTypeField field = fields.get(i);
         UnresolvedColumn column = flinkSchema.getColumns().get(i);
         outputType.add(field);
-        if (MutationComputedColumn.UUID_COLUMN.equalsIgnoreCase(column.getName())) {
-          Preconditions.checkArgument(field.getType().getSqlTypeName() == SqlTypeName.VARCHAR,
-              "As a current limitation, %s columns must be of type STRING or VARCHAR", MutationComputedColumn.UUID_COLUMN);
-          mutationBld.computedColumn(new MutationComputedColumn(column.getName(), Type.UUID));
-          if (pk.isUndefined()) pk = PrimaryKeyMap.of(List.of(i));
-        } else if ((column instanceof UnresolvedMetadataColumn) &&
-            MutationComputedColumn.TIMESTAMP_METADATA.equalsIgnoreCase(((UnresolvedMetadataColumn) column).getMetadataKey())) {
-          mutationBld.computedColumn(new MutationComputedColumn(column.getName(), Type.TIMESTAMP));
+        //Check if field is a computed column, if so it should not be part of input type
+        Optional<MutationComputedColumn> computedColumn = computedColumns.stream()
+            .filter(col -> col.getColumnName().equals(column.getName())).findFirst();
+        if (computedColumn.isPresent()) {
+          //if computed column is UUID and we don't have a pk, select it as pk
+          if (pk.isUndefined() && computedColumn.get().getType()== MutationComputedColumnType.UUID) {
+            pk = PrimaryKeyMap.of(List.of(i));
+          }
         } else {
           inputType.add(field);
         }
@@ -718,6 +754,7 @@ public class Sqrl2FlinkSQLTranslator {
 
   private List<RelDataTypeField> convertSchema2RelDataType(Schema schema) {
     List<RelDataTypeField> fields = new ArrayList<>();
+    Function<Expression, ResolvedExpression> expressionResolver = null;
     for (int i = 0; i < schema.getColumns().size(); i++) {
       UnresolvedColumn column = schema.getColumns().get(i);
       AbstractDataType type = null;
@@ -725,6 +762,12 @@ public class Sqrl2FlinkSQLTranslator {
         type = ((UnresolvedPhysicalColumn) column).getDataType();
       } else if (column instanceof UnresolvedMetadataColumn) {
         type = ((UnresolvedMetadataColumn) column).getDataType();
+      } else if (column instanceof UnresolvedComputedColumn) {
+        UnresolvedComputedColumn computedColumn = (UnresolvedComputedColumn) column;
+        if (expressionResolver==null) expressionResolver=getExpressionResolver(); //lazy initialization
+        // Resolve the expression's data type
+        ResolvedExpression resolvedExpression = expressionResolver.apply(computedColumn.getExpression());
+        type = resolvedExpression.getOutputDataType();
       }
       if (type instanceof DataType) {
         fields.add(new RelDataTypeFieldImpl(column.getName(),i,

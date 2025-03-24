@@ -1,5 +1,7 @@
 # Functions
 
+SQRL adds additional functions to the standard SQL function catalog.
+
 Functions in SQRL are designed to be engine-agnostic, ensuring that their implementation is consistent across different platforms and execution environments. This uniformity is crucial for maintaining the semantic integrity of functions when executed under various systems.
 
 **Characteristics of Functions**
@@ -81,7 +83,7 @@ The following function libraries can be imported into SQRL scripts:
 * [Math](https://github.com/DataSQRL/sqrl-functions/tree/main/sqrl-math): Contains a number of advanced math functions beyond the basic SQL arithmetic functions in the system library.
 * [OpenAI](https://github.com/DataSQRL/sqrl-functions/tree/main/sqrl-openai): Functions that invoke OpenAI for vector embeddings, completions, and structured data extraction.
 
-Check out the [SQRL functions repository](https://github.com/DataSQRL/sqrl-functions/) for all standard libraries.
+Check out the [SQRL functions repository](https://github.com/DataSQRL/sqrl-functions/) for additional libraries that can be imported into SQRL scripts.
 
 ## User Defined Functions
 

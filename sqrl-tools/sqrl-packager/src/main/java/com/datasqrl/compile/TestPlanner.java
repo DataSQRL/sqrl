@@ -8,6 +8,7 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.compile.TestPlan.GraphqlQuery;
 import com.datasqrl.graphql.visitor.GraphqlSchemaVisitor;
 import com.datasqrl.plan.queries.APISource;
+import com.datasqrl.v2.tables.SqrlTableFunction;
 import com.google.inject.Inject;
 import graphql.language.Argument;
 import graphql.language.AstPrinter;
@@ -102,11 +103,8 @@ public class TestPlanner {
 
     @Override
     public List<Node> visitDocument(Document node, Object context) {
-      //todo: Visit the query definition
-      // for each query that ends in 'Test', construct an ast node of a query of all scalar fields
-      // print out the result using the code below
       List<Definition> definitions = node.getDefinitions();
-
+      //Iterate through all queries and process them
       List<Node> queries = definitions.stream()
           .filter(definition -> definition instanceof ObjectTypeDefinition)
           .map(definition -> (ObjectTypeDefinition) definition)
@@ -120,8 +118,9 @@ public class TestPlanner {
     private List<Node> processQueryDefinition(ObjectTypeDefinition definition, Document document) {
       List<Node> queries = new ArrayList<>();
       for (FieldDefinition def : definition.getFieldDefinitions()) {
-        //Lookup function and see if it is a sqrl test macro
-        // Todo: use overloaded lookup
+        //TODO: @Etienne: instead of looking the functions up in the framework, pass them into
+        //The test planner and lookup the function by name. Then replace macro.isTest() with fct.getVisibility().isTest();
+        SqrlTableFunction fct;
         SqrlTableMacro macro = framework.getSchema().getTableFunctions(NamePath.of(def.getName())).get(0);
         if (macro.isTest()) {
           OperationDefinition operation = processOperation(def.getName(),

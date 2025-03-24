@@ -22,7 +22,7 @@ public class SqlCreateIcebergTableFromAwsGlueTest {
     SqlCreateIcebergTableFromAwsGlue createTable = new SqlCreateIcebergTableFromAwsGlue(
         SqlParserPos.ZERO, false, false, tableName, null, null, catalogTableName, null, null, null);
 
-    assertEquals("CREATE ICEBERG TABLE \"test_table\" CATALOG_TABLE_NAME = 'test_catalog_table'",
+    assertEquals("CREATE ICEBERG TABLE test_table CATALOG_TABLE_NAME = 'test_catalog_table'",
         unparse(createTable));
   }
 
@@ -40,7 +40,7 @@ public class SqlCreateIcebergTableFromAwsGlueTest {
         SqlParserPos.ZERO, true, true, tableName, externalVolume, catalog, catalogTableName,
         catalogNamespace, replaceInvalidCharacters, comment);
 
-    assertEquals("CREATE OR REPLACE ICEBERG TABLE IF NOT EXISTS \"test_table\" EXTERNAL_VOLUME = 'vol1' CATALOG = 'aws_catalog' CATALOG_TABLE_NAME = 'test_catalog_table' CATALOG_NAMESPACE = 'namespace1' REPLACE_INVALID_CHARACTERS = true COMMENT = 'This is a test table'",
+    assertEquals("CREATE OR REPLACE ICEBERG TABLE IF NOT EXISTS test_table EXTERNAL_VOLUME = 'vol1' CATALOG = 'aws_catalog' CATALOG_TABLE_NAME = 'test_catalog_table' CATALOG_NAMESPACE = 'namespace1' REPLACE_INVALID_CHARACTERS = true COMMENT = 'This is a test table'",
         unparse(createTable));
   }
 

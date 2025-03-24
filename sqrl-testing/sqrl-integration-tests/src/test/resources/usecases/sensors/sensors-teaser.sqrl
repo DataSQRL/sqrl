@@ -1,6 +1,7 @@
 IMPORT sensor-local.SensorReading; -- Import sensor data
 
 /* Aggregate sensor readings to second */
+/*+query_by_all(sensorid) */
 SecReading := SELECT sensorid, window_time as timeSec,
         avg(temperature) as temp
     FROM TABLE(TUMBLE(TABLE SensorReading, DESCRIPTOR(`timestamp`), INTERVAL '1' SECONDS))
@@ -12,6 +13,7 @@ _SensorMaxTempWindow := SELECT sensorid, window_time, max(temp) as maxTemp
     FROM TABLE(HOP(TABLE SecReading, DESCRIPTOR(timeSec), INTERVAL '5' SECONDS, INTERVAL '1' MINUTES))
     GROUP BY sensorid, window_start, window_end, window_time;
 
+/*+query_by_any(sensorid) */
 SensorMaxTemp := DISTINCT _SensorMaxTempWindow ON sensorid ORDER BY window_time DESC;
 
 
@@ -21,4 +23,4 @@ SensorMaxTemp := DISTINCT _SensorMaxTempWindow ON sensorid ORDER BY window_time 
 SecReadingTest := SELECT * FROM SecReading ORDER BY timeSec DESC, temp DESC LIMIT 5;
 
 /*+test */
-SensorMaxTempTest := SELECT * FROM SensorMaxTemp ORDER BY maxTemp DESC LIMIT 5;
+SensorMaxTempTest := SELECT sensorid, maxTemp FROM SensorMaxTemp ORDER BY maxTemp DESC LIMIT 5;

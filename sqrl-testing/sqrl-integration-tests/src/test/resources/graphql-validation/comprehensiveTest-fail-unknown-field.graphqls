@@ -1,0 +1,10 @@
+type AnotherCustomer {
+    customerid: Float!
+    email: String!
+    lastUpdated: Float!
+    unknown: Float!
+}
+
+type Query {
+    AnotherCustomer(limit: Int = 10, offset: Int = 0): [AnotherCustomer!]
+}

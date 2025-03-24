@@ -6,11 +6,64 @@ The DataSQRL project consists of two parts:
   integrated data pipeline or event-driven microservice by producing the deployment
   assets for all components of the pipeline or microservice.
 * The DataSQRL runtime components: libraries and components that are executed
-  as part of a compiled data pipeline when the deployment assets are deployed.
+  as part of a compiled data pipeline when the deployment assets are deployed or tested.
 
-This repository contains the code for both parts split across multiple modules.
-Refer to the README.md file in each module for information on what this module contains
-and what its purpose is.
+This repository contains the entire build tool implementation and parts of the runtime split across multiple modules.
+Refer to the README.md file in each module for information on what this module contains and what its purpose is.
+
+The following repositories contain additional runtime components:
+* [Flink SQL Runner](https://github.com/DataSQRL/flink-sql-runner): Runs the Flink compiled plan
+* [SQRL Functions](https://github.com/DataSQRL/sqrl-functions/): Contains additional function packages
+* [SQRL K8s](https://github.com/DataSQRL/sqrl-k8s): A template for running DataSQRL pipelines in Kubernetes
+
+The following diagram shows how the modules and repositories fit together:
+
+```mermaid
+graph TD;
+    %% Repository Annotations
+    subgraph Repositories
+        B["➕ = sqrl"]
+        A["⬛︎ = flink-sql-runner"]
+        C["▲ = sqrl-functions"]
+        D["⚫︎ = sqrl-k8s"]
+    end
+
+    subgraph Server
+        server-core["server-core ➕"]
+        server-vertx["server-vertx ➕"]
+    end
+
+    %% Main Components
+    sqrl-k8s["sqrl-k8s ⚫︎"]
+    flink-sql-run["sql-run (light) ⬛︎ "]
+    sqrl-exec["sqrl-exec ➕"]
+    sqrl-cli["sqrl-cli ➕"]
+    sqrl-planner["sqrl-planner ➕"]
+    sqrl-integration-test["sqrl-integration-test➕"]
+    sqrl-lib-common["sqrl-lib-common (light) ⬛︎"]
+    sqrl-common["sqrl-common (light) ➕"]
+    std-library-functions["Std library functions ➕"]
+    formats-connectors["Formats & Connectors ⬛︎"]
+    sqrl-functions["sqrl-functions ▲"]
+
+    %% Relationships
+    sqrl-lib-common -->flink-sql-run
+    sqrl-lib-common -->sqrl-common
+    sqrl-lib-common --> std-library-functions
+    sqrl-lib-common --> formats-connectors
+    sqrl-lib-common --> sqrl-functions
+
+    flink-sql-run --> sqrl-k8s
+    flink-sql-run --> sqrl-exec
+
+    sqrl-common --> sqrl-planner
+    sqrl-common --> server-core
+
+    server-core --> server-vertx
+    sqrl-exec --> sqrl-integration-test
+    sqrl-planner --> sqrl-cli
+    sqrl-cli --> sqrl-integration-test
+```
 
 ## DataSQRL Build Tool
 
@@ -35,6 +88,7 @@ DataSQRL supports the following types of stages:
 * Log: For moving data between stages reliably
 * Database: For storage and querying data
 * Server: For returning data through an API upon request
+* Cache: For caching data on the server (coming soon)
 
 A data pipeline topology is a sequence of stages. A pipeline topology may contain
 multiple stages of the same type (e.g. two different database stages).
@@ -55,7 +109,9 @@ engine configuration.
 The DataSQRL build tool consists of the following components (i.e. java modules),
 listed in the order in which they are invoked when compiling a SQRL script:
 
-### Packager
+### CLI
+
+#### Packager
 
 The packager prepares the build directory for the compiler. The job of the
 packager is to populate the `build` directory with all the files needed by the
@@ -72,6 +128,29 @@ to pre-process input files and place them into the build directory for the
 compiler. DataSQRL has a generic pre-processor framework.
 
 [Link to packager module](sqrl-tools/sqrl-packager)
+
+
+#### Command Line Interface
+
+The DataSQRL build tool is accessed through a command line interface.
+It defines all of the commands that DataSQRL supports and provides
+usability features to help the user and produce useful error messages.
+See the [CLI documentation](cli.md) for more information.
+
+[Link to cli module](sqrl-tools/sqrl-cli)
+
+#### Discovery
+
+The build tool contains a separate piece of functionality for data discovery.
+The goal for data discovery is to make it easy for new users to get started
+with DataSQRL by automatically generating table definitions for users' data.
+
+This is implemented as a pre-processor that automatically extracts a schema
+from `jsonl` and `csv` files and generates a table definition with connector
+information for such files.
+
+[Link to discovery module](sqrl-tools/sqrl-discovery)
+
 
 ### Planner
 
@@ -97,7 +176,7 @@ the table schemas.
 The transpiler is build on top of Apache Calcite by way of FlinkSQL for all SQL handling.
 It prepares the statements that are analyzed and planned by the planner
 
-### Logical Plan Analyzer
+#### Logical Plan Analyzer
 
 The logical plan analyzer is the second stage of the compiler. It takes the
 logical plan (i.e. Relnode) produced by the transpiler for each table or function
@@ -109,7 +188,7 @@ that contains information needed by the planner.
 3. It extracts cost information for the optimizer.
 
 
-### DAG Planner
+#### DAG Planner
 
 The DAG planner takes all the individual table and function definitions and assembles them into
 a data processing DAG (directed acyclic graph). It prunes the DAG and rewrites the DAG before optimizing the
@@ -121,7 +200,7 @@ pipelines.
 At the end of the DAG planning process, each table or function defined in the SQRL script
 is assigned to a stage in the pipeline.
 
-### Physical Planner
+#### Physical Planner
 
 All the tables in a given stage are then passed to the stage engine's physical
 planner which produces the physical plan for the engine that has been
@@ -137,27 +216,6 @@ to the SQRL script.
 
 The physical plans are then written out as deployment artifacts to the `build/plan`
 directory.
-
-### Discovery
-
-The build tool contains a separate piece of functionality for data discovery.
-The goal for data discovery is to make it easy for new users to get started
-with DataSQRL by automatically generating table definitions for users' data.
-
-This is implemented as a pre-processor that automatically extracts a schema
- from `jsonl` and `csv` files and generates a table definition with connector
-information for such files.
-
-[Link to discovery module](sqrl-tools/sqrl-discovery)
-
-### Command Line Interface
-
-The DataSQRL build tool is accessed through a command line interface.
-It defines all of the commands that DataSQRL supports and provides
-usability features to help the user and produce useful error messages.
-See the [CLI documentation](cli.md) for more information.
-
-[Link to cli module](sqrl-tools/sqrl-cli)
 
 ### Testing
 
@@ -193,3 +251,5 @@ It also contains custom formats and connectors for Flink that extend
 existing formats and connectors to support functionality needed by DataSQRL.
 It may be reasonable to contribute those improvements and extensions back to
 the Apache Flink project.
+
+

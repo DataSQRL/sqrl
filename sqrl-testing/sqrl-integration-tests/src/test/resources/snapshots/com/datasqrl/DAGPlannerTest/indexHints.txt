@@ -181,7 +181,7 @@ CREATE TABLE `MyOrdersIndexBtree_1` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'MyOrdersIndexBtree_1'
 );
 CREATE TABLE `MyOrdersIndexHash_2` (
@@ -195,7 +195,7 @@ CREATE TABLE `MyOrdersIndexHash_2` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'MyOrdersIndexHash_2'
 );
 CREATE TABLE `MyOrdersNoHint_3` (
@@ -209,7 +209,7 @@ CREATE TABLE `MyOrdersNoHint_3` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'MyOrdersNoHint_3'
 );
 CREATE TABLE `MyOrdersNoIndex_4` (
@@ -223,7 +223,7 @@ CREATE TABLE `MyOrdersNoIndex_4` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'MyOrdersNoIndex_4'
 );
 CREATE TABLE `MyOrdersTwoIndex_5` (
@@ -237,7 +237,7 @@ CREATE TABLE `MyOrdersTwoIndex_5` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'MyOrdersTwoIndex_5'
 );
 EXECUTE STATEMENT SET BEGIN
@@ -562,4 +562,151 @@ INSERT INTO `default_catalog`.`default_database`.`MyOrdersIndexHash_2`
   ]
 }
 >>>vertx.json
-{ }
+{
+  "model" : {
+    "coords" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "MyOrdersIndexBtree",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"MyOrdersIndexBtree_1\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "MyOrdersIndexHash",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"MyOrdersIndexHash_2\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "MyOrdersNoHint",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"MyOrdersNoHint_3\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "MyOrdersNoIndex",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"MyOrdersNoIndex_4\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "MyOrdersTwoIndex",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"MyOrdersTwoIndex_5\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      }
+    ],
+    "mutations" : [ ],
+    "subscriptions" : [ ],
+    "schema" : {
+      "type" : "string",
+      "type" : "string",
+      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype MyOrdersIndexBtree {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries: [MyOrdersIndexBtree_entriesOutput]!\n}\n\ntype MyOrdersIndexBtree_entriesOutput {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n\ntype MyOrdersIndexHash {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries: [MyOrdersIndexHash_entriesOutput]!\n}\n\ntype MyOrdersIndexHash_entriesOutput {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n\ntype MyOrdersNoHint {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries: [MyOrdersNoHint_entriesOutput]!\n}\n\ntype MyOrdersNoHint_entriesOutput {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n\ntype MyOrdersNoIndex {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries: [MyOrdersNoIndex_entriesOutput]!\n}\n\ntype MyOrdersNoIndex_entriesOutput {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n\ntype MyOrdersTwoIndex {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries: [MyOrdersTwoIndex_entriesOutput]!\n}\n\ntype MyOrdersTwoIndex_entriesOutput {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  MyOrdersIndexBtree(limit: Int = 10, offset: Int = 0): [MyOrdersIndexBtree!]\n  MyOrdersIndexHash(limit: Int = 10, offset: Int = 0): [MyOrdersIndexHash!]\n  MyOrdersNoHint(limit: Int = 10, offset: Int = 0): [MyOrdersNoHint!]\n  MyOrdersNoIndex(limit: Int = 10, offset: Int = 0): [MyOrdersNoIndex!]\n  MyOrdersTwoIndex(limit: Int = 10, offset: Int = 0): [MyOrdersTwoIndex!]\n}\n"
+    }
+  }
+}

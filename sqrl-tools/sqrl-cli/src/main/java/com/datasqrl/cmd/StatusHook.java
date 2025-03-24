@@ -5,7 +5,7 @@ import lombok.Getter;
 
 public interface StatusHook {
 
-  void onSuccess();
+  void onSuccess(ErrorCollector errors);
 
   void onFailure(Throwable e, ErrorCollector errors);
   boolean isSuccess();
@@ -15,7 +15,7 @@ public interface StatusHook {
   public static final StatusHook NONE = new StatusHook() {
     boolean failed = false;
     @Override
-    public void onSuccess() {
+    public void onSuccess(ErrorCollector errors) {
 
     }
 
@@ -42,7 +42,7 @@ public interface StatusHook {
     private boolean failed = false;
 
     @Override
-    public void onSuccess() {
+    public void onSuccess(ErrorCollector errors) {
       failed = false;
     }
 

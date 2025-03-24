@@ -1,10 +1,12 @@
 package com.datasqrl;
 
+import static com.datasqrl.config.SqrlConstants.PLAN_PATH;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import com.datasqrl.cmd.AssertStatusHook;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SqrlConfigCommons;
+import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.config.TestRunnerConfiguration;
 import com.datasqrl.engines.TestContainersForTestGoal;
 import com.datasqrl.engines.TestContainersForTestGoal.TestContainerHook;
@@ -49,7 +51,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 @Slf4j
 @ExtendWith(MiniClusterExtension.class)
-@Disabled("todo: re-enable once GraphQL is implemented")
 public class FullUsecasesIT {
   private static final Path RESOURCES = Paths.get("src/test/resources");
   private static final Path USE_CASES = RESOURCES.resolve("usecases");
@@ -63,24 +64,24 @@ public class FullUsecasesIT {
   }
 
   List<ScriptCriteria> disabledScripts = List.of(
+      new ScriptCriteria("conference-disabled.sqrl", "test"), //fails in build server
+      new ScriptCriteria("conference-disabled.sqrl", "run"), //fails in build server
+      new ScriptCriteria("iceberg-export.sqrl", "test"), //fails in build server
+      new ScriptCriteria("iceberg-export.sqrl", "run"), //fails in build server
       new ScriptCriteria("duckdb.sqrl", "test"), //fails in build server
       new ScriptCriteria("duckdb.sqrl", "run"), //fails in build server
-      new ScriptCriteria("snowflake.sqrl", "test"), //fails in build server
-      new ScriptCriteria("snowflake.sqrl", "run"), //fails in build server
+      new ScriptCriteria("snowflake-disabled.sqrl", "test"), //fails in build server
+      new ScriptCriteria("snowflake-disabled.sqrl", "run"), //fails in build server
       new ScriptCriteria("sensors-mutation.sqrl", "test"), //flaky see sqrl script
       new ScriptCriteria("sensors-mutation.sqrl", "run"), //flaky see sqrl script
       new ScriptCriteria("sensors-full.sqrl", "test"), //flaky (too much data)
       new ScriptCriteria("sensors-full.sqrl", "run"), //flaky (too much data)
-      //new ScriptCriteria("sensors-teaser.sqrl", "test"),
-      //new ScriptCriteria("season-teaser.sqrl", "run"),
-//      new ScriptCriteria("comparison-functions.sqrl", "test"),
-//      new ScriptCriteria("comparison-functions.sqrl", "run"),
       new ScriptCriteria("analytics-only.sqrl", "test"),
       new ScriptCriteria("analytics-only.sqrl", "run"),
-      new ScriptCriteria("postgres-log.sqrl", "test"),
-      new ScriptCriteria("postgres-log.sqrl", "run"),
-      new ScriptCriteria("seedshop-extended.sqrl", "test"), // CustomerPromotionTest issue
-      new ScriptCriteria("seedshop-extended.sqrl", "run") // CustomerPromotionTest issue
+      new ScriptCriteria("postgres-log-disabled.sqrl", "test"),
+      new ScriptCriteria("postgres-log-disabled.sqrl", "run"),
+      new ScriptCriteria("seedshop-extended.sqrl", "test"), // CustomerPromotionTest issue TODO
+      new ScriptCriteria("seedshop-extended.sqrl", "run") // CustomerPromotionTest issue TODO
   );
 
   static final Path PROJECT_ROOT = Paths.get(System.getProperty("user.dir"));
@@ -164,7 +165,7 @@ public class FullUsecasesIT {
     executor.execute(new AssertStatusHook());
 
     PackageJson packageJson = SqrlConfigCommons.fromFilesPackageJson(ErrorCollector.root(),
-        List.of(rootDir.resolve("build").resolve("package.json")));
+        List.of(rootDir.resolve(SqrlConstants.BUILD_DIR_NAME).resolve(SqrlConstants.PACKAGE_JSON)));
 
 
     try {
@@ -195,7 +196,7 @@ public class FullUsecasesIT {
       DatasqrlRun run = null;
       if (param.getGoal().equals("run")) {
         try {
-          run = new DatasqrlRun(context.getRootDir().resolve("build/plan"),
+          run = new DatasqrlRun(context.getRootDir().resolve(SqrlConstants.PLAN_PATH),
               context.getEnv());
           TableResult result = run.run(false);
          long delaySec = packageJson.getTestConfig().flatMap(TestRunnerConfiguration::getDelaySec)
@@ -251,7 +252,7 @@ public class FullUsecasesIT {
   @MethodSource("useCaseProvider")
   @Disabled
   public void runTestNumber(UseCaseTestParameter param, TestInfo testInfo) {
-    int i = -1;
+    int i = 39;
     testNo++;
     System.out.println(testNo + ":" + param);
     if (i == testNo) {

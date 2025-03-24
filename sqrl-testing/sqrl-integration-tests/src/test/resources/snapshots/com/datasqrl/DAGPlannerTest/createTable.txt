@@ -4,6 +4,8 @@ ID:     default_catalog.default_database.MachineReading
 Type:   stream
 Stage:  flink
 Inputs: default_catalog.default_database._SensorReading, default_catalog.default_database._Sensors
+Annotations:
+ - stream-root: _SensorReading__def
 Primary Key: -
 Timestamp  : event_time
 Schema:
@@ -12,8 +14,8 @@ Schema:
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME*
  - machineid: INTEGER
 Plan:
-LogicalProject(sensorid=[$0], temperature=[$1], event_time=[$2], machineid=[$4])
-  LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{0, 2}])
+LogicalProject(sensorid=[$1], temperature=[$2], event_time=[$3], machineid=[$5])
+  LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{1, 3}])
     LogicalTableScan(table=[[default_catalog, default_database, _SensorReading]])
     LogicalFilter(condition=[=($cor1.sensorid, $0)])
       LogicalSnapshot(period=[$cor1.event_time])
@@ -28,6 +30,7 @@ Stage:  flink
 Inputs: default_catalog.default_database.MachineReading
 Annotations:
  - features: STREAM_WINDOW_AGGREGATION (feature)
+ - stream-root: _SensorReading__def
 Primary Key: -
 Timestamp  : time_hour
 Schema:
@@ -50,16 +53,19 @@ ID:     default_catalog.default_database._SensorReading
 Type:   stream
 Stage:  flink
 Inputs: default_catalog.default_database._SensorReading__def
-Primary Key: -
+Annotations:
+ - stream-root: _SensorReading__def
+Primary Key: event_id
 Timestamp  : event_time
 Schema:
+ - event_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - sensorid: INTEGER
  - temperature: FLOAT
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME*
 Plan:
-LogicalProject(sensorid=[$0], temperature=[$1], event_time=[$2])
-  LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($2, 0:INTERVAL SECOND)])
-    LogicalProject(sensorid=[$0], temperature=[$1], event_time=[CAST($2):TIMESTAMP_LTZ(3) *ROWTIME*])
+LogicalProject(event_id=[$0], sensorid=[$1], temperature=[$2], event_time=[$3])
+  LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($3, 0:INTERVAL SECOND)])
+    LogicalProject(event_id=[$0], sensorid=[$1], temperature=[$2], event_time=[CAST($3):TIMESTAMP_LTZ(3) *ROWTIME*])
       LogicalTableScan(table=[[default_catalog, default_database, _SensorReading__def, metadata=[timestamp]]])
 SQL: CREATE VIEW `_SensorReading`
 AS
@@ -71,15 +77,15 @@ Type:   state
 Stage:  flink
 Inputs: default_catalog.default_database._Sensors__def
 Primary Key: sensorid
-Timestamp  : event_time
+Timestamp  : updatedTime
 Schema:
  - sensorid: INTEGER NOT NULL
  - machineid: INTEGER
- - event_time: TIMESTAMP_LTZ(3) *ROWTIME*
+ - updatedTime: TIMESTAMP_LTZ(3) *ROWTIME*
 Plan:
-LogicalProject(sensorid=[$0], machineid=[$1], event_time=[$2])
-  LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($2, 0:INTERVAL SECOND)])
-    LogicalProject(sensorid=[$0], machineid=[$1], event_time=[CAST($2):TIMESTAMP_LTZ(3) *ROWTIME*])
+LogicalProject(sensorid=[$0], machineid=[$1], updatedTime=[$2])
+  LogicalWatermarkAssigner(rowtime=[updatedTime], watermark=[-($2, 0:INTERVAL SECOND)])
+    LogicalProject(sensorid=[$0], machineid=[$1], updatedTime=[CAST($2):TIMESTAMP_LTZ(3) *ROWTIME*])
       LogicalTableScan(table=[[default_catalog, default_database, _Sensors__def, metadata=[timestamp]]])
 SQL: CREATE VIEW `_Sensors`
 AS
@@ -89,15 +95,15 @@ FROM `default_catalog`.`default_database`.`_Sensors__def`
 CREATE TABLE `_Sensors__def` (
   `sensorid` INTEGER,
   `machineid` INTEGER,
-  `event_time` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
+  `updatedTime` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
   PRIMARY KEY (`sensorid`) NOT ENFORCED,
-  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
+  WATERMARK FOR `updatedTime` AS `updatedTime` - INTERVAL '0.0' SECOND
 ) WITH (
   'connector' = 'upsert-kafka',
   'value.format' = 'flexible-json',
+  'key.format' = 'raw',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
-  'key.format' = 'raw',
   'topic' = '_Sensors'
 );
 CREATE VIEW `_Sensors`
@@ -105,6 +111,7 @@ AS
 SELECT *
 FROM `default_catalog`.`default_database`.`_Sensors__def`;
 CREATE TABLE `_SensorReading__def` (
+  `event_id` STRING NOT NULL,
   `sensorid` INTEGER,
   `temperature` FLOAT,
   `event_time` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
@@ -144,7 +151,7 @@ CREATE TABLE `MachineReading_1` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'MachineReading_1'
 );
 CREATE TABLE `MachineTempByHour_2` (
@@ -158,7 +165,7 @@ CREATE TABLE `MachineTempByHour_2` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'MachineTempByHour_2'
 );
 EXECUTE STATEMENT SET BEGIN
@@ -304,4 +311,90 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
   ]
 }
 >>>vertx.json
-{ }
+{
+  "model" : {
+    "coords" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "MachineReading",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"sensorid\", \"temperature\", \"event_time\", \"machineid\"\nFROM \"MachineReading_1\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "MachineTempByHour",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"machineid\", \"time_hour\", \"avg_temperature\"\nFROM \"MachineTempByHour_2\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      }
+    ],
+    "mutations" : [
+      {
+        "type" : "kafka",
+        "fieldName" : "_SensorReading",
+        "topic" : "_SensorReading",
+        "computedColumns" : {
+          "event_id" : "UUID",
+          "event_time" : "TIMESTAMP"
+        },
+        "sinkConfig" : { }
+      },
+      {
+        "type" : "kafka",
+        "fieldName" : "_Sensors",
+        "topic" : "_Sensors",
+        "computedColumns" : {
+          "updatedTime" : "TIMESTAMP"
+        },
+        "sinkConfig" : { }
+      }
+    ],
+    "subscriptions" : [ ],
+    "schema" : {
+      "type" : "string",
+      "type" : "string",
+      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype MachineReading {\n  sensorid: Int\n  temperature: Float\n  event_time: DateTime\n  machineid: Int\n}\n\ntype MachineTempByHour {\n  machineid: Int\n  time_hour: DateTime!\n  avg_temperature: Float\n}\n\ntype Mutation {\n  _SensorReading(event: _SensorReadingInput!): _SensorReadingResultOutput!\n  _Sensors(event: _SensorsInput!): _SensorsResultOutput!\n}\n\ntype Query {\n  MachineReading(limit: Int = 10, offset: Int = 0): [MachineReading!]\n  MachineTempByHour(limit: Int = 10, offset: Int = 0): [MachineTempByHour!]\n}\n\ninput _SensorReadingInput {\n  sensorid: Int\n  temperature: Float\n}\n\ntype _SensorReadingResultOutput {\n  event_id: String!\n  sensorid: Int\n  temperature: Float\n  event_time: DateTime\n}\n\ninput _SensorsInput {\n  sensorid: Int!\n  machineid: Int\n}\n\ntype _SensorsResultOutput {\n  sensorid: Int!\n  machineid: Int\n  updatedTime: DateTime\n}\n"
+    }
+  }
+}

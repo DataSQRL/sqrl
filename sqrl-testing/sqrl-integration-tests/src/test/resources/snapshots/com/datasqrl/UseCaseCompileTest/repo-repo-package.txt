@@ -19,32 +19,31 @@ ID:     default_catalog.default_database.Submission
 Type:   stream
 Stage:  flink
 Inputs: default_catalog.default_database._SubmissionRaw
-Annotations:
- - stream-root: _SubmissionRaw__def
-Primary Key: name, submissionTime
-Timestamp  : submissionTime
+Primary Key: -
+Timestamp  : event_time
 Schema:
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - version: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - variant: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - variant: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - latest: BOOLEAN NOT NULL
- - type: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
- - license: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
- - repository: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
- - homepage: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
- - documentation: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
- - readme: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
- - description: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - type: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - license: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - repository: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - homepage: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - documentation: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - readme: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - description: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - keywords: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL ARRAY NOT NULL
  - uniqueId: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - file: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - hash: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - authorid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - submissionTime: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
- - keywords: RecordType:peek_no_expand(VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL name) NOT NULL ARRAY NOT NULL
+ - authorId: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - submissionTime: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - variant0: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - repoURL: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
 Plan:
-LogicalProject(name=[$0], version=[$1], variant=[$2], latest=[$3], type=[$4], license=[$5], repository=[$6], homepage=[$7], documentation=[$8], readme=[$9], description=[$10], uniqueId=[$11], file=[$12], hash=[$13], authorid=[$14], submissionTime=[$15], keywords=[$16], variant0=[COALESCE($2, 'default')], repoURL=[CONCAT('https://repository.datasqrl.com/', $12)])
+LogicalProject(name=[$0], version=[$1], variant=[$2], latest=[$3], type=[$4], license=[$5], repository=[$6], homepage=[$7], documentation=[$8], readme=[$9], description=[$10], keywords=[$11], uniqueId=[$12], file=[$13], hash=[$14], authorId=[$15], submissionTime=[$16], event_time=[$17], variant0=[COALESCE($2, 'default')], repoURL=[CONCAT('https://repository.datasqrl.com/', $13)])
   LogicalTableScan(table=[[default_catalog, default_database, _SubmissionRaw]])
 SQL: CREATE VIEW Submission AS  SELECT *,  COALESCE(variant, 'default') AS variant0,
                      concat('https://repository.datasqrl.com/',file) AS repoURL
@@ -55,21 +54,20 @@ ID:     default_catalog.default_database.SubmissionTopics
 Type:   stream
 Stage:  flink
 Inputs: default_catalog.default_database.Submission
-Annotations:
- - stream-root: _SubmissionRaw__def
 Primary Key: -
-Timestamp  : submissionTime
+Timestamp  : -
 Schema:
  - pkgName: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - topicName: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - submissionTime: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - submissionTime: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalProject(pkgName=[$0], topicName=[$19], submissionTime=[$15])
-  LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{16}])
+LogicalProject(pkgName=[$0], topicName=[$20], submissionTime=[$16])
+  LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{11}])
     LogicalTableScan(table=[[default_catalog, default_database, Submission]])
-    Uncollect
-      LogicalProject(keywords=[$cor1.keywords])
-        LogicalValues(tuples=[[{ 0 }]])
+    LogicalProject(name=[$0])
+      Uncollect
+        LogicalProject(keywords=[$cor1.keywords])
+          LogicalValues(tuples=[[{ 0 }]])
 SQL: CREATE VIEW SubmissionTopics AS  SELECT s.name AS pkgName, k.name AS topicName, s.submissionTime
                     FROM Submission s CROSS JOIN UNNEST(keywords) k(name);
 
@@ -79,21 +77,21 @@ Type:   state
 Stage:  flink
 Inputs: default_catalog.default_database.SubmissionTopics
 Annotations:
- - sort: [2 DESC-nulls-last]
+ - sort: [2 DESC-nulls-last, 0 ASC-nulls-first]
 Primary Key: pkgName, topicName
-Timestamp  : lastSubmission
+Timestamp  : -
 Schema:
  - pkgName: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - topicName: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - numSubmissions: BIGINT NOT NULL
- - lastSubmission: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - lastSubmission: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
 LogicalAggregate(group=[{0, 1}], numSubmissions=[COUNT()], lastSubmission=[MAX($2)])
   LogicalProject(pkgName=[$0], topicName=[$1], submissionTime=[$2])
     LogicalTableScan(table=[[default_catalog, default_database, SubmissionTopics]])
 SQL: CREATE VIEW TopicPackages AS  SELECT pkgName, topicName, COUNT(1) AS numSubmissions, MAX(submissionTime) AS lastSubmission
                  FROM SubmissionTopics
-                 GROUP BY pkgName, topicName ORDER BY numSubmissions DESC;
+                 GROUP BY pkgName, topicName ORDER BY numSubmissions DESC, pkgName ASC;
 
 === TopicSearch
 ID:     default_catalog.default_database.TopicSearch
@@ -120,68 +118,63 @@ ID:     default_catalog.default_database._SubmissionRaw
 Type:   stream
 Stage:  flink
 Inputs: default_catalog.default_database._SubmissionRaw__def
-Annotations:
- - features: DENORMALIZE (feature)
- - stream-root: _SubmissionRaw__def
-Primary Key: name, submissionTime
-Timestamp  : submissionTime
+Primary Key: -
+Timestamp  : event_time
 Schema:
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - version: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - variant: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - variant: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - latest: BOOLEAN NOT NULL
- - type: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
- - license: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
- - repository: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
- - homepage: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
- - documentation: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
- - readme: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
- - description: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - type: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - license: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - repository: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - homepage: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - documentation: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - readme: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - description: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - keywords: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL ARRAY NOT NULL
  - uniqueId: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - file: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - hash: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - authorid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - submissionTime: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
- - keywords: RecordType:peek_no_expand(VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL name) NOT NULL ARRAY NOT NULL
+ - authorId: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - submissionTime: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
-LogicalProject(name=[$0], version=[$1], variant=[$2], latest=[$3], type=[$4], license=[$5], repository=[$6], homepage=[$7], documentation=[$8], readme=[$9], description=[$10], uniqueId=[$11], file=[$12], hash=[$13], authorid=[$14], submissionTime=[$15], keywords=[$16])
-  LogicalWatermarkAssigner(rowtime=[submissionTime], watermark=[-($15, 1:INTERVAL SECOND)])
-    LogicalTableScan(table=[[default_catalog, default_database, _SubmissionRaw__def]])
+LogicalProject(name=[$0], version=[$1], variant=[$2], latest=[$3], type=[$4], license=[$5], repository=[$6], homepage=[$7], documentation=[$8], readme=[$9], description=[$10], keywords=[$11], uniqueId=[$12], file=[$13], hash=[$14], authorId=[$15], submissionTime=[$16], event_time=[$17])
+  LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($17, 1:INTERVAL SECOND)])
+    LogicalProject(name=[$0], version=[$1], variant=[$2], latest=[$3], type=[$4], license=[$5], repository=[$6], homepage=[$7], documentation=[$8], readme=[$9], description=[$10], keywords=[$11], uniqueId=[$12], file=[$13], hash=[$14], authorId=[$15], submissionTime=[$16], event_time=[NOW()])
+      LogicalTableScan(table=[[default_catalog, default_database, _SubmissionRaw__def]])
 SQL: CREATE VIEW `_SubmissionRaw`
 AS
 SELECT *
 FROM `default_catalog`.`default_database`.`_SubmissionRaw__def`
 >>>flink-sql-no-functions.sql
-CREATE TEMPORARY TABLE `_SubmissionRaw__schema` (
+CREATE TABLE `_SubmissionRaw__def` (
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `version` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `variant` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `variant` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `latest` BOOLEAN NOT NULL,
-  `type` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `license` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `repository` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `homepage` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `documentation` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `readme` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `type` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `license` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `repository` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `homepage` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `documentation` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `readme` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `keywords` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL ARRAY NOT NULL,
   `uniqueId` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `file` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `hash` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `authorid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `authorId` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `submissionTime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `keywords` ROW(`name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL) NOT NULL ARRAY NOT NULL
+  `event_time` AS NOW(),
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.001' SECOND
 ) WITH (
-  'connector' = 'datagen'
-);
-CREATE TABLE `_SubmissionRaw__def` (
-  PRIMARY KEY (`name`, `submissionTime`) NOT ENFORCED,
-  WATERMARK FOR `submissionTime` AS `submissionTime` - INTERVAL '0.001' SECOND
-) WITH (
+  'connector' = 'filesystem',
   'format' = 'flexible-json',
-  'path' = '${DATA_PATH}/repodata.jsonl',
-  'connector' = 'filesystem'
-)
-LIKE `_SubmissionRaw__schema`;
+  'path' = '${DATA_PATH}/submission.jsonl',
+  'source.monitor-interval' = '10 sec'
+);
 CREATE VIEW `_SubmissionRaw`
 AS
 SELECT *
@@ -217,36 +210,38 @@ CREATE TABLE `Package_1` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'Package_1'
 );
 CREATE TABLE `Submission_2` (
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `version` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `variant` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `variant` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `latest` BOOLEAN NOT NULL,
-  `type` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `license` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `repository` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `homepage` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `documentation` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `readme` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `type` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `license` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `repository` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `homepage` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `documentation` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `readme` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `keywords` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),
   `uniqueId` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `file` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `hash` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `authorid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `authorId` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `submissionTime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `keywords` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),
+  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `variant0` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `repoURL` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  PRIMARY KEY (`name`, `submissionTime`) NOT ENFORCED
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'Submission_2'
 );
 CREATE TABLE `SubmissionTopics_3` (
@@ -260,7 +255,7 @@ CREATE TABLE `SubmissionTopics_3` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'SubmissionTopics_3'
 );
 CREATE TABLE `TopicPackages_4` (
@@ -274,7 +269,7 @@ CREATE TABLE `TopicPackages_4` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'TopicPackages_4'
 );
 CREATE TABLE `TopicSearch_5` (
@@ -286,7 +281,7 @@ CREATE TABLE `TopicSearch_5` (
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_URL}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'TopicSearch_5'
 );
 EXECUTE STATEMENT SET BEGIN
@@ -295,7 +290,7 @@ INSERT INTO `default_catalog`.`default_database`.`Package_1`
  FROM `default_catalog`.`default_database`.`Package`)
 ;
 INSERT INTO `default_catalog`.`default_database`.`Submission_2`
- (SELECT `name`, `version`, `variant`, `latest`, `type`, `license`, `repository`, `homepage`, `documentation`, `readme`, `description`, `uniqueId`, `file`, `hash`, `authorid`, `submissionTime`, TOJSON(`keywords`) AS `keywords`, `variant0`, `repoURL`
+ (SELECT `name`, `version`, `variant`, `latest`, `type`, `license`, `repository`, `homepage`, `documentation`, `readme`, `description`, TOJSON(`keywords`) AS `keywords`, `uniqueId`, `file`, `hash`, `authorId`, `submissionTime`, `event_time`, `variant0`, `repoURL`, HASHCOLUMNS(`name`, `version`, `variant`, `latest`, `type`, `license`, `repository`, `homepage`, `documentation`, `readme`, `description`, `keywords`, `uniqueId`, `file`, `hash`, `authorId`, `submissionTime`, `event_time`, `variant0`, `repoURL`) AS `__pk_hash`
   FROM `default_catalog`.`default_database`.`Submission`)
  ;
  INSERT INTO `default_catalog`.`default_database`.`SubmissionTopics_3`
@@ -313,26 +308,241 @@ INSERT INTO `default_catalog`.`default_database`.`Submission_2`
     END
 >>>postgres-schema.sql
 CREATE TABLE IF NOT EXISTS "Package_1" ("name" TEXT NOT NULL , PRIMARY KEY ("name"));
-CREATE TABLE IF NOT EXISTS "Submission_2" ("name" TEXT NOT NULL, "version" TEXT NOT NULL, "variant" TEXT , "latest" BOOLEAN NOT NULL, "type" TEXT , "license" TEXT , "repository" TEXT , "homepage" TEXT , "documentation" TEXT , "readme" TEXT , "description" TEXT , "uniqueId" TEXT NOT NULL, "file" TEXT NOT NULL, "hash" TEXT NOT NULL, "authorid" TEXT NOT NULL, "submissionTime" TIMESTAMP WITH TIME ZONE NOT NULL, "keywords" JSONB , "variant0" TEXT NOT NULL, "repoURL" TEXT NOT NULL , PRIMARY KEY ("name","submissionTime"));
+CREATE TABLE IF NOT EXISTS "Submission_2" ("name" TEXT NOT NULL, "version" TEXT NOT NULL, "variant" TEXT NOT NULL, "latest" BOOLEAN NOT NULL, "type" TEXT NOT NULL, "license" TEXT NOT NULL, "repository" TEXT NOT NULL, "homepage" TEXT NOT NULL, "documentation" TEXT NOT NULL, "readme" TEXT NOT NULL, "description" TEXT NOT NULL, "keywords" JSONB , "uniqueId" TEXT NOT NULL, "file" TEXT NOT NULL, "hash" TEXT NOT NULL, "authorId" TEXT NOT NULL, "submissionTime" TIMESTAMP WITH TIME ZONE NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "variant0" TEXT NOT NULL, "repoURL" TEXT NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
 CREATE TABLE IF NOT EXISTS "SubmissionTopics_3" ("pkgName" TEXT NOT NULL, "topicName" TEXT NOT NULL, "submissionTime" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
 CREATE TABLE IF NOT EXISTS "TopicPackages_4" ("pkgName" TEXT NOT NULL, "topicName" TEXT NOT NULL, "numSubmissions" BIGINT NOT NULL, "lastSubmission" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("pkgName","topicName"));
 CREATE TABLE IF NOT EXISTS "TopicSearch_5" ("topicName" TEXT NOT NULL, "numPackages" BIGINT NOT NULL , PRIMARY KEY ("topicName"));
 
+CREATE INDEX IF NOT EXISTS "Submission_2_btree_c0c1c2" ON "Submission_2" USING btree ("name","version","variant");
+CREATE INDEX IF NOT EXISTS "Submission_2_btree_c0c2" ON "Submission_2" USING btree ("name","variant");
 CREATE INDEX IF NOT EXISTS "Submission_2_btree_c0c3" ON "Submission_2" USING btree ("name","latest")
 >>>postgres-views.sql
-CREATE OR REPLACE VIEW "Package"("name") AS SELECT *
-FROM "Package_1";
-CREATE OR REPLACE VIEW "Submission"("name", "version", "variant", "latest", "type", "license", "repository", "homepage", "documentation", "readme", "description", "uniqueId", "file", "hash", "authorid", "submissionTime", "keywords", "variant0", "repoURL") AS SELECT *
+CREATE OR REPLACE VIEW "Submission"("name", "version", "variant", "latest", "type", "license", "repository", "homepage", "documentation", "readme", "description", "keywords", "uniqueId", "file", "hash", "authorId", "submissionTime", "event_time", "variant0", "repoURL") AS SELECT "name", "version", "variant", "latest", "type", "license", "repository", "homepage", "documentation", "readme", "description", "keywords", "uniqueId", "file", "hash", "authorId", "submissionTime", "event_time", "variant0", "repoURL"
 FROM "Submission_2";
 CREATE OR REPLACE VIEW "SubmissionTopics"("pkgName", "topicName", "submissionTime") AS SELECT "pkgName", "topicName", "submissionTime"
-FROM "SubmissionTopics_3";
-CREATE OR REPLACE VIEW "TopicPackages"("pkgName", "topicName", "numSubmissions", "lastSubmission") AS SELECT *
-FROM (SELECT "pkgName", "topicName", "numSubmissions", "lastSubmission"
-  FROM "TopicPackages_4"
-  ORDER BY "numSubmissions" DESC NULLS LAST) AS "t1";
-CREATE OR REPLACE VIEW "TopicSearch"("topicName", "numPackages") AS SELECT *
-FROM (SELECT "topicName", "numPackages"
-  FROM "TopicSearch_5"
-  ORDER BY "numPackages" DESC NULLS LAST) AS "t1"
+FROM "SubmissionTopics_3"
 >>>vertx.json
-{ }
+{
+  "model" : {
+    "coords" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Package",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "name"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"Package_1\"\nWHERE \"name\" = $1 OR $1 IS NULL",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "name"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Package",
+        "fieldName" : "latest",
+        "matchs" : [
+          {
+            "arguments" : [ ],
+            "query" : {
+              "type" : "JdbcQuery",
+              "type" : "JdbcQuery",
+              "sql" : "SELECT \"name\", \"version\", \"variant\", \"latest\", \"type\", \"license\", \"repository\", \"homepage\", \"documentation\", \"readme\", \"description\", \"keywords\", \"uniqueId\", \"file\", \"hash\", \"authorId\", \"submissionTime\", \"event_time\", \"variant0\", \"repoURL\"\nFROM \"Submission_2\"\nWHERE $1 = \"name\" AND \"latest\" = TRUE\nORDER BY \"submissionTime\" DESC NULLS LAST\nFETCH NEXT 1 ROWS ONLY",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "type" : "source",
+                  "key" : "name"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Package",
+        "fieldName" : "versions",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "version"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "variant"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT \"name\", \"version\", \"variant\", \"latest\", \"type\", \"license\", \"repository\", \"homepage\", \"documentation\", \"readme\", \"description\", \"keywords\", \"uniqueId\", \"file\", \"hash\", \"authorId\", \"submissionTime\", \"event_time\", \"variant0\", \"repoURL\"\nFROM \"Submission_2\"\nWHERE $3 = \"name\" AND ($1 IS NULL OR $1 = \"version\") AND ($2 IS NULL OR $2 = \"variant\")\nORDER BY \"submissionTime\" DESC NULLS LAST",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "version"
+                },
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "variant"
+                },
+                {
+                  "type" : "source",
+                  "type" : "source",
+                  "key" : "name"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "TopicSearch",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "topicName"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"topicName\", \"numPackages\"\n  FROM \"TopicSearch_5\"\n  ORDER BY \"numPackages\" DESC NULLS LAST) AS \"t\"\nWHERE \"topicName\" = $1 OR $1 IS NULL",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "topicName"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "TopicPackages",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "topicName"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"pkgName\", \"topicName\", \"numSubmissions\", \"lastSubmission\"\n  FROM \"TopicPackages_4\"\n  ORDER BY \"numSubmissions\" DESC NULLS LAST, \"pkgName\" NULLS FIRST) AS \"t\"\nWHERE \"topicName\" = $1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "type" : "arg",
+                  "path" : "topicName"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "TopicPackages",
+        "fieldName" : "latest",
+        "matchs" : [
+          {
+            "arguments" : [ ],
+            "query" : {
+              "type" : "JdbcQuery",
+              "type" : "JdbcQuery",
+              "sql" : "SELECT \"name\", \"version\", \"variant\", \"latest\", \"type\", \"license\", \"repository\", \"homepage\", \"documentation\", \"readme\", \"description\", \"keywords\", \"uniqueId\", \"file\", \"hash\", \"authorId\", \"submissionTime\", \"event_time\", \"variant0\", \"repoURL\"\nFROM \"Submission_2\"\nWHERE $1 = \"name\" AND \"latest\" = TRUE\nORDER BY \"submissionTime\" DESC NULLS LAST\nFETCH NEXT 1 ROWS ONLY",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "type" : "source",
+                  "key" : "pkgName"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "mutations" : [ ],
+    "subscriptions" : [ ],
+    "schema" : {
+      "type" : "string",
+      "type" : "string",
+      "schema" : "type Package {\n  name: String!\n  latest: Submission\n  versions(version: String, variant: String, limit: Int = 10, offset: Int = 0): [Submission!]\n}\n\ntype Query {\n  Package(name: String, limit: Int = 10, offset: Int = 0): [Package!]\n  TopicSearch(topicName: String, limit: Int = 10, offset: Int = 0): [TopicSearch!]\n  TopicPackages(topicName: String!, limit: Int = 10, offset: Int = 0): [TopicPackages!]\n}\n\ntype Submission {\n  name: String!\n  version: String!\n  variant: String!\n  latest: Boolean!\n  type: String\n  license: String\n  repository: String\n  homepage: String\n  documentation: String\n  readme: String\n  description: String\n  uniqueId: String!\n  keywords: [String!]\n  repoURL: String!\n  file: String!\n  hash: String!\n  submissionTime: String!\n}\n\ntype TopicSearch {\n  topicName: String!\n  numPackages: Int!\n}\n\ntype TopicPackages {\n  topicName: String!\n  pkgName: String!\n  lastSubmission: String!\n  numSubmissions: Int!\n  latest: Submission\n}"
+    }
+  }
+}

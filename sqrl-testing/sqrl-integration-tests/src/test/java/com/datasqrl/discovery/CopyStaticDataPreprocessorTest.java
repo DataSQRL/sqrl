@@ -3,9 +3,9 @@ package com.datasqrl.discovery;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.datasqrl.AbstractAssetSnapshotTest;
+import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.discovery.FlexibleSchemaInferencePreprocessorTest.DataFiles;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.packager.Packager;
 import com.datasqrl.packager.preprocess.CopyStaticDataPreprocessor;
 import com.datasqrl.packager.preprocess.Preprocessor.ProcessorContext;
 import com.datasqrl.packager.util.FileHash;
@@ -24,7 +24,7 @@ public class CopyStaticDataPreprocessorTest extends AbstractAssetSnapshotTest {
 
   protected CopyStaticDataPreprocessorTest() {
     super(FILES_DIR.resolve("output"));
-    super.buildDir = super.deployDir;
+    super.buildDir = super.outputDir;
   }
 
   @ParameterizedTest
@@ -35,8 +35,8 @@ public class CopyStaticDataPreprocessorTest extends AbstractAssetSnapshotTest {
     String filename = file.getFileName().toString();
     assertTrue(preprocessor.getPattern().matcher(filename).matches());
     this.snapshot = Snapshot.of(getDisplayName(file), getClass());
-    preprocessor.processFile(file, new ProcessorContext(deployDir, buildDir, null), ErrorCollector.root());
-    Path copyFile = deployDir.resolve(Packager.DATA_DIR).resolve(filename);
+    preprocessor.processFile(file, new ProcessorContext(outputDir, buildDir, null), ErrorCollector.root());
+    Path copyFile = outputDir.resolve(SqrlConstants.DATA_DIR).resolve(filename);
     assertTrue(Files.exists(copyFile));
     assertTrue(Files.isRegularFile(copyFile));
     snapshot.addContent(FileHash.getFor(copyFile), filename);

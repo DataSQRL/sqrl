@@ -55,6 +55,8 @@ public interface PackageJson {
     boolean isAddArguments();
 
     String getLogger();
+
+    boolean isExtendedScalarTypes();
   }
 
   interface OutputConfig {

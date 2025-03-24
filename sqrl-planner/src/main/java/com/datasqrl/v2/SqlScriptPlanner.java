@@ -1,7 +1,6 @@
 package com.datasqrl.v2;
 
 
-import static com.datasqrl.v2.parser.ParsePosUtil.convertPosition;
 import static com.datasqrl.v2.parser.StatementParserException.checkFatal;
 
 import com.datasqrl.canonicalizer.Name;
@@ -12,13 +11,11 @@ import com.datasqrl.config.SystemBuiltInConnectors;
 import com.datasqrl.engine.log.LogEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.datasqrl.engine.stream.flink.plan.FlinkSqlNodeFactory;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.error.ErrorLocation.FileLocation;
-import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.StringUtil;
 import com.datasqrl.v2.Sqrl2FlinkSQLTranslator.MutationBuilder;
 import com.datasqrl.v2.analyzer.TableAnalysis;
@@ -28,6 +25,8 @@ import com.datasqrl.v2.dag.nodes.ExportNode;
 import com.datasqrl.v2.dag.nodes.PipelineNode;
 import com.datasqrl.v2.dag.nodes.TableFunctionNode;
 import com.datasqrl.v2.dag.nodes.TableNode;
+import com.datasqrl.v2.dag.plan.MutationComputedColumn;
+import com.datasqrl.graphql.server.MutationComputedColumnType;
 import com.datasqrl.v2.hint.ColumnNamesHint;
 import com.datasqrl.v2.hint.ExecHint;
 import com.datasqrl.v2.hint.NoQueryHint;
@@ -37,7 +36,6 @@ import com.datasqrl.v2.hint.TestHint;
 import com.datasqrl.v2.parser.AccessModifier;
 import com.datasqrl.v2.parser.FlinkSQLStatement;
 import com.datasqrl.v2.parser.ParsePosUtil;
-import com.datasqrl.v2.parser.ParsePosUtil.MessageLocation;
 import com.datasqrl.v2.parser.ParsedObject;
 import com.datasqrl.v2.parser.SQLStatement;
 import com.datasqrl.v2.parser.SqlScriptStatementSplitter;
@@ -88,7 +86,6 @@ import lombok.Getter;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.runtime.CalciteContextException;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.parser.SqlParseException;
@@ -99,7 +96,6 @@ import org.apache.flink.sql.parser.ddl.SqlCreateTable;
 import org.apache.flink.sql.parser.ddl.SqlCreateView;
 import org.apache.flink.sql.parser.ddl.SqlDropTable;
 import org.apache.flink.sql.parser.ddl.SqlDropView;
-import org.apache.flink.sql.parser.error.SqlValidateException;
 import org.apache.flink.table.api.ValidationException;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.functions.UserDefinedFunction;
@@ -283,8 +279,10 @@ public class SqlScriptPlanner {
               "Could not find parent table for relationship: %s", tblFctStmt.getPath().getFirst());
           checkFatal(parentNode.get() instanceof TableNode, sqrlDef.getTableName().getFileLocation(), ErrorCode.INVALID_TABLE_FUNCTION_ARGUMENTS,
               "Relationships can only be added to tables (not functions): %s [%s]", tblFctStmt.getPath().getFirst(), parentNode.get().getClass());
-          identifier = SqlNameUtil.toIdentifier(Name.system(tablePath.getLast().getDisplay()));
+          identifier = SqlNameUtil.toIdentifier(tablePath.toString());
           parentTbl = ((TableNode) parentNode.get()).getTableAnalysis();
+          checkFatal(parentTbl.getOptionalBaseTable().isEmpty(), ErrorCode.BASETABLE_ONLY_ERROR,
+              "Relationships can only be added to the base table [%s]", parentTbl.getBaseTable().getIdentifier());
         }
         //Resolve arguments, map indexes, and check for errors
         Map<Integer, Integer> argumentIndexMap = new HashMap<>();
@@ -311,6 +309,8 @@ public class SqlScriptPlanner {
         AccessVisibility visibility = new AccessVisibility(access, hints.isTest(), tblFctStmt.isRelationship(), isHidden);
         fctBuilder.visibility(visibility);
         SqrlTableFunction fct = fctBuilder.build();
+        errors.checkFatal(dagBuilder.getNode(fct.getIdentifier()).isEmpty(),
+            ErrorCode.FUNCTION_EXISTS, "Function or relationship [%s] already exists in catalog", tablePath);
         addFunctionToDag(fct, hints);
         if (!fct.getVisibility().isAccessOnly()) {
           sqrlEnv.registerSqrlTableFunction(fct);
@@ -480,14 +480,14 @@ public class SqlScriptPlanner {
         if (hint instanceof NoQueryHint) { //Don't add an access function
           return;
         }
-        parameters = CalciteUtil.addFilterByColumn(relBuilder, hint.getColumnIndexes(), hint instanceof QueryByAnyHint);
+        parameters = SqlScriptPlannerUtil.addFilterByColumn(relBuilder, hint.getColumnIndexes(), hint instanceof QueryByAnyHint);
       }
       relBuilder.project(IntStream.range(0, tableAnalysis.getFieldLength()).mapToObj(relBuilder::field).collect(
           Collectors.toList()), tableAnalysis.getRowType().getFieldNames(), true); //Identity projection
       //TODO: should we add a default sort if the user didn't specify one to have predictable result sets for testing?
       String tableName = tableAnalysis.getIdentifier().getObjectName();
       String fctName = tableName + ACCESS_FUNCTION_SUFFIX;
-      SqrlTableFunction.SqrlTableFunctionBuilder fctBuilder = sqrlEnv.addSqrlTableFunction(SqlNameUtil.toIdentifier(Name.system(fctName)),
+      SqrlTableFunction.SqrlTableFunctionBuilder fctBuilder = sqrlEnv.addSqrlTableFunction(SqlNameUtil.toIdentifier(fctName),
           relBuilder.build(), parameters, tableAnalysis);
       fctBuilder.fullPath(NamePath.of(tableName));
       fctBuilder.visibility(visibility);
@@ -596,12 +596,17 @@ public class SqlScriptPlanner {
     }
     LogEngine engine = (LogEngine) logStage.get().getEngine();
     return (tableBuilder, datatype) -> {
+      String originalTableName = StringUtil.removeFromEnd(tableBuilder.getTableName(), Sqrl2FlinkSQLTranslator.TABLE_DEFINITION_SUFFIX);
       MutationQuery.MutationQueryBuilder mutationBuilder = MutationQuery.builder();
       mutationBuilder.stage(logStage.get());
       mutationBuilder.createTopic(engine.createTable(logStage.get(),
-          StringUtil.removeFromEnd(tableBuilder.getTableName(), Sqrl2FlinkSQLTranslator.TABLE_DEFINITION_SUFFIX),
+          originalTableName,
           tableBuilder, datatype, Optional.empty()));
-      mutationBuilder.name(Name.system(tableBuilder.getTableName()));
+      mutationBuilder.name(Name.system(originalTableName));
+      tableBuilder.extractMetadataColumns(MutationComputedColumn.UUID_METADATA, true).
+          forEach(colName -> mutationBuilder.computedColumn(new MutationComputedColumn(colName, MutationComputedColumnType.UUID)));
+      tableBuilder.extractMetadataColumns(MutationComputedColumn.TIMESTAMP_METADATA, false).
+          forEach(colName -> mutationBuilder.computedColumn(new MutationComputedColumn(colName, MutationComputedColumnType.TIMESTAMP)));
       return mutationBuilder;
     };
   }
@@ -616,7 +621,7 @@ public class SqlScriptPlanner {
     Name sinkName = sinkPath.getLast();
     NamePath tablePath = exportStmt.getTableIdentifier().get();
 
-    //Lookup the table taht is being exported
+    //Lookup the table that is being exported
     Optional<PipelineNode> tableNode = dagBuilder.getNode(SqlNameUtil.toIdentifier(tablePath.getLast()));
     TableNode inputNode = tableNode.orElseThrow(() -> new StatementParserException(ErrorLabel.GENERIC,
         exportStmt.getTableIdentifier().getFileLocation(), "Could not find table: %s",
