@@ -1,6 +1,8 @@
 package com.datasqrl;
 
 import com.datasqrl.util.FlinkOperatorStatusChecker;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -9,23 +11,22 @@ import java.net.http.HttpResponse;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import io.vertx.core.Vertx;
+import io.vertx.core.http.WebSocket;
+import io.vertx.core.http.WebSocketConnectOptions;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
-import org.apache.commons.collections.ListUtils;
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.JobStatus;
 import org.apache.flink.core.execution.JobClient;
-import org.apache.flink.runtime.client.JobExecutionException;
 import org.apache.flink.table.api.TableResult;
 
 /**
@@ -50,6 +51,8 @@ public class DatasqrlTest {
   private final Path planPath;
   private final Map<String, String> env;
   public String GRAPHQL_ENDPOINT = "http://localhost:8888/graphql";
+  private Map<String, List<String>> subscriptionRecords = new HashMap<>(); // subscription records per subscription name
+  private WebSocket webSocket;
 
   public static void main(String[] args) {
     DatasqrlTest test = new DatasqrlTest();
@@ -103,12 +106,23 @@ public class DatasqrlTest {
       //2. Execute subscription & mutation queries against the API and snapshot results
       if (testPlanOpt.isPresent()) {
         //TODO: Etienne run all subscription queries async and collect the results.
-        for (GraphqlQuery query : testPlanOpt.get().getMutations()) {
+
+        // 1. add the graphql subscriptions to the test plan
+        // 2. connect a websocket to the graphql server hosted in vertx
+        // 3. run all the graphql subscriptions requests by sending them to the websocket
+        // 4. collect the response data (from the websocket) that the pipeline has written to kafka.
+
+        connectWebSocket();
+        for (GraphqlQuery subscriptionQuery : testPlanOpt.get().getSubscriptions()) {
+          executeSubscriptionQuery(subscriptionQuery.getQuery());
+        }
+
+        for (GraphqlQuery mutationQuery : testPlanOpt.get().getMutations()) {
           //Execute mutation queries
-          String data = executeQuery(query.getQuery());
+          String data = executeQuery(mutationQuery.getQuery());
           //Snapshot result
-          Path snapshotPath = snapshotDir.resolve(query.getName() + ".snapshot");
-          snapshot(snapshotPath, query.getName(), data, exceptions);
+          Path snapshotPath = snapshotDir.resolve(mutationQuery.getName() + ".snapshot");
+          snapshot(snapshotPath, mutationQuery.getName(), data, exceptions);
         }
       }
 
@@ -181,8 +195,18 @@ public class DatasqrlTest {
           Path snapshotPath = snapshotDir.resolve(query.getName() + ".snapshot");
           snapshot(snapshotPath, query.getName(), data, exceptions);
         }
+        // TODO make sure for the exceptions
         //TODO: Etienne terminate subscriptions, sort all records retrieved, and snapshot the result like we do the queries above
         //add snapshot comparison below for subscriptions
+
+        for (GraphqlQuery subscriptionQuery : testPlan.getSubscriptions()) {
+          terminateSubscription(extractSubscriptionId(subscriptionQuery.getQuery()));
+          Path snapshotPath = snapshotDir.resolve(subscriptionQuery.getName() + ".snapshot");
+          final List<String> records = subscriptionRecords.get(subscriptionQuery.getName());
+          // sort the records by their hash for determinism because records in subscriptions can arrive in different order.
+          records.sort(Comparator.comparingInt(String::hashCode));
+          snapshot(snapshotPath, subscriptionQuery.getName(), String.join("\n", records), exceptions);
+        }
 
         List<String> expectedSnapshotsQueries = testPlan.getQueries().stream()
             .map(f -> f.getName() + ".snapshot")
@@ -190,8 +214,13 @@ public class DatasqrlTest {
         List<String> expectedSnapshotsMutations = testPlan.getMutations().stream()
             .map(f -> f.getName() + ".snapshot")
             .collect(Collectors.toList());
-        List<String> expectedSnapshots = ListUtils.union(expectedSnapshotsQueries,
-            expectedSnapshotsMutations);
+        List<String> expectedSnapshotsSubscriptions = testPlan.getSubscriptions().stream()
+                .map(f -> f.getName() + ".snapshot")
+                .collect(Collectors.toList());
+        List<String> expectedSnapshots =  new ArrayList<>();
+        expectedSnapshots.addAll(expectedSnapshotsQueries);
+        expectedSnapshots.addAll(expectedSnapshotsMutations);
+        expectedSnapshots.addAll(expectedSnapshotsSubscriptions);
         // Check all snapshots in the directory
         try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(snapshotDir,
             "*.snapshot")) {
@@ -243,6 +272,67 @@ public class DatasqrlTest {
       }
     }
     return exitCode;
+  }
+
+  private String extractSubscriptionId(String subscriptionQuery) throws Exception {
+    final ObjectMapper objectMapper = new ObjectMapper();
+    final JsonNode jsonNode = objectMapper.readTree(subscriptionQuery);
+    return jsonNode.get("id").asText();
+  }
+
+  private String extractSubscriptionName(String subscriptionRecord) throws JsonProcessingException {
+    ObjectMapper objectMapper = new ObjectMapper();
+    JsonNode jsonNode = objectMapper.readTree(subscriptionRecord);
+
+    if (jsonNode.has("payload") && jsonNode.get("payload").has("data")) {
+      JsonNode dataNode = jsonNode.get("payload").get("data");
+      if (dataNode.fieldNames().hasNext()) {
+        return dataNode.fieldNames().next();
+      }
+    }
+    throw new IllegalArgumentException("Invalid subscription record format");
+  }
+
+  private void executeSubscriptionQuery(String subscriptionQuery) {
+    webSocket.writeTextMessage(subscriptionQuery);
+  }
+
+  private void terminateSubscription(String subscriptionId) {
+    if (webSocket != null) {
+      String terminationMessage = "{\"type\":\"complete\",\"id\":\"" + subscriptionId + "\"}";
+      webSocket.writeTextMessage(terminationMessage);
+    }
+  }
+
+  private void connectWebSocket() {
+    Vertx vertx = Vertx.vertx();
+    io.vertx.core.http.HttpClient client = vertx.createHttpClient();
+
+    URI uri = URI.create(GRAPHQL_ENDPOINT);
+    WebSocketConnectOptions options = new WebSocketConnectOptions()
+            .setPort(uri.getPort())
+            .setHost(uri.getHost())
+            .setURI(uri.getPath());
+
+    client.webSocket(options, wsResult -> {
+      if (wsResult.succeeded()) {
+        webSocket = wsResult.result();
+        String initMessage = "{\"type\":\"connection_init\",\"payload\":{}}";
+
+        webSocket.writeTextMessage(initMessage);
+        webSocket.handler(message -> {
+            try {
+              final String messageText = message.toString();
+              final String relatedSubscription = extractSubscriptionName(messageText);
+              subscriptionRecords.computeIfAbsent(relatedSubscription, k -> new ArrayList<>()).add(messageText);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+        });
+      } else {
+        throw new RuntimeException("WebSocket connection failed: " + wsResult.cause().getMessage());
+      }
+    });
   }
 
 
@@ -300,6 +390,7 @@ public class DatasqrlTest {
 
     List<GraphqlQuery> queries;
     List<GraphqlQuery> mutations;
+    List<GraphqlQuery> subscriptions;
   }
 
   @AllArgsConstructor

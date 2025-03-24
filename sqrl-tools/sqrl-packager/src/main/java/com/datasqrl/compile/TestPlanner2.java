@@ -66,6 +66,7 @@ public class TestPlanner2 {
                 throw new RuntimeException(e);
               }
               Document document = parser.parseDocument(content);
+              //TODO extract subscriptions from .graphql files
               extractQueriesAndMutations(document, queries, mutations, file.getFileName().toString().replace(".graphql", ""));
             });
       } catch (IOException e) {
