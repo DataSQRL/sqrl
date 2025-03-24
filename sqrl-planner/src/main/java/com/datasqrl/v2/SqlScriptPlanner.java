@@ -40,6 +40,7 @@ import com.datasqrl.v2.parser.ParsedObject;
 import com.datasqrl.v2.parser.SQLStatement;
 import com.datasqrl.v2.parser.SqlScriptStatementSplitter;
 import com.datasqrl.v2.parser.SqrlAddColumnStatement;
+import com.datasqrl.v2.parser.SqrlComments;
 import com.datasqrl.v2.parser.SqrlCreateTableStatement;
 import com.datasqrl.v2.parser.SqrlDefinition;
 import com.datasqrl.v2.parser.SqrlExportStatement;
@@ -224,17 +225,25 @@ public class SqlScriptPlanner {
    * @throws SqlParseException
    */
   private void planStatement(SQLStatement stmt, List<StackableStatement> statementStack, Sqrl2FlinkSQLTranslator sqrlEnv, ErrorCollector errors) throws SqlParseException {
-    //Process hints
+    //Process hints & documentation
     PlannerHints hints = PlannerHints.EMPTY;
+    Optional<String> documentation = Optional.empty();
     if (stmt instanceof SqrlStatement) {
-      hints = PlannerHints.fromHints(((SqrlStatement)stmt).getComments());
+      SqrlComments comments = ((SqrlStatement)stmt).getComments();
+      hints = PlannerHints.fromHints(comments);
+      if (!comments.getDocumentation().isEmpty()) {
+        documentation = Optional.of(comments.getDocumentation().stream().map(ParsedObject::get)
+            .map(String::trim).collect(
+            Collectors.joining("\n")));
+      }
     }
+    HintsAndDocs hintsAndDocs = new HintsAndDocs(hints, documentation);
     if (stmt instanceof SqrlImportStatement) {
-      addImport((SqrlImportStatement) stmt, sqrlEnv, errors);
+      addImport((SqrlImportStatement) stmt, hintsAndDocs, sqrlEnv, errors);
     } else if (stmt instanceof SqrlExportStatement) {
       addExport((SqrlExportStatement) stmt, sqrlEnv);
     } else if (stmt instanceof SqrlCreateTableStatement) {
-      addSourceToDag(sqrlEnv.createTable(((SqrlCreateTableStatement) stmt).toSql(), getLogEngineBuilder()), sqrlEnv);
+      addSourceToDag(sqrlEnv.createTable(((SqrlCreateTableStatement) stmt).toSql(), getLogEngineBuilder(hintsAndDocs)), hintsAndDocs, sqrlEnv);
     } else if (stmt instanceof SqrlDefinition) {
       SqrlDefinition sqrlDef = (SqrlDefinition) stmt;
       AccessModifier access = sqrlDef.getAccess();
@@ -308,16 +317,17 @@ public class SqlScriptPlanner {
         fctBuilder.fullPath(tblFctStmt.getPath());
         AccessVisibility visibility = new AccessVisibility(access, hints.isTest(), tblFctStmt.isRelationship(), isHidden);
         fctBuilder.visibility(visibility);
+        fctBuilder.documentation(documentation);
         SqrlTableFunction fct = fctBuilder.build();
         errors.checkFatal(dagBuilder.getNode(fct.getIdentifier()).isEmpty(),
             ErrorCode.FUNCTION_EXISTS, "Function or relationship [%s] already exists in catalog", tablePath);
-        addFunctionToDag(fct, hints);
+        addFunctionToDag(fct, hintsAndDocs);
         if (!fct.getVisibility().isAccessOnly()) {
           sqrlEnv.registerSqrlTableFunction(fct);
         }
       } else {
         AccessVisibility visibility = new AccessVisibility(access, hints.isTest(), true, isHidden);
-        addTableToDag(sqrlEnv.addView(originalSql, hints, errors), hints, visibility, sqrlEnv);
+        addTableToDag(sqrlEnv.addView(originalSql, hints, errors), hintsAndDocs, visibility, sqrlEnv);
       }
     } else if (stmt instanceof FlinkSQLStatement) { //Some other Flink table statement we pass right through
       FlinkSQLStatement flinkStmt = (FlinkSQLStatement) stmt;
@@ -325,9 +335,9 @@ public class SqlScriptPlanner {
       if (node instanceof SqlCreateView || node instanceof SqlAlterViewAs) {
         //plan like other definitions from above
         AccessVisibility visibility = new AccessVisibility(adjustAccess(AccessModifier.QUERY), false, true, false);
-        addTableToDag(sqrlEnv.addView(flinkStmt.getSql().get(), hints, errors), hints, visibility, sqrlEnv);
+        addTableToDag(sqrlEnv.addView(flinkStmt.getSql().get(), hints, errors), hintsAndDocs, visibility, sqrlEnv);
       } else if (node instanceof SqlCreateTable) {
-        addSourceToDag(sqrlEnv.createTable(flinkStmt.getSql().get(), getLogEngineBuilder()), sqrlEnv);
+        addSourceToDag(sqrlEnv.createTable(flinkStmt.getSql().get(), getLogEngineBuilder(hintsAndDocs)), hintsAndDocs, sqrlEnv);
       } else if (node instanceof SqlAlterTable || node instanceof SqlAlterView) {
         errors.fatal("Renaming or altering tables is not supported. Rename them directly in the script or IMPORT AS.");
       } else if (node instanceof SqlDropTable || node instanceof SqlDropView) {
@@ -337,6 +347,14 @@ public class SqlScriptPlanner {
         sqrlEnv.executeSQL(flinkStmt.getSql().get());
       }
     }
+  }
+
+  @Value
+  private static class HintsAndDocs {
+    PlannerHints hints;
+    Optional<String> documentation;
+
+    public static final HintsAndDocs EMPTY = new HintsAndDocs(PlannerHints.EMPTY, Optional.empty());
   }
 
   /**
@@ -444,7 +462,8 @@ public class SqlScriptPlanner {
    * @param tableAnalysis
    * @param sqrlEnv
    */
-  private void addSourceToDag(TableAnalysis tableAnalysis, Sqrl2FlinkSQLTranslator sqrlEnv) {
+  private void addSourceToDag(TableAnalysis tableAnalysis, HintsAndDocs hintsAndDocs,
+      Sqrl2FlinkSQLTranslator sqrlEnv) {
     Preconditions.checkArgument(tableAnalysis.getFromTables().size()==1);
     TableAnalysis source = (TableAnalysis) tableAnalysis.getFromTables().get(0);
     Preconditions.checkArgument(source.isSourceOrSink());
@@ -453,25 +472,25 @@ public class SqlScriptPlanner {
     boolean isHidden = Name.system(tableAnalysis.getIdentifier().getObjectName()).isHidden();
     AccessVisibility visibility = new AccessVisibility(isHidden?AccessModifier.NONE:adjustAccess(AccessModifier.QUERY), false, true,
         isHidden);
-    addTableToDag(tableAnalysis, PlannerHints.EMPTY, visibility, sqrlEnv);
+    addTableToDag(tableAnalysis, hintsAndDocs, visibility, sqrlEnv);
   }
 
   /**
    * Adds a table to the DAG and plans the table access function based on the determined visibility
    * and provided hints.
    * @param tableAnalysis
-   * @param hints
+   * @param hintsAndDocs
    * @param visibility
    * @param sqrlEnv
    */
-  private void addTableToDag(TableAnalysis tableAnalysis, PlannerHints hints, AccessVisibility visibility,
-      Sqrl2FlinkSQLTranslator sqrlEnv) {
-    List<ExecutionStage> availableStages = determineStages(tableStages,hints);
+  private void addTableToDag(TableAnalysis tableAnalysis, HintsAndDocs hintsAndDocs,
+      AccessVisibility visibility, Sqrl2FlinkSQLTranslator sqrlEnv) {
+    List<ExecutionStage> availableStages = determineStages(tableStages,hintsAndDocs.hints);
     TableNode tableNode = new TableNode(tableAnalysis, getStageAnalysis(tableAnalysis, availableStages));
     dagBuilder.add(tableNode);
 
     //Figure out if and what type of access function we should add for this table
-    Optional<ColumnNamesHint> queryByHint = hints.getQueryByHint();
+    Optional<ColumnNamesHint> queryByHint = hintsAndDocs.hints.getQueryByHint();
     if (visibility.isEndpoint()) { //only add function if this table is an endpoint
       FlinkRelBuilder relBuilder = sqrlEnv.getTableScan(tableAnalysis.getIdentifier());
       List<FunctionParameter> parameters = List.of();
@@ -491,15 +510,16 @@ public class SqlScriptPlanner {
           relBuilder.build(), parameters, tableAnalysis);
       fctBuilder.fullPath(NamePath.of(tableName));
       fctBuilder.visibility(visibility);
-      addFunctionToDag(fctBuilder.build(), PlannerHints.EMPTY); //hints don't apply to the function access
+      fctBuilder.documentation(hintsAndDocs.documentation);
+      addFunctionToDag(fctBuilder.build(), HintsAndDocs.EMPTY); //hints don't apply to the function access
     } else if (queryByHint.isPresent()) {
       throw new StatementParserException(ErrorLabel.GENERIC, queryByHint.get().getSource().getFileLocation(),
           "query_by hints are only supported on tables that are queryable");
     }
   }
 
-  private void addFunctionToDag(SqrlTableFunction function, PlannerHints hints) {
-    List<ExecutionStage> availableStages = determineStages(determineViableStages(function.getVisibility().getAccess()),hints);
+  private void addFunctionToDag(SqrlTableFunction function, HintsAndDocs hintsAndDocs) {
+    List<ExecutionStage> availableStages = determineStages(determineViableStages(function.getVisibility().getAccess()), hintsAndDocs.hints);
     dagBuilder.add(new TableFunctionNode(function, getStageAnalysis(function.getFunctionAnalysis(), availableStages)));
   }
 
@@ -512,7 +532,7 @@ public class SqlScriptPlanner {
    * @param sqrlEnv
    * @param errors
    */
-  private void addImport(SqrlImportStatement importStmt, Sqrl2FlinkSQLTranslator sqrlEnv, ErrorCollector errors) {
+  private void addImport(SqrlImportStatement importStmt, HintsAndDocs hintsAndDocs, Sqrl2FlinkSQLTranslator sqrlEnv, ErrorCollector errors) {
     NamePath path = importStmt.getPackageIdentifier().get();
     boolean isStar = path.getLast().equals(STAR);
 
@@ -534,7 +554,7 @@ public class SqlScriptPlanner {
       }
       for (NamespaceObject namespaceObject : module.getNamespaceObjects()) {
         //For multiple imports, the alias serves as a prefix.
-        addImport(namespaceObject, alias.map(x -> x.append(namespaceObject.getName()).getDisplay()), sqrlEnv);
+        addImport(namespaceObject, alias.map(x -> x.append(namespaceObject.getName()).getDisplay()), hintsAndDocs, sqrlEnv);
       }
     } else {
       Optional<NamespaceObject> namespaceObject = module.getNamespaceObject(path.getLast());
@@ -542,6 +562,7 @@ public class SqlScriptPlanner {
 
       addImport(namespaceObject.get(),
           Optional.of(alias.orElse(path.getLast()).getDisplay()),
+          hintsAndDocs,
           sqrlEnv);
     }
   }
@@ -553,16 +574,16 @@ public class SqlScriptPlanner {
    * @param alias
    * @param sqrlEnv
    */
-  private void addImport(NamespaceObject nsObject, Optional<String> alias, Sqrl2FlinkSQLTranslator sqrlEnv) {
+  private void addImport(NamespaceObject nsObject, Optional<String> alias, HintsAndDocs hintsAndDocs, Sqrl2FlinkSQLTranslator sqrlEnv) {
     if (nsObject instanceof FlinkTableNamespaceObject) { //import a table
       //TODO: for a create table statement without options (connector), we manage it internally
       // add pass it to Log engine for augmentation after validating/adding event-id and event-time metadata columns & checking no watermark/partition/constraint is present
       ExternalFlinkTable flinkTable = ExternalFlinkTable.fromNamespaceObject((FlinkTableNamespaceObject) nsObject,
           alias, errorCollector);
       try {
-        TableAnalysis tableAnalysis = sqrlEnv.addImport(flinkTable.tableName.getDisplay(), flinkTable.sqlCreateTable,
-            flinkTable.schema, getLogEngineBuilder());
-        addSourceToDag(tableAnalysis, sqrlEnv);
+        TableAnalysis tableAnalysis = sqrlEnv.createTableWithSchema(flinkTable.tableName.getDisplay(), flinkTable.sqlCreateTable,
+            flinkTable.schema, getLogEngineBuilder(hintsAndDocs));
+        addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv);
       } catch (Throwable e) {
         throw flinkTable.errorCollector.handle(e);
       }
@@ -586,7 +607,7 @@ public class SqlScriptPlanner {
    * this MutationBuilder to fill in the connector settings based on the configured log engine.
    * @return
    */
-  private MutationBuilder getLogEngineBuilder() {
+  private MutationBuilder getLogEngineBuilder(HintsAndDocs hintsAndDocs) {
     Optional<ExecutionStage> logStage = pipeline.getStageByType(EngineType.LOG);
     if (logStage.isEmpty()) {
       return (t, d) -> {
@@ -603,6 +624,7 @@ public class SqlScriptPlanner {
           originalTableName,
           tableBuilder, datatype, Optional.empty()));
       mutationBuilder.name(Name.system(originalTableName));
+      mutationBuilder.documentation(hintsAndDocs.documentation);
       tableBuilder.extractMetadataColumns(MutationComputedColumn.UUID_METADATA, true).
           forEach(colName -> mutationBuilder.computedColumn(new MutationComputedColumn(colName, MutationComputedColumnType.UUID)));
       tableBuilder.extractMetadataColumns(MutationComputedColumn.TIMESTAMP_METADATA, false).

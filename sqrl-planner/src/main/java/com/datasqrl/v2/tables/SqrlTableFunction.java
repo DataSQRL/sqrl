@@ -7,6 +7,7 @@ import com.datasqrl.io.tables.TableType;
 import com.datasqrl.v2.analyzer.TableAnalysis;
 import com.datasqrl.v2.analyzer.TableOrFunctionAnalysis;
 import com.datasqrl.schema.Multiplicity;
+import com.datasqrl.v2.util.Documented;
 import com.google.common.base.Preconditions;
 import java.lang.reflect.Type;
 import java.util.List;
@@ -41,7 +42,7 @@ import org.apache.flink.table.catalog.ObjectIdentifier;
 @Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @ToString(onlyExplicitlyIncluded = true)
-public class SqrlTableFunction implements TableFunction, TableOrFunctionAnalysis {
+public class SqrlTableFunction implements TableFunction, TableOrFunctionAnalysis, Documented {
 
   /**
    * The full path for this function. If it is a root-level
@@ -76,6 +77,12 @@ public class SqrlTableFunction implements TableFunction, TableOrFunctionAnalysis
    */
   @Nullable @Default @Setter
   private ExecutableQuery executableQuery = null;
+
+  /**
+   * A documentation string that describes the function
+   */
+  @Default
+  private Optional<String> documentation = Optional.empty();
 
   @Override
   public RelDataType getRowType(RelDataTypeFactory relDataTypeFactory, List<? extends Object> list) {

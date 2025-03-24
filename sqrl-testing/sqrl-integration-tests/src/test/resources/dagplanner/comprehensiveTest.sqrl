@@ -42,6 +42,9 @@ CustomerSubscriptionById(minId INT) := SUBSCRIBE SELECT * FROM Customer WHERE cu
 UnnestOrders := SELECT o.id, o.customerid, o.`time`, e.productid, e.quantity, e.discount FROM ExternalOrders o CROSS JOIN UNNEST(entries) e;
 UnnestOrders.newId := id + productid;
 
+/**
+    Newly placed orders
+ */
 CREATE TABLE Orders (
                         orderid INT,
                         amount FLOAT,

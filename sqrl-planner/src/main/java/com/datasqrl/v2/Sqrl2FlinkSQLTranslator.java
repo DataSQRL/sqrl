@@ -60,7 +60,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.Value;
-import org.apache.calcite.plan.hep.HepMatchOrder;
 import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
@@ -87,7 +86,6 @@ import org.apache.calcite.sql.SqlSyntax;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.SqlNameMatchers;
 import org.apache.calcite.sql2rel.SqlToRelConverter;
-import org.apache.calcite.tools.RuleSets;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.sql.parser.ddl.SqlAlterViewAs;
 import org.apache.flink.sql.parser.ddl.SqlCreateFunction;
@@ -104,7 +102,6 @@ import org.apache.flink.table.api.Schema.UnresolvedColumn;
 import org.apache.flink.table.api.Schema.UnresolvedComputedColumn;
 import org.apache.flink.table.api.Schema.UnresolvedMetadataColumn;
 import org.apache.flink.table.api.Schema.UnresolvedPhysicalColumn;
-import org.apache.flink.table.api.TableConfig;
 import org.apache.flink.table.api.TableException;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.api.bridge.java.internal.StreamTableEnvironmentImpl;
@@ -132,11 +129,6 @@ import org.apache.flink.table.planner.delegation.PlannerBase;
 import org.apache.flink.table.planner.operations.SqlNodeConvertContext;
 import org.apache.flink.table.planner.operations.SqlNodeToOperationConversion;
 import org.apache.flink.table.planner.parse.CalciteParser;
-import org.apache.flink.table.planner.plan.optimize.program.FlinkChainedProgram;
-import org.apache.flink.table.planner.plan.optimize.program.FlinkHepRuleSetProgram;
-import org.apache.flink.table.planner.plan.optimize.program.FlinkOptimizeProgram;
-import org.apache.flink.table.planner.plan.optimize.program.FlinkStreamProgram;
-import org.apache.flink.table.planner.plan.optimize.program.StreamOptimizeContext;
 import org.apache.flink.table.planner.utils.RowLevelModificationContextUtils;
 import org.apache.flink.table.types.AbstractDataType;
 import org.apache.flink.table.types.DataType;
@@ -566,7 +558,7 @@ public class Sqrl2FlinkSQLTranslator {
     MutationQueryBuilder createMutation(FlinkTableBuilder flinkTableBuilder, RelDataType relDataType);
   }
 
-  public TableAnalysis addImport(String tableName, String tableDefinition,
+  public TableAnalysis createTableWithSchema(String tableName, String tableDefinition,
       Optional<RelDataType> schema,
       MutationBuilder logEngineBuilder) {
     return addSourceTable(addTable(Optional.of(tableName), tableDefinition, schema, logEngineBuilder));

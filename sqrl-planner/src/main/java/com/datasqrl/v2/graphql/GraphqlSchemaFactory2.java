@@ -207,12 +207,12 @@ public class GraphqlSchemaFactory2 {
           .name("event")
           .type(inputType)
           .build();
-      GraphQLFieldDefinition mutationField = GraphQLFieldDefinition.newFieldDefinition()
+      GraphQLFieldDefinition.Builder mutationFieldBuilder = GraphQLFieldDefinition.newFieldDefinition()
           .name(name)
           .argument(inputArgument)
-          .type(GraphqlSchemaUtil2.createOutputTypeForRelDataType(mutation.getOutputDataType(), NamePath.of(name.concat("Result")), extendedScalarTypes).get())
-          .build();
-      builder.field(mutationField);
+          .type(GraphqlSchemaUtil2.createOutputTypeForRelDataType(mutation.getOutputDataType(), NamePath.of(name.concat("Result")), extendedScalarTypes).get());
+      mutation.getDocumentation().ifPresent(mutationFieldBuilder::description);
+      builder.field(mutationFieldBuilder.build());
     }
     return Optional.of(builder.build());
   }
@@ -235,12 +235,12 @@ public class GraphqlSchemaFactory2 {
           tableFunctionsType == AccessModifier.QUERY
             ? (GraphQLOutputType) wrapMultiplicity(createTypeReference(tableFunction), tableFunction.getMultiplicity())
             : createTypeReference(tableFunction); // type is nullable because there can be no update in the subscription
-      GraphQLFieldDefinition field = GraphQLFieldDefinition.newFieldDefinition()
+      GraphQLFieldDefinition.Builder fieldBuilder = GraphQLFieldDefinition.newFieldDefinition()
           .name(tableFunctionName)
           .type(type)
-          .arguments(createArguments(tableFunction))
-          .build();
-      fields.add(field);
+          .arguments(createArguments(tableFunction));
+      tableFunction.getDocumentation().ifPresent(fieldBuilder::description);
+      fields.add(fieldBuilder.build());
     }
     if (fields.isEmpty()) {
       return Optional.empty();
