@@ -32,6 +32,7 @@ ApplicationStatus := SELECT u._uuid, u.status, u.message, u.event_time, a.id, a.
 
 --EXPORT ApplicationStatus TO print.status;
 
+-- TODO make it a subscription
 ApplicationAlert := SELECT _uuid, id, customer_id, loan_type_id, max_amount, min_amount, amount
                     FROM ApplicationStatus a
                     WHERE status = 'underwriting' AND (amount > max_amount OR amount < min_amount);
