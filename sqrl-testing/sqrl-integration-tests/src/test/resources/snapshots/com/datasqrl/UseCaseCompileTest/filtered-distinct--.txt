@@ -227,7 +227,7 @@ FROM "Orders_2"
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype DistinctOrders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  productid: Float!\n  quantity: Float!\n  unit_price: Float\n  discount: Float\n}\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  productid: Float!\n  quantity: Float!\n  unit_price: Float\n  discount: Float\n}\n\ntype Query {\n  DistinctOrders(limit: Int = 10, offset: Int = 0): [DistinctOrders!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n}\n"
+      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype DistinctOrders {\n  id: GraphQLBigInteger!\n  customerid: GraphQLBigInteger!\n  time: DateTime!\n  productid: GraphQLBigInteger!\n  quantity: GraphQLBigInteger!\n  unit_price: Float\n  discount: Float\n}\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Orders {\n  id: GraphQLBigInteger!\n  customerid: GraphQLBigInteger!\n  time: DateTime!\n  productid: GraphQLBigInteger!\n  quantity: GraphQLBigInteger!\n  unit_price: Float\n  discount: Float\n}\n\ntype Query {\n  DistinctOrders(limit: Int = 10, offset: Int = 0): [DistinctOrders!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n}\n"
     }
   }
 }
