@@ -112,7 +112,9 @@ public class DatasqrlTest {
         // 3. run all the graphql subscriptions requests by sending them to the websocket
         // 4. collect the response data (from the websocket) that the pipeline has written to kafka.
 
-        connectWebSocket();
+        if (!testPlanOpt.get().getSubscriptions().isEmpty()) {
+          connectWebSocket();
+        }
         for (GraphqlQuery subscriptionQuery : testPlanOpt.get().getSubscriptions()) {
           executeSubscriptionQuery(subscriptionQuery.getQuery());
         }

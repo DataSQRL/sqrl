@@ -49,10 +49,11 @@ import static com.datasqrl.v2.util.SqrTableFunctionUtil.getTableFunctionFromPath
 public class TestPlanner2 {
   private List<SqrlTableFunction> tableFunctions;
 
-  public TestPlan generateTestPlan(APISource source, Optional<Path> testsPath) {
+  public TestPlan2 generateTestPlan(APISource source, Optional<Path> testsPath) {
     Parser parser = new Parser();
     List<GraphqlQuery> queries = new ArrayList<>();
     List<GraphqlQuery> mutations = new ArrayList<>();
+    List<GraphqlQuery> subscriptions = new ArrayList<>();
 
     testsPath.ifPresent((p) -> {
       try (Stream<Path> paths = Files.walk(p)) {
@@ -84,7 +85,7 @@ public class TestPlanner2 {
       queries.add(new GraphqlQuery(definition1.getName(),
           AstPrinter.printAst(definition1)));
     }
-    return new TestPlan(queries, mutations);
+    return new TestPlan2(queries, mutations, subscriptions);
   }
 
   private void extractQueriesAndMutations(Document document, List<GraphqlQuery> queries, List<GraphqlQuery> mutations, String prefix) {

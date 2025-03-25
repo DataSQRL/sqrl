@@ -54,7 +54,7 @@ public class CompilationProcessV2 {
   private final ExecutionPipeline pipeline;
   private final ErrorCollector errors;
 
-  public Pair<PhysicalPlan, TestPlan> executeCompilation(Optional<Path> testsPath) {
+  public Pair<PhysicalPlan, TestPlan2> executeCompilation(Optional<Path> testsPath) {
 
     Sqrl2FlinkSQLTranslator environment = new Sqrl2FlinkSQLTranslator(buildPath);
     planner.planMain(mainScript, environment);
@@ -66,7 +66,7 @@ public class CompilationProcessV2 {
 
     writeDeploymentArtifactsHook.run(dag);
 
-    TestPlan testPlan = null;
+    TestPlan2 testPlan = null;
     //There can only be a single server plan
     Optional<ServerPhysicalPlan> serverPlan = physicalPlan.getPlans(ServerPhysicalPlan.class).findFirst();
     if (serverPlan.isPresent()) {
