@@ -1,1 +1,1 @@
-{"data":{"JsonArrayTest":[{"id":1.0,"json_array_string_function":[1,{"a":1}],"json_array_json_function":[{"a":1},{"a":2}]}]}}
+{"data":{"JsonArrayTest":[{"id":1,"json_array_string_function":[1,{"a":1}],"json_array_json_function":[{"a":1},{"a":2}]}]}}
