@@ -43,7 +43,8 @@ public abstract class GraphqlSchemaWalker2 {
   protected final List<SqrlTableFunction> tableFunctions;
   protected final List<MutationQuery> mutations;
 
-  protected final Set<ObjectTypeDefinition> seen = new HashSet<>();
+  protected final Set<ObjectTypeDefinition> seenObjectTypes = new HashSet<>();
+  protected final Set<NamePath> seenTableFunctions = new HashSet<>();
 
   /*
   * Schema walking methods
@@ -87,6 +88,8 @@ public abstract class GraphqlSchemaWalker2 {
 
   private void walkTableFunction(ObjectTypeDefinition parentType, FieldDefinition atField,
                                  SqrlTableFunction tableFunction, TypeDefinitionRegistry registry) {
+    checkState(!seenTableFunctions.contains(tableFunction.getFullPath()), atField.getSourceLocation(), "Duplicate table function: %s", tableFunction.getFullPath());
+    seenTableFunctions.add(tableFunction.getFullPath());
     Optional<TypeDefinition> typeDefOpt = registry.getType(atField.getType());
     checkState(typeDefOpt.isPresent(), atField.getType().getSourceLocation(), "Could not find object type in graphql type registry: %s", atField.getType());
     final TypeDefinition typeDefinition = typeDefOpt.get();
@@ -102,10 +105,10 @@ public abstract class GraphqlSchemaWalker2 {
   }
 
   private void walkObjectType(boolean isFunctionResultType, ObjectTypeDefinition objectType, Optional<RelDataType> relDataType, TypeDefinitionRegistry registry) {
-    if (seen.contains(objectType)) {
+    if (seenObjectTypes.contains(objectType)) {
       return;
     }
-    seen.add(objectType);
+    seenObjectTypes.add(objectType);
     checkState(isValidGraphQLName(objectType.getName()), objectType.getSourceLocation(), "Invalid object type name: %s", objectType.getName());
     checkState(!objectType.getFieldDefinitions().isEmpty(), objectType.getSourceLocation(), "Empty object type: %s", objectType.getName());
     for (FieldDefinition field : objectType.getFieldDefinitions()) {
