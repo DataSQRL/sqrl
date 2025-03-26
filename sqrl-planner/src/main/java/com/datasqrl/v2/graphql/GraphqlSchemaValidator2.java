@@ -1,5 +1,7 @@
 package com.datasqrl.v2.graphql;
 
+import static com.datasqrl.graphql.jdbc.SchemaConstants.LIMIT;
+import static com.datasqrl.graphql.jdbc.SchemaConstants.OFFSET;
 import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.getQueryTypeName;
 import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.getType;
 import static com.datasqrl.graphql.util.GraphqlCheckUtil.checkState;
@@ -9,6 +11,7 @@ import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.generate.GraphqlSchemaUtil;
 import com.datasqrl.plan.queries.APISource;
+import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.v2.dag.plan.MutationQuery;
 import com.datasqrl.v2.tables.SqrlTableFunction;
 import com.google.inject.Inject;
@@ -47,15 +50,23 @@ public class GraphqlSchemaValidator2 extends GraphqlSchemaWalker2 {
   }
 
   @Override
-  protected void visitSubscription(FieldDefinition field, SqrlTableFunction tableFunction) {
+  protected void visitSubscription(FieldDefinition atField, SqrlTableFunction tableFunction) {
+  }
+
+  private void checkHasLimitAndOffset(FieldDefinition atField, SqrlTableFunction tableFunction) {
+    if (tableFunction.getMultiplicity() == Multiplicity.MANY) {
+      List<InputValueDefinition> arguments = atField.getInputValueDefinitions();
+      final List<InputValueDefinition> limitAndOffsetArgs = arguments.stream().filter(argument -> argument.getName().equals(LIMIT) || argument.getName().equals(OFFSET)).collect(Collectors.toList());
+      checkState(limitAndOffsetArgs.size() == 2, atField.getSourceLocation(), "Query %s must have limit and offset arguments", atField.getName());
+    }
   }
 
   @Override
-  protected void visitMutation(FieldDefinition field, TypeDefinitionRegistry registry, MutationQuery mutation) {
+  protected void visitMutation(FieldDefinition atField, TypeDefinitionRegistry registry, MutationQuery mutation) {
     validateStructurallyEqualMutation(
-        field,
-        getValidMutationOutputType(field, registry),
-        getValidMutationInputType(field, registry),
+            atField,
+        getValidMutationOutputType(atField, registry),
+        getValidMutationInputType(atField, registry),
         List.of(ReservedName.MUTATION_TIME.getCanonical(), ReservedName.MUTATION_PRIMARY_KEY.getDisplay()),
         registry);
   }
@@ -216,24 +227,25 @@ public class GraphqlSchemaValidator2 extends GraphqlSchemaWalker2 {
   }
 
   @Override
-  protected void visitUnknownObject(FieldDefinition field, Optional<RelDataType> relDataType) {
+  protected void visitUnknownObject(FieldDefinition atField, Optional<RelDataType> relDataType) {
     throw createThrowable(
-        field.getSourceLocation(), "Unknown field at location %s",
+        atField.getSourceLocation(), "Unknown field at location %s",
         relDataType.map(r ->
-                    field.getName() + ". Possible scalars are [" + r.getFieldNames().stream()
+                    atField.getName() + ". Possible scalars are [" + r.getFieldNames().stream()
                                                                   .filter(GraphqlSchemaUtil::isValidGraphQLName)
                                                                   .collect(Collectors.joining(", "))
                                                             + "]")
-            .orElse(field.getName()));
+            .orElse(atField.getName()));
   }
 
   @Override
-  protected void visitScalar(ObjectTypeDefinition objectType, FieldDefinition field, RelDataTypeField relDataTypeField) {
+  protected void visitScalar(ObjectTypeDefinition objectType, FieldDefinition atField, RelDataTypeField relDataTypeField) {
   }
 
   @Override
   protected void visitQuery(ObjectTypeDefinition parentType, FieldDefinition atField, SqrlTableFunction tableFunction) {
     checkValidArrayNonNullType(atField.getType());
+    checkHasLimitAndOffset(atField, tableFunction);
   }
 
   private void checkValidArrayNonNullType(Type type) {
