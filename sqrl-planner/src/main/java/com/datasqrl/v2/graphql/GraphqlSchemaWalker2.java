@@ -105,7 +105,7 @@ public abstract class GraphqlSchemaWalker2 {
       return;
     }
     seen.add(objectType);
-
+    checkState(!objectType.getFieldDefinitions().isEmpty(), objectType.getSourceLocation(), "Empty object type: %s", objectType.getName());
     for (FieldDefinition field : objectType.getFieldDefinitions()) {
 
       NamePath fieldPath = NamePath.of(objectType.getName()).concat(Name.system(field.getName()));
