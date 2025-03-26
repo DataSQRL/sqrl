@@ -57,7 +57,6 @@ import org.apache.commons.collections.ListUtils;
 @Slf4j
 public class GraphqlSchemaFactory2 {
 
-  private final List<GraphQLFieldDefinition> queryFields = new ArrayList<>();
   private final List<GraphQLObjectType> objectTypes = new ArrayList<>();
   private final Set<String> definedTypeNames = new HashSet<>();
   private final boolean extendedScalarTypes;
@@ -80,13 +79,7 @@ public class GraphqlSchemaFactory2 {
 
     // process query table functions
     final Optional<GraphQLObjectType> queriesObjectType = createQueriesOrSubscriptionsObjectType(serverPlan, AccessModifier.QUERY);
-    //TODO when there is no query fields createQueriesOrSubscriptionsObjectType return an empty optional, so this test is no more neeeded.
-    // and if we remove cleanInvalidTypes, the whole queryFields is no more needed.
-    /*
-    if (queryFields.isEmpty()) { // there must be at least 1 query
-      return Optional.empty();
-    }
-*/
+
     queriesObjectType.ifPresentOrElse(
         graphQLSchemaBuilder::query,
         () -> {throw new IllegalArgumentException("No queryable tables found in script");} // there is no query
@@ -148,9 +141,6 @@ public class GraphqlSchemaFactory2 {
             .filter(tableFunction -> !tableFunction.isRelationship())
             .collect(Collectors.toList());
     Optional<GraphQLObjectType> rootObjectType = createRootType(rootTableFunctions, tableFunctionsType);
-    //TODO no more needed?
-    //TODO fix cleanInvalidTypes: it removes nestedTypes.
-//    cleanInvalidTypes();
     return rootObjectType;
   }
 
@@ -188,7 +178,6 @@ public class GraphqlSchemaFactory2 {
             .fields(fields)
             .build();
     definedTypeNames.add(typeName);
-    queryFields.addAll(fields);
     return Optional.of(objectType);
   }
 
@@ -254,11 +243,6 @@ public class GraphqlSchemaFactory2 {
         .build();
 
     definedTypeNames.add(rootTypeName);
-    // TODO no more needed ?
-    // for downstream cleaning invalid types
-    if (tableFunctionsType == AccessModifier.QUERY) {
-      this.queryFields.addAll(fields);
-    }
 
     return Optional.of(rootQueryObjectType);
   }
@@ -350,84 +334,5 @@ public class GraphqlSchemaFactory2 {
             ? tableFunction.getBaseTable().getName()
             : uniquifyNameForPath(tableFunction.getFullPath());
     return new GraphQLTypeReference(typeName);
-  }
-
-
-  // TODO no more needed ?
-  public void cleanInvalidTypes() {
-    // Ensure every field points to a valid type
-    boolean found;
-    int attempts = 10;
-    do {
-      found = false;
-      Iterator<GraphQLObjectType> iterator = objectTypes.iterator();
-      List<GraphQLObjectType> replacedType = new ArrayList<>();
-      while (iterator.hasNext()) {
-        GraphQLObjectType objectType = iterator.next();
-        List<GraphQLFieldDefinition> invalidFields = new ArrayList<>();
-
-        for (GraphQLFieldDefinition field : objectType.getFields()) {
-          if (!isValidType(field.getType())) {
-            invalidFields.add(field);
-          }
-        }
-
-        // Refactor to remove invalid fields
-        List<GraphQLFieldDefinition> fields = new ArrayList<>(objectType.getFields());
-        boolean fieldsRemoved = fields.removeAll(invalidFields);
-
-        // After removing invalid fields, if an object has no fields, it should be removed
-        if (fields.isEmpty()) {
-          iterator.remove();
-          found = true;
-        } else if (fieldsRemoved) {
-          GraphQLObjectType newObjectType = GraphQLObjectType.newObject(objectType).clearFields()
-              .fields(fields).build();
-          replacedType.add(newObjectType);
-          iterator.remove();
-          found = true;
-        }
-      }
-
-      //Add new types back
-      objectTypes.addAll(replacedType);
-
-      found |= queryFields.removeIf(field -> !isValidType(field.getType()));
-
-      // Ensure each object has at least one field
-      found |= objectTypes.removeIf(objectType -> objectType.getFields().isEmpty());
-    } while (found && --attempts != 0);
-
-    if (found) {
-      throw new RuntimeException("Schema too complexity high, could not be reduced");
-    }
-  }
-
-  boolean isValidType(GraphQLType type) {
-    type = unbox(type);
-    // You can expand this logic depending on the intricacies of type validation
-    if (type instanceof GraphQLTypeReference) {
-      GraphQLTypeReference typeReference = (GraphQLTypeReference) type;
-      for (GraphQLObjectType objectType : this.objectTypes) {
-        if (typeReference.getName().equalsIgnoreCase(objectType.getName())) {
-          return true;
-        }
-      }
-    }
-
-    return isBaseGraphQLType(type);
-  }
-
-  private GraphQLType unbox(GraphQLType type) {
-    if (type instanceof GraphQLNonNull) {
-      return unbox(((GraphQLNonNull) type).getWrappedType());
-    } else if (type instanceof GraphQLList) {
-      return unbox(((GraphQLList) type).getWrappedType());
-    }
-    return type;
-  }
-
-  boolean isBaseGraphQLType(GraphQLType type) {
-    return type instanceof GraphQLScalarType;
   }
 }
