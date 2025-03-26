@@ -62,18 +62,20 @@ public abstract class GraphqlSchemaWalker2 {
   }
 
 
-  private void walkRootMutationType(ObjectTypeDefinition type, TypeDefinitionRegistry registry) {
-    for(FieldDefinition fieldDefinition : type.getFieldDefinitions()) {
+  private void walkRootMutationType(ObjectTypeDefinition rootType, TypeDefinitionRegistry registry) {
+    checkState(!rootType.getFieldDefinitions().isEmpty(), rootType.getSourceLocation(), "Empty root object type: %s", rootType.getName());
+    for(FieldDefinition field : rootType.getFieldDefinitions()) {
       MutationQuery mutationQuery =
           mutations.stream()
-              .filter(mutation -> mutation.getName().getDisplay().equalsIgnoreCase(fieldDefinition.getName()))
+              .filter(mutation -> mutation.getName().getDisplay().equalsIgnoreCase(field.getName()))
               .findFirst()
-              .orElseThrow(() -> new RuntimeException("No mutation found for " + fieldDefinition.getName()));
-      visitMutation(fieldDefinition, registry, mutationQuery);
+              .orElseThrow(() -> new RuntimeException("No mutation found for " + field.getName()));
+      visitMutation(field, registry, mutationQuery);
     }
   }
 
   private void walkRootType(ObjectTypeDefinition rootType, TypeDefinitionRegistry registry) {
+    checkState(!rootType.getFieldDefinitions().isEmpty(), rootType.getSourceLocation(), "Empty root object type: %s", rootType.getName());
     for (FieldDefinition field : rootType.getFieldDefinitions()) { // fields are root table functions
       final NamePath fieldPath = NamePath.ROOT.concat(NamePath.of(field.getName()));
       final Optional<SqrlTableFunction> tableFunction = getTableFunctionFromPath(tableFunctions, fieldPath); // root table functions are always present
