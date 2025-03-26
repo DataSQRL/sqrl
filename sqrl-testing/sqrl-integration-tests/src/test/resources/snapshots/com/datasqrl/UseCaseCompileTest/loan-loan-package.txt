@@ -770,11 +770,49 @@ FROM "LoanTypesStream_11"
     "coords" : [
       {
         "type" : "args",
-        "parentType" : "Subscription",
+        "parentType" : "Query",
+        "fieldName" : "AddChatMessage",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"AddChatMessage_1\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
         "fieldName" : "ApplicationAlert",
         "matchs" : [
           {
-            "arguments" : [ ],
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
@@ -790,7 +828,18 @@ FROM "LoanTypesStream_11"
         "fieldName" : "ApplicationStatus",
         "matchs" : [
           {
-            "arguments" : [ ],
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
@@ -803,43 +852,26 @@ FROM "LoanTypesStream_11"
       {
         "type" : "args",
         "parentType" : "Query",
-        "fieldName" : "Applications",
+        "fieldName" : "ApplicationUpdates",
         "matchs" : [
           {
             "arguments" : [
               {
                 "type" : "variable",
                 "type" : "variable",
-                "path" : "id"
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"Applications_5\"",
+              "sql" : "SELECT *\nFROM \"ApplicationUpdates_4\"",
               "parameters" : [ ]
-            }
-          }
-        ]
-      },
-      {
-        "type" : "args",
-        "parentType" : "Applications",
-        "fieldName" : "updates",
-        "matchs" : [
-          {
-            "arguments" : [ ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"ApplicationUpdates_4\"\nWHERE $1 = \"loan_application_id\"\nORDER BY \"event_time\" NULLS FIRST",
-              "parameters" : [
-                {
-                  "type" : "source",
-                  "type" : "source",
-                  "key" : "id"
-                }
-              ]
             }
           }
         ]
@@ -850,7 +882,18 @@ FROM "LoanTypesStream_11"
         "fieldName" : "application",
         "matchs" : [
           {
-            "arguments" : [ ],
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
@@ -872,7 +915,18 @@ FROM "LoanTypesStream_11"
         "fieldName" : "loanType",
         "matchs" : [
           {
-            "arguments" : [ ],
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
@@ -890,6 +944,120 @@ FROM "LoanTypesStream_11"
       },
       {
         "type" : "args",
+        "parentType" : "Applications",
+        "fieldName" : "updates",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"ApplicationUpdates_4\"\nWHERE $1 = \"loan_application_id\"\nORDER BY \"event_time\" NULLS FIRST",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "type" : "source",
+                  "key" : "id"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Applications",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"Applications_5\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "ApplicationsStream",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"ApplicationsStream_6\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "CustomerChatMessage",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"role\", \"content\", \"name\", \"customerid\", \"timestamp\", \"uuid\"\n  FROM \"CustomerChatMessage_7\"\n  ORDER BY \"timestamp\" DESC NULLS LAST) AS \"t\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
         "parentType" : "Query",
         "fieldName" : "Customers",
         "matchs" : [
@@ -898,7 +1066,12 @@ FROM "LoanTypesStream_11"
               {
                 "type" : "variable",
                 "type" : "variable",
-                "path" : "id"
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
             "query" : {
@@ -949,7 +1122,18 @@ FROM "LoanTypesStream_11"
         "fieldName" : "overview",
         "matchs" : [
           {
-            "arguments" : [ ],
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
@@ -968,6 +1152,33 @@ FROM "LoanTypesStream_11"
       {
         "type" : "args",
         "parentType" : "Query",
+        "fieldName" : "CustomersStream",
+        "matchs" : [
+          {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "PagedJdbcQuery",
+              "type" : "PagedJdbcQuery",
+              "sql" : "SELECT *\nFROM \"CustomersStream_9\"",
+              "parameters" : [ ]
+            }
+          }
+        ]
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
         "fieldName" : "LoanTypes",
         "matchs" : [
           {
@@ -975,7 +1186,12 @@ FROM "LoanTypesStream_11"
               {
                 "type" : "variable",
                 "type" : "variable",
-                "path" : "id"
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
             "query" : {
@@ -990,39 +1206,7 @@ FROM "LoanTypesStream_11"
       {
         "type" : "args",
         "parentType" : "Query",
-        "fieldName" : "ApplicationAlert",
-        "matchs" : [
-          {
-            "arguments" : [ ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"ApplicationAlert_2\"",
-              "parameters" : [ ]
-            }
-          }
-        ]
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "ApplicationUpdates",
-        "matchs" : [
-          {
-            "arguments" : [ ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"ApplicationUpdates_4\"",
-              "parameters" : [ ]
-            }
-          }
-        ]
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "CustomerChatMessage",
+        "fieldName" : "LoanTypesStream",
         "matchs" : [
           {
             "arguments" : [
@@ -1034,18 +1218,13 @@ FROM "LoanTypesStream_11"
               {
                 "type" : "variable",
                 "type" : "variable",
-                "path" : "customerid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
                 "path" : "limit"
               }
             ],
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT \"role\", \"content\", \"name\", \"customerid\", \"timestamp\", \"uuid\"\n  FROM \"CustomerChatMessage_7\"\n  ORDER BY \"timestamp\" DESC NULLS LAST) AS \"t\"",
+              "sql" : "SELECT *\nFROM \"LoanTypesStream_11\"",
               "parameters" : [ ]
             }
           }
@@ -1055,8 +1234,8 @@ FROM "LoanTypesStream_11"
     "mutations" : [
       {
         "type" : "kafka",
-        "fieldName" : "ApplicationUpdates",
-        "topic" : "ApplicationUpdates",
+        "fieldName" : "AddChatMessage",
+        "topic" : "AddChatMessage",
         "computedColumns" : {
           "_uuid" : "UUID",
           "event_time" : "TIMESTAMP"
@@ -1065,8 +1244,8 @@ FROM "LoanTypesStream_11"
       },
       {
         "type" : "kafka",
-        "fieldName" : "AddChatMessage",
-        "topic" : "AddChatMessage",
+        "fieldName" : "ApplicationUpdates",
+        "topic" : "ApplicationUpdates",
         "computedColumns" : {
           "_uuid" : "UUID",
           "event_time" : "TIMESTAMP"
@@ -1078,7 +1257,7 @@ FROM "LoanTypesStream_11"
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "type ApplicationAlert {\n  id: Int!\n  loan_type_id: Int!\n  customer_id: Int!\n  max_amount: Float!\n  min_amount: Float!\n  amount: Float!\n}\n\ntype ApplicationStatus {\n  status: String!\n  message: String!\n  id: Int!\n  customer_id: Int!\n  loan_type_id: Int!\n  amount: Float!\n  duration: Int!\n}\n\ntype ApplicationUpdates {\n  loan_application_id: Int!\n  status: String!\n  message: String!\n  event_time: String!\n  application: Applications!\n}\n\ntype Applications {\n  id: Int!\n  customer_id: Int!\n  loan_type_id: Int!\n  amount: Float!\n  duration: Int!\n  application_date: String!\n  updated_at: String!\n  updates: [ApplicationUpdates!]\n  loanType: LoanTypes!\n}\n\ntype Customers {\n  id: Int!\n  first_name: String!\n  last_name: String!\n  email: String!\n  phone: String!\n  address: String!\n  date_of_birth: String!\n  updated_at: String!\n  applications(limit: Int = 20, offset: Int = 0): [Applications!]\n  overview: [overview!]\n}\n\ntype LoanTypes {\n  id: Int!\n  name: String!\n  description: String!\n  interest_rate: Float!\n  max_amount: Float!\n  min_amount: Float!\n  max_duration: Int!\n  min_duration: Int!\n  updated_at: String!\n}\n\ntype Query {\n  ApplicationStatus: [ApplicationStatus!]\n  Applications(id: Int!): [Applications!]\n  Customers(id: Int!): [Customers!]\n  LoanTypes(id: Int): [LoanTypes!]\n  ApplicationAlert: [ApplicationAlert!]\n  ApplicationUpdates: [ApplicationUpdates!]\n  CustomerChatMessage(customerid: Int!, limit: Int = 10, offset: Int = 0): [CustomerChatMessage!]\n}\n\ntype CustomerChatMessage {\n  role: String!\n  content: String!\n  name: String\n  customerid: Int!\n  timestamp: String!\n  uuid: String!\n}\n\ntype overview {\n  loan_type_id: Int!\n  total_amount: Float!\n  total_loans: Int!\n}\n\ntype Subscription {\n  ApplicationAlert: ApplicationAlert!\n}\n\ntype Mutation {\n  ApplicationUpdates(event: ApplicationUpdateEvent!): ApplicationUpdateEventResult!\n  AddChatMessage(message: ChatMessageInput!): CreatedChatMessage\n}\n\ninput ApplicationUpdateEvent {\n  loan_application_id: Int!\n  status: String!\n  message: String!\n}\n\ntype ApplicationUpdateEventResult {\n  loan_application_id: Int!\n  message: String!\n}\n\n\ninput ChatMessageInput {\n  role: String!\n  content: String!\n  name: String\n  context: ChatMessageContextInput\n}\n\ninput ChatMessageContextInput {\n  customerid: Int\n}\n\ntype CreatedChatMessage {\n  event_time: String!\n}\n"
+      "schema" : "type AddChatMessage {\n  role: String!\n  content: String!\n  name: String\n  context: AddChatMessage_contextOutput!\n  event_time: DateTime\n}\n\ninput AddChatMessageInput {\n  role: String!\n  content: String!\n  name: String\n  context: AddChatMessage_contextInput!\n}\n\ntype AddChatMessageResultOutput {\n  role: String!\n  content: String!\n  name: String\n  context: AddChatMessageResult_contextOutput!\n  event_time: DateTime\n}\n\ntype AddChatMessageResult_contextOutput {\n  customerid: Int\n}\n\ninput AddChatMessage_contextInput {\n  customerid: Int\n}\n\ntype AddChatMessage_contextOutput {\n  customerid: Int\n}\n\ntype ApplicationAlert {\n  id: GraphQLBigInteger!\n  customer_id: GraphQLBigInteger!\n  loan_type_id: GraphQLBigInteger!\n  max_amount: Float!\n  min_amount: Float!\n  amount: Float!\n}\n\ntype ApplicationStatus {\n  status: String!\n  message: String\n  event_time: DateTime\n  id: GraphQLBigInteger!\n  customer_id: GraphQLBigInteger!\n  loan_type_id: GraphQLBigInteger!\n  amount: Float!\n  duration: GraphQLBigInteger!\n  max_amount: Float!\n  min_amount: Float!\n}\n\ntype ApplicationUpdates {\n  loan_application_id: GraphQLBigInteger!\n  status: String!\n  message: String\n  event_time: DateTime\n  application(limit: Int = 10, offset: Int = 0): [Applications!]\n}\n\ninput ApplicationUpdatesInput {\n  loan_application_id: GraphQLBigInteger!\n  status: String!\n  message: String\n}\n\ntype ApplicationUpdatesResultOutput {\n  loan_application_id: GraphQLBigInteger!\n  status: String!\n  message: String\n  event_time: DateTime\n}\n\ntype Applications {\n  id: GraphQLBigInteger!\n  customer_id: GraphQLBigInteger!\n  loan_type_id: GraphQLBigInteger!\n  amount: Float!\n  duration: GraphQLBigInteger!\n  application_date: DateTime!\n  updated_at: DateTime!\n  loanType(limit: Int = 10, offset: Int = 0): [LoanTypes!]\n  updates(limit: Int = 10, offset: Int = 0): [ApplicationUpdates!]\n}\n\ntype ApplicationsStream {\n  id: GraphQLBigInteger!\n  customer_id: GraphQLBigInteger!\n  loan_type_id: GraphQLBigInteger!\n  amount: Float!\n  duration: GraphQLBigInteger!\n  application_date: DateTime!\n  updated_at: DateTime!\n}\n\ntype CustomerChatMessage {\n  role: String!\n  content: String!\n  name: String\n  customerid: Int\n  timestamp: DateTime\n  uuid: String!\n}\n\ntype Customers {\n  id: GraphQLBigInteger!\n  first_name: String!\n  last_name: String!\n  email: String!\n  phone: String!\n  address: String!\n  date_of_birth: String!\n  updated_at: DateTime!\n  applications(limit: Int = 10, offset: Int = 0): [Applications!]\n  overview(limit: Int = 10, offset: Int = 0): [Customers_overview!]\n}\n\ntype CustomersStream {\n  id: GraphQLBigInteger!\n  first_name: String!\n  last_name: String!\n  email: String!\n  phone: String!\n  address: String!\n  date_of_birth: String!\n  updated_at: DateTime!\n}\n\ntype Customers_overview {\n  loan_type_id: GraphQLBigInteger!\n  total_amount: Float!\n  total_loans: GraphQLBigInteger!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype LoanTypes {\n  id: GraphQLBigInteger!\n  name: String!\n  description: String!\n  interest_rate: Float!\n  max_amount: Float!\n  min_amount: Float!\n  max_duration: GraphQLBigInteger!\n  min_duration: GraphQLBigInteger!\n  updated_at: DateTime!\n}\n\ntype LoanTypesStream {\n  id: GraphQLBigInteger!\n  name: String!\n  description: String!\n  interest_rate: Float!\n  max_amount: Float!\n  min_amount: Float!\n  max_duration: GraphQLBigInteger!\n  min_duration: GraphQLBigInteger!\n  updated_at: DateTime!\n}\n\ntype Mutation {\n  AddChatMessage(event: AddChatMessageInput!): AddChatMessageResultOutput!\n  ApplicationUpdates(event: ApplicationUpdatesInput!): ApplicationUpdatesResultOutput!\n}\n\ntype Query {\n  AddChatMessage(limit: Int = 10, offset: Int = 0): [AddChatMessage!]\n  ApplicationAlert(limit: Int = 10, offset: Int = 0): [ApplicationAlert!]\n  ApplicationStatus(limit: Int = 10, offset: Int = 0): [ApplicationStatus!]\n  ApplicationUpdates(limit: Int = 10, offset: Int = 0): [ApplicationUpdates!]\n  Applications(limit: Int = 10, offset: Int = 0): [Applications!]\n  ApplicationsStream(limit: Int = 10, offset: Int = 0): [ApplicationsStream!]\n  CustomerChatMessage(limit: Int = 10, offset: Int = 0): [CustomerChatMessage!]\n  Customers(limit: Int = 10, offset: Int = 0): [Customers!]\n  CustomersStream(limit: Int = 10, offset: Int = 0): [CustomersStream!]\n  LoanTypes(limit: Int = 10, offset: Int = 0): [LoanTypes!]\n  LoanTypesStream(limit: Int = 10, offset: Int = 0): [LoanTypesStream!]\n}\n"
     }
   }
 }
