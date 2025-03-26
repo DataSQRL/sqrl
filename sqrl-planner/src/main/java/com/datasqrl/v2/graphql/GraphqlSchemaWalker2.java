@@ -3,6 +3,7 @@ package com.datasqrl.v2.graphql;
 import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.getQueryType;
 import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.getSubscriptionType;
 import static com.datasqrl.graphql.util.GraphqlCheckUtil.checkState;
+import static com.datasqrl.v2.graphql.GraphqlSchemaUtil2.isValidGraphQLName;
 import static com.datasqrl.v2.util.SqrTableFunctionUtil.getTableFunctionFromPath;
 
 import com.datasqrl.canonicalizer.Name;
@@ -105,9 +106,10 @@ public abstract class GraphqlSchemaWalker2 {
       return;
     }
     seen.add(objectType);
+    checkState(isValidGraphQLName(objectType.getName()), objectType.getSourceLocation(), "Invalid object type name: %s", objectType.getName());
     checkState(!objectType.getFieldDefinitions().isEmpty(), objectType.getSourceLocation(), "Empty object type: %s", objectType.getName());
     for (FieldDefinition field : objectType.getFieldDefinitions()) {
-
+      checkState(isValidGraphQLName(field.getName()), field.getSourceLocation(), "Invalid field name: %s", field.getName());
       NamePath fieldPath = NamePath.of(objectType.getName()).concat(Name.system(field.getName()));
 
       // Functions can have relationships, so if we are walking a function resultType, process relationship fields
