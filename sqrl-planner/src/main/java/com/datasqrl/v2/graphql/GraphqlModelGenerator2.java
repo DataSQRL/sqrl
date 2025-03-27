@@ -89,12 +89,12 @@ public class GraphqlModelGenerator2 extends GraphqlSchemaWalker2 {
   }
 
   @Override
-  protected void visitSubscription(FieldDefinition atField, SqrlTableFunction tableFunction) {
+  protected void visitSubscription(FieldDefinition fieldDefinition, SqrlTableFunction tableFunction) {
     Preconditions.checkArgument(tableFunction.getVisibility().getAccess()== AccessModifier.SUBSCRIPTION);
     final ExecutableQuery executableQuery = tableFunction.getExecutableQuery();
 
-    String fieldName = atField.getName();
-    List<InputValueDefinition> inputArguments = atField.getInputValueDefinitions();
+    String fieldName = fieldDefinition.getName();
+    List<InputValueDefinition> inputArguments = fieldDefinition.getInputValueDefinitions();
     SubscriptionCoords subscriptionCoords;
     if (executableQuery instanceof KafkaQuery) {
       KafkaQuery kafkaQuery = (KafkaQuery) executableQuery;
@@ -123,13 +123,13 @@ public class GraphqlModelGenerator2 extends GraphqlSchemaWalker2 {
 
 
   @Override
-  protected void visitMutation(FieldDefinition atField, TypeDefinitionRegistry registry, MutationQuery mutation) {
+  protected void visitMutation(FieldDefinition field, TypeDefinitionRegistry registry, MutationQuery mutation) {
     MutationCoords mutationCoords;
     Map<String, MutationComputedColumnType> computedColumns = mutation.getComputedColumns().stream()
         .collect(Collectors.toMap(MutationComputedColumn::getColumnName, MutationComputedColumn::getType));
     if (mutation.getCreateTopic() instanceof NewTopic) {
       NewTopic newTopic = (NewTopic) mutation.getCreateTopic();
-      mutationCoords = new KafkaMutationCoords(atField.getName(), newTopic.getName(), computedColumns, Map.of());
+      mutationCoords = new KafkaMutationCoords(field.getName(), newTopic.getName(), computedColumns, Map.of());
 //    } else if (logPlan.isPresent() && logPlan.get() instanceof PostgresLogPhysicalPlan) {
 //      String tableName;
 //      if (tableSource != null) {
@@ -162,17 +162,17 @@ public class GraphqlModelGenerator2 extends GraphqlSchemaWalker2 {
   }
 
   @Override
-  protected void visitUnknownObject(FieldDefinition atField, Optional<RelDataType> relDataType) {
+  protected void visitUnknownObject(FieldDefinition field, Optional<RelDataType> relDataType) {
   }
 
   @Override
-  protected void visitScalar(ObjectTypeDefinition objectType, FieldDefinition atField, RelDataTypeField relDataTypeField) {
+  protected void visitScalar(ObjectTypeDefinition objectType, FieldDefinition field, RelDataTypeField relDataTypeField) {
     //todo: walk into structured type to check all prop fetchers
 
     // we create PropertyDataFetchers for fields only when graphql field name is different from calcite field name
-    if (hasVaryingCase(atField, relDataTypeField)) {
+    if (hasVaryingCase(field, relDataTypeField)) {
       FieldLookupCoords fieldLookupCoords = FieldLookupCoords.builder().parentType(objectType.getName())
-          .fieldName(atField.getName()).columnName(relDataTypeField.getName()).build();
+          .fieldName(field.getName()).columnName(relDataTypeField.getName()).build();
       queryCoords.add(fieldLookupCoords);
     }
   }
