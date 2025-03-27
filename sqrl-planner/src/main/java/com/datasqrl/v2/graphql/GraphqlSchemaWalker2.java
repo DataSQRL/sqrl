@@ -95,9 +95,9 @@ public abstract class GraphqlSchemaWalker2 {
     final TypeDefinition typeDefinition = typeDefOpt.get();
     checkState(typeDefinition instanceof ObjectTypeDefinition, typeDefinition.getSourceLocation(), "Could not infer non-object type on graphql schema: %s", typeDefinition.getName());
     if (tableFunction.getVisibility().getAccess() == AccessModifier.QUERY) { // walking a query table function
-      visitQuery(parentType, atField, tableFunction);
+      visitQuery(parentType, atField, tableFunction, registry);
     } else { // walking a subscription table function
-      visitSubscription(atField, tableFunction);
+      visitSubscription(atField, tableFunction, registry);
     }
     RelDataType functionRowType = tableFunction.getRowType();
     ObjectTypeDefinition resultType = (ObjectTypeDefinition) typeDefinition;
@@ -179,9 +179,9 @@ public abstract class GraphqlSchemaWalker2 {
   /*
   * Abstract visit methods for concrete graphQL schema walkers to implement (for validation and graphQL model generation)
    */
-  protected abstract void visitQuery(ObjectTypeDefinition parentType, FieldDefinition atField, SqrlTableFunction tableFunction);
+  protected abstract void visitQuery(ObjectTypeDefinition parentType, FieldDefinition atField, SqrlTableFunction tableFunction, TypeDefinitionRegistry registry);
 
-  protected abstract void visitSubscription(FieldDefinition atField, SqrlTableFunction tableFunction);
+  protected abstract void visitSubscription(FieldDefinition atField, SqrlTableFunction tableFunction, TypeDefinitionRegistry registry);
 
   protected abstract void visitMutation(FieldDefinition atField, TypeDefinitionRegistry registry, MutationQuery mutation);
 

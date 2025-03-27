@@ -89,7 +89,7 @@ public class GraphqlModelGenerator2 extends GraphqlSchemaWalker2 {
   }
 
   @Override
-  protected void visitSubscription(FieldDefinition atField, SqrlTableFunction tableFunction) {
+  protected void visitSubscription(FieldDefinition atField, SqrlTableFunction tableFunction, TypeDefinitionRegistry registry) {
     Preconditions.checkArgument(tableFunction.getVisibility().getAccess()== AccessModifier.SUBSCRIPTION);
     final ExecutableQuery executableQuery = tableFunction.getExecutableQuery();
 
@@ -178,7 +178,7 @@ public class GraphqlModelGenerator2 extends GraphqlSchemaWalker2 {
   }
 
   @Override
-  protected void visitQuery(ObjectTypeDefinition parentType, FieldDefinition atField, SqrlTableFunction tableFunction) {
+  protected void visitQuery(ObjectTypeDefinition parentType, FieldDefinition atField, SqrlTableFunction tableFunction, TypeDefinitionRegistry registry) {
     // As we no more merge user provided graphQL schema with the inferred schema, we no more need to generate as many queries as the permutations of its arguments.
     // We now have a single executable query linked to the table function and already fully defined
     final ExecutableQuery executableQuery = tableFunction.getExecutableQuery();
