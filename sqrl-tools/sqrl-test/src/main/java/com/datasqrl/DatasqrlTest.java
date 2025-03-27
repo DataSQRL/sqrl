@@ -205,8 +205,7 @@ public class DatasqrlTest {
           terminateSubscription(extractSubscriptionId(subscriptionQuery.getQuery()));
           Path snapshotPath = snapshotDir.resolve(subscriptionQuery.getName() + ".snapshot");
           final List<String> records = subscriptionRecords.get(subscriptionQuery.getName());
-          //TODO: order by each column ASC starting from the first column
-          records.sort(Comparator.comparingInt(String::hashCode));
+          records.sort(Comparator.naturalOrder());
           snapshot(snapshotPath, subscriptionQuery.getName(), String.join("\n", records), exceptions);
         }
 
