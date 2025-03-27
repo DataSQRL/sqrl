@@ -1,0 +1,19 @@
+type Customer {
+    customerid: Float!
+    email: String!
+    name: String!
+    lastUpdated: Float!
+    timestamp: DateTime
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+
+type Query {
+    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+    CustomerByTime2: [Customer!]
+    CustomerByMultipleTime(limit: Int = 10): [Customer!]
+    SelectCustomers(offset: Int = 0): [Customer!]
+}
