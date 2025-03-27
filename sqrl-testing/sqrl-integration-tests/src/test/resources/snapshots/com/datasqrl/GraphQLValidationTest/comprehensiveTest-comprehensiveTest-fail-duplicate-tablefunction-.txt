@@ -20,7 +20,7 @@ CustomerTimeWindow := SELECT
 ^
 
 [FATAL] Duplicate table function: TableFunctionCallsTblFct
-in script:comprehensivetest-fail-duplicate-tablefunction [15:5]:
+in script:comprehensivetest-fail-duplicate-tablefunction [17:5]:
 
 type Query {
     TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]

@@ -14,5 +14,6 @@ type Customer {
 }
 
 type Query {
-    TableFunctionCallsTblFct1(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
 }

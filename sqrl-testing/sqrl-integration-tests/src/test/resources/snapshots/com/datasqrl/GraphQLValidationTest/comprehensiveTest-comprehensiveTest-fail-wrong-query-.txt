@@ -20,9 +20,9 @@ CustomerTimeWindow := SELECT
 ^
 
 [FATAL] Type must be a non-null array, array, or non-null
-in script:comprehensivetest-fail-wrong-query [113:56]:
+in script:comprehensivetest-fail-wrong-query [17:89]:
 
 type Query {
-    AnotherCustomer(limit: Int = 10, offset: Int = 0): [[AnotherCustomer!]]
--------------------------------------------------------^
+    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [[Customer!]]
+----------------------------------------------------------------------------------------^
 

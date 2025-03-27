@@ -20,8 +20,8 @@ CustomerTimeWindow := SELECT
 ^
 
 [FATAL] Empty root object type: Mutation
-in script:comprehensivetest-fail-empty-mutation [14:1]:
-scalar DateTime
+in script:comprehensivetest-fail-empty-mutation [16:1]:
+}
 
 type Mutation {
 ^

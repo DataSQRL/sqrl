@@ -1,28 +1,16 @@
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"An arbitrary precision signed integer"
+scalar GraphQLBigInteger
+
 type Customer {
-    customerid: Float!
+    customerid: GraphQLBigInteger!
     email: String!
     name: String!
-    lastUpdated: Float!
+    lastUpdated: GraphQLBigInteger!
     timestamp: DateTime
     related(limit: Int = 10, offset: Int = 0): [Customer!]
     relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
-}
-
-"An RFC-3339 compliant DateTime Scalar"
-scalar DateTime
-
-type Mutation {
-    Orders(event: OrdersInput!): OrdersResultOutput!
-}
-
-input OrdersInput {
-    orderid: Int!
-    amount: Float
-}
-
-type OrdersResultOutput {
-    orderid: Int!
-    amount: Float
 }
 
 type Subscription {

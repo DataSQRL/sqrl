@@ -20,7 +20,7 @@ CustomerTimeWindow := SELECT
 ^
 
 [FATAL] Could not find table or function for field: TableFunctionCallsTblFct1
-in script:comprehensivetest-fail-query-with-no-table-function [15:5]:
+in script:comprehensivetest-fail-query-with-no-table-function [17:5]:
 
 type Query {
     TableFunctionCallsTblFct1(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]

@@ -19,10 +19,10 @@ in script:comprehensivetest.sqrl [51:1]:
 CustomerTimeWindow := SELECT
 ^
 
-[FATAL] Empty root object type: Subscription
-in script:comprehensivetest-fail-empty-subscription [16:1]:
-}
-
-type Subscription {
-^
+[FATAL] Duplicate table function: TableFunctionCallsTblFct
+in script:comprehensivetest-fail-duplicate-tablefunction2 [18:5]:
+type Query {
+    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+----^
 
