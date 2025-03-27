@@ -1,0 +1,18 @@
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"An arbitrary precision signed integer"
+scalar GraphQLBigInteger
+
+type Customer {
+    customerid: GraphQLBigInteger!
+    email: String!
+    name: String!
+    lastUpdated: GraphQLBigInteger!
+    timestamp: DateTime
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Query {
+    TableFunctionCallsTblFct(wrongName: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
