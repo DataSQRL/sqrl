@@ -181,13 +181,13 @@ public abstract class GraphqlSchemaWalker2 {
    */
   protected abstract void visitQuery(ObjectTypeDefinition parentType, FieldDefinition atField, SqrlTableFunction tableFunction);
 
-  protected abstract void visitSubscription(FieldDefinition field, SqrlTableFunction tableFunction);
+  protected abstract void visitSubscription(FieldDefinition atField, SqrlTableFunction tableFunction);
 
-  protected abstract void visitMutation(FieldDefinition field, TypeDefinitionRegistry registry, MutationQuery mutation);
+  protected abstract void visitMutation(FieldDefinition atField, TypeDefinitionRegistry registry, MutationQuery mutation);
 
-  protected abstract void visitUnknownObject(FieldDefinition field, Optional<RelDataType> relDataType);
+  protected abstract void visitUnknownObject(FieldDefinition atField, Optional<RelDataType> relDataType);
 
-  protected abstract void visitScalar(ObjectTypeDefinition objectType, FieldDefinition field, RelDataTypeField relDataTypeField);
+  protected abstract void visitScalar(ObjectTypeDefinition objectType, FieldDefinition atField, RelDataTypeField relDataTypeField);
 
 /*
 * Utility methods

@@ -47,15 +47,15 @@ public class GraphqlSchemaValidator2 extends GraphqlSchemaWalker2 {
   }
 
   @Override
-  protected void visitSubscription(FieldDefinition field, SqrlTableFunction tableFunction) {
+  protected void visitSubscription(FieldDefinition atField, SqrlTableFunction tableFunction) {
   }
 
   @Override
-  protected void visitMutation(FieldDefinition field, TypeDefinitionRegistry registry, MutationQuery mutation) {
+  protected void visitMutation(FieldDefinition atField, TypeDefinitionRegistry registry, MutationQuery mutation) {
     validateStructurallyEqualMutation(
-        field,
-        getValidMutationOutputType(field, registry),
-        getValidMutationInputType(field, registry),
+            atField,
+        getValidMutationOutputType(atField, registry),
+        getValidMutationInputType(atField, registry),
         List.of(ReservedName.MUTATION_TIME.getCanonical(), ReservedName.MUTATION_PRIMARY_KEY.getDisplay()),
         registry);
   }
@@ -216,19 +216,19 @@ public class GraphqlSchemaValidator2 extends GraphqlSchemaWalker2 {
   }
 
   @Override
-  protected void visitUnknownObject(FieldDefinition field, Optional<RelDataType> relDataType) {
+  protected void visitUnknownObject(FieldDefinition atField, Optional<RelDataType> relDataType) {
     throw createThrowable(
-        field.getSourceLocation(), "Unknown field at location %s",
+        atField.getSourceLocation(), "Unknown field at location %s",
         relDataType.map(r ->
-                    field.getName() + ". Possible scalars are [" + r.getFieldNames().stream()
+                    atField.getName() + ". Possible scalars are [" + r.getFieldNames().stream()
                                                                   .filter(GraphqlSchemaUtil::isValidGraphQLName)
                                                                   .collect(Collectors.joining(", "))
                                                             + "]")
-            .orElse(field.getName()));
+            .orElse(atField.getName()));
   }
 
   @Override
-  protected void visitScalar(ObjectTypeDefinition objectType, FieldDefinition field, RelDataTypeField relDataTypeField) {
+  protected void visitScalar(ObjectTypeDefinition objectType, FieldDefinition atField, RelDataTypeField relDataTypeField) {
   }
 
   @Override
