@@ -1,5 +1,7 @@
 package com.datasqrl.v2.graphql;
 
+import static com.datasqrl.graphql.jdbc.SchemaConstants.LIMIT;
+import static com.datasqrl.graphql.jdbc.SchemaConstants.OFFSET;
 import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.getQueryTypeName;
 import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.getType;
 import static com.datasqrl.graphql.util.GraphqlCheckUtil.checkState;
@@ -16,8 +18,7 @@ import com.datasqrl.v2.tables.SqrlFunctionParameter;
 import com.datasqrl.v2.tables.SqrlTableFunction;
 import com.google.inject.Inject;
 import graphql.language.*;
-import graphql.schema.GraphQLInputType;
-import graphql.schema.GraphQLTypeReference;
+import graphql.schema.*;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
 
@@ -120,19 +121,19 @@ public class GraphqlSchemaValidator2 extends GraphqlSchemaWalker2 {
 
       if (inputTypeDef instanceof ScalarTypeDefinition) {
         checkState(outputTypeDef instanceof ScalarTypeDefinition && inputTypeDef.getName()
-                .equals(outputTypeDef.getName()), outputField.getSourceLocation(),
+                .equals(outputTypeDef.getName()), outputType.getSourceLocation(),
             "Scalar types not matching for field [%s]: found %s but wanted %s", outputField.getName(),
             inputTypeDef.getName(), outputTypeDef.getName());
         return null;
       } else if (inputTypeDef instanceof EnumTypeDefinition) {
         checkState(outputTypeDef instanceof EnumTypeDefinition
                 || outputTypeDef instanceof ScalarTypeDefinition && inputTypeDef.getName()
-                .equals(outputTypeDef.getName()), outputField.getSourceLocation(),
+                .equals(outputTypeDef.getName()), outputType.getSourceLocation(),
             "Enum types not matching for field [%s]: found %s but wanted %s", outputField.getName(),
             inputTypeDef.getName(), outputTypeDef.getName());
         return null;
       } else if (inputTypeDef instanceof InputObjectTypeDefinition) {
-        checkState(outputTypeDef instanceof ObjectTypeDefinition, outputField.getSourceLocation(),
+        checkState(outputTypeDef instanceof ObjectTypeDefinition, outputType.getSourceLocation(),
             "Return object type must match with an input object type not matching for field [%s]: found %s but wanted %s",
             outputField.getName(), inputTypeDef.getName(), outputTypeDef.getName());
         ObjectTypeDefinition outputObjectTypeDef = (ObjectTypeDefinition) outputTypeDef;
@@ -236,23 +237,57 @@ public class GraphqlSchemaValidator2 extends GraphqlSchemaWalker2 {
 
   private void checkArgumentsMatchParameters(FieldDefinition atField, SqrlTableFunction tableFunction, TypeDefinitionRegistry registry) {
     final List<InputValueDefinition> arguments = atField.getInputValueDefinitions();
-    // there is no more table function overloading: check that arguments match the table function parameters in order, name and types
+    // Check that arguments match the table function parameters in name and types
     final List<FunctionParameter> externalParameters = tableFunction.getParameters().stream()
-            .filter(parameter -> !((SqrlFunctionParameter) parameter).isParentField()).collect(Collectors.toList());
-    for (int i = 0; i < arguments.size(); i++) {
-      final InputValueDefinition argument = arguments.get(i);
-      final FunctionParameter parameter = externalParameters.get(i);
-      checkState(argument.getName().equals(parameter.getName()), atField.getSourceLocation(), "argument number [%d] named [%s] does not match parameter number [%d] named [%s]", i, argument.getName(), i, parameter.getName());
+            .filter(parameter -> !((SqrlFunctionParameter) parameter).isParentField())
+            .collect(Collectors.toList());
+    arguments.stream()
+        .filter(argument -> !argument.getName().equals(LIMIT) && !argument.getName().equals(OFFSET))
+        .forEach(
+        argument -> {
+              final Optional<FunctionParameter> foundParameter =
+                  externalParameters.stream()
+                      .filter(parameter -> parameter.getName().equals(argument.getName()))
+                      .findFirst();
+              checkState(
+                  foundParameter.isPresent(),
+                  atField.getSourceLocation(),
+                  "GraphQl argument [%s] not found in the parameters of [%s]",
+                  argument.getName(),
+                  atField.getName());
 
-      // Infer the type of the parameter the same way schema inference does (and with non-null wrapper as well) because there is a big chance that the user schema is based on inference
-      // TODO inject extendedScalarTypes conf parameter instead of passing true because if a user provides a schema with id : Float and he disables extendedScalarTypes, argument will type will be float and parameter type will be bigint
-      final Optional<GraphQLInputType> parameterType = GraphqlSchemaUtil2.getGraphQLInputType(parameter.getType(null), NamePath.of(parameter.getName()), true);
-      checkState(parameterType.isPresent(), atField.getSourceLocation(), "Cannot infer the type of parameter [%s]", parameter.getName());
-      checkState(parameterType.get() instanceof GraphQLTypeReference, atField.getSourceLocation(), "Cannot find the type of parameter [%s]", parameter.getName());
-      NonNullType parameterASTType = new NonNullType(new TypeName(((graphql.schema.GraphQLTypeReference) parameterType.get()).getName()));
+              // Infer the table function parameter type the same way schema inference does (and
+              // with non-null wrapper as well) because there is a big chance that the user schema
+              // is based on inference
+              // TODO inject extendedScalarTypes conf parameter instead of passing true because if a
+              // user provides a schema with id : Float and he disables extendedScalarTypes,
+              // argument will type will be float and parameter type will be bigint
+              final Optional<GraphQLInputType> inferedParameterType =
+                  GraphqlSchemaUtil2.getGraphQLInputType(foundParameter.get().getType(null), NamePath.of(foundParameter.get().getName()), true);
+              checkState(
+                  inferedParameterType.isPresent(),
+                  atField.getSourceLocation(),
+                  "Cannot infer the type of parameter [%s]",
+                  foundParameter.get().getName());
+              NonNullType parameterType = new NonNullType(convertGraphQLInputTypeToType(inferedParameterType.get(), atField));
 
-      validateStructurallyEqualTypes(atField, argument.getType(), parameterASTType, registry);
+              // compare the infered graphql parameter type to the argument type
+              validateStructurallyEqualTypes(atField, parameterType, argument.getType(), registry);
+            });
+  }
+
+  private Type convertGraphQLInputTypeToType(GraphQLInputType inputType, FieldDefinition atField) {
+    if (inputType instanceof GraphQLNonNull) {
+      GraphQLNonNull nonNull = (GraphQLNonNull) inputType;
+      return new NonNullType(convertGraphQLInputTypeToType((GraphQLInputType) nonNull.getWrappedType(), atField));
+    } else if (inputType instanceof graphql.schema.GraphQLList) {
+      graphql.schema.GraphQLList list = (graphql.schema.GraphQLList) inputType;
+      return new ListType(convertGraphQLInputTypeToType((GraphQLInputType) list.getWrappedType(), atField));
+    } else if (inputType instanceof GraphQLNamedType) {
+      GraphQLNamedType namedType = (GraphQLNamedType) inputType;
+      return new TypeName(namedType.getName());
     }
+    throw createThrowable(atField.getSourceLocation(), "Unsupported GraphQLInputType %s", inputType.getClass().getName());
   }
 
   private void checkValidArrayNonNullType(Type type) {
