@@ -21,6 +21,11 @@ jobs:
         java-version: '11'
         distribution: 'adopt'
         cache: maven
+
+    - name: Download dependencies
+      run: |
+        mvn -B org.apache.maven.plugins:maven-dependency-plugin:3.8.1:go-offline de.qaware.maven:go-offline-maven-plugin:1.2.8:resolve-dependencies -T3
+
     - name: Build SQRL
       env:
         DATASQRL_TOKEN: ${{ secrets.DATASQRL_TOKEN }}
