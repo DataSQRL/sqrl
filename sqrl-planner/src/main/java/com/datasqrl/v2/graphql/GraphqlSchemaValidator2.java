@@ -121,20 +121,20 @@ public class GraphqlSchemaValidator2 extends GraphqlSchemaWalker2 {
 
       if (inputTypeDef instanceof ScalarTypeDefinition) {
         checkState(outputTypeDef instanceof ScalarTypeDefinition && inputTypeDef.getName()
-                .equals(outputTypeDef.getName()), outputType.getSourceLocation(),
+                .equals(outputTypeDef.getName()), inputType.getSourceLocation(),
             "Scalar types not matching for field [%s]: found %s but wanted %s", outputField.getName(),
             inputTypeDef.getName(), outputTypeDef.getName());
         return null;
       } else if (inputTypeDef instanceof EnumTypeDefinition) {
         checkState(outputTypeDef instanceof EnumTypeDefinition
                 || outputTypeDef instanceof ScalarTypeDefinition && inputTypeDef.getName()
-                .equals(outputTypeDef.getName()), outputType.getSourceLocation(),
+                .equals(outputTypeDef.getName()), inputType.getSourceLocation(),
             "Enum types not matching for field [%s]: found %s but wanted %s", outputField.getName(),
             inputTypeDef.getName(), outputTypeDef.getName());
         return null;
       } else if (inputTypeDef instanceof InputObjectTypeDefinition) {
-        checkState(outputTypeDef instanceof ObjectTypeDefinition, outputType.getSourceLocation(),
-            "Return object type must match with an input object type not matching for field [%s]: found %s but wanted %s",
+        checkState(outputTypeDef instanceof ObjectTypeDefinition, inputType.getSourceLocation(),
+            "Object types not matching for field [%s]: found %s but wanted %s",
             outputField.getName(), inputTypeDef.getName(), outputTypeDef.getName());
         ObjectTypeDefinition outputObjectTypeDef = (ObjectTypeDefinition) outputTypeDef;
         InputObjectTypeDefinition inputObjectTypeDef = (InputObjectTypeDefinition) inputTypeDef;
