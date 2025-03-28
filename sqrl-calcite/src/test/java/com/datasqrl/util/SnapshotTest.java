@@ -3,6 +3,7 @@
  */
 package com.datasqrl.util;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -142,7 +143,7 @@ public class SnapshotTest {
               break;
             }
           }
-          assertEquals(expected, content, "Mismatched snapshots: " + fileName + " " + "file://"+path.toFile().getAbsolutePath());
+          assertThat(path).hasContent(content);
         }
       }
     }
