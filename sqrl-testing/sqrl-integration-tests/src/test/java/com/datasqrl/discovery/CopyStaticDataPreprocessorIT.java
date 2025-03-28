@@ -16,13 +16,13 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
-public class CopyStaticDataPreprocessorTest extends AbstractAssetSnapshotTest {
+public class CopyStaticDataPreprocessorIT extends AbstractAssetSnapshotTest {
 
   public static final Path FILES_DIR = getResourcesDirectory("discoveryfiles");
 
   CopyStaticDataPreprocessor preprocessor = new CopyStaticDataPreprocessor();
 
-  protected CopyStaticDataPreprocessorTest() {
+  protected CopyStaticDataPreprocessorIT() {
     super(FILES_DIR.resolve("output"));
     super.buildDir = super.outputDir;
   }

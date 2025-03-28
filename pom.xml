@@ -901,16 +901,11 @@
         <version>0.8.11</version>
         <executions>
           <execution>
-            <id>default-prepare-agent</id>
             <goals>
               <goal>prepare-agent</goal>
-            </goals>
-          </execution>
-          <execution>
-            <id>report</id>
-            <phase>test</phase>
-            <goals>
+              <goal>prepare-agent-integration</goal>
               <goal>report-aggregate</goal>
+              <goal>report-integration</goal>
             </goals>
           </execution>
         </executions>
