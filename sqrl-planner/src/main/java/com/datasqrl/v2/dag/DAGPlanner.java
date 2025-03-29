@@ -501,9 +501,18 @@ public class DAGPlanner {
           .collect(Collectors.toList());
       RelDataTypeBuilder typeBuilder = CalciteUtil.getRelTypeBuilder(sqrlEnv.getTypeFactory());
       newProjects.forEach(pair -> typeBuilder.add(pair.right, pair.left.getType()));
-
-      return project.copy(project.getTraitSet(), input, newProjects.stream().map(Pair::getKey).collect(
-          Collectors.toList()), typeBuilder.build());
+      try {
+        return project.copy(project.getTraitSet(), input,
+            newProjects.stream().map(Pair::getKey).collect(
+                Collectors.toList()), typeBuilder.build());
+      } catch (Throwable e) {
+        System.out.println("Original Type:" + project.getRowType());
+        System.out.println("Replaced Type:" + typeBuilder.build());
+        System.out.println("Original select:" + project.getProjects());
+        System.out.println("Replaced select:" + newProjects.stream().map(Pair::getKey).collect(
+            Collectors.toList()));
+        throw e;
+      }
     }
 
     @Override
