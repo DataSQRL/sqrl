@@ -282,11 +282,18 @@ public class DAGPlanner {
         }
         if (function != null) {
           RelNode originalRelnode = function.getFunctionAnalysis().getRelNode();
-          RelNode plannedRelNode = originalRelnode.accept(
-              new QueryExpansionRelShuttle(id -> streamTableMapping.get(new InputTableKey(dataStoreStage, id)),
-                  sqrlEnv, dbEngine.getTypeMapping(), true));
-          dbPlan.query(new Query(function, plannedRelNode, function.getFunctionAnalysis().getErrors()));
-          if (function.getVisibility().isQueryable()) serverPlan.function(function);
+          try {
+            RelNode plannedRelNode = originalRelnode.accept(
+                new QueryExpansionRelShuttle(
+                    id -> streamTableMapping.get(new InputTableKey(dataStoreStage, id)),
+                    sqrlEnv, dbEngine.getTypeMapping(), true));
+            dbPlan.query(
+                new Query(function, plannedRelNode, function.getFunctionAnalysis().getErrors()));
+            if (function.getVisibility().isQueryable())
+              serverPlan.function(function);
+          } catch (Throwable e) {
+            System.out.println("Original Relnode: " + originalRelnode.explain());
+          }
         }
       });
       EnginePhysicalPlan dbPhysicalPlan = dbEngine.plan(dbPlan.build());
@@ -506,8 +513,9 @@ public class DAGPlanner {
             newProjects.stream().map(Pair::getKey).collect(
                 Collectors.toList()), typeBuilder.build());
       } catch (Throwable e) {
-        System.out.println("Original Type:" + project.getRowType());
-        System.out.println("Replaced Type:" + typeBuilder.build());
+        System.out.println("Original Explain:" + project.explain());
+        System.out.println("Original Type:" + project.getRowType().getFullTypeString());
+        System.out.println("Replaced Type:" + typeBuilder.build().getFullTypeString());
         System.out.println("Original select:" + project.getProjects());
         System.out.println("Replaced select:" + newProjects.stream().map(Pair::getKey).collect(
             Collectors.toList()));
