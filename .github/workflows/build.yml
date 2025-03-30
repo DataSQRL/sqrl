@@ -35,9 +35,9 @@ jobs:
       run: docker build -t sqrl-test ./sqrl-tools
 
     - name: Run Docker container and execute tests
-      working-directory: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/conference
+      working-directory: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/banking
       run: |
-        docker run -i --rm -v $PWD:/build sqrl-test test conference.sqrl conference.graphqls --snapshot snapshots-conference --tests tests-conference
+        docker run -i --rm -v $PWD:/build sqrl-test test loan.sqrl loan.graphqls --snapshot snapshots-loan --tests tests-loan
       continue-on-error: false
 
     - name: Test UDF
