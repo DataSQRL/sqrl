@@ -2,4 +2,4 @@ The rowtime column is used to advance the watermark and for time-based operation
 
 Ensure that the rowtime column always has a value by filtering or setting a default. If that is the case but the compiler doesn't recognize it, explicitly cast it in the table definition.
 For example:
-`timestamp AS CAST(TO_TIMESTAMP_LTZ(lastUpdated, 0) AS TIMESTAMP_LTZ(3) NOT NULL)`
+`rowTime AS COALESCE(TO_TIMESTAMP_LTZ(lastUpdated, 0), TIMESTAMP '1970-01-01 00:00:00.000')`

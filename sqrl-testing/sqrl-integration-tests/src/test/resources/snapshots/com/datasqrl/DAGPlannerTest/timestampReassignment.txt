@@ -13,11 +13,11 @@ Schema:
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
- - timestamp: TIMESTAMP_LTZ(3) *ROWTIME*
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
-    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[TO_TIMESTAMP_LTZ($3, 0)])
+    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
       LogicalTableScan(table=[[default_catalog, default_database, Customer__def]])
 SQL: CREATE VIEW `Customer`
 AS
@@ -33,12 +33,12 @@ Annotations:
 Primary Key: customerid, lastUpdated
 Timestamp  : updatedTime
 Schema:
- - updatedTime: TIMESTAMP_LTZ(3) *ROWTIME*
+ - updatedTime: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
- - timestamp: TIMESTAMP_LTZ(3) *ROWTIME*
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
 LogicalProject(updatedTime=[$4], customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
@@ -55,12 +55,12 @@ Annotations:
 Primary Key: customerid
 Timestamp  : updatedTime
 Schema:
- - updatedTime: TIMESTAMP_LTZ(3) *ROWTIME*
+ - updatedTime: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
- - timestamp: TIMESTAMP_LTZ(3) *ROWTIME*
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
 LogicalProject(updatedTime=[$0], customerid=[$1], email=[$2], name=[$3], lastUpdated=[$4], timestamp=[$5])
   LogicalFilter(condition=[=($6, 1)])
@@ -82,7 +82,7 @@ CREATE TEMPORARY TABLE `Customer__schema` (
   'connector' = 'datagen'
 );
 CREATE TABLE `Customer__def` (
-  `timestamp` AS TO_TIMESTAMP_LTZ(`lastUpdated`, 0),
+  `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -111,7 +111,7 @@ CREATE TABLE `Customer_1` (
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` BIGINT NOT NULL,
-  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -122,12 +122,12 @@ CREATE TABLE `Customer_1` (
   'table-name' = 'Customer_1'
 );
 CREATE TABLE `Customer2_2` (
-  `updatedTime` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  `updatedTime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `customerid` BIGINT NOT NULL,
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` BIGINT NOT NULL,
-  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -138,12 +138,12 @@ CREATE TABLE `Customer2_2` (
   'table-name' = 'Customer2_2'
 );
 CREATE TABLE `CustomerByTime2_3` (
-  `updatedTime` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  `updatedTime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `customerid` BIGINT NOT NULL,
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` BIGINT NOT NULL,
-  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -177,7 +177,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer2_2`
     {
       "name" : "Customer_1",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer_1\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer_1\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -202,19 +202,19 @@ INSERT INTO `default_catalog`.`default_database`.`Customer2_2`
         {
           "name" : "timestamp",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
+          "nullable" : false
         }
       ]
     },
     {
       "name" : "Customer2_2",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer2_2\" (\"updatedTime\" TIMESTAMP WITH TIME ZONE , \"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer2_2\" (\"updatedTime\" TIMESTAMP WITH TIME ZONE NOT NULL, \"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
       "fields" : [
         {
           "name" : "updatedTime",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
+          "nullable" : false
         },
         {
           "name" : "customerid",
@@ -239,19 +239,19 @@ INSERT INTO `default_catalog`.`default_database`.`Customer2_2`
         {
           "name" : "timestamp",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
+          "nullable" : false
         }
       ]
     },
     {
       "name" : "CustomerByTime2_3",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerByTime2_3\" (\"updatedTime\" TIMESTAMP WITH TIME ZONE , \"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY (\"customerid\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerByTime2_3\" (\"updatedTime\" TIMESTAMP WITH TIME ZONE NOT NULL, \"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\"))",
       "fields" : [
         {
           "name" : "updatedTime",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
+          "nullable" : false
         },
         {
           "name" : "customerid",
@@ -276,7 +276,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer2_2`
         {
           "name" : "timestamp",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
+          "nullable" : false
         }
       ]
     },
@@ -308,7 +308,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer2_2`
         {
           "name" : "timestamp",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
+          "nullable" : false
         }
       ]
     },
@@ -320,7 +320,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer2_2`
         {
           "name" : "updatedTime",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
+          "nullable" : false
         },
         {
           "name" : "customerid",
@@ -345,7 +345,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer2_2`
         {
           "name" : "timestamp",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
+          "nullable" : false
         }
       ]
     },
@@ -357,7 +357,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer2_2`
         {
           "name" : "updatedTime",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
+          "nullable" : false
         },
         {
           "name" : "customerid",
@@ -382,7 +382,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer2_2`
         {
           "name" : "timestamp",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
+          "nullable" : false
         }
       ]
     }
@@ -479,7 +479,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer2_2`
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime\n}\n\ntype Customer2 {\n  updatedTime: DateTime\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime\n}\n\ntype CustomerByTime2 {\n  updatedTime: DateTime\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  Customer2(limit: Int = 10, offset: Int = 0): [Customer2!]\n  CustomerByTime2(limit: Int = 10, offset: Int = 0): [CustomerByTime2!]\n}\n"
+      "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\ntype Customer2 {\n  updatedTime: DateTime!\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\ntype CustomerByTime2 {\n  updatedTime: DateTime!\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  Customer2(limit: Int = 10, offset: Int = 0): [Customer2!]\n  CustomerByTime2(limit: Int = 10, offset: Int = 0): [CustomerByTime2!]\n}\n"
     }
   }
 }

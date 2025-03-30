@@ -8,7 +8,7 @@ Primary Key: -
 Timestamp  : rowtime
 Schema:
  - customerid: BIGINT NOT NULL
- - rowtime: TIMESTAMP_LTZ(3) *ROWTIME*
+ - rowtime: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
 LogicalUnion(all=[true])
   LogicalProject(customerid=[$1], rowtime=[$2])
@@ -31,11 +31,11 @@ Schema:
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
- - timestamp: TIMESTAMP_LTZ(3) *ROWTIME*
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
-    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[TO_TIMESTAMP_LTZ($3, 0)])
+    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
       LogicalTableScan(table=[[default_catalog, default_database, Customer__def]])
 SQL: CREATE VIEW `Customer`
 AS
@@ -74,7 +74,7 @@ CREATE TEMPORARY TABLE `Customer__schema` (
   'connector' = 'datagen'
 );
 CREATE TABLE `Customer__def` (
-  `timestamp` AS TO_TIMESTAMP_LTZ(`lastUpdated`, 0),
+  `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -119,7 +119,7 @@ SELECT `c`.`customerid`, `c`.`timestamp` AS `rowtime`
 FROM `Customer` AS `c`;
 CREATE TABLE `CombinedStream_1` (
   `customerid` BIGINT NOT NULL,
-  `rowtime` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  `rowtime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
 ) WITH (
@@ -135,7 +135,7 @@ CREATE TABLE `Customer_2` (
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` BIGINT NOT NULL,
-  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -183,7 +183,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
     {
       "name" : "CombinedStream_1",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"CombinedStream_1\" (\"customerid\" BIGINT NOT NULL, \"rowtime\" TIMESTAMP WITH TIME ZONE , \"__pk_hash\" TEXT  , PRIMARY KEY (\"__pk_hash\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CombinedStream_1\" (\"customerid\" BIGINT NOT NULL, \"rowtime\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT  , PRIMARY KEY (\"__pk_hash\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -193,7 +193,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
         {
           "name" : "rowtime",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
+          "nullable" : false
         },
         {
           "name" : "__pk_hash",
@@ -205,7 +205,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
     {
       "name" : "Customer_2",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer_2\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer_2\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -230,7 +230,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
         {
           "name" : "timestamp",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
+          "nullable" : false
         }
       ]
     },
@@ -274,7 +274,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
         {
           "name" : "rowtime",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
+          "nullable" : false
         }
       ]
     },
@@ -306,7 +306,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
         {
           "name" : "timestamp",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
+          "nullable" : false
         }
       ]
     },
@@ -430,7 +430,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "type CombinedStream {\n  customerid: GraphQLBigInteger!\n  rowtime: DateTime\n}\n\ntype Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Orders {\n  id: GraphQLBigInteger!\n  customerid: GraphQLBigInteger!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: GraphQLBigInteger!\n  quantity: GraphQLBigInteger!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  CombinedStream(limit: Int = 10, offset: Int = 0): [CombinedStream!]\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n}\n"
+      "schema" : "type CombinedStream {\n  customerid: GraphQLBigInteger!\n  rowtime: DateTime!\n}\n\ntype Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Orders {\n  id: GraphQLBigInteger!\n  customerid: GraphQLBigInteger!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: GraphQLBigInteger!\n  quantity: GraphQLBigInteger!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  CombinedStream(limit: Int = 10, offset: Int = 0): [CombinedStream!]\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n}\n"
     }
   }
 }

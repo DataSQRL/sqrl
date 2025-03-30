@@ -13,11 +13,11 @@ Schema:
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
- - timestamp: TIMESTAMP_LTZ(3) *ROWTIME*
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
-    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[TO_TIMESTAMP_LTZ($3, 0)])
+    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
       LogicalTableScan(table=[[default_catalog, default_database, Customer__def]])
 SQL: CREATE VIEW `Customer`
 AS
@@ -171,7 +171,7 @@ CREATE TEMPORARY TABLE `Customer__schema` (
   'connector' = 'datagen'
 );
 CREATE TABLE `Customer__def` (
-  `timestamp` AS TO_TIMESTAMP_LTZ(`lastUpdated`, 0),
+  `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -244,7 +244,7 @@ CREATE TABLE `Customer_1` (
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` BIGINT NOT NULL,
-  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -288,7 +288,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
     {
       "name" : "Customer_1",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer_1\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer_1\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -313,7 +313,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
         {
           "name" : "timestamp",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
+          "nullable" : false
         }
       ]
     },
@@ -372,7 +372,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
         {
           "name" : "timestamp",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
+          "nullable" : false
         }
       ]
     },
@@ -793,7 +793,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype OrderCustomer {\n  id: GraphQLBigInteger!\n  name: String!\n  customerid: GraphQLBigInteger!\n}\n\ntype OrderCustomerConstant {\n  time: DateTime!\n  id: GraphQLBigInteger!\n  name: String!\n  customerid: GraphQLBigInteger!\n}\n\ntype OrderCustomerLeft {\n  cid: GraphQLBigInteger!\n  ctime: GraphQLBigInteger!\n  id: GraphQLBigInteger!\n  name: String\n  customerid: GraphQLBigInteger!\n}\n\ntype OrderCustomerLeftExcluded {\n  time: DateTime!\n  id: GraphQLBigInteger!\n  customerid: GraphQLBigInteger!\n}\n\ntype OrderCustomerRight {\n  ouuid: GraphQLBigInteger!\n  otime: DateTime!\n  id: GraphQLBigInteger\n  name: String!\n  customerid: GraphQLBigInteger\n}\n\ntype OrderCustomerRightExcluded {\n  lastUpdated: GraphQLBigInteger!\n  customerid: GraphQLBigInteger!\n  name: String!\n}\n\ntype Orders {\n  id: GraphQLBigInteger!\n  customerid: GraphQLBigInteger!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: GraphQLBigInteger!\n  quantity: GraphQLBigInteger!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  OrderCustomer(limit: Int = 10, offset: Int = 0): [OrderCustomer!]\n  OrderCustomerConstant(limit: Int = 10, offset: Int = 0): [OrderCustomerConstant!]\n  OrderCustomerLeft(limit: Int = 10, offset: Int = 0): [OrderCustomerLeft!]\n  OrderCustomerLeftExcluded(limit: Int = 10, offset: Int = 0): [OrderCustomerLeftExcluded!]\n  OrderCustomerRight(limit: Int = 10, offset: Int = 0): [OrderCustomerRight!]\n  OrderCustomerRightExcluded(limit: Int = 10, offset: Int = 0): [OrderCustomerRightExcluded!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n}\n"
+      "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype OrderCustomer {\n  id: GraphQLBigInteger!\n  name: String!\n  customerid: GraphQLBigInteger!\n}\n\ntype OrderCustomerConstant {\n  time: DateTime!\n  id: GraphQLBigInteger!\n  name: String!\n  customerid: GraphQLBigInteger!\n}\n\ntype OrderCustomerLeft {\n  cid: GraphQLBigInteger!\n  ctime: GraphQLBigInteger!\n  id: GraphQLBigInteger!\n  name: String\n  customerid: GraphQLBigInteger!\n}\n\ntype OrderCustomerLeftExcluded {\n  time: DateTime!\n  id: GraphQLBigInteger!\n  customerid: GraphQLBigInteger!\n}\n\ntype OrderCustomerRight {\n  ouuid: GraphQLBigInteger!\n  otime: DateTime!\n  id: GraphQLBigInteger\n  name: String!\n  customerid: GraphQLBigInteger\n}\n\ntype OrderCustomerRightExcluded {\n  lastUpdated: GraphQLBigInteger!\n  customerid: GraphQLBigInteger!\n  name: String!\n}\n\ntype Orders {\n  id: GraphQLBigInteger!\n  customerid: GraphQLBigInteger!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: GraphQLBigInteger!\n  quantity: GraphQLBigInteger!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  OrderCustomer(limit: Int = 10, offset: Int = 0): [OrderCustomer!]\n  OrderCustomerConstant(limit: Int = 10, offset: Int = 0): [OrderCustomerConstant!]\n  OrderCustomerLeft(limit: Int = 10, offset: Int = 0): [OrderCustomerLeft!]\n  OrderCustomerLeftExcluded(limit: Int = 10, offset: Int = 0): [OrderCustomerLeftExcluded!]\n  OrderCustomerRight(limit: Int = 10, offset: Int = 0): [OrderCustomerRight!]\n  OrderCustomerRightExcluded(limit: Int = 10, offset: Int = 0): [OrderCustomerRightExcluded!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n}\n"
     }
   }
 }
