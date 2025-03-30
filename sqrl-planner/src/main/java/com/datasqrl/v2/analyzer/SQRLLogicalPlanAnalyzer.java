@@ -9,6 +9,7 @@ import static com.datasqrl.util.CalciteUtil.CAST_TRANSFORM;
 import static com.datasqrl.util.CalciteUtil.COALESCE_TRANSFORM;
 
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.v2.TableAnalysisLookup;
 import com.datasqrl.v2.analyzer.cost.CostAnalysis;
@@ -164,7 +165,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     originalRelnode.accept(this);
     RelNodeAnalysis analysis = this.intermediateAnalysis;
 
-    if (analysis.type.isStream() && CalciteUtil.findBestRowTimeIndex(analysis.relNode.getRowType()).isEmpty()) {
+    if (analysis.type.isStream() && analysis.getRowTime().isEmpty()) {
       //If we don't have a rowtime, let's check if we lost it when all inputs had a rowtime
       if (sourceTables.stream().map(TableOrFunctionAnalysis::getRowTime).allMatch(Optional::isPresent)) {
         errors.notice("This table does not propagate the source row time columns: %s",
@@ -172,6 +173,12 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
                 .collect(Collectors.joining(", ")));
       }
     }
+
+    Optional<RelDataTypeField> rowTimeField = analysis.getRowTime().map(analysis::getField);
+    if (rowTimeField.filter(field -> field.getType().isNullable()).isPresent()) {
+      errors.warn(ErrorCode.ROWTIME_IS_NULLABLE, "The rowtime column '%s' for this table is nullable", rowTimeField.get().getName());
+    }
+
 
     for (ColumnNamesHint hint : hints.getHints(ColumnNamesHint.class).collect(Collectors.toList())) {
       //Validate column names in hints and map to indexes
