@@ -23,6 +23,24 @@ jobs:
           distribution: 'adopt'
           cache: maven
 
+      - name: Generate settings.xml
+        if: github.ref == 'refs/heads/main'
+        run: |
+          mkdir -p ~/.m2
+          echo "<settings>
+                <servers>
+                  <server>
+                    <id>github</id>
+                    <username>${{ github.actor }}</username>
+                    <password>${{ secrets.GITHUB_TOKEN }}</password>
+                  </server>
+                </servers>
+              </settings>" > ~/.m2/settings.xml
+
+      - name: Extract Project Version
+        id: get-version
+        run: echo "VERSION=$(mvn -q -DforceStdout help:evaluate -Dexpression=project.version)" >> $GITHUB_ENV
+
       - name: Build SQRL
         env:
           DATASQRL_TOKEN: ${{ secrets.DATASQRL_TOKEN }}

@@ -24,10 +24,18 @@ jobs:
         distribution: 'adopt'
         cache: maven
 
-    - name: Print versions
+    - name: Generate settings.xml
       run: |
-        set -x
-        mvn --version
+        mkdir -p ~/.m2
+        echo "<settings>
+                <servers>
+                  <server>
+                    <id>github</id>
+                    <username>${{ github.actor }}</username>
+                    <password>${{ secrets.GITHUB_TOKEN }}</password>
+                  </server>
+                </servers>
+              </settings>" > ~/.m2/settings.xml
 
     - name: Download dependencies
       run: |
@@ -41,19 +49,6 @@ jobs:
         echo "$GPG_PRIVATE_KEY" | gpg --batch --import
         echo "default-key $(gpg --list-keys --with-colons | grep pub | cut -d':' -f5)" >> ~/.gnupg/gpg.conf
         echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
-
-    - name: Generate settings.xml
-      run: |
-        mkdir -p ~/.m2
-        echo "<settings>
-                <servers>
-                  <server>
-                    <id>github</id>
-                    <username>${{ github.actor }}</username>
-                    <password>${{ secrets.GITHUB_TOKEN }}</password>
-                  </server>
-                </servers>
-              </settings>" > ~/.m2/settings.xml
 
     - name: Deploy Snapshots
       run: |
