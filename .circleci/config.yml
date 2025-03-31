@@ -1,0 +1,239 @@
+version: 2.1
+
+orbs:
+  docker: circleci/docker@2.2.0
+
+executors:
+  default-machine:
+    machine:
+      image: ubuntu-2004:202111-02
+      resource_class: large
+    environment:
+      TZ: America/Los_Angeles
+
+commands:
+  download-dependencies:
+    description: "Download Maven dependencies"
+    steps:
+      - run:
+          name: Download dependencies
+          command: |
+            mvn -B org.apache.maven.plugins:maven-dependency-plugin:3.8.1:go-offline de.qaware.maven:go-offline-maven-plugin:1.2.8:resolve-dependencies -T3
+
+jobs:
+  build-base:
+    executor: default-machine
+    steps:
+      - checkout
+      - download-dependencies
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
+
+  unit-tests:
+    executor: default-machine
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Install and Run Unit Tests
+          command: mvn -T 1 -B install -DskipITs -Pskip-shade-plugin
+          environment:
+            DATASQRL_TOKEN: $DATASQRL_TOKEN
+      - run:
+          name: Gather Unit Test Results
+          command: |
+            mkdir -p test-results/unit-tests
+            find . -type d -path '*/target/surefire-reports' -exec cp -r {} test-results/unit-tests/ \;
+      - store_test_results:
+          path: test-results/unit-tests
+
+  integration-tests:
+    executor: default-machine
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Install and Run Integration Tests
+          command: mvn -T 1 -B install -Dtest=skip -Dsurefire.failIfNoSpecifiedTests=false -Pskip-shade-plugin
+          environment:
+            DATASQRL_TOKEN: $DATASQRL_TOKEN
+      - run:
+          name: Gather Integration Test Results
+          command: |
+            mkdir -p test-results/integration-tests
+            find . -type d -path '*/target/failsafe-reports' -exec cp -r {} test-results/integration-tests/ \;
+      - store_test_results:
+          path: test-results/integration-tests
+
+  build-test-image:
+    executor: default-machine
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Install and Build Shaded JAR
+          command: mvn clean -T 1 -B install -DskipTests -DskipITs
+          environment:
+            DATASQRL_TOKEN: $DATASQRL_TOKEN
+      - run:
+          name: Download base image
+          command: docker pull eclipse-temurin:11.0.22_7-jdk
+      - run:
+          name: Build Docker Image
+          command: docker build -t sqrl-test ./sqrl-tools
+      - run:
+          name: Save Docker Image
+          command: docker save -o sqrl-test.tar sqrl-test
+      - persist_to_workspace:
+          root: .
+          paths:
+            - sqrl-test.tar
+
+  run-conference-tests:
+    executor: default-machine
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Load Docker Image
+          command: docker load -i sqrl-test.tar
+      - run:
+          name: Run Conference Tests
+          command: |
+            docker run -i --rm -v $PWD:/build sqrl-test test conference.sqrl conference.graphqls --snapshot snapshots-conference --tests tests-conference
+          working_directory: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/conference
+
+  run-udf-tests:
+    executor: default-machine
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Load Docker Image
+          command: docker load -i sqrl-test.tar
+      - run:
+          name: Run UDF Tests
+          command: |
+            docker run -i --rm -v $PWD:/build sqrl-test test myudf.sqrl --snapshot snapshots-myudf --tests tests-myudf
+          working_directory: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/udf
+
+  docker-build-and-push:
+    parameters:
+      build_type:
+        type: enum
+        enum: ["latest", "tag"]
+        default: "latest"
+    docker:
+      - image: cimg/openjdk:11.0
+    environment:
+      TZ: America/Los_Angeles
+    steps:
+      - checkout
+      - download-dependencies
+      - run:
+          name: Build SQRL
+          command: |
+            if [ "<< parameters.build_type >>" = "tag" ]; then
+              mvn -T 1 -B -U -e clean package -DskipTests=true
+            else
+              mvn -T 1 -B -U -e clean package
+            fi
+          environment:
+            DATASQRL_TOKEN: $DATASQRL_TOKEN
+      - docker/install-docker-tools
+      - run:
+          name: Set Docker Tags
+          command: |
+            if [ "<< parameters.build_type >>" = "tag" ]; then
+              echo "export CMD_TAGS='$CIRCLE_TAG,latest'" >> $BASH_ENV
+              echo "export SERVER_TAGS='$CIRCLE_TAG,latest'" >> $BASH_ENV
+            else
+              echo "export CMD_TAGS='dev'" >> $BASH_ENV
+              echo "export SERVER_TAGS='dev'" >> $BASH_ENV
+            fi
+      - docker/build:
+          image: datasqrl/cmd
+          tag: "$CMD_TAGS"
+          dockerfile: sqrl-tools/Dockerfile
+          path: sqrl-tools
+          extra_build_args: --platform=linux/amd64,linux/arm64
+      - docker/build:
+          image: datasqrl/sqrl-server
+          tag: "$SERVER_TAGS"
+          dockerfile: sqrl-server/sqrl-server-vertx/Dockerfile
+          path: sqrl-server/sqrl-server-vertx
+          extra_build_args: --platform=linux/amd64,linux/arm64
+      - when:
+          condition:
+            equal: [ "tag", << parameters.build_type >> ]
+          steps:
+            - docker/push:
+                image: datasqrl/cmd
+                tag: "$CIRCLE_TAG"
+            - docker/push:
+                image: datasqrl/cmd
+                tag: latest
+            - docker/push:
+                image: datasqrl/sqrl-server
+                tag: "$CIRCLE_TAG"
+            - docker/push:
+                image: datasqrl/sqrl-server
+                tag: latest
+      - when:
+          condition:
+            equal: [ "latest", << parameters.build_type >> ]
+          steps:
+            - docker/push:
+                image: datasqrl/cmd
+                tag: dev
+            - docker/push:
+                image: datasqrl/sqrl-server
+                tag: dev
+
+workflows:
+  pull-request-workflow:
+    jobs:
+      - build-base:
+          context: docker-hub
+          filters:
+            branches:
+              only: /.*/
+      - unit-tests:
+          requires:
+            - build-base
+      - integration-tests:
+          requires:
+            - build-base
+      - build-test-image:
+          requires:
+            - build-base
+      - run-conference-tests:
+          requires:
+            - build-test-image
+      - run-udf-tests:
+          requires:
+            - build-test-image
+
+  main-branch-workflow:
+    jobs:
+      - docker-build-and-push:
+          build_type: "latest"
+          context: docker-hub
+          filters:
+            branches:
+              only:
+                - main
+                - v0.5.9-release
+
+  tag-workflow:
+    jobs:
+      - docker-build-and-push:
+          build_type: "tag"
+          context: docker-hub
+          filters:
+            tags:
+              only: /v[0-9]+(\.[0-9]+)*/
+            branches:
+              ignore: /.*/
