@@ -89,6 +89,23 @@
         <snapshots.update>true</snapshots.update>
       </properties>
     </profile>
+
+    <profile>
+      <id>skip-shade-plugin</id>
+
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-shade-plugin</artifactId>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
     <profile>
         <id>m2e</id>
         <activation>
@@ -1020,6 +1037,15 @@
         </configuration>
       </plugin>
     </plugins>
+    <pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.6.0</version>
+            </plugin>
+        </plugins>
+    </pluginManagement>
   </build>
 
 </project>
