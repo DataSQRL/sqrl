@@ -17,6 +17,11 @@ import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Listens for PostgreSQL notifications on a PostgreSQL channel, converts the
+ * notification payload into a JsonObject and extracts the required parameters. These parameters are
+ * then used to execute a predefined SQL query (onNotifyQuery)
+ */
 @Slf4j
 @AllArgsConstructor
 public class PostgresListenNotifyConsumer {

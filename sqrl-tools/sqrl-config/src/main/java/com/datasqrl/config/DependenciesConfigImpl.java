@@ -9,8 +9,6 @@ public class DependenciesConfigImpl implements PackageJson.DependenciesConfig {
 
   public static final String DEPENDENCIES_KEY = "dependencies";
   public static final String PKG_NAME_KEY = "pkgName";
-  public static final String VERSION_KEY = "version";
-  public static final String VARIANT_KEY = "variant";
 
   SqrlConfig parentConfig;
   SqrlConfig sqrlConfig;

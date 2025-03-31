@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -210,7 +211,7 @@ public class DatasqrlRun {
 
     Path flinkPath = planPath.resolve("flink.json");
     if (!flinkPath.toFile().exists()) {
-      throw new RuntimeException("Could not find flink plan.");
+      throw new RuntimeException("Could not find flink plan: " + flinkPath);
     }
 
     Map map = objectMapper.readValue(planPath.resolve("flink.json").toFile(), Map.class);
@@ -294,8 +295,14 @@ public class DatasqrlRun {
     }
     props.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, getenv("PROPERTIES_BOOTSTRAP_SERVERS"));
     try (AdminClient adminClient = AdminClient.create(props)) {
+      Set<String> existingTopics = adminClient.listTopics().names().get();
+
       for (Map<String, Object> topic : mutableTopics) {
-        NewTopic newTopic = new NewTopic((String) topic.get("name"), 1, (short) 1);
+        String topicName = (String) topic.get("name");
+        if(existingTopics.contains(topicName)) {
+          continue;
+        }
+        NewTopic newTopic = new NewTopic(topicName, 1, (short) 1);
         adminClient.createTopics(Collections.singletonList(newTopic)).all().get();
       }
     }

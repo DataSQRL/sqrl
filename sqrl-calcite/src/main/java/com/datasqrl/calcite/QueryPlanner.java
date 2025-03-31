@@ -14,7 +14,16 @@ import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.graphql.server.CustomScalars;
 import com.datasqrl.parse.SqrlParserImpl;
 import com.datasqrl.util.DataContextImpl;
+import java.io.File;
+import java.io.Serializable;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -22,6 +31,7 @@ import org.apache.calcite.adapter.enumerable.EnumerableInterpretable;
 import org.apache.calcite.adapter.enumerable.EnumerableRel;
 import org.apache.calcite.adapter.enumerable.EnumerableRelImplementor;
 import org.apache.calcite.adapter.enumerable.EnumerableRules;
+import org.apache.calcite.config.Lex;
 import org.apache.calcite.jdbc.CalcitePrepare;
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.linq4j.Enumerator;
@@ -59,16 +69,11 @@ import org.apache.calcite.sql2rel.SqrlSqlToRelConverter;
 import org.apache.calcite.tools.Programs;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.javac.JaninoCompiler;
-
-import java.io.File;
-import java.io.Serializable;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import org.apache.flink.sql.parser.ddl.SqlCreateTable;
+import org.apache.flink.sql.parser.ddl.SqlTableColumn.SqlRegularColumn;
+import org.apache.flink.sql.parser.validate.FlinkSqlConformance;
+import org.apache.flink.table.planner.delegation.FlinkSqlParserFactories;
+import org.apache.flink.table.planner.parse.CalciteParser;
 
 /**
  * A facade to the calcite planner
@@ -87,6 +92,7 @@ public class QueryPlanner {
   private final RelMetadataProvider metadataProvider;
   private final SqrlFramework framework;
 
+  private final CalciteParser flinkParser;
   public QueryPlanner(SqrlFramework framework) {
     this.framework = framework;
     this.catalogReader = framework.getCatalogReader();
@@ -109,6 +115,13 @@ public class QueryPlanner {
     this.defaultClassDir = new File("build/calcite/classes");
     cluster.setMetadataProvider(this.metadataProvider);
     cluster.setHintStrategies(hintStrategyTable);
+
+    SqlParser.Config config = SqlParser.config()
+        .withParserFactory(FlinkSqlParserFactories.create(FlinkSqlConformance.DEFAULT))
+        .withConformance(FlinkSqlConformance.DEFAULT)
+        .withLex(Lex.JAVA)
+        .withIdentifierMaxLength(256);
+    this.flinkParser = new CalciteParser(config);
   }
 
   /* Parse */
@@ -125,6 +138,7 @@ public class QueryPlanner {
         return new SqrlParserImpl()
             .parse(sql);
       case FLINK:
+        return flinkParser.parse(sql);
       default:
         throw new RuntimeException("Unknown dialect");
     }
@@ -179,35 +193,27 @@ public class QueryPlanner {
    */
   @SneakyThrows
   public RelDataType parseDatatype(String datatype) {
-    // Addl type aliases
-    if (datatype.equalsIgnoreCase("string")) {
-      return this.cluster.getTypeFactory().createSqlType(SqlTypeName.VARCHAR);
-    } else if (datatype.equalsIgnoreCase("int")) {
-      return this.cluster.getTypeFactory().createSqlType(SqlTypeName.INTEGER);
-    } else if (datatype.equalsIgnoreCase("datetime")) {
+    // Must be flink types
+    datatype = datatype.replaceAll("TIMESTAMP_WITH_LOCAL_TIME_ZONE",
+        "TIMESTAMP_LTZ");
+
+    // Addl type aliases for graphql
+    if (datatype.equalsIgnoreCase("datetime")) {
       return this.cluster.getTypeFactory().createSqlType(SqlTypeName.TIMESTAMP, 3);
     } else if (datatype.equalsIgnoreCase(CustomScalars.GRAPHQL_BIGINTEGER.getName())) {
         return this.cluster.getTypeFactory().createSqlType(SqlTypeName.BIGINT);
     }
 
-    // Todo fix: only supporting precision for non-alien types
-    if (datatype.indexOf('(') != -1) {
-      String name = datatype.substring(0, datatype.indexOf('('));
-      int precision = Integer.parseInt(
-          datatype.substring(datatype.indexOf('(') + 1, datatype.indexOf(')')));
-      return framework.getTypeFactory()
-          .createSqlType(SqlTypeName.get(name), precision);
+    if (datatype.equalsIgnoreCase(CustomScalars.GRAPHQL_BIGINTEGER.getName())) {
+      return this.cluster.getTypeFactory().createSqlType(SqlTypeName.BIGINT);
     }
 
-    SqlCall sqlNode = (SqlCall) SqlParser.create(String.format("CAST(null AS %s)", datatype))
-        .parseExpression();
+    // For other types, delegate to Flink planner to create Calcite types
+    String create = String.format("CREATE TABLE x (col %s)", datatype);
+    SqlCreateTable parse = (SqlCreateTable)parse(Dialect.FLINK, create);
+    SqlDataTypeSpec typeSpec = ((SqlRegularColumn) parse.getColumnList().get(0)).getType();
 
-    SqlValidator validator = createSqlValidator();
-    validator.validate(sqlNode);
-
-    SqlDataTypeSpec typeSpec = (SqlDataTypeSpec) sqlNode.getOperandList().get(1);
-
-    return typeSpec.deriveType(validator);
+    return typeSpec.deriveType(createSqlValidator());
   }
 
   /**
@@ -369,7 +375,7 @@ public class QueryPlanner {
     return new SqrlSqlValidator(
         this.operatorTable,
         catalogReader,
-        catalogReader.getTypeFactory(),
+        framework.getTypeFactory(),
         SqrlConfigurations.sqlValidatorConfig);
   }
 

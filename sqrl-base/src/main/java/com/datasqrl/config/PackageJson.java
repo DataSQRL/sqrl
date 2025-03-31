@@ -20,12 +20,6 @@ public interface PackageJson {
 
   DependenciesConfig getDependencies();
 
-  boolean hasProfileKey();
-
-  List<String> getProfiles();
-
-  void setProfiles(String[] profiles);
-
   void toFile(Path path, boolean pretty);
 
   ScriptConfig getScriptConfig();
@@ -64,7 +58,6 @@ public interface PackageJson {
     boolean isAddUid();
 
     String getTableSuffix();
-
   }
 
   interface ExplainConfig {
@@ -104,7 +97,7 @@ public interface PackageJson {
 
     String getEngineName();
 
-    @Deprecated(since="Migrate to templates or static objects")
+    @Deprecated(since = "Migrate to templates or static objects")
     Map<String, Object> toMap();
 
     ConnectorsConfig getConnectors();
@@ -138,7 +131,6 @@ public interface PackageJson {
   interface DiscoveryConfig {
 
     DataDiscoveryConfig getDataDiscoveryConfig();
-
   }
 
   interface DataDiscoveryConfig {
@@ -147,5 +139,4 @@ public interface PackageJson {
 
     ErrorCollector getErrors();
   }
-
 }

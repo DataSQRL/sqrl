@@ -2,7 +2,7 @@ CREATE TEMPORARY FUNCTION IF NOT EXISTS `tojson` AS 'com.datasqrl.json.ToJson' L
 
 CREATE TEMPORARY FUNCTION IF NOT EXISTS `__DataSQRLUuidGenerator` AS 'com.datasqrl.secure.Uuid' LANGUAGE JAVA;
 
-CREATE TEMPORARY TABLE `orders$1` (
+CREATE TABLE `orders$1` (
   `_source_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL
@@ -12,7 +12,7 @@ CREATE TEMPORARY TABLE `orders$1` (
    'number-of-rows' = '20'
 );
 
-CREATE TEMPORARY TABLE `orders$2$1` (
+CREATE TABLE `orders$2$1` (
   `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,
   `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `_source_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,

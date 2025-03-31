@@ -29,7 +29,7 @@ public class TestCommand extends AbstractCompilerCommand {
   @SneakyThrows
   @Override
   public void execute(ErrorCollector errors) {
-    super.execute(errors, this.profiles, snapshotPath == null ?
+    super.execute(errors, snapshotPath == null ?
         root.rootDir.resolve("snapshots") :
             snapshotPath.isAbsolute() ? snapshotPath : root.rootDir.resolve(snapshotPath),
         tests == null ? (Files.isDirectory(root.rootDir.resolve("tests")) ?

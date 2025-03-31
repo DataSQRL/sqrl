@@ -1,14 +1,12 @@
-name: Latest Docker Build and Push
+name: PR Docker Build and Push to GitHub Packages
 
 on:
-  push:
-    branches: [main, sqrl-0.5.x, v0.5.9-release]
+  pull_request:
 
 jobs:
-  docker:
+  pr-docker:
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    if: "!contains(github.event.head_commit.message, 'maven-release-plugin')"
     steps:
       - name: Setup Timezone
         uses: szenius/set-timezone@v1.1
@@ -25,10 +23,6 @@ jobs:
           distribution: 'adopt'
           cache: maven
 
-      - name: Extract Project Version
-        id: get-version
-        run: echo "VERSION=$(mvn -q -DforceStdout help:evaluate -Dexpression=project.version)" >> $GITHUB_ENV
-
       - name: Build SQRL
         env:
           DATASQRL_TOKEN: ${{ secrets.DATASQRL_TOKEN }}
@@ -39,40 +33,38 @@ jobs:
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
-      - name: Login to Docker Hub
+      - name: Log in to GitHub Packages
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Determine Docker Tags
         id: set-tags
         run: |
-          CMD_TAGS="datasqrl/cmd:v${VERSION}"
-          SERVER_TAGS="datasqrl/sqrl-server:v${VERSION}"
+          PR_NUMBER=${{ github.event.pull_request.number }}
 
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            CMD_TAGS="$CMD_TAGS,datasqrl/cmd:dev"
-            SERVER_TAGS="$SERVER_TAGS,datasqrl/sqrl-server:dev"
-          fi
+          CMD_TAG="ghcr.io/datasqrl/cmd:pr-${PR_NUMBER}"
+          SERVER_TAG="ghcr.io/datasqrl/sqrl-server:pr-${PR_NUMBER}"
 
-          echo "CMD_TAGS=$CMD_TAGS" >> $GITHUB_ENV
-          echo "SERVER_TAGS=$SERVER_TAGS" >> $GITHUB_ENV
+          echo "CMD_TAG=$CMD_TAG" >> $GITHUB_ENV
+          echo "SERVER_TAG=$SERVER_TAG" >> $GITHUB_ENV
 
-      - name: Build and Push sqrl-cli Dev
+      - name: Build and Push sqrl-cli PR Image
         uses: docker/build-push-action@v3
         with:
           context: sqrl-tools
           file: sqrl-tools/Dockerfile
           push: true
-          tags: ${{ env.CMD_TAGS }}
+          tags: ${{ env.CMD_TAG }}
           platforms: linux/amd64,linux/arm64
 
-      - name: Build and Push sqrl-vertx Docker
+      - name: Build and Push sqrl-vertx PR Image
         uses: docker/build-push-action@v3
         with:
           context: sqrl-server/sqrl-server-vertx
           file: sqrl-server/sqrl-server-vertx/Dockerfile
           push: true
-          tags: ${{ env.SERVER_TAGS }}
+          tags: ${{ env.SERVER_TAG }}
           platforms: linux/amd64,linux/arm64
