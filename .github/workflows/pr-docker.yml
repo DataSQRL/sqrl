@@ -24,7 +24,6 @@ jobs:
           cache: maven
 
       - name: Generate settings.xml
-        if: github.ref == 'refs/heads/main'
         run: |
           mkdir -p ~/.m2
           echo "<settings>
