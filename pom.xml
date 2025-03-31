@@ -1043,4 +1043,11 @@
     </pluginManagement>
   </build>
 
+  <distributionManagement>
+    <snapshotRepository>
+      <id>github</id>
+      <url>https://maven.pkg.github.com/DataSQRL/sqrl</url>
+    </snapshotRepository>
+  </distributionManagement>
+
 </project>
