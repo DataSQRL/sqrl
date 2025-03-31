@@ -8,7 +8,7 @@ type Customer {
     email: String!
     name: String!
     lastUpdated: GraphQLBigInteger!
-    timestamp: DateTime
+    timestamp: DateTime!
     related(limit: Int = 10, offset: Int = 0): [Customer!]
     relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
 }

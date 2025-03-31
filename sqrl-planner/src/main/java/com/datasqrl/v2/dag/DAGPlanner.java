@@ -283,10 +283,13 @@ public class DAGPlanner {
         if (function != null) {
           RelNode originalRelnode = function.getFunctionAnalysis().getRelNode();
           RelNode plannedRelNode = originalRelnode.accept(
-              new QueryExpansionRelShuttle(id -> streamTableMapping.get(new InputTableKey(dataStoreStage, id)),
+              new QueryExpansionRelShuttle(
+                  id -> streamTableMapping.get(new InputTableKey(dataStoreStage, id)),
                   sqrlEnv, dbEngine.getTypeMapping(), true));
-          dbPlan.query(new Query(function, plannedRelNode, function.getFunctionAnalysis().getErrors()));
-          if (function.getVisibility().isQueryable()) serverPlan.function(function);
+          dbPlan.query(
+              new Query(function, plannedRelNode, function.getFunctionAnalysis().getErrors()));
+          if (function.getVisibility().isQueryable())
+            serverPlan.function(function);
         }
       });
       EnginePhysicalPlan dbPhysicalPlan = dbEngine.plan(dbPlan.build());
@@ -501,18 +504,8 @@ public class DAGPlanner {
           .collect(Collectors.toList());
       RelDataTypeBuilder typeBuilder = CalciteUtil.getRelTypeBuilder(sqrlEnv.getTypeFactory());
       newProjects.forEach(pair -> typeBuilder.add(pair.right, pair.left.getType()));
-      try {
-        return project.copy(project.getTraitSet(), input,
-            newProjects.stream().map(Pair::getKey).collect(
-                Collectors.toList()), typeBuilder.build());
-      } catch (Throwable e) {
-        System.out.println("Original Type:" + project.getRowType());
-        System.out.println("Replaced Type:" + typeBuilder.build());
-        System.out.println("Original select:" + project.getProjects());
-        System.out.println("Replaced select:" + newProjects.stream().map(Pair::getKey).collect(
-            Collectors.toList()));
-        throw e;
-      }
+      return project.copy(project.getTraitSet(), input,
+          newProjects.stream().map(Pair::getKey).collect(Collectors.toList()), typeBuilder.build());
     }
 
     @Override

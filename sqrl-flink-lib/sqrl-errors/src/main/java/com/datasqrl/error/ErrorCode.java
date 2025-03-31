@@ -38,7 +38,8 @@ public enum ErrorCode implements ErrorLabel {
   SCHEMA_ERROR,
   TABLE_NOT_MATERIALIZE,
   FUNCTION_EXISTS,
-  NOT_YET_IMPLEMENTED;
+  NOT_YET_IMPLEMENTED,
+  ROWTIME_IS_NULLABLE;
 
   @Override
   public String getLabel() {

@@ -3,6 +3,7 @@
  */
 package com.datasqrl.util;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -27,6 +28,9 @@ public class SnapshotTest {
   public static final String[] BASE_SNAPSHOT_DIR = new String[]{"src", "test", "resources",
       "snapshots"};
   public static final String SNAPSHOT_EXTENSION = ".txt";
+
+
+  public static final String JUNIT_SNAPSHOTS = System.getenv("SQRL_JUNIT_SNAPSHOTS");
 
 
   public static void createOrValidateSnapshot(@NonNull String className, @NonNull String fileName,
@@ -127,22 +131,18 @@ public class SnapshotTest {
         Files.write(path, content.getBytes());
         fail("Creating snapshots: " + "file://"+path.toFile().getAbsolutePath());
       } else {
-        byte[] data = Files.readAllBytes(path);
-        String expected = new String(data);
-        if (!expected.equals(content)) {
-          String[] expectedLines = expected.split("\n");
-          String[] contentLines = content.split("\n");
-          for (int i = 0; i < Math.min(expectedLines.length, contentLines.length); i++) {
-            if (!expectedLines[i].equals(contentLines[i])) {
-              log.error("Error at line: {}\n"
-                  + "expected: {}\n"
-                  + "found   : {}\n"
-                  + "------------------\n"
-                  + "entire plan output:\n{}", i, expectedLines[i], contentLines[i], content);
-              break;
-            }
-          }
-          assertEquals(expected, content, "Mismatched snapshots: " + fileName + " " + "file://"+path.toFile().getAbsolutePath());
+        String expected = Files.readString(path);
+        /*
+         Intellij works much better with JUNIT based assertions, but on the build server
+         the assertThat output is easier to analyze.
+         */
+        if (JUNIT_SNAPSHOTS!=null) {
+          assertEquals(expected, content,
+              "Mismatched snapshots: " + fileName + " " + "file://" + path.toFile()
+                  .getAbsolutePath());
+        } else {
+          // WARNING: This is written in the opposite way and treats content as the "expected".
+          assertThat(path).hasContent(content);
         }
       }
     }

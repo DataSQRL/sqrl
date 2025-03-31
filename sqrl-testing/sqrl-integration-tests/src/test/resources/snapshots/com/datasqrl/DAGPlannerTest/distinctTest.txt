@@ -13,11 +13,11 @@ Schema:
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
- - timestamp: TIMESTAMP_LTZ(3) *ROWTIME*
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
-    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[TO_TIMESTAMP_LTZ($3, 0)])
+    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
       LogicalTableScan(table=[[default_catalog, default_database, Customer__def]])
 SQL: CREATE VIEW `Customer`
 AS
@@ -37,7 +37,7 @@ Schema:
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
- - timestamp: TIMESTAMP_LTZ(3) *ROWTIME*
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalFilter(condition=[=($5, 1)])
@@ -64,7 +64,7 @@ Schema:
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
- - timestamp: TIMESTAMP_LTZ(3) *ROWTIME*
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalFilter(condition=[=($5, 1)])
@@ -91,7 +91,7 @@ Schema:
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
- - timestamp: TIMESTAMP_LTZ(3) *ROWTIME*
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalFilter(condition=[=($5, 1)])
@@ -118,7 +118,7 @@ Schema:
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
- - timestamp: TIMESTAMP_LTZ(3) *ROWTIME*
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalFilter(condition=[=($5, 1)])
@@ -144,7 +144,7 @@ Schema:
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
- - timestamp: TIMESTAMP_LTZ(3) *ROWTIME*
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalFilter(condition=[=($5, 1)])
@@ -170,7 +170,7 @@ Schema:
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
- - timestamp: TIMESTAMP_LTZ(3) *ROWTIME*
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalFilter(condition=[=($5, 1)])
@@ -196,7 +196,7 @@ Schema:
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
- - timestamp: TIMESTAMP_LTZ(3) *ROWTIME*
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalFilter(condition=[=($5, 1)])
@@ -219,7 +219,7 @@ Primary Key: customerid
 Timestamp  : timestamp
 Schema:
  - customerid: BIGINT NOT NULL
- - timestamp: TIMESTAMP_LTZ(3) *ROWTIME*
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
 Plan:
 LogicalProject(customerid=[$0], timestamp=[$4], name=[$2])
@@ -238,7 +238,7 @@ CREATE TEMPORARY TABLE `Customer__schema` (
   'connector' = 'datagen'
 );
 CREATE TABLE `Customer__def` (
-  `timestamp` AS TO_TIMESTAMP_LTZ(`lastUpdated`, 0),
+  `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -305,7 +305,7 @@ CREATE TABLE `Customer_1` (
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` BIGINT NOT NULL,
-  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -320,7 +320,7 @@ CREATE TABLE `CustomerByMultiple_2` (
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` BIGINT NOT NULL,
-  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`customerid`, `email`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -335,7 +335,7 @@ CREATE TABLE `CustomerByMultipleTime_3` (
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` BIGINT NOT NULL,
-  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`customerid`, `email`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -350,7 +350,7 @@ CREATE TABLE `CustomerByTime_4` (
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` BIGINT NOT NULL,
-  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -365,7 +365,7 @@ CREATE TABLE `CustomerByTime2_5` (
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` BIGINT NOT NULL,
-  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -380,7 +380,7 @@ CREATE TABLE `CustomerByTimeAsc_6` (
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` BIGINT NOT NULL,
-  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -395,7 +395,7 @@ CREATE TABLE `CustomerByUpdated_7` (
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` BIGINT NOT NULL,
-  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -410,7 +410,7 @@ CREATE TABLE `CustomerByUpdatedAsc_8` (
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` BIGINT NOT NULL,
-  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -422,7 +422,7 @@ CREATE TABLE `CustomerByUpdatedAsc_8` (
 );
 CREATE TABLE `ExplicitDistinct_9` (
   `customerid` BIGINT NOT NULL,
-  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
@@ -481,7 +481,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByMultiple_2`
     {
       "name" : "Customer_1",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer_1\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer_1\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -506,14 +506,14 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByMultiple_2`
         {
           "name" : "timestamp",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
+          "nullable" : false
         }
       ]
     },
     {
       "name" : "CustomerByMultiple_2",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerByMultiple_2\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY (\"customerid\",\"email\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerByMultiple_2\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\",\"email\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -538,14 +538,14 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByMultiple_2`
         {
           "name" : "timestamp",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
+          "nullable" : false
         }
       ]
     },
     {
       "name" : "CustomerByMultipleTime_3",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerByMultipleTime_3\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY (\"customerid\",\"email\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerByMultipleTime_3\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\",\"email\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -570,14 +570,14 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByMultiple_2`
         {
           "name" : "timestamp",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
+          "nullable" : false
         }
       ]
     },
     {
       "name" : "CustomerByTime_4",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerByTime_4\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY (\"customerid\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerByTime_4\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -602,14 +602,14 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByMultiple_2`
         {
           "name" : "timestamp",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
+          "nullable" : false
         }
       ]
     },
     {
       "name" : "CustomerByTime2_5",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerByTime2_5\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY (\"customerid\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerByTime2_5\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -634,14 +634,14 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByMultiple_2`
         {
           "name" : "timestamp",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
+          "nullable" : false
         }
       ]
     },
     {
       "name" : "CustomerByTimeAsc_6",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerByTimeAsc_6\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY (\"customerid\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerByTimeAsc_6\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -666,14 +666,14 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByMultiple_2`
         {
           "name" : "timestamp",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
+          "nullable" : false
         }
       ]
     },
     {
       "name" : "CustomerByUpdated_7",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerByUpdated_7\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY (\"customerid\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerByUpdated_7\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -698,14 +698,14 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByMultiple_2`
         {
           "name" : "timestamp",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
+          "nullable" : false
         }
       ]
     },
     {
       "name" : "CustomerByUpdatedAsc_8",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerByUpdatedAsc_8\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY (\"customerid\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerByUpdatedAsc_8\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -730,14 +730,14 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByMultiple_2`
         {
           "name" : "timestamp",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
+          "nullable" : false
         }
       ]
     },
     {
       "name" : "ExplicitDistinct_9",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"ExplicitDistinct_9\" (\"customerid\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE , \"name\" TEXT NOT NULL , PRIMARY KEY (\"customerid\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"ExplicitDistinct_9\" (\"customerid\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL, \"name\" TEXT NOT NULL , PRIMARY KEY (\"customerid\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -747,7 +747,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByMultiple_2`
         {
           "name" : "timestamp",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
+          "nullable" : false
         },
         {
           "name" : "name",
@@ -784,7 +784,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByMultiple_2`
         {
           "name" : "timestamp",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
+          "nullable" : false
         }
       ]
     },
@@ -816,7 +816,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByMultiple_2`
         {
           "name" : "timestamp",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
+          "nullable" : false
         }
       ]
     },
@@ -848,7 +848,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByMultiple_2`
         {
           "name" : "timestamp",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
+          "nullable" : false
         }
       ]
     },
@@ -880,7 +880,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByMultiple_2`
         {
           "name" : "timestamp",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
+          "nullable" : false
         }
       ]
     },
@@ -912,7 +912,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByMultiple_2`
         {
           "name" : "timestamp",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
+          "nullable" : false
         }
       ]
     },
@@ -944,7 +944,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByMultiple_2`
         {
           "name" : "timestamp",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
+          "nullable" : false
         }
       ]
     },
@@ -976,7 +976,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByMultiple_2`
         {
           "name" : "timestamp",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
+          "nullable" : false
         }
       ]
     },
@@ -1008,7 +1008,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByMultiple_2`
         {
           "name" : "timestamp",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
+          "nullable" : false
         }
       ]
     },
@@ -1025,7 +1025,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByMultiple_2`
         {
           "name" : "timestamp",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
+          "nullable" : false
         },
         {
           "name" : "name",
@@ -1289,7 +1289,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByMultiple_2`
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime\n}\n\ntype CustomerByMultiple {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime\n}\n\ntype CustomerByMultipleTime {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime\n}\n\ntype CustomerByTime {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime\n}\n\ntype CustomerByTime2 {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime\n}\n\ntype CustomerByTimeAsc {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime\n}\n\ntype CustomerByUpdated {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime\n}\n\ntype CustomerByUpdatedAsc {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype ExplicitDistinct {\n  customerid: GraphQLBigInteger!\n  timestamp: DateTime\n  name: String!\n}\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerByMultiple(limit: Int = 10, offset: Int = 0): [CustomerByMultiple!]\n  CustomerByMultipleTime(limit: Int = 10, offset: Int = 0): [CustomerByMultipleTime!]\n  CustomerByTime(limit: Int = 10, offset: Int = 0): [CustomerByTime!]\n  CustomerByTime2(limit: Int = 10, offset: Int = 0): [CustomerByTime2!]\n  CustomerByTimeAsc(limit: Int = 10, offset: Int = 0): [CustomerByTimeAsc!]\n  CustomerByUpdated(limit: Int = 10, offset: Int = 0): [CustomerByUpdated!]\n  CustomerByUpdatedAsc(limit: Int = 10, offset: Int = 0): [CustomerByUpdatedAsc!]\n  ExplicitDistinct(limit: Int = 10, offset: Int = 0): [ExplicitDistinct!]\n}\n"
+      "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\ntype CustomerByMultiple {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\ntype CustomerByMultipleTime {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\ntype CustomerByTime {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\ntype CustomerByTime2 {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\ntype CustomerByTimeAsc {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\ntype CustomerByUpdated {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\ntype CustomerByUpdatedAsc {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype ExplicitDistinct {\n  customerid: GraphQLBigInteger!\n  timestamp: DateTime!\n  name: String!\n}\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerByMultiple(limit: Int = 10, offset: Int = 0): [CustomerByMultiple!]\n  CustomerByMultipleTime(limit: Int = 10, offset: Int = 0): [CustomerByMultipleTime!]\n  CustomerByTime(limit: Int = 10, offset: Int = 0): [CustomerByTime!]\n  CustomerByTime2(limit: Int = 10, offset: Int = 0): [CustomerByTime2!]\n  CustomerByTimeAsc(limit: Int = 10, offset: Int = 0): [CustomerByTimeAsc!]\n  CustomerByUpdated(limit: Int = 10, offset: Int = 0): [CustomerByUpdated!]\n  CustomerByUpdatedAsc(limit: Int = 10, offset: Int = 0): [CustomerByUpdatedAsc!]\n  ExplicitDistinct(limit: Int = 10, offset: Int = 0): [ExplicitDistinct!]\n}\n"
     }
   }
 }

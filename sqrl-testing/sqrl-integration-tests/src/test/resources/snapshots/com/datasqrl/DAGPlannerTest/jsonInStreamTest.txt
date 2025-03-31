@@ -14,7 +14,7 @@ Schema:
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
- - timestamp: TIMESTAMP_LTZ(3) *ROWTIME*
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalFilter(condition=[=($5, 1)])
@@ -40,11 +40,11 @@ Schema:
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
- - timestamp: TIMESTAMP_LTZ(3) *ROWTIME*
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
-    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[TO_TIMESTAMP_LTZ($3, 0)])
+    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
       LogicalTableScan(table=[[default_catalog, default_database, CustomerStream__def]])
 SQL: CREATE VIEW `CustomerStream`
 AS
@@ -228,7 +228,7 @@ CREATE TEMPORARY TABLE `CustomerStream__schema` (
   'connector' = 'datagen'
 );
 CREATE TABLE `CustomerStream__def` (
-  `timestamp` AS TO_TIMESTAMP_LTZ(`lastUpdated`, 0),
+  `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -295,7 +295,7 @@ CREATE TABLE `Customer_1` (
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` BIGINT NOT NULL,
-  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -310,7 +310,7 @@ CREATE TABLE `CustomerStream_2` (
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` BIGINT NOT NULL,
-  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -500,7 +500,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
     {
       "name" : "Customer_1",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer_1\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY (\"customerid\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer_1\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -525,14 +525,14 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
         {
           "name" : "timestamp",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
+          "nullable" : false
         }
       ]
     },
     {
       "name" : "CustomerStream_2",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerStream_2\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerStream_2\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -557,7 +557,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
         {
           "name" : "timestamp",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
+          "nullable" : false
         }
       ]
     },
@@ -759,7 +759,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
         {
           "name" : "timestamp",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
+          "nullable" : false
         }
       ]
     },
@@ -791,7 +791,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
         {
           "name" : "timestamp",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
+          "nullable" : false
         }
       ]
     },
@@ -1301,7 +1301,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime\n}\n\ntype CustomerStream {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\n\"A JSON scalar\"\nscalar JSON\n\ntype ObjComplex {\n  customerid: GraphQLBigInteger!\n  obj: JSON\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerStream(limit: Int = 10, offset: Int = 0): [CustomerStream!]\n  ObjComplex(limit: Int = 10, offset: Int = 0): [ObjComplex!]\n  jsonArrayAggTable(limit: Int = 10, offset: Int = 0): [jsonArrayAggTable!]\n  jsonArrayTable(limit: Int = 10, offset: Int = 0): [jsonArrayTable!]\n  jsonConcatTable(limit: Int = 10, offset: Int = 0): [jsonConcatTable!]\n  jsonExistsTable(limit: Int = 10, offset: Int = 0): [jsonExistsTable!]\n  jsonExtractTable(limit: Int = 10, offset: Int = 0): [jsonExtractTable!]\n  jsonObjectAggTable(limit: Int = 10, offset: Int = 0): [jsonObjectAggTable!]\n  jsonQueryTable(limit: Int = 10, offset: Int = 0): [jsonQueryTable!]\n  jsonToStringTable(limit: Int = 10, offset: Int = 0): [jsonToStringTable!]\n  toJsonTable(limit: Int = 10, offset: Int = 0): [toJsonTable!]\n}\n\ntype jsonArrayAggTable {\n  name: String!\n  agg: JSON\n}\n\ntype jsonArrayTable {\n  customerid: GraphQLBigInteger!\n  obj: JSON\n}\n\ntype jsonConcatTable {\n  customerid: GraphQLBigInteger!\n  obj: JSON\n}\n\ntype jsonExistsTable {\n  customerid: GraphQLBigInteger!\n  obj: Boolean\n}\n\ntype jsonExtractTable {\n  customerid: GraphQLBigInteger!\n  obj: String\n}\n\ntype jsonObjectAggTable {\n  name: String!\n  agg: JSON\n}\n\ntype jsonQueryTable {\n  customerid: GraphQLBigInteger!\n  obj: String\n}\n\ntype jsonToStringTable {\n  customerid: GraphQLBigInteger!\n  obj: String\n}\n\ntype toJsonTable {\n  customerid: GraphQLBigInteger!\n  obj: JSON\n}\n"
+      "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\ntype CustomerStream {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\n\"A JSON scalar\"\nscalar JSON\n\ntype ObjComplex {\n  customerid: GraphQLBigInteger!\n  obj: JSON\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerStream(limit: Int = 10, offset: Int = 0): [CustomerStream!]\n  ObjComplex(limit: Int = 10, offset: Int = 0): [ObjComplex!]\n  jsonArrayAggTable(limit: Int = 10, offset: Int = 0): [jsonArrayAggTable!]\n  jsonArrayTable(limit: Int = 10, offset: Int = 0): [jsonArrayTable!]\n  jsonConcatTable(limit: Int = 10, offset: Int = 0): [jsonConcatTable!]\n  jsonExistsTable(limit: Int = 10, offset: Int = 0): [jsonExistsTable!]\n  jsonExtractTable(limit: Int = 10, offset: Int = 0): [jsonExtractTable!]\n  jsonObjectAggTable(limit: Int = 10, offset: Int = 0): [jsonObjectAggTable!]\n  jsonQueryTable(limit: Int = 10, offset: Int = 0): [jsonQueryTable!]\n  jsonToStringTable(limit: Int = 10, offset: Int = 0): [jsonToStringTable!]\n  toJsonTable(limit: Int = 10, offset: Int = 0): [toJsonTable!]\n}\n\ntype jsonArrayAggTable {\n  name: String!\n  agg: JSON\n}\n\ntype jsonArrayTable {\n  customerid: GraphQLBigInteger!\n  obj: JSON\n}\n\ntype jsonConcatTable {\n  customerid: GraphQLBigInteger!\n  obj: JSON\n}\n\ntype jsonExistsTable {\n  customerid: GraphQLBigInteger!\n  obj: Boolean\n}\n\ntype jsonExtractTable {\n  customerid: GraphQLBigInteger!\n  obj: String\n}\n\ntype jsonObjectAggTable {\n  name: String!\n  agg: JSON\n}\n\ntype jsonQueryTable {\n  customerid: GraphQLBigInteger!\n  obj: String\n}\n\ntype jsonToStringTable {\n  customerid: GraphQLBigInteger!\n  obj: String\n}\n\ntype toJsonTable {\n  customerid: GraphQLBigInteger!\n  obj: JSON\n}\n"
     }
   }
 }
