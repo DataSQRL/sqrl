@@ -19,10 +19,10 @@ in script:comprehensivetest.sqrl [51:1]:
 CustomerTimeWindow := SELECT
 ^
 
-[FATAL] Unknown field at location unknown. Possible scalars are [customerid, email, lastUpdated]
-in script:comprehensivetest-fail-unknown-field [5:5]:
-    email: String!
-    lastUpdated: Float!
-    unknown: Float!
+[FATAL] Unknown field at location unknown. Possible scalars are [customerid, email, name, lastUpdated, timestamp]
+in script:comprehensivetest-fail-unknown-field [14:5]:
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+    unknown: Int
 ----^
 

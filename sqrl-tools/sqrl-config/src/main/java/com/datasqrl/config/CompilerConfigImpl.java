@@ -23,7 +23,7 @@ public class CompilerConfigImpl implements PackageJson.CompilerConfig {
   }
   public boolean isExtendedScalarTypes() {
     return sqrlConfig.asBool("extendedScalarTypes")
-            .getOptional().orElse(false); // by default don't use the extended scalar types (map PK as float) for backward compatibility
+            .getOptional().orElse(true);
   }
 
   @Override

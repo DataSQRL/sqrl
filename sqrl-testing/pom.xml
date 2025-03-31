@@ -14,5 +14,6 @@
     <module>sqrl-flink-1.16</module>
     <module>sqrl-flink-1.17</module>
     <module>sqrl-flink-1.18</module>
+    <module>sqrl-coverage</module>
   </modules>
 </project>

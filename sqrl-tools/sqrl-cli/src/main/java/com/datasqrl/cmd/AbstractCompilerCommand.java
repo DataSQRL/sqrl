@@ -105,7 +105,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     CompilationProcessV2 compilationProcess = injector.getInstance(CompilationProcessV2.class);
     testsPath.ifPresent(this::validateTestPath);
 
-    Pair<PhysicalPlan, TestPlan> plan = compilationProcess.executeCompilation(testsPath);
+    Pair<PhysicalPlan, ? extends TestPlan> plan = compilationProcess.executeCompilation(testsPath);
 
     if (errors.hasErrors()) {
       return;

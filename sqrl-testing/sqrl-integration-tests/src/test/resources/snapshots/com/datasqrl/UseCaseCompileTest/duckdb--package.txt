@@ -346,7 +346,7 @@ FROM "_MyApplications2_3"
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "type MyTable1 {\n  id: Float!\n  hello: String!\n}\n\ntype MyTable2 {\n  id: Float!\n  hello: String!\n}\n\ntype MyTable3 {\n  id: Float!\n  hello: String!\n}\n\ntype Query {\n  MyTable1(limit: Int = 10, offset: Int = 0): [MyTable1!]\n  MyTable2(limit: Int = 10, offset: Int = 0): [MyTable2!]\n  MyTable3(limit: Int = 10, offset: Int = 0): [MyTable3!]\n}\n"
+      "schema" : "\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype MyTable1 {\n  id: GraphQLBigInteger!\n  hello: String!\n}\n\ntype MyTable2 {\n  id: GraphQLBigInteger!\n  hello: String!\n}\n\ntype MyTable3 {\n  id: GraphQLBigInteger!\n  hello: String!\n}\n\ntype Query {\n  MyTable1(limit: Int = 10, offset: Int = 0): [MyTable1!]\n  MyTable2(limit: Int = 10, offset: Int = 0): [MyTable2!]\n  MyTable3(limit: Int = 10, offset: Int = 0): [MyTable3!]\n}\n"
     }
   }
 }

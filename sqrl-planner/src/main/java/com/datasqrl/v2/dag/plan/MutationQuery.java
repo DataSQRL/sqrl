@@ -4,8 +4,11 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.engine.ExecutableQuery;
 import com.datasqrl.engine.database.EngineCreateTable;
 import com.datasqrl.engine.pipeline.ExecutionStage;
+import com.datasqrl.v2.util.Documented;
 import java.util.List;
+import java.util.Optional;
 import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.Singular;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
@@ -16,7 +19,7 @@ import org.apache.calcite.rel.type.RelDataType;
  */
 @Value
 @Builder
-public class MutationQuery implements ExecutableQuery {
+public class MutationQuery implements ExecutableQuery, Documented {
 
   /**
    * The name of the mutation
@@ -44,5 +47,10 @@ public class MutationQuery implements ExecutableQuery {
    */
   @Singular
   List<MutationComputedColumn> computedColumns;
+  /**
+   * A documentation string that describes the mutation
+   */
+  @Default
+  private Optional<String> documentation = Optional.empty();
 
 }

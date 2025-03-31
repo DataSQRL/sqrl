@@ -283,10 +283,13 @@ public class DAGPlanner {
         if (function != null) {
           RelNode originalRelnode = function.getFunctionAnalysis().getRelNode();
           RelNode plannedRelNode = originalRelnode.accept(
-              new QueryExpansionRelShuttle(id -> streamTableMapping.get(new InputTableKey(dataStoreStage, id)),
+              new QueryExpansionRelShuttle(
+                  id -> streamTableMapping.get(new InputTableKey(dataStoreStage, id)),
                   sqrlEnv, dbEngine.getTypeMapping(), true));
-          dbPlan.query(new Query(function, plannedRelNode, function.getFunctionAnalysis().getErrors()));
-          if (function.getVisibility().isQueryable()) serverPlan.function(function);
+          dbPlan.query(
+              new Query(function, plannedRelNode, function.getFunctionAnalysis().getErrors()));
+          if (function.getVisibility().isQueryable())
+            serverPlan.function(function);
         }
       });
       EnginePhysicalPlan dbPhysicalPlan = dbEngine.plan(dbPlan.build());
@@ -501,9 +504,8 @@ public class DAGPlanner {
           .collect(Collectors.toList());
       RelDataTypeBuilder typeBuilder = CalciteUtil.getRelTypeBuilder(sqrlEnv.getTypeFactory());
       newProjects.forEach(pair -> typeBuilder.add(pair.right, pair.left.getType()));
-
-      return project.copy(project.getTraitSet(), input, newProjects.stream().map(Pair::getKey).collect(
-          Collectors.toList()), typeBuilder.build());
+      return project.copy(project.getTraitSet(), input,
+          newProjects.stream().map(Pair::getKey).collect(Collectors.toList()), typeBuilder.build());
     }
 
     @Override

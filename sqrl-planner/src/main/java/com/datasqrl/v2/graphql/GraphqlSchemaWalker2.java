@@ -3,6 +3,7 @@ package com.datasqrl.v2.graphql;
 import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.getQueryType;
 import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.getSubscriptionType;
 import static com.datasqrl.graphql.util.GraphqlCheckUtil.checkState;
+import static com.datasqrl.v2.graphql.GraphqlSchemaUtil2.isValidGraphQLName;
 import static com.datasqrl.v2.util.SqrTableFunctionUtil.getTableFunctionFromPath;
 
 import com.datasqrl.canonicalizer.Name;
@@ -42,7 +43,8 @@ public abstract class GraphqlSchemaWalker2 {
   protected final List<SqrlTableFunction> tableFunctions;
   protected final List<MutationQuery> mutations;
 
-  protected final Set<ObjectTypeDefinition> seen = new HashSet<>();
+  protected final Set<ObjectTypeDefinition> seenObjectTypes = new HashSet<>();
+  protected final Set<NamePath> seenTableFunctions = new HashSet<>();
 
   /*
   * Schema walking methods
@@ -62,18 +64,20 @@ public abstract class GraphqlSchemaWalker2 {
   }
 
 
-  private void walkRootMutationType(ObjectTypeDefinition type, TypeDefinitionRegistry registry) {
-    for(FieldDefinition fieldDefinition : type.getFieldDefinitions()) {
+  private void walkRootMutationType(ObjectTypeDefinition rootType, TypeDefinitionRegistry registry) {
+    checkState(!rootType.getFieldDefinitions().isEmpty(), rootType.getSourceLocation(), "Empty root object type: %s", rootType.getName());
+    for(FieldDefinition field : rootType.getFieldDefinitions()) {
       MutationQuery mutationQuery =
           mutations.stream()
-              .filter(mutation -> mutation.getName().getDisplay().equalsIgnoreCase(fieldDefinition.getName()))
+              .filter(mutation -> mutation.getName().getDisplay().equalsIgnoreCase(field.getName()))
               .findFirst()
-              .orElseThrow(() -> new RuntimeException("No mutation found for " + fieldDefinition.getName()));
-      visitMutation(fieldDefinition, registry, mutationQuery);
+              .orElseThrow(() -> new RuntimeException("No mutation found for " + field.getName()));
+      visitMutation(field, registry, mutationQuery);
     }
   }
 
   private void walkRootType(ObjectTypeDefinition rootType, TypeDefinitionRegistry registry) {
+    checkState(!rootType.getFieldDefinitions().isEmpty(), rootType.getSourceLocation(), "Empty root object type: %s", rootType.getName());
     for (FieldDefinition field : rootType.getFieldDefinitions()) { // fields are root table functions
       final NamePath fieldPath = NamePath.ROOT.concat(NamePath.of(field.getName()));
       final Optional<SqrlTableFunction> tableFunction = getTableFunctionFromPath(tableFunctions, fieldPath); // root table functions are always present
@@ -84,14 +88,16 @@ public abstract class GraphqlSchemaWalker2 {
 
   private void walkTableFunction(ObjectTypeDefinition parentType, FieldDefinition atField,
                                  SqrlTableFunction tableFunction, TypeDefinitionRegistry registry) {
+    checkState(!seenTableFunctions.contains(tableFunction.getFullPath()), atField.getSourceLocation(), "Duplicate table function: %s", tableFunction.getFullPath());
+    seenTableFunctions.add(tableFunction.getFullPath());
     Optional<TypeDefinition> typeDefOpt = registry.getType(atField.getType());
     checkState(typeDefOpt.isPresent(), atField.getType().getSourceLocation(), "Could not find object type in graphql type registry: %s", atField.getType());
     final TypeDefinition typeDefinition = typeDefOpt.get();
     checkState(typeDefinition instanceof ObjectTypeDefinition, typeDefinition.getSourceLocation(), "Could not infer non-object type on graphql schema: %s", typeDefinition.getName());
     if (tableFunction.getVisibility().getAccess() == AccessModifier.QUERY) { // walking a query table function
-      visitQuery(parentType, atField, tableFunction);
+      visitQuery(parentType, atField, tableFunction, registry);
     } else { // walking a subscription table function
-      visitSubscription(atField, tableFunction);
+      visitSubscription(atField, tableFunction, registry);
     }
     RelDataType functionRowType = tableFunction.getRowType();
     ObjectTypeDefinition resultType = (ObjectTypeDefinition) typeDefinition;
@@ -99,13 +105,14 @@ public abstract class GraphqlSchemaWalker2 {
   }
 
   private void walkObjectType(boolean isFunctionResultType, ObjectTypeDefinition objectType, Optional<RelDataType> relDataType, TypeDefinitionRegistry registry) {
-    if (seen.contains(objectType)) {
+    if (seenObjectTypes.contains(objectType)) {
       return;
     }
-    seen.add(objectType);
-
+    seenObjectTypes.add(objectType);
+    checkState(isValidGraphQLName(objectType.getName()), objectType.getSourceLocation(), "Invalid object type name: %s", objectType.getName());
+    checkState(!objectType.getFieldDefinitions().isEmpty(), objectType.getSourceLocation(), "Empty object type: %s", objectType.getName());
     for (FieldDefinition field : objectType.getFieldDefinitions()) {
-
+      checkState(isValidGraphQLName(field.getName()), field.getSourceLocation(), "Invalid field name: %s", field.getName());
       NamePath fieldPath = NamePath.of(objectType.getName()).concat(Name.system(field.getName()));
 
       // Functions can have relationships, so if we are walking a function resultType, process relationship fields
@@ -172,15 +179,15 @@ public abstract class GraphqlSchemaWalker2 {
   /*
   * Abstract visit methods for concrete graphQL schema walkers to implement (for validation and graphQL model generation)
    */
-  protected abstract void visitQuery(ObjectTypeDefinition parentType, FieldDefinition atField, SqrlTableFunction tableFunction);
+  protected abstract void visitQuery(ObjectTypeDefinition parentType, FieldDefinition atField, SqrlTableFunction tableFunction, TypeDefinitionRegistry registry);
 
-  protected abstract void visitSubscription(FieldDefinition field, SqrlTableFunction tableFunction);
+  protected abstract void visitSubscription(FieldDefinition atField, SqrlTableFunction tableFunction, TypeDefinitionRegistry registry);
 
-  protected abstract void visitMutation(FieldDefinition field, TypeDefinitionRegistry registry, MutationQuery mutation);
+  protected abstract void visitMutation(FieldDefinition atField, TypeDefinitionRegistry registry, MutationQuery mutation);
 
-  protected abstract void visitUnknownObject(FieldDefinition field, Optional<RelDataType> relDataType);
+  protected abstract void visitUnknownObject(FieldDefinition atField, Optional<RelDataType> relDataType);
 
-  protected abstract void visitScalar(ObjectTypeDefinition objectType, FieldDefinition field, RelDataTypeField relDataTypeField);
+  protected abstract void visitScalar(ObjectTypeDefinition objectType, FieldDefinition atField, RelDataTypeField relDataTypeField);
 
 /*
 * Utility methods

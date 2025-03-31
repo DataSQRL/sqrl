@@ -10,6 +10,7 @@ import com.google.common.base.Preconditions;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -77,6 +78,10 @@ public class CalciteUtil {
   public static Optional<Integer> findBestRowTimeIndex(RelDataType type) {
     return type.getFieldList().stream()
         .filter(field -> isRowTime(field.getType()))
+        //Prioritize not null fields, then sort by index increasing
+        .sorted(Comparator
+            .comparing((RelDataTypeField field) -> field.getType().isNullable())
+            .thenComparing(RelDataTypeField::getIndex))
         .map(RelDataTypeField::getIndex)
         .findFirst();
   }
