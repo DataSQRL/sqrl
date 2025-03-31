@@ -36,6 +36,11 @@ jobs:
                 </servers>
               </settings>" > ~/.m2/settings.xml
 
+      - name: Download dependencies
+        run: |
+          set -x
+          mvn -B org.apache.maven.plugins:maven-dependency-plugin:3.8.1:go-offline de.qaware.maven:go-offline-maven-plugin:1.2.8:resolve-dependencies
+
       - name: Extract Project Version
         id: get-version
         run: echo "VERSION=$(mvn -q -DforceStdout help:evaluate -Dexpression=project.version)" >> $GITHUB_ENV
