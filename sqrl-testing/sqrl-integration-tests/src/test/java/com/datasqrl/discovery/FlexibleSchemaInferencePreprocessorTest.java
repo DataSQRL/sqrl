@@ -19,7 +19,6 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 import lombok.SneakyThrows;
@@ -41,19 +40,23 @@ public class FlexibleSchemaInferencePreprocessorTest extends AbstractAssetSnapsh
   protected FlexibleSchemaInferencePreprocessorTest() {
     super(FILES_DIR.resolve("output"));
     try {
-      packageJson = SqrlConfigCommons.fromFilesPackageJson(errors,
-          List.of(Path.of("../../profiles/default/package.json")));
+      packageJson = SqrlConfigCommons.getDefaultPackageJson(errors);
     } catch (Exception e) {
-        System.out.println(ErrorPrinter.prettyPrint(errors));
-        throw e;
-      }
-    Injector injector = Guice.createInjector(
-        new SqrlInjector(ErrorCollector.root(), FILES_DIR, super.outputDir, packageJson, ExecutionGoal.COMPILE, null),
-        new StatefulModule(new SqrlSchema(new TypeFactory(), NameCanonicalizer.SYSTEM)));
+      System.out.println(ErrorPrinter.prettyPrint(errors));
+      throw e;
+    }
+    Injector injector =
+        Guice.createInjector(
+            new SqrlInjector(
+                ErrorCollector.root(),
+                FILES_DIR,
+                super.outputDir,
+                packageJson,
+                ExecutionGoal.COMPILE),
+            new StatefulModule(new SqrlSchema(new TypeFactory(), NameCanonicalizer.SYSTEM)));
     preprocessor = injector.getInstance(FlexibleSchemaInferencePreprocessor.class);
     super.buildDir = outputDir;
   }
-
 
   @ParameterizedTest
   @ArgumentsSource(DataFiles.class)
@@ -64,11 +67,10 @@ public class FlexibleSchemaInferencePreprocessorTest extends AbstractAssetSnapsh
     String filename = file.getFileName().toString();
     assertTrue(preprocessor.getPattern().matcher(filename).matches());
     this.snapshot = Snapshot.of(getDisplayName(file), getClass());
-    preprocessor.processFile(targetFile, new ProcessorContext(outputDir, buildDir, packageJson),
-          errors);
+    preprocessor.processFile(
+        targetFile, new ProcessorContext(outputDir, buildDir, packageJson), errors);
     createSnapshot();
   }
-
 
   @Override
   public Predicate<Path> getOutputDirFilter() {
@@ -83,5 +85,4 @@ public class FlexibleSchemaInferencePreprocessorTest extends AbstractAssetSnapsh
       return Files.list(FILES_DIR).map(Arguments::of);
     }
   }
-
 }

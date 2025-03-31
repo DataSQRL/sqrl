@@ -8,6 +8,9 @@ import io.vertx.micrometer.MicrometerMetricsOptions;
 import io.vertx.micrometer.VertxPrometheusOptions;
 import io.vertx.core.http.HttpServerOptions;
 
+/**
+ * Main entry point for launching the Vert.x application with Prometheus metrics.
+ */
 public class SqrlLauncher extends Launcher {
 
   public static void main(String[] args) {

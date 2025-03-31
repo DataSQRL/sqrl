@@ -21,16 +21,31 @@ import lombok.Setter;
 import lombok.Singular;
 import lombok.ToString;
 
+/**
+ * Purpose: Encapsulates the GraphQL schema and entry points (queries, mutations, subscriptions).
+ * Defines the visitor interfaces to visit the model. This class is deserialized from vertx.json
+ * <br>
+ * Collaboration:
+ *
+ * <ul>
+ *   <li>the root of the model, the schema, coords, the jdbc queries, the arguments and parameters
+ *       are visited by {@link GraphQLEngineBuilder}
+ *   <li>the mutations (kafka and prostgreSQL) are visited by {@link
+ *       com.datasqrl.graphql.MutationConfigurationImpl}
+ *   <li>the subscriptions (kafka and prostgreSQL) are visited by {@link
+ *       com.datasqrl.graphql.SubscriptionConfigurationImpl}
+ * </ul>
+ */
 @Getter
 @Builder
 public class RootGraphqlModel {
 
   @Singular
-  List<Coords> coords; //TODO should be renamed queries but it is a breaking change for vertx server.
-  @Singular
-  List<MutationCoords> mutations;
-  @Singular
-  List<SubscriptionCoords> subscriptions;
+  List<Coords>
+      coords; // TODO should be renamed queries but it is a breaking change for vertx server.
+
+  @Singular List<MutationCoords> mutations;
+  @Singular List<SubscriptionCoords> subscriptions;
 
   Schema schema;
 
@@ -55,12 +70,8 @@ public class RootGraphqlModel {
     R visitRoot(RootGraphqlModel root, C context);
   }
 
-  @JsonTypeInfo(
-      use = JsonTypeInfo.Id.NAME,
-      property = "type")
-  @JsonSubTypes({
-      @Type(value = StringSchema.class, name = "string")
-  })
+  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+  @JsonSubTypes({@Type(value = StringSchema.class, name = "string")})
   public interface Schema {
 
     <R, C> R accept(SchemaVisitor<R, C> visitor, C context);
@@ -85,24 +96,23 @@ public class RootGraphqlModel {
     }
   }
 
-  @JsonTypeInfo(
-      use = JsonTypeInfo.Id.NAME,
-      property = "type"
-  )
+  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
   @JsonSubTypes({
-      @Type(value = KafkaMutationCoords.class, name = KafkaMutationCoords.type),
-      @Type(value = PostgresLogMutationCoords.class, name = PostgresLogMutationCoords.type)
+    @Type(value = KafkaMutationCoords.class, name = KafkaMutationCoords.type),
+    @Type(value = PostgresLogMutationCoords.class, name = PostgresLogMutationCoords.type)
   })
-  public static abstract class MutationCoords {
+  public abstract static class MutationCoords {
     protected String type;
+
     public abstract <R, C> R accept(MutationCoordsVisitor<R, C> visitor, C context);
+
     public abstract String getFieldName();
   }
 
   public interface MutationCoordsVisitor<R, C> {
     R visit(KafkaMutationCoords coords, C context);
-    R visit(PostgresLogMutationCoords coords, C c
-    );
+
+    R visit(PostgresLogMutationCoords coords, C c);
   }
 
   @Getter
@@ -113,11 +123,14 @@ public class RootGraphqlModel {
 
     protected String fieldName;
     protected String topic;
-    protected Map<String,MutationComputedColumnType> computedColumns;
+    protected Map<String, MutationComputedColumnType> computedColumns;
     protected Map<String, String> sinkConfig;
 
-    public KafkaMutationCoords(String fieldName, String topic,
-        Map<String,MutationComputedColumnType> computedColumns, Map<String, String> sinkConfig) {
+    public KafkaMutationCoords(
+        String fieldName,
+        String topic,
+        Map<String, MutationComputedColumnType> computedColumns,
+        Map<String, String> sinkConfig) {
       this.fieldName = fieldName;
       this.topic = topic;
       this.computedColumns = computedColumns;
@@ -141,8 +154,8 @@ public class RootGraphqlModel {
     protected String insertStatement;
     protected List<String> parameters;
 
-    public PostgresLogMutationCoords(String fieldName, String tableName, String insertStatement,
-        List<String> parameters) {
+    public PostgresLogMutationCoords(
+        String fieldName, String tableName, String insertStatement, List<String> parameters) {
       this.fieldName = fieldName;
       this.tableName = tableName;
       this.insertStatement = insertStatement;
@@ -158,20 +171,22 @@ public class RootGraphqlModel {
   @JsonTypeInfo(
       use = JsonTypeInfo.Id.NAME,
       property = "type",
-      defaultImpl = KafkaSubscriptionCoords.class
-  )
+      defaultImpl = KafkaSubscriptionCoords.class)
   @JsonSubTypes({
-      @Type(value = KafkaSubscriptionCoords.class, name = "kafka"),
-      @Type(value = PostgresSubscriptionCoords.class, name = "postgres_log")
+    @Type(value = KafkaSubscriptionCoords.class, name = "kafka"),
+    @Type(value = PostgresSubscriptionCoords.class, name = "postgres_log")
   })
-  public static abstract class SubscriptionCoords {
+  public abstract static class SubscriptionCoords {
     protected String type;
+
     public abstract <R, C> R accept(SubscriptionCoordsVisitor<R, C> visitor, C context);
+
     public abstract String getFieldName();
   }
 
   public interface SubscriptionCoordsVisitor<R, C> {
     R visit(KafkaSubscriptionCoords coords, C context);
+
     R visit(PostgresSubscriptionCoords coords, C context);
   }
 
@@ -193,7 +208,6 @@ public class RootGraphqlModel {
       return visitor.visit(this, context);
     }
   }
-
 
   @Getter
   @AllArgsConstructor
@@ -222,17 +236,21 @@ public class RootGraphqlModel {
     R visitFieldLookup(FieldLookupCoords coords, C context);
   }
 
+  /**
+   * Binds graphql queries with corresponding sql queries and the combinations of their arguments:
+   * out of graphQL schema we generate all possible SQL queries for the possible arguments.
+   * (nullable, not nullable, same table called with different sets of args). These combinations are
+   * matchs which contain arguments, sql query and parameters.
+   */
   @Getter
   @AllArgsConstructor
   @NoArgsConstructor
-  @JsonTypeInfo(
-      use = JsonTypeInfo.Id.NAME,
-      property = "type")
+  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
   @JsonSubTypes({
-      @Type(value = ArgumentLookupCoords.class, name = "args"),
-      @Type(value = FieldLookupCoords.class, name = "field")
+    @Type(value = ArgumentLookupCoords.class, name = "args"),
+    @Type(value = FieldLookupCoords.class, name = "field")
   })
-  public static abstract class Coords { //TODO should be renamed QueryCoords
+  public abstract static class Coords { // TODO should be renamed QueryCoords
 
     String parentType;
     String fieldName;
@@ -244,13 +262,11 @@ public class RootGraphqlModel {
   @NoArgsConstructor
   public static class FieldLookupCoords extends Coords {
 
-    @JsonIgnore
-    final String type = "field";
+    @JsonIgnore final String type = "field";
     String columnName;
 
     @Builder
-    public FieldLookupCoords(String parentType, String fieldName,
-                             String columnName) {
+    public FieldLookupCoords(String parentType, String fieldName, String columnName) {
       super(parentType, fieldName);
       this.columnName = columnName;
     }
@@ -264,16 +280,17 @@ public class RootGraphqlModel {
   @NoArgsConstructor
   public static class ArgumentLookupCoords extends Coords {
 
-    @JsonIgnore
-    final String type = "args";
+    @JsonIgnore final String type = "args";
+
     /**
-     * A match is an executable query + its SQL parameters + its graphQl arguments (including the SQL parameters)
+     * A match is an executable query + its SQL parameters + its graphQl arguments (including the
+     * SQL parameters)
      */
     Set<ArgumentSet> matchs;
 
     @Builder
-    public ArgumentLookupCoords(String parentType, String fieldName,
-                                @Singular Set<ArgumentSet> matchs) {
+    public ArgumentLookupCoords(
+        String parentType, String fieldName, @Singular Set<ArgumentSet> matchs) {
       super(parentType, fieldName);
       this.matchs = matchs;
     }
@@ -291,9 +308,8 @@ public class RootGraphqlModel {
   @ToString
   public static class ArgumentSet {
 
-    //The may be empty for no-args
-    @Singular
-    Set<Argument> arguments;
+    // The may be empty for no-args
+    @Singular Set<Argument> arguments;
     QueryBase query;
   }
 
@@ -304,22 +320,22 @@ public class RootGraphqlModel {
     R visitPagedJdbcQuery(PagedJdbcQuery jdbcQuery, C context);
 
     R visitPagedDuckDbQuery(PagedDuckDbQuery pagedDuckDbQuery, C context);
+
     R visitPagedSnowflakeDbQuery(PagedSnowflakeDbQuery pagedDuckDbQuery, C context);
 
     R visitDuckDbQuery(DuckDbQuery duckDbQuery, C context);
+
     R visitSnowflakeDbQuery(SnowflakeDbQuery duckDbQuery, C context);
   }
 
-  @JsonTypeInfo(
-      use = JsonTypeInfo.Id.NAME,
-      property = "type")
+  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
   @JsonSubTypes({
-      @Type(value = JdbcQuery.class, name = "JdbcQuery"),
-      @Type(value = PagedJdbcQuery.class, name = "PagedJdbcQuery"),
-      @Type(value = DuckDbQuery.class, name = "DuckDbQuery"),
-      @Type(value = SnowflakeDbQuery.class, name = "SnowflakeDbQuery"),
-      @Type(value = PagedDuckDbQuery.class, name = "PagedDuckDbQuery"),
-      @Type(value = PagedSnowflakeDbQuery.class, name = "PagedSnowflakeDbQuery"),
+    @Type(value = JdbcQuery.class, name = "JdbcQuery"),
+    @Type(value = PagedJdbcQuery.class, name = "PagedJdbcQuery"),
+    @Type(value = DuckDbQuery.class, name = "DuckDbQuery"),
+    @Type(value = SnowflakeDbQuery.class, name = "SnowflakeDbQuery"),
+    @Type(value = PagedDuckDbQuery.class, name = "PagedDuckDbQuery"),
+    @Type(value = PagedSnowflakeDbQuery.class, name = "PagedSnowflakeDbQuery"),
   })
   public interface QueryBase {
 
@@ -333,8 +349,7 @@ public class RootGraphqlModel {
 
     final String type = "JdbcQuery";
     String sql;
-    @Singular
-    List<JdbcParameterHandler> parameters;
+    @Singular List<JdbcParameterHandler> parameters;
 
     @Override
     public <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context) {
@@ -349,8 +364,7 @@ public class RootGraphqlModel {
 
     final String type = "DuckDbQuery";
     String sql;
-    @Singular
-    List<JdbcParameterHandler> parameters;
+    @Singular List<JdbcParameterHandler> parameters;
 
     @Override
     public <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context) {
@@ -365,8 +379,7 @@ public class RootGraphqlModel {
 
     final String type = "SnowflakeDbQuery";
     String sql;
-    @Singular
-    List<JdbcParameterHandler> parameters;
+    @Singular List<JdbcParameterHandler> parameters;
 
     @Override
     public <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context) {
@@ -381,8 +394,7 @@ public class RootGraphqlModel {
 
     final String type = "PagedJdbcQuery";
     String sql;
-    @Singular
-    List<JdbcParameterHandler> parameters;
+    @Singular List<JdbcParameterHandler> parameters;
 
     @Override
     public <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context) {
@@ -397,8 +409,7 @@ public class RootGraphqlModel {
 
     final String type = "PagedDuckDbQuery";
     String sql;
-    @Singular
-    List<JdbcParameterHandler> parameters;
+    @Singular List<JdbcParameterHandler> parameters;
 
     @Override
     public <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context) {
@@ -413,8 +424,7 @@ public class RootGraphqlModel {
 
     final String type = "PagedSnowflakeDbQuery";
     String sql;
-    @Singular
-    List<JdbcParameterHandler> parameters;
+    @Singular List<JdbcParameterHandler> parameters;
 
     @Override
     public <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context) {
@@ -422,28 +432,24 @@ public class RootGraphqlModel {
     }
   }
 
-  @JsonTypeInfo(
-      use = JsonTypeInfo.Id.NAME,
-      property = "type")
+  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
   @JsonSubTypes({
-      @Type(value = FixedArgument.class, name = "fixed"),
-      @Type(value = VariableArgument.class, name = "variable")
+    @Type(value = FixedArgument.class, name = "fixed"),
+    @Type(value = VariableArgument.class, name = "variable")
   })
   public interface Argument {
 
     String getPath();
+
     Object getValue();
   }
-
 
   public interface VariableArgumentVisitor<R, C> {
 
     R visitVariableArgument(VariableArgument variableArgument, C context);
   }
 
-  /**
-   * A variable argument
-   */
+  /** A variable argument */
   @Builder
   @Getter
   @AllArgsConstructor
@@ -458,7 +464,7 @@ public class RootGraphqlModel {
       return visitor.visitVariableArgument(this, context);
     }
 
-    //Exclude the value for variable arguments
+    // Exclude the value for variable arguments
     @Override
     public boolean equals(Object o) {
       if (this == o) {
@@ -478,9 +484,7 @@ public class RootGraphqlModel {
 
     @Override
     public String toString() {
-      return "VariableArgument{" +
-          "path='" + path + '\'' +
-          '}';
+      return "VariableArgument{" + "path='" + path + '\'' + '}';
     }
   }
 
@@ -489,9 +493,7 @@ public class RootGraphqlModel {
     R visitFixedArgument(FixedArgument fixedArgument, C context);
   }
 
-  /**
-   * An argument with a scalar value
-   */
+  /** An argument with a scalar value */
   @Builder
   @Getter
   @AllArgsConstructor
@@ -509,12 +511,10 @@ public class RootGraphqlModel {
     }
   }
 
-  @JsonTypeInfo(
-      use = JsonTypeInfo.Id.NAME,
-      property = "type")
+  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
   @JsonSubTypes({
-      @Type(value = SourceParameter.class, name = "source"),
-      @Type(value = ArgumentParameter.class, name = "arg")
+    @Type(value = SourceParameter.class, name = "source"),
+    @Type(value = ArgumentParameter.class, name = "arg")
   })
   public interface JdbcParameterHandler {
 
@@ -568,6 +568,7 @@ public class RootGraphqlModel {
   public interface ResolvedQuery {
 
     QueryBase getQuery();
+
     public <R, C> R accept(ResolvedQueryVisitor<R, C> visitor, C context);
   }
 

@@ -1,0 +1,60 @@
+name: Build and deploy with Maven
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "*" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up JDK 11
+      uses: actions/setup-java@v3
+      with:
+        java-version: '11'
+        distribution: 'adopt'
+        cache: maven
+
+    - name: Print versions
+      run: |
+        set -x
+        mvn --version
+
+    - name: Download dependencies
+      run: |
+        set -x
+        mvn -B org.apache.maven.plugins:maven-dependency-plugin:3.8.1:go-offline de.qaware.maven:go-offline-maven-plugin:1.2.8:resolve-dependencies
+
+    - name: Import GPG Key
+      env:
+        GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+      run: |
+        echo "$GPG_PRIVATE_KEY" | gpg --batch --import
+        echo "default-key $(gpg --list-keys --with-colons | grep pub | cut -d':' -f5)" >> ~/.gnupg/gpg.conf
+        echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
+
+    - name: Generate settings.xml
+      run: |
+        mkdir -p ~/.m2
+        echo "<settings>
+                <servers>
+                  <server>
+                    <id>github</id>
+                    <username>${{ github.actor }}</username>
+                    <password>${{ secrets.GITHUB_TOKEN }}</password>
+                  </server>
+                </servers>
+              </settings>" > ~/.m2/settings.xml
+
+    - name: Deploy Snapshots
+      run: |
+        mvn -B deploy -DskipTests

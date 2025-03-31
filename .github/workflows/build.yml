@@ -6,8 +6,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    env:
-      TZ: 'America/Los_Angeles'
 
     permissions:
       contents: read
