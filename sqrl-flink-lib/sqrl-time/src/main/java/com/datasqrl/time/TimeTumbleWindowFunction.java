@@ -2,6 +2,8 @@ package com.datasqrl.time;
 
 import com.datasqrl.function.FlinkTypeUtil;
 import com.datasqrl.function.FlinkTypeUtil.VariableArguments;
+import com.datasqrl.function.StandardLibraryFunction;
+
 //import com.google.common.base.Preconditions;
 import java.time.Duration;
 import java.time.Instant;
@@ -17,7 +19,7 @@ import org.apache.flink.table.types.inference.TypeInference;
 
 @AllArgsConstructor
 public abstract class TimeTumbleWindowFunction extends ScalarFunction implements
-    TimeTumbleWindowFunctionEval {
+    TimeTumbleWindowFunctionEval, StandardLibraryFunction {
 
   protected final ChronoUnit timeUnit;
   protected final ChronoUnit offsetUnit;
