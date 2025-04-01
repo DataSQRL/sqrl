@@ -3,6 +3,7 @@ package com.datasqrl.v2;
 import static com.datasqrl.function.FlinkUdfNsObject.getFunctionNameFromClass;
 import static org.apache.flink.table.planner.utils.ShortcutUtils.unwrapContext;
 
+import com.datasqrl.NamespaceObjectUtil;
 import com.datasqrl.calcite.SqrlRexUtil;
 import com.datasqrl.config.BuildPath;
 import com.datasqrl.engine.stream.flink.plan.FlinkSqlNodeFactory;
@@ -32,6 +33,7 @@ import com.datasqrl.v2.tables.SourceSinkTableAnalysis;
 import com.datasqrl.v2.tables.SqrlFunctionParameter;
 import com.datasqrl.v2.tables.SqrlTableFunction;
 import com.datasqrl.function.AbstractFunctionModule;
+import com.datasqrl.function.StandardLibraryFunction;
 import com.datasqrl.function.StdLibrary;
 import com.datasqrl.plan.util.PrimaryKeyMap;
 import com.datasqrl.util.ServiceLoaderDiscovery;
@@ -206,8 +208,8 @@ public class Sqrl2FlinkSQLTranslator {
     this.catalogManager = tEnv.getCatalogManager();
 
     //Register SQRL standard library functions
-    StreamUtil.filterByClass(ServiceLoaderDiscovery.getAll(StdLibrary.class), AbstractFunctionModule.class)
-        .flatMap(fctModule -> fctModule.getFunctions().stream())
+    ServiceLoaderDiscovery.getAll(StandardLibraryFunction.class).stream()
+        .map(NamespaceObjectUtil::createNsObject)
         .forEach(fct -> this.addUserDefinedFunction(fct.getSqlName(), fct.getFunction().getClass().getName(), true));
   }
 

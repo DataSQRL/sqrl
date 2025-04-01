@@ -1,5 +1,7 @@
 package com.datasqrl.json;
 
+import com.datasqrl.function.StandardLibraryFunction;
+import com.google.auto.service.AutoService;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.ReadContext;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
@@ -10,7 +12,8 @@ import org.apache.flink.util.jackson.JacksonMapperFactory;
 /**
  * For a given JSON object, executes a JSON path query against the object and returns the result as string.
  */
-public class JsonQuery extends ScalarFunction {
+@AutoService(StandardLibraryFunction.class)
+public class JsonQuery extends ScalarFunction implements StandardLibraryFunction{
   static final ObjectMapper mapper = JacksonMapperFactory.createObjectMapper();
 
   public String eval(FlinkJsonType input, String pathSpec) {

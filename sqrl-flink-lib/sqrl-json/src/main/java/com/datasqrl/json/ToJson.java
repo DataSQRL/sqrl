@@ -1,6 +1,9 @@
 package com.datasqrl.json;
 
 import com.datasqrl.function.SqrlCastFunction;
+import com.datasqrl.function.StandardLibraryFunction;
+import com.google.auto.service.AutoService;
+
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,7 +18,8 @@ import org.apache.flink.util.jackson.JacksonMapperFactory;
 /**
  * Parses a JSON object from string
  */
-public class ToJson extends ScalarFunction implements SqrlCastFunction {
+@AutoService(StandardLibraryFunction.class)
+public class ToJson extends ScalarFunction implements SqrlCastFunction, StandardLibraryFunction {
 
   public static final ObjectMapper mapper = JacksonMapperFactory.createObjectMapper();
 
