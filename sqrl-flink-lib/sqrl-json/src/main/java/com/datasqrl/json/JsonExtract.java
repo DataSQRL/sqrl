@@ -1,6 +1,6 @@
 package com.datasqrl.json;
 
-import com.datasqrl.function.StandardLibraryFunction;
+import com.datasqrl.function.AutoRegisterSystemFunction;
 import com.google.auto.service.AutoService;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.ReadContext;
@@ -13,8 +13,8 @@ import org.apache.flink.table.functions.ScalarFunction;
  * can be provided to specify a default value when the given JSON path does not yield a value for
  * the JSON object.
  */
-@AutoService(StandardLibraryFunction.class)
-public class JsonExtract extends ScalarFunction implements StandardLibraryFunction{
+@AutoService(AutoRegisterSystemFunction.class)
+public class JsonExtract extends ScalarFunction implements AutoRegisterSystemFunction{
 
   public String eval(FlinkJsonType input, String pathSpec) {
     if (input == null) {

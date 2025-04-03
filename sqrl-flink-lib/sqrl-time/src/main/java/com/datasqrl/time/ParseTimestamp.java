@@ -1,7 +1,7 @@
 package com.datasqrl.time;
 
 import com.datasqrl.function.FlinkTypeUtil;
-import com.datasqrl.function.StandardLibraryFunction;
+import com.datasqrl.function.AutoRegisterSystemFunction;
 import com.datasqrl.function.FlinkTypeUtil.VariableArguments;
 import com.google.auto.service.AutoService;
 
@@ -20,8 +20,8 @@ import org.apache.flink.table.types.inference.TypeInference;
  * Parses a timestamp from an ISO timestamp string.
  */
 @Slf4j
-@AutoService(StandardLibraryFunction.class)
-public class ParseTimestamp extends ScalarFunction implements StandardLibraryFunction {
+@AutoService(AutoRegisterSystemFunction.class)
+public class ParseTimestamp extends ScalarFunction implements AutoRegisterSystemFunction {
 
   public Instant eval(String s) {
     return Instant.parse(s);

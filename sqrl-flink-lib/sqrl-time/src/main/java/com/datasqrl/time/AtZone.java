@@ -1,7 +1,7 @@
 package com.datasqrl.time;
 
 import com.datasqrl.function.FlinkTypeUtil;
-import com.datasqrl.function.StandardLibraryFunction;
+import com.datasqrl.function.AutoRegisterSystemFunction;
 import com.google.auto.service.AutoService;
 
 import java.time.Instant;
@@ -17,8 +17,8 @@ import org.apache.flink.table.types.inference.TypeInference;
 /**
  * Returns the timestamp at the given timezone.
  */
-@AutoService(StandardLibraryFunction.class)
-public class AtZone extends ScalarFunction implements StandardLibraryFunction {
+@AutoService(AutoRegisterSystemFunction.class)
+public class AtZone extends ScalarFunction implements AutoRegisterSystemFunction {
 
   public ZonedDateTime eval(Instant instant, String zoneId) {
     return instant.atZone(ZoneId.of(zoneId));

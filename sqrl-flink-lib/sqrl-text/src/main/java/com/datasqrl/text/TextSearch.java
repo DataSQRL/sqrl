@@ -1,7 +1,7 @@
 package com.datasqrl.text;
 
 import com.datasqrl.function.FlinkTypeUtil;
-import com.datasqrl.function.StandardLibraryFunction;
+import com.datasqrl.function.AutoRegisterSystemFunction;
 import com.datasqrl.function.FlinkTypeUtil.VariableArguments;
 import com.google.auto.service.AutoService;
 
@@ -21,8 +21,8 @@ import org.apache.flink.table.types.inference.TypeInference;
  * Returns a numeric score for how well the given query string matches the provided string text.
  * Returns 0 if there is no match. Use this function for full-text search.
  */
-@AutoService(StandardLibraryFunction.class)
-public class TextSearch extends ScalarFunction implements StandardLibraryFunction {
+@AutoService(AutoRegisterSystemFunction.class)
+public class TextSearch extends ScalarFunction implements AutoRegisterSystemFunction {
 
   public static void tokenizeTo(String text, Collection<String> collection) {
     StringTokenizer tokenizer = new StringTokenizer(text);

@@ -1,7 +1,7 @@
 package com.datasqrl.secure;
 
 import com.datasqrl.function.FlinkTypeUtil;
-import com.datasqrl.function.StandardLibraryFunction;
+import com.datasqrl.function.AutoRegisterSystemFunction;
 import com.google.auto.service.AutoService;
 
 import java.security.SecureRandom;
@@ -16,8 +16,8 @@ import org.apache.flink.table.types.inference.TypeInference;
  * Generates a random ID string with the given number of secure random bytes. The bytes are base64
  * encoded so the string length will be longer than the number of bytes
  */
-@AutoService(StandardLibraryFunction.class)
-public class RandomID extends ScalarFunction implements StandardLibraryFunction {
+@AutoService(AutoRegisterSystemFunction.class)
+public class RandomID extends ScalarFunction implements AutoRegisterSystemFunction {
 
   private static final SecureRandom random = new SecureRandom();
   private static final Base64.Encoder encoder = Base64.getUrlEncoder().withoutPadding();
