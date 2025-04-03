@@ -2,7 +2,7 @@ package com.datasqrl.text;
 
 import org.apache.flink.table.functions.ScalarFunction;
 
-import com.datasqrl.function.StandardLibraryFunction;
+import com.datasqrl.function.AutoRegisterSystemFunction;
 import com.google.auto.service.AutoService;
 
 /**
@@ -12,8 +12,8 @@ import com.google.auto.service.AutoService;
  * delimiter is null, a null value is returned. If the delimiter is found at the beginning or end of
  * the string, or there are contiguous delimiters, then an empty string is added to the array.
  */
-@AutoService(StandardLibraryFunction.class)
-public class Split extends ScalarFunction implements StandardLibraryFunction {
+@AutoService(AutoRegisterSystemFunction.class)
+public class Split extends ScalarFunction implements AutoRegisterSystemFunction {
 
   public String[] eval(String text, String delimiter) {
     if (text == null || delimiter == null) {

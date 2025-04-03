@@ -1,7 +1,7 @@
 package com.datasqrl.vector;
 
 import com.datasqrl.function.SqrlCastFunction;
-import com.datasqrl.function.StandardLibraryFunction;
+import com.datasqrl.function.AutoRegisterSystemFunction;
 import com.google.auto.service.AutoService;
 
 import org.apache.flink.table.functions.ScalarFunction;
@@ -9,8 +9,8 @@ import org.apache.flink.table.functions.ScalarFunction;
 /**
  * Converts a double array to a vector
  */
-@AutoService(StandardLibraryFunction.class)
-public class DoubleToVector extends ScalarFunction implements SqrlCastFunction, StandardLibraryFunction {
+@AutoService(AutoRegisterSystemFunction.class)
+public class DoubleToVector extends ScalarFunction implements SqrlCastFunction, AutoRegisterSystemFunction {
 
   public FlinkVectorType eval(double[] array) {
     return new FlinkVectorType(array);

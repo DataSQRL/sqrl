@@ -1,6 +1,6 @@
 package com.datasqrl.json;
 
-import com.datasqrl.function.StandardLibraryFunction;
+import com.datasqrl.function.AutoRegisterSystemFunction;
 import com.google.auto.service.AutoService;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.ReadContext;
@@ -12,8 +12,8 @@ import org.apache.flink.util.jackson.JacksonMapperFactory;
 /**
  * For a given JSON object, executes a JSON path query against the object and returns the result as string.
  */
-@AutoService(StandardLibraryFunction.class)
-public class JsonQuery extends ScalarFunction implements StandardLibraryFunction{
+@AutoService(AutoRegisterSystemFunction.class)
+public class JsonQuery extends ScalarFunction implements AutoRegisterSystemFunction{
   static final ObjectMapper mapper = JacksonMapperFactory.createObjectMapper();
 
   public String eval(FlinkJsonType input, String pathSpec) {

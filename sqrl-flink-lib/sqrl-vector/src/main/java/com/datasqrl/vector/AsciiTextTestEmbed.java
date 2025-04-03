@@ -2,14 +2,14 @@ package com.datasqrl.vector;
 
 import org.apache.flink.table.functions.ScalarFunction;
 
-import com.datasqrl.function.StandardLibraryFunction;
+import com.datasqrl.function.AutoRegisterSystemFunction;
 import com.google.auto.service.AutoService;
 
 /**
  * A unuseful embedding function counts each character (modulo 256). Used for testing only.
  */
-@AutoService(StandardLibraryFunction.class)
-public class AsciiTextTestEmbed extends ScalarFunction implements StandardLibraryFunction {
+@AutoService(AutoRegisterSystemFunction.class)
+public class AsciiTextTestEmbed extends ScalarFunction implements AutoRegisterSystemFunction {
 
   private static final int VECTOR_LENGTH = 256;
 

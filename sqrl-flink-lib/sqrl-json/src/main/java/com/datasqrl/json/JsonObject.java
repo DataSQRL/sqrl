@@ -14,7 +14,7 @@ import org.apache.flink.table.types.inference.TypeInference;
 import org.apache.flink.table.types.inference.TypeStrategies;
 import org.apache.flink.util.jackson.JacksonMapperFactory;
 
-import com.datasqrl.function.StandardLibraryFunction;
+import com.datasqrl.function.AutoRegisterSystemFunction;
 import com.google.auto.service.AutoService;
 
 /**
@@ -23,8 +23,8 @@ import com.google.auto.service.AutoService;
  * of each pair being the key and the second being the value. If multiple key-value pairs have the
  * same key, the last pair is added to the JSON object.
  */
-@AutoService(StandardLibraryFunction.class)
-public class JsonObject extends ScalarFunction implements StandardLibraryFunction{
+@AutoService(AutoRegisterSystemFunction.class)
+public class JsonObject extends ScalarFunction implements AutoRegisterSystemFunction{
   static final ObjectMapper mapper = JacksonMapperFactory.createObjectMapper();
 
   public FlinkJsonType eval(Object... objects) {

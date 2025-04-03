@@ -1,7 +1,7 @@
 package com.datasqrl.text;
 
 import com.datasqrl.function.FlinkTypeUtil;
-import com.datasqrl.function.StandardLibraryFunction;
+import com.datasqrl.function.AutoRegisterSystemFunction;
 import com.datasqrl.function.FlinkTypeUtil.VariableArguments;
 import com.google.auto.service.AutoService;
 
@@ -13,8 +13,8 @@ import org.apache.flink.table.types.inference.TypeInference;
 /**
  * Replaces the placeholders in the first argument with the remaining arguments in order.
  */
-@AutoService(StandardLibraryFunction.class)
-public class Format extends ScalarFunction implements StandardLibraryFunction {
+@AutoService(AutoRegisterSystemFunction.class)
+public class Format extends ScalarFunction implements AutoRegisterSystemFunction {
 
   public String eval(String text, String... arguments) {
     if (text == null) {

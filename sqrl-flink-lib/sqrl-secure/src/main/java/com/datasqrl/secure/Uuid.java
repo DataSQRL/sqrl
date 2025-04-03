@@ -6,14 +6,14 @@ import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.table.types.inference.TypeInference;
 
-import com.datasqrl.function.StandardLibraryFunction;
+import com.datasqrl.function.AutoRegisterSystemFunction;
 import com.google.auto.service.AutoService;
 
 /**
  * Generates a random UUID string
  */
-@AutoService(StandardLibraryFunction.class)
-public class Uuid extends ScalarFunction implements StandardLibraryFunction {
+@AutoService(AutoRegisterSystemFunction.class)
+public class Uuid extends ScalarFunction implements AutoRegisterSystemFunction {
 
   public String eval() {
     return java.util.UUID.randomUUID().toString();

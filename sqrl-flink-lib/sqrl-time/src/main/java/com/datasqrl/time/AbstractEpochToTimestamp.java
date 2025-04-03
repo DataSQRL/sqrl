@@ -2,7 +2,7 @@ package com.datasqrl.time;
 
 
 import com.datasqrl.function.FlinkTypeUtil;
-import com.datasqrl.function.StandardLibraryFunction;
+import com.datasqrl.function.AutoRegisterSystemFunction;
 
 import java.time.Instant;
 import lombok.AllArgsConstructor;
@@ -12,7 +12,7 @@ import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.table.types.inference.TypeInference;
 
 @AllArgsConstructor
-public class AbstractEpochToTimestamp extends ScalarFunction implements StandardLibraryFunction {
+public class AbstractEpochToTimestamp extends ScalarFunction implements AutoRegisterSystemFunction {
 
   boolean isMilli;
 
