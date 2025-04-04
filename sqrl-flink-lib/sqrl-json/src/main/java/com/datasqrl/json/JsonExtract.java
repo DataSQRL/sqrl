@@ -14,7 +14,7 @@ import org.apache.flink.table.functions.ScalarFunction;
  * the JSON object.
  */
 @AutoService(AutoRegisterSystemFunction.class)
-public class JsonExtract extends ScalarFunction implements AutoRegisterSystemFunction{
+public class JsonExtract extends ScalarFunction implements AutoRegisterSystemFunction {
 
   public String eval(FlinkJsonType input, String pathSpec) {
     if (input == null) {
