@@ -8,7 +8,7 @@
   </parent>
 
   <artifactId>sqrl-flink-runner</artifactId>
-  
+
   <build>
     <resources>
       <resource>
@@ -46,7 +46,7 @@
           </execution>
         </executions>
       </plugin>
-      
+
       <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
@@ -56,7 +56,7 @@
             </systemPropertyVariables>
           </configuration>
       </plugin>
-      
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
@@ -117,7 +117,7 @@
       <artifactId>testcontainers</artifactId>
       <scope>test</scope>
     </dependency>
-    
+
     <!-- list of libraries that need to be embedded into docker image-->
     <dependency>
       <groupId>${project.groupId}</groupId>

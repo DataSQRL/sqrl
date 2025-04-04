@@ -23,45 +23,45 @@ import com.nextbreakpoint.flink.client.model.JobStatus;
 
 class SqlFlinkRunnerIT extends AbstractITSupport {
 
-	@Test
-	void testSqlJobRunsSuccessfully() throws Exception {
-		var client = createClient(flinkContainer.getMappedPort(8081));
+  @Test
+  void givenPlan_whenInvokingFormatFunction_thenSuccess() throws Exception {
+    var client = createClient(flinkContainer.getMappedPort(8081));
 
-		// Step 1: Submit the job inside the running container
-		String output = flinkContainer.execInContainer("flink", "run",
-				"./plugins/flink-sql-runner/flink-sql-runner.uber.jar", "--planfile", "/flink/sql/format.plan")
-				.getStdout();
-		
-		assertThat(output).contains("com.datasqrl.text.Format");
+    // Step 1: Submit the job inside the running container
+    String output = flinkContainer.execInContainer("flink", "run",
+        "./plugins/flink-sql-runner/flink-sql-runner.uber.jar", "--planfile", "/flink/sql/format.plan")
+        .getStdout();
+    
+    assertThat(output).contains("com.datasqrl.text.Format");
 
-		System.out.println(output);
+    System.out.println(output);
 
-		var clientLog = flinkContainer.execInContainer("ls", "-1", "/opt/flink/log").getStdout().lines()
-				.filter(name -> name.startsWith("flink--client-") && name.endsWith(".log")).findFirst()
-				.orElseThrow(() -> new RuntimeException("TaskExecutor log not found"));
-		System.out.println(flinkContainer.execInContainer("cat", "/opt/flink/log/" + clientLog).getStdout());
+    var clientLog = flinkContainer.execInContainer("ls", "-1", "/opt/flink/log").getStdout().lines()
+        .filter(name -> name.startsWith("flink--client-") && name.endsWith(".log")).findFirst()
+        .orElseThrow(() -> new RuntimeException("TaskExecutor log not found"));
+    System.out.println(flinkContainer.execInContainer("cat", "/opt/flink/log/" + clientLog).getStdout());
 
-		// Extract Job ID from stdout
-		String jobId = output.lines().filter(line -> line.contains("Job has been submitted with JobID"))
-				.map(line -> line.substring(line.lastIndexOf(" ") + 1).trim()).findFirst()
-				.orElseThrow(() -> new RuntimeException("Job ID not found in output"));
+    // Extract Job ID from stdout
+    String jobId = output.lines().filter(line -> line.contains("Job has been submitted with JobID"))
+        .map(line -> line.substring(line.lastIndexOf(" ") + 1).trim()).findFirst()
+        .orElseThrow(() -> new RuntimeException("Job ID not found in output"));
 
-		// Poll Flink API to wait for job completion
-		untilAssert(() -> {
-			var jobStatus = client.getJobStatusInfo(jobId);
+    // Poll Flink API to wait for job completion
+    untilAssert(() -> {
+      var jobStatus = client.getJobStatusInfo(jobId);
 
-			assertThat(jobStatus.getStatus()).isIn(JobStatus.FINISHED);
-		});
+      assertThat(jobStatus.getStatus()).isIn(JobStatus.FINISHED);
+    });
 
-		var logFile = flinkContainer.execInContainer("ls", "-1", "/opt/flink/log").getStdout().lines()
-				.filter(name -> name.startsWith("flink--taskexecutor") && name.endsWith(".out")).findFirst()
-				.orElseThrow(() -> new RuntimeException("TaskExecutor log not found"));
+    var logFile = flinkContainer.execInContainer("ls", "-1", "/opt/flink/log").getStdout().lines()
+        .filter(name -> name.startsWith("flink--taskexecutor") && name.endsWith(".out")).findFirst()
+        .orElseThrow(() -> new RuntimeException("TaskExecutor log not found"));
 
-			String taskExecutorLogs = flinkContainer.execInContainer("cat", "/opt/flink/log/" + logFile).getStdout();
+      String taskExecutorLogs = flinkContainer.execInContainer("cat", "/opt/flink/log/" + logFile).getStdout();
 
-			// check log printed, means sqrl concat function was executed correctly
-			assertThat(taskExecutorLogs).as("Expected output not found in TaskManager logs")
-					.contains("Completed ID: 13 name");
-	}
+      // check log printed, means sqrl concat function was executed correctly
+      assertThat(taskExecutorLogs).as("Expected output not found in TaskManager logs")
+          .contains("Completed ID: 13 name");
+  }
 
 }
