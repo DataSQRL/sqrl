@@ -1,6 +1,9 @@
 package com.datasqrl.compile;
 
 import java.util.List;
+
+import com.datasqrl.compile.TestPlan.GraphqlQuery;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,6 +16,7 @@ public class TestPlan {
 
   List<GraphqlQuery> queries;
   List<GraphqlQuery> mutations;
+  List<GraphqlQuery> subscriptions;
 
   @AllArgsConstructor
   @NoArgsConstructor

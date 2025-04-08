@@ -1,9 +1,13 @@
 package com.datasqrl;
 
+import com.datasqrl.DatasqrlTest.GraphqlQuery;
+import com.datasqrl.DatasqrlTest.SubscriptionQuery.SubscriptionPayload;
 import com.datasqrl.util.FlinkOperatorStatusChecker;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -13,17 +17,25 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.WebSocket;
+import io.vertx.core.http.WebSocketClient;
+import io.vertx.core.http.WebSocketClientOptions;
 import io.vertx.core.http.WebSocketConnectOptions;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.Value;
+
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.JobStatus;
 import org.apache.flink.core.execution.JobClient;
@@ -51,8 +63,7 @@ public class DatasqrlTest {
   private final Path planPath;
   private final Map<String, String> env;
   public String GRAPHQL_ENDPOINT = "http://localhost:8888/graphql";
-  private Map<String, List<String>> subscriptionRecords = new HashMap<>(); // subscription records per subscription name
-  private WebSocket webSocket;
+  private final ObjectMapper objectMapper = new ObjectMapper();
 
   public static void main(String[] args) {
     DatasqrlTest test = new DatasqrlTest();
@@ -74,8 +85,6 @@ public class DatasqrlTest {
 
   @SneakyThrows
   public int run() {
-    ObjectMapper objectMapper = new ObjectMapper();
-
     //1. Run the DataSQRL pipeline via {@link DatasqrlRun}
     DatasqrlRun run = new DatasqrlRun(planPath, env);
     Map compilerMap = (Map) run.getPackageJson().get("compiler");
@@ -103,23 +112,33 @@ public class DatasqrlTest {
       //todo add file check instead of sleeping to make sure pipeline has started
       Thread.sleep(1000);
 
-      //2. Execute subscription & mutation queries against the API and snapshot results
+      List<SubscriptionClient> subscriptionClients = List.of();
+  //2. Execute subscription & mutation queries against the API and snapshot results
       if (testPlanOpt.isPresent()) {
-        //TODO: Etienne run all subscription queries async and collect the results.
+        TestPlan testPlan = testPlanOpt.get();        
+              //TODO: Etienne run all subscription queries async and collect the results.
 
         // 1. add the graphql subscriptions to the test plan
         // 2. connect a websocket to the graphql server hosted in vertx
         // 3. run all the graphql subscriptions requests by sending them to the websocket
         // 4. collect the response data (from the websocket) that the pipeline has written to kafka.
 
-        if (!testPlanOpt.get().getSubscriptions().isEmpty()) {
-          connectWebSocket();
-        }
-        for (GraphqlQuery subscriptionQuery : testPlanOpt.get().getSubscriptions()) {
-          executeSubscriptionQuery(subscriptionQuery.getQuery());
+        // Initialize subscriptions
+        subscriptionClients  = new ArrayList<>();
+        List<CompletableFuture<Void>> subscriptionFutures = new ArrayList<>();
+
+        for (GraphqlQuery subscription : testPlan.getSubscriptions()) {
+          SubscriptionClient client = new SubscriptionClient(subscription.getName(), subscription.getQuery());
+          subscriptionClients.add(client);
+          CompletableFuture<Void> future = client.start();
+          subscriptionFutures.add(future);
         }
 
-        for (GraphqlQuery mutationQuery : testPlanOpt.get().getMutations()) {
+        // Wait for all subscriptions to be connected
+        CompletableFuture.allOf(subscriptionFutures.toArray(new CompletableFuture[0])).join();
+
+     // Execute mutations
+        for (GraphqlQuery mutationQuery : testPlan.getMutations()) {
           //Execute mutation queries
           String data = executeQuery(mutationQuery.getQuery());
           //Snapshot result
@@ -177,6 +196,8 @@ public class DatasqrlTest {
         }
       }
       
+      Thread.sleep(5_000);
+      
       try {
         JobExecutionResult jobExecutionResult = result.getJobClient().get().getJobExecutionResult()
             .get(2, TimeUnit.SECONDS); //flink will hold if the minicluster is stopped
@@ -200,13 +221,17 @@ public class DatasqrlTest {
         // TODO make sure for the exceptions
         //TODO: Etienne terminate subscriptions, sort all records retrieved, and snapshot the result like we do the queries above
         //add snapshot comparison below for subscriptions
-
-        for (GraphqlQuery subscriptionQuery : testPlan.getSubscriptions()) {
-          terminateSubscription(extractSubscriptionId(subscriptionQuery.getQuery()));
-          Path snapshotPath = snapshotDir.resolve(subscriptionQuery.getName() + ".snapshot");
-          final List<String> records = subscriptionRecords.get(subscriptionQuery.getName());
-          records.sort(Comparator.naturalOrder());
-          snapshot(snapshotPath, subscriptionQuery.getName(), String.join("\n", records), exceptions);
+        // Stop subscriptions
+        for (SubscriptionClient client : subscriptionClients) {
+          client.stop();
+        }
+        
+        // Collect messages and write to snapshots
+        for (SubscriptionClient client : subscriptionClients) {
+          List<String> messages = client.getMessages();
+          String data = objectMapper.writeValueAsString(messages);
+          Path snapshotPath = snapshotDir.resolve(client.getName() + ".snapshot");
+          snapshot(snapshotPath, client.getName(), data, exceptions);
         }
 
         List<String> expectedSnapshotsQueries = testPlan.getQueries().stream()
@@ -275,68 +300,6 @@ public class DatasqrlTest {
     return exitCode;
   }
 
-  private String extractSubscriptionId(String subscriptionQuery) throws Exception {
-    final ObjectMapper objectMapper = new ObjectMapper();
-    final JsonNode jsonNode = objectMapper.readTree(subscriptionQuery);
-    return jsonNode.get("id").asText();
-  }
-
-  private String extractSubscriptionName(String subscriptionRecord) throws JsonProcessingException {
-    ObjectMapper objectMapper = new ObjectMapper();
-    JsonNode jsonNode = objectMapper.readTree(subscriptionRecord);
-
-    if (jsonNode.has("payload") && jsonNode.get("payload").has("data")) {
-      JsonNode dataNode = jsonNode.get("payload").get("data");
-      if (dataNode.fieldNames().hasNext()) {
-        return dataNode.fieldNames().next();
-      }
-    }
-    throw new IllegalArgumentException("Invalid subscription record format");
-  }
-
-  private void executeSubscriptionQuery(String subscriptionQuery) {
-    webSocket.writeTextMessage(subscriptionQuery);
-  }
-
-  private void terminateSubscription(String subscriptionId) {
-    if (webSocket != null) {
-      String terminationMessage = "{\"type\":\"complete\",\"id\":\"" + subscriptionId + "\"}";
-      webSocket.writeTextMessage(terminationMessage);
-    }
-  }
-
-  private void connectWebSocket() {
-    Vertx vertx = Vertx.vertx();
-    io.vertx.core.http.HttpClient client = vertx.createHttpClient();
-
-    URI uri = URI.create(GRAPHQL_ENDPOINT);
-    WebSocketConnectOptions options = new WebSocketConnectOptions()
-            .setPort(uri.getPort())
-            .setHost(uri.getHost())
-            .setURI(uri.getPath());
-
-    client.webSocket(options, wsResult -> {
-      if (wsResult.succeeded()) {
-        webSocket = wsResult.result();
-        String initMessage = "{\"type\":\"connection_init\",\"payload\":{}}";
-
-        webSocket.writeTextMessage(initMessage);
-        webSocket.handler(message -> {
-            try {
-              final String messageText = message.toString();
-              final String relatedSubscription = extractSubscriptionName(messageText);
-              subscriptionRecords.computeIfAbsent(relatedSubscription, k -> new ArrayList<>()).add(messageText);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-        });
-      } else {
-        throw new RuntimeException("WebSocket connection failed: " + wsResult.cause().getMessage());
-      }
-    });
-  }
-
-
   @SneakyThrows
   private String executeQuery(String query) {
     HttpClient client = HttpClient.newHttpClient();
@@ -401,5 +364,168 @@ public class DatasqrlTest {
 
     String name;
     String query;
+  }
+  
+  @Value
+  public static class SubscriptionQuery{
+    
+    @JsonIgnore
+    String name;
+    Long id;
+    String type;
+    SubscriptionPayload  payload;
+    
+    @Value
+    public static class SubscriptionPayload {
+      String query;
+      Map<String, Object> variables;
+      String operationName;
+    }
+  }
+
+  private SubscriptionQuery toPayload(GraphqlQuery graphqlQuery) {
+    return new SubscriptionQuery(graphqlQuery.getName(), System.nanoTime(), "subscribe",
+        new SubscriptionPayload(graphqlQuery.query, Map.of(), graphqlQuery.getName()));
+  }
+
+
+  // Simplified example WebSocket client code using Vert.x
+  public static class SubscriptionClient {
+    private final String name;
+    private final String query;
+    private final List<String> messages = new ArrayList<>();
+    private WebSocket webSocket;
+    private final Vertx vertx = Vertx.vertx();
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    public SubscriptionClient(String name, String query) {
+      this.name = name;
+      this.query = query;
+    }
+
+    public CompletableFuture<Void> start() {
+      CompletableFuture<Void> connectedFuture = new CompletableFuture<>();
+      Future<WebSocket> connect = vertx.createWebSocketClient()
+//      "ws://localhost:8888/graphql"
+          .connect(8888, "localhost", "/graphql");
+      connect.onSuccess(ws -> {
+        this.webSocket = ws;
+        System.out.println("WebSocket opened for subscription: " + name);
+
+        // Set a message handler for incoming messages
+        ws.handler(this::handleTextMessage);
+
+        // Send initial connection message
+        webSocket.writeTextMessage("{\"type\": \"connection_init\"}", result -> {
+        	if(result.succeeded()) { 
+        		connectedFuture.complete(null);
+        	} else {
+        		connectedFuture.completeExceptionally(result.cause());
+        	}
+        });
+      }).onFailure(throwable -> {
+        throwable.printStackTrace();
+        System.err.println("Failed to open WebSocket for subscription: " + name);
+        connectedFuture.completeExceptionally(throwable);
+      });
+
+      return connectedFuture;
+    }
+
+    private Future<Void> sendSubscribe() {
+      Map<String, Object> payload = Map.of(
+//    		  "operationName", "breakMe",
+          "query", query
+    );
+      Map<String, Object> message = Map.of(
+          "id", System.nanoTime(),
+          "type", "subscribe",
+          "payload", payload
+      );
+      return sendMessage(message);
+    }
+
+    @SneakyThrows
+    private Future<Void> sendMessage(Map<String, Object> message) {
+        String json = objectMapper.writeValueAsString(message);
+        System.out.println("Sending: "+ json);
+        return webSocket.writeTextMessage(json);
+    }
+
+  private void handleTextMessage(Buffer buffer) {
+    String data = buffer.toString();
+    // Handle the incoming messages
+    System.out.println("Data: " + data);
+    Map<String, Object> message;
+    try {
+      message = objectMapper.readValue(data, Map.class);
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException("Unable to serialize message", e);
+    }
+  
+    if(message.containsKey("payload")) {
+      try {
+        messages.add(objectMapper.writeValueAsString(message.get("payload")));
+        return;
+      } catch (JsonProcessingException e) {
+        throw new RuntimeException("Unable to serialize message", e);
+      }
+    }
+  
+    String type = (String) message.get("type");
+
+    if ("connection_ack".equals(type)) {
+      // Connection acknowledged, send the subscribe message
+      sendSubscribe();
+    } else if ("next".equals(type)) {
+      // Data message received
+      Map<String, Object> payload = (Map<String, Object>) message.get("payload");
+      Map<String, Object> dataPayload = (Map<String, Object>) payload.get("data");
+      try {
+        String dataStr = objectMapper.writeValueAsString(dataPayload);
+        messages.add(dataStr);
+      } catch (JsonProcessingException e) {
+        throw new RuntimeException("Unable to serialize message", e);
+      }
+    } else if ("complete".equals(type)) {
+      // Subscription complete
+    } else if ("error".equals(type)) {
+      // Handle error
+      System.err.println("Error message received: " + data);
+      throw new RuntimeException("Error data: " + data);
+    } else {
+      throw new RuntimeException("Unknown type " + type);
+    }
+  }
+
+    public void stop() {
+      // Send 'complete' message to close the subscription properly
+      Map<String, Object> message = Map.of(
+          "id", System.nanoTime(),
+          "type", "complete"
+      );
+      waitCompletion(sendMessage(message));
+
+      // Close WebSocket
+      if (webSocket != null) {
+        waitCompletion(webSocket.close());
+      }
+      waitCompletion(vertx.close());
+    }
+    
+
+    @SneakyThrows
+    private <E> E waitCompletion(Future<E> future) {
+      return future.toCompletionStage().toCompletableFuture().get();
+    }
+
+    public List<String> getMessages() {
+      return messages;
+    }
+
+    public String getName() {
+      return name;
+    }
   }
 }
