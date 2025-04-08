@@ -64,6 +64,8 @@ public class FullUsecasesIT {
   }
 
   List<ScriptCriteria> disabledScripts = List.of(
+      new ScriptCriteria("flink-functions.sqrl", "test"), //not a full test case
+      new ScriptCriteria("flink-functions.sqrl", "run"), //not a full test case
       new ScriptCriteria("conference-disabled.sqrl", "test"), //fails in build server
       new ScriptCriteria("conference-disabled.sqrl", "run"), //fails in build server
       new ScriptCriteria("iceberg-export.sqrl", "test"), //fails in build server
