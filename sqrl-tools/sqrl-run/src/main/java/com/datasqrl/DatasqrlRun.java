@@ -298,7 +298,7 @@ public class DatasqrlRun {
       Set<String> existingTopics = adminClient.listTopics().names().get();
 
       for (Map<String, Object> topic : mutableTopics) {
-        String topicName = (String) topic.get("name");
+        String topicName = (String) topic.get("topicName");
         if(existingTopics.contains(topicName)) {
           continue;
         }

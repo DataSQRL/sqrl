@@ -11,7 +11,7 @@ SensorMaxTemp := SELECT sensorid, max(temperature) as maxTemp
     ORDER BY sensorid DESC;
 
 /* Alert on high temperatures */
-HighTempAlert := SELECT * FROM SensorReading WHERE temperature > 50;
+HighTempAlert := SELECT * FROM SensorReading WHERE temperature > 50 ORDER BY sensorid DESC;
 
 /*+test */
 HighTempAlertTest := SELECT sensorid, temperature FROM HighTempAlert ORDER BY sensorid DESC;
