@@ -75,7 +75,8 @@ END
 {
   "topics" : [
     {
-      "name" : "LogData",
+      "topicName" : "LogData",
+      "tableName" : "LogData_1",
       "numPartitions" : 1,
       "replicationFactor" : 1,
       "replicasAssignments" : { },
