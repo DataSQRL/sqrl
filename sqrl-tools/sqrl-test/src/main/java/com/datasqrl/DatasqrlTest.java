@@ -200,9 +200,7 @@ public class DatasqrlTest {
         } catch (Exception e) {
         }
       }
-      
-      Thread.sleep(5_000);
-      
+
       try {
         JobExecutionResult jobExecutionResult = result.getJobClient().get().getJobExecutionResult()
             .get(2, TimeUnit.SECONDS); //flink will hold if the minicluster is stopped
