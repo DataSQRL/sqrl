@@ -20,6 +20,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
@@ -137,7 +138,9 @@ public class DatasqrlTest {
         // Wait for all subscriptions to be connected
         CompletableFuture.allOf(subscriptionFutures.toArray(new CompletableFuture[0])).join();
 
-     // Execute mutations
+        Thread.sleep(5_000);
+
+        // Execute mutations
         for (GraphqlQuery mutationQuery : testPlan.getMutations()) {
           //Execute mutation queries
           String data = executeQuery(mutationQuery.getQuery());
@@ -225,7 +228,7 @@ public class DatasqrlTest {
         for (SubscriptionClient client : subscriptionClients) {
           client.stop();
         }
-        
+
         // Collect messages and write to snapshots
         for (SubscriptionClient client : subscriptionClients) {
           List<String> messages = client.getMessages();
@@ -398,6 +401,7 @@ public class DatasqrlTest {
     private final Vertx vertx = Vertx.vertx();
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private CompletableFuture<Void> connectedFuture = new CompletableFuture<>();
 
     public SubscriptionClient(String name, String query) {
       this.name = name;
@@ -405,10 +409,9 @@ public class DatasqrlTest {
     }
 
     public CompletableFuture<Void> start() {
-      CompletableFuture<Void> connectedFuture = new CompletableFuture<>();
       Future<WebSocket> connect = vertx.createWebSocketClient()
-//      "ws://localhost:8888/graphql"
           .connect(8888, "localhost", "/graphql");
+
       connect.onSuccess(ws -> {
         this.webSocket = ws;
         System.out.println("WebSocket opened for subscription: " + name);
@@ -417,13 +420,9 @@ public class DatasqrlTest {
         ws.handler(this::handleTextMessage);
 
         // Send initial connection message
-        webSocket.writeTextMessage("{\"type\": \"connection_init\"}", result -> {
-        	if(result.succeeded()) { 
-        		connectedFuture.complete(null);
-        	} else {
-        		connectedFuture.completeExceptionally(result.cause());
-        	}
-        });
+        sendConnectionInit()
+          .onComplete(success -> connectedFuture.complete(null))
+          .onFailure(error -> connectedFuture.completeExceptionally(error));
       }).onFailure(throwable -> {
         throwable.printStackTrace();
         System.err.println("Failed to open WebSocket for subscription: " + name);
@@ -431,6 +430,10 @@ public class DatasqrlTest {
       });
 
       return connectedFuture;
+    }
+
+    private Future<Void> sendConnectionInit() {
+      return sendMessage(Map.of("type", "connection_init"));
     }
 
     private Future<Void> sendSubscribe() {
@@ -478,6 +481,7 @@ public class DatasqrlTest {
     if ("connection_ack".equals(type)) {
       // Connection acknowledged, send the subscribe message
       sendSubscribe();
+      connectedFuture.complete(null);
     } else if ("next".equals(type)) {
       // Data message received
       Map<String, Object> payload = (Map<String, Object>) message.get("payload");
