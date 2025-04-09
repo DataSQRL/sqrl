@@ -139,6 +139,8 @@ public class DatasqrlTest {
         CompletableFuture.allOf(subscriptionFutures.toArray(new CompletableFuture[0])).join();
 
         if(!subscriptionClients.isEmpty()) {
+          // sqrl server takes a while to create the server side wiring that connnects kafka to websocket.  We don't have any mechanism to notify us when the server is ready
+          // we should replace this with some sort of GET /status that list which subscriptions are ready
           Thread.sleep(5_000);
         }
 
