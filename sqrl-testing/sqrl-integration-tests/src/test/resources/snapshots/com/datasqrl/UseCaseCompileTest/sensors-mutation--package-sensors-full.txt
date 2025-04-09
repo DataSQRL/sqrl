@@ -75,6 +75,21 @@ LogicalProject(sensorid=[$0], temperature=[$1], event_time=[$2])
   LogicalTableScan(table=[[default_catalog, default_database, SensorReading]])
 SQL: CREATE VIEW SensorReadingSubscription AS  SELECT * FROM SensorReading;
 
+=== SensorSubscriptionById
+ID:     default_catalog.default_database.SensorSubscriptionById
+Type:   query
+Stage:  kafka
+Inputs: default_catalog.default_database.SensorReading
+Annotations:
+ - parameters: sensorid
+ - base-table: SensorReading
+Plan:
+LogicalProject(sensorid=[$0], temperature=[$1], event_time=[$2])
+  LogicalFilter(condition=[=($0, ?0)])
+    LogicalTableScan(table=[[default_catalog, default_database, SensorReading]])
+SQL: CREATE VIEW SensorSubscriptionById AS  SELECT * FROM SensorReading
+                                                                    WHERE sensorid = ?        ;
+
 >>>flink-sql-no-functions.sql
 CREATE TABLE `SensorReading__def` (
   `sensorid` INTEGER NOT NULL,
@@ -156,7 +171,20 @@ CREATE TABLE `SensorReading_3` (
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'SensorReading_3'
 );
-CREATE TABLE `SensorReadingSubscription_4` (
+CREATE TABLE `SensorReading_4` (
+  `sensorid` INTEGER NOT NULL,
+  `temperature` DECIMAL(8, 2) NOT NULL,
+  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE
+) WITH (
+  'connector' = 'kafka',
+  'format' = 'flexible-json',
+  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
+  'properties.group.id' = '${PROPERTIES_GROUP_ID}',
+  'scan.startup.mode' = 'group-offsets',
+  'properties.auto.offset.reset' = 'earliest',
+  'topic' = 'SensorReading'
+);
+CREATE TABLE `SensorReadingSubscription_5` (
   `sensorid` INTEGER NOT NULL,
   `temperature` DECIMAL(8, 2) NOT NULL,
   `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE
@@ -182,17 +210,29 @@ INSERT INTO `default_catalog`.`default_database`.`SensorMaxTemp_2`
   (SELECT `sensorid`, `temperature`, `event_time`, HASHCOLUMNS(`sensorid`, `temperature`, `event_time`) AS `__pk_hash`
    FROM `default_catalog`.`default_database`.`SensorReading`)
   ;
-  INSERT INTO `default_catalog`.`default_database`.`SensorReadingSubscription_4`
+  INSERT INTO `default_catalog`.`default_database`.`SensorReading_4`
    (SELECT *
-    FROM `default_catalog`.`default_database`.`SensorReadingSubscription`)
+    FROM `default_catalog`.`default_database`.`SensorReading`)
    ;
-   END
+   INSERT INTO `default_catalog`.`default_database`.`SensorReadingSubscription_5`
+    (SELECT *
+     FROM `default_catalog`.`default_database`.`SensorReadingSubscription`)
+    ;
+    END
 >>>kafka.json
 {
   "topics" : [
     {
+      "topicName" : "SensorReading",
+      "tableName" : "SensorReading_4",
+      "numPartitions" : 1,
+      "replicationFactor" : 1,
+      "replicasAssignments" : { },
+      "config" : { }
+    },
+    {
       "topicName" : "SensorReadingSubscription",
-      "tableName" : "SensorReadingSubscription_4",
+      "tableName" : "SensorReadingSubscription_5",
       "numPartitions" : 1,
       "replicationFactor" : 1,
       "replicasAssignments" : { },
@@ -327,12 +367,21 @@ FROM "SensorReading_3"
         "topic" : "SensorReadingSubscription",
         "sinkConfig" : { },
         "filters" : { }
+      },
+      {
+        "type" : "kafka",
+        "fieldName" : "SensorSubscriptionById",
+        "topic" : "SensorReading",
+        "sinkConfig" : { },
+        "filters" : {
+          "sensorid" : "sensorid"
+        }
       }
     ],
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Mutation {\n  SensorReading(event: SensorReadingInput!): SensorReadingResultOutput!\n}\n\ntype Query {\n  HighTempAlert(limit: Int = 10, offset: Int = 0): [SensorReading!]\n  SensorMaxTemp(limit: Int = 10, offset: Int = 0): [SensorMaxTemp!]\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n}\n\ntype SensorMaxTemp {\n  sensorid: Int!\n  maxTemp: Float!\n}\n\ntype SensorReading {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime\n}\n\ninput SensorReadingInput {\n  sensorid: Int!\n  temperature: Float!\n}\n\ntype SensorReadingResultOutput {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime\n}\n\ntype Subscription {\n  SensorReadingSubscription: SensorReading\n}\n"
+      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Mutation {\n  SensorReading(event: SensorReadingInput!): SensorReadingResultOutput!\n}\n\ntype Query {\n  HighTempAlert(limit: Int = 10, offset: Int = 0): [SensorReading!]\n  SensorMaxTemp(limit: Int = 10, offset: Int = 0): [SensorMaxTemp!]\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n}\n\ntype SensorMaxTemp {\n  sensorid: Int!\n  maxTemp: Float!\n}\n\ntype SensorReading {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime\n}\n\ninput SensorReadingInput {\n  sensorid: Int!\n  temperature: Float!\n}\n\ntype SensorReadingResultOutput {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime\n}\n\ntype Subscription {\n  SensorReadingSubscription: SensorReading\n  SensorSubscriptionById(sensorid: Int!): SensorReading\n}\n"
     }
   }
 }

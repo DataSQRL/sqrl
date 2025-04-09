@@ -20,3 +20,6 @@ HighTempAlertTest := SELECT sensorid, temperature FROM HighTempAlert ORDER BY se
 SensorMaxTempTest := SELECT sensorid, maxTemp FROM SensorMaxTemp ORDER BY sensorid DESC;
 
 SensorReadingSubscription := SUBSCRIBE SELECT * FROM SensorReading;
+
+SensorSubscriptionById(sensorid INT NOT NULL) := SUBSCRIBE SELECT * FROM SensorReading
+                                                                    WHERE sensorid = :sensorid;
