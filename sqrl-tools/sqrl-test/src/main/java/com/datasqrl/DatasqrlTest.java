@@ -229,9 +229,13 @@ public class DatasqrlTest {
         // Collect messages and write to snapshots
         for (SubscriptionClient client : subscriptionClients) {
           List<String> messages = client.getMessages();
+
+          assert messages.size() < 1000: "Too many messages, that is unexpeccted " + messages.size();
+
           String data = messages.stream()
               //to guarantee that snapshots are stable, must sort the responses by json contents
-              .sorted().collect(Collectors.joining(",", "[", "]"));
+              .sorted()
+              .collect(Collectors.joining(",", "[", "]"));
           Path snapshotPath = snapshotDir.resolve(client.getName() + ".snapshot");
           snapshot(snapshotPath, client.getName(), data, exceptions);
         }

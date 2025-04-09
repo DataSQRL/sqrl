@@ -166,7 +166,15 @@ public class FullUsecasesIT {
         .packageJsonPath(param.getPackageJsonPath())
         .build();
 
-    executor.execute(new AssertStatusHook());
+    AssertStatusHook hook = new AssertStatusHook();
+    try {
+        executor.execute(hook);
+    } catch (Throwable e) {
+        if(hook.failure() != null) {
+            e.addSuppressed(hook.failure());
+        }
+        throw e;
+    }
 
     PackageJson packageJson = SqrlConfigCommons.fromFilesPackageJson(ErrorCollector.root(),
         List.of(rootDir.resolve(SqrlConstants.BUILD_DIR_NAME).resolve(SqrlConstants.PACKAGE_JSON)));
