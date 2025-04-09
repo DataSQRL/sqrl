@@ -53,6 +53,26 @@ LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timesta
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL: CREATE VIEW CustomerByIds AS  SELECT * FROM Customer WHERE array_contains(CAST(?    AS BIGINT ARRAY), customerid);
 
+=== CustomerByNothing
+ID:     default_catalog.default_database.CustomerByNothing
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.Customer
+Annotations:
+ - stream-root: Customer__def
+Primary Key: customerid, lastUpdated
+Timestamp  : timestamp
+Schema:
+ - customerid: BIGINT NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - lastUpdated: BIGINT NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Plan:
+LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
+  LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW CustomerByNothing AS  SELECT * FROM Customer;
+
 === SelectCustomer
 ID:     default_catalog.default_database.SelectCustomer
 Type:   query
@@ -92,6 +112,10 @@ CREATE VIEW `Customer`
 AS
 SELECT *
 FROM `default_catalog`.`default_database`.`Customer__def`;
+CREATE VIEW `CustomerByNothing`
+AS
+SELECT *
+FROM `Customer`;
 CREATE TABLE `Customer_1` (
   `customerid` BIGINT NOT NULL,
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -107,15 +131,42 @@ CREATE TABLE `Customer_1` (
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'Customer_1'
 );
+CREATE TABLE `CustomerByNothing_2` (
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+) WITH (
+  'connector' = 'kafka',
+  'format' = 'flexible-json',
+  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
+  'properties.group.id' = '${PROPERTIES_GROUP_ID}',
+  'scan.startup.mode' = 'group-offsets',
+  'properties.auto.offset.reset' = 'earliest',
+  'topic' = 'CustomerByNothing'
+);
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`
 (SELECT *
  FROM `default_catalog`.`default_database`.`Customer`)
 ;
-END
+INSERT INTO `default_catalog`.`default_database`.`CustomerByNothing_2`
+ (SELECT *
+  FROM `default_catalog`.`default_database`.`CustomerByNothing`)
+ ;
+ END
 >>>kafka.json
 {
-  "topics" : [ ]
+  "topics" : [
+    {
+      "name" : "CustomerByNothing",
+      "numPartitions" : 1,
+      "replicationFactor" : 1,
+      "replicasAssignments" : { },
+      "config" : { }
+    }
+  ]
 }
 >>>postgres.json
 {
@@ -348,11 +399,19 @@ END
       }
     ],
     "mutations" : [ ],
-    "subscriptions" : [ ],
+    "subscriptions" : [
+      {
+        "type" : "kafka",
+        "fieldName" : "CustomerByNothing",
+        "topic" : "CustomerByNothing_2",
+        "sinkConfig" : { },
+        "filters" : { }
+      }
+    ],
     "schema" : {
       "type" : "string",
       "type" : "string",
-      "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerByEmail(email: String!, id: GraphQLBigInteger!, limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerByIds(ids: [GraphQLBigInteger]!, limit: Int = 10, offset: Int = 0): [Customer!]\n  SelectCustomer(id: GraphQLBigInteger!, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n"
+      "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerByEmail(email: String!, id: GraphQLBigInteger!, limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerByIds(ids: [GraphQLBigInteger]!, limit: Int = 10, offset: Int = 0): [Customer!]\n  SelectCustomer(id: GraphQLBigInteger!, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n\ntype Subscription {\n  CustomerByNothing: Customer\n}\n"
     }
   }
 }
