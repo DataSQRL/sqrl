@@ -79,15 +79,15 @@ SQL: CREATE VIEW SensorReadingSubscription AS  SELECT * FROM SensorReading;
 ID:     default_catalog.default_database.SensorSubscriptionById
 Type:   query
 Stage:  kafka
-Inputs: default_catalog.default_database.SensorReading
+Inputs: default_catalog.default_database.SensorReadingSubscription
 Annotations:
  - parameters: sensorid
  - base-table: SensorReading
 Plan:
 LogicalProject(sensorid=[$0], temperature=[$1], event_time=[$2])
   LogicalFilter(condition=[=($0, ?0)])
-    LogicalTableScan(table=[[default_catalog, default_database, SensorReading]])
-SQL: CREATE VIEW SensorSubscriptionById AS  SELECT * FROM SensorReading
+    LogicalTableScan(table=[[default_catalog, default_database, SensorReadingSubscription]])
+SQL: CREATE VIEW SensorSubscriptionById AS  SELECT * FROM SensorReadingSubscription
                                                                     WHERE sensorid = ?        ;
 
 >>>flink-sql-no-functions.sql
@@ -171,20 +171,7 @@ CREATE TABLE `SensorReading_3` (
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'SensorReading_3'
 );
-CREATE TABLE `SensorReading_4` (
-  `sensorid` INTEGER NOT NULL,
-  `temperature` DECIMAL(8, 2) NOT NULL,
-  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE
-) WITH (
-  'connector' = 'kafka',
-  'format' = 'flexible-json',
-  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
-  'properties.group.id' = '${PROPERTIES_GROUP_ID}',
-  'scan.startup.mode' = 'group-offsets',
-  'properties.auto.offset.reset' = 'earliest',
-  'topic' = 'SensorReading'
-);
-CREATE TABLE `SensorReadingSubscription_5` (
+CREATE TABLE `SensorReadingSubscription_4` (
   `sensorid` INTEGER NOT NULL,
   `temperature` DECIMAL(8, 2) NOT NULL,
   `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE
@@ -210,29 +197,17 @@ INSERT INTO `default_catalog`.`default_database`.`SensorMaxTemp_2`
   (SELECT `sensorid`, `temperature`, `event_time`, HASHCOLUMNS(`sensorid`, `temperature`, `event_time`) AS `__pk_hash`
    FROM `default_catalog`.`default_database`.`SensorReading`)
   ;
-  INSERT INTO `default_catalog`.`default_database`.`SensorReading_4`
+  INSERT INTO `default_catalog`.`default_database`.`SensorReadingSubscription_4`
    (SELECT *
-    FROM `default_catalog`.`default_database`.`SensorReading`)
+    FROM `default_catalog`.`default_database`.`SensorReadingSubscription`)
    ;
-   INSERT INTO `default_catalog`.`default_database`.`SensorReadingSubscription_5`
-    (SELECT *
-     FROM `default_catalog`.`default_database`.`SensorReadingSubscription`)
-    ;
-    END
+   END
 >>>kafka.json
 {
   "topics" : [
     {
-      "topicName" : "SensorReading",
-      "tableName" : "SensorReading_4",
-      "numPartitions" : 1,
-      "replicationFactor" : 1,
-      "replicasAssignments" : { },
-      "config" : { }
-    },
-    {
       "topicName" : "SensorReadingSubscription",
-      "tableName" : "SensorReadingSubscription_5",
+      "tableName" : "SensorReadingSubscription_4",
       "numPartitions" : 1,
       "replicationFactor" : 1,
       "replicasAssignments" : { },
@@ -371,7 +346,7 @@ FROM "SensorReading_3"
       {
         "type" : "kafka",
         "fieldName" : "SensorSubscriptionById",
-        "topic" : "SensorReading",
+        "topic" : "SensorReadingSubscription",
         "sinkConfig" : { },
         "filters" : {
           "sensorid" : "sensorid"
