@@ -228,8 +228,10 @@ public class DatasqrlTest {
 
         // Collect messages and write to snapshots
         for (SubscriptionClient client : subscriptionClients) {
-          List<Object> messages = client.getMessages();
-          String data = objectMapper.writeValueAsString(messages);
+          List<String> messages = client.getMessages();
+          String data = messages.stream()
+              //to guarantee that snapshots are stable, must sort the responses by json contents
+              .sorted().collect(Collectors.joining(",", "[", "]"));
           Path snapshotPath = snapshotDir.resolve(client.getName() + ".snapshot");
           snapshot(snapshotPath, client.getName(), data, exceptions);
         }

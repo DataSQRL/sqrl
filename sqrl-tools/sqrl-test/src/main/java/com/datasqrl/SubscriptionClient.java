@@ -18,7 +18,7 @@ import lombok.SneakyThrows;
   public class SubscriptionClient {
     private final String name;
     private final String query;
-    private final List<Object> messages = new ArrayList<>();
+    private final List<String> messages = new ArrayList<>();
     private WebSocket webSocket;
     private final Vertx vertx = Vertx.vertx();
 
@@ -90,7 +90,11 @@ import lombok.SneakyThrows;
     }
   
     if(message.containsKey("payload")) {
-      messages.add(message.get("payload"));
+      try {
+        messages.add(objectMapper.writeValueAsString(message.get("payload")));
+      } catch (JsonProcessingException e) {
+        throw new RuntimeException("Unable to serialize message", e);
+      }
       return;
     }
   
@@ -132,7 +136,7 @@ import lombok.SneakyThrows;
       return future.toCompletionStage().toCompletableFuture().get();
     }
 
-    public List<Object> getMessages() {
+    public List<String> getMessages() {
       return messages;
     }
 
