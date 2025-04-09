@@ -74,7 +74,6 @@ public class FullUsecasesIT {
       new ScriptCriteria("duckdb.sqrl", "run"), //fails in build server
       new ScriptCriteria("snowflake-disabled.sqrl", "test"), //fails in build server
       new ScriptCriteria("snowflake-disabled.sqrl", "run"), //fails in build server
-//      new ScriptCriteria("sensors-mutation.sqrl", "test"), //flaky see sqrl script
       new ScriptCriteria("sensors-mutation.sqrl", "run"), //flaky see sqrl script
       new ScriptCriteria("sensors-full.sqrl", "test"), //flaky (too much data)
       new ScriptCriteria("sensors-full.sqrl", "run"), //flaky (too much data)
@@ -298,9 +297,6 @@ public class FullUsecasesIT {
           }
           if (!file.getParent().resolve(testPath).toFile().exists()) {
             testPath = null;
-          }
-          if(!fileName.equals("sensors-mutation.sqrl")) {
-        	  continue;
           }
           UseCaseTestParameter useCaseTestParameter = new UseCaseTestParameter(
               "usecases",
