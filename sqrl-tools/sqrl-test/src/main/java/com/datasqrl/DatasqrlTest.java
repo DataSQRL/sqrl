@@ -138,7 +138,9 @@ public class DatasqrlTest {
         // Wait for all subscriptions to be connected
         CompletableFuture.allOf(subscriptionFutures.toArray(new CompletableFuture[0])).join();
 
-        Thread.sleep(5_000);
+        if(!subscriptionClients.isEmpty()) {
+          Thread.sleep(5_000);
+        }
 
         // Execute mutations
         for (GraphqlQuery mutationQuery : testPlan.getMutations()) {
