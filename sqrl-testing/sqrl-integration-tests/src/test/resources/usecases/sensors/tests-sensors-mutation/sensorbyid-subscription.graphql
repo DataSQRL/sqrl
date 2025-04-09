@@ -1,0 +1,6 @@
+subscription {
+  SensorSubscriptionById(sensorid: 2) {
+    sensorid
+    temperature
+  }
+}

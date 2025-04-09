@@ -2,6 +2,7 @@ package com.datasqrl;
 
 import static com.datasqrl.config.SqrlConstants.PLAN_PATH;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import com.datasqrl.cmd.AssertStatusHook;
 import com.datasqrl.config.PackageJson;
@@ -38,6 +39,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.table.api.ResultKind;
 import org.apache.flink.table.api.TableResult;
 import org.apache.flink.test.junit5.MiniClusterExtension;
+import org.assertj.core.api.Assumptions;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.jupiter.api.AfterAll;
@@ -74,7 +76,6 @@ public class FullUsecasesIT {
       new ScriptCriteria("duckdb.sqrl", "run"), //fails in build server
       new ScriptCriteria("snowflake-disabled.sqrl", "test"), //fails in build server
       new ScriptCriteria("snowflake-disabled.sqrl", "run"), //fails in build server
-      new ScriptCriteria("sensors-mutation.sqrl", "test"), //flaky see sqrl script
       new ScriptCriteria("sensors-mutation.sqrl", "run"), //flaky see sqrl script
       new ScriptCriteria("sensors-full.sqrl", "test"), //flaky (too much data)
       new ScriptCriteria("sensors-full.sqrl", "run"), //flaky (too much data)
@@ -144,6 +145,7 @@ public class FullUsecasesIT {
   public void testUseCase(UseCaseTestParameter param, TestInfo testInfo) {
     if (disabledScripts.contains(new ScriptCriteria(param.getSqrlFileName(), param.getGoal()))) {
       log.warn("Skipping disabled test:" + param.getSqrlFileName());
+      Assumptions.assumeThat(false).as("Skipping disabled test: %s" , param.getSqrlFileName()).isTrue();
       return;
     }
     this.snapshot = Snapshot.of(
@@ -164,7 +166,15 @@ public class FullUsecasesIT {
         .packageJsonPath(param.getPackageJsonPath())
         .build();
 
-    executor.execute(new AssertStatusHook());
+    AssertStatusHook hook = new AssertStatusHook();
+    try {
+        executor.execute(hook);
+    } catch (Throwable e) {
+        if(hook.failure() != null) {
+            e.addSuppressed(hook.failure());
+        }
+        throw e;
+    }
 
     PackageJson packageJson = SqrlConfigCommons.fromFilesPackageJson(ErrorCollector.root(),
         List.of(rootDir.resolve(SqrlConstants.BUILD_DIR_NAME).resolve(SqrlConstants.PACKAGE_JSON)));
@@ -312,7 +322,7 @@ public class FullUsecasesIT {
           params.add(useCaseTestParameter.cloneWithGoal("run"));
         }
       } catch (Exception e) {
-        e.printStackTrace();
+        fail("Unable to process use case: "+ useCaseName,e);
       }
     });
 

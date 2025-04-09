@@ -1,26 +1,26 @@
 mutation {
-    AddReading1: AddReading(metric: {sensorid: 1, temperature: 13.5}) {
+    AddReading1: SensorReading(event: {sensorid: 1, temperature: 13.5}) {
         sensorid
     }
-    AddReading2: AddReading(metric: {sensorid: 2, temperature: 15.1}) {
+    AddReading2: SensorReading(event: {sensorid: 2, temperature: 15.1}) {
         sensorid
     }
-    AddReading3: AddReading(metric: {sensorid: 3, temperature: 10.7}) {
+    AddReading3: SensorReading(event: {sensorid: 3, temperature: 10.7}) {
         sensorid
     }
-    AddReading4: AddReading(metric: {sensorid: 2, temperature: 14.7}) {
+    AddReading4: SensorReading(event: {sensorid: 2, temperature: 14.7}) {
         sensorid
     }
-    AddReading5: AddReading(metric: {sensorid: 1, temperature: 12.7}) {
+    AddReading5: SensorReading(event: {sensorid: 1, temperature: 12.7}) {
         sensorid
     }
-    AddReading5: AddReading(metric: {sensorid: 1, temperature: 12.7}) {
+    AddReading5: SensorReading(event: {sensorid: 1, temperature: 12.7}) {
         sensorid
     }
-    AddReading5: AddReading(metric: {sensorid: 1, temperature: 12.7}) {
+    AddReading5: SensorReading(event: {sensorid: 1, temperature: 12.7}) {
         sensorid
     }
-    AddReading5: AddReading(metric: {sensorid: 1, temperature: 12.7}) {
+    AddReading5: SensorReading(event: {sensorid: 1, temperature: 12.7}) {
         sensorid
     }
 }

@@ -49,7 +49,7 @@ import static com.datasqrl.v2.util.SqrTableFunctionUtil.getTableFunctionFromPath
 public class TestPlanner2 {
   private List<SqrlTableFunction> tableFunctions;
 
-  public TestPlan2 generateTestPlan(APISource source, Optional<Path> testsPath) {
+  public TestPlan generateTestPlan(APISource source, Optional<Path> testsPath) {
     Parser parser = new Parser();
     List<GraphqlQuery> queries = new ArrayList<>();
     List<GraphqlQuery> mutations = new ArrayList<>();
@@ -68,7 +68,7 @@ public class TestPlanner2 {
               }
               Document document = parser.parseDocument(content);
               //TODO extract subscriptions from .graphql files
-              extractQueriesAndMutations(document, queries, mutations, file.getFileName().toString().replace(".graphql", ""));
+              extractQueriesAndMutations(document, queries, mutations, subscriptions, file.getFileName().toString().replace(".graphql", ""));
             });
       } catch (IOException e) {
         e.printStackTrace();
@@ -85,18 +85,18 @@ public class TestPlanner2 {
       queries.add(new GraphqlQuery(definition1.getName(),
           AstPrinter.printAst(definition1)));
     }
-    return new TestPlan2(queries, mutations, subscriptions);
+    return new TestPlan(queries, mutations, subscriptions);
   }
 
-  private void extractQueriesAndMutations(Document document, List<GraphqlQuery> queries, List<GraphqlQuery> mutations, String prefix) {
+  private void extractQueriesAndMutations(Document document, List<GraphqlQuery> queries, List<GraphqlQuery> mutations, List<GraphqlQuery> subscriptions, String prefix) {
     for (Definition definition : document.getDefinitions()) {
       if (definition instanceof OperationDefinition) {
         OperationDefinition operationDefinition = (OperationDefinition) definition;
         GraphqlQuery query = new GraphqlQuery(prefix, AstPrinter.printAst(operationDefinition));
-        if (operationDefinition.getOperation() == Operation.QUERY) {
-          queries.add(query);
-        } else if (operationDefinition.getOperation() == Operation.MUTATION) {
-          mutations.add(query);
+        switch(operationDefinition.getOperation()) {
+        case QUERY : queries.add(query);break;
+        case MUTATION : mutations.add(query);break;
+        case SUBSCRIPTION : subscriptions.add(query);break;
         }
       }
     }
