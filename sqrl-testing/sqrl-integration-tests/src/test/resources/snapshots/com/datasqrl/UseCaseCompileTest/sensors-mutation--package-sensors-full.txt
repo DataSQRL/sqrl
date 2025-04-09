@@ -4,6 +4,8 @@ ID:     default_catalog.default_database.HighTempAlert
 Type:   stream
 Stage:  flink
 Inputs: default_catalog.default_database.SensorReading
+Annotations:
+ - sort: [0 DESC-nulls-last]
 Primary Key: -
 Timestamp  : event_time
 Schema:
@@ -14,7 +16,7 @@ Plan:
 LogicalProject(sensorid=[$0], temperature=[$1], event_time=[$2])
   LogicalFilter(condition=[>($1, 50)])
     LogicalTableScan(table=[[default_catalog, default_database, SensorReading]])
-SQL: CREATE VIEW HighTempAlert AS  SELECT * FROM SensorReading WHERE temperature > 50;
+SQL: CREATE VIEW HighTempAlert AS  SELECT * FROM SensorReading WHERE temperature > 50 ORDER BY sensorid DESC;
 
 === SensorMaxTemp
 ID:     default_catalog.default_database.SensorMaxTemp
@@ -212,7 +214,9 @@ CREATE TABLE IF NOT EXISTS "SensorMaxTemp_2" ("sensorid" INTEGER NOT NULL, "maxT
 CREATE TABLE IF NOT EXISTS "SensorReading_3" ("sensorid" INTEGER NOT NULL, "temperature" NUMERIC NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE , "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"))
 >>>postgres-views.sql
 CREATE OR REPLACE VIEW "HighTempAlert"("sensorid", "temperature", "event_time") AS SELECT "sensorid", "temperature", "event_time"
-FROM "HighTempAlert_1";
+FROM (SELECT "sensorid", "temperature", "event_time", "__pk_hash"
+  FROM "HighTempAlert_1"
+  ORDER BY "sensorid" DESC NULLS LAST) AS "t1";
 CREATE OR REPLACE VIEW "SensorMaxTemp"("sensorid", "maxTemp") AS SELECT *
 FROM (SELECT "sensorid", "maxTemp"
   FROM "SensorMaxTemp_2"
@@ -244,7 +248,7 @@ FROM "SensorReading_3"
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"sensorid\", \"temperature\", \"event_time\"\nFROM \"HighTempAlert_1\"",
+              "sql" : "SELECT \"sensorid\", \"temperature\", \"event_time\"\nFROM (SELECT \"sensorid\", \"temperature\", \"event_time\", \"__pk_hash\"\n  FROM \"HighTempAlert_1\"\n  ORDER BY \"sensorid\" DESC NULLS LAST) AS \"t\"",
               "parameters" : [ ]
             }
           }
