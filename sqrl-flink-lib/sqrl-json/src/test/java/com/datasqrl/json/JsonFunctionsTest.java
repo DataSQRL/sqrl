@@ -1,14 +1,21 @@
 package com.datasqrl.json;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import lombok.SneakyThrows;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.flink.types.Row;
-import org.apache.flink.types.RowKind;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+
+import com.datasqrl.types.json.FlinkJsonType;
+
+import lombok.SneakyThrows;
 
 
 class JsonFunctionsTest {

@@ -2,15 +2,13 @@ package com.datasqrl.datatype.snowflake;
 
 import com.datasqrl.datatype.DataTypeMapper;
 import com.datasqrl.engine.stream.flink.connector.CastFunction;
-import com.datasqrl.json.FlinkJsonType;
+import com.datasqrl.types.json.FlinkJsonType;
 import com.google.auto.service.AutoService;
 import java.util.Optional;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
-/**
- * We should only map at the table format engine level, the rest should be function translations
- */
+/** We should only map at the table format engine level, the rest should be function translations */
 @AutoService(DataTypeMapper.class)
 @Deprecated
 public class SnowflakeIcebergDataTypeMapper implements DataTypeMapper {
@@ -69,7 +67,7 @@ public class SnowflakeIcebergDataTypeMapper implements DataTypeMapper {
       case VARBINARY:
       case MULTISET:
       case MAP:
-      case ROW: //todo iterate over the row
+      case ROW: // todo iterate over the row
         return true;
       case ARRAY:
         return nativeTypeSupport(type.getComponentType());
@@ -86,6 +84,6 @@ public class SnowflakeIcebergDataTypeMapper implements DataTypeMapper {
       }
     }
 
-    return Optional.empty(); //Could not create type
+    return Optional.empty(); // Could not create type
   }
 }

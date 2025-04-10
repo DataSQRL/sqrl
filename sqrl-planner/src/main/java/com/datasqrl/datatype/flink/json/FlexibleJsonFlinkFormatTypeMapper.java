@@ -1,5 +1,11 @@
 package com.datasqrl.datatype.flink.json;
 
+import java.util.Optional;
+
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.flink.table.planner.plan.schema.RawRelDataType;
+
 import com.datasqrl.config.TableConfig;
 import com.datasqrl.datatype.DataTypeMapper;
 import com.datasqrl.datatype.DataTypeMapping;
@@ -7,14 +13,10 @@ import com.datasqrl.datatype.DataTypeMappings;
 import com.datasqrl.datatype.SerializeToBytes;
 import com.datasqrl.datatype.flink.FlinkDataTypeMapper;
 import com.datasqrl.engine.stream.flink.connector.CastFunction;
-import com.datasqrl.json.FlinkJsonType;
 import com.datasqrl.json.ToJson;
+import com.datasqrl.types.json.FlinkJsonType;
 import com.datasqrl.vector.FlinkVectorType;
 import com.google.auto.service.AutoService;
-import java.util.Optional;
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.sql.type.SqlTypeName;
-import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 @AutoService(DataTypeMapper.class)
 public class FlexibleJsonFlinkFormatTypeMapper extends FlinkDataTypeMapper implements
