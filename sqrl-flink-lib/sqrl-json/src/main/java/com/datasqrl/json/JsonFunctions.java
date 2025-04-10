@@ -7,6 +7,8 @@ import org.apache.flink.table.types.inference.ArgumentTypeStrategy;
 import org.apache.flink.table.types.inference.InputTypeStrategies;
 import org.apache.flink.table.types.inference.strategies.SpecificInputTypeStrategies;
 
+import com.datasqrl.types.json.FlinkJsonType;
+
 public class JsonFunctions {
 
   public static final ToJson TO_JSON = new ToJson();

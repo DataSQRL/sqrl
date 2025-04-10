@@ -68,8 +68,13 @@
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-lib-common</artifactId>
     </dependency>
-
+    <dependency>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>json-type</artifactId>
+      <version>1.0.0-SNAPSHOT</version>
+    </dependency>
   </dependencies>
+
   <build>
     <plugins>
       <plugin>

@@ -1,16 +1,17 @@
 package com.datasqrl.json;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.JsonProcessingException;
+
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.flink.table.annotation.DataTypeHint;
 import org.apache.flink.table.annotation.FunctionHint;
 import org.apache.flink.table.annotation.InputGroup;
 import org.apache.flink.table.functions.AggregateFunction;
-import org.apache.flink.table.functions.FunctionContext;
 import org.apache.flink.util.jackson.JacksonMapperFactory;
+
+import com.datasqrl.types.json.FlinkJsonType;
+import com.datasqrl.types.json.FlinkJsonTypeSerializer;
 
 /**
  * Aggregation function that merges JSON objects into a single JSON object. If two JSON objects

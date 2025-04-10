@@ -3,7 +3,6 @@ package com.datasqrl.json;
 import static com.datasqrl.json.JsonFunctions.createJsonArgumentTypeStrategy;
 import static com.datasqrl.json.JsonFunctions.createJsonType;
 
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ArrayNode;
 import org.apache.flink.table.catalog.DataTypeFactory;
@@ -13,6 +12,8 @@ import org.apache.flink.table.types.inference.InputTypeStrategy;
 import org.apache.flink.table.types.inference.TypeInference;
 import org.apache.flink.table.types.inference.TypeStrategies;
 import org.apache.flink.util.jackson.JacksonMapperFactory;
+
+import com.datasqrl.types.json.FlinkJsonType;
 
 /**
  * Creates a JSON array from the list of JSON objects and scalar values.

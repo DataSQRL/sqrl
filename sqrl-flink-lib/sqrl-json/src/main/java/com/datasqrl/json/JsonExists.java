@@ -3,6 +3,8 @@ package com.datasqrl.json;
 import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.table.runtime.functions.SqlJsonUtils;
 
+import com.datasqrl.types.json.FlinkJsonType;
+
 /**
  * For a given JSON object, checks whether the provided JSON path exists
  */

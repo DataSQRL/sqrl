@@ -1,6 +1,5 @@
 package com.datasqrl.format;
 
-import com.datasqrl.json.FlinkJsonType;
 import org.apache.flink.formats.common.TimestampFormat;
 import org.apache.flink.formats.json.JsonFormatOptions.MapNullKeyMode;
 import org.apache.flink.formats.json.RowDataToJsonConverters;
@@ -8,6 +7,8 @@ import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.JsonProcessin
 import org.apache.flink.table.data.binary.BinaryRawValueData;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.RawType;
+
+import com.datasqrl.types.json.FlinkJsonType;
 
 /**
  * Extends the {@link RowDataToJsonConverters} to add support for FlinkJsonType

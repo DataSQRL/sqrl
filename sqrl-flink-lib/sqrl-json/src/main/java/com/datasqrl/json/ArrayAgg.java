@@ -1,9 +1,11 @@
 package com.datasqrl.json;
 
 import java.util.List;
-import lombok.Value;
+
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
 import org.apache.flink.table.annotation.DataTypeHint;
+
+import lombok.Value;
 
 @Value
 public class ArrayAgg {

@@ -1,8 +1,9 @@
 package com.datasqrl.json;
 
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.flink.table.functions.ScalarFunction;
+
+import com.datasqrl.types.json.FlinkJsonType;
 
 /**
  * Merges two JSON objects into one. If two objects share the same key, the value from the later object is used.

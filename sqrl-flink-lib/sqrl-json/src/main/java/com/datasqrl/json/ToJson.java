@@ -1,6 +1,5 @@
 package com.datasqrl.json;
 
-import com.datasqrl.function.SqrlCastFunction;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
@@ -11,6 +10,9 @@ import org.apache.flink.table.annotation.InputGroup;
 import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.jackson.JacksonMapperFactory;
+
+import com.datasqrl.function.SqrlCastFunction;
+import com.datasqrl.types.json.FlinkJsonType;
 
 /**
  * Parses a JSON object from string

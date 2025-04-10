@@ -1,11 +1,13 @@
 package com.datasqrl.json;
 
-import com.jayway.jsonpath.JsonPath;
-import com.jayway.jsonpath.ReadContext;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.util.jackson.JacksonMapperFactory;
+
+import com.datasqrl.types.json.FlinkJsonType;
+import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.ReadContext;
 
 /**
  * For a given JSON object, executes a JSON path query against the object and returns the result as string.

@@ -1,7 +1,9 @@
 package com.datasqrl.json;
 
-import com.datasqrl.function.SqrlCastFunction;
 import org.apache.flink.table.functions.ScalarFunction;
+
+import com.datasqrl.function.SqrlCastFunction;
+import com.datasqrl.types.json.FlinkJsonType;
 
 public class JsonToString extends ScalarFunction implements SqrlCastFunction {
 

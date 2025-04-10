@@ -1,10 +1,11 @@
 package com.datasqrl.json;
 
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
+import org.apache.flink.table.functions.ScalarFunction;
+
+import com.datasqrl.types.json.FlinkJsonType;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.ReadContext;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.flink.table.functions.ScalarFunction;
 
 /**
  * Extracts a value from the JSON object based on the provided JSON path. An optional third argument
