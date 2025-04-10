@@ -30,8 +30,7 @@ public class SqlScriptPlannerUtil {
     for (Integer colIndex : columnIndexes) {
       RelDataTypeField field = fields.get(colIndex);
       int ordinal = paramCounter.getAndIncrement();
-      RelDataType paramType = field.getType();
-      if (optional) paramType = relB.getTypeFactory().createTypeWithNullability(field.getType(), true);
+      RelDataType paramType = relB.getTypeFactory().createTypeWithNullability(field.getType(), optional);
       RexDynamicParam param = new RexDynamicParam(paramType, ordinal);
       RexNode condition = relB.equals(relB.field(colIndex), param);
       if (optional) {

@@ -6,7 +6,7 @@ IMPORT ecommerceTs.Customer;
 Orders := SELECT * FROM _Orders;
 Customer.orders := SELECT * FROM Orders WHERE customerid = this.customerid;
 OrdersById(id BIGINT NOT NULL) := SELECT * FROM Orders WHERE :id = id;
-OrdersByTime(`time` TIMESTAMP_LTZ, customerid BIGINT) := SELECT * FROM Orders WHERE `time` > :time AND customerid = :customerid;
+OrdersByTime(`time` TIMESTAMP_LTZ NOT NULL, customerid BIGINT NOT NULL) := SELECT * FROM Orders WHERE `time` > :time AND customerid = :customerid;
 
 /*+query_by_any(name, description, category, _ingest_time) */
 Product := SELECT * FROM _Product;

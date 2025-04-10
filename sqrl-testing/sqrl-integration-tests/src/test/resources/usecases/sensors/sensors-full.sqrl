@@ -9,7 +9,7 @@ SecReading := SELECT sensorid, window_time as timeSec,
               GROUP BY sensorid, window_start, window_end, window_time
               ORDER BY timeSec DESC;
 
-SecReadingByTemp(temp Int) := SELECT * FROM SecReading WHERE temp > :temp ORDER BY timeSec ASC LIMIT 10;
+SecReadingByTemp(temp Int NOT NULL) := SELECT * FROM SecReading WHERE temp > :temp ORDER BY timeSec ASC LIMIT 10;
 
 /* Create table of sensors and relate to readings */
 Sensors := DISTINCT SensorUpdates ON id ORDER BY `timestamp` DESC;

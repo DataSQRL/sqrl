@@ -1,3 +1,4 @@
 IMPORT ecommerceTs.Customer;
+/*+query_by_all(productid) */
 IMPORT ecommerceTs.Product;
 
