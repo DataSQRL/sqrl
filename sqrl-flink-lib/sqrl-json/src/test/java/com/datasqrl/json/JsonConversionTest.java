@@ -20,7 +20,7 @@
 //import com.datasqrl.io.DataSystemConnectorFactory;
 //import com.datasqrl.io.InMemSourceFactory;
 //import com.datasqrl.io.mem.MemoryConnectorFactory;
-//import com.datasqrl.json.FlinkJsonType;
+//import com.datasqrl.types.json.FlinkJsonType;
 //import com.datasqrl.loaders.TableSourceNamespaceObject;
 //import com.datasqrl.module.NamespaceObject;
 //import com.datasqrl.module.SqrlModule;

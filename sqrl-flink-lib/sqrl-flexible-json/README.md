@@ -1,1 +1,0 @@
-JDBC is provided scope. 
