@@ -11,5 +11,6 @@ public class SqrlExportStatement implements SqrlDdlStatement {
 
   ParsedObject<NamePath> tableIdentifier;
   ParsedObject<NamePath> packageIdentifier;
+  SqrlComments comments;
 
 }

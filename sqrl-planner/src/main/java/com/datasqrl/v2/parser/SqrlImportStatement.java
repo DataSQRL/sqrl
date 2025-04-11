@@ -11,5 +11,6 @@ public class SqrlImportStatement implements SqrlDdlStatement {
 
   ParsedObject<NamePath> packageIdentifier;
   ParsedObject<NamePath> alias;
+  SqrlComments comments;
 
 }

@@ -1,9 +1,13 @@
 package com.datasqrl.v2.hint;
 
+import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.v2.parser.ParsedObject;
 import com.datasqrl.v2.parser.SqrlHint;
+import com.datasqrl.v2.parser.StatementParserException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
+import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.tools.Planner;
 
 /**
@@ -37,8 +41,24 @@ public abstract class ColumnNamesHint extends PlannerHint {
    * @param columnNames
    * @param columnIndexes
    */
-  public void updateColumns(List<String> columnNames, List<Integer> columnIndexes) {
+  private void updateColumns(List<String> columnNames, List<Integer> columnIndexes) {
     this.colNames = columnNames;
     this.colIndexes = columnIndexes;
+  }
+
+  public void validateAndUpdate(Function<String, RelDataTypeField> fieldByIndex) {
+    //Validate column names in hints and map to indexes
+    List<String> colNames = new ArrayList<>();
+    List<Integer> colIndexes = new ArrayList<>();
+    for (String colName : getColumnNames()) {
+      RelDataTypeField field = fieldByIndex.apply(colName);
+      if (field == null) {
+        throw new StatementParserException(ErrorLabel.GENERIC, getSource().getFileLocation(),
+            "%s hint reference column [%s] that does not exist in table", getName(), colName);
+      }
+      colNames.add(field.getName());
+      colIndexes.add(field.getIndex());
+    }
+    updateColumns(colNames, colIndexes);
   }
 }

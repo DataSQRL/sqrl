@@ -583,6 +583,7 @@ public class SqlScriptPlanner {
       try {
         TableAnalysis tableAnalysis = sqrlEnv.createTableWithSchema(flinkTable.tableName.getDisplay(), flinkTable.sqlCreateTable,
             flinkTable.schema, getLogEngineBuilder(hintsAndDocs));
+        hintsAndDocs.getHints().updateColumnNamesHints(tableAnalysis::getField);
         addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv);
       } catch (Throwable e) {
         throw flinkTable.errorCollector.handle(e);

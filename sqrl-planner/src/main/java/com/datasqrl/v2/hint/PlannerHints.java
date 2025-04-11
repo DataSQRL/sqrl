@@ -6,9 +6,11 @@ import com.datasqrl.v2.parser.StatementParserException;
 import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.Value;
+import org.apache.calcite.rel.type.RelDataTypeField;
 
 @Value
 public class PlannerHints {
@@ -42,6 +44,10 @@ public class PlannerHints {
 
   public<H> Stream<H> getHints(Class<H> hintClass) {
     return hints.stream().filter(hintClass::isInstance).map(hintClass::cast);
+  }
+
+  public void updateColumnNamesHints(Function<String, RelDataTypeField> fieldByIndex) {
+    getHints(ColumnNamesHint.class).forEach(hint -> hint.validateAndUpdate(fieldByIndex));
   }
 
 

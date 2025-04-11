@@ -180,21 +180,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     }
 
 
-    for (ColumnNamesHint hint : hints.getHints(ColumnNamesHint.class).collect(Collectors.toList())) {
-      //Validate column names in hints and map to indexes
-      List<String> colNames = new ArrayList<>();
-      List<Integer> colIndexes = new ArrayList<>();
-      for (String colName : hint.getColumnNames()) {
-        RelDataTypeField field = analysis.getField(colName);
-        if (field == null) {
-          throw new StatementParserException(ErrorLabel.GENERIC, hint.getSource().getFileLocation(),
-              "%s hint reference column [%s] that does not exist in table", hint.getName(), colName);
-        }
-        colNames.add(field.getName());
-        colIndexes.add(field.getIndex());
-      }
-      hint.updateColumns(colNames, colIndexes);
-    }
+    hints.updateColumnNamesHints(analysis::getField);
     //See if the primary key is being explicitly set:
     Optional<PrimaryKeyHint> pkHint = hints.getHint(PrimaryKeyHint.class);
     if (pkHint.isPresent()) {
