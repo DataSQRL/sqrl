@@ -705,7 +705,8 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerPromotion_1`
 {
   "topics" : [
     {
-      "name" : "CustomerPromotion",
+      "topicName" : "CustomerPromotion",
+      "tableName" : "CustomerPromotion_1",
       "numPartitions" : 1,
       "replicationFactor" : 1,
       "replicasAssignments" : { },
@@ -1175,7 +1176,7 @@ FROM "Orders_6"
       {
         "type" : "kafka",
         "fieldName" : "CustomerPromotion",
-        "topic" : "CustomerPromotion_1",
+        "topic" : "CustomerPromotion",
         "sinkConfig" : { },
         "filters" : { }
       }

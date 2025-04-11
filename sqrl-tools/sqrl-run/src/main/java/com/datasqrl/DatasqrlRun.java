@@ -297,8 +297,8 @@ public class DatasqrlRun {
     try (AdminClient adminClient = AdminClient.create(props)) {
       Set<String> existingTopics = adminClient.listTopics().names().get();
 
-      for (Map<String, Object> topic : mutableTopics) {
-        String topicName = (String) topic.get("name");
+      Set<String> requiredTopics = mutableTopics.stream().map(topic -> (String) topic.get("topicName")).collect(Collectors.toSet());
+      for (String topicName : requiredTopics) {
         if(existingTopics.contains(topicName)) {
           continue;
         }

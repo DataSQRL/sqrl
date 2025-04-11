@@ -29,6 +29,7 @@ import com.datasqrl.plan.global.PhysicalDAGPlan.LogStagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
 import com.datasqrl.util.CalciteUtil;
+import com.datasqrl.util.StreamUtil;
 import com.datasqrl.v2.analyzer.TableAnalysis;
 import com.datasqrl.v2.dag.plan.MaterializationStagePlan;
 import com.datasqrl.v2.dag.plan.MaterializationStagePlan.Query;
@@ -125,7 +126,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       }
     }
     tableBuilder.setConnectorOptions(conf.toMapWithSubstitution(ctxBuilder.build()));
-    return new NewTopic(originalTableName);
+    return new NewTopic(originalTableName, tableBuilder.getTableName());
   }
 
   @Override
@@ -143,6 +144,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
 
   @Override
   public EnginePhysicalPlan plan(MaterializationStagePlan stagePlan) {
+    Map<String, String> table2TopicMap = StreamUtil.filterByClass(stagePlan.getTables(), NewTopic.class)
+        .collect(Collectors.toMap(NewTopic::getTableName, NewTopic::getTopicName));
     //Plan queries
     for (Query query : stagePlan.getQueries()) {
       ErrorCollector errors = query.getErrors();
@@ -179,7 +182,9 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       errors.checkFatal(relNode instanceof TableScan, "The Kafka engine currently only supports"
           + "simple filter queries without any transformations, but got: %s", relNode.explain());
       RelOptTable table = relNode.getTable();
-      String topicName = table.getQualifiedName().get(2);
+      String tableName = table.getQualifiedName().get(2);
+      String topicName = table2TopicMap.get(tableName);
+      Preconditions.checkArgument(topicName!=null, "Could not find topic for table: %s [%s]", tableName, table2TopicMap);
       query.getFunction().setExecutableQuery(new KafkaQuery(stagePlan.getStage(), topicName, filterColumns));
     }
     //Plan topic creation
@@ -190,6 +195,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
   }
 
   @Override
+  @Deprecated
   public EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs, ExecutionPipeline pipeline,
       List<StagePlan> stagePlans, SqrlFramework framework, ErrorCollector errorCollector) {
     Preconditions.checkArgument(plan instanceof LogStagePlan);
@@ -197,7 +203,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     List<NewTopic> logTopics = ((LogStagePlan) plan).getLogs().stream()
         .map(log -> (KafkaTopic) log)
         .map(KafkaTopic::getTopicName)
-        .map(NewTopic::new)
+        .map(name -> new NewTopic(name,name))
         .collect(Collectors.toList());
 
     return new KafkaPhysicalPlan(logTopics);

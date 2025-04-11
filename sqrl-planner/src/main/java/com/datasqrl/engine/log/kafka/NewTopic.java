@@ -11,13 +11,14 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Getter
 public class NewTopic implements EngineCreateTable {
-    private String name;
+    private String topicName;
+    private String tableName;
     private int numPartitions;
     private short replicationFactor;
     private Map<Integer, List<Integer>> replicasAssignments;
     private Map<String, String> config;
 
-    public NewTopic(String name) {
-        this(name, 1, Short.parseShort("1"), Map.of(), Map.of());
+    public NewTopic(String topicName, String tableName) {
+        this(topicName, tableName, 1, Short.parseShort("1"), Map.of(), Map.of());
     }
 }

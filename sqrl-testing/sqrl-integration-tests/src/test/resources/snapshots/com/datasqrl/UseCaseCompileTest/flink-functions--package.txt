@@ -1,0 +1,63 @@
+>>>pipeline_explain.txt
+=== FlinkFunctions
+ID:     default_catalog.default_database.FlinkFunctions
+Type:   state
+Stage:  flink
+Primary Key: -
+Timestamp  : -
+Schema:
+ - name_upper: VARCHAR(7) CHARACTER SET "UTF-16LE" NOT NULL
+ - name_length: INTEGER NOT NULL
+ - time_now: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - current_unix_ts: BIGINT NOT NULL
+ - generated_uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+ - name_md5: CHAR(32) CHARACTER SET "UTF-16LE" NOT NULL
+ - formatted_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - name_json: RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI=')
+Plan:
+LogicalProject(name_upper=[UPPER($0)], name_length=[CHAR_LENGTH($0)], time_now=[NOW()], current_unix_ts=[UNIX_TIMESTAMP()], generated_uuid=[UUID()], name_md5=[MD5($0)], formatted_name=[FORMAT('Hello, %s', $0)], name_json=[TOJSON(CONCAT('{"a": "', $0, '"}'))])
+  LogicalValues(tuples=[[{ 'Alice' }, { 'Bob' }, { 'Charlie' }]])
+SQL: CREATE VIEW FlinkFunctions AS  SELECT
+  UPPER(name) AS name_upper,
+  CHAR_LENGTH(name) AS name_length,
+  NOW() AS time_now,
+  UNIX_TIMESTAMP() AS current_unix_ts,
+  UUID() AS generated_uuid,
+  MD5(name) AS name_md5,
+  FORMAT('Hello, %s', name) AS formatted_name,
+  TOJSON(CONCAT('{"a": "',name,'"}')) AS name_json
+FROM (
+    VALUES ('Alice'), ('Bob'), ('Charlie')) AS names(name);
+
+=== functions
+ID:     print.functions
+Type:   export
+Stage:  flink
+Inputs: default_catalog.default_database.FlinkFunctions
+
+>>>flink-sql-no-functions.sql
+CREATE VIEW `FlinkFunctions`
+AS
+SELECT UPPER(`name`) AS `name_upper`, CHAR_LENGTH(`name`) AS `name_length`, NOW() AS `time_now`, UNIX_TIMESTAMP() AS `current_unix_ts`, UUID() AS `generated_uuid`, MD5(`name`) AS `name_md5`, FORMAT('Hello, %s', `name`) AS `formatted_name`, TOJSON(CONCAT('{"a": "', `name`, '"}')) AS `name_json`
+FROM (VALUES ROW('Alice'),
+   ROW('Bob'),
+   ROW('Charlie')) AS `names` (`name`);
+CREATE TABLE `functions_1` (
+  `name_upper` VARCHAR(7) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name_length` INTEGER NOT NULL,
+  `time_now` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `current_unix_ts` BIGINT NOT NULL,
+  `generated_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name_md5` CHAR(32) CHARACTER SET `UTF-16LE` NOT NULL,
+  `formatted_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name_json` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI=')
+) WITH (
+  'connector' = 'print',
+  'print-identifier' = 'functions'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`functions_1`
+(SELECT *
+ FROM `default_catalog`.`default_database`.`FlinkFunctions`)
+;
+END

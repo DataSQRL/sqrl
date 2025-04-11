@@ -186,7 +186,7 @@ public class SqlScriptPlanner {
         Optional<ParsePosUtil.MessageLocation> converted = ParsePosUtil.convertFlinkParserException(e);
         if (converted.isPresent()) {
           ParsePosUtil.MessageLocation msgLocation = converted.get();
-//          e.printStackTrace();
+          e.printStackTrace();
           scriptErrors.atFile(statement.getFileLocation()
                   .add(sqlStatement.mapSqlLocation(msgLocation.getLocation())))
               .fatal(msgLocation.getMessage());

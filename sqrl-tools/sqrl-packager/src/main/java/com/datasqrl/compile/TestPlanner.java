@@ -82,7 +82,7 @@ public class TestPlanner {
       queries.add(new GraphqlQuery(definition1.getName(),
           AstPrinter.printAst(definition1)));
     }
-    return new TestPlan(queries, mutations);
+    return new TestPlan(queries, mutations, List.of());
   }
 
   private void extractQueriesAndMutations(Document document, List<GraphqlQuery> queries, List<GraphqlQuery> mutations, String prefix) {

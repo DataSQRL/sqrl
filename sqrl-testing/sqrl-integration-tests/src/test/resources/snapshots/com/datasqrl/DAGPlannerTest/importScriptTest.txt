@@ -197,14 +197,16 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
 {
   "topics" : [
     {
-      "name" : "_SensorReading",
+      "topicName" : "_SensorReading",
+      "tableName" : "_SensorReading__def",
       "numPartitions" : 1,
       "replicationFactor" : 1,
       "replicasAssignments" : { },
       "config" : { }
     },
     {
-      "name" : "_Sensors",
+      "topicName" : "_Sensors",
+      "tableName" : "_Sensors__def",
       "numPartitions" : 1,
       "replicationFactor" : 1,
       "replicasAssignments" : { },

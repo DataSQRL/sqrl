@@ -165,11 +165,25 @@ Options for the Test Command:
 |Option/Flag Name| 	Description                                         |
 |--------------|------------------------------------------------------|
 |-s or --snapshot| 	Path to the snapshot files. Defaults to `snapshot`. |
-|--tests| 	Path to test query files. Defaults to `tests`.      |
+|--tests| 	Path to test graphql query files. Defaults to `tests`.      |
 
-The `tests` directory contains GraphQL queries that are executed against the API of the generated data pipeline. Mutations are executed
-prior to queries in alphabetical order.
+The `tests` directory contains GraphQL queries that are executed against the API of the generated data pipeline. 
 
+### Testing Order Overview
+
+Subscriptions are registered first. This ensures that any incoming data events are captured as soon as they occur.
+
+Next, mutations are executed in alphabetical order. This controlled ordering allows predictable state changes during testing.
+
+Queries are executed after all mutations have been applied. This step retrieves the system state resulting from the preceding operations.
+
+Once all queries complete, the subscriptions are terminated and the data collected during their active phase is assembled into snapshots.
+
+---
+**NOTE**
+Subscriptions can only be tested in conjunction with mutations at this time.
+
+---
 
 <!--
 

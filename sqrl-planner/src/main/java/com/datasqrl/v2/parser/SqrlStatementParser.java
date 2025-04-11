@@ -42,7 +42,7 @@ public class SqrlStatementParser {
   public static final String COMMENT_REGEX = "(/\\*)+?[\\w\\W]*?(\\*/)";
   public static final String BEGINNING_COMMENT = "^(("+ COMMENT_REGEX +")|(\\s*))*";
   public static final String IMPORT_EXPORT_REGEX = BEGINNING_COMMENT + "(?<fullmatch>import|export)";
-  public static final String SQRL_DEFINITION_REGEX = BEGINNING_COMMENT + "(?<fullmatch>(?<tablename>"+IDENTIFIER_REGEX+")\\s*(\\((?<arguments>.+?)\\))?\\s*:=)";
+  public static final String SQRL_DEFINITION_REGEX = BEGINNING_COMMENT + "(?<fullmatch>(?<tablename>"+IDENTIFIER_REGEX+")\\s*(\\((?<arguments>.*?)\\))?\\s*:=)";
   public static final String CREATE_TABLE_REGEX = BEGINNING_COMMENT + "(?<fullmatch>create\\s+(temporary\\s+)?table)";
 
 
@@ -148,7 +148,8 @@ public class SqrlStatementParser {
 
       AccessModifier access = AccessModifier.QUERY;
 
-      ParsedObject<String> arguments = parse(sqrlDefinition, "arguments", statement);
+      ParsedObject<String> arguments = parse(sqrlDefinition, "arguments", statement)
+          .map(str -> str.isBlank()?null:str);
       //Identify SQL keyword
       Pattern sqlKeywordPattern = Pattern.compile("^\\s*(\\w+)");
       Matcher keywordMatcher = sqlKeywordPattern.matcher(definitionBody.get());

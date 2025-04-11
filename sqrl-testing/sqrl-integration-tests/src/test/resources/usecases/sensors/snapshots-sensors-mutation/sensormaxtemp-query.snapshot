@@ -1,1 +1,1 @@
-{"data":{"Sensor1":[{"sensorid":1,"maxTemp":43.5}],"Sensor2":[{"sensorid":2,"maxTemp":55.1}],"Sensor3":[{"sensorid":3,"maxTemp":50.7}]}}
+{"data":{"SensorMaxTemp":[{"sensorid":3,"maxTemp":50.7},{"sensorid":2,"maxTemp":55.1},{"sensorid":1,"maxTemp":43.5}]}}
