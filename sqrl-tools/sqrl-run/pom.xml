@@ -81,12 +81,14 @@
       <version>1.19.1</version>
     </dependency>
     <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-flexible-json</artifactId>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>flexible-json-format</artifactId>
+      <version>1.0.0-SNAPSHOT</version>
     </dependency>
     <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-flexible-csv</artifactId>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>flexible-csv-format</artifactId>
+      <version>1.0.0-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>

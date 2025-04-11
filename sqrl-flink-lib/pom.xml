@@ -27,8 +27,6 @@
     <module>sqrl-text</module>
     <module>sqrl-time</module>
     <module>sqrl-vector</module>
-    <module>sqrl-flexible-json</module>
-    <module>sqrl-flexible-csv</module>
     <module>sqrl-name</module>
     <module>sqrl-errors</module>
   </modules>
@@ -62,18 +60,6 @@
       <dependency>
         <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-lib-common</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-flexible-csv</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-flexible-json</artifactId>
         <version>${project.version}</version>
       </dependency>
 

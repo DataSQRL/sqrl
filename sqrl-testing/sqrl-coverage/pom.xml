@@ -39,11 +39,6 @@
   </dependency>
   <dependency>
     <groupId>${project.groupId}</groupId>
-    <artifactId>sqrl-flexible-json</artifactId>
-    <version>${project.version}</version>
-  </dependency>
-  <dependency>
-    <groupId>${project.groupId}</groupId>
     <artifactId>sqrl-jdbc-1.19</artifactId>
     <version>${project.version}</version>
   </dependency>
@@ -115,11 +110,6 @@
   <dependency>
     <groupId>${project.groupId}</groupId>
     <artifactId>sqrl-run</artifactId>
-    <version>${project.version}</version>
-  </dependency>
-  <dependency>
-    <groupId>${project.groupId}</groupId>
-    <artifactId>sqrl-flexible-csv</artifactId>
     <version>${project.version}</version>
   </dependency>
   <dependency>
