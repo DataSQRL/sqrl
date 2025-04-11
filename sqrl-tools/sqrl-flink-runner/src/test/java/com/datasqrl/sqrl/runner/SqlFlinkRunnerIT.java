@@ -17,6 +17,8 @@ package com.datasqrl.sqrl.runner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.nio.file.Path;
+
 import org.junit.jupiter.api.Test;
 
 import com.nextbreakpoint.flink.client.model.JobStatus;
@@ -25,13 +27,16 @@ class SqlFlinkRunnerIT extends AbstractITSupport {
 
   @Test
   void givenPlan_whenInvokingFormatFunction_thenSuccess() throws Exception {
+    String testCase = "flink-functions";
+    super.compilePlan(testCase);
+
     var client = createClient(flinkContainer.getMappedPort(8081));
 
     // Step 1: Submit the job inside the running container
     String output = flinkContainer.execInContainer("flink", "run",
-        "./plugins/flink-sql-runner/flink-sql-runner.uber.jar", "--planfile", "/flink/sql/format.plan")
+        "./plugins/flink-sql-runner/flink-sql-runner.uber.jar", "--planfile", "/flink/sql/"+testCase+"/build/deploy/plan/flink-compiled-plan.json")
         .getStdout();
-    
+
     assertThat(output).contains("com.datasqrl.text.Format");
 
     System.out.println(output);
@@ -61,7 +66,7 @@ class SqlFlinkRunnerIT extends AbstractITSupport {
 
       // check log printed, means sqrl concat function was executed correctly
       assertThat(taskExecutorLogs).as("Expected output not found in TaskManager logs")
-          .contains("Completed ID: 13 name");
+          .contains("Hello Bob!");
   }
 
 }

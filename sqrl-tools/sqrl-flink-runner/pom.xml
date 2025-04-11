@@ -117,6 +117,16 @@
       <artifactId>testcontainers</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>sqrl-config</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>sqrl-cli</artifactId>
+      <scope>test</scope>
+    </dependency>
 
     <!-- list of libraries that need to be embedded into docker image-->
     <dependency>
