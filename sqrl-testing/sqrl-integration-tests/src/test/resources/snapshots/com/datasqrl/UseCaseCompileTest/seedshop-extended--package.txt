@@ -936,7 +936,7 @@ FROM "Orders_6"
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"id\", \"time\", \"customerid\", \"price\", \"saving\"\nFROM \"OrdersTotals_7\"\nWHERE $1 = \"id\"",
+              "sql" : "SELECT *\nFROM (SELECT \"id\", \"time\", \"customerid\", \"price\", \"saving\"\n  FROM \"OrdersTotals_7\") AS \"t\"\nWHERE $1 = \"id\"",
               "parameters" : [
                 {
                   "type" : "source",
@@ -969,7 +969,7 @@ FROM "Orders_6"
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"customerid\", \"week\", \"spend\", \"saved\"\nFROM (SELECT \"customerid\", \"week\", \"spend\", \"saved\", \"__pk_hash\"\n  FROM \"CustomersSpending_5\"\n  ORDER BY \"week\" DESC NULLS LAST) AS \"t\"\nWHERE \"customerid\" = $1",
+              "sql" : "SELECT *\nFROM (SELECT \"customerid\", \"week\", \"spend\", \"saved\"\n  FROM \"CustomersSpending_5\"\n  ORDER BY \"week\" DESC NULLS LAST) AS \"t0\"\nWHERE \"customerid\" = $1",
               "parameters" : [
                 {
                   "type" : "source",
@@ -1072,7 +1072,7 @@ FROM "Orders_6"
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"productid\", \"country\", \"quantity\", \"spend\", \"weight\"\nFROM \"ProductsByCountry_9\"\nWHERE \"productid\" = $1",
+              "sql" : "SELECT *\nFROM (SELECT \"productid\", \"country\", \"quantity\", \"spend\", \"weight\"\n  FROM \"ProductsByCountry_9\") AS \"t\"\nWHERE \"productid\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",

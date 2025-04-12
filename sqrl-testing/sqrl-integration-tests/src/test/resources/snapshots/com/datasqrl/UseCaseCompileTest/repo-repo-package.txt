@@ -373,7 +373,7 @@ FROM "SubmissionTopics_3"
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-              "sql" : "SELECT \"name\", \"version\", \"variant\", \"latest\", \"type\", \"license\", \"repository\", \"homepage\", \"documentation\", \"readme\", \"description\", \"keywords\", \"uniqueId\", \"file\", \"hash\", \"authorId\", \"submissionTime\", \"event_time\", \"variant0\", \"repoURL\"\nFROM \"Submission_2\"\nWHERE $1 = \"name\" AND \"latest\" = TRUE\nORDER BY \"submissionTime\" DESC NULLS LAST\nFETCH NEXT 1 ROWS ONLY",
+              "sql" : "SELECT *\nFROM (SELECT \"name\", \"version\", \"variant\", \"latest\", \"type\", \"license\", \"repository\", \"homepage\", \"documentation\", \"readme\", \"description\", \"keywords\", \"uniqueId\", \"file\", \"hash\", \"authorId\", \"submissionTime\", \"event_time\", \"variant0\", \"repoURL\"\n  FROM \"Submission_2\") AS \"t\"\nWHERE $1 = \"name\" AND \"latest\" = TRUE\nORDER BY \"submissionTime\" DESC NULLS LAST\nFETCH NEXT 1 ROWS ONLY",
               "parameters" : [
                 {
                   "type" : "source",
@@ -416,7 +416,7 @@ FROM "SubmissionTopics_3"
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"name\", \"version\", \"variant\", \"latest\", \"type\", \"license\", \"repository\", \"homepage\", \"documentation\", \"readme\", \"description\", \"keywords\", \"uniqueId\", \"file\", \"hash\", \"authorId\", \"submissionTime\", \"event_time\", \"variant0\", \"repoURL\"\nFROM \"Submission_2\"\nWHERE $3 = \"name\" AND ($1 IS NULL OR $1 = \"version\") AND ($2 IS NULL OR $2 = \"variant\")\nORDER BY \"submissionTime\" DESC NULLS LAST",
+              "sql" : "SELECT *\nFROM (SELECT \"name\", \"version\", \"variant\", \"latest\", \"type\", \"license\", \"repository\", \"homepage\", \"documentation\", \"readme\", \"description\", \"keywords\", \"uniqueId\", \"file\", \"hash\", \"authorId\", \"submissionTime\", \"event_time\", \"variant0\", \"repoURL\"\n  FROM \"Submission_2\") AS \"t\"\nWHERE $3 = \"name\" AND ($1 IS NULL OR $1 = \"version\") AND ($2 IS NULL OR $2 = \"variant\")\nORDER BY \"submissionTime\" DESC NULLS LAST",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -524,7 +524,7 @@ FROM "SubmissionTopics_3"
             "query" : {
               "type" : "JdbcQuery",
               "type" : "JdbcQuery",
-              "sql" : "SELECT \"name\", \"version\", \"variant\", \"latest\", \"type\", \"license\", \"repository\", \"homepage\", \"documentation\", \"readme\", \"description\", \"keywords\", \"uniqueId\", \"file\", \"hash\", \"authorId\", \"submissionTime\", \"event_time\", \"variant0\", \"repoURL\"\nFROM \"Submission_2\"\nWHERE $1 = \"name\" AND \"latest\" = TRUE\nORDER BY \"submissionTime\" DESC NULLS LAST\nFETCH NEXT 1 ROWS ONLY",
+              "sql" : "SELECT *\nFROM (SELECT \"name\", \"version\", \"variant\", \"latest\", \"type\", \"license\", \"repository\", \"homepage\", \"documentation\", \"readme\", \"description\", \"keywords\", \"uniqueId\", \"file\", \"hash\", \"authorId\", \"submissionTime\", \"event_time\", \"variant0\", \"repoURL\"\n  FROM \"Submission_2\") AS \"t\"\nWHERE $1 = \"name\" AND \"latest\" = TRUE\nORDER BY \"submissionTime\" DESC NULLS LAST\nFETCH NEXT 1 ROWS ONLY",
               "parameters" : [
                 {
                   "type" : "source",

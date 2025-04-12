@@ -416,7 +416,7 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"machineid\", \"time_hour\", \"avg_temperature\"\nFROM \"MachineTempByHour_2\"\nWHERE \"machineid\" = $1",
+              "sql" : "SELECT *\nFROM (SELECT \"machineid\", \"time_hour\", \"avg_temperature\"\n  FROM \"MachineTempByHour_2\") AS \"t\"\nWHERE \"machineid\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",

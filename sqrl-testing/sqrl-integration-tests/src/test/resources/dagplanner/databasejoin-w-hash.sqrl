@@ -1,0 +1,6 @@
+IMPORT ecommerceTs.Orders AS _Orders;
+
+_OrderEntries := SELECT o.id, o.customerid, o.`time`, e.productid, e.quantity, e.discount FROM _Orders o CROSS JOIN UNNEST(entries) e;
+
+OrderEntryJoin := SELECT o1.id AS id1, o2.id AS id2, o1.quantity * o2.quantity AS multi
+                  FROM _OrderEntries o1 JOIN _OrderEntries o2 ON o1.customerid = o2.customerid;

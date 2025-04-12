@@ -246,7 +246,7 @@ FROM "SensorReading_3"
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"sensorid\", \"timeSec\", \"temp\"\nFROM (SELECT \"sensorid\", \"timeSec\", \"temp\", \"__pk_hash\"\n  FROM \"SecReading_1\"\n  ORDER BY \"timeSec\" DESC NULLS LAST) AS \"t\"\nWHERE \"sensorid\" = $1",
+              "sql" : "SELECT *\nFROM (SELECT \"sensorid\", \"timeSec\", \"temp\"\n  FROM \"SecReading_1\"\n  ORDER BY \"timeSec\" DESC NULLS LAST) AS \"t0\"\nWHERE \"sensorid\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",

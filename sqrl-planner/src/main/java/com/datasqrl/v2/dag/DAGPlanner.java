@@ -391,9 +391,14 @@ public class DAGPlanner {
     List<RelDataTypeField> sourceFields = sourceType.getFieldList();
     List<RexNode> fields = new ArrayList<>();
     List<String> fieldNames = new ArrayList<>();
+    Preconditions.checkArgument(sourceType.getFieldCount()==sourceFields.size());
     for (int i = 0; i < sourceFields.size(); i++) {
       if (i < sourceType.getFieldCount()) {
         RelDataTypeField field = sourceFields.get(i);
+         if (mapDirection==Direction.FROM_DATABASE && field.getName().equalsIgnoreCase(HASHED_PK_NAME)) {
+          hasChanged = true; //Ignore field
+          continue;
+        }
         fieldNames.add(field.getName());
         Optional<SqrlCastFunction> castFct = typeMapper.getMapper(field.getType()).flatMap(mapper -> mapper.getEngineMapping(mapDirection));
         if (castFct.isPresent()) {
