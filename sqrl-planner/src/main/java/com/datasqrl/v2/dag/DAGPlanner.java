@@ -393,32 +393,31 @@ public class DAGPlanner {
     List<String> fieldNames = new ArrayList<>();
     Preconditions.checkArgument(sourceType.getFieldCount()==sourceFields.size());
     for (int i = 0; i < sourceFields.size(); i++) {
-      if (i < sourceType.getFieldCount()) {
-        RelDataTypeField field = sourceFields.get(i);
-         if (mapDirection==Direction.FROM_DATABASE && field.getName().equalsIgnoreCase(HASHED_PK_NAME)) {
-          hasChanged = true; //Ignore field
-          continue;
-        }
-        fieldNames.add(field.getName());
-        Optional<SqrlCastFunction> castFct = typeMapper.getMapper(field.getType()).flatMap(mapper -> mapper.getEngineMapping(mapDirection));
-        if (castFct.isPresent()) {
-          SqrlCastFunction castFunction = castFct.get();
-          hasChanged = true;
-          fields.add(relBuilder.getRexBuilder()
-              .makeCall(sqrlEnv.lookupUserDefinedFunction(castFunction), List.of(relBuilder.field(field.getIndex()))));
-          continue;
-        } else if (mapDirection==Direction.TO_DATABASE &&
-            CalciteUtil.isRowTime(field.getType()) && i!=timestampIndex) {
-          //We need to cast all other rowtime fields to their underlying type or Flink will complain
-          TimeIndicatorRelDataType rowtimeType = (TimeIndicatorRelDataType) field.getType();
-          BasicSqlType timestampType = rowtimeType.originalType();
-          hasChanged = true;
-          fields.add(relBuilder.getRexBuilder().makeCast(timestampType, relBuilder.field(field.getIndex())));
-          continue;
-        }
+      RelDataTypeField field = sourceFields.get(i);
+      if (mapDirection==Direction.FROM_DATABASE && field.getName().equalsIgnoreCase(HASHED_PK_NAME)) {
+        //We ignore the appendex pk_hash field in order to preserve the original table schema
+        hasChanged = true;
+        continue;
       }
-      //Add reference to field
-      fields.add(relBuilder.field(i));
+      fieldNames.add(field.getName());
+      Optional<SqrlCastFunction> castFct = typeMapper.getMapper(field.getType()).flatMap(mapper -> mapper.getEngineMapping(mapDirection));
+      if (castFct.isPresent()) {
+        //We need to cast the datatype
+        SqrlCastFunction castFunction = castFct.get();
+        hasChanged = true;
+        fields.add(relBuilder.getRexBuilder()
+            .makeCall(sqrlEnv.lookupUserDefinedFunction(castFunction), List.of(relBuilder.field(field.getIndex()))));
+      } else if (mapDirection==Direction.TO_DATABASE &&
+          CalciteUtil.isRowTime(field.getType()) && i!=timestampIndex) {
+        //We need to cast all other rowtime fields to their underlying type or Flink will complain
+        TimeIndicatorRelDataType rowtimeType = (TimeIndicatorRelDataType) field.getType();
+        BasicSqlType timestampType = rowtimeType.originalType();
+        hasChanged = true;
+        fields.add(relBuilder.getRexBuilder().makeCast(timestampType, relBuilder.field(field.getIndex())));
+      } else {
+        //Just select the field
+        fields.add(relBuilder.field(i));
+      }
     }
 
     if (hasChanged) {
