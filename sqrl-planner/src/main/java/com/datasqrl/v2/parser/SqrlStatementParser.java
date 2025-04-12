@@ -108,7 +108,7 @@ public class SqrlStatementParser {
     if (importExportMatcher.find()) { //it's an import or export statement
       String directive = importExportMatcher.group("fullmatch");
       int commentEnd = importExportMatcher.end()-directive.length();
-      String comment = statement.substring(0,commentEnd); //For now, hints on import/export are ignored
+      SqrlComments comment = SqrlComments.parse(parse(statement.substring(0,commentEnd), statement, 0));
       String body = statement.substring(importExportMatcher.end()).trim();
 
       if (directive.equalsIgnoreCase("import")) {
@@ -117,7 +117,7 @@ public class SqrlStatementParser {
         ParsedObject<NamePath> packageIdentifier = parseNamePath(subMatcher, "package", statement);
         ParsedObject<NamePath> alias = parseNamePath(subMatcher, "identifier", statement);
         checkFatal(packageIdentifier.isPresent(), ErrorCode.INVALID_IMPORT, "Missing package path");
-        return new SqrlImportStatement(packageIdentifier, alias);
+        return new SqrlImportStatement(packageIdentifier, alias, comment);
       } else if (directive.equalsIgnoreCase("export")) {
         Matcher subMatcher = EXPORT_PARSER.matcher(body);
         checkFatal(subMatcher.find(), ErrorCode.INVALID_IMPORT, "Could not parse IMPORT statement");
@@ -125,7 +125,7 @@ public class SqrlStatementParser {
         ParsedObject<NamePath> tableName = parseNamePath(subMatcher, "identifier", statement);
         checkFatal(packageIdentifier.isPresent(), ErrorCode.INVALID_EXPORT, "Missing package path");
         checkFatal(packageIdentifier.isPresent(), ErrorCode.INVALID_EXPORT, "Missing table");
-        return new SqrlExportStatement(tableName, packageIdentifier);
+        return new SqrlExportStatement(tableName, packageIdentifier, comment);
       } else {
         //This should not happen
         throw new UnsupportedOperationException("Unexpected import/export directive: " + directive);

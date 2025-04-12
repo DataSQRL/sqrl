@@ -24,11 +24,11 @@ Customer := DISTINCT CustomerImport ON customerid ORDER BY `timestamp` DESC;
 Customer.orders := SELECT * FROM SimpleOrders o WHERE this.customerid = o.customerid ORDER BY o.orderTime DESC;
 
 -- This is a function, customerid is an explicit (i.e. not internal) parameter
-CustomerById(customerid BIGINT) := SELECT * FROM Customer WHERE customerid = :customerid;
+CustomerById(customerid BIGINT NOT NULL) := SELECT * FROM Customer WHERE customerid = :customerid;
 
 -- We can then get fancy and combine the two: relationship with explicit parameters
 -- this.customerid is an internal parameter and minAmount is an explicit/external parameter
-Customer.largeOrders(minAmount FLOAT) := SELECT * FROM SimpleOrders o WHERE this.customerid = o.customerid AND o.amount >= :minAmount ORDER BY o.amount DESC;
+Customer.largeOrders(minAmount FLOAT NOT NULL) := SELECT * FROM SimpleOrders o WHERE this.customerid = o.customerid AND o.amount >= :minAmount ORDER BY o.amount DESC;
 
 -- This is a subscription with a filter based on the parameter
 LargeOrderSubscription(customerid BIGINT) := SUBSCRIBE SELECT * FROM LargeOrders WHERE customerid = :customerid;

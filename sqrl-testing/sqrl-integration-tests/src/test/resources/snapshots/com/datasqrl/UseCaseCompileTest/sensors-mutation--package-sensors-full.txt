@@ -228,10 +228,10 @@ CREATE TABLE IF NOT EXISTS "HighTempAlert_1" ("sensorid" INTEGER NOT NULL, "temp
 CREATE TABLE IF NOT EXISTS "SensorMaxTemp_2" ("sensorid" INTEGER NOT NULL, "maxTemp" NUMERIC NOT NULL , PRIMARY KEY ("sensorid"));
 CREATE TABLE IF NOT EXISTS "SensorReading_3" ("sensorid" INTEGER NOT NULL, "temperature" NUMERIC NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE , "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"))
 >>>postgres-views.sql
-CREATE OR REPLACE VIEW "HighTempAlert"("sensorid", "temperature", "event_time") AS SELECT "sensorid", "temperature", "event_time"
-FROM (SELECT "sensorid", "temperature", "event_time", "__pk_hash"
+CREATE OR REPLACE VIEW "HighTempAlert"("sensorid", "temperature", "event_time") AS SELECT *
+FROM (SELECT "sensorid", "temperature", "event_time"
   FROM "HighTempAlert_1"
-  ORDER BY "sensorid" DESC NULLS LAST) AS "t1";
+  ORDER BY "sensorid" DESC NULLS LAST) AS "t3";
 CREATE OR REPLACE VIEW "SensorMaxTemp"("sensorid", "maxTemp") AS SELECT *
 FROM (SELECT "sensorid", "maxTemp"
   FROM "SensorMaxTemp_2"
@@ -263,7 +263,7 @@ FROM "SensorReading_3"
             "query" : {
               "type" : "PagedJdbcQuery",
               "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"sensorid\", \"temperature\", \"event_time\"\nFROM (SELECT \"sensorid\", \"temperature\", \"event_time\", \"__pk_hash\"\n  FROM \"HighTempAlert_1\"\n  ORDER BY \"sensorid\" DESC NULLS LAST) AS \"t\"",
+              "sql" : "SELECT *\nFROM (SELECT \"sensorid\", \"temperature\", \"event_time\"\n  FROM \"HighTempAlert_1\"\n  ORDER BY \"sensorid\" DESC NULLS LAST) AS \"t0\"",
               "parameters" : [ ]
             }
           }

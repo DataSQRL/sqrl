@@ -286,10 +286,6 @@ public class GraphqlSchemaFactory2 {
   }
 
   private List<GraphQLArgument> createArguments(SqrlTableFunction tableFunction) {
-    if (tableFunction.getMultiplicity() != Multiplicity.MANY) {
-      return List.of();
-    }
-
     List<FunctionParameter> parameters = tableFunction.getParameters().stream()
         .filter(parameter->!((SqrlFunctionParameter)parameter).isParentField())
         .collect(Collectors.toList());
@@ -298,11 +294,13 @@ public class GraphqlSchemaFactory2 {
               .filter(p -> GraphqlSchemaUtil2.getGraphQLInputType(p.getType(null), NamePath.of(p.getName()), extendedScalarTypes).isPresent())
               .map(parameter -> GraphQLArgument.newArgument()
                       .name(parameter.getName())
-                      .type(nonNull(
-                          GraphqlSchemaUtil2.getGraphQLInputType(parameter.getType(null), NamePath.of(parameter.getName()), extendedScalarTypes).get()))
+                      .type((GraphQLInputType) GraphqlSchemaUtil2.wrapNullable(
+                          GraphqlSchemaUtil2.getGraphQLInputType(parameter.getType(null), NamePath.of(parameter.getName()), extendedScalarTypes).get(),
+                          parameter.getType(null)))
                       .build()).collect(Collectors.toList());
     List<GraphQLArgument> limitAndOffsetArguments = List.of();
-    if(tableFunction.getVisibility().getAccess() != AccessModifier.SUBSCRIPTION) {
+    if(tableFunction.getVisibility().getAccess() != AccessModifier.SUBSCRIPTION &&
+        tableFunction.getMultiplicity() == Multiplicity.MANY) {
       limitAndOffsetArguments = generateLimitAndOffsetArguments();
     }
     return ListUtils.union(parametersArguments, limitAndOffsetArguments);
