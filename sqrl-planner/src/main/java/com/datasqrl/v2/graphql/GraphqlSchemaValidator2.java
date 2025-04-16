@@ -83,33 +83,34 @@ public class GraphqlSchemaValidator2 extends GraphqlSchemaWalker2 {
     Type outputType = outputField.getType();
     Type inputType = inputField.getType();
 
-    validateStructurallyEqualTypes(outputField, outputType, inputType, registry);
+    validateStructurallyEqualTypes(outputField, Optional.empty(), outputType, inputType, registry);
   }
 
-  private Object validateStructurallyEqualTypes(FieldDefinition outputField, Type outputType, Type inputType, TypeDefinitionRegistry registry) {
+  private Object validateStructurallyEqualTypes(FieldDefinition outputField, Optional<InputValueDefinition> argument, Type outputType, Type inputType, TypeDefinitionRegistry registry) {
+    String argumentAppendix = argument.map(InputValueDefinition::getName).map(name -> "at argument " + name).orElse("");
     if (inputType instanceof NonNullType) {
       //subType may be nullable if type is non-null
       NonNullType nonNullInputType = (NonNullType) inputType;
       if (outputType instanceof NonNullType) {
         NonNullType nonNullOutputType = (NonNullType) outputType;
-        return validateStructurallyEqualTypes(outputField, nonNullOutputType.getType(), nonNullInputType.getType(), registry);
+        return validateStructurallyEqualTypes(outputField, argument, nonNullOutputType.getType(), nonNullInputType.getType(), registry);
       } else {
-        return validateStructurallyEqualTypes(outputField, outputType, nonNullInputType.getType(), registry);
+        return validateStructurallyEqualTypes(outputField, argument, outputType, nonNullInputType.getType(), registry);
       }
     } else if (inputType instanceof ListType) {
       //subType must be a list
-      checkState(outputType instanceof ListType, outputType.getSourceLocation(),
-          "List type mismatch for field. Must match the input type. " + outputField.getName());
+      checkState(outputType instanceof ListType, inputType.getSourceLocation(),
+          "List type mismatch for field %s %s. Must match the input type.",outputField.getName(), argumentAppendix);
       ListType inputListType = (ListType) inputType;
       ListType outputListType = (ListType) outputType;
-      return validateStructurallyEqualTypes(outputField, outputListType.getType(), inputListType.getType(), registry);
+      return validateStructurallyEqualTypes(outputField, argument, outputListType.getType(), inputListType.getType(), registry);
     } else if (inputType instanceof TypeName) {
       //If subtype nonnull then it could return errors
-      checkState(!(outputType instanceof NonNullType), outputType.getSourceLocation(),
-          "Non-null found on field %s, could result in errors if input type is null",
-          outputField.getName());
-      checkState(!(outputType instanceof ListType), outputType.getSourceLocation(),
-          "List type found on field %s when the input is a scalar type", outputField.getName());
+      checkState(!(outputType instanceof NonNullType), inputType.getSourceLocation(),
+          "Field %s %s requires non-null type",
+          outputField.getName(), argumentAppendix);
+      checkState(!(outputType instanceof ListType), inputType.getSourceLocation(),
+          "List type found on field %s %s when the input is a scalar type", outputField.getName(), argumentAppendix);
 
       //If typeName, resolve then
       TypeName inputTypeName = (TypeName) inputType;
@@ -122,29 +123,29 @@ public class GraphqlSchemaValidator2 extends GraphqlSchemaWalker2 {
       if (inputTypeDef instanceof ScalarTypeDefinition) {
         checkState(outputTypeDef instanceof ScalarTypeDefinition && inputTypeDef.getName()
                 .equals(outputTypeDef.getName()), inputType.getSourceLocation(),
-            "Scalar types not matching for field [%s]: found %s but wanted %s", outputField.getName(),
+            "Scalar types not matching for field %s %s: found %s but wanted %s", outputField.getName(), argumentAppendix,
             inputTypeDef.getName(), outputTypeDef.getName());
         return null;
       } else if (inputTypeDef instanceof EnumTypeDefinition) {
         checkState(outputTypeDef instanceof EnumTypeDefinition
                 || outputTypeDef instanceof ScalarTypeDefinition && inputTypeDef.getName()
                 .equals(outputTypeDef.getName()), inputType.getSourceLocation(),
-            "Enum types not matching for field [%s]: found %s but wanted %s", outputField.getName(),
+            "Enum types not matching for field %s %s: found %s but wanted %s", outputField.getName(), argumentAppendix,
             inputTypeDef.getName(), outputTypeDef.getName());
         return null;
       } else if (inputTypeDef instanceof InputObjectTypeDefinition) {
         checkState(outputTypeDef instanceof ObjectTypeDefinition, inputType.getSourceLocation(),
-            "Object types not matching for field [%s]: found %s but wanted %s",
-            outputField.getName(), inputTypeDef.getName(), outputTypeDef.getName());
+            "Object types not matching for field %s %s: found %s but wanted %s",
+            outputField.getName(), argumentAppendix, inputTypeDef.getName(), outputTypeDef.getName());
         ObjectTypeDefinition outputObjectTypeDef = (ObjectTypeDefinition) outputTypeDef;
         InputObjectTypeDefinition inputObjectTypeDef = (InputObjectTypeDefinition) inputTypeDef;
         // walk object types
         return validateStructurallyEqualMutation(outputField, outputObjectTypeDef, inputObjectTypeDef, List.of(), registry);
       } else {
-        throw createThrowable(inputTypeDef.getSourceLocation(), "Unknown type encountered: %s", inputTypeDef.getName());
+        throw createThrowable(inputType.getSourceLocation(), "Unknown type encountered for field %s %s: %s", outputField.getName(), argumentAppendix, inputTypeDef.getName());
       }
     }
-    throw createThrowable(outputField.getSourceLocation(), "Unknown type encountered for field: %s", outputField.getName());
+    throw createThrowable(inputType.getSourceLocation(), "Unknown type encountered for field %s %s", outputField.getName(), argumentAppendix);
   }
 
   private InputValueDefinition findExactlyOneInputValue(FieldDefinition field, String forName, List<InputValueDefinition> inputValueDefinitions) {
@@ -269,10 +270,10 @@ public class GraphqlSchemaValidator2 extends GraphqlSchemaWalker2 {
                   atField.getSourceLocation(),
                   "Cannot infer the type of parameter [%s]",
                   foundParameter.get().getName());
-              NonNullType parameterType = new NonNullType(convertGraphQLInputTypeToType(inferedParameterType.get(), atField));
+              Type parameterType = convertGraphQLInputTypeToType(inferedParameterType.get(), atField);
 
-              // compare the infered graphql parameter type to the argument type
-              validateStructurallyEqualTypes(atField, parameterType, argument.getType(), registry);
+              // compare the inferred graphql parameter type to the argument type
+              validateStructurallyEqualTypes(atField, Optional.of(argument), parameterType, argument.getType(), registry);
             });
   }
 

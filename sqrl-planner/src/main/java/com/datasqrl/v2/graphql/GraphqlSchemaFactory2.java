@@ -189,7 +189,7 @@ public class GraphqlSchemaFactory2 {
     for (MutationQuery mutation : mutations) {
       String name = mutation.getName().getDisplay();
       GraphQLInputType inputType = GraphqlSchemaUtil2.getGraphQLInputType(mutation.getInputDataType(), NamePath.of(name), extendedScalarTypes)
-          .map(GraphQLNonNull::nonNull).orElseThrow(
+          .orElseThrow(
           () -> new IllegalArgumentException("Could not create input type for mutation: " + mutation.getName()));
       // Create the 'event' argument which should mirror the structure of the type
       GraphQLArgument inputArgument = GraphQLArgument.newArgument()
@@ -199,7 +199,7 @@ public class GraphqlSchemaFactory2 {
       GraphQLFieldDefinition.Builder mutationFieldBuilder = GraphQLFieldDefinition.newFieldDefinition()
           .name(name)
           .argument(inputArgument)
-          .type(GraphqlSchemaUtil2.createOutputTypeForRelDataType(mutation.getOutputDataType(), NamePath.of(name.concat("Result")), extendedScalarTypes).get());
+          .type(GraphqlSchemaUtil2.getGraphQLOutputType(mutation.getOutputDataType(), NamePath.of(name.concat("Result")), extendedScalarTypes).get());
       mutation.getDocumentation().ifPresent(mutationFieldBuilder::description);
       builder.field(mutationFieldBuilder.build());
     }
@@ -260,7 +260,7 @@ public class GraphqlSchemaFactory2 {
             .filter(type -> isVisible(field))
             .map(type -> GraphQLFieldDefinition.newFieldDefinition()
                                             .name(field.getName())
-                                            .type((GraphQLOutputType) wrapNullable(type, field.getType()))
+                                            .type(type)
                                             .build()
             );
   }
@@ -294,9 +294,7 @@ public class GraphqlSchemaFactory2 {
               .filter(p -> GraphqlSchemaUtil2.getGraphQLInputType(p.getType(null), NamePath.of(p.getName()), extendedScalarTypes).isPresent())
               .map(parameter -> GraphQLArgument.newArgument()
                       .name(parameter.getName())
-                      .type((GraphQLInputType) GraphqlSchemaUtil2.wrapNullable(
-                          GraphqlSchemaUtil2.getGraphQLInputType(parameter.getType(null), NamePath.of(parameter.getName()), extendedScalarTypes).get(),
-                          parameter.getType(null)))
+                      .type(GraphqlSchemaUtil2.getGraphQLInputType(parameter.getType(null), NamePath.of(parameter.getName()), extendedScalarTypes).get())
                       .build()).collect(Collectors.toList());
     List<GraphQLArgument> limitAndOffsetArguments = List.of();
     if(tableFunction.getVisibility().getAccess() != AccessModifier.SUBSCRIPTION &&

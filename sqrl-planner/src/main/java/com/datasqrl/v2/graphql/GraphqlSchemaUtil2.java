@@ -59,12 +59,12 @@ public class GraphqlSchemaUtil2 {
 
   public static Optional<GraphQLInputType> getGraphQLInputType(RelDataType type, NamePath namePath, boolean extendedScalarTypes) {
     return getGraphQLType(GraphQLMetaType.INPUT, type, namePath, extendedScalarTypes)
-        .map(f->(GraphQLInputType)f);
+        .map(f->(GraphQLInputType)f).map(inputType -> (GraphQLInputType) wrapNullable(inputType, type));
   }
 
   public static Optional<GraphQLOutputType> getGraphQLOutputType(RelDataType type, NamePath namePath, boolean extendedScalarTypes) {
     return getGraphQLType(GraphQLMetaType.OUTPUT, type, namePath, extendedScalarTypes)
-        .map(f->(GraphQLOutputType)f);
+        .map(t -> (GraphQLOutputType) wrapNullable(t, type));
   }
 
   public static Optional<GraphQLType> getGraphQLType(GraphQLMetaType metaType, RelDataType type, NamePath namePath, boolean extendedScalarTypes) {
@@ -146,12 +146,6 @@ public class GraphqlSchemaUtil2 {
       default:
         return Optional.empty();
     }
-  }
-
-
-  //TODO will be used for mutations. Do not remove, inline when coding mutations
-  public static Optional<GraphQLOutputType> createOutputTypeForRelDataType(RelDataType type, NamePath namePath, boolean extendedScalarTypes) {
-    return getGraphQLOutputType(type, namePath, extendedScalarTypes).map(t -> (GraphQLOutputType) wrapNullable(t, type));
   }
 
   private static Optional<GraphQLType> createGraphQLStructuredType(GraphQLMetaType metaType, RelDataType rowType,

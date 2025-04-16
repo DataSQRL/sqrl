@@ -34,7 +34,7 @@ CustomerSubscription := SUBSCRIBE SELECT * FROM Customer;
 
 CustomerById(minId INT) := SELECT * FROM Customer WHERE customerid > :minId;
 
-TableFunctionCallsTblFct(arg1 INT, arg2 INT) := SELECT * FROM Table(CustomerById(:arg2)) WHERE customerid > :arg1;
+TableFunctionCallsTblFct(arg1 INT, arg2 INT NOT NULL) := SELECT * FROM Table(CustomerById(:arg2)) WHERE customerid > :arg1;
 
 CustomerSubscriptionById(minId INT) := SUBSCRIBE SELECT * FROM Customer WHERE customerid = :minId;
 

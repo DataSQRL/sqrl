@@ -11,7 +11,7 @@ type Customer {
     lastUpdated: GraphQLBigInteger!
     timestamp: DateTime
     related(limit: Int = 10, offset: Int = 0): [Customer!]
-    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int, limit: Int = 10, offset: Int = 0): [Customer!]
 }
 
 type CustomerByMultipleTime {
@@ -133,7 +133,7 @@ type Query {
     UnnestOrders(limit: Int = 10, offset: Int = 0): [UnnestOrders!]
     CustomerById(minId: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
     CustomerQuery(id: GraphQLBigInteger!, limit: Int = 10, offset: Int = 0): [AnotherCustomer!]
-    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+    TableFunctionCallsTblFct(arg1: Int, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
 }
 
 type Subscription {
