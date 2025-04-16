@@ -19,7 +19,7 @@ in script:comprehensivetest.sqrl [51:1]:
 CustomerTimeWindow := SELECT
 ^
 
-[FATAL] Scalar types not matching for field [amount]: found Float but wanted Int
+[FATAL] Scalar types not matching for field amount : found Float but wanted Int
 in script:comprehensivetest-fail-not-equal-mutations-field-types [22:13]:
 input OrdersInput {
     orderid: Int!
