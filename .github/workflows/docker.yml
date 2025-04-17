@@ -15,9 +15,9 @@ jobs:
   docker:
     runs-on: ubuntu-latest
     timeout-minutes: 45
-	permissions:
-	  contents: write
-	  packages: write
+    permissions:
+      contents: write
+      packages: write
     strategy:
       matrix:
         target:
