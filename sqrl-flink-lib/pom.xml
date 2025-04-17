@@ -366,6 +366,19 @@
     </profile>
   </profiles>
 
+  <repositories>
+    <repository>
+      <id>github</id>
+      <url>https://maven.pkg.github.com/DataSQRL/flink-sql-runner</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+    </repository>
+  </repositories>
+
   <distributionManagement>
     <snapshotRepository>
       <id>github</id>
