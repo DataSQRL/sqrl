@@ -1,6 +1,9 @@
 package com.datasqrl.datatype;
 
 import com.datasqrl.function.SqrlCastFunction;
+import com.datasqrl.function.AutoRegisterSystemFunction;
+import com.google.auto.service.AutoService;
+
 import lombok.SneakyThrows;
 import org.apache.flink.api.common.typeutils.TypeSerializer;
 import org.apache.flink.core.memory.DataOutputSerializer;
@@ -11,7 +14,8 @@ import org.apache.flink.table.functions.ScalarFunction;
 /**
  * Converts an annotated data type to
  */
-public class SerializeToBytes extends ScalarFunction implements SqrlCastFunction {
+@AutoService(AutoRegisterSystemFunction.class)
+public class SerializeToBytes extends ScalarFunction implements SqrlCastFunction, AutoRegisterSystemFunction {
 
   @SneakyThrows
   public byte[] eval(@DataTypeHint(inputGroup = InputGroup.ANY) Object object) {

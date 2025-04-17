@@ -14,10 +14,14 @@ import org.apache.flink.table.types.inference.TypeInference;
 import org.apache.flink.table.types.inference.TypeStrategies;
 import org.apache.flink.util.jackson.JacksonMapperFactory;
 
+import com.datasqrl.function.AutoRegisterSystemFunction;
+import com.google.auto.service.AutoService;
+
 /**
  * Creates a JSON array from the list of JSON objects and scalar values.
  */
-public class JsonArray extends ScalarFunction {
+@AutoService(AutoRegisterSystemFunction.class)
+public class JsonArray extends ScalarFunction implements AutoRegisterSystemFunction{
   private static final ObjectMapper mapper = JacksonMapperFactory.createObjectMapper();
 
   public FlinkJsonType eval(Object... objects) {

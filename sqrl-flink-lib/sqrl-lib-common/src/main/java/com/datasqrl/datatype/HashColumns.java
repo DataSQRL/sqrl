@@ -7,12 +7,17 @@ import org.apache.flink.table.types.inference.InputTypeStrategies;
 import org.apache.flink.table.types.inference.InputTypeStrategy;
 import org.apache.flink.table.types.inference.TypeInference;
 import org.apache.flink.table.types.inference.TypeStrategies;
+
+import com.datasqrl.function.AutoRegisterSystemFunction;
+import com.google.auto.service.AutoService;
+
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
-public class HashColumns extends ScalarFunction {
+@AutoService(AutoRegisterSystemFunction.class)
+public class HashColumns extends ScalarFunction implements AutoRegisterSystemFunction{
 
   public String eval(Object... objects) {
     if (objects.length==0) return "";
