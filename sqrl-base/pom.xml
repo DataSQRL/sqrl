@@ -128,6 +128,10 @@
       <artifactId>guice-multibindings</artifactId>
       <version>4.2.3</version>
     </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-server-core</artifactId>
+    </dependency>
 
   </dependencies>
 

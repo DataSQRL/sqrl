@@ -13,6 +13,7 @@ import com.datasqrl.engine.database.DatabasePhysicalPlanOld;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.graphql.jdbc.DatabaseType;
 import com.datasqrl.plan.global.PhysicalDAGPlan.DatabaseStagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
@@ -98,7 +99,7 @@ public class DuckDBEngine extends AbstractJDBCQueryEngine {
         }
       });
 
-      databaseQueries.put(readQuery.getQuery(), new QueryTemplate(getName(), replaced));
+      databaseQueries.put(readQuery.getQuery(), new QueryTemplate(DatabaseType.DUCKDB, replaced));
     });
 
 

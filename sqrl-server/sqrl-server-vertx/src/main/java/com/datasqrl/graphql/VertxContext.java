@@ -2,7 +2,7 @@ package com.datasqrl.graphql;
 
 import com.datasqrl.graphql.server.Context;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
-import com.datasqrl.graphql.server.JdbcClient;
+import com.datasqrl.graphql.jdbc.JdbcClient;
 import com.datasqrl.graphql.server.QueryExecutionContext;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
@@ -69,24 +69,12 @@ public class VertxContext implements Context {
 
   @Override
   public DataFetcher<?> createArgumentLookupFetcher(
-      GraphQLEngineBuilder server, Map<Set<Argument>, ResolvedQuery> lookupMap) {
+      GraphQLEngineBuilder server, Set<Argument> arguments, ResolvedQuery resolvedQuery) {
     return VertxDataFetcher.create(
         (env, future) -> {
-          // Map args
-          Set<Argument> argumentSet =
-              env.getArguments().entrySet().stream()
-                  .map(argument -> new VariableArgument(argument.getKey(), argument.getValue()))
-                  .collect(Collectors.toSet());
-
-          // Find query
-          ResolvedQuery resolvedQuery = lookupMap.get(argumentSet);
-          if (resolvedQuery == null) {
-            future.fail("Could not find query: " + env.getArguments());
-            return;
-          }
           // Execute
           QueryExecutionContext context =
-              new VertxQueryExecutionContext(this, env, argumentSet, future);
+              new VertxQueryExecutionContext(this, env, arguments, future);
           resolvedQuery.accept(server, context);
         });
   }

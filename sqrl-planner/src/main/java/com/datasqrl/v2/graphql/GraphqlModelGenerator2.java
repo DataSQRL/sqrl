@@ -8,24 +8,20 @@ import com.datasqrl.engine.database.relational.ExecutableJdbcReadQuery;
 import com.datasqrl.engine.log.kafka.KafkaQuery;
 import com.datasqrl.engine.log.kafka.NewTopic;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.graphql.jdbc.SchemaConstants;
 import com.datasqrl.graphql.server.MutationComputedColumnType;
+import com.datasqrl.graphql.server.PaginationType;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
-import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentLookupCoords;
-import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentSet;
-import com.datasqrl.graphql.server.RootGraphqlModel.Coords;
-import com.datasqrl.graphql.server.RootGraphqlModel.DuckDbQuery;
-import com.datasqrl.graphql.server.RootGraphqlModel.FieldLookupCoords;
-import com.datasqrl.graphql.server.RootGraphqlModel.JdbcQuery;
+import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentLookupQueryCoords;
+import com.datasqrl.graphql.server.RootGraphqlModel.FieldLookupQueryCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.KafkaMutationCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.KafkaSubscriptionCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoords;
-import com.datasqrl.graphql.server.RootGraphqlModel.PagedDuckDbQuery;
-import com.datasqrl.graphql.server.RootGraphqlModel.PagedJdbcQuery;
-import com.datasqrl.graphql.server.RootGraphqlModel.PagedSnowflakeDbQuery;
-import com.datasqrl.graphql.server.RootGraphqlModel.SnowflakeDbQuery;
+import com.datasqrl.graphql.server.RootGraphqlModel.QueryCoords;
+import com.datasqrl.graphql.server.RootGraphqlModel.QueryWithArguments;
+import com.datasqrl.graphql.server.RootGraphqlModel.SqlQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoords;
-import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.v2.dag.plan.MutationComputedColumn;
 import com.datasqrl.v2.dag.plan.MutationQuery;
 import com.datasqrl.v2.parser.AccessModifier;
@@ -54,7 +50,7 @@ import org.apache.calcite.schema.FunctionParameter;
 @Getter
 public class GraphqlModelGenerator2 extends GraphqlSchemaWalker2 {
 
-  List<Coords> queryCoords = new ArrayList<>();
+  List<QueryCoords> queryCoords = new ArrayList<>();
   List<MutationCoords> mutations = new ArrayList<>();
   List<SubscriptionCoords> subscriptions = new ArrayList<>();
   private final ErrorCollector errorCollector;
@@ -148,7 +144,7 @@ public class GraphqlModelGenerator2 extends GraphqlSchemaWalker2 {
 
     // we create PropertyDataFetchers for fields only when graphql field name is different from calcite field name
     if (hasVaryingCase(atField, relDataTypeField)) {
-      FieldLookupCoords fieldLookupCoords = FieldLookupCoords.builder().parentType(objectType.getName())
+      FieldLookupQueryCoords fieldLookupCoords = FieldLookupQueryCoords.builder().parentType(objectType.getName())
           .fieldName(atField.getName()).columnName(relDataTypeField.getName()).build();
       queryCoords.add(fieldLookupCoords);
     }
@@ -161,7 +157,7 @@ public class GraphqlModelGenerator2 extends GraphqlSchemaWalker2 {
     final ExecutableQuery executableQuery = tableFunction.getExecutableQuery();
     checkState(
         executableQuery instanceof ExecutableJdbcReadQuery,
-        atField.getType().getSourceLocation(),
+        atField.getSourceLocation(),
         "This table function should be planned as an ExecutableJdbcReadQuery");
     final ExecutableJdbcReadQuery executableJdbcReadQuery = (ExecutableJdbcReadQuery) executableQuery;
 
@@ -174,41 +170,18 @@ public class GraphqlModelGenerator2 extends GraphqlSchemaWalker2 {
               : new RootGraphqlModel.ArgumentParameter(parameter.getName()));
     }
     RootGraphqlModel.QueryBase queryBase;
-    if (tableFunction.getMultiplicity() == Multiplicity.MANY) { // all queries that can return more than 1 element are paginated
-      switch (executableJdbcReadQuery.getStage().getEngine().getName()) {
-        case "postgres":
-        default:
-          queryBase = new PagedJdbcQuery(executableJdbcReadQuery.getSql(), parameters);
-          break;
-        case "duckdb":
-          queryBase = new PagedDuckDbQuery(executableJdbcReadQuery.getSql(), parameters);
-          break;
-        case "snowflake":
-          queryBase = new PagedSnowflakeDbQuery(executableJdbcReadQuery.getSql(), parameters);
-          break;
-      }
-    } else { // query returns a single element, it does not require pagination
-      switch (executableJdbcReadQuery.getStage().getEngine().getName()) {
-        case "postgres":
-        default:
-          queryBase = new JdbcQuery(executableJdbcReadQuery.getSql(), parameters);
-          break;
-        case "duckdb":
-          queryBase = new DuckDbQuery(executableJdbcReadQuery.getSql(), parameters);
-          break;
-        case "snowflake":
-          queryBase = new SnowflakeDbQuery(executableJdbcReadQuery.getSql(), parameters);
-          break;
-      }
-    }
 
-    ArgumentLookupCoords.ArgumentLookupCoordsBuilder coordsBuilder = ArgumentLookupCoords.builder()
+    boolean hasLimitOrOffset = atField.getInputValueDefinitions().stream().map(InputValueDefinition::getName)
+        .anyMatch(name -> name.equals(SchemaConstants.LIMIT) || name.equals(SchemaConstants.OFFSET));
+    queryBase = new SqlQuery(executableJdbcReadQuery.getSql(), parameters,
+        hasLimitOrOffset? PaginationType.LIMIT_AND_OFFSET: PaginationType.NONE,
+        executableJdbcReadQuery.getDatabase());
+    ArgumentLookupQueryCoords.ArgumentLookupQueryCoordsBuilder coordsBuilder = ArgumentLookupQueryCoords.builder()
         .parentType(parentType.getName()).fieldName(atField.getName());
-    ArgumentSet set = ArgumentSet.builder().arguments(createArguments(atField))
+    QueryWithArguments set = QueryWithArguments.builder().arguments(createArguments(atField))
             .query(queryBase).build();
 
-    coordsBuilder.match(set);
-
+    coordsBuilder.exec(set);
     queryCoords.add(coordsBuilder.build());
   }
 

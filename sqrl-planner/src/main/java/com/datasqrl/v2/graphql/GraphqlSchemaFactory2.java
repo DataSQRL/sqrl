@@ -319,7 +319,6 @@ public class GraphqlSchemaFactory2 {
     return List.of(limit, offset);
   }
 
-
   private boolean isVisible(RelDataTypeField f) {
     return !f.getName().startsWith(HIDDEN_PREFIX);
   }

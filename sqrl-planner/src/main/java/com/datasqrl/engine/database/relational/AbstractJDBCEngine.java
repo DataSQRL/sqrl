@@ -133,7 +133,9 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
         SqrlTableFunction function = query.getFunction();
         QueryResult result = stmtFactory.createQuery(query, !function.hasParameters());
         if (result.getExecQueryBuilder()!=null && function.getExecutableQuery()==null) {
-          function.setExecutableQuery(result.getExecQueryBuilder().stage(stagePlan.getStage()).build());
+          function.setExecutableQuery(result.getExecQueryBuilder()
+              .database(getDialect().getDatabaseType())
+              .stage(stagePlan.getStage()).build());
         }
         if (result.getView()!=null) {
           planBuilder.statement(result.getView());
@@ -178,7 +180,7 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
 
     Map<IdentifiedQuery, QueryTemplate> databaseQueries = dbPlan.getQueries().stream()
         .collect(Collectors.toMap(ReadQuery::getQuery, q -> new QueryTemplate(
-            getDialect().name().toLowerCase(), q.getRelNode())));
+            getDialect().getDatabaseType(), q.getRelNode())));
 
     List<DatabaseView> views = new ArrayList<>();
     Optional<DataTypeMapper> upCastingMapper = getUpCastingMapper();
