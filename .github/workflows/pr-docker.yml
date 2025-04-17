@@ -8,8 +8,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
-      contents: read
-      packages: read
+      contents: write
+      packages: write
 
     steps:
       - name: Setup Timezone
