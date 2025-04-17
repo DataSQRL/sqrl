@@ -1,11 +1,14 @@
 package com.datasqrl.json;
 
-import org.apache.flink.table.functions.ScalarFunction;
-
+import com.datasqrl.function.AutoRegisterSystemFunction;
 import com.datasqrl.function.SqrlCastFunction;
 import com.datasqrl.types.json.FlinkJsonType;
+import com.google.auto.service.AutoService;
+import org.apache.flink.table.functions.ScalarFunction;
 
-public class JsonToString extends ScalarFunction implements SqrlCastFunction {
+@AutoService(AutoRegisterSystemFunction.class)
+public class JsonToString extends ScalarFunction
+    implements SqrlCastFunction, AutoRegisterSystemFunction {
 
   public String eval(FlinkJsonType json) {
     if (json == null) {
@@ -13,5 +16,4 @@ public class JsonToString extends ScalarFunction implements SqrlCastFunction {
     }
     return json.getJson().toString();
   }
-
 }

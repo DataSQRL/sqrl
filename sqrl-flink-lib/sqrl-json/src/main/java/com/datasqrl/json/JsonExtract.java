@@ -1,18 +1,20 @@
 package com.datasqrl.json;
 
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
-import org.apache.flink.table.functions.ScalarFunction;
-
+import com.datasqrl.function.AutoRegisterSystemFunction;
 import com.datasqrl.types.json.FlinkJsonType;
+import com.google.auto.service.AutoService;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.ReadContext;
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
+import org.apache.flink.table.functions.ScalarFunction;
 
 /**
  * Extracts a value from the JSON object based on the provided JSON path. An optional third argument
  * can be provided to specify a default value when the given JSON path does not yield a value for
  * the JSON object.
  */
-public class JsonExtract extends ScalarFunction {
+@AutoService(AutoRegisterSystemFunction.class)
+public class JsonExtract extends ScalarFunction implements AutoRegisterSystemFunction {
 
   public String eval(FlinkJsonType input, String pathSpec) {
     if (input == null) {

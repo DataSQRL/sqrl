@@ -2,6 +2,9 @@ package com.datasqrl.json;
 
 import static com.datasqrl.json.JsonFunctions.createJsonArgumentTypeStrategy;
 
+import com.datasqrl.function.AutoRegisterSystemFunction;
+import com.datasqrl.types.json.FlinkJsonType;
+import com.google.auto.service.AutoService;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.flink.table.api.DataTypes;
@@ -13,15 +16,14 @@ import org.apache.flink.table.types.inference.TypeInference;
 import org.apache.flink.table.types.inference.TypeStrategies;
 import org.apache.flink.util.jackson.JacksonMapperFactory;
 
-import com.datasqrl.types.json.FlinkJsonType;
-
 /**
  * Creates a JSON object from key-value pairs, where the key is mapped to a field with the
  * associated value. Key-value pairs are provided as a list of even length, with the first element
  * of each pair being the key and the second being the value. If multiple key-value pairs have the
  * same key, the last pair is added to the JSON object.
  */
-public class JsonObject extends ScalarFunction {
+@AutoService(AutoRegisterSystemFunction.class)
+public class JsonObject extends ScalarFunction implements AutoRegisterSystemFunction {
   static final ObjectMapper mapper = JacksonMapperFactory.createObjectMapper();
 
   public FlinkJsonType eval(Object... objects) {
@@ -48,16 +50,18 @@ public class JsonObject extends ScalarFunction {
     return new FlinkJsonType(objectNode);
   }
 
-
   @Override
   public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-    InputTypeStrategy anyJsonCompatibleArg = InputTypeStrategies.repeatingSequence(
-        createJsonArgumentTypeStrategy(typeFactory));
+    InputTypeStrategy anyJsonCompatibleArg =
+        InputTypeStrategies.repeatingSequence(createJsonArgumentTypeStrategy(typeFactory));
 
-    InputTypeStrategy inputTypeStrategy = InputTypeStrategies.compositeSequence()
-        .finishWithVarying(anyJsonCompatibleArg);
+    InputTypeStrategy inputTypeStrategy =
+        InputTypeStrategies.compositeSequence().finishWithVarying(anyJsonCompatibleArg);
 
-    return TypeInference.newBuilder().inputTypeStrategy(inputTypeStrategy).outputTypeStrategy(
-        TypeStrategies.explicit(DataTypes.of(FlinkJsonType.class).toDataType(typeFactory))).build();
+    return TypeInference.newBuilder()
+        .inputTypeStrategy(inputTypeStrategy)
+        .outputTypeStrategy(
+            TypeStrategies.explicit(DataTypes.of(FlinkJsonType.class).toDataType(typeFactory)))
+        .build();
   }
 }

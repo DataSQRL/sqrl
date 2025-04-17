@@ -8,7 +8,11 @@ import org.apache.flink.table.types.inference.InputTypeStrategy;
 import org.apache.flink.table.types.inference.TypeInference;
 import org.apache.flink.table.types.inference.TypeStrategies;
 
-public class Noop extends ScalarFunction {
+import com.datasqrl.function.AutoRegisterSystemFunction;
+import com.google.auto.service.AutoService;
+
+@AutoService(AutoRegisterSystemFunction.class)
+public class Noop extends ScalarFunction implements AutoRegisterSystemFunction{
 
   public boolean eval(Object... objects) {
     return true;

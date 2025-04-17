@@ -3,6 +3,9 @@ package com.datasqrl.json;
 import static com.datasqrl.json.JsonFunctions.createJsonArgumentTypeStrategy;
 import static com.datasqrl.json.JsonFunctions.createJsonType;
 
+import com.datasqrl.function.AutoRegisterSystemFunction;
+import com.datasqrl.types.json.FlinkJsonType;
+import com.google.auto.service.AutoService;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ArrayNode;
 import org.apache.flink.table.catalog.DataTypeFactory;
@@ -13,12 +16,9 @@ import org.apache.flink.table.types.inference.TypeInference;
 import org.apache.flink.table.types.inference.TypeStrategies;
 import org.apache.flink.util.jackson.JacksonMapperFactory;
 
-import com.datasqrl.types.json.FlinkJsonType;
-
-/**
- * Creates a JSON array from the list of JSON objects and scalar values.
- */
-public class JsonArray extends ScalarFunction {
+/** Creates a JSON array from the list of JSON objects and scalar values. */
+@AutoService(AutoRegisterSystemFunction.class)
+public class JsonArray extends ScalarFunction implements AutoRegisterSystemFunction {
   private static final ObjectMapper mapper = JacksonMapperFactory.createObjectMapper();
 
   public FlinkJsonType eval(Object... objects) {
@@ -38,11 +38,12 @@ public class JsonArray extends ScalarFunction {
 
   @Override
   public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-    InputTypeStrategy inputTypeStrategy = InputTypeStrategies.varyingSequence(
-        createJsonArgumentTypeStrategy(typeFactory));
+    InputTypeStrategy inputTypeStrategy =
+        InputTypeStrategies.varyingSequence(createJsonArgumentTypeStrategy(typeFactory));
 
-    return TypeInference.newBuilder().inputTypeStrategy(inputTypeStrategy)
-        .outputTypeStrategy(TypeStrategies.explicit(createJsonType(typeFactory))).build();
+    return TypeInference.newBuilder()
+        .inputTypeStrategy(inputTypeStrategy)
+        .outputTypeStrategy(TypeStrategies.explicit(createJsonType(typeFactory)))
+        .build();
   }
-
 }

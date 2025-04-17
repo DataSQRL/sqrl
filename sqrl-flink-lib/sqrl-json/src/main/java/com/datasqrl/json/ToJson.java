@@ -1,5 +1,9 @@
 package com.datasqrl.json;
 
+import com.datasqrl.function.AutoRegisterSystemFunction;
+import com.datasqrl.function.SqrlCastFunction;
+import com.datasqrl.types.json.FlinkJsonType;
+import com.google.auto.service.AutoService;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
@@ -11,13 +15,9 @@ import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.jackson.JacksonMapperFactory;
 
-import com.datasqrl.function.SqrlCastFunction;
-import com.datasqrl.types.json.FlinkJsonType;
-
-/**
- * Parses a JSON object from string
- */
-public class ToJson extends ScalarFunction implements SqrlCastFunction {
+/** Parses a JSON object from string */
+@AutoService(AutoRegisterSystemFunction.class)
+public class ToJson extends ScalarFunction implements SqrlCastFunction, AutoRegisterSystemFunction {
 
   public static final ObjectMapper mapper = JacksonMapperFactory.createObjectMapper();
 
@@ -32,13 +32,12 @@ public class ToJson extends ScalarFunction implements SqrlCastFunction {
     }
   }
 
-
   public FlinkJsonType eval(@DataTypeHint(inputGroup = InputGroup.ANY) Object json) {
     if (json == null) {
       return null;
     }
     if (json instanceof FlinkJsonType) {
-      return (FlinkJsonType)json;
+      return (FlinkJsonType) json;
     }
 
     return new FlinkJsonType(unboxFlinkToJsonNode(json));
@@ -48,10 +47,11 @@ public class ToJson extends ScalarFunction implements SqrlCastFunction {
     if (json instanceof Row) {
       Row row = (Row) json;
       ObjectNode objectNode = mapper.createObjectNode();
-      String[] fieldNames = row.getFieldNames(true).toArray(new String[0]);  // Get field names in an array
+      String[] fieldNames =
+          row.getFieldNames(true).toArray(new String[0]); // Get field names in an array
       for (String fieldName : fieldNames) {
         Object field = row.getField(fieldName);
-        objectNode.set(fieldName, unboxFlinkToJsonNode(field));  // Recursively unbox each field
+        objectNode.set(fieldName, unboxFlinkToJsonNode(field)); // Recursively unbox each field
       }
       return objectNode;
     } else if (json instanceof Row[]) {
@@ -61,11 +61,11 @@ public class ToJson extends ScalarFunction implements SqrlCastFunction {
         if (row == null) {
           arrayNode.addNull();
         } else {
-          arrayNode.add(unboxFlinkToJsonNode(row));  // Recursively unbox each row in the array
+          arrayNode.add(unboxFlinkToJsonNode(row)); // Recursively unbox each row in the array
         }
       }
       return arrayNode;
     }
-    return mapper.valueToTree(json);  // Directly serialize other types
+    return mapper.valueToTree(json); // Directly serialize other types
   }
 }
