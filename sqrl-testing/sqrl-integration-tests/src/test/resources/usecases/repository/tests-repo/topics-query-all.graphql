@@ -1,0 +1,6 @@
+{
+  TopicSearch {
+    topicName
+    numPackages
+  }
+}
