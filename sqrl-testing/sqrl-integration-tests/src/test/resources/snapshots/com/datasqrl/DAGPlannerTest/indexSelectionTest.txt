@@ -489,7 +489,6 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
             "parameters" : [
               {
                 "type" : "source",
-                "type" : "source",
                 "key" : "customerid"
               }
             ],
@@ -527,11 +526,9 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
             "parameters" : [
               {
                 "type" : "arg",
-                "type" : "arg",
                 "path" : "time"
               },
               {
-                "type" : "arg",
                 "type" : "arg",
                 "path" : "customerid"
               }
@@ -578,21 +575,17 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
             "parameters" : [
               {
                 "type" : "arg",
-                "type" : "arg",
                 "path" : "name"
               },
               {
-                "type" : "arg",
                 "type" : "arg",
                 "path" : "description"
               },
               {
                 "type" : "arg",
-                "type" : "arg",
                 "path" : "category"
               },
               {
-                "type" : "arg",
                 "type" : "arg",
                 "path" : "_ingest_time"
               }
@@ -626,7 +619,6 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
             "sql" : "SELECT *\nFROM \"Orders_2\"\nWHERE $1 = \"id\"",
             "parameters" : [
               {
-                "type" : "arg",
                 "type" : "arg",
                 "path" : "id"
               }
@@ -665,11 +657,9 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
             "parameters" : [
               {
                 "type" : "arg",
-                "type" : "arg",
                 "path" : "time"
               },
               {
-                "type" : "arg",
                 "type" : "arg",
                 "path" : "customerid"
               }

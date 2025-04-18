@@ -1102,7 +1102,6 @@ FROM "UnnestOrders_16"
             "parameters" : [
               {
                 "type" : "source",
-                "type" : "source",
                 "key" : "customerid"
               }
             ],
@@ -1136,11 +1135,9 @@ FROM "UnnestOrders_16"
             "parameters" : [
               {
                 "type" : "arg",
-                "type" : "arg",
                 "path" : "length"
               },
               {
-                "type" : "source",
                 "type" : "source",
                 "key" : "customerid"
               }
@@ -1511,7 +1508,6 @@ FROM "UnnestOrders_16"
             "parameters" : [
               {
                 "type" : "arg",
-                "type" : "arg",
                 "path" : "minId"
               }
             ],
@@ -1544,7 +1540,6 @@ FROM "UnnestOrders_16"
             "sql" : "SELECT *\nFROM \"AnotherCustomer_1\"\nWHERE \"customerid\" = $1",
             "parameters" : [
               {
-                "type" : "arg",
                 "type" : "arg",
                 "path" : "id"
               }
@@ -1583,11 +1578,9 @@ FROM "UnnestOrders_16"
             "parameters" : [
               {
                 "type" : "arg",
-                "type" : "arg",
                 "path" : "arg1"
               },
               {
-                "type" : "arg",
                 "type" : "arg",
                 "path" : "arg2"
               }

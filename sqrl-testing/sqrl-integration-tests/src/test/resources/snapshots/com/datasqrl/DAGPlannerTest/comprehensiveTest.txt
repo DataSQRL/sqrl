@@ -1880,7 +1880,6 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
             "parameters" : [
               {
                 "type" : "source",
-                "type" : "source",
                 "key" : "customerid"
               }
             ],
@@ -1914,11 +1913,9 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
             "parameters" : [
               {
                 "type" : "arg",
-                "type" : "arg",
                 "path" : "length"
               },
               {
-                "type" : "source",
                 "type" : "source",
                 "key" : "customerid"
               }
@@ -2289,7 +2286,6 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
             "parameters" : [
               {
                 "type" : "arg",
-                "type" : "arg",
                 "path" : "minId"
               }
             ],
@@ -2322,7 +2318,6 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
             "sql" : "SELECT *\nFROM \"AnotherCustomer_1\"\nWHERE \"customerid\" = $1",
             "parameters" : [
               {
-                "type" : "arg",
                 "type" : "arg",
                 "path" : "id"
               }
@@ -2361,11 +2356,9 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
             "parameters" : [
               {
                 "type" : "arg",
-                "type" : "arg",
                 "path" : "arg1"
               },
               {
-                "type" : "arg",
                 "type" : "arg",
                 "path" : "arg2"
               }

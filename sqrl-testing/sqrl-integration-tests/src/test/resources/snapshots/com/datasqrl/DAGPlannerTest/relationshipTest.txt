@@ -312,7 +312,6 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
             "parameters" : [
               {
                 "type" : "source",
-                "type" : "source",
                 "key" : "customerid"
               }
             ],
@@ -341,7 +340,6 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
             "sql" : "SELECT \"id\"\nFROM \"Orders_2\"\nWHERE $1 = \"customerid\"",
             "parameters" : [
               {
-                "type" : "source",
                 "type" : "source",
                 "key" : "customerid"
               }

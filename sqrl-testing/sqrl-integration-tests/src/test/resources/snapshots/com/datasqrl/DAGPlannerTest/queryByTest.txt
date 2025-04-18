@@ -339,16 +339,13 @@ INSERT INTO `default_catalog`.`default_database`.`Orders1_2`
             "parameters" : [
               {
                 "type" : "arg",
-                "type" : "arg",
                 "path" : "id"
               },
               {
                 "type" : "arg",
-                "type" : "arg",
                 "path" : "time"
               },
               {
-                "type" : "arg",
                 "type" : "arg",
                 "path" : "customerid"
               }
@@ -391,16 +388,13 @@ INSERT INTO `default_catalog`.`default_database`.`Orders1_2`
             "parameters" : [
               {
                 "type" : "arg",
-                "type" : "arg",
                 "path" : "id"
               },
               {
                 "type" : "arg",
-                "type" : "arg",
                 "path" : "time"
               },
               {
-                "type" : "arg",
                 "type" : "arg",
                 "path" : "customerid"
               }

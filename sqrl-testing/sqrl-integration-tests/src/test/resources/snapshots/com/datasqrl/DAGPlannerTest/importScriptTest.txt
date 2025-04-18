@@ -409,7 +409,6 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
             "parameters" : [
               {
                 "type" : "arg",
-                "type" : "arg",
                 "path" : "machineid"
               }
             ],

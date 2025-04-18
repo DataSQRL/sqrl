@@ -300,11 +300,9 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByNothing_2`
             "parameters" : [
               {
                 "type" : "arg",
-                "type" : "arg",
                 "path" : "email"
               },
               {
-                "type" : "arg",
                 "type" : "arg",
                 "path" : "id"
               }
@@ -339,7 +337,6 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByNothing_2`
             "parameters" : [
               {
                 "type" : "arg",
-                "type" : "arg",
                 "path" : "ids"
               }
             ],
@@ -372,7 +369,6 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByNothing_2`
             "sql" : "SELECT *\nFROM \"Customer_1\"\nWHERE 'john@doe.com' = \"email\" AND ($1 IS NULL OR $1 = \"customerid\")",
             "parameters" : [
               {
-                "type" : "arg",
                 "type" : "arg",
                 "path" : "id"
               }

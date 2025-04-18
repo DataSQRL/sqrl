@@ -449,7 +449,6 @@ INSERT INTO `default_catalog`.`default_database`.`SelectOrders1_2`
             "parameters" : [
               {
                 "type" : "arg",
-                "type" : "arg",
                 "path" : "id"
               }
             ],
@@ -482,7 +481,6 @@ INSERT INTO `default_catalog`.`default_database`.`SelectOrders1_2`
             "sql" : "SELECT *\nFROM \"SelectOrders2_3\"\nWHERE \"id\" = $1",
             "parameters" : [
               {
-                "type" : "arg",
                 "type" : "arg",
                 "path" : "id"
               }

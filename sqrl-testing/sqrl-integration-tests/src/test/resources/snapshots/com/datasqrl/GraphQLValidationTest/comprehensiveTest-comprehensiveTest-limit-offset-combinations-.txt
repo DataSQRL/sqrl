@@ -1110,11 +1110,9 @@ FROM "UnnestOrders_16"
             "parameters" : [
               {
                 "type" : "arg",
-                "type" : "arg",
                 "path" : "arg1"
               },
               {
-                "type" : "arg",
                 "type" : "arg",
                 "path" : "arg2"
               }
@@ -1144,7 +1142,6 @@ FROM "UnnestOrders_16"
             "sql" : "SELECT *\nFROM \"Customer_2\"\nWHERE $1 = \"customerid\"\nORDER BY \"timestamp\" NULLS FIRST",
             "parameters" : [
               {
-                "type" : "source",
                 "type" : "source",
                 "key" : "customerid"
               }
@@ -1179,11 +1176,9 @@ FROM "UnnestOrders_16"
             "parameters" : [
               {
                 "type" : "arg",
-                "type" : "arg",
                 "path" : "length"
               },
               {
-                "type" : "source",
                 "type" : "source",
                 "key" : "customerid"
               }

@@ -99,7 +99,7 @@ Type:   state
 Stage:  flink
 Inputs: default_catalog.default_database.SubmissionTopics
 Annotations:
- - sort: [1 DESC-nulls-last]
+ - sort: [1 DESC-nulls-last, 0 ASC-nulls-first]
 Primary Key: topicName
 Timestamp  : -
 Schema:
@@ -111,7 +111,7 @@ LogicalAggregate(group=[{0}], numPackages=[COUNT(DISTINCT $1)])
     LogicalTableScan(table=[[default_catalog, default_database, SubmissionTopics]])
 SQL: CREATE VIEW TopicSearch AS  SELECT topicName, COUNT(DISTINCT pkgName) AS numPackages
                FROM SubmissionTopics
-               GROUP BY topicName ORDER BY numPackages DESC;
+               GROUP BY topicName ORDER BY numPackages DESC, topicName ASC;
 
 === _SubmissionRaw
 ID:     default_catalog.default_database._SubmissionRaw
@@ -444,7 +444,7 @@ FROM "SubmissionTopics_3"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"topicName\", \"numPackages\"\n  FROM \"TopicSearch_5\"\n  ORDER BY \"numPackages\" DESC NULLS LAST) AS \"t\"\nWHERE \"topicName\" = $1 OR $1 IS NULL",
+            "sql" : "SELECT *\nFROM (SELECT \"topicName\", \"numPackages\"\n  FROM \"TopicSearch_5\"\n  ORDER BY \"numPackages\" DESC NULLS LAST, \"topicName\" NULLS FIRST) AS \"t\"\nWHERE \"topicName\" = $1 OR $1 IS NULL",
             "parameters" : [
               {
                 "type" : "arg",
@@ -514,7 +514,7 @@ FROM "SubmissionTopics_3"
     "subscriptions" : [ ],
     "schema" : {
       "type" : "string",
-      "schema" : "type Package {\n  name: String!\n  latest: Submission\n  versions(version: String!, variant: String!, limit: Int = 10, offset: Int = 0): [Submission!]\n}\n\ntype Query {\n  Package(name: String!, limit: Int = 10, offset: Int = 0): [Package!]\n  TopicSearch(topicName: String!, limit: Int = 10, offset: Int = 0): [TopicSearch!]\n  TopicPackages(topicName: String!, limit: Int = 10, offset: Int = 0): [TopicPackages!]\n}\n\ntype Submission {\n  name: String!\n  version: String!\n  variant: String!\n  latest: Boolean!\n  type: String\n  license: String\n  repository: String\n  homepage: String\n  documentation: String\n  readme: String\n  description: String\n  uniqueId: String!\n  keywords: [String!]\n  repoURL: String!\n  file: String!\n  hash: String!\n  submissionTime: String!\n}\n\ntype TopicSearch {\n  topicName: String!\n  numPackages: Int!\n}\n\ntype TopicPackages {\n  topicName: String!\n  pkgName: String!\n  lastSubmission: String!\n  numSubmissions: Int!\n  latest: Submission\n}"
+      "schema" : "type Package {\n  name: String!\n  latest: Submission\n  versions(version: String!, variant: String!, limit: Int = 10, offset: Int = 0): [Submission!]\n}\n\ntype Query {\n  Package(name: String!, limit: Int = 10, offset: Int = 0): [Package!]\n  TopicSearch(topicName: String, limit: Int = 10, offset: Int = 0): [TopicSearch!]\n  TopicPackages(topicName: String!, limit: Int = 10, offset: Int = 0): [TopicPackages!]\n}\n\ntype Submission {\n  name: String!\n  version: String!\n  variant: String!\n  latest: Boolean!\n  type: String\n  license: String\n  repository: String\n  homepage: String\n  documentation: String\n  readme: String\n  description: String\n  uniqueId: String!\n  keywords: [String!]\n  repoURL: String!\n  file: String!\n  hash: String!\n  submissionTime: String!\n}\n\ntype TopicSearch {\n  topicName: String!\n  numPackages: Int!\n}\n\ntype TopicPackages {\n  topicName: String!\n  pkgName: String!\n  lastSubmission: String!\n  numSubmissions: Int!\n  latest: Submission\n}"
     }
   }
 }

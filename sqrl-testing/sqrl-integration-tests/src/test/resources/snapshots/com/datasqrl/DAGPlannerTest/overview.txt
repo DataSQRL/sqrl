@@ -910,11 +910,9 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2__def`
             "parameters" : [
               {
                 "type" : "arg",
-                "type" : "arg",
                 "path" : "minAmount"
               },
               {
-                "type" : "source",
                 "type" : "source",
                 "key" : "customerid"
               }
@@ -944,7 +942,6 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2__def`
             "sql" : "SELECT *\nFROM \"SimpleOrders_6\"\nWHERE $1 = \"customerid\"\nORDER BY \"orderTime\" DESC NULLS LAST",
             "parameters" : [
               {
-                "type" : "source",
                 "type" : "source",
                 "key" : "customerid"
               }
@@ -1098,7 +1095,6 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2__def`
             "sql" : "SELECT *\nFROM \"Customer_1\"\nWHERE \"customerid\" = $1",
             "parameters" : [
               {
-                "type" : "arg",
                 "type" : "arg",
                 "path" : "customerid"
               }

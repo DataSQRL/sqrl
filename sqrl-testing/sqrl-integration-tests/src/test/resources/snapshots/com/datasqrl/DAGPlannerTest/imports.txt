@@ -291,7 +291,6 @@ INSERT INTO `default_catalog`.`default_database`.`Product_2`
             "parameters" : [
               {
                 "type" : "arg",
-                "type" : "arg",
                 "path" : "productid"
               }
             ],
