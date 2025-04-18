@@ -29,7 +29,7 @@ import lombok.ToString;
  * Collaboration:
  *
  * <ul>
- *   <li>the root of the model, the schema, coords, the jdbc queries, the arguments and parameters
+ *   <li>the root of the model, the schema, coords, the sql queries, the arguments and parameters
  *       are visited by {@link GraphQLEngineBuilder}
  *   <li>the mutations (kafka and prostgreSQL) are visited by {@link
  *       com.datasqrl.graphql.MutationConfigurationImpl}
@@ -86,7 +86,6 @@ public class RootGraphqlModel {
   @AllArgsConstructor
   public static class StringSchema implements Schema {
 
-    final String type = "string";
     String schema;
 
     public <R, C> R accept(SchemaVisitor<R, C> visitor, C context) {
@@ -260,7 +259,6 @@ public class RootGraphqlModel {
   @NoArgsConstructor
   public static class FieldLookupQueryCoords extends QueryCoords {
 
-    @JsonIgnore final String type = "field";
     String columnName;
 
     @Builder
@@ -277,8 +275,6 @@ public class RootGraphqlModel {
   @Getter
   @NoArgsConstructor
   public static class ArgumentLookupQueryCoords extends QueryCoords {
-
-    @JsonIgnore final String type = "args";
 
     /**
      * The executable query with the query base and GraphQL Arguments
@@ -317,7 +313,7 @@ public class RootGraphqlModel {
 
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
   @JsonSubTypes({
-    @Type(value = SqlQuery.class, name = "JdbcQuery")
+    @Type(value = SqlQuery.class, name = "SqlQuery")
   })
   public interface QueryBase {
 
@@ -329,9 +325,8 @@ public class RootGraphqlModel {
   @NoArgsConstructor
   public static class SqlQuery implements QueryBase {
 
-    final String type = "JdbcQuery";
     String sql;
-    @Singular List<JdbcParameterHandler> parameters;
+    @Singular List<QueryParameterHandler> parameters;
     PaginationType pagination;
     DatabaseType database;
 
@@ -352,8 +347,8 @@ public class RootGraphqlModel {
 
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
   @JsonSubTypes({
-    @Type(value = FixedArgument.class, name = "fixed"),
-    @Type(value = VariableArgument.class, name = "variable")
+    @Type(value = FixedArgument.class, name = FixedArgument.type),
+    @Type(value = VariableArgument.class, name = VariableArgument.type)
   })
   public interface Argument {
 
@@ -374,7 +369,7 @@ public class RootGraphqlModel {
   @NoArgsConstructor
   public static class VariableArgument implements Argument {
 
-    final String type = "variable";
+    static final String type = "variable";
     String path;
     Object value;
 
@@ -419,7 +414,7 @@ public class RootGraphqlModel {
   @ToString
   public static class FixedArgument implements Argument {
 
-    final String type = "fixed";
+    final static String type = "fixed";
 
     String path;
     Object value;
@@ -431,10 +426,10 @@ public class RootGraphqlModel {
 
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
   @JsonSubTypes({
-    @Type(value = SourceParameter.class, name = "source"),
-    @Type(value = ArgumentParameter.class, name = "arg")
+    @Type(value = SourceParameter.class, name = SourceParameter.type),
+    @Type(value = ArgumentParameter.class, name = ArgumentParameter.type)
   })
-  public interface JdbcParameterHandler {
+  public interface QueryParameterHandler {
 
     <R, C> R accept(ParameterHandlerVisitor<R, C> visitor, C context);
   }
@@ -451,9 +446,9 @@ public class RootGraphqlModel {
   @NoArgsConstructor
   @Builder
   @ToString
-  public static class SourceParameter implements JdbcParameterHandler {
+  public static class SourceParameter implements QueryParameterHandler {
 
-    final String type = "source";
+    final static String type = "source";
     String key;
 
     public <R, C> R accept(ParameterHandlerVisitor<R, C> visitor, C context) {
@@ -466,9 +461,9 @@ public class RootGraphqlModel {
   @NoArgsConstructor
   @Builder
   @ToString
-  public static class ArgumentParameter implements JdbcParameterHandler {
+  public static class ArgumentParameter implements QueryParameterHandler {
 
-    final String type = "arg";
+    final static String type = "arg";
     String path;
 
     public <R, C> R accept(ParameterHandlerVisitor<R, C> visitor, C context) {
@@ -478,7 +473,7 @@ public class RootGraphqlModel {
 
   public interface ResolvedQueryVisitor<R, C> {
 
-    R visitResolvedJdbcQuery(ResolvedJdbcQuery query, C context);
+    R visitResolvedSqlQuery(ResolvedSqlQuery query, C context);
   }
 
   public interface ResolvedQuery {
@@ -491,14 +486,14 @@ public class RootGraphqlModel {
   @AllArgsConstructor
   @Getter
   @NoArgsConstructor
-  public static class ResolvedJdbcQuery implements ResolvedQuery {
+  public static class ResolvedSqlQuery implements ResolvedQuery {
 
     SqlQuery query;
     PreparedSqrlQuery preparedQueryContainer;
 
     @Override
     public <R, C> R accept(ResolvedQueryVisitor<R, C> visitor, C context) {
-      return visitor.visitResolvedJdbcQuery(this, context);
+      return visitor.visitResolvedSqlQuery(this, context);
     }
   }
 

@@ -29,6 +29,7 @@ import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.engine.stream.flink.connector.CastFunction;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.graphql.jdbc.DatabaseType;
 import com.datasqrl.plan.global.PhysicalDAGPlan.DatabaseStagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.ReadQuery;
@@ -101,6 +102,8 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
 
   protected abstract JdbcDialect getDialect();
 
+  protected abstract DatabaseType getDatabaseType();
+
   public EngineCreateTable createTable(ExecutionStage stage, String originalTableName,
       FlinkTableBuilder tableBuilder, RelDataType relDataType, Optional<TableAnalysis> tableAnalysis) {
     String tableName = tableBuilder.getTableName();
@@ -134,7 +137,7 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
         QueryResult result = stmtFactory.createQuery(query, !function.hasParameters());
         if (result.getExecQueryBuilder()!=null && function.getExecutableQuery()==null) {
           function.setExecutableQuery(result.getExecQueryBuilder()
-              .database(getDialect().getDatabaseType())
+              .database(getDatabaseType())
               .stage(stagePlan.getStage()).build());
         }
         if (result.getView()!=null) {
@@ -180,7 +183,7 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
 
     Map<IdentifiedQuery, QueryTemplate> databaseQueries = dbPlan.getQueries().stream()
         .collect(Collectors.toMap(ReadQuery::getQuery, q -> new QueryTemplate(
-            getDialect().getDatabaseType(), q.getRelNode())));
+            DatabaseType.POSTGRES, q.getRelNode())));
 
     List<DatabaseView> views = new ArrayList<>();
     Optional<DataTypeMapper> upCastingMapper = getUpCastingMapper();

@@ -10,6 +10,7 @@ import com.datasqrl.datatype.DataTypeMapping;
 import com.datasqrl.datatype.flink.jdbc.FlinkSqrlPostgresDataTypeMapper;
 import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.database.relational.ddl.PostgresDDLFactory;
+import com.datasqrl.graphql.jdbc.DatabaseType;
 import com.google.inject.Inject;
 import lombok.NonNull;
 import org.apache.calcite.sql.SqlIdentifier;
@@ -36,6 +37,11 @@ public class PostgresJdbcEngine extends AbstractJDBCDatabaseEngine {
   @Override
   protected JdbcDialect getDialect() {
     return JdbcDialect.Postgres;
+  }
+
+  @Override
+  protected DatabaseType getDatabaseType() {
+    return DatabaseType.POSTGRES;
   }
 
   @Override

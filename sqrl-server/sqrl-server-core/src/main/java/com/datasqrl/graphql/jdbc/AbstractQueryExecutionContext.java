@@ -3,13 +3,11 @@ package com.datasqrl.graphql.jdbc;
 import com.datasqrl.graphql.server.QueryExecutionContext;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentParameter;
-import com.datasqrl.graphql.server.RootGraphqlModel.JdbcParameterHandler;
+import com.datasqrl.graphql.server.RootGraphqlModel.QueryParameterHandler;
 import com.datasqrl.graphql.server.RootGraphqlModel.ParameterHandlerVisitor;
 import com.datasqrl.graphql.server.RootGraphqlModel.SourceParameter;
-import graphql.schema.PropertyDataFetcher;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import lombok.SneakyThrows;
 
 public abstract class AbstractQueryExecutionContext implements QueryExecutionContext,
@@ -39,10 +37,10 @@ public abstract class AbstractQueryExecutionContext implements QueryExecutionCon
         .orElse(null);
   }
 
-  public List getParamArguments(List<JdbcParameterHandler> parameters) {
+  public List getParamArguments(List<QueryParameterHandler> parameters) {
     List paramObj = new ArrayList(parameters.size()+2);
     for (int i = 0; i < parameters.size(); i++) {
-      JdbcParameterHandler param = parameters.get(i);
+      QueryParameterHandler param = parameters.get(i);
       Object o = param.accept(this, this);
       paramObj.add(o);
     }

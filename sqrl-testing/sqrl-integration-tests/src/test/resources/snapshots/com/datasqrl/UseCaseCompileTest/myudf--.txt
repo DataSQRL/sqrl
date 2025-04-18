@@ -154,93 +154,83 @@ FROM (SELECT "val", "myFnc"
 >>>vertx.json
 {
   "model" : {
-    "coords" : [
+    "queries" : [
       {
         "type" : "args",
         "parentType" : "Query",
         "fieldName" : "MyAsyncTable",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT \"val\", \"myFnc\"\n  FROM \"MyAsyncTable_1\"\n  ORDER BY \"val\" NULLS FIRST) AS \"t\"",
-              "parameters" : [ ]
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM (SELECT \"val\", \"myFnc\"\n  FROM \"MyAsyncTable_1\"\n  ORDER BY \"val\" NULLS FIRST) AS \"t\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
       },
       {
         "type" : "args",
         "parentType" : "Query",
         "fieldName" : "MyTable",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT \"val\", \"myFnc\"\n  FROM \"MyTable_2\"\n  ORDER BY \"val\" NULLS FIRST) AS \"t\"",
-              "parameters" : [ ]
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM (SELECT \"val\", \"myFnc\"\n  FROM \"MyTable_2\"\n  ORDER BY \"val\" NULLS FIRST) AS \"t\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
       },
       {
         "type" : "args",
         "parentType" : "Query",
         "fieldName" : "MyTableAnother",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT \"val\", \"myFnc\"\n  FROM \"MyTableAnother_3\"\n  ORDER BY \"val\" NULLS FIRST) AS \"t\"",
-              "parameters" : [ ]
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM (SELECT \"val\", \"myFnc\"\n  FROM \"MyTableAnother_3\"\n  ORDER BY \"val\" NULLS FIRST) AS \"t\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
       }
     ],
     "mutations" : [ ],
     "subscriptions" : [ ],
     "schema" : {
-      "type" : "string",
       "type" : "string",
       "schema" : "\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype MyAsyncTable {\n  val: String!\n  myFnc: String\n}\n\ntype MyTable {\n  val: Int!\n  myFnc: GraphQLBigInteger\n}\n\ntype MyTableAnother {\n  val: Int!\n  myFnc: GraphQLBigInteger\n}\n\ntype Query {\n  MyAsyncTable(limit: Int = 10, offset: Int = 0): [MyAsyncTable!]\n  MyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  MyTableAnother(limit: Int = 10, offset: Int = 0): [MyTableAnother!]\n}\n"
     }

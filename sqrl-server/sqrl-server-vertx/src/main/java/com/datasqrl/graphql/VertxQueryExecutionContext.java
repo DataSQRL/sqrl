@@ -6,13 +6,8 @@ import static com.datasqrl.graphql.jdbc.SchemaConstants.OFFSET;
 import com.datasqrl.graphql.VertxJdbcClient.PreparedSqrlQueryImpl;
 import com.datasqrl.graphql.jdbc.AbstractQueryExecutionContext;
 import com.datasqrl.graphql.jdbc.JdbcExecutionContext;
-import com.datasqrl.graphql.server.QueryExecutionContext;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
-import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentParameter;
-import com.datasqrl.graphql.server.RootGraphqlModel.JdbcParameterHandler;
-import com.datasqrl.graphql.server.RootGraphqlModel.ParameterHandlerVisitor;
-import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedJdbcQuery;
-import com.datasqrl.graphql.server.RootGraphqlModel.SourceParameter;
+import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedSqlQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.SqlQuery;
 import graphql.schema.DataFetchingEnvironment;
 import io.vertx.core.Future;
@@ -22,16 +17,13 @@ import io.vertx.sqlclient.PreparedQuery;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import lombok.SneakyThrows;
 import lombok.Value;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * It is the ExecutionContext per servlet type. It is responsible for executing the resolved SQL
@@ -47,7 +39,7 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext {
   Promise<Object> future; // basically Vert.x completableFuture
 
   @Override
-  public CompletableFuture runQuery(ResolvedJdbcQuery resolvedQuery,
+  public CompletableFuture runQuery(ResolvedSqlQuery resolvedQuery,
       boolean isList) {
     PreparedSqrlQueryImpl preparedQueryContainer = (PreparedSqrlQueryImpl) resolvedQuery.getPreparedQueryContainer();
     final List paramObj = getParamArguments(resolvedQuery.getQuery().getParameters());

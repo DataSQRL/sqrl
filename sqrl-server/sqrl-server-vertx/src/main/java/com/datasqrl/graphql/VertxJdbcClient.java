@@ -4,7 +4,7 @@ import com.datasqrl.graphql.jdbc.DatabaseType;
 import com.datasqrl.graphql.jdbc.JdbcClient;
 import com.datasqrl.graphql.server.Context;
 import com.datasqrl.graphql.server.RootGraphqlModel.PreparedSqrlQuery;
-import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedJdbcQuery;
+import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedSqlQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.SqlQuery;
 import io.vertx.core.Future;
@@ -34,13 +34,13 @@ public class VertxJdbcClient implements JdbcClient {
     PreparedQuery<RowSet<Row>> preparedQuery = sqlClient
         .preparedQuery(query.getSql());
 
-    return new ResolvedJdbcQuery(query,
+    return new ResolvedSqlQuery(query,
         new PreparedSqrlQueryImpl(preparedQuery));
   }
 
   @Override
   public ResolvedQuery unpreparedQuery(SqlQuery sqlQuery, Context context) {
-    return new ResolvedJdbcQuery(sqlQuery, null);
+    return new ResolvedSqlQuery(sqlQuery, null);
   }
 
   public Future<RowSet<Row>> execute(DatabaseType database, PreparedQuery query, Tuple tup) {

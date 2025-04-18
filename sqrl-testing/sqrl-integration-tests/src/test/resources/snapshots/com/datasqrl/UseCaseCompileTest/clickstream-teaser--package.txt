@@ -212,131 +212,116 @@ FROM "VisitAfter_4"
 >>>vertx.json
 {
   "model" : {
-    "coords" : [
+    "queries" : [
       {
         "type" : "args",
         "parentType" : "Query",
         "fieldName" : "Click",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"Click_1\"",
-              "parameters" : [ ]
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"Click_1\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
       },
       {
         "type" : "args",
         "parentType" : "Query",
         "fieldName" : "Recommendation",
-        "matchs" : [
-          {
-            "arguments" : [
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "url"
+            },
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM (SELECT \"url\", \"rec\", \"frequency\"\n  FROM \"Recommendation_2\"\n  ORDER BY \"url\" NULLS FIRST, \"frequency\" DESC NULLS LAST) AS \"t\"\nWHERE \"url\" = $1",
+            "parameters" : [
               {
-                "type" : "variable",
-                "type" : "variable",
+                "type" : "arg",
                 "path" : "url"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
               }
             ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT \"url\", \"rec\", \"frequency\"\n  FROM \"Recommendation_2\"\n  ORDER BY \"url\" NULLS FIRST, \"frequency\" DESC NULLS LAST) AS \"t\"\nWHERE \"url\" = $1",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "url"
-                }
-              ]
-            }
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
       },
       {
         "type" : "args",
         "parentType" : "Query",
         "fieldName" : "Trending",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT \"url\", \"total\"\n  FROM \"Trending_3\"\n  ORDER BY \"total\" DESC NULLS LAST, \"url\" NULLS FIRST) AS \"t\"",
-              "parameters" : [ ]
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM (SELECT \"url\", \"total\"\n  FROM \"Trending_3\"\n  ORDER BY \"total\" DESC NULLS LAST, \"url\" NULLS FIRST) AS \"t\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
       },
       {
         "type" : "args",
         "parentType" : "Query",
         "fieldName" : "VisitAfter",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"beforeURL\", \"afterURL\", \"timestamp\"\nFROM \"VisitAfter_4\"",
-              "parameters" : [ ]
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT \"beforeURL\", \"afterURL\", \"timestamp\"\nFROM \"VisitAfter_4\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
       }
     ],
     "mutations" : [ ],
     "subscriptions" : [ ],
     "schema" : {
-      "type" : "string",
       "type" : "string",
       "schema" : "type Click {\n  url: String!\n  timestamp: DateTime!\n  userid: String!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  Click(limit: Int = 10, offset: Int = 0): [Click!]\n  Recommendation(url: String!, limit: Int = 10, offset: Int = 0): [Recommendation!]\n  Trending(limit: Int = 10, offset: Int = 0): [Trending!]\n  VisitAfter(limit: Int = 10, offset: Int = 0): [VisitAfter!]\n}\n\ntype Recommendation {\n  url: String!\n  rec: String!\n  frequency: GraphQLBigInteger!\n}\n\ntype Trending {\n  url: String!\n  total: GraphQLBigInteger!\n}\n\ntype VisitAfter {\n  beforeURL: String!\n  afterURL: String!\n  timestamp: DateTime!\n}\n"
     }

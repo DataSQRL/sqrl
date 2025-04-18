@@ -30,13 +30,4 @@ public enum JdbcDialect {
     return Arrays.stream(values()).filter(d -> d.matches(dialect)).findFirst();
   }
 
-  public DatabaseType getDatabaseType() {
-    switch (this) {
-      case Postgres: return DatabaseType.POSTGRES;
-      case DuckDB: return DatabaseType.DUCKDB;
-      case Snowflake: return DatabaseType.SNOWFLAKE;
-      default: throw new UnsupportedOperationException("Dialect not yet supported by server: " + this);
-    }
-  }
-
 }

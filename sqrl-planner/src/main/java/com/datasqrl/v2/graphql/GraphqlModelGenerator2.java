@@ -19,6 +19,7 @@ import com.datasqrl.graphql.server.RootGraphqlModel.KafkaMutationCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.KafkaSubscriptionCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.QueryCoords;
+import com.datasqrl.graphql.server.RootGraphqlModel.QueryParameterHandler;
 import com.datasqrl.graphql.server.RootGraphqlModel.QueryWithArguments;
 import com.datasqrl.graphql.server.RootGraphqlModel.SqlQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoords;
@@ -161,7 +162,7 @@ public class GraphqlModelGenerator2 extends GraphqlSchemaWalker2 {
         "This table function should be planned as an ExecutableJdbcReadQuery");
     final ExecutableJdbcReadQuery executableJdbcReadQuery = (ExecutableJdbcReadQuery) executableQuery;
 
-    List<RootGraphqlModel.JdbcParameterHandler> parameters = new ArrayList<>();
+    List<QueryParameterHandler> parameters = new ArrayList<>();
     for (FunctionParameter functionParameter : tableFunction.getParameters()) {
       final SqrlFunctionParameter parameter = (SqrlFunctionParameter) functionParameter;
       parameters.add(

@@ -54,6 +54,11 @@ public class DuckDBEngine extends AbstractJDBCQueryEngine {
   }
 
   @Override
+  protected DatabaseType getDatabaseType() {
+    return DatabaseType.DUCKDB;
+  }
+
+  @Override
   public JdbcStatementFactory getStatementFactory() {
     return new DuckDbStatementFactory(engineConfig);
   }

@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public enum DatabaseType {
 
+  NONE(false, false),
   POSTGRES(true, true),
   DUCKDB(true, true),
   SNOWFLAKE(false, false);

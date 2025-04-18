@@ -160,66 +160,59 @@ FROM (SELECT "id", "val", "json_col", "json_col_2", "json_col_3", "json_col_4"
 >>>vertx.json
 {
   "model" : {
-    "coords" : [
+    "queries" : [
       {
         "type" : "args",
         "parentType" : "Query",
         "fieldName" : "Json",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"Json_1\"",
-              "parameters" : [ ]
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"Json_1\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
       },
       {
         "type" : "args",
         "parentType" : "Query",
         "fieldName" : "UnmodifiedJsonData",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT \"id\", \"val\", \"json_col\", \"json_col_2\", \"json_col_3\", \"json_col_4\"\n  FROM \"UnmodifiedJsonData_2\"\n  ORDER BY \"id\" NULLS FIRST) AS \"t\"",
-              "parameters" : [ ]
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM (SELECT \"id\", \"val\", \"json_col\", \"json_col_2\", \"json_col_3\", \"json_col_4\"\n  FROM \"UnmodifiedJsonData_2\"\n  ORDER BY \"id\" NULLS FIRST) AS \"t\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
       }
     ],
     "mutations" : [ ],
     "subscriptions" : [ ],
     "schema" : {
-      "type" : "string",
       "type" : "string",
       "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\n\"A JSON scalar\"\nscalar JSON\n\ntype Json {\n  id: GraphQLBigInteger!\n  val: String!\n  timestamp: DateTime!\n}\n\ntype Query {\n  Json(limit: Int = 10, offset: Int = 0): [Json!]\n  UnmodifiedJsonData(limit: Int = 10, offset: Int = 0): [UnmodifiedJsonData!]\n}\n\ntype UnmodifiedJsonData {\n  id: GraphQLBigInteger!\n  val: String!\n  json_col: JSON\n  json_col_2: JSON\n  json_col_3: JSON\n  json_col_4: JSON\n}\n"
     }

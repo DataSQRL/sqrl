@@ -14,7 +14,7 @@ import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.QueryBaseVisitor;
 import com.datasqrl.graphql.server.RootGraphqlModel.QueryCoordVisitor;
 import com.datasqrl.graphql.server.RootGraphqlModel.QueryCoords;
-import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedJdbcQuery;
+import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedSqlQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQueryVisitor;
 import com.datasqrl.graphql.server.RootGraphqlModel.RootVisitor;
@@ -214,7 +214,7 @@ public class GraphQLEngineBuilder
   }
 
   @Override
-  public CompletableFuture visitResolvedJdbcQuery(ResolvedJdbcQuery query,
+  public CompletableFuture visitResolvedSqlQuery(ResolvedSqlQuery query,
       QueryExecutionContext context) {
     return context.runQuery(query, isList(context.getEnvironment().getFieldType()));
   }

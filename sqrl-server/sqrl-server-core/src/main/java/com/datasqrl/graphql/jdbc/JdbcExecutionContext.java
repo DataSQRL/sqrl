@@ -4,7 +4,7 @@ import static com.datasqrl.graphql.jdbc.SchemaConstants.LIMIT;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.OFFSET;
 
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
-import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedJdbcQuery;
+import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedSqlQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.SqlQuery;
 import graphql.schema.DataFetchingEnvironment;
 import java.sql.Connection;
@@ -31,7 +31,7 @@ public class JdbcExecutionContext extends AbstractQueryExecutionContext {
 
   @SneakyThrows
   @Override
-  public CompletableFuture runQuery(ResolvedJdbcQuery resolvedQuery,
+  public CompletableFuture runQuery(ResolvedSqlQuery resolvedQuery,
       boolean isList) {
     PreparedSqrlQueryImpl preparedQueryContainer = ((PreparedSqrlQueryImpl) resolvedQuery.getPreparedQueryContainer());
     final List paramObj = getParamArguments(resolvedQuery.getQuery().getParameters());

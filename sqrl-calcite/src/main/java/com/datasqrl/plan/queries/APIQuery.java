@@ -6,8 +6,7 @@ package com.datasqrl.plan.queries;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
-import com.datasqrl.graphql.server.RootGraphqlModel.JdbcParameterHandler;
-import java.util.ArrayList;
+import com.datasqrl.graphql.server.RootGraphqlModel.QueryParameterHandler;
 import java.util.List;
 import java.util.Optional;
 import lombok.EqualsAndHashCode;
@@ -28,7 +27,7 @@ public class APIQuery implements IdentifiedQuery {
   // Query
   RelNode relNode;
   // Where parameters come from (where parameters come from at runtime)
-  List<JdbcParameterHandler> parameters;
+  List<QueryParameterHandler> parameters;
   // How arguments are matched (matching the arguments in the signature of the functions)
   List<Argument> graphqlArguments;
   // Has a limit/offset

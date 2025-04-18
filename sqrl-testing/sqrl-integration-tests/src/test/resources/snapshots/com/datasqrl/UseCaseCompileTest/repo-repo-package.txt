@@ -324,223 +324,195 @@ FROM "SubmissionTopics_3"
 >>>vertx.json
 {
   "model" : {
-    "coords" : [
+    "queries" : [
       {
         "type" : "args",
         "parentType" : "Query",
         "fieldName" : "Package",
-        "matchs" : [
-          {
-            "arguments" : [
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "name"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"Package_1\"\nWHERE \"name\" = $1 OR $1 IS NULL",
+            "parameters" : [
               {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
+                "type" : "arg",
                 "path" : "name"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
               }
             ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"Package_1\"\nWHERE \"name\" = $1 OR $1 IS NULL",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "name"
-                }
-              ]
-            }
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
       },
       {
         "type" : "args",
         "parentType" : "Package",
         "fieldName" : "latest",
-        "matchs" : [
-          {
-            "arguments" : [ ],
-            "query" : {
-              "type" : "JdbcQuery",
-              "type" : "JdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT \"name\", \"version\", \"variant\", \"latest\", \"type\", \"license\", \"repository\", \"homepage\", \"documentation\", \"readme\", \"description\", \"keywords\", \"uniqueId\", \"file\", \"hash\", \"authorId\", \"submissionTime\", \"event_time\", \"variant0\", \"repoURL\"\n  FROM \"Submission_2\") AS \"t\"\nWHERE $1 = \"name\" AND \"latest\" = TRUE\nORDER BY \"submissionTime\" DESC NULLS LAST\nFETCH NEXT 1 ROWS ONLY",
-              "parameters" : [
-                {
-                  "type" : "source",
-                  "type" : "source",
-                  "key" : "name"
-                }
-              ]
-            }
+        "exec" : {
+          "arguments" : [ ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM (SELECT \"name\", \"version\", \"variant\", \"latest\", \"type\", \"license\", \"repository\", \"homepage\", \"documentation\", \"readme\", \"description\", \"keywords\", \"uniqueId\", \"file\", \"hash\", \"authorId\", \"submissionTime\", \"event_time\", \"variant0\", \"repoURL\"\n  FROM \"Submission_2\") AS \"t\"\nWHERE $1 = \"name\" AND \"latest\" = TRUE\nORDER BY \"submissionTime\" DESC NULLS LAST\nFETCH NEXT 1 ROWS ONLY",
+            "parameters" : [
+              {
+                "type" : "source",
+                "key" : "name"
+              }
+            ],
+            "pagination" : "NONE",
+            "database" : "POSTGRES"
           }
-        ]
+        }
       },
       {
         "type" : "args",
         "parentType" : "Package",
         "fieldName" : "versions",
-        "matchs" : [
-          {
-            "arguments" : [
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "version"
+            },
+            {
+              "type" : "variable",
+              "path" : "variant"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM (SELECT \"name\", \"version\", \"variant\", \"latest\", \"type\", \"license\", \"repository\", \"homepage\", \"documentation\", \"readme\", \"description\", \"keywords\", \"uniqueId\", \"file\", \"hash\", \"authorId\", \"submissionTime\", \"event_time\", \"variant0\", \"repoURL\"\n  FROM \"Submission_2\") AS \"t\"\nWHERE $3 = \"name\" AND ($1 IS NULL OR $1 = \"version\") AND ($2 IS NULL OR $2 = \"variant\")\nORDER BY \"submissionTime\" DESC NULLS LAST",
+            "parameters" : [
               {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
+                "type" : "arg",
                 "path" : "version"
               },
               {
-                "type" : "variable",
-                "type" : "variable",
+                "type" : "arg",
                 "path" : "variant"
               },
               {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
+                "type" : "source",
+                "key" : "name"
               }
             ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT \"name\", \"version\", \"variant\", \"latest\", \"type\", \"license\", \"repository\", \"homepage\", \"documentation\", \"readme\", \"description\", \"keywords\", \"uniqueId\", \"file\", \"hash\", \"authorId\", \"submissionTime\", \"event_time\", \"variant0\", \"repoURL\"\n  FROM \"Submission_2\") AS \"t\"\nWHERE $3 = \"name\" AND ($1 IS NULL OR $1 = \"version\") AND ($2 IS NULL OR $2 = \"variant\")\nORDER BY \"submissionTime\" DESC NULLS LAST",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "version"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "variant"
-                },
-                {
-                  "type" : "source",
-                  "type" : "source",
-                  "key" : "name"
-                }
-              ]
-            }
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
       },
       {
         "type" : "args",
         "parentType" : "Query",
         "fieldName" : "TopicSearch",
-        "matchs" : [
-          {
-            "arguments" : [
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "topicName"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM (SELECT \"topicName\", \"numPackages\"\n  FROM \"TopicSearch_5\"\n  ORDER BY \"numPackages\" DESC NULLS LAST) AS \"t\"\nWHERE \"topicName\" = $1 OR $1 IS NULL",
+            "parameters" : [
               {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
+                "type" : "arg",
                 "path" : "topicName"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
               }
             ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT \"topicName\", \"numPackages\"\n  FROM \"TopicSearch_5\"\n  ORDER BY \"numPackages\" DESC NULLS LAST) AS \"t\"\nWHERE \"topicName\" = $1 OR $1 IS NULL",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "topicName"
-                }
-              ]
-            }
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
       },
       {
         "type" : "args",
         "parentType" : "Query",
         "fieldName" : "TopicPackages",
-        "matchs" : [
-          {
-            "arguments" : [
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "topicName"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM (SELECT \"pkgName\", \"topicName\", \"numSubmissions\", \"lastSubmission\"\n  FROM \"TopicPackages_4\"\n  ORDER BY \"numSubmissions\" DESC NULLS LAST, \"pkgName\" NULLS FIRST) AS \"t\"\nWHERE \"topicName\" = $1",
+            "parameters" : [
               {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
+                "type" : "arg",
                 "path" : "topicName"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
               }
             ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT \"pkgName\", \"topicName\", \"numSubmissions\", \"lastSubmission\"\n  FROM \"TopicPackages_4\"\n  ORDER BY \"numSubmissions\" DESC NULLS LAST, \"pkgName\" NULLS FIRST) AS \"t\"\nWHERE \"topicName\" = $1",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "topicName"
-                }
-              ]
-            }
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
       },
       {
         "type" : "args",
         "parentType" : "TopicPackages",
         "fieldName" : "latest",
-        "matchs" : [
-          {
-            "arguments" : [ ],
-            "query" : {
-              "type" : "JdbcQuery",
-              "type" : "JdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT \"name\", \"version\", \"variant\", \"latest\", \"type\", \"license\", \"repository\", \"homepage\", \"documentation\", \"readme\", \"description\", \"keywords\", \"uniqueId\", \"file\", \"hash\", \"authorId\", \"submissionTime\", \"event_time\", \"variant0\", \"repoURL\"\n  FROM \"Submission_2\") AS \"t\"\nWHERE $1 = \"name\" AND \"latest\" = TRUE\nORDER BY \"submissionTime\" DESC NULLS LAST\nFETCH NEXT 1 ROWS ONLY",
-              "parameters" : [
-                {
-                  "type" : "source",
-                  "type" : "source",
-                  "key" : "pkgName"
-                }
-              ]
-            }
+        "exec" : {
+          "arguments" : [ ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM (SELECT \"name\", \"version\", \"variant\", \"latest\", \"type\", \"license\", \"repository\", \"homepage\", \"documentation\", \"readme\", \"description\", \"keywords\", \"uniqueId\", \"file\", \"hash\", \"authorId\", \"submissionTime\", \"event_time\", \"variant0\", \"repoURL\"\n  FROM \"Submission_2\") AS \"t\"\nWHERE $1 = \"name\" AND \"latest\" = TRUE\nORDER BY \"submissionTime\" DESC NULLS LAST\nFETCH NEXT 1 ROWS ONLY",
+            "parameters" : [
+              {
+                "type" : "source",
+                "key" : "pkgName"
+              }
+            ],
+            "pagination" : "NONE",
+            "database" : "POSTGRES"
           }
-        ]
+        }
       }
     ],
     "mutations" : [ ],
     "subscriptions" : [ ],
     "schema" : {
-      "type" : "string",
       "type" : "string",
       "schema" : "type Package {\n  name: String!\n  latest: Submission\n  versions(version: String!, variant: String!, limit: Int = 10, offset: Int = 0): [Submission!]\n}\n\ntype Query {\n  Package(name: String!, limit: Int = 10, offset: Int = 0): [Package!]\n  TopicSearch(topicName: String!, limit: Int = 10, offset: Int = 0): [TopicSearch!]\n  TopicPackages(topicName: String!, limit: Int = 10, offset: Int = 0): [TopicPackages!]\n}\n\ntype Submission {\n  name: String!\n  version: String!\n  variant: String!\n  latest: Boolean!\n  type: String\n  license: String\n  repository: String\n  homepage: String\n  documentation: String\n  readme: String\n  description: String\n  uniqueId: String!\n  keywords: [String!]\n  repoURL: String!\n  file: String!\n  hash: String!\n  submissionTime: String!\n}\n\ntype TopicSearch {\n  topicName: String!\n  numPackages: Int!\n}\n\ntype TopicPackages {\n  topicName: String!\n  pkgName: String!\n  lastSubmission: String!\n  numSubmissions: Int!\n  latest: Submission\n}"
     }
