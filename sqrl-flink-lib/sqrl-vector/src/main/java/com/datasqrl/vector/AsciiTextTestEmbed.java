@@ -3,6 +3,7 @@ package com.datasqrl.vector;
 import org.apache.flink.table.functions.ScalarFunction;
 
 import com.datasqrl.function.AutoRegisterSystemFunction;
+import com.datasqrl.types.vector.FlinkVectorType;
 import com.google.auto.service.AutoService;
 
 /**

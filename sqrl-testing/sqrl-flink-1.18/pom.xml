@@ -143,9 +143,11 @@
 <!--      </exclusions>-->
 <!--    </dependency>-->
     <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-flexible-json</artifactId>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>flexible-json-format</artifactId>
+      <version>1.0.0-SNAPSHOT</version>
     </dependency>
+
 
 <!--    &lt;!&ndash; https://mvnrepository.com/artifact/org.apache.iceberg/iceberg-hive-metastore &ndash;&gt;-->
 <!--    <dependency>-->

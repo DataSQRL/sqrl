@@ -1,11 +1,11 @@
 package com.datasqrl.json;
 
 import com.datasqrl.function.AutoRegisterSystemFunction;
+import com.datasqrl.types.json.FlinkJsonType;
 import com.google.auto.service.AutoService;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.ReadContext;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.flink.table.functions.ScalarFunction;
 
 /**

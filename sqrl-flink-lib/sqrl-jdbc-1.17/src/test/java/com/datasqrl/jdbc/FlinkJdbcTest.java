@@ -45,7 +45,7 @@ public class FlinkJdbcTest {
                                        ")";
 
             String createSinkTable = "CREATE TABLE jdbc_sink (" +
-                                     "    arrayOfRows RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI=') " +
+                                     "    arrayOfRows RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQAvY29tLmRhdGFzcXJsLnR5cGVzLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI=') " +
                                      ") WITH (" +
                                      "    'connector' = 'jdbc-sqrl', " +
                                      "    'url' = '" + postgres.getJdbcUrl() + "', " +

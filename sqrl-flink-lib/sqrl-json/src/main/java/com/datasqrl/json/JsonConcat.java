@@ -1,17 +1,17 @@
 package com.datasqrl.json;
 
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
+import com.datasqrl.function.AutoRegisterSystemFunction;
+import com.datasqrl.types.json.FlinkJsonType;
+import com.google.auto.service.AutoService;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.flink.table.functions.ScalarFunction;
 
-import com.datasqrl.function.AutoRegisterSystemFunction;
-import com.google.auto.service.AutoService;
-
 /**
- * Merges two JSON objects into one. If two objects share the same key, the value from the later object is used.
+ * Merges two JSON objects into one. If two objects share the same key, the value from the later
+ * object is used.
  */
 @AutoService(AutoRegisterSystemFunction.class)
-public class JsonConcat extends ScalarFunction implements AutoRegisterSystemFunction{
+public class JsonConcat extends ScalarFunction implements AutoRegisterSystemFunction {
 
   public FlinkJsonType eval(FlinkJsonType json1, FlinkJsonType json2) {
     if (json1 == null || json2 == null) {
@@ -27,5 +27,4 @@ public class JsonConcat extends ScalarFunction implements AutoRegisterSystemFunc
       return null;
     }
   }
-
 }
