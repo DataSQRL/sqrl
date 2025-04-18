@@ -4,6 +4,8 @@ package com.datasqrl.vector;
 import java.util.Set;
 import org.apache.flink.table.functions.FunctionDefinition;
 
+import com.datasqrl.types.vector.FlinkVectorType;
+
 public class VectorFunctions {
 
   public static final CosineSimilarity COSINE_SIMILARITY = new CosineSimilarity();

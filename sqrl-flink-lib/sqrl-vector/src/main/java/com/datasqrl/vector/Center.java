@@ -5,6 +5,8 @@ import static com.datasqrl.vector.VectorFunctions.convert;
 
 import org.apache.flink.table.functions.AggregateFunction;
 
+import com.datasqrl.types.vector.FlinkVectorType;
+
 /**
  * Aggregates vectors by computing the centroid, i.e. summing up all vectors and dividing the resulting vector by the number of vectors.
  */

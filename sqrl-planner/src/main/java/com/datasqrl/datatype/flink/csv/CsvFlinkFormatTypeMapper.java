@@ -12,7 +12,7 @@ import com.datasqrl.datatype.flink.FlinkDataTypeMapper;
 import com.datasqrl.engine.stream.flink.connector.CastFunction;
 import com.datasqrl.json.JsonToString;
 import com.datasqrl.types.json.FlinkJsonType;
-import com.datasqrl.vector.FlinkVectorType;
+import com.datasqrl.types.vector.FlinkVectorType;
 import com.datasqrl.vector.VectorToDouble;
 import com.google.auto.service.AutoService;
 

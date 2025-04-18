@@ -1,5 +1,7 @@
 package com.datasqrl.vector;
 
+import com.datasqrl.types.vector.FlinkVectorType;
+
 /**
  * Computes the cosine distance between two vectors
  */
