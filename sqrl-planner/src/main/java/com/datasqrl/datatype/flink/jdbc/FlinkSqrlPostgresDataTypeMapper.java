@@ -15,7 +15,7 @@ import com.datasqrl.datatype.flink.FlinkDataTypeMapper;
 import com.datasqrl.engine.stream.flink.connector.CastFunction;
 import com.datasqrl.json.ToJson;
 import com.datasqrl.types.json.FlinkJsonType;
-import com.datasqrl.vector.FlinkVectorType;
+import com.datasqrl.types.vector.FlinkVectorType;
 import com.google.auto.service.AutoService;
 
 @AutoService(DataTypeMapper.class)

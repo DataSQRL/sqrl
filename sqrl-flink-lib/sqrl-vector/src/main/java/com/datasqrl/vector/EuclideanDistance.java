@@ -7,6 +7,7 @@ import org.apache.commons.math3.linear.RealVector;
 import org.apache.flink.table.functions.ScalarFunction;
 
 import com.datasqrl.function.AutoRegisterSystemFunction;
+import com.datasqrl.types.vector.FlinkVectorType;
 import com.google.auto.service.AutoService;
 
 /**

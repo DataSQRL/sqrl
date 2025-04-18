@@ -4,7 +4,7 @@ import static com.datasqrl.function.FlinkUdfNsObject.getFunctionNameFromClass;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.sql.DatabaseExtension;
-import com.datasqrl.vector.FlinkVectorType;
+import com.datasqrl.types.vector.FlinkVectorType;
 import com.datasqrl.vector.VectorFunctions;
 import com.google.auto.service.AutoService;
 

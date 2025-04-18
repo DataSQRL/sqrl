@@ -1,6 +1,9 @@
 package com.datasqrl.vector;
 
 import com.datasqrl.type.JdbcTypeSerializer;
+import com.datasqrl.types.vector.FlinkVectorType;
+import com.datasqrl.types.vector.FlinkVectorTypeSerializer;
+
 import java.util.Arrays;
 import org.apache.flink.connector.jdbc.converter.AbstractJdbcRowConverter.JdbcDeserializationConverter;
 import org.apache.flink.connector.jdbc.converter.AbstractJdbcRowConverter.JdbcSerializationConverter;

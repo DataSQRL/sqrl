@@ -1,6 +1,7 @@
 package com.datasqrl.vector;
 
 import com.datasqrl.function.SqrlCastFunction;
+import com.datasqrl.types.vector.FlinkVectorType;
 import com.datasqrl.function.AutoRegisterSystemFunction;
 import com.google.auto.service.AutoService;
 
