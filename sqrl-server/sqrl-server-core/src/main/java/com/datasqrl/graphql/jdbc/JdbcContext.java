@@ -19,6 +19,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 import lombok.Value;
 
 @Value
@@ -36,10 +37,14 @@ public class JdbcContext implements Context {
       Set<Argument> arguments, ResolvedQuery resolvedQuery) {
     //Runtime execution, keep this as light as possible
     return (env) -> {
+      Set<Argument> argumentSet =
+          env.getArguments().entrySet().stream()
+              .map(argument -> new VariableArgument(argument.getKey(), argument.getValue()))
+              .collect(Collectors.toSet());
+
       QueryExecutionContext context = new JdbcExecutionContext(this,
-          env, arguments);
-      CompletableFuture future = resolvedQuery.accept(server, context);
-      return future;
+          env, argumentSet);
+      return resolvedQuery.accept(server, context);
     };
   }
 

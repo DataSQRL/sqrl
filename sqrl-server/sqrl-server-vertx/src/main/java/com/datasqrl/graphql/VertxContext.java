@@ -72,9 +72,13 @@ public class VertxContext implements Context {
       GraphQLEngineBuilder server, Set<Argument> arguments, ResolvedQuery resolvedQuery) {
     return VertxDataFetcher.create(
         (env, future) -> {
+          Set<Argument> argumentSet =
+              env.getArguments().entrySet().stream()
+                  .map(argument -> new VariableArgument(argument.getKey(), argument.getValue()))
+                  .collect(Collectors.toSet());
           // Execute
           QueryExecutionContext context =
-              new VertxQueryExecutionContext(this, env, arguments, future);
+              new VertxQueryExecutionContext(this, env, argumentSet, future);
           resolvedQuery.accept(server, context);
         });
   }
