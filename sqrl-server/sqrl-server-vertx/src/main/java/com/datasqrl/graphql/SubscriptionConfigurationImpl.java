@@ -53,19 +53,14 @@ public class SubscriptionConfigurationImpl implements SubscriptionConfiguration<
     return new SubscriptionCoordsVisitor<>() {
       @Override
       public DataFetcher<?> visit(KafkaSubscriptionCoords coords, Context context) {
-        Map<String, SinkConsumer> subscriptions = new HashMap<>();
-        for (SubscriptionCoords sub: root.getSubscriptions()) {
-          KafkaSubscriptionCoords kafkaSub = (KafkaSubscriptionCoords) sub;
-          KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, getSourceConfig());
-          consumer.subscribe(kafkaSub.getTopic())
-              .onSuccess(v -> log.info("Subscribed to topic: {}", kafkaSub.getTopic()))
-              .onFailure(err -> {
-                log.error("Failed to subscribe to topic: {}", kafkaSub.getTopic(), err);
-                startPromise.fail(err);
-              });
-          subscriptions.put(sub.getFieldName(), new KafkaSinkConsumer<>(consumer));
-        }
-        return KafkaDataFetcherFactory.create(subscriptions, coords);
+        KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, getSourceConfig());
+        consumer.subscribe(coords.getTopic())
+            .onSuccess(v -> log.info("Subscribed to topic: {}", coords.getTopic()))
+            .onFailure(err -> {
+              log.error("Failed to subscribe to topic: {}", coords.getTopic(), err);
+              startPromise.fail(err);
+            });
+        return KafkaDataFetcherFactory.create(new KafkaSinkConsumer<>(consumer), coords);
       }
 
       @Override

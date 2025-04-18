@@ -5,6 +5,7 @@ package com.datasqrl.graphql;
 
 import com.datasqrl.graphql.config.CorsHandlerOptions;
 import com.datasqrl.graphql.config.ServerConfig;
+import com.datasqrl.graphql.jdbc.DatabaseType;
 import com.datasqrl.graphql.server.CustomScalars;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import com.datasqrl.graphql.server.RootGraphqlModel;
@@ -212,10 +213,10 @@ public class GraphQLServer extends AbstractVerticle {
     });
 
     SqlClient client = getPostgresSqlClient();
-    Map<String, SqlClient> clients = new HashMap<>();
-    clients.put("postgres", client);
-    clients.put("duckdb", getDuckdbSqlClient());
-    snowflakeUrl.map(s-> clients.put("snowflake", getSnowflakeClient(s)));
+    Map<DatabaseType, SqlClient> clients = new HashMap<>();
+    clients.put(DatabaseType.POSTGRES, client);
+    clients.put(DatabaseType.DUCKDB, getDuckdbSqlClient());
+    snowflakeUrl.map(s-> clients.put(DatabaseType.SNOWFLAKE, getSnowflakeClient(s)));
 
     GraphQL graphQL = createGraphQL(clients, startPromise);
 
@@ -322,7 +323,7 @@ public class GraphQLServer extends AbstractVerticle {
             .setPipelined(true));
   }
 
-  public GraphQL createGraphQL(Map<String, SqlClient> client, Promise<Void> startPromise) {
+  public GraphQL createGraphQL(Map<DatabaseType, SqlClient> client, Promise<Void> startPromise) {
     try {
       VertxJdbcClient vertxJdbcClient = new VertxJdbcClient(client);
       GraphQL.Builder graphQL = model.accept(

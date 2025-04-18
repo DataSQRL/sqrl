@@ -3,6 +3,7 @@
  */
 package com.datasqrl.graphql.server;
 
+import com.datasqrl.graphql.jdbc.DatabaseType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -28,7 +29,7 @@ import lombok.ToString;
  * Collaboration:
  *
  * <ul>
- *   <li>the root of the model, the schema, coords, the jdbc queries, the arguments and parameters
+ *   <li>the root of the model, the schema, coords, the sql queries, the arguments and parameters
  *       are visited by {@link GraphQLEngineBuilder}
  *   <li>the mutations (kafka and prostgreSQL) are visited by {@link
  *       com.datasqrl.graphql.MutationConfigurationImpl}
@@ -40,10 +41,7 @@ import lombok.ToString;
 @Builder
 public class RootGraphqlModel {
 
-  @Singular
-  List<Coords>
-      coords; // TODO should be renamed queries but it is a breaking change for vertx server.
-
+  @Singular List<QueryCoords> queries;
   @Singular List<MutationCoords> mutations;
   @Singular List<SubscriptionCoords> subscriptions;
 
@@ -51,11 +49,11 @@ public class RootGraphqlModel {
 
   @JsonCreator
   public RootGraphqlModel(
-      @JsonProperty("coords") List<Coords> coords,
+      @JsonProperty("queries") List<QueryCoords> queries,
       @JsonProperty("mutations") List<MutationCoords> mutations,
       @JsonProperty("subscriptions") List<SubscriptionCoords> subscriptions,
       @JsonProperty("schema") Schema schema) {
-    this.coords = coords;
+    this.queries = queries;
     this.mutations = mutations == null ? List.of() : mutations;
     this.subscriptions = subscriptions == null ? List.of() : subscriptions;
     this.schema = schema;
@@ -88,7 +86,6 @@ public class RootGraphqlModel {
   @AllArgsConstructor
   public static class StringSchema implements Schema {
 
-    final String type = "string";
     String schema;
 
     public <R, C> R accept(SchemaVisitor<R, C> visitor, C context) {
@@ -229,11 +226,11 @@ public class RootGraphqlModel {
     }
   }
 
-  public interface CoordVisitor<R, C> {
+  public interface QueryCoordVisitor<R, C> {
 
-    R visitArgumentLookup(ArgumentLookupCoords coords, C context);
+    R visitArgumentLookup(ArgumentLookupQueryCoords coords, C context);
 
-    R visitFieldLookup(FieldLookupCoords coords, C context);
+    R visitFieldLookup(FieldLookupQueryCoords coords, C context);
   }
 
   /**
@@ -247,55 +244,51 @@ public class RootGraphqlModel {
   @NoArgsConstructor
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
   @JsonSubTypes({
-    @Type(value = ArgumentLookupCoords.class, name = "args"),
-    @Type(value = FieldLookupCoords.class, name = "field")
+    @Type(value = ArgumentLookupQueryCoords.class, name = "args"),
+    @Type(value = FieldLookupQueryCoords.class, name = "field")
   })
-  public abstract static class Coords { // TODO should be renamed QueryCoords
+  public abstract static class QueryCoords { // TODO should be renamed QueryCoords
 
     String parentType;
     String fieldName;
 
-    public abstract <R, C> R accept(CoordVisitor<R, C> visitor, C context);
+    public abstract <R, C> R accept(QueryCoordVisitor<R, C> visitor, C context);
   }
 
   @Getter
   @NoArgsConstructor
-  public static class FieldLookupCoords extends Coords {
+  public static class FieldLookupQueryCoords extends QueryCoords {
 
-    @JsonIgnore final String type = "field";
     String columnName;
 
     @Builder
-    public FieldLookupCoords(String parentType, String fieldName, String columnName) {
+    public FieldLookupQueryCoords(String parentType, String fieldName, String columnName) {
       super(parentType, fieldName);
       this.columnName = columnName;
     }
 
-    public <R, C> R accept(CoordVisitor<R, C> visitor, C context) {
+    public <R, C> R accept(QueryCoordVisitor<R, C> visitor, C context) {
       return visitor.visitFieldLookup(this, context);
     }
   }
 
   @Getter
   @NoArgsConstructor
-  public static class ArgumentLookupCoords extends Coords {
-
-    @JsonIgnore final String type = "args";
+  public static class ArgumentLookupQueryCoords extends QueryCoords {
 
     /**
-     * A match is an executable query + its SQL parameters + its graphQl arguments (including the
-     * SQL parameters)
+     * The executable query with the query base and GraphQL Arguments
      */
-    Set<ArgumentSet> matchs;
+    QueryWithArguments exec;
 
     @Builder
-    public ArgumentLookupCoords(
-        String parentType, String fieldName, @Singular Set<ArgumentSet> matchs) {
+    public ArgumentLookupQueryCoords(
+        String parentType, String fieldName, QueryWithArguments exec) {
       super(parentType, fieldName);
-      this.matchs = matchs;
+      this.exec = exec;
     }
 
-    public <R, C> R accept(CoordVisitor<R, C> visitor, C context) {
+    public <R, C> R accept(QueryCoordVisitor<R, C> visitor, C context) {
       return visitor.visitArgumentLookup(this, context);
     }
   }
@@ -306,36 +299,21 @@ public class RootGraphqlModel {
   @AllArgsConstructor
   @NoArgsConstructor
   @ToString
-  public static class ArgumentSet {
+  public static class QueryWithArguments {
 
-    // The may be empty for no-args
+    // May be empty for no-args
     @Singular Set<Argument> arguments;
     QueryBase query;
   }
 
   public interface QueryBaseVisitor<R, C> {
 
-    R visitJdbcQuery(JdbcQuery jdbcQuery, C context);
-
-    R visitPagedJdbcQuery(PagedJdbcQuery jdbcQuery, C context);
-
-    R visitPagedDuckDbQuery(PagedDuckDbQuery pagedDuckDbQuery, C context);
-
-    R visitPagedSnowflakeDbQuery(PagedSnowflakeDbQuery pagedDuckDbQuery, C context);
-
-    R visitDuckDbQuery(DuckDbQuery duckDbQuery, C context);
-
-    R visitSnowflakeDbQuery(SnowflakeDbQuery duckDbQuery, C context);
+    R visitSqlQuery(SqlQuery sqlQuery, C context);
   }
 
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
   @JsonSubTypes({
-    @Type(value = JdbcQuery.class, name = "JdbcQuery"),
-    @Type(value = PagedJdbcQuery.class, name = "PagedJdbcQuery"),
-    @Type(value = DuckDbQuery.class, name = "DuckDbQuery"),
-    @Type(value = SnowflakeDbQuery.class, name = "SnowflakeDbQuery"),
-    @Type(value = PagedDuckDbQuery.class, name = "PagedDuckDbQuery"),
-    @Type(value = PagedSnowflakeDbQuery.class, name = "PagedSnowflakeDbQuery"),
+    @Type(value = SqlQuery.class, name = "SqlQuery")
   })
   public interface QueryBase {
 
@@ -345,97 +323,32 @@ public class RootGraphqlModel {
   @Getter
   @AllArgsConstructor
   @NoArgsConstructor
-  public static class JdbcQuery implements QueryBase {
+  public static class SqlQuery implements QueryBase {
 
-    final String type = "JdbcQuery";
     String sql;
-    @Singular List<JdbcParameterHandler> parameters;
+    @Singular List<QueryParameterHandler> parameters;
+    PaginationType pagination;
+    DatabaseType database;
+
+    public boolean requiresDynamicLimitOffset() {
+      return pagination==PaginationType.LIMIT_AND_OFFSET && !database.supportsLimitOffsetBinding;
+    }
 
     @Override
     public <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context) {
-      return visitor.visitJdbcQuery(this, context);
+      return visitor.visitSqlQuery(this, context);
     }
-  }
 
-  @Getter
-  @AllArgsConstructor
-  @NoArgsConstructor
-  public static class DuckDbQuery extends JdbcQuery {
-
-    final String type = "DuckDbQuery";
-    String sql;
-    @Singular List<JdbcParameterHandler> parameters;
-
-    @Override
-    public <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context) {
-      return visitor.visitDuckDbQuery(this, context);
+    public SqlQuery updateSQL(String newSQL) {
+      return new SqlQuery(newSQL, parameters, pagination, database);
     }
-  }
 
-  @Getter
-  @AllArgsConstructor
-  @NoArgsConstructor
-  public static class SnowflakeDbQuery extends JdbcQuery {
-
-    final String type = "SnowflakeDbQuery";
-    String sql;
-    @Singular List<JdbcParameterHandler> parameters;
-
-    @Override
-    public <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context) {
-      return visitor.visitSnowflakeDbQuery(this, context);
-    }
-  }
-
-  @Getter
-  @AllArgsConstructor
-  @NoArgsConstructor
-  public static class PagedJdbcQuery extends JdbcQuery {
-
-    final String type = "PagedJdbcQuery";
-    String sql;
-    @Singular List<JdbcParameterHandler> parameters;
-
-    @Override
-    public <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context) {
-      return visitor.visitPagedJdbcQuery(this, context);
-    }
-  }
-
-  @Getter
-  @AllArgsConstructor
-  @NoArgsConstructor
-  public static class PagedDuckDbQuery extends PagedJdbcQuery {
-
-    final String type = "PagedDuckDbQuery";
-    String sql;
-    @Singular List<JdbcParameterHandler> parameters;
-
-    @Override
-    public <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context) {
-      return visitor.visitPagedDuckDbQuery(this, context);
-    }
-  }
-
-  @Getter
-  @AllArgsConstructor
-  @NoArgsConstructor
-  public static class PagedSnowflakeDbQuery extends PagedJdbcQuery {
-
-    final String type = "PagedSnowflakeDbQuery";
-    String sql;
-    @Singular List<JdbcParameterHandler> parameters;
-
-    @Override
-    public <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context) {
-      return visitor.visitPagedSnowflakeDbQuery(this, context);
-    }
   }
 
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
   @JsonSubTypes({
-    @Type(value = FixedArgument.class, name = "fixed"),
-    @Type(value = VariableArgument.class, name = "variable")
+    @Type(value = FixedArgument.class, name = FixedArgument.type),
+    @Type(value = VariableArgument.class, name = VariableArgument.type)
   })
   public interface Argument {
 
@@ -456,7 +369,7 @@ public class RootGraphqlModel {
   @NoArgsConstructor
   public static class VariableArgument implements Argument {
 
-    final String type = "variable";
+    static final String type = "variable";
     String path;
     Object value;
 
@@ -501,7 +414,7 @@ public class RootGraphqlModel {
   @ToString
   public static class FixedArgument implements Argument {
 
-    final String type = "fixed";
+    final static String type = "fixed";
 
     String path;
     Object value;
@@ -513,10 +426,10 @@ public class RootGraphqlModel {
 
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
   @JsonSubTypes({
-    @Type(value = SourceParameter.class, name = "source"),
-    @Type(value = ArgumentParameter.class, name = "arg")
+    @Type(value = SourceParameter.class, name = SourceParameter.type),
+    @Type(value = ArgumentParameter.class, name = ArgumentParameter.type)
   })
-  public interface JdbcParameterHandler {
+  public interface QueryParameterHandler {
 
     <R, C> R accept(ParameterHandlerVisitor<R, C> visitor, C context);
   }
@@ -533,9 +446,9 @@ public class RootGraphqlModel {
   @NoArgsConstructor
   @Builder
   @ToString
-  public static class SourceParameter implements JdbcParameterHandler {
+  public static class SourceParameter implements QueryParameterHandler {
 
-    final String type = "source";
+    final static String type = "source";
     String key;
 
     public <R, C> R accept(ParameterHandlerVisitor<R, C> visitor, C context) {
@@ -548,9 +461,9 @@ public class RootGraphqlModel {
   @NoArgsConstructor
   @Builder
   @ToString
-  public static class ArgumentParameter implements JdbcParameterHandler {
+  public static class ArgumentParameter implements QueryParameterHandler {
 
-    final String type = "arg";
+    final static String type = "arg";
     String path;
 
     public <R, C> R accept(ParameterHandlerVisitor<R, C> visitor, C context) {
@@ -560,9 +473,7 @@ public class RootGraphqlModel {
 
   public interface ResolvedQueryVisitor<R, C> {
 
-    public R visitResolvedJdbcQuery(ResolvedJdbcQuery query, C context);
-
-    public R visitResolvedPagedJdbcQuery(ResolvedPagedJdbcQuery query, C context);
+    R visitResolvedSqlQuery(ResolvedSqlQuery query, C context);
   }
 
   public interface ResolvedQuery {
@@ -575,14 +486,14 @@ public class RootGraphqlModel {
   @AllArgsConstructor
   @Getter
   @NoArgsConstructor
-  public static class ResolvedJdbcQuery implements ResolvedQuery {
+  public static class ResolvedSqlQuery implements ResolvedQuery {
 
-    JdbcQuery query;
+    SqlQuery query;
     PreparedSqrlQuery preparedQueryContainer;
 
     @Override
     public <R, C> R accept(ResolvedQueryVisitor<R, C> visitor, C context) {
-      return visitor.visitResolvedJdbcQuery(this, context);
+      return visitor.visitResolvedSqlQuery(this, context);
     }
   }
 
@@ -591,16 +502,4 @@ public class RootGraphqlModel {
     T getPreparedQuery();
   }
 
-  @AllArgsConstructor
-  @Getter
-  @NoArgsConstructor
-  public static class ResolvedPagedJdbcQuery implements ResolvedQuery {
-
-    PagedJdbcQuery query;
-
-    @Override
-    public <R, C> R accept(ResolvedQueryVisitor<R, C> visitor, C context) {
-      return visitor.visitResolvedPagedJdbcQuery(this, context);
-    }
-  }
 }

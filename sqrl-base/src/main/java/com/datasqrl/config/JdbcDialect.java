@@ -1,5 +1,6 @@
 package com.datasqrl.config;
 
+import com.datasqrl.graphql.jdbc.DatabaseType;
 import java.util.Arrays;
 import java.util.Optional;
 

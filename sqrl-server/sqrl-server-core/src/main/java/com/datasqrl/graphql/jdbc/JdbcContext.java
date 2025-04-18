@@ -19,6 +19,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 import lombok.Value;
 
 @Value
@@ -33,30 +34,17 @@ public class JdbcContext implements Context {
 
   @Override
   public DataFetcher<?> createArgumentLookupFetcher(GraphQLEngineBuilder server,
-      Map<Set<Argument>, ResolvedQuery> lookupMap) {
-
+      Set<Argument> arguments, ResolvedQuery resolvedQuery) {
     //Runtime execution, keep this as light as possible
     return (env) -> {
+      Set<Argument> argumentSet =
+          env.getArguments().entrySet().stream()
+              .map(argument -> new VariableArgument(argument.getKey(), argument.getValue()))
+              .collect(Collectors.toSet());
 
-      //Map args
-      Set<Argument> argumentSet = new HashSet<>();
-      for (GraphQLArgument argument : env.getFieldDefinition().getArguments()) {
-        VariableArgument arg = new VariableArgument(argument.getName(),
-            env.getArguments().get(argument.getName()));
-        argumentSet.add(arg);
-      }
-
-      //Find query
-      ResolvedQuery resolvedQuery = lookupMap.get(argumentSet);
-      if (resolvedQuery == null) {
-        throw new RuntimeException("Could not find query");
-      }
-
-      //Execute
       QueryExecutionContext context = new JdbcExecutionContext(this,
           env, argumentSet);
-      CompletableFuture future = resolvedQuery.accept(server, context);
-      return future;
+      return resolvedQuery.accept(server, context);
     };
   }
 

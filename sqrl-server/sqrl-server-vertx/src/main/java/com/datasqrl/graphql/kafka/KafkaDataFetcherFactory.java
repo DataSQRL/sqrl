@@ -12,10 +12,7 @@ import reactor.core.publisher.Flux;
 
 public class KafkaDataFetcherFactory {
 
-  public static DataFetcher<?> create(Map<String, SinkConsumer> subscriptions, KafkaSubscriptionCoords coords) {
-    SinkConsumer consumer = subscriptions.get(coords.getFieldName());
-    Preconditions.checkNotNull(consumer, "Could not find subscription consumer: {}", coords.getFieldName());
-
+  public static DataFetcher<?> create(SinkConsumer consumer, KafkaSubscriptionCoords coords) {
     Flux<Object> deferredFlux = Flux.create(sink ->
         consumer.listen(sink::next, sink::error, (x) -> sink.complete())).share();
 

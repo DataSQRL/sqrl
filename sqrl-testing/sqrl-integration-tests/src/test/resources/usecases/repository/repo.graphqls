@@ -6,7 +6,7 @@ type Package {
 
 type Query {
   Package(name: String!, limit: Int = 10, offset: Int = 0): [Package!]
-  TopicSearch(topicName: String!, limit: Int = 10, offset: Int = 0): [TopicSearch!]
+  TopicSearch(topicName: String, limit: Int = 10, offset: Int = 0): [TopicSearch!]
   TopicPackages(topicName: String!, limit: Int = 10, offset: Int = 0): [TopicPackages!]
 }
 

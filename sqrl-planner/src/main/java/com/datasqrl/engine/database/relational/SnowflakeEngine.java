@@ -17,6 +17,7 @@ import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.database.DatabasePhysicalPlanOld;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.graphql.jdbc.DatabaseType;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
@@ -52,6 +53,11 @@ public class SnowflakeEngine extends AbstractJDBCQueryEngine {
   @Override
   protected JdbcDialect getDialect() {
     return JdbcDialect.Snowflake;
+  }
+
+  @Override
+  protected DatabaseType getDatabaseType() {
+    return DatabaseType.SNOWFLAKE;
   }
 
   @Override
