@@ -4,8 +4,8 @@ package com.datasqrl.calcite.dialect;
 import static org.apache.calcite.sql.SqlKind.COLLECTION_TABLE;
 
 import com.datasqrl.calcite.Dialect;
+import com.datasqrl.connector.postgresql.type.JdbcTypeSerializer;
 import com.datasqrl.function.translations.SqlTranslation;
-import com.datasqrl.type.JdbcTypeSerializer;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import java.util.Map;
 import java.util.stream.Collectors;
