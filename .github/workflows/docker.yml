@@ -15,6 +15,9 @@ jobs:
   docker:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    permissions:
+      contents: write
+      packages: write
     strategy:
       matrix:
         target:
@@ -40,6 +43,26 @@ jobs:
           java-version: '11'
           distribution: 'adopt'
           cache: maven
+
+      - name: Generate settings.xml
+        run: |
+          mkdir -p ~/.m2
+          cat <<EOF > ~/.m2/settings.xml
+          <settings>
+            <servers>
+              <server>
+                <id>github</id>
+                <username>${{ github.actor }}</username>
+                <password>${{ secrets.GITHUB_TOKEN }}</password>
+              </server>
+            </servers>
+          </settings>
+          EOF
+
+      - name: Download dependencies
+        run: |
+          set -x
+          mvn -B org.apache.maven.plugins:maven-dependency-plugin:3.8.1:go-offline de.qaware.maven:go-offline-maven-plugin:1.2.8:resolve-dependencies
 
       - name: Build SQRL
         env:

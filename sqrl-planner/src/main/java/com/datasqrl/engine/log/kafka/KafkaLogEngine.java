@@ -22,7 +22,7 @@ import com.datasqrl.engine.log.LogFactory;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.format.FlexibleJsonFormat;
+import com.datasqrl.flink.format.json.FlexibleJsonFormat;
 import com.datasqrl.io.schema.avro.AvroTableSchemaFactory;
 import com.datasqrl.io.tables.TableType;
 import com.datasqrl.plan.global.PhysicalDAGPlan.LogStagePlan;

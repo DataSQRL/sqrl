@@ -1,6 +1,10 @@
 package com.datasqrl.datatype.flink.jdbc;
 
-import static com.datasqrl.function.CalciteFunctionUtil.lightweightOp;
+import java.util.Optional;
+
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 import com.datasqrl.config.TableConfig;
 import com.datasqrl.datatype.DataTypeMapper;
@@ -9,14 +13,10 @@ import com.datasqrl.datatype.DataTypeMappings;
 import com.datasqrl.datatype.SerializeToBytes;
 import com.datasqrl.datatype.flink.FlinkDataTypeMapper;
 import com.datasqrl.engine.stream.flink.connector.CastFunction;
-import com.datasqrl.json.FlinkJsonType;
-import com.datasqrl.json.ToJson;
-import com.datasqrl.vector.FlinkVectorType;
+import com.datasqrl.types.json.FlinkJsonType;
+import com.datasqrl.types.json.functions.ToJson;
+import com.datasqrl.types.vector.FlinkVectorType;
 import com.google.auto.service.AutoService;
-import java.util.Optional;
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.sql.type.SqlTypeName;
-import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 @AutoService(DataTypeMapper.class)
 public class FlinkSqrlPostgresDataTypeMapper extends FlinkDataTypeMapper implements

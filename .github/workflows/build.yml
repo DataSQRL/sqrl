@@ -10,6 +10,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: read
+
     steps:
     - name: Setup Timezone
       uses: szenius/set-timezone@v1.1
@@ -24,6 +28,21 @@ jobs:
         distribution: 'adopt'
         cache: maven
 
+    - name: Generate settings.xml
+      run: |
+        mkdir -p ~/.m2
+        cat <<EOF > ~/.m2/settings.xml
+        <settings>
+          <servers>
+            <server>
+              <id>github</id>
+              <username>${{ github.actor }}</username>
+              <password>${{ secrets.GITHUB_TOKEN }}</password>
+            </server>
+          </servers>
+        </settings>
+        EOF
+
     - name: Download dependencies
       run: |
         mvn -B org.apache.maven.plugins:maven-dependency-plugin:3.8.1:go-offline de.qaware.maven:go-offline-maven-plugin:1.2.8:resolve-dependencies -T3
@@ -32,20 +51,6 @@ jobs:
       env:
         DATASQRL_TOKEN: ${{ secrets.DATASQRL_TOKEN }}
       run: mvn -T 1 -B -U -e clean verify
-
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v5
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        directory: .
-        verbose: true
-        fail_ci_if_error: true
-
-    - name: Upload test results to Codecov
-      if: ${{ !cancelled() }}
-      uses: codecov/test-results-action@v1
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
 
     - name: Build Docker image
       run: docker build -t sqrl-test ./sqrl-tools

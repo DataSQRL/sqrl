@@ -4,7 +4,7 @@ import static com.datasqrl.function.FlinkUdfNsObject.getFunctionNameFromClass;
 import com.datasqrl.function.CalciteFunctionUtil;
 import com.datasqrl.function.translations.PostgresSqlTranslation;
 import com.datasqrl.function.translations.SqlTranslation;
-import com.datasqrl.vector.Center;
+import com.datasqrl.types.vector.functions.Center;
 import com.google.auto.service.AutoService;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlWriter;

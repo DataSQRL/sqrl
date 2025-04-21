@@ -60,9 +60,11 @@
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-server-core</artifactId>
     </dependency>
+
     <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-jdbc-1.19</artifactId>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>postgresql-connector</artifactId>
+      <version>${flinkrunner.version}</version>
     </dependency>
 
     <dependency>

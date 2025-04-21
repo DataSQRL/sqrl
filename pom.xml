@@ -59,6 +59,7 @@
     <avro.version>1.11.3</avro.version>
     <freemarker.version>2.3.32</freemarker.version>
     <jsonschema.version>1.5.2</jsonschema.version>
+    <flinkrunner.version>1.0.0-SNAPSHOT</flinkrunner.version>
 
     <!-- params -->
     <snapshots.update>false</snapshots.update>
@@ -242,11 +243,6 @@
       <dependency>
         <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-server-vertx</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-jdbc-1.19</artifactId>
         <version>${project.version}</version>
       </dependency>
       <!-- examples-->
@@ -1040,6 +1036,19 @@
       </plugins>    
     </pluginManagement>
   </build>
+
+  <repositories>
+    <repository>
+      <id>github</id>
+      <url>https://maven.pkg.github.com/DataSQRL/flink-sql-runner</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+    </repository>
+  </repositories>
 
   <distributionManagement>
     <snapshotRepository>

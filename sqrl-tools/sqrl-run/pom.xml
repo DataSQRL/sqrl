@@ -81,16 +81,19 @@
       <version>1.19.1</version>
     </dependency>
     <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-flexible-json</artifactId>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>postgresql-connector</artifactId>
+      <version>${flinkrunner.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-flexible-csv</artifactId>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>flexible-json-format</artifactId>
+      <version>${flinkrunner.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-json</artifactId>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>flexible-csv-format</artifactId>
+      <version>${flinkrunner.version}</version>
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
@@ -107,10 +110,6 @@
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-vector</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-jdbc-1.19</artifactId>
     </dependency>
     <dependency>
       <groupId>org.testcontainers</groupId>

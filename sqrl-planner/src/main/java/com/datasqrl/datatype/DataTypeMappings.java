@@ -1,10 +1,11 @@
 package com.datasqrl.datatype;
 
 import com.datasqrl.datatype.DataTypeMapping.SimpleMapper;
-import com.datasqrl.json.JsonToString;
-import com.datasqrl.json.ToJson;
-import com.datasqrl.vector.DoubleToVector;
-import com.datasqrl.vector.VectorToDouble;
+import com.datasqrl.types.json.functions.JsonToString;
+import com.datasqrl.types.json.functions.ToJson;
+import com.datasqrl.types.vector.functions.DoubleToVector;
+import com.datasqrl.types.vector.functions.VectorToDouble;
+
 import java.util.Optional;
 
 public class DataTypeMappings {

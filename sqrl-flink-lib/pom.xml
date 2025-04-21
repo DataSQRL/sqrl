@@ -16,16 +16,10 @@
   </properties>
 
   <modules>
-    <module>sqrl-h2-1.16</module>
-    <module>sqrl-jdbc-1.19</module>
-    <module>sqrl-json</module>
     <module>sqrl-lib-common</module>
     <module>sqrl-secure</module>
     <module>sqrl-text</module>
     <module>sqrl-time</module>
-    <module>sqrl-vector</module>
-    <module>sqrl-flexible-json</module>
-    <module>sqrl-flexible-csv</module>
     <module>sqrl-name</module>
     <module>sqrl-errors</module>
   </modules>
@@ -59,36 +53,6 @@
       <dependency>
         <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-lib-common</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-flexible-csv</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-flexible-json</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-h2-1.16</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-jdbc-1.19</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-json</artifactId>
         <version>${project.version}</version>
       </dependency>
 
@@ -364,6 +328,19 @@
       </build>
     </profile>
   </profiles>
+
+  <repositories>
+    <repository>
+      <id>github</id>
+      <url>https://maven.pkg.github.com/DataSQRL/flink-sql-runner</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+    </repository>
+  </repositories>
 
   <distributionManagement>
     <snapshotRepository>
