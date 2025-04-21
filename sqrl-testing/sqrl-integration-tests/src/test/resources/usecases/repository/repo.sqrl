@@ -24,4 +24,4 @@ TopicPackages.latest := SELECT * FROM  Submission s WHERE this.pkgName = s.name 
 /*+query_by_any(topicName) */
 TopicSearch := SELECT topicName, COUNT(DISTINCT pkgName) AS numPackages
                FROM SubmissionTopics
-               GROUP BY topicName ORDER BY numPackages DESC;
+               GROUP BY topicName ORDER BY numPackages DESC, topicName ASC;

@@ -258,93 +258,83 @@ FROM "_MyApplications2_3"
 >>>vertx.json
 {
   "model" : {
-    "coords" : [
+    "queries" : [
       {
         "type" : "args",
         "parentType" : "Query",
         "fieldName" : "MyTable1",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"id\", 'hello world1' AS \"hello\"\nFROM ICEBERG_SCAN('/tmp/duckdb/default_database/_MyApplications1_1', ALLOW_MOVED_PATHS = TRUE)",
-              "parameters" : [ ]
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT \"id\", 'hello world1' AS \"hello\"\nFROM ICEBERG_SCAN('/tmp/duckdb/default_database/_MyApplications1_1', ALLOW_MOVED_PATHS = TRUE)",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "DUCKDB"
           }
-        ]
+        }
       },
       {
         "type" : "args",
         "parentType" : "Query",
         "fieldName" : "MyTable2",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"id\", 'hello world2' AS \"hello\"\nFROM ICEBERG_SCAN('/tmp/duckdb/default_database/_MyApplications2_2', ALLOW_MOVED_PATHS = TRUE)",
-              "parameters" : [ ]
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT \"id\", 'hello world2' AS \"hello\"\nFROM ICEBERG_SCAN('/tmp/duckdb/default_database/_MyApplications2_2', ALLOW_MOVED_PATHS = TRUE)",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "DUCKDB"
           }
-        ]
+        }
       },
       {
         "type" : "args",
         "parentType" : "Query",
         "fieldName" : "MyTable3",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"id\", 'hello world3' AS \"hello\"\nFROM \"_MyApplications2_3\"",
-              "parameters" : [ ]
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT \"id\", 'hello world3' AS \"hello\"\nFROM \"_MyApplications2_3\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
       }
     ],
     "mutations" : [ ],
     "subscriptions" : [ ],
     "schema" : {
-      "type" : "string",
       "type" : "string",
       "schema" : "\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype MyTable1 {\n  id: GraphQLBigInteger!\n  hello: String!\n}\n\ntype MyTable2 {\n  id: GraphQLBigInteger!\n  hello: String!\n}\n\ntype MyTable3 {\n  id: GraphQLBigInteger!\n  hello: String!\n}\n\ntype Query {\n  MyTable1(limit: Int = 10, offset: Int = 0): [MyTable1!]\n  MyTable2(limit: Int = 10, offset: Int = 0): [MyTable2!]\n  MyTable3(limit: Int = 10, offset: Int = 0): [MyTable3!]\n}\n"
     }

@@ -7,9 +7,9 @@ import com.datasqrl.calcite.QueryPlanner;
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.config.TableConfig;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.PhysicalPlan;
-import com.datasqrl.config.TableConfig;
 import com.datasqrl.engine.PhysicalPlan.PhysicalStagePlan;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.engine.database.relational.ddl.statements.InsertStatement;
@@ -18,22 +18,17 @@ import com.datasqrl.engine.log.Log;
 import com.datasqrl.engine.log.kafka.KafkaPhysicalPlan;
 import com.datasqrl.engine.log.postgres.PostgresLogPhysicalPlan;
 import com.datasqrl.graphql.APIConnectorManager;
-import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
-import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentLookupCoords;
-import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentSet;
-import com.datasqrl.graphql.server.RootGraphqlModel.Coords;
-import com.datasqrl.graphql.server.RootGraphqlModel.DuckDbQuery;
-import com.datasqrl.graphql.server.RootGraphqlModel.FieldLookupCoords;
-import com.datasqrl.graphql.server.RootGraphqlModel.JdbcQuery;
+import com.datasqrl.graphql.jdbc.DatabaseType;
+import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentLookupQueryCoords;
+import com.datasqrl.graphql.server.RootGraphqlModel.FieldLookupQueryCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.KafkaMutationCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.KafkaSubscriptionCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoords;
-import com.datasqrl.graphql.server.RootGraphqlModel.PagedDuckDbQuery;
-import com.datasqrl.graphql.server.RootGraphqlModel.PagedJdbcQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.PostgresLogMutationCoords;
-import com.datasqrl.graphql.server.RootGraphqlModel.PagedSnowflakeDbQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.PostgresSubscriptionCoords;
-import com.datasqrl.graphql.server.RootGraphqlModel.SnowflakeDbQuery;
+import com.datasqrl.graphql.server.RootGraphqlModel.QueryCoords;
+import com.datasqrl.graphql.server.RootGraphqlModel.QueryWithArguments;
+import com.datasqrl.graphql.server.RootGraphqlModel.SqlQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoords;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.plan.queries.APIQuery;
@@ -51,7 +46,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import org.apache.calcite.jdbc.SqrlSchema;
@@ -70,7 +64,7 @@ public class GraphqlModelGenerator extends SchemaWalker {
   private static final Logger log = LoggerFactory.getLogger(GraphqlModelGenerator.class);
   private final PhysicalPlan physicalPlan;
   private final QueryPlanner queryPlanner;
-  List<Coords> coords = new ArrayList<>();
+  List<QueryCoords> coords = new ArrayList<>();
   List<MutationCoords> mutations = new ArrayList<>();
   List<SubscriptionCoords> subscriptions = new ArrayList<>();
 
@@ -218,7 +212,7 @@ public class GraphqlModelGenerator extends SchemaWalker {
     //todo: walk into structured type to check all prop fetchers
 
     if (hasVaryingCase(field, relDataTypeField)) {
-      FieldLookupCoords build = FieldLookupCoords.builder().parentType(type.getName())
+      FieldLookupQueryCoords build = FieldLookupQueryCoords.builder().parentType(type.getName())
           .fieldName(field.getName()).columnName(relDataTypeField.getName()).build();
       coords.add(build);
     }
@@ -239,16 +233,17 @@ public class GraphqlModelGenerator extends SchemaWalker {
     if (queries.isEmpty()) {
       return;
     }
+    Preconditions.checkArgument(queries.size()==1, "Path %s should map to a single query but found: %s", path, queries);
 
-    ArgumentLookupCoords.ArgumentLookupCoordsBuilder coordsBuilder = ArgumentLookupCoords.builder()
+    ArgumentLookupQueryCoords.ArgumentLookupQueryCoordsBuilder coordsBuilder = ArgumentLookupQueryCoords.builder()
         .parentType(parentType.getName()).fieldName(field.getName());
 
     for (Entry<IdentifiedQuery, QueryTemplate> entry : queries) {
-      JdbcQuery queryBase;
+      SqlQuery queryBase = null;
       APIQuery query = (APIQuery) entry.getKey();
 
       String queryStr;
-      if (entry.getValue().getDatabase().toLowerCase().equalsIgnoreCase("snowflake")) {
+      if (entry.getValue().getDatabase()== DatabaseType.SNOWFLAKE) {
         queryStr = queryPlanner.relToString(Dialect.SNOWFLAKE,
                 queryPlanner.convertRelToDialect(Dialect.SNOWFLAKE, entry.getValue().getRelNode()))
             .getSql();
@@ -258,46 +253,13 @@ public class GraphqlModelGenerator extends SchemaWalker {
             .getSql();
       }
 
-      if (query.isLimitOffset()) {
-        switch (entry.getValue().getDatabase().toLowerCase()) {
-          case "postgres":
-          default:
-            queryBase = new PagedJdbcQuery(queryStr, query.getParameters());
-            break;
-          case "duckdb":
-            queryBase = new PagedDuckDbQuery(queryStr, query.getParameters());
-            break;
-          case "snowflake":
-            queryBase = new PagedSnowflakeDbQuery(queryStr, query.getParameters());
-            break;
-        }
-      } else {
-        switch (entry.getValue().getDatabase().toLowerCase()) {
-          case "postgres":
-          default:
-            queryBase = new JdbcQuery(queryStr, query.getParameters());
-            break;
-          case "duckdb":
-            queryBase = new DuckDbQuery(queryStr, query.getParameters());
-            break;
-          case "snowflake":
-            queryBase = new SnowflakeDbQuery(queryStr, query.getParameters());
-            break;
-        }
-      }
-
-      ArgumentSet set = ArgumentSet.builder().arguments(query.getGraphqlArguments())
+      QueryWithArguments set = QueryWithArguments.builder().arguments(query.getGraphqlArguments())
           .query(queryBase).build();
 
-      coordsBuilder.match(set);
+      coordsBuilder.exec(set);
     }
 
-    ArgumentLookupCoords coord = coordsBuilder.build();
-    Set<Set<Argument>> matches = coord.getMatchs().stream().map(ArgumentSet::getArguments)
-        .collect(Collectors.toSet());
-    Preconditions.checkState(coord.getMatchs().size() == matches.size(),
-        "Internal error. Duplicate argument sets found in query matches for '" + field.getName() + "'.");
-
+    ArgumentLookupQueryCoords coord = coordsBuilder.build();
     coords.add(coord);
   }
 }

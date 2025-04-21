@@ -14,6 +14,7 @@ import com.datasqrl.engine.database.CombinedEnginePlan;
 import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.database.QueryEngine;
 import com.datasqrl.engine.export.ExportEngine;
+import com.datasqrl.graphql.jdbc.DatabaseType;
 import com.datasqrl.plan.global.IndexSelectorConfig;
 import com.datasqrl.v2.dag.plan.MaterializationStagePlan;
 import com.google.common.base.Preconditions;
@@ -52,6 +53,11 @@ public abstract class AbstractJDBCTableFormatEngine extends AbstractJDBCEngine i
     if (!supportsQueryEngine(queryEngine)) throw new UnsupportedOperationException(getName() + " table format does not support query engine: " + queryEngine);
     Preconditions.checkState(!queryEngines.containsKey(queryEngine.getName()), "Query engine already added: %s", queryEngine.getName());
     queryEngines.put(queryEngine.getName(), queryEngine);
+  }
+
+  @Override
+  protected DatabaseType getDatabaseType() {
+    return DatabaseType.NONE;
   }
 
   @Override

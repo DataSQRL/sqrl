@@ -13,11 +13,13 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.datasqrl.graphql.config.ServerConfig;
+import com.datasqrl.graphql.jdbc.DatabaseType;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
+import com.datasqrl.graphql.server.PaginationType;
 import com.datasqrl.graphql.server.RootGraphqlModel;
-import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentLookupCoords;
-import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentSet;
-import com.datasqrl.graphql.server.RootGraphqlModel.JdbcQuery;
+import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentLookupQueryCoords;
+import com.datasqrl.graphql.server.RootGraphqlModel.QueryWithArguments;
+import com.datasqrl.graphql.server.RootGraphqlModel.SqlQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.KafkaMutationCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.StringSchema;
 import graphql.ExecutionInput;
@@ -134,11 +136,12 @@ class WriteTest {
                     + "  customerid: Int "
                     + "  ts: DateTime"
                     + "}").build())
-            .coord(ArgumentLookupCoords.builder()
+            .query(ArgumentLookupQueryCoords.builder()
                     .parentType("Query")
                     .fieldName("customer")
-                    .match(ArgumentSet.builder()
-                            .query(new JdbcQuery("SELECT customerid FROM Customer", List.of()))
+                    .exec(QueryWithArguments.builder()
+                            .query(new SqlQuery("SELECT customerid FROM Customer", List.of(),
+                                PaginationType.NONE, DatabaseType.POSTGRES))
                             .build())
                     .build())
             .mutation(new KafkaMutationCoords("addCustomer", topicName, Map.of(),
@@ -166,7 +169,7 @@ class WriteTest {
             .withMutationConfiguration(new MutationConfigurationImpl(model, vertx, config))
             .withSubscriptionConfiguration(new SubscriptionConfigurationImpl(model, vertx, config, Promise.promise(), null))
             .build(),
-        new VertxContext(new VertxJdbcClient(Map.of("postgres",client))))
+        new VertxContext(new VertxJdbcClient(Map.of(DatabaseType.POSTGRES,client))))
         .build();
 
     ExecutionInput executionInput = ExecutionInput.newExecutionInput()

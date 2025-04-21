@@ -56,15 +56,8 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
     return new MutationCoordsVisitor<>() {
       @Override
       public DataFetcher<?> visit(KafkaMutationCoords coords, Context context) {
-        Map<String, SinkProducer> sinks = new HashMap<>();
-        for (MutationCoords mut : root.getMutations()) {
-          KafkaMutationCoords kafkaMut = (KafkaMutationCoords) mut;
-          KafkaProducer<String, String> producer = KafkaProducer.create(vertx, getSinkConfig());
-          KafkaSinkProducer sinkProducer = new KafkaSinkProducer<>(kafkaMut.getTopic(), producer);
-          sinks.put(mut.getFieldName(), sinkProducer);
-        }
-
-        SinkProducer emitter = sinks.get(coords.getFieldName());
+        KafkaProducer<String, String> producer = KafkaProducer.create(vertx, getSinkConfig());
+        SinkProducer emitter = new KafkaSinkProducer<>(coords.getTopic(), producer);
         final List<String> uuidColumns = coords.getComputedColumns().entrySet().stream()
             .filter(e -> e.getValue() == MutationComputedColumnType.UUID).map(Map.Entry::getKey).collect(Collectors.toList());
         final List<String> timestampColumns = coords.getComputedColumns().entrySet().stream()

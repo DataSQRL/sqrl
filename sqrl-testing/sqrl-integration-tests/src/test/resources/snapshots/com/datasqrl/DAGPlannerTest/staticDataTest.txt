@@ -1499,228 +1499,203 @@ INSERT INTO `default_catalog`.`default_database`.`Numbers2_2`
 >>>vertx.json
 {
   "model" : {
-    "coords" : [
+    "queries" : [
       {
         "type" : "args",
         "parentType" : "Query",
         "fieldName" : "Numbers",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"Numbers_1\"",
-              "parameters" : [ ]
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"Numbers_1\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
       },
       {
         "type" : "args",
         "parentType" : "Query",
         "fieldName" : "Numbers2",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"Numbers2_2\"",
-              "parameters" : [ ]
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"Numbers2_2\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
       },
       {
         "type" : "args",
         "parentType" : "Query",
         "fieldName" : "NumbersLarge",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"NumbersLarge_3\"",
-              "parameters" : [ ]
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"NumbersLarge_3\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
       },
       {
         "type" : "args",
         "parentType" : "Query",
         "fieldName" : "OrderNumbers",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"Orders_40\".\"id\", \"Orders_40\".\"time\"\nFROM \"Orders_4\" AS \"Orders_40\"\n INNER JOIN (SELECT \"id\", CAST(\"id\" AS BIGINT) AS \"id0\"\n  FROM \"Numbers_1\") AS \"t\" ON \"Orders_40\".\"customerid\" = \"t\".\"id0\"",
-              "parameters" : [ ]
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT \"Orders_40\".\"id\", \"Orders_40\".\"time\"\nFROM \"Orders_4\" AS \"Orders_40\"\n INNER JOIN (SELECT \"id\", CAST(\"id\" AS BIGINT) AS \"id0\"\n  FROM \"Numbers_1\") AS \"t\" ON \"Orders_40\".\"customerid\" = \"t\".\"id0\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
       },
       {
         "type" : "args",
         "parentType" : "Query",
         "fieldName" : "OrderNumbers2",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"Orders_40\".\"id\", \"Orders_40\".\"time\"\nFROM \"Orders_4\" AS \"Orders_40\"\n INNER JOIN (SELECT \"id\", CAST(\"id\" AS BIGINT) AS \"id0\"\n  FROM (VALUES (1),\n      (2),\n      (3),\n      (4),\n      (4)) AS \"t\" (\"id\")) AS \"t0\" ON \"Orders_40\".\"customerid\" = \"t0\".\"id0\"",
-              "parameters" : [ ]
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT \"Orders_40\".\"id\", \"Orders_40\".\"time\"\nFROM \"Orders_4\" AS \"Orders_40\"\n INNER JOIN (SELECT \"id\", CAST(\"id\" AS BIGINT) AS \"id0\"\n  FROM (VALUES (1),\n      (2),\n      (3),\n      (4),\n      (4)) AS \"t\" (\"id\")) AS \"t0\" ON \"Orders_40\".\"customerid\" = \"t0\".\"id0\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
       },
       {
         "type" : "args",
         "parentType" : "Query",
         "fieldName" : "OrderPairs",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"Orders_40\".\"id\", \"Orders_40\".\"time\", \"t\".\"id\" AS \"otherid\"\nFROM \"Orders_4\" AS \"Orders_40\",\n  (VALUES (1, 1),\n    (2, 2),\n    (3, 3),\n    (4, 4),\n    (4, 4)) AS \"t\" (\"id\", \"pk\")",
-              "parameters" : [ ]
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT \"Orders_40\".\"id\", \"Orders_40\".\"time\", \"t\".\"id\" AS \"otherid\"\nFROM \"Orders_4\" AS \"Orders_40\",\n  (VALUES (1, 1),\n    (2, 2),\n    (3, 3),\n    (4, 4),\n    (4, 4)) AS \"t\" (\"id\", \"pk\")",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
       },
       {
         "type" : "args",
         "parentType" : "Query",
         "fieldName" : "OrderPairs2",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"Orders_40\".\"id\", \"Orders_40\".\"time\", \"t\".\"pk\"\nFROM \"Orders_4\" AS \"Orders_40\",\n  (VALUES (1, 1),\n    (2, 2),\n    (3, 3),\n    (4, 4),\n    (4, 4)) AS \"t\" (\"id\", \"pk\")",
-              "parameters" : [ ]
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT \"Orders_40\".\"id\", \"Orders_40\".\"time\", \"t\".\"pk\"\nFROM \"Orders_4\" AS \"Orders_40\",\n  (VALUES (1, 1),\n    (2, 2),\n    (3, 3),\n    (4, 4),\n    (4, 4)) AS \"t\" (\"id\", \"pk\")",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
       },
       {
         "type" : "args",
         "parentType" : "Query",
         "fieldName" : "Orders",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"Orders_4\"",
-              "parameters" : [ ]
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"Orders_4\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
       }
     ],
     "mutations" : [ ],
     "subscriptions" : [ ],
     "schema" : {
-      "type" : "string",
       "type" : "string",
       "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Numbers {\n  id: Int!\n}\n\ntype Numbers2 {\n  id: Int!\n}\n\ntype NumbersLarge {\n  id: Int!\n}\n\ntype OrderNumbers {\n  id: GraphQLBigInteger!\n  time: DateTime!\n}\n\ntype OrderNumbers2 {\n  id: GraphQLBigInteger!\n  time: DateTime!\n}\n\ntype OrderPairs {\n  id: GraphQLBigInteger!\n  time: DateTime!\n  otherid: Int!\n}\n\ntype OrderPairs2 {\n  id: GraphQLBigInteger!\n  time: DateTime!\n  pk: Int!\n}\n\ntype Orders {\n  id: GraphQLBigInteger!\n  customerid: GraphQLBigInteger!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: GraphQLBigInteger!\n  quantity: GraphQLBigInteger!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  Numbers(limit: Int = 10, offset: Int = 0): [Numbers!]\n  Numbers2(limit: Int = 10, offset: Int = 0): [Numbers2!]\n  NumbersLarge(limit: Int = 10, offset: Int = 0): [NumbersLarge!]\n  OrderNumbers(limit: Int = 10, offset: Int = 0): [OrderNumbers!]\n  OrderNumbers2(limit: Int = 10, offset: Int = 0): [OrderNumbers2!]\n  OrderPairs(limit: Int = 10, offset: Int = 0): [OrderPairs!]\n  OrderPairs2(limit: Int = 10, offset: Int = 0): [OrderPairs2!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n}\n"
     }

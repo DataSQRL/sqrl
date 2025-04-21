@@ -9,7 +9,7 @@ import com.datasqrl.graphql.inference.GraphqlQueryGenerator.ArgCombination;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentParameter;
 import com.datasqrl.graphql.server.RootGraphqlModel.FixedArgument;
-import com.datasqrl.graphql.server.RootGraphqlModel.JdbcParameterHandler;
+import com.datasqrl.graphql.server.RootGraphqlModel.QueryParameterHandler;
 import com.datasqrl.graphql.server.RootGraphqlModel.SourceParameter;
 import com.datasqrl.graphql.server.RootGraphqlModel.VariableArgument;
 import com.datasqrl.plan.queries.APIQuery;
@@ -37,7 +37,7 @@ public class QueryBuilderHelper {
   private final RexBuilder rexBuilder;
   private final String nameId;
   List<Argument> graphqlArguments = new ArrayList<>();
-  List<Pair<RexNode, JdbcParameterHandler>> parameterHandler = new ArrayList<>();
+  List<Pair<RexNode, QueryParameterHandler>> parameterHandler = new ArrayList<>();
   List<RexNode> extraFilters = new ArrayList<>();
   private boolean limitOffsetFlag = false;
 
@@ -155,7 +155,7 @@ public class QueryBuilderHelper {
     RelNode rel = relBuilder.build();
 
     RelNode expanded = queryPlanner.expandMacros(rel);
-    List<JdbcParameterHandler> parameters = this.parameterHandler.stream()
+    List<QueryParameterHandler> parameters = this.parameterHandler.stream()
         .map(Pair::getRight)
         .collect(Collectors.toList());
     return new APIQuery(nameId, path, expanded, parameters, this.graphqlArguments, limitOffsetFlag);

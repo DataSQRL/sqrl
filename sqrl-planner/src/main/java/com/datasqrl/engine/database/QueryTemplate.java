@@ -3,12 +3,13 @@
  */
 package com.datasqrl.engine.database;
 
+import com.datasqrl.graphql.jdbc.DatabaseType;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;
 
 @Value
 public class QueryTemplate {
-  String database;
+  DatabaseType database;
 
   RelNode relNode;
   //TODO: add parameters
