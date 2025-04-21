@@ -3,8 +3,9 @@ package com.datasqrl.functions.vector;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.datasqrl.types.vector.FlinkVectorType;
-import com.datasqrl.vector.CenterAccumulator;
-import com.datasqrl.vector.VectorFunctions;
+import com.datasqrl.types.vector.functions.CenterAccumulator;
+import com.datasqrl.types.vector.functions.VectorFunctions;
+
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;

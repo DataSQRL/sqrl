@@ -4,7 +4,7 @@ import com.datasqrl.function.CalciteFunctionUtil;
 import com.datasqrl.function.PgSpecificOperatorTable;
 import com.datasqrl.function.translations.PostgresSqlTranslation;
 import com.datasqrl.function.translations.SqlTranslation;
-import com.datasqrl.vector.VectorFunctions;
+import com.datasqrl.types.vector.functions.VectorFunctions;
 import com.google.auto.service.AutoService;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlWriter;

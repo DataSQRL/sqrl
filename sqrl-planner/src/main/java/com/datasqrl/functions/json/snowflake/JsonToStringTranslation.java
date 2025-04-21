@@ -6,7 +6,7 @@ import static com.datasqrl.function.CalciteFunctionUtil.lightweightOp;
 import com.datasqrl.function.translations.PostgresSqlTranslation;
 import com.datasqrl.function.translations.SnowflakeSqlTranslation;
 import com.datasqrl.function.translations.SqlTranslation;
-import com.datasqrl.json.JsonFunctions;
+import com.datasqrl.types.json.functions.JsonFunctions;
 import com.google.auto.service.AutoService;
 import java.util.List;
 import org.apache.calcite.sql.SqlCall;

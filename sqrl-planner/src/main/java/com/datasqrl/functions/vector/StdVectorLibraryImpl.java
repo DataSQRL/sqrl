@@ -1,18 +1,18 @@
 package com.datasqrl.functions.vector;
 
-import static com.datasqrl.vector.VectorFunctions.ASCII_TEXT_TEST_EMBED;
-import static com.datasqrl.vector.VectorFunctions.CENTER;
-import static com.datasqrl.vector.VectorFunctions.COSINE_DISTANCE;
-import static com.datasqrl.vector.VectorFunctions.COSINE_SIMILARITY;
-import static com.datasqrl.vector.VectorFunctions.DOUBLE_TO_VECTOR;
-import static com.datasqrl.vector.VectorFunctions.EUCLIDEAN_DISTANCE;
-import static com.datasqrl.vector.VectorFunctions.VEC_TO_DOUBLE;
-
 import com.datasqrl.NamespaceObjectUtil;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.function.AbstractFunctionModule;
 import com.datasqrl.function.StdLibrary;
 import com.google.auto.service.AutoService;
+
+import static com.datasqrl.types.vector.functions.VectorFunctions.ASCII_TEXT_TEST_EMBED;
+import static com.datasqrl.types.vector.functions.VectorFunctions.CENTER;
+import static com.datasqrl.types.vector.functions.VectorFunctions.COSINE_DISTANCE;
+import static com.datasqrl.types.vector.functions.VectorFunctions.COSINE_SIMILARITY;
+import static com.datasqrl.types.vector.functions.VectorFunctions.DOUBLE_TO_VECTOR;
+import static com.datasqrl.types.vector.functions.VectorFunctions.EUCLIDEAN_DISTANCE;
+import static com.datasqrl.types.vector.functions.VectorFunctions.VEC_TO_DOUBLE;
 
 import java.util.List;
 import java.util.stream.Collectors;
