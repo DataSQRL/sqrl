@@ -11,6 +11,5 @@
 
   <modules>
     <module>sqrl-integration-tests</module>
-    <module>sqrl-coverage</module>
   </modules>
 </project>
