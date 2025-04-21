@@ -20,7 +20,6 @@
     <module>sqrl-secure</module>
     <module>sqrl-text</module>
     <module>sqrl-time</module>
-    <module>sqrl-vector</module>
     <module>sqrl-name</module>
     <module>sqrl-errors</module>
   </modules>
