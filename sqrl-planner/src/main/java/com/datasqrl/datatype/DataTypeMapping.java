@@ -1,11 +1,11 @@
 package com.datasqrl.datatype;
 
 import com.datasqrl.engine.stream.flink.connector.CastFunction;
-import com.datasqrl.function.SqrlCastFunction;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.flink.table.functions.FunctionDefinition;
 
 /**
  * For mapping Flink types to and from database engine types
@@ -26,7 +26,7 @@ public interface DataTypeMapping {
 
   interface Mapper {
 
-    default Optional<SqrlCastFunction> getEngineMapping(Direction direction) {
+    default Optional<FunctionDefinition> getEngineMapping(Direction direction) {
       switch (direction) {
         case TO_DATABASE: return Optional.of(toEngineMapping());
         case FROM_DATABASE: return fromEngineMapping();
@@ -37,34 +37,34 @@ public interface DataTypeMapping {
     /**
      * @return The {@link CastFunction} that maps the {@link RelDataType} to a supported engine type
      */
-    SqrlCastFunction toEngineMapping();
+    FunctionDefinition toEngineMapping();
 
     /**
      * @return The {@link CastFunction} that maps back to a type an database engine internal type
      * that is identical or similar to the original {@link RelDataType}. Returns empty when no such mapping
      * is possible or needed.
      */
-    Optional<SqrlCastFunction> fromEngineMapping();
+    Optional<FunctionDefinition> fromEngineMapping();
   }
 
   @Value
   @AllArgsConstructor
   class SimpleMapper implements Mapper {
 
-    SqrlCastFunction toEngineMapping;
-    Optional<SqrlCastFunction> fromEngineMapping;
+	  FunctionDefinition toEngineMapping;
+    Optional<FunctionDefinition> fromEngineMapping;
 
-    public SimpleMapper(SqrlCastFunction toEngineMapping, SqrlCastFunction fromEngineMapping) {
+    public SimpleMapper(FunctionDefinition toEngineMapping, FunctionDefinition fromEngineMapping) {
       this(toEngineMapping, Optional.of(fromEngineMapping));
     }
 
     @Override
-    public SqrlCastFunction toEngineMapping() {
+    public FunctionDefinition toEngineMapping() {
       return toEngineMapping;
     }
 
     @Override
-    public Optional<SqrlCastFunction> fromEngineMapping() {
+    public Optional<FunctionDefinition> fromEngineMapping() {
       return fromEngineMapping;
     }
 

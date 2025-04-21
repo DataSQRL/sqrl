@@ -36,7 +36,6 @@ import com.datasqrl.v2.parser.AccessModifier;
 import com.datasqrl.v2.tables.AccessVisibility;
 import com.datasqrl.v2.tables.FlinkTableBuilder;
 import com.datasqrl.v2.tables.SqrlTableFunction;
-import com.datasqrl.function.SqrlCastFunction;
 import com.datasqrl.plan.util.PrimaryKeyMap;
 import com.datasqrl.util.CalciteUtil;
 import com.google.common.base.Preconditions;
@@ -77,6 +76,7 @@ import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.Pair;
 import org.apache.flink.table.catalog.ObjectIdentifier;
+import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.planner.calcite.FlinkRelBuilder;
 import org.apache.flink.table.planner.catalog.SqlCatalogViewTable;
 import org.apache.flink.table.planner.plan.schema.ExpandingPreparingTable;
@@ -400,10 +400,10 @@ public class DAGPlanner {
         continue;
       }
       fieldNames.add(field.getName());
-      Optional<SqrlCastFunction> castFct = typeMapper.getMapper(field.getType()).flatMap(mapper -> mapper.getEngineMapping(mapDirection));
+      Optional<FunctionDefinition> castFct = typeMapper.getMapper(field.getType()).flatMap(mapper -> mapper.getEngineMapping(mapDirection));
       if (castFct.isPresent()) {
         //We need to cast the datatype
-        SqrlCastFunction castFunction = castFct.get();
+        FunctionDefinition castFunction = castFct.get();
         hasChanged = true;
         fields.add(relBuilder.getRexBuilder()
             .makeCall(sqrlEnv.lookupUserDefinedFunction(castFunction), List.of(relBuilder.field(field.getIndex()))));

@@ -92,10 +92,6 @@
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-json</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-secure</artifactId>
     </dependency>
     <dependency>
@@ -109,10 +105,6 @@
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-vector</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-jdbc-1.19</artifactId>
     </dependency>
     <dependency>
       <groupId>org.testcontainers</groupId>
