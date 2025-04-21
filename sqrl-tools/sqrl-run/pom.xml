@@ -82,6 +82,11 @@
     </dependency>
     <dependency>
       <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>postgresql-connector</artifactId>
+      <version>${flinkrunner.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl.flinkrunner</groupId>
       <artifactId>flexible-json-format</artifactId>
       <version>${flinkrunner.version}</version>
     </dependency>
