@@ -17,9 +17,6 @@
 
   <modules>
     <module>sqrl-h2-1.16</module>
-    <module>sqrl-jdbc-1.16</module>
-    <module>sqrl-jdbc-1.17</module>
-    <module>sqrl-jdbc-1.18</module>
     <module>sqrl-jdbc-1.19</module>
     <module>sqrl-json</module>
     <module>sqrl-lib-common</module>
@@ -85,19 +82,7 @@
 
       <dependency>
         <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-jdbc-1.16</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-jdbc-1.17</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-jdbc-1.18</artifactId>
+        <artifactId>sqrl-jdbc-1.19</artifactId>
         <version>${project.version}</version>
       </dependency>
 
