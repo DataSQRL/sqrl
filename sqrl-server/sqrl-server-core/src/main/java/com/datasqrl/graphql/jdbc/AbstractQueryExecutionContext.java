@@ -8,6 +8,7 @@ import com.datasqrl.graphql.server.RootGraphqlModel.ParameterHandlerVisitor;
 import com.datasqrl.graphql.server.RootGraphqlModel.SourceParameter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 
 public abstract class AbstractQueryExecutionContext implements QueryExecutionContext,
@@ -38,14 +39,9 @@ public abstract class AbstractQueryExecutionContext implements QueryExecutionCon
   }
 
   public List getParamArguments(List<QueryParameterHandler> parameters) {
-    List paramObj = new ArrayList(parameters.size()+2);
-    for (int i = 0; i < parameters.size(); i++) {
-      QueryParameterHandler param = parameters.get(i);
-      Object o = param.accept(this, this);
-      paramObj.add(o);
-    }
-    assert paramObj.size() == parameters.size();
-    return paramObj;
+    return parameters.stream()
+        .map(param -> param.accept(this, this))
+        .collect(Collectors.toCollection(() -> new ArrayList<>(parameters.size() + 2)));
   }
 
   public static String addLimitOffsetToQuery(String sqlQuery, String limit, String offset) {
