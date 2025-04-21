@@ -47,15 +47,17 @@ jobs:
       - name: Generate settings.xml
         run: |
           mkdir -p ~/.m2
-          echo "<settings>
-                <servers>
-                  <server>
-                    <id>github</id>
-                    <username>${{ github.actor }}</username>
-                    <password>${{ secrets.GITHUB_TOKEN }}</password>
-                  </server>
-                </servers>
-              </settings>" > ~/.m2/settings.xml
+          cat <<EOF > ~/.m2/settings.xml
+          <settings>
+            <servers>
+              <server>
+                <id>github</id>
+                <username>${{ github.actor }}</username>
+                <password>${{ secrets.GITHUB_TOKEN }}</password>
+              </server>
+            </servers>
+          </settings>
+          EOF
 
       - name: Download dependencies
         run: |
